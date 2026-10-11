@@ -216,15 +216,6 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
             return r("this analytic DE option of the DE combination (not on the GPU yet)");
         }
     }
-    if p.cut_options != 0 {
-        return r("cutting planes (not on the GPU yet)");
-    }
-    if p.inside_rendering || p.in_and_outside {
-        return r("inside rendering (not on the GPU yet)");
-    }
-    if p.color_on_it != 0 {
-        return r("colour on iteration (not on the GPU yet)");
-    }
     if p.vol.is_some() {
         return r("volumetric light (not on the GPU yet)");
     }
@@ -521,7 +512,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "}}");
     // difs_init: the record fields a dIFS loop sets once (hybrid_difs):
     // RStopD, BTmp, SmoothIt / InsideRender (not inside)
-    let _ = writeln!(g, "fn difs_init() {{");
+    // `ins`: inside (bCalcInside): the record's SmoothIt (high half of
+    // cell 13) and InsideRender (cell 55) are -1, as doHybridIFS3D sets them
+    let _ = writeln!(g, "fn difs_init(ins: bool) {{");
     match ty.get(&2) {
         Some(CellTy::Whole) => {
             let _ = writeln!(g, "    r2f = rstopd;");
@@ -535,10 +528,10 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         let _ = writeln!(g, "    r33h = 0u;");
     }
     if has(13) {
-        let _ = writeln!(g, "    r13h = 0u;");
+        let _ = writeln!(g, "    r13h = select(0u, 0xFFFFFFFFu, ins);");
     }
     if let Some(CellTy::Halves) = ty.get(&55) {
-        let _ = writeln!(g, "    r55l = 0u; r55h = 0u;");
+        let _ = writeln!(g, "    r55l = select(0u, 0xFFFFFFFFu, ins); r55h = 0u;");
     }
     let _ = writeln!(g, "}}");
     for (_, w) in &wfs {
@@ -935,6 +928,14 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     // the weights of the two formulas of an interpolation hybrid
     f(&mut v, p.ipol[0] as f64);
     f(&mut v, p.ipol[1] as f64);
+    // inside rendering (1) / inside and outside (2), colour on iteration,
+    // the cutting planes (options with the sides in bits 4-6, positions)
+    i(&mut v, p.inside_rendering as i32 | (p.in_and_outside as i32) << 1);
+    i(&mut v, p.color_on_it as i32);
+    i(&mut v, p.cut_options as i32);
+    for &x in &p.cut_pos {
+        f(&mut v, x);
+    }
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
@@ -965,7 +966,7 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 290;
+const PARAM_WORDS: usize = 296;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
@@ -1752,6 +1753,17 @@ mod tests {
         gbuffer_matches_cpu(&quat, 0.5);
     }
 
+    /// Cutting planes, colour on iteration, inside and outside rendering
+    /// (the Mandelbulb cut open: the rays start on the plane, inside the
+    /// set where it is cut).
+    #[test]
+    fn cut_inside_matches_cpu() {
+        let bulb = include_str!("../examples/mandelbulb.m3s");
+        gbuffer_matches_cpu(&format!("cut_y = -0.3\ncolor_on_iteration = 2\n{bulb}"), 0.5);
+        gbuffer_matches_cpu(&format!("cut_z = 0.1\ninside = both\n{bulb}"), 0.5);
+        gbuffer_matches_cpu(&format!("cut_x = 0.2\ninside = inside\n{bulb}"), 0.5);
+    }
+
     fn gbuffer_matches_cpu(scene: &str, scale: f64) {
         let mut sc = crate::scene::Scene::parse(scene).unwrap();
         sc.scale_image(scale);
@@ -1775,12 +1787,18 @@ mod tests {
         let cpu_s = t.elapsed().as_secs_f64();
         assert_eq!(g.len(), cpu.len());
         let (mut same_hit, mut both, mut zdiff, mut ndot, mut bad_n) = (0usize, 0usize, 0f64, 0f64, 0usize);
+        // the colour values: orbit trap (bit 15: the inside and outside flag)
+        // and the gradient (bit 15: started inside the set)
+        let (mut col_off, mut flag_off, mut flagged) = (0usize, 0usize, 0usize);
         for (a, b) in g.iter().zip(&cpu) {
             if a.is_background() == b.is_background() {
                 same_hit += 1;
             }
             if !a.is_background() && !b.is_background() {
                 both += 1;
+                col_off += (((a.otrap & 0x7FFF) as i32 - (b.otrap & 0x7FFF) as i32).abs() > 500) as usize;
+                flag_off += ((a.otrap ^ b.otrap) & 0x8000 != 0 || (a.si_gradient ^ b.si_gradient) & 0x8000 != 0) as usize;
+                flagged += (b.otrap & 0x8000 != 0) as usize;
                 zdiff += (a.zpos() as f64 - b.zpos() as f64).abs();
                 let na = a.normal.map(|v| v as f64 / 32767.0);
                 let nb = b.normal.map(|v| v as f64 / 32767.0);
@@ -1803,7 +1821,11 @@ mod tests {
             same * 100.0,
             bad * 100.0
         );
+        let col = col_off as f64 / both.max(1) as f64;
+        let flag = flag_off as f64 / both.max(1) as f64;
+        eprintln!("  colour values off {:.2}%, flags differ {:.2}%, outside-flagged {flagged}", col * 100.0, flag * 100.0);
         assert!(same > 0.99, "background/object differ in {:.2}% of the pixels", (1.0 - same) * 100.0);
+        assert!(col < 0.03 && flag < 0.01, "colour values differ in {:.2}%, flags in {:.2}% of the pixels", col * 100.0, flag * 100.0);
         assert!(zd < 20.0, "depth differs by {zd:.1} on average");
         assert!(nd > 0.97 && bad < 0.03, "normals differ: mean cosine {nd:.4}, {:.2}% off", bad * 100.0);
     }

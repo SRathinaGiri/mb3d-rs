@@ -2,7 +2,7 @@
 // TMandCalcThread.Execute) for the graphics card, in single precision.
 // The alternating 3D hybrid of 'Integer Power' and .m3f formulas (lifted
 // to WGSL, x86/lift_wgsl.rs; gpu.rs inserts them at the FORMULAS marker
-// marker), numerical or analytic DE; no cutting planes, inside rendering
+// marker), numerical or analytic DE; cutting planes, inside rendering;
 // or volumetric light (gpu.rs checks).
 // The structure follows calc.rs closely so the two can be compared line by
 // line; the iteration state is kept in private variables like the CPU's
@@ -110,7 +110,7 @@ const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or t
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 302u;
+const STATE_FIXED: u32 = 306u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -139,6 +139,10 @@ fn slotxi(n: u32, k: u32) -> i32 { return bitcast<i32>(P[SLOTX + n * 8u + k]); }
 // the 4D rotation (smatrix4, 4 rows of 3) of the 4D hybrids
 const SMATRIX4: u32 = 275u;
 const IPOL_W: u32 = 287u;         // the weights of the two formulas of an interpolation hybrid
+const INSIDE_FLAGS: u32 = 289u;   // 1 inside rendering, 2 inside and outside
+const COLOR_ON_IT: u32 = 290u;    // doColorOnIt: 0 off, 1 the start vector, n the vector after n - 1 iterations
+const CUT_OPT: u32 = 291u;        // the cutting planes: bits 0-2 the axes, 4-6 their sides
+const CUT_POS: u32 = 292u;        // 3 values
 
 const PI: f32 = 3.14159265358979;
 
@@ -208,6 +212,8 @@ var<private> dbg_g: f32;
 // a DE of the pixel overflowed single precision (NaN / infinite before
 // the clamp): the CPU decides whether the image is trustworthy
 var<private> de_overflow: bool;
+// inside rendering (Marcher::inside / calc_inside): the DE is inverted
+var<private> inside: bool;
 var<private> mzz: f32;
 var<private> vfov: vec3<f32>;
 var<private> base: vec3<f32>;
@@ -778,7 +784,10 @@ fn set_part(part: u32) {
 // counted iteration leaves a distance estimate in rout (relative to
 // vary_scale), the smallest is the result.  `vec_ini`: start from c
 // (else from the vector of the preceding part).
-fn hybrid_difs(vec_ini: bool, rs: f32) -> f32 {
+// `ins` (Iteration::hybrid_difs `inside`): rendered from inside the set
+// (inside rendering or the inverted maximum combination): the loop does not
+// stop at the first DE below the stop
+fn hybrid_difs(vec_ini: bool, rs: f32, ins: bool) -> f32 {
     if (vec_ini) {
         if (pi(DO_JULIA) != 0) {
             j = pv(JU);
@@ -794,7 +803,7 @@ fn hybrid_difs(vec_ini: bool, rs: f32) -> f32 {
     vary_scale = 1.0;
     dfree.x = 0.0;
     deriv.x = 1.0;
-    difs_init();
+    difs_init(ins);
     var min_de = 65535.0;
     var dfree2 = 0.0;
     var it_min = 0;
@@ -838,7 +847,7 @@ fn hybrid_difs(vec_ini: bool, rs: f32) -> f32 {
             it_min = it;
             dfree2 = dfree.x;
             min_de = de;
-            if (de < rs) {
+            if (!ins && de < rs) {
                 break;
             }
         }
@@ -855,9 +864,9 @@ fn hybrid_difs(vec_ini: bool, rs: f32) -> f32 {
 // The one place that iterates the formulas: the driver inlines functions,
 // so `hybrid` and `hybrid_difs` (and through them the formula code) must
 // have a single textual call site each.
-fn run_part(difs: bool, de: bool, vec_ini: bool, rs: f32, kind: u32) -> f32 {
+fn run_part(difs: bool, de: bool, vec_ini: bool, rs: f32, kind: u32, ins: bool) -> f32 {
     if (HAS_DIFS && difs) {
-        return hybrid_difs(vec_ini, rs);
+        return hybrid_difs(vec_ini, rs, ins);
     }
     return hybrid(de, HAS_4D && (kind & 1u) != 0u, HAS_IPOL && kind >= 2u);
 }
@@ -900,7 +909,11 @@ fn evaluate(on_de: bool) -> f32 {
     for (var guard = 0u; guard < P[EVAL_TURNS]; guard++) {
         if (part_begin) {
             part_begin = false;
-            set_part(part);
+            // (part 1 keeps the caller's values, e.g. RMdoBinSearchIt's
+            // max_it + 1, as the CPU, which switches only for part 2)
+            if (part == 2u) {
+                set_part(2u);
+            }
             if (part == 2u) {
                 difs = pi(P2_DIFS) != 0;
                 custom = pi(P2_CUSTOM) != 0;
@@ -925,7 +938,7 @@ fn evaluate(on_de: bool) -> f32 {
             o[k - 1u] = pf(DE_OFFSET);
             c = bc + o;
         }
-        let hres = run_part(difs, on_de && custom, !no_vec_ini, ms_de_stop * pf(STEP_WIDTH) * 1.03, hkind);
+        let hres = run_part(difs, on_de && custom, !no_vec_ini, ms_de_stop * pf(STEP_WIDTH) * 1.03, hkind, invert || inside);
         let four_d = (hkind & 1u) != 0u;
         if (!on_de) {
             return smooth_it;
@@ -947,7 +960,7 @@ fn evaluate(on_de: bool) -> f32 {
                 result = hres * dds;
             } else if (k == 0u) {
                 // the numerical gradient of the iteration count
-                if (rout <= 0.0) {
+                if ((inside && it_result == max_it) || rout <= 0.0) {
                     result = 0.0;
                 } else {
                     buf_rout = rout;
@@ -1018,7 +1031,7 @@ fn evaluate(on_de: bool) -> f32 {
         }
         if (part == 1u) {
             if (nparts == 1u) {
-                return result;
+                return invert_inside(result, difs);
             }
             // PrepareF1DEcomb
             r1 = result;
@@ -1102,9 +1115,25 @@ fn evaluate(on_de: bool) -> f32 {
             max_its_result = buf_mir;
         }
         set_part(1u);
-        return result;
+        return invert_inside(result, difs);
     }
     return ms_de_stop * 0.25;
+}
+
+// Marcher::invert_inside: the distance to the surface from inside the set
+fn invert_inside(r: f32, difs: bool) -> f32 {
+    if (!inside) {
+        return r;
+    }
+    let ms = ms_de_stop;
+    if (difs) {
+        return ms * 2.0 - r;
+    }
+    let q = ms * 4.0 - r * 3.0;
+    if (q >= ms) {
+        it_result -= 1;
+    }
+    return q;
 }
 
 fn vg(i: u32) -> vec3<f32> {
@@ -1164,6 +1193,59 @@ fn xy_vecs(n: vec3<f32>, vx: ptr<function, vec3<f32>>, vy: ptr<function, vec3<f3
     let x = vec3<f32>(1.0 - 2.0 * d1 * d1, 2.0 * dd * d1, 2.0 * d1 * cos_a);
     *vx = x;
     *vy = vec3<f32>(x.y, 1.0 - 2.0 * dd * dd, -2.0 * dd * cos_a);
+}
+
+// RMmaxLengthToCutPlane: the distance (in steps) from the start to the
+// cutting planes along the ray (x) and the plane hit (y, 1..3)
+fn max_length_to_cut_plane() -> vec2<f32> {
+    let opts = P[CUT_OPT];
+    var len = 0.0;
+    var plane = 0.0;
+    for (var k = 0u; k < 3u; k++) {
+        if (((opts >> k) & 1u) == 0u || abs(vfov[k]) <= 1e-20) {
+            continue;
+        }
+        let side = ((opts >> (4u + k)) & 1u) != 0u;
+        let neg = (bitcast<u32>(vfov[k]) >> 31u) != 0u;
+        if (side == neg) {
+            len = 1e20;
+        } else {
+            let t = (pf(CUT_POS + k) - c[k]) / vfov[k];
+            if (t > len) {
+                len = t;
+                plane = f32(k + 1u);
+            }
+        }
+    }
+    return vec2<f32>(len, plane);
+}
+
+// AtCutPlane2: closer than `plus_d` to a cutting plane
+fn at_cut_plane(plus_d: f32) -> bool {
+    for (var k = 0u; k < 3u; k++) {
+        if (((P[CUT_OPT] >> k) & 1u) != 0u && abs(c[k] - pf(CUT_POS + k)) - plus_d < 0.0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// RMcalcNanglesForCut: depth and normal of a pixel that starts inside the
+// set, on the cutting plane `plane` (1..3) or the start plane (0)
+fn calc_nangles_for_cut(plane: u32) {
+    if (plane > 0u) {
+        let nn = 8388352.0 - pf(ZC_MUL) * (sqrt(mzz * pf(ZCORR) + 1.0) - 1.0);
+        si_zpos = u32(max(round(nn), 0.0)) << 8u;
+        let k = plane - 1u;
+        let g = vg(2u)[k];
+        let m = select(-1.0 / g, -1e30, abs(g) < 1e-30);
+        let n = vec3<f32>(vg(0u)[k] * m, vg(1u)[k] * m, -1.0);
+        let l = 32767.0 / sqrt(dot(n, n) + 1e-30);
+        si_normal = vec3<i32>(round(n * l));
+    } else {
+        si_zpos = 0x7FFF0000u;
+        si_normal = vec3<i32>(0, 0, -32767);
+    }
 }
 
 // RMdoColor
@@ -1298,6 +1380,12 @@ const P_R_AFTER_N: u32 = 43u; // then the shadows
 const P_R_AFTER_HS: u32 = 44u; // then the ambient occlusion
 const P_DONE: u32 = 45u;
 const P_R_END: u32 = 46u;    // the outputs of the task
+const P_CUT: u32 = 47u;      // the march: to the cutting planes, then the DE at the start
+const P_IN_COL: u32 = 48u;   // the pixel starts inside the set: its colour
+const P_IN_SIT: u32 = 49u;   // result: the smoothed iteration count (inside rendering)
+const P_COI: u32 = 50u;      // doColorOnIt, then after_coi
+const P_COI_R: u32 = 51u;    // result of its iterations
+const P_SURF_COL: u32 = 52u; // the surface: colour and depth
 
 
 // The march of a pixel (M_MARCH), or a post calculation on the G-buffer
@@ -1344,7 +1432,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var pc = P_START;
     var need = true;
     var want_de = true;
-    if (mode == M_SHADOW || mode == M_DEAO) {
+    // the post passes use the scene's setting for every pixel (the CPU's
+    // Marcher::new); the march may switch it (inside and outside)
+    inside = (P[INSIDE_FLAGS] & 1u) != 0u;
+    var cut_plane = 0u;
+    var after_coi = P_DONE;
+    var coi_max = 0;
+    if (mode == M_MARCH) {
+        pc = P_CUT;
+        need = false;
+    } else if (mode == M_SHADOW || mode == M_DEAO) {
         pc = P_PS;
         need = false;
     } else if (mode == M_REFLECT) {
@@ -1611,6 +1708,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
         axis = bitcast<i32>(STATE[so + 299u * ns]);
         kk = bitcast<i32>(STATE[so + 300u * ns]);
         guard = bitcast<i32>(STATE[so + 301u * ns]);
+        inside = (STATE[so + 302u * ns] != 0u);
+        cut_plane = STATE[so + 303u * ns];
+        after_coi = STATE[so + 304u * ns];
+        coi_max = bitcast<i32>(STATE[so + 305u * ns]);
         load_record(so + (1u + STATE_FIXED) * ns, ns);
     }
     for (var turns = 0u; guard < 2000000; guard++) {
@@ -1786,6 +1887,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
             STATE[so + 299u * ns] = bitcast<u32>(axis);
             STATE[so + 300u * ns] = bitcast<u32>(kk);
             STATE[so + 301u * ns] = bitcast<u32>(guard);
+            STATE[so + 302u * ns] = select(0u, 1u, inside);
+            STATE[so + 303u * ns] = cut_plane;
+            STATE[so + 304u * ns] = after_coi;
+            STATE[so + 305u * ns] = bitcast<u32>(coi_max);
             save_record(so + (1u + STATE_FIXED) * ns, ns);
             STATE[so] = cur_item + 1u;
             atomicAdd(&QUEUE[0], 1u);
@@ -1819,22 +1924,100 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         si_otrap = u32(dbg_it1) & 0xFFFFu;
                         return;
                     }
-                    if (it_result >= max_its_result || dtmp < ms_de_stop) {
-                        // inside the set at the start plane
-                        si_zpos = 0x7FFF0000u;
-                        si_normal = vec3<i32>(0, 0, -32767);
-                        do_color();
-                        if (pi(COLOR_OPTION) > 4) {
-                            si_grad |= 32768u;
-                        } else {
-                            let t = clamp(rout / pf(D_RSTOP), 0.0, 1.0);
-                            si_grad = 32768u + u32(round(32767.0 * t));
+                    let start_in = it_result >= max_its_result || dtmp < ms_de_stop;
+                    if (start_in && (P[INSIDE_FLAGS] & 2u) != 0u && inside == ((P[INSIDE_FLAGS] & 1u) != 0u)) {
+                        // inside and outside: the start is in the set, so
+                        // render from the other side (once)
+                        inside = !inside;
+                        need = true;
+                        want_de = true;
+                    } else if (start_in) {
+                        // inside the set at the start plane (or the cutting plane)
+                        after_coi = P_IN_COL;
+                        pc = select(P_IN_COL, P_COI, P[COLOR_ON_IT] != 0u);
+                    } else {
+                        rsf_mul = 1.0;
+                        last_step = dtmp * pf(Z_STEP_DIV);
+                        pc = P_LOOP;
+                    }
+                }
+            }
+            case P_CUT: {
+                if (MODE_KIND == 0u) {
+                    // move to the begin of the cutting planes
+                    if (P[CUT_OPT] != 0u) {
+                        let cl = max_length_to_cut_plane();
+                        cut_plane = u32(cl.y);
+                        if (cl.x > pf(ZEND) - mzz) {
+                            return; // background
                         }
+                        mzz = cl.x;
+                        setc();
+                        update_de_stop();
+                    }
+                    need = true;
+                    want_de = true;
+                    pc = P_START;
+                }
+            }
+            case P_IN_COL: {
+                if (MODE_KIND == 0u) {
+                    calc_nangles_for_cut(cut_plane);
+                    do_color();
+                    if (pi(COLOR_OPTION) > 4) {
+                        si_grad |= 32768u;
+                        return;
+                    } else if (inside) {
+                        calc_sit = true;
+                        need = true;
+                        want_de = true;
+                        pc = P_IN_SIT;
+                    } else {
+                        let t = clamp(rout / pf(D_RSTOP), 0.0, 1.0);
+                        si_grad = 32768u + u32(round(32767.0 * t));
                         return;
                     }
-                    rsf_mul = 1.0;
-                    last_step = dtmp * pf(Z_STEP_DIV);
-                    pc = P_LOOP;
+                }
+            }
+            case P_IN_SIT: {
+                if (MODE_KIND == 0u) {
+                    calc_sit = false;
+                    si_grad = 32768u | clip15(smooth_it * pf(MCTS_M));
+                    return;
+                }
+            }
+            // doColorOnIt: the start vector, or the vector after
+            // COLOR_ON_IT - 1 iterations
+            case P_COI: {
+                if (MODE_KIND == 0u) {
+                    if (P[COLOR_ON_IT] == 1u) {
+                        v = c;
+                        pc = after_coi;
+                    } else {
+                        coi_max = max_it;
+                        max_it = i32(P[COLOR_ON_IT]) - 1;
+                        rstop = pf(RSTOP3D);
+                        need = true;
+                        want_de = true;
+                        pc = P_COI_R;
+                    }
+                }
+            }
+            case P_COI_R: {
+                if (MODE_KIND == 0u) {
+                    max_it = coi_max;
+                    rstop = pf(D_RSTOP);
+                    pc = after_coi;
+                }
+            }
+            case P_SURF_COL: {
+                if (MODE_KIND == 0u) {
+                    do_color();
+                    calc_zpos_and_rough();
+                    if ((P[INSIDE_FLAGS] & 2u) != 0u && !inside) {
+                        si_otrap |= 0x8000u;
+                    }
+                    done = true;
                 }
             }
             case P_LOOP: {
@@ -2173,7 +2356,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_SW: {
                 if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     if (axis >= 2) {
-                        let dsg = ds.x * dm - s1.x * s1.x + ds.y * dm - s1.y * s1.y;
+                        // = ds1 * dm - nn1^2 + ds2 * dm - nn2^2 of the CPU
+                        let dsg = (ds.x + ds.y) * dm;
                         let dt2 = noffset * 0.5 / (dm * ssn);
                         s_roughness = calc_roughness(n, dt2, dsg);
                         if (sm < 8) {
@@ -2203,8 +2387,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     } else {
                         d = (dnn - r) / f32(kk);
                     }
+                    // ds: the sum of squared deviations from the mean
+                    // (Welford; the CPU's n * sum(d^2) - sum(d)^2 cancels
+                    // in single precision and came out too small)
+                    let cprev = f32(kk + sm - select(0, 1, kk > 0));
+                    let mean_old = select(0.0, s1[axis] / cprev, cprev > 0.0);
                     s1[axis] += d;
-                    ds[axis] += d * d;
+                    ds[axis] += (d - mean_old) * (d - s1[axis] / (cprev + 1.0));
                     kk += 1;
                     pc = P_SW;
                 }
@@ -2212,7 +2401,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_NEND: {
                 if (MODE_KIND == 0u) {
                     c = ct1;
-                    store_normal(n);
+                    // (the normals on the smoothed iteration count point
+                    // out of the set: inverted inside, the DE ones are not)
+                    store_normal(select(n, -n, inside && !on_de));
                     var g: f32;
                     if (de_limited) {
                         g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL)
@@ -2221,9 +2412,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         g = 32767.0 - nn * pf(MCTS_M);
                     }
                     si_grad = clip15(g);
-                    do_color();
-                    calc_zpos_and_rough();
-                    done = true;
+                    after_coi = P_SURF_COL;
+                    pc = select(P_SURF_COL, P_COI, P[COLOR_ON_IT] != 0u);
                 } else if (MODE_KIND == 3u) {
                     // the hit of a reflected ray (calc_ray)
                     c = ct1;
@@ -2559,9 +2749,15 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         b_end = true;
                     }
                     c = ic + sv * dt1;
-                    need = true;
-                    want_de = true;
-                    pc = P_AO_R;
+                    if (P[CUT_OPT] != 0u && at_cut_plane(dt1 * pf(STEP_WIDTH) * 0.5)) {
+                        ao_min[k] = max(s_tmp, 0.0) * de_mul;
+                        k += 1u;
+                        pc = P_AO_RAY;
+                    } else {
+                        need = true;
+                        want_de = true;
+                        pc = P_AO_R;
+                    }
                 }
             }
             case P_AO_R: {
@@ -2823,6 +3019,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
         }
     }
     if (mode == M_MARCH) {
+        if (inside) {
+            step_count *= 200.0 * pf(DE_STOP) / f32(pi(WIDTH));
+        }
         si_shadow = u32(round(clamp(step_count, 0.0, 1023.0)));
     }
 }

@@ -397,12 +397,14 @@ of an `.m3f` formula is analysed (`src/lift.rs`: every memory access
 resolved to the iteration record, the formula's constants or the stack)
 and translated to WGSL (`src/lift_wgsl.rs`), including the SSE2 code many
 formulas use and record fields chosen by an index; the built-in formulas
-are written by hand. A scene runs on the GPU when it is a hybrid of such
-formulas, alternating or interpolating, 3D or 4D, with the numerical or an
-analytic DE (options 0, 2, 5, 6 and 11), a dIFS hybrid (option 20) or a DE
-combination of two such parts (minimum, maximum, inverted maximum, the two
-smooth minima and the dIFS mix). Everything else is calculated on the CPU
-as before: the formulas the lifter cannot resolve, cutting planes, inside rendering,
+except the JIT example are written by hand. A scene runs on the GPU when it
+is a hybrid of such formulas, alternating or interpolating, 3D or 4D, with
+the numerical or an analytic DE (options 0, 2, 5, 6 and 11), a dIFS hybrid
+(option 20) or a DE combination of two such parts (minimum, maximum,
+inverted maximum, the two smooth minima and the dIFS mix), also with
+cutting planes, inside or inside-and-outside rendering and colour on
+iteration. Everything else is calculated on the CPU as before: the
+formulas the lifter cannot resolve and those reading maps,
 volumetric light, views zoomed so far that single precision would show as
 noise, and the Monte Carlo renderer. The zoom limit depends on the DE: a
 numerical DE samples the formula at a tiny offset, which must span a few
@@ -418,7 +420,7 @@ calculation is sent in pieces of about 25 ms (`MB3D_GPU_BAND_MS`): a pixel
 that needs longer (a single dIFS pixel can take 100 ms on the card) saves
 its state and continues in the next piece, with identical results.
 
-Of the 80 example parameter files of MB3D, 55 run on the GPU at their
+Of the 80 example parameter files of MB3D, 59 run on the GPU at their
 own image size (421 of the 460 formula files translate); at that size
 *Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
 instead of 58 s; with the reflections on the card, *Rama - Elysium* at 160

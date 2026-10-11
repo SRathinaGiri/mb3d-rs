@@ -24,6 +24,34 @@ fn main() {
         let mae = r.rgb.iter().zip(&c.rgb).map(|(&x, &y)| (x as f64 - y as f64).abs()).sum::<f64>() / r.rgb.len() as f64 / 2.55;
         let off = r.rgb.chunks(3).zip(c.rgb.chunks(3)).filter(|(x, y)| x.iter().zip(y.iter()).any(|(&p, &q)| (p as i32 - q as i32).abs() > 25)).count();
         println!("cpu {:.3}s: mean difference {mae:.2} %, {:.2} % of the pixels differ by more than 10 %", t.elapsed().as_secs_f64(), off as f64 * 100.0 / (r.width * r.height) as f64);
+        // which G-buffer values differ (object pixels in both)
+        let both: Vec<_> = r.gbuffer.iter().zip(&c.gbuffer).filter(|(a, b)| !a.is_background() && !b.is_background()).collect();
+        let n = both.len().max(1) as f64;
+        let pct = |f: &dyn Fn(&mb3d::gbuffer::SiLight, &mb3d::gbuffer::SiLight) -> bool| both.iter().filter(|(a, b)| f(a, b)).count() as f64 * 100.0 / n;
+        println!(
+            "G-buffer: otrap bit 15 {:.2} %, otrap off by > 1000 {:.2} %, gradient off by > 1000 {:.2} %, gradient bit 15 {:.2} %, depth off by > 256 {:.2} %",
+            pct(&|a, b| (a.otrap ^ b.otrap) & 0x8000 != 0),
+            pct(&|a, b| ((a.otrap & 0x7FFF) as i32 - (b.otrap & 0x7FFF) as i32).abs() > 1000),
+            pct(&|a, b| ((a.si_gradient & 0x7FFF) as i32 - (b.si_gradient & 0x7FFF) as i32).abs() > 1000),
+            pct(&|a, b| (a.si_gradient ^ b.si_gradient) & 0x8000 != 0),
+            pct(&|a, b| (a.zpos_fine as i64 - b.zpos_fine as i64).abs() > 256 << 8),
+        );
+        println!(
+            "          roughness off by > 20 {:.2} % (mean GPU {:.1}, CPU {:.1})",
+            pct(&|a, b| ((a.zpos_fine & 0xFF) as i32 - (b.zpos_fine & 0xFF) as i32).abs() > 20),
+            both.iter().map(|(a, _)| (a.zpos_fine & 0xFF) as f64).sum::<f64>() / n,
+            both.iter().map(|(_, b)| (b.zpos_fine & 0xFF) as f64).sum::<f64>() / n,
+        );
+        println!(
+            "          shadow bits {:.2} %, step count off by > 50 {:.2} %, ambient off by > 1000 {:.2} %, normals off by > 25 degrees {:.2} %",
+            pct(&|a, b| (a.shadow ^ b.shadow) & 0xFC00 != 0),
+            pct(&|a, b| ((a.shadow & 0x3FF) as i32 - (b.shadow & 0x3FF) as i32).abs() > 50),
+            pct(&|a, b| (a.amb_shadow as i32 - b.amb_shadow as i32).abs() > 1000),
+            pct(&|a, b| {
+                let (p, q) = (a.normal.map(|v| v as f64), b.normal.map(|v| v as f64));
+                (p[0] * q[0] + p[1] * q[1] + p[2] * q[2]) / ((p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) * (q[0] * q[0] + q[1] * q[1] + q[2] * q[2])).sqrt().max(1.0) < 0.9
+            }),
+        );
         let dir = std::path::PathBuf::from(dir);
         let _ = std::fs::create_dir_all(&dir);
         mb3d::png::write_rgb(dir.join("gpu.png").to_str().unwrap(), r.width, r.height, &r.rgb).unwrap();
