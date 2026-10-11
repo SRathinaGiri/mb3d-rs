@@ -456,6 +456,17 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 /// Paints the G-buffer with the scene lighting.
 pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
+    paint_with(sc, p, gbuf, true)
+}
+
+/// [`paint`] without the reflections and the depth of field: the preview
+/// of the rows calculated so far (both need the whole image, and the
+/// reflections march again, taking as long as the calculation itself).
+pub fn paint_preview(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
+    paint_with(sc, p, gbuf, false)
+}
+
+fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> Vec<u8> {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);
@@ -479,6 +490,9 @@ pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
             });
         }
     });
+    if !full {
+        return rgb;
+    }
     if sc.mc.reflections && p.slice_2d == 0 {
         crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads);
     }

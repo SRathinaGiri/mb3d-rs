@@ -1189,6 +1189,8 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                 }
                 return;
             }
+            // the program ends (gpu::abort_all): no CPU pass either
+            Err(e) if e == "cancelled" => return,
             Err(e) => eprintln!("reflections on the GPU failed, calculated on the CPU: {e}"),
         }
     }

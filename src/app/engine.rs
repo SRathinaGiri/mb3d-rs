@@ -82,12 +82,29 @@ pub struct Inner {
     pub out: Mutex<Output>,
     pub base: Mutex<Option<Arc<Base>>>,
     partial: Mutex<Option<Partial>>,
+    /// the painted preview of the rows so far, and whether a painter runs
+    preview: Mutex<Option<(Vec<u8>, usize, usize)>>,
+    painting: AtomicBool,
     waker: Mutex<Option<Waker>>,
     busy: AtomicBool,
 }
 
-#[derive(Clone)]
 pub struct Engine(pub Arc<Inner>);
+
+/// The program ends: the calculation stops first and is waited for (at
+/// most a few seconds).  A calculation still waiting for the graphics card
+/// when the process exits crashes in the driver.
+impl Drop for Engine {
+    fn drop(&mut self) {
+        #[cfg(feature = "gpu")]
+        crate::gpu::abort_all();
+        self.stop();
+        let t = Instant::now();
+        while self.0.busy.load(Ordering::SeqCst) && t.elapsed().as_secs() < 5 {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
+}
 
 /// Everything the post calculations depend on.
 pub fn post_sig(sc: &Scene) -> String {
@@ -140,6 +157,8 @@ impl Engine {
             out: Mutex::new(Output::default()),
             base: Mutex::new(None),
             partial: Mutex::new(None),
+            preview: Mutex::new(None),
+            painting: AtomicBool::new(false),
             waker: Mutex::new(None),
             busy: AtomicBool::new(false),
         });
@@ -181,17 +200,36 @@ impl Engine {
         self.0.progress.load(Ordering::Relaxed) as f32 / 1000.0
     }
 
-    /// Paints the rows calculated so far (None when nothing new).
+    /// The rows calculated so far, painted (None when nothing new).  The
+    /// painting runs on a thread of its own, from a copy of the rows, so
+    /// that the window stays responsive: a call starts it, a later call
+    /// returns the image.
     pub fn partial_image(&self) -> Option<(Vec<u8>, usize, usize)> {
-        let mut p = self.0.partial.lock().unwrap();
-        let p = p.as_mut()?;
-        if !p.rows_new {
+        if let Some(img) = self.0.preview.lock().unwrap().take() {
+            return Some(img);
+        }
+        if self.0.painting.load(Ordering::SeqCst) {
             return None;
         }
-        p.rows_new = false;
-        let rgb = crate::render::paint(&p.scene, &p.params, &p.gbuf);
-        let h = p.gbuf.len() / p.w.max(1);
-        Some((rgb, p.w, h))
+        let (scene, params, gbuf, w) = {
+            let mut p = self.0.partial.lock().unwrap();
+            let p = p.as_mut()?;
+            if !p.rows_new {
+                return None;
+            }
+            p.rows_new = false;
+            (p.scene.clone(), p.params.clone(), p.gbuf.clone(), p.w)
+        };
+        self.0.painting.store(true, Ordering::SeqCst);
+        let e = self.0.clone();
+        std::thread::spawn(move || {
+            let rgb = crate::render::paint_preview(&scene, &params, &gbuf);
+            let h = gbuf.len() / w.max(1);
+            *e.preview.lock().unwrap() = Some((rgb, w, h));
+            e.painting.store(false, Ordering::SeqCst);
+            e.wake();
+        });
+        None
     }
 
     pub fn base(&self) -> Option<Arc<Base>> {

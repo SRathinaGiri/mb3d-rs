@@ -121,7 +121,7 @@ impl Resumer {
         g.queue.write_buffer(&self.queue, 0, &bytes(&[0, 0, u32::MAX, 0]));
         g.queue.submit([enc.finish()]);
         loop {
-            if cancel() {
+            if cancel() || ABORT.load(std::sync::atomic::Ordering::SeqCst) {
                 return Err("cancelled".into());
             }
             let t = std::time::Instant::now();
@@ -183,6 +183,16 @@ pub fn default_on() -> bool {
 /// How the last calculation ran: "GPU (name)" or "CPU: reason".
 pub fn last_status() -> String {
     LAST.lock().map(|s| s.clone()).unwrap_or_default()
+}
+
+/// Set when the program ends: running GPU work returns an error at its
+/// next submission (a process that exits while a calculation waits for
+/// the card crashes in the driver).
+static ABORT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Stops all GPU work for good (the program ends).
+pub fn abort_all() {
+    ABORT.store(true, std::sync::atomic::Ordering::SeqCst);
 }
 
 pub fn set_status(s: String) {

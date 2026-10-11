@@ -3,7 +3,8 @@
 //! `cargo run --release --example snapform -- [APP ARGS] -- STEPS...` with
 //! the steps `show:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
-//! a running calculation), `print:FORM:CONTROL` (its caption) and `led`
+//! a running calculation; `lagwait:SECONDS` also prints the longest
+//! blocking of the window), `print:FORM:CONTROL` (its caption) and `led`
 //! (the title bar LED of the main window).
 use mb3d::vcl::canvas::Canvas;
 use mb3d::vcl::App;
@@ -26,6 +27,23 @@ fn main() {
                     app.process(&mut ui);
                     std::thread::sleep(std::time::Duration::from_millis(50));
                 }
+            }
+            // as wait, and prints how long the program's idle work blocked
+            // the window at most (what a user feels as a frozen window)
+            "lagwait" => {
+                let t = std::time::Instant::now();
+                let (mut worst, mut n, mut over) = (0f64, 0, 0);
+                while t.elapsed().as_secs_f64() < p[1].parse().unwrap() {
+                    let t1 = std::time::Instant::now();
+                    app.idle(&mut ui);
+                    app.process(&mut ui);
+                    let d = t1.elapsed().as_secs_f64();
+                    worst = worst.max(d);
+                    n += 1;
+                    over += (d > 0.1) as usize;
+                    std::thread::sleep(std::time::Duration::from_millis(16));
+                }
+                println!("idle work: {n} turns, longest {:.0} ms, {over} longer than 100 ms", worst * 1000.0);
             }
             "print" => println!("{}.{} = {:?}", p[1], p[2], ui.caption(p[1], p[2])),
             "status" => {
