@@ -94,10 +94,19 @@ const P2_DIFS: u32 = 160u;
 const P2_DDS: u32 = 161u;        // d_de_scale of the part
 const PROBE_MZZ: u32 = 162u;     // M_PROBE: the depth along the ray
 const EVAL_TURNS: u32 = 164u;    // the turns of evaluate's loop (a parameter so that the driver does not unroll it)
+// the reflection pass (M_REFLECT): tasks instead of pixels
+const R_FAR_FOG: u32 = 168u;     // far fog / squared depth: the depth of a hit from the fog formula
+const R_SURFACE: u32 = 169u;     // 1: the tasks are the pixels' surfaces (no march)
+const R_N: u32 = 170u;           // the number of tasks
+const R_LIGHTS: u32 = 172u;      // 6 x (index, HSvec or position, positional, lmax_l, visible, 0)
+const R_WORDS: u32 = 24u;        // a task: 0-2 origin, 3-5 direction, 6 zz (surface: zpos), 7 pixel;
+                                 // out 8-12 the G-buffer value, 13-15 position, 16 zz, 17 zz2, 18 flags, 19 step count
+const R_W: u32 = 256u;           // tasks per dispatch row
 const M_MARCH: u32 = 0u;
 const M_SHADOW: u32 = 1u;
 const M_DEAO: u32 = 2u;
 const M_PROBE: u32 = 3u;         // the DE at the ray start (a check against the CPU)
+const M_REFLECT: u32 = 4u;       // the reflection pass: a bounce (or the surface) of every task
 // 6 slots of 8 words: iterations, uncounted, constants base, fHln,
 // Integer Power power, z multiplier, kind (0 none, 1 Integer Power, 2 .m3f,
 // 3 Amazing Box: see amazing_box)
@@ -149,6 +158,17 @@ var<private> part_repeat: u32;
 var<private> de_option: i32;
 // the absolute DE stop of a dIFS loop (RStopD)
 var<private> rstopd: f32;
+// the pixel's view vector (the shadow rays measure their depth along it)
+var<private> vfov_px: vec3<f32>;
+// the depth along the view for the DE stop: zz_base + mzz * zz_mul (a
+// reflected ray runs at an angle to the view); abs for the reflection pass
+var<private> zz_base: f32;
+var<private> zz_mul: f32;
+var<private> zz_abs: bool;
+// the reflection pass: its outputs
+var<private> r_flags: u32;
+var<private> r_zz2: f32;
+var<private> r_step_count: f32;
 // the parts' own results of the last DE combination (M_PROBE)
 var<private> dbg_r1: f32;
 var<private> dbg_it1: i32;
@@ -737,7 +757,11 @@ fn rot_rev(a: vec3<f32>) -> vec3<f32> {
 }
 
 fn update_de_stop() {
-    ms_de_stop = pf(DE_STOP) * (1.0 + mzz * pf(DE_STOP_FACTOR));
+    var z = zz_base + mzz * zz_mul;
+    if (zz_abs) {
+        z = abs(z);
+    }
+    ms_de_stop = pf(DE_STOP) * (1.0 + z * pf(DE_STOP_FACTOR));
 }
 
 // MakeWNormalsFromDVec
@@ -901,6 +925,19 @@ const P_AO_RAY: u32 = 31u;   // the next ray
 const P_AO_STEP: u32 = 32u;  // a step along the ray
 const P_AO_R: u32 = 33u;     // result: the DE after the step
 const P_AO_CORR: u32 = 34u;  // the correction and the mean
+// the reflection pass (reflect.rs calc_ray)
+const P_R_START: u32 = 35u;  // the task: the pixel's surface or a bounce
+const P_R_SURF_R: u32 = 36u; // result: the DE at the stored depth of the surface
+const P_R_SURF_END: u32 = 37u;
+const P_R_M0: u32 = 38u;     // result: the DE at the start of the bounce
+const P_R_LOOP: u32 = 39u;   // a step along the bounce
+const P_R_STEP: u32 = 40u;   // result: the DE after the step
+const P_R_HIT: u32 = 41u;    // the surface: the binary search
+const P_R_HIT2: u32 = 42u;   // the normals, colour and depth of the hit
+const P_R_AFTER_N: u32 = 43u; // then the shadows
+const P_R_AFTER_HS: u32 = 44u; // then the ambient occlusion
+const P_DONE: u32 = 45u;
+const P_R_END: u32 = 46u;    // the outputs of the task
 
 
 // The march of a pixel (M_MARCH), or a post calculation on the G-buffer
@@ -950,9 +987,22 @@ fn pixel(x: i32, y: i32, mode: u32) {
     if (mode == M_SHADOW || mode == M_DEAO) {
         pc = P_PS;
         need = false;
+    } else if (mode == M_REFLECT) {
+        pc = P_R_START;
+        need = false;
     }
+    vfov_px = vfov;
+    zz_base = 0.0;
+    zz_mul = 1.0;
+    zz_abs = mode == M_REFLECT;
+    let reflect = mode == M_REFLECT;
+    var after_hs = P_DONE;
+    var after_ao = P_DONE;
+    var last_zz = 0.0;
+    var rlast_sw = 0.0;
     var after_bs = P_N_INIT;
     var bs_thr = 0.001;
+    var bs_it_check = mode != M_DEAO;
     var zf = 0.0;
     // shadows
     let soft = pf(HS_SOFT_RADIUS) > 0.0;
@@ -1183,7 +1233,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             case P_BS_R: {
                 dtmp = r;
-                if (mode != M_DEAO && it_result >= max_its_result) {
+                if (bs_it_check && it_result >= max_its_result) {
                     dt1 = -abs(dt1);
                 } else if (dtmp < ms_de_stop) {
                     dt1 = abs(dt1) * -0.55;
@@ -1253,7 +1303,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // RMCalculateNormals (on_de) / RMCalculateNormalsOnSmoothIt
             case P_N_INIT: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     noffset = min(pf(DE_STOP), 1.0) * (1.0 + mzz * pf(DE_STOP_FACTOR)) * 0.15;
                     calc_sit = true;
                     ct1 = c;
@@ -1263,7 +1313,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_N_0: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     dnn = r;
                     nn = smooth_it;
                     if (on_de) {
@@ -1279,7 +1329,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_N8: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     // the next of the 124 points of the 5x5x5 cube (not the centre)
                     if (cnt >= 125) {
                         n *= 0.0075;
@@ -1301,7 +1351,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_N8_R: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     let a = cnt / 25 - 2;
                     let b = (cnt / 5) % 5 - 2;
                     let cc = cnt % 5 - 2;
@@ -1314,7 +1364,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NA: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     // z, x, y as on the CPU; + then - the offset
                     if (cnt >= 6) {
                         pc = P_NSM;
@@ -1332,7 +1382,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NA_R: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     let ax = (u32(cnt / 2) + 2u) % 3u;
                     if (cnt % 2 == 0) {
                         na = r;
@@ -1344,7 +1394,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NSM: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     if (sm <= 0) {
                         pc = P_NEND;
                     } else {
@@ -1389,7 +1439,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NSM_R: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     if (on_de) {
                         dnn += r;
                     } else {
@@ -1400,7 +1450,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_SW: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     if (axis >= 2) {
                         let dsg = ds.x * dm - s1.x * s1.x + ds.y * dm - s1.y * s1.y;
                         let dt2 = noffset * 0.5 / (dm * ssn);
@@ -1425,7 +1475,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_SW_R: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 3u) {
                     var d: f32;
                     if (on_de) {
                         d = (r - dnn) / f32(kk);
@@ -1453,6 +1503,27 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     do_color();
                     calc_zpos_and_rough();
                     done = true;
+                } else if (MODE_KIND == 3u) {
+                    // the hit of a reflected ray (calc_ray)
+                    c = ct1;
+                    store_normal(n);
+                    var g: f32;
+                    if (de_limited) {
+                        g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL) * log(ms_de_stop * pf(STEP_WIDTH))) * pf(MCTS_M);
+                    } else {
+                        g = 32767.0 - nn * pf(MCTS_M);
+                    }
+                    si_grad = clip15(g);
+                    do_color();
+                    var ds = r_zz2;
+                    if (P[R_FAR_FOG] != 0u) {
+                        ds = sqrt(max((r_zz2 + last_zz) * (r_zz2 + last_zz) - last_zz + 1e-30, 0.0));
+                    }
+                    let mz = mzz;
+                    mzz = ds;
+                    calc_zpos_and_rough();
+                    mzz = mz;
+                    pc = P_R_AFTER_N;
                 }
             }
             // ---- the post calculations: the surface of the pixel
@@ -1505,45 +1576,90 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // ---- hard_shadow_row / soft_shadow_row
             case P_HS_INIT: {
-                if (MODE_KIND == 1u) {
+                if (MODE_KIND == 1u || MODE_KIND == 3u) {
                     calc_sit = false;
                     nvec = rot_rev(vec3<f32>(si_normal) / 32767.0);
-                    let mz0 = mzz;
-                    if (soft) {
-                        mzz -= 0.1;
+                    if (reflect) {
+                        // calc_hs: from the hit itself, the depth along the view
+                        if (soft) {
+                            si_shadow |= 0xFC00u;
+                        } else {
+                            for (var i = 0u; i < P[HS_N]; i++) {
+                                si_shadow &= ~(0x400u << P[R_LIGHTS + i * 8u]);
+                            }
+                        }
+                        update_de_stop();
+                        ic = c;
+                        max_lhs = f32(pi(WIDTH) + pi(HEIGHT)) * 0.6 * (1.0 + 0.5 * min(mzz, pf(ZEND) * 0.4) * max(pf(FOV_Y), 0.0) / f32(pi(HEIGHT))) * pf(HS_MAX_LEN_MUL);
                     } else {
-                        mzz = max(mzz - 0.1, 0.0);
+                        let mz0 = mzz;
+                        if (soft) {
+                            mzz -= 0.1;
+                        } else {
+                            mzz = max(mzz - 0.1, 0.0);
+                        }
+                        c = base + vfov * (mz0 - 0.1);
+                        update_de_stop();
+                        ic = c;
+                        max_lhs = hs_max_len(y);
                     }
-                    c = base + vfov * (mz0 - 0.1);
-                    update_de_stop();
-                    ic = c;
-                    max_lhs = hs_max_len(y);
                     zrs_mul = 80.0 / max(pf(HS_SOFT_RADIUS), 0.001);
                     li = 0u;
                     pc = P_HS_LIGHT;
                 }
             }
             case P_HS_LIGHT: {
-                if (MODE_KIND == 1u) {
+                if (MODE_KIND == 1u || MODE_KIND == 3u) {
                     if (li >= P[HS_N]) {
-                        done = true;
+                        c = ic;
+                        pc = after_hs;
                     } else {
-                        lidx = P[HS_LIGHTS + li * 4u];
-                        lvec = pv(HS_LIGHTS + li * 4u + 1u);
                         c = ic;
                         zz2 = mzz;
-                        zz2mul = -dot(lvec, vfov) / max(sqrt(dot(lvec, lvec) * dot(vfov, vfov)), 1e-30);
-                        if (dot(nvec, lvec) > 0.0) {
+                        dt1 = max_lhs;
+                        var too_far = false;
+                        if (reflect) {
+                            let lb = R_LIGHTS + li * 8u;
+                            lidx = P[lb];
+                            lvec = pv(lb + 1u);
+                            if (P[lb + 4u] != 0u) {
+                                // a positional light: towards its position, at most its reach
+                                let v = lvec - c;
+                                let d = dot(v, v);
+                                too_far = d > pf(lb + 5u) * pf(HS_MAX_LEN_MUL);
+                                let sw = pf(STEP_WIDTH);
+                                if (d < dt1 * sw * dt1 * sw) {
+                                    dt1 = sqrt(d) / sw;
+                                }
+                                lvec = v * (-sw / max(sqrt(d), 1e-30));
+                                if (soft) {
+                                    zrs_mul = select(40.0, 70.0, (P[lb + 6u] & 6u) == 2u) / max(pf(HS_SOFT_RADIUS), 0.001);
+                                }
+                            }
+                        } else {
+                            lidx = P[HS_LIGHTS + li * 4u];
+                            lvec = pv(HS_LIGHTS + li * 4u + 1u);
+                        }
+                        zz2mul = -dot(lvec, vfov_px) / max(sqrt(dot(lvec, lvec) * dot(vfov_px, vfov_px)), 1e-30);
+                        if (too_far) {
+                            if (soft) {
+                                c = ic;
+                                pc = after_hs;
+                            } else {
+                                si_shadow |= 0x400u << lidx;
+                                li += 1u;
+                            }
+                        } else if (dot(nvec, lvec) > 0.0) {
                             // the surface faces away from the light
                             if (soft) {
                                 si_shadow &= 0x3FFu;
-                                done = true;
+                                c = ic;
+                                pc = after_hs;
                             } else {
                                 si_shadow |= 0x400u << lidx;
                                 li += 1u;
                             }
                         } else {
-                            dt1 = max_lhs;
                             zr_soft = 1.0;
                             if (dt1 > 0.0) {
                                 ms_de_stop = pf(DE_STOP) * (1.0 + abs(zz2) * pf(DE_STOP_FACTOR));
@@ -1559,15 +1675,22 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_R0: {
-                if (MODE_KIND == 1u) {
+                if (MODE_KIND == 1u || MODE_KIND == 3u) {
                     dtmp = r;
+                    if (reflect) {
+                        rsf = 1.0;
+                    }
                     pc = P_HS_STEP;
                 }
             }
             case P_HS_STEP: {
-                if (MODE_KIND == 1u) {
+                if (MODE_KIND == 1u || MODE_KIND == 3u) {
                     last_de = dtmp;
-                    st = min(max(0.11, (dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf), max(ms_de_stop, 0.4) * pf(MH04ZSD));
+                    if (reflect) {
+                        st = min(dtmp * pf(Z_STEP_DIV) * rsf, max(ms_de_stop, 0.4) * pf(MH04ZSD));
+                    } else {
+                        st = min(max(0.11, (dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf), max(ms_de_stop, 0.4) * pf(MH04ZSD));
+                    }
                     dt1 -= st;
                     c -= lvec * st;
                     zz2 += st * zz2mul;
@@ -1578,14 +1701,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_R: {
-                if (MODE_KIND == 1u) {
+                if (MODE_KIND == 1u || MODE_KIND == 3u) {
                     dtmp = r;
                     if (soft) {
                         let rr = (max_lhs - dt1) / max_lhs;
                         let r8 = (rr * rr) * (rr * rr);
                         zr_soft = min(zr_soft, (dtmp - ms_de_stop) * zrs_mul / (max_lhs - dt1 + 0.11) + r8 * r8);
                     }
-                    if (it_result >= max_its_result || dtmp <= ms_de_stop) {
+                    if (it_result >= max_its_result || dtmp <= ms_de_stop || (reflect && dtmp < ms_de_stop)) {
                         pc = P_HS_DONE;
                     } else {
                         if (dtmp > last_de + st) {
@@ -1607,10 +1730,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_DONE: {
-                if (MODE_KIND == 1u) {
+                if (MODE_KIND == 1u || MODE_KIND == 3u) {
                     if (soft) {
                         si_shadow = (si_shadow & 0x3FFu) | (u32(round(clamp(zr_soft, 0.0, 1.0) * 63.4)) << 10u);
-                        done = true;
+                        c = ic;
+                        pc = after_hs;
                     } else {
                         if (dt1 > 0.0) {
                             si_shadow |= 0x400u << lidx; // in shadow
@@ -1622,7 +1746,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // ---- deao_row
             case P_AO_INIT: {
-                if (MODE_KIND == 2u) {
+                if (MODE_KIND == 2u || MODE_KIND == 3u) {
                     calc_sit = false;
                     update_de_stop();
                     let msl = min(ms_de_stop, 1e6);
@@ -1666,7 +1790,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             ray_count = 1u;
                         }
                         for (var rr = 1u; rr <= q; rr++) {
-                            let n = u32(round(sin(f32(rr) * abr) * 2.0 * PI / abr));
+                            // CalcAmbShadowDEfor1pos (reflections) takes sin(0.25) for every row
+                            let n = u32(round(sin(select(f32(rr) * abr, 0.25, reflect)) * 2.0 * PI / abr));
                             for (var i = 0u; i < n; i++) {
                                 if (ray_count < 33u) {
                                     ao_dirs[ray_count] = ray_dir(abr * (f32(rr) + dt1d - select(0.0, 0.25, dither > 0)), (f32(i) + dt2d) * 2.0 * PI / f32(n));
@@ -1688,7 +1813,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_RAY: {
-                if (MODE_KIND == 2u) {
+                if (MODE_KIND == 2u || MODE_KIND == 3u) {
                     if (k >= ray_count) {
                         pc = P_AO_CORR;
                     } else {
@@ -1704,7 +1829,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_STEP: {
-                if (MODE_KIND == 2u) {
+                if (MODE_KIND == 2u || MODE_KIND == 3u) {
                     if (b_first) {
                         b_first = false;
                         dt1 *= get_rand() * 1.5 + 0.5;
@@ -1719,7 +1844,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_R: {
-                if (MODE_KIND == 2u) {
+                if (MODE_KIND == 2u || MODE_KIND == 3u) {
                     let dt2 = r;
                     s_tmp = min(s_tmp, (dt2 - ms2 + dt1 * md_d10) / dt1);
                     var fin = s_tmp < 0.02;
@@ -1737,7 +1862,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_CORR: {
-                if (MODE_KIND == 2u) {
+                if (MODE_KIND == 2u || MODE_KIND == 3u) {
                     // open neighbour rays lighten a closed one
                     var amount = 0.0;
                     for (var i = 0u; i < ray_count; i++) {
@@ -1760,6 +1885,211 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         amount += min(s_add + ao_min[i], 1.0);
                     }
                     si_amb = u32(max(round(16383.0 * (1.0 - amount / f32(ray_count))), 0.0));
+                    c = ic;
+                    pc = after_ao;
+                }
+            }
+            case P_DONE: {
+                done = true;
+            }
+            // ---- the reflection pass: calc_ray of reflect.rs
+            case P_R_START: {
+                if (MODE_KIND == 3u) {
+                    r_flags = 0u;
+                    r_step_count = 0.0;
+                    r_zz2 = 0.0;
+                    calc_sit = false;
+                    if (P[R_SURFACE] != 0u) {
+                        // the pixel's surface: from the G-buffer depth, refined
+                        zf = r_task.z;
+                        let a = (8388351.5 - zf) / pf(ZC_MUL);
+                        mzz = a * (a + 2.0) / pf(ZCORR);
+                        setc();
+                        update_de_stop();
+                        need = true;
+                        want_de = true;
+                        pc = P_R_SURF_R;
+                    } else {
+                        base = r_task_origin;
+                        vfov = r_task_dir;
+                        zz_base = r_task.z;
+                        zz_mul = dot(vfov_px, vfov) / sqrt(dot(vfov_px, vfov_px) * dot(vfov, vfov) + 1e-30);
+                        last_zz = abs(zz_base);
+                        mzz = min(pf(DE_STOP) * 0.25, 1.0);
+                        setc();
+                        update_de_stop();
+                        need = true;
+                        want_de = true;
+                        pc = P_R_M0;
+                    }
+                }
+            }
+            case P_R_SURF_R: {
+                if (MODE_KIND == 3u) {
+                    dtmp = r;
+                    if (dtmp < ms_de_stop * 0.5) {
+                        r_flags = 4u; // keep the painted colour
+                        done = true;
+                    } else {
+                        de_limited = it_result < max_its_result || dtmp <= ms_de_stop;
+                        itmp = pi(DE_ADD_STEPS);
+                        after_bs = P_R_SURF_END;
+                        if (de_limited) {
+                            let a1 = (8388351.5 - (zf - 1.0)) / pf(ZC_MUL);
+                            dt1 = (mzz - a1 * (a1 + 2.0) / pf(ZCORR)) * -0.5;
+                            bs_thr = 0.001;
+                            pc = P_BS;
+                        } else {
+                            yp = f32(max_it) - 0.99;
+                            saved_max = max_it;
+                            max_it += 1;
+                            calc_sit = true;
+                            dt1 = 0.0;
+                            dmul = 1.0;
+                            first = true;
+                            last_si = 0.0;
+                            last_dif = 0.0;
+                            pc = P_BSI;
+                        }
+                    }
+                }
+            }
+            case P_R_SURF_END: {
+                if (MODE_KIND == 3u) {
+                    r_flags = 1u;
+                    r_zz2 = mzz;
+                    pc = P_R_END;
+                }
+            }
+            case P_R_M0: {
+                if (MODE_KIND == 3u) {
+                    dtmp = r;
+                    rlast_sw = dtmp * pf(Z_STEP_DIV);
+                    de_limited = true;
+                    rsf = 1.0;
+                    if (dtmp > 1e-10) {
+                        pc = P_R_LOOP;
+                    } else {
+                        pc = P_R_HIT;
+                    }
+                }
+            }
+            case P_R_LOOP: {
+                if (MODE_KIND == 3u) {
+                    last_de = dtmp;
+                    var dstep = max((dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf, 0.11);
+                    let s1 = max(ms_de_stop, 0.4) * pf(MH04ZSD);
+                    let count = dfog_on_it == 0 || it_result == dfog_on_it;
+                    if (s1 < dstep) {
+                        if (count) {
+                            r_step_count += s1 / dstep;
+                        }
+                        dstep = s1;
+                    } else if (count) {
+                        r_step_count += 1.0;
+                    }
+                    rlast_sw = dstep;
+                    mzz += dstep;
+                    if (mzz > pf(ZEND)) {
+                        // open air
+                        r_flags = 0u;
+                        r_zz2 = mzz;
+                        pc = P_R_END;
+                    } else {
+                        setc();
+                        update_de_stop();
+                        need = true;
+                        want_de = true;
+                        pc = P_R_STEP;
+                    }
+                }
+            }
+            case P_R_STEP: {
+                if (MODE_KIND == 3u) {
+                    dtmp = r;
+                    if (it_result >= max_its_result) {
+                        de_limited = false;
+                        pc = P_R_HIT;
+                    } else if (dtmp < ms_de_stop && it_result >= pi(MIN_IT)) {
+                        pc = P_R_HIT;
+                    } else {
+                        if (dtmp > last_de + rlast_sw) {
+                            dtmp = last_de + rlast_sw;
+                        }
+                        rsf = 1.0;
+                        if (last_de > dtmp + 1e-10) {
+                            let t = rlast_sw / (last_de - dtmp);
+                            if (t < 1.0) {
+                                rsf = max(0.5, t);
+                            }
+                        }
+                        pc = P_R_LOOP;
+                    }
+                }
+            }
+            case P_R_HIT: {
+                if (MODE_KIND == 3u) {
+                    after_bs = P_R_HIT2;
+                    if (pi(DE_ADD_STEPS) != 0) {
+                        itmp = pi(DE_ADD_STEPS);
+                        if (de_limited) {
+                            // dtmp is the DE at the surface (the march's last)
+                            dt1 = rlast_sw * -0.5;
+                            bs_thr = 0.001;
+                            bs_it_check = false;
+                            pc = P_BS;
+                        } else {
+                            yp = f32(max_it) - 0.99;
+                            saved_max = max_it;
+                            max_it += 1;
+                            calc_sit = true;
+                            dt1 = 0.0;
+                            dmul = 1.0;
+                            first = true;
+                            last_si = 0.0;
+                            last_dif = 0.0;
+                            pc = P_BSI;
+                        }
+                    } else {
+                        pc = P_R_HIT2;
+                    }
+                }
+            }
+            case P_R_HIT2: {
+                if (MODE_KIND == 3u) {
+                    r_flags = 1u | select(0u, 2u, de_limited);
+                    r_zz2 = mzz;
+                    // from here the depth is the one along the view (m.mzz = zz.abs())
+                    mzz = abs(zz_base + mzz * zz_mul);
+                    zz_base = 0.0;
+                    zz_mul = 1.0;
+                    si_shadow = u32(round(clamp(r_step_count, 0.0, 1023.0)));
+                    after_hs = P_R_AFTER_HS;
+                    after_ao = P_R_END;
+                    pc = P_N_INIT;
+                }
+            }
+            case P_R_AFTER_N: {
+                if (MODE_KIND == 3u) {
+                    if (P[HS_N] > 0u) {
+                        pc = P_HS_INIT;
+                    } else {
+                        pc = P_R_AFTER_HS;
+                    }
+                }
+            }
+            case P_R_AFTER_HS: {
+                if (MODE_KIND == 3u) {
+                    if (pi(AO_QUALITY) >= 0) {
+                        pc = P_AO_INIT;
+                    } else {
+                        si_amb = 5000u;
+                        pc = P_R_END;
+                    }
+                }
+            }
+            case P_R_END: {
+                if (MODE_KIND == 3u) {
                     done = true;
                 }
             }
@@ -1777,12 +2107,51 @@ fn pixel(x: i32, y: i32, mode: u32) {
 }
 
 
+// the task of the reflection pass
+var<private> r_task_origin: vec3<f32>;
+var<private> r_task_dir: vec3<f32>;
+var<private> r_task: vec4<f32>; // z: zz (or the surface depth)
+
+fn reflect_task(lx: i32, ly: i32) {
+    let idx = (u32(ly) + P[ROW0]) * R_W + u32(lx);
+    if (lx >= i32(R_W) || ly >= pi(ROWS) || idx >= P[R_N]) {
+        return;
+    }
+    let o = idx * R_WORDS;
+    r_task_origin = vec3<f32>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u]));
+    r_task_dir = vec3<f32>(bitcast<f32>(OUT[o + 3u]), bitcast<f32>(OUT[o + 4u]), bitcast<f32>(OUT[o + 5u]));
+    r_task = vec4<f32>(0.0, 0.0, bitcast<f32>(OUT[o + 6u]), 0.0);
+    let pix = OUT[o + 7u];
+    let x = pi(RECT_X0) + i32(pix % u32(pi(RECT_W)));
+    let y = pi(RECT_Y0) + i32(pix / u32(pi(RECT_W)));
+    si_normal = vec3<i32>(0);
+    si_zpos = 32768u << 16u;
+    si_shadow = 0u;
+    si_grad = 0u;
+    si_otrap = 0u;
+    si_amb = 5000u;
+    s_roughness = 0.0;
+    pixel(x, y, M_REFLECT);
+    OUT[o + 8u] = (u32(si_normal.x) & 0xFFFFu) | (u32(si_normal.y) << 16u);
+    OUT[o + 9u] = (u32(si_normal.z) & 0xFFFFu) | (si_shadow << 16u);
+    OUT[o + 10u] = si_zpos;
+    OUT[o + 11u] = si_grad | (si_otrap << 16u);
+    OUT[o + 12u] = si_amb;
+    OUT[o + 13u] = bitcast<u32>(c.x);
+    OUT[o + 14u] = bitcast<u32>(c.y);
+    OUT[o + 15u] = bitcast<u32>(c.z);
+    OUT[o + 16u] = bitcast<u32>(zz_base + mzz * zz_mul);
+    OUT[o + 17u] = bitcast<u32>(r_zz2);
+    OUT[o + 18u] = r_flags;
+    OUT[o + 19u] = bitcast<u32>(r_step_count);
+}
+
 @compute @workgroup_size(8, 8)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let lx = i32(gid.x);
     let ly = i32(gid.y);
     let w = pi(RECT_W);
-    if (lx >= w || ly >= pi(ROWS)) {
+    if (P[MODE] != M_REFLECT && (lx >= w || ly >= pi(ROWS))) {
         return;
     }
     let x = pi(RECT_X0) + lx;
@@ -1801,8 +2170,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     vary_scale = 1.0;
     deriv = vec3<f32>(1.0, 0.0, 0.0);
     dfree = vec2<f32>(0.0, 0.0);
-    let o = u32(ly * w + lx) * 5u;
     let mode = P[MODE];
+    if (mode == M_REFLECT) {
+        reflect_task(lx, ly);
+        return;
+    }
+    let o = u32(ly * w + lx) * 5u;
     // one call of pixel() only: the driver inlines it at every call site
     var run = true;
     if (mode == M_MARCH || mode == M_PROBE) {

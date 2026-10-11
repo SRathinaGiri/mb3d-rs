@@ -246,6 +246,15 @@ struct SrTracer<'a, 'c> {
     scale_amb_diff_down: bool,
     rnd: i32,
     guard: u32,
+    /// MB3D_REFLECT_DEBUG=x,y: print the bounces of that pixel
+    dbg: bool,
+}
+
+/// The pixel named by `MB3D_REFLECT_DEBUG` ("x,y").
+fn debug_pixel() -> Option<(i32, i32)> {
+    let v = std::env::var("MB3D_REFLECT_DEBUG").ok()?;
+    let (a, b) = v.split_once(',')?;
+    Some((a.trim().parse().ok()?, b.trim().parse().ok()?))
 }
 
 impl<'a, 'c> SrTracer<'a, 'c> {
@@ -686,6 +695,59 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         self.t_amb = add3(self.t_amb, mul3(*t_absorb, tmp_amb));
     }
 
+    /// The paint values along a reflected ray (the view, the positions of
+    /// the lights and of the background, the depth colour).
+    fn set_ray_paint(&mut self, new_vec: Vec3, zz2: f64) {
+        let c = self.c;
+        let p = c.p;
+        let sw = p.step_width;
+        // the paint values along the new ray
+        let av = s3(&normalize(new_vec));
+        self.plv.abs_view = av;
+        self.plv.view = c.cam.to_view(av);
+        self.calc_light_z_pos();
+        let lv = c.lv;
+        self.plv.zpos_dyn_fog = (zz2 * sw + p.zz_stmit_dif) as f32;
+        let t = if lv.amb_rel_obj { self.plv.abs_view } else { self.plv.view };
+        let fov_y = p.fov_y as f32;
+        let mut ypos = t[1].clamp(-1.0, 1.0).asin() / fov_y + 0.5;
+        if lv.bg.is_some() {
+            let d = (p.fov_y / (2.0 * std::f64::consts::PI - p.fov_y).max(0.1)) as f32;
+            if ypos > 1.0 {
+                ypos = 1.0 + d * (1.0 - ypos);
+                if ypos < 0.75 {
+                    ypos = 1.5 - ypos;
+                }
+            } else if ypos < 0.0 {
+                ypos = ypos.abs() * d;
+                if ypos > 0.25 {
+                    ypos = 0.5 - ypos;
+                }
+            }
+        }
+        self.plv.y_pos = ypos.clamp(0.0, 1.0);
+        let dstep = (p.height as f64 / (p.fov_y * p.width as f64)) as f32;
+        let mut xpos = t[0].atan2(t[2]) * dstep + 0.5;
+        if lv.bg.is_some() {
+            let d = 1.0 / (dstep * (2.0 * std::f32::consts::PI - 1.0 / dstep).max(0.1));
+            if xpos > 1.0 {
+                xpos = 1.0 + d * (1.0 - xpos);
+            } else if xpos < 0.0 {
+                xpos = xpos.abs() * d;
+            }
+        }
+        self.plv.x_pos = xpos.clamp(0.0, 1.0);
+        if !lv.amb_rel_obj {
+            let mut s = self.plv.y_pos;
+            if lv.depth_func == 1 {
+                s *= s;
+            } else if lv.depth_func != 0 {
+                s = s.max(0.0).sqrt();
+            }
+            self.plv.dep_c = lin2(lv.depth_col2, lv.depth_col, s);
+        }
+    }
+
     /// `CalcRay`: follows the reflected (or refracted) ray from the current
     /// surface; `sd` = (specular colour, alpha, diffuse colour) of it.
     fn calc_ray(&mut self, mut zz: f64, sr_vec: Vec3, mut t_absorb: S3, mut sd: ([f32; 3], f32, [f32; 3]), rit: i32) {
@@ -857,51 +919,8 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                     }
                 }
             }
-            // the paint values along the new ray
-            let av = s3(&normalize(new_vec));
-            self.plv.abs_view = av;
-            self.plv.view = c.cam.to_view(av);
-            self.calc_light_z_pos();
+            self.set_ray_paint(new_vec, zz2);
             let lv = c.lv;
-            self.plv.zpos_dyn_fog = (zz2 * sw + p.zz_stmit_dif) as f32;
-            let t = if lv.amb_rel_obj { self.plv.abs_view } else { self.plv.view };
-            let fov_y = p.fov_y as f32;
-            let mut ypos = t[1].clamp(-1.0, 1.0).asin() / fov_y + 0.5;
-            if lv.bg.is_some() {
-                let d = (p.fov_y / (2.0 * std::f64::consts::PI - p.fov_y).max(0.1)) as f32;
-                if ypos > 1.0 {
-                    ypos = 1.0 + d * (1.0 - ypos);
-                    if ypos < 0.75 {
-                        ypos = 1.5 - ypos;
-                    }
-                } else if ypos < 0.0 {
-                    ypos = ypos.abs() * d;
-                    if ypos > 0.25 {
-                        ypos = 0.5 - ypos;
-                    }
-                }
-            }
-            self.plv.y_pos = ypos.clamp(0.0, 1.0);
-            let dstep = (p.height as f64 / (p.fov_y * p.width as f64)) as f32;
-            let mut xpos = t[0].atan2(t[2]) * dstep + 0.5;
-            if lv.bg.is_some() {
-                let d = 1.0 / (dstep * (2.0 * std::f32::consts::PI - 1.0 / dstep).max(0.1));
-                if xpos > 1.0 {
-                    xpos = 1.0 + d * (1.0 - xpos);
-                } else if xpos < 0.0 {
-                    xpos = xpos.abs() * d;
-                }
-            }
-            self.plv.x_pos = xpos.clamp(0.0, 1.0);
-            if !lv.amb_rel_obj {
-                let mut s = self.plv.y_pos;
-                if lv.depth_func == 1 {
-                    s *= s;
-                } else if lv.depth_func != 0 {
-                    s = s.max(0.0).sqrt();
-                }
-                self.plv.dep_c = lin2(lv.depth_col2, lv.depth_col, s);
-            }
             let mut si = SiLight::default();
             si.shadow = if c.vol {
                 crate::lighting::encode_vlight(step_count)
@@ -911,6 +930,9 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                 }
                 step_count.clamp(0.0, 1023.0).round_ties_even() as u16
             };
+            if self.dbg {
+                eprintln!("CPU bounce {rit}: new_vec {new_vec:?} open_air {open_air} zz {zz:.4} zz2 {zz2:.4} de_limited {de_limited} steps {step_count}");
+            }
             if !open_air {
                 if p.de_add_steps != 0 {
                     if de_limited {
@@ -941,7 +963,13 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                     }
                 }
                 self.m.mzz = zz.abs();
+                if self.dbg {
+                    eprintln!("  after the search: c {:?} zz2 {zz2:.4}", self.m.it.c);
+                }
                 let nn = if p.normals_on_de { self.m.calculate_normals(&mut si) } else { self.m.calculate_normals_on_smooth_it(&mut si) };
+                if self.dbg {
+                    eprintln!("  after the normals: c {:?}", self.m.it.c);
+                }
                 self.normal = normal_of(&si);
                 let v = if de_limited {
                     32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
@@ -982,6 +1010,9 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                     };
                     self.m.mzz = zz.abs();
                     self.deao_1pos(&mut si, q, max_len, first);
+                    if self.dbg {
+                        eprintln!("  after the AO: c {:?}", self.m.it.c);
+                    }
                     si.amb_shadow = ((si.amb_shadow as i32 * 8) / (8 + rit)) as u16;
                 } else {
                     si.amb_shadow = 5000;
@@ -1005,6 +1036,9 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                     inside = Some((sd.2, c.absorp_coeff));
                 }
                 let sh = self.shade(&si, inside);
+                if self.dbg {
+                    eprintln!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {t_absorb:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+                }
                 let tmp_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
                 sd = (sh.spe, sh.spe_a, sh.dif);
                 self.t_amb = add3(self.t_amb, mul3(t_absorb, tmp_amb));
@@ -1023,6 +1057,9 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                     t_absorb = mul3(t_absorb, sd.0);
                 }
                 self.calc_open_air(&mut si, &mut sd, &mut t_absorb, calc_t, zz2.min(max_l) as f32);
+                if self.dbg {
+                    eprintln!("  open air: t_absorb {t_absorb:?} t_amb {:?} plv {:?}", self.t_amb, self.plv);
+                }
             }
             if calc_t {
                 self.m.it.c = tmp_loc;
@@ -1116,6 +1153,9 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         self.t_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
         let sv = sc3(sh.result, c.sr_light_amount);
         let mzz = self.m.mzz;
+        if self.dbg {
+            eprintln!("CPU surface: pos {:?} zz {mzz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+        }
         self.calc_ray(mzz, vf, sv, (sh.spe, sh.spe_a, sh.dif), 1);
         let mut t = self.t_amb.map(|v| v.clamp(0.0, 1.0));
         if lv.sqr {
@@ -1139,6 +1179,19 @@ fn s3d(v: S3) -> Vec3 {
 #[allow(clippy::too_many_arguments)]
 pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) {
     let mc = &sc.mc;
+    #[cfg(feature = "gpu")]
+    if crate::gpu::enabled() && !mc.transparency && p.cut_options == 0 && p.vol.is_none() && !p.inside_rendering && !p.in_and_outside && crate::gpu::unsupported(p).is_none() {
+        match reflections_gpu(sc, p, gbuf, rgb, cam, lv, threads) {
+            Ok(()) => {
+                let s = crate::gpu::last_status();
+                if s.starts_with("GPU") && !s.contains("+reflections") {
+                    crate::gpu::set_status(format!("{s} +reflections"));
+                }
+                return;
+            }
+            Err(e) => eprintln!("reflections on the GPU failed, calculated on the CPU: {e}"),
+        }
+    }
     let mid = sc.stereo_mid();
     let m1 = normalise_matrix_to(1.0, &p.vgrads);
     let hs_vecs: Vec<Vec3> = lv
@@ -1218,8 +1271,11 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                         scale_amb_diff_down: false,
                         rnd: seed,
                         guard: 0,
+                        dbg: false,
                     };
+                    let dp = debug_pixel();
                     for x in 0..wu {
+                        t.dbg = dp == Some((x as i32 + x0, y));
                         if let Some(c) = t.pixel(x as i32 + x0, y, &gbuf[ry * wu + x]) {
                             row[x * 3..x * 3 + 3].copy_from_slice(&c);
                         }
@@ -1228,4 +1284,302 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
             });
         }
     });
+}
+
+/// The per pixel state of the reflection pass on the graphics card.
+#[cfg(feature = "gpu")]
+#[derive(Clone)]
+struct RPix {
+    x: i32,
+    y: i32,
+    /// the G-buffer value of the pixel
+    si0: SiLight,
+    active: bool,
+    t_amb: S3,
+    t_absorb: S3,
+    sd: (S3, f32, S3),
+    zz: f64,
+    dir: Vec3,
+    pos: Vec3,
+    normal: Vec3,
+    plv: Plv,
+}
+
+/// `reflections` with the rays on the graphics card: every bounce of all
+/// pixels is one batch (`gpu::reflect_batch`), which marches the rays and
+/// calculates the normals, colours, shadows and ambient occlusion of the
+/// hits; the shading and the blending of the bounces stay here, as in
+/// `calc_ray` without transparency.
+#[cfg(feature = "gpu")]
+fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) -> Result<(), String> {
+    use crate::gpu::{ReflectLight, ReflectOpts, ReflectTask};
+    let mc = &sc.mc;
+    let mid = sc.stereo_mid();
+    let m1 = normalise_matrix_to(1.0, &p.vgrads);
+    let sw = p.step_width;
+    let hs_vecs: Vec<Vec3> = lv
+        .lights
+        .iter()
+        .map(|l| if l.positional { add(s3d(l.ln), mid) } else { rotate_vector_reverse(&norm_to(-p.step_width, s3d(l.ln)), &m1) })
+        .collect();
+    let hs = sc.shadows.map(|h| {
+        let lights: Vec<(usize, usize)> = lv.lights.iter().enumerate().filter(|(_, l)| (h.lights >> l.idx) & 1 != 0).map(|(i, l)| (i, l.idx)).collect();
+        (lights, h.soft, h.soft_radius.max(0.001), h.max_len_mul)
+    });
+    let ao = sc.ao.as_ref().map(|_| {
+        let d = sc.deao.unwrap_or_default();
+        (d.max_len, d.first_step_random)
+    });
+    let ctx = SrCtx {
+        p,
+        lv,
+        cam,
+        mid,
+        hs_vecs: hs_vecs.clone(),
+        max_reflections: mc.reflection_depth as i32,
+        sr_light_amount: mc.reflection_amount.clamp(0.0, 100.0),
+        trans_di_const: mc.refraction_index,
+        calc_trans: false,
+        only_difs: mc.only_difs,
+        absorption: (mc.absorption as f64 * p.step_width) as f32,
+        absorp_coeff: mc.absorption,
+        light_scattering_mul: mc.scattering / 330.0,
+        back_dist: (((8388352.0 / p.zc_mul + 1.0).powi(2) - 1.0) * p.step_width / p.zcorr) as f32,
+        hs: hs.clone(),
+        ao,
+        vol: false,
+    };
+    // the lights of the shadow rays (calc_hs): soft shadows use the last one
+    let mut lights: Vec<ReflectLight> = Vec::new();
+    let (mut soft_radius, mut hs_mul) = (0.0f32, 1.0f32);
+    if let Some((ls, soft, radius, mul)) = &hs {
+        hs_mul = *mul;
+        let sel: Vec<&(usize, usize)> = if *soft { ls.last().into_iter().collect() } else { ls.iter().collect() };
+        if *soft && !sel.is_empty() {
+            soft_radius = *radius;
+        }
+        for &(li, idx) in sel {
+            let l = &lv.lights[li];
+            lights.push(ReflectLight { idx: idx as u32, vec: s3(&hs_vecs[li]), positional: l.positional, lmax_l: l.lmax_l, visible: l.visible as u32 });
+        }
+    }
+    let far_fog = lv.far_fog || lv.sqr;
+    let [x0, y0, w, h] = p.rect;
+    let (wu, hu) = (w as usize, h as usize);
+    let n = wu * hu;
+    let threads = threads.clamp(1, hu);
+    // a tracer per thread for the shading (its marcher is not used)
+    let new_tracer = |seed: i32| SrTracer {
+        c: &ctx,
+        m: Marcher::new(p, seed),
+        sr_si: SiLight::default(),
+        normal: [0.0; 3],
+        t_amb: [0.0; 3],
+        plv: Plv { view: [0.0, 0.0, 1.0], abs_view: [0.0, 0.0, 1.0], cam_pos: [0.0; 3], obj_pos: [0.0; 3], z_pos: 0.0, zpos_dyn_fog: 0.0, x_pos: 0.0, y_pos: 0.0, dep_c: [0.0; 3] },
+        light_z: lv.lights.iter().map(|l| (l.pos_z, l.pos_lp)).collect(),
+        calc_trans_r: false,
+        trans_flip_inside: false,
+        scale_amb_diff_down: false,
+        rnd: seed,
+        guard: 0,
+        dbg: false,
+    };
+    let dbg_i = debug_pixel().map(|(x, y)| ((y - y0) * w + (x - x0)) as usize);
+    // the surfaces of the object pixels
+    let mut px: Vec<Option<RPix>> = vec![None; n];
+    let mut tasks: Vec<ReflectTask> = Vec::new();
+    for (i, si) in gbuf.iter().enumerate() {
+        if si.zpos() < 32768 && si.si_gradient < 32768 {
+            tasks.push(ReflectTask { zz: (si.zpos_fine >> 8) as f32, pixel: i as u32, ..Default::default() });
+        }
+    }
+    let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    let t0 = std::time::Instant::now();
+    let hits = crate::gpu::reflect_batch(p, &tasks, &ReflectOpts { surface: true, hs_mul, ..Default::default() })?;
+    if timing {
+        eprintln!("  reflections: {} surfaces in {:.2} s", tasks.len(), t0.elapsed().as_secs_f64());
+    }
+    let chunk = |n: usize| n.div_ceil(threads).max(1);
+    let pairs: Vec<(usize, crate::gpu::ReflectHit)> = tasks.iter().zip(&hits).map(|(t, h)| (t.pixel as usize, *h)).collect();
+    std::thread::scope(|s| {
+        let mut rest: &mut [Option<RPix>] = &mut px;
+        let mut start = 0usize;
+        // the pixels in index order: split the state by pixel ranges
+        let per = chunk(n);
+        while start < n {
+            let (part, r) = rest.split_at_mut(per.min(rest.len()));
+            rest = r;
+            let lo = start;
+            let hi = start + part.len();
+            let mine: Vec<(usize, crate::gpu::ReflectHit)> = pairs.iter().filter(|(i, _)| *i >= lo && *i < hi).copied().collect();
+            s.spawn(move || {
+                let mut t = new_tracer(1);
+                for (i, hit) in mine {
+                    if hit.skip {
+                        continue;
+                    }
+                    let si = gbuf[i];
+                    let (x, y) = (x0 + (i % wu) as i32, y0 + (i / wu) as i32);
+                    let (start, vfov) = crate::calc::pixel_ray(p, x, y);
+                    t.plv.cam_pos = s3(&sub(start, mid));
+                    let av = s3(&normalize(vfov));
+                    t.plv.abs_view = av;
+                    t.plv.view = cam.to_view(av);
+                    t.plv.y_pos = y as f32 / p.height as f32;
+                    t.plv.x_pos = (x + 1) as f32 / p.width as f32;
+                    let ys = t.plv.y_pos;
+                    let sd = match lv.depth_func {
+                        1 => ys * ys,
+                        0 => ys,
+                        _ => ys.max(0.0).sqrt(),
+                    };
+                    t.plv.dep_c = lin2(lv.depth_col2, lv.depth_col, sd);
+                    t.calc_light_z_pos();
+                    let pos = [hit.pos[0] as f64, hit.pos[1] as f64, hit.pos[2] as f64];
+                    let zz = hit.zz as f64;
+                    t.plv.z_pos = (zz * sw + p.zz_stmit_dif) as f32;
+                    t.plv.obj_pos = s3(&sub(pos, mid));
+                    t.plv.zpos_dyn_fog = t.plv.z_pos;
+                    t.scale_amb_diff_down = false;
+                    t.sr_si = si;
+                    let sh = t.shade(&si, None);
+                    if dbg_i == Some(i) {
+                        eprintln!("GPU surface: pos {pos:?} zz {zz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", t.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+                    }
+                    part[i - lo] = Some(RPix {
+                        x,
+                        y,
+                        si0: si,
+                        active: true,
+                        t_amb: sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0)),
+                        t_absorb: sc3(sh.result, ctx.sr_light_amount),
+                        sd: (sh.spe, sh.spe_a, sh.dif),
+                        zz,
+                        dir: vfov,
+                        pos,
+                        normal: normal_of(&si),
+                        plv: t.plv,
+                    });
+                }
+            });
+            start = hi;
+        }
+    });
+    // the bounces
+    for rit in 1..=ctx.max_reflections {
+        let mut tasks: Vec<ReflectTask> = Vec::new();
+        let mut dirs: Vec<(usize, Vec3)> = Vec::new();
+        for (i, q) in px.iter_mut().enumerate() {
+            let Some(q) = q.as_mut().filter(|q| q.active) else { continue };
+            if luma(q.t_absorb.map(f32::abs)) < 1e-4 {
+                q.active = false;
+                continue;
+            }
+            let nr = rotate_vector_reverse(&q.normal, &p.vgrads);
+            let new_vec = sub(q.dir, scale(nr, 2.0 * dot(&nr, &q.dir) / sqr_len(&nr)));
+            tasks.push(ReflectTask { origin: s3(&q.pos), dir: s3(&new_vec), zz: q.zz as f32, pixel: i as u32 });
+            dirs.push((i, new_vec));
+        }
+        if tasks.is_empty() {
+            break;
+        }
+        let q = match rit {
+            1 => 2,
+            2 => 1,
+            _ => 0,
+        };
+        let opts = ReflectOpts { surface: false, lights: lights.clone(), soft_radius, hs_mul, ao: ao.map(|(m, f)| (q, m, f)), far_fog };
+        let t0 = std::time::Instant::now();
+        let hits = crate::gpu::reflect_batch(p, &tasks, &opts)?;
+        if timing {
+            eprintln!("  reflections: bounce {rit}: {} rays, {} hits, in {:.2} s", tasks.len(), hits.iter().filter(|h| h.hit).count(), t0.elapsed().as_secs_f64());
+        }
+        let last = rit >= ctx.max_reflections;
+        let items: Vec<(usize, Vec3, crate::gpu::ReflectHit)> = dirs.iter().zip(&hits).map(|((i, d), h)| (*i, *d, *h)).collect();
+        std::thread::scope(|s| {
+            let mut rest: &mut [Option<RPix>] = &mut px;
+            let mut start = 0usize;
+            let per = chunk(n);
+            while start < n {
+                let (part, r) = rest.split_at_mut(per.min(rest.len()));
+                rest = r;
+                let lo = start;
+                let hi = start + part.len();
+                let mine: Vec<(usize, Vec3, crate::gpu::ReflectHit)> = items.iter().filter(|(i, _, _)| *i >= lo && *i < hi).copied().collect();
+                s.spawn(move || {
+                    let mut t = new_tracer(1);
+                    for (i, new_vec, hit) in mine {
+                        let Some(q) = part[i - lo].as_mut() else { continue };
+                        t.plv = q.plv;
+                        t.sr_si = q.si0;
+                        // the ray starts a first step from the surface (calc_ray)
+                        let step0 = (p.de_stop as f64 * 0.25).min(1.0);
+                        t.plv.cam_pos = s3(&sub(add(q.pos, scale(new_vec, step0)), mid));
+                        t.set_ray_paint(new_vec, hit.zz2 as f64);
+                        if dbg_i == Some(i) {
+                            eprintln!("GPU bounce {rit}: new_vec {new_vec:?} open_air {} zz {:.4} zz2 {:.4} de_limited {} steps {}", !hit.hit, hit.zz, hit.zz2, hit.de_limited, hit.step_count);
+                        }
+                        if hit.hit {
+                            let mut si = hit.si;
+                            if ao.is_some() {
+                                si.amb_shadow = ((si.amb_shadow as i32 * 8) / (8 + rit)) as u16;
+                            }
+                            q.normal = normal_of(&si);
+                            q.pos = [hit.pos[0] as f64, hit.pos[1] as f64, hit.pos[2] as f64];
+                            q.zz = hit.zz as f64;
+                            t.plv.z_pos = (q.zz.abs() * sw + p.zz_stmit_dif) as f32;
+                            t.plv.obj_pos = s3(&sub(q.pos, mid));
+                            t.scale_amb_diff_down = false;
+                            q.t_absorb = mul3(q.t_absorb, q.sd.0);
+                            let sh = t.shade(&si, None);
+                            if dbg_i == Some(i) {
+                                eprintln!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {:?}", q.pos, t.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif, q.t_absorb);
+                            }
+                            let tmp_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
+                            q.sd = (sh.spe, sh.spe_a, sh.dif);
+                            q.t_amb = add3(q.t_amb, mul3(q.t_absorb, tmp_amb));
+                            q.t_absorb = mul3(q.t_absorb, sh.result);
+                            if last {
+                                q.active = false;
+                            } else {
+                                q.t_absorb = sc3(q.t_absorb, ctx.sr_light_amount);
+                                q.dir = new_vec;
+                            }
+                        } else {
+                            q.t_absorb = mul3(q.t_absorb, q.sd.0);
+                            // the step count of the ray (dynamic fog) as calc_ray keeps it
+                            let mut si = SiLight { zpos_fine: 32768 << 16, shadow: hit.step_count.clamp(0.0, 1023.0).round_ties_even() as u16, ..SiLight::default() };
+                            t.t_amb = q.t_amb;
+                            let mut sd = q.sd;
+                            let mut ta = q.t_absorb;
+                            t.calc_open_air(&mut si, &mut sd, &mut ta, false, (hit.zz2 as f64).min(p.zend) as f32);
+                            q.t_amb = t.t_amb;
+                            if dbg_i == Some(i) {
+                                eprintln!("  open air: t_absorb {ta:?} t_amb {:?} plv {:?}", t.t_amb, t.plv);
+                            }
+                            q.active = false;
+                        }
+                        q.plv = t.plv;
+                    }
+                });
+                start = hi;
+            }
+        });
+    }
+    // the colours
+    for (i, q) in px.iter().enumerate() {
+        let Some(q) = q else { continue };
+        let mut t = q.t_amb.map(|v| v.clamp(0.0, 1.0));
+        if lv.sqr {
+            t = t.map(|v| v.sqrt());
+        }
+        if lv.gamma_h != 0 {
+            let g = if lv.gamma_h > 0 { t.map(|v| v.sqrt()) } else { t.map(|v| v * v) };
+            t = add3(t, sc3(sub3(g, t), lv.s_gamma));
+        }
+        let c = t.map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8);
+        rgb[i * 3..i * 3 + 3].copy_from_slice(&c);
+        let _ = (q.x, q.y);
+    }
+    Ok(())
 }

@@ -365,9 +365,9 @@ to switch:
 
 * in the program, a blinking LED right of the window title shows where the
   last calculation ran: **green** all on the graphics card, **orange**
-  mixed (ray marching, shadows and ambient occlusion on the graphics
-  card, normals on the z-buffer on the CPU), **red** on the CPU (also
-  Monte Carlo renders), grey before the first calculation;
+  mixed (ray marching, shadows, ambient occlusion and reflections on the
+  graphics card, normals on the z-buffer on the CPU), **red** on the CPU
+  (also Monte Carlo renders), grey before the first calculation;
 * `mb3d` uses it too (it prints `calculated on: ...`); `--cpu` calculates
   on the CPU only;
 * the environment variable `MB3D_GPU=0` switches it off for both.
@@ -383,8 +383,13 @@ older 15 bit kind) has shaders of its own (`src/gpu_ssao.wgsl`,
 `src/gpu_ssao15.wgsl`) that only need the depth buffer, so it runs on the
 card after a CPU calculation too; with regular sampling it gives the
 CPU's values exactly, with random sampling the random numbers differ.
-Reflections and the painting stay on the CPU. The marcher calculates in
-single precision. The formulas reach it through the lifter: the x86 code
+The reflections of the normal renderer run on the card too: every
+bounce of all pixels is one batch that marches the reflected rays and
+calculates the normals, colours, shadows and ambient occlusion of the
+hits, while the shading and the blending of the bounces stay on the CPU
+(as in MB3D's `CalcSR`); scenes with transparency, cutting planes, inside
+rendering or volumetric light keep the CPU pass. The painting stays on
+the CPU. The marcher calculates in single precision. The formulas reach it through the lifter: the x86 code
 of an `.m3f` formula is analysed (`src/lift.rs`: every memory access
 resolved to the iteration record, the formula's constants or the stack)
 and translated to WGSL (`src/lift_wgsl.rs`), including the SSE2 code many
@@ -410,7 +415,9 @@ its shader (one to two seconds; the driver caches it).
 Of the 80 example parameter files of MB3D, 45 run on the GPU at their
 own image size (391 of the 460 formula files translate); at that size
 *Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
-instead of 58 s. On a GeForce GTX 1650 (laptop) against a
+instead of 58 s; with the reflections on the card, *Rama - Elysium* at 160
+pixels takes 4.5 s instead of 24.7 s and *LightBulbMoon - A Fabulous
+Excuse* 1.1 s instead of 6.8 s. On a GeForce GTX 1650 (laptop) against a
 Ryzen 5 3550H (8 threads), at 640 pixels: *TimeMachine* 1.5 s instead of
 19.8 s, *Theli-At - Bone Menger* 1.4 s instead of 11.8 s,
 *Hal-Tenny-Resistance* 16.5 s instead of 99 s; with the shadows on the

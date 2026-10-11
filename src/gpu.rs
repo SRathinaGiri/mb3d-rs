@@ -539,7 +539,7 @@ async fn init() -> Result<Gpu, String> {
 /// The words of the parameter buffer (`P` in the shader) for a band of
 /// rows; `mode` 0 is the march, 1 the shadow pass and 2 the ambient
 /// occlusion of `post`.
-fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode: u32, post: &PostJob) -> Vec<u32> {
+fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode: u32, post: &PostJob, reflect: Option<(&ReflectOpts, usize)>) -> Vec<u32> {
     let probe_mzz = PROBE_MZZ.with(|m| m.get());
     let (power, z_mul) = match p.slots[0].formula {
         Formula::IntPow { power, z_mul } => (power, z_mul),
@@ -590,7 +590,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
     i(&mut v, p.dfog_on_it as i32);
     i(&mut v, p.first_step_random as i32);
     // the post passes use their own binary search depth
-    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps][mode as usize]);
+    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps, p.de_add_steps][mode as usize]);
     i(&mut v, p.normals_on_de as i32);
     i(&mut v, p.sm_normals);
     f(&mut v, p.de_offset as f64);
@@ -621,14 +621,27 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
     debug_assert_eq!(v.len(), 112);
     i(&mut v, mode as i32);
     let sh = post.shadows.as_ref();
-    i(&mut v, sh.map(|s| s.lights.len()).unwrap_or(0) as i32);
-    f(&mut v, sh.map(|s| s.max_len_mul).unwrap_or(1.0) as f64);
-    f(&mut v, sh.map(|s| s.soft_radius).unwrap_or(0.0) as f64);
     let ao = post.deao.as_ref();
-    i(&mut v, ao.map(|d| d.quality).unwrap_or(0) as i32);
-    i(&mut v, ao.map(|d| d.dither).unwrap_or(0) as i32);
-    f(&mut v, ao.map(|d| d.max_len).unwrap_or(1.0) as f64);
-    i(&mut v, ao.map(|d| d.first_step_random).unwrap_or(false) as i32);
+    match reflect {
+        Some((o, _)) => {
+            i(&mut v, o.lights.len() as i32);
+            f(&mut v, o.hs_mul as f64);
+            f(&mut v, o.soft_radius as f64);
+            i(&mut v, o.ao.map(|a| a.0).unwrap_or(-1));
+            i(&mut v, 0);
+            f(&mut v, o.ao.map(|a| a.1).unwrap_or(1.0) as f64);
+            i(&mut v, o.ao.map(|a| a.2).unwrap_or(false) as i32);
+        }
+        None => {
+            i(&mut v, sh.map(|s| s.lights.len()).unwrap_or(0) as i32);
+            f(&mut v, sh.map(|s| s.max_len_mul).unwrap_or(1.0) as f64);
+            f(&mut v, sh.map(|s| s.soft_radius).unwrap_or(0.0) as f64);
+            i(&mut v, ao.map(|d| d.quality).unwrap_or(0) as i32);
+            i(&mut v, ao.map(|d| d.dither).unwrap_or(0) as i32);
+            f(&mut v, ao.map(|d| d.max_len).unwrap_or(1.0) as f64);
+            i(&mut v, ao.map(|d| d.first_step_random).unwrap_or(false) as i32);
+        }
+    }
     i(&mut v, p.width);
     while v.len() < 124 {
         v.push(0);
@@ -669,6 +682,34 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
     f(&mut v, probe_mzz);
     i(&mut v, std::env::var_os("MB3D_PROBE_DETAIL").is_some() as i32);
     i(&mut v, 16);
+    while v.len() < 168 {
+        v.push(0);
+    }
+    // the reflection pass
+    match reflect {
+        Some((o, n)) => {
+            i(&mut v, o.far_fog as i32);
+            i(&mut v, o.surface as i32);
+            i(&mut v, n as i32);
+            i(&mut v, 0);
+            for k in 0..6 {
+                match o.lights.get(k) {
+                    Some(l) => {
+                        i(&mut v, l.idx as i32);
+                        for &x in &l.vec {
+                            f(&mut v, x as f64);
+                        }
+                        i(&mut v, l.positional as i32);
+                        f(&mut v, l.lmax_l as f64);
+                        i(&mut v, l.visible as i32);
+                        i(&mut v, 0);
+                    }
+                    None => v.extend_from_slice(&[0; 8]),
+                }
+            }
+        }
+        None => v.resize(220, 0),
+    }
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
@@ -676,7 +717,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 168;
+const PARAM_WORDS: usize = 224;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
@@ -764,6 +805,172 @@ fn modes(post: &PostJob) -> Vec<u32> {
 /// One pixel of [`de_probe`]: the DE in step widths, the iteration count,
 /// 0, and the two parts of a DE combination with their iteration counts.
 pub type DeProbe = (f32, i32, i32, [(f32, i32); 2]);
+
+/// A task of the reflection pass: a bounce from `origin` along `dir` at
+/// the view depth `zz` for the pixel `pixel` (its index in the rect); with
+/// [`ReflectOpts::surface`] the pixel's own surface (`zz` its G-buffer
+/// depth `zpos_fine >> 8`).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ReflectTask {
+    pub origin: [f32; 3],
+    pub dir: [f32; 3],
+    pub zz: f32,
+    pub pixel: u32,
+}
+
+/// The result of a task: the G-buffer value of the hit (normal, depth,
+/// colour, shadow bits, ambient occlusion), its position, the view depth,
+/// the distance along the ray, and what happened.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ReflectHit {
+    pub si: SiLight,
+    pub pos: [f32; 3],
+    pub zz: f32,
+    pub zz2: f32,
+    pub hit: bool,
+    pub de_limited: bool,
+    /// a surface task: the pixel keeps its painted colour
+    pub skip: bool,
+    pub step_count: f32,
+}
+
+/// A light of the reflection pass's hard shadows: `vec` is the `HSvec`
+/// of a global light or the position of a positional one.
+#[derive(Clone, Debug)]
+pub struct ReflectLight {
+    pub idx: u32,
+    pub vec: [f32; 3],
+    pub positional: bool,
+    pub lmax_l: f32,
+    pub visible: u32,
+}
+
+/// The settings of a reflection batch.
+#[derive(Clone, Debug, Default)]
+pub struct ReflectOpts {
+    pub surface: bool,
+    pub lights: Vec<ReflectLight>,
+    /// > 0: one soft shadow of this radius
+    pub soft_radius: f32,
+    pub hs_mul: f32,
+    /// DE ambient occlusion: quality, maximum length, random first step
+    pub ao: Option<(i32, f32, bool)>,
+    pub far_fog: bool,
+}
+
+/// Runs the tasks of the reflection pass on the graphics card (the march
+/// of every bounce with the normals, colour, shadows and ambient occlusion
+/// of its hit, as `reflect.rs` does on the CPU).
+pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> Result<Vec<ReflectHit>, String> {
+    if tasks.is_empty() {
+        return Ok(Vec::new());
+    }
+    if let Some(r) = unsupported(p) {
+        return Err(r);
+    }
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
+    let pl = pipeline(g, &sh.code, &[("MODE_KIND", 3.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64)])?;
+    let n = tasks.len();
+    let words: Vec<u32> = tasks
+        .iter()
+        .flat_map(|t| {
+            let mut w = [0u32; 24];
+            for k in 0..3 {
+                w[k] = t.origin[k].to_bits();
+                w[3 + k] = t.dir[k].to_bits();
+            }
+            w[6] = t.zz.to_bits();
+            w[7] = t.pixel;
+            w
+        })
+        .collect();
+    let size = (words.len() * 4) as u64;
+    let buf = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("reflection tasks"), size, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    g.queue.write_buffer(&buf, 0, &bytes(&words));
+    let read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("reflection read"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let make = |label: &'static str, d: &[u32]| {
+        let d = if d.is_empty() { vec![0u32] } else { d.to_vec() };
+        let b = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (d.len() * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        g.queue.write_buffer(&b, 0, &bytes(&d));
+        b
+    };
+    let cst = make("constants", &sh.cst);
+    let rtpl = make("record", &sh.rtpl);
+    // the rows of tasks per submission: a bounce marches a ray and casts
+    // the shadow and occlusion rays of its hit
+    let cost = 2 + o.lights.len() + o.ao.map(|a| [3, 7, 17, 33][a.0.clamp(0, 3) as usize] / 2).unwrap_or(0);
+    let rows_total = n.div_ceil(256);
+    let band = (BAND_PIXELS / cost / 256).clamp(1, rows_total);
+    let mut row0 = 0;
+    while row0 < rows_total {
+        let rows = band.min(rows_total - row0);
+        let par = make("params", &params(p, row0, rows, &sh.slots, 4, &PostJob::default(), Some((o, n))));
+        let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: None,
+            layout: &pl.get_bind_group_layout(0),
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+            ],
+        });
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        {
+            let mut pass = enc.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&pl);
+            pass.set_bind_group(0, &bind, &[]);
+            pass.dispatch_workgroups(32, rows.div_ceil(8) as u32, 1);
+        }
+        g.queue.submit([enc.finish()]);
+        row0 += rows;
+    }
+    let mut enc = g.device.create_command_encoder(&Default::default());
+    enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
+    g.queue.submit([enc.finish()]);
+    let slice = read.slice(..);
+    let (tx, rx) = std::sync::mpsc::channel();
+    slice.map_async(wgpu::MapMode::Read, move |r| {
+        let _ = tx.send(r);
+    });
+    g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
+    if let Some(e) = take_error() {
+        return Err(e);
+    }
+    rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    let out = {
+        let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
+        data.chunks_exact(96)
+            .map(|rec| {
+                let u = |k: usize| u32::from_le_bytes(rec[k * 4..k * 4 + 4].try_into().unwrap());
+                let f = |k: usize| f32::from_bits(u(k));
+                let (a, b, z, s, amb) = (u(8), u(9), u(10), u(11), u(12));
+                let flags = u(18);
+                ReflectHit {
+                    si: SiLight {
+                        normal: [a as u16 as i16, (a >> 16) as u16 as i16, b as u16 as i16],
+                        zpos_fine: z,
+                        shadow: (b >> 16) as u16,
+                        amb_shadow: amb as u16,
+                        si_gradient: s as u16,
+                        otrap: (s >> 16) as u16,
+                    },
+                    pos: [f(13), f(14), f(15)],
+                    zz: f(16),
+                    zz2: f(17),
+                    hit: flags & 1 != 0,
+                    de_limited: flags & 2 != 0,
+                    skip: flags & 4 != 0,
+                    step_count: f(19),
+                }
+            })
+            .collect()
+    };
+    read.unmap();
+    Ok(out)
+}
 
 /// The DE of every pixel of `p.rect` at the start of its ray, as the
 /// shader calculates it (a check against the CPU's `calc::de_at`): the DE
@@ -873,7 +1080,7 @@ fn run(
         }
         let rows = band.min(h - row0);
         for (k, &mode) in modes.iter().enumerate() {
-            g.queue.write_buffer(&pars[k], 0, &bytes(&params(p, row0, rows, &sh.slots, mode, post)));
+            g.queue.write_buffer(&pars[k], 0, &bytes(&params(p, row0, rows, &sh.slots, mode, post, None)));
         }
         let mut enc = g.device.create_command_encoder(&Default::default());
         for (bind, pl) in binds.iter().zip(&pls) {
