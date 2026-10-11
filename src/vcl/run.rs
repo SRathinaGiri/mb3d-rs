@@ -329,6 +329,13 @@ impl<A: App> Runner<A> {
                 }
             }
         }
+        // a control's cursor can change without the mouse moving (the
+        // image's hourglass while a calculation runs): it would otherwise
+        // stay until the next mouse move
+        let ids: Vec<WindowId> = self.wins.keys().copied().collect();
+        for id in ids {
+            self.update_cursor(id);
+        }
         if self.ui.quit {
             el.exit();
         }

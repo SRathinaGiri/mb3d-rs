@@ -471,8 +471,19 @@ pub fn select_formula(app: &mut Mb3d, ui: &mut Ui, name: &str) {
     check_4d_and_info(app, ui);
 }
 
-fn list_tag_of(ui: &Ui, name: &str) -> usize {
-    ui.tag(F, name).max(0) as usize
+/// The number of a formula list from its name (`ListBoxEx12` has the tag
+/// 11 in the .dfm, its button `SpeedButtonEx11` the tag 12).
+fn list_no(name: &str) -> usize {
+    name.trim_start_matches("ListBoxEx").parse().unwrap_or(0)
+}
+
+/// The button of formula list `n` (none for the search list 11).
+fn list_button(n: usize) -> Option<String> {
+    match n {
+        11 => None,
+        12 => Some("SpeedButtonEx11".into()),
+        n => Some(format!("SpeedButtonEx{n}")),
+    }
 }
 
 fn hide_lists_but(app: &mut Mb3d, ui: &mut Ui, n: usize) {
@@ -480,15 +491,12 @@ fn hide_lists_but(app: &mut Mb3d, ui: &mut Ui, n: usize) {
         let lb = format!("ListBoxEx{i}");
         if i != n && ui.f(F).has(&lb) && ui.visible(F, &lb) {
             ui.set_visible(F, &lb, false);
-            let sb = format!("SpeedButtonEx{i}");
-            if ui.f(F).has(&sb) {
-                ui.cm(F, &sb).down = false;
+            if let Some(sb) = list_button(i) {
+                if ui.f(F).has(&sb) {
+                    ui.cm(F, &sb).down = false;
+                }
             }
         }
-    }
-    if n < 11 && ui.visible(F, "ListBoxEx12") {
-        ui.set_visible(F, "ListBoxEx12", false);
-        ui.cm(F, "SpeedButtonEx11").down = false;
     }
     if app.formula.open_list.is_some_and(|o| o != n) {
         app.formula.open_list = None;
@@ -507,7 +515,7 @@ fn popup_list(app: &mut Mb3d, ui: &mut Ui, lb: &str, x: i32, y: i32) {
     c.visible = true;
     c.enabled = true;
     c.item_index = -1;
-    app.formula.open_list = Some(list_tag_of(ui, lb));
+    app.formula.open_list = Some(list_no(lb));
     app.formula.hide_ticks = 5;
     ui.set_timer(F, "Timer1", true);
 }
@@ -670,14 +678,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "ListBoxEx1MouseEnter" => {
             ui.set_timer(F, "Timer4", false);
-            let tg = ui.tag(F, &e.sender) as usize;
-            hide_lists_but(app, ui, tg);
+            hide_lists_but(app, ui, list_no(&e.sender));
         }
         "ListBoxEx1MouseLeave" => {
-            let tg = ui.tag(F, &e.sender) as usize;
-            let sb = format!("SpeedButtonEx{tg}");
-            if ui.f(F).has(&sb) && !mouse_in(ui, &sb) && !mouse_in(ui, &e.sender) {
-                ui.set_timer(F, "Timer4", true);
+            if let Some(sb) = list_button(list_no(&e.sender)) {
+                if ui.f(F).has(&sb) && !mouse_in(ui, &sb) && !mouse_in(ui, &e.sender) {
+                    ui.set_timer(F, "Timer4", true);
+                }
             }
         }
         "ListBoxEx1MouseMove" => {
@@ -698,9 +705,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                         select_formula(app, ui, &last_words(&it));
                     }
                     ui.set_visible(F, &lb, false);
-                    let tg = ui.tag(F, &lb);
-                    if tg != 11 {
-                        let sb = format!("SpeedButtonEx{tg}");
+                    if let Some(sb) = list_button(list_no(&lb)) {
                         if ui.f(F).has(&sb) {
                             ui.cm(F, &sb).down = false;
                         }

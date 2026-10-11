@@ -36,7 +36,7 @@ fn take_error() -> Option<String> {
 /// The tasks per dispatch row of the reflection pass (`R_W` in the shader).
 const R_W: usize = 256;
 
-/// The parameter words (unused), `N_SLOTS`, `ITEM_END` of resumable marching.
+/// The parameter words `R_SPLIT` (the reflection pass), `N_SLOTS`, `ITEM_END` (resumable marching).
 const SLOTS_WORD: usize = 165;
 
 /// The parameter word `TURN_BUDGET`.
@@ -45,8 +45,8 @@ const BUDGET_WORD: usize = 272;
 /// Resumable marching (`STATE` in the shader): every thread is a slot for
 /// a pixel (or task) of a job; a submission gives each a budget of turns
 /// of the marcher's state machine, and pixels that need more save their
-/// state and continue in the next submission while work groups whose
-/// pixels are all finished take the next 64.  The budget follows the time a
+/// state and continue in the next submission while the slots of finished
+/// pixels take new ones.  The budget follows the time a
 /// submission took so that one lasts about [`Resumer::target`] (env
 /// `MB3D_GPU_BAND_MS`, default 25): the desktop shares the card, its
 /// compositor waits for a running submission, and in slow scenes (dIFS) a
@@ -171,7 +171,20 @@ pub fn set_enabled(on: bool) {
 }
 
 pub fn enabled() -> bool {
-    ENABLED.load(Ordering::Relaxed)
+    ENABLED.load(Ordering::Relaxed) && !CPU_HERE.with(|c| c.get())
+}
+
+thread_local! {
+    /// the calculations of this thread stay on the CPU (cpu_in_thread)
+    static CPU_HERE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The calculations of the calling thread stay on the CPU while `on`
+/// (MutaGen's previews: tiny images of ever new formula combinations,
+/// where compiling each one's shader takes seconds and the CPU a fraction
+/// of one).  Returns the previous setting.
+pub fn cpu_in_thread(on: bool) -> bool {
+    CPU_HERE.with(|c| c.replace(on))
 }
 
 /// The programs' default: on, unless the environment variable `MB3D_GPU`
@@ -196,6 +209,10 @@ pub fn abort_all() {
 }
 
 pub fn set_status(s: String) {
+    // (a thread kept on the CPU does not speak for the main calculation)
+    if CPU_HERE.with(|c| c.get()) {
+        return;
+    }
     if let Ok(mut l) = LAST.lock() {
         *l = s;
     }
@@ -1163,7 +1180,33 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     let g = gpu()?;
     let sh = scene_shader(p)?;
     let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
-    let pl = pipeline(g, &sh.code, &[("MODE_KIND", 3.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)])?;
+    // the shadow and occlusion states only where the batch uses them, and
+    // then in a pipeline of their own after the march (MB3D_GPU_NOSPLIT:
+    // one pipeline, for comparisons): smaller shaders keep more rays on
+    // the card at once
+    let r_hs = !o.lights.is_empty() || o.soft_radius > 0.0;
+    let r_ao = o.ao.is_some();
+    let split = (r_hs || r_ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
+    let kind = |march: bool, hs: bool, ao: bool| {
+        pipeline(
+            g,
+            &sh.code,
+            &[
+                ("MODE_KIND", 3.0),
+                ("HAS_DIFS", difs as u8 as f64),
+                ("HAS_DECOMB", p.decomb.is_some() as u8 as f64),
+                ("HAS_4D", four_d(p) as u8 as f64),
+                ("HAS_IPOL", has_ipol(p) as u8 as f64),
+                ("R_HS", hs as u8 as f64),
+                ("R_AO", ao as u8 as f64),
+                ("R_MARCH", march as u8 as f64),
+            ],
+        )
+    };
+    let mut pls = vec![if split { kind(true, false, false)? } else { kind(true, r_hs, r_ao)? }];
+    if split {
+        pls.push(kind(false, r_hs, r_ao)?);
+    }
     let n = tasks.len();
     let words: Vec<u32> = tasks
         .iter()
@@ -1195,34 +1238,37 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     // casts the shadow and occlusion rays of its hit)
     let mut res = Resumer::new(g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-    let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None,
-        layout: &pl.get_bind_group_layout(0),
-        entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
-        ],
-    });
-    let base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
-    res.run(
-        g,
-        &par,
-        base,
-        n,
-        &|| false,
-        |enc, groups| {
-            let mut pass = enc.begin_compute_pass(&Default::default());
-            pass.set_pipeline(&pl);
-            pass.set_bind_group(0, &bind, &[]);
-            pass.dispatch_workgroups(groups, 1, 1);
-        },
-        |_| Ok(()),
-    )?;
+    let mut base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
+    base[SLOTS_WORD] = split as u32;
+    for pl in &pls {
+        let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: None,
+            layout: &pl.get_bind_group_layout(0),
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+            ],
+        });
+        res.run(
+            g,
+            &par,
+            base.clone(),
+            n,
+            &|| false,
+            |enc, groups| {
+                let mut pass = enc.begin_compute_pass(&Default::default());
+                pass.set_pipeline(pl);
+                pass.set_bind_group(0, &bind, &[]);
+                pass.dispatch_workgroups(groups, 1, 1);
+            },
+            |_| Ok(()),
+        )?;
+    }
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
@@ -1748,7 +1794,7 @@ mod tests {
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
         // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "dv"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "dv"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();

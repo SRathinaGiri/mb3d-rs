@@ -15,13 +15,13 @@
 @group(0) @binding(2) var<storage, read> cst: array<u32>;
 @group(0) @binding(3) var<storage, read> rtpl: array<u32>;
 // resumable marching: every thread is a slot for a pixel (or task) of the
-// job, which work groups take 64 at a time from QUEUE[1]; a pixel that has
+// job, taken from QUEUE[1]; a pixel that has
 // used the turns of a submission (TURN_BUDGET) saves its state in the slot
 // (word 0: the pixel + 1, 0 when the slot is free; word k of slot s at
 // k * N_SLOTS + s), counts itself in QUEUE[0] and its index in QUEUE[2]
 // (the lowest suspended), and the next submission continues it.  A
 // submission thus lasts a short time even where one pixel takes long (the
-// desktop shares the card), and groups of finished pixels take new ones
+// desktop shares the card), and the slots of finished pixels take new ones
 // meanwhile.
 @group(0) @binding(4) var<storage, read_write> STATE: array<u32>;
 @group(0) @binding(5) var<storage, read_write> QUEUE: array<atomic<u32>, 4>;
@@ -109,6 +109,7 @@ const P2_DIFS: u32 = 160u;
 const P2_DDS: u32 = 161u;        // d_de_scale of the part
 const PROBE_MZZ: u32 = 162u;     // M_PROBE: the depth along the ray
 const EVAL_TURNS: u32 = 164u;    // the turns of evaluate's loop (a parameter so that the driver does not unroll it)
+const R_SPLIT: u32 = 165u;        // the reflection pass runs in two pipelines (R_MARCH)
 const N_SLOTS: u32 = 166u;        // resumable marching: the slots (64 per work group)
 const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or tasks of the job
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
@@ -159,6 +160,15 @@ override HAS_DIFS: bool = false;
 override HAS_DECOMB: bool = false;
 override HAS_4D: bool = false;
 override HAS_IPOL: bool = false;
+// the reflection pass (MODE_KIND 3): the shadow rays / the ambient
+// occlusion at the hits; without them their states compile away
+override R_HS: bool = true;
+override R_AO: bool = true;
+// the reflection pass in two pipelines where it casts shadow or occlusion
+// rays (R_SPLIT): the march to the hits (R_MARCH), then the shadows and the
+// occlusion of the hits (!R_MARCH; P_R_POST takes up the hit from the task
+// record): each shader is smaller, more rays fit on the card at once
+override R_MARCH: bool = true;
 
 fn pf(i: u32) -> f32 { return bitcast<f32>(P[i]); }
 fn pi(i: u32) -> i32 { return bitcast<i32>(P[i]); }
@@ -1448,6 +1458,7 @@ const P_IN_SIT: u32 = 49u;   // result: the smoothed iteration count (inside ren
 const P_COI: u32 = 50u;      // doColorOnIt, then after_coi
 const P_COI_R: u32 = 51u;    // result of its iterations
 const P_SURF_COL: u32 = 52u; // the surface: colour and depth
+const P_R_POST: u32 = 53u;   // the second reflection pipeline: the hit from the task record
 
 
 // The march of a pixel (M_MARCH), or a post calculation on the G-buffer
@@ -1507,7 +1518,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
         pc = P_PS;
         need = false;
     } else if (mode == M_REFLECT) {
-        pc = P_R_START;
+        pc = select(P_R_POST, P_R_START, R_MARCH);
         need = false;
     }
     vfov_px = vfov;
@@ -2269,7 +2280,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // RMCalculateNormals (on_de) / RMCalculateNormalsOnSmoothIt
             case P_N_INIT: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     noffset = min(pf(DE_STOP), 1.0) * (1.0 + mzz * pf(DE_STOP_FACTOR)) * 0.15;
                     calc_sit = true;
                     ct1 = c;
@@ -2279,7 +2290,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_N_0: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     dnn = r;
                     nn = smooth_it;
                     if (on_de) {
@@ -2295,7 +2306,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_N8: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     // the next of the 124 points of the 5x5x5 cube (not the centre)
                     if (cnt >= 125) {
                         n *= 0.0075;
@@ -2317,7 +2328,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_N8_R: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     let a = cnt / 25 - 2;
                     let b = (cnt / 5) % 5 - 2;
                     let cc = cnt % 5 - 2;
@@ -2330,7 +2341,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NA: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     // z, x, y as on the CPU; + then - the offset
                     if (cnt >= 6) {
                         pc = P_NSM;
@@ -2348,7 +2359,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NA_R: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     let ax = (u32(cnt / 2) + 2u) % 3u;
                     if (cnt % 2 == 0) {
                         na = r;
@@ -2360,7 +2371,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NSM: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     if (sm <= 0) {
                         pc = P_NEND;
                     } else {
@@ -2405,7 +2416,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_NSM_R: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     if (on_de) {
                         dnn += r;
                     } else {
@@ -2416,7 +2427,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_SW: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     if (axis >= 2) {
                         // = ds1 * dm - nn1^2 + ds2 * dm - nn2^2 of the CPU
                         let dsg = (ds.x + ds.y) * dm;
@@ -2442,7 +2453,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_SW_R: {
-                if (MODE_KIND == 0u || MODE_KIND == 3u) {
+                if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     var d: f32;
                     if (on_de) {
                         d = (r - dnn) / f32(kk);
@@ -2476,7 +2487,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     si_grad = clip15(g);
                     after_coi = P_SURF_COL;
                     pc = select(P_SURF_COL, P_COI, P[COLOR_ON_IT] != 0u);
-                } else if (MODE_KIND == 3u) {
+                } else if (MODE_KIND == 3u && R_MARCH) {
                     // the hit of a reflected ray (calc_ray)
                     c = ct1;
                     store_normal(n);
@@ -2549,7 +2560,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // ---- hard_shadow_row / soft_shadow_row
             case P_HS_INIT: {
-                if (MODE_KIND == 1u || MODE_KIND == 3u) {
+                if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     calc_sit = false;
                     nvec = rot_rev(vec3<f32>(si_normal) / 32767.0);
                     if (reflect) {
@@ -2582,7 +2593,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_LIGHT: {
-                if (MODE_KIND == 1u || MODE_KIND == 3u) {
+                if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     if (li >= P[HS_N]) {
                         c = ic;
                         pc = after_hs;
@@ -2648,7 +2659,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_R0: {
-                if (MODE_KIND == 1u || MODE_KIND == 3u) {
+                if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     dtmp = r;
                     if (reflect) {
                         rsf = 1.0;
@@ -2657,7 +2668,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_STEP: {
-                if (MODE_KIND == 1u || MODE_KIND == 3u) {
+                if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     last_de = dtmp;
                     if (reflect) {
                         st = min(dtmp * pf(Z_STEP_DIV) * rsf, max(ms_de_stop, 0.4) * pf(MH04ZSD));
@@ -2674,7 +2685,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_R: {
-                if (MODE_KIND == 1u || MODE_KIND == 3u) {
+                if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     dtmp = r;
                     if (soft) {
                         let rr = (max_lhs - dt1) / max_lhs;
@@ -2703,7 +2714,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_HS_DONE: {
-                if (MODE_KIND == 1u || MODE_KIND == 3u) {
+                if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     if (soft) {
                         si_shadow = (si_shadow & 0x3FFu) | (u32(round(clamp(zr_soft, 0.0, 1.0) * 63.4)) << 10u);
                         c = ic;
@@ -2719,7 +2730,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // ---- deao_row
             case P_AO_INIT: {
-                if (MODE_KIND == 2u || MODE_KIND == 3u) {
+                if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     calc_sit = false;
                     update_de_stop();
                     let msl = min(ms_de_stop, 1e6);
@@ -2786,7 +2797,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_RAY: {
-                if (MODE_KIND == 2u || MODE_KIND == 3u) {
+                if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     if (k >= ray_count) {
                         pc = P_AO_CORR;
                     } else {
@@ -2802,7 +2813,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_STEP: {
-                if (MODE_KIND == 2u || MODE_KIND == 3u) {
+                if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     if (b_first) {
                         b_first = false;
                         dt1 *= get_rand() * 1.5 + 0.5;
@@ -2823,7 +2834,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_R: {
-                if (MODE_KIND == 2u || MODE_KIND == 3u) {
+                if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     let dt2 = r;
                     s_tmp = min(s_tmp, (dt2 - ms2 + dt1 * md_d10) / dt1);
                     var fin = s_tmp < 0.02;
@@ -2841,7 +2852,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_AO_CORR: {
-                if (MODE_KIND == 2u || MODE_KIND == 3u) {
+                if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     // open neighbour rays lighten a closed one
                     var amount = 0.0;
                     for (var i = 0u; i < ray_count; i++) {
@@ -2873,7 +2884,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // ---- the reflection pass: calc_ray of reflect.rs
             case P_R_START: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     r_flags = 0u;
                     r_step_count = 0.0;
                     r_zz2 = 0.0;
@@ -2904,7 +2915,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_R_SURF_R: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     dtmp = r;
                     if (dtmp < ms_de_stop * 0.5) {
                         r_flags = 4u; // keep the painted colour
@@ -2934,14 +2945,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_R_SURF_END: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     r_flags = 1u;
                     r_zz2 = mzz;
                     pc = P_R_END;
                 }
             }
             case P_R_M0: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     dtmp = r;
                     rlast_sw = dtmp * pf(Z_STEP_DIV);
                     de_limited = true;
@@ -2954,7 +2965,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_R_LOOP: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     last_de = dtmp;
                     var dstep = max((dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf, 0.11);
                     let s1 = max(ms_de_stop, 0.4) * pf(MH04ZSD);
@@ -2984,7 +2995,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_R_STEP: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     dtmp = r;
                     if (it_result >= max_its_result) {
                         de_limited = false;
@@ -3007,7 +3018,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_R_HIT: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     after_bs = P_R_HIT2;
                     if (pi(DE_ADD_STEPS) != 0) {
                         itmp = pi(DE_ADD_STEPS);
@@ -3035,7 +3046,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_R_HIT2: {
-                if (MODE_KIND == 3u) {
+                if (MODE_KIND == 3u && R_MARCH) {
                     r_flags = 1u | select(0u, 2u, de_limited);
                     r_zz2 = mzz;
                     // from here the depth is the one along the view (m.mzz = zz.abs())
@@ -3048,9 +3059,50 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     pc = P_N_INIT;
                 }
             }
+            case P_R_POST: {
+                if (MODE_KIND == 3u && !R_MARCH) {
+                    if (OUT[r_rec + 22u] == 0u) {
+                        // no hit (or the surface task): nothing to add
+                        r_keep = true;
+                        done = true;
+                    } else {
+                        // the bounce as P_R_START set it up, and the hit as
+                        // P_R_HIT2 leaves it (mzz: the depth along the view)
+                        base = r_task_origin;
+                        vfov = r_task_dir;
+                        last_zz = abs(r_task.z);
+                        zz_base = 0.0;
+                        zz_mul = 1.0;
+                        after_hs = P_R_AFTER_HS;
+                        after_ao = P_R_END;
+                        let o = r_rec;
+                        let a = OUT[o + 8u];
+                        let b = OUT[o + 9u];
+                        si_normal = vec3<i32>(i32(a << 16u) >> 16u, i32(a) >> 16u, i32(b << 16u) >> 16u);
+                        si_shadow = b >> 16u;
+                        si_zpos = OUT[o + 10u];
+                        si_grad = OUT[o + 11u] & 0xFFFFu;
+                        si_otrap = OUT[o + 11u] >> 16u;
+                        si_amb = OUT[o + 12u];
+                        c = vec3<f32>(bitcast<f32>(OUT[o + 13u]), bitcast<f32>(OUT[o + 14u]), bitcast<f32>(OUT[o + 15u]));
+                        r_zz2 = bitcast<f32>(OUT[o + 17u]);
+                        r_flags = OUT[o + 18u];
+                        r_step_count = bitcast<f32>(OUT[o + 19u]);
+                        mzz = bitcast<f32>(OUT[o + 20u]);
+                        seed = bitcast<i32>(OUT[o + 21u]);
+                        pc = P_R_AFTER_N;
+                    }
+                }
+            }
             case P_R_AFTER_N: {
+                if (MODE_KIND == 3u && R_MARCH && P[R_SPLIT] != 0u) {
+                    // the first pipeline: the hit for the second
+                    OUT[r_rec + 20u] = bitcast<u32>(mzz);
+                    OUT[r_rec + 21u] = bitcast<u32>(seed);
+                    OUT[r_rec + 22u] = 1u;
+                }
                 if (MODE_KIND == 3u) {
-                    if (P[HS_N] > 0u) {
+                    if (R_HS && P[HS_N] > 0u) {
                         pc = P_HS_INIT;
                     } else {
                         pc = P_R_AFTER_HS;
@@ -3059,7 +3111,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             case P_R_AFTER_HS: {
                 if (MODE_KIND == 3u) {
-                    if (pi(AO_QUALITY) >= 0) {
+                    if (R_AO && pi(AO_QUALITY) >= 0) {
                         pc = P_AO_INIT;
                     } else {
                         si_amb = 5000u;
@@ -3095,12 +3147,18 @@ var<private> r_task_dir: vec3<f32>;
 var<private> r_task: vec4<f32>; // z: zz (or the surface depth)
 
 var<private> state_slot: u32;
+// the reflection pass: the task's record in OUT, and whether the task
+// leaves it alone (the second pipeline on a task without a hit)
+var<private> r_rec: u32;
+var<private> r_keep: bool;
 var<private> cur_item: u32;
 var<private> resuming: bool;
 var<private> suspended: bool;
 
 fn reflect_task(idx: u32) {
     let o = idx * R_WORDS;
+    r_rec = o;
+    r_keep = false;
     r_task_origin = vec3<f32>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u]));
     r_task_dir = vec3<f32>(bitcast<f32>(OUT[o + 3u]), bitcast<f32>(OUT[o + 4u]), bitcast<f32>(OUT[o + 5u]));
     r_task = vec4<f32>(0.0, 0.0, bitcast<f32>(OUT[o + 6u]), 0.0);
@@ -3115,7 +3173,7 @@ fn reflect_task(idx: u32) {
     si_amb = 5000u;
     s_roughness = 0.0;
     pixel(x, y, M_REFLECT);
-    if (suspended) {
+    if (suspended || r_keep) {
         return;
     }
     OUT[o + 8u] = (u32(si_normal.x) & 0xFFFFu) | (u32(si_normal.y) << 16u);
@@ -3132,45 +3190,27 @@ fn reflect_task(idx: u32) {
     OUT[o + 19u] = bitcast<u32>(r_step_count);
 }
 
-// the suspended slots of the work group, and the first of the 64 pixels
-// it takes when none is left (neighbouring pixels in a group take similar
-// paths through the state machine: far less divergence than slots that
-// refill one by one)
-var<workgroup> wg_busy: atomic<u32>;
-var<workgroup> wg_base: u32;
-
 @compute @workgroup_size(8, 8)
 fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
-    // the slot: a suspended pixel or one of the group's new ones
+    // the slot: a suspended pixel or the next one of the job (each slot
+    // takes its own: reflected rays of neighbouring pixels differ widely in
+    // length, and a slot that waited for its group's slowest wasted the card)
     state_slot = wid.x * 64u + li;
     let so = state_slot;
     let st = STATE[so];
     resuming = st != 0u;
     suspended = false;
-    if (li == 0u) {
-        atomicStore(&wg_busy, 0u);
-    }
-    workgroupBarrier();
-    if (resuming) {
-        atomicAdd(&wg_busy, 1u);
-    }
-    workgroupBarrier();
-    if (li == 0u) {
-        wg_base = 0xFFFFFFFFu;
-        // (idle groups do not count on: the counter would wrap in long jobs)
-        if (atomicLoad(&wg_busy) == 0u && atomicLoad(&QUEUE[1]) < P[ITEM_END]) {
-            wg_base = atomicAdd(&QUEUE[1], 64u);
-        }
-    }
-    workgroupBarrier();
     if (resuming) {
         cur_item = st - 1u;
     } else {
-        let base = wg_base;
-        if (base == 0xFFFFFFFFu || base + li >= P[ITEM_END]) {
+        // (idle slots do not count on: the counter would wrap in long jobs)
+        if (atomicLoad(&QUEUE[1]) >= P[ITEM_END]) {
             return;
         }
-        cur_item = base + li;
+        cur_item = atomicAdd(&QUEUE[1], 1u);
+        if (cur_item >= P[ITEM_END]) {
+            return;
+        }
     }
     let w = pi(RECT_W);
     // the pixel (the reflection pass: the seed of the task's place in

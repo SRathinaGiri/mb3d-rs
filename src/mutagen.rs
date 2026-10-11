@@ -415,7 +415,14 @@ pub fn preview(s: &Scene, w: usize, h: usize, blank: bool, threads: usize) -> Re
     if let Some(dof) = p.dof.as_mut() {
         dof.clip_r = (dof.clip_r * f as f32).max(0.1);
     }
-    let r = crate::render::render(&p, &|_, _| {})?;
+    // on the CPU: the mutations bring ever new formula combinations, and
+    // compiling a shader for each takes seconds for a tiny image
+    #[cfg(feature = "gpu")]
+    let was = crate::gpu::cpu_in_thread(true);
+    let r = crate::render::render(&p, &|_, _| {});
+    #[cfg(feature = "gpu")]
+    crate::gpu::cpu_in_thread(was);
+    let r = r?;
     Ok((r.rgb, pw as usize, ph as usize))
 }
 
