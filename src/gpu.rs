@@ -48,7 +48,8 @@ const BUDGET_WORD: usize = 272;
 /// state and continue in the next submission while the slots of finished
 /// pixels take new ones.  The budget follows the time a
 /// submission took so that one lasts about [`Resumer::target`] (env
-/// `MB3D_GPU_BAND_MS`, default 25): the desktop shares the card, its
+/// `MB3D_GPU_BAND_MS`, default 50: shorter pieces cost much more, each
+/// has a fixed cost of a few ms): the desktop shares the card, its
 /// compositor waits for a running submission, and in slow scenes (dIFS) a
 /// single pixel takes 100 ms or more, so a submission that finished its
 /// pixels froze the screen for seconds.
@@ -92,7 +93,7 @@ impl Resumer {
             mapped_at_creation: false,
         });
         let queue_read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("queue read"), size: 16, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        let ms: f64 = std::env::var("MB3D_GPU_BAND_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(25.0);
+        let ms: f64 = std::env::var("MB3D_GPU_BAND_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(50.0);
         // MB3D_GPU_TURNS: a fixed budget (a check of the suspending)
         let fixed: Option<u32> = std::env::var("MB3D_GPU_TURNS").ok().and_then(|v| v.parse().ok());
         Resumer { state, queue, queue_read, slots, budget: fixed.unwrap_or(64), fixed: fixed.is_some(), target: ms / 1000.0, timing: std::env::var_os("MB3D_GPU_TIMING").is_some() }
@@ -274,7 +275,7 @@ fn real_block(dbl: bool) -> String {
     if dbl {
         o.push_str("alias R = f64;\nfn rtpl_r(i: u32) -> R { return bitcast<f64>((u64(rtpl[i + 1u]) << 32u) | u64(rtpl[i])); }\nfn rput(q: u32, ns: u32, x: R) { let b = bitcast<u64>(x); STATE[q] = u32(b & 0xFFFFFFFFlu); STATE[q + ns] = u32(b >> 32u); }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f64>((u64(STATE[q + ns]) << 32u) | u64(STATE[q])); }\n");
     } else {
-        o.push_str("alias R = f32;\nfn rtpl_r(i: u32) -> R { return bitcast<f32>(rtpl[i]); }\nfn rput(q: u32, ns: u32, x: R) { STATE[q] = bitcast<u32>(x); STATE[q + ns] = 0u; }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f32>(STATE[q]); }\n");
+        o.push_str("alias R = f32;\nfn rtpl_r(i: u32) -> R { return bitcast<f32>(rtpl[i]); }\nfn rput(q: u32, ns: u32, x: R) { STATE[q] = bitcast<u32>(x); }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f32>(STATE[q]); }\n");
     }
     // the coordinates: as doubles (DP: start, view gradients, julia
     // constant) or the f32 parameters
@@ -1213,6 +1214,8 @@ pub struct ReflectTask {
     pub dir: [f32; 3],
     pub zz: f32,
     pub pixel: u32,
+    /// the ray runs inside the set (inside rendering: the DE inverted)
+    pub inside: bool,
 }
 
 /// The result of a task: the G-buffer value of the hit (normal, depth,
@@ -1310,6 +1313,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
             }
             w[6] = t.zz.to_bits();
             w[7] = t.pixel;
+            w[23] = t.inside as u32;
             w
         })
         .collect();
@@ -1332,7 +1336,9 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
     base[SLOTS_WORD] = split as u32;
-    for pl in &pls {
+    let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    for (pi, pl) in pls.iter().enumerate() {
+        let t_pl = std::time::Instant::now();
         let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &pl.get_bind_group_layout(0),
@@ -1360,6 +1366,10 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
             },
             |_| Ok(()),
         )?;
+        if timing {
+            let what = if pls.len() == 1 { "march, shadows, occlusion" } else if pi == 0 { "march" } else { "shadows, occlusion" };
+            eprintln!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
+        }
     }
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
@@ -1886,7 +1896,7 @@ mod tests {
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
         // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "dv"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "dv"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();

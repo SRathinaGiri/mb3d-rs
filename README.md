@@ -420,14 +420,18 @@ driver also send the calculation to the CPU, and software renderers
 (llvmpipe, WARP) are not used. The first calculation of a scene compiles
 its shader (one to two seconds; the driver caches it). The desktop shares
 the graphics card and waits for each piece of work sent to it, so the
-calculation is sent in pieces of about 25 ms (`MB3D_GPU_BAND_MS`): a pixel
+calculation is sent in pieces of about 50 ms (`MB3D_GPU_BAND_MS`): a pixel
 that needs longer (a single dIFS pixel can take 100 ms on the card) saves
 its state and continues in the next piece, with identical results.
 
 Of the 80 example parameter files of MB3D, 79 run on the GPU at their
-own image size (449 of the 460 formula files translate); at that size
-*Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
-instead of 58 s; with the reflections on the card, *Rama - Elysium* at 160
+own image size (449 of the 460 formula files translate). The times below
+compare the graphics card with this program's own CPU renderer, not with
+MB3D: MB3D runs the formulas' machine code directly and is often much
+faster on the CPU (*Chrystal* takes 12 s in MB3D under Wine on the same machine,
+35 s in this program's CPU renderer, 3 s on the GPU here). At their own
+size *LightBulbMoon - No, Never* takes 2.0 s instead of 58 s; with the
+reflections on the card, *Rama - Elysium* at 160
 pixels takes 4.5 s instead of 24.7 s and *LightBulbMoon - A Fabulous
 Excuse* 1.1 s instead of 6.8 s. On a GeForce GTX 1650 (laptop) against a
 Ryzen 5 3550H (8 threads), at 640 pixels: *TimeMachine* 1.5 s instead of

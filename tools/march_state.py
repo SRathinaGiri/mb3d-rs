@@ -22,7 +22,7 @@ for m in re.finditer(r'^    var (\w+)(?:: ([^=;]+))?(?: = ([^;]+))?;',body,re.M)
         elif i.startswith('mat3x3<R>'): t='mat3x3<R>'
         else: raise SystemExit('type? '+n+' '+i)
     loc.append((n,t.strip()))
-skip={'dbg_r1','dbg_it1','dbg_rst','dbg_it2','dbg_rout','dbg_g','r_task_origin','r_task_dir','r_task','suspended','state_slot','cur_item','resuming','r_rec','r_keep','dv'}
+skip={'dbg_r1','dbg_it1','dbg_rst','dbg_it2','dbg_rout','dbg_g','r_task_origin','r_task_dir','r_task','suspended','state_slot','cur_item','resuming','r_rec','r_keep','r_task_inside','dv'}
 vars_=[v for v in priv+loc if v[0] not in skip]+[('guard','i32')]
 sv=[];ld=[];off=1
 def scalar(n,t):
@@ -48,12 +48,16 @@ for n,t in vars_:
             for jj in range(3): scalar(f'{n}[{i}].{"xyz"[jj]}','R')
     else:
         m=re.match(r'array<(.+), (\d+)>$',t); et,cnt=m.group(1),int(m.group(2))
+        # the arrays of the ambient occlusion: only the pipelines that cast
+        # its rays (MODE_KIND 2, 3) keep them (MODE_KIND is a pipeline
+        # constant: the march saves and loads them not at all)
+        guard = 'if (MODE_KIND == 2u || MODE_KIND == 3u) ' if n.startswith('ao_') else ''
         if et=='R':
-            sv.append(f'for (var i = 0u; i < {cnt}u; i++) {{ rput(so + ({off}u + 2u * i) * ns, ns, {n}[i]); }}')
-            ld.append(f'for (var i = 0u; i < {cnt}u; i++) {{ {n}[i] = rget(so + ({off}u + 2u * i) * ns, ns); }}'); off+=2*cnt
+            sv.append(guard+f'{{ for (var i = 0u; i < {cnt}u; i++) {{ rput(so + ({off}u + 2u * i) * ns, ns, {n}[i]); }} }}')
+            ld.append(guard+f'{{ for (var i = 0u; i < {cnt}u; i++) {{ {n}[i] = rget(so + ({off}u + 2u * i) * ns, ns); }} }}'); off+=2*cnt
         elif et=='vec3<R>':
-            sv.append(f'for (var i = 0u; i < {cnt}u; i++) {{ let q = so + ({off}u + 6u * i) * ns; rput(q, ns, {n}[i].x); rput(q + 2u * ns, ns, {n}[i].y); rput(q + 4u * ns, ns, {n}[i].z); }}')
-            ld.append(f'for (var i = 0u; i < {cnt}u; i++) {{ let q = so + ({off}u + 6u * i) * ns; {n}[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); }}'); off+=6*cnt
+            sv.append(guard+f'{{ for (var i = 0u; i < {cnt}u; i++) {{ let q = so + ({off}u + 6u * i) * ns; rput(q, ns, {n}[i].x); rput(q + 2u * ns, ns, {n}[i].y); rput(q + 4u * ns, ns, {n}[i].z); }} }}')
+            ld.append(guard+f'{{ for (var i = 0u; i < {cnt}u; i++) {{ let q = so + ({off}u + 6u * i) * ns; {n}[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); }} }}'); off+=6*cnt
         else: raise SystemExit('array? '+t)
 # replace the blocks
 ls=src.index('    if (resuming) {\n',b)

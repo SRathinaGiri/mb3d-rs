@@ -499,7 +499,7 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
             s.deao = Some(crate::deao::DeaoParams {
                 quality: (ao_bits >> 4) & 3,
                 dither: r.u8(188).min(2),
-                max_len: if mand_id >= 26 { (r.f32(374) as f32).max(0.01) } else { 1.0 },
+                max_len: if mand_id >= 30 { (r.f32(374) as f32).max(0.01) } else { 1.0 },
                 first_step_random: ao_bits & 128 != 0,
             });
         }
@@ -674,6 +674,52 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     } else {
         w.push("no formula block found, using the default formula".into());
         s.formulas = Scene::default().formulas;
+    }
+    // the upgrades of LoadParameter (FileHandling.pas): older files do not
+    // have these fields, their bytes are other data (a raystep limiter read
+    // from a version 20 file made the steps a hundred times too short)
+    if mand_id < 21 {
+        if r.f32(182) < 0.01 {
+            s.z_step_div = 0.3;
+        }
+        s.optic = CameraOptic::Common;
+    }
+    if mand_id < 22 {
+        s.color_option = 0;
+        s.rot_4d = [0.0; 3];
+        s.color_mul = 1.0;
+        s.julia_c[3] = 0.0;
+    }
+    if mand_id < 23 {
+        s.raystep_limiter = 1.0;
+    }
+    if mand_id < 24 {
+        s.stereo_screen = [1.0, 2.0, 0.5];
+    }
+    if mand_id < 26 {
+        if let Some(d) = s.deao.as_mut() {
+            d.dither = 0;
+        }
+    }
+    if mand_id < 28 {
+        if let Some(a) = s.ao.as_mut() {
+            a.random = a.random.min(1);
+        }
+    }
+    if mand_id < 29 {
+        if let Some(f) = s.dof.as_mut() {
+            f.clip_r = 25.0;
+            f.aperture = 0.02;
+        }
+    }
+    if mand_id < 35 {
+        s.dfog_on_it = 0;
+    }
+    if mand_id < 36 {
+        if let Some(a) = s.ao.as_mut() {
+            a.border_mirror = 0.0;
+        }
+        s.step_sub_de_stop = false;
     }
     Ok(M3pFile { scene: s, warnings: w, mand_id })
 }

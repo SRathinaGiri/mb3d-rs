@@ -1180,7 +1180,7 @@ fn s3d(v: S3) -> Vec3 {
 pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) {
     let mc = &sc.mc;
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && !mc.transparency && p.cut_options == 0 && p.vol.is_none() && !p.inside_rendering && !p.in_and_outside && crate::gpu::unsupported(p).is_none() {
+    if crate::gpu::enabled() && !mc.transparency && p.cut_options == 0 && p.vol.is_none() && crate::gpu::unsupported(p).is_none() {
         match reflections_gpu(sc, p, gbuf, rgb, cam, lv, threads) {
             Ok(()) => {
                 let s = crate::gpu::last_status();
@@ -1390,9 +1390,12 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     // the surfaces of the object pixels
     let mut px: Vec<Option<RPix>> = vec![None; n];
     let mut tasks: Vec<ReflectTask> = Vec::new();
+    // inside rendering: the rays of a pixel run inside the set (in and
+    // outside: unless the pixel was found from outside, as `pixel` does)
+    let inside_of = |si: &SiLight| if p.in_and_outside && si.otrap & 0x8000 != 0 { false } else { p.inside_rendering };
     for (i, si) in gbuf.iter().enumerate() {
         if si.zpos() < 32768 && si.si_gradient < 32768 {
-            tasks.push(ReflectTask { zz: (si.zpos_fine >> 8) as f32, pixel: i as u32, ..Default::default() });
+            tasks.push(ReflectTask { zz: (si.zpos_fine >> 8) as f32, pixel: i as u32, inside: inside_of(si), ..Default::default() });
         }
     }
     let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
@@ -1479,7 +1482,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
             }
             let nr = rotate_vector_reverse(&q.normal, &p.vgrads);
             let new_vec = sub(q.dir, scale(nr, 2.0 * dot(&nr, &q.dir) / sqr_len(&nr)));
-            tasks.push(ReflectTask { origin: s3(&q.pos), dir: s3(&new_vec), zz: q.zz as f32, pixel: i as u32 });
+            tasks.push(ReflectTask { origin: s3(&q.pos), dir: s3(&new_vec), zz: q.zz as f32, pixel: i as u32, inside: inside_of(&q.si0) });
             dirs.push((i, new_vec));
         }
         if tasks.is_empty() {

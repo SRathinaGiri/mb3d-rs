@@ -1505,6 +1505,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
     // the post passes use the scene's setting for every pixel (the CPU's
     // Marcher::new); the march may switch it (inside and outside)
     inside = (P[INSIDE_FLAGS] & 1u) != 0u;
+    if (mode == M_REFLECT) {
+        inside = r_task_inside;
+    }
     var cut_plane = 0u;
     var after_coi = P_DONE;
     var coi_max = 0;
@@ -1669,8 +1672,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
         si_grad = STATE[so + 100u * ns];
         si_otrap = STATE[so + 101u * ns];
         si_amb = STATE[so + 102u * ns];
-        for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; ao_dirs[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); }
-        for (var i = 0u; i < 33u; i++) { ao_min[i] = rget(so + (301u + 2u * i) * ns, ns); }
+        if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; ao_dirs[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); } }
+        if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { ao_min[i] = rget(so + (301u + 2u * i) * ns, ns); } }
         step_count = rget(so + 367u * ns, ns);
         first_step = (STATE[so + 369u * ns] != 0u);
         pc = STATE[so + 370u * ns];
@@ -1848,8 +1851,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
             STATE[so + 100u * ns] = si_grad;
             STATE[so + 101u * ns] = si_otrap;
             STATE[so + 102u * ns] = si_amb;
-            for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; rput(q, ns, ao_dirs[i].x); rput(q + 2u * ns, ns, ao_dirs[i].y); rput(q + 4u * ns, ns, ao_dirs[i].z); }
-            for (var i = 0u; i < 33u; i++) { rput(so + (301u + 2u * i) * ns, ns, ao_min[i]); }
+            if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; rput(q, ns, ao_dirs[i].x); rput(q + 2u * ns, ns, ao_dirs[i].y); rput(q + 4u * ns, ns, ao_dirs[i].z); } }
+            if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { rput(so + (301u + 2u * i) * ns, ns, ao_min[i]); } }
             rput(so + 367u * ns, ns, step_count);
             STATE[so + 369u * ns] = select(0u, 1u, first_step);
             STATE[so + 370u * ns] = pc;
@@ -2487,7 +2490,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 } else if (MODE_KIND == 3u && R_MARCH) {
                     // the hit of a reflected ray (calc_ray)
                     c = ct1;
-                    store_normal(n);
+                    store_normal(select(n, -n, inside && !on_de));
                     var g: R;
                     if (de_limited) {
                         g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL) * r_log(ms_de_stop * pf(STEP_WIDTH))) * pf(MCTS_M);
@@ -2746,7 +2749,17 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         d_min_a_dif = r_cos(abr * 1.2);
                         corr_w = select(R(0.1666), R(0.2), q == 1u);
                     }
-                    ms2 = select(pf(DE_STOP), msl, pf(DE_STOP_FACTOR) != 0.0) / (d_step_mul * d_step_mul);
+                    // deao_1pos inside the set: half the step factor, and the
+                    // DE stop of the depth as it is
+                    let ao_in = reflect && inside && pi(DIFS) == 0;
+                    if (ao_in) {
+                        d_step_mul *= 0.5;
+                    }
+                    if (pf(DE_STOP_FACTOR) != 0.0) {
+                        ms2 = select(msl / (d_step_mul * d_step_mul), msl, ao_in);
+                    } else {
+                        ms2 = pf(DE_STOP) / (d_step_mul * d_step_mul);
+                    }
                     // the ray directions, dithered per pixel
                     let dither = pi(AO_DITHER);
                     var dt1d = R(0.0);
@@ -2981,6 +2994,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         // open air
                         r_flags = 0u;
                         r_zz2 = mzz;
+                        if (inside) {
+                            r_step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
+                        }
                         pc = P_R_END;
                     } else {
                         setc();
@@ -3050,6 +3066,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     mzz = abs(zz_base + mzz * zz_mul);
                     zz_base = 0.0;
                     zz_mul = 1.0;
+                    if (inside) {
+                        r_step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
+                    }
                     si_shadow = u32(round(clamp(r_step_count, 0.0, 1023.0)));
                     after_hs = P_R_AFTER_HS;
                     after_ao = P_R_END;
@@ -3147,6 +3166,8 @@ var<private> state_slot: u32;
 // the reflection pass: the task's record in OUT, and whether the task
 // leaves it alone (the second pipeline on a task without a hit)
 var<private> r_rec: u32;
+// the task runs inside the set (word 23)
+var<private> r_task_inside: bool;
 var<private> r_keep: bool;
 var<private> cur_item: u32;
 var<private> resuming: bool;
@@ -3155,6 +3176,7 @@ var<private> suspended: bool;
 fn reflect_task(idx: u32) {
     let o = idx * R_WORDS;
     r_rec = o;
+    r_task_inside = OUT[o + 23u] != 0u;
     r_keep = false;
     r_task_origin = vec3<R>(R(bitcast<f32>(OUT[o])), R(bitcast<f32>(OUT[o + 1u])), R(bitcast<f32>(OUT[o + 2u])));
     r_task_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
