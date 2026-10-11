@@ -232,24 +232,31 @@ pub fn run(args: &[String]) -> Result<(), String> {
 /// Creates the forms and the application state (without windows).
 pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
     let mut file = None;
+    let mut scale_arg: Option<u32> = None;
     let mut it = args.iter();
     while let Some(a) = it.next() {
         match a.as_str() {
             "--formulas" => crate::formulas::add_formula_dir(it.next().ok_or("--formulas needs a folder")?.into()),
             "--maps" => crate::maps::add_map_dir(it.next().ok_or("--maps needs a folder")?.into()),
+            "--scale" => scale_arg = Some(it.next().and_then(|v| v.trim_end_matches('%').parse().ok()).ok_or("--scale needs a percentage (e.g. 150)")?),
             "-h" | "--help" => {
-                println!("Mandelbulb3D [--formulas DIR] [--maps DIR] [FILE.m3p|.m3i|.txt]");
+                println!("Mandelbulb3D [--formulas DIR] [--maps DIR] [--scale PERCENT] [FILE.m3p|.m3i|.txt]");
                 return Ok(None);
             }
             s => file = Some(PathBuf::from(s)),
         }
     }
     let ini = ini::Ini::load();
+    // the interface scale: the command line, then MB3D_UI_SCALE, then the ini
+    let scale_pct = scale_arg
+        .or_else(|| std::env::var("MB3D_UI_SCALE").ok().and_then(|v| v.trim().trim_end_matches('%').parse().ok()))
+        .unwrap_or_else(|| small_forms::ini_ui_scale(&ini));
     // MB3D's folders: formulas and maps of the ini (next to the program)
     crate::formulas::add_formula_dir(ini.dir(ini::DIR_FORMULAS));
     crate::maps::add_map_dir(ini.dir(ini::DIR_MAPS));
     let style = Style::from_name(ini.get("VisualTheme")).unwrap_or(Style::Glossy);
     let mut ui = Ui::new(style);
+    ui.set_ui_scale(scale_pct.clamp(50, 400) as f64 / 100.0);
     for f in FORMS {
         if let Err(e) = ui.add_form(forms::get(f)) {
             eprintln!("{f}: {e}");

@@ -99,7 +99,10 @@ the event handlers are ported from the Delphi units (`Mand.pas`,
 `FormulaGUI.pas`, `LightAdjust.pas`, ...). A small toolkit (`src/vcl`) draws
 the controls itself in MB3D's two looks: *Glossy* (MB3D's default dark
 theme) and *Windows* (Prefs ▸ Visual themes). Text is drawn with the
-bundled Liberation fonts; on Windows Tahoma is used if present.
+bundled Liberation fonts; on Windows Tahoma is used if present. Prefs ▸
+Visual themes ▸ *Interface size* scales all windows and their text (75 to
+200 %; also `--scale 150` on the command line or `MB3D_UI_SCALE=150`), the
+layouts stay as they are.
 
 The Formulas, Lighting and Post processing windows are ordinary windows
 that move independently of the main window. Wayland does not let a program

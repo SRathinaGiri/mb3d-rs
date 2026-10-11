@@ -241,8 +241,10 @@ fn cursor_for(name: &str) -> CursorIcon {
 }
 
 impl<A: App> Runner<A> {
+    /// Logical (.dfm) pixels to device pixels: the screen's scale factor
+    /// times the user's interface scale.
     fn scale_of(&self, w: &Win) -> f64 {
-        w.window.scale_factor()
+        w.window.scale_factor() * self.ui.ui_scale
     }
 
     /// Hands the queued events to the program until none are left.
@@ -284,10 +286,11 @@ impl<A: App> Runner<A> {
                         w.window.request_redraw();
                     }
                     let (ow, oh) = f.outer_size(&theme);
-                    let s = w.window.scale_factor();
+                    let us = self.ui.ui_scale;
+                    let s = w.window.scale_factor() * us;
                     let cur: LogicalSize<f64> = w.window.inner_size().to_logical(s);
                     if !f.maximized && ((cur.width - ow as f64).abs() > 1.0 || (cur.height - oh as f64).abs() > 1.0) {
-                        let _ = w.window.request_inner_size(LogicalSize::new(ow as f64, oh as f64));
+                        let _ = w.window.request_inner_size(LogicalSize::new(ow as f64 * us, oh as f64 * us));
                     }
                     let title = f.caption();
                     if w.title != title {
@@ -333,12 +336,22 @@ impl<A: App> Runner<A> {
 
     fn create_window(&mut self, el: &ActiveEventLoop, fi: usize) {
         let theme = self.ui.theme;
+        let us = self.ui.ui_scale;
         let f = &mut self.ui.forms[fi];
         f.layout();
         let (w, h) = f.outer_size(&theme);
+        // the window's size on the screen: the user's scale on top of the
+        // .dfm size, at most the monitor
+        let mon = el.primary_monitor().or_else(|| el.available_monitors().next());
+        let (mut sw, mut sh) = (w as f64 * us, h as f64 * us);
+        if let Some(m) = &mon {
+            let ms: LogicalSize<f64> = m.size().to_logical(m.scale_factor());
+            sw = sw.min(ms.width);
+            sh = sh.min(ms.height);
+        }
         let mut attrs = Window::default_attributes()
             .with_title(f.caption())
-            .with_inner_size(LogicalSize::new(w as f64, h as f64))
+            .with_inner_size(LogicalSize::new(sw, sh))
             .with_decorations(false)
             .with_resizable(f.sizeable())
             .with_window_icon(app_icon());
@@ -346,19 +359,18 @@ impl<A: App> Runner<A> {
             let b = f.frame_w() * 2;
             let min_w = f.ctl[0].min_w.max(120) + b;
             let min_h = f.ctl[0].min_h.max(60) + b + f.caption_h(&theme);
-            attrs = attrs.with_min_inner_size(LogicalSize::new(min_w as f64, min_h as f64));
+            attrs = attrs.with_min_inner_size(LogicalSize::new((min_w as f64 * us).min(sw), (min_h as f64 * us).min(sh)));
         }
         if f.stay_on_top {
             attrs = attrs.with_window_level(WindowLevel::AlwaysOnTop);
         }
         // position
-        let mon = el.primary_monitor().or_else(|| el.available_monitors().next());
         let centre = matches!(f.position.as_str(), "poScreenCenter" | "poDesktopCenter" | "poMainFormCenter" | "poOwnerFormCenter");
         if let Some(m) = &mon {
             let ms: LogicalSize<f64> = m.size().to_logical(m.scale_factor());
             let mp: LogicalPosition<f64> = m.position().to_logical(m.scale_factor());
             let (x, y) = if centre {
-                (mp.x + (ms.width - w as f64) / 2.0, mp.y + (ms.height - h as f64) / 2.0)
+                (mp.x + (ms.width - sw) / 2.0, mp.y + (ms.height - sh) / 2.0)
             } else {
                 (f.left as f64, f.top as f64)
             };
@@ -401,7 +413,7 @@ impl<A: App> Runner<A> {
         let Some(w) = self.wins.get_mut(&id) else { return };
         let size = w.window.inner_size();
         let (Some(pw), Some(ph)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) else { return };
-        let scale = w.window.scale_factor() as f32;
+        let scale = (w.window.scale_factor() * self.ui.ui_scale) as f32;
         let f = &mut self.ui.forms[w.form];
         if w.surface.resize(pw, ph).is_err() {
             return;
@@ -823,11 +835,11 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
             WindowEvent::Resized(size) => {
                 let theme = self.ui.theme;
                 let window = self.wins[&id].window.clone();
-                let s = window.scale_factor();
+                let s = window.scale_factor() * self.ui.ui_scale;
                 let l: LogicalSize<f64> = size.to_logical(s);
                 // a move and a resize in one step (X11) brings no Moved event
                 if let Ok(p) = window.outer_position() {
-                    self.moved(fi, p.to_logical(s));
+                    self.moved(fi, p.to_logical(window.scale_factor()));
                 }
                 let f = &mut self.ui.forms[fi];
                 f.maximized = window.is_maximized();

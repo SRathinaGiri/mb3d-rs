@@ -61,6 +61,10 @@ pub struct Ui {
     /// internal handlers of the toolkit's own dialogs
     pub(crate) dialogs: HashMap<usize, super::dialogs::DialogState>,
     pub busy: bool,
+    /// The user's interface scale (1 = the size of the .dfm files), on top
+    /// of the screen's scale factor: windows, controls and text all grow
+    /// with it, the layouts stay as they are.
+    pub ui_scale: f64,
 }
 
 impl Default for Ui {
@@ -85,6 +89,16 @@ impl Ui {
             close_pending: Vec::new(),
             dialogs: HashMap::new(),
             busy: false,
+            ui_scale: 1.0,
+        }
+    }
+
+    /// Sets the interface scale (see `ui_scale`); all windows are resized
+    /// and redrawn.
+    pub fn set_ui_scale(&mut self, scale: f64) {
+        self.ui_scale = scale.clamp(0.5, 4.0);
+        for f in &mut self.forms {
+            f.dirty = true;
         }
     }
 

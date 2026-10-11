@@ -14,6 +14,14 @@ use crate::vcl::{DialogResult, Event, Style, Ui};
 
 const TH: &str = "VisualThemesFrm";
 
+/// The interface sizes offered (percent), `UIScale` in the ini file.
+pub const UI_SCALES: [u32; 6] = [75, 100, 125, 150, 175, 200];
+
+/// The interface scale of the ini file (percent), 100 when unset.
+pub fn ini_ui_scale(ini: &super::ini::Ini) -> u32 {
+    ini.get_extra("UIScale").and_then(|v| v.trim().parse().ok()).unwrap_or(100)
+}
+
 pub fn themes_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let set = |ui: &mut Ui, name: &str| {
         let i = ui.c(TH, "StylesCmb").items.iter().position(|s| s == name).map(|i| i as i32).unwrap_or(0);
@@ -27,6 +35,16 @@ pub fn themes_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_items(TH, "StylesCmb", vec!["Glossy".into(), "Windows".into()]);
             let cur = ui.theme.style.name().to_string();
             set(ui, &cur);
+            ui.set_items(TH, "UIScaleCmb", UI_SCALES.iter().map(|p| format!("{p} %")).collect());
+            let pct = (ui.ui_scale * 100.0).round() as u32;
+            let i = UI_SCALES.iter().position(|p| *p == pct).unwrap_or(1);
+            ui.set_item_index(TH, "UIScaleCmb", i as i32);
+        }
+        "UIScaleCmbChange" => {
+            let i = ui.item_index(TH, "UIScaleCmb").clamp(0, UI_SCALES.len() as i32 - 1) as usize;
+            let pct = UI_SCALES[i];
+            ui.set_ui_scale(pct as f64 / 100.0);
+            app.ini.set_extra("UIScale", &pct.to_string());
         }
         "StylesCmbChange" => {
             let s = ui.c(TH, "StylesCmb").item_text();

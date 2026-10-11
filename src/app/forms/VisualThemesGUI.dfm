@@ -3,7 +3,7 @@ object VisualThemesFrm: TVisualThemesFrm
   Top = 170
   BorderStyle = bsToolWindow
   Caption = 'Setting the Visual Theme'
-  ClientHeight = 117
+  ClientHeight = 150
   ClientWidth = 390
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -43,6 +43,27 @@ object VisualThemesFrm: TVisualThemesFrm
     DropDownCount = 32
     TabOrder = 1
     OnChange = StylesCmbChange
+  end
+  object Label2: TLabel
+    Left = 72
+    Top = 121
+    Width = 73
+    Height = 13
+    Alignment = taRightJustify
+    Caption = 'Interface size:'
+  end
+  object UIScaleCmb: TComboBox
+    Left = 151
+    Top = 118
+    Width = 231
+    Height = 21
+    Hint = 'Bigger or smaller windows and text (the layout stays the same)'
+    Style = csDropDownList
+    DropDownCount = 8
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 4
+    OnChange = UIScaleCmbChange
   end
   object DefaultThemeBtn: TButton
     Left = 8
