@@ -701,6 +701,13 @@ impl Prog {
             Op::FSin(i) => format!("f[{0}] = sin(f[{0}]); fsw = fsw & ~0x0400u;", i & 7),
             Op::FCos(i) => format!("f[{0}] = cos(f[{0}]); fsw = fsw & ~0x0400u;", i & 7),
             Op::FRndint(i) => format!("f[{0}] = round(f[{0}]);", i & 7),
+            Op::FPrem { a, b, ieee } => format!(
+                "{{ let x = f[{0}]; let y = f[{1}]; let q = {2}; f[{0}] = x - q * y; let qi = u32(min(abs(q), 4294967000.0)); \
+                 fsw = select(0u, 0x100u, (qi & 4u) != 0u) | select(0u, 0x4000u, (qi & 2u) != 0u) | select(0u, 0x200u, (qi & 1u) != 0u); }}",
+                a & 7,
+                b & 7,
+                if *ieee { "round(x / y)" } else { "trunc(x / y)" }
+            ),
             Op::F2xm1(i) => format!("f[{0}] = exp2(f[{0}]) - 1.0;", i & 7),
             Op::FSincos { src, dst } => format!("{{ let a = f[{0}]; f[{0}] = sin(a); f[{1}] = cos(a); fsw = fsw & ~0x0400u; }}", src & 7, dst & 7),
             Op::FPatan { x, y } => format!("f[{0}] = atan2(f[{0}], f[{1}]);", y & 7, x & 7),
@@ -903,6 +910,12 @@ impl Prog {
             Ins::Mov { dst, src: s, size } => {
                 let v = src(s, *size)?;
                 format!("{{ let v = {v}; {} }}", wr(dst, *size, "v")?)
+            }
+            Ins::Shift { op: Shift::Rcl, dst: Rm::Reg(r), cnt: Some(1), size: 4 } => {
+                format!("{{ let x = rg[{r}]; let out = ((x >> 31u) & 1u) == 1u; rg[{r}] = (x << 1u) | select(0u, 1u, xcf); xcf = out; }}")
+            }
+            Ins::Shift { op: Shift::Rcr, dst: Rm::Reg(r), cnt: Some(1), size: 4 } => {
+                format!("{{ let x = rg[{r}]; let out = (x & 1u) == 1u; rg[{r}] = (x >> 1u) | (select(0u, 1u, xcf) << 31u); xcf = out; }}")
             }
             Ins::Shift { op: sop @ (Shift::Shl | Shift::Shr | Shift::Sar), dst: Rm::Reg(r), cnt: Some(c), size } => {
                 let o = match sop {

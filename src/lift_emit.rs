@@ -164,7 +164,10 @@ fn fstore_stmt(c: &mut Cells, r: (char, u32), kind: FKind, v: &str) -> Option<St
                 "{{ let x = m.round_int({v}); let i = if x.is_nan() || !(-2147483648.0..=2147483647.0).contains(&x) {{ 0x8000_0000u32 }} else {{ x as i32 as u32 }}; {w} }}"
             )
         }
-        _ => return None,
+        _ => {
+            lift_debug(&format!("x87 store of {kind:?}"));
+            return None;
+        }
     })
 }
 
@@ -454,6 +457,14 @@ impl Prog {
             Op::FSin(i) => format!("f[{0}] = f[{0}].sin(); fsw &= !0x0400;", i & 7),
             Op::FCos(i) => format!("f[{0}] = f[{0}].cos(); fsw &= !0x0400;", i & 7),
             Op::FRndint(i) => format!("f[{0}] = m.round_int(f[{0}]);", i & 7),
+            // fprem / fprem1 with the quotient bits in C0, C3, C1 (Machine::exec_op)
+            Op::FPrem { a, b, ieee } => format!(
+                "{{ let (x, y) = (f[{0}], f[{1}]); let q = if {2} {{ (x / y).round_ties_even() }} else {{ (x / y).trunc() }}; f[{0}] = if {2} {{ x - q * y }} else {{ x % y }}; \
+                 let qi = q.abs() as u64; fsw = (if qi & 4 != 0 {{ 0x0100 }} else {{ 0 }}) | (if qi & 2 != 0 {{ 0x4000 }} else {{ 0 }}) | (if qi & 1 != 0 {{ 0x0200 }} else {{ 0 }}); }}",
+                a & 7,
+                b & 7,
+                ieee
+            ),
             Op::F2xm1(i) => format!("f[{0}] = f[{0}].exp2() - 1.0;", i & 7),
             Op::FSincos { src, dst } => format!("{{ let (s, c) = f[{0}].sin_cos(); f[{0}] = s; f[{1}] = c; fsw &= !0x0400; }}", src & 7, dst & 7),
             Op::FPatan { x, y } => format!("f[{0}] = f[{0}].atan2(f[{1}]);", y & 7, x & 7),
@@ -545,6 +556,13 @@ impl Prog {
                 let v = src(c, s, *size, &mut rd)?;
                 format!("{{ let v = {v}; {} }}", wr(c, dst, *size, "v")?)
             }
+            // rcl / rcr by one (the x87 flag tricks of some formulas)
+            Ins::Shift { op: Shift::Rcl, dst: Rm::Reg(r), cnt: Some(1), size: 4 } => {
+                format!("{{ let x = rg[{r}]; let out = (x >> 31) & 1 == 1; rg[{r}] = (x << 1) | fl.cf as u32; fl.cf = out; }}")
+            }
+            Ins::Shift { op: Shift::Rcr, dst: Rm::Reg(r), cnt: Some(1), size: 4 } => {
+                format!("{{ let x = rg[{r}]; let out = x & 1 == 1; rg[{r}] = (x >> 1) | ((fl.cf as u32) << 31); fl.cf = out; }}")
+            }
             Ins::Shift { op: sop @ (Shift::Shl | Shift::Shr | Shift::Sar), dst: Rm::Reg(r), cnt: Some(n), size } => {
                 format!("shift_reg_l(&mut rg, &mut fl, Shift::{sop:?}, {r}, {n}, {size});")
             }
@@ -577,7 +595,10 @@ impl Prog {
                     _ => c.wr(r, 8, &format!("m.xmm[{s}][0]")),
                 }
             }
-            _ => return None,
+            other => {
+                lift_debug(&format!("op {k}: {other:?}"));
+                return None;
+            }
         })
     }
 }

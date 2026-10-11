@@ -112,6 +112,10 @@ const M_REFLECT: u32 = 4u;       // the reflection pass: a bounce (or the surfac
 // 3 Amazing Box: see amazing_box)
 const SLOTS: u32 = 64u;
 fn slot(n: u32, k: u32) -> u32 { return P[SLOTS + n * 8u + k]; }
+// the parameters of the built-in formulas (8 per slot)
+const SLOTX: u32 = 224u;
+fn slotx(n: u32, k: u32) -> f32 { return bitcast<f32>(P[SLOTX + n * 8u + k]); }
+fn slotxi(n: u32, k: u32) -> i32 { return bitcast<i32>(P[SLOTX + n * 8u + k]); }
 
 const PI: f32 = 3.14159265358979;
 
@@ -176,6 +180,9 @@ var<private> dbg_rst: f32;
 var<private> dbg_it2: i32;
 var<private> dbg_rout: f32;
 var<private> dbg_g: f32;
+// a DE of the pixel overflowed single precision (NaN / infinite before
+// the clamp): the CPU decides whether the image is trustworthy
+var<private> de_overflow: bool;
 var<private> mzz: f32;
 var<private> vfov: vec3<f32>;
 var<private> base: vec3<f32>;
@@ -297,10 +304,7 @@ fn box_fold(x: f32, fold: f32) -> f32 {
     return abs(x + fold) - (abs(x - fold) + x);
 }
 
-fn amazing_box(n: u32) {
-    let scale = bitcast<f32>(slot(n, 4u));
-    let min_r = bitcast<f32>(slot(n, 5u));
-    let fold = bitcast<f32>(slot(n, 7u));
+fn abox(scale: f32, min_r: f32, fold: f32, ade: bool) {
     let x = box_fold(v.x, fold);
     let y = box_fold(v.y, fold);
     let z = box_fold(v.z, fold);
@@ -314,10 +318,161 @@ fn amazing_box(n: u32) {
     } else {
         mul = scale / r;
     }
-    if (slot(n, 2u) != 0u) {
+    if (ade) {
         w *= mul;
     }
     v = vec3<f32>(x * mul + j.x, y * mul + j.y, z * mul + j.z);
+}
+
+fn amazing_box(n: u32) {
+    abox(bitcast<f32>(slot(n, 4u)), bitcast<f32>(slot(n, 5u)), bitcast<f32>(slot(n, 7u)), slot(n, 2u) != 0u);
+}
+
+// 'Tricorn' (formulas.rs): z multiplier, cz multiplier
+fn tricorn(n: u32) {
+    let x = v.x;
+    let y = v.y;
+    let z = v.z;
+    v.z = z * x * slotx(n, 0u) + j.z * slotx(n, 1u);
+    v.x = x * x - (y * y + z * z) + j.x;
+    v.y = 2.0 * (y * x) + j.y;
+}
+
+// 'Real Power' (HybridFloatPow): power, z multiplier; rout is the squared radius
+fn real_power(n: u32) {
+    let pw = slotx(n, 0u);
+    let x = v.x;
+    let y = v.y;
+    let z = v.z;
+    let theta = atan2(y, x) * pw;
+    let phi = atan2(z, sqrt(x * x + y * y)) * pw;
+    let r = pow(rout, pw * 0.5);
+    v = vec3<f32>(cos(theta) * cos(phi) * r + j.x, sin(theta) * cos(phi) * r + j.y, sin(phi) * r * slotx(n, 1u) + j.z);
+}
+
+// HybridItIntPow2scale: sine bulb power 2 with scaling (Bulbox)
+fn int_pow2_scale(scaling: f32) {
+    let s = 1.0 / scaling;
+    let x = v.x * s;
+    let y = v.y * s;
+    let z = v.z * s;
+    let xx = x * x;
+    let yy = y * y;
+    let r = xx + yy;
+    let a = (r - z * z) / r;
+    v = vec3<f32>((xx - yy) * a * scaling + j.x, (x * y * a) * 2.0 * scaling + j.y, -((sqrt(r) * z) * 2.0) * scaling + j.z);
+}
+
+// 'Bulbox' (HybridSuperCube2): box scale, box min R, box fold, bulb scaling,
+// R threshold, R threshold 2
+fn bulbox(n: u32) {
+    let scale = slotx(n, 0u);
+    let min_r = slotx(n, 1u);
+    let fold = slotx(n, 2u);
+    let bulb_scale = slotx(n, 3u);
+    let rt1 = slotx(n, 4u) * slotx(n, 4u);
+    let rt2 = slotx(n, 5u) * slotx(n, 5u);
+    if (rout < rt1) {
+        if (rout < rt2) {
+            int_pow2_scale(bulb_scale);
+        } else {
+            let m = (rout - rt2) / (rt1 - rt2);
+            let xyz_in = v;
+            int_pow2_scale(bulb_scale);
+            let o = v;
+            v = xyz_in;
+            abox(scale, min_r, fold, false);
+            let r1 = length(v);
+            let m2 = 1.0 - m;
+            let r2 = r1 * m + m2 * length(o);
+            v = v * m + m2 * o;
+            v *= r2 / sqrt(dot(v, v) + 1e-40);
+        }
+    } else {
+        abox(scale, min_r, fold, false);
+    }
+}
+
+// 'Folding Int Pow': power, z multiplier, R fold
+fn folding_int_pow(n: u32) {
+    let fold = slotx(n, 2u);
+    v = vec3<f32>(box_fold(v.x, fold), box_fold(v.y, fold), box_fold(v.z, fold));
+    v = int_pow(v, j, slotxi(n, 0u), slotx(n, 1u));
+}
+
+// 'Aexion C' (formulas.rs aexion_c): float power, z multiplier, rotate C,
+// conditional phi, float power C, Cz multiplier, PowC on distance, mode
+fn aexion_c(n: u32) {
+    let pw = slotx(n, 0u);
+    let z_mul = slotx(n, 1u);
+    let x = v.x;
+    let y = v.y;
+    let z = v.z;
+    var r1 = x * x + y * y + z * z;
+    let th = atan2(sqrt(x * x + z * z), y) * pw;
+    let ph = atan2(z, x) * pw;
+    r1 = exp(log(r1) * pw * 0.5);
+    v = vec3<f32>(cos(ph) * cos(th) * r1 + j.x, cos(th) * sin(ph) * r1 + j.y, sin(th) * r1 * z_mul + j.z);
+    if (slotxi(n, 2u) == 0) {
+        return;
+    }
+    var pd = slotx(n, 4u);
+    if (slotxi(n, 6u) != 0) {
+        pd *= length(v - j);
+    }
+    let r = length(j);
+    let mode = slotxi(n, 7u);
+    var a: f32;
+    var b: f32;
+    var cc: f32;
+    if ((mode & 16) != 0) {
+        a = v.y - j.y;
+        b = v.z - j.z;
+        cc = v.x - j.x;
+    } else {
+        a = j.y;
+        b = j.z;
+        cc = j.x;
+    }
+    var ofs = 0;
+    var ecx = 8;
+    if ((mode & 8) != 0) {
+        let t = a;
+        a = b;
+        b = t;
+        ecx = 16;
+    }
+    let s = sqrt(b * b + cc * cc);
+    var th2 = select(atan2(s, a), atan2(a, s), (mode & 1) != 0);
+    var ph2: f32;
+    if ((mode & 2) != 0) {
+        ofs = 24 - ecx;
+        ph2 = atan2(cc, b);
+    } else {
+        ph2 = atan2(b, cc);
+    }
+    if ((mode & 4) != 0) {
+        let t = th2;
+        th2 = ph2;
+        ph2 = t;
+        ofs = ecx;
+    }
+    if (slotxi(n, 3u) != 0) {
+        var t = v.z;
+        if (ofs == 0) {
+            t = v.x;
+        } else if (ofs == 8) {
+            t = v.y;
+        }
+        if ((bitcast<u32>(t) >> 31u) == 0u) {
+            ph2 = -ph2;
+        }
+    }
+    let sa = sin(ph2 * pd);
+    let ca = cos(ph2 * pd);
+    let sb = sin(th2 * pd);
+    let cb = cos(th2 * pd);
+    j = vec3<f32>(ca * cb * r, cb * sa * r, sb * r * slotx(n, 5u));
 }
 
 // CalcSmoothIterations (fHln of the last formula n)
@@ -547,6 +702,7 @@ fn evaluate(on_de: bool) -> f32 {
     var bc = c;
     var buf_rout = 0.0;
     var buf_lr = 0.0;
+    var buf_v = vec3<f32>(0.0);
     var buf_sit = false;
     var buf_max_it = 0;
     var g = 0.0;
@@ -610,6 +766,7 @@ fn evaluate(on_de: bool) -> f32 {
                 } else {
                     buf_rout = rout;
                     buf_lr = lrout;
+                    buf_v = v;
                     buf_sit = calc_sit;
                     buf_max_it = max_it;
                     calc_sit = false;
@@ -619,9 +776,16 @@ fn evaluate(on_de: bool) -> f32 {
                     part_done = false;
                 }
             } else {
-                // the differences relative to rout, from the logarithms:
-                // rout itself overflows for orbits that escaped far
-                let d = 1.0 - exp(lrout - buf_lr);
+                // the difference of the squared lengths relative to rout, from
+                // the vectors themselves (|a|^2 - |b|^2 = (a - b) . (a + b):
+                // exact where the squares would lose precision); from the
+                // logarithms where the vectors overflowed single precision
+                var d: f32;
+                if (buf_rout < 1e30 && rout < 1e30) {
+                    d = dot(buf_v - v, buf_v + v) / buf_rout;
+                } else {
+                    d = 1.0 - exp(lrout - buf_lr);
+                }
                 g += d * d;
                 k += 1u;
                 if (k < 4u) {
@@ -642,6 +806,9 @@ fn evaluate(on_de: bool) -> f32 {
             if (part_done) {
                 max_its_result = max_it;
                 let mn = ms_de_stop * 0.25;
+                if (is_nan(result) || abs(result) > 3.0e38) {
+                    de_overflow = true;
+                }
                 if (result < mn || is_nan(result)) {
                     result = mn;
                 }
@@ -2178,6 +2345,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let o = u32(ly * w + lx) * 5u;
     // one call of pixel() only: the driver inlines it at every call site
     var run = true;
+    de_overflow = false;
     if (mode == M_MARCH || mode == M_PROBE) {
         si_normal = vec3<i32>(0);
         si_zpos = 32768u << 16u;
@@ -2217,5 +2385,5 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         OUT[o + 3u] = si_grad | (si_otrap << 16u);
     }
     OUT[o + 1u] = (u32(si_normal.z) & 0xFFFFu) | (si_shadow << 16u);
-    OUT[o + 4u] = si_amb;
+    OUT[o + 4u] = (si_amb & 0xFFFFu) | select(0u, 0x10000u, de_overflow) | (OUT[o + 4u] & 0x10000u & select(0u, 0xFFFFFFFFu, mode != M_MARCH && mode != M_PROBE));
 }

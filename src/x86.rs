@@ -3405,6 +3405,7 @@ fn localize(line: &str, permute_rotations: bool) -> String {
     // rotate_right is a memory move).  Not in code with local subroutines:
     // their returns are dynamic jumps, and the permutations become register
     // shuffles at every call site (slower than the memory move there)
+    #[allow(clippy::while_immutable_condition)] // the body breaks out
     while permute_rotations {
         let Some(i) = l.find("f.rotate_right(") else { break };
         let end = l[i..].find(");").map(|e| i + e + 2).unwrap_or(l.len());

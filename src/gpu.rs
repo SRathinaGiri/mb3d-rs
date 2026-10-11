@@ -121,6 +121,8 @@ struct SceneShader {
     /// per slot: iterations, uncounted, constants base, fHln bits, power,
     /// z multiplier bits, kind, 0
     slots: [[u32; 8]; 6],
+    /// per slot: the parameters of the built-in formulas (f32 / i32 bits)
+    slotx: [[u32; 8]; 6],
 }
 
 /// Record cells (offset / 8 from J4) with integers the loop copies to the
@@ -131,6 +133,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     use crate::x86::lift_wgsl::{record_globals, CellTy, WgslFormula, PRELUDE};
     use std::fmt::Write;
     let mut slots = [[0u32; 8]; 6];
+    let mut slotx = [[0u32; 8]; 6];
     let mut wfs: Vec<(usize, WgslFormula)> = Vec::new();
     let mut cst: Vec<u32> = Vec::new();
     if p.slots.len() > 6 {
@@ -164,7 +167,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             let vb = (crate::custom::var_buf_addr(n) - crate::x86::BASE) as usize;
             row[7] = cst.len() as u32;
             cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400]));
-            row[6] |= 8;
+            row[6] |= 16; // the dIFS translation (the kind is in the low bits)
             wfs.push((n, wf));
             if !plain_slot(n) {
                 continue;
@@ -182,6 +185,28 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 row[5] = (*min_r as f32).to_bits();
                 row[6] = 3;
                 row[7] = (*fold as f32).to_bits();
+            }
+            Formula::Tricorn { z_mul, cz_mul } => {
+                row[6] = 5;
+                slotx[n] = [(*z_mul as f32).to_bits(), (*cz_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0];
+            }
+            Formula::Bulbox { scale, min_r, fold, bulb_scale, r_threshold, r_threshold2 } => {
+                row[6] = 6;
+                let f = |x: &f64| (*x as f32).to_bits();
+                slotx[n] = [f(scale), f(min_r), f(fold), f(bulb_scale), f(r_threshold), f(r_threshold2), 0, 0];
+            }
+            Formula::AexionC { power, z_mul, rot_c, cond_phi, power_c, cz_mul, powc_dist, mode } => {
+                row[6] = 7;
+                let f = |x: &f64| (*x as f32).to_bits();
+                slotx[n] = [f(power), f(z_mul), *rot_c as u32, *cond_phi as u32, f(power_c), f(cz_mul), *powc_dist as u32, *mode as u32];
+            }
+            Formula::RealPower { power, z_mul } => {
+                row[6] = 4;
+                slotx[n] = [(*power as f32).to_bits(), (*z_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0];
+            }
+            Formula::FoldingIntPow { power, z_mul, fold } => {
+                row[6] = 9;
+                slotx[n] = [*power as u32, (*z_mul as f32).to_bits(), (*fold as f32).to_bits(), 0, 0, 0, 0, 0];
             }
             Formula::Custom(c) if c.def.jit.is_none() => {
                 let m = p.machine.as_ref().ok_or("no formula machine")?;
@@ -372,7 +397,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "fn call_slot(n: u32) {{");
     let _ = writeln!(g, "    switch (n) {{");
     for (n, row) in slots.iter().enumerate() {
-        match row[6] & 7 {
+        match row[6] & 15 {
             1 => {
                 let _ = writeln!(g, "        case {n}u: {{ v = int_pow(v, j, bitcast<i32>(slot({n}u, 4u)), bitcast<f32>(slot({n}u, 5u))); }}");
             }
@@ -381,6 +406,21 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             }
             3 => {
                 let _ = writeln!(g, "        case {n}u: {{ amazing_box({n}u); }}");
+            }
+            5 => {
+                let _ = writeln!(g, "        case {n}u: {{ tricorn({n}u); }}");
+            }
+            6 => {
+                let _ = writeln!(g, "        case {n}u: {{ bulbox({n}u); }}");
+            }
+            7 => {
+                let _ = writeln!(g, "        case {n}u: {{ aexion_c({n}u); }}");
+            }
+            4 => {
+                let _ = writeln!(g, "        case {n}u: {{ real_power({n}u); }}");
+            }
+            9 => {
+                let _ = writeln!(g, "        case {n}u: {{ folding_int_pow({n}u); }}");
             }
             _ => {}
         }
@@ -393,7 +433,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "fn call_slot_difs(n: u32, cnt: u32) {{");
     let _ = writeln!(g, "    switch (n) {{");
     for (n, row) in slots.iter().enumerate() {
-        if row[6] & 8 != 0 {
+        if row[6] & 16 != 0 {
             let _ = writeln!(
                 g,
                 "        case {n}u: {{ marshal_in(); rg = array<u32, 8>(0u, cnt, {:#x}u, {n}u, {:#x}u, 0u, {:#x}u, {:#x}u); fsw = 0u; fd{n}(slot({n}u, 7u)); marshal_out(); }}",
@@ -412,7 +452,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     if let Some(f) = std::env::var_os("MB3D_GPU_DUMP") {
         let _ = std::fs::write(f, &code);
     }
-    Ok(SceneShader { code, cst, rtpl, slots })
+    Ok(SceneShader { code, cst, rtpl, slots, slotx })
 }
 
 /// The smallest [`precision`] for the GPU: below it the single precision
@@ -539,7 +579,8 @@ async fn init() -> Result<Gpu, String> {
 /// The words of the parameter buffer (`P` in the shader) for a band of
 /// rows; `mode` 0 is the march, 1 the shadow pass and 2 the ambient
 /// occlusion of `post`.
-fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode: u32, post: &PostJob, reflect: Option<(&ReflectOpts, usize)>) -> Vec<u32> {
+fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u32, post: &PostJob, reflect: Option<(&ReflectOpts, usize)>) -> Vec<u32> {
+    let slots = &scene.slots;
     let probe_mzz = PROBE_MZZ.with(|m| m.get());
     let (power, z_mul) = match p.slots[0].formula {
         Formula::IntPow { power, z_mul } => (power, z_mul),
@@ -710,6 +751,11 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
         }
         None => v.resize(220, 0),
     }
+    v.resize(224, 0);
+    // the parameters of the built-in formulas
+    for row in &scene.slotx {
+        v.extend_from_slice(row);
+    }
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
@@ -717,11 +763,13 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 224;
+const PARAM_WORDS: usize = 272;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
     static PROBE_MZZ: std::cell::Cell<f64> = const { std::cell::Cell::new(0.0) };
+    /// the pixels of the last [`run`] whose DE overflowed single precision
+    static OVERFLOW: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
 }
 
 fn bytes(v: &[u32]) -> Vec<u8> {
@@ -771,6 +819,19 @@ pub fn march(
     if timing {
         eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
     }
+    let r = r.and_then(|v| {
+        // pixels whose DE overflowed single precision: a formula not made
+        // for f32 (folds of huge values); a few are harmless, many are not
+        let n = OVERFLOW.with(|c| c.get());
+        if timing {
+            eprintln!("  DE overflow in {n} of {} pixels", v.len());
+        }
+        if n * 500 > v.len() {
+            Err(format!("single precision overflows in {} ({n} of {} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + "), v.len()))
+        } else {
+            Ok(v)
+        }
+    });
     match r {
         Ok(v) => {
             let mut s = format!("GPU {}", g.name);
@@ -906,7 +967,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     let mut row0 = 0;
     while row0 < rows_total {
         let rows = band.min(rows_total - row0);
-        let par = make("params", &params(p, row0, rows, &sh.slots, 4, &PostJob::default(), Some((o, n))));
+        let par = make("params", &params(p, row0, rows, &sh, 4, &PostJob::default(), Some((o, n))));
         let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &pl.get_bind_group_layout(0),
@@ -1073,6 +1134,7 @@ fn run(
         })
         .collect();
     let mut gbuf = Vec::with_capacity(w * h);
+    let mut overflow = 0usize;
     let mut row0 = 0;
     while row0 < h {
         if cancel() {
@@ -1080,7 +1142,7 @@ fn run(
         }
         let rows = band.min(h - row0);
         for (k, &mode) in modes.iter().enumerate() {
-            g.queue.write_buffer(&pars[k], 0, &bytes(&params(p, row0, rows, &sh.slots, mode, post, None)));
+            g.queue.write_buffer(&pars[k], 0, &bytes(&params(p, row0, rows, sh, mode, post, None)));
         }
         let mut enc = g.device.create_command_encoder(&Default::default());
         for (bind, pl) in binds.iter().zip(&pls) {
@@ -1109,6 +1171,7 @@ fn run(
                 for px in row.chunks_exact(20) {
                     let u = |k: usize| u32::from_le_bytes(px[k * 4..k * 4 + 4].try_into().unwrap());
                     let (a, b, z, s, amb) = (u(0), u(1), u(2), u(3), u(4));
+                    overflow += (amb & 0x10000 != 0) as usize;
                     gbuf.push(SiLight {
                         normal: [a as u16 as i16, (a >> 16) as u16 as i16, b as u16 as i16],
                         zpos_fine: z,
@@ -1125,6 +1188,7 @@ fn run(
         row0 += rows;
         progress(row0, h);
     }
+    OVERFLOW.with(|c| c.set(overflow));
     Ok(gbuf)
 }
 

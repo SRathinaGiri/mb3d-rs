@@ -54,7 +54,10 @@ pub fn parse_float(s: &str) -> Option<f64> {
     let mut d = 1.0;
     let up = st.to_ascii_uppercase();
     if up.contains("PHI") {
-        d = 1.6180339887;
+        #[allow(clippy::approx_constant)] // MB3D's digits of the golden ratio
+        {
+            d = 1.6180339887;
+        }
         st = replace_ci(&st, "phi");
     }
     if st.to_ascii_uppercase().contains("PI") {

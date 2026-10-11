@@ -191,6 +191,7 @@ pub fn de_check(name: &str, p: &mb3d::calc::CalcParams) {
     let Some(gb) = mb3d::gpu::march(p, &mb3d::calc::PostJob::default(), &|_, _| {}, &|| false, |_, _| {}) else { return };
     let mut worst = (0i64, 0, 0);
     let mut diff_bg = 0usize;
+    let mut bg_pixel: Option<(i32, i32, bool)> = None;
     for y in 0..h {
         let mut m = mb3d::calc::Marcher::new(p, 1);
         for x in 0..w {
@@ -198,6 +199,14 @@ pub fn de_check(name: &str, p: &mb3d::calc::CalcParams) {
             let a = &gb[(y * w + x) as usize];
             if a.is_background() != c.is_background() {
                 diff_bg += 1;
+                // the mismatch nearest the centre gets the profile
+                let better = |q: &Option<(i32, i32, bool)>| match q {
+                    Some((qx, qy, _)) => (x - w / 2).abs() + (y - h / 2).abs() < (qx - x0 - w / 2).abs() + (qy - y0 - h / 2).abs(),
+                    None => true,
+                };
+                if better(&bg_pixel) {
+                    bg_pixel = Some((x0 + x, y0 + y, c.is_background()));
+                }
             }
             let d = (a.zpos() as i64 - c.zpos() as i64).abs();
             if d > worst.0 {
@@ -206,6 +215,14 @@ pub fn de_check(name: &str, p: &mb3d::calc::CalcParams) {
         }
     }
     println!("  background/object differ in {:.2}% of the pixels; largest depth difference {} at ({}, {})", 100.0 * diff_bg as f64 / n, worst.0, worst.1, worst.2);
+    if let Some((x, y, cpu_bg)) = bg_pixel {
+        println!("  a background/object mismatch at ({x}, {y}): the CPU sees {}", if cpu_bg { "background" } else { "the object" });
+        worst = (0, x, y);
+    }
+    // POSTCHECK_PIXEL=x,y: the profile of that pixel instead
+    if let Some((x, y)) = std::env::var("POSTCHECK_PIXEL").ok().and_then(|v| v.split_once(',').and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?)))) {
+        worst = (0, x, y);
+    }
     let (start, dir) = mb3d::calc::pixel_ray(p, worst.1, worst.2);
     let (px, py) = ((worst.1 - x0) as usize, (worst.2 - y0) as usize);
     println!("  the DE along its ray (cpu / gpu, iteration counts):");

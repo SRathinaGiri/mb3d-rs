@@ -416,7 +416,8 @@ driver also send the calculation to the CPU, and software renderers
 its shader (one to two seconds; the driver caches it).
 
 Of the 80 example parameter files of MB3D, 45 run on the GPU at their
-own image size (391 of the 460 formula files translate); at that size
+own image size (421 of the 460 formula files translate, and the built-in
+formulas except Quaternion are written by hand); at that size
 *Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
 instead of 58 s; with the reflections on the card, *Rama - Elysium* at 160
 pixels takes 4.5 s instead of 24.7 s and *LightBulbMoon - A Fabulous

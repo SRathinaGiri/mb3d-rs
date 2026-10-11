@@ -40,6 +40,7 @@ fn iq_bulb_matches_its_definition() {
 fn benesi_pine_tree_matches_its_definition() {
     let def = formula("JITBenesiPineTree");
     // constants come from [CONSTANTS], options Offset = 2, Scale = 2
+    #[allow(clippy::approx_constant)]
     let (s12, s13, s23) = (0.707106781186548f64, 0.577350269189626, 0.816496580927726);
     let v = [0.4f64, -0.3, 0.8, 1.0];
     let j = [0.25, 0.5, 0.75];
