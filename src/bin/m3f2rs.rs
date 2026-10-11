@@ -184,10 +184,15 @@ fn gpu_report(dir: &str) {
     for f in &files {
         let Ok(def) = M3f::load(f) else { continue };
         let name = def.name.clone();
-        let difs = def.de_option >= 20;
+        // GPU_REPORT_DIFS: the dIFS calling convention for every formula
+        let difs = def.de_option >= 20 || std::env::var_os("GPU_REPORT_DIFS").is_some();
         let cf = CustomFormula::new(Arc::new(def));
         let m = build_machine(&[Some(&cf)]);
         let Some(p) = m.prog(code_addr(0)) else { continue };
+        // GPU_REPORT_WGSL: also attempt the WGSL translation (LIFT_DEBUG says why it fails)
+        if std::env::var_os("GPU_REPORT_WGSL").is_some() {
+            println!("WGSL {} {name}", if p.emit_wgsl("f", difs).is_some() { "ok  " } else { "FAIL" });
+        }
         match p.gpu_typing(difs) {
             None => not_lifted += 1,
             Some((true, _)) => {

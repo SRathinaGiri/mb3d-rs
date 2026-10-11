@@ -12,11 +12,26 @@ fn main() {
     mb3d::formulas::add_formula_dir(mb3d.join("M3Formulas"));
     mb3d::maps::add_map_dir(mb3d.join("M3Maps"));
     mb3d::gpu::set_enabled(true);
-    for f in &a[2..] {
+    for f in a[2..].iter().filter(|x| !x.starts_with("--")) {
         let name = std::path::Path::new(f).file_stem().unwrap().to_string_lossy().to_string();
         let Ok((mut sc, _)) = mb3d::animfile::load_scene(std::path::Path::new(f)) else { continue };
         sc.scale_image(width / sc.width.max(1) as f64);
         let Ok(p) = mb3d::calc::CalcParams::new(&sc) else { continue };
+        if a.iter().any(|x| x == "--de") {
+            de_check(&name, &p);
+            // the parts of a DE combination on their own
+            if sc.decomb.is_some() && a.iter().any(|x| x == "--parts") {
+                let mut s1 = sc.clone();
+                s1.decomb = None;
+                for f in s1.formulas.iter_mut().skip(1) {
+                    f.iterations = 0;
+                }
+                if let Ok(p1) = mb3d::calc::CalcParams::new(&s1) {
+                    de_check(&format!("{name} part 1"), &p1);
+                }
+            }
+            continue;
+        }
         let job = mb3d::render::post_job(&sc, &p);
         // screen space AO: the CPU's and the card's on the same G-buffer
         if let Some(ao) = sc.ao.filter(|_| sc.deao.is_none()) {
@@ -142,5 +157,68 @@ fn main() {
             s += &format!(" AO mean diff {:.4}, > 0.1 in {:.2}%", ao_d / n, 100.0 * ao_bad as f64 / n);
         }
         println!("{s}");
+    }
+}
+
+/// `--de`: the DE at the ray start of every pixel, card against CPU, and
+/// the DE along the ray of the pixel whose depth differs most.
+pub fn de_check(name: &str, p: &mb3d::calc::CalcParams) {
+    let g = match mb3d::gpu::de_probe(p, 0.0) {
+        Ok(g) => g,
+        Err(e) => {
+            println!("{name}: DE probe: {e}");
+            return;
+        }
+    };
+    let [x0, y0, w, h] = p.rect;
+    let (mut n, mut rel, mut bad, mut it_same) = (0usize, 0f64, 0usize, 0usize);
+    for y in 0..h {
+        for x in 0..w {
+            let (start, _) = mb3d::calc::pixel_ray(p, x0 + x, y0 + y);
+            let (d, it) = mb3d::calc::de_at(p, start);
+            let d = d / p.step_width;
+            let (gd, git, _, _) = g[(y * w + x) as usize];
+            n += 1;
+            let r = ((gd as f64 - d).abs() / d.abs().max(1e-6)).min(10.0);
+            rel += r;
+            bad += (r > 0.05) as usize;
+            it_same += (git == it) as usize;
+        }
+    }
+    let n = n.max(1) as f64;
+    println!("{name}: DE at the ray start: mean relative diff {:.4}, > 5% in {:.2}%, same iteration count {:.1}%", rel / n, 100.0 * bad as f64 / n, 100.0 * it_same as f64 / n);
+    // the G-buffers: the pixel whose depth differs most
+    let Some(gb) = mb3d::gpu::march(p, &mb3d::calc::PostJob::default(), &|_, _| {}, &|| false, |_, _| {}) else { return };
+    let mut worst = (0i64, 0, 0);
+    let mut diff_bg = 0usize;
+    for y in 0..h {
+        let mut m = mb3d::calc::Marcher::new(p, 1);
+        for x in 0..w {
+            let c = m.march_pixel(x0 + x, y0 + y);
+            let a = &gb[(y * w + x) as usize];
+            if a.is_background() != c.is_background() {
+                diff_bg += 1;
+            }
+            let d = (a.zpos() as i64 - c.zpos() as i64).abs();
+            if d > worst.0 {
+                worst = (d, x0 + x, y0 + y);
+            }
+        }
+    }
+    println!("  background/object differ in {:.2}% of the pixels; largest depth difference {} at ({}, {})", 100.0 * diff_bg as f64 / n, worst.0, worst.1, worst.2);
+    let (start, dir) = mb3d::calc::pixel_ray(p, worst.1, worst.2);
+    let (px, py) = ((worst.1 - x0) as usize, (worst.2 - y0) as usize);
+    println!("  the DE along its ray (cpu / gpu, iteration counts):");
+    let mut mzz = 0.0;
+    while mzz < p.zend {
+        let pos = [0, 1, 2].map(|k| start[k] + dir[k] * mzz);
+        let (d, it) = mb3d::calc::de_at(p, pos);
+        let (gd, git, gm, parts) = match mb3d::gpu::de_probe(p, mzz) {
+            Ok(v) => v[py * w as usize + px],
+            Err(_) => break,
+        };
+        let _ = gm;
+        println!("    mzz {mzz:9.2}: {:10.4} it {it:3} / {:10.4} it {git:3}   (gpu parts: {:.3} it {}, {:.3} it {})", d / p.step_width, gd, parts[0].0, parts[0].1, parts[1].0, parts[1].1);
+        mzz += (p.zend / 40.0).max(1.0);
     }
 }

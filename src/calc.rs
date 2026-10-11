@@ -1806,6 +1806,16 @@ impl<'a> Marcher<'a> {
     }
 }
 
+/// The ray of a pixel: its start position and its direction per step
+/// (`RMCalculateVgradsFOV` / `RMCalculateStartPos`), for tools.
+pub fn pixel_ray(p: &CalcParams, x: i32, y: i32) -> (Vec3, Vec3) {
+    let mut m = Marcher::new(p, 1);
+    m.cafy = (y as f64 / p.height as f64 - 0.5) * p.fov_y;
+    m.calc_vgrads_fov(x + 1);
+    m.calc_start_pos(x, y);
+    (m.it.c, m.vfov)
+}
+
 /// Evaluate the DE at an arbitrary world position (useful for tests/tools).
 pub fn de_at(p: &CalcParams, pos: Vec3) -> (f64, i32) {
     let mut m = Marcher::new(p, 1);

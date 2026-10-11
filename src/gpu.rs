@@ -5,9 +5,10 @@
 //! fills the same G-buffer as the CPU, then runs the hard shadows and the
 //! DE ambient occlusion on it (the painting stays on the CPU).  The shader
 //! calculates in single precision: the alternating 3D hybrid of 'Integer
-//! Power' and the .m3f formulas the lifter translates to WGSL
-//! (`x86::lift_wgsl`), with the numerical or the analytic DE (options 0,
-//! 2, 11); [`unsupported`] says why a scene is calculated on the CPU.
+//! Power', 'Amazing Box' and the .m3f formulas the lifter translates to
+//! WGSL (`x86::lift_wgsl`), with the numerical or the analytic DE (options
+//! 0, 2, 11), dIFS hybrids (option 20) and the DE combinations of two
+//! parts; [`unsupported`] says why a scene is calculated on the CPU.
 
 use crate::calc::{CalcParams, PostJob};
 use crate::formulas::Formula;
@@ -69,17 +70,20 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     if p.slice_2d != 0 {
         return r("2D calculation (not on the GPU yet)");
     }
-    if p.decomb.is_some() {
-        return r("DE combination (not on the GPU yet)");
-    }
     if p.mode != HybridMode::Alt3D {
         return r("4D or interpolation hybrid (not on the GPU yet)");
     }
-    if p.difs {
-        return r("dIFS formulas (not on the GPU yet)");
-    }
-    if p.is_custom_de && ![2, 11].contains(&p.de_option) {
+    if p.is_custom_de && !p.difs && ![2, 11].contains(&p.de_option) {
         return r("this analytic DE option (not on the GPU yet)");
+    }
+    if let Some(dc) = &p.decomb {
+        let p2 = &dc.part2;
+        if p2.mode != HybridMode::Alt3D {
+            return r("a 4D part of the DE combination (not on the GPU yet)");
+        }
+        if p2.is_custom_de && !p2.difs && ![2, 11].contains(&p2.de_option) {
+            return r("this analytic DE option of the DE combination (not on the GPU yet)");
+        }
     }
     if p.cut_options != 0 {
         return r("cutting planes (not on the GPU yet)");
@@ -126,6 +130,13 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     if p.slots.len() > 6 {
         return Err("more than 6 formulas".into());
     }
+    // the slots called with the dIFS convention (doHybridIFS3D) and the
+    // ones called as plain formulas; a slot can be in both parts
+    let part2 = p.decomb.as_ref().map(|d| &d.part2);
+    let in_part1 = |n: usize| n <= p.end_to;
+    let in_part2 = |n: usize| part2.is_some_and(|q| (q.start..=q.end).contains(&n));
+    let difs_slot = |n: usize| (in_part1(n) && p.difs) || (in_part2(n) && part2.is_some_and(|q| q.difs));
+    let plain_slot = |n: usize| (in_part1(n) && !p.difs) || (in_part2(n) && part2.is_some_and(|q| !q.difs));
     for (n, sl) in p.slots.iter().enumerate() {
         let row = &mut slots[n];
         row[0] = sl.iterations as u32;
@@ -133,6 +144,25 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         row[3] = p.fhln[n].to_bits();
         if sl.iterations == 0 {
             continue;
+        }
+        if difs_slot(n) {
+            let Formula::Custom(c) = &sl.formula else {
+                return Err(format!("{} in a dIFS hybrid", sl.formula.name()));
+            };
+            let m = p.machine.as_ref().ok_or("no formula machine")?;
+            let prog = m.prog(crate::custom::code_addr(n)).ok_or_else(|| format!("{}: not compiled", c.name()))?;
+            let wf = prog.emit_wgsl(&format!("fd{n}"), true).ok_or_else(|| format!("{} is not on the GPU yet", c.name()))?;
+            if wf.writes_vars {
+                return Err(format!("{} keeps state in its variables", c.name()));
+            }
+            let vb = (crate::custom::var_buf_addr(n) - crate::x86::BASE) as usize;
+            row[7] = cst.len() as u32;
+            cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400]));
+            row[6] |= 8;
+            wfs.push((n, wf));
+            if !plain_slot(n) {
+                continue;
+            }
         }
         match &sl.formula {
             Formula::IntPow { power, z_mul } => {
@@ -157,7 +187,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 let vb = (crate::custom::var_buf_addr(n) - crate::x86::BASE) as usize;
                 row[2] = cst.len() as u32;
                 cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400]));
-                row[6] = 2;
+                row[6] |= 2;
                 wfs.push((n, wf));
             }
             f => return Err(format!("the built-in formula {} is not on the GPU yet", f.name())),
@@ -174,10 +204,18 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             }
         }
     }
+    // the cells the loop copies as integers must keep their bits
+    for c in LOOP_HALVES {
+        if let Some(e) = unified.get_mut(&c) {
+            *e = CellTy::Halves;
+        }
+    }
     for (n, w) in wfs.iter_mut() {
         if w.record.iter().any(|(c, t)| unified[c] != *t) {
             let prog = p.machine.as_ref().and_then(|m| m.prog(crate::custom::code_addr(*n))).ok_or("not compiled")?;
-            *w = prog.emit_wgsl_with(&format!("fm{n}"), false, &unified).ok_or("formula typing")?;
+            let difs = w.code.contains(&format!("fn fd{n}("));
+            let name = if difs { format!("fd{n}") } else { format!("fm{n}") };
+            *w = prog.emit_wgsl_with(&name, difs, &unified).ok_or("formula typing")?;
         }
     }
     let refs: Vec<&WgslFormula> = wfs.iter().map(|(_, w)| w).collect();
@@ -291,6 +329,28 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         let _ = writeln!(g, "    first_it = bitcast<i32>(r33l);");
     }
     let _ = writeln!(g, "}}");
+    // difs_init: the record fields a dIFS loop sets once (hybrid_difs):
+    // RStopD, BTmp, SmoothIt / InsideRender (not inside)
+    let _ = writeln!(g, "fn difs_init() {{");
+    match ty.get(&2) {
+        Some(CellTy::Whole) => {
+            let _ = writeln!(g, "    r2f = rstopd;");
+        }
+        Some(CellTy::Halves) => {
+            let _ = writeln!(g, "    r2l = f64_lo(rstopd); r2h = f64_hi(rstopd);");
+        }
+        None => {}
+    }
+    if has(33) {
+        let _ = writeln!(g, "    r33h = 0u;");
+    }
+    if has(13) {
+        let _ = writeln!(g, "    r13h = 0u;");
+    }
+    if let Some(CellTy::Halves) = ty.get(&55) {
+        let _ = writeln!(g, "    r55l = 0u; r55h = 0u;");
+    }
+    let _ = writeln!(g, "}}");
     for (_, w) in &wfs {
         g.push_str(&w.code);
     }
@@ -306,7 +366,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "fn call_slot(n: u32) {{");
     let _ = writeln!(g, "    switch (n) {{");
     for (n, row) in slots.iter().enumerate() {
-        match row[6] {
+        match row[6] & 7 {
             1 => {
                 let _ = writeln!(g, "        case {n}u: {{ v = int_pow(v, j, bitcast<i32>(slot({n}u, 4u)), bitcast<f32>(slot({n}u, 5u))); }}");
             }
@@ -320,6 +380,25 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         }
     }
     let _ = writeln!(g, "        default: {{}}");
+    let _ = writeln!(g, "    }}");
+    let _ = writeln!(g, "}}");
+    // call_slot_difs: Machine::call_difs (esi = the record + 144, edx =
+    // esi + 128, edi = the variables, ebx = the slot, ecx = the count)
+    let _ = writeln!(g, "fn call_slot_difs(n: u32, cnt: u32) {{");
+    let _ = writeln!(g, "    switch (n) {{");
+    for (n, row) in slots.iter().enumerate() {
+        if row[6] & 8 != 0 {
+            let _ = writeln!(
+                g,
+                "        case {n}u: {{ marshal_in(); rg = array<u32, 8>(0u, cnt, {:#x}u, {n}u, {:#x}u, 0u, {:#x}u, {:#x}u); fsw = 0u; fd{n}(slot({n}u, 7u)); marshal_out(); }}",
+                crate::custom::IT_BASE + 272,
+                crate::custom::STACK_TOP - 4,
+                crate::custom::IT_BASE + 144,
+                crate::custom::pconst_addr(n)
+            );
+        }
+    }
+    let _ = writeln!(g, "        default: {{ rg[1] = cnt; rg[3] = n; }}");
     let _ = writeln!(g, "    }}");
     let _ = writeln!(g, "}}");
     let code = include_str!("gpu_march.wgsl").replace("//@FORMULAS@", &g);
@@ -354,33 +433,52 @@ struct Gpu {
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
-fn pipeline(g: &Gpu, code: &str) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
-    pipeline_entry(g, code, "main", None)
+fn pipeline(g: &Gpu, code: &str, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
+    pipeline_entry(g, code, "main", None, constants)
 }
 
 /// The pipeline of the entry point `entry` of the shader `code`; `layout`
 /// when several pipelines share one bind group (the automatic layout of a
 /// pipeline is exclusive to it).
-fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
+fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();
     (code, entry).hash(&mut h);
+    for (k, v) in constants {
+        (k, v.to_bits()).hash(&mut h);
+    }
     let key = h.finish();
     if let Some(pl) = g.pipelines.lock().map_err(|e| e.to_string())?.get(&key) {
         return Ok(pl.clone());
     }
     let scope = g.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    // MB3D_GPU_NOCACHE: a different shader text every time (the driver's
+    // cache misses: the compile time of a new scene), MB3D_GPU_TIMING: print it
+    let t = std::time::Instant::now();
+    let salted;
+    let code = if std::env::var_os("MB3D_GPU_NOCACHE").is_some() {
+        // a different constant inside the entry point every time
+        let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos() as u32).unwrap_or(1);
+        let at = code.find(&format!("fn {entry}(")).and_then(|i| code[..i].rfind("@compute")).unwrap_or(0);
+        salted = format!("{}const SALT_X: u32 = {t}u;\n{}", &code[..at], &code[at..]).replacen("    _ = cst[0];", "    _ = cst[0] + SALT_X;", 1);
+        &salted
+    } else {
+        code
+    };
     let module = g.device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some(entry), source: wgpu::ShaderSource::Wgsl(code.into()) });
     let pl = g.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: Some(entry),
         layout,
         module: &module,
         entry_point: Some(entry),
-        compilation_options: Default::default(),
+        compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
         cache: None,
     });
     if let Some(e) = pollster::block_on(scope.pop()) {
         return Err(format!("the shader does not compile: {e}"));
+    }
+    if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+        eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s", code.lines().count(), t.elapsed().as_secs_f64());
     }
     let pl = std::sync::Arc::new(pl);
     g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
@@ -425,6 +523,7 @@ async fn init() -> Result<Gpu, String> {
 /// rows; `mode` 0 is the march, 1 the shadow pass and 2 the ambient
 /// occlusion of `post`.
 fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode: u32, post: &PostJob) -> Vec<u32> {
+    let probe_mzz = PROBE_MZZ.with(|m| m.get());
     let (power, z_mul) = match p.slots[0].formula {
         Formula::IntPow { power, z_mul } => (power, z_mul),
         _ => (8, -1.0),
@@ -474,7 +573,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
     i(&mut v, p.dfog_on_it as i32);
     i(&mut v, p.first_step_random as i32);
     // the post passes use their own binary search depth
-    i(&mut v, [p.de_add_steps, 8, 5][mode as usize]);
+    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps][mode as usize]);
     i(&mut v, p.normals_on_de as i32);
     i(&mut v, p.sm_normals);
     f(&mut v, p.de_offset as f64);
@@ -528,12 +627,44 @@ fn params(p: &CalcParams, row0: usize, rows: usize, slots: &[[u32; 8]; 6], mode:
             None => v.extend_from_slice(&[0; 4]),
         }
     }
-    debug_assert_eq!(v.len(), PARAM_WORDS);
+    debug_assert_eq!(v.len(), 148);
+    // dIFS and the DE combination
+    i(&mut v, p.difs as i32);
+    i(&mut v, 0); // START_FROM of the first part
+    match &p.decomb {
+        Some(dc) => {
+            let q = &dc.part2;
+            i(&mut v, dc.kind as i32);
+            f(&mut v, dc.smooth);
+            f(&mut v, dc.fmix_pow);
+            i(&mut v, dc.mix_col as i32);
+            i(&mut v, q.start as i32);
+            i(&mut v, q.end as i32);
+            i(&mut v, q.repeat as i32);
+            i(&mut v, q.max_it);
+            i(&mut v, q.de_option);
+            i(&mut v, q.is_custom_de as i32);
+            i(&mut v, q.difs as i32);
+            f(&mut v, q.d_de_scale as f64);
+        }
+        None => v.extend_from_slice(&[0; 12]),
+    }
+    f(&mut v, probe_mzz);
+    i(&mut v, std::env::var_os("MB3D_PROBE_DETAIL").is_some() as i32);
+    i(&mut v, 16);
+    while v.len() < PARAM_WORDS {
+        v.push(0);
+    }
     v
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 148;
+const PARAM_WORDS: usize = 168;
+
+thread_local! {
+    /// the depth of [`de_probe`] (a parameter of the shader)
+    static PROBE_MZZ: std::cell::Cell<f64> = const { std::cell::Cell::new(0.0) };
+}
 
 fn bytes(v: &[u32]) -> Vec<u8> {
     v.iter().flat_map(|x| x.to_le_bytes()).collect()
@@ -554,6 +685,8 @@ pub fn march(
         set_status(format!("CPU: {r}"));
         return None;
     }
+    let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    let t = std::time::Instant::now();
     let g = match gpu() {
         Ok(g) => g,
         Err(e) => {
@@ -561,6 +694,10 @@ pub fn march(
             return None;
         }
     };
+    if timing {
+        eprintln!("  GPU device: {:.2} s", t.elapsed().as_secs_f64());
+    }
+    let t = std::time::Instant::now();
     let sh = match scene_shader(p) {
         Ok(s) => s,
         Err(e) => {
@@ -568,7 +705,15 @@ pub fn march(
             return None;
         }
     };
-    match run(g, p, &sh, post, progress, cancel, &mut sink) {
+    if timing {
+        eprintln!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
+    }
+    let t = std::time::Instant::now();
+    let r = run(g, p, &sh, post, None, progress, cancel, &mut sink);
+    if timing {
+        eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
+    }
+    match r {
         Ok(v) => {
             let mut s = format!("GPU {}", g.name);
             if post.shadows.is_some() {
@@ -599,12 +744,37 @@ fn modes(post: &PostJob) -> Vec<u32> {
     m
 }
 
+/// One pixel of [`de_probe`]: the DE in step widths, the iteration count,
+/// 0, and the two parts of a DE combination with their iteration counts.
+pub type DeProbe = (f32, i32, i32, [(f32, i32); 2]);
+
+/// The DE of every pixel of `p.rect` at the start of its ray, as the
+/// shader calculates it (a check against the CPU's `calc::de_at`): the DE
+/// in step widths, the iteration count and `max_its_result`.
+pub fn de_probe(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
+    if let Some(r) = unsupported(p) {
+        return Err(r);
+    }
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    PROBE_MZZ.with(|m| m.set(mzz));
+    let v = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {})?;
+    Ok(v.iter()
+        .map(|s| {
+            let rst = f32::from_bits((s.normal[0] as u16 as u32) | (s.normal[1] as u16 as u32) << 16);
+            let r1 = f32::from_bits(s.amb_shadow as u32 | (s.shadow as u32) << 16);
+            (f32::from_bits(s.zpos_fine), s.si_gradient as i32, 0, [(r1, s.otrap as i32), (rst, s.normal[2] as i32)])
+        })
+        .collect())
+}
+
 #[allow(clippy::too_many_arguments)]
 fn run(
     g: &Gpu,
     p: &CalcParams,
     sh: &SceneShader,
     post: &PostJob,
+    only_mode: Option<u32>,
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
     sink: &mut dyn FnMut(usize, &[SiLight]),
@@ -624,10 +794,20 @@ fn run(
         usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
-    let pipeline = pipeline(g, &sh.code)?;
     // one parameter buffer per pass (a buffer write before a submission
-    // takes effect before all of its passes)
-    let modes = modes(post);
+    // takes effect before all of its passes), and a pipeline per kind of pass
+    let modes = only_mode.map(|m| vec![m]).unwrap_or_else(|| modes(post));
+    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
+    let decomb = p.decomb.is_some();
+    let mut pls = Vec::new();
+    for &m in &modes {
+        let kind = match m {
+            1 => 1.0,
+            2 => 2.0,
+            _ => 0.0,
+        };
+        pls.push(pipeline(g, &sh.code, &[("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", decomb as u8 as f64)])?);
+    }
     let pars: Vec<wgpu::Buffer> = modes
         .iter()
         .map(|_| {
@@ -654,10 +834,11 @@ fn run(
     let rtpl = words("record", &sh.rtpl);
     let binds: Vec<wgpu::BindGroup> = pars
         .iter()
-        .map(|par| {
+        .zip(&pls)
+        .map(|(par, pl)| {
             g.device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: None,
-                layout: &pipeline.get_bind_group_layout(0),
+                layout: &pl.get_bind_group_layout(0),
                 entries: &[
                     wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 1, resource: out.as_entire_binding() },
@@ -678,9 +859,9 @@ fn run(
             g.queue.write_buffer(&pars[k], 0, &bytes(&params(p, row0, rows, &sh.slots, mode, post)));
         }
         let mut enc = g.device.create_command_encoder(&Default::default());
-        for bind in &binds {
+        for (bind, pl) in binds.iter().zip(&pls) {
             let mut pass = enc.begin_compute_pass(&Default::default());
-            pass.set_pipeline(&pipeline);
+            pass.set_pipeline(pl);
             pass.set_bind_group(0, bind, &[]);
             pass.dispatch_workgroups(w.div_ceil(8) as u32, rows.div_ceil(8) as u32, 1);
         }
@@ -744,9 +925,9 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
     let bgl = g.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("ssao"), entries: &entries });
     let layout = g.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("ssao"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
     let (pl_h, pl_v, pl_s) = (
-        pipeline_entry(g, code, "blur_h", Some(&layout))?,
-        pipeline_entry(g, code, "blur_v", Some(&layout))?,
-        pipeline_entry(g, code, "sample", Some(&layout))?,
+        pipeline_entry(g, code, "blur_h", Some(&layout), &[])?,
+        pipeline_entry(g, code, "blur_v", Some(&layout), &[])?,
+        pipeline_entry(g, code, "sample", Some(&layout), &[])?,
     );
     let levels = crate::ssao::level_count(w, h);
     let z_scale = ((256.0 / zc_mul + 1.0).powi(2) - 1.0) / zcorr;
@@ -908,7 +1089,7 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
         return Ok(());
     }
     let g = gpu()?;
-    let pl = pipeline_entry(g, include_str!("gpu_ssao15.wgsl"), "sample15", None)?;
+    let pl = pipeline_entry(g, include_str!("gpu_ssao15.wgsl"), "sample15", None, &[])?;
     let lv = crate::ssao15::build_levels(gbuf, w, h);
     let (szrt, smul, st2) = crate::ssao15::sampling_constants(&lv, zc_mul, zcorr, p);
     let levels: Vec<u32> = lv.lev.iter().flat_map(|l| l.iter().map(|&v| v as u32)).collect();
@@ -969,6 +1150,17 @@ fn run_pipeline(g: &Gpu, pipeline: &wgpu::ComputePipeline, inputs: &[&[u32]], ou
     drop(data);
     read.unmap();
     Ok(v)
+}
+
+/// Compiles `wgsl` (entry point `entry`) as a new shader (the driver's
+/// cache is defeated) and returns the time it took; for shader size
+/// experiments.
+pub fn compile_time(wgsl: &str, entry: &str) -> Result<f64, String> {
+    let g = gpu()?;
+    std::env::set_var("MB3D_GPU_NOCACHE", "1");
+    let t = std::time::Instant::now();
+    pipeline_entry(g, wgsl, entry, None, &[])?;
+    Ok(t.elapsed().as_secs_f64())
 }
 
 /// Runs `wgsl` (entry point `main`) once with the storage buffers

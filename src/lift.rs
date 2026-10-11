@@ -33,6 +33,11 @@ enum AVal {
     /// a known base (`K` or `Pv` as the bool says: true = Pv) plus a
     /// computed index: the address of an element of an array
     Dyn(bool, i32),
+    /// data in 0..=mask (after `and reg, mask`): a small index
+    Bnd(u32),
+    /// a known address plus a small index times a scale: one of a few
+    /// record fields chosen at run time (base, scale, mask)
+    Idx(u32, u8, u8),
 }
 
 impl AVal {
@@ -59,11 +64,13 @@ impl AVal {
             }
             return AVal::D;
         }
-        if matches!((self, o), (AVal::D, AVal::K(_) | AVal::Ks(_)) | (AVal::K(_) | AVal::Ks(_), AVal::D)) {
+        match (self, o) {
+            (AVal::Bnd(a), AVal::Bnd(b)) => AVal::Bnd(a.max(b)),
+            (AVal::Bnd(m), AVal::K(k)) | (AVal::K(k), AVal::Bnd(m)) if k <= m => AVal::Bnd(m),
+            (AVal::Bnd(_), AVal::D | AVal::K(_) | AVal::Ks(_)) | (AVal::D | AVal::K(_) | AVal::Ks(_), AVal::Bnd(_)) => AVal::D,
             // constants used as data (masks, immediates) on one path
-            AVal::D
-        } else {
-            AVal::Top
+            (AVal::D, AVal::K(_) | AVal::Ks(_)) | (AVal::K(_) | AVal::Ks(_), AVal::D) => AVal::D,
+            _ => AVal::Top,
         }
     }
 }
@@ -106,6 +113,9 @@ pub enum Loc {
     DynField(u32),
     DynVar(i32),
     DynStack(i32),
+    /// one of a few record fields chosen by a small index at run time:
+    /// (base offset, scale, mask), the field at base + index * scale
+    FieldIdx(u32, u8, u8),
     /// anything else (not liftable)
     Unresolved,
 }
@@ -134,8 +144,9 @@ fn addr_of(s: &State, m: &Mem) -> AVal {
     if let Some((i, sc)) = m.index {
         return match (base, s.regs[i as usize]) {
             (AVal::K(b), AVal::K(x)) => AVal::K(b.wrapping_add(x.wrapping_mul(sc as u32)).wrapping_add(m.disp as u32)),
-            (AVal::K(b), AVal::D) => AVal::Dyn(false, b.wrapping_add(m.disp as u32) as i32),
-            (AVal::Pv(o), AVal::D) => AVal::Dyn(true, o.wrapping_add(m.disp)),
+            (AVal::K(b), AVal::Bnd(x)) if x <= 15 && sc <= 8 => AVal::Idx(b.wrapping_add(m.disp as u32), sc, x as u8),
+            (AVal::K(b), AVal::D | AVal::Bnd(_)) => AVal::Dyn(false, b.wrapping_add(m.disp as u32) as i32),
+            (AVal::Pv(o), AVal::D | AVal::Bnd(_)) => AVal::Dyn(true, o.wrapping_add(m.disp)),
             _ => AVal::Top,
         };
     }
@@ -155,6 +166,7 @@ fn classify(a: AVal) -> Loc {
         AVal::Dyn(false, b) if (IT_BASE..IT_BASE + 0x200).contains(&(b as u32)) => Loc::DynField(b as u32 - IT_BASE),
         AVal::Dyn(false, b) if (STACK_LOW..=STACK_TOP).contains(&(b as u32)) => Loc::DynStack(b - STACK_TOP as i32),
         AVal::Dyn(true, o) => Loc::DynVar(o),
+        AVal::Idx(b, sc, mk) if (IT_BASE..IT_BASE + 0x200).contains(&b) && b + mk as u32 * sc as u32 + 8 <= IT_BASE + 0x200 => Loc::FieldIdx(b - IT_BASE, sc, mk),
         _ => Loc::Unresolved,
     }
 }
@@ -186,7 +198,7 @@ impl Ctx<'_> {
         match a {
             AVal::K(x) if x == IT_BASE + off::PVAR => AVal::Pv(0),
             AVal::K(x) if (STACK_LOW..=STACK_TOP).contains(&x) => s.stack.get(&x).copied().unwrap_or(AVal::Top),
-            AVal::K(_) | AVal::Pv(_) => AVal::D,
+            AVal::K(_) | AVal::Pv(_) | AVal::Idx(..) => AVal::D,
             _ => AVal::Top,
         }
     }
@@ -363,6 +375,8 @@ impl Ctx<'_> {
                     (Alu::And, AVal::K(x), AVal::K(y), 4) => AVal::K(x & y),
                     (Alu::Or, AVal::K(x), AVal::K(y), 4) => AVal::K(x | y),
                     (Alu::Xor, AVal::K(x), AVal::K(y), 4) => AVal::K(x ^ y),
+                    // a small mask: an index into a few fields
+                    (Alu::And, _, AVal::K(y), 4) if y <= 15 => AVal::Bnd(y),
                     // pointer arithmetic with data: unknown address
                     (_, AVal::Pv(_), _, 4) | (_, AVal::K(_), AVal::D | AVal::Top, 4) if matches!(op, Alu::Add | Alu::Sub) => AVal::Top,
                     _ => AVal::D,

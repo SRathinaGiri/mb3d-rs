@@ -79,6 +79,8 @@ var<private> xof: bool;
 var<private> xpf: bool;
 var<private> xaf: bool;
 var<private> fsw: u32;
+// the SSE registers: two doubles each as f32 (x the low lane)
+var<private> xmm: array<vec2<f32>, 8>;
 
 fn szmask(size: u32) -> u32 {
     if (size >= 4u) { return 0xFFFFFFFFu; }
@@ -240,6 +242,24 @@ fn fnan(x: f32) -> bool {
 }
 
 // C3 C2 C0 xof fcom
+// an SSE register as the bits of its doubles (low word first), and back
+fn xbits(v: vec2<f32>) -> vec4<u32> {
+    return vec4<u32>(f64_lo(v.x), f64_hi(v.x), f64_lo(v.y), f64_hi(v.y));
+}
+fn xfrom(b: vec4<u32>) -> vec2<f32> {
+    return vec2<f32>(from_f64_bits(b.y, b.x), from_f64_bits(b.w, b.z));
+}
+fn x_isnan(x: f32) -> bool {
+    return (bitcast<u32>(x) & 0x7FFFFFFFu) > 0x7F800000u;
+}
+// minsd / maxsd: the second operand unless the first is smaller / larger
+fn xmin(a: f32, b: f32) -> f32 {
+    return select(b, a, a < b);
+}
+fn xmax(a: f32, b: f32) -> f32 {
+    return select(b, a, a > b);
+}
+
 fn fcompare_cc(a: f32, b: f32) -> u32 {
     if (fnan(a) || fnan(b)) { return 0x4500u; }
     if (a < b) { return 0x0100u; }
@@ -312,69 +332,73 @@ impl Typed<'_> {
     /// A whole double (f32 expression); of a halves cell: its bits as a
     /// double, rounded to f32.
     fn rd_f(&self, r: (char, u32)) -> Option<String> {
-        if r.1 % 8 != 0 {
-            return None;
-        }
         let c = r.1 / 8;
-        Some(match self.ty(r)? {
-            CellTy::Whole => self.name(r.0, c, 'f'),
-            CellTy::Halves => format!("from_f64_bits({}, {})", self.name(r.0, c, 'h'), self.name(r.0, c, 'l')),
-        })
+        if r.1.is_multiple_of(8) && self.ty(r) == Some(CellTy::Whole) {
+            return Some(self.name(r.0, c, 'f'));
+        }
+        // the bits form, also across cells or words
+        Some(format!("from_f64_bits({}, {})", self.rd_u((r.0, r.1 + 4), 4)?, self.rd_u(r, 4)?))
     }
 
     fn wr_f(&self, r: (char, u32), v: &str) -> Option<String> {
-        if r.1 % 8 != 0 {
-            return None;
-        }
         let c = r.1 / 8;
-        Some(match self.ty(r)? {
-            CellTy::Whole => format!("{} = {v};", self.name(r.0, c, 'f')),
-            CellTy::Halves => format!(
-                "{{ let nv = {v}; {} = f64_lo(nv); {} = f64_hi(nv); }}",
-                self.name(r.0, c, 'l'),
-                self.name(r.0, c, 'h')
-            ),
-        })
+        if r.1.is_multiple_of(8) && self.ty(r) == Some(CellTy::Whole) {
+            return Some(format!("{} = {v};", self.name(r.0, c, 'f')));
+        }
+        Some(format!("{{ let nv = {v}; {} {} }}", self.wr_u(r, 4, "f64_lo(nv)")?, self.wr_u((r.0, r.1 + 4), 4, "f64_hi(nv)")?))
     }
 
     /// The u32 half `part` ('l' / 'h') of a cell as an expression (of a
     /// whole cell: the halves of its double).
     fn half(&self, p: char, c: u32, part: char) -> Option<String> {
-        Some(match self.ty.get(&(p, c))? {
+        let Some(ty) = self.ty.get(&(p, c)) else {
+            super::lift_emit::lift_debug(&format!("WGSL: cell {p}{c} not typed"));
+            return None;
+        };
+        Some(match ty {
             CellTy::Halves => self.name(p, c, part),
             // whole cells have no partial accesses (see the typing)
-            CellTy::Whole => return None,
+            CellTy::Whole => {
+                super::lift_emit::lift_debug(&format!("WGSL: part of the whole cell {p}{c}"));
+                return None;
+            }
         })
     }
 
-    /// `n` bytes (1, 2, 4) as a u32 expression.
+    /// The u32 word `wi` (counted from the region start) of the cells.
+    fn word(&self, p: char, wi: u32) -> Option<String> {
+        self.half(p, wi / 2, if wi.is_multiple_of(2) { 'l' } else { 'h' })
+    }
+
+    /// `n` bytes (1, 2, 4) as a u32 expression; an access across two words
+    /// combines them.
     fn rd_u(&self, (p, off): (char, u32), n: u32) -> Option<String> {
-        let (c, sh) = (off / 8, off % 8);
-        let (part, s) = if sh < 4 { ('l', sh) } else { ('h', sh - 4) };
-        if s + n > 4 {
-            return None;
+        let (wi, s) = (off / 4, off % 4);
+        let w0 = self.word(p, wi)?;
+        if s + n <= 4 {
+            return Some(if s == 0 && n == 4 { w0 } else { format!("(({w0} >> {}u) & {})", 8 * s, wmask(n)) });
         }
-        let h = self.half(p, c, part)?;
-        Some(if s == 0 && n == 4 { h } else { format!("(({h} >> {}u) & {})", 8 * s, wmask(n)) })
+        let w1 = self.word(p, wi + 1)?;
+        Some(format!("((({w0} >> {sh}u) | ({w1} << {}u)) & {})", 32 - 8 * s, wmask(n), sh = 8 * s))
     }
 
     fn wr_u(&self, (p, off): (char, u32), n: u32, v: &str) -> Option<String> {
-        let (c, sh) = (off / 8, off % 8);
-        let (part, s) = if sh < 4 { ('l', sh) } else { ('h', sh - 4) };
-        if s + n > 4 {
-            return None;
+        let (wi, s) = (off / 4, off % 4);
+        let cur = self.word(p, wi)?;
+        let mk = wmask(n);
+        if s + n <= 4 {
+            let new = if s == 0 && n == 4 { format!("({v})") } else { format!("(({cur} & ~({mk} << {sh}u)) | ((({v}) & {mk}) << {sh}u))", sh = 8 * s) };
+            return Some(format!("{cur} = {new};"));
         }
-        let cur = self.half(p, c, part)?;
-        let new = if s == 0 && n == 4 {
-            format!("({v})")
-        } else {
-            let mk = wmask(n);
-            format!("(({cur} & ~({mk} << {sh}u)) | ((({v}) & {mk}) << {sh}u))", sh = 8 * s)
-        };
-        Some(match self.ty.get(&(p, c))? {
-            CellTy::Halves => format!("{} = {new};", self.name(p, c, part)),
-            CellTy::Whole => return None,
-        })
+        // across two words: 4 - s bytes in the first, the rest in the next
+        let cur1 = self.word(p, wi + 1)?;
+        let mk0 = wmask(4 - s);
+        let mk1 = wmask(s + n - 4);
+        Some(format!(
+            "{{ let wv = {v}; {cur} = ({cur} & ~({mk0} << {sh}u)) | ((wv & {mk0}) << {sh}u); {cur1} = ({cur1} & ~{mk1}) | ((wv >> {b}u) & {mk1}); }}",
+            sh = 8 * s,
+            b = 32 - 8 * s
+        ))
     }
 
     /// x87 load xof `kind` (f32 expression).
@@ -448,9 +472,6 @@ impl Prog {
     /// that all formulas of a shader agree on the record's cell types.
     pub fn emit_wgsl_with(&self, name: &str, difs: bool, force_halves: &BTreeMap<u32, CellTy>) -> Option<WgslFormula> {
         let (_, cells) = self.emit_lifted_cells("typing", difs)?;
-        if cells.log.iter().any(|e| e.3 == 'x') {
-            return None;
-        }
         // cell types
         let mut ty: BTreeMap<(char, u32), CellTy> = BTreeMap::new();
         let mut whole: BTreeMap<(char, u32), (bool, bool)> = BTreeMap::new();
@@ -505,7 +526,13 @@ impl Prog {
             let _ = writeln!(body, "            case {bi}u: {{");
             let mut k = *k0;
             loop {
-                let (line, ended) = self.wgsl_op(k, cs, &an, &tz, &id)?;
+                let (line, ended) = match self.wgsl_op(k, cs, &an, &tz, &id) {
+                    Some(x) => x,
+                    None => {
+                        super::lift_emit::lift_debug(&format!("WGSL: op {k} {:?}", self.ops[k]));
+                        return None;
+                    }
+                };
                 if !line.is_empty() {
                     let _ = writeln!(body, "                {line}");
                 }
@@ -583,6 +610,49 @@ impl Prog {
     }
 
     #[allow(clippy::too_many_arguments)]
+    /// An x87 double access to a record field chosen by a small index
+    /// (`Loc::FieldIdx`): a select chain / switch over the possible cells.
+    fn wgsl_idx_op(&self, k: usize, cs: &[usize], an: &Analysis, t: &Typed) -> Option<String> {
+        let (mem, kind): (&Mem, Option<FKind>) = match &self.ops[k] {
+            Op::FLd64 { mem, .. } | Op::FSt64 { mem, .. } | Op::FArithM64 { mem, .. } => (mem, None),
+            Op::FLd { mem, kind, .. } | Op::FSt { mem, kind, .. } | Op::FArithM { mem, kind, .. } | Op::FComM { mem, kind, .. } => (mem, Some(*kind)),
+            _ => return None,
+        };
+        if kind.is_some_and(|k| k != FKind::F64) {
+            return None;
+        }
+        let super::lift::Loc::FieldIdx(off, sc, mask) = an.loc(k, cs, mem) else { return None };
+        let (ireg, _) = mem.index?;
+        if sc != 8 || off % 8 != 0 {
+            return None;
+        }
+        let sel = format!("(rg[{ireg}] & {mask}u)");
+        let fx = |i: &u8| format!("f[{}]", i & 7);
+        let rd = || -> Option<String> {
+            let mut e = t.rd_f(('r', off))?;
+            for i in 1..=mask as u32 {
+                e = format!("select({e}, {}, {sel} == {i}u)", t.rd_f(('r', off + 8 * i))?);
+            }
+            Some(e)
+        };
+        Some(match &self.ops[k] {
+            Op::FLd64 { dst, .. } | Op::FLd { dst, .. } => format!("f[{}] = {};", dst & 7, rd()?),
+            Op::FArithM64 { op, dst, .. } | Op::FArithM { op, dst, .. } => {
+                let d = fx(dst);
+                format!("{d} = {};", fop(op, &d, &format!("({})", rd()?)))
+            }
+            Op::FComM { a, .. } => format!("fsw = fcompare_cc(f[{}], {});", a & 7, rd()?),
+            Op::FSt64 { src, .. } | Op::FSt { src, .. } => {
+                let mut arms = String::new();
+                for i in 0..=mask as u32 {
+                    arms.push_str(&format!("case {i}u: {{ {} }} ", t.wr_f(('r', off + 8 * i), &fx(src))?));
+                }
+                format!("switch {sel} {{ {arms}default: {{}} }}")
+            }
+            _ => return None,
+        })
+    }
+
     fn wgsl_op(
         &self,
         k: usize,
@@ -593,6 +663,9 @@ impl Prog {
     ) -> Option<(String, bool)> {
         let loc = |mm: &Mem| region(an.loc(k, cs, mm));
         let fx = |i: &u8| format!("f[{}]", i & 7);
+        if let Some(line) = self.wgsl_idx_op(k, cs, an, t) {
+            return Some((line, false));
+        }
         let line = match &self.ops[k] {
             Op::MovRM { r, mem } => format!("rg[{r}] = {};", t.rd_u(loc(mem)?, 4)?),
             Op::MovMR { mem, r } => t.wr_u(loc(mem)?, 4, &format!("rg[{r}]"))?,
@@ -674,6 +747,112 @@ impl Prog {
         Some((line, false))
     }
 
+    /// One SSE op on the `xmm` registers (the semantics of `emit_sse_with`):
+    /// the lanes are f32; the logic ops and the dword shuffle work on the
+    /// bits of the doubles (masks).
+    fn wgsl_sse(&self, op: SseOp, d: u32, src: &Rm, imm: u8, loc: &dyn Fn(&Mem) -> Option<(char, u32)>, t: &Typed) -> Option<String> {
+        use SseOp::*;
+        let mem = match src {
+            Rm::Reg(_) => None,
+            Rm::Mem(mm) => Some(loc(mm)?),
+        };
+        // the source as lanes (vec2<f32>), as the low lane (f32), as bits
+        let sf2 = |t: &Typed| -> Option<String> {
+            Some(match (src, mem) {
+                (Rm::Reg(r), _) => format!("xmm[{r}]"),
+                (_, Some((p, off))) => format!("vec2<f32>({}, {})", t.rd_f((p, off))?, t.rd_f((p, off + 8))?),
+                _ => return None,
+            })
+        };
+        let sf1 = |t: &Typed| -> Option<String> {
+            Some(match (src, mem) {
+                (Rm::Reg(r), _) => format!("xmm[{r}].x"),
+                (_, Some((p, off))) => t.rd_f((p, off))?,
+                _ => return None,
+            })
+        };
+        let sb4 = |t: &Typed| -> Option<String> {
+            Some(match (src, mem) {
+                (Rm::Reg(r), _) => format!("xbits(xmm[{r}])"),
+                (_, Some((p, off))) => format!("vec4<u32>({}, {}, {}, {})", t.rd_u((p, off), 4)?, t.rd_u((p, off + 4), 4)?, t.rd_u((p, off + 8), 4)?, t.rd_u((p, off + 12), 4)?),
+                _ => return None,
+            })
+        };
+        let bin = |o: &str, a: &str, b: &str| -> String {
+            match o {
+                "min" => format!("xmin({a}, {b})"),
+                "max" => format!("xmax({a}, {b})"),
+                _ => format!("({a} {o} {b})"),
+            }
+        };
+        let pd = |o: &str| -> Option<String> {
+            Some(format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<f32>({}, {}); }}", sf2(t)?, bin(o, "a.x", "s.x"), bin(o, "a.y", "s.y")))
+        };
+        let sd = |o: &str| -> Option<String> { Some(format!("xmm[{d}].x = {};", bin(o, &format!("xmm[{d}].x"), &format!("({})", sf1(t)?)))) };
+        let logic = |o: &str| -> Option<String> { Some(format!("xmm[{d}] = xfrom({}xbits(xmm[{d}]) {o} {});", if o == "&~" { "~" } else { "" }, sb4(t)?)) };
+        Some(match op {
+            UComiSd | ComiSd => format!(
+                "{{ let b = {}; let a = xmm[{d}].x; xof = false; xsf = false; xaf = false; \
+                 let un = x_isnan(a) || x_isnan(b); xzf = un || a == b; xpf = un; xcf = un || a < b; }}",
+                sf1(t)?
+            ),
+            Pshufd => {
+                let sel = [imm & 3, (imm >> 2) & 3, (imm >> 4) & 3, (imm >> 6) & 3];
+                let lane = |a: u8, b: u8| -> Option<&'static str> {
+                    match (a, b) {
+                        (0, 1) => Some("x"),
+                        (2, 3) => Some("y"),
+                        _ => None,
+                    }
+                };
+                match (lane(sel[0], sel[1]), lane(sel[2], sel[3])) {
+                    (Some(l0), Some(l1)) => format!("{{ let s = {}; xmm[{d}] = vec2<f32>(s.{l0}, s.{l1}); }}", sf2(t)?),
+                    _ => {
+                        let dw = |i: u8| ["x", "y", "z", "w"][i as usize];
+                        format!("{{ let s = {}; xmm[{d}] = xfrom(vec4<u32>(s.{}, s.{}, s.{}, s.{})); }}", sb4(t)?, dw(sel[0]), dw(sel[1]), dw(sel[2]), dw(sel[3]))
+                    }
+                }
+            }
+            MovU => format!("xmm[{d}] = {};", sf2(t)?),
+            MovSdLoad => match src {
+                Rm::Reg(r) => format!("xmm[{d}].x = xmm[{r}].x;"),
+                Rm::Mem(_) => format!("xmm[{d}] = vec2<f32>({}, 0.0);", sf1(t)?),
+            },
+            MovqLoad => format!("xmm[{d}] = vec2<f32>({}, 0.0);", sf1(t)?),
+            MovLpdLoad => format!("xmm[{d}].x = {};", sf1(t)?),
+            MovHpdLoad => format!("xmm[{d}].y = {};", sf1(t)?),
+            MovHlps => format!("xmm[{d}].x = {}.y;", sf2(t)?),
+            MovLhps => format!("xmm[{d}].y = {}.x;", sf2(t)?),
+            AddPd => pd("+")?,
+            SubPd => pd("-")?,
+            MulPd => pd("*")?,
+            DivPd => pd("/")?,
+            MinPd => pd("min")?,
+            MaxPd => pd("max")?,
+            SqrtPd => format!("xmm[{d}] = sqrt({});", sf2(t)?),
+            AddSd => sd("+")?,
+            SubSd => sd("-")?,
+            MulSd => sd("*")?,
+            DivSd => sd("/")?,
+            MinSd => sd("min")?,
+            MaxSd => sd("max")?,
+            SqrtSd => format!("xmm[{d}].x = sqrt({});", sf1(t)?),
+            And => logic("&")?,
+            AndN => logic("&~")?,
+            Or => logic("|")?,
+            Xor => logic("^")?,
+            UnpckLpd => format!("xmm[{d}].y = {}.x;", sf2(t)?),
+            UnpckHpd => format!("{{ let s = {}; xmm[{d}] = vec2<f32>(xmm[{d}].y, s.y); }}", sf2(t)?),
+            ShufPd => {
+                let a = if imm & 1 == 0 { "x" } else { "y" };
+                let b = if (imm >> 1) & 1 == 0 { "x" } else { "y" };
+                format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<f32>(a.{a}, s.{b}); }}", sf2(t)?)
+            }
+            HAddPd => format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<f32>(a.x + a.y, s.x + s.y); }}", sf2(t)?),
+            _ => return None,
+        })
+    }
+
     fn wgsl_gen(&self, ins: &Ins, k: usize, cs: &[usize], an: &Analysis, t: &Typed) -> Option<String> {
         let loc = |mm: &Mem| region(an.loc(k, cs, mm));
         let rd = |rm: &Rm, size: u8| -> Option<String> {
@@ -697,6 +876,16 @@ impl Prog {
             })
         };
         Some(match ins {
+            Ins::Sse { op, dst, src: s, imm } if super::sse_native(*op, s) => self.wgsl_sse(*op, *dst as u32, s, *imm, &loc, t)?,
+            Ins::SseStore { op, dst, src: s } => {
+                let (p, off) = loc(dst)?;
+                match op {
+                    SseOp::MovStore => format!("{} {}", t.wr_f((p, off), &format!("xmm[{s}].x"))?, t.wr_f((p, off + 8), &format!("xmm[{s}].y"))?),
+                    SseOp::MovSdStore | SseOp::MovLpdStore | SseOp::MovqStore => t.wr_f((p, off), &format!("xmm[{s}].x"))?,
+                    SseOp::MovHpdStore => t.wr_f((p, off), &format!("xmm[{s}].y"))?,
+                    _ => return None,
+                }
+            }
             Ins::Nop => String::new(),
             Ins::Sahf => "{ let ah = (rg[0] >> 8u) & 0xFFu; xsf = (ah & 0x80u) != 0u; xzf = (ah & 0x40u) != 0u; xaf = (ah & 0x10u) != 0u; xpf = (ah & 0x04u) != 0u; xcf = (ah & 0x01u) != 0u; }".into(),
             Ins::Alu { op, dst, src: s, size } if !matches!(op, Alu::Adc | Alu::Sbb) => {

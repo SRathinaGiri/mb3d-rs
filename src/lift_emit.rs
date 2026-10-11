@@ -75,6 +75,9 @@ impl Cells {
                 format!("(({p}{c} >> {}) & {})", 8 * sh, mask(n))
             }
         } else {
+            // the rest in the next cell (logged too, for the typing)
+            self.log.push(((p, c + 1), 0, sh + n - 8, self.kind));
+            self.log_ops.push(self.cur_op);
             self.used.insert((p, c + 1));
             format!("((({p}{c} >> {}) | ({p}{} << {})) & {})", 8 * sh, c + 1, 64 - 8 * sh, mask(n))
         }
@@ -97,6 +100,8 @@ impl Cells {
         } else {
             let n0 = 8 - sh;
             let n1 = n - n0;
+            self.log.push(((p, c + 1), 0, n1, self.kind));
+            self.log_ops.push(self.cur_op);
             self.used.insert((p, c + 1));
             self.written.insert((p, c + 1));
             format!(
@@ -124,8 +129,18 @@ fn fload_expr(c: &mut Cells, r: (char, u32), kind: FKind) -> Option<String> {
         FKind::I16 => format!("({} as u16 as i16 as f64)", c.rd(r, 2)),
         FKind::I32 => format!("({} as u32 as i32 as f64)", c.rd(r, 4)),
         FKind::I64 => format!("({} as i64 as f64)", c.rd(r, 8)),
-        FKind::F80 => return None,
+        FKind::F80 => {
+            lift_debug("an 80 bit float in memory");
+            return None;
+        }
     })
+}
+
+/// `LIFT_DEBUG`: says why a formula is not lifted.
+pub(super) fn lift_debug(why: &str) {
+    if std::env::var_os("LIFT_DEBUG").is_some() {
+        eprintln!("    not lifted: {why}");
+    }
 }
 
 /// x87 memory store of the f64 expression `v` (the conversions of
@@ -194,13 +209,55 @@ impl Prog {
         self.emit_lifted_cells(name, difs).map(|x| x.0)
     }
 
+    /// An x87 double access to a record field chosen by a small index
+    /// (`Loc::FieldIdx`, e.g. `[esi + eax*8 - 128]` after `and eax, 3`):
+    /// a match over the possible cells.  None for other ops.
+    fn lifted_idx_op(&self, k: usize, cs: &[usize], an: &Analysis, c: &mut Cells) -> Option<String> {
+        let (mem, kind): (&Mem, Option<FKind>) = match &self.ops[k] {
+            Op::FLd64 { mem, .. } | Op::FSt64 { mem, .. } | Op::FArithM64 { mem, .. } => (mem, None),
+            Op::FLd { mem, kind, .. } | Op::FSt { mem, kind, .. } | Op::FArithM { mem, kind, .. } | Op::FComM { mem, kind, .. } => (mem, Some(*kind)),
+            _ => return None,
+        };
+        if kind.is_some_and(|k| k != FKind::F64) {
+            return None;
+        }
+        let Loc::FieldIdx(off, sc, mask) = an.loc(k, cs, mem) else { return None };
+        let (ireg, _) = mem.index?;
+        if sc != 8 || off % 8 != 0 {
+            return None;
+        }
+        c.kind = 'd';
+        let sel = format!("(rg[{ireg}] & {mask})");
+        let fx = |i: &u8| format!("f[{}]", i & 7);
+        let rd = |c: &mut Cells| -> String {
+            let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {}", c.rd(('r', off + 8 * i), 8))).collect();
+            format!("f64::from_bits(match {sel} {{ {}, _ => 0 }})", arms.join(", "))
+        };
+        Some(match &self.ops[k] {
+            Op::FLd64 { dst, .. } | Op::FLd { dst, .. } => format!("f[{}] = {};", dst & 7, rd(c)),
+            Op::FArithM64 { op, dst, .. } | Op::FArithM { op, dst, .. } => {
+                let d = fx(dst);
+                format!("{{ let v = {}; {d} = {}; }}", rd(c), fop(op, &d, "v"))
+            }
+            Op::FComM { a, .. } => format!("fsw = fcompare_cc(f[{}], {});", a & 7, rd(c)),
+            Op::FSt64 { src, .. } | Op::FSt { src, .. } => {
+                let v = format!("{}.to_bits()", fx(src));
+                let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {{ {} }}", c.wr(('r', off + 8 * i), 8, &v))).collect();
+                format!("match {sel} {{ {}, _ => {{}} }}", arms.join(", "))
+            }
+            _ => return None,
+        })
+    }
+
     /// `emit_lifted` with the cells and their access log.
     pub(super) fn emit_lifted_cells(&self, name: &str, difs: bool) -> Option<(String, Cells)> {
         let an = self.analyse(difs);
         if !an.report.problems.is_empty() {
+            lift_debug(&format!("{:?}", an.report.problems));
             return None;
         }
-        if an.report.accesses.iter().any(|(_, l, _)| region(*l).is_none()) {
+        if let Some(a) = an.report.accesses.iter().find(|(_, l, _)| region(*l).is_none() && !matches!(l, Loc::FieldIdx(..))) {
+            lift_debug(&format!("access outside the known regions: {a:?}"));
             return None;
         }
         let n = self.ops.len();
@@ -307,7 +364,8 @@ impl Prog {
     pub fn gpu_typing(&self, difs: bool) -> Option<(bool, Vec<String>)> {
         let (_, cells) = self.emit_lifted_cells("x", difs)?;
         let sse = cells.log.iter().any(|e| e.3 == 'x');
-        let mut by_cell: std::collections::BTreeMap<(char, u32), Vec<(u32, u32, char)>> = Default::default();
+        type Accesses = Vec<(u32, u32, char)>;
+        let mut by_cell: std::collections::BTreeMap<(char, u32), Accesses> = Default::default();
         for (cell, off, n, k) in &cells.log {
             by_cell.entry(*cell).or_default().push((*off, *n, *k));
         }
@@ -347,9 +405,18 @@ impl Prog {
         let loc = |mm: &Mem| region(an.loc(k, cs, mm));
         let fx = |i: &u8| format!("f[{}]", i & 7);
         c.cur_op = k;
+        if let Some(line) = self.lifted_idx_op(k, cs, an, c) {
+            return Some((line, false));
+        }
         c.kind = match &self.ops[k] {
             Op::FLd64 { .. } | Op::FSt64 { .. } | Op::FArithM64 { .. } => 'd',
-            Op::Gen(ins, _, _) if matches!(ins.as_ref(), Ins::Sse { .. } | Ins::SseStore { .. }) => 'x',
+            // SSE moves and arithmetic access whole doubles; the logic ops
+            // and the dword shuffle need the exact bits (masks)
+            Op::Gen(ins, _, _) => match ins.as_ref() {
+                Ins::Sse { op: SseOp::And | SseOp::AndN | SseOp::Or | SseOp::Xor | SseOp::Pshufd, .. } => 'x',
+                Ins::Sse { .. } | Ins::SseStore { .. } => 'd',
+                _ => 'i',
+            },
             _ => 'i',
         };
         let line = match &self.ops[k] {
@@ -430,7 +497,10 @@ impl Prog {
                 });
             }
             Op::Gen(ins, _, _) => self.lifted_gen(ins, k, cs, an, c)?,
-            _ => return None,
+            op => {
+                lift_debug(&format!("op {k}: {op:?}"));
+                return None;
+            }
         };
         Some((line, false))
     }

@@ -384,38 +384,48 @@ older 15 bit kind) has shaders of its own (`src/gpu_ssao.wgsl`,
 card after a CPU calculation too; with regular sampling it gives the
 CPU's values exactly, with random sampling the random numbers differ.
 Reflections and the painting stay on the CPU. The marcher calculates in
-single precision. The
-formulas reach it through the lifter: the x86 code of an `.m3f` formula is
-analysed (`src/lift.rs`: every memory access resolved to the iteration
-record, the formula's constants or the stack) and translated to WGSL
-(`src/lift_wgsl.rs`); the built-in *Integer Power* and *Amazing Box* are
-written by hand. A scene runs on the GPU when it is an alternating 3D
-hybrid of such formulas with the numerical or an analytic DE (options 0, 2
-and 11). Everything else is calculated on the CPU as before: dIFS, DE
-combinations, 4D and interpolation hybrids, formulas with SSE code and the
-other built-in formulas, cutting planes, inside rendering, volumetric light,
-views zoomed so far that single precision would show as noise (about zoom 7
-at 800 pixels width), and the Monte Carlo renderer. `mb3d` prints which
-was used and why; errors of the graphics card or its driver also send the
-calculation to the CPU, and software renderers (llvmpipe, WARP) are not
-used.
+single precision. The formulas reach it through the lifter: the x86 code
+of an `.m3f` formula is analysed (`src/lift.rs`: every memory access
+resolved to the iteration record, the formula's constants or the stack)
+and translated to WGSL (`src/lift_wgsl.rs`), including the SSE2 code many
+formulas use and record fields chosen by an index; the built-in *Integer
+Power* and *Amazing Box* are written by hand. A scene runs on the GPU when
+it is an alternating 3D hybrid of such formulas with the numerical or an
+analytic DE (options 0, 2 and 11), a dIFS hybrid (option 20) or a DE
+combination of two such parts (minimum, maximum, inverted maximum, the two
+smooth minima and the dIFS mix). Everything else is calculated on the CPU
+as before: 4D and interpolation hybrids, the formulas the lifter cannot
+resolve and the other built-in formulas, cutting planes, inside rendering,
+volumetric light, views zoomed so far that single precision would show as
+noise (about zoom 7 at 800 pixels width), and the Monte Carlo renderer.
+`mb3d` prints which was used and why; errors of the graphics card or its
+driver also send the calculation to the CPU, and software renderers
+(llvmpipe, WARP) are not used. The first calculation of a scene compiles
+its shader (one to two seconds; the driver caches it).
 
-Of the 80 example parameter files of MB3D, 17 run on the GPU. On a GeForce
-GTX 1650 (laptop) against a Ryzen 5 3550H (8 threads), at 640 pixels:
-*TimeMachine* 1.5 s instead of 19.8 s, *Theli-At - Bone Menger* 1.4 s
-instead of 11.8 s, *Hal-Tenny-Resistance* 16.5 s instead of 99 s; with
-the shadows on the card too, *TreePlanet* at 400 pixels takes 0.8 s
-instead of 6 s. Scenes with many iterations of strongly expanding formulas
-show single precision noise (*MengerTrees*). The shadow rays differ from
-MB3D in one point: MB3D stops a ray early when the neighbouring pixel found
-open air at that distance; the card marches every ray to its end, so fine
-structures throw slightly more shadow (a few percent of their pixels).
-Developer checks: `cargo run --release --example gpuformulas -- M3Formulas`
-runs every translatable formula on the GPU against the interpreter (all
-278 agree), `cargo test` compares the GPU G-buffer of a Mandelbulb with
-the CPU's, and `cargo run --release --example postcheck -- 320 MB3D_DIR
-FILES...` compares the shadow bits and the ambient occlusion of the card
-with the CPU's.
+Of the 80 example parameter files of MB3D, 41 run on the GPU (391 of the
+460 formula files translate). On a GeForce GTX 1650 (laptop) against a
+Ryzen 5 3550H (8 threads), at 640 pixels: *TimeMachine* 1.5 s instead of
+19.8 s, *Theli-At - Bone Menger* 1.4 s instead of 11.8 s,
+*Hal-Tenny-Resistance* 16.5 s instead of 99 s; with the shadows on the
+card too, *TreePlanet* at 400 pixels takes 0.8 s instead of 6 s; at 320
+pixels the dIFS scenes *ApolloBalloons* and *AureliusCat - Bamboo* take
+4.2 s instead of 54 s and 0.6 s instead of 6.7 s, the DE combination
+*ExcludeBulbMeng* 0.8 s instead of 14.8 s. Scenes with many iterations of
+strongly expanding formulas show single precision noise (*MengerTrees*),
+and DE combinations whose parts are long plain hybrids gain little
+(*Fishbowl* 6.7 s against 6.9 s, *DEcomb1* 168 s against 189 s). The shadow rays differ from MB3D in one
+point: MB3D stops a ray early when the neighbouring pixel found open air at
+that distance; the card marches every ray to its end, so fine structures
+throw slightly more shadow (a few percent of their pixels). Developer
+checks: `cargo run --release --example gpuformulas -- M3Formulas` runs
+every translatable formula on the GPU against the interpreter (all 391
+agree), `cargo test` compares the GPU G-buffer of a Mandelbulb with the
+CPU's, `cargo run --release --example postcheck -- 320 MB3D_DIR FILES...`
+compares the shadow bits and the ambient occlusion of the card with the
+CPU's (`--de` the distance estimate along a ray), and `m3f2rs
+--gpu-report M3Formulas` says which formulas translate and why not
+(`LIFT_DEBUG=1`).
 
 ## What is ported
 
