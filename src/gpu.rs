@@ -207,18 +207,12 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     if p.slice_2d != 0 {
         return r("2D calculation (not on the GPU yet)");
     }
-    if p.mode != HybridMode::Alt3D {
-        return r("4D or interpolation hybrid (not on the GPU yet)");
-    }
-    if p.is_custom_de && !p.difs && ![2, 11].contains(&p.de_option) {
+    if p.is_custom_de && !p.difs && ![2, 5, 6, 11].contains(&p.de_option) {
         return r("this analytic DE option (not on the GPU yet)");
     }
     if let Some(dc) = &p.decomb {
         let p2 = &dc.part2;
-        if p2.mode != HybridMode::Alt3D {
-            return r("a 4D part of the DE combination (not on the GPU yet)");
-        }
-        if p2.is_custom_de && !p2.difs && ![2, 11].contains(&p2.de_option) {
+        if p2.is_custom_de && !p2.difs && ![2, 5, 6, 11].contains(&p2.de_option) {
             return r("this analytic DE option of the DE combination (not on the GPU yet)");
         }
     }
@@ -284,13 +278,15 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let in_part1 = |n: usize| n <= p.end_to;
     let in_part2 = |n: usize| part2.is_some_and(|q| (q.start..=q.end).contains(&n));
     let difs_slot = |n: usize| (in_part1(n) && p.difs) || (in_part2(n) && part2.is_some_and(|q| q.difs));
-    let plain_slot = |n: usize| (in_part1(n) && !p.difs) || (in_part2(n) && part2.is_some_and(|q| !q.difs));
+    // an interpolation hybrid iterates the first two formulas
+    let ipol = has_ipol(p);
+    let plain_slot = |n: usize| (in_part1(n) && !p.difs) || (in_part2(n) && part2.is_some_and(|q| !q.difs)) || (ipol && n < 2);
     for (n, sl) in p.slots.iter().enumerate() {
         let row = &mut slots[n];
         row[0] = sl.iterations as u32;
         row[1] = sl.uncounted as u32;
         row[3] = p.fhln[n].to_bits();
-        if sl.iterations == 0 {
+        if sl.iterations == 0 && !(ipol && n < 2) {
             continue;
         }
         if difs_slot(n) {
@@ -342,6 +338,10 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             Formula::RealPower { power, z_mul } => {
                 row[6] = 4;
                 slotx[n] = [(*power as f32).to_bits(), (*z_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0];
+            }
+            Formula::Quaternion { yw_mul, w_add } => {
+                row[6] = 8;
+                slotx[n] = [(*yw_mul as f32).to_bits(), (*w_add as f32).to_bits(), 0, 0, 0, 0, 0, 0];
             }
             Formula::FoldingIntPow { power, z_mul, fold } => {
                 row[6] = 9;
@@ -577,6 +577,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             }
             4 => {
                 let _ = writeln!(g, "        case {n}u: {{ real_power({n}u); }}");
+            }
+            8 => {
+                let _ = writeln!(g, "        case {n}u: {{ quaternion({n}u); }}");
             }
             9 => {
                 let _ = writeln!(g, "        case {n}u: {{ folding_int_pow({n}u); }}");
@@ -918,14 +921,51 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     for row in &scene.slotx {
         v.extend_from_slice(row);
     }
+    // the turn budget (`Resumer::run`), the kinds of the parts' hybrids
+    // and the 4D rotation of the 4D hybrids
+    debug_assert_eq!(v.len(), BUDGET_WORD);
+    i(&mut v, 0);
+    i(&mut v, hybrid_kind(p.mode));
+    i(&mut v, p.decomb.as_ref().map_or(0, |d| hybrid_kind(d.part2.mode)));
+    for r in &p.smatrix4 {
+        for &x in &r[..3] {
+            f(&mut v, x);
+        }
+    }
+    // the weights of the two formulas of an interpolation hybrid
+    f(&mut v, p.ipol[0] as f64);
+    f(&mut v, p.ipol[1] as f64);
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
     v
 }
 
+/// The kind of a hybrid part for the shader (`HYB_KIND`): 0 alternating
+/// 3D, 1 alternating 4D, 2 interpolation 3D, 3 interpolation 4D.
+fn hybrid_kind(m: HybridMode) -> i32 {
+    match m {
+        HybridMode::Alt3D => 0,
+        HybridMode::Alt4D => 1,
+        HybridMode::Ipol3D => 2,
+        HybridMode::Ipol4D => 3,
+    }
+}
+
+/// A part of the hybrid is a 4D hybrid (the shader's HAS_4D).
+fn four_d(p: &CalcParams) -> bool {
+    let k = |m: HybridMode| matches!(m, HybridMode::Alt4D | HybridMode::Ipol4D);
+    k(p.mode) || p.decomb.as_ref().is_some_and(|d| k(d.part2.mode))
+}
+
+/// A part of the hybrid is an interpolation hybrid (the shader's HAS_IPOL).
+fn has_ipol(p: &CalcParams) -> bool {
+    let k = |m: HybridMode| matches!(m, HybridMode::Ipol3D | HybridMode::Ipol4D);
+    k(p.mode) || p.decomb.as_ref().is_some_and(|d| k(d.part2.mode))
+}
+
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 280;
+const PARAM_WORDS: usize = 290;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
@@ -1094,7 +1134,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     let g = gpu()?;
     let sh = scene_shader(p)?;
     let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
-    let pl = pipeline(g, &sh.code, &[("MODE_KIND", 3.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64)])?;
+    let pl = pipeline(g, &sh.code, &[("MODE_KIND", 3.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)])?;
     let n = tasks.len();
     let words: Vec<u32> = tasks
         .iter()
@@ -1256,7 +1296,7 @@ fn run(
             2 => 2.0,
             _ => 0.0,
         };
-        pls.push(pipeline(g, &sh.code, &[("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", decomb as u8 as f64)])?);
+        pls.push(pipeline(g, &sh.code, &[("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", decomb as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)])?);
     }
     let pars: Vec<wgpu::Buffer> = modes
         .iter()
@@ -1694,8 +1734,27 @@ mod tests {
     /// when the computer has no usable graphics card).
     #[test]
     fn mandelbulb_matches_cpu() {
-        let mut sc = crate::scene::Scene::parse(include_str!("../examples/mandelbulb.m3s")).unwrap();
-        sc.scale_image(0.5);
+        gbuffer_matches_cpu(include_str!("../examples/mandelbulb.m3s"), 0.5);
+    }
+
+    /// The 4D hybrid loop (doHybrid4DPas) with the 4D rotation.
+    #[test]
+    fn quaternion_julia_matches_cpu() {
+        gbuffer_matches_cpu(include_str!("../examples/quaternion_julia.m3s"), 0.5);
+    }
+
+    /// The interpolation hybrid (doInterpolHybridPasDE), 3D and, with two
+    /// quaternions, 4D (doInterpolHybridPas4D).
+    #[test]
+    fn interpolation_matches_cpu() {
+        gbuffer_matches_cpu(include_str!("../examples/interpolation_boxes.m3s"), 0.5);
+        let quat = format!("{}\n[formula]\nname = Quaternion\nyw_multiplier = -1\nw_add = 0.3\n", include_str!("../examples/quaternion_julia.m3s").replace("iterations = 12\n", "iterations = 12\ninterpolation = 0.5, 0.5\n"));
+        gbuffer_matches_cpu(&quat, 0.5);
+    }
+
+    fn gbuffer_matches_cpu(scene: &str, scale: f64) {
+        let mut sc = crate::scene::Scene::parse(scene).unwrap();
+        sc.scale_image(scale);
         let p = CalcParams::new(&sc).unwrap();
         assert_eq!(unsupported(&p), None);
         if let Err(e) = gpu() {

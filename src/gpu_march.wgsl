@@ -111,6 +111,9 @@ const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
 const STATE_FIXED: u32 = 302u;
+const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
+                                  // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
+const P2_HYB_KIND: u32 = 274u;    // the second part's
 // the reflection pass (M_REFLECT): tasks instead of pixels
 const R_FAR_FOG: u32 = 168u;     // far fog / squared depth: the depth of a hit from the fog formula
 const R_SURFACE: u32 = 169u;     // 1: the tasks are the pixels' surfaces (no march)
@@ -133,6 +136,9 @@ fn slot(n: u32, k: u32) -> u32 { return P[SLOTS + n * 8u + k]; }
 const SLOTX: u32 = 224u;
 fn slotx(n: u32, k: u32) -> f32 { return bitcast<f32>(P[SLOTX + n * 8u + k]); }
 fn slotxi(n: u32, k: u32) -> i32 { return bitcast<i32>(P[SLOTX + n * 8u + k]); }
+// the 4D rotation (smatrix4, 4 rows of 3) of the 4D hybrids
+const SMATRIX4: u32 = 275u;
+const IPOL_W: u32 = 287u;         // the weights of the two formulas of an interpolation hybrid
 
 const PI: f32 = 3.14159265358979;
 
@@ -143,6 +149,8 @@ const PI: f32 = 3.14159265358979;
 override MODE_KIND: u32 = 0u;
 override HAS_DIFS: bool = false;
 override HAS_DECOMB: bool = false;
+override HAS_4D: bool = false;
+override HAS_IPOL: bool = false;
 
 fn pf(i: u32) -> f32 { return bitcast<f32>(P[i]); }
 fn pi(i: u32) -> i32 { return bitcast<i32>(P[i]); }
@@ -492,6 +500,28 @@ fn aexion_c(n: u32) {
     j = vec3<f32>(ca * cb * r, cb * sa * r, sb * r * slotx(n, 5u));
 }
 
+// Quaternion (4D): the quaternion square plus the constant; `w` is the
+// fourth coordinate here, `j4` the fourth constant
+fn quaternion(n: u32) {
+    let x = v.x;
+    let y = v.y;
+    let z = v.z;
+    let q = w;
+    v.x = x * x - y * y - z * z - q * q + j.x;
+    v.y = 2.0 * (y * x + z * q) + j.y;
+    v.z = 2.0 * (z * x + slotx(n, 0u) * y * q) + j.z;
+    w = 2.0 * (q * x + y * z) + slotx(n, 1u) + j4;
+}
+
+// rotate_4Dex: the start vector of a 4D hybrid (smatrix4 * c)
+fn rotate_4d(p: vec3<f32>) -> vec4<f32> {
+    var r: vec4<f32>;
+    for (var i = 0u; i < 4u; i++) {
+        r[i] = p.x * pf(SMATRIX4 + i * 3u) + p.y * pf(SMATRIX4 + i * 3u + 1u) + p.z * pf(SMATRIX4 + i * 3u + 2u);
+    }
+    return r;
+}
+
 // CalcSmoothIterations (fHln of the last formula n)
 fn calc_smooth_iterations(n: u32) {
     if (rout <= 1.0) {
@@ -509,34 +539,98 @@ fn calc_smooth_iterations(n: u32) {
 //@FORMULAS@
 
 // doHybridPas / doHybridPasDE (Iteration::run, hybrid_3d, hybrid_3d_de):
-// the alternating hybrid; `de`: with the analytic DE (returned)
-fn hybrid(de: bool) -> f32 {
-    if (pi(DO_JULIA) != 0) {
-        j = pv(JU);
-    } else {
-        j = c;
-    }
-    v = c;
-    w = 0.0;
-    rout = dot(c, c);
-    otrap = rout;
+// the alternating hybrid; `de`: with the analytic DE (returned).
+// `four_d` (doHybrid4DPas, hybrid_4d / hybrid_4d_de): the vector is the
+// rotated 4D start, `w` its fourth coordinate (the derivative of the
+// analytic DE is deriv.x then), the lengths are 4D.
+// `ipol` (doInterpolHybridPas[4D][DE], Iteration::run_ipol): the first two
+// formulas are applied to the same vector and the results blended with
+// the weights IPOL_W (the two calls go through the loop's one call site)
+fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
     let deo = de_option;
-    if (de) {
-        if ((deo & 0x38) == 16) {
-            w = rout;
-        } else if ((deo & 0x38) == 32) {
-            deriv = vec3<f32>(1.0, 0.0, 0.0);
+    if (four_d) {
+        let v4 = rotate_4d(c);
+        v = v4.xyz;
+        w = v4.w;
+        if (pi(DO_JULIA) != 0) {
+            j = pv(JU);
+            j4 = pf(J4);
         } else {
-            w = 1.0;
+            j = v4.xyz;
+            j4 = v4.w;
+        }
+        rout = dot(v4, v4);
+        otrap = rout;
+        if (de) {
+            if ((deo & 0x38) == 16) {
+                deriv.x = rout;
+            } else if ((deo & 0x38) == 32) {
+                deriv = vec3<f32>(1.0, 0.0, 0.0);
+            } else {
+                deriv.x = 1.0;
+            }
+        }
+    } else {
+        if (pi(DO_JULIA) != 0) {
+            j = pv(JU);
+        } else {
+            j = c;
+        }
+        v = c;
+        w = 0.0;
+        rout = dot(c, c);
+        otrap = rout;
+        if (de && ipol) {
+            w = select(1.0, rout, (deo & 0x18) == 16);
+        } else if (de) {
+            if ((deo & 0x38) == 16) {
+                w = rout;
+            } else if ((deo & 0x38) == 32) {
+                deriv = vec3<f32>(1.0, 0.0, 0.0);
+            } else {
+                w = 1.0;
+            }
         }
     }
+    // interpolation: the vector before the iteration, the result of the
+    // first formula, the derivatives; `phase` 1 between the two calls
+    let s1 = pf(IPOL_W);
+    let s2 = pf(IPOL_W + 1u);
+    var phase = 0u;
+    var y1v = vec3<f32>(0.0);
+    var y1w = 0.0;
+    var x1v = vec3<f32>(0.0);
+    var x1w = 0.0;
+    var dt = 0.0;
+    var dd = 0.0;
     var n = part_start;
     var btmp = max(bitcast<i32>(slot(n, 0u)), 0);
     it_result = 0;
     first_it = 0;
     var uncounted_guard = 0u;
     loop {
-        rold = rout;
+        if (ipol) {
+            if (phase == 0u) {
+                rold = rout;
+                y1v = v;
+                y1w = w;
+                dt = deriv.x;
+                n = 0u;
+            } else {
+                x1v = v;
+                x1w = w;
+                v = y1v;
+                w = y1w;
+                dd = deriv.x;
+                if (four_d && de) {
+                    deriv.x = dt;
+                }
+                n = 1u;
+            }
+            btmp = 1;
+        } else {
+            rold = rout;
+        }
         var guard = 0;
         while (btmp <= 0) {
             n += 1u;
@@ -553,6 +647,52 @@ fn hybrid(de: bool) -> f32 {
             break;
         }
         call_slot(n);
+        if (ipol) {
+            if (phase == 0u) {
+                phase = 1u;
+                continue;
+            }
+            phase = 0u;
+            var xx: f32;
+            var yy: f32;
+            if (four_d) {
+                xx = sqrt(dot(x1v, x1v) + x1w * x1w);
+                yy = sqrt(dot(v, v) + w * w);
+            } else {
+                xx = length(x1v);
+                yy = length(v);
+            }
+            xx = xx * s1 + yy * s2;
+            var nv = x1v * s1 + v * s2;
+            var nw = x1w * s1 + w * s2;
+            if (de && !four_d) {
+                nw = abs(x1w) * s1 + abs(w) * s2;
+            }
+            if (de && four_d) {
+                deriv.x = abs(dd) * s1 + abs(deriv.x) * s2;
+            }
+            var l2 = dot(nv, nv);
+            if (four_d) {
+                l2 += nw * nw;
+            }
+            // (MB3D adds 1e-40, below the smallest normal f32)
+            let f = xx / sqrt(max(l2, 1e-37));
+            nv *= f;
+            if (four_d) {
+                nw *= f;
+            }
+            v = nv;
+            w = nw;
+            it_result += 1;
+            rout = xx * xx;
+            if (rout < otrap) {
+                otrap = rout;
+            }
+            if (it_result >= max_it || rout > rstop) {
+                break;
+            }
+            continue;
+        }
         btmp -= 1;
         if (slot(n, 1u) != 0u) {
             uncounted_guard += 1u;
@@ -563,6 +703,9 @@ fn hybrid(de: bool) -> f32 {
         }
         it_result += 1;
         rout = v.x * v.x + v.y * v.y + v.z * v.z;
+        if (four_d) {
+            rout += w * w;
+        }
         if (rout < otrap) {
             otrap = rout;
         }
@@ -570,15 +713,36 @@ fn hybrid(de: bool) -> f32 {
             break;
         }
     }
-    let mabs = max(abs(v.x), max(abs(v.y), abs(v.z)));
+    var mabs = max(abs(v.x), max(abs(v.y), abs(v.z)));
+    if (four_d) {
+        mabs = max(mabs, abs(w));
+    }
     if (mabs > 1e18) {
         let sv = v / mabs;
-        lrout = log(dot(sv, sv)) + 2.0 * log(mabs);
+        let sw = select(0.0, w / mabs, four_d);
+        lrout = log(dot(sv, sv) + sw * sw) + 2.0 * log(mabs);
     } else {
         lrout = log(rout);
     }
     var result = 0.0;
-    if (de) {
+    if (ipol) {
+        // the smooth iterations use fHln of the first formula
+        n = 0u;
+    }
+    if (four_d && de) {
+        // de_4d_result: the derivative is Deriv1
+        if ((deo & 7) == 4) {
+            result = abs(v.z) * log(abs(v.z)) / deriv.x;
+        } else {
+            result = sqrt(rout) / abs(deriv.x);
+        }
+    } else if (de && ipol) {
+        if ((deo & 7) == 4) {
+            result = abs(v.z) * log(abs(v.z)) / w;
+        } else {
+            result = sqrt(rout) / abs(w);
+        }
+    } else if (de) {
         if ((deo & 0x38) == 32) {
             result = sqrt(rout) * 0.5 * log(rout) / deriv.x;
         } else if ((deo & 7) == 4) {
@@ -691,11 +855,11 @@ fn hybrid_difs(vec_ini: bool, rs: f32) -> f32 {
 // The one place that iterates the formulas: the driver inlines functions,
 // so `hybrid` and `hybrid_difs` (and through them the formula code) must
 // have a single textual call site each.
-fn run_part(difs: bool, de: bool, vec_ini: bool, rs: f32) -> f32 {
+fn run_part(difs: bool, de: bool, vec_ini: bool, rs: f32, kind: u32) -> f32 {
     if (HAS_DIFS && difs) {
         return hybrid_difs(vec_ini, rs);
     }
-    return hybrid(de);
+    return hybrid(de, HAS_4D && (kind & 1u) != 0u, HAS_IPOL && kind >= 2u);
 }
 
 // Marcher::calc_de (`on_de`: the DE of the hybrid parts, combined as the
@@ -711,6 +875,7 @@ fn evaluate(on_de: bool) -> f32 {
     // the part
     var difs = false;
     var custom = false;
+    var hkind = 0u;
     var dds = 0.0;
     var invert = false;
     var no_vec_ini = false;
@@ -720,6 +885,7 @@ fn evaluate(on_de: bool) -> f32 {
     var buf_rout = 0.0;
     var buf_lr = 0.0;
     var buf_v = vec3<f32>(0.0);
+    var buf_w = 0.0;
     var buf_sit = false;
     var buf_max_it = 0;
     var g = 0.0;
@@ -738,12 +904,14 @@ fn evaluate(on_de: bool) -> f32 {
             if (part == 2u) {
                 difs = pi(P2_DIFS) != 0;
                 custom = pi(P2_CUSTOM) != 0;
+                hkind = P[P2_HYB_KIND];
                 dds = pf(P2_DDS);
                 invert = kind == 3u;
                 no_vec_ini = kind == 6u;
             } else {
                 difs = pi(DIFS) != 0;
                 custom = pi(IS_CUSTOM_DE) != 0;
+                hkind = P[HYB_KIND];
                 dds = pf(D_DE_SCALE);
                 invert = false;
                 no_vec_ini = false;
@@ -757,7 +925,8 @@ fn evaluate(on_de: bool) -> f32 {
             o[k - 1u] = pf(DE_OFFSET);
             c = bc + o;
         }
-        let hres = run_part(difs, on_de && custom, !no_vec_ini, ms_de_stop * pf(STEP_WIDTH) * 1.03);
+        let hres = run_part(difs, on_de && custom, !no_vec_ini, ms_de_stop * pf(STEP_WIDTH) * 1.03, hkind);
+        let four_d = (hkind & 1u) != 0u;
         if (!on_de) {
             return smooth_it;
         }
@@ -784,6 +953,7 @@ fn evaluate(on_de: bool) -> f32 {
                     buf_rout = rout;
                     buf_lr = lrout;
                     buf_v = v;
+                    buf_w = w;
                     buf_sit = calc_sit;
                     buf_max_it = max_it;
                     calc_sit = false;
@@ -799,7 +969,11 @@ fn evaluate(on_de: bool) -> f32 {
                 // logarithms where the vectors overflowed single precision
                 var d: f32;
                 if (buf_rout < 1e30 && rout < 1e30) {
-                    d = dot(buf_v - v, buf_v + v) / buf_rout;
+                    d = dot(buf_v - v, buf_v + v);
+                    if (four_d) {
+                        d += (buf_w - w) * (buf_w + w);
+                    }
+                    d /= buf_rout;
                 } else {
                     d = 1.0 - exp(lrout - buf_lr);
                 }

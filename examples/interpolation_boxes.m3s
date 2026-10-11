@@ -1,0 +1,27 @@
+# Interpolation hybrid: two Amazing Boxes applied to the same vector in
+# every iteration, the results blended 60 : 40 (MB3D's interpolation
+# hybrid, analytic DE).
+width = 640
+height = 480
+iterations = 30
+interpolation = 0.6, 0.4
+zoom = 0.35
+z_start = -8
+rotation = 25, -35, 0
+smooth_normals = 2
+color_start = 59
+color_end = 64
+
+[formula]
+name = Amazing Box
+scale = -1.5
+min_r = 0.5
+fold = 1
+iterations = 2
+
+[formula]
+name = Amazing Box
+scale = 2.2
+min_r = 0.5
+fold = 1
+iterations = 1

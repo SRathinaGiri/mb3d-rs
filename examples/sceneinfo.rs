@@ -6,7 +6,7 @@ fn main() {
     for f in &a[1..] {
         let (sc, _) = mb3d::animfile::load_scene(std::path::Path::new(f)).unwrap();
         let p = mb3d::calc::CalcParams::new(&sc).unwrap();
-        println!("{f}: difs {} custom {} de_option {} end_to {} repeat {} max_it {} d_de_scale {}", p.difs, p.is_custom_de, p.de_option, p.end_to, p.repeat_from, p.max_it, p.d_de_scale);
+        println!("{f}: mode {:?} difs {} custom {} de_option {} end_to {} repeat {} max_it {} d_de_scale {}", p.mode, p.difs, p.is_custom_de, p.de_option, p.end_to, p.repeat_from, p.max_it, p.d_de_scale);
         for (i, s) in p.slots.iter().enumerate() {
             println!("  slot {i}: {} x{} uncounted {} ade {} de_option {}", s.formula.name(), s.iterations, s.uncounted, s.ade, s.formula.de_option());
         }
