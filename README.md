@@ -413,7 +413,11 @@ distinct (64 single precision steps), which allows far deeper views.
 `mb3d` prints which was used and why; errors of the graphics card or its
 driver also send the calculation to the CPU, and software renderers
 (llvmpipe, WARP) are not used. The first calculation of a scene compiles
-its shader (one to two seconds; the driver caches it).
+its shader (one to two seconds; the driver caches it). The desktop shares
+the graphics card and waits for each piece of work sent to it, so the
+calculation is sent in pieces of about 25 ms (`MB3D_GPU_BAND_MS`): a pixel
+that needs longer (a single dIFS pixel can take 100 ms on the card) saves
+its state and continues in the next piece, with identical results.
 
 Of the 80 example parameter files of MB3D, 45 run on the GPU at their
 own image size (421 of the 460 formula files translate, and the built-in

@@ -33,9 +33,136 @@ fn take_error() -> Option<String> {
     ERROR.lock().ok().and_then(|mut l| l.take())
 }
 
-/// Pixels per GPU submission: keeps every submission short (drivers reset
-/// the card when one takes seconds) and gives progress steps.
-const BAND_PIXELS: usize = 1 << 17;
+/// The tasks per dispatch row of the reflection pass (`R_W` in the shader).
+const R_W: usize = 256;
+
+/// The parameter words (unused), `N_SLOTS`, `ITEM_END` of resumable marching.
+const SLOTS_WORD: usize = 165;
+
+/// The parameter word `TURN_BUDGET`.
+const BUDGET_WORD: usize = 272;
+
+/// Resumable marching (`STATE` in the shader): every thread is a slot for
+/// a pixel (or task) of a job; a submission gives each a budget of turns
+/// of the marcher's state machine, and pixels that need more save their
+/// state and continue in the next submission while work groups whose
+/// pixels are all finished take the next 64.  The budget follows the time a
+/// submission took so that one lasts about [`Resumer::target`] (env
+/// `MB3D_GPU_BAND_MS`, default 25): the desktop shares the card, its
+/// compositor waits for a running submission, and in slow scenes (dIFS) a
+/// single pixel takes 100 ms or more, so a submission that finished its
+/// pixels froze the screen for seconds.
+struct Resumer {
+    state: wgpu::Buffer,
+    queue: wgpu::Buffer,
+    queue_read: wgpu::Buffer,
+    slots: usize,
+    budget: u32,
+    fixed: bool,
+    target: f64,
+    timing: bool,
+}
+
+/// Slots at most (about 1.3 KB of state each).
+const RESUME_SLOTS: usize = 1 << 15;
+
+/// The words of the marcher's state (`STATE_FIXED` in the shader).
+fn state_fixed() -> u32 {
+    let code = include_str!("gpu_march.wgsl");
+    let i = code.find("const STATE_FIXED: u32 = ").expect("STATE_FIXED") + 25;
+    code[i..].split('u').next().unwrap().parse().unwrap()
+}
+
+impl Resumer {
+    fn new(g: &Gpu, sh: &SceneShader) -> Self {
+        let stride = 1 + state_fixed() + sh.record_words;
+        // within the default storage binding limit (128 MB)
+        let max: usize = std::env::var("MB3D_GPU_SLOTS").ok().and_then(|v| v.parse().ok()).unwrap_or(RESUME_SLOTS);
+        let slots = max.min((96 << 20) / (stride as usize * 4)).max(64) / 64 * 64;
+        let state = g.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("state"),
+            size: (slots * stride as usize * 4) as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let queue = g.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("queue"),
+            size: 16,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let queue_read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("queue read"), size: 16, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let ms: f64 = std::env::var("MB3D_GPU_BAND_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(25.0);
+        // MB3D_GPU_TURNS: a fixed budget (a check of the suspending)
+        let fixed: Option<u32> = std::env::var("MB3D_GPU_TURNS").ok().and_then(|v| v.parse().ok());
+        Resumer { state, queue, queue_read, slots, budget: fixed.unwrap_or(64), fixed: fixed.is_some(), target: ms / 1000.0, timing: std::env::var_os("MB3D_GPU_TIMING").is_some() }
+    }
+
+    /// Runs a job of `items` pixels (tasks) until all are done: `base` is
+    /// its parameter block (written to `par`), `encode` records its compute
+    /// pass of the given work groups (x, 1), `done(n)` is called when the
+    /// first `n` items are finished.
+    fn run(
+        &mut self,
+        g: &Gpu,
+        par: &wgpu::Buffer,
+        mut base: Vec<u32>,
+        items: usize,
+        cancel: &dyn Fn() -> bool,
+        encode: impl Fn(&mut wgpu::CommandEncoder, u32),
+        mut done: impl FnMut(usize) -> Result<(), String>,
+    ) -> Result<(), String> {
+        let groups = self.slots / 64;
+        base[SLOTS_WORD + 1] = self.slots as u32;
+        base[SLOTS_WORD + 2] = items as u32;
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        // the slots' first words (the pixel + 1): all free
+        enc.clear_buffer(&self.state, 0, Some(self.slots as u64 * 4));
+        g.queue.write_buffer(&self.queue, 0, &bytes(&[0, 0, u32::MAX, 0]));
+        g.queue.submit([enc.finish()]);
+        loop {
+            if cancel() {
+                return Err("cancelled".into());
+            }
+            let t = std::time::Instant::now();
+            base[BUDGET_WORD] = self.budget;
+            g.queue.write_buffer(par, 0, &bytes(&base));
+            g.queue.write_buffer(&self.queue, 0, &bytes(&[0]));
+            g.queue.write_buffer(&self.queue, 8, &bytes(&[u32::MAX]));
+            let mut enc = g.device.create_command_encoder(&Default::default());
+            encode(&mut enc, groups as u32);
+            enc.copy_buffer_to_buffer(&self.queue, 0, &self.queue_read, 0, 16);
+            g.queue.submit([enc.finish()]);
+            let slice = self.queue_read.slice(..);
+            let (tx, rx) = std::sync::mpsc::channel();
+            slice.map_async(wgpu::MapMode::Read, move |r| {
+                let _ = tx.send(r);
+            });
+            g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
+            if let Some(e) = take_error() {
+                return Err(e);
+            }
+            rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+            let q: Vec<u32> = slice.get_mapped_range().map_err(|e| e.to_string())?.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
+            self.queue_read.unmap();
+            let (left, next) = (q[0] as usize, (q[1] as usize).min(items));
+            let dt = t.elapsed().as_secs_f64();
+            if self.timing {
+                eprintln!("  submission (budget {}): {:.1} ms, {next} of {items} started, {left} suspended", self.budget, dt * 1000.0);
+            }
+            // the first suspended item or the next to start: all before it
+            // are finished
+            done(if left > 0 { (q[2] as usize).min(next) } else { next })?;
+            if left == 0 && next >= items {
+                return Ok(());
+            }
+            if !self.fixed {
+                let f = (self.target / dt.max(1e-4)).clamp(0.25, 2.0);
+                self.budget = ((self.budget as f64 * f) as u32).clamp(8, 1 << 24);
+            }
+        }
+    }
+}
 
 /// Calculate on the graphics card when the scene allows it.  Off in the
 /// library; the programs switch it on (see [`default_on`]).
@@ -123,6 +250,8 @@ struct SceneShader {
     slots: [[u32; 8]; 6],
     /// per slot: the parameters of the built-in formulas (f32 / i32 bits)
     slotx: [[u32; 8]; 6],
+    /// the words of the record cells in a pixel's state slot
+    record_words: u32,
 }
 
 /// Record cells (offset / 8 from J4) with integers the loop copies to the
@@ -298,6 +427,26 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         }
     }
     let _ = writeln!(g, "}}");
+    // the record cells in a pixel's state slot (resumable marching)
+    let mut record_words = 0u32;
+    let mut save = String::new();
+    let mut load = String::new();
+    for (c, t) in &ty {
+        match t {
+            CellTy::Whole => {
+                let _ = writeln!(save, "    STATE[o + {record_words}u * ns] = bitcast<u32>(r{c}f);");
+                let _ = writeln!(load, "    r{c}f = bitcast<f32>(STATE[o + {record_words}u * ns]);");
+                record_words += 1;
+            }
+            CellTy::Halves => {
+                let _ = writeln!(save, "    STATE[o + {record_words}u * ns] = r{c}l; STATE[o + {}u * ns] = r{c}h;", record_words + 1);
+                let _ = writeln!(load, "    r{c}l = STATE[o + {record_words}u * ns]; r{c}h = STATE[o + {}u * ns];", record_words + 1);
+                record_words += 2;
+            }
+        }
+    }
+    let _ = writeln!(g, "fn save_record(o: u32, ns: u32) {{\n{save}}}");
+    let _ = writeln!(g, "fn load_record(o: u32, ns: u32) {{\n{load}}}");
     let ins: [(u32, &str); 20] = [
         (3, "r3f = v.x;"), (4, "r4f = v.y;"), (5, "r5f = v.z;"), (6, "r6f = w;"),
         (7, "r7f = c.x;"), (8, "r8f = c.y;"), (9, "r9f = c.z;"),
@@ -452,7 +601,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     if let Some(f) = std::env::var_os("MB3D_GPU_DUMP") {
         let _ = std::fs::write(f, &code);
     }
-    Ok(SceneShader { code, cst, rtpl, slots, slotx })
+    Ok(SceneShader { code, cst, rtpl, slots, slotx, record_words })
 }
 
 /// The smallest [`precision`] for the GPU: below it the single precision
@@ -723,6 +872,9 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     f(&mut v, probe_mzz);
     i(&mut v, std::env::var_os("MB3D_PROBE_DETAIL").is_some() as i32);
     i(&mut v, 16);
+    // resumable marching (`Resumer::run` fills them in)
+    debug_assert_eq!(v.len(), SLOTS_WORD);
+    v.extend_from_slice(&[0; 3]);
     while v.len() < 168 {
         v.push(0);
     }
@@ -763,7 +915,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 272;
+const PARAM_WORDS: usize = 280;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
@@ -959,35 +1111,37 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     };
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
-    // the rows of tasks per submission: a bounce marches a ray and casts
-    // the shadow and occlusion rays of its hit
-    let cost = 2 + o.lights.len() + o.ao.map(|a| [3, 7, 17, 33][a.0.clamp(0, 3) as usize] / 2).unwrap_or(0);
-    let rows_total = n.div_ceil(256);
-    let band = (BAND_PIXELS / cost / 256).clamp(1, rows_total);
-    let mut row0 = 0;
-    while row0 < rows_total {
-        let rows = band.min(rows_total - row0);
-        let par = make("params", &params(p, row0, rows, &sh, 4, &PostJob::default(), Some((o, n))));
-        let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: None,
-            layout: &pl.get_bind_group_layout(0),
-            entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
-            ],
-        });
-        let mut enc = g.device.create_command_encoder(&Default::default());
-        {
+    // the tasks in rows of R_W, resumable (a bounce marches a ray and
+    // casts the shadow and occlusion rays of its hit)
+    let mut res = Resumer::new(g, &sh);
+    let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: None,
+        layout: &pl.get_bind_group_layout(0),
+        entries: &[
+            wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+        ],
+    });
+    let base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
+    res.run(
+        g,
+        &par,
+        base,
+        n,
+        &|| false,
+        |enc, groups| {
             let mut pass = enc.begin_compute_pass(&Default::default());
             pass.set_pipeline(&pl);
             pass.set_bind_group(0, &bind, &[]);
-            pass.dispatch_workgroups(32, rows.div_ceil(8) as u32, 1);
-        }
-        g.queue.submit([enc.finish()]);
-        row0 += rows;
-    }
+            pass.dispatch_workgroups(groups, 1, 1);
+        },
+        |_| Ok(()),
+    )?;
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
@@ -1065,11 +1219,13 @@ fn run(
     sink: &mut dyn FnMut(usize, &[SiLight]),
 ) -> Result<Vec<SiLight>, String> {
     let (w, h) = (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize);
-    // the post passes march several rays per pixel: smaller bands
-    let cost = 1
-        + post.shadows.as_ref().map(|s| s.lights.len()).unwrap_or(0)
-        + post.deao.map(|d| [3, 7, 17, 33][d.quality.min(3) as usize] / 2).unwrap_or(0);
-    let band = (BAND_PIXELS / cost / w.max(1)).clamp(8, h.max(8));
+    let mut res = Resumer::new(g, sh);
+    let modes = only_mode.map(|m| vec![m]).unwrap_or_else(|| modes(post));
+    // the rows of a job: as many as the G-buffer allows (a job ends with
+    // its slowest pixels alone on the card); with post passes (which need
+    // the march of the band done) a few slot generations, so that the rows
+    // still come in steps
+    let band = if modes.len() == 1 { (96 << 20) / (w.max(1) * 20) } else { 4 * res.slots / w.max(1) }.clamp(8, h.max(8));
     let out_size = (w * band * 20) as u64;
     let usage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC;
     let out = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("gbuffer"), size: out_size.max(16), usage, mapped_at_creation: false });
@@ -1081,7 +1237,6 @@ fn run(
     });
     // one parameter buffer per pass (a buffer write before a submission
     // takes effect before all of its passes), and a pipeline per kind of pass
-    let modes = only_mode.map(|m| vec![m]).unwrap_or_else(|| modes(post));
     let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
     let decomb = p.decomb.is_some();
     let mut pls = Vec::new();
@@ -1129,6 +1284,8 @@ fn run(
                     wgpu::BindGroupEntry { binding: 1, resource: out.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
                 ],
             })
         })
@@ -1141,55 +1298,77 @@ fn run(
             return Err("cancelled".into());
         }
         let rows = band.min(h - row0);
+        // each pass on the band until its pixels are done; the rows the
+        // last one has finished go to the sink as they come
+        let mut sunk = 0;
         for (k, &mode) in modes.iter().enumerate() {
-            g.queue.write_buffer(&pars[k], 0, &bytes(&params(p, row0, rows, sh, mode, post, None)));
+            let last = k + 1 == modes.len();
+            res.run(
+                g,
+                &pars[k],
+                params(p, row0, rows, sh, mode, post, None),
+                w * rows,
+                cancel,
+                |enc, groups| {
+                    let mut pass = enc.begin_compute_pass(&Default::default());
+                    pass.set_pipeline(&pls[k]);
+                    pass.set_bind_group(0, &binds[k], &[]);
+                    pass.dispatch_workgroups(groups, 1, 1);
+                },
+                |done| {
+                    let ready = done / w.max(1);
+                    if !last || ready <= sunk || (ready < rows && ready - sunk < 8) {
+                        return Ok(());
+                    }
+                    let data = read_back(g, &out, &read, (sunk * w * 20) as u64, ((ready - sunk) * w * 20) as u64)?;
+                    for (r, row) in data.chunks_exact(w * 20).enumerate() {
+                        let start = gbuf.len();
+                        for px in row.chunks_exact(20) {
+                            let u = |k: usize| u32::from_le_bytes(px[k * 4..k * 4 + 4].try_into().unwrap());
+                            let (a, b, z, s, amb) = (u(0), u(1), u(2), u(3), u(4));
+                            overflow += (amb & 0x10000 != 0) as usize;
+                            gbuf.push(SiLight {
+                                normal: [a as u16 as i16, (a >> 16) as u16 as i16, b as u16 as i16],
+                                zpos_fine: z,
+                                shadow: (b >> 16) as u16,
+                                amb_shadow: amb as u16,
+                                si_gradient: s as u16,
+                                otrap: (s >> 16) as u16,
+                            });
+                        }
+                        sink(row0 + sunk + r, &gbuf[start..]);
+                    }
+                    sunk = ready;
+                    progress(row0 + sunk, h);
+                    Ok(())
+                },
+            )?;
         }
-        let mut enc = g.device.create_command_encoder(&Default::default());
-        for (bind, pl) in binds.iter().zip(&pls) {
-            let mut pass = enc.begin_compute_pass(&Default::default());
-            pass.set_pipeline(pl);
-            pass.set_bind_group(0, bind, &[]);
-            pass.dispatch_workgroups(w.div_ceil(8) as u32, rows.div_ceil(8) as u32, 1);
-        }
-        let n = (w * rows * 20) as u64;
-        enc.copy_buffer_to_buffer(&out, 0, &read, 0, n);
-        g.queue.submit([enc.finish()]);
-        let slice = read.slice(..n);
-        let (tx, rx) = std::sync::mpsc::channel();
-        slice.map_async(wgpu::MapMode::Read, move |r| {
-            let _ = tx.send(r);
-        });
-        g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
-        if let Some(e) = take_error() {
-            return Err(e);
-        }
-        rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
-        {
-            let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
-            for (r, row) in data.chunks_exact(w * 20).enumerate() {
-                let start = gbuf.len();
-                for px in row.chunks_exact(20) {
-                    let u = |k: usize| u32::from_le_bytes(px[k * 4..k * 4 + 4].try_into().unwrap());
-                    let (a, b, z, s, amb) = (u(0), u(1), u(2), u(3), u(4));
-                    overflow += (amb & 0x10000 != 0) as usize;
-                    gbuf.push(SiLight {
-                        normal: [a as u16 as i16, (a >> 16) as u16 as i16, b as u16 as i16],
-                        zpos_fine: z,
-                        shadow: (b >> 16) as u16,
-                        amb_shadow: amb as u16,
-                        si_gradient: s as u16,
-                        otrap: (s >> 16) as u16,
-                    });
-                }
-                sink(row0 + r, &gbuf[start..]);
-            }
-        }
-        read.unmap();
         row0 += rows;
-        progress(row0, h);
     }
     OVERFLOW.with(|c| c.set(overflow));
     Ok(gbuf)
+}
+
+/// Copies `len` bytes at `offset` of the storage buffer `out` through the
+/// mappable buffer `read` (at least as large).
+fn read_back(g: &Gpu, out: &wgpu::Buffer, read: &wgpu::Buffer, offset: u64, len: u64) -> Result<Vec<u8>, String> {
+    let mut enc = g.device.create_command_encoder(&Default::default());
+    enc.copy_buffer_to_buffer(out, offset, read, 0, len);
+    g.queue.submit([enc.finish()]);
+    let slice = read.slice(..len);
+    let (tx, rx) = std::sync::mpsc::channel();
+    slice.map_async(wgpu::MapMode::Read, move |r| {
+        let _ = tx.send(r);
+    });
+    g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
+    if let Some(e) = take_error() {
+        return Err(e);
+    }
+    rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    let v = slice.get_mapped_range().map_err(|e| e.to_string())?.to_vec();
+    read.unmap();
+    Ok(v)
 }
 
 /// Screen space ambient occlusion (`ssao::ssao24`) on the graphics card:
@@ -1477,6 +1656,29 @@ pub fn run_compute(wgsl: &str, inputs: &[&[u32]], out_len: usize, groups: u32) -
 mod tests {
     use super::*;
     use crate::calc::Marcher;
+
+    /// Resumable marching saves and loads every variable that lives across
+    /// turns of the marcher: the private variables and the locals of
+    /// `pixel` declared before its loop (a variable added later must join
+    /// the lists, or a suspended pixel would continue with a stale value).
+    #[test]
+    fn state_lists_complete() {
+        let code = include_str!("gpu_march.wgsl");
+        // set before every pixel or submission, or the debug outputs
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "dv"];
+        let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
+        let body = &code[code.find("fn pixel(").unwrap()..];
+        let lp = body.find("    for (var turns").unwrap();
+        names.extend(body[..lp].lines().filter_map(|l| l.strip_prefix("    var ")).map(|l| l.split([':', ' ', ';']).next().unwrap()));
+        let load = &body[body.find("if (resuming) {").unwrap()..lp];
+        let save = &body[lp..body.find("save_record(").unwrap()];
+        let has = |block: &str, n: &str| block.split(|c: char| !c.is_alphanumeric() && c != '_').any(|w| w == n);
+        for n in names.iter().filter(|n| !n.starts_with("dbg_") && !transient.contains(n)) {
+            assert!(has(save, n), "{n} is not saved");
+            assert!(has(load, n), "{n} is not loaded");
+        }
+        assert!(state_fixed() > 100);
+    }
 
     /// The GPU G-buffer against the CPU's for the example Mandelbulb (skipped
     /// when the computer has no usable graphics card).

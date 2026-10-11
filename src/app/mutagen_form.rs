@@ -257,18 +257,20 @@ fn to_bitmap(rgb: &[u8], w: usize, h: usize, bw: usize, bh: usize) -> Bitmap {
     b
 }
 
-/// The window is opened (again): when the main window's parameters are no
-/// longer those the generations started from, the generations are dropped
-/// so that the next mutation starts from the current parameters (MB3D
-/// kept the old ones until the program was restarted).
+/// The window is opened (again): the main window's parameters become the
+/// root of a first generation and its preview is rendered (MB3D's
+/// `RestartFromMain` / `CreateInitialSet`, which it never called: its root
+/// tile stayed black until the first mutation).  When the parameters are
+/// still those the generations started from, nothing changes.
 pub fn opening(app: &mut Mb3d, ui: &mut Ui) {
     if app.mutagen.running || ui.showing(F) {
         return;
     }
-    let Some(root) = app.mutagen.generations.first().and_then(|g| g.first().cloned().flatten()) else { return };
     app.make_scene(ui);
-    if root.member.scene.to_text() == app.scene.to_text() {
-        return;
+    if let Some(root) = app.mutagen.generations.first().and_then(|g| g.first().cloned().flatten()) {
+        if root.member.scene.to_text() == app.scene.to_text() {
+            return;
+        }
     }
     app.mutagen.generations.clear();
     app.mutagen.current = 0;
@@ -277,7 +279,7 @@ pub fn opening(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_picture(F, &image_name(i), Some(b));
         ui.set_caption(F, &panel_name(i), "");
     }
-    refresh_generation_label(app, ui);
+    create_mutation(app, ui, 0, true);
 }
 
 /// The parameters of the main window as the root (`CreateInitialSet`).
@@ -287,8 +289,9 @@ fn initial_from_main(app: &mut Mb3d, ui: &mut Ui) -> Option<GenMember> {
     Some(GenMember { member: Member { scene: s, probe: Vec::new(), coverage: 0.0 }, img: blank(ui) })
 }
 
-/// `CreateMutation(Sender)`: a new generation from the member of a panel.
-fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize) {
+/// `CreateMutation(Sender)`: a new generation from the member of a panel;
+/// `root_only` renders just the root (`CreateInitialSet`).
+fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize, root_only: bool) {
     if app.mutagen.running {
         app.mutagen.cancel.store(true, Ordering::SeqCst);
         return;
@@ -315,7 +318,7 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize) {
     refresh_generation_label(app, ui);
     {
         let c = ui.cm(F, "ProgressBar");
-        c.max = TREE.len() as i64;
+        c.max = if root_only { 1 } else { TREE.len() as i64 };
         c.position = 0;
     }
     let cfg = config(ui);
@@ -340,7 +343,7 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize) {
         };
         let r = (|| -> Result<(), String> {
             for (i, (_, p)) in TREE.iter().enumerate() {
-                if cancel.load(Ordering::Relaxed) {
+                if cancel.load(Ordering::Relaxed) || (root_only && i > 0) {
                     return Ok(());
                 }
                 let (m, img) = match p {
@@ -441,11 +444,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.close_cancel(F);
             }
         }
-        "MutateBtnClick" => create_mutation(app, ui, 0),
+        "MutateBtnClick" => create_mutation(app, ui, 0, false),
         "Panel_1DblClick" => {
             let s = e.sender.as_str();
             if let Some(i) = (0..TREE.len()).find(|&i| s == panel_name(i) || s == image_name(i)) {
-                create_mutation(app, ui, i);
+                create_mutation(app, ui, i, false);
             }
         }
         "DisableAllBtnClick" => {

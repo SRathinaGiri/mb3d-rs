@@ -14,6 +14,17 @@
 // the iteration record (u32 words from J4)
 @group(0) @binding(2) var<storage, read> cst: array<u32>;
 @group(0) @binding(3) var<storage, read> rtpl: array<u32>;
+// resumable marching: every thread is a slot for a pixel (or task) of the
+// job, which work groups take 64 at a time from QUEUE[1]; a pixel that has
+// used the turns of a submission (TURN_BUDGET) saves its state in the slot
+// (word 0: the pixel + 1, 0 when the slot is free; word k of slot s at
+// k * N_SLOTS + s), counts itself in QUEUE[0] and its index in QUEUE[2]
+// (the lowest suspended), and the next submission continues it.  A
+// submission thus lasts a short time even where one pixel takes long (the
+// desktop shares the card), and groups of finished pixels take new ones
+// meanwhile.
+@group(0) @binding(4) var<storage, read_write> STATE: array<u32>;
+@group(0) @binding(5) var<storage, read_write> QUEUE: array<atomic<u32>, 4>;
 
 // parameter indices (gpu.rs writes them in this order)
 const RECT_X0: u32 = 0u;
@@ -94,6 +105,12 @@ const P2_DIFS: u32 = 160u;
 const P2_DDS: u32 = 161u;        // d_de_scale of the part
 const PROBE_MZZ: u32 = 162u;     // M_PROBE: the depth along the ray
 const EVAL_TURNS: u32 = 164u;    // the turns of evaluate's loop (a parameter so that the driver does not unroll it)
+const N_SLOTS: u32 = 166u;        // resumable marching: the slots (64 per work group)
+const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or tasks of the job
+const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
+// the words of the marcher's state in a slot (after the suspended flag);
+// the record cells follow (gpu.rs reads this number)
+const STATE_FIXED: u32 = 302u;
 // the reflection pass (M_REFLECT): tasks instead of pixels
 const R_FAR_FOG: u32 = 168u;     // far fog / squared depth: the depth of a hit from the fog formula
 const R_SURFACE: u32 = 169u;     // 1: the tasks are the pixels' surfaces (no march)
@@ -806,7 +823,9 @@ fn evaluate(on_de: bool) -> f32 {
             if (part_done) {
                 max_its_result = max_it;
                 let mn = ms_de_stop * 0.25;
-                if (is_nan(result) || abs(result) > 3.0e38) {
+                // an infinite DE is an escaped point (harmless); NaN is
+                // not, the formula's arithmetic broke down
+                if (is_nan(result)) {
                     de_overflow = true;
                 }
                 if (result < mn || is_nan(result)) {
@@ -1240,7 +1259,368 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var axis = 0;
     var kk = 0;
 
-    for (var guard = 0; guard < 2000000; guard++) {
+    // resumable marching (STATE): the state of every variable that lives
+    // across turns (a test checks the lists against the declarations)
+    // word k of the slot at k * ns (the threads of a warp access adjacent words)
+    let so = state_slot;
+    let ns = P[N_SLOTS];
+    var guard = 0;
+    if (resuming) {
+        c.x = bitcast<f32>(STATE[so + 1u * ns]);
+        c.y = bitcast<f32>(STATE[so + 2u * ns]);
+        c.z = bitcast<f32>(STATE[so + 3u * ns]);
+        v.x = bitcast<f32>(STATE[so + 4u * ns]);
+        v.y = bitcast<f32>(STATE[so + 5u * ns]);
+        v.z = bitcast<f32>(STATE[so + 6u * ns]);
+        rout = bitcast<f32>(STATE[so + 7u * ns]);
+        lrout = bitcast<f32>(STATE[so + 8u * ns]);
+        rold = bitcast<f32>(STATE[so + 9u * ns]);
+        otrap = bitcast<f32>(STATE[so + 10u * ns]);
+        it_result = bitcast<i32>(STATE[so + 11u * ns]);
+        max_it = bitcast<i32>(STATE[so + 12u * ns]);
+        rstop = bitcast<f32>(STATE[so + 13u * ns]);
+        calc_sit = (STATE[so + 14u * ns] != 0u);
+        smooth_it = bitcast<f32>(STATE[so + 15u * ns]);
+        w = bitcast<f32>(STATE[so + 16u * ns]);
+        j.x = bitcast<f32>(STATE[so + 17u * ns]);
+        j.y = bitcast<f32>(STATE[so + 18u * ns]);
+        j.z = bitcast<f32>(STATE[so + 19u * ns]);
+        j4 = bitcast<f32>(STATE[so + 20u * ns]);
+        vary_scale = bitcast<f32>(STATE[so + 21u * ns]);
+        first_it = bitcast<i32>(STATE[so + 22u * ns]);
+        deriv.x = bitcast<f32>(STATE[so + 23u * ns]);
+        deriv.y = bitcast<f32>(STATE[so + 24u * ns]);
+        deriv.z = bitcast<f32>(STATE[so + 25u * ns]);
+        dfree.x = bitcast<f32>(STATE[so + 26u * ns]);
+        dfree.y = bitcast<f32>(STATE[so + 27u * ns]);
+        ms_de_stop = bitcast<f32>(STATE[so + 28u * ns]);
+        part_start = STATE[so + 29u * ns];
+        part_end = STATE[so + 30u * ns];
+        part_repeat = STATE[so + 31u * ns];
+        de_option = bitcast<i32>(STATE[so + 32u * ns]);
+        rstopd = bitcast<f32>(STATE[so + 33u * ns]);
+        vfov_px.x = bitcast<f32>(STATE[so + 34u * ns]);
+        vfov_px.y = bitcast<f32>(STATE[so + 35u * ns]);
+        vfov_px.z = bitcast<f32>(STATE[so + 36u * ns]);
+        zz_base = bitcast<f32>(STATE[so + 37u * ns]);
+        zz_mul = bitcast<f32>(STATE[so + 38u * ns]);
+        zz_abs = (STATE[so + 39u * ns] != 0u);
+        r_flags = STATE[so + 40u * ns];
+        r_zz2 = bitcast<f32>(STATE[so + 41u * ns]);
+        r_step_count = bitcast<f32>(STATE[so + 42u * ns]);
+        de_overflow = (STATE[so + 43u * ns] != 0u);
+        mzz = bitcast<f32>(STATE[so + 44u * ns]);
+        vfov.x = bitcast<f32>(STATE[so + 45u * ns]);
+        vfov.y = bitcast<f32>(STATE[so + 46u * ns]);
+        vfov.z = bitcast<f32>(STATE[so + 47u * ns]);
+        base.x = bitcast<f32>(STATE[so + 48u * ns]);
+        base.y = bitcast<f32>(STATE[so + 49u * ns]);
+        base.z = bitcast<f32>(STATE[so + 50u * ns]);
+        max_its_result = bitcast<i32>(STATE[so + 51u * ns]);
+        s_roughness = bitcast<f32>(STATE[so + 52u * ns]);
+        seed = bitcast<i32>(STATE[so + 53u * ns]);
+        si_normal.x = bitcast<i32>(STATE[so + 54u * ns]);
+        si_normal.y = bitcast<i32>(STATE[so + 55u * ns]);
+        si_normal.z = bitcast<i32>(STATE[so + 56u * ns]);
+        si_zpos = STATE[so + 57u * ns];
+        si_shadow = STATE[so + 58u * ns];
+        si_grad = STATE[so + 59u * ns];
+        si_otrap = STATE[so + 60u * ns];
+        si_amb = STATE[so + 61u * ns];
+        for (var i = 0u; i < 33u; i++) { let q = so + (62u + i * 3u) * ns; ao_dirs[i] = vec3<f32>(bitcast<f32>(STATE[q]), bitcast<f32>(STATE[q + ns]), bitcast<f32>(STATE[q + 2u * ns])); }
+        for (var i = 0u; i < 33u; i++) { ao_min[i] = bitcast<f32>(STATE[so + (161u + i) * ns]); }
+        step_count = bitcast<f32>(STATE[so + 194u * ns]);
+        first_step = (STATE[so + 195u * ns] != 0u);
+        pc = STATE[so + 196u * ns];
+        need = (STATE[so + 197u * ns] != 0u);
+        want_de = (STATE[so + 198u * ns] != 0u);
+        after_hs = STATE[so + 199u * ns];
+        after_ao = STATE[so + 200u * ns];
+        last_zz = bitcast<f32>(STATE[so + 201u * ns]);
+        rlast_sw = bitcast<f32>(STATE[so + 202u * ns]);
+        after_bs = STATE[so + 203u * ns];
+        bs_thr = bitcast<f32>(STATE[so + 204u * ns]);
+        bs_it_check = (STATE[so + 205u * ns] != 0u);
+        zf = bitcast<f32>(STATE[so + 206u * ns]);
+        ic.x = bitcast<f32>(STATE[so + 207u * ns]);
+        ic.y = bitcast<f32>(STATE[so + 208u * ns]);
+        ic.z = bitcast<f32>(STATE[so + 209u * ns]);
+        nvec.x = bitcast<f32>(STATE[so + 210u * ns]);
+        nvec.y = bitcast<f32>(STATE[so + 211u * ns]);
+        nvec.z = bitcast<f32>(STATE[so + 212u * ns]);
+        max_lhs = bitcast<f32>(STATE[so + 213u * ns]);
+        li = STATE[so + 214u * ns];
+        lidx = STATE[so + 215u * ns];
+        lvec.x = bitcast<f32>(STATE[so + 216u * ns]);
+        lvec.y = bitcast<f32>(STATE[so + 217u * ns]);
+        lvec.z = bitcast<f32>(STATE[so + 218u * ns]);
+        zz2 = bitcast<f32>(STATE[so + 219u * ns]);
+        zz2mul = bitcast<f32>(STATE[so + 220u * ns]);
+        rsf = bitcast<f32>(STATE[so + 221u * ns]);
+        st = bitcast<f32>(STATE[so + 222u * ns]);
+        zr_soft = bitcast<f32>(STATE[so + 223u * ns]);
+        zrs_mul = bitcast<f32>(STATE[so + 224u * ns]);
+        ray_count = STATE[so + 225u * ns];
+        k = STATE[so + 226u * ns];
+        step_ao = bitcast<f32>(STATE[so + 227u * ns]);
+        max_dist = bitcast<f32>(STATE[so + 228u * ns]);
+        d_step_mul = bitcast<f32>(STATE[so + 229u * ns]);
+        ms2 = bitcast<f32>(STATE[so + 230u * ns]);
+        de_mul = bitcast<f32>(STATE[so + 231u * ns]);
+        abr_c = bitcast<f32>(STATE[so + 232u * ns]);
+        md_d10 = bitcast<f32>(STATE[so + 233u * ns]);
+        d_min_a_dif = bitcast<f32>(STATE[so + 234u * ns]);
+        corr_w = bitcast<f32>(STATE[so + 235u * ns]);
+        rot_w[0].x = bitcast<f32>(STATE[so + 236u * ns]);
+        rot_w[0].y = bitcast<f32>(STATE[so + 237u * ns]);
+        rot_w[0].z = bitcast<f32>(STATE[so + 238u * ns]);
+        rot_w[1].x = bitcast<f32>(STATE[so + 239u * ns]);
+        rot_w[1].y = bitcast<f32>(STATE[so + 240u * ns]);
+        rot_w[1].z = bitcast<f32>(STATE[so + 241u * ns]);
+        rot_w[2].x = bitcast<f32>(STATE[so + 242u * ns]);
+        rot_w[2].y = bitcast<f32>(STATE[so + 243u * ns]);
+        rot_w[2].z = bitcast<f32>(STATE[so + 244u * ns]);
+        rv0.x = bitcast<f32>(STATE[so + 245u * ns]);
+        rv0.y = bitcast<f32>(STATE[so + 246u * ns]);
+        rv0.z = bitcast<f32>(STATE[so + 247u * ns]);
+        rv1.x = bitcast<f32>(STATE[so + 248u * ns]);
+        rv1.y = bitcast<f32>(STATE[so + 249u * ns]);
+        rv1.z = bitcast<f32>(STATE[so + 250u * ns]);
+        rv2.x = bitcast<f32>(STATE[so + 251u * ns]);
+        rv2.y = bitcast<f32>(STATE[so + 252u * ns]);
+        rv2.z = bitcast<f32>(STATE[so + 253u * ns]);
+        sv.x = bitcast<f32>(STATE[so + 254u * ns]);
+        sv.y = bitcast<f32>(STATE[so + 255u * ns]);
+        sv.z = bitcast<f32>(STATE[so + 256u * ns]);
+        s_tmp = bitcast<f32>(STATE[so + 257u * ns]);
+        b_end = (STATE[so + 258u * ns] != 0u);
+        b_first = (STATE[so + 259u * ns] != 0u);
+        r = bitcast<f32>(STATE[so + 260u * ns]);
+        done = (STATE[so + 261u * ns] != 0u);
+        dtmp = bitcast<f32>(STATE[so + 262u * ns]);
+        rsf_mul = bitcast<f32>(STATE[so + 263u * ns]);
+        last_step = bitcast<f32>(STATE[so + 264u * ns]);
+        last_de = bitcast<f32>(STATE[so + 265u * ns]);
+        dt1 = bitcast<f32>(STATE[so + 266u * ns]);
+        de_limited = (STATE[so + 267u * ns] != 0u);
+        itmp = bitcast<i32>(STATE[so + 268u * ns]);
+        yp = bitcast<f32>(STATE[so + 269u * ns]);
+        saved_max = bitcast<i32>(STATE[so + 270u * ns]);
+        dmul = bitcast<f32>(STATE[so + 271u * ns]);
+        first = (STATE[so + 272u * ns] != 0u);
+        last_si = bitcast<f32>(STATE[so + 273u * ns]);
+        last_dif = bitcast<f32>(STATE[so + 274u * ns]);
+        noffset = bitcast<f32>(STATE[so + 275u * ns]);
+        ct1.x = bitcast<f32>(STATE[so + 276u * ns]);
+        ct1.y = bitcast<f32>(STATE[so + 277u * ns]);
+        ct1.z = bitcast<f32>(STATE[so + 278u * ns]);
+        dnn = bitcast<f32>(STATE[so + 279u * ns]);
+        nn = bitcast<f32>(STATE[so + 280u * ns]);
+        n.x = bitcast<f32>(STATE[so + 281u * ns]);
+        n.y = bitcast<f32>(STATE[so + 282u * ns]);
+        n.z = bitcast<f32>(STATE[so + 283u * ns]);
+        cnt = bitcast<i32>(STATE[so + 284u * ns]);
+        na = bitcast<f32>(STATE[so + 285u * ns]);
+        acc = bitcast<f32>(STATE[so + 286u * ns]);
+        ssn = bitcast<f32>(STATE[so + 287u * ns]);
+        dm = bitcast<f32>(STATE[so + 288u * ns]);
+        vx.x = bitcast<f32>(STATE[so + 289u * ns]);
+        vx.y = bitcast<f32>(STATE[so + 290u * ns]);
+        vx.z = bitcast<f32>(STATE[so + 291u * ns]);
+        vy.x = bitcast<f32>(STATE[so + 292u * ns]);
+        vy.y = bitcast<f32>(STATE[so + 293u * ns]);
+        vy.z = bitcast<f32>(STATE[so + 294u * ns]);
+        s1.x = bitcast<f32>(STATE[so + 295u * ns]);
+        s1.y = bitcast<f32>(STATE[so + 296u * ns]);
+        ds.x = bitcast<f32>(STATE[so + 297u * ns]);
+        ds.y = bitcast<f32>(STATE[so + 298u * ns]);
+        axis = bitcast<i32>(STATE[so + 299u * ns]);
+        kk = bitcast<i32>(STATE[so + 300u * ns]);
+        guard = bitcast<i32>(STATE[so + 301u * ns]);
+        load_record(so + (1u + STATE_FIXED) * ns, ns);
+    }
+    for (var turns = 0u; guard < 2000000; guard++) {
+        if (turns >= P[TURN_BUDGET]) {
+            STATE[so + 1u * ns] = bitcast<u32>(c.x);
+            STATE[so + 2u * ns] = bitcast<u32>(c.y);
+            STATE[so + 3u * ns] = bitcast<u32>(c.z);
+            STATE[so + 4u * ns] = bitcast<u32>(v.x);
+            STATE[so + 5u * ns] = bitcast<u32>(v.y);
+            STATE[so + 6u * ns] = bitcast<u32>(v.z);
+            STATE[so + 7u * ns] = bitcast<u32>(rout);
+            STATE[so + 8u * ns] = bitcast<u32>(lrout);
+            STATE[so + 9u * ns] = bitcast<u32>(rold);
+            STATE[so + 10u * ns] = bitcast<u32>(otrap);
+            STATE[so + 11u * ns] = bitcast<u32>(it_result);
+            STATE[so + 12u * ns] = bitcast<u32>(max_it);
+            STATE[so + 13u * ns] = bitcast<u32>(rstop);
+            STATE[so + 14u * ns] = select(0u, 1u, calc_sit);
+            STATE[so + 15u * ns] = bitcast<u32>(smooth_it);
+            STATE[so + 16u * ns] = bitcast<u32>(w);
+            STATE[so + 17u * ns] = bitcast<u32>(j.x);
+            STATE[so + 18u * ns] = bitcast<u32>(j.y);
+            STATE[so + 19u * ns] = bitcast<u32>(j.z);
+            STATE[so + 20u * ns] = bitcast<u32>(j4);
+            STATE[so + 21u * ns] = bitcast<u32>(vary_scale);
+            STATE[so + 22u * ns] = bitcast<u32>(first_it);
+            STATE[so + 23u * ns] = bitcast<u32>(deriv.x);
+            STATE[so + 24u * ns] = bitcast<u32>(deriv.y);
+            STATE[so + 25u * ns] = bitcast<u32>(deriv.z);
+            STATE[so + 26u * ns] = bitcast<u32>(dfree.x);
+            STATE[so + 27u * ns] = bitcast<u32>(dfree.y);
+            STATE[so + 28u * ns] = bitcast<u32>(ms_de_stop);
+            STATE[so + 29u * ns] = part_start;
+            STATE[so + 30u * ns] = part_end;
+            STATE[so + 31u * ns] = part_repeat;
+            STATE[so + 32u * ns] = bitcast<u32>(de_option);
+            STATE[so + 33u * ns] = bitcast<u32>(rstopd);
+            STATE[so + 34u * ns] = bitcast<u32>(vfov_px.x);
+            STATE[so + 35u * ns] = bitcast<u32>(vfov_px.y);
+            STATE[so + 36u * ns] = bitcast<u32>(vfov_px.z);
+            STATE[so + 37u * ns] = bitcast<u32>(zz_base);
+            STATE[so + 38u * ns] = bitcast<u32>(zz_mul);
+            STATE[so + 39u * ns] = select(0u, 1u, zz_abs);
+            STATE[so + 40u * ns] = r_flags;
+            STATE[so + 41u * ns] = bitcast<u32>(r_zz2);
+            STATE[so + 42u * ns] = bitcast<u32>(r_step_count);
+            STATE[so + 43u * ns] = select(0u, 1u, de_overflow);
+            STATE[so + 44u * ns] = bitcast<u32>(mzz);
+            STATE[so + 45u * ns] = bitcast<u32>(vfov.x);
+            STATE[so + 46u * ns] = bitcast<u32>(vfov.y);
+            STATE[so + 47u * ns] = bitcast<u32>(vfov.z);
+            STATE[so + 48u * ns] = bitcast<u32>(base.x);
+            STATE[so + 49u * ns] = bitcast<u32>(base.y);
+            STATE[so + 50u * ns] = bitcast<u32>(base.z);
+            STATE[so + 51u * ns] = bitcast<u32>(max_its_result);
+            STATE[so + 52u * ns] = bitcast<u32>(s_roughness);
+            STATE[so + 53u * ns] = bitcast<u32>(seed);
+            STATE[so + 54u * ns] = bitcast<u32>(si_normal.x);
+            STATE[so + 55u * ns] = bitcast<u32>(si_normal.y);
+            STATE[so + 56u * ns] = bitcast<u32>(si_normal.z);
+            STATE[so + 57u * ns] = si_zpos;
+            STATE[so + 58u * ns] = si_shadow;
+            STATE[so + 59u * ns] = si_grad;
+            STATE[so + 60u * ns] = si_otrap;
+            STATE[so + 61u * ns] = si_amb;
+            for (var i = 0u; i < 33u; i++) { let q = so + (62u + i * 3u) * ns; STATE[q] = bitcast<u32>(ao_dirs[i].x); STATE[q + ns] = bitcast<u32>(ao_dirs[i].y); STATE[q + 2u * ns] = bitcast<u32>(ao_dirs[i].z); }
+            for (var i = 0u; i < 33u; i++) { STATE[so + (161u + i) * ns] = bitcast<u32>(ao_min[i]); }
+            STATE[so + 194u * ns] = bitcast<u32>(step_count);
+            STATE[so + 195u * ns] = select(0u, 1u, first_step);
+            STATE[so + 196u * ns] = pc;
+            STATE[so + 197u * ns] = select(0u, 1u, need);
+            STATE[so + 198u * ns] = select(0u, 1u, want_de);
+            STATE[so + 199u * ns] = after_hs;
+            STATE[so + 200u * ns] = after_ao;
+            STATE[so + 201u * ns] = bitcast<u32>(last_zz);
+            STATE[so + 202u * ns] = bitcast<u32>(rlast_sw);
+            STATE[so + 203u * ns] = after_bs;
+            STATE[so + 204u * ns] = bitcast<u32>(bs_thr);
+            STATE[so + 205u * ns] = select(0u, 1u, bs_it_check);
+            STATE[so + 206u * ns] = bitcast<u32>(zf);
+            STATE[so + 207u * ns] = bitcast<u32>(ic.x);
+            STATE[so + 208u * ns] = bitcast<u32>(ic.y);
+            STATE[so + 209u * ns] = bitcast<u32>(ic.z);
+            STATE[so + 210u * ns] = bitcast<u32>(nvec.x);
+            STATE[so + 211u * ns] = bitcast<u32>(nvec.y);
+            STATE[so + 212u * ns] = bitcast<u32>(nvec.z);
+            STATE[so + 213u * ns] = bitcast<u32>(max_lhs);
+            STATE[so + 214u * ns] = li;
+            STATE[so + 215u * ns] = lidx;
+            STATE[so + 216u * ns] = bitcast<u32>(lvec.x);
+            STATE[so + 217u * ns] = bitcast<u32>(lvec.y);
+            STATE[so + 218u * ns] = bitcast<u32>(lvec.z);
+            STATE[so + 219u * ns] = bitcast<u32>(zz2);
+            STATE[so + 220u * ns] = bitcast<u32>(zz2mul);
+            STATE[so + 221u * ns] = bitcast<u32>(rsf);
+            STATE[so + 222u * ns] = bitcast<u32>(st);
+            STATE[so + 223u * ns] = bitcast<u32>(zr_soft);
+            STATE[so + 224u * ns] = bitcast<u32>(zrs_mul);
+            STATE[so + 225u * ns] = ray_count;
+            STATE[so + 226u * ns] = k;
+            STATE[so + 227u * ns] = bitcast<u32>(step_ao);
+            STATE[so + 228u * ns] = bitcast<u32>(max_dist);
+            STATE[so + 229u * ns] = bitcast<u32>(d_step_mul);
+            STATE[so + 230u * ns] = bitcast<u32>(ms2);
+            STATE[so + 231u * ns] = bitcast<u32>(de_mul);
+            STATE[so + 232u * ns] = bitcast<u32>(abr_c);
+            STATE[so + 233u * ns] = bitcast<u32>(md_d10);
+            STATE[so + 234u * ns] = bitcast<u32>(d_min_a_dif);
+            STATE[so + 235u * ns] = bitcast<u32>(corr_w);
+            STATE[so + 236u * ns] = bitcast<u32>(rot_w[0].x);
+            STATE[so + 237u * ns] = bitcast<u32>(rot_w[0].y);
+            STATE[so + 238u * ns] = bitcast<u32>(rot_w[0].z);
+            STATE[so + 239u * ns] = bitcast<u32>(rot_w[1].x);
+            STATE[so + 240u * ns] = bitcast<u32>(rot_w[1].y);
+            STATE[so + 241u * ns] = bitcast<u32>(rot_w[1].z);
+            STATE[so + 242u * ns] = bitcast<u32>(rot_w[2].x);
+            STATE[so + 243u * ns] = bitcast<u32>(rot_w[2].y);
+            STATE[so + 244u * ns] = bitcast<u32>(rot_w[2].z);
+            STATE[so + 245u * ns] = bitcast<u32>(rv0.x);
+            STATE[so + 246u * ns] = bitcast<u32>(rv0.y);
+            STATE[so + 247u * ns] = bitcast<u32>(rv0.z);
+            STATE[so + 248u * ns] = bitcast<u32>(rv1.x);
+            STATE[so + 249u * ns] = bitcast<u32>(rv1.y);
+            STATE[so + 250u * ns] = bitcast<u32>(rv1.z);
+            STATE[so + 251u * ns] = bitcast<u32>(rv2.x);
+            STATE[so + 252u * ns] = bitcast<u32>(rv2.y);
+            STATE[so + 253u * ns] = bitcast<u32>(rv2.z);
+            STATE[so + 254u * ns] = bitcast<u32>(sv.x);
+            STATE[so + 255u * ns] = bitcast<u32>(sv.y);
+            STATE[so + 256u * ns] = bitcast<u32>(sv.z);
+            STATE[so + 257u * ns] = bitcast<u32>(s_tmp);
+            STATE[so + 258u * ns] = select(0u, 1u, b_end);
+            STATE[so + 259u * ns] = select(0u, 1u, b_first);
+            STATE[so + 260u * ns] = bitcast<u32>(r);
+            STATE[so + 261u * ns] = select(0u, 1u, done);
+            STATE[so + 262u * ns] = bitcast<u32>(dtmp);
+            STATE[so + 263u * ns] = bitcast<u32>(rsf_mul);
+            STATE[so + 264u * ns] = bitcast<u32>(last_step);
+            STATE[so + 265u * ns] = bitcast<u32>(last_de);
+            STATE[so + 266u * ns] = bitcast<u32>(dt1);
+            STATE[so + 267u * ns] = select(0u, 1u, de_limited);
+            STATE[so + 268u * ns] = bitcast<u32>(itmp);
+            STATE[so + 269u * ns] = bitcast<u32>(yp);
+            STATE[so + 270u * ns] = bitcast<u32>(saved_max);
+            STATE[so + 271u * ns] = bitcast<u32>(dmul);
+            STATE[so + 272u * ns] = select(0u, 1u, first);
+            STATE[so + 273u * ns] = bitcast<u32>(last_si);
+            STATE[so + 274u * ns] = bitcast<u32>(last_dif);
+            STATE[so + 275u * ns] = bitcast<u32>(noffset);
+            STATE[so + 276u * ns] = bitcast<u32>(ct1.x);
+            STATE[so + 277u * ns] = bitcast<u32>(ct1.y);
+            STATE[so + 278u * ns] = bitcast<u32>(ct1.z);
+            STATE[so + 279u * ns] = bitcast<u32>(dnn);
+            STATE[so + 280u * ns] = bitcast<u32>(nn);
+            STATE[so + 281u * ns] = bitcast<u32>(n.x);
+            STATE[so + 282u * ns] = bitcast<u32>(n.y);
+            STATE[so + 283u * ns] = bitcast<u32>(n.z);
+            STATE[so + 284u * ns] = bitcast<u32>(cnt);
+            STATE[so + 285u * ns] = bitcast<u32>(na);
+            STATE[so + 286u * ns] = bitcast<u32>(acc);
+            STATE[so + 287u * ns] = bitcast<u32>(ssn);
+            STATE[so + 288u * ns] = bitcast<u32>(dm);
+            STATE[so + 289u * ns] = bitcast<u32>(vx.x);
+            STATE[so + 290u * ns] = bitcast<u32>(vx.y);
+            STATE[so + 291u * ns] = bitcast<u32>(vx.z);
+            STATE[so + 292u * ns] = bitcast<u32>(vy.x);
+            STATE[so + 293u * ns] = bitcast<u32>(vy.y);
+            STATE[so + 294u * ns] = bitcast<u32>(vy.z);
+            STATE[so + 295u * ns] = bitcast<u32>(s1.x);
+            STATE[so + 296u * ns] = bitcast<u32>(s1.y);
+            STATE[so + 297u * ns] = bitcast<u32>(ds.x);
+            STATE[so + 298u * ns] = bitcast<u32>(ds.y);
+            STATE[so + 299u * ns] = bitcast<u32>(axis);
+            STATE[so + 300u * ns] = bitcast<u32>(kk);
+            STATE[so + 301u * ns] = bitcast<u32>(guard);
+            save_record(so + (1u + STATE_FIXED) * ns, ns);
+            STATE[so] = cur_item + 1u;
+            atomicAdd(&QUEUE[0], 1u);
+            atomicMin(&QUEUE[2], cur_item);
+            suspended = true;
+            return;
+        }
+        // an evaluation costs more than a step of the state machine
+        turns += select(1u, 8u, need);
         if (need) {
             r = evaluate(want_de);
             need = false;
@@ -2279,11 +2659,12 @@ var<private> r_task_origin: vec3<f32>;
 var<private> r_task_dir: vec3<f32>;
 var<private> r_task: vec4<f32>; // z: zz (or the surface depth)
 
-fn reflect_task(lx: i32, ly: i32) {
-    let idx = (u32(ly) + P[ROW0]) * R_W + u32(lx);
-    if (lx >= i32(R_W) || ly >= pi(ROWS) || idx >= P[R_N]) {
-        return;
-    }
+var<private> state_slot: u32;
+var<private> cur_item: u32;
+var<private> resuming: bool;
+var<private> suspended: bool;
+
+fn reflect_task(idx: u32) {
     let o = idx * R_WORDS;
     r_task_origin = vec3<f32>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u]));
     r_task_dir = vec3<f32>(bitcast<f32>(OUT[o + 3u]), bitcast<f32>(OUT[o + 4u]), bitcast<f32>(OUT[o + 5u]));
@@ -2299,6 +2680,9 @@ fn reflect_task(lx: i32, ly: i32) {
     si_amb = 5000u;
     s_roughness = 0.0;
     pixel(x, y, M_REFLECT);
+    if (suspended) {
+        return;
+    }
     OUT[o + 8u] = (u32(si_normal.x) & 0xFFFFu) | (u32(si_normal.y) << 16u);
     OUT[o + 9u] = (u32(si_normal.z) & 0xFFFFu) | (si_shadow << 16u);
     OUT[o + 10u] = si_zpos;
@@ -2313,36 +2697,80 @@ fn reflect_task(lx: i32, ly: i32) {
     OUT[o + 19u] = bitcast<u32>(r_step_count);
 }
 
+// the suspended slots of the work group, and the first of the 64 pixels
+// it takes when none is left (neighbouring pixels in a group take similar
+// paths through the state machine: far less divergence than slots that
+// refill one by one)
+var<workgroup> wg_busy: atomic<u32>;
+var<workgroup> wg_base: u32;
+
 @compute @workgroup_size(8, 8)
-fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-    let lx = i32(gid.x);
-    let ly = i32(gid.y);
-    let w = pi(RECT_W);
-    if (P[MODE] != M_REFLECT && (lx >= w || ly >= pi(ROWS))) {
-        return;
+fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
+    // the slot: a suspended pixel or one of the group's new ones
+    state_slot = wid.x * 64u + li;
+    let so = state_slot;
+    let st = STATE[so];
+    resuming = st != 0u;
+    suspended = false;
+    if (li == 0u) {
+        atomicStore(&wg_busy, 0u);
     }
-    let x = pi(RECT_X0) + lx;
+    workgroupBarrier();
+    if (resuming) {
+        atomicAdd(&wg_busy, 1u);
+    }
+    workgroupBarrier();
+    if (li == 0u) {
+        wg_base = 0xFFFFFFFFu;
+        // (idle groups do not count on: the counter would wrap in long jobs)
+        if (atomicLoad(&wg_busy) == 0u && atomicLoad(&QUEUE[1]) < P[ITEM_END]) {
+            wg_base = atomicAdd(&QUEUE[1], 64u);
+        }
+    }
+    workgroupBarrier();
+    if (resuming) {
+        cur_item = st - 1u;
+    } else {
+        let base = wg_base;
+        if (base == 0xFFFFFFFFu || base + li >= P[ITEM_END]) {
+            return;
+        }
+        cur_item = base + li;
+    }
+    let w = pi(RECT_W);
+    // the pixel (the reflection pass: the seed of the task's place in
+    // rows of R_W)
+    let rw = select(u32(w), R_W, P[MODE] == M_REFLECT);
+    let cx = i32(cur_item % rw);
+    let ly = i32(cur_item / rw);
+    let x = pi(RECT_X0) + cx;
     let y = pi(RECT_Y0) + pi(ROW0) + ly;
     // MB3D seeds per row; the CPU advances the seed along the row, here the
     // seed is advanced by the column (the same random sequence, but not
     // exactly the same numbers where pixels have no first step)
-    seed = bitcast<i32>(0x24563487u + u32(y + 1) * 0x324594A1u);
-    for (var k = 0; k < lx; k++) {
-        seed = seed * 214013 + 2531011;
+    // (a resumed pixel loads its seed and record from the state)
+    if (!resuming) {
+        seed = bitcast<i32>(0x24563487u + u32(y + 1) * 0x324594A1u);
+        for (var k = 0; k < cx; k++) {
+            seed = seed * 214013 + 2531011;
+        }
+        init_record();
     }
     _ = cst[0];
     _ = rtpl[0];
-    init_record();
     j4 = pf(J4);
     vary_scale = 1.0;
     deriv = vec3<f32>(1.0, 0.0, 0.0);
     dfree = vec2<f32>(0.0, 0.0);
     let mode = P[MODE];
     if (mode == M_REFLECT) {
-        reflect_task(lx, ly);
+        reflect_task(cur_item);
+        if (!suspended) {
+            STATE[so] = 0u;
+        }
         return;
     }
-    let o = u32(ly * w + lx) * 5u;
+    let o = cur_item * 5u;
     // one call of pixel() only: the driver inlines it at every call site
     var run = true;
     de_overflow = false;
@@ -2379,6 +2807,10 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (run) {
         pixel(x, y, mode);
     }
+    if (suspended) {
+        return;
+    }
+    STATE[so] = 0u;
     if (mode == M_MARCH || mode == M_PROBE) {
         OUT[o] = (u32(si_normal.x) & 0xFFFFu) | (u32(si_normal.y) << 16u);
         OUT[o + 2u] = si_zpos;
