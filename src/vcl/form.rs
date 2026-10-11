@@ -971,4 +971,30 @@ mod tests {
             assert_eq!(scrollbox_extent(&f, s), before);
         }
     }
+
+    /// Glossy: a button under the mouse turns blue, a disabled one does not.
+    #[test]
+    fn hot_button_is_blue() {
+        use super::super::canvas::Canvas;
+        let text = "object F: TForm\n  ClientWidth = 200\n  ClientHeight = 100\n  object A: TButton\n    Left = 10\n    Top = 10\n    Width = 80\n    Height = 25\n    Caption = 'A'\n  end\n  object B: TButton\n    Left = 100\n    Top = 10\n    Width = 80\n    Height = 25\n    Caption = 'B'\n    Enabled = False\n  end\nend\n";
+        let th = Theme::new(super::super::theme::Style::Glossy);
+        let mut f = Form::from_dfm(text, &th).unwrap();
+        // a pixel in the upper half of a button, clear of the caption
+        let px = |f: &mut Form, x: i32| {
+            f.layout();
+            let (w, h) = f.outer_size(&th);
+            let mut buf = vec![0u32; (w * h) as usize];
+            let mut cv = Canvas::new(&mut buf, w as usize, h as usize, 1.0);
+            f.paint(&mut cv, &th, w, h);
+            let p = buf[((f.caption_h(&th) + f.frame_w() + 15) * w + f.frame_w() + x + 5) as usize];
+            ((p >> 16) & 255, p & 255)
+        };
+        let blue = |(r, b): (u32, u32)| b > r + 40;
+        assert!(!blue(px(&mut f, 10)));
+        f.mouse_move(50, 20, 0);
+        assert!(blue(px(&mut f, 10)));
+        f.mouse_move(140, 20, 0);
+        assert!(!blue(px(&mut f, 10)));
+        assert!(!blue(px(&mut f, 100)));
+    }
 }

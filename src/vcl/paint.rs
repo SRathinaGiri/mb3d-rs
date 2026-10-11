@@ -896,14 +896,14 @@ impl Form {
         let sel_key = if c.kind == Kind::PageControl { c.active_page.unwrap_or(usize::MAX) } else { c.tab_index.max(-1) as usize };
         for (i, (key, tr)) in rects.iter().enumerate() {
             let sel = *key == sel_key;
-            let hot = self.hot == Some(id) && self.hot_part == i as i32;
+            let hot = self.hot == Some(id) && self.hot_part == i as i32 && self.enabled(id);
             let mut tr = tr.offset(r.x, r.y);
             if sel && !buttons {
                 tr = Rect::new(tr.x - 2, tr.y - 2, tr.w + 4, tr.h + 3);
             }
             th.tab(cv, tr, sel, hot, buttons);
             let text = if c.kind == Kind::PageControl { strip_amp(&self.ctl[*key].caption) } else { strip_amp(&c.tabs[*key]) };
-            let col = if !self.enabled(id) { th.text_disabled() } else if buttons && sel && th.glossy() { 0xFFFFFFFF } else { th.tab_text(sel) };
+            let col = if !self.enabled(id) { th.text_disabled() } else if buttons && (sel || hot) && th.glossy() { 0xFFFFFFFF } else { th.tab_text(sel) };
             cv.text_in(tr, &text, font, col, HAlign::Center, VAlign::Center, false);
         }
     }

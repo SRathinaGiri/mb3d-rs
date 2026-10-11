@@ -257,22 +257,23 @@ impl Theme {
     // ---- buttons
 
     pub fn button(&self, cv: &mut Canvas, r: Rect, s: BtnState) {
+        // a disabled button does not light up under the mouse
+        let s = BtnState { hot: s.hot && s.enabled, ..s };
         match self.style {
             Style::Glossy => {
                 if s.flat && !s.hot && !s.down && !s.pressed {
                     return;
                 }
                 let (mut t0, mut t1, mut b0, mut b1) = (c(0x4E4E4E), c(0x3A3A3A), c(0x1D1D1D), c(0x2C2C2C));
-                if s.down || s.pressed {
-                    // the style's "pressed" look: blue gloss
-                    (t0, t1, b0, b1) = (c(0x6A9BEA), c(0x3E74D6), c(0x1A4FB8), c(0x2E64CC));
-                    if s.pressed && !s.down {
-                        (t0, t1, b0, b1) = (c(0x2A2A2A), c(0x262626), c(0x141414), c(0x1C1C1C));
-                    }
-                } else if !s.enabled {
+                if !s.enabled {
                     (t0, t1, b0, b1) = (c(0x333333), c(0x2D2D2D), c(0x222222), c(0x262626));
+                } else if s.down || s.pressed {
+                    // the style's "pressed" look (also a speed button that
+                    // is down): blue gloss
+                    (t0, t1, b0, b1) = (c(0x6A9BEA), c(0x3E74D6), c(0x1A4FB8), c(0x2E64CC));
                 } else if s.hot {
-                    (t0, t1, b0, b1) = (c(0x5E5E5E), c(0x484848), c(0x262626), c(0x363636));
+                    // the style's "hot" look under the mouse: lighter blue gloss
+                    (t0, t1, b0, b1) = (c(0x8DB6F2), c(0x5B8FE4), c(0x2A62CC), c(0x4479DC));
                 }
                 let border = if s.focused || s.default { c(0x5A7FBF) } else { c(0x0A0A0A) };
                 // gloss: upper half lighter, sharp split, lower half dark
@@ -318,7 +319,7 @@ impl Theme {
             return self.text_disabled();
         }
         match self.style {
-            Style::Glossy if s.down => c(0xFFFFFF),
+            Style::Glossy if s.down || s.pressed || s.hot => c(0xFFFFFF),
             _ => self.text(),
         }
     }
