@@ -225,16 +225,78 @@ fn axis_samples(pos: i32, size: i32, max_rad: i32, step: i32, out: &mut Vec<i32>
     }
 }
 
+/// One sample of a ring for pixels whose rings lie inside the image: the
+/// offset in the level, `1 / radius` and the range of the 1/32 circle
+/// buckets it updates (everything that does not depend on the pixel).
+struct RingSample {
+    off: isize,
+    r1d: f32,
+    lo: u8,
+    hi: u8,
+}
+
+/// The rings of one level.
+struct Ring {
+    /// outer radius: the samples need `max_rad` pixels on every side
+    max_rad: i32,
+    min_rad: i32,
+    step: i32,
+    rm: f32,
+    multi: bool,
+    zrt: f32,
+    samples: Vec<RingSample>,
+}
+
+/// The rings of all levels (the sample pattern of `TAmbShadowCalc`).
+fn rings(lv: &Levels, w: usize, szrt: f32) -> Vec<Ring> {
+    let n = lv.count as f32;
+    let (mut max_rad, mut min_rad) = (0i32, 0i32);
+    let mut out = Vec::new();
+    let mut axis = Vec::new();
+    for atl in 1..=lv.count {
+        let step = 1i32 << (atl - 1);
+        let rm = (step as f32).sqrt() * 5.0;
+        max_rad += 4 * step;
+        let multi = (rm / (min_rad + 1) as f32).round_ties_even() > 0.0;
+        let zrt = szrt * (n / atl as f32).sqrt().sqrt();
+        // the offsets of a pixel away from the borders
+        axis_samples(max_rad, 2 * max_rad + 1, max_rad, step, &mut axis);
+        let (maxs, mins) = (max_rad * max_rad, min_rad * min_rad);
+        let mut samples = Vec::new();
+        for &y2 in &axis {
+            for &x2 in &axis {
+                let rads = y2 * y2 + x2 * x2;
+                if rads <= mins || rads > maxs {
+                    continue;
+                }
+                let r1d = 1.0 / (rads as f32).sqrt();
+                let c = fast_int_arctan2(y2, x2);
+                let (lo, hi) = if multi {
+                    let ic = (rm * r1d).round_ties_even() as usize;
+                    let start = (c as i32 - (ic as i32 >> 1)) as usize & 31;
+                    (start, (start + ic).min(39))
+                } else {
+                    (c, c)
+                };
+                samples.push(RingSample { off: y2 as isize * w as isize + x2 as isize, r1d, lo: lo as u8, hi: hi as u8 });
+            }
+        }
+        out.push(Ring { max_rad, min_rad, step, rm, multi, zrt, samples });
+        min_rad = max_rad;
+    }
+    out
+}
+
 /// Calculates `amb_shadow` for all object pixels.
 pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &SsaoParams, threads: usize) {
     if w < 4 || h < 4 {
         return;
     }
     let lv = build_levels(gbuf, w, h);
-    let n = lv.count as f32;
     let (szrt, smul, st2) = sampling_constants(&lv, zc_mul, zcorr, p);
+    let rings = rings(&lv, w, szrt);
     let threads = threads.clamp(1, h);
-    let lv = &lv;
+    let (lv, rings) = (&lv, &rings);
     let zps: Vec<i32> = gbuf.iter().map(|s| lv.zp_of(s)).collect();
     let zps = &zps;
     std::thread::scope(|sc| {
@@ -252,52 +314,61 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                             continue;
                         }
                         let zp = zps[y * w + x];
+                        // the steepest slope per 1/32 circle: kept if larger
+                        // (the order of the samples does not matter)
+                        let update = |ang: &mut [f32; 40], mut st: f32, zrt: f32, lo: usize, hi: usize| {
+                            if p.t0 {
+                                if st >= zrt {
+                                    return;
+                                }
+                                let s3 = st / zrt;
+                                st *= 1.0 - s3 * s3 * s3;
+                            } else if st > zrt {
+                                st = zrt;
+                            }
+                            for a in &mut ang[lo..=hi] {
+                                if *a < st {
+                                    *a = st;
+                                }
+                            }
+                        };
                         // 32 directions + overflow rows (MB3D merges 32..35)
                         let mut ang = [-1e10f32; 40];
-                        let (mut max_rad, mut min_rad) = (0i32, 0i32);
-                        for atl in 1..=lv.count {
-                            let step = 1i32 << (atl - 1);
-                            let rm = (step as f32).sqrt() * 5.0;
-                            max_rad += 4 * step;
-                            let (maxs, mins) = (max_rad * max_rad, min_rad * min_rad);
-                            let multi = (rm / (min_rad + 1) as f32).round_ties_even() > 0.0;
-                            let zrt = szrt * (n / atl as f32).sqrt().sqrt();
-                            let l = &lv.lev[atl - 1];
-                            axis_samples(y as i32, h as i32, max_rad, step, &mut ys);
-                            axis_samples(x as i32, w as i32, max_rad, step, &mut xs);
+                        let (xi, yi) = (x as i32, y as i32);
+                        for (ri, ring) in rings.iter().enumerate() {
+                            let l = &lv.lev[ri];
+                            let r = ring.max_rad;
+                            if xi >= r && xi + r < w as i32 && yi >= r && yi + r < h as i32 {
+                                let base = (y * w + x) as isize;
+                                for s in &ring.samples {
+                                    let st = (l[(base + s.off) as usize] as i32 - zp) as f32 * s.r1d;
+                                    update(&mut ang, st, ring.zrt, s.lo as usize, s.hi as usize);
+                                }
+                                continue;
+                            }
+                            // near the borders: the clipped sample grid
+                            let (maxs, mins) = (r * r, ring.min_rad * ring.min_rad);
+                            axis_samples(yi, h as i32, r, ring.step, &mut ys);
+                            axis_samples(xi, w as i32, r, ring.step, &mut xs);
                             for &y2 in &ys {
-                                let rowi = (y as i32 + y2) as usize * w;
+                                let rowi = (yi + y2) as usize * w;
                                 for &x2 in &xs {
                                     let rads = y2 * y2 + x2 * x2;
                                     if rads <= mins || rads > maxs {
                                         continue;
                                     }
                                     let r1d = 1.0 / (rads as f32).sqrt();
-                                    let mut st = (l[rowi + (x as i32 + x2) as usize] as i32 - zp) as f32 * r1d;
-                                    if p.t0 {
-                                        if st >= zrt {
-                                            continue;
-                                        }
-                                        let s3 = st / zrt;
-                                        st *= 1.0 - s3 * s3 * s3;
-                                    } else if st > zrt {
-                                        st = zrt;
-                                    }
+                                    let st = (l[rowi + (xi + x2) as usize] as i32 - zp) as f32 * r1d;
                                     let c = fast_int_arctan2(y2, x2);
-                                    if multi {
-                                        let ic = (rm * r1d).round_ties_even() as usize;
+                                    if ring.multi {
+                                        let ic = (ring.rm * r1d).round_ties_even() as usize;
                                         let start = (c as i32 - (ic as i32 >> 1)) as usize & 31;
-                                        for k in start..=(start + ic).min(39) {
-                                            if ang[k] < st {
-                                                ang[k] = st;
-                                            }
-                                        }
-                                    } else if ang[c] < st {
-                                        ang[c] = st;
+                                        update(&mut ang, st, ring.zrt, start, (start + ic).min(39));
+                                    } else {
+                                        update(&mut ang, st, ring.zrt, c, c);
                                     }
                                 }
                             }
-                            min_rad = max_rad;
                         }
                         for k in 0..4 {
                             if ang[k + 32] > ang[k] {
