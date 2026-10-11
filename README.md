@@ -405,10 +405,13 @@ inverted maximum, the two smooth minima and the dIFS mix), also with
 cutting planes, inside or inside-and-outside rendering and colour on
 iteration; formulas that read maps through MB3D's map functions get the
 maps uploaded to the card. Everything else is calculated on the CPU as
-before: the formulas the lifter cannot resolve,
-volumetric light, views zoomed so far that single precision would show as
-noise, and the Monte Carlo renderer. The zoom limit depends on the DE: a
-numerical DE samples the formula at a tiny offset, which must span a few
+before: the formulas the lifter cannot resolve, volumetric light and the
+Monte Carlo renderer. Views zoomed so far that single precision would show
+as noise are calculated in double precision on cards with doubles in
+shaders (Vulkan and DirectX 12 on NVIDIA, AMD and Intel; not Metal): the
+shader's real type becomes f64, with sine, cosine, logarithm and
+exponential written out in double precision. The limit depends on the DE:
+a numerical DE samples the formula at a tiny offset, which must span a few
 single precision steps of the coordinates (about zoom 7 at 800 pixels
 width); an analytic DE or dIFS only needs the pixel steps themselves to be
 distinct (64 single precision steps), which allows far deeper views.
@@ -421,7 +424,7 @@ calculation is sent in pieces of about 25 ms (`MB3D_GPU_BAND_MS`): a pixel
 that needs longer (a single dIFS pixel can take 100 ms on the card) saves
 its state and continues in the next piece, with identical results.
 
-Of the 80 example parameter files of MB3D, 63 run on the GPU at their
+Of the 80 example parameter files of MB3D, 74 run on the GPU at their
 own image size (429 of the 460 formula files translate); at that size
 *Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
 instead of 58 s; with the reflections on the card, *Rama - Elysium* at 160

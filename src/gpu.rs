@@ -236,15 +236,9 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     if p.vol.is_some() {
         return r("volumetric light (not on the GPU yet)");
     }
-    // MB3D_GPU_MIN_PRECISION / MB3D_GPU_MIN_STEP: experiments with the limits
-    let env = |k: &str, d: f64| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
-    let numeric = !(p.is_custom_de || p.difs) || p.decomb.as_ref().is_some_and(|d| !(d.part2.is_custom_de || d.part2.difs));
-    if numeric && precision(p) < env("MB3D_GPU_MIN_PRECISION", MIN_PRECISION) {
-        return r("the zoom needs double precision");
-    }
-    if step_precision(p) < env("MB3D_GPU_MIN_STEP", MIN_STEP_PRECISION) {
-        return r("the zoom needs double precision");
-    }
+    // the zooms beyond single precision use the double mode (scene_shader,
+    // needs_double; MB3D_GPU_MIN_PRECISION / MB3D_GPU_MIN_STEP: experiments
+    // with the limits)
     scene_shader(p).err()
 }
 
@@ -272,9 +266,53 @@ struct SceneShader {
 /// record before a .m3f call (`Iteration::run_custom`): they must be halves.
 const LOOP_HALVES: [u32; 4] = [13, 15, 16, 33];
 
+/// The type of the shader's real numbers (`R`) and its helpers: f32, or
+/// f64 for the views single precision cannot resolve (`dbl`).  The state
+/// slots keep two words per real value either way.
+fn real_block(dbl: bool) -> String {
+    let mut o = String::new();
+    if dbl {
+        o.push_str("alias R = f64;\nfn rtpl_r(i: u32) -> R { return bitcast<f64>((u64(rtpl[i + 1u]) << 32u) | u64(rtpl[i])); }\nfn rput(q: u32, ns: u32, x: R) { let b = bitcast<u64>(x); STATE[q] = u32(b & 0xFFFFFFFFlu); STATE[q + ns] = u32(b >> 32u); }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f64>((u64(STATE[q + ns]) << 32u) | u64(STATE[q])); }\n");
+    } else {
+        o.push_str("alias R = f32;\nfn rtpl_r(i: u32) -> R { return bitcast<f32>(rtpl[i]); }\nfn rput(q: u32, ns: u32, x: R) { STATE[q] = bitcast<u32>(x); STATE[q + ns] = 0u; }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f32>(STATE[q]); }\n");
+    }
+    // the coordinates: as doubles (DP: start, view gradients, julia
+    // constant) or the f32 parameters
+    if dbl {
+        o.push_str("fn pdd(i: u32) -> R { return bitcast<f64>((u64(P[DP + 2u * i + 1u]) << 32u) | u64(P[DP + 2u * i])); }\n");
+        o.push_str("fn p_ystart() -> vec3<R> { return vec3<R>(pdd(0u), pdd(1u), pdd(2u)); }\n");
+        o.push_str("fn vg(i: u32) -> vec3<R> { return vec3<R>(pdd(3u + 3u * i), pdd(4u + 3u * i), pdd(5u + 3u * i)); }\n");
+        o.push_str("fn p_ju() -> vec3<R> { return vec3<R>(pdd(12u), pdd(13u), pdd(14u)); }\nfn p_j4() -> R { return pdd(15u); }\n");
+    } else {
+        o.push_str("fn p_ystart() -> vec3<R> { return pv(YSTART); }\nfn vg(i: u32) -> vec3<R> { return pv(VG + i * 3u); }\nfn p_ju() -> vec3<R> { return pv(JU); }\nfn p_j4() -> R { return pf(J4); }\n");
+    }
+    o
+}
+
+thread_local! {
+    /// the last march overflowed single precision and ran in double mode
+    /// (until the next march on this thread)
+    static RETRY_DOUBLE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The scene needs the shader's double mode: its zoom is beyond single
+/// precision (see [`unsupported`]); MB3D_GPU_DOUBLE=1 forces it (checks).
+fn needs_double(p: &CalcParams) -> bool {
+    if std::env::var("MB3D_GPU_DOUBLE").as_deref() == Ok("1") || RETRY_DOUBLE.with(|c| c.get()) {
+        return true;
+    }
+    let env = |k: &str, d: f64| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
+    let numeric = !(p.is_custom_de || p.difs) || p.decomb.as_ref().is_some_and(|d| !(d.part2.is_custom_de || d.part2.difs));
+    (numeric && precision(p) < env("MB3D_GPU_MIN_PRECISION", MIN_PRECISION)) || step_precision(p) < env("MB3D_GPU_MIN_STEP", MIN_STEP_PRECISION)
+}
+
 fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
-    use crate::x86::lift_wgsl::{record_globals, CellTy, WgslFormula, PRELUDE};
+    use crate::x86::lift_wgsl::{prelude, record_globals, CellTy, WgslFormula};
     use std::fmt::Write;
+    let dbl = needs_double(p);
+    if dbl && !gpu()?.f64 {
+        return Err("the zoom needs double precision (the graphics card has no doubles)".into());
+    }
     let mut slots = [[0u32; 8]; 6];
     let mut slotx = [[0u32; 8]; 6];
     let mut wfs: Vec<(usize, WgslFormula)> = Vec::new();
@@ -311,7 +349,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             }
             let vb = (crate::custom::var_buf_addr(n) - crate::x86::BASE) as usize;
             row[7] = cst.len() as u32;
-            cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400]));
+            cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400], dbl));
             row[6] |= 16; // the dIFS translation (the kind is in the low bits)
             wfs.push((n, wf));
             if !plain_slot(n) {
@@ -366,7 +404,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 }
                 let vb = (crate::custom::var_buf_addr(n) - crate::x86::BASE) as usize;
                 row[2] = cst.len() as u32;
-                cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400]));
+                cst.extend(wf.constants_from(&m.mem[vb..vb + 0x400], dbl));
                 row[6] |= 2;
                 wfs.push((n, wf));
             }
@@ -422,8 +460,8 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             let lo = u32::from_le_bytes(m.mem[o..o + 4].try_into().unwrap());
             let hi = u32::from_le_bytes(m.mem[o + 4..o + 8].try_into().unwrap());
             match t {
-                CellTy::Whole => rtpl[2 * *c as usize] = (f64::from_bits(lo as u64 | (hi as u64) << 32) as f32).to_bits(),
-                CellTy::Halves => {
+                CellTy::Whole if !dbl => rtpl[2 * *c as usize] = (f64::from_bits(lo as u64 | (hi as u64) << 32) as f32).to_bits(),
+                _ => {
                     rtpl[2 * *c as usize] = lo;
                     rtpl[2 * *c as usize + 1] = hi;
                 }
@@ -431,7 +469,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         }
     }
     let mut g = String::new();
-    g.push_str(PRELUDE);
+    g.push_str(&prelude(dbl));
     g.push_str(&globals);
     // init_record, marshal_in, marshal_out
     let has = |c: u32| ty.contains_key(&c);
@@ -439,7 +477,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     for (c, t) in &ty {
         match t {
             CellTy::Whole => {
-                let _ = writeln!(g, "    r{c}f = bitcast<f32>(rtpl[{}u]);", 2 * c);
+                let _ = writeln!(g, "    r{c}f = rtpl_r({}u);", 2 * c);
             }
             CellTy::Halves => {
                 let _ = writeln!(g, "    r{c}l = rtpl[{}u]; r{c}h = rtpl[{}u];", 2 * c, 2 * c + 1);
@@ -454,9 +492,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     for (c, t) in &ty {
         match t {
             CellTy::Whole => {
-                let _ = writeln!(save, "    STATE[o + {record_words}u * ns] = bitcast<u32>(r{c}f);");
-                let _ = writeln!(load, "    r{c}f = bitcast<f32>(STATE[o + {record_words}u * ns]);");
-                record_words += 1;
+                let _ = writeln!(save, "    rput(o + {record_words}u * ns, ns, r{c}f);");
+                let _ = writeln!(load, "    r{c}f = rget(o + {record_words}u * ns, ns);");
+                record_words += 2;
             }
             CellTy::Halves => {
                 let _ = writeln!(save, "    STATE[o + {record_words}u * ns] = r{c}l; STATE[o + {}u * ns] = r{c}h;", record_words + 1);
@@ -570,7 +608,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     for (n, row) in slots.iter().enumerate() {
         match row[6] & 15 {
             1 => {
-                let _ = writeln!(g, "        case {n}u: {{ v = int_pow(v, j, bitcast<i32>(slot({n}u, 4u)), bitcast<f32>(slot({n}u, 5u))); }}");
+                let _ = writeln!(g, "        case {n}u: {{ v = int_pow(v, j, bitcast<i32>(slot({n}u, 4u)), R(bitcast<f32>(slot({n}u, 5u)))); }}");
             }
             2 => {
                 let _ = writeln!(g, "        case {n}u: {{ marshal_in(); {regs} fsw = 0u; fm{n}(slot({n}u, 2u)); marshal_out(); }}");
@@ -621,7 +659,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "        default: {{ rg[1] = cnt; rg[3] = n; }}");
     let _ = writeln!(g, "    }}");
     let _ = writeln!(g, "}}");
-    let code = include_str!("gpu_march.wgsl").replace("//@FORMULAS@", &g);
+    let code = format!("{}{}", real_block(dbl), include_str!("gpu_march.wgsl").replace("//@FORMULAS@", &g));
     // MB3D_GPU_DUMP=file: write the scene shader (for debugging)
     if let Some(f) = std::env::var_os("MB3D_GPU_DUMP") {
         let _ = std::fs::write(f, &code);
@@ -687,6 +725,8 @@ struct Gpu {
     /// compiled scene shaders by a hash of their code
     pipelines: Mutex<std::collections::HashMap<u64, std::sync::Arc<wgpu::ComputePipeline>>>,
     name: String,
+    /// the shaders can calculate in doubles (SHADER_F64, SHADER_INT64)
+    f64: bool,
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
@@ -761,10 +801,14 @@ async fn init() -> Result<Gpu, String> {
         // llvmpipe, WARP: slower than the CPU renderer
         return Err(format!("only a software renderer ({})", info.name));
     }
+    // doubles in shaders (Vulkan, DirectX 12; not Metal): the deep zooms
+    let dbl = wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64;
+    let f64 = adapter.features().contains(dbl);
     let (device, queue) = adapter
         .request_device(&wgpu::DeviceDescriptor {
             label: Some("mb3d"),
             required_limits: adapter.limits(),
+            required_features: if f64 { dbl } else { wgpu::Features::empty() },
             ..Default::default()
         })
         .await
@@ -772,7 +816,7 @@ async fn init() -> Result<Gpu, String> {
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
     device.on_uncaptured_error(std::sync::Arc::new(|e: wgpu::Error| set_error(e.to_string())));
-    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend) })
+    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64 })
 }
 
 /// The parameters in the order of the indices in `gpu_march.wgsl`.
@@ -981,6 +1025,25 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     for &x in &p.cut_pos {
         f(&mut v, x);
     }
+    // the coordinates as doubles (the shader's double mode): start position,
+    // view gradients, julia constant
+    v.resize(DOUBLE_WORD, 0);
+    let mut d = |x: f64| {
+        let b = x.to_bits();
+        v.push(b as u32);
+        v.push((b >> 32) as u32);
+    };
+    for &x in &p.ystart {
+        d(x);
+    }
+    for r in &p.vgrads {
+        for &x in r {
+            d(x);
+        }
+    }
+    for &x in &p.ju {
+        d(x);
+    }
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
@@ -1011,7 +1074,10 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 296;
+const PARAM_WORDS: usize = 328;
+
+/// The parameter word of the coordinates as doubles (`DP` in the shader).
+const DOUBLE_WORD: usize = 296;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
@@ -1051,35 +1117,54 @@ pub fn march(
     if timing {
         eprintln!("  GPU device: {:.2} s", t.elapsed().as_secs_f64());
     }
-    let t = std::time::Instant::now();
-    let sh = match scene_shader(p) {
-        Ok(s) => s,
-        Err(e) => {
-            set_status(format!("CPU: {e}"));
-            return None;
-        }
-    };
-    if timing {
-        eprintln!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
-    }
-    let t = std::time::Instant::now();
-    let r = run(g, p, &sh, post, None, progress, cancel, &mut sink);
-    if timing {
-        eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
-    }
-    let r = r.and_then(|v| {
-        // pixels whose DE overflowed single precision: a formula not made
-        // for f32 (folds of huge values); a few are harmless, many are not
-        let n = OVERFLOW.with(|c| c.get());
+    RETRY_DOUBLE.with(|c| c.set(false));
+    let mut r: Result<Vec<SiLight>, String> = Err(String::new());
+    for attempt in 0..2 {
+        let t = std::time::Instant::now();
+        let sh = match scene_shader(p) {
+            Ok(s) => s,
+            Err(e) => {
+                set_status(format!("CPU: {e}"));
+                return None;
+            }
+        };
         if timing {
-            eprintln!("  DE overflow in {n} of {} pixels", v.len());
+            eprintln!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
         }
-        if n * 500 > v.len() {
-            Err(format!("single precision overflows in {} ({n} of {} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + "), v.len()))
-        } else {
-            Ok(v)
+        let t = std::time::Instant::now();
+        r = run(g, p, &sh, post, None, progress, cancel, &mut sink);
+        if timing {
+            eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
         }
-    });
+        // pixels whose DE overflowed single precision: a formula not made
+        // for f32 (folds of huge values); a few are harmless, many are not.
+        // In double mode a NaN DE is the formula's own, as on the CPU, which
+        // takes it as a near surface too.
+        let overflow = match &r {
+            Ok(v) => {
+                let n = OVERFLOW.with(|c| c.get());
+                if timing {
+                    eprintln!("  DE overflow in {n} of {} pixels", v.len());
+                }
+                n * 500 > v.len() && !needs_double(p)
+            }
+            Err(_) => false,
+        };
+        if !overflow {
+            break;
+        }
+        let n = OVERFLOW.with(|c| c.get());
+        let len = r.as_ref().map(|v| v.len()).unwrap_or(0);
+        r = Err(format!("single precision overflows in {} ({n} of {len} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + ")));
+        // (MB3D_GPU_RETRY_DOUBLE=1: the NVIDIA driver crashes compiling the
+        // double shader of some of these formulas, so not by default)
+        if attempt > 0 || !g.f64 || std::env::var_os("MB3D_GPU_RETRY_DOUBLE").is_none() {
+            break;
+        }
+        // again in double mode (it stays for the passes of this picture
+        // on this thread: reflections)
+        RETRY_DOUBLE.with(|c| c.set(true));
+    }
     match r {
         Ok(v) => {
             let mut s = format!("GPU {}", g.name);
@@ -1176,6 +1261,10 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     }
     if let Some(r) = unsupported(p) {
         return Err(r);
+    }
+    if needs_double(p) {
+        // the task records keep positions in single precision
+        return Err("reflections of a view that needs doubles".into());
     }
     let g = gpu()?;
     let sh = scene_shader(p)?;
@@ -1803,7 +1892,7 @@ mod tests {
         let save = &body[lp..body.find("save_record(").unwrap()];
         let has = |block: &str, n: &str| block.split(|c: char| !c.is_alphanumeric() && c != '_').any(|w| w == n);
         for n in names.iter().filter(|n| !n.starts_with("dbg_") && !transient.contains(n)) {
-            assert!(has(save, n), "{n} is not saved");
+            assert!(has(save, n), "{n} is not saved (python3 tools/march_state.py src/gpu_march.wgsl)");
             assert!(has(load, n), "{n} is not loaded");
         }
         assert!(state_fixed() > 100);

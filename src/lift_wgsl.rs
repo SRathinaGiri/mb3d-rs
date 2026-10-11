@@ -49,8 +49,9 @@ pub struct WgslFormula {
 
 impl WgslFormula {
     /// The u32 constants xof a slot from its variable buffer (the bytes from
-    /// the buffer start): doubles become f32 bits.
-    pub fn constants_from(&self, var_buf: &[u8]) -> Vec<u32> {
+    /// the buffer start): a whole double is its f32 bits (and 0), or with
+    /// `dbl` its own two words (the shader's `cst_r`).
+    pub fn constants_from(&self, var_buf: &[u8], dbl: bool) -> Vec<u32> {
         let mut v = vec![0u32; self.const_len as usize];
         for &(c, ty, i) in &self.constants {
             let o = c as usize * 8;
@@ -58,6 +59,10 @@ impl WgslFormula {
             let lo = u32::from_le_bytes([b(0), b(1), b(2), b(3)]);
             let hi = u32::from_le_bytes([b(4), b(5), b(6), b(7)]);
             match ty {
+                CellTy::Whole if dbl => {
+                    v[i as usize] = lo;
+                    v[i as usize + 1] = hi;
+                }
                 CellTy::Whole => v[i as usize] = (f64::from_bits(lo as u64 | (hi as u64) << 32) as f32).to_bits(),
                 CellTy::Halves => {
                     v[i as usize] = lo;
@@ -69,8 +74,280 @@ impl WgslFormula {
     }
 }
 
-/// The flag rules xof `Flags` and helpers, in WGSL (shared by all formulas).
-pub const PRELUDE: &str = r#"
+/// The flag rules xof `Flags` and helpers, in WGSL (shared by all formulas),
+/// for the shader's real type (`dbl`: R = f64).
+pub fn prelude(dbl: bool) -> String {
+    format!("{}{}", PRELUDE_COMMON, if dbl { HELPERS_F64 } else { HELPERS_F32 })
+}
+
+const HELPERS_F32: &str = r#"
+fn r_sin(x: R) -> R { return sin(x); }
+fn r_cos(x: R) -> R { return cos(x); }
+fn r_tan(x: R) -> R { return tan(x); }
+fn r_asin(x: R) -> R { return asin(x); }
+fn r_acos(x: R) -> R { return acos(x); }
+fn r_atan(x: R) -> R { return atan(x); }
+fn r_atan2(y: R, x: R) -> R { return atan2(y, x); }
+fn r_exp(x: R) -> R { return exp(x); }
+fn r_exp2(x: R) -> R { return exp2(x); }
+fn r_log(x: R) -> R { return log(x); }
+fn r_log2(x: R) -> R { return log2(x); }
+fn r_pow(a: R, b: R) -> R { return pow(a, b); }
+// the halves of the double an f32 converts to (exact), and a double from
+// its halves rounded to f32 (nearest even): integer access to parts of a
+// double held as f32 (abs / negation on the sign, copies as two halves)
+fn f64_hi(x: f32) -> u32 {
+    let b = bitcast<u32>(x);
+    let s = b & 0x80000000u;
+    let e = (b >> 23u) & 0xFFu;
+    let m = b & 0x7FFFFFu;
+    if (e == 0u) {
+        if (m == 0u) { return s; }
+        let sh = countLeadingZeros(m) - 8u;
+        let mn = (m << sh) & 0x7FFFFFu;
+        return s | ((897u - sh) << 20u) | (mn >> 3u);
+    }
+    if (e == 255u) { return s | 0x7FF00000u | (m >> 3u); }
+    return s | ((e + 896u) << 20u) | (m >> 3u);
+}
+
+fn f64_lo(x: f32) -> u32 {
+    let b = bitcast<u32>(x);
+    let e = (b >> 23u) & 0xFFu;
+    var m = b & 0x7FFFFFu;
+    if (e == 0u && m != 0u) {
+        let sh = countLeadingZeros(m) - 8u;
+        m = (m << sh) & 0x7FFFFFu;
+    }
+    return (m & 7u) << 29u;
+}
+
+fn from_f64_bits(hi: u32, lo: u32) -> f32 {
+    let s = hi & 0x80000000u;
+    let e = (hi >> 20u) & 0x7FFu;
+    let mh = hi & 0xFFFFFu;
+    if (e == 0x7FFu) {
+        if (mh == 0u && lo == 0u) { return bitcast<f32>(s | 0x7F800000u); }
+        return bitcast<f32>(s | 0x7FC00000u);
+    }
+    if (e == 0u) { return bitcast<f32>(s); }
+    var m = (mh << 3u) | (lo >> 29u);
+    let rest = lo & 0x1FFFFFFFu;
+    if (rest > 0x10000000u || (rest == 0x10000000u && (m & 1u) == 1u)) { m += 1u; }
+    var ee = i32(e) - 896;
+    if (m == 0x800000u) { m = 0u; ee += 1; }
+    if (ee >= 255) { return bitcast<f32>(s | 0x7F800000u); }
+    if (ee <= 0) {
+        let v = ldexp(1.0 + f32(m) / 8388608.0, ee - 127);
+        return bitcast<f32>(s | bitcast<u32>(v));
+    }
+    return bitcast<f32>(s | (u32(ee) << 23u) | m);
+}
+
+fn fnan(x: f32) -> bool {
+    return (bitcast<u32>(x) & 0x7FFFFFFFu) > 0x7F800000u;
+}
+fn cst_r(i: u32) -> R {
+    return bitcast<f32>(cst[i]);
+}
+fn rlit(f: u32, lo: u32, hi: u32) -> R {
+    return bitcast<f32>(f);
+}
+
+"#;
+
+const HELPERS_F64: &str = r#"
+
+// the transcendental functions in double precision (GPUs have them for f32
+// only): range reduction and polynomials, about 1e-16 relative
+fn r_pow2i(k: i32) -> R {
+    // 2^k for -1022 <= k <= 1023
+    return bitcast<f64>(u64(k + 1023) << 52u);
+}
+fn r_exp(x: R) -> R {
+    if (x != x) { return x; }
+    if (x > 709.782712893384) { return bitcast<f64>(0x7FF0000000000000lu); }
+    if (x < -745.2) { return 0.0lf; }
+    let k = round(x * 1.4426950408889634lf);
+    let r = (x - k * 0.6931471803691238lf) - k * 1.9082149292705877e-10lf;
+    var p = 1.0lf / 6227020800.0lf;
+    p = p * r + 1.0lf / 479001600.0lf;
+    p = p * r + 1.0lf / 39916800.0lf;
+    p = p * r + 1.0lf / 3628800.0lf;
+    p = p * r + 1.0lf / 362880.0lf;
+    p = p * r + 1.0lf / 40320.0lf;
+    p = p * r + 1.0lf / 5040.0lf;
+    p = p * r + 1.0lf / 720.0lf;
+    p = p * r + 1.0lf / 120.0lf;
+    p = p * r + 1.0lf / 24.0lf;
+    p = p * r + 1.0lf / 6.0lf;
+    p = p * r + 0.5lf;
+    p = p * r + 1.0lf;
+    p = p * r + 1.0lf;
+    let ki = i32(k);
+    if (ki > 1023) { return p * r_pow2i(1023) * r_pow2i(ki - 1023); }
+    if (ki < -1022) { return p * r_pow2i(-1022) * r_pow2i(ki + 1022); }
+    return p * r_pow2i(ki);
+}
+fn r_log(x0: R) -> R {
+    if (x0 != x0 || x0 < 0.0lf) { return bitcast<f64>(0x7FF8000000000000lu); }
+    if (x0 == 0.0lf) { return bitcast<f64>(0xFFF0000000000000lu); }
+    if (x0 > 1.7976931348623157e308lf) { return x0; }
+    var x = x0;
+    var e = 0;
+    if (x < 2.2250738585072014e-308lf) { x = x * 18014398509481984.0lf; e = -54; }
+    let b = bitcast<u64>(x);
+    e += i32((b >> 52u) & 0x7FFlu) - 1023;
+    var m = bitcast<f64>((b & 0x000FFFFFFFFFFFFFlu) | 0x3FF0000000000000lu);
+    if (m > 1.4142135623730951lf) { m = m * 0.5lf; e += 1; }
+    let z = (m - 1.0lf) / (m + 1.0lf);
+    let z2 = z * z;
+    var s = 2.0lf / 23.0lf;
+    s = s * z2 + 2.0lf / 21.0lf;
+    s = s * z2 + 2.0lf / 19.0lf;
+    s = s * z2 + 2.0lf / 17.0lf;
+    s = s * z2 + 2.0lf / 15.0lf;
+    s = s * z2 + 2.0lf / 13.0lf;
+    s = s * z2 + 2.0lf / 11.0lf;
+    s = s * z2 + 2.0lf / 9.0lf;
+    s = s * z2 + 2.0lf / 7.0lf;
+    s = s * z2 + 2.0lf / 5.0lf;
+    s = s * z2 + 2.0lf / 3.0lf;
+    s = s * z2 + 2.0lf;
+    let fe = f64(e);
+    return (z * s + fe * 1.9082149292705877e-10lf) + fe * 0.6931471803691238lf;
+}
+fn r_exp2(x: R) -> R { return r_exp(x * 0.6931471805599453lf); }
+fn r_log2(x: R) -> R { return r_log(x) * 1.4426950408889634lf; }
+fn r_pow(a: R, b: R) -> R {
+    if (a == 0.0lf) { return select(0.0lf, 1.0lf, b == 0.0lf); }
+    return r_exp(b * r_log(a));
+}
+// sin and cos of the reduced argument (|r| <= pi/4)
+fn r_sin_k(r: R) -> R {
+    let r2 = r * r;
+    var p = -1.0lf / 1307674368000.0lf;
+    p = p * r2 + 1.0lf / 6227020800.0lf;
+    p = p * r2 - 1.0lf / 39916800.0lf;
+    p = p * r2 + 1.0lf / 362880.0lf;
+    p = p * r2 - 1.0lf / 5040.0lf;
+    p = p * r2 + 1.0lf / 120.0lf;
+    p = p * r2 - 1.0lf / 6.0lf;
+    return r + r * r2 * p;
+}
+fn r_cos_k(r: R) -> R {
+    let r2 = r * r;
+    var p = 1.0lf / 20922789888000.0lf;
+    p = p * r2 - 1.0lf / 87178291200.0lf;
+    p = p * r2 + 1.0lf / 479001600.0lf;
+    p = p * r2 - 1.0lf / 3628800.0lf;
+    p = p * r2 + 1.0lf / 40320.0lf;
+    p = p * r2 - 1.0lf / 720.0lf;
+    p = p * r2 + 1.0lf / 24.0lf;
+    p = p * r2 - 0.5lf;
+    return 1.0lf + r2 * p;
+}
+// x - n * pi / 2 (Cody-Waite, three parts) and the quadrant n
+fn r_reduce(x: R) -> vec2<f64> {
+    let n = round(x * 0.6366197723675814lf);
+    let r = ((x - n * 1.5707963267341256lf) - n * 6.077100506506192e-11lf) - n * 2.0222662487959506e-21lf;
+    return vec2<f64>(r, n);
+}
+fn r_sin(x: R) -> R {
+    if (abs(x) > 1.0e15lf || x != x) { return R(sin(f32(x))); }
+    let q = r_reduce(x);
+    let n = i32(q.y) & 3;
+    if (n == 0) { return r_sin_k(q.x); }
+    if (n == 1) { return r_cos_k(q.x); }
+    if (n == 2) { return -r_sin_k(q.x); }
+    return -r_cos_k(q.x);
+}
+fn r_cos(x: R) -> R {
+    if (abs(x) > 1.0e15lf || x != x) { return R(cos(f32(x))); }
+    let q = r_reduce(x);
+    let n = i32(q.y) & 3;
+    if (n == 0) { return r_cos_k(q.x); }
+    if (n == 1) { return -r_sin_k(q.x); }
+    if (n == 2) { return -r_cos_k(q.x); }
+    return r_sin_k(q.x);
+}
+fn r_tan(x: R) -> R { return r_sin(x) / r_cos(x); }
+// atan for 0 <= a <= 1
+fn r_atan01(a0: R) -> R {
+    var a = a0;
+    var off = 0.0lf;
+    if (a > 0.2679491924311227lf) {
+        // atan(a) = pi/6 + atan((a - 1/sqrt3) / (1 + a/sqrt3))
+        a = (a - 0.5773502691896258lf) / (1.0lf + a * 0.5773502691896258lf);
+        off = 0.5235987755982989lf;
+    }
+    let t2 = a * a;
+    var p = -1.0lf / 31.0lf;
+    p = p * t2 + 1.0lf / 29.0lf;
+    p = p * t2 - 1.0lf / 27.0lf;
+    p = p * t2 + 1.0lf / 25.0lf;
+    p = p * t2 - 1.0lf / 23.0lf;
+    p = p * t2 + 1.0lf / 21.0lf;
+    p = p * t2 - 1.0lf / 19.0lf;
+    p = p * t2 + 1.0lf / 17.0lf;
+    p = p * t2 - 1.0lf / 15.0lf;
+    p = p * t2 + 1.0lf / 13.0lf;
+    p = p * t2 - 1.0lf / 11.0lf;
+    p = p * t2 + 1.0lf / 9.0lf;
+    p = p * t2 - 1.0lf / 7.0lf;
+    p = p * t2 + 1.0lf / 5.0lf;
+    p = p * t2 - 1.0lf / 3.0lf;
+    p = p * t2 + 1.0lf;
+    return off + a * p;
+}
+fn r_atan(x: R) -> R {
+    if (x != x) { return x; }
+    let a = abs(x);
+    var r: R;
+    if (a > 1.0lf) { r = 1.5707963267948966lf - r_atan01(1.0lf / a); } else { r = r_atan01(a); }
+    return select(r, -r, x < 0.0lf);
+}
+fn r_atan2(y: R, x: R) -> R {
+    if (x != x || y != y) { return x + y; }
+    if (x == 0.0lf) {
+        if (y == 0.0lf) {
+            // the signs of the zeros as atan2 has them
+            let neg_x = (bitcast<u64>(x) >> 63u) != 0lu;
+            let r = select(0.0lf, 3.141592653589793lf, neg_x);
+            return select(r, -r, (bitcast<u64>(y) >> 63u) != 0lu);
+        }
+        return select(1.5707963267948966lf, -1.5707963267948966lf, y < 0.0lf);
+    }
+    let r = r_atan(y / x);
+    if (x > 0.0lf) { return r; }
+    return select(r - 3.141592653589793lf, r + 3.141592653589793lf, (bitcast<u64>(y) >> 63u) == 0lu);
+}
+fn r_asin(x: R) -> R { return r_atan2(x, sqrt(max(1.0lf - x * x, 0.0lf))); }
+fn r_acos(x: R) -> R { return r_atan2(sqrt(max(1.0lf - x * x, 0.0lf)), x); }
+// doubles as such (R = f64): the halves are the exact bits
+fn f64_hi(x: R) -> u32 {
+    return u32(bitcast<u64>(x) >> 32u);
+}
+fn f64_lo(x: R) -> u32 {
+    return u32(bitcast<u64>(x) & 0xFFFFFFFFlu);
+}
+fn from_f64_bits(hi: u32, lo: u32) -> R {
+    return bitcast<f64>((u64(hi) << 32u) | u64(lo));
+}
+fn fnan(x: R) -> bool {
+    return (bitcast<u64>(x) & 0x7FFFFFFFFFFFFFFFlu) > 0x7FF0000000000000lu;
+}
+fn cst_r(i: u32) -> R {
+    return from_f64_bits(cst[i + 1u], cst[i]);
+}
+fn rlit(f: u32, lo: u32, hi: u32) -> R {
+    return from_f64_bits(hi, lo);
+}
+
+"#;
+
+/// The part of the prelude that does not depend on the real type.
+const PRELUDE_COMMON: &str = r#"
 var<private> rg: array<u32, 8>;
 var<private> xcf: bool;
 var<private> xzf: bool;
@@ -80,7 +357,7 @@ var<private> xpf: bool;
 var<private> xaf: bool;
 var<private> fsw: u32;
 // the SSE registers: two doubles each as f32 (x the low lane)
-var<private> xmm: array<vec2<f32>, 8>;
+var<private> xmm: array<vec2<R>, 8>;
 
 fn szmask(size: u32) -> u32 {
     if (size >= 4u) { return 0xFFFFFFFFu; }
@@ -186,81 +463,26 @@ fn shift_reg(op: u32, reg: u32, c0: u32, size: u32) {
     reg_set(reg, size, r);
 }
 
-// the halves of the double an f32 converts to (exact), and a double from
-// its halves rounded to f32 (nearest even): integer access to parts of a
-// double held as f32 (abs / negation on the sign, copies as two halves)
-fn f64_hi(x: f32) -> u32 {
-    let b = bitcast<u32>(x);
-    let s = b & 0x80000000u;
-    let e = (b >> 23u) & 0xFFu;
-    let m = b & 0x7FFFFFu;
-    if (e == 0u) {
-        if (m == 0u) { return s; }
-        let sh = countLeadingZeros(m) - 8u;
-        let mn = (m << sh) & 0x7FFFFFu;
-        return s | ((897u - sh) << 20u) | (mn >> 3u);
-    }
-    if (e == 255u) { return s | 0x7FF00000u | (m >> 3u); }
-    return s | ((e + 896u) << 20u) | (m >> 3u);
-}
-
-fn f64_lo(x: f32) -> u32 {
-    let b = bitcast<u32>(x);
-    let e = (b >> 23u) & 0xFFu;
-    var m = b & 0x7FFFFFu;
-    if (e == 0u && m != 0u) {
-        let sh = countLeadingZeros(m) - 8u;
-        m = (m << sh) & 0x7FFFFFu;
-    }
-    return (m & 7u) << 29u;
-}
-
-fn from_f64_bits(hi: u32, lo: u32) -> f32 {
-    let s = hi & 0x80000000u;
-    let e = (hi >> 20u) & 0x7FFu;
-    let mh = hi & 0xFFFFFu;
-    if (e == 0x7FFu) {
-        if (mh == 0u && lo == 0u) { return bitcast<f32>(s | 0x7F800000u); }
-        return bitcast<f32>(s | 0x7FC00000u);
-    }
-    if (e == 0u) { return bitcast<f32>(s); }
-    var m = (mh << 3u) | (lo >> 29u);
-    let rest = lo & 0x1FFFFFFFu;
-    if (rest > 0x10000000u || (rest == 0x10000000u && (m & 1u) == 1u)) { m += 1u; }
-    var ee = i32(e) - 896;
-    if (m == 0x800000u) { m = 0u; ee += 1; }
-    if (ee >= 255) { return bitcast<f32>(s | 0x7F800000u); }
-    if (ee <= 0) {
-        let v = ldexp(1.0 + f32(m) / 8388608.0, ee - 127);
-        return bitcast<f32>(s | bitcast<u32>(v));
-    }
-    return bitcast<f32>(s | (u32(ee) << 23u) | m);
-}
-
-fn fnan(x: f32) -> bool {
-    return (bitcast<u32>(x) & 0x7FFFFFFFu) > 0x7F800000u;
-}
-
 // C3 C2 C0 xof fcom
 // an SSE register as the bits of its doubles (low word first), and back
-fn xbits(v: vec2<f32>) -> vec4<u32> {
+fn xbits(v: vec2<R>) -> vec4<u32> {
     return vec4<u32>(f64_lo(v.x), f64_hi(v.x), f64_lo(v.y), f64_hi(v.y));
 }
-fn xfrom(b: vec4<u32>) -> vec2<f32> {
-    return vec2<f32>(from_f64_bits(b.y, b.x), from_f64_bits(b.w, b.z));
+fn xfrom(b: vec4<u32>) -> vec2<R> {
+    return vec2<R>(from_f64_bits(b.y, b.x), from_f64_bits(b.w, b.z));
 }
-fn x_isnan(x: f32) -> bool {
-    return (bitcast<u32>(x) & 0x7FFFFFFFu) > 0x7F800000u;
+fn x_isnan(x: R) -> bool {
+    return fnan(x);
 }
 // minsd / maxsd: the second operand unless the first is smaller / larger
-fn xmin(a: f32, b: f32) -> f32 {
+fn xmin(a: R, b: R) -> R {
     return select(b, a, a < b);
 }
-fn xmax(a: f32, b: f32) -> f32 {
+fn xmax(a: R, b: R) -> R {
     return select(b, a, a > b);
 }
 
-fn fcompare_cc(a: f32, b: f32) -> u32 {
+fn fcompare_cc(a: R, b: R) -> u32 {
     if (fnan(a) || fnan(b)) { return 0x4500u; }
     if (a < b) { return 0x0100u; }
     if (a == b) { return 0x4000u; }
@@ -268,13 +490,13 @@ fn fcompare_cc(a: f32, b: f32) -> u32 {
 }
 
 // fist: rounded, out xof range or NaN -> the integer indefinite
-fn fist32(v: f32) -> u32 {
+fn fist32(v: R) -> u32 {
     let x = round(v);
     if (fnan(x) || x < -2147483648.0 || x >= 2147483648.0) { return 0x80000000u; }
     return bitcast<u32>(i32(x));
 }
 
-fn fist16(v: f32) -> u32 {
+fn fist16(v: R) -> u32 {
     let x = round(v);
     if (fnan(x) || x < -32768.0 || x > 32767.0) { return 0x8000u; }
     return bitcast<u32>(i32(x)) & 0xFFFFu;
@@ -301,8 +523,10 @@ fn wmask(n: u32) -> String {
     }
 }
 
+/// A double constant: `rlit` picks the f32 or the double bits (R).
 fn f32_lit(v: f64) -> String {
-    format!("bitcast<f32>({:#x}u)", (v as f32).to_bits())
+    let b = v.to_bits();
+    format!("rlit({:#x}u, {:#x}u, {:#x}u)", (v as f32).to_bits(), b as u32, (b >> 32) as u32)
 }
 
 struct Typed<'a> {
@@ -318,7 +542,7 @@ impl Typed<'_> {
         if p == 'v' && !self.written_vars {
             let i = self.cidx[&c] + if part == 'h' { 1 } else { 0 };
             return match part {
-                'f' => format!("bitcast<f32>(cst[cb + {i}u])"),
+                'f' => format!("cst_r(cb + {i}u)"),
                 _ => format!("cst[cb + {i}u]"),
             };
         }
@@ -405,9 +629,9 @@ impl Typed<'_> {
     fn fload(&self, r: (char, u32), kind: FKind) -> Option<String> {
         Some(match kind {
             FKind::F64 => self.rd_f(r)?,
-            FKind::F32 => format!("bitcast<f32>({})", self.rd_u(r, 4)?),
-            FKind::I32 => format!("f32(bitcast<i32>({}))", self.rd_u(r, 4)?),
-            FKind::I16 => format!("f32(sign_ext({}, 2u))", self.rd_u(r, 2)?),
+            FKind::F32 => format!("R(bitcast<f32>({}))", self.rd_u(r, 4)?),
+            FKind::I32 => format!("R(bitcast<i32>({}))", self.rd_u(r, 4)?),
+            FKind::I16 => format!("R(sign_ext({}, 2u))", self.rd_u(r, 2)?),
             _ => return None,
         })
     }
@@ -415,7 +639,7 @@ impl Typed<'_> {
     fn fstore(&self, r: (char, u32), kind: FKind, v: &str) -> Option<String> {
         Some(match kind {
             FKind::F64 => self.wr_f(r, v)?,
-            FKind::F32 => self.wr_u(r, 4, &format!("bitcast<u32>({v})"))?,
+            FKind::F32 => self.wr_u(r, 4, &format!("bitcast<u32>(f32({v}))"))?,
             FKind::I32 => self.wr_u(r, 4, &format!("fist32({v})"))?,
             FKind::I16 => self.wr_u(r, 2, &format!("fist16({v})"))?,
             _ => return None,
@@ -436,7 +660,7 @@ fn fop(op: &FOp, a: &str, b: &str) -> String {
 
 fn rot(n: u8) -> String {
     let perm: Vec<String> = (0..8).map(|k| format!("f[{}]", (k + 8 - (n as usize) % 8) % 8)).collect();
-    format!("f = array<f32, 8>({});", perm.join(", "))
+    format!("f = array<R, 8>({});", perm.join(", "))
 }
 
 /// The address expression xof a memory operand on the registers (for lea).
@@ -499,7 +723,7 @@ impl Prog {
             if *p == 'v' {
                 cidx.insert(*c, len);
                 constants.push((*c, *t, len));
-                len += if *t == CellTy::Whole { 1 } else { 2 };
+                len += 2; // a whole double: its f32 or its double (constants_from)
             }
         }
         let tz = Typed { ty: &ty, cidx: &cidx, written_vars };
@@ -553,7 +777,7 @@ impl Prog {
         }
         let mut o = String::new();
         let _ = writeln!(o, "fn {name}(cb: u32) {{");
-        let _ = writeln!(o, "    var f: array<f32, 8>;");
+        let _ = writeln!(o, "    var f: array<R, 8>;");
         for ((p, c), t) in &ty {
             let local = *p == 's' || (*p == 'v' && written_vars);
             if !local {
@@ -576,7 +800,7 @@ impl Prog {
                 }
                 if *p == 'v' {
                     let i = cidx[c] + if part == 'h' { 1 } else { 0 };
-                    if part == 'f' { format!("bitcast<f32>(cst[cb + {i}u])") } else { format!("cst[cb + {i}u]") }
+                    if part == 'f' { format!("cst_r(cb + {i}u)") } else { format!("cst[cb + {i}u]") }
                 } else if part == 'f' {
                     "0.0".into()
                 } else {
@@ -585,7 +809,7 @@ impl Prog {
             };
             match t {
                 CellTy::Whole => {
-                    let _ = writeln!(o, "    var {p}{c}f: f32 = {};", init('f'));
+                    let _ = writeln!(o, "    var {p}{c}f: R = {};", init('f'));
                 }
                 CellTy::Halves => {
                     let _ = writeln!(o, "    var {p}{c}l: u32 = {};", init('l'));
@@ -698,8 +922,8 @@ impl Prog {
             Op::FChs(i) => format!("f[{0}] = -f[{0}];", i & 7),
             Op::FAbs(i) => format!("f[{0}] = abs(f[{0}]);", i & 7),
             Op::FSqrt(i) => format!("f[{0}] = sqrt(f[{0}]);", i & 7),
-            Op::FSin(i) => format!("f[{0}] = sin(f[{0}]); fsw = fsw & ~0x0400u;", i & 7),
-            Op::FCos(i) => format!("f[{0}] = cos(f[{0}]); fsw = fsw & ~0x0400u;", i & 7),
+            Op::FSin(i) => format!("f[{0}] = r_sin(f[{0}]); fsw = fsw & ~0x0400u;", i & 7),
+            Op::FCos(i) => format!("f[{0}] = r_cos(f[{0}]); fsw = fsw & ~0x0400u;", i & 7),
             Op::FRndint(i) => format!("f[{0}] = round(f[{0}]);", i & 7),
             Op::FPrem { a, b, ieee } => format!(
                 "{{ let x = f[{0}]; let y = f[{1}]; let q = {2}; f[{0}] = x - q * y; let qi = u32(min(abs(q), 4294967000.0)); \
@@ -708,11 +932,11 @@ impl Prog {
                 b & 7,
                 if *ieee { "round(x / y)" } else { "trunc(x / y)" }
             ),
-            Op::F2xm1(i) => format!("f[{0}] = exp2(f[{0}]) - 1.0;", i & 7),
-            Op::FSincos { src, dst } => format!("{{ let a = f[{0}]; f[{0}] = sin(a); f[{1}] = cos(a); fsw = fsw & ~0x0400u; }}", src & 7, dst & 7),
-            Op::FPatan { x, y } => format!("f[{0}] = atan2(f[{0}], f[{1}]);", y & 7, x & 7),
-            Op::FYl2x { x, y } => format!("f[{0}] = f[{0}] * log2(f[{1}]);", y & 7, x & 7),
-            Op::FScale { a, s } => format!("f[{0}] = f[{0}] * exp2(trunc(f[{1}]));", a & 7, s & 7),
+            Op::F2xm1(i) => format!("f[{0}] = r_exp2(f[{0}]) - 1.0;", i & 7),
+            Op::FSincos { src, dst } => format!("{{ let a = f[{0}]; f[{0}] = r_sin(a); f[{1}] = r_cos(a); fsw = fsw & ~0x0400u; }}", src & 7, dst & 7),
+            Op::FPatan { x, y } => format!("f[{0}] = r_atan2(f[{0}], f[{1}]);", y & 7, x & 7),
+            Op::FYl2x { x, y } => format!("f[{0}] = f[{0}] * r_log2(f[{1}]);", y & 7, x & 7),
+            Op::FScale { a, s } => format!("f[{0}] = f[{0}] * r_exp2(trunc(f[{1}]));", a & 7, s & 7),
             Op::FCom { a, b } => format!("fsw = fcompare_cc(f[{}], f[{}]);", a & 7, b & 7),
             Op::FComM { a, kind, mem } => format!("fsw = fcompare_cc(f[{}], {});", a & 7, t.fload(loc(mem)?, *kind)?),
             Op::FTst(a) => format!("fsw = fcompare_cc(f[{}], 0.0);", a & 7),
@@ -779,11 +1003,11 @@ impl Prog {
             Rm::Reg(_) => None,
             Rm::Mem(mm) => Some(loc(mm)?),
         };
-        // the source as lanes (vec2<f32>), as the low lane (f32), as bits
+        // the source as lanes (vec2<R>), as the low lane (f32), as bits
         let sf2 = |t: &Typed| -> Option<String> {
             Some(match (src, mem) {
                 (Rm::Reg(r), _) => format!("xmm[{r}]"),
-                (_, Some((p, off))) => format!("vec2<f32>({}, {})", t.rd_f((p, off))?, t.rd_f((p, off + 8))?),
+                (_, Some((p, off))) => format!("vec2<R>({}, {})", t.rd_f((p, off))?, t.rd_f((p, off + 8))?),
                 _ => return None,
             })
         };
@@ -809,7 +1033,7 @@ impl Prog {
             }
         };
         let pd = |o: &str| -> Option<String> {
-            Some(format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<f32>({}, {}); }}", sf2(t)?, bin(o, "a.x", "s.x"), bin(o, "a.y", "s.y")))
+            Some(format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<R>({}, {}); }}", sf2(t)?, bin(o, "a.x", "s.x"), bin(o, "a.y", "s.y")))
         };
         let sd = |o: &str| -> Option<String> { Some(format!("xmm[{d}].x = {};", bin(o, &format!("xmm[{d}].x"), &format!("({})", sf1(t)?)))) };
         let logic = |o: &str| -> Option<String> { Some(format!("xmm[{d}] = xfrom({}xbits(xmm[{d}]) {o} {});", if o == "&~" { "~" } else { "" }, sb4(t)?)) };
@@ -829,7 +1053,7 @@ impl Prog {
                     }
                 };
                 match (lane(sel[0], sel[1]), lane(sel[2], sel[3])) {
-                    (Some(l0), Some(l1)) => format!("{{ let s = {}; xmm[{d}] = vec2<f32>(s.{l0}, s.{l1}); }}", sf2(t)?),
+                    (Some(l0), Some(l1)) => format!("{{ let s = {}; xmm[{d}] = vec2<R>(s.{l0}, s.{l1}); }}", sf2(t)?),
                     _ => {
                         let dw = |i: u8| ["x", "y", "z", "w"][i as usize];
                         format!("{{ let s = {}; xmm[{d}] = xfrom(vec4<u32>(s.{}, s.{}, s.{}, s.{})); }}", sb4(t)?, dw(sel[0]), dw(sel[1]), dw(sel[2]), dw(sel[3]))
@@ -839,9 +1063,9 @@ impl Prog {
             MovU => format!("xmm[{d}] = {};", sf2(t)?),
             MovSdLoad => match src {
                 Rm::Reg(r) => format!("xmm[{d}].x = xmm[{r}].x;"),
-                Rm::Mem(_) => format!("xmm[{d}] = vec2<f32>({}, 0.0);", sf1(t)?),
+                Rm::Mem(_) => format!("xmm[{d}] = vec2<R>({}, 0.0);", sf1(t)?),
             },
-            MovqLoad => format!("xmm[{d}] = vec2<f32>({}, 0.0);", sf1(t)?),
+            MovqLoad => format!("xmm[{d}] = vec2<R>({}, 0.0);", sf1(t)?),
             MovLpdLoad => format!("xmm[{d}].x = {};", sf1(t)?),
             MovHpdLoad => format!("xmm[{d}].y = {};", sf1(t)?),
             MovHlps => format!("xmm[{d}].x = {}.y;", sf2(t)?),
@@ -865,13 +1089,13 @@ impl Prog {
             Or => logic("|")?,
             Xor => logic("^")?,
             UnpckLpd => format!("xmm[{d}].y = {}.x;", sf2(t)?),
-            UnpckHpd => format!("{{ let s = {}; xmm[{d}] = vec2<f32>(xmm[{d}].y, s.y); }}", sf2(t)?),
+            UnpckHpd => format!("{{ let s = {}; xmm[{d}] = vec2<R>(xmm[{d}].y, s.y); }}", sf2(t)?),
             ShufPd => {
                 let a = if imm & 1 == 0 { "x" } else { "y" };
                 let b = if (imm >> 1) & 1 == 0 { "x" } else { "y" };
-                format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<f32>(a.{a}, s.{b}); }}", sf2(t)?)
+                format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<R>(a.{a}, s.{b}); }}", sf2(t)?)
             }
-            HAddPd => format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<f32>(a.x + a.y, s.x + s.y); }}", sf2(t)?),
+            HAddPd => format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<R>(a.x + a.y, s.x + s.y); }}", sf2(t)?),
             _ => return None,
         })
     }
@@ -967,7 +1191,7 @@ pub fn record_globals(formulas: &[&WgslFormula]) -> Option<String> {
     for (c, t) in ty {
         match t {
             CellTy::Whole => {
-                let _ = writeln!(o, "var<private> r{c}f: f32;");
+                let _ = writeln!(o, "var<private> r{c}f: R;");
             }
             CellTy::Halves => {
                 let _ = writeln!(o, "var<private> r{c}l: u32;");

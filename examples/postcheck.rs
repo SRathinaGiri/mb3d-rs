@@ -171,13 +171,19 @@ pub fn de_check(name: &str, p: &mb3d::calc::CalcParams) {
         }
     };
     let [x0, y0, w, h] = p.rect;
-    let (mut n, mut rel, mut bad, mut it_same) = (0usize, 0f64, 0usize, 0usize);
+    let (mut n, mut rel, mut bad, mut it_same, mut nan) = (0usize, 0f64, 0usize, 0usize, 0usize);
     for y in 0..h {
         for x in 0..w {
             let (start, _) = mb3d::calc::pixel_ray(p, x0 + x, y0 + y);
             let (d, it) = mb3d::calc::de_at(p, start);
             let d = d / p.step_width;
-            let (gd, git, _, _) = g[(y * w + x) as usize];
+            let (gd, git, _, parts) = g[(y * w + x) as usize];
+            if gd.is_nan() {
+                nan += 1;
+                if nan == 1 {
+                    println!("{name}: first NaN DE at {},{}: CPU DE {d:.4} it {it}; GPU it {git}, parts {parts:?}", x0 + x, y0 + y);
+                }
+            }
             n += 1;
             let r = ((gd as f64 - d).abs() / d.abs().max(1e-6)).min(10.0);
             rel += r;
@@ -186,6 +192,7 @@ pub fn de_check(name: &str, p: &mb3d::calc::CalcParams) {
         }
     }
     let n = n.max(1) as f64;
+    println!("{name}: NaN DEs: {nan}");
     println!("{name}: DE at the ray start: mean relative diff {:.4}, > 5% in {:.2}%, same iteration count {:.1}%", rel / n, 100.0 * bad as f64 / n, 100.0 * it_same as f64 / n);
     // the G-buffers: the pixel whose depth differs most
     let Some(gb) = mb3d::gpu::march(p, &mb3d::calc::PostJob::default(), &|_, _| {}, &|| false, |_, _| {}) else { return };

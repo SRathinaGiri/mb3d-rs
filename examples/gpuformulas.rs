@@ -5,7 +5,7 @@
 //! `cargo run --release --example gpuformulas -- <M3Formulas dir> [-v]`
 use mb3d::custom::*;
 use mb3d::m3f::M3f;
-use mb3d::x86::lift_wgsl::{record_globals, CellTy, PRELUDE};
+use mb3d::x86::lift_wgsl::{prelude, record_globals, CellTy};
 use mb3d::x86::{Machine, BASE};
 use std::sync::Arc;
 
@@ -109,7 +109,7 @@ fn main() {
             }
         }
         let vb = (var_buf_addr(0) - BASE) as usize;
-        let cst = wf.constants_from(&base.mem[vb..vb + 0x400]);
+        let cst = wf.constants_from(&base.mem[vb..vb + 0x400], false);
         // the shader: load the cells, the calling convention, the formula, store
         let words: usize = wf.record.iter().map(|(_, t)| if *t == CellTy::Whole { 1 } else { 2 }).sum();
         let mut load = String::new();
@@ -136,7 +136,8 @@ fn main() {
             format!("rg = array<u32, 8>({:#x}u, {:#x}u, {:#x}u, 0u, {:#x}u, 0u, 0u, 0u);", x, x + 16, x + 8, STACK_TOP - 12)
         };
         let wgsl = format!(
-            "@group(0) @binding(0) var<storage, read> inp: array<u32>;\n@group(0) @binding(1) var<storage, read> cst: array<u32>;\n@group(0) @binding(2) var<storage, read_write> outp: array<u32>;\n{PRELUDE}\n// no maps are loaded here: the interpreter's map functions give 0\nfn map_px(sphere: bool, nr: i32, v: vec3<f32>) -> vec3<f32> {{ return vec3<f32>(0.0); }}\n{}\n{}\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) g: vec3<u32>) {{\n    let i = g.x;\n    if (i >= {TRIALS}u) {{ return; }}\n    _ = cst[0];\n    let b0 = i * {words}u;\n{load}    {regs}\n    xcf = false; xzf = false; xsf = false; xof = false; xpf = false; xaf = false; fsw = 0u;\n    fm(0u);\n{store}}}\n",
+            "@group(0) @binding(0) var<storage, read> inp: array<u32>;\n@group(0) @binding(1) var<storage, read> cst: array<u32>;\n@group(0) @binding(2) var<storage, read_write> outp: array<u32>;\nalias R = f32;\n{}\n// no maps are loaded here: the interpreter's map functions give 0\nfn map_px(sphere: bool, nr: i32, v: vec3<R>) -> vec3<R> {{ return vec3<R>(0.0); }}\n{}\n{}\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) g: vec3<u32>) {{\n    let i = g.x;\n    if (i >= {TRIALS}u) {{ return; }}\n    _ = cst[0];\n    let b0 = i * {words}u;\n{load}    {regs}\n    xcf = false; xzf = false; xsf = false; xof = false; xpf = false; xaf = false; fsw = 0u;\n    fm(0u);\n{store}}}\n",
+            prelude(false),
             record_globals(&[&wf]).unwrap(),
             wf.code
         );

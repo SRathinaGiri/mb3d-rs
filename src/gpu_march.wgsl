@@ -115,7 +115,7 @@ const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or t
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 306u;
+const STATE_FIXED: u32 = 563u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -139,7 +139,7 @@ const SLOTS: u32 = 64u;
 fn slot(n: u32, k: u32) -> u32 { return P[SLOTS + n * 8u + k]; }
 // the parameters of the built-in formulas (8 per slot)
 const SLOTX: u32 = 224u;
-fn slotx(n: u32, k: u32) -> f32 { return bitcast<f32>(P[SLOTX + n * 8u + k]); }
+fn slotx(n: u32, k: u32) -> R { return R(bitcast<f32>(P[SLOTX + n * 8u + k])); }
 fn slotxi(n: u32, k: u32) -> i32 { return bitcast<i32>(P[SLOTX + n * 8u + k]); }
 // the 4D rotation (smatrix4, 4 rows of 3) of the 4D hybrids
 const SMATRIX4: u32 = 275u;
@@ -148,8 +148,9 @@ const INSIDE_FLAGS: u32 = 289u;   // 1 inside rendering, 2 inside and outside
 const COLOR_ON_IT: u32 = 290u;    // doColorOnIt: 0 off, 1 the start vector, n the vector after n - 1 iterations
 const CUT_OPT: u32 = 291u;        // the cutting planes: bits 0-2 the axes, 4-6 their sides
 const CUT_POS: u32 = 292u;        // 3 values
+const DP: u32 = 296u;             // the coordinates as doubles: start (3), view gradients (9), julia (4)
 
-const PI: f32 = 3.14159265358979;
+const PI: R = 3.14159265358979;
 
 // Pipeline constants: a pipeline per kind of pass (0 the march, 1 the
 // shadows, 2 the ambient occlusion) and per scene feature, so that the
@@ -170,69 +171,69 @@ override R_AO: bool = true;
 // record): each shader is smaller, more rays fit on the card at once
 override R_MARCH: bool = true;
 
-fn pf(i: u32) -> f32 { return bitcast<f32>(P[i]); }
+fn pf(i: u32) -> R { return R(bitcast<f32>(P[i])); }
 fn pi(i: u32) -> i32 { return bitcast<i32>(P[i]); }
-fn pv(i: u32) -> vec3<f32> { return vec3<f32>(pf(i), pf(i + 1u), pf(i + 2u)); }
+fn pv(i: u32) -> vec3<R> { return vec3<R>(pf(i), pf(i + 1u), pf(i + 2u)); }
 
 // iteration state (Marcher::it)
-var<private> c: vec3<f32>;
-var<private> v: vec3<f32>;
-var<private> rout: f32;
-// log(rout) of the last iteration, finite where rout overflows single
+var<private> c: vec3<R>;
+var<private> v: vec3<R>;
+var<private> rout: R;
+// r_log(rout) of the last iteration, finite where rout overflows single
 // precision (orbits that escaped far: |v| beyond 1e19)
-var<private> lrout: f32;
-var<private> rold: f32;
-var<private> otrap: f32;
+var<private> lrout: R;
+var<private> rold: R;
+var<private> otrap: R;
 var<private> it_result: i32;
 var<private> max_it: i32;
-var<private> rstop: f32;
+var<private> rstop: R;
 var<private> calc_sit: bool;
-var<private> smooth_it: f32;
+var<private> smooth_it: R;
 // the rest of the iteration record the formulas see (Iteration)
-var<private> w: f32;
-var<private> j: vec3<f32>;
-var<private> j4: f32;
-var<private> vary_scale: f32;
+var<private> w: R;
+var<private> j: vec3<R>;
+var<private> j4: R;
+var<private> vary_scale: R;
 var<private> first_it: i32;
-var<private> deriv: vec3<f32>;
-var<private> dfree: vec2<f32>;
+var<private> deriv: vec3<R>;
+var<private> dfree: vec2<R>;
 // marcher state
-var<private> ms_de_stop: f32;
+var<private> ms_de_stop: R;
 // the hybrid part being iterated (set_part)
 var<private> part_start: u32;
 var<private> part_end: u32;
 var<private> part_repeat: u32;
 var<private> de_option: i32;
 // the absolute DE stop of a dIFS loop (RStopD)
-var<private> rstopd: f32;
+var<private> rstopd: R;
 // the pixel's view vector (the shadow rays measure their depth along it)
-var<private> vfov_px: vec3<f32>;
+var<private> vfov_px: vec3<R>;
 // the depth along the view for the DE stop: zz_base + mzz * zz_mul (a
 // reflected ray runs at an angle to the view); abs for the reflection pass
-var<private> zz_base: f32;
-var<private> zz_mul: f32;
+var<private> zz_base: R;
+var<private> zz_mul: R;
 var<private> zz_abs: bool;
 // the reflection pass: its outputs
 var<private> r_flags: u32;
-var<private> r_zz2: f32;
-var<private> r_step_count: f32;
+var<private> r_zz2: R;
+var<private> r_step_count: R;
 // the parts' own results of the last DE combination (M_PROBE)
-var<private> dbg_r1: f32;
+var<private> dbg_r1: R;
 var<private> dbg_it1: i32;
-var<private> dbg_rst: f32;
+var<private> dbg_rst: R;
 var<private> dbg_it2: i32;
-var<private> dbg_rout: f32;
-var<private> dbg_g: f32;
+var<private> dbg_rout: R;
+var<private> dbg_g: R;
 // a DE of the pixel overflowed single precision (NaN / infinite before
 // the clamp): the CPU decides whether the image is trustworthy
 var<private> de_overflow: bool;
 // inside rendering (Marcher::inside / calc_inside): the DE is inverted
 var<private> inside: bool;
-var<private> mzz: f32;
-var<private> vfov: vec3<f32>;
-var<private> base: vec3<f32>;
+var<private> mzz: R;
+var<private> vfov: vec3<R>;
+var<private> base: vec3<R>;
 var<private> max_its_result: i32;
-var<private> s_roughness: f32;
+var<private> s_roughness: R;
 var<private> seed: i32;
 // the result (SiLight)
 var<private> si_normal: vec3<i32>;
@@ -242,16 +243,16 @@ var<private> si_grad: u32;
 var<private> si_otrap: u32;
 var<private> si_amb: u32;
 // the rays of the ambient occlusion
-var<private> ao_dirs: array<vec3<f32>, 33>;
-var<private> ao_min: array<f32, 33>;
+var<private> ao_dirs: array<vec3<R>, 33>;
+var<private> ao_min: array<R, 33>;
 
-fn is_nan(x: f32) -> bool {
-    let b = bitcast<u32>(x) & 0x7FFFFFFFu;
+fn is_nan(x: R) -> bool {
+    let b = bitcast<u32>(f32(x)) & 0x7FFFFFFFu;
     return b > 0x7F800000u;
 }
 
 // min_max_clip_15bit
-fn clip15(s: f32) -> u32 {
+fn clip15(s: R) -> u32 {
     if (is_nan(s) || s < 0.0) { return 0u; }
     if (s > 32767.0) { return 32767u; }
     return u32(round(s));
@@ -263,12 +264,12 @@ fn setc() {
 }
 
 // fHIntFunctions[power] (formulas.rs int_pow)
-fn int_pow(p: vec3<f32>, j: vec3<f32>, power: i32, zmul: f32) -> vec3<f32> {
+fn int_pow(p: vec3<R>, j: vec3<R>, power: i32, zmul: R) -> vec3<R> {
     let x = p.x;
     let y = p.y;
     let z = p.z;
-    let EPS = 1e-30;
-    var o: vec3<f32>;
+    let EPS = R(1e-30);
+    var o: vec3<R>;
     if (power <= 2) {
         let yy = y * y;
         let xx = x * x;
@@ -345,17 +346,17 @@ fn int_pow(p: vec3<f32>, j: vec3<f32>, power: i32, zmul: f32) -> vec3<f32> {
 
 // HybridCube / HybridCubeDE (formulas.rs amazing_box); slot words: 4 scale,
 // 5 min R, 7 fold, 2 analytic DE (the running derivative in w)
-fn box_fold(x: f32, fold: f32) -> f32 {
+fn box_fold(x: R, fold: R) -> R {
     return abs(x + fold) - (abs(x - fold) + x);
 }
 
-fn abox(scale: f32, min_r: f32, fold: f32, ade: bool) {
+fn abox(scale: R, min_r: R, fold: R, ade: bool) {
     let x = box_fold(v.x, fold);
     let y = box_fold(v.y, fold);
     let z = box_fold(v.z, fold);
     let r = z * z + y * y + x * x;
     let sqr_min_r = min_r * min_r;
-    var mul: f32;
+    var mul: R;
     if (r < sqr_min_r) {
         mul = scale / sqr_min_r;
     } else if (1.0 < r) {
@@ -366,11 +367,11 @@ fn abox(scale: f32, min_r: f32, fold: f32, ade: bool) {
     if (ade) {
         w *= mul;
     }
-    v = vec3<f32>(x * mul + j.x, y * mul + j.y, z * mul + j.z);
+    v = vec3<R>(x * mul + j.x, y * mul + j.y, z * mul + j.z);
 }
 
 fn amazing_box(n: u32) {
-    abox(bitcast<f32>(slot(n, 4u)), bitcast<f32>(slot(n, 5u)), bitcast<f32>(slot(n, 7u)), slot(n, 2u) != 0u);
+    abox(R(bitcast<f32>(slot(n, 4u))), R(bitcast<f32>(slot(n, 5u))), R(bitcast<f32>(slot(n, 7u))), slot(n, 2u) != 0u);
 }
 
 // 'Tricorn' (formulas.rs): z multiplier, cz multiplier
@@ -389,14 +390,14 @@ fn real_power(n: u32) {
     let x = v.x;
     let y = v.y;
     let z = v.z;
-    let theta = atan2(y, x) * pw;
-    let phi = atan2(z, sqrt(x * x + y * y)) * pw;
-    let r = pow(rout, pw * 0.5);
-    v = vec3<f32>(cos(theta) * cos(phi) * r + j.x, sin(theta) * cos(phi) * r + j.y, sin(phi) * r * slotx(n, 1u) + j.z);
+    let theta = r_atan2(y, x) * pw;
+    let phi = r_atan2(z, sqrt(x * x + y * y)) * pw;
+    let r = r_pow(rout, pw * 0.5);
+    v = vec3<R>(r_cos(theta) * r_cos(phi) * r + j.x, r_sin(theta) * r_cos(phi) * r + j.y, r_sin(phi) * r * slotx(n, 1u) + j.z);
 }
 
 // HybridItIntPow2scale: sine bulb power 2 with scaling (Bulbox)
-fn int_pow2_scale(scaling: f32) {
+fn int_pow2_scale(scaling: R) {
     let s = 1.0 / scaling;
     let x = v.x * s;
     let y = v.y * s;
@@ -405,7 +406,7 @@ fn int_pow2_scale(scaling: f32) {
     let yy = y * y;
     let r = xx + yy;
     let a = (r - z * z) / r;
-    v = vec3<f32>((xx - yy) * a * scaling + j.x, (x * y * a) * 2.0 * scaling + j.y, -((sqrt(r) * z) * 2.0) * scaling + j.z);
+    v = vec3<R>((xx - yy) * a * scaling + j.x, (x * y * a) * 2.0 * scaling + j.y, -((sqrt(r) * z) * 2.0) * scaling + j.z);
 }
 
 // 'Bulbox' (HybridSuperCube2): box scale, box min R, box fold, bulb scaling,
@@ -441,7 +442,7 @@ fn bulbox(n: u32) {
 // 'Folding Int Pow': power, z multiplier, R fold
 fn folding_int_pow(n: u32) {
     let fold = slotx(n, 2u);
-    v = vec3<f32>(box_fold(v.x, fold), box_fold(v.y, fold), box_fold(v.z, fold));
+    v = vec3<R>(box_fold(v.x, fold), box_fold(v.y, fold), box_fold(v.z, fold));
     v = int_pow(v, j, slotxi(n, 0u), slotx(n, 1u));
 }
 
@@ -454,10 +455,10 @@ fn aexion_c(n: u32) {
     let y = v.y;
     let z = v.z;
     var r1 = x * x + y * y + z * z;
-    let th = atan2(sqrt(x * x + z * z), y) * pw;
-    let ph = atan2(z, x) * pw;
-    r1 = exp(log(r1) * pw * 0.5);
-    v = vec3<f32>(cos(ph) * cos(th) * r1 + j.x, cos(th) * sin(ph) * r1 + j.y, sin(th) * r1 * z_mul + j.z);
+    let th = r_atan2(sqrt(x * x + z * z), y) * pw;
+    let ph = r_atan2(z, x) * pw;
+    r1 = r_exp(r_log(r1) * pw * 0.5);
+    v = vec3<R>(r_cos(ph) * r_cos(th) * r1 + j.x, r_cos(th) * r_sin(ph) * r1 + j.y, r_sin(th) * r1 * z_mul + j.z);
     if (slotxi(n, 2u) == 0) {
         return;
     }
@@ -467,9 +468,9 @@ fn aexion_c(n: u32) {
     }
     let r = length(j);
     let mode = slotxi(n, 7u);
-    var a: f32;
-    var b: f32;
-    var cc: f32;
+    var a: R;
+    var b: R;
+    var cc: R;
     if ((mode & 16) != 0) {
         a = v.y - j.y;
         b = v.z - j.z;
@@ -488,13 +489,13 @@ fn aexion_c(n: u32) {
         ecx = 16;
     }
     let s = sqrt(b * b + cc * cc);
-    var th2 = select(atan2(s, a), atan2(a, s), (mode & 1) != 0);
-    var ph2: f32;
+    var th2 = select(r_atan2(s, a), r_atan2(a, s), (mode & 1) != 0);
+    var ph2: R;
     if ((mode & 2) != 0) {
         ofs = 24 - ecx;
-        ph2 = atan2(cc, b);
+        ph2 = r_atan2(cc, b);
     } else {
-        ph2 = atan2(b, cc);
+        ph2 = r_atan2(b, cc);
     }
     if ((mode & 4) != 0) {
         let t = th2;
@@ -509,15 +510,15 @@ fn aexion_c(n: u32) {
         } else if (ofs == 8) {
             t = v.y;
         }
-        if ((bitcast<u32>(t) >> 31u) == 0u) {
+        if ((bitcast<u32>(f32(t)) >> 31u) == 0u) {
             ph2 = -ph2;
         }
     }
-    let sa = sin(ph2 * pd);
-    let ca = cos(ph2 * pd);
-    let sb = sin(th2 * pd);
-    let cb = cos(th2 * pd);
-    j = vec3<f32>(ca * cb * r, cb * sa * r, sb * r * slotx(n, 5u));
+    let sa = r_sin(ph2 * pd);
+    let ca = r_cos(ph2 * pd);
+    let sb = r_sin(th2 * pd);
+    let cb = r_cos(th2 * pd);
+    j = vec3<R>(ca * cb * r, cb * sa * r, sb * r * slotx(n, 5u));
 }
 
 // Quaternion (4D): the quaternion square plus the constant; `w` is the
@@ -534,8 +535,8 @@ fn quaternion(n: u32) {
 }
 
 // rotate_4Dex: the start vector of a 4D hybrid (smatrix4 * c)
-fn rotate_4d(p: vec3<f32>) -> vec4<f32> {
-    var r: vec4<f32>;
+fn rotate_4d(p: vec3<R>) -> vec4<R> {
+    var r: vec4<R>;
     for (var i = 0u; i < 4u; i++) {
         r[i] = p.x * pf(SMATRIX4 + i * 3u) + p.y * pf(SMATRIX4 + i * 3u + 1u) + p.z * pf(SMATRIX4 + i * 3u + 2u);
     }
@@ -543,17 +544,17 @@ fn rotate_4d(p: vec3<f32>) -> vec4<f32> {
 }
 
 // MakeSplineCoeff
-fn map_coeff(xs: f32) -> vec4<f32> {
+fn map_coeff(xs: R) -> vec4<R> {
     let r3 = xs * xs * xs / 6.0;
     let r0 = 1.0 / 6.0 + 0.5 * xs * (xs - 1.0) - r3;
     let r2 = xs + r0 - 2.0 * r3;
-    return vec4<f32>(r0, 1.0 - r0 - r2 - r3, r2, r3);
+    return vec4<R>(r0, 1.0 - r0 - r2 - r3, r2, r3);
 }
 
 // GetMapPixelSphereSpline (`sphere`) / GetMapPixelDirectXYspline, called by
 // the formulas through the record (custom.rs map_px): the colour (0..1) of
 // map `nr` at the direction `v` / at x, y; 0 for a map that is not loaded
-fn map_px(sphere: bool, nr: i32, v: vec3<f32>) -> vec3<f32> {
+fn map_px(sphere: bool, nr: i32, v: vec3<R>) -> vec3<R> {
     var hd = 0u;
     for (var i = 0u; i < MAPS[0]; i++) {
         if (MAPS[1u + i * 4u] == u32(nr)) {
@@ -562,38 +563,38 @@ fn map_px(sphere: bool, nr: i32, v: vec3<f32>) -> vec3<f32> {
         }
     }
     if (hd == 0u || nr < 1) {
-        return vec3<f32>(0.0);
+        return vec3<R>(0.0);
     }
     let wi = i32(MAPS[hd + 1u]);
     let hi = i32(MAPS[hd + 2u]);
     let base = MAPS[hd + 3u];
     if (wi < 1 || hi < 1) {
-        return vec3<f32>(0.0);
+        return vec3<R>(0.0);
     }
-    let w = f32(wi);
-    let h = f32(hi);
-    var x: f32;
-    var y: f32;
+    let w = R(wi);
+    let h = R(hi);
+    var x: R;
+    var y: R;
     if (sphere) {
         let d = v / max(length(v), 1e-30);
-        x = clamp((atan2(d.x, d.y) * (-0.5 / PI) + 0.5) * w, 0.0, w);
-        y = clamp((0.5 - asin(clamp(d.z, -1.0, 1.0)) / PI) * h, 0.0, h);
+        x = clamp((r_atan2(d.x, d.y) * (-0.5 / PI) + 0.5) * w, 0.0, w);
+        y = clamp((0.5 - r_asin(clamp(d.z, -1.0, 1.0)) / PI) * h, 0.0, h);
     } else {
         x = fract(v.x) * w;
         y = fract(v.y) * h;
     }
     let xf = i32(x);
     let yf = i32(y);
-    let xv = map_coeff(x - f32(xf));
-    let yv = map_coeff(y - f32(yf));
-    var r = vec3<f32>(0.0);
+    let xv = map_coeff(x - R(xf));
+    let yv = map_coeff(y - R(yf));
+    var r = vec3<R>(0.0);
     for (var j = 0; j < 4; j++) {
         let row = u32(((yf + j - 1) % hi + hi) % hi);
-        var s = vec3<f32>(0.0);
+        var s = vec3<R>(0.0);
         for (var i = 0; i < 4; i++) {
             let col = u32(((xf + i - 1) % wi + wi) % wi);
             let o = base + (row * u32(wi + 1) + col) * 3u;
-            s += vec3<f32>(bitcast<f32>(MAPS[o]), bitcast<f32>(MAPS[o + 1u]), bitcast<f32>(MAPS[o + 2u])) * xv[i];
+            s += vec3<R>(R(bitcast<f32>(MAPS[o])), R(bitcast<f32>(MAPS[o + 1u])), R(bitcast<f32>(MAPS[o + 2u]))) * xv[i];
         }
         r += s * yv[j];
     }
@@ -603,14 +604,14 @@ fn map_px(sphere: bool, nr: i32, v: vec3<f32>) -> vec3<f32> {
 // CalcSmoothIterations (fHln of the last formula n)
 fn calc_smooth_iterations(n: u32) {
     if (rout <= 1.0) {
-        smooth_it = f32(it_result);
+        smooth_it = R(it_result);
     } else if (rold < 1.0) {
-        let d = log(0.5 * lrout) * bitcast<f32>(slot(n, 3u));
-        smooth_it = f32(it_result) + pf(LN_RSTOP) - d;
+        let d = r_log(0.5 * lrout) * R(bitcast<f32>(slot(n, 3u)));
+        smooth_it = R(it_result) + pf(LN_RSTOP) - d;
     } else {
-        let d = log(0.5 * lrout);
-        let e = d - log(0.5 * log(rold));
-        smooth_it = (pf(LN_RSTOP) - d) / (e + 1e-30) + f32(it_result);
+        let d = r_log(0.5 * lrout);
+        let e = d - r_log(0.5 * r_log(rold));
+        smooth_it = (pf(LN_RSTOP) - d) / (e + 1e-30) + R(it_result);
     }
 }
 
@@ -624,15 +625,15 @@ fn calc_smooth_iterations(n: u32) {
 // `ipol` (doInterpolHybridPas[4D][DE], Iteration::run_ipol): the first two
 // formulas are applied to the same vector and the results blended with
 // the weights IPOL_W (the two calls go through the loop's one call site)
-fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
+fn hybrid(de: bool, four_d: bool, ipol: bool) -> R {
     let deo = de_option;
     if (four_d) {
         let v4 = rotate_4d(c);
         v = v4.xyz;
         w = v4.w;
         if (pi(DO_JULIA) != 0) {
-            j = pv(JU);
-            j4 = pf(J4);
+            j = p_ju();
+            j4 = p_j4();
         } else {
             j = v4.xyz;
             j4 = v4.w;
@@ -643,14 +644,14 @@ fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
             if ((deo & 0x38) == 16) {
                 deriv.x = rout;
             } else if ((deo & 0x38) == 32) {
-                deriv = vec3<f32>(1.0, 0.0, 0.0);
+                deriv = vec3<R>(1.0, 0.0, 0.0);
             } else {
                 deriv.x = 1.0;
             }
         }
     } else {
         if (pi(DO_JULIA) != 0) {
-            j = pv(JU);
+            j = p_ju();
         } else {
             j = c;
         }
@@ -664,7 +665,7 @@ fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
             if ((deo & 0x38) == 16) {
                 w = rout;
             } else if ((deo & 0x38) == 32) {
-                deriv = vec3<f32>(1.0, 0.0, 0.0);
+                deriv = vec3<R>(1.0, 0.0, 0.0);
             } else {
                 w = 1.0;
             }
@@ -675,12 +676,12 @@ fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
     let s1 = pf(IPOL_W);
     let s2 = pf(IPOL_W + 1u);
     var phase = 0u;
-    var y1v = vec3<f32>(0.0);
-    var y1w = 0.0;
-    var x1v = vec3<f32>(0.0);
-    var x1w = 0.0;
-    var dt = 0.0;
-    var dd = 0.0;
+    var y1v = vec3<R>(0.0);
+    var y1w = R(0.0);
+    var x1v = vec3<R>(0.0);
+    var x1w = R(0.0);
+    var dt = R(0.0);
+    var dd = R(0.0);
     var n = part_start;
     var btmp = max(bitcast<i32>(slot(n, 0u)), 0);
     it_result = 0;
@@ -731,8 +732,8 @@ fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
                 continue;
             }
             phase = 0u;
-            var xx: f32;
-            var yy: f32;
+            var xx: R;
+            var yy: R;
             if (four_d) {
                 xx = sqrt(dot(x1v, x1v) + x1w * x1w);
                 yy = sqrt(dot(v, v) + w * w);
@@ -798,11 +799,11 @@ fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
     if (mabs > 1e18) {
         let sv = v / mabs;
         let sw = select(0.0, w / mabs, four_d);
-        lrout = log(dot(sv, sv) + sw * sw) + 2.0 * log(mabs);
+        lrout = r_log(dot(sv, sv) + sw * sw) + 2.0 * r_log(mabs);
     } else {
-        lrout = log(rout);
+        lrout = r_log(rout);
     }
-    var result = 0.0;
+    var result = R(0.0);
     if (ipol) {
         // the smooth iterations use fHln of the first formula
         n = 0u;
@@ -810,21 +811,21 @@ fn hybrid(de: bool, four_d: bool, ipol: bool) -> f32 {
     if (four_d && de) {
         // de_4d_result: the derivative is Deriv1
         if ((deo & 7) == 4) {
-            result = abs(v.z) * log(abs(v.z)) / deriv.x;
+            result = abs(v.z) * r_log(abs(v.z)) / deriv.x;
         } else {
             result = sqrt(rout) / abs(deriv.x);
         }
     } else if (de && ipol) {
         if ((deo & 7) == 4) {
-            result = abs(v.z) * log(abs(v.z)) / w;
+            result = abs(v.z) * r_log(abs(v.z)) / w;
         } else {
             result = sqrt(rout) / abs(w);
         }
     } else if (de) {
         if ((deo & 0x38) == 32) {
-            result = sqrt(rout) * 0.5 * log(rout) / deriv.x;
+            result = sqrt(rout) * 0.5 * r_log(rout) / deriv.x;
         } else if ((deo & 7) == 4) {
-            result = abs(v.y) * log(abs(v.y)) / w;
+            result = abs(v.y) * r_log(abs(v.y)) / w;
         } else {
             result = sqrt(rout) / abs(w);
         }
@@ -859,10 +860,10 @@ fn set_part(part: u32) {
 // `ins` (Iteration::hybrid_difs `inside`): rendered from inside the set
 // (inside rendering or the inverted maximum combination): the loop does not
 // stop at the first DE below the stop
-fn hybrid_difs(vec_ini: bool, rs: f32, ins: bool) -> f32 {
+fn hybrid_difs(vec_ini: bool, rs: R, ins: bool) -> R {
     if (vec_ini) {
         if (pi(DO_JULIA) != 0) {
-            j = pv(JU);
+            j = p_ju();
         } else {
             j = c;
         }
@@ -876,8 +877,8 @@ fn hybrid_difs(vec_ini: bool, rs: f32, ins: bool) -> f32 {
     dfree.x = 0.0;
     deriv.x = 1.0;
     difs_init(ins);
-    var min_de = 65535.0;
-    var dfree2 = 0.0;
+    var min_de = R(65535.0);
+    var dfree2 = R(0.0);
     var it_min = 0;
     var it = 0;
     var n = min(part_start, 5u);
@@ -928,7 +929,7 @@ fn hybrid_difs(vec_ini: bool, rs: f32, ins: bool) -> f32 {
         }
     }
     it_result = it_min;
-    smooth_it = f32(it_min);
+    smooth_it = R(it_min);
     otrap = dfree2;
     return min_de;
 }
@@ -936,7 +937,7 @@ fn hybrid_difs(vec_ini: bool, rs: f32, ins: bool) -> f32 {
 // The one place that iterates the formulas: the driver inlines functions,
 // so `hybrid` and `hybrid_difs` (and through them the formula code) must
 // have a single textual call site each.
-fn run_part(difs: bool, de: bool, vec_ini: bool, rs: f32, kind: u32, ins: bool) -> f32 {
+fn run_part(difs: bool, de: bool, vec_ini: bool, rs: R, kind: u32, ins: bool) -> R {
     if (HAS_DIFS && difs) {
         return hybrid_difs(vec_ini, rs, ins);
     }
@@ -948,7 +949,7 @@ fn run_part(difs: bool, de: bool, vec_ini: bool, rs: f32, kind: u32, ins: bool) 
 // iteration count).  Written as one loop with one `run_part` site: each
 // turn iterates a part once (CalcDEanalytic, or CalcDEnoADE's first
 // iteration and its three gradient samples, or the dIFS loop).
-fn evaluate(on_de: bool) -> f32 {
+fn evaluate(on_de: bool) -> R {
     let kind = P[DC_KIND];
     let nparts = select(1u, 2u, HAS_DECOMB && on_de && kind != 0u);
     var part = 1u;
@@ -957,26 +958,26 @@ fn evaluate(on_de: bool) -> f32 {
     var difs = false;
     var custom = false;
     var hkind = 0u;
-    var dds = 0.0;
+    var dds = R(0.0);
     var invert = false;
     var no_vec_ini = false;
     var k = 0u;
-    var result = 0.0;
+    var result = R(0.0);
     var bc = c;
-    var buf_rout = 0.0;
-    var buf_lr = 0.0;
-    var buf_v = vec3<f32>(0.0);
-    var buf_w = 0.0;
+    var buf_rout = R(0.0);
+    var buf_lr = R(0.0);
+    var buf_v = vec3<R>(0.0);
+    var buf_w = R(0.0);
     var buf_sit = false;
     var buf_max_it = 0;
-    var g = 0.0;
+    var g = R(0.0);
     // the first part's values for the combination
-    var r1 = 0.0;
-    var wt = 0.0;
-    var dt = 0.0;
+    var r1 = R(0.0);
+    var wt = R(0.0);
+    var dt = R(0.0);
     var buf_it = 0;
-    var buf_otrap = 0.0;
-    var buf_sit1 = 0.0;
+    var buf_otrap = R(0.0);
+    var buf_sit1 = R(0.0);
     var buf_mir = 0;
     for (var guard = 0u; guard < P[EVAL_TURNS]; guard++) {
         if (part_begin) {
@@ -1006,7 +1007,7 @@ fn evaluate(on_de: bool) -> f32 {
             g = 0.0;
         }
         if (k > 0u) {
-            var o = vec3<f32>(0.0);
+            var o = vec3<R>(0.0);
             o[k - 1u] = pf(DE_OFFSET);
             c = bc + o;
         }
@@ -1052,7 +1053,7 @@ fn evaluate(on_de: bool) -> f32 {
                 // the vectors themselves (|a|^2 - |b|^2 = (a - b) . (a + b):
                 // exact where the squares would lose precision); from the
                 // logarithms where the vectors overflowed single precision
-                var d: f32;
+                var d: R;
                 if (buf_rout < 1e30 && rout < 1e30) {
                     d = dot(buf_v - v, buf_v + v);
                     if (four_d) {
@@ -1060,7 +1061,7 @@ fn evaluate(on_de: bool) -> f32 {
                     }
                     d /= buf_rout;
                 } else {
-                    d = 1.0 - exp(lrout - buf_lr);
+                    d = 1.0 - r_exp(lrout - buf_lr);
                 }
                 g += d * d;
                 k += 1u;
@@ -1070,8 +1071,8 @@ fn evaluate(on_de: bool) -> f32 {
                     c = bc;
                     dbg_rout = buf_rout;
                     dbg_g = g;
-                    // = buf_rout * log(buf_rout) * dds / (sqrt(g * buf_rout^2) + de_offset006)
-                    result = buf_lr * dds / (sqrt(g) + pf(DE_OFFSET006) * exp(-buf_lr));
+                    // = buf_rout * r_log(buf_rout) * dds / (sqrt(g * buf_rout^2) + de_offset006)
+                    result = buf_lr * dds / (sqrt(g) + pf(DE_OFFSET006) * r_exp(-buf_lr));
                     rout = buf_rout;
                     it_result = max_it;
                     max_it = buf_max_it;
@@ -1176,7 +1177,7 @@ fn evaluate(on_de: bool) -> f32 {
                 } else if (deo == 2 || deo == 11) {
                     result = rst / wt;
                 } else {
-                    result = rst * pow(abs(pf(DC_FMIX_POW)), f32(-1 - buf_it));
+                    result = rst * r_pow(abs(pf(DC_FMIX_POW)), R(-1 - buf_it));
                 }
             }
         }
@@ -1193,7 +1194,7 @@ fn evaluate(on_de: bool) -> f32 {
 }
 
 // Marcher::invert_inside: the distance to the surface from inside the set
-fn invert_inside(r: f32, difs: bool) -> f32 {
+fn invert_inside(r: R, difs: bool) -> R {
     if (!inside) {
         return r;
     }
@@ -1208,12 +1209,8 @@ fn invert_inside(r: f32, difs: bool) -> f32 {
     return q;
 }
 
-fn vg(i: u32) -> vec3<f32> {
-    return pv(VG + i * 3u);
-}
-
 // rotate_vector_reverse(v, vgrads)
-fn rot_rev(a: vec3<f32>) -> vec3<f32> {
+fn rot_rev(a: vec3<R>) -> vec3<R> {
     return a.x * vg(0u) + a.y * vg(1u) + a.z * vg(2u);
 }
 
@@ -1226,7 +1223,7 @@ fn update_de_stop() {
 }
 
 // MakeWNormalsFromDVec
-fn store_normal(n: vec3<f32>) {
+fn store_normal(n: vec3<R>) {
     let d = 32767.0 / sqrt(dot(n, n) + 1e-30);
     var o: vec3<i32>;
     for (var k = 0; k < 3; k++) {
@@ -1244,56 +1241,56 @@ fn store_normal(n: vec3<f32>) {
 }
 
 // RMCalcRoughness
-fn calc_roughness(n: vec3<f32>, dt2: f32, dsg: f32) -> f32 {
+fn calc_roughness(n: vec3<R>, dt2: R, dsg: R) -> R {
     let a = (dsg * 7.0 * dt2 * dt2 + 1e-30) / (dot(n, n) + 1e-30);
     return clamp(sqrt(max(a, 0.0)) - 0.05, 0.0, 1.0);
 }
 
 // create_xy_vecs_from_normals
-fn xy_vecs(n: vec3<f32>, vx: ptr<function, vec3<f32>>, vy: ptr<function, vec3<f32>>) {
+fn xy_vecs(n: vec3<R>, vx: ptr<function, vec3<R>>, vy: ptr<function, vec3<R>>) {
     let d = n.y * n.y + n.x * n.x;
     if (d < 1e-30) {
-        *vx = vec3<f32>(1.0, 0.0, 0.0);
-        *vy = vec3<f32>(0.0, 1.0, 0.0);
+        *vx = vec3<R>(1.0, 0.0, 0.0);
+        *vy = vec3<R>(0.0, 1.0, 0.0);
         return;
     }
-    let a = acos(clamp(-n.z / sqrt(d + n.z * n.z + 1e-30), -1.0, 1.0)) * 0.5;
-    let sin_a = sin(a) / sqrt(d);
-    let cos_a = cos(a);
+    let a = r_acos(clamp(-n.z / sqrt(d + n.z * n.z + 1e-30), -1.0, 1.0)) * 0.5;
+    let sin_a = r_sin(a) / sqrt(d);
+    let cos_a = r_cos(a);
     let dd = -n.y * sin_a;
     let d1 = n.x * sin_a;
-    let x = vec3<f32>(1.0 - 2.0 * d1 * d1, 2.0 * dd * d1, 2.0 * d1 * cos_a);
+    let x = vec3<R>(1.0 - 2.0 * d1 * d1, 2.0 * dd * d1, 2.0 * d1 * cos_a);
     *vx = x;
-    *vy = vec3<f32>(x.y, 1.0 - 2.0 * dd * dd, -2.0 * dd * cos_a);
+    *vy = vec3<R>(x.y, 1.0 - 2.0 * dd * dd, -2.0 * dd * cos_a);
 }
 
 // RMmaxLengthToCutPlane: the distance (in steps) from the start to the
 // cutting planes along the ray (x) and the plane hit (y, 1..3)
-fn max_length_to_cut_plane() -> vec2<f32> {
+fn max_length_to_cut_plane() -> vec2<R> {
     let opts = P[CUT_OPT];
-    var len = 0.0;
-    var plane = 0.0;
+    var len = R(0.0);
+    var plane = R(0.0);
     for (var k = 0u; k < 3u; k++) {
         if (((opts >> k) & 1u) == 0u || abs(vfov[k]) <= 1e-20) {
             continue;
         }
         let side = ((opts >> (4u + k)) & 1u) != 0u;
-        let neg = (bitcast<u32>(vfov[k]) >> 31u) != 0u;
+        let neg = (bitcast<u32>(f32(vfov[k])) >> 31u) != 0u;
         if (side == neg) {
             len = 1e20;
         } else {
             let t = (pf(CUT_POS + k) - c[k]) / vfov[k];
             if (t > len) {
                 len = t;
-                plane = f32(k + 1u);
+                plane = R(k + 1u);
             }
         }
     }
-    return vec2<f32>(len, plane);
+    return vec2<R>(len, plane);
 }
 
 // AtCutPlane2: closer than `plus_d` to a cutting plane
-fn at_cut_plane(plus_d: f32) -> bool {
+fn at_cut_plane(plus_d: R) -> bool {
     for (var k = 0u; k < 3u; k++) {
         if (((P[CUT_OPT] >> k) & 1u) != 0u && abs(c[k] - pf(CUT_POS + k)) - plus_d < 0.0) {
             return true;
@@ -1311,7 +1308,7 @@ fn calc_nangles_for_cut(plane: u32) {
         let k = plane - 1u;
         let g = vg(2u)[k];
         let m = select(-1.0 / g, -1e30, abs(g) < 1e-30);
-        let n = vec3<f32>(vg(0u)[k] * m, vg(1u)[k] * m, -1.0);
+        let n = vec3<R>(vg(0u)[k] * m, vg(1u)[k] * m, -1.0);
         let l = 32767.0 / sqrt(dot(n, n) + 1e-30);
         si_normal = vec3<i32>(round(n * l));
     } else {
@@ -1325,24 +1322,24 @@ fn do_color() {
     let x = v.x;
     let y = v.y;
     let z = v.z;
-    var s: f32;
+    var s: R;
     switch (pi(COLOR_OPTION)) {
         case 1: {
-            s = log(rout / (rold + 1.0)) * pf(MCT_COLOR_MUL);
+            s = r_log(rout / (rold + 1.0)) * pf(MCT_COLOR_MUL);
         }
         case 2: {
-            s = (atan2(y - c.y, x - c.x) + PI) * 5200.0;
+            s = (r_atan2(y - c.y, x - c.x) + PI) * 5200.0;
         }
         case 3: {
-            s = (atan2(z - c.z, x - c.x) + PI) * 5200.0;
+            s = (r_atan2(z - c.z, x - c.x) + PI) * 5200.0;
         }
         case 4: {
-            s = (atan2(z - c.z, y - c.y) + PI) * 5200.0;
+            s = (r_atan2(z - c.z, y - c.y) + PI) * 5200.0;
         }
         case 5: {
-            s = (atan2(x, y) + PI) * 5215.0;
+            s = (r_atan2(x, y) + PI) * 5215.0;
             let r = sqrt(x * x + y * y + 1e-30 + z * z);
-            let s2 = (PI + asin(clamp(z / r, -1.0, 1.0)) * 2.0) * 5215.0;
+            let s2 = (PI + r_asin(clamp(z / r, -1.0, 1.0)) * 2.0) * 5215.0;
             si_grad = clip15(s2);
         }
         default: {
@@ -1366,37 +1363,37 @@ fn calc_zpos_and_rough() {
 }
 
 // deao.rs get_rand
-fn get_rand() -> f32 {
+fn get_rand() -> R {
     seed = seed * 0x343FD + 0x269EC3;
-    return f32((u32(seed) >> 8u) & 0x7FFFFFu) / f32(0x7FFFFFu);
+    return R((u32(seed) >> 8u) & 0x7FFFFFu) / R(0x7FFFFFu);
 }
 
 // -BuildRotMatrixS(0, ya, za)[2]
-fn ray_dir(ya: f32, za: f32) -> vec3<f32> {
-    return vec3<f32>(sin(ya) * cos(za), -sin(ya) * sin(za), -cos(ya));
+fn ray_dir(ya: R, za: R) -> vec3<R> {
+    return vec3<R>(r_sin(ya) * r_cos(za), -r_sin(ya) * r_sin(za), -r_cos(ya));
 }
 
 // MakeRotQuatFromSNormals + CreateSMatrixFromQuat (deao.rs normal_matrix)
-fn normal_matrix(n: vec3<f32>) -> mat3x3<f32> {
-    let a = acos(clamp(-n.z, -1.0, 1.0)) * 0.5;
-    var sa = sin(a);
-    let ca = cos(a);
+fn normal_matrix(n: vec3<R>) -> mat3x3<R> {
+    let a = r_acos(clamp(-n.z, -1.0, 1.0)) * 0.5;
+    var sa = r_sin(a);
+    let ca = r_cos(a);
     let nn = sqrt(n.y * n.y + n.x * n.x);
-    var q = vec4<f32>(0.0, 0.0, 0.0, ca);
+    var q = vec4<R>(0.0, 0.0, 0.0, ca);
     if (nn >= 1e-25) {
         sa /= nn;
-        q = vec4<f32>(-n.y * sa, n.x * sa, 0.0, ca);
+        q = vec4<R>(-n.y * sa, n.x * sa, 0.0, ca);
     }
     // the rows of the CPU's matrix (m[i] dot d)
-    return mat3x3<f32>(
-        vec3<f32>(1.0 - 2.0 * (q.y * q.y + q.z * q.z), 2.0 * (q.x * q.y + q.z * q.w), 2.0 * (q.x * q.z - q.y * q.w)),
-        vec3<f32>(2.0 * (q.x * q.y - q.z * q.w), 1.0 - 2.0 * (q.x * q.x + q.z * q.z), 2.0 * (q.z * q.y + q.x * q.w)),
-        vec3<f32>(2.0 * (q.x * q.z + q.y * q.w), 2.0 * (q.y * q.z - q.x * q.w), 1.0 - 2.0 * (q.x * q.x + q.y * q.y)));
+    return mat3x3<R>(
+        vec3<R>(1.0 - 2.0 * (q.y * q.y + q.z * q.z), 2.0 * (q.x * q.y + q.z * q.w), 2.0 * (q.x * q.z - q.y * q.w)),
+        vec3<R>(2.0 * (q.x * q.y - q.z * q.w), 1.0 - 2.0 * (q.x * q.x + q.z * q.z), 2.0 * (q.z * q.y + q.x * q.w)),
+        vec3<R>(2.0 * (q.x * q.z + q.y * q.w), 2.0 * (q.y * q.z - q.x * q.w), 1.0 - 2.0 * (q.x * q.x + q.y * q.y)));
 }
 
 // MaxLHS
-fn hs_max_len(y: i32) -> f32 {
-    return f32(pi(WIDTH) + y) * 0.6 * (1.0 + 0.5 * min(mzz, pf(ZEND) * 0.4) * max(pf(FOV_Y), 0.0) / f32(pi(HEIGHT))) * pf(HS_MAX_LEN_MUL);
+fn hs_max_len(y: i32) -> R {
+    return R(pi(WIDTH) + y) * 0.6 * (1.0 + 0.5 * min(mzz, pf(ZEND) * 0.4) * max(pf(FOV_Y), 0.0) / R(pi(HEIGHT))) * pf(HS_MAX_LEN_MUL);
 }
 
 // states of march_pixel; a state may request an evaluation (`need`, at
@@ -1470,26 +1467,26 @@ fn pixel(x: i32, y: i32, mode: u32) {
     max_its_result = max_it;
 
     // RMCalculateVgradsFOV
-    let cafy = (f32(y) / f32(pi(HEIGHT)) - 0.5) * pf(FOV_Y);
-    let cafx = (pf(FOVX_OFF) - f32(x + 1)) * pf(FOVX_MUL);
-    var dv: vec3<f32>;
+    let cafy = (R(y) / R(pi(HEIGHT)) - 0.5) * pf(FOV_Y);
+    let cafx = (pf(FOVX_OFF) - R(x + 1)) * pf(FOVX_MUL);
+    var dv: vec3<R>;
     let optic = pi(OPTIC);
     if (optic == 1) {
-        dv = normalize(vec3<f32>(-cafx, cafy, pf(PL_OPTIC_Z)));
+        dv = normalize(vec3<R>(-cafx, cafy, pf(PL_OPTIC_Z)));
     } else if (optic == 2) {
-        dv = vec3<f32>(-sin(cafx) * cos(cafy), sin(cafy), cos(cafy) * cos(cafx));
+        dv = vec3<R>(-r_sin(cafx) * r_cos(cafy), r_sin(cafy), r_cos(cafy) * r_cos(cafx));
     } else {
-        dv = normalize(vec3<f32>(-sin(cafx), sin(cafy), cos(cafy) * cos(cafx)));
+        dv = normalize(vec3<R>(-r_sin(cafx), r_sin(cafy), r_cos(cafy) * r_cos(cafx)));
     }
     vfov = rot_rev(dv);
     // RMCalculateStartPos
     if (optic == 2) {
-        base = pv(YSTART);
+        base = p_ystart();
     } else {
-        base = pv(YSTART) + vg(0u) * f32(x) + vg(1u) * f32(y);
+        base = p_ystart() + vg(0u) * R(x) + vg(1u) * R(y);
     }
     calc_sit = false;
-    var step_count = 0.0;
+    var step_count = R(0.0);
     mzz = 0.0;
     if (mode == M_PROBE) {
         mzz = pf(PROBE_MZZ);
@@ -1528,78 +1525,78 @@ fn pixel(x: i32, y: i32, mode: u32) {
     let reflect = mode == M_REFLECT;
     var after_hs = P_DONE;
     var after_ao = P_DONE;
-    var last_zz = 0.0;
-    var rlast_sw = 0.0;
+    var last_zz = R(0.0);
+    var rlast_sw = R(0.0);
     var after_bs = P_N_INIT;
-    var bs_thr = 0.001;
+    var bs_thr = R(0.001);
     var bs_it_check = mode != M_DEAO;
-    var zf = 0.0;
+    var zf = R(0.0);
     // shadows
     let soft = pf(HS_SOFT_RADIUS) > 0.0;
-    var ic = vec3<f32>(0.0);
-    var nvec = vec3<f32>(0.0);
-    var max_lhs = 0.0;
+    var ic = vec3<R>(0.0);
+    var nvec = vec3<R>(0.0);
+    var max_lhs = R(0.0);
     var li = 0u;
     var lidx = 0u;
-    var lvec = vec3<f32>(0.0);
-    var zz2 = 0.0;
-    var zz2mul = 0.0;
-    var rsf = 1.0;
-    var st = 0.0;
-    var zr_soft = 1.0;
-    var zrs_mul = 0.0;
+    var lvec = vec3<R>(0.0);
+    var zz2 = R(0.0);
+    var zz2mul = R(0.0);
+    var rsf = R(1.0);
+    var st = R(0.0);
+    var zr_soft = R(1.0);
+    var zrs_mul = R(0.0);
     // ambient occlusion
     var ray_count = 0u;
     var k = 0u;
-    var step_ao = 0.0;
-    var max_dist = 0.0;
-    var d_step_mul = 1.0;
-    var ms2 = 0.0;
-    var de_mul = 1.0;
-    var abr_c = 0.0;
-    var md_d10 = 0.0;
-    var d_min_a_dif = -1.0;
-    var corr_w = 0.0;
-    var rot_w = mat3x3<f32>();
-    var rv0 = vec3<f32>(0.0);
-    var rv1 = vec3<f32>(0.0);
-    var rv2 = vec3<f32>(0.0);
-    var sv = vec3<f32>(0.0);
-    var s_tmp = 1.0;
+    var step_ao = R(0.0);
+    var max_dist = R(0.0);
+    var d_step_mul = R(1.0);
+    var ms2 = R(0.0);
+    var de_mul = R(1.0);
+    var abr_c = R(0.0);
+    var md_d10 = R(0.0);
+    var d_min_a_dif = R(-1.0);
+    var corr_w = R(0.0);
+    var rot_w = mat3x3<R>();
+    var rv0 = vec3<R>(0.0);
+    var rv1 = vec3<R>(0.0);
+    var rv2 = vec3<R>(0.0);
+    var sv = vec3<R>(0.0);
+    var s_tmp = R(1.0);
     var b_end = false;
     var b_first = false;
-    var r = 0.0;
+    var r = R(0.0);
     var done = false;
     // march
-    var dtmp = 0.0;
-    var rsf_mul = 1.0;
-    var last_step = 0.0;
-    var last_de = 0.0;
-    var dt1 = 0.0;
+    var dtmp = R(0.0);
+    var rsf_mul = R(1.0);
+    var last_step = R(0.0);
+    var last_de = R(0.0);
+    var dt1 = R(0.0);
     var de_limited = false;
     var itmp = 0;
     // RMdoBinSearchIt
-    var yp = 0.0;
+    var yp = R(0.0);
     var saved_max = 0;
-    var dmul = 1.0;
+    var dmul = R(1.0);
     var first = true;
-    var last_si = 0.0;
-    var last_dif = 0.0;
+    var last_si = R(0.0);
+    var last_dif = R(0.0);
     // normals
-    var noffset = 0.0;
-    var ct1 = vec3<f32>(0.0);
-    var dnn = 0.0;
-    var nn = 0.0;
-    var n = vec3<f32>(0.0);
+    var noffset = R(0.0);
+    var ct1 = vec3<R>(0.0);
+    var dnn = R(0.0);
+    var nn = R(0.0);
+    var n = vec3<R>(0.0);
     var cnt = 0;
-    var na = 0.0;
-    var acc = 0.0;
-    var ssn = 0.0;
-    var dm = 0.0;
-    var vx = vec3<f32>(0.0);
-    var vy = vec3<f32>(0.0);
-    var s1 = vec2<f32>(0.0);
-    var ds = vec2<f32>(0.0);
+    var na = R(0.0);
+    var acc = R(0.0);
+    var ssn = R(0.0);
+    var dm = R(0.0);
+    var vx = vec3<R>(0.0);
+    var vy = vec3<R>(0.0);
+    var s1 = vec2<R>(0.0);
+    var ds = vec2<R>(0.0);
     var axis = 0;
     var kk = 0;
 
@@ -1610,360 +1607,360 @@ fn pixel(x: i32, y: i32, mode: u32) {
     let ns = P[N_SLOTS];
     var guard = 0;
     if (resuming) {
-        c.x = bitcast<f32>(STATE[so + 1u * ns]);
-        c.y = bitcast<f32>(STATE[so + 2u * ns]);
-        c.z = bitcast<f32>(STATE[so + 3u * ns]);
-        v.x = bitcast<f32>(STATE[so + 4u * ns]);
-        v.y = bitcast<f32>(STATE[so + 5u * ns]);
-        v.z = bitcast<f32>(STATE[so + 6u * ns]);
-        rout = bitcast<f32>(STATE[so + 7u * ns]);
-        lrout = bitcast<f32>(STATE[so + 8u * ns]);
-        rold = bitcast<f32>(STATE[so + 9u * ns]);
-        otrap = bitcast<f32>(STATE[so + 10u * ns]);
-        it_result = bitcast<i32>(STATE[so + 11u * ns]);
-        max_it = bitcast<i32>(STATE[so + 12u * ns]);
-        rstop = bitcast<f32>(STATE[so + 13u * ns]);
-        calc_sit = (STATE[so + 14u * ns] != 0u);
-        smooth_it = bitcast<f32>(STATE[so + 15u * ns]);
-        w = bitcast<f32>(STATE[so + 16u * ns]);
-        j.x = bitcast<f32>(STATE[so + 17u * ns]);
-        j.y = bitcast<f32>(STATE[so + 18u * ns]);
-        j.z = bitcast<f32>(STATE[so + 19u * ns]);
-        j4 = bitcast<f32>(STATE[so + 20u * ns]);
-        vary_scale = bitcast<f32>(STATE[so + 21u * ns]);
-        first_it = bitcast<i32>(STATE[so + 22u * ns]);
-        deriv.x = bitcast<f32>(STATE[so + 23u * ns]);
-        deriv.y = bitcast<f32>(STATE[so + 24u * ns]);
-        deriv.z = bitcast<f32>(STATE[so + 25u * ns]);
-        dfree.x = bitcast<f32>(STATE[so + 26u * ns]);
-        dfree.y = bitcast<f32>(STATE[so + 27u * ns]);
-        ms_de_stop = bitcast<f32>(STATE[so + 28u * ns]);
-        part_start = STATE[so + 29u * ns];
-        part_end = STATE[so + 30u * ns];
-        part_repeat = STATE[so + 31u * ns];
-        de_option = bitcast<i32>(STATE[so + 32u * ns]);
-        rstopd = bitcast<f32>(STATE[so + 33u * ns]);
-        vfov_px.x = bitcast<f32>(STATE[so + 34u * ns]);
-        vfov_px.y = bitcast<f32>(STATE[so + 35u * ns]);
-        vfov_px.z = bitcast<f32>(STATE[so + 36u * ns]);
-        zz_base = bitcast<f32>(STATE[so + 37u * ns]);
-        zz_mul = bitcast<f32>(STATE[so + 38u * ns]);
-        zz_abs = (STATE[so + 39u * ns] != 0u);
-        r_flags = STATE[so + 40u * ns];
-        r_zz2 = bitcast<f32>(STATE[so + 41u * ns]);
-        r_step_count = bitcast<f32>(STATE[so + 42u * ns]);
-        de_overflow = (STATE[so + 43u * ns] != 0u);
-        mzz = bitcast<f32>(STATE[so + 44u * ns]);
-        vfov.x = bitcast<f32>(STATE[so + 45u * ns]);
-        vfov.y = bitcast<f32>(STATE[so + 46u * ns]);
-        vfov.z = bitcast<f32>(STATE[so + 47u * ns]);
-        base.x = bitcast<f32>(STATE[so + 48u * ns]);
-        base.y = bitcast<f32>(STATE[so + 49u * ns]);
-        base.z = bitcast<f32>(STATE[so + 50u * ns]);
-        max_its_result = bitcast<i32>(STATE[so + 51u * ns]);
-        s_roughness = bitcast<f32>(STATE[so + 52u * ns]);
-        seed = bitcast<i32>(STATE[so + 53u * ns]);
-        si_normal.x = bitcast<i32>(STATE[so + 54u * ns]);
-        si_normal.y = bitcast<i32>(STATE[so + 55u * ns]);
-        si_normal.z = bitcast<i32>(STATE[so + 56u * ns]);
-        si_zpos = STATE[so + 57u * ns];
-        si_shadow = STATE[so + 58u * ns];
-        si_grad = STATE[so + 59u * ns];
-        si_otrap = STATE[so + 60u * ns];
-        si_amb = STATE[so + 61u * ns];
-        for (var i = 0u; i < 33u; i++) { let q = so + (62u + i * 3u) * ns; ao_dirs[i] = vec3<f32>(bitcast<f32>(STATE[q]), bitcast<f32>(STATE[q + ns]), bitcast<f32>(STATE[q + 2u * ns])); }
-        for (var i = 0u; i < 33u; i++) { ao_min[i] = bitcast<f32>(STATE[so + (161u + i) * ns]); }
-        step_count = bitcast<f32>(STATE[so + 194u * ns]);
-        first_step = (STATE[so + 195u * ns] != 0u);
-        pc = STATE[so + 196u * ns];
-        need = (STATE[so + 197u * ns] != 0u);
-        want_de = (STATE[so + 198u * ns] != 0u);
-        after_hs = STATE[so + 199u * ns];
-        after_ao = STATE[so + 200u * ns];
-        last_zz = bitcast<f32>(STATE[so + 201u * ns]);
-        rlast_sw = bitcast<f32>(STATE[so + 202u * ns]);
-        after_bs = STATE[so + 203u * ns];
-        bs_thr = bitcast<f32>(STATE[so + 204u * ns]);
-        bs_it_check = (STATE[so + 205u * ns] != 0u);
-        zf = bitcast<f32>(STATE[so + 206u * ns]);
-        ic.x = bitcast<f32>(STATE[so + 207u * ns]);
-        ic.y = bitcast<f32>(STATE[so + 208u * ns]);
-        ic.z = bitcast<f32>(STATE[so + 209u * ns]);
-        nvec.x = bitcast<f32>(STATE[so + 210u * ns]);
-        nvec.y = bitcast<f32>(STATE[so + 211u * ns]);
-        nvec.z = bitcast<f32>(STATE[so + 212u * ns]);
-        max_lhs = bitcast<f32>(STATE[so + 213u * ns]);
-        li = STATE[so + 214u * ns];
-        lidx = STATE[so + 215u * ns];
-        lvec.x = bitcast<f32>(STATE[so + 216u * ns]);
-        lvec.y = bitcast<f32>(STATE[so + 217u * ns]);
-        lvec.z = bitcast<f32>(STATE[so + 218u * ns]);
-        zz2 = bitcast<f32>(STATE[so + 219u * ns]);
-        zz2mul = bitcast<f32>(STATE[so + 220u * ns]);
-        rsf = bitcast<f32>(STATE[so + 221u * ns]);
-        st = bitcast<f32>(STATE[so + 222u * ns]);
-        zr_soft = bitcast<f32>(STATE[so + 223u * ns]);
-        zrs_mul = bitcast<f32>(STATE[so + 224u * ns]);
-        ray_count = STATE[so + 225u * ns];
-        k = STATE[so + 226u * ns];
-        step_ao = bitcast<f32>(STATE[so + 227u * ns]);
-        max_dist = bitcast<f32>(STATE[so + 228u * ns]);
-        d_step_mul = bitcast<f32>(STATE[so + 229u * ns]);
-        ms2 = bitcast<f32>(STATE[so + 230u * ns]);
-        de_mul = bitcast<f32>(STATE[so + 231u * ns]);
-        abr_c = bitcast<f32>(STATE[so + 232u * ns]);
-        md_d10 = bitcast<f32>(STATE[so + 233u * ns]);
-        d_min_a_dif = bitcast<f32>(STATE[so + 234u * ns]);
-        corr_w = bitcast<f32>(STATE[so + 235u * ns]);
-        rot_w[0].x = bitcast<f32>(STATE[so + 236u * ns]);
-        rot_w[0].y = bitcast<f32>(STATE[so + 237u * ns]);
-        rot_w[0].z = bitcast<f32>(STATE[so + 238u * ns]);
-        rot_w[1].x = bitcast<f32>(STATE[so + 239u * ns]);
-        rot_w[1].y = bitcast<f32>(STATE[so + 240u * ns]);
-        rot_w[1].z = bitcast<f32>(STATE[so + 241u * ns]);
-        rot_w[2].x = bitcast<f32>(STATE[so + 242u * ns]);
-        rot_w[2].y = bitcast<f32>(STATE[so + 243u * ns]);
-        rot_w[2].z = bitcast<f32>(STATE[so + 244u * ns]);
-        rv0.x = bitcast<f32>(STATE[so + 245u * ns]);
-        rv0.y = bitcast<f32>(STATE[so + 246u * ns]);
-        rv0.z = bitcast<f32>(STATE[so + 247u * ns]);
-        rv1.x = bitcast<f32>(STATE[so + 248u * ns]);
-        rv1.y = bitcast<f32>(STATE[so + 249u * ns]);
-        rv1.z = bitcast<f32>(STATE[so + 250u * ns]);
-        rv2.x = bitcast<f32>(STATE[so + 251u * ns]);
-        rv2.y = bitcast<f32>(STATE[so + 252u * ns]);
-        rv2.z = bitcast<f32>(STATE[so + 253u * ns]);
-        sv.x = bitcast<f32>(STATE[so + 254u * ns]);
-        sv.y = bitcast<f32>(STATE[so + 255u * ns]);
-        sv.z = bitcast<f32>(STATE[so + 256u * ns]);
-        s_tmp = bitcast<f32>(STATE[so + 257u * ns]);
-        b_end = (STATE[so + 258u * ns] != 0u);
-        b_first = (STATE[so + 259u * ns] != 0u);
-        r = bitcast<f32>(STATE[so + 260u * ns]);
-        done = (STATE[so + 261u * ns] != 0u);
-        dtmp = bitcast<f32>(STATE[so + 262u * ns]);
-        rsf_mul = bitcast<f32>(STATE[so + 263u * ns]);
-        last_step = bitcast<f32>(STATE[so + 264u * ns]);
-        last_de = bitcast<f32>(STATE[so + 265u * ns]);
-        dt1 = bitcast<f32>(STATE[so + 266u * ns]);
-        de_limited = (STATE[so + 267u * ns] != 0u);
-        itmp = bitcast<i32>(STATE[so + 268u * ns]);
-        yp = bitcast<f32>(STATE[so + 269u * ns]);
-        saved_max = bitcast<i32>(STATE[so + 270u * ns]);
-        dmul = bitcast<f32>(STATE[so + 271u * ns]);
-        first = (STATE[so + 272u * ns] != 0u);
-        last_si = bitcast<f32>(STATE[so + 273u * ns]);
-        last_dif = bitcast<f32>(STATE[so + 274u * ns]);
-        noffset = bitcast<f32>(STATE[so + 275u * ns]);
-        ct1.x = bitcast<f32>(STATE[so + 276u * ns]);
-        ct1.y = bitcast<f32>(STATE[so + 277u * ns]);
-        ct1.z = bitcast<f32>(STATE[so + 278u * ns]);
-        dnn = bitcast<f32>(STATE[so + 279u * ns]);
-        nn = bitcast<f32>(STATE[so + 280u * ns]);
-        n.x = bitcast<f32>(STATE[so + 281u * ns]);
-        n.y = bitcast<f32>(STATE[so + 282u * ns]);
-        n.z = bitcast<f32>(STATE[so + 283u * ns]);
-        cnt = bitcast<i32>(STATE[so + 284u * ns]);
-        na = bitcast<f32>(STATE[so + 285u * ns]);
-        acc = bitcast<f32>(STATE[so + 286u * ns]);
-        ssn = bitcast<f32>(STATE[so + 287u * ns]);
-        dm = bitcast<f32>(STATE[so + 288u * ns]);
-        vx.x = bitcast<f32>(STATE[so + 289u * ns]);
-        vx.y = bitcast<f32>(STATE[so + 290u * ns]);
-        vx.z = bitcast<f32>(STATE[so + 291u * ns]);
-        vy.x = bitcast<f32>(STATE[so + 292u * ns]);
-        vy.y = bitcast<f32>(STATE[so + 293u * ns]);
-        vy.z = bitcast<f32>(STATE[so + 294u * ns]);
-        s1.x = bitcast<f32>(STATE[so + 295u * ns]);
-        s1.y = bitcast<f32>(STATE[so + 296u * ns]);
-        ds.x = bitcast<f32>(STATE[so + 297u * ns]);
-        ds.y = bitcast<f32>(STATE[so + 298u * ns]);
-        axis = bitcast<i32>(STATE[so + 299u * ns]);
-        kk = bitcast<i32>(STATE[so + 300u * ns]);
-        guard = bitcast<i32>(STATE[so + 301u * ns]);
-        inside = (STATE[so + 302u * ns] != 0u);
-        cut_plane = STATE[so + 303u * ns];
-        after_coi = STATE[so + 304u * ns];
-        coi_max = bitcast<i32>(STATE[so + 305u * ns]);
+        c.x = rget(so + 1u * ns, ns);
+        c.y = rget(so + 3u * ns, ns);
+        c.z = rget(so + 5u * ns, ns);
+        v.x = rget(so + 7u * ns, ns);
+        v.y = rget(so + 9u * ns, ns);
+        v.z = rget(so + 11u * ns, ns);
+        rout = rget(so + 13u * ns, ns);
+        lrout = rget(so + 15u * ns, ns);
+        rold = rget(so + 17u * ns, ns);
+        otrap = rget(so + 19u * ns, ns);
+        it_result = bitcast<i32>(STATE[so + 21u * ns]);
+        max_it = bitcast<i32>(STATE[so + 22u * ns]);
+        rstop = rget(so + 23u * ns, ns);
+        calc_sit = (STATE[so + 25u * ns] != 0u);
+        smooth_it = rget(so + 26u * ns, ns);
+        w = rget(so + 28u * ns, ns);
+        j.x = rget(so + 30u * ns, ns);
+        j.y = rget(so + 32u * ns, ns);
+        j.z = rget(so + 34u * ns, ns);
+        j4 = rget(so + 36u * ns, ns);
+        vary_scale = rget(so + 38u * ns, ns);
+        first_it = bitcast<i32>(STATE[so + 40u * ns]);
+        deriv.x = rget(so + 41u * ns, ns);
+        deriv.y = rget(so + 43u * ns, ns);
+        deriv.z = rget(so + 45u * ns, ns);
+        dfree.x = rget(so + 47u * ns, ns);
+        dfree.y = rget(so + 49u * ns, ns);
+        ms_de_stop = rget(so + 51u * ns, ns);
+        part_start = STATE[so + 53u * ns];
+        part_end = STATE[so + 54u * ns];
+        part_repeat = STATE[so + 55u * ns];
+        de_option = bitcast<i32>(STATE[so + 56u * ns]);
+        rstopd = rget(so + 57u * ns, ns);
+        vfov_px.x = rget(so + 59u * ns, ns);
+        vfov_px.y = rget(so + 61u * ns, ns);
+        vfov_px.z = rget(so + 63u * ns, ns);
+        zz_base = rget(so + 65u * ns, ns);
+        zz_mul = rget(so + 67u * ns, ns);
+        zz_abs = (STATE[so + 69u * ns] != 0u);
+        r_flags = STATE[so + 70u * ns];
+        r_zz2 = rget(so + 71u * ns, ns);
+        r_step_count = rget(so + 73u * ns, ns);
+        de_overflow = (STATE[so + 75u * ns] != 0u);
+        inside = (STATE[so + 76u * ns] != 0u);
+        mzz = rget(so + 77u * ns, ns);
+        vfov.x = rget(so + 79u * ns, ns);
+        vfov.y = rget(so + 81u * ns, ns);
+        vfov.z = rget(so + 83u * ns, ns);
+        base.x = rget(so + 85u * ns, ns);
+        base.y = rget(so + 87u * ns, ns);
+        base.z = rget(so + 89u * ns, ns);
+        max_its_result = bitcast<i32>(STATE[so + 91u * ns]);
+        s_roughness = rget(so + 92u * ns, ns);
+        seed = bitcast<i32>(STATE[so + 94u * ns]);
+        si_normal.x = bitcast<i32>(STATE[so + 95u * ns]);
+        si_normal.y = bitcast<i32>(STATE[so + 96u * ns]);
+        si_normal.z = bitcast<i32>(STATE[so + 97u * ns]);
+        si_zpos = STATE[so + 98u * ns];
+        si_shadow = STATE[so + 99u * ns];
+        si_grad = STATE[so + 100u * ns];
+        si_otrap = STATE[so + 101u * ns];
+        si_amb = STATE[so + 102u * ns];
+        for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; ao_dirs[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); }
+        for (var i = 0u; i < 33u; i++) { ao_min[i] = rget(so + (301u + 2u * i) * ns, ns); }
+        step_count = rget(so + 367u * ns, ns);
+        first_step = (STATE[so + 369u * ns] != 0u);
+        pc = STATE[so + 370u * ns];
+        need = (STATE[so + 371u * ns] != 0u);
+        want_de = (STATE[so + 372u * ns] != 0u);
+        cut_plane = STATE[so + 373u * ns];
+        after_coi = STATE[so + 374u * ns];
+        coi_max = bitcast<i32>(STATE[so + 375u * ns]);
+        after_hs = STATE[so + 376u * ns];
+        after_ao = STATE[so + 377u * ns];
+        last_zz = rget(so + 378u * ns, ns);
+        rlast_sw = rget(so + 380u * ns, ns);
+        after_bs = STATE[so + 382u * ns];
+        bs_thr = rget(so + 383u * ns, ns);
+        bs_it_check = (STATE[so + 385u * ns] != 0u);
+        zf = rget(so + 386u * ns, ns);
+        ic.x = rget(so + 388u * ns, ns);
+        ic.y = rget(so + 390u * ns, ns);
+        ic.z = rget(so + 392u * ns, ns);
+        nvec.x = rget(so + 394u * ns, ns);
+        nvec.y = rget(so + 396u * ns, ns);
+        nvec.z = rget(so + 398u * ns, ns);
+        max_lhs = rget(so + 400u * ns, ns);
+        li = STATE[so + 402u * ns];
+        lidx = STATE[so + 403u * ns];
+        lvec.x = rget(so + 404u * ns, ns);
+        lvec.y = rget(so + 406u * ns, ns);
+        lvec.z = rget(so + 408u * ns, ns);
+        zz2 = rget(so + 410u * ns, ns);
+        zz2mul = rget(so + 412u * ns, ns);
+        rsf = rget(so + 414u * ns, ns);
+        st = rget(so + 416u * ns, ns);
+        zr_soft = rget(so + 418u * ns, ns);
+        zrs_mul = rget(so + 420u * ns, ns);
+        ray_count = STATE[so + 422u * ns];
+        k = STATE[so + 423u * ns];
+        step_ao = rget(so + 424u * ns, ns);
+        max_dist = rget(so + 426u * ns, ns);
+        d_step_mul = rget(so + 428u * ns, ns);
+        ms2 = rget(so + 430u * ns, ns);
+        de_mul = rget(so + 432u * ns, ns);
+        abr_c = rget(so + 434u * ns, ns);
+        md_d10 = rget(so + 436u * ns, ns);
+        d_min_a_dif = rget(so + 438u * ns, ns);
+        corr_w = rget(so + 440u * ns, ns);
+        rot_w[0].x = rget(so + 442u * ns, ns);
+        rot_w[0].y = rget(so + 444u * ns, ns);
+        rot_w[0].z = rget(so + 446u * ns, ns);
+        rot_w[1].x = rget(so + 448u * ns, ns);
+        rot_w[1].y = rget(so + 450u * ns, ns);
+        rot_w[1].z = rget(so + 452u * ns, ns);
+        rot_w[2].x = rget(so + 454u * ns, ns);
+        rot_w[2].y = rget(so + 456u * ns, ns);
+        rot_w[2].z = rget(so + 458u * ns, ns);
+        rv0.x = rget(so + 460u * ns, ns);
+        rv0.y = rget(so + 462u * ns, ns);
+        rv0.z = rget(so + 464u * ns, ns);
+        rv1.x = rget(so + 466u * ns, ns);
+        rv1.y = rget(so + 468u * ns, ns);
+        rv1.z = rget(so + 470u * ns, ns);
+        rv2.x = rget(so + 472u * ns, ns);
+        rv2.y = rget(so + 474u * ns, ns);
+        rv2.z = rget(so + 476u * ns, ns);
+        sv.x = rget(so + 478u * ns, ns);
+        sv.y = rget(so + 480u * ns, ns);
+        sv.z = rget(so + 482u * ns, ns);
+        s_tmp = rget(so + 484u * ns, ns);
+        b_end = (STATE[so + 486u * ns] != 0u);
+        b_first = (STATE[so + 487u * ns] != 0u);
+        r = rget(so + 488u * ns, ns);
+        done = (STATE[so + 490u * ns] != 0u);
+        dtmp = rget(so + 491u * ns, ns);
+        rsf_mul = rget(so + 493u * ns, ns);
+        last_step = rget(so + 495u * ns, ns);
+        last_de = rget(so + 497u * ns, ns);
+        dt1 = rget(so + 499u * ns, ns);
+        de_limited = (STATE[so + 501u * ns] != 0u);
+        itmp = bitcast<i32>(STATE[so + 502u * ns]);
+        yp = rget(so + 503u * ns, ns);
+        saved_max = bitcast<i32>(STATE[so + 505u * ns]);
+        dmul = rget(so + 506u * ns, ns);
+        first = (STATE[so + 508u * ns] != 0u);
+        last_si = rget(so + 509u * ns, ns);
+        last_dif = rget(so + 511u * ns, ns);
+        noffset = rget(so + 513u * ns, ns);
+        ct1.x = rget(so + 515u * ns, ns);
+        ct1.y = rget(so + 517u * ns, ns);
+        ct1.z = rget(so + 519u * ns, ns);
+        dnn = rget(so + 521u * ns, ns);
+        nn = rget(so + 523u * ns, ns);
+        n.x = rget(so + 525u * ns, ns);
+        n.y = rget(so + 527u * ns, ns);
+        n.z = rget(so + 529u * ns, ns);
+        cnt = bitcast<i32>(STATE[so + 531u * ns]);
+        na = rget(so + 532u * ns, ns);
+        acc = rget(so + 534u * ns, ns);
+        ssn = rget(so + 536u * ns, ns);
+        dm = rget(so + 538u * ns, ns);
+        vx.x = rget(so + 540u * ns, ns);
+        vx.y = rget(so + 542u * ns, ns);
+        vx.z = rget(so + 544u * ns, ns);
+        vy.x = rget(so + 546u * ns, ns);
+        vy.y = rget(so + 548u * ns, ns);
+        vy.z = rget(so + 550u * ns, ns);
+        s1.x = rget(so + 552u * ns, ns);
+        s1.y = rget(so + 554u * ns, ns);
+        ds.x = rget(so + 556u * ns, ns);
+        ds.y = rget(so + 558u * ns, ns);
+        axis = bitcast<i32>(STATE[so + 560u * ns]);
+        kk = bitcast<i32>(STATE[so + 561u * ns]);
+        guard = bitcast<i32>(STATE[so + 562u * ns]);
         load_record(so + (1u + STATE_FIXED) * ns, ns);
     }
     for (var turns = 0u; guard < 2000000; guard++) {
         if (turns >= P[TURN_BUDGET]) {
-            STATE[so + 1u * ns] = bitcast<u32>(c.x);
-            STATE[so + 2u * ns] = bitcast<u32>(c.y);
-            STATE[so + 3u * ns] = bitcast<u32>(c.z);
-            STATE[so + 4u * ns] = bitcast<u32>(v.x);
-            STATE[so + 5u * ns] = bitcast<u32>(v.y);
-            STATE[so + 6u * ns] = bitcast<u32>(v.z);
-            STATE[so + 7u * ns] = bitcast<u32>(rout);
-            STATE[so + 8u * ns] = bitcast<u32>(lrout);
-            STATE[so + 9u * ns] = bitcast<u32>(rold);
-            STATE[so + 10u * ns] = bitcast<u32>(otrap);
-            STATE[so + 11u * ns] = bitcast<u32>(it_result);
-            STATE[so + 12u * ns] = bitcast<u32>(max_it);
-            STATE[so + 13u * ns] = bitcast<u32>(rstop);
-            STATE[so + 14u * ns] = select(0u, 1u, calc_sit);
-            STATE[so + 15u * ns] = bitcast<u32>(smooth_it);
-            STATE[so + 16u * ns] = bitcast<u32>(w);
-            STATE[so + 17u * ns] = bitcast<u32>(j.x);
-            STATE[so + 18u * ns] = bitcast<u32>(j.y);
-            STATE[so + 19u * ns] = bitcast<u32>(j.z);
-            STATE[so + 20u * ns] = bitcast<u32>(j4);
-            STATE[so + 21u * ns] = bitcast<u32>(vary_scale);
-            STATE[so + 22u * ns] = bitcast<u32>(first_it);
-            STATE[so + 23u * ns] = bitcast<u32>(deriv.x);
-            STATE[so + 24u * ns] = bitcast<u32>(deriv.y);
-            STATE[so + 25u * ns] = bitcast<u32>(deriv.z);
-            STATE[so + 26u * ns] = bitcast<u32>(dfree.x);
-            STATE[so + 27u * ns] = bitcast<u32>(dfree.y);
-            STATE[so + 28u * ns] = bitcast<u32>(ms_de_stop);
-            STATE[so + 29u * ns] = part_start;
-            STATE[so + 30u * ns] = part_end;
-            STATE[so + 31u * ns] = part_repeat;
-            STATE[so + 32u * ns] = bitcast<u32>(de_option);
-            STATE[so + 33u * ns] = bitcast<u32>(rstopd);
-            STATE[so + 34u * ns] = bitcast<u32>(vfov_px.x);
-            STATE[so + 35u * ns] = bitcast<u32>(vfov_px.y);
-            STATE[so + 36u * ns] = bitcast<u32>(vfov_px.z);
-            STATE[so + 37u * ns] = bitcast<u32>(zz_base);
-            STATE[so + 38u * ns] = bitcast<u32>(zz_mul);
-            STATE[so + 39u * ns] = select(0u, 1u, zz_abs);
-            STATE[so + 40u * ns] = r_flags;
-            STATE[so + 41u * ns] = bitcast<u32>(r_zz2);
-            STATE[so + 42u * ns] = bitcast<u32>(r_step_count);
-            STATE[so + 43u * ns] = select(0u, 1u, de_overflow);
-            STATE[so + 44u * ns] = bitcast<u32>(mzz);
-            STATE[so + 45u * ns] = bitcast<u32>(vfov.x);
-            STATE[so + 46u * ns] = bitcast<u32>(vfov.y);
-            STATE[so + 47u * ns] = bitcast<u32>(vfov.z);
-            STATE[so + 48u * ns] = bitcast<u32>(base.x);
-            STATE[so + 49u * ns] = bitcast<u32>(base.y);
-            STATE[so + 50u * ns] = bitcast<u32>(base.z);
-            STATE[so + 51u * ns] = bitcast<u32>(max_its_result);
-            STATE[so + 52u * ns] = bitcast<u32>(s_roughness);
-            STATE[so + 53u * ns] = bitcast<u32>(seed);
-            STATE[so + 54u * ns] = bitcast<u32>(si_normal.x);
-            STATE[so + 55u * ns] = bitcast<u32>(si_normal.y);
-            STATE[so + 56u * ns] = bitcast<u32>(si_normal.z);
-            STATE[so + 57u * ns] = si_zpos;
-            STATE[so + 58u * ns] = si_shadow;
-            STATE[so + 59u * ns] = si_grad;
-            STATE[so + 60u * ns] = si_otrap;
-            STATE[so + 61u * ns] = si_amb;
-            for (var i = 0u; i < 33u; i++) { let q = so + (62u + i * 3u) * ns; STATE[q] = bitcast<u32>(ao_dirs[i].x); STATE[q + ns] = bitcast<u32>(ao_dirs[i].y); STATE[q + 2u * ns] = bitcast<u32>(ao_dirs[i].z); }
-            for (var i = 0u; i < 33u; i++) { STATE[so + (161u + i) * ns] = bitcast<u32>(ao_min[i]); }
-            STATE[so + 194u * ns] = bitcast<u32>(step_count);
-            STATE[so + 195u * ns] = select(0u, 1u, first_step);
-            STATE[so + 196u * ns] = pc;
-            STATE[so + 197u * ns] = select(0u, 1u, need);
-            STATE[so + 198u * ns] = select(0u, 1u, want_de);
-            STATE[so + 199u * ns] = after_hs;
-            STATE[so + 200u * ns] = after_ao;
-            STATE[so + 201u * ns] = bitcast<u32>(last_zz);
-            STATE[so + 202u * ns] = bitcast<u32>(rlast_sw);
-            STATE[so + 203u * ns] = after_bs;
-            STATE[so + 204u * ns] = bitcast<u32>(bs_thr);
-            STATE[so + 205u * ns] = select(0u, 1u, bs_it_check);
-            STATE[so + 206u * ns] = bitcast<u32>(zf);
-            STATE[so + 207u * ns] = bitcast<u32>(ic.x);
-            STATE[so + 208u * ns] = bitcast<u32>(ic.y);
-            STATE[so + 209u * ns] = bitcast<u32>(ic.z);
-            STATE[so + 210u * ns] = bitcast<u32>(nvec.x);
-            STATE[so + 211u * ns] = bitcast<u32>(nvec.y);
-            STATE[so + 212u * ns] = bitcast<u32>(nvec.z);
-            STATE[so + 213u * ns] = bitcast<u32>(max_lhs);
-            STATE[so + 214u * ns] = li;
-            STATE[so + 215u * ns] = lidx;
-            STATE[so + 216u * ns] = bitcast<u32>(lvec.x);
-            STATE[so + 217u * ns] = bitcast<u32>(lvec.y);
-            STATE[so + 218u * ns] = bitcast<u32>(lvec.z);
-            STATE[so + 219u * ns] = bitcast<u32>(zz2);
-            STATE[so + 220u * ns] = bitcast<u32>(zz2mul);
-            STATE[so + 221u * ns] = bitcast<u32>(rsf);
-            STATE[so + 222u * ns] = bitcast<u32>(st);
-            STATE[so + 223u * ns] = bitcast<u32>(zr_soft);
-            STATE[so + 224u * ns] = bitcast<u32>(zrs_mul);
-            STATE[so + 225u * ns] = ray_count;
-            STATE[so + 226u * ns] = k;
-            STATE[so + 227u * ns] = bitcast<u32>(step_ao);
-            STATE[so + 228u * ns] = bitcast<u32>(max_dist);
-            STATE[so + 229u * ns] = bitcast<u32>(d_step_mul);
-            STATE[so + 230u * ns] = bitcast<u32>(ms2);
-            STATE[so + 231u * ns] = bitcast<u32>(de_mul);
-            STATE[so + 232u * ns] = bitcast<u32>(abr_c);
-            STATE[so + 233u * ns] = bitcast<u32>(md_d10);
-            STATE[so + 234u * ns] = bitcast<u32>(d_min_a_dif);
-            STATE[so + 235u * ns] = bitcast<u32>(corr_w);
-            STATE[so + 236u * ns] = bitcast<u32>(rot_w[0].x);
-            STATE[so + 237u * ns] = bitcast<u32>(rot_w[0].y);
-            STATE[so + 238u * ns] = bitcast<u32>(rot_w[0].z);
-            STATE[so + 239u * ns] = bitcast<u32>(rot_w[1].x);
-            STATE[so + 240u * ns] = bitcast<u32>(rot_w[1].y);
-            STATE[so + 241u * ns] = bitcast<u32>(rot_w[1].z);
-            STATE[so + 242u * ns] = bitcast<u32>(rot_w[2].x);
-            STATE[so + 243u * ns] = bitcast<u32>(rot_w[2].y);
-            STATE[so + 244u * ns] = bitcast<u32>(rot_w[2].z);
-            STATE[so + 245u * ns] = bitcast<u32>(rv0.x);
-            STATE[so + 246u * ns] = bitcast<u32>(rv0.y);
-            STATE[so + 247u * ns] = bitcast<u32>(rv0.z);
-            STATE[so + 248u * ns] = bitcast<u32>(rv1.x);
-            STATE[so + 249u * ns] = bitcast<u32>(rv1.y);
-            STATE[so + 250u * ns] = bitcast<u32>(rv1.z);
-            STATE[so + 251u * ns] = bitcast<u32>(rv2.x);
-            STATE[so + 252u * ns] = bitcast<u32>(rv2.y);
-            STATE[so + 253u * ns] = bitcast<u32>(rv2.z);
-            STATE[so + 254u * ns] = bitcast<u32>(sv.x);
-            STATE[so + 255u * ns] = bitcast<u32>(sv.y);
-            STATE[so + 256u * ns] = bitcast<u32>(sv.z);
-            STATE[so + 257u * ns] = bitcast<u32>(s_tmp);
-            STATE[so + 258u * ns] = select(0u, 1u, b_end);
-            STATE[so + 259u * ns] = select(0u, 1u, b_first);
-            STATE[so + 260u * ns] = bitcast<u32>(r);
-            STATE[so + 261u * ns] = select(0u, 1u, done);
-            STATE[so + 262u * ns] = bitcast<u32>(dtmp);
-            STATE[so + 263u * ns] = bitcast<u32>(rsf_mul);
-            STATE[so + 264u * ns] = bitcast<u32>(last_step);
-            STATE[so + 265u * ns] = bitcast<u32>(last_de);
-            STATE[so + 266u * ns] = bitcast<u32>(dt1);
-            STATE[so + 267u * ns] = select(0u, 1u, de_limited);
-            STATE[so + 268u * ns] = bitcast<u32>(itmp);
-            STATE[so + 269u * ns] = bitcast<u32>(yp);
-            STATE[so + 270u * ns] = bitcast<u32>(saved_max);
-            STATE[so + 271u * ns] = bitcast<u32>(dmul);
-            STATE[so + 272u * ns] = select(0u, 1u, first);
-            STATE[so + 273u * ns] = bitcast<u32>(last_si);
-            STATE[so + 274u * ns] = bitcast<u32>(last_dif);
-            STATE[so + 275u * ns] = bitcast<u32>(noffset);
-            STATE[so + 276u * ns] = bitcast<u32>(ct1.x);
-            STATE[so + 277u * ns] = bitcast<u32>(ct1.y);
-            STATE[so + 278u * ns] = bitcast<u32>(ct1.z);
-            STATE[so + 279u * ns] = bitcast<u32>(dnn);
-            STATE[so + 280u * ns] = bitcast<u32>(nn);
-            STATE[so + 281u * ns] = bitcast<u32>(n.x);
-            STATE[so + 282u * ns] = bitcast<u32>(n.y);
-            STATE[so + 283u * ns] = bitcast<u32>(n.z);
-            STATE[so + 284u * ns] = bitcast<u32>(cnt);
-            STATE[so + 285u * ns] = bitcast<u32>(na);
-            STATE[so + 286u * ns] = bitcast<u32>(acc);
-            STATE[so + 287u * ns] = bitcast<u32>(ssn);
-            STATE[so + 288u * ns] = bitcast<u32>(dm);
-            STATE[so + 289u * ns] = bitcast<u32>(vx.x);
-            STATE[so + 290u * ns] = bitcast<u32>(vx.y);
-            STATE[so + 291u * ns] = bitcast<u32>(vx.z);
-            STATE[so + 292u * ns] = bitcast<u32>(vy.x);
-            STATE[so + 293u * ns] = bitcast<u32>(vy.y);
-            STATE[so + 294u * ns] = bitcast<u32>(vy.z);
-            STATE[so + 295u * ns] = bitcast<u32>(s1.x);
-            STATE[so + 296u * ns] = bitcast<u32>(s1.y);
-            STATE[so + 297u * ns] = bitcast<u32>(ds.x);
-            STATE[so + 298u * ns] = bitcast<u32>(ds.y);
-            STATE[so + 299u * ns] = bitcast<u32>(axis);
-            STATE[so + 300u * ns] = bitcast<u32>(kk);
-            STATE[so + 301u * ns] = bitcast<u32>(guard);
-            STATE[so + 302u * ns] = select(0u, 1u, inside);
-            STATE[so + 303u * ns] = cut_plane;
-            STATE[so + 304u * ns] = after_coi;
-            STATE[so + 305u * ns] = bitcast<u32>(coi_max);
+            rput(so + 1u * ns, ns, c.x);
+            rput(so + 3u * ns, ns, c.y);
+            rput(so + 5u * ns, ns, c.z);
+            rput(so + 7u * ns, ns, v.x);
+            rput(so + 9u * ns, ns, v.y);
+            rput(so + 11u * ns, ns, v.z);
+            rput(so + 13u * ns, ns, rout);
+            rput(so + 15u * ns, ns, lrout);
+            rput(so + 17u * ns, ns, rold);
+            rput(so + 19u * ns, ns, otrap);
+            STATE[so + 21u * ns] = bitcast<u32>(it_result);
+            STATE[so + 22u * ns] = bitcast<u32>(max_it);
+            rput(so + 23u * ns, ns, rstop);
+            STATE[so + 25u * ns] = select(0u, 1u, calc_sit);
+            rput(so + 26u * ns, ns, smooth_it);
+            rput(so + 28u * ns, ns, w);
+            rput(so + 30u * ns, ns, j.x);
+            rput(so + 32u * ns, ns, j.y);
+            rput(so + 34u * ns, ns, j.z);
+            rput(so + 36u * ns, ns, j4);
+            rput(so + 38u * ns, ns, vary_scale);
+            STATE[so + 40u * ns] = bitcast<u32>(first_it);
+            rput(so + 41u * ns, ns, deriv.x);
+            rput(so + 43u * ns, ns, deriv.y);
+            rput(so + 45u * ns, ns, deriv.z);
+            rput(so + 47u * ns, ns, dfree.x);
+            rput(so + 49u * ns, ns, dfree.y);
+            rput(so + 51u * ns, ns, ms_de_stop);
+            STATE[so + 53u * ns] = part_start;
+            STATE[so + 54u * ns] = part_end;
+            STATE[so + 55u * ns] = part_repeat;
+            STATE[so + 56u * ns] = bitcast<u32>(de_option);
+            rput(so + 57u * ns, ns, rstopd);
+            rput(so + 59u * ns, ns, vfov_px.x);
+            rput(so + 61u * ns, ns, vfov_px.y);
+            rput(so + 63u * ns, ns, vfov_px.z);
+            rput(so + 65u * ns, ns, zz_base);
+            rput(so + 67u * ns, ns, zz_mul);
+            STATE[so + 69u * ns] = select(0u, 1u, zz_abs);
+            STATE[so + 70u * ns] = r_flags;
+            rput(so + 71u * ns, ns, r_zz2);
+            rput(so + 73u * ns, ns, r_step_count);
+            STATE[so + 75u * ns] = select(0u, 1u, de_overflow);
+            STATE[so + 76u * ns] = select(0u, 1u, inside);
+            rput(so + 77u * ns, ns, mzz);
+            rput(so + 79u * ns, ns, vfov.x);
+            rput(so + 81u * ns, ns, vfov.y);
+            rput(so + 83u * ns, ns, vfov.z);
+            rput(so + 85u * ns, ns, base.x);
+            rput(so + 87u * ns, ns, base.y);
+            rput(so + 89u * ns, ns, base.z);
+            STATE[so + 91u * ns] = bitcast<u32>(max_its_result);
+            rput(so + 92u * ns, ns, s_roughness);
+            STATE[so + 94u * ns] = bitcast<u32>(seed);
+            STATE[so + 95u * ns] = bitcast<u32>(si_normal.x);
+            STATE[so + 96u * ns] = bitcast<u32>(si_normal.y);
+            STATE[so + 97u * ns] = bitcast<u32>(si_normal.z);
+            STATE[so + 98u * ns] = si_zpos;
+            STATE[so + 99u * ns] = si_shadow;
+            STATE[so + 100u * ns] = si_grad;
+            STATE[so + 101u * ns] = si_otrap;
+            STATE[so + 102u * ns] = si_amb;
+            for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; rput(q, ns, ao_dirs[i].x); rput(q + 2u * ns, ns, ao_dirs[i].y); rput(q + 4u * ns, ns, ao_dirs[i].z); }
+            for (var i = 0u; i < 33u; i++) { rput(so + (301u + 2u * i) * ns, ns, ao_min[i]); }
+            rput(so + 367u * ns, ns, step_count);
+            STATE[so + 369u * ns] = select(0u, 1u, first_step);
+            STATE[so + 370u * ns] = pc;
+            STATE[so + 371u * ns] = select(0u, 1u, need);
+            STATE[so + 372u * ns] = select(0u, 1u, want_de);
+            STATE[so + 373u * ns] = cut_plane;
+            STATE[so + 374u * ns] = after_coi;
+            STATE[so + 375u * ns] = bitcast<u32>(coi_max);
+            STATE[so + 376u * ns] = after_hs;
+            STATE[so + 377u * ns] = after_ao;
+            rput(so + 378u * ns, ns, last_zz);
+            rput(so + 380u * ns, ns, rlast_sw);
+            STATE[so + 382u * ns] = after_bs;
+            rput(so + 383u * ns, ns, bs_thr);
+            STATE[so + 385u * ns] = select(0u, 1u, bs_it_check);
+            rput(so + 386u * ns, ns, zf);
+            rput(so + 388u * ns, ns, ic.x);
+            rput(so + 390u * ns, ns, ic.y);
+            rput(so + 392u * ns, ns, ic.z);
+            rput(so + 394u * ns, ns, nvec.x);
+            rput(so + 396u * ns, ns, nvec.y);
+            rput(so + 398u * ns, ns, nvec.z);
+            rput(so + 400u * ns, ns, max_lhs);
+            STATE[so + 402u * ns] = li;
+            STATE[so + 403u * ns] = lidx;
+            rput(so + 404u * ns, ns, lvec.x);
+            rput(so + 406u * ns, ns, lvec.y);
+            rput(so + 408u * ns, ns, lvec.z);
+            rput(so + 410u * ns, ns, zz2);
+            rput(so + 412u * ns, ns, zz2mul);
+            rput(so + 414u * ns, ns, rsf);
+            rput(so + 416u * ns, ns, st);
+            rput(so + 418u * ns, ns, zr_soft);
+            rput(so + 420u * ns, ns, zrs_mul);
+            STATE[so + 422u * ns] = ray_count;
+            STATE[so + 423u * ns] = k;
+            rput(so + 424u * ns, ns, step_ao);
+            rput(so + 426u * ns, ns, max_dist);
+            rput(so + 428u * ns, ns, d_step_mul);
+            rput(so + 430u * ns, ns, ms2);
+            rput(so + 432u * ns, ns, de_mul);
+            rput(so + 434u * ns, ns, abr_c);
+            rput(so + 436u * ns, ns, md_d10);
+            rput(so + 438u * ns, ns, d_min_a_dif);
+            rput(so + 440u * ns, ns, corr_w);
+            rput(so + 442u * ns, ns, rot_w[0].x);
+            rput(so + 444u * ns, ns, rot_w[0].y);
+            rput(so + 446u * ns, ns, rot_w[0].z);
+            rput(so + 448u * ns, ns, rot_w[1].x);
+            rput(so + 450u * ns, ns, rot_w[1].y);
+            rput(so + 452u * ns, ns, rot_w[1].z);
+            rput(so + 454u * ns, ns, rot_w[2].x);
+            rput(so + 456u * ns, ns, rot_w[2].y);
+            rput(so + 458u * ns, ns, rot_w[2].z);
+            rput(so + 460u * ns, ns, rv0.x);
+            rput(so + 462u * ns, ns, rv0.y);
+            rput(so + 464u * ns, ns, rv0.z);
+            rput(so + 466u * ns, ns, rv1.x);
+            rput(so + 468u * ns, ns, rv1.y);
+            rput(so + 470u * ns, ns, rv1.z);
+            rput(so + 472u * ns, ns, rv2.x);
+            rput(so + 474u * ns, ns, rv2.y);
+            rput(so + 476u * ns, ns, rv2.z);
+            rput(so + 478u * ns, ns, sv.x);
+            rput(so + 480u * ns, ns, sv.y);
+            rput(so + 482u * ns, ns, sv.z);
+            rput(so + 484u * ns, ns, s_tmp);
+            STATE[so + 486u * ns] = select(0u, 1u, b_end);
+            STATE[so + 487u * ns] = select(0u, 1u, b_first);
+            rput(so + 488u * ns, ns, r);
+            STATE[so + 490u * ns] = select(0u, 1u, done);
+            rput(so + 491u * ns, ns, dtmp);
+            rput(so + 493u * ns, ns, rsf_mul);
+            rput(so + 495u * ns, ns, last_step);
+            rput(so + 497u * ns, ns, last_de);
+            rput(so + 499u * ns, ns, dt1);
+            STATE[so + 501u * ns] = select(0u, 1u, de_limited);
+            STATE[so + 502u * ns] = bitcast<u32>(itmp);
+            rput(so + 503u * ns, ns, yp);
+            STATE[so + 505u * ns] = bitcast<u32>(saved_max);
+            rput(so + 506u * ns, ns, dmul);
+            STATE[so + 508u * ns] = select(0u, 1u, first);
+            rput(so + 509u * ns, ns, last_si);
+            rput(so + 511u * ns, ns, last_dif);
+            rput(so + 513u * ns, ns, noffset);
+            rput(so + 515u * ns, ns, ct1.x);
+            rput(so + 517u * ns, ns, ct1.y);
+            rput(so + 519u * ns, ns, ct1.z);
+            rput(so + 521u * ns, ns, dnn);
+            rput(so + 523u * ns, ns, nn);
+            rput(so + 525u * ns, ns, n.x);
+            rput(so + 527u * ns, ns, n.y);
+            rput(so + 529u * ns, ns, n.z);
+            STATE[so + 531u * ns] = bitcast<u32>(cnt);
+            rput(so + 532u * ns, ns, na);
+            rput(so + 534u * ns, ns, acc);
+            rput(so + 536u * ns, ns, ssn);
+            rput(so + 538u * ns, ns, dm);
+            rput(so + 540u * ns, ns, vx.x);
+            rput(so + 542u * ns, ns, vx.y);
+            rput(so + 544u * ns, ns, vx.z);
+            rput(so + 546u * ns, ns, vy.x);
+            rput(so + 548u * ns, ns, vy.y);
+            rput(so + 550u * ns, ns, vy.z);
+            rput(so + 552u * ns, ns, s1.x);
+            rput(so + 554u * ns, ns, s1.y);
+            rput(so + 556u * ns, ns, ds.x);
+            rput(so + 558u * ns, ns, ds.y);
+            STATE[so + 560u * ns] = bitcast<u32>(axis);
+            STATE[so + 561u * ns] = bitcast<u32>(kk);
+            STATE[so + 562u * ns] = bitcast<u32>(guard);
             save_record(so + (1u + STATE_FIXED) * ns, ns);
             STATE[so] = cur_item + 1u;
             atomicAdd(&QUEUE[0], 1u);
@@ -1982,16 +1979,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 if (MODE_KIND == 0u) {
                     dtmp = r;
                     if (mode == M_PROBE) {
-                        si_zpos = bitcast<u32>(r);
+                        si_zpos = bitcast<u32>(f32(r));
                         si_grad = u32(it_result) & 0xFFFFu;
-                        let rb = bitcast<u32>(dbg_rst);
+                        let rb = bitcast<u32>(f32(dbg_rst));
                         si_normal = vec3<i32>(i32(rb << 16u) >> 16u, i32(rb) >> 16u, dbg_it2);
                         if (P[PROBE_MZZ + 1u] != 0u) {
                             // the details of the numerical DE of part 1 instead
-                            let gb = bitcast<u32>(dbg_g);
-                            si_normal = vec3<i32>(i32(gb << 16u) >> 16u, i32(gb) >> 16u, i32(round(log(dbg_rout))));
+                            let gb = bitcast<u32>(f32(dbg_g));
+                            si_normal = vec3<i32>(i32(gb << 16u) >> 16u, i32(gb) >> 16u, i32(round(r_log(dbg_rout))));
                         }
-                        let rb1 = bitcast<u32>(dbg_r1);
+                        let rb1 = bitcast<u32>(f32(dbg_r1));
                         si_amb = rb1 & 0xFFFFu;
                         si_shadow = rb1 >> 16u;
                         si_otrap = u32(dbg_it1) & 0xFFFFu;
@@ -2134,7 +2131,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         if (first_step) {
                             first_step = false;
                             seed = seed * 214013 + 2531011;
-                            d *= f32(u32(seed) & 0x7FFFFFFFu) * (1.0 / 2147483647.0);
+                            d *= R(u32(seed) & 0x7FFFFFFFu) * (1.0 / 2147483647.0);
                         }
                         mzz += d;
                         if (mzz > pf(ZEND)) {
@@ -2157,7 +2154,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                 dt1 = last_step * -0.5;
                                 pc = P_BS;
                             } else {
-                                yp = f32(max_it) - 0.99;
+                                yp = R(max_it) - 0.99;
                                 saved_max = max_it;
                                 max_it += 1;
                                 calc_sit = true;
@@ -2240,7 +2237,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
                 last_dif = abs(yp - smooth_it);
                 last_si = smooth_it;
-                if (smooth_it > f32(max_it) - 0.1) {
+                if (smooth_it > R(max_it) - 0.1) {
                     dt1 = -3.0;
                     pc = P_BSI_END;
                 } else {
@@ -2254,7 +2251,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_BSI_2: {
                 let rr = last_si - smooth_it;
                 if (abs(rr) < 1e-30) {
-                    dt1 = select(0.0, 1.0, last_si < smooth_it) - 0.5;
+                    dt1 = select(R(0.0), R(1.0), last_si < smooth_it) - 0.5;
                 } else if (rr < 0.0) {
                     dt1 = (yp - smooth_it) / (rr * 500.0);
                 } else {
@@ -2296,7 +2293,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     if (on_de) {
                         calc_sit = false;
                     }
-                    n = vec3<f32>(0.0);
+                    n = vec3<R>(0.0);
                     cnt = 0;
                     if (sm == 8) {
                         pc = P_N8;
@@ -2319,7 +2316,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             cnt += 1;
                         } else {
                             let sn = noffset * 1.3333;
-                            c = ct1 + vg(2u) * (f32(a) * sn) + vg(1u) * (f32(b) * sn) + vg(0u) * (f32(cc) * sn);
+                            c = ct1 + vg(2u) * (R(a) * sn) + vg(1u) * (R(b) * sn) + vg(0u) * (R(cc) * sn);
                             need = true;
                             want_de = on_de;
                             pc = P_N8_R;
@@ -2332,10 +2329,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     let a = cnt / 25 - 2;
                     let b = (cnt / 5) % 5 - 2;
                     let cc = cnt % 5 - 2;
-                    let d = r * select(-1.0, 1.0, on_de);
-                    if (a != 0) { n.z += d / f32(a); }
-                    if (b != 0) { n.y += d / f32(b); }
-                    if (cc != 0) { n.x += d / f32(cc); }
+                    let d = r * select(R(-1.0), R(1.0), on_de);
+                    if (a != 0) { n.z += d / R(a); }
+                    if (b != 0) { n.y += d / R(b); }
+                    if (cc != 0) { n.x += d / R(cc); }
                     cnt += 1;
                     pc = P_N8;
                 }
@@ -2391,13 +2388,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                 nn = acc * 0.2;
                                 dnn = nn;
                             }
-                            ssn = noffset * 3.0 / (f32(sm) + 0.5);
-                            dm = f32(sm) * 2.0;
+                            ssn = noffset * 3.0 / (R(sm) + 0.5);
+                            dm = R(sm) * 2.0;
                             xy_vecs(n, &vx, &vy);
                             vx = rot_rev(vx);
                             vy = rot_rev(vy);
-                            s1 = vec2<f32>(0.0);
-                            ds = vec2<f32>(0.0);
+                            s1 = vec2<R>(0.0);
+                            ds = vec2<R>(0.0);
                             axis = 0;
                             kk = -sm;
                             pc = P_SW;
@@ -2445,7 +2442,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         kk += 1;
                     } else {
                         let dir = select(vy, vx, axis == 0);
-                        c = ct1 + dir * (f32(kk) * ssn);
+                        c = ct1 + dir * (R(kk) * ssn);
                         need = true;
                         want_de = on_de;
                         pc = P_SW_R;
@@ -2454,16 +2451,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             case P_SW_R: {
                 if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
-                    var d: f32;
+                    var d: R;
                     if (on_de) {
-                        d = (r - dnn) / f32(kk);
+                        d = (r - dnn) / R(kk);
                     } else {
-                        d = (dnn - r) / f32(kk);
+                        d = (dnn - r) / R(kk);
                     }
                     // ds: the sum of squared deviations from the mean
                     // (Welford; the CPU's n * sum(d^2) - sum(d)^2 cancels
                     // in single precision and came out too small)
-                    let cprev = f32(kk + sm - select(0, 1, kk > 0));
+                    let cprev = R(kk + sm - select(0, 1, kk > 0));
                     let mean_old = select(0.0, s1[axis] / cprev, cprev > 0.0);
                     s1[axis] += d;
                     ds[axis] += (d - mean_old) * (d - s1[axis] / (cprev + 1.0));
@@ -2477,10 +2474,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     // (the normals on the smoothed iteration count point
                     // out of the set: inverted inside, the DE ones are not)
                     store_normal(select(n, -n, inside && !on_de));
-                    var g: f32;
+                    var g: R;
                     if (de_limited) {
                         g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL)
-                            * log(max(pf(DE_STOP), ms_de_stop) * pf(STEP_WIDTH))) * pf(MCTS_M);
+                            * r_log(max(pf(DE_STOP), ms_de_stop) * pf(STEP_WIDTH))) * pf(MCTS_M);
                     } else {
                         g = 32767.0 - nn * pf(MCTS_M);
                     }
@@ -2491,9 +2488,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     // the hit of a reflected ray (calc_ray)
                     c = ct1;
                     store_normal(n);
-                    var g: f32;
+                    var g: R;
                     if (de_limited) {
-                        g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL) * log(ms_de_stop * pf(STEP_WIDTH))) * pf(MCTS_M);
+                        g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL) * r_log(ms_de_stop * pf(STEP_WIDTH))) * pf(MCTS_M);
                     } else {
                         g = 32767.0 - nn * pf(MCTS_M);
                     }
@@ -2514,7 +2511,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_PS: {
                 if (MODE_KIND != 0u) {
                     // the depth of the G-buffer (the inverse of calc_zpos_and_rough)
-                    zf = f32(si_zpos >> 8u);
+                    zf = R(si_zpos >> 8u);
                     let a = (8388351.5 - zf) / pf(ZC_MUL);
                     mzz = a * (a + 2.0) / pf(ZCORR);
                     setc();
@@ -2545,7 +2542,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         }
                         pc = P_BS;
                     } else {
-                        yp = f32(max_it) - 0.99;
+                        yp = R(max_it) - 0.99;
                         saved_max = max_it;
                         max_it += 1;
                         calc_sit = true;
@@ -2562,7 +2559,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_HS_INIT: {
                 if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     calc_sit = false;
-                    nvec = rot_rev(vec3<f32>(si_normal) / 32767.0);
+                    nvec = rot_rev(vec3<R>(si_normal) / 32767.0);
                     if (reflect) {
                         // calc_hs: from the hit itself, the depth along the view
                         if (soft) {
@@ -2574,7 +2571,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         }
                         update_de_stop();
                         ic = c;
-                        max_lhs = f32(pi(WIDTH) + pi(HEIGHT)) * 0.6 * (1.0 + 0.5 * min(mzz, pf(ZEND) * 0.4) * max(pf(FOV_Y), 0.0) / f32(pi(HEIGHT))) * pf(HS_MAX_LEN_MUL);
+                        max_lhs = R(pi(WIDTH) + pi(HEIGHT)) * 0.6 * (1.0 + 0.5 * min(mzz, pf(ZEND) * 0.4) * max(pf(FOV_Y), 0.0) / R(pi(HEIGHT))) * pf(HS_MAX_LEN_MUL);
                     } else {
                         let mz0 = mzz;
                         if (soft) {
@@ -2617,7 +2614,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                 }
                                 lvec = v * (-sw / max(sqrt(d), 1e-30));
                                 if (soft) {
-                                    zrs_mul = select(40.0, 70.0, (P[lb + 6u] & 6u) == 2u) / max(pf(HS_SOFT_RADIUS), 0.001);
+                                    zrs_mul = select(R(40.0), R(70.0), (P[lb + 6u] & 6u) == 2u) / max(pf(HS_SOFT_RADIUS), 0.001);
                                 }
                             }
                         } else {
@@ -2736,35 +2733,35 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     let msl = min(ms_de_stop, 1e6);
                     ic = c;
                     step_ao = msl / pf(DE_STOP);
-                    let s_max_d = pf(AO_MAX_LEN) * 0.5 * sqrt(f32(pi(HEIGHT)) * f32(pi(HEIGHT)) + f32(pi(WIDTH)) * f32(pi(WIDTH)));
+                    let s_max_d = pf(AO_MAX_LEN) * 0.5 * sqrt(R(pi(HEIGHT)) * R(pi(HEIGHT)) + R(pi(WIDTH)) * R(pi(WIDTH)));
                     max_dist = s_max_d * sqrt(step_ao);
                     let q = min(u32(pi(AO_QUALITY)), 3u);
-                    let abr = 0.5 * PI / (f32(q) + 0.9);
+                    let abr = 0.5 * PI / (R(q) + 0.9);
                     if (q == 0u) {
                         d_step_mul = 1.8;
                         d_min_a_dif = -1.0;
                         corr_w = 0.3;
                     } else {
-                        d_step_mul = 1.0 + sin(abr);
-                        d_min_a_dif = cos(abr * 1.2);
-                        corr_w = select(0.1666, 0.2, q == 1u);
+                        d_step_mul = 1.0 + r_sin(abr);
+                        d_min_a_dif = r_cos(abr * 1.2);
+                        corr_w = select(R(0.1666), R(0.2), q == 1u);
                     }
                     ms2 = select(pf(DE_STOP), msl, pf(DE_STOP_FACTOR) != 0.0) / (d_step_mul * d_step_mul);
                     // the ray directions, dithered per pixel
                     let dither = pi(AO_DITHER);
-                    var dt1d = 0.0;
-                    var dt2d = 0.0;
+                    var dt1d = R(0.0);
+                    var dt2d = R(0.0);
                     if (dither > 0) {
-                        dt1d = f32(y % (dither + 1)) * 0.5 / f32(dither);
-                        dt2d = f32(x % (dither + 1)) * 0.5 / f32(dither);
+                        dt1d = R(y % (dither + 1)) * 0.5 / R(dither);
+                        dt2d = R(x % (dither + 1)) * 0.5 / R(dither);
                     }
                     ray_count = 0u;
                     if (q == 0u) {
                         for (var i = 0u; i < 3u; i++) {
                             if (dither > 0) {
-                                ao_dirs[i] = ray_dir((dt1d + 0.5) * radians(50.0), (f32(i) + dt2d) * 2.0 * PI / 3.0);
+                                ao_dirs[i] = ray_dir((dt1d + 0.5) * radians(50.0), (R(i) + dt2d) * 2.0 * PI / 3.0);
                             } else {
-                                ao_dirs[i] = ray_dir(0.5 * radians(60.0), f32(i) * 2.0 * PI / 3.0);
+                                ao_dirs[i] = ray_dir(0.5 * radians(60.0), R(i) * 2.0 * PI / 3.0);
                             }
                         }
                         ray_count = 3u;
@@ -2774,20 +2771,20 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             ray_count = 1u;
                         }
                         for (var rr = 1u; rr <= q; rr++) {
-                            // CalcAmbShadowDEfor1pos (reflections) takes sin(0.25) for every row
-                            let n = u32(round(sin(select(f32(rr) * abr, 0.25, reflect)) * 2.0 * PI / abr));
+                            // CalcAmbShadowDEfor1pos (reflections) takes r_sin(0.25) for every row
+                            let n = u32(round(r_sin(select(R(rr) * abr, 0.25, reflect)) * 2.0 * PI / abr));
                             for (var i = 0u; i < n; i++) {
                                 if (ray_count < 33u) {
-                                    ao_dirs[ray_count] = ray_dir(abr * (f32(rr) + dt1d - select(0.0, 0.25, dither > 0)), (f32(i) + dt2d) * 2.0 * PI / f32(n));
+                                    ao_dirs[ray_count] = ray_dir(abr * (R(rr) + dt1d - select(R(0.0), R(0.25), dither > 0)), (R(i) + dt2d) * 2.0 * PI / R(n));
                                     ray_count += 1u;
                                 }
                             }
                         }
                     }
-                    de_mul = sqrt(f32(ray_count) * 0.5);
-                    abr_c = 1.2 / asin(clamp(1.0 / de_mul, -1.0, 1.0));
+                    de_mul = sqrt(R(ray_count) * 0.5);
+                    abr_c = 1.2 / r_asin(clamp(1.0 / de_mul, -1.0, 1.0));
                     md_d10 = 0.1 / (max_dist * de_mul);
-                    rot_w = normal_matrix(normalize(vec3<f32>(si_normal)));
+                    rot_w = normal_matrix(normalize(vec3<R>(si_normal)));
                     // normalise_matrix_to(step_width, vgrads)
                     rv0 = vg(0u) * (pf(STEP_WIDTH) / length(vg(0u)));
                     rv1 = vg(1u) * (pf(STEP_WIDTH) / length(vg(1u)));
@@ -2802,7 +2799,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         pc = P_AO_CORR;
                     } else {
                         let d = ao_dirs[k];
-                        let vv = vec3<f32>(dot(rot_w[0], d), dot(rot_w[1], d), dot(rot_w[2], d));
+                        let vv = vec3<R>(dot(rot_w[0], d), dot(rot_w[1], d), dot(rot_w[2], d));
                         sv = vv.x * rv0 + vv.y * rv1 + vv.z * rv2;
                         dt1 = step_ao * d_step_mul;
                         s_tmp = 1.0;
@@ -2854,9 +2851,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_AO_CORR: {
                 if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     // open neighbour rays lighten a closed one
-                    var amount = 0.0;
+                    var amount = R(0.0);
                     for (var i = 0u; i < ray_count; i++) {
-                        var s_add = 0.0;
+                        var s_add = R(0.0);
                         if (ao_min[i] < 1.0) {
                             let max_add = 1.0 - ao_min[i];
                             for (var i2 = 0u; i2 < ray_count; i2++) {
@@ -2865,7 +2862,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                 }
                                 let dt = dot(ao_dirs[i], ao_dirs[i2]);
                                 if (dt > d_min_a_dif) {
-                                    let overlap = ao_min[i2] - acos(clamp(dt, -1.0, 1.0)) * abr_c + 1.0;
+                                    let overlap = ao_min[i2] - r_acos(clamp(dt, -1.0, 1.0)) * abr_c + 1.0;
                                     if (overlap > 0.0) {
                                         s_add += min(max_add, overlap) * corr_w;
                                     }
@@ -2874,7 +2871,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         }
                         amount += min(s_add + ao_min[i], 1.0);
                     }
-                    si_amb = u32(max(round(16383.0 * (1.0 - amount / f32(ray_count))), 0.0));
+                    si_amb = u32(max(round(16383.0 * (1.0 - amount / R(ray_count))), 0.0));
                     c = ic;
                     pc = after_ao;
                 }
@@ -2930,7 +2927,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             bs_thr = 0.001;
                             pc = P_BS;
                         } else {
-                            yp = f32(max_it) - 0.99;
+                            yp = R(max_it) - 0.99;
                             saved_max = max_it;
                             max_it += 1;
                             calc_sit = true;
@@ -3029,7 +3026,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             bs_it_check = false;
                             pc = P_BS;
                         } else {
-                            yp = f32(max_it) - 0.99;
+                            yp = R(max_it) - 0.99;
                             saved_max = max_it;
                             max_it += 1;
                             calc_sit = true;
@@ -3084,11 +3081,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         si_grad = OUT[o + 11u] & 0xFFFFu;
                         si_otrap = OUT[o + 11u] >> 16u;
                         si_amb = OUT[o + 12u];
-                        c = vec3<f32>(bitcast<f32>(OUT[o + 13u]), bitcast<f32>(OUT[o + 14u]), bitcast<f32>(OUT[o + 15u]));
-                        r_zz2 = bitcast<f32>(OUT[o + 17u]);
+                        c = vec3<R>(R(bitcast<f32>(OUT[o + 13u])), R(bitcast<f32>(OUT[o + 14u])), R(bitcast<f32>(OUT[o + 15u])));
+                        r_zz2 = R(bitcast<f32>(OUT[o + 17u]));
                         r_flags = OUT[o + 18u];
-                        r_step_count = bitcast<f32>(OUT[o + 19u]);
-                        mzz = bitcast<f32>(OUT[o + 20u]);
+                        r_step_count = R(bitcast<f32>(OUT[o + 19u]));
+                        mzz = R(bitcast<f32>(OUT[o + 20u]));
                         seed = bitcast<i32>(OUT[o + 21u]);
                         pc = P_R_AFTER_N;
                     }
@@ -3097,7 +3094,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_R_AFTER_N: {
                 if (MODE_KIND == 3u && R_MARCH && P[R_SPLIT] != 0u) {
                     // the first pipeline: the hit for the second
-                    OUT[r_rec + 20u] = bitcast<u32>(mzz);
+                    OUT[r_rec + 20u] = bitcast<u32>(f32(mzz));
                     OUT[r_rec + 21u] = bitcast<u32>(seed);
                     OUT[r_rec + 22u] = 1u;
                 }
@@ -3134,7 +3131,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
     }
     if (mode == M_MARCH) {
         if (inside) {
-            step_count *= 200.0 * pf(DE_STOP) / f32(pi(WIDTH));
+            step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
         }
         si_shadow = u32(round(clamp(step_count, 0.0, 1023.0)));
     }
@@ -3142,9 +3139,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
 
 
 // the task of the reflection pass
-var<private> r_task_origin: vec3<f32>;
-var<private> r_task_dir: vec3<f32>;
-var<private> r_task: vec4<f32>; // z: zz (or the surface depth)
+var<private> r_task_origin: vec3<R>;
+var<private> r_task_dir: vec3<R>;
+var<private> r_task: vec4<R>; // z: zz (or the surface depth)
 
 var<private> state_slot: u32;
 // the reflection pass: the task's record in OUT, and whether the task
@@ -3159,9 +3156,9 @@ fn reflect_task(idx: u32) {
     let o = idx * R_WORDS;
     r_rec = o;
     r_keep = false;
-    r_task_origin = vec3<f32>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u]));
-    r_task_dir = vec3<f32>(bitcast<f32>(OUT[o + 3u]), bitcast<f32>(OUT[o + 4u]), bitcast<f32>(OUT[o + 5u]));
-    r_task = vec4<f32>(0.0, 0.0, bitcast<f32>(OUT[o + 6u]), 0.0);
+    r_task_origin = vec3<R>(R(bitcast<f32>(OUT[o])), R(bitcast<f32>(OUT[o + 1u])), R(bitcast<f32>(OUT[o + 2u])));
+    r_task_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
+    r_task = vec4<R>(0.0, 0.0, R(bitcast<f32>(OUT[o + 6u])), 0.0);
     let pix = OUT[o + 7u];
     let x = pi(RECT_X0) + i32(pix % u32(pi(RECT_W)));
     let y = pi(RECT_Y0) + i32(pix / u32(pi(RECT_W)));
@@ -3181,13 +3178,13 @@ fn reflect_task(idx: u32) {
     OUT[o + 10u] = si_zpos;
     OUT[o + 11u] = si_grad | (si_otrap << 16u);
     OUT[o + 12u] = si_amb;
-    OUT[o + 13u] = bitcast<u32>(c.x);
-    OUT[o + 14u] = bitcast<u32>(c.y);
-    OUT[o + 15u] = bitcast<u32>(c.z);
-    OUT[o + 16u] = bitcast<u32>(zz_base + mzz * zz_mul);
-    OUT[o + 17u] = bitcast<u32>(r_zz2);
+    OUT[o + 13u] = bitcast<u32>(f32(c.x));
+    OUT[o + 14u] = bitcast<u32>(f32(c.y));
+    OUT[o + 15u] = bitcast<u32>(f32(c.z));
+    OUT[o + 16u] = bitcast<u32>(f32(zz_base + mzz * zz_mul));
+    OUT[o + 17u] = bitcast<u32>(f32(r_zz2));
     OUT[o + 18u] = r_flags;
-    OUT[o + 19u] = bitcast<u32>(r_step_count);
+    OUT[o + 19u] = bitcast<u32>(f32(r_step_count));
 }
 
 @compute @workgroup_size(8, 8)
@@ -3234,10 +3231,10 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
     _ = cst[0];
     _ = rtpl[0];
     _ = MAPS[0];
-    j4 = pf(J4);
+    j4 = p_j4();
     vary_scale = 1.0;
-    deriv = vec3<f32>(1.0, 0.0, 0.0);
-    dfree = vec2<f32>(0.0, 0.0);
+    deriv = vec3<R>(1.0, 0.0, 0.0);
+    dfree = vec2<R>(0.0, 0.0);
     let mode = P[MODE];
     if (mode == M_REFLECT) {
         reflect_task(cur_item);
