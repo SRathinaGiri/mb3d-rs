@@ -52,8 +52,9 @@ fn main() {
         .filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("m3f")))
         .collect();
     files.sort();
-    // hash -> (op count, function name, formula names, code)
-    let mut funcs: BTreeMap<u64, (usize, String, Vec<String>, String)> = BTreeMap::new();
+    // hash -> (op count, function name, formula names, code, record cells read / written)
+    type Func = (usize, String, Vec<String>, String, Option<(u64, u64)>);
+    let mut funcs: BTreeMap<u64, Func> = BTreeMap::new();
     let (mut skipped, mut total, mut lifted) = (0, 0, 0);
     for f in &files {
         total += 1;
@@ -69,18 +70,24 @@ fn main() {
             skipped += 1;
             continue;
         };
+        if p.emit_lifted("x", difs).is_some_and(|c| c.contains("map_px")) {
+            // map formulas: the lifted version calls the map directly (no
+            // stack arguments), not yet checked against the interpreter
+            skipped += 1;
+            continue;
+        }
         let e = funcs.entry(p.hash).or_insert_with(|| {
             let fname = format!("f_{:016x}", p.hash);
             // the lifted version (memory as locals) where the analysis
             // allows it, the emulated memory otherwise
-            let code = match (std::env::var_os("M3F2RS_NO_LIFT"), p.emit_lifted(&fname, difs)) {
-                (None, Some(c)) => {
+            let (code, fields) = match (std::env::var_os("M3F2RS_NO_LIFT"), p.emit_lifted_fields(&fname, difs)) {
+                (None, Some((c, rd, wr))) => {
                     lifted += 1;
-                    c
+                    (c, Some((rd, wr)))
                 }
-                _ => p.emit_rust(&fname, difs),
+                _ => (p.emit_rust(&fname, difs), None),
             };
-            (p.len(), fname.clone(), Vec::new(), code)
+            (p.len(), fname.clone(), Vec::new(), code, fields)
         });
         e.2.push(name);
     }
@@ -92,11 +99,20 @@ fn main() {
          use super::*;\n\n",
     );
     o.push_str("pub(super) fn lookup(hash: u64, ops: usize) -> Option<NativeFn> {\n    let (n, f): (usize, NativeFn) = match hash {\n");
-    for (h, (n, fname, names, _)) in &funcs {
+    for (h, (n, fname, names, _, _)) in &funcs {
         let _ = writeln!(o, "        {h:#018x} => ({n}, {fname}), // {}", names.join(", "));
     }
     o.push_str("        _ => return None,\n    };\n    (n == ops).then_some(f)\n}\n\n");
-    for (_, (_, _, names, code)) in &funcs {
+    // the lifted functions touch the iteration record only in these cells
+    o.push_str("/// The 8-byte cells of the iteration record a lifted function reads and\n/// writes (bit c: bytes 8c..8c+8 from `J4`); None: any.\n");
+    o.push_str("pub(super) fn fields(hash: u64) -> Option<(u64, u64)> {\n    Some(match hash {\n");
+    for (h, (_, _, _, _, fields)) in &funcs {
+        if let Some((rd, wr)) = fields {
+            let _ = writeln!(o, "        {h:#018x} => ({rd:#x}, {wr:#x}),");
+        }
+    }
+    o.push_str("        _ => return None,\n    })\n}\n\n");
+    for (_, (_, _, names, code, _)) in &funcs {
         let _ = writeln!(o, "// {}", names.join(", "));
         o.push_str(code);
         o.push('\n');

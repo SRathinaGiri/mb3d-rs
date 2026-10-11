@@ -288,6 +288,21 @@ impl Prog {
         self.emit_lifted_cells(name, difs).map(|x| x.0)
     }
 
+    /// [`Prog::emit_lifted`] with the 8-byte cells of the iteration record
+    /// the code reads and writes (bit c: bytes 8c..8c+8 from `J4`), so the
+    /// caller only needs to copy those in and out.
+    pub fn emit_lifted_fields(&self, name: &str, difs: bool) -> Option<(String, u64, u64)> {
+        let (code, cells) = self.emit_lifted_cells(name, difs)?;
+        // (a cell past the 64 the record has would mean "copy everything")
+        let mask = |set: &BTreeSet<(char, u32)>| set.iter().filter(|c| c.0 == 'r').fold(0u64, |m, c| m | 1u64.checked_shl(c.1).unwrap_or(u64::MAX));
+        let mut rd = mask(&cells.used);
+        if !difs && cells.used.iter().any(|c| c.0 == 'v') {
+            // the variable buffer address is read from PVar
+            rd |= 1 << (off::PVAR / 8);
+        }
+        Some((code, rd | mask(&cells.written), mask(&cells.written)))
+    }
+
     /// An x87 double access to a record field chosen by a small index
     /// (`Loc::FieldIdx`, e.g. `[esi + eax*8 - 128]` after `and eax, 3`):
     /// a match over the possible cells.  None for other ops.

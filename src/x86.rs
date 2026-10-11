@@ -1081,6 +1081,7 @@ fn fcompare_cc(a: f64, b: f64) -> u16 {
 }
 
 /// `push` on a local register file (translated formulas).
+#[allow(dead_code)] // used by generated code when a formula needs it
 #[inline(always)]
 fn push_l(m: &mut Machine, r: &mut [u32; 8], v: u32) -> R<()> {
     r[ESP] = r[ESP].wrapping_sub(4);
@@ -1102,6 +1103,7 @@ fn pop_lu(m: &mut Machine, r: &mut [u32; 8]) -> u32 {
 }
 
 /// `pop` on a local register file (translated formulas).
+#[allow(dead_code)] // used by generated code when a formula needs it
 #[inline(always)]
 fn pop_l(m: &mut Machine, r: &mut [u32; 8]) -> R<u32> {
     let v = m.rd32(r[ESP])?;
@@ -1223,6 +1225,16 @@ impl Machine {
     /// The compiled program for `entry`, if the code could be compiled.
     pub fn prog(&self, entry: u32) -> Option<&Prog> {
         self.progs.iter().find(|(e, _)| *e == entry).map(|(_, p)| p)
+    }
+
+    /// The iteration record cells (read, written as bit masks of 8-byte
+    /// cells from `J4`) of the formula at `entry` when it runs as translated
+    /// code; None if it may touch any part of the record.
+    pub fn formula_fields(&self, entry: u32) -> Option<(u64, u64)> {
+        if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+            return None;
+        }
+        self.prog(entry)?.fields
     }
 
     /// Whether the code at `entry` runs compiled.
@@ -1390,6 +1402,7 @@ impl Machine {
             FKind::F80 => f80_to_f64(self.rd64u(a), self.rd16u(a.wrapping_add(8))),
         }
     }
+    #[allow(dead_code)] // used by generated code when a formula needs it
     #[inline]
     fn fstoreu(&mut self, kind: FKind, a: u32, v: f64) {
         // the same conversions as `fstore`, without the bounds checks
@@ -2745,6 +2758,9 @@ pub struct Prog {
     /// translated native version (`native.rs`)
     pub hash: u64,
     native: Option<NativeFn>,
+    /// the iteration record cells the native version reads / writes
+    /// (`native::fields`); None: it may touch any
+    fields: Option<(u64, u64)>,
     /// return addresses of local calls and the op index they return to
     rets: Vec<(u32, usize)>,
     /// op index for instruction addresses (jump targets)
@@ -3049,7 +3065,8 @@ impl Machine {
                 _ => None,
             })
             .collect();
-        Ok(Prog { ops, index, hash, native, rets })
+        let fields = native.and_then(|_| native::fields(hash));
+        Ok(Prog { ops, index, hash, native, fields, rets })
     }
 
     fn fload_m(&self, kind: FKind, mem: &Mem) -> R<f64> {
