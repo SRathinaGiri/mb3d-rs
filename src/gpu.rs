@@ -247,6 +247,8 @@ struct SceneShader {
     slotx: [[u32; 8]; 6],
     /// the words of the record cells in a pixel's state slot
     record_words: u32,
+    /// the maps of the formulas' map functions (the shader's MAPS)
+    maps: Vec<u32>,
 }
 
 /// Record cells (offset / 8 from J4) with integers the loop copies to the
@@ -607,7 +609,33 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     if let Some(f) = std::env::var_os("MB3D_GPU_DUMP") {
         let _ = std::fs::write(f, &code);
     }
-    Ok(SceneShader { code, cst, rtpl, slots, slotx, record_words })
+    // the maps: those named by an integer option of a formula that reads
+    // maps (the map number is an option; unknown numbers give 0 as on the
+    // CPU)
+    let mut nrs: Vec<i32> = Vec::new();
+    for (n, wf) in &wfs {
+        if !wf.code.contains("map_px(") {
+            continue;
+        }
+        if let Formula::Custom(c) = &p.slots[*n].formula {
+            for (o, v) in c.def.options.iter().zip(&c.values) {
+                let nr = v.round() as i32;
+                if o.ty == 2 && !nrs.contains(&nr) && crate::maps::by_number(nr).is_some() {
+                    nrs.push(nr);
+                }
+            }
+        }
+    }
+    let mut maps = vec![nrs.len() as u32];
+    let mut pixels: Vec<u32> = Vec::new();
+    let head = 1 + 4 * nrs.len();
+    for nr in &nrs {
+        let lm = crate::maps::by_number(*nr).unwrap();
+        maps.extend_from_slice(&[*nr as u32, lm.width as u32, lm.height as u32, (head + pixels.len()) as u32]);
+        pixels.extend(lm.data().iter().flat_map(|p| p.map(f32::to_bits)));
+    }
+    maps.extend(pixels);
+    Ok(SceneShader { code, cst, rtpl, slots, slotx, record_words, maps })
 }
 
 /// The smallest [`precision`] for the GPU: below it the single precision
@@ -1162,6 +1190,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     };
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
+    let maps = make("maps", &sh.maps);
     // the tasks in rows of R_W, resumable (a bounce marches a ray and
     // casts the shadow and occlusion rays of its hit)
     let mut res = Resumer::new(g, &sh);
@@ -1176,6 +1205,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
             wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
         ],
     });
     let base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
@@ -1323,6 +1353,7 @@ fn run(
     };
     let cst = words("constants", &sh.cst);
     let rtpl = words("record", &sh.rtpl);
+    let maps = words("maps", &sh.maps);
     let binds: Vec<wgpu::BindGroup> = pars
         .iter()
         .zip(&pls)
@@ -1337,6 +1368,7 @@ fn run(
                     wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
                 ],
             })
         })

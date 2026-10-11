@@ -621,7 +621,7 @@ impl Prog {
         if kind.is_some_and(|k| k != FKind::F64) {
             return None;
         }
-        let super::lift::Loc::FieldIdx(off, sc, mask) = an.loc(k, cs, mem) else { return None };
+        let ((p, off), sc, mask) = super::lift_emit::idx_region(an.loc(k, cs, mem))?;
         let (ireg, _) = mem.index?;
         if sc != 8 || off % 8 != 0 {
             return None;
@@ -629,9 +629,9 @@ impl Prog {
         let sel = format!("(rg[{ireg}] & {mask}u)");
         let fx = |i: &u8| format!("f[{}]", i & 7);
         let rd = || -> Option<String> {
-            let mut e = t.rd_f(('r', off))?;
+            let mut e = t.rd_f((p, off))?;
             for i in 1..=mask as u32 {
-                e = format!("select({e}, {}, {sel} == {i}u)", t.rd_f(('r', off + 8 * i))?);
+                e = format!("select({e}, {}, {sel} == {i}u)", t.rd_f((p, off + 8 * i))?);
             }
             Some(e)
         };
@@ -645,7 +645,7 @@ impl Prog {
             Op::FSt64 { src, .. } | Op::FSt { src, .. } => {
                 let mut arms = String::new();
                 for i in 0..=mask as u32 {
-                    arms.push_str(&format!("case {i}u: {{ {} }} ", t.wr_f(('r', off + 8 * i), &fx(src))?));
+                    arms.push_str(&format!("case {i}u: {{ {} }} ", t.wr_f((p, off + 8 * i), &fx(src))?));
                 }
                 format!("switch {sel} {{ {arms}default: {{}} }}")
             }
@@ -749,6 +749,22 @@ impl Prog {
                 });
             }
             Op::Gen(ins, _, _) => self.wgsl_gen(ins, k, cs, an, t)?,
+            // a map function of the record: map_px of the shader (gpu.rs
+            // uploads the maps)
+            Op::CallHost(Rm::Mem(m)) => {
+                let sphere = super::lift::map_call_loc(&an.loc(k, cs, m))?;
+                let arg = |r: usize, i: i32| Mem { base: Some(r as u8), index: None, disp: 8 * i };
+                let mut v = Vec::new();
+                for i in 0..3 {
+                    v.push(t.rd_f(loc(&arg(EAX, i))?)?);
+                }
+                let mut w = String::new();
+                for (i, c) in ["x", "y", "z"].iter().enumerate() {
+                    w.push_str(&t.wr_f(loc(&arg(ECX, i as i32))?, &format!("mr.{c}"))?);
+                    w.push(' ');
+                }
+                format!("{{ let mr = map_px({sphere}, bitcast<i32>(rg[2]), vec3<f32>({})); {w}}}", v.join(", "))
+            }
             _ => return None,
         };
         Some((line, false))

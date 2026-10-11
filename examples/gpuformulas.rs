@@ -136,7 +136,7 @@ fn main() {
             format!("rg = array<u32, 8>({:#x}u, {:#x}u, {:#x}u, 0u, {:#x}u, 0u, 0u, 0u);", x, x + 16, x + 8, STACK_TOP - 12)
         };
         let wgsl = format!(
-            "@group(0) @binding(0) var<storage, read> inp: array<u32>;\n@group(0) @binding(1) var<storage, read> cst: array<u32>;\n@group(0) @binding(2) var<storage, read_write> outp: array<u32>;\n{PRELUDE}\n{}\n{}\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) g: vec3<u32>) {{\n    let i = g.x;\n    if (i >= {TRIALS}u) {{ return; }}\n    _ = cst[0];\n    let b0 = i * {words}u;\n{load}    {regs}\n    xcf = false; xzf = false; xsf = false; xof = false; xpf = false; xaf = false; fsw = 0u;\n    fm(0u);\n{store}}}\n",
+            "@group(0) @binding(0) var<storage, read> inp: array<u32>;\n@group(0) @binding(1) var<storage, read> cst: array<u32>;\n@group(0) @binding(2) var<storage, read_write> outp: array<u32>;\n{PRELUDE}\n// no maps are loaded here: the interpreter's map functions give 0\nfn map_px(sphere: bool, nr: i32, v: vec3<f32>) -> vec3<f32> {{ return vec3<f32>(0.0); }}\n{}\n{}\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) g: vec3<u32>) {{\n    let i = g.x;\n    if (i >= {TRIALS}u) {{ return; }}\n    _ = cst[0];\n    let b0 = i * {words}u;\n{load}    {regs}\n    xcf = false; xzf = false; xsf = false; xof = false; xpf = false; xaf = false; fsw = 0u;\n    fm(0u);\n{store}}}\n",
             record_globals(&[&wf]).unwrap(),
             wf.code
         );

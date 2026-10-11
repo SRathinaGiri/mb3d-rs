@@ -124,6 +124,12 @@ impl LightMap {
         LightMap { width: W, height: H, data, avg: self.avg }
     }
 
+    /// The pixels (0..255) in rows of `width + 1` (the first column
+    /// repeated), `height + 1` rows.
+    pub fn data(&self) -> &[[f32; 3]] {
+        &self.data
+    }
+
     #[inline]
     fn at(&self, x: usize, y: usize) -> [f32; 3] {
         self.data[y * (self.width + 1) + x]

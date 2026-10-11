@@ -25,6 +25,10 @@
 // meanwhile.
 @group(0) @binding(4) var<storage, read_write> STATE: array<u32>;
 @group(0) @binding(5) var<storage, read_write> QUEUE: array<atomic<u32>, 4>;
+// the maps the formulas read (map_px): count, per map (number, width,
+// height, index of its pixels), the pixels as f32 RGB 0..255 in rows of
+// width + 1 (LightMap's layout)
+@group(0) @binding(6) var<storage, read> MAPS: array<u32>;
 
 // parameter indices (gpu.rs writes them in this order)
 const RECT_X0: u32 = 0u;
@@ -526,6 +530,64 @@ fn rotate_4d(p: vec3<f32>) -> vec4<f32> {
         r[i] = p.x * pf(SMATRIX4 + i * 3u) + p.y * pf(SMATRIX4 + i * 3u + 1u) + p.z * pf(SMATRIX4 + i * 3u + 2u);
     }
     return r;
+}
+
+// MakeSplineCoeff
+fn map_coeff(xs: f32) -> vec4<f32> {
+    let r3 = xs * xs * xs / 6.0;
+    let r0 = 1.0 / 6.0 + 0.5 * xs * (xs - 1.0) - r3;
+    let r2 = xs + r0 - 2.0 * r3;
+    return vec4<f32>(r0, 1.0 - r0 - r2 - r3, r2, r3);
+}
+
+// GetMapPixelSphereSpline (`sphere`) / GetMapPixelDirectXYspline, called by
+// the formulas through the record (custom.rs map_px): the colour (0..1) of
+// map `nr` at the direction `v` / at x, y; 0 for a map that is not loaded
+fn map_px(sphere: bool, nr: i32, v: vec3<f32>) -> vec3<f32> {
+    var hd = 0u;
+    for (var i = 0u; i < MAPS[0]; i++) {
+        if (MAPS[1u + i * 4u] == u32(nr)) {
+            hd = 1u + i * 4u;
+            break;
+        }
+    }
+    if (hd == 0u || nr < 1) {
+        return vec3<f32>(0.0);
+    }
+    let wi = i32(MAPS[hd + 1u]);
+    let hi = i32(MAPS[hd + 2u]);
+    let base = MAPS[hd + 3u];
+    if (wi < 1 || hi < 1) {
+        return vec3<f32>(0.0);
+    }
+    let w = f32(wi);
+    let h = f32(hi);
+    var x: f32;
+    var y: f32;
+    if (sphere) {
+        let d = v / max(length(v), 1e-30);
+        x = clamp((atan2(d.x, d.y) * (-0.5 / PI) + 0.5) * w, 0.0, w);
+        y = clamp((0.5 - asin(clamp(d.z, -1.0, 1.0)) / PI) * h, 0.0, h);
+    } else {
+        x = fract(v.x) * w;
+        y = fract(v.y) * h;
+    }
+    let xf = i32(x);
+    let yf = i32(y);
+    let xv = map_coeff(x - f32(xf));
+    let yv = map_coeff(y - f32(yf));
+    var r = vec3<f32>(0.0);
+    for (var j = 0; j < 4; j++) {
+        let row = u32(((yf + j - 1) % hi + hi) % hi);
+        var s = vec3<f32>(0.0);
+        for (var i = 0; i < 4; i++) {
+            let col = u32(((xf + i - 1) % wi + wi) % wi);
+            let o = base + (row * u32(wi + 1) + col) * 3u;
+            s += vec3<f32>(bitcast<f32>(MAPS[o]), bitcast<f32>(MAPS[o + 1u]), bitcast<f32>(MAPS[o + 2u])) * xv[i];
+        }
+        r += s * yv[j];
+    }
+    return r / 255.0;
 }
 
 // CalcSmoothIterations (fHln of the last formula n)
@@ -3131,6 +3193,7 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
     }
     _ = cst[0];
     _ = rtpl[0];
+    _ = MAPS[0];
     j4 = pf(J4);
     vary_scale = 1.0;
     deriv = vec3<f32>(1.0, 0.0, 0.0);

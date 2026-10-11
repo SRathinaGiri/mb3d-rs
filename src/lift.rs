@@ -98,6 +98,25 @@ impl State {
     }
 }
 
+/// The map function a host call goes to (`true`: the sphere map), from the
+/// address the target is read from.
+fn map_call(a: AVal) -> Option<bool> {
+    match a {
+        AVal::K(x) if x == IT_BASE + off::PMAPFUNC => Some(true),
+        AVal::K(x) if x == IT_BASE + off::PMAPFUNC + 4 => Some(false),
+        _ => None,
+    }
+}
+
+/// [`map_call`] by the location of the target.
+pub(super) fn map_call_loc(l: &Loc) -> Option<bool> {
+    match l {
+        Loc::Field(o) if *o == off::PMAPFUNC => Some(true),
+        Loc::Field(o) if *o == off::PMAPFUNC + 4 => Some(false),
+        _ => None,
+    }
+}
+
 /// Where a memory operand points.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Loc {
@@ -116,6 +135,9 @@ pub enum Loc {
     /// one of a few record fields chosen by a small index at run time:
     /// (base offset, scale, mask), the field at base + index * scale
     FieldIdx(u32, u8, u8),
+    /// the same on the stack (offset as for `Stack`), e.g. a component of a
+    /// local vector chosen by an option
+    StackIdx(i32, u8, u8),
     /// anything else (not liftable)
     Unresolved,
 }
@@ -167,6 +189,7 @@ fn classify(a: AVal) -> Loc {
         AVal::Dyn(false, b) if (STACK_LOW..=STACK_TOP).contains(&(b as u32)) => Loc::DynStack(b - STACK_TOP as i32),
         AVal::Dyn(true, o) => Loc::DynVar(o),
         AVal::Idx(b, sc, mk) if (IT_BASE..IT_BASE + 0x200).contains(&b) && b + mk as u32 * sc as u32 + 8 <= IT_BASE + 0x200 => Loc::FieldIdx(b - IT_BASE, sc, mk),
+        AVal::Idx(b, sc, mk) if (STACK_LOW..=STACK_TOP).contains(&b) && b + mk as u32 * sc as u32 + 8 <= STACK_TOP => Loc::StackIdx(b as i32 - STACK_TOP as i32, sc, mk),
         _ => Loc::Unresolved,
     }
 }
@@ -351,6 +374,25 @@ impl Ctx<'_> {
                 return succ;
             }
             Op::Gen(ins, _, _) => self.gen(k, s, ins),
+            // the record's map functions (PMapFunc, PMapFunc2): eax = @vec,
+            // edx = map number, ecx = @result (3 doubles each); eax, ecx and
+            // edx are not kept
+            Op::CallHost(rm) => match rm {
+                Rm::Mem(m) if map_call(self.addr(s, m)).is_some() => {
+                    for i in 0..3 {
+                        self.access(k, s, &Mem { base: Some(EAX as u8), index: None, disp: 8 * i }, false);
+                    }
+                    for i in 0..3 {
+                        let m = Mem { base: Some(ECX as u8), index: None, disp: 8 * i };
+                        let a = self.access(k, s, &m, true);
+                        self.store(s, a, AVal::D, 8);
+                    }
+                    for r in [EAX, ECX, EDX] {
+                        s.regs[r] = AVal::Top;
+                    }
+                }
+                _ => self.rep.problems.push(format!("op {k}: host call {rm:?}")),
+            },
             _ => {}
         }
         next

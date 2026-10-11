@@ -32,6 +32,15 @@ fn region(loc: Loc) -> Option<(char, u32)> {
     }
 }
 
+/// The first cell and the index of a `FieldIdx` / `StackIdx` location.
+pub(super) fn idx_region(loc: Loc) -> Option<((char, u32), u8, u8)> {
+    match loc {
+        Loc::FieldIdx(o, sc, mk) => Some((('r', o), sc, mk)),
+        Loc::StackIdx(o, sc, mk) => Some((('s', (STACK_TOP as i32 + o) as u32 - STACK_LOW), sc, mk)),
+        _ => None,
+    }
+}
+
 fn mask(n: u32) -> String {
     if n >= 8 {
         "u64::MAX".into()
@@ -224,7 +233,7 @@ impl Prog {
         if kind.is_some_and(|k| k != FKind::F64) {
             return None;
         }
-        let Loc::FieldIdx(off, sc, mask) = an.loc(k, cs, mem) else { return None };
+        let ((p, off), sc, mask) = idx_region(an.loc(k, cs, mem))?;
         let (ireg, _) = mem.index?;
         if sc != 8 || off % 8 != 0 {
             return None;
@@ -233,7 +242,7 @@ impl Prog {
         let sel = format!("(rg[{ireg}] & {mask})");
         let fx = |i: &u8| format!("f[{}]", i & 7);
         let rd = |c: &mut Cells| -> String {
-            let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {}", c.rd(('r', off + 8 * i), 8))).collect();
+            let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {}", c.rd((p, off + 8 * i), 8))).collect();
             format!("f64::from_bits(match {sel} {{ {}, _ => 0 }})", arms.join(", "))
         };
         Some(match &self.ops[k] {
@@ -245,7 +254,7 @@ impl Prog {
             Op::FComM { a, .. } => format!("fsw = fcompare_cc(f[{}], {});", a & 7, rd(c)),
             Op::FSt64 { src, .. } | Op::FSt { src, .. } => {
                 let v = format!("{}.to_bits()", fx(src));
-                let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {{ {} }}", c.wr(('r', off + 8 * i), 8, &v))).collect();
+                let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {{ {} }}", c.wr((p, off + 8 * i), 8, &v))).collect();
                 format!("match {sel} {{ {}, _ => {{}} }}", arms.join(", "))
             }
             _ => return None,
@@ -259,7 +268,7 @@ impl Prog {
             lift_debug(&format!("{:?}", an.report.problems));
             return None;
         }
-        if let Some(a) = an.report.accesses.iter().find(|(_, l, _)| region(*l).is_none() && !matches!(l, Loc::FieldIdx(..))) {
+        if let Some(a) = an.report.accesses.iter().find(|(_, l, _)| region(*l).is_none() && idx_region(*l).is_none()) {
             lift_debug(&format!("access outside the known regions: {a:?}"));
             return None;
         }
@@ -412,7 +421,7 @@ impl Prog {
             return Some((line, false));
         }
         c.kind = match &self.ops[k] {
-            Op::FLd64 { .. } | Op::FSt64 { .. } | Op::FArithM64 { .. } => 'd',
+            Op::FLd64 { .. } | Op::FSt64 { .. } | Op::FArithM64 { .. } | Op::CallHost(_) => 'd',
             // SSE moves and arithmetic access whole doubles; the logic ops
             // and the dword shuffle need the exact bits (masks)
             Op::Gen(ins, _, _) => match ins.as_ref() {
@@ -508,6 +517,20 @@ impl Prog {
                 });
             }
             Op::Gen(ins, _, _) => self.lifted_gen(ins, k, cs, an, c)?,
+            // a map function of the record (lift::map_call)
+            Op::CallHost(Rm::Mem(m)) => {
+                let sphere = super::lift::map_call_loc(&an.loc(k, cs, m))?;
+                let arg = |r: usize, i: i32| Mem { base: Some(r as u8), index: None, disp: 8 * i };
+                let mut v = Vec::new();
+                for i in 0..3 {
+                    v.push(format!("f64::from_bits({})", c.rd(loc(&arg(EAX, i))?, 8)));
+                }
+                let mut w = String::new();
+                for i in 0..3 {
+                    w.push_str(&c.wr(loc(&arg(ECX, i as i32))?, 8, &format!("r[{i}].to_bits()")));
+                }
+                format!("{{ let r = crate::custom::map_px({sphere}, rg[EDX] as i32, [{}]); {w} }}", v.join(", "))
+            }
             op => {
                 lift_debug(&format!("op {k}: {op:?}"));
                 return None;

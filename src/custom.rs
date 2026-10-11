@@ -117,28 +117,30 @@ fn host_int_pow(m: &mut Machine, n: i32) -> Result<(), EmuError> {
 pub const MAP_SPHERE_ADDR: u32 = MAGIC_START + 0x200;
 pub const MAP_XY_ADDR: u32 = MAGIC_START + 0x210;
 
-/// `GetMapPixelSphereSpline` / `GetMapPixelDirectXYspline` called from
-/// formula code: eax = @vec (3 doubles), edx = map number, ecx = @result.
+/// `GetMapPixelSphereSpline` (`sphere`) / `GetMapPixelDirectXYspline`:
+/// the colour (0..1) of map `nr` at the direction `v` / at x, y.
+pub fn map_px(sphere: bool, nr: i32, v: [f64; 3]) -> [f64; 3] {
+    let Some(lm) = crate::maps::by_number(nr) else { return [0.0; 3] };
+    let (w, h) = (lm.width as f64, lm.height as f64);
+    if sphere {
+        let l = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt().max(1e-300);
+        let d = [v[0] / l, v[1] / l, v[2] / l];
+        // MPi05d = -0.5 / Pi
+        let x = d[0].atan2(d[1]) * (-0.5 / std::f64::consts::PI) + 0.5;
+        let y = 0.5 - d[2].clamp(-1.0, 1.0).asin() / std::f64::consts::PI;
+        lm.spline_px((x * w).clamp(0.0, w), (y * h).clamp(0.0, h))
+    } else {
+        let fa = |d: f64| d - d.floor();
+        lm.spline_px(fa(v[0]) * w, fa(v[1]) * h)
+    }
+}
+
+/// The map functions called from formula code: eax = @vec (3 doubles),
+/// edx = map number, ecx = @result.
 fn host_map(m: &mut Machine, sphere: bool) -> Result<(), EmuError> {
     let (pv, nr, pr) = (m.reg(0), m.reg(2) as i32, m.reg(1));
     let v = [m.rdf64(pv)?, m.rdf64(pv + 8)?, m.rdf64(pv + 16)?];
-    let r = match crate::maps::by_number(nr) {
-        Some(lm) => {
-            let (w, h) = (lm.width as f64, lm.height as f64);
-            if sphere {
-                let l = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt().max(1e-300);
-                let d = [v[0] / l, v[1] / l, v[2] / l];
-                // MPi05d = -0.5 / Pi
-                let x = d[0].atan2(d[1]) * (-0.5 / std::f64::consts::PI) + 0.5;
-                let y = 0.5 - d[2].clamp(-1.0, 1.0).asin() / std::f64::consts::PI;
-                lm.spline_px((x * w).clamp(0.0, w), (y * h).clamp(0.0, h))
-            } else {
-                let fa = |d: f64| d - d.floor();
-                lm.spline_px(fa(v[0]) * w, fa(v[1]) * h)
-            }
-        }
-        None => [0.0; 3],
-    };
+    let r = map_px(sphere, nr, v);
     m.wrf64(pr, r[0])?;
     m.wrf64(pr + 8, r[1])?;
     m.wrf64(pr + 16, r[2])

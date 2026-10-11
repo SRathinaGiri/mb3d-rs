@@ -2666,6 +2666,9 @@ mod tests {
 enum Op {
     /// any non-x87 instruction, executed by `Machine::exec`
     Gen(Box<Ins>, u32, u32), // ins, next address, own address
+    /// `call [mem]` to a host function (`Machine::host`, e.g. the record's
+    /// map functions); it returns to the next op
+    CallHost(Rm),
     MovRM { r: u8, mem: Mem },
     FLd64 { dst: u8, mem: Mem },
     FSt64 { src: u8, mem: Mem },
@@ -2870,7 +2873,9 @@ fn analyze<'t>(
                     work.push((next, e - rot, a));
                 }
             }
-            Ins::CallInd(_) | Ins::JmpInd(_) | Ins::Halt => return Err(format!("{a:#x}: {ins:?}")),
+            // an indirect call is a host function (the map functions of
+            // the record); they keep the x87 stack
+            Ins::JmpInd(_) | Ins::Halt => return Err(format!("{a:#x}: {ins:?}")),
             _ => work.push((next, nd, a)),
         }
     }
@@ -2934,6 +2939,7 @@ impl Machine {
                 Ins::Jmp(t) => Op::Jmp(*t),
                 Ins::Ret(n) => Op::Ret(*n),
                 Ins::Call(t) => Op::Call { target: *t, ret: next },
+                Ins::CallInd(rm) => Op::CallHost(*rm),
                 Ins::FLd(FKind::F64, mem) => Op::FLd64 { dst: slot(d), mem: *mem },
                 Ins::FLd(kind, mem) => Op::FLd { dst: slot(d), kind: *kind, mem: *mem },
                 Ins::FSt(FKind::F64, mem, _) => Op::FSt64 { src: top, mem: *mem },
@@ -3142,6 +3148,15 @@ impl Machine {
     #[inline]
     fn exec_op(&mut self, op: &Op, f: &mut [f64; 8]) -> R<()> {
         match op {
+            Op::CallHost(rm) => {
+                // as Machine::run: the host function finds its return
+                // address on the stack and drops its stack arguments
+                let t = self.get_rm(rm, 4)?;
+                let hf = self.host.iter().find(|(a, _)| *a == t).map(|(_, f)| *f).ok_or(EmuError::Halt(t))?;
+                self.push(RETURN_SENTINEL)?;
+                hf(self)?;
+                self.pop()?;
+            }
                 Op::Gen(ins, next, at) => {
                     let r = self.exec(ins, *next, *at)?;
                     if r != *next {
