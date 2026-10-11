@@ -424,8 +424,8 @@ calculation is sent in pieces of about 25 ms (`MB3D_GPU_BAND_MS`): a pixel
 that needs longer (a single dIFS pixel can take 100 ms on the card) saves
 its state and continues in the next piece, with identical results.
 
-Of the 80 example parameter files of MB3D, 74 run on the GPU at their
-own image size (429 of the 460 formula files translate); at that size
+Of the 80 example parameter files of MB3D, 79 run on the GPU at their
+own image size (449 of the 460 formula files translate); at that size
 *Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
 instead of 58 s; with the reflections on the card, *Rama - Elysium* at 160
 pixels takes 4.5 s instead of 24.7 s and *LightBulbMoon - A Fabulous
@@ -444,7 +444,7 @@ point: MB3D stops a ray early when the neighbouring pixel found open air at
 that distance; the card marches every ray to its end, so fine structures
 throw slightly more shadow (a few percent of their pixels). Developer
 checks: `cargo run --release --example gpuformulas -- M3Formulas` runs
-every translatable formula on the GPU against the interpreter (all 429
+every translatable formula on the GPU against the interpreter (all 449
 agree), `cargo test` compares the GPU G-buffer of a Mandelbulb with the
 CPU's, `cargo run --release --example postcheck -- 320 MB3D_DIR FILES...`
 compares the shadow bits and the ambient occlusion of the card with the

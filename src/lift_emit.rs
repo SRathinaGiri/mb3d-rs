@@ -32,13 +32,80 @@ fn region(loc: Loc) -> Option<(char, u32)> {
     }
 }
 
-/// The first cell and the index of a `FieldIdx` / `StackIdx` location.
+/// The first cell and the index of a `FieldIdx` / `StackIdx` location:
+/// (region, offset), element size, mask, reversed (a negated index
+/// register: bit 7 of the mask).
 pub(super) fn idx_region(loc: Loc) -> Option<((char, u32), u8, u8)> {
     match loc {
         Loc::FieldIdx(o, sc, mk) => Some((('r', o), sc, mk)),
         Loc::StackIdx(o, sc, mk) => Some((('s', (STACK_TOP as i32 + o) as u32 - STACK_LOW), sc, mk)),
         _ => None,
     }
+}
+
+thread_local! {
+    /// the element of an indexed location (`FieldIdx` / `StackIdx`) the
+    /// op being generated stands for (see `idx_switch`)
+    static IDX_AT: std::cell::Cell<Option<(char, u32)>> = const { std::cell::Cell::new(None) };
+}
+
+/// [`region`], with an indexed location as the element [`IDX_AT`] says.
+pub(super) fn region_at(loc: Loc) -> Option<(char, u32)> {
+    match (loc, IDX_AT.with(|c| c.get())) {
+        (Loc::FieldIdx(..) | Loc::StackIdx(..), Some(r)) => Some(r),
+        _ => region(loc),
+    }
+}
+
+/// The memory operand of an op that can be generated element by element.
+pub(super) fn op_mem(op: &Op) -> Option<Mem> {
+    match op {
+        Op::MovRM { mem, .. } | Op::MovMR { mem, .. } | Op::FLd64 { mem, .. } | Op::FSt64 { mem, .. } | Op::FArithM64 { mem, .. } => Some(*mem),
+        Op::FLd { mem, .. } | Op::FSt { mem, .. } | Op::FArithM { mem, .. } | Op::FComM { mem, .. } => Some(*mem),
+        Op::Gen(ins, _, _) => match ins.as_ref() {
+            Ins::Sse { src: Rm::Mem(m), .. } | Ins::SseStore { dst: m, .. } => Some(*m),
+            Ins::Mov { dst: Rm::Mem(m), .. } | Ins::Mov { src: Src::Rm(Rm::Mem(m)), .. } => Some(*m),
+            Ins::Alu { dst: Rm::Mem(m), .. } | Ins::Alu { src: Src::Rm(Rm::Mem(m)), .. } => Some(*m),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+/// An op whose memory operand is an indexed location, as a switch over
+/// the elements: `gen` generates the op for the element IDX_AT; `sel` the
+/// selector expression of the index register; `case` the arm syntax.
+pub(super) fn idx_switch(op: &Op, an: &Analysis, k: usize, cs: &[usize], wgsl: bool, gen: &mut dyn FnMut() -> Option<String>) -> Option<Option<String>> {
+    if IDX_AT.with(|c| c.get()).is_some() {
+        return None;
+    }
+    let mem = op_mem(op)?;
+    let ((p, off), sc, mk) = idx_region(an.loc(k, cs, &mem))?;
+    let (ireg, isc) = an.idx_reg(k, cs, &mem)?;
+    let (mask, rev) = (mk & 0x7F, mk & 0x80 != 0);
+    if sc < isc || !(sc / isc).is_power_of_two() {
+        return Some(None);
+    }
+    let ish = (sc / isc).trailing_zeros();
+    let sel = match (wgsl, rev) {
+        (true, false) => format!("((rg[{ireg}] >> {ish}u) & {mask}u)"),
+        (true, true) => format!("({mask}u - (((0u - rg[{ireg}]) >> {ish}u) & {mask}u))"),
+        (false, false) => format!("((rg[{ireg}] >> {ish}) & {mask})"),
+        (false, true) => format!("({mask} - ((0u32.wrapping_sub(rg[{ireg}]) >> {ish}) & {mask}))"),
+    };
+    let mut arms = String::new();
+    for i in 0..=mask as u32 {
+        IDX_AT.with(|c| c.set(Some((p, off + sc as u32 * i))));
+        let line = gen();
+        IDX_AT.with(|c| c.set(None));
+        let Some(line) = line else { return Some(None) };
+        if wgsl {
+            arms.push_str(&format!("case {i}u: {{ {line} }} "));
+        } else {
+            arms.push_str(&format!("{i} => {{ {line} }} "));
+        }
+    }
+    Some(Some(if wgsl { format!("switch {sel} {{ {arms}default: {{}} }}") } else { format!("match {sel} {{ {arms}_ => {{}} }}") }))
 }
 
 fn mask(n: u32) -> String {
@@ -233,16 +300,19 @@ impl Prog {
         if kind.is_some_and(|k| k != FKind::F64) {
             return None;
         }
-        let ((p, off), sc, mask) = idx_region(an.loc(k, cs, mem))?;
-        let (ireg, _) = mem.index?;
-        if sc != 8 || off % 8 != 0 {
+        let ((p, off), sc, mk) = idx_region(an.loc(k, cs, mem))?;
+        let (mask, rev) = (mk & 0x7F, mk & 0x80 != 0);
+        let (ireg, isc) = an.idx_reg(k, cs, &mem)?;
+        // the index register holds i * sc / isc (the cells take any offset)
+        if sc < isc || !(sc / isc).is_power_of_two() {
             return None;
         }
+        let ish = (sc / isc).trailing_zeros();
         c.kind = 'd';
-        let sel = format!("(rg[{ireg}] & {mask})");
+        let sel = if rev { format!("({mask} - ((0u32.wrapping_sub(rg[{ireg}]) >> {ish}) & {mask}))") } else { format!("((rg[{ireg}] >> {ish}) & {mask})") };
         let fx = |i: &u8| format!("f[{}]", i & 7);
         let rd = |c: &mut Cells| -> String {
-            let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {}", c.rd((p, off + 8 * i), 8))).collect();
+            let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {}", c.rd((p, off + sc as u32 * i), 8))).collect();
             format!("f64::from_bits(match {sel} {{ {}, _ => 0 }})", arms.join(", "))
         };
         Some(match &self.ops[k] {
@@ -254,7 +324,7 @@ impl Prog {
             Op::FComM { a, .. } => format!("fsw = fcompare_cc(f[{}], {});", a & 7, rd(c)),
             Op::FSt64 { src, .. } | Op::FSt { src, .. } => {
                 let v = format!("{}.to_bits()", fx(src));
-                let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {{ {} }}", c.wr((p, off + 8 * i), 8, &v))).collect();
+                let arms: Vec<String> = (0..=mask as u32).map(|i| format!("{i} => {{ {} }}", c.wr((p, off + sc as u32 * i), 8, &v))).collect();
                 format!("match {sel} {{ {}, _ => {{}} }}", arms.join(", "))
             }
             _ => return None,
@@ -268,7 +338,7 @@ impl Prog {
             lift_debug(&format!("{:?}", an.report.problems));
             return None;
         }
-        if let Some(a) = an.report.accesses.iter().find(|(_, l, _)| region(*l).is_none() && idx_region(*l).is_none()) {
+        if let Some(a) = an.report.accesses.iter().find(|(_, l, w)| region(*l).is_none() && idx_region(*l).is_none() && !matches!((*l, *w), (Loc::DynVar(_), false))) {
             lift_debug(&format!("access outside the known regions: {a:?}"));
             return None;
         }
@@ -414,9 +484,13 @@ impl Prog {
         id: &dyn Fn(usize, &[usize]) -> Option<usize>,
         jump: &dyn Fn(usize) -> String,
     ) -> Option<(String, bool)> {
-        let loc = |mm: &Mem| region(an.loc(k, cs, mm));
+        let loc = |mm: &Mem| region_at(an.loc(k, cs, mm));
         let fx = |i: &u8| format!("f[{}]", i & 7);
         c.cur_op = k;
+        // an indexed memory operand: the op once per element
+        if let Some(r) = idx_switch(&self.ops[k], an, k, cs, false, &mut || self.lifted_op(k, cs, an, c, id, jump).map(|x| x.0)) {
+            return r.map(|line| (line, false));
+        }
         if let Some(line) = self.lifted_idx_op(k, cs, an, c) {
             return Some((line, false));
         }
@@ -431,6 +505,29 @@ impl Prog {
             },
             _ => 'i',
         };
+        // a read through a pointer that walks over the variable buffer
+        // (Loc::DynVar): the address at run time
+        let dyn_rd = |mm: &Mem, n: u32| -> Option<String> {
+            if !matches!(an.loc(k, cs, mm), Loc::DynVar(_)) {
+                return None;
+            }
+            let ea = super::ea_expr(mm).replace("m.regs[", "rg[");
+            Some(match n {
+                4 => format!("m.rd32({ea})?"),
+                _ => format!("m.rdf64({ea})?.to_bits()"),
+            })
+        };
+        if let Some(line) = match &self.ops[k] {
+            Op::MovRM { r, mem } => dyn_rd(mem, 4).map(|e| format!("rg[{r}] = {e};")),
+            Op::FLd64 { dst, mem } => dyn_rd(mem, 8).map(|e| format!("f[{}] = f64::from_bits({e});", dst & 7)),
+            Op::FArithM64 { op, dst, mem } => dyn_rd(mem, 8).map(|e| {
+                let d = fx(dst);
+                format!("{{ let v = f64::from_bits({e}); {d} = {}; }}", fop(op, &d, "v"))
+            }),
+            _ => None,
+        } {
+            return Some((line, false));
+        }
         let line = match &self.ops[k] {
             Op::MovRM { r, mem } => format!("rg[{r}] = {} as u32;", c.rd(loc(mem)?, 4)),
             Op::MovMR { mem, r } => c.wr(loc(mem)?, 4, &format!("rg[{r}] as u64")),
@@ -475,6 +572,7 @@ impl Prog {
                 ieee
             ),
             Op::F2xm1(i) => format!("f[{0}] = f[{0}].exp2() - 1.0;", i & 7),
+            Op::FPtan { src, dst } => format!("f[{0}] = f[{0}].tan(); f[{1}] = 1.0; fsw &= !0x0400;", src & 7, dst & 7),
             Op::FSincos { src, dst } => format!("{{ let (s, c) = f[{0}].sin_cos(); f[{0}] = s; f[{1}] = c; fsw &= !0x0400; }}", src & 7, dst & 7),
             Op::FPatan { x, y } => format!("f[{0}] = f[{0}].atan2(f[{1}]);", y & 7, x & 7),
             Op::FYl2x { x, y } => format!("f[{0}] *= f[{1}].log2();", y & 7, x & 7),
@@ -540,7 +638,7 @@ impl Prog {
     }
 
     fn lifted_gen(&self, ins: &Ins, k: usize, cs: &[usize], an: &Analysis, c: &mut Cells) -> Option<String> {
-        let loc = |mm: &Mem| region(an.loc(k, cs, mm));
+        let loc = |mm: &Mem| region_at(an.loc(k, cs, mm));
         let mut rd = |c: &mut Cells, rm: &Rm, size: u8| -> Option<String> {
             Some(match rm {
                 Rm::Reg(r) => reg_rd(*r, size),
@@ -589,10 +687,38 @@ impl Prog {
             Ins::Shift { op: sop @ (Shift::Shl | Shift::Shr | Shift::Sar), dst: Rm::Reg(r), cnt: Some(n), size } => {
                 format!("shift_reg_l(&mut rg, &mut fl, Shift::{sop:?}, {r}, {n}, {size});")
             }
-            Ins::Inc(rm, 4) | Ins::Dec(rm, 4) => {
+            Ins::Not(rm, size) => {
+                let v = rd(c, rm, *size)?;
+                wr(c, rm, *size, &format!("!({v})"))?
+            }
+            Ins::Neg(rm, size) => {
+                let v = rd(c, rm, *size)?;
+                let m = super::mask(u32::MAX, *size);
+                format!("{{ let v = {v}; let r = fl.alu(Alu::Sub, 0, v, {size}); fl.cf = v & {m:#x} != 0; {} }}", wr(c, rm, *size, "r")?)
+            }
+            // one-operand mul / imul / div / idiv (Machine::exec)
+            Ins::Mul(rm, size) | Ins::IMul1(rm, size) => {
+                let sg = matches!(ins, Ins::IMul1(..));
+                let b = rd(c, rm, *size)?;
+                match size {
+                    1 => format!("{{ let b = {b}; let a = rg[EAX] & 0xFF; let r = if {sg} {{ (a as u8 as i8 as i32 * b as u8 as i8 as i32) as u32 }} else {{ a * b }}; reg_set(&mut rg, 0, 2, r); fl.cf = if {sg} {{ (r as u16 as i16) != (r as u8 as i8 as i16) }} else {{ (r >> 8) & 0xFF != 0 }}; fl.of = fl.cf; }}"),
+                    2 => format!("{{ let b = {b}; let a = rg[EAX] & 0xFFFF; let r = if {sg} {{ (a as u16 as i16 as i32 * b as u16 as i16 as i32) as u32 }} else {{ a * b }}; reg_set(&mut rg, 0, 2, r); reg_set(&mut rg, 2, 2, r >> 16); fl.cf = if {sg} {{ (r as i32) != (r as u16 as i16 as i32) }} else {{ (r >> 16) != 0 }}; fl.of = fl.cf; }}"),
+                    _ => format!("{{ let b = {b}; let a = rg[EAX]; let r: u64 = if {sg} {{ (a as i32 as i64 * b as i32 as i64) as u64 }} else {{ a as u64 * b as u64 }}; rg[EAX] = r as u32; rg[EDX] = (r >> 32) as u32; fl.cf = if {sg} {{ (r as i64) != (r as u32 as i32 as i64) }} else {{ (r >> 32) != 0 }}; fl.of = fl.cf; }}"),
+                }
+            }
+            Ins::Div(rm, size) | Ins::IDiv(rm, size) => {
+                let sg = matches!(ins, Ins::IDiv(..));
+                let b = rd(c, rm, *size)?;
+                match size {
+                    1 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = rg[EAX] & 0xFFFF; let (q, r) = if {sg} {{ let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32); ((n / d) as u32, (n % d) as u32) }} else {{ (n / b, n % b) }}; reg_set(&mut rg, 0, 1, q); reg_set(&mut rg, 4, 1, r); }}"),
+                    2 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] & 0xFFFF) << 16 | (rg[EAX] & 0xFFFF); let (q, r) = if {sg} {{ let (n, d) = (n as i32, b as u16 as i16 as i32); ((n / d) as u32, (n % d) as u32) }} else {{ (n / b, n % b) }}; reg_set(&mut rg, 0, 2, q); reg_set(&mut rg, 2, 2, r); }}"),
+                    _ => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if {sg} {{ let (n, d) = (n as i64, b as i32 as i64); ((n / d) as u32, (n % d) as u32) }} else {{ ((n / b as u64) as u32, (n % b as u64) as u32) }}; rg[EAX] = q; rg[EDX] = r; }}"),
+                }
+            }
+            Ins::Inc(rm, size) | Ins::Dec(rm, size) => {
                 let aop = if matches!(ins, Ins::Inc(..)) { "Add" } else { "Sub" };
-                let v = rd(c, rm, 4)?;
-                format!("{{ let v = {v}; let cf = fl.cf; let r = fl.alu(Alu::{aop}, v, 1, 4); fl.cf = cf; {} }}", wr(c, rm, 4, "r")?)
+                let v = rd(c, rm, *size)?;
+                format!("{{ let v = {v}; let cf = fl.cf; let r = fl.alu(Alu::{aop}, v, 1, {size}); fl.cf = cf; {} }}", wr(c, rm, *size, "r")?)
             }
             Ins::Sse { op, dst, src: s, imm } if sse_native(*op, s) => {
                 let (s16, s8, sr) = match s {

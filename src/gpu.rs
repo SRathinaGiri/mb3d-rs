@@ -591,8 +591,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         let _ = writeln!(g, "    r55l = select(0u, 0xFFFFFFFFu, ins); r55h = 0u;");
     }
     let _ = writeln!(g, "}}");
-    for (_, w) in &wfs {
-        g.push_str(&w.code);
+    for (n, w) in &wfs {
+        // (reads through a pointer into the slot's variable buffer)
+        g.push_str(&w.code.replace("@VARBUF@", &format!("{:#x}u", crate::custom::var_buf_addr(*n))));
     }
     // call_slot
     let x = crate::custom::IT_C1 - 32;
@@ -611,7 +612,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 let _ = writeln!(g, "        case {n}u: {{ v = int_pow(v, j, bitcast<i32>(slot({n}u, 4u)), R(bitcast<f32>(slot({n}u, 5u)))); }}");
             }
             2 => {
-                let _ = writeln!(g, "        case {n}u: {{ marshal_in(); {regs} fsw = 0u; fm{n}(slot({n}u, 2u)); marshal_out(); }}");
+                // PVar: the slot's variables, as Iteration::run_custom sets it
+                let pv = if has(13) { format!("r13l = {:#x}u; ", crate::custom::pconst_addr(n)) } else { String::new() };
+                let _ = writeln!(g, "        case {n}u: {{ marshal_in(); {pv}{regs} fsw = 0u; fm{n}(slot({n}u, 2u)); marshal_out(); }}");
             }
             3 => {
                 let _ = writeln!(g, "        case {n}u: {{ amazing_box({n}u); }}");

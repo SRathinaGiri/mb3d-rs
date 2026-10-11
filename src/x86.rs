@@ -3486,7 +3486,7 @@ fn sse_native(op: SseOp, src: &Rm) -> bool {
     match op {
         MovU | MovLpdLoad | MovHpdLoad | AddPd | SubPd | MulPd | DivPd | MinPd | MaxPd | SqrtPd | AddSd | SubSd | MulSd | DivSd
         | MinSd | MaxSd | SqrtSd | And | AndN | Or | Xor | UnpckLpd | UnpckHpd | ShufPd | HAddPd | UComiSd | ComiSd | Pshufd => true,
-        MovSdLoad | MovqLoad => true,
+        MovSdLoad | MovqLoad | CvtPd2Dq | CvtDq2Pd => true,
         MovHlps | MovLhps => matches!(src, Rm::Reg(_)),
         _ => false,
     }
@@ -3571,6 +3571,12 @@ fn emit_sse_with(op: SseOp, d: usize, src_reg: Option<u8>, s16: &str, s8: &str, 
         UnpckLpd => format!("{{ let s: [u64; 2] = {s16}; m.xmm[{d}][1] = s[0]; }}"),
         UnpckHpd => format!("{{ let s: [u64; 2] = {s16}; let a = m.xmm[{d}]; m.xmm[{d}] = [a[1], s[1]]; }}"),
         ShufPd => format!("{{ let s: [u64; 2] = {s16}; let a = m.xmm[{d}]; m.xmm[{d}] = [a[{}], s[{}]]; }}", imm & 1, (imm >> 1) & 1),
+        // as Machine::sse: rounded to nearest even, the integer indefinite
+        // outside the int32 range
+        CvtPd2Dq => format!(
+            "{{ let s: [u64; 2] = {s16}; let c = |v: f64| -> u64 {{ let r = v.round_ties_even(); (if r.is_nan() || !(-2147483648.0..=2147483647.0).contains(&r) {{ 0x8000_0000u32 }} else {{ r as i32 as u32 }}) as u64 }}; m.xmm[{d}] = [c(f64::from_bits(s[0])) | (c(f64::from_bits(s[1])) << 32), 0]; }}"
+        ),
+        CvtDq2Pd => format!("{{ let s: u64 = {s8}; m.xmm[{d}] = [(s as u32 as i32 as f64).to_bits(), ((s >> 32) as u32 as i32 as f64).to_bits()]; }}"),
         HAddPd => format!("{{ let s: [u64; 2] = {s16}; let a = m.xmm[{d}]; m.xmm[{d}] = [{}.to_bits(), {}.to_bits()]; }}", bin("+", "a[0]", "a[1]"), bin("+", "s[0]", "s[1]")),
         _ => unreachable!("sse_native"),
     }

@@ -82,7 +82,12 @@ fn main() {
         let cf = CustomFormula::new(Arc::new(def));
         let base = build_machine(&[Some(&cf)]);
         let Some(p) = base.prog(code_addr(0)) else { continue };
-        let Some(wf) = p.emit_wgsl("fm", difs) else { continue };
+        let Some(wf) = p.emit_wgsl("fm", difs) else {
+            if verbose {
+                println!("NOT   {name}");
+            }
+            continue;
+        };
         translated += 1;
         // CPU runs, collecting the inputs and the results
         let mut rng = Rng(0x9E37_79B9 ^ name.len() as u64 * 7919);
@@ -139,7 +144,7 @@ fn main() {
             "@group(0) @binding(0) var<storage, read> inp: array<u32>;\n@group(0) @binding(1) var<storage, read> cst: array<u32>;\n@group(0) @binding(2) var<storage, read_write> outp: array<u32>;\nalias R = f32;\n{}\n// no maps are loaded here: the interpreter's map functions give 0\nfn map_px(sphere: bool, nr: i32, v: vec3<R>) -> vec3<R> {{ return vec3<R>(0.0); }}\n{}\n{}\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) g: vec3<u32>) {{\n    let i = g.x;\n    if (i >= {TRIALS}u) {{ return; }}\n    _ = cst[0];\n    let b0 = i * {words}u;\n{load}    {regs}\n    xcf = false; xzf = false; xsf = false; xof = false; xpf = false; xaf = false; fsw = 0u;\n    fm(0u);\n{store}}}\n",
             prelude(false),
             record_globals(&[&wf]).unwrap(),
-            wf.code
+            wf.code.replace("@VARBUF@", &format!("{:#x}u", var_buf_addr(0)))
         );
         let got = match mb3d::gpu::run_compute(&wgsl, &[&inp, &cst], TRIALS * words, (TRIALS as u32).div_ceil(64)) {
             Ok(v) => v,

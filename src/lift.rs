@@ -35,6 +35,9 @@ enum AVal {
     Dyn(bool, i32),
     /// data in 0..=mask (after `and reg, mask`): a small index
     Bnd(u32),
+    /// data i << shift with i in 0..=mask (a small index scaled by a shift);
+    /// bit 7 of the shift byte: negated, -(i << shift)
+    BndS(u32, u8),
     /// a known address plus a small index times a scale: one of a few
     /// record fields chosen at run time (base, scale, mask)
     Idx(u32, u8, u8),
@@ -65,7 +68,12 @@ impl AVal {
             return AVal::D;
         }
         match (self, o) {
+            // a pointer that walks over the variable buffer (a loop over the
+            // formula's options): somewhere in it, the address at run time
+            (AVal::Pv(a), AVal::Pv(b)) | (AVal::Pv(a), AVal::Dyn(true, b)) | (AVal::Dyn(true, a), AVal::Pv(b)) | (AVal::Dyn(true, a), AVal::Dyn(true, b)) => AVal::Dyn(true, a.min(b)),
             (AVal::Bnd(a), AVal::Bnd(b)) => AVal::Bnd(a.max(b)),
+            (AVal::BndS(a, s), AVal::BndS(b, t)) if s == t => AVal::BndS(a.max(b), s),
+            (AVal::BndS(..), _) | (_, AVal::BndS(..)) => AVal::D,
             (AVal::Bnd(m), AVal::K(k)) | (AVal::K(k), AVal::Bnd(m)) if k <= m => AVal::Bnd(m),
             (AVal::Bnd(_), AVal::D | AVal::K(_) | AVal::Ks(_)) | (AVal::D | AVal::K(_) | AVal::Ks(_), AVal::Bnd(_)) => AVal::D,
             // constants used as data (masks, immediates) on one path
@@ -167,6 +175,19 @@ fn addr_of(s: &State, m: &Mem) -> AVal {
         return match (base, s.regs[i as usize]) {
             (AVal::K(b), AVal::K(x)) => AVal::K(b.wrapping_add(x.wrapping_mul(sc as u32)).wrapping_add(m.disp as u32)),
             (AVal::K(b), AVal::Bnd(x)) if x <= 15 && sc <= 8 => AVal::Idx(b.wrapping_add(m.disp as u32), sc, x as u8),
+            // the small index as the base register, the address as the index
+            (AVal::Bnd(x), AVal::K(b)) if x <= 15 && sc == 1 => AVal::Idx(b.wrapping_add(m.disp as u32), 1, x as u8),
+            (AVal::BndS(x, shn), AVal::K(b)) if x <= 15 && sc == 1 && shn & 0x80 == 0 && (1u32 << shn) <= 128 => AVal::Idx(b.wrapping_add(m.disp as u32), 1 << shn, x as u8),
+            (AVal::K(b), AVal::BndS(x, shn)) if x <= 15 && ((sc as u32) << (shn & 0x7F)) <= 128 => {
+                let step = sc << (shn & 0x7F);
+                if shn & 0x80 != 0 {
+                    // a negated index: the elements below the address,
+                    // counted from the lowest (bit 7 of the mask: reversed)
+                    AVal::Idx(b.wrapping_add(m.disp as u32).wrapping_sub(x * step as u32), step, x as u8 | 0x80)
+                } else {
+                    AVal::Idx(b.wrapping_add(m.disp as u32), step, x as u8)
+                }
+            }
             (AVal::K(b), AVal::D | AVal::Bnd(_)) => AVal::Dyn(false, b.wrapping_add(m.disp as u32) as i32),
             (AVal::Pv(o), AVal::D | AVal::Bnd(_)) => AVal::Dyn(true, o.wrapping_add(m.disp)),
             _ => AVal::Top,
@@ -175,6 +196,7 @@ fn addr_of(s: &State, m: &Mem) -> AVal {
     match base {
         AVal::K(b) => AVal::K(b.wrapping_add(m.disp as u32)),
         AVal::Pv(o) => AVal::Pv(o.wrapping_add(m.disp)),
+        AVal::Dyn(true, o) => AVal::Dyn(true, o.wrapping_add(m.disp)),
         _ => AVal::Top,
     }
 }
@@ -188,8 +210,9 @@ fn classify(a: AVal) -> Loc {
         AVal::Dyn(false, b) if (IT_BASE..IT_BASE + 0x200).contains(&(b as u32)) => Loc::DynField(b as u32 - IT_BASE),
         AVal::Dyn(false, b) if (STACK_LOW..=STACK_TOP).contains(&(b as u32)) => Loc::DynStack(b - STACK_TOP as i32),
         AVal::Dyn(true, o) => Loc::DynVar(o),
-        AVal::Idx(b, sc, mk) if (IT_BASE..IT_BASE + 0x200).contains(&b) && b + mk as u32 * sc as u32 + 8 <= IT_BASE + 0x200 => Loc::FieldIdx(b - IT_BASE, sc, mk),
-        AVal::Idx(b, sc, mk) if (STACK_LOW..=STACK_TOP).contains(&b) && b + mk as u32 * sc as u32 + 8 <= STACK_TOP => Loc::StackIdx(b as i32 - STACK_TOP as i32, sc, mk),
+        AVal::Idx(b, sc, mk) if (IT_BASE..IT_BASE + 0x200).contains(&b) && b + (mk & 0x7F) as u32 * sc as u32 + 8 <= IT_BASE + 0x200 => Loc::FieldIdx(b - IT_BASE, sc, mk),
+        // (as for Stack: the last element may start up to the stack top)
+        AVal::Idx(b, sc, mk) if (STACK_LOW..=STACK_TOP).contains(&b) && b + (mk & 0x7F) as u32 * sc as u32 <= STACK_TOP => Loc::StackIdx(b as i32 - STACK_TOP as i32, sc, mk),
         _ => Loc::Unresolved,
     }
 }
@@ -221,7 +244,7 @@ impl Ctx<'_> {
         match a {
             AVal::K(x) if x == IT_BASE + off::PVAR => AVal::Pv(0),
             AVal::K(x) if (STACK_LOW..=STACK_TOP).contains(&x) => s.stack.get(&x).copied().unwrap_or(AVal::Top),
-            AVal::K(_) | AVal::Pv(_) | AVal::Idx(..) => AVal::D,
+            AVal::K(_) | AVal::Pv(_) | AVal::Idx(..) | AVal::Dyn(true, _) => AVal::D,
             _ => AVal::Top,
         }
     }
@@ -414,11 +437,16 @@ impl Ctx<'_> {
                     (Alu::Sub, AVal::K(x), AVal::K(y), 4) => AVal::K(x.wrapping_sub(y)),
                     (Alu::Add, AVal::Pv(o), AVal::K(y), 4) => AVal::Pv(o.wrapping_add(y as i32)),
                     (Alu::Sub, AVal::Pv(o), AVal::K(y), 4) => AVal::Pv(o.wrapping_sub(y as i32)),
+                    // (the base of a walking pointer stays: the loop ends)
+                    (Alu::Add | Alu::Sub, AVal::Dyn(true, o), AVal::K(_), 4) => AVal::Dyn(true, o),
                     (Alu::And, AVal::K(x), AVal::K(y), 4) => AVal::K(x & y),
                     (Alu::Or, AVal::K(x), AVal::K(y), 4) => AVal::K(x | y),
                     (Alu::Xor, AVal::K(x), AVal::K(y), 4) => AVal::K(x ^ y),
                     // a small mask: an index into a few fields
                     (Alu::And, _, AVal::K(y), 4) if y <= 15 => AVal::Bnd(y),
+                    // c - (i << s) with c = mask << s: the same set of values
+                    (Alu::Sub, AVal::K(c), AVal::BndS(m, sh), 4) if sh & 0x80 == 0 && c == m << sh => AVal::BndS(m, sh),
+                    (Alu::Sub, AVal::K(c), AVal::Bnd(m), 4) if c == m => AVal::Bnd(m),
                     // pointer arithmetic with data: unknown address
                     (_, AVal::Pv(_), _, 4) | (_, AVal::K(_), AVal::D | AVal::Top, 4) if matches!(op, Alu::Add | Alu::Sub) => AVal::Top,
                     _ => AVal::D,
@@ -455,13 +483,21 @@ impl Ctx<'_> {
                 let r = match (ins, v, size) {
                     (Ins::Inc(..), AVal::K(x), 4) => AVal::K(x.wrapping_add(1)),
                     (Ins::Dec(..), AVal::K(x), 4) => AVal::K(x.wrapping_sub(1)),
+                    (Ins::Neg(..), AVal::BndS(m, sh), 4) => AVal::BndS(m, sh ^ 0x80),
+                    (Ins::Neg(..), AVal::Bnd(m), 4) => AVal::BndS(m, 0x80),
                     _ => AVal::D,
                 };
                 self.write_rm(k, s, rm, *size, r);
             }
-            Ins::Shift { dst, size, .. } => {
-                self.read_rm(k, s, dst, *size);
-                self.write_rm(k, s, dst, *size, AVal::D);
+            Ins::Shift { op, dst, cnt, size } => {
+                let v = self.read_rm(k, s, dst, *size);
+                // a small index shifted left: a few offsets (element size)
+                let r = match (op, v, cnt, size) {
+                    (Shift::Shl, AVal::Bnd(m), Some(n), 4) if *n <= 4 => AVal::BndS(m, *n),
+                    (Shift::Shl, AVal::BndS(m, sh), Some(n), 4) if sh & 0x80 == 0 && sh + *n <= 6 => AVal::BndS(m, sh + *n),
+                    _ => AVal::D,
+                };
+                self.write_rm(k, s, dst, *size, r);
             }
             Ins::Mul(rm, size) | Ins::IMul1(rm, size) | Ins::Div(rm, size) | Ins::IDiv(rm, size) => {
                 self.read_rm(k, s, rm, *size);
@@ -568,6 +604,18 @@ impl Analysis {
         match self.states.get(&(k, cs.to_vec())) {
             Some(s) => classify(addr_of(s, m)),
             None => Loc::Unresolved,
+        }
+    }
+    /// The register of an indexed memory operand that holds the small
+    /// index (`Bnd` / `BndS`) and its scale: the index register, or the
+    /// base when the address is in the index register.
+    pub fn idx_reg(&self, k: usize, cs: &[usize], m: &Mem) -> Option<(u8, u8)> {
+        let s = self.states.get(&(k, cs.to_vec()))?;
+        let small = |r: u8| matches!(s.regs[r as usize], AVal::Bnd(_) | AVal::BndS(..));
+        match (m.base, m.index) {
+            (_, Some((i, sc))) if small(i) => Some((i, sc)),
+            (Some(b), Some((_, 1))) if small(b) => Some((b, 1)),
+            _ => None,
         }
     }
     /// The stack location of a push (`push`: the cell below ESP) or pop.
