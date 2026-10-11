@@ -11,6 +11,7 @@
 //! The x87 register stack is emulated with `f64` (MB3D ran in 64-bit-mantissa
 //! extended precision, so results can differ in the last bits).
 
+use crate::iteration::Iteration;
 use std::collections::HashMap;
 
 /// Base address of the emulated memory (also used by the native test oracle).
@@ -1227,14 +1228,19 @@ impl Machine {
         self.progs.iter().find(|(e, _)| *e == entry).map(|(_, p)| p)
     }
 
-    /// The iteration record cells (read, written as bit masks of 8-byte
-    /// cells from `J4`) of the formula at `entry` when it runs as translated
-    /// code; None if it may touch any part of the record.
-    pub fn formula_fields(&self, entry: u32) -> Option<(u64, u64)> {
+    /// Runs the translated formula at `entry` directly on `it` (see
+    /// [`DirectFn`]), `pvar` = its `PVar`; None if it has no direct version
+    /// (or translated formulas are switched off).
+    pub fn call_direct(&mut self, entry: u32, it: &mut Iteration, pvar: u32, max_steps: u64) -> Option<R<()>> {
         if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
             return None;
         }
-        self.prog(entry)?.fields
+        let i = self.progs.iter().position(|(e, _)| *e == entry)?;
+        let f = self.progs[i].1.direct?;
+        // SAFETY: as in `call_formula`, `progs` cannot change while the
+        // program runs
+        let prog: *const Prog = &self.progs[i].1;
+        Some(f(self, unsafe { &*prog }, it, pvar, max_steps))
     }
 
     /// Whether the code at `entry` runs compiled.
@@ -2735,6 +2741,140 @@ enum Op {
 /// Formula code translated to Rust ahead of time (see `native.rs`).
 pub type NativeFn = fn(&mut Machine, &Prog, u64) -> R<()>;
 
+/// A translated formula called directly with the iteration state (no call
+/// set up, no copying of the iteration record through the emulated memory):
+/// (machine, program, iteration, `PVar`, step limit).  The machine still
+/// holds the stack and the variable buffer.
+pub type DirectFn = fn(&mut Machine, &Prog, &mut Iteration, u32, u64) -> R<()>;
+
+/// The registers and stack arguments `Machine::call_compiled` sets up for a
+/// formula call (the stack in the machine's memory).
+#[inline(always)]
+fn direct_regs(m: &mut Machine) -> [u32; 8] {
+    use crate::custom::{IT_C1, STACK_TOP};
+    let x = IT_C1 - 32;
+    let mut rg = [0u32; 8];
+    rg[EAX] = x;
+    rg[EDX] = x + 8;
+    rg[ECX] = x + 16;
+    rg[ESP] = STACK_TOP - 12;
+    m.wr32u(STACK_TOP - 4, x + 24);
+    m.wr32u(STACK_TOP - 8, IT_C1);
+    m.wr32u(STACK_TOP - 12, RETURN_SENTINEL);
+    rg
+}
+
+/// Cell `c` (the 8 bytes at `J4 + 8c`) of the iteration record for a direct
+/// formula: the fields `Iteration::run_custom` copies into the record come
+/// from `it`, the others from the record in memory.
+#[inline(always)]
+fn rec_get(m: &Machine, it: &Iteration, pvar: u32, c: u32) -> u64 {
+    let mem = || m.rd64u(crate::custom::IT_BASE + 8 * c);
+    let low = |v: u32| (mem() & !0xFFFF_FFFF) | v as u64;
+    match c {
+        0 => it.j[3].to_bits(),
+        1 => it.rold.to_bits(),
+        3..=6 => it.v[c as usize - 3].to_bits(),
+        7..=9 => it.c[c as usize - 7].to_bits(),
+        10..=12 => it.j[c as usize - 10].to_bits(),
+        13 => low(pvar),
+        14 => it.rout.to_bits(),
+        15 => it.it_result as u32 as u64 | (it.max_it as u32 as u64) << 32,
+        16 => low((it.rstop as f32).to_bits()),
+        31 => it.otrap.to_bits(),
+        32 => it.vary_scale.to_bits(),
+        33 => low(it.first_it as u32),
+        34 => it.dfree[0].to_bits(),
+        35 => it.dfree[1].to_bits(),
+        36 => it.deriv1.to_bits(),
+        37 => it.deriv2.to_bits(),
+        38 => it.deriv3.to_bits(),
+        _ => mem(),
+    }
+}
+
+/// Stores cell `c` written by a direct formula: the fields `run_custom`
+/// reads back go to `it`, everything else to the record in memory (the
+/// other fields `run_custom` copies in are overwritten at the next call).
+#[inline(always)]
+fn rec_set(m: &mut Machine, it: &mut Iteration, c: u32, v: u64) {
+    let f = f64::from_bits(v);
+    match c {
+        0 => it.j[3] = f,
+        3..=6 => it.v[c as usize - 3] = f,
+        10..=12 => it.j[c as usize - 10] = f,
+        14 => it.rout = f,
+        31 => it.otrap = f,
+        32 => it.vary_scale = f,
+        34 => it.dfree[0] = f,
+        35 => it.dfree[1] = f,
+        36 => it.deriv1 = f,
+        37 => it.deriv2 = f,
+        38 => it.deriv3 = f,
+        _ => {
+            if c == 33 {
+                it.first_it = v as u32 as i32;
+            }
+            m.wr64u(crate::custom::IT_BASE + 8 * c, v)
+        }
+    }
+}
+
+/// The [`NativeFn`] of a formula with a direct version: runs it on the
+/// iteration record in the emulated memory (for callers of
+/// `Machine::call_formula`).  The registers other than `esp` are not kept.
+fn direct_via_memory(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {
+    use crate::custom::{off, IT_BASE, STACK_TOP};
+    let f = |m: &Machine, o: u32| m.rdf64u(IT_BASE + o);
+    let u = |m: &Machine, o: u32| m.rd32u(IT_BASE + o);
+    let mut it = Iteration::default();
+    for k in 0..4 {
+        it.v[k] = f(m, off::X + 8 * k as u32);
+    }
+    for k in 0..3 {
+        it.c[k] = f(m, off::C1 + 8 * k as u32);
+        it.j[k] = f(m, off::J1 + 8 * k as u32);
+    }
+    it.j[3] = f(m, off::J4);
+    it.rold = f(m, off::ROLD);
+    it.rout = f(m, off::ROUT);
+    it.it_result = u(m, off::IT_RESULT) as i32;
+    it.max_it = u(m, off::MAX_IT) as i32;
+    it.rstop = f32::from_bits(u(m, off::RSTOP)) as f64;
+    it.otrap = f(m, off::OTRAP);
+    it.vary_scale = f(m, off::VARY_SCALE);
+    it.first_it = u(m, off::FIRST_IT) as i32;
+    it.dfree = [f(m, off::DFREE1), f(m, off::DFREE2)];
+    it.deriv1 = f(m, off::DERIV1);
+    it.deriv2 = f(m, off::DERIV1 + 8);
+    it.deriv3 = f(m, off::DERIV1 + 16);
+    let pvar = u(m, off::PVAR);
+    // the return pops the stack arguments like the emulated call
+    let direct = p.direct.expect("direct formula");
+    let r = direct(m, p, &mut it, pvar, max_steps);
+    if r.is_ok() {
+        let mut put = |o: u32, v: f64| m.wrf64u(IT_BASE + o, v);
+        for k in 0..4 {
+            put(off::X + 8 * k as u32, it.v[k]);
+        }
+        for k in 0..3 {
+            put(off::J1 + 8 * k as u32, it.j[k]);
+        }
+        put(off::J4, it.j[3]);
+        put(off::ROUT, it.rout);
+        put(off::OTRAP, it.otrap);
+        put(off::VARY_SCALE, it.vary_scale);
+        put(off::DFREE1, it.dfree[0]);
+        put(off::DFREE2, it.dfree[1]);
+        put(off::DERIV1, it.deriv1);
+        put(off::DERIV1 + 8, it.deriv2);
+        put(off::DERIV1 + 16, it.deriv3);
+        m.wr32u(IT_BASE + off::FIRST_IT, it.first_it as u32);
+        m.regs[ESP] = STACK_TOP;
+    }
+    r
+}
+
 /// Whether translated native formulas are used (`MB3D_NO_NATIVE` turns them off).
 pub static NATIVE_ENABLED: std::sync::LazyLock<std::sync::atomic::AtomicBool> =
     std::sync::LazyLock::new(|| std::sync::atomic::AtomicBool::new(std::env::var_os("MB3D_NO_NATIVE").is_none()));
@@ -2758,9 +2898,9 @@ pub struct Prog {
     /// translated native version (`native.rs`)
     pub hash: u64,
     native: Option<NativeFn>,
-    /// the iteration record cells the native version reads / writes
-    /// (`native::fields`); None: it may touch any
-    fields: Option<(u64, u64)>,
+    /// the direct version of the translated formula, if any (`native`
+    /// then runs it on the emulated memory)
+    direct: Option<DirectFn>,
     /// return addresses of local calls and the op index they return to
     rets: Vec<(u32, usize)>,
     /// op index for instruction addresses (jump targets)
@@ -3065,8 +3205,9 @@ impl Machine {
                 _ => None,
             })
             .collect();
-        let fields = native.and_then(|_| native::fields(hash));
-        Ok(Prog { ops, index, hash, native, fields, rets })
+        let direct = native::lookup_direct(hash, ops.len());
+        let native = if direct.is_some() { Some(direct_via_memory as NativeFn) } else { native };
+        Ok(Prog { ops, index, hash, native, direct, rets })
     }
 
     fn fload_m(&self, kind: FKind, mem: &Mem) -> R<f64> {
@@ -3607,6 +3748,11 @@ impl Prog {
     /// Whether a translated native version is attached.
     pub fn is_native(&self) -> bool {
         self.native.is_some()
+    }
+
+    /// Whether the translated version is called directly (see [`DirectFn`]).
+    pub fn is_direct(&self) -> bool {
+        self.direct.is_some()
     }
 
     /// Translates the program into a Rust function `name` with the

@@ -521,91 +521,69 @@ impl Iteration {
     /// record is mirrored into the emulated memory, the machine code is run
     /// and the fields a formula may change are read back.
     fn run_custom(&mut self, n: usize) {
+        // a translated formula with a direct version works on the fields
+        // themselves (the machine is taken out of `self` for the call)
+        if let Some(mut m) = self.emu.take() {
+            let r = m.call_direct(custom::code_addr(n), self, custom::pconst_addr(n), custom::MAX_STEPS);
+            self.emu = Some(m);
+            match r {
+                Some(Ok(())) => return,
+                Some(Err(_)) => {
+                    CUSTOM_ERRORS.fetch_add(1, Ordering::Relaxed);
+                    self.v = [f64::INFINITY; 4];
+                    self.rout = f64::INFINITY;
+                    return;
+                }
+                None => {}
+            }
+        }
         let Some(m) = self.emu.as_deref_mut() else {
             self.rout = f64::INFINITY;
             return;
         };
         let b = custom::IT_BASE;
-        let code = custom::code_addr(n);
-        // a translated formula touches only the record cells it names, the
-        // others need not be copied (all cells for the interpreter)
-        let (rd, wr) = m.formula_fields(code).unwrap_or((u64::MAX, u64::MAX));
-        let has = |mask: u64, o: u32| mask & (1 << (o / 8)) != 0;
         // the iteration record lies at fixed addresses inside the image,
         // so the unchecked accessors are used here
         for k in 0..4 {
-            let o = off::X + 8 * k as u32;
-            if has(rd, o) {
-                m.put_f64(b + o, self.v[k]);
-            }
+            m.put_f64(b + off::X + 8 * k as u32, self.v[k]);
         }
         for k in 0..3 {
-            if has(rd, off::C1 + 8 * k as u32) {
-                m.put_f64(b + off::C1 + 8 * k as u32, self.c[k]);
-            }
-            if has(rd, off::J1 + 8 * k as u32) {
-                m.put_f64(b + off::J1 + 8 * k as u32, self.j[k]);
-            }
+            m.put_f64(b + off::C1 + 8 * k as u32, self.c[k]);
+            m.put_f64(b + off::J1 + 8 * k as u32, self.j[k]);
         }
-        let f64s: [(u32, f64); 10] = [
-            (off::J4, self.j[3]),
-            (off::ROLD, self.rold),
-            (off::ROUT, self.rout),
-            (off::OTRAP, self.otrap),
-            (off::VARY_SCALE, self.vary_scale),
-            (off::DERIV1, self.deriv1),
-            (off::DERIV1 + 8, self.deriv2),
-            (off::DERIV1 + 16, self.deriv3),
-            (off::DFREE1, self.dfree[0]),
-            (off::DFREE2, self.dfree[1]),
-        ];
-        for (o, v) in f64s {
-            if has(rd, o) {
-                m.put_f64(b + o, v);
-            }
-        }
-        let u32s: [(u32, u32); 5] = [
-            (off::PVAR, custom::pconst_addr(n)),
-            (off::IT_RESULT, self.it_result as u32),
-            (off::MAX_IT, self.max_it as u32),
-            (off::RSTOP, (self.rstop as f32).to_bits()),
-            (off::FIRST_IT, self.first_it as u32),
-        ];
-        for (o, v) in u32s {
-            if has(rd, o) {
-                m.put_u32(b + o, v);
-            }
-        }
-        let res = m.call_formula(code, custom::IT_C1, custom::STACK_TOP, custom::MAX_STEPS);
+        m.put_f64(b + off::J4, self.j[3]);
+        m.put_f64(b + off::ROLD, self.rold);
+        m.put_u32(b + off::PVAR, custom::pconst_addr(n));
+        m.put_f64(b + off::ROUT, self.rout);
+        m.put_u32(b + off::IT_RESULT, self.it_result as u32);
+        m.put_u32(b + off::MAX_IT, self.max_it as u32);
+        m.put_u32(b + off::RSTOP, (self.rstop as f32).to_bits());
+        m.put_f64(b + off::OTRAP, self.otrap);
+        m.put_f64(b + off::VARY_SCALE, self.vary_scale);
+        m.put_u32(b + off::FIRST_IT, self.first_it as u32);
+        m.put_f64(b + off::DERIV1, self.deriv1);
+        m.put_f64(b + off::DERIV1 + 8, self.deriv2);
+        m.put_f64(b + off::DERIV1 + 16, self.deriv3);
+        m.put_f64(b + off::DFREE1, self.dfree[0]);
+        m.put_f64(b + off::DFREE2, self.dfree[1]);
+        let res = m.call_formula(custom::code_addr(n), custom::IT_C1, custom::STACK_TOP, custom::MAX_STEPS);
         if res.is_ok() {
             for k in 0..4 {
-                let o = off::X + 8 * k as u32;
-                if has(wr, o) {
-                    self.v[k] = m.get_f64(b + o);
-                }
+                self.v[k] = m.get_f64(b + off::X + 8 * k as u32);
             }
             for k in 0..3 {
-                if has(wr, off::J1 + 8 * k as u32) {
-                    self.j[k] = m.get_f64(b + off::J1 + 8 * k as u32);
-                }
+                self.j[k] = m.get_f64(b + off::J1 + 8 * k as u32);
             }
-            let get = |o: u32, x: &mut f64| {
-                if has(wr, o) {
-                    *x = m.get_f64(b + o);
-                }
-            };
-            get(off::J4, &mut self.j[3]);
-            get(off::ROUT, &mut self.rout);
-            get(off::OTRAP, &mut self.otrap);
-            get(off::VARY_SCALE, &mut self.vary_scale);
-            get(off::DERIV1, &mut self.deriv1);
-            get(off::DERIV1 + 8, &mut self.deriv2);
-            get(off::DERIV1 + 16, &mut self.deriv3);
-            get(off::DFREE1, &mut self.dfree[0]);
-            get(off::DFREE2, &mut self.dfree[1]);
-            if has(wr, off::FIRST_IT) {
-                self.first_it = m.get_u32(b + off::FIRST_IT) as i32;
-            }
+            self.j[3] = m.get_f64(b + off::J4);
+            self.rout = m.get_f64(b + off::ROUT);
+            self.otrap = m.get_f64(b + off::OTRAP);
+            self.vary_scale = m.get_f64(b + off::VARY_SCALE);
+            self.first_it = m.get_u32(b + off::FIRST_IT) as i32;
+            self.deriv1 = m.get_f64(b + off::DERIV1);
+            self.deriv2 = m.get_f64(b + off::DERIV1 + 8);
+            self.deriv3 = m.get_f64(b + off::DERIV1 + 16);
+            self.dfree[0] = m.get_f64(b + off::DFREE1);
+            self.dfree[1] = m.get_f64(b + off::DFREE2);
         }
         if res.is_err() {
             CUSTOM_ERRORS.fetch_add(1, Ordering::Relaxed);

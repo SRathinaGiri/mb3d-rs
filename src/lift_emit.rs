@@ -288,19 +288,12 @@ impl Prog {
         self.emit_lifted_cells(name, difs).map(|x| x.0)
     }
 
-    /// [`Prog::emit_lifted`] with the 8-byte cells of the iteration record
-    /// the code reads and writes (bit c: bytes 8c..8c+8 from `J4`), so the
-    /// caller only needs to copy those in and out.
-    pub fn emit_lifted_fields(&self, name: &str, difs: bool) -> Option<(String, u64, u64)> {
-        let (code, cells) = self.emit_lifted_cells(name, difs)?;
-        // (a cell past the 64 the record has would mean "copy everything")
-        let mask = |set: &BTreeSet<(char, u32)>| set.iter().filter(|c| c.0 == 'r').fold(0u64, |m, c| m | 1u64.checked_shl(c.1).unwrap_or(u64::MAX));
-        let mut rd = mask(&cells.used);
-        if !difs && cells.used.iter().any(|c| c.0 == 'v') {
-            // the variable buffer address is read from PVar
-            rd |= 1 << (off::PVAR / 8);
-        }
-        Some((code, rd | mask(&cells.written), mask(&cells.written)))
+    /// The direct version of [`Prog::emit_lifted`] (a [`DirectFn`]): the
+    /// iteration record cells come from and go to the `Iteration` (see
+    /// `rec_get` / `rec_set`), the call needs no set up in the emulated
+    /// machine.  Not for dIFS formulas.
+    pub fn emit_lifted_direct(&self, name: &str) -> Option<String> {
+        self.emit_lifted_mode(name, false, true).map(|x| x.0)
     }
 
     /// An x87 double access to a record field chosen by a small index
@@ -348,6 +341,10 @@ impl Prog {
 
     /// `emit_lifted` with the cells and their access log.
     pub(super) fn emit_lifted_cells(&self, name: &str, difs: bool) -> Option<(String, Cells)> {
+        self.emit_lifted_mode(name, difs, false)
+    }
+
+    fn emit_lifted_mode(&self, name: &str, difs: bool, direct: bool) -> Option<(String, Cells)> {
         let an = self.analyse(difs);
         if !an.report.problems.is_empty() {
             lift_debug(&format!("{:?}", an.report.problems));
@@ -411,25 +408,47 @@ impl Prog {
             }
         };
         let mut o = String::new();
-        let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {{");
-        let _ = writeln!(o, "    let _ = p;");
-        let _ = writeln!(o, "    let mut f = [0f64; 8];");
-        let _ = writeln!(o, "    let mut rg = m.regs;");
-        let _ = writeln!(o, "    let mut fl = m.fl;");
-        let _ = writeln!(o, "    let mut fsw = m.fsw_cc;");
-        let _ = writeln!(o, "    let mut steps = m.steps;");
-        let _ = writeln!(o, "    let limit = steps + max_steps;");
-        if cells.used.iter().any(|c| c.0 == 'v') {
-            // the variable buffer: dIFS formulas get PVar in edi, the others
-            // read it from the record (as the analysis assumes)
-            if difs {
-                let _ = writeln!(o, "    let vb = rg[EDI].wrapping_sub({});", crate::m3f::CONST_OFFSET);
-            } else {
-                let _ = writeln!(o, "    let vb = m.rd32u({:#x}u32).wrapping_sub({});", IT_BASE + off::PVAR, crate::m3f::CONST_OFFSET);
+        if direct {
+            // the state `Machine::call_compiled` sets up, without the machine
+            let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {{");
+            let _ = writeln!(o, "    let _ = p;");
+            let _ = writeln!(o, "    let mut f = [0f64; 8];");
+            let _ = writeln!(o, "    let mut rg = direct_regs(m);");
+            let _ = writeln!(o, "    let mut fl = Flags::default();");
+            let _ = writeln!(o, "    let mut fsw = 0u16;");
+            let _ = writeln!(o, "    let mut steps = 0u64;");
+            let _ = writeln!(o, "    let limit = max_steps;");
+            if cells.used.iter().any(|c| c.0 == 'v') {
+                let _ = writeln!(o, "    let vb = pvar.wrapping_sub({});", crate::m3f::CONST_OFFSET);
             }
-        }
-        for (p, c) in &cells.used {
-            let _ = writeln!(o, "    let mut {p}{c}: u64 = m.rd64u({});", addr(*p, *c));
+            for (p, c) in &cells.used {
+                if *p == 'r' {
+                    let _ = writeln!(o, "    let mut r{c}: u64 = rec_get(m, it, pvar, {c});");
+                } else {
+                    let _ = writeln!(o, "    let mut {p}{c}: u64 = m.rd64u({});", addr(*p, *c));
+                }
+            }
+        } else {
+            let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {{");
+            let _ = writeln!(o, "    let _ = p;");
+            let _ = writeln!(o, "    let mut f = [0f64; 8];");
+            let _ = writeln!(o, "    let mut rg = m.regs;");
+            let _ = writeln!(o, "    let mut fl = m.fl;");
+            let _ = writeln!(o, "    let mut fsw = m.fsw_cc;");
+            let _ = writeln!(o, "    let mut steps = m.steps;");
+            let _ = writeln!(o, "    let limit = steps + max_steps;");
+            if cells.used.iter().any(|c| c.0 == 'v') {
+                // the variable buffer: dIFS formulas get PVar in edi, the others
+                // read it from the record (as the analysis assumes)
+                if difs {
+                    let _ = writeln!(o, "    let vb = rg[EDI].wrapping_sub({});", crate::m3f::CONST_OFFSET);
+                } else {
+                    let _ = writeln!(o, "    let vb = m.rd32u({:#x}u32).wrapping_sub({});", IT_BASE + off::PVAR, crate::m3f::CONST_OFFSET);
+                }
+            }
+            for (p, c) in &cells.used {
+                let _ = writeln!(o, "    let mut {p}{c}: u64 = m.rd64u({});", addr(*p, *c));
+            }
         }
         let _ = writeln!(o, "    let res = (|| -> R<()> {{");
         let _ = writeln!(o, "    let mut b: usize = {};", id(0, &[])?);
@@ -442,13 +461,19 @@ impl Prog {
         let _ = writeln!(o, "    }})();");
         let _ = writeln!(o, "    if res.is_ok() {{");
         for (p, c) in &cells.written {
-            let _ = writeln!(o, "        m.wr64u({}, {p}{c});", addr(*p, *c));
+            if direct && *p == 'r' {
+                let _ = writeln!(o, "        rec_set(m, it, {c}, r{c});");
+            } else {
+                let _ = writeln!(o, "        m.wr64u({}, {p}{c});", addr(*p, *c));
+            }
         }
-        let _ = writeln!(o, "        m.regs = rg;");
-        let _ = writeln!(o, "        m.fl = fl;");
-        let _ = writeln!(o, "        m.fsw_cc = fsw;");
-        let _ = writeln!(o, "        m.steps = steps;");
-        let _ = writeln!(o, "        m.st = f;");
+        if !direct {
+            let _ = writeln!(o, "        m.regs = rg;");
+            let _ = writeln!(o, "        m.fl = fl;");
+            let _ = writeln!(o, "        m.fsw_cc = fsw;");
+            let _ = writeln!(o, "        m.steps = steps;");
+            let _ = writeln!(o, "        m.st = f;");
+        }
         let _ = writeln!(o, "    }}");
         let _ = writeln!(o, "    res");
         let _ = writeln!(o, "}}");

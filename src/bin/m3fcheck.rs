@@ -201,7 +201,9 @@ fn main() {
                     ei.call_formula(code_addr(slot), IT_C1, STACK_TOP, MAX_STEPS)
                 };
                 mb3d::x86::NATIVE_ENABLED.store(true, std::sync::atomic::Ordering::Relaxed);
-                let regs_differ = (0..8).any(|r| em.reg(r) != ei.reg(r));
+                // a direct formula keeps only esp (callers use nothing else)
+                let direct = base.prog(code_addr(slot)).is_some_and(|p| p.is_direct());
+                let regs_differ = (0..8).any(|r| em.reg(r) != ei.reg(r) && (!direct || r == 4));
                 let first_mem = (0..MEM_SIZE).find(|&i| em.mem[i] != ei.mem[i]);
                 if r2.is_err() || regs_differ || first_mem.is_some() {
                     status = format!(

@@ -52,8 +52,8 @@ fn main() {
         .filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("m3f")))
         .collect();
     files.sort();
-    // hash -> (op count, function name, formula names, code, record cells read / written)
-    type Func = (usize, String, Vec<String>, String, Option<(u64, u64)>);
+    // hash -> (op count, function name, formula names, code, direct version, dIFS)
+    type Func = (usize, String, Vec<String>, String, bool, bool);
     let mut funcs: BTreeMap<u64, Func> = BTreeMap::new();
     let (mut skipped, mut total, mut lifted) = (0, 0, 0);
     for f in &files {
@@ -76,19 +76,26 @@ fn main() {
             skipped += 1;
             continue;
         }
+        let no_lift = std::env::var_os("M3F2RS_NO_LIFT").is_some();
         let e = funcs.entry(p.hash).or_insert_with(|| {
             let fname = format!("f_{:016x}", p.hash);
             // the lifted version (memory as locals) where the analysis
-            // allows it, the emulated memory otherwise
-            let (code, fields) = match (std::env::var_os("M3F2RS_NO_LIFT"), p.emit_lifted_fields(&fname, difs)) {
-                (None, Some((c, rd, wr))) => {
-                    lifted += 1;
-                    (c, Some((rd, wr)))
-                }
-                _ => (p.emit_rust(&fname, difs), None),
+            // allows it, called directly with the iteration state except for
+            // dIFS formulas; the emulated memory otherwise
+            let lifted_code = if no_lift { None } else { p.emit_lifted(&fname, difs) };
+            if lifted_code.is_some() {
+                lifted += 1;
+            }
+            let (code, direct) = match lifted_code {
+                Some(_) if !difs => (p.emit_lifted_direct(&fname).expect("lifted"), true),
+                Some(c) => (c, false),
+                None => (p.emit_rust(&fname, difs), false),
             };
-            (p.len(), fname.clone(), Vec::new(), code, fields)
+            (p.len(), fname.clone(), Vec::new(), code, direct, difs)
         });
+        // the same code used with both calling conventions would need both
+        // versions
+        assert_eq!(e.5, difs, "{name}: the same code as a formula of the other kind");
         e.2.push(name);
     }
     let mut o = String::new();
@@ -98,21 +105,19 @@ fn main() {
          #![allow(clippy::all, unused_mut, unused_variables, unreachable_code, unused_parens, unused_braces, unused_assignments)]\n\n\
          use super::*;\n\n",
     );
-    o.push_str("pub(super) fn lookup(hash: u64, ops: usize) -> Option<NativeFn> {\n    let (n, f): (usize, NativeFn) = match hash {\n");
-    for (h, (n, fname, names, _, _)) in &funcs {
-        let _ = writeln!(o, "        {h:#018x} => ({n}, {fname}), // {}", names.join(", "));
-    }
-    o.push_str("        _ => return None,\n    };\n    (n == ops).then_some(f)\n}\n\n");
-    // the lifted functions touch the iteration record only in these cells
-    o.push_str("/// The 8-byte cells of the iteration record a lifted function reads and\n/// writes (bit c: bytes 8c..8c+8 from `J4`); None: any.\n");
-    o.push_str("pub(super) fn fields(hash: u64) -> Option<(u64, u64)> {\n    Some(match hash {\n");
-    for (h, (_, _, _, _, fields)) in &funcs {
-        if let Some((rd, wr)) = fields {
-            let _ = writeln!(o, "        {h:#018x} => ({rd:#x}, {wr:#x}),");
+    let table = |o: &mut String, direct: bool| {
+        let (fname, ty) = if direct { ("lookup_direct", "DirectFn") } else { ("lookup", "NativeFn") };
+        let _ = writeln!(o, "pub(super) fn {fname}(hash: u64, ops: usize) -> Option<{ty}> {{\n    let (n, f): (usize, {ty}) = match hash {{");
+        for (h, (n, fname, names, _, d, _)) in &funcs {
+            if *d == direct {
+                let _ = writeln!(o, "        {h:#018x} => ({n}, {fname}), // {}", names.join(", "));
+            }
         }
-    }
-    o.push_str("        _ => return None,\n    })\n}\n\n");
-    for (_, (_, _, names, code, _)) in &funcs {
+        o.push_str("        _ => return None,\n    };\n    (n == ops).then_some(f)\n}\n\n");
+    };
+    table(&mut o, false);
+    table(&mut o, true);
+    for (_, (_, _, names, code, _, _)) in &funcs {
         let _ = writeln!(o, "// {}", names.join(", "));
         o.push_str(code);
         o.push('\n');
