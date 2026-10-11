@@ -1839,9 +1839,9 @@ object Mand3DForm: TMand3DForm
         OnMouseUp = SpeedButton9MouseUp
       end
       object Button2: TButton
-        Left = 3
+        Left = -1
         Top = 25
-        Width = 77
+        Width = 81
         Height = 43
         Hint = 'Main rendering of the image'
         Caption = 'Calculate 3D'
@@ -2613,7 +2613,7 @@ object Mand3DForm: TMand3DForm
       Align = alTop
       TabOrder = 2
       object SpeedButton12: TSpeedButton
-        Left = 4
+        Left = 2
         Top = 5
         Width = 52
         Height = 30
@@ -2624,7 +2624,7 @@ object Mand3DForm: TMand3DForm
         OnClick = SpeedButton12Click
       end
       object SpeedButton15: TSpeedButton
-        Left = 4
+        Left = 2
         Top = 38
         Width = 52
         Height = 31
@@ -2636,7 +2636,7 @@ object Mand3DForm: TMand3DForm
         OnClick = SpeedButton15Click
       end
       object MeshExportBtn: TSpeedButton
-        Left = 57
+        Left = 55
         Top = 5
         Width = 52
         Height = 30
@@ -2647,7 +2647,7 @@ object Mand3DForm: TMand3DForm
         OnClick = MeshExportBtnClick
       end
       object MutaGenBtn: TSpeedButton
-        Left = 57
+        Left = 55
         Top = 38
         Width = 52
         Height = 31
@@ -2659,7 +2659,7 @@ object Mand3DForm: TMand3DForm
         OnClick = MutaGenBtnClick
       end
       object ZBufferGenBtn: TSpeedButton
-        Left = 110
+        Left = 108
         Top = 38
         Width = 52
         Height = 30
@@ -2670,7 +2670,7 @@ object Mand3DForm: TMand3DForm
         OnClick = ZBufferGenBtnClick
       end
       object HeightMapGenBtn: TSpeedButton
-        Left = 110
+        Left = 108
         Top = 5
         Width = 52
         Height = 30

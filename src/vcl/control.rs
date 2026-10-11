@@ -394,7 +394,8 @@ impl Control {
             popup_menu: None,
             cursor: String::new(),
             auto_size: matches!(kind, Kind::Label | Kind::Edit | Kind::StaticText),
-            word_wrap: false,
+            // TMemo wraps by default (WordWrap = True)
+            word_wrap: kind == Kind::Memo,
             alignment: if kind == Kind::Panel { HAlign::Center } else { HAlign::Left },
             layout: if kind == Kind::SpeedButton || kind == Kind::Panel { VAlign::Center } else { VAlign::Top },
             text: String::new(),

@@ -708,13 +708,24 @@ impl Form {
             let ty = r.y + (r.h - lh) / 2 + off;
             let old = cv.clip_to(r.inset(1));
             if layout == "blGlyphRight" {
-                if tw > 0 {
-                    cv.text(x, ty, &cap, &font, tc);
-                    x += tw + sp;
+                // VCL (TButtonGlyph.CalcButtonLayout): the margin is measured
+                // from the edge the glyph is on; a negative spacing centres
+                // the caption in the space left on the other side
+                let gx = if c.margin >= 0 { r.x + r.w - c.margin - gw + off } else { x + tw + sp };
+                if let Some(g) = &glyph {
+                    cv.image(gx, gy, g);
                 }
+                if tw > 0 {
+                    let tx = if c.spacing < 0 && gw > 0 { r.x + (gx - r.x - tw) / 2 + off } else if gw > 0 { gx - sp - tw } else { x };
+                    cv.text(tx, ty, &cap, &font, tc);
+                }
+            } else if c.margin >= 0 && c.spacing < 0 && gw > 0 && tw > 0 {
+                // glyph on the left at the margin, the caption centred beside it
                 if let Some(g) = &glyph {
                     cv.image(x, gy, g);
                 }
+                let gr = x + gw;
+                cv.text(gr + (r.x + r.w - gr - tw) / 2, ty, &cap, &font, tc);
             } else {
                 if let Some(g) = &glyph {
                     cv.image(x, gy, g);

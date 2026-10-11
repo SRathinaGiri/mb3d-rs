@@ -119,6 +119,9 @@ fn layout(app: &mut Mb3d, ui: &mut Ui) {
         let c = ui.cm(F, &panel_name(i));
         c.set_bounds(l, t, w, h);
         c.caption = if i == 0 { "Root".into() } else { format!("Mutation {}", &TREE[i].0[2..]) };
+        // the picture fills the panel (alClient with 5 pixel margins), the
+        // caption below it
+        ui.cm(F, &image_name(i)).set_bounds(5, 5, (w - 10).max(8), (h - 10 - 14).max(8));
     }
     // the lines (`TPanelLinkLine`), red
     let mut b = Bitmap::new(r.w.max(1) as usize, r.h.max(1) as usize, 0);
@@ -290,6 +293,8 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize) {
         app.mutagen.cancel.store(true, Ordering::SeqCst);
         return;
     }
+    // the picture size follows the window's layout
+    layout(app, ui);
     let initial = if app.mutagen.generations.is_empty() {
         initial_from_main(app, ui)
     } else {
@@ -327,7 +332,10 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize) {
         let render = |m: &Member| -> Bitmap {
             match crate::mutagen::preview(&m.scene, bw, bh, false, threads) {
                 Ok((rgb, w, h)) => to_bitmap(&rgb, w, h, bw, bh),
-                Err(_) => Bitmap::new(bw, bh, 0xFF00_0000),
+                Err(e) => {
+                    eprintln!("MutaGen preview: {e}");
+                    Bitmap::new(bw, bh, 0xFF00_0000)
+                }
             }
         };
         let r = (|| -> Result<(), String> {
