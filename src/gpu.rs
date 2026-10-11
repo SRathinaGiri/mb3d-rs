@@ -97,7 +97,13 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     if p.vol.is_some() {
         return r("volumetric light (not on the GPU yet)");
     }
-    if precision(p) < MIN_PRECISION {
+    // MB3D_GPU_MIN_PRECISION / MB3D_GPU_MIN_STEP: experiments with the limits
+    let env = |k: &str, d: f64| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
+    let numeric = !(p.is_custom_de || p.difs) || p.decomb.as_ref().is_some_and(|d| !(d.part2.is_custom_de || d.part2.difs));
+    if numeric && precision(p) < env("MB3D_GPU_MIN_PRECISION", MIN_PRECISION) {
+        return r("the zoom needs double precision");
+    }
+    if step_precision(p) < env("MB3D_GPU_MIN_STEP", MIN_STEP_PRECISION) {
         return r("the zoom needs double precision");
     }
     scene_shader(p).err()
@@ -418,11 +424,22 @@ const MIN_PRECISION: f64 = 3.0;
 /// offset of the numerical DE gradient spans: the larger, the less the
 /// rounding of the shader shows.  It falls with the zoom (the pixel size).
 pub fn precision(p: &CalcParams) -> f64 {
-    let m = p.ystart.iter().fold(0.0f64, |a, v| a.max(v.abs()))
-        + p.step_width * (p.width + p.height) as f64
-        + 2.0;
-    p.de_offset as f64 / (m * f32::EPSILON as f64)
+    p.de_offset as f64 / (coord_size(p) * f32::EPSILON as f64)
 }
+
+/// The size of the coordinates the shader works with.
+fn coord_size(p: &CalcParams) -> f64 {
+    p.ystart.iter().fold(0.0f64, |a, v| a.max(v.abs())) + p.step_width * (p.width + p.height) as f64 + 2.0
+}
+
+/// How many single precision steps a pixel step spans: the limit for the
+/// scenes with an analytic DE (no gradient offset).
+pub fn step_precision(p: &CalcParams) -> f64 {
+    p.step_width / (coord_size(p) * f32::EPSILON as f64)
+}
+
+/// The smallest [`step_precision`] for the GPU.
+const MIN_STEP_PRECISION: f64 = 64.0;
 
 struct Gpu {
     device: wgpu::Device,

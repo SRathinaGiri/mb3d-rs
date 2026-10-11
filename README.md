@@ -397,14 +397,20 @@ smooth minima and the dIFS mix). Everything else is calculated on the CPU
 as before: 4D and interpolation hybrids, the formulas the lifter cannot
 resolve and the other built-in formulas, cutting planes, inside rendering,
 volumetric light, views zoomed so far that single precision would show as
-noise (about zoom 7 at 800 pixels width), and the Monte Carlo renderer.
+noise, and the Monte Carlo renderer. The zoom limit depends on the DE: a
+numerical DE samples the formula at a tiny offset, which must span a few
+single precision steps of the coordinates (about zoom 7 at 800 pixels
+width); an analytic DE or dIFS only needs the pixel steps themselves to be
+distinct (64 single precision steps), which allows far deeper views.
 `mb3d` prints which was used and why; errors of the graphics card or its
 driver also send the calculation to the CPU, and software renderers
 (llvmpipe, WARP) are not used. The first calculation of a scene compiles
 its shader (one to two seconds; the driver caches it).
 
-Of the 80 example parameter files of MB3D, 41 run on the GPU (391 of the
-460 formula files translate). On a GeForce GTX 1650 (laptop) against a
+Of the 80 example parameter files of MB3D, 45 run on the GPU at their
+own image size (391 of the 460 formula files translate); at that size
+*Chrystal* takes 3.2 s instead of 148 s, *LightBulbMoon - No, Never* 2.0 s
+instead of 58 s. On a GeForce GTX 1650 (laptop) against a
 Ryzen 5 3550H (8 threads), at 640 pixels: *TimeMachine* 1.5 s instead of
 19.8 s, *Theli-At - Bone Menger* 1.4 s instead of 11.8 s,
 *Hal-Tenny-Resistance* 16.5 s instead of 99 s; with the shadows on the
