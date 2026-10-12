@@ -2561,39 +2561,41 @@ struct SharedRound {
 
 #[cfg(feature = "gpu")]
 impl SharedRound {
-    /// A thread's part while it has nothing else to do: pieces from the
-    /// end until the card is done, then the tasks the card gave up (if it
-    /// is done by then); returns without waiting
-    fn help(&self, m: &mut McMarch) {
+    /// One piece from the end (or, once published, a task the card gave
+    /// up); false when there is nothing to take
+    fn help_piece(&self, m: &mut McMarch) -> bool {
         use std::sync::atomic::Ordering;
         const PIECE: usize = 16;
-        loop {
-            let piece = {
-                let mut st = self.share.state.lock().unwrap();
-                let lo = st.1.saturating_sub(PIECE).max(st.0);
-                let r = lo..st.1;
-                st.1 = lo;
-                r
-            };
-            if piece.is_empty() {
-                break;
-            }
+        let piece = {
+            let mut st = self.share.state.lock().unwrap();
+            let lo = st.1.saturating_sub(PIECE).max(st.0);
+            let r = lo..st.1;
+            st.1 = lo;
+            r
+        };
+        if !piece.is_empty() {
             let t = std::time::Instant::now();
             for i in piece.rev() {
                 let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
             }
             self.cpu_ns.fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
+            return true;
         }
         if self.published.load(Ordering::SeqCst) {
-            self.take_left(m);
+            let i = self.left.lock().unwrap().pop();
+            if let Some(i) = i {
+                let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
+                return true;
+            }
         }
+        false
     }
 
-    fn take_left(&self, m: &mut McMarch) {
-        loop {
-            let Some(i) = self.left.lock().unwrap().pop() else { break };
-            let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
-        }
+    /// There may be something to take
+    fn open(&self) -> bool {
+        use std::sync::atomic::Ordering;
+        let st = self.share.state.lock().unwrap();
+        st.0 < st.1 || !self.published.load(Ordering::SeqCst) || !self.left.lock().unwrap().is_empty()
     }
 }
 
@@ -2604,6 +2606,14 @@ struct ToMain {
     worker: usize,
     group: usize,
     reqs: Option<Vec<McReq>>,
+}
+
+/// The pass's events: a thread's round, or the card's batch done (its
+/// result and seconds).
+#[cfg(feature = "gpu")]
+enum MainEv {
+    Round(ToMain),
+    Card(Result<(Vec<McRes>, usize, Vec<usize>), String>, f64),
 }
 
 /// The answer to a group's round: the results, or "march them yourself";
@@ -2637,7 +2647,7 @@ fn pass_gpu(
     let h = img.height;
     let p = ctx.p;
     let done_rows = std::sync::atomic::AtomicUsize::new(0);
-    let (to_main, from_workers) = mpsc::channel::<ToMain>();
+    let (to_main, from_workers) = mpsc::channel::<MainEv>();
     let mut replies = Vec::new();
     let mut inboxes = Vec::new();
     for _ in 0..threads {
@@ -2677,15 +2687,16 @@ fn pass_gpu(
                 }
                 let outboxes = [Rc::new(RefCell::new(Vec::new())), Rc::new(RefCell::new(Vec::new()))];
                 let mut groups: Vec<Group> = outboxes.iter().map(|o| Group { active: Vec::new(), outbox: o.clone(), waiting: None, done: false }).collect();
-                // answers that came for the other group
+                // answers that came for the other group, batches to help with
                 let mut stash: Vec<ToWorker> = Vec::new();
+                let mut helping: Vec<std::sync::Arc<SharedRound>> = Vec::new();
                 let mut cx = Context::from_waker(std::task::Waker::noop());
                 let mut g = 0;
                 while !(groups[0].done && groups[1].done) {
                     if cancel() {
                         for (k, gr) in groups.iter().enumerate() {
                             if !gr.done {
-                                let _ = to_main.send(ToMain { worker: wi, group: k, reqs: None });
+                                let _ = to_main.send(MainEv::Round(ToMain { worker: wi, group: k, reqs: None }));
                             }
                         }
                         return;
@@ -2694,18 +2705,32 @@ fn pass_gpu(
                         g = 1 - g;
                         continue;
                     }
-                    // the answer to this group's round (helping meanwhile)
+                    // the answer to this group's round (helping with the
+                    // batches meanwhile, a piece at a time)
                     if let Some((links, reqs)) = groups[g].waiting.take() {
                         let res = loop {
-                            let m = match stash.iter().position(|m| matches!(m, ToWorker::Results(k, _) | ToWorker::Cpu(k) if *k == g)) {
-                                Some(i) => stash.swap_remove(i),
-                                None => match inbox.recv() {
+                            let m = if let Some(i) = stash.iter().position(|m| matches!(m, ToWorker::Results(k, _) | ToWorker::Cpu(k) if *k == g)) {
+                                stash.swap_remove(i)
+                            } else {
+                                match inbox.try_recv() {
                                     Ok(m) => m,
-                                    Err(_) => return,
-                                },
+                                    Err(mpsc::TryRecvError::Disconnected) => return,
+                                    Err(mpsc::TryRecvError::Empty) => {
+                                        helping.retain(|r| r.open());
+                                        let mut m = march.borrow_mut();
+                                        if helping.iter().any(|r| r.help_piece(&mut m)) {
+                                            continue;
+                                        }
+                                        drop(m);
+                                        match inbox.recv() {
+                                            Ok(m) => m,
+                                            Err(_) => return,
+                                        }
+                                    }
+                                }
                             };
                             match m {
-                                ToWorker::Help(round) => round.help(&mut march.borrow_mut()),
+                                ToWorker::Help(round) => helping.push(round),
                                 ToWorker::Results(k, res) if k == g => break res,
                                 ToWorker::Cpu(k) if k == g => {
                                     let mut m = march.borrow_mut();
@@ -2762,14 +2787,14 @@ fn pass_gpu(
                     if links.is_empty() {
                         if gr.active.is_empty() && queue.is_empty() {
                             gr.done = true;
-                            if to_main.send(ToMain { worker: wi, group: g, reqs: None }).is_err() {
+                            if to_main.send(MainEv::Round(ToMain { worker: wi, group: g, reqs: None })).is_err() {
                                 return;
                             }
                         }
                         // (only new pixels: they start in the next turn)
                     } else {
                         let reqs: Vec<McReq> = links.iter().map(|l| l.req.take().unwrap()).collect();
-                        if to_main.send(ToMain { worker: wi, group: g, reqs: Some(reqs.clone()) }).is_err() {
+                        if to_main.send(MainEv::Round(ToMain { worker: wi, group: g, reqs: Some(reqs.clone()) })).is_err() {
                             return;
                         }
                         gr.waiting = Some((links, reqs));
@@ -2780,13 +2805,35 @@ fn pass_gpu(
                 drop(groups);
             });
         }
+        // the card's thread: one batch after the other
+        let (to_card, card_in) = mpsc::channel::<std::sync::Arc<SharedRound>>();
+        {
+            let to_main = to_main.clone();
+            s.spawn(move || {
+                while let Ok(sr) = card_in.recv() {
+                    let t = std::time::Instant::now();
+                    let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));
+                    if to_main.send(MainEv::Card(r, t.elapsed().as_secs_f64())).is_err() {
+                        return;
+                    }
+                }
+            });
+        }
         drop(to_main);
         // (dropped when this thread panics: the workers end then)
         let replies = std::mem::take(&mut replies);
         let mut main_march = McMarch::new(ctx);
-        // the batches of the rounds, the groups in turn
         let mut live = [threads, threads];
         let mut pending: [Vec<(usize, Vec<McReq>)>; 2] = [Vec::new(), Vec::new()];
+        // the batches: the first on the card, the next one waiting (the
+        // threads take from its end already)
+        struct Batch {
+            group: usize,
+            round: Vec<(usize, usize)>,
+            sr: std::sync::Arc<SharedRound>,
+            t0: std::time::Instant,
+        }
+        let mut batches_q: std::collections::VecDeque<Batch> = std::collections::VecDeque::new();
         let mut on_card = true;
         let mut batches = 0usize;
         let (mut n_card, mut n_cpu) = (0usize, 0usize);
@@ -2794,60 +2841,84 @@ fn pass_gpu(
         let (mut t_card, mut t_wait) = (0f64, 0f64);
         // the CPU's part of a batch, from the rates of the last one
         let mut cpu_part = 0.3f64;
-        let mut g = 0;
-        'pass: while live[0] + live[1] > 0 {
-            if live[g] == 0 {
-                g = 1 - g;
-                continue;
+        loop {
+            // complete rounds become batches (or CPU rounds)
+            for g in 0..2 {
+                if live[g] == 0 || pending[g].len() < live[g] || batches_q.iter().any(|b| b.group == g) {
+                    continue;
+                }
+                let round = std::mem::take(&mut pending[g]);
+                let total: usize = round.iter().map(|r| r.1.len()).sum();
+                if !on_card || total < MC_CPU_RAYS {
+                    n_cpu += total;
+                    for (wi, _) in &round {
+                        let _ = replies[*wi].send(ToWorker::Cpu(g));
+                    }
+                    continue;
+                }
+                let all: Vec<McReq> = round.iter().flat_map(|r| r.1.iter().copied()).collect();
+                let sr = std::sync::Arc::new(SharedRound {
+                    cpu_res: (0..all.len()).map(|_| std::sync::OnceLock::new()).collect(),
+                    share: crate::gpu::RaySharing {
+                        // (without sharing the card's limit is all of them)
+                        state: std::sync::Mutex::new((if share_cpu { 0 } else { all.len() }, all.len())),
+                        done: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                        tail: if share_cpu { threads * 4 } else { 0 },
+                        cap: if share_cpu { total - (total as f64 * cpu_part) as usize } else { usize::MAX },
+                    },
+                    reqs: all,
+                    left: std::sync::Mutex::new(Vec::new()),
+                    published: std::sync::atomic::AtomicBool::new(false),
+                    cpu_ns: std::sync::atomic::AtomicU64::new(0),
+                });
+                if share_cpu {
+                    for wi in 0..threads {
+                        let _ = replies[wi].send(ToWorker::Help(sr.clone()));
+                    }
+                }
+                if batches_q.is_empty() {
+                    let _ = to_card.send(sr.clone());
+                }
+                batches_q.push_back(Batch { group: g, round: round.iter().map(|(wi, r)| (*wi, r.len())).collect(), sr, t0: std::time::Instant::now() });
             }
+            if live[0] + live[1] == 0 && batches_q.is_empty() {
+                break;
+            }
+            // the next event; meanwhile this thread helps too
             let tw = std::time::Instant::now();
-            // one message from every live worker of the group
-            while pending[g].len() < live[g] {
-                match from_workers.recv() {
-                    Ok(ToMain { worker, group, reqs: Some(r) }) => pending[group].push((worker, r)),
-                    Ok(ToMain { group, reqs: None, .. }) => live[group] -= 1,
-                    Err(_) => break 'pass,
+            let ev = loop {
+                match from_workers.try_recv() {
+                    Ok(e) => break Some(e),
+                    Err(mpsc::TryRecvError::Disconnected) => break None,
+                    Err(mpsc::TryRecvError::Empty) => {
+                        if share_cpu && batches_q.iter().any(|b| b.sr.help_piece(&mut main_march)) {
+                            continue;
+                        }
+                        break from_workers.recv().ok();
+                    }
                 }
-            }
+            };
             t_wait += tw.elapsed().as_secs_f64();
-            let round = std::mem::take(&mut pending[g]);
-            let total: usize = round.iter().map(|r| r.1.len()).sum();
-            if total == 0 {
-                g = 1 - g;
-                continue;
-            }
-            if !on_card || total < MC_CPU_RAYS {
-                n_cpu += total;
-                for (wi, _) in &round {
-                    let _ = replies[*wi].send(ToWorker::Cpu(g));
+            let (r, card_s) = match ev {
+                None => break,
+                Some(MainEv::Round(ToMain { worker, group, reqs: Some(r) })) => {
+                    pending[group].push((worker, r));
+                    continue;
                 }
-                g = 1 - g;
-                continue;
-            }
-            let all: Vec<McReq> = round.iter().flat_map(|r| r.1.iter().copied()).collect();
-            let sr = std::sync::Arc::new(SharedRound {
-                cpu_res: (0..all.len()).map(|_| std::sync::OnceLock::new()).collect(),
-                share: crate::gpu::RaySharing {
-                    // (without sharing the card's limit is all of them)
-                    state: std::sync::Mutex::new((if share_cpu { 0 } else { all.len() }, all.len())),
-                    done: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
-                    tail: if share_cpu { threads * 4 } else { 0 },
-                    cap: if share_cpu { total - (total as f64 * cpu_part) as usize } else { usize::MAX },
-                },
-                reqs: all,
-                left: std::sync::Mutex::new(Vec::new()),
-                published: std::sync::atomic::AtomicBool::new(false),
-                cpu_ns: std::sync::atomic::AtomicU64::new(0),
-            });
-            if share_cpu {
-                for wi in 0..threads {
-                    let _ = replies[wi].send(ToWorker::Help(sr.clone()));
+                Some(MainEv::Round(ToMain { group, reqs: None, .. })) => {
+                    live[group] -= 1;
+                    continue;
                 }
+                Some(MainEv::Card(r, card_s)) => (r, card_s),
+            };
+            // the card finished the first batch
+            let b = batches_q.pop_front().unwrap();
+            if let Some(next) = batches_q.front() {
+                let _ = to_card.send(next.sr.clone());
             }
-            let tc = std::time::Instant::now();
-            let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));
-            let card_s = tc.elapsed().as_secs_f64();
             t_card += card_s;
+            let sr = &b.sr;
+            let total = sr.reqs.len();
             let (res, took, gave_up) = match r {
                 Ok(v) => v,
                 Err(e) => {
@@ -2875,7 +2946,7 @@ fn pass_gpu(
             }
             *sr.left.lock().unwrap() = mine.clone();
             sr.published.store(true, Ordering::SeqCst);
-            sr.take_left(&mut main_march);
+            while sr.help_piece(&mut main_march) {}
             // the pieces the threads took
             for i in mine.into_iter().chain(meet..total) {
                 while sr.cpu_res[i].get().is_none() {
@@ -2889,26 +2960,23 @@ fn pass_gpu(
                 let card = (total - n_cpu_b) as f64 / card_s.max(1e-4);
                 let ns = sr.cpu_ns.load(Ordering::Relaxed);
                 let helped = (total - meet) as f64;
-                if ns > 0 && helped > 0.0 {
+                if ns > 0 && helped > 0.0 && total > n_cpu_b {
                     let cpu = helped / (ns as f64 * 1e-9) * threads as f64;
                     cpu_part = (cpu / (cpu + card).max(1e-9)).clamp(0.02, 0.85);
                 }
-                if timing {
-                    eprintln!("  CPU's part now {:.0} %", cpu_part * 100.0);
-                }
             }
             if timing {
-                eprintln!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all", card_s * 1000.0, tc.elapsed().as_secs_f64() * 1000.0);
+                eprintln!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all, CPU's part now {:.0} %", card_s * 1000.0, b.t0.elapsed().as_secs_f64() * 1000.0, cpu_part * 100.0);
             }
             batches += 1;
             n_cpu += n_cpu_b;
             n_card += total - n_cpu_b;
             let mut it = (0..total).map(|i| sr.cpu_res[i].get().copied().unwrap_or_else(|| res[i]));
-            for (wi, r) in &round {
-                let _ = replies[*wi].send(ToWorker::Results(g, it.by_ref().take(r.len()).collect()));
+            for (wi, n) in &b.round {
+                let _ = replies[*wi].send(ToWorker::Results(b.group, it.by_ref().take(*n).collect()));
             }
-            g = 1 - g;
         }
+        drop(to_card);
         if timing {
             eprintln!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
         }

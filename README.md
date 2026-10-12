@@ -359,12 +359,13 @@ the shadow rays towards the lights) run on the graphics card when the
 scene's formulas do (see below): the pixels of a pass trace their rays
 together in two halves, and while the card marches the rays of one half
 (a batch for all threads) the CPU threads shade the other's results and
-take a measured share of the batch from its end; small rounds stay on
-the CPU. Lighting,
+take a measured share of the batches from their ends, the next batch
+already while the card finishes the last; small rounds stay on the
+CPU. Lighting,
 colours and the noise statistics are calculated on the CPU as before, so
 an image is the same with or without the card up to the precision of the
-marches. With a GTX 1650 and 8 CPU threads the example scenes render 1.4 to
-3.5 times faster than on the CPU alone (the first render of a scene also
+marches. With a GTX 1650 and 8 CPU threads the example scenes render 1.8 to
+3.8 times faster than on the CPU alone (the first render of a scene also
 compiles its shader, which the driver then caches).
 
 In the Mandelbulb3D program, the **Monte Carlo** window imports the main
