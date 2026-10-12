@@ -390,8 +390,13 @@ The reflections of the normal renderer run on the card too: every
 bounce of all pixels is one batch that marches the reflected rays and
 calculates the normals, colours, shadows and ambient occlusion of the
 hits, while the shading and the blending of the bounces stay on the CPU
-(as in MB3D's `CalcSR`); scenes with transparency, cutting planes, inside
-rendering or volumetric light keep the CPU pass. The painting stays on
+(as in MB3D's `CalcSR`). With transparency every surface sends a
+refracted and a reflected ray, marched in rounds over all pixels;
+cutting planes end the rays on the card, and deep zooms keep their
+positions in double precision. The CPU takes rays from the other end of
+each round and finishes the last few long ones the card would wait on
+(`MB3D_REFLECT_CPU_SHARE=0` leaves them all to the card); scenes with
+volumetric light keep the CPU pass. The painting stays on
 the CPU. The marcher calculates in single precision. The formulas reach it through the lifter: the x86 code
 of an `.m3f` formula is analysed (`src/lift.rs`: every memory access
 resolved to the iteration record, the formula's constants or the stack)
@@ -428,8 +433,9 @@ Of the 80 example parameter files of MB3D, 79 run on the GPU at their
 own image size (449 of the 460 formula files translate). The times below
 compare the graphics card with this program's own CPU renderer, not with
 MB3D: MB3D runs the formulas' machine code directly and is often much
-faster on the CPU (*Chrystal* takes 12 s in MB3D under Wine on the same machine,
-35 s in this program's CPU renderer, 3 s on the GPU here). At their own
+faster on the CPU (*Chrystal* at 1600 pixels takes 19.3 s in MB3D under
+Wine on the same machine, 23.8 s in this program's CPU renderer, where
+the translated formulas are called directly on the iteration state). At their own
 size *LightBulbMoon - No, Never* takes 2.0 s instead of 58 s; with the
 reflections on the card, *Rama - Elysium* at 160
 pixels takes 4.5 s instead of 24.7 s and *LightBulbMoon - A Fabulous
