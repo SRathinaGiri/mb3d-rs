@@ -19,8 +19,13 @@ use crate::gbuffer::SiLight;
 use crate::lighting::{pos_light_shape, LightVals, PaintCamera};
 use crate::math::*;
 use crate::scene::{CameraOptic, McSettings, Scene};
+use std::cell::{Cell, RefCell};
 use std::f64::consts::PI;
+use std::future::Future;
+use std::pin::Pin;
+use std::rc::Rc;
 use std::sync::OnceLock;
+use std::task::{Context, Poll};
 
 type S3 = [f32; 3];
 type S4 = [f32; 4];
@@ -377,11 +382,631 @@ struct McCtx<'a> {
 }
 
 // ---------------------------------------------------------------------------
+// the marches of a ray: what the CPU's marcher or the graphics card does
+// for the tracer (the tracer itself keeps no iteration state)
+
+/// A march of the tracer: `kind` 0 a ray of `CalcRay` (from `pos` along
+/// `dir`, at most `len`, with `zz` the depth along the view, `zz2` the
+/// ray's length so far and `zzplus` the depth per step; `probe`: a primary
+/// ray, which first looks whether it starts inside the set), 1 a shadow ray
+/// of `CalcHSMC` towards a light (`len` its length, `zz` the depth for the
+/// DE stop of its start, `zz2`/`zzplus` the depth along it; `trans`: the
+/// surface it hits is found, coloured and handed back), 2 the way through
+/// a transparent object hit by a shadow ray (`len` the length left,
+/// `ms_de_stop` the DE stop).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct McReq {
+    pub kind: u8,
+    pub pos: Vec3,
+    pub dir: Vec3,
+    pub zz: f64,
+    pub zz2: f64,
+    pub zzplus: f64,
+    pub len: f64,
+    pub seed: i32,
+    pub inside: bool,
+    pub probe: bool,
+    pub trans: bool,
+    pub ms_de_stop: f32,
+}
+
+/// The result of a march: `kind` 0 open air (or a shadow ray without a
+/// coloured surface), 1 a surface, 2 a primary ray that starts inside the
+/// set; the position, depths and length left where it ended, the step
+/// count of the dynamic fog, the normal, gradient and orbit trap of the
+/// surface, the random seed after the march, the inside flag (a primary ray
+/// that starts inside the set with inside-and-outside rendering turns
+/// around), whether the first and the last DE came from a dIFS part, and
+/// the DE stop where it ended.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct McRes {
+    pub kind: u8,
+    pub pos: Vec3,
+    pub zz: f64,
+    pub zz2: f64,
+    pub len: f64,
+    pub dyn_fog: f32,
+    pub de_limited: bool,
+    pub normals: Vec3,
+    pub si_grad: u16,
+    pub otrap: u16,
+    pub seed: i32,
+    pub inside: bool,
+    pub start_difs: bool,
+    pub last_difs: bool,
+    pub ms_de_stop: f32,
+}
+
+/// `GetRand` on a seed
+#[inline]
+fn rand_of(seed: &mut i32) -> f64 {
+    *seed = seed.wrapping_mul(0x343FD).wrapping_add(0x269EC3);
+    (*seed & 0x7FFF_FFFF) as f64 * SEED_MUL
+}
+
+/// The CPU's marcher of a thread.
+struct McMarch<'a, 'c> {
+    c: &'c McCtx<'a>,
+    m: Marcher<'a>,
+}
+
+impl<'a, 'c> McMarch<'a, 'c> {
+    fn new(c: &'c McCtx<'a>) -> Self {
+        McMarch { c, m: Marcher::new(c.p, 0) }
+    }
+
+    fn run(&mut self, r: &McReq, vfov: Vec3) -> McRes {
+        let m = &mut self.m;
+        m.it.c = r.pos;
+        m.inside = r.inside;
+        m.calc_inside = r.inside;
+        m.it.calc_sit = false;
+        m.vfov = vfov;
+        match r.kind {
+            0 => self.ray(r),
+            1 => self.shadow(r),
+            _ => self.through(r),
+        }
+    }
+
+    #[inline]
+    fn update_de_stop(&mut self, zz: f64) {
+        let p = self.c.p;
+        self.m.ms_de_stop = (p.de_stop as f64 * (1.0 + zz.abs() * p.de_stop_factor as f64)) as f32;
+    }
+
+    #[inline]
+    fn advance(&mut self, dir: &Vec3, d: f64) {
+        add_weight(&mut self.m.it.c, dir, d);
+    }
+
+    /// `DoDynFog` for volumetric light: the step limit and the light
+    /// collected on the last step
+    fn do_dyn_fog(&mut self, act_de: &mut f64, rsfmul: f32, last_sw: f64, dyn_fog: &mut f32) {
+        let p = self.c.p;
+        *act_de = ((*act_de - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
+        let s1 = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
+        if s1 < *act_de {
+            *act_de = s1;
+        }
+        if let Some(vl) = &p.vol {
+            let c = self.m.it.c;
+            let vf = self.m.vfov;
+            vl.integrate(p, &c, &vf, last_sw, self.m.mzz, dyn_fog);
+        }
+    }
+
+    /// `CalculateNormals` (on the DE) or `CalculateNormalsOnSmoothIt`: one
+    /// sided gradient on the world axes, its side chosen at random; returns
+    /// the smoothed iteration count and the normal
+    fn normals(&mut self, raydir: &Vec3, seed: &mut i32) -> (f32, Vec3) {
+        let p = self.c.p;
+        let on_de = p.normals_on_de;
+        let m = &mut self.m;
+        let mut sca: f32 = if *seed & 128 == 0 { 0.15 } else { -0.15 };
+        m.it.calc_sit = true;
+        let (no, nn) = if on_de {
+            let no = m.calc_de();
+            let nn = m.it.smooth_it;
+            m.it.calc_sit = false;
+            (no, nn)
+        } else {
+            m.mand_function();
+            (0.0, m.it.smooth_it)
+        };
+        let mut i = 4;
+        let mut n = [0.0; 3];
+        let mut normals = [0.0; 3];
+        loop {
+            if i < 4 {
+                sca = ((rand_of(seed) - 0.5) * 0.5) as f32;
+            }
+            let off = (p.de_stop.min(1.0) as f64) * (1.0 + m.mzz * p.de_stop_factor as f64) * sca as f64 * p.step_width;
+            for k in [2usize, 0, 1] {
+                let t = m.it.c[k];
+                m.it.c[k] = t + off;
+                n[k] = if on_de {
+                    (m.calc_de() - no) * sca as f64
+                } else {
+                    m.mand_function();
+                    (nn - m.it.smooth_it) as f64 * sca as f64
+                };
+                m.it.c[k] = t;
+            }
+            let l = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
+            if l > 1e-100 && dot(&n, raydir) < 0.0 {
+                normals = scale(n, 1.0 / l.sqrt());
+                break;
+            }
+            i -= 1;
+            if i == 0 {
+                break;
+            }
+        }
+        if !on_de {
+            m.it.calc_sit = false;
+        }
+        if i == 0 {
+            normals = norm_to(-1.0, *raydir);
+        }
+        (nn, normals)
+    }
+
+    /// `doBinSearchIt`: the surface of an iteration limited (non DE) object
+    fn bin_search_it(&mut self, zz: &mut f64, dir: &Vec3) {
+        let m = &mut self.m;
+        let saved = m.it.max_it;
+        let yp = saved as f32 - 0.99;
+        m.it.max_it += 1;
+        let mut itmp = 10;
+        m.it.calc_sit = true;
+        let mut dt1 = 0f64;
+        let mut dmul = 1f64;
+        let mut first = true;
+        let (mut last_si, mut last_dif) = (0f32, 0f32);
+        loop {
+            *zz += dt1;
+            add_weight(&mut m.it.c, dir, dt1);
+            m.calc_de();
+            if !first && last_dif < (yp - m.it.smooth_it).abs() {
+                *zz -= dt1;
+                add_weight(&mut m.it.c, dir, -dt1);
+                m.it.smooth_it = last_si;
+                if dt1 > 0.0 {
+                    dmul *= 0.5;
+                } else {
+                    dmul *= 0.7;
+                }
+            }
+            last_dif = (yp - m.it.smooth_it).abs();
+            last_si = m.it.smooth_it;
+            if m.it.smooth_it > m.it.max_it as f32 - 0.1 {
+                dt1 = -3.0;
+            } else {
+                *zz -= 0.001;
+                add_weight(&mut m.it.c, dir, -0.001);
+                m.calc_de();
+                let r = last_si - m.it.smooth_it;
+                dt1 = if r.abs() < 1e-30 {
+                    (if last_si < m.it.smooth_it { 1.0 } else { 0.0 }) - 0.5
+                } else if r < 0.0 {
+                    ((yp - m.it.smooth_it) / (r * 500.0)) as f64
+                } else {
+                    ((yp - m.it.smooth_it) / (r * 1000.0)) as f64
+                };
+                if dt1 > 4.0 {
+                    dt1 = dt1.sqrt() * 2.0;
+                } else if dt1 < -9.0 {
+                    dt1 = (-dt1).sqrt() * -3.0;
+                }
+                dt1 = dt1 * dmul + 0.0005;
+            }
+            first = false;
+            itmp -= 1;
+            if itmp < 0 {
+                break;
+            }
+        }
+        m.it.max_it = saved;
+    }
+
+    /// The gradient of a surface from its smoothed iteration count, then
+    /// the colour (`doColorOnIt`, `RMdoColor`): (gradient, orbit trap)
+    fn surface_colour(&mut self, nn: f32, de_limited: bool) -> (u16, u16) {
+        let p = self.c.p;
+        let sw = p.step_width;
+        let m = &mut self.m;
+        let v = if de_limited {
+            32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
+        } else {
+            32767.0 - nn * p.mcts_m
+        };
+        let mut si = SiLight { si_gradient: min_max_clip_15bit(v), ..Default::default() };
+        if p.color_on_it != 0 {
+            m.do_color_on_it();
+        }
+        m.do_color(&mut si);
+        (si.si_gradient, si.otrap)
+    }
+
+    /// The march of `CalcRay` (and the start of a primary ray in `Execute`)
+    fn ray(&mut self, r: &McReq) -> McRes {
+        let c = self.c;
+        let p = c.p;
+        let mut seed = r.seed;
+        let mut o = McRes::default();
+        let dir = r.dir;
+        let mut zz = r.zz;
+        let mut zz2 = r.zz2;
+        let max_l = r.len;
+        let zzplus = r.zzplus;
+        self.update_de_stop(zz);
+        let mut dtmp = self.m.calc_de();
+        if r.probe && (self.m.it.it_result >= self.m.max_its_result || dtmp < self.m.ms_de_stop as f64) {
+            // the start is inside the set (cutting plane or start plane)
+            if p.in_and_outside {
+                let m = &mut self.m;
+                m.inside = !m.inside;
+                m.calc_inside = !m.calc_inside;
+                dtmp = m.calc_de();
+            } else {
+                let m = &mut self.m;
+                let mut si = SiLight::default();
+                if p.color_on_it != 0 {
+                    m.do_color_on_it();
+                }
+                m.do_color(&mut si);
+                m.mzz = zz;
+                if p.color_option > 4 {
+                    si.si_gradient |= 32768;
+                } else if m.inside {
+                    m.it.calc_sit = true;
+                    m.calc_de();
+                    si.si_gradient = min_max_clip_15bit(m.it.smooth_it * p.mcts_m) | 32768;
+                } else {
+                    si.si_gradient = 32768 + (32767.0 * (m.it.rout / p.d_rstop).clamp(0.0, 1.0)).round_ties_even() as u16;
+                }
+                o.kind = 2;
+                o.pos = m.it.c;
+                o.si_grad = si.si_gradient;
+                o.otrap = si.otrap;
+                o.inside = m.inside;
+                o.last_difs = m.last_difs;
+                o.seed = seed;
+                return o;
+            }
+        }
+        o.start_difs = self.m.last_difs;
+        let mut dyn_fog = 0f32;
+        let mut open_air = false;
+        let mut de_limited = true;
+        let mut first_step = true;
+        let mut rsfmul = 1f32;
+        let mut rlast_sw = dtmp * p.z_step_div as f64;
+        let mut rlast_de;
+        let mut guard = 0u32;
+        loop {
+            rlast_de = dtmp;
+            let mut dstep;
+            if c.vol {
+                dstep = dtmp;
+                self.m.mzz = zz.abs();
+                self.do_dyn_fog(&mut dstep, rsfmul, rlast_sw, &mut dyn_fog);
+            } else {
+                let m = &self.m;
+                dstep = ((dtmp - p.ms_de_sub as f64 * m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
+                let d1 = (m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
+                let count = p.dfog_on_it == 0 || m.it.it_result == p.dfog_on_it as i32;
+                if d1 < dstep {
+                    if count {
+                        dyn_fog += (d1 / dstep) as f32;
+                    }
+                    dstep = d1;
+                } else if count {
+                    dyn_fog += 1.0;
+                }
+            }
+            if first_step {
+                first_step = false;
+                dstep *= rand_of(&mut seed);
+            }
+            rlast_sw = dstep;
+            zz2 += dstep;
+            if zz2 > max_l {
+                if c.vol {
+                    dstep = max_l - zz2 + dstep;
+                    self.advance(&dir, dstep);
+                    self.do_dyn_fog(&mut rlast_de, rsfmul, dstep, &mut dyn_fog);
+                }
+                open_air = true;
+                break;
+            }
+            self.advance(&dir, dstep);
+            zz += dstep * zzplus;
+            self.update_de_stop(zz);
+            dtmp = self.m.calc_de();
+            if self.m.it.it_result >= self.m.max_its_result {
+                de_limited = false;
+                break;
+            }
+            if !(dtmp >= self.m.ms_de_stop as f64) && self.m.it.it_result >= p.min_it {
+                break;
+            }
+            if dtmp > rlast_de + rlast_sw {
+                dtmp = rlast_de + rlast_sw;
+            }
+            rsfmul = if rlast_de > dtmp + 1e-30 {
+                let d = rlast_sw / (rlast_de - dtmp);
+                if d < 1.0 {
+                    d.max(0.5) as f32
+                } else {
+                    1.0
+                }
+            } else {
+                1.0
+            };
+            guard += 1;
+            if guard > 1_000_000 {
+                open_air = true;
+                break;
+            }
+        }
+        if self.m.inside && !c.vol {
+            dyn_fog *= 200.0 * p.de_stop / p.width as f32;
+        }
+        o.dyn_fog = dyn_fog;
+        o.zz2 = zz2;
+        o.inside = self.m.inside;
+        if open_air {
+            o.pos = self.m.it.c;
+            o.zz = zz;
+            o.last_difs = self.m.last_difs;
+            o.seed = seed;
+            return o;
+        }
+        if de_limited {
+            if c.secant_search {
+                let mut itmp = 4;
+                while itmp > 0 && (dtmp - self.m.ms_de_stop as f64).abs() > 0.001 {
+                    rlast_de = not_zero(rlast_de - dtmp);
+                    let f = rlast_sw * (dtmp - self.m.ms_de_stop as f64) / rlast_de;
+                    if dtmp < self.m.ms_de_stop as f64 {
+                        rlast_sw = if f >= 0.0 || f < rlast_sw.abs() * -0.94 { rlast_sw.abs() * -0.5 } else { f };
+                    } else {
+                        rlast_sw = if f <= 0.0 || f > rlast_sw.abs() * 0.94 { rlast_sw.abs() * 0.5 } else { f };
+                    }
+                    rlast_de = dtmp;
+                    zz += rlast_sw * zzplus;
+                    self.advance(&dir, rlast_sw);
+                    self.update_de_stop(zz);
+                    itmp -= 1;
+                    if itmp <= 0 {
+                        break;
+                    }
+                    dtmp = self.m.calc_de();
+                }
+            } else {
+                let mut itmp = 10;
+                let mut ds = rlast_sw * -0.5;
+                while (dtmp - self.m.ms_de_stop as f64).abs() > 0.001 {
+                    zz += ds * zzplus;
+                    self.advance(&dir, ds);
+                    self.update_de_stop(zz);
+                    itmp -= 1;
+                    if itmp <= 0 {
+                        break;
+                    }
+                    dtmp = self.m.calc_de();
+                    ds = if dtmp < self.m.ms_de_stop as f64 { ds.abs() * -0.55 } else { ds.abs() * 0.55 };
+                }
+            }
+        } else {
+            let mut ds = zz;
+            self.bin_search_it(&mut ds, &dir);
+            zz += (ds - zz) * zzplus;
+        }
+        self.m.mzz = zz.abs();
+        let (nn, normals) = self.normals(&dir, &mut seed);
+        o.pos = self.m.it.c;
+        (o.si_grad, o.otrap) = self.surface_colour(nn, de_limited);
+        o.kind = 1;
+        o.zz = zz;
+        o.de_limited = de_limited;
+        o.normals = normals;
+        o.last_difs = self.m.last_difs;
+        o.seed = seed;
+        o
+    }
+
+    /// A shadow ray of `CalcHSMC`, and the surface it hits when that may
+    /// be transparent
+    fn shadow(&mut self, r: &McReq) -> McRes {
+        let p = self.c.p;
+        let mut seed = r.seed;
+        let mut o = McRes::default();
+        let v = r.dir;
+        let mut dt1 = r.len;
+        let zz2mul = r.zzplus;
+        let mut zz2 = r.zz2;
+        self.update_de_stop(r.zz);
+        let mut rsfd = 2.0f32;
+        let mut dtmp = self.m.calc_de();
+        let (mut rlast_de, mut rlast_sw);
+        loop {
+            rlast_de = dtmp;
+            dtmp = (dtmp * p.z_step_div as f64 * rsfd as f64).min((self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64);
+            rlast_sw = dtmp;
+            dt1 -= dtmp;
+            self.advance(&v, dtmp);
+            zz2 += dtmp * zz2mul;
+            self.update_de_stop(zz2);
+            dtmp = self.m.calc_de();
+            // a march that started inside goes backwards and overflows: it
+            // ends at a DE that is not a number (Delphi's comparisons are
+            // true for a NaN) or beyond any scene
+            if self.m.it.it_result >= self.m.max_its_result || !(dtmp >= self.m.ms_de_stop as f64) || !(dtmp < 1e30) {
+                break;
+            }
+            if dtmp > rlast_de + rlast_sw {
+                dtmp = rlast_de + rlast_sw;
+            }
+            rsfd = if rlast_de > dtmp + 1e-30 {
+                let s = rlast_sw / (rlast_de - dtmp);
+                if s < 1.0 {
+                    s.max(0.5) as f32
+                } else {
+                    1.0
+                }
+            } else {
+                1.0
+            };
+            if !(dt1 >= 0.0) {
+                break;
+            }
+        }
+        o.len = dt1;
+        o.seed = seed;
+        if dt1 <= 0.01 || !r.trans {
+            return o;
+        }
+        // a transparent object between surface and light
+        let de_limited = self.m.it.it_result < self.m.max_its_result;
+        if de_limited {
+            let mut itmp = 3;
+            while itmp > 0 && (dtmp - self.m.ms_de_stop as f64).abs() > 0.01 {
+                rlast_de = not_zero(rlast_de - dtmp);
+                let f = rlast_sw * (dtmp - self.m.ms_de_stop as f64) / rlast_de;
+                if dtmp < self.m.ms_de_stop as f64 {
+                    rlast_sw = if f >= 0.0 || f < rlast_sw.abs() * -0.94 { rlast_sw.abs() * -0.5 } else { f };
+                } else {
+                    rlast_sw = if f <= 0.0 || f > rlast_sw.abs() * 0.94 { rlast_sw.abs() * 0.5 } else { f };
+                }
+                rlast_de = dtmp;
+                zz2 += rlast_sw * zz2mul;
+                self.advance(&v, rlast_sw);
+                self.update_de_stop(zz2);
+                dtmp = self.m.calc_de();
+                itmp -= 1;
+            }
+        } else {
+            let mut d = zz2;
+            self.bin_search_it(&mut d, &v);
+            zz2 += (d - zz2) * zz2mul;
+        }
+        self.m.mzz = zz2.abs();
+        let (nn, normals) = self.normals(&v, &mut seed);
+        o.pos = self.m.it.c;
+        // the iteration count after the normals, as in MB3D's CalcHSMC
+        let de_limited = self.m.it.it_result < self.m.max_its_result;
+        (o.si_grad, o.otrap) = self.surface_colour(nn, de_limited);
+        o.kind = 1;
+        o.zz2 = zz2;
+        o.normals = normals;
+        o.last_difs = self.m.last_difs;
+        o.ms_de_stop = self.m.ms_de_stop;
+        o.seed = seed;
+        o
+    }
+
+    /// Through a transparent object towards the light: steps on until
+    /// outside again
+    fn through(&mut self, r: &McReq) -> McRes {
+        let mut seed = r.seed;
+        let v = r.dir;
+        let mut dt1 = r.len;
+        self.m.ms_de_stop = r.ms_de_stop;
+        self.advance(&v, dt1);
+        let mut d = rand_of(&mut seed) * 8.0 * (self.m.ms_de_stop as f64).max(1.0);
+        loop {
+            d = -1.0 - d.abs();
+            dt1 += d;
+            self.advance(&v, d);
+            d = self.m.calc_de();
+            if d > self.m.ms_de_stop as f64 || !(dt1 > 0.0) {
+                break;
+            }
+        }
+        McRes { len: dt1, last_difs: self.m.last_difs, seed, ..Default::default() }
+    }
+}
+
+/// A tracer's march waiting for the card: the request, then its result
+#[derive(Default)]
+struct Link {
+    req: Cell<Option<McReq>>,
+    res: Cell<Option<McRes>>,
+}
+
+/// Waits for the result of a link
+struct Answer(Rc<Link>);
+
+impl Future for Answer {
+    type Output = McRes;
+    fn poll(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<McRes> {
+        match self.0.res.take() {
+            Some(r) => Poll::Ready(r),
+            None => Poll::Pending,
+        }
+    }
+}
+
+/// Polls a future once: with the CPU's marcher it is finished then
+fn now<F: Future>(f: F) -> F::Output {
+    let mut f = std::pin::pin!(f);
+    match f.as_mut().poll(&mut Context::from_waker(std::task::Waker::noop())) {
+        Poll::Ready(v) => v,
+        Poll::Pending => unreachable!("a march of the CPU waits"),
+    }
+}
+
+/// All rays of a pixel's round at once: their results in order
+struct JoinAll<'x, T> {
+    futs: Vec<Option<Pin<Box<dyn Future<Output = T> + 'x>>>>,
+    out: Vec<Option<T>>,
+}
+
+impl<'x, T: Unpin> Future for JoinAll<'x, T> {
+    type Output = Vec<T>;
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Vec<T>> {
+        let s = self.get_mut();
+        let mut all = true;
+        for (f, o) in s.futs.iter_mut().zip(s.out.iter_mut()) {
+            if let Some(fut) = f {
+                match fut.as_mut().poll(cx) {
+                    Poll::Ready(v) => {
+                        *o = Some(v);
+                        *f = None;
+                    }
+                    Poll::Pending => all = false,
+                }
+            }
+        }
+        if all {
+            Poll::Ready(s.out.iter_mut().map(|o| o.take().unwrap()).collect())
+        } else {
+            Poll::Pending
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // one thread of the calculation
 
 struct Tracer<'a, 'c> {
     c: &'c McCtx<'a>,
-    m: Marcher<'a>,
+    /// the marches: the thread's marcher, or the card (`link`, collected
+    /// in `outbox` for the next batch)
+    cpu: Option<&'c RefCell<McMarch<'a, 'c>>>,
+    link: Option<(Rc<Link>, &'c RefCell<Vec<Rc<Link>>>)>,
+    /// the position (`Iteration::c` of MB3D's thread), the pixel's view
+    /// vector, the depth along it and the inside flags (`bInsideRendering`
+    /// and `bCalcInside` are always the same here)
+    pos: Vec3,
+    vfov: Vec3,
+    mzz: f64,
+    inside: bool,
+    /// the last DE came from a dIFS part
+    last_difs: bool,
     seed: i32,
     halton_x: f32,
     halton_y: f32,
@@ -408,6 +1033,21 @@ struct Tracer<'a, 'c> {
     hit: bool,
     row_y: i32,
     guard: u32,
+    pass_nr: u32,
+}
+
+/// The seed of the random numbers of a ray (`b` its number in the pixel)
+/// or of a pixel's ray count in a pass: every ray has its own, so the rays
+/// of a pixel do not depend on each other
+fn seed_of(x: i32, y: i32, b: u32) -> i32 {
+    let mix = |mut h: u32| {
+        h ^= h >> 16;
+        h = h.wrapping_mul(0x7FEB_352D);
+        h ^= h >> 15;
+        h = h.wrapping_mul(0x846C_A68B);
+        h ^ (h >> 16)
+    };
+    mix((x as u32).wrapping_mul(0x9E37_79B1) ^ mix((y as u32).wrapping_mul(0x85EB_CA77) ^ mix(b.wrapping_add(0x1656_67B1)))) as i32
 }
 
 /// `CalcZposAndRough` without roughness (the MC renderer sets
@@ -426,7 +1066,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let n = c.lv.lights.len();
         Tracer {
             c,
-            m: Marcher::new(c.p, seed),
+            cpu: None,
+            link: None,
+            pos: [0.0; 3],
+            vfov: [0.0, 0.0, 1.0],
+            mzz: 0.0,
+            inside: c.p.inside_rendering,
+            last_difs: false,
             seed,
             halton_x: 0.0,
             halton_y: 0.0,
@@ -451,6 +1097,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
             hit: false,
             row_y: 0,
             guard: 0,
+            pass_nr: 0,
         }
     }
 
@@ -466,21 +1113,31 @@ impl<'a, 'c> Tracer<'a, 'c> {
         self.c.p.step_width
     }
 
-    #[inline]
-    fn update_de_stop(&mut self, zz: f64) {
-        let p = self.c.p;
-        self.m.ms_de_stop = (p.de_stop as f64 * (1.0 + zz.abs() * p.de_stop_factor as f64)) as f32;
+    /// A tracer for one ray of the pixel: the same marcher (or a link of
+    /// its own to the card)
+    fn fork(&self) -> Self {
+        let mut t = Tracer::new(self.c, 0);
+        t.cpu = self.cpu;
+        t.link = self.link.as_ref().map(|(_, outbox)| (Rc::new(Link::default()), *outbox));
+        t.row_y = self.row_y;
+        t.pass_nr = self.pass_nr;
+        t
     }
 
     #[inline]
     fn toggle_inside(&mut self) {
-        self.m.inside = !self.m.inside;
-        self.m.calc_inside = !self.m.calc_inside;
+        self.inside = !self.inside;
     }
 
-    #[inline]
-    fn advance(&mut self, dir: &Vec3, d: f64) {
-        add_weight(&mut self.m.it.c, dir, d);
+    /// A march by the CPU's marcher, or by the card (waits for the batch)
+    async fn march(&mut self, r: McReq) -> McRes {
+        if let Some(m) = self.cpu {
+            return m.borrow_mut().run(&r, self.vfov);
+        }
+        let (link, outbox) = self.link.as_ref().expect("a marcher");
+        link.req.set(Some(r));
+        outbox.borrow_mut().push(link.clone());
+        Answer(link.clone()).await
     }
 
     /// `GenSphereSVecOm`: a direction on the unit sphere
@@ -527,8 +1184,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         if let Some(d) = &lv.diff_map {
             let st = dif;
             let lns = self.c.cam.to_view(s3(&self.normals));
-            let c = self.m.it.c;
-            let obj = s3(&sub(c, self.c.mid));
+            let obj = s3(&sub(self.pos, self.c.mid));
             dif = lv.diff_map_color(d, si, lns, obj, 0.0, self.c.cam);
             if lv.yc_comb {
                 dif = sc3(st, luma(dif) / (0.01 + luma(st)));
@@ -560,139 +1216,6 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 }
             }
         }
-    }
-
-    /// `CalculateNormals`: one sided DE gradient on the world axes, its
-    /// side chosen at random; returns the smoothed iteration count
-    fn calculate_normals(&mut self, raydir: &Vec3) -> f32 {
-        let p = self.c.p;
-        self.m.it.calc_sit = true;
-        let mut sca: f32 = if self.seed & 128 == 0 { 0.15 } else { -0.15 };
-        let no = self.m.calc_de();
-        let nn = self.m.it.smooth_it;
-        self.m.it.calc_sit = false;
-        let mut i = 4;
-        let mut n = [0.0; 3];
-        loop {
-            if i < 4 {
-                sca = ((self.rand() - 0.5) * 0.5) as f32;
-            }
-            let off = (p.de_stop.min(1.0) as f64) * (1.0 + self.m.mzz * p.de_stop_factor as f64) * sca as f64 * p.step_width;
-            for k in [2usize, 0, 1] {
-                let t = self.m.it.c[k];
-                self.m.it.c[k] = t + off;
-                n[k] = (self.m.calc_de() - no) * sca as f64;
-                self.m.it.c[k] = t;
-            }
-            let l = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
-            if l > 1e-100 && dot(&n, raydir) < 0.0 {
-                self.normals = scale(n, 1.0 / l.sqrt());
-                break;
-            }
-            i -= 1;
-            if i == 0 {
-                break;
-            }
-        }
-        if i == 0 {
-            self.normals = norm_to(-1.0, *raydir);
-        }
-        nn
-    }
-
-    /// `CalculateNormalsOnSmoothIt`
-    fn calculate_normals_on_smooth_it(&mut self, raydir: &Vec3) -> f32 {
-        let p = self.c.p;
-        let mut sca: f32 = if self.seed & 128 == 0 { 0.15 } else { -0.15 };
-        self.m.it.calc_sit = true;
-        self.m.mand_function();
-        let nn = self.m.it.smooth_it;
-        let mut i = 4;
-        let mut n = [0.0; 3];
-        loop {
-            if i < 4 {
-                sca = ((self.rand() - 0.5) * 0.5) as f32;
-            }
-            let off = (p.de_stop.min(1.0) as f64) * (1.0 + self.m.mzz * p.de_stop_factor as f64) * sca as f64 * p.step_width;
-            for k in [2usize, 0, 1] {
-                let t = self.m.it.c[k];
-                self.m.it.c[k] = t + off;
-                self.m.mand_function();
-                n[k] = (nn - self.m.it.smooth_it) as f64 * sca as f64;
-                self.m.it.c[k] = t;
-            }
-            let l = n[0] * n[0] + n[1] * n[1] + n[2] * n[2];
-            if l > 1e-100 && dot(&n, raydir) < 0.0 {
-                self.normals = scale(n, 1.0 / l.sqrt());
-                break;
-            }
-            i -= 1;
-            if i == 0 {
-                break;
-            }
-        }
-        self.m.it.calc_sit = false;
-        if i == 0 {
-            self.normals = norm_to(-1.0, *raydir);
-        }
-        nn
-    }
-
-    /// `doBinSearchIt`: the surface of an iteration limited (non DE) object
-    fn bin_search_it(&mut self, zz: &mut f64, dir: &Vec3) {
-        let saved = self.m.it.max_it;
-        let yp = saved as f32 - 0.99;
-        self.m.it.max_it += 1;
-        let mut itmp = 10;
-        self.m.it.calc_sit = true;
-        let mut dt1 = 0f64;
-        let mut dmul = 1f64;
-        let mut first = true;
-        let (mut last_si, mut last_dif) = (0f32, 0f32);
-        loop {
-            *zz += dt1;
-            self.advance(dir, dt1);
-            self.m.calc_de();
-            if !first && last_dif < (yp - self.m.it.smooth_it).abs() {
-                *zz -= dt1;
-                self.advance(dir, -dt1);
-                self.m.it.smooth_it = last_si;
-                if dt1 > 0.0 {
-                    dmul *= 0.5;
-                } else {
-                    dmul *= 0.7;
-                }
-            }
-            last_dif = (yp - self.m.it.smooth_it).abs();
-            last_si = self.m.it.smooth_it;
-            if self.m.it.smooth_it > self.m.it.max_it as f32 - 0.1 {
-                dt1 = -3.0;
-            } else {
-                *zz -= 0.001;
-                self.advance(dir, -0.001);
-                self.m.calc_de();
-                let r = last_si - self.m.it.smooth_it;
-                dt1 = if r.abs() < 1e-30 {
-                    (if last_si < self.m.it.smooth_it { 1.0 } else { 0.0 }) - 0.5
-                } else if r < 0.0 {
-                    ((yp - self.m.it.smooth_it) / (r * 500.0)) as f64
-                } else {
-                    ((yp - self.m.it.smooth_it) / (r * 1000.0)) as f64
-                };
-                if dt1 > 4.0 {
-                    dt1 = dt1.sqrt() * 2.0;
-                } else if dt1 < -9.0 {
-                    dt1 = (-dt1).sqrt() * -3.0;
-                }
-                dt1 = dt1 * dmul + 0.0005;
-            }
-            first = false;
-            itmp -= 1;
-            if itmp < 0 {
-                break;
-            }
-        }
-        self.m.it.max_it = saved;
     }
 
     /// `CalcVisLights`: visible light sources, depth fog and dynamic fog on
@@ -752,7 +1275,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
                         }
                     };
                     if zp < 32768 {
-                        let c = self.m.it.c;
+                        let c = self.pos;
                         let h = self.c.hs_vecs[ir];
                         let t = pick([c[0] - h[0], c[1] - h[1], c[2] - h[2]]);
                         if -((ldis - stmp).sqrt() as f64) > t {
@@ -901,23 +1424,22 @@ impl<'a, 'c> Tracer<'a, 'c> {
 
     /// `CalcHSMC`: shadows (and coloured light through transparent objects)
     /// towards each light, as factors in `hs6`
-    fn calc_hs_mc(&mut self) {
+    async fn calc_hs_mc(&mut self) {
         let c = self.c;
         let p = c.p;
         let lv = c.lv;
-        let zz = self.m.mzz.abs() as f32;
-        let ic = self.m.it.c;
+        let zz = self.mzz.abs() as f32;
+        let ic = self.pos;
         let max_lhs = c.hs_max_lmul * (1.0 + 0.5 * zz.min(p.zend as f32 * 0.4) * (p.fov_y as f32).max(0.0) / c.height as f32);
         let sw = p.step_width;
         for i in 0..lv.lights.len() {
             let l = &lv.lights[i];
             self.hs6[i] = [1.0; 4];
-            self.m.it.c = ic;
-            let mut zz2 = self.m.mzz;
-            self.update_de_stop(zz as f64);
+            self.pos = ic;
+            let zz2 = self.mzz;
             let mut dt1 = max_lhs as f64;
             let v = if l.positional {
-                let v = sub(self.hs_vecs[i], self.m.it.c);
+                let v = sub(self.hs_vecs[i], self.pos);
                 let d = sqr_len(&v);
                 if d > (l.lmax_l * c.hs_max_len_mul) as f64 {
                     continue;
@@ -933,7 +1455,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 // HSminLengthToCutPlane
                 for k in 0..3 {
                     if (p.cut_options >> k) & 1 != 0 && v[k].abs() > 1e-20 {
-                        let t = (p.cut_pos[k] - self.m.it.c[k]) / v[k];
+                        let t = (p.cut_pos[k] - self.pos[k]) / v[k];
                         if t > 0.0 && t < dt1 {
                             dt1 = t;
                         }
@@ -947,40 +1469,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 self.hs6[i] = [0.0; 4];
                 continue;
             }
-            let zz2mul = dot(&v, &self.m.vfov) / (sqr_len(&v) * sqr_len(&self.m.vfov)).sqrt();
-            let mut rsfd = 2.0f32;
+            let zz2mul = dot(&v, &self.vfov) / (sqr_len(&v) * sqr_len(&self.vfov)).sqrt();
             let dmaxl = dt1;
-            let mut dtmp = self.m.calc_de();
-            let (mut rlast_de, mut rlast_sw);
-            loop {
-                rlast_de = dtmp;
-                dtmp = (dtmp * p.z_step_div as f64 * rsfd as f64).min((self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64);
-                rlast_sw = dtmp;
-                dt1 -= dtmp;
-                self.advance(&v, dtmp);
-                zz2 += dtmp * zz2mul;
-                self.update_de_stop(zz2);
-                dtmp = self.m.calc_de();
-                if self.m.it.it_result >= self.m.max_its_result || dtmp < self.m.ms_de_stop as f64 {
-                    break;
-                }
-                if dtmp > rlast_de + rlast_sw {
-                    dtmp = rlast_de + rlast_sw;
-                }
-                rsfd = if rlast_de > dtmp + 1e-30 {
-                    let s = rlast_sw / (rlast_de - dtmp);
-                    if s < 1.0 {
-                        s.max(0.5) as f32
-                    } else {
-                        1.0
-                    }
-                } else {
-                    1.0
-                };
-                if dt1 < 0.0 {
-                    break;
-                }
-            }
+            let h = self
+                .march(McReq { kind: 1, pos: ic, dir: v, zz: zz as f64, zz2, zzplus: zz2mul, len: dt1, seed: self.seed, inside: self.inside, trans: self.calc_trans_r, ..Default::default() })
+                .await;
+            self.seed = h.seed;
+            dt1 = h.len;
             if dt1 <= 0.01 {
                 continue;
             }
@@ -992,44 +1487,15 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 continue;
             }
             // a transparent object between surface and light
-            if self.m.it.it_result < self.m.max_its_result {
-                let mut itmp = 3;
-                while itmp > 0 && (dtmp - self.m.ms_de_stop as f64).abs() > 0.01 {
-                    rlast_de = not_zero(rlast_de - dtmp);
-                    let f = rlast_sw * (dtmp - self.m.ms_de_stop as f64) / rlast_de;
-                    if dtmp < self.m.ms_de_stop as f64 {
-                        rlast_sw = if f >= 0.0 || f < rlast_sw.abs() * -0.94 { rlast_sw.abs() * -0.5 } else { f };
-                    } else {
-                        rlast_sw = if f <= 0.0 || f > rlast_sw.abs() * 0.94 { rlast_sw.abs() * 0.5 } else { f };
-                    }
-                    rlast_de = dtmp;
-                    zz2 += rlast_sw * zz2mul;
-                    self.advance(&v, rlast_sw);
-                    self.update_de_stop(zz2);
-                    dtmp = self.m.calc_de();
-                    itmp -= 1;
-                }
-            } else {
-                let mut d = zz2;
-                self.bin_search_it(&mut d, &v);
-                zz2 += (d - zz2) * zz2mul;
-            }
-            self.m.mzz = zz2.abs();
+            self.mzz = h.zz2.abs();
+            self.pos = h.pos;
+            self.last_difs = h.last_difs;
             let nvec = self.normals;
-            let stmp = if p.normals_on_de { self.calculate_normals(&v) } else { self.calculate_normals_on_smooth_it(&v) };
-            let stmp = if self.m.it.it_result < self.m.max_its_result {
-                32767.0 - (stmp + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
-            } else {
-                32767.0 - stmp * p.mcts_m
-            };
-            let mut hsi = SiLight { si_gradient: min_max_clip_15bit(stmp), ..Default::default() };
-            if p.color_on_it != 0 {
-                self.m.do_color_on_it();
-            }
-            self.m.do_color(&mut hsi);
-            hsi.zpos_fine = zpos_of(p, zz2);
-            let obj = self.calc_color(&hsi, (self.m.mzz * sw + p.zz_stmit_dif) as f32);
-            let difs = self.m.last_difs;
+            self.normals = h.normals;
+            let mut hsi = SiLight { si_gradient: h.si_grad, otrap: h.otrap, ..Default::default() };
+            hsi.zpos_fine = zpos_of(p, h.zz2);
+            let obj = self.calc_color(&hsi, (self.mzz * sw + p.zz_stmit_dif) as f32);
+            let difs = self.last_difs;
             if obj[0][3] > 0.0 && (!c.only_difs || difs) {
                 if p.in_and_outside {
                     let a = spow(first3(obj[1]), c.absorption);
@@ -1044,20 +1510,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
                         self.hs6[i][k] *= w;
                     }
                     // through the object: step on until outside again
-                    self.toggle_inside();
-                    self.advance(&v, dt1);
-                    let mut d = self.rand() * 8.0 * (self.m.ms_de_stop as f64).max(1.0);
-                    loop {
-                        d = -1.0 - d.abs();
-                        dt1 += d;
-                        self.advance(&v, d);
-                        d = self.m.calc_de();
-                        if d > self.m.ms_de_stop as f64 || dt1 <= 0.0 {
-                            break;
-                        }
-                    }
-                    self.toggle_inside();
-                    if difs != self.m.last_difs {
+                    let t = self
+                        .march(McReq { kind: 2, pos: self.pos, dir: v, len: dt1, seed: self.seed, inside: !self.inside, ms_de_stop: h.ms_de_stop, ..Default::default() })
+                        .await;
+                    self.seed = t.seed;
+                    dt1 = t.len;
+                    self.last_difs = t.last_difs;
+                    if difs != self.last_difs {
                         self.hs6[i] = [0.0; 4];
                     } else {
                         let a = spow(first3(obj[1]), (dt1.max(0.0) as f32) * c.absorption);
@@ -1075,12 +1534,12 @@ impl<'a, 'c> Tracer<'a, 'c> {
             }
             self.normals = nvec;
         }
-        self.m.it.c = ic;
+        self.pos = ic;
     }
 
     /// `CalcPhongLight`: direct light with soft shadows from lights with a
     /// size (`MCSoftShadowRadius`): [specular, diffuse]
-    fn calc_phong_light(&mut self, reflect: &Vec3) -> [S3; 2] {
+    async fn calc_phong_light(&mut self, reflect: &Vec3) -> [S3; 2] {
         let c = self.c;
         let lv = c.lv;
         let sw = self.sw();
@@ -1114,13 +1573,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 self.hs_vecs[i] = norm_to(sw, v);
             }
         }
-        self.calc_hs_mc();
+        self.calc_hs_mc().await;
         for (i, l) in lv.lights.iter().enumerate() {
             let hs = self.hs6[i];
             if hs[0] != 0.0 || hs[1] != 0.0 || hs[2] != 0.0 {
                 let mut l0 = l.col;
                 let t = if l.positional {
-                    let t = sub(self.m.it.c, saved[i]);
+                    let t = sub(self.pos, saved[i]);
                     l0 = sc3(l0, (1.0 / (sqr_len(&t) + 1e-26)) as f32);
                     norm_to(sw, t)
                 } else {
@@ -1145,7 +1604,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let mut res = [[0f32; 3]; 2];
         for (i, l) in lv.lights.iter().enumerate() {
             let (sl, v) = if l.positional {
-                let v = sub(self.m.it.c, self.hs_vecs[i]);
+                let v = sub(self.pos, self.hs_vecs[i]);
                 (sc3(l.col, (1.0 / (sqr_len(&v) + 1e-60)) as f32), norm_to(sw, v))
             } else {
                 (l.col, self.hs_vecs[i])
@@ -1193,21 +1652,6 @@ impl<'a, 'c> Tracer<'a, 'c> {
         mul3(res, first3(self.tmp_obj_col[1]))
     }
 
-    /// `DoDynFog` for volumetric light: the step limit and the light
-    /// collected on the last step
-    fn do_dyn_fog(&mut self, act_de: &mut f64, rsfmul: f32, last_sw: f64) {
-        let p = self.c.p;
-        *act_de = ((*act_de - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
-        let s1 = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
-        if s1 < *act_de {
-            *act_de = s1;
-        }
-        if let Some(vl) = &p.vol {
-            let c = self.m.it.c;
-            let vf = self.m.vfov;
-            vl.integrate(p, &c, &vf, last_sw, self.m.mzz, &mut self.dyn_fog);
-        }
-    }
 
     /// Random direction jitter of reflections (`MCdiffReflects`)
     fn diffuse_jitter(&mut self, v: &Vec3) -> Vec3 {
@@ -1227,18 +1671,24 @@ impl<'a, 'c> Tracer<'a, 'c> {
 
     /// `CalcRay`: follows a ray (length StepWidth per step in `dir`) and
     /// adds its light, weighted by `t_absorb`, to `total_light`; recurses
-    /// for reflections, transmission and the ambient bounce.
-    fn calc_ray(&mut self, mut zz: f64, dir: Vec3, mut t_absorb: S3, mut rit: i32) {
+    /// for reflections, transmission and the ambient bounce.  `probe`: the
+    /// primary ray, which first looks whether it starts inside the set (then
+    /// it returns the march's result for `ray`).
+    fn calc_ray<'x>(&'x mut self, zz: f64, dir: Vec3, t_absorb: S3, rit: i32, probe: bool) -> Pin<Box<dyn Future<Output = Option<McRes>> + 'x>> {
+        Box::pin(self.calc_ray_at(zz, dir, t_absorb, rit, probe))
+    }
+
+    async fn calc_ray_at(&mut self, mut zz: f64, dir: Vec3, mut t_absorb: S3, mut rit: i32, probe: bool) -> Option<McRes> {
         let c = self.c;
         let p = c.p;
         let lv = c.lv;
         let sw = p.step_width;
         if t_absorb[0].abs() * 0.3 + t_absorb[1].abs() * 0.59 + t_absorb[2].abs() * 0.11 < 1e-4 {
-            return;
+            return None;
         }
         self.guard += 1;
         if self.guard > 4096 {
-            return;
+            return None;
         }
         let mut max_l = if self.calc_amb_shadow {
             c.amb_max_l * (self.rand().powi(2) + 0.75)
@@ -1254,166 +1704,51 @@ impl<'a, 'c> Tracer<'a, 'c> {
             zz2 = zz;
         } else {
             if p.cut_options != 0 {
-                let pos = self.m.it.c;
+                let pos = self.pos;
                 self.min_length_to_cut_plane(&mut max_l, 0.1, &pos, &dir);
             }
             zz2 = 0.0;
         }
-        if !c.calc_trans {
-            self.calc_trans_r = false;
-        } else if !c.only_difs {
-            self.calc_trans_r = true;
-        } else {
-            self.m.calc_de();
-            self.calc_trans_r = self.m.last_difs;
-        }
-        let mut calc_t = self.calc_trans_r;
         let mut bg_dec = 1f32;
-        self.dyn_fog = 0.0;
-        self.update_de_stop(zz);
-        let mut open_air = false;
-        let start = self.start_override.take().unwrap_or(self.m.it.c);
+        let start = self.start_override.unwrap_or(self.pos);
         let vpos = s3(&sub(start, c.mid));
-        let zzplus = dot(&dir, &self.m.vfov) / (sw * sw);
-        let mut de_limited = true;
-        let mut first_step = true;
-        let mut rsfmul = 1f32;
-        let mut dtmp = self.m.calc_de();
-        let mut rlast_sw = dtmp * p.z_step_div as f64;
-        let mut rlast_de;
-        let mut guard = 0u32;
-        loop {
-            rlast_de = dtmp;
-            let mut dstep;
-            if c.vol {
-                dstep = dtmp;
-                self.m.mzz = zz.abs();
-                self.do_dyn_fog(&mut dstep, rsfmul, rlast_sw);
-            } else {
-                dstep = ((dtmp - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
-                let d1 = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
-                let count = p.dfog_on_it == 0 || self.m.it.it_result == p.dfog_on_it as i32;
-                if d1 < dstep {
-                    if count {
-                        self.dyn_fog += (d1 / dstep) as f32;
-                    }
-                    dstep = d1;
-                } else if count {
-                    self.dyn_fog += 1.0;
-                }
-            }
-            if first_step {
-                first_step = false;
-                dstep *= self.rand();
-            }
-            rlast_sw = dstep;
-            zz2 += dstep;
-            if zz2 > max_l {
-                if c.vol {
-                    dstep = max_l - zz2 + dstep;
-                    self.advance(&dir, dstep);
-                    self.do_dyn_fog(&mut rlast_de, rsfmul, dstep);
-                }
-                open_air = true;
-                break;
-            }
-            self.advance(&dir, dstep);
-            zz += dstep * zzplus;
-            self.update_de_stop(zz);
-            dtmp = self.m.calc_de();
-            if self.m.it.it_result >= self.m.max_its_result {
-                de_limited = false;
-                break;
-            }
-            if dtmp < self.m.ms_de_stop as f64 && self.m.it.it_result >= p.min_it {
-                break;
-            }
-            if dtmp > rlast_de + rlast_sw {
-                dtmp = rlast_de + rlast_sw;
-            }
-            rsfmul = if rlast_de > dtmp + 1e-30 {
-                let d = rlast_sw / (rlast_de - dtmp);
-                if d < 1.0 {
-                    d.max(0.5) as f32
-                } else {
-                    1.0
-                }
-            } else {
-                1.0
-            };
-            guard += 1;
-            if guard > 1_000_000 {
-                open_air = true;
-                break;
-            }
+        let zzplus = dot(&dir, &self.vfov) / (sw * sw);
+        let h = self.march(McReq { kind: 0, pos: self.pos, dir, zz, zz2, zzplus, len: max_l, seed: self.seed, inside: self.inside, probe, ..Default::default() }).await;
+        self.seed = h.seed;
+        self.inside = h.inside;
+        self.pos = h.pos;
+        self.last_difs = h.last_difs;
+        if h.kind == 2 {
+            return Some(h);
         }
-        if self.m.inside && !c.vol {
-            self.dyn_fog *= 200.0 * p.de_stop / p.width as f32;
-        }
+        self.start_override = None;
+        self.calc_trans_r = if !c.calc_trans {
+            false
+        } else if !c.only_difs {
+            true
+        } else {
+            h.start_difs
+        };
+        let mut calc_t = self.calc_trans_r;
+        zz = h.zz;
+        zz2 = h.zz2;
+        self.dyn_fog = h.dyn_fog;
+        let open_air = h.kind == 0;
         let mut d1 = 1f32;
         let cc;
         let obj;
         if !open_air {
             self.hit = true;
-            if de_limited {
-                if c.secant_search {
-                    let mut itmp = 4;
-                    while itmp > 0 && (dtmp - self.m.ms_de_stop as f64).abs() > 0.001 {
-                        rlast_de = not_zero(rlast_de - dtmp);
-                        let f = rlast_sw * (dtmp - self.m.ms_de_stop as f64) / rlast_de;
-                        if dtmp < self.m.ms_de_stop as f64 {
-                            rlast_sw = if f >= 0.0 || f < rlast_sw.abs() * -0.94 { rlast_sw.abs() * -0.5 } else { f };
-                        } else {
-                            rlast_sw = if f <= 0.0 || f > rlast_sw.abs() * 0.94 { rlast_sw.abs() * 0.5 } else { f };
-                        }
-                        rlast_de = dtmp;
-                        zz += rlast_sw * zzplus;
-                        self.advance(&dir, rlast_sw);
-                        self.update_de_stop(zz);
-                        itmp -= 1;
-                        if itmp <= 0 {
-                            break;
-                        }
-                        dtmp = self.m.calc_de();
-                    }
-                } else {
-                    let mut itmp = 10;
-                    let mut ds = rlast_sw * -0.5;
-                    while (dtmp - self.m.ms_de_stop as f64).abs() > 0.001 {
-                        zz += ds * zzplus;
-                        self.advance(&dir, ds);
-                        self.update_de_stop(zz);
-                        itmp -= 1;
-                        if itmp <= 0 {
-                            break;
-                        }
-                        dtmp = self.m.calc_de();
-                        ds = if dtmp < self.m.ms_de_stop as f64 { ds.abs() * -0.55 } else { ds.abs() * 0.55 };
-                    }
-                }
-            } else {
-                let mut ds = zz;
-                self.bin_search_it(&mut ds, &dir);
-                zz += (ds - zz) * zzplus;
-            }
-            self.m.mzz = zz.abs();
-            let nn = if p.normals_on_de { self.calculate_normals(&dir) } else { self.calculate_normals_on_smooth_it(&dir) };
-            let v = if de_limited {
-                32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
-            } else {
-                32767.0 - nn * p.mcts_m
-            };
-            cr.si_gradient = min_max_clip_15bit(v);
-            cc = self.m.it.c;
-            if p.color_on_it != 0 {
-                self.m.do_color_on_it();
-            }
-            self.m.do_color(&mut cr);
+            self.mzz = zz.abs();
+            self.normals = h.normals;
+            cr.si_gradient = h.si_grad;
+            cr.otrap = h.otrap;
+            cc = self.pos;
             cr.zpos_fine = zpos_of(p, zz2);
             if rit1 {
                 self.main_si = cr;
             }
-            obj = self.calc_color(&cr, (self.m.mzz * sw + p.zz_stmit_dif) as f32);
+            obj = self.calc_color(&cr, (self.mzz * sw + p.zz_stmit_dif) as f32);
             self.zpos_dyn_fog = (zz2 * sw + p.zz_stmit_dif) as f32;
             let sv = self.calc_vis_lights(vpos, &dir, &cr, &mut bg_dec, &mut d1);
             self.total_light = add3(self.total_light, mul3(sv, t_absorb));
@@ -1458,29 +1793,29 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 bg_dec *= rsf;
             }
             addw3(&mut sv, bgl, bg_dec);
-            if calc_t && !p.in_and_outside && (self.trans_flip_inside ^ self.m.inside) {
+            if calc_t && !p.in_and_outside && (self.trans_flip_inside ^ self.inside) {
                 // light scattering inside the material
                 let sv2 = spow(first3(self.tmp_obj_col[1]), (zz2.min(max_l) as f32) * c.absorption);
                 t_absorb = mul3(t_absorb, sv2);
                 let r = (1.0 - luma(sv2)) * c.light_scattering_mul;
                 if r != 0.0 {
-                    let pos = s3(&sub(self.m.it.c, c.mid));
+                    let pos = s3(&sub(self.pos, c.mid));
                     let al = self.add_light(vpos, pos);
                     let add = mul3(sc3(mul3(al, first3(self.tmp_obj_col[1])), r), t_absorb);
                     self.total_light = add3(self.total_light, add);
                 }
             }
             self.total_light = add3(self.total_light, mul3(sv, t_absorb));
-            return;
+            return None;
         }
 
-        if calc_t && !p.in_and_outside && (self.trans_flip_inside ^ self.m.inside) {
+        if calc_t && !p.in_and_outside && (self.trans_flip_inside ^ self.inside) {
             // absorption inside the material (colour of the last surface)
             let sv = spow(first3(self.tmp_obj_col[1]), (zz2.min(max_l) as f32) * c.absorption);
             let sv2 = t_absorb;
             let r = (1.0 - luma(sv)) * c.light_scattering_mul;
             t_absorb = mul3(t_absorb, sv);
-            let pos = s3(&sub(self.m.it.c, c.mid));
+            let pos = s3(&sub(self.pos, c.mid));
             let al = self.add_light(vpos, pos);
             let add = mul3(al, lin2(t_absorb, sv2, 0.5));
             addw3(&mut self.total_light, add, r);
@@ -1489,15 +1824,15 @@ impl<'a, 'c> Tracer<'a, 'c> {
             t_absorb = sc3(t_absorb, bg_dec * d1);
         }
         let reflect = sub(dir, scale(self.normals, 2.0 * dot(&self.normals, &dir)));
-        self.m.mzz = zz;
+        self.mzz = zz;
         calc_t = if !c.calc_trans {
             false
         } else if !c.only_difs {
             true
         } else {
-            self.m.last_difs
+            self.last_difs
         };
-        let light_sd = self.calc_phong_light(&reflect);
+        let light_sd = self.calc_phong_light(&reflect).await;
         let mut d2 = 1f32;
         let d3v;
         let mut d4 = 0f32;
@@ -1505,14 +1840,14 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let mut tvec2 = [0.0; 3];
         if calc_t {
             rsf_max = obj[0][0].max(obj[0][1]).max(obj[0][2]);
-            let dstep = if !p.in_and_outside && (self.trans_flip_inside ^ self.m.inside) {
+            let dstep = if !p.in_and_outside && (self.trans_flip_inside ^ self.inside) {
                 c.trans_di_const as f64
             } else {
                 1.0 / c.trans_di_const as f64
             };
             let dl = len(&dir);
             if dl < 1e-100 {
-                return;
+                return None;
             }
             let dd3 = -dot(&dir, &self.normals) / dl;
             let k = 1.0 - dstep * dstep * (1.0 - dd3 * dd3);
@@ -1559,7 +1894,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 }
                 if !skip {
                     let w = sc3(first3(obj[0]), d3v * c.sr_light_amount);
-                    self.calc_ray(zz, rv, mul3(t_absorb, w), rit);
+                    self.calc_ray(zz, rv, mul3(t_absorb, w), rit, false).await;
                     self.calc_amb_shadow = backup;
                 }
             }
@@ -1572,11 +1907,11 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 }
                 if !skip_trans {
                     let d4b = (1.0 - d4 * rsf_max) * obj[0][3];
-                    self.m.it.c = cc;
+                    self.pos = cc;
                     self.tmp_obj_col = obj;
                     let backup = self.calc_amb_shadow;
                     self.toggle_inside();
-                    self.calc_ray(zz, tvec2, sc3(t_absorb, d4b * c.sr_light_amount), rit);
+                    self.calc_ray(zz, tvec2, sc3(t_absorb, d4b * c.sr_light_amount), rit, false).await;
                     self.calc_amb_shadow = backup;
                     self.toggle_inside();
                 }
@@ -1598,12 +1933,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 nv[k] = ((o0[k] * d3c * dd) as f32 + (o1[k] * d4s * dd) as f32) as f64 + nvec[k] * w;
             }
             let nv = norm_to(sw, nv);
-            self.m.it.c = cc;
+            self.pos = cc;
             self.tmp_obj_col = obj;
             self.calc_amb_shadow = true;
             let w = sc3(first3(obj[1]), d2);
-            self.calc_ray(zz, nv, mul3(t_absorb, w), rit);
+            self.calc_ray(zz, nv, mul3(t_absorb, w), rit, false).await;
         }
+        None
     }
 
     /// `GetSubPixelShift`: -0.5..0.5 (box) or gaussian
@@ -1638,15 +1974,15 @@ impl<'a, 'c> Tracer<'a, 'c> {
             CameraOptic::Panorama => build_view_vector_dsphere_fov(cafy, cafx),
             CameraOptic::Common => build_view_vector_dfov(cafy, cafx),
         };
-        self.m.vfov = rotate_vector_reverse(&v, &p.vgrads);
+        self.vfov = rotate_vector_reverse(&v, &p.vgrads);
     }
 
     /// `DoDOF`: start the ray on the lens disc, aimed at the focus point
     fn do_dof(&mut self) {
         let sw = self.sw();
-        let mut zpos = self.m.it.c;
-        add_weight(&mut zpos, &self.m.vfov, self.c.dof_zsharp as f64);
-        let (o0, o1) = make_ortho(&self.m.vfov);
+        let mut zpos = self.pos;
+        add_weight(&mut zpos, &self.vfov, self.c.dof_zsharp as f64);
+        let (o0, o1) = make_ortho(&self.vfov);
         // CalcBokehMC
         let h = halton_seq()[self.act_ray_nr];
         let mut xx = frac_s(h.hdx as f32 * D1D65535 + self.shift_x);
@@ -1656,9 +1992,9 @@ impl<'a, 'c> Tracer<'a, 'c> {
         self.disc_x = xx * s;
         self.disc_y = yy * s;
         for k in 0..3 {
-            self.m.it.c[k] += ((o0[k] as f32 * self.disc_x) as f64) + ((o1[k] as f32 * self.disc_y) as f64);
+            self.pos[k] += ((o0[k] as f32 * self.disc_x) as f64) + ((o1[k] as f32 * self.disc_y) as f64);
         }
-        self.m.vfov = norm_to(sw, sub(zpos, self.m.it.c));
+        self.vfov = norm_to(sw, sub(zpos, self.pos));
     }
 
     /// `CalcNormalsOnCutMC`
@@ -1676,20 +2012,20 @@ impl<'a, 'c> Tracer<'a, 'c> {
 
     /// One ray through pixel (x1 = 1-based column, y = row); returns the
     /// light of the ray.
-    fn ray(&mut self, x1: i32, y: i32, rec_rays: u16, itcount: i32) -> S3 {
+    async fn ray(&mut self, x1: i32, y: i32, rec_rays: u16, itcount: i32) -> S3 {
         let c = self.c;
         let p = c.p;
         let sw = p.step_width;
         self.guard = 0;
         self.act_ray_nr = (rec_rays as usize + itcount as usize).min(65535);
+        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32);
         let (sx, sy) = halton_2d_shifts(x1, y);
         self.shift_x = sx;
         self.shift_y = sy;
         let h = halton_seq()[self.act_ray_nr];
         self.halton_x = frac_s(h.hrx as f32 * D1D65535 + sx);
         self.halton_y = frac_s(h.hry as f32 * D1D65535 + sy);
-        self.m.inside = p.inside_rendering;
-        self.m.calc_inside = p.inside_rendering;
+        self.inside = p.inside_rendering;
         set_zpos_word(&mut self.main_si, 32768);
         self.main_si.shadow = 0;
         self.main_si.si_gradient = 0;
@@ -1701,10 +2037,10 @@ impl<'a, 'c> Tracer<'a, 'c> {
         };
         self.calc_vgrads_fov(xx, yy);
         if p.optic == CameraOptic::Panorama {
-            self.m.it.c = p.ystart;
+            self.pos = p.ystart;
         } else {
             for k in 0..3 {
-                self.m.it.c[k] = p.ystart[k] + p.vgrads[1][k] * yy as f64 + p.vgrads[0][k] * xx as f64;
+                self.pos[k] = p.ystart[k] + p.vgrads[1][k] * yy as f64 + p.vgrads[0][k] * xx as f64;
             }
         }
         if c.do_dof {
@@ -1714,99 +2050,95 @@ impl<'a, 'c> Tracer<'a, 'c> {
             self.disc_y = frac_s(h.hdy as f32 * D1D65535 + sy);
         }
         self.total_light = [0.0; 3];
-        self.m.it.calc_sit = false;
         self.calc_amb_shadow = false;
         self.rit1 = true;
-        self.m.ms_de_stop = p.de_stop;
         let mut zz = 0f64;
         self.dyn_fog = 0.0;
         let mut cut_plane = 0usize;
         self.start_override = None;
-        let mut march = true;
+        let vf = self.vfov;
         if p.cut_options != 0 {
-            let (len, plane) = self.m.max_length_to_cut_plane();
+            let (len, plane) = self.max_length_to_cut_plane();
             zz = len;
             cut_plane = plane;
-            self.start_override = Some(self.m.it.c);
+            self.start_override = Some(self.pos);
             let mut beyond = false;
             if zz >= p.zend {
                 beyond = true;
                 zz = p.zend;
             }
-            let vf = self.m.vfov;
-            self.advance(&vf, zz);
-            self.update_de_stop(zz);
+            add_weight(&mut self.pos, &vf, zz);
             if beyond {
                 self.rit1 = false;
-                return self.trace_primary(zz);
+                self.calc_ray(zz, vf, [1.0; 3], 0, false).await;
+                return self.total_light;
             }
         }
-        let dtmp = self.m.calc_de();
-        if self.m.it.it_result >= self.m.max_its_result || dtmp < self.m.ms_de_stop as f64 {
-            // the start is inside the set (cutting plane or start plane)
-            if p.in_and_outside {
-                self.toggle_inside();
-            } else {
-                march = false;
-                self.hit = true;
-                self.zpos_dyn_fog = (zz * sw + p.zz_stmit_dif) as f32;
-                let mut si = self.main_si;
-                if p.color_on_it != 0 {
-                    self.m.do_color_on_it();
-                }
-                self.m.do_color(&mut si);
-                self.normals_on_cut(cut_plane);
-                self.m.mzz = zz;
-                if p.color_option > 4 {
-                    si.si_gradient |= 32768;
-                } else if self.m.inside {
-                    self.m.it.calc_sit = true;
-                    self.m.calc_de();
-                    si.si_gradient = min_max_clip_15bit(self.m.it.smooth_it * p.mcts_m) | 32768;
-                } else {
-                    si.si_gradient = 32768 + (32767.0 * (self.m.it.rout / p.d_rstop).clamp(0.0, 1.0)).round_ties_even() as u16;
-                }
-                let lsd = self.calc_color(&si, zz as f32);
-                si.zpos_fine = zpos_of(p, zz);
-                self.main_si = si;
-                let start = self.start_override.unwrap_or(self.m.it.c);
-                let (mut a, mut b) = (0f32, 0f32);
-                let vf = self.m.vfov;
-                let mut tl = self.calc_vis_lights(s3(&sub(start, c.mid)), &vf, &si, &mut a, &mut b);
-                let tmpv = sub(vf, scale(self.normals, 2.0 * dot(&self.normals, &vf)));
-                let lsd2 = self.calc_phong_light_no_hs(&tmpv);
-                let w = a * b;
-                let add = add3(mul3(first3(lsd[0]), lsd2[0]), mul3(first3(lsd[1]), lsd2[1]));
-                addw3(&mut tl, add, w);
-                if c.calc_reflects {
-                    let dt = w;
-                    let mut si2 = si;
-                    set_zpos_word(&mut si2, 32768);
-                    self.main_si = si2;
-                    let (mut a2, mut b2) = (0f32, 0f32);
-                    let pos = s3(&sub(self.m.it.c, c.mid));
-                    let sv = self.calc_vis_lights(pos, &tmpv, &si2, &mut a2, &mut b2);
-                    let mut x2 = a2;
-                    if c.lv.bg.is_none() || !c.lv.bg_add_light {
-                        x2 *= b2;
-                    }
-                    let bgl = self.calc_bg_light(&tmpv, false, false, false);
-                    let r = mul3(add3(sv, sc3(bgl, x2)), first3(lsd[0]));
-                    addw3(&mut tl, r, c.sr_light_amount * dt);
-                }
-                self.total_light = tl;
+        let Some(h) = self.calc_ray(zz, vf, [1.0; 3], 0, true).await else {
+            return self.total_light;
+        };
+        // the start is inside the set (cutting plane or start plane)
+        self.hit = true;
+        self.zpos_dyn_fog = (zz * sw + p.zz_stmit_dif) as f32;
+        let mut si = self.main_si;
+        si.si_gradient = h.si_grad;
+        si.otrap = h.otrap;
+        self.normals_on_cut(cut_plane);
+        self.mzz = zz;
+        let lsd = self.calc_color(&si, zz as f32);
+        si.zpos_fine = zpos_of(p, zz);
+        self.main_si = si;
+        let start = self.start_override.unwrap_or(self.pos);
+        let (mut a, mut b) = (0f32, 0f32);
+        let mut tl = self.calc_vis_lights(s3(&sub(start, c.mid)), &vf, &si, &mut a, &mut b);
+        let tmpv = sub(vf, scale(self.normals, 2.0 * dot(&self.normals, &vf)));
+        let lsd2 = self.calc_phong_light_no_hs(&tmpv);
+        let w = a * b;
+        let add = add3(mul3(first3(lsd[0]), lsd2[0]), mul3(first3(lsd[1]), lsd2[1]));
+        addw3(&mut tl, add, w);
+        if c.calc_reflects {
+            let dt = w;
+            let mut si2 = si;
+            set_zpos_word(&mut si2, 32768);
+            self.main_si = si2;
+            let (mut a2, mut b2) = (0f32, 0f32);
+            let pos = s3(&sub(self.pos, c.mid));
+            let sv = self.calc_vis_lights(pos, &tmpv, &si2, &mut a2, &mut b2);
+            let mut x2 = a2;
+            if c.lv.bg.is_none() || !c.lv.bg_add_light {
+                x2 *= b2;
             }
+            let bgl = self.calc_bg_light(&tmpv, false, false, false);
+            let r = mul3(add3(sv, sc3(bgl, x2)), first3(lsd[0]));
+            addw3(&mut tl, r, c.sr_light_amount * dt);
         }
-        if march {
-            return self.trace_primary(zz);
-        }
-        self.total_light
+        self.total_light = tl;
+        tl
     }
 
-    fn trace_primary(&mut self, zz: f64) -> S3 {
-        let vf = self.m.vfov;
-        self.calc_ray(zz, vf, [1.0; 3], 0);
-        self.total_light
+    /// `RMmaxLengthToCutPlane`: distance (in steps) from the start position
+    /// to the cutting planes along the view ray, and the plane (1..3) hit.
+    fn max_length_to_cut_plane(&self) -> (f64, usize) {
+        let p = self.c.p;
+        let mut len = 0f64;
+        let mut plane = 0;
+        for k in 0..3 {
+            if (p.cut_options >> k) & 1 == 0 || self.vfov[k].abs() <= 1e-20 {
+                continue;
+            }
+            let side = (p.cut_options >> (4 + k)) & 1 != 0;
+            let neg = self.vfov[k].is_sign_negative();
+            if side == neg {
+                len = 1e20;
+            } else {
+                let t = (p.cut_pos[k] - self.pos[k]) / self.vfov[k];
+                if t > len {
+                    len = t;
+                    plane = k + 1;
+                }
+            }
+        }
+        (len, plane)
     }
 
     /// `CalcN`: how many more rays the pixel gets in this pass, from its
@@ -1921,8 +2253,9 @@ impl<'a, 'c> Tracer<'a, 'c> {
 
     /// One pixel of `TMCCalcThread.Execute` (rays until the noise is low).
     #[allow(clippy::too_many_arguments)]
-    fn pixel(&mut self, x1: i32, y: i32, rec: &mut McRecord, snap: &[McRecord], skip_nonzero: bool, avrg_vari: f64, avrg_rcount: f32, max_new: i32) {
+    async fn pixel(&mut self, x1: i32, y: i32, rec: &mut McRecord, snap: &[McRecord], skip_nonzero: bool, avrg_vari: f64, avrg_rcount: f32, max_new: i32) {
         let sqr = self.c.lv.sqr;
+        self.seed = seed_of(x1, y, 0x8000_0000 | self.pass_nr);
         let mut total = if rec.ray_count == 0 {
             4
         } else if skip_nonzero {
@@ -1938,8 +2271,21 @@ impl<'a, 'c> Tracer<'a, 'c> {
             let mut at = [0f32; 3];
             let (mut sum, mut sqr_sum) = (0f64, 0f64);
             let mut itcount = 0;
-            while itcount < total {
-                let l = self.ray(x1, y, rec.ray_count, itcount);
+            // the rays of the round, each with its own tracer (and seed)
+            let rc = rec.ray_count;
+            let rays = (0..total.max(0))
+                .map(|i| {
+                    let mut t = self.fork();
+                    Some(Box::pin(async move {
+                        let l = t.ray(x1, y, rc, i).await;
+                        (l, t.hit)
+                    }) as Pin<Box<dyn Future<Output = (S3, bool)> + 'c>>)
+                })
+                .collect::<Vec<_>>();
+            let n = rays.len();
+            let lights = JoinAll { futs: rays, out: (0..n).map(|_| None).collect() }.await;
+            for (l, hit) in lights {
+                self.hit |= hit;
                 let sv = [l[0].clamp(0.0, 400.0), l[1].clamp(0.0, 400.0), l[2].clamp(0.0, 400.0)];
                 let yv = luma(sv) as f64;
                 sqr_sum += yv * yv;
@@ -2115,6 +2461,25 @@ pub fn pass_rows(
     let ctx = &ctx;
     let snap = &snap;
     let done = &done;
+    #[cfg(feature = "gpu")]
+    if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
+        let pa = PassArgs { snap, skip_nonzero, avrg_vari, avrg_rcount, max_new, pass_nr: pass_nr as u32 };
+        match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows) {
+            Ok(status) => {
+                *MC_STATUS.lock().unwrap() = status;
+                img.seconds += t0.elapsed().as_secs_f64();
+                if cancel() {
+                    return Err("cancelled".into());
+                }
+                img.passes += 1;
+                return Ok(());
+            }
+            Err(e) if e == "cancelled" => return Err(e),
+            // nothing of the pass is kept: it runs on the CPU again
+            Err(e) => eprintln!("Monte Carlo on the GPU failed, calculated on the CPU: {e}"),
+        }
+    }
+    *MC_STATUS.lock().unwrap() = "CPU".into();
     std::thread::scope(|s| {
         let mut per: Vec<Vec<(usize, &mut [McRecord])>> = (0..threads).map(|_| Vec::new()).collect();
         for (y, row) in img.recs.chunks_mut(w).enumerate() {
@@ -2122,15 +2487,17 @@ pub fn pass_rows(
         }
         for list in per {
             s.spawn(move || {
+                let march = RefCell::new(McMarch::new(ctx));
                 for (y, row) in list {
                     if cancel() {
                         break;
                     }
-                    let seed = (0x24563487i64 + (y as i64 + 1) * 0x324594A1i64 + pass_nr as i64 * 0x5851F42D) as i32;
-                    let mut t = Tracer::new(ctx, seed);
+                    let mut t = Tracer::new(ctx, 0);
+                    t.cpu = Some(&march);
                     t.row_y = y as i32;
+                    t.pass_nr = pass_nr as u32;
                     for (x, rec) in row.iter_mut().enumerate() {
-                        t.pixel(x as i32 + 1, y as i32, rec, snap, skip_nonzero, avrg_vari, avrg_rcount, max_new);
+                        now(t.pixel(x as i32 + 1, y as i32, rec, snap, skip_nonzero, avrg_vari, avrg_rcount, max_new));
                     }
                     if let Some(f) = rows {
                         f(y, row);
@@ -2147,6 +2514,341 @@ pub fn pass_rows(
     }
     img.passes += 1;
     Ok(())
+}
+
+/// Where the last pass was calculated ("CPU" or the GPU's status).
+static MC_STATUS: std::sync::Mutex<String> = std::sync::Mutex::new(String::new());
+
+/// Where the last pass was calculated.
+pub fn last_status() -> String {
+    MC_STATUS.lock().unwrap().clone()
+}
+
+/// The per-pass values of [`Tracer::pixel`].
+#[cfg(feature = "gpu")]
+struct PassArgs<'s> {
+    snap: &'s [McRecord],
+    skip_nonzero: bool,
+    avrg_vari: f64,
+    avrg_rcount: f32,
+    max_new: i32,
+    pass_nr: u32,
+}
+
+/// Rounds smaller than this run on the CPU (a batch of the card has a fixed
+/// cost).
+#[cfg(feature = "gpu")]
+const MC_CPU_RAYS: usize = 2000;
+
+/// The pixels each thread keeps going at once (their rays wait for the
+/// card together).
+#[cfg(feature = "gpu")]
+const MC_ACTIVE: usize = 1 << 16;
+
+/// A round's batch shared by the card and the threads: the card starts
+/// the tasks from the front, the threads take pieces from the end
+/// (`share`), and then those the card gave up (`left`, once `published`).
+#[cfg(feature = "gpu")]
+struct SharedRound {
+    reqs: Vec<McReq>,
+    cpu_res: Vec<std::sync::OnceLock<McRes>>,
+    share: crate::gpu::RaySharing,
+    left: std::sync::Mutex<Vec<usize>>,
+    published: std::sync::atomic::AtomicBool,
+}
+
+#[cfg(feature = "gpu")]
+impl SharedRound {
+    /// A thread's part: pieces from the end until the card is done, then
+    /// the tasks the card gave up
+    fn help(&self, m: &mut McMarch) {
+        use std::sync::atomic::Ordering;
+        const PIECE: usize = 16;
+        loop {
+            let piece = {
+                let mut st = self.share.state.lock().unwrap();
+                let lo = st.1.saturating_sub(PIECE).max(st.0);
+                let r = lo..st.1;
+                st.1 = lo;
+                r
+            };
+            if piece.is_empty() {
+                break;
+            }
+            for i in piece.rev() {
+                let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
+            }
+        }
+        while !self.published.load(Ordering::SeqCst) {
+            std::thread::yield_now();
+        }
+        loop {
+            let Some(i) = self.left.lock().unwrap().pop() else { break };
+            let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
+        }
+    }
+}
+
+/// What a thread tells the pass: its marches of the round (None: its
+/// pixels are done), or that it finished helping with a batch.
+#[cfg(feature = "gpu")]
+enum ToMain {
+    Round(usize, Option<Vec<McReq>>),
+    Helped,
+}
+
+/// The answer to a thread's round: the results, or "march them yourself",
+/// or "help with the batch, then wait for the results".
+#[cfg(feature = "gpu")]
+enum ToWorker {
+    Results(Vec<McRes>),
+    Cpu,
+    Help(std::sync::Arc<SharedRound>),
+}
+
+/// A pass with the marches on the graphics card: every thread runs many
+/// pixels at once (each a future that waits for its marches); in every
+/// round the threads hand their marches to this thread, which sends them
+/// to the card as one batch while the threads march from its end.
+/// Returns the status of the card.
+#[cfg(feature = "gpu")]
+fn pass_gpu(
+    ctx: &McCtx,
+    img: &mut McImage,
+    threads: usize,
+    pa: &PassArgs,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
+) -> Result<String, String> {
+    use std::sync::atomic::Ordering;
+    use std::sync::mpsc;
+    let w = img.width;
+    let h = img.height;
+    let p = ctx.p;
+    let done_rows = std::sync::atomic::AtomicUsize::new(0);
+    let (to_main, from_workers) = mpsc::channel::<ToMain>();
+    let mut replies = Vec::new();
+    let mut inboxes = Vec::new();
+    for _ in 0..threads {
+        let (tx, rx) = mpsc::channel::<ToWorker>();
+        replies.push(tx);
+        inboxes.push(rx);
+    }
+    let failed: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+    let mut status = String::new();
+    let share_cpu = std::env::var("MB3D_MC_CPU_SHARE").map_or(true, |v| v != "0");
+    std::thread::scope(|s| {
+        let mut per: Vec<Vec<(usize, &mut [McRecord])>> = (0..threads).map(|_| Vec::new()).collect();
+        for (y, row) in img.recs.chunks_mut(w).enumerate() {
+            per[y % threads].push((y, row));
+        }
+        for ((wi, list), inbox) in per.into_iter().enumerate().zip(inboxes) {
+            let to_main = to_main.clone();
+            let done_rows = &done_rows;
+            s.spawn(move || {
+                let march = RefCell::new(McMarch::new(ctx));
+                let outbox: RefCell<Vec<Rc<Link>>> = RefCell::new(Vec::new());
+                let active_max = (MC_ACTIVE / threads).max(64);
+                // the pixels in row order: (row, column)
+                let mut queue = list.iter().flat_map(|(y, row)| (0..row.len()).map(move |x| (*y, x))).collect::<std::collections::VecDeque<_>>();
+                let mut row_of: std::collections::HashMap<usize, (Vec<McRecord>, usize)> = list.iter().map(|(y, row)| (*y, (row.to_vec(), row.len()))).collect();
+                let mut slices: std::collections::HashMap<usize, &mut [McRecord]> = list.into_iter().collect();
+                type Px<'x> = Pin<Box<dyn Future<Output = McRecord> + 'x>>;
+                let mut active: Vec<(usize, usize, Px)> = Vec::new();
+                let mut cx = Context::from_waker(std::task::Waker::noop());
+                loop {
+                    if cancel() {
+                        let _ = to_main.send(ToMain::Round(wi, None));
+                        return;
+                    }
+                    while active.len() < active_max {
+                        let Some((y, x)) = queue.pop_front() else { break };
+                        let rec = row_of[&y].0[x];
+                        let outbox = &outbox;
+                        let fut = Box::pin(async move {
+                            let mut t = Tracer::new(ctx, 0);
+                            t.link = Some((Rc::new(Link::default()), outbox));
+                            t.row_y = y as i32;
+                            t.pass_nr = pa.pass_nr;
+                            let mut r = rec;
+                            t.pixel(x as i32 + 1, y as i32, &mut r, pa.snap, pa.skip_nonzero, pa.avrg_vari, pa.avrg_rcount, pa.max_new).await;
+                            r
+                        }) as Px;
+                        active.push((y, x, fut));
+                    }
+                    // the futures run until they wait for a march
+                    let mut k = 0;
+                    while k < active.len() {
+                        if let Poll::Ready(r) = active[k].2.as_mut().poll(&mut cx) {
+                            let (y, x, _) = active.swap_remove(k);
+                            let e = row_of.get_mut(&y).unwrap();
+                            e.0[x] = r;
+                            e.1 -= 1;
+                            if e.1 == 0 {
+                                let (recs, _) = row_of.remove(&y).unwrap();
+                                let row = slices.remove(&y).unwrap();
+                                row.copy_from_slice(&recs);
+                                if let Some(f) = rows {
+                                    f(y, row);
+                                }
+                                let d = done_rows.fetch_add(1, Ordering::Relaxed) + 1;
+                                progress(d, h);
+                            }
+                        } else {
+                            k += 1;
+                        }
+                    }
+                    let links: Vec<Rc<Link>> = std::mem::take(&mut *outbox.borrow_mut());
+                    if links.is_empty() {
+                        if active.is_empty() && queue.is_empty() {
+                            let _ = to_main.send(ToMain::Round(wi, None));
+                            return;
+                        }
+                        // only new pixels: start them in the next turn
+                        continue;
+                    }
+                    let reqs: Vec<McReq> = links.iter().map(|l| l.req.take().unwrap()).collect();
+                    if to_main.send(ToMain::Round(wi, Some(reqs.clone()))).is_err() {
+                        return;
+                    }
+                    let mut answer = inbox.recv();
+                    if let Ok(ToWorker::Help(round)) = &answer {
+                        round.help(&mut march.borrow_mut());
+                        let _ = to_main.send(ToMain::Helped);
+                        answer = inbox.recv();
+                    }
+                    match answer {
+                        Ok(ToWorker::Results(res)) => {
+                            for (l, r) in links.iter().zip(res) {
+                                l.res.set(Some(r));
+                            }
+                        }
+                        // the CPU does this round
+                        Ok(ToWorker::Cpu) => {
+                            let mut m = march.borrow_mut();
+                            for (l, r) in links.iter().zip(&reqs) {
+                                // (the view vector only matters for volumetric light)
+                                l.res.set(Some(m.run(r, [0.0, 0.0, 1.0])));
+                            }
+                        }
+                        _ => return,
+                    }
+                }
+            });
+        }
+        drop(to_main);
+        // (dropped when this thread panics: the workers end then)
+        let replies = std::mem::take(&mut replies);
+        // the batches of the rounds
+        let mut live = threads;
+        let mut on_card = true;
+        let mut batches = 0usize;
+        let (mut n_card, mut n_cpu) = (0usize, 0usize);
+        let timing = std::env::var_os("MB3D_MC_TIMING").is_some();
+        let (mut t_card, mut t_wait) = (0f64, 0f64);
+        while live > 0 {
+            let tw = std::time::Instant::now();
+            let mut round: Vec<(usize, Vec<McReq>)> = Vec::new();
+            // one message from every live worker
+            while round.len() < live {
+                match from_workers.recv() {
+                    Ok(ToMain::Round(wi, Some(r))) => round.push((wi, r)),
+                    Ok(ToMain::Round(_, None)) => live -= 1,
+                    Ok(ToMain::Helped) => {}
+                    Err(_) => {
+                        live = 0;
+                        break;
+                    }
+                }
+            }
+            t_wait += tw.elapsed().as_secs_f64();
+            let total: usize = round.iter().map(|r| r.1.len()).sum();
+            if total == 0 {
+                continue;
+            }
+            if !on_card || total < MC_CPU_RAYS {
+                n_cpu += total;
+                for (wi, _) in &round {
+                    let _ = replies[*wi].send(ToWorker::Cpu);
+                }
+                continue;
+            }
+            let all: Vec<McReq> = round.iter().flat_map(|r| r.1.iter().copied()).collect();
+            let sr = std::sync::Arc::new(SharedRound {
+                cpu_res: (0..all.len()).map(|_| std::sync::OnceLock::new()).collect(),
+                share: crate::gpu::RaySharing {
+                    // (without sharing the card's limit is all of them)
+                    state: std::sync::Mutex::new((if share_cpu { 0 } else { all.len() }, all.len())),
+                    done: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                    tail: if share_cpu { threads * 4 } else { 0 },
+                },
+                reqs: all,
+                left: std::sync::Mutex::new(Vec::new()),
+                published: std::sync::atomic::AtomicBool::new(false),
+            });
+            for (wi, _) in &round {
+                let _ = replies[*wi].send(ToWorker::Help(sr.clone()));
+            }
+            let tc = std::time::Instant::now();
+            let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));
+            let card_s = tc.elapsed().as_secs_f64();
+            t_card += card_s;
+            let (res, took, gave_up) = match r {
+                Ok(v) => v,
+                Err(e) => {
+                    // the rest of the pass on the CPU (this batch: the
+                    // threads march what the card did not)
+                    if e == "cancelled" {
+                        *failed.lock().unwrap() = Some(e);
+                    } else {
+                        eprintln!("Monte Carlo on the GPU failed, calculated on the CPU: {e}");
+                    }
+                    on_card = false;
+                    (Vec::new(), 0, Vec::new())
+                }
+            };
+            {
+                // what the card did not finish: its own part it gave up, or
+                // all of it when it failed
+                let mut left = sr.left.lock().unwrap();
+                *left = gave_up;
+                if !on_card {
+                    let lim = sr.share.state.lock().unwrap().1;
+                    left.extend(0..lim.min(total));
+                }
+            }
+            sr.published.store(true, Ordering::SeqCst);
+            // the threads finish their parts
+            let mut helped = 0;
+            while helped < round.len() {
+                match from_workers.recv() {
+                    Ok(ToMain::Helped) => helped += 1,
+                    Ok(_) => unreachable!("a thread with a round of its own while helping"),
+                    Err(_) => break,
+                }
+            }
+            let n_cpu_b = sr.cpu_res.iter().filter(|c| c.get().is_some()).count();
+            if timing {
+                eprintln!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all", card_s * 1000.0, tc.elapsed().as_secs_f64() * 1000.0);
+            }
+            batches += 1;
+            n_cpu += n_cpu_b;
+            n_card += total - n_cpu_b;
+            let mut it = (0..total).map(|i| sr.cpu_res[i].get().copied().unwrap_or_else(|| res[i]));
+            for (wi, r) in &round {
+                let _ = replies[*wi].send(ToWorker::Results(it.by_ref().take(r.len()).collect()));
+            }
+        }
+        if timing {
+            eprintln!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
+        }
+        status = format!("GPU {} ({batches} batches, {n_card} marches on the card, {n_cpu} on the CPU)", crate::gpu::name().unwrap_or_default());
+    });
+    if let Some(e) = failed.into_inner().unwrap() {
+        return Err(e);
+    }
+    Ok(status)
 }
 
 // ---------------------------------------------------------------------------

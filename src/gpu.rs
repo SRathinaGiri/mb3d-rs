@@ -195,6 +195,11 @@ pub fn set_enabled(on: bool) {
     ENABLED.store(on, Ordering::Relaxed);
 }
 
+/// The graphics card's name (None without a usable card).
+pub fn name() -> Option<String> {
+    gpu().ok().map(|g| g.name.clone())
+}
+
 pub fn enabled() -> bool {
     ENABLED.load(Ordering::Relaxed) && !CPU_HERE.with(|c| c.get())
 }
@@ -304,9 +309,9 @@ fn real_block(dbl: bool) -> String {
     // the positions of the reflection tasks: as doubles (words 24-29 and
     // 30-35 of the record) or the f32 words
     if dbl {
-        o.push_str("fn out_d(q: u32) -> R { return bitcast<f64>((u64(OUT[q + 1u]) << 32u) | u64(OUT[q])); }\nfn task_origin(o: u32) -> vec3<R> { return vec3<R>(out_d(o + 24u), out_d(o + 26u), out_d(o + 28u)); }\nfn put_hit_pos(o: u32, v: vec3<R>) { for (var k = 0u; k < 3u; k++) { let b = bitcast<u64>(v[k]); OUT[o + 30u + 2u * k] = u32(b & 0xFFFFFFFFlu); OUT[o + 31u + 2u * k] = u32(b >> 32u); } }\n");
+        o.push_str("fn out_d(q: u32) -> R { return bitcast<f64>((u64(OUT[q + 1u]) << 32u) | u64(OUT[q])); }\nfn task_origin(o: u32) -> vec3<R> { return vec3<R>(out_d(o + 24u), out_d(o + 26u), out_d(o + 28u)); }\nfn put_hit_pos(o: u32, v: vec3<R>) { for (var k = 0u; k < 3u; k++) { let b = bitcast<u64>(v[k]); OUT[o + 30u + 2u * k] = u32(b & 0xFFFFFFFFlu); OUT[o + 31u + 2u * k] = u32(b >> 32u); } }\nfn mc_pos(o: u32) -> vec3<R> { return vec3<R>(out_d(o + 13u), out_d(o + 15u), out_d(o + 17u)); }\nfn mc_put_pos(o: u32, v: vec3<R>) { for (var k = 0u; k < 3u; k++) { let b = bitcast<u64>(v[k]); OUT[o + 13u + 2u * k] = u32(b & 0xFFFFFFFFlu); OUT[o + 14u + 2u * k] = u32(b >> 32u); } }\n");
     } else {
-        o.push_str("fn task_origin(o: u32) -> vec3<R> { return vec3<R>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u])); }\nfn put_hit_pos(o: u32, v: vec3<R>) {}\n");
+        o.push_str("fn task_origin(o: u32) -> vec3<R> { return vec3<R>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u])); }\nfn put_hit_pos(o: u32, v: vec3<R>) {}\nfn mc_pos(o: u32) -> vec3<R> { return vec3<R>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u])); }\nfn mc_put_pos(o: u32, v: vec3<R>) {}\n");
     }
     // the coordinates: as doubles (DP: start, view gradients, julia
     // constant) or the f32 parameters
@@ -910,7 +915,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     i(&mut v, p.dfog_on_it as i32);
     i(&mut v, p.first_step_random as i32);
     // the post passes use their own binary search depth
-    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps, p.de_add_steps][mode as usize]);
+    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps, p.de_add_steps, p.de_add_steps][mode as usize]);
     i(&mut v, p.normals_on_de as i32);
     i(&mut v, p.sm_normals);
     f(&mut v, p.de_offset as f64);
@@ -1513,6 +1518,182 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sha
     Ok((out, n_card.get(), unfinished))
 }
 
+/// The [`Resumer`] of the Monte Carlo batches with the hash of their shader.
+static MC_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+
+/// The words of a Monte Carlo task (`MC_WORDS` in the shader).
+const MC_WORDS: usize = 20;
+
+/// Runs marches of the Monte Carlo renderer on the graphics card (what
+/// `mc.rs`'s `McMarch` does on the CPU).  `secant`: the secant search
+/// refines the surfaces.  With `share` the card starts the tasks below the
+/// shared limit and the CPU takes them from the end (see [`RaySharing`]);
+/// returns the results (those the card did not take are default), the
+/// number it took and those of them it did not finish.
+pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
+    use crate::mc::McRes;
+    if tasks.is_empty() {
+        if let Some(sh) = share {
+            sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
+        }
+        return Ok((Vec::new(), 0, Vec::new()));
+    }
+    if let Some(r) = unsupported(p) {
+        return Err(r);
+    }
+    let dbl = needs_double(p);
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
+    let pl = pipeline(
+        g,
+        &sh.code,
+        &[("MODE_KIND", 4.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)],
+    )?;
+    let n = tasks.len();
+    let words: Vec<u32> = tasks
+        .iter()
+        .flat_map(|t| {
+            let mut w = [0u32; MC_WORDS];
+            for k in 0..3 {
+                w[k] = (t.pos[k] as f32).to_bits();
+                w[3 + k] = (t.dir[k] as f32).to_bits();
+                let b = t.pos[k].to_bits();
+                (w[13 + 2 * k], w[14 + 2 * k]) = (b as u32, (b >> 32) as u32);
+            }
+            w[6] = (t.zz as f32).to_bits();
+            w[7] = (t.zz2 as f32).to_bits();
+            w[8] = (t.zzplus as f32).to_bits();
+            w[9] = (t.len as f32).to_bits();
+            w[10] = t.seed as u32;
+            w[11] = t.kind as u32 | (t.inside as u32) << 2 | (t.probe as u32) << 3 | (t.trans as u32) << 4;
+            w[12] = t.ms_de_stop.to_bits();
+            w
+        })
+        .collect();
+    let size = (words.len() * 4) as u64;
+    let buf = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("mc tasks"), size, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    g.queue.write_buffer(&buf, 0, &bytes(&words));
+    let read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("mc read"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let make = |label: &'static str, d: &[u32]| {
+        let d = if d.is_empty() { vec![0u32] } else { d.to_vec() };
+        let b = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (d.len() * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        g.queue.write_buffer(&b, 0, &bytes(&d));
+        b
+    };
+    let cst = make("constants", &sh.cst);
+    let rtpl = make("record", &sh.rtpl);
+    let maps = make("maps", &sh.maps);
+    let key = {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        sh.code.hash(&mut h);
+        h.finish()
+    };
+    let mut res = match MC_RESUMER.lock().unwrap().take() {
+        Some((k, r)) if k == key => r,
+        _ => Resumer::new(g, &sh),
+    };
+    let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let mut base = params(p, 0, n.div_ceil(R_W), &sh, 5, &PostJob::default(), None);
+    base[171] = secant as u32;
+    let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: None,
+        layout: &pl.get_bind_group_layout(0),
+        entries: &[
+            wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+        ],
+    });
+    use std::sync::atomic::Ordering;
+    let lim = |started: usize, free: usize| -> usize {
+        let Some(sh) = share else { return n };
+        let mut st = sh.state.lock().unwrap();
+        st.0 = st.0.max((started + free).min(st.1));
+        st.0
+    };
+    let give_up = |left: usize| -> bool {
+        share.is_some_and(|sh| {
+            let st = sh.state.lock().unwrap();
+            left <= sh.tail && st.0 >= st.1
+        })
+    };
+    let r = res.run(
+        g,
+        &par,
+        base,
+        n,
+        &lim,
+        &give_up,
+        &|| false,
+        |enc, groups| {
+            let mut pass = enc.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&pl);
+            pass.set_bind_group(0, &bind, &[]);
+            pass.dispatch_workgroups(groups, 1, 1);
+        },
+        |_| Ok(()),
+    );
+    if let Some(sh) = share {
+        sh.done.store(true, Ordering::SeqCst);
+    }
+    let (n_card, unfinished) = r?;
+    *MC_RESUMER.lock().unwrap() = Some((key, res));
+    let mut enc = g.device.create_command_encoder(&Default::default());
+    enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
+    g.queue.submit([enc.finish()]);
+    let slice = read.slice(..);
+    let (tx, rx) = std::sync::mpsc::channel();
+    slice.map_async(wgpu::MapMode::Read, move |r| {
+        let _ = tx.send(r);
+    });
+    g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
+    if let Some(e) = take_error() {
+        return Err(e);
+    }
+    rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    let out = {
+        let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
+        data.chunks_exact(MC_WORDS * 4)
+            .take(n_card)
+            .map(|rec| {
+                let u = |k: usize| u32::from_le_bytes(rec[k * 4..k * 4 + 4].try_into().unwrap());
+                let f = |k: usize| f32::from_bits(u(k)) as f64;
+                let flags = u(11);
+                McRes {
+                    kind: (flags & 3) as u8,
+                    pos: if dbl {
+                        let d = |k: usize| f64::from_bits(u(k) as u64 | (u(k + 1) as u64) << 32);
+                        [d(13), d(15), d(17)]
+                    } else {
+                        [f(0), f(1), f(2)]
+                    },
+                    normals: [f(3), f(4), f(5)],
+                    zz: f(6),
+                    zz2: f(7),
+                    dyn_fog: f(8) as f32,
+                    len: f(9),
+                    seed: u(10) as i32,
+                    inside: flags & 4 != 0,
+                    de_limited: flags & 8 != 0,
+                    start_difs: flags & 16 != 0,
+                    last_difs: flags & 32 != 0,
+                    ms_de_stop: f(12) as f32,
+                    si_grad: u(19) as u16,
+                    otrap: (u(19) >> 16) as u16,
+                }
+            })
+            .collect()
+    };
+    read.unmap();
+    Ok((out, n_card, unfinished))
+}
+
 /// The DE of every pixel of `p.rect` at the start of its ray, as the
 /// shader calculates it (a check against the CPU's `calc::de_at`): the DE
 /// in step widths, the iteration count and `max_its_result`.
@@ -1995,7 +2176,7 @@ mod tests {
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
         // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();

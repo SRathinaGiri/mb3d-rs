@@ -115,7 +115,7 @@ const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or t
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 563u;
+const STATE_FIXED: u32 = 589u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -134,6 +134,14 @@ const M_SHADOW: u32 = 1u;
 const M_DEAO: u32 = 2u;
 const M_PROBE: u32 = 3u;         // the DE at the ray start (a check against the CPU)
 const M_REFLECT: u32 = 4u;       // the reflection pass: a bounce (or the surface) of every task
+const M_MC: u32 = 5u;            // the Monte Carlo renderer: the march of every task (mc.rs McReq)
+const MC_SECANT: u32 = 171u;     // M_MC: the secant search refines the surface (MCoptions bit 1)
+const MC_WORDS: u32 = 20u;       // a task: 0-2 position, 3-5 direction, 6 zz, 7 zz2, 8 zzplus, 9 len,
+                                 // 10 seed, 11 kind (bits 0-1), inside (2), probe (3), trans (4),
+                                 // 12 DE stop, 13-18 the position as doubles; out 0-2 (13-18) position,
+                                 // 3-5 normal, 6 zz, 7 zz2, 8 dynamic fog steps, 9 len, 10 seed,
+                                 // 11 kind, inside (2), DE limited (3), first (4) and last (5) DE dIFS,
+                                 // 12 DE stop, 19 gradient and orbit trap
 // 6 slots of 8 words: iterations, uncounted, constants base, fHln,
 // Integer Power power, z multiplier, kind (0 none, 1 Integer Power, 2 .m3f,
 // 3 Amazing Box: see amazing_box)
@@ -167,6 +175,7 @@ override HAS_IPOL: bool = false;
 // occlusion at the hits; without them their states compile away
 override R_HS: bool = true;
 override R_AO: bool = true;
+// MODE_KIND 4: the Monte Carlo renderer's marches (M_MC)
 // the reflection pass in two pipelines where it casts shadow or occlusion
 // rays (R_SPLIT): the march to the hits (R_MARCH), then the shadows and the
 // occlusion of the hits (!R_MARCH; P_R_POST takes up the hit from the task
@@ -231,6 +240,15 @@ var<private> dbg_g: R;
 var<private> de_overflow: bool;
 // inside rendering (Marcher::inside / calc_inside): the DE is inverted
 var<private> inside: bool;
+// the last DE came from a dIFS part (Marcher::last_difs)
+var<private> last_difs: bool;
+// the Monte Carlo renderer's results: the length left (shadow rays), the
+// ray's length, the dynamic fog steps, the flags (McRes) and the normal
+var<private> mc_len: R;
+var<private> mc_zz2o: R;
+var<private> mc_dyn: R;
+var<private> mc_flags: u32;
+var<private> mc_n: vec3<R>;
 var<private> mzz: R;
 var<private> vfov: vec3<R>;
 var<private> base: vec3<R>;
@@ -1018,6 +1036,7 @@ fn evaluate(on_de: bool) -> R {
         if (!on_de) {
             return smooth_it;
         }
+        last_difs = difs;
         var part_done = true;
         if (difs) {
             // DE option 20: the absolute DE stop as RStopD
@@ -1476,7 +1495,34 @@ const P_IN_SIT: u32 = 49u;   // result: the smoothed iteration count (inside ren
 const P_COI: u32 = 50u;      // doColorOnIt, then after_coi
 const P_COI_R: u32 = 51u;    // result of its iterations
 const P_SURF_COL: u32 = 52u; // the surface: colour and depth
-const P_R_POST: u32 = 53u;   // the second reflection pipeline: the hit from the task record
+const P_R_POST: u32 = 53u;
+// the Monte Carlo renderer (mc.rs McMarch)
+const P_MC_START: u32 = 54u;  // the task
+const P_MC_PROBE: u32 = 55u;  // result: the DE at the start of the ray
+const P_MC_M0: u32 = 56u;     // the march: its first DE in r
+const P_MC_LOOP: u32 = 57u;   // a step
+const P_MC_STEP: u32 = 58u;   // result: the DE after the step
+const P_MC_HIT: u32 = 59u;    // the surface: refine it
+const P_MC_SEC: u32 = 60u;    // the secant search
+const P_MC_SEC_R: u32 = 61u;
+const P_MC_HN: u32 = 62u;     // the normal, gradient and colour of the surface
+const P_MC_N: u32 = 63u;      // CalculateNormals(OnSmoothIt): the centre sample
+const P_MC_N0: u32 = 64u;
+const P_MC_NA: u32 = 65u;     // an attempt (a side)
+const P_MC_NK: u32 = 66u;     // the sample on an axis
+const P_MC_NK_R: u32 = 67u;
+const P_MC_COL: u32 = 68u;    // the gradient, then doColorOnIt
+const P_MC_COL2: u32 = 69u;   // RMdoColor
+const P_MC_IN: u32 = 70u;     // a primary ray that starts inside the set: its colour
+const P_MC_IN2: u32 = 71u;
+const P_MC_IN_SIT: u32 = 72u;
+const P_MC_HS0: u32 = 73u;    // a shadow ray: the DE at its start
+const P_MC_HS_STEP: u32 = 74u;
+const P_MC_HS_R: u32 = 75u;
+const P_MC_HS_END: u32 = 76u;
+const P_MC_TH_STEP: u32 = 77u; // through a transparent object
+const P_MC_TH_R: u32 = 78u;
+const P_MC_OPEN: u32 = 79u;   // the ray ends in open air   // the second reflection pipeline: the hit from the task record
 
 
 // The march of a pixel (M_MARCH), or a post calculation on the G-buffer
@@ -1529,6 +1575,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
     if (mode == M_REFLECT) {
         inside = r_task_inside;
     }
+    if (mode == M_MC) {
+        inside = (mc_t_flags & 4u) != 0u;
+    }
     var cut_plane = 0u;
     var after_coi = P_DONE;
     var coi_max = 0;
@@ -1540,6 +1589,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
         need = false;
     } else if (mode == M_REFLECT) {
         pc = select(P_R_POST, P_R_START, R_MARCH);
+        need = false;
+    } else if (mode == M_MC) {
+        pc = P_MC_START;
         need = false;
     }
     vfov_px = vfov;
@@ -1623,6 +1675,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var ds = vec2<R>(0.0);
     var axis = 0;
     var kk = 0;
+    // the Monte Carlo renderer: the ray's length at the start, the
+    // normal's centre DE, side and offset, the depth along the view, the
+    // kind of secant search and the march guard
+    var mc_zz2 = R(0.0);
+    var mc_no = R(0.0);
+    var mc_sca = R(0.0);
+    var mc_off = R(0.0);
+    var mc_vz = R(0.0);
+    var mc_sec_main = false;
+    var mc_guard = 0;
 
     // resumable marching (STATE): the state of every variable that lives
     // across turns (a test checks the lists against the declarations)
@@ -1675,137 +1737,152 @@ fn pixel(x: i32, y: i32, mode: u32) {
         r_step_count = rget(so + 73u * ns, ns);
         de_overflow = (STATE[so + 75u * ns] != 0u);
         inside = (STATE[so + 76u * ns] != 0u);
-        mzz = rget(so + 77u * ns, ns);
-        vfov.x = rget(so + 79u * ns, ns);
-        vfov.y = rget(so + 81u * ns, ns);
-        vfov.z = rget(so + 83u * ns, ns);
-        base.x = rget(so + 85u * ns, ns);
-        base.y = rget(so + 87u * ns, ns);
-        base.z = rget(so + 89u * ns, ns);
-        max_its_result = bitcast<i32>(STATE[so + 91u * ns]);
-        s_roughness = rget(so + 92u * ns, ns);
-        seed = bitcast<i32>(STATE[so + 94u * ns]);
-        si_normal.x = bitcast<i32>(STATE[so + 95u * ns]);
-        si_normal.y = bitcast<i32>(STATE[so + 96u * ns]);
-        si_normal.z = bitcast<i32>(STATE[so + 97u * ns]);
-        si_zpos = STATE[so + 98u * ns];
-        si_shadow = STATE[so + 99u * ns];
-        si_grad = STATE[so + 100u * ns];
-        si_otrap = STATE[so + 101u * ns];
-        si_amb = STATE[so + 102u * ns];
-        if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; ao_dirs[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); } }
-        if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { ao_min[i] = rget(so + (301u + 2u * i) * ns, ns); } }
-        step_count = rget(so + 367u * ns, ns);
-        first_step = (STATE[so + 369u * ns] != 0u);
-        pc = STATE[so + 370u * ns];
-        need = (STATE[so + 371u * ns] != 0u);
-        want_de = (STATE[so + 372u * ns] != 0u);
-        cut_plane = STATE[so + 373u * ns];
-        after_coi = STATE[so + 374u * ns];
-        coi_max = bitcast<i32>(STATE[so + 375u * ns]);
-        after_hs = STATE[so + 376u * ns];
-        after_ao = STATE[so + 377u * ns];
-        last_zz = rget(so + 378u * ns, ns);
-        rlast_sw = rget(so + 380u * ns, ns);
-        after_bs = STATE[so + 382u * ns];
-        bs_thr = rget(so + 383u * ns, ns);
-        bs_it_check = (STATE[so + 385u * ns] != 0u);
-        zf = rget(so + 386u * ns, ns);
-        ic.x = rget(so + 388u * ns, ns);
-        ic.y = rget(so + 390u * ns, ns);
-        ic.z = rget(so + 392u * ns, ns);
-        nvec.x = rget(so + 394u * ns, ns);
-        nvec.y = rget(so + 396u * ns, ns);
-        nvec.z = rget(so + 398u * ns, ns);
-        max_lhs = rget(so + 400u * ns, ns);
-        li = STATE[so + 402u * ns];
-        lidx = STATE[so + 403u * ns];
-        lvec.x = rget(so + 404u * ns, ns);
-        lvec.y = rget(so + 406u * ns, ns);
-        lvec.z = rget(so + 408u * ns, ns);
-        zz2 = rget(so + 410u * ns, ns);
-        zz2mul = rget(so + 412u * ns, ns);
-        rsf = rget(so + 414u * ns, ns);
-        st = rget(so + 416u * ns, ns);
-        zr_soft = rget(so + 418u * ns, ns);
-        zrs_mul = rget(so + 420u * ns, ns);
-        ray_count = STATE[so + 422u * ns];
-        k = STATE[so + 423u * ns];
-        step_ao = rget(so + 424u * ns, ns);
-        max_dist = rget(so + 426u * ns, ns);
-        d_step_mul = rget(so + 428u * ns, ns);
-        ms2 = rget(so + 430u * ns, ns);
-        de_mul = rget(so + 432u * ns, ns);
-        abr_c = rget(so + 434u * ns, ns);
-        md_d10 = rget(so + 436u * ns, ns);
-        d_min_a_dif = rget(so + 438u * ns, ns);
-        corr_w = rget(so + 440u * ns, ns);
-        rot_w[0].x = rget(so + 442u * ns, ns);
-        rot_w[0].y = rget(so + 444u * ns, ns);
-        rot_w[0].z = rget(so + 446u * ns, ns);
-        rot_w[1].x = rget(so + 448u * ns, ns);
-        rot_w[1].y = rget(so + 450u * ns, ns);
-        rot_w[1].z = rget(so + 452u * ns, ns);
-        rot_w[2].x = rget(so + 454u * ns, ns);
-        rot_w[2].y = rget(so + 456u * ns, ns);
-        rot_w[2].z = rget(so + 458u * ns, ns);
-        rv0.x = rget(so + 460u * ns, ns);
-        rv0.y = rget(so + 462u * ns, ns);
-        rv0.z = rget(so + 464u * ns, ns);
-        rv1.x = rget(so + 466u * ns, ns);
-        rv1.y = rget(so + 468u * ns, ns);
-        rv1.z = rget(so + 470u * ns, ns);
-        rv2.x = rget(so + 472u * ns, ns);
-        rv2.y = rget(so + 474u * ns, ns);
-        rv2.z = rget(so + 476u * ns, ns);
-        sv.x = rget(so + 478u * ns, ns);
-        sv.y = rget(so + 480u * ns, ns);
-        sv.z = rget(so + 482u * ns, ns);
-        s_tmp = rget(so + 484u * ns, ns);
-        b_end = (STATE[so + 486u * ns] != 0u);
-        b_first = (STATE[so + 487u * ns] != 0u);
-        r = rget(so + 488u * ns, ns);
-        done = (STATE[so + 490u * ns] != 0u);
-        dtmp = rget(so + 491u * ns, ns);
-        rsf_mul = rget(so + 493u * ns, ns);
-        last_step = rget(so + 495u * ns, ns);
-        last_de = rget(so + 497u * ns, ns);
-        dt1 = rget(so + 499u * ns, ns);
-        de_limited = (STATE[so + 501u * ns] != 0u);
-        itmp = bitcast<i32>(STATE[so + 502u * ns]);
-        yp = rget(so + 503u * ns, ns);
-        saved_max = bitcast<i32>(STATE[so + 505u * ns]);
-        dmul = rget(so + 506u * ns, ns);
-        first = (STATE[so + 508u * ns] != 0u);
-        last_si = rget(so + 509u * ns, ns);
-        last_dif = rget(so + 511u * ns, ns);
-        noffset = rget(so + 513u * ns, ns);
-        ct1.x = rget(so + 515u * ns, ns);
-        ct1.y = rget(so + 517u * ns, ns);
-        ct1.z = rget(so + 519u * ns, ns);
-        dnn = rget(so + 521u * ns, ns);
-        nn = rget(so + 523u * ns, ns);
-        n.x = rget(so + 525u * ns, ns);
-        n.y = rget(so + 527u * ns, ns);
-        n.z = rget(so + 529u * ns, ns);
-        cnt = bitcast<i32>(STATE[so + 531u * ns]);
-        na = rget(so + 532u * ns, ns);
-        acc = rget(so + 534u * ns, ns);
-        ssn = rget(so + 536u * ns, ns);
-        dm = rget(so + 538u * ns, ns);
-        vx.x = rget(so + 540u * ns, ns);
-        vx.y = rget(so + 542u * ns, ns);
-        vx.z = rget(so + 544u * ns, ns);
-        vy.x = rget(so + 546u * ns, ns);
-        vy.y = rget(so + 548u * ns, ns);
-        vy.z = rget(so + 550u * ns, ns);
-        s1.x = rget(so + 552u * ns, ns);
-        s1.y = rget(so + 554u * ns, ns);
-        ds.x = rget(so + 556u * ns, ns);
-        ds.y = rget(so + 558u * ns, ns);
-        axis = bitcast<i32>(STATE[so + 560u * ns]);
-        kk = bitcast<i32>(STATE[so + 561u * ns]);
-        guard = bitcast<i32>(STATE[so + 562u * ns]);
+        last_difs = (STATE[so + 77u * ns] != 0u);
+        mc_len = rget(so + 78u * ns, ns);
+        mc_zz2o = rget(so + 80u * ns, ns);
+        mc_dyn = rget(so + 82u * ns, ns);
+        mc_flags = STATE[so + 84u * ns];
+        mc_n.x = rget(so + 85u * ns, ns);
+        mc_n.y = rget(so + 87u * ns, ns);
+        mc_n.z = rget(so + 89u * ns, ns);
+        mzz = rget(so + 91u * ns, ns);
+        vfov.x = rget(so + 93u * ns, ns);
+        vfov.y = rget(so + 95u * ns, ns);
+        vfov.z = rget(so + 97u * ns, ns);
+        base.x = rget(so + 99u * ns, ns);
+        base.y = rget(so + 101u * ns, ns);
+        base.z = rget(so + 103u * ns, ns);
+        max_its_result = bitcast<i32>(STATE[so + 105u * ns]);
+        s_roughness = rget(so + 106u * ns, ns);
+        seed = bitcast<i32>(STATE[so + 108u * ns]);
+        si_normal.x = bitcast<i32>(STATE[so + 109u * ns]);
+        si_normal.y = bitcast<i32>(STATE[so + 110u * ns]);
+        si_normal.z = bitcast<i32>(STATE[so + 111u * ns]);
+        si_zpos = STATE[so + 112u * ns];
+        si_shadow = STATE[so + 113u * ns];
+        si_grad = STATE[so + 114u * ns];
+        si_otrap = STATE[so + 115u * ns];
+        si_amb = STATE[so + 116u * ns];
+        if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { let q = so + (117u + 6u * i) * ns; ao_dirs[i] = vec3<R>(rget(q, ns), rget(q + 2u * ns, ns), rget(q + 4u * ns, ns)); } }
+        if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { ao_min[i] = rget(so + (315u + 2u * i) * ns, ns); } }
+        step_count = rget(so + 381u * ns, ns);
+        first_step = (STATE[so + 383u * ns] != 0u);
+        pc = STATE[so + 384u * ns];
+        need = (STATE[so + 385u * ns] != 0u);
+        want_de = (STATE[so + 386u * ns] != 0u);
+        cut_plane = STATE[so + 387u * ns];
+        after_coi = STATE[so + 388u * ns];
+        coi_max = bitcast<i32>(STATE[so + 389u * ns]);
+        after_hs = STATE[so + 390u * ns];
+        after_ao = STATE[so + 391u * ns];
+        last_zz = rget(so + 392u * ns, ns);
+        rlast_sw = rget(so + 394u * ns, ns);
+        after_bs = STATE[so + 396u * ns];
+        bs_thr = rget(so + 397u * ns, ns);
+        bs_it_check = (STATE[so + 399u * ns] != 0u);
+        zf = rget(so + 400u * ns, ns);
+        ic.x = rget(so + 402u * ns, ns);
+        ic.y = rget(so + 404u * ns, ns);
+        ic.z = rget(so + 406u * ns, ns);
+        nvec.x = rget(so + 408u * ns, ns);
+        nvec.y = rget(so + 410u * ns, ns);
+        nvec.z = rget(so + 412u * ns, ns);
+        max_lhs = rget(so + 414u * ns, ns);
+        li = STATE[so + 416u * ns];
+        lidx = STATE[so + 417u * ns];
+        lvec.x = rget(so + 418u * ns, ns);
+        lvec.y = rget(so + 420u * ns, ns);
+        lvec.z = rget(so + 422u * ns, ns);
+        zz2 = rget(so + 424u * ns, ns);
+        zz2mul = rget(so + 426u * ns, ns);
+        rsf = rget(so + 428u * ns, ns);
+        st = rget(so + 430u * ns, ns);
+        zr_soft = rget(so + 432u * ns, ns);
+        zrs_mul = rget(so + 434u * ns, ns);
+        ray_count = STATE[so + 436u * ns];
+        k = STATE[so + 437u * ns];
+        step_ao = rget(so + 438u * ns, ns);
+        max_dist = rget(so + 440u * ns, ns);
+        d_step_mul = rget(so + 442u * ns, ns);
+        ms2 = rget(so + 444u * ns, ns);
+        de_mul = rget(so + 446u * ns, ns);
+        abr_c = rget(so + 448u * ns, ns);
+        md_d10 = rget(so + 450u * ns, ns);
+        d_min_a_dif = rget(so + 452u * ns, ns);
+        corr_w = rget(so + 454u * ns, ns);
+        rot_w[0].x = rget(so + 456u * ns, ns);
+        rot_w[0].y = rget(so + 458u * ns, ns);
+        rot_w[0].z = rget(so + 460u * ns, ns);
+        rot_w[1].x = rget(so + 462u * ns, ns);
+        rot_w[1].y = rget(so + 464u * ns, ns);
+        rot_w[1].z = rget(so + 466u * ns, ns);
+        rot_w[2].x = rget(so + 468u * ns, ns);
+        rot_w[2].y = rget(so + 470u * ns, ns);
+        rot_w[2].z = rget(so + 472u * ns, ns);
+        rv0.x = rget(so + 474u * ns, ns);
+        rv0.y = rget(so + 476u * ns, ns);
+        rv0.z = rget(so + 478u * ns, ns);
+        rv1.x = rget(so + 480u * ns, ns);
+        rv1.y = rget(so + 482u * ns, ns);
+        rv1.z = rget(so + 484u * ns, ns);
+        rv2.x = rget(so + 486u * ns, ns);
+        rv2.y = rget(so + 488u * ns, ns);
+        rv2.z = rget(so + 490u * ns, ns);
+        sv.x = rget(so + 492u * ns, ns);
+        sv.y = rget(so + 494u * ns, ns);
+        sv.z = rget(so + 496u * ns, ns);
+        s_tmp = rget(so + 498u * ns, ns);
+        b_end = (STATE[so + 500u * ns] != 0u);
+        b_first = (STATE[so + 501u * ns] != 0u);
+        r = rget(so + 502u * ns, ns);
+        done = (STATE[so + 504u * ns] != 0u);
+        dtmp = rget(so + 505u * ns, ns);
+        rsf_mul = rget(so + 507u * ns, ns);
+        last_step = rget(so + 509u * ns, ns);
+        last_de = rget(so + 511u * ns, ns);
+        dt1 = rget(so + 513u * ns, ns);
+        de_limited = (STATE[so + 515u * ns] != 0u);
+        itmp = bitcast<i32>(STATE[so + 516u * ns]);
+        yp = rget(so + 517u * ns, ns);
+        saved_max = bitcast<i32>(STATE[so + 519u * ns]);
+        dmul = rget(so + 520u * ns, ns);
+        first = (STATE[so + 522u * ns] != 0u);
+        last_si = rget(so + 523u * ns, ns);
+        last_dif = rget(so + 525u * ns, ns);
+        noffset = rget(so + 527u * ns, ns);
+        ct1.x = rget(so + 529u * ns, ns);
+        ct1.y = rget(so + 531u * ns, ns);
+        ct1.z = rget(so + 533u * ns, ns);
+        dnn = rget(so + 535u * ns, ns);
+        nn = rget(so + 537u * ns, ns);
+        n.x = rget(so + 539u * ns, ns);
+        n.y = rget(so + 541u * ns, ns);
+        n.z = rget(so + 543u * ns, ns);
+        cnt = bitcast<i32>(STATE[so + 545u * ns]);
+        na = rget(so + 546u * ns, ns);
+        acc = rget(so + 548u * ns, ns);
+        ssn = rget(so + 550u * ns, ns);
+        dm = rget(so + 552u * ns, ns);
+        vx.x = rget(so + 554u * ns, ns);
+        vx.y = rget(so + 556u * ns, ns);
+        vx.z = rget(so + 558u * ns, ns);
+        vy.x = rget(so + 560u * ns, ns);
+        vy.y = rget(so + 562u * ns, ns);
+        vy.z = rget(so + 564u * ns, ns);
+        s1.x = rget(so + 566u * ns, ns);
+        s1.y = rget(so + 568u * ns, ns);
+        ds.x = rget(so + 570u * ns, ns);
+        ds.y = rget(so + 572u * ns, ns);
+        axis = bitcast<i32>(STATE[so + 574u * ns]);
+        kk = bitcast<i32>(STATE[so + 575u * ns]);
+        mc_zz2 = rget(so + 576u * ns, ns);
+        mc_no = rget(so + 578u * ns, ns);
+        mc_sca = rget(so + 580u * ns, ns);
+        mc_off = rget(so + 582u * ns, ns);
+        mc_vz = rget(so + 584u * ns, ns);
+        mc_sec_main = (STATE[so + 586u * ns] != 0u);
+        mc_guard = bitcast<i32>(STATE[so + 587u * ns]);
+        guard = bitcast<i32>(STATE[so + 588u * ns]);
         load_record(so + (1u + STATE_FIXED) * ns, ns);
     }
     for (var turns = 0u; guard < 2000000; guard++) {
@@ -1854,137 +1931,152 @@ fn pixel(x: i32, y: i32, mode: u32) {
             rput(so + 73u * ns, ns, r_step_count);
             STATE[so + 75u * ns] = select(0u, 1u, de_overflow);
             STATE[so + 76u * ns] = select(0u, 1u, inside);
-            rput(so + 77u * ns, ns, mzz);
-            rput(so + 79u * ns, ns, vfov.x);
-            rput(so + 81u * ns, ns, vfov.y);
-            rput(so + 83u * ns, ns, vfov.z);
-            rput(so + 85u * ns, ns, base.x);
-            rput(so + 87u * ns, ns, base.y);
-            rput(so + 89u * ns, ns, base.z);
-            STATE[so + 91u * ns] = bitcast<u32>(max_its_result);
-            rput(so + 92u * ns, ns, s_roughness);
-            STATE[so + 94u * ns] = bitcast<u32>(seed);
-            STATE[so + 95u * ns] = bitcast<u32>(si_normal.x);
-            STATE[so + 96u * ns] = bitcast<u32>(si_normal.y);
-            STATE[so + 97u * ns] = bitcast<u32>(si_normal.z);
-            STATE[so + 98u * ns] = si_zpos;
-            STATE[so + 99u * ns] = si_shadow;
-            STATE[so + 100u * ns] = si_grad;
-            STATE[so + 101u * ns] = si_otrap;
-            STATE[so + 102u * ns] = si_amb;
-            if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { let q = so + (103u + 6u * i) * ns; rput(q, ns, ao_dirs[i].x); rput(q + 2u * ns, ns, ao_dirs[i].y); rput(q + 4u * ns, ns, ao_dirs[i].z); } }
-            if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { rput(so + (301u + 2u * i) * ns, ns, ao_min[i]); } }
-            rput(so + 367u * ns, ns, step_count);
-            STATE[so + 369u * ns] = select(0u, 1u, first_step);
-            STATE[so + 370u * ns] = pc;
-            STATE[so + 371u * ns] = select(0u, 1u, need);
-            STATE[so + 372u * ns] = select(0u, 1u, want_de);
-            STATE[so + 373u * ns] = cut_plane;
-            STATE[so + 374u * ns] = after_coi;
-            STATE[so + 375u * ns] = bitcast<u32>(coi_max);
-            STATE[so + 376u * ns] = after_hs;
-            STATE[so + 377u * ns] = after_ao;
-            rput(so + 378u * ns, ns, last_zz);
-            rput(so + 380u * ns, ns, rlast_sw);
-            STATE[so + 382u * ns] = after_bs;
-            rput(so + 383u * ns, ns, bs_thr);
-            STATE[so + 385u * ns] = select(0u, 1u, bs_it_check);
-            rput(so + 386u * ns, ns, zf);
-            rput(so + 388u * ns, ns, ic.x);
-            rput(so + 390u * ns, ns, ic.y);
-            rput(so + 392u * ns, ns, ic.z);
-            rput(so + 394u * ns, ns, nvec.x);
-            rput(so + 396u * ns, ns, nvec.y);
-            rput(so + 398u * ns, ns, nvec.z);
-            rput(so + 400u * ns, ns, max_lhs);
-            STATE[so + 402u * ns] = li;
-            STATE[so + 403u * ns] = lidx;
-            rput(so + 404u * ns, ns, lvec.x);
-            rput(so + 406u * ns, ns, lvec.y);
-            rput(so + 408u * ns, ns, lvec.z);
-            rput(so + 410u * ns, ns, zz2);
-            rput(so + 412u * ns, ns, zz2mul);
-            rput(so + 414u * ns, ns, rsf);
-            rput(so + 416u * ns, ns, st);
-            rput(so + 418u * ns, ns, zr_soft);
-            rput(so + 420u * ns, ns, zrs_mul);
-            STATE[so + 422u * ns] = ray_count;
-            STATE[so + 423u * ns] = k;
-            rput(so + 424u * ns, ns, step_ao);
-            rput(so + 426u * ns, ns, max_dist);
-            rput(so + 428u * ns, ns, d_step_mul);
-            rput(so + 430u * ns, ns, ms2);
-            rput(so + 432u * ns, ns, de_mul);
-            rput(so + 434u * ns, ns, abr_c);
-            rput(so + 436u * ns, ns, md_d10);
-            rput(so + 438u * ns, ns, d_min_a_dif);
-            rput(so + 440u * ns, ns, corr_w);
-            rput(so + 442u * ns, ns, rot_w[0].x);
-            rput(so + 444u * ns, ns, rot_w[0].y);
-            rput(so + 446u * ns, ns, rot_w[0].z);
-            rput(so + 448u * ns, ns, rot_w[1].x);
-            rput(so + 450u * ns, ns, rot_w[1].y);
-            rput(so + 452u * ns, ns, rot_w[1].z);
-            rput(so + 454u * ns, ns, rot_w[2].x);
-            rput(so + 456u * ns, ns, rot_w[2].y);
-            rput(so + 458u * ns, ns, rot_w[2].z);
-            rput(so + 460u * ns, ns, rv0.x);
-            rput(so + 462u * ns, ns, rv0.y);
-            rput(so + 464u * ns, ns, rv0.z);
-            rput(so + 466u * ns, ns, rv1.x);
-            rput(so + 468u * ns, ns, rv1.y);
-            rput(so + 470u * ns, ns, rv1.z);
-            rput(so + 472u * ns, ns, rv2.x);
-            rput(so + 474u * ns, ns, rv2.y);
-            rput(so + 476u * ns, ns, rv2.z);
-            rput(so + 478u * ns, ns, sv.x);
-            rput(so + 480u * ns, ns, sv.y);
-            rput(so + 482u * ns, ns, sv.z);
-            rput(so + 484u * ns, ns, s_tmp);
-            STATE[so + 486u * ns] = select(0u, 1u, b_end);
-            STATE[so + 487u * ns] = select(0u, 1u, b_first);
-            rput(so + 488u * ns, ns, r);
-            STATE[so + 490u * ns] = select(0u, 1u, done);
-            rput(so + 491u * ns, ns, dtmp);
-            rput(so + 493u * ns, ns, rsf_mul);
-            rput(so + 495u * ns, ns, last_step);
-            rput(so + 497u * ns, ns, last_de);
-            rput(so + 499u * ns, ns, dt1);
-            STATE[so + 501u * ns] = select(0u, 1u, de_limited);
-            STATE[so + 502u * ns] = bitcast<u32>(itmp);
-            rput(so + 503u * ns, ns, yp);
-            STATE[so + 505u * ns] = bitcast<u32>(saved_max);
-            rput(so + 506u * ns, ns, dmul);
-            STATE[so + 508u * ns] = select(0u, 1u, first);
-            rput(so + 509u * ns, ns, last_si);
-            rput(so + 511u * ns, ns, last_dif);
-            rput(so + 513u * ns, ns, noffset);
-            rput(so + 515u * ns, ns, ct1.x);
-            rput(so + 517u * ns, ns, ct1.y);
-            rput(so + 519u * ns, ns, ct1.z);
-            rput(so + 521u * ns, ns, dnn);
-            rput(so + 523u * ns, ns, nn);
-            rput(so + 525u * ns, ns, n.x);
-            rput(so + 527u * ns, ns, n.y);
-            rput(so + 529u * ns, ns, n.z);
-            STATE[so + 531u * ns] = bitcast<u32>(cnt);
-            rput(so + 532u * ns, ns, na);
-            rput(so + 534u * ns, ns, acc);
-            rput(so + 536u * ns, ns, ssn);
-            rput(so + 538u * ns, ns, dm);
-            rput(so + 540u * ns, ns, vx.x);
-            rput(so + 542u * ns, ns, vx.y);
-            rput(so + 544u * ns, ns, vx.z);
-            rput(so + 546u * ns, ns, vy.x);
-            rput(so + 548u * ns, ns, vy.y);
-            rput(so + 550u * ns, ns, vy.z);
-            rput(so + 552u * ns, ns, s1.x);
-            rput(so + 554u * ns, ns, s1.y);
-            rput(so + 556u * ns, ns, ds.x);
-            rput(so + 558u * ns, ns, ds.y);
-            STATE[so + 560u * ns] = bitcast<u32>(axis);
-            STATE[so + 561u * ns] = bitcast<u32>(kk);
-            STATE[so + 562u * ns] = bitcast<u32>(guard);
+            STATE[so + 77u * ns] = select(0u, 1u, last_difs);
+            rput(so + 78u * ns, ns, mc_len);
+            rput(so + 80u * ns, ns, mc_zz2o);
+            rput(so + 82u * ns, ns, mc_dyn);
+            STATE[so + 84u * ns] = mc_flags;
+            rput(so + 85u * ns, ns, mc_n.x);
+            rput(so + 87u * ns, ns, mc_n.y);
+            rput(so + 89u * ns, ns, mc_n.z);
+            rput(so + 91u * ns, ns, mzz);
+            rput(so + 93u * ns, ns, vfov.x);
+            rput(so + 95u * ns, ns, vfov.y);
+            rput(so + 97u * ns, ns, vfov.z);
+            rput(so + 99u * ns, ns, base.x);
+            rput(so + 101u * ns, ns, base.y);
+            rput(so + 103u * ns, ns, base.z);
+            STATE[so + 105u * ns] = bitcast<u32>(max_its_result);
+            rput(so + 106u * ns, ns, s_roughness);
+            STATE[so + 108u * ns] = bitcast<u32>(seed);
+            STATE[so + 109u * ns] = bitcast<u32>(si_normal.x);
+            STATE[so + 110u * ns] = bitcast<u32>(si_normal.y);
+            STATE[so + 111u * ns] = bitcast<u32>(si_normal.z);
+            STATE[so + 112u * ns] = si_zpos;
+            STATE[so + 113u * ns] = si_shadow;
+            STATE[so + 114u * ns] = si_grad;
+            STATE[so + 115u * ns] = si_otrap;
+            STATE[so + 116u * ns] = si_amb;
+            if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { let q = so + (117u + 6u * i) * ns; rput(q, ns, ao_dirs[i].x); rput(q + 2u * ns, ns, ao_dirs[i].y); rput(q + 4u * ns, ns, ao_dirs[i].z); } }
+            if (MODE_KIND == 2u || MODE_KIND == 3u) { for (var i = 0u; i < 33u; i++) { rput(so + (315u + 2u * i) * ns, ns, ao_min[i]); } }
+            rput(so + 381u * ns, ns, step_count);
+            STATE[so + 383u * ns] = select(0u, 1u, first_step);
+            STATE[so + 384u * ns] = pc;
+            STATE[so + 385u * ns] = select(0u, 1u, need);
+            STATE[so + 386u * ns] = select(0u, 1u, want_de);
+            STATE[so + 387u * ns] = cut_plane;
+            STATE[so + 388u * ns] = after_coi;
+            STATE[so + 389u * ns] = bitcast<u32>(coi_max);
+            STATE[so + 390u * ns] = after_hs;
+            STATE[so + 391u * ns] = after_ao;
+            rput(so + 392u * ns, ns, last_zz);
+            rput(so + 394u * ns, ns, rlast_sw);
+            STATE[so + 396u * ns] = after_bs;
+            rput(so + 397u * ns, ns, bs_thr);
+            STATE[so + 399u * ns] = select(0u, 1u, bs_it_check);
+            rput(so + 400u * ns, ns, zf);
+            rput(so + 402u * ns, ns, ic.x);
+            rput(so + 404u * ns, ns, ic.y);
+            rput(so + 406u * ns, ns, ic.z);
+            rput(so + 408u * ns, ns, nvec.x);
+            rput(so + 410u * ns, ns, nvec.y);
+            rput(so + 412u * ns, ns, nvec.z);
+            rput(so + 414u * ns, ns, max_lhs);
+            STATE[so + 416u * ns] = li;
+            STATE[so + 417u * ns] = lidx;
+            rput(so + 418u * ns, ns, lvec.x);
+            rput(so + 420u * ns, ns, lvec.y);
+            rput(so + 422u * ns, ns, lvec.z);
+            rput(so + 424u * ns, ns, zz2);
+            rput(so + 426u * ns, ns, zz2mul);
+            rput(so + 428u * ns, ns, rsf);
+            rput(so + 430u * ns, ns, st);
+            rput(so + 432u * ns, ns, zr_soft);
+            rput(so + 434u * ns, ns, zrs_mul);
+            STATE[so + 436u * ns] = ray_count;
+            STATE[so + 437u * ns] = k;
+            rput(so + 438u * ns, ns, step_ao);
+            rput(so + 440u * ns, ns, max_dist);
+            rput(so + 442u * ns, ns, d_step_mul);
+            rput(so + 444u * ns, ns, ms2);
+            rput(so + 446u * ns, ns, de_mul);
+            rput(so + 448u * ns, ns, abr_c);
+            rput(so + 450u * ns, ns, md_d10);
+            rput(so + 452u * ns, ns, d_min_a_dif);
+            rput(so + 454u * ns, ns, corr_w);
+            rput(so + 456u * ns, ns, rot_w[0].x);
+            rput(so + 458u * ns, ns, rot_w[0].y);
+            rput(so + 460u * ns, ns, rot_w[0].z);
+            rput(so + 462u * ns, ns, rot_w[1].x);
+            rput(so + 464u * ns, ns, rot_w[1].y);
+            rput(so + 466u * ns, ns, rot_w[1].z);
+            rput(so + 468u * ns, ns, rot_w[2].x);
+            rput(so + 470u * ns, ns, rot_w[2].y);
+            rput(so + 472u * ns, ns, rot_w[2].z);
+            rput(so + 474u * ns, ns, rv0.x);
+            rput(so + 476u * ns, ns, rv0.y);
+            rput(so + 478u * ns, ns, rv0.z);
+            rput(so + 480u * ns, ns, rv1.x);
+            rput(so + 482u * ns, ns, rv1.y);
+            rput(so + 484u * ns, ns, rv1.z);
+            rput(so + 486u * ns, ns, rv2.x);
+            rput(so + 488u * ns, ns, rv2.y);
+            rput(so + 490u * ns, ns, rv2.z);
+            rput(so + 492u * ns, ns, sv.x);
+            rput(so + 494u * ns, ns, sv.y);
+            rput(so + 496u * ns, ns, sv.z);
+            rput(so + 498u * ns, ns, s_tmp);
+            STATE[so + 500u * ns] = select(0u, 1u, b_end);
+            STATE[so + 501u * ns] = select(0u, 1u, b_first);
+            rput(so + 502u * ns, ns, r);
+            STATE[so + 504u * ns] = select(0u, 1u, done);
+            rput(so + 505u * ns, ns, dtmp);
+            rput(so + 507u * ns, ns, rsf_mul);
+            rput(so + 509u * ns, ns, last_step);
+            rput(so + 511u * ns, ns, last_de);
+            rput(so + 513u * ns, ns, dt1);
+            STATE[so + 515u * ns] = select(0u, 1u, de_limited);
+            STATE[so + 516u * ns] = bitcast<u32>(itmp);
+            rput(so + 517u * ns, ns, yp);
+            STATE[so + 519u * ns] = bitcast<u32>(saved_max);
+            rput(so + 520u * ns, ns, dmul);
+            STATE[so + 522u * ns] = select(0u, 1u, first);
+            rput(so + 523u * ns, ns, last_si);
+            rput(so + 525u * ns, ns, last_dif);
+            rput(so + 527u * ns, ns, noffset);
+            rput(so + 529u * ns, ns, ct1.x);
+            rput(so + 531u * ns, ns, ct1.y);
+            rput(so + 533u * ns, ns, ct1.z);
+            rput(so + 535u * ns, ns, dnn);
+            rput(so + 537u * ns, ns, nn);
+            rput(so + 539u * ns, ns, n.x);
+            rput(so + 541u * ns, ns, n.y);
+            rput(so + 543u * ns, ns, n.z);
+            STATE[so + 545u * ns] = bitcast<u32>(cnt);
+            rput(so + 546u * ns, ns, na);
+            rput(so + 548u * ns, ns, acc);
+            rput(so + 550u * ns, ns, ssn);
+            rput(so + 552u * ns, ns, dm);
+            rput(so + 554u * ns, ns, vx.x);
+            rput(so + 556u * ns, ns, vx.y);
+            rput(so + 558u * ns, ns, vx.z);
+            rput(so + 560u * ns, ns, vy.x);
+            rput(so + 562u * ns, ns, vy.y);
+            rput(so + 564u * ns, ns, vy.z);
+            rput(so + 566u * ns, ns, s1.x);
+            rput(so + 568u * ns, ns, s1.y);
+            rput(so + 570u * ns, ns, ds.x);
+            rput(so + 572u * ns, ns, ds.y);
+            STATE[so + 574u * ns] = bitcast<u32>(axis);
+            STATE[so + 575u * ns] = bitcast<u32>(kk);
+            rput(so + 576u * ns, ns, mc_zz2);
+            rput(so + 578u * ns, ns, mc_no);
+            rput(so + 580u * ns, ns, mc_sca);
+            rput(so + 582u * ns, ns, mc_off);
+            rput(so + 584u * ns, ns, mc_vz);
+            STATE[so + 586u * ns] = select(0u, 1u, mc_sec_main);
+            STATE[so + 587u * ns] = bitcast<u32>(mc_guard);
+            STATE[so + 588u * ns] = bitcast<u32>(guard);
             save_record(so + (1u + STATE_FIXED) * ns, ns);
             STATE[so] = cur_item + 1u;
             atomicAdd(&QUEUE[0], 1u);
@@ -2083,7 +2175,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             // doColorOnIt: the start vector, or the vector after
             // COLOR_ON_IT - 1 iterations
             case P_COI: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 4u) {
                     if (P[COLOR_ON_IT] == 1u) {
                         v = c;
                         pc = after_coi;
@@ -2098,7 +2190,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 }
             }
             case P_COI_R: {
-                if (MODE_KIND == 0u) {
+                if (MODE_KIND == 0u || MODE_KIND == 4u) {
                     max_it = coi_max;
                     rstop = pf(D_RSTOP);
                     pc = after_coi;
@@ -2914,6 +3006,455 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_DONE: {
                 done = true;
             }
+            // ---- the Monte Carlo renderer: McMarch of mc.rs
+            case P_MC_START: {
+                if (MODE_KIND == 4u) {
+                    base = mc_t_pos;
+                    vfov = mc_t_dir;
+                    zz_abs = true;
+                    zz_mul = 0.0;
+                    mzz = 0.0;
+                    calc_sit = false;
+                    setc();
+                    let kind = mc_t_flags & 3u;
+                    mc_len = mc_t.w;
+                    if (kind == 2u) {
+                        // through a transparent object (from the far end of
+                        // the light's way back)
+                        ms_de_stop = mc_t_stop;
+                        mzz = mc_len;
+                        dtmp = mc_rand() * 8.0 * max(ms_de_stop, 1.0);
+                        pc = P_MC_TH_STEP;
+                    } else {
+                        zz_base = mc_t.x;
+                        update_de_stop();
+                        zz_mul = mc_t.z;
+                        if (kind == 1u) {
+                            zz_base = mc_t.y;
+                            pc = P_MC_HS0;
+                        } else {
+                            mc_zz2 = mc_t.y;
+                            pc = P_MC_PROBE;
+                        }
+                        need = true;
+                        want_de = true;
+                    }
+                }
+            }
+            case P_MC_PROBE: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    if ((mc_t_flags & 8u) != 0u && (it_result >= max_its_result || dtmp < ms_de_stop)) {
+                        // a primary ray that starts inside the set
+                        if ((P[INSIDE_FLAGS] & 2u) != 0u) {
+                            inside = !inside;
+                            need = true;
+                            want_de = true;
+                            pc = P_MC_M0;
+                        } else {
+                            mc_flags = 2u;
+                            if (P[COLOR_ON_IT] != 0u) {
+                                after_coi = P_MC_IN2;
+                                pc = P_COI;
+                            } else {
+                                pc = P_MC_IN2;
+                            }
+                        }
+                    } else {
+                        pc = P_MC_M0;
+                    }
+                }
+            }
+            case P_MC_IN2: {
+                if (MODE_KIND == 4u) {
+                    si_grad = 0u;
+                    do_color();
+                    if (pi(COLOR_OPTION) > 4) {
+                        si_grad |= 32768u;
+                        pc = P_DONE;
+                    } else if (inside) {
+                        calc_sit = true;
+                        need = true;
+                        want_de = true;
+                        pc = P_MC_IN_SIT;
+                    } else {
+                        si_grad = 32768u + u32(round(32767.0 * clamp(rout / pf(D_RSTOP), 0.0, 1.0)));
+                        pc = P_DONE;
+                    }
+                }
+            }
+            case P_MC_IN_SIT: {
+                if (MODE_KIND == 4u) {
+                    si_grad = clip15(smooth_it * pf(MCTS_M)) | 32768u;
+                    pc = P_DONE;
+                }
+            }
+            case P_MC_M0: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    mc_flags = select(0u, 16u, last_difs);
+                    mc_dyn = 0.0;
+                    first_step = true;
+                    rlast_sw = dtmp * pf(Z_STEP_DIV);
+                    rsf = 1.0;
+                    de_limited = true;
+                    mc_guard = 0;
+                    pc = P_MC_LOOP;
+                }
+            }
+            case P_MC_LOOP: {
+                if (MODE_KIND == 4u) {
+                    last_de = dtmp;
+                    var dstep = max((dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf, 0.11);
+                    let s1 = max(ms_de_stop, 0.4) * pf(MH04ZSD);
+                    let count = dfog_on_it == 0 || it_result == dfog_on_it;
+                    if (s1 < dstep) {
+                        if (count) {
+                            mc_dyn += s1 / dstep;
+                        }
+                        dstep = s1;
+                    } else if (count) {
+                        mc_dyn += 1.0;
+                    }
+                    if (first_step) {
+                        first_step = false;
+                        dstep *= mc_rand();
+                    }
+                    rlast_sw = dstep;
+                    let z2 = mc_zz2 + mzz + dstep;
+                    if (z2 > mc_len) {
+                        mc_zz2o = z2;
+                        pc = P_MC_OPEN;
+                    } else {
+                        mzz += dstep;
+                        setc();
+                        update_de_stop();
+                        need = true;
+                        want_de = true;
+                        pc = P_MC_STEP;
+                    }
+                }
+            }
+            case P_MC_STEP: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    if (it_result >= max_its_result) {
+                        de_limited = false;
+                        pc = P_MC_HIT;
+                    } else if (!(dtmp >= ms_de_stop) && it_result >= pi(MIN_IT)) {
+                        pc = P_MC_HIT;
+                    } else {
+                        if (dtmp > last_de + rlast_sw) {
+                            dtmp = last_de + rlast_sw;
+                        }
+                        rsf = 1.0;
+                        if (last_de > dtmp + 1e-30) {
+                            let t = rlast_sw / (last_de - dtmp);
+                            if (t < 1.0) {
+                                rsf = max(0.5, t);
+                            }
+                        }
+                        mc_guard += 1;
+                        if (mc_guard > 1000000) {
+                            mc_zz2o = mc_zz2 + mzz;
+                            pc = P_MC_OPEN;
+                        } else {
+                            pc = P_MC_LOOP;
+                        }
+                    }
+                }
+            }
+            case P_MC_OPEN: {
+                if (MODE_KIND == 4u) {
+                    if (inside) {
+                        mc_dyn *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
+                    }
+                    mc_flags &= 16u;
+                    pc = P_DONE;
+                }
+            }
+            case P_MC_HIT: {
+                if (MODE_KIND == 4u) {
+                    if (inside) {
+                        mc_dyn *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
+                    }
+                    mc_zz2o = mc_zz2 + mzz;
+                    mc_flags = 1u | (mc_flags & 16u) | select(0u, 8u, de_limited);
+                    after_bs = P_MC_HN;
+                    if (de_limited) {
+                        bs_thr = 0.001;
+                        if (P[MC_SECANT] != 0u) {
+                            itmp = 4;
+                            mc_sec_main = true;
+                            pc = P_MC_SEC;
+                        } else {
+                            itmp = 10;
+                            dt1 = rlast_sw * -0.5;
+                            bs_it_check = false;
+                            pc = P_BS;
+                        }
+                    } else {
+                        yp = R(max_it) - 0.99;
+                        saved_max = max_it;
+                        max_it += 1;
+                        calc_sit = true;
+                        dt1 = 0.0;
+                        dmul = 1.0;
+                        first = true;
+                        last_si = 0.0;
+                        last_dif = 0.0;
+                        itmp = 10;
+                        pc = P_BSI;
+                    }
+                }
+            }
+            case P_MC_SEC: {
+                if (MODE_KIND == 4u) {
+                    if (itmp > 0 && abs(dtmp - ms_de_stop) > bs_thr) {
+                        last_de = last_de - dtmp;
+                        if (abs(last_de) < 1e-37) {
+                            last_de = select(R(1e-37), R(-1e-37), last_de < 0.0);
+                        }
+                        let f = rlast_sw * (dtmp - ms_de_stop) / last_de;
+                        if (dtmp < ms_de_stop) {
+                            if (f >= 0.0 || f < abs(rlast_sw) * -0.94) {
+                                rlast_sw = abs(rlast_sw) * -0.5;
+                            } else {
+                                rlast_sw = f;
+                            }
+                        } else {
+                            if (f <= 0.0 || f > abs(rlast_sw) * 0.94) {
+                                rlast_sw = abs(rlast_sw) * 0.5;
+                            } else {
+                                rlast_sw = f;
+                            }
+                        }
+                        last_de = dtmp;
+                        mzz += rlast_sw;
+                        setc();
+                        update_de_stop();
+                        itmp -= 1;
+                        if (mc_sec_main && itmp <= 0) {
+                            pc = after_bs;
+                        } else {
+                            need = true;
+                            want_de = true;
+                            pc = P_MC_SEC_R;
+                        }
+                    } else {
+                        pc = after_bs;
+                    }
+                }
+            }
+            case P_MC_SEC_R: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    pc = P_MC_SEC;
+                }
+            }
+            case P_MC_HN: {
+                if (MODE_KIND == 4u) {
+                    // CalculateNormals(OnSmoothIt): the depth along the view
+                    // for the offset, the side from the seed
+                    mc_vz = abs(zz_base + mzz * zz_mul);
+                    mc_sca = select(R(-0.15), R(0.15), (seed & 128) == 0);
+                    calc_sit = true;
+                    ct1 = c;
+                    need = true;
+                    want_de = on_de;
+                    pc = P_MC_N0;
+                }
+            }
+            case P_MC_N0: {
+                if (MODE_KIND == 4u) {
+                    c = ct1;
+                    nn = smooth_it;
+                    if (on_de) {
+                        mc_no = r;
+                        calc_sit = false;
+                    }
+                    cnt = 4;
+                    pc = P_MC_NA;
+                }
+            }
+            case P_MC_NA: {
+                if (MODE_KIND == 4u) {
+                    if (cnt < 4) {
+                        mc_sca = (mc_rand() - 0.5) * 0.5;
+                    }
+                    mc_off = min(pf(DE_STOP), 1.0) * (1.0 + mc_vz * pf(DE_STOP_FACTOR)) * mc_sca * pf(STEP_WIDTH);
+                    kk = 0;
+                    pc = P_MC_NK;
+                }
+            }
+            case P_MC_NK: {
+                if (MODE_KIND == 4u) {
+                    // the axes z, x, y
+                    axis = select(select(1, 0, kk == 1), 2, kk == 0);
+                    c = ct1;
+                    c[axis] = ct1[axis] + mc_off;
+                    need = true;
+                    want_de = on_de;
+                    pc = P_MC_NK_R;
+                }
+            }
+            case P_MC_NK_R: {
+                if (MODE_KIND == 4u) {
+                    if (on_de) {
+                        n[axis] = (r - mc_no) * mc_sca;
+                    } else {
+                        n[axis] = (nn - smooth_it) * mc_sca;
+                    }
+                    c = ct1;
+                    kk += 1;
+                    if (kk < 3) {
+                        pc = P_MC_NK;
+                    } else {
+                        let l = dot(n, n);
+                        if (l > 0.0 && dot(n, vfov) < 0.0) {
+                            mc_n = n / sqrt(l);
+                            pc = P_MC_COL;
+                        } else {
+                            cnt -= 1;
+                            if (cnt == 0) {
+                                mc_n = -vfov / sqrt(dot(vfov, vfov));
+                                pc = P_MC_COL;
+                            } else {
+                                pc = P_MC_NA;
+                            }
+                        }
+                    }
+                }
+            }
+            case P_MC_COL: {
+                if (MODE_KIND == 4u) {
+                    if (!on_de) {
+                        calc_sit = false;
+                    }
+                    // a shadow ray takes the iteration count after the
+                    // normals, as CalcHSMC
+                    let dl = select((mc_flags & 8u) != 0u, it_result < max_its_result, (mc_t_flags & 3u) == 1u);
+                    var g: R;
+                    if (dl) {
+                        g = 32767.0 - (nn + pf(D_COL_PLUS) + pf(COL_VAR_DE_STOP_MUL) * r_log(ms_de_stop * pf(STEP_WIDTH))) * pf(MCTS_M);
+                    } else {
+                        g = 32767.0 - nn * pf(MCTS_M);
+                    }
+                    si_grad = clip15(g);
+                    if (P[COLOR_ON_IT] != 0u) {
+                        after_coi = P_MC_COL2;
+                        pc = P_COI;
+                    } else {
+                        pc = P_MC_COL2;
+                    }
+                }
+            }
+            case P_MC_COL2: {
+                if (MODE_KIND == 4u) {
+                    do_color();
+                    pc = P_DONE;
+                }
+            }
+            case P_MC_HS0: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    rsf = 2.0;
+                    pc = P_MC_HS_STEP;
+                }
+            }
+            case P_MC_HS_STEP: {
+                if (MODE_KIND == 4u) {
+                    last_de = dtmp;
+                    dtmp = min(dtmp * pf(Z_STEP_DIV) * rsf, max(ms_de_stop, 0.4) * pf(MH04ZSD));
+                    rlast_sw = dtmp;
+                    mc_len -= dtmp;
+                    mzz += dtmp;
+                    setc();
+                    update_de_stop();
+                    need = true;
+                    want_de = true;
+                    pc = P_MC_HS_R;
+                }
+            }
+            case P_MC_HS_R: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    // a march that started inside goes backwards and
+                    // overflows: it ends at a DE that is not a number or
+                    // beyond any scene
+                    if (it_result >= max_its_result || !(dtmp >= ms_de_stop) || !(dtmp < 1e30)) {
+                        pc = P_MC_HS_END;
+                    } else {
+                        if (dtmp > last_de + rlast_sw) {
+                            dtmp = last_de + rlast_sw;
+                        }
+                        rsf = 1.0;
+                        if (last_de > dtmp + 1e-30) {
+                            let t = rlast_sw / (last_de - dtmp);
+                            if (t < 1.0) {
+                                rsf = max(0.5, t);
+                            }
+                        }
+                        if (!(mc_len >= 0.0)) {
+                            pc = P_MC_HS_END;
+                        } else {
+                            pc = P_MC_HS_STEP;
+                        }
+                    }
+                }
+            }
+            case P_MC_HS_END: {
+                if (MODE_KIND == 4u) {
+                    if (mc_len <= 0.01 || (mc_t_flags & 16u) == 0u) {
+                        mc_flags = 0u;
+                        pc = P_DONE;
+                    } else {
+                        // the surface of a transparent object
+                        de_limited = it_result < max_its_result;
+                        mc_flags = 1u | select(0u, 8u, de_limited);
+                        after_bs = P_MC_HN;
+                        if (de_limited) {
+                            itmp = 3;
+                            bs_thr = 0.01;
+                            mc_sec_main = false;
+                            pc = P_MC_SEC;
+                        } else {
+                            yp = R(max_it) - 0.99;
+                            saved_max = max_it;
+                            max_it += 1;
+                            calc_sit = true;
+                            dt1 = 0.0;
+                            dmul = 1.0;
+                            first = true;
+                            last_si = 0.0;
+                            last_dif = 0.0;
+                            itmp = 10;
+                            pc = P_BSI;
+                        }
+                    }
+                }
+            }
+            case P_MC_TH_STEP: {
+                if (MODE_KIND == 4u) {
+                    dtmp = -1.0 - abs(dtmp);
+                    mc_len += dtmp;
+                    mzz += dtmp;
+                    setc();
+                    need = true;
+                    want_de = true;
+                    pc = P_MC_TH_R;
+                }
+            }
+            case P_MC_TH_R: {
+                if (MODE_KIND == 4u) {
+                    dtmp = r;
+                    if (dtmp > ms_de_stop || !(mc_len > 0.0)) {
+                        pc = P_DONE;
+                    } else {
+                        pc = P_MC_TH_STEP;
+                    }
+                }
+            }
             // ---- the reflection pass: calc_ray of reflect.rs
             case P_R_START: {
                 if (MODE_KIND == 3u && R_MARCH) {
@@ -3235,6 +3776,59 @@ fn reflect_task(idx: u32) {
     OUT[o + 19u] = bitcast<u32>(f32(r_step_count));
 }
 
+// the task of the Monte Carlo renderer
+var<private> mc_t_pos: vec3<R>;
+var<private> mc_t_dir: vec3<R>;
+var<private> mc_t: vec4<R>; // zz, zz2, zzplus, len
+var<private> mc_t_flags: u32;
+var<private> mc_t_stop: R;
+
+// GetRand of the Monte Carlo renderer
+fn mc_rand() -> R {
+    seed = seed * 214013 + 2531011;
+    return R(u32(seed) & 0x7FFFFFFFu) * (1.0 / 2147483647.0);
+}
+
+fn mc_task(idx: u32) {
+    let o = idx * MC_WORDS;
+    mc_t_pos = mc_pos(o);
+    mc_t_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
+    mc_t = vec4<R>(R(bitcast<f32>(OUT[o + 6u])), R(bitcast<f32>(OUT[o + 7u])), R(bitcast<f32>(OUT[o + 8u])), R(bitcast<f32>(OUT[o + 9u])));
+    mc_t_flags = OUT[o + 11u];
+    mc_t_stop = R(bitcast<f32>(OUT[o + 12u]));
+    seed = bitcast<i32>(OUT[o + 10u]);
+    si_normal = vec3<i32>(0);
+    si_zpos = 0u;
+    si_shadow = 0u;
+    si_grad = 0u;
+    si_otrap = 0u;
+    si_amb = 0u;
+    s_roughness = 0.0;
+    mc_flags = 0u;
+    mc_dyn = 0.0;
+    mc_n = vec3<R>(0.0);
+    pixel(0, 0, M_MC);
+    if (suspended) {
+        return;
+    }
+    OUT[o] = bitcast<u32>(f32(c.x));
+    OUT[o + 1u] = bitcast<u32>(f32(c.y));
+    OUT[o + 2u] = bitcast<u32>(f32(c.z));
+    mc_put_pos(o, c);
+    OUT[o + 3u] = bitcast<u32>(f32(mc_n.x));
+    OUT[o + 4u] = bitcast<u32>(f32(mc_n.y));
+    OUT[o + 5u] = bitcast<u32>(f32(mc_n.z));
+    OUT[o + 6u] = bitcast<u32>(f32(zz_base + mzz * zz_mul));
+    // a shadow ray: its depth along the view at the surface
+    OUT[o + 7u] = bitcast<u32>(f32(select(mc_zz2o, zz_base + mzz * zz_mul, (mc_t_flags & 3u) == 1u)));
+    OUT[o + 8u] = bitcast<u32>(f32(mc_dyn));
+    OUT[o + 9u] = bitcast<u32>(f32(mc_len));
+    OUT[o + 10u] = bitcast<u32>(seed);
+    OUT[o + 11u] = mc_flags | select(0u, 4u, inside) | select(0u, 32u, last_difs);
+    OUT[o + 12u] = bitcast<u32>(f32(ms_de_stop));
+    OUT[o + 19u] = si_grad | (si_otrap << 16u);
+}
+
 @compute @workgroup_size(8, 8)
 fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) li: u32) {
     // the slot: a suspended pixel or the next one of the job (each slot
@@ -3260,7 +3854,7 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
     let w = pi(RECT_W);
     // the pixel (the reflection pass: the seed of the task's place in
     // rows of R_W)
-    let rw = select(u32(w), R_W, P[MODE] == M_REFLECT);
+    let rw = select(u32(w), R_W, P[MODE] == M_REFLECT || P[MODE] == M_MC);
     let cx = i32(cur_item % rw);
     let ly = i32(cur_item / rw);
     let x = pi(RECT_X0) + cx;
@@ -3286,6 +3880,13 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
     let mode = P[MODE];
     if (mode == M_REFLECT) {
         reflect_task(cur_item);
+        if (!suspended) {
+            STATE[so] = 0u;
+        }
+        return;
+    }
+    if (mode == M_MC) {
+        mc_task(cur_item);
         if (!suspended) {
             STATE[so] = 0u;
         }

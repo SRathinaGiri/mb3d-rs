@@ -452,6 +452,12 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(img) = img {
         app.mc.seen_ver = ver;
         app.mc.img = Some(img);
+        // the LED: the marches of the pass on the graphics card or the CPU
+        let led = if crate::mc::last_status().contains("on the card") { super::main_form::Led::Gpu } else { super::main_form::Led::Cpu };
+        if led != app.main.led {
+            app.main.led = led;
+            super::main_form::show_led(ui, led, app.mc.running);
+        }
         repaint(app, ui);
         let max_rays = show_stats(app, ui);
         ui.set_caption(F, "Label8", "..til next update");

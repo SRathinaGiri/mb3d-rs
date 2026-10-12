@@ -354,6 +354,17 @@ HDR soft clipping (`mc_soft_clip`) and the gamma slider only change the
 painting. MB3D's own `.m3c` files can be continued and the port's opened
 in MB3D.
 
+The marches of the rays (camera rays, bounces, reflections, refractions and
+the shadow rays towards the lights) run on the graphics card when the
+scene's formulas do (see below): the pixels of a pass trace their rays
+together, every round of marches goes to the card in one batch while the
+CPU threads shade the results, and small rounds stay on the CPU. Lighting,
+colours and the noise statistics are calculated on the CPU as before, so
+an image is the same with or without the card up to the precision of the
+marches. With a GTX 1650 and 8 CPU threads the example scenes render 1.4 to
+3 times faster than on the CPU alone (the first render of a scene also
+compiles its shader, which the driver then caches).
+
 In the Mandelbulb3D program, the **Monte Carlo** window imports the main
 window's parameters, renders in the background pass after pass (Start /
 Stop adds rays to the image), saves the picture or `.m3c` and has MB3D's
@@ -369,8 +380,9 @@ to switch:
 * in the program, a blinking LED right of the window title shows where the
   last calculation ran: **green** all on the graphics card, **orange**
   mixed (ray marching, shadows, ambient occlusion and reflections on the
-  graphics card, normals on the z-buffer on the CPU), **red** on the CPU
-  (also Monte Carlo renders), grey before the first calculation;
+  graphics card, normals on the z-buffer on the CPU), **red** on the CPU,
+  grey before the first calculation (the Monte Carlo window has its own,
+  green when its marches ran on the card);
 * `mb3d` uses it too (it prints `calculated on: ...`); `--cpu` calculates
   on the CPU only;
 * the environment variable `MB3D_GPU=0` switches it off for both.
@@ -410,8 +422,7 @@ inverted maximum, the two smooth minima and the dIFS mix), also with
 cutting planes, inside or inside-and-outside rendering and colour on
 iteration; formulas that read maps through MB3D's map functions get the
 maps uploaded to the card. Everything else is calculated on the CPU as
-before: the formulas the lifter cannot resolve, volumetric light and the
-Monte Carlo renderer. Views zoomed so far that single precision would show
+before: the formulas the lifter cannot resolve and volumetric light. Views zoomed so far that single precision would show
 as noise are calculated in double precision on cards with doubles in
 shaders (Vulkan and DirectX 12 on NVIDIA, AMD and Intel; not Metal): the
 shader's real type becomes f64, with sine, cosine, logarithm and
@@ -726,8 +737,9 @@ tile files that MB3D writes for big renders are rendered as that tile.
   strokes and the ambient light pass of the post processing window. The
   BulbTracer2 cache format (`.btr2cache`) is not written, and its OpenGL
   auto preview of the mesh is not available (the voxel preview is).
-* **Monte Carlo:** the random numbers are seeded per row and pass, so an
-  image is the same with any number of threads but not MB3D's; neighbour
+* **Monte Carlo:** the random numbers are seeded per ray and pass, so an
+  image is the same with any number of threads and with or without the
+  graphics card (up to its precision), but not MB3D's; neighbour
   pixels steer the ray counts from their state at the start of a pass (MB3D
   reads them while other threads change them). The z-buffer that the Monte
   Carlo window saves with "With ZBuffer" comes from a normal calculation of

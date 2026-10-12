@@ -22,7 +22,7 @@ for m in re.finditer(r'^    var (\w+)(?:: ([^=;]+))?(?: = ([^;]+))?;',body,re.M)
         elif i.startswith('mat3x3<R>'): t='mat3x3<R>'
         else: raise SystemExit('type? '+n+' '+i)
     loc.append((n,t.strip()))
-skip={'dbg_r1','dbg_it1','dbg_rst','dbg_it2','dbg_rout','dbg_g','r_task_origin','r_task_dir','r_task','suspended','state_slot','cur_item','resuming','r_rec','r_keep','r_task_inside','r_task_q','dv'}
+skip={'dbg_r1','dbg_it1','dbg_rst','dbg_it2','dbg_rout','dbg_g','r_task_origin','r_task_dir','r_task','suspended','state_slot','cur_item','resuming','r_rec','r_keep','r_task_inside','r_task_q','dv','mc_t_pos','mc_t_dir','mc_t','mc_t_flags','mc_t_stop'}
 vars_=[v for v in priv+loc if v[0] not in skip]+[('guard','i32')]
 sv=[];ld=[];off=1
 def scalar(n,t):

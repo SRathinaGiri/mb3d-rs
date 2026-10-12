@@ -1545,6 +1545,9 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             Err(e) => return Err(e),
         }
         let st = img.stats();
+        if !quiet && img.passes == start_passes + 1 {
+            eprintln!("\r  calculated on: {}", mb3d::mc::last_status());
+        }
         if !quiet {
             eprintln!(
                 "\r  pass {:3}: {:6.1} rays/pixel (max {}), noise {:.4}, {}",
