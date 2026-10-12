@@ -921,6 +921,26 @@ tile files that MB3D writes for big renders are rendered as that tile.
 10. ✅ Browser editor in MB3D's layout (main window, Formulas, Lighting, Post processing and tool windows), repainting of the kept G-buffer, recalculate a selection, double image size, JIT formula editor, map sequences, `.m3i` writing, batch processing in the editor; SSE2/x87 formula code translated natively (2× on dIFS scenes); CI and release builds for Linux, Windows and macOS
 11. ✅ The Mandelbulb3D desktop program replaces the browser editor: MB3D's own form files and ported event handlers for all windows (incl. Big renders, Monte Carlo, Voxel export, Bulb Tracer 2 with mesh preview, HeightMap generator, MutaGen, JIT formula editor), G-buffer double image size, JPEG output
 
+Planned:
+
+- [ ] **Themes as XML files**: the look of the controls (colours, gloss and
+  gradients, radii, metrics) described in XML instead of code; today's two
+  looks become the first two files, and new themes need no programming.
+  Then a few themes of our own design under our own names. MB3D's built-in
+  VCL styles are Embarcadero's and are neither shipped, converted nor read
+  from an MB3D installation.
+- [ ] **Faster custom formulas on the CPU**: a translator that emits
+  structured Rust instead of a step-by-step emulation (ApolloBalloons' main
+  calculation: 279 s against MB3D's 144 s on the same machine); a prototype
+  is under way.
+- [ ] **Double precision where single precision shows**: a quick probe
+  before a card render switches detailed scenes to double precision (the
+  1–5 % differences in the comparison table); under way.
+- [ ] Shadows and ambient occlusion on the card after a shared (mixed)
+  start.
+- [ ] Auto that remembers scenes which are faster on the CPU.
+- [ ] Rendering on other computers in the network (animation frames first).
+
 ## License
 
 MB3D is licensed under the LGPL 2.1. This port is a derivative work and uses
