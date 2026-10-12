@@ -447,6 +447,22 @@ a numerical DE samples the formula at a tiny offset, which must span a few
 single precision steps of the coordinates (about zoom 7 at 800 pixels
 width); an analytic DE or dIFS only needs the pixel steps themselves to be
 distinct (64 single precision steps), which allows far deeper views.
+Some scenes that are not deep zooms still come out visibly different in
+single precision, mostly through the roughness that smoothed normals
+measure from the formula's values at tiny offsets around the surface. No
+parameter of the scene tells them apart, so a probe decides: before a
+calculation on the card, about 3000 pixels (a grid over the image) are
+marched on the card in single precision and on the CPU (at most 150 ms
+there, 1.5 s on the card), painted and compared; when their colours
+differ by more than 1.3 % on average, the card calculates the scene in
+double precision. The decision is kept for the scene (its shader, view,
+size and lighting), so calculating it again does not probe again. The
+probe needs the card's single precision shader: with *Auto* it runs once
+that is compiled (from the next calculation of the scene on), with
+*Graphics card* the calculation waits for it. Monte Carlo renders use the
+probe too when the scene's march is compiled. `MB3D_GPU_NOPROBE=1` turns
+it off, `MB3D_PROBE_DEBUG=1` prints its result, and `cargo run --release
+--example probecheck -- MB3D_DIR 480 FILES...` runs it on parameter files.
 `mb3d` prints which was used and why; errors of the graphics card or its
 driver also send the calculation to the CPU, and software renderers
 (llvmpipe, WARP) are not used. The first calculation of a scene compiles
@@ -519,7 +535,14 @@ modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats it.
   some sparkle in different pixels. In double precision on the card
   (`MB3D_GPU_DOUBLE=1`) the three largest drop to 0.3, 0.3 and 0.65 %.
   The shadow rule described above and the random numbers of the SSAO with
-  random sampling add a little.
+  random sampling add a little. The table was made without the precision
+  probe (see above); with it, 20 of the 73 files switch to double
+  precision, among them all ten from 1.7 to 5 %, which drop to 0.03 to
+  0.85 % (*Waste-and-tragedy* 1.4 %), at 1 to 7 times the card's time
+  (*AboxShapes-Misty* no slower, *KentPress* 1.25 times, *JuliaSetSample*
+  and *BulboxCut* 6 to 7 times). Of the files under 0.7 % two switch as
+  well (*Lenord - The Beanstalk*, *InAndOutside box*; the probe paints
+  without shadows and occlusion, which can hide much of a difference).
 
 <details>
 <summary>All 80 files (click to open)</summary>

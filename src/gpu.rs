@@ -326,6 +326,11 @@ fn real_block(dbl: bool) -> String {
     o
 }
 
+/// The scene would run in single precision, and the card has doubles.
+pub fn double_possible(p: &CalcParams) -> bool {
+    !needs_double(p) && gpu().is_ok_and(|g| g.f64)
+}
+
 thread_local! {
     /// the last march overflowed single precision and ran in double mode
     /// (until the next march on this thread)
@@ -333,9 +338,11 @@ thread_local! {
 }
 
 /// The scene needs the shader's double mode: its zoom is beyond single
-/// precision (see [`unsupported`]); MB3D_GPU_DOUBLE=1 forces it (checks).
+/// precision (see [`unsupported`]), or a probe found single precision too
+/// coarse for its detail (`p.gpu_double`); MB3D_GPU_DOUBLE=1 forces it
+/// (checks).
 fn needs_double(p: &CalcParams) -> bool {
-    if std::env::var("MB3D_GPU_DOUBLE").as_deref() == Ok("1") || RETRY_DOUBLE.with(|c| c.get()) {
+    if std::env::var("MB3D_GPU_DOUBLE").as_deref() == Ok("1") || RETRY_DOUBLE.with(|c| c.get()) || p.gpu_double {
         return true;
     }
     let env = |k: &str, d: f64| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
@@ -894,6 +901,25 @@ fn march_constants(p: &CalcParams, mode: u32) -> Vec<(&'static str, f64)> {
     vec![("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)]
 }
 
+/// The single precision march of the scene is compiled already (no
+/// compile is started).
+pub fn march_compiled(p: &CalcParams) -> bool {
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return false };
+    let key = pipeline_key(&sh.code, "main", &march_constants(p, 0));
+    g.pipelines.lock().is_ok_and(|m| m.contains_key(&key))
+}
+
+/// A key of the scene as the card marches it: its shader, the formulas'
+/// constants and the march's parameters (the view, the size, the limits).
+pub fn scene_key(p: &CalcParams) -> Option<u64> {
+    use std::hash::{Hash, Hasher};
+    let sh = scene_shader(p).ok()?;
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    (&sh.code, &sh.cst, &sh.rtpl, &sh.slots, &sh.slotx, &sh.maps).hash(&mut h);
+    params(p, 0, p.rect[3].max(0) as usize, &sh, 0, &PostJob::default(), None).hash(&mut h);
+    Some(h.finish())
+}
+
 /// A normal calculation on the card: flags that turn true once the
 /// shaders of its passes are compiled (the march first; see [`prepare`]);
 /// an error when the scene cannot run there.
@@ -951,6 +977,32 @@ pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize
     let n = OVERFLOW.with(|c| c.get());
     if n * 500 > v.len() && !needs_double(p) {
         return Err(format!("single precision overflows in {} ({n} of {} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + "), v.len()));
+    }
+    Ok(())
+}
+
+/// The march alone on the card of a sample of the pixels: every `sx`-th
+/// column (from (row * 5) % sx) of every `sy`-th row (from sy / 2).  The
+/// sample rows go to `sink` with their row in the image; their pixels are
+/// the sampled columns.
+pub fn march_sample(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    let (sx, sy) = (sx.max(1), sy.max(1));
+    let mut q = p.clone();
+    q.rect[2] = (p.rect[2].max(0) as usize / sx) as i32;
+    q.rect[3] = (p.rect[3].max(0) as usize / sy) as i32;
+    if q.rect[2] == 0 || q.rect[3] == 0 {
+        return Ok(());
+    }
+    let g = gpu()?;
+    let sh = scene_shader(&q)?;
+    SAMPLE.with(|c| c.set((sx, sy)));
+    let r = run(g, &q, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, &mut |y, row| sink(y * sy + sy / 2, row), None);
+    SAMPLE.with(|c| c.set((0, 0)));
+    let v = r?;
+    // pixels whose DE overflowed single precision (see [`march_bands`])
+    let n = OVERFLOW.with(|c| c.get());
+    if n * 500 > v.len() && !needs_double(p) {
+        return Err("single precision overflows".into());
     }
     Ok(())
 }
@@ -1184,6 +1236,10 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
         }
         None => v.resize(220, 0),
     }
+    // a sample of the pixels (see [`march_sample`])
+    let (sx, sy) = SAMPLE.with(|c| c.get());
+    i(&mut v, sx as i32);
+    i(&mut v, sy as i32);
     v.resize(224, 0);
     // the parameters of the built-in formulas
     for row in &scene.slotx {
@@ -1268,6 +1324,8 @@ const DOUBLE_WORD: usize = 296;
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)
     static PROBE_MZZ: std::cell::Cell<f64> = const { std::cell::Cell::new(0.0) };
+    /// the columns and rows of a sample of the pixels (0: all)
+    static SAMPLE: std::cell::Cell<(usize, usize)> = const { std::cell::Cell::new((0, 0)) };
     /// the pixels of the last [`run`] whose DE overflowed single precision
     static OVERFLOW: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
 }

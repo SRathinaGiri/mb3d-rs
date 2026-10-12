@@ -94,6 +94,10 @@ pub struct CalcParams {
     /// The post calculations the graphics card ran with the main
     /// calculation (`render::post_process` skips them).
     pub gpu_post: Option<PostJob>,
+    /// The graphics card calculates in double precision although the zoom
+    /// would allow single: a probe found single precision too coarse for
+    /// the scene's fine detail (see `render::double_probe`).
+    pub gpu_double: bool,
 }
 
 /// The post calculations on the G-buffer that follow the main calculation:
@@ -743,6 +747,7 @@ impl CalcParams {
             in_and_outside: sc.inside == InsideMode::Both,
             vol: None,
             gpu_post: None,
+            gpu_double: false,
             machine,
         })
     }
