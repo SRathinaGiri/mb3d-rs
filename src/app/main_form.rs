@@ -283,7 +283,10 @@ fn set_calc_on(app: &mut Mb3d, ui: &mut Ui, i: i64) {
     ui.set_item_index(F, "CalcOnCombo", i as i32);
     app.ini.set_extra("CalcOn", ["Auto", "CPU", "GPU"][i as usize]);
     #[cfg(feature = "gpu")]
-    crate::gpu::set_enabled(i != 1 && crate::gpu::default_on());
+    {
+        crate::gpu::set_enabled(i != 1 && crate::gpu::default_on());
+        crate::gpu::set_auto(i == 0);
+    }
 }
 
 /// The title bar LED: where the last calculation ran.

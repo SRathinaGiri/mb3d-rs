@@ -118,6 +118,26 @@ fn calculate_inner(
         // the main calculation (also for a raw calculation: post_process
         // skips what is done)
         let job = post_job(sc, &p);
+        // the reflection pass's pipelines compile meanwhile
+        if sc.mc.reflections {
+            crate::gpu::reflect_prepare(&p, sc.shadows.is_some(), sc.ao.is_some());
+        }
+        // Auto: when the card's shaders are not compiled within a moment,
+        // the CPU starts and the card joins for the march once it can
+        // (the post calculations then run as after a CPU calculation)
+        if crate::gpu::auto() {
+            if let Ok(flags) = crate::gpu::march_prepare(&p, &job) {
+                let all = || flags.iter().all(|f| f.load(Ordering::SeqCst));
+                let t = std::time::Instant::now();
+                while !all() && t.elapsed() < std::time::Duration::from_millis(200) {
+                    std::thread::sleep(std::time::Duration::from_millis(5));
+                }
+                if !all() {
+                    let gbuf = march_mixed(&p, threads, progress, cancel, sink, &flags[0])?;
+                    return finish_calculation(sc, p, gbuf, post, threads, cancel);
+                }
+            }
+        }
         let gpu = crate::gpu::march(&p, &job, progress, cancel, |y, row| {
             if let Some(f) = sink {
                 f(y, row);
@@ -174,6 +194,118 @@ fn calculate_inner(
     }
     let gbuf: Vec<SiLight> = rows.into_iter().flatten().collect();
     finish_calculation(sc, p, gbuf, post, threads, cancel)
+}
+
+/// One row of the main calculation on the CPU (MB3D's per-row seed).
+fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
+    let [x0, y0, w, _] = p.rect;
+    let yy = y + y0 as usize;
+    // MB3D: seed := Round(Random * (iThreadId + 1) * $324594A1 + $24563487)
+    let seed = (0x24563487u32 as i64 + (yy as i64 + 1) * 0x324594A1i64) as i32;
+    let mut m = Marcher::new(p, seed);
+    (x0..x0 + w).map(|x| m.march_pixel(x, yy as i32)).collect()
+}
+
+/// The march with the CPU threads taking rows from the bottom at once and
+/// the card from the top once `ready` (its shader compiled) - until they
+/// meet.
+#[cfg(feature = "gpu")]
+fn march_mixed(
+    p: &CalcParams,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    sink: Option<RowSink>,
+    ready: &std::sync::atomic::AtomicBool,
+) -> Result<Vec<SiLight>, String> {
+    use std::sync::{Mutex, OnceLock};
+    let h = p.rect[3].max(0) as usize;
+    // the rows still free: [top, bottom)
+    let free = Mutex::new((0usize, h));
+    let rows: Vec<OnceLock<Vec<SiLight>>> = (0..h).map(|_| OnceLock::new()).collect();
+    let done = AtomicUsize::new(0);
+    let on_card = AtomicUsize::new(0);
+    let put = |y: usize, row: Vec<SiLight>| {
+        if let Some(f) = sink {
+            f(y, &row);
+        }
+        let _ = rows[y].set(row);
+        progress(done.fetch_add(1, Ordering::Relaxed) + 1, h);
+    };
+    let mut card_err = None;
+    std::thread::scope(|s| {
+        for _ in 0..threads {
+            s.spawn(|| loop {
+                if cancel() {
+                    break;
+                }
+                let y = {
+                    let mut f = free.lock().unwrap();
+                    if f.1 <= f.0 {
+                        break;
+                    }
+                    f.1 -= 1;
+                    f.1
+                };
+                put(y, cpu_row(p, y));
+            });
+        }
+        // the card, once its shader is ready
+        loop {
+            let left = {
+                let f = free.lock().unwrap();
+                f.0 < f.1
+            };
+            if !left || cancel() {
+                return;
+            }
+            if ready.load(Ordering::SeqCst) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        let claimed = Mutex::new(Vec::new());
+        let r = crate::gpu::march_bands(
+            p,
+            &|band| {
+                let mut f = free.lock().unwrap();
+                (f.0 < f.1).then(|| {
+                    let r = (f.0, band.min(f.1 - f.0));
+                    f.0 += r.1;
+                    claimed.lock().unwrap().push(r);
+                    r
+                })
+            },
+            cancel,
+            &mut |y, row| {
+                on_card.fetch_add(1, Ordering::Relaxed);
+                put(y, row.to_vec());
+            },
+        );
+        if let Err(e) = r {
+            if e != "cancelled" {
+                // the card's rows not delivered: on the CPU
+                for (r0, n) in claimed.into_inner().unwrap() {
+                    for y in r0..r0 + n {
+                        if rows[y].get().is_none() && !cancel() {
+                            put(y, cpu_row(p, y));
+                        }
+                    }
+                }
+            }
+            card_err = Some(e);
+        }
+    });
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let n_card = on_card.load(Ordering::Relaxed);
+    crate::gpu::set_status(match card_err {
+        Some(e) => format!("CPU: {e}"),
+        None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
+        None => format!("GPU {} (march only, its shader compiled meanwhile): {} % of the rows on the card, the rest on the CPU", crate::gpu::name().unwrap_or_default(), n_card * 100 / h.max(1)),
+    });
+    Ok(rows.into_iter().flat_map(|r| r.into_inner().unwrap_or_default()).collect())
 }
 
 /// The post calculations after the main calculation (CPU or GPU).

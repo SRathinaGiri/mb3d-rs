@@ -778,13 +778,19 @@ fn pipeline(g: &Gpu, code: &str, constants: &[(&str, f64)]) -> Result<std::sync:
 /// when several pipelines share one bind group (the automatic layout of a
 /// pipeline is exclusive to it).
 fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
-    use std::hash::{Hash, Hasher};
-    let mut h = std::collections::hash_map::DefaultHasher::new();
-    (code, entry).hash(&mut h);
-    for (k, v) in constants {
-        (k, v.to_bits()).hash(&mut h);
+    let key = pipeline_key(code, entry, constants);
+    // compiled in the background (see [`prepare`]): wait for it
+    let pending = PREPARING.lock().unwrap().iter().find(|(k, _)| *k == key).map(|(_, f)| f.clone());
+    if let Some(f) = pending {
+        while !f.load(Ordering::SeqCst) {
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
     }
-    let key = h.finish();
+    compile_entry(g, code, entry, layout, constants, key)
+}
+
+/// [`pipeline_entry`] without the wait (the background compile itself).
+fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)], key: u64) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
     if let Some(pl) = g.pipelines.lock().map_err(|e| e.to_string())?.get(&key) {
         return Ok(pl.clone());
     }
@@ -820,6 +826,137 @@ fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipeli
     let pl = std::sync::Arc::new(pl);
     g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
     Ok(pl)
+}
+
+fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    (code, entry).hash(&mut h);
+    for (k, v) in constants {
+        (k, v.to_bits()).hash(&mut h);
+    }
+    h.finish()
+}
+
+/// The pipelines being compiled in the background, with their flags.
+static PREPARING: Mutex<Vec<(u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
+
+/// A flag that turns true once the pipeline of `code` is compiled (at once
+/// when it is): a thread of its own compiles it meanwhile.  A shader that
+/// does not compile sets it too (its calculation then finds the error).
+fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&'static str, f64)>) -> std::sync::Arc<AtomicBool> {
+    let key = pipeline_key(&code, entry, &constants);
+    if g.pipelines.lock().is_ok_and(|m| m.contains_key(&key)) {
+        return std::sync::Arc::new(AtomicBool::new(true));
+    }
+    let mut list = PREPARING.lock().unwrap();
+    if let Some((_, f)) = list.iter().find(|(k, _)| *k == key) {
+        return f.clone();
+    }
+    let flag = std::sync::Arc::new(AtomicBool::new(false));
+    list.push((key, flag.clone()));
+    let f = flag.clone();
+    std::thread::spawn(move || {
+        let _ = compile_entry(g, &code, entry, None, &constants, key);
+        f.store(true, Ordering::SeqCst);
+        PREPARING.lock().unwrap().retain(|(k, _)| *k != key);
+    });
+    flag
+}
+
+/// The constants of the Monte Carlo pipeline.
+fn mc_constants(p: &CalcParams) -> Vec<(&'static str, f64)> {
+    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
+    vec![("MODE_KIND", 4.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)]
+}
+
+/// Monte Carlo on the card: a flag that turns true once its shader is
+/// compiled (see [`prepare`]); an error when the scene cannot run there.
+pub fn mc_prepare(p: &CalcParams) -> Result<std::sync::Arc<AtomicBool>, String> {
+    if let Some(r) = unsupported(p) {
+        return Err(r);
+    }
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    Ok(prepare(g, sh.code, "main", mc_constants(p)))
+}
+
+/// The constants of the pipeline of a normal calculation's pass `mode`
+/// (0 the march, 1 shadows, 2 DE ambient occlusion).
+fn march_constants(p: &CalcParams, mode: u32) -> Vec<(&'static str, f64)> {
+    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
+    let kind = match mode {
+        1 => 1.0,
+        2 => 2.0,
+        _ => 0.0,
+    };
+    vec![("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)]
+}
+
+/// A normal calculation on the card: flags that turn true once the
+/// shaders of its passes are compiled (the march first; see [`prepare`]);
+/// an error when the scene cannot run there.
+pub fn march_prepare(p: &CalcParams, post: &PostJob) -> Result<Vec<std::sync::Arc<AtomicBool>>, String> {
+    if let Some(r) = unsupported(p) {
+        return Err(r);
+    }
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    Ok(modes(post).into_iter().map(|m| prepare(g, sh.code.clone(), "main", march_constants(p, m))).collect())
+}
+
+/// The constants of a reflection pipeline: the march and/or the shadows
+/// and occlusion of the hits.
+fn reflect_constants(p: &CalcParams, march: bool, hs: bool, ao: bool) -> Vec<(&'static str, f64)> {
+    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
+    vec![
+        ("MODE_KIND", 3.0),
+        ("HAS_DIFS", difs as u8 as f64),
+        ("HAS_DECOMB", p.decomb.is_some() as u8 as f64),
+        ("HAS_4D", four_d(p) as u8 as f64),
+        ("HAS_IPOL", has_ipol(p) as u8 as f64),
+        ("R_HS", hs as u8 as f64),
+        ("R_AO", ao as u8 as f64),
+        ("R_MARCH", march as u8 as f64),
+    ]
+}
+
+/// Starts compiling the reflection pass's pipelines in the background:
+/// the march, and the shadows (`hs`) and occlusion (`ao`) of the hits.
+pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
+    if unsupported(p).is_some() {
+        return;
+    }
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return };
+    let split = (hs || ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
+    if split {
+        prepare(g, sh.code.clone(), "main", reflect_constants(p, true, false, false));
+        prepare(g, sh.code, "main", reflect_constants(p, false, hs, ao));
+    } else {
+        prepare(g, sh.code, "main", reflect_constants(p, true, hs, ao));
+    }
+}
+
+/// The march alone on the card, of the bands that `bands` hands out (the
+/// CPU calculates the other rows): their rows go to `sink`.
+pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands))?;
+    Ok(())
+}
+
+/// "Calculate on: Auto": a calculation starts on the CPU while the card's
+/// shader compiles, and the card joins when it is ready (otherwise the
+/// calculation waits for the shader).
+static AUTO: AtomicBool = AtomicBool::new(true);
+
+pub fn set_auto(on: bool) {
+    AUTO.store(on, Ordering::Relaxed);
+}
+
+pub fn auto() -> bool {
+    AUTO.load(Ordering::Relaxed)
 }
 
 fn gpu() -> Result<&'static Gpu, String> {
@@ -1171,8 +1308,12 @@ pub fn march(
         if timing {
             eprintln!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
         }
+        // the passes' pipelines compile in parallel
+        for m in modes(post) {
+            prepare(g, sh.code.clone(), "main", march_constants(p, m));
+        }
         let t = std::time::Instant::now();
-        r = run(g, p, &sh, post, None, progress, cancel, &mut sink);
+        r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None);
         if timing {
             eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
         }
@@ -1330,7 +1471,6 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sha
     let dbl = needs_double(p);
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
     // the shadow and occlusion states only where the batch uses them, and
     // then in a pipeline of their own after the march (MB3D_GPU_NOSPLIT:
     // one pipeline, for comparisons): smaller shaders keep more rays on
@@ -1338,22 +1478,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sha
     let r_hs = !o.lights.is_empty() || o.soft_radius > 0.0;
     let r_ao = o.ao.is_some();
     let split = (r_hs || r_ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
-    let kind = |march: bool, hs: bool, ao: bool| {
-        pipeline(
-            g,
-            &sh.code,
-            &[
-                ("MODE_KIND", 3.0),
-                ("HAS_DIFS", difs as u8 as f64),
-                ("HAS_DECOMB", p.decomb.is_some() as u8 as f64),
-                ("HAS_4D", four_d(p) as u8 as f64),
-                ("HAS_IPOL", has_ipol(p) as u8 as f64),
-                ("R_HS", hs as u8 as f64),
-                ("R_AO", ao as u8 as f64),
-                ("R_MARCH", march as u8 as f64),
-            ],
-        )
-    };
+    let kind = |march: bool, hs: bool, ao: bool| pipeline(g, &sh.code, &reflect_constants(p, march, hs, ao));
     let mut pls = vec![if split { kind(true, false, false)? } else { kind(true, r_hs, r_ao)? }];
     if split {
         pls.push(kind(false, r_hs, r_ao)?);
@@ -1547,12 +1672,7 @@ pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share:
     let dbl = needs_double(p);
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
-    let pl = pipeline(
-        g,
-        &sh.code,
-        &[("MODE_KIND", 4.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)],
-    )?;
+    let pl = pipeline(g, &sh.code, &mc_constants(p))?;
     let n = tasks.len();
     let words: Vec<u32> = tasks
         .iter()
@@ -1716,7 +1836,7 @@ pub fn de_probe(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
     PROBE_MZZ.with(|m| m.set(mzz));
-    let v = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {})?;
+    let v = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {}, None)?;
     Ok(v.iter()
         .map(|s| {
             let rst = f32::from_bits((s.normal[0] as u16 as u32) | (s.normal[1] as u16 as u32) << 16);
@@ -1736,6 +1856,7 @@ fn run(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
     sink: &mut dyn FnMut(usize, &[SiLight]),
+    bands: Option<&dyn Fn(usize) -> Option<(usize, usize)>>,
 ) -> Result<Vec<SiLight>, String> {
     let (w, h) = (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize);
     let mut res = Resumer::new(g, sh);
@@ -1744,7 +1865,8 @@ fn run(
     // its slowest pixels alone on the card); with post passes (which need
     // the march of the band done) a few slot generations, so that the rows
     // still come in steps
-    let band = if modes.len() == 1 { (96 << 20) / (w.max(1) * 20) } else { 4 * res.slots / w.max(1) }.clamp(8, h.max(8));
+    // (shared with the CPU: small bands, so that both end together)
+    let band = if modes.len() == 1 && bands.is_none() { (96 << 20) / (w.max(1) * 20) } else { 4 * res.slots / w.max(1) }.clamp(8, h.max(8));
     let out_size = (w * band * 20) as u64;
     let usage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC;
     let out = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("gbuffer"), size: out_size.max(16), usage, mapped_at_creation: false });
@@ -1756,16 +1878,9 @@ fn run(
     });
     // one parameter buffer per pass (a buffer write before a submission
     // takes effect before all of its passes), and a pipeline per kind of pass
-    let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
-    let decomb = p.decomb.is_some();
     let mut pls = Vec::new();
     for &m in &modes {
-        let kind = match m {
-            1 => 1.0,
-            2 => 2.0,
-            _ => 0.0,
-        };
-        pls.push(pipeline(g, &sh.code, &[("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", decomb as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)])?);
+        pls.push(pipeline(g, &sh.code, &march_constants(p, m))?);
     }
     let pars: Vec<wgpu::Buffer> = modes
         .iter()
@@ -1813,12 +1928,21 @@ fn run(
         .collect();
     let mut gbuf = Vec::with_capacity(w * h);
     let mut overflow = 0usize;
-    let mut row0 = 0;
-    while row0 < h {
+    let mut next = 0;
+    // the next band: in order, or from the allocator (the rows from the
+    // top that the CPU has not taken)
+    let mut take = |band: usize| match bands {
+        Some(f) => f(band),
+        None => (next < h).then(|| {
+            let r = (next, band.min(h - next));
+            next += r.1;
+            r
+        }),
+    };
+    while let Some((row0, rows)) = take(band) {
         if cancel() {
             return Err("cancelled".into());
         }
-        let rows = band.min(h - row0);
         // each pass on the band until its pixels are done; the rows the
         // last one has finished go to the sink as they come
         let mut sunk = 0;
@@ -1862,12 +1986,13 @@ fn run(
                         sink(row0 + sunk + r, &gbuf[start..]);
                     }
                     sunk = ready;
-                    progress(row0 + sunk, h);
+                    if bands.is_none() {
+                        progress(row0 + sunk, h);
+                    }
                     Ok(())
                 },
             )?;
         }
-        row0 += rows;
     }
     OVERFLOW.with(|c| c.set(overflow));
     Ok(gbuf)

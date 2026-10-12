@@ -2835,6 +2835,20 @@ fn pass_gpu(
         }
         let mut batches_q: std::collections::VecDeque<Batch> = std::collections::VecDeque::new();
         let mut on_card = true;
+        // Auto: the rounds stay on the CPU until the card's shader is
+        // compiled
+        let ready = if crate::gpu::auto() {
+            match crate::gpu::mc_prepare(p) {
+                Ok(f) => Some(f),
+                Err(_) => {
+                    on_card = false;
+                    None
+                }
+            }
+        } else {
+            None
+        };
+        let card_ready = || ready.as_ref().is_none_or(|f| f.load(Ordering::SeqCst));
         let mut batches = 0usize;
         let (mut n_card, mut n_cpu) = (0usize, 0usize);
         let timing = std::env::var_os("MB3D_MC_TIMING").is_some();
@@ -2849,7 +2863,7 @@ fn pass_gpu(
                 }
                 let round = std::mem::take(&mut pending[g]);
                 let total: usize = round.iter().map(|r| r.1.len()).sum();
-                if !on_card || total < MC_CPU_RAYS {
+                if !on_card || total < MC_CPU_RAYS || !card_ready() {
                     n_cpu += total;
                     for (wi, _) in &round {
                         let _ = replies[*wi].send(ToWorker::Cpu(g));
@@ -2981,7 +2995,11 @@ fn pass_gpu(
             eprintln!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
         }
         let pc = (n_card * 100 + (n_card + n_cpu) / 2) / (n_card + n_cpu).max(1);
-        status = format!("GPU {}: {pc} % of the marches on the card, {} % on the CPU ({batches} batches)", crate::gpu::name().unwrap_or_default(), 100 - pc);
+        status = if n_card == 0 {
+            if card_ready() { "CPU (all rounds small)".into() } else { "CPU (the graphics card's shader was still compiling)".into() }
+        } else {
+            format!("GPU {}: {pc} % of the marches on the card, {} % on the CPU ({batches} batches)", crate::gpu::name().unwrap_or_default(), 100 - pc)
+        };
     });
     if let Some(e) = failed.into_inner().unwrap() {
         return Err(e);

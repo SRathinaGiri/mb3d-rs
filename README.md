@@ -386,8 +386,15 @@ whenever the scene allows it, and on the CPU otherwise:
   grey before the first calculation; the mouse on it shows the details
   (for Monte Carlo renders the parts of the marches on the card and on
   the CPU);
-* "Calculate on" on the Internal tab: Auto, CPU (never the graphics card)
-  or Graphics card, kept in `Mandelbulb3D.ini`;
+* "Calculate on" on the Internal tab: **Auto** starts on the CPU when the
+  card's shader for the scene is not compiled yet (the first time a
+  formula combination is used: 10 to 20 s; the driver keeps it for the
+  next time) and lets the card join once it is (normal renders: the card
+  takes rows from the top while the CPU threads take them from the
+  bottom, and the post calculations run as after a CPU calculation;
+  Monte Carlo: the rounds go to the card from then on), so small images
+  never wait for a compile; **CPU** never uses the graphics card;
+  **Graphics card** waits for the shader. Kept in `Mandelbulb3D.ini`;
 * `mb3d` uses it too (it prints `calculated on: ...`); `--cpu` calculates
   on the CPU only;
 * the environment variable `MB3D_GPU=0` switches it off for both.
