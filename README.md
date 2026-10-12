@@ -929,10 +929,12 @@ Planned:
   Then a few themes of our own design under our own names. MB3D's built-in
   VCL styles are Embarcadero's and are neither shipped, converted nor read
   from an MB3D installation.
-- [ ] **Faster custom formulas on the CPU**: a translator that emits
-  structured Rust instead of a step-by-step emulation (ApolloBalloons' main
-  calculation: 279 s against MB3D's 144 s on the same machine); a prototype
-  is under way.
+- [ ] **Faster custom formulas on the CPU**: the translator now emits
+  structured Rust and calls dIFS formulas directly (ApolloBalloons' main
+  calculation about 27 % faster, bit-identical); what remains of the gap
+  to MB3D (279 s before against 144 s on the same machine) is mostly
+  glibc's `atan2` and `sincos`, whose results a faster version would change
+  in the last bits.
 - [ ] **Double precision where single precision shows**: a quick probe
   before a card render switches detailed scenes to double precision (the
   1–5 % differences in the comparison table); under way.
