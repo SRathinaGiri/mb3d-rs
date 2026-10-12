@@ -4,8 +4,9 @@ The original Mandelbulb3D calculates everything on the processor (CPU).
 mb3d-rs can also use the **graphics card**, which is usually several times
 faster, and it decides by itself how to share the work. This page explains
 what happens, what the little lamp in the title bar tells you, and the
-one setting you may want to change. It ends with the other things that
-are new compared with the original program.
+one setting you may want to change. The other things that are new
+compared with the original program are listed in the
+[README](../README.md#new-compared-with-mandelbulb3d).
 
 ![The main window after a calculation on the graphics card](img/main_window.jpg)
 
@@ -123,30 +124,3 @@ Speed on a GTX 1650 with 8 CPU threads:
 | toricaleggs (reflections, transparency) | 33 s | 11.8 s |
 | Mengerplus | 12.7 s | 6.8 s |
 | Mandelwerk seashell (a slow formula) | 87 s | 47.5 s |
-
-## Interface size
-
-**Prefs ▸ Visual themes ▸ Interface size** makes all windows and their
-text larger or smaller (75 to 200 %), for high resolution screens. The
-layouts stay exactly as in MB3D, only bigger. It is saved in
-`Mandelbulb3D.ini`; `Mandelbulb3D --scale 150` or `MB3D_UI_SCALE=150` set
-it for one start.
-
-| 100 % | 150 % |
-|---|---|
-| ![Visual themes at 100 %](img/themes_100.png) | ![Visual themes at 150 %](img/themes_150.png) |
-
-## New compared with the original Mandelbulb3D
-
-- **Graphics card calculation** of the image, shadows, ambient occlusion
-  (also the screen space kinds), reflections and transparency, and the
-  Monte Carlo renderer, in single or (on cards that have it) double
-  precision for deep zooms.
-- **Calculate on: Auto / CPU / Graphics card**, with *Auto* sharing the
-  work instead of waiting for shaders.
-- **The lamp in the title bar** and its hint.
-- **Interface size** 75–200 %.
-- Runs on **Linux, Windows and macOS** (Intel and Apple Silicon).
-- **`mb3d`, a command line program**: renders, animations, batch lists,
-  Monte Carlo, voxel and mesh export, without a window (`mb3d` alone shows
-  its options).

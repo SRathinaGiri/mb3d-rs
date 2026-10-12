@@ -18,6 +18,42 @@ files are rendered in batches.
 Formulas, Lighting, Post processing, Navigator, Animation and all tool
 windows, built from MB3D's own form files (see below).
 
+## New compared with Mandelbulb3D
+
+- **Graphics card calculation** of the image, shadows, ambient occlusion
+  (also the screen space kinds), reflections and transparency, and the
+  Monte Carlo renderer, in single or (on cards that have it) double
+  precision; usually several times faster than the CPU.
+- **Calculate on: Auto / CPU / Graphics card**, with *Auto* sharing the
+  work between card and CPU instead of waiting for shaders.
+- **The lamp in the title bar**, showing where the last calculation ran.
+- **Interface size** 75–200 %.
+- Runs on **Linux, Windows and macOS** (Intel and Apple Silicon).
+- **`mb3d`, a command line program**: renders, animations, batch lists,
+  Monte Carlo, voxel and mesh export, without a window (`mb3d` alone shows
+  its options).
+
+### Rendering
+
+The image is calculated on the graphics card where it can be, and the
+program decides by itself how to share the work with the CPU.
+[How the rendering works](docs/RENDERING.md) explains it with pictures:
+the "Calculate on" setting, what *Auto* does the first time a formula
+combination is used, the lamp in the title bar and its hint, the thread
+priority and Monte Carlo renders.
+
+### Interface size
+
+**Prefs ▸ Visual themes ▸ Interface size** makes all windows and their
+text larger or smaller (75 to 200 %), for high resolution screens. The
+layouts stay exactly as in MB3D, only bigger. It is saved in
+`Mandelbulb3D.ini`; `Mandelbulb3D --scale 150` or `MB3D_UI_SCALE=150` set
+it for one start.
+
+| 100 % | 150 % |
+|---|---|
+| ![Visual themes at 100 %](docs/img/themes_100.png) | ![Visual themes at 150 %](docs/img/themes_150.png) |
+
 ## Download
 
 Ready-to-run programs for the latest release (no installation needed):
@@ -29,7 +65,14 @@ Ready-to-run programs for the latest release (no installation needed):
 | macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
 | macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
 
-Unpack it and start **Mandelbulb3D** (`Mandelbulb3D.exe` on Windows) in the
+On Linux, one line downloads the latest release into `~/mb3d-rs` and
+starts it:
+
+```sh
+mkdir -p ~/mb3d-rs && curl -L https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz | tar xz -C ~/mb3d-rs --strip-components=1 && ~/mb3d-rs/Mandelbulb3D
+```
+
+Otherwise unpack it and start **Mandelbulb3D** (`Mandelbulb3D.exe` on Windows) in the
 unpacked folder; `mb3d` is the command line renderer. The folder also has
 MB3D's formulas, maps and example parameters. Older versions and the
 release notes are on the [releases](https://github.com/thr32423/mb3d-rs/releases)
@@ -376,8 +419,8 @@ batch panel.
 ## Graphics card
 
 [How the rendering works](docs/RENDERING.md) explains the graphics card,
-the "Calculate on" setting, the lamp in the title bar and the interface
-size with pictures, without technical terms.
+the "Calculate on" setting and the lamp in the title bar with pictures,
+without technical terms.
 
 The main calculation (the ray marching of every pixel) runs on the
 graphics card through [wgpu](https://wgpu.rs) (Vulkan, Metal, DirectX 12)
