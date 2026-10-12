@@ -47,6 +47,8 @@ pub struct State {
     /// the title bar LED: its state, blinking during a 3D calculation
     pub led: Led,
     pub led_running: bool,
+    /// the note on the card's shaders compiling was shown for this calculation
+    pub compile_note: bool,
     pub user_aspect: (i32, i32),
     pub intern_aspect: f64,
     pub user_change: bool,
@@ -81,6 +83,7 @@ impl Default for State {
             calc_start: Instant::now(),
             led: Led::Idle,
             led_running: false,
+            compile_note: false,
             user_aspect: (0, 0),
             intern_aspect: 4.0 / 3.0,
             user_change: true,
@@ -150,6 +153,8 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         let i = app.ini.get("ThreadPriority").parse().unwrap_or(2);
         ui.set_item_index(F, "ComboBox2", i);
     }
+    // the calculation threads below the windows (MB3D's default: Lower)
+    crate::prio::set_level(ui.item_index(F, "ComboBox2"));
     if let Ok(i) = app.ini.get("ImageSharp").parse::<i32>() {
         ui.set_caption(F, "Label23", &i.to_string());
     }
@@ -320,6 +325,10 @@ pub fn show_led(ui: &mut Ui, led: Led, blinking: bool) {
         f.dirty = true;
     }
 }
+
+/// Shown when a calculation starts on the CPU while the card's shaders
+/// compile.
+pub const COMPILE_NOTE: &str = "First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.";
 
 /// The LED's hint: where the last calculation ran.
 pub fn set_led_hint(ui: &mut Ui, text: &str) {
@@ -627,6 +636,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         #[cfg(feature = "gpu")]
         crate::gpu::set_status(String::new());
         app.main.led_running = true;
+        app.main.compile_note = false;
     }
     let slice = if calc3d { 0 } else { app.main.slice_calc.clamp(1, 3) };
     app.eng.start(Job::Calc { scene: app.scene.clone(), slice });
@@ -642,6 +652,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         let led = running_led(app).unwrap_or(app.main.led);
         app.main.led = led;
         show_led(ui, led, true);
+        // Auto started on the CPU: the first calculation of these formulas
+        // compiles the card's shaders
+        #[cfg(feature = "gpu")]
+        if !app.main.compile_note && crate::gpu::last_status().contains("shaders are compiling") {
+            app.main.compile_note = true;
+            app.message(ui, COMPILE_NOTE);
+        }
     }
     if app.main.calculating {
         ui.set_position(F, "ProgressBar1", (app.eng.progress() * ui.c(F, "ProgressBar1").max as f32) as i64);
@@ -779,6 +796,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "Button2Click" => button2_click(app, ui),
+        // the thread priority box and "Disable threadboost"
+        "CheckBox14Click" => crate::prio::set_level(ui.item_index(F, "ComboBox2")),
         "CalcOnComboChange" => {
             let i = ui.item_index(F, "CalcOnCombo") as i64;
             set_calc_on(app, ui, i);

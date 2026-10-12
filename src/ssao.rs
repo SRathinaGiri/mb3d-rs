@@ -167,6 +167,7 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                     let zfine = &zfine;
                     let ys = start;
                     handles.push(sc.spawn(move || {
+                        crate::prio::calc_thread();
                         let mut out: Vec<(usize, u16)> = Vec::new();
                         for yy in 0..n {
                             let y = ys + yy;

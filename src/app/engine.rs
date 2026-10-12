@@ -223,6 +223,7 @@ impl Engine {
         self.0.painting.store(true, Ordering::SeqCst);
         let e = self.0.clone();
         std::thread::spawn(move || {
+            crate::prio::calc_thread();
             let rgb = crate::render::paint_preview(&scene, &params, &gbuf);
             let h = gbuf.len() / w.max(1);
             *e.preview.lock().unwrap() = Some((rgb, w, h));

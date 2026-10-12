@@ -213,6 +213,7 @@ pub fn build(
             }
             for list in per {
                 sc.spawn(move || {
+                    crate::prio::calc_thread();
                     let mut mr = Marcher::new(p, 1);
                     for (row, out) in list {
                         let y = row as i32 - hs;

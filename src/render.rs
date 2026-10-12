@@ -158,6 +158,7 @@ fn calculate_inner(
             let p = &p;
             let done = &done;
             handles.push(s.spawn(move || {
+                crate::prio::calc_thread();
                 // MB3D: seed := Round(Random * (iThreadId + 1) * $324594A1 + $24563487)
                 let mut out = Vec::new();
                 let mut y = t;
@@ -234,9 +235,12 @@ fn march_mixed(
         progress((done.fetch_add(1, Ordering::Relaxed) + 1).min(h), h);
     };
     let mut card_err = None;
+    // (the program shows a note on this: see `main_form::COMPILE_NOTE`)
+    crate::gpu::set_status("CPU (the graphics card's shaders are compiling)".into());
     std::thread::scope(|s| {
         for _ in 0..threads {
             s.spawn(|| loop {
+                crate::prio::calc_thread();
                 if cancel() {
                     break;
                 }
@@ -292,6 +296,7 @@ fn march_mixed(
                 std::thread::scope(|s2| {
                     for _ in 0..threads {
                         s2.spawn(|| loop {
+                            crate::prio::calc_thread();
                             let i = next.fetch_add(1, Ordering::Relaxed);
                             if i >= redo.len() || cancel() {
                                 break;
@@ -580,6 +585,7 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
         }
         for list in per {
             s.spawn(move || {
+                crate::prio::calc_thread();
                 for (y, row) in list {
                     let y = y + y0;
                     let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
@@ -620,6 +626,7 @@ fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> Vec<u
             let lv = &lv;
             let cam = &cam;
             s.spawn(move || {
+                crate::prio::calc_thread();
                 let y0 = ci * chunk_rows;
                 for (ry, row) in chunk.chunks_mut(w as usize * 3).enumerate() {
                     let y = y0 + ry;

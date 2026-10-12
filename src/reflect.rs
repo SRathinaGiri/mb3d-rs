@@ -1428,6 +1428,7 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         }
         for list in per {
             s.spawn(move || {
+                crate::prio::calc_thread();
                 for (ry, row) in list {
                     let y = ry as i32 + y0;
                     let seed = (0x24563487i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
@@ -1610,6 +1611,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
             let hi = start + part.len();
             let mine: Vec<(usize, crate::gpu::ReflectHit)> = pairs.iter().filter(|(i, _)| *i >= lo && *i < hi).copied().collect();
             s.spawn(move || {
+                crate::prio::calc_thread();
                 let mut t = new_tracer(1);
                 for (i, hit) in mine {
                     if hit.skip {
@@ -1738,6 +1740,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
             let hs: Vec<_> = (0..workers)
                 .map(|_| {
                     s.spawn(move || {
+                        crate::prio::calc_thread();
                         let mut t = new_tracer(1);
                         // with the card: rays still running when it is done
                         // are given up (single rays can take long here)
@@ -1796,6 +1799,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                 let lo = start;
                 start += part.len();
                 handles.push(s.spawn(move || {
+                    crate::prio::calc_thread();
                     let mut t = new_tracer(1);
                     let mut out = Vec::new();
                     for (k, q) in part.iter_mut().enumerate() {

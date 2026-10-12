@@ -192,6 +192,7 @@ pub fn calc_slice(
         for t in 0..threads {
             let rows = &rows;
             s.spawn(move || {
+                crate::prio::calc_thread();
                 let mut m = Marcher::new(p, 1);
                 let mut buf = vec![false; w];
                 let mut y = t;

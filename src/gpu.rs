@@ -857,6 +857,7 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
     list.push((key, flag.clone()));
     let f = flag.clone();
     std::thread::spawn(move || {
+        crate::prio::calc_thread();
         let _ = compile_entry(g, &code, entry, None, &constants, key);
         f.store(true, Ordering::SeqCst);
         PREPARING.lock().unwrap().retain(|(k, _)| *k != key);

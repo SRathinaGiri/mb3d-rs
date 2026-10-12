@@ -59,6 +59,10 @@ and the card takes rows from the top, until they meet:
 
 ![Card and CPU share the rows of an image](img/rows-split.svg)
 
+The message box of the main window says when this happens (*"First
+calculation of this formula combination: the graphics card's shaders are
+being compiled ..."*), so a slower first run is not a surprise.
+
 All shaders a calculation needs (the march, shadows, ambient occlusion,
 reflections) compile at the same time in the background, so the waiting
 is paid once and not once per shader. In the shared case the shadows and
@@ -84,6 +88,15 @@ renders how the work was shared.
 ![Calculated on the graphics card: green lamp and its hint](img/led_card.png)
 
 ![Calculate on: CPU - red lamp and its hint](img/led_cpu.png)
+
+## Thread priority
+
+**Thread Priority** on the Internal page (Idle, Lowest, *Lower* by
+default, Normal) works as in MB3D: the calculation threads run below the
+windows, so the program stays responsive and the lamp blinks steadily
+during long calculations. It costs no speed while nothing else needs the
+processor; other programs that do get it first (Idle the most). On Linux
+and Windows; macOS keeps normal priority.
 
 ## Monte Carlo renders
 

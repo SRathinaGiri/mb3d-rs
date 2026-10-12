@@ -2487,6 +2487,7 @@ pub fn pass_rows(
         }
         for list in per {
             s.spawn(move || {
+                crate::prio::calc_thread();
                 let march = RefCell::new(McMarch::new(ctx));
                 for (y, row) in list {
                     if cancel() {
@@ -2667,6 +2668,7 @@ fn pass_gpu(
             let to_main = to_main.clone();
             let done_rows = &done_rows;
             s.spawn(move || {
+                crate::prio::calc_thread();
                 let march = RefCell::new(McMarch::new(ctx));
                 let active_max = (MC_ACTIVE / threads / 2).max(64);
                 // the pixels in row order: (row, column), every other one
@@ -2810,6 +2812,7 @@ fn pass_gpu(
         {
             let to_main = to_main.clone();
             s.spawn(move || {
+                crate::prio::calc_thread();
                 while let Ok(sr) = card_in.recv() {
                     let t = std::time::Instant::now();
                     let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));

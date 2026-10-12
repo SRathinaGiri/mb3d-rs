@@ -54,6 +54,7 @@ pub mod mesh;
 pub mod mutagen;
 pub mod math;
 pub mod png;
+pub mod prio;
 pub mod reflect;
 pub mod render;
 pub mod scene;

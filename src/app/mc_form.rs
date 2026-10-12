@@ -56,6 +56,8 @@ pub struct State {
     seen_live: u64,
     live_painted: Instant,
     pub running: bool,
+    /// the note on the card's shaders compiling was shown for this run
+    pub compile_note: bool,
     start: Instant,
     last_saved: Instant,
     /// total calculation time in tenths of seconds (`iCalcTime`)
@@ -85,6 +87,7 @@ impl Default for State {
             seen_live: 0,
             live_painted: Instant::now(),
             running: false,
+            compile_note: false,
             start: Instant::now(),
             last_saved: Instant::now(),
             calc_time: 0,
@@ -328,6 +331,7 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.seen_ver = 0;
     app.mc.seen_live = 0;
     app.mc.running = true;
+    app.mc.compile_note = false;
     app.main.led = super::main_form::Led::Cpu;
     super::main_form::show_led(ui, app.main.led, true);
     app.mc.start = Instant::now();
@@ -459,6 +463,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             super::main_form::show_led(ui, led, app.mc.running);
         }
         super::main_form::set_led_hint(ui, &format!("Monte Carlo calculated on: {}", crate::mc::last_status()));
+        if !app.mc.compile_note && crate::mc::last_status().contains("still compiling") {
+            app.mc.compile_note = true;
+            app.message(ui, super::main_form::COMPILE_NOTE);
+        }
         repaint(app, ui);
         let max_rays = show_stats(app, ui);
         ui.set_caption(F, "Label8", "..til next update");
