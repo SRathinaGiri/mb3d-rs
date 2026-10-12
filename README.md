@@ -48,17 +48,18 @@ priority and Monte Carlo renders.
 ### Themes
 
 **Prefs ▸ Visual themes** offers eight looks: MB3D's two (*Glossy*, the
-dark default, and *Windows*, its "Themes off") and six new ones.
+dark default, and *Windows*, its "Themes off") and six new ones (click a
+picture for its full size).
 
 | | |
 |---|---|
-| ![Glossy](docs/img/themes/Glossy.png) | ![Windows](docs/img/themes/Windows.png) |
+| <a href="docs/img/themes/Glossy.jpg"><img src="docs/img/themes/Glossy.jpg" width="380" alt="Glossy"></a> | <a href="docs/img/themes/Windows.jpg"><img src="docs/img/themes/Windows.jpg" width="380" alt="Windows"></a> |
 | **Glossy**: MB3D's default | **Windows**: MB3D's "Themes off" |
-| ![Graphite](docs/img/themes/Graphite.png) | ![Daylight](docs/img/themes/Daylight.png) |
+| <a href="docs/img/themes/Graphite.jpg"><img src="docs/img/themes/Graphite.jpg" width="380" alt="Graphite"></a> | <a href="docs/img/themes/Daylight.jpg"><img src="docs/img/themes/Daylight.jpg" width="380" alt="Daylight"></a> |
 | **Graphite**: lighter neutral grey, steel-blue accents | **Daylight**: warm light grey, teal accents |
-| ![Midnight](docs/img/themes/Midnight.png) | ![Ember](docs/img/themes/Ember.png) |
+| <a href="docs/img/themes/Midnight.jpg"><img src="docs/img/themes/Midnight.jpg" width="380" alt="Midnight"></a> | <a href="docs/img/themes/Ember.jpg"><img src="docs/img/themes/Ember.jpg" width="380" alt="Ember"></a> |
 | **Midnight**: deep navy, blue accents | **Ember**: warm charcoal, orange accents |
-| ![Forest](docs/img/themes/Forest.png) | ![High contrast](docs/img/themes/Highcontrast.png) |
+| <a href="docs/img/themes/Forest.jpg"><img src="docs/img/themes/Forest.jpg" width="380" alt="Forest"></a> | <a href="docs/img/themes/Highcontrast.jpg"><img src="docs/img/themes/Highcontrast.jpg" width="380" alt="High contrast"></a> |
 | **Forest**: dark green-grey, green accents | **High contrast**: black, white text, yellow highlights |
 
 A theme is an XML file of named colours and sizes, drawn in one of two
