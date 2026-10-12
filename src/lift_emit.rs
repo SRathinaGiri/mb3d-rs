@@ -310,7 +310,7 @@ fn structure(blocks: &[Block], entry: usize) -> Option<Structured> {
                 let _ = writeln!(code, "{}}}", ind(&open));
             }
         }
-        if open.iter().any(|o| *o == Open::Scope(p)) || open.iter().any(|o| matches!(o, Open::Loop(h) if lend[*h].is_some_and(|e| e < p))) {
+        if open.contains(&Open::Scope(p)) || open.iter().any(|o| matches!(o, Open::Loop(h) if lend[*h].is_some_and(|e| e < p))) {
             return None;
         }
         if let Some(e) = lend[p] {
@@ -1112,5 +1112,41 @@ impl Prog {
                 return None;
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn block(lines: &[String], fall: Option<usize>) -> Block {
+        Block { lines: lines.to_vec(), fall }
+    }
+
+    #[test]
+    fn structure_conditional_jump_to_the_next_block() {
+        // 0: if c goto 2, else 1; 1: if c goto 3, else 2; 2, 3: return.
+        // The reverse post order is 0 1 3 2: the conditional jump of 1 to
+        // the next block must still leave the block
+        let cond = |t| format!("if fl.cond(4) {{ {} }}", Jump::mark(t, true));
+        let blocks = vec![block(&[cond(2)], Some(1)), block(&[cond(3)], Some(2)), block(&[Jump::RETURN.to_string()], None), block(&[Jump::RETURN.to_string()], None)];
+        let s = structure(&blocks, 0).expect("structured");
+        assert!(!s.loops);
+        assert!(s.code.contains("// block 1\n        if fl.cond(4) { break 'b3; }\n        break 'b2;\n        } // 'b3\n        // block 3"), "{}", s.code);
+    }
+
+    #[test]
+    fn structure_loop() {
+        // 0 -> 1; 1: if c { goto 1 } fall to 2; 2: return
+        let blocks = vec![
+            block(&[], Some(1)),
+            block(&[format!("if fl.cond(4) {{ {} }}", Jump::mark(1, true))], Some(2)),
+            block(&[Jump::RETURN.to_string()], None),
+        ];
+        let s = structure(&blocks, 0).expect("structured");
+        assert!(s.loops);
+        assert!(s.code.contains("'l1: loop {"), "{}", s.code);
+        assert!(s.code.contains("continue 'l1;"), "{}", s.code);
+        assert!(s.code.contains("break 'b2;"), "{}", s.code);
     }
 }
