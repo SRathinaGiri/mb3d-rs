@@ -2,3 +2,4 @@ target/
 out/
 *.png
 scenes/
+!docs/img/*.png
