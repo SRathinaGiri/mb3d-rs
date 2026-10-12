@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MB3D's default look: dark, glossy buttons. The colours of the gloss family's built-in theme; other gloss themes take what they leave out from here. -->
+<theme name="Glossy" family="gloss">
+
+  <!-- Basic colours -->
+  <color name="dark.shadow" value="#000000"/>
+  <color name="face" value="#252525"/>
+  <color name="face.dither" value="#282828"/>
+  <color name="text" value="#E6E6E6"/>
+  <color name="text.disabled" value="#6E6E6E"/>
+  <color name="window" value="#121212"/>
+  <color name="highlight" value="#3EE8E0"/>
+  <color name="highlight.text" value="#000000"/>
+  <color name="shadow" value="#0C0C0C"/>
+  <color name="light" value="#3C3C3C"/>
+  <color name="image.bg" value="#121212"/>
+
+  <!-- Hints -->
+  <color name="hint.bg" value="#3A3A3A"/>
+  <color name="hint.text" value="#F0F0F0"/>
+  <color name="hint.border" value="#101010"/>
+
+  <!-- Buttons -->
+  <color name="button.normal.top1" value="#4E4E4E"/>
+  <color name="button.normal.top2" value="#3A3A3A"/>
+  <color name="button.normal.bottom1" value="#1D1D1D"/>
+  <color name="button.normal.bottom2" value="#2C2C2C"/>
+  <color name="button.disabled.top1" value="#333333"/>
+  <color name="button.disabled.top2" value="#2D2D2D"/>
+  <color name="button.disabled.bottom1" value="#222222"/>
+  <color name="button.disabled.bottom2" value="#262626"/>
+  <color name="button.pressed.top1" value="#6A9BEA"/>
+  <color name="button.pressed.top2" value="#3E74D6"/>
+  <color name="button.pressed.bottom1" value="#1A4FB8"/>
+  <color name="button.pressed.bottom2" value="#2E64CC"/>
+  <color name="button.hot.top1" value="#8DB6F2"/>
+  <color name="button.hot.top2" value="#5B8FE4"/>
+  <color name="button.hot.bottom1" value="#2A62CC"/>
+  <color name="button.hot.bottom2" value="#4479DC"/>
+  <color name="button.focused.border" value="#5A7FBF"/>
+  <color name="button.border" value="#0A0A0A"/>
+  <color name="button.active.text" value="#FFFFFF"/>
+
+  <!-- Small buttons (up-downs, scroll bar and combo box buttons) -->
+  <color name="small.disabled.top" value="#3A3A3A"/>
+  <color name="small.disabled.bottom" value="#303030"/>
+  <color name="small.pressed.top" value="#505050"/>
+  <color name="small.pressed.bottom" value="#5C5C5C"/>
+  <color name="small.hot.top" value="#8A8A8A"/>
+  <color name="small.hot.bottom" value="#666666"/>
+  <color name="small.normal.top" value="#737373"/>
+  <color name="small.normal.bottom" value="#535353"/>
+  <color name="small.border" value="#101010"/>
+  <color name="small.arrow" value="#141414"/>
+  <color name="small.arrow.disabled" value="#555555"/>
+
+  <!-- Edits, lists, memos -->
+  <color name="edit.disabled.bg" value="#F0F0F0"/>
+  <color name="edit.edge.dark" value="#0A0A0A"/>
+  <color name="edit.edge.light" value="#3A3A3A"/>
+  <color name="edit.focused.border" value="#4A6A9A"/>
+
+  <!-- Check boxes -->
+  <color name="check.disabled.top" value="#3C3C3C"/>
+  <color name="check.disabled.bottom" value="#333333"/>
+  <color name="check.hot.top" value="#7A7A7A"/>
+  <color name="check.hot.bottom" value="#5A5A5A"/>
+  <color name="check.normal.top" value="#6A6A6A"/>
+  <color name="check.normal.bottom" value="#4C4C4C"/>
+  <color name="check.border" value="#101010"/>
+  <color name="check.mark" value="#F4F4F4"/>
+  <color name="check.mark.disabled" value="#777777"/>
+
+  <!-- Radio buttons -->
+  <color name="radio.disabled.bg" value="#3A3A3A"/>
+  <color name="radio.hot.bg" value="#777777"/>
+  <color name="radio.bg" value="#626262"/>
+  <color name="radio.border" value="#101010"/>
+  <color name="radio.dot" value="#F0F0F0"/>
+  <color name="radio.dot.disabled" value="#808080"/>
+
+  <!-- Group boxes and bevels -->
+  <color name="group.border" value="#3C3C3C"/>
+  <color name="bevel.light" value="#3E3E3E"/>
+  <color name="bevel.dark" value="#0E0E0E"/>
+
+  <!-- Tabs -->
+  <color name="tab.selected.top" value="#4A4A4A"/>
+  <color name="tab.selected.bottom" value="#2E2E2E"/>
+  <color name="tab.border" value="#0A0A0A"/>
+  <color name="tab.hot.top" value="#3E3E3E"/>
+  <color name="tab.hot.bottom" value="#2A2A2A"/>
+  <color name="tab.normal.top" value="#313131"/>
+  <color name="tab.normal.bottom" value="#222222"/>
+  <color name="tab.body.border" value="#3A3A3A"/>
+  <color name="tab.unselected.text" value="#9A9A9A"/>
+
+  <!-- Track bars -->
+  <color name="track.bg" value="#101010"/>
+  <color name="track.edge.dark" value="#0A0A0A"/>
+  <color name="track.edge.light" value="#3A3A3A"/>
+
+  <!-- Track bar thumbs -->
+  <color name="thumb.pressed.top" value="#5A5A5A"/>
+  <color name="thumb.pressed.bottom" value="#4A4A4A"/>
+  <color name="thumb.hot.top" value="#9A9A9A"/>
+  <color name="thumb.hot.bottom" value="#6A6A6A"/>
+  <color name="thumb.normal.top" value="#868686"/>
+  <color name="thumb.normal.bottom" value="#585858"/>
+  <color name="thumb.border" value="#0E0E0E"/>
+
+  <!-- Track bar ticks -->
+  <color name="tick" value="#8A8A8A"/>
+
+  <!-- Progress bars -->
+  <color name="progress.bg" value="#101010"/>
+  <color name="progress.edge.dark" value="#0A0A0A"/>
+  <color name="progress.edge.light" value="#303030"/>
+  <color name="progress.bar.top" value="#6FF8F0"/>
+  <color name="progress.bar.bottom" value="#18C8C0"/>
+
+  <!-- Scroll bars -->
+  <color name="scroll.track" value="#1A1A1A"/>
+  <color name="scroll.thumb.hot.top" value="#7A7A7A"/>
+  <color name="scroll.thumb.hot.bottom" value="#5A5A5A"/>
+  <color name="scroll.thumb.top" value="#5E5E5E"/>
+  <color name="scroll.thumb.bottom" value="#444444"/>
+  <color name="scroll.thumb.border" value="#101010"/>
+
+  <!-- Menus -->
+  <color name="menu.bg" value="#2B2B2B"/>
+  <color name="menu.border" value="#0A0A0A"/>
+  <color name="menu.hot.top" value="#6A9BEA"/>
+  <color name="menu.hot.bottom" value="#2E64CC"/>
+  <color name="menu.hot.text" value="#FFFFFF"/>
+
+  <!-- Selections in lists -->
+  <color name="selection.unfocused" value="#CDE8FF"/>
+  <color name="selection.unfocused.text" value="#000000"/>
+
+  <!-- Title bar -->
+  <color name="caption.active.top" value="#4A4A48"/>
+  <color name="caption.active.mid" value="#2A2A2C"/>
+  <color name="caption.active.bottom" value="#161818"/>
+  <color name="caption.inactive.top" value="#3A3A3A"/>
+  <color name="caption.inactive.mid" value="#262626"/>
+  <color name="caption.inactive.bottom" value="#1A1A1A"/>
+  <color name="caption.line" value="#080808"/>
+  <color name="caption.active.text" value="#F2F2F2"/>
+  <color name="caption.inactive.text" value="#9A9A9A"/>
+  <color name="caption.button.pressed" value="#202020"/>
+  <color name="caption.button.close.hot" value="#B03030"/>
+  <color name="caption.button.hot" value="#5A5A5A"/>
+  <color name="caption.button" value="#3E3E3E"/>
+  <color name="caption.button.border" value="#0A0A0A"/>
+  <color name="caption.button.glyph" value="#D8D8D8"/>
+
+  <!-- Window border -->
+  <color name="window.border.active" value="#3A3A3A"/>
+  <color name="window.border.inactive" value="#2A2A2A"/>
+
+  <!-- Speed button glyphs -->
+  <color name="glyph.disabled.shade" value="#3A3A3A"/>
+
+  <!-- Grids -->
+  <color name="grid.line" value="#333333"/>
+
+  <!-- Sizes -->
+  <size name="caption.height" value="24"/>
+  <size name="caption.tool.height" value="20"/>
+</theme>

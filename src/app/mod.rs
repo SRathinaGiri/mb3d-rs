@@ -254,6 +254,10 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
     // MB3D's folders: formulas and maps of the ini (next to the program)
     crate::formulas::add_formula_dir(ini.dir(ini::DIR_FORMULAS));
     crate::maps::add_map_dir(ini.dir(ini::DIR_MAPS));
+    // themes of the `Themes` folder next to the program (besides the built-in ones)
+    for e in crate::vcl::theme::load_dir(&crate::appdirs::app_folder().join("Themes")) {
+        eprintln!("theme {e}");
+    }
     let style = Style::from_name(ini.get("VisualTheme")).unwrap_or(Style::Glossy);
     let mut ui = Ui::new(style);
     ui.set_ui_scale(scale_pct.clamp(50, 400) as f64 / 100.0);

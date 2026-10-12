@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The system look (MB3D's "Themes off"). The colours of the flat family's built-in theme; other flat themes take what they leave out from here. -->
+<theme name="Windows" family="flat">
+
+  <!-- Basic colours -->
+  <color name="dark.shadow" value="#000000"/>
+  <color name="face" value="#F0F0F0"/>
+  <color name="face.dither" value="#F0F0F0"/>
+  <color name="text" value="#000000"/>
+  <color name="text.disabled" value="#A0A0A0"/>
+  <color name="window" value="#FFFFFF"/>
+  <color name="highlight" value="#0078D7"/>
+  <color name="highlight.text" value="#FFFFFF"/>
+  <color name="shadow" value="#A0A0A0"/>
+  <color name="light" value="#FFFFFF"/>
+  <color name="image.bg" value="#ABABAB"/>
+
+  <!-- Hints -->
+  <color name="hint.bg" value="#FFFFE1"/>
+  <color name="hint.text" value="#000000"/>
+  <color name="hint.border" value="#767676"/>
+
+  <!-- Buttons -->
+  <color name="button.disabled.bg" value="#CCCCCC"/>
+  <color name="button.disabled.border" value="#BFBFBF"/>
+  <color name="button.pressed.bg" value="#CCE4F7"/>
+  <color name="button.pressed.border" value="#005499"/>
+  <color name="button.down.bg" value="#C4DDF2"/>
+  <color name="button.down.border" value="#2C628B"/>
+  <color name="button.hot.bg" value="#E5F1FB"/>
+  <color name="button.hot.border" value="#0078D7"/>
+  <color name="button.focused.bg" value="#E1E1E1"/>
+  <color name="button.focused.border" value="#0078D7"/>
+  <color name="button.normal.bg" value="#E1E1E1"/>
+  <color name="button.border" value="#ADADAD"/>
+
+  <!-- Small buttons (up-downs, scroll bar and combo box buttons) -->
+  <color name="small.pressed.bg" value="#CCE4F7"/>
+  <color name="small.pressed.border" value="#569DE5"/>
+  <color name="small.hot.bg" value="#E5F1FB"/>
+  <color name="small.hot.border" value="#7EB4EA"/>
+  <color name="small.normal.bg" value="#F0F0F0"/>
+  <color name="small.border" value="#D9D9D9"/>
+  <color name="small.arrow" value="#606060"/>
+  <color name="small.arrow.disabled" value="#BFBFBF"/>
+
+  <!-- Edits, lists, memos -->
+  <color name="edit.disabled.bg" value="#F0F0F0"/>
+  <color name="edit.focused.border" value="#0078D7"/>
+  <color name="edit.border" value="#7A7A7A"/>
+
+  <!-- Check boxes -->
+  <color name="check.bg" value="#FFFFFF"/>
+  <color name="check.disabled.bg" value="#E6E6E6"/>
+  <color name="check.hot.border" value="#0078D7"/>
+  <color name="check.border" value="#333333"/>
+  <color name="check.disabled.border" value="#BCBCBC"/>
+  <color name="check.mark" value="#000000"/>
+  <color name="check.mark.disabled" value="#BCBCBC"/>
+
+  <!-- Radio buttons -->
+  <color name="radio.bg" value="#FFFFFF"/>
+  <color name="radio.disabled.bg" value="#E6E6E6"/>
+  <color name="radio.hot.border" value="#0078D7"/>
+  <color name="radio.border" value="#333333"/>
+  <color name="radio.dot" value="#000000"/>
+  <color name="radio.dot.disabled" value="#BCBCBC"/>
+
+  <!-- Group boxes and bevels -->
+  <color name="group.border" value="#DCDCDC"/>
+  <color name="bevel.light" value="#FFFFFF"/>
+  <color name="bevel.dark" value="#A0A0A0"/>
+
+  <!-- Tabs -->
+  <color name="tab.selected.bg" value="#FFFFFF"/>
+  <color name="tab.hot.bg" value="#D8EAF9"/>
+  <color name="tab.normal.bg" value="#F0F0F0"/>
+  <color name="tab.border" value="#D9D9D9"/>
+  <color name="tab.body.bg" value="#FFFFFF"/>
+  <color name="tab.body.border" value="#D9D9D9"/>
+
+  <!-- Track bars -->
+  <color name="track.bg" value="#E7EAEA"/>
+  <color name="track.border" value="#D6D6D6"/>
+
+  <!-- Track bar thumbs -->
+  <color name="thumb.pressed" value="#CCCCCC"/>
+  <color name="thumb.hot" value="#171717"/>
+  <color name="thumb.normal" value="#007AD9"/>
+
+  <!-- Track bar ticks -->
+  <color name="tick" value="#C4C4C4"/>
+
+  <!-- Progress bars -->
+  <color name="progress.bg" value="#E6E6E6"/>
+  <color name="progress.border" value="#BCBCBC"/>
+  <color name="progress.bar" value="#06B025"/>
+
+  <!-- Scroll bars -->
+  <color name="scroll.track" value="#F0F0F0"/>
+  <color name="scroll.thumb.pressed" value="#606060"/>
+  <color name="scroll.thumb.hot" value="#A6A6A6"/>
+  <color name="scroll.thumb" value="#CDCDCD"/>
+
+  <!-- Menus -->
+  <color name="menu.bg" value="#F2F2F2"/>
+  <color name="menu.border" value="#CCCCCC"/>
+  <color name="menu.hot" value="#91C9F7"/>
+  <color name="menu.hot.text" value="#000000"/>
+
+  <!-- Selections in lists -->
+  <color name="selection.unfocused" value="#CDE8FF"/>
+  <color name="selection.unfocused.text" value="#000000"/>
+
+  <!-- Title bar -->
+  <color name="caption.active" value="#FFFFFF"/>
+  <color name="caption.inactive" value="#F3F3F3"/>
+  <color name="caption.line" value="#E5E5E5"/>
+  <color name="caption.active.text" value="#000000"/>
+  <color name="caption.inactive.text" value="#999999"/>
+  <color name="caption.button.close.hot" value="#E81123"/>
+  <color name="caption.button.hot" value="#E5E5E5"/>
+  <color name="caption.button.close.hot.glyph" value="#FFFFFF"/>
+  <color name="caption.button.glyph" value="#000000"/>
+
+  <!-- Window border -->
+  <color name="window.border.active" value="#0078D7"/>
+  <color name="window.border.inactive" value="#AAAAAA"/>
+
+  <!-- Speed button glyphs -->
+  <color name="glyph.disabled.shade" value="#FFFFFF"/>
+
+  <!-- Grids -->
+  <color name="grid.line" value="#D0D0D0"/>
+
+  <!-- Sizes -->
+  <size name="caption.height" value="30"/>
+  <size name="caption.tool.height" value="24"/>
+</theme>

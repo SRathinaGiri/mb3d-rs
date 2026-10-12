@@ -32,7 +32,7 @@ pub fn themes_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     };
     match e.handler.as_str() {
         "FormShow" => {
-            ui.set_items(TH, "StylesCmb", vec!["Glossy".into(), "Windows".into()]);
+            ui.set_items(TH, "StylesCmb", Style::all().into_iter().map(|s| s.name().to_string()).collect());
             let cur = ui.theme.style.name().to_string();
             set(ui, &cur);
             ui.set_items(TH, "UIScaleCmb", UI_SCALES.iter().map(|p| format!("{p} %")).collect());
