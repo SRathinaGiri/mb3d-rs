@@ -84,6 +84,11 @@ fn run() -> Result<(), String> {
     #[cfg(feature = "gpu")]
     mb3d::gpu::set_enabled(mb3d::gpu::default_on());
     let all: Vec<String> = std::env::args().skip(1).collect();
+    // no arguments at all: the help, not a render of the default preset
+    if all.is_empty() {
+        print!("{USAGE}");
+        return Ok(());
+    }
     match all.first().map(String::as_str) {
         Some("animate") | Some("anim") => return animate(&all[1..]),
         Some("batch") => return batch(&all[1..]),
