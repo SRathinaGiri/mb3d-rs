@@ -30,6 +30,7 @@ windows, built from MB3D's own form files (see below).
   occlusion) and never waiting for shaders.
 - **The lamp in the title bar**, showing where the last calculation ran.
 - **Interface size** 75–200 %.
+- **Themes**: eight looks, six of them new, and your own as XML files.
 - Runs on **Linux, Windows and macOS** (Intel and Apple Silicon).
 - **`mb3d`, a command line program**: renders, animations, batch lists,
   Monte Carlo, voxel and mesh export, without a window (`mb3d` alone shows
@@ -43,6 +44,40 @@ program decides by itself how to share the work with the CPU.
 the "Calculate on" setting, what *Auto* does the first time a formula
 combination is used, the lamp in the title bar and its hint, the thread
 priority and Monte Carlo renders.
+
+### Themes
+
+**Prefs ▸ Visual themes** offers eight looks: MB3D's two (*Glossy*, the
+dark default, and *Windows*, its "Themes off") and six new ones.
+
+| | |
+|---|---|
+| ![Glossy](docs/img/themes/Glossy.png) | ![Windows](docs/img/themes/Windows.png) |
+| **Glossy**: MB3D's default | **Windows**: MB3D's "Themes off" |
+| ![Graphite](docs/img/themes/Graphite.png) | ![Daylight](docs/img/themes/Daylight.png) |
+| **Graphite**: lighter neutral grey, steel-blue accents | **Daylight**: warm light grey, teal accents |
+| ![Midnight](docs/img/themes/Midnight.png) | ![Ember](docs/img/themes/Ember.png) |
+| **Midnight**: deep navy, blue accents | **Ember**: warm charcoal, orange accents |
+| ![Forest](docs/img/themes/Forest.png) | ![High contrast](docs/img/themes/Highcontrast.png) |
+| **Forest**: dark green-grey, green accents | **High contrast**: black, white text, yellow highlights |
+
+A theme is an XML file of named colours and sizes, drawn in one of two
+shape families (`gloss`: rounded glossy buttons, `flat`: the system
+look). Put your own into a `Themes` folder next to the program and it
+appears in the list at the next start. A theme names only what it
+changes; the rest comes from its base:
+
+```xml
+<theme name="Ocean" family="gloss" base="Glossy">
+  <color name="face" value="#1E2A30"/>
+  <color name="highlight" value="#3EC8F0"/>
+  <color name="button.hot.top1" value="#7FC8E8"/>
+</theme>
+```
+
+The built-in ones in [`src/vcl/themes`](src/vcl/themes) list every
+name. The looks are this project's own; MB3D's Embarcadero VCL styles are
+not used.
 
 ### Interface size
 
@@ -142,8 +177,9 @@ original form files (`src/app/forms/*.dfm`, read at start): every control
 has the position, size, caption, hint and default value it has in MB3D, and
 the event handlers are ported from the Delphi units (`Mand.pas`,
 `FormulaGUI.pas`, `LightAdjust.pas`, ...). A small toolkit (`src/vcl`) draws
-the controls itself in MB3D's two looks: *Glossy* (MB3D's default dark
-theme) and *Windows* (Prefs ▸ Visual themes). Text is drawn with the
+the controls itself, in MB3D's two looks *Glossy* (MB3D's default dark
+theme) and *Windows* or in one of the [other themes](#themes) (Prefs ▸
+Visual themes). Text is drawn with the
 bundled Liberation fonts; on Windows Tahoma is used if present. Prefs ▸
 Visual themes ▸ *Interface size* scales all windows and their text (75 to
 200 %; also `--scale 150` on the command line or `MB3D_UI_SCALE=150`), the

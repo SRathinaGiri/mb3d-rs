@@ -330,7 +330,7 @@ impl Form {
             Kind::Form | Kind::TabSheet | Kind::GridPanel => {
                 let bg = self.bg(id, th);
                 if c.kind == Kind::TabSheet && !th.glossy() && c.color.is_none() {
-                    cv.fill(r, 0xFFFF_FFFF);
+                    cv.fill(r, th.v("tab.body.bg"));
                 } else {
                     th.fill_face(cv, r, bg);
                 }
@@ -580,7 +580,7 @@ impl Form {
             }
             Kind::Bevel => {
                 let raised = c.bevel_style == "bsRaised";
-                let (l, d) = if th.glossy() { (0xFF3E3E3E, 0xFF0E0E0E) } else { (0xFFFFFFFF, 0xFFA0A0A0) };
+                let (l, d) = (th.v("bevel.light"), th.v("bevel.dark"));
                 let (a, b) = if raised { (l, d) } else { (d, l) };
                 match c.bevel_shape.as_str() {
                     "bsBox" => th.bevel(cv, r, raised),
@@ -671,7 +671,7 @@ impl Form {
         let tc = if en { th.button_text(&st) } else { th.text_disabled() };
         let glyph = c.glyph_image(if !en { 1 } else if c.down || pressed { if c.num_glyphs > 2 { 2 } else { 0 } } else { 0 });
         let glyph = match (glyph, en, c.num_glyphs) {
-            (Some(g), false, 1) => Some(g.disabled(if th.glossy() { 0xFF3A3A3A } else { 0xFFFFFFFF }, th.text_disabled())),
+            (Some(g), false, 1) => Some(g.disabled(th.v("glyph.disabled.shade"), th.text_disabled())),
             (g, _, _) => g,
         };
         let cap = strip_amp(&c.caption);
@@ -905,7 +905,7 @@ impl Form {
             }
             th.tab(cv, tr, sel, hot, buttons);
             let text = if c.kind == Kind::PageControl { strip_amp(&self.ctl[*key].caption) } else { strip_amp(&c.tabs[*key]) };
-            let col = if !self.enabled(id) { th.text_disabled() } else if buttons && (sel || hot) && th.glossy() { 0xFFFFFFFF } else { th.tab_text(sel) };
+            let col = if !self.enabled(id) { th.text_disabled() } else if buttons && (sel || hot) && th.glossy() { th.v("button.active.text") } else { th.tab_text(sel) };
             cv.text_in(tr, &text, font, col, HAlign::Center, VAlign::Center, false);
         }
     }
@@ -943,7 +943,7 @@ impl Form {
         let inner = if c.border { th.edit_frame(cv, r, en, focused, c.color) } else { r };
         let rh = c.default_row_height.max(10);
         let old = cv.clip_to(inner);
-        let line = if th.glossy() { 0xFF333333 } else { 0xFFD0D0D0 };
+        let line = th.v("grid.line");
         let mut y = inner.y;
         for (ri, row) in c.cells.iter().enumerate() {
             let rr = ri as i32;
@@ -1102,7 +1102,7 @@ impl Form {
         let y = if y + h > ch { (y - h - 24).max(0) } else { y };
         let r = Rect::new(x, y, w, h);
         cv.fill(r, th.hint_bg());
-        cv.frame(r, if th.glossy() { 0xFF101010 } else { 0xFF767676 });
+        cv.frame(r, th.v("hint.border"));
         let mut yy = y + 2;
         for l in lines {
             cv.text(x + 4, yy, &l, &font, th.hint_text());

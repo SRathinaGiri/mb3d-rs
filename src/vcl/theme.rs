@@ -1,28 +1,187 @@
-//! The look of the controls: MB3D's default VCL style "Glossy" (dark,
-//! glossy buttons) and "Windows" (the system look, MB3D's "Themes off").
+//! The look of the controls.  A theme is a set of named colours and sizes
+//! read from an XML file (`src/vcl/themes/*.xml` built in, more in the
+//! program's `Themes` folder) drawn in one of two shape families: `gloss`
+//! (MB3D's default VCL style "Glossy": dark, glossy buttons) or `flat` (the
+//! system look, MB3D's "Themes off").
 
 use super::canvas::{mix, Canvas, Rect};
+use std::collections::HashMap;
+use std::sync::RwLock;
 
+/// How a theme draws its controls.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Style {
-    Glossy,
-    Windows,
+pub enum Family {
+    Gloss,
+    Flat,
 }
 
+/// A theme as read from its XML file: the name, the shape family and the
+/// named values (colours as 0xAARRGGBB, sizes in pixels).
+#[derive(Debug)]
+pub struct ThemeData {
+    pub name: String,
+    pub family: Family,
+    vals: HashMap<String, u32>,
+}
+
+/// A theme of the registry: the built-in ones first, then those of the
+/// `Themes` folder.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Style(u16);
+
+#[allow(non_upper_case_globals)]
 impl Style {
+    pub const Glossy: Style = Style(0);
+    pub const Windows: Style = Style(1);
+
     pub fn name(self) -> &'static str {
-        match self {
-            Style::Glossy => "Glossy",
-            Style::Windows => "Windows",
-        }
+        data(self).name.as_str()
     }
     pub fn from_name(s: &str) -> Option<Style> {
-        match s.trim().to_ascii_lowercase().as_str() {
-            "glossy" => Some(Style::Glossy),
-            "windows" => Some(Style::Windows),
-            _ => None,
+        let s = s.trim();
+        registry().iter().position(|d| d.name.eq_ignore_ascii_case(s)).map(|i| Style(i as u16))
+    }
+    /// All themes, in the order of the registry.
+    pub fn all() -> Vec<Style> {
+        (0..registry().len()).map(|i| Style(i as u16)).collect()
+    }
+}
+
+/// The built-in themes (the first two are Glossy and Windows, the defaults
+/// of the two families; the others take what they leave out from them).
+const BUILT_IN: [&str; 8] = [
+    include_str!("themes/Glossy.xml"),
+    include_str!("themes/Windows.xml"),
+    include_str!("themes/Graphite.xml"),
+    include_str!("themes/Midnight.xml"),
+    include_str!("themes/Ember.xml"),
+    include_str!("themes/Forest.xml"),
+    include_str!("themes/Daylight.xml"),
+    include_str!("themes/Highcontrast.xml"),
+];
+
+static REGISTRY: RwLock<Vec<&'static ThemeData>> = RwLock::new(Vec::new());
+
+fn registry() -> std::sync::RwLockReadGuard<'static, Vec<&'static ThemeData>> {
+    {
+        let r = REGISTRY.read().unwrap();
+        if !r.is_empty() {
+            return r;
         }
     }
+    {
+        let mut w = REGISTRY.write().unwrap();
+        if w.is_empty() {
+            for t in BUILT_IN {
+                let d = parse(t, &w).expect("built-in theme");
+                w.push(Box::leak(Box::new(d)));
+            }
+        }
+    }
+    REGISTRY.read().unwrap()
+}
+
+fn data(s: Style) -> &'static ThemeData {
+    let r = registry();
+    r.get(s.0 as usize).copied().unwrap_or(r[0])
+}
+
+/// Adds the themes of the `.xml` files in `dir` (a theme whose name is
+/// already known is skipped); returns the files that could not be read.
+pub fn load_dir(dir: &std::path::Path) -> Vec<String> {
+    let mut errors = Vec::new();
+    let Ok(rd) = std::fs::read_dir(dir) else { return errors };
+    let mut files: Vec<_> = rd.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("xml"))).collect();
+    files.sort();
+    // (the built-in themes first: the bases of the files')
+    drop(registry());
+    for f in files {
+        let text = match std::fs::read_to_string(&f) {
+            Ok(t) => t,
+            Err(e) => {
+                errors.push(format!("{}: {e}", f.display()));
+                continue;
+            }
+        };
+        let mut w = REGISTRY.write().unwrap();
+        match parse(&text, &w) {
+            Ok(d) if !w.iter().any(|t| t.name.eq_ignore_ascii_case(&d.name)) => w.push(Box::leak(Box::new(d))),
+            Ok(_) => {}
+            Err(e) => errors.push(format!("{}: {e}", f.display())),
+        }
+    }
+    errors
+}
+
+/// A theme file: `<theme name=".." family="gloss|flat" base="..">` with
+/// `<color name=".." value="#RRGGBB"/>` and `<size name=".." value="24"/>`
+/// entries.  Values it leaves out come from `base`, or else from the
+/// built-in theme of its family.
+fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, String> {
+    let mut rest = text;
+    let mut theme: Option<ThemeData> = None;
+    while let Some(i) = rest.find('<') {
+        rest = &rest[i..];
+        if rest.starts_with("<!--") {
+            let e = rest.find("-->").ok_or("unclosed comment")?;
+            rest = &rest[e + 3..];
+            continue;
+        }
+        let e = rest.find('>').ok_or("unclosed tag")?;
+        let tag = rest[1..e].trim().trim_end_matches('/').trim();
+        rest = &rest[e + 1..];
+        if tag.starts_with('?') || tag.starts_with('/') {
+            continue;
+        }
+        let (elem, attrs) = tag.split_once(char::is_whitespace).unwrap_or((tag, ""));
+        let attr = |n: &str| -> Option<String> {
+            let mut a = attrs;
+            while let Some(eq) = a.find('=') {
+                let key = a[..eq].trim();
+                let v = a[eq + 1..].trim_start();
+                let q = v.chars().next()?;
+                let close = v[1..].find(q)? + 1;
+                if key == n {
+                    return Some(v[1..close].to_string());
+                }
+                a = &v[close + 1..];
+            }
+            None
+        };
+        match elem {
+            "theme" => {
+                let name = attr("name").ok_or("a theme without a name")?;
+                let family = match attr("family").as_deref() {
+                    Some("gloss") => Family::Gloss,
+                    Some("flat") => Family::Flat,
+                    f => return Err(format!("unknown family {f:?} (gloss or flat)")),
+                };
+                let base = match attr("base") {
+                    Some(b) => Some(*known.iter().find(|t| t.name.eq_ignore_ascii_case(&b)).ok_or(format!("unknown base theme {b}"))?),
+                    None => known.iter().find(|t| t.family == family).copied(),
+                };
+                theme = Some(ThemeData { name, family, vals: base.map(|b| b.vals.clone()).unwrap_or_default() });
+            }
+            "color" | "size" => {
+                let t = theme.as_mut().ok_or("an entry outside <theme>")?;
+                let n = attr("name").ok_or("an entry without a name")?;
+                let v = attr("value").ok_or(format!("{n}: no value"))?;
+                let v = if elem == "color" {
+                    let h = v.trim().trim_start_matches('#');
+                    let x = u32::from_str_radix(h, 16).map_err(|_| format!("{n}: not a colour: {v}"))?;
+                    if h.len() != 6 {
+                        return Err(format!("{n}: not a colour (#RRGGBB): {v}"));
+                    }
+                    0xFF00_0000 | x
+                } else {
+                    v.trim().parse::<u32>().map_err(|_| format!("{n}: not a size: {v}"))?
+                };
+                t.vals.insert(n, v);
+            }
+            other => return Err(format!("unknown element <{other}>")),
+        }
+    }
+    theme.ok_or_else(|| "no <theme> element".into())
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -52,15 +211,22 @@ const fn c(rgb: u32) -> u32 {
 #[derive(Clone, Copy, Debug)]
 pub struct Theme {
     pub style: Style,
+    d: &'static ThemeData,
 }
 
 impl Theme {
     pub fn new(style: Style) -> Theme {
-        Theme { style }
+        Theme { style, d: data(style) }
     }
 
     pub fn glossy(&self) -> bool {
-        self.style == Style::Glossy
+        self.d.family == Family::Gloss
+    }
+
+    /// A named colour (or size) of the theme; magenta for a name it does
+    /// not have (a theme file's typo shows).
+    pub fn v(&self, name: &str) -> u32 {
+        self.d.vals.get(name).copied().unwrap_or(0xFFFF_00FF)
     }
 
     /// Colour of a VCL colour value (`clBtnFace`, `$00BBGGRR`, ...).
@@ -83,7 +249,7 @@ impl Theme {
             18 => self.text(),                   // clBtnText
             16 => self.shadow(),                 // clBtnShadow
             20 => self.light(),                  // clBtnHighlight
-            21 => c(0x000000),                   // cl3DDkShadow
+            21 => self.v("dark.shadow"),                   // cl3DDkShadow
             22 => self.face(),                   // cl3DLight
             23 => self.text(),                   // clInfoText
             24 => self.hint_bg(),                // clInfoBk
@@ -149,78 +315,78 @@ impl Theme {
     // ---- basic colours
 
     pub fn face(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x252525),
-            Style::Windows => c(0xF0F0F0),
+        match self.d.family {
+            Family::Gloss => self.v("face"),
+            Family::Flat => self.v("face"),
         }
     }
     pub fn face_dither(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x282828),
-            Style::Windows => c(0xF0F0F0),
+        match self.d.family {
+            Family::Gloss => self.v("face.dither"),
+            Family::Flat => self.v("face.dither"),
         }
     }
     pub fn text(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0xE6E6E6),
-            Style::Windows => c(0x000000),
+        match self.d.family {
+            Family::Gloss => self.v("text"),
+            Family::Flat => self.v("text"),
         }
     }
     pub fn text_disabled(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x6E6E6E),
-            Style::Windows => c(0xA0A0A0),
+        match self.d.family {
+            Family::Gloss => self.v("text.disabled"),
+            Family::Flat => self.v("text.disabled"),
         }
     }
     pub fn window(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x121212),
-            Style::Windows => c(0xFFFFFF),
+        match self.d.family {
+            Family::Gloss => self.v("window"),
+            Family::Flat => self.v("window"),
         }
     }
     pub fn window_text(&self) -> u32 {
         self.text()
     }
     pub fn highlight(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x3EE8E0),
-            Style::Windows => c(0x0078D7),
+        match self.d.family {
+            Family::Gloss => self.v("highlight"),
+            Family::Flat => self.v("highlight"),
         }
     }
     pub fn highlight_text(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x000000),
-            Style::Windows => c(0xFFFFFF),
+        match self.d.family {
+            Family::Gloss => self.v("highlight.text"),
+            Family::Flat => self.v("highlight.text"),
         }
     }
     pub fn shadow(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x0C0C0C),
-            Style::Windows => c(0xA0A0A0),
+        match self.d.family {
+            Family::Gloss => self.v("shadow"),
+            Family::Flat => self.v("shadow"),
         }
     }
     pub fn light(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x3C3C3C),
-            Style::Windows => c(0xFFFFFF),
+        match self.d.family {
+            Family::Gloss => self.v("light"),
+            Family::Flat => self.v("light"),
         }
     }
     pub fn hint_bg(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x3A3A3A),
-            Style::Windows => c(0xFFFFE1),
+        match self.d.family {
+            Family::Gloss => self.v("hint.bg"),
+            Family::Flat => self.v("hint.bg"),
         }
     }
     pub fn hint_text(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0xF0F0F0),
-            Style::Windows => c(0x000000),
+        match self.d.family {
+            Family::Gloss => self.v("hint.text"),
+            Family::Flat => self.v("hint.text"),
         }
     }
     pub fn image_bg(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x121212),
-            Style::Windows => c(0xABABAB),
+        match self.d.family {
+            Family::Gloss => self.v("image.bg"),
+            Family::Flat => self.v("image.bg"),
         }
     }
     /// The colour of a text that the form gave explicitly: dark colours
@@ -259,23 +425,23 @@ impl Theme {
     pub fn button(&self, cv: &mut Canvas, r: Rect, s: BtnState) {
         // a disabled button does not light up under the mouse
         let s = BtnState { hot: s.hot && s.enabled, ..s };
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 if s.flat && !s.hot && !s.down && !s.pressed {
                     return;
                 }
-                let (mut t0, mut t1, mut b0, mut b1) = (c(0x4E4E4E), c(0x3A3A3A), c(0x1D1D1D), c(0x2C2C2C));
+                let (mut t0, mut t1, mut b0, mut b1) = (self.v("button.normal.top1"), self.v("button.normal.top2"), self.v("button.normal.bottom1"), self.v("button.normal.bottom2"));
                 if !s.enabled {
-                    (t0, t1, b0, b1) = (c(0x333333), c(0x2D2D2D), c(0x222222), c(0x262626));
+                    (t0, t1, b0, b1) = (self.v("button.disabled.top1"), self.v("button.disabled.top2"), self.v("button.disabled.bottom1"), self.v("button.disabled.bottom2"));
                 } else if s.down || s.pressed {
                     // the style's "pressed" look (also a speed button that
                     // is down): blue gloss
-                    (t0, t1, b0, b1) = (c(0x6A9BEA), c(0x3E74D6), c(0x1A4FB8), c(0x2E64CC));
+                    (t0, t1, b0, b1) = (self.v("button.pressed.top1"), self.v("button.pressed.top2"), self.v("button.pressed.bottom1"), self.v("button.pressed.bottom2"));
                 } else if s.hot {
                     // the style's "hot" look under the mouse: lighter blue gloss
-                    (t0, t1, b0, b1) = (c(0x8DB6F2), c(0x5B8FE4), c(0x2A62CC), c(0x4479DC));
+                    (t0, t1, b0, b1) = (self.v("button.hot.top1"), self.v("button.hot.top2"), self.v("button.hot.bottom1"), self.v("button.hot.bottom2"));
                 }
-                let border = if s.focused || s.default { c(0x5A7FBF) } else { c(0x0A0A0A) };
+                let border = if s.focused || s.default { self.v("button.focused.border") } else { self.v("button.border") };
                 // gloss: upper half lighter, sharp split, lower half dark
                 let rad = 3.0;
                 cv.round_rect(r, rad, t0, b1, Some(border));
@@ -288,22 +454,22 @@ impl Theme {
                 cv.round_rect(inner, rad - 1.0, b0, b1, None);
                 cv.set_clip(old);
             }
-            Style::Windows => {
+            Family::Flat => {
                 if s.flat && !s.hot && !s.down && !s.pressed {
                     return;
                 }
                 let (bg, br) = if !s.enabled {
-                    (c(0xCCCCCC), c(0xBFBFBF))
+                    (self.v("button.disabled.bg"), self.v("button.disabled.border"))
                 } else if s.pressed {
-                    (c(0xCCE4F7), c(0x005499))
+                    (self.v("button.pressed.bg"), self.v("button.pressed.border"))
                 } else if s.down {
-                    (c(0xC4DDF2), c(0x2C628B))
+                    (self.v("button.down.bg"), self.v("button.down.border"))
                 } else if s.hot {
-                    (c(0xE5F1FB), c(0x0078D7))
+                    (self.v("button.hot.bg"), self.v("button.hot.border"))
                 } else if s.default || s.focused {
-                    (c(0xE1E1E1), c(0x0078D7))
+                    (self.v("button.focused.bg"), self.v("button.focused.border"))
                 } else {
-                    (c(0xE1E1E1), c(0xADADAD))
+                    (self.v("button.normal.bg"), self.v("button.border"))
                 };
                 cv.fill(r, bg);
                 cv.frame(r, br);
@@ -318,8 +484,8 @@ impl Theme {
         if !s.enabled {
             return self.text_disabled();
         }
-        match self.style {
-            Style::Glossy if s.down || s.pressed || s.hot => c(0xFFFFFF),
+        match self.d.family {
+            Family::Gloss if s.down || s.pressed || s.hot => self.v("button.active.text"),
             _ => self.text(),
         }
     }
@@ -339,35 +505,35 @@ impl Theme {
 
     /// The small buttons of up-downs, scroll bars and combo boxes.
     pub fn small_button(&self, cv: &mut Canvas, r: Rect, d: Option<Dir>, s: BtnState) {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 let (t, b) = if !s.enabled {
-                    (c(0x3A3A3A), c(0x303030))
+                    (self.v("small.disabled.top"), self.v("small.disabled.bottom"))
                 } else if s.pressed {
-                    (c(0x505050), c(0x5C5C5C))
+                    (self.v("small.pressed.top"), self.v("small.pressed.bottom"))
                 } else if s.hot {
-                    (c(0x8A8A8A), c(0x666666))
+                    (self.v("small.hot.top"), self.v("small.hot.bottom"))
                 } else {
-                    (c(0x737373), c(0x535353))
+                    (self.v("small.normal.top"), self.v("small.normal.bottom"))
                 };
-                cv.round_rect(r, 2.0, t, b, Some(c(0x101010)));
+                cv.round_rect(r, 2.0, t, b, Some(self.v("small.border")));
                 if let Some(d) = d {
-                    let col = if s.enabled { c(0x141414) } else { c(0x555555) };
+                    let col = if s.enabled { self.v("small.arrow") } else { self.v("small.arrow.disabled") };
                     self.arrow(cv, r, d, col);
                 }
             }
-            Style::Windows => {
+            Family::Flat => {
                 let (bg, br) = if s.pressed {
-                    (c(0xCCE4F7), c(0x569DE5))
+                    (self.v("small.pressed.bg"), self.v("small.pressed.border"))
                 } else if s.hot {
-                    (c(0xE5F1FB), c(0x7EB4EA))
+                    (self.v("small.hot.bg"), self.v("small.hot.border"))
                 } else {
-                    (c(0xF0F0F0), c(0xD9D9D9))
+                    (self.v("small.normal.bg"), self.v("small.border"))
                 };
                 cv.fill(r, bg);
                 cv.frame(r, br);
                 if let Some(d) = d {
-                    let col = if s.enabled { c(0x606060) } else { c(0xBFBFBF) };
+                    let col = if s.enabled { self.v("small.arrow") } else { self.v("small.arrow.disabled") };
                     self.arrow(cv, r, d, col);
                 }
             }
@@ -379,18 +545,18 @@ impl Theme {
     /// Frame and background of an edit / list box / memo; returns the
     /// inner rectangle.
     pub fn edit_frame(&self, cv: &mut Canvas, r: Rect, enabled: bool, focused: bool, bg: Option<u32>) -> Rect {
-        let bgc = bg.unwrap_or(if enabled || self.glossy() { self.window() } else { c(0xF0F0F0) });
-        match self.style {
-            Style::Glossy => {
+        let bgc = bg.unwrap_or(if enabled || self.glossy() { self.window() } else { self.v("edit.disabled.bg") });
+        match self.d.family {
+            Family::Gloss => {
                 cv.fill(r, bgc);
-                cv.edge(r, c(0x0A0A0A), c(0x3A3A3A));
+                cv.edge(r, self.v("edit.edge.dark"), self.v("edit.edge.light"));
                 if focused {
-                    cv.frame(r, c(0x4A6A9A));
+                    cv.frame(r, self.v("edit.focused.border"));
                 }
             }
-            Style::Windows => {
+            Family::Flat => {
                 cv.fill(r, bgc);
-                cv.frame(r, if focused { c(0x0078D7) } else { c(0x7A7A7A) });
+                cv.frame(r, if focused { self.v("edit.focused.border") } else { self.v("edit.border") });
             }
         }
         r.inset(2)
@@ -399,23 +565,23 @@ impl Theme {
     // ---- check boxes, radio buttons
 
     pub fn checkbox(&self, cv: &mut Canvas, r: Rect, state: u8, enabled: bool, hot: bool) {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 let (t, b) = if !enabled {
-                    (c(0x3C3C3C), c(0x333333))
+                    (self.v("check.disabled.top"), self.v("check.disabled.bottom"))
                 } else if hot {
-                    (c(0x7A7A7A), c(0x5A5A5A))
+                    (self.v("check.hot.top"), self.v("check.hot.bottom"))
                 } else {
-                    (c(0x6A6A6A), c(0x4C4C4C))
+                    (self.v("check.normal.top"), self.v("check.normal.bottom"))
                 };
-                cv.round_rect(r, 1.5, t, b, Some(c(0x101010)));
-                let col = if enabled { c(0xF4F4F4) } else { c(0x777777) };
+                cv.round_rect(r, 1.5, t, b, Some(self.v("check.border")));
+                let col = if enabled { self.v("check.mark") } else { self.v("check.mark.disabled") };
                 self.check_mark(cv, r, state, col);
             }
-            Style::Windows => {
-                cv.fill(r, if enabled { c(0xFFFFFF) } else { c(0xE6E6E6) });
-                cv.frame(r, if hot { c(0x0078D7) } else if enabled { c(0x333333) } else { c(0xBCBCBC) });
-                let col = if enabled { c(0x000000) } else { c(0xBCBCBC) };
+            Family::Flat => {
+                cv.fill(r, if enabled { self.v("check.bg") } else { self.v("check.disabled.bg") });
+                cv.frame(r, if hot { self.v("check.hot.border") } else if enabled { self.v("check.border") } else { self.v("check.disabled.border") });
+                let col = if enabled { self.v("check.mark") } else { self.v("check.mark.disabled") };
                 self.check_mark(cv, r, state, col);
             }
         }
@@ -434,18 +600,18 @@ impl Theme {
     }
 
     pub fn radio(&self, cv: &mut Canvas, r: Rect, on: bool, enabled: bool, hot: bool) {
-        match self.style {
-            Style::Glossy => {
-                let fill = if !enabled { c(0x3A3A3A) } else if hot { c(0x777777) } else { c(0x626262) };
-                cv.ellipse(r, Some(fill), Some(c(0x101010)));
+        match self.d.family {
+            Family::Gloss => {
+                let fill = if !enabled { self.v("radio.disabled.bg") } else if hot { self.v("radio.hot.bg") } else { self.v("radio.bg") };
+                cv.ellipse(r, Some(fill), Some(self.v("radio.border")));
                 if on {
-                    cv.ellipse(r.inset(3), Some(if enabled { c(0xF0F0F0) } else { c(0x808080) }), None);
+                    cv.ellipse(r.inset(3), Some(if enabled { self.v("radio.dot") } else { self.v("radio.dot.disabled") }), None);
                 }
             }
-            Style::Windows => {
-                cv.ellipse(r, Some(if enabled { c(0xFFFFFF) } else { c(0xE6E6E6) }), Some(if hot { c(0x0078D7) } else { c(0x333333) }));
+            Family::Flat => {
+                cv.ellipse(r, Some(if enabled { self.v("radio.bg") } else { self.v("radio.disabled.bg") }), Some(if hot { self.v("radio.hot.border") } else { self.v("radio.border") }));
                 if on {
-                    cv.ellipse(r.inset(3), Some(if enabled { c(0x000000) } else { c(0xBCBCBC) }), None);
+                    cv.ellipse(r.inset(3), Some(if enabled { self.v("radio.dot") } else { self.v("radio.dot.disabled") }), None);
                 }
             }
         }
@@ -454,9 +620,9 @@ impl Theme {
     // ---- frames
 
     pub fn groupbox(&self, cv: &mut Canvas, r: Rect, gap: Option<(i32, i32)>) {
-        let col = match self.style {
-            Style::Glossy => c(0x3C3C3C),
-            Style::Windows => c(0xDCDCDC),
+        let col = match self.d.family {
+            Family::Gloss => self.v("group.border"),
+            Family::Flat => self.v("group.border"),
         };
         let old = cv.clip();
         // leave the caption gap open
@@ -483,9 +649,9 @@ impl Theme {
 
     /// TPanel / TBevel edges: `raised` true = bvRaised, false = bvLowered.
     pub fn bevel(&self, cv: &mut Canvas, r: Rect, raised: bool) {
-        let (l, d) = match self.style {
-            Style::Glossy => (c(0x3E3E3E), c(0x0E0E0E)),
-            Style::Windows => (c(0xFFFFFF), c(0xA0A0A0)),
+        let (l, d) = match self.d.family {
+            Family::Gloss => (self.v("bevel.light"), self.v("bevel.dark")),
+            Family::Flat => (self.v("bevel.light"), self.v("bevel.dark")),
         };
         if raised {
             cv.edge(r, l, d);
@@ -497,48 +663,48 @@ impl Theme {
     // ---- tabs
 
     pub fn tab(&self, cv: &mut Canvas, r: Rect, selected: bool, hot: bool, buttons: bool) {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 if buttons || !selected {
                     let s = BtnState { hot, enabled: true, down: selected && buttons, ..Default::default() };
                     if selected && !buttons {
-                        cv.round_rect(r, 3.0, c(0x4A4A4A), c(0x2E2E2E), Some(c(0x0A0A0A)));
+                        cv.round_rect(r, 3.0, self.v("tab.selected.top"), self.v("tab.selected.bottom"), Some(self.v("tab.border")));
                     } else {
-                        let (t, b) = if hot { (c(0x3E3E3E), c(0x2A2A2A)) } else { (c(0x313131), c(0x222222)) };
+                        let (t, b) = if hot { (self.v("tab.hot.top"), self.v("tab.hot.bottom")) } else { (self.v("tab.normal.top"), self.v("tab.normal.bottom")) };
                         if buttons {
                             self.button(cv, r, s);
                         } else {
-                            cv.round_rect(r, 3.0, t, b, Some(c(0x0A0A0A)));
+                            cv.round_rect(r, 3.0, t, b, Some(self.v("tab.border")));
                         }
                     }
                 } else {
-                    cv.round_rect(r, 3.0, c(0x4A4A4A), c(0x2E2E2E), Some(c(0x0A0A0A)));
+                    cv.round_rect(r, 3.0, self.v("tab.selected.top"), self.v("tab.selected.bottom"), Some(self.v("tab.border")));
                 }
             }
-            Style::Windows => {
-                let bg = if selected { c(0xFFFFFF) } else if hot { c(0xD8EAF9) } else { c(0xF0F0F0) };
+            Family::Flat => {
+                let bg = if selected { self.v("tab.selected.bg") } else if hot { self.v("tab.hot.bg") } else { self.v("tab.normal.bg") };
                 cv.fill(r, bg);
-                cv.frame(r, c(0xD9D9D9));
+                cv.frame(r, self.v("tab.border"));
             }
         }
     }
 
     pub fn tab_body(&self, cv: &mut Canvas, r: Rect) {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 self.fill_face(cv, r, self.face());
-                cv.frame(r, c(0x3A3A3A));
+                cv.frame(r, self.v("tab.body.border"));
             }
-            Style::Windows => {
-                cv.fill(r, c(0xFFFFFF));
-                cv.frame(r, c(0xD9D9D9));
+            Family::Flat => {
+                cv.fill(r, self.v("tab.body.bg"));
+                cv.frame(r, self.v("tab.body.border"));
             }
         }
     }
 
     pub fn tab_text(&self, selected: bool) -> u32 {
-        match self.style {
-            Style::Glossy if !selected => c(0x9A9A9A),
+        match self.d.family {
+            Family::Gloss if !selected => self.v("tab.unselected.text"),
             _ => self.text(),
         }
     }
@@ -546,49 +712,49 @@ impl Theme {
     // ---- track bars, progress bars, scroll bars
 
     pub fn track_channel(&self, cv: &mut Canvas, r: Rect) {
-        match self.style {
-            Style::Glossy => {
-                cv.fill(r, c(0x101010));
-                cv.edge(r, c(0x0A0A0A), c(0x3A3A3A));
+        match self.d.family {
+            Family::Gloss => {
+                cv.fill(r, self.v("track.bg"));
+                cv.edge(r, self.v("track.edge.dark"), self.v("track.edge.light"));
             }
-            Style::Windows => {
-                cv.fill(r, c(0xE7EAEA));
-                cv.frame(r, c(0xD6D6D6));
+            Family::Flat => {
+                cv.fill(r, self.v("track.bg"));
+                cv.frame(r, self.v("track.border"));
             }
         }
     }
 
     pub fn track_thumb(&self, cv: &mut Canvas, r: Rect, s: BtnState) {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 let (t, b) = if s.pressed {
-                    (c(0x5A5A5A), c(0x4A4A4A))
+                    (self.v("thumb.pressed.top"), self.v("thumb.pressed.bottom"))
                 } else if s.hot {
-                    (c(0x9A9A9A), c(0x6A6A6A))
+                    (self.v("thumb.hot.top"), self.v("thumb.hot.bottom"))
                 } else {
-                    (c(0x868686), c(0x585858))
+                    (self.v("thumb.normal.top"), self.v("thumb.normal.bottom"))
                 };
-                cv.round_rect(r, 2.0, t, b, Some(c(0x0E0E0E)));
+                cv.round_rect(r, 2.0, t, b, Some(self.v("thumb.border")));
             }
-            Style::Windows => {
-                let col = if s.pressed { c(0xCCCCCC) } else if s.hot { c(0x171717) } else { c(0x007AD9) };
+            Family::Flat => {
+                let col = if s.pressed { self.v("thumb.pressed") } else if s.hot { self.v("thumb.hot") } else { self.v("thumb.normal") };
                 cv.fill(r, col);
             }
         }
     }
 
     pub fn tick(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x8A8A8A),
-            Style::Windows => c(0xC4C4C4),
+        match self.d.family {
+            Family::Gloss => self.v("tick"),
+            Family::Flat => self.v("tick"),
         }
     }
 
     pub fn progress(&self, cv: &mut Canvas, r: Rect, frac: f32, vertical: bool) {
-        match self.style {
-            Style::Glossy => {
-                cv.fill(r, c(0x101010));
-                cv.edge(r, c(0x0A0A0A), c(0x303030));
+        match self.d.family {
+            Family::Gloss => {
+                cv.fill(r, self.v("progress.bg"));
+                cv.edge(r, self.v("progress.edge.dark"), self.v("progress.edge.light"));
                 let inner = r.inset(1);
                 let f = if vertical {
                     let h = (inner.h as f32 * frac.clamp(0.0, 1.0)).round() as i32;
@@ -596,11 +762,11 @@ impl Theme {
                 } else {
                     Rect::new(inner.x, inner.y, (inner.w as f32 * frac.clamp(0.0, 1.0)).round() as i32, inner.h)
                 };
-                cv.gradient(f, c(0x6FF8F0), c(0x18C8C0));
+                cv.gradient(f, self.v("progress.bar.top"), self.v("progress.bar.bottom"));
             }
-            Style::Windows => {
-                cv.fill(r, c(0xE6E6E6));
-                cv.frame(r, c(0xBCBCBC));
+            Family::Flat => {
+                cv.fill(r, self.v("progress.bg"));
+                cv.frame(r, self.v("progress.border"));
                 let inner = r.inset(1);
                 let f = if vertical {
                     let h = (inner.h as f32 * frac.clamp(0.0, 1.0)).round() as i32;
@@ -608,26 +774,26 @@ impl Theme {
                 } else {
                     Rect::new(inner.x, inner.y, (inner.w as f32 * frac.clamp(0.0, 1.0)).round() as i32, inner.h)
                 };
-                cv.fill(f, c(0x06B025));
+                cv.fill(f, self.v("progress.bar"));
             }
         }
     }
 
     pub fn scroll_track(&self, cv: &mut Canvas, r: Rect) {
-        cv.fill(r, match self.style {
-            Style::Glossy => c(0x1A1A1A),
-            Style::Windows => c(0xF0F0F0),
+        cv.fill(r, match self.d.family {
+            Family::Gloss => self.v("scroll.track"),
+            Family::Flat => self.v("scroll.track"),
         });
     }
 
     pub fn scroll_thumb(&self, cv: &mut Canvas, r: Rect, s: BtnState) {
-        match self.style {
-            Style::Glossy => {
-                let (t, b) = if s.pressed || s.hot { (c(0x7A7A7A), c(0x5A5A5A)) } else { (c(0x5E5E5E), c(0x444444)) };
-                cv.round_rect(r.inset(1), 2.0, t, b, Some(c(0x101010)));
+        match self.d.family {
+            Family::Gloss => {
+                let (t, b) = if s.pressed || s.hot { (self.v("scroll.thumb.hot.top"), self.v("scroll.thumb.hot.bottom")) } else { (self.v("scroll.thumb.top"), self.v("scroll.thumb.bottom")) };
+                cv.round_rect(r.inset(1), 2.0, t, b, Some(self.v("scroll.thumb.border")));
             }
-            Style::Windows => {
-                let col = if s.pressed { c(0x606060) } else if s.hot { c(0xA6A6A6) } else { c(0xCDCDCD) };
+            Family::Flat => {
+                let col = if s.pressed { self.v("scroll.thumb.pressed") } else if s.hot { self.v("scroll.thumb.hot") } else { self.v("scroll.thumb") };
                 cv.fill(r.inset(1), col);
             }
         }
@@ -636,87 +802,81 @@ impl Theme {
     // ---- menus, hints, list selection
 
     pub fn menu_bg(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x2B2B2B),
-            Style::Windows => c(0xF2F2F2),
+        match self.d.family {
+            Family::Gloss => self.v("menu.bg"),
+            Family::Flat => self.v("menu.bg"),
         }
     }
     pub fn menu_border(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0x0A0A0A),
-            Style::Windows => c(0xCCCCCC),
+        match self.d.family {
+            Family::Gloss => self.v("menu.border"),
+            Family::Flat => self.v("menu.border"),
         }
     }
     pub fn menu_hot(&self, cv: &mut Canvas, r: Rect) {
-        match self.style {
-            Style::Glossy => cv.round_rect(r, 2.0, c(0x6A9BEA), c(0x2E64CC), None),
-            Style::Windows => cv.fill(r, c(0x91C9F7)),
+        match self.d.family {
+            Family::Gloss => cv.round_rect(r, 2.0, self.v("menu.hot.top"), self.v("menu.hot.bottom"), None),
+            Family::Flat => cv.fill(r, self.v("menu.hot")),
         }
     }
     pub fn menu_hot_text(&self) -> u32 {
-        match self.style {
-            Style::Glossy => c(0xFFFFFF),
-            Style::Windows => c(0x000000),
+        match self.d.family {
+            Family::Gloss => self.v("menu.hot.text"),
+            Family::Flat => self.v("menu.hot.text"),
         }
     }
 
     pub fn selection(&self, cv: &mut Canvas, r: Rect, focused: bool) {
-        let col = if focused || self.glossy() { self.highlight() } else { c(0xCDE8FF) };
+        let col = if focused || self.glossy() { self.highlight() } else { self.v("selection.unfocused") };
         cv.fill(r, col);
     }
     pub fn selection_text(&self, focused: bool) -> u32 {
         if focused || self.glossy() {
             self.highlight_text()
         } else {
-            c(0x000000)
+            self.v("selection.unfocused.text")
         }
     }
 
     // ---- window frame
 
     pub fn caption_height(&self) -> i32 {
-        match self.style {
-            Style::Glossy => 24,
-            Style::Windows => 30,
-        }
+        self.v("caption.height") as i32
     }
     pub fn tool_caption_height(&self) -> i32 {
-        match self.style {
-            Style::Glossy => 20,
-            Style::Windows => 24,
-        }
+        self.v("caption.tool.height") as i32
     }
 
     /// Title bar background.
     pub fn caption(&self, cv: &mut Canvas, r: Rect, active: bool) {
-        match self.style {
-            Style::Glossy => {
-                let (t, m, b) = if active { (c(0x4A4A48), c(0x2A2A2C), c(0x161818)) } else { (c(0x3A3A3A), c(0x262626), c(0x1A1A1A)) };
+        match self.d.family {
+            Family::Gloss => {
+                let (t, m, b) = if active { (self.v("caption.active.top"), self.v("caption.active.mid"), self.v("caption.active.bottom")) } else { (self.v("caption.inactive.top"), self.v("caption.inactive.mid"), self.v("caption.inactive.bottom")) };
                 let half = r.h / 2;
                 cv.gradient(Rect::new(r.x, r.y, r.w, half), t, m);
                 cv.gradient(Rect::new(r.x, r.y + half, r.w, r.h - half), mix(m, b, 0.6), b);
-                cv.hline(r.x, r.right(), r.bottom() - 1, c(0x080808));
+                cv.hline(r.x, r.right(), r.bottom() - 1, self.v("caption.line"));
             }
-            Style::Windows => {
-                cv.fill(r, if active { c(0xFFFFFF) } else { c(0xF3F3F3) });
-                cv.hline(r.x, r.right(), r.bottom() - 1, c(0xE5E5E5));
+            Family::Flat => {
+                cv.fill(r, if active { self.v("caption.active") } else { self.v("caption.inactive") });
+                cv.hline(r.x, r.right(), r.bottom() - 1, self.v("caption.line"));
             }
         }
     }
     pub fn caption_text(&self, active: bool) -> u32 {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 if active {
-                    c(0xF2F2F2)
+                    self.v("caption.active.text")
                 } else {
-                    c(0x9A9A9A)
+                    self.v("caption.inactive.text")
                 }
             }
-            Style::Windows => {
+            Family::Flat => {
                 if active {
-                    c(0x000000)
+                    self.v("caption.active.text")
                 } else {
-                    c(0x999999)
+                    self.v("caption.inactive.text")
                 }
             }
         }
@@ -724,19 +884,19 @@ impl Theme {
 
     /// Window border colour (around the client area).
     pub fn window_border(&self, active: bool) -> u32 {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 if active {
-                    c(0x3A3A3A)
+                    self.v("window.border.active")
                 } else {
-                    c(0x2A2A2A)
+                    self.v("window.border.inactive")
                 }
             }
-            Style::Windows => {
+            Family::Flat => {
                 if active {
-                    c(0x0078D7)
+                    self.v("window.border.active")
                 } else {
-                    c(0xAAAAAA)
+                    self.v("window.border.inactive")
                 }
             }
         }
@@ -744,13 +904,13 @@ impl Theme {
 
     /// Title bar buttons: 0 close, 1 maximise, 2 minimise.
     pub fn caption_button(&self, cv: &mut Canvas, r: Rect, kind: u8, hot: bool, pressed: bool) {
-        match self.style {
-            Style::Glossy => {
+        match self.d.family {
+            Family::Gloss => {
                 let d = r.w.min(r.h) - 4;
                 let cr = Rect::new(r.x + (r.w - d) / 2, r.y + (r.h - d) / 2, d, d);
-                let fill = if pressed { c(0x202020) } else if hot { if kind == 0 { c(0xB03030) } else { c(0x5A5A5A) } } else { c(0x3E3E3E) };
-                cv.ellipse(cr, Some(fill), Some(c(0x0A0A0A)));
-                let col = c(0xD8D8D8);
+                let fill = if pressed { self.v("caption.button.pressed") } else if hot { if kind == 0 { self.v("caption.button.close.hot") } else { self.v("caption.button.hot") } } else { self.v("caption.button") };
+                cv.ellipse(cr, Some(fill), Some(self.v("caption.button.border")));
+                let col = self.v("caption.button.glyph");
                 let (x, y, w) = (cr.x as f32, cr.y as f32, cr.w as f32);
                 match kind {
                     0 => {
@@ -764,11 +924,11 @@ impl Theme {
                     _ => cv.line_aa(x + w * 0.32, y + w * 0.5, x + w * 0.68, y + w * 0.5, 1.6, col),
                 }
             }
-            Style::Windows => {
+            Family::Flat => {
                 if hot || pressed {
-                    cv.fill(r, if kind == 0 { c(0xE81123) } else { c(0xE5E5E5) });
+                    cv.fill(r, if kind == 0 { self.v("caption.button.close.hot") } else { self.v("caption.button.hot") });
                 }
-                let col = if kind == 0 && (hot || pressed) { c(0xFFFFFF) } else { c(0x000000) };
+                let col = if kind == 0 && (hot || pressed) { self.v("caption.button.close.hot.glyph") } else { self.v("caption.button.glyph") };
                 let (cx, cy) = (r.x as f32 + r.w as f32 / 2.0, r.y as f32 + r.h as f32 / 2.0);
                 match kind {
                     0 => {
@@ -780,5 +940,50 @@ impl Theme {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every built-in theme reads, and has every value the drawing code
+    /// asks for (a missing one would be drawn magenta).
+    #[test]
+    fn built_in_themes() {
+        let all = Style::all();
+        assert_eq!(all.len(), BUILT_IN.len());
+        assert_eq!(Style::from_name("glossy"), Some(Style::Glossy));
+        assert_eq!(Style::from_name("Windows"), Some(Style::Windows));
+        let src = include_str!("theme.rs").to_string() + include_str!("paint.rs");
+        let mut names: Vec<&str> = src.match_indices(".v(\"").map(|(i, m)| { let r = &src[i + m.len()..]; &r[..r.find('"').unwrap()] }).collect();
+        names.sort();
+        names.dedup();
+        assert!(names.len() > 100);
+        // the two families' built-in themes have them all between them
+        let (g, w) = (data(Style::Glossy), data(Style::Windows));
+        for n in &names {
+            assert!(g.vals.contains_key(*n) || w.vals.contains_key(*n), "no theme has {n}");
+        }
+        // and every theme all of its family's
+        for st in all {
+            let d = data(st);
+            let base = if d.family == Family::Gloss { g } else { w };
+            for n in base.vals.keys() {
+                assert!(d.vals.contains_key(n), "theme {} has no value {n}", d.name);
+            }
+        }
+    }
+
+    #[test]
+    fn theme_files() {
+        let known: Vec<&'static ThemeData> = registry().clone();
+        let t = parse("<?xml version=\"1.0\"?>\n<!-- a test -->\n<theme name=\"T\" family=\"flat\" base=\"Windows\">\n  <color name=\"face\" value=\"#102030\"/>\n  <size name=\"caption.height\" value=\"28\"/>\n</theme>", &known).unwrap();
+        assert_eq!(t.family, Family::Flat);
+        assert_eq!(t.vals["face"], 0xFF10_2030);
+        assert_eq!(t.vals["caption.height"], 28);
+        assert_eq!(t.vals["text"], data(Style::Windows).vals["text"]);
+        assert!(parse("<theme name=\"X\" family=\"round\"/>", &known).is_err());
+        assert!(parse("<theme name=\"X\" family=\"gloss\"><color name=\"face\" value=\"red\"/></theme>", &known).is_err());
     }
 }

@@ -3,3 +3,4 @@ out/
 *.png
 scenes/
 !docs/img/*.png
+!docs/img/themes/*.png
