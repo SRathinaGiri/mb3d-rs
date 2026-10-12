@@ -182,7 +182,15 @@ impl Resumer {
                 return Ok((lim, busy));
             }
             if !self.fixed {
-                let f = (self.target / dt.max(1e-4)).clamp(0.25, 2.0);
+                // towards the target time of a submission: down at once in
+                // proportion (a card that also drives the screen loses its
+                // device when one submission runs for seconds), up only
+                // while the budget cut work short (items that all finish
+                // within it say nothing about a heavier batch next)
+                let mut f = (self.target / dt.max(1e-4)).clamp(0.02, 2.0);
+                if left == 0 {
+                    f = f.min(1.0);
+                }
                 self.budget = ((self.budget as f64 * f) as u32).clamp(8, 1 << 24);
             }
         }
@@ -201,7 +209,34 @@ pub fn name() -> Option<String> {
 }
 
 pub fn enabled() -> bool {
-    ENABLED.load(Ordering::Relaxed) && !CPU_HERE.with(|c| c.get())
+    ENABLED.load(Ordering::Relaxed) && !CPU_HERE.with(|c| c.get()) && !LOST.load(Ordering::Relaxed)
+}
+
+/// The graphics card failed (its device was lost, e.g. after a driver
+/// timeout): everything is calculated on the CPU until the program ends.
+static LOST: AtomicBool = AtomicBool::new(false);
+
+/// Runs card work so that a failure of the card (wgpu panics when its
+/// device is lost) becomes an error for the caller's CPU fallback and
+/// switches the card off, instead of ending the calculation's thread.
+fn guard<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    let lost = |e: &str| {
+        LOST.store(true, Ordering::SeqCst);
+        set_status(format!("CPU: the graphics card failed ({e}); calculating on the CPU until the program is restarted"));
+    };
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
+        Ok(Err(e)) if e.to_ascii_lowercase().contains("lost") => {
+            lost(&e);
+            Err(e)
+        }
+        Ok(r) => r,
+        Err(p) => {
+            let e = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_else(|| "a panic".into());
+            let e = e.lines().last().unwrap_or("").trim().to_string();
+            lost(&e);
+            Err(e)
+        }
+    }
 }
 
 thread_local! {
@@ -969,6 +1004,10 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
 /// after rows went to `sink` (single precision overflows) means they are
 /// not usable.
 pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    guard(|| march_bands_card(p, bands, cancel, sink))
+}
+
+fn march_bands_card(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
     let v = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands))?;
@@ -986,6 +1025,10 @@ pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize
 /// sample rows go to `sink` with their row in the image; their pixels are
 /// the sampled columns.
 pub fn march_sample(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    guard(|| march_sample_card(p, sx, sy, cancel, sink))
+}
+
+fn march_sample_card(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
     let (sx, sy) = (sx.max(1), sy.max(1));
     let mut q = p.clone();
     q.rect[2] = (p.rect[2].max(0) as usize / sx) as i32;
@@ -1343,6 +1386,16 @@ pub fn march(
     post: &PostJob,
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
+    sink: impl FnMut(usize, &[SiLight]),
+) -> Option<Vec<SiLight>> {
+    guard(|| Ok(march_card(p, post, progress, cancel, sink))).ok().flatten()
+}
+
+fn march_card(
+    p: &CalcParams,
+    post: &PostJob,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
     mut sink: impl FnMut(usize, &[SiLight]),
 ) -> Option<Vec<SiLight>> {
     if let Some(r) = unsupported(p) {
@@ -1526,6 +1579,10 @@ pub struct RaySharing {
 /// of every bounce with the normals, colour, shadows and ambient occlusion
 /// of its hit, as `reflect.rs` does on the CPU).
 pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+    guard(|| reflect_batch_card(p, tasks, o, share))
+}
+
+fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
     if tasks.is_empty() {
         if let Some(sh) = share {
             sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -1726,6 +1783,10 @@ const MC_WORDS: usize = 20;
 /// returns the results (those the card did not take are default), the
 /// number it took and those of them it did not finish.
 pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
+    guard(|| mc_batch_card(p, tasks, secant, share))
+}
+
+fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
     use crate::mc::McRes;
     if tasks.is_empty() {
         if let Some(sh) = share {
@@ -2091,6 +2152,10 @@ fn read_back(g: &Gpu, out: &wgpu::Buffer, read: &wgpu::Buffer, offset: u64, len:
 /// sampling the random numbers differ).  Sets `amb_shadow` of the object
 /// pixels; `Err` leaves the G-buffer untouched (the caller uses the CPU).
 pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &crate::ssao::SsaoParams) -> Result<(), String> {
+    guard(|| ssao24_card(gbuf, w, h, zc_mul, zcorr, p))
+}
+
+fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &crate::ssao::SsaoParams) -> Result<(), String> {
     if w == 0 || h == 0 {
         return Ok(());
     }
@@ -2267,6 +2332,10 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
 /// the graphics card: the levels are built on the CPU, the sampling of
 /// every pixel runs in the shader.
 pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &crate::ssao::SsaoParams) -> Result<(), String> {
+    guard(|| ssao15_card(gbuf, w, h, zc_mul, zcorr, p))
+}
+
+fn ssao15_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &crate::ssao::SsaoParams) -> Result<(), String> {
     if w < 4 || h < 4 {
         return Ok(());
     }

@@ -331,12 +331,18 @@ fn worker(e: Arc<Inner>) {
         };
         e.busy.store(true, Ordering::SeqCst);
         let cancel = || e.gen.load(Ordering::SeqCst) != gen;
-        let res = match job {
+        // a panic ends the job with an error message instead of leaving
+        // the window waiting for it
+        let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match job {
             Job::Calc { scene, slice } => calc(&e, &scene, slice, &cancel),
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
             Job::Recalc { scene, rect, div, nearer } => recalc(&e, &scene, rect, div, nearer, &cancel),
-        };
+        }))
+        .unwrap_or_else(|p| {
+            let m = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
+            Err(format!("The calculation failed: {}", m.lines().last().unwrap_or("").trim()))
+        });
         e.busy.store(false, Ordering::SeqCst);
         // a newer job may already wait: only report when this one is the last
         if e.job.lock().unwrap().is_none() {
