@@ -1,7 +1,7 @@
-//! Renders parameter files on the CPU, split between CPU and graphics card
-//! (Auto's mixed mode, forced) and on the card, and compares the images:
-//! `modecheck mb3d_dir max_width out_dir file...` prints one line per file
-//! (tab separated: name, size, CPU s, mixed s, card's rows %, mean
+//! Renders parameter files on the CPU, shared between CPU and graphics
+//! card ("Calculate on: Auto") and on the card alone, and compares the
+//! images: `modecheck mb3d_dir max_width out_dir file...` prints one line
+//! per file (tab separated: name, size, CPU s, Auto s, card's rows %, mean
 //! difference %, pixels off by > 10 %, card s, mean difference %, pixels
 //! off %, status) and writes cpu/mixed/card PNGs to out_dir.
 fn main() {
@@ -24,16 +24,11 @@ fn main() {
         if sc.width as f64 > max_w {
             sc.scale_image(max_w / sc.width as f64);
         }
-        // mixed: Auto with the split forced; the card: "Graphics card" (waits
-        // for its shaders)
+        // mixed: Auto (the card and the CPU share the march, the post
+        // calculations run on the card); the card: "Graphics card"
         let render = |gpu: bool, mixed: bool| {
             mb3d::gpu::set_enabled(gpu);
             mb3d::gpu::set_auto(mixed);
-            if mixed {
-                std::env::set_var("MB3D_GPU_MIXED", "1");
-            } else {
-                std::env::remove_var("MB3D_GPU_MIXED");
-            }
             let t = std::time::Instant::now();
             let r = mb3d::render::render(&sc, &|_, _| {});
             (r, t.elapsed().as_secs_f64(), mb3d::gpu::last_status())

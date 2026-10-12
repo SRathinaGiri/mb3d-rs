@@ -18,7 +18,7 @@
   <text x="305" y="148" fill="#222">3. When it is ready the card joins from</text>
   <text x="322" y="166" fill="#555">the top, in small bands.</text>
   <text x="305" y="196" fill="#222">4. They meet somewhere in the middle:</text>
-  <text x="322" y="214" fill="#555">the image is done.</text>
+  <text x="322" y="214" fill="#555">the card then adds shadows and occlusion.</text>
   <text x="305" y="244" fill="#222">Small image? The CPU finishes before the</text>
   <text x="322" y="262" fill="#555">compile does - nothing waits.</text>
 </svg>

@@ -24,8 +24,10 @@ windows, built from MB3D's own form files (see below).
   (also the screen space kinds), reflections and transparency, and the
   Monte Carlo renderer, in single or (on cards that have it) double
   precision; usually several times faster than the CPU.
-- **Calculate on: Auto / CPU / Graphics card**, with *Auto* sharing the
-  work between card and CPU instead of waiting for shaders.
+- **Calculate on: Auto / CPU / Graphics card**, with *Auto* sharing every
+  image between card and CPU (the card marches rows from the top, the CPU
+  threads from the bottom, then the card runs the shadows and the ambient
+  occlusion) and never waiting for shaders.
 - **The lamp in the title bar**, showing where the last calculation ran.
 - **Interface size** 75–200 %.
 - Runs on **Linux, Windows and macOS** (Intel and Apple Silicon).
@@ -433,15 +435,18 @@ whenever the scene allows it, and on the CPU otherwise:
   grey before the first calculation; the mouse on it shows the details
   (for Monte Carlo renders the parts of the marches on the card and on
   the CPU);
-* "Calculate on" on the Internal tab: **Auto** starts on the CPU when the
-  card's shader for the scene is not compiled yet (the first time a
-  formula combination is used: 10 to 20 s; the driver keeps it for the
-  next time) and lets the card join once it is (normal renders: the card
-  takes rows from the top while the CPU threads take them from the
-  bottom, and the post calculations run as after a CPU calculation;
-  Monte Carlo: the rounds go to the card from then on), so small images
-  never wait for a compile; **CPU** never uses the graphics card;
-  **Graphics card** waits for the shader. Kept in `Mandelbulb3D.ini`;
+* "Calculate on" on the Internal tab: **Auto** shares a normal render
+  between the card and the CPU: the CPU threads start at once and take
+  rows from the bottom, the card takes rows from the top as soon as its
+  shader is compiled, until they meet; the card then calculates the
+  shadows and the ambient occlusion of the whole image. The first time a
+  formula combination is used its shaders compile (10 to 20 s; the driver
+  keeps them for the next time) while the CPU already calculates, so
+  small images never wait for a compile (when the CPU finishes before the
+  card joins, the post calculations run on the CPU too). Monte Carlo
+  renders go to the card from the moment its shader is ready. **CPU**
+  never uses the graphics card; **Graphics card** waits for the shader.
+  Kept in `Mandelbulb3D.ini`;
 * `mb3d` uses it too (it prints `calculated on: ...`); `--cpu` calculates
   on the CPU only;
 * the environment variable `MB3D_GPU=0` switches it off for both.
@@ -552,11 +557,11 @@ CPU's (`--de` the distance estimate along a ray), and `m3f2rs
 
 All 80 example parameter files of MB3D (`M3Parameter`), each rendered
 three ways at up to 480 pixels wide on a GeForce GTX 1650 (laptop) with a
-Ryzen 5 3550H (8 threads): on the **CPU**; **mixed**, as *Auto* does when
-the card's shaders are still compiling, forced here (`MB3D_GPU_MIXED=1`:
-the card marches rows from the top, the CPU threads from the bottom, the
-post calculations run on the CPU); and on the **card** ("Calculate on:
-Graphics card", the shaders compiled beforehand). *Faster* is the CPU's
+Ryzen 5 3550H (8 threads): on the **CPU**; **mixed**, as *Auto* shares
+an image (the card marches rows from the top, the CPU threads from the
+bottom; when this table was made the post calculations then ran on the
+CPU, today *Auto* runs them on the card); and on the **card** ("Calculate
+on: Graphics card", the shaders compiled beforehand). *Faster* is the CPU's
 time divided by the card's; the differences are the mean difference of
 the final images to the CPU's. `cargo run --release --example
 modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats it.

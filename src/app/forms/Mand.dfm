@@ -759,8 +759,10 @@ object Mand3DForm: TMand3DForm
           Width = 75
           Height = 21
           Hint = 
-            'Auto: the CPU starts at once, the graphics card joins'#13#10'as soon' +
-            ' as its shader is compiled.'#13#10'CPU: never the graphics card.'#13#10 +
+            'Auto: the CPU and the graphics card share the image (the CPU' +
+            #13#10'starts at once, the card joins as soon as its shader is' +
+            #13#10'compiled), the card then runs the shadows and the ambient' +
+            #13#10'occlusion.'#13#10'CPU: never the graphics card.'#13#10 +
             'Graphics card: wait for the shader, as before.'
           Style = csDropDownList
           ItemIndex = 0

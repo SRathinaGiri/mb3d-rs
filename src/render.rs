@@ -126,21 +126,41 @@ fn calculate_inner(
         if sc.mc.reflections {
             crate::gpu::reflect_prepare(&p, sc.shadows.is_some(), sc.ao.is_some());
         }
-        // Auto: when the card's shaders are not compiled within a moment,
-        // the CPU starts and the card joins for the march once it can
-        // (the post calculations then run as after a CPU calculation)
+        // Auto: the CPU threads and the card share the march (the CPU
+        // starts at once, the card joins when its shader is compiled);
+        // then the card runs the shadows and the occlusion of the whole
+        // image. When the card never joined (its shaders were still
+        // compiling), the post calculations run as after a CPU
+        // calculation.
         if crate::gpu::auto() {
             if let Ok(flags) = crate::gpu::march_prepare(&p, &job) {
-                let all = || flags.iter().all(|f| f.load(Ordering::SeqCst));
-                let t = std::time::Instant::now();
-                while !all() && t.elapsed() < std::time::Duration::from_millis(200) {
-                    std::thread::sleep(std::time::Duration::from_millis(5));
+                let (mut gbuf, n_card) = march_mixed(&p, threads, progress, cancel, sink, &flags[0])?;
+                if n_card > 0 && (job.shadows.is_some() || job.deao.is_some()) {
+                    // the post passes' pipelines compiled with the march's
+                    while !flags.iter().all(|f| f.load(Ordering::SeqCst)) && !cancel() {
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                    }
+                    let mut s = crate::gpu::last_status();
+                    match crate::gpu::post_on_card(&p, &mut gbuf, &job, cancel) {
+                        Ok(()) => {
+                            if job.shadows.is_some() {
+                                s.push_str(" +shadows");
+                            }
+                            if job.deao.is_some() {
+                                s.push_str(" +AO");
+                            }
+                            crate::gpu::set_status(s);
+                            p.gpu_post = Some(job);
+                        }
+                        Err(e) => {
+                            if cancel() {
+                                return Err("cancelled".into());
+                            }
+                            crate::gpu::set_status(format!("{s}; post calculations on the CPU: GPU error: {e}"));
+                        }
+                    }
                 }
-                // (MB3D_GPU_MIXED=1: always, for comparisons)
-                if !all() || std::env::var_os("MB3D_GPU_MIXED").is_some() {
-                    let gbuf = march_mixed(&p, threads, progress, cancel, sink, &flags[0])?;
-                    return finish_calculation(sc, p, gbuf, post, threads, cancel);
-                }
+                return finish_calculation(sc, p, gbuf, post, threads, cancel);
             }
         }
         let gpu = crate::gpu::march(&p, &job, progress, cancel, |y, row| {
@@ -398,7 +418,8 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
 
 /// The march with the CPU threads taking rows from the bottom at once and
 /// the card from the top once `ready` (its shader compiled) - until they
-/// meet.
+/// meet.  Returns the G-buffer and the number of rows the card marched
+/// (0: it never joined, or its rows were redone on the CPU).
 #[cfg(feature = "gpu")]
 fn march_mixed(
     p: &CalcParams,
@@ -407,7 +428,7 @@ fn march_mixed(
     cancel: &(dyn Fn() -> bool + Sync),
     sink: Option<RowSink>,
     ready: &std::sync::atomic::AtomicBool,
-) -> Result<Vec<SiLight>, String> {
+) -> Result<(Vec<SiLight>, usize), String> {
     use std::sync::Mutex;
     let h = p.rect[3].max(0) as usize;
     // the rows still free: [top, bottom)
@@ -423,8 +444,13 @@ fn march_mixed(
         progress((done.fetch_add(1, Ordering::Relaxed) + 1).min(h), h);
     };
     let mut card_err = None;
-    // (the program shows a note on this: see `main_form::COMPILE_NOTE`)
-    crate::gpu::set_status("CPU (the graphics card's shaders are compiling)".into());
+    let name = crate::gpu::name().unwrap_or_default();
+    crate::gpu::set_status(if ready.load(Ordering::SeqCst) {
+        format!("GPU {name}: the march shared with the CPU")
+    } else {
+        // (the program shows a note on this: see `main_form::COMPILE_NOTE`)
+        "CPU (the graphics card's shaders are compiling)".into()
+    });
     std::thread::scope(|s| {
         for _ in 0..threads {
             s.spawn(|| loop {
@@ -502,12 +528,13 @@ fn march_mixed(
         return Err("cancelled".into());
     }
     let n_card = on_card.load(Ordering::Relaxed);
+    let pct = n_card * 100 / h.max(1);
     crate::gpu::set_status(match card_err {
         Some(e) => format!("CPU: GPU error: {e}"),
         None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
-        None => format!("GPU {} (march only, its shader compiled meanwhile): {} % of the rows on the card, the rest on the CPU", crate::gpu::name().unwrap_or_default(), n_card * 100 / h.max(1)),
+        None => format!("GPU {name}: {pct} % of the rows on the card, {} % on the CPU", 100 - pct),
     });
-    Ok(rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect())
+    Ok((rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect(), n_card))
 }
 
 /// The post calculations after the main calculation (CPU or GPU).

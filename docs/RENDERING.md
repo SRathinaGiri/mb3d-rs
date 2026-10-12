@@ -33,7 +33,7 @@ On the **Internal** page of the main window (where the thread count is):
 
 | Setting | What happens |
 |---|---|
-| **Auto** (default) | Uses the graphics card. If its shader is not ready yet, the CPU starts at once and the card joins when it can - nothing waits. |
+| **Auto** (default) | The graphics card and the CPU share the image: the card takes rows from the top, the CPU threads from the bottom, then the card calculates the shadows and the ambient occlusion. If the card's shader is not ready yet, the CPU starts alone and the card joins when it can - nothing waits. |
 | **CPU** | Never uses the graphics card - exactly like the original MB3D. |
 | **Graphics card** | Waits for the shader if needed, then calculates on the card. |
 
@@ -47,16 +47,17 @@ switches the card off for both programs.
 flowchart TD
     A[Calculate 3D] --> B{Can the card do this scene?}
     B -- no --> CPU[CPU calculates everything]
-    B -- yes --> C{Card's shaders compiled?}
-    C -- "yes (or within 0.2 s)" --> GPU[Card calculates the image,<br/>shadows, ambient occlusion<br/>and reflections]
-    C -- no --> D[CPU starts at once<br/>shaders compile in the background]
-    D --> E{Shader ready before<br/>the CPU is done?}
-    E -- no --> F[CPU finishes alone<br/>small images]
-    E -- yes --> G[Card joins, the two<br/>share the rows]
+    B -- yes --> D[CPU threads start at once,<br/>rows from the bottom]
+    D --> C{Card's shader compiled?}
+    C -- yes --> G[Card takes rows from the top<br/>until the two meet]
+    C -- "not yet (first time)" --> E{Compiled before<br/>the CPU is done?}
+    E -- yes --> G
+    E -- no --> F[CPU finishes alone<br/>small images; shadows and<br/>ambient occlusion on the CPU]
+    G --> H[Card calculates shadows,<br/>ambient occlusion and reflections<br/>for the whole image]
 ```
 
-When the two share an image, the CPU threads take rows from the bottom
-and the card takes rows from the top, until they meet:
+Every image is shared: the CPU threads take rows from the bottom and the
+card takes rows from the top, until they meet:
 
 ![Card and CPU share the rows of an image](img/rows-split.svg)
 
@@ -66,9 +67,13 @@ being compiled ..."*), so a slower first run is not a surprise.
 
 All shaders a calculation needs (the march, shadows, ambient occlusion,
 reflections) compile at the same time in the background, so the waiting
-is paid once and not once per shader. In the shared case the shadows and
-ambient occlusion are calculated on the CPU, like after a CPU calculation;
-the next calculation of the scene runs entirely on the card.
+is paid once and not once per shader. Once the card has marched part of
+the image, it also calculates the shadows and the ambient occlusion of
+the whole image, the CPU's rows included. Only when the card never joined
+(its shaders were still compiling when the CPU finished) do they run on
+the CPU, like after a CPU calculation. The lamp's hint says how the rows
+were shared, for example *"71 % of the rows on the card, 29 % on the
+CPU +shadows +AO"*.
 
 ## The lamp (LED) in the title bar
 
@@ -79,7 +84,7 @@ ran. It blinks while a calculation is running.
 |---|---|
 | grey | nothing calculated yet |
 | **green** | on the graphics card |
-| **orange** | mixed: the image on the card, some steps on the CPU (for example normals on the z-buffer, or shadows after a shared start) |
+| **orange** | mixed: the image on the card, some steps on the CPU (for example normals on the z-buffer, or shadows after a first run whose shaders were still compiling) |
 | **red** | on the CPU (setting *CPU*, or a scene the card cannot do) |
 
 **Hold the mouse over the lamp** to see the details: the card's name, the

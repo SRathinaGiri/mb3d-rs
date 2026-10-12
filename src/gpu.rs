@@ -1010,7 +1010,7 @@ pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize
 fn march_bands_card(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let v = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands))?;
+    let v = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands), None)?;
     // pixels whose DE overflowed single precision (see [`march`]): the
     // card's rows are not usable then
     let n = OVERFLOW.with(|c| c.get());
@@ -1039,7 +1039,7 @@ fn march_sample_card(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() ->
     let g = gpu()?;
     let sh = scene_shader(&q)?;
     SAMPLE.with(|c| c.set((sx, sy)));
-    let r = run(g, &q, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, &mut |y, row| sink(y * sy + sy / 2, row), None);
+    let r = run(g, &q, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, &mut |y, row| sink(y * sy + sy / 2, row), None, None);
     SAMPLE.with(|c| c.set((0, 0)));
     let v = r?;
     // pixels whose DE overflowed single precision (see [`march_bands`])
@@ -1050,9 +1050,27 @@ fn march_sample_card(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() ->
     Ok(())
 }
 
-/// "Calculate on: Auto": a calculation starts on the CPU while the card's
-/// shader compiles, and the card joins when it is ready (otherwise the
-/// calculation waits for the shader).
+/// The post passes of `post` (shadows, DE ambient occlusion) on the card
+/// for a G-buffer marched elsewhere (the rows the CPU took in a shared
+/// march): it is uploaded band by band and gets the results.
+pub fn post_on_card(p: &CalcParams, gbuf: &mut [SiLight], post: &PostJob, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    guard(|| {
+        let g = gpu()?;
+        let sh = scene_shader(p)?;
+        let w = p.rect[2].max(0) as usize;
+        let mut done: Vec<(usize, Vec<SiLight>)> = Vec::new();
+        run(g, p, &sh, post, None, &|_, _| {}, cancel, &mut |y, row| done.push((y, row.to_vec())), None, Some(&*gbuf))?;
+        for (y, row) in done {
+            gbuf[y * w..y * w + row.len()].copy_from_slice(&row);
+        }
+        Ok(())
+    })
+}
+
+/// "Calculate on: Auto": the CPU and the card share a calculation - the
+/// CPU starts at once, the card joins when its shader is compiled and
+/// then runs the post passes (otherwise the calculation waits for the
+/// shader and runs on the card alone).
 static AUTO: AtomicBool = AtomicBool::new(true);
 
 pub fn set_auto(on: bool) {
@@ -1433,7 +1451,7 @@ fn march_card(
             prepare(g, sh.code.clone(), "main", march_constants(p, m));
         }
         let t = std::time::Instant::now();
-        r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None);
+        r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None, None);
         if timing {
             eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
         }
@@ -1964,7 +1982,7 @@ pub fn de_probe(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
     PROBE_MZZ.with(|m| m.set(mzz));
-    let v = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {}, None)?;
+    let v = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {}, None, None)?;
     Ok(v.iter()
         .map(|s| {
             let rst = f32::from_bits((s.normal[0] as u16 as u32) | (s.normal[1] as u16 as u32) << 16);
@@ -1985,10 +2003,19 @@ fn run(
     cancel: &(dyn Fn() -> bool + Sync),
     sink: &mut dyn FnMut(usize, &[SiLight]),
     bands: Option<&dyn Fn(usize) -> Option<(usize, usize)>>,
+    upload: Option<&[SiLight]>,
 ) -> Result<Vec<SiLight>, String> {
     let (w, h) = (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize);
     let mut res = Resumer::new(g, sh);
-    let modes = only_mode.map(|m| vec![m]).unwrap_or_else(|| modes(post));
+    let mut modes = only_mode.map(|m| vec![m]).unwrap_or_else(|| modes(post));
+    // `upload`: the G-buffer marched elsewhere (by the CPU too) goes to the
+    // card band by band, and only the post passes run on it
+    if upload.is_some() {
+        modes.retain(|&m| m != 0);
+        if modes.is_empty() {
+            return Ok(upload.unwrap().to_vec());
+        }
+    }
     // the rows of a job: as many as the G-buffer allows (a job ends with
     // its slowest pixels alone on the card); with post passes (which need
     // the march of the band done) a few slot generations, so that the rows
@@ -1996,7 +2023,10 @@ fn run(
     // (shared with the CPU: small bands, so that both end together)
     let band = if modes.len() == 1 && bands.is_none() { (96 << 20) / (w.max(1) * 20) } else { 4 * res.slots / w.max(1) }.clamp(8, h.max(8));
     let out_size = (w * band * 20) as u64;
-    let usage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC;
+    let mut usage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC;
+    if upload.is_some() {
+        usage |= wgpu::BufferUsages::COPY_DST;
+    }
     let out = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("gbuffer"), size: out_size.max(16), usage, mapped_at_creation: false });
     let read = g.device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("read"),
@@ -2070,6 +2100,22 @@ fn run(
     while let Some((row0, rows)) = take(band) {
         if cancel() {
             return Err("cancelled".into());
+        }
+        if let Some(gb) = upload {
+            // as the march writes it (see the end of `main` in the shader)
+            let words: Vec<u32> = gb[row0 * w..(row0 + rows) * w]
+                .iter()
+                .flat_map(|s| {
+                    [
+                        (s.normal[0] as u16 as u32) | (s.normal[1] as u16 as u32) << 16,
+                        (s.normal[2] as u16 as u32) | (s.shadow as u32) << 16,
+                        s.zpos_fine,
+                        s.si_gradient as u32 | (s.otrap as u32) << 16,
+                        s.amb_shadow as u32,
+                    ]
+                })
+                .collect();
+            g.queue.write_buffer(&out, 0, &bytes(&words));
         }
         // each pass on the band until its pixels are done; the rows the
         // last one has finished go to the sink as they come
