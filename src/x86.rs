@@ -1243,6 +1243,34 @@ impl Machine {
         Some(f(self, unsafe { &*prog }, it, pvar, max_steps))
     }
 
+    /// The direct version of the translated dIFS formula at `entry` (see
+    /// [`DifsFn`]): the function and its program; None if there is none (or
+    /// translated formulas are switched off).  The program stays valid while
+    /// the machine's programs are not rebuilt.
+    pub fn difs_fn(&self, entry: u32) -> Option<(DifsFn, *const Prog)> {
+        if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+            return None;
+        }
+        let (_, p) = self.progs.iter().find(|(e, _)| *e == entry)?;
+        Some((p.difs?, p as *const Prog))
+    }
+
+    /// The registers of `call_difs` for a [`DifsFn`] (the return address
+    /// pushed as `call_difs` does).
+    #[inline]
+    pub fn difs_regs(&mut self, esi: u32, edi: u32, ebx: u32, ecx: u32, stack_top: u32) -> [u32; 8] {
+        let mut r = [0u32; 8];
+        r[ESI] = esi;
+        r[EDI] = edi;
+        r[EBX] = ebx;
+        r[ECX] = ecx;
+        r[EDX] = esi + 128;
+        r[ESP] = stack_top - 4;
+        self.wr32u(stack_top - 4, RETURN_SENTINEL);
+        self.fsw_cc = 0;
+        r
+    }
+
     /// Whether the code at `entry` runs compiled.
     pub fn is_compiled(&self, entry: u32) -> bool {
         self.progs.iter().any(|(e, _)| *e == entry)
@@ -1350,6 +1378,16 @@ impl Machine {
     #[inline(always)]
     fn ui(a: u32) -> usize {
         (a.wrapping_sub(BASE) as usize) & (MEM_SIZE - 1)
+    }
+    /// The `N` bytes at `a` with one check (the variable buffer cells a
+    /// translated formula reads, see [`cell`]); a fault outside the image.
+    #[inline(always)]
+    pub fn bytes_at<const N: usize>(&self, a: u32) -> R<&[u8; N]> {
+        let i = a.wrapping_sub(BASE) as usize;
+        match self.mem[..MEM_SIZE].get(i..i + N) {
+            Some(s) => Ok(s.try_into().unwrap()),
+            None => Err(EmuError::MemFault(a)),
+        }
     }
     #[inline(always)]
     pub fn rd8u(&self, a: u32) -> u8 {
@@ -1560,9 +1598,10 @@ impl Machine {
     fn fcompare(&mut self, a: f64, b: f64) {
         self.fsw_cc = fcompare_cc(a, b);
     }
+    #[inline]
     fn round_int(&self, v: f64) -> f64 {
         match (self.fcw >> 10) & 3 {
-            0 => v.round_ties_even(),
+            0 => round_even(v),
             1 => v.floor(),
             2 => v.ceil(),
             _ => v.trunc(),
@@ -2571,6 +2610,28 @@ fn sign_extend(v: u32, size: u8) -> i32 {
     }
 }
 
+/// The 8-byte cell at offset `o` of `b` (from [`Machine::bytes_at`]).
+#[allow(dead_code)] // used by generated code
+#[inline(always)]
+fn cell<const N: usize>(b: &[u8; N], o: usize) -> u64 {
+    u64::from_le_bytes(b[o..o + 8].try_into().unwrap())
+}
+
+/// `v.round_ties_even()` without the call into libm (`rint`) that it is on
+/// CPUs without SSE4.1: adding and removing 2^52 rounds to an integer in
+/// the default rounding mode; larger values are integers already (NaN is
+/// made quiet as by `rint`).
+#[inline(always)]
+fn round_even(v: f64) -> f64 {
+    const BIG: f64 = 4503599627370496.0;
+    let a = v.abs();
+    if a < BIG {
+        ((a + BIG) - BIG).copysign(v)
+    } else {
+        v + 0.0
+    }
+}
+
 fn f80_to_f64(mant: u64, se: u16) -> f64 {
     let sign = if se & 0x8000 != 0 { -1.0 } else { 1.0 };
     let exp = (se & 0x7FFF) as i32;
@@ -2629,6 +2690,21 @@ pub fn decode_listing(code: &[u8], addr: u32) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn round_even_is_round_ties_even() {
+        let mut vals = vec![0.0, -0.0, 0.5, -0.5, 1.5, 2.5, -2.5, 0.49999999999999994, 4503599627370495.5, -4503599627370495.5, 4503599627370496.0, 1e300, f64::INFINITY, -f64::INFINITY, f64::MIN_POSITIVE, -1e-310];
+        let mut x = 0x1234_5678_9abc_def0u64;
+        for _ in 0..100_000 {
+            x = x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            vals.push(f64::from_bits(x));
+            vals.push((x >> 11) as f64 / (1u64 << (x % 60)) as f64 - 1e6);
+        }
+        for v in vals {
+            let (a, b) = (round_even(v), v.round_ties_even());
+            assert!(a.to_bits() == b.to_bits() || (a.is_nan() && b.is_nan()), "{v:e}: {a:e} vs {b:e}");
+        }
+    }
 
     #[test]
     fn f80_round_trip() {
@@ -2746,6 +2822,24 @@ pub type NativeFn = fn(&mut Machine, &Prog, u64) -> R<()>;
 /// (machine, program, iteration, `PVar`, step limit).  The machine still
 /// holds the stack and the variable buffer.
 pub type DirectFn = fn(&mut Machine, &Prog, &mut Iteration, u32, u64) -> R<()>;
+
+/// A translated dIFS formula called without the set up of
+/// `Machine::call_difs`: (machine, program, the registers call_difs sets up
+/// and the formula leaves, step limit).  The stack slot of the return
+/// address must hold `RETURN_SENTINEL` (`Machine::difs_regs`).
+pub type DifsFn = fn(&mut Machine, &Prog, &mut [u32; 8], u64) -> R<()>;
+
+/// The [`NativeFn`] of a formula with a [`DifsFn`]: runs it on the
+/// registers `Machine::call_difs` set up.  The flags, the x87 registers and
+/// `fsw_cc` are not kept (as for a direct formula).
+fn difs_via_machine(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {
+    let mut regs = m.regs;
+    let r = (p.difs.expect("dIFS formula"))(m, p, &mut regs, max_steps);
+    if r.is_ok() {
+        m.regs = regs;
+    }
+    r
+}
 
 /// The registers and stack arguments `Machine::call_compiled` sets up for a
 /// formula call (the stack in the machine's memory).
@@ -2901,6 +2995,9 @@ pub struct Prog {
     /// the direct version of the translated formula, if any (`native`
     /// then runs it on the emulated memory)
     direct: Option<DirectFn>,
+    /// the direct version of a translated dIFS formula, if any (`native`
+    /// then runs it on the machine's registers)
+    difs: Option<DifsFn>,
     /// return addresses of local calls and the op index they return to
     rets: Vec<(u32, usize)>,
     /// op index for instruction addresses (jump targets)
@@ -3206,8 +3303,15 @@ impl Machine {
             })
             .collect();
         let direct = native::lookup_direct(hash, ops.len());
-        let native = if direct.is_some() { Some(direct_via_memory as NativeFn) } else { native };
-        Ok(Prog { ops, index, hash, native, direct, rets })
+        let difs = native::lookup_difs(hash, ops.len());
+        let native = if direct.is_some() {
+            Some(direct_via_memory as NativeFn)
+        } else if difs.is_some() {
+            Some(difs_via_machine as NativeFn)
+        } else {
+            native
+        };
+        Ok(Prog { ops, index, hash, native, direct, difs, rets })
     }
 
     fn fload_m(&self, kind: FKind, mem: &Mem) -> R<f64> {

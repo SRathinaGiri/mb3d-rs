@@ -437,6 +437,12 @@ impl Iteration {
         let mut edi = custom::pconst_addr(n);
         let mut guard = 0u32;
         let mut failed = false;
+        // the translated formulas called directly (without call_difs and
+        // the program lookup per call)
+        let mut direct: [Option<(crate::x86::DifsFn, *const crate::x86::Prog)>; 8] = [None; 8];
+        for (k, d) in direct.iter_mut().enumerate().take(slots.len()) {
+            *d = m.difs_fn(custom::code_addr(k));
+        }
         'outer: loop {
             // @Repeat / @While: next slot with iterations
             let mut g = 0;
@@ -452,17 +458,29 @@ impl Iteration {
                     break 'outer;
                 }
             }
-            let entry = custom::code_addr(n);
-            if m.call_difs(entry, esi, edi, n as u32, cnt as u32, custom::STACK_TOP, custom::MAX_STEPS).is_err() {
-                failed = true;
-                break;
-            }
-            cnt = m.reg(1) as i32 - 1;
-            let nb = m.reg(3) as usize;
+            let regs = if let Some((f, p)) = direct.get(n).copied().flatten() {
+                let mut regs = m.difs_regs(esi, edi, n as u32, cnt as u32, custom::STACK_TOP);
+                // SAFETY: the machine's programs are not rebuilt during the
+                // call (see `Machine::difs_fn`)
+                if f(m, unsafe { &*p }, &mut regs, custom::MAX_STEPS).is_err() {
+                    failed = true;
+                    break;
+                }
+                regs
+            } else {
+                let entry = custom::code_addr(n);
+                if m.call_difs(entry, esi, edi, n as u32, cnt as u32, custom::STACK_TOP, custom::MAX_STEPS).is_err() {
+                    failed = true;
+                    break;
+                }
+                m.regs
+            };
+            cnt = regs[1] as i32 - 1;
+            let nb = regs[3] as usize;
             if nb < slots.len() {
                 n = nb;
             }
-            edi = m.reg(7);
+            edi = regs[7];
             guard += 1;
             if guard > 1_000_000 {
                 break;

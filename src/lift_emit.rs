@@ -12,6 +12,11 @@
 //! target.  The operations are those of `emit_rust`; formulas whose code
 //! needs the interpreter, or that index memory with computed values, are
 //! not lifted.
+//!
+//! The blocks are laid out as structured code (labelled blocks and loops,
+//! see `structure`), so that the compiler sees direct branches; only flow
+//! that does not nest that way gets the state machine of `emit_rust`
+//! (`dispatch`; `M3F2RS_DISPATCH` forces it for comparisons).
 
 use super::lift::{Analysis, Loc};
 use super::*;
@@ -114,6 +119,246 @@ fn mask(n: u32) -> String {
     } else {
         format!("{:#x}u64", (1u64 << (8 * n)) - 1)
     }
+}
+
+/// The jumps in the generated code of a block are placeholders until the
+/// control flow is laid out: `\x01J7\x02` a jump of the formula to block 7
+/// (counted by the interpreter), `\x01G7\x02` a call or return going to block
+/// 7, `\x01R\x02` the return of the formula.
+struct Jump;
+
+impl Jump {
+    const RETURN: &'static str = "\x01R\x02";
+
+    fn mark(t: usize, counted: bool) -> String {
+        format!("\x01{}{t}\x02", if counted { 'J' } else { 'G' })
+    }
+
+    /// The placeholders in `s`: (kind, target block; 0 for a return).
+    fn find(s: &str) -> Vec<(char, usize)> {
+        s.split('\x01').skip(1).filter_map(|p| p.split_once('\x02')).map(|(m, _)| (m.as_bytes()[0] as char, m[1..].parse().unwrap_or(0))).collect()
+    }
+
+    /// `s` with every placeholder replaced by `f(kind, target)`.
+    fn replace(s: &str, f: &dyn Fn(char, usize) -> String) -> String {
+        let mut parts = s.split('\x01');
+        let mut o = parts.next().unwrap_or("").to_string();
+        for p in parts {
+            let (m, rest) = p.split_once('\x02').unwrap_or((p, ""));
+            o.push_str(&f(m.as_bytes()[0] as char, m[1..].parse().unwrap_or(0)));
+            o.push_str(rest);
+        }
+        o
+    }
+}
+
+/// The generated code of one block: its lines and the block it falls
+/// through to.
+#[derive(Default)]
+struct Block {
+    lines: Vec<String>,
+    fall: Option<usize>,
+}
+
+impl Block {
+    /// The blocks this one goes to (jumps first, the fall through last).
+    fn succs(&self) -> Vec<usize> {
+        let mut v: Vec<usize> = self.lines.iter().flat_map(|l| Jump::find(l)).filter(|j| j.0 != 'R').map(|j| j.1).collect();
+        v.extend(self.fall);
+        v
+    }
+}
+
+/// The blocks as a state machine: `loop { match b { ... } }`, every jump of
+/// the formula counted against the step limit.
+fn dispatch(blocks: &[Block]) -> String {
+    let resolve = |kind: char, t: usize| match kind {
+        'J' => format!("steps += 1; if steps > limit {{ return Err(EmuError::StepLimit); }} b = {t}; continue;"),
+        'G' => format!("b = {t}; continue;"),
+        _ => "return Ok(());".into(),
+    };
+    let mut body = String::new();
+    for (bi, bl) in blocks.iter().enumerate() {
+        let _ = writeln!(body, "            {bi} => {{");
+        for l in &bl.lines {
+            let _ = writeln!(body, "                {}", Jump::replace(l, &resolve));
+        }
+        if let Some(t) = bl.fall {
+            let _ = writeln!(body, "                b = {t};");
+        }
+        let _ = writeln!(body, "            }}");
+    }
+    body
+}
+
+/// The calling convention of a lifted function.
+#[derive(Clone, Copy, PartialEq)]
+enum Conv {
+    /// a [`NativeFn`]: everything in the machine
+    Machine,
+    /// a [`DirectFn`] (normal formulas)
+    Direct,
+    /// a [`DifsFn`] (dIFS formulas)
+    Difs,
+}
+
+/// Structured control flow of the blocks (`structure`).
+struct Structured {
+    code: String,
+    /// whether there are loops (guarded by the step counter)
+    loops: bool,
+}
+
+/// The blocks as structured Rust: laid out in reverse post order, a jump
+/// forward leaves a labelled block that ends just before its target
+/// (`break 'b7`), a jump backward continues a labelled loop (`continue
+/// 'l7`, counted against the step limit); a block that falls through to the
+/// next one needs neither.  None when the flow does not nest that way (the
+/// dispatcher is used then).
+fn structure(blocks: &[Block], entry: usize) -> Option<Structured> {
+    let nb = blocks.len();
+    // reverse post order; the successor visited last comes right after a
+    // block, so the fall through is visited last
+    let mut order = Vec::with_capacity(nb);
+    let mut seen = vec![false; nb];
+    let mut stack: Vec<(usize, usize)> = vec![(entry, 0)];
+    seen[entry] = true;
+    while let Some(&mut (b, ref mut i)) = stack.last_mut() {
+        let succs = blocks[b].succs();
+        if *i < succs.len() {
+            let s = succs[*i];
+            *i += 1;
+            if s < nb && !seen[s] {
+                seen[s] = true;
+                stack.push((s, 0));
+            }
+        } else {
+            order.push(b);
+            stack.pop();
+        }
+    }
+    order.reverse();
+    let mut pos = vec![usize::MAX; nb];
+    for (p, &b) in order.iter().enumerate() {
+        pos[b] = p;
+    }
+    // loops: header position -> last position of the body
+    let mut lend: Vec<Option<usize>> = vec![None; order.len()];
+    for (p, &b) in order.iter().enumerate() {
+        for t in blocks[b].succs() {
+            let q = *pos.get(t)?;
+            if q <= p {
+                lend[q] = Some(lend[q].map_or(p, |e: usize| e.max(p)));
+            }
+        }
+    }
+    let loops: Vec<(usize, usize)> = lend.iter().enumerate().filter_map(|(h, e)| e.map(|e| (h, e))).collect();
+    // the innermost loop around position p (not the one p is the header of)
+    let ctx = |p: usize| loops.iter().filter(|&&(h, e)| h < p && p <= e).max_by_key(|l| l.0).copied();
+    // whether the exit of the block at p to the one at q needs no code: the
+    // last exit of the block (not a conditional jump followed by the fall
+    // through) to the next block in the same loop
+    let plain = |p: usize, q: usize, last: bool| last && q == p + 1 && !loops.iter().any(|&(h, e)| e == p && h <= p);
+    // the jumps in the lines are conditional if the block falls through (or
+    // ends with a conditional jump: one ending the code)
+    let last_jump = |b: usize| blocks[b].fall.is_none() && !blocks[b].lines.last().is_some_and(|l| l.starts_with("if "));
+    // the targets of forward jumps that need a label, checked to lie in the
+    // same loop as the jump (no jumps into a loop)
+    let mut labels = vec![false; order.len()];
+    for (p, &b) in order.iter().enumerate() {
+        let exits = blocks[b].lines.iter().flat_map(|l| Jump::find(l)).filter(|j| j.0 != 'R').map(|j| (j.1, last_jump(b))).chain(blocks[b].fall.map(|t| (t, true)));
+        for (t, last) in exits {
+            let q = pos[t];
+            if q > p && !plain(p, q, last) {
+                if ctx(q).is_some_and(|(h, _)| p < h) {
+                    return None;
+                }
+                labels[q] = true;
+            }
+        }
+    }
+    // a construct: a label scope ends before position q, a loop after it
+    #[derive(PartialEq)]
+    enum Open {
+        Scope(usize),
+        Loop(usize),
+    }
+    let scopes_in = |c: Option<(usize, usize)>| -> Vec<usize> {
+        let mut v: Vec<usize> = (0..order.len()).filter(|&q| labels[q] && ctx(q) == c).collect();
+        v.sort_by(|a, b| b.cmp(a));
+        v
+    };
+    let mut open: Vec<Open> = Vec::new();
+    let mut code = String::new();
+    // indented by the loops only (the label scopes nest deeply)
+    let ind = |open: &[Open]| "    ".repeat(2 + open.iter().filter(|o| matches!(o, Open::Loop(_))).count());
+    for q in scopes_in(None) {
+        let _ = writeln!(code, "{}'b{}: {{", ind(&open), order[q]);
+        open.push(Open::Scope(q));
+    }
+    for (p, &b) in order.iter().enumerate() {
+        // close the constructs that end here (they must be innermost)
+        loop {
+            match open.last() {
+                Some(Open::Scope(q)) if *q == p => {}
+                Some(Open::Loop(h)) if p > 0 && lend[*h] == Some(p - 1) => {}
+                _ => break,
+            }
+            if let Some(Open::Scope(q)) = open.pop() {
+                let _ = writeln!(code, "{}}} // 'b{}", ind(&open), order[q]);
+            } else {
+                let _ = writeln!(code, "{}}}", ind(&open));
+            }
+        }
+        if open.iter().any(|o| *o == Open::Scope(p)) || open.iter().any(|o| matches!(o, Open::Loop(h) if lend[*h].is_some_and(|e| e < p))) {
+            return None;
+        }
+        if let Some(e) = lend[p] {
+            let _ = writeln!(code, "{}'l{b}: loop {{", ind(&open));
+            open.push(Open::Loop(p));
+            for q in scopes_in(Some((p, e))) {
+                let _ = writeln!(code, "{}'b{}: {{", ind(&open), order[q]);
+                open.push(Open::Scope(q));
+            }
+        }
+        // 'F' the fall through
+        let resolve = |kind: char, t: usize| -> String {
+            if kind == 'R' {
+                return "break 'body;".into();
+            }
+            let q = pos[t];
+            if q <= p {
+                format!("steps += 1; if steps > limit {{ return Err(EmuError::StepLimit); }} continue 'l{t};")
+            } else if plain(p, q, kind == 'F' || last_jump(b)) {
+                String::new()
+            } else {
+                format!("break 'b{t};")
+            }
+        };
+        let i = ind(&open);
+        let _ = writeln!(code, "{i}// block {b}");
+        for l in &blocks[b].lines {
+            let _ = writeln!(code, "{i}{}", Jump::replace(l, &resolve));
+        }
+        if let Some(t) = blocks[b].fall {
+            let r = resolve('F', t);
+            if !r.is_empty() {
+                let _ = writeln!(code, "{i}{r}");
+            }
+        }
+    }
+    // only loops ending with the last block are left
+    while let Some(Open::Loop(h)) = open.last() {
+        if lend[*h] != Some(order.len() - 1) {
+            return None;
+        }
+        open.pop();
+        let _ = writeln!(code, "{}}}", ind(&open));
+    }
+    if !open.is_empty() {
+        return None;
+    }
+    Some(Structured { code, loops: !loops.is_empty() })
 }
 
 /// The cells and the code that uses them.
@@ -293,7 +538,14 @@ impl Prog {
     /// `rec_get` / `rec_set`), the call needs no set up in the emulated
     /// machine.  Not for dIFS formulas.
     pub fn emit_lifted_direct(&self, name: &str) -> Option<String> {
-        self.emit_lifted_mode(name, false, true).map(|x| x.0)
+        self.emit_lifted_mode(name, false, Conv::Direct).map(|x| x.0)
+    }
+
+    /// The direct version of [`Prog::emit_lifted`] for a dIFS formula (a
+    /// [`DifsFn`]): the registers `Machine::call_difs` sets up come in and go
+    /// back in `regs`, the iteration record stays in the machine.
+    pub fn emit_lifted_difs(&self, name: &str) -> Option<String> {
+        self.emit_lifted_mode(name, true, Conv::Difs).map(|x| x.0)
     }
 
     /// An x87 double access to a record field chosen by a small index
@@ -341,10 +593,11 @@ impl Prog {
 
     /// `emit_lifted` with the cells and their access log.
     pub(super) fn emit_lifted_cells(&self, name: &str, difs: bool) -> Option<(String, Cells)> {
-        self.emit_lifted_mode(name, difs, false)
+        self.emit_lifted_mode(name, difs, Conv::Machine)
     }
 
-    fn emit_lifted_mode(&self, name: &str, difs: bool, direct: bool) -> Option<(String, Cells)> {
+    fn emit_lifted_mode(&self, name: &str, difs: bool, conv: Conv) -> Option<(String, Cells)> {
+        let direct = conv == Conv::Direct;
         let an = self.analyse(difs);
         if !an.report.problems.is_empty() {
             lift_debug(&format!("{:?}", an.report.problems));
@@ -374,37 +627,61 @@ impl Prog {
         let ids: HashMap<(usize, Vec<usize>), usize> = keys.iter().enumerate().map(|(i, k)| (k.clone(), i)).collect();
         let id = |k: usize, cs: &[usize]| ids.get(&(k, cs.to_vec())).copied();
         let mut cells = Cells::default();
-        let mut body = String::new();
-        let jump = |t: usize| format!("steps += 1; if steps > limit {{ return Err(EmuError::StepLimit); }} b = {t}; continue;");
-        for (bi, (k0, cs)) in keys.iter().enumerate() {
-            let _ = writeln!(body, "            {bi} => {{");
+        // the code of every block, its jumps as placeholders (see `Jump`)
+        let mut blocks: Vec<Block> = Vec::new();
+        let jump = |t: usize, counted: bool| Jump::mark(t, counted);
+        for (k0, cs) in keys.iter() {
+            let mut bl = Block::default();
             let mut k = *k0;
             loop {
                 let (line, ended) = self.lifted_op(k, cs, &an, &mut cells, &id, &jump)?;
                 if !line.is_empty() {
-                    let _ = writeln!(body, "                {line}");
+                    bl.lines.push(line);
                 }
                 k += 1;
                 if ended {
                     break;
                 }
                 if k >= n {
-                    let _ = writeln!(body, "                return Err(unsup(0, \"ran past the end\".into()));");
+                    bl.lines.push("return Err(unsup(0, \"ran past the end\".into()));".into());
                     break;
                 }
                 if start[k] {
-                    let _ = writeln!(body, "                b = {};", id(k, cs)?);
+                    bl.fall = Some(id(k, cs)?);
                     break;
                 }
             }
-            let _ = writeln!(body, "            }}");
+            blocks.push(bl);
         }
+        let entry = id(0, &[])?;
+        // structured control flow where it can be found, else the dispatcher
+        let structured = if std::env::var_os("M3F2RS_DISPATCH").is_some() { None } else { structure(&blocks, entry) };
+        let body = match &structured {
+            Some(s) => s.code.clone(),
+            None => dispatch(&blocks),
+        };
         // the cells: read at the start, the written ones back at the end
         let addr = |p: char, c: u32| -> String {
             match p {
                 'r' => format!("{:#x}u32", IT_BASE + 8 * c),
                 'v' => format!("vb.wrapping_add({})", 8 * c),
                 _ => format!("{:#x}u32", STACK_LOW + 8 * c),
+            }
+        };
+        // the step counter guards the loops (the dispatcher counts every jump)
+        let steps = structured.as_ref().is_none_or(|s| s.loops);
+        // the variable buffer cells are read from one checked slice (after
+        // `vb` is set)
+        let vcells: Vec<u32> = cells.used.iter().filter(|c| c.0 == 'v').map(|c| c.1).collect();
+        let vslice = |o: &mut String| {
+            if let (Some(lo), Some(hi)) = (vcells.first(), vcells.last()) {
+                let _ = writeln!(o, "    let vm = m.bytes_at::<{}>(vb.wrapping_add({}))?;", 8 * (hi - lo + 1), 8 * lo);
+            }
+        };
+        let load = |p: char, c: u32| -> String {
+            match p {
+                'v' => format!("cell(vm, {})", 8 * (c - vcells[0])),
+                _ => format!("m.rd64u({})", addr(p, c)),
             }
         };
         let mut o = String::new();
@@ -416,17 +693,40 @@ impl Prog {
             let _ = writeln!(o, "    let mut rg = direct_regs(m);");
             let _ = writeln!(o, "    let mut fl = Flags::default();");
             let _ = writeln!(o, "    let mut fsw = 0u16;");
-            let _ = writeln!(o, "    let mut steps = 0u64;");
-            let _ = writeln!(o, "    let limit = max_steps;");
+            if steps {
+                let _ = writeln!(o, "    let mut steps = 0u64;");
+                let _ = writeln!(o, "    let limit = max_steps;");
+            }
             if cells.used.iter().any(|c| c.0 == 'v') {
                 let _ = writeln!(o, "    let vb = pvar.wrapping_sub({});", crate::m3f::CONST_OFFSET);
             }
+            vslice(&mut o);
             for (p, c) in &cells.used {
                 if *p == 'r' {
                     let _ = writeln!(o, "    let mut r{c}: u64 = rec_get(m, it, pvar, {c});");
                 } else {
-                    let _ = writeln!(o, "    let mut {p}{c}: u64 = m.rd64u({});", addr(*p, *c));
+                    let _ = writeln!(o, "    let mut {p}{c}: u64 = {};", load(*p, *c));
                 }
+            }
+        } else if conv == Conv::Difs {
+            // the registers of `Machine::call_difs` (fsw_cc = 0); the flags
+            // start cleared as for a direct formula
+            let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, regs: &mut [u32; 8], max_steps: u64) -> R<()> {{");
+            let _ = writeln!(o, "    let _ = p;");
+            let _ = writeln!(o, "    let mut f = [0f64; 8];");
+            let _ = writeln!(o, "    let mut rg = *regs;");
+            let _ = writeln!(o, "    let mut fl = Flags::default();");
+            let _ = writeln!(o, "    let mut fsw = 0u16;");
+            if steps {
+                let _ = writeln!(o, "    let mut steps = 0u64;");
+                let _ = writeln!(o, "    let limit = max_steps;");
+            }
+            if cells.used.iter().any(|c| c.0 == 'v') {
+                let _ = writeln!(o, "    let vb = rg[EDI].wrapping_sub({});", crate::m3f::CONST_OFFSET);
+            }
+            vslice(&mut o);
+            for (p, c) in &cells.used {
+                let _ = writeln!(o, "    let mut {p}{c}: u64 = {};", load(*p, *c));
             }
         } else {
             let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {{");
@@ -435,8 +735,10 @@ impl Prog {
             let _ = writeln!(o, "    let mut rg = m.regs;");
             let _ = writeln!(o, "    let mut fl = m.fl;");
             let _ = writeln!(o, "    let mut fsw = m.fsw_cc;");
-            let _ = writeln!(o, "    let mut steps = m.steps;");
-            let _ = writeln!(o, "    let limit = steps + max_steps;");
+            if steps {
+                let _ = writeln!(o, "    let mut steps = m.steps;");
+                let _ = writeln!(o, "    let limit = steps + max_steps;");
+            }
             if cells.used.iter().any(|c| c.0 == 'v') {
                 // the variable buffer: dIFS formulas get PVar in edi, the others
                 // read it from the record (as the analysis assumes)
@@ -446,12 +748,46 @@ impl Prog {
                     let _ = writeln!(o, "    let vb = m.rd32u({:#x}u32).wrapping_sub({});", IT_BASE + off::PVAR, crate::m3f::CONST_OFFSET);
                 }
             }
+            vslice(&mut o);
             for (p, c) in &cells.used {
-                let _ = writeln!(o, "    let mut {p}{c}: u64 = m.rd64u({});", addr(*p, *c));
+                let _ = writeln!(o, "    let mut {p}{c}: u64 = {};", load(*p, *c));
             }
         }
+        // the state goes back to the machine when the formula returns (not
+        // after an error)
+        let write_back = |o: &mut String, ind: &str| {
+            for (p, c) in &cells.written {
+                if direct && *p == 'r' {
+                    let _ = writeln!(o, "{ind}rec_set(m, it, {c}, r{c});");
+                } else {
+                    let _ = writeln!(o, "{ind}m.wr64u({}, {p}{c});", addr(*p, *c));
+                }
+            }
+            if conv == Conv::Difs {
+                // the caller reads the registers
+                let _ = writeln!(o, "{ind}*regs = rg;");
+            } else if !direct {
+                let _ = writeln!(o, "{ind}m.regs = rg;");
+                let _ = writeln!(o, "{ind}m.fl = fl;");
+                let _ = writeln!(o, "{ind}m.fsw_cc = fsw;");
+                if steps {
+                    let _ = writeln!(o, "{ind}m.steps = steps;");
+                }
+                let _ = writeln!(o, "{ind}m.st = f;");
+            }
+        };
+        if structured.is_some() {
+            // errors return at once; a return of the formula leaves 'body
+            let _ = writeln!(o, "    'body: {{");
+            o.push_str(&body);
+            let _ = writeln!(o, "    }}");
+            write_back(&mut o, "    ");
+            let _ = writeln!(o, "    Ok(())");
+            let _ = writeln!(o, "}}");
+            return Some((o, cells));
+        }
         let _ = writeln!(o, "    let res = (|| -> R<()> {{");
-        let _ = writeln!(o, "    let mut b: usize = {};", id(0, &[])?);
+        let _ = writeln!(o, "    let mut b: usize = {entry};");
         let _ = writeln!(o, "    loop {{");
         let _ = writeln!(o, "        match b {{");
         o.push_str(&body);
@@ -460,20 +796,7 @@ impl Prog {
         let _ = writeln!(o, "    }}");
         let _ = writeln!(o, "    }})();");
         let _ = writeln!(o, "    if res.is_ok() {{");
-        for (p, c) in &cells.written {
-            if direct && *p == 'r' {
-                let _ = writeln!(o, "        rec_set(m, it, {c}, r{c});");
-            } else {
-                let _ = writeln!(o, "        m.wr64u({}, {p}{c});", addr(*p, *c));
-            }
-        }
-        if !direct {
-            let _ = writeln!(o, "        m.regs = rg;");
-            let _ = writeln!(o, "        m.fl = fl;");
-            let _ = writeln!(o, "        m.fsw_cc = fsw;");
-            let _ = writeln!(o, "        m.steps = steps;");
-            let _ = writeln!(o, "        m.st = f;");
-        }
+        write_back(&mut o, "        ");
         let _ = writeln!(o, "    }}");
         let _ = writeln!(o, "    res");
         let _ = writeln!(o, "}}");
@@ -522,7 +845,7 @@ impl Prog {
         an: &Analysis,
         c: &mut Cells,
         id: &dyn Fn(usize, &[usize]) -> Option<usize>,
-        jump: &dyn Fn(usize) -> String,
+        jump: &dyn Fn(usize, bool) -> String,
     ) -> Option<(String, bool)> {
         let loc = |mm: &Mem| region_at(an.loc(k, cs, mm));
         let fx = |i: &u8| format!("f[{}]", i & 7);
@@ -625,13 +948,13 @@ impl Prog {
             }
             Op::Fnstsw { mem: Some(mm), depth } => c.wr(loc(mm)?, 2, &format!("(fsw | {:#x}) as u64", ((8 - *depth as u16) & 7) << 11)),
             Op::Jcc { cc, target } => {
-                return Some((format!("if fl.cond({cc}) {{ {} }}", jump(id(*target as usize, cs)?)), false));
+                return Some((format!("if fl.cond({cc}) {{ {} }}", jump(id(*target as usize, cs)?, true)), false));
             }
             Op::JccRot { cc, target, rot: r } => {
-                return Some((format!("if fl.cond({cc}) {{ {} {} }}", rot(*r), jump(id(*target as usize, cs)?)), false));
+                return Some((format!("if fl.cond({cc}) {{ {} {} }}", rot(*r), jump(id(*target as usize, cs)?, true)), false));
             }
-            Op::Jmp(t) => return Some((jump(id(*t as usize, cs)?), true)),
-            Op::JmpRot { target, rot: r } => return Some((format!("{} {}", rot(*r), jump(id(*target as usize, cs)?)), true)),
+            Op::Jmp(t) => return Some((jump(id(*t as usize, cs)?, true), true)),
+            Op::JmpRot { target, rot: r } => return Some((format!("{} {}", rot(*r), jump(id(*target as usize, cs)?, true)), true)),
             Op::Call { target, ret } | Op::CallRot { target, ret, .. } => {
                 let ri = self.rets.iter().find(|e| e.0 == *ret)?.1;
                 let mut c2 = cs.to_vec();
@@ -643,15 +966,15 @@ impl Prog {
                     Op::CallRot { rot: r, .. } => rot(*r),
                     _ => String::new(),
                 };
-                return Some((format!("{r} rg[ESP] = rg[ESP].wrapping_sub(4); {w} b = {}; continue;", id(*target as usize, &c2)?), true));
+                return Some((format!("{r} rg[ESP] = rg[ESP].wrapping_sub(4); {w} {}", jump(id(*target as usize, &c2)?, false)), true));
             }
             Op::Ret(nb) => {
                 // the return address is popped (its cell is read: no effect);
                 // the call string says where this return goes
                 let esp = format!("rg[ESP] = rg[ESP].wrapping_add({});", 4 + *nb as u32);
                 return Some(match cs.split_last() {
-                    None => (format!("{esp} return Ok(());"), true),
-                    Some((&ri, rest)) => (format!("{esp} b = {}; continue;", id(ri, rest)?), true),
+                    None => (format!("{esp} {}", Jump::RETURN), true),
+                    Some((&ri, rest)) => (format!("{esp} {}", jump(id(ri, rest)?, false)), true),
                 });
             }
             Op::Gen(ins, _, _) => self.lifted_gen(ins, k, cs, an, c)?,
