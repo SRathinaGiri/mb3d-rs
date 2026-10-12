@@ -30,6 +30,15 @@ fn main() {
             }
         };
         let main_s = t.elapsed().as_secs_f64();
+        // MAIN_ONLY=1: the main calculation's time and statistics (as MB3D
+        // shows them: average steps per pixel, the share of object pixels)
+        if std::env::var_os("MAIN_ONLY").is_some() {
+            let n = g.len().max(1) as f64;
+            let steps = g.iter().map(|s| (s.shadow & 0x3FF) as f64).sum::<f64>() / n;
+            let hits = g.iter().filter(|s| !s.is_background()).count() as f64 * 100.0 / n;
+            println!("{name}	{}x{}	main {main_s:.2} s	steps {steps:.1}	hits {hits:.1} %", sc.width, sc.height);
+            continue;
+        }
         let formulas: Vec<String> = p
             .slots
             .iter()

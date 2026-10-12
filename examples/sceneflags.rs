@@ -5,7 +5,13 @@ fn main() {
     mb3d::maps::add_map_dir(std::path::PathBuf::from(&a[0]).join("M3Maps"));
     let mut n: std::collections::BTreeMap<&str, usize> = Default::default();
     for f in &a[1..] {
-        let Ok((sc, _)) = mb3d::animfile::load_scene(std::path::Path::new(f)) else { continue };
+        let Ok((mut sc, _)) = mb3d::animfile::load_scene(std::path::Path::new(f)) else { continue };
+        // MAXW=n: at most n pixels wide (as the comparisons render them)
+        if let Some(w) = std::env::var("MAXW").ok().and_then(|v| v.parse::<f64>().ok()) {
+            if sc.width as f64 > w {
+                sc.scale_image(w / sc.width as f64);
+            }
+        }
         let Ok(p) = mb3d::calc::CalcParams::new(&sc) else { continue };
         let name = std::path::Path::new(f).file_stem().unwrap().to_string_lossy().to_string();
         let mut tags: Vec<&str> = Vec::new();
@@ -21,7 +27,16 @@ fn main() {
         let m = p.ystart.iter().fold(0.0f64, |a, v| a.max(v.abs())) + p.step_width * (p.width + p.height) as f64 + 2.0;
         let step_prec = p.step_width / (m * f32::EPSILON as f64);
         tags.push(if p.difs { "difs" } else if p.is_custom_de { "analytic" } else { "numeric" });
-        let detail = format!("{}x{} precision {:.2} step/ulp {:.0}", sc.width, sc.height, mb3d::gpu::precision(&p), step_prec);
+        let detail = format!(
+            "{}x{} precision {:.2} step/ulp {:.0} maxit {} destop {:.3} {}",
+            sc.width,
+            sc.height,
+            mb3d::gpu::precision(&p),
+            step_prec,
+            p.max_it,
+            p.de_stop,
+            p.slots.iter().filter(|s| s.iterations != 0).map(|s| format!("{}x{}", s.formula.name(), s.iterations)).collect::<Vec<_>>().join("+")
+        );
         for t in &tags { *n.entry(t).or_default() += 1; }
         let gpu = mb3d::gpu::unsupported(&p).unwrap_or_else(|| "GPU".into());
         println!("{name}: {} | {detail} | {gpu}", tags.join(", "));

@@ -10,6 +10,12 @@ fn main() {
     if let Some(s) = a.get(2) {
         sc.scale_image(s.parse().unwrap());
     }
+    // MAXW=n: at most n pixels wide
+    if let Some(w) = std::env::var("MAXW").ok().and_then(|v| v.parse::<f64>().ok()) {
+        if sc.width as f64 > w {
+            sc.scale_image(w / sc.width as f64);
+        }
+    }
     mb3d::gpu::set_enabled(std::env::var_os("CPU").is_none());
     let t = std::time::Instant::now();
     let r = mb3d::render::render(&sc, &|_, _| {}).unwrap();

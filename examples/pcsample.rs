@@ -50,7 +50,12 @@ mod linux {
     pub fn main() {
         let a: Vec<String> = std::env::args().skip(1).collect();
         mb3d::formulas::add_formula_dir(std::path::PathBuf::from(&a[0]).join("M3Formulas"));
-        let (sc, _) = mb3d::animfile::load_scene(std::path::Path::new(&a[1])).unwrap();
+        let (mut sc, _) = mb3d::animfile::load_scene(std::path::Path::new(&a[1])).unwrap();
+        if let Some(w) = std::env::var("MAXW").ok().and_then(|v| v.parse::<f64>().ok()) {
+            if sc.width as f64 > w {
+                sc.scale_image(w / sc.width as f64);
+            }
+        }
         let p = mb3d::calc::CalcParams::new(&sc).unwrap();
         let mut it = p.new_iteration();
         unsafe {
@@ -67,7 +72,18 @@ mod linux {
             };
             setitimer(2, &t, std::ptr::null_mut());
         }
-        for k in 0..2_000_000u64 {
+        // ROWS=n: n rows from the middle of the image, marched as the CPU
+        // renderer does (all of the calculation, not only the formulas)
+        if let Some(rows) = std::env::var("ROWS").ok().and_then(|v| v.parse::<i32>().ok()) {
+            let h = p.rect[3];
+            for y in (h - rows) / 2..(h + rows) / 2 {
+                let mut m = mb3d::calc::Marcher::new(&p, y);
+                for x in 0..p.rect[2] {
+                    std::hint::black_box(m.march_pixel(x, y));
+                }
+            }
+        }
+        for k in 0..(if std::env::var_os("ROWS").is_some() { 0 } else { 2_000_000u64 }) {
             let s = (k % 2000) as f64 / 2000.0;
             for i in 0..3 {
                 it.c[i] = p.ystart[i]
@@ -88,6 +104,9 @@ mod linux {
         let n = COUNT.load(Ordering::Relaxed).min(N);
         // addresses relative to the executable's load base (PIE): read /proc/self/maps
         let maps = std::fs::read_to_string("/proc/self/maps").unwrap();
+        // (with the absolute addresses: samples outside the executable)
+        std::fs::write(format!("{}.maps", a[2]), &maps).unwrap();
+        std::fs::write(format!("{}.abs", a[2]), (0..n).map(|i| format!("{:#x}\n", unsafe { PCS[i] })).collect::<String>()).unwrap();
         let exe = std::env::current_exe()
             .unwrap()
             .to_string_lossy()
