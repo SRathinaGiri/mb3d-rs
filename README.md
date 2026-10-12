@@ -973,42 +973,6 @@ tile files that MB3D writes for big renders are rendered as that tile.
 * Points exactly on the z axis are degenerate in MB3D's triplex formulas
   (division by `x² + y²`). This is kept as in the original.
 
-## Roadmap
-
-1. ✅ Core renderer CLI
-2. ✅ `.m3p` loading and custom `.m3f` formulas via the x86 interpreter
-3. ✅ Ambient occlusion (24 bit SSAO), hard and soft shadows
-4. ✅ Rendering features: positional, visible and volumetric lights, DEAO, cutting planes, depth of field, text parameters, `.m3i` parameters, 15 bit and random SSAO, inside rendering, background pictures, light maps, diffuse colour maps, the remaining light options, `.m3p` writing
-5. ✅ Formulas translated to Rust (3–8× faster), dIFS formulas, DE combinations, image maps and map formulas, tiled rendering
-6. ✅ Editor in the browser (`mb3d gui`): progressive preview, navigator, formula, camera, render, colour and light editors, file handling, final rendering
-7. ✅ Animation (keyframes, MB3D's interpolation incl. light values, `.m3a` and `.m3k` files, frame rendering shared by several processes, animation maker in the editor) and batch rendering
-8. ✅ Voxel export (`.m3v` projects), mesh export (BulbTracer2: OBJ, PLY, STL), the internal formula Aexion C, MutaGen; MutaGen and Export tabs in the editor
-9. ✅ The remaining gaps: JIT formulas (`[SOURCE]` Pascal), interpolation hybrids, 2D slices, colour on iteration, stereo images and animations, reflections and transparency in normal renders, normals on the z-buffer, the Monte Carlo renderer (CLI and editor tab, `.m3c` files)
-10. ✅ Browser editor in MB3D's layout (main window, Formulas, Lighting, Post processing and tool windows), repainting of the kept G-buffer, recalculate a selection, double image size, JIT formula editor, map sequences, `.m3i` writing, batch processing in the editor; SSE2/x87 formula code translated natively (2× on dIFS scenes); CI and release builds for Linux, Windows and macOS
-11. ✅ The Mandelbulb3D desktop program replaces the browser editor: MB3D's own form files and ported event handlers for all windows (incl. Big renders, Monte Carlo, Voxel export, Bulb Tracer 2 with mesh preview, HeightMap generator, MutaGen, JIT formula editor), G-buffer double image size, JPEG output
-
-Planned:
-
-- [ ] **Themes as XML files**: the look of the controls (colours, gloss and
-  gradients, radii, metrics) described in XML instead of code; today's two
-  looks become the first two files, and new themes need no programming.
-  Then a few themes of our own design under our own names. MB3D's built-in
-  VCL styles are Embarcadero's and are neither shipped, converted nor read
-  from an MB3D installation.
-- [ ] **Faster custom formulas on the CPU**: the translator now emits
-  structured Rust and calls dIFS formulas directly (ApolloBalloons' main
-  calculation about 27 % faster, bit-identical); what remains of the gap
-  to MB3D (279 s before against 144 s on the same machine) is mostly
-  glibc's `atan2` and `sincos`, whose results a faster version would change
-  in the last bits.
-- [ ] **Double precision where single precision shows**: a quick probe
-  before a card render switches detailed scenes to double precision (the
-  1–5 % differences in the comparison table); under way.
-- [ ] Shadows and ambient occlusion on the card after a shared (mixed)
-  start.
-- [ ] Auto that remembers scenes which are faster on the CPU.
-- [ ] Rendering on other computers in the network (animation frames first).
-
 ## License
 
 MB3D is licensed under the LGPL 2.1. This port is a derivative work and uses
