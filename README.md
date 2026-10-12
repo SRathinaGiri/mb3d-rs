@@ -497,9 +497,9 @@ Ryzen 5 3550H (8 threads): on the **CPU**; **mixed**, as *Auto* does when
 the card's shaders are still compiling, forced here (`MB3D_GPU_MIXED=1`:
 the card marches rows from the top, the CPU threads from the bottom, the
 post calculations run on the CPU); and on the **card** ("Calculate on:
-Graphics card", the shaders compiled beforehand). The differences are the
-mean difference of the final images to the CPU's, in brackets the part of
-the pixels that differ by more than 10 %. `cargo run --release --example
+Graphics card", the shaders compiled beforehand). *Faster* is the CPU's
+time divided by the card's; the differences are the mean difference of
+the final images to the CPU's. `cargo run --release --example
 modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats it.
 
 * 73 of the 80 files run on the card; the other 7 stay on the CPU
@@ -521,88 +521,93 @@ modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats it.
   The shadow rule described above and the random numbers of the SSAO with
   random sampling add a little.
 
-| Parameter file | Size | CPU | Mixed | Card's rows | Mixed vs CPU | Card | Card vs CPU | Card does |
-|---|---|--:|--:|--:|--:|--:|--:|---|
-| 0Encrypted0 - ABoxSOff4d example | 480x300 | 7.4 s | 2.6 s | 91 % | 0.02 % (0.0 %) | 1.8 s | 0.05 % (0.0 %) | march, AO |
-| 6 AM - Torii temple | 480x640 | 50.0 s | 43.3 s | 75 % | 0.22 % (0.0 %) | 44.7 s | 0.22 % (0.0 %) | march, SSAO, reflections |
-| Abominog-Ua - 12.06.2014 | 480x299 | 28.3 s | 32.9 s | 91 % | 0.57 % (2.0 %) | 35.7 s | 0.61 % (2.2 %) | march, shadows, SSAO |
-| ABoxPartlyJuliaRoff | 480x288 | 2.2 s | 1.6 s | 94 % | 1.28 % (3.5 %) | 0.4 s | 1.33 % (3.6 %) | march, shadows, AO |
-| ABoxScale2Start | 400x400 | 0.5 s | 0.1 s | 81 % | 0.00 % (0.0 %) | 0.1 s | 0.00 % (0.0 %) | march, SSAO |
-| ABoxScale3Start | 400x400 | 0.5 s | 0.1 s | 81 % | 0.00 % (0.0 %) | 0.1 s | 0.00 % (0.0 %) | march, SSAO |
-| AboxShapes-Misty | 480x360 | 7.1 s | 2.6 s | 75 % | 2.73 % (13.4 %) | 3.2 s | 3.82 % (19.7 %) | march, SSAO |
-| Aexion 10bulbs | 480x460 | 4.1 s | 0.6 s | 80 % | 0.52 % (1.6 %) | 0.7 s | 0.53 % (1.7 %) | march, SSAO |
-| AkuraPare - 463b | 480x270 | 3.2 s | 1.1 s | 97 % | 0.28 % (0.0 %) | 0.3 s | 0.28 % (0.0 %) | march, shadows, SSAO |
-| ApolloBalloons dIFS | 480x360 | 86.9 s | 18.0 s | 75 % | 1.03 % (4.7 %) | 19.3 s | 1.20 % (5.5 %) | march, SSAO, reflections |
-| AureliusCat - Bamboo | 480x360 | 6.5 s | 0.6 s | 88 % | 0.08 % (0.3 %) | 0.7 s | 0.08 % (0.3 %) | march, SSAO |
-| BatJorge - Pong 703 - Swirls | 480x288 | 11.0 s | 10.3 s | 95 % | 2.74 % (8.3 %) | 1.0 s | 2.86 % (8.6 %) | march, shadows, SSAO |
-| Bill-Snowzell - Tweak - Canyon | 480x270 | 19.9 s | 17.0 s | 97 % | 0.42 % (0.1 %) | 17.9 s | 0.42 % (0.1 %) | march, shadows, SSAO |
-| Blood on the dancefloor | 480x359 | 150.4 s | 12.6 s | 91 % | 4.52 % (16.7 %) | 12.3 s | 4.93 % (18.6 %) | march, SSAO, reflections |
-| BulboxCut | 480x480 | 0.9 s | 0.2 s | 88 % | 1.63 % (5.6 %) | 0.2 s | 1.76 % (6.0 %) | march, SSAO |
-| Chrystal | 480x460 | 2.3 s | 0.3 s | 86 % | 0.17 % (0.0 %) | 0.3 s | 0.20 % (0.0 %) | march, SSAO |
-| cutted sphere over carpet | 480x360 | 16.1 s | 3.5 s | 75 % | 0.13 % (0.1 %) | 3.7 s | 0.15 % (0.1 %) | march, shadows, SSAO, reflections |
-| Dainbramage - Home of the Ancients | 480x300 | 6.5 s | 2.2 s | 91 % | 0.30 % (0.0 %) | 2.4 s | 0.30 % (0.0 %) | march, SSAO |
-| Dainbramage - Hydra | 400x400 | 14.9 s | 4.0 s | 81 % | 0.16 % (0.0 %) | 4.9 s | 0.16 % (0.0 %) | march, SSAO |
-| Dainbramage - Nothing left but bones | 480x240 | 6.1 s | 3.0 s | 97 % | 0.01 % (0.0 %) | 3.0 s | 0.01 % (0.0 %) | march, SSAO |
-| DEcomb1 | 480x360 | 18.4 s | 17.9 s | 75 % | 0.00 % (0.0 %) | 19.8 s | 0.00 % (0.0 %) | march, shadows, AO |
-| dIFS heart shrub | 480x360 | 8.7 s | 3.0 s | 81 % | 0.94 % (2.7 %) | 2.1 s | 1.11 % (2.8 %) | march, shadows, SSAO, reflections |
-| dIFS heart shrub otrap | 480x360 | 9.7 s | 3.3 s | 80 % | 1.08 % (4.8 %) | 2.3 s | 1.19 % (5.1 %) | march, shadows, SSAO, reflections |
-| dIFS shrub | 480x360 | 12.4 s | 3.7 s | 86 % | 0.15 % (0.1 %) | 2.5 s | 0.21 % (0.2 %) | march, shadows, SSAO, reflections |
-| Dodeca Torus mix | 480x480 | 1.2 s | 0.1 s | 81 % | 0.00 % (0.0 %) | 0.1 s | 0.00 % (0.0 %) | march, SSAO |
-| DsyneGrafix - Getting Loopy | 480x270 | 2.6 s | 1.6 s | 97 % | 0.15 % (0.2 %) | 1.6 s | 0.16 % (0.2 %) | march, SSAO |
-| Ellarien - Embellished | 480x240 | 5.0 s | 3.8 s | 96 % | 0.00 % (0.0 %) | 3.1 s | 0.00 % (0.0 %) | march, shadows, SSAO |
-| Ellarien - Shrooms are coming | 480x312 | 27.2 s | 3.2 s | 87 % | 1.03 % (1.2 %) | 3.1 s | 1.32 % (1.6 %) | march, SSAO |
-| ExcludeBulbMeng | 480x360 | 22.4 s | - | - | - | - | - | CPU only: GPU error: single precision overflows in Integer Power + MengerIFS (52177 of 172800 pixels) |
-| Fishbowl | 480x360 | 15.8 s | 3.4 s | 78 % | 0.84 % (2.9 %) | 3.5 s | 1.10 % (3.7 %) | march, SSAO, reflections |
-| Fractales75 - Kiosk | 480x240 | 2.7 s | 1.8 s | 96 % | 0.09 % (0.2 %) | 1.8 s | 0.09 % (0.2 %) | march, AO |
-| Genetic Menger | 480x360 | 2.4 s | 0.3 s | 85 % | 0.00 % (0.0 %) | 0.4 s | 0.01 % (0.0 %) | march, SSAO |
-| genQuat helix mix | 480x360 | 8.2 s | 2.4 s | 77 % | 0.18 % (0.5 %) | 1.2 s | 0.22 % (0.6 %) | march, shadows |
-| HalTenny - Freak Of Nature | 480x480 | 2.2 s | - | - | - | - | - | CPU only: GPU error: single precision overflows in Integer Power + Riemann2 + Folding Int Pow (87901 of 230400 pixels) |
-| Hal-Tenny-Resistance (slow) | 480x270 | 66.8 s | 23.1 s | 97 % | 1.05 % (0.8 %) | 18.3 s | 1.06 % (0.8 %) | march, shadows, SSAO, reflections |
-| Hyperben2 - Ozosphere tweak | 480x288 | 1.9 s | 0.3 s | 94 % | 0.61 % (0.3 %) | 0.3 s | 0.64 % (0.4 %) | march, SSAO |
-| ImpossibleWorld dIFS | 480x360 | 246.6 s | 135.2 s | 75 % | 0.48 % (1.4 %) | 123.6 s | 0.61 % (1.8 %) | march, shadows, SSAO, reflections |
-| InAndOutside box | 480x300 | 0.7 s | 0.2 s | 91 % | 0.11 % (0.0 %) | 0.1 s | 0.13 % (0.0 %) | march, shadows, SSAO |
-| Insect Menger | 480x360 | 35.7 s | 0.7 s | 97 % | 0.01 % (0.0 %) | 0.4 s | 0.01 % (0.0 %) | march, SSAO |
-| Jost1 - Tweak - New tiny temple | 480x360 | 5.9 s | 1.4 s | 78 % | 0.00 % (0.0 %) | 1.4 s | 0.00 % (0.0 %) | march, shadows, SSAO |
-| julia on box | 480x360 | 8.1 s | 3.1 s | 88 % | 0.41 % (1.7 %) | 1.1 s | 0.80 % (1.9 %) | march, shadows, AO, reflections |
-| JuliaSetSample | 480x360 | 4.1 s | 2.4 s | 90 % | 2.73 % (9.1 %) | 0.6 s | 3.08 % (10.2 %) | march, AO |
-| KentPress - Parameter 3 tweak fogits | 480x672 | 34.6 s | 19.8 s | 74 % | 2.28 % (10.2 %) | 15.5 s | 2.93 % (13.1 %) | march, shadows, SSAO |
-| KochSurf Sample 6 | 480x480 | 6.9 s | - | - | - | - | - | CPU only: volumetric light (not on the GPU yet) |
-| Lenord - ASurf 2 | 480x270 | 5.8 s | 3.5 s | 97 % | 0.15 % (0.0 %) | 3.3 s | 0.15 % (0.0 %) | march, shadows, SSAO |
-| Lenord - Between Dark and Light | 480x270 | 10.4 s | - | - | - | - | - | CPU only: volumetric light (not on the GPU yet) |
-| Lenord - The Beanstalk | 480x270 | 4.0 s | 1.6 s | 97 % | 0.51 % (0.4 %) | 0.5 s | 0.52 % (0.4 %) | march, shadows, SSAO |
-| LightBulbMoon - A Fabulous Excuse | 480x264 | 9.1 s | 2.5 s | 96 % | 2.79 % (9.5 %) | 1.7 s | 2.86 % (9.7 %) | march, shadows, SSAO, reflections |
-| LightBulbMoon - No, Never | 480x480 | 28.2 s | 2.4 s | 95 % | 0.10 % (0.1 %) | 2.9 s | 0.10 % (0.1 %) | march, SSAO |
-| Mandelwerk - Makin seashell | 480x360 | 13.5 s | 10.1 s | 75 % | 0.21 % (0.0 %) | 11.9 s | 0.21 % (0.0 %) | march, SSAO |
-| Mandelwerk - TgladTetra inner spirals | 480x360 | 17.4 s | 1.1 s | 90 % | 0.90 % (3.1 %) | 1.2 s | 0.96 % (3.2 %) | march, SSAO |
-| MarkJayBee - Curvichrome | 480x240 | 8.2 s | 2.5 s | 96 % | 3.01 % (11.8 %) | 1.3 s | 3.42 % (12.5 %) | march, shadows, AO, reflections |
-| material colors | 480x298 | 3.1 s | 1.8 s | 91 % | 0.02 % (0.0 %) | 1.5 s | 0.03 % (0.0 %) | march, AO, reflections |
-| Melting spot bloxx | 480x480 | 107.9 s | 18.2 s | 92 % | 0.66 % (3.1 %) | 18.5 s | 0.71 % (3.3 %) | march, SSAO, reflections |
-| Mengerplus for MC | 480x360 | 4.3 s | 3.8 s | 76 % | 0.64 % (2.5 %) | 1.9 s | 0.75 % (2.5 %) | march, shadows, AO, reflections |
-| MengerTrees | 480x360 | 10.6 s | 3.0 s | 91 % | 1.05 % (5.1 %) | 2.0 s | 1.27 % (6.1 %) | march, shadows, SSAO |
-| MutaGenD4B12E71C70D4FD00357_canary~ | 480x270 | 7.0 s | - | - | - | - | - | CPU only: the built-in formula JITTrigExample is not on the GPU yet |
-| Oxnot - Flexing | 480x360 | 3.2 s | 0.6 s | 89 % | 0.00 % (0.0 %) | 0.2 s | 0.00 % (0.0 %) | march, shadows, SSAO |
-| Oxnot - Shells | 480x360 | 6.9 s | - | - | - | - | - | CPU only: GPU error: single precision overflows in PseudoXDB + _PolyFold-sym + Riemann2 (6457 of 172800 pixels) |
-| PaMonk - Ringlets | 480x480 | 7.1 s | 0.3 s | 96 % | 0.84 % (1.6 %) | 0.3 s | 0.87 % (1.7 %) | march, SSAO |
-| QuatP4hybridJulia | 480x679 | 0.8 s | 0.1 s | 80 % | 0.17 % (0.3 %) | 0.1 s | 0.19 % (0.4 %) | march, SSAO |
-| Rama - Elysium | 480x360 | 68.7 s | 22.4 s | 89 % | 0.05 % (0.0 %) | 14.8 s | 0.14 % (0.1 %) | march, shadows, AO, reflections |
-| Recycledrelatives - Fractal Fan | 480x411 | 0.9 s | 0.1 s | 79 % | 0.04 % (0.0 %) | 0.1 s | 0.04 % (0.0 %) | march, SSAO |
-| Recycledrelatives - Test for SurfMod | 480x360 | 5.5 s | 0.5 s | 88 % | 0.95 % (1.4 %) | 0.5 s | 0.99 % (1.5 %) | march, SSAO |
-| Rowratty - Spirals | 480x270 | 4.0 s | 1.6 s | 97 % | 0.56 % (0.0 %) | 0.6 s | 0.65 % (0.4 %) | march, shadows, SSAO |
-| Sabine62 - Housing problem | 480x360 | 34.1 s | 13.5 s | 75 % | 2.95 % (9.6 %) | 12.5 s | 3.09 % (10.2 %) | march, shadows, SSAO, reflections |
-| spineJulia | 480x480 | 20.8 s | - | - | - | - | - | CPU only: GPU error: single precision overflows in Integer Power (41693 of 230400 pixels) |
-| Surreal shell | 480x288 | 1.8 s | 0.3 s | 94 % | 1.17 % (1.5 %) | 0.3 s | 1.25 % (1.6 %) | march, SSAO |
-| Test8 | 480x360 | 0.6 s | 0.1 s | 82 % | 0.00 % (0.0 %) | 0.1 s | 0.00 % (0.0 %) | march, SSAO |
-| Theli-At - Black Mandelbulb | 480x480 | 1.4 s | 0.1 s | 79 % | 0.29 % (0.6 %) | 0.1 s | 0.37 % (0.7 %) | march, SSAO |
-| Theli-At - Bone Menger using MH | 480x360 | 4.8 s | 0.7 s | 82 % | 0.78 % (2.0 %) | 0.8 s | 0.78 % (2.0 %) | march, SSAO |
-| Theli-At - MengerSpheres | 480x360 | 3.7 s | 0.5 s | 85 % | 0.05 % (0.0 %) | 0.6 s | 0.05 % (0.0 %) | march, SSAO |
-| ThePearl dIFS | 480x360 | 2.7 s | 1.4 s | 75 % | 0.03 % (0.1 %) | 0.8 s | 0.03 % (0.1 %) | march, shadows, SSAO, reflections |
-| TimeMachine | 480x448 | 1.6 s | 0.4 s | 65 % | 0.62 % (2.4 %) | 0.5 s | 1.02 % (4.2 %) | march, SSAO |
-| toricaleggs | 480x480 | 14.2 s | 5.4 s | 91 % | 0.28 % (1.2 %) | 5.5 s | 0.29 % (1.2 %) | march, SSAO, reflections |
-| TreePlanet | 480x435 | 4.4 s | 1.1 s | 82 % | 0.84 % (5.1 %) | 0.7 s | 0.87 % (5.2 %) | march, shadows, SSAO |
-| UndeadAcademy tweak - Peacock in blue | 480x360 | 8.2 s | 1.0 s | 81 % | 0.62 % (1.9 %) | 1.0 s | 0.68 % (2.1 %) | march, SSAO |
-| Virtual tubes world (UndeadAcademy style) | 480x360 | 23.1 s | 5.3 s | 79 % | 0.59 % (1.6 %) | 4.8 s | 0.84 % (2.4 %) | march, shadows, SSAO, reflections |
-| Wada basin - Reflect test | 480x360 | 1.2 s | 0.5 s | 79 % | 0.02 % (0.0 %) | 0.4 s | 0.02 % (0.0 %) | march, SSAO, reflections |
-| Waste-and-tragedy - Mandalex | 480x480 | 36.8 s | 12.7 s | 56 % | 1.45 % (6.3 %) | 22.2 s | 2.52 % (13.2 %) | march, SSAO |
+<details>
+<summary>All 80 files (click to open)</summary>
+
+| Parameter file | CPU | Card | Faster | Card vs CPU | Mixed vs CPU |
+|:--|--:|--:|--:|--:|--:|
+| 0Encrypted0 - ABoxSOff4d example | 7.4 s | 1.8 s | 4.1× | 0.05 % | 0.02 % |
+| 6 AM - Torii temple | 50.0 s | 44.7 s | 1.1× | 0.22 % | 0.22 % |
+| Abominog-Ua - 12.06.2014 | 28.3 s | 35.7 s | 0.8× | 0.61 % | 0.57 % |
+| ABoxPartlyJuliaRoff | 2.2 s | 0.4 s | 5.4× | 1.33 % | 1.28 % |
+| ABoxScale2Start | 0.5 s | 0.1 s | 5.7× | 0.00 % | 0.00 % |
+| ABoxScale3Start | 0.5 s | 0.1 s | 5.3× | 0.00 % | 0.00 % |
+| AboxShapes-Misty | 7.1 s | 3.2 s | 2.2× | 3.82 % | 2.73 % |
+| Aexion 10bulbs | 4.1 s | 0.7 s | 6.1× | 0.53 % | 0.52 % |
+| AkuraPare - 463b | 3.2 s | 0.3 s | 12.3× | 0.28 % | 0.28 % |
+| ApolloBalloons dIFS | 86.9 s | 19.3 s | 4.5× | 1.20 % | 1.03 % |
+| AureliusCat - Bamboo | 6.5 s | 0.7 s | 9.8× | 0.08 % | 0.08 % |
+| BatJorge - Pong 703 - Swirls | 11.0 s | 1.0 s | 10.9× | 2.86 % | 2.74 % |
+| Bill-Snowzell - Tweak - Canyon | 19.9 s | 17.9 s | 1.1× | 0.42 % | 0.42 % |
+| Blood on the dancefloor | 150.4 s | 12.3 s | 12.2× | 4.93 % | 4.52 % |
+| BulboxCut | 0.9 s | 0.2 s | 5.4× | 1.76 % | 1.63 % |
+| Chrystal | 2.3 s | 0.3 s | 7.5× | 0.20 % | 0.17 % |
+| cutted sphere over carpet | 16.1 s | 3.7 s | 4.4× | 0.15 % | 0.13 % |
+| Dainbramage - Home of the Ancients | 6.5 s | 2.4 s | 2.7× | 0.30 % | 0.30 % |
+| Dainbramage - Hydra | 14.9 s | 4.9 s | 3.1× | 0.16 % | 0.16 % |
+| Dainbramage - Nothing left but bones | 6.1 s | 3.0 s | 2.0× | 0.01 % | 0.01 % |
+| DEcomb1 | 18.4 s | 19.8 s | 0.9× | 0.00 % | 0.00 % |
+| dIFS heart shrub | 8.7 s | 2.1 s | 4.1× | 1.11 % | 0.94 % |
+| dIFS heart shrub otrap | 9.7 s | 2.3 s | 4.2× | 1.19 % | 1.08 % |
+| dIFS shrub | 12.4 s | 2.5 s | 5.0× | 0.21 % | 0.15 % |
+| Dodeca Torus mix | 1.2 s | 0.1 s | 9.0× | 0.00 % | 0.00 % |
+| DsyneGrafix - Getting Loopy | 2.6 s | 1.6 s | 1.6× | 0.16 % | 0.15 % |
+| Ellarien - Embellished | 5.0 s | 3.1 s | 1.6× | 0.00 % | 0.00 % |
+| Ellarien - Shrooms are coming | 27.2 s | 3.1 s | 8.7× | 1.32 % | 1.03 % |
+| ExcludeBulbMeng | 22.4 s | – | – | CPU only: single precision overflows | |
+| Fishbowl | 15.8 s | 3.5 s | 4.5× | 1.10 % | 0.84 % |
+| Fractales75 - Kiosk | 2.7 s | 1.8 s | 1.5× | 0.09 % | 0.09 % |
+| Genetic Menger | 2.4 s | 0.4 s | 6.8× | 0.01 % | 0.00 % |
+| genQuat helix mix | 8.2 s | 1.2 s | 6.5× | 0.22 % | 0.18 % |
+| HalTenny - Freak Of Nature | 2.2 s | – | – | CPU only: single precision overflows | |
+| Hal-Tenny-Resistance (slow) | 66.8 s | 18.3 s | 3.7× | 1.06 % | 1.05 % |
+| Hyperben2 - Ozosphere tweak | 1.9 s | 0.3 s | 6.2× | 0.64 % | 0.61 % |
+| ImpossibleWorld dIFS | 246.6 s | 123.6 s | 2.0× | 0.61 % | 0.48 % |
+| InAndOutside box | 0.7 s | 0.1 s | 7.7× | 0.13 % | 0.11 % |
+| Insect Menger | 35.7 s | 0.4 s | 87.1× | 0.01 % | 0.01 % |
+| Jost1 - Tweak - New tiny temple | 5.9 s | 1.4 s | 4.2× | 0.00 % | 0.00 % |
+| julia on box | 8.1 s | 1.1 s | 7.1× | 0.80 % | 0.41 % |
+| JuliaSetSample | 4.1 s | 0.6 s | 6.6× | 3.08 % | 2.73 % |
+| KentPress - Parameter 3 tweak fogits | 34.6 s | 15.5 s | 2.2× | 2.93 % | 2.28 % |
+| KochSurf Sample 6 | 6.9 s | – | – | CPU only: volumetric light | |
+| Lenord - ASurf 2 | 5.8 s | 3.3 s | 1.7× | 0.15 % | 0.15 % |
+| Lenord - Between Dark and Light | 10.4 s | – | – | CPU only: volumetric light | |
+| Lenord - The Beanstalk | 4.0 s | 0.5 s | 7.5× | 0.52 % | 0.51 % |
+| LightBulbMoon - A Fabulous Excuse | 9.1 s | 1.7 s | 5.4× | 2.86 % | 2.79 % |
+| LightBulbMoon - No, Never | 28.2 s | 2.9 s | 9.9× | 0.10 % | 0.10 % |
+| Mandelwerk - Makin seashell | 13.5 s | 11.9 s | 1.1× | 0.21 % | 0.21 % |
+| Mandelwerk - TgladTetra inner spirals | 17.4 s | 1.2 s | 14.9× | 0.96 % | 0.90 % |
+| MarkJayBee - Curvichrome | 8.2 s | 1.3 s | 6.2× | 3.42 % | 3.01 % |
+| material colors | 3.1 s | 1.5 s | 2.1× | 0.03 % | 0.02 % |
+| Melting spot bloxx | 107.9 s | 18.5 s | 5.8× | 0.71 % | 0.66 % |
+| Mengerplus for MC | 4.3 s | 1.9 s | 2.3× | 0.75 % | 0.64 % |
+| MengerTrees | 10.6 s | 2.0 s | 5.3× | 1.27 % | 1.05 % |
+| MutaGenD4B12E71C70D4FD00357_canary~ | 7.0 s | – | – | CPU only: JIT formula | |
+| Oxnot - Flexing | 3.2 s | 0.2 s | 15.1× | 0.00 % | 0.00 % |
+| Oxnot - Shells | 6.9 s | – | – | CPU only: single precision overflows | |
+| PaMonk - Ringlets | 7.1 s | 0.3 s | 26.4× | 0.87 % | 0.84 % |
+| QuatP4hybridJulia | 0.8 s | 0.1 s | 6.5× | 0.19 % | 0.17 % |
+| Rama - Elysium | 68.7 s | 14.8 s | 4.6× | 0.14 % | 0.05 % |
+| Recycledrelatives - Fractal Fan | 0.9 s | 0.1 s | 6.7× | 0.04 % | 0.04 % |
+| Recycledrelatives - Test for SurfMod | 5.5 s | 0.5 s | 10.4× | 0.99 % | 0.95 % |
+| Rowratty - Spirals | 4.0 s | 0.6 s | 6.8× | 0.65 % | 0.56 % |
+| Sabine62 - Housing problem | 34.1 s | 12.5 s | 2.7× | 3.09 % | 2.95 % |
+| spineJulia | 20.8 s | – | – | CPU only: single precision overflows | |
+| Surreal shell | 1.8 s | 0.3 s | 6.6× | 1.25 % | 1.17 % |
+| Test8 | 0.6 s | 0.1 s | 10.2× | 0.00 % | 0.00 % |
+| Theli-At - Black Mandelbulb | 1.4 s | 0.1 s | 15.6× | 0.37 % | 0.29 % |
+| Theli-At - Bone Menger using MH | 4.8 s | 0.8 s | 5.6× | 0.78 % | 0.78 % |
+| Theli-At - MengerSpheres | 3.7 s | 0.6 s | 6.6× | 0.05 % | 0.05 % |
+| ThePearl dIFS | 2.7 s | 0.8 s | 3.2× | 0.03 % | 0.03 % |
+| TimeMachine | 1.6 s | 0.5 s | 3.0× | 1.02 % | 0.62 % |
+| toricaleggs | 14.2 s | 5.5 s | 2.6× | 0.29 % | 0.28 % |
+| TreePlanet | 4.4 s | 0.7 s | 6.6× | 0.87 % | 0.84 % |
+| UndeadAcademy tweak - Peacock in blue | 8.2 s | 1.0 s | 7.9× | 0.68 % | 0.62 % |
+| Virtual tubes world (UndeadAcademy style) | 23.1 s | 4.8 s | 4.9× | 0.84 % | 0.59 % |
+| Wada basin - Reflect test | 1.2 s | 0.4 s | 2.8× | 0.02 % | 0.02 % |
+| Waste-and-tragedy - Mandalex | 36.8 s | 22.2 s | 1.7× | 2.52 % | 1.45 % |
+
+</details>
 
 ## What is ported
 
