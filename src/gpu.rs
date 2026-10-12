@@ -64,6 +64,10 @@ struct Resumer {
     timing: bool,
 }
 
+/// The [`Resumer`] of the reflection batches with the hash of their shader
+/// (another scene starts with a new one: its turns may take much longer).
+static REFLECT_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+
 /// Slots at most (about 1.3 KB of state each).
 const RESUME_SLOTS: usize = 1 << 15;
 
@@ -83,7 +87,7 @@ impl Resumer {
         let state = g.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("state"),
             size: (slots * stride as usize * 4) as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
         let queue = g.device.create_buffer(&wgpu::BufferDescriptor {
@@ -102,20 +106,29 @@ impl Resumer {
     /// Runs a job of `items` pixels (tasks) until all are done: `base` is
     /// its parameter block (written to `par`), `encode` records its compute
     /// pass of the given work groups (x, 1), `done(n)` is called when the
-    /// first `n` items are finished.
+    /// first `n` items are finished.  `limit(started, free)` gives before
+    /// every submission how many of the items the card may start (from
+    /// `started` up to `items`; the others are left to someone else; `free`
+    /// slots are idle); `give_up(left)` with `left` items still running
+    /// after a submission stops the job early.  Returns the number of items
+    /// the card took and those of them it did not finish.
+    #[allow(clippy::too_many_arguments)]
     fn run(
         &mut self,
         g: &Gpu,
         par: &wgpu::Buffer,
         mut base: Vec<u32>,
         items: usize,
+        limit: &dyn Fn(usize, usize) -> usize,
+        give_up: &dyn Fn(usize) -> bool,
         cancel: &dyn Fn() -> bool,
         encode: impl Fn(&mut wgpu::CommandEncoder, u32),
         mut done: impl FnMut(usize) -> Result<(), String>,
-    ) -> Result<(), String> {
+    ) -> Result<(usize, Vec<usize>), String> {
         let groups = self.slots / 64;
         base[SLOTS_WORD + 1] = self.slots as u32;
-        base[SLOTS_WORD + 2] = items as u32;
+        let mut started;
+        let mut lim = limit(0, self.slots).clamp(0, items);
         let mut enc = g.device.create_command_encoder(&Default::default());
         // the slots' first words (the pixel + 1): all free
         enc.clear_buffer(&self.state, 0, Some(self.slots as u64 * 4));
@@ -126,6 +139,7 @@ impl Resumer {
                 return Err("cancelled".into());
             }
             let t = std::time::Instant::now();
+            base[SLOTS_WORD + 2] = lim as u32;
             base[BUDGET_WORD] = self.budget;
             g.queue.write_buffer(par, 0, &bytes(&base));
             g.queue.write_buffer(&self.queue, 0, &bytes(&[0]));
@@ -146,16 +160,26 @@ impl Resumer {
             rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
             let q: Vec<u32> = slice.get_mapped_range().map_err(|e| e.to_string())?.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
             self.queue_read.unmap();
-            let (left, next) = (q[0] as usize, (q[1] as usize).min(items));
+            let (left, next) = (q[0] as usize, (q[1] as usize).min(lim));
+            started = next;
             let dt = t.elapsed().as_secs_f64();
             if self.timing {
-                eprintln!("  submission (budget {}): {:.1} ms, {next} of {items} started, {left} suspended", self.budget, dt * 1000.0);
+                eprintln!("  submission (budget {}): {:.1} ms, {next} of {lim} started, {left} suspended", self.budget, dt * 1000.0);
             }
             // the first suspended item or the next to start: all before it
             // are finished
             done(if left > 0 { (q[2] as usize).min(next) } else { next })?;
-            if left == 0 && next >= items {
-                return Ok(());
+            lim = limit(started, self.slots.saturating_sub(left)).clamp(started, items);
+            if left == 0 && next >= lim {
+                return Ok((lim, Vec::new()));
+            }
+            if left > 0 && next >= lim && give_up(left) {
+                // the items of the busy slots (their first state word: the
+                // item + 1)
+                let read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("slots read"), size: self.slots as u64 * 4, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+                let v = read_back(g, &self.state, &read, 0, self.slots as u64 * 4)?;
+                let busy = v.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).filter(|&x| x != 0).map(|x| x as usize - 1).collect();
+                return Ok((lim, busy));
             }
             if !self.fixed {
                 let f = (self.target / dt.max(1e-4)).clamp(0.25, 2.0);
@@ -276,6 +300,13 @@ fn real_block(dbl: bool) -> String {
         o.push_str("alias R = f64;\nfn rtpl_r(i: u32) -> R { return bitcast<f64>((u64(rtpl[i + 1u]) << 32u) | u64(rtpl[i])); }\nfn rput(q: u32, ns: u32, x: R) { let b = bitcast<u64>(x); STATE[q] = u32(b & 0xFFFFFFFFlu); STATE[q + ns] = u32(b >> 32u); }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f64>((u64(STATE[q + ns]) << 32u) | u64(STATE[q])); }\n");
     } else {
         o.push_str("alias R = f32;\nfn rtpl_r(i: u32) -> R { return bitcast<f32>(rtpl[i]); }\nfn rput(q: u32, ns: u32, x: R) { STATE[q] = bitcast<u32>(x); }\nfn rget(q: u32, ns: u32) -> R { return bitcast<f32>(STATE[q]); }\n");
+    }
+    // the positions of the reflection tasks: as doubles (words 24-29 and
+    // 30-35 of the record) or the f32 words
+    if dbl {
+        o.push_str("fn out_d(q: u32) -> R { return bitcast<f64>((u64(OUT[q + 1u]) << 32u) | u64(OUT[q])); }\nfn task_origin(o: u32) -> vec3<R> { return vec3<R>(out_d(o + 24u), out_d(o + 26u), out_d(o + 28u)); }\nfn put_hit_pos(o: u32, v: vec3<R>) { for (var k = 0u; k < 3u; k++) { let b = bitcast<u64>(v[k]); OUT[o + 30u + 2u * k] = u32(b & 0xFFFFFFFFlu); OUT[o + 31u + 2u * k] = u32(b >> 32u); } }\n");
+    } else {
+        o.push_str("fn task_origin(o: u32) -> vec3<R> { return vec3<R>(bitcast<f32>(OUT[o]), bitcast<f32>(OUT[o + 1u]), bitcast<f32>(OUT[o + 2u])); }\nfn put_hit_pos(o: u32, v: vec3<R>) {}\n");
     }
     // the coordinates: as doubles (DP: start, view gradients, julia
     // constant) or the f32 parameters
@@ -1210,12 +1241,15 @@ pub type DeProbe = (f32, i32, i32, [(f32, i32); 2]);
 /// depth `zpos_fine >> 8`).
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ReflectTask {
-    pub origin: [f32; 3],
+    pub origin: [f64; 3],
     pub dir: [f32; 3],
     pub zz: f32,
     pub pixel: u32,
     /// the ray runs inside the set (inside rendering: the DE inverted)
     pub inside: bool,
+    /// the quality of the ambient occlusion at the hit (0..3, `deao_1pos`;
+    /// the bounces use lower ones)
+    pub ao_q: u8,
 }
 
 /// The result of a task: the G-buffer value of the hit (normal, depth,
@@ -1224,7 +1258,7 @@ pub struct ReflectTask {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ReflectHit {
     pub si: SiLight,
-    pub pos: [f32; 3],
+    pub pos: [f64; 3],
     pub zz: f32,
     pub zz2: f32,
     pub hit: bool,
@@ -1258,20 +1292,34 @@ pub struct ReflectOpts {
     pub far_fog: bool,
 }
 
+/// The tasks of a reflection batch shared with the CPU: (limit, cpu_next)
+/// under a lock.  The card starts the tasks below `limit`, raising it before
+/// each submission by the slots that became free; the CPU takes them from
+/// the end (`cpu_next`, going down, never below `limit`).  `done`: the card
+/// is finished, the limit final.
+#[derive(Debug)]
+pub struct RaySharing {
+    pub state: Mutex<(usize, usize)>,
+    pub done: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    /// when no more than this many rays are left on the card (and the CPU
+    /// has none) the card gives them to the CPU: returned as unfinished
+    pub tail: usize,
+}
+
 /// Runs the tasks of the reflection pass on the graphics card (the march
 /// of every bounce with the normals, colour, shadows and ambient occlusion
 /// of its hit, as `reflect.rs` does on the CPU).
-pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> Result<Vec<ReflectHit>, String> {
+pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
     if tasks.is_empty() {
-        return Ok(Vec::new());
+        if let Some(sh) = share {
+            sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
+        }
+        return Ok((Vec::new(), 0, Vec::new()));
     }
     if let Some(r) = unsupported(p) {
         return Err(r);
     }
-    if needs_double(p) {
-        // the task records keep positions in single precision
-        return Err("reflections of a view that needs doubles".into());
-    }
+    let dbl = needs_double(p);
     let g = gpu()?;
     let sh = scene_shader(p)?;
     let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
@@ -1306,14 +1354,16 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     let words: Vec<u32> = tasks
         .iter()
         .flat_map(|t| {
-            let mut w = [0u32; 24];
+            let mut w = [0u32; 36];
             for k in 0..3 {
-                w[k] = t.origin[k].to_bits();
+                w[k] = (t.origin[k] as f32).to_bits();
                 w[3 + k] = t.dir[k].to_bits();
+                let b = t.origin[k].to_bits();
+                (w[24 + 2 * k], w[25 + 2 * k]) = (b as u32, (b >> 32) as u32);
             }
             w[6] = t.zz.to_bits();
             w[7] = t.pixel;
-            w[23] = t.inside as u32;
+            w[23] = t.inside as u32 | (t.ao_q as u32) << 8;
             w
         })
         .collect();
@@ -1332,11 +1382,26 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     let maps = make("maps", &sh.maps);
     // the tasks in rows of R_W, resumable (a bounce marches a ray and
     // casts the shadow and occlusion rays of its hit)
-    let mut res = Resumer::new(g, &sh);
+    // the pacing from the last batch (its buffers and turn budget): the
+    // reflection pass sends many batches, a new one each time ramped up
+    // from a small budget again
+    let key = {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        sh.code.hash(&mut h);
+        h.finish()
+    };
+    let mut res = match REFLECT_RESUMER.lock().unwrap().take() {
+        Some((k, r)) if k == key => r,
+        _ => Resumer::new(g, &sh),
+    };
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
     base[SLOTS_WORD] = split as u32;
     let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    use std::sync::atomic::Ordering;
+    let n_card = std::cell::Cell::new(n);
+    let mut unfinished = Vec::new();
     for (pi, pl) in pls.iter().enumerate() {
         let t_pl = std::time::Instant::now();
         let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -1352,11 +1417,29 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
                 wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
             ],
         });
-        res.run(
+        // the march shares the tasks with the CPU (`RaySharing`), the
+        // shadows and occlusion follow for the card's part
+        let lim = |started: usize, free: usize| -> usize {
+            let Some(sh) = share.filter(|_| pi == 0) else { return n_card.get() };
+            let mut st = sh.state.lock().unwrap();
+            st.0 = st.0.max((started + free).min(st.1));
+            st.0
+        };
+        // the last few rays of the march: the CPU, when it has nothing else
+        // to do, is faster for single long rays
+        let give_up = |left: usize| -> bool {
+            share.filter(|_| pi == 0).is_some_and(|sh| {
+                let st = sh.state.lock().unwrap();
+                left <= sh.tail && st.0 >= st.1
+            })
+        };
+        let (done_n, busy) = res.run(
             g,
             &par,
             base.clone(),
             n,
+            &lim,
+            &give_up,
             &|| false,
             |enc, groups| {
                 let mut pass = enc.begin_compute_pass(&Default::default());
@@ -1366,11 +1449,20 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
             },
             |_| Ok(()),
         )?;
+        if pi == 0 {
+            n_card.set(done_n);
+            unfinished = busy;
+            if let Some(sh) = share {
+                // the limit is final: the CPU does the rest
+                sh.done.store(true, Ordering::SeqCst);
+            }
+        }
         if timing {
             let what = if pls.len() == 1 { "march, shadows, occlusion" } else if pi == 0 { "march" } else { "shadows, occlusion" };
             eprintln!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
         }
     }
+    *REFLECT_RESUMER.lock().unwrap() = Some((key, res));
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
@@ -1386,7 +1478,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
     rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
     let out = {
         let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
-        data.chunks_exact(96)
+        data.chunks_exact(36 * 4)
             .map(|rec| {
                 let u = |k: usize| u32::from_le_bytes(rec[k * 4..k * 4 + 4].try_into().unwrap());
                 let f = |k: usize| f32::from_bits(u(k));
@@ -1401,7 +1493,12 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
                         si_gradient: s as u16,
                         otrap: (s >> 16) as u16,
                     },
-                    pos: [f(13), f(14), f(15)],
+                    pos: if dbl {
+                        let d = |k: usize| f64::from_bits(u(k) as u64 | (u(k + 1) as u64) << 32);
+                        [d(30), d(32), d(34)]
+                    } else {
+                        [f(13) as f64, f(14) as f64, f(15) as f64]
+                    },
                     zz: f(16),
                     zz2: f(17),
                     hit: flags & 1 != 0,
@@ -1413,7 +1510,7 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts) -> 
             .collect()
     };
     read.unmap();
-    Ok(out)
+    Ok((out, n_card.get(), unfinished))
 }
 
 /// The DE of every pixel of `p.rect` at the start of its ray, as the
@@ -1539,6 +1636,8 @@ fn run(
                 &pars[k],
                 params(p, row0, rows, sh, mode, post, None),
                 w * rows,
+                &|_, _| w * rows,
+                &|_| false,
                 cancel,
                 |enc, groups| {
                     let mut pass = enc.begin_compute_pass(&Default::default());
@@ -1896,7 +1995,7 @@ mod tests {
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
         // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "dv"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();

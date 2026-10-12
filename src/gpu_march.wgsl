@@ -124,8 +124,10 @@ const R_FAR_FOG: u32 = 168u;     // far fog / squared depth: the depth of a hit 
 const R_SURFACE: u32 = 169u;     // 1: the tasks are the pixels' surfaces (no march)
 const R_N: u32 = 170u;           // the number of tasks
 const R_LIGHTS: u32 = 172u;      // 6 x (index, HSvec or position, positional, lmax_l, visible, 0)
-const R_WORDS: u32 = 24u;        // a task: 0-2 origin, 3-5 direction, 6 zz (surface: zpos), 7 pixel;
-                                 // out 8-12 the G-buffer value, 13-15 position, 16 zz, 17 zz2, 18 flags, 19 step count
+const R_WORDS: u32 = 36u;        // a task: 0-2 origin, 3-5 direction, 6 zz (surface: zpos), 7 pixel,
+                                 // 23 inside (bit 0) and AO quality (bits 8-15), 24-29 the origin as doubles;
+                                 // out 8-12 the G-buffer value, 13-15 position, 16 zz, 17 zz2, 18 flags, 19 step count,
+                                 // 30-35 the position as doubles (double mode)
 const R_W: u32 = 256u;           // tasks per dispatch row
 const M_MARCH: u32 = 0u;
 const M_SHADOW: u32 = 1u;
@@ -1287,6 +1289,25 @@ fn max_length_to_cut_plane() -> vec2<R> {
         }
     }
     return vec2<R>(len, plane);
+}
+
+// minLengthToCutPlane for a reflected ray: its length up to the cutting
+// planes ahead (more than one step away), at most ZEND
+fn r_max_len() -> R {
+    var len = pf(ZEND);
+    let opts = P[CUT_OPT];
+    if (opts == 0u) {
+        return len;
+    }
+    for (var k = 0u; k < 3u; k++) {
+        if (((opts >> k) & 1u) != 0u && abs(r_task_dir[k]) > 1e-20) {
+            let t = (pf(CUT_POS + k) - r_task_origin[k]) / r_task_dir[k];
+            if (t > 1.0 && t < len) {
+                len = t;
+            }
+        }
+    }
+    return len;
 }
 
 // AtCutPlane2: closer than `plus_d` to a cutting plane
@@ -2738,7 +2759,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     step_ao = msl / pf(DE_STOP);
                     let s_max_d = pf(AO_MAX_LEN) * 0.5 * sqrt(R(pi(HEIGHT)) * R(pi(HEIGHT)) + R(pi(WIDTH)) * R(pi(WIDTH)));
                     max_dist = s_max_d * sqrt(step_ao);
-                    let q = min(u32(pi(AO_QUALITY)), 3u);
+                    // reflections: the quality of the task's bounce
+                    let q = min(select(u32(pi(AO_QUALITY)), r_task_q, MODE_KIND == 3u), 3u);
                     let abr = 0.5 * PI / (R(q) + 0.9);
                     if (q == 0u) {
                         d_step_mul = 1.8;
@@ -2990,7 +3012,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     }
                     rlast_sw = dstep;
                     mzz += dstep;
-                    if (mzz > pf(ZEND)) {
+                    if (mzz > r_max_len()) {
                         // open air
                         r_flags = 0u;
                         r_zz2 = mzz;
@@ -3166,8 +3188,10 @@ var<private> state_slot: u32;
 // the reflection pass: the task's record in OUT, and whether the task
 // leaves it alone (the second pipeline on a task without a hit)
 var<private> r_rec: u32;
-// the task runs inside the set (word 23)
+// the task runs inside the set (word 23 bit 0), the AO quality of its
+// bounce (bits 8-15)
 var<private> r_task_inside: bool;
+var<private> r_task_q: u32;
 var<private> r_keep: bool;
 var<private> cur_item: u32;
 var<private> resuming: bool;
@@ -3176,9 +3200,10 @@ var<private> suspended: bool;
 fn reflect_task(idx: u32) {
     let o = idx * R_WORDS;
     r_rec = o;
-    r_task_inside = OUT[o + 23u] != 0u;
+    r_task_inside = (OUT[o + 23u] & 1u) != 0u;
+    r_task_q = (OUT[o + 23u] >> 8u) & 0xFFu;
     r_keep = false;
-    r_task_origin = vec3<R>(R(bitcast<f32>(OUT[o])), R(bitcast<f32>(OUT[o + 1u])), R(bitcast<f32>(OUT[o + 2u])));
+    r_task_origin = task_origin(o);
     r_task_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
     r_task = vec4<R>(0.0, 0.0, R(bitcast<f32>(OUT[o + 6u])), 0.0);
     let pix = OUT[o + 7u];
@@ -3203,6 +3228,7 @@ fn reflect_task(idx: u32) {
     OUT[o + 13u] = bitcast<u32>(f32(c.x));
     OUT[o + 14u] = bitcast<u32>(f32(c.y));
     OUT[o + 15u] = bitcast<u32>(f32(c.z));
+    put_hit_pos(o, c);
     OUT[o + 16u] = bitcast<u32>(f32(zz_base + mzz * zz_mul));
     OUT[o + 17u] = bitcast<u32>(f32(r_zz2));
     OUT[o + 18u] = r_flags;

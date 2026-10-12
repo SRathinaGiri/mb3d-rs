@@ -230,6 +230,8 @@ struct SrCtx<'a> {
     /// DE ambient occlusion: (max length, first step random)
     ao: Option<(f32, bool)>,
     vol: bool,
+    /// the rays are marched on the graphics card
+    gpu: bool,
 }
 
 struct SrTracer<'a, 'c> {
@@ -248,6 +250,95 @@ struct SrTracer<'a, 'c> {
     guard: u32,
     /// MB3D_REFLECT_DEBUG=x,y: print the bounces of that pixel
     dbg: bool,
+    /// set: give up the ray being marched (`march_until`)
+    stop: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+}
+
+/// (specular colour, alpha, diffuse colour) of a surface for the next ray
+type Sd = (S3, f32, S3);
+
+/// Where a frame of [`SrTracer::step`] continues.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum At {
+    /// the start of `CalcRay`
+    Enter,
+    /// `lab1`: the next ray (refracted or reflected) from the surface
+    Next,
+    /// the ray was marched
+    Marched,
+    /// the recursion for the hit returned
+    Returned,
+}
+
+/// The locals of one `CalcRay` call.
+#[derive(Clone, Debug)]
+struct Frame {
+    at: At,
+    rit: i32,
+    sr_vec: Vec3,
+    zz: f64,
+    t_absorb: S3,
+    sd: Sd,
+    calc_t: bool,
+    tmp_loc: Vec3,
+    tmp_norm: Vec3,
+    tmp_absorb: S3,
+    tmp_sd: Sd,
+    zz_tmp: f64,
+    spec_mul_t: f64,
+    new_vec: Vec3,
+    max_l: f64,
+    /// where the ray starts
+    origin: Vec3,
+}
+
+impl Frame {
+    fn new(zz: f64, sr_vec: Vec3, t_absorb: S3, sd: Sd, rit: i32) -> Self {
+        Frame {
+            at: At::Enter,
+            rit,
+            sr_vec,
+            zz,
+            t_absorb,
+            sd,
+            calc_t: false,
+            tmp_loc: [0.0; 3],
+            tmp_norm: [0.0; 3],
+            tmp_absorb: [0.0; 3],
+            tmp_sd: ([0.0; 3], 0.0, [0.0; 3]),
+            zz_tmp: 0.0,
+            spec_mul_t: 0.0,
+            new_vec: [0.0; 3],
+            max_l: 0.0,
+            origin: [0.0; 3],
+        }
+    }
+}
+
+/// A ray to march: from the surface at `origin` (depth `zz`) in direction
+/// `dir`, inside the set or not, bounce `rit`, at most `max_l` long.
+#[derive(Clone, Copy, Debug)]
+struct RayReq {
+    origin: Vec3,
+    dir: Vec3,
+    zz: f64,
+    inside: bool,
+    rit: i32,
+    max_l: f64,
+}
+
+/// The result of a march: the G-buffer value of the hit (normal, colour,
+/// depth, shadows, occlusion) or of the open air (step count), the hit
+/// position and depth, the length of the ray before (`zz2_paint`) and after
+/// the search of the surface.
+#[derive(Clone, Copy, Debug)]
+struct RayHit {
+    hit: bool,
+    si: SiLight,
+    pos: Vec3,
+    zz: f64,
+    zz2_paint: f64,
+    zz2: f64,
 }
 
 /// The pixel named by `MB3D_REFLECT_DEBUG` ("x,y").
@@ -262,6 +353,11 @@ impl<'a, 'c> SrTracer<'a, 'c> {
     fn update_de_stop(&mut self, zz: f64) {
         let p = self.c.p;
         self.m.ms_de_stop = (p.de_stop as f64 * (1.0 + zz.abs() * p.de_stop_factor as f64)) as f32;
+    }
+
+    #[inline]
+    fn stopped(&self) -> bool {
+        self.stop.as_ref().is_some_and(|f| f.load(std::sync::atomic::Ordering::Relaxed))
     }
 
     #[inline]
@@ -408,7 +504,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                 } else {
                     1.0
                 };
-                if *dt1 < 0.0 || guard > 1_000_000 {
+                if *dt1 < 0.0 || guard > 1_000_000 || (guard % 64 == 0 && me.stopped()) {
                     break;
                 }
             }
@@ -750,334 +846,406 @@ impl<'a, 'c> SrTracer<'a, 'c> {
 
     /// `CalcRay`: follows the reflected (or refracted) ray from the current
     /// surface; `sd` = (specular colour, alpha, diffuse colour) of it.
-    fn calc_ray(&mut self, mut zz: f64, sr_vec: Vec3, mut t_absorb: S3, mut sd: ([f32; 3], f32, [f32; 3]), rit: i32) {
+    fn calc_ray(&mut self, zz: f64, sr_vec: Vec3, t_absorb: S3, sd: Sd, rit: i32) {
+        let mut st = vec![Frame::new(zz, sr_vec, t_absorb, sd, rit)];
+        let mut hit = None;
+        while let Some(r) = self.step(&mut st, hit.take()) {
+            hit = Some(self.march(&r));
+        }
+    }
+
+    /// `CalcRay` as a resumable machine: runs the frames on `st` (the
+    /// recursion of `CalcRay`, the last is the current one) until a ray has
+    /// to be marched (returned; its result is passed in `hit` on the next
+    /// call) or all are done.  The march is [`SrTracer::march`] on the CPU
+    /// or a batch of rays on the graphics card.
+    fn step(&mut self, st: &mut Vec<Frame>, mut hit: Option<RayHit>) -> Option<RayReq> {
         let c = self.c;
         let p = c.p;
         let sw = p.step_width;
-        self.guard += 1;
-        if self.guard > 10_000 {
-            return;
-        }
-        self.normal = rotate_vector_reverse(&self.normal, &p.vgrads);
-        self.calc_trans_r = if !c.calc_trans {
-            false
-        } else if !c.only_difs {
-            true
-        } else {
-            self.m.calc_de();
-            self.m.last_difs
-        };
-        let mut calc_t = self.calc_trans_r;
-        let (mut tmp_loc, mut tmp_norm, mut tmp_absorb, mut tmp_sd, mut zz_tmp, mut spec_mul_t) =
-            (self.m.it.c, self.normal, t_absorb, sd, zz, 0f64);
         loop {
-            // lab1
-            if t_absorb[0].abs() * 0.3 + t_absorb[1].abs() * 0.59 + t_absorb[2].abs() * 0.11 < 1e-4 {
-                return;
-            }
-            let new_vec;
-            loop {
-                // lab2
-                if calc_t {
-                    let stmp = sd.0[0].max(sd.0[1]).max(sd.0[2]);
-                    let dstep = if self.trans_flip_inside ^ self.m.inside { c.trans_di_const as f64 } else { 1.0 / c.trans_di_const as f64 };
-                    let dl = len(&sr_vec);
-                    let nl = len(&self.normal);
-                    spec_mul_t = -dot(&sr_vec, &self.normal) / (dl * nl);
-                    let zz2 = 1.0 - dstep * dstep * (1.0 - spec_mul_t * spec_mul_t);
-                    if zz2 <= 0.0 {
-                        // total internal reflection
-                        let f = 1.0 - sd.1 + sd.1 * sd.1 / (stmp + 0.01);
-                        sd.0 = sc3(sd.0, f);
-                        calc_t = false;
+            let f = st.last_mut()?;
+            match f.at {
+                At::Enter => {
+                    self.guard += 1;
+                    if self.guard > 10_000 {
+                        st.pop();
                         continue;
                     }
-                    tmp_loc = self.m.it.c;
-                    tmp_norm = self.normal;
-                    tmp_absorb = t_absorb;
-                    tmp_sd = sd;
-                    zz_tmp = zz;
-                    let mut nv = sub(sr_vec, scale(self.normal, dl / (nl * dstep) * (zz2.sqrt() - dstep * spec_mul_t)));
-                    nv = scale(nv, dl / len(&nv));
-                    let dt = dot(&nv, &self.normal).abs() / (dl * nl);
-                    spec_mul_t = spec_mul_t.abs();
-                    if dt.abs() > 1e-16 {
-                        let a = spec_mul_t;
-                        spec_mul_t = (((a - dstep * dt) / (a + dstep * dt)).powi(2) + ((dt - dstep * a) / (dt + dstep * a)).powi(2)) * 0.5;
-                    }
-                    t_absorb = sc3(t_absorb, (1.0 - spec_mul_t * stmp as f64) as f32);
-                    self.toggle_inside();
-                    new_vec = nv;
-                } else {
-                    let n = self.normal;
-                    new_vec = sub(sr_vec, scale(n, 2.0 * dot(&n, &sr_vec) / sqr_len(&n)));
+                    self.normal = rotate_vector_reverse(&self.normal, &p.vgrads);
+                    self.calc_trans_r = if !c.calc_trans {
+                        false
+                    } else if !c.only_difs {
+                        true
+                    } else if c.gpu {
+                        // which part the DE comes from (the last one evaluated)
+                        p.decomb.as_ref().map_or(p.difs, |d| d.part2.difs)
+                    } else {
+                        self.m.calc_de();
+                        self.m.last_difs
+                    };
+                    f.calc_t = self.calc_trans_r;
+                    (f.tmp_loc, f.tmp_norm, f.tmp_absorb, f.tmp_sd, f.zz_tmp, f.spec_mul_t) = (self.m.it.c, self.normal, f.t_absorb, f.sd, f.zz, 0.0);
+                    f.at = At::Next;
                 }
-                break;
-            }
-            let zzplus = dot(&self.m.vfov, &new_vec) / (sqr_len(&self.m.vfov) * sqr_len(&new_vec) + 1e-100).sqrt();
-            let mut max_l = p.zend;
-            let mut cp = 0usize;
-            if p.cut_options != 0 {
-                let pos = self.m.it.c;
-                self.min_length_to_cut_plane(&mut max_l, &mut cp, 1.0, &pos, &new_vec);
-            }
-            let last_zz = zz.abs() as f32;
-            let mut zz2 = (p.de_stop as f64 * 0.25).min(1.0);
-            zz += zz2 * zzplus;
-            self.advance(&new_vec, zz2);
-            self.update_de_stop(zz);
-            self.plv.cam_pos = s3(&sub(self.m.it.c, c.mid));
-            let mut open_air = true;
-            let mut step_count = 0f32;
-            let mut de_limited = true;
-            let mut rlast_sw = 0f64;
-            if self.sr_si.si_gradient > 32767 {
-                zz2 = p.zend;
-            } else {
-                open_air = false;
-                let mut rsfmul = 1f32;
-                let mut dtmp = self.m.calc_de();
-                rlast_sw = dtmp * p.z_step_div as f64;
-                let mut guard = 0u32;
-                if dtmp > 1e-10 {
+                At::Next => {
+                    let t_absorb = f.t_absorb;
+                    if t_absorb[0].abs() * 0.3 + t_absorb[1].abs() * 0.59 + t_absorb[2].abs() * 0.11 < 1e-4 {
+                        st.pop();
+                        continue;
+                    }
+                    let sr_vec = f.sr_vec;
+                    let new_vec;
                     loop {
-                        let mut rlast_de = dtmp;
-                        let mut dstep;
-                        if c.vol {
-                            dstep = dtmp;
-                            self.m.mzz = zz.abs();
-                            dstep = ((dstep - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
-                            let s1 = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
-                            if s1 < dstep {
-                                dstep = s1;
+                        if f.calc_t {
+                            let sd = f.sd;
+                            let stmp = sd.0[0].max(sd.0[1]).max(sd.0[2]);
+                            let dstep = if self.trans_flip_inside ^ self.m.inside { c.trans_di_const as f64 } else { 1.0 / c.trans_di_const as f64 };
+                            let dl = len(&sr_vec);
+                            let nl = len(&self.normal);
+                            f.spec_mul_t = -dot(&sr_vec, &self.normal) / (dl * nl);
+                            let zz2 = 1.0 - dstep * dstep * (1.0 - f.spec_mul_t * f.spec_mul_t);
+                            if zz2 <= 0.0 {
+                                // total internal reflection
+                                let k = 1.0 - sd.1 + sd.1 * sd.1 / (stmp + 0.01);
+                                f.sd.0 = sc3(sd.0, k);
+                                f.calc_t = false;
+                                continue;
                             }
+                            f.tmp_loc = self.m.it.c;
+                            f.tmp_norm = self.normal;
+                            f.tmp_absorb = f.t_absorb;
+                            f.tmp_sd = f.sd;
+                            f.zz_tmp = f.zz;
+                            let mut nv = sub(sr_vec, scale(self.normal, dl / (nl * dstep) * (zz2.sqrt() - dstep * f.spec_mul_t)));
+                            nv = scale(nv, dl / len(&nv));
+                            let dt = dot(&nv, &self.normal).abs() / (dl * nl);
+                            f.spec_mul_t = f.spec_mul_t.abs();
+                            if dt.abs() > 1e-16 {
+                                let a = f.spec_mul_t;
+                                f.spec_mul_t = (((a - dstep * dt) / (a + dstep * dt)).powi(2) + ((dt - dstep * a) / (dt + dstep * a)).powi(2)) * 0.5;
+                            }
+                            f.t_absorb = sc3(f.t_absorb, (1.0 - f.spec_mul_t * stmp as f64) as f32);
+                            self.toggle_inside();
+                            new_vec = nv;
+                        } else {
+                            let n = self.normal;
+                            new_vec = sub(sr_vec, scale(n, 2.0 * dot(&n, &sr_vec) / sqr_len(&n)));
+                        }
+                        break;
+                    }
+                    let mut max_l = p.zend;
+                    if p.cut_options != 0 {
+                        let mut cp = 0usize;
+                        let pos = self.m.it.c;
+                        self.min_length_to_cut_plane(&mut max_l, &mut cp, 1.0, &pos, &new_vec);
+                    }
+                    f.new_vec = new_vec;
+                    f.max_l = max_l;
+                    f.origin = self.m.it.c;
+                    f.at = At::Marched;
+                    return Some(RayReq { origin: self.m.it.c, dir: new_vec, zz: f.zz, inside: self.m.calc_inside, rit: f.rit, max_l });
+                }
+                At::Marched => {
+                    let h = hit.take().expect("the march of the ray");
+                    let (new_vec, max_l, rit, calc_t) = (f.new_vec, f.max_l, f.rit, f.calc_t);
+                    // the paint values along the ray from its first step
+                    let step0 = (p.de_stop as f64 * 0.25).min(1.0);
+                    self.plv.cam_pos = s3(&sub(add(f.origin, scale(new_vec, step0)), c.mid));
+                    self.set_ray_paint(new_vec, h.zz2_paint);
+                    if self.dbg {
+                        eprintln!("bounce {rit}: new_vec {new_vec:?} open_air {} zz {:.4} zz2 {:.4} steps {}", !h.hit, h.zz, h.zz2, h.si.shadow & 0x3FF);
+                    }
+                    f.at = At::Returned;
+                    let mut si = h.si;
+                    if h.hit {
+                        self.m.it.c = h.pos;
+                        f.zz = h.zz;
+                        self.normal = normal_of(&si);
+                        self.plv.z_pos = (h.zz.abs() * sw + p.zz_stmit_dif) as f32;
+                        self.plv.obj_pos = s3(&sub(h.pos, c.mid));
+                        self.scale_amb_diff_down = self.calc_trans_r && rit < c.max_reflections;
+                        let sd = f.sd;
+                        let mut t_absorb = if calc_t { sc3(f.t_absorb, sd.1) } else { mul3(f.t_absorb, sd.0) };
+                        let mut inside = None;
+                        if self.trans_flip_inside ^ self.m.inside {
+                            // absorption inside the material
+                            let tmp_amb = spow(sd.2, (h.zz2.min(max_l) as f32) * c.absorption);
+                            let tmp_spec = t_absorb;
+                            let stmp = (1.0 - luma(tmp_amb)) * c.light_scattering_mul;
+                            t_absorb = mul3(t_absorb, tmp_amb);
+                            let al = self.add_light(sd.2);
+                            self.t_amb = add3(self.t_amb, sc3(mul3(al, lin2(t_absorb, tmp_spec, 0.5)), stmp));
+                            inside = Some((sd.2, c.absorp_coeff));
+                        }
+                        let sh = self.shade(&si, inside);
+                        if self.dbg {
+                            eprintln!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {t_absorb:?}", h.pos, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+                        }
+                        let tmp_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
+                        f.sd = (sh.spe, sh.spe_a, sh.dif);
+                        self.t_amb = add3(self.t_amb, mul3(t_absorb, tmp_amb));
+                        if !calc_t || !(self.trans_flip_inside ^ self.m.inside) {
+                            t_absorb = mul3(t_absorb, sh.result);
+                        }
+                        f.t_absorb = t_absorb;
+                        if rit < c.max_reflections {
+                            let t_absorb = sc3(t_absorb, c.sr_light_amount);
+                            let (zz, sd) = (f.zz, f.sd);
+                            st.push(Frame::new(zz, new_vec, t_absorb, sd, rit + 1));
+                        }
+                    } else {
+                        let mut sd = f.sd;
+                        let mut t_absorb = if calc_t { sc3(f.t_absorb, sd.1) } else { mul3(f.t_absorb, sd.0) };
+                        self.calc_open_air(&mut si, &mut sd, &mut t_absorb, calc_t, h.zz2.min(max_l) as f32);
+                        (f.sd, f.t_absorb) = (sd, t_absorb);
+                        if self.dbg {
+                            eprintln!("  open air: t_absorb {t_absorb:?} t_amb {:?} plv {:?}", self.t_amb, self.plv);
+                        }
+                    }
+                }
+                At::Returned => {
+                    if f.calc_t {
+                        // now the reflected part of the refracting surface
+                        self.m.it.c = f.tmp_loc;
+                        self.normal = f.tmp_norm;
+                        f.zz = f.zz_tmp;
+                        f.sd = f.tmp_sd;
+                        f.t_absorb = sc3(f.tmp_absorb, (f.spec_mul_t + (1.0 - f.spec_mul_t) * (1.0 - f.sd.1 as f64)) as f32);
+                        self.toggle_inside();
+                        f.calc_t = false;
+                        f.at = At::Next;
+                    } else {
+                        st.pop();
+                    }
+                }
+            }
+        }
+    }
+
+    /// The march of a reflected or refracted ray on the CPU (the part of
+    /// `CalcRay` from the first step to the shadows and the ambient
+    /// occlusion of the hit).
+    fn march(&mut self, r: &RayReq) -> RayHit {
+        self.march_until(r).expect("not stopped")
+    }
+
+    /// [`SrTracer::march`] that gives up (None) when the tracer's `stop`
+    /// flag is set (checked every 64 steps of the ray and of its shadow ray).
+    fn march_until(&mut self, r: &RayReq) -> Option<RayHit> {
+        let c = self.c;
+        let p = c.p;
+        let sw = p.step_width;
+        let new_vec = r.dir;
+        let max_l = r.max_l;
+        let mut zz = r.zz;
+        self.m.it.c = r.origin;
+        let zzplus = dot(&self.m.vfov, &new_vec) / (sqr_len(&self.m.vfov) * sqr_len(&new_vec) + 1e-100).sqrt();
+        let last_zz = zz.abs() as f32;
+        let mut zz2 = (p.de_stop as f64 * 0.25).min(1.0);
+        zz += zz2 * zzplus;
+        self.advance(&new_vec, zz2);
+        self.update_de_stop(zz);
+        let mut open_air = true;
+        let mut step_count = 0f32;
+        let mut de_limited = true;
+        let mut rlast_sw = 0f64;
+        if self.sr_si.si_gradient > 32767 {
+            zz2 = p.zend;
+        } else {
+            open_air = false;
+            let mut rsfmul = 1f32;
+            let mut dtmp = self.m.calc_de();
+            rlast_sw = dtmp * p.z_step_div as f64;
+            let mut guard = 0u32;
+            if dtmp > 1e-10 {
+                loop {
+                    let mut rlast_de = dtmp;
+                    let mut dstep;
+                    if c.vol {
+                        dstep = dtmp;
+                        self.m.mzz = zz.abs();
+                        dstep = ((dstep - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
+                        let s1 = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
+                        if s1 < dstep {
+                            dstep = s1;
+                        }
+                        if let Some(vl) = &p.vol {
+                            let cc = self.m.it.c;
+                            let vf = self.m.vfov;
+                            vl.integrate(p, &cc, &vf, rlast_sw, self.m.mzz, &mut step_count);
+                        }
+                    } else {
+                        dstep = ((dtmp - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
+                        let s = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
+                        let count = p.dfog_on_it == 0 || self.m.it.it_result == p.dfog_on_it as i32;
+                        if s < dstep {
+                            if count {
+                                step_count += (s / dstep) as f32;
+                            }
+                            dstep = s;
+                        } else if count {
+                            step_count += 1.0;
+                        }
+                    }
+                    rlast_sw = dstep;
+                    zz2 += dstep;
+                    if zz2 > max_l {
+                        if c.vol {
+                            rlast_sw = max_l - zz2 + rlast_sw;
+                            self.advance(&new_vec, rlast_sw);
                             if let Some(vl) = &p.vol {
                                 let cc = self.m.it.c;
                                 let vf = self.m.vfov;
                                 vl.integrate(p, &cc, &vf, rlast_sw, self.m.mzz, &mut step_count);
                             }
-                        } else {
-                            dstep = ((dtmp - p.ms_de_sub as f64 * self.m.ms_de_stop as f64) * p.z_step_div as f64 * rsfmul as f64).max(0.11);
-                            let s = (self.m.ms_de_stop.max(0.4) * p.mh04zsd) as f64;
-                            let count = p.dfog_on_it == 0 || self.m.it.it_result == p.dfog_on_it as i32;
-                            if s < dstep {
-                                if count {
-                                    step_count += (s / dstep) as f32;
-                                }
-                                dstep = s;
-                            } else if count {
-                                step_count += 1.0;
-                            }
+                            let _ = &mut rlast_de;
                         }
-                        rlast_sw = dstep;
-                        zz2 += dstep;
-                        if zz2 > max_l {
-                            if c.vol {
-                                rlast_sw = max_l - zz2 + rlast_sw;
-                                self.advance(&new_vec, rlast_sw);
-                                if let Some(vl) = &p.vol {
-                                    let cc = self.m.it.c;
-                                    let vf = self.m.vfov;
-                                    vl.integrate(p, &cc, &vf, rlast_sw, self.m.mzz, &mut step_count);
-                                }
-                                let _ = &mut rlast_de;
-                            }
-                            open_air = true;
-                            break;
-                        }
-                        self.advance(&new_vec, dstep);
-                        zz += dstep * zzplus;
-                        self.update_de_stop(zz);
-                        dtmp = self.m.calc_de();
-                        if self.m.it.it_result >= self.m.max_its_result {
-                            de_limited = false;
-                            break;
-                        }
-                        if dtmp < self.m.ms_de_stop as f64 && self.m.it.it_result >= p.min_it {
-                            break;
-                        }
-                        if dtmp > rlast_de + rlast_sw {
-                            dtmp = rlast_de + rlast_sw;
-                        }
-                        rsfmul = if rlast_de > dtmp + 1e-10 {
-                            let d = rlast_sw / (rlast_de - dtmp);
-                            if d < 1.0 {
-                                d.max(0.5) as f32
-                            } else {
-                                1.0
-                            }
+                        open_air = true;
+                        break;
+                    }
+                    self.advance(&new_vec, dstep);
+                    zz += dstep * zzplus;
+                    self.update_de_stop(zz);
+                    dtmp = self.m.calc_de();
+                    if self.m.it.it_result >= self.m.max_its_result {
+                        de_limited = false;
+                        break;
+                    }
+                    if dtmp < self.m.ms_de_stop as f64 && self.m.it.it_result >= p.min_it {
+                        break;
+                    }
+                    if dtmp > rlast_de + rlast_sw {
+                        dtmp = rlast_de + rlast_sw;
+                    }
+                    rsfmul = if rlast_de > dtmp + 1e-10 {
+                        let d = rlast_sw / (rlast_de - dtmp);
+                        if d < 1.0 {
+                            d.max(0.5) as f32
                         } else {
                             1.0
-                        };
-                        rlast_de = dtmp;
-                        let _ = rlast_de;
-                        guard += 1;
-                        if guard > 1_000_000 {
-                            open_air = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            self.set_ray_paint(new_vec, zz2);
-            let lv = c.lv;
-            let mut si = SiLight::default();
-            si.shadow = if c.vol {
-                crate::lighting::encode_vlight(step_count)
-            } else {
-                if self.m.inside {
-                    step_count *= 200.0 * p.de_stop / p.width as f32;
-                }
-                step_count.clamp(0.0, 1023.0).round_ties_even() as u16
-            };
-            if self.dbg {
-                eprintln!("CPU bounce {rit}: new_vec {new_vec:?} open_air {open_air} zz {zz:.4} zz2 {zz2:.4} de_limited {de_limited} steps {step_count}");
-            }
-            if !open_air {
-                if p.de_add_steps != 0 {
-                    if de_limited {
-                        let mut itmp = p.de_add_steps;
-                        let mut ds = rlast_sw * -0.5;
-                        let mut d = self.m.calc_de();
-                        while (d - self.m.ms_de_stop as f64).abs() > 0.001 {
-                            zz2 += ds;
-                            zz += ds * zzplus;
-                            self.advance(&new_vec, ds);
-                            self.update_de_stop(zz);
-                            itmp -= 1;
-                            if itmp <= 0 {
-                                break;
-                            }
-                            d = self.m.calc_de();
-                            ds = if d < self.m.ms_de_stop as f64 { ds.abs() * -0.55 } else { ds.abs() * 0.55 };
                         }
                     } else {
-                        let before = zz2;
-                        let vf = self.m.vfov;
-                        self.m.vfov = new_vec;
-                        self.m.mzz = zz2;
-                        self.m.bin_search_it();
-                        zz2 = self.m.mzz;
-                        self.m.vfov = vf;
-                        zz += (zz2 - before) * zzplus;
-                    }
-                }
-                self.m.mzz = zz.abs();
-                if self.dbg {
-                    eprintln!("  after the search: c {:?} zz2 {zz2:.4}", self.m.it.c);
-                }
-                let nn = if p.normals_on_de { self.m.calculate_normals(&mut si) } else { self.m.calculate_normals_on_smooth_it(&mut si) };
-                if self.dbg {
-                    eprintln!("  after the normals: c {:?}", self.m.it.c);
-                }
-                self.normal = normal_of(&si);
-                let v = if de_limited {
-                    32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
-                } else {
-                    32767.0 - nn * p.mcts_m
-                };
-                si.si_gradient = min_max_clip_15bit(v);
-                if p.color_on_it != 0 {
-                    self.m.do_color_on_it();
-                }
-                self.m.do_color(&mut si);
-                let ds = if lv.far_fog || lv.sqr {
-                    (((zz2 + last_zz as f64).powi(2) - last_zz as f64 + 1e-30).max(0.0)).sqrt()
-                } else {
-                    zz2
-                };
-                {
-                    let v = (p.zc_mul * ((ds.max(0.0) * p.zcorr + 1.0).sqrt() - 1.0)).round_ties_even() as i64;
-                    let z = (8388352 - v).clamp(0, 8388352) as u32;
-                    let mut r = z << 8;
-                    if p.sm_normals > 0 {
-                        r |= ((self.m.s_roughness * 255.0).round_ties_even() as u32) & 0xFF;
-                    }
-                    si.zpos_fine = r;
-                }
-                let saved_de_stop = self.m.ms_de_stop;
-                if c.hs.is_some() {
-                    self.m.mzz = zz.abs();
-                    self.calc_hs(&mut si);
-                }
-                self.plv.z_pos = (zz.abs() * sw + p.zz_stmit_dif) as f32;
-                self.plv.obj_pos = s3(&sub(self.m.it.c, c.mid));
-                if let Some((max_len, first)) = c.ao {
-                    let q = match rit {
-                        1 => 2,
-                        2 => 1,
-                        _ => 0,
+                        1.0
                     };
-                    self.m.mzz = zz.abs();
-                    self.deao_1pos(&mut si, q, max_len, first);
-                    if self.dbg {
-                        eprintln!("  after the AO: c {:?}", self.m.it.c);
+                    rlast_de = dtmp;
+                    let _ = rlast_de;
+                    guard += 1;
+                    if guard > 1_000_000 {
+                        open_air = true;
+                        break;
                     }
-                    si.amb_shadow = ((si.amb_shadow as i32 * 8) / (8 + rit)) as u16;
-                } else {
-                    si.amb_shadow = 5000;
-                }
-                self.m.ms_de_stop = saved_de_stop;
-                self.scale_amb_diff_down = self.calc_trans_r && rit < c.max_reflections;
-                if calc_t {
-                    t_absorb = sc3(t_absorb, sd.1);
-                } else {
-                    t_absorb = mul3(t_absorb, sd.0);
-                }
-                let mut inside = None;
-                if self.trans_flip_inside ^ self.m.inside {
-                    // absorption inside the material
-                    let tmp_amb = spow(sd.2, (zz2.min(max_l) as f32) * c.absorption);
-                    let tmp_spec = t_absorb;
-                    let stmp = (1.0 - luma(tmp_amb)) * c.light_scattering_mul;
-                    t_absorb = mul3(t_absorb, tmp_amb);
-                    let al = self.add_light(sd.2);
-                    self.t_amb = add3(self.t_amb, sc3(mul3(al, lin2(t_absorb, tmp_spec, 0.5)), stmp));
-                    inside = Some((sd.2, c.absorp_coeff));
-                }
-                let sh = self.shade(&si, inside);
-                if self.dbg {
-                    eprintln!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {t_absorb:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
-                }
-                let tmp_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
-                sd = (sh.spe, sh.spe_a, sh.dif);
-                self.t_amb = add3(self.t_amb, mul3(t_absorb, tmp_amb));
-                if !calc_t || !(self.trans_flip_inside ^ self.m.inside) {
-                    t_absorb = mul3(t_absorb, sh.result);
-                }
-                if rit < c.max_reflections {
-                    t_absorb = sc3(t_absorb, c.sr_light_amount);
-                    self.calc_ray(zz, new_vec, t_absorb, sd, rit + 1);
-                }
-            } else {
-                si.zpos_fine = 32768 << 16;
-                if calc_t {
-                    t_absorb = sc3(t_absorb, sd.1);
-                } else {
-                    t_absorb = mul3(t_absorb, sd.0);
-                }
-                self.calc_open_air(&mut si, &mut sd, &mut t_absorb, calc_t, zz2.min(max_l) as f32);
-                if self.dbg {
-                    eprintln!("  open air: t_absorb {t_absorb:?} t_amb {:?} plv {:?}", self.t_amb, self.plv);
+                    if guard % 64 == 0 && self.stopped() {
+                        return None;
+                    }
                 }
             }
-            if calc_t {
-                self.m.it.c = tmp_loc;
-                self.normal = tmp_norm;
-                zz = zz_tmp;
-                sd = tmp_sd;
-                t_absorb = sc3(tmp_absorb, (spec_mul_t + (1.0 - spec_mul_t) * (1.0 - sd.1 as f64)) as f32);
-                self.toggle_inside();
-                calc_t = false;
-                continue;
-            }
-            return;
         }
+        let zz2_paint = zz2;
+        let lv = c.lv;
+        let mut si = SiLight::default();
+        si.shadow = if c.vol {
+            crate::lighting::encode_vlight(step_count)
+        } else {
+            if self.m.inside {
+                step_count *= 200.0 * p.de_stop / p.width as f32;
+            }
+            step_count.clamp(0.0, 1023.0).round_ties_even() as u16
+        };
+        if !open_air {
+            if p.de_add_steps != 0 {
+                if de_limited {
+                    let mut itmp = p.de_add_steps;
+                    let mut ds = rlast_sw * -0.5;
+                    let mut d = self.m.calc_de();
+                    while (d - self.m.ms_de_stop as f64).abs() > 0.001 {
+                        zz2 += ds;
+                        zz += ds * zzplus;
+                        self.advance(&new_vec, ds);
+                        self.update_de_stop(zz);
+                        itmp -= 1;
+                        if itmp <= 0 {
+                            break;
+                        }
+                        d = self.m.calc_de();
+                        ds = if d < self.m.ms_de_stop as f64 { ds.abs() * -0.55 } else { ds.abs() * 0.55 };
+                    }
+                } else {
+                    let before = zz2;
+                    let vf = self.m.vfov;
+                    self.m.vfov = new_vec;
+                    self.m.mzz = zz2;
+                    self.m.bin_search_it();
+                    zz2 = self.m.mzz;
+                    self.m.vfov = vf;
+                    zz += (zz2 - before) * zzplus;
+                }
+            }
+            self.m.mzz = zz.abs();
+            let nn = if p.normals_on_de { self.m.calculate_normals(&mut si) } else { self.m.calculate_normals_on_smooth_it(&mut si) };
+            let v = if de_limited {
+                32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
+            } else {
+                32767.0 - nn * p.mcts_m
+            };
+            si.si_gradient = min_max_clip_15bit(v);
+            if p.color_on_it != 0 {
+                self.m.do_color_on_it();
+            }
+            self.m.do_color(&mut si);
+            let ds = if lv.far_fog || lv.sqr {
+                (((zz2 + last_zz as f64).powi(2) - last_zz as f64 + 1e-30).max(0.0)).sqrt()
+            } else {
+                zz2
+            };
+            {
+                let v = (p.zc_mul * ((ds.max(0.0) * p.zcorr + 1.0).sqrt() - 1.0)).round_ties_even() as i64;
+                let z = (8388352 - v).clamp(0, 8388352) as u32;
+                let mut r = z << 8;
+                if p.sm_normals > 0 {
+                    r |= ((self.m.s_roughness * 255.0).round_ties_even() as u32) & 0xFF;
+                }
+                si.zpos_fine = r;
+            }
+            let saved_de_stop = self.m.ms_de_stop;
+            if c.hs.is_some() {
+                self.m.mzz = zz.abs();
+                self.calc_hs(&mut si);
+                if self.stopped() {
+                    return None;
+                }
+            }
+            if let Some((max_len, first)) = c.ao {
+                let q = match r.rit {
+                    1 => 2,
+                    2 => 1,
+                    _ => 0,
+                };
+                self.m.mzz = zz.abs();
+                self.deao_1pos(&mut si, q, max_len, first);
+                si.amb_shadow = ((si.amb_shadow as i32 * 8) / (8 + r.rit)) as u16;
+            } else {
+                si.amb_shadow = 5000;
+            }
+            self.m.ms_de_stop = saved_de_stop;
+        } else {
+            si.zpos_fine = 32768 << 16;
+        }
+        Some(RayHit { hit: !open_air, si, pos: self.m.it.c, zz, zz2_paint, zz2 })
     }
 
     /// One pixel of `TSRCalcThread.Execute`: returns the new colour, or
     /// None to keep the painted one.
     fn pixel(&mut self, x: i32, y: i32, si: &SiLight) -> Option<[u8; 3]> {
+        let (mzz, vf, sv, sd) = self.start_pixel(x, y, si)?;
+        self.calc_ray(mzz, vf, sv, sd, 1);
+        Some(self.final_colour())
+    }
+
+    /// The pixel's surface (refined, or on the cutting plane), its shading
+    /// and the start of `calc_ray`: (depth, view vector, absorption, `sd`);
+    /// None to keep the painted colour.
+    fn start_pixel(&mut self, x: i32, y: i32, si: &SiLight) -> Option<(f64, Vec3, S3, Sd)> {
         let c = self.c;
         let p = c.p;
         let sw = p.step_width;
@@ -1090,9 +1258,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         let inside = if p.in_and_outside && si.otrap & 0x8000 != 0 { false } else { p.inside_rendering };
         self.m.inside = inside;
         self.m.calc_inside = inside;
-        self.m.cafy = (y as f64 / p.height as f64 - 0.5) * p.fov_y;
-        self.m.calc_vgrads_fov(x + 1);
-        self.m.calc_start_pos(x, y);
+        self.pixel_marcher(x, y);
         self.plv.cam_pos = s3(&sub(self.m.it.c, c.mid));
         let av = s3(&normalize(self.m.vfov));
         self.plv.abs_view = av;
@@ -1156,7 +1322,21 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         if self.dbg {
             eprintln!("CPU surface: pos {:?} zz {mzz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
         }
-        self.calc_ray(mzz, vf, sv, (sh.spe, sh.spe_a, sh.dif), 1);
+        Some((mzz, vf, sv, (sh.spe, sh.spe_a, sh.dif)))
+    }
+
+    /// The marcher's view of pixel x, y (its view vector, gradients and
+    /// start position).
+    fn pixel_marcher(&mut self, x: i32, y: i32) {
+        let p = self.c.p;
+        self.m.cafy = (y as f64 / p.height as f64 - 0.5) * p.fov_y;
+        self.m.calc_vgrads_fov(x + 1);
+        self.m.calc_start_pos(x, y);
+    }
+
+    /// The colour of the light gathered by the rays of the pixel.
+    fn final_colour(&self) -> [u8; 3] {
+        let lv = self.c.lv;
         let mut t = self.t_amb.map(|v| v.clamp(0.0, 1.0));
         if lv.sqr {
             t = t.map(|v| v.sqrt());
@@ -1165,7 +1345,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             let g = if lv.gamma_h > 0 { t.map(|v| v.sqrt()) } else { t.map(|v| v * v) };
             t = add3(t, sc3(sub3(g, t), lv.s_gamma));
         }
-        Some(t.map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8))
+        t.map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8)
     }
 }
 
@@ -1180,7 +1360,7 @@ fn s3d(v: S3) -> Vec3 {
 pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) {
     let mc = &sc.mc;
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && !mc.transparency && p.cut_options == 0 && p.vol.is_none() && crate::gpu::unsupported(p).is_none() {
+    if crate::gpu::enabled() && p.vol.is_none() && crate::gpu::unsupported(p).is_none() {
         match reflections_gpu(sc, p, gbuf, rgb, cam, lv, threads) {
             Ok(()) => {
                 let s = crate::gpu::last_status();
@@ -1235,6 +1415,7 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         hs,
         ao,
         vol: p.vol.is_some(),
+        gpu: false,
     };
     let [x0, y0, w, h] = p.rect;
     let (wu, hu) = (w as usize, h as usize);
@@ -1274,6 +1455,7 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                         rnd: seed,
                         guard: 0,
                         dbg: false,
+                        stop: None,
                     };
                     let dp = debug_pixel();
                     for x in 0..wu {
@@ -1288,30 +1470,38 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     });
 }
 
-/// The per pixel state of the reflection pass on the graphics card.
+/// Fewer rays than this in a round of the reflection pass are marched on
+/// the CPU.
+#[cfg(feature = "gpu")]
+const CPU_RAYS: usize = 2000;
+
+/// The per pixel state of the reflection pass on the graphics card: the
+/// tracer fields `calc_ray` keeps between its rays and its frames.
 #[cfg(feature = "gpu")]
 #[derive(Clone)]
 struct RPix {
-    x: i32,
-    y: i32,
     /// the G-buffer value of the pixel
     si0: SiLight,
-    active: bool,
     t_amb: S3,
-    t_absorb: S3,
-    sd: (S3, f32, S3),
-    zz: f64,
-    dir: Vec3,
     pos: Vec3,
     normal: Vec3,
+    inside: bool,
     plv: Plv,
+    calc_trans_r: bool,
+    scale_amb_diff_down: bool,
+    guard: u32,
+    stack: Vec<Frame>,
+    /// the march of the ray the last step asked for
+    hit: Option<RayHit>,
 }
 
 /// `reflections` with the rays on the graphics card: every bounce of all
 /// pixels is one batch (`gpu::reflect_batch`), which marches the rays and
 /// calculates the normals, colours, shadows and ambient occlusion of the
-/// hits; the shading and the blending of the bounces stay here, as in
-/// `calc_ray` without transparency.
+/// hits; the shading and the blending of the rays stay here
+/// (`SrTracer::step`, the same code as on the CPU).  With transparency a
+/// surface sends a refracted and a reflected ray: every round marches the
+/// next ray of each pixel.
 #[cfg(feature = "gpu")]
 fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) -> Result<(), String> {
     use crate::gpu::{ReflectLight, ReflectOpts, ReflectTask};
@@ -1341,7 +1531,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         max_reflections: mc.reflection_depth as i32,
         sr_light_amount: mc.reflection_amount.clamp(0.0, 100.0),
         trans_di_const: mc.refraction_index,
-        calc_trans: false,
+        calc_trans: mc.transparency,
         only_difs: mc.only_difs,
         absorption: (mc.absorption as f64 * p.step_width) as f32,
         absorp_coeff: mc.absorption,
@@ -1350,6 +1540,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         hs: hs.clone(),
         ao,
         vol: false,
+        gpu: true,
     };
     // the lights of the shadow rays (calc_hs): soft shadows use the last one
     let mut lights: Vec<ReflectLight> = Vec::new();
@@ -1380,11 +1571,12 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         plv: Plv { view: [0.0, 0.0, 1.0], abs_view: [0.0, 0.0, 1.0], cam_pos: [0.0; 3], obj_pos: [0.0; 3], z_pos: 0.0, zpos_dyn_fog: 0.0, x_pos: 0.0, y_pos: 0.0, dep_c: [0.0; 3] },
         light_z: lv.lights.iter().map(|l| (l.pos_z, l.pos_lp)).collect(),
         calc_trans_r: false,
-        trans_flip_inside: false,
+        trans_flip_inside: p.inside_rendering,
         scale_amb_diff_down: false,
         rnd: seed,
         guard: 0,
         dbg: false,
+        stop: None,
     };
     let dbg_i = debug_pixel().map(|(x, y)| ((y - y0) * w + (x - x0)) as usize);
     // the surfaces of the object pixels
@@ -1400,7 +1592,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     }
     let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
     let t0 = std::time::Instant::now();
-    let hits = crate::gpu::reflect_batch(p, &tasks, &ReflectOpts { surface: true, hs_mul, ..Default::default() })?;
+    let (hits, _, _) = crate::gpu::reflect_batch(p, &tasks, &ReflectOpts { surface: true, hs_mul, ..Default::default() }, None)?;
     if timing {
         eprintln!("  reflections: {} surfaces in {:.2} s", tasks.len(), t0.elapsed().as_secs_f64());
     }
@@ -1440,68 +1632,161 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                     };
                     t.plv.dep_c = lin2(lv.depth_col2, lv.depth_col, sd);
                     t.calc_light_z_pos();
-                    let pos = [hit.pos[0] as f64, hit.pos[1] as f64, hit.pos[2] as f64];
+                    let pos = hit.pos;
                     let zz = hit.zz as f64;
                     t.plv.z_pos = (zz * sw + p.zz_stmit_dif) as f32;
                     t.plv.obj_pos = s3(&sub(pos, mid));
                     t.plv.zpos_dyn_fog = t.plv.z_pos;
-                    t.scale_amb_diff_down = false;
+                    let calc_trans_r = ctx.calc_trans && (!ctx.only_difs || p.decomb.as_ref().map_or(p.difs, |d| d.part2.difs));
+                    t.scale_amb_diff_down = calc_trans_r;
                     t.sr_si = si;
                     let sh = t.shade(&si, None);
                     if dbg_i == Some(i) {
                         eprintln!("GPU surface: pos {pos:?} zz {zz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", t.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
                     }
+                    let sd = (sh.spe, sh.spe_a, sh.dif);
                     part[i - lo] = Some(RPix {
-                        x,
-                        y,
                         si0: si,
-                        active: true,
                         t_amb: sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0)),
-                        t_absorb: sc3(sh.result, ctx.sr_light_amount),
-                        sd: (sh.spe, sh.spe_a, sh.dif),
-                        zz,
-                        dir: vfov,
                         pos,
                         normal: normal_of(&si),
+                        inside: inside_of(&si),
                         plv: t.plv,
+                        calc_trans_r,
+                        scale_amb_diff_down: calc_trans_r,
+                        guard: 0,
+                        stack: vec![Frame::new(zz, vfov, sc3(sh.result, ctx.sr_light_amount), sd, 1)],
+                        hit: None,
                     });
+                }
+                // pixels on a cutting plane: no surface to refine, set up here
+                // (their rays only see the open air)
+                if p.cut_options != 0 {
+                    for i in lo..hi {
+                        let si = gbuf[i];
+                        if si.zpos() >= 32768 || si.si_gradient < 32768 {
+                            continue;
+                        }
+                        let (x, y) = (x0 + (i % wu) as i32, y0 + (i / wu) as i32);
+                        t.dbg = dbg_i == Some(i);
+                        let Some((mzz, vf, sv, sd)) = t.start_pixel(x, y, &si) else { continue };
+                        part[i - lo] = Some(RPix {
+                            si0: si,
+                            t_amb: t.t_amb,
+                            pos: t.m.it.c,
+                            normal: t.normal,
+                            inside: t.m.inside,
+                            plv: t.plv,
+                            calc_trans_r: t.calc_trans_r,
+                            scale_amb_diff_down: t.scale_amb_diff_down,
+                            guard: 0,
+                            stack: vec![Frame::new(mzz, vf, sv, sd, 1)],
+                            hit: None,
+                        });
+                    }
                 }
             });
             start = hi;
         }
     });
-    // the bounces
-    for rit in 1..=ctx.max_reflections {
-        let mut tasks: Vec<ReflectTask> = Vec::new();
-        let mut dirs: Vec<(usize, Vec3)> = Vec::new();
-        for (i, q) in px.iter_mut().enumerate() {
-            let Some(q) = q.as_mut().filter(|q| q.active) else { continue };
-            if luma(q.t_absorb.map(f32::abs)) < 1e-4 {
-                q.active = false;
-                continue;
-            }
-            let nr = rotate_vector_reverse(&q.normal, &p.vgrads);
-            let new_vec = sub(q.dir, scale(nr, 2.0 * dot(&nr, &q.dir) / sqr_len(&nr)));
-            tasks.push(ReflectTask { origin: s3(&q.pos), dir: s3(&new_vec), zz: q.zz as f32, pixel: i as u32, inside: inside_of(&q.si0) });
-            dirs.push((i, new_vec));
-        }
-        if tasks.is_empty() {
-            break;
-        }
-        let q = match rit {
-            1 => 2,
-            2 => 1,
-            _ => 0,
-        };
-        let opts = ReflectOpts { surface: false, lights: lights.clone(), soft_radius, hs_mul, ao: ao.map(|(m, f)| (q, m, f)), far_fog };
-        let t0 = std::time::Instant::now();
-        let hits = crate::gpu::reflect_batch(p, &tasks, &opts)?;
-        if timing {
-            eprintln!("  reflections: bounce {rit}: {} rays, {} hits, in {:.2} s", tasks.len(), hits.iter().filter(|h| h.hit).count(), t0.elapsed().as_secs_f64());
-        }
-        let last = rit >= ctx.max_reflections;
-        let items: Vec<(usize, Vec3, crate::gpu::ReflectHit)> = dirs.iter().zip(&hits).map(|((i, d), h)| (*i, *d, *h)).collect();
+    // the rays: every round runs each pixel to its next ray, the rays are
+    // marched in a batch per bounce (the AO quality depends on it)
+    let rit_q = |rit: i32| match rit {
+        1 => 2u8,
+        2 => 1,
+        _ => 0,
+    };
+    // marches rays on the card
+    let march_gpu = |list: &[&(usize, RayReq)], share: Option<&crate::gpu::RaySharing>| -> Result<(Vec<RayHit>, usize, Vec<usize>), String> {
+        let tasks: Vec<ReflectTask> = list
+            .iter()
+            .map(|(i, r)| ReflectTask { origin: r.origin, dir: s3(&r.dir), zz: r.zz as f32, pixel: *i as u32, inside: r.inside, ao_q: rit_q(r.rit) })
+            .collect();
+        let opts = ReflectOpts { surface: false, lights: lights.clone(), soft_radius, hs_mul, ao: ao.map(|(m, f)| (0, m, f)), far_fog };
+        let (hits, n_card, unfinished) = crate::gpu::reflect_batch(p, &tasks, &opts, share)?;
+        let hits = list
+            .iter()
+            .zip(hits)
+            .map(|((_, req), h)| {
+                if h.hit {
+                    let mut si = h.si;
+                    if ao.is_some() {
+                        si.amb_shadow = ((si.amb_shadow as i32 * 8) / (8 + req.rit)) as u16;
+                    } else {
+                        si.amb_shadow = 5000;
+                    }
+                    RayHit { hit: true, si, pos: h.pos, zz: h.zz as f64, zz2_paint: h.zz2 as f64, zz2: h.zz2 as f64 }
+                } else {
+                    // the step count of the ray (dynamic fog) as calc_ray keeps it
+                    let si = SiLight { zpos_fine: 32768 << 16, shadow: h.step_count.clamp(0.0, 1023.0).round_ties_even() as u16, ..SiLight::default() };
+                    RayHit { hit: false, si, pos: [0.0; 3], zz: h.zz as f64, zz2_paint: h.zz2 as f64, zz2: h.zz2 as f64 }
+                }
+            })
+            .collect();
+        Ok((hits, n_card, unfinished))
+    };
+    // marches rays here: all of `list`, or with `share` the ones the card
+    // leaves (taken from the end in pieces): (index in `list`, result)
+    let march_cpu = |list: &[&(usize, RayReq)], share: Option<&crate::gpu::RaySharing>| -> Vec<(usize, RayHit)> {
+        use std::sync::atomic::Ordering::SeqCst;
+        const PIECE: usize = 16;
+        let own = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, list.len())), done: std::sync::Arc::new(true.into()), tail: 0 };
+        let sh = share.unwrap_or(&own);
+        // one thread feeds the card
+        let workers = if share.is_some() { threads.saturating_sub(1).max(1) } else { threads };
         std::thread::scope(|s| {
+            let hs: Vec<_> = (0..workers)
+                .map(|_| {
+                    s.spawn(move || {
+                        let mut t = new_tracer(1);
+                        // with the card: rays still running when it is done
+                        // are given up (single rays can take long here)
+                        t.stop = share.map(|sh| sh.done.clone());
+                        let mut out = Vec::new();
+                        loop {
+                            let (lo, cur) = {
+                                let mut st = sh.state.lock().unwrap();
+                                let (lim, cur) = *st;
+                                if cur > lim {
+                                    st.1 = cur.saturating_sub(PIECE).max(lim);
+                                    (st.1, cur)
+                                } else {
+                                    (cur, cur)
+                                }
+                            };
+                            if lo == cur {
+                                if sh.done.load(SeqCst) {
+                                    break;
+                                }
+                                // the card has the rest for now
+                                std::thread::sleep(std::time::Duration::from_micros(500));
+                                continue;
+                            }
+                            for (k, (i, r)) in list.iter().enumerate().take(cur).skip(lo) {
+                                t.pixel_marcher(x0 + (i % wu) as i32, y0 + (i / wu) as i32);
+                                t.sr_si = gbuf[*i];
+                                t.m.inside = r.inside;
+                                t.m.calc_inside = r.inside;
+                                if let Some(h) = t.march_until(r) {
+                                    out.push((k, h));
+                                }
+                            }
+                        }
+                        out
+                    })
+                })
+                .collect();
+            hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
+        })
+    };
+    let mut round = 0;
+    // MB3D_REFLECT_CPU_SHARE=0: all rays on the card (comparisons)
+    let card_only = std::env::var("MB3D_REFLECT_CPU_SHARE").is_ok_and(|v| v == "0");
+    let mut t_steps = 0.0;
+    loop {
+        let ts = std::time::Instant::now();
+        let reqs: Vec<(usize, RayReq)> = std::thread::scope(|s| {
+            let mut handles = Vec::new();
             let mut rest: &mut [Option<RPix>] = &mut px;
             let mut start = 0usize;
             let per = chunk(n);
@@ -1509,67 +1794,125 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                 let (part, r) = rest.split_at_mut(per.min(rest.len()));
                 rest = r;
                 let lo = start;
-                let hi = start + part.len();
-                let mine: Vec<(usize, Vec3, crate::gpu::ReflectHit)> = items.iter().filter(|(i, _, _)| *i >= lo && *i < hi).copied().collect();
-                s.spawn(move || {
+                start += part.len();
+                handles.push(s.spawn(move || {
                     let mut t = new_tracer(1);
-                    for (i, new_vec, hit) in mine {
-                        let Some(q) = part[i - lo].as_mut() else { continue };
+                    let mut out = Vec::new();
+                    for (k, q) in part.iter_mut().enumerate() {
+                        let Some(q) = q.as_mut().filter(|q| !q.stack.is_empty()) else { continue };
+                        let i = lo + k;
                         t.plv = q.plv;
+                        t.t_amb = q.t_amb;
+                        t.m.it.c = q.pos;
+                        t.normal = q.normal;
+                        t.m.inside = q.inside;
+                        t.m.calc_inside = q.inside;
                         t.sr_si = q.si0;
-                        // the ray starts a first step from the surface (calc_ray)
-                        let step0 = (p.de_stop as f64 * 0.25).min(1.0);
-                        t.plv.cam_pos = s3(&sub(add(q.pos, scale(new_vec, step0)), mid));
-                        t.set_ray_paint(new_vec, hit.zz2 as f64);
-                        if dbg_i == Some(i) {
-                            eprintln!("GPU bounce {rit}: new_vec {new_vec:?} open_air {} zz {:.4} zz2 {:.4} de_limited {} steps {}", !hit.hit, hit.zz, hit.zz2, hit.de_limited, hit.step_count);
+                        t.calc_trans_r = q.calc_trans_r;
+                        t.scale_amb_diff_down = q.scale_amb_diff_down;
+                        t.guard = q.guard;
+                        t.dbg = dbg_i == Some(i);
+                        // the rays of a pixel on a cutting plane end in the open
+                        // air (`march` does not step): no need for the card
+                        let on_cut = q.si0.si_gradient > 32767;
+                        if on_cut {
+                            t.pixel_marcher(x0 + (i % wu) as i32, y0 + (i / wu) as i32);
                         }
-                        if hit.hit {
-                            let mut si = hit.si;
-                            if ao.is_some() {
-                                si.amb_shadow = ((si.amb_shadow as i32 * 8) / (8 + rit)) as u16;
+                        let mut hit = q.hit.take();
+                        while let Some(r) = t.step(&mut q.stack, hit) {
+                            if on_cut {
+                                hit = Some(t.march(&r));
+                                continue;
                             }
-                            q.normal = normal_of(&si);
-                            q.pos = [hit.pos[0] as f64, hit.pos[1] as f64, hit.pos[2] as f64];
-                            q.zz = hit.zz as f64;
-                            t.plv.z_pos = (q.zz.abs() * sw + p.zz_stmit_dif) as f32;
-                            t.plv.obj_pos = s3(&sub(q.pos, mid));
-                            t.scale_amb_diff_down = false;
-                            q.t_absorb = mul3(q.t_absorb, q.sd.0);
-                            let sh = t.shade(&si, None);
-                            if dbg_i == Some(i) {
-                                eprintln!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {:?}", q.pos, t.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif, q.t_absorb);
-                            }
-                            let tmp_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
-                            q.sd = (sh.spe, sh.spe_a, sh.dif);
-                            q.t_amb = add3(q.t_amb, mul3(q.t_absorb, tmp_amb));
-                            q.t_absorb = mul3(q.t_absorb, sh.result);
-                            if last {
-                                q.active = false;
-                            } else {
-                                q.t_absorb = sc3(q.t_absorb, ctx.sr_light_amount);
-                                q.dir = new_vec;
-                            }
-                        } else {
-                            q.t_absorb = mul3(q.t_absorb, q.sd.0);
-                            // the step count of the ray (dynamic fog) as calc_ray keeps it
-                            let mut si = SiLight { zpos_fine: 32768 << 16, shadow: hit.step_count.clamp(0.0, 1023.0).round_ties_even() as u16, ..SiLight::default() };
-                            t.t_amb = q.t_amb;
-                            let mut sd = q.sd;
-                            let mut ta = q.t_absorb;
-                            t.calc_open_air(&mut si, &mut sd, &mut ta, false, (hit.zz2 as f64).min(p.zend) as f32);
-                            q.t_amb = t.t_amb;
-                            if dbg_i == Some(i) {
-                                eprintln!("  open air: t_absorb {ta:?} t_amb {:?} plv {:?}", t.t_amb, t.plv);
-                            }
-                            q.active = false;
+                            out.push((i, r));
+                            break;
                         }
                         q.plv = t.plv;
+                        q.t_amb = t.t_amb;
+                        q.pos = t.m.it.c;
+                        q.normal = t.normal;
+                        q.inside = t.m.inside;
+                        q.calc_trans_r = t.calc_trans_r;
+                        q.scale_amb_diff_down = t.scale_amb_diff_down;
+                        q.guard = t.guard;
                     }
-                });
-                start = hi;
+                    out
+                }));
             }
+            handles.into_iter().flat_map(|h| h.join().unwrap()).collect()
         });
+        t_steps += ts.elapsed().as_secs_f64();
+        if reqs.is_empty() {
+            break;
+        }
+        round += 1;
+        // the rays of the round: on the card in one batch (the tasks carry
+        // the AO quality of their bounce) while the threads here take a
+        // share of them in small pieces, until the card is done; what they
+        // did not get to goes after (all on the CPU for a few rays: the card
+        // would wait for the slowest of them)
+        let all: Vec<&(usize, RayReq)> = reqs.iter().collect();
+        let t0 = std::time::Instant::now();
+        let mut res: Vec<Option<RayHit>> = vec![None; all.len()];
+        let mut n_gpu = 0usize;
+        if all.len() < CPU_RAYS && !card_only {
+            for (k, h) in march_cpu(&all, None) {
+                res[k] = Some(h);
+            }
+        } else if card_only {
+            let (hits, _, _) = march_gpu(&all, None)?;
+            n_gpu = all.len();
+            for (k, h) in hits.into_iter().enumerate() {
+                res[k] = Some(h);
+            }
+        } else {
+            // the CPU starts with a few pieces per thread from the end
+            let n = all.len();
+            let sh = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, n)), done: std::sync::Arc::new(false.into()), tail: threads * 2 };
+            let (gpu, cpu) = std::thread::scope(|s| {
+                let g = s.spawn(|| march_gpu(&all, Some(&sh)));
+                let c = march_cpu(&all, Some(&sh));
+                (g.join().unwrap(), c)
+            });
+            let (hits, n_card, unfinished) = gpu?;
+            n_gpu = n_card - unfinished.len();
+            for (k, h) in hits.into_iter().enumerate().take(n_card) {
+                res[k] = Some(h);
+            }
+            for (k, h) in cpu {
+                res[k] = Some(h);
+            }
+            // the rays the card left: here
+            let list: Vec<&(usize, RayReq)> = unfinished.iter().map(|&k| all[k]).collect();
+            for (j, h) in march_cpu(&list, None) {
+                res[unfinished[j]] = Some(h);
+            }
+            // the rays given up here: on the card
+            let rest: Vec<usize> = (0..all.len()).filter(|&k| res[k].is_none()).collect();
+            if !rest.is_empty() {
+                let list: Vec<&(usize, RayReq)> = rest.iter().map(|&k| all[k]).collect();
+                let (hits, _, _) = march_gpu(&list, None)?;
+                for (j, h) in hits.into_iter().enumerate() {
+                    res[rest[j]] = Some(h);
+                }
+            }
+        }
+        let n_cpu_done = all.len() - n_gpu;
+        if timing {
+            eprintln!(
+                "  reflections: round {round}: {} rays, {n_gpu} on the card, {n_cpu_done} on the CPU, in {:.2} s",
+                all.len(),
+                t0.elapsed().as_secs_f64()
+            );
+        }
+        for ((i, _), h) in all.iter().zip(res) {
+            if let (Some(q), Some(h)) = (px[*i].as_mut(), h) {
+                q.hit = Some(h);
+            }
+        }
+    }
+    if timing {
+        eprintln!("  reflections: {round} rounds, shading {t_steps:.2} s");
     }
     // the colours
     for (i, q) in px.iter().enumerate() {
@@ -1584,7 +1927,6 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         }
         let c = t.map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8);
         rgb[i * 3..i * 3 + 3].copy_from_slice(&c);
-        let _ = (q.x, q.y);
     }
     Ok(())
 }
