@@ -556,6 +556,22 @@ impl<A: App> Runner<A> {
             return;
         }
         let (cx, cy) = self.client_xy(fi, x, y);
+        {
+            // the LED's hint, at once
+            let f = &mut self.ui.forms[fi];
+            let r = f.led_rect.get();
+            let (xi, yi) = (x as i32, y as i32);
+            let on = nc == Nc::Caption && f.caption_led.is_some() && !f.led_hint.is_empty() && xi >= r.x - 3 && xi < r.x + r.w + 3 && yi >= r.y - 4 && yi < r.y + r.h + 4;
+            if on && !f.led_hint_shown {
+                f.hint = Some((f.led_hint.clone(), cx as i32, 2));
+                f.led_hint_shown = true;
+                f.dirty = true;
+            } else if !on && f.led_hint_shown {
+                f.hint = None;
+                f.led_hint_shown = false;
+                f.dirty = true;
+            }
+        }
         let raws = if nc == Nc::Client || self.ui.forms[fi].capture.is_some() {
             self.ui.forms[fi].mouse_move(cx, cy, shift_of(self.mods))
         } else {
@@ -564,7 +580,9 @@ impl<A: App> Runner<A> {
             let mut out = Vec::new();
             if let Some(h) = f.hot.take() {
                 out.push(Raw { id: h, name: "OnMouseLeave", ev: Ev::MouseLeave });
-                f.hint = None;
+                if !f.led_hint_shown {
+                    f.hint = None;
+                }
                 f.dirty = true;
             }
             out
@@ -899,6 +917,7 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                     }
                     f.nc_hot = -1;
                     f.hint = None;
+                    f.led_hint_shown = false;
                     f.mouse = (-1, -1);
                     f.dirty = true;
                     self.dispatch(fi, raws);

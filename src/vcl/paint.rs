@@ -265,7 +265,9 @@ impl Form {
             cv.text(tx, b + (ch - lh) / 2, self.caption(), &tf, th.caption_text(active));
             if let Some(c) = self.caption_led {
                 let lx = tx + cv.text_width(&tf, self.caption()) + 10;
-                draw_led(cv, Rect::new(lx, b + (ch - 9) / 2, 18, 9), c, self.led_on);
+                let r = Rect::new(lx, b + (ch - 9) / 2, 18, 9);
+                draw_led(cv, r, c, self.led_on);
+                self.led_rect.set(r);
             }
             cv.set_clip(old);
             for (k, r) in buttons {

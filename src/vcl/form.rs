@@ -170,6 +170,11 @@ pub struct Form {
     pub caption_led: Option<u32>,
     pub led_blink: bool,
     pub led_on: bool,
+    /// the LED's hint (shown while the mouse is on it) and where it was
+    /// painted (window coordinates)
+    pub led_hint: String,
+    pub led_rect: std::cell::Cell<super::canvas::Rect>,
+    pub led_hint_shown: bool,
     pub repeat_at: Option<Instant>,
     pub last_click: (Instant, i32, i32, Option<Id>),
     /// title bar button under the mouse / pressed (0 close, 1 max, 2 min)
@@ -249,6 +254,9 @@ impl Form {
             caption_led: None,
             led_blink: false,
             led_on: true,
+            led_hint: String::new(),
+            led_rect: Default::default(),
+            led_hint_shown: false,
             repeat_at: None,
             last_click: (Instant::now(), 0, 0, None),
             nc_hot: -1,

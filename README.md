@@ -357,12 +357,14 @@ in MB3D.
 The marches of the rays (camera rays, bounces, reflections, refractions and
 the shadow rays towards the lights) run on the graphics card when the
 scene's formulas do (see below): the pixels of a pass trace their rays
-together, every round of marches goes to the card in one batch while the
-CPU threads shade the results, and small rounds stay on the CPU. Lighting,
+together in two halves, and while the card marches the rays of one half
+(a batch for all threads) the CPU threads shade the other's results and
+take a measured share of the batch from its end; small rounds stay on
+the CPU. Lighting,
 colours and the noise statistics are calculated on the CPU as before, so
 an image is the same with or without the card up to the precision of the
 marches. With a GTX 1650 and 8 CPU threads the example scenes render 1.4 to
-3 times faster than on the CPU alone (the first render of a scene also
+3.5 times faster than on the CPU alone (the first render of a scene also
 compiles its shader, which the driver then caches).
 
 In the Mandelbulb3D program, the **Monte Carlo** window imports the main
@@ -374,15 +376,17 @@ batch panel.
 
 The main calculation (the ray marching of every pixel) runs on the
 graphics card through [wgpu](https://wgpu.rs) (Vulkan, Metal, DirectX 12)
-whenever the scene allows it, and on the CPU otherwise; there is nothing
-to switch:
+whenever the scene allows it, and on the CPU otherwise:
 
 * in the program, a blinking LED right of the window title shows where the
-  last calculation ran: **green** all on the graphics card, **orange**
-  mixed (ray marching, shadows, ambient occlusion and reflections on the
+  last calculation ran: **green** on the graphics card, **orange** mixed
+  (ray marching, shadows, ambient occlusion and reflections on the
   graphics card, normals on the z-buffer on the CPU), **red** on the CPU,
-  grey before the first calculation (the Monte Carlo window has its own,
-  green when its marches ran on the card);
+  grey before the first calculation; the mouse on it shows the details
+  (for Monte Carlo renders the parts of the marches on the card and on
+  the CPU);
+* "Calculate on" on the Internal tab: Auto, CPU (never the graphics card)
+  or Graphics card, kept in `Mandelbulb3D.ini`;
 * `mb3d` uses it too (it prints `calculated on: ...`); `--cpu` calculates
   on the CPU only;
 * the environment variable `MB3D_GPU=0` switches it off for both.

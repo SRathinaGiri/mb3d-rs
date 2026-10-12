@@ -1309,6 +1309,9 @@ pub struct RaySharing {
     /// when no more than this many rays are left on the card (and the CPU
     /// has none) the card gives them to the CPU: returned as unfinished
     pub tail: usize,
+    /// the card starts no rays beyond this one while it is busy (the CPU's
+    /// share at the end; usize::MAX: none)
+    pub cap: usize,
 }
 
 /// Runs the tasks of the reflection pass on the graphics card (the march
@@ -1611,10 +1614,19 @@ pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share:
         ],
     });
     use std::sync::atomic::Ordering;
+    // (the first call has all slots free)
+    let slots = std::cell::Cell::new(0usize);
     let lim = |started: usize, free: usize| -> usize {
         let Some(sh) = share else { return n };
+        slots.set(slots.get().max(free));
+        let mut want = started + free;
+        // the CPU's share: the card goes beyond it only once it has
+        // started all of its own and runs low on rays
+        if want > sh.cap && (started < sh.cap || slots.get() - free > slots.get() / 4) {
+            want = sh.cap.max(started);
+        }
         let mut st = sh.state.lock().unwrap();
-        st.0 = st.0.max((started + free).min(st.1));
+        st.0 = st.0.max(want.min(st.1));
         st.0
     };
     let give_up = |left: usize| -> bool {

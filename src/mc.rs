@@ -2555,12 +2555,15 @@ struct SharedRound {
     share: crate::gpu::RaySharing,
     left: std::sync::Mutex<Vec<usize>>,
     published: std::sync::atomic::AtomicBool,
+    /// the threads' time marching (ns)
+    cpu_ns: std::sync::atomic::AtomicU64,
 }
 
 #[cfg(feature = "gpu")]
 impl SharedRound {
-    /// A thread's part: pieces from the end until the card is done, then
-    /// the tasks the card gave up
+    /// A thread's part while it has nothing else to do: pieces from the
+    /// end until the card is done, then the tasks the card gave up (if it
+    /// is done by then); returns without waiting
     fn help(&self, m: &mut McMarch) {
         use std::sync::atomic::Ordering;
         const PIECE: usize = 16;
@@ -2575,13 +2578,18 @@ impl SharedRound {
             if piece.is_empty() {
                 break;
             }
+            let t = std::time::Instant::now();
             for i in piece.rev() {
                 let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
             }
+            self.cpu_ns.fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
         }
-        while !self.published.load(Ordering::SeqCst) {
-            std::thread::yield_now();
+        if self.published.load(Ordering::SeqCst) {
+            self.take_left(m);
         }
+    }
+
+    fn take_left(&self, m: &mut McMarch) {
         loop {
             let Some(i) = self.left.lock().unwrap().pop() else { break };
             let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
@@ -2589,28 +2597,30 @@ impl SharedRound {
     }
 }
 
-/// What a thread tells the pass: its marches of the round (None: its
-/// pixels are done), or that it finished helping with a batch.
+/// What a thread tells the pass: the marches of one of its two pixel
+/// groups (None: the group is done).
 #[cfg(feature = "gpu")]
-enum ToMain {
-    Round(usize, Option<Vec<McReq>>),
-    Helped,
+struct ToMain {
+    worker: usize,
+    group: usize,
+    reqs: Option<Vec<McReq>>,
 }
 
-/// The answer to a thread's round: the results, or "march them yourself",
-/// or "help with the batch, then wait for the results".
+/// The answer to a group's round: the results, or "march them yourself";
+/// or a batch to help with when idle.
 #[cfg(feature = "gpu")]
 enum ToWorker {
-    Results(Vec<McRes>),
-    Cpu,
+    Results(usize, Vec<McRes>),
+    Cpu(usize),
     Help(std::sync::Arc<SharedRound>),
 }
 
 /// A pass with the marches on the graphics card: every thread runs many
-/// pixels at once (each a future that waits for its marches); in every
-/// round the threads hand their marches to this thread, which sends them
-/// to the card as one batch while the threads march from its end.
-/// Returns the status of the card.
+/// pixels at once (each a future that waits for its marches) in two
+/// groups; the rounds of the groups alternate, so while the card marches
+/// one group's rays (one batch for all threads, sent by this thread) the
+/// threads shade the other group's results, and help with the batch from
+/// its end when they wait.  Returns the status of the card.
 #[cfg(feature = "gpu")]
 fn pass_gpu(
     ctx: &McCtx,
@@ -2648,40 +2658,89 @@ fn pass_gpu(
             let done_rows = &done_rows;
             s.spawn(move || {
                 let march = RefCell::new(McMarch::new(ctx));
-                let outbox: RefCell<Vec<Rc<Link>>> = RefCell::new(Vec::new());
-                let active_max = (MC_ACTIVE / threads).max(64);
-                // the pixels in row order: (row, column)
-                let mut queue = list.iter().flat_map(|(y, row)| (0..row.len()).map(move |x| (*y, x))).collect::<std::collections::VecDeque<_>>();
+                let active_max = (MC_ACTIVE / threads / 2).max(64);
+                // the pixels in row order: (row, column), every other one
+                // for each group
+                let mut queues: [std::collections::VecDeque<(usize, usize)>; 2] = Default::default();
+                for (i, px) in list.iter().flat_map(|(y, row)| (0..row.len()).map(move |x| (*y, x))).enumerate() {
+                    queues[i & 1].push_back(px);
+                }
                 let mut row_of: std::collections::HashMap<usize, (Vec<McRecord>, usize)> = list.iter().map(|(y, row)| (*y, (row.to_vec(), row.len()))).collect();
                 let mut slices: std::collections::HashMap<usize, &mut [McRecord]> = list.into_iter().collect();
                 type Px<'x> = Pin<Box<dyn Future<Output = McRecord> + 'x>>;
-                let mut active: Vec<(usize, usize, Px)> = Vec::new();
+                struct Group<'x> {
+                    active: Vec<(usize, usize, Px<'x>)>,
+                    outbox: Rc<RefCell<Vec<Rc<Link>>>>,
+                    // the links of the round sent, and its requests
+                    waiting: Option<(Vec<Rc<Link>>, Vec<McReq>)>,
+                    done: bool,
+                }
+                let outboxes = [Rc::new(RefCell::new(Vec::new())), Rc::new(RefCell::new(Vec::new()))];
+                let mut groups: Vec<Group> = outboxes.iter().map(|o| Group { active: Vec::new(), outbox: o.clone(), waiting: None, done: false }).collect();
+                // answers that came for the other group
+                let mut stash: Vec<ToWorker> = Vec::new();
                 let mut cx = Context::from_waker(std::task::Waker::noop());
-                loop {
+                let mut g = 0;
+                while !(groups[0].done && groups[1].done) {
                     if cancel() {
-                        let _ = to_main.send(ToMain::Round(wi, None));
+                        for (k, gr) in groups.iter().enumerate() {
+                            if !gr.done {
+                                let _ = to_main.send(ToMain { worker: wi, group: k, reqs: None });
+                            }
+                        }
                         return;
                     }
-                    while active.len() < active_max {
+                    if groups[g].done {
+                        g = 1 - g;
+                        continue;
+                    }
+                    // the answer to this group's round (helping meanwhile)
+                    if let Some((links, reqs)) = groups[g].waiting.take() {
+                        let res = loop {
+                            let m = match stash.iter().position(|m| matches!(m, ToWorker::Results(k, _) | ToWorker::Cpu(k) if *k == g)) {
+                                Some(i) => stash.swap_remove(i),
+                                None => match inbox.recv() {
+                                    Ok(m) => m,
+                                    Err(_) => return,
+                                },
+                            };
+                            match m {
+                                ToWorker::Help(round) => round.help(&mut march.borrow_mut()),
+                                ToWorker::Results(k, res) if k == g => break res,
+                                ToWorker::Cpu(k) if k == g => {
+                                    let mut m = march.borrow_mut();
+                                    // (the view vector only matters for volumetric light)
+                                    break reqs.iter().map(|r| m.run(r, [0.0, 0.0, 1.0])).collect();
+                                }
+                                other => stash.push(other),
+                            }
+                        };
+                        for (l, r) in links.iter().zip(res) {
+                            l.res.set(Some(r));
+                        }
+                    }
+                    let gr = &mut groups[g];
+                    let queue = &mut queues[g];
+                    while gr.active.len() < active_max {
                         let Some((y, x)) = queue.pop_front() else { break };
                         let rec = row_of[&y].0[x];
-                        let outbox = &outbox;
+                        let outbox = gr.outbox.clone();
                         let fut = Box::pin(async move {
                             let mut t = Tracer::new(ctx, 0);
-                            t.link = Some((Rc::new(Link::default()), outbox));
+                            t.link = Some((Rc::new(Link::default()), &*outbox));
                             t.row_y = y as i32;
                             t.pass_nr = pa.pass_nr;
                             let mut r = rec;
                             t.pixel(x as i32 + 1, y as i32, &mut r, pa.snap, pa.skip_nonzero, pa.avrg_vari, pa.avrg_rcount, pa.max_new).await;
                             r
                         }) as Px;
-                        active.push((y, x, fut));
+                        gr.active.push((y, x, fut));
                     }
                     // the futures run until they wait for a march
                     let mut k = 0;
-                    while k < active.len() {
-                        if let Poll::Ready(r) = active[k].2.as_mut().poll(&mut cx) {
-                            let (y, x, _) = active.swap_remove(k);
+                    while k < gr.active.len() {
+                        if let Poll::Ready(r) = gr.active[k].2.as_mut().poll(&mut cx) {
+                            let (y, x, _) = gr.active.swap_remove(k);
                             let e = row_of.get_mut(&y).unwrap();
                             e.0[x] = r;
                             e.1 -= 1;
@@ -2699,79 +2758,70 @@ fn pass_gpu(
                             k += 1;
                         }
                     }
-                    let links: Vec<Rc<Link>> = std::mem::take(&mut *outbox.borrow_mut());
+                    let links: Vec<Rc<Link>> = std::mem::take(&mut *gr.outbox.borrow_mut());
                     if links.is_empty() {
-                        if active.is_empty() && queue.is_empty() {
-                            let _ = to_main.send(ToMain::Round(wi, None));
+                        if gr.active.is_empty() && queue.is_empty() {
+                            gr.done = true;
+                            if to_main.send(ToMain { worker: wi, group: g, reqs: None }).is_err() {
+                                return;
+                            }
+                        }
+                        // (only new pixels: they start in the next turn)
+                    } else {
+                        let reqs: Vec<McReq> = links.iter().map(|l| l.req.take().unwrap()).collect();
+                        if to_main.send(ToMain { worker: wi, group: g, reqs: Some(reqs.clone()) }).is_err() {
                             return;
                         }
-                        // only new pixels: start them in the next turn
-                        continue;
+                        gr.waiting = Some((links, reqs));
                     }
-                    let reqs: Vec<McReq> = links.iter().map(|l| l.req.take().unwrap()).collect();
-                    if to_main.send(ToMain::Round(wi, Some(reqs.clone()))).is_err() {
-                        return;
-                    }
-                    let mut answer = inbox.recv();
-                    if let Ok(ToWorker::Help(round)) = &answer {
-                        round.help(&mut march.borrow_mut());
-                        let _ = to_main.send(ToMain::Helped);
-                        answer = inbox.recv();
-                    }
-                    match answer {
-                        Ok(ToWorker::Results(res)) => {
-                            for (l, r) in links.iter().zip(res) {
-                                l.res.set(Some(r));
-                            }
-                        }
-                        // the CPU does this round
-                        Ok(ToWorker::Cpu) => {
-                            let mut m = march.borrow_mut();
-                            for (l, r) in links.iter().zip(&reqs) {
-                                // (the view vector only matters for volumetric light)
-                                l.res.set(Some(m.run(r, [0.0, 0.0, 1.0])));
-                            }
-                        }
-                        _ => return,
-                    }
+                    g = 1 - g;
                 }
+                // (the futures hold the outboxes)
+                drop(groups);
             });
         }
         drop(to_main);
         // (dropped when this thread panics: the workers end then)
         let replies = std::mem::take(&mut replies);
-        // the batches of the rounds
-        let mut live = threads;
+        let mut main_march = McMarch::new(ctx);
+        // the batches of the rounds, the groups in turn
+        let mut live = [threads, threads];
+        let mut pending: [Vec<(usize, Vec<McReq>)>; 2] = [Vec::new(), Vec::new()];
         let mut on_card = true;
         let mut batches = 0usize;
         let (mut n_card, mut n_cpu) = (0usize, 0usize);
         let timing = std::env::var_os("MB3D_MC_TIMING").is_some();
         let (mut t_card, mut t_wait) = (0f64, 0f64);
-        while live > 0 {
+        // the CPU's part of a batch, from the rates of the last one
+        let mut cpu_part = 0.3f64;
+        let mut g = 0;
+        'pass: while live[0] + live[1] > 0 {
+            if live[g] == 0 {
+                g = 1 - g;
+                continue;
+            }
             let tw = std::time::Instant::now();
-            let mut round: Vec<(usize, Vec<McReq>)> = Vec::new();
-            // one message from every live worker
-            while round.len() < live {
+            // one message from every live worker of the group
+            while pending[g].len() < live[g] {
                 match from_workers.recv() {
-                    Ok(ToMain::Round(wi, Some(r))) => round.push((wi, r)),
-                    Ok(ToMain::Round(_, None)) => live -= 1,
-                    Ok(ToMain::Helped) => {}
-                    Err(_) => {
-                        live = 0;
-                        break;
-                    }
+                    Ok(ToMain { worker, group, reqs: Some(r) }) => pending[group].push((worker, r)),
+                    Ok(ToMain { group, reqs: None, .. }) => live[group] -= 1,
+                    Err(_) => break 'pass,
                 }
             }
             t_wait += tw.elapsed().as_secs_f64();
+            let round = std::mem::take(&mut pending[g]);
             let total: usize = round.iter().map(|r| r.1.len()).sum();
             if total == 0 {
+                g = 1 - g;
                 continue;
             }
             if !on_card || total < MC_CPU_RAYS {
                 n_cpu += total;
                 for (wi, _) in &round {
-                    let _ = replies[*wi].send(ToWorker::Cpu);
+                    let _ = replies[*wi].send(ToWorker::Cpu(g));
                 }
+                g = 1 - g;
                 continue;
             }
             let all: Vec<McReq> = round.iter().flat_map(|r| r.1.iter().copied()).collect();
@@ -2782,13 +2832,17 @@ fn pass_gpu(
                     state: std::sync::Mutex::new((if share_cpu { 0 } else { all.len() }, all.len())),
                     done: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
                     tail: if share_cpu { threads * 4 } else { 0 },
+                    cap: if share_cpu { total - (total as f64 * cpu_part) as usize } else { usize::MAX },
                 },
                 reqs: all,
                 left: std::sync::Mutex::new(Vec::new()),
                 published: std::sync::atomic::AtomicBool::new(false),
+                cpu_ns: std::sync::atomic::AtomicU64::new(0),
             });
-            for (wi, _) in &round {
-                let _ = replies[*wi].send(ToWorker::Help(sr.clone()));
+            if share_cpu {
+                for wi in 0..threads {
+                    let _ = replies[wi].send(ToWorker::Help(sr.clone()));
+                }
             }
             let tc = std::time::Instant::now();
             let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));
@@ -2808,27 +2862,41 @@ fn pass_gpu(
                     (Vec::new(), 0, Vec::new())
                 }
             };
-            {
-                // what the card did not finish: its own part it gave up, or
-                // all of it when it failed
-                let mut left = sr.left.lock().unwrap();
-                *left = gave_up;
-                if !on_card {
-                    let lim = sr.share.state.lock().unwrap().1;
-                    left.extend(0..lim.min(total));
-                }
+            // what the card did not finish: its own part it gave up, or
+            // all of it when it failed; nothing more for the helpers
+            let meet = {
+                let mut st = sr.share.state.lock().unwrap();
+                st.0 = st.1;
+                st.1
+            };
+            let mut mine: Vec<usize> = gave_up;
+            if !on_card {
+                mine.extend(0..meet.min(total));
             }
+            *sr.left.lock().unwrap() = mine.clone();
             sr.published.store(true, Ordering::SeqCst);
-            // the threads finish their parts
-            let mut helped = 0;
-            while helped < round.len() {
-                match from_workers.recv() {
-                    Ok(ToMain::Helped) => helped += 1,
-                    Ok(_) => unreachable!("a thread with a round of its own while helping"),
-                    Err(_) => break,
+            sr.take_left(&mut main_march);
+            // the pieces the threads took
+            for i in mine.into_iter().chain(meet..total) {
+                while sr.cpu_res[i].get().is_none() {
+                    std::thread::yield_now();
                 }
             }
             let n_cpu_b = sr.cpu_res.iter().filter(|c| c.get().is_some()).count();
+            {
+                // marches per second: the card in its time, all threads at
+                // the rate of the pieces they marched
+                let card = (total - n_cpu_b) as f64 / card_s.max(1e-4);
+                let ns = sr.cpu_ns.load(Ordering::Relaxed);
+                let helped = (total - meet) as f64;
+                if ns > 0 && helped > 0.0 {
+                    let cpu = helped / (ns as f64 * 1e-9) * threads as f64;
+                    cpu_part = (cpu / (cpu + card).max(1e-9)).clamp(0.02, 0.85);
+                }
+                if timing {
+                    eprintln!("  CPU's part now {:.0} %", cpu_part * 100.0);
+                }
+            }
             if timing {
                 eprintln!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all", card_s * 1000.0, tc.elapsed().as_secs_f64() * 1000.0);
             }
@@ -2837,13 +2905,15 @@ fn pass_gpu(
             n_card += total - n_cpu_b;
             let mut it = (0..total).map(|i| sr.cpu_res[i].get().copied().unwrap_or_else(|| res[i]));
             for (wi, r) in &round {
-                let _ = replies[*wi].send(ToWorker::Results(it.by_ref().take(r.len()).collect()));
+                let _ = replies[*wi].send(ToWorker::Results(g, it.by_ref().take(r.len()).collect()));
             }
+            g = 1 - g;
         }
         if timing {
             eprintln!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
         }
-        status = format!("GPU {} ({batches} batches, {n_card} marches on the card, {n_cpu} on the CPU)", crate::gpu::name().unwrap_or_default());
+        let pc = (n_card * 100 + (n_card + n_cpu) / 2) / (n_card + n_cpu).max(1);
+        status = format!("GPU {}: {pc} % of the marches on the card, {} % on the CPU ({batches} batches)", crate::gpu::name().unwrap_or_default(), 100 - pc);
     });
     if let Some(e) = failed.into_inner().unwrap() {
         return Err(e);

@@ -1730,7 +1730,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     let march_cpu = |list: &[&(usize, RayReq)], share: Option<&crate::gpu::RaySharing>| -> Vec<(usize, RayHit)> {
         use std::sync::atomic::Ordering::SeqCst;
         const PIECE: usize = 16;
-        let own = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, list.len())), done: std::sync::Arc::new(true.into()), tail: 0 };
+        let own = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, list.len())), done: std::sync::Arc::new(true.into()), tail: 0, cap: usize::MAX };
         let sh = share.unwrap_or(&own);
         // one thread feeds the card
         let workers = if share.is_some() { threads.saturating_sub(1).max(1) } else { threads };
@@ -1868,7 +1868,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         } else {
             // the CPU starts with a few pieces per thread from the end
             let n = all.len();
-            let sh = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, n)), done: std::sync::Arc::new(false.into()), tail: threads * 2 };
+            let sh = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, n)), done: std::sync::Arc::new(false.into()), tail: threads * 2, cap: usize::MAX };
             let (gpu, cpu) = std::thread::scope(|s| {
                 let g = s.spawn(|| march_gpu(&all, Some(&sh)));
                 let c = march_cpu(&all, Some(&sh));

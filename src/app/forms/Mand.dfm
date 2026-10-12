@@ -735,16 +735,44 @@ object Mand3DForm: TMand3DForm
         end
         object Label3: TLabel
           Left = 20
-          Top = 160
+          Top = 166
           Width = 3
           Height = 13
         end
         object Label17: TLabel
           Left = 20
-          Top = 176
+          Top = 181
           Width = 49
           Height = 13
           Caption = 'its for free!'
+        end
+        object CalcOnLabel: TLabel
+          Left = 8
+          Top = 145
+          Width = 50
+          Height = 13
+          Caption = 'Calculate on'
+        end
+        object CalcOnCombo: TComboBox
+          Left = 66
+          Top = 141
+          Width = 75
+          Height = 21
+          Hint = 
+            'Auto: the CPU starts at once, the graphics card joins'#13#10'as soon' +
+            ' as its shader is compiled.'#13#10'CPU: never the graphics card.'#13#10 +
+            'Graphics card: wait for the shader, as before.'
+          Style = csDropDownList
+          ItemIndex = 0
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 5
+          Text = 'Auto'
+          OnChange = CalcOnComboChange
+          Items.Strings = (
+            'Auto'
+            'CPU'
+            'Graphics card')
         end
         object Label33: TLabel
           Left = 13

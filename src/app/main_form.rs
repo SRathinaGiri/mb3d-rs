@@ -156,6 +156,12 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     if app.ini.get("ScaleDEstop") == "0" {
         ui.set_checked(F, "CheckBox11", false);
     }
+    let calc_on = match app.ini.get_extra("CalcOn") {
+        Some("CPU") => 1,
+        Some("GPU") => 2,
+        _ => 0,
+    };
+    set_calc_on(app, ui, calc_on);
     if app.ini.get("ThreadCount") != "Auto" {
         ui.set_checked(F, "CheckBox12", false);
         let n = app.ini.get("ThreadCount").parse::<i64>().unwrap_or(cpus).clamp(1, 64);
@@ -270,6 +276,16 @@ fn init_compute(ui: &mut Ui) {
     show_led(ui, Led::Idle, false);
 }
 
+/// The "Calculate on" setting (Internal tab, `CalcOn` in the ini):
+/// 0 Auto, 1 CPU, 2 graphics card.
+fn set_calc_on(app: &mut Mb3d, ui: &mut Ui, i: i64) {
+    let i = i.clamp(0, 2);
+    ui.set_item_index(F, "CalcOnCombo", i as i32);
+    app.ini.set_extra("CalcOn", ["Auto", "CPU", "GPU"][i as usize]);
+    #[cfg(feature = "gpu")]
+    crate::gpu::set_enabled(i != 1 && crate::gpu::default_on());
+}
+
 /// The title bar LED: where the last calculation ran.
 #[derive(Clone, Copy, PartialEq)]
 pub enum Led {
@@ -299,6 +315,19 @@ pub fn show_led(ui: &mut Ui, led: Led, blinking: bool) {
         f.caption_led = col;
         f.led_blink = blinking;
         f.dirty = true;
+    }
+}
+
+/// The LED's hint: where the last calculation ran.
+pub fn set_led_hint(ui: &mut Ui, text: &str) {
+    let f = ui.fm(F);
+    if f.led_hint != text {
+        f.led_hint = text.to_string();
+        if f.led_hint_shown {
+            f.hint = None;
+            f.led_hint_shown = false;
+            f.dirty = true;
+        }
     }
 }
 
@@ -647,6 +676,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 ui.set_caption(F, "Label52", &time_str((stats.calc_s * 10.0) as i64));
                 app.main.led = running_led(app).unwrap_or(Led::Cpu);
                 show_led(ui, app.main.led, false);
+                #[cfg(feature = "gpu")]
+                set_led_hint(ui, &format!("Calculated on: {}", crate::gpu::last_status()));
+                #[cfg(not(feature = "gpu"))]
+                set_led_hint(ui, "Calculated on the CPU");
                 if stats.post_s > 0.0 {
                     let l = if app.scene.shadows.is_some() { "Label8" } else { "Label48" };
                     ui.set_caption(F, l, &time_str((stats.post_s * 10.0) as i64));
@@ -743,6 +776,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "Button2Click" => button2_click(app, ui),
+        "CalcOnComboChange" => {
+            let i = ui.item_index(F, "CalcOnCombo") as i64;
+            set_calc_on(app, ui, i);
+        }
         "Button1Click" => {
             // the 2D slices at z mid / start / end
             app.main.slice_calc = ui.tag(F, &e.sender) as u8;

@@ -458,6 +458,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             app.main.led = led;
             super::main_form::show_led(ui, led, app.mc.running);
         }
+        super::main_form::set_led_hint(ui, &format!("Monte Carlo calculated on: {}", crate::mc::last_status()));
         repaint(app, ui);
         let max_rays = show_stats(app, ui);
         ui.set_caption(F, "Label8", "..til next update");
