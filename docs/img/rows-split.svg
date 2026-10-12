@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="640" height="300" fill="#ffffff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#222">Auto, first time a formula combination is used</text>
+  <!-- image -->
+  <rect x="20" y="45" width="260" height="230" fill="#f2f2f2" stroke="#666"/>
+  <rect x="20" y="45" width="260" height="80" fill="#3fb950" opacity="0.85"/>
+  <rect x="20" y="125" width="260" height="40" fill="#bbbbbb"/>
+  <rect x="20" y="165" width="260" height="110" fill="#e5534b" opacity="0.85"/>
+  <text x="150" y="90" text-anchor="middle" fill="#fff" font-weight="bold">graphics card</text>
+  <text x="150" y="108" text-anchor="middle" fill="#fff">rows from the top ↓</text>
+  <text x="150" y="150" text-anchor="middle" fill="#333">not calculated yet</text>
+  <text x="150" y="215" text-anchor="middle" fill="#fff" font-weight="bold">CPU threads</text>
+  <text x="150" y="233" text-anchor="middle" fill="#fff">rows from the bottom ↑</text>
+  <!-- explanation -->
+  <text x="305" y="70" fill="#222">1. The CPU starts at once, from the bottom.</text>
+  <text x="305" y="100" fill="#222">2. Meanwhile the card's shader compiles</text>
+  <text x="322" y="118" fill="#555">(10–20 s the first time, then cached).</text>
+  <text x="305" y="148" fill="#222">3. When it is ready the card joins from</text>
+  <text x="322" y="166" fill="#555">the top, in small bands.</text>
+  <text x="305" y="196" fill="#222">4. They meet somewhere in the middle:</text>
+  <text x="322" y="214" fill="#555">the image is done.</text>
+  <text x="305" y="244" fill="#222">Small image? The CPU finishes before the</text>
+  <text x="322" y="262" fill="#555">compile does - nothing waits.</text>
+</svg>

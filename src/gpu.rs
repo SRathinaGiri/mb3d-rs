@@ -938,11 +938,19 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
 }
 
 /// The march alone on the card, of the bands that `bands` hands out (the
-/// CPU calculates the other rows): their rows go to `sink`.
+/// CPU calculates the other rows): their rows go to `sink`.  An error
+/// after rows went to `sink` (single precision overflows) means they are
+/// not usable.
 pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands))?;
+    let v = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands))?;
+    // pixels whose DE overflowed single precision (see [`march`]): the
+    // card's rows are not usable then
+    let n = OVERFLOW.with(|c| c.get());
+    if n * 500 > v.len() && !needs_double(p) {
+        return Err(format!("single precision overflows in {} ({n} of {} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + "), v.len()));
+    }
     Ok(())
 }
 

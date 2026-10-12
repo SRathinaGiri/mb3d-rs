@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="250" viewBox="0 0 680 250" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <rect width="680" height="250" fill="#ffffff"/>
+  <text x="20" y="26" font-size="16" font-weight="bold" fill="#222">Monte Carlo on the graphics card: two halves take turns</text>
+  <text x="20" y="72" fill="#222" font-weight="bold">graphics card</text>
+  <text x="20" y="132" fill="#222" font-weight="bold">CPU threads</text>
+  <!-- card lane -->
+  <rect x="130" y="55" width="120" height="26" fill="#3fb950"/><text x="190" y="73" text-anchor="middle" fill="#fff">rays of half A</text>
+  <rect x="255" y="55" width="120" height="26" fill="#2f81f7"/><text x="315" y="73" text-anchor="middle" fill="#fff">rays of half B</text>
+  <rect x="380" y="55" width="120" height="26" fill="#3fb950"/><text x="440" y="73" text-anchor="middle" fill="#fff">rays of half A</text>
+  <rect x="505" y="55" width="120" height="26" fill="#2f81f7"/><text x="565" y="73" text-anchor="middle" fill="#fff">rays of half B</text>
+  <!-- cpu lane -->
+  <rect x="130" y="115" width="80" height="26" fill="#2f81f7" opacity="0.55"/><text x="170" y="133" text-anchor="middle" fill="#123">shade B</text>
+  <rect x="212" y="115" width="38" height="26" fill="#3fb950" opacity="0.55"/><text x="231" y="133" text-anchor="middle" fill="#123">A</text>
+  <rect x="255" y="115" width="80" height="26" fill="#3fb950" opacity="0.55"/><text x="295" y="133" text-anchor="middle" fill="#123">shade A</text>
+  <rect x="337" y="115" width="38" height="26" fill="#2f81f7" opacity="0.55"/><text x="356" y="133" text-anchor="middle" fill="#123">B</text>
+  <rect x="380" y="115" width="80" height="26" fill="#2f81f7" opacity="0.55"/><text x="420" y="133" text-anchor="middle" fill="#123">shade B</text>
+  <rect x="462" y="115" width="38" height="26" fill="#3fb950" opacity="0.55"/><text x="481" y="133" text-anchor="middle" fill="#123">A</text>
+  <rect x="505" y="115" width="80" height="26" fill="#3fb950" opacity="0.55"/><text x="545" y="133" text-anchor="middle" fill="#123">shade A</text>
+  <rect x="587" y="115" width="38" height="26" fill="#2f81f7" opacity="0.55"/><text x="606" y="133" text-anchor="middle" fill="#123">B</text>
+  <line x1="130" y1="160" x2="640" y2="160" stroke="#888" marker-end="url(#a)"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#888"/></marker></defs>
+  <text x="640" y="176" text-anchor="end" fill="#666">time</text>
+  <text x="20" y="200" fill="#222">While the card follows the rays of one half of the pixels, the CPU works out the light of the</text>
+  <text x="20" y="218" fill="#222">other half - and with time left over it marches rays from the end of the card's batches</text>
+  <text x="20" y="236" fill="#222">(small squares), so neither side waits for the other.</text>
+</svg>

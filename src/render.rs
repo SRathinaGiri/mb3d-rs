@@ -132,7 +132,8 @@ fn calculate_inner(
                 while !all() && t.elapsed() < std::time::Duration::from_millis(200) {
                     std::thread::sleep(std::time::Duration::from_millis(5));
                 }
-                if !all() {
+                // (MB3D_GPU_MIXED=1: always, for comparisons)
+                if !all() || std::env::var_os("MB3D_GPU_MIXED").is_some() {
                     let gbuf = march_mixed(&p, threads, progress, cancel, sink, &flags[0])?;
                     return finish_calculation(sc, p, gbuf, post, threads, cancel);
                 }
@@ -218,19 +219,19 @@ fn march_mixed(
     sink: Option<RowSink>,
     ready: &std::sync::atomic::AtomicBool,
 ) -> Result<Vec<SiLight>, String> {
-    use std::sync::{Mutex, OnceLock};
+    use std::sync::Mutex;
     let h = p.rect[3].max(0) as usize;
     // the rows still free: [top, bottom)
     let free = Mutex::new((0usize, h));
-    let rows: Vec<OnceLock<Vec<SiLight>>> = (0..h).map(|_| OnceLock::new()).collect();
+    let rows: Vec<Mutex<Vec<SiLight>>> = (0..h).map(|_| Mutex::new(Vec::new())).collect();
     let done = AtomicUsize::new(0);
     let on_card = AtomicUsize::new(0);
     let put = |y: usize, row: Vec<SiLight>| {
         if let Some(f) = sink {
             f(y, &row);
         }
-        let _ = rows[y].set(row);
-        progress(done.fetch_add(1, Ordering::Relaxed) + 1, h);
+        *rows[y].lock().unwrap() = row;
+        progress((done.fetch_add(1, Ordering::Relaxed) + 1).min(h), h);
     };
     let mut card_err = None;
     std::thread::scope(|s| {
@@ -284,14 +285,22 @@ fn march_mixed(
         );
         if let Err(e) = r {
             if e != "cancelled" {
-                // the card's rows not delivered: on the CPU
-                for (r0, n) in claimed.into_inner().unwrap() {
-                    for y in r0..r0 + n {
-                        if rows[y].get().is_none() && !cancel() {
-                            put(y, cpu_row(p, y));
-                        }
+                // the card's rows (also those it delivered: overflows) on
+                // the CPU, by all threads
+                let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).collect();
+                let next = AtomicUsize::new(0);
+                std::thread::scope(|s2| {
+                    for _ in 0..threads {
+                        s2.spawn(|| loop {
+                            let i = next.fetch_add(1, Ordering::Relaxed);
+                            if i >= redo.len() || cancel() {
+                                break;
+                            }
+                            put(redo[i], cpu_row(p, redo[i]));
+                        });
                     }
-                }
+                });
+                on_card.store(0, Ordering::Relaxed);
             }
             card_err = Some(e);
         }
@@ -301,11 +310,11 @@ fn march_mixed(
     }
     let n_card = on_card.load(Ordering::Relaxed);
     crate::gpu::set_status(match card_err {
-        Some(e) => format!("CPU: {e}"),
+        Some(e) => format!("CPU: GPU error: {e}"),
         None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
         None => format!("GPU {} (march only, its shader compiled meanwhile): {} % of the rows on the card, the rest on the CPU", crate::gpu::name().unwrap_or_default(), n_card * 100 / h.max(1)),
     });
-    Ok(rows.into_iter().flat_map(|r| r.into_inner().unwrap_or_default()).collect())
+    Ok(rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect())
 }
 
 /// The post calculations after the main calculation (CPU or GPU).
