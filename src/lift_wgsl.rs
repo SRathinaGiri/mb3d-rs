@@ -1092,7 +1092,7 @@ impl Prog {
                     w.push_str(&t.wr_f(loc(&arg(ECX, i as i32))?, &format!("mr.{c}"))?);
                     w.push(' ');
                 }
-                format!("{{ let mr = map_px({sphere}, bitcast<i32>(rg[2]), vec3<f32>({})); {w}}}", v.join(", "))
+                format!("{{ let mr = map_px({sphere}, bitcast<i32>(rg[2]), vec3<R>({})); {w}}}", v.join(", "))
             }
             _ => return None,
         };
