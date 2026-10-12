@@ -36,7 +36,7 @@ fn main() {
             let n = g.len().max(1) as f64;
             let steps = g.iter().map(|s| (s.shadow & 0x3FF) as f64).sum::<f64>() / n;
             let hits = g.iter().filter(|s| !s.is_background()).count() as f64 * 100.0 / n;
-            println!("{name}	{}x{}	main {main_s:.2} s	steps {steps:.1}	hits {hits:.1} %", sc.width, sc.height);
+            println!("{name}	{}x{}	main {main_s:.2} s	steps {steps:.1}	hits {hits:.1} %	formula errors {}", sc.width, sc.height, mb3d::iteration::CUSTOM_ERRORS.load(std::sync::atomic::Ordering::Relaxed));
             continue;
         }
         let formulas: Vec<String> = p
