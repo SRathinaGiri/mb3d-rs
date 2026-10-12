@@ -2385,6 +2385,13 @@ pub fn pass_rows(
             p.vol = Some(std::sync::Arc::new(map));
         }
     }
+    // the card in double precision where single is too coarse for the
+    // scene (see `render::double_probe`; only when the card's march is
+    // compiled already, as after a normal calculation of the scene)
+    #[cfg(feature = "gpu")]
+    {
+        p.gpu_double = crate::render::double_probe(&sc, &p, threads, false);
+    }
     let mid = sc.stereo_mid();
     // CalcHSVecsFromLights
     let m1 = normalise_matrix_to(1.0, &p.vgrads);

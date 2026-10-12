@@ -112,6 +112,8 @@ const EVAL_TURNS: u32 = 164u;    // the turns of evaluate's loop (a parameter so
 const R_SPLIT: u32 = 165u;        // the reflection pass runs in two pipelines (R_MARCH)
 const N_SLOTS: u32 = 166u;        // resumable marching: the slots (64 per work group)
 const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or tasks of the job
+const SAMPLE_X: u32 = 220u;      // > 0: a sample of the pixels (render.rs probe_single): every
+const SAMPLE_Y: u32 = 221u;      // SAMPLE_X-th column of every SAMPLE_Y-th row (RECT_W, ROW0 count them)
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
@@ -3855,10 +3857,17 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
     // the pixel (the reflection pass: the seed of the task's place in
     // rows of R_W)
     let rw = select(u32(w), R_W, P[MODE] == M_REFLECT || P[MODE] == M_MC);
-    let cx = i32(cur_item % rw);
+    var cx = i32(cur_item % rw);
     let ly = i32(cur_item / rw);
+    var y = pi(RECT_Y0) + pi(ROW0) + ly;
+    if (pi(SAMPLE_X) > 0) {
+        let sx = pi(SAMPLE_X);
+        let sy = pi(SAMPLE_Y);
+        let ry = pi(ROW0) + ly;
+        cx = cx * sx + (ry * 5) % sx;
+        y = pi(RECT_Y0) + ry * sy + sy / 2;
+    }
     let x = pi(RECT_X0) + cx;
-    let y = pi(RECT_Y0) + pi(ROW0) + ly;
     // MB3D seeds per row; the CPU advances the seed along the row, here the
     // seed is advanced by the column (the same random sequence, but not
     // exactly the same numbers where pixels have no first step)

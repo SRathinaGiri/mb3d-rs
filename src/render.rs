@@ -118,6 +118,10 @@ fn calculate_inner(
         // the main calculation (also for a raw calculation: post_process
         // skips what is done)
         let job = post_job(sc, &p);
+        // single precision too coarse for this scene (a probe on the CPU
+        // and the card disagrees): double precision (the probe waits for
+        // its shader only when the calculation waits for the card anyway)
+        p.gpu_double = double_probe(sc, &p, threads, !crate::gpu::auto());
         // the reflection pass's pipelines compile meanwhile
         if sc.mc.reflections {
             crate::gpu::reflect_prepare(&p, sc.shadows.is_some(), sc.ao.is_some());
@@ -206,6 +210,190 @@ fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
     let seed = (0x24563487u32 as i64 + (yy as i64 + 1) * 0x324594A1i64) as i32;
     let mut m = Marcher::new(p, seed);
     (x0..x0 + w).map(|x| m.march_pixel(x, yy as i32)).collect()
+}
+
+/// The mean colour difference of the probe's pixels (a share of full
+/// scale) above which a scene runs in double precision on the card (see
+/// [`double_probe`]).
+#[cfg(feature = "gpu")]
+const PROBE_LIMIT: f64 = 0.013;
+
+/// The probe's pixels (about; the CPU marches fewer when they take longer
+/// than [`PROBE_MS`]).
+#[cfg(feature = "gpu")]
+const PROBE_PIXELS: usize = 3000;
+
+/// The time the probe's CPU marches may take (ms).
+#[cfg(feature = "gpu")]
+const PROBE_MS: u64 = 150;
+
+/// The time the probe's march on the card may take (ms): its slowest
+/// pixels decide (no result when it takes longer).
+#[cfg(feature = "gpu")]
+const PROBE_CARD_MS: u64 = 1500;
+
+/// The probe's decisions by scene ([`crate::gpu::scene_key`]).
+#[cfg(feature = "gpu")]
+static PROBED: std::sync::Mutex<Vec<(u64, bool)>> = std::sync::Mutex::new(Vec::new());
+
+/// Whether the card calculates the scene in double precision although its
+/// zoom allows single: some scenes' fine detail (not deep zooms, mostly
+/// the roughness of smoothed normals) comes out clearly different in
+/// single precision.  A probe marches a sample of pixels on the CPU and
+/// the card (single precision) and compares their colours; its decision
+/// is kept for the scene (its shader, view and lighting).  The probe needs
+/// the card's single precision march: `compile` waits for it, otherwise
+/// (Auto's CPU start must not wait) there is no probe until it is
+/// compiled.
+/// MB3D_GPU_NOPROBE: no probe; MB3D_PROBE_LIMIT: the limit (a share);
+/// MB3D_PROBE_MS: the time of its CPU marches;
+/// MB3D_PROBE_DEBUG: prints the probe's result.
+#[cfg(feature = "gpu")]
+pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -> bool {
+    if p.gpu_double || p.slice_2d != 0 || !crate::gpu::enabled() || std::env::var_os("MB3D_GPU_NOPROBE").is_some() || !crate::gpu::double_possible(p) || crate::gpu::unsupported(p).is_some() {
+        return p.gpu_double;
+    }
+    let Some(key) = crate::gpu::scene_key(p) else { return false };
+    let key = {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        (key, format!("{:?}", effective_lighting(sc))).hash(&mut h);
+        h.finish()
+    };
+    if let Some(&(_, d)) = PROBED.lock().unwrap().iter().find(|(k, _)| *k == key) {
+        return d;
+    }
+    let ready = if compile {
+        match crate::gpu::march_prepare(p, &PostJob::default()) {
+            Ok(flags) => {
+                while !flags[0].load(Ordering::SeqCst) {
+                    std::thread::sleep(std::time::Duration::from_millis(5));
+                }
+                true
+            }
+            Err(_) => false,
+        }
+    } else {
+        crate::gpu::march_compiled(p)
+    };
+    if !ready {
+        return false;
+    }
+    let t = Instant::now();
+    let f = probe_single(sc, p, threads);
+    let limit = std::env::var("MB3D_PROBE_LIMIT").ok().and_then(|v| v.parse().ok()).unwrap_or(PROBE_LIMIT);
+    let d = f.is_some_and(|(f, _)| f > limit);
+    if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
+        match f {
+            Some((f, n)) => eprintln!("  probe: {n} pixels, colours differ by {:.2} % in single precision ({:.0} ms): {}", f * 100.0, t.elapsed().as_secs_f64() * 1000.0, if d { "double" } else { "single" }),
+            None => eprintln!("  probe: no result ({:.0} ms)", t.elapsed().as_secs_f64() * 1000.0),
+        }
+    }
+    let mut list = PROBED.lock().unwrap();
+    if list.len() >= 256 {
+        list.remove(0);
+    }
+    list.push((key, d));
+    d
+}
+
+/// The probe of [`double_probe`]: the mean difference of the colours of a
+/// sample of pixels marched by the card in single precision and by the
+/// CPU (painted without shadows and occlusion; a share of full scale), and
+/// the number of pixels compared.  The pixels are a grid of about
+/// [`PROBE_PIXELS`] over the image: the card marches all of them, the CPU
+/// as many as it can in [`PROBE_MS`] (in a spread order), every pixel with
+/// a fresh [`Marcher`] and the seed the card's pixel has.  None when the
+/// card cannot march the scene (or not within [`PROBE_CARD_MS`]) or the
+/// CPU did too few pixels in its time.
+#[cfg(feature = "gpu")]
+pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, usize)> {
+    use std::sync::OnceLock;
+    let [x0, y0, w, h] = p.rect.map(|v| v.max(0) as usize);
+    if w == 0 || h == 0 {
+        return None;
+    }
+    // a grid of about PROBE_PIXELS (the card's sample, see
+    // [`crate::gpu::march_sample`])
+    let sxy = ((w * h) as f64 / PROBE_PIXELS as f64).sqrt().max(1.0) as usize;
+    let (nx, ny) = (w / sxy, h / sxy);
+    let samples: Vec<(usize, usize)> = (0..ny).flat_map(|r| (0..nx).map(move |c| (r * sxy + sxy / 2, c * sxy + (r * 5) % sxy))).collect();
+    let ns = samples.len();
+    if ns == 0 {
+        return None;
+    }
+    // a spread order (a step coprime to the count)
+    let step = [7919usize, 7907, 7901].into_iter().find(|s| ns % s != 0).unwrap_or(1) % ns;
+    let step = step.max(1);
+    let budget = std::time::Duration::from_millis(std::env::var("MB3D_PROBE_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(PROBE_MS));
+    let cpu: Vec<OnceLock<SiLight>> = (0..ns).map(|_| OnceLock::new()).collect();
+    let mut card: Vec<(usize, Vec<SiLight>)> = Vec::new();
+    let next = AtomicUsize::new(0);
+    let t = Instant::now();
+    let card_ok = std::thread::scope(|s| {
+        for _ in 0..threads.max(1) {
+            s.spawn(|| {
+                crate::prio::calc_thread();
+                loop {
+                    let i = next.fetch_add(1, Ordering::Relaxed);
+                    if i >= ns || t.elapsed() > budget {
+                        break;
+                    }
+                    let j = i * step % ns;
+                    let (y, x) = samples[j];
+                    let yy = y + y0;
+                    // the card's seed: the row's, advanced by the column
+                    let mut seed = (0x24563487u32 as i64 + (yy as i64 + 1) * 0x324594A1i64) as i32;
+                    for _ in 0..x {
+                        seed = seed.wrapping_mul(214013).wrapping_add(2531011);
+                    }
+                    let _ = cpu[j].set(Marcher::new(p, seed).march_pixel((x + x0) as i32, yy as i32));
+                }
+            });
+        }
+        let card_budget = std::time::Duration::from_millis(PROBE_CARD_MS);
+        crate::gpu::march_sample(p, sxy, sxy, &|| t.elapsed() > card_budget, &mut |y, r| card.push((y, r.to_vec()))).is_ok()
+    });
+    if !card_ok {
+        return None;
+    }
+    let cam = paint_camera(sc, p);
+    let lv = light_vals(sc, &effective_lighting(sc), &cam);
+    let soft = lv.lights.iter().any(|l| l.hs_mask == u16::MAX);
+    // (MB3D_PROBE_DEBUG: the counts of clear differences: any, the object
+    // or not, depth, normal, gradient, roughness)
+    let mut n = [0usize; 6];
+    let (mut total, mut diff) = (0usize, 0f64);
+    for (&(y, x), c) in samples.iter().zip(&cpu) {
+        let (Some(b), Some(a)) = (c.get(), card.iter().find(|(yy, _)| *yy == y).and_then(|(_, r)| r.get(x / sxy))) else { continue };
+        total += 1;
+        // (painted lit: the soft shadow's light in full, no hard shadows)
+        let lit = |si: &SiLight| SiLight { shadow: if soft { 0xFC00 } else { 0 }, ..*si };
+        let (ca, cb) = (lv.pixel_color(&lit(a), (x + x0) as i32, (y + y0) as i32, &cam), lv.pixel_color(&lit(b), (x + x0) as i32, (y + y0) as i32, &cam));
+        diff += ca.iter().zip(&cb).map(|(&u, &v)| (u as f64 - v as f64).abs()).sum::<f64>() / (3.0 * 255.0);
+        let d = if a.is_background() || b.is_background() {
+            [a.is_background() != b.is_background(), false, false, false, false]
+        } else {
+            let (u, v) = (a.normal.map(|x| x as f64), b.normal.map(|x| x as f64));
+            let cos = (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / ((u[0] * u[0] + u[1] * u[1] + u[2] * u[2]) * (v[0] * v[0] + v[1] * v[1] + v[2] * v[2])).sqrt().max(1.0);
+            [
+                false,
+                (a.zpos_fine as i64 - b.zpos_fine as i64).abs() > 256 << 8,
+                cos < 0.9,
+                ((a.si_gradient & 0x7FFF) as i32 - (b.si_gradient & 0x7FFF) as i32).abs() > 1000,
+                ((a.zpos_fine & 0xFF) as i32 - (b.zpos_fine & 0xFF) as i32).abs() > 20,
+            ]
+        };
+        n[0] += d.iter().any(|&v| v) as usize;
+        for (k, &v) in d.iter().enumerate() {
+            n[k + 1] += v as usize;
+        }
+    }
+    if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
+        let pc = |k: usize| n[k] as f64 * 100.0 / total.max(1) as f64;
+        eprintln!("  probe: any {:.2} %, object {:.2} %, depth {:.2} %, normal {:.2} %, gradient {:.2} %, roughness {:.2} %", pc(0), pc(1), pc(2), pc(3), pc(4), pc(5));
+    }
+    (total >= 100).then(|| (diff / total as f64, total))
 }
 
 /// The march with the CPU threads taking rows from the bottom at once and

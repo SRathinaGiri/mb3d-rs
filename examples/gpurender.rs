@@ -1,7 +1,8 @@
 // renders a parameter file (GPU on unless CPU is set) and prints the times
 // and checksums of the G-buffer and the image: gpurender mb3d_dir file [scale]
 // COMPARE=dir: renders on the CPU too, prints the mean difference of the
-// images and writes both (gpu.png, cpu.png) to dir
+// images and writes both (gpu.png, cpu.png) to dir; MAXW=n: at most n
+// pixels wide; NOAUTO: the card waits for its shaders (no mixed start)
 fn main() {
     let a: Vec<String> = std::env::args().skip(1).collect();
     mb3d::formulas::add_formula_dir(std::path::PathBuf::from(&a[0]).join("M3Formulas"));
@@ -17,6 +18,10 @@ fn main() {
         }
     }
     mb3d::gpu::set_enabled(std::env::var_os("CPU").is_none());
+    // NOAUTO: "Calculate on: Graphics card" (waits for the card's shaders)
+    if std::env::var_os("NOAUTO").is_some() {
+        mb3d::gpu::set_auto(false);
+    }
     let t = std::time::Instant::now();
     let r = mb3d::render::render(&sc, &|_, _| {}).unwrap();
     let hash = |b: &mut dyn Iterator<Item = u8>| b.fold(0xcbf29ce484222325u64, |h, x| (h ^ x as u64).wrapping_mul(0x100000001b3));
