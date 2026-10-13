@@ -19,12 +19,11 @@ Download the archive for your system and unpack it:
 These links always give the latest release; older versions are on the
 [releases](../../releases) page.
 
-Or build it yourself with [Rust](https://rustup.rs) (stable):
+On Linux, one line downloads the latest release into `~/mb3d-rs` and
+starts it:
 
 ```sh
-git clone <this repository> mb3d-rs
-cd mb3d-rs
-cargo build --release          # target/release/Mandelbulb3D and target/release/mb3d
+mkdir -p ~/mb3d-rs && curl -L https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz | tar xz -C ~/mb3d-rs --strip-components=1 && ~/mb3d-rs/Mandelbulb3D
 ```
 
 On macOS, a downloaded binary may need
@@ -54,29 +53,10 @@ examples/             scenes in this port's .m3s format
 Nothing else is needed: the program finds the formulas and maps next to
 itself.
 
-When you build mb3d yourself, get the same folders with
-
-```sh
-git clone https://github.com/thargor6/mb3d
-```
-
-(or download the repository as a ZIP from GitHub), or use an existing MB3D
-installation, which has the same folders.
-
 ### Where mb3d looks for them
 
-The easiest setup puts the folders next to the program:
-
-```
-mb3d-rs/
-  Mandelbulb3D(.exe)
-  mb3d(.exe)
-  M3Formulas/
-  M3Maps/
-  M3Parameter/
-```
-
-`mb3d` searches, in this order:
+Formulas or maps kept somewhere else (for example in an existing MB3D
+installation) can be added with options; `mb3d` searches, in this order:
 
 | what | searched in |
 |---|---|
@@ -88,10 +68,12 @@ kept in `Mandelbulb3D.ini` next to the program.
 
 ## 3. The Mandelbulb3D program
 
-Start `Mandelbulb3D` (double-click it, or from a terminal, optionally with
-a parameter file):
+Start `Mandelbulb3D` in the unpacked folder (double-click it;
+`Mandelbulb3D.exe` on Windows), or from a terminal in that folder,
+optionally with a parameter file:
 
 ```sh
+cd ~/mb3d-rs
 ./Mandelbulb3D
 ./Mandelbulb3D "M3Parameter/6 AM - Torii temple.m3p"
 ```
@@ -122,15 +104,19 @@ saves it reduced by the viewing scale (1:2 and 1:3 are anti-aliased).
 
 ## 4. The command line
 
+Open a terminal in the program's folder (`cd ~/mb3d-rs` on Linux). On
+Windows, open a command prompt in the unpacked folder and type `mb3d`
+(`.\mb3d` in PowerShell) instead of `./mb3d`.
+
 ```sh
-mb3d "M3Parameter/6 AM - Torii temple.m3p" -o torii.png            # full size
-mb3d "M3Parameter/6 AM - Torii temple.m3p" --scale 0.25 -o small.png
-mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.6 -o dof.png
-mb3d batch M3Parameter --scale 0.2 -o previews                       # a folder
-mb3d animate flight.m3a                                              # MB3D animation
-mb3d montecarlo scene.m3p --rays 64 -o mc.png
-mb3d mesh scene.m3p -o object.stl
-mb3d --help                     # all options; also mb3d animate --help, ...
+./mb3d "M3Parameter/6 AM - Torii temple.m3p" -o torii.png            # full size
+./mb3d "M3Parameter/6 AM - Torii temple.m3p" --scale 0.25 -o small.png
+./mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.6 -o dof.png
+./mb3d batch M3Parameter --scale 0.2 -o previews                       # a folder
+./mb3d animate flight.m3a                                              # MB3D animation
+./mb3d montecarlo scene.m3p --rays 64 -o mc.png
+./mb3d mesh scene.m3p -o object.stl
+./mb3d --help                     # all options; also ./mb3d animate --help, ...
 ```
 
 Parameters copied from a forum post (`Mandelbulb3Dv18{...}`) can be saved
@@ -143,3 +129,19 @@ into a text file and opened like a `.m3p`.
 * *map N not found*: the same for `M3Maps` (`--maps`).
 * A file renders, but looks different from MB3D: please open an issue with
   the parameter file (README ▸ "Known differences" lists what is not ported).
+
+## 6. Building from source
+
+Only needed if you want to change the program. With
+[Rust](https://rustup.rs) (stable):
+
+```sh
+git clone https://github.com/thr32423/mb3d-rs
+cd mb3d-rs
+cargo build --release          # target/release/Mandelbulb3D and target/release/mb3d
+```
+
+The programs built this way have no formulas or maps next to them: get
+MB3D's folders with `git clone https://github.com/thargor6/mb3d` (or use
+an existing MB3D installation) and copy `M3Formulas` and `M3Maps` next to
+the programs, or pass `--formulas` and `--maps`.

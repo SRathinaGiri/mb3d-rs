@@ -121,43 +121,51 @@ page; [GETTING_STARTED.md](GETTING_STARTED.md) has the first steps.
 * macOS blocks programs downloaded from the internet that are not signed:
   run `xattr -dr com.apple.quarantine .` in the unpacked folder once.
 
-## Building and the command line
+## The command line
 
-The renderer has **no external dependencies** (std only, including its own
-PNG and JPEG encoders); the windows use four crates (winit, softbuffer,
-fontdue, arboard) and the graphics card two (wgpu, pollster). Everything
-builds with any recent stable Rust:
+`mb3d` is the command line renderer. Open a terminal in the program's
+folder (`cd ~/mb3d-rs` after the one-line install on Linux) and run it as
+`./mb3d`; on Windows, open a command prompt in the unpacked folder and
+type `mb3d` (`.\mb3d` in PowerShell) instead of `./mb3d`. It finds MB3D's
+formulas (`M3Formulas`) and maps (`M3Maps`) in its own folder, so no
+folder options are needed for them.
 
 ```sh
-cargo build --release
-./target/release/mb3d --help
-./target/release/mb3d -f "Amazing Box" -W 1024 -H 768 -o box.png
-./target/release/mb3d examples/mandelbulb.m3s -o bulb.png --depth bulb_depth.png
-./target/release/mb3d examples/hybrid_box_bulb.m3s -s iterations=40 --auto-color
+./mb3d --help
+./mb3d -f "Amazing Box" -W 1024 -H 768 -o box.png
+./mb3d examples/mandelbulb.m3s -o bulb.png --depth bulb_depth.png
+./mb3d examples/hybrid_box_bulb.m3s -s iterations=40 --auto-color
 
-# MB3D parameter files with custom formulas (.m3f from the MB3D repo):
-./target/release/mb3d City.m3p --formulas path/to/mb3d/M3Formulas --scale 0.1 --aa 2 -o city.png
-./target/release/mb3d -f MengerHyper --formulas path/to/mb3d/M3Formulas -o menger.png
+# MB3D parameter files, with custom formulas (.m3f) from M3Formulas:
+./mb3d City.m3p --scale 0.1 --aa 2 -o city.png
+./mb3d -f MengerHyper -o menger.png
+./mb3d "M3Parameter/6 AM - Torii temple.m3p" --scale 0.25 -o torii.png
 
-# text parameters as posted in forums (Mandelbulb3Dv18{...}) work the same way:
-./target/release/mb3d pasted.txt --formulas path/to/mb3d/M3Formulas --scale 0.1 -o pasted.png
-# images (maps, background pictures) are searched in --maps DIR, $MB3D_MAPS,
-# ./M3Maps, next to the executable and next to the formula directory:
-./target/release/mb3d "6 AM - Torii temple.m3p" --formulas path/to/mb3d/M3Formulas --maps path/to/mb3d/M3Maps
+# text parameters as posted in forums (Mandelbulb3Dv18{...}), saved into a
+# text file, work the same way:
+./mb3d pasted.txt --scale 0.1 -o pasted.png
+# formulas or maps kept somewhere else (another MB3D installation, say):
+./mb3d scene.m3p --formulas path/to/M3Formulas --maps path/to/M3Maps
 
 # conversions between .m3p, .m3i, text parameters and .m3s (no rendering
 # unless --render is given):
-./target/release/mb3d City.m3p --save-text city.txt
-./target/release/mb3d pasted.txt --save-m3p pasted.m3p
-./target/release/mb3d City.m3p --save-scene city.m3s
-./target/release/mb3d city.m3s -s iterations=80 --save-m3p city80.m3p
+./mb3d City.m3p --save-text city.txt
+./mb3d pasted.txt --save-m3p pasted.m3p
+./mb3d City.m3p --save-scene city.m3s
+./mb3d city.m3s -s iterations=80 --save-m3p city80.m3p
 
 # big images in tiles (one tile after another, then stitched):
-./target/release/mb3d City.m3p --formulas path/to/mb3d/M3Formulas --tiles 4x4 -o city.png
+./mb3d City.m3p --tiles 4x4 -o city.png
 # or one tile per machine / process, written as MB3D tile parameter files:
-./target/release/mb3d City.m3p --tiles 4x4 --tile 2,3 --save-m3p city_t23.m3p
-./target/release/mb3d City.m3p --formulas path/to/mb3d/M3Formulas --tiles 4x4 --tile 2,3 -o t23.png
+./mb3d City.m3p --tiles 4x4 --tile 2,3 --save-m3p city_t23.m3p
+./mb3d City.m3p --tiles 4x4 --tile 2,3 -o t23.png
 ```
+
+Formulas are searched in the folders given with `--formulas` (or
+`$MB3D_FORMULAS`), in `M3Formulas` in the current folder and in
+`M3Formulas` next to the program; images (maps, background pictures) in
+`--maps` (or `$MB3D_MAPS`), `M3Maps` in the current folder, next to the
+program and next to each formula folder.
 
 `--scale` shrinks the image for previews of large parameter files. The DE
 stop value is in pixels, so it is scaled along with the image; the result is
@@ -167,9 +175,13 @@ than a pixel shows up as noise, which is why MB3D authors often render at
 
 ## The Mandelbulb3D program
 
+Start `Mandelbulb3D` in the program's folder (double-click it, or
+`~/mb3d-rs/Mandelbulb3D` after the one-line install on Linux;
+`Mandelbulb3D.exe` on Windows). From a terminal it also takes a parameter
+file to open:
+
 ```sh
-cargo build --release
-./target/release/Mandelbulb3D [--formulas DIR] [--maps DIR] [file.m3p|.m3i|.txt]
+./Mandelbulb3D [--formulas DIR] [--maps DIR] [file.m3p|.m3i|.txt]
 ```
 
 `Mandelbulb3D` opens MB3D's windows as desktop windows (winit: Linux with
@@ -236,13 +248,13 @@ installation.
 
 ```sh
 # keyframes from parameter files, 60 sub-frames from each to the next:
-./target/release/mb3d animate start.m3p middle.m3p end.m3p --frames 60 --save flight.m3k
-./target/release/mb3d animate flight.m3k --list            # frame schedule
-./target/release/mb3d animate flight.m3k --scale 0.25 --every 4 -o preview   # quick look
-./target/release/mb3d animate flight.m3k --aa 2 -o frames --name flight      # frames/flight000001.png ...
+./mb3d animate start.m3p middle.m3p end.m3p --frames 60 --save flight.m3k
+./mb3d animate flight.m3k --list            # frame schedule
+./mb3d animate flight.m3k --scale 0.25 --every 4 -o preview   # quick look
+./mb3d animate flight.m3k --aa 2 -o frames --name flight      # frames/flight000001.png ...
 # MB3D animation projects work too, and can be written for MB3D:
-./target/release/mb3d animate project.m3a --formulas path/to/mb3d/M3Formulas -o frames
-./target/release/mb3d animate flight.m3k --save flight.m3a
+./mb3d animate project.m3a -o frames
+./mb3d animate flight.m3k --save flight.m3a
 ```
 
 Like MB3D's animation maker, a keyframe is a complete parameter set plus the
@@ -325,9 +337,9 @@ in the background. Animations are opened and saved as `.m3a` or `.m3k`.
 ## Batch rendering
 
 ```sh
-./target/release/mb3d batch path/to/mb3d/M3Parameter -o renders --formulas path/to/mb3d/M3Formulas
-./target/release/mb3d batch a.m3p b.m3s pasted.txt --aa 2 --skip-existing
-./target/release/mb3d batch --list jobs.txt --scale 0.25 -o previews --dry-run
+./mb3d batch M3Parameter -o renders
+./mb3d batch a.m3p b.m3s pasted.txt --aa 2 --skip-existing
+./mb3d batch --list jobs.txt --scale 0.25 -o previews --dry-run
 ```
 
 Parameter files (`.m3p`, `.m3i`, `.m3s`, text parameters; a directory means
@@ -344,11 +356,11 @@ All 80 of MB3D's example parameter files render.
 ## Voxel export
 
 ```sh
-./target/release/mb3d voxel scene.m3p -o voxels --slices 256
-./target/release/mb3d voxel scene.m3p --slices 400 --scale 1,1,0.5 --axes --iterations
-./target/release/mb3d voxel scene.m3p --preview vox.png        # quick look first
-./target/release/mb3d voxel project.m3v                        # MB3D voxel projects
-./target/release/mb3d voxel scene.m3p --save-m3v project.m3v   # ... and back to MB3D
+./mb3d voxel scene.m3p -o voxels --slices 256
+./mb3d voxel scene.m3p --slices 400 --scale 1,1,0.5 --axes --iterations
+./mb3d voxel scene.m3p --preview vox.png        # quick look first
+./mb3d voxel project.m3v                        # MB3D voxel projects
+./mb3d voxel scene.m3p --save-m3v project.m3v   # ... and back to MB3D
 ```
 
 Like MB3D's voxel export, the object is cut into a stack of 1 bit PNG slices
@@ -363,9 +375,9 @@ projects (versions 1–4, read and written) are supported.
 ## Mesh export
 
 ```sh
-./target/release/mb3d mesh scene.m3p -o bulb.stl
-./target/release/mb3d mesh scene.m3p -o bulb.obj --resolution 300 --sharpness 2 --colors --smooth 5
-./target/release/mb3d mesh scene.m3p -o part.ply --bounds 0,50,0,100,0,100 --close
+./mb3d mesh scene.m3p -o bulb.stl
+./mb3d mesh scene.m3p -o bulb.obj --resolution 300 --sharpness 2 --colors --smooth 5
+./mb3d mesh scene.m3p -o part.ply --bounds 0,50,0,100,0,100 --close
 ```
 
 A port of MB3D's BulbTracer2 mesh export: the distance estimate is sampled on
@@ -381,8 +393,8 @@ time on all cores, so memory stays small at high resolutions.
 ## MutaGen
 
 ```sh
-./target/release/mb3d mutagen scene.m3p -o muta --formulas path/to/mb3d/M3Formulas
-./target/release/mb3d mutagen muta/1.2.1.m3p -o muta2 --params-strength 0.5 --seed 7
+./mb3d mutagen scene.m3p -o muta
+./mb3d mutagen muta/1.2.1.m3p -o muta2 --params-strength 0.5 --seed 7
 ```
 
 MB3D's MutaGen makes a family of 15 random variations: the parent's mutation
@@ -406,10 +418,10 @@ the arrows go back and forth between generations.
 ## Monte Carlo rendering
 
 ```sh
-./target/release/mb3d montecarlo "Mengerplus for MC.m3p" --rays 64 -o menger.png
-./target/release/mb3d montecarlo scene.m3p --time 600 --m3c scene.m3c   # stop after 10 minutes
-./target/release/mb3d montecarlo scene.m3c --rays 256                   # continue later
-./target/release/mb3d montecarlo bulb.m3s -s mc_reflections=true -s mc_depth=4 --exposure 150
+./mb3d montecarlo "Mengerplus for MC.m3p" --rays 64 -o menger.png
+./mb3d montecarlo scene.m3p --time 600 --m3c scene.m3c   # stop after 10 minutes
+./mb3d montecarlo scene.m3c --rays 256                   # continue later
+./mb3d montecarlo bulb.m3s -s mc_reflections=true -s mc_depth=4 --exposure 150
 ```
 
 A port of MB3D's Monte Carlo renderer: path tracing with the scene's lights,
@@ -488,9 +500,6 @@ whenever the scene allows it, and on the CPU otherwise:
   on the CPU only;
 * the environment variable `MB3D_GPU=0` switches it off for both.
 
-It needs the cargo feature `gpu` (part of the default build; a build with
-`--no-default-features` is the CPU renderer without dependencies).
-
 The shader (`src/gpu_march.wgsl`) is a port of the CPU's per-pixel loop
 and fills the same G-buffer, then runs the hard (or soft) shadows and the
 DE ambient occlusion on it (the same shader, started on the surface of
@@ -546,8 +555,7 @@ probe needs the card's single precision shader: with *Auto* it runs once
 that is compiled (from the next calculation of the scene on), with
 *Graphics card* the calculation waits for it. Monte Carlo renders use the
 probe too when the scene's march is compiled. `MB3D_GPU_NOPROBE=1` turns
-it off, `MB3D_PROBE_DEBUG=1` prints its result, and `cargo run --release
---example probecheck -- MB3D_DIR 480 FILES...` runs it on parameter files.
+it off and `MB3D_PROBE_DEBUG=1` prints its result.
 `mb3d` prints which was used and why; errors of the graphics card or its
 driver also send the calculation to the CPU, and software renderers
 (llvmpipe, WARP) are not used. The first calculation of a scene compiles
@@ -580,15 +588,7 @@ and DE combinations whose parts are long plain hybrids gain little
 (*Fishbowl* 6.7 s against 6.9 s, *DEcomb1* 168 s against 189 s). The shadow rays differ from MB3D in one
 point: MB3D stops a ray early when the neighbouring pixel found open air at
 that distance; the card marches every ray to its end, so fine structures
-throw slightly more shadow (a few percent of their pixels). Developer
-checks: `cargo run --release --example gpuformulas -- M3Formulas` runs
-every translatable formula on the GPU against the interpreter (all 449
-agree), `cargo test` compares the GPU G-buffer of a Mandelbulb with the
-CPU's, `cargo run --release --example postcheck -- 320 MB3D_DIR FILES...`
-compares the shadow bits and the ambient occlusion of the card with the
-CPU's (`--de` the distance estimate along a ray), and `m3f2rs
---gpu-report M3Formulas` says which formulas translate and why not
-(`LIFT_DEBUG=1`).
+throw slightly more shadow (a few percent of their pixels).
 
 ### CPU and graphics card compared
 
@@ -600,8 +600,7 @@ bottom; when this table was made the post calculations then ran on the
 CPU, today *Auto* runs them on the card); and on the **card** ("Calculate
 on: Graphics card", the shaders compiled beforehand). *Faster* is the CPU's
 time divided by the card's; the differences are the mean difference of
-the final images to the CPU's. `cargo run --release --example
-modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats it.
+the final images to the CPU's.
 
 * 73 of the 80 files run on the card; the other 7 stay on the CPU
   (volumetric light, a built-in JIT example, and four whose formulas
@@ -807,30 +806,16 @@ example paths for invalid option values, or helper routines called at
 different depths), the register file is rotated exactly as a different x87
 TOP pointer would, so behaviour matches the CPU on every path.
 
-Regenerating the translation (only needed when the formula set changes):
-
-```sh
-cargo run --release --bin m3f2rs -- path/to/M3Formulas -o src/native.rs
-cargo build --release
-```
-
 Speed on the 2-core test machine, 120-pixel previews of the three test scenes
 (volumetric light off), compared with phase 4: City 35.2 s → 4.6 s, Eagle
 18.3 s → 5.4 s, Electric 28.0 s → 5.2 s. The images are pixel-identical.
 Formulas with very short code (Eagle) gain less, because the cost of passing
 the iteration state in and out of the emulated memory remains.
 
-Verification: `tools/oracle/oracle.asm` is a small native 32-bit Linux
-program that runs the same machine code on the real CPU from the same memory
-image. `src/bin/m3fcheck.rs` compares interpreter and CPU over random inputs
-for every formula:
-
-```sh
-nasm -f elf32 tools/oracle/oracle.asm -o /tmp/oracle.o && ld -m elf_i386 /tmp/oracle.o -o /tmp/mb3d_oracle
-./target/release/m3fcheck path/to/M3Formulas --oracle /tmp/mb3d_oracle --trials 12
-#   460 formulas: 449 ok, 0 mismatch, ...
-```
-
+Verification: a small native 32-bit program runs the same machine code on
+the real CPU from the same memory image, and the results are compared with
+the port's over random inputs for every formula (see
+[Building from source](#building-from-source)).
 All 449 testable formulas, dIFS formulas included, agree with the CPU to
 1e-9 relative, in every tier (the check runs the translated code by default,
 `MB3D_NO_NATIVE=1` checks the micro ops). The only differences are in the
@@ -844,8 +829,8 @@ compiled by `jit.rs` from the Delphi subset they use; all 40 of the MB3D
 repository compile, and the tests compare two of them with equivalent
 formulas.
 
-Formulas are looked up in `--formulas DIR`, `$MB3D_FORMULAS`, `./M3Formulas`
-and `M3Formulas` next to the executable.
+Formulas are looked up in `M3Formulas` next to the program, and also in
+`--formulas DIR`, `$MB3D_FORMULAS` and `M3Formulas` in the current folder.
 
 ## Scene files (`.m3s`)
 
@@ -885,7 +870,7 @@ Like MB3D, both run on the G-buffer after the main calculation (as with the
 | `shadow_set_cos` | `true`/`false` | set the diffuse function of shadowed lights to cos |
 
 ```sh
-./target/release/mb3d examples/mandelbulb.m3s -s shadows=1 -s shadow_soft=true -o soft.png
+./mb3d examples/mandelbulb.m3s -s shadows=1 -s shadow_soft=true -o soft.png
 ```
 
 `.m3p` files bring their own settings. Shadows are only calculated when the
@@ -910,8 +895,8 @@ itself per light.
 | `dof_passes` | 1..4 | passes |
 
 ```sh
-./target/release/mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
-./target/release/mb3d examples/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
+./mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
+./mb3d examples/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
 ```
 
 The volumetric light map is calculated before the image, with a ray march
@@ -930,8 +915,8 @@ per map pixel, so it adds noticeable time.
 | `normals_on_zbuf` | `true`/`false` | "Normals on Z-buffer": normals from the positions of the neighbour pixels |
 
 ```sh
-./target/release/mb3d "material colors.m3p" --formulas M3Formulas -o glass.png
-./target/release/mb3d examples/mandelbulb.m3s -s cut_y=-0.6 -s mc_reflections=true -s mc_reflection_amount=0.8 -o mirror.png
+./mb3d "material colors.m3p" -o glass.png
+./mb3d examples/mandelbulb.m3s -s cut_y=-0.6 -s mc_reflections=true -s mc_reflection_amount=0.8 -o mirror.png
 ```
 
 Like in MB3D these run after the calculation: the normals on the z-buffer
@@ -1014,6 +999,60 @@ tile files that MB3D writes for big renders are rendered as that tile.
   the original program.
 * Points exactly on the z axis are degenerate in MB3D's triplex formulas
   (division by `x² + y²`). This is kept as in the original.
+
+## Building from source
+
+This section is for developers; the release downloads above need none of
+it. The renderer has **no external dependencies** (std only, including its
+own PNG and JPEG encoders); the windows use four crates (winit, softbuffer,
+fontdue, arboard) and the graphics card two (wgpu, pollster). Everything
+builds with any recent stable Rust:
+
+```sh
+git clone https://github.com/thr32423/mb3d-rs
+cd mb3d-rs
+cargo build --release      # target/release/Mandelbulb3D and target/release/mb3d
+```
+
+The programs are then in `target/release`. They look for `M3Formulas` and
+`M3Maps` next to themselves or in the current folder, so either copy MB3D's
+folders there (from [thargor6/mb3d](https://github.com/thargor6/mb3d) or an
+MB3D installation) or pass `--formulas` / `--maps`.
+
+The graphics card support is the cargo feature `gpu` (part of the default
+build; a build with `--no-default-features` is the CPU renderer without
+dependencies).
+
+Regenerating the formula translation (only needed when the formula set
+changes):
+
+```sh
+cargo run --release --bin m3f2rs -- path/to/M3Formulas -o src/native.rs
+cargo build --release
+```
+
+Checking the formulas against the real CPU: `tools/oracle/oracle.asm` is a
+small native 32-bit Linux program that runs the formulas' machine code from
+the same memory image, and `src/bin/m3fcheck.rs` compares interpreter and
+CPU over random inputs for every formula:
+
+```sh
+nasm -f elf32 tools/oracle/oracle.asm -o /tmp/oracle.o && ld -m elf_i386 /tmp/oracle.o -o /tmp/mb3d_oracle
+./target/release/m3fcheck path/to/M3Formulas --oracle /tmp/mb3d_oracle --trials 12
+#   460 formulas: 449 ok, 0 mismatch, ...
+```
+
+Graphics card checks: `cargo run --release --example gpuformulas --
+M3Formulas` runs every translatable formula on the GPU against the
+interpreter (all 449 agree), `cargo test` compares the GPU G-buffer of a
+Mandelbulb with the CPU's, `cargo run --release --example postcheck -- 320
+MB3D_DIR FILES...` compares the shadow bits and the ambient occlusion of
+the card with the CPU's (`--de` the distance estimate along a ray),
+`cargo run --release --example probecheck -- MB3D_DIR 480 FILES...` runs
+the precision probe on parameter files, `cargo run --release --example
+modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats the CPU and graphics
+card comparison, and `m3f2rs --gpu-report M3Formulas` says which formulas
+translate and why not (`LIFT_DEBUG=1`).
 
 ## License
 
