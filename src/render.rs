@@ -100,7 +100,11 @@ fn calculate_inner(
         let lv = light_vals(sc, &l, &paint_camera(sc, &p));
         if let Some((ln, positional)) = lv.light_ln(vp.light) {
             let hs_len = sc.shadows.map(|h| h.max_len_mul).unwrap_or(1.0);
+            let t = Instant::now();
             let map = crate::vollight::build(&p, sc.stereo_mid(), ln, positional, l.lights[vp.light].amplitude, vp, hs_len, threads);
+            if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+                eprintln!("  volumetric light map: {} side(s) of {}x{} in {:.2} s", map.sides.len(), map.cube_size, map.cube_size, t.elapsed().as_secs_f64());
+            }
             p.vol = Some(std::sync::Arc::new(map));
         }
     }
@@ -643,7 +647,11 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
         }
     }
     if sc.shadows.is_some() && !shadows_done {
+        let t = Instant::now();
         hard_shadows(sc, p, gbuf, threads);
+        if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+            eprintln!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
+        }
     }
     if let Some(ao) = &sc.ao {
         if let Some(d) = &sc.deao {
