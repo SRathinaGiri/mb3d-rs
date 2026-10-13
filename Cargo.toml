@@ -32,6 +32,10 @@ name = "Mandelbulb3D"
 path = "src/bin/Mandelbulb3D.rs"
 required-features = ["gui"]
 
+[[example]]
+name = "wintest"
+required-features = ["gui"]
+
 [profile.release]
 opt-level = 3
 lto = true

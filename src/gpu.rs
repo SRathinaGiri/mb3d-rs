@@ -1093,7 +1093,11 @@ fn gpu() -> Result<&'static Gpu, String> {
 }
 
 async fn init() -> Result<Gpu, String> {
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+    // Vulkan, Metal, DirectX 12 (OpenGL lost the device on the ray marcher;
+    // WGPU_BACKEND still chooses any)
+    let mut desc = wgpu::InstanceDescriptor::new_without_display_handle();
+    desc.backends = wgpu::Backends::PRIMARY;
+    let instance = wgpu::Instance::new(desc.with_env());
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
@@ -1102,7 +1106,9 @@ async fn init() -> Result<Gpu, String> {
         .await
         .map_err(|e| format!("no graphics card found: {e}"))?;
     let info = adapter.get_info();
-    if info.device_type == wgpu::DeviceType::Cpu {
+    // (MB3D_GPU_ALLOW_SOFTWARE: tests on a software renderer, e.g. Mesa's
+    // lavapipe for a driver other than the card's)
+    if info.device_type == wgpu::DeviceType::Cpu && std::env::var_os("MB3D_GPU_ALLOW_SOFTWARE").is_none() {
         // llvmpipe, WARP: slower than the CPU renderer
         return Err(format!("only a software renderer ({})", info.name));
     }

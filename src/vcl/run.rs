@@ -290,6 +290,9 @@ impl<A: App> Runner<A> {
                     let s = w.window.scale_factor() * us;
                     let cur: LogicalSize<f64> = w.window.inner_size().to_logical(s);
                     if !f.maximized && ((cur.width - ow as f64).abs() > 1.0 || (cur.height - oh as f64).abs() > 1.0) {
+                        if std::env::var_os("MB3D_TRACE_REDRAW").is_some() {
+                            trace_line(&format!("sync {}: request {}x{} (now {:.0}x{:.0} logical, scale {})", f.name, ow, oh, cur.width, cur.height, s));
+                        }
                         let _ = w.window.request_inner_size(LogicalSize::new(ow as f64 * us, oh as f64 * us));
                     }
                     let title = f.caption();
@@ -419,20 +422,39 @@ impl<A: App> Runner<A> {
         let theme = self.ui.theme;
         let Some(w) = self.wins.get_mut(&id) else { return };
         let size = w.window.inner_size();
+        let trace = std::env::var_os("MB3D_TRACE_REDRAW").is_some();
+        if trace {
+            trace_line(&format!("redraw {} {}x{}", w.title, size.width, size.height));
+        }
         let (Some(pw), Some(ph)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) else { return };
         let scale = (w.window.scale_factor() * self.ui.ui_scale) as f32;
         let f = &mut self.ui.forms[w.form];
-        if w.surface.resize(pw, ph).is_err() {
+        if let Err(e) = w.surface.resize(pw, ph) {
+            if trace {
+                trace_line(&format!("  resize: {e}"));
+            }
             return;
         }
-        let Ok(mut buf) = w.surface.buffer_mut() else { return };
+        let mut buf = match w.surface.buffer_mut() {
+            Ok(b) => b,
+            Err(e) => {
+                if trace {
+                    trace_line(&format!("  buffer: {e}"));
+                }
+                return;
+            }
+        };
         f.layout();
         let lw = (size.width as f32 / scale).round() as i32;
         let lh = (size.height as f32 / scale).round() as i32;
         let mut cv = Canvas::new(&mut buf, size.width as usize, size.height as usize, scale);
         f.paint(&mut cv, &theme, lw, lh);
         f.dirty = false;
-        let _ = buf.present();
+        if let Err(e) = buf.present() {
+            if trace {
+                trace_line(&format!("  present: {e}"));
+            }
+        }
     }
 
     /// Non-client hit test in logical window coordinates.
@@ -835,6 +857,9 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
     }
 
     fn resumed(&mut self, el: &ActiveEventLoop) {
+        if std::env::var_os("MB3D_TRACE_REDRAW").is_some() {
+            trace_line("resumed");
+        }
         self.process();
         self.sync(el);
     }
@@ -848,6 +873,9 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
     }
 
     fn window_event(&mut self, el: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+        if std::env::var_os("MB3D_TRACE_REDRAW").is_some() && !matches!(event, WindowEvent::CursorMoved { .. }) {
+            trace_line(&format!("event {event:?}"));
+        }
         let Some(fi) = self.wins.get(&id).map(|w| w.form) else { return };
         match event {
             WindowEvent::RedrawRequested => self.redraw(id),
@@ -868,6 +896,9 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                 }
                 let f = &mut self.ui.forms[fi];
                 f.maximized = window.is_maximized();
+                if std::env::var_os("MB3D_TRACE_REDRAW").is_some() {
+                    trace_line(&format!("resized {}: {:.0}x{:.0} logical, maximized {}", f.name, l.width, l.height, f.maximized));
+                }
                 let before = f.client_size();
                 f.set_outer_size(l.width.round() as i32, l.height.round() as i32, &theme);
                 if f.client_size() != before {
@@ -965,5 +996,14 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
         self.redraw_dirty();
         el.set_control_flow(ControlFlow::WaitUntil(next.min(Instant::now() + Duration::from_millis(100))));
         let _ = &self.proxy;
+    }
+}
+
+/// MB3D_TRACE_REDRAW: a line in mb3d_trace.txt (a Windows program has no
+/// console for stderr)
+fn trace_line(s: &str) {
+    use std::io::Write;
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open("mb3d_trace.txt") {
+        let _ = writeln!(f, "{s}");
     }
 }
