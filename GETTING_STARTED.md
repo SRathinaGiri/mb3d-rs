@@ -19,12 +19,15 @@ Download the archive for your system and unpack it:
 These links always give the latest release; older versions are on the
 [releases](../../releases) page.
 
-On Linux, one line downloads the latest release into `~/mb3d-rs` and
-starts it:
+On Linux and macOS, one line downloads the latest release into
+`~/mb3d-rs` (with the script [download.sh](download.sh), which is also in
+the program's folder; run it again to update):
 
 ```sh
-mkdir -p ~/mb3d-rs && curl -L https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz | tar xz -C ~/mb3d-rs --strip-components=1 && ~/mb3d-rs/Mandelbulb3D
+curl -L https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
+
+Then start it with `~/mb3d-rs/Mandelbulb3D`.
 
 On macOS, a downloaded binary may need
 `xattr -dr com.apple.quarantine .` (in the unpacked folder) before the first start.

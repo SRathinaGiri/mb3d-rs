@@ -103,12 +103,15 @@ Ready-to-run programs for the latest release (no installation needed):
 | macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
 | macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
 
-On Linux, one line downloads the latest release into `~/mb3d-rs` and
-starts it:
+On Linux and macOS, one line downloads the latest release into
+`~/mb3d-rs` (with the script [download.sh](download.sh), which is also in
+the program's folder; run it again to update):
 
 ```sh
-mkdir -p ~/mb3d-rs && curl -L https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz | tar xz -C ~/mb3d-rs --strip-components=1 && ~/mb3d-rs/Mandelbulb3D
+curl -L https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
+
+Then start it with `~/mb3d-rs/Mandelbulb3D`.
 
 Otherwise unpack it and start **Mandelbulb3D** (`Mandelbulb3D.exe` on Windows) in the
 unpacked folder; `mb3d` is the command line renderer. The folder also has
@@ -124,7 +127,7 @@ page; [GETTING_STARTED.md](GETTING_STARTED.md) has the first steps.
 ## The command line
 
 `mb3d` is the command line renderer. Open a terminal in the program's
-folder (`cd ~/mb3d-rs` after the one-line install on Linux) and run it as
+folder (`cd ~/mb3d-rs` after the one-line install) and run it as
 `./mb3d`; on Windows, open a command prompt in the unpacked folder and
 type `mb3d` (`.\mb3d` in PowerShell) instead of `./mb3d`. It finds MB3D's
 formulas (`M3Formulas`) and maps (`M3Maps`) in its own folder, so no
@@ -176,7 +179,7 @@ than a pixel shows up as noise, which is why MB3D authors often render at
 ## The Mandelbulb3D program
 
 Start `Mandelbulb3D` in the program's folder (double-click it, or
-`~/mb3d-rs/Mandelbulb3D` after the one-line install on Linux;
+`~/mb3d-rs/Mandelbulb3D` after the one-line install;
 `Mandelbulb3D.exe` on Windows). From a terminal it also takes a parameter
 file to open:
 

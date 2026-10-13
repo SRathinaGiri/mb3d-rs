@@ -63,7 +63,7 @@ jobs:
           for exe in Mandelbulb3D mb3d; do
             cp "target/${{ matrix.target }}/release/$exe${{ matrix.ext }}" "$name"/
           done
-          cp README.md GETTING_STARTED.md LICENSE "$name"/
+          cp README.md GETTING_STARTED.md LICENSE download.sh "$name"/
           # the themes (the program reads them from here)
           cp -r Themes "$name"/
           mkdir -p "$name/examples"
