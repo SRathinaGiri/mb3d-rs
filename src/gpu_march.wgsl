@@ -139,7 +139,8 @@ const M_REFLECT: u32 = 4u;       // the reflection pass: a bounce (or the surfac
 const M_MC: u32 = 5u;
 const M_VLMAP: u32 = 6u;         // the volumetric light's map: one task per texel of its sides (in the shadow pipeline)            // the Monte Carlo renderer: the march of every task (mc.rs McReq)
 const MC_SECANT: u32 = 171u;     // M_MC: the secant search refines the surface (MCoptions bit 1)
-const MC_WORDS: u32 = 20u;       // a task: 0-2 position, 3-5 direction, 6 zz, 7 zz2, 8 zzplus, 9 len,
+const MC_WORDS: u32 = 23u;       // a task: 0-2 position, 3-5 direction, 6 zz, 7 zz2, 8 zzplus, 9 len,
+                                 // 20-22 the sample's view vector (the volumetric light),
                                  // 10 seed, 11 kind (bits 0-1), inside (2), probe (3), trans (4),
                                  // 12 DE stop, 13-18 the position as doubles; out 0-2 (13-18) position,
                                  // 3-5 normal, 6 zz, 7 zz2, 8 dynamic fog steps, 9 len, 10 seed,
@@ -3328,7 +3329,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     var dstep = max((dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf, 0.11);
                     let s1 = max(ms_de_stop, 0.4) * pf(MH04ZSD);
                     let count = dfog_on_it == 0 || it_result == dfog_on_it;
-                    if (s1 < dstep) {
+                    let vol = pi(VOL_ON) != 0;
+                    // (the volumetric light: DoDynFog, along the sample's
+                    // view back from here; m.mzz = zz.abs())
+                    let vzz = abs(zz_base + mzz * zz_mul);
+                    if (vol) {
+                        if (s1 < dstep) {
+                            dstep = s1;
+                        }
+                        mc_dyn += vol_integrate(base + vfov * mzz, mc_t_vf, -rlast_sw, rlast_sw, vzz);
+                    } else if (s1 < dstep) {
                         if (count) {
                             mc_dyn += s1 / dstep;
                         }
@@ -3344,6 +3354,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     let z2 = mc_zz2 + mzz + dstep;
                     if (z2 > mc_len) {
                         mc_zz2o = z2;
+                        if (vol) {
+                            // the light up to the end of the ray
+                            let rem = mc_len - mc_zz2 - mzz;
+                            mc_dyn += vol_integrate(base + vfov * (mzz + rem), mc_t_vf, -rem, rem, vzz);
+                        }
                         pc = P_MC_OPEN;
                     } else {
                         mzz += dstep;
@@ -3386,7 +3401,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             case P_MC_OPEN: {
                 if (MODE_KIND == 4u) {
-                    if (inside) {
+                    if (inside && pi(VOL_ON) == 0) {
                         mc_dyn *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
                     }
                     mc_flags &= 16u;
@@ -3395,7 +3410,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             case P_MC_HIT: {
                 if (MODE_KIND == 4u) {
-                    if (inside) {
+                    if (inside && pi(VOL_ON) == 0) {
                         mc_dyn *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
                     }
                     mc_zz2o = mc_zz2 + mzz;
@@ -4023,6 +4038,7 @@ var<private> mc_t_dir: vec3<R>;
 var<private> mc_t: vec4<R>; // zz, zz2, zzplus, len
 var<private> mc_t_flags: u32;
 var<private> mc_t_stop: R;
+var<private> mc_t_vf: vec3<R>;
 
 // GetRand of the Monte Carlo renderer
 fn mc_rand() -> R {
@@ -4037,6 +4053,7 @@ fn mc_task(idx: u32) {
     mc_t = vec4<R>(R(bitcast<f32>(OUT[o + 6u])), R(bitcast<f32>(OUT[o + 7u])), R(bitcast<f32>(OUT[o + 8u])), R(bitcast<f32>(OUT[o + 9u])));
     mc_t_flags = OUT[o + 11u];
     mc_t_stop = R(bitcast<f32>(OUT[o + 12u]));
+    mc_t_vf = vec3<R>(R(bitcast<f32>(OUT[o + 20u])), R(bitcast<f32>(OUT[o + 21u])), R(bitcast<f32>(OUT[o + 22u])));
     seed = bitcast<i32>(OUT[o + 10u]);
     si_normal = vec3<i32>(0);
     si_zpos = 0u;

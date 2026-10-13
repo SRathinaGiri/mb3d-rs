@@ -408,6 +408,9 @@ pub struct McReq {
     pub probe: bool,
     pub trans: bool,
     pub ms_de_stop: f32,
+    /// the view vector of the sample (the volumetric light is collected
+    /// along it, as `DoDynFog` does)
+    pub vfov: Vec3,
 }
 
 /// The result of a march: `kind` 0 open air (or a shadow ray without a
@@ -455,13 +458,13 @@ impl<'a, 'c> McMarch<'a, 'c> {
         McMarch { c, m: Marcher::new(c.p, 0) }
     }
 
-    fn run(&mut self, r: &McReq, vfov: Vec3) -> McRes {
+    fn run(&mut self, r: &McReq) -> McRes {
         let m = &mut self.m;
         m.it.c = r.pos;
         m.inside = r.inside;
         m.calc_inside = r.inside;
         m.it.calc_sit = false;
-        m.vfov = vfov;
+        m.vfov = r.vfov;
         match r.kind {
             0 => self.ray(r),
             1 => self.shadow(r),
@@ -1130,9 +1133,10 @@ impl<'a, 'c> Tracer<'a, 'c> {
     }
 
     /// A march by the CPU's marcher, or by the card (waits for the batch)
-    async fn march(&mut self, r: McReq) -> McRes {
+    async fn march(&mut self, mut r: McReq) -> McRes {
+        r.vfov = self.vfov;
         if let Some(m) = self.cpu {
-            return m.borrow_mut().run(&r, self.vfov);
+            return m.borrow_mut().run(&r);
         }
         let (link, outbox) = self.link.as_ref().expect("a marcher");
         link.req.set(Some(r));
@@ -2380,9 +2384,24 @@ pub fn pass_rows(
     let lv = crate::render::light_vals(&sc, &l, &cam);
     if let Some(vp) = sc.vol_light.as_ref() {
         if let Some((ln, positional)) = lv.light_ln(vp.light) {
-            let hs_len = sc.shadows.map(|h| h.max_len_mul).unwrap_or(1.0);
-            let map = crate::vollight::build(&p, sc.stereo_mid(), ln, positional, l.lights[vp.light].amplitude, vp, hs_len, threads);
-            p.vol = Some(std::sync::Arc::new(map));
+            // the map of the last pass while the scene is the same
+            static LAST: std::sync::Mutex<Option<(u64, std::sync::Arc<crate::vollight::VolLightMap>)>> = std::sync::Mutex::new(None);
+            let key = {
+                use std::hash::{Hash, Hasher};
+                let mut h = std::collections::hash_map::DefaultHasher::new();
+                format!("{sc:?}").hash(&mut h);
+                h.finish()
+            };
+            let last = LAST.lock().unwrap().as_ref().filter(|(k, _)| *k == key).map(|(_, m)| m.clone());
+            p.vol = Some(match last {
+                Some(m) => m,
+                None => {
+                    let hs_len = sc.shadows.map(|h| h.max_len_mul).unwrap_or(1.0);
+                    let m = std::sync::Arc::new(crate::vollight::build(&p, sc.stereo_mid(), ln, positional, l.lights[vp.light].amplitude, vp, hs_len, threads));
+                    *LAST.lock().unwrap() = Some((key, m.clone()));
+                    m
+                }
+            });
         }
     }
     // the card in double precision where single is too coarse for the
@@ -2469,7 +2488,7 @@ pub fn pass_rows(
     let snap = &snap;
     let done = &done;
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && crate::gpu::unsupported_beyond_march(&p).is_none() {
+    if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
         let pa = PassArgs { snap, skip_nonzero, avrg_vari, avrg_rcount, max_new, pass_nr: pass_nr as u32 };
         match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows) {
             Ok(status) => {
@@ -2584,7 +2603,7 @@ impl SharedRound {
         if !piece.is_empty() {
             let t = std::time::Instant::now();
             for i in piece.rev() {
-                let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
+                let _ = self.cpu_res[i].set(m.run(&self.reqs[i]));
             }
             self.cpu_ns.fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
             return true;
@@ -2592,7 +2611,7 @@ impl SharedRound {
         if self.published.load(Ordering::SeqCst) {
             let i = self.left.lock().unwrap().pop();
             if let Some(i) = i {
-                let _ = self.cpu_res[i].set(m.run(&self.reqs[i], [0.0, 0.0, 1.0]));
+                let _ = self.cpu_res[i].set(m.run(&self.reqs[i]));
                 return true;
             }
         }
@@ -2743,8 +2762,7 @@ fn pass_gpu(
                                 ToWorker::Results(k, res) if k == g => break res,
                                 ToWorker::Cpu(k) if k == g => {
                                     let mut m = march.borrow_mut();
-                                    // (the view vector only matters for volumetric light)
-                                    break reqs.iter().map(|r| m.run(r, [0.0, 0.0, 1.0])).collect();
+                                    break reqs.iter().map(|r| m.run(r)).collect();
                                 }
                                 other => stash.push(other),
                             }
