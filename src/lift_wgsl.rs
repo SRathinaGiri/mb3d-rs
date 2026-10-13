@@ -14,6 +14,7 @@
 //! the GPU); the x87 registers are an `f32` array.
 
 use super::lift::Analysis;
+use super::lift_emit::{dispatch_wgsl, structure_wgsl, Block, Jump};
 use super::*;
 use crate::custom::STACK_TOP;
 use std::collections::{BTreeMap, HashMap};
@@ -820,9 +821,12 @@ impl Prog {
         keys.sort();
         let ids: HashMap<(usize, Vec<usize>), usize> = keys.iter().enumerate().map(|(i, k)| (k.clone(), i)).collect();
         let id = |k: usize, cs: &[usize]| ids.get(&(k, cs.to_vec())).copied();
-        let mut body = String::new();
-        for (bi, (k0, cs)) in keys.iter().enumerate() {
-            let _ = writeln!(body, "            case {bi}u: {{");
+        // the blocks with their jumps as placeholders, then laid out as
+        // structured code (loops and one-pass loops as scopes) or, where the
+        // flow does not nest, as the dispatcher
+        let mut blocks: Vec<Block> = Vec::new();
+        for (k0, cs) in keys.iter() {
+            let mut bl = Block::default();
             let mut k = *k0;
             loop {
                 let (line, ended) = match self.wgsl_op(k, cs, &an, &tz, &id) {
@@ -833,23 +837,25 @@ impl Prog {
                     }
                 };
                 if !line.is_empty() {
-                    let _ = writeln!(body, "                {line}");
+                    bl.lines.push(line);
                 }
                 k += 1;
                 if ended {
                     break;
                 }
                 if k >= n {
-                    let _ = writeln!(body, "                return;");
+                    bl.lines.push("return;".into());
                     break;
                 }
                 if start[k] {
-                    let _ = writeln!(body, "                b = {}u;", id(k, cs)?);
+                    bl.fall = Some(id(k, cs)?);
                     break;
                 }
             }
-            let _ = writeln!(body, "            }}");
+            blocks.push(bl);
         }
+        let entry = id(0, &[])?;
+        let structured = if std::env::var_os("M3F2RS_DISPATCH").is_some() { None } else { structure_wgsl(&blocks, entry) };
         let mut o = String::new();
         let _ = writeln!(o, "fn {name}(cb: u32) {{");
         let _ = writeln!(o, "    var f: array<R, 8>;");
@@ -892,14 +898,25 @@ impl Prog {
                 }
             }
         }
-        let _ = writeln!(o, "    var b: u32 = {}u;", id(0, &[])?);
-        let _ = writeln!(o, "    for (var guard = 0u; guard < 200000u; guard++) {{");
-        let _ = writeln!(o, "        switch (b) {{");
-        o.push_str(&body);
-        let _ = writeln!(o, "            default: {{ return; }}");
-        let _ = writeln!(o, "        }}");
-        let _ = writeln!(o, "    }}");
-        let _ = writeln!(o, "}}");
+        match structured {
+            Some(code) => {
+                let _ = writeln!(o, "    var guard = 0u;");
+                let _ = writeln!(o, "    var brk = 0u;");
+                let _ = writeln!(o, "    var cont = 0u;");
+                o.push_str(&code);
+                let _ = writeln!(o, "}}");
+            }
+            None => {
+                let _ = writeln!(o, "    var b: u32 = {entry}u;");
+                let _ = writeln!(o, "    for (var guard = 0u; guard < 200000u; guard++) {{");
+                let _ = writeln!(o, "        switch (b) {{");
+                o.push_str(&dispatch_wgsl(&blocks));
+                let _ = writeln!(o, "            default: {{ return; }}");
+                let _ = writeln!(o, "        }}");
+                let _ = writeln!(o, "    }}");
+                let _ = writeln!(o, "}}");
+            }
+        }
         let record = ty.iter().filter(|((p, _), _)| *p == 'r').map(|((_, c), t)| (*c, *t)).collect();
         Some(WgslFormula { code: o, record, constants, const_len: len, writes_vars: written_vars, dyn_var })
     }
@@ -1049,16 +1066,17 @@ impl Prog {
                 format!("rg[0] = (rg[0] & 0xFFFF0000u) | (fsw | {:#x}u);", ((8 - *depth as u32) & 7) << 11)
             }
             Op::Fnstsw { mem: Some(mm), depth } => t.wr_u(loc(mm)?, 2, &format!("(fsw | {:#x}u)", ((8 - *depth as u32) & 7) << 11))?,
+            // the jumps as placeholders (`Jump`), laid out by `structure_wgsl`
+            // or `dispatch_wgsl`; a conditional jump falls through to the next
+            // block
             Op::Jcc { cc, target } => {
-                let next = id(k + 1, cs)?;
-                return Some((format!("if (cond({cc}u)) {{ b = {}u; }} else {{ b = {next}u; }}", id(*target as usize, cs)?), true));
+                return Some((format!("if (cond({cc}u)) {{ {} }}", Jump::mark(id(*target as usize, cs)?, true)), false));
             }
             Op::JccRot { cc, target, rot: r } => {
-                let next = id(k + 1, cs)?;
-                return Some((format!("if (cond({cc}u)) {{ {} b = {}u; }} else {{ b = {next}u; }}", rot(*r), id(*target as usize, cs)?), true));
+                return Some((format!("if (cond({cc}u)) {{ {} {} }}", rot(*r), Jump::mark(id(*target as usize, cs)?, true)), false));
             }
-            Op::Jmp(tg) => return Some((format!("b = {}u;", id(*tg as usize, cs)?), true)),
-            Op::JmpRot { target, rot: r } => return Some((format!("{} b = {}u;", rot(*r), id(*target as usize, cs)?), true)),
+            Op::Jmp(tg) => return Some((Jump::mark(id(*tg as usize, cs)?, true), true)),
+            Op::JmpRot { target, rot: r } => return Some((format!("{} {}", rot(*r), Jump::mark(id(*target as usize, cs)?, true)), true)),
             Op::Call { target, ret } | Op::CallRot { target, ret, .. } => {
                 let ri = self.rets.iter().find(|e| e.0 == *ret)?.1;
                 let mut c2 = cs.to_vec();
@@ -1068,13 +1086,13 @@ impl Prog {
                     Op::CallRot { rot: r, .. } => rot(*r),
                     _ => String::new(),
                 };
-                return Some((format!("{r} rg[4] = rg[4] - 4u; {w} b = {}u;", id(*target as usize, &c2)?), true));
+                return Some((format!("{r} rg[4] = rg[4] - 4u; {w} {}", Jump::mark(id(*target as usize, &c2)?, false)), true));
             }
             Op::Ret(nb) => {
                 let esp = format!("rg[4] = rg[4] + {}u;", 4 + *nb as u32);
                 return Some(match cs.split_last() {
-                    None => (format!("{esp} return;"), true),
-                    Some((&ri, rest)) => (format!("{esp} b = {}u;", id(ri, rest)?), true),
+                    None => (format!("{esp} {}", Jump::RETURN), true),
+                    Some((&ri, rest)) => (format!("{esp} {}", Jump::mark(id(ri, rest)?, false)), true),
                 });
             }
             Op::Gen(ins, _, _) => self.wgsl_gen(ins, k, cs, an, t)?,

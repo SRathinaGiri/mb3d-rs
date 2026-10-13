@@ -2914,56 +2914,70 @@ fn rec_set(m: &mut Machine, it: &mut Iteration, c: u32, v: u64) {
     }
 }
 
+/// The fields of the iteration record a direct formula works on
+/// (`rec_get`), read from the record in the emulated memory.
+fn load_record(m: &Machine, it: &mut Iteration) {
+    use crate::custom::{off, IT_BASE};
+    let f = |o: u32| m.rdf64u(IT_BASE + o);
+    let u = |o: u32| m.rd32u(IT_BASE + o);
+    for k in 0..4 {
+        it.v[k] = f(off::X + 8 * k as u32);
+    }
+    for k in 0..3 {
+        it.c[k] = f(off::C1 + 8 * k as u32);
+        it.j[k] = f(off::J1 + 8 * k as u32);
+    }
+    it.j[3] = f(off::J4);
+    it.rold = f(off::ROLD);
+    it.rout = f(off::ROUT);
+    it.it_result = u(off::IT_RESULT) as i32;
+    it.max_it = u(off::MAX_IT) as i32;
+    it.rstop = f32::from_bits(u(off::RSTOP)) as f64;
+    it.otrap = f(off::OTRAP);
+    it.vary_scale = f(off::VARY_SCALE);
+    it.first_it = u(off::FIRST_IT) as i32;
+    it.dfree = [f(off::DFREE1), f(off::DFREE2)];
+    it.deriv1 = f(off::DERIV1);
+    it.deriv2 = f(off::DERIV1 + 8);
+    it.deriv3 = f(off::DERIV1 + 16);
+}
+
+/// The fields a direct formula may change (`rec_set`), written to the
+/// record in the emulated memory.
+fn store_record(m: &mut Machine, it: &Iteration) {
+    use crate::custom::{off, IT_BASE};
+    let mut put = |o: u32, v: f64| m.wrf64u(IT_BASE + o, v);
+    for k in 0..4 {
+        put(off::X + 8 * k as u32, it.v[k]);
+    }
+    for k in 0..3 {
+        put(off::J1 + 8 * k as u32, it.j[k]);
+    }
+    put(off::J4, it.j[3]);
+    put(off::ROUT, it.rout);
+    put(off::OTRAP, it.otrap);
+    put(off::VARY_SCALE, it.vary_scale);
+    put(off::DFREE1, it.dfree[0]);
+    put(off::DFREE2, it.dfree[1]);
+    put(off::DERIV1, it.deriv1);
+    put(off::DERIV1 + 8, it.deriv2);
+    put(off::DERIV1 + 16, it.deriv3);
+    m.wr32u(IT_BASE + off::FIRST_IT, it.first_it as u32);
+}
+
 /// The [`NativeFn`] of a formula with a direct version: runs it on the
 /// iteration record in the emulated memory (for callers of
 /// `Machine::call_formula`).  The registers other than `esp` are not kept.
 fn direct_via_memory(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {
     use crate::custom::{off, IT_BASE, STACK_TOP};
-    let f = |m: &Machine, o: u32| m.rdf64u(IT_BASE + o);
-    let u = |m: &Machine, o: u32| m.rd32u(IT_BASE + o);
     let mut it = Iteration::default();
-    for k in 0..4 {
-        it.v[k] = f(m, off::X + 8 * k as u32);
-    }
-    for k in 0..3 {
-        it.c[k] = f(m, off::C1 + 8 * k as u32);
-        it.j[k] = f(m, off::J1 + 8 * k as u32);
-    }
-    it.j[3] = f(m, off::J4);
-    it.rold = f(m, off::ROLD);
-    it.rout = f(m, off::ROUT);
-    it.it_result = u(m, off::IT_RESULT) as i32;
-    it.max_it = u(m, off::MAX_IT) as i32;
-    it.rstop = f32::from_bits(u(m, off::RSTOP)) as f64;
-    it.otrap = f(m, off::OTRAP);
-    it.vary_scale = f(m, off::VARY_SCALE);
-    it.first_it = u(m, off::FIRST_IT) as i32;
-    it.dfree = [f(m, off::DFREE1), f(m, off::DFREE2)];
-    it.deriv1 = f(m, off::DERIV1);
-    it.deriv2 = f(m, off::DERIV1 + 8);
-    it.deriv3 = f(m, off::DERIV1 + 16);
-    let pvar = u(m, off::PVAR);
+    load_record(m, &mut it);
+    let pvar = m.rd32u(IT_BASE + off::PVAR);
     // the return pops the stack arguments like the emulated call
     let direct = p.direct.expect("direct formula");
     let r = direct(m, p, &mut it, pvar, max_steps);
     if r.is_ok() {
-        let mut put = |o: u32, v: f64| m.wrf64u(IT_BASE + o, v);
-        for k in 0..4 {
-            put(off::X + 8 * k as u32, it.v[k]);
-        }
-        for k in 0..3 {
-            put(off::J1 + 8 * k as u32, it.j[k]);
-        }
-        put(off::J4, it.j[3]);
-        put(off::ROUT, it.rout);
-        put(off::OTRAP, it.otrap);
-        put(off::VARY_SCALE, it.vary_scale);
-        put(off::DFREE1, it.dfree[0]);
-        put(off::DFREE2, it.dfree[1]);
-        put(off::DERIV1, it.deriv1);
-        put(off::DERIV1 + 8, it.deriv2);
-        put(off::DERIV1 + 16, it.deriv3);
-        m.wr32u(IT_BASE + off::FIRST_IT, it.first_it as u32);
+        store_record(m, &it);
         m.regs[ESP] = STACK_TOP;
     }
     r

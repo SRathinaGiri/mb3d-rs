@@ -125,22 +125,22 @@ fn mask(n: u32) -> String {
 /// control flow is laid out: `\x01J7\x02` a jump of the formula to block 7
 /// (counted by the interpreter), `\x01G7\x02` a call or return going to block
 /// 7, `\x01R\x02` the return of the formula.
-struct Jump;
+pub(super) struct Jump;
 
 impl Jump {
-    const RETURN: &'static str = "\x01R\x02";
+    pub(super) const RETURN: &'static str = "\x01R\x02";
 
-    fn mark(t: usize, counted: bool) -> String {
+    pub(super) fn mark(t: usize, counted: bool) -> String {
         format!("\x01{}{t}\x02", if counted { 'J' } else { 'G' })
     }
 
     /// The placeholders in `s`: (kind, target block; 0 for a return).
-    fn find(s: &str) -> Vec<(char, usize)> {
+    pub(super) fn find(s: &str) -> Vec<(char, usize)> {
         s.split('\x01').skip(1).filter_map(|p| p.split_once('\x02')).map(|(m, _)| (m.as_bytes()[0] as char, m[1..].parse().unwrap_or(0))).collect()
     }
 
     /// `s` with every placeholder replaced by `f(kind, target)`.
-    fn replace(s: &str, f: &dyn Fn(char, usize) -> String) -> String {
+    pub(super) fn replace(s: &str, f: &dyn Fn(char, usize) -> String) -> String {
         let mut parts = s.split('\x01');
         let mut o = parts.next().unwrap_or("").to_string();
         for p in parts {
@@ -155,9 +155,9 @@ impl Jump {
 /// The generated code of one block: its lines and the block it falls
 /// through to.
 #[derive(Default)]
-struct Block {
-    lines: Vec<String>,
-    fall: Option<usize>,
+pub(super) struct Block {
+    pub(super) lines: Vec<String>,
+    pub(super) fall: Option<usize>,
 }
 
 impl Block {
@@ -189,6 +189,205 @@ fn dispatch(blocks: &[Block]) -> String {
         let _ = writeln!(body, "            }}");
     }
     body
+}
+
+/// [`dispatch`] in WGSL: `for (guard) { switch (b) { ... } }`, a jump
+/// sets `b` and continues the loop.
+pub(super) fn dispatch_wgsl(blocks: &[Block]) -> String {
+    let resolve = |kind: char, t: usize| match kind {
+        'R' => "return;".to_string(),
+        _ => format!("b = {t}u; continue;"),
+    };
+    let mut body = String::new();
+    for (bi, bl) in blocks.iter().enumerate() {
+        let _ = writeln!(body, "            case {bi}u: {{");
+        for l in &bl.lines {
+            let _ = writeln!(body, "                {}", Jump::replace(l, &resolve));
+        }
+        if let Some(t) = bl.fall {
+            let _ = writeln!(body, "                b = {t}u;");
+        }
+        let _ = writeln!(body, "            }}");
+    }
+    body
+}
+
+/// [`structure`] in WGSL (the same layout; kept apart so that the Rust
+/// code stays as it is).  WGSL has no labels: a label scope is a one-pass
+/// `loop { ... break; }`, a jump out of a scope that is not the innermost
+/// one sets `brk` (the target scope) or `cont` (the target loop) and
+/// breaks; every scope and loop end checks the flags and breaks on until
+/// the target is reached.  Loops are guarded by `guard` like the
+/// dispatcher.  None when the flow does not nest (the dispatcher then).
+pub(super) fn structure_wgsl(blocks: &[Block], entry: usize) -> Option<String> {
+    let nb = blocks.len();
+    let mut order = Vec::with_capacity(nb);
+    let mut seen = vec![false; nb];
+    let mut stack: Vec<(usize, usize)> = vec![(entry, 0)];
+    seen[entry] = true;
+    while let Some(&mut (b, ref mut i)) = stack.last_mut() {
+        let succs = blocks[b].succs();
+        if *i < succs.len() {
+            let s = succs[*i];
+            *i += 1;
+            if s < nb && !seen[s] {
+                seen[s] = true;
+                stack.push((s, 0));
+            }
+        } else {
+            order.push(b);
+            stack.pop();
+        }
+    }
+    order.reverse();
+    let mut pos = vec![usize::MAX; nb];
+    for (p, &b) in order.iter().enumerate() {
+        pos[b] = p;
+    }
+    let mut lend: Vec<Option<usize>> = vec![None; order.len()];
+    for (p, &b) in order.iter().enumerate() {
+        for t in blocks[b].succs() {
+            let q = *pos.get(t)?;
+            if q <= p {
+                lend[q] = Some(lend[q].map_or(p, |e: usize| e.max(p)));
+            }
+        }
+    }
+    let loops: Vec<(usize, usize)> = lend.iter().enumerate().filter_map(|(h, e)| e.map(|e| (h, e))).collect();
+    let ctx = |p: usize| loops.iter().filter(|&&(h, e)| h < p && p <= e).max_by_key(|l| l.0).copied();
+    let plain = |p: usize, q: usize, last: bool| last && q == p + 1 && !loops.iter().any(|&(h, e)| e == p && h <= p);
+    let last_jump = |b: usize| blocks[b].fall.is_none() && !blocks[b].lines.last().is_some_and(|l| l.starts_with("if "));
+    let mut labels = vec![false; order.len()];
+    for (p, &b) in order.iter().enumerate() {
+        let exits = blocks[b].lines.iter().flat_map(|l| Jump::find(l)).filter(|j| j.0 != 'R').map(|j| (j.1, last_jump(b))).chain(blocks[b].fall.map(|t| (t, true)));
+        for (t, last) in exits {
+            let q = pos[t];
+            if q > p && !plain(p, q, last) {
+                if ctx(q).is_some_and(|(h, _)| p < h) {
+                    return None;
+                }
+                labels[q] = true;
+            }
+        }
+    }
+    #[derive(PartialEq, Clone, Copy)]
+    enum Open {
+        Scope(usize),
+        Loop(usize),
+    }
+    let scopes_in = |c: Option<(usize, usize)>| -> Vec<usize> {
+        let mut v: Vec<usize> = (0..order.len()).filter(|&q| labels[q] && ctx(q) == c).collect();
+        v.sort_by(|a, b| b.cmp(a));
+        v
+    };
+    let step = "guard = guard + 1u; if (guard > 200000u) { return; }";
+    // the label scopes nest deeply with many forward jumps; naga's parser
+    // has a brace nesting limit (127), the lines nest a few more
+    if labels.iter().filter(|l| **l).count() + loops.len() > 48 {
+        return None;
+    }
+    let mut open: Vec<Open> = Vec::new();
+    let mut code = String::new();
+    let ind = |open: &[Open]| "    ".repeat(1 + open.len());
+    // the flag check after a construct closed: `arrive` = the label of a
+    // closed scope (the jumps to it end here)
+    let check = |open: &[Open], arrive: Option<usize>| -> String {
+        let mut c = String::new();
+        if let Some(q) = arrive {
+            let _ = write!(c, "if (brk == {q}u) {{ brk = 0u; }} else ");
+        }
+        match open.last() {
+            Some(Open::Loop(h)) => {
+                let _ = write!(c, "if (cont == {h}u) {{ cont = 0u; {step} continue; }} else if (brk != 0u || cont != 0u) {{ break; }}");
+            }
+            Some(Open::Scope(_)) => {
+                let _ = write!(c, "if (brk != 0u || cont != 0u) {{ break; }}");
+            }
+            None => {
+                let _ = write!(c, "{{}}");
+            }
+        }
+        c
+    };
+    for q in scopes_in(None) {
+        let _ = writeln!(code, "{}loop {{ // 'b{}", ind(&open), order[q]);
+        open.push(Open::Scope(q));
+    }
+    for (p, &b) in order.iter().enumerate() {
+        loop {
+            match open.last() {
+                Some(Open::Scope(q)) if *q == p => {}
+                Some(Open::Loop(h)) if p > 0 && lend[*h] == Some(p - 1) => {}
+                _ => break,
+            }
+            let top = open.pop();
+            match top {
+                Some(Open::Scope(q)) => {
+                    let _ = writeln!(code, "{}break; }} // 'b{}", ind(&open), order[q]);
+                    let _ = writeln!(code, "{}{}", ind(&open), check(&open, Some(order[q])));
+                }
+                _ => {
+                    let _ = writeln!(code, "{}}}", ind(&open));
+                    let _ = writeln!(code, "{}{}", ind(&open), check(&open, None));
+                }
+            }
+        }
+        if open.contains(&Open::Scope(p)) || open.iter().any(|o| matches!(o, Open::Loop(h) if lend[*h].is_some_and(|e| e < p))) {
+            return None;
+        }
+        if let Some(e) = lend[p] {
+            let _ = writeln!(code, "{}loop {{ // 'l{b}", ind(&open));
+            open.push(Open::Loop(p));
+            for q in scopes_in(Some((p, e))) {
+                let _ = writeln!(code, "{}loop {{ // 'b{}", ind(&open), order[q]);
+                open.push(Open::Scope(q));
+            }
+        }
+        // a jump: plain break / continue when the target construct is the
+        // innermost open one, else through the flags
+        let open_now = open.clone();
+        let resolve = |kind: char, t: usize| -> String {
+            if kind == 'R' {
+                return "return;".into();
+            }
+            let q = pos[t];
+            if q <= p {
+                if open_now.last() == Some(&Open::Loop(q)) {
+                    format!("{step} continue;")
+                } else {
+                    format!("cont = {t}u; break;")
+                }
+            } else if plain(p, q, kind == 'F' || last_jump(b)) {
+                String::new()
+            } else if open_now.last() == Some(&Open::Scope(q)) {
+                "break;".into()
+            } else {
+                format!("brk = {t}u; break;")
+            }
+        };
+        let i = ind(&open);
+        let _ = writeln!(code, "{i}// block {b}");
+        for l in &blocks[b].lines {
+            let _ = writeln!(code, "{i}{}", Jump::replace(l, &resolve));
+        }
+        if let Some(t) = blocks[b].fall {
+            let r = resolve('F', t);
+            if !r.is_empty() {
+                let _ = writeln!(code, "{i}{r}");
+            }
+        }
+    }
+    while let Some(Open::Loop(h)) = open.last() {
+        if lend[*h] != Some(order.len() - 1) {
+            return None;
+        }
+        open.pop();
+        let _ = writeln!(code, "{}}}", ind(&open));
+    }
+    if !open.is_empty() {
+        return None;
+    }
+    Some(code)
 }
 
 /// The calling convention of a lifted function.
