@@ -136,7 +136,8 @@ const M_SHADOW: u32 = 1u;
 const M_DEAO: u32 = 2u;
 const M_PROBE: u32 = 3u;         // the DE at the ray start (a check against the CPU)
 const M_REFLECT: u32 = 4u;       // the reflection pass: a bounce (or the surface) of every task
-const M_MC: u32 = 5u;            // the Monte Carlo renderer: the march of every task (mc.rs McReq)
+const M_MC: u32 = 5u;
+const M_VLMAP: u32 = 6u;         // the volumetric light's map: one task per texel of its sides (in the shadow pipeline)            // the Monte Carlo renderer: the march of every task (mc.rs McReq)
 const MC_SECANT: u32 = 171u;     // M_MC: the secant search refines the surface (MCoptions bit 1)
 const MC_WORDS: u32 = 20u;       // a task: 0-2 position, 3-5 direction, 6 zz, 7 zz2, 8 zzplus, 9 len,
                                  // 10 seed, 11 kind (bits 0-1), inside (2), probe (3), trans (4),
@@ -179,6 +180,9 @@ const VOL_BASE: u32 = 390u;
 // length multiplier, iLightPos and 14); the position is in HS_LIGHTS'
 // vector (double mode: pdd(19 + 3 i ..))
 const HS_POS: u32 = 391u;
+// M_VLMAP: the light map's march (vollight.rs build / vl_trace)
+const VOL_MIN_DIST: u32 = 409u;
+const VOL_MAX_DIST: u32 = 410u;   // in steps
 
 const PI: R = 3.14159265358979;
 
@@ -1362,6 +1366,11 @@ fn vol_integrate(ray0: vec3<R>, t0: R, len: R, mzz_: R) -> R {
     return acc;
 }
 
+// a texel of the light map (M_VLMAP): the distance in steps from the light
+fn vl_out(dist: R) {
+    OUT[cur_item] = bitcast<u32>(f32(dist * pf(STEP_WIDTH) + pf(VOL_MIN_DIST)));
+}
+
 // lighting.rs encode_vlight: the volumetric light in the shadow word
 fn encode_vlight(sc: R) -> u32 {
     var i = i32(clamp(round(sc), -1.0e9, 16383.0));
@@ -1636,6 +1645,7 @@ const P_MC_HS_R: u32 = 75u;
 const P_MC_HS_END: u32 = 76u;
 const P_MC_TH_STEP: u32 = 77u; // through a transparent object
 const P_MC_TH_R: u32 = 78u;
+const P_VL_START: u32 = 80u;   // M_VLMAP: the ray of the texel, then the shadow ray's states
 const P_MC_OPEN: u32 = 79u;   // the ray ends in open air   // the second reflection pipeline: the hit from the task record
 
 
@@ -1707,12 +1717,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
     } else if (mode == M_MC) {
         pc = P_MC_START;
         need = false;
+    } else if (mode == M_VLMAP) {
+        pc = P_VL_START;
+        need = false;
     }
     vfov_px = vfov;
     zz_base = 0.0;
     zz_mul = 1.0;
     zz_abs = mode == M_REFLECT;
     let reflect = mode == M_REFLECT;
+    let vlmap = mode == M_VLMAP;
     var after_hs = P_DONE;
     var after_ao = P_DONE;
     var last_zz = R(0.0);
@@ -2800,6 +2814,56 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     }
                 }
             }
+            // ---- the volumetric light's map (vollight.rs build, vl_trace):
+            // the ray from the light through the texel, marched as a
+            // shadow ray (the same steps)
+            case P_VL_START: {
+                if (MODE_KIND == 1u) {
+                    let cs = u32(pi(VOL_CUBE));
+                    let side = cur_item / (cs * cs);
+                    let t = cur_item % (cs * cs);
+                    let hs = pi(VOL_HALF);
+                    let xf = R(i32(t % cs) - hs);
+                    let yf = R(i32(t / cs) - hs);
+                    var dir: vec3<R>;
+                    var start: vec3<R>;
+                    if (pi(VOL_IS_POS) != 0) {
+                        let h = R(hs);
+                        var v3 = vec3<R>(-xf, -yf, -h);
+                        switch side {
+                            case 0u: { v3 = vec3<R>(h, xf, yf); }
+                            case 1u: { v3 = vec3<R>(-h, -xf, -yf); }
+                            case 2u: { v3 = vec3<R>(xf, h, yf); }
+                            case 3u: { v3 = vec3<R>(-xf, -h, -yf); }
+                            case 4u: { v3 = vec3<R>(xf, yf, h); }
+                            default: {}
+                        }
+                        dir = normalize(v3);
+                        start = vol_pos();
+                    } else {
+                        dir = pv(VOL_ROT + 6u);
+                        let sgl = 1.0 / pf(VOL_STRETCH);
+                        start = vol_pos() + dir * pf(VOL_MIN_DIST) + pv(VOL_ROT) * (xf * sgl) + pv(VOL_ROT + 3u) * (yf * sgl);
+                    }
+                    // the image's middle on the start plane
+                    var ys = p_ystart();
+                    if (pi(OPTIC) != 2) {
+                        ys += vg(0u) * (R(pi(WIDTH)) * 0.5) + vg(1u) * (R(pi(HEIGHT)) * 0.5);
+                    }
+                    let sw = pf(STEP_WIDTH);
+                    c = start;
+                    zz2 = length(start - ys) / sw;
+                    ms_de_stop = pf(DE_STOP) * (1.0 + zz2 * pf(DE_STOP_FACTOR));
+                    let vz = vg(2u);
+                    zz2mul = dot(vz, dir) / max(sqrt(dot(vz, vz) * dot(dir, dir)), 1e-30);
+                    lvec = -dir * sw;
+                    dt1 = pf(VOL_MAX_DIST);
+                    rsf = 1.0;
+                    need = true;
+                    want_de = true;
+                    pc = P_HS_R0;
+                }
+            }
             // ---- hard_shadow_row / soft_shadow_row
             case P_HS_INIT: {
                 if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
@@ -2952,7 +3016,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         zr_soft = min(zr_soft, (dtmp - ms_de_stop) * zrs_mul / (dmax_l - dt1 + 0.11) + r8 * r8);
                     }
                     if (it_result >= max_its_result || dtmp <= ms_de_stop || (reflect && dtmp < ms_de_stop)) {
-                        pc = P_HS_DONE;
+                        if (vlmap) {
+                            // the light map: the distance to the surface
+                            vl_out(pf(VOL_MAX_DIST) - dt1);
+                            done = true;
+                        } else {
+                            pc = P_HS_DONE;
+                        }
                     } else {
                         if (dtmp > last_de + st) {
                             dtmp = last_de + st;
@@ -2964,7 +3034,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                 rsf = max(0.5, t);
                             }
                         }
-                        if (dt1 < 0.0) {
+                        if (vlmap && dt1 <= 0.0) {
+                            // open (vl_trace: dist >= maxDist)
+                            vl_out(pf(VOL_MAX_DIST) * 1000.0);
+                            done = true;
+                        } else if (dt1 < 0.0) {
                             pc = P_HS_DONE;
                         } else {
                             pc = P_HS_STEP;
@@ -4044,6 +4118,13 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
     }
     if (mode == M_MC) {
         mc_task(cur_item);
+        if (!suspended) {
+            STATE[so] = 0u;
+        }
+        return;
+    }
+    if (mode == M_VLMAP) {
+        pixel(0, 0, M_VLMAP);
         if (!suspended) {
             STATE[so] = 0u;
         }

@@ -19,7 +19,7 @@ pub struct VolLightParams {
     pub map_size: i32,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct VolLightMap {
     pub cube_size: i32,
     pub half_size: i32,
@@ -202,54 +202,131 @@ pub fn build(
     let hs = half_size;
     let threads = threads.max(1);
     let m = &map;
-    let mut sides = Vec::new();
-    for side in 0..side_count {
-        let mut data = vec![0f32; cs * cs];
-        std::thread::scope(|sc| {
-            let rows: Vec<(usize, &mut [f32])> = data.chunks_mut(cs).enumerate().collect();
-            let mut per: Vec<Vec<(usize, &mut [f32])>> = (0..threads).map(|_| Vec::new()).collect();
-            for (i, r) in rows {
-                per[i % threads].push((i, r));
+    let n = side_count * cs * cs;
+    // the texel `i` of all sides
+    let texel = |mr: &mut Marcher, i: usize| -> f32 {
+        let side = i / (cs * cs);
+        let x = (i % cs) as i32 - hs;
+        let y = (i / cs % cs) as i32 - hs;
+        let (start, dir, max_dist) = if positional {
+            let (xf, yf, h) = (x as f64, y as f64, hs as f64);
+            let v = match side {
+                0 => [h, xf, yf],
+                1 => [-h, -xf, -yf],
+                2 => [xf, h, yf],
+                3 => [-xf, -h, -yf],
+                4 => [xf, yf, h],
+                _ => [-xf, -yf, -h],
+            };
+            (m.light_pos, normalize(v), max_dist_pos)
+        } else {
+            let r = &m.rot;
+            let dir = [r[2][0] as f64, r[2][1] as f64, r[2][2] as f64];
+            let mut c = m.light_pos;
+            add_weight(&mut c, &dir, min_distance as f64);
+            for k in 0..3 {
+                c[k] += r[0][k] as f64 * x as f64 * sgl + r[1][k] as f64 * y as f64 * sgl;
             }
-            for list in per {
+            (c, dir, max_dist_glob)
+        };
+        let dist = mr.vl_trace(start, dir, &ystart, max_dist);
+        (dist * sw) as f32 + min_distance
+    };
+    // the texels still free: [card, cpu) (the card takes them from the
+    // front, the CPU threads from the back, as in the reflection pass)
+    let free = std::sync::Mutex::new((0usize, n));
+    let card_done = std::sync::atomic::AtomicBool::new(true);
+    let mut data = vec![0f32; n];
+    #[allow(unused_mut)]
+    let mut card: Option<Result<Vec<f32>, String>> = None;
+    std::thread::scope(|sc| {
+        // the graphics card when it can (the same march: the shader's
+        // M_VLMAP)
+        // (it joins once its shader is compiled)
+        #[cfg(feature = "gpu")]
+        let card_thread = crate::gpu::vol_map_prepare(p).map(|ready| {
+            card_done.store(false, std::sync::atomic::Ordering::SeqCst);
+            let max_dist = if positional { max_dist_pos } else { max_dist_glob };
+            let (free, card_done) = (&free, &card_done);
+            sc.spawn(move || {
+                use std::sync::atomic::Ordering::SeqCst;
+                let left = || {
+                    let f = free.lock().unwrap();
+                    f.0 < f.1
+                };
+                while !ready.load(SeqCst) && left() {
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+                let r = left().then(|| {
+                    let claim = |want: usize| {
+                        let mut f = free.lock().unwrap();
+                        f.0 = f.0.max(want.min(f.1));
+                        f.0
+                    };
+                    crate::gpu::vol_map(p, m, max_dist, &claim)
+                });
+                card_done.store(true, SeqCst);
+                r
+            })
+        });
+        const PIECE: usize = 64;
+        let workers: Vec<_> = (0..threads)
+            .map(|_| {
+                let (free, card_done, texel) = (&free, &card_done, &texel);
                 sc.spawn(move || {
                     crate::prio::calc_thread();
                     let mut mr = Marcher::new(p, 1);
-                    for (row, out) in list {
-                        let y = row as i32 - hs;
-                        for (xi, o) in out.iter_mut().enumerate() {
-                            let x = xi as i32 - hs;
-                            let (start, dir, max_dist) = if positional {
-                                let (xf, yf, h) = (x as f64, y as f64, hs as f64);
-                                let v = match side {
-                                    0 => [h, xf, yf],
-                                    1 => [-h, -xf, -yf],
-                                    2 => [xf, h, yf],
-                                    3 => [-xf, -h, -yf],
-                                    4 => [xf, yf, h],
-                                    _ => [-xf, -yf, -h],
-                                };
-                                (m.light_pos, normalize(v), max_dist_pos)
-                            } else {
-                                let r = &m.rot;
-                                let dir = [r[2][0] as f64, r[2][1] as f64, r[2][2] as f64];
-                                let mut c = m.light_pos;
-                                add_weight(&mut c, &dir, min_distance as f64);
-                                for k in 0..3 {
-                                    c[k] += r[0][k] as f64 * x as f64 * sgl + r[1][k] as f64 * y as f64 * sgl;
-                                }
-                                (c, dir, max_dist_glob)
-                            };
-                            let dist = mr.vl_trace(start, dir, &ystart, max_dist);
-                            *o = (dist * sw) as f32 + min_distance;
+                    let mut out = Vec::new();
+                    loop {
+                        let (lo, hi) = {
+                            let mut f = free.lock().unwrap();
+                            let hi = f.1;
+                            f.1 = hi.saturating_sub(PIECE).max(f.0);
+                            (f.1, hi)
+                        };
+                        if lo == hi {
+                            if card_done.load(std::sync::atomic::Ordering::SeqCst) {
+                                break;
+                            }
+                            // the card has the rest for now
+                            std::thread::sleep(std::time::Duration::from_millis(1));
+                            continue;
+                        }
+                        for i in lo..hi {
+                            out.push((i, texel(&mut mr, i)));
                         }
                     }
-                });
+                    out
+                })
+            })
+            .collect();
+        for w in workers {
+            for (i, v) in w.join().unwrap() {
+                data[i] = v;
             }
-        });
-        sides.push(data);
+        }
+        #[cfg(feature = "gpu")]
+        if let Some(t) = card_thread {
+            card = t.join().unwrap();
+        }
+    });
+    let n_card = free.lock().unwrap().0;
+    match card {
+        Some(Ok(v)) => data[..n_card].copy_from_slice(&v[..n_card]),
+        Some(Err(e)) => {
+            // the card's part here
+            eprintln!("volumetric light map on the GPU: {e} (on the CPU)");
+            let mut mr = Marcher::new(p, 1);
+            for i in 0..n_card {
+                data[i] = texel(&mut mr, i);
+            }
+        }
+        None => {}
     }
-    map.sides = sides;
+    if std::env::var_os("MB3D_GPU_TIMING").is_some() && n_card > 0 {
+        eprintln!("  volumetric light map: {} % of the texels on the card", n_card * 100 / n.max(1));
+    }
+    map.sides = data.chunks(cs * cs).map(|c| c.to_vec()).collect();
     map
 }
 

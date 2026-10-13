@@ -1190,7 +1190,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     i(&mut v, p.dfog_on_it as i32);
     i(&mut v, p.first_step_random as i32);
     // the post passes use their own binary search depth
-    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps, p.de_add_steps, p.de_add_steps][mode as usize]);
+    i(&mut v, [p.de_add_steps, 8, 5, p.de_add_steps, p.de_add_steps, p.de_add_steps, p.de_add_steps][mode as usize]);
     i(&mut v, p.normals_on_de as i32);
     i(&mut v, p.sm_normals);
     f(&mut v, p.de_offset as f64);
@@ -1366,7 +1366,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     }
     // the volumetric light (the march only: VOL_ON and the rest, its map
     // after the scene's maps, see `vol_maps`)
-    let vol = p.vol.as_deref().filter(|_| mode == 0);
+    let vol = p.vol.as_deref().filter(|_| mode == 0 || mode == M_VLMAP);
     for k in 0..3 {
         d(vol.map_or(0.0, |m| m.light_pos[k]));
     }
@@ -1871,6 +1871,102 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
 
 /// The [`Resumer`] of the Monte Carlo batches with the hash of their shader.
 static MC_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+
+/// The shader's M_VLMAP: the volumetric light's map.
+const M_VLMAP: u32 = 6;
+
+/// Whether the card can build the volumetric light's map: a flag that
+/// turns true once the shadow pipeline it runs in is compiled (the CPU
+/// builds the map meanwhile), or `None` (the card off, the scene not on it).
+pub fn vol_map_prepare(p: &CalcParams) -> Option<std::sync::Arc<AtomicBool>> {
+    if !enabled() || unsupported(p).is_some() || LOST.load(Ordering::SeqCst) {
+        return None;
+    }
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return None };
+    Some(prepare(g, sh.code.clone(), "main", march_constants(p, 1)))
+}
+
+/// The volumetric light's map on the card (`vollight::build`): the
+/// distance from the light to the first surface for the texels of its
+/// sides (`map` without them; `max_dist` in steps), all sides in a row.
+/// `claim(want)`: the card would go up to texel `want`, returns how far it
+/// may (the CPU takes the others); the texels up to the last claim are set.
+pub fn vol_map(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f64, claim: &(dyn Fn(usize) -> usize + Sync)) -> Result<Vec<f32>, String> {
+    guard(|| vol_map_card(p, map, max_dist, claim))
+}
+
+fn vol_map_card(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f64, claim: &(dyn Fn(usize) -> usize + Sync)) -> Result<Vec<f32>, String> {
+    let g = gpu()?;
+    let sh = scene_shader(p)?;
+    let pl = pipeline(g, &sh.code, &march_constants(p, 1))?;
+    let cs = map.cube_size as usize;
+    let sides = if map.is_pos_light { 6 } else { 1 };
+    let n = sides * cs * cs;
+    let size = (n.max(1) * 4) as u64;
+    let buf = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("light map"), size, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    let read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("light map read"), size, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    let make = |label: &'static str, d: &[u32]| {
+        let d = if d.is_empty() { vec![0u32] } else { d.to_vec() };
+        let b = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (d.len() * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        g.queue.write_buffer(&b, 0, &bytes(&d));
+        b
+    };
+    let cst = make("constants", &sh.cst);
+    let rtpl = make("record", &sh.rtpl);
+    let maps = make("maps", &sh.maps);
+    let mut res = Resumer::new(g, &sh);
+    let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    // the map's values (without its sides) as the march's volumetric light
+    let mut pv = p.clone();
+    pv.vol = Some(std::sync::Arc::new(map.clone()));
+    let mut base = params(&pv, 0, 1, &sh, M_VLMAP, &PostJob::default(), None);
+    base[409] = map.min_distance.to_bits();
+    base[410] = (max_dist as f32).to_bits();
+    let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: None,
+        layout: &pl.get_bind_group_layout(0),
+        entries: &[
+            wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 1, resource: buf.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+        ],
+    });
+    res.run(
+        g,
+        &par,
+        base,
+        n,
+        &|started, free| claim(started + free),
+        &|_| false,
+        &|| false,
+        |enc, groups| {
+            let mut pass = enc.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&pl);
+            pass.set_bind_group(0, &bind, &[]);
+            pass.dispatch_workgroups(groups, 1, 1);
+        },
+        |_| Ok(()),
+    )?;
+    let mut enc = g.device.create_command_encoder(&Default::default());
+    enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
+    g.queue.submit([enc.finish()]);
+    let slice = read.slice(..);
+    let (tx, rx) = std::sync::mpsc::channel();
+    slice.map_async(wgpu::MapMode::Read, move |r| {
+        let _ = tx.send(r);
+    });
+    g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
+    if let Some(e) = take_error() {
+        return Err(e);
+    }
+    rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
+    Ok(data.chunks_exact(4).take(n).map(|b| f32::from_le_bytes(b.try_into().unwrap())).collect())
+}
 
 /// The words of a Monte Carlo task (`MC_WORDS` in the shader).
 const MC_WORDS: usize = 20;
