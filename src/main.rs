@@ -38,8 +38,10 @@ OPTIONS:
         --auto-color         Fit the colour range to the rendered surface
         --stats              Print G-buffer statistics
         --cpu                Calculate on the CPU only (by default the graphics
-                             card calculates the scenes it supports: Integer
-                             Power formulas; MB3D_GPU=0 also switches it off)
+                             card and the CPU share the scenes the card
+                             supports; MB3D_GPU=0 also switches the card off)
+        --card               Calculate on the graphics card only (waits for its
+                             shaders; the CPU takes the scenes it cannot do)
         --save-scene <FILE>  Write the final scene as .m3s text (e.g. to convert a .m3p)
         --save-text <FILE>   Write MB3D text parameters (Mandelbulb3Dv18{...})
         --save-m3p <FILE>    Write a MB3D parameter file (.m3p); parameter inputs are
@@ -61,7 +63,12 @@ OPTIONS:
 ";
 
 fn main() -> ExitCode {
-    match run() {
+    let r = run();
+    // a shader still compiling in the background is finished and cached
+    // before the program ends (see gpu::wait_compiles)
+    #[cfg(feature = "gpu")]
+    mb3d::gpu::wait_compiles(std::time::Duration::from_secs(120));
+    match r {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("error: {e}");
@@ -143,6 +150,11 @@ fn run() -> Result<(), String> {
             "--stats" => stats = true,
             "--gpu" => use_gpu(true),
             "--cpu" => use_gpu(false),
+            "--card" => {
+                use_gpu(true);
+                #[cfg(feature = "gpu")]
+                mb3d::gpu::set_auto(false);
+            }
             "--save-scene" => save_scene = Some(val(&a)?),
             "--save-text" => save_text = Some(val(&a)?),
             "--save-m3p" => save_m3p = Some(val(&a)?),

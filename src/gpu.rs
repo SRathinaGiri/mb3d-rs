@@ -911,6 +911,31 @@ fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {
 /// The pipelines being compiled in the background, with their flags.
 static PREPARING: Mutex<Vec<(u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
 
+/// Whether a shader is being compiled in the background right now.  Work
+/// sent to the card meanwhile waits behind the driver's compile (the
+/// screen space occlusion of a picture the CPU finished alone waited 13 s
+/// for a double precision shader it never used), so short passes run on
+/// the CPU then.
+pub fn compiling() -> bool {
+    PREPARING.lock().map(|l| !l.is_empty()).unwrap_or(false)
+}
+
+/// Waits until no shader is being compiled any more (at most `max`).  The
+/// command line program calls it before it ends: a compile its CPU threads
+/// overtook would die with the process and never reach the pipeline cache,
+/// so the next run of the same scene would be just as cold.
+pub fn wait_compiles(max: std::time::Duration) {
+    let t = std::time::Instant::now();
+    let mut said = false;
+    while compiling() && t.elapsed() < max {
+        if !said {
+            eprintln!("  (waiting for the graphics card's shader compile, kept for the next time)");
+            said = true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+}
+
 /// A flag that turns true once the pipeline of `code` is compiled (at once
 /// when it is): a thread of its own compiles it meanwhile.  A shader that
 /// does not compile sets it too (its calculation then finds the error).

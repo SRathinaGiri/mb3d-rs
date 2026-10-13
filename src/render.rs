@@ -141,13 +141,20 @@ fn calculate_inner(
                 // the probe when its shader was not compiled yet: when the
                 // card can join, before it does (a scene too coarse in
                 // single precision joins in double, when that is compiled)
+                // the probe when its shader was not compiled yet: when the
+                // card can join, before it does.  A scene too coarse in
+                // single precision is left to the CPU threads (a flag that
+                // never turns true): consumer cards calculate doubles 16 to
+                // 32 times slower (AboxShapes-Misty took the card 203 s in
+                // double precision against 45 s on the CPU); "Graphics card"
+                // uses the card in double precision.
                 let probe = || {
                     if p.gpu_double || !double_probe(sc, &p, threads, false) {
                         return None;
                     }
                     let mut pd = p.clone();
                     pd.gpu_double = true;
-                    crate::gpu::march_prepare(&pd, &job).ok().map(|f| (pd, f))
+                    Some((pd, vec![std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))]))
                 };
                 let (mut gbuf, n_card, switched) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe)?;
                 if let Some((pd, f)) = switched {
@@ -564,6 +571,7 @@ fn march_mixed(
     let pct = n_card * 100 / h.max(1);
     crate::gpu::set_status(match card_err {
         Some(e) => format!("CPU: GPU error: {e}"),
+        None if n_card == 0 && switched.is_some() => "CPU (single precision is too coarse for this scene on the card; Auto leaves it to the CPU)".into(),
         None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
         None => format!("GPU {name}: {pct} % of the rows on the card, {} % on the CPU", 100 - pct),
     });
@@ -688,8 +696,10 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize) {
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() {
+    if crate::gpu::enabled() && !crate::gpu::compiling() {
         // only the depth buffer is needed: also after a CPU calculation
+        // (but not while the card compiles a shader: the pass would wait
+        // behind the compile)
         let r = if ao.bits15 { crate::gpu::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao) } else { crate::gpu::ssao24(gbuf, w, h, p.zc_mul, p.zcorr, ao) };
         match r {
             Ok(()) => {
