@@ -133,8 +133,23 @@ fn calculate_inner(
         // compiling), the post calculations run as after a CPU
         // calculation.
         if crate::gpu::auto() {
-            if let Ok(flags) = crate::gpu::march_prepare(&p, &job) {
-                let (mut gbuf, n_card) = march_mixed(&p, threads, progress, cancel, sink, &flags[0])?;
+            if let Ok(mut flags) = crate::gpu::march_prepare(&p, &job) {
+                // the probe when its shader was not compiled yet: when the
+                // card can join, before it does (a scene too coarse in
+                // single precision joins in double, when that is compiled)
+                let probe = || {
+                    if p.gpu_double || !double_probe(sc, &p, threads, false) {
+                        return None;
+                    }
+                    let mut pd = p.clone();
+                    pd.gpu_double = true;
+                    crate::gpu::march_prepare(&pd, &job).ok().map(|f| (pd, f))
+                };
+                let (mut gbuf, n_card, switched) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe)?;
+                if let Some((pd, f)) = switched {
+                    p = pd;
+                    flags = f;
+                }
                 if n_card > 0 && (job.shadows.is_some() || job.deao.is_some()) {
                     // the post passes' pipelines compiled with the march's
                     while !flags.iter().all(|f| f.load(Ordering::SeqCst)) && !cancel() {
@@ -428,7 +443,8 @@ fn march_mixed(
     cancel: &(dyn Fn() -> bool + Sync),
     sink: Option<RowSink>,
     ready: &std::sync::atomic::AtomicBool,
-) -> Result<(Vec<SiLight>, usize), String> {
+    on_ready: &(dyn Fn() -> Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)> + Sync),
+) -> Result<(Vec<SiLight>, usize, Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)>), String> {
     use std::sync::Mutex;
     let h = p.rect[3].max(0) as usize;
     // the rows still free: [top, bottom)
@@ -444,6 +460,7 @@ fn march_mixed(
         progress((done.fetch_add(1, Ordering::Relaxed) + 1).min(h), h);
     };
     let mut card_err = None;
+    let mut switched = None;
     let name = crate::gpu::name().unwrap_or_default();
     crate::gpu::set_status(if ready.load(Ordering::SeqCst) {
         format!("GPU {name}: the march shared with the CPU")
@@ -470,22 +487,34 @@ fn march_mixed(
             });
         }
         // the card, once its shader is ready
-        loop {
+        let wait = |ready: &std::sync::atomic::AtomicBool| loop {
             let left = {
                 let f = free.lock().unwrap();
                 f.0 < f.1
             };
             if !left || cancel() {
-                return;
+                return false;
             }
             if ready.load(Ordering::SeqCst) {
-                break;
+                return true;
             }
             std::thread::sleep(std::time::Duration::from_millis(10));
+        };
+        if !wait(ready) {
+            return;
         }
+        // (or in double precision, once that shader is ready)
+        if let Some((pd, flags)) = on_ready() {
+            let go = wait(&flags[0]);
+            switched = Some((pd, flags));
+            if !go {
+                return;
+            }
+        }
+        let cp = switched.as_ref().map_or(p, |(pd, _)| pd);
         let claimed = Mutex::new(Vec::new());
         let r = crate::gpu::march_bands(
-            p,
+            cp,
             &|band| {
                 let mut f = free.lock().unwrap();
                 (f.0 < f.1).then(|| {
@@ -534,7 +563,9 @@ fn march_mixed(
         None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
         None => format!("GPU {name}: {pct} % of the rows on the card, {} % on the CPU", 100 - pct),
     });
-    Ok((rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect(), n_card))
+    // (the card's parameters when it joined in double precision)
+    let switched = switched.filter(|_| n_card > 0);
+    Ok((rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect(), n_card, switched))
 }
 
 /// The post calculations after the main calculation (CPU or GPU).
