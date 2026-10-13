@@ -13,10 +13,12 @@ DeviantArt and USB scene comparisons (see `examples/gbcompare.rs`).
 - `mbsave.sh N` — `mbrun.sh N`, then Save tab, "m3i" button, types the
   path and saves MB3D's image + G-buffer as `da/mb_sN.m3i`; closes MB3D.
 
-`$MB3D_WINE_WORK` defaults to the current folder. The click coordinates
-assume MB3D's main window at screen position (48, 169) and its save dialog
-at (963, 568), where Wine placed them on the 1920x1080 test desktop: check
-with `xw.py list` and adjust if yours differ. Write the `.m3p` files with
+`$MB3D_WINE_WORK` defaults to the current folder. The scripts read the
+position of MB3D's main window from `xw.py list` (Wine places it
+differently per desktop; it is kept in `da/win_sN`); the click coordinates
+of the save dialog assume it at screen position (963, 568), where Wine
+placed it on the 1920x1080 test desktop: check with `xw.py list` and adjust
+if yours differ. Write the `.m3p` files with
 `examples/txt2m3p.rs` (scales an image, SET= changes keys). The image of a
 640 px wide scene is the crop `640xH+7+102` of `mb_sN.png`.
 

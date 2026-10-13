@@ -4,8 +4,9 @@ S=${MB3D_WINE_WORK:-$PWD}
 D=$(cd "$(dirname "$0")" && pwd)
 i=$1
 $D/mbrun.sh $i
-timeout 20 python3 $D/xw.py click $((48+236)) $((169+43)); sleep 1.5
-timeout 20 python3 $D/xw.py click $((48+194)) $((169+75)); sleep 3
+. $S/da/win_s$i
+timeout 20 python3 $D/xw.py click $((WX+236)) $((WY+43)); sleep 1.5
+timeout 20 python3 $D/xw.py click $((WX+194)) $((WY+75)); sleep 3
 X=$((963+375)); Y=$((568+445))
 timeout 20 python3 $D/xw.py click $X $Y; sleep 0.3
 timeout 20 python3 $D/xw.py click $X $Y; sleep 0.1
