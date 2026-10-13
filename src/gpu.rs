@@ -284,6 +284,16 @@ pub fn set_status(s: String) {
 }
 
 /// Why the scene cannot be calculated by the shader, `None` if it can.
+/// What keeps the passes other than the march (Monte Carlo, the reflection
+/// pass) off the card: what keeps the march off, and the volumetric light
+/// (the march's only).
+pub fn unsupported_beyond_march(p: &CalcParams) -> Option<String> {
+    if p.vol.is_some() {
+        return Some("volumetric light (only the main calculation on the GPU yet)".into());
+    }
+    unsupported(p)
+}
+
 pub fn unsupported(p: &CalcParams) -> Option<String> {
     let r = |s: &str| Some(s.to_string());
     if p.slice_2d != 0 {
@@ -298,8 +308,12 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
             return r("this analytic DE option of the DE combination (not on the GPU yet)");
         }
     }
-    if p.vol.is_some() {
-        return r("volumetric light (not on the GPU yet)");
+    if let Some(v) = &p.vol {
+        // (its map goes with the maps into one buffer)
+        let words = v.sides.iter().map(|s| s.len()).sum::<usize>() as u64;
+        if gpu().is_ok_and(|g| (words + 4096) * 4 > g.device.limits().max_storage_buffer_binding_size as u64) {
+            return r("volumetric light: its map is too big for the graphics card");
+        }
     }
     // the zooms beyond single precision use the double mode (scene_shader,
     // needs_double; MB3D_GPU_MIN_PRECISION / MB3D_GPU_MIN_STEP: experiments
@@ -355,8 +369,10 @@ fn real_block(dbl: bool) -> String {
         o.push_str("fn p_ystart() -> vec3<R> { return vec3<R>(pdd(0u), pdd(1u), pdd(2u)); }\n");
         o.push_str("fn vg(i: u32) -> vec3<R> { return vec3<R>(pdd(3u + 3u * i), pdd(4u + 3u * i), pdd(5u + 3u * i)); }\n");
         o.push_str("fn p_ju() -> vec3<R> { return vec3<R>(pdd(12u), pdd(13u), pdd(14u)); }\nfn p_j4() -> R { return pdd(15u); }\n");
+        o.push_str("fn vol_pos() -> vec3<R> { return vec3<R>(pdd(16u), pdd(17u), pdd(18u)); }\nfn hs_light_pos(i: u32) -> vec3<R> { return vec3<R>(pdd(19u + 3u * i), pdd(20u + 3u * i), pdd(21u + 3u * i)); }\n");
     } else {
         o.push_str("fn p_ystart() -> vec3<R> { return pv(YSTART); }\nfn vg(i: u32) -> vec3<R> { return pv(VG + i * 3u); }\nfn p_ju() -> vec3<R> { return pv(JU); }\nfn p_j4() -> R { return pf(J4); }\n");
+        o.push_str("fn vol_pos() -> vec3<R> { return pv(VOL_POS); }\nfn hs_light_pos(i: u32) -> vec3<R> { return pv(HS_LIGHTS + i * 4u + 1u); }\n");
     }
     o
 }
@@ -916,7 +932,7 @@ fn mc_constants(p: &CalcParams) -> Vec<(&'static str, f64)> {
 /// Monte Carlo on the card: a flag that turns true once its shader is
 /// compiled (see [`prepare`]); an error when the scene cannot run there.
 pub fn mc_prepare(p: &CalcParams) -> Result<std::sync::Arc<AtomicBool>, String> {
-    if let Some(r) = unsupported(p) {
+    if let Some(r) = unsupported_beyond_march(p) {
         return Err(r);
     }
     let g = gpu()?;
@@ -986,7 +1002,7 @@ fn reflect_constants(p: &CalcParams, march: bool, hs: bool, ao: bool) -> Vec<(&'
 /// Starts compiling the reflection pass's pipelines in the background:
 /// the march, and the shadows (`hs`) and occlusion (`ao`) of the hits.
 pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
-    if unsupported(p).is_some() {
+    if unsupported_beyond_march(p).is_some() {
         return;
     }
     let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return };
@@ -1234,7 +1250,8 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
         match sh.and_then(|s| s.lights.get(k)) {
             Some(l) => {
                 i(&mut v, l.idx as i32);
-                for &x in &l.vec {
+                // (a positional light: its position, see HS_POS)
+                for &x in &l.pos.map_or(l.vec, |(q, _)| q) {
                     f(&mut v, x);
                 }
             }
@@ -1347,10 +1364,69 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     for &x in &p.ju {
         d(x);
     }
+    // the volumetric light (the march only: VOL_ON and the rest, its map
+    // after the scene's maps, see `vol_maps`)
+    let vol = p.vol.as_deref().filter(|_| mode == 0);
+    for k in 0..3 {
+        d(vol.map_or(0.0, |m| m.light_pos[k]));
+    }
+    // the shadow lights' positions
+    let hs = post.shadows.as_ref();
+    for li in 0..6 {
+        let pos = hs.and_then(|j| j.lights.get(li)).and_then(|l| l.pos).map_or([0.0; 3], |(q, _)| q);
+        for k in 0..3 {
+            d(pos[k]);
+        }
+    }
+    debug_assert_eq!(v.len(), 370);
+    if let Some(m) = vol {
+        let f = |v: &mut Vec<u32>, x: f32| v.push(x.to_bits());
+        v.push(1);
+        for k in 0..3 {
+            f(&mut v, m.light_pos[k] as f32);
+        }
+        for r in &m.rot {
+            for &x in r {
+                f(&mut v, x);
+            }
+        }
+        v.push(m.cube_size as u32);
+        v.push(m.half_size as u32);
+        f(&mut v, m.size_factor);
+        f(&mut v, m.stretch);
+        v.push(m.is_pos_light as u32);
+        f(&mut v, m.vl_mul);
+        f(&mut v, m.vl_step_mul);
+        v.push(scene.maps.len().max(1) as u32);
+    }
+    v.resize(391, 0);
+    for li in 0..6 {
+        match hs.and_then(|j| j.lights.get(li)) {
+            Some(l) => {
+                v.push(l.pos.is_some() as u32);
+                v.push((l.pos.map_or(0.0, |(_, m)| m) as f32).to_bits());
+                v.push(l.visible as u32);
+            }
+            None => v.extend_from_slice(&[0; 3]),
+        }
+    }
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
     v
+}
+
+/// The scene's maps (`SceneShader::maps`) with the volumetric light's map
+/// after them (`VOL_BASE`: the shader's buffer of the maps has at least one
+/// word)
+fn vol_maps(p: &CalcParams, sh: &SceneShader) -> Vec<u32> {
+    let mut m = if sh.maps.is_empty() { vec![0u32] } else { sh.maps.clone() };
+    if let Some(v) = &p.vol {
+        for side in &v.sides {
+            m.extend(side.iter().map(|x| x.to_bits()));
+        }
+    }
+    m
 }
 
 /// The kind of a hybrid part for the shader (`HYB_KIND`): 0 alternating
@@ -1377,7 +1453,7 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 328;
+const PARAM_WORDS: usize = 416;
 
 /// The parameter word of the coordinates as doubles (`DP` in the shader).
 const DOUBLE_WORD: usize = 296;
@@ -1607,7 +1683,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         }
         return Ok((Vec::new(), 0, Vec::new()));
     }
-    if let Some(r) = unsupported(p) {
+    if let Some(r) = unsupported_beyond_march(p) {
         return Err(r);
     }
     let dbl = needs_double(p);
@@ -1817,7 +1893,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         }
         return Ok((Vec::new(), 0, Vec::new()));
     }
-    if let Some(r) = unsupported(p) {
+    if let Some(r) = unsupported_beyond_march(p) {
         return Err(r);
     }
     let dbl = needs_double(p);
@@ -2069,7 +2145,7 @@ fn run(
     };
     let cst = words("constants", &sh.cst);
     let rtpl = words("record", &sh.rtpl);
-    let maps = words("maps", &sh.maps);
+    let maps = words("maps", &vol_maps(p, sh));
     let binds: Vec<wgpu::BindGroup> = pars
         .iter()
         .zip(&pls)

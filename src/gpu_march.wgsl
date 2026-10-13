@@ -117,7 +117,7 @@ const SAMPLE_Y: u32 = 221u;      // SAMPLE_X-th column of every SAMPLE_Y-th row 
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 589u;
+const STATE_FIXED: u32 = 591u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -160,7 +160,25 @@ const INSIDE_FLAGS: u32 = 289u;   // 1 inside rendering, 2 inside and outside
 const COLOR_ON_IT: u32 = 290u;    // doColorOnIt: 0 off, 1 the start vector, n the vector after n - 1 iterations
 const CUT_OPT: u32 = 291u;        // the cutting planes: bits 0-2 the axes, 4-6 their sides
 const CUT_POS: u32 = 292u;        // 3 values
-const DP: u32 = 296u;             // the coordinates as doubles: start (3), view gradients (9), julia (4)
+const DP: u32 = 296u;             // the coordinates as doubles: start (3), view gradients (9), julia (4),
+                                  // the volumetric light's position (3), the shadow lights' positions (6 x 3)
+// the volumetric light (vollight.rs VolLightMap): its map is in MAPS from
+// VOL_BASE (the cube sides of a positional light, one side for a global one)
+const VOL_ON: u32 = 370u;
+const VOL_POS: u32 = 371u;        // 3 values (f32; double mode: pdd(16..18))
+const VOL_ROT: u32 = 374u;        // 9 values, the rows of the global light's map
+const VOL_CUBE: u32 = 383u;
+const VOL_HALF: u32 = 384u;
+const VOL_SIZE_FACTOR: u32 = 385u;
+const VOL_STRETCH: u32 = 386u;
+const VOL_IS_POS: u32 = 387u;
+const VOL_MUL: u32 = 388u;
+const VOL_STEP_MUL: u32 = 389u;
+const VOL_BASE: u32 = 390u;
+// the shadow pass's positional lights: 6 x (positional, sLmaxL * the
+// length multiplier, iLightPos and 14); the position is in HS_LIGHTS'
+// vector (double mode: pdd(19 + 3 i ..))
+const HS_POS: u32 = 391u;
 
 const PI: R = 3.14159265358979;
 
@@ -1263,6 +1281,100 @@ fn store_normal(n: vec3<R>) {
     si_normal = o;
 }
 
+// the volumetric light map (vollight.rs)
+fn vol_map(i: u32) -> f32 {
+    return bitcast<f32>(MAPS[P[VOL_BASE] + i]);
+}
+
+// VolLightMap::pos_lit: is the point at `v` from the global light lit?
+fn vol_lit(v: vec3<f32>) -> bool {
+    let t0 = dot(v, vec3<f32>(bitcast<f32>(P[VOL_ROT]), bitcast<f32>(P[VOL_ROT + 1u]), bitcast<f32>(P[VOL_ROT + 2u])));
+    let t1 = dot(v, vec3<f32>(bitcast<f32>(P[VOL_ROT + 3u]), bitcast<f32>(P[VOL_ROT + 4u]), bitcast<f32>(P[VOL_ROT + 5u])));
+    let t2 = dot(v, vec3<f32>(bitcast<f32>(P[VOL_ROT + 6u]), bitcast<f32>(P[VOL_ROT + 7u]), bitcast<f32>(P[VOL_ROT + 8u])));
+    let cs = pi(VOL_CUBE);
+    let st = bitcast<f32>(P[VOL_STRETCH]);
+    let x = clamp(i32(round(t0 * st)) + pi(VOL_HALF), 0, cs - 1);
+    let y = clamp(i32(round(t1 * st)) + pi(VOL_HALF), 0, cs - 1);
+    return vol_map(u32(x + y * cs)) > t2;
+}
+
+// VolLightMap::vec: the distance from the positional light to the first
+// surface in the direction `vd`
+fn vol_vec(vd: vec3<f32>) -> f32 {
+    let a = abs(vd);
+    let sf = bitcast<f32>(P[VOL_SIZE_FACTOR]);
+    var side: u32;
+    var x: i32;
+    var y: i32;
+    if (a.x >= a.y && a.x >= a.z) {
+        side = select(1u, 0u, vd.x > 0.0);
+        let f = sf / vd.x;
+        x = i32(round(vd.y * f));
+        y = i32(round(vd.z * f));
+    } else if (a.x >= a.y || a.y < a.z) {
+        side = select(5u, 4u, vd.z > 0.0);
+        let f = sf / vd.z;
+        x = i32(round(vd.x * f));
+        y = i32(round(vd.y * f));
+    } else {
+        side = select(3u, 2u, vd.y > 0.0);
+        let f = sf / vd.y;
+        x = i32(round(vd.x * f));
+        y = i32(round(vd.z * f));
+    }
+    let cs = pi(VOL_CUBE);
+    let h = pi(VOL_HALF);
+    return vol_map(side * u32(cs * cs) + u32(clamp(x + h, 0, cs - 1) + clamp(y + h, 0, cs - 1) * cs));
+}
+
+// VolLightMap::integrate: the light collected on the view ray of the pixel
+// (start `ray0`, `vfov` per step) from depth `t0` over `len` steps
+fn vol_integrate(ray0: vec3<R>, t0: R, len: R, mzz_: R) -> R {
+    let rel0 = ray0 - vol_pos();
+    let sw = pf(STEP_WIDTH);
+    let d2 = sw * sw;
+    let vmul = pf(VOL_MUL);
+    let is_pos = pi(VOL_IS_POS) != 0;
+    var s1 = f32((1.0 + mzz_ * pf(DE_STOP_FACTOR)) * pf(VOL_STEP_MUL));
+    var st = f32(len);
+    var t = t0;
+    var acc = R(0.0);
+    for (var g = 0; g < 100000; g++) {
+        if (s1 > st) {
+            s1 = st;
+        }
+        t += R(s1);
+        st -= s1;
+        let vs = vec3<f32>(rel0 + vfov * t);
+        if (is_pos) {
+            let d1 = dot(vs, vs);
+            let m = vol_vec(vs);
+            if (m * m > d1) {
+                acc += vmul * R(s1) / (R(d1) + d2);
+            }
+        } else if (vol_lit(vs)) {
+            acc += R(f32(vmul) * s1);
+        }
+        if (st < 0.01) {
+            break;
+        }
+    }
+    return acc;
+}
+
+// lighting.rs encode_vlight: the volumetric light in the shadow word
+fn encode_vlight(sc: R) -> u32 {
+    var i = i32(clamp(round(sc), -1.0e9, 16383.0));
+    if (i <= 0) {
+        return u32(i) & 0x3FFu;
+    }
+    let sh = 31 - i32(countLeadingZeros(u32(i))) - 6;
+    if (sh > 0) {
+        i = (i >> u32(sh)) | (sh << 7u);
+    }
+    return u32(i);
+}
+
 // RMCalcRoughness
 fn calc_roughness(n: vec3<R>, dt2: R, dsg: R) -> R {
     let a = (dsg * 7.0 * dt2 * dt2 + 1e-30) / (dot(n, n) + 1e-30);
@@ -1614,6 +1726,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var ic = vec3<R>(0.0);
     var nvec = vec3<R>(0.0);
     var max_lhs = R(0.0);
+    // the march length of the light (a positional light's distance)
+    var dmax_l = R(0.0);
     var li = 0u;
     var lidx = 0u;
     var lvec = vec3<R>(0.0);
@@ -1790,6 +1904,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
         nvec.y = rget(so + 410u * ns, ns);
         nvec.z = rget(so + 412u * ns, ns);
         max_lhs = rget(so + 414u * ns, ns);
+        dmax_l = rget(so + 589u * ns, ns);
         li = STATE[so + 416u * ns];
         lidx = STATE[so + 417u * ns];
         lvec.x = rget(so + 418u * ns, ns);
@@ -1984,6 +2099,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             rput(so + 410u * ns, ns, nvec.y);
             rput(so + 412u * ns, ns, nvec.z);
             rput(so + 414u * ns, ns, max_lhs);
+            rput(so + 589u * ns, ns, dmax_l);
             STATE[so + 416u * ns] = li;
             STATE[so + 417u * ns] = lidx;
             rput(so + 418u * ns, ns, lvec.x);
@@ -2238,7 +2354,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         var d = max(0.11, (dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf_mul);
                         let st1 = max(ms_de_stop, 0.4) * pf(MH04ZSD);
                         let count = dfog_on_it == 0 || it_result == dfog_on_it;
-                        if (st1 < d) {
+                        if (pi(VOL_ON) != 0) {
+                            // the light on the last step
+                            if (st1 < d) {
+                                d = st1;
+                            }
+                            step_count += vol_integrate(base, mzz - last_step, last_step, mzz);
+                        } else if (st1 < d) {
                             if (count) {
                                 step_count += st1 / d;
                             }
@@ -2254,6 +2376,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         mzz += d;
                         if (mzz > pf(ZEND)) {
                             // background (`break` here would only leave the switch)
+                            if (pi(VOL_ON) != 0) {
+                                // the light up to the end of the range
+                                let last = pf(ZEND) - mzz + d;
+                                step_count += vol_integrate(base, pf(ZEND) - last, last, mzz);
+                            }
                             done = true;
                         } else {
                             last_step = d;
@@ -2738,7 +2865,24 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         } else {
                             lidx = P[HS_LIGHTS + li * 4u];
                             lvec = pv(HS_LIGHTS + li * 4u + 1u);
+                            let pb = HS_POS + li * 3u;
+                            if (P[pb] != 0u) {
+                                // a positional light (HsLight::at): towards its
+                                // position, no farther than it reaches
+                                let v = hs_light_pos(li) - c;
+                                let d = dot(v, v);
+                                too_far = d > pf(pb + 1u);
+                                let sw = pf(STEP_WIDTH);
+                                if (d < dt1 * sw * dt1 * sw) {
+                                    dt1 = sqrt(d) / sw;
+                                }
+                                lvec = v * (-sw / max(sqrt(d), 1e-30));
+                                if (soft) {
+                                    zrs_mul = select(R(40.0), R(70.0), (P[pb + 2u] & 6u) == 2u) / max(pf(HS_SOFT_RADIUS), 0.001);
+                                }
+                            }
                         }
+                        dmax_l = dt1;
                         zz2mul = -dot(lvec, vfov_px) / max(sqrt(dot(lvec, lvec) * dot(vfov_px, vfov_px)), 1e-30);
                         if (too_far) {
                             if (soft) {
@@ -2803,9 +2947,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 if (MODE_KIND == 1u || (MODE_KIND == 3u && R_HS)) {
                     dtmp = r;
                     if (soft) {
-                        let rr = (max_lhs - dt1) / max_lhs;
+                        let rr = (dmax_l - dt1) / max_lhs;
                         let r8 = (rr * rr) * (rr * rr);
-                        zr_soft = min(zr_soft, (dtmp - ms_de_stop) * zrs_mul / (max_lhs - dt1 + 0.11) + r8 * r8);
+                        zr_soft = min(zr_soft, (dtmp - ms_de_stop) * zrs_mul / (dmax_l - dt1 + 0.11) + r8 * r8);
                     }
                     if (it_result >= max_its_result || dtmp <= ms_de_stop || (reflect && dtmp < ms_de_stop)) {
                         pc = P_HS_DONE;
@@ -3717,7 +3861,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
         if (inside) {
             step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
         }
-        si_shadow = u32(round(clamp(step_count, 0.0, 1023.0)));
+        if (pi(VOL_ON) != 0) {
+            si_shadow = encode_vlight(step_count);
+        } else {
+            si_shadow = u32(round(clamp(step_count, 0.0, 1023.0)));
+        }
     }
 }
 

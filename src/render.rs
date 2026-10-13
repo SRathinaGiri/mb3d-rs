@@ -602,10 +602,7 @@ fn finish_calculation(
 /// The post calculations the scene asks for that the graphics card can
 /// run with the main calculation.
 pub fn post_job(sc: &Scene, p: &CalcParams) -> PostJob {
-    // (the card has no shadows of positional lights yet: those stay on
-    // the CPU)
-    let shadows = shadow_job(sc, p).filter(|j| j.lights.iter().all(|l| l.pos.is_none()));
-    PostJob { shadows, deao: sc.ao.and(sc.deao) }
+    PostJob { shadows: shadow_job(sc, p), deao: sc.ao.and(sc.deao) }
 }
 
 /// Whether [`post_process`] has anything left to do for the scene (the

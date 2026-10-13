@@ -2469,7 +2469,7 @@ pub fn pass_rows(
     let snap = &snap;
     let done = &done;
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
+    if crate::gpu::enabled() && crate::gpu::unsupported_beyond_march(&p).is_none() {
         let pa = PassArgs { snap, skip_nonzero, avrg_vari, avrg_rcount, max_new, pass_nr: pass_nr as u32 };
         match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows) {
             Ok(status) => {
