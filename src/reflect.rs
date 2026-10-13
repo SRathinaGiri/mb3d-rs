@@ -1729,6 +1729,9 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     };
     // marches rays here: all of `list`, or with `share` the ones the card
     // leaves (taken from the end in pieces): (index in `list`, result)
+    // the threads' time on rays (not waiting for the card)
+    let busy = std::sync::atomic::AtomicU64::new(0);
+    let busy_ns = &busy;
     let march_cpu = |list: &[&(usize, RayReq)], share: Option<&crate::gpu::RaySharing>| -> Vec<(usize, RayHit)> {
         use std::sync::atomic::Ordering::SeqCst;
         const PIECE: usize = 16;
@@ -1765,6 +1768,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                                 std::thread::sleep(std::time::Duration::from_micros(500));
                                 continue;
                             }
+                            let tb = std::time::Instant::now();
                             for (k, (i, r)) in list.iter().enumerate().take(cur).skip(lo) {
                                 t.pixel_marcher(x0 + (i % wu) as i32, y0 + (i / wu) as i32);
                                 t.sr_si = gbuf[*i];
@@ -1774,6 +1778,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                                     out.push((k, h));
                                 }
                             }
+                            busy_ns.fetch_add(tb.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
                         }
                         out
                     })
@@ -1786,6 +1791,12 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     // MB3D_REFLECT_CPU_SHARE=0: all rays on the card (comparisons)
     let card_only = std::env::var("MB3D_REFLECT_CPU_SHARE").is_ok_and(|v| v == "0");
     let mut t_steps = 0.0;
+    // the CPU's part of a round, from the rates of the last one (the card
+    // claims its rays as fast as it marches them, but then casts their
+    // shadow and occlusion rays alone: without a cap the threads wait)
+    // Kept per odd and even round: the rounds alternate in what they cost
+    // the two (Luna's vase: the CPU's part came out 68 % and 45 % in turn).
+    let mut cpu_part: [Option<f64>; 2] = [None; 2];
     loop {
         let ts = std::time::Instant::now();
         let reqs: Vec<(usize, RayReq)> = std::thread::scope(|s| {
@@ -1872,14 +1883,28 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         } else {
             // the CPU starts with a few pieces per thread from the end
             let n = all.len();
-            let sh = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, n)), done: std::sync::Arc::new(false.into()), tail: threads * 2, cap: usize::MAX };
-            let (gpu, cpu) = std::thread::scope(|s| {
-                let g = s.spawn(|| march_gpu(&all, Some(&sh)));
+            let cap = cpu_part[round % 2].or(cpu_part[(round + 1) % 2]).map_or(usize::MAX, |c| n - (n as f64 * c) as usize);
+            let sh = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, n)), done: std::sync::Arc::new(false.into()), tail: threads * 2, cap };
+            busy_ns.store(0, std::sync::atomic::Ordering::Relaxed);
+            let ((gpu, t_card), cpu) = std::thread::scope(|s| {
+                let g = s.spawn(|| {
+                    let t = std::time::Instant::now();
+                    (march_gpu(&all, Some(&sh)), t.elapsed().as_secs_f64())
+                });
                 let c = march_cpu(&all, Some(&sh));
                 (g.join().unwrap(), c)
             });
+            // (the threads' busy time over their number: the time all of
+            // them took)
+            let t_cpu = busy_ns.load(std::sync::atomic::Ordering::Relaxed) as f64 * 1e-9 / threads.saturating_sub(1).max(1) as f64;
             let (hits, n_card, unfinished) = gpu?;
             n_gpu = n_card - unfinished.len();
+            // rays per second of both sides (each in its own time)
+            if n_gpu > 0 && !cpu.is_empty() {
+                let card = n_gpu as f64 / t_card.max(1e-4);
+                let c = cpu.len() as f64 / t_cpu.max(1e-4);
+                cpu_part[round % 2] = Some((c / (c + card)).clamp(0.02, 0.85));
+            }
             for (k, h) in hits.into_iter().enumerate().take(n_card) {
                 res[k] = Some(h);
             }
@@ -1904,9 +1929,10 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         let n_cpu_done = all.len() - n_gpu;
         if timing {
             eprintln!(
-                "  reflections: round {round}: {} rays, {n_gpu} on the card, {n_cpu_done} on the CPU, in {:.2} s",
+                "  reflections: round {round}: {} rays, {n_gpu} on the card, {n_cpu_done} on the CPU, in {:.2} s (CPU's part {:.0} %)",
                 all.len(),
-                t0.elapsed().as_secs_f64()
+                t0.elapsed().as_secs_f64(),
+                cpu_part[round % 2].unwrap_or(0.0) * 100.0
             );
         }
         for ((i, _), h) in all.iter().zip(res) {

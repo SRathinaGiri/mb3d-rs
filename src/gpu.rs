@@ -1696,8 +1696,13 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         // shadows and occlusion follow for the card's part
         let lim = |started: usize, free: usize| -> usize {
             let Some(sh) = share.filter(|_| pi == 0) else { return n_card.get() };
+            let mut want = started + free;
+            // the CPU's share: the card does not go beyond it (its rays
+            // still need the shadow and occlusion pass after the march,
+            // which the CPU does with each ray)
+            want = want.min(sh.cap.max(started));
             let mut st = sh.state.lock().unwrap();
-            st.0 = st.0.max((started + free).min(st.1));
+            st.0 = st.0.max(want.min(st.1));
             st.0
         };
         // the last few rays of the march: the CPU, when it has nothing else
