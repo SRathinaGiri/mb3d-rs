@@ -64,6 +64,8 @@ jobs:
             cp "target/${{ matrix.target }}/release/$exe${{ matrix.ext }}" "$name"/
           done
           cp README.md GETTING_STARTED.md LICENSE "$name"/
+          # the themes (the program reads them from here)
+          cp -r Themes "$name"/
           mkdir -p "$name/examples"
           cp examples/*.m3s "$name/examples"/
           # the archive name has no version, so that the README can link to

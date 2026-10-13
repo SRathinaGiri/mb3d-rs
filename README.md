@@ -64,9 +64,9 @@ picture for its full size).
 
 A theme is an XML file of named colours and sizes, drawn in one of two
 shape families (`gloss`: rounded glossy buttons, `flat`: the system
-look). Put your own into a `Themes` folder next to the program and it
-appears in the list at the next start. A theme names only what it
-changes; the rest comes from its base:
+look). All themes are files in the `Themes` folder next to the program:
+put your own there and it appears in the list at the next start. A
+theme names only what it changes; the rest comes from its base:
 
 ```xml
 <theme name="Ocean" family="gloss" base="Glossy">
@@ -76,8 +76,8 @@ changes; the rest comes from its base:
 </theme>
 ```
 
-The built-in ones in [`src/vcl/themes`](src/vcl/themes) list every
-name. The looks are this project's own; MB3D's Embarcadero VCL styles are
+[Glossy](Themes/Glossy.xml) and [Windows](Themes/Windows.xml) list
+every name. The looks are this project's own; MB3D's Embarcadero VCL styles are
 not used.
 
 ### Interface size

@@ -1,6 +1,6 @@
 //! The look of the controls.  A theme is a set of named colours and sizes
-//! read from an XML file (`src/vcl/themes/*.xml` built in, more in the
-//! program's `Themes` folder) drawn in one of two shape families: `gloss`
+//! read from an XML file of the `Themes` folder next to the program, drawn
+//! in one of two shape families: `gloss`
 //! (MB3D's default VCL style "Glossy": dark, glossy buttons) or `flat` (the
 //! system look, MB3D's "Themes off").
 
@@ -24,16 +24,19 @@ pub struct ThemeData {
     vals: HashMap<String, u32>,
 }
 
-/// A theme of the registry: the built-in ones first, then those of the
-/// `Themes` folder.
+/// A theme of the registry (Glossy and Windows first, the others by name).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Style(u16);
 
-#[allow(non_upper_case_globals)]
-impl Style {
-    pub const Glossy: Style = Style(0);
-    pub const Windows: Style = Style(1);
+impl Default for Style {
+    /// Glossy, MB3D's default (or the first theme when there is none of
+    /// that name)
+    fn default() -> Style {
+        Style::from_name("Glossy").unwrap_or(Style(0))
+    }
+}
 
+impl Style {
     pub fn name(self) -> &'static str {
         data(self).name.as_str()
     }
@@ -47,21 +50,20 @@ impl Style {
     }
 }
 
-/// The built-in themes (the first two are Glossy and Windows, the defaults
-/// of the two families; the others take what they leave out from them).
-const BUILT_IN: [&str; 8] = [
-    include_str!("themes/Glossy.xml"),
-    include_str!("themes/Windows.xml"),
-    include_str!("themes/Graphite.xml"),
-    include_str!("themes/Midnight.xml"),
-    include_str!("themes/Ember.xml"),
-    include_str!("themes/Forest.xml"),
-    include_str!("themes/Daylight.xml"),
-    include_str!("themes/Highcontrast.xml"),
-];
-
 static REGISTRY: RwLock<Vec<&'static ThemeData>> = RwLock::new(Vec::new());
 
+/// The `Themes` folder: next to the program, or else (a program run from
+/// the build folder: cargo run, the tests and examples) the source tree's.
+pub fn themes_dir() -> std::path::PathBuf {
+    let d = crate::appdirs::app_folder().join("Themes");
+    if d.is_dir() {
+        return d;
+    }
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Themes");
+    if src.is_dir() { src } else { d }
+}
+
+/// The registry, read from the `Themes` folder at the first use.
 fn registry() -> std::sync::RwLockReadGuard<'static, Vec<&'static ThemeData>> {
     {
         let r = REGISTRY.read().unwrap();
@@ -72,10 +74,11 @@ fn registry() -> std::sync::RwLockReadGuard<'static, Vec<&'static ThemeData>> {
     {
         let mut w = REGISTRY.write().unwrap();
         if w.is_empty() {
-            for t in BUILT_IN {
-                let d = parse(t, &w).expect("built-in theme");
-                w.push(Box::leak(Box::new(d)));
+            let (themes, errors) = load_dir(&themes_dir());
+            for e in errors {
+                eprintln!("theme {e}");
             }
+            *w = themes;
         }
     }
     REGISTRY.read().unwrap()
@@ -83,41 +86,91 @@ fn registry() -> std::sync::RwLockReadGuard<'static, Vec<&'static ThemeData>> {
 
 fn data(s: Style) -> &'static ThemeData {
     let r = registry();
-    r.get(s.0 as usize).copied().unwrap_or(r[0])
+    match r.get(s.0 as usize).or(r.first()) {
+        Some(d) => d,
+        None => panic!("{}", missing()),
+    }
 }
 
-/// Adds the themes of the `.xml` files in `dir` (a theme whose name is
-/// already known is skipped); returns the files that could not be read.
-pub fn load_dir(dir: &std::path::Path) -> Vec<String> {
+/// The message when there are no themes (a program copied without its
+/// `Themes` folder), or `None`.
+pub fn check() -> Result<(), String> {
+    if registry().is_empty() { Err(missing()) } else { Ok(()) }
+}
+
+fn missing() -> String {
+    format!("no themes: the folder {} with the theme files (.xml) is missing; it comes with the program", themes_dir().display())
+}
+
+/// The themes of the `.xml` files in `dir`, Glossy and Windows first (the
+/// defaults of the two families: a theme without a `base` takes what it
+/// leaves out from them), then the others by name; and the files that
+/// could not be read.
+fn load_dir(dir: &std::path::Path) -> (Vec<&'static ThemeData>, Vec<String>) {
     let mut errors = Vec::new();
-    let Ok(rd) = std::fs::read_dir(dir) else { return errors };
+    let mut known: Vec<&'static ThemeData> = Vec::new();
+    let Ok(rd) = std::fs::read_dir(dir) else { return (known, errors) };
     let mut files: Vec<_> = rd.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("xml"))).collect();
     files.sort();
-    // (the built-in themes first: the bases of the files')
-    drop(registry());
+    let mut pending = Vec::new();
     for f in files {
-        let text = match std::fs::read_to_string(&f) {
-            Ok(t) => t,
-            Err(e) => {
-                errors.push(format!("{}: {e}", f.display()));
-                continue;
-            }
-        };
-        let mut w = REGISTRY.write().unwrap();
-        match parse(&text, &w) {
-            Ok(d) if !w.iter().any(|t| t.name.eq_ignore_ascii_case(&d.name)) => w.push(Box::leak(Box::new(d))),
-            Ok(_) => {}
+        match std::fs::read_to_string(&f) {
+            Ok(t) => pending.push((f, t)),
             Err(e) => errors.push(format!("{}: {e}", f.display())),
         }
     }
-    errors
+    // a theme after its base: as many rounds as it takes
+    loop {
+        let mut later = Vec::new();
+        let n = known.len();
+        for (f, text) in pending {
+            match parse(&text, &known) {
+                Ok(d) if known.iter().any(|t| t.name.eq_ignore_ascii_case(&d.name)) => errors.push(format!("{}: a second theme {}", f.display(), d.name)),
+                Ok(d) => known.push(Box::leak(Box::new(d))),
+                Err(Missing::Base(_)) => later.push((f, text)),
+                Err(Missing::Error(e)) => errors.push(format!("{}: {e}", f.display())),
+            }
+        }
+        pending = later;
+        if pending.is_empty() || known.len() == n {
+            break;
+        }
+    }
+    for (f, text) in pending {
+        if let Err(Missing::Base(b)) = parse(&text, &known) {
+            errors.push(format!("{}: unknown base theme {b}", f.display()));
+        }
+    }
+    let rank = |d: &ThemeData| ["glossy", "windows"].iter().position(|n| d.name.eq_ignore_ascii_case(n)).unwrap_or(2);
+    known.sort_by(|a, b| rank(a).cmp(&rank(b)).then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())));
+    (known, errors)
+}
+
+/// Why a file is not (yet) a theme.
+#[derive(Debug)]
+enum Missing {
+    /// its base theme is not known (yet)
+    Base(String),
+    Error(String),
+}
+
+impl From<&str> for Missing {
+    fn from(e: &str) -> Missing {
+        Missing::Error(e.into())
+    }
+}
+
+impl From<String> for Missing {
+    fn from(e: String) -> Missing {
+        Missing::Error(e)
+    }
 }
 
 /// A theme file: `<theme name=".." family="gloss|flat" base="..">` with
 /// `<color name=".." value="#RRGGBB"/>` and `<size name=".." value="24"/>`
-/// entries.  Values it leaves out come from `base`, or else from the
-/// built-in theme of its family.
-fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, String> {
+/// entries.  Values it leaves out come from `base`, or else from Glossy
+/// (`gloss`) or Windows (`flat`).
+fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, Missing> {
     let mut rest = text;
     let mut theme: Option<ThemeData> = None;
     while let Some(i) = rest.find('<') {
@@ -154,11 +207,17 @@ fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, String> 
                 let family = match attr("family").as_deref() {
                     Some("gloss") => Family::Gloss,
                     Some("flat") => Family::Flat,
-                    f => return Err(format!("unknown family {f:?} (gloss or flat)")),
+                    f => return Err(format!("unknown family {f:?} (gloss or flat)").into()),
                 };
+                let default = if family == Family::Gloss { "Glossy" } else { "Windows" };
                 let base = match attr("base") {
-                    Some(b) => Some(*known.iter().find(|t| t.name.eq_ignore_ascii_case(&b)).ok_or(format!("unknown base theme {b}"))?),
-                    None => known.iter().find(|t| t.family == family).copied(),
+                    Some(b) => Some(b),
+                    None if name.eq_ignore_ascii_case(default) => None,
+                    None => Some(default.to_string()),
+                };
+                let base = match base {
+                    Some(b) => Some(*known.iter().find(|t| t.name.eq_ignore_ascii_case(&b)).ok_or(Missing::Base(b))?),
+                    None => None,
                 };
                 theme = Some(ThemeData { name, family, vals: base.map(|b| b.vals.clone()).unwrap_or_default() });
             }
@@ -170,7 +229,7 @@ fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, String> 
                     let h = v.trim().trim_start_matches('#');
                     let x = u32::from_str_radix(h, 16).map_err(|_| format!("{n}: not a colour: {v}"))?;
                     if h.len() != 6 {
-                        return Err(format!("{n}: not a colour (#RRGGBB): {v}"));
+                        return Err(format!("{n}: not a colour (#RRGGBB): {v}").into());
                     }
                     0xFF00_0000 | x
                 } else {
@@ -178,7 +237,7 @@ fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, String> 
                 };
                 t.vals.insert(n, v);
             }
-            other => return Err(format!("unknown element <{other}>")),
+            other => return Err(format!("unknown element <{other}>").into()),
         }
     }
     theme.ok_or_else(|| "no <theme> element".into())
@@ -947,21 +1006,23 @@ impl Theme {
 mod tests {
     use super::*;
 
-    /// Every built-in theme reads, and has every value the drawing code
+    /// Every theme of the Themes folder reads, and has every value the drawing code
     /// asks for (a missing one would be drawn magenta).
     #[test]
-    fn built_in_themes() {
+    fn bundled_themes() {
         let all = Style::all();
-        assert_eq!(all.len(), BUILT_IN.len());
-        assert_eq!(Style::from_name("glossy"), Some(Style::Glossy));
-        assert_eq!(Style::from_name("Windows"), Some(Style::Windows));
+        let files = std::fs::read_dir(themes_dir()).unwrap().count();
+        assert_eq!(all.len(), files);
+        let (glossy, windows) = (Style::from_name("glossy").unwrap(), Style::from_name("Windows").unwrap());
+        assert_eq!((glossy, windows), (Style(0), Style(1)));
+        assert_eq!(Style::default(), glossy);
         let src = include_str!("theme.rs").to_string() + include_str!("paint.rs");
         let mut names: Vec<&str> = src.match_indices(".v(\"").map(|(i, m)| { let r = &src[i + m.len()..]; &r[..r.find('"').unwrap()] }).collect();
         names.sort();
         names.dedup();
         assert!(names.len() > 100);
-        // the two families' built-in themes have them all between them
-        let (g, w) = (data(Style::Glossy), data(Style::Windows));
+        // the two families' defaults (Glossy, Windows) have them all between them
+        let (g, w) = (data(glossy), data(windows));
         for n in &names {
             assert!(g.vals.contains_key(*n) || w.vals.contains_key(*n), "no theme has {n}");
         }
@@ -982,8 +1043,30 @@ mod tests {
         assert_eq!(t.family, Family::Flat);
         assert_eq!(t.vals["face"], 0xFF10_2030);
         assert_eq!(t.vals["caption.height"], 28);
-        assert_eq!(t.vals["text"], data(Style::Windows).vals["text"]);
+        assert_eq!(t.vals["text"], data(Style::from_name("Windows").unwrap()).vals["text"]);
         assert!(parse("<theme name=\"X\" family=\"round\"/>", &known).is_err());
         assert!(parse("<theme name=\"X\" family=\"gloss\"><color name=\"face\" value=\"red\"/></theme>", &known).is_err());
+    }
+
+    #[test]
+    fn theme_folder() {
+        // bases later in the name order, and a theme without a base
+        let dir = std::env::temp_dir().join(format!("mb3d-themes-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for f in ["Glossy.xml", "Windows.xml"] {
+            std::fs::copy(themes_dir().join(f), dir.join(f)).unwrap();
+        }
+        std::fs::write(dir.join("A.xml"), "<theme name=\"Aqua\" family=\"gloss\" base=\"Zinc\"><color name=\"text\" value=\"#010203\"/></theme>").unwrap();
+        std::fs::write(dir.join("Z.xml"), "<theme name=\"Zinc\" family=\"gloss\"><color name=\"face\" value=\"#405060\"/></theme>").unwrap();
+        std::fs::write(dir.join("B.xml"), "<theme name=\"Broken\" family=\"flat\" base=\"Nowhere\"/>").unwrap();
+        let (themes, errors) = load_dir(&dir);
+        let _ = std::fs::remove_dir_all(&dir);
+        let names: Vec<&str> = themes.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(names, ["Glossy", "Windows", "Aqua", "Zinc"]);
+        assert_eq!(themes[2].vals["face"], 0xFF40_5060);
+        assert_eq!(themes[2].vals["text"], 0xFF01_0203);
+        assert_eq!(themes[3].vals["highlight"], themes[0].vals["highlight"]);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("Nowhere"));
     }
 }

@@ -969,7 +969,7 @@ mod tests {
     #[test]
     fn scroll_range_is_fixed() {
         let text = "object F: TForm\n  ClientWidth = 300\n  ClientHeight = 200\n  object S: TScrollBox\n    Left = 0\n    Top = 0\n    Width = 300\n    Height = 200\n    object I: TImage\n      Left = 0\n      Top = 0\n      Width = 900\n      Height = 1000\n    end\n  end\nend\n";
-        let mut f = Form::from_dfm(text, &Theme::new(super::super::theme::Style::Glossy)).unwrap();
+        let mut f = Form::from_dfm(text, &Theme::new(super::super::theme::Style::default())).unwrap();
         let s = f.id("S").unwrap();
         let before = scrollbox_extent(&f, s);
         assert_eq!(before, (900, 1000));
@@ -985,7 +985,7 @@ mod tests {
     fn hot_button_is_blue() {
         use super::super::canvas::Canvas;
         let text = "object F: TForm\n  ClientWidth = 200\n  ClientHeight = 100\n  object A: TButton\n    Left = 10\n    Top = 10\n    Width = 80\n    Height = 25\n    Caption = 'A'\n  end\n  object B: TButton\n    Left = 100\n    Top = 10\n    Width = 80\n    Height = 25\n    Caption = 'B'\n    Enabled = False\n  end\nend\n";
-        let th = Theme::new(super::super::theme::Style::Glossy);
+        let th = Theme::new(super::super::theme::Style::default());
         let mut f = Form::from_dfm(text, &th).unwrap();
         // a pixel in the upper half of a button, clear of the caption
         let px = |f: &mut Form, x: i32| {

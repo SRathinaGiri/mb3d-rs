@@ -69,7 +69,7 @@ pub struct Ui {
 
 impl Default for Ui {
     fn default() -> Self {
-        Ui::new(Style::Glossy)
+        Ui::new(Style::default())
     }
 }
 
