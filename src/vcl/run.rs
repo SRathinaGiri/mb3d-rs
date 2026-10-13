@@ -34,6 +34,12 @@ struct Win {
     cursor_icon: CursorIcon,
     /// the title last set (X11 cannot read it back: `Window::title` is empty)
     title: String,
+    /// the form's outer size (and the user scale) the window last had or
+    /// was asked for: the window is only resized when the program changes
+    /// the form, never to undo a size the window manager imposed (under
+    /// Wine on a tiling manager that bounced between the two sizes forever
+    /// and the windows never got painted)
+    synced: (i32, i32, f64),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -289,7 +295,9 @@ impl<A: App> Runner<A> {
                     let us = self.ui.ui_scale;
                     let s = w.window.scale_factor() * us;
                     let cur: LogicalSize<f64> = w.window.inner_size().to_logical(s);
-                    if !f.maximized && ((cur.width - ow as f64).abs() > 1.0 || (cur.height - oh as f64).abs() > 1.0) {
+                    let changed = w.synced != (ow, oh, us);
+                    w.synced = (ow, oh, us);
+                    if changed && !f.maximized && ((cur.width - ow as f64).abs() > 1.0 || (cur.height - oh as f64).abs() > 1.0) {
                         if std::env::var_os("MB3D_TRACE_REDRAW").is_some() {
                             trace_line(&format!("sync {}: request {}x{} (now {:.0}x{:.0} logical, scale {})", f.name, ow, oh, cur.width, cur.height, s));
                         }
@@ -413,7 +421,7 @@ impl<A: App> Runner<A> {
         };
         let id = window.id();
         window.request_redraw();
-        self.wins.insert(id, Win { window, surface, form: fi, cursor: (0.0, 0.0), nc: Nc::Client, cursor_icon: CursorIcon::Default, title: self.ui.forms[fi].caption().to_string() });
+        self.wins.insert(id, Win { window, surface, form: fi, cursor: (0.0, 0.0), nc: Nc::Client, cursor_icon: CursorIcon::Default, title: self.ui.forms[fi].caption().to_string(), synced: (w, h, us) });
         self.by_form.insert(fi, id);
         f_created(&mut self.ui, fi);
     }
@@ -901,6 +909,12 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                 }
                 let before = f.client_size();
                 f.set_outer_size(l.width.round() as i32, l.height.round() as i32, &theme);
+                let (ow, oh) = f.outer_size(&theme);
+                let us = self.ui.ui_scale;
+                if let Some(w) = self.wins.get_mut(&id) {
+                    w.synced = (ow, oh, us);
+                }
+                let f = &mut self.ui.forms[fi];
                 if f.client_size() != before {
                     f.layout();
                     if let Some(h) = f.ctl[0].events.get("OnResize").cloned() {
