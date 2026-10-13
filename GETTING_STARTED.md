@@ -38,7 +38,7 @@ EM_JIT_M3Formulas/    more JIT formulas
 History/              parameters of every "Calculate 3D" (as in MB3D)
 Meshes/               meshes from BTracer2
 BigRenders/           big renders
-ShaderCache/          the graphics card's compiled shaders (made on the first calculation)
+ShaderCache/          the graphics card's compiled shaders (Linux; made on the first calculation)
 MB3D-sources/         MB3D's Delphi sources and project files
 README-MB3D.md, README_1.*.txt, CHANGELOG.txt, License.txt   MB3D's documents
 examples/             scenes in this port's .m3s format
@@ -122,7 +122,7 @@ into a text file and opened like a `.m3p`.
   or add `--formulas path/to/M3Formulas`.
 * *map N not found*: the same for `M3Maps` (`--maps`).
 * A file renders, but looks different from MB3D: please open an issue with
-  the parameter file (README ▸ "Known differences" lists what is not ported).
+  the parameter file (README ▸ "Good to know" and docs/TECHNICAL.md ▸ "Known differences" list what is not ported).
 
 ## 6. Building from source
 

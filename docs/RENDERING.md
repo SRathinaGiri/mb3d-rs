@@ -3,10 +3,10 @@
 The original Mandelbulb3D calculates everything on the processor (CPU).
 mb3d-rs can also use the **graphics card**, which is usually several times
 faster, and it decides by itself how to share the work. This page explains
-what happens, what the little lamp in the title bar tells you, and the
+what happens, what the little LED in the title bar tells you, and the
 one setting you may want to change. The other things that are new
 compared with the original program are listed in the
-[README](../README.md#new-compared-with-mandelbulb3d).
+[README](../README.md#what-is-new-compared-with-mandelbulb3d).
 
 ![The main window after a calculation on the graphics card](img/main_window.jpg)
 
@@ -17,7 +17,7 @@ compared with the original program are listed in the
 | What it runs | MB3D's calculation, ported line by line | the same calculation, translated into a *shader* (a program for the card) |
 | Speed | close to MB3D's own speed | in the 80 example files a median of 5 times faster (up to 87 times) |
 | Scenes | all of them | 73 of the 80 examples (not: volumetric light, 2D slices, the few formulas that cannot be translated, formulas whose numbers grow beyond single precision - those go to the CPU by themselves) |
-| Result | MB3D's result | the same image within rounding (see the [comparison of all 80 example files](../README.md#cpu-and-graphics-card-compared)) |
+| Result | MB3D's result | the same image within rounding (see the [comparison of all 80 example files](../README.md#speed) and the [image differences](TECHNICAL.md#cpu-and-graphics-card-compared-gtx-1650-earlier-measurement)) |
 | Start-up | none | the **first** time a formula combination is used, its shader must be *compiled*: 10–20 s. The compiled shader is kept in the `ShaderCache` folder next to the program (and by the graphics driver), so the next time it is ready at once |
 
 The compile time is the reason why the graphics card is not always the
@@ -71,13 +71,13 @@ is paid once and not once per shader. Once the card has marched part of
 the image, it also calculates the shadows and the ambient occlusion of
 the whole image, the CPU's rows included. Only when the card never joined
 (its shaders were still compiling when the CPU finished) do they run on
-the CPU, like after a CPU calculation. The lamp's hint says how the rows
+the CPU, like after a CPU calculation. The LED's hint says how the rows
 were shared, for example *"71 % of the rows on the card, 29 % on the
 CPU +shadows +AO"*.
 
-## The lamp (LED) in the title bar
+## The LED in the title bar
 
-Right of the window title a small lamp shows where the last calculation
+Right of the window title a small LED shows where the last calculation
 ran. It blinks while a calculation is running.
 
 | Colour | Meaning |
@@ -87,19 +87,19 @@ ran. It blinks while a calculation is running.
 | **orange** | mixed: the image on the card, some steps on the CPU (for example normals on the z-buffer, or shadows after a first run whose shaders were still compiling) |
 | **red** | on the CPU (setting *CPU*, or a scene the card cannot do) |
 
-**Hold the mouse over the lamp** to see the details: the card's name, the
+**Hold the mouse over the LED** to see the details: the card's name, the
 steps it calculated, the reason for a CPU calculation, and for Monte Carlo
 renders how the work was shared.
 
-![Calculated on the graphics card: green lamp and its hint](img/led_card.png)
+![Calculated on the graphics card: green LED and its hint](img/led_card.png)
 
-![Calculate on: CPU - red lamp and its hint](img/led_cpu.png)
+![Calculate on: CPU - red LED and its hint](img/led_cpu.png)
 
 ## Thread priority
 
 **Thread Priority** on the Internal page (Idle, Lowest, *Lower* by
 default, Normal) works as in MB3D: the calculation threads run below the
-windows, so the program stays responsive and the lamp blinks steadily
+windows, so the program stays responsive and the LED blinks steadily
 during long calculations. It costs no speed while nothing else needs the
 processor; other programs that do get it first (Idle the most). On Linux
 and Windows; macOS keeps normal priority.
@@ -116,7 +116,7 @@ busy, every CPU thread splits its pixels into two halves that take turns:
 The CPU also takes a part of every batch of rays from its end. How big
 that part is follows from how fast the card and the CPU were on the last
 batch, so a slow formula (where the card is not much faster than the CPU)
-gets more help from the CPU. The lamp's hint shows the result, for
+gets more help from the CPU. The LED's hint shows the result, for
 example *"93 % of the marches on the card, 7 % on the CPU"*. With *Auto*
 the first passes run on the CPU while the shader compiles.
 
