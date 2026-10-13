@@ -284,12 +284,11 @@ pub fn set_status(s: String) {
 }
 
 /// Why the scene cannot be calculated by the shader, `None` if it can.
-/// What keeps the passes other than the march (Monte Carlo, the reflection
-/// pass) off the card: what keeps the march off, and the volumetric light
-/// (the march's only).
+/// What keeps Monte Carlo off the card: what keeps the march off, and the
+/// volumetric light (not in its marches yet).
 pub fn unsupported_beyond_march(p: &CalcParams) -> Option<String> {
     if p.vol.is_some() {
-        return Some("volumetric light (only the main calculation on the GPU yet)".into());
+        return Some("volumetric light (not in Monte Carlo on the GPU yet)".into());
     }
     unsupported(p)
 }
@@ -1002,7 +1001,7 @@ fn reflect_constants(p: &CalcParams, march: bool, hs: bool, ao: bool) -> Vec<(&'
 /// Starts compiling the reflection pass's pipelines in the background:
 /// the march, and the shadows (`hs`) and occlusion (`ao`) of the hits.
 pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
-    if unsupported_beyond_march(p).is_some() {
+    if unsupported(p).is_some() {
         return;
     }
     let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return };
@@ -1366,7 +1365,8 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     }
     // the volumetric light (the march only: VOL_ON and the rest, its map
     // after the scene's maps, see `vol_maps`)
-    let vol = p.vol.as_deref().filter(|_| mode == 0 || mode == M_VLMAP);
+    // (the march, the reflection pass and the light map's march)
+    let vol = p.vol.as_deref().filter(|_| mode == 0 || mode == 4 || mode == M_VLMAP);
     for k in 0..3 {
         d(vol.map_or(0.0, |m| m.light_pos[k]));
     }
@@ -1683,7 +1683,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         }
         return Ok((Vec::new(), 0, Vec::new()));
     }
-    if let Some(r) = unsupported_beyond_march(p) {
+    if let Some(r) = unsupported(p) {
         return Err(r);
     }
     let dbl = needs_double(p);
@@ -1730,7 +1730,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
     };
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
-    let maps = make("maps", &sh.maps);
+    let maps = make("maps", &vol_maps(p, &sh));
     // the tasks in rows of R_W, resumable (a bounce marches a ray and
     // casts the shadow and occlusion rays of its hit)
     // the pacing from the last batch (its buffers and turn budget): the

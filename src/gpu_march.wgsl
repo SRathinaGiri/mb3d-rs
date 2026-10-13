@@ -1331,9 +1331,9 @@ fn vol_vec(vd: vec3<f32>) -> f32 {
     return vol_map(side * u32(cs * cs) + u32(clamp(x + h, 0, cs - 1) + clamp(y + h, 0, cs - 1) * cs));
 }
 
-// VolLightMap::integrate: the light collected on the view ray of the pixel
-// (start `ray0`, `vfov` per step) from depth `t0` over `len` steps
-fn vol_integrate(ray0: vec3<R>, t0: R, len: R, mzz_: R) -> R {
+// VolLightMap::integrate: the light collected on the ray from `ray0` (`dir`
+// per step) from `t0` over `len` steps
+fn vol_integrate(ray0: vec3<R>, dir: vec3<R>, t0: R, len: R, mzz_: R) -> R {
     let rel0 = ray0 - vol_pos();
     let sw = pf(STEP_WIDTH);
     let d2 = sw * sw;
@@ -1349,7 +1349,7 @@ fn vol_integrate(ray0: vec3<R>, t0: R, len: R, mzz_: R) -> R {
         }
         t += R(s1);
         st -= s1;
-        let vs = vec3<f32>(rel0 + vfov * t);
+        let vs = vec3<f32>(rel0 + dir * t);
         if (is_pos) {
             let d1 = dot(vs, vs);
             let m = vol_vec(vs);
@@ -2373,7 +2373,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             if (st1 < d) {
                                 d = st1;
                             }
-                            step_count += vol_integrate(base, mzz - last_step, last_step, mzz);
+                            step_count += vol_integrate(base, vfov, mzz - last_step, last_step, mzz);
                         } else if (st1 < d) {
                             if (count) {
                                 step_count += st1 / d;
@@ -2393,7 +2393,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             if (pi(VOL_ON) != 0) {
                                 // the light up to the end of the range
                                 let last = pf(ZEND) - mzz + d;
-                                step_count += vol_integrate(base, pf(ZEND) - last, last, mzz);
+                                step_count += vol_integrate(base, vfov, pf(ZEND) - last, last, mzz);
                             }
                             done = true;
                         } else {
@@ -3763,7 +3763,16 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     var dstep = max((dtmp - pf(MS_DE_SUB) * ms_de_stop) * pf(Z_STEP_DIV) * rsf, 0.11);
                     let s1 = max(ms_de_stop, 0.4) * pf(MH04ZSD);
                     let count = dfog_on_it == 0 || it_result == dfog_on_it;
-                    if (s1 < dstep) {
+                    let vol = pi(VOL_ON) != 0;
+                    // (the volumetric light: along the view ray back from
+                    // here, as calc_ray does; m.mzz = zz.abs())
+                    let vzz = abs(zz_base + mzz * zz_mul);
+                    if (vol) {
+                        if (s1 < dstep) {
+                            dstep = s1;
+                        }
+                        r_step_count += vol_integrate(base + vfov * mzz, vfov_px, -rlast_sw, rlast_sw, vzz);
+                    } else if (s1 < dstep) {
                         if (count) {
                             r_step_count += s1 / dstep;
                         }
@@ -3777,7 +3786,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         // open air
                         r_flags = 0u;
                         r_zz2 = mzz;
-                        if (inside) {
+                        if (vol) {
+                            // the light up to the ray's end
+                            let last = r_max_len() - mzz + rlast_sw;
+                            r_step_count += vol_integrate(base + vfov * r_max_len(), vfov_px, -last, last, vzz);
+                        } else if (inside) {
                             r_step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
                         }
                         pc = P_R_END;
@@ -3849,10 +3862,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     mzz = abs(zz_base + mzz * zz_mul);
                     zz_base = 0.0;
                     zz_mul = 1.0;
-                    if (inside) {
-                        r_step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
+                    if (pi(VOL_ON) != 0) {
+                        si_shadow = encode_vlight(r_step_count);
+                    } else {
+                        if (inside) {
+                            r_step_count *= 200.0 * pf(DE_STOP) / R(pi(WIDTH));
+                        }
+                        si_shadow = u32(round(clamp(r_step_count, 0.0, 1023.0)));
                     }
-                    si_shadow = u32(round(clamp(r_step_count, 0.0, 1023.0)));
                     after_hs = P_R_AFTER_HS;
                     after_ao = P_R_END;
                     pc = P_N_INIT;

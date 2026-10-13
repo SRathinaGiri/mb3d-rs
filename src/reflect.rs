@@ -1360,7 +1360,7 @@ fn s3d(v: S3) -> Vec3 {
 pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) {
     let mc = &sc.mc;
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && p.vol.is_none() && crate::gpu::unsupported(p).is_none() {
+    if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
         match reflections_gpu(sc, p, gbuf, rgb, cam, lv, threads) {
             Ok(()) => {
                 let s = crate::gpu::last_status();
@@ -1540,7 +1540,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
         back_dist: (((8388352.0 / p.zc_mul + 1.0).powi(2) - 1.0) * p.step_width / p.zcorr) as f32,
         hs: hs.clone(),
         ao,
-        vol: false,
+        vol: p.vol.is_some(),
         gpu: true,
     };
     // the lights of the shadow rays (calc_hs): soft shadows use the last one
@@ -1720,7 +1720,8 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
                     RayHit { hit: true, si, pos: h.pos, zz: h.zz as f64, zz2_paint: h.zz2 as f64, zz2: h.zz2 as f64 }
                 } else {
                     // the step count of the ray (dynamic fog) as calc_ray keeps it
-                    let si = SiLight { zpos_fine: 32768 << 16, shadow: h.step_count.clamp(0.0, 1023.0).round_ties_even() as u16, ..SiLight::default() };
+                    let shadow = if p.vol.is_some() { crate::lighting::encode_vlight(h.step_count) } else { h.step_count.clamp(0.0, 1023.0).round_ties_even() as u16 };
+                    let si = SiLight { zpos_fine: 32768 << 16, shadow, ..SiLight::default() };
                     RayHit { hit: false, si, pos: [0.0; 3], zz: h.zz as f64, zz2_paint: h.zz2 as f64, zz2: h.zz2 as f64 }
                 }
             })
