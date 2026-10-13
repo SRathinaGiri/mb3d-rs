@@ -2,6 +2,12 @@
 //! execution of the formula machine code.
 //!
 //! usage: m3fcheck <formula dir or .m3f files...> [--oracle PATH] [--trials N] [--translated] [-v]
+//!        m3fcheck <files...> --bench N --oracle PATH_TO_oracle_bench
+//!
+//! `--bench N` times N calls of each formula from the same start (the
+//! iteration record restored before each call): MB3D's machine code natively
+//! (tools/oracle/oracle_bench.s) and the translated code here, in ns per call
+//! with the cost of an empty call taken off both.
 //!
 //! `--translated` compares the translated native code (`native.rs`) with
 //! the interpreter: memory and registers must be identical bit for bit.
@@ -105,6 +111,7 @@ fn main() {
     let mut trials = 4;
     let mut verbose = false;
     let mut translated = false;
+    let mut bench: Option<u64> = None;
     let mut args = std::env::args().skip(1);
     while let Some(a) = args.next() {
         match a.as_str() {
@@ -112,6 +119,7 @@ fn main() {
             "--trials" => trials = args.next().and_then(|s| s.parse().ok()).unwrap_or(4),
             "-v" => verbose = true,
             "--translated" => translated = true,
+            "--bench" => bench = args.next().and_then(|s| s.parse().ok()),
             p => {
                 let pb = PathBuf::from(p);
                 if pb.is_dir() {
@@ -128,6 +136,9 @@ fn main() {
                 }
             }
         }
+    }
+    if let Some(n) = bench {
+        return run_bench(&files, n, oracle.as_deref());
     }
     let (mut ok, mut mismatch, mut emu_fail, mut skipped, mut native_fail) = (0, 0, 0, 0, 0);
     let mut compiled = 0;
@@ -262,4 +273,124 @@ fn main() {
         "\n{} formulas: {ok} ok, {mismatch} mismatch, {emu_fail} interpreter errors, {native_fail} native failures, {skipped} skipped",
         files.len()
     );
+}
+
+/// `--bench`: nanoseconds per call of each formula, natively (MB3D's code
+/// through the timing oracle) and translated (here), from the same start.
+fn run_bench(files: &[PathBuf], n: u64, oracle: Option<&str>) {
+    // the record restored before each call (both sides)
+    let (r1, l1, r2, l2) = (IT_BASE, 36u32, IT_BASE + 144, 76u32);
+    let header = |m: &mut Machine, entry: u32| {
+        m.wr32(BASE, entry).unwrap();
+        for (o, v) in [(44u32, n as u32), (48, r1), (52, l1), (56, r2), (60, l2)] {
+            m.wr32(BASE + o, v).unwrap();
+        }
+    };
+    let native_ns = |m: &Machine| -> Option<f64> {
+        let out = run_native(oracle?, &m.mem[..MEM_SIZE])?;
+        let ns = u64::from_le_bytes(out[64..72].try_into().unwrap());
+        Some(ns as f64 / n as f64)
+    };
+    println!("{:<28} {:>10} {:>10} {:>7}", "formula", "MB3D ns", "ours ns", "ratio");
+    let mut empty: Option<(f64, f64)> = None;
+    for path in files {
+        let Ok(def) = M3f::load(path) else { continue };
+        let def = Arc::new(def);
+        let difs = def.de_option >= 20;
+        let cf = CustomFormula::new(def.clone());
+        let base = build_machine(&[Some(&cf)]);
+        let mut rng = Rng(0x1234_5678 ^ def.name.len() as u64 * 7919);
+        let mut m = base.clone();
+        setup(&mut m, &mut rng, def.de_option, 1, 0);
+        if difs {
+            for (o, v) in [(12u32, 1u32), (28, 1), (32, IT_BASE + 144), (36, pconst_addr(0)), (40, 0)] {
+                m.wr32(BASE + o, v).unwrap();
+            }
+            m.wrf64(IT_BASE + off::ROLD, 0.01).unwrap();
+            m.wrf64(IT_BASE + off::RSTOPD, 0.01).unwrap();
+        }
+        // the cost of an empty call (a `ret` in slot 5's code), once
+        if empty.is_none() {
+            let mut e = m.clone();
+            e.mem[(code_addr(5) - BASE) as usize] = 0xC3;
+            e.wr32(BASE + 28, 0).unwrap();
+            header(&mut e, code_addr(5));
+            let nat = native_ns(&e).unwrap_or(0.0);
+            let t = std::time::Instant::now();
+            let saved = e.mem.clone();
+            for _ in 0..n {
+                restore(&mut e, &saved[..], r1, l1, r2, l2);
+            }
+            empty = Some((nat, t.elapsed().as_nanos() as f64 / n as f64));
+        }
+        let (e_nat, e_ours) = empty.unwrap();
+        header(&mut m, code_addr(0));
+        let nat = native_ns(&m).map(|v| v - e_nat);
+        // ours: the same calls through the machine (translated code)
+        let saved = m.mem.clone();
+        let mut em = m.clone();
+        let t = std::time::Instant::now();
+        let mut ok = true;
+        for _ in 0..n {
+            restore(&mut em, &saved[..], r1, l1, r2, l2);
+            let r = if difs {
+                em.call_difs(code_addr(0), IT_BASE + 144, pconst_addr(0), 0, 1, STACK_TOP, MAX_STEPS)
+            } else {
+                em.call_formula(code_addr(0), IT_C1, STACK_TOP, MAX_STEPS)
+            };
+            ok &= r.is_ok();
+        }
+        let mut ours = t.elapsed().as_nanos() as f64 / n as f64 - e_ours;
+        // as the render calls it: the direct version on the iteration record
+        let rd = |o: u32| f64::from_le_bytes(saved[(IT_BASE + o - BASE) as usize..][..8].try_into().unwrap());
+        let mut it0 = mb3d::iteration::Iteration::default();
+        for k in 0..4 {
+            it0.v[k] = rd(off::X + 8 * k as u32);
+        }
+        for k in 0..3 {
+            it0.c[k] = rd(off::C1 + 8 * k as u32);
+            it0.j[k] = rd(off::J1 + 8 * k as u32);
+            it0.ju[k] = rd(off::JU1 + 8 * k as u32);
+        }
+        it0.j[3] = rd(off::J4);
+        it0.rold = rd(off::ROLD);
+        it0.rout = rd(off::ROUT);
+        it0.otrap = rd(off::OTRAP);
+        it0.vary_scale = rd(off::VARY_SCALE);
+        it0.deriv1 = 1.0;
+        it0.it_result = 3;
+        it0.max_it = 60;
+        it0.rstop = 1024.0 * 1024.0;
+        it0.first_it = 1;
+        it0.de_option = def.de_option;
+        let mut dm = m.clone();
+        let mut it = it0.clone();
+        if !difs && dm.call_direct(code_addr(0), &mut it, pconst_addr(0), MAX_STEPS).is_some() {
+            let t = std::time::Instant::now();
+            for _ in 0..n {
+                it.clone_from(&it0);
+                let _ = dm.call_direct(code_addr(0), &mut it, pconst_addr(0), MAX_STEPS);
+            }
+            ours = t.elapsed().as_nanos() as f64 / n as f64;
+            // (the copy of the record taken off)
+            let t = std::time::Instant::now();
+            for _ in 0..n {
+                it.clone_from(&it0);
+                std::hint::black_box(&mut it);
+            }
+            ours -= t.elapsed().as_nanos() as f64 / n as f64;
+        }
+        let kind = if base.prog(code_addr(0)).is_some_and(|p| p.is_native()) { "" } else { " (interpreted)" };
+        match nat {
+            Some(nat) => println!("{:<28} {:>10.1} {:>10.1} {:>7.2}{kind}{}", def.name, nat, ours, ours / nat.max(0.1), if ok { "" } else { " ERROR" }),
+            None => println!("{:<28} {:>10} {:>10.1}{kind}", def.name, "-", ours),
+        }
+    }
+}
+
+fn restore(m: &mut Machine, saved: &[u8], r1: u32, l1: u32, r2: u32, l2: u32) {
+    for (a, l) in [(r1, l1), (r2, l2)] {
+        let (a, l) = ((a - BASE) as usize, l as usize * 4);
+        m.mem[a..a + l].copy_from_slice(&saved[a..a + l]);
+    }
 }
