@@ -454,6 +454,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             scale_amb_diff_down: if self.scale_amb_diff_down { Some(self.c.sr_light_amount) } else { None },
             inside_trans: inside,
             light_z: Some(&self.light_z),
+            svec: true,
         };
         self.c.lv.shade(si, &self.plv, self.c.cam, &o)
     }

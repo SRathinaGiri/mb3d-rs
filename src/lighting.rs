@@ -396,6 +396,16 @@ fn cos_tabs() -> &'static CosTabs {
 
 /// `GetCosTabVal`: diffuse light function with roughness blending.
 pub(crate) fn get_cos_tab_val(tnr: usize, dotp: f32, rough: f32) -> f32 {
+    cos_tab_val(tnr, dotp, rough, false)
+}
+
+/// `GetCosTabValSqr` (internal gamma 2, `CalcPixelColorSqr`): the two
+/// interpolated values squared before the roughness blend.
+pub(crate) fn get_cos_tab_val_sqr(tnr: usize, dotp: f32, rough: f32) -> f32 {
+    cos_tab_val(tnr, dotp, rough, true)
+}
+
+fn cos_tab_val(tnr: usize, dotp: f32, rough: f32, sqr: bool) -> f32 {
     let tabs = cos_tabs();
     let mut t = 62.0 - 60.0 * dotp;
     let mut ip = t.trunc() as i32 - 1;
@@ -412,8 +422,12 @@ pub(crate) fn get_cos_tab_val(tnr: usize, dotp: f32, rough: f32) -> f32 {
     let ip = ip as usize;
     let p1 = &tabs.diff[tnr][ip..ip + 4];
     let p2 = &tabs.diff[tnr + 4][ip..ip + 4];
-    let a: f32 = (0..4).map(|k| p1[k] * w[k]).sum();
-    let b: f32 = (0..4).map(|k| p2[k] * w[k]).sum();
+    let mut a: f32 = (0..4).map(|k| p1[k] * w[k]).sum();
+    let mut b: f32 = (0..4).map(|k| p2[k] * w[k]).sum();
+    if sqr {
+        a *= a;
+        b *= b;
+    }
     a + rough * (b - a)
 }
 
@@ -868,7 +882,12 @@ impl LightVals {
             let raw = sv_scale(lcol(li.color), light_scale);
             let (col, mut lmax_l) = if li.positional {
                 let c = sv_scale(raw, li.amplitude * 1.3 * light_scale);
-                (c, 800.0 * (c[0] + c[1] + c[2] + 128.0 * li.amplitude))
+                // sLmaxL := 800 * (HSumSVec(sLCols) + 128 * sTmp), and
+                // HSumSVec is (sv[0] + sv[1] + sv[3]) / 3 with sv[3] = 0
+                // (MB3D's own slip, but it decides where a positional light
+                // ends: with the sum of r, g and b the light reached ~3x
+                // as far, 180430's light 6 lit what MB3D leaves dark)
+                (c, 800.0 * ((c[0] + c[1]) / 3.0 + 128.0 * li.amplitude))
             } else {
                 (sv_scale(raw, li.amplitude), 800.0 * (raw[0] + raw[1] + raw[2] + 128.0) * li.amplitude)
             };
@@ -1578,7 +1597,7 @@ impl LightVals {
                 a + (self.s_amb_shad - 1.0) * (a * a - a)
             };
             if sqr {
-                d_amb_sh = (d_amb_sh * d_amb_sh + d_amb_sh) * 0.5;
+                d_amb_sh = if o.svec { d_amb_sh * d_amb_sh } else { (d_amb_sh * d_amb_sh + d_amb_sh) * 0.5 };
             }
             let lns: SVec = [
                 si.normal[0] as f32 * 3.0518509476e-5,
@@ -1604,7 +1623,7 @@ impl LightVals {
                     (lv.ln, 1.0)
                 };
                 let dot = lns[0] * ln[0] + lns[1] * ln[1] + lns[2] * ln[2];
-                let mut d = get_cos_tab_val(lv.diff_func, dot, d_rough) * att;
+                let mut d = if sqr { get_cos_tab_val_sqr(lv.diff_func, dot, d_rough) } else { get_cos_tab_val(lv.diff_func, dot, d_rough) } * att;
                 sv_add_w(&mut li_amb, lv.col, d);
                 if no_hs {
                     d *= if lv.sub_amb_sh { d_amb_sh } else { d_fog };
@@ -1870,6 +1889,10 @@ pub(crate) struct ShadeOpts<'a> {
     /// depth (`sPosLightZpos`, `sPosLP`) of positional lights as seen from
     /// the start of a reflected ray, per entry of `lights`
     pub(crate) light_z: Option<&'a [(f32, f32)]>,
+    /// `CalcPixelColorSvec(Trans)` (the reflection pass) rather than
+    /// `CalcPixelColor2` / `CalcPixelColorSqr`: with internal gamma 2 the
+    /// ambient shadow is squared (not the mean of it and its square)
+    pub(crate) svec: bool,
 }
 
 /// Result of [`LightVals::shade`].
