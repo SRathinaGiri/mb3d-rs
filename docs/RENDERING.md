@@ -18,7 +18,7 @@ compared with the original program are listed in the
 | Speed | close to MB3D's own speed | in the 80 example files a median of 5 times faster (up to 87 times) |
 | Scenes | all of them | 73 of the 80 examples (not: volumetric light, 2D slices, the few formulas that cannot be translated, formulas whose numbers grow beyond single precision - those go to the CPU by themselves) |
 | Result | MB3D's result | the same image within rounding (see the [comparison of all 80 example files](../README.md#cpu-and-graphics-card-compared)) |
-| Start-up | none | the **first** time a formula combination is used, its shader must be *compiled*: 10–20 s. The graphics driver keeps it, so the next time it is ready at once |
+| Start-up | none | the **first** time a formula combination is used, its shader must be *compiled*: 10–20 s. The compiled shader is kept in the `ShaderCache` folder next to the program (and by the graphics driver), so the next time it is ready at once |
 
 The compile time is the reason why the graphics card is not always the
 faster choice: a small preview that the CPU finishes in two seconds would

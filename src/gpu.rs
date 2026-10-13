@@ -815,6 +815,26 @@ struct Gpu {
     name: String,
     /// the shaders can calculate in doubles (SHADER_F64, SHADER_INT64)
     f64: bool,
+    /// the driver's compiled pipelines, kept in `cache_file` between runs
+    /// (Vulkan): the scene shaders take the driver 10-20 s to compile, and
+    /// its own disk cache may be full or off
+    cache: Option<wgpu::PipelineCache>,
+    cache_file: Option<std::path::PathBuf>,
+}
+
+/// Writes the pipeline cache to its file (after a new pipeline was
+/// compiled; a temporary file renamed, so that a run that ends meanwhile
+/// leaves no broken cache).
+fn save_pipeline_cache(g: &Gpu) {
+    let (Some(c), Some(f)) = (&g.cache, &g.cache_file) else {
+        return;
+    };
+    if let Some(data) = c.get_data() {
+        let tmp = f.with_extension("tmp");
+        if std::fs::write(&tmp, &data).is_ok() {
+            let _ = std::fs::rename(&tmp, f);
+        }
+    }
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
@@ -857,20 +877,22 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         code
     };
     let module = g.device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some(entry), source: wgpu::ShaderSource::Wgsl(code.into()) });
+    let module_s = t.elapsed().as_secs_f64();
     let pl = g.device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: Some(entry),
         layout,
         module: &module,
         entry_point: Some(entry),
         compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
-        cache: None,
+        cache: g.cache.as_ref(),
     });
     if let Some(e) = pollster::block_on(scope.pop()) {
         return Err(format!("the shader does not compile: {e}"));
     }
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-        eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s", code.lines().count(), t.elapsed().as_secs_f64());
+        eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
     }
+    save_pipeline_cache(g);
     let pl = std::sync::Arc::new(pl);
     g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
     Ok(pl)
@@ -1115,11 +1137,19 @@ async fn init() -> Result<Gpu, String> {
     // doubles in shaders (Vulkan, DirectX 12; not Metal): the deep zooms
     let dbl = wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64;
     let f64 = adapter.features().contains(dbl);
+    let mut features = if f64 { dbl } else { wgpu::Features::empty() };
+    // the compiled pipelines kept between runs (see `Gpu::cache`)
+    let cache_file = wgpu::util::pipeline_cache_key(&info)
+        .filter(|_| adapter.features().contains(wgpu::Features::PIPELINE_CACHE) && std::env::var_os("MB3D_GPU_NOCACHE").is_none())
+        .map(|k| crate::appdirs::work_folder("ShaderCache").join(format!("{k}.bin")));
+    if cache_file.is_some() {
+        features |= wgpu::Features::PIPELINE_CACHE;
+    }
     let (device, queue) = adapter
         .request_device(&wgpu::DeviceDescriptor {
             label: Some("mb3d"),
             required_limits: adapter.limits(),
-            required_features: if f64 { dbl } else { wgpu::Features::empty() },
+            required_features: features,
             ..Default::default()
         })
         .await
@@ -1127,7 +1157,15 @@ async fn init() -> Result<Gpu, String> {
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
     device.on_uncaptured_error(std::sync::Arc::new(|e: wgpu::Error| set_error(e.to_string())));
-    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64 })
+    let cache = cache_file.as_ref().map(|f| {
+        let data = std::fs::read(f).ok();
+        // SAFETY: the data is what `PipelineCache::get_data` wrote to the
+        // file (`save_pipeline_cache`); the driver validates it for its
+        // version and device, and `fallback` starts empty when it is not
+        // usable
+        unsafe { device.create_pipeline_cache(&wgpu::PipelineCacheDescriptor { label: Some("mb3d"), data: data.as_deref(), fallback: true }) }
+    });
+    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64, cache, cache_file })
 }
 
 /// The parameters in the order of the indices in `gpu_march.wgsl`.
