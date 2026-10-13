@@ -7,30 +7,20 @@ installation.
 
 ## 1. Get the program
 
-Download the archive for your system and unpack it:
-
-| system | archive |
-|---|---|
-| Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
-| Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
-| macOS, Apple silicon | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
-| macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
-
-These links always give the latest release; older versions are on the
-[releases](../../releases) page.
-
-On Linux and macOS, one line downloads the latest release into
-`~/mb3d-rs` (with the script [download.sh](download.sh), which is also in
+On Linux and macOS, this line runs the script [download.sh](download.sh),
+which downloads the latest release into `~/mb3d-rs` (the script is also in
 the program's folder; run it again to update):
 
 ```sh
-curl -L https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
+curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
 
 Then start it with `~/mb3d-rs/Mandelbulb3D`.
 
-On macOS, a downloaded binary may need
-`xattr -dr com.apple.quarantine .` (in the unpacked folder) before the first start.
+On Windows, download
+[mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip)
+from the [releases](../../releases) page (older versions are there too),
+unpack it and start `Mandelbulb3D.exe`.
 
 ## 2. Get MB3D's formulas and maps
 

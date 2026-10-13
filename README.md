@@ -94,35 +94,28 @@ it for one start.
 
 ## Download
 
-Ready-to-run programs for the latest release (no installation needed):
+Ready-to-run programs for the latest release (no installation needed).
 
-| System | Download |
-|---|---|
-| Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
-| Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
-| macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
-| macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
-
-On Linux and macOS, one line downloads the latest release into
-`~/mb3d-rs` (with the script [download.sh](download.sh), which is also in
+On Linux and macOS, this line runs the script [download.sh](download.sh),
+which downloads the latest release into `~/mb3d-rs` (the script is also in
 the program's folder; run it again to update):
 
 ```sh
-curl -L https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
+curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
 
-Then start it with `~/mb3d-rs/Mandelbulb3D`.
+Then start it with `~/mb3d-rs/Mandelbulb3D`; `mb3d` is the command line
+renderer. The folder also has MB3D's formulas, maps and example parameters.
 
-Otherwise unpack it and start **Mandelbulb3D** (`Mandelbulb3D.exe` on Windows) in the
-unpacked folder; `mb3d` is the command line renderer. The folder also has
-MB3D's formulas, maps and example parameters. Older versions and the
-release notes are on the [releases](https://github.com/thr32423/mb3d-rs/releases)
-page; [GETTING_STARTED.md](GETTING_STARTED.md) has the first steps.
+On Windows, download
+[mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip)
+from the [releases](https://github.com/thr32423/mb3d-rs/releases) page,
+unpack it and start `Mandelbulb3D.exe`. Windows may show "Windows protected
+your PC" for a downloaded program: click *More info* ▸ *Run anyway*.
 
-* Windows may show "Windows protected your PC" for a downloaded program:
-  click *More info* ▸ *Run anyway*.
-* macOS blocks programs downloaded from the internet that are not signed:
-  run `xattr -dr com.apple.quarantine .` in the unpacked folder once.
+Older versions and the release notes are on the
+[releases](https://github.com/thr32423/mb3d-rs/releases) page;
+[GETTING_STARTED.md](GETTING_STARTED.md) has the first steps.
 
 ## The command line
 

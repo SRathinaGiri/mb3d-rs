@@ -3,7 +3,7 @@
 # as the first argument). Running it again updates the programs; files you
 # made in the folder (parameters, History, Mandelbulb3D.ini, ...) are kept.
 #
-#   curl -L https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 set -e
 dir=${1:-"$HOME/mb3d-rs"}
 case "$(uname -s)-$(uname -m)" in
