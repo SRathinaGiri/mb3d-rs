@@ -37,23 +37,34 @@ It comes as two programs:
 
 ## Download
 
-No installation is needed; the program runs from its folder, which is laid
-out like an MB3D installation (with MB3D's formulas, maps and 80 example
-parameter files).
+Ready-to-run programs for the latest release, no installation needed:
 
-**Linux and macOS** — this line downloads the latest release into
-`~/mb3d-rs` (run it again later to update):
+| System | Download |
+|---|---|
+| Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
+| Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
+| macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
+| macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
+
+Unpack it and start **Mandelbulb3D** (`Mandelbulb3D.exe` on Windows) in
+the unpacked folder. The folder is laid out like an MB3D installation,
+with MB3D's formulas, maps and 80 example parameter files.
+
+* If Windows shows "Windows protected your PC", click *More info* ▸
+  *Run anyway*.
+* macOS blocks downloaded programs that are not signed: run
+  `xattr -dr com.apple.quarantine .` in the unpacked folder once.
+
+**Alternative for Linux and macOS:** instead of downloading by hand, this
+one line fetches the latest release into `~/mb3d-rs` (run it again later
+to update; the script [download.sh](download.sh) is also in the program's
+folder):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
 
 Then start `~/mb3d-rs/Mandelbulb3D`.
-
-**Windows** — download
-[mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip),
-unpack it and start `Mandelbulb3D.exe`. If Windows shows "Windows
-protected your PC", click *More info* ▸ *Run anyway*.
 
 [Getting started](GETTING_STARTED.md) walks through the first steps; older
 versions and the release notes are on the
