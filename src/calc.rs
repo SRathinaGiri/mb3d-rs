@@ -1835,6 +1835,29 @@ pub fn de_at(p: &CalcParams, pos: Vec3) -> (f64, i32) {
 pub struct HsLight {
     pub idx: usize,
     pub vec: Vec3,
+    /// a positional light: its world position and the squared distance
+    /// beyond which it casts no shadow (`sLmaxL * sHSmaxLengthMultiplier`);
+    /// `vec` is then taken from the position at each pixel
+    pub pos: Option<(Vec3, f64)>,
+    /// `iLightPos and 14` (the soft shadow's scale of a positional light)
+    pub visible: u8,
+}
+
+impl HsLight {
+    /// `HSvecs[i]` at the surface point `c` and the march length `max_l`
+    /// (shortened to a positional light's distance); `None`: a positional
+    /// light too far away
+    fn at(&self, c: &Vec3, max_l: f64, step_width: f64) -> Option<(Vec3, f64)> {
+        let Some((pos, lmax)) = self.pos else { return Some((self.vec, max_l)) };
+        let v = [pos[0] - c[0], pos[1] - c[1], pos[2] - c[2]];
+        let d = sqr_len(&v);
+        if d > lmax {
+            return None;
+        }
+        let max_l = if d < (max_l * step_width).powi(2) { d.sqrt() / step_width } else { max_l };
+        let s = -step_width / d.sqrt().max(1e-300);
+        Some(([v[0] * s, v[1] * s, v[2] * s], max_l))
+    }
 }
 
 #[inline]
@@ -1927,13 +1950,18 @@ impl<'a> Marcher<'a> {
                 }
                 self.it.c = ic;
                 let mut zz2 = self.mzz;
-                let zz2mul = -dot_normalize(&l.vec, &self.vfov);
-                if dot(&nvec, &l.vec) > 0.0 {
+                // (a positional light too far away: in shadow)
+                let Some((lvec, max_l)) = l.at(&ic, max_lhs, p.step_width) else {
+                    si.shadow |= 0x400 << it;
+                    continue;
+                };
+                let zz2mul = -dot_normalize(&lvec, &self.vfov);
+                if dot(&nvec, &lvec) > 0.0 {
                     si.shadow |= 0x400 << it;
                     b_zz_oathr[it] = 0;
                     continue;
                 }
-                let mut dt1 = max_lhs;
+                let mut dt1 = max_l;
                 if dt1 > 0.0 {
                     self.ms_de_stop = (p.de_stop as f64 * (1.0 + zz2.abs() * p.de_stop_factor as f64)) as f32;
                     let mut rsf = 2f32;
@@ -1954,7 +1982,7 @@ impl<'a> Marcher<'a> {
                             f32::max(self.ms_de_stop, 0.4) * p.mh04zsd,
                         ) as f64;
                         dt1 -= st;
-                        add_weight(&mut self.it.c, &l.vec, -st);
+                        add_weight(&mut self.it.c, &lvec, -st);
                         zz2 += st * zz2mul;
                         self.ms_de_stop = (p.de_stop as f64 * (1.0 + zz2.abs() * p.de_stop_factor as f64)) as f32;
                         d = self.calc_de();
@@ -2001,7 +2029,12 @@ impl<'a> Marcher<'a> {
     /// `calcHSsoft`: one light with a soft shadow value (0..63) in bits 10..15.
     pub fn soft_shadow_row(&mut self, y: i32, x0: i32, row: &mut [SiLight], light: &HsLight, soft_radius: f32, max_len_mul: f32) {
         let p = self.p;
-        let zrs_mul = 80.0 / soft_radius.max(0.001);
+        let zrs_mul = match light.pos {
+            // (a positional light scales with its distance)
+            Some(_) if light.visible & 6 == 2 => 70.0,
+            Some(_) => 40.0,
+            None => 80.0,
+        } / soft_radius.max(0.001);
         for (x, si) in row.iter_mut().enumerate() {
             si.shadow |= 0xFC00;
             let mut nvec = [si.normal[0] as f64 / 32767.0, si.normal[1] as f64 / 32767.0, si.normal[2] as f64 / 32767.0];
@@ -2015,9 +2048,10 @@ impl<'a> Marcher<'a> {
             let max_lhs = self.hs_max_len(y, max_len_mul);
             let mut zz2 = self.mzz;
             self.update_de_stop();
-            let d_max_l = max_lhs;
-            let zz2mul = -dot_normalize(&light.vec, &self.vfov);
-            if dot(&nvec, &light.vec) > 0.0 {
+            // (a positional light too far away: no shadow)
+            let Some((lvec, d_max_l)) = light.at(&self.it.c, max_lhs, p.step_width) else { continue };
+            let zz2mul = -dot_normalize(&lvec, &self.vfov);
+            if dot(&nvec, &lvec) > 0.0 {
                 si.shadow &= 0x3FF;
                 continue;
             }
@@ -2039,7 +2073,7 @@ impl<'a> Marcher<'a> {
                         f32::max(self.ms_de_stop, 0.4) * p.mh04zsd,
                     ) as f64;
                     dt1 -= st;
-                    add_weight(&mut self.it.c, &light.vec, -st);
+                    add_weight(&mut self.it.c, &lvec, -st);
                     zz2 += st * zz2mul;
                     self.ms_de_stop = (p.de_stop as f64 * (1.0 + zz2.abs() * p.de_stop_factor as f64)) as f32;
                     d = self.calc_de();

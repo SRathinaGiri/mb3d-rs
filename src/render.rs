@@ -598,7 +598,10 @@ fn finish_calculation(
 /// The post calculations the scene asks for that the graphics card can
 /// run with the main calculation.
 pub fn post_job(sc: &Scene, p: &CalcParams) -> PostJob {
-    PostJob { shadows: shadow_job(sc, p), deao: sc.ao.and(sc.deao) }
+    // (the card has no shadows of positional lights yet: those stay on
+    // the CPU)
+    let shadows = shadow_job(sc, p).filter(|j| j.lights.iter().all(|l| l.pos.is_none()));
+    PostJob { shadows, deao: sc.ao.and(sc.deao) }
 }
 
 /// Whether [`post_process`] has anything left to do for the scene (the
@@ -789,14 +792,22 @@ pub fn shadow_job(sc: &Scene, p: &CalcParams) -> Option<ShadowJob> {
     let lv = light_vals(sc, &l, &paint_camera(sc, p));
     // CalcHSVecsFromLights: HSvecs = RotateVectorReverse(-StepWidth * LN, M)
     let m = normalise_matrix_to(1.0, &p.vgrads);
+    // positional lights: their position (`LN + Xmit`); the direction is
+    // taken at each pixel
+    let mid = sc.stereo_mid();
     let mut lights: Vec<HsLight> = lv
-        .light_dirs()
-        .into_iter()
-        .filter(|(idx, _)| (hs.lights >> idx) & 1 != 0)
-        .map(|(idx, ln)| {
-            let v = crate::math::normalize([ln[0] as f64, ln[1] as f64, ln[2] as f64]);
+        .lights
+        .iter()
+        .filter(|l| (hs.lights >> l.idx) & 1 != 0)
+        .map(|l| {
+            let ln = [l.ln[0] as f64, l.ln[1] as f64, l.ln[2] as f64];
+            if l.positional {
+                let pos = [ln[0] + mid[0], ln[1] + mid[1], ln[2] + mid[2]];
+                return HsLight { idx: l.idx, vec: [0.0; 3], pos: Some((pos, l.lmax_l as f64 * hs.max_len_mul as f64)), visible: l.visible };
+            }
+            let v = crate::math::normalize(ln);
             let v = [-v[0] * p.step_width, -v[1] * p.step_width, -v[2] * p.step_width];
-            HsLight { idx, vec: crate::math::rotate_vector_reverse(&v, &m) }
+            HsLight { idx: l.idx, vec: crate::math::rotate_vector_reverse(&v, &m), pos: None, visible: l.visible }
         })
         .collect();
     if lights.is_empty() {
