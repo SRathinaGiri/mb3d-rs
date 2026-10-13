@@ -2675,7 +2675,7 @@ mod tests {
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
         // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();
