@@ -601,6 +601,31 @@ fn finish_calculation(
 
 /// The post calculations the scene asks for that the graphics card can
 /// run with the main calculation.
+/// Starts compiling the card's shaders for the scene in the background
+/// (opening a file, changing a formula), so that they are ready when it is
+/// calculated: the march with its shadow and occlusion passes, and the
+/// reflection pass.  Parameter changes need no new shaders, formula
+/// changes do (the shaders are made per formula combination).
+pub fn prewarm_gpu(sc: Scene) {
+    #[cfg(feature = "gpu")]
+    std::thread::spawn(move || {
+        crate::prio::calc_thread();
+        if !crate::gpu::enabled() {
+            return;
+        }
+        let Ok(p) = CalcParams::new(&sc) else { return };
+        if p.slice_2d != 0 {
+            return;
+        }
+        let _ = crate::gpu::march_prepare(&p, &post_job(&sc, &p));
+        if sc.mc.reflections {
+            crate::gpu::reflect_prepare(&p, sc.shadows.is_some(), sc.ao.is_some());
+        }
+    });
+    #[cfg(not(feature = "gpu"))]
+    let _ = sc;
+}
+
 pub fn post_job(sc: &Scene, p: &CalcParams) -> PostJob {
     PostJob { shadows: shadow_job(sc, p), deao: sc.ao.and(sc.deao) }
 }

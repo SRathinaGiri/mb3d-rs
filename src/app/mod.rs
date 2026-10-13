@@ -98,6 +98,17 @@ impl Mb3d {
         formula_form::update_from_header(self, ui);
         light_form::set_from_header(self, ui);
         postpro_form::set_from_header(self, ui);
+        // the card's shaders for it, compiled meanwhile
+        crate::render::prewarm_gpu(self.scene.clone());
+    }
+
+    /// The scene as the forms describe it now (the current scene stays as
+    /// it is), for compiling the card's shaders ahead.
+    pub fn prewarm_from_forms(&mut self, ui: &mut Ui) {
+        let saved = self.scene.clone();
+        self.make_scene(ui);
+        let sc = std::mem::replace(&mut self.scene, saved);
+        crate::render::prewarm_gpu(sc);
     }
 
     /// Loads a parameter file (.m3p / .m3i / text) as the current scene.

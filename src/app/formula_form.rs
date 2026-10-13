@@ -469,6 +469,8 @@ pub fn select_formula(app: &mut Mb3d, ui: &mut Ui, name: &str) {
         }
     }
     check_4d_and_info(app, ui);
+    // a new formula combination: its card shaders, compiled meanwhile
+    app.prewarm_from_forms(ui);
 }
 
 /// The number of a formula list from its name (`ListBoxEx12` has the tag
