@@ -34,6 +34,8 @@ pub struct Stats {
     pub calc_s: f64,
     pub post_s: f64,
     pub hits: f64,
+    /// the stages after the main calculation
+    pub stages: crate::render::StageTimes,
 }
 
 /// The kept result of the last calculation.
@@ -144,7 +146,7 @@ pub fn stats_of(g: &[SiLight], calc_s: f64, post_s: f64) -> Stats {
     let n = g.len().max(1) as f64;
     let hits = g.iter().filter(|s| !s.is_background()).count() as f64;
     let steps = g.iter().map(|s| (s.shadow & 0x3FF) as f64).sum::<f64>() / n;
-    Stats { avg_steps: steps, avg_its: 0.0, max_its: 0, calc_s, post_s, hits: 100.0 * hits / n }
+    Stats { avg_steps: steps, avg_its: 0.0, max_its: 0, calc_s, post_s, hits: 100.0 * hits / n, stages: Default::default() }
 }
 
 impl Engine {
@@ -378,21 +380,27 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) ->
     *e.partial.lock().unwrap() = None;
     let t1 = Instant::now();
     let raw = Arc::new(raw);
+    let mut stages = crate::render::StageTimes::default();
     let post = if needs_post(&sc, &p) {
         e.out.lock().unwrap().stage = if sc.shadows.is_some() { "hard shadow calculation".into() } else { "ambient shadow calculation".into() };
         let mut g = (*raw).clone();
-        crate::render::post_process(&sc, &p, &mut g, crate::render::thread_count(&sc));
+        stages = crate::render::post_process(&sc, &p, &mut g, crate::render::thread_count(&sc));
         Arc::new(g)
     } else {
+        // the card ran the shadows and the occlusion with the march
+        stages.shadows = sc.shadows.as_ref().map(|_| None);
+        stages.ao = sc.ao.as_ref().map(|_| None);
         raw.clone()
     };
     if cancel() {
         return Err("cancelled".into());
     }
     let t2 = Instant::now();
-    let rgb = crate::render::paint(&sc, &p, &post);
+    let (rgb, refl_s) = crate::render::paint_timed(&sc, &p, &post);
+    stages.reflections = refl_s;
     let post_s = if needs_post(&sc, &p) { (t2 - t1).as_secs_f64() } else { 0.0 };
-    let stats = stats_of(&post, (t1 - t0).as_secs_f64(), post_s);
+    let mut stats = stats_of(&post, (t1 - t0).as_secs_f64(), post_s);
+    stats.stages = stages;
     e.publish(rgb, w, h, "", Some(stats));
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw, post, post_sig: post_sig(&sc), w, h }));
     Ok(())

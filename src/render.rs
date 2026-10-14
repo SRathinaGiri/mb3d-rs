@@ -684,11 +684,23 @@ pub fn post_pending(sc: &Scene, p: &CalcParams) -> bool {
     sc.normals_on_zbuf || shadows || ao
 }
 
+/// The times of the stages after the main calculation (the Infos tab):
+/// None when the scene has no such stage, `Some(None)` when the graphics
+/// card ran it with the main calculation.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct StageTimes {
+    pub shadows: Option<Option<f64>>,
+    pub ao: Option<Option<f64>>,
+    pub reflections: Option<f64>,
+}
+
 /// The automatic post calculations on the G-buffer (hard shadows, ambient
 /// occlusion), as MB3D runs them after the main calculation.  What the
 /// graphics card already ran with the same settings (`p.gpu_post`) is kept;
-/// what it ran with other settings is undone first.
-pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize) {
+/// what it ran with other settings is undone first.  Returns the times of
+/// the shadows and the occlusion.
+pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize) -> StageTimes {
+    let mut times = StageTimes::default();
     if sc.normals_on_zbuf {
         crate::reflect::normals_on_zbuf(sc, p, gbuf);
     }
@@ -708,22 +720,31 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
             }
         }
     }
+    if sc.shadows.is_some() {
+        times.shadows = Some(None);
+    }
     if sc.shadows.is_some() && !shadows_done {
         let t = Instant::now();
         hard_shadows(sc, p, gbuf, threads);
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
             eprintln!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
         }
+        times.shadows = Some(Some(t.elapsed().as_secs_f64()));
     }
     if let Some(ao) = &sc.ao {
+        times.ao = Some(None);
+        let t = Instant::now();
         if let Some(d) = &sc.deao {
             if !deao_done {
                 crate::deao::deao(p, gbuf, p.rect[2] as usize, p.rect[3] as usize, d, threads);
+                times.ao = Some(Some(t.elapsed().as_secs_f64()));
             }
         } else {
             ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads);
+            times.ao = Some(Some(t.elapsed().as_secs_f64()));
         }
     }
+    times
 }
 
 fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize) {
@@ -932,6 +953,11 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 /// Paints the G-buffer with the scene lighting.
 pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
+    paint_with(sc, p, gbuf, true).0
+}
+
+/// [`paint`], and the time of the reflections (None without them).
+pub fn paint_timed(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> (Vec<u8>, Option<f64>) {
     paint_with(sc, p, gbuf, true)
 }
 
@@ -939,10 +965,10 @@ pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
 /// of the rows calculated so far (both need the whole image, and the
 /// reflections march again, taking as long as the calculation itself).
 pub fn paint_preview(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with(sc, p, gbuf, false)
+    paint_with(sc, p, gbuf, false).0
 }
 
-fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> Vec<u8> {
+fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> (Vec<u8>, Option<f64>) {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);
@@ -968,15 +994,18 @@ fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> Vec<u
         }
     });
     if !full {
-        return rgb;
+        return (rgb, None);
     }
+    let mut refl_s = None;
     if sc.mc.reflections && p.slice_2d == 0 {
+        let t = Instant::now();
         crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads);
+        refl_s = Some(t.elapsed().as_secs_f64());
     }
     if let Some(d) = sc.dof.as_ref().filter(|_| p.slice_2d == 0) {
         crate::dof::apply(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d);
     }
-    rgb
+    (rgb, refl_s)
 }
 
 /// Chooses `color_start` / `color_end` so that the palette spans the 2nd to

@@ -695,17 +695,23 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 ui.set_caption(F, "Label31", &format!("{:.1}", stats.avg_steps));
                 ui.set_caption(F, "Label32", "-");
                 ui.set_caption(F, "Label40", "?");
-                ui.set_caption(F, "Label52", &time_str((stats.calc_s * 10.0) as i64));
+                ui.set_caption(F, "Label52", &time_str(((stats.calc_s * 10.0) as i64).max(1)));
                 app.main.led = running_led(app).unwrap_or(Led::Cpu);
                 show_led(ui, app.main.led, false);
                 #[cfg(feature = "gpu")]
                 set_led_hint(ui, &format!("Calculated on: {}", crate::gpu::last_status()));
                 #[cfg(not(feature = "gpu"))]
                 set_led_hint(ui, "Calculated on the CPU");
-                if stats.post_s > 0.0 {
-                    let l = if app.scene.shadows.is_some() { "Label8" } else { "Label48" };
-                    ui.set_caption(F, l, &time_str((stats.post_s * 10.0) as i64));
-                }
+                // the stages after the main calculation: "-" when the scene
+                // has none, "in main" when the card ran it with the march
+                let stage = |t: Option<Option<f64>>| match t {
+                    None => "-".to_string(),
+                    Some(None) => "in main".to_string(),
+                    Some(Some(s)) => time_str(((s * 10.0) as i64).max(1)),
+                };
+                ui.set_caption(F, "Label8", &stage(stats.stages.shadows));
+                ui.set_caption(F, "Label48", &stage(stats.stages.ao));
+                ui.set_caption(F, "Label50", &stage(stats.stages.reflections.map(Some)));
                 let _ = secs;
                 if let Some(p) = app.main.auto_m3i.take() {
                     save_m3i(app, ui, &p);
