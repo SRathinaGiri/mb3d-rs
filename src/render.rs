@@ -137,24 +137,21 @@ fn calculate_inner(
         // compiling), the post calculations run as after a CPU
         // calculation.
         if crate::gpu::auto() {
-            if let Ok(mut flags) = crate::gpu::march_prepare(&p, &job) {
-                // the probe when its shader was not compiled yet: when the
-                // card can join, before it does (a scene too coarse in
-                // single precision joins in double, when that is compiled)
+            if let Ok(flags) = crate::gpu::march_prepare(&p, &job) {
                 // the probe when its shader was not compiled yet: when the
                 // card can join, before it does.  A scene too coarse in
-                // single precision is left to the CPU threads (a flag that
-                // never turns true): consumer cards calculate doubles 16 to
-                // 32 times slower (AboxShapes-Misty took the card 203 s in
-                // double precision against 45 s on the CPU); "Graphics card"
-                // uses the card in double precision.
+                // single precision joins in double, when that is compiled:
+                // the card is 3 to 5 times slower in double, but sharing the
+                // rows it still helps (MengerTrees 16.4 -> 11.4 s, Shrooms
+                // 6.8 -> 5.4 s); a slow card just takes fewer rows
+                // (AboxShapes-Misty: 11 %, as fast as the CPU alone).
                 let probe = || {
                     if p.gpu_double || !double_probe(sc, &p, threads, false) {
                         return None;
                     }
                     let mut pd = p.clone();
                     pd.gpu_double = true;
-                    Some((pd, vec![std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))]))
+                    crate::gpu::march_prepare(&pd, &job).ok().map(|f| (pd, f))
                 };
                 let t_march = Instant::now();
                 let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe)?;
@@ -167,17 +164,16 @@ fn calculate_inner(
                 // over the example files, at a ratio below 1.5 the CPU did
                 // them about as fast or faster (DEcomb1: 20.6 s on the card,
                 // 12.2 s on the CPU), above it the card won (up to 15 times).
-                let card_posts = n_card > 0 && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
+                // (not after a march in double precision: the card is slow
+                // in it, and the reflections stay in single precision, as
+                // they were before the card joined in double)
+                let card_posts = n_card > 0 && switched.is_none() && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
                 if timing {
                     eprintln!(
                         "  march (card and CPU): {march_secs:.2} s, {n_card} of {h} rows on the card in {card_secs:.2} s; rows/s card {:.1}, CPU {:.1}",
                         rate(n_card, card_secs),
                         rate(h - n_card, march_secs)
                     );
-                }
-                if let Some((pd, f)) = switched {
-                    p = pd;
-                    flags = f;
                 }
                 if card_posts && (job.shadows.is_some() || job.deao.is_some()) {
                     // the post passes' pipelines compiled with the march's
@@ -603,8 +599,9 @@ fn march_mixed(
     let pct = n_card * 100 / h.max(1);
     crate::gpu::set_status(match card_err {
         Some(e) => format!("CPU: GPU error: {e}"),
-        None if n_card == 0 && switched.is_some() => "CPU (single precision is too coarse for this scene on the card; Auto leaves it to the CPU)".into(),
+        None if n_card == 0 && switched.is_some() => "CPU (the graphics card's double precision shader was still compiling)".into(),
         None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
+        None if switched.is_some() => format!("GPU {name}: {pct} % of the rows on the card (double precision), {} % on the CPU", 100 - pct),
         None => format!("GPU {name}: {pct} % of the rows on the card, {} % on the CPU", 100 - pct),
     });
     // (the card's parameters when it joined in double precision)
