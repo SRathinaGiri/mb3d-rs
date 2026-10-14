@@ -32,6 +32,17 @@ impl Default for SsaoParams {
     }
 }
 
+/// `x.round_ties_even()` without the library call (and its branch on the
+/// sign) that it is on x86-64 without SSE4.1: for |x| < 2^23 adding and
+/// subtracting 2^23 rounds to the nearest even integer; larger values are
+/// integers already (and NaN stays NaN).
+#[inline(always)]
+fn rne(x: f32) -> f32 {
+    const M: f32 = 8_388_608.0;
+    let a = x.abs();
+    if a < M { ((a + M) - M).copysign(x) } else { x }
+}
+
 /// Z values of the depth buffer as used by the AO (`FirstATlevelHiQ`).
 fn first_level(gbuf: &[SiLight]) -> Vec<u32> {
     gbuf.iter().map(|s| if s.zpos() < 32768 { (s.zpos_fine & 0xFFFF_FF00) >> 1 } else { 0 }).collect()
@@ -51,25 +62,44 @@ fn smooth_line(dst: &mut [u32], src: &[u32], step: usize) {
     }
 }
 
-/// `NextATlevelHiQ`
-fn next_level(pia: &mut [u32], w: usize, h: usize, step: usize) {
-    let mut sa = vec![0u32; w.max(h)];
-    for y in 0..h {
-        sa[..w].copy_from_slice(&pia[y * w..(y + 1) * w]);
-        smooth_line(&mut pia[y * w..(y + 1) * w], &sa[..w], step);
-    }
-    let mut col = vec![0u32; h];
-    for x in 0..w {
-        for y in 0..h {
-            sa[y] = pia[y * w + x];
-            col[y] = pia[y * w + x];
+/// Runs `f(first_row, rows)` on row bands of `buf` (`w` values per row) in
+/// parallel.
+fn par_rows(buf: &mut [u32], w: usize, threads: usize, f: impl Fn(usize, &mut [u32]) + Sync) {
+    let h = buf.len() / w.max(1);
+    let n = threads.clamp(1, h.max(1));
+    let band = h.div_ceil(n).max(1);
+    std::thread::scope(|sc| {
+        for (i, part) in buf.chunks_mut(band * w).enumerate() {
+            let f = &f;
+            sc.spawn(move || f(i * band, part));
         }
-        // SmoothV writes PIA[y] := (SA[y] + (SA[a] + SA[b]) / 2) / 2
-        smooth_line(&mut col, &sa[..h], step);
-        for y in 0..h {
-            pia[y * w + x] = col[y];
+    });
+}
+
+/// `NextATlevelHiQ`: the horizontal pass, then the vertical one (both
+/// `(p + (p[-step] + p[+step]) / 2) / 2`, clamped at the borders). The
+/// vertical pass reads a copy of the horizontally smoothed image row by row
+/// (MB3D walks the columns; the values are the same).
+fn next_level(pia: &mut [u32], w: usize, h: usize, step: usize, threads: usize) {
+    par_rows(pia, w, threads, |_, rows| {
+        let mut sa = vec![0u32; w];
+        for row in rows.chunks_mut(w) {
+            sa.copy_from_slice(row);
+            smooth_line(row, &sa, step);
         }
-    }
+    });
+    let src = pia.to_vec();
+    let src = &src;
+    par_rows(pia, w, threads, |y0, rows| {
+        for (k, row) in rows.chunks_mut(w).enumerate() {
+            let y = y0 + k;
+            let a = &src[y.saturating_sub(step) * w..][..w];
+            let b = &src[(y + step).min(h - 1) * w..][..w];
+            for x in 0..w {
+                row[x] = ((row[x] as u64 + ((a[x] as u64 + b[x] as u64) >> 1)) >> 1) as u32;
+            }
+        }
+    });
 }
 
 /// Number of levels (`aATlevelCount`).
@@ -86,6 +116,9 @@ pub(crate) fn level_count(w: usize, h: usize) -> usize {
     }
     y
 }
+
+/// Memory for the smoothed depth levels kept over the row blocks and passes.
+const PYRAMID_BYTES: usize = 1 << 30;
 
 /// Calculates the ambient shadow for all object pixels of `gbuf`.
 /// `zc_mul`, `zcorr` are the z-buffer constants (`CalcPPZvals`).
@@ -118,13 +151,20 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
 
     let passes = if p.random > 0 { p.random as usize } else { 1 };
     let mut acc = vec![0u32; w * h];
+    // The smoothed depth levels do not depend on the pass or the row block:
+    // kept when they fit in PYRAMID_BYTES, else smoothed again per block.
+    let keep = (blocks > 1 || passes > 1) && levels * w * h * 4 <= PYRAMID_BYTES;
+    let mut pyramid: Vec<Vec<u32>> = Vec::new();
     for pass in 0..passes {
     let mut y0 = 0;
     while y0 < h {
         let y1 = (y0 + rows).min(h);
-        let mut pia = first_level(gbuf);
+        let mut pia = if pyramid.is_empty() { first_level(gbuf) } else { Vec::new() };
         let mut ang: Vec<[i16; 32]> = vec![[-32768i16; 32]; w * (y1 - y0)];
         for level in 1..=levels {
+            if keep && pyramid.len() < level {
+                pyramid.push(pia.clone());
+            }
             let sum_up = level == levels;
             let mut sit = (z_scale / 22000.0 * 4096.0) as f32;
             let mut szrt = thr * if p.t0 { 1.0 } else { 0.7 } * 4096.0 / sit
@@ -149,26 +189,44 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
             let smin_rad = if istep < 2 { 1.0f32 } else { 3.25 * istep as f32 };
             let step_count = if istep < 2 { 5 } else { 3 };
             let rma: Vec<f32> = (0..step_count).map(|k| 1.0 / (smin_rad + (k as i64 * istep) as f32 + 0.1)).collect();
+            // the random mode's cell corners (rounded `ox`, `oy` of every
+            // direction and step) are the same for all pixels
+            let cells: Vec<[(i64, i64); 5]> = dirs
+                .iter()
+                .map(|&(dx, dy)| {
+                    let mut c = [(0i64, 0i64); 5];
+                    let (mut ox, mut oy) = (dx * smin_rad - ssub, dy * smin_rad - ssub);
+                    for ck in c.iter_mut().take(step_count) {
+                        *ck = (rne(ox) as i64, rne(oy) as i64);
+                        ox += dx * istep as f32;
+                        oy += dy * istep as f32;
+                    }
+                    c
+                })
+                .collect();
             sit *= szrt;
-            let pia_ref = &pia;
+            let pia_ref: &[u32] = if keep { &pyramid[level - 1] } else { &pia };
             let ncpu = threads.max(1).min(y1 - y0);
-            let chunk = (y1 - y0).div_ceil(ncpu);
+            // bands of a few rows handed out as the threads get free: the
+            // rows with object pixels cost, the background rows do not
+            const BAND: usize = 2;
+            let jobs = std::sync::Mutex::new(ang.chunks_mut(BAND * w).enumerate());
             std::thread::scope(|sc| {
-                let mut rest: &mut [[i16; 32]] = &mut ang;
                 let mut handles = Vec::new();
-                let mut start = y0;
-                while start < y1 {
-                    let n = chunk.min(y1 - start);
-                    let (part, r) = rest.split_at_mut(n * w);
-                    rest = r;
+                for _ in 0..ncpu {
                     let rma = &rma;
+                    let cells = &cells;
                     let dirs = &dirs;
                     let objects = &objects;
                     let zfine = &zfine;
-                    let ys = start;
+                    let jobs = &jobs;
                     handles.push(sc.spawn(move || {
                         crate::prio::calc_thread();
                         let mut out: Vec<(usize, u16)> = Vec::new();
+                        loop {
+                        let Some((k, part)) = jobs.lock().unwrap().next() else { break };
+                        let ys = y0 + k * BAND;
+                        let n = part.len() / w;
                         for yy in 0..n {
                             let y = ys + yy;
                             let mut seed: i32 = (0x24563487i64 + (y as i64 + 1) * 0x324594A1 + pass as i64 * 0x5851F42D) as i32;
@@ -182,18 +240,14 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                                 for (d, &(dx, dy)) in dirs.iter().enumerate() {
                                     let mut sx = x as f32 + dx * smin_rad;
                                     let mut sy = y as f32 + dy * smin_rad;
-                                    let (mut ox, mut oy) = (dx * smin_rad - ssub, dy * smin_rad - ssub);
-                                    for &r in rma.iter() {
-                                        let mut x2 = sx.round_ties_even() as i64;
-                                        let mut y2 = sy.round_ties_even() as i64;
+                                    for (&r, &(cx, cy)) in rma.iter().zip(cells[d].iter()) {
+                                        let (mut x2, mut y2);
                                         let mut r = r;
                                         if rnd {
                                             // TAmbHiQCalcR: jittered sample inside the step cell
                                             seed = seed.wrapping_mul(214013).wrapping_add(2531011);
-                                            let jx = ox.round_ties_even() as i64 + ((seed as u32 >> 16) as i64 & iand);
-                                            let jy = oy.round_ties_even() as i64 + ((seed as u32 >> 10) as i64 & iand);
-                                            ox += dx * istep as f32;
-                                            oy += dy * istep as f32;
+                                            let jx = cx + ((seed as u32 >> 16) as i64 & iand);
+                                            let jy = cy + ((seed as u32 >> 10) as i64 & iand);
                                             let dd = (jx * jx + jy * jy) as f32;
                                             if dd == 0.0 {
                                                 sx += dx * istep as f32;
@@ -203,6 +257,9 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                                             r = 1.0 / dd.sqrt();
                                             x2 = x as i64 + jx;
                                             y2 = y as i64 + jy;
+                                        } else {
+                                            x2 = rne(sx) as i64;
+                                            y2 = rne(sy) as i64;
                                         }
                                         if x2 < 0 {
                                             x2 = -x2;
@@ -227,15 +284,11 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                                             }
                                         }
                                         let st = (pia_ref[(y2 * w as i64 + x2) as usize] as i64 - zp) as f32 * r;
-                                        let it = if p.t0 {
-                                            (st * sit / (st * st + szrt)).round_ties_even()
-                                        } else {
-                                            (st * sit / (szrt + st.abs())).round_ties_even()
-                                        };
+                                        let it = rne(if p.t0 { st * sit / (st * st + szrt) } else { st * sit / (szrt + st.abs()) });
+                                        // MB3D: if am < it then am := min(it, 32767); as a max
+                                        // without a branch (`as` saturates; a NaN counts as -32768)
                                         let it = if it.is_nan() { -32768.0 } else { it };
-                                        if (am[d] as f32) < it {
-                                            am[d] = if it >= 32767.0 { 32767 } else { it as i16 };
-                                        }
+                                        am[d] = am[d].max(it as i16);
                                         sx += dx * istep as f32;
                                         sy += dy * istep as f32;
                                     }
@@ -251,9 +304,9 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                                 }
                             }
                         }
+                        }
                         out
                     }));
-                    start += n;
                 }
                 for hd in handles {
                     for (i, v) in hd.join().unwrap() {
@@ -262,9 +315,9 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                     }
                 }
             });
-            if level < levels {
+            if level < levels && !(keep && pyramid.len() > level) {
                 // NextATlevelHiQ(..., 1 shl (newLevel - 1))
-                next_level(&mut pia, w, h, 1 << level);
+                next_level(&mut pia, w, h, 1 << level, threads);
             }
         }
         y0 = y1;
@@ -280,6 +333,20 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rne_matches_round_ties_even() {
+        let mut v: Vec<f32> = vec![0.0, -0.0, 0.5, -0.5, 1.5, 2.5, -2.5, 8_388_607.5, 4_194_304.5, -4_194_303.5, 1e10, -1e10, f32::INFINITY, f32::NEG_INFINITY];
+        let mut seed = 12345u32;
+        for _ in 0..200_000 {
+            seed = seed.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            v.push(f32::from_bits(seed) % 1e8);
+        }
+        for x in v {
+            assert_eq!(rne(x).to_bits(), x.round_ties_even().to_bits(), "{x}");
+        }
+        assert!(rne(f32::NAN).is_nan());
+    }
 
     #[test]
     fn levels() {
