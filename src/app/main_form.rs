@@ -414,7 +414,9 @@ fn set_edit16(app: &Mb3d, ui: &mut Ui) {
 pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     let sc = app.scene.clone();
     app.main.user_change = false;
-    if sc.width > 0 && sc.height > 0 {
+    // a size that the kept ratio rounds to keeps that ratio (a 2000x1500
+    // image halved to 250x187 is still 4:3, not 1.337:1)
+    if sc.width > 0 && sc.height > 0 && ((sc.width as f64 / app.main.intern_aspect).round() as i32 - sc.height).abs() > 1 {
         app.main.intern_aspect = sc.width as f64 / sc.height as f64;
     }
     set(ui, "Edit11", &sc.width.to_string());
@@ -926,17 +928,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.scene.tiling = None;
                 let (w, h) = (pti(&t(ui, "Edit11")), pti(&t(ui, "Edit12")));
                 app.main.user_change = false;
-                if up {
-                    set(ui, "Edit11", &(w * 2).to_string());
-                    set(ui, "Edit12", &(h * 2).to_string());
-                    scale_de_stop(ui, 2.0);
-                    scale_rclip(ui, 2.0);
-                } else {
-                    set(ui, "Edit11", &(w / 2).max(1).to_string());
-                    set(ui, "Edit12", &(h / 2).max(1).to_string());
-                    scale_de_stop(ui, 0.5);
-                    scale_rclip(ui, 0.5);
-                }
+                let (w2, h2) = if up { (w * 2, h * 2) } else { ((w / 2).max(1), (h / 2).max(1)) };
+                // with "keep aspect" the height follows the kept ratio, so halving
+                // an odd height and doubling it again does not change the shape
+                let h2 = if ui.checked(F, "CheckBox10") { ((w2 as f64 / app.main.intern_aspect).round() as i32).max(1) } else { h2 };
+                set(ui, "Edit11", &w2.to_string());
+                set(ui, "Edit12", &h2.to_string());
+                let s = if up { 2.0 } else { 0.5 };
+                scale_de_stop(ui, s);
+                scale_rclip(ui, s);
                 app.scene.width = pti(&t(ui, "Edit11"));
                 app.scene.height = pti(&t(ui, "Edit12"));
                 app.main.user_change = true;
