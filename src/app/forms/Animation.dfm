@@ -3,7 +3,7 @@ object AnimationForm: TAnimationForm
   Top = 458
   BorderStyle = bsDialog
   Caption = 'Animation maker'
-  ClientHeight = 379
+  ClientHeight = 407
   ClientWidth = 767
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -318,7 +318,7 @@ object AnimationForm: TAnimationForm
     Left = 0
     Top = 147
     Width = 767
-    Height = 232
+    Height = 260
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
@@ -1203,6 +1203,43 @@ object AnimationForm: TAnimationForm
       TabOrder = 16
       Text = 'last'
       OnChange = Edit5Change
+    end
+    object VideoCheck: TCheckBox
+      Left = 24
+      Top = 236
+      Width = 121
+      Height = 17
+      Hint = 
+        'After rendering, join the images into a video file in the output' +
+        ' folder'#13#10'(<project name>.mp4 or .webm). Needs ffmpeg; the images' +
+        ' are kept.'
+      Caption = 'Also make a video:'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 17
+    end
+    object VideoFormatCmb: TComboBox
+      Left = 150
+      Top = 234
+      Width = 64
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 18
+    end
+    object VideoFpsLbl: TLabel
+      Left = 228
+      Top = 237
+      Width = 94
+      Height = 13
+      Caption = 'Frames per second:'
+    end
+    object VideoFpsEdit: TEdit
+      Left = 328
+      Top = 234
+      Width = 40
+      Height = 21
+      TabOrder = 19
+      Text = '25'
     end
   end
   object Panel3: TPanel

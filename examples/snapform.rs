@@ -2,6 +2,7 @@
 //! layouts without clicking through the windows).
 //! `cargo run --release --example snapform -- [APP ARGS] -- STEPS...` with
 //! the steps `show:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
+//! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`,
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
 //! a running calculation; `lagwait:SECONDS` also prints the longest
 //! blocking of the window), `print:FORM:CONTROL` (its caption) and `led`
@@ -20,6 +21,8 @@ fn main() {
             "show" => ui.show(p[1]),
             "page" => ui.set_active_page(p[1], p[2], p[3]),
             "click" => ui.click(p[1], p[2]),
+            "text" => ui.set_text(p[1], p[2], &p[3..].join(":")),
+            "check" => ui.set_checked(p[1], p[2], p[3] == "1"),
             "wait" => {
                 let t = std::time::Instant::now();
                 while t.elapsed().as_secs_f64() < p[1].parse().unwrap() {

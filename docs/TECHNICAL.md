@@ -12,6 +12,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Lights, volumetric light, cutting planes, depth of field](#lights-volumetric-light-cutting-planes-depth-of-field)
 - [Reflections and transparency, normals on the z-buffer](#reflections-and-transparency-normals-on-the-z-buffer)
 - [Hybrids, inside rendering, maps](#hybrids-inside-rendering-maps)
+- [Output: videos](#output-videos)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Building from source](#building-from-source)
 
@@ -554,6 +555,20 @@ into one G-buffer and SSAO, painting and DOF run on the whole image, so the
 result equals an untiled render. A single tile is calculated with a border of
 24 pixels for the image space effects, like MB3D's big-render tiles, and the
 tile files that MB3D writes for big renders are rendered as that tile.
+
+## Output: videos
+
+`mb3d animate ... --video FILE [--fps N]` and the Animation maker's *Also
+make a video* (`src/video.rs`) run ffmpeg on the finished frame images
+(PNG, BMP or JPEG; not for `--format m3p` or stereo pairs), which stay in
+place. ffmpeg is the one on the `PATH`, or `MB3D_FFMPEG`; it is checked
+before the first frame. The frames go in through an ffconcat list (each
+for 1/fps seconds), so `--every`, `--from`/`--to` and index steps work;
+odd sizes are padded by one pixel. By extension: `.mp4`/`.mov` H.264
+(`yuv420p`, CRF 18, faststart), `.mkv` H.264, `.webm` VP9 (CRF 30),
+anything else ffmpeg's default for it (e.g. `.gif`). The window writes
+`<output folder>/<project name>.mp4|.webm` and keeps its settings in the
+ini (`AniVideo`, `AniVideoFormat`, `AniVideoFps`).
 
 ## Known differences and gaps
 

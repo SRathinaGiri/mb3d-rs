@@ -34,6 +34,8 @@ It comes as two programs:
 * **Eight looks** for the windows, all of them theme files you can copy and change: two reproduce MB3D's looks, six are new.
 * **Linux, Windows and macOS** (Intel and Apple Silicon).
 * **A command line program** for everything that needs no window.
+* **Videos of animations**: the Animation maker can join the frames
+  into an MP4 or WebM video as well (see [Videos](#videos-of-animations)).
 
 ## Download
 
@@ -282,6 +284,22 @@ definitions, so every button, slider and hint is where it is in MB3D:
   generator, MutaGen, ZBuf16Bit, Map sequences, Ini dirs** — all as in
   MB3D.
 
+### Videos of animations
+
+The Animation maker writes every frame as a picture, as MB3D does. Tick
+**Also make a video** (bottom left) and, when all frames are done, they
+are joined into one video file in the output folder, named after the
+project: **MP4** (plays everywhere) or **WebM**, at the frames per second
+you choose. The pictures stay where they are.
+
+<a href="docs/img/animation_video.png"><img src="docs/img/animation_video.png" width="760" alt="The Animation maker with 'Also make a video'"></a>
+
+The video is made by **ffmpeg**, a free program that has to be installed
+once: on Linux from the distribution (`sudo apt install ffmpeg`,
+`sudo pacman -S ffmpeg`, ...), on macOS with `brew install ffmpeg`, on
+Windows with `winget install ffmpeg` or from [ffmpeg.org](https://ffmpeg.org).
+Without it the program says so before rendering starts.
+
 Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
 does. Not in this program: MB3D's script editor, the "shortdistance check
 DE" option, the random light strokes and the ambient light pass of the
@@ -309,6 +327,7 @@ Everything else has a sub-command with its own `--help`:
 ./mb3d batch M3Parameter --scale 0.2 -o previews        # a whole folder
 ./mb3d animate start.m3p middle.m3p end.m3p --frames 60 -o frames
 ./mb3d animate project.m3a -o frames                     # MB3D animations
+./mb3d animate project.m3a -o frames --video flight.mp4  # ... and a video
 ./mb3d montecarlo scene.m3p --rays 64 -o mc.png
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
