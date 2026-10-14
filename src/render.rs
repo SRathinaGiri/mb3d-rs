@@ -465,15 +465,16 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
     (total >= 100).then(|| (diff / total as f64, total))
 }
 
+/// How much faster than the CPU threads the card must march for Auto to give
+/// it the shadows and the DE occlusion (see `calculate_inner`).
+#[cfg(feature = "gpu")]
+const POST_ON_CARD_RATIO: f64 = 1.5;
+
 /// The march with the CPU threads taking rows from the bottom at once and
 /// the card from the top once `ready` (its shader compiled) - until they
 /// meet.  Returns the G-buffer and the number of rows the card marched
 /// (0: it never joined, or its rows were redone on the CPU).
 #[cfg(feature = "gpu")]
-/// How much faster than the CPU threads the card must march for Auto to give
-/// it the shadows and the DE occlusion (see `calculate_inner`).
-const POST_ON_CARD_RATIO: f64 = 1.5;
-
 fn march_mixed(
     p: &CalcParams,
     threads: usize,
