@@ -5261,14 +5261,14 @@ pub(super) fn f_0c5b508a8961b04d(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f[1] + f[3];
         f[3] = f[1];
         f[4] = f[2];
-        f[3] = f[3].atan2(f[4]);
-        { let v = f64::from_bits(v22); f[3] = v - f[3]; }
-        { let v = f64::from_bits(v32); f[3] = f[3] * v; }
-        { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; }
-        f[3] = m.round_int(f[3]);
+        let (pa32y, pa32x) = (f[3], f[4]); let (pa32lo, pa32hi) = atan2_bracket(pa32y, pa32x); f[3] = pa32lo;
+        let c32_33 = { let v = f64::from_bits(v22); f[3] = v - f[3]; v };
+        let c32_34 = { let v = f64::from_bits(v32); f[3] = f[3] * v; v };
+        let c32_35 = { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c32_33 - v; v = v * c32_34; v = v * c32_35; v }; let r1 = m.round_int(ch(pa32lo)); let r2 = m.round_int(ch(pa32hi)); f[3] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa32y.atan2(pa32x))) }; }
         { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] / v; }
         { let v = f64::from_bits(v33); f[3] = f[3] * v; }
-        { let (s, c) = f[3].sin_cos(); f[3] = s; f[4] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[3]); f[3] = s; f[4] = c; fsw &= !0x0400; }
         f[5] = f[1];
         f[5] = f[5] * f[4];
         f[6] = f[2];
@@ -5509,14 +5509,14 @@ pub(super) fn f_0d2d38758758b123(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         { let v: u64 = f[0].to_bits(); s2011 = (s2011 & !(0xffffffffffffu64 << 16)) | ((v & 0xffffffffffffu64) << 16); s2012 = (s2012 & !0xffffu64) | ((v >> 48) & 0xffffu64); }
         f[0] = f64::from_bits((((s2009 >> 16) | (s2010 << 48)) & u64::MAX));
         f[1] = f64::from_bits((((s2011 >> 16) | (s2012 << 48)) & u64::MAX));
-        f[0] = f[0].atan2(f[1]);
-        { let v = f64::from_bits(v34); f[0] = v - f[0]; }
-        { let v = f64::from_bits(v32); f[0] = f[0] * v; }
-        { let v = (((v22 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; }
-        f[0] = m.round_int(f[0]);
+        let (pa50y, pa50x) = (f[0], f[1]); let (pa50lo, pa50hi) = atan2_bracket(pa50y, pa50x); f[0] = pa50lo;
+        let c50_51 = { let v = f64::from_bits(v34); f[0] = v - f[0]; v };
+        let c50_52 = { let v = f64::from_bits(v32); f[0] = f[0] * v; v };
+        let c50_53 = { let v = (((v22 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c50_51 - v; v = v * c50_52; v = v * c50_53; v }; let r1 = m.round_int(ch(pa50lo)); let r2 = m.round_int(ch(pa50hi)); f[0] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa50y.atan2(pa50x))) }; }
         { let v = (((v22 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v33); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         { let v: u64 = f[1].to_bits(); s2012 = (s2012 & !(0xffffffffffffu64 << 16)) | ((v & 0xffffffffffffu64) << 16); s2013 = (s2013 & !0xffffu64) | ((v >> 48) & 0xffffu64); }
         { let v: u64 = f[0].to_bits(); s2013 = (s2013 & !(0xffffffffffffu64 << 16)) | ((v & 0xffffffffffffu64) << 16); s2014 = (s2014 & !0xffffu64) | ((v >> 48) & 0xffffu64); }
         f[0] = f64::from_bits((((s2009 >> 16) | (s2010 << 48)) & u64::MAX));
@@ -11144,17 +11144,17 @@ pub(super) fn f_221797652ab837b5(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         { let v = f64::from_bits(v30); f[2] = f[2] + v; }
         f[3] = f[1];
         f[4] = f[2];
-        f[3] = f[3].atan2(f[4]);
+        let (pa9y, pa9x) = (f[3], f[4]); let (pa9lo, pa9hi) = atan2_bracket(pa9y, pa9x); f[3] = pa9lo;
         f[3] = -f[3];
-        { let v = f64::from_bits(v32); f[3] = f[3] * v; }
+        let c9_11 = { let v = f64::from_bits(v32); f[3] = f[3] * v; v };
         f[4] = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64);
         f.swap(4, 3);
-        f[4] = f[4] * f[3];
-        f[4] = m.round_int(f[4]);
+        let c9_14 = f[3]; f[4] = f[4] * f[3];
+        { let ch = |mut v: f64| -> f64 { v = -v; v = v * c9_11; v = v * c9_14; v }; let r1 = m.round_int(ch(pa9lo)); let r2 = m.round_int(ch(pa9hi)); f[4] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa9y.atan2(pa9x))) }; }
         { let x = m.round_int(f[4]); let i = if x.is_nan() || !(-2147483648.0..=2147483647.0).contains(&x) { 0x8000_0000u32 } else { x as i32 as u32 }; s2014 = (s2014 & !(0xffffffffu64 << 32)) | (((i as u64) & 0xffffffffu64) << 32); }
         f[3] = f[4] / f[3];
         { let v = f64::from_bits(v33); f[3] = f[3] * v; }
-        { let (s, c) = f[3].sin_cos(); f[3] = s; f[4] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[3]); f[3] = s; f[4] = c; fsw &= !0x0400; }
         f[5] = f[1];
         f[5] = f[5] * f[4];
         f[6] = f[2];
@@ -22627,7 +22627,7 @@ pub(super) fn f_4f619e28b1880b12(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         rg[2] = ((s2007 >> 32) & 0xffffffffu64) as u32;
         { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] / v; }
         { let v = f64::from_bits(v33); f[2] = f[2] * v; }
-        { let (s, c) = f[2].sin_cos(); f[2] = s; f[3] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[2]); f[2] = s; f[3] = c; fsw &= !0x0400; }
         f[4] = f[0];
         f[4] = f[4] * f[3];
         f[5] = f[1];
@@ -24212,7 +24212,7 @@ pub(super) fn f_55905c9bc6aae0dd(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[0] = (((s2012 >> 32) & 0xffffffffu64) as u32 as i32 as f64);
         { let v = (((v22 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v34); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         { let v: u64 = f[1].to_bits(); s2010 = (s2010 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2011 = (s2011 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         { let v: u64 = f[0].to_bits(); s2011 = (s2011 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2012 = (s2012 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         f[0] = f64::from_bits((((s2009 >> 32) | (s2010 << 32)) & u64::MAX));
@@ -28388,14 +28388,14 @@ pub(super) fn f_67c5196c872080e3(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         shift_reg_l(&mut rg, &mut fl, Shift::Shr, 2, 1, 4);
         f[0] = f64::from_bits(s2008);
         f[1] = f64::from_bits(s2009);
-        f[0] = f[0].atan2(f[1]);
-        { let v = f64::from_bits(v34); f[0] = v - f[0]; }
-        { let v = f64::from_bits(v32); f[0] = f[0] * v; }
-        { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; }
-        f[0] = m.round_int(f[0]);
+        let (pa34y, pa34x) = (f[0], f[1]); let (pa34lo, pa34hi) = atan2_bracket(pa34y, pa34x); f[0] = pa34lo;
+        let c34_35 = { let v = f64::from_bits(v34); f[0] = v - f[0]; v };
+        let c34_36 = { let v = f64::from_bits(v32); f[0] = f[0] * v; v };
+        let c34_37 = { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c34_35 - v; v = v * c34_36; v = v * c34_37; v }; let r1 = m.round_int(ch(pa34lo)); let r2 = m.round_int(ch(pa34hi)); f[0] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa34y.atan2(pa34x))) }; }
         { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v33); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         s2013 = f[1].to_bits();
         s2014 = f[0].to_bits();
         f[0] = f64::from_bits(s2008);
@@ -40854,7 +40854,7 @@ pub(super) fn f_8713cb10fb46f160(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[0] = m.round_int(f[0]);
         { let v = (((v22 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v33); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         s2013 = f[1].to_bits();
         s2014 = f[0].to_bits();
         f[0] = f64::from_bits(s2008);
@@ -40954,14 +40954,14 @@ pub(super) fn f_887131ff4a1b0a62(m: &mut Machine, p: &Prog, it: &mut Iteration, 
         { let v = f64::from_bits(v27); f[0] = f[0] + v; }
         f[1] = f64::from_bits(r3);
         { let v = f64::from_bits(v28); f[1] = f[1] + v; }
-        f[0] = f[0].atan2(f[1]);
+        let (pa12y, pa12x) = (f[0], f[1]); let (pa12lo, pa12hi) = atan2_bracket(pa12y, pa12x); f[0] = pa12lo;
         f[1] = f64::from_bits(v26);
         { let v = f64::from_bits(v29); f[1] = f[1] + v; }
         { let v = f64::from_bits(v33); f[1] = f[1] * v; }
-        f[0] = f[0] + f[1];
-        { let v = f64::from_bits(v32); f[0] = f[0] / v; }
-        { let v = f64::from_bits(v30); f[0] = f[0] * v; }
-        f[0] = m.round_int(f[0]);
+        let c12_16 = f[1]; f[0] = f[0] + f[1];
+        let c12_17 = { let v = f64::from_bits(v32); f[0] = f[0] / v; v };
+        let c12_18 = { let v = f64::from_bits(v30); f[0] = f[0] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = v + c12_16; v = v / c12_17; v = v * c12_18; v }; let r1 = m.round_int(ch(pa12lo)); let r2 = m.round_int(ch(pa12hi)); f[0] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa12y.atan2(pa12x))) }; }
         f[0] = -f[0];
         { let v = f64::from_bits(v30); f[0] = f[0] / v; }
         { let v = f64::from_bits(v32); f[0] = f[0] * v; }
@@ -42778,17 +42778,17 @@ pub(super) fn f_8cca213c07130873(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f[1] + f[3];
         f[3] = f[1];
         f[4] = f[2];
-        f[3] = f[3].atan2(f[4]);
-        { let v = f64::from_bits(v22); f[3] = v - f[3]; }
-        { let v = f64::from_bits(v32); f[3] = f[3] * v; }
-        { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; }
-        f[3] = m.round_int(f[3]);
+        let (pa32y, pa32x) = (f[3], f[4]); let (pa32lo, pa32hi) = atan2_bracket(pa32y, pa32x); f[3] = pa32lo;
+        let c32_33 = { let v = f64::from_bits(v22); f[3] = v - f[3]; v };
+        let c32_34 = { let v = f64::from_bits(v32); f[3] = f[3] * v; v };
+        let c32_35 = { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c32_33 - v; v = v * c32_34; v = v * c32_35; v }; let r1 = m.round_int(ch(pa32lo)); let r2 = m.round_int(ch(pa32hi)); f[3] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa32y.atan2(pa32x))) }; }
         { let bv = 0xfffffff0u32; let av = rg[4]; let r = fl.alu(Alu::Add, av, bv, 4); rg[4] = r; }
         { let x = m.round_int(f[3]); let i = if x.is_nan() || !(-2147483648.0..=2147483647.0).contains(&x) { 0x8000_0000u32 } else { x as i32 as u32 }; s2013 = (s2013 & !(0xffffffffu64 << 32)) | (((i as u64) & 0xffffffffu64) << 32); }
         rg[2] = ((s2013 >> 32) & 0xffffffffu64) as u32;
         { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] / v; }
         { let v = f64::from_bits(v33); f[3] = f[3] * v; }
-        { let (s, c) = f[3].sin_cos(); f[3] = s; f[4] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[3]); f[3] = s; f[4] = c; fsw &= !0x0400; }
         f[5] = f[1];
         f[5] = f[5] * f[4];
         f[6] = f[2];
@@ -42817,17 +42817,17 @@ pub(super) fn f_8cca213c07130873(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f64::from_bits(r3);
         f[2] = f[0];
         f[3] = f[1];
-        f[2] = f[2].atan2(f[3]);
-        { let v = f64::from_bits((((v20 >> 32) | (v21 << 32)) & u64::MAX)); f[2] = v - f[2]; }
-        { let v = f64::from_bits(v32); f[2] = f[2] * v; }
-        { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] * v; }
-        f[2] = m.round_int(f[2]);
+        let (pa74y, pa74x) = (f[2], f[3]); let (pa74lo, pa74hi) = atan2_bracket(pa74y, pa74x); f[2] = pa74lo;
+        let c74_75 = { let v = f64::from_bits((((v20 >> 32) | (v21 << 32)) & u64::MAX)); f[2] = v - f[2]; v };
+        let c74_76 = { let v = f64::from_bits(v32); f[2] = f[2] * v; v };
+        let c74_77 = { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c74_75 - v; v = v * c74_76; v = v * c74_77; v }; let r1 = m.round_int(ch(pa74lo)); let r2 = m.round_int(ch(pa74hi)); f[2] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa74y.atan2(pa74x))) }; }
         { let bv = 0xfffffff0u32; let av = rg[4]; let r = fl.alu(Alu::Add, av, bv, 4); rg[4] = r; }
         { let x = m.round_int(f[2]); let i = if x.is_nan() || !(-2147483648.0..=2147483647.0).contains(&x) { 0x8000_0000u32 } else { x as i32 as u32 }; s2013 = (s2013 & !(0xffffffffu64 << 32)) | (((i as u64) & 0xffffffffu64) << 32); }
         rg[2] = ((s2013 >> 32) & 0xffffffffu64) as u32;
         { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] / v; }
         { let v = f64::from_bits(v33); f[2] = f[2] * v; }
-        { let (s, c) = f[2].sin_cos(); f[2] = s; f[3] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[2]); f[2] = s; f[3] = c; fsw &= !0x0400; }
         f[4] = f[0];
         f[4] = f[4] * f[3];
         f[5] = f[1];
@@ -42991,17 +42991,17 @@ pub(super) fn f_8e1d3abf1bb89335(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f[1] + f[3];
         f[3] = f[1];
         f[4] = f[2];
-        f[3] = f[3].atan2(f[4]);
-        { let v = f64::from_bits(v22); f[3] = v - f[3]; }
-        { let v = f64::from_bits(v32); f[3] = f[3] * v; }
-        { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; }
-        f[3] = m.round_int(f[3]);
+        let (pa32y, pa32x) = (f[3], f[4]); let (pa32lo, pa32hi) = atan2_bracket(pa32y, pa32x); f[3] = pa32lo;
+        let c32_33 = { let v = f64::from_bits(v22); f[3] = v - f[3]; v };
+        let c32_34 = { let v = f64::from_bits(v32); f[3] = f[3] * v; v };
+        let c32_35 = { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c32_33 - v; v = v * c32_34; v = v * c32_35; v }; let r1 = m.round_int(ch(pa32lo)); let r2 = m.round_int(ch(pa32hi)); f[3] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa32y.atan2(pa32x))) }; }
         { let bv = 0xfffffff0u32; let av = rg[4]; let r = fl.alu(Alu::Add, av, bv, 4); rg[4] = r; }
         { let x = m.round_int(f[3]); let i = if x.is_nan() || !(-2147483648.0..=2147483647.0).contains(&x) { 0x8000_0000u32 } else { x as i32 as u32 }; s2013 = (s2013 & !(0xffffffffu64 << 32)) | (((i as u64) & 0xffffffffu64) << 32); }
         rg[2] = ((s2013 >> 32) & 0xffffffffu64) as u32;
         { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] / v; }
         { let v = f64::from_bits(v33); f[3] = f[3] * v; }
-        { let (s, c) = f[3].sin_cos(); f[3] = s; f[4] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[3]); f[3] = s; f[4] = c; fsw &= !0x0400; }
         f[5] = f[1];
         f[5] = f[5] * f[4];
         f[6] = f[2];
@@ -55360,14 +55360,14 @@ pub(super) fn f_c0dcddf31e72bec8(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         { let v: u64 = m.xmm[1][0]; s2012 = (s2012 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2013 = (s2013 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         f[0] = f64::from_bits((((s2010 >> 32) | (s2011 << 32)) & u64::MAX));
         f[1] = f64::from_bits((((s2011 >> 32) | (s2012 << 32)) & u64::MAX));
-        f[0] = f[0].atan2(f[1]);
-        { let v = f64::from_bits(v34); f[0] = v - f[0]; }
-        { let v = f64::from_bits(v32); f[0] = f[0] * v; }
-        { let v = (((v30 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; }
-        f[0] = m.round_int(f[0]);
+        let (pa18y, pa18x) = (f[0], f[1]); let (pa18lo, pa18hi) = atan2_bracket(pa18y, pa18x); f[0] = pa18lo;
+        let c18_19 = { let v = f64::from_bits(v34); f[0] = v - f[0]; v };
+        let c18_20 = { let v = f64::from_bits(v32); f[0] = f[0] * v; v };
+        let c18_21 = { let v = (((v30 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c18_19 - v; v = v * c18_20; v = v * c18_21; v }; let r1 = m.round_int(ch(pa18lo)); let r2 = m.round_int(ch(pa18hi)); f[0] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa18y.atan2(pa18x))) }; }
         { let v = (((v30 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v33); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         { let v: u64 = f[1].to_bits(); s2014 = (s2014 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2015 = (s2015 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         { let v: u64 = f[0].to_bits(); s2013 = (s2013 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2014 = (s2014 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         f[0] = f64::from_bits((((s2010 >> 32) | (s2011 << 32)) & u64::MAX));
@@ -55385,14 +55385,14 @@ pub(super) fn f_c0dcddf31e72bec8(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         { let v: u64 = f[0].to_bits(); s2011 = (s2011 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2012 = (s2012 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         f[0] = f64::from_bits((((s2010 >> 32) | (s2011 << 32)) & u64::MAX));
         f[1] = f64::from_bits((((s2012 >> 32) | (s2013 << 32)) & u64::MAX));
-        f[0] = f[0].atan2(f[1]);
-        { let v = f64::from_bits(v34); f[0] = v - f[0]; }
-        { let v = f64::from_bits(v32); f[0] = f[0] * v; }
-        { let v = (((v30 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; }
-        f[0] = m.round_int(f[0]);
+        let (pa43y, pa43x) = (f[0], f[1]); let (pa43lo, pa43hi) = atan2_bracket(pa43y, pa43x); f[0] = pa43lo;
+        let c43_44 = { let v = f64::from_bits(v34); f[0] = v - f[0]; v };
+        let c43_45 = { let v = f64::from_bits(v32); f[0] = f[0] * v; v };
+        let c43_46 = { let v = (((v30 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c43_44 - v; v = v * c43_45; v = v * c43_46; v }; let r1 = m.round_int(ch(pa43lo)); let r2 = m.round_int(ch(pa43hi)); f[0] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa43y.atan2(pa43x))) }; }
         { let v = (((v30 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v33); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         { let v: u64 = f[1].to_bits(); s2014 = (s2014 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2015 = (s2015 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         { let v: u64 = f[0].to_bits(); s2013 = (s2013 & !(0xffffffffu64 << 32)) | ((v & 0xffffffffu64) << 32); s2014 = (s2014 & !0xffffffffu64) | ((v >> 32) & 0xffffffffu64); }
         f[0] = f64::from_bits((((s2010 >> 32) | (s2011 << 32)) & u64::MAX));
@@ -67814,7 +67814,7 @@ pub(super) fn f_e15d68fb5acad786(m: &mut Machine, p: &Prog, it: &mut Iteration, 
         f[2] = (((r33 >> 0) & 0xffffffffu64) as u32 as i32 as f64);
         { let v = f64::from_bits((((v25 >> 32) | (v26 << 32)) & u64::MAX)); f[2] = f[2] * v; }
         { let v = f64::from_bits(v32); f[2] = f[2] * v; }
-        { let (s, c) = f[2].sin_cos(); f[2] = s; f[3] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[2]); f[2] = s; f[3] = c; fsw &= !0x0400; }
         f[4] = f[3];
         f[4] = f[4] * f[1];
         f[5] = f[2];
@@ -70916,17 +70916,17 @@ pub(super) fn f_e64650665d88ef3d(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f[1] + f[3];
         f[3] = f[1];
         f[4] = f[2];
-        f[3] = f[3].atan2(f[4]);
-        { let v = f64::from_bits(v34); f[3] = v - f[3]; }
-        { let v = f64::from_bits(v32); f[3] = f[3] * v; }
-        { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; }
-        f[3] = m.round_int(f[3]);
+        let (pa32y, pa32x) = (f[3], f[4]); let (pa32lo, pa32hi) = atan2_bracket(pa32y, pa32x); f[3] = pa32lo;
+        let c32_33 = { let v = f64::from_bits(v34); f[3] = v - f[3]; v };
+        let c32_34 = { let v = f64::from_bits(v32); f[3] = f[3] * v; v };
+        let c32_35 = { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c32_33 - v; v = v * c32_34; v = v * c32_35; v }; let r1 = m.round_int(ch(pa32lo)); let r2 = m.round_int(ch(pa32hi)); f[3] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa32y.atan2(pa32x))) }; }
         { let bv = 0xfffffff0u32; let av = rg[4]; let r = fl.alu(Alu::Add, av, bv, 4); rg[4] = r; }
         { let x = m.round_int(f[3]); let i = if x.is_nan() || !(-2147483648.0..=2147483647.0).contains(&x) { 0x8000_0000u32 } else { x as i32 as u32 }; s2013 = (s2013 & !(0xffffffffu64 << 32)) | (((i as u64) & 0xffffffffu64) << 32); }
         rg[2] = ((s2013 >> 32) & 0xffffffffu64) as u32;
         { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] / v; }
         { let v = f64::from_bits(v33); f[3] = f[3] * v; }
-        { let (s, c) = f[3].sin_cos(); f[3] = s; f[4] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[3]); f[3] = s; f[4] = c; fsw &= !0x0400; }
         f[5] = f[1];
         f[5] = f[5] * f[4];
         f[6] = f[2];
@@ -72347,7 +72347,7 @@ pub(super) fn f_ed3aff44c27b1a75(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[0] = (((s2013 >> 16) & 0xffffffffu64) as u32 as i32 as f64);
         { let v = (((v22 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[0] = f[0] / v; }
         { let v = f64::from_bits(v33); f[0] = f[0] * v; }
-        { let (s, c) = f[0].sin_cos(); f[0] = s; f[1] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[0]); f[0] = s; f[1] = c; fsw &= !0x0400; }
         { let v: u64 = f[1].to_bits(); s2010 = (s2010 & !(0xffffffffffffu64 << 16)) | ((v & 0xffffffffffffu64) << 16); s2011 = (s2011 & !0xffffu64) | ((v >> 48) & 0xffffu64); }
         { let v: u64 = f[0].to_bits(); s2011 = (s2011 & !(0xffffffffffffu64 << 16)) | ((v & 0xffffffffffffu64) << 16); s2012 = (s2012 & !0xffffu64) | ((v >> 48) & 0xffffu64); }
         f[0] = f64::from_bits((((s2007 >> 16) | (s2008 << 48)) & u64::MAX));
@@ -73493,14 +73493,14 @@ pub(super) fn f_f11bef59dface564(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f[1] + f[3];
         f[3] = f[1];
         f[4] = f[2];
-        f[3] = f[3].atan2(f[4]);
-        { let v = f64::from_bits(v22); f[3] = v - f[3]; }
-        { let v = f64::from_bits(v32); f[3] = f[3] * v; }
-        { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; }
-        f[3] = m.round_int(f[3]);
+        let (pa32y, pa32x) = (f[3], f[4]); let (pa32lo, pa32hi) = atan2_bracket(pa32y, pa32x); f[3] = pa32lo;
+        let c32_33 = { let v = f64::from_bits(v22); f[3] = v - f[3]; v };
+        let c32_34 = { let v = f64::from_bits(v32); f[3] = f[3] * v; v };
+        let c32_35 = { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c32_33 - v; v = v * c32_34; v = v * c32_35; v }; let r1 = m.round_int(ch(pa32lo)); let r2 = m.round_int(ch(pa32hi)); f[3] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa32y.atan2(pa32x))) }; }
         { let v = (((v23 >> 0) & 0xffffffffu64) as u32 as i32 as f64); f[3] = f[3] / v; }
         { let v = f64::from_bits(v33); f[3] = f[3] * v; }
-        { let (s, c) = f[3].sin_cos(); f[3] = s; f[4] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[3]); f[3] = s; f[4] = c; fsw &= !0x0400; }
         f[5] = f[1];
         f[5] = f[5] * f[4];
         f[6] = f[2];
@@ -73522,14 +73522,14 @@ pub(super) fn f_f11bef59dface564(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         f[1] = f64::from_bits(r3);
         f[2] = f[0];
         f[3] = f[1];
-        f[2] = f[2].atan2(f[3]);
-        { let v = f64::from_bits((((v20 >> 32) | (v21 << 32)) & u64::MAX)); f[2] = v - f[2]; }
-        { let v = f64::from_bits(v32); f[2] = f[2] * v; }
-        { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] * v; }
-        f[2] = m.round_int(f[2]);
+        let (pa67y, pa67x) = (f[2], f[3]); let (pa67lo, pa67hi) = atan2_bracket(pa67y, pa67x); f[2] = pa67lo;
+        let c67_68 = { let v = f64::from_bits((((v20 >> 32) | (v21 << 32)) & u64::MAX)); f[2] = v - f[2]; v };
+        let c67_69 = { let v = f64::from_bits(v32); f[2] = f[2] * v; v };
+        let c67_70 = { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] * v; v };
+        { let ch = |mut v: f64| -> f64 { v = c67_68 - v; v = v * c67_69; v = v * c67_70; v }; let r1 = m.round_int(ch(pa67lo)); let r2 = m.round_int(ch(pa67hi)); f[2] = if r1 == r2 && r1.to_bits() == r2.to_bits() { r1 } else { m.round_int(ch(pa67y.atan2(pa67x))) }; }
         { let v = (((v21 >> 32) & 0xffffffffu64) as u32 as i32 as f64); f[2] = f[2] / v; }
         { let v = f64::from_bits(v33); f[2] = f[2] * v; }
-        { let (s, c) = f[2].sin_cos(); f[2] = s; f[3] = c; fsw &= !0x0400; }
+        { let (s, c) = m.sin_cos_cached(f[2]); f[2] = s; f[3] = c; fsw &= !0x0400; }
         f[4] = f[0];
         f[4] = f[4] * f[3];
         f[5] = f[1];

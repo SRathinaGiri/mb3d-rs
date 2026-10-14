@@ -376,6 +376,27 @@ pixel-identically but no faster (ApolloBalloons 83 s either way), the
 loop's cost being its control logic and the `Rout / VaryScale` division on
 the critical path, not the copying; it was not kept.
 
+Two shortcuts in the translated code give the same results with less work.
+Both concern the symmetry IFS formulas (Apollo2D-IFS, the PolyFold IFS,
+discoballIFS and a few more), which turn a point by a multiple of a
+sector's angle:
+
+* The sector is `frndint` of the point's angle (`fpatan`) after a few
+  scaling steps (negation, multiplication, division by and addition of
+  other values). The translator finds such chains in a block; the code then
+  takes an interval around a fast approximation of the angle
+  (`atan2_bracket`, within 1e-5 of it) through the same steps. Each step is
+  monotonic, so if both ends round to the same integer the exact angle does
+  too; otherwise (near a sector border) it calls `atan2`. `M3F2RS_EXACT_ATAN=1`
+  at translation time turns this off.
+* The sine and cosine of the sector's angle (`fsincos` of a value made from
+  rounded values, integers and parameters) are remembered per thread by the
+  exact bits of the argument (`Machine::sin_cos_cached`).
+
+ApolloBalloons on the CPU: main calculation 36.5 s → 31.7 s, reflections
+and occlusion 45.0 s → 40.3 s (MB3D under Wine: 30.8 s and 41.4 s); the 80
+example files render byte-identically.
+
 The translation and the micro ops rely on the x87 register stack depth being
 known at every instruction. Where code joins with different depths (for
 example paths for invalid option values, or helper routines called at

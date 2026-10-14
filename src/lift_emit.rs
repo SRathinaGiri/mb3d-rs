@@ -691,6 +691,88 @@ fn fstore_stmt(c: &mut Cells, r: (char, u32), kind: FKind, v: &str) -> Option<St
     })
 }
 
+/// A step of an angle's way from `fpatan` to `frndint` (see `atan_round_chain`).
+enum ChainStep {
+    Neg,
+    /// with another register: the tracked value is `fop`'s first operand or not
+    Reg { other: u8, op: FOp, first: bool },
+    /// with a memory operand (the tracked value is the first operand)
+    Mem { op: FOp },
+}
+
+/// `fpatan` whose angle is only scaled (negated, multiplied, divided by,
+/// added to other values) and then rounded by `frndint` in the same block,
+/// with nothing else reading it: the angle matters only through the rounded
+/// integer (a symmetry's sector: Apollo2D-IFS, the PolyFold IFS). Returns
+/// the `frndint`'s op index and the steps by op index. Every step is
+/// monotonic in the angle, so if both ends of `atan2_bracket`'s interval
+/// round to the same integer, so does the exact angle.
+fn atan_round_chain(ops: &[Op], k0: usize, start: &[bool]) -> Option<(usize, Vec<(usize, ChainStep)>)> {
+    let Op::FPatan { y, .. } = ops[k0] else { return None };
+    let mut p = y & 7;
+    let mut steps = Vec::new();
+    let mut k = k0 + 1;
+    while k < ops.len() && !start[k] {
+        let r = |v: u8| v & 7;
+        match &ops[k] {
+            Op::FRndint(i) if r(*i) == p => return Some((k, steps)),
+            Op::FRndint(_) => {}
+            Op::FChs(i) if r(*i) == p => steps.push((k, ChainStep::Neg)),
+            Op::FChs(_) | Op::FAbs(_) => {
+                if matches!(&ops[k], Op::FAbs(i) if r(*i) == p) {
+                    return None;
+                }
+            }
+            Op::FSwap { a, b } => {
+                if r(*a) == p {
+                    p = r(*b);
+                } else if r(*b) == p {
+                    p = r(*a);
+                }
+            }
+            Op::FLd { dst, .. } | Op::FLd64 { dst, .. } | Op::FConst { dst, .. } => {
+                if r(*dst) == p {
+                    return None;
+                }
+            }
+            Op::FMov { dst, src } => {
+                if r(*dst) == p || r(*src) == p {
+                    return None;
+                }
+            }
+            Op::FArithM64 { op, dst, .. } | Op::FArithM { op, dst, .. } => {
+                if r(*dst) == p {
+                    // v / angle is not monotonic across 0
+                    if *op == FOp::DivR {
+                        return None;
+                    }
+                    steps.push((k, ChainStep::Mem { op: *op }));
+                }
+            }
+            Op::FArith { op, dst, a, b } => {
+                let (ta, tb) = (r(*a) == p, r(*b) == p);
+                if r(*dst) != p {
+                    if ta || tb {
+                        return None;
+                    }
+                } else {
+                    if ta == tb {
+                        return None; // overwritten, or angle with itself
+                    }
+                    // the angle must not be the divisor
+                    if (*op == FOp::Div && tb) || (*op == FOp::DivR && ta) {
+                        return None;
+                    }
+                    steps.push((k, ChainStep::Reg { other: if ta { r(*b) } else { r(*a) }, op: *op, first: ta }));
+                }
+            }
+            _ => return None,
+        }
+        k += 1;
+    }
+    None
+}
+
 fn fop(op: &FOp, a: &str, b: &str) -> String {
     match op {
         FOp::Add => format!("{a} + {b}"),
@@ -790,7 +872,34 @@ impl Prog {
         })
     }
 
-    /// `emit_lifted` with the cells and their access log.
+    /// Tracks which x87 registers hold a quantity with few distinct values: a
+/// rounded value (`frndint`), an integer load or a constant, combined only
+/// with such values or with memory operands (the formula's parameters).
+/// `fsincos` of such a register uses `Machine::sin_cos_cached` (exact: keyed
+/// by the argument's bits; a wrong guess here costs speed, not results).
+fn quantized(op: &Op, q: &mut [bool; 8]) {
+    let i = |r: &u8| *r as usize & 7;
+    match op {
+        Op::FRndint(r) => q[i(r)] = true,
+        Op::FConst { dst, .. } => q[i(dst)] = true,
+        Op::FLd { dst, kind, .. } => q[i(dst)] = matches!(kind, FKind::I16 | FKind::I32 | FKind::I64),
+        Op::FLd64 { dst, .. } => q[i(dst)] = false,
+        Op::FMov { dst, src } => q[i(dst)] = q[i(src)],
+        Op::FSwap { a, b } => q.swap(i(a), i(b)),
+        Op::FArith { dst, a, b, .. } => q[i(dst)] = q[i(a)] && q[i(b)],
+        Op::FArithM64 { .. } | Op::FArithM { .. } | Op::FChs(_) | Op::FAbs(_) => {}
+        Op::FSqrt(r) | Op::FSin(r) | Op::FCos(r) | Op::F2xm1(r) => q[i(r)] = false,
+        Op::FPrem { a, .. } | Op::FScale { a, .. } => q[i(a)] = false,
+        Op::FPtan { src, dst } | Op::FSincos { src, dst } => {
+            q[i(src)] = false;
+            q[i(dst)] = false;
+        }
+        Op::FPatan { y, .. } | Op::FYl2x { y, .. } => q[i(y)] = false,
+        _ => {}
+    }
+}
+
+/// `emit_lifted` with the cells and their access log.
     pub(super) fn emit_lifted_cells(&self, name: &str, difs: bool) -> Option<(String, Cells)> {
         self.emit_lifted_mode(name, difs, Conv::Machine)
     }
@@ -832,8 +941,54 @@ impl Prog {
         for (k0, cs) in keys.iter() {
             let mut bl = Block::default();
             let mut k = *k0;
+            // the x87 registers holding a "few values" quantity (see `quantized`)
+            let mut q = [false; 8];
+            // an fpatan angle on its way to frndint: (fpatan's index, frndint's
+            // index, the steps' code, the steps by op index)
+            let mut chain: Option<(usize, usize, Vec<String>, Vec<(usize, ChainStep)>)> = None;
             loop {
-                let (line, ended) = self.lifted_op(k, cs, &an, &mut cells, &id, &jump)?;
+                let (mut line, ended) = self.lifted_op(k, cs, &an, &mut cells, &id, &jump)?;
+                if let Op::FPatan { x, y } = &self.ops[k] {
+                    if std::env::var_os("M3F2RS_EXACT_ATAN").is_none() {
+                        if let Some((end, steps)) = atan_round_chain(&self.ops, k, &start) {
+                            line = format!("let (pa{k}y, pa{k}x) = (f[{0}], f[{1}]); let (pa{k}lo, pa{k}hi) = atan2_bracket(pa{k}y, pa{k}x); f[{0}] = pa{k}lo;", y & 7, x & 7);
+                            chain = Some((k, end, Vec::new(), steps));
+                        }
+                    }
+                } else if let Some((k0, end, code, steps)) = &mut chain {
+                    if let Some((_, st)) = steps.iter().find(|(i, _)| *i == k) {
+                        let c = format!("c{k0}_{k}");
+                        match st {
+                            ChainStep::Neg => code.push("v = -v;".into()),
+                            ChainStep::Reg { other, op, first } => {
+                                line = format!("let {c} = f[{other}]; {line}");
+                                code.push(format!("v = {};", if *first { fop(op, "v", &c) } else { fop(op, &c, "v") }));
+                            }
+                            ChainStep::Mem { op } => {
+                                // `{ let v = <operand>; f[d] = ...; }` keeps the operand as well
+                                let body = line.strip_suffix('}')?;
+                                line = format!("let {c} = {body}v }};");
+                                code.push(format!("v = {};", fop(op, "v", &c)));
+                            }
+                        }
+                    } else if k == *end {
+                        let Op::FRndint(i) = &self.ops[k] else { return None };
+                        let ch = code.join(" ");
+                        line = format!(
+                            "{{ let ch = |mut v: f64| -> f64 {{ {ch} v }}; let r1 = m.round_int(ch(pa{k0}lo)); let r2 = m.round_int(ch(pa{k0}hi)); \
+                             f[{0}] = if r1 == r2 && r1.to_bits() == r2.to_bits() {{ r1 }} else {{ m.round_int(ch(pa{k0}y.atan2(pa{k0}x))) }}; }}",
+                            i & 7
+                        );
+                        chain = None;
+                    }
+                }
+                if let Op::FSincos { src, .. } = &self.ops[k] {
+                    if q[*src as usize & 7] {
+                        let a = format!("f[{}].sin_cos()", src & 7);
+                        line = line.replace(&a, &format!("m.sin_cos_cached(f[{}])", src & 7));
+                    }
+                }
+                Self::quantized(&self.ops[k], &mut q);
                 if !line.is_empty() {
                     bl.lines.push(line);
                 }

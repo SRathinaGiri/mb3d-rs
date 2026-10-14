@@ -1132,6 +1132,47 @@ pub struct Machine {
     progs: std::sync::Arc<Vec<(u32, Prog)>>,
     pub host: Vec<(u32, HostFn)>,
     pub steps: u64,
+    /// Results of `fsincos` by the exact bits of the argument (see
+    /// [`Machine::sin_cos_cached`]).
+    trig: Box<[(u64, f64, f64); TRIG_SLOTS]>,
+}
+
+const TRIG_SLOTS: usize = 256;
+
+/// The half width of [`atan2_bracket`]'s interval: the approximation
+/// (Abramowitz & Stegun 4.4.49) is within 1e-5 of the true angle, the
+/// library's `atan2` within an ulp of it.
+const ATAN2_EPS: f64 = 4e-5;
+
+/// An interval that contains `y.atan2(x)`, from a fast approximation (one
+/// division and a polynomial). The translated formulas use it where the
+/// angle is only scaled and rounded to an integer (a symmetry's sector): if
+/// both ends round to the same integer, so does the exact angle, as the
+/// scaling steps are monotonic; else they call `atan2` (see
+/// `lift_emit::atan_round_chain`). Zero, infinite and NaN inputs give the
+/// exact value at both ends.
+#[allow(dead_code)] // used by generated code
+#[inline]
+fn atan2_bracket(y: f64, x: f64) -> (f64, f64) {
+    let (ax, ay) = (x.abs(), y.abs());
+    if !(ax > 0.0 && ay > 0.0 && ax < f64::INFINITY && ay < f64::INFINITY) {
+        let a = y.atan2(x);
+        return (a, a);
+    }
+    let (mn, mx) = if ay > ax { (ax, ay) } else { (ay, ax) };
+    let z = mn / mx;
+    let z2 = z * z;
+    let mut a = z * (0.999_977_26 + z2 * (-0.332_623_47 + z2 * (0.193_543_46 + z2 * (-0.116_432_87 + z2 * (0.052_653_32 + z2 * -0.011_721_20)))));
+    if ay > ax {
+        a = std::f64::consts::FRAC_PI_2 - a;
+    }
+    if x < 0.0 {
+        a = std::f64::consts::PI - a;
+    }
+    if y < 0.0 {
+        a = -a;
+    }
+    (a - ATAN2_EPS, a + ATAN2_EPS)
 }
 
 const EAX: usize = 0;
@@ -1159,7 +1200,25 @@ impl Machine {
             progs: std::sync::Arc::new(Vec::new()),
             host: Vec::new(),
             steps: 0,
+            // every slot holds a true entry: sin_cos(0.0) = (0.0, 1.0)
+            trig: Box::new([(0, 0.0, 1.0); TRIG_SLOTS]),
         }
+    }
+
+    /// `x.sin_cos()`, remembered by the exact bits of `x`: the same result,
+    /// fast when a formula takes the sine of a few angles over and over (a
+    /// rounded sector number times a constant: Apollo2D-IFS' symmetry). The
+    /// translator uses it only where the argument comes from such a value.
+    #[inline]
+    pub fn sin_cos_cached(&mut self, x: f64) -> (f64, f64) {
+        let b = x.to_bits();
+        let e = &mut self.trig[(b.wrapping_mul(0x9E37_79B9_7F4A_7C15) >> 56) as usize];
+        if e.0 == b {
+            return (e.1, e.2);
+        }
+        let (s, c) = x.sin_cos();
+        *e = (b, s, c);
+        (s, c)
     }
 
     /// Forget decoded instructions (after code was changed).
@@ -4137,5 +4196,46 @@ impl Prog {
     }
     pub fn has(&self, addr: u32) -> bool {
         self.index.contains_key(&addr)
+    }
+}
+
+#[cfg(test)]
+mod atan2_bracket_tests {
+    use super::{atan2_bracket, ATAN2_EPS};
+
+    #[test]
+    fn contains_atan2() {
+        let mut seed = 0x2545_F491_4F6C_DD1Du64;
+        let mut next = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            seed
+        };
+        let mut worst = 0.0f64;
+        for k in 0..2_000_000 {
+            // mixed scales, signs and the octant borders
+            let (y, x) = match k % 4 {
+                0 => ((next() as i64 as f64) / 9.2e18, (next() as i64 as f64) / 9.2e18),
+                1 => (f64::from_bits(next() >> 2) * if next() & 1 == 0 { 1.0 } else { -1.0 }, f64::from_bits(next() >> 2) * if next() & 1 == 0 { 1.0 } else { -1.0 }),
+                2 => {
+                    let v = (next() as i64 as f64) / 9.2e18;
+                    (v, v * (1.0 + (next() as i64 as f64) / 9.2e30))
+                }
+                _ => ((next() % 2001) as f64 - 1000.0, (next() % 2001) as f64 - 1000.0),
+            };
+            let e = y.atan2(x);
+            let (lo, hi) = atan2_bracket(y, x);
+            assert!(lo <= e && e <= hi || (e.is_nan() && lo.is_nan()), "y {y} x {x}: {e} not in [{lo}, {hi}]");
+            if lo < hi {
+                worst = worst.max((e - (lo + hi) * 0.5).abs());
+            }
+        }
+        assert!(worst < ATAN2_EPS * 0.5, "approximation error {worst}");
+        for (y, x) in [(0.0, 1.0), (-0.0, -1.0), (1.0, 0.0), (0.0, 0.0), (f64::INFINITY, 1.0), (f64::NAN, 1.0), (1.0, f64::NEG_INFINITY)] {
+            let (lo, hi) = atan2_bracket(y, x);
+            let e: f64 = y.atan2(x);
+            assert!(lo.to_bits() == e.to_bits() && hi.to_bits() == e.to_bits() || e.is_nan() && lo.is_nan());
+        }
     }
 }
