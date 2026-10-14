@@ -131,9 +131,9 @@ The example files that come with MB3D (and in this program's
 
 MB3D could not calculate one of the files (*Test8*: it stops with a "Division by zero" error), so the comparisons count 79 files.
 
-* **mb3d-rs on the processor alone is faster than MB3D** in 68 of the 79 files, a median **1.6 times**; all files together took MB3D 18 min 21 s and mb3d-rs on the processor 18 min 17 s.
-* **Auto mode** is faster than MB3D in 75 of 79 files (median 2.0 times); all files together 9 min 32 s. For 29 of the files the processor finishes in under two seconds, before the card gets a turn — there Auto is simply the processor plus a moment's overhead. The card joined in 48 files, the slower ones, where it made the picture a median 1.5 times faster than the processor (up to 14 times: *Insect Menger*, 4.9 s instead of 66.5 s).
-* In 2 files Auto was slower than the processor alone (*AboxShapes-Misty*, *DEcomb1*): there the card is slower than the 24 processor threads for this scene, or the ambient occlusion of a very large picture runs slower on the card.
+* **mb3d-rs on the processor alone is faster than MB3D** in 71 of the 79 files, a median **1.7 times**; all files together took MB3D 18 min 21 s and mb3d-rs on the processor 17 min 10 s.
+* **Auto mode** is faster than MB3D in 77 of 79 files (median 2.1 times); all files together 8 min 17 s. In 30 of the files the processor finished alone, mostly because it needs only a few seconds, before the card gets a turn — there Auto is simply the processor plus a moment's overhead. The card joined in 49 files, the slower ones, where it made the picture a median 1.6 times faster than the processor (up to 13 times: *Insect Menger*, 4.7 s instead of 63.0 s).
+* In 4 files Auto was noticeably slower than the processor alone (*Ellarien - Shrooms are coming*, *MengerTrees*, *toricaleggs*, *TreePlanet*): there the card is slower than the 24 processor threads for the scene.
 * "Rows on the card" is the share of the picture the graphics card marched in Auto mode (– when the processor finished alone).
 
 <details>
@@ -141,86 +141,86 @@ MB3D could not calculate one of the files (*Test8*: it stops with a "Division by
 
 | Parameter file | MB3D (Wine) | mb3d-rs CPU | mb3d-rs Auto | rows on the card | Auto vs MB3D |
 |:--|--:|--:|--:|--:|--:|
-| 0Encrypted0 - ABoxSOff4d example | 12.8 s | 6.8 s | 2.0 s | 81 % | 6.4× |
-| 6 AM - Torii temple | 23.0 s | 20.7 s | 19.1 s | 60 % | 1.2× |
-| Abominog-Ua - 12.06.2014 | 7.6 s | 8.4 s | 7.4 s | 50 % | 1.0× |
-| ABoxPartlyJuliaRoff | 2.5 s | 1.4 s | 1.7 s | – | 1.5× |
-| ABoxScale2Start | 1.0 s | 0.1 s | 0.4 s | – | 2.5× |
+| 0Encrypted0 - ABoxSOff4d example | 12.8 s | 7.4 s | 1.9 s | 80 % | 6.7× |
+| 6 AM - Torii temple | 23.0 s | 20.4 s | 17.8 s | 60 % | 1.3× |
+| Abominog-Ua - 12.06.2014 | 7.6 s | 8.0 s | 7.4 s | 50 % | 1.0× |
+| ABoxPartlyJuliaRoff | 2.5 s | 1.4 s | 1.6 s | – | 1.6× |
+| ABoxScale2Start | 1.0 s | 0.1 s | 0.3 s | – | 3.3× |
 | ABoxScale3Start | 1.5 s | 0.1 s | 0.3 s | – | 5.0× |
-| AboxShapes-Misty | 27.5 s | 45.0 s | 59.1 s | – | 0.5× |
-| Aexion 10bulbs | 11.5 s | 10.0 s | 2.8 s | 73 % | 4.1× |
-| AkuraPare - 463b | 4.0 s | 2.3 s | 1.4 s | 63 % | 2.9× |
-| ApolloBalloons dIFS | 75.8 s | 81.8 s | 27.8 s | 61 % | 2.7× |
-| AureliusCat - Bamboo | 2.0 s | 1.2 s | 0.8 s | 50 % | 2.5× |
-| BatJorge - Pong 703 - Swirls | 4.0 s | 3.0 s | 3.4 s | – | 1.2× |
-| Bill-Snowzell - Tweak - Canyon | 4.0 s | 1.9 s | 2.0 s | 38 % | 2.0× |
-| Blood on the dancefloor | 7.6 s | 5.1 s | 3.9 s | – | 1.9× |
+| AboxShapes-Misty | 27.5 s | 25.6 s | 17.7 s | – | 1.6× |
+| Aexion 10bulbs | 11.5 s | 9.8 s | 2.6 s | 73 % | 4.4× |
+| AkuraPare - 463b | 4.0 s | 2.0 s | 0.7 s | 72 % | 5.7× |
+| ApolloBalloons dIFS | 75.8 s | 73.2 s | 24.9 s | 57 % | 3.0× |
+| AureliusCat - Bamboo | 2.0 s | 1.2 s | 0.7 s | 58 % | 2.9× |
+| BatJorge - Pong 703 - Swirls | 4.0 s | 2.8 s | 3.1 s | – | 1.3× |
+| Bill-Snowzell - Tweak - Canyon | 4.0 s | 1.6 s | 1.7 s | 44 % | 2.4× |
+| Blood on the dancefloor | 7.6 s | 4.4 s | 3.2 s | – | 2.4× |
 | BulboxCut | 4.0 s | 2.3 s | 2.3 s | – | 1.7× |
-| Chrystal | 5.6 s | 5.6 s | 1.7 s | 79 % | 3.3× |
-| cutted sphere over carpet | 7.1 s | 20.7 s | 4.2 s | 52 % | 1.7× |
-| Dainbramage - Home of the Ancients | 3.0 s | 1.5 s | 1.7 s | 25 % | 1.8× |
-| Dainbramage - Hydra | 3.5 s | 1.8 s | 1.8 s | 40 % | 1.9× |
-| Dainbramage - Nothing left but bones | 4.0 s | 3.0 s | 2.6 s | 49 % | 1.5× |
-| DEcomb1 | 83.9 s | 92.0 s | 110.4 s | 47 % | 0.8× |
-| dIFS heart shrub | 2.5 s | 3.8 s | 3.0 s | – | 0.8× |
-| dIFS heart shrub otrap | 5.1 s | 17.0 s | 3.3 s | 93 % | 1.5× |
-| dIFS shrub | 4.0 s | 19.6 s | 3.4 s | 93 % | 1.2× |
-| Dodeca Torus mix | 2.0 s | 0.6 s | 0.7 s | – | 2.9× |
-| DsyneGrafix - Getting Loopy | 2.0 s | 0.8 s | 0.9 s | 24 % | 2.2× |
-| Ellarien - Embellished | 3.5 s | 1.1 s | 1.3 s | 32 % | 2.7× |
-| Ellarien - Shrooms are coming | 8.1 s | 6.2 s | 6.9 s | – | 1.2× |
-| ExcludeBulbMeng | 17.3 s | 12.9 s | 8.6 s | – | 2.0× |
-| Fishbowl | 4.6 s | 3.5 s | 2.0 s | 49 % | 2.3× |
-| Fractales75 - Kiosk | 3.0 s | 1.8 s | 2.1 s | 41 % | 1.4× |
-| Genetic Menger | 1.5 s | 0.5 s | 0.7 s | 32 % | 2.1× |
-| genQuat helix mix | 4.0 s | 3.1 s | 1.6 s | 64 % | 2.5× |
-| HalTenny - Freak Of Nature | 2.5 s | 1.1 s | 1.4 s | – | 1.8× |
-| Hal-Tenny-Resistance (slow) | 18.9 s | 19.7 s | 8.8 s | 80 % | 2.1× |
-| Hyperben2 - Ozosphere tweak | 2.0 s | 0.8 s | 0.7 s | 50 % | 2.9× |
-| ImpossibleWorld dIFS | 399.8 s | 396.2 s | 99.5 s | 74 % | 4.0× |
-| InAndOutside box | 5.1 s | 2.7 s | 1.5 s | 67 % | 3.4× |
-| Insect Menger | 4.0 s | 66.5 s | 4.9 s | 93 % | 0.8× |
-| Jost1 - Tweak - New tiny temple | 3.5 s | 1.5 s | 1.1 s | 57 % | 3.2× |
-| julia on box | 4.6 s | 3.8 s | 1.5 s | 68 % | 3.1× |
+| Chrystal | 5.6 s | 5.2 s | 1.7 s | 79 % | 3.3× |
+| cutted sphere over carpet | 7.1 s | 20.7 s | 4.5 s | 48 % | 1.6× |
+| Dainbramage - Home of the Ancients | 3.0 s | 1.3 s | 1.2 s | 25 % | 2.5× |
+| Dainbramage - Hydra | 3.5 s | 1.7 s | 1.6 s | 41 % | 2.2× |
+| Dainbramage - Nothing left but bones | 4.0 s | 3.0 s | 2.4 s | 49 % | 1.7× |
+| DEcomb1 | 83.9 s | 93.5 s | 80.3 s | 48 % | 1.0× |
+| dIFS heart shrub | 2.5 s | 3.5 s | 3.0 s | – | 0.8× |
+| dIFS heart shrub otrap | 5.1 s | 15.6 s | 3.6 s | 93 % | 1.4× |
+| dIFS shrub | 4.0 s | 17.3 s | 3.6 s | 93 % | 1.1× |
+| Dodeca Torus mix | 2.0 s | 0.5 s | 0.6 s | 14 % | 3.3× |
+| DsyneGrafix - Getting Loopy | 2.0 s | 0.8 s | 0.8 s | 25 % | 2.5× |
+| Ellarien - Embellished | 3.5 s | 1.1 s | 1.2 s | 49 % | 2.9× |
+| Ellarien - Shrooms are coming | 8.1 s | 6.2 s | 6.8 s | – | 1.2× |
+| ExcludeBulbMeng | 17.3 s | 12.9 s | 8.5 s | – | 2.0× |
+| Fishbowl | 4.6 s | 3.5 s | 1.9 s | 49 % | 2.4× |
+| Fractales75 - Kiosk | 3.0 s | 1.8 s | 1.9 s | 47 % | 1.6× |
+| Genetic Menger | 1.5 s | 0.5 s | 0.6 s | 46 % | 2.5× |
+| genQuat helix mix | 4.0 s | 3.3 s | 1.8 s | 61 % | 2.2× |
+| HalTenny - Freak Of Nature | 2.5 s | 0.9 s | 1.2 s | – | 2.1× |
+| Hal-Tenny-Resistance (slow) | 18.9 s | 20.3 s | 8.7 s | 78 % | 2.2× |
+| Hyperben2 - Ozosphere tweak | 2.0 s | 0.8 s | 0.6 s | 56 % | 3.3× |
+| ImpossibleWorld dIFS | 399.8 s | 367.5 s | 99.0 s | 71 % | 4.0× |
+| InAndOutside box | 5.1 s | 2.7 s | 1.4 s | 68 % | 3.6× |
+| Insect Menger | 4.0 s | 63.0 s | 4.7 s | 93 % | 0.9× |
+| Jost1 - Tweak - New tiny temple | 3.5 s | 1.6 s | 1.0 s | 60 % | 3.5× |
+| julia on box | 4.6 s | 4.0 s | 1.6 s | 73 % | 2.9× |
 | JuliaSetSample | 3.0 s | 1.9 s | 2.2 s | – | 1.4× |
-| KentPress - Parameter 3 tweak fogits | 4.0 s | 2.7 s | 3.1 s | – | 1.3× |
-| KochSurf Sample 6 | 3.0 s | 1.3 s | 1.0 s | 71 % | 3.0× |
-| Lenord - ASurf 2 | 5.1 s | 2.4 s | 2.4 s | 42 % | 2.1× |
-| Lenord - Between Dark and Light | 5.6 s | 4.1 s | 2.6 s | 57 % | 2.2× |
-| Lenord - The Beanstalk | 3.5 s | 2.2 s | 2.6 s | – | 1.3× |
+| KentPress - Parameter 3 tweak fogits | 4.0 s | 2.5 s | 3.0 s | – | 1.3× |
+| KochSurf Sample 6 | 3.0 s | 1.4 s | 0.8 s | 75 % | 3.8× |
+| Lenord - ASurf 2 | 5.1 s | 1.7 s | 1.9 s | 48 % | 2.7× |
+| Lenord - Between Dark and Light | 5.6 s | 3.8 s | 2.1 s | 60 % | 2.7× |
+| Lenord - The Beanstalk | 3.5 s | 1.8 s | 2.0 s | – | 1.8× |
 | LightBulbMoon - A Fabulous Excuse | 3.5 s | 2.0 s | 1.6 s | – | 2.2× |
-| LightBulbMoon - No, Never | 5.1 s | 3.9 s | 1.4 s | 80 % | 3.6× |
-| Mandelwerk - Makin seashell | 12.0 s | 8.3 s | 8.5 s | 40 % | 1.4× |
-| Mandelwerk - TgladTetra inner spirals | 8.6 s | 4.8 s | 1.5 s | 79 % | 5.7× |
-| MarkJayBee - Curvichrome | 2.5 s | 1.2 s | 1.2 s | – | 2.1× |
-| material colors | 3.0 s | 1.3 s | 1.8 s | – | 1.7× |
-| Melting spot bloxx | 23.2 s | 19.8 s | 6.6 s | 75 % | 3.5× |
-| Mengerplus for MC | 3.5 s | 2.1 s | 2.6 s | – | 1.3× |
-| MengerTrees | 19.3 s | 15.2 s | 16.5 s | – | 1.2× |
-| MutaGenD4B12E71C70D4FD00357_canary~ | 7.1 s | 3.7 s | 3.9 s | – | 1.8× |
-| Oxnot - Flexing | 2.5 s | 0.8 s | 0.9 s | 32 % | 2.8× |
-| Oxnot - Shells | 5.6 s | 3.3 s | 3.7 s | – | 1.5× |
-| PaMonk - Ringlets | 5.1 s | 2.7 s | 2.9 s | – | 1.8× |
-| QuatP4hybridJulia | 1.5 s | 0.2 s | 0.5 s | – | 3.0× |
-| Rama - Elysium | 11.5 s | 10.4 s | 4.6 s | 76 % | 2.5× |
-| Recycledrelatives - Fractal Fan | 2.0 s | 0.5 s | 0.7 s | 23 % | 2.9× |
-| Recycledrelatives - Test for SurfMod | 4.6 s | 3.1 s | 3.2 s | – | 1.4× |
-| Rowratty - Spirals | 4.0 s | 2.8 s | 1.6 s | 57 % | 2.5× |
+| LightBulbMoon - No, Never | 5.1 s | 4.0 s | 1.2 s | 82 % | 4.2× |
+| Mandelwerk - Makin seashell | 12.0 s | 8.1 s | 8.1 s | 30 % | 1.5× |
+| Mandelwerk - TgladTetra inner spirals | 8.6 s | 4.5 s | 1.1 s | 80 % | 7.8× |
+| MarkJayBee - Curvichrome | 2.5 s | 1.3 s | 1.3 s | – | 1.9× |
+| material colors | 3.0 s | 1.4 s | 1.9 s | – | 1.6× |
+| Melting spot bloxx | 23.2 s | 20.4 s | 7.6 s | 73 % | 3.1× |
+| Mengerplus for MC | 3.5 s | 2.2 s | 2.5 s | – | 1.4× |
+| MengerTrees | 19.3 s | 15.4 s | 16.9 s | – | 1.1× |
+| MutaGenD4B12E71C70D4FD00357_canary~ | 7.1 s | 3.7 s | 4.1 s | – | 1.7× |
+| Oxnot - Flexing | 2.5 s | 0.7 s | 0.7 s | 59 % | 3.6× |
+| Oxnot - Shells | 5.6 s | 3.3 s | 3.6 s | – | 1.6× |
+| PaMonk - Ringlets | 5.1 s | 2.7 s | 2.8 s | – | 1.8× |
+| QuatP4hybridJulia | 1.5 s | 0.2 s | 0.4 s | – | 3.8× |
+| Rama - Elysium | 11.5 s | 10.6 s | 5.5 s | 74 % | 2.1× |
+| Recycledrelatives - Fractal Fan | 2.0 s | 0.4 s | 0.6 s | 31 % | 3.3× |
+| Recycledrelatives - Test for SurfMod | 4.6 s | 3.0 s | 3.1 s | – | 1.5× |
+| Rowratty - Spirals | 4.0 s | 2.5 s | 1.0 s | 69 % | 4.0× |
 | Sabine62 - Housing problem | 11.7 s | 10.5 s | 6.8 s | – | 1.7× |
-| spineJulia | 91.9 s | 71.9 s | 44.3 s | 45 % | 2.1× |
-| Surreal shell | 2.0 s | 0.6 s | 0.9 s | – | 2.2× |
-| Test8 | error in MB3D | 0.2 s | 0.4 s |  | – |
-| Theli-At - Black Mandelbulb | 1.0 s | 0.3 s | 0.7 s | 6 % | 1.4× |
-| Theli-At - Bone Menger using MH | 2.0 s | 0.9 s | 1.3 s | – | 1.5× |
-| Theli-At - MengerSpheres | 2.0 s | 0.6 s | 0.7 s | 41 % | 2.9× |
-| ThePearl dIFS | 2.5 s | 1.4 s | 1.2 s | 30 % | 2.1× |
-| TimeMachine | 1.0 s | 0.4 s | 0.8 s | – | 1.2× |
-| toricaleggs | 8.6 s | 5.5 s | 6.1 s | 40 % | 1.4× |
-| TreePlanet | 7.6 s | 6.6 s | 7.4 s | – | 1.0× |
-| UndeadAcademy tweak - Peacock in blue | 7.6 s | 4.5 s | 1.3 s | 75 % | 5.8× |
+| spineJulia | 91.9 s | 71.7 s | 50.7 s | 35 % | 1.8× |
+| Surreal shell | 2.0 s | 0.6 s | 0.8 s | – | 2.5× |
+| Test8 | error in MB3D | 0.1 s | 0.3 s |  | – |
+| Theli-At - Black Mandelbulb | 1.0 s | 0.2 s | 0.5 s | 22 % | 2.0× |
+| Theli-At - Bone Menger using MH | 2.0 s | 0.7 s | 1.1 s | – | 1.8× |
+| Theli-At - MengerSpheres | 2.0 s | 0.6 s | 0.6 s | 50 % | 3.3× |
+| ThePearl dIFS | 2.5 s | 1.4 s | 1.2 s | 25 % | 2.1× |
+| TimeMachine | 1.0 s | 0.5 s | 0.7 s | – | 1.4× |
+| toricaleggs | 8.6 s | 5.6 s | 6.6 s | 40 % | 1.3× |
+| TreePlanet | 7.6 s | 6.6 s | 7.5 s | – | 1.0× |
+| UndeadAcademy tweak - Peacock in blue | 7.6 s | 4.5 s | 1.2 s | 74 % | 6.3× |
 | Virtual tubes world (UndeadAcademy style) | 9.1 s | 6.9 s | 4.3 s | 49 % | 2.1× |
-| Wada basin - Reflect test | 6.6 s | 5.2 s | 4.7 s | 35 % | 1.4× |
-| Waste-and-tragedy - Mandalex | 5.1 s | 3.6 s | 4.0 s | – | 1.3× |
+| Wada basin - Reflect test | 6.6 s | 4.1 s | 4.6 s | 40 % | 1.4× |
+| Waste-and-tragedy - Mandalex | 5.1 s | 3.4 s | 3.8 s | – | 1.3× |
 
 </details>
 
