@@ -633,6 +633,14 @@ The graphics card support is the cargo feature `gpu` (part of the default
 build; a build with `--no-default-features` is the CPU renderer without
 dependencies).
 
+Before pushing: `tools/check.sh` runs the build and test steps of the CI
+workflow locally (the build with and without the default features, the
+tests, the graphics card tests; about 3 minutes once the build is cached).
+`tools/check.sh --install-hook` makes git run it before every push that
+changes the code (`src`, `examples`, `tests`, `Cargo.*`, `.cargo`,
+`.github`; pushes of text only are let through, `git push --no-verify`
+skips it once).
+
 Regenerating the formula translation (only needed when the formula set
 changes):
 
