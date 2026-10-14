@@ -346,6 +346,16 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.36](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.36) · 14 Oct 2026, 17:35 UTC
+
+| Commit | What it does |
+|---|---|
+| [`28c8984`](https://github.com/thr32423/mb3d-rs/commit/28c8984298778887840ed7f1c9c5ffde5ba88614) | Version number and release notes of this release |
+| [`e21e881`](https://github.com/thr32423/mb3d-rs/commit/e21e8815c3ec7851ec496f07a4162f5a3722abc4) | Keep the image's aspect ratio when the Scale buttons halve and double it |
+| [`3aad0f0`](https://github.com/thr32423/mb3d-rs/commit/3aad0f0ac89c69614e25ef190208886a23875ba9) | tools/check.sh: the CI build and test steps locally, optionally as a pre-push hook |
+| [`c1ebf8a`](https://github.com/thr32423/mb3d-rs/commit/c1ebf8aeb50121463a6c7c3177cd2243e1408543) | Build without the gpu feature again: the cfg back on march_mixed |
+| [`1de0747`](https://github.com/thr32423/mb3d-rs/commit/1de0747571f3986bf05893df7d569d44388bf89e) | README: updates section with v0.2.35 |
+
 ### [v0.2.35](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.35) · 14 Oct 2026, 08:23 UTC
 
 | Commit | What it does |
@@ -389,6 +399,8 @@ in UTC.
 | [`7ec1842`](https://github.com/thr32423/mb3d-rs/commit/7ec1842175e8fa89591c63163221f6af3d844116) | Windows under Wine: no resize loop; windows paint again |
 | [`e489830`](https://github.com/thr32423/mb3d-rs/commit/e489830140a7b6909ebc31da8616390b821be743) | README, Getting started: install with the download.sh one-liner |
 
+<details><summary>Older releases (v0.1.0 to v0.2.31)</summary>
+
 ### [v0.2.31](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.31) · 13 Oct 2026, 09:38 UTC
 
 | Commit | What it does |
@@ -413,8 +425,6 @@ in UTC.
 | [`6277242`](https://github.com/thr32423/mb3d-rs/commit/6277242dc937fc2731ada694c0b797dd9bb8bdb7) | Card: map formulas in double precision shaders |
 | [`78529a6`](https://github.com/thr32423/mb3d-rs/commit/78529a6a8b2bf10e054fcf93c703c578c9846b5c) | profile: print the formula error count with MAIN_ONLY |
 | [`3756b00`](https://github.com/thr32423/mb3d-rs/commit/3756b00a2000f00ccf3f6d1b9ae5d855418b4bc2) | README: full-size theme screenshots, opened by a click |
-
-<details><summary>Older releases (v0.1.0 to v0.2.30)</summary>
 
 ### [v0.2.30](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.30) · 12 Oct 2026, 18:52 UTC
 
