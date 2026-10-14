@@ -621,7 +621,10 @@ cargo build --release      # target/release/Mandelbulb3D and target/release/mb3d
 The programs are then in `target/release`. They look for `M3Formulas` and
 `M3Maps` next to themselves or in the current folder, so either copy MB3D's
 folders there (from [thargor6/mb3d](https://github.com/thargor6/mb3d) or an
-MB3D installation) or pass `--formulas` / `--maps`. With a release installed
+MB3D installation) or pass `--formulas` / `--maps`. `.cargo/config.toml`
+aligns functions and jump targets: without it the speed of some scenes
+depended on where the compiler happened to place the hot loops (an
+unrelated change made *Insect Menger* 15 % slower on the CPU). With a release installed
 by `download.sh` in `~/mb3d-rs`, its formulas and maps are found
 automatically, and so are those next to a parameter file's `M3Parameter`
 folder.

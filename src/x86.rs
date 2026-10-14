@@ -1132,9 +1132,6 @@ pub struct Machine {
     progs: std::sync::Arc<Vec<(u32, Prog)>>,
     pub host: Vec<(u32, HostFn)>,
     pub steps: u64,
-    /// Results of `fsincos` by the exact bits of the argument (see
-    /// [`Machine::sin_cos_cached`]).
-    trig: Box<[(u64, f64, f64); TRIG_SLOTS]>,
 }
 
 const TRIG_SLOTS: usize = 256;
@@ -1200,8 +1197,6 @@ impl Machine {
             progs: std::sync::Arc::new(Vec::new()),
             host: Vec::new(),
             steps: 0,
-            // every slot holds a true entry: sin_cos(0.0) = (0.0, 1.0)
-            trig: Box::new([(0, 0.0, 1.0); TRIG_SLOTS]),
         }
     }
 
@@ -1209,16 +1204,22 @@ impl Machine {
     /// fast when a formula takes the sine of a few angles over and over (a
     /// rounded sector number times a constant: Apollo2D-IFS' symmetry). The
     /// translator uses it only where the argument comes from such a value.
+    /// The results are kept per thread.
     #[inline]
     pub fn sin_cos_cached(&mut self, x: f64) -> (f64, f64) {
-        let b = x.to_bits();
-        let e = &mut self.trig[(b.wrapping_mul(0x9E37_79B9_7F4A_7C15) >> 56) as usize];
-        if e.0 == b {
-            return (e.1, e.2);
+        thread_local! {
+            // every slot holds a true entry: sin_cos(0.0) = (0.0, 1.0)
+            static TRIG: std::cell::RefCell<[(u64, f64, f64); TRIG_SLOTS]> = const { std::cell::RefCell::new([(0, 0.0, 1.0); TRIG_SLOTS]) };
         }
-        let (s, c) = x.sin_cos();
-        *e = (b, s, c);
-        (s, c)
+        let b = x.to_bits();
+        TRIG.with_borrow_mut(|t| {
+            let e = &mut t[(b.wrapping_mul(0x9E37_79B9_7F4A_7C15) >> 56) as usize];
+            if e.0 != b {
+                let (s, c) = x.sin_cos();
+                *e = (b, s, c);
+            }
+            (e.1, e.2)
+        })
     }
 
     /// Forget decoded instructions (after code was changed).
