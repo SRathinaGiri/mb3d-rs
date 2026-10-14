@@ -99,6 +99,27 @@ fn ang_set(o: u32, d: u32, a: i32) {
     }
 }
 
+// n steps of seed = seed * 214013 + 2531011 (mod 2^32) at once: the step
+// is the affine map (a, c); its powers are made by squaring, (a, c) twice
+// is (a * a, c * (a + 1)), so n steps cost about log2(n) rounds instead of n
+fn lcg_skip(seed: i32, n: u32) -> i32 {
+    var a = 214013u;
+    var c = 2531011u;
+    var ma = 1u;
+    var mc = 0u;
+    var k = n;
+    while (k != 0u) {
+        if ((k & 1u) != 0u) {
+            ma = ma * a;
+            mc = mc * a + c;
+        }
+        c = c * (a + 1u);
+        a = a * a;
+        k = k >> 1u;
+    }
+    return bitcast<i32>(ma * bitcast<u32>(seed) + mc);
+}
+
 // TAmbHiQCalc / TAmbHiQCalcT0 / TAmbHiQCalcR for one pixel on one level
 @compute @workgroup_size(8, 8)
 fn sample(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -138,9 +159,7 @@ fn sample(@builtin(global_invocation_id) gid: vec3<u32>) {
     // draws along the row; the numbers differ, the statistics do not)
     var seed = i32(0x24563487u + (y + 1u) * 0x324594A1u + P[PASS] * 0x5851F42Du);
     if (rnd) {
-        for (var k = 0u; k < x * 32u * steps; k++) {
-            seed = seed * 214013 + 2531011;
-        }
+        seed = lcg_skip(seed, x * 32u * steps);
     }
     let wlo = pi(WLO);
     let whi = pi(WHI);
