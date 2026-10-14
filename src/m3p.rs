@@ -74,6 +74,7 @@ fn matrix_from_quat(q: [f64; 4]) -> [[f64; 3]; 3] {
 
 /// Loads a `.m3p` or `.m3i` file, or a text file with MB3D text parameters.
 pub fn load(path: &std::path::Path) -> Result<M3pFile, String> {
+    crate::formulas::note_scene_file(path);
     let (raw, title) = read_raw(path)?;
     let mut m = parse(&raw)?;
     if let Some(t) = title {

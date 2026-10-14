@@ -10,7 +10,7 @@
 
 use crate::custom::CustomFormula;
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// Formula option types relevant for DE scaling / colouring heuristics
@@ -84,14 +84,49 @@ fn formula_dirs() -> &'static Mutex<Vec<PathBuf>> {
     })
 }
 
+/// Folders found from the parameter files that were loaded (searched after
+/// the regular ones).
+fn scene_formula_dirs() -> &'static Mutex<Vec<PathBuf>> {
+    static D: OnceLock<Mutex<Vec<PathBuf>>> = OnceLock::new();
+    D.get_or_init(|| Mutex::new(Vec::new()))
+}
+
+/// The folder `download.sh` installs the release into (`~/mb3d-rs`), last
+/// in the search: a program built from source finds the formulas there.
+fn installed_formula_dir() -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?;
+    Some(PathBuf::from(home).join("mb3d-rs").join("M3Formulas"))
+}
+
+/// Remembers the `M3Formulas` folder that belongs to a parameter file: in
+/// its own folder or the one above (MB3D keeps `M3Parameter` next to
+/// `M3Formulas`). Such folders are searched after the regular ones.
+pub fn note_scene_file(path: &Path) {
+    let path = std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf());
+    let Some(dir) = path.parent() else { return };
+    let mut found = scene_formula_dirs().lock().unwrap();
+    for c in [Some(dir.join("M3Formulas")), dir.parent().map(|p| p.join("M3Formulas"))].into_iter().flatten() {
+        if c.is_dir() && !found.contains(&c) {
+            found.push(c);
+        }
+    }
+}
+
 /// The formula search directories.
 pub fn formula_dir_list() -> Vec<PathBuf> {
-    formula_dirs().lock().unwrap().clone()
+    let mut v = formula_dirs().lock().unwrap().clone();
+    v.extend(scene_formula_dirs().lock().unwrap().iter().cloned());
+    if let Some(d) = installed_formula_dir() {
+        if d.is_dir() && !v.contains(&d) {
+            v.push(d);
+        }
+    }
+    v
 }
 
 /// Names of all `.m3f` formulas in the formula directories (sorted, unique).
 pub fn list_custom() -> Vec<String> {
-    let dirs = formula_dirs().lock().unwrap().clone();
+    let dirs = formula_dir_list();
     let mut v: Vec<String> = dirs
         .iter()
         .filter_map(|d| std::fs::read_dir(d).ok())
@@ -113,7 +148,7 @@ pub fn list_custom() -> Vec<String> {
 /// lists by it: 2/11 3Da, 4 4D, 5/6 4Da, -1/-2 Ads, 20 dIFS, 21/22 dIFS
 /// transformations, others 3D).
 pub fn list_custom_with_de() -> Vec<(String, i32)> {
-    let dirs = formula_dirs().lock().unwrap().clone();
+    let dirs = formula_dir_list();
     list_custom()
         .into_iter()
         .map(|name| {
@@ -150,7 +185,7 @@ pub fn forget_custom(name: &str) {
 
 /// The file of a custom formula, if found in the formula directories.
 pub fn custom_path(name: &str) -> Option<PathBuf> {
-    crate::m3f::find_formula(name, &formula_dirs().lock().unwrap().clone())
+    crate::m3f::find_formula(name, &formula_dir_list())
 }
 
 pub fn load_custom(name: &str) -> Result<Arc<crate::m3f::M3f>, String> {
@@ -158,7 +193,7 @@ pub fn load_custom(name: &str) -> Result<Arc<crate::m3f::M3f>, String> {
     if let Some(f) = cache.lock().unwrap().iter().find(|f| f.name.eq_ignore_ascii_case(name.trim())) {
         return Ok(f.clone());
     }
-    let dirs = formula_dirs().lock().unwrap().clone();
+    let dirs = formula_dir_list();
     let path = crate::m3f::find_formula(name, &dirs).ok_or_else(|| {
         format!(
             "formula '{name}' not found (searched {}); use --formulas DIR or MB3D_FORMULAS",

@@ -407,6 +407,9 @@ formulas.
 
 Formulas are looked up in `M3Formulas` next to the program, and also in
 `--formulas DIR`, `$MB3D_FORMULAS` and `M3Formulas` in the current folder.
+After those come `M3Formulas` in the folder of a loaded parameter file or
+the folder above it (MB3D keeps `M3Parameter` next to `M3Formulas`) and,
+last, `~/mb3d-rs/M3Formulas`, where `download.sh` installs the release.
 
 ## Scene files (`.m3s`)
 
@@ -597,7 +600,10 @@ cargo build --release      # target/release/Mandelbulb3D and target/release/mb3d
 The programs are then in `target/release`. They look for `M3Formulas` and
 `M3Maps` next to themselves or in the current folder, so either copy MB3D's
 folders there (from [thargor6/mb3d](https://github.com/thargor6/mb3d) or an
-MB3D installation) or pass `--formulas` / `--maps`.
+MB3D installation) or pass `--formulas` / `--maps`. With a release installed
+by `download.sh` in `~/mb3d-rs`, its formulas and maps are found
+automatically, and so are those next to a parameter file's `M3Parameter`
+folder.
 
 The graphics card support is the cargo feature `gpu` (part of the default
 build; a build with `--no-default-features` is the CPU renderer without

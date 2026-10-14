@@ -43,6 +43,7 @@ pub struct AnimFile {
 /// Loads a parameter file of any supported kind: `.m3p`, `.m3i`, MB3D text
 /// parameters or a `.m3s` scene.  Returns the scene and loader notes.
 pub fn load_scene(path: &Path) -> Result<(Scene, Vec<String>), String> {
+    crate::formulas::note_scene_file(path);
     let data = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
     scene_from_bytes(&path.to_string_lossy(), data)
 }

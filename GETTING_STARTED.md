@@ -54,7 +54,7 @@ installation) can be added with options; `mb3d` searches, in this order:
 
 | what | searched in |
 |---|---|
-| formulas | `--formulas DIR` (may be repeated), `$MB3D_FORMULAS` (a path list), `./M3Formulas`, `M3Formulas` next to the program |
+| formulas | `--formulas DIR` (may be repeated), `$MB3D_FORMULAS` (a path list), `./M3Formulas`, `M3Formulas` next to the program, next to the parameter file's folder, `~/mb3d-rs/M3Formulas` |
 | maps | `--maps DIR`, `$MB3D_MAPS`, `./M3Maps`, `M3Maps` next to the program, `M3Maps` next to every formula folder |
 
 In Mandelbulb3D, *Prefs ▸ Ini dirs* sets the folders, as in MB3D; they are

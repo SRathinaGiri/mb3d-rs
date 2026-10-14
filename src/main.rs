@@ -22,7 +22,8 @@ USAGE:
 SCENE_FILE is an INI-style scene description (see examples/*.m3s), a
 Mandelbulb3D parameter file (.m3p), image file (.m3i, parameters only) or a
 text file containing MB3D text parameters (Mandelbulb3Dv18{...}).
-Without a scene file the preset for --formula is rendered.
+Without a scene file the preset for --formula is rendered (run without any
+arguments, mb3d renders the \"Integer Power\" preset to mb3d.png).
 
 OPTIONS:
     -f, --formula <NAME>     Built-in formula preset (default: \"Integer Power\")
@@ -55,7 +56,10 @@ OPTIONS:
                              modes, see -s stereo_screen=width,distance,min) and combine
                              them: parallel, cross or anaglyph
     -q, --quiet              No progress output
-        --formulas <DIR>     Directory with .m3f formula files (also: MB3D_FORMULAS)
+        --formulas <DIR>     Directory with .m3f formula files (also: MB3D_FORMULAS;
+                             M3Formulas in the current folder, next to the program,
+                             next to the parameter file's folder and in ~/mb3d-rs
+                             is searched too)
         --maps <DIR>         Directory with maps and background pictures (also: MB3D_MAPS;
                              M3Maps next to the formula directory is searched too)
         --list-formulas      List the built-in formulas and their options
@@ -91,10 +95,9 @@ fn run() -> Result<(), String> {
     #[cfg(feature = "gpu")]
     mb3d::gpu::set_enabled(mb3d::gpu::default_on());
     let all: Vec<String> = std::env::args().skip(1).collect();
-    // no arguments at all: the help, not a render of the default preset
+    // no arguments at all: render the default preset (with a hint to the help)
     if all.is_empty() {
-        print!("{USAGE}");
-        return Ok(());
+        eprintln!("no scene file: rendering the \"Integer Power\" preset to mb3d.png (mb3d --help shows the options)");
     }
     match all.first().map(String::as_str) {
         Some("animate") | Some("anim") => return animate(&all[1..]),
@@ -221,7 +224,10 @@ fn run() -> Result<(), String> {
         // file (or preset) text + command line overrides, which are inserted
         // in front of the first [section]
         let mut text = match (&scene_file, &formula) {
-            (Some(f), _) => std::fs::read_to_string(f).map_err(|e| format!("{f}: {e}"))?,
+            (Some(f), _) => {
+                mb3d::formulas::note_scene_file(std::path::Path::new(f));
+                std::fs::read_to_string(f).map_err(|e| format!("{f}: {e}"))?
+            }
             (None, f) => Scene::preset(f.as_deref().unwrap_or("Integer Power"))?.to_text(),
         };
         if scene_file.is_some() {
