@@ -1043,7 +1043,7 @@ impl Form {
         out.push(raw(id, "OnDropDown", Ev::DropDown));
         let c = &self.ctl[id];
         let n = c.items.len() as i32;
-        let vis = c.drop_down_count.max(1).min(n.max(1));
+        let vis = paint::combo_rows(self, id).max(1);
         let hot = c.item_index;
         let top = if hot >= vis { (hot - vis / 2).clamp(0, (n - vis).max(0)) } else { 0 };
         self.popup = Some(Popup::Combo { id, hot, top });
@@ -1329,7 +1329,7 @@ impl Form {
             match p {
                 Popup::Combo { id, hot, top } => {
                     let n = self.ctl[id].items.len() as i32;
-                    let vis = (self.ctl[id].drop_down_count.max(1)).min(n.max(1));
+                    let vis = paint::combo_rows(self, id).max(1);
                     let h = match key {
                         vk::UP => (hot - 1).max(0),
                         vk::DOWN => (hot + 1).min(n - 1),

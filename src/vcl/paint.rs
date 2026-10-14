@@ -164,16 +164,34 @@ pub fn radio_items(f: &Form, id: Id) -> Vec<Rect> {
     (0..n).map(|k| Rect::new((k / per_col) * bw + 8, (k % per_col) * bh + top, bw, bh)).collect()
 }
 
-/// Rectangle of the drop-down list of a combo box (form coordinates).
+/// Rectangle of the drop-down list of a combo box (form coordinates).  The
+/// list is drawn inside the window: below the box, or above it when it
+/// does not fit below; when it fits neither, it gets the larger side and
+/// shows as many rows as fit (it scrolls).
 pub fn combo_list_rect(f: &Form, id: Id) -> Rect {
     let c = &f.ctl[id];
     let r = f.abs_rect(id);
     let ih = line_height(&f.font(id)) + 2;
     let n = (c.items.len() as i32).clamp(1, c.drop_down_count.max(1));
-    let h = n * ih + 2;
     let (_, fh) = f.client_size();
-    let y = if r.bottom() + h > fh && r.y - h >= 0 { r.y - h } else { r.bottom() };
-    Rect::new(r.x, y, r.w.max(40), h)
+    let (below, above) = (fh - r.bottom(), r.y);
+    let fits = |room: i32| ((room - 2) / ih).clamp(1, n);
+    let (rows, up) = if n * ih + 2 <= below {
+        (n, false)
+    } else if n * ih + 2 <= above {
+        (n, true)
+    } else if above > below {
+        (fits(above), true)
+    } else {
+        (fits(below), false)
+    };
+    let h = rows * ih + 2;
+    Rect::new(r.x, if up { r.y - h } else { r.bottom() }, r.w.max(40), h)
+}
+
+/// The rows the drop-down list of a combo box shows at once.
+pub fn combo_rows(f: &Form, id: Id) -> i32 {
+    (combo_list_rect(f, id).h - 2) / (line_height(&f.font(id)) + 2)
 }
 
 pub const MENU_ITEM_H: i32 = 22;

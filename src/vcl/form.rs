@@ -1005,4 +1005,32 @@ mod tests {
         assert!(!blue(px(&mut f, 10)));
         assert!(!blue(px(&mut f, 100)));
     }
+
+    /// A drop-down list that fits neither below nor above its box stays
+    /// inside the window and scrolls (the theme window's list of themes
+    /// ran out of the window: its last theme was cut off).
+    #[test]
+    fn combo_list_fits_the_window() {
+        let th = Theme::new(super::super::theme::Style::default());
+        let mut f = Form::from_dfm(include_str!("../app/forms/VisualThemesGUI.dfm"), &th).unwrap();
+        let c = f.id("StylesCmb").unwrap();
+        f.ctl[c].items = (0..8).map(|i| format!("Theme {i}")).collect();
+        f.ctl[c].set_item_index(0);
+        f.layout();
+        let (_, fh) = f.client_size();
+        let lr = super::super::paint::combo_list_rect(&f, c);
+        assert!(lr.y >= 0 && lr.bottom() <= fh, "{lr:?} in a window {fh} high");
+        let rows = super::super::paint::combo_rows(&f, c);
+        assert!(rows > 1 && rows < 8, "{rows} rows");
+        // the list opens and End scrolls to the last item
+        f.popup = None;
+        let r = f.abs_rect(c);
+        f.mouse_down(r.right() - 5, r.y + 5, MouseButton::Left, 0);
+        f.mouse_up(r.right() - 5, r.y + 5, MouseButton::Left, 0);
+        assert!(matches!(f.popup, Some(Popup::Combo { .. })));
+        f.key_down(super::super::input::vk::END, 0);
+        let Some(Popup::Combo { hot, top, .. }) = f.popup else { panic!("the list closed") };
+        assert_eq!(hot, 7);
+        assert!(top + rows > 7 && top >= 0, "top {top}, {rows} rows");
+    }
 }
