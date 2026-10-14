@@ -346,10 +346,14 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
-### Not released yet
+### [v0.2.35](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.35) · 14 Oct 2026, 08:23 UTC
 
 | Commit | What it does |
 |---|---|
+| [`023218c`](https://github.com/thr32423/mb3d-rs/commit/023218c80d0bd947da7896b475de9261cc522311) | Version number and release notes of this release |
+| [`b282bd9`](https://github.com/thr32423/mb3d-rs/commit/b282bd9c0019d449c105a3c71a789b94995693a3) | README: the speed tables measured again (80 example files) |
+| [`82d79b1`](https://github.com/thr32423/mb3d-rs/commit/82d79b17dd42170b7d822e0f56a28f6da627b975) | Build: align functions and jump targets; the sine cache per thread |
+| [`bcf5aa3`](https://github.com/thr32423/mb3d-rs/commit/bcf5aa32a2018e4186cd4a5c58ed09e759699f76) | README: updates section refreshed |
 | [`0de3ae6`](https://github.com/thr32423/mb3d-rs/commit/0de3ae6eedecbfc5050f55269ed1bcdca38356e9) | Translated formulas: exact shortcuts for the symmetry IFS angle and its sine |
 | [`f8975ce`](https://github.com/thr32423/mb3d-rs/commit/f8975ce691e512006df39140c6d903413ecfe49f) | Auto: shadows and DE occlusion on the card only when it marched clearly faster |
 | [`9f1ae05`](https://github.com/thr32423/mb3d-rs/commit/9f1ae05c9f48670684bd5580af781b2b3d4f670c) | README: an Updates section with every release, its time and its commits |
@@ -410,6 +414,8 @@ in UTC.
 | [`78529a6`](https://github.com/thr32423/mb3d-rs/commit/78529a6a8b2bf10e054fcf93c703c578c9846b5c) | profile: print the formula error count with MAIN_ONLY |
 | [`3756b00`](https://github.com/thr32423/mb3d-rs/commit/3756b00a2000f00ccf3f6d1b9ae5d855418b4bc2) | README: full-size theme screenshots, opened by a click |
 
+<details><summary>Older releases (v0.1.0 to v0.2.30)</summary>
+
 ### [v0.2.30](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.30) · 12 Oct 2026, 18:52 UTC
 
 | Commit | What it does |
@@ -417,8 +423,6 @@ in UTC.
 | [`35c7a5c`](https://github.com/thr32423/mb3d-rs/commit/35c7a5c1215a3f2e0af5fad82841bdbd8abcc6a9) | Version number and release notes of this release |
 | [`c133917`](https://github.com/thr32423/mb3d-rs/commit/c133917ba7f19f9a1fe804adb2cb63daeeb197aa) | Auto: every image shared between card and CPU, post passes on the card |
 | [`69f679b`](https://github.com/thr32423/mb3d-rs/commit/69f679b20f75904953fc1a045689b0b6e9aa2a7b) | Themes as XML files; six new themes |
-
-<details><summary>Older releases (v0.1.0 to v0.2.29)</summary>
 
 ### [v0.2.29](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.29) · 12 Oct 2026, 17:10 UTC
 
