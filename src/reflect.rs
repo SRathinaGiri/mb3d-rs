@@ -12,7 +12,7 @@
 
 use crate::calc::{CalcParams, Marcher};
 use crate::gbuffer::SiLight;
-use crate::lighting::{LightVals, PaintCamera, Plv, ShadeOpts};
+use crate::lighting::{LightVals, PaintCamera, Plv, Sample, ShadeOpts};
 use crate::math::*;
 use crate::scene::{CameraOptic, Scene};
 
@@ -1237,7 +1237,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
 
     /// One pixel of `TSRCalcThread.Execute`: returns the new colour, or
     /// None to keep the painted one.
-    fn pixel(&mut self, x: i32, y: i32, si: &SiLight) -> Option<[u8; 3]> {
+    fn pixel<S: Sample>(&mut self, x: i32, y: i32, si: &SiLight) -> Option<[S; 3]> {
         let (mzz, vf, sv, sd) = self.start_pixel(x, y, si)?;
         self.calc_ray(mzz, vf, sv, sd, 1);
         Some(self.final_colour())
@@ -1336,7 +1336,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
     }
 
     /// The colour of the light gathered by the rays of the pixel.
-    fn final_colour(&self) -> [u8; 3] {
+    fn final_colour<S: Sample>(&self) -> [S; 3] {
         let lv = self.c.lv;
         let mut t = self.t_amb.map(|v| v.clamp(0.0, 1.0));
         if lv.sqr {
@@ -1346,7 +1346,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             let g = if lv.gamma_h > 0 { t.map(|v| v.sqrt()) } else { t.map(|v| v * v) };
             t = add3(t, sc3(sub3(g, t), lv.s_gamma));
         }
-        t.map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8)
+        t.map(S::from_unit)
     }
 }
 
@@ -1358,7 +1358,7 @@ fn s3d(v: S3) -> Vec3 {
 /// `CalcSRT`: the reflection pass over the painted image `rgb` of the
 /// G-buffer `gbuf` (both covering `p.rect`).
 #[allow(clippy::too_many_arguments)]
-pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) {
+pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) {
     let mc = &sc.mc;
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
@@ -1423,7 +1423,7 @@ pub fn reflections(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
     let threads = threads.min(hu).max(1);
     let ctx = &ctx;
     std::thread::scope(|s| {
-        let mut per: Vec<Vec<(usize, &mut [u8])>> = (0..threads).map(|_| Vec::new()).collect();
+        let mut per: Vec<Vec<(usize, &mut [S])>> = (0..threads).map(|_| Vec::new()).collect();
         for (y, row) in rgb.chunks_mut(wu * 3).enumerate() {
             per[y % threads].push((y, row));
         }
@@ -1505,7 +1505,7 @@ struct RPix {
 /// surface sends a refracted and a reflected ray: every round marches the
 /// next ray of each pixel.
 #[cfg(feature = "gpu")]
-fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8], cam: &PaintCamera, lv: &LightVals, threads: usize) -> Result<(), String> {
+fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) -> Result<(), String> {
     use crate::gpu::{ReflectLight, ReflectOpts, ReflectTask};
     let mc = &sc.mc;
     let mid = sc.stereo_mid();
@@ -1957,7 +1957,7 @@ fn reflections_gpu(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [u8],
             let g = if lv.gamma_h > 0 { t.map(|v| v.sqrt()) } else { t.map(|v| v * v) };
             t = add3(t, sc3(sub3(g, t), lv.s_gamma));
         }
-        let c = t.map(|v| (v * 255.0).round().clamp(0.0, 255.0) as u8);
+        let c = t.map(S::from_unit);
         rgb[i * 3..i * 3 + 3].copy_from_slice(&c);
     }
     Ok(())

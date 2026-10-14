@@ -36,6 +36,8 @@ It comes as two programs:
 * **A command line program** for everything that needs no window.
 * **Videos of animations**: the Animation maker can join the frames
   into an MP4 or WebM video as well (see [Videos](#videos-of-animations)).
+* **16 bit pictures**: PNG files with 65,536 instead of 256 steps per
+  colour, for editing without banding (see [16 bit](#16-bit-pictures)).
 
 ## Download
 
@@ -300,6 +302,20 @@ once: on Linux from the distribution (`sudo apt install ffmpeg`,
 Windows with `winget install ffmpeg` or from [ffmpeg.org](https://ffmpeg.org).
 Without it the program says so before rendering starts.
 
+### 16 bit pictures
+
+MB3D saves 8 bit pictures: 256 steps per colour. That is plenty to look
+at, but when a picture is edited afterwards — brightness, contrast,
+curves — smooth areas such as the background or fog break into visible
+bands. **Save pic ▸ PNG** offers a second file type, **PNG 16 bit
+colour**: the colours as the program calculated them, before they are
+rounded to 256 steps, with all shadows, reflections and depth of field.
+The file looks the same, and stays smooth when it is edited.
+
+<a href="docs/img/png16_compare.png"><img src="docs/img/png16_compare.png" width="760" alt="A background gradient after a strong contrast increase: steps in 8 bit, smooth in 16 bit"></a>
+
+<a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
+
 Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
 does. Not in this program: MB3D's script editor, the "shortdistance check
 DE" option, the random light strokes and the ambient light pass of the
@@ -318,6 +334,7 @@ in the unpacked folder, and type `mb3d` instead of `./mb3d`):
 ./mb3d City.m3p --tiles 4x4 -o city.png    # a big picture in tiles
 ./mb3d --cpu City.m3p -o city.png          # processor only
 ./mb3d --card City.m3p -o city.png         # graphics card only
+./mb3d City.m3p --bits 16 -o city16.png    # 16 bit colour
 ./mb3d --help                              # all options
 ```
 

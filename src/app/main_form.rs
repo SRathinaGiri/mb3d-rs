@@ -1582,7 +1582,7 @@ fn save_pic_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str) {
         return;
     }
     let (filter, ext) = match what {
-        "png" => ("PNG (*.png)|*.png|Bitmap (*.bmp)|*.bmp", "png"),
+        "png" => ("PNG (*.png)|*.png|PNG 16 bit colour (*.png)|*.png|Bitmap (*.bmp)|*.bmp", "png"),
         "jpg" => ("JPEG (*.jpg)|*.jpg", "jpg"),
         "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png", "jpg"),
         _ => ("PNG 16 bit (*.png)|*.png", "png"),
@@ -1626,6 +1626,28 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     };
     match res {
         Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
+    }
+}
+
+/// "PNG 16 bit colour": the picture painted again from the kept G-buffer
+/// with the colours as calculated (before the rounding to 8 bit), reduced
+/// by the viewing scale as the 8 bit picture.
+fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+    let Some(b) = app.eng.base() else {
+        app.message(ui, "Calculate the image first.");
+        return;
+    };
+    let rgb = crate::render::paint16(&b.scene, &b.params, &b.post);
+    let s = app.main.image_scale.max(1) as usize;
+    let (rgb, w, h) = if s > 1 { crate::render::downsample(&rgb, b.w, b.h, s) } else { (rgb, b.w, b.h) };
+    let mut data = crate::png::encode_rgb16(w, h, &rgb);
+    if ui.checked(F, "CheckBox13") {
+        let text = crate::m3p::raw_to_text(&crate::m3p::write(&b.scene), ui.f(F).caption());
+        data = crate::png::with_text(data, "Comment", &text);
+    }
+    match std::fs::write(path, data) {
+        Ok(()) => app.message(ui, &format!("Saved {} (16 bit colour)", path.display())),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -1691,7 +1713,12 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             if let Some(d) = p.parent() {
                 app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
             }
-            save_image(app, ui, p)
+            let png = p.extension().is_some_and(|e| e.eq_ignore_ascii_case("png"));
+            if what == "savepng" && ui.filter_index == 2 && png {
+                save_image16(app, ui, p)
+            } else {
+                save_image(app, ui, p)
+            }
         }
         ("savejpgp", DialogResult::File(Some(p))) => {
             app.make_scene(ui);

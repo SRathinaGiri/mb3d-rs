@@ -418,6 +418,7 @@ impl Ui {
         }
         let tag = d.tag.clone();
         let multi = d.multi;
+        self.filter_index = self.forms[i].c("TypeCombo").item_index.max(0) as usize + 1;
         self.forms[i].modal_result = MR_OK;
         let res = if multi { DialogResult::Files(vec![p]) } else { DialogResult::File(Some(p)) };
         self.events.push_back(Event { form: String::new(), sender: tag, handler: String::new(), ev: Ev::DialogResult(res) });

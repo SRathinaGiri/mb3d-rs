@@ -8,6 +8,7 @@
 //! run in 1–4 passes with growing radius.
 
 use crate::gbuffer::SiLight;
+use crate::lighting::Sample;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DofParams {
@@ -75,9 +76,9 @@ fn focus(p: &DofParams, pass: u32, sorted: bool, width: usize, height: usize, fo
     (ap, de_stop_factor, z_sharp, r_sub)
 }
 
-/// Applies all passes of the depth of field to `rgb` (8 bit RGB).
+/// Applies all passes of the depth of field to `rgb` (8 or 16 bit RGB).
 #[allow(clippy::too_many_arguments)]
-pub fn apply(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc_mul: f64, zcorr: f64, fov_y_deg: f64, p: &DofParams) {
+pub fn apply<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc_mul: f64, zcorr: f64, fov_y_deg: f64, p: &DofParams) {
     let zc = ZConv { zc_mul_inv: 1.0 / zc_mul, zcorr_inv: 1.0 / zcorr };
     for pass in 0..p.passes.clamp(1, 4) as u32 {
         if p.forward {
@@ -88,14 +89,9 @@ pub fn apply(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc_m
     }
 }
 
-#[inline]
-fn to_u8(v: f32) -> u8 {
-    v.clamp(0.0, 255.0).round_ties_even() as u8
-}
-
 /// `doDOF`
 #[allow(clippy::too_many_arguments)]
-fn dof_forward(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32) {
+fn dof_forward<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32) {
     let (ap, dsf, z_sharp, r_sub) = focus(p, pass, false, width, height, fov);
     let clip_r = p.clip_r.clamp(0.1, 1000.0);
     let n = width * height;
@@ -121,7 +117,7 @@ fn dof_forward(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc
             let i = (y * wi + x) as usize;
             let rr = rbuf[i];
             let s_ms = (rr.abs() + 1.0).powi(2);
-            let c = [rgb[i * 3] as f32, rgb[i * 3 + 1] as f32, rgb[i * 3 + 2] as f32];
+            let c = [rgb[i * 3].to_255(), rgb[i * 3 + 1].to_255(), rgb[i * 3 + 2].to_255()];
             let sw = 0.5 / s_ms;
             let r = (rr.abs() + 0.5).round_ties_even() as i64;
             let xa = (-r).max(-x);
@@ -153,14 +149,14 @@ fn dof_forward(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc
     for i in 0..n {
         let m = if transp[i] < 1e-10 { 1e10 } else { 1.0 / transp[i] };
         for k in 0..3 {
-            rgb[i * 3 + k] = to_u8(col[i * 3 + k] * m);
+            rgb[i * 3 + k] = S::from_dof(col[i * 3 + k] * m);
         }
     }
 }
 
 /// `doDOFsort`
 #[allow(clippy::too_many_arguments)]
-fn dof_sorted(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32) {
+fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32) {
     let (ap, dsf, z_sharp, r_sub) = focus(p, pass, true, width, height, fov);
     let clip_r = p.clip_r.clamp(0.1, 1000.0);
     let n = width * height;
@@ -194,7 +190,7 @@ fn dof_sorted(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc:
     for &(iz, idx) in &list {
         let i = idx as usize;
         let (x, y) = ((i % width) as i64, (i / width) as i64);
-        let c = [rgb[i * 3] as f32, rgb[i * 3 + 1] as f32, rgb[i * 3 + 2] as f32];
+        let c = [rgb[i * 3].to_255(), rgb[i * 3 + 1].to_255(), rgb[i * 3 + 2].to_255()];
         let w = zc.steps((8388352 - iz as i64) as f64);
         let mut s_radius = (w - z_sharp) * ap / (1.0 + w * dsf);
         let b_descale = s_radius < 0.0;
@@ -249,7 +245,7 @@ fn dof_sorted(rgb: &mut [u8], gbuf: &[SiLight], width: usize, height: usize, zc:
     for i in 0..n {
         let m = if transp[i] < 1e-10 { 1e10 } else { 1.0 / transp[i] };
         for k in 0..3 {
-            rgb[i * 3 + k] = to_u8(col[i * 3 + k] * m);
+            rgb[i * 3 + k] = S::from_dof(col[i * 3 + k] * m);
         }
     }
 }

@@ -950,28 +950,34 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 /// Paints the G-buffer with the scene lighting.
 pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with(sc, p, gbuf, true).0
+    paint_with::<u8>(sc, p, gbuf, true).0
+}
+
+/// [`paint`] in 16 bit per colour channel (the colours as calculated,
+/// before MB3D's rounding to 8 bit): `mb3d --bits 16`, "PNG 16 bit colour".
+pub fn paint16(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u16> {
+    paint_with::<u16>(sc, p, gbuf, true).0
 }
 
 /// [`paint`], and the time of the reflections (None without them).
 pub fn paint_timed(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> (Vec<u8>, Option<f64>) {
-    paint_with(sc, p, gbuf, true)
+    paint_with::<u8>(sc, p, gbuf, true)
 }
 
 /// [`paint`] without the reflections and the depth of field: the preview
 /// of the rows calculated so far (both need the whole image, and the
 /// reflections march again, taking as long as the calculation itself).
 pub fn paint_preview(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with(sc, p, gbuf, false).0
+    paint_with::<u8>(sc, p, gbuf, false).0
 }
 
-fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> (Vec<u8>, Option<f64>) {
+fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> (Vec<S>, Option<f64>) {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);
     let lv = light_vals(sc, &l, &cam);
     let threads = thread_count(sc).min(h as usize).max(1);
-    let mut rgb = vec![0u8; (w * h * 3) as usize];
+    let mut rgb = vec![S::default(); (w * h * 3) as usize];
     let chunk_rows = ((h as usize) + threads - 1) / threads;
     std::thread::scope(|s| {
         for (ci, chunk) in rgb.chunks_mut(chunk_rows * w as usize * 3).enumerate() {
@@ -983,7 +989,7 @@ fn paint_with(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> (Vec<
                 for (ry, row) in chunk.chunks_mut(w as usize * 3).enumerate() {
                     let y = y0 + ry;
                     for x in 0..w as usize {
-                        let c = lv.pixel_color(&gbuf[y * w as usize + x], x as i32 + x0, y as i32 + ry0, cam);
+                        let c = lv.pixel_color_s::<S>(&gbuf[y * w as usize + x], x as i32 + x0, y as i32 + ry0, cam);
                         row[x * 3..x * 3 + 3].copy_from_slice(&c);
                     }
                 }
@@ -1045,9 +1051,9 @@ pub fn render(sc: &Scene, progress: &(dyn Fn(usize, usize) + Sync)) -> Result<Re
 
 /// Box filter downsampling of an RGB image by an integer factor (used for
 /// anti-aliasing: render at n times the size, then downsample).
-pub fn downsample(rgb: &[u8], w: usize, h: usize, n: usize) -> (Vec<u8>, usize, usize) {
+pub fn downsample<S: Copy + Default + Into<u32> + TryFrom<u32>>(rgb: &[S], w: usize, h: usize, n: usize) -> (Vec<S>, usize, usize) {
     let (w2, h2) = (w / n, h / n);
-    let mut out = vec![0u8; w2 * h2 * 3];
+    let mut out = vec![S::default(); w2 * h2 * 3];
     let nn = (n * n) as u32;
     for y in 0..h2 {
         for x in 0..w2 {
@@ -1055,10 +1061,10 @@ pub fn downsample(rgb: &[u8], w: usize, h: usize, n: usize) -> (Vec<u8>, usize, 
                 let mut sum = 0u32;
                 for dy in 0..n {
                     for dx in 0..n {
-                        sum += rgb[((y * n + dy) * w + x * n + dx) * 3 + c] as u32;
+                        sum += rgb[((y * n + dy) * w + x * n + dx) * 3 + c].into();
                     }
                 }
-                out[(y * w2 + x) * 3 + c] = ((sum + nn / 2) / nn) as u8;
+                out[(y * w2 + x) * 3 + c] = S::try_from((sum + nn / 2) / nn).unwrap_or_default();
             }
         }
     }

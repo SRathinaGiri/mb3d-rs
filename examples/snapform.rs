@@ -2,7 +2,8 @@
 //! layouts without clicking through the windows).
 //! `cargo run --release --example snapform -- [APP ARGS] -- STEPS...` with
 //! the steps `show:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
-//! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`,
+//! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`,
+//! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
 //! a running calculation; `lagwait:SECONDS` also prints the longest
 //! blocking of the window), `print:FORM:CONTROL` (its caption) and `led`
@@ -23,6 +24,13 @@ fn main() {
             "click" => ui.click(p[1], p[2]),
             "text" => ui.set_text(p[1], p[2], &p[3..].join(":")),
             "check" => ui.set_checked(p[1], p[2], p[3] == "1"),
+            "item" => ui.set_item_index(p[1], p[2], p[3].parse().unwrap()),
+            "items" => ui.set_items(p[1], p[2], p[3..].join(":").split('|').filter(|s| !s.is_empty()).map(String::from).collect()),
+            "drop" => {
+                let f = ui.fm(p[1]);
+                let id = f.id(p[2]).unwrap();
+                f.popup = Some(mb3d::vcl::form::Popup::Combo { id, hot: f.ctl[id].item_index, top: 0 });
+            }
             "wait" => {
                 let t = std::time::Instant::now();
                 while t.elapsed().as_secs_f64() < p[1].parse().unwrap() {

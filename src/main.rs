@@ -34,6 +34,9 @@ OPTIONS:
         --aa <N>             Anti-aliasing: render N times larger and downsample
     -o, --output <FILE>      Output PNG (default: mb3d.png)
         --depth <FILE>       Also write a 16 bit depth map PNG
+        --bits <8|16>        Colour depth of the PNG: 16 keeps the colours as calculated,
+                             before MB3D's rounding to 8 bit (smooth gradients for
+                             editing; single pictures, not tiles or stereo pairs)
     -s, --set <KEY=VALUE>    Override a scene key (may be repeated)
     -t, --threads <N>        Number of threads (default: all cores)
         --auto-color         Fit the colour range to the rendered surface
@@ -120,6 +123,7 @@ fn run() -> Result<(), String> {
     let mut render_too = false;
     let mut scale: Option<f64> = None;
     let mut aa: usize = 1;
+    let mut bits16 = false;
     let mut stereo_pair: Option<mb3d::render::StereoLayout> = None;
     while let Some(a) = args.next() {
         let mut val = |name: &str| args.next().ok_or_else(|| format!("{name} needs a value"));
@@ -145,6 +149,13 @@ fn run() -> Result<(), String> {
             "-s" | "--set" => overrides.push(val(&a)?),
             "-o" | "--output" => output = val(&a)?,
             "--depth" => depth = Some(val(&a)?),
+            "--bits" => {
+                bits16 = match val(&a)?.trim() {
+                    "8" => false,
+                    "16" => true,
+                    _ => return Err("--bits is 8 or 16".into()),
+                }
+            }
             "--formulas" => mb3d::formulas::add_formula_dir(val(&a)?.into()),
             "--maps" => mb3d::maps::add_map_dir(val(&a)?.into()),
             "--auto-color" => auto_color = true,
@@ -298,6 +309,12 @@ fn run() -> Result<(), String> {
             let _ = std::io::stderr().flush();
         }
     };
+    if bits16 && (stereo_pair.is_some() || scene.tiling.is_some()) {
+        return Err("--bits 16 is for single pictures (not with --stereo-pair or --tiles)".into());
+    }
+    if bits16 && !output.to_ascii_lowercase().ends_with(".png") {
+        return Err("--bits 16 writes PNG files: give an output file ending in .png".into());
+    }
     if let Some(layout) = stereo_pair {
         if scene.tiling.is_some() {
             return Err("--stereo-pair does not work with tiles".into());
@@ -368,7 +385,7 @@ fn run() -> Result<(), String> {
             write_depth(&d, g, res.width, res.height)?;
         }
     } else {
-        render_single(&mut scene, auto_color, stats, quiet, aa, &output, depth, &progress)?;
+        render_single(&mut scene, auto_color, stats, quiet, aa, bits16, &output, depth, &progress)?;
     }
     let errs = mb3d::iteration::CUSTOM_ERRORS.load(std::sync::atomic::Ordering::Relaxed);
     if errs > 0 {
@@ -387,6 +404,7 @@ fn render_single(
     stats: bool,
     quiet: bool,
     aa: usize,
+    bits16: bool,
     output: &str,
     depth: Option<String>,
     progress: &(dyn Fn(usize, usize) + Sync),
@@ -403,7 +421,8 @@ fn render_single(
             );
         }
     }
-    let rgb = mb3d::render::paint(scene, &params, &gbuffer);
+    // 16 bit: the colours before the rounding to 8 bit
+    let (rgb, rgb16) = if bits16 { (Vec::new(), Some(mb3d::render::paint16(scene, &params, &gbuffer))) } else { (mb3d::render::paint(scene, &params, &gbuffer), None) };
     let res = mb3d::RenderResult {
         width: scene.width as usize,
         height: scene.height as usize,
@@ -433,12 +452,17 @@ fn render_single(
             eprintln!("  dof_focus for the image centre: {:.5}", z / res.width as f64);
         }
     }
-    let (rgb, ow, oh) = if aa > 1 {
-        mb3d::render::downsample(&res.rgb, res.width, res.height, aa)
+    if let Some(rgb16) = rgb16 {
+        let (px, ow, oh) = if aa > 1 { mb3d::render::downsample(&rgb16, res.width, res.height, aa) } else { (rgb16, res.width, res.height) };
+        std::fs::write(output, mb3d::png::encode_rgb16(ow, oh, &px)).map_err(|e| format!("{output}: {e}"))?;
     } else {
-        (res.rgb.clone(), res.width, res.height)
-    };
-    mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+        let (rgb, ow, oh) = if aa > 1 {
+            mb3d::render::downsample(&res.rgb, res.width, res.height, aa)
+        } else {
+            (res.rgb.clone(), res.width, res.height)
+        };
+        mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+    }
     if let Some(d) = depth {
         write_depth(&d, &res.gbuffer, res.width, res.height)?;
     }

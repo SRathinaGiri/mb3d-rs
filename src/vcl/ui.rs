@@ -60,6 +60,9 @@ pub struct Ui {
     close_pending: Vec<usize>,
     /// internal handlers of the toolkit's own dialogs
     pub(crate) dialogs: HashMap<usize, super::dialogs::DialogState>,
+    /// the file type chosen in the last file dialog (1 = the first of its
+    /// filter, as TOpenDialog.FilterIndex after Execute)
+    pub filter_index: usize,
     pub busy: bool,
     /// The user's interface scale (1 = the size of the .dfm files), on top
     /// of the screen's scale factor: windows, controls and text all grow
@@ -88,6 +91,7 @@ impl Ui {
             modal_stack: Vec::new(),
             close_pending: Vec::new(),
             dialogs: HashMap::new(),
+            filter_index: 1,
             busy: false,
             ui_scale: 1.0,
         }

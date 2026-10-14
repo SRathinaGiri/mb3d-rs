@@ -12,6 +12,60 @@ use crate::gbuffer::SiLight;
 use crate::math::{fast_int_pow, make_spline_coeff};
 use std::sync::OnceLock;
 
+/// A colour channel of a painted image: 8 bit (the pictures as MB3D
+/// paints them) or 16 bit (`mb3d --bits 16`, "PNG 16 bit colour").  The
+/// colours are calculated in floating point; each stage rounds its result
+/// in its own way (as MB3D does for 8 bit), so the 8 bit images stay
+/// exactly as before.
+pub trait Sample: Copy + Default + Send + Sync + 'static {
+    /// a painted colour (0 to 255 for 8 bit: `CalcPixelColor2`)
+    fn from_paint(v: f32) -> Self;
+    /// a colour of the reflection pass (0 to 1)
+    fn from_unit(t: f32) -> Self;
+    /// a colour of the depth of field (0 to 255 for 8 bit)
+    fn from_dof(v: f32) -> Self;
+    /// the value on the 8 bit scale (0 to 255)
+    fn to_255(self) -> f32;
+}
+
+impl Sample for u8 {
+    #[inline]
+    fn from_paint(v: f32) -> u8 {
+        v.round() as u8
+    }
+    #[inline]
+    fn from_unit(t: f32) -> u8 {
+        (t * 255.0).round().clamp(0.0, 255.0) as u8
+    }
+    #[inline]
+    fn from_dof(v: f32) -> u8 {
+        v.clamp(0.0, 255.0).round_ties_even() as u8
+    }
+    #[inline]
+    fn to_255(self) -> f32 {
+        self as f32
+    }
+}
+
+impl Sample for u16 {
+    #[inline]
+    fn from_paint(v: f32) -> u16 {
+        (v * 257.0).round() as u16
+    }
+    #[inline]
+    fn from_unit(t: f32) -> u16 {
+        (t * 65535.0).round().clamp(0.0, 65535.0) as u16
+    }
+    #[inline]
+    fn from_dof(v: f32) -> u16 {
+        (v * 257.0).clamp(0.0, 65535.0).round_ties_even() as u16
+    }
+    #[inline]
+    fn to_255(self) -> f32 {
+        self as f32 / 257.0
+    }
+}
+
 /// One light source (`TLight8`, global lights only).
 #[derive(Clone, Debug)]
 pub struct Light {
@@ -1509,6 +1563,11 @@ impl LightVals {
 
     /// `CalcPixelColor2` for pixel (x, y). Returns RGB.
     pub fn pixel_color(&self, si: &SiLight, x: i32, y: i32, cam: &PaintCamera) -> [u8; 3] {
+        self.pixel_color_s(si, x, y, cam)
+    }
+
+    /// [`Self::pixel_color`] in 8 or 16 bit.
+    pub fn pixel_color_s<S: Sample>(&self, si: &SiLight, x: i32, y: i32, cam: &PaintCamera) -> [S; 3] {
         let plv = self.plv_for_pixel(si, x, y, cam);
         let sh = self.shade(si, &plv, cam, &ShadeOpts::default());
         let out = sh.light;
@@ -1526,7 +1585,7 @@ impl LightVals {
             };
             c = lerp(g, c, self.s_gamma);
         }
-        [c[0].round() as u8, c[1].round() as u8, c[2].round() as u8]
+        [S::from_paint(c[0]), S::from_paint(c[1]), S::from_paint(c[2])]
     }
 
     /// The paint values of a pixel of the G-buffer (`CalcViewVec`,

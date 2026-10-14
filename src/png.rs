@@ -257,6 +257,12 @@ pub fn with_text(mut png: Vec<u8>, key: &str, text: &str) -> Vec<u8> {
     png
 }
 
+/// PNG file contents of a 16 bit RGB image.
+pub fn encode_rgb16(width: usize, height: usize, rgb: &[u16]) -> Vec<u8> {
+    let bytes: Vec<u8> = rgb.iter().flat_map(|v| v.to_be_bytes()).collect();
+    encode(width, height, &bytes, 2, 16, 6)
+}
+
 /// PNG file contents of an 8 bit greyscale image.
 pub fn encode_gray8(width: usize, height: usize, gray: &[u8]) -> Vec<u8> {
     encode(width, height, gray, 0, 8, 1)
@@ -275,6 +281,14 @@ pub fn write_gray16(path: &str, width: usize, height: usize, gray: &[u16]) -> st
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rgb16_reads_back() {
+        let px: Vec<u16> = vec![0, 1, 65535, 300, 40000, 12345];
+        let img = crate::image::decode(&encode_rgb16(2, 1, &px)).unwrap();
+        assert!(img.deep);
+        assert_eq!(img.data.iter().flat_map(|p| [p[0], p[1], p[2]]).collect::<Vec<u16>>(), px);
+    }
 
     #[test]
     fn crc_known_value() {

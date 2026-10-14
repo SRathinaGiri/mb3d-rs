@@ -12,7 +12,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Lights, volumetric light, cutting planes, depth of field](#lights-volumetric-light-cutting-planes-depth-of-field)
 - [Reflections and transparency, normals on the z-buffer](#reflections-and-transparency-normals-on-the-z-buffer)
 - [Hybrids, inside rendering, maps](#hybrids-inside-rendering-maps)
-- [Output: videos](#output-videos)
+- [Output: videos, 16 bit pictures](#output-videos-16-bit-pictures)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Building from source](#building-from-source)
 
@@ -556,7 +556,7 @@ result equals an untiled render. A single tile is calculated with a border of
 24 pixels for the image space effects, like MB3D's big-render tiles, and the
 tile files that MB3D writes for big renders are rendered as that tile.
 
-## Output: videos
+## Output: videos, 16 bit pictures
 
 `mb3d animate ... --video FILE [--fps N]` and the Animation maker's *Also
 make a video* (`src/video.rs`) run ffmpeg on the finished frame images
@@ -569,6 +569,19 @@ odd sizes are padded by one pixel. By extension: `.mp4`/`.mov` H.264
 anything else ffmpeg's default for it (e.g. `.gif`). The window writes
 `<output folder>/<project name>.mp4|.webm` and keeps its settings in the
 ini (`AniVideo`, `AniVideoFormat`, `AniVideoFps`).
+
+16 bit colour (`mb3d --bits 16`, single pictures; the window's *PNG 16 bit
+colour* file type): painting, the reflection pass and the depth of field
+are generic over the sample type (`lighting::Sample`, `u8` and `u16`;
+`render::paint16`). They calculate in `f32` and round only at the end of
+each stage, every stage as MB3D does for 8 bit (`from_paint`, `from_unit`,
+`from_dof`), so the 8 bit pictures are bit for bit as before; 16 bit keeps
+the value times 257. A 16 bit picture rounded to 8 bit differs from the
+8 bit one by at most 1 (about 3 to 5 % of the values: 8 bit rounds between
+the stages). The window paints the 16 bit picture again from the kept
+G-buffer when it is saved (with the reflections, they are marched again),
+reduced by the viewing scale like the 8 bit one. `png::encode_rgb16`
+writes it.
 
 ## Known differences and gaps
 
