@@ -156,18 +156,41 @@ fn calculate_inner(
                     pd.gpu_double = true;
                     Some((pd, vec![std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false))]))
                 };
-                let (mut gbuf, n_card, switched) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe)?;
+                let t_march = Instant::now();
+                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe)?;
+                let march_secs = t_march.elapsed().as_secs_f64();
+                let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+                let rate = |n: usize, t: f64| n as f64 / t.max(1e-6);
+                // The shadows and the DE occlusion march the same formula:
+                // they go to the card when it marched clearly faster than the
+                // CPU threads (rows per second while it marched). Measured
+                // over the example files, at a ratio below 1.5 the CPU did
+                // them about as fast or faster (DEcomb1: 20.6 s on the card,
+                // 12.2 s on the CPU), above it the card won (up to 15 times).
+                let card_posts = n_card > 0 && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
+                if timing {
+                    eprintln!(
+                        "  march (card and CPU): {march_secs:.2} s, {n_card} of {h} rows on the card in {card_secs:.2} s; rows/s card {:.1}, CPU {:.1}",
+                        rate(n_card, card_secs),
+                        rate(h - n_card, march_secs)
+                    );
+                }
                 if let Some((pd, f)) = switched {
                     p = pd;
                     flags = f;
                 }
-                if n_card > 0 && (job.shadows.is_some() || job.deao.is_some()) {
+                if card_posts && (job.shadows.is_some() || job.deao.is_some()) {
                     // the post passes' pipelines compiled with the march's
                     while !flags.iter().all(|f| f.load(Ordering::SeqCst)) && !cancel() {
                         std::thread::sleep(std::time::Duration::from_millis(10));
                     }
                     let mut s = crate::gpu::last_status();
-                    match crate::gpu::post_on_card(&p, &mut gbuf, &job, cancel) {
+                    let t_post = Instant::now();
+                    let r = crate::gpu::post_on_card(&p, &mut gbuf, &job, cancel);
+                    if timing {
+                        eprintln!("  shadows and DE occlusion on the card: {:.2} s", t_post.elapsed().as_secs_f64());
+                    }
+                    match r {
                         Ok(()) => {
                             if job.shadows.is_some() {
                                 s.push_str(" +shadows");
@@ -447,6 +470,10 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
 /// meet.  Returns the G-buffer and the number of rows the card marched
 /// (0: it never joined, or its rows were redone on the CPU).
 #[cfg(feature = "gpu")]
+/// How much faster than the CPU threads the card must march for Auto to give
+/// it the shadows and the DE occlusion (see `calculate_inner`).
+const POST_ON_CARD_RATIO: f64 = 1.5;
+
 fn march_mixed(
     p: &CalcParams,
     threads: usize,
@@ -455,8 +482,10 @@ fn march_mixed(
     sink: Option<RowSink>,
     ready: &std::sync::atomic::AtomicBool,
     on_ready: &(dyn Fn() -> Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)> + Sync),
-) -> Result<(Vec<SiLight>, usize, Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)>), String> {
+) -> Result<(Vec<SiLight>, usize, Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)>, f64), String> {
     use std::sync::Mutex;
+    // how long the card marched (its rows per second against the CPU's)
+    let card_secs = Mutex::new(0.0f64);
     let h = p.rect[3].max(0) as usize;
     // the rows still free: [top, bottom)
     let free = Mutex::new((0usize, h));
@@ -524,6 +553,7 @@ fn march_mixed(
         }
         let cp = switched.as_ref().map_or(p, |(pd, _)| pd);
         let claimed = Mutex::new(Vec::new());
+        let t_card = Instant::now();
         let r = crate::gpu::march_bands(
             cp,
             &|band| {
@@ -541,6 +571,7 @@ fn march_mixed(
                 put(y, row.to_vec());
             },
         );
+        *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
         if let Err(e) = r {
             if e != "cancelled" {
                 // the card's rows (also those it delivered: overflows) on
@@ -577,7 +608,7 @@ fn march_mixed(
     });
     // (the card's parameters when it joined in double precision)
     let switched = switched.filter(|_| n_card > 0);
-    Ok((rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect(), n_card, switched))
+    Ok((rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect(), n_card, switched, card_secs.into_inner().unwrap()))
 }
 
 /// The post calculations after the main calculation (CPU or GPU).
