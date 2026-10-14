@@ -338,6 +338,387 @@ interrupted animation continues and several computers can share one.
 * **Big pictures** can be rendered in tiles, also on several computers
   (`--tiles`, and the Big renders window).
 
+## Updates
+
+Every release, newest first, with the time it was published and the
+changes (commits) it brought. Each commit links to its full description
+and code on GitHub; the downloads of a release are on its page. Times are
+in UTC.
+
+<!-- updates:start -->
+### Not released yet
+
+| Commit | What it does |
+|---|---|
+| [`57a1d1f`](https://github.com/thr32423/mb3d-rs/commit/57a1d1f2be0d6ac16efb2e5520efb5e3725d615d) | SSAO24 on the card: the random mode's seed jumps ahead instead of stepping |
+| [`1c0cf6d`](https://github.com/thr32423/mb3d-rs/commit/1c0cf6d85d5df7e9425522e874ea0570a6f5f47c) | SSAO24 on the CPU about 2.7 times faster, same pixels |
+| [`9afa081`](https://github.com/thr32423/mb3d-rs/commit/9afa08154ff254ee7c838199e8b59675076a2267) | mb3d: the preset render without arguments again; formulas found next to the parameter file and in ~/mb3d-rs |
+| [`7f2e6fb`](https://github.com/thr32423/mb3d-rs/commit/7f2e6fb113699dc7e3e6f396a3986df27dac27fe) | README: download table first, the download.sh one-liner as the alternative |
+
+### [v0.2.34](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.34) · 13 Oct 2026, 19:52 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1448c01`](https://github.com/thr32423/mb3d-rs/commit/1448c01b83aada508c5b5e63a8a8fba3052a660d) | Version number and release notes of this release |
+| [`bae03aa`](https://github.com/thr32423/mb3d-rs/commit/bae03aae799df679ca9d2705064194a238266161) | README for users; the technical notes in docs/TECHNICAL.md; MB3D compared |
+| [`4cf6967`](https://github.com/thr32423/mb3d-rs/commit/4cf6967271b8677051aa24715442417a433a89d3) | Auto: double precision scenes stay on the CPU; mb3d waits for compiles; --card |
+| [`ed68b01`](https://github.com/thr32423/mb3d-rs/commit/ed68b017e823484fe3e2799234d0270331188f4a) | Card: the formulas' control flow structured in the shaders |
+
+### [v0.2.33](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.33) · 13 Oct 2026, 13:00 UTC
+
+| Commit | What it does |
+|---|---|
+| [`e584134`](https://github.com/thr32423/mb3d-rs/commit/e584134f99c7efddb6789515b6e92dfa46f2c04c) | Version number and release notes of this release |
+| [`20e9edc`](https://github.com/thr32423/mb3d-rs/commit/20e9edcf5d23d0d5d5c71fda98274fcd1b0472b1) | profile: reflections and depth of field apart; paintbench; mb3d-wine finds the window |
+| [`967fe36`](https://github.com/thr32423/mb3d-rs/commit/967fe3683f0da0ead618a8f46de19a076e5e7056) | Card: the compiled shaders kept in ShaderCache between runs |
+| [`496901b`](https://github.com/thr32423/mb3d-rs/commit/496901b9fce7dc1e195c4d728e1dc86373a3b047) | tools/mb3d-wine: render and save a G-buffer in MB3D under Wine |
+| [`e71a78b`](https://github.com/thr32423/mb3d-rs/commit/e71a78b425e8a3e00652a656f8f63b99f6b9492f) | Painting with internal gamma 2 as MB3D does: 180430 matches |
+
+### [v0.2.32](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.32) · 13 Oct 2026, 11:16 UTC
+
+| Commit | What it does |
+|---|---|
+| [`4e39d49`](https://github.com/thr32423/mb3d-rs/commit/4e39d49a85a5a8cccd4ec8ab5a43365f9229be88) | Version number and release notes of this release |
+| [`7ec1842`](https://github.com/thr32423/mb3d-rs/commit/7ec1842175e8fa89591c63163221f6af3d844116) | Windows under Wine: no resize loop; windows paint again |
+| [`e489830`](https://github.com/thr32423/mb3d-rs/commit/e489830140a7b6909ebc31da8616390b821be743) | README, Getting started: install with the download.sh one-liner |
+
+### [v0.2.31](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.31) · 13 Oct 2026, 09:38 UTC
+
+| Commit | What it does |
+|---|---|
+| [`337cdab`](https://github.com/thr32423/mb3d-rs/commit/337cdabc47d74db100dbff92cd57af85645b182e) | Version number and release notes of this release |
+| [`b5757cb`](https://github.com/thr32423/mb3d-rs/commit/b5757cbc5bdcc71603cbac88a53414d0dbda30be) | Card shaders compiled when a scene is opened or a formula changes |
+| [`0edb088`](https://github.com/thr32423/mb3d-rs/commit/0edb0888f67fb36dbed5b01ae81b6c1b530d943b) | download.sh: the one-line install as a script, also in the release folder |
+| [`a94c6ed`](https://github.com/thr32423/mb3d-rs/commit/a94c6ed4afa3854959769a832c788f198c78e070) | README, Getting started: commands for the release folder, building from source at the end |
+| [`b9fe839`](https://github.com/thr32423/mb3d-rs/commit/b9fe8399c720e4dd19df56fdd2dc57703bde4d98) | Card: no OpenGL by default; a software renderer for tests; window trace |
+| [`c706ad3`](https://github.com/thr32423/mb3d-rs/commit/c706ad3d3cce7867764f34dbd3261d37090ac314) | gbcompare: our G-buffer against MB3D's (from an .m3i it saved) |
+| [`050311d`](https://github.com/thr32423/mb3d-rs/commit/050311ddae778bc897fb610bc05c4fe557bad94e) | Tools: time formulas against MB3D's machine code |
+| [`3bd8f27`](https://github.com/thr32423/mb3d-rs/commit/3bd8f27edd7e257a93effb50ae7614c34e951821) | Test: the Monte Carlo task's view vector is loaded per task |
+| [`7e69757`](https://github.com/thr32423/mb3d-rs/commit/7e6975768aa601c8dd7cb344e9e35686fc502666) | Monte Carlo with volumetric light on the card; smaller Auto bands |
+| [`27b1d2f`](https://github.com/thr32423/mb3d-rs/commit/27b1d2f4fe5386d780285413bf2df44066025094) | Card: volumetric light in the reflection pass |
+| [`535d92a`](https://github.com/thr32423/mb3d-rs/commit/535d92a735e369a61acdb83afbefe865f9998b83) | Card: the volumetric light's map, shared with the CPU |
+| [`c0350b8`](https://github.com/thr32423/mb3d-rs/commit/c0350b804201fab63c7f81ed65c96a343d610de6) | Card: volumetric light in the main calculation, shadows of positional lights |
+| [`19073d6`](https://github.com/thr32423/mb3d-rs/commit/19073d6d993f4a44bff187f2adfe9df57ff4ac1e) | MB3D_GPU_TIMING: the volumetric light map and the CPU's hard shadows |
+| [`ddc4851`](https://github.com/thr32423/mb3d-rs/commit/ddc48514207660f8ddb495c8c7dc5a01b74545a9) | Hard shadows of positional lights |
+| [`062580e`](https://github.com/thr32423/mb3d-rs/commit/062580e2cf815aa3203f93ad41427774f863d1ae) | Reflections: the card's share from the measured rates |
+| [`7dbf870`](https://github.com/thr32423/mb3d-rs/commit/7dbf87068ee30a19b2c6d9ce3327c16b16d7700b) | Auto: the precision probe before the card joins |
+| [`5ec3d95`](https://github.com/thr32423/mb3d-rs/commit/5ec3d95579c850b2d2c621a6c0be24dace82ec0e) | Themes: all themes are files in the Themes folder |
+| [`6277242`](https://github.com/thr32423/mb3d-rs/commit/6277242dc937fc2731ada694c0b797dd9bb8bdb7) | Card: map formulas in double precision shaders |
+| [`78529a6`](https://github.com/thr32423/mb3d-rs/commit/78529a6a8b2bf10e054fcf93c703c578c9846b5c) | profile: print the formula error count with MAIN_ONLY |
+| [`3756b00`](https://github.com/thr32423/mb3d-rs/commit/3756b00a2000f00ccf3f6d1b9ae5d855418b4bc2) | README: full-size theme screenshots, opened by a click |
+
+### [v0.2.30](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.30) · 12 Oct 2026, 18:52 UTC
+
+| Commit | What it does |
+|---|---|
+| [`35c7a5c`](https://github.com/thr32423/mb3d-rs/commit/35c7a5c1215a3f2e0af5fad82841bdbd8abcc6a9) | Version number and release notes of this release |
+| [`c133917`](https://github.com/thr32423/mb3d-rs/commit/c133917ba7f19f9a1fe804adb2cb63daeeb197aa) | Auto: every image shared between card and CPU, post passes on the card |
+| [`69f679b`](https://github.com/thr32423/mb3d-rs/commit/69f679b20f75904953fc1a045689b0b6e9aa2a7b) | Themes as XML files; six new themes |
+
+<details><summary>Older releases (v0.1.0 to v0.2.29)</summary>
+
+### [v0.2.29](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.29) · 12 Oct 2026, 17:10 UTC
+
+| Commit | What it does |
+|---|---|
+| [`2042c55`](https://github.com/thr32423/mb3d-rs/commit/2042c55ca2fad3f2285f1ca512536707a43d396d) | Version number and release notes of this release |
+| [`447e764`](https://github.com/thr32423/mb3d-rs/commit/447e764920f7f194698fa1817de96ce6c71aa1a6) | Card: no runaway submissions; a lost card falls back to the CPU |
+| [`5d4676b`](https://github.com/thr32423/mb3d-rs/commit/5d4676b5905a41c680ae2ea0926b5d72862fbe8b) | README: "New compared with Mandelbulb3D" section, Linux one-liner |
+| [`e5dc427`](https://github.com/thr32423/mb3d-rs/commit/e5dc427edc0ab173571e3cc45f4ed7b99915a552) | Card: double precision where a probe finds single too coarse |
+| [`db44845`](https://github.com/thr32423/mb3d-rs/commit/db4484548f33582cb50c45fb78a128104ac0d20d) | README: the CPU formula translator's state |
+| [`f986d84`](https://github.com/thr32423/mb3d-rs/commit/f986d845910ce10af21fa6bd60eabb2774deb139) | lift_emit: tests of the structured layout |
+| [`1ad89ef`](https://github.com/thr32423/mb3d-rs/commit/1ad89efe6ac7b09a6aea332f6884c30ce7a5b423) | README: planned work (XML themes, CPU formulas, double precision, ...) |
+| [`9d84fc9`](https://github.com/thr32423/mb3d-rs/commit/9d84fc9eb80abaae38cde4a1b63a13dec1249760) | Translated formulas: structured control flow, direct dIFS calls |
+| [`8128318`](https://github.com/thr32423/mb3d-rs/commit/81283188dd9c67cfe27d9c637f40fce0244bc0b2) | Profiling tools: real rows, main-only timing, width limits |
+| [`87e05e5`](https://github.com/thr32423/mb3d-rs/commit/87e05e5984978cda1c36123aed57e661ef5536b6) | Thread priority applied, first-run note, steady LED |
+| [`e6a9a38`](https://github.com/thr32423/mb3d-rs/commit/e6a9a387e954e71301910721fd72eb86f0afee23) | README: a readable CPU / card comparison table |
+
+### [v0.2.28](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.28) · 12 Oct 2026, 11:39 UTC
+
+| Commit | What it does |
+|---|---|
+| [`32735dd`](https://github.com/thr32423/mb3d-rs/commit/32735dd0d395c2c6ea1df2549047da9508723aed) | Version number and release notes of this release |
+| [`914ca83`](https://github.com/thr32423/mb3d-rs/commit/914ca8381452d0a36d6ac9f44ebca306dde70916) | docs: the screenshots of RENDERING.md |
+| [`9446a48`](https://github.com/thr32423/mb3d-rs/commit/9446a48c065db42bf1ca214d7eabdd426b5c5666) | CPU, mixed and card compared on all 80 examples; rendering explained |
+| [`9a321b5`](https://github.com/thr32423/mb3d-rs/commit/9a321b5d43f1dc50430299951cd4d75bacdcf71e) | "Calculate on: Auto": the CPU starts while the card's shaders compile |
+| [`4b317eb`](https://github.com/thr32423/mb3d-rs/commit/4b317eb04f24b3c9a096777434e0192863c0ba48) | mb3d: print the help when run without arguments |
+| [`0e8f6a4`](https://github.com/thr32423/mb3d-rs/commit/0e8f6a4fcc56af9bddd7ed94e3db7f275b2bb7a5) | Monte Carlo: the card on its own thread, the next batch shared at once |
+| [`bb5ec9c`](https://github.com/thr32423/mb3d-rs/commit/bb5ec9c86a44e1a5d4a4d1767da1bb979d6ce8c6) | Monte Carlo: card and CPU overlap; LED hint; "Calculate on" setting |
+
+### [v0.2.27](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.27) · 12 Oct 2026, 07:44 UTC
+
+| Commit | What it does |
+|---|---|
+| [`564ea17`](https://github.com/thr32423/mb3d-rs/commit/564ea176dd876e36dce2ba44cc034cd4b51dd8a1) | Version number and release notes of this release |
+| [`f74e0a4`](https://github.com/thr32423/mb3d-rs/commit/f74e0a4cfdfa53218031369aac780e809992d241) | Monte Carlo marches on the GPU |
+
+### [v0.2.26](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.26) · 12 Oct 2026, 02:27 UTC
+
+| Commit | What it does |
+|---|---|
+| [`af93900`](https://github.com/thr32423/mb3d-rs/commit/af93900401b0a564d40cf776f56313857d31c266) | Version number and release notes of this release |
+| [`3d5a53d`](https://github.com/thr32423/mb3d-rs/commit/3d5a53d4f8f5d1055f63033bb0a0f0859197c877) | Reflections on the GPU with transparency, cutting planes and doubles |
+| [`805a226`](https://github.com/thr32423/mb3d-rs/commit/805a2263eb71b13ecb8e72e79162c55bc4ca0ad7) | SSAO15: per-level sample tables, twice as fast |
+| [`07f82d7`](https://github.com/thr32423/mb3d-rs/commit/07f82d76ee9b6fac90982c5b818fa490896906a9) | Custom formulas called directly with the iteration state |
+| [`b1ffc60`](https://github.com/thr32423/mb3d-rs/commit/b1ffc60e5ffc077cdbbfb5e260aca6f1e27a5583) | Custom formulas copy only the record fields they use |
+| [`f37382c`](https://github.com/thr32423/mb3d-rs/commit/f37382c05993aaa482a699d4d686e11ecfa6b1e9) | Buttons light up blue under the mouse, as in MB3D's Glossy style |
+
+### [v0.2.25](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.25) · 11 Oct 2026, 18:06 UTC
+
+| Commit | What it does |
+|---|---|
+| [`aed2a31`](https://github.com/thr32423/mb3d-rs/commit/aed2a317ad055229c7830596ee9f62b05460e995) | Old parameter files as MB3D reads them; faster GPU pacing; version 0.2.25 |
+
+### [v0.2.24](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.24) · 11 Oct 2026, 17:07 UTC
+
+| Commit | What it does |
+|---|---|
+| [`44877a2`](https://github.com/thr32423/mb3d-rs/commit/44877a28151ae5294e96ac031f6297b71c0ad54c) | GPU: more formulas translated; version 0.2.24 |
+
+### [v0.2.23](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.23) · 11 Oct 2026, 15:24 UTC
+
+| Commit | What it does |
+|---|---|
+| [`f134fb4`](https://github.com/thr32423/mb3d-rs/commit/f134fb43437242c6fb76337863902b3287f6f923) | GPU: double precision for deep zooms; version 0.2.23 |
+
+### [v0.2.22](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.22) · 11 Oct 2026, 13:52 UTC
+
+| Commit | What it does |
+|---|---|
+| [`cd376c8`](https://github.com/thr32423/mb3d-rs/commit/cd376c88f2372988c7c814000b8c0121536124ad) | GPU: faster reflections; interface fixes; version 0.2.22 |
+| [`4e5e70c`](https://github.com/thr32423/mb3d-rs/commit/4e5e70c56eb43e1495c5fadd73240dd62706b993) | Formulas: map functions compiled and on the graphics card |
+
+### [v0.2.21](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.21) · 11 Oct 2026, 11:21 UTC
+
+| Commit | What it does |
+|---|---|
+| [`b27b0e8`](https://github.com/thr32423/mb3d-rs/commit/b27b0e83c14d163b3908c562a5430a513cf369e5) | Version number and release notes of this release |
+| [`bdb3e91`](https://github.com/thr32423/mb3d-rs/commit/bdb3e91caa1f678b2a9059c2c759c898feea8319) | GPU: cutting planes, inside rendering and colour on iteration on the graphics card |
+
+### [v0.2.20](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.20) · 11 Oct 2026, 09:36 UTC
+
+| Commit | What it does |
+|---|---|
+| [`d927069`](https://github.com/thr32423/mb3d-rs/commit/d9270691557d851876727c71921fd259962207da) | GPU: 4D and interpolation hybrids on the graphics card; version 0.2.20 |
+
+### [v0.2.19](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.19) · 11 Oct 2026, 09:13 UTC
+
+| Commit | What it does |
+|---|---|
+| [`57f42f2`](https://github.com/thr32423/mb3d-rs/commit/57f42f2d0aa02008d347ae27699f595cc17e1430) | Interface: the window stays responsive while a picture is calculated; version 0.2.19 |
+
+### [v0.2.18](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.18) · 11 Oct 2026, 08:14 UTC
+
+| Commit | What it does |
+|---|---|
+| [`daed4b6`](https://github.com/thr32423/mb3d-rs/commit/daed4b6663ad9a12a69b2d593b4a124b5ccec0ce) | GPU: resumable marching keeps the desktop responsive; version 0.2.18 |
+
+### [v0.2.17](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.17) · 11 Oct 2026, 04:33 UTC
+
+| Commit | What it does |
+|---|---|
+| [`6e07c4b`](https://github.com/thr32423/mb3d-rs/commit/6e07c4b884635b1675d36fe8249987470ba6df5e) | GPU: more formulas on the graphics card; version 0.2.17 |
+| [`a1dd058`](https://github.com/thr32423/mb3d-rs/commit/a1dd05870ed4ff290d68a80d91faf052a1a10fca) | Interface: user interface scale (Prefs > Visual themes > Interface size, --scale, MB3D_UI_SCALE) |
+
+### [v0.2.16](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.16) · 11 Oct 2026, 03:12 UTC
+
+| Commit | What it does |
+|---|---|
+| [`080432c`](https://github.com/thr32423/mb3d-rs/commit/080432c1ceb5bf772f9ae40b7c7c0fa0ca48be43) | GPU: reflections on the graphics card; version 0.2.16 |
+
+### [v0.2.15](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.15) · 11 Oct 2026, 02:58 UTC
+
+| Commit | What it does |
+|---|---|
+| [`a072d7a`](https://github.com/thr32423/mb3d-rs/commit/a072d7a511c82e3d31307c6c725e7de3a2cb8d9c) | Interface: button alignment, glyph layout, memo word wrap, MutaGen tiles; version 0.2.15 |
+
+### [v0.2.14](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.14) · 11 Oct 2026, 01:41 UTC
+
+| Commit | What it does |
+|---|---|
+| [`2cc440d`](https://github.com/thr32423/mb3d-rs/commit/2cc440d4665e3482c9f8bc164d885ef2a020029d) | GPU: zoom limit by DE kind (analytic / dIFS scenes go much deeper); version 0.2.14 |
+
+### [v0.2.13](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.13) · 11 Oct 2026, 01:20 UTC
+
+| Commit | What it does |
+|---|---|
+| [`cf96c92`](https://github.com/thr32423/mb3d-rs/commit/cf96c9263a39f4c917875f337e1f86238a636366) | GPU: dIFS hybrids and DE combinations on the graphics card; version 0.2.13 |
+
+### [v0.2.12](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.12) · 10 Oct 2026, 18:29 UTC
+
+| Commit | What it does |
+|---|---|
+| [`a3e7377`](https://github.com/thr32423/mb3d-rs/commit/a3e73773604aa754bc239561fde8d7836aea84f7) | GPU: screen space ambient occlusion on the graphics card; version 0.2.12 |
+
+### [v0.2.11](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.11) · 10 Oct 2026, 17:58 UTC
+
+| Commit | What it does |
+|---|---|
+| [`d4aff31`](https://github.com/thr32423/mb3d-rs/commit/d4aff31e73928b52ad180bd7b2a1dd8a2a3c7eab) | GPU: hard shadows and DE ambient occlusion on the graphics card; version 0.2.11 |
+
+### [v0.2.10](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.10) · 10 Oct 2026, 17:10 UTC
+
+| Commit | What it does |
+|---|---|
+| [`d2c9731`](https://github.com/thr32423/mb3d-rs/commit/d2c9731dfcf8476660ee338e7b002618e92d5ca5) | GPU status LED, preset images, no sticky windows, png par; version 0.2.10 |
+
+### [v0.2.9](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.9) · 10 Oct 2026, 15:47 UTC
+
+| Commit | What it does |
+|---|---|
+| [`abb142d`](https://github.com/thr32423/mb3d-rs/commit/abb142dc83fadd7d60a836029b1f40c9cb38ca9a) | GPU: .m3f formulas on the graphics card through the lifter; version 0.2.9 |
+
+### [v0.2.8](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.8) · 10 Oct 2026, 13:08 UTC
+
+| Commit | What it does |
+|---|---|
+| [`cedc9d5`](https://github.com/thr32423/mb3d-rs/commit/cedc9d5b536a0619b6cfb04b08ee78ec83f23d18) | Formula lifter: memory accesses resolved, translated formulas with local memory; version 0.2.8 |
+
+### [v0.2.7](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.7) · 10 Oct 2026, 11:38 UTC
+
+| Commit | What it does |
+|---|---|
+| [`7e8d014`](https://github.com/thr32423/mb3d-rs/commit/7e8d0149d1eb75984d830466761d50f08cf16de9) | Translated formulas keep registers and flags in locals; version 0.2.7 |
+
+### [v0.2.6](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.6) · 10 Oct 2026, 09:49 UTC
+
+| Commit | What it does |
+|---|---|
+| [`cba2883`](https://github.com/thr32423/mb3d-rs/commit/cba28832b6431b32bac11028323111f026b43334) | Faster renders: dIFS step limit as in MB3D, faster translated formulas; version 0.2.6 |
+
+### [v0.2.5](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.5) · 10 Oct 2026, 06:28 UTC
+
+| Commit | What it does |
+|---|---|
+| [`ed94ea2`](https://github.com/thr32423/mb3d-rs/commit/ed94ea27a6be7c2b07199bb844ffd2f704828377) | Scroll bars keep their range; Navigator panel next to the image; mb3d is the command line renderer only; version 0.2.5 |
+
+### [v0.2.4](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.4) · 10 Oct 2026, 06:00 UTC
+
+| Commit | What it does |
+|---|---|
+| [`ebc72aa`](https://github.com/thr32423/mb3d-rs/commit/ebc72aad572b531e8d32cfadc82aeb8e64ef15de) | GPU on by default with a GPU box in the main window; Monte Carlo shows the lines as they are calculated |
+| [`3d2e046`](https://github.com/thr32423/mb3d-rs/commit/3d2e0465fc950f67b3cc5700d80a954346297d7e) | GPU: errors fall back to the CPU instead of ending the program; DXC on Windows; no software renderers; version 0.2.4 |
+
+### [v0.2.3](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.3) · 10 Oct 2026, 05:15 UTC
+
+| Commit | What it does |
+|---|---|
+| [`7946d81`](https://github.com/thr32423/mb3d-rs/commit/7946d8150c31091c5b3a6646bff2c45d38fc3134) | GPU prototype: Mandelbulb ray marching on the graphics card (wgpu); version 0.2.3 |
+
+### [v0.2.2](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.2) · 10 Oct 2026, 04:09 UTC
+
+| Commit | What it does |
+|---|---|
+| [`5942fd9`](https://github.com/thr32423/mb3d-rs/commit/5942fd952b564f2189d5cb6561504c11726e1cda) | Release archives packed once, with fixed names; README links to the downloads; version 0.2.2 |
+
+### [v0.2.1](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.1) · 10 Oct 2026, 03:58 UTC
+
+| Commit | What it does |
+|---|---|
+| [`12ec446`](https://github.com/thr32423/mb3d-rs/commit/12ec446c69ce292bc0203dd9d4b0b9b472b5404b) | Sticky formula, lighting and post processing windows as in MB3D; plain mb3d opens the windows; version 0.2.1 |
+
+### [v0.2.0](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.0) · 10 Oct 2026, 03:18 UTC
+
+| Commit | What it does |
+|---|---|
+| [`9ffe24c`](https://github.com/thr32423/mb3d-rs/commit/9ffe24c3169b4837683b1fe9ebbf498212e0bea8) | Replace the web editor with a native Mandelbulb3D desktop program; version 0.2.0 |
+
+### [v0.1.9](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.9) · 9 Oct 2026, 17:33 UTC
+
+| Commit | What it does |
+|---|---|
+| [`e9c98a8`](https://github.com/thr32423/mb3d-rs/commit/e9c98a86554cb56f8179ecb131ce5a7978284112) | Fix the editor page (syntax error in the start message of 0.1.8); CI checks the page script; version 0.1.9 |
+
+### [v0.1.8](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.8) · 9 Oct 2026, 17:20 UTC
+
+| Commit | What it does |
+|---|---|
+| [`aa5dece`](https://github.com/thr32423/mb3d-rs/commit/aa5deceb82610b026d1a9ab36de5d5a9f7cb4424) | Editor: no stale editor or Navigator window size from older versions; version 0.1.8 |
+
+### [v0.1.7](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.7) · 9 Oct 2026, 17:04 UTC
+
+| Commit | What it does |
+|---|---|
+| [`dfee6cb`](https://github.com/thr32423/mb3d-rs/commit/dfee6cb6363a5bac69ed335a37118c5f37994bd1) | Navigator in its own window with its own parameters and preview, as in MB3D |
+
+### [v0.1.6](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.6) · 9 Oct 2026, 16:25 UTC
+
+| Commit | What it does |
+|---|---|
+| [`16a6309`](https://github.com/thr32423/mb3d-rs/commit/16a6309fb4d303956f27543194447392dc4d33ff) | Windows release archive contains run_gui.cmd (starts the editor and opens the browser); version 0.1.6 |
+
+### [v0.1.5](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.5) · 9 Oct 2026, 16:20 UTC
+
+| Commit | What it does |
+|---|---|
+| [`acbe17c`](https://github.com/thr32423/mb3d-rs/commit/acbe17c4028b825f455538d3b63263c1e995b92f) | Release archives contain run_gui.sh (uses the mb3d next to it); version 0.1.5 |
+| [`5225cc8`](https://github.com/thr32423/mb3d-rs/commit/5225cc8b79613f61b808d8ba87c3f3048026307e) | Editor: run_gui.sh starts the editor and opens it in the browser |
+| [`1464316`](https://github.com/thr32423/mb3d-rs/commit/1464316fbbb09590c06a0999971a41b543cb830f) | Version number and release notes of this release |
+| [`c8b7824`](https://github.com/thr32423/mb3d-rs/commit/c8b78246f73fb33663f597948a8a837a4bde0b1a) | Editor: pop out windows into their own browser windows |
+
+### [v0.1.4](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.4) · 9 Oct 2026, 15:57 UTC
+
+| Commit | What it does |
+|---|---|
+| [`9e306c2`](https://github.com/thr32423/mb3d-rs/commit/9e306c2ecce32596569ea41d83538521679a0a90) | CI: actions on Node.js 24 (checkout v7, upload-artifact v7, download-artifact v8, rust-cache 2.9.2); version 0.1.4 |
+
+### [v0.1.3](https://github.com/thr32423/mb3d-rs/releases/tag/v0.1.3) · 9 Oct 2026, 15:50 UTC
+
+| Commit | What it does |
+|---|---|
+| [`c20b0ad`](https://github.com/thr32423/mb3d-rs/commit/c20b0ad9700afaf53a3fb11844c60ad90b5f6a9e) | Release folder laid out like a Mandelbulb3D installation; History, Meshes, BigRenders |
+
+### v0.1.2 · 9 Oct 2026, 15:06 UTC (tag only, no GitHub release)
+
+| Commit | What it does |
+|---|---|
+| [`ecd47c5`](https://github.com/thr32423/mb3d-rs/commit/ecd47c529308498d5b917d931d72f605291de1aa) | Release archives contain the original Mandelbulb3D folder |
+| [`a825590`](https://github.com/thr32423/mb3d-rs/commit/a82559026feb9e78c307795a00cc14e015e43fae) | Version number and release notes of this release |
+| [`5170ca6`](https://github.com/thr32423/mb3d-rs/commit/5170ca6a970ecc8069f2d103d36d03ae9810440d) | Editor: pop out windows into their own browser windows |
+
+### v0.1.1 · 9 Oct 2026, 14:41 UTC (tag only, no GitHub release)
+
+| Commit | What it does |
+|---|---|
+| [`1464316`](https://github.com/thr32423/mb3d-rs/commit/1464316fbbb09590c06a0999971a41b543cb830f) | Version number and release notes of this release |
+| [`c8b7824`](https://github.com/thr32423/mb3d-rs/commit/c8b78246f73fb33663f597948a8a837a4bde0b1a) | Editor: pop out windows into their own browser windows |
+
+### v0.1.0 · 9 Oct 2026, 13:47 UTC (tag only, no GitHub release)
+
+| Commit | What it does |
+|---|---|
+| [`44cac48`](https://github.com/thr32423/mb3d-rs/commit/44cac4800279eb15dbc1107febfdb08b4b971a46) | README: the editor in MB3D's layout, phase 10 |
+| [`a8cd49f`](https://github.com/thr32423/mb3d-rs/commit/a8cd49f816d89cb816a26e8c240ce9af580b893c) | Speed: translate the remaining common x87 ops (fst, fsin/fcos/fsincos, fpatan, fyl2x, f2xm1, fscale, frndint) |
+| [`c1fce9f`](https://github.com/thr32423/mb3d-rs/commit/c1fce9f29a1bcda93be452367d04acb61952af55) | Speed: translate SSE2 double ops of custom formulas to native code |
+| [`531a5af`](https://github.com/thr32423/mb3d-rs/commit/531a5af5267ce27da61a69c5d9b8806324a61125) | CI (Linux, Windows, macOS, MB3D data), release builds, getting-started guide |
+| [`c01ed71`](https://github.com/thr32423/mb3d-rs/commit/c01ed71cc6ac220ca00cb0ddde529b2da36347e4) | Recalculate a selection, double image size, JIT formula editor, map sequences |
+| [`07f6a2d`](https://github.com/thr32423/mb3d-rs/commit/07f6a2d41cfcd03653575843380f217604260822) | Editor: MB3D's main window layout and menu structure |
+| [`73d76f1`](https://github.com/thr32423/mb3d-rs/commit/73d76f178b5494512e9d5f90963064e75a9c40f9) | Editor server: keep the G-buffer for repainting, MB3D mouse modes, Euler angles, picking, m3i export, ini dirs |
+| [`6bd808b`](https://github.com/thr32423/mb3d-rs/commit/6bd808b9d320d6693159e8f673244d94c6a44b31) | Phase 9: README, reflection keys in the editor's Render tab |
+| [`a85abe7`](https://github.com/thr32423/mb3d-rs/commit/a85abe79cf5453b47700f069fc9fd95a67c8cb29) | Phase 9: reflections and transparency in normal renders, normals on Z |
+| [`6f0fb30`](https://github.com/thr32423/mb3d-rs/commit/6f0fb300c9f0dcb2211ac6f2b262e4162594ecda) | Editor: Monte Carlo tab |
+| [`4f7f0ac`](https://github.com/thr32423/mb3d-rs/commit/4f7f0ac1237b8e9b0d7dcc96c04ac246d717e753) | Phase 9: Monte Carlo renderer |
+| [`8ab8576`](https://github.com/thr32423/mb3d-rs/commit/8ab8576f1a36216bbd890be10ea5912156c0ef71) | Fix mirrored spherical map lookups; palette alpha |
+| [`b0bb8ba`](https://github.com/thr32423/mb3d-rs/commit/b0bb8ba2f1651c5dcd0f5b030f4f34bc7e9d324d) | Phase 9: stereo images |
+| [`8a57b86`](https://github.com/thr32423/mb3d-rs/commit/8a57b86daa7e542e127283d6ed0e71ecd312dcf7) | Phase 9: interpolation hybrids, 2D slices, colour on iteration, 4D analytic DE |
+| [`72de294`](https://github.com/thr32423/mb3d-rs/commit/72de294745869a9535f348c818b1088dd314f568) | Phase 9: JIT formulas ([SOURCE] Pascal) |
+| [`bb62130`](https://github.com/thr32423/mb3d-rs/commit/bb621300b583bdabcc20a2d0da259f40c9f864ef) | Phase 8: README for voxel and mesh export, Aexion C and MutaGen |
+| [`571f73f`](https://github.com/thr32423/mb3d-rs/commit/571f73f24db50127b4d6f7a24d12c28b34b7edb5) | Editor: MutaGen and Export tabs |
+| [`aacc112`](https://github.com/thr32423/mb3d-rs/commit/aacc1123355751531e9af2d6f10d31626ecce660) | MutaGen: random variations of a parameter set |
+| [`d5296f6`](https://github.com/thr32423/mb3d-rs/commit/d5296f6ecbdd18812e9ff7d3e9a5e47bebb93738) | Aexion C, the internal formula #9 |
+| [`ce7b171`](https://github.com/thr32423/mb3d-rs/commit/ce7b171aaf848429aac12417200f298da1021b1b) | Phase 8: voxel and mesh export |
+| [`90e1d19`](https://github.com/thr32423/mb3d-rs/commit/90e1d19d9efb777f3b3fc089e5c93436073e93e3) | Phase 7: README for animation and batch rendering |
+| [`3ca3e59`](https://github.com/thr32423/mb3d-rs/commit/3ca3e59480647998b6f79cb46987e9bc8a33c357) | Phase 7: animation tab in the browser editor |
+| [`2ca420b`](https://github.com/thr32423/mb3d-rs/commit/2ca420ba7905cb809a37b2b640aea5dff64c4e23) | Phase 7: mb3d batch - batch rendering of parameter files |
+| [`8ebaa7c`](https://github.com/thr32423/mb3d-rs/commit/8ebaa7c6327aaf9a77a38e47d056b31c1dbe39cb) | Phase 7: mb3d animate - render animation frames |
+| [`92356e5`](https://github.com/thr32423/mb3d-rs/commit/92356e554c2974d3ab3b38d58e9d7c1ae652216a) | Phase 7: animation files (.m3a read/write, .m3k text format) |
+| [`52ee74d`](https://github.com/thr32423/mb3d-rs/commit/52ee74d9a9ba9f46814a01c5a98d7f702bfd856b) | Phase 7: interpolate the light values of animation frames |
+| [`b45e1d7`](https://github.com/thr32423/mb3d-rs/commit/b45e1d7886b336e80e44009c69d0e84fbeb1e6ff) | Phase 7: keyframe interpolation (Interpolate2frames, Interpolate3framesBezier) |
+| [`e0cddb3`](https://github.com/thr32423/mb3d-rs/commit/e0cddb38ff23d19e6602f0390e57ec3d75be0d47) | Phase 1-6 baseline (imported from mb3d-rs-phase6.tar.gz) |
+
+</details>
+<!-- updates:end -->
+
 ## For developers
 
 The [technical notes](docs/TECHNICAL.md) describe how the graphics card
