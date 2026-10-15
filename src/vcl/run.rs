@@ -603,7 +603,8 @@ impl<A: App> Runner<A> {
             }
         }
         let raws = if nc == Nc::Client || self.ui.forms[fi].capture.is_some() {
-            self.ui.forms[fi].mouse_move(cx, cy, shift_of(self.mods))
+            // the held buttons too (TShiftState's ssLeft ...): drags check them
+            self.ui.forms[fi].mouse_move(cx, cy, shift_of(self.mods) | self.buttons)
         } else {
             // leaving the client area
             let f = &mut self.ui.forms[fi];

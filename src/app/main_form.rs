@@ -598,7 +598,7 @@ pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn set_image_cursor(app: &Mb3d, ui: &mut Ui) {
-    let c = if app.main.get_pos > 0 || ui.visible(F, "Shape2") {
+    let c = if app.main.get_pos > 0 || ui.visible(F, "Shape2") || selecting(ui) {
         "crCross"
     } else if ui.checked(F, "SpeedButton2") {
         "crHandPoint"
@@ -677,6 +677,12 @@ fn store_sticky(app: &mut Mb3d) {
     let s = app.main.sticky.map(|v| v as u32 & 3);
     let j = (j & 0b1100) | s[1] | (s[0] << 4) | (s[2] << 6);
     app.ini.set("StickOption", &j.to_string());
+}
+
+/// Post processing > "Recalculate a selection" is enabled: the mouse marks
+/// the selection on the image.
+fn selecting(ui: &Ui) -> bool {
+    ui.has_form("PostProForm") && (ui.checked("PostProForm", "CheckBox21") || ui.checked("PostProForm", "CheckBox25"))
 }
 
 fn not_all_buttons_up(ui: &Ui) -> bool {
@@ -1541,7 +1547,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
         if shift & SS_LEFT != 0 {
             ui.set_visible(F, "Shape1", true);
         }
-    } else if cursor == "crCross" && button == MouseButton::Left && app.main.get_pos > 0 {
+    } else if cursor == "crCross" && button == MouseButton::Left && app.main.get_pos > 0 && !selecting(ui) {
         let gp = app.main.get_pos;
         let pick = app.eng.pick(x * s, y * s);
         match gp {
@@ -1606,12 +1612,12 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
         }
         app.main.get_pos = 0;
         set_image_cursor(app, ui);
-    } else if cursor == "crCross" && button == MouseButton::Left && ui.visible(F, "Shape2") {
-        paint_on_image(app, ui, x, y);
-    } else if cursor == "crCross" && button == MouseButton::Left && ui.has_form("PostProForm") {
+    } else if cursor == "crCross" && button == MouseButton::Left && selecting(ui) {
         // selection for "recalculate a selection"
         ui.cm(F, "Shape1").set_bounds(img.x + x, img.y + y, 0, 0);
         ui.set_visible(F, "Shape1", true);
+    } else if cursor == "crCross" && button == MouseButton::Left && ui.visible(F, "Shape2") {
+        paint_on_image(app, ui, x, y);
     }
 }
 
