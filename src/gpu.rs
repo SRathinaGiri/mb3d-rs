@@ -2569,6 +2569,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
                 // the blur that made this level (0: the first level) and
                 // the one that makes the next
                 i(&mut v, if level == 1 { 0 } else { 1 << (level - 1) });
+                i(&mut v, p.wrap_x as i32);
                 v.resize(32, 0);
                 g.queue.write_buffer(&par, 0, &bytes(&v));
                 let mut enc = g.device.create_command_encoder(&Default::default());
@@ -2636,11 +2637,11 @@ fn ssao15_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     }
     let g = gpu()?;
     let pl = pipeline_entry(g, include_str!("gpu_ssao15.wgsl"), "sample15", None, &[])?;
-    let lv = crate::ssao15::build_levels(gbuf, w, h);
+    let lv = crate::ssao15::build_levels(gbuf, w, h, p.wrap_x);
     let (szrt, smul, st2) = crate::ssao15::sampling_constants(&lv, zc_mul, zcorr, p);
     let levels: Vec<u32> = lv.lev.iter().flat_map(|l| l.iter().map(|&v| v as u32)).collect();
     let zps: Vec<u32> = gbuf.iter().map(|s| lv.zp_of(s) as u32).collect();
-    let par = [w as u32, h as u32, lv.count as u32, szrt.to_bits(), st2.to_bits(), smul.to_bits(), p.t0 as u32, 0];
+    let par = [w as u32, h as u32, lv.count as u32, szrt.to_bits(), st2.to_bits(), smul.to_bits(), p.t0 as u32, p.wrap_x as u32];
     let out = run_pipeline(g, &pl, &[&par, &levels, &zps], w * h, (w.div_ceil(8) as u32, h.div_ceil(8) as u32))?;
     for (s, v) in gbuf.iter_mut().zip(out) {
         if s.zpos() < 32768 {

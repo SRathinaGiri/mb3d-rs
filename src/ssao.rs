@@ -24,11 +24,16 @@ pub struct SsaoParams {
     /// the older "15 bit" wavelet SSAO (`AmbShadowCalcThreadN`) instead of
     /// the 24 bit one
     pub bits15: bool,
+    /// the picture wraps around horizontally (a 360 degree panorama): the
+    /// left and the right edge are neighbours, so the samples and the
+    /// smoothing continue on the other side instead of stopping at the
+    /// border (which left the edge columns too bright: a seam)
+    pub wrap_x: bool,
 }
 
 impl Default for SsaoParams {
     fn default() -> Self {
-        SsaoParams { threshold: 2.0, border_mirror: 0.0, t0: false, random: 0, bits15: false }
+        SsaoParams { threshold: 2.0, border_mirror: 0.0, t0: false, random: 0, bits15: false, wrap_x: false }
     }
 }
 
@@ -48,16 +53,16 @@ fn first_level(gbuf: &[SiLight]) -> Vec<u32> {
     gbuf.iter().map(|s| if s.zpos() < 32768 { (s.zpos_fine & 0xFFFF_FF00) >> 1 } else { 0 }).collect()
 }
 
-/// `SmoothH` / `SmoothV`: one blur pass with the given step on a line.
-fn smooth_line(dst: &mut [u32], src: &[u32], step: usize) {
+/// `SmoothH` / `SmoothV`: one blur pass with the given step on a line
+/// (`wrap`: the line is a circle, a panorama's row).
+fn smooth_line(dst: &mut [u32], src: &[u32], step: usize, wrap: bool) {
     let n = src.len();
     if n == 0 {
         return;
     }
     let last = n - 1;
     for x in 0..n {
-        let a = x.saturating_sub(step);
-        let b = (x + step).min(last);
+        let (a, b) = if wrap { ((x + n - step % n) % n, (x + step) % n) } else { (x.saturating_sub(step), (x + step).min(last)) };
         dst[x] = ((dst[x] as u64 + ((src[a] as u64 + src[b] as u64) >> 1)) >> 1) as u32;
     }
 }
@@ -80,12 +85,12 @@ fn par_rows(buf: &mut [u32], w: usize, threads: usize, f: impl Fn(usize, &mut [u
 /// `(p + (p[-step] + p[+step]) / 2) / 2`, clamped at the borders). The
 /// vertical pass reads a copy of the horizontally smoothed image row by row
 /// (MB3D walks the columns; the values are the same).
-fn next_level(pia: &mut [u32], w: usize, h: usize, step: usize, threads: usize) {
+fn next_level(pia: &mut [u32], w: usize, h: usize, step: usize, threads: usize, wrap: bool) {
     par_rows(pia, w, threads, |_, rows| {
         let mut sa = vec![0u32; w];
         for row in rows.chunks_mut(w) {
             sa.copy_from_slice(row);
-            smooth_line(row, &sa, step);
+            smooth_line(row, &sa, step, wrap);
         }
     });
     let src = pia.to_vec();
@@ -261,7 +266,9 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                                             x2 = rne(sx) as i64;
                                             y2 = rne(sy) as i64;
                                         }
-                                        if x2 < 0 {
+                                        if p.wrap_x {
+                                            x2 = x2.rem_euclid(w as i64);
+                                        } else if x2 < 0 {
                                             x2 = -x2;
                                             if x2 >= wlo {
                                                 break;
@@ -317,7 +324,7 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
             });
             if level < levels && !(keep && pyramid.len() > level) {
                 // NextATlevelHiQ(..., 1 shl (newLevel - 1))
-                next_level(&mut pia, w, h, 1 << level, threads);
+                next_level(&mut pia, w, h, 1 << level, threads, p.wrap_x);
             }
         }
         y0 = y1;
@@ -367,5 +374,45 @@ mod tests {
         let center = g[32 * w + 32].amb_shadow;
         let far = g[5 * w + 5].amb_shadow;
         assert!(center > far + 1000, "center {center} far {far}");
+    }
+
+    /// A panorama (`wrap_x`) has no left or right border: the occlusion of
+    /// a picture turned sideways by k columns is the turned occlusion of
+    /// the picture (both SSAO kinds).
+    #[test]
+    fn wrapped_occlusion_turns_with_the_picture() {
+        let (w, h) = (96, 48);
+        let scene = |shift: usize| {
+            let mut g = vec![SiLight::default(); w * h];
+            for (i, s) in g.iter_mut().enumerate() {
+                let (x, y) = ((i % w + shift) % w, i / w);
+                // pits near the left border, so the samples cross the seam
+                let pit = if ((x as i64 - 3).pow(2) + (y as i64 - 24).pow(2)) < 30 || (x as i64 - 60).pow(2) + (y as i64 - 10).pow(2) < 20 { 20000 } else { (x * 37 % 11) as i64 * 300 };
+                s.zpos_fine = ((4_000_000 - pit) as u32) << 8;
+            }
+            g
+        };
+        for bits15 in [false, true] {
+            let p = SsaoParams { wrap_x: true, bits15, ..Default::default() };
+            let run = |shift: usize| {
+                let mut g = scene(shift);
+                if bits15 {
+                    crate::ssao15::ssao15(&mut g, w, h, 300.0, 0.001, &p, 2);
+                } else {
+                    ssao24(&mut g, w, h, 300.0, 0.001, &p, 2);
+                }
+                g.iter().map(|s| s.amb_shadow).collect::<Vec<u16>>()
+            };
+            // an even turn: SSAO24 rounds its sample positions half to
+            // even, so an odd one would change the rounding everywhere
+            let (a, k) = (run(0), 38usize);
+            let b = run(k);
+            for y in 0..h {
+                for x in 0..w {
+                    // b at x shows a at x + k
+                    assert_eq!(b[y * w + x], a[y * w + (x + k) % w], "bits15 {bits15}: x {x} y {y}");
+                }
+            }
+        }
     }
 }

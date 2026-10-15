@@ -85,6 +85,7 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         t0: ui.checked(F, "CheckBox12"),
         random: if tab == 2 { ui.position(F, "UpDown3").clamp(1, 9) as u8 } else { 0 },
         bits15: tab == 0,
+        wrap_x: false,
     });
     sc.deao = (ao_on && tab == 3).then(|| crate::deao::DeaoParams {
         quality: ui.position(F, "UpDown1").clamp(0, 3) as u8,

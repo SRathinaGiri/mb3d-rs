@@ -84,7 +84,7 @@ pub(crate) fn sampling_constants(lv: &Levels, zc_mul: f64, zcorr: f64, p: &SsaoP
 }
 
 /// `BuildATlevels`
-pub(crate) fn build_levels(gbuf: &[SiLight], w: usize, h: usize) -> Levels {
+pub(crate) fn build_levels(gbuf: &[SiLight], w: usize, h: usize, wrap: bool) -> Levels {
     let mut count = 1usize;
     let mut x = w / 16;
     loop {
@@ -154,7 +154,10 @@ pub(crate) fn build_levels(gbuf: &[SiLight], w: usize, h: usize) -> Levels {
             for i in 0..w {
                 let ii = i as isize;
                 let s = step as isize;
-                d[i] = if i < step {
+                d[i] = if wrap {
+                    // a panorama's row is a circle
+                    avg(r[i], avg(r[(ii - s).rem_euclid(w as isize) as usize], r[(ii + s).rem_euclid(w as isize) as usize]))
+                } else if i < step {
                     avg(r[i], avg(r[0], at(ii + s)))
                 } else if i + step < w {
                     avg(r[i], avg(at(ii - s), at(ii + s)))
@@ -292,7 +295,7 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
     if w < 4 || h < 4 {
         return;
     }
-    let lv = build_levels(gbuf, w, h);
+    let lv = build_levels(gbuf, w, h, p.wrap_x);
     let (szrt, smul, st2) = sampling_constants(&lv, zc_mul, zcorr, p);
     let rings = rings(&lv, w, szrt);
     let threads = threads.clamp(1, h);
@@ -350,7 +353,12 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                             // near the borders: the clipped sample grid
                             let (maxs, mins) = (r * r, ring.min_rad * ring.min_rad);
                             axis_samples(yi, h as i32, r, ring.step, &mut ys);
-                            axis_samples(xi, w as i32, r, ring.step, &mut xs);
+                            if p.wrap_x {
+                                // the whole grid: x continues on the other side
+                                axis_samples(r, 2 * r + 1, r, ring.step, &mut xs);
+                            } else {
+                                axis_samples(xi, w as i32, r, ring.step, &mut xs);
+                            }
                             for &y2 in &ys {
                                 let rowi = (yi + y2) as usize * w;
                                 for &x2 in &xs {
@@ -359,7 +367,8 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                                         continue;
                                     }
                                     let r1d = 1.0 / (rads as f32).sqrt();
-                                    let st = (l[rowi + (xi + x2) as usize] as i32 - zp) as f32 * r1d;
+                                    let xx = (xi + x2).rem_euclid(w as i32) as usize;
+                                    let st = (l[rowi + xx] as i32 - zp) as f32 * r1d;
                                     let c = fast_int_arctan2(y2, x2);
                                     if ring.multi {
                                         let ic = (ring.rm * r1d).round_ties_even() as usize;

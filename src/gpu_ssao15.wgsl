@@ -19,6 +19,8 @@ const SZRT: u32 = 3u;
 const ST2: u32 = 4u;
 const SMUL: u32 = 5u;
 const T0: u32 = 6u;
+// 1: the picture wraps around horizontally (a panorama, SsaoParams::wrap_x)
+const WRAP: u32 = 7u;
 const BIG: i32 = 0x7FFFFFFF;
 
 fn pf(i: u32) -> f32 { return bitcast<f32>(P[i]); }
@@ -123,8 +125,17 @@ fn sample15(@builtin(global_invocation_id) gid: vec3<u32>) {
             let rowi = lo + u32((y + y2) * w);
             // the x samples
             var xa2 = 0;
-            var vx = axis_start(x, w, max_rad, step, &xa2);
-            let ex = select(max_rad, w - x - 1, x + max_rad >= w);
+            var vx: i32;
+            var ex: i32;
+            let wrap = P[WRAP] != 0u;
+            if (wrap) {
+                // the whole grid: x continues on the other side
+                vx = axis_start(max_rad, 2 * max_rad + 1, max_rad, step, &xa2);
+                ex = max_rad;
+            } else {
+                vx = axis_start(x, w, max_rad, step, &xa2);
+                ex = select(max_rad, w - x - 1, x + max_rad >= w);
+            }
             loop {
                 if (vx > xa2) {
                     vx = xa2;
@@ -134,7 +145,8 @@ fn sample15(@builtin(global_invocation_id) gid: vec3<u32>) {
                 let rads = y2 * y2 + x2 * x2;
                 if (rads > mins && rads <= maxs) {
                     let r1d = 1.0 / sqrt(f32(rads));
-                    var st = f32(i32(lev[rowi + u32(x + x2)]) - zp) * r1d;
+                    let xx = select(x + x2, ((x + x2) % w + w) % w, wrap);
+                    var st = f32(i32(lev[rowi + u32(xx)]) - zp) * r1d;
                     var skip = false;
                     if (t0) {
                         if (st >= zrt) {

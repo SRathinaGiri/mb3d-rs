@@ -510,6 +510,7 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
             t0: ao_bits & 2 != 0,
             random: if kind == 2 { r.u8(187).max(1) } else { 0 },
             bits15: kind == 0,
+            wrap_x: false,
         })
     } else {
         None

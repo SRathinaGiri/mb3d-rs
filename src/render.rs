@@ -750,6 +750,8 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 }
 
 fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize) {
+    // a panorama wraps around: its left and right edges are neighbours
+    let ao = &crate::ssao::SsaoParams { wrap_x: p.optic == CameraOptic::Panorama, ..*ao };
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && !crate::gpu::compiling() {
         // only the depth buffer is needed: also after a CPU calculation

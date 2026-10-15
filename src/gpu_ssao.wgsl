@@ -42,6 +42,8 @@ const MW2: u32 = 25u;
 const MH2: u32 = 26u;
 const PASS: u32 = 27u;
 const BLUR_STEP: u32 = 28u;
+// 1: the picture wraps around horizontally (a panorama, SsaoParams::wrap_x)
+const WRAP: u32 = 29u;
 
 fn pf(i: u32) -> f32 { return bitcast<f32>(P[i]); }
 fn pi(i: u32) -> i32 { return bitcast<i32>(P[i]); }
@@ -58,8 +60,12 @@ fn blur_h(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     _ = z0[0]; _ = ang[0]; _ = acc[0]; // all pipelines share one bind group
     let s = P[BLUR_STEP];
-    let a = select(x - s, 0u, x < s);
-    let b = min(x + s, w - 1u);
+    var a = select(x - s, 0u, x < s);
+    var b = min(x + s, w - 1u);
+    if (P[WRAP] != 0u) {
+        a = (x + w - s % w) % w;
+        b = (x + s) % w;
+    }
     let o = y * w;
     pb[o + x] = (pa[o + x] + ((pa[o + a] + pa[o + b]) >> 1u)) >> 1u;
 }
@@ -194,7 +200,9 @@ fn sample(@builtin(global_invocation_id) gid: vec3<u32>) {
                 x2 = i32(x) + jx;
                 y2 = i32(y) + jy;
             }
-            if (x2 < 0) {
+            if (P[WRAP] != 0u) {
+                x2 = ((x2 % i32(w)) + i32(w)) % i32(w);
+            } else if (x2 < 0) {
                 x2 = -x2;
                 if (x2 >= wlo) {
                     break;
