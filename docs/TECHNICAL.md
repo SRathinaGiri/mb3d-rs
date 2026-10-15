@@ -71,9 +71,9 @@ each round and finishes the last few long ones the card would wait on
 (`MB3D_REFLECT_CPU_SHARE=0` leaves them all to the card); scenes with
 volumetric light keep the CPU pass. The painting stays on
 the CPU. The marcher calculates in single precision. The formulas reach it through the lifter: the x86 code
-of an `.m3f` formula is analysed (`src/lift.rs`: every memory access
+of an `.m3f` formula is analysed (`src/x86/lift.rs`: every memory access
 resolved to the iteration record, the formula's constants or the stack)
-and translated to WGSL (`src/lift_wgsl.rs`), including the SSE2 code many
+and translated to WGSL (`src/x86/lift_wgsl.rs`), including the SSE2 code many
 formulas use and record fields chosen by an index; the built-in formulas
 except the JIT example are written by hand. The formulas' control flow
 is emitted structured (loops and one-pass loops as scopes, with flag
@@ -359,7 +359,7 @@ mutations, the coverage measures and a whole generation work.
 MB3D's 460 formula files store their iteration step as 32-bit x86 machine
 code. This port runs that code in three tiers:
 
-1. **Translated to Rust** (`src/native/`, generated): 441 formulas. Their
+1. **Translated to Rust** (`src/x86/native/`, generated): 441 formulas. Their
    machine code was translated ahead of time into ordinary Rust functions,
    which the Rust compiler turns into native code for whatever CPU the crate
    is built for (x86-64, ARM64, …); nothing in it is specific to Intel CPUs.
@@ -415,12 +415,13 @@ Speed on the 2-core test machine, 120-pixel previews of the three test scenes
 Formulas with very short code (Eagle) gain less, because the cost of passing
 the iteration state in and out of the emulated memory remains.
 
-Verification: a small native 32-bit program runs the same machine code on
-the real CPU from the same memory image, and the results are compared with
-the port's over random inputs for every formula (see
-[Building from source](#building-from-source)).
-All 449 testable formulas, dIFS formulas included, agree with the CPU to
-1e-9 relative, in every tier (the check runs the translated code by default,
+Verification: a small native 32-bit program ran the same machine code on
+the real CPU from the same memory image, and the results were compared with
+the port's over random inputs for every formula (the program and that mode
+of `m3fcheck` were removed from the repository in 0.2.44; they are in its
+history).
+All 449 testable formulas, dIFS formulas included, agreed with the CPU to
+1e-9 relative, in every tier (the check ran the translated code by default,
 `MB3D_NO_NATIVE=1` checks the micro ops). The only differences are in the
 last bits, because the x87 computes with 80-bit precision and the port uses
 f64. Not checked by the oracle: the formulas compiled from Pascal source
@@ -736,19 +737,16 @@ Regenerating the formula translation (only needed when the formula set
 changes):
 
 ```sh
-cargo run --release --bin m3f2rs -- path/to/M3Formulas -o src/native
+cargo run --release --bin m3f2rs -- path/to/M3Formulas -o src/x86/native
 cargo build --release
 ```
 
-Checking the formulas against the real CPU: `tools/oracle/oracle.asm` is a
-small native 32-bit Linux program that runs the formulas' machine code from
-the same memory image, and `src/bin/m3fcheck.rs` compares interpreter and
-CPU over random inputs for every formula:
+Checking the formulas: `src/bin/m3fcheck.rs` runs every formula in the
+interpreter over random inputs, and with `--translated` compares the
+translated code with the interpreter bit for bit:
 
 ```sh
-nasm -f elf32 tools/oracle/oracle.asm -o /tmp/oracle.o && ld -m elf_i386 /tmp/oracle.o -o /tmp/mb3d_oracle
-./target/release/m3fcheck path/to/M3Formulas --oracle /tmp/mb3d_oracle --trials 12
-#   460 formulas: 449 ok, 0 mismatch, ...
+./target/release/m3fcheck path/to/M3Formulas --translated --trials 12
 ```
 
 Graphics card checks: `cargo run --release --example gpuformulas --

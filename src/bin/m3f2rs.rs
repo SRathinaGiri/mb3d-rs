@@ -1,8 +1,8 @@
 //! Developer tool: translates the machine code of `.m3f` formula files into
-//! Rust (`src/native/`), so the formulas run as compiled native code on
+//! Rust (`src/x86/native/`), so the formulas run as compiled native code on
 //! any CPU the crate is built for.
 //!
-//! usage: m3f2rs <formula dir> [-o src/native]
+//! usage: m3f2rs <formula dir> [-o src/x86/native]
 //!
 //! Every formula that the micro-op compiler accepts is translated.  At run
 //! time a formula is matched by a hash of its code bytes; formulas without a
@@ -26,7 +26,7 @@ enum Table {
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let mut dir = None;
-    let mut out = "src/native".to_string();
+    let mut out = "src/x86/native".to_string();
     let mut i = 0;
     while i < args.len() {
         if args[i] == "--list" {
@@ -53,7 +53,7 @@ fn main() {
             i += 1;
         }
     }
-    let dir = dir.expect("usage: m3f2rs <formula dir> [-o src/native]");
+    let dir = dir.expect("usage: m3f2rs <formula dir> [-o src/x86/native]");
     let mut files: Vec<_> = std::fs::read_dir(&dir)
         .expect("formula dir")
         .filter_map(|e| e.ok().map(|e| e.path()))
