@@ -438,10 +438,12 @@ impl Iteration {
         let mut guard = 0u32;
         let mut failed = false;
         // the translated formulas called directly (without call_difs and
-        // the program lookup per call)
-        let mut direct: [Option<(crate::x86::DifsFn, *const crate::x86::Prog)>; 8] = [None; 8];
+        // the program lookup per call); the programs are out of the machine
+        // for the loop, so that they can be borrowed while the machine changes
+        let progs = m.take_progs();
+        let mut direct: [Option<(crate::x86::DifsFn, &crate::x86::Prog)>; 8] = [None; 8];
         for (k, d) in direct.iter_mut().enumerate().take(slots.len()) {
-            *d = m.difs_fn(custom::code_addr(k));
+            *d = progs.difs_fn(custom::code_addr(k));
         }
         'outer: loop {
             // @Repeat / @While: next slot with iterations
@@ -460,16 +462,14 @@ impl Iteration {
             }
             let regs = if let Some((f, p)) = direct.get(n).copied().flatten() {
                 let mut regs = m.difs_regs(esi, edi, n as u32, cnt as u32, custom::STACK_TOP);
-                // SAFETY: the machine's programs are not rebuilt during the
-                // call (see `Machine::difs_fn`)
-                if f(m, unsafe { &*p }, &mut regs, custom::MAX_STEPS).is_err() {
+                if f(m, p, &mut regs, custom::MAX_STEPS).is_err() {
                     failed = true;
                     break;
                 }
                 regs
             } else {
                 let entry = custom::code_addr(n);
-                if m.call_difs(entry, esi, edi, n as u32, cnt as u32, custom::STACK_TOP, custom::MAX_STEPS).is_err() {
+                if m.call_difs_taken(&progs, entry, esi, edi, n as u32, cnt as u32, custom::STACK_TOP, custom::MAX_STEPS).is_err() {
                     failed = true;
                     break;
                 }
@@ -503,6 +503,7 @@ impl Iteration {
                 break;
             }
         }
+        m.restore_progs(progs);
         if failed {
             CUSTOM_ERRORS.fetch_add(1, Ordering::Relaxed);
             min_de = f64::INFINITY;

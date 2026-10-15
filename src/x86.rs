@@ -1128,8 +1128,9 @@ pub struct Machine {
     cache: HashMap<u32, (Ins, u8)>,
     /// Pre-decoded instructions of the code area (see [`Machine::predecode`]).
     table: std::sync::Arc<Vec<Option<(Ins, u8)>>>,
-    /// Compiled programs by entry address.
-    progs: std::sync::Arc<Vec<(u32, Prog)>>,
+    /// Compiled programs by entry address (None only while one runs, see
+    /// [`Machine::with_prog`]).
+    progs: Option<std::sync::Arc<Vec<(u32, Prog)>>>,
     pub host: Vec<(u32, HostFn)>,
     pub steps: u64,
 }
@@ -1194,7 +1195,7 @@ impl Machine {
             xmm: [[0; 2]; 8],
             cache: HashMap::new(),
             table: std::sync::Arc::new(Vec::new()),
-            progs: std::sync::Arc::new(Vec::new()),
+            progs: Some(std::sync::Arc::new(Vec::new())),
             host: Vec::new(),
             steps: 0,
         }
@@ -1280,12 +1281,29 @@ impl Machine {
                 }
             }
         }
-        self.progs = std::sync::Arc::new(progs);
+        self.progs = Some(std::sync::Arc::new(progs));
+    }
+
+    /// The compiled programs.
+    fn progs(&self) -> &[(u32, Prog)] {
+        self.progs.as_deref().map_or(&[], |v| v)
+    }
+
+    /// Runs `f` on the machine with program number `i`: the programs are
+    /// taken out of the machine for the call, so that the program can be
+    /// borrowed while the machine changes (a program never starts another
+    /// one).
+    #[inline(always)]
+    fn with_prog<T>(&mut self, i: usize, f: impl FnOnce(&mut Self, &Prog) -> T) -> T {
+        let progs = self.progs.take().expect("a compiled program started another one");
+        let r = f(self, &progs[i].1);
+        self.progs = Some(progs);
+        r
     }
 
     /// The compiled program for `entry`, if the code could be compiled.
     pub fn prog(&self, entry: u32) -> Option<&Prog> {
-        self.progs.iter().find(|(e, _)| *e == entry).map(|(_, p)| p)
+        self.progs().iter().find(|(e, _)| *e == entry).map(|(_, p)| p)
     }
 
     /// Runs the translated formula at `entry` directly on `it` (see
@@ -1295,25 +1313,23 @@ impl Machine {
         if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
             return None;
         }
-        let i = self.progs.iter().position(|(e, _)| *e == entry)?;
-        let f = self.progs[i].1.direct?;
-        // SAFETY: as in `call_formula`, `progs` cannot change while the
-        // program runs
-        let prog: *const Prog = &self.progs[i].1;
-        Some(f(self, unsafe { &*prog }, it, pvar, max_steps))
+        let i = self.progs().iter().position(|(e, _)| *e == entry)?;
+        let f = self.progs()[i].1.direct?;
+        Some(self.with_prog(i, |m, p| f(m, p, it, pvar, max_steps)))
     }
 
-    /// The direct version of the translated dIFS formula at `entry` (see
-    /// [`DifsFn`]): the function and its program; None if there is none (or
-    /// translated formulas are switched off).  The program stays valid while
-    /// the machine's programs are not rebuilt.
-    pub fn difs_fn(&self, entry: u32) -> Option<(DifsFn, *const Prog)> {
-        if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
-            return None;
-        }
-        let (_, p) = self.progs.iter().find(|(e, _)| *e == entry)?;
-        Some((p.difs?, p as *const Prog))
+    /// The compiled programs, taken out of the machine (so that a loop can
+    /// call [`DifsFn`]s with them); [`Machine::restore_progs`] puts them
+    /// back.
+    pub fn take_progs(&mut self) -> Progs {
+        Progs(self.progs.take())
     }
+
+    pub fn restore_progs(&mut self, p: Progs) {
+        self.progs = p.0;
+    }
+
+
 
     /// The registers of `call_difs` for a [`DifsFn`] (the return address
     /// pushed as `call_difs` does).
@@ -1333,7 +1349,7 @@ impl Machine {
 
     /// Whether the code at `entry` runs compiled.
     pub fn is_compiled(&self, entry: u32) -> bool {
-        self.progs.iter().any(|(e, _)| *e == entry)
+        self.progs().iter().any(|(e, _)| *e == entry)
     }
 
     // ---- memory ----
@@ -2573,11 +2589,8 @@ impl Machine {
     /// Set up a formula call: eax=@x, edx=@y, ecx=@z, push @w, push PIt,
     /// push the sentinel return address.
     pub fn call_formula(&mut self, entry: u32, it_c1: u32, stack_top: u32, max_steps: u64) -> R<()> {
-        if let Some(i) = self.progs.iter().position(|(e, _)| *e == entry) {
-            // SAFETY: `progs` is only replaced by `predecode`, which needs
-            // `&mut self` and cannot run while the program executes.
-            let prog: *const Prog = &self.progs[i].1;
-            return self.call_compiled(unsafe { &*prog }, it_c1, stack_top, max_steps);
+        if let Some(i) = self.progs().iter().position(|(e, _)| *e == entry) {
+            return self.with_prog(i, |m, p| m.call_compiled(p, it_c1, stack_top, max_steps));
         }
         let x = it_c1 - 32;
         self.regs = [0; 8];
@@ -2606,13 +2619,34 @@ impl Machine {
         self.regs[ESP] = stack_top;
         self.push(RETURN_SENTINEL)?;
         self.fsw_cc = 0;
-        if let Some(i) = self.progs.iter().position(|(e, _)| *e == entry) {
-            // SAFETY: see `call_formula`
-            let prog: *const Prog = &self.progs[i].1;
-            return self.run_prog(unsafe { &*prog }, max_steps);
+        if let Some(i) = self.progs().iter().position(|(e, _)| *e == entry) {
+            return self.with_prog(i, |m, p| m.run_prog(p, max_steps));
         }
         self.top = 0;
         self.run(entry, max_steps)
+    }
+
+    /// [`Machine::call_difs`] while the programs are out of the machine
+    /// ([`Machine::take_progs`]).
+    #[allow(clippy::too_many_arguments)]
+    pub fn call_difs_taken(&mut self, progs: &Progs, entry: u32, esi: u32, edi: u32, ebx: u32, ecx: u32, stack_top: u32, max_steps: u64) -> R<()> {
+        let p = progs.0.as_ref().and_then(|v| v.iter().find(|(e, _)| *e == entry)).map(|(_, p)| p);
+        match p {
+            Some(p) => {
+                self.regs = [0; 8];
+                self.regs[ESI] = esi;
+                self.regs[EDI] = edi;
+                self.regs[EBX] = ebx;
+                self.regs[ECX] = ecx;
+                self.regs[EDX] = esi + 128;
+                self.regs[ESP] = stack_top;
+                self.push(RETURN_SENTINEL)?;
+                self.fsw_cc = 0;
+                self.run_prog(p, max_steps)
+            }
+            // not compiled: the interpreter does not need the programs
+            None => self.call_difs(entry, esi, edi, ebx, ecx, stack_top, max_steps),
+        }
     }
 
     /// For host functions: read the stack argument `n` (0 = first pushed
@@ -3039,17 +3073,30 @@ fn direct_via_memory(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {
 pub static NATIVE_ENABLED: std::sync::LazyLock<std::sync::atomic::AtomicBool> =
     std::sync::LazyLock::new(|| std::sync::atomic::AtomicBool::new(std::env::var_os("MB3D_NO_NATIVE").is_none()));
 
-#[path = "native/mod.rs"]
 mod native;
 
-#[path = "lift.rs"]
 pub mod lift;
 
-#[path = "lift_emit.rs"]
 mod lift_emit;
 
-#[path = "lift_wgsl.rs"]
 pub mod lift_wgsl;
+
+/// The compiled programs of a machine while they are out of it (see
+/// [`Machine::take_progs`]).
+pub struct Progs(Option<std::sync::Arc<Vec<(u32, Prog)>>>);
+
+impl Progs {
+    /// The direct version of the translated dIFS formula at `entry` (see
+    /// [`DifsFn`]) and its program; None if there is none (or translated
+    /// formulas are switched off).
+    pub fn difs_fn(&self, entry: u32) -> Option<(DifsFn, &Prog)> {
+        if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+            return None;
+        }
+        let (_, p) = self.0.as_ref()?.iter().find(|(e, _)| *e == entry)?;
+        Some((p.difs?, p))
+    }
+}
 
 /// A compiled formula.
 pub struct Prog {
