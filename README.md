@@ -316,6 +316,17 @@ The file looks the same, and stays smooth when it is edited.
 
 <a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
 
+### Monte Carlo: "-noise"
+
+The Monte Carlo window has a **-noise** button again: it softens the
+grain of the shown picture by averaging every pixel with its four
+neighbours, at the cost of a little sharpness. Saving saves the softened
+picture; the rendering itself goes on unchanged, and its next update
+shows it unsoftened again. The button and its filter are MB3D's own,
+which MB3D 1.99 kept hidden.
+
+<a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture before and after -noise"></a>
+
 Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
 does. Not in this program: MB3D's script editor, the "shortdistance check
 DE" option, the random light strokes and the ambient light pass of the

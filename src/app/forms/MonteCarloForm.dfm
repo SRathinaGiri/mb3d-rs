@@ -239,12 +239,13 @@ object MCForm: TMCForm
       Top = 12
       Width = 48
       Height = 25
-      Hint = 'perform a noise filter on the image'
+      Hint = 
+        'Noise filter on the shown picture: every pixel averaged with its' +
+        ' four neighbours.'#13#10'The rendering itself is not changed; the next update shows it again.'
       Caption = '-noise'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
-      Visible = False
       OnClick = Button6Click
     end
     object WithZBufferCbx: TCheckBox

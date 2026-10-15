@@ -255,6 +255,46 @@ fn set_image(ui: &mut Ui, w: usize, h: usize, rgb: &[u8]) {
     c.picture = Some(b);
 }
 
+/// `Button6Click` ("-noise"): MB3D's noise filter on the shown picture.
+/// Every inner pixel becomes the mean of itself (weight 1) and its four
+/// neighbours (1/4 each), in place as in MB3D, so the upper and left
+/// neighbours are filtered already.  Only the picture changes: the next
+/// update of a running render shows the records again, and saving saves
+/// the shown picture.
+fn noise_filter(ui: &mut Ui) {
+    let Some(mut b) = ui.cm(F, "Image1").picture.take() else { return };
+    let (w, h) = (b.w, b.h);
+    if w >= 3 && h >= 3 {
+        let px = &mut b.px;
+        let ch = |p: u32, k: u32| ((p >> k) & 255) as f32;
+        for y in 1..h - 1 {
+            for x in 1..w - 1 {
+                let i = y * w + x;
+                let mut out = 0xFF00_0000u32;
+                for k in [16, 8, 0] {
+                    let mut v = ch(px[i], k);
+                    for j in [i - w, i - 1, i + 1, i + w] {
+                        v += ch(px[j], k) * 0.25;
+                    }
+                    // SVecToCol: Round (half to even) of the value clamped
+                    out |= ((v * 0.5).clamp(0.0, 255.0).round_ties_even() as u32) << k;
+                }
+                px[i] = out;
+            }
+        }
+    }
+    ui.cm(F, "Image1").picture = Some(b);
+}
+
+/// The shown picture as RGB (MB3D saves `Image1`, so also a picture the
+/// noise filter changed), or the painted records when there is none.
+fn shown_rgb(ui: &Ui, img: &crate::mc::McImage, p: &crate::scene::Scene) -> Vec<u8> {
+    match &ui.c(F, "Image1").picture {
+        Some(b) if b.w == img.width && b.h == img.height => b.px.iter().flat_map(|c| [(c >> 16) as u8, (c >> 8) as u8, *c as u8]).collect(),
+        _ => crate::mc::paint(img, &p.mc, p.lighting.gamma),
+    }
+}
+
 fn message_image(ui: &mut Ui, w: usize, h: usize, text: &str) {
     let mut b = Bitmap::new(w.max(1), h.max(1), 0xFFFF_FFFF);
     {
@@ -542,7 +582,7 @@ fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
 /// The displayed image (and the z-buffer of a normal calculation).
 fn save_picture(app: &mut Mb3d, ui: &mut Ui, path: &Path, jpeg_q: u8) {
     let (Some(p), Some(img)) = (&app.mc.paras, &app.mc.img) else { return };
-    let rgb = crate::mc::paint(img, &p.mc, p.lighting.gamma);
+    let rgb = shown_rgb(ui, img, p);
     let (w, h) = (img.width, img.height);
     let ext = path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
     let data = match ext.as_str() {
@@ -846,7 +886,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             update_paras(app, ui);
             proof_light_amount(app, ui, true);
         }
-        "Button6Click" => {}
+        "Button6Click" => noise_filter(ui),
         "Button2Click" => {
             if app.mc.running {
                 app.mc.in_batch = false;
