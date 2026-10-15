@@ -1,14 +1,15 @@
 //! Loader for Mandelbulb3D's binary parameter files (`.m3p`, MandId >= 20):
 //! `TMandHeader10` (840 bytes, including the light record
 //! `TLightingParas9`) followed by `THeaderCustomAddon` (the hybrid formulas),
-//! see `LoadParameter` in FileHandling.pas.
+//! see `LoadParameter` in FileHandling.pas.  Older files are converted to
+//! this layout by [`crate::m3p_old`].
 
 use crate::formulas::Formula;
 use crate::lighting::{Light, Lighting, PaletteColor};
 use crate::scene::{CameraOptic, FormulaEntry, Scene};
 
-const HEADER_SIZE: usize = 840;
-const ADDON_SIZE: usize = 8 + 6 * 188;
+pub(crate) const HEADER_SIZE: usize = 840;
+pub(crate) const ADDON_SIZE: usize = 8 + 6 * 188;
 
 struct Rd<'a>(&'a [u8]);
 impl Rd<'_> {
@@ -99,6 +100,8 @@ pub fn raw_from_bytes(data: Vec<u8>, is_m3i: bool) -> Result<(Vec<u8>, Option<St
         Ok((raw, Some(title)))
     } else if is_m3i {
         Ok((raw_from_m3i(&data)?, None))
+    } else if data.len() >= 4 && i32::from_le_bytes(data[0..4].try_into().unwrap()) < 20 {
+        Ok((crate::m3p_old::raw_from_old_file(&data)?, None))
     } else {
         let mut raw = data;
         raw.resize(raw.len().max(HEADER_SIZE + ADDON_SIZE), 0);
@@ -115,7 +118,7 @@ fn find_text_params(data: &[u8]) -> Option<String> {
 }
 
 /// `ThreeBytesTo4Chars`
-fn three_bytes_to_4_chars(b: &[u8], out: &mut String) {
+pub(crate) fn three_bytes_to_4_chars(b: &[u8], out: &mut String) {
     let mut i = b[0] as u32 | (b[1] as u32) << 8 | (b[2] as u32) << 16;
     for _ in 0..4 {
         let mut c = (i & 0x3F) as u8;
@@ -150,7 +153,8 @@ fn four_chars_to_3_bytes(s: &[u8]) -> Option<[u8; 3]> {
 }
 
 /// `GetHeaderFromText`: decodes `Mandelbulb3Dv18{...}{Titel: ...}` text
-/// parameters (versions 16 and later; older ones used `TMandHeader8`).
+/// parameters (versions before 16 hold a `TMandHeader8`, see
+/// [`crate::m3p_old::raw_from_old_text`]).
 pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
     let t = text.trim_start();
     let open = t.find('{').ok_or("text parameters: missing '{'")?;
@@ -163,10 +167,7 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
             num.clear();
         }
     }
-    let ver: f32 = num.parse().unwrap_or(13.0);
-    if ver < 16.0 {
-        return Err(format!("text parameters of version {ver} (MB3D before 1.6) are not supported yet"));
-    }
+    let ver: f32 = if num.is_empty() { 14.0 } else { num.parse().unwrap_or(13.0) };
     let close = t[open..].find('}').ok_or("text parameters: missing '}'")? + open;
     // the "..." character (cp1252 133) stands for three dots
     let body: Vec<u8> = t[open + 1..close]
@@ -181,6 +182,9 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
         }
         let b = four_chars_to_3_bytes(ch).ok_or_else(|| format!("text parameters: bad characters '{}'", String::from_utf8_lossy(ch)))?;
         raw.extend_from_slice(&b);
+    }
+    if ver < 16.0 {
+        raw = crate::m3p_old::raw_from_old_text(&raw, ver)?;
     }
     if raw.len() < HEADER_SIZE {
         return Err(format!("text parameters too short ({} of {HEADER_SIZE} header bytes)", raw.len()));
@@ -249,7 +253,7 @@ pub fn raw_from_m3i(data: &[u8]) -> Result<Vec<u8>, String> {
     let r = Rd(data);
     let mand_id = r.i32(0);
     if mand_id < 20 {
-        return Err(format!("image version {mand_id} (MB3D before 1.6) is not supported yet"));
+        return crate::m3p_old::raw_from_old_file(data);
     }
     let (w, h) = (r.i32(4), r.i32(8));
     let tiling = if mand_id < 35 { 0 } else { r.i32(428) };
@@ -277,6 +281,9 @@ pub fn gbuffer_from_m3i(data: &[u8]) -> Option<(usize, usize, Vec<crate::gbuffer
         return None;
     }
     let r = Rd(data);
+    if (0..20).contains(&r.i32(0)) {
+        return crate::m3p_old::gbuffer_from_old_m3i(data);
+    }
     let (w, h) = (r.i32(4), r.i32(8));
     if r.i32(0) < 20 || w < 1 || h < 1 || (r.i32(0) >= 35 && r.i32(428) != 0) {
         return None;
@@ -357,22 +364,32 @@ fn upgrade_hybrid_options(d: &mut [u8], mand_id: i32) {
     d[a + 6..a + 8].copy_from_slice(&hyb2.to_le_bytes());
 }
 
+/// Reads parameters in the `TMandHeader10` layout (files before MandId 20
+/// are converted to it by [`raw_from_bytes`] and friends, keeping their
+/// MandId).
 pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     if data.len() < HEADER_SIZE {
         return Err("file too small for a MB3D parameter header".into());
     }
     let mand_id = i32::from_le_bytes(data[0..4].try_into().unwrap());
+    if mand_id < 0 {
+        return Err(format!("parameter version {mand_id} is not a MB3D version"));
+    }
     let mut upgraded = data.to_vec();
-    if (20..42).contains(&mand_id) {
+    if mand_id < 42 {
         upgrade_hybrid_options(&mut upgraded, mand_id);
+    }
+    if mand_id < 22 {
+        // UpdateFormulaOptionAbove20: the gamma (TBoptions bits 23..28) moved
+        let o = 432 + 44;
+        let t = u32::from_le_bytes(upgraded[o..o + 4].try_into().unwrap());
+        let t = (t & 0xE07F_FFFF) | ((t & 0x1F00_0000) >> 1) | 0x1000_0000;
+        upgraded[o..o + 4].copy_from_slice(&t.to_le_bytes());
     }
     upgrade_light(&mut upgraded);
     let data: &[u8] = &upgraded;
     let r = Rd(data);
     let mand_id = r.i32(0);
-    if mand_id < 20 {
-        return Err(format!("parameter version {mand_id} (MB3D before 1.6) is not supported yet"));
-    }
     let mut w: Vec<String> = Vec::new();
     let mut s = Scene::default();
     s.width = r.i32(4);

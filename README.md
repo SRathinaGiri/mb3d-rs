@@ -435,6 +435,15 @@ window opens where it was last closed.
 
 <a href="docs/img/sticky_menu.png"><img src="docs/img/sticky_menu.png" width="300" alt="The right click menu of the Lighting button: stick to the right side, left side, or not sticky"></a>
 
+### Parameters from before Mandelbulb3D 1.6
+
+Parameter files, `.m3i` images and text parameters saved by the early
+Mandelbulb3D versions (before 1.6) open again. They are
+brought up to date the way Mandelbulb3D does it: the formula and the old
+"alt. hybrid" become today's formula tabs, the old colours and lights
+become today's lighting, and an old `.m3i` image shows its picture without
+a new calculation.
+
 ### Smaller things
 
 * **Save dialogs:** choosing another file type changes the extension of

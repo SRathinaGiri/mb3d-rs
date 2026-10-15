@@ -317,6 +317,7 @@ and kept in the original evaluation order.
 | `jpeg.rs` | (new) | baseline JPEG encoder |
 | `scene.rs` | TMandHeader10 + GUI defaults | scene parameters, defaults, the `.m3s` text format |
 | `m3p.rs` | FileHandling.pas (`LoadParameter`, `UpdateLightParasAbove3`), DivUtils.pas (tiling), TypeDefinitions.pas | binary `.m3p` files (MandId ≥ 20): `TMandHeader10`, `TLightingParas9`, `THeaderCustomAddon`; reading with the upgrades of older versions, and writing (MandId 44) |
+| `m3p_old.rs` | FileHandling.pas (`ConvertHeaderFromOldParas`, `ConvertLight8to9`, `UpdateLightVersion8`, `Convert4to7paras`, `LoadHAddon`, `LoadFullM3I`), HeaderTrafos.pas (`CalcVGradsFromHeader8rots`, `GetHAddOnFromInternFormula`) | parameters from before MB3D 1.6 (MandId < 20: `TMandHeader8`, `TMandHeader4`, `TMandHeaderOld`, `TLightingParas8`, `THeaderCustomAddonOld`) in `.m3p`, `.m3i` (with the `TsiLight3`/`TsiLight4` G-buffer) and text parameters before version 16, converted to `TMandHeader10` |
 | `m3f.rs` | CustomFormulas.pas (`LoadCustomFormula`, `FillCustomVBufWithVars`) | `.m3f` custom formula files, all 23 option types, constants |
 | `x86.rs` | (new) | IA-32 interpreter for the formulas' machine code: integer, x87 and SSE/SSE2 subset; plus a compiler that resolves the x87 stack statically into micro-ops |
 | `custom.rs` | formulas.pas / TypeDefinitions.pas | memory layout of `TIteration3Dext` and the calling convention used by MB3D's hybrid loop, host functions |

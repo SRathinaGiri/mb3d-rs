@@ -17,6 +17,7 @@
 //! | `lighting`  | HeaderTrafos.pas (`MakeLightValsFromHeaderLight`), LightAdjust.pas, PaintThread.pas |
 //! | `render`    | Calc.pas (`CalcMandT`), PaintThread.pas (`PaintRows`) |
 //! | `m3p`       | FileHandling.pas (`LoadParameter`): binary .m3p files |
+//! | `m3p_old`   | FileHandling.pas (`ConvertHeaderFromOldParas`): parameters before MB3D 1.6 |
 //! | `m3f`       | CustomFormulas.pas: .m3f custom formula files       |
 //! | `x86`       | IA-32 interpreter/compiler for the formula machine code |
 //! | `custom`    | memory layout + calling convention for .m3f formulas |
@@ -49,6 +50,7 @@ pub mod jpeg;
 pub mod lighting;
 pub mod m3f;
 pub mod m3p;
+pub mod m3p_old;
 pub mod maps;
 pub mod mc;
 pub mod mclut;
