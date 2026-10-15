@@ -1032,9 +1032,19 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "FormCreate" => {
-            // MB3D starts with its start preset
-            let (l, tb) = start_lighting();
-            app.scene.lighting = l;
+            // MB3D starts with its start preset (`SetStartPreset`): the
+            // preset's colours and lights, everything else as the window's
+            // controls start (`PutLightFInHeader`)
+            put_light_in_header(app, ui);
+            let (p, tb) = start_lighting();
+            let l = &mut app.scene.lighting;
+            (l.amb_top, l.amb_bottom, l.depth_col, l.depth_col2) = (p.amb_top, p.amb_bottom, p.depth_col, p.depth_col2);
+            (l.lights, l.palette, l.interior, l.palette_alpha) = (p.lights, p.palette, p.interior, p.palette_alpha);
+            // `UpdateLightParasAbove3`: the interior colours' specular
+            // amount is their brightness
+            for (s, (_, c)) in l.interior_spec.iter_mut().zip(l.interior) {
+                *s = (c[0] as f32 * 0.3 + c[1] as f32 * 0.59 + c[2] as f32 * 0.11).round() as u8;
+            }
             set_from_header(app, ui);
             setp(ui, "TrackBar7", tb[0]);
             setp(ui, "TrackBar5", tb[1]);
