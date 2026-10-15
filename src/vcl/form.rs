@@ -661,7 +661,10 @@ impl Form {
                     if !self.ctl[k].visible || self.ctl[k].kind != Kind::CategoryPanel {
                         continue;
                     }
-                    let full = self.ctl[k].design.h.max(category_header_h(self, k));
+                    // a panel that starts collapsed keeps its open height in
+                    // ExpandedHeight (its Height is the collapsed one)
+                    let open_h = self.ctl[k].prop("ExpandedHeight").and_then(Value::as_int).map_or(self.ctl[k].design.h, |v| v as i32);
+                    let full = open_h.max(category_header_h(self, k));
                     let h = if self.ctl[k].collapsed { category_header_h(self, k) } else { full };
                     self.ctl[k].set_bounds(ar.x, y, ar.w, h);
                     y += h;

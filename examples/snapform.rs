@@ -5,7 +5,7 @@
 //! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`,
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
-//! `key:FORM:CONTROL:HANDLER:KEYCODE` (a key down event),
+//! `key:FORM:CONTROL:HANDLER:KEYCODE` (a key down event), `hit:FORM:X:Y` (the control there),
 //! `mouse:FORM:X:Y[:right]` (a click at client coordinates, as from the mouse),
 //! `drag:FORM:X1:Y1:X2:Y2:STEPS` (a left drag), `wheel:FORM:X:Y:DELTA`,
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
@@ -32,6 +32,12 @@ fn main() {
             "check" => ui.set_checked(p[1], p[2], p[3] == "1"),
             "item" => ui.set_item_index(p[1], p[2], p[3].parse().unwrap()),
             "post" => ui.post(p[1], p[2], p[3], mb3d::vcl::Ev::Click),
+            "hit" => {
+                let fi = ui.form_index(p[1]).unwrap();
+                let f = &ui.forms[fi];
+                let h = f.hit(p[2].parse().unwrap(), p[3].parse().unwrap());
+                println!("hit {}:{}:{} = {:?}", p[1], p[2], p[3], h.map(|i| f.ctl[i].name.clone()));
+            }
             "key" => ui.post(p[1], p[2], p[3], mb3d::vcl::Ev::KeyDown { key: p[4].parse().unwrap(), shift: 0 }),
             "mouse" => {
                 let fi = ui.form_index(p[1]).unwrap();
@@ -40,6 +46,13 @@ fn main() {
                 let b = if p.get(4) == Some(&"right") { mb3d::vcl::MouseButton::Right } else { mb3d::vcl::MouseButton::Left };
                 raws.extend(ui.forms[fi].mouse_down(x, y, b, 0));
                 raws.extend(ui.forms[fi].mouse_up(x, y, b, 0));
+                if std::env::var_os("SNAPFORM_EVENTS").is_some() {
+                    let f = &ui.forms[fi];
+                    for r in &raws {
+                        let c = &f.ctl[r.id];
+                        println!("raw {}.{} -> {:?}", c.name, r.name, c.events.get(r.name));
+                    }
+                }
                 ui.dispatch(fi, raws);
             }
             "wheel" => {
