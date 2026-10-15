@@ -39,6 +39,7 @@ pub mod dof;
 pub mod formulas;
 pub mod frames;
 pub mod gbuffer;
+pub mod gif;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod image;

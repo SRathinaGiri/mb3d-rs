@@ -308,6 +308,15 @@ once: on Linux from the distribution (`sudo apt install ffmpeg`,
 Windows with `winget install ffmpeg` or from [ffmpeg.org](https://ffmpeg.org).
 Without it the program says so before rendering starts.
 
+### Animated GIF of the preview
+
+When the **Preview** of the Animation maker has rendered all its frames,
+the **AniGif** button saves them as an animated GIF that plays in a loop
+at the preview's frames per second, with the frame numbers if *Show frame
+nr* is ticked. That's handy for showing a flight on a forum or in a chat.
+
+<a href="docs/img/anigif.png"><img src="docs/img/anigif.png" width="760" alt="The animation preview with the AniGif button, and the frames of the saved GIF"></a>
+
 ### Paint colours on the image
 
 In the colour window (**Lighting** → **Object** tab → click the colours),

@@ -372,6 +372,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
         if ui.showing(PV) {
             ui.set_visible(PV, "ProgressBar1", false);
+            ui.set_visible(PV, "SpeedButton1", frames_len > 0);
             app.anim.playing = true;
             app.anim.play_frame = 0;
         }
@@ -536,6 +537,8 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     // the preview window: an image of the frame size
     let (w, h) = ((a.width as f64 / down).round() as i32, (a.height as f64 / down).round() as i32);
     setup_preview_window(ui, w, h, frames.len());
+    // (the AniGif button shows when the frames are done)
+    ui.set_visible(PV, "SpeedButton1", false);
     ui.show(PV);
     ui.set_visible(PV, "ProgressBar1", true);
     ui.cm(PV, "ProgressBar1").max = frames.len() as i64;
@@ -609,10 +612,10 @@ fn setup_preview_window(ui: &mut Ui, w: i32, h: i32, n: usize) {
     sb.position = 0;
 }
 
-fn show_frame(app: &Mb3d, ui: &mut Ui, k: usize) {
+/// Preview frame `k` as shown: with its number when "Frame nr." is on.
+fn frame_picture(app: &Mb3d, ui: &Ui, k: usize) -> Option<Bitmap> {
     let j = app.anim.job.lock().unwrap();
-    let Some(Some(b)) = j.frames.get(k) else { return };
-    let mut b = b.clone();
+    let mut b = j.frames.get(k)?.clone()?;
     drop(j);
     if ui.checked(PV, "CheckBox1") {
         // the frame number in the corner
@@ -620,7 +623,30 @@ fn show_frame(app: &Mb3d, ui: &mut Ui, k: usize) {
         let col = if ui.checked(PV, "CheckBox2") { 0xFFFF_FFFF } else { 0xFF00_0000 };
         draw_digits(&mut b, 2, 2, nr, col);
     }
-    ui.set_picture(PV, "FrameImage", Some(b));
+    Some(b)
+}
+
+fn show_frame(app: &Mb3d, ui: &mut Ui, k: usize) {
+    if let Some(b) = frame_picture(app, ui, k) {
+        ui.set_picture(PV, "FrameImage", Some(b));
+    }
+}
+
+/// `SpeedButton1Click` (AniGif): the preview frames as an animated GIF at
+/// the preview's speed.
+fn save_ani_gif(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
+    let n = app.anim.job.lock().unwrap().frames.len();
+    let pics: Vec<Bitmap> = (0..n).filter_map(|k| frame_picture(app, ui, k)).collect();
+    if pics.is_empty() {
+        return;
+    }
+    let rgbs: Vec<Vec<u8>> = pics.iter().map(|b| b.px.iter().flat_map(|&c| [(c >> 16) as u8, (c >> 8) as u8, c as u8]).collect()).collect();
+    let frames: Vec<crate::gif::Frame> = pics.iter().zip(&rgbs).map(|(b, rgb)| crate::gif::Frame { rgb, w: b.w, h: b.h }).collect();
+    let fps = pti(&ui.text(PV, "Edit1")).clamp(1, 60) as f64;
+    let gif = crate::gif::encode_animation(&frames, (100.0 / fps).round() as u16);
+    if let Err(e) = std::fs::write(p, gif) {
+        ui.show_message(&format!("Could not write {}: {e}", p.display()));
+    }
 }
 
 /// A tiny 3x5 pixel font for the frame numbers of the preview.
@@ -671,6 +697,16 @@ pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.anim.stop.store(true, Ordering::SeqCst);
             app.anim.playing = false;
             ui.set_enabled(F, "Button4", count(app) > 1);
+        }
+        "SpeedButton1Click" => {
+            let o = crate::vcl::dialogs::FileOptions {
+                filter: "Animated Gif|*.gif".into(),
+                default_ext: "gif".into(),
+                initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
+                file_name: app.anim.anim.name.clone(),
+                ..Default::default()
+            };
+            ui.save_dialog("anim:gif", &o);
         }
         "ScrollBar1Scroll" => {
             let k = ui.position(PV, "ScrollBar1").max(0) as usize;
@@ -1055,6 +1091,12 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             ui.set_text(F, "Edit2", &p.display().to_string());
             app.anim.anim.output_folder = p.display().to_string();
             app.ini.dirs[super::ini::DIR_ANIOUT] = p.clone();
+        }
+        ("gif", DialogResult::File(Some(p))) => {
+            if let Some(d) = p.parent() {
+                app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
+            }
+            save_ani_gif(app, ui, &p.with_extension("gif"));
         }
         ("open", DialogResult::File(Some(p))) => {
             if let Some(d) = p.parent() {
