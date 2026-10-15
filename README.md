@@ -521,6 +521,24 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.42](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.42) · 15 Oct 2026, 19:26 UTC
+
+| Commit | What it does |
+|---|---|
+| [`ec17f4c`](https://github.com/thr32423/mb3d-rs/commit/ec17f4ce447e26b52f4d0fedc20375fe4c2a4547) | Version number and release notes of this release |
+| [`6b324dc`](https://github.com/thr32423/mb3d-rs/commit/6b324dcc00f57af7c81591bfd44db652fa836ede) | .m3a animation files before version 5, old keyframe formula blocks |
+| [`d1fec6f`](https://github.com/thr32423/mb3d-rs/commit/d1fec6f741f4fa90ca947204729a67aa5f9ddc88) | Parameters from before MB3D 1.6 (MandId < 20) |
+| [`ca87e14`](https://github.com/thr32423/mb3d-rs/commit/ca87e14aee86ac0452378a0e3b85407eec501e85) | Post processing: shown while it runs and can be stopped (issue #2) |
+| [`8487744`](https://github.com/thr32423/mb3d-rs/commit/84877445d274e24d41baf536172ecdc5198ef129) | Recalculate a selection: the selection can be marked on the image (issue #3) |
+| [`a87225a`](https://github.com/thr32423/mb3d-rs/commit/a87225a6ba006e4cc826f6ab34adb4578c4347dd) | Sticky windows again: Formulas, Lighting and Post processing |
+| [`e9b2def`](https://github.com/thr32423/mb3d-rs/commit/e9b2def0b52641e5086591c4f7b1b81da0f9015b) | Calc-: the rough 8x8 block picture of MB3D |
+| [`7939a08`](https://github.com/thr32423/mb3d-rs/commit/7939a0867c174be783330f12192c57b2009c5f1b) | Save dialogs: the file type sets the name's extension |
+| [`0e742a5`](https://github.com/thr32423/mb3d-rs/commit/0e742a5de281cde31777ae49d3f97b95c7f3d59b) | README: "Restored Mandelbulb3D functionality" section |
+| [`7f62d0f`](https://github.com/thr32423/mb3d-rs/commit/7f62d0fa33cfe5b0eca00b6adae4370e07dbfa7c) | AniGif: save the animation preview as an animated GIF |
+| [`95c0c58`](https://github.com/thr32423/mb3d-rs/commit/95c0c586fb6653b457096e42fc0861291ca6ffa8) | Paint on image: paint palette colours on the calculated picture |
+| [`9b29d56`](https://github.com/thr32423/mb3d-rs/commit/9b29d56f796855c5cda5366df3d6b64e685b7562) | docs: before/after picture of the panorama seam (issue #1) |
+| [`ad5550b`](https://github.com/thr32423/mb3d-rs/commit/ad5550bdd0081003f68a0fc0601f997a27fc2961) | README: Updates for v0.2.41 |
+
 ### [v0.2.41](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.41) · 15 Oct 2026, 13:11 UTC
 
 | Commit | What it does |
@@ -557,6 +575,8 @@ in UTC.
 | [`4ab267e`](https://github.com/thr32423/mb3d-rs/commit/4ab267e9a96a9b197c7ca4c295f97f05e7c9d4c0) | Navigator: type exact values and the zoom; Reset view |
 | [`97ac2c7`](https://github.com/thr32423/mb3d-rs/commit/97ac2c7ef4911fc97f868b1862f99266d27d9a66) | README: Updates for v0.2.37 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.37)</summary>
+
 ### [v0.2.37](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.37) · 15 Oct 2026, 06:49 UTC
 
 | Commit | What it does |
@@ -571,8 +591,6 @@ in UTC.
 | [`0730a59`](https://github.com/thr32423/mb3d-rs/commit/0730a59f83f831b74ccd7d15871892733bfda113) | Drop-down lists stay inside their window and scroll |
 | [`477ae4a`](https://github.com/thr32423/mb3d-rs/commit/477ae4a94189a2b4d6d74ef842c754023d403919) | Infos tab: the hard shadow, occlusion and reflection times each on their own |
 | [`f177710`](https://github.com/thr32423/mb3d-rs/commit/f1777108a1fa37610698ca2f147b2a2ed719f5f6) | README: Updates for v0.2.36 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.36)</summary>
 
 ### [v0.2.36](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.36) · 14 Oct 2026, 17:35 UTC
 
