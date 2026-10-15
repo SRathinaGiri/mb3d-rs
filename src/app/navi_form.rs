@@ -225,7 +225,11 @@ fn set_window_size(app: &mut Mb3d, ui: &mut Ui, panel2: bool) {
     let (w, h) = (app.navi.scene.width, app.navi.scene.height);
     let p2h = if panel2 { ui.c(F, "Panel2").height } else { 0 };
     let p1h = ui.c(F, "Panel1").height;
-    let ch = (h + p1h + p2h).max(580);
+    // MB3D: Max(580, height + Panel1 + Panel2): below 580 the bottom panel
+    // pushed the bar with its open/close arrows up, away from under the
+    // mouse (they looked gone); the window grows by the panel instead, so
+    // the bar stays where it is
+    let ch = (h + p1h).max(580) + p2h;
     // MB3D: Max(646 (+ Panel3), width + Panel5.Width) kept room for the
     // adjustment panel also while it is hidden, which left a gap between
     // the image and the panel; the panel is added only when it is shown
