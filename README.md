@@ -501,6 +501,18 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.44](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.44) · 15 Oct 2026, 23:01 UTC
+
+| Commit | What it does |
+|---|---|
+| [`114dbb3`](https://github.com/thr32423/mb3d-rs/commit/114dbb30a067627ace13be2443aefa8a7b5de790) | Version number and release notes of this release |
+| [`b0f94e1`](https://github.com/thr32423/mb3d-rs/commit/b0f94e13c4da29f0a8b742bed48f2b45a8b8191b) | Formula translation modules in src/x86/ (no #[path]) |
+| [`f64b8f4`](https://github.com/thr32423/mb3d-rs/commit/f64b8f4d98abe8f7038a40e21f6cd8e43e754fe1) | No unsafe code and no started programs left (issue #4) |
+| [`705b80b`](https://github.com/thr32423/mb3d-rs/commit/705b80ba3c2f8f50cae59413a8fe37f314e0e0cf) | Card: no skipped items when the CPU shares a batch |
+| [`4906b50`](https://github.com/thr32423/mb3d-rs/commit/4906b5050481442116283bb61ca6c9634fa58f4c) | Monte Carlo window: Statistics and Reflections open again |
+| [`1c4e174`](https://github.com/thr32423/mb3d-rs/commit/1c4e17421f9f0dc94f8d9a9351410ddcc2ea8880) | Cargo.toml: drop the removed pcsample example |
+| [`f6a1a4c`](https://github.com/thr32423/mb3d-rs/commit/f6a1a4cf2a0a10f0c2a5e698f3c548ee7b0695ec) | README: Updates for v0.2.43 |
+
 ### [v0.2.43](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.43) · 15 Oct 2026, 21:36 UTC
 
 | Commit | What it does |
@@ -544,6 +556,8 @@ in UTC.
 | [`a3c158a`](https://github.com/thr32423/mb3d-rs/commit/a3c158a2e9ec95b5932c39ba8947d491d86fa9a8) | Map formulas run as translated native code |
 | [`5e05b21`](https://github.com/thr32423/mb3d-rs/commit/5e05b2157aa593aa62b76d50b0e7e40233633164) | README: Updates for v0.2.39 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.39)</summary>
+
 ### [v0.2.39](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.39) · 15 Oct 2026, 10:59 UTC
 
 | Commit | What it does |
@@ -551,8 +565,6 @@ in UTC.
 | [`e0be9b5`](https://github.com/thr32423/mb3d-rs/commit/e0be9b5e8be9e10c4d7baf0194fc17c108f9b301) | Version number and release notes of this release |
 | [`714d9e8`](https://github.com/thr32423/mb3d-rs/commit/714d9e83599442e7f719d224dbdf50b8cb217b3d) | Open dialog: a preview of parameter files |
 | [`d9e33ca`](https://github.com/thr32423/mb3d-rs/commit/d9e33ca2efe2c33c71ed82eef0a815f5d77ae924) | README: Updates for v0.2.38 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.38)</summary>
 
 ### [v0.2.38](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.38) · 15 Oct 2026, 10:26 UTC
 
