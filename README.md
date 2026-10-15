@@ -501,6 +501,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.43](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.43) · 15 Oct 2026, 21:36 UTC
+
+| Commit | What it does |
+|---|---|
+| [`0515c31`](https://github.com/thr32423/mb3d-rs/commit/0515c313fc4a265a7b683fcc1259e9d1787ff69a) | Version number and release notes of this release |
+| [`dd3c946`](https://github.com/thr32423/mb3d-rs/commit/dd3c94621f6088240b8dd10c71bfc9f3f7c9b6db) | Fewer patterns that code scanners flag (issue #4) |
+| [`3658ae8`](https://github.com/thr32423/mb3d-rs/commit/3658ae8a79c30dfdec49fd2f4b0264d4238acd40) | Start-up lighting as in MB3D |
+| [`2aa1bdc`](https://github.com/thr32423/mb3d-rs/commit/2aa1bdc4f5a76983085447e9a53b8c4584ca6631) | README: Updates for v0.2.42 |
+
 ### [v0.2.42](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.42) · 15 Oct 2026, 19:26 UTC
 
 | Commit | What it does |
@@ -543,6 +552,8 @@ in UTC.
 | [`714d9e8`](https://github.com/thr32423/mb3d-rs/commit/714d9e83599442e7f719d224dbdf50b8cb217b3d) | Open dialog: a preview of parameter files |
 | [`d9e33ca`](https://github.com/thr32423/mb3d-rs/commit/d9e33ca2efe2c33c71ed82eef0a815f5d77ae924) | README: Updates for v0.2.38 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.38)</summary>
+
 ### [v0.2.38](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.38) · 15 Oct 2026, 10:26 UTC
 
 | Commit | What it does |
@@ -554,8 +565,6 @@ in UTC.
 | [`7a4a6d6`](https://github.com/thr32423/mb3d-rs/commit/7a4a6d6165b81eb5a9982d8ab861881970859fb2) | Transparent background for pictures and animations |
 | [`4ab267e`](https://github.com/thr32423/mb3d-rs/commit/4ab267e9a96a9b197c7ca4c295f97f05e7c9d4c0) | Navigator: type exact values and the zoom; Reset view |
 | [`97ac2c7`](https://github.com/thr32423/mb3d-rs/commit/97ac2c7ef4911fc97f868b1862f99266d27d9a66) | README: Updates for v0.2.37 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.37)</summary>
 
 ### [v0.2.37](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.37) · 15 Oct 2026, 06:49 UTC
 
