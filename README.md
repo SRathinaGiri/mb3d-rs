@@ -452,6 +452,14 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.39](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.39) · 15 Oct 2026, 10:59 UTC
+
+| Commit | What it does |
+|---|---|
+| [`e0be9b5`](https://github.com/thr32423/mb3d-rs/commit/e0be9b5e8be9e10c4d7baf0194fc17c108f9b301) | Version number and release notes of this release |
+| [`714d9e8`](https://github.com/thr32423/mb3d-rs/commit/714d9e83599442e7f719d224dbdf50b8cb217b3d) | Open dialog: a preview of parameter files |
+| [`d9e33ca`](https://github.com/thr32423/mb3d-rs/commit/d9e33ca2efe2c33c71ed82eef0a815f5d77ae924) | README: Updates for v0.2.38 |
+
 ### [v0.2.38](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.38) · 15 Oct 2026, 10:26 UTC
 
 | Commit | What it does |
@@ -505,6 +513,8 @@ in UTC.
 | [`9afa081`](https://github.com/thr32423/mb3d-rs/commit/9afa08154ff254ee7c838199e8b59675076a2267) | mb3d: the preset render without arguments again; formulas found next to the parameter file and in ~/mb3d-rs |
 | [`7f2e6fb`](https://github.com/thr32423/mb3d-rs/commit/7f2e6fb113699dc7e3e6f396a3986df27dac27fe) | README: download table first, the download.sh one-liner as the alternative |
 
+<details><summary>Older releases (v0.1.0 to v0.2.34)</summary>
+
 ### [v0.2.34](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.34) · 13 Oct 2026, 19:52 UTC
 
 | Commit | What it does |
@@ -513,8 +523,6 @@ in UTC.
 | [`bae03aa`](https://github.com/thr32423/mb3d-rs/commit/bae03aae799df679ca9d2705064194a238266161) | README for users; the technical notes in docs/TECHNICAL.md; MB3D compared |
 | [`4cf6967`](https://github.com/thr32423/mb3d-rs/commit/4cf6967271b8677051aa24715442417a433a89d3) | Auto: double precision scenes stay on the CPU; mb3d waits for compiles; --card |
 | [`ed68b01`](https://github.com/thr32423/mb3d-rs/commit/ed68b017e823484fe3e2799234d0270331188f4a) | Card: the formulas' control flow structured in the shaders |
-
-<details><summary>Older releases (v0.1.0 to v0.2.33)</summary>
 
 ### [v0.2.33](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.33) · 13 Oct 2026, 13:00 UTC
 
