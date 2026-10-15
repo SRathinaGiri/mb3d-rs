@@ -518,6 +518,10 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
         return Err("cancelled".into());
     }
     let rgb = crate::render::paint(&target, &b.params, &post);
+    // stopped during the reflections: the image stays as it was
+    if cancel() {
+        return Err("cancelled".into());
+    }
     e.publish(rgb, b.w, b.h, "", None);
     let mut g = e.base.lock().unwrap();
     // (the buffers painted on meanwhile ("Paint on image") are kept: their

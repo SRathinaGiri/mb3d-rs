@@ -22,6 +22,9 @@ pub struct State {
     pub normals_now: bool,
     pub dof_now: bool,
     pub refl_now: bool,
+    /// the processing running from this window (its name for the status
+    /// line) and its start
+    pub running: Option<(&'static str, std::time::Instant)>,
 }
 
 const PANELS: [(&str, &str, &str); 7] = [
@@ -230,14 +233,42 @@ fn toggle(ui: &mut Ui, btn: &str, pnl: &str) {
     update_captions(ui);
 }
 
-/// The image is repainted with the post processing of the parameters.
-pub fn repaint(app: &mut Mb3d, ui: &mut Ui) {
-    if app.main.calculating || app.eng.base().is_none() {
+/// The image is repainted with the post processing of the parameters;
+/// `stage` is shown in the main window while it runs.
+pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
+    if app.main.calculating {
+        app.message(ui, "Wait for the running calculation, or stop it first.");
+        return;
+    }
+    if app.eng.base().is_none() {
         app.message(ui, "Calculate the image first.");
         return;
     }
     app.make_scene(ui);
+    started(app, ui, stage);
     app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
+}
+
+/// A processing of this window starts (MB3D's `DisableButtons` and
+/// `Label6`): "Calculate 3D" turns into "Stop", the LED blinks and the stage
+/// is shown until it is done.
+fn started(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
+    super::main_form::disable_buttons(app, ui);
+    app.main.calc3d = false;
+    app.main.led_running = true;
+    super::main_form::show_led(ui, app.main.led, true);
+    ui.set_caption(MAIN, "Label6", stage);
+    app.post.running = Some((stage, std::time::Instant::now()));
+}
+
+/// The processing finished (not stopped): a line in the status.
+pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
+    if let Some((stage, t)) = app.post.running.take() {
+        let tenths = (t.elapsed().as_secs_f64() * 10.0).round().max(1.0) as i64;
+        let mut s = stage.to_string();
+        s[..1].make_ascii_uppercase();
+        app.message(ui, &format!("{s} done ({}).", super::util::time_str(tenths)));
+    }
 }
 
 pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
@@ -269,7 +300,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "UpDown1ChangingEx" => radio_group3_click(ui),
         "Button14Click" => {
             app.post.normals_now = true;
-            repaint(app, ui);
+            repaint(app, ui, "Normals on ZBuf");
         }
         "Button3Click" => {
             if shadow_params(ui).lights == 0 {
@@ -277,7 +308,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 return;
             }
             app.post.hs_now = true;
-            repaint(app, ui);
+            repaint(app, ui, "hard shadow calculation");
         }
         "Button4Click" => {
             // reset the hard shadow of a light
@@ -286,15 +317,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if shadow_params(ui).lights == 0 {
                 app.post.hs_now = false;
             }
-            repaint(app, ui);
+            repaint(app, ui, "hard shadow calculation");
         }
         "Button10Click" => {
             app.post.ao_now = true;
-            repaint(app, ui);
+            repaint(app, ui, "ambient shadow calculation");
         }
         "Button11Click" => {
             app.post.refl_now = true;
-            repaint(app, ui);
+            repaint(app, ui, "Reflections");
         }
         "Button1Click" => {
             if app.scene.tiling.is_some() {
@@ -302,7 +333,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 return;
             }
             app.post.dof_now = true;
-            repaint(app, ui);
+            repaint(app, ui, "DoF calculation");
         }
         "Button2Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
@@ -323,7 +354,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button16Click" => {
             // "Reset now": the processings applied by hand are dropped
             app.post = State::default();
-            repaint(app, ui);
+            repaint(app, ui, "post processing");
         }
         "CheckBox21Click" | "CheckBox25Click" => {
             update_captions(ui);
@@ -355,8 +386,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.make_scene(ui);
             let div = pti(&ui.text(F, "Edit12")).max(1) as f64;
             let nearer = ui.checked(F, "CheckBox19");
-            super::main_form::disable_buttons(app, ui);
-            app.main.calc3d = false;
+            started(app, ui, "selection recalculation");
+            ui.set_visible(MAIN, "ProgressBar1", true);
             app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer });
         }
         "Button12Click" => {

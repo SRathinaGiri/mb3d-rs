@@ -803,6 +803,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 if let Some(p) = app.main.auto_m3i.take() {
                     save_m3i(app, ui, &p);
                 }
+            } else {
+                super::postpro_form::calc_finished(app, ui);
             }
             if app.batch.status != 0 {
                 super::tools_forms::batch_finished(app, ui);
@@ -1397,6 +1399,10 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
         app.eng.stop();
         super::voxel_form::stop(app);
         enable_buttons(app, ui);
+        if app.main.led_running {
+            app.main.led_running = false;
+            show_led(ui, app.main.led, false);
+        }
         app.message(ui, "Calculation stopped.");
         return;
     }
