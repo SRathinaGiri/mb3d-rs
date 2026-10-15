@@ -127,7 +127,7 @@ impl Resumer {
     ) -> Result<(usize, Vec<usize>), String> {
         let groups = self.slots / 64;
         base[SLOTS_WORD + 1] = self.slots as u32;
-        let mut started;
+        let mut started = 0usize;
         let mut lim = limit(0, self.slots).clamp(0, items);
         let mut enc = g.device.create_command_encoder(&Default::default());
         // the slots' first words (the pixel + 1): all free
@@ -142,7 +142,10 @@ impl Resumer {
             base[SLOTS_WORD + 2] = lim as u32;
             base[BUDGET_WORD] = self.budget;
             g.queue.write_buffer(par, 0, &bytes(&base));
-            g.queue.write_buffer(&self.queue, 0, &bytes(&[0]));
+            // the next item to start: slots that raced past the last limit
+            // incremented the counter without taking an item, and those
+            // items would be skipped once the limit grows
+            g.queue.write_buffer(&self.queue, 0, &bytes(&[0, started as u32]));
             g.queue.write_buffer(&self.queue, 8, &bytes(&[u32::MAX]));
             let mut enc = g.device.create_command_encoder(&Default::default());
             encode(&mut enc, groups as u32);
