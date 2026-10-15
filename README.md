@@ -308,28 +308,6 @@ once: on Linux from the distribution (`sudo apt install ffmpeg`,
 Windows with `winget install ffmpeg` or from [ffmpeg.org](https://ffmpeg.org).
 Without it the program says so before rendering starts.
 
-### Animated GIF of the preview
-
-When the **Preview** of the Animation maker has rendered all its frames,
-the **AniGif** button saves them as an animated GIF that plays in a loop
-at the preview's frames per second, with the frame numbers if *Show frame
-nr* is ticked. That's handy for showing a flight on a forum or in a chat.
-
-<a href="docs/img/anigif.png"><img src="docs/img/anigif.png" width="760" alt="The animation preview with the AniGif button, and the frames of the saved GIF"></a>
-
-### Paint colours on the image
-
-In the colour window (**Lighting** → **Object** tab → click the colours),
-click a colour on the colour bar and tick **Paint on image**. A round brush then follows the mouse over
-the picture: click or drag to paint that colour on the object. Only the
-surface at about the depth of the brush's middle is painted, so a brush
-over a branch does not colour the ground behind it. Turn the mouse wheel
-for a bigger or smaller brush, and right-click it to switch between a
-disc and a square. The painting lives in the calculated image (save it as
-`.m3i` to keep it); a new calculation starts from fresh colours.
-
-<a href="docs/img/paint_on_image.png"><img src="docs/img/paint_on_image.png" width="760" alt="The colour window with 'Paint on image', and a picture before and after painting two strokes"></a>
-
 ### 16 bit pictures
 
 MB3D saves 8 bit pictures: 256 steps per colour. That is plenty to look
@@ -408,6 +386,33 @@ Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
 does. Not in this program: MB3D's script editor, the "shortdistance check
 DE" option, the random light strokes and the ambient light pass of the
 post processing window.
+
+## Restored Mandelbulb3D functionality
+
+Things Mandelbulb3D has that earlier versions of this port were missing.
+They work as in MB3D.
+
+### Animated GIF of the preview
+
+When the **Preview** of the Animation maker has rendered all its frames,
+the **AniGif** button saves them as an animated GIF that plays in a loop
+at the preview's frames per second, with the frame numbers if *Show frame
+nr* is ticked. That's handy for showing a flight on a forum or in a chat.
+
+<a href="docs/img/anigif.png"><img src="docs/img/anigif.png" width="760" alt="The animation preview with the AniGif button, and the frames of the saved GIF"></a>
+
+### Paint colours on the image
+
+In the colour window (**Lighting** → **Object** tab → click the colours),
+click a colour on the colour bar and tick **Paint on image**. A round brush then follows the mouse over
+the picture: click or drag to paint that colour on the object. Only the
+surface at about the depth of the brush's middle is painted, so a brush
+over a branch does not colour the ground behind it. Turn the mouse wheel
+for a bigger or smaller brush, and right-click it to switch between a
+disc and a square. The painting lives in the calculated image (save it as
+`.m3i` to keep it); a new calculation starts from fresh colours.
+
+<a href="docs/img/paint_on_image.png"><img src="docs/img/paint_on_image.png" width="760" alt="The colour window with 'Paint on image', and a picture before and after painting two strokes"></a>
 
 ## The command line
 
