@@ -24,14 +24,25 @@ pub struct State {
     pub refl_now: bool,
 }
 
-const PANELS: [(&str, &str, &str); 6] = [
+const PANELS: [(&str, &str, &str); 7] = [
     ("RecalcSectionBtn", "RecalcSectionPnl", "CheckBox21"),
     ("NormalsOnZBufferBtn", "NormalsOnZBufferPnl", "CheckBox23"),
     ("HardShadowsBtn", "HardShadowsPnl", "CheckBox9"),
     ("AmbientShadowsBtn", "AmbientShadowsPnl", "CheckBox11"),
     ("ReflTransparencyBtn", "ReflTransparencyPnl", "CheckBox24"),
     ("DepthOfFieldBtn", "DepthOfFieldPnl", "CheckBox1"),
+    ("NoiseFilterBtn", "NoiseFilterPnl", "NoiseAutoCbx"),
 ];
+
+/// The strength of the noise filter (Noise Filter section), 0 when off.
+pub fn noise_sigma(ui: &Ui) -> f32 {
+    ui.text(F, "NoiseSigmaEdit").trim().replace(',', ".").parse::<f32>().map_or(4.0, |v| v.clamp(0.0, 255.0))
+}
+
+/// "Filter new pictures automatically" of the Noise Filter section.
+pub fn noise_auto(ui: &Ui) -> bool {
+    ui.has_form(F) && ui.checked(F, "NoiseAutoCbx")
+}
 
 fn shadow_params(ui: &Ui) -> ShadowParams {
     let mut lights = 0u8;
@@ -237,6 +248,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
     }
     match h {
+        "NoiseFilterNowBtnClick" => super::main_form::denoise_picture(app, ui, noise_sigma(ui)),
+        "NoiseAutoCbxClick" => update_captions(ui),
         "FormShow" => {
             ui.cm(F, "Edit11").hint = "Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.".into();
             ui.cm(F, "Edit12").hint = "Divides the actual \"Raystep multiplier\" by this value,\nincrease the value to reduce overstepping.".into();

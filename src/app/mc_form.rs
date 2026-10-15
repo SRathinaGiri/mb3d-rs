@@ -255,35 +255,20 @@ fn set_image(ui: &mut Ui, w: usize, h: usize, rgb: &[u8]) {
     c.picture = Some(b);
 }
 
-/// `Button6Click` ("-noise"): MB3D's noise filter on the shown picture.
-/// Every inner pixel becomes the mean of itself (weight 1) and its four
-/// neighbours (1/4 each), in place as in MB3D, so the upper and left
-/// neighbours are filtered already.  Only the picture changes: the next
-/// update of a running render shows the records again, and saving saves
-/// the shown picture.
-fn noise_filter(ui: &mut Ui) {
-    let Some(mut b) = ui.cm(F, "Image1").picture.take() else { return };
-    let (w, h) = (b.w, b.h);
-    if w >= 3 && h >= 3 {
-        let px = &mut b.px;
-        let ch = |p: u32, k: u32| ((p >> k) & 255) as f32;
-        for y in 1..h - 1 {
-            for x in 1..w - 1 {
-                let i = y * w + x;
-                let mut out = 0xFF00_0000u32;
-                for k in [16, 8, 0] {
-                    let mut v = ch(px[i], k);
-                    for j in [i - w, i - 1, i + 1, i + w] {
-                        v += ch(px[j], k) * 0.25;
-                    }
-                    // SVecToCol: Round (half to even) of the value clamped
-                    out |= ((v * 0.5).clamp(0.0, 255.0).round_ties_even() as u32) << k;
-                }
-                px[i] = out;
-            }
-        }
-    }
-    ui.cm(F, "Image1").picture = Some(b);
+/// `Button6Click` ("-noise"): a noise filter on the shown picture, the
+/// DCT denoising of GIMP's "Denoise DCT" ([`crate::denoise`]) with the
+/// strength estimated from the rays ([`crate::mc::noise_sigma`]).  (MB3D
+/// has this button hidden, with a 4-neighbour blur behind it.)  Only the
+/// picture changes: the next update of a running render shows the records
+/// again, and saving saves the shown picture.
+fn noise_filter(app: &mut Mb3d, ui: &mut Ui) {
+    let (Some(p), Some(img)) = (&app.mc.paras, &app.mc.img) else { return };
+    let sigma = crate::mc::noise_sigma(img);
+    let rgb = shown_rgb(ui, img, p);
+    let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
+    let out = crate::denoise::dct_denoise(&rgb, img.width, img.height, sigma, threads);
+    set_image(ui, img.width, img.height, &out);
+    app.message(ui, &format!("Noise filter: strength {sigma:.1}"));
 }
 
 /// The shown picture as RGB (MB3D saves `Image1`, so also a picture the
@@ -886,7 +871,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             update_paras(app, ui);
             proof_light_amount(app, ui, true);
         }
-        "Button6Click" => noise_filter(ui),
+        "Button6Click" => noise_filter(app, ui),
         "Button2Click" => {
             if app.mc.running {
                 app.mc.in_batch = false;

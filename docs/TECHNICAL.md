@@ -12,7 +12,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Lights, volumetric light, cutting planes, depth of field](#lights-volumetric-light-cutting-planes-depth-of-field)
 - [Reflections and transparency, normals on the z-buffer](#reflections-and-transparency-normals-on-the-z-buffer)
 - [Hybrids, inside rendering, maps](#hybrids-inside-rendering-maps)
-- [Output: videos, 16 bit pictures](#output-videos-16-bit-pictures)
+- [Output: videos, 16 bit pictures, noise filter](#output-videos-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Building from source](#building-from-source)
 
@@ -556,7 +556,7 @@ result equals an untiled render. A single tile is calculated with a border of
 24 pixels for the image space effects, like MB3D's big-render tiles, and the
 tile files that MB3D writes for big renders are rendered as that tile.
 
-## Output: videos, 16 bit pictures
+## Output: videos, 16 bit pictures, noise filter
 
 `mb3d animate ... --video FILE [--fps N]` and the Animation maker's *Also
 make a video* (`src/video.rs`) run ffmpeg on the finished frame images
@@ -582,6 +582,55 @@ the stages). The window paints the 16 bit picture again from the kept
 G-buffer when it is saved (with the reflections, they are marched again),
 reduced by the viewing scale like the 8 bit one. `png::encode_rgb16`
 writes it.
+
+The noise filter (`src/denoise.rs`) is the DCT image denoising of
+G. Yu and G. Sapiro (IPOL 2011, doi:10.5201/ipol.2011.ys-dct), the
+algorithm of GIMP's *Denoise DCT* (GEGL `denoise-dct`), implemented here
+from the paper: every 8x8 patch (all overlapping positions) of each of R,
+G and B is transformed with the orthonormal 2D DCT, coefficients below
+3 sigma are set to zero (the mean stays), the patch is transformed back,
+and each pixel is the mean of the patches that cover it. As in GIMP the
+channels are filtered separately; the paper's colour transform was tried
+and made the results slightly worse and unlike GIMP's. Against GIMP's own
+output (`gegl ... -- gegl:denoise-dct sigma=S`) the results differ by
+0.42 levels on average (rounding). The image is split into bands of rows,
+each band computing all patches that overlap it, so threads never share
+pixels. It filters 8 bit pictures: `mb3d --denoise S`, `mb3d montecarlo
+--denoise [S]`, the Monte Carlo window's *-noise* and Post processing ▸
+Noise Filter (*Filter now*, *Filter new pictures automatically*, applied
+in `main_form::show_image`, so the saved picture is the filtered one;
+16 bit saves are painted again and not filtered).
+
+The choice was measured on Monte Carlo pictures against 512 (256) ray
+references, RMSE of the 8 bit pictures (TreePlanet at 0.3 size, the
+default Mandelbulb 480x360, rays per pixel):
+
+| filter (GIMP 3.2 / GEGL 0.4.72) | Tree 8 | Tree 16 | Tree 32 | Mand 4 | Mand 8 | Mand 16 | Mand 32 |
+|---|---|---|---|---|---|---|---|
+| none | 6.20 | 4.54 | 3.06 | 9.46 | 4.29 | 2.81 | 1.84 |
+| Denoise DCT, sigma 4 | 5.97 | 4.40 | 3.06 | 9.28 | 4.11 | 2.76 | 1.95 |
+| Denoise DCT, sigma 8 | 5.75 | 4.58 | 3.76 | 8.55 | 4.11 | 3.22 | 2.80 |
+| Noise Reduction (default, 4 iterations) | 10.33 | 10.15 | 9.99 | 10.88 | 10.15 | 10.00 | 9.92 |
+| Smooth by Domain Transform | 5.80 | 4.53 | 3.54 | 8.79 | 4.28 | 3.30 | 2.77 |
+| MB3D's -noise (4-neighbour mean) | 6.99 | 6.57 | 6.26 | 7.68 | 6.03 | 5.73 | 5.59 |
+
+Selective Gaussian Blur, Median, Mean Curvature Blur and Symmetric Nearest
+Neighbour were all worse than none from 8 rays on.
+
+A self-made variance and normal/depth guided a-trous filter (SVGF style)
+was worse than none from 8 rays on and was dropped. For Monte Carlo the
+strength is `mc::noise_sigma` = 64 / average rays per pixel, at most 12:
+over four scenes (also "cutted sphere over carpet" and "julia on box",
+the latter not used to choose the rule) the best strength followed the
+ray count (about 12 at 4 rays, 8 at 8, 4 at 16, 2 at 32) much more than
+an estimate from each pixel's ray spread, which missed by far on the
+sphere scene (RMSE 12.4 -> 31.8). With the rule all 13 cases improve:
+-16 to -23 % at 4 rays, -5 to -10 % at 8, -2 to -5 % at 16, -1 to -3 %
+at 32.
+
+Licences: GEGL's operations are LGPL-3.0-or-later; MB3D's core is LGPL 2.1
+(its sources state no "or later"), so GEGL code is not used: the filter
+is written from the published algorithm only.
 
 ## Known differences and gaps
 

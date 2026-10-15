@@ -38,6 +38,8 @@ It comes as two programs:
   into an MP4 or WebM video as well (see [Videos](#videos-of-animations)).
 * **16 bit pictures**: PNG files with 65,536 instead of 256 steps per
   colour, for editing without banding (see [16 bit](#16-bit-pictures)).
+* **A noise filter** for Monte Carlo and all other pictures, the DCT
+  denoising known from GIMP (see [Noise filter](#noise-filter)).
 
 ## Download
 
@@ -316,16 +318,29 @@ The file looks the same, and stays smooth when it is edited.
 
 <a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
 
-### Monte Carlo: "-noise"
+### Noise filter
 
-The Monte Carlo window has a **-noise** button again: it softens the
-grain of the shown picture by averaging every pixel with its four
-neighbours, at the cost of a little sharpness. Saving saves the softened
-picture; the rendering itself goes on unchanged, and its next update
-shows it unsoftened again. The button and its filter are MB3D's own,
-which MB3D 1.99 kept hidden.
+A **noise filter** removes grain from the pictures: the **DCT denoising**
+of GIMP's *Filters ▸ Enhance ▸ Noise Reduction ▸ Denoise DCT*, which of
+GIMP's filters suited these pictures best (see the credits below).
 
-<a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture before and after -noise"></a>
+* **Monte Carlo window ▸ -noise** (a button MB3D had hidden): filters the
+  shown picture, and the saved one, with a strength that follows the rays
+  per pixel. The rendering itself goes on unfiltered, and its next update
+  shows it unfiltered again.
+* **Post processing ▸ Noise Filter**: *Filter now* filters the picture of
+  the main window; *Filter new pictures automatically* filters every new
+  one. *Strength* is the strength of the noise to remove (4 is light;
+  higher removes more grain and more fine detail).
+
+Monte Carlo pictures have the most grain. Against pictures rendered with
+512 rays per pixel, the filtered pictures were closer than the unfiltered
+ones in all 13 tests (four scenes, 4 to 32 rays): by up to 23 % at 4 rays,
+5 to 10 % at 8 rays, 1 to 3 % at 32 rays, where little grain is left.
+
+<a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture with 4 rays per pixel, the same with the noise filter, and with 512 rays"></a>
+
+<a href="docs/img/postpro_noise.png"><img src="docs/img/postpro_noise.png" width="260" alt="Post processing: the Noise Filter section"></a>
 
 Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
 does. Not in this program: MB3D's script editor, the "shortdistance check
@@ -346,6 +361,7 @@ in the unpacked folder, and type `mb3d` instead of `./mb3d`):
 ./mb3d --cpu City.m3p -o city.png          # processor only
 ./mb3d --card City.m3p -o city.png         # graphics card only
 ./mb3d City.m3p --bits 16 -o city16.png    # 16 bit colour
+./mb3d City.m3p --denoise 4 -o city.png    # with the noise filter
 ./mb3d --help                              # all options
 ```
 
@@ -357,6 +373,7 @@ Everything else has a sub-command with its own `--help`:
 ./mb3d animate project.m3a -o frames                     # MB3D animations
 ./mb3d animate project.m3a -o frames --video flight.mp4  # ... and a video
 ./mb3d montecarlo scene.m3p --rays 64 -o mc.png
+./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
@@ -800,3 +817,17 @@ cargo build --release      # target/release/Mandelbulb3D and target/release/mb3d
 
 MB3D is licensed under the LGPL 2.1. This port is a derivative work and uses
 the same license.
+
+## Credits
+
+* **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
+* **The noise filter** is the DCT image denoising algorithm of Guoshen Yu
+  and Guillermo Sapiro: *DCT image denoising: a simple and effective image
+  denoising algorithm*, Image Processing On Line 1 (2011),
+  [doi:10.5201/ipol.2011.ys-dct](https://doi.org/10.5201/ipol.2011.ys-dct).
+  It is the algorithm of **GIMP**'s *Denoise DCT* filter (from GIMP's
+  image library [GEGL](https://gegl.org)); GIMP's filters were compared
+  on Monte Carlo pictures, and this one came out best. This program has
+  its own implementation of the algorithm, written from the paper; it
+  contains no code of GIMP or GEGL (GEGL is under the LGPL 3, this
+  program under the LGPL 2.1).

@@ -240,8 +240,10 @@ object MCForm: TMCForm
       Width = 48
       Height = 25
       Hint = 
-        'Noise filter on the shown picture: every pixel averaged with its' +
-        ' four neighbours.'#13#10'The rendering itself is not changed; the next update shows it again.'
+        'Noise filter on the shown picture (DCT denoising as GIMP'#39's "Denois' +
+        'e DCT"),'#13#10'its strength estimated from the rays. The rendering ' +
+        'itself is not changed;'#13#10'the next update shows it unfiltered again' +
+        '.'
       Caption = '-noise'
       ParentShowHint = False
       ShowHint = True

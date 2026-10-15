@@ -34,6 +34,8 @@ OPTIONS:
         --aa <N>             Anti-aliasing: render N times larger and downsample
     -o, --output <FILE>      Output PNG (default: mb3d.png)
         --depth <FILE>       Also write a 16 bit depth map PNG
+        --denoise <SIGMA>    Noise filter on the picture (DCT denoising as GIMP's Denoise DCT):
+                             the strength of the noise to remove, e.g. 4 (1..30)
         --bits <8|16>        Colour depth of the PNG: 16 keeps the colours as calculated,
                              before MB3D's rounding to 8 bit (smooth gradients for
                              editing; single pictures, not tiles or stereo pairs)
@@ -124,6 +126,7 @@ fn run() -> Result<(), String> {
     let mut scale: Option<f64> = None;
     let mut aa: usize = 1;
     let mut bits16 = false;
+    let mut denoise = 0f32;
     let mut stereo_pair: Option<mb3d::render::StereoLayout> = None;
     while let Some(a) = args.next() {
         let mut val = |name: &str| args.next().ok_or_else(|| format!("{name} needs a value"));
@@ -149,6 +152,7 @@ fn run() -> Result<(), String> {
             "-s" | "--set" => overrides.push(val(&a)?),
             "-o" | "--output" => output = val(&a)?,
             "--depth" => depth = Some(val(&a)?),
+            "--denoise" => denoise = val(&a)?.trim().parse::<f32>().map_err(|_| "--denoise needs a strength (e.g. 4)".to_string())?.clamp(0.0, 255.0),
             "--bits" => {
                 bits16 = match val(&a)?.trim() {
                     "8" => false,
@@ -312,6 +316,9 @@ fn run() -> Result<(), String> {
     if bits16 && (stereo_pair.is_some() || scene.tiling.is_some()) {
         return Err("--bits 16 is for single pictures (not with --stereo-pair or --tiles)".into());
     }
+    if bits16 && denoise > 0.0 {
+        return Err("--denoise filters 8 bit pictures (not with --bits 16)".into());
+    }
     if bits16 && !output.to_ascii_lowercase().ends_with(".png") {
         return Err("--bits 16 writes PNG files: give an output file ending in .png".into());
     }
@@ -335,6 +342,7 @@ fn run() -> Result<(), String> {
         }
         let (w, h) = (eyes[0].1, eyes[0].2);
         let (rgb, ow, oh) = mb3d::render::compose_stereo(&eyes[0].0, &eyes[1].0, w, h, layout);
+        let rgb = denoised(rgb, ow, oh, denoise);
         mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
     } else if let Some(tl) = scene.tiling {
         // anti-aliasing of tile renders: --aa and the tile downscale
@@ -380,12 +388,13 @@ fn run() -> Result<(), String> {
         } else {
             (res.rgb, res.width, res.height)
         };
+        let rgb = denoised(rgb, ow, oh, denoise);
         mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
         if let (Some(d), Some(g)) = (depth, &res.gbuffer) {
             write_depth(&d, g, res.width, res.height)?;
         }
     } else {
-        render_single(&mut scene, auto_color, stats, quiet, aa, bits16, &output, depth, &progress)?;
+        render_single(&mut scene, auto_color, stats, quiet, aa, bits16, denoise, &output, depth, &progress)?;
     }
     let errs = mb3d::iteration::CUSTOM_ERRORS.load(std::sync::atomic::Ordering::Relaxed);
     if errs > 0 {
@@ -405,6 +414,7 @@ fn render_single(
     quiet: bool,
     aa: usize,
     bits16: bool,
+    denoise: f32,
     output: &str,
     depth: Option<String>,
     progress: &(dyn Fn(usize, usize) + Sync),
@@ -461,12 +471,22 @@ fn render_single(
         } else {
             (res.rgb.clone(), res.width, res.height)
         };
+        let rgb = denoised(rgb, ow, oh, denoise);
         mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
     }
     if let Some(d) = depth {
         write_depth(&d, &res.gbuffer, res.width, res.height)?;
     }
     Ok(())
+}
+
+/// `--denoise`: the DCT noise filter (GIMP's "Denoise DCT") with this
+/// strength, 0 = off.
+fn denoised(rgb: Vec<u8>, w: usize, h: usize, sigma: f32) -> Vec<u8> {
+    if sigma <= 0.0 {
+        return rgb;
+    }
+    mb3d::denoise::dct_denoise(&rgb, w, h, sigma, std::thread::available_parallelism().map_or(4, |n| n.get()))
 }
 
 fn write_depth(path: &str, g: &[mb3d::gbuffer::SiLight], w: usize, h: usize) -> Result<(), String> {
@@ -1491,6 +1511,9 @@ OPTIONS:
                              pass (continue later, also in MB3D)
         --exposure <N>       0..255 (default: the file's, 128 = 1)
         --saturation <N>     0..127 (32 = 1)
+        --denoise [SIGMA]    DCT noise filter on the written picture (GIMP's Denoise DCT):
+                             the noise strength SIGMA (0..255), default: 64 / rays per
+                             pixel (at most 12); the --m3c records stay unfiltered
         --scale <F>          Scale the image size
     -s, --set <KEY=VALUE>    Change a scene key (may be repeated)
     -t, --threads <N>        Number of threads (default: all cores)
@@ -1505,8 +1528,18 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     let (mut threads, mut quiet) = (0usize, false);
     let (mut rays, mut passes, mut time) = (None::<f64>, None::<u32>, None::<f64>);
     let (mut exposure, mut saturation, mut scale) = (None::<u8>, None::<u8>, None::<f64>);
-    let mut args = argv.iter();
+    // the noise filter: None off, Some(None) sigma estimated from the rays
+    let mut denoise: Option<Option<f32>> = None;
+    let mut args = argv.iter().peekable();
     while let Some(a) = args.next() {
+        if a == "--denoise" {
+            let v = args.peek().and_then(|v| v.trim().parse::<f32>().ok());
+            if v.is_some() {
+                args.next();
+            }
+            denoise = Some(v.map(|v| v.clamp(0.0, 255.0)));
+            continue;
+        }
         let mut val = || args.next().cloned().ok_or_else(|| format!("{a} needs a value"));
         let f = |v: String| v.trim().parse::<f64>().map_err(|_| format!("bad value for {a}"));
         match a.as_str() {
@@ -1586,7 +1619,12 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     let t0 = Instant::now();
     let start_passes = img.passes;
     let write_picture = |img: &mb3d::mc::McImage| -> Result<(), String> {
-        let rgb = mb3d::mc::paint(img, &scene.mc, scene.lighting.gamma);
+        let mut rgb = mb3d::mc::paint(img, &scene.mc, scene.lighting.gamma);
+        if let Some(sigma) = denoise {
+            let sigma = sigma.unwrap_or_else(|| mb3d::mc::noise_sigma(img));
+            let n = if threads > 0 { threads } else { std::thread::available_parallelism().map_or(4, |n| n.get()) };
+            rgb = mb3d::denoise::dct_denoise(&rgb, img.width, img.height, sigma, n);
+        }
         mb3d::png::write_rgb(&out, img.width, img.height, &rgb).map_err(|e| format!("{out}: {e}"))
     };
     loop {

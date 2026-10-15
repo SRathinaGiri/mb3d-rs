@@ -3,7 +3,7 @@ object PostProForm: TPostProForm
   Top = 100
   BorderStyle = bsDialog
   Caption = 'Post processing'
-  ClientHeight = 1247
+  ClientHeight = 1352
   ClientWidth = 255
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -1060,6 +1060,20 @@ object PostProForm: TPostProForm
       TabOrder = 10
     end
   end
+  object NoiseFilterBtn: TSpeedButton
+    Left = 0
+    Top = 1115
+    Width = 255
+    Height = 21
+    Hint = 'Click to hide/show'
+    Align = alTop
+    AllowAllUp = True
+    GroupIndex = 7
+    Caption = ' Noise Filter'
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = NoiseFilterBtnClick
+  end
   object DepthOfFieldPnl: TPanel
     Left = 0
     Top = 912
@@ -1307,6 +1321,66 @@ object PostProForm: TPostProForm
       ParentShowHint = False
       ShowHint = True
       TabOrder = 10
+    end
+  end
+  object NoiseFilterPnl: TPanel
+    Left = 0
+    Top = 1136
+    Width = 255
+    Height = 84
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 10
+    Visible = False
+    object NoiseStrengthLbl: TLabel
+      Left = 29
+      Top = 37
+      Width = 46
+      Height = 13
+      Caption = 'Strength:'
+    end
+    object NoiseAutoCbx: TCheckBox
+      Left = 27
+      Top = 9
+      Width = 212
+      Height = 17
+      Hint = 
+        'Every new picture of the main window is filtered (the saved one ' +
+        'too).'
+      Caption = 'Filter new pictures automatically'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      OnClick = NoiseAutoCbxClick
+    end
+    object NoiseSigmaEdit: TEdit
+      Left = 81
+      Top = 34
+      Width = 40
+      Height = 21
+      Hint = 
+        'How strong the noise is that is removed (1 to 30, as GIMP'#39's "Den' +
+        'oise DCT").'#13#10'Higher removes more noise, and more fine detail.'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      Text = '4'
+    end
+    object NoiseFilterNowBtn: TButton
+      Left = 11
+      Top = 59
+      Width = 83
+      Height = 21
+      Caption = 'Filter now'
+      TabOrder = 2
+      OnClick = NoiseFilterNowBtnClick
+    end
+    object NoiseInfoLbl: TLabel
+      Left = 130
+      Top = 37
+      Width = 115
+      Height = 13
+      Caption = 'DCT denoising (GIMP)'
     end
   end
   object GroupBox4: TGroupBox

@@ -3127,6 +3127,22 @@ pub fn paint(img: &McImage, mc: &McSettings, gamma: f32) -> Vec<u8> {
 }
 
 // ---------------------------------------------------------------------------
+// the noise of the picture
+
+/// The strength (sigma, 0..255) of the DCT noise filter
+/// ([`crate::denoise`]) for the painted picture: 64 divided by the average
+/// ray count, at most 12.  Measured on four example scenes against 256 and
+/// 512 ray references (TreePlanet, the default Mandelbulb, "cutted sphere
+/// over carpet", "julia on box", at 4 to 32 rays), the best strength
+/// depended on the ray count much more than on anything else: about 12 at
+/// 4 rays, 8 at 8, 4 at 16 and 2 at 32.  (An estimate from each pixel's
+/// spread of its rays was tried first and missed by far on some scenes.)
+pub fn noise_sigma(img: &McImage) -> f32 {
+    let rays = img.stats().avg_rays as f32;
+    if rays <= 0.0 { 0.0 } else { (64.0 / rays).min(12.0) }
+}
+
+// ---------------------------------------------------------------------------
 // .m3c files: parameters + records (`SaveM3C`, `Button9Click`)
 
 const REC_SIZE: usize = 18;

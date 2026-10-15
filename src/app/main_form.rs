@@ -737,6 +737,12 @@ pub fn show_image(app: &mut Mb3d, ui: &mut Ui) {
     };
     match rgb {
         Some(rgb) => {
+            // Post processing > Noise Filter > "Filter new pictures automatically"
+            let rgb = if super::postpro_form::noise_auto(ui) {
+                std::sync::Arc::new(denoised(&rgb, w, h, super::postpro_form::noise_sigma(ui)))
+            } else {
+                rgb
+            };
             app.main.rgb = Some((rgb.clone(), w, h));
             set_image(app, ui, rgb, w, h);
         }
@@ -745,6 +751,23 @@ pub fn show_image(app: &mut Mb3d, ui: &mut Ui) {
             clear_screen(app, ui);
         }
     }
+}
+
+fn denoised(rgb: &[u8], w: usize, h: usize, sigma: f32) -> Vec<u8> {
+    let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
+    crate::denoise::dct_denoise(rgb, w, h, sigma, threads)
+}
+
+/// Post processing > Noise Filter > "Filter now": the DCT noise filter
+/// ([`crate::denoise`]) on the shown picture, which is also the saved one.
+pub fn denoise_picture(app: &mut Mb3d, ui: &mut Ui, sigma: f32) {
+    let Some((rgb, w, h)) = app.main.rgb.clone() else {
+        return app.message(ui, "Calculate the image first.");
+    };
+    let out = std::sync::Arc::new(denoised(&rgb, w, h, sigma));
+    app.main.rgb = Some((out.clone(), w, h));
+    set_image(app, ui, out, w, h);
+    app.message(ui, &format!("Noise filter: strength {sigma}"));
 }
 
 /// Shows a picture of another window in the main window (voxel slices).

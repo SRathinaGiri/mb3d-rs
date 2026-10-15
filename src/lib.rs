@@ -34,6 +34,7 @@ pub mod batch;
 pub mod calc;
 pub mod custom;
 pub mod deao;
+pub mod denoise;
 pub mod dof;
 pub mod formulas;
 pub mod frames;
