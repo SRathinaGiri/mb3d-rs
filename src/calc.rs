@@ -815,6 +815,30 @@ impl CalcParams {
     }
 }
 
+/// The random state of pixel (x, y) of the picture at its first step
+/// ("first step random"): MB3D's seed of row y, advanced by one step of
+/// its random generator per column x (MB3D draws once per pixel along the
+/// row).  By the column in the whole picture, so that a tile or a band
+/// that starts inside a row gets the same numbers as the whole picture
+/// (the rows used to start their sequence at the tile's first column, and
+/// tiles came out different).
+pub fn pixel_seed(y: i64, x: i64) -> i32 {
+    let row = (0x24563487u32 as i64 + (y + 1) * 0x324594A1i64) as i32 as u32;
+    // the generator s -> 214013 s + 2531011 applied x times, by squaring
+    let (mut a, mut c, mut ra, mut rc) = (214013u32, 2531011u32, 1u32, 0u32);
+    let mut n = x.max(0) as u64;
+    while n > 0 {
+        if n & 1 != 0 {
+            rc = rc.wrapping_mul(a).wrapping_add(c);
+            ra = ra.wrapping_mul(a);
+        }
+        c = c.wrapping_mul(a).wrapping_add(c);
+        a = a.wrapping_mul(a);
+        n >>= 1;
+    }
+    ra.wrapping_mul(row).wrapping_add(rc) as i32
+}
+
 /// Per-thread ray marching state (the mutable parts of `TMCTparameter`).
 pub struct Marcher<'a> {
     pub p: &'a CalcParams,
@@ -2104,6 +2128,23 @@ impl<'a> Marcher<'a> {
                 }
             }
             si.shadow = (si.shadow & 0x3FF) | (((zr_soft.clamp(0.0, 1.0) * 63.4).round_ties_even() as u16) << 10);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The jump-ahead equals stepping the generator x times.
+    #[test]
+    fn pixel_seed_steps_along_the_row() {
+        for y in [0i64, 7, 1499] {
+            let mut s = (0x24563487u32 as i64 + (y + 1) * 0x324594A1i64) as i32;
+            for x in 0..3000i64 {
+                assert_eq!(pixel_seed(y, x), s, "y {y} x {x}");
+                s = s.wrapping_mul(214013).wrapping_add(2531011);
+            }
         }
     }
 }

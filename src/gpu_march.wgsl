@@ -280,6 +280,27 @@ var<private> base: vec3<R>;
 var<private> max_its_result: i32;
 var<private> s_roughness: R;
 var<private> seed: i32;
+
+// calc::pixel_seed: MB3D's seed of row y advanced by x steps of its
+// generator (s -> 214013 s + 2531011), by squaring
+fn pixel_seed(y: i32, x: i32) -> i32 {
+    var a = 214013u;
+    var c = 2531011u;
+    var ra = 1u;
+    var rc = 0u;
+    var n = u32(max(x, 0));
+    loop {
+        if (n == 0u) { break; }
+        if ((n & 1u) != 0u) {
+            rc = rc * a + c;
+            ra = ra * a;
+        }
+        c = c * a + c;
+        a = a * a;
+        n = n >> 1u;
+    }
+    return bitcast<i32>(ra * (0x24563487u + u32(y + 1) * 0x324594A1u) + rc);
+}
 // the result (SiLight)
 var<private> si_normal: vec3<i32>;
 var<private> si_zpos: u32;
@@ -4124,15 +4145,12 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         y = pi(RECT_Y0) + ry * sy + sy / 2;
     }
     let x = pi(RECT_X0) + cx;
-    // MB3D seeds per row; the CPU advances the seed along the row, here the
-    // seed is advanced by the column (the same random sequence, but not
-    // exactly the same numbers where pixels have no first step)
+    // MB3D seeds per row and draws once per pixel along it: the row's seed
+    // advanced by the column in the whole picture (calc::pixel_seed; the
+    // same numbers as the CPU and in every tile)
     // (a resumed pixel loads its seed and record from the state)
     if (!resuming) {
-        seed = bitcast<i32>(0x24563487u + u32(y + 1) * 0x324594A1u);
-        for (var k = 0; k < cx; k++) {
-            seed = seed * 214013 + 2531011;
-        }
+        seed = pixel_seed(y, x);
         init_record();
     }
     _ = cst[0];

@@ -236,12 +236,16 @@ fn calculate_inner(
                         break;
                     }
                     let yy = y + y0;
-                    let seed = (0x24563487u32 as i64 + (yy as i64 + 1) * 0x324594A1i64) as i32;
-                    let mut m = Marcher::new(p, seed);
+                    let mut m = Marcher::new(p, 0);
                     let row: Vec<SiLight> = if two_d {
                         (x0..x0 + w).map(|x| m.slice_pixel(x as i32, yy as i32)).collect()
                     } else {
-                        (x0..x0 + w).map(|x| m.march_pixel(x as i32, yy as i32)).collect()
+                        (x0..x0 + w)
+                            .map(|x| {
+                                m.seed = crate::calc::pixel_seed(yy as i64, x as i64);
+                                m.march_pixel(x as i32, yy as i32)
+                            })
+                            .collect()
                     };
                     if let Some(f) = sink {
                         f(y, &row);
@@ -272,9 +276,13 @@ fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
     let [x0, y0, w, _] = p.rect;
     let yy = y + y0 as usize;
     // MB3D: seed := Round(Random * (iThreadId + 1) * $324594A1 + $24563487)
-    let seed = (0x24563487u32 as i64 + (yy as i64 + 1) * 0x324594A1i64) as i32;
-    let mut m = Marcher::new(p, seed);
-    (x0..x0 + w).map(|x| m.march_pixel(x, yy as i32)).collect()
+    let mut m = Marcher::new(p, 0);
+    (x0..x0 + w)
+        .map(|x| {
+            m.seed = crate::calc::pixel_seed(yy as i64, x as i64);
+            m.march_pixel(x, yy as i32)
+        })
+        .collect()
 }
 
 /// The mean colour difference of the probe's pixels (a share of full
@@ -408,10 +416,7 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
                     let (y, x) = samples[j];
                     let yy = y + y0;
                     // the card's seed: the row's, advanced by the column
-                    let mut seed = (0x24563487u32 as i64 + (yy as i64 + 1) * 0x324594A1i64) as i32;
-                    for _ in 0..x {
-                        seed = seed.wrapping_mul(214013).wrapping_add(2531011);
-                    }
+                    let seed = crate::calc::pixel_seed(yy as i64, (x + x0) as i64);
                     let _ = cpu[j].set(Marcher::new(p, seed).march_pixel((x + x0) as i32, yy as i32));
                 }
             });

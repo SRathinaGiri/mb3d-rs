@@ -2808,9 +2808,11 @@ mod tests {
         let t = std::time::Instant::now();
         let mut cpu = Vec::new();
         for y in y0..y0 + h {
-            let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
-            let mut m = Marcher::new(&p, seed);
-            cpu.extend((x0..x0 + w).map(|x| m.march_pixel(x, y)));
+            let mut m = Marcher::new(&p, 0);
+            cpu.extend((x0..x0 + w).map(|x| {
+                m.seed = crate::calc::pixel_seed(y as i64, x as i64);
+                m.march_pixel(x, y)
+            }));
         }
         let cpu_s = t.elapsed().as_secs_f64();
         assert_eq!(g.len(), cpu.len());
