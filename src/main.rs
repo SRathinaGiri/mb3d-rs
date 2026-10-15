@@ -1585,6 +1585,10 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     }
     let t0 = Instant::now();
     let start_passes = img.passes;
+    let write_picture = |img: &mb3d::mc::McImage| -> Result<(), String> {
+        let rgb = mb3d::mc::paint(img, &scene.mc, scene.lighting.gamma);
+        mb3d::png::write_rgb(&out, img.width, img.height, &rgb).map_err(|e| format!("{out}: {e}"))
+    };
     loop {
         let st = img.stats();
         if let Some(r) = target {
@@ -1629,14 +1633,25 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
                 fmt_dur(img.seconds)
             );
         }
-        let rgb = mb3d::mc::paint(&img, &scene.mc, scene.lighting.gamma);
-        mb3d::png::write_rgb(&out, img.width, img.height, &rgb).map_err(|e| format!("{out}: {e}"))?;
+        write_picture(&img)?;
         if let Some(m) = &m3c {
             std::fs::write(m, mb3d::mc::write_m3c(&scene, &img)).map_err(|e| format!("{m}: {e}"))?;
         }
         if time.is_some_and(|t| t0.elapsed().as_secs_f64() >= t) {
             break;
         }
+    }
+    // a continued .m3c that already had its rays: its picture (e.g. with
+    // another exposure or saturation)
+    if img.passes == start_passes {
+        if img.stats().avg_rays == 0.0 {
+            return Err("no rays calculated (nothing to write)".into());
+        }
+        write_picture(&img)?;
+        if !quiet {
+            eprintln!("wrote {out} (no new pass: the target was reached already)");
+        }
+        return Ok(());
     }
     if !quiet {
         eprintln!("wrote {out}{}", m3c.map(|m| format!(" and {m}")).unwrap_or_default());
