@@ -439,6 +439,18 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.38](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.38) · 15 Oct 2026, 10:26 UTC
+
+| Commit | What it does |
+|---|---|
+| [`0c9986e`](https://github.com/thr32423/mb3d-rs/commit/0c9986eb9a12113a636984fdbb2d6b773cf9b85c) | Version number and release notes of this release |
+| [`4099048`](https://github.com/thr32423/mb3d-rs/commit/40990480f9f0f720e9c5e991792e76e219be5086) | Tiles come out exactly as the whole picture |
+| [`9ebe8b9`](https://github.com/thr32423/mb3d-rs/commit/9ebe8b9d527af2d94cf57a22f008359c9a866bf4) | Navigator: the bottom panel no longer moves the arrows away |
+| [`98c2ed6`](https://github.com/thr32423/mb3d-rs/commit/98c2ed67622ea9d92cab8cf11e602fad31c5a9f6) | Formulas' map lookups without locks: Insect Menger 63.8 -> 3.6 s |
+| [`7a4a6d6`](https://github.com/thr32423/mb3d-rs/commit/7a4a6d6165b81eb5a9982d8ab861881970859fb2) | Transparent background for pictures and animations |
+| [`4ab267e`](https://github.com/thr32423/mb3d-rs/commit/4ab267e9a96a9b197c7ca4c295f97f05e7c9d4c0) | Navigator: type exact values and the zoom; Reset view |
+| [`97ac2c7`](https://github.com/thr32423/mb3d-rs/commit/97ac2c7ef4911fc97f868b1862f99266d27d9a66) | README: Updates for v0.2.37 |
+
 ### [v0.2.37](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.37) · 15 Oct 2026, 06:49 UTC
 
 | Commit | What it does |
@@ -489,6 +501,8 @@ in UTC.
 | [`4cf6967`](https://github.com/thr32423/mb3d-rs/commit/4cf6967271b8677051aa24715442417a433a89d3) | Auto: double precision scenes stay on the CPU; mb3d waits for compiles; --card |
 | [`ed68b01`](https://github.com/thr32423/mb3d-rs/commit/ed68b017e823484fe3e2799234d0270331188f4a) | Card: the formulas' control flow structured in the shaders |
 
+<details><summary>Older releases (v0.1.0 to v0.2.33)</summary>
+
 ### [v0.2.33](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.33) · 13 Oct 2026, 13:00 UTC
 
 | Commit | What it does |
@@ -498,8 +512,6 @@ in UTC.
 | [`967fe36`](https://github.com/thr32423/mb3d-rs/commit/967fe3683f0da0ead618a8f46de19a076e5e7056) | Card: the compiled shaders kept in ShaderCache between runs |
 | [`496901b`](https://github.com/thr32423/mb3d-rs/commit/496901b9fce7dc1e195c4d728e1dc86373a3b047) | tools/mb3d-wine: render and save a G-buffer in MB3D under Wine |
 | [`e71a78b`](https://github.com/thr32423/mb3d-rs/commit/e71a78b425e8a3e00652a656f8f63b99f6b9492f) | Painting with internal gamma 2 as MB3D does: 180430 matches |
-
-<details><summary>Older releases (v0.1.0 to v0.2.32)</summary>
 
 ### [v0.2.32](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.32) · 13 Oct 2026, 11:16 UTC
 
