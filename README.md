@@ -414,6 +414,11 @@ disc and a square. The painting lives in the calculated image (save it as
 
 <a href="docs/img/paint_on_image.png"><img src="docs/img/paint_on_image.png" width="760" alt="The colour window with 'Paint on image', and a picture before and after painting two strokes"></a>
 
+### Smaller things
+
+* **Save dialogs:** choosing another file type changes the extension of
+  the file name, and a name typed without one gets the chosen type's.
+
 ## The command line
 
 `mb3d` renders without a window. Open a terminal in the program's folder

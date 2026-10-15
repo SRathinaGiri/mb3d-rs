@@ -376,6 +376,31 @@ impl Ui {
         l.top_index = 0;
     }
 
+    /// The extension of the chosen file type (its first `*.ext` pattern).
+    fn file_type_ext(&self, i: usize) -> Option<String> {
+        let sel = self.forms[i].c("TypeCombo").item_index.max(0) as usize;
+        let Some(DialogState::File(d)) = self.dialogs.get(&i) else { return None };
+        d.filters.get(sel)?.1.iter().find_map(|p| p.strip_prefix("*.").filter(|e| !e.is_empty() && !e.contains(['*', '?'])).map(str::to_string))
+    }
+
+    /// `SaveDialogTypeChange`: another file type in a save dialog gives the
+    /// file name its extension.
+    fn file_type_change(&mut self, i: usize) {
+        let Some(DialogState::File(d)) = self.dialogs.get(&i) else { return };
+        if !d.save {
+            return;
+        }
+        let Some(ext) = self.file_type_ext(i) else { return };
+        let name = self.forms[i].c("NameEdit").text.trim().to_string();
+        if name.is_empty() {
+            return;
+        }
+        let new = Path::new(&name).with_extension(&ext).to_string_lossy().into_owned();
+        if new != name {
+            self.forms[i].c_mut("NameEdit").set_text(&new);
+        }
+    }
+
     /// Accepts the file name of the dialog; false when it navigated instead.
     fn file_accept(&mut self, i: usize) -> bool {
         let name = self.forms[i].c("NameEdit").text.trim().to_string();
@@ -411,6 +436,8 @@ impl Ui {
         if name.is_empty() {
             return false;
         }
+        let type_ext = self.file_type_ext(i);
+        let Some(DialogState::File(d)) = self.dialogs.get_mut(&i) else { return false };
         let mut p = PathBuf::from(&name);
         if !p.is_absolute() {
             p = d.dir.join(&name);
@@ -421,8 +448,12 @@ impl Ui {
             self.file_refresh(i);
             return false;
         }
-        if d.save && p.extension().is_none() && !d.default_ext.is_empty() {
-            p.set_extension(d.default_ext.trim_start_matches('.'));
+        if d.save && p.extension().is_none() {
+            // the chosen file type's extension (MB3D's DefaultExt per type)
+            let ext = type_ext.unwrap_or_else(|| d.default_ext.trim_start_matches('.').to_string());
+            if !ext.is_empty() {
+                p.set_extension(ext);
+            }
         }
         if !d.save && !p.exists() {
             let msg = format!("{}\nFile not found.\nPlease verify the correct file name was given.", p.display());
@@ -458,7 +489,10 @@ impl Ui {
                     }
                     self.file_refresh(i);
                 }
-                ("TypeCombo", "OnChange") => self.file_refresh(i),
+                ("TypeCombo", "OnChange") => {
+                    self.file_type_change(i);
+                    self.file_refresh(i);
+                }
                 ("DirEdit", "OnKeyPress") if r.ev == Ev::KeyPress('\r') => {
                     let t = PathBuf::from(self.forms[i].c("DirEdit").text.trim());
                     if t.is_dir() {
@@ -569,3 +603,37 @@ const BASIC: [u32; 48] = [
     0x0000FF, 0x0000A0, 0x800080, 0x8000FF, 0x400000, 0x804000, 0x004000, 0x004040, 0x000080, 0x000040, 0x400040, 0x400080, 0x000000, 0x808000,
     0x808040, 0x808080, 0x408080, 0xC0C0C0, 0x400040, 0xFFFFFF,
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Another file type in a save dialog changes the name's extension; a
+    /// name without one gets the type's when accepted.
+    #[test]
+    fn save_type_sets_extension() {
+        let mut ui = Ui::default();
+        let dir = std::env::temp_dir();
+        let o = FileOptions { filter: "JPEG (*.jpg)|*.jpg|PNG (*.png)|*.png|All|*.*".into(), default_ext: "jpg".into(), initial_dir: Some(dir.clone()), file_name: "pic.jpg".into(), ..Default::default() };
+        ui.save_dialog("t", &o);
+        let i = ui.form_index("FileDlg").unwrap();
+        let combo = ui.forms[i].id("TypeCombo").unwrap();
+        let change = |ui: &mut Ui, k: i32| {
+            ui.forms[i].c_mut("TypeCombo").set_item_index(k);
+            ui.dialog_event(i, &Raw { id: combo, name: "OnChange", ev: Ev::Click });
+        };
+        change(&mut ui, 1);
+        assert_eq!(ui.forms[i].c("NameEdit").text, "pic.png");
+        // "All" has no extension: the name stays
+        change(&mut ui, 2);
+        assert_eq!(ui.forms[i].c("NameEdit").text, "pic.png");
+        change(&mut ui, 1);
+        ui.forms[i].c_mut("NameEdit").set_text("noext");
+        assert!(ui.file_accept(i));
+        let got = ui.events.iter().find_map(|e| match &e.ev {
+            Ev::DialogResult(DialogResult::File(Some(p))) => Some(p.clone()),
+            _ => None,
+        });
+        assert_eq!(got, Some(dir.join("noext.png")));
+    }
+}
