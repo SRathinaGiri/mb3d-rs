@@ -30,12 +30,13 @@ pub fn check() -> Result<(), String> {
 /// The video file extensions offered (the window's list).
 pub const FORMATS: [&str; 2] = ["mp4", "webm"];
 
-/// The encoder options for a video file (by its extension).
-fn codec_args(out: &Path) -> Vec<&'static str> {
+/// The encoder options for a video file (by its extension); `alpha`:
+/// transparent frames stay transparent where the format can (WebM).
+fn codec_args(out: &Path, alpha: bool) -> Vec<&'static str> {
     match out.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).as_deref() {
         Some("mp4" | "mov") => vec!["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-preset", "medium", "-movflags", "+faststart"],
         Some("mkv") => vec!["-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-preset", "medium"],
-        Some("webm") => vec!["-c:v", "libvpx-vp9", "-pix_fmt", "yuv420p", "-crf", "30", "-b:v", "0", "-row-mt", "1"],
+        Some("webm") => vec!["-c:v", "libvpx-vp9", "-pix_fmt", if alpha { "yuva420p" } else { "yuv420p" }, "-crf", "30", "-b:v", "0", "-row-mt", "1"],
         _ => vec![],
     }
 }
@@ -56,8 +57,9 @@ fn concat_list(frames: &[PathBuf], fps: f64) -> String {
 
 /// Joins the frame images (in this order) into the video file `out` at
 /// `fps` frames per second.  Odd sizes are padded by a pixel (H.264 and
-/// VP9 need even ones).
-pub fn encode(frames: &[PathBuf], fps: f64, out: &Path) -> Result<(), String> {
+/// VP9 need even ones).  `alpha`: the frames have a transparent background
+/// (kept in WebM; MP4 shows the background).
+pub fn encode(frames: &[PathBuf], fps: f64, out: &Path, alpha: bool) -> Result<(), String> {
     if frames.is_empty() {
         return Err("no frames for the video".into());
     }
@@ -77,7 +79,7 @@ pub fn encode(frames: &[PathBuf], fps: f64, out: &Path) -> Result<(), String> {
         .args(["-y", "-hide_banner", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i"])
         .arg(&list)
         .args(["-vf", &vf, "-r", &fps_s])
-        .args(codec_args(out))
+        .args(codec_args(out, alpha))
         .arg(out)
         .output();
     let _ = std::fs::remove_file(&list);
@@ -121,7 +123,7 @@ mod tests {
             })
             .collect();
         let out = dir.join("v.mp4");
-        encode(&frames, 10.0, &out).unwrap();
+        encode(&frames, 10.0, &out, false).unwrap();
         assert!(std::fs::metadata(&out).unwrap().len() > 100);
         assert!(!PathBuf::from(format!("{}.frames.txt", out.display())).exists());
         let _ = std::fs::remove_dir_all(&dir);

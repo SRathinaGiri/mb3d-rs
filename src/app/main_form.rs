@@ -1605,7 +1605,7 @@ fn save_pic_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str) {
         return;
     }
     let (filter, ext) = match what {
-        "png" => ("PNG (*.png)|*.png|PNG 16 bit colour (*.png)|*.png|Bitmap (*.bmp)|*.bmp", "png"),
+        "png" => ("PNG (*.png)|*.png|PNG 16 bit colour (*.png)|*.png|PNG transparent background (*.png)|*.png|Bitmap (*.bmp)|*.bmp", "png"),
         "jpg" => ("JPEG (*.jpg)|*.jpg", "jpg"),
         "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png", "jpg"),
         _ => ("PNG 16 bit (*.png)|*.png", "png"),
@@ -1675,6 +1675,29 @@ fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     }
 }
 
+/// "PNG transparent background": the shown picture as RGBA, the background
+/// transparent ([`crate::frames::rgba_of`]), reduced by the viewing scale.
+fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+    let (Some((rgb, w, h)), Some(b)) = (app.main.rgb.clone(), app.eng.base()) else {
+        app.message(ui, "Calculate the image first.");
+        return;
+    };
+    if b.post.len() != w * h {
+        return app.message(ui, "The picture does not match its calculation: calculate it again.");
+    }
+    let s = app.main.image_scale.max(1) as usize;
+    let (rgba, ow, oh) = crate::frames::rgba_of(&rgb, &b.post, w, h, s);
+    let mut data = crate::png::encode_rgba(ow, oh, &rgba);
+    if ui.checked(F, "CheckBox13") {
+        let text = crate::m3p::raw_to_text(&crate::m3p::write(&b.scene), ui.f(F).caption());
+        data = crate::png::with_text(data, "Comment", &text);
+    }
+    match std::fs::write(path, data) {
+        Ok(()) => app.message(ui, &format!("Saved {} (transparent background)", path.display())),
+        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
+    }
+}
+
 fn save_zbuf(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else {
         app.message(ui, "Calculate the image first.");
@@ -1739,6 +1762,8 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let png = p.extension().is_some_and(|e| e.eq_ignore_ascii_case("png"));
             if what == "savepng" && ui.filter_index == 2 && png {
                 save_image16(app, ui, p)
+            } else if what == "savepng" && ui.filter_index == 3 && png {
+                save_transparent(app, ui, p)
             } else {
                 save_image(app, ui, p)
             }

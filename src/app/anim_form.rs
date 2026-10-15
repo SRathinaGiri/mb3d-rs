@@ -59,6 +59,7 @@ fn video_settings(ui: &Ui, a: &Animation) -> Result<Option<(std::path::PathBuf, 
 }
 
 fn save_video_settings(app: &mut Mb3d, ui: &Ui) {
+    app.ini.set_extra("AniTransparent", if ui.checked(F, "TransparentCheck") { "1" } else { "0" });
     app.ini.set_extra("AniVideo", if ui.checked(F, "VideoCheck") { "1" } else { "0" });
     app.ini.set_extra("AniVideoFormat", &ui.item_index(F, "VideoFormatCmb").max(0).to_string());
     app.ini.set_extra("AniVideoFps", ui.text(F, "VideoFpsEdit").trim());
@@ -130,6 +131,7 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     a.index_step = pti(&ui.text(F, "Edit4")).max(1) as i64;
     a.overwrite = ui.checked(F, "CheckBox6");
     a.save_depth = ui.checked(F, "CheckBox7");
+    a.transparent = ui.checked(F, "TransparentCheck") && a.format == OutputFormat::Png;
     a.stereo_bits = if ui.checked(F, "CheckBox4") { 1 | if ui.checked(F, "CheckBox5") { 2 } else { 0 } } else { 0 };
 }
 
@@ -416,6 +418,9 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
         ui.show_message("No frames to render in this range.");
         return;
     }
+    if ui.checked(F, "TransparentCheck") && a.format != OutputFormat::Png {
+        return ui.show_message("A transparent background needs PNG frames: choose PNG as the output format.");
+    }
     let video = match video_settings(ui, &a) {
         Ok(v) => v,
         Err(e) => return ui.show_message(&e),
@@ -486,7 +491,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
                 w.wake();
             }
             let files: Vec<std::path::PathBuf> = frames.iter().map(|&f| a.frame_file(f)).collect();
-            let r = crate::video::encode(&files, fps, &path);
+            let r = crate::video::encode(&files, fps, &path, a.transparent);
             let mut j = job.lock().unwrap();
             j.making_video = false;
             match r {
@@ -553,7 +558,7 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
                     s.ao = None;
                     s.dof = None;
                 }
-                crate::frames::render_scaled(&s, 1, false, &|_, _| {}, &cancel)
+                crate::frames::render_scaled(&s, 1, false, false, &|_, _| {}, &cancel)
             });
             let mut j = job.lock().unwrap();
             match r {
@@ -808,6 +813,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 let fi = app.ini.get_extra("AniVideoFormat").and_then(|v| v.parse::<i32>().ok()).unwrap_or(0);
                 ui.set_item_index(F, "VideoFormatCmb", fi.clamp(0, crate::video::FORMATS.len() as i32 - 1));
                 ui.set_checked(F, "VideoCheck", app.ini.get_extra("AniVideo") == Some("1"));
+                ui.set_checked(F, "TransparentCheck", app.ini.get_extra("AniTransparent") == Some("1"));
                 let fps = app.ini.get_extra("AniVideoFps").filter(|v| !v.is_empty()).unwrap_or("25").to_string();
                 ui.set_text(F, "VideoFpsEdit", &fps);
             }

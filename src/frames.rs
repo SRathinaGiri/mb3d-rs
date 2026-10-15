@@ -5,6 +5,7 @@
 //! can work on the same animation or list, and the image encoders.
 
 use crate::anim::{Animation, OutputFormat};
+use crate::gbuffer::SiLight;
 use crate::scene::Scene;
 use std::fs::{File, OpenOptions};
 use std::io::{Seek, Write};
@@ -130,7 +131,47 @@ pub struct FrameImage {
     pub rgb: Vec<u8>,
     /// 16 bit depth (0 = background, larger = nearer), at the image size
     pub depth: Option<Vec<u16>>,
+    /// the picture with a transparent background (RGBA, see [`rgba_of`])
+    pub rgba: Option<Vec<u8>>,
     pub seconds: f64,
+}
+
+/// A picture with a transparent background (RGBA, straight alpha), reduced
+/// by `n` (anti-aliasing, 1 = none): the opacity of a pixel is the share
+/// of object (not background) pixels in its n x n block, so edges are
+/// soft; its colour is the mean of only those object pixels, so the old
+/// background does not show as a fringe.  Pixels without an object keep
+/// the background's colour (shown by viewers that ignore transparency).
+pub fn rgba_of(rgb: &[u8], gbuf: &[SiLight], w: usize, h: usize, n: usize) -> (Vec<u8>, usize, usize) {
+    let n = n.max(1);
+    let (w2, h2) = (w / n, h / n);
+    let nn = (n * n) as u32;
+    let mut out = vec![0u8; w2 * h2 * 4];
+    for y in 0..h2 {
+        for x in 0..w2 {
+            let (mut obj, mut all, mut k) = ([0u32; 3], [0u32; 3], 0u32);
+            for dy in 0..n {
+                for dx in 0..n {
+                    let i = (y * n + dy) * w + x * n + dx;
+                    let object = !gbuf[i].is_background();
+                    k += object as u32;
+                    for c in 0..3 {
+                        let v = rgb[i * 3 + c] as u32;
+                        all[c] += v;
+                        if object {
+                            obj[c] += v;
+                        }
+                    }
+                }
+            }
+            let o = (y * w2 + x) * 4;
+            for c in 0..3 {
+                out[o + c] = if k > 0 { (obj[c] + k / 2) / k } else { (all[c] + nn / 2) / nn } as u8;
+            }
+            out[o + 3] = ((k * 255 + nn / 2) / nn) as u8;
+        }
+    }
+    (out, w2, h2)
 }
 
 /// Renders a scene that is `aa` times larger than the wanted image and
@@ -140,18 +181,20 @@ pub fn render_scaled(
     sc: &Scene,
     aa: usize,
     want_depth: bool,
+    want_alpha: bool,
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<FrameImage, String> {
     let t0 = Instant::now();
     let (rgb, w, h, gbuf) = if sc.tiling.is_some() {
-        let r = crate::render::render_tiled(sc, want_depth, progress, &|_, _, _| {})?;
+        let r = crate::render::render_tiled(sc, want_depth || want_alpha, progress, &|_, _, _| {})?;
         (r.rgb, r.width, r.height, r.gbuffer)
     } else {
         let (p, g) = crate::render::calculate_cancellable(sc, progress, cancel)?;
         let rgb = crate::render::paint(sc, &p, &g);
         (rgb, sc.width as usize, sc.height as usize, Some(g))
     };
+    let rgba = if want_alpha { gbuf.as_ref().map(|g| rgba_of(&rgb, g, w, h, aa).0) } else { None };
     let depth = if want_depth {
         gbuf.map(|g| {
             let z: Vec<u16> =
@@ -168,13 +211,16 @@ pub fn render_scaled(
         None
     };
     let (rgb, w, h) = if aa > 1 { crate::render::downsample(&rgb, w, h, aa) } else { (rgb, w, h) };
-    Ok(FrameImage { width: w, height: h, rgb, depth, seconds: t0.elapsed().as_secs_f64() })
+    Ok(FrameImage { width: w, height: h, rgb, depth, rgba, seconds: t0.elapsed().as_secs_f64() })
 }
 
 /// File contents of an image in an output format.
 pub fn encode(format: OutputFormat, img: &FrameImage) -> Result<Vec<u8>, String> {
     match format {
-        OutputFormat::Png => Ok(crate::png::encode_rgb(img.width, img.height, &img.rgb)),
+        OutputFormat::Png => Ok(match &img.rgba {
+            Some(rgba) => crate::png::encode_rgba(img.width, img.height, rgba),
+            None => crate::png::encode_rgb(img.width, img.height, &img.rgb),
+        }),
         OutputFormat::Bmp => Ok(encode_bmp(img.width, img.height, &img.rgb)),
         OutputFormat::Jpg => Ok(crate::jpeg::encode(img.width, img.height, &img.rgb, 95)),
         OutputFormat::M3p => Err("parameter output has no image".into()),
@@ -275,7 +321,7 @@ pub fn render_frame_to_file(
             crate::maps::set_current_frame(a.file_index(frame) as i32);
             let mut s = frame_render_scene(a, frame, run)?;
             s.stereo_mode = mode;
-            let img = render_scaled(&s, a.scale.max(1) as usize, a.save_depth, progress, cancel)?;
+            let img = render_scaled(&s, a.scale.max(1) as usize, a.save_depth, a.transparent && a.format == OutputFormat::Png, progress, cancel)?;
             c.finish(&encode(a.format, &img)?)?;
             if let Some(z) = &img.depth {
                 let p = a.depth_file_eye(frame, eye);
@@ -300,12 +346,30 @@ pub fn keyframe_preview(a: &Animation, key: usize) -> Result<crate::animfile::Pr
     s.scale_image(w as f64 / s.width as f64);
     s.width = w as i32;
     s.height = h as i32;
-    let img = render_scaled(&s, 1, false, &|_, _| {}, &|| false)?;
+    let img = render_scaled(&s, 1, false, false, &|_, _| {}, &|| false)?;
     Ok(crate::animfile::Preview { width: img.width, height: img.height, rgb: img.rgb })
 }
 
 #[cfg(test)]
 mod tests {
+    /// Opacity = share of object pixels in the block, colour = their mean.
+    #[test]
+    fn rgba_soft_edges_without_fringe() {
+        use crate::gbuffer::SiLight;
+        // the default is background; an object pixel has a nearer z
+        let bg = SiLight::default();
+        let obj = SiLight { zpos_fine: 1000 << 16, ..SiLight::default() };
+        assert!(bg.is_background() && !obj.is_background());
+        // a 6x2 picture in 2x2 blocks: none, one and all four object pixels
+        let g = [bg, bg, obj, bg, obj, obj, bg, bg, bg, bg, obj, obj];
+        let rgb: Vec<u8> = g.iter().flat_map(|s| if s.is_background() { [0, 0, 255] } else { [200, 100, 0] }).collect();
+        let (out, w, h) = rgba_of(&rgb, &g, 6, 2, 2);
+        assert_eq!((w, h), (3, 1));
+        assert_eq!(&out[0..4], &[0, 0, 255, 0]);
+        assert_eq!(&out[4..8], &[200, 100, 0, 64]);
+        assert_eq!(&out[8..12], &[200, 100, 0, 255]);
+    }
+
     use super::*;
 
     #[test]

@@ -40,6 +40,8 @@ It comes as two programs:
   colour, for editing without banding (see [16 bit](#16-bit-pictures)).
 * **A noise filter** for Monte Carlo and all other pictures, the DCT
   denoising known from GIMP (see [Noise filter](#noise-filter)).
+* **Transparent backgrounds** for pictures and animations (see
+  [Transparent background](#transparent-background)).
 
 ## Download
 
@@ -318,6 +320,19 @@ The file looks the same, and stays smooth when it is edited.
 
 <a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
 
+### Transparent background
+
+Pictures and animation frames can be saved with a **transparent
+background**, to put the fractal onto another picture or into a video
+editor: **Save pic ▸ PNG ▸ PNG transparent background**, and in the
+Animation maker **Transparent background** (PNG frames; a WebM video keeps
+the transparency, an MP4 shows the background). With anti-aliasing (a
+viewing scale of 1:2 or more, or `--aa`) the edges are soft, and they
+carry no fringe of the old background colour. Depth pictures for
+compositing were already there (*Save Z buffer too*, `--depth`).
+
+<a href="docs/img/transparent.png"><img src="docs/img/transparent.png" width="760" alt="A picture with its background, and with a transparent background shown over a checkerboard"></a>
+
 ### Navigator: exact values and Reset view
 
 * **Click a value** in the Navigator's panels — Julia values, formula
@@ -374,6 +389,7 @@ in the unpacked folder, and type `mb3d` instead of `./mb3d`):
 ./mb3d --card City.m3p -o city.png         # graphics card only
 ./mb3d City.m3p --bits 16 -o city16.png    # 16 bit colour
 ./mb3d City.m3p --denoise 4 -o city.png    # with the noise filter
+./mb3d City.m3p --aa 2 --transparent -o city.png   # transparent background
 ./mb3d --help                              # all options
 ```
 
@@ -384,6 +400,7 @@ Everything else has a sub-command with its own `--help`:
 ./mb3d animate start.m3p middle.m3p end.m3p --frames 60 -o frames
 ./mb3d animate project.m3a -o frames                     # MB3D animations
 ./mb3d animate project.m3a -o frames --video flight.mp4  # ... and a video
+./mb3d animate project.m3a -o frames --transparent --video flight.webm
 ./mb3d montecarlo scene.m3p --rays 64 -o mc.png
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing

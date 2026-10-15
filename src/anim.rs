@@ -116,6 +116,8 @@ pub struct Animation {
     pub overwrite: bool,
     /// Save a depth (z-buffer) image too (`CheckBox7`)
     pub save_depth: bool,
+    /// PNG frames with a transparent background (not in MB3D's files)
+    pub transparent: bool,
     /// Stereo options of `.m3a` files: 0x40 stereo animation (a right and
     /// a left eye image per frame), 0x80 only the "very left" image
     pub stereo_bits: u32,
@@ -137,6 +139,7 @@ impl Default for Animation {
             index_step: 1,
             overwrite: true,
             save_depth: false,
+            transparent: false,
             stereo_bits: 0,
         }
     }

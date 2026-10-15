@@ -195,7 +195,7 @@ pub fn render_item(
             c.finish(&crate::m3p::write(&s))?;
             return Ok(ItemResult::Done { output: output.to_path_buf(), seconds: 0.0, notes });
         }
-        let img = render_scaled(&s, aa, opts.depth, progress, cancel)?;
+        let img = render_scaled(&s, aa, opts.depth, false, progress, cancel)?;
         c.finish(&crate::frames::encode(opts.format, &img)?)?;
         if let Some(z) = &img.depth {
             let stem = output.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();

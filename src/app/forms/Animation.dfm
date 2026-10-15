@@ -1241,6 +1241,19 @@ object AnimationForm: TAnimationForm
       TabOrder = 19
       Text = '25'
     end
+    object TransparentCheck: TCheckBox
+      Left = 400
+      Top = 236
+      Width = 160
+      Height = 17
+      Hint = 
+        'PNG frames with a transparent background (the video too, if it ' +
+        'is WebM).'
+      Caption = 'Transparent background'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 20
+    end
   end
   object Panel3: TPanel
     Left = 0

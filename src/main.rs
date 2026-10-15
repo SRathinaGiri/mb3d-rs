@@ -34,6 +34,7 @@ OPTIONS:
         --aa <N>             Anti-aliasing: render N times larger and downsample
     -o, --output <FILE>      Output PNG (default: mb3d.png)
         --depth <FILE>       Also write a 16 bit depth map PNG
+        --transparent        PNG with a transparent background (soft edges with --aa)
         --denoise <SIGMA>    Noise filter on the picture (DCT denoising as GIMP's Denoise DCT):
                              the strength of the noise to remove, e.g. 4 (1..30)
         --bits <8|16>        Colour depth of the PNG: 16 keeps the colours as calculated,
@@ -127,6 +128,7 @@ fn run() -> Result<(), String> {
     let mut aa: usize = 1;
     let mut bits16 = false;
     let mut denoise = 0f32;
+    let mut transparent = false;
     let mut stereo_pair: Option<mb3d::render::StereoLayout> = None;
     while let Some(a) = args.next() {
         let mut val = |name: &str| args.next().ok_or_else(|| format!("{name} needs a value"));
@@ -152,6 +154,7 @@ fn run() -> Result<(), String> {
             "-s" | "--set" => overrides.push(val(&a)?),
             "-o" | "--output" => output = val(&a)?,
             "--depth" => depth = Some(val(&a)?),
+            "--transparent" => transparent = true,
             "--denoise" => denoise = val(&a)?.trim().parse::<f32>().map_err(|_| "--denoise needs a strength (e.g. 4)".to_string())?.clamp(0.0, 255.0),
             "--bits" => {
                 bits16 = match val(&a)?.trim() {
@@ -316,6 +319,12 @@ fn run() -> Result<(), String> {
     if bits16 && (stereo_pair.is_some() || scene.tiling.is_some()) {
         return Err("--bits 16 is for single pictures (not with --stereo-pair or --tiles)".into());
     }
+    if transparent && (bits16 || stereo_pair.is_some()) {
+        return Err("--transparent writes 8 bit pictures (not with --bits 16 or --stereo-pair)".into());
+    }
+    if transparent && !output.to_ascii_lowercase().ends_with(".png") {
+        return Err("--transparent writes PNG files: give an output file ending in .png".into());
+    }
     if bits16 && denoise > 0.0 {
         return Err("--denoise filters 8 bit pictures (not with --bits 16)".into());
     }
@@ -369,7 +378,7 @@ fn run() -> Result<(), String> {
                 eprintln!("\r  tile {done}/{total} done ({}x{} at {}, {})          ", t[2], t[3], t[0], t[1]);
             }
         };
-        let res = mb3d::render::render_tiled(&scene, stats || depth.is_some(), &progress, &tile_progress)?;
+        let res = mb3d::render::render_tiled(&scene, stats || depth.is_some() || transparent, &progress, &tile_progress)?;
         if !quiet {
             eprintln!("  done: calc {:.2}s, paint {:.2}s", res.calc_seconds, res.paint_seconds);
         }
@@ -383,18 +392,22 @@ fn run() -> Result<(), String> {
                 paint_seconds: 0.0,
             });
         }
-        let (rgb, ow, oh) = if down > 1 {
-            mb3d::render::downsample(&res.rgb, res.width, res.height, down)
+        if let (true, Some(g)) = (transparent, &res.gbuffer) {
+            write_transparent(&output, &res.rgb, g, res.width, res.height, down, denoise)?;
         } else {
-            (res.rgb, res.width, res.height)
-        };
-        let rgb = denoised(rgb, ow, oh, denoise);
-        mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+            let (rgb, ow, oh) = if down > 1 {
+                mb3d::render::downsample(&res.rgb, res.width, res.height, down)
+            } else {
+                (res.rgb, res.width, res.height)
+            };
+            let rgb = denoised(rgb, ow, oh, denoise);
+            mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+        }
         if let (Some(d), Some(g)) = (depth, &res.gbuffer) {
             write_depth(&d, g, res.width, res.height)?;
         }
     } else {
-        render_single(&mut scene, auto_color, stats, quiet, aa, bits16, denoise, &output, depth, &progress)?;
+        render_single(&mut scene, auto_color, stats, quiet, aa, bits16, denoise, transparent, &output, depth, &progress)?;
     }
     let errs = mb3d::iteration::CUSTOM_ERRORS.load(std::sync::atomic::Ordering::Relaxed);
     if errs > 0 {
@@ -415,6 +428,7 @@ fn render_single(
     aa: usize,
     bits16: bool,
     denoise: f32,
+    transparent: bool,
     output: &str,
     depth: Option<String>,
     progress: &(dyn Fn(usize, usize) + Sync),
@@ -462,7 +476,9 @@ fn render_single(
             eprintln!("  dof_focus for the image centre: {:.5}", z / res.width as f64);
         }
     }
-    if let Some(rgb16) = rgb16 {
+    if transparent {
+        write_transparent(output, &res.rgb, &res.gbuffer, res.width, res.height, aa, denoise)?;
+    } else if let Some(rgb16) = rgb16 {
         let (px, ow, oh) = if aa > 1 { mb3d::render::downsample(&rgb16, res.width, res.height, aa) } else { (rgb16, res.width, res.height) };
         std::fs::write(output, mb3d::png::encode_rgb16(ow, oh, &px)).map_err(|e| format!("{output}: {e}"))?;
     } else {
@@ -478,6 +494,20 @@ fn render_single(
         write_depth(&d, &res.gbuffer, res.width, res.height)?;
     }
     Ok(())
+}
+
+/// `--transparent`: the picture with a transparent background (an RGBA
+/// PNG, see `frames::rgba_of`), reduced by `aa`; the noise filter works on
+/// its colours.
+fn write_transparent(output: &str, rgb: &[u8], g: &[mb3d::gbuffer::SiLight], w: usize, h: usize, aa: usize, sigma: f32) -> Result<(), String> {
+    let (mut rgba, ow, oh) = mb3d::frames::rgba_of(rgb, g, w, h, aa);
+    if sigma > 0.0 {
+        let rgb: Vec<u8> = rgba.chunks(4).flat_map(|p| [p[0], p[1], p[2]]).collect();
+        for (d, s) in rgba.chunks_mut(4).zip(denoised(rgb, ow, oh, sigma).chunks(3)) {
+            d[..3].copy_from_slice(s);
+        }
+    }
+    std::fs::write(output, mb3d::png::encode_rgba(ow, oh, &rgba)).map_err(|e| format!("{output}: {e}"))
 }
 
 /// `--denoise`: the DCT noise filter (GIMP's "Denoise DCT") with this
@@ -565,6 +595,8 @@ OPTIONS:
                              ffmpeg, MB3D_FFMPEG names it if it is not on the PATH);
                              the frame images are kept
         --fps <N>            Frames per second of the video (default 25)
+        --transparent        PNG frames with a transparent background (also kept in a
+                             WebM video; MP4 shows the background)
         --stereo <MODE>      pair: a right and a left eye image per frame
                              (<name>Right000001, <name>Left000001), very_left: only
                              the 'very left' images, off (as MB3D's animation maker)
@@ -593,6 +625,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut depth, mut list, mut render_too, mut quiet) = (false, false, false, false);
     let mut save: Option<String> = None;
     let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, mb3d::video::DEFAULT_FPS);
+    let mut transparent = false;
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
         v.ok_or_else(|| format!("{a} needs a value"))?.trim().parse::<i64>().map_err(|_| format!("bad value for {a}"))
@@ -645,6 +678,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--overwrite" => overwrite = Some(true),
             "--depth" => depth = true,
             "--video" => video = Some(args.next().ok_or("--video needs a file name")?.into()),
+            "--transparent" => transparent = true,
             "--fps" => fps = args.next().and_then(|v| v.trim().parse::<f64>().ok()).filter(|f| *f > 0.0 && *f <= 1000.0).ok_or("--fps needs a frame rate (e.g. 25)")?,
             "-s" | "--set" => overrides.push(args.next().ok_or("--set needs a value")?.clone()),
             "--save" => save = Some(args.next().ok_or("--save needs a value")?.clone()),
@@ -826,6 +860,12 @@ fn animate(argv: &[String]) -> Result<(), String> {
     if frames_to_do.is_empty() {
         return Err("no frames to render (check --from/--to/--frame)".into());
     }
+    if transparent {
+        if anim.format != OutputFormat::Png {
+            return Err("--transparent needs PNG frames (--format png)".into());
+        }
+        anim.transparent = true;
+    }
     if video.is_some() {
         if anim.format == OutputFormat::M3p {
             return Err("--video needs images (--format png, bmp or jpg), not parameter files".into());
@@ -883,7 +923,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     if let Some(v) = video {
         let files: Vec<std::path::PathBuf> = frames_to_do.iter().map(|&f| anim.frame_file(f)).collect();
         let t = Instant::now();
-        mb3d::video::encode(&files, fps, &v)?;
+        mb3d::video::encode(&files, fps, &v, anim.transparent)?;
         if !quiet {
             eprintln!("video: {} ({} frames at {fps} per second, {})", v.display(), files.len(), fmt_dur(t.elapsed().as_secs_f64()));
         }

@@ -257,6 +257,11 @@ pub fn with_text(mut png: Vec<u8>, key: &str, text: &str) -> Vec<u8> {
     png
 }
 
+/// PNG file contents of an 8 bit RGBA image (straight alpha).
+pub fn encode_rgba(width: usize, height: usize, rgba: &[u8]) -> Vec<u8> {
+    encode(width, height, rgba, 6, 8, 4)
+}
+
 /// PNG file contents of a 16 bit RGB image.
 pub fn encode_rgb16(width: usize, height: usize, rgb: &[u16]) -> Vec<u8> {
     let bytes: Vec<u8> = rgb.iter().flat_map(|v| v.to_be_bytes()).collect();

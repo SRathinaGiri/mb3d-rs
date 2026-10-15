@@ -583,6 +583,19 @@ G-buffer when it is saved (with the reflections, they are marched again),
 reduced by the viewing scale like the 8 bit one. `png::encode_rgb16`
 writes it.
 
+Transparent backgrounds (`frames::rgba_of`, `png::encode_rgba`): an 8 bit
+RGBA PNG with straight alpha. A pixel's opacity is the share of object
+pixels (G-buffer not background) in its anti-aliasing block (`--aa`, the
+viewing scale, the animation's scale), its colour the mean of only those
+object pixels, so no fringe of the background is left; fully transparent
+pixels keep the background's colour. Background effects (volumetric light,
+fog over the background) are dropped with the background. `mb3d
+--transparent` (single pictures and tiles; not with `--bits 16` or
+`--stereo-pair`), `mb3d animate --transparent` (PNG frames; WebM gets VP9
+`yuva420p` with alpha, MP4 has none), Save pic > PNG transparent
+background, the Animation maker's Transparent background (`AniTransparent`
+in the ini).
+
 The noise filter (`src/denoise.rs`) is the DCT image denoising of
 G. Yu and G. Sapiro (IPOL 2011, doi:10.5201/ipol.2011.ys-dct), the
 algorithm of GIMP's *Denoise DCT* (GEGL `denoise-dct`), implemented here
