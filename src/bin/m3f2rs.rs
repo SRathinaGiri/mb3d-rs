@@ -79,12 +79,9 @@ fn main() {
             skipped += 1;
             continue;
         };
-        if p.emit_lifted("x", difs).is_some_and(|c| c.contains("map_px")) {
-            // map formulas: the lifted version calls the map directly (no
-            // stack arguments), not yet checked against the interpreter
-            skipped += 1;
-            continue;
-        }
+        // map formulas: the lifted version calls the map directly (no stack
+        // arguments); checked against the interpreter bit for bit with
+        // `m3fcheck --translated` (2026-10-15)
         let no_lift = std::env::var_os("M3F2RS_NO_LIFT").is_some();
         // M3F2RS_NO_DIFS: dIFS formulas only with the machine's calling
         // convention (`NativeFn`)

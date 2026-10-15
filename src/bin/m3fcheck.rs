@@ -215,7 +215,15 @@ fn main() {
                 // a direct formula keeps only esp (callers use nothing else)
                 let direct = base.prog(code_addr(slot)).is_some_and(|p| p.is_direct());
                 let regs_differ = (0..8).any(|r| em.reg(r) != ei.reg(r) && (!direct || r == 4));
-                let first_mem = (0..MEM_SIZE).find(|&i| em.mem[i] != ei.mem[i]);
+                // memory below the final stack pointer is dead (the
+                // interpreter pushes the arguments of host calls, e.g. the
+                // map functions, that the translated code passes directly)
+                let esp = em.reg(4).min(ei.reg(4));
+                let dead = |i: usize| {
+                    let a = i as u32 + BASE;
+                    a < esp && a >= esp.saturating_sub(0x1000)
+                };
+                let first_mem = (0..MEM_SIZE).find(|&i| em.mem[i] != ei.mem[i] && !dead(i));
                 if r2.is_err() || regs_differ || first_mem.is_some() {
                     status = format!(
                         "TRANSLATED DIFFERS trial {t}: interpreter {:?}, registers differ {regs_differ}, first memory difference {:?}",
