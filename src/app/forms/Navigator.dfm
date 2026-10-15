@@ -1724,7 +1724,24 @@ object FNavigator: TFNavigator
       Top = 4
       Width = 3
       Height = 13
+      Cursor = crHandPoint
+      Hint = 'Click to type the zoom (it stays: fixed zoom).'
+      ParentShowHint = False
+      ShowHint = True
       Transparent = True
+      OnClick = Label24Click
+    end
+    object ResetViewBtn: TButton
+      Left = 180
+      Top = 1
+      Width = 66
+      Height = 18
+      Hint = 'Back to the view taken from the main window.'
+      Caption = 'Reset view'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 20
+      OnClick = ResetViewBtnClick
     end
     object SpeedButton17: TSpeedButton
       Left = 576

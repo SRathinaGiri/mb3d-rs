@@ -4,6 +4,7 @@
 //! the steps `show:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
 //! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`,
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
+//! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
 //! a running calculation; `lagwait:SECONDS` also prints the longest
 //! blocking of the window), `print:FORM:CONTROL` (its caption) and `led`
@@ -25,6 +26,7 @@ fn main() {
             "text" => ui.set_text(p[1], p[2], &p[3..].join(":")),
             "check" => ui.set_checked(p[1], p[2], p[3] == "1"),
             "item" => ui.set_item_index(p[1], p[2], p[3].parse().unwrap()),
+            "post" => ui.post(p[1], p[2], p[3], mb3d::vcl::Ev::Click),
             "items" => ui.set_items(p[1], p[2], p[3..].join(":").split('|').filter(|s| !s.is_empty()).map(String::from).collect()),
             "drop" => {
                 let f = ui.fm(p[1]);

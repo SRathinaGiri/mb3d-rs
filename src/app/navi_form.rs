@@ -41,6 +41,9 @@ pub struct State {
     pub destop_changed: bool,
     pub adjust_first: bool,
     pub waker_set: bool,
+    /// the view taken from the main window and "Fixed zoom" then ("Reset view")
+    pub start: Option<Scene>,
+    pub start_fixed: bool,
 }
 
 impl Default for State {
@@ -70,6 +73,8 @@ impl Default for State {
             destop_changed: false,
             adjust_first: true,
             waker_set: false,
+            start: None,
+            start_fixed: false,
         }
     }
 }
@@ -333,6 +338,8 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
     app.make_scene(ui);
     app.navi.scene = app.scene.clone();
     transform_header(app, ui);
+    app.navi.start = Some(app.navi.scene.clone());
+    app.navi.start_fixed = ui.checked(F, "CheckBox1");
     reset_julia_vals(app, ui);
     update_adjust(app, ui, "");
     adjust_panel3_positions(ui);
@@ -746,6 +753,14 @@ fn slider_change(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
     } else {
         st.vals[t] = st.pos0[t] + pos * st.range[t] / d;
     }
+    let formula_shown = ui.visible(F, sender);
+    apply_value(app, ui, t, formula_shown);
+}
+
+/// The value `app.navi.vals[t]` of a slider into the navigator's scene,
+/// its label and the preview (from the slider or typed into the label).
+fn apply_value(app: &mut Mb3d, ui: &mut Ui, t: usize, formula_shown: bool) {
+    let st = &mut app.navi;
     let mut update = false;
     if t < 3 {
         let v = st.vals[t];
@@ -799,7 +814,7 @@ fn slider_change(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
         };
         ui.set_caption(F, &lv, &cap);
         update = old != cap;
-    } else if ui.visible(F, sender) {
+    } else if formula_shown {
         st.focused = t - 3;
         let fi = (formula_nr(ui), (st.sub_top + t - 3).min(15));
         let lv = format!("LabelV{}", t - 3);
@@ -1302,9 +1317,20 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.navi.pos0[9] = v;
             ui.set_caption(F, "LabelV3", &(v.round() as i64).to_string());
         }
+        "Label24Click" => {
+            let z = crate::app::util::float_general(app.navi.scene.zoom, 6);
+            ui.input_query("navi:zoom", "Zoom", "New zoom:", &z);
+        }
+        "ResetViewBtnClick" => reset_view(app, ui),
         "Label39MouseDown" => {
-            // a value label: focus its slider
+            // a value label: focus its slider, and type its value (MB3D's
+            // InputQuery; angles in degrees)
             let t = ui.tag(F, &e.sender) as usize;
+            if t < 14 {
+                let v = app.navi.vals[t];
+                let s = if (6..9).contains(&t) { fts_single(v.to_degrees()) } else if is_int_type(app.navi.vtype[t]) { (v.round() as i64).to_string() } else { fts_single(v) };
+                ui.input_query(&format!("navi:val{t}"), "Input", "New value:", &s);
+            }
             if (3..=5).contains(&t) {
                 app.navi.focused = t - 3;
             } else if (9..=13).contains(&t) {
@@ -1318,6 +1344,54 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         _ => {}
     }
+}
+
+/// "Reset view": the position, direction and zoom taken from the main
+/// window (the adjusted values stay).
+fn reset_view(app: &mut Mb3d, ui: &mut Ui) {
+    let Some(s0) = app.navi.start.clone() else { return };
+    let sc = &mut app.navi.scene;
+    sc.mid = s0.mid;
+    sc.vgrads = s0.vgrads;
+    sc.z_start = s0.z_start;
+    sc.z_end = s0.z_end;
+    sc.zoom = s0.zoom;
+    // the zoom as when the view was taken: fixed, or from the distance
+    ui.set_checked(F, "CheckBox1", app.navi.start_fixed);
+    app.navi.de_mul = 1.0;
+    set_zoom(app, ui);
+    new_calc(app, ui);
+}
+
+/// Answers of the navigator's input boxes: a typed zoom (it stays: fixed
+/// zoom) or a typed slider value.
+pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &crate::vcl::DialogResult) {
+    let crate::vcl::DialogResult::Text(Some(s)) = r else { return };
+    let Some(v) = parse_float(s.trim()) else { return };
+    if what == "zoom" {
+        if v > 0.0 {
+            app.navi.scene.zoom = v;
+            ui.set_checked(F, "CheckBox1", true);
+            new_calc(app, ui);
+        }
+        return;
+    }
+    let Some(t) = what.strip_prefix("val").and_then(|n| n.parse::<usize>().ok()).filter(|t| *t < 14) else { return };
+    let v = if (6..9).contains(&t) { v.to_radians() } else { v };
+    let st = &mut app.navi;
+    st.vals[t] = v;
+    st.pos0[t] = v;
+    if t < 3 {
+        st.scene.julia_c[t] = v;
+    }
+    // the slider starts again from the typed value
+    for i in 1..=14 {
+        let n = format!("TrackBarEx{i}");
+        if ui.f(F).id(&n).is_some() && ui.tag(F, &n) as usize == t {
+            ui.set_position(F, &n, 0);
+        }
+    }
+    apply_value(app, ui, t, true);
 }
 
 fn enable_size_buttons(ui: &mut Ui) {

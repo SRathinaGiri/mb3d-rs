@@ -224,6 +224,7 @@ impl Mb3d {
             "batch" => tools_forms::batch_dialog(self, ui, what, r),
             "tiling" => tools_forms::tiling_dialog(self, ui, what, r),
             "mc" => mc_form::dialog(self, ui, what, r),
+            "navi" => navi_form::dialog(self, ui, what, r),
             "voxel" => voxel_form::dialog(self, ui, what, r),
             "btracer" => bulbtracer_form::dialog(self, ui, what, r),
             "mutagen" => mutagen_form::dialog(self, ui, what, r),

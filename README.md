@@ -318,6 +318,18 @@ The file looks the same, and stays smooth when it is edited.
 
 <a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
 
+### Navigator: exact values and Reset view
+
+* **Click a value** in the Navigator's panels — Julia values, formula
+  values, 4D rotation, the Misc values — and type the exact number, as in
+  MB3D (angles in degrees). The slider then continues from that value.
+* **Click the zoom** and type it, when the zoom steps are too coarse (a
+  wish from MB3D's issue list); a typed zoom stays (*Fixed zoom*).
+* **Reset view** goes back to the position, direction and zoom the
+  Navigator took from the main window; the adjusted values stay.
+
+<a href="docs/img/navigator_values.png"><img src="docs/img/navigator_values.png" width="640" alt="The Navigator with the formula values and the input box of a clicked value"></a>
+
 ### Noise filter
 
 A **noise filter** removes grain from the pictures: the **DCT denoising**
