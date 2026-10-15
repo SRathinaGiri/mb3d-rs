@@ -42,6 +42,8 @@ It comes as two programs:
   denoising known from GIMP (see [Noise filter](#noise-filter)).
 * **Transparent backgrounds** for pictures and animations (see
   [Transparent background](#transparent-background)).
+* **A preview of parameter files** in the Open dialog (see
+  [Preview](#preview-when-opening-parameters)).
 
 ## Download
 
@@ -319,6 +321,17 @@ The file looks the same, and stays smooth when it is edited.
 <a href="docs/img/png16_compare.png"><img src="docs/img/png16_compare.png" width="760" alt="A background gradient after a strong contrast increase: steps in 8 bit, smooth in 16 bit"></a>
 
 <a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
+
+### Preview when opening parameters
+
+**Open ▸ Open m3p** and **Open m3i** show a small picture of the
+clicked parameter file, with its size and formulas, before it is
+opened; the arrow keys move through the list with the preview. The
+picture is calculated in the background on the processor, so the
+dialog stays responsive, and each file's preview is kept while the
+program runs.
+
+<a href="docs/img/open_preview.png"><img src="docs/img/open_preview.png" width="760" alt="The Open dialog with the preview of a parameter file"></a>
 
 ### Transparent background
 

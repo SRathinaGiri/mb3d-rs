@@ -63,6 +63,9 @@ pub struct Ui {
     /// the file type chosen in the last file dialog (1 = the first of its
     /// filter, as TOpenDialog.FilterIndex after Execute)
     pub filter_index: usize,
+    /// the file clicked in a file dialog with a preview column (taken by
+    /// the application, which shows its preview there)
+    pub file_preview: Option<std::path::PathBuf>,
     pub busy: bool,
     /// The user's interface scale (1 = the size of the .dfm files), on top
     /// of the screen's scale factor: windows, controls and text all grow
@@ -92,6 +95,7 @@ impl Ui {
             close_pending: Vec::new(),
             dialogs: HashMap::new(),
             filter_index: 1,
+            file_preview: None,
             busy: false,
             ui_scale: 1.0,
         }

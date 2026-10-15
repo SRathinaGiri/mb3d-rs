@@ -8,6 +8,7 @@
 pub mod anim_form;
 pub mod bulbtracer_form;
 pub mod engine;
+pub mod file_preview;
 pub mod forms;
 pub mod formula_form;
 pub mod ini;
@@ -62,6 +63,8 @@ pub struct Mb3d {
     pub mutagen: mutagen_form::State,
     pub meshview: meshview::State,
     pub jit: jit_form::State,
+    /// the parameter previews of the open dialogs
+    pub preview: file_preview::State,
     /// notes from loading a parameter file (unsupported features)
     pub notes: Vec<String>,
     pub startup_file: Option<PathBuf>,
@@ -203,6 +206,7 @@ impl App for Mb3d {
         bulbtracer_form::idle(self, ui);
         mutagen_form::idle(self, ui);
         meshview::idle(self, ui);
+        file_preview::idle(self, ui);
     }
 }
 
@@ -298,6 +302,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         mutagen: mutagen_form::State::default(),
         meshview: meshview::State::default(),
         jit: jit_form::State::default(),
+        preview: file_preview::State::default(),
         notes: Vec::new(),
         startup_file: file,
     };

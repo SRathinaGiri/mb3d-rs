@@ -1132,6 +1132,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: "M3D Parameter (*.m3p)|*.m3p|All files (*.*)|*.*".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
+                preview: true,
                 ..Default::default()
             };
             ui.open_dialog("main:openm3p", &o);
@@ -1140,6 +1141,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
+                preview: true,
                 ..Default::default()
             };
             ui.open_dialog("main:openm3i", &o);

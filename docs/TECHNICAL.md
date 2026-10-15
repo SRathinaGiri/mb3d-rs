@@ -583,6 +583,14 @@ G-buffer when it is saved (with the reflections, they are marched again),
 reduced by the viewing scale like the 8 bit one. `png::encode_rgb16`
 writes it.
 
+The Open m3p / m3i dialogs have a preview column (`FileOptions::preview`;
+`app::file_preview`): a clicked (or arrow-key selected) `.m3p`, `.m3i` or
+`.txt` file goes through `Ui::file_preview` to the application, which
+renders it with `mutagen::preview` (at most 240 x 180, on the CPU via
+`gpu::cpu_in_thread`, all cores but one) in a background thread, one at a
+time, the last clicked file next; results (or the reason there is none)
+are kept per path for the session.
+
 Transparent backgrounds (`frames::rgba_of`, `png::encode_rgba`): an 8 bit
 RGBA PNG with straight alpha. A pixel's opacity is the share of object
 pixels (G-buffer not background) in its anti-aliasing block (`--aa`, the

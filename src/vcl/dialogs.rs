@@ -28,6 +28,8 @@ pub(crate) struct FileDlg {
     folder: bool,
     /// list entries: (is directory, name)
     entries: Vec<(bool, String)>,
+    /// a preview column: a clicked file goes to `Ui::file_preview`
+    preview: bool,
 }
 
 /// Options of a file dialog (TOpenDialog / TSaveDialog properties).
@@ -43,6 +45,9 @@ pub struct FileOptions {
     pub multi: bool,
     /// choose a folder (the folder shown when "Select" is pressed)
     pub folder: bool,
+    /// a preview column on the right (`PreviewImage`, `PreviewLabel`): a
+    /// clicked file is put into `Ui::file_preview` for the application
+    pub preview: bool,
 }
 
 fn esc(s: &str) -> String {
@@ -274,7 +279,8 @@ impl Ui {
     fn file_dialog(&mut self, tag: &str, o: &FileOptions, save: bool) {
         let title = if o.title.is_empty() { if save { "Save As" } else { "Open" } } else { &o.title };
         let filters = parse_filter(&o.filter);
-        let mut d = format!("object FileDlg: TForm\n  Caption = {}\n  ClientWidth = 560\n  ClientHeight = 390\n{FORM_HEAD}", esc(title));
+        let cw = if o.preview { 812 } else { 560 };
+        let mut d = format!("object FileDlg: TForm\n  Caption = {}\n  ClientWidth = {cw}\n  ClientHeight = 390\n{FORM_HEAD}", esc(title));
         d = d.replace("bsDialog", "bsSizeable");
         d.push_str(
             "  object LookLabel: TLabel\n    Left = 8\n    Top = 12\n    Width = 40\n    Height = 13\n    Caption = 'Look &in:'\n  end\n\
@@ -288,6 +294,12 @@ impl Ui {
         );
         d.push_str(&button("OkBtn", if o.folder { "&Select" } else if save { "&Save" } else { "&Open" }, 477, 314, 75, 0, true, false).replace("TabOrder = 0", "TabOrder = 5\n    Anchors = [akRight, akBottom]"));
         d.push_str(&button("CancelBtn", "Cancel", 477, 346, 75, MR_CANCEL, false, true).replace("TabOrder = 0", "TabOrder = 6\n    Anchors = [akRight, akBottom]"));
+        if o.preview {
+            d.push_str(
+                "  object PreviewImage: TImage\n    Left = 564\n    Top = 36\n    Width = 240\n    Height = 180\n    Anchors = [akTop, akRight]\n    Center = True\n  end\n\
+                 \x20 object PreviewLabel: TLabel\n    Left = 564\n    Top = 224\n    Width = 240\n    Height = 80\n    Anchors = [akTop, akRight]\n    AutoSize = False\n    WordWrap = True\n    Caption = 'Click a parameter file for its preview.'\n  end\n",
+            );
+        }
         d.push_str("end\n");
         let i = self.dialog_form("FileDlg", &d);
         let mut dir = o.initial_dir.clone().filter(|p| p.is_dir()).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
@@ -308,6 +320,7 @@ impl Ui {
             default_ext: o.default_ext.clone(),
             folder: o.folder,
             entries: Vec::new(),
+            preview: o.preview,
         };
         {
             let f = &mut self.forms[i];
@@ -459,6 +472,9 @@ impl Ui {
                     let k = self.forms[i].c("FileList").item_index;
                     if let Some(DialogState::File(d)) = self.dialogs.get(&i) {
                         if let Some((false, n)) = d.entries.get(k.max(0) as usize).cloned() {
+                            if d.preview {
+                                self.file_preview = Some(d.dir.join(&n));
+                            }
                             self.forms[i].c_mut("NameEdit").set_text(&n);
                         }
                     }
