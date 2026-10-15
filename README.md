@@ -410,6 +410,21 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.37](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.37) · 15 Oct 2026, 06:49 UTC
+
+| Commit | What it does |
+|---|---|
+| [`76b6da1`](https://github.com/thr32423/mb3d-rs/commit/76b6da12f5e386adcca6a06d2dd620e8bf9da12e) | Version number and release notes of this release |
+| [`42e52a8`](https://github.com/thr32423/mb3d-rs/commit/42e52a8722c335746202dc86d99474d7fb958548) | Noise filter for all pictures: DCT denoising as GIMP's Denoise DCT |
+| [`a1a8637`](https://github.com/thr32423/mb3d-rs/commit/a1a863742a4f4bfab3fbf33c4c75535851c751ad) | mb3d montecarlo: a continued .m3c that has its rays already writes its picture |
+| [`9a8279c`](https://github.com/thr32423/mb3d-rs/commit/9a8279c417b49114e2c653eb4daa443cf042fe7e) | Monte Carlo: the -noise button works (MB3D's filter, hidden in MB3D) |
+| [`a66857d`](https://github.com/thr32423/mb3d-rs/commit/a66857db9b3737d22c3f0f8cd6cd2f411542b0ea) | 16 bit colour pictures: mb3d --bits 16 and "PNG 16 bit colour" |
+| [`953e65c`](https://github.com/thr32423/mb3d-rs/commit/953e65ce23be74e635390d0a8d4a8c122b1f68a2) | Animations: also a video (MP4 or WebM) of the frames |
+| [`1b9752f`](https://github.com/thr32423/mb3d-rs/commit/1b9752f8ab16f5a69484c71bf90af2807adf3bbc) | Auto: the card helps in double precision where single is too coarse |
+| [`0730a59`](https://github.com/thr32423/mb3d-rs/commit/0730a59f83f831b74ccd7d15871892733bfda113) | Drop-down lists stay inside their window and scroll |
+| [`477ae4a`](https://github.com/thr32423/mb3d-rs/commit/477ae4a94189a2b4d6d74ef842c754023d403919) | Infos tab: the hard shadow, occlusion and reflection times each on their own |
+| [`f177710`](https://github.com/thr32423/mb3d-rs/commit/f1777108a1fa37610698ca2f147b2a2ed719f5f6) | README: Updates for v0.2.36 |
+
 ### [v0.2.36](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.36) · 14 Oct 2026, 17:35 UTC
 
 | Commit | What it does |
@@ -455,6 +470,8 @@ in UTC.
 | [`496901b`](https://github.com/thr32423/mb3d-rs/commit/496901b9fce7dc1e195c4d728e1dc86373a3b047) | tools/mb3d-wine: render and save a G-buffer in MB3D under Wine |
 | [`e71a78b`](https://github.com/thr32423/mb3d-rs/commit/e71a78b425e8a3e00652a656f8f63b99f6b9492f) | Painting with internal gamma 2 as MB3D does: 180430 matches |
 
+<details><summary>Older releases (v0.1.0 to v0.2.32)</summary>
+
 ### [v0.2.32](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.32) · 13 Oct 2026, 11:16 UTC
 
 | Commit | What it does |
@@ -462,8 +479,6 @@ in UTC.
 | [`4e39d49`](https://github.com/thr32423/mb3d-rs/commit/4e39d49a85a5a8cccd4ec8ab5a43365f9229be88) | Version number and release notes of this release |
 | [`7ec1842`](https://github.com/thr32423/mb3d-rs/commit/7ec1842175e8fa89591c63163221f6af3d844116) | Windows under Wine: no resize loop; windows paint again |
 | [`e489830`](https://github.com/thr32423/mb3d-rs/commit/e489830140a7b6909ebc31da8616390b821be743) | README, Getting started: install with the download.sh one-liner |
-
-<details><summary>Older releases (v0.1.0 to v0.2.31)</summary>
 
 ### [v0.2.31](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.31) · 13 Oct 2026, 09:38 UTC
 
