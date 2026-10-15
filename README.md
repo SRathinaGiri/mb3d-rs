@@ -444,6 +444,13 @@ brought up to date the way Mandelbulb3D does it: the formula and the old
 become today's lighting, and an old `.m3i` image shows its picture without
 a new calculation.
 
+### Old animation projects
+
+Animation projects (`.m3a`) saved by the early Mandelbulb3D versions open
+in the Animation maker and with `mb3d animate`, with their keyframes,
+sub-frame counts and preview pictures. Their keyframes are brought up to
+date like old parameter files.
+
 ### Smaller things
 
 * **Save dialogs:** choosing another file type changes the extension of

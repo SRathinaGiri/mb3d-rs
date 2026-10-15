@@ -323,7 +323,7 @@ and kept in the original evaluation order.
 | `custom.rs` | formulas.pas / TypeDefinitions.pas | memory layout of `TIteration3Dext` and the calling convention used by MB3D's hybrid loop, host functions |
 | `anim.rs` | Animation.pas, Interpolation.pas, Math3D.pas | keyframes, sub-frame schedule (`TotalBMPsToRender`, `Timer2Timer`), `Interpolate2frames`, `Interpolate3framesBezier` (header and formula values), `bInterpolateFormula`, quaternions (`MatrixToQuat`, `SlerpQuat`, `SlerpSVec`, `BezierIpol3SVecs`) |
 | `lighting.rs` (`blend`) | Interpolation.pas | the light value part of both interpolations (`TLightVals`, `Slerp2SMatrices`, `Slerp3SMatrices`) |
-| `animfile.rs` | Animation.pas (`LoadAni`, `SpeedButton9Click`) | `.m3a` animation files incl. preview images; the `.m3k` text format |
+| `animfile.rs` | Animation.pas (`LoadAni`, `SpeedButton9Click`) | `.m3a` animation files (versions 1 to 5, keyframe formula blocks in both layouts) incl. preview images; the `.m3k` text format |
 | `frames.rs` | Animation.pas, Mand.pas (`DoSaveAniImage`, `AniFileAlreadyExists`, `OccupyDFile`) | frame files, claiming/locking, image scale, BMP output, keyframe previews (`RenderPrevBMP`) |
 | `batch.rs` | BatchForm.pas | batch lists |
 | `voxel.rs` | VoxelExport.pas | voxel slice stacks (`TVoxelExportCalcThread`, object test, in-and-outside limits), `.m3v` projects incl. older versions, stack preview |
@@ -678,7 +678,7 @@ is written from the published algorithm only.
   not vertex for vertex. MutaGen uses its own random generator, so
   a seed gives other mutations than in MB3D; mutating map or light settings
   (not in MB3D's MutaGen either) is not done.
-* **Animation:** `.m3a` files before version 5 are not supported. Map sequences (`Mandelbulb3DMSeq.ini` in the working folder or
+* **Animation:** Map sequences (`Mandelbulb3DMSeq.ini` in the working folder or
   `$MB3D_MAP_SEQUENCES`) follow the file index of animation frames. Without a loop, MB3D's render loop also counts the sub-frames of
   the last keyframe (repeating it); the port renders the last keyframe once,
   as MB3D's own frame count (`TotalBMPsToRender`) and time estimate do.

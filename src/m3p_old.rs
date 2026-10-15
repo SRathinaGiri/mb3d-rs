@@ -826,52 +826,53 @@ pub(crate) fn gbuffer_from_old_m3i(data: &[u8]) -> Option<(usize, usize, Vec<cra
 }
 
 #[cfg(test)]
+/// A `TMandHeader8` for tests (the fields of `TypeDefinitions.pas`).
+pub(crate) fn header8(mid: i32, fnr_options: i32) -> Vec<u8> {
+    let mut p = vec![0u8; OLD_HEADER_SIZE];
+    pi32(&mut p, 0, mid);
+    pi32(&mut p, 4, 320); // Width
+    pi32(&mut p, 8, 240); // Height
+    pi32(&mut p, 12, 12); // Iterations
+    pi32(&mut p, 16, fnr_options); // iOptions
+    pf64(&mut p, 20, -1.5); // dZstart
+    pf64(&mut p, 28, 4.0); // dZend
+    pf64(&mut p, 36, 0.25); // dXmid
+    pf64(&mut p, 84, 1.0); // dZoom
+    pf64(&mut p, 92, 1024.0); // RStop
+    pf64(&mut p, 100, 8.0); // dPow
+    pf64(&mut p, 108, 30.0f64.to_radians()); // dFOVy
+    p[133] = 1; // bCalculateHardShadow
+    p[134] = 6; // bStepsafterDEStop
+    pf32(&mut p, 177, 1.5); // sDEstop
+    pf64(&mut p, 215, 1.0); // dZmul
+    pf32(&mut p, 319, 0.4); // sAmbShadowThreshold
+    // TLightingParas8: TBpos, TBoptions 0, Cols, light 1
+    let tb = |k: usize| L8 + (k - 1) * 4;
+    for (k, v) in [(4, 7), (5, 50), (7, 30), (8, 50), (9, 10), (10, 20)] {
+        pi32(&mut p, tb(k), v);
+    }
+    let col = |k: usize| L8 + 56 + (k - 1) * 4;
+    pu32(&mut p, col(1), 0x0000FF);
+    pu32(&mut p, col(2), 0xFFFFFF);
+    for k in [3, 6, 9] {
+        pu32(&mut p, col(k), 0x102030);
+    }
+    let l = L8 + 92;
+    p[l + 1] = 0x12; // LFunction
+    pu32(&mut p, l + 2, 0xFF8040); // Lcolor
+    pi32(&mut p, l + 6, 8192); // LXangle = 90 degrees
+    pi32(&mut p, l + 10, -4096);
+    for i in 1..4 {
+        p[l + i * 14] = 1; // off
+    }
+    p
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::formulas::Formula;
     use crate::m3p::{gbuffer_from_m3i, parse, raw_from_bytes, raw_from_text};
-
-    /// A `TMandHeader8` as MB3D 1.5 wrote it (the fields of `TypeDefinitions.pas`).
-    fn header8(mid: i32, fnr_options: i32) -> Vec<u8> {
-        let mut p = vec![0u8; OLD_HEADER_SIZE];
-        pi32(&mut p, 0, mid);
-        pi32(&mut p, 4, 320); // Width
-        pi32(&mut p, 8, 240); // Height
-        pi32(&mut p, 12, 12); // Iterations
-        pi32(&mut p, 16, fnr_options); // iOptions
-        pf64(&mut p, 20, -1.5); // dZstart
-        pf64(&mut p, 28, 4.0); // dZend
-        pf64(&mut p, 36, 0.25); // dXmid
-        pf64(&mut p, 84, 1.0); // dZoom
-        pf64(&mut p, 92, 1024.0); // RStop
-        pf64(&mut p, 100, 8.0); // dPow
-        pf64(&mut p, 108, 30.0f64.to_radians()); // dFOVy
-        p[133] = 1; // bCalculateHardShadow
-        p[134] = 6; // bStepsafterDEStop
-        pf32(&mut p, 177, 1.5); // sDEstop
-        pf64(&mut p, 215, 1.0); // dZmul
-        pf32(&mut p, 319, 0.4); // sAmbShadowThreshold
-        // TLightingParas8: TBpos, TBoptions 0, Cols, light 1
-        let tb = |k: usize| L8 + (k - 1) * 4;
-        for (k, v) in [(4, 7), (5, 50), (7, 30), (8, 50), (9, 10), (10, 20)] {
-            pi32(&mut p, tb(k), v);
-        }
-        let col = |k: usize| L8 + 56 + (k - 1) * 4;
-        pu32(&mut p, col(1), 0x0000FF);
-        pu32(&mut p, col(2), 0xFFFFFF);
-        for k in [3, 6, 9] {
-            pu32(&mut p, col(k), 0x102030);
-        }
-        let l = L8 + 92;
-        p[l + 1] = 0x12; // LFunction
-        pu32(&mut p, l + 2, 0xFF8040); // Lcolor
-        pi32(&mut p, l + 6, 8192); // LXangle = 90 degrees
-        pi32(&mut p, l + 10, -4096);
-        for i in 1..4 {
-            p[l + i * 14] = 1; // off
-        }
-        p
-    }
 
     fn load(file: &[u8]) -> crate::m3p::M3pFile {
         let (raw, _) = raw_from_bytes(file.to_vec(), false).unwrap();

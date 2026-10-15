@@ -3,7 +3,9 @@
 //! * `.m3a`: MB3D's binary animation project (`TAnimationForm.LoadAni`,
 //!   `SpeedButton9Click`), version 5: the animation settings, then per
 //!   keyframe the sub-frame count, preview time, `TMandHeader10` and
-//!   `THeaderCustomAddon`, then the keyframes' preview images.
+//!   `THeaderCustomAddon`, then the keyframes' preview images.  Versions 1
+//!   to 4 hold a `TMandHeader9` per keyframe (converted by
+//!   [`crate::m3p_old`]), with a formula block from version 4 on.
 //! * `.m3k`: a text format of this port, see [`parse_m3k`].  Keyframes
 //!   either refer to parameter files (`.m3p`, `.m3s`, text parameters) or
 //!   hold MB3D text parameters inline, so a `.m3k` file can be written by
@@ -119,12 +121,6 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
     if version > 5 {
         return Err(format!("animation file version {version} is newer than supported (5)"));
     }
-    if version < 5 {
-        return Err(format!(
-            "animation file version {version} (MB3D before 1.7, old header format) is not supported; \
-             load and save it once with a newer MB3D"
-        ));
-    }
     let mut a = Animation { name: name.to_string(), ..Default::default() };
     a.width = r.i32()?;
     a.height = r.i32()?;
@@ -133,18 +129,35 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
     let s = r.bytes(256)?;
     let n = (s[0] as usize).min(255);
     a.output_folder = s[1..1 + n].iter().map(|&c| c as char).collect();
-    let opt = r.i32()?;
-    a.interpolation = if opt & 3 == 0 { Interpolation::Linear } else { Interpolation::Bezier };
-    a.looped = opt & 4 != 0;
-    a.format = match (opt >> 3) & 7 {
-        0 => OutputFormat::Bmp,
-        2 => OutputFormat::Jpg,
-        3 => OutputFormat::M3p,
-        _ => OutputFormat::Png,
-    };
-    a.stereo_bits = (opt as u32) & 0xC0;
-    a.overwrite = opt & 256 == 0;
-    a.save_depth = opt & 512 != 0;
+    // RadioGroup2 (sub-frame interpolation): 1 (quadratic bezier) is the
+    // program's default, kept by version 1 files that do not store it
+    let mut ipol = 1;
+    if version == 5 {
+        let opt = r.i32()?;
+        ipol = opt & 3;
+        a.looped = opt & 4 != 0;
+        a.format = match (opt >> 3) & 7 {
+            0 => OutputFormat::Bmp,
+            2 => OutputFormat::Jpg,
+            3 => OutputFormat::M3p,
+            _ => OutputFormat::Png,
+        };
+        a.stereo_bits = (opt as u32) & 0xC0;
+        a.overwrite = opt & 256 == 0;
+        a.save_depth = opt & 512 != 0;
+    } else {
+        // older files: no loop, BMP images, no stereo, overwrite, no z-buffer
+        if version > 1 {
+            let opt = r.i32()?;
+            ipol = if version < 3 { 1 } else { ((opt & 3) / 2).min(1) };
+        }
+        a.looped = false;
+        a.format = OutputFormat::Bmp;
+        a.stereo_bits = 0;
+        a.overwrite = true;
+        a.save_depth = false;
+    }
+    a.interpolation = if ipol == 0 { Interpolation::Linear } else { Interpolation::Bezier };
     let hc = r.i32()?;
     if !(1..=4095).contains(&hc) {
         return Err(format!("animation file: bad keyframe count {hc}"));
@@ -153,13 +166,31 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
     for i in 0..hc as usize {
         let frames = r.i32()?.max(0) as u32;
         let time_ms = r.i32()?;
-        let smooth = r.i32()?;
-        let mut raw = r.bytes(HEADER_SIZE)?.to_vec();
-        let addon = r.bytes(ADDON_SIZE)?;
-        if !(16..=99).contains(&addon[0]) {
-            return Err("animation file: keyframe formulas in the old format are not supported".into());
+        let mut smooth = r.i32()?;
+        if version < 3 {
+            smooth = ipol;
         }
-        raw.extend_from_slice(addon);
+        let mut addon = vec![0u8; ADDON_SIZE];
+        let mut raw = if version < 5 {
+            // TMandHeader9: ConvertHeaderFromOldParas, then the 432 bytes
+            // before the light record and ConvertLight8to9
+            let mut p8 = r.bytes(crate::m3p_old::OLD_HEADER_SIZE)?.to_vec();
+            crate::m3p_old::convert_header_from_old_paras(&mut p8, &mut addon).map_err(|e| format!("keyframe {}: {e}", i + 1))?;
+            crate::m3p_old::header10_from_old(&p8, false)
+        } else {
+            let mut raw = r.bytes(HEADER_SIZE)?.to_vec();
+            raw.resize(HEADER_SIZE + ADDON_SIZE, 0);
+            raw
+        };
+        if version > 3 {
+            // LoadHAddon: the current or the old (shorter) layout
+            if r.p + 4 > r.d.len() {
+                return Err("animation file is truncated".into());
+            }
+            r.p += crate::m3p_old::load_haddon(&r.d[r.p..], &mut addon);
+        }
+        let mand_id = i32::from_le_bytes(raw[0..4].try_into().unwrap());
+        crate::m3p_old::finish_addon(&mut raw, &addon, mand_id);
         let m = crate::m3p::parse(&raw).map_err(|e| format!("keyframe {}: {e}", i + 1))?;
         for w in m.warnings {
             let w = format!("keyframe {}: {w}", i + 1);
@@ -590,5 +621,131 @@ mod tests {
         assert!(parse_m3k("[keyframe]\nframes = 3\n", &dir, "x").is_err());
         assert!(parse_m3k("bogus = 1\n", &dir, "x").is_err());
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn put_i32(d: &mut Vec<u8>, v: i32) {
+        d.extend_from_slice(&v.to_le_bytes());
+    }
+
+    /// `THeaderCustomAddonOld` (1016 bytes) with one formula in slot 0
+    fn old_formula_block(fnr: i32, its: i32, vals: [f64; 2]) -> Vec<u8> {
+        let mut a = vec![0u8; 1016];
+        a[8..12].copy_from_slice(&its.to_le_bytes());
+        for k in 0..6 {
+            let f = if k == 0 { fnr } else { -1 };
+            a[32 + k * 4..36 + k * 4].copy_from_slice(&f.to_le_bytes());
+        }
+        a[248..256].copy_from_slice(&vals[0].to_le_bytes());
+        a[256..264].copy_from_slice(&vals[1].to_le_bytes());
+        a
+    }
+
+    /// The settings of an `.m3a` file before the keyframes.
+    fn old_m3a_start(version: i32, opt: Option<i32>, keyframes: i32) -> Vec<u8> {
+        let mut d = Vec::new();
+        for v in [version, 160, 120, 1, 1] {
+            put_i32(&mut d, v);
+        }
+        let mut s = [0u8; 256];
+        s[0] = 6;
+        s[1..7].copy_from_slice(b"frames");
+        d.extend_from_slice(&s);
+        if let Some(o) = opt {
+            put_i32(&mut d, o);
+        }
+        put_i32(&mut d, keyframes);
+        d
+    }
+
+    #[test]
+    fn m3a_version_4() {
+        // keyframe 1: MandId 15 with a formula block in the old layout,
+        // keyframe 2: MandId 18 with one in the current layout
+        let mut d = old_m3a_start(4, Some(2), 2);
+        for v in [10, 5, 0] {
+            put_i32(&mut d, v);
+        }
+        d.extend_from_slice(&crate::m3p_old::header8(15, 6 << 18));
+        d.extend_from_slice(&old_formula_block(2, 2, [-1.0, 0.7]));
+        for v in [20, 6, 3] {
+            put_i32(&mut d, v);
+        }
+        d.extend_from_slice(&crate::m3p_old::header8(18, 0));
+        let mut a = vec![0u8; ADDON_SIZE];
+        a[0] = 16;
+        a[8..12].copy_from_slice(&4i32.to_le_bytes());
+        a[16..20].copy_from_slice(&2i32.to_le_bytes());
+        a[68..76].copy_from_slice(&5.0f64.to_le_bytes());
+        for k in 1..6 {
+            a[12 + k * 188..16 + k * 188].copy_from_slice(&(-1i32).to_le_bytes());
+        }
+        d.extend_from_slice(&a);
+        // previews: 1x1 and none
+        for v in [1, 1, 0x00102030, 0, 0] {
+            put_i32(&mut d, v);
+        }
+        let f = read_m3a(&d, "old").unwrap();
+        let b = &f.anim;
+        assert_eq!((b.width, b.height, b.output_folder.as_str()), (160, 120, "frames"));
+        // version 3 and 4: bezier when bit 1 of the options is set
+        assert_eq!(b.interpolation, Interpolation::Bezier);
+        assert!(!b.looped && b.overwrite && !b.save_depth);
+        assert_eq!(b.format, OutputFormat::Bmp);
+        assert_eq!(b.keyframes.iter().map(|k| (k.frames, k.smooth)).collect::<Vec<_>>(), vec![(10, 0), (20, 3)]);
+        let k0 = &b.keyframes[0].scene;
+        assert_eq!(k0.formulas.len(), 1);
+        assert_eq!(k0.formulas[0].iterations, 2);
+        // UpdateFormulaOptionTo20: the quaternion's w add is 0 before MandId 20
+        assert!(matches!(k0.formulas[0].formula, crate::formulas::Formula::Quaternion { yw_mul, w_add } if yw_mul == -1.0 && w_add == 0.0));
+        let k1 = &b.keyframes[1].scene;
+        assert_eq!(k1.formulas[0].iterations, 4);
+        assert!(matches!(k1.formulas[0].formula, crate::formulas::Formula::IntPow { power: 5, .. }));
+        assert_eq!(k1.width, 320);
+        assert_eq!(f.previews[0], Some(Preview { width: 1, height: 1, rgb: vec![0x10, 0x20, 0x30] }));
+        assert_eq!(f.previews[1], None);
+    }
+
+    #[test]
+    fn m3a_version_2() {
+        // no formula block: the formula comes from the header (MandId 10,
+        // Integer Power 8); the interpolation of version 2 files is bezier
+        // whatever is stored, and the keyframes' smooth value follows it
+        let mut d = old_m3a_start(2, Some(0), 1);
+        for v in [15, 0, 0] {
+            put_i32(&mut d, v);
+        }
+        d.extend_from_slice(&crate::m3p_old::header8(10, 6 << 18));
+        let f = read_m3a(&d, "old").unwrap();
+        let b = &f.anim;
+        assert_eq!(b.interpolation, Interpolation::Bezier);
+        assert_eq!((b.keyframes[0].frames, b.keyframes[0].smooth), (15, 1));
+        let s = &b.keyframes[0].scene;
+        assert!(matches!(s.formulas[0].formula, crate::formulas::Formula::IntPow { power: 8, .. }));
+        assert_eq!(f.previews, vec![None]);
+        // version 1 has no options at all
+        let mut d = old_m3a_start(1, None, 1);
+        for v in [15, 0, 0] {
+            put_i32(&mut d, v);
+        }
+        d.extend_from_slice(&crate::m3p_old::header8(10, 6 << 18));
+        assert_eq!(read_m3a(&d, "old").unwrap().anim.keyframes.len(), 1);
+    }
+
+    #[test]
+    fn m3a_version_5_with_old_formula_block() {
+        // LoadHAddon reads only the 1016 bytes of the old layout, the next
+        // keyframe follows directly
+        let a = sample();
+        let data = write_m3a(&a, &[None, None]);
+        let start = 4 * 6 + 256 + 4 + 12 + HEADER_SIZE;
+        let mut d = data[..start].to_vec();
+        d.extend_from_slice(&old_formula_block(0, 7, [3.0, 1.0]));
+        d.extend_from_slice(&data[start + ADDON_SIZE..]);
+        let f = read_m3a(&d, "test").unwrap();
+        let k = &f.anim.keyframes;
+        assert_eq!(k[0].scene.formulas[0].iterations, 7);
+        assert!(matches!(k[0].scene.formulas[0].formula, crate::formulas::Formula::IntPow { power: 3, .. }));
+        same_scene(&a.keyframes[1].scene, &k[1].scene);
+        assert_eq!(f.previews, vec![None, None]);
     }
 }
