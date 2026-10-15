@@ -73,6 +73,8 @@ OPTIONS:
 ";
 
 fn main() -> ExitCode {
+    #[cfg(feature = "gpu")]
+    mb3d::gpu::use_own_driver_cache();
     let r = run();
     // a shader still compiling in the background is finished and cached
     // before the program ends (see gpu::wait_compiles)
@@ -591,12 +593,7 @@ OPTIONS:
                              render, and lets several processes share the work
         --overwrite          Render all frames again (default unless the animation says no)
         --depth              Also write depth images (ZBuf <name><index>.png)
-        --video <FILE>       Also join the frames into a video (.mp4 or .webm; needs
-                             ffmpeg, MB3D_FFMPEG names it if it is not on the PATH);
-                             the frame images are kept
-        --fps <N>            Frames per second of the video (default 25)
-        --transparent        PNG frames with a transparent background (also kept in a
-                             WebM video; MP4 shows the background)
+        --transparent        PNG frames with a transparent background
         --stereo <MODE>      pair: a right and a left eye image per frame
                              (<name>Right000001, <name>Left000001), very_left: only
                              the 'very left' images, off (as MB3D's animation maker)
@@ -624,7 +621,6 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let mut stereo: Option<u32> = None;
     let (mut depth, mut list, mut render_too, mut quiet) = (false, false, false, false);
     let mut save: Option<String> = None;
-    let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, mb3d::video::DEFAULT_FPS);
     let mut transparent = false;
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
@@ -677,9 +673,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--skip-existing" => overwrite = Some(false),
             "--overwrite" => overwrite = Some(true),
             "--depth" => depth = true,
-            "--video" => video = Some(args.next().ok_or("--video needs a file name")?.into()),
             "--transparent" => transparent = true,
-            "--fps" => fps = args.next().and_then(|v| v.trim().parse::<f64>().ok()).filter(|f| *f > 0.0 && *f <= 1000.0).ok_or("--fps needs a frame rate (e.g. 25)")?,
             "-s" | "--set" => overrides.push(args.next().ok_or("--set needs a value")?.clone()),
             "--save" => save = Some(args.next().ok_or("--save needs a value")?.clone()),
             "--render" => render_too = true,
@@ -866,15 +860,6 @@ fn animate(argv: &[String]) -> Result<(), String> {
         }
         anim.transparent = true;
     }
-    if video.is_some() {
-        if anim.format == OutputFormat::M3p {
-            return Err("--video needs images (--format png, bmp or jpg), not parameter files".into());
-        }
-        if anim.stereo_bits & 1 != 0 {
-            return Err("--video makes no stereo videos (render the eyes separately)".into());
-        }
-        mb3d::video::check()?;
-    }
     if !quiet {
         eprintln!(
             "rendering {} of {} frames at {}x{}{} to {}",
@@ -919,14 +904,6 @@ fn animate(argv: &[String]) -> Result<(), String> {
     }
     if !quiet {
         eprintln!("done: {done} frames rendered, {skipped} skipped, {}", fmt_dur(t0.elapsed().as_secs_f64()));
-    }
-    if let Some(v) = video {
-        let files: Vec<std::path::PathBuf> = frames_to_do.iter().map(|&f| anim.frame_file(f)).collect();
-        let t = Instant::now();
-        mb3d::video::encode(&files, fps, &v, anim.transparent)?;
-        if !quiet {
-            eprintln!("video: {} ({} frames at {fps} per second, {})", v.display(), files.len(), fmt_dur(t.elapsed().as_secs_f64()));
-        }
     }
     Ok(())
 }

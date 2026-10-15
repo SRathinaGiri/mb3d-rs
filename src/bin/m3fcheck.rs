@@ -9,7 +9,7 @@
 //! (tools/oracle/oracle_bench.s) and the translated code here, in ns per call
 //! with the cost of an empty call taken off both.
 //!
-//! `--translated` compares the translated native code (`native.rs`) with
+//! `--translated` compares the translated native code (`native/`) with
 //! the interpreter: memory and registers must be identical bit for bit.
 //!
 //! The oracle is the 32-bit static program built from tools/oracle/oracle.asm

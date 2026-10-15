@@ -289,7 +289,6 @@ pub fn trace(
                 let rows = &rows;
                 let sampler = &sampler;
                 s.spawn(move || {
-                    crate::prio::calc_thread();
                     let mut m = Marcher::new(&sampler.p, 1);
                     let mut buf = vec![Sample::default(); side];
                     let mut j = t;

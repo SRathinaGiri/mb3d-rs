@@ -34,8 +34,6 @@ It comes as two programs:
 * **Eight looks** for the windows, all of them theme files you can copy and change: two reproduce MB3D's looks, six are new.
 * **Linux, Windows and macOS** (Intel and Apple Silicon).
 * **A command line program** for everything that needs no window.
-* **Videos of animations**: the Animation maker can join the frames
-  into an MP4 or WebM video as well (see [Videos](#videos-of-animations)).
 * **16 bit pictures**: PNG files with 65,536 instead of 256 steps per
   colour, for editing without banding (see [16 bit](#16-bit-pictures)).
 * **A noise filter** for Monte Carlo and all other pictures, the DCT
@@ -101,10 +99,10 @@ The first time a combination of formulas is used, the graphics driver
 has to prepare a program for the card — the *shader* — which takes 10 to
 15 seconds on the computer measured below. In Auto mode the processor
 simply starts without it and the card joins when it is ready, so a small
-picture never waits. The prepared shader is kept for the next time (on
-Linux in the `ShaderCache` folder next to the program, on Windows and
-macOS by the graphics driver), so the next picture with the same formulas
-starts on the card at once.
+picture never waits. The prepared shader is kept for the next time (by
+the graphics driver, on Linux in the `ShaderCache` folder next to the
+program), so the next picture with the same formulas starts on the card
+at once.
 
 The **LED** right of the window title tells where the last picture was
 calculated: green on the graphics card, orange partly, red on the
@@ -292,22 +290,6 @@ definitions, so every button, slider and hint is where it is in MB3D:
   generator, MutaGen, ZBuf16Bit, Map sequences, Ini dirs** — all as in
   MB3D.
 
-### Videos of animations
-
-The Animation maker writes every frame as a picture, as MB3D does. Tick
-**Also make a video** (bottom left) and, when all frames are done, they
-are joined into one video file in the output folder, named after the
-project: **MP4** (plays everywhere) or **WebM**, at the frames per second
-you choose. The pictures stay where they are.
-
-<a href="docs/img/animation_video.png"><img src="docs/img/animation_video.png" width="760" alt="The Animation maker with 'Also make a video'"></a>
-
-The video is made by **ffmpeg**, a free program that has to be installed
-once: on Linux from the distribution (`sudo apt install ffmpeg`,
-`sudo pacman -S ffmpeg`, ...), on macOS with `brew install ffmpeg`, on
-Windows with `winget install ffmpeg` or from [ffmpeg.org](https://ffmpeg.org).
-Without it the program says so before rendering starts.
-
 ### 16 bit pictures
 
 MB3D saves 8 bit pictures: 256 steps per colour. That is plenty to look
@@ -338,8 +320,7 @@ program runs.
 Pictures and animation frames can be saved with a **transparent
 background**, to put the fractal onto another picture or into a video
 editor: **Save pic ▸ PNG ▸ PNG transparent background**, and in the
-Animation maker **Transparent background** (PNG frames; a WebM video keeps
-the transparency, an MP4 shows the background). With anti-aliasing (a
+Animation maker **Transparent background** (PNG frames). With anti-aliasing (a
 viewing scale of 1:2 or more, or `--aa`) the edges are soft, and they
 carry no fringe of the old background colour. Depth pictures for
 compositing were already there (*Save Z buffer too*, `--depth`).
@@ -481,8 +462,7 @@ Everything else has a sub-command with its own `--help`:
 ./mb3d batch M3Parameter --scale 0.2 -o previews        # a whole folder
 ./mb3d animate start.m3p middle.m3p end.m3p --frames 60 -o frames
 ./mb3d animate project.m3a -o frames                     # MB3D animations
-./mb3d animate project.m3a -o frames --video flight.mp4  # ... and a video
-./mb3d animate project.m3a -o frames --transparent --video flight.webm
+./mb3d animate project.m3a -o frames --transparent      # ... see-through
 ./mb3d montecarlo scene.m3p --rays 64 -o mc.png
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing

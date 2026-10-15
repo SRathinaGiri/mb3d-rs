@@ -50,7 +50,6 @@ pub fn dct_denoise(rgb: &[u8], w: usize, h: usize, sigma: f32, threads: usize) -
             .map(|t| {
                 let (ch, c) = (&ch, &c);
                 s.spawn(move || {
-                    crate::prio::calc_thread();
                     let (y0, y1) = (t * band, ((t + 1) * band).min(h));
                     let mut acc = vec![[0f32; 3]; (y1.saturating_sub(y0)) * w];
                     if y0 >= y1 {

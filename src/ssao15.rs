@@ -309,7 +309,6 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
         }
         for list in per {
             sc.spawn(move || {
-                crate::prio::calc_thread();
                 let mut ys = Vec::new();
                 let mut xs = Vec::new();
                 for (y, row) in list {

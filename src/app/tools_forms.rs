@@ -206,14 +206,7 @@ pub fn batch_dialog(_app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) 
 
 /// Opens a folder in the system's file manager.
 pub fn open_folder(d: &Path) {
-    let cmd = if cfg!(windows) {
-        "explorer"
-    } else if cfg!(target_os = "macos") {
-        "open"
-    } else {
-        "xdg-open"
-    };
-    let _ = std::process::Command::new(cmd).arg(d).spawn();
+    let _ = open::that_detached(d);
 }
 
 // ---------------------------------------------------------------------------

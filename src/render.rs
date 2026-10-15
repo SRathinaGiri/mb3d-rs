@@ -227,7 +227,6 @@ fn calculate_inner(
             let p = &p;
             let done = &done;
             handles.push(s.spawn(move || {
-                crate::prio::calc_thread();
                 // MB3D: seed := Round(Random * (iThreadId + 1) * $324594A1 + $24563487)
                 let mut out = Vec::new();
                 let mut y = t;
@@ -294,7 +293,6 @@ pub fn calculate_blocky(
     std::thread::scope(|s| {
         for _ in 0..threads {
             s.spawn(|| {
-                crate::prio::calc_thread();
                 let mut m = Marcher::new(&p, 0);
                 loop {
                     let b = next.fetch_add(1, Ordering::Relaxed);
@@ -463,7 +461,6 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
     let card_ok = std::thread::scope(|s| {
         for _ in 0..threads.max(1) {
             s.spawn(|| {
-                crate::prio::calc_thread();
                 loop {
                     let i = next.fetch_add(1, Ordering::Relaxed);
                     if i >= ns || t.elapsed() > budget {
@@ -570,7 +567,6 @@ fn march_mixed(
     std::thread::scope(|s| {
         for _ in 0..threads {
             s.spawn(|| loop {
-                crate::prio::calc_thread();
                 if cancel() {
                     break;
                 }
@@ -640,7 +636,6 @@ fn march_mixed(
                 std::thread::scope(|s2| {
                     for _ in 0..threads {
                         s2.spawn(|| loop {
-                            crate::prio::calc_thread();
                             let i = next.fetch_add(1, Ordering::Relaxed);
                             if i >= redo.len() || cancel() {
                                 break;
@@ -708,7 +703,6 @@ fn finish_calculation(
 pub fn prewarm_gpu(sc: Scene) {
     #[cfg(feature = "gpu")]
     std::thread::spawn(move || {
-        crate::prio::calc_thread();
         if !crate::gpu::enabled() {
             return;
         }
@@ -996,7 +990,6 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
         }
         for list in per {
             s.spawn(move || {
-                crate::prio::calc_thread();
                 for (y, row) in list {
                     let y = y + y0;
                     let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
@@ -1048,7 +1041,6 @@ fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[Si
             let lv = &lv;
             let cam = &cam;
             s.spawn(move || {
-                crate::prio::calc_thread();
                 let y0 = ci * chunk_rows;
                 for (ry, row) in chunk.chunks_mut(w as usize * 3).enumerate() {
                     let y = y0 + ry;

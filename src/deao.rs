@@ -120,7 +120,6 @@ pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, d
         for list in per {
             let base = &base;
             s.spawn(move || {
-                crate::prio::calc_thread();
                 for (y, row) in list {
                     let y = y + p.rect[1] as usize;
                     let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;

@@ -66,7 +66,6 @@ fn start(app: &mut Mb3d, ui: &Ui, path: PathBuf) {
     let slot = app.preview.result.clone();
     let waker = ui.waker();
     std::thread::spawn(move || {
-        crate::prio::calc_thread();
         let (r, text) = calculate(&path);
         *slot.lock().unwrap() = Some((path, r, text));
         if let Some(w) = &waker {

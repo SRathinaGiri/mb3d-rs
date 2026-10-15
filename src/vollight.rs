@@ -274,7 +274,6 @@ pub fn build(
             .map(|_| {
                 let (free, card_done, texel) = (&free, &card_done, &texel);
                 sc.spawn(move || {
-                    crate::prio::calc_thread();
                     let mut mr = Marcher::new(p, 1);
                     let mut out = Vec::new();
                     loop {

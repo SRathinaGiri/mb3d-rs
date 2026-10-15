@@ -30,39 +30,10 @@ pub struct Job {
     pub frames: Vec<Option<Bitmap>>,
     pub thumbs: Vec<(usize, u64, Bitmap)>,
     pub changed: bool,
-    /// the frames are done, ffmpeg joins them
-    pub making_video: bool,
-    /// the video written ("Also make a video")
-    pub video: Option<std::path::PathBuf>,
 }
 
-/// "Also make a video": the video file of the rendered frames (in the
-/// output folder, named after the project) and its frame rate, or why
-/// there is none.
-fn video_settings(ui: &Ui, a: &Animation) -> Result<Option<(std::path::PathBuf, f64)>, String> {
-    if !ui.checked(F, "VideoCheck") {
-        return Ok(None);
-    }
-    if a.format == OutputFormat::M3p {
-        return Err("A video needs images: choose BMP, PNG or JPG as the output format.".into());
-    }
-    if a.stereo_bits & 1 != 0 {
-        return Err("A video of a stereo animation is not made: switch off 'Render stereo animation' or the video.".into());
-    }
-    let fps = ui.text(F, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0);
-    let Some(fps) = fps else { return Err("The video's frames per second must be a number above 0 (e.g. 25).".into()) };
-    crate::video::check().map_err(|e| format!("No video can be made: {e}."))?;
-    let i = ui.item_index(F, "VideoFormatCmb").clamp(0, crate::video::FORMATS.len() as i32 - 1) as usize;
-    let mut p = std::path::PathBuf::from(&a.output_folder);
-    p.push(format!("{}.{}", a.name, crate::video::FORMATS[i]));
-    Ok(Some((p, fps)))
-}
-
-fn save_video_settings(app: &mut Mb3d, ui: &Ui) {
+fn save_output_settings(app: &mut Mb3d, ui: &Ui) {
     app.ini.set_extra("AniTransparent", if ui.checked(F, "TransparentCheck") { "1" } else { "0" });
-    app.ini.set_extra("AniVideo", if ui.checked(F, "VideoCheck") { "1" } else { "0" });
-    app.ini.set_extra("AniVideoFormat", &ui.item_index(F, "VideoFormatCmb").max(0).to_string());
-    app.ini.set_extra("AniVideoFps", ui.text(F, "VideoFpsEdit").trim());
 }
 
 pub struct State {
@@ -318,12 +289,11 @@ fn main_scene(app: &mut Mb3d, ui: &mut Ui) -> Scene {
 }
 
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
-    let (changed, thumbs, running, done, total, err, last, frames_len, making_video, video) = {
+    let (changed, thumbs, running, done, total, err, last, frames_len) = {
         let mut j = app.anim.job.lock().unwrap();
         let c = j.changed;
         j.changed = false;
-        let video = if j.running { None } else { j.video.take() };
-        (c, std::mem::take(&mut j.thumbs), j.running, j.done, j.total, j.error.clone(), j.last.take(), j.frames.len(), j.making_video, video)
+        (c, std::mem::take(&mut j.thumbs), j.running, j.done, j.total, j.error.clone(), j.last.take(), j.frames.len())
     };
     for (i, id, b) in thumbs {
         if let Some(k) = app.anim.ids.iter().position(|&x| x == id) {
@@ -356,9 +326,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         c.max = (frames_len as i64 - 1).max(0);
     }
     let el = app.anim.started.elapsed().as_secs();
-    if making_video {
-        ui.set_caption(F, "Label19", "Making the video...");
-    } else if running || done > 0 {
+    if running || done > 0 {
         ui.set_caption(F, "Label19", &format!("Done: {done} of {total}"));
         ui.set_caption(F, "Label22", &format!("{}:{:02}:{:02}", el / 3600, el / 60 % 60, el % 60));
     }
@@ -366,9 +334,6 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         end_rendering(app, ui);
         if !err.is_empty() {
             app.message(ui, &format!("Animation: {err}"));
-        }
-        if let Some(v) = video {
-            app.message(ui, &format!("Animation: video written: {}", v.display()));
         }
         if ui.showing(PV) {
             ui.set_visible(PV, "ProgressBar1", false);
@@ -422,11 +387,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     if ui.checked(F, "TransparentCheck") && a.format != OutputFormat::Png {
         return ui.show_message("A transparent background needs PNG frames: choose PNG as the output format.");
     }
-    let video = match video_settings(ui, &a) {
-        Ok(v) => v,
-        Err(e) => return ui.show_message(&e),
-    };
-    save_video_settings(app, ui);
+    save_output_settings(app, ui);
     for b in ["SpeedButton1", "SpeedButton2", "SpeedButton3", "SpeedButton4", "SpeedButton5", "SpeedButton8", "SpeedButton9", "SpeedButton10", "SpeedButton11", "SpeedButton12", "SpeedButton14", "Edit1", "Button3", "Button4"] {
         ui.set_enabled(F, b, false);
     }
@@ -479,25 +440,6 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             drop(j);
             if let Some(w) = &waker {
                 w.wake();
-            }
-        }
-        // the video of the frames, when all of them are there
-        if let Some((path, fps)) = video.filter(|_| !cancel() && job.lock().unwrap().error.is_empty()) {
-            {
-                let mut j = job.lock().unwrap();
-                j.making_video = true;
-                j.changed = true;
-            }
-            if let Some(w) = &waker {
-                w.wake();
-            }
-            let files: Vec<std::path::PathBuf> = frames.iter().map(|&f| a.frame_file(f)).collect();
-            let r = crate::video::encode(&files, fps, &path, a.transparent);
-            let mut j = job.lock().unwrap();
-            j.making_video = false;
-            match r {
-                Ok(()) => j.video = Some(path),
-                Err(e) => j.error = format!("the video was not made: {e}"),
             }
         }
         let mut j = job.lock().unwrap();
@@ -845,13 +787,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.anim.anim.output_folder = out;
                 ui.set_item_index(F, "RadioGroup3", 1);
                 show_project_name(app, ui);
-                ui.set_items(F, "VideoFormatCmb", crate::video::FORMATS.iter().map(|f| f.to_ascii_uppercase()).collect());
-                let fi = app.ini.get_extra("AniVideoFormat").and_then(|v| v.parse::<i32>().ok()).unwrap_or(0);
-                ui.set_item_index(F, "VideoFormatCmb", fi.clamp(0, crate::video::FORMATS.len() as i32 - 1));
-                ui.set_checked(F, "VideoCheck", app.ini.get_extra("AniVideo") == Some("1"));
                 ui.set_checked(F, "TransparentCheck", app.ini.get_extra("AniTransparent") == Some("1"));
-                let fps = app.ini.get_extra("AniVideoFps").filter(|v| !v.is_empty()).unwrap_or("25").to_string();
-                ui.set_text(F, "VideoFpsEdit", &fps);
             }
             let fc = app.ini.get("AniFrameCount").to_string();
             ui.set_text(F, "Edit5", &fc);
@@ -861,7 +797,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormDestroy" | "Button1Click" => {
             app.ini.set("AniFrameCount", &ui.text(F, "Edit5"));
             app.ini.set("AniSmoothPar", &ui.item_index(F, "RadioGroup2").to_string());
-            save_video_settings(app, ui);
+            save_output_settings(app, ui);
             if h == "Button1Click" {
                 ui.hide(F);
             }

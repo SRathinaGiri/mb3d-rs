@@ -12,7 +12,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Lights, volumetric light, cutting planes, depth of field](#lights-volumetric-light-cutting-planes-depth-of-field)
 - [Reflections and transparency, normals on the z-buffer](#reflections-and-transparency-normals-on-the-z-buffer)
 - [Hybrids, inside rendering, maps](#hybrids-inside-rendering-maps)
-- [Output: videos, 16 bit pictures, noise filter](#output-videos-16-bit-pictures-noise-filter)
+- [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Building from source](#building-from-source)
 
@@ -39,8 +39,8 @@ whenever the scene allows it, and on the CPU otherwise:
   shader is compiled, until they meet; the card then calculates the
   shadows and the ambient occlusion of the whole image. The first time a
   formula combination is used its shaders compile (10 to 20 s; the
-  compiled pipelines are kept in the `ShaderCache` folder next to the
-  program for the next time) while the CPU already calculates, so
+  driver keeps them in `ShaderCache` next to the program for the next
+  time) while the CPU already calculates, so
   small images never wait for a compile (when the CPU finishes before the
   card joins, the post calculations run on the CPU too). Monte Carlo
   renders go to the card from the moment its shader is ready. **CPU**
@@ -122,13 +122,17 @@ is compiled. `MB3D_GPU_NOPROBE=1` turns it off and `MB3D_PROBE_DEBUG=1`
 prints its result. The command line program waits for a shader still
 compiling before it ends (`gpu::wait_compiles`): a compile the CPU
 threads had overtaken used to die with the process and never reach the
-pipeline cache, so a short scene's next run was just as cold.
+driver's cache, so a short scene's next run was just as cold.
 `mb3d` prints which was used and why; errors of the graphics card or its
 driver also send the calculation to the CPU, and software renderers
 (llvmpipe, WARP) are not used. The first calculation of a scene compiles
-its shader (one to twenty seconds depending on the driver; the compiled
-pipeline is kept in `ShaderCache` next to the program, independently of
-the driver's own cache, which may be full or off). The desktop shares
+its shader (one to twenty seconds depending on the driver). The driver
+keeps it for the next run: the programs give it a cache of its own in
+`ShaderCache` next to the program (`gpu::use_own_driver_cache`, the
+NVIDIA `__GL_SHADER_DISK_CACHE_*` and Mesa `MESA_SHADER_CACHE_*`
+settings, unless the user set them), because the shared cache in the
+user's folder can be full (NVIDIA keeps about 1 GB) and a full one made
+every run compile again. The desktop shares
 the graphics card and waits for each piece of work sent to it, so the
 calculation is sent in pieces of about 50 ms (`MB3D_GPU_BAND_MS`): a pixel
 that needs longer (a single dIFS pixel can take 100 ms on the card) saves
@@ -355,7 +359,7 @@ mutations, the coverage measures and a whole generation work.
 MB3D's 460 formula files store their iteration step as 32-bit x86 machine
 code. This port runs that code in three tiers:
 
-1. **Translated to Rust** (`src/native.rs`, generated): 441 formulas. Their
+1. **Translated to Rust** (`src/native/`, generated): 441 formulas. Their
    machine code was translated ahead of time into ordinary Rust functions,
    which the Rust compiler turns into native code for whatever CPU the crate
    is built for (x86-64, ARM64, …); nothing in it is specific to Intel CPUs.
@@ -557,19 +561,7 @@ result equals an untiled render. A single tile is calculated with a border of
 24 pixels for the image space effects, like MB3D's big-render tiles, and the
 tile files that MB3D writes for big renders are rendered as that tile.
 
-## Output: videos, 16 bit pictures, noise filter
-
-`mb3d animate ... --video FILE [--fps N]` and the Animation maker's *Also
-make a video* (`src/video.rs`) run ffmpeg on the finished frame images
-(PNG, BMP or JPEG; not for `--format m3p` or stereo pairs), which stay in
-place. ffmpeg is the one on the `PATH`, or `MB3D_FFMPEG`; it is checked
-before the first frame. The frames go in through an ffconcat list (each
-for 1/fps seconds), so `--every`, `--from`/`--to` and index steps work;
-odd sizes are padded by one pixel. By extension: `.mp4`/`.mov` H.264
-(`yuv420p`, CRF 18, faststart), `.mkv` H.264, `.webm` VP9 (CRF 30),
-anything else ffmpeg's default for it (e.g. `.gif`). The window writes
-`<output folder>/<project name>.mp4|.webm` and keeps its settings in the
-ini (`AniVideo`, `AniVideoFormat`, `AniVideoFps`).
+## Output: 16 bit pictures, noise filter
 
 16 bit colour (`mb3d --bits 16`, single pictures; the window's *PNG 16 bit
 colour* file type): painting, the reflection pass and the depth of field
@@ -744,7 +736,7 @@ Regenerating the formula translation (only needed when the formula set
 changes):
 
 ```sh
-cargo run --release --bin m3f2rs -- path/to/M3Formulas -o src/native.rs
+cargo run --release --bin m3f2rs -- path/to/M3Formulas -o src/native
 cargo build --release
 ```
 

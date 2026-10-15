@@ -927,7 +927,7 @@ fn decode_0f(d: &mut Dec, addr: u32, p66: bool, rep: Option<u8>, osz: u8) -> R<I
 pub type HostFn = fn(&mut Machine) -> R<()>;
 
 /// The arithmetic flags of the emulated CPU.  The interpreter keeps them in
-/// the machine; the translated formulas (`native.rs`) keep a local copy, so
+/// the machine; the translated formulas (`native/`) keep a local copy, so
 /// that the compiler can drop flags nobody reads.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Flags {
@@ -1358,14 +1358,12 @@ impl Machine {
     #[inline]
     pub fn rd32(&self, a: u32) -> R<u32> {
         let i = self.idx(a, 4)?;
-        // SAFETY: `idx` checked that i + 4 <= mem.len()
-        Ok(u32::from_le_bytes(unsafe { *(self.mem.as_ptr().add(i) as *const [u8; 4]) }))
+        Ok(u32::from_le_bytes(self.mem[i..i + 4].try_into().unwrap()))
     }
     #[inline]
     pub fn rd64(&self, a: u32) -> R<u64> {
         let i = self.idx(a, 8)?;
-        // SAFETY: `idx` checked that i + 8 <= mem.len()
-        Ok(u64::from_le_bytes(unsafe { *(self.mem.as_ptr().add(i) as *const [u8; 8]) }))
+        Ok(u64::from_le_bytes(self.mem[i..i + 8].try_into().unwrap()))
     }
     #[inline]
     pub fn wr8(&mut self, a: u32, v: u8) -> R<()> {
@@ -1382,46 +1380,40 @@ impl Machine {
     #[inline]
     pub fn wr32(&mut self, a: u32, v: u32) -> R<()> {
         let i = self.idx(a, 4)?;
-        // SAFETY: `idx` checked that i + 4 <= mem.len()
-        unsafe { *(self.mem.as_mut_ptr().add(i) as *mut [u8; 4]) = v.to_le_bytes() };
+        self.mem[i..i + 4].copy_from_slice(&v.to_le_bytes());
         Ok(())
     }
     #[inline]
     pub fn wr64(&mut self, a: u32, v: u64) -> R<()> {
         let i = self.idx(a, 8)?;
-        // SAFETY: `idx` checked that i + 8 <= mem.len()
-        unsafe { *(self.mem.as_mut_ptr().add(i) as *mut [u8; 8]) = v.to_le_bytes() };
+        self.mem[i..i + 8].copy_from_slice(&v.to_le_bytes());
         Ok(())
     }
-    /// Unchecked f64 access for fixed addresses inside the image (the
-    /// iteration record); panics in debug builds if out of range.
+    /// f64 access for fixed addresses inside the image (the
+    /// iteration record), without an error result; panics if out of range.
     #[inline(always)]
     pub fn put_f64(&mut self, a: u32, v: f64) {
         let i = a.wrapping_sub(BASE) as usize;
-        assert!(i + 8 <= MEM_SIZE );
-        // SAFETY: checked above
-        unsafe { *(self.mem.as_mut_ptr().add(i) as *mut [u8; 8]) = v.to_bits().to_le_bytes() };
+        assert!(i + 8 <= MEM_SIZE);
+        self.mem[i..i + 8].copy_from_slice(&v.to_bits().to_le_bytes());
     }
     #[inline(always)]
     pub fn get_f64(&self, a: u32) -> f64 {
         let i = a.wrapping_sub(BASE) as usize;
-        assert!(i + 8 <= MEM_SIZE );
-        // SAFETY: checked above
-        f64::from_bits(u64::from_le_bytes(unsafe { *(self.mem.as_ptr().add(i) as *const [u8; 8]) }))
+        assert!(i + 8 <= MEM_SIZE);
+        f64::from_bits(u64::from_le_bytes(self.mem[i..i + 8].try_into().unwrap()))
     }
     #[inline(always)]
     pub fn put_u32(&mut self, a: u32, v: u32) {
         let i = a.wrapping_sub(BASE) as usize;
-        assert!(i + 4 <= MEM_SIZE );
-        // SAFETY: checked above
-        unsafe { *(self.mem.as_mut_ptr().add(i) as *mut [u8; 4]) = v.to_le_bytes() };
+        assert!(i + 4 <= MEM_SIZE);
+        self.mem[i..i + 4].copy_from_slice(&v.to_le_bytes());
     }
     #[inline(always)]
     pub fn get_u32(&self, a: u32) -> u32 {
         let i = a.wrapping_sub(BASE) as usize;
-        assert!(i + 4 <= MEM_SIZE );
-        // SAFETY: checked above
-        u32::from_le_bytes(unsafe { *(self.mem.as_ptr().add(i) as *const [u8; 4]) })
+        assert!(i + 4 <= MEM_SIZE);
+        u32::from_le_bytes(self.mem[i..i + 4].try_into().unwrap())
     }
 
     #[inline]
@@ -2874,7 +2866,7 @@ enum Op {
     Fnstsw { mem: Option<Mem>, depth: u8 },
 }
 
-/// Formula code translated to Rust ahead of time (see `native.rs`).
+/// Formula code translated to Rust ahead of time (see `native/`).
 pub type NativeFn = fn(&mut Machine, &Prog, u64) -> R<()>;
 
 /// A translated formula called directly with the iteration state (no call
@@ -3047,7 +3039,7 @@ fn direct_via_memory(m: &mut Machine, p: &Prog, max_steps: u64) -> R<()> {
 pub static NATIVE_ENABLED: std::sync::LazyLock<std::sync::atomic::AtomicBool> =
     std::sync::LazyLock::new(|| std::sync::atomic::AtomicBool::new(std::env::var_os("MB3D_NO_NATIVE").is_none()));
 
-#[path = "native.rs"]
+#[path = "native/mod.rs"]
 mod native;
 
 #[path = "lift.rs"]
@@ -3063,7 +3055,7 @@ pub mod lift_wgsl;
 pub struct Prog {
     ops: Vec<Op>,
     /// hash of the code bytes (position independent), to find the
-    /// translated native version (`native.rs`)
+    /// translated native version (`native/`)
     pub hash: u64,
     native: Option<NativeFn>,
     /// the direct version of the translated formula, if any (`native`

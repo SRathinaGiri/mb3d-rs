@@ -226,7 +226,6 @@ pub fn ssao24(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                     let zfine = &zfine;
                     let jobs = &jobs;
                     handles.push(sc.spawn(move || {
-                        crate::prio::calc_thread();
                         let mut out: Vec<(usize, u16)> = Vec::new();
                         loop {
                         let Some((k, part)) = jobs.lock().unwrap().next() else { break };

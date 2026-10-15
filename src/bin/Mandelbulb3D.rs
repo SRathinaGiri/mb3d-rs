@@ -3,6 +3,8 @@
 #![allow(non_snake_case)]
 
 fn main() {
+    #[cfg(feature = "gpu")]
+    mb3d::gpu::use_own_driver_cache();
     #[cfg(windows)]
     {
         // a Windows program has no console: a panic or an error would

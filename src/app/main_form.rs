@@ -160,8 +160,11 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         let i = app.ini.get("ThreadPriority").parse().unwrap_or(2);
         ui.set_item_index(F, "ComboBox2", i);
     }
-    // the calculation threads below the windows (MB3D's default: Lower)
-    crate::prio::set_level(ui.item_index(F, "ComboBox2"));
+    // no thread priority (MB3D's "Thread Priority", "Disable threadboost"):
+    // the calculation threads run at normal priority
+    for c in ["Label33", "ComboBox2", "CheckBox14", "CheckBox15"] {
+        ui.set_visible(F, c, false);
+    }
     if let Ok(i) = app.ini.get("ImageSharp").parse::<i32>() {
         ui.set_caption(F, "Label23", &i.to_string());
     }
@@ -916,8 +919,6 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "Button2Click" => button2_click(app, ui),
-        // the thread priority box and "Disable threadboost"
-        "CheckBox14Click" => crate::prio::set_level(ui.item_index(F, "ComboBox2")),
         "CalcOnComboChange" => {
             let i = ui.item_index(F, "CalcOnCombo") as i64;
             set_calc_on(app, ui, i);

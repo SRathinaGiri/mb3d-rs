@@ -38,7 +38,7 @@ EM_JIT_M3Formulas/    more JIT formulas
 History/              parameters of every "Calculate 3D" (as in MB3D)
 Meshes/               meshes from BTracer2
 BigRenders/           big renders
-ShaderCache/          the graphics card's compiled shaders (Linux; made on the first calculation)
+ShaderCache/          the graphics driver's compiled shaders (Linux; made on the first calculation)
 MB3D-sources/         MB3D's Delphi sources and project files
 README-MB3D.md, README_1.*.txt, CHANGELOG.txt, License.txt   MB3D's documents
 examples/             scenes in this port's .m3s format

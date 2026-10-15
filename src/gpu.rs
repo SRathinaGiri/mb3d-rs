@@ -815,26 +815,6 @@ struct Gpu {
     name: String,
     /// the shaders can calculate in doubles (SHADER_F64, SHADER_INT64)
     f64: bool,
-    /// the driver's compiled pipelines, kept in `cache_file` between runs
-    /// (Vulkan): the scene shaders take the driver 10-20 s to compile, and
-    /// its own disk cache may be full or off
-    cache: Option<wgpu::PipelineCache>,
-    cache_file: Option<std::path::PathBuf>,
-}
-
-/// Writes the pipeline cache to its file (after a new pipeline was
-/// compiled; a temporary file renamed, so that a run that ends meanwhile
-/// leaves no broken cache).
-fn save_pipeline_cache(g: &Gpu) {
-    let (Some(c), Some(f)) = (&g.cache, &g.cache_file) else {
-        return;
-    };
-    if let Some(data) = c.get_data() {
-        let tmp = f.with_extension("tmp");
-        if std::fs::write(&tmp, &data).is_ok() {
-            let _ = std::fs::rename(&tmp, f);
-        }
-    }
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
@@ -884,7 +864,7 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         module: &module,
         entry_point: Some(entry),
         compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
-        cache: g.cache.as_ref(),
+        cache: None,
     });
     if let Some(e) = pollster::block_on(scope.pop()) {
         return Err(format!("the shader does not compile: {e}"));
@@ -892,7 +872,6 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
         eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
     }
-    save_pipeline_cache(g);
     let pl = std::sync::Arc::new(pl);
     g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
     Ok(pl)
@@ -922,7 +901,7 @@ pub fn compiling() -> bool {
 
 /// Waits until no shader is being compiled any more (at most `max`).  The
 /// command line program calls it before it ends: a compile its CPU threads
-/// overtook would die with the process and never reach the pipeline cache,
+/// overtook would die with the process and never reach the driver's cache,
 /// so the next run of the same scene would be just as cold.
 pub fn wait_compiles(max: std::time::Duration) {
     let t = std::time::Instant::now();
@@ -952,7 +931,6 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
     list.push((key, flag.clone()));
     let f = flag.clone();
     std::thread::spawn(move || {
-        crate::prio::calc_thread();
         let _ = compile_entry(g, &code, entry, None, &constants, key);
         f.store(true, Ordering::SeqCst);
         PREPARING.lock().unwrap().retain(|(k, _)| *k != key);
@@ -1134,6 +1112,29 @@ pub fn auto() -> bool {
     AUTO.load(Ordering::Relaxed)
 }
 
+/// Gives the graphics driver a shader cache of its own, in `ShaderCache`
+/// next to the program: the scene shaders take the driver 10-20 s to
+/// compile, and its shared cache in the user's folder may be full (NVIDIA
+/// keeps about 1 GB, then throws shaders away), so the next run of a scene
+/// would compile them again.  The drivers read these settings when the
+/// card is opened: the programs call this first thing in `main`, before
+/// other threads run.  Settings the user made are kept.  NVIDIA (Vulkan,
+/// OpenGL) and Mesa (AMD, Intel on Linux); DirectX 12 and Metal keep their
+/// own caches.
+pub fn use_own_driver_cache() {
+    let dir = crate::appdirs::work_folder("ShaderCache");
+    let set = |k: &str, v: &std::ffi::OsStr| {
+        if std::env::var_os(k).is_none() {
+            std::env::set_var(k, v);
+        }
+    };
+    set("__GL_SHADER_DISK_CACHE", "1".as_ref());
+    set("__GL_SHADER_DISK_CACHE_PATH", dir.as_os_str());
+    set("__GL_SHADER_DISK_CACHE_SIZE", "4294967296".as_ref());
+    set("MESA_SHADER_CACHE_DIR", dir.as_os_str());
+    set("MESA_SHADER_CACHE_MAX_SIZE", "4G".as_ref());
+}
+
 fn gpu() -> Result<&'static Gpu, String> {
     static G: OnceLock<Result<Gpu, String>> = OnceLock::new();
     G.get_or_init(|| pollster::block_on(init())).as_ref().map_err(|e| e.clone())
@@ -1162,14 +1163,7 @@ async fn init() -> Result<Gpu, String> {
     // doubles in shaders (Vulkan, DirectX 12; not Metal): the deep zooms
     let dbl = wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64;
     let f64 = adapter.features().contains(dbl);
-    let mut features = if f64 { dbl } else { wgpu::Features::empty() };
-    // the compiled pipelines kept between runs (see `Gpu::cache`)
-    let cache_file = wgpu::util::pipeline_cache_key(&info)
-        .filter(|_| adapter.features().contains(wgpu::Features::PIPELINE_CACHE) && std::env::var_os("MB3D_GPU_NOCACHE").is_none())
-        .map(|k| crate::appdirs::work_folder("ShaderCache").join(format!("{k}.bin")));
-    if cache_file.is_some() {
-        features |= wgpu::Features::PIPELINE_CACHE;
-    }
+    let features = if f64 { dbl } else { wgpu::Features::empty() };
     let (device, queue) = adapter
         .request_device(&wgpu::DeviceDescriptor {
             label: Some("mb3d"),
@@ -1182,15 +1176,7 @@ async fn init() -> Result<Gpu, String> {
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
     device.on_uncaptured_error(std::sync::Arc::new(|e: wgpu::Error| set_error(e.to_string())));
-    let cache = cache_file.as_ref().map(|f| {
-        let data = std::fs::read(f).ok();
-        // SAFETY: the data is what `PipelineCache::get_data` wrote to the
-        // file (`save_pipeline_cache`); the driver validates it for its
-        // version and device, and `fallback` starts empty when it is not
-        // usable
-        unsafe { device.create_pipeline_cache(&wgpu::PipelineCacheDescriptor { label: Some("mb3d"), data: data.as_deref(), fallback: true }) }
-    });
-    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64, cache, cache_file })
+    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64 })
 }
 
 /// The parameters in the order of the indices in `gpu_march.wgsl`.
