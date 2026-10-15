@@ -533,6 +533,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "FormShow" => {
+            super::main_form::place_sticky(app, ui, Some(F), true);
             if !app.formula.names_loaded {
                 load_formula_names(app, ui);
             }

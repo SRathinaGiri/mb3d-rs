@@ -67,6 +67,11 @@ pub struct State {
     /// full size image (for saving)
     pub rgb: Option<(std::sync::Arc<Vec<u8>>, usize, usize)>,
     pub last_history: Instant,
+    /// `FormsSticky`: the Formulas, Lighting and Post processing windows
+    /// beside the main window: 0 free, 1 right, 2 left side
+    pub sticky: [u8; 3],
+    /// the window whose right click menu is open (`StickIt`)
+    pub stick_it: usize,
 }
 
 impl Default for State {
@@ -99,6 +104,8 @@ impl Default for State {
             image_text: false,
             rgb: None,
             last_history: Instant::now(),
+            sticky: [1, 1, 1],
+            stick_it: 0,
         }
     }
 }
@@ -174,6 +181,9 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         set(ui, "Edit21", &n.to_string());
     }
     app.main.authors[0] = app.ini.get("Author").to_string();
+    // StickOption: Lighting bits 0-1, Formulas 4-5, Post processing 6-7
+    let j = app.ini.get("StickOption").trim().parse::<u32>().unwrap_or(81);
+    app.main.sticky = [((j >> 4) & 3) as u8, (j & 3) as u8, ((j >> 6) & 3) as u8];
     // window position and size of the last session
     let (l, tp) = super::ini::two_ints(app.ini.get("m3dPos"), (65, 100));
     let (w, h) = super::ini::two_ints(app.ini.get("m3dSize"), (779, 671));
@@ -631,6 +641,42 @@ fn paint_on_image(app: &mut Mb3d, ui: &mut Ui, x: i32, y: i32) {
     if super::palette_form::paint_on_image(app, x * s, y * s, radius, rect) {
         super::light_form::trigger_repaint(app, ui);
     }
+}
+
+/// The windows that can stick to the main window, in `FormsSticky` order,
+/// with the ini item of their free position.
+const STICKY: [(&str, &str); 3] = [("FormulaGUIForm", "FormulaPos"), ("LightAdjustForm", "LightPos"), ("PostProForm", "PostpPos")];
+
+/// Puts the sticking windows beside the main window (MB3D's `WM_Move` and
+/// `FormResize`); `free` also puts a free one shown now at its position of
+/// the last session.
+pub fn place_sticky(app: &Mb3d, ui: &mut Ui, only: Option<&str>, free: bool) {
+    let m = ui.f(F);
+    let (ml, mt) = (m.left, m.top);
+    let (mw, _) = m.outer_size(&ui.theme);
+    for (k, (form, pos)) in STICKY.iter().enumerate() {
+        if only.is_some_and(|o| o != *form) || !ui.has_form(form) {
+            continue;
+        }
+        let (w, _) = ui.f(form).outer_size(&ui.theme);
+        match app.main.sticky[k] {
+            1 => ui.move_form(form, ml + mw, mt),
+            2 => ui.move_form(form, ml - w, mt),
+            _ if free => {
+                let (x, y) = super::ini::two_ints(app.ini.get(pos), (844, 100));
+                ui.move_form(form, x, y);
+            }
+            _ => {}
+        }
+    }
+}
+
+/// `StickOption` of the ini (keeps the Animation window's bits).
+fn store_sticky(app: &mut Mb3d) {
+    let j = app.ini.get("StickOption").trim().parse::<u32>().unwrap_or(81);
+    let s = app.main.sticky.map(|v| v as u32 & 3);
+    let j = (j & 0b1100) | s[1] | (s[0] << 4) | (s[2] << 6);
+    app.ini.set("StickOption", &j.to_string());
 }
 
 fn not_all_buttons_up(ui: &Ui) -> bool {
@@ -1275,7 +1321,28 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FrameEditExit" => crate::maps::set_current_frame(pti(&t(ui, "FrameEdit")).max(1)),
         "FormKeyPress" => {}
+        "WMMove" => place_sticky(app, ui, None, false),
+        // a right click on Formulas, Lighting, Postprocess: stick its window
+        // to the right or left side of this one, or not
+        "Button10MouseDown" => {
+            if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
+                let k = ui.tag(F, &e.sender).clamp(0, 2) as usize;
+                app.main.stick_it = k;
+                let v = app.main.sticky[k];
+                ui.set_checked(F, "Stickthiswindowtotherightside1", v == 1);
+                ui.set_checked(F, "Stickthiswindowtotheleftside1", v == 2);
+                ui.set_checked(F, "Donotmakethiswindowsticky1", v == 0);
+                ui.popup_menu(F, "PopupMenu2", &e.sender, x, y);
+            }
+        }
+        "Stickthiswindowtotherightside1Click" => {
+            let k = app.main.stick_it;
+            app.main.sticky[k] = ui.tag(F, &e.sender).clamp(0, 2) as u8;
+            store_sticky(app);
+            place_sticky(app, ui, Some(STICKY[k].0), false);
+        }
         "FormResize" => {
+            place_sticky(app, ui, None, false);
             let ph = ui.c(F, "Panel1").height;
             let mt = ui.c(F, "Memo1").top;
             let p4 = ui.c(F, "Panel4").height;

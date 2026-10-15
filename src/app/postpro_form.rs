@@ -252,6 +252,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "NoiseFilterNowBtnClick" => super::main_form::denoise_picture(app, ui, noise_sigma(ui)),
         "NoiseAutoCbxClick" => update_captions(ui),
         "FormShow" => {
+            super::main_form::place_sticky(app, ui, Some(F), true);
             ui.cm(F, "Edit11").hint = "Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.".into();
             ui.cm(F, "Edit12").hint = "Divides the actual \"Raystep multiplier\" by this value,\nincrease the value to reduce overstepping.".into();
             align_panels(ui);

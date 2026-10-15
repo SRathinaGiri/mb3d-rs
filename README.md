@@ -425,6 +425,16 @@ processor. Shadows and ambient occlusion are left out.
 
 <a href="docs/img/calc_rough.png"><img src="docs/img/calc_rough.png" width="760" alt="Part of TreePlanet calculated with Calc- (8x8 blocks) and with Calculate 3D"></a>
 
+### Windows that stick to the main window
+
+The **Formulas**, **Lighting** and **Post processing** windows open
+right beside the main window and follow it when you move or resize it.
+Right-click their buttons to stick a window to the left side instead, or
+to let it move freely. The choice is kept for the next start. A free
+window opens where it was last closed.
+
+<a href="docs/img/sticky_menu.png"><img src="docs/img/sticky_menu.png" width="300" alt="The right click menu of the Lighting button: stick to the right side, left side, or not sticky"></a>
+
 ### Smaller things
 
 * **Save dialogs:** choosing another file type changes the extension of

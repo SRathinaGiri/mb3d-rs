@@ -5,12 +5,13 @@
 //! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`,
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
-//! `mouse:FORM:X:Y` (a left click at client coordinates, as from the mouse),
+//! `mouse:FORM:X:Y[:right]` (a click at client coordinates, as from the mouse),
 //! `drag:FORM:X1:Y1:X2:Y2:STEPS` (a left drag), `wheel:FORM:X:Y:DELTA`,
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
 //! a running calculation; `lagwait:SECONDS` also prints the longest
 //! blocking of the window), `print:FORM:CONTROL` (its caption),
-//! `printtext:FORM:CONTROL` (its text), `rect:FORM:CONTROL` (where it is) and `led`
+//! `printtext:FORM:CONTROL` (its text), `rect:FORM:CONTROL` (where it is),
+//! `formpos:FORM` (the window's position and size) and `led`
 //! (the title bar LED of the main window).
 use mb3d::vcl::canvas::Canvas;
 use mb3d::vcl::App;
@@ -34,8 +35,9 @@ fn main() {
                 let fi = ui.form_index(p[1]).unwrap();
                 let (x, y): (i32, i32) = (p[2].parse().unwrap(), p[3].parse().unwrap());
                 let mut raws = ui.forms[fi].mouse_move(x, y, 0);
-                raws.extend(ui.forms[fi].mouse_down(x, y, mb3d::vcl::MouseButton::Left, 0));
-                raws.extend(ui.forms[fi].mouse_up(x, y, mb3d::vcl::MouseButton::Left, 0));
+                let b = if p.get(4) == Some(&"right") { mb3d::vcl::MouseButton::Right } else { mb3d::vcl::MouseButton::Left };
+                raws.extend(ui.forms[fi].mouse_down(x, y, b, 0));
+                raws.extend(ui.forms[fi].mouse_up(x, y, b, 0));
                 ui.dispatch(fi, raws);
             }
             "wheel" => {
@@ -92,6 +94,10 @@ fn main() {
             }
             "print" => println!("{}.{} = {:?}", p[1], p[2], ui.caption(p[1], p[2])),
             "printtext" => println!("{}.{} = {:?}", p[1], p[2], ui.text(p[1], p[2])),
+            "formpos" => {
+                let f = ui.f(p[1]);
+                println!("{} at {}, {} size {:?}", p[1], f.left, f.top, f.outer_size(&ui.theme));
+            }
             "rect" => {
                 let f = ui.fm(p[1]);
                 let id = f.id(p[2]).unwrap();

@@ -1008,6 +1008,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let i = tab(ui);
     match h {
         "FormShow" => {
+            super::main_form::place_sticky(app, ui, Some(F), true);
             if app.light.first_show {
                 app.light.first_show = false;
                 for k in 1..=5 {
