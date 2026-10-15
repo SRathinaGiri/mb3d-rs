@@ -289,6 +289,40 @@ fn map_dirs() -> &'static Mutex<Vec<PathBuf>> {
 /// Adds a directory searched for maps and background pictures (first).
 pub fn add_map_dir(dir: PathBuf) {
     map_dirs().lock().unwrap().insert(0, dir);
+    GENERATION.fetch_add(1, std::sync::atomic::Ordering::Release);
+}
+
+/// Bumped whenever the map of a number can change (folders, sequences, the
+/// sequence frame): the threads' caches of [`with_map`] are then refilled.
+static GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+thread_local! {
+    /// This thread's maps by number, of the generation in the first field.
+    static THREAD_MAPS: std::cell::RefCell<(u64, Vec<(i32, Option<Arc<LightMap>>)>)> = const { std::cell::RefCell::new((u64::MAX, Vec::new())) };
+}
+
+/// `f` with map number `nr` ([`by_number`]), None without the map.  For
+/// the formulas' map functions, called for every iteration step on every
+/// thread: each thread keeps its own references, so the calls take no lock
+/// and touch no shared reference count (`by_number` formatted a key and
+/// locked two mutexes per call; 24 threads queued on them).
+pub fn with_map<R>(nr: i32, f: impl FnOnce(&LightMap) -> R) -> Option<R> {
+    let g = GENERATION.load(std::sync::atomic::Ordering::Acquire);
+    THREAD_MAPS.with(|c| {
+        let mut c = c.borrow_mut();
+        if c.0 != g {
+            c.0 = g;
+            c.1.clear();
+        }
+        let i = match c.1.iter().position(|(n, _)| *n == nr) {
+            Some(i) => i,
+            None => {
+                c.1.push((nr, by_number(nr)));
+                c.1.len() - 1
+            }
+        };
+        c.1[i].1.as_deref().map(f)
+    })
 }
 
 /// The directories searched for maps (for the editor's "Ini Dirs").
@@ -441,7 +475,9 @@ static FRAME: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(1
 
 /// The frame number used for map sequences (animations set it per frame).
 pub fn set_current_frame(frame: i32) {
-    FRAME.store(frame.max(1), std::sync::atomic::Ordering::Relaxed);
+    if FRAME.swap(frame.max(1), std::sync::atomic::Ordering::Relaxed) != frame.max(1) {
+        GENERATION.fetch_add(1, std::sync::atomic::Ordering::Release);
+    }
 }
 
 pub fn current_frame() -> i32 {
@@ -498,6 +534,7 @@ pub fn map_sequences() -> Vec<MapSequence> {
 pub fn set_map_sequences(list: Vec<MapSequence>) -> Result<(), String> {
     *sequences().lock().unwrap() = list.clone();
     cache().lock().unwrap().retain(|k, _| !k.starts_with("s:"));
+    GENERATION.fetch_add(1, std::sync::atomic::Ordering::Release);
     let p = sequence_file();
     std::fs::write(&p, sequences_text(&list)).map_err(|e| format!("{}: {e}", p.display()))
 }

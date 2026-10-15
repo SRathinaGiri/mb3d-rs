@@ -120,7 +120,10 @@ pub const MAP_XY_ADDR: u32 = MAGIC_START + 0x210;
 /// `GetMapPixelSphereSpline` (`sphere`) / `GetMapPixelDirectXYspline`:
 /// the colour (0..1) of map `nr` at the direction `v` / at x, y.
 pub fn map_px(sphere: bool, nr: i32, v: [f64; 3]) -> [f64; 3] {
-    let Some(lm) = crate::maps::by_number(nr) else { return [0.0; 3] };
+    crate::maps::with_map(nr, |lm| map_px_of(lm, sphere, v)).unwrap_or([0.0; 3])
+}
+
+fn map_px_of(lm: &crate::maps::LightMap, sphere: bool, v: [f64; 3]) -> [f64; 3] {
     let (w, h) = (lm.width as f64, lm.height as f64);
     if sphere {
         let l = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt().max(1e-300);
