@@ -414,6 +414,17 @@ disc and a square. The painting lives in the calculated image (save it as
 
 <a href="docs/img/paint_on_image.png"><img src="docs/img/paint_on_image.png" width="760" alt="The colour window with 'Paint on image', and a picture before and after painting two strokes"></a>
 
+### Calc-: a quick rough picture
+
+**Calc-** (next to *Calculate 3D*) calculates one pixel in every 8×8
+block of the full picture and fills the block with it: a rough view of
+the whole picture in a fraction of a second, to check the framing and the
+colours before the real calculation. TreePlanet at 1600×1450 takes 0.13
+seconds this way, against 7.7 seconds for the full picture on the
+processor. Shadows and ambient occlusion are left out.
+
+<a href="docs/img/calc_rough.png"><img src="docs/img/calc_rough.png" width="760" alt="Part of TreePlanet calculated with Calc- (8x8 blocks) and with Calculate 3D"></a>
+
 ### Smaller things
 
 * **Save dialogs:** choosing another file type changes the extension of

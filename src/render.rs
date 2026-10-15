@@ -271,6 +271,63 @@ fn calculate_inner(
     finish_calculation(sc, p, gbuf, post, threads, cancel)
 }
 
+/// "Calc-" (MB3D's `CalcMandBlocky`): a rough image of the whole view, one
+/// pixel calculated for each 8x8 block (its pixel 3, 3) and copied to the
+/// block, on the CPU, without the post calculations.  `rows` gets every
+/// finished band of 8 rows.
+pub fn calculate_blocky(
+    sc: &Scene,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    rows: RowSink,
+) -> Result<(CalcParams, Vec<SiLight>), String> {
+    let mut sc = sc.clone();
+    sc.stereo_mode = 0;
+    let p = CalcParams::new(&sc)?;
+    let [x0, y0, w, h] = p.rect;
+    let (w, h) = (w as usize, h as usize);
+    let bands = h.div_ceil(8);
+    let threads = thread_count(&sc).min(bands).max(1);
+    let next = AtomicUsize::new(0);
+    let done = AtomicUsize::new(0);
+    let out: Vec<std::sync::Mutex<Vec<SiLight>>> = (0..bands).map(|_| std::sync::Mutex::new(Vec::new())).collect();
+    std::thread::scope(|s| {
+        for _ in 0..threads {
+            s.spawn(|| {
+                crate::prio::calc_thread();
+                let mut m = Marcher::new(&p, 0);
+                loop {
+                    let b = next.fetch_add(1, Ordering::Relaxed);
+                    if b >= bands || cancel() {
+                        break;
+                    }
+                    let (by0, by1) = (b * 8, (b * 8 + 8).min(h));
+                    let y = (by0 + 3).min(h - 1) as i32 + y0;
+                    let mut band = vec![SiLight::default(); (by1 - by0) * w];
+                    for bx0 in (0..w).step_by(8) {
+                        let x = (bx0 + 3).min(w - 1) as i32 + x0;
+                        m.seed = crate::calc::pixel_seed(y as i64, x as i64);
+                        let si = m.march_pixel(x, y);
+                        for row in band.chunks_mut(w) {
+                            row[bx0..(bx0 + 8).min(w)].fill(si);
+                        }
+                    }
+                    for (k, row) in band.chunks(w).enumerate() {
+                        rows(by0 + k, row);
+                    }
+                    *out[b].lock().unwrap() = band;
+                    progress(done.fetch_add(1, Ordering::Relaxed) + 1, bands);
+                }
+            });
+        }
+    });
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let gbuf = out.into_iter().flat_map(|b| b.into_inner().unwrap()).collect();
+    Ok((p, gbuf))
+}
+
 /// One row of the main calculation on the CPU (MB3D's per-row seed).
 fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
     let [x0, y0, w, _] = p.rect;

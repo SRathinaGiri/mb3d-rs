@@ -18,6 +18,8 @@ pub enum Job {
     /// the Navigator's preview: the scene at 1/8, 1/4, 1/2 and full size
     /// (MB3D's NaviStep 8, 4, 2, 1), each pass shown when done
     Preview { scene: Scene },
+    /// "Calc-": the rough image of 8x8 blocks (MB3D's `CalcMandBlocky`)
+    Blocky { scene: Scene },
     /// lighting / post processing changed: repaint the kept G-buffer
     Repaint { scene: Scene },
     /// "Recalculate a selection": rectangle (left, top, width, height) of
@@ -361,6 +363,7 @@ fn worker(e: Arc<Inner>) {
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match job {
             Job::Calc { scene, slice } => calc(&e, &scene, slice, &cancel),
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
+            Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
             Job::Recalc { scene, rect, div, nearer } => recalc(&e, &scene, rect, div, nearer, &cancel),
         }))
@@ -426,6 +429,37 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) ->
     stats.stages = stages;
     e.publish(rgb, w, h, "", Some(stats));
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw, post, post_sig: post_sig(&sc), w, h }));
+    Ok(())
+}
+
+fn blocky(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let mut sc = sc.clone();
+    sc.slice_2d = 0;
+    sc.calc_rect = None;
+    let t0 = Instant::now();
+    let params = CalcParams::new(&sc)?;
+    let [_, _, w, h] = params.rect;
+    let (w, h) = (w as usize, h as usize);
+    *e.partial.lock().unwrap() = Some(Partial { params, scene: sc.clone(), gbuf: vec![SiLight::default(); w * h], w, rows_new: false });
+    e.out.lock().unwrap().stage = "rough image".into();
+    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    let sink = |y: usize, row: &[SiLight]| {
+        if let Some(p) = e.partial.lock().unwrap().as_mut() {
+            let o = y * p.w;
+            if o + row.len() <= p.gbuf.len() {
+                p.gbuf[o..o + row.len()].copy_from_slice(row);
+                p.rows_new = true;
+            }
+        }
+    };
+    let (p, g) = crate::render::calculate_blocky(&sc, &progress, cancel, &sink)?;
+    *e.partial.lock().unwrap() = None;
+    // painted without the post calculations, as MB3D's PaintRowsNoThreadBlocky
+    let rgb = crate::render::paint_preview(&sc, &p, &g);
+    let stats = stats_of(&g, t0.elapsed().as_secs_f64(), 0.0);
+    e.publish(rgb, w, h, "", Some(stats));
+    let g = Arc::new(g);
+    *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw: g.clone(), post: g, post_sig: post_sig(&sc), w, h }));
     Ok(())
 }
 

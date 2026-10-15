@@ -876,10 +876,17 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "Button11Click" => {
-            // "Calc-": a fast rough image (MB3D: 8x8 blocks); here a 2D
-            // slice at the middle
-            app.main.slice_calc = 2;
-            calc_mand(app, ui, false);
+            // "Calc-": a fast rough image of 8x8 blocks
+            app.post = super::postpro_form::State::default();
+            app.make_scene(ui);
+            if app.scene.width < 1 || app.scene.height < 1 {
+                return;
+            }
+            app.main.calc3d = false;
+            app.main.calc_start = Instant::now();
+            ui.set_visible(F, "Shape1", false);
+            disable_buttons(app, ui);
+            app.eng.start(Job::Blocky { scene: app.scene.clone() });
         }
         "Button12Click" => {
             // stereo images: very left / left / right eye
