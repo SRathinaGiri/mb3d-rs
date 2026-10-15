@@ -588,7 +588,7 @@ pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn set_image_cursor(app: &Mb3d, ui: &mut Ui) {
-    let c = if app.main.get_pos > 0 {
+    let c = if app.main.get_pos > 0 || ui.visible(F, "Shape2") {
         "crCross"
     } else if ui.checked(F, "SpeedButton2") {
         "crHandPoint"
@@ -596,6 +596,41 @@ fn set_image_cursor(app: &Mb3d, ui: &mut Ui) {
         "crDefault"
     };
     ui.cm(F, "Image1").cursor = c.into();
+}
+
+/// "Paint on image" of the colour window on / off: the brush (`Shape2`)
+/// on the image, the navigation buttons up (`MButtonsUp`).
+pub fn show_paint_brush(app: &mut Mb3d, ui: &mut Ui, on: bool) {
+    if on {
+        for b in ["SpeedButton1", "SpeedButton2", "SpeedButton4"] {
+            ui.set_checked(F, b, false);
+        }
+    }
+    ui.set_visible(F, "Shape2", on);
+    set_image_cursor(app, ui);
+}
+
+/// `SetShape2Size`: the brush size (3..31), around its middle.
+fn set_brush_size(ui: &mut Ui, size: i32) {
+    if !(3..=31).contains(&size) {
+        return;
+    }
+    let r = ui.c(F, "Shape2").rect();
+    let (mx, my) = (r.x + r.w / 2, r.y + r.w / 2);
+    ui.cm(F, "Shape2").set_bounds(mx - size / 2, my - size / 2, size, size);
+}
+
+/// `ModColOnImage` at the image position `x`, `y` (view pixels).
+fn paint_on_image(app: &mut Mb3d, ui: &mut Ui, x: i32, y: i32) {
+    if app.main.calculating {
+        return;
+    }
+    let s = app.main.image_scale.max(1);
+    let b = ui.c(F, "Shape2");
+    let (radius, rect) = ((b.width / 2) * s, b.shape == "stRectangle");
+    if super::palette_form::paint_on_image(app, x * s, y * s, radius, rect) {
+        super::light_form::trigger_repaint(app, ui);
+    }
 }
 
 fn not_all_buttons_up(ui: &Ui) -> bool {
@@ -1029,6 +1064,27 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Image1MouseMove" => image_mouse_move(app, ui, &e.ev),
         "Image1MouseUp" => image_mouse_up(app, ui, &e.ev),
         "Shape1MouseDown" => ui.set_visible(F, "Shape1", false),
+        // the brush of "Paint on image" is over the image: its events are
+        // the image's (a right click chooses its shape)
+        "Shape2MouseDown" | "Shape2MouseMove" => {
+            let img = ui.c(F, "Image1").rect();
+            let b = ui.c(F, "Shape2").rect();
+            let (dx, dy) = (b.x - img.x, b.y - img.y);
+            match e.ev {
+                Ev::MouseDown { button: MouseButton::Right, x, y, .. } => ui.popup_menu(F, "PopupMenu4", "Shape2", x, y),
+                Ev::MouseDown { x, y, button, shift } => image_mouse_down(app, ui, &Ev::MouseDown { x: x + dx, y: y + dy, button, shift }),
+                Ev::MouseMove { x, y, shift } => image_mouse_move(app, ui, &Ev::MouseMove { x: x + dx, y: y + dy, shift }),
+                _ => {}
+            }
+        }
+        "ShapeDisc1Click" => ui.cm(F, "Shape2").shape = "stCircle".into(),
+        "ShapeBox1Click" => ui.cm(F, "Shape2").shape = "stRectangle".into(),
+        "FormMouseWheel" if ui.visible(F, "Shape2") => {
+            if let Ev::Wheel { delta, .. } = e.ev {
+                let w = ui.c(F, "Shape2").width;
+                set_brush_size(ui, if delta < 0 { w - 2 } else { w + 2 });
+            }
+        }
         "FormMouseWheel" => {
             if let Ev::Wheel { delta, x, y, .. } = e.ev {
                 let r = ui.ctl_rect(F, "ScrollBox1");
@@ -1476,6 +1532,8 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
         }
         app.main.get_pos = 0;
         set_image_cursor(app, ui);
+    } else if cursor == "crCross" && button == MouseButton::Left && ui.visible(F, "Shape2") {
+        paint_on_image(app, ui, x, y);
     } else if cursor == "crCross" && button == MouseButton::Left && ui.has_form("PostProForm") {
         // selection for "recalculate a selection"
         ui.cm(F, "Shape1").set_bounds(img.x + x, img.y + y, 0, 0);
@@ -1488,6 +1546,15 @@ fn image_mouse_move(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
     let cursor = ui.c(F, "Image1").cursor.clone();
     let img = ui.c(F, "Image1").rect();
     let (sx, sy) = app.main.mouse_start;
+    if ui.visible(F, "Shape2") && !not_all_buttons_up(ui) {
+        // the brush follows the mouse and paints while the button is down
+        let half = ui.c(F, "Shape2").width / 2;
+        ui.cm(F, "Shape2").set_bounds(x - half + img.x, y - half + img.y, half * 2 + 1, half * 2 + 1);
+        if shift & SS_LEFT != 0 && cursor != "crHourGlass" {
+            paint_on_image(app, ui, x, y);
+        }
+        return;
+    }
     if shift & SS_LEFT != 0 && cursor != "crHourGlass" && cursor != "crCross" && not_all_buttons_up(ui) {
         if cursor == "crHandPoint" {
             ui.cm(F, "Shape1").set_bounds(x - sx + img.x, y - sy + img.y, img.w, img.h);

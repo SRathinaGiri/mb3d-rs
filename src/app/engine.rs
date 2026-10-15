@@ -39,6 +39,7 @@ pub struct Stats {
 }
 
 /// The kept result of the last calculation.
+#[derive(Clone)]
 pub struct Base {
     pub scene: Scene,
     pub params: CalcParams,
@@ -260,6 +261,28 @@ impl Engine {
         Some((pos, z / (sc.step_width() * sc.width as f64)))
     }
 
+    /// Changes the kept G-buffer in place (painting colours on the image):
+    /// `f` gets the calculated scene, its parameters and the pixels, once
+    /// for the buffer before and once for the one after the shadows when
+    /// they differ.  The caller repaints.  False without a kept image.
+    pub fn edit_gbuffer(&self, f: impl Fn(&Scene, &CalcParams, &mut [SiLight])) -> bool {
+        let mut g = self.0.base.lock().unwrap();
+        let Some(arc) = g.as_mut() else { return false };
+        let b = Arc::make_mut(arc);
+        let shared = Arc::ptr_eq(&b.raw, &b.post);
+        if shared {
+            // (one buffer for both: edited without copying it)
+            b.raw = Arc::new(Vec::new());
+        }
+        f(&b.scene, &b.params, Arc::make_mut(&mut b.post).as_mut_slice());
+        if shared {
+            b.raw = b.post.clone();
+        } else {
+            f(&b.scene, &b.params, Arc::make_mut(&mut b.raw).as_mut_slice());
+        }
+        true
+    }
+
     /// Drops the kept image (a new parameter set was loaded).
     pub fn clear(&self) {
         *self.0.base.lock().unwrap() = None;
@@ -446,7 +469,8 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     target.slice_2d = b.scene.slice_2d;
     target.calc_rect = None;
     let psig = post_sig(&target);
-    let post = if psig == b.post_sig || b.params.slice_2d != 0 {
+    let reuse = psig == b.post_sig || b.params.slice_2d != 0;
+    let post = if reuse {
         b.post.clone()
     } else {
         e.out.lock().unwrap().stage = "post processing".into();
@@ -461,7 +485,14 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     }
     let rgb = crate::render::paint(&target, &b.params, &post);
     e.publish(rgb, b.w, b.h, "", None);
-    *e.base.lock().unwrap() = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw: b.raw.clone(), post, post_sig: psig, w: b.w, h: b.h }));
+    let mut g = e.base.lock().unwrap();
+    // (the buffers painted on meanwhile ("Paint on image") are kept: their
+    // own repaint follows)
+    let (raw, post) = match g.as_ref() {
+        Some(cur) if reuse => (cur.raw.clone(), cur.post.clone()),
+        _ => (b.raw.clone(), post),
+    };
+    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig: psig, w: b.w, h: b.h }));
     Ok(())
 }
 

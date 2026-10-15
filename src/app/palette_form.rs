@@ -16,6 +16,10 @@ pub struct State {
     pub rand_mid: [u32; 2],
     pub copy: Option<(Option<[u8; 3]>, [u8; 3], [u8; 3], u8)>,
     pub draw_x: i32,
+    /// the colour painted on the image (`DrawColSIndex`, 0..1 on the colour
+    /// bar) and whether it is an interior colour (`DrawInOutside`)
+    pub draw_index: f32,
+    pub draw_inside: bool,
 }
 
 fn outside(ui: &Ui) -> bool {
@@ -144,13 +148,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormHide" => {
             super::light_form::set_from_header(app, ui);
             ui.set_checked(F, "CheckBox3", false);
-            ui.set_visible(super::MAIN, "Shape2", false);
+            super::main_form::show_paint_brush(app, ui, false);
         }
         "RadioGroup1Click" => radio_group1(app, ui),
         "Image1MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Left, x, .. } = e.ev {
                 ui.cm(F, "Shape31").brush_clear = false;
                 app.palette.draw_x = x;
+                app.palette.draw_inside = !outside(ui);
+                app.palette.draw_index = x as f32 / ui.c(F, "Image1").rect().w.max(1) as f32;
                 repaint_image(app, ui, false);
             }
         }
@@ -279,13 +285,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "CheckBox3Click" => {
+            // paint the picked colour on the image (the brush on the main window)
             let on = ui.checked(F, "CheckBox3");
-            ui.cm(F, "Shape31").brush_clear = !on;
-            ui.set_visible(super::MAIN, "Shape2", false);
-            if on {
-                app.message(ui, "Painting colours on the image is not available in this version.");
-                ui.set_checked(F, "CheckBox3", false);
+            ui.cm(F, "Shape31").brush_clear = !(on && app.palette.draw_x >= 0);
+            if on && app.palette.draw_x >= 0 {
+                repaint_image(app, ui, false);
             }
+            ui.cm(F, "Image1").cursor = if on { "crCross" } else { "crDefault" }.into();
+            super::main_form::show_paint_brush(app, ui, on);
         }
         "FormKeyDown" => {
             let Ev::KeyDown { key, .. } = e.ev else { return };
@@ -459,4 +466,101 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         }
         _ => {}
     }
+}
+
+/// `ModColOnImage`: paints the picked colour on the image under the brush
+/// at `x`, `y` (pixels of the calculated image): the colour index of the
+/// object pixels around it whose depth is close to the one in the middle
+/// is set to the one giving the picked colour there (the palette moves
+/// with the depth by "colour var. on Z").  The caller repaints.
+pub fn paint_on_image(app: &Mb3d, x: i32, y: i32, radius: i32, rect: bool) -> bool {
+    let l = &app.scene.lighting;
+    let (index, inside) = (app.palette.draw_index as f64, app.palette.draw_inside);
+    let mod_otrap = l.color_on_otrap && !inside;
+    let cycling = l.color_cycling;
+    // CalcSCstartAndSCmul
+    let (mut c_start, mut c_mul) = if inside {
+        let d = (l.interior_start as f64).powi(4);
+        let mut m = ((l.interior_end as f64).powi(4) - d) * 0.5 * 0.00031605;
+        if m.abs() > 1e-10 {
+            m = 1.0 / m;
+        }
+        (d * 0.000158025 + 32768.0, m)
+    } else {
+        let mut st = ((l.color_start as f64 + 30.0) / 90.0).powi(2) * 32767.0 - 10900.0;
+        let mut m = ((l.color_end as f64 + 30.0) / 90.0).powi(2) * 32767.0 - 10900.0 - st;
+        if let Some((a1, a2)) = l.fine_col_adj {
+            let d = st + m * (a2 as f64 - 30.0) * 0.0166666666666666;
+            st += m * (a1 as f64 - 30.0) * 0.0166666666666666;
+            m = d - st;
+        }
+        (st, if m.abs() > 0.001 { 2.0 / m } else if m < 0.0 { -2000.0 } else { 2000.0 })
+    };
+    c_mul = 1.0 / c_mul;
+    let plus = if c_mul < 0.0 { -1.0 } else { 1.0 };
+    let in_out: u16 = if inside {
+        c_start -= 32768.0;
+        0x8000
+    } else {
+        0
+    };
+    let var_col_z = l.var_col_z as f64;
+    app.eng.edit_gbuffer(|sc, p, g| {
+        let (w, h) = (p.rect[2], p.rect[3]);
+        if x < 0 || y < 0 || x >= w || y >= h {
+            return;
+        }
+        let ir = if rect { radius - 1 } else { radius };
+        let mut irr = ir * ir;
+        if !rect && irr < 10 && irr > 3 {
+            irr -= 2;
+        }
+        let at = |x: i32, y: i32| (y * w + x) as usize;
+        let s0 = g[at(x, y)];
+        if s0.zpos_fine >> 16 > 32767 {
+            return;
+        }
+        let col_zmul = var_col_z * -0.005 / (p.step_width * sc.width as f64);
+        let (zcorr, zc_mul) = (1.0 / p.zcorr, 1.0 / p.zc_mul);
+        let zz_dif = sc.z_start - sc.mid[2];
+        let zz_of = |iz: f64| (((8388351.5 - iz) * zc_mul + 1.0).powi(2) - 1.0) * zcorr;
+        let iz0 = (s0.zpos_fine >> 8) as f64;
+        let zz0 = zz_of(iz0);
+        let max_zdiff = (2.0 * ir as f64 * (1.0 + zz0 * p.de_stop_factor as f64) / (zz0 - (((8388352.5 - iz0) * zc_mul + 1.0).powi(2) - 1.0) * zcorr).abs()).round();
+        let col = |zz: f64, idx: f64| ((idx * 2.0 - col_zmul * (zz * p.step_width + zz_dif)) * c_mul + c_start).clamp(-1e9, 1e9).round();
+        for iy in -ir..=ir {
+            for ix in -ir..=ir {
+                let (px, py) = (x + ix, y + iy);
+                if px < 0 || py < 0 || px >= w || py >= h || !(rect || iy * iy + ix * ix < irr) {
+                    continue;
+                }
+                let s = &mut g[at(px, py)];
+                if s.zpos_fine >> 16 > 32767 {
+                    continue;
+                }
+                let iz = (s.zpos_fine >> 8) as f64;
+                if (iz0 - iz).abs() > max_zdiff {
+                    continue;
+                }
+                let zz = zz_of(iz);
+                let mut c = col(zz, index);
+                if !(0.0..=32767.0).contains(&c) {
+                    // (out of the palette: the next round of a cycling one)
+                    if !cycling {
+                        continue;
+                    }
+                    c = col(zz, index + if c < 0.0 { plus } else { -plus });
+                    if !(0.0..=32767.0).contains(&c) {
+                        continue;
+                    }
+                }
+                if mod_otrap {
+                    s.otrap = c as u16;
+                    s.si_gradient &= 0x7FFF;
+                } else {
+                    s.si_gradient = c as u16 | in_out;
+                }
+            }
+        }
+    })
 }

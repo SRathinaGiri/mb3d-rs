@@ -6,9 +6,11 @@
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
 //! `mouse:FORM:X:Y` (a left click at client coordinates, as from the mouse),
+//! `drag:FORM:X1:Y1:X2:Y2:STEPS` (a left drag), `wheel:FORM:X:Y:DELTA`,
 //! `snap:FORM:FILE.png[:SCALE]`, `wait:SECONDS` (the program's idle work, e.g.
 //! a running calculation; `lagwait:SECONDS` also prints the longest
-//! blocking of the window), `print:FORM:CONTROL` (its caption) and `led`
+//! blocking of the window), `print:FORM:CONTROL` (its caption),
+//! `printtext:FORM:CONTROL` (its text), `rect:FORM:CONTROL` (where it is) and `led`
 //! (the title bar LED of the main window).
 use mb3d::vcl::canvas::Canvas;
 use mb3d::vcl::App;
@@ -34,6 +36,27 @@ fn main() {
                 let mut raws = ui.forms[fi].mouse_move(x, y, 0);
                 raws.extend(ui.forms[fi].mouse_down(x, y, mb3d::vcl::MouseButton::Left, 0));
                 raws.extend(ui.forms[fi].mouse_up(x, y, mb3d::vcl::MouseButton::Left, 0));
+                ui.dispatch(fi, raws);
+            }
+            "wheel" => {
+                let fi = ui.form_index(p[1]).unwrap();
+                let (x, y, d): (i32, i32, i32) = (p[2].parse().unwrap(), p[3].parse().unwrap(), p[4].parse().unwrap());
+                let raws = ui.forms[fi].wheel(d, x, y, 0);
+                ui.dispatch(fi, raws);
+            }
+            // a left drag from X1:Y1 to X2:Y2 in STEPS mouse moves
+            "drag" => {
+                let fi = ui.form_index(p[1]).unwrap();
+                let v: Vec<i32> = p[2..7].iter().map(|v| v.parse().unwrap()).collect();
+                let mut raws = ui.forms[fi].mouse_move(v[0], v[1], 0);
+                raws.extend(ui.forms[fi].mouse_down(v[0], v[1], mb3d::vcl::MouseButton::Left, 0));
+                ui.dispatch(fi, raws);
+                for k in 1..=v[4] {
+                    let (x, y) = (v[0] + (v[2] - v[0]) * k / v[4], v[1] + (v[3] - v[1]) * k / v[4]);
+                    let raws = ui.forms[fi].mouse_move(x, y, mb3d::vcl::form::SS_LEFT);
+                    ui.dispatch(fi, raws);
+                }
+                let raws = ui.forms[fi].mouse_up(v[2], v[3], mb3d::vcl::MouseButton::Left, 0);
                 ui.dispatch(fi, raws);
             }
             "items" => ui.set_items(p[1], p[2], p[3..].join(":").split('|').filter(|s| !s.is_empty()).map(String::from).collect()),
@@ -68,6 +91,12 @@ fn main() {
                 println!("idle work: {n} turns, longest {:.0} ms, {over} longer than 100 ms", worst * 1000.0);
             }
             "print" => println!("{}.{} = {:?}", p[1], p[2], ui.caption(p[1], p[2])),
+            "printtext" => println!("{}.{} = {:?}", p[1], p[2], ui.text(p[1], p[2])),
+            "rect" => {
+                let f = ui.fm(p[1]);
+                let id = f.id(p[2]).unwrap();
+                println!("{}.{} at {:?}", p[1], p[2], f.abs_rect(id));
+            }
             "status" => {
                 let sc = &app.scene;
                 println!("gpu status {:?}; normals on zbuf {}, shadows {}, ao {:?}, deao {:?}", mb3d::gpu::last_status(), sc.normals_on_zbuf, sc.shadows.is_some(), sc.ao, sc.deao);
