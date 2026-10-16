@@ -72,6 +72,9 @@ you check further on your own:
   denoising known from GIMP (see [Noise filter](#noise-filter)).
 * **Transparent backgrounds** for pictures and animations (see
   [Transparent background](#transparent-background)).
+* **Videos of animations**: an AVI file straight from the program, or
+  the ffmpeg command for a small MP4 (see
+  [Video of an animation](#video-of-an-animation)).
 * **A preview of parameter files** in the Open dialog (see
   [Preview](#preview-when-opening-parameters)).
 * **Very big pictures in one piece**: 15000 x 20000 pixels and more
@@ -377,6 +380,23 @@ compositing were already there (*Save Z buffer too*, `--depth`).
 
 <a href="docs/img/transparent.png"><img src="docs/img/transparent.png" width="760" alt="A picture with its background, and with a transparent background shown over a checkerboard"></a>
 
+### Video of an animation
+
+In the Animation maker, **Also make a video (AVI)** joins the frames into
+a video when they are rendered, at the **Frames per second** you set:
+`<project name>.avi` in the output folder, next to the frames, which are
+kept. It plays in VLC and mpv and opens in video editors (Kdenlive,
+Shotcut, DaVinci Resolve). Each frame is stored as a whole picture, so the
+files are big: good for editing and keeping, less for sharing.
+
+For a small video to share, **FFmpeg command** puts the command for an MP4
+(or, with a transparent background, a WebM) on the clipboard and in the
+messages. Install [ffmpeg](https://ffmpeg.org), paste the command into a
+terminal when the frames are done, and it makes the video; this program
+starts no other programs itself.
+
+<a href="docs/img/anim_video.png"><img src="docs/img/anim_video.png" width="760" alt="The Animation maker with Also make a video (AVI), Frames per second and FFmpeg command"></a>
+
 ### Navigator: exact values and Reset view
 
 * **Click a value** in the Navigator's panels — Julia values, formula
@@ -528,6 +548,7 @@ Everything else has a sub-command with its own `--help`:
 ./mb3d animate start.m3p middle.m3p end.m3p --frames 60 -o frames
 ./mb3d animate project.m3a -o frames                     # MB3D animations
 ./mb3d animate project.m3a -o frames --transparent      # ... see-through
+./mb3d animate project.m3a -o frames --video flight.avi  # ... and a video
 ./mb3d montecarlo scene.m3p --rays 64 -o mc.png
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing

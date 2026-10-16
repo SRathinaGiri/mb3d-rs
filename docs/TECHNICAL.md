@@ -14,6 +14,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Hybrids, inside rendering, maps](#hybrids-inside-rendering-maps)
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
+- [Videos](#videos)
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
 - [Linux packaging and the command line](#linux-packaging-and-the-command-line)
 - [Building from source](#building-from-source)
@@ -697,6 +698,25 @@ is written from the published algorithm only.
   the original program.
 * Points exactly on the z axis are degenerate in MB3D's triplex formulas
   (division by `x² + y²`). This is kept as in the original.
+
+## Videos
+
+`src/video.rs` writes animation frames into an AVI file (RIFF, one Motion
+JPEG stream): PNG and BMP frames are encoded with the program's own JPEG
+encoder at quality 92, JPEG frames are copied as they are; the index
+(`idx1`) and the sizes are completed at the end. AVI 1.0's sizes are 32
+bit, so a video stops before 4 GB (about 10000 frames of 1920x1080) with
+a message pointing to the ffmpeg command. `mb3d animate --video FILE.avi
+--fps N`, and the Animation maker's *Also make a video (AVI)*. A
+transparent background is not kept (AVI has none).
+
+`video::ffmpeg_command` gives the command for a small video of the frames
+(`-c:v libx264 -crf 18 -pix_fmt yuv420p` MP4; with transparent PNG frames
+a VP9 WebM with `yuva420p`), with `-start_number` of the first frame, or
+a `-pattern_type glob` input when the file index steps by more than 1.
+`mb3d animate` prints it at the end; the Animation maker's *FFmpeg
+command* copies it to the clipboard. The program itself starts no other
+programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
 
 ## Where the program keeps its files
 

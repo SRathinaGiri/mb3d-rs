@@ -1204,8 +1204,52 @@ object AnimationForm: TAnimationForm
       Text = 'last'
       OnChange = Edit5Change
     end
-    object TransparentCheck: TCheckBox
+    object VideoCheck: TCheckBox
       Left = 24
+      Top = 236
+      Width = 150
+      Height = 17
+      Hint = 
+        'After rendering, join the frames into a video in the output fol' +
+        'der'#13#10'(<project name>.avi, Motion JPEG: plays in VLC and mpv, ' +
+        'opens in video editors).'#13#10'The frames are kept.'
+      Caption = 'Also make a video (AVI)'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 17
+    end
+    object VideoFpsLbl: TLabel
+      Left = 182
+      Top = 237
+      Width = 94
+      Height = 13
+      Caption = 'Frames per second:'
+    end
+    object VideoFpsEdit: TEdit
+      Left = 280
+      Top = 234
+      Width = 40
+      Height = 21
+      TabOrder = 18
+      Text = '25'
+    end
+    object FfmpegBtn: TButton
+      Left = 332
+      Top = 232
+      Width = 110
+      Height = 25
+      Hint = 
+        'Copies an ffmpeg command for a small MP4 video of the frames to ' +
+        'the clipboard.'#13#10'Run it yourself in a terminal (this program st' +
+        'arts no other programs).'
+      Caption = 'FFmpeg command'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 19
+      OnClick = FfmpegBtnClick
+    end
+    object TransparentCheck: TCheckBox
+      Left = 456
       Top = 236
       Width = 160
       Height = 17
@@ -1213,7 +1257,7 @@ object AnimationForm: TAnimationForm
       Caption = 'Transparent background'
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 17
+      TabOrder = 20
     end
   end
   object Panel3: TPanel

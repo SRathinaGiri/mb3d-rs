@@ -30,10 +30,87 @@ pub struct Job {
     pub frames: Vec<Option<Bitmap>>,
     pub thumbs: Vec<(usize, u64, Bitmap)>,
     pub changed: bool,
+    /// the frames are done, the video is being made
+    pub making_video: bool,
+    /// the video written ("Also make a video")
+    pub video: Option<std::path::PathBuf>,
 }
 
 fn save_output_settings(app: &mut Mb3d, ui: &Ui) {
     app.ini.set_extra("AniTransparent", if ui.checked(F, "TransparentCheck") { "1" } else { "0" });
+    app.ini.set_extra("AniVideo", if ui.checked(F, "VideoCheck") { "1" } else { "0" });
+    app.ini.set_extra("AniVideoFps", ui.text(F, "VideoFpsEdit").trim());
+}
+
+/// The frames per second of the video and the ffmpeg command.
+fn video_fps(ui: &Ui) -> Result<f64, String> {
+    ui.text(F, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or_else(|| "The frames per second must be a number above 0 (e.g. 25).".to_string())
+}
+
+/// A video needs images, one per frame.
+fn video_check(a: &Animation) -> Result<(), String> {
+    if a.format == OutputFormat::M3p {
+        return Err("A video needs images: choose BMP, PNG or JPG as the output format.".into());
+    }
+    if a.stereo_eyes().len() != 1 {
+        return Err("A video of a stereo animation is not made: switch off 'Render stereo animation'.".into());
+    }
+    Ok(())
+}
+
+/// "Also make a video": the AVI in the output folder, named after the
+/// project, and its frame rate; None without the option.
+fn video_settings(ui: &Ui, a: &Animation) -> Result<Option<(std::path::PathBuf, f64)>, String> {
+    if !ui.checked(F, "VideoCheck") {
+        return Ok(None);
+    }
+    video_check(a)?;
+    let fps = video_fps(ui)?;
+    Ok(Some((std::path::Path::new(&a.output_folder).join(format!("{}.avi", a.name)), fps)))
+}
+
+/// The animation to render with this window's settings, its range and
+/// its frames (`start_rendering`, the ffmpeg command).
+fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usize>), String> {
+    read_settings(app, ui);
+    let mut a = app.anim.anim.clone();
+    if a.keyframes.len() < 2 {
+        return Err("The animation needs at least two keyframes.".into());
+    }
+    if a.output_folder.trim().is_empty() {
+        a.output_folder = app.ini.dir(super::ini::DIR_ANIOUT).display().to_string();
+    }
+    let to = ui.text(F, "Edit11").trim().parse::<i64>().ok();
+    let from = ui.text(F, "Edit8").trim().parse::<i64>().ok();
+    let run = FrameRun { from_index: from, to_index: to, ..Default::default() };
+    let frames = run.frames(&a);
+    if frames.is_empty() {
+        return Err("No frames to render in this range.".into());
+    }
+    Ok((a, run, frames))
+}
+
+/// `FfmpegBtnClick`: the ffmpeg command for a small video of the frames,
+/// to the clipboard and the messages (run by the user: this program
+/// starts no other programs).
+fn ffmpeg_command(app: &mut Mb3d, ui: &mut Ui) {
+    let (mut a, _, frames) = match output_plan(app, ui) {
+        Ok(p) => p,
+        Err(e) => return ui.show_message(&e),
+    };
+    a.transparent = ui.checked(F, "TransparentCheck") && a.format == OutputFormat::Png;
+    if let Err(e) = video_check(&a) {
+        return ui.show_message(&e);
+    }
+    let fps = match video_fps(ui) {
+        Ok(f) => f,
+        Err(e) => return ui.show_message(&e),
+    };
+    let step = if frames.len() > 1 { a.file_index(frames[1]) - a.file_index(frames[0]) } else { 1 };
+    let cmd = crate::video::ffmpeg_command(std::path::Path::new(&a.output_folder), &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent);
+    crate::vcl::clipboard::set(&cmd);
+    app.message(ui, "Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):");
+    app.message(ui, &cmd);
 }
 
 pub struct State {
@@ -289,6 +366,14 @@ fn main_scene(app: &mut Mb3d, ui: &mut Ui) -> Scene {
 }
 
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
+    let (making_video, video) = {
+        let mut j = app.anim.job.lock().unwrap();
+        let v = if j.running { None } else { j.video.take() };
+        (j.making_video, v)
+    };
+    if let Some(v) = video {
+        app.message(ui, &format!("Animation: video written: {}", v.display()));
+    }
     let (changed, thumbs, running, done, total, err, last, frames_len) = {
         let mut j = app.anim.job.lock().unwrap();
         let c = j.changed;
@@ -326,7 +411,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         c.max = (frames_len as i64 - 1).max(0);
     }
     let el = app.anim.started.elapsed().as_secs();
-    if running || done > 0 {
+    if making_video {
+        ui.set_caption(F, "Label19", "Making the video...");
+    } else if running || done > 0 {
         ui.set_caption(F, "Label19", &format!("Done: {done} of {total}"));
         ui.set_caption(F, "Label22", &format!("{}:{:02}:{:02}", el / 3600, el / 60 % 60, el % 60));
     }
@@ -367,26 +454,20 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_caption(F, "Button2", "Pause rendering");
         return;
     }
-    read_settings(app, ui);
-    let mut a = app.anim.anim.clone();
-    if a.keyframes.len() < 2 {
-        return;
-    }
-    if a.output_folder.trim().is_empty() {
-        a.output_folder = app.ini.dir(super::ini::DIR_ANIOUT).display().to_string();
-    }
+    let (a, run, frames) = match output_plan(app, ui) {
+        Ok(p) => p,
+        // (fewer than two keyframes: nothing to render, as before)
+        Err(_) if app.anim.anim.keyframes.len() < 2 => return,
+        Err(e) => return ui.show_message(&e),
+    };
     let _ = std::fs::create_dir_all(&a.output_folder);
-    let to = ui.text(F, "Edit11").trim().parse::<i64>().ok();
-    let from = ui.text(F, "Edit8").trim().parse::<i64>().ok();
-    let run = FrameRun { from_index: from, to_index: to, ..Default::default() };
-    let frames = run.frames(&a);
-    if frames.is_empty() {
-        ui.show_message("No frames to render in this range.");
-        return;
-    }
     if ui.checked(F, "TransparentCheck") && a.format != OutputFormat::Png {
         return ui.show_message("A transparent background needs PNG frames: choose PNG as the output format.");
     }
+    let video = match video_settings(ui, &a) {
+        Ok(v) => v,
+        Err(e) => return ui.show_message(&e),
+    };
     save_output_settings(app, ui);
     for b in ["SpeedButton1", "SpeedButton2", "SpeedButton3", "SpeedButton4", "SpeedButton5", "SpeedButton8", "SpeedButton9", "SpeedButton10", "SpeedButton11", "SpeedButton12", "SpeedButton14", "Edit1", "Button3", "Button4"] {
         ui.set_enabled(F, b, false);
@@ -440,6 +521,27 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             drop(j);
             if let Some(w) = &waker {
                 w.wake();
+            }
+        }
+        // the video of the frames, when all of them are there
+        if let Some((path, fps)) = video.filter(|_| !cancel() && job.lock().unwrap().error.is_empty()) {
+            {
+                let mut j = job.lock().unwrap();
+                j.making_video = true;
+                j.changed = true;
+            }
+            if let Some(w) = &waker {
+                w.wake();
+            }
+            let files: Vec<std::path::PathBuf> = frames.iter().map(|&f| a.frame_file(f)).filter(|p| p.is_file()).collect();
+            let progress = |d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+            let r = crate::video::frames_to_avi(&files, fps, &path, &progress, &cancel);
+            let mut j = job.lock().unwrap();
+            j.making_video = false;
+            match r {
+                Ok(_) => j.video = Some(path),
+                Err(e) if e == "cancelled" => {}
+                Err(e) => j.error = format!("video: {e}"),
             }
         }
         let mut j = job.lock().unwrap();
@@ -788,6 +890,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.set_item_index(F, "RadioGroup3", 1);
                 show_project_name(app, ui);
                 ui.set_checked(F, "TransparentCheck", app.ini.get_extra("AniTransparent") == Some("1"));
+                ui.set_checked(F, "VideoCheck", app.ini.get_extra("AniVideo") == Some("1"));
+                let fps = app.ini.get_extra("AniVideoFps").filter(|f| !f.is_empty()).unwrap_or("25").to_string();
+                ui.set_text(F, "VideoFpsEdit", &fps);
             }
             let fc = app.ini.get("AniFrameCount").to_string();
             ui.set_text(F, "Edit5", &fc);
@@ -967,6 +1072,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_enabled(F, "CheckBox5", c);
         }
         "Button2Click" => start_rendering(app, ui),
+        "FfmpegBtnClick" => ffmpeg_command(app, ui),
         "Button4Click" => start_preview(app, ui),
         "SpeedButton10Click" => ui.show(PR),
         "SpeedButton9Click" => {

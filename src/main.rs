@@ -665,6 +665,12 @@ OPTIONS:
         --overwrite          Render all frames again (default unless the animation says no)
         --depth              Also write depth images (ZBuf <name><index>.png)
         --transparent        PNG frames with a transparent background
+        --video <FILE.avi>   Also join the frames into a video: Motion JPEG in an AVI
+                             file (plays in VLC and mpv, opens in video editors; big
+                             files). The frames are kept. For a small MP4 the end of
+                             the output shows the ffmpeg command to run yourself.
+        --fps <N>            Frames per second of the video and of the ffmpeg
+                             command (default 25)
         --stereo <MODE>      pair: a right and a left eye image per frame
                              (<name>Right000001, <name>Left000001), very_left: only
                              the 'very left' images, off (as MB3D's animation maker)
@@ -693,6 +699,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut depth, mut list, mut render_too, mut quiet) = (false, false, false, false);
     let mut save: Option<String> = None;
     let mut transparent = false;
+    let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, 25.0);
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
         v.ok_or_else(|| format!("{a} needs a value"))?.trim().parse::<i64>().map_err(|_| format!("bad value for {a}"))
@@ -745,6 +752,10 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--overwrite" => overwrite = Some(true),
             "--depth" => depth = true,
             "--transparent" => transparent = true,
+            "--video" => video = Some(args.next().ok_or("--video needs a file name")?.into()),
+            "--fps" => {
+                fps = args.next().ok_or("--fps needs a value")?.trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or("--fps needs a number above 0 (e.g. 25)")?
+            }
             "-s" | "--set" => overrides.push(args.next().ok_or("--set needs a value")?.clone()),
             "--save" => save = Some(args.next().ok_or("--save needs a value")?.clone()),
             "--render" => render_too = true,
@@ -928,9 +939,22 @@ fn animate(argv: &[String]) -> Result<(), String> {
     }
     if transparent {
         if anim.format != OutputFormat::Png {
-            return Err("--transparent needs PNG frames (--format png)".into());
+            return Err(usage_err("--transparent needs PNG frames (--format png)"));
         }
         anim.transparent = true;
+    }
+    // a video of the frames: images, one per frame
+    let movie = anim.format != OutputFormat::M3p && anim.stereo_eyes().len() == 1;
+    if let Some(v) = &video {
+        if anim.format == OutputFormat::M3p {
+            return Err(usage_err("--video needs images (--format png, bmp or jpg), not parameter files"));
+        }
+        if !movie {
+            return Err(usage_err("--video makes no stereo videos (render the eyes separately)"));
+        }
+        if !v.extension().is_some_and(|e| e.eq_ignore_ascii_case("avi")) {
+            return Err(usage_err("--video writes an AVI file: give a name ending in .avi (for an MP4, run the ffmpeg command shown at the end)"));
+        }
     }
     if !quiet {
         eprintln!(
@@ -976,6 +1000,31 @@ fn animate(argv: &[String]) -> Result<(), String> {
     }
     if !quiet {
         eprintln!("done: {done} frames rendered, {skipped} skipped, {}", fmt_dur(t0.elapsed().as_secs_f64()));
+    }
+    if movie {
+        // the frames of this run that are there, in order
+        let files: Vec<std::path::PathBuf> = frames_to_do.iter().map(|&f| anim.frame_file(f)).filter(|p| p.is_file()).collect();
+        if let Some(v) = &video {
+            let t = Instant::now();
+            let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
+            let progress = |d: usize, n: usize| {
+                if !quiet && tty {
+                    eprint!("\r  video {d}/{n}");
+                    let _ = std::io::stderr().flush();
+                }
+            };
+            let n = mb3d::video::frames_to_avi(&files, fps, v, &progress, &|| false).map_err(|e| output_err(&v.to_string_lossy(), e))?;
+            if !quiet {
+                let cr = if tty { "\r" } else { "" };
+                eprintln!("{cr}video: {} ({n} frames at {fps} per second, {})", v.display(), fmt_dur(t.elapsed().as_secs_f64()));
+            }
+        }
+        if !quiet && !files.is_empty() {
+            let step = if frames_to_do.len() > 1 { anim.file_index(frames_to_do[1]) - anim.file_index(frames_to_do[0]) } else { 1 };
+            let folder = files[0].parent().unwrap_or(std::path::Path::new(""));
+            let cmd = mb3d::video::ffmpeg_command(folder, &anim.name, anim.format.extension(), anim.file_index(frames_to_do[0]), step, fps, anim.transparent);
+            eprintln!("a small video with ffmpeg (run it yourself):\n  {cmd}");
+        }
     }
     Ok(())
 }
