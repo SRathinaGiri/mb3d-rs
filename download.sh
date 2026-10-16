@@ -107,8 +107,23 @@ if ! (cd "$tmp" && $sha -c sum > /dev/null); then
 fi
 echo "Checksum OK."
 
+# which version this is (the archive's folder: mb3d-rs-v0.2.46-<target>/),
+# and which one the folder has (.mb3d-rs-version, written below)
+ver=$(tar tzf "$tmp/$archive" | head -n 1 | sed -n 's|^mb3d-rs-v\([0-9][^-/]*\)-.*|\1|p')
+old=$(cat "$dir/.mb3d-rs-version" 2> /dev/null || true)
+if [ -n "$ver" ]; then
+  if [ "$ver" = "$old" ]; then
+    echo "mb3d-rs $ver is installed already in $dir: installing it again."
+  elif [ -n "$old" ]; then
+    echo "Updating mb3d-rs $old to $ver."
+  else
+    echo "Installing mb3d-rs $ver."
+  fi
+fi
+
 mkdir -p "$dir"
 tar xzf "$tmp/$archive" -C "$dir" --strip-components=1
+[ -n "$ver" ] && printf '%s\n' "$ver" > "$dir/.mb3d-rs-version"
 if [ "$(uname -s)" = Darwin ]; then xattr -dr com.apple.quarantine "$dir" 2>/dev/null || true; fi
 
 # the commands (an existing file of the same name that is not a link is kept)
@@ -159,7 +174,7 @@ EOF
   refresh_menus
 fi
 
-echo "mb3d-rs is in $dir: start Mandelbulb3D (the windows) or mb3d (command line)"
+echo "mb3d-rs ${ver:-} is in $dir: start Mandelbulb3D (the windows) or mb3d (command line)"
 case ":$PATH:" in
   *":$bin:"*) ;;
   *) echo "Add $bin to your PATH to start them by name, e.g. in ~/.profile: export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
