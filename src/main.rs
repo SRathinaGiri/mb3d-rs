@@ -4,6 +4,7 @@ use mb3d::formulas::Formula;
 use mb3d::scene::Scene;
 use std::io::Write;
 use std::process::ExitCode;
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::time::Instant;
 
 const USAGE: &str = "\
@@ -32,7 +33,7 @@ OPTIONS:
     -i, --iterations <N>     Max iterations
         --scale <F>          Scale the image size (e.g. 0.1 for a preview of a .m3p)
         --aa <N>             Anti-aliasing: render N times larger and downsample
-    -o, --output <FILE>      Output PNG (default: mb3d.png)
+    -o, --output <FILE>      Output PNG (default: mb3d.png); - writes it to the standard output
         --depth <FILE>       Also write a 16 bit depth map PNG
         --transparent        PNG with a transparent background (soft edges with --aa)
         --denoise <SIGMA>    Noise filter on the picture (DCT denoising as GIMP's Denoise DCT):
@@ -63,13 +64,25 @@ OPTIONS:
                              them: parallel, cross or anaglyph
     -q, --quiet              No progress output
         --formulas <DIR>     Directory with .m3f formula files (also: MB3D_FORMULAS;
-                             M3Formulas in the current folder, next to the program,
-                             next to the parameter file's folder and in ~/mb3d-rs
-                             is searched too)
+                             M3Formulas in the current folder, in ~/.local/share/mb3d-rs
+                             (your own, before the shipped ones), next to the program,
+                             in /usr/share/mb3d-rs, next to the parameter file's folder
+                             and in ~/mb3d-rs is searched too)
         --maps <DIR>         Directory with maps and background pictures (also: MB3D_MAPS;
                              M3Maps next to the formula directory is searched too)
         --list-formulas      List the built-in formulas and their options
     -h, --help               Show this help
+    -V, --version            Show the version
+
+Progress is shown only when the error output is a terminal (not in logs or
+pipes); the results are reported either way.
+
+EXIT STATUS:
+    0  success
+    1  the calculation or another step failed
+    2  wrong command line (unknown option, missing or bad value, no file)
+    3  the scene or parameter file could not be read
+    4  a result file could not be written
 ";
 
 fn main() -> ExitCode {
@@ -84,9 +97,54 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("error: {e}");
-            ExitCode::FAILURE
+            ExitCode::from(EXIT.load(Ordering::Relaxed))
         }
     }
+}
+
+/// The exit status of an error (see EXIT STATUS in the help): 2 while the
+/// arguments are read, 1 after [`args_read`]; [`input_err`] and
+/// [`output_err`] set 3 and 4.
+static EXIT: AtomicU8 = AtomicU8::new(2);
+
+/// The command line was read: errors from now on are not usage errors.
+fn args_read() {
+    EXIT.store(1, Ordering::Relaxed);
+}
+
+/// Options that do not go together, found after [`args_read`] (exit
+/// status 2).
+fn usage_err(msg: &str) -> String {
+    EXIT.store(2, Ordering::Relaxed);
+    msg.to_string()
+}
+
+/// A scene or parameter file could not be read (exit status 3).
+fn input_err(e: impl std::fmt::Display) -> String {
+    EXIT.store(3, Ordering::Relaxed);
+    e.to_string()
+}
+
+/// A result could not be written (exit status 4).
+fn output_err(path: &str, e: impl std::fmt::Display) -> String {
+    EXIT.store(4, Ordering::Relaxed);
+    format!("{path}: {e}")
+}
+
+/// Writes a result file; "-" writes it to the standard output (pipes).
+fn write_out(path: &str, data: &[u8]) -> Result<(), String> {
+    let r = if path == "-" {
+        let mut o = std::io::stdout().lock();
+        o.write_all(data).and_then(|_| o.flush())
+    } else {
+        std::fs::write(path, data)
+    };
+    r.map_err(|e| output_err(path, e))
+}
+
+/// Writes an 8 bit RGB picture as PNG (to the standard output for "-").
+fn write_png(path: &str, w: usize, h: usize, rgb: &[u8]) -> Result<(), String> {
+    write_out(path, &mb3d::png::encode_rgb(w, h, rgb))
 }
 
 /// `--gpu` / `--cpu`: the main calculation on the graphics card or not.
@@ -137,6 +195,10 @@ fn run() -> Result<(), String> {
         match a.as_str() {
             "-h" | "--help" => {
                 print!("{USAGE}");
+                return Ok(());
+            }
+            "-V" | "--version" => {
+                println!("mb3d {}", env!("CARGO_PKG_VERSION"));
                 return Ok(());
             }
             "--list-formulas" => {
@@ -190,6 +252,7 @@ fn run() -> Result<(), String> {
             s => scene_file = Some(s.to_string()),
         }
     }
+    args_read();
 
     let is_m3p = scene_file
         .as_deref()
@@ -203,9 +266,9 @@ fn run() -> Result<(), String> {
     let raw_copy = is_m3p && overrides.is_empty() && scale.is_none();
     if raw_copy && (save_text.is_some() || save_m3p.is_some()) {
         let path = scene_file.clone().unwrap();
-        let (raw, title) = mb3d::m3p::read_raw(std::path::Path::new(&path))?;
+        let (raw, title) = mb3d::m3p::read_raw(std::path::Path::new(&path)).map_err(input_err)?;
         if let Some(f) = &save_m3p {
-            std::fs::write(f, &raw).map_err(|e| format!("{f}: {e}"))?;
+            std::fs::write(f, &raw).map_err(|e| output_err(&f, e))?;
             if !quiet {
                 eprintln!("  wrote parameters {f}");
             }
@@ -214,7 +277,7 @@ fn run() -> Result<(), String> {
             let title = title.unwrap_or_else(|| {
                 std::path::Path::new(&path).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
             });
-            std::fs::write(f, mb3d::m3p::raw_to_text(&raw, &title)).map_err(|e| format!("{f}: {e}"))?;
+            std::fs::write(f, mb3d::m3p::raw_to_text(&raw, &title)).map_err(|e| output_err(&f, e))?;
             if !quiet {
                 eprintln!("  wrote text parameters {f}");
             }
@@ -225,7 +288,7 @@ fn run() -> Result<(), String> {
     }
     let mut scene = if is_m3p {
         let path = scene_file.clone().unwrap();
-        let m = mb3d::m3p::load(std::path::Path::new(&path))?;
+        let m = mb3d::m3p::load(std::path::Path::new(&path)).map_err(input_err)?;
         if !quiet {
             eprintln!(
                 "loaded {path} (MB3D parameter version {}, {}x{})",
@@ -239,16 +302,16 @@ fn run() -> Result<(), String> {
         if let Some(f) = scale {
             s.scale_image(f);
         }
-        s.apply(&overrides.join("\n"))?
+        s.apply(&overrides.join("\n")).map_err(input_err)?
     } else {
         // file (or preset) text + command line overrides, which are inserted
         // in front of the first [section]
         let mut text = match (&scene_file, &formula) {
             (Some(f), _) => {
                 mb3d::formulas::note_scene_file(std::path::Path::new(f));
-                std::fs::read_to_string(f).map_err(|e| format!("{f}: {e}"))?
+                std::fs::read_to_string(f).map_err(|e| input_err(format!("{f}: {e}")))?
             }
-            (None, f) => Scene::preset(f.as_deref().unwrap_or("Integer Power"))?.to_text(),
+            (None, f) => Scene::preset(f.as_deref().unwrap_or("Integer Power")).map_err(input_err)?.to_text(),
         };
         if scene_file.is_some() {
             if let Some(f) = &formula {
@@ -260,14 +323,14 @@ fn run() -> Result<(), String> {
         }
         let idx = if text.starts_with('[') { 0 } else { text.find("\n[").map(|i| i + 1).unwrap_or(text.len()) };
         text.insert_str(idx, &format!("{}\n", overrides.join("\n")));
-        let mut s = Scene::parse(&text)?;
+        let mut s = Scene::parse(&text).map_err(input_err)?;
         if let Some(f) = scale {
             s.scale_image(f);
         }
         s
     };
     if let Some(f) = &save_scene {
-        std::fs::write(f, scene.to_text()).map_err(|e| format!("{f}: {e}"))?;
+        std::fs::write(f, scene.to_text()).map_err(|e| output_err(&f, e))?;
         if !quiet {
             eprintln!("  wrote scene {f}");
         }
@@ -279,7 +342,7 @@ fn run() -> Result<(), String> {
         // a scene: encode it as MB3D parameters
         let raw = mb3d::m3p::write(&scene);
         if let Some(f) = &save_m3p {
-            std::fs::write(f, &raw).map_err(|e| format!("{f}: {e}"))?;
+            std::fs::write(f, &raw).map_err(|e| output_err(&f, e))?;
             if !quiet {
                 eprintln!("  wrote parameters {f}");
             }
@@ -289,7 +352,7 @@ fn run() -> Result<(), String> {
                 .as_deref()
                 .and_then(|p| std::path::Path::new(p).file_stem().map(|s| s.to_string_lossy().into_owned()))
                 .unwrap_or_else(|| "mb3d-rs".into());
-            std::fs::write(f, mb3d::m3p::raw_to_text(&raw, &title)).map_err(|e| format!("{f}: {e}"))?;
+            std::fs::write(f, mb3d::m3p::raw_to_text(&raw, &title)).map_err(|e| output_err(&f, e))?;
             if !quiet {
                 eprintln!("  wrote text parameters {f}");
             }
@@ -312,30 +375,33 @@ fn run() -> Result<(), String> {
             scene.iterations
         );
     }
+    // the progress only on a terminal (logs and pipes get the results)
+    let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
+    let cr = if tty { "\r" } else { "" };
     let progress = |done: usize, total: usize| {
-        if !quiet && (done % 8 == 0 || done == total) {
+        if !quiet && tty && (done % 8 == 0 || done == total) {
             eprint!("\r  {:5.1}%", 100.0 * done as f64 / total as f64);
             let _ = std::io::stderr().flush();
         }
     };
     if bits16 && (stereo_pair.is_some() || scene.tiling.is_some()) {
-        return Err("--bits 16 is for single pictures (not with --stereo-pair or --tiles)".into());
+        return Err(usage_err("--bits 16 is for single pictures (not with --stereo-pair or --tiles)"));
     }
     if transparent && (bits16 || stereo_pair.is_some()) {
-        return Err("--transparent writes 8 bit pictures (not with --bits 16 or --stereo-pair)".into());
+        return Err(usage_err("--transparent writes 8 bit pictures (not with --bits 16 or --stereo-pair)"));
     }
-    if transparent && !output.to_ascii_lowercase().ends_with(".png") {
-        return Err("--transparent writes PNG files: give an output file ending in .png".into());
+    if transparent && output != "-" && !output.to_ascii_lowercase().ends_with(".png") {
+        return Err(usage_err("--transparent writes PNG files: give an output file ending in .png"));
     }
     if bits16 && denoise > 0.0 {
-        return Err("--denoise filters 8 bit pictures (not with --bits 16)".into());
+        return Err(usage_err("--denoise filters 8 bit pictures (not with --bits 16)"));
     }
-    if bits16 && !output.to_ascii_lowercase().ends_with(".png") {
-        return Err("--bits 16 writes PNG files: give an output file ending in .png".into());
+    if bits16 && output != "-" && !output.to_ascii_lowercase().ends_with(".png") {
+        return Err(usage_err("--bits 16 writes PNG files: give an output file ending in .png"));
     }
     if let Some(layout) = stereo_pair {
         if scene.tiling.is_some() {
-            return Err("--stereo-pair does not work with tiles".into());
+            return Err(usage_err("--stereo-pair does not work with tiles"));
         }
         if auto_color {
             let (_, g) = mb3d::render::calculate(&scene, &|_, _| {})?;
@@ -347,14 +413,14 @@ fn run() -> Result<(), String> {
             s.stereo_mode = mode;
             let r = mb3d::render(&s, &progress)?;
             if !quiet {
-                eprintln!("\r  {name} eye: calc {:.2}s, paint {:.2}s", r.calc_seconds, r.paint_seconds);
+                eprintln!("{cr}  {name} eye: calc {:.2}s, paint {:.2}s", r.calc_seconds, r.paint_seconds);
             }
             eyes.push(if aa > 1 { mb3d::render::downsample(&r.rgb, r.width, r.height, aa) } else { (r.rgb, r.width, r.height) });
         }
         let (w, h) = (eyes[0].1, eyes[0].2);
         let (rgb, ow, oh) = mb3d::render::compose_stereo(&eyes[0].0, &eyes[1].0, w, h, layout);
         let rgb = denoised(rgb, ow, oh, denoise);
-        mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+        write_png(&output, ow, oh, &rgb)?;
     } else if let Some(tl) = scene.tiling {
         // anti-aliasing of tile renders: --aa and the tile downscale
         let down = aa * tl.downscale.max(1) as usize;
@@ -377,7 +443,7 @@ fn run() -> Result<(), String> {
         }
         let tile_progress = |done: usize, total: usize, t: [i32; 4]| {
             if !quiet {
-                eprintln!("\r  tile {done}/{total} done ({}x{} at {}, {})          ", t[2], t[3], t[0], t[1]);
+                eprintln!("{cr}  tile {done}/{total} done ({}x{} at {}, {})          ", t[2], t[3], t[0], t[1]);
             }
         };
         let res = mb3d::render::render_tiled(&scene, stats || depth.is_some() || transparent, &progress, &tile_progress)?;
@@ -403,7 +469,7 @@ fn run() -> Result<(), String> {
                 (res.rgb, res.width, res.height)
             };
             let rgb = denoised(rgb, ow, oh, denoise);
-            mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+            write_png(&output, ow, oh, &rgb)?;
         }
         if let (Some(d), Some(g)) = (depth, &res.gbuffer) {
             write_depth(&d, g, res.width, res.height)?;
@@ -416,7 +482,7 @@ fn run() -> Result<(), String> {
         eprintln!("  warning: {errs} custom formula calls failed in the interpreter");
     }
     if !quiet {
-        eprintln!("  wrote {output}");
+        eprintln!("  wrote {}", if output == "-" { "to the standard output" } else { &output });
     }
     Ok(())
 }
@@ -435,6 +501,7 @@ fn render_single(
     depth: Option<String>,
     progress: &(dyn Fn(usize, usize) + Sync),
 ) -> Result<(), String> {
+    let cr = if std::io::IsTerminal::is_terminal(&std::io::stderr()) { "\r" } else { "" };
     let t0 = Instant::now();
     let (params, gbuffer) = mb3d::render::calculate(scene, progress)?;
     let t1 = Instant::now();
@@ -442,7 +509,7 @@ fn render_single(
         mb3d::render::auto_color_range(scene, &gbuffer);
         if !quiet {
             eprintln!(
-                "\r  auto colour range: color_start = {:.1}, color_end = {:.1}",
+                "{cr}  auto colour range: color_start = {:.1}, color_end = {:.1}",
                 scene.lighting.color_start, scene.lighting.color_end
             );
         }
@@ -459,7 +526,7 @@ fn render_single(
     };
     if !quiet {
         eprintln!(
-            "\r  done: calc {:.2}s, paint {:.2}s, object coverage {:.1}%",
+            "{cr}  done: calc {:.2}s, paint {:.2}s, object coverage {:.1}%",
             res.calc_seconds,
             res.paint_seconds,
             res.coverage() * 100.0
@@ -486,7 +553,7 @@ fn render_single(
         write_transparent(output, &res.rgb, &res.gbuffer, res.width, res.height, aa, denoise)?;
     } else if let Some(rgb16) = rgb16 {
         let (px, ow, oh) = if aa > 1 { mb3d::render::downsample(&rgb16, res.width, res.height, aa) } else { (rgb16, res.width, res.height) };
-        std::fs::write(output, mb3d::png::encode_rgb16(ow, oh, &px)).map_err(|e| format!("{output}: {e}"))?;
+        write_out(output, &mb3d::png::encode_rgb16(ow, oh, &px))?;
     } else {
         let (rgb, ow, oh) = if aa > 1 {
             mb3d::render::downsample(&res.rgb, res.width, res.height, aa)
@@ -494,7 +561,7 @@ fn render_single(
             (res.rgb.clone(), res.width, res.height)
         };
         let rgb = denoised(rgb, ow, oh, denoise);
-        mb3d::png::write_rgb(&output, ow, oh, &rgb).map_err(|e| format!("{output}: {e}"))?;
+        write_png(&output, ow, oh, &rgb)?;
     }
     if let Some(d) = depth {
         write_depth(&d, &res.gbuffer, res.width, res.height)?;
@@ -513,7 +580,7 @@ fn write_transparent(output: &str, rgb: &[u8], g: &[mb3d::gbuffer::SiLight], w: 
             d[..3].copy_from_slice(s);
         }
     }
-    std::fs::write(output, mb3d::png::encode_rgba(ow, oh, &rgba)).map_err(|e| format!("{output}: {e}"))
+    write_out(output, &mb3d::png::encode_rgba(ow, oh, &rgba))
 }
 
 /// `--denoise`: the DCT noise filter (GIMP's "Denoise DCT") with this
@@ -528,7 +595,7 @@ fn denoised(rgb: Vec<u8>, w: usize, h: usize, sigma: f32) -> Vec<u8> {
 fn write_depth(path: &str, g: &[mb3d::gbuffer::SiLight], w: usize, h: usize) -> Result<(), String> {
     let z: Vec<u16> =
         g.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
-    mb3d::png::write_gray16(path, w, h, &z).map_err(|e| format!("{path}: {e}"))
+    mb3d::png::write_gray16(path, w, h, &z).map_err(|e| output_err(path, e))
 }
 
 fn print_stats(res: &mb3d::RenderResult) {
@@ -693,6 +760,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     if files.is_empty() {
         return Err(format!("no animation or keyframe files given\n\n{ANIMATE_USAGE}"));
     }
+    args_read();
     let is_anim = |f: &str| {
         let l = f.to_ascii_lowercase();
         l.ends_with(".m3a") || l.ends_with(".m3k")
@@ -706,7 +774,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let from_file = files.len() == 1 && is_anim(&files[0]);
     let mut anim = if from_file {
         let path = std::path::Path::new(&files[0]);
-        let f = mb3d::animfile::load(path)?;
+        let f = mb3d::animfile::load(path).map_err(input_err)?;
         for w in &f.warnings {
             note(w);
         }
@@ -733,7 +801,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
         }
         let mut a = Animation { name: "anim".into(), ..Default::default() };
         for f in &files {
-            let (s, w) = mb3d::animfile::load_scene(std::path::Path::new(f))?;
+            let (s, w) = mb3d::animfile::load_scene(std::path::Path::new(f)).map_err(input_err)?;
             for w in w {
                 note(&format!("{f}: {w}"));
             }
@@ -749,7 +817,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     if !overrides.is_empty() {
         let text = overrides.join("\n");
         for (i, k) in anim.keyframes.iter_mut().enumerate() {
-            k.scene = k.scene.clone().apply(&text).map_err(|e| format!("keyframe {}: {e}", i + 1))?;
+            k.scene = k.scene.clone().apply(&text).map_err(|e| input_err(format!("keyframe {}: {e}", i + 1)))?;
             if let Some(src) = &mut k.source {
                 for o in &overrides {
                     src.push('\u{0}');
@@ -987,13 +1055,14 @@ fn batch(argv: &[String]) -> Result<(), String> {
     }
     let mut items = mb3d::batch::expand_inputs(&inputs)?;
     for l in &lists {
-        let text = std::fs::read_to_string(l).map_err(|e| format!("{l}: {e}"))?;
+        let text = std::fs::read_to_string(l).map_err(|e| input_err(format!("{l}: {e}")))?;
         let base = std::path::Path::new(l).parent().unwrap_or(std::path::Path::new(""));
-        items.extend(mb3d::batch::parse_list(&text, base).map_err(|e| format!("{l}: {e}"))?);
+        items.extend(mb3d::batch::parse_list(&text, base).map_err(|e| input_err(format!("{l}: {e}")))?);
     }
     if items.is_empty() {
         return Err(format!("no parameter files given\n\n{BATCH_USAGE}"));
     }
+    args_read();
     let outputs = mb3d::batch::output_paths(&items, &opts);
     if dry {
         let mut out = std::io::stdout().lock();
@@ -1082,7 +1151,7 @@ fn parse_list_f64(s: &str, n: usize, what: &str) -> Result<Vec<f64>, String> {
 
 /// Loads a scene for the exports and applies `-s` changes.
 fn load_for_export(file: &str, overrides: &[String], quiet: bool) -> Result<Scene, String> {
-    let (s, notes) = mb3d::animfile::load_scene(std::path::Path::new(file))?;
+    let (s, notes) = mb3d::animfile::load_scene(std::path::Path::new(file)).map_err(input_err)?;
     if !quiet {
         for n in notes {
             eprintln!("  note: {n}");
@@ -1091,7 +1160,7 @@ fn load_for_export(file: &str, overrides: &[String], quiet: bool) -> Result<Scen
     if overrides.is_empty() {
         Ok(s)
     } else {
-        s.apply(&overrides.join("\n"))
+        s.apply(&overrides.join("\n")).map_err(input_err)
     }
 }
 
@@ -1195,17 +1264,18 @@ fn voxel_cmd(argv: &[String]) -> Result<(), String> {
         }
     }
     let file = file.ok_or_else(|| format!("no parameter file given\n\n{VOXEL_USAGE}"))?;
+    args_read();
     let path = std::path::Path::new(&file);
     let stem = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "voxel".into());
     let (mut vp, scene) = if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("m3v")) {
-        let data = std::fs::read(path).map_err(|e| format!("{file}: {e}"))?;
-        let (mut vp, s, notes) = mb3d::voxel::read_m3v(&data)?;
+        let data = std::fs::read(path).map_err(|e| input_err(format!("{file}: {e}")))?;
+        let (mut vp, s, notes) = mb3d::voxel::read_m3v(&data).map_err(input_err)?;
         if !quiet {
             for n in notes {
                 eprintln!("  note: {n}");
             }
         }
-        let s = if overrides.is_empty() { s } else { s.apply(&overrides.join("\n"))? };
+        let s = if overrides.is_empty() { s } else { s.apply(&overrides.join("\n")).map_err(input_err)? };
         if let Some(n) = slices {
             // keep the DE threshold in proportion to the resolution
             vp.de *= n as f64 / vp.slices as f64;
@@ -1226,7 +1296,7 @@ fn voxel_cmd(argv: &[String]) -> Result<(), String> {
         if let Some(o) = &out {
             v2.output_folder = o.clone();
         }
-        std::fs::write(f, mb3d::voxel::write_m3v(&v2, &scene)).map_err(|e| format!("{f}: {e}"))?;
+        std::fs::write(f, mb3d::voxel::write_m3v(&v2, &scene)).map_err(|e| output_err(&f, e))?;
         if !quiet {
             eprintln!("  wrote {f}");
         }
@@ -1236,7 +1306,7 @@ fn voxel_cmd(argv: &[String]) -> Result<(), String> {
     }
     if let Some(pf) = &preview {
         let (rgb, pw, ph) = mb3d::voxel::preview(&scene, &vp, 160, threads)?;
-        mb3d::png::write_rgb(pf, pw, ph, &rgb).map_err(|e| format!("{pf}: {e}"))?;
+        mb3d::png::write_rgb(pf, pw, ph, &rgb).map_err(|e| output_err(&pf, e))?;
         if !quiet {
             eprintln!("  wrote preview {pf} ({pw}x{ph})");
         }
@@ -1348,6 +1418,7 @@ fn mesh_cmd(argv: &[String]) -> Result<(), String> {
         }
     }
     let file = file.ok_or_else(|| format!("no parameter file given\n\n{MESH_USAGE}"))?;
+    args_read();
     let out = out.ok_or("no output file given (-o mesh.obj / .ply / .stl)")?;
     let ext = std::path::Path::new(&out).extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
     if !["obj", "ply", "stl"].contains(&ext.as_str()) {
@@ -1460,9 +1531,10 @@ fn mutagen_cmd(argv: &[String]) -> Result<(), String> {
         }
     }
     let file = file.ok_or_else(|| format!("no parameter file given\n\n{MUTAGEN_USAGE}"))?;
+    args_read();
     let scene = load_for_export(&file, &overrides, quiet)?;
     let dir = std::path::PathBuf::from(&out);
-    std::fs::create_dir_all(&dir).map_err(|e| format!("{out}: {e}"))?;
+    std::fs::create_dir_all(&dir).map_err(|e| output_err(&out, e))?;
     let seed = seed.unwrap_or_else(|| {
         std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos() as u64).unwrap_or(1)
     });
@@ -1586,19 +1658,20 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         }
     }
     let file = file.ok_or_else(|| format!("no parameter file given\n\n{MC_USAGE}"))?;
+    args_read();
     let path = std::path::Path::new(&file);
     let is_m3c = path.extension().is_some_and(|e| e.eq_ignore_ascii_case("m3c"));
     let (mut scene, mut img) = if is_m3c {
-        let data = std::fs::read(path).map_err(|e| format!("{file}: {e}"))?;
-        let (f, img) = mb3d::mc::read_m3c(&data)?;
+        let data = std::fs::read(path).map_err(|e| input_err(format!("{file}: {e}")))?;
+        let (f, img) = mb3d::mc::read_m3c(&data).map_err(input_err)?;
         if !quiet {
             for n in &f.warnings {
                 eprintln!("  note: {n}");
             }
         }
-        let sc = if overrides.is_empty() { f.scene } else { f.scene.apply(&overrides.join("\n"))? };
+        let sc = if overrides.is_empty() { f.scene } else { f.scene.apply(&overrides.join("\n")).map_err(input_err)? };
         if scale.is_some() {
-            return Err("--scale cannot be used when continuing a .m3c file".into());
+            return Err(usage_err("--scale cannot be used when continuing a .m3c file"));
         }
         (sc, Some(img))
     } else {
@@ -1616,7 +1689,11 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     }
     let mut img = img.take().unwrap_or_else(|| mb3d::mc::McImage::new(scene.width as usize, scene.height as usize));
     let out = out.unwrap_or_else(|| path.with_extension("png").file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "mc.png".into()));
-    let target = if rays.is_none() && passes.is_none() && time.is_none() { Some(64.0) } else { rays };
+    if out == "-" {
+        // (the picture is written again after every pass)
+        return Err(usage_err("montecarlo writes its picture after every pass: give a file name, not -"));
+    }
+    let target =if rays.is_none() && passes.is_none() && time.is_none() { Some(64.0) } else { rays };
     if !quiet {
         let m = &scene.mc;
         eprintln!(
@@ -1646,7 +1723,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             let n = if threads > 0 { threads } else { std::thread::available_parallelism().map_or(4, |n| n.get()) };
             rgb = mb3d::denoise::dct_denoise(&rgb, img.width, img.height, sigma, n);
         }
-        mb3d::png::write_rgb(&out, img.width, img.height, &rgb).map_err(|e| format!("{out}: {e}"))
+        write_png(&out, img.width, img.height, &rgb)
     };
     loop {
         let st = img.stats();
@@ -1661,8 +1738,10 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         if time.is_some_and(|t| t0.elapsed().as_secs_f64() >= t) {
             break;
         }
+        let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
+        let cr = if tty { "\r" } else { "" };
         let progress = |d: usize, n: usize| {
-            if !quiet && (d % 8 == 0 || d == n) {
+            if !quiet && tty && (d % 8 == 0 || d == n) {
                 eprint!("\r  pass {:3}: {:5.1} %", img_passes_hint(), 100.0 * d as f64 / n as f64);
             }
         };
@@ -1673,18 +1752,18 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             Ok(()) => {}
             Err(e) if e == "cancelled" => {
                 if !quiet {
-                    eprintln!("\r  time limit reached during pass {}", img.passes + 1);
+                    eprintln!("{cr}  time limit reached during pass {}", img.passes + 1);
                 }
             }
             Err(e) => return Err(e),
         }
         let st = img.stats();
         if !quiet && img.passes == start_passes + 1 {
-            eprintln!("\r  calculated on: {}", mb3d::mc::last_status());
+            eprintln!("{cr}  calculated on: {}", mb3d::mc::last_status());
         }
         if !quiet {
             eprintln!(
-                "\r  pass {:3}: {:6.1} rays/pixel (max {}), noise {:.4}, {}",
+                "{cr}  pass {:3}: {:6.1} rays/pixel (max {}), noise {:.4}, {}",
                 img.passes,
                 st.avg_rays,
                 st.max_rays,
@@ -1694,7 +1773,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         }
         write_picture(&img)?;
         if let Some(m) = &m3c {
-            std::fs::write(m, mb3d::mc::write_m3c(&scene, &img)).map_err(|e| format!("{m}: {e}"))?;
+            std::fs::write(m, mb3d::mc::write_m3c(&scene, &img)).map_err(|e| output_err(&m, e))?;
         }
         if time.is_some_and(|t| t0.elapsed().as_secs_f64() >= t) {
             break;
