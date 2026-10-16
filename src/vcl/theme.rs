@@ -52,15 +52,33 @@ impl Style {
 
 static REGISTRY: RwLock<Vec<&'static ThemeData>> = RwLock::new(Vec::new());
 
-/// The `Themes` folder: next to the program, or else (a program run from
+/// The shipped `Themes` folder: next to the program, else a system-wide
+/// installation's (`appdirs::system_data_dirs`), else (a program run from
 /// the build folder: cargo run, the tests and examples) the source tree's.
 pub fn themes_dir() -> std::path::PathBuf {
     let d = crate::appdirs::app_folder().join("Themes");
     if d.is_dir() {
         return d;
     }
+    if let Some(s) = crate::appdirs::system_data_dirs().into_iter().map(|s| s.join("Themes")).find(|s| s.is_dir()) {
+        return s;
+    }
     let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Themes");
     if src.is_dir() { src } else { d }
+}
+
+/// The folders the themes are read from: the shipped one, then the user's
+/// own (`~/.local/share/mb3d-rs/Themes`, for an installed program whose
+/// folder the user cannot write); a file of the same name there replaces
+/// the shipped one.
+fn theme_dirs() -> Vec<std::path::PathBuf> {
+    let mut v = vec![themes_dir()];
+    if let Some(u) = crate::appdirs::user_data_dir().map(|d| d.join("Themes")).filter(|u| u.is_dir()) {
+        if !v.contains(&u) {
+            v.push(u);
+        }
+    }
+    v
 }
 
 /// The registry, read from the `Themes` folder at the first use.
@@ -74,7 +92,7 @@ fn registry() -> std::sync::RwLockReadGuard<'static, Vec<&'static ThemeData>> {
     {
         let mut w = REGISTRY.write().unwrap();
         if w.is_empty() {
-            let (themes, errors) = load_dir(&themes_dir());
+            let (themes, errors) = load_dirs(&theme_dirs());
             for e in errors {
                 eprintln!("theme {e}");
             }
@@ -102,16 +120,33 @@ fn missing() -> String {
     format!("no themes: the folder {} with the theme files (.xml) is missing; it comes with the program", themes_dir().display())
 }
 
-/// The themes of the `.xml` files in `dir`, Glossy and Windows first (the
+/// [`load_dirs`] of one folder.
+#[cfg(test)]
+fn load_dir(dir: &std::path::Path) -> (Vec<&'static ThemeData>, Vec<String>) {
+    load_dirs(&[dir.to_path_buf()])
+}
+
+/// The themes of the `.xml` files in `dirs`, Glossy and Windows first (the
 /// defaults of the two families: a theme without a `base` takes what it
 /// leaves out from them), then the others by name; and the files that
-/// could not be read.
-fn load_dir(dir: &std::path::Path) -> (Vec<&'static ThemeData>, Vec<String>) {
+/// could not be read.  A file in a later folder replaces the one of the
+/// same name (case ignored) in an earlier one.
+fn load_dirs(dirs: &[std::path::PathBuf]) -> (Vec<&'static ThemeData>, Vec<String>) {
     let mut errors = Vec::new();
     let mut known: Vec<&'static ThemeData> = Vec::new();
-    let Ok(rd) = std::fs::read_dir(dir) else { return (known, errors) };
-    let mut files: Vec<_> = rd.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("xml"))).collect();
-    files.sort();
+    let mut by_name: std::collections::BTreeMap<String, std::path::PathBuf> = std::collections::BTreeMap::new();
+    for dir in dirs {
+        let Ok(rd) = std::fs::read_dir(dir) else { continue };
+        for p in rd.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("xml"))) {
+            let key = p.file_name().map(|n| n.to_string_lossy().to_lowercase()).unwrap_or_default();
+            by_name.insert(key, p);
+        }
+    }
+    if by_name.is_empty() {
+        return (known, errors);
+    }
+    let mut files: Vec<_> = by_name.into_values().collect();
+    files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
     let mut pending = Vec::new();
     for f in files {
         match std::fs::read_to_string(&f) {
@@ -1005,6 +1040,26 @@ impl Theme {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The user's Themes folder adds to the shipped one, and its files
+    /// replace shipped files of the same name.
+    #[test]
+    fn user_themes_add_and_replace() {
+        let user = std::env::temp_dir().join(format!("mb3d-user-themes-{}", std::process::id()));
+        std::fs::create_dir_all(&user).unwrap();
+        let shipped = themes_dir();
+        let text = |f: &str| std::fs::read_to_string(shipped.join(f)).unwrap();
+        // a changed Midnight (same file name), a new theme
+        std::fs::write(user.join("midnight.xml"), text("Midnight.xml").replacen("name=\"Midnight\"", "name=\"My Midnight\"", 1)).unwrap();
+        std::fs::write(user.join("Mine.xml"), text("Glossy.xml").replacen("name=\"Glossy\"", "name=\"Mine\"", 1)).unwrap();
+        let (themes, errors) = load_dirs(&[shipped.clone(), user.clone()]);
+        let _ = std::fs::remove_dir_all(&user);
+        assert!(errors.is_empty(), "{errors:?}");
+        let names: Vec<&str> = themes.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(names.len(), std::fs::read_dir(&shipped).unwrap().count() + 1);
+        assert!(names.contains(&"My Midnight") && names.contains(&"Mine") && !names.contains(&"Midnight"), "{names:?}");
+        assert_eq!(&names[..2], &["Glossy", "Windows"]);
+    }
 
     /// Every theme of the Themes folder reads, and has every value the drawing code
     /// asks for (a missing one would be drawn magenta).

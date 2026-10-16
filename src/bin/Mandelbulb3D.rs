@@ -27,7 +27,7 @@ fn main() {
 #[cfg(windows)]
 fn crash_note(s: &str) {
     use std::io::Write;
-    let p = mb3d::appdirs::app_folder().join("mb3d_crash.txt");
+    let p = mb3d::appdirs::data_folder().join("mb3d_crash.txt");
     let p = if std::fs::OpenOptions::new().create(true).append(true).open(&p).is_ok() { p } else { "mb3d_crash.txt".into() };
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {
         let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);

@@ -216,7 +216,7 @@ pub fn start_lighting() -> (Lighting, [i64; 3]) {
 
 /// The custom presets 6..15: `color_preset_N.bin` (a TLpreset20).
 fn load_custom_preset(app: &mut Mb3d, i: usize) -> bool {
-    let p = crate::appdirs::app_folder().join(format!("color_preset_{}.bin", i + 1));
+    let p = crate::appdirs::config_file(&format!("color_preset_{}.bin", i + 1));
     let Ok(d) = std::fs::read(&p) else { return false };
     if d.len() < 348 {
         return false;
@@ -264,7 +264,7 @@ fn save_custom_preset(app: &Mb3d, i: usize) {
     d[28..32].copy_from_slice(&5i32.to_le_bytes());
     d[32..224].copy_from_slice(&rec[b + 68..b + 68 + 192]);
     d[224..348].copy_from_slice(&rec[b + 260..b + 260 + 124]);
-    let _ = std::fs::write(crate::appdirs::app_folder().join(format!("color_preset_{}.bin", i + 1)), d);
+    let _ = std::fs::write(crate::appdirs::config_folder().join(format!("color_preset_{}.bin", i + 1)), d);
 }
 
 /// `RenderPresetQuat`: the little quaternion of the preset buttons, 34 x 34

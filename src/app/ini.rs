@@ -42,8 +42,18 @@ pub struct Ini {
 
 impl Ini {
     pub fn load() -> Ini {
-        let app = crate::appdirs::app_folder();
-        Ini::load_from(&app.join("Mandelbulb3D.ini"), &app)
+        // (one folder: both are the program's folder, as in MB3D)
+        let data = crate::appdirs::data_folder();
+        let mut ini = Ini::load_from(&crate::appdirs::config_folder().join("Mandelbulb3D.ini"), &data);
+        // the shipped folders where they are (installed: not in the data folder)
+        for (d, name) in [(DIR_M3P, "M3Parameter"), (DIR_FORMULAS, "M3Formulas"), (DIR_MAPS, "M3Maps")] {
+            if ini.dirs[d] == data.join(name) && !ini.dirs[d].is_dir() {
+                if let Some(r) = crate::appdirs::resource(name) {
+                    ini.dirs[d] = r;
+                }
+            }
+        }
+        ini
     }
 
     pub fn load_from(path: &Path, app: &Path) -> Ini {

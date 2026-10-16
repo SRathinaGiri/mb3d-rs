@@ -277,11 +277,14 @@ fn map_dirs() -> &'static Mutex<Vec<PathBuf>> {
             v.extend(std::env::split_paths(&e));
         }
         v.push(PathBuf::from("M3Maps"));
+        // as the formulas: the user's, the program's, system-wide
+        v.extend(crate::appdirs::user_data_dir().map(|d| d.join("M3Maps")).filter(|d| d.is_dir()));
         if let Ok(exe) = std::env::current_exe() {
             if let Some(d) = exe.parent() {
                 v.push(d.join("M3Maps"));
             }
         }
+        v.extend(crate::appdirs::system_data_dirs().into_iter().map(|d| d.join("M3Maps")).filter(|d| d.is_dir()));
         Mutex::new(v)
     })
 }

@@ -1136,7 +1136,7 @@ pub fn auto() -> bool {
 /// OpenGL) and Mesa (AMD, Intel on Linux); DirectX 12 and Metal keep their
 /// own caches.
 pub fn use_own_driver_cache() {
-    let dir = crate::appdirs::work_folder("ShaderCache");
+    let dir = crate::appdirs::cache_folder("ShaderCache");
     let set = |k: &str, v: &std::ffi::OsStr| {
         if std::env::var_os(k).is_none() {
             std::env::set_var(k, v);

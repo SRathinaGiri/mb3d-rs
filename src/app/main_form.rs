@@ -210,7 +210,7 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     // the start parameters: a file of the command line or Default.m3p
     let mut start_timer = true;
     let file = app.startup_file.clone().or_else(|| {
-        let a = crate::appdirs::app_folder().join("Default.m3p");
+        let a = crate::appdirs::config_file("Default.m3p");
         let b = app.ini.dir(super::ini::DIR_M3P).join("Default.m3p");
         [a, b].into_iter().find(|p| p.is_file())
     });
@@ -251,7 +251,7 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn load_acc_preset(app: &mut Mb3d, i: usize) {
-    let p = crate::appdirs::app_folder().join(PRESET_FILES[i]);
+    let p = crate::appdirs::config_file(PRESET_FILES[i]);
     let Ok(t) = std::fs::read_to_string(p) else { return };
     let pr = &mut app.main.presets[i];
     for l in t.lines() {
@@ -282,7 +282,7 @@ fn save_acc_preset(app: &Mb3d, i: usize) {
         p.image_scale,
         fts_single(p.ray_limiter)
     );
-    let _ = std::fs::write(crate::appdirs::app_folder().join(PRESET_FILES[i]), t);
+    let _ = std::fs::write(crate::appdirs::config_folder().join(PRESET_FILES[i]), t);
 }
 
 /// Where the calculations run (not in MB3D): on the graphics card when the

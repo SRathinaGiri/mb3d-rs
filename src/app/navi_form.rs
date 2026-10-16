@@ -864,7 +864,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.set_checked(F, "CheckBox4", app.ini.get("NavHiQ") != "No");
                 app.navi.double_click = app.ini.get("NavDoubleClickMode") != "No";
                 for k in 0..3 {
-                    let p = crate::appdirs::app_folder().join(format!("NaviLightPreset{}.m3l", k + 1));
+                    let p = crate::appdirs::config_file(&format!("NaviLightPreset{}.m3l", k + 1));
                     app.navi.presets[k] = std::fs::read(p).ok().and_then(|d| crate::m3p::light_from_record(&d));
                     ui.set_enabled(F, &format!("SpeedButton{}", 19 + k), app.navi.presets[k].is_some());
                 }
@@ -1071,7 +1071,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let t = (ui.tag(F, &e.sender) - 1).clamp(0, 2) as usize;
             if ui.c(F, &e.sender).cursor == "crUpArrow" {
                 let rec = crate::m3p::write(&app.navi.scene);
-                let p = crate::appdirs::app_folder().join(format!("NaviLightPreset{}.m3l", t + 1));
+                let p = crate::appdirs::config_folder().join(format!("NaviLightPreset{}.m3l", t + 1));
                 let _ = std::fs::write(p, &rec[432..840]);
                 app.navi.presets[t] = Some(app.navi.scene.lighting.clone());
                 app.navi.storing = false;
