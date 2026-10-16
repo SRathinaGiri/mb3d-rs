@@ -7,3 +7,4 @@ Exec=Mandelbulb3D
 Icon=mb3d-rs
 Terminal=false
 Categories=Graphics;3DGraphics;
+StartupWMClass=mb3d-rs

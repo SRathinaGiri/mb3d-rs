@@ -400,8 +400,11 @@ impl<A: App> Runner<A> {
         {
             use winit::platform::wayland::WindowAttributesExtWayland;
             use winit::platform::x11::WindowAttributesExtX11;
-            attrs = WindowAttributesExtWayland::with_name(attrs, "mandelbulb3d", "Mandelbulb3D");
-            attrs = WindowAttributesExtX11::with_name(attrs, "mandelbulb3d", "Mandelbulb3D");
+            // the app ID (Wayland) and WM_CLASS (X11) name the menu entry,
+            // mb3d-rs.desktop: the desktop takes the window's icon from it
+            // (Wayland ignores the icon the program sets)
+            attrs = WindowAttributesExtWayland::with_name(attrs, "mb3d-rs", "Mandelbulb3D");
+            attrs = WindowAttributesExtX11::with_name(attrs, "mb3d-rs", "Mandelbulb3D");
         }
         let window = match el.create_window(attrs) {
             Ok(w) => Rc::new(w),

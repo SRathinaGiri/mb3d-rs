@@ -1089,8 +1089,9 @@ the same license.
 * **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
 * **The icon** is Mandelbulb3D's own icon (`m3d128.ico` from
   [thargor6/mb3d](https://github.com/thargor6/mb3d), LGPL 2.1), with its
-  background made transparent and the letters "rs" (for the Rust port)
-  added; the letters are set in Liberation Mono (SIL Open Font License).
+  background made transparent and the letters "RS" (for the Rust port)
+  added; the letters are set in Liberation Sans Bold (SIL Open Font
+  License).
 * **The noise filter** is the DCT image denoising algorithm of Guoshen Yu
   and Guillermo Sapiro: *DCT image denoising: a simple and effective image
   denoising algorithm*, Image Processing On Line 1 (2011),

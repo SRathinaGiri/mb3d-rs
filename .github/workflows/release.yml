@@ -106,7 +106,7 @@ jobs:
           done
           cp README.md GETTING_STARTED.md LICENSE download.sh "$name"/
           # the application menu entry and its icon (download.sh, the .deb)
-          cp assets/mb3d-rs.png assets/mb3d-rs-64.png assets/mb3d-rs-48.png assets/mb3d-rs.desktop "$name"/
+          cp assets/mb3d-rs*.png assets/mb3d-rs.desktop "$name"/
           # the man page and the bash, zsh and fish completions, made from the
           # program's own help (download.sh installs them)
           if [ "${{ runner.os }}" != "Windows" ]; then

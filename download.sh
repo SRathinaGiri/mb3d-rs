@@ -31,6 +31,8 @@ data="${XDG_DATA_HOME:-$HOME/.local/share}"
 conf="${XDG_CONFIG_HOME:-$HOME/.config}"
 desktop="$data/applications/mb3d-rs.desktop"
 icons="$data/icons/hicolor"
+# (and 256x256: mb3d-rs.png)
+icon_sizes="16 22 24 32 48 64 128"
 man="$data/man/man1/mb3d.1"
 bash_c="$data/bash-completion/completions/mb3d"
 zsh_c="$data/zsh/site-functions/_mb3d"
@@ -43,12 +45,24 @@ remove_link() {
   fi
 }
 
+# the desktops see the changed menu entry and icons: the desktop file
+# database, KDE's menu cache, and GTK desktops (GNOME, XFCE, ...) look at
+# the time of the icon folder
+refresh_menus() {
+  command -v update-desktop-database > /dev/null 2>&1 && update-desktop-database "$data/applications" 2> /dev/null
+  command -v kbuildsycoca6 > /dev/null 2>&1 && kbuildsycoca6 > /dev/null 2>&1
+  [ -d "$icons" ] && touch "$icons"
+  true
+}
+
 if [ -n "$uninstall" ]; then
   remove_link "$bin/mb3d"
   remove_link "$bin/Mandelbulb3D"
-  rm -f "$desktop" "$icons/256x256/apps/mb3d-rs.png" "$icons/64x64/apps/mb3d-rs.png" "$icons/48x48/apps/mb3d-rs.png" \
-    "$man" "$bash_c" "$zsh_c" "$fish_c"
-  command -v update-desktop-database > /dev/null 2>&1 && update-desktop-database "$data/applications" 2> /dev/null || true
+  rm -f "$desktop" "$icons/256x256/apps/mb3d-rs.png" "$man" "$bash_c" "$zsh_c" "$fish_c"
+  for s in $icon_sizes; do
+    rm -f "$icons/${s}x$s/apps/mb3d-rs.png"
+  done
+  refresh_menus
   echo "Removed the commands, the menu entry, the man page and the completions."
   echo "The programs and your files are still in $dir: delete that folder yourself if you no longer need it."
   exit 0
@@ -121,10 +135,13 @@ copy "$dir/completions/mb3d.fish" "$fish_c"
 
 # the application menu (Linux desktops)
 if [ "$(uname -s)" = Linux ]; then
-  # (48 and 64 px: the small-size version with larger letters)
+  # the icon in the sizes of the hicolor theme (the small ones with larger
+  # letters): panels, title bars and menus of every desktop take the size
+  # they need
   copy "$dir/mb3d-rs.png" "$icons/256x256/apps/mb3d-rs.png"
-  copy "$dir/mb3d-rs-64.png" "$icons/64x64/apps/mb3d-rs.png"
-  copy "$dir/mb3d-rs-48.png" "$icons/48x48/apps/mb3d-rs.png"
+  for s in $icon_sizes; do
+    copy "$dir/mb3d-rs-$s.png" "$icons/${s}x$s/apps/mb3d-rs.png"
+  done
   mkdir -p "$(dirname "$desktop")"
   cat > "$desktop" <<EOF
 [Desktop Entry]
@@ -137,8 +154,9 @@ Path=$dir
 Icon=mb3d-rs
 Terminal=false
 Categories=Graphics;3DGraphics;
+StartupWMClass=mb3d-rs
 EOF
-  command -v update-desktop-database > /dev/null 2>&1 && update-desktop-database "$data/applications" 2> /dev/null || true
+  refresh_menus
 fi
 
 echo "mb3d-rs is in $dir: start Mandelbulb3D (the windows) or mb3d (command line)"

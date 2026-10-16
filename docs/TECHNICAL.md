@@ -756,7 +756,7 @@ mismatch or without checksums. It then installs, for the user only:
 | what | where |
 |---|---|
 | `mb3d`, `Mandelbulb3D` (links into the folder) | `~/.local/bin` |
-| menu entry, icon (Linux) | `$XDG_DATA_HOME/applications/mb3d-rs.desktop`, `.../icons/hicolor/{48x48,64x64,256x256}/apps/mb3d-rs.png` (48 and 64 px: a version with larger letters) |
+| menu entry, icon (Linux) | `$XDG_DATA_HOME/applications/mb3d-rs.desktop`, `.../icons/hicolor/{16x16,22x22,...,256x256}/apps/mb3d-rs.png` (all hicolor sizes from 16 to 256 px; the small ones with larger letters, 16 px without) |
 | man page | `$XDG_DATA_HOME/man/man1/mb3d.1` |
 | completions | `$XDG_DATA_HOME/bash-completion/completions/mb3d`, `$XDG_DATA_HOME/zsh/site-functions/_mb3d` (add to `fpath`), `$XDG_CONFIG_HOME/fish/completions/mb3d.fish` |
 
@@ -776,6 +776,16 @@ It lays the files out as a system program: `/usr/bin/mb3d`,
 `/usr/share/mb3d-rs`, the menu entry `mb3d-rs.desktop` and its icon, the
 man page and the completions in Debian's folders (zsh:
 `vendor-completions`).
+
+**The icon on the desktops.** The menu entry `mb3d-rs.desktop` names the
+icon `mb3d-rs` (hicolor theme, 16 to 256 px). A running window is matched
+to the entry by its app ID (native Wayland) or `WM_CLASS` (X11, also
+XWayland, which the program prefers so that its windows open at their
+places), both `mb3d-rs`, and `StartupWMClass=mb3d-rs`; the window also
+sets its own icon (`_NET_WM_ICON`, 64 px), which X11 desktops show in
+title bars and task lists. `download.sh` refreshes the desktop file
+database, KDE's menu cache (`kbuildsycoca6`) and touches the icon folder
+for GTK desktops; the .deb leaves that to Debian's triggers.
 
 **Checking a download by hand:** every release has `SHA256SUMS`, and the
 archives have build provenance attestations (made by the release workflow

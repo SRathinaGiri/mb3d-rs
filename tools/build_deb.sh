@@ -38,9 +38,12 @@ mkdir -p "$share/mb3d-rs"
 for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes examples; do
   [ -d "$src/$d" ] && cp -r "$src/$d" "$share/mb3d-rs/"
 done
+# the icon in the sizes of the hicolor theme (Debian's icon triggers refresh
+# the caches of the desktops)
 install -Dm644 "$src/mb3d-rs.png" "$share/icons/hicolor/256x256/apps/mb3d-rs.png"
-install -Dm644 "$src/mb3d-rs-64.png" "$share/icons/hicolor/64x64/apps/mb3d-rs.png"
-install -Dm644 "$src/mb3d-rs-48.png" "$share/icons/hicolor/48x48/apps/mb3d-rs.png"
+for s in 16 22 24 32 48 64 128; do
+  install -Dm644 "$src/mb3d-rs-$s.png" "$share/icons/hicolor/${s}x$s/apps/mb3d-rs.png"
+done
 install -d "$share/man/man1"
 gzip -9n < "$src/man/mb3d.1" > "$share/man/man1/mb3d.1.gz"
 install -Dm644 "$src/completions/mb3d.bash" "$share/bash-completion/completions/mb3d"
@@ -67,7 +70,7 @@ License: LGPL-2.1-only
 
 Files: usr/share/icons/*
 Copyright: Mandelbulb3D's icon (m3d128.ico, thargor6/mb3d); modified for
- mb3d-rs (transparent background, the letters "rs" added)
+ mb3d-rs (transparent background, the letters "RS" added)
 License: LGPL-2.1-only
 
 Files: usr/bin/Mandelbulb3D
