@@ -1,0 +1,35 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.Integer Mode = 0
+.Integer Rings = 60
+.Double Height = 3
+.Double Gap = 0.15
+.Double Colour scale = 4
+[CODE]
+C746E000000000C746E4FFFFEF7FB86D623364B82D727320B8556C616DB8537069
+72B8616C0000C3
+[END]
+
+Ulam's prime spiral in 3D: the numbers 1, 2, 3, ... on a square spiral
+of unit cells in the xy plane (1 in the middle, 2 to its right, then
+counter-clockwise), one shape per number. The primes line up on
+diagonals, as Stanislaw Ulam saw in 1963.
+
+Calculated by mb3d-rs itself (the code above is only a placeholder; the
+original Mandelbulb3D shows nothing with this formula).
+
+Mode 0: a plate per number, a tower on each prime.
+Mode 1: a column per number, higher the more divisors it has (the
+primes are the low streets).
+Mode 2: a sphere per number, larger the more divisors it has.
+Mode 3: the numbers on cube shells around the middle (each shell's
+bottom face as the square spiral, then the ring of each layer, then the
+top face), a cube on each prime.
+Rings: the size of the spiral (60 rings: the numbers up to 14641; mode 3
+at most 120).
+Height: the height of the towers (mode 0) or of the columns (mode 1,
+growing with the logarithm of the divisor count).
+Gap: the space between the shapes, as a part of a cell.
+Colour scale: the colour value (orbit trap, "2nd choice" in the
+Lighting) is the logarithm of the divisor count; this scales it.

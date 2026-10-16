@@ -374,7 +374,8 @@ code. This port runs that code in three tiers:
    subset) for code that does not fit the static model (a handful of formula files).
 
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
-by the release workflow; so far **SphereTree**, TGlad's sphere tree) are
+by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
+**UlamSpiral**, Ulam's prime spiral in 3D) are
 written in Rust and WGSL (`src/x86/handwritten.rs`). Their `.m3f` file has
 the options and a placeholder `[CODE]` that only stores a huge `Rout` (the
 original MB3D loads the formula and shows nothing) and carries the
@@ -388,6 +389,19 @@ iterations would otherwise give the outer sphere), writes the distance
 times the inverse scale to `Rout` and a per-branch colour value (a hash of
 the lattice cell at each level, the first level weighted most) to
 `dFree1`, the orbit trap of dIFS formulas.
+
+UlamSpiral reads Mode (pConst−12), Rings (−16), Height (−24), Gap (−32) and
+Colour scale (−40). The numbers are on unit cells: the square spiral by
+its closed form (`ulam_number`), mode 3 on cube shells (`ulam_number_3d`:
+shell k after (2k−1)³, its bottom face in square-spiral order, the ring of
+each layer, its top face). Each shape stays inside its cell, so the
+shapes beyond the cells next to the point are at least half a cell away:
+the distance is the minimum over the 4 nearest cells (8 in mode 3),
+capped at 0.5, and bounded by the highest possible shape (the divisor
+count is at most 2√n; the skyline grows with its logarithm). A distance
+cut at the cell border instead would stop the marcher there (false hits).
+The colour value is the logarithm of the divisor count (trial division).
+
 
 All tiers emulate the flat 32-bit address space with the `TIteration3Dext`
 record, the option and constant buffer and a stack, using the same memory

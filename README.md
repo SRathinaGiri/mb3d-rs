@@ -74,6 +74,8 @@ you check further on your own:
   denoising known from GIMP (see [Noise filter](#noise-filter)).
 * **A new formula, SphereTree**: a tree of touching spheres that branch
   smaller and smaller, by Tom Lowe (see [SphereTree](#a-new-formula-spheretree)).
+* **A new formula, UlamSpiral**: Ulam's spiral of prime numbers in 3D, as
+  a city, a skyline, spheres or a block (see [UlamSpiral](#a-new-formula-ulamspiral)).
 * **Transparent backgrounds** for pictures and animations (see
   [Transparent background](#transparent-background)).
 * **Videos of animations**: an AVI file straight from the program, or
@@ -465,10 +467,35 @@ not in Mandelbulb3D.
 | <a href="docs/img/spheretree_close.jpg"><img src="docs/img/spheretree_close.jpg" width="380" alt="A close-up of the sphere foam of SphereTree"></a> | <a href="docs/img/spheretree_swarm.jpg"><img src="docs/img/spheretree_swarm.jpg" width="380" alt="SphereTree repeated with tilingbrickIFS: a swarm of sphere trees"></a> |
 |:---:|:---:|
 
-Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
-does. Not in this program: MB3D's script editor, the "shortdistance check
-DE" option, the random light strokes and the ambient light pass of the
-post processing window.
+### A new formula: UlamSpiral
+
+In 1963 the mathematician Stanisław Ulam wrote the numbers 1, 2, 3, …
+on a square spiral and marked the prime numbers: they line up on
+diagonal lines, which nobody has fully explained to this day.
+**UlamSpiral** builds that spiral in 3D, one shape per number, in four
+forms (*Mode*):
+
+* **0, prime towers**: a plate for every number and a tower on each
+  prime. The diagonal lines of primes become rows of towers.
+* **1, divisor skyline**: a column for every number, the higher the more
+  divisors it has; the primes are the low streets between them.
+* **2, divisor spheres**: a sphere for every number, the larger the more
+  divisors it has (the primes are the small ones).
+* **3, a block of primes**: the numbers wound around cube shells instead
+  of a square, a cube on each prime.
+
+*Rings* sets the size of the spiral (60 rings are the numbers up to
+14,641), *Height* the height of the towers or columns, *Gap* the space
+between them. With *2nd choice* (the orbit trap) in the colour settings
+the colour follows the number of divisors, so the primes have a colour
+of their own. Like SphereTree it runs on the graphics card and the
+processor, works after dIFS transforms, needs only 1 iteration, and
+parameters with it open only in this program.
+
+<a href="docs/img/ulam_city.jpg"><img src="docs/img/ulam_city.jpg" width="760" alt="UlamSpiral, prime towers: the diagonal rows of prime numbers as a city, in the Monte Carlo renderer with fog, hard shadows and depth of field"></a>
+
+| <a href="docs/img/ulam_skyline.jpg"><img src="docs/img/ulam_skyline.jpg" width="250" alt="UlamSpiral, divisor skyline"></a> | <a href="docs/img/ulam_spheres.jpg"><img src="docs/img/ulam_spheres.jpg" width="250" alt="UlamSpiral, divisor spheres"></a> | <a href="docs/img/ulam_block.jpg"><img src="docs/img/ulam_block.jpg" width="250" alt="UlamSpiral, a block of primes on cube shells"></a> |
+|:---:|:---:|:---:|
 
 ## Restored Mandelbulb3D functionality
 

@@ -11,10 +11,13 @@ use super::*;
 
 /// The hash of `SphereTree.m3f`'s placeholder code (`Prog::hash`).
 pub const SPHERE_TREE_HASH: u64 = 0x03f50568c0ace569;
+/// The hash of `UlamSpiral.m3f`'s placeholder code.
+pub const ULAM_SPIRAL_HASH: u64 = 0x12bc488dcd6d5f0e;
 
 pub(super) fn lookup_difs(hash: u64, _ops: usize) -> Option<DifsFn> {
     match hash {
         SPHERE_TREE_HASH => Some(sphere_tree_difs as DifsFn),
+        ULAM_SPIRAL_HASH => Some(ulam_spiral_difs as DifsFn),
         _ => None,
     }
 }
@@ -36,9 +39,132 @@ pub fn wgsl(hash: u64, name: &str) -> Option<lift_wgsl::WgslFormula> {
             writes_vars: false,
             dyn_var: None,
         }),
+        ULAM_SPIRAL_HASH => Some(WgslFormula {
+            code: ULAM_SPIRAL_WGSL.replace("@NAME@", name),
+            record: [3, 4, 5, 14, 34].iter().map(|&c| (c, CellTy::Whole)).collect(),
+            // Rings and Mode (pConst-16 and -12, cell 30) as the halves at 0
+            // and 1; Height (-24, cell 29) at 2, Gap (-32, cell 28) at 4,
+            // Colour scale (-40, cell 27) at 6
+            constants: vec![(30, CellTy::Halves, 0), (29, CellTy::Whole, 2), (28, CellTy::Whole, 4), (27, CellTy::Whole, 6)],
+            const_len: 8,
+            writes_vars: false,
+            dyn_var: None,
+        }),
         _ => None,
     }
 }
+
+/// [`ulam_spiral`] in WGSL (the helpers carry the function's name, so that
+/// two slots with the formula do not clash).
+const ULAM_SPIRAL_WGSL: &str = r#"fn @NAME@_n2(x: i32, y: i32) -> u32 {
+    let k = max(abs(x), abs(y));
+    if (k == 0) { return 1u; }
+    let m = (2 * k - 1) * (2 * k - 1);
+    var n: i32;
+    if (x == k && y > -k) { n = m + y + k; }
+    else if (y == k) { n = m + 2 * k + (k - x); }
+    else if (x == -k) { n = m + 4 * k + (k - y); }
+    else { n = m + 6 * k + (x + k); }
+    return u32(n);
+}
+fn @NAME@_n3(x: i32, y: i32, z: i32) -> u32 {
+    let k = max(max(abs(x), abs(y)), abs(z));
+    if (k == 0) { return 1u; }
+    let b = u32(2 * k - 1);
+    let face = u32((2 * k + 1) * (2 * k + 1));
+    let ring = u32(8 * k);
+    let u = @NAME@_n2(x, y) - 1u;
+    var off: u32;
+    if (z == -k) { off = u; }
+    else if (z == k) { off = face + b * ring + u; }
+    else { off = face + u32(z + k - 1) * ring + (u - b * b); }
+    return b * b * b + off + 1u;
+}
+fn @NAME@_div(n: u32) -> u32 {
+    var c = 0u;
+    var i = 1u;
+    loop {
+        if (i * i > n) { break; }
+        if (n % i == 0u) { c += select(2u, 1u, i * i == n); }
+        i += 1u;
+    }
+    return c;
+}
+fn @NAME@_box(q: vec3<R>, b: vec3<R>) -> R {
+    let d = abs(q) - b;
+    return length(max(d, vec3<R>(0.0))) + min(max(d.x, max(d.y, d.z)), 0.0);
+}
+fn @NAME@(cb: u32) {
+    let rings = i32(cst[cb + 0u]);
+    let mode = i32(cst[cb + 1u]);
+    let height = cst_r(cb + 2u);
+    let gap = cst_r(cb + 4u);
+    let cscale = cst_r(cb + 6u);
+    let p = vec3<R>(r3f, r4f, r5f);
+    let r = R(clamp(rings, 0, select(2000, 120, mode == 3)));
+    let hs = 0.5 * (1.0 - clamp(gap, 0.0, 0.95));
+    let c = floor(p + vec3<R>(0.5));
+    let l = p - c;
+    let sg = select(vec3<R>(1.0), vec3<R>(-1.0), l < vec3<R>(0.0));
+    let lateral = max(abs(p.x) - (r + 0.5), abs(p.y) - (r + 0.5));
+    var bd = R(0.5);
+    var bc = R(0.0);
+    var d: R;
+    if (mode == 3) {
+        let out = max(lateral, abs(p.z) - (r + 0.5));
+        if (out > 0.5) {
+            d = out;
+        } else {
+            for (var k = 0u; k < 8u; k++) {
+                let o = vec3<R>(R(k & 1u), R((k >> 1u) & 1u), R((k >> 2u) & 1u)) * sg;
+                let q = c + o;
+                if (abs(q.x) > r || abs(q.y) > r || abs(q.z) > r) { continue; }
+                let dc = @NAME@_div(@NAME@_n3(i32(q.x), i32(q.y), i32(q.z)));
+                if (dc == 2u) {
+                    let e = @NAME@_box(l - o, vec3<R>(hs));
+                    if (e < bd) { bd = e; bc = log(R(dc)); }
+                }
+            }
+            d = max(bd, out);
+        }
+    } else if (lateral > 0.5) {
+        d = lateral;
+    } else {
+        let plate = R(0.05);
+        var top = max(height, plate);
+        if (mode == 1) { top = plate + height * 0.5 * log2(2.0 * r + 1.0); }
+        if (mode == 2) { top = 2.0 * hs; }
+        if (p.z - top > 0.5) {
+            d = p.z - top;
+        } else {
+            for (var k = 0u; k < 4u; k++) {
+                let o = vec2<R>(R(k & 1u), R((k >> 1u) & 1u)) * sg.xy;
+                let q = c.xy + o;
+                if (abs(q.x) > r || abs(q.y) > r) { continue; }
+                let dc = @NAME@_div(@NAME@_n2(i32(q.x), i32(q.y)));
+                let lq = l.xy - o;
+                var e: R;
+                if (mode == 1) {
+                    let h = plate + height * 0.5 * log2(R(max(dc, 2u)) / 2.0);
+                    e = @NAME@_box(vec3<R>(lq, p.z - h * 0.5), vec3<R>(hs, hs, h * 0.5));
+                } else if (mode == 2) {
+                    let rad = hs * min(sqrt(R(dc)) / 6.0, 1.0);
+                    e = length(vec3<R>(lq, p.z - rad)) - rad;
+                } else {
+                    var h = plate;
+                    if (dc == 2u) { h = height; }
+                    e = @NAME@_box(vec3<R>(lq, p.z - h * 0.5), vec3<R>(hs, hs, h * 0.5));
+                }
+                if (e < bd) { bd = e; bc = log(R(dc)); }
+            }
+            d = max(bd, lateral);
+        }
+    }
+    r14f = d;
+    r34f = bc * cscale;
+    rg[4] = rg[4] + 4u;
+}
+"#;
 
 /// [`sphere_tree`] in WGSL (`R` is the shader's real type).
 const SPHERE_TREE_WGSL: &str = r#"fn @NAME@(cb: u32) {
@@ -282,6 +408,172 @@ pub fn sphere_tree(mut p: [f64; 3], levels: i32, k: f64, rotated: bool) -> (f64,
     ((dot(q, q).sqrt() - 0.5 * k) * scale, col)
 }
 
+/// `UlamSpiral.m3f`: options Integer Mode, Integer Rings, Double Height,
+/// Double Gap, Double Colour scale.
+fn ulam_spiral_difs(m: &mut Machine, _p: &Prog, regs: &mut [u32; 8], _max_steps: u64) -> R<()> {
+    let edi = regs[EDI];
+    let mode = m.rd32(edi.wrapping_sub(12))? as i32;
+    let rings = m.rd32(edi.wrapping_sub(16))? as i32;
+    let height = m.rdf64(edi.wrapping_sub(24))?;
+    let gap = m.rdf64(edi.wrapping_sub(32))?;
+    let colour_scale = m.rdf64(edi.wrapping_sub(40))?;
+    let it = crate::custom::IT_BASE;
+    use crate::custom::off;
+    let p = [m.rdf64(it + off::X)?, m.rdf64(it + off::X + 8)?, m.rdf64(it + off::X + 16)?];
+    let (d, col) = ulam_spiral(p, mode, rings, height, gap);
+    m.wrf64(it + off::ROUT, d)?;
+    m.wrf64(it + off::DFREE1, col * colour_scale)?;
+    regs[ESP] = regs[ESP].wrapping_add(4);
+    Ok(())
+}
+
+/// The number at the cell (x, y) of Ulam's square spiral: 1 in the middle,
+/// 2 to the right of it, then counter-clockwise.
+pub fn ulam_number(x: i64, y: i64) -> u64 {
+    let k = x.abs().max(y.abs());
+    if k == 0 {
+        return 1;
+    }
+    let m = (2 * k - 1) * (2 * k - 1);
+    let n = if x == k && y > -k {
+        m + y + k
+    } else if y == k {
+        m + 2 * k + (k - x)
+    } else if x == -k {
+        m + 4 * k + (k - y)
+    } else {
+        m + 6 * k + (x + k)
+    };
+    n as u64
+}
+
+/// The number of divisors of n (1 for 1, 2 for a prime).
+pub fn divisor_count(n: u64) -> u32 {
+    let mut c = 0;
+    let mut i = 1;
+    while i * i <= n {
+        if n % i == 0 {
+            c += if i * i == n { 1 } else { 2 };
+        }
+        i += 1;
+    }
+    c
+}
+
+fn sd_box(q: [f64; 3], b: [f64; 3]) -> f64 {
+    let d = [q[0].abs() - b[0], q[1].abs() - b[1], q[2].abs() - b[2]];
+    let o = (d[0].max(0.0).powi(2) + d[1].max(0.0).powi(2) + d[2].max(0.0).powi(2)).sqrt();
+    o + d[0].max(d[1]).max(d[2]).min(0.0)
+}
+
+/// The number at the cube (x, y, z) of a spiral over cube shells: shell k
+/// (the cubes with max(|x|, |y|, |z|) = k) follows the numbers up to
+/// (2k-1)^3; its bottom face is numbered as the square spiral, then the
+/// ring of each layer above it, then its top face.
+pub fn ulam_number_3d(x: i64, y: i64, z: i64) -> u64 {
+    let k = x.abs().max(y.abs()).max(z.abs());
+    if k == 0 {
+        return 1;
+    }
+    let before = ((2 * k - 1) as u64).pow(3);
+    let face = ((2 * k + 1) * (2 * k + 1)) as u64;
+    let ring = 8 * k as u64;
+    let u = ulam_number(x, y) - 1;
+    let off = if z == -k {
+        u
+    } else if z == k {
+        face + (2 * k - 1) as u64 * ring + u
+    } else {
+        face + (z + k - 1) as u64 * ring + (u - ((2 * k - 1) * (2 * k - 1)) as u64)
+    };
+    before + off + 1
+}
+
+/// Ulam's prime spiral in 3D. Modes 0..2: the numbers on a grid of unit
+/// cells in the xy plane (z up, from 0), one shape per cell. 0: a plate per
+/// number and a tower of `height` on each prime; 1: a column per number,
+/// higher the more divisors it has (primes are the low streets); 2: a
+/// sphere per number, larger the more divisors it has. 3: the numbers on
+/// cube shells ([`ulam_number_3d`]), a cube on each prime. `gap`: the space
+/// between the shapes (part of a cell). Returns the distance estimate and
+/// the colour value (the logarithm of the divisor count of the nearest
+/// shape: 0 for 1, 0.69 for the primes).
+///
+/// Every shape stays in its cell, so the shapes of the cells beyond the
+/// ones next to the point are at least half a cell away: the distance is
+/// the minimum over the 4 (mode 3: 8) cells nearest to the point, at most
+/// 0.5.
+pub fn ulam_spiral(p: [f64; 3], mode: i32, rings: i32, height: f64, gap: f64) -> (f64, f64) {
+    let r = rings.clamp(0, if mode == 3 { 120 } else { 2000 }) as f64;
+    let hs = 0.5 * (1.0 - gap.clamp(0.0, 0.95));
+    let c = [(p[0] + 0.5).floor(), (p[1] + 0.5).floor(), (p[2] + 0.5).floor()];
+    let l = [p[0] - c[0], p[1] - c[1], p[2] - c[2]];
+    let s = l.map(|v| if v < 0.0 { -1.0 } else { 1.0 });
+    let lateral = (p[0].abs() - (r + 0.5)).max(p[1].abs() - (r + 0.5));
+    let mut best = (0.5f64, 0.0f64);
+    if mode == 3 {
+        let out = lateral.max(p[2].abs() - (r + 0.5));
+        if out > 0.5 {
+            return (out, 0.0);
+        }
+        for k in 0..8 {
+            let o = [(k & 1) as f64 * s[0], ((k >> 1) & 1) as f64 * s[1], ((k >> 2) & 1) as f64 * s[2]];
+            let q = [c[0] + o[0], c[1] + o[1], c[2] + o[2]];
+            if q[0].abs() > r || q[1].abs() > r || q[2].abs() > r {
+                continue;
+            }
+            let dc = divisor_count(ulam_number_3d(q[0] as i64, q[1] as i64, q[2] as i64));
+            if dc == 2 {
+                let d = sd_box([l[0] - o[0], l[1] - o[1], l[2] - o[2]], [hs, hs, hs]);
+                if d < best.0 {
+                    best = (d, (dc as f64).ln());
+                }
+            }
+        }
+        return (best.0.max(out), best.1);
+    }
+    if lateral > 0.5 {
+        return (lateral, 0.0);
+    }
+    let plate = 0.05;
+    // the highest shape (the divisor count is at most 2 sqrt(n))
+    let top = match mode {
+        1 => plate + height * 0.5 * (2.0 * r + 1.0).log2(),
+        2 => 2.0 * hs,
+        _ => height.max(plate),
+    };
+    if p[2] - top > 0.5 {
+        return (p[2] - top, 0.0);
+    }
+    for k in 0..4 {
+        let o = [(k & 1) as f64 * s[0], ((k >> 1) & 1) as f64 * s[1]];
+        let q = [c[0] + o[0], c[1] + o[1]];
+        if q[0].abs() > r || q[1].abs() > r {
+            continue;
+        }
+        let dc = divisor_count(ulam_number(q[0] as i64, q[1] as i64));
+        let (lx, ly) = (l[0] - o[0], l[1] - o[1]);
+        let d = match mode {
+            1 => {
+                let h = plate + height * 0.5 * (dc.max(2) as f64 / 2.0).log2();
+                sd_box([lx, ly, p[2] - h * 0.5], [hs, hs, h * 0.5])
+            }
+            2 => {
+                let rad = hs * ((dc as f64).sqrt() / 6.0).min(1.0);
+                (lx * lx + ly * ly + (p[2] - rad) * (p[2] - rad)).sqrt() - rad
+            }
+            _ => {
+                let h = if dc == 2 { height } else { plate };
+                sd_box([lx, ly, p[2] - h * 0.5], [hs, hs, h * 0.5])
+            }
+        };
+        if d < best.0 {
+            best = (d, (dc as f64).ln());
+        }
+    }
+    (best.0.max(lateral), best.1)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -295,6 +587,50 @@ mod tests {
         let m = crate::custom::build_machine(&[Some(&cf)]);
         let p = m.prog(crate::custom::code_addr(0)).unwrap();
         assert_eq!(p.hash, SPHERE_TREE_HASH, "hash {:#018x}", p.hash);
+    }
+
+    #[test]
+    fn ulam_spiral_placeholder_is_recognised() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("M3Formulas-rs/UlamSpiral.m3f");
+        let def = crate::m3f::M3f::load(&path).unwrap();
+        assert_eq!(def.de_option, 20);
+        let cf = crate::custom::CustomFormula::new(std::sync::Arc::new(def));
+        let m = crate::custom::build_machine(&[Some(&cf)]);
+        let p = m.prog(crate::custom::code_addr(0)).unwrap();
+        assert_eq!(p.hash, ULAM_SPIRAL_HASH, "hash {:#018x}", p.hash);
+    }
+
+    #[test]
+    fn ulam_numbers() {
+        // walking the spiral: right 1, up 1, left 2, down 2, right 3, ...
+        let (mut x, mut y, mut n) = (0i64, 0i64, 1u64);
+        let dirs = [(1, 0), (0, 1), (-1, 0), (0, -1)];
+        let mut d = 0;
+        for step in 1..60 {
+            for _ in 0..2 {
+                for _ in 0..step {
+                    x += dirs[d % 4].0;
+                    y += dirs[d % 4].1;
+                    n += 1;
+                    assert_eq!(ulam_number(x, y), n, "({x}, {y})");
+                }
+                d += 1;
+            }
+        }
+        // the 3D spiral numbers every cube of the shells 0..6 once
+        let mut seen = std::collections::HashSet::new();
+        for x in -6..=6 {
+            for y in -6..=6 {
+                for z in -6..=6 {
+                    assert!(seen.insert(ulam_number_3d(x, y, z)));
+                }
+            }
+        }
+        assert_eq!(seen.len(), 13 * 13 * 13);
+        assert_eq!(*seen.iter().max().unwrap(), 13 * 13 * 13);
+        assert_eq!(divisor_count(1), 1);
+        assert_eq!(divisor_count(97), 2);
+        assert_eq!(divisor_count(36), 9);
     }
 
     #[test]
