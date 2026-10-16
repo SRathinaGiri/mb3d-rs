@@ -31,8 +31,8 @@ programming language. Anyone can run it on this repository at any time:
 **[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (click *Rescan* for a fresh result of the current code)
 
-Version 0.2.44 was rated **safe: 6 out of 100, no findings**
-([the result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
+Version 0.2.45 was rated **safe: 6 out of 100, no findings**, as 0.2.44
+before it ([the 0.2.44 result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
 and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
 it is now written to stay this way. The programs contain no code that
 connects to the internet; the only other program they ask your system to
@@ -74,6 +74,10 @@ you check further on your own:
   [Transparent background](#transparent-background)).
 * **A preview of parameter files** in the Open dialog (see
   [Preview](#preview-when-opening-parameters)).
+* **Very big pictures in one piece**: 15000 x 20000 pixels and more
+  without running out of memory, and the depth of field uses all
+  processor cores (11 times faster on 24 threads than before 0.2.45, with
+  the same picture).
 
 ## Download
 
@@ -539,8 +543,10 @@ interrupted animation continues and several computers can share one.
   code from MB3D's `.m3f` files was translated so that it runs on any
   processor (also Apple Silicon), at a small cost; the ray marching
   itself is faster. See the tables above.
-* **Big pictures** can be rendered in tiles, also on several computers
-  (`--tiles`, and the Big renders window).
+* **Big pictures** can be rendered in one piece (a 15000 x 20000 picture
+  needs about 15 GB of memory; with depth of field it takes hours) or in
+  tiles, also on several computers (`--tiles`, and the Big renders
+  window), which needs less memory.
 * **Newer or your own formulas, maps and themes** go into
   `~/.local/share/mb3d-rs/M3Formulas`, `.../M3Maps` and `.../Themes`
   (any way of installing; on Windows `%APPDATA%\mb3d-rs\...`). They
@@ -557,6 +563,13 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### Not released yet
+
+| Commit | What it does |
+|---|---|
+| [`8cd70cd`](https://github.com/thr32423/mb3d-rs/commit/8cd70cd39d9353f0609a42b49b871a26337866b5) | Remove the Flatpak files |
+| [`57e5baf`](https://github.com/thr32423/mb3d-rs/commit/57e5baf8356448d9eef568c5e7569c5e636dd8c6) | README: Updates for v0.2.45 |
+
 ### [v0.2.45](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.45) · 16 Oct 2026, 11:42 UTC
 
 | Commit | What it does |
