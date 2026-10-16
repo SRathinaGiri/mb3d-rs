@@ -55,6 +55,9 @@ pub struct State {
     /// MB3D's iGetPosFromImage: 1/10 DOF z, 2 light position, 3 julia,
     /// 4 stereo, 6 cutting, 22 midpoint
     pub get_pos: i32,
+    /// the mouse button went down for a "get ... from image" pick: its
+    /// release must not move or zoom the view (issue #6)
+    pub pos_picked: bool,
     pub mouse_start: (i32, i32),
     pub max_shape_w: i32,
     pub z_translate: i32,
@@ -93,6 +96,7 @@ impl Default for State {
             intern_aspect: 4.0 / 3.0,
             user_change: true,
             get_pos: 0,
+            pos_picked: false,
             mouse_start: (0, 0),
             max_shape_w: 0,
             z_translate: 0,
@@ -1640,6 +1644,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
             }
         }
         app.main.get_pos = 0;
+        app.main.pos_picked = true;
         set_image_cursor(app, ui);
     } else if cursor == "crCross" && button == MouseButton::Left && selecting(ui) {
         // selection for "recalculate a selection"
@@ -1652,6 +1657,9 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
 
 fn image_mouse_move(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
     let Ev::MouseMove { x, y, shift } = *ev else { return };
+    if app.main.pos_picked {
+        return;
+    }
     let cursor = ui.c(F, "Image1").cursor.clone();
     let img = ui.c(F, "Image1").rect();
     let (sx, sy) = app.main.mouse_start;
@@ -1686,6 +1694,9 @@ fn image_mouse_move(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
 
 fn image_mouse_up(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
     let Ev::MouseUp { x, y, button, .. } = *ev else { return };
+    if std::mem::take(&mut app.main.pos_picked) {
+        return;
+    }
     let cursor = ui.c(F, "Image1").cursor.clone();
     if cursor == "crHourGlass" || cursor == "crCross" || !not_all_buttons_up(ui) {
         return;
