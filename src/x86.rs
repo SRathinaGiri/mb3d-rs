@@ -3075,6 +3075,8 @@ pub static NATIVE_ENABLED: std::sync::LazyLock<std::sync::atomic::AtomicBool> =
 
 mod native;
 
+pub mod handwritten;
+
 pub mod lift;
 
 mod lift_emit;
@@ -3416,7 +3418,7 @@ impl Machine {
             })
             .collect();
         let direct = native::lookup_direct(hash, ops.len());
-        let difs = native::lookup_difs(hash, ops.len());
+        let difs = handwritten::lookup_difs(hash, ops.len()).or_else(|| native::lookup_difs(hash, ops.len()));
         let native = if direct.is_some() {
             Some(direct_via_memory as NativeFn)
         } else if difs.is_some() {

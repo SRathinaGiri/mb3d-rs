@@ -72,6 +72,8 @@ you check further on your own:
   colour, for editing without banding (see [16 bit](#16-bit-pictures)).
 * **A noise filter** for Monte Carlo and all other pictures, the DCT
   denoising known from GIMP (see [Noise filter](#noise-filter)).
+* **A new formula, SphereTree**: a tree of touching spheres that branch
+  smaller and smaller, by Tom Lowe (see [SphereTree](#a-new-formula-spheretree)).
 * **Transparent backgrounds** for pictures and animations (see
   [Transparent background](#transparent-background)).
 * **Videos of animations**: an AVI file straight from the program, or
@@ -434,6 +436,34 @@ ones in all 13 tests (four scenes, 4 to 32 rays): by up to 23 % at 4 rays,
 <a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture with 4 rays per pixel, the same with the noise filter, and with 512 rays"></a>
 
 <a href="docs/img/postpro_noise.png"><img src="docs/img/postpro_noise.png" width="260" alt="Post processing: the Noise Filter section"></a>
+
+### A new formula: SphereTree
+
+**SphereTree** is a formula Mandelbulb3D does not have: a tree of spheres
+that touch each other and branch into smaller and smaller spheres, like
+foam or coral. Tom Lowe, who invented the Mandelbox, published it in 2020
+(see the credits below). It is in the formula list with the dIFS formulas
+and has four settings:
+
+* **PackRatio** (0 to 1.22): the size of the spheres; at 1 they just
+  touch, above 1 the outer ones break off.
+* **Levels**: how deep the tree goes (6 is plenty for most pictures).
+* **Rotated**: 1 turns every level a twelfth of a turn, and the tree
+  becomes a round ball of sphere clusters.
+* **Colour scale**: every branch of the tree has its own colour. Choose
+  *2nd choice* (the orbit trap) in the colour settings of the Lighting to
+  see them; this setting spreads them over the colour gradient.
+
+It works alone and after dIFS transforms (the third picture repeats it
+with *tilingbrickIFS*), and it is calculated on the graphics card as well
+as on the processor. Set the iterations to 1: the formula calculates the
+whole tree at once. Parameters with SphereTree open only in this program,
+not in Mandelbulb3D.
+
+<a href="docs/img/spheretree_ball.jpg"><img src="docs/img/spheretree_ball.jpg" width="760" alt="A SphereTree ball (Rotated) in the Monte Carlo renderer, at dusk"></a>
+
+| <a href="docs/img/spheretree_close.jpg"><img src="docs/img/spheretree_close.jpg" width="380" alt="A close-up of the sphere foam of SphereTree"></a> | <a href="docs/img/spheretree_swarm.jpg"><img src="docs/img/spheretree_swarm.jpg" width="380" alt="SphereTree repeated with tilingbrickIFS: a swarm of sphere trees"></a> |
+|:---:|:---:|
 
 Settings are kept in `Mandelbulb3D.ini` next to the program, as MB3D
 does. Not in this program: MB3D's script editor, the "shortdistance check
@@ -1127,6 +1157,13 @@ the same license.
 ## Credits
 
 * **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
+* **The SphereTree formula** is by Tom Lowe (TGlad): recursive Eisenstein
+  Ford sphere packings on a Riemann sphere projection, published on
+  [fractalforums.org](https://fractalforums.org/fractal-mathematics-and-new-theories/28/new-sphere-tree/3557)
+  in June 2020 with a Fragmentarium file
+  ([TGlad/FragmentariumExamples](https://github.com/TGlad/FragmentariumExamples)).
+  This program's version is written in Rust and WGSL from that
+  algorithm; the colouring per branch was added.
 * **The icon** is Mandelbulb3D's own icon (`m3d128.ico` from
   [thargor6/mb3d](https://github.com/thargor6/mb3d), LGPL 2.1), with its
   background made transparent and the letters "RS" (for the Rust port)

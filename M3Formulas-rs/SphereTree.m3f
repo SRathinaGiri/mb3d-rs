@@ -1,0 +1,24 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.Double PackRatio = 1
+.Integer Levels = 6
+.Integer Rotated = 0
+.Double Colour scale = 5
+[CODE]
+C746E000000000C746E4FFFFEF7FB86D623364B82D727320B853706865B8726554
+72B865650000C3
+[END]
+
+Sphere tree by TGlad (Tom Lowe): recursive Eisenstein Ford sphere
+packings on a Riemann sphere projection, a dense tree of touching spheres
+(fractalforums.org, "New sphere tree", June 2020).
+
+Calculated by mb3d-rs itself (the code above is only a placeholder; the
+original Mandelbulb3D shows nothing with this formula).
+
+PackRatio: 0 .. 1.22, the size of the spheres (1: touching).
+Levels: how deep the tree goes.
+Rotated: 1 turns each level a twelfth of a revolution.
+Colour scale: each branch of the tree gets its own colour value (0..1.5,
+the orbit trap: "2nd choice" in the Lighting); this scales it.

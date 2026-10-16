@@ -373,6 +373,22 @@ code. This port runs that code in three tiers:
 3. **Interpreter** (`x86.rs`): an IA-32 emulator (integer, x87, SSE/SSE2
    subset) for code that does not fit the static model (a handful of formula files).
 
+Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
+by the release workflow; so far **SphereTree**, TGlad's sphere tree) are
+written in Rust and WGSL (`src/x86/handwritten.rs`). Their `.m3f` file has
+the options and a placeholder `[CODE]` that only stores a huge `Rout` (the
+original MB3D loads the formula and shows nothing) and carries the
+formula's name in `mov eax, imm32` instructions. The program of that code
+is recognised by its hash, like the translated formulas, and runs the Rust
+function as a `DifsFn`; on the GPU the hand-written WGSL takes the place
+of the lifter's translation (same record cells and constants). SphereTree
+reads PackRatio (pConst−16), Rotated (−24), Levels (−20) and Colour scale
+(−32), computes the whole tree in one call (the dIFS loop's minimum over
+iterations would otherwise give the outer sphere), writes the distance
+times the inverse scale to `Rout` and a per-branch colour value (a hash of
+the lattice cell at each level, the first level weighted most) to
+`dFree1`, the orbit trap of dIFS formulas.
+
 All tiers emulate the flat 32-bit address space with the `TIteration3Dext`
 record, the option and constant buffer and a stack, using the same memory
 layout and calling convention as MB3D. The translated plain formulas whose

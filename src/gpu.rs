@@ -440,7 +440,10 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             };
             let m = p.machine.as_ref().ok_or("no formula machine")?;
             let prog = m.prog(crate::custom::code_addr(n)).ok_or_else(|| format!("{}: not compiled", c.name()))?;
-            let wf = prog.emit_wgsl(&format!("fd{n}"), true).ok_or_else(|| format!("{} is not on the GPU yet", c.name()))?;
+            let wf = match crate::x86::handwritten::wgsl(prog.hash, &format!("fd{n}")) {
+                Some(wf) => wf,
+                None => prog.emit_wgsl(&format!("fd{n}"), true).ok_or_else(|| format!("{} is not on the GPU yet", c.name()))?,
+            };
             if wf.writes_vars {
                 return Err(format!("{} keeps state in its variables", c.name()));
             }

@@ -95,6 +95,8 @@ jobs:
             for f in "$name"/MB3D-sources/$item; do [ -e "$f" ] && mv "$f" "$name"/; done
           done
           mv "$name/MB3D-sources/README.md" "$name/README-MB3D.md"
+          # formulas new in mb3d-rs (calculated by the program itself)
+          cp M3Formulas-rs/*.m3f "$name/M3Formulas/"
           for d in History Meshes BigRenders; do mkdir -p "$name/$d"; done
           echo "Parameters of every image calculated with \"Calculate 3D\" (one folder per day), as in MB3D." > "$name/History/README.txt"
           echo "Meshes exported with BTracer2 are saved here, as in MB3D." > "$name/Meshes/README.txt"
