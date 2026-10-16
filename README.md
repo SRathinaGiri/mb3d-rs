@@ -557,6 +557,22 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.45](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.45) · 16 Oct 2026, 11:42 UTC
+
+| Commit | What it does |
+|---|---|
+| [`d9c30ac`](https://github.com/thr32423/mb3d-rs/commit/d9c30ac0094c791bfb1fdbf1780e4a9625b067f7) | Version number and release notes of this release |
+| [`aacab39`](https://github.com/thr32423/mb3d-rs/commit/aacab397208d60146b8b784f2b7172dbd850728f) | README and docs: checking safety, .deb, own formulas, packaging |
+| [`b033779`](https://github.com/thr32423/mb3d-rs/commit/b033779f54da83e3414b15438186152096dff3d8) | Flatpak: manifest and metainfo (io.github.thr32423.mb3d-rs) |
+| [`32863f4`](https://github.com/thr32423/mb3d-rs/commit/32863f4daa564c6c2bc5f2a9a4471da121f5b157) | Linux: glibc 2.28, checked download.sh, .deb, checksums, attestations |
+| [`d4bf73d`](https://github.com/thr32423/mb3d-rs/commit/d4bf73d7f37d701bb5a4d5424b3e976aac4f2d11) | New icon: MB3D's icon, transparent, with "rs" |
+| [`596f309`](https://github.com/thr32423/mb3d-rs/commit/596f309400d140f0f15dfe3ae3f79d69141d6715) | Standard folders for an installed program; own formulas, maps, themes |
+| [`a480ad1`](https://github.com/thr32423/mb3d-rs/commit/a480ad145f0f7f81672bc5f1927dd0bed1f63d20) | mb3d: exit status, progress on a terminal only, output to a pipe |
+| [`eb5f701`](https://github.com/thr32423/mb3d-rs/commit/eb5f70187e03327e02ca4cc20e111782fa9009d8) | Big pictures: reflections in bands, depth of field on all cores |
+| [`3021a67`](https://github.com/thr32423/mb3d-rs/commit/3021a67924f3ca8ad9d25730b60bbd4d04a5ea89) | Infos: Avg. and Max. iterations as in MB3D |
+| [`9d0b022`](https://github.com/thr32423/mb3d-rs/commit/9d0b0221c147e1133aa71230c1a48271a7653eba) | docs: scanrepo.dev result for 0.2.44 (issue #4) |
+| [`2535b72`](https://github.com/thr32423/mb3d-rs/commit/2535b7225d04492e132eb21665b3108d0f8e591c) | README: Updates for v0.2.44 |
+
 ### [v0.2.44](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.44) · 15 Oct 2026, 23:01 UTC
 
 | Commit | What it does |
@@ -604,6 +620,8 @@ in UTC.
 | [`3435f9d`](https://github.com/thr32423/mb3d-rs/commit/3435f9dd8af04b7d2b1f1ca1d0a1ac9fbba87dec) | Workflows: a GitHub token for curl on Windows (the DXC download) |
 | [`a81f74c`](https://github.com/thr32423/mb3d-rs/commit/a81f74c8f6bfb5571016b182b3023380b70da73f) | Panoramas: no seam where the left and right edges meet |
 
+<details><summary>Older releases (v0.1.0 to v0.2.40)</summary>
+
 ### [v0.2.40](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.40) · 15 Oct 2026, 12:36 UTC
 
 | Commit | What it does |
@@ -611,8 +629,6 @@ in UTC.
 | [`3297426`](https://github.com/thr32423/mb3d-rs/commit/3297426c1d8556fde1577062b04aa21fb58447ea) | Version number and release notes of this release |
 | [`a3c158a`](https://github.com/thr32423/mb3d-rs/commit/a3c158a2e9ec95b5932c39ba8947d491d86fa9a8) | Map formulas run as translated native code |
 | [`5e05b21`](https://github.com/thr32423/mb3d-rs/commit/5e05b2157aa593aa62b76d50b0e7e40233633164) | README: Updates for v0.2.39 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.39)</summary>
 
 ### [v0.2.39](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.39) · 15 Oct 2026, 10:59 UTC
 
