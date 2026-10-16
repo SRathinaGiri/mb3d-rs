@@ -8,6 +8,9 @@ on:
 
 permissions:
   contents: write
+  # build provenance attestations of the archives (gh attestation verify)
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -52,9 +55,29 @@ jobs:
           printf 'header = "Authorization: Bearer %s"\n' "$GH_TOKEN" > "$d/.curlrc"
           cp "$d/.curlrc" "$d/_curlrc"
           echo "CURL_HOME=$d" >> "$GITHUB_ENV"
+      # Linux: built with zig against glibc 2.28, so the programs also start
+      # on older distributions (RHEL/Rocky 8, Debian 10, Ubuntu 18.04 and
+      # newer); the runner's own glibc would make 2.39 the minimum
+      - name: Zig (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install ziglang cargo-zigbuild
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
       - name: Build
-        # with the GPU prototype (off unless --gpu / MB3D_GPU=1)
-        run: cargo build --release --features gpu --target ${{ matrix.target }}
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            cargo zigbuild --release --features gpu --target ${{ matrix.target }}.2.28
+            # no symbol may need a newer glibc than 2.28
+            for exe in Mandelbulb3D mb3d; do
+              v=$(objdump -T "target/${{ matrix.target }}/release/$exe" | grep -oE 'GLIBC_[0-9.]+' | sort -t. -k2,2n -k3,3n -u | tail -1)
+              echo "$exe needs $v"
+              case "$v" in GLIBC_2.[0-9]|GLIBC_2.1[0-9]|GLIBC_2.2[0-8]) ;; *) echo "::error::$exe needs $v"; exit 1;; esac
+            done
+          else
+            cargo build --release --features gpu --target ${{ matrix.target }}
+          fi
       - name: Package
         shell: bash
         run: |
@@ -82,6 +105,19 @@ jobs:
             cp "target/${{ matrix.target }}/release/$exe${{ matrix.ext }}" "$name"/
           done
           cp README.md GETTING_STARTED.md LICENSE download.sh "$name"/
+          # the application menu entry and its icon (download.sh, the .deb)
+          cp assets/mb3d-rs.png assets/mb3d-rs-64.png assets/mb3d-rs-48.png assets/mb3d-rs.desktop "$name"/
+          # the man page and the bash, zsh and fish completions, made from the
+          # program's own help (download.sh installs them)
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            mkdir help
+            if "$name/mb3d" --version > help/version.txt && "$name/mb3d" --help > help/main.txt; then
+              for c in animate batch voxel mesh mutagen montecarlo; do "$name/mb3d" $c --help > help/$c.txt; done
+              python3 tools/cli_docs.py help "$name"
+            else
+              echo "::warning::no man page / completions (mb3d does not run on this runner)"
+            fi
+          fi
           # the themes (the program reads them from here)
           cp -r Themes "$name"/
           mkdir -p "$name/examples"
@@ -91,6 +127,42 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then archive=mb3d-rs-${{ matrix.asset }}.zip; 7z a "$archive" "$name" > /dev/null
           else archive=mb3d-rs-${{ matrix.asset }}.tar.gz; tar czf "$archive" "$name"; fi
           echo "ARCHIVE=$archive" >> "$GITHUB_ENV"
+          # Debian/Ubuntu: a .deb of the same folder (programs in /usr/bin,
+          # MB3D's folders in /usr/share/mb3d-rs)
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            v=${GITHUB_REF_NAME#v}
+            case "$v" in [0-9]*) ;; *) v=0.0.0~$v ;; esac
+            tools/build_deb.sh "$name" "$v" deb
+            # without the version, like the archives (the README links to
+            # releases/latest/download/mb3d-rs-linux-x64.deb)
+            mv deb/mb3d-rs_${v}_amd64.deb mb3d-rs-linux-x64.deb
+            echo "DEB=mb3d-rs-linux-x64.deb" >> "$GITHUB_ENV"
+          fi
+      # the .deb installed on the runner: the programs, their files in
+      # /usr/share/mb3d-rs, the man page
+      - name: Try the .deb
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y "./$DEB"
+          mb3d --version
+          test -f /usr/share/man/man1/mb3d.1.gz
+          mb3d -W 64 -H 48 --cpu -q -o /tmp/t.png "/usr/share/mb3d-rs/M3Parameter/$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i 'apollo.*\.m3p$')"
+          test -s /tmp/t.png
+          # the user's files are not written next to the programs
+          test ! -e /usr/bin/ShaderCache
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'Linux'
+        with:
+          path: ${{ env.DEB }}
+          archive: false
+          if-no-files-found: error
+      # a signed record that this archive was built here from this commit
+      - uses: actions/attest-build-provenance@v4
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          subject-path: |
+            ${{ env.ARCHIVE }}
+            ${{ env.DEB }}
       # uploaded as it is (not zipped again): the artifact is the archive itself
       - uses: actions/upload-artifact@v7
         with:
@@ -109,6 +181,9 @@ jobs:
           path: dist
           merge-multiple: true
           skip-decompress: true
+      # the checksums download.sh verifies before it unpacks an archive
+      - name: Checksums
+        run: cd dist && sha256sum mb3d-rs* > SHA256SUMS && cat SHA256SUMS
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
