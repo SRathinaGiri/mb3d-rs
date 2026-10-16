@@ -1,3 +1,5 @@
+<img src="assets/social-preview.png" width="760" alt="mb3d-rs: Mandelbulb3D for Linux, Windows and macOS">
+
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
