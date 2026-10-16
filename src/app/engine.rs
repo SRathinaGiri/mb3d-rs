@@ -145,11 +145,12 @@ fn needs_post(sc: &Scene, p: &CalcParams) -> bool {
     crate::render::post_pending(sc, p)
 }
 
-pub fn stats_of(g: &[SiLight], calc_s: f64, post_s: f64) -> Stats {
+pub fn stats_of(g: &[SiLight], p: &CalcParams, calc_s: f64, post_s: f64) -> Stats {
     let n = g.len().max(1) as f64;
     let hits = g.iter().filter(|s| !s.is_background()).count() as f64;
     let steps = g.iter().map(|s| (s.shadow & 0x3FF) as f64).sum::<f64>() / n;
-    Stats { avg_steps: steps, avg_its: 0.0, max_its: 0, calc_s, post_s, hits: 100.0 * hits / n, stages: Default::default() }
+    let (avg_its10, max_its) = p.its.get();
+    Stats { avg_steps: steps, avg_its: avg_its10 as f64 / 10.0, max_its, calc_s, post_s, hits: 100.0 * hits / n, stages: Default::default() }
 }
 
 impl Engine {
@@ -424,7 +425,7 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) ->
     let (rgb, refl_s) = crate::render::paint_timed(&sc, &p, &post);
     stages.reflections = refl_s;
     let post_s = if needs_post(&sc, &p) { (t2 - t1).as_secs_f64() } else { 0.0 };
-    let mut stats = stats_of(&post, (t1 - t0).as_secs_f64(), post_s);
+    let mut stats = stats_of(&post, &p, (t1 - t0).as_secs_f64(), post_s);
     stats.stages = stages;
     e.publish(rgb, w, h, "", Some(stats));
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw, post, post_sig: post_sig(&sc), w, h }));
@@ -455,7 +456,7 @@ fn blocky(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(
     *e.partial.lock().unwrap() = None;
     // painted without the post calculations, as MB3D's PaintRowsNoThreadBlocky
     let rgb = crate::render::paint_preview(&sc, &p, &g);
-    let stats = stats_of(&g, t0.elapsed().as_secs_f64(), 0.0);
+    let stats = stats_of(&g, &p, t0.elapsed().as_secs_f64(), 0.0);
     e.publish(rgb, w, h, "", Some(stats));
     let g = Arc::new(g);
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw: g.clone(), post: g, post_sig: post_sig(&sc), w, h }));

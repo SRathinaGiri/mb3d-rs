@@ -424,8 +424,22 @@ fn set_edit16(app: &Mb3d, ui: &mut Ui) {
 }
 
 /// `SetEditsFromHeader` (the main window's part).
+/// A value times 10 as MB3D shows it (`IntToStr(v div 10) + '.' +
+/// IntToStr(v mod 10)`).
+fn tenths(v: i32) -> String {
+    format!("{}.{}", v / 10, v % 10)
+}
+
 pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     let sc = app.scene.clone();
+    // the statistics of the calculation the parameters come from (none
+    // known: the labels stay empty, as at MB3D's start)
+    let st = sc.stats;
+    if st != Default::default() {
+        ui.set_caption(F, "Label31", &tenths(st.avg_de_steps10));
+        ui.set_caption(F, "Label32", &tenths(st.avg_its10));
+        ui.set_caption(F, "Label40", &if st.max_its > 0 { st.max_its.to_string() } else { "?".into() });
+    }
     app.main.user_change = false;
     // a size that the kept ratio rounds to keeps that ratio (a 2000x1500
     // image halved to 250x187 is still 4:3, not 1.337:1)
@@ -782,9 +796,17 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.message(ui, &err);
             } else if app.main.calc3d {
                 let secs = app.main.calc_start.elapsed().as_secs_f64();
-                ui.set_caption(F, "Label31", &format!("{:.1}", stats.avg_steps));
-                ui.set_caption(F, "Label32", "-");
-                ui.set_caption(F, "Label40", "?");
+                // CalcStatistic: kept in the parameters (iAvrgDEsteps,
+                // iAvrgIts, iMaxIts)
+                app.scene.stats = crate::scene::CalcStats {
+                    avg_de_steps10: (stats.avg_steps * 10.0).round() as i32,
+                    avg_its10: (stats.avg_its * 10.0).round() as i32,
+                    max_its: stats.max_its,
+                };
+                let st = app.scene.stats;
+                ui.set_caption(F, "Label31", &if st.avg_de_steps10 == 0 { "?".into() } else { tenths(st.avg_de_steps10) });
+                ui.set_caption(F, "Label32", &tenths(st.avg_its10));
+                ui.set_caption(F, "Label40", &st.max_its.to_string());
                 ui.set_caption(F, "Label52", &time_str(((stats.calc_s * 10.0) as i64).max(1)));
                 app.main.led = running_led(app).unwrap_or(Led::Cpu);
                 show_led(ui, app.main.led, false);

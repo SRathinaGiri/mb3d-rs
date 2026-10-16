@@ -62,6 +62,10 @@ struct Resumer {
     fixed: bool,
     target: f64,
     timing: bool,
+    /// the march's iteration statistics of the last [`Resumer::run`]
+    /// (sum, count and most of the iterations at the surface points; see
+    /// QUEUE[4..7] in the shader)
+    its: (u64, u64, u32),
 }
 
 /// The [`Resumer`] of the reflection batches with the hash of their shader
@@ -92,15 +96,15 @@ impl Resumer {
         });
         let queue = g.device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("queue"),
-            size: 16,
+            size: 32,
             usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let queue_read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("queue read"), size: 16, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let queue_read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("queue read"), size: 32, usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let ms: f64 = std::env::var("MB3D_GPU_BAND_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(50.0);
         // MB3D_GPU_TURNS: a fixed budget (a check of the suspending)
         let fixed: Option<u32> = std::env::var("MB3D_GPU_TURNS").ok().and_then(|v| v.parse().ok());
-        Resumer { state, queue, queue_read, slots, budget: fixed.unwrap_or(64), fixed: fixed.is_some(), target: ms / 1000.0, timing: std::env::var_os("MB3D_GPU_TIMING").is_some() }
+        Resumer { state, queue, queue_read, slots, budget: fixed.unwrap_or(64), fixed: fixed.is_some(), target: ms / 1000.0, timing: std::env::var_os("MB3D_GPU_TIMING").is_some(), its: (0, 0, 0) }
     }
 
     /// Runs a job of `items` pixels (tasks) until all are done: `base` is
@@ -134,6 +138,7 @@ impl Resumer {
         enc.clear_buffer(&self.state, 0, Some(self.slots as u64 * 4));
         g.queue.write_buffer(&self.queue, 0, &bytes(&[0, 0, u32::MAX, 0]));
         g.queue.submit([enc.finish()]);
+        self.its = (0, 0, 0);
         loop {
             if cancel() || ABORT.load(std::sync::atomic::Ordering::SeqCst) {
                 return Err("cancelled".into());
@@ -147,9 +152,12 @@ impl Resumer {
             // items would be skipped once the limit grows
             g.queue.write_buffer(&self.queue, 0, &bytes(&[0, started as u32]));
             g.queue.write_buffer(&self.queue, 8, &bytes(&[u32::MAX]));
+            // the iteration statistics per submission (a u32 sum cannot
+            // overflow within one)
+            g.queue.write_buffer(&self.queue, 16, &bytes(&[0, 0, 0, 0]));
             let mut enc = g.device.create_command_encoder(&Default::default());
             encode(&mut enc, groups as u32);
-            enc.copy_buffer_to_buffer(&self.queue, 0, &self.queue_read, 0, 16);
+            enc.copy_buffer_to_buffer(&self.queue, 0, &self.queue_read, 0, 32);
             g.queue.submit([enc.finish()]);
             let slice = self.queue_read.slice(..);
             let (tx, rx) = std::sync::mpsc::channel();
@@ -163,6 +171,7 @@ impl Resumer {
             rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
             let q: Vec<u32> = slice.get_mapped_range().map_err(|e| e.to_string())?.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect();
             self.queue_read.unmap();
+            self.its = (self.its.0 + q[4] as u64, self.its.1 + q[5] as u64, self.its.2.max(q[6]));
             let (left, next) = (q[0] as usize, (q[1] as usize).min(lim));
             started = next;
             let dt = t.elapsed().as_secs_f64();
@@ -1065,6 +1074,8 @@ pub fn march_sample(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() -> 
 fn march_sample_card(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
     let (sx, sy) = (sx.max(1), sy.max(1));
     let mut q = p.clone();
+    // (the samples do not count in the calculation's statistics)
+    q.its = Default::default();
     q.rect[2] = (p.rect[2].max(0) as usize / sx) as i32;
     q.rect[3] = (p.rect[3].max(0) as usize / sy) as i32;
     if q.rect[2] == 0 || q.rect[3] == 0 {
@@ -2404,6 +2415,9 @@ fn run(
                     Ok(())
                 },
             )?;
+            if mode == 0 {
+                p.its.add(res.its.0, res.its.1, res.its.2 as i32);
+            }
         }
     }
     OVERFLOW.with(|c| c.set(overflow));

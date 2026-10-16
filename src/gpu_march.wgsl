@@ -22,9 +22,11 @@
 // (the lowest suspended), and the next submission continues it.  A
 // submission thus lasts a short time even where one pixel takes long (the
 // desktop shares the card), and the slots of finished pixels take new ones
-// meanwhile.
+// meanwhile.  QUEUE[4..7]: the march's iteration statistics of the
+// submission (sum, count and most of the iterations at the surface
+// points, MB3D's i64Its, iItAvrCount, MaxIts).
 @group(0) @binding(4) var<storage, read_write> STATE: array<u32>;
-@group(0) @binding(5) var<storage, read_write> QUEUE: array<atomic<u32>, 4>;
+@group(0) @binding(5) var<storage, read_write> QUEUE: array<atomic<u32>, 8>;
 // the maps the formulas read (map_px): count, per map (number, width,
 // height, index of its pixels), the pixels as f32 RGB 0..255 in rows of
 // width + 1 (LightMap's layout)
@@ -2558,6 +2560,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
             }
             // RMCalculateNormals (on_de) / RMCalculateNormalsOnSmoothIt
             case P_N_INIT: {
+                if (MODE_KIND == 0u && mode == M_MARCH) {
+                    // the statistics: the iterations at the surface point
+                    // (after the binary search)
+                    let its = u32(max(it_result, 0));
+                    atomicAdd(&QUEUE[4], its);
+                    atomicAdd(&QUEUE[5], 1u);
+                    atomicMax(&QUEUE[6], its);
+                }
                 if (MODE_KIND == 0u || (MODE_KIND == 3u && R_MARCH)) {
                     noffset = min(pf(DE_STOP), 1.0) * (1.0 + mzz * pf(DE_STOP_FACTOR)) * 0.15;
                     calc_sit = true;

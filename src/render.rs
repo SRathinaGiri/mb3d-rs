@@ -461,6 +461,8 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
     let card_ok = std::thread::scope(|s| {
         for _ in 0..threads.max(1) {
             s.spawn(|| {
+                // the probe does not count in the calculation's statistics
+                crate::calc::statistics_off(true);
                 loop {
                     let i = next.fetch_add(1, Ordering::Relaxed);
                     if i >= ns || t.elapsed() > budget {

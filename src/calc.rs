@@ -98,6 +98,48 @@ pub struct CalcParams {
     /// would allow single: a probe found single precision too coarse for
     /// the scene's fine detail (see `render::double_probe`).
     pub gpu_double: bool,
+    /// The iteration statistics of the calculation (shared by the clones
+    /// of these parameters).
+    pub its: std::sync::Arc<ItStats>,
+}
+
+/// MB3D's iteration statistics of a calculation (`i64Its`, `iItAvrCount`,
+/// `MaxIts` of the calculation threads): the iterations at the surface
+/// point of every pixel that hits it, after the binary search.
+#[derive(Debug, Default)]
+pub struct ItStats {
+    sum: std::sync::atomic::AtomicU64,
+    count: std::sync::atomic::AtomicU64,
+    max: std::sync::atomic::AtomicI32,
+}
+
+impl ItStats {
+    pub fn add(&self, sum: u64, count: u64, max: i32) {
+        use std::sync::atomic::Ordering::Relaxed;
+        if count > 0 {
+            self.sum.fetch_add(sum, Relaxed);
+            self.count.fetch_add(count, Relaxed);
+            self.max.fetch_max(max, Relaxed);
+        }
+    }
+
+    pub fn reset(&self) {
+        use std::sync::atomic::Ordering::Relaxed;
+        self.sum.store(0, Relaxed);
+        self.count.store(0, Relaxed);
+        self.max.store(0, Relaxed);
+    }
+
+    /// (average iterations times 10, rounded; the most iterations), as
+    /// MB3D's `CalcStatistic`: (0, 0) when no pixel hit the surface.
+    pub fn get(&self) -> (i32, i32) {
+        use std::sync::atomic::Ordering::Relaxed;
+        let (s, n) = (self.sum.load(Relaxed), self.count.load(Relaxed));
+        if n == 0 {
+            return (0, 0);
+        }
+        (((s as f64 * 10.0 / n as f64).round()) as i32, self.max.load(Relaxed))
+    }
 }
 
 /// The post calculations on the G-buffer that follow the main calculation:
@@ -748,6 +790,7 @@ impl CalcParams {
             vol: None,
             gpu_post: None,
             gpu_double: false,
+            its: Default::default(),
             machine,
         })
     }
@@ -855,6 +898,31 @@ pub struct Marcher<'a> {
     pub calc_inside: bool,
     /// the last DE came from a dIFS part
     pub(crate) last_difs: bool,
+}
+
+thread_local! {
+    /// The iteration statistics of the pixels this thread's marcher has
+    /// marched so far (sum, count, most): added to its parameters'
+    /// [`ItStats`] when the marcher is dropped.  (Kept out of the marcher:
+    /// a larger `Marcher` made some scenes 2-5 % slower.)
+    static ITS: std::cell::Cell<(u64, u64, i32)> = const { std::cell::Cell::new((0, 0, 0)) };
+    /// the marches of this thread do not count (probes)
+    static ITS_OFF: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The marches of the calling thread do not count in the statistics of
+/// their calculation while `off` (probes, samples).
+pub fn statistics_off(off: bool) {
+    ITS_OFF.with(|c| c.set(off));
+}
+
+impl Drop for Marcher<'_> {
+    fn drop(&mut self) {
+        let (s, n, m) = ITS.with(|c| c.replace((0, 0, 0)));
+        if n > 0 && !ITS_OFF.with(|c| c.get()) {
+            self.p.its.add(s, n, m);
+        }
+    }
 }
 
 impl<'a> Marcher<'a> {
@@ -1795,6 +1863,11 @@ impl<'a> Marcher<'a> {
                         self.bin_search_it();
                     }
                 }
+                let n = self.it.it_result.max(0);
+                ITS.with(|c| {
+                    let (s, k, m) = c.get();
+                    c.set((s + n as u64, k + 1, m.max(n)));
+                });
                 let nn = if p.normals_on_de {
                     self.calculate_normals(&mut si)
                 } else {

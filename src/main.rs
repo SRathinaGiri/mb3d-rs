@@ -464,6 +464,10 @@ fn render_single(
             res.paint_seconds,
             res.coverage() * 100.0
         );
+        let (avg10, most) = params.its.get();
+        if most > 0 {
+            eprintln!("  iterations at the surface: average {}.{}, most {most}", avg10 / 10, avg10 % 10);
+        }
     }
     #[cfg(feature = "gpu")]
     if !quiet && mb3d::gpu::enabled() {

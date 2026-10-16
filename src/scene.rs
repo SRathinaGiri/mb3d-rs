@@ -142,6 +142,22 @@ pub struct Scene {
     /// Light values of an animation frame: blended from the keyframes by
     /// the renderer (set by [`crate::anim`], not stored in scene files)
     pub light_blend: Option<std::sync::Arc<crate::anim::LightBlend>>,
+    /// The statistics of the last calculation (MB3D's header fields
+    /// `iAvrgDEsteps`, `iAvrgIts`, `iMaxIts`, shown in the Infos panel):
+    /// kept in .m3p/.m3i files, not in scene files, and no calculation
+    /// setting
+    pub stats: CalcStats,
+}
+
+/// Statistics of a calculation as MB3D keeps them in its parameters.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct CalcStats {
+    /// average ray steps of a pixel, times 10
+    pub avg_de_steps10: i32,
+    /// average iterations at the surface of the pixels that hit it, times 10
+    pub avg_its10: i32,
+    /// most iterations at a surface point (0: unknown)
+    pub max_its: i32,
 }
 
 /// Names of the diffuse map mappings (`Lights[1].FreeByte`).
@@ -286,6 +302,7 @@ impl Default for Scene {
             tiling: None,
             calc_rect: None,
             light_blend: None,
+            stats: CalcStats::default(),
         }
     }
 }

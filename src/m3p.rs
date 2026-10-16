@@ -407,6 +407,8 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     s.normals_on_de = r.u8(132) != 0;
     s.bin_search_steps = r.u8(134) as i32;
     s.min_iterations = r.u16(135) as i32;
+    // the statistics of the calculation (iAvrgDEsteps, iAvrgIts, iMaxIts)
+    s.stats = crate::scene::CalcStats { avg_de_steps10: r.i32(140), avg_its10: r.i32(144), max_its: r.i32(414) };
     s.optic = match r.u8(148) & 3 {
         1 => CameraOptic::Planar,
         2 | 3 => CameraOptic::Panorama,
@@ -1124,6 +1126,9 @@ pub fn write(sc: &Scene) -> Vec<u8> {
     pf32(&mut d, 104, sc.decomb.map(|c| c.mix_pow).unwrap_or(2.0));
     pf32(&mut d, 378, sc.decomb.map(|c| c.smooth).unwrap_or(0.5));
     pi32(&mut d, 418, sc.decomb.map(|c| c.iterations2).unwrap_or(sc.iterations));
+    pi32(&mut d, 140, sc.stats.avg_de_steps10);
+    pi32(&mut d, 144, sc.stats.avg_its10);
+    pi32(&mut d, 414, sc.stats.max_its);
     d[422] = sc.decomb.map(|c| c.mix_color).unwrap_or(0);
 
     // ---- TLightingParas9 ----
