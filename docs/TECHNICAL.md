@@ -14,6 +14,8 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Hybrids, inside rendering, maps](#hybrids-inside-rendering-maps)
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
+- [Where the program keeps its files](#where-the-program-keeps-its-files)
+- [Linux packaging and the command line](#linux-packaging-and-the-command-line)
 - [Building from source](#building-from-source)
 
 ## Graphics card
@@ -695,6 +697,113 @@ is written from the published algorithm only.
   the original program.
 * Points exactly on the z axis are degenerate in MB3D's triplex formulas
   (division by `x² + y²`). This is kept as in the original.
+
+## Where the program keeps its files
+
+`src/appdirs.rs` decides between two ways:
+
+* **One folder** (MB3D's way, the release archives, `download.sh`): the
+  program's folder is writable, and everything stays next to the program
+  as in MB3D: `Mandelbulb3D.ini`, the presets (`*.m3l`, `color_preset_*.bin`,
+  the accuracy presets), `History`, `BigRenders`, `Meshes`, `ShaderCache`.
+* **Installed** (a program folder the user cannot write, and always below
+  `/usr`, so that running it as root does not write into `/usr/bin`):
+
+  | what | where |
+  |---|---|
+  | `Mandelbulb3D.ini`, presets, `Default.m3p` | `$XDG_CONFIG_HOME/mb3d-rs` (`~/.config/mb3d-rs`) |
+  | `History`, `BigRenders`, `Meshes` | `$XDG_DATA_HOME/mb3d-rs` (`~/.local/share/mb3d-rs`) |
+  | `ShaderCache` | `$XDG_CACHE_HOME/mb3d-rs` (`~/.cache/mb3d-rs`) |
+
+  On Windows `%APPDATA%\mb3d-rs` and `%LOCALAPPDATA%\mb3d-rs`. A preset
+  or `Default.m3p` next to the program is still read as a default when the
+  user has none.
+
+`MB3D_PORTABLE=1` or `0` chooses a way regardless of the folder.
+
+The shipped folders are found next to the program, in the user's data
+folder and in `$XDG_DATA_DIRS/mb3d-rs` (`/usr/local/share/mb3d-rs`,
+`/usr/share/mb3d-rs`). Formulas are searched in this order:
+`--formulas` / `MB3D_FORMULAS`, `./M3Formulas`, `~/.local/share/mb3d-rs/M3Formulas`,
+the program's `M3Formulas`, the system-wide ones, next to the parameter
+file's folder, `~/mb3d-rs/M3Formulas`; the first file of a name wins, so a
+newer formula in the user's folder replaces the shipped one (formulas
+whose code differs from the translated ones run in the interpreter). Maps
+the same way. Themes are read from the shipped `Themes` folder and then
+`~/.local/share/mb3d-rs/Themes`, where a file of the same name replaces
+the shipped one and new files add themes.
+
+## Linux packaging and the command line
+
+**glibc.** The Linux programs are built with
+[cargo-zigbuild](https://github.com/rust-cross/cargo-zigbuild) against
+glibc 2.28 (`--target x86_64-unknown-linux-gnu.2.28`); a build on the
+runner's own Ubuntu would need its glibc (2.39) and not start on Debian
+12, RHEL 9 or Ubuntu 22.04. The release workflow stops if a symbol of a
+newer glibc slips in (`objdump -T`). The programs link only libc, libm and
+libgcc_s; Vulkan, X11 and Wayland are loaded at run time. `mb3d` contains
+no code of the window libraries (the linker drops them).
+
+**In the archive** (Linux and macOS): `man/mb3d.1` and
+`completions/{mb3d.bash,_mb3d,mb3d.fish}`, made by `tools/cli_docs.py`
+from `mb3d --help` and the sub-commands' `--help`, so they always match
+the program; and `mb3d-rs.png`, the icon of the menu entry.
+
+**download.sh** downloads the archive and the release's `SHA256SUMS`,
+checks the archive (`sha256sum`/`shasum`) and unpacks nothing on a
+mismatch or without checksums. It then installs, for the user only:
+
+| what | where |
+|---|---|
+| `mb3d`, `Mandelbulb3D` (links into the folder) | `~/.local/bin` |
+| menu entry, icon (Linux) | `$XDG_DATA_HOME/applications/mb3d-rs.desktop`, `.../icons/hicolor/{48x48,64x64,256x256}/apps/mb3d-rs.png` (48 and 64 px: a version with larger letters) |
+| man page | `$XDG_DATA_HOME/man/man1/mb3d.1` |
+| completions | `$XDG_DATA_HOME/bash-completion/completions/mb3d`, `$XDG_DATA_HOME/zsh/site-functions/_mb3d` (add to `fpath`), `$XDG_CONFIG_HOME/fish/completions/mb3d.fish` |
+
+(`$XDG_DATA_HOME` is `~/.local/share` and `$XDG_CONFIG_HOME` `~/.config`
+unless set.) A file in `~/.local/bin` that is not a link is left alone.
+`download.sh --uninstall [FOLDER]` removes these files and links (only
+links that point into the folder); the folder stays, as it may hold the
+user's parameters and History. `MB3D_RS_URL` points the script to
+another release folder (`file://` works, for tests).
+
+**Packages.** The release workflow also builds `mb3d-rs-linux-x64.deb`
+(`tools/build_deb.sh` from the Linux release folder; `dpkg-deb`, or `ar`
+and `tar` where it is missing) and installs it on the runner as a test.
+It lays the files out as a system program: `/usr/bin/mb3d`,
+`/usr/bin/Mandelbulb3D`, MB3D's folders (`M3Formulas`, `M3Maps`,
+`M3Parameter`, `EM_JIT_M3Formulas`, `Themes`, `examples`) in
+`/usr/share/mb3d-rs`, the menu entry `mb3d-rs.desktop` and its icon, the
+man page and the completions in Debian's folders (zsh:
+`vendor-completions`).
+
+**Checking a download by hand:** every release has `SHA256SUMS`, and the
+archives have build provenance attestations (made by the release workflow
+with GitHub's `attest-build-provenance`):
+
+```sh
+sha256sum -c --ignore-missing SHA256SUMS
+gh attestation verify mb3d-rs-linux-x64.tar.gz --repo thr32423/mb3d-rs
+```
+
+**Command line behaviour:**
+
+* Progress (`\r` updates of the percentage) is written only when the
+  error output is a terminal; in logs and pipes only the result lines
+  appear.
+* `-o -` writes the picture (PNG) to the standard output; the messages go
+  to the error output. Not for `montecarlo`, which rewrites its picture
+  after every pass.
+* `mb3d --version` (`-V`) prints the version.
+* Exit status: 0 success, 1 the calculation or another step failed, 2
+  wrong command line (unknown option, missing or bad value, no file,
+  options that do not go together), 3 the scene or parameter file could
+  not be read, 4 a result could not be written. (`main.rs`: the status is
+  2 until `args_read()`; `input_err` / `output_err` set 3 and 4.)
+* Environment: `MB3D_FORMULAS` and `MB3D_MAPS` (folders, separated like
+  `PATH`), `MB3D_GPU=0` (CPU only), `MB3D_PORTABLE` (see [Where the
+  program keeps its files](#where-the-program-keeps-its-files), also for
+  the order in which formulas are searched).
 
 ## Building from source
 

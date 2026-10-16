@@ -20,6 +20,38 @@ It comes as two programs:
   animations, batch lists, Monte Carlo renders, voxel and mesh exports,
   all without a window.
 
+## Is it safe to run? Check it yourself
+
+You do not have to take our word for it. [scanrepo.dev](https://www.scanrepo.dev)
+is an independent service that examines a GitHub repository for the signs
+of harmful software: code that starts other programs, connects to the
+internet, hides what it does, or bypasses the safety checks of the
+programming language. Anyone can run it on this repository at any time:
+
+**[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
+(click *Rescan* for a fresh result of the current code)
+
+Version 0.2.44 was rated **safe: 6 out of 100, no findings**
+([the result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
+and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
+it is now written to stay this way. The programs contain no code that
+connects to the internet; the only other program they ask your system to
+open is your file manager, when you click a button to open a folder.
+
+A scan looks for known warning signs; it is not a guarantee. These let
+you check further on your own:
+
+* **All of the source code is here.** The downloads are built from it by
+  GitHub's own build servers, by the steps you can read in
+  [the release workflow](.github/workflows/release.yml), not on anyone's
+  personal computer.
+* **Every release lists checksums** (`SHA256SUMS`), so you can confirm
+  that the file you downloaded is exactly the one that was published;
+  the one-line install below does this for you. Releases from 0.2.45 on
+  also carry GitHub's build attestations: `gh attestation verify
+  FILE --repo thr32423/mb3d-rs` shows which commit a download was built
+  from.
+
 ## What is new compared with Mandelbulb3D
 
 * **The graphics card calculates the picture** — the image itself, the
@@ -51,6 +83,7 @@ Ready-to-run programs for the latest release, no installation needed:
 |---|---|
 | Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
 | Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
+| Debian, Ubuntu, Mint (installs like other programs) | [mb3d-rs-linux-x64.deb](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.deb) |
 | macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
 | macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
 
@@ -72,7 +105,20 @@ folder):
 curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
 
-Then start `~/mb3d-rs/Mandelbulb3D`.
+It checks the download before unpacking it, puts **Mandelbulb3D** in
+your application menu (Linux) and makes `Mandelbulb3D` and `mb3d`
+commands you can type in any folder. `sh ~/mb3d-rs/download.sh
+--uninstall` takes the menu entry and the commands away again; your files
+stay.
+
+The Linux programs run on distributions from about 2018 on (Ubuntu 18.04,
+Debian 10, Rocky/RHEL 8 and newer).
+
+**Installed like other programs:** on Debian, Ubuntu and Mint, open the
+`.deb` file above (or `sudo apt install ./mb3d-rs-linux-x64.deb`).
+Mandelbulb3D is then in the application menu and `mb3d` works in any
+folder; your settings and History are kept in `~/.config/mb3d-rs` and
+`~/.local/share/mb3d-rs`.
 
 [Getting started](GETTING_STARTED.md) walks through the first steps; older
 versions and the release notes are on the
@@ -440,8 +486,10 @@ date like old parameter files.
 ## The command line
 
 `mb3d` renders without a window. Open a terminal in the program's folder
-(`cd ~/mb3d-rs` after the one-line install; on Windows a command prompt
-in the unpacked folder, and type `mb3d` instead of `./mb3d`):
+(on Windows a command prompt in the unpacked folder, and type `mb3d`
+instead of `./mb3d`). After the one-line install on Linux or macOS, `mb3d`
+works in any folder, `man mb3d` shows its manual, and the Tab key
+completes its options in bash, zsh and fish:
 
 ```sh
 ./mb3d "M3Parameter/6 AM - Torii temple.m3p" -o torii.png      # full size
@@ -453,6 +501,7 @@ in the unpacked folder, and type `mb3d` instead of `./mb3d`):
 ./mb3d City.m3p --bits 16 -o city16.png    # 16 bit colour
 ./mb3d City.m3p --denoise 4 -o city.png    # with the noise filter
 ./mb3d City.m3p --aa 2 --transparent -o city.png   # transparent background
+./mb3d City.m3p -o - | display -          # the picture into another program
 ./mb3d --help                              # all options
 ```
 
@@ -492,6 +541,13 @@ interrupted animation continues and several computers can share one.
   itself is faster. See the tables above.
 * **Big pictures** can be rendered in tiles, also on several computers
   (`--tiles`, and the Big renders window).
+* **Newer or your own formulas, maps and themes** go into
+  `~/.local/share/mb3d-rs/M3Formulas`, `.../M3Maps` and `.../Themes`
+  (any way of installing; on Windows `%APPDATA%\mb3d-rs\...`). They
+  are used in addition to the ones that
+  come with the program, and replace a shipped file of the same name, so
+  an updated formula from the forums takes effect without touching the
+  program's folder.
 
 ## Updates
 
@@ -1002,6 +1058,10 @@ the same license.
 ## Credits
 
 * **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
+* **The icon** is Mandelbulb3D's own icon (`m3d128.ico` from
+  [thargor6/mb3d](https://github.com/thargor6/mb3d), LGPL 2.1), with its
+  background made transparent and the letters "rs" (for the Rust port)
+  added; the letters are set in Liberation Mono (SIL Open Font License).
 * **The noise filter** is the DCT image denoising algorithm of Guoshen Yu
   and Guillermo Sapiro: *DCT image denoising: a simple and effective image
   denoising algorithm*, Image Processing On Line 1 (2011),

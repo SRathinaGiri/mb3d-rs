@@ -3,7 +3,7 @@ name = "mb3d"
 version = "0.2.44"
 edition = "2021"
 description = "Rust port of Mandelbulb3D (MB3D) - renderer and desktop application"
-license = "LGPL-2.1-or-later"
+license = "LGPL-2.1-only"
 
 [features]
 # the desktop application (Mandelbulb3D window and forms); without it only
