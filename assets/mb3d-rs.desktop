@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Mandelbulb3D
+GenericName=Fractal renderer
+Comment=Mandelbulb3D (mb3d-rs): 3D fractals
+Exec=Mandelbulb3D
+Icon=mb3d-rs
+Terminal=false
+Categories=Graphics;3DGraphics;

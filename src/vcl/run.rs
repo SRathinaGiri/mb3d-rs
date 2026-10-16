@@ -844,7 +844,7 @@ fn f_created(ui: &mut Ui, fi: usize) {
 }
 
 fn app_icon() -> Option<winit::window::Icon> {
-    let b = super::paint::decode_ico(include_bytes!("../../assets/Mand3D.ico"), 64)?;
+    let b = super::paint::decode_ico(include_bytes!("../../assets/mb3d-rs.ico"), 64)?;
     let rgba: Vec<u8> = b.px.iter().flat_map(|p| [(p >> 16) as u8, (p >> 8) as u8, *p as u8, (p >> 24) as u8]).collect();
     winit::window::Icon::from_rgba(rgba, b.w as u32, b.h as u32).ok()
 }

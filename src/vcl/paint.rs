@@ -1140,11 +1140,12 @@ pub fn updown_rects(c: &Control, r: Rect) -> (Rect, Rect) {
     }
 }
 
-/// The application icon of the title bar: MB3D's orange "bulb".
+/// The application icon of the title bar: the orange "bulb" of MB3D's icon
+/// (mb3d-rs.ico; without the RS badge at this size).
 fn draw_app_icon(cv: &mut Canvas, x: i32, y: i32) {
     use std::sync::OnceLock;
     static ICON: OnceLock<Option<super::bitmap::Bitmap>> = OnceLock::new();
-    let icon = ICON.get_or_init(|| decode_ico(include_bytes!("../../assets/Mand3D.ico"), 16));
+    let icon = ICON.get_or_init(|| decode_ico(include_bytes!("../../assets/mb3d-rs.ico"), 16));
     match icon {
         Some(b) => cv.image_stretch(Rect::new(x, y, 16, 16), b, true),
         None => cv.ellipse(Rect::new(x + 2, y + 2, 12, 12), Some(0xFFE07020), None),
