@@ -596,10 +596,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
-### Not released yet
+### [v0.2.46](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.46) · 16 Oct 2026, 14:45 UTC
 
 | Commit | What it does |
 |---|---|
+| [`f66b666`](https://github.com/thr32423/mb3d-rs/commit/f66b666ac1cce03672beae431c6d33cbf4610b32) | Version number and release notes of this release |
+| [`fec44aa`](https://github.com/thr32423/mb3d-rs/commit/fec44aa5dce22e743bc2eb4b61f1033db4033c91) | Videos of animations without other programs: AVI, ffmpeg command |
+| [`1d40e75`](https://github.com/thr32423/mb3d-rs/commit/1d40e750149a0354811ac8ee3508347c63eec0a4) | Post processing: selections as in MB3D, Stop ends every step |
+| [`517f8ac`](https://github.com/thr32423/mb3d-rs/commit/517f8ac7ce0e0c9f668060210d51cbbd801d1404) | Icon: capital RS in all desktop sizes, window matched to its menu entry |
+| [`cd76d6e`](https://github.com/thr32423/mb3d-rs/commit/cd76d6ebef893b293e21b64b8ad1de1c8f42cc01) | README: 0.2.45 (scan result, big pictures) |
 | [`8cd70cd`](https://github.com/thr32423/mb3d-rs/commit/8cd70cd39d9353f0609a42b49b871a26337866b5) | Remove the Flatpak files |
 | [`57e5baf`](https://github.com/thr32423/mb3d-rs/commit/57e5baf8356448d9eef568c5e7569c5e636dd8c6) | README: Updates for v0.2.45 |
 
@@ -658,6 +663,8 @@ in UTC.
 | [`9b29d56`](https://github.com/thr32423/mb3d-rs/commit/9b29d56f796855c5cda5366df3d6b64e685b7562) | docs: before/after picture of the panorama seam (issue #1) |
 | [`ad5550b`](https://github.com/thr32423/mb3d-rs/commit/ad5550bdd0081003f68a0fc0601f997a27fc2961) | README: Updates for v0.2.41 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.41)</summary>
+
 ### [v0.2.41](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.41) · 15 Oct 2026, 13:11 UTC
 
 | Commit | What it does |
@@ -665,8 +672,6 @@ in UTC.
 | [`7a134a2`](https://github.com/thr32423/mb3d-rs/commit/7a134a25a9e8efd52a7fb0e878cfe05b4ddb6c14) | Version number and release notes of this release |
 | [`3435f9d`](https://github.com/thr32423/mb3d-rs/commit/3435f9dd8af04b7d2b1f1ca1d0a1ac9fbba87dec) | Workflows: a GitHub token for curl on Windows (the DXC download) |
 | [`a81f74c`](https://github.com/thr32423/mb3d-rs/commit/a81f74c8f6bfb5571016b182b3023380b70da73f) | Panoramas: no seam where the left and right edges meet |
-
-<details><summary>Older releases (v0.1.0 to v0.2.40)</summary>
 
 ### [v0.2.40](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.40) · 15 Oct 2026, 12:36 UTC
 
