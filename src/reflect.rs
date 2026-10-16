@@ -1355,26 +1355,55 @@ fn s3d(v: S3) -> Vec3 {
     [v[0] as f64, v[1] as f64, v[2] as f64]
 }
 
+/// The pixels of one [`reflections_gpu`] call: its state (surfaces, ray
+/// stacks, the card's task buffers) is a few hundred bytes per pixel, so
+/// big pictures go through in bands of rows (8M pixels, so 4K UHD stays
+/// one band; each band costs the card ~1.5 s ramp-up; 15000x20000 at once peaked
+/// at 80 GB).  `MB3D_REFLECT_BAND_PIXELS` changes it (tests).
+#[cfg(feature = "gpu")]
+const REFLECT_BAND_PIXELS: usize = 1 << 23;
+
 /// `CalcSRT`: the reflection pass over the painted image `rgb` of the
 /// G-buffer `gbuf` (both covering `p.rect`).
 #[allow(clippy::too_many_arguments)]
 pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) {
-    let mc = &sc.mc;
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
-        match reflections_gpu(sc, p, gbuf, rgb, cam, lv, threads) {
-            Ok(()) => {
-                let s = crate::gpu::last_status();
-                if s.starts_with("GPU") && !s.contains("+reflections") {
-                    crate::gpu::set_status(format!("{s} +reflections"));
+        let [x0, y0, w, h] = p.rect;
+        let (wu, hu) = (w.max(1) as usize, h.max(0) as usize);
+        let band_px = std::env::var("MB3D_REFLECT_BAND_PIXELS").ok().and_then(|v| v.parse().ok()).unwrap_or(REFLECT_BAND_PIXELS);
+        let rows = (band_px / wu).max(1);
+        let mut q = p.clone();
+        let mut y = 0;
+        while y < hu {
+            let bh = rows.min(hu - y);
+            q.rect = [x0, y0 + y as i32, w, bh as i32];
+            let (g, c) = (&gbuf[y * wu..(y + bh) * wu], &mut rgb[y * wu * 3..(y + bh) * wu * 3]);
+            match reflections_gpu(sc, &q, g, c, cam, lv, threads) {
+                Ok(()) => y += bh,
+                // the program ends (gpu::abort_all): no CPU pass either
+                Err(e) if e == "cancelled" => return,
+                // (a failed band is unchanged: it and the rest on the CPU)
+                Err(e) => {
+                    eprintln!("reflections on the GPU failed, calculated on the CPU: {e}");
+                    q.rect = [x0, y0 + y as i32, w, (hu - y) as i32];
+                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads);
                 }
-                return;
             }
-            // the program ends (gpu::abort_all): no CPU pass either
-            Err(e) if e == "cancelled" => return,
-            Err(e) => eprintln!("reflections on the GPU failed, calculated on the CPU: {e}"),
         }
+        let s = crate::gpu::last_status();
+        if s.starts_with("GPU") && !s.contains("+reflections") {
+            crate::gpu::set_status(format!("{s} +reflections"));
+        }
+        return;
     }
+    reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads)
+}
+
+/// [`reflections`] on the CPU.
+#[allow(clippy::too_many_arguments)]
+fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) {
+    let mc = &sc.mc;
     let mid = sc.stereo_mid();
     let m1 = normalise_matrix_to(1.0, &p.vgrads);
     let hs_vecs: Vec<Vec3> = lv

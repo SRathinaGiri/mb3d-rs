@@ -174,78 +174,128 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
     let w = zc.steps(((32768 - zmax) * 256) as f64);
     let max_r = clip_r.min(r0.max(((w - z_sharp) / (1.0 + w * dsf) * ap).abs()) * 1.5);
 
-    // back to front: ascending fine z, background (-1) first
-    let mut list: Vec<(i32, u32)> = gbuf
-        .iter()
-        .enumerate()
-        .map(|(i, s)| {
-            let z = (s.zpos_fine >> 8) as i32;
-            (if z > 8388352 || s.zpos() > 32767 { -1 } else { z }, i as u32)
-        })
-        .collect();
-    list.sort_by_key(|e| e.0);
-    let mut transp = vec![0f32; n];
-    let mut col = vec![0f32; n * 3];
-    let (wi, hi) = (width as i64, height as i64);
-    for &(iz, idx) in &list {
-        let i = idx as usize;
-        let (x, y) = ((i % width) as i64, (i / width) as i64);
-        let c = [rgb[i * 3].to_255(), rgb[i * 3 + 1].to_255(), rgb[i * 3 + 2].to_255()];
-        let w = zc.steps((8388352 - iz as i64) as f64);
-        let mut s_radius = (w - z_sharp) * ap / (1.0 + w * dsf);
-        let b_descale = s_radius < 0.0;
-        s_radius = (s_radius.abs() - r_sub).clamp(0.0, max_r);
-        let s_ms = s_radius + 1.0;
-        let ims = (s_ms * s_ms) as i64;
-        let sw = 1.0 / (2.5 * s_radius * s_radius + 1.0);
-        let b_bg = iz == -1;
-        let r = (s_radius.abs() + 0.5).round_ties_even() as i64;
-        let xa = (-r).max(-x);
-        let xe = r.min(wi - 1 - x);
-        let ya = (-r).max(-y);
-        let ye = r.min(hi - 1 - y);
-        for yy in ya..=ye {
-            let iys = yy * yy;
-            for xx in xa..=xe {
-                let ii = xx * xx + iys;
-                if ii > ims {
-                    continue;
-                }
-                let j = ((y + yy) * wi + x + xx) as usize;
-                let mut w = s_ms - (ii as f32).sqrt();
-                let mut dw = 0.0;
-                if b_descale {
-                    dw = 1.0 - (0.8 * w / s_ms).powi(2);
-                }
-                w = if w > 1.0 { sw } else { w * sw };
-                let pc = &mut col[j * 3..j * 3 + 3];
-                let pt = &mut transp[j];
-                if b_descale && *pt > dw {
-                    let f = dw / *pt;
-                    for v in pc.iter_mut() {
-                        *v *= f;
-                    }
-                    *pt *= f;
-                }
-                if !b_bg && w + *pt > 1.01 {
-                    let st = (1.01 - w) / *pt;
-                    for k in 0..3 {
-                        pc[k] = pc[k] * st + c[k] * w;
-                    }
-                    *pt = 1.01;
-                } else {
-                    for k in 0..3 {
-                        pc[k] += c[k] * w;
-                    }
-                    *pt += w;
-                }
-            }
-        }
+    // back to front: ascending fine z, background (-1) first, equal depths
+    // in pixel order (a counting sort over the 24 bit depths)
+    let depth = |s: &SiLight| {
+        let z = (s.zpos_fine >> 8) as i32;
+        if z > 8388352 || s.zpos() > 32767 { -1 } else { z }
+    };
+    let mut start = vec![0usize; 8388355];
+    for s in gbuf {
+        start[(depth(s) + 2) as usize] += 1;
     }
-    for i in 0..n {
-        let m = if transp[i] < 1e-10 { 1e10 } else { 1.0 / transp[i] };
-        for k in 0..3 {
-            rgb[i * 3 + k] = S::from_dof(col[i * 3 + k] * m);
+    for k in 1..start.len() {
+        start[k] += start[k - 1];
+    }
+    let mut order = vec![0u32; n];
+    for (i, s) in gbuf.iter().enumerate() {
+        let k = (depth(s) + 1) as usize;
+        order[start[k]] = i as u32;
+        start[k] += 1;
+    }
+    drop(start);
+    // The pixels spread over at most `rmax` rows, so the image is painted in
+    // bands of rows, each by one thread over the whole list: a pixel of a
+    // band still gets its contributions in the same order (the result is
+    // the same as one pass over the image, which took hours at 15000x20000).
+    let (wi, hi) = (width as i64, height as i64);
+    let rmax = (max_r.abs() + 0.5).round_ties_even() as i64;
+    let threads = std::thread::available_parallelism().map_or(4, |t| t.get());
+    let band_rows = height.div_ceil(threads * 4).max(1);
+    let n_bands = height.div_ceil(band_rows);
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let src: &[S] = rgb;
+    let (order, next) = (&order, &next);
+    let bands: Vec<(usize, Vec<f32>, Vec<f32>)> = std::thread::scope(|s| {
+        let hs: Vec<_> = (0..threads.min(n_bands))
+            .map(|_| {
+                s.spawn(move || {
+                    let mut done = Vec::new();
+                    loop {
+                        let b = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                        if b >= n_bands {
+                            break done;
+                        }
+                        let (by0, by1) = ((b * band_rows) as i64, ((b + 1) * band_rows).min(height) as i64);
+                        let bn = (by1 - by0) as usize * width;
+                        let mut transp = vec![0f32; bn];
+                        let mut col = vec![0f32; bn * 3];
+                        // the pixels that can reach the band
+                        let lo = ((by0 - rmax).max(0) * wi) as u32;
+                        let hi_i = ((by1 + rmax).min(hi) * wi) as u32;
+                        for &idx in order.iter() {
+                            if idx < lo || idx >= hi_i {
+                                continue;
+                            }
+                            let i = idx as usize;
+                            let iz = depth(&gbuf[i]);
+                            let (x, y) = ((i % width) as i64, (i / width) as i64);
+                            let c = [src[i * 3].to_255(), src[i * 3 + 1].to_255(), src[i * 3 + 2].to_255()];
+                            let w = zc.steps((8388352 - iz as i64) as f64);
+                            let mut s_radius = (w - z_sharp) * ap / (1.0 + w * dsf);
+                            let b_descale = s_radius < 0.0;
+                            s_radius = (s_radius.abs() - r_sub).clamp(0.0, max_r);
+                            let s_ms = s_radius + 1.0;
+                            let ims = (s_ms * s_ms) as i64;
+                            let sw = 1.0 / (2.5 * s_radius * s_radius + 1.0);
+                            let b_bg = iz == -1;
+                            let r = (s_radius.abs() + 0.5).round_ties_even() as i64;
+                            let xa = (-r).max(-x);
+                            let xe = r.min(wi - 1 - x);
+                            let ya = (-r).max(-y).max(by0 - y);
+                            let ye = r.min(hi - 1 - y).min(by1 - 1 - y);
+                            for yy in ya..=ye {
+                                let iys = yy * yy;
+                                for xx in xa..=xe {
+                                    let ii = xx * xx + iys;
+                                    if ii > ims {
+                                        continue;
+                                    }
+                                    let j = ((y + yy - by0) * wi + x + xx) as usize;
+                                    let mut w = s_ms - (ii as f32).sqrt();
+                                    let mut dw = 0.0;
+                                    if b_descale {
+                                        dw = 1.0 - (0.8 * w / s_ms).powi(2);
+                                    }
+                                    w = if w > 1.0 { sw } else { w * sw };
+                                    let pc = &mut col[j * 3..j * 3 + 3];
+                                    let pt = &mut transp[j];
+                                    if b_descale && *pt > dw {
+                                        let f = dw / *pt;
+                                        for v in pc.iter_mut() {
+                                            *v *= f;
+                                        }
+                                        *pt *= f;
+                                    }
+                                    if !b_bg && w + *pt > 1.01 {
+                                        let st = (1.01 - w) / *pt;
+                                        for k in 0..3 {
+                                            pc[k] = pc[k] * st + c[k] * w;
+                                        }
+                                        *pt = 1.01;
+                                    } else {
+                                        for k in 0..3 {
+                                            pc[k] += c[k] * w;
+                                        }
+                                        *pt += w;
+                                    }
+                                }
+                            }
+                        }
+                        done.push((by0 as usize, col, transp));
+                    }
+                })
+            })
+            .collect();
+        hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
+    });
+    for (by0, col, transp) in bands {
+        let o = by0 * width;
+        for (i, t) in transp.iter().enumerate() {
+            let m = if *t < 1e-10 { 1e10 } else { 1.0 / t };
+            for k in 0..3 {
+                rgb[(o + i) * 3 + k] = S::from_dof(col[i * 3 + k] * m);
+            }
         }
     }
 }
