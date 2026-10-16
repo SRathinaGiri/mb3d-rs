@@ -628,6 +628,16 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.47](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.47) · 16 Oct 2026, 19:16 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1b630d9`](https://github.com/thr32423/mb3d-rs/commit/1b630d93e5dcdcf18e479386cd0868336d13a86b) | Version number and release notes of this release |
+| [`3d0cd99`](https://github.com/thr32423/mb3d-rs/commit/3d0cd998bbde720c4836d8c6b0554fc8305ccdc0) | New formula SphereTree (TGlad's sphere tree), on the CPU and the GPU |
+| [`fb5f6af`](https://github.com/thr32423/mb3d-rs/commit/fb5f6af7e5de89f49362c7aded629b42fb6a1fdc) | README: banner with the RS icon |
+| [`18877c8`](https://github.com/thr32423/mb3d-rs/commit/18877c893ea8007fbc4dfe3e2a525a0f697d75c6) | download.sh: say which version it installs |
+| [`a87d266`](https://github.com/thr32423/mb3d-rs/commit/a87d2669ccf57c837495175b359c2eceeb7ae79e) | README: Updates for v0.2.46 |
+
 ### [v0.2.46](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.46) · 16 Oct 2026, 14:45 UTC
 
 | Commit | What it does |
@@ -677,6 +687,8 @@ in UTC.
 | [`3658ae8`](https://github.com/thr32423/mb3d-rs/commit/3658ae8a79c30dfdec49fd2f4b0264d4238acd40) | Start-up lighting as in MB3D |
 | [`2aa1bdc`](https://github.com/thr32423/mb3d-rs/commit/2aa1bdc4f5a76983085447e9a53b8c4584ca6631) | README: Updates for v0.2.42 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.42)</summary>
+
 ### [v0.2.42](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.42) · 15 Oct 2026, 19:26 UTC
 
 | Commit | What it does |
@@ -694,8 +706,6 @@ in UTC.
 | [`95c0c58`](https://github.com/thr32423/mb3d-rs/commit/95c0c586fb6653b457096e42fc0861291ca6ffa8) | Paint on image: paint palette colours on the calculated picture |
 | [`9b29d56`](https://github.com/thr32423/mb3d-rs/commit/9b29d56f796855c5cda5366df3d6b64e685b7562) | docs: before/after picture of the panorama seam (issue #1) |
 | [`ad5550b`](https://github.com/thr32423/mb3d-rs/commit/ad5550bdd0081003f68a0fc0601f997a27fc2961) | README: Updates for v0.2.41 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.41)</summary>
 
 ### [v0.2.41](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.41) · 15 Oct 2026, 13:11 UTC
 
