@@ -681,13 +681,13 @@ fn finish_calculation(
     if two_d || post == 0 {
         // MB3D runs no post calculations after a 2D calculation
     } else if post == 2 {
-        post_process(sc, &p, &mut gbuf, threads);
+        post_process_cancellable(sc, &p, &mut gbuf, threads, cancel)?;
     } else if sc.shadows.is_some() || sc.deao.is_some() {
         let mut s2 = sc.clone();
         if s2.deao.is_none() {
             s2.ao = None;
         }
-        post_process(&s2, &p, &mut gbuf, threads);
+        post_process_cancellable(&s2, &p, &mut gbuf, threads, cancel)?;
     }
     if cancel() {
         return Err("cancelled".into());
@@ -755,6 +755,13 @@ pub struct StageTimes {
 /// what it ran with other settings is undone first.  Returns the times of
 /// the shadows and the occlusion.
 pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize) -> StageTimes {
+    post_process_cancellable(sc, p, gbuf, threads, &|| false).unwrap_or_default()
+}
+
+/// [`post_process`] that stops (`Err("cancelled")`, the G-buffer half
+/// done) when `cancel` returns true: the "Stop" button.
+pub fn post_process_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize, cancel: &(dyn Fn() -> bool + Sync)) -> Result<StageTimes, String> {
+    let stopped = || if cancel() { Err("cancelled".to_string()) } else { Ok(()) };
     let mut times = StageTimes::default();
     if sc.normals_on_zbuf {
         crate::reflect::normals_on_zbuf(sc, p, gbuf);
@@ -780,7 +787,8 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
     }
     if sc.shadows.is_some() && !shadows_done {
         let t = Instant::now();
-        hard_shadows(sc, p, gbuf, threads);
+        hard_shadows_cancellable(sc, p, gbuf, threads, cancel);
+        stopped()?;
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
             eprintln!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
         }
@@ -791,15 +799,16 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
         let t = Instant::now();
         if let Some(d) = &sc.deao {
             if !deao_done {
-                crate::deao::deao(p, gbuf, p.rect[2] as usize, p.rect[3] as usize, d, threads);
+                crate::deao::deao(p, gbuf, p.rect[2] as usize, p.rect[3] as usize, d, threads, cancel);
                 times.ao = Some(Some(t.elapsed().as_secs_f64()));
             }
         } else {
             ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads);
             times.ao = Some(Some(t.elapsed().as_secs_f64()));
         }
+        stopped()?;
     }
-    times
+    Ok(times)
 }
 
 fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize) {
@@ -973,6 +982,11 @@ pub fn shadow_job(sc: &Scene, p: &CalcParams) -> Option<ShadowJob> {
 /// `CalcHardShadowT`: hard (or one soft) shadow for the selected global
 /// lights, stored in the shadow bits of the G-buffer.
 pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize) {
+    hard_shadows_cancellable(sc, p, gbuf, threads, &|| false)
+}
+
+/// [`hard_shadows`] whose rows stop when `cancel` returns true.
+pub fn hard_shadows_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
     let Some(hs) = &sc.shadows else { return };
     let Some(job) = shadow_job(sc, p) else { return };
     // the HS calculation always uses 8 binary search steps
@@ -993,6 +1007,9 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
         for list in per {
             s.spawn(move || {
                 for (y, row) in list {
+                    if cancel() {
+                        break;
+                    }
                     let y = y + y0;
                     let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
                     let mut m = Marcher::new(p, seed);
@@ -1009,28 +1026,36 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 /// Paints the G-buffer with the scene lighting.
 pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with::<u8>(sc, p, gbuf, true).0
+    paint_with::<u8>(sc, p, gbuf, true, &|| false).0
+}
+
+/// [`paint`] that stops (`Err("cancelled")`) when `cancel` returns true,
+/// also during the reflections and the depth of field: the "Stop" button.
+pub fn paint_cancellable(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], cancel: &(dyn Fn() -> bool + Sync)) -> Result<Vec<u8>, String> {
+    let rgb = paint_with::<u8>(sc, p, gbuf, true, cancel).0;
+    if cancel() { Err("cancelled".into()) } else { Ok(rgb) }
 }
 
 /// [`paint`] in 16 bit per colour channel (the colours as calculated,
 /// before MB3D's rounding to 8 bit): `mb3d --bits 16`, "PNG 16 bit colour".
 pub fn paint16(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u16> {
-    paint_with::<u16>(sc, p, gbuf, true).0
+    paint_with::<u16>(sc, p, gbuf, true, &|| false).0
 }
 
 /// [`paint`], and the time of the reflections (None without them).
 pub fn paint_timed(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> (Vec<u8>, Option<f64>) {
-    paint_with::<u8>(sc, p, gbuf, true)
+    paint_with::<u8>(sc, p, gbuf, true, &|| false)
 }
 
 /// [`paint`] without the reflections and the depth of field: the preview
 /// of the rows calculated so far (both need the whole image, and the
-/// reflections march again, taking as long as the calculation itself).
+/// reflections march again, taking as long as the calculation itself),
+/// and MB3D's `PaintRows` of a recalculated selection.
 pub fn paint_preview(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with::<u8>(sc, p, gbuf, false).0
+    paint_with::<u8>(sc, p, gbuf, false, &|| false).0
 }
 
-fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool) -> (Vec<S>, Option<f64>) {
+fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool, cancel: &(dyn Fn() -> bool + Sync)) -> (Vec<S>, Option<f64>) {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);
@@ -1060,11 +1085,11 @@ fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[Si
     let mut refl_s = None;
     if sc.mc.reflections && p.slice_2d == 0 {
         let t = Instant::now();
-        crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads);
+        crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads, cancel);
         refl_s = Some(t.elapsed().as_secs_f64());
     }
-    if let Some(d) = sc.dof.as_ref().filter(|_| p.slice_2d == 0) {
-        crate::dof::apply(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d);
+    if let Some(d) = sc.dof.as_ref().filter(|_| p.slice_2d == 0 && !cancel()) {
+        crate::dof::apply(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d, cancel);
     }
     (rgb, refl_s)
 }

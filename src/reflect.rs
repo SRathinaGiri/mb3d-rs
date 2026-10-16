@@ -1366,7 +1366,10 @@ const REFLECT_BAND_PIXELS: usize = 1 << 23;
 /// `CalcSRT`: the reflection pass over the painted image `rgb` of the
 /// G-buffer `gbuf` (both covering `p.rect`).
 #[allow(clippy::too_many_arguments)]
-pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) {
+///
+/// `cancel` ("Stop") ends it early; the picture is then half done (the
+/// callers drop it).
+pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
         let [x0, y0, w, h] = p.rect;
@@ -1376,10 +1379,13 @@ pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         let mut q = p.clone();
         let mut y = 0;
         while y < hu {
+            if cancel() {
+                return;
+            }
             let bh = rows.min(hu - y);
             q.rect = [x0, y0 + y as i32, w, bh as i32];
             let (g, c) = (&gbuf[y * wu..(y + bh) * wu], &mut rgb[y * wu * 3..(y + bh) * wu * 3]);
-            match reflections_gpu(sc, &q, g, c, cam, lv, threads) {
+            match reflections_gpu(sc, &q, g, c, cam, lv, threads, cancel) {
                 Ok(()) => y += bh,
                 // the program ends (gpu::abort_all): no CPU pass either
                 Err(e) if e == "cancelled" => return,
@@ -1387,7 +1393,7 @@ pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                 Err(e) => {
                     eprintln!("reflections on the GPU failed, calculated on the CPU: {e}");
                     q.rect = [x0, y0 + y as i32, w, (hu - y) as i32];
-                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads);
+                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads, cancel);
                 }
             }
         }
@@ -1397,12 +1403,12 @@ pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         }
         return;
     }
-    reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads)
+    reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads, cancel)
 }
 
 /// [`reflections`] on the CPU.
 #[allow(clippy::too_many_arguments)]
-fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) {
+fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
     let mc = &sc.mc;
     let mid = sc.stereo_mid();
     let m1 = normalise_matrix_to(1.0, &p.vgrads);
@@ -1459,6 +1465,9 @@ fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         for list in per {
             s.spawn(move || {
                 for (ry, row) in list {
+                    if cancel() {
+                        break;
+                    }
                     let y = ry as i32 + y0;
                     let seed = (0x24563487i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
                     let mut t = SrTracer {
@@ -1533,7 +1542,8 @@ struct RPix {
 /// surface sends a refracted and a reflected ray: every round marches the
 /// next ray of each pixel.
 #[cfg(feature = "gpu")]
-fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize) -> Result<(), String> {
+#[allow(clippy::too_many_arguments)]
+fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     use crate::gpu::{ReflectLight, ReflectOpts, ReflectTask};
     let mc = &sc.mc;
     let mid = sc.stereo_mid();
@@ -1826,6 +1836,10 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     // the two (Luna's vase: the CPU's part came out 68 % and 45 % in turn).
     let mut cpu_part: [Option<f64>; 2] = [None; 2];
     loop {
+        // ("Stop": rgb is written only at the end, so it stays unchanged)
+        if cancel() {
+            return Err("cancelled".into());
+        }
         let ts = std::time::Instant::now();
         let reqs: Vec<(usize, RayReq)> = std::thread::scope(|s| {
             let mut handles = Vec::new();

@@ -77,14 +77,19 @@ fn focus(p: &DofParams, pass: u32, sorted: bool, width: usize, height: usize, fo
 }
 
 /// Applies all passes of the depth of field to `rgb` (8 or 16 bit RGB).
+/// `cancel` ("Stop") ends it after the running pass (the sorted one also
+/// within a pass; the picture is then half done and dropped by the callers).
 #[allow(clippy::too_many_arguments)]
-pub fn apply<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc_mul: f64, zcorr: f64, fov_y_deg: f64, p: &DofParams) {
+pub fn apply<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc_mul: f64, zcorr: f64, fov_y_deg: f64, p: &DofParams, cancel: &(dyn Fn() -> bool + Sync)) {
     let zc = ZConv { zc_mul_inv: 1.0 / zc_mul, zcorr_inv: 1.0 / zcorr };
     for pass in 0..p.passes.clamp(1, 4) as u32 {
+        if cancel() {
+            return;
+        }
         if p.forward {
             dof_forward(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass);
         } else {
-            dof_sorted(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass);
+            dof_sorted(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass, cancel);
         }
     }
 }
@@ -156,7 +161,7 @@ fn dof_forward<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height:
 
 /// `doDOFsort`
 #[allow(clippy::too_many_arguments)]
-fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32) {
+fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32, cancel: &(dyn Fn() -> bool + Sync)) {
     let (ap, dsf, z_sharp, r_sub) = focus(p, pass, true, width, height, fov);
     let clip_r = p.clip_r.clamp(0.1, 1000.0);
     let n = width * height;
@@ -213,7 +218,7 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
                     let mut done = Vec::new();
                     loop {
                         let b = next.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                        if b >= n_bands {
+                        if b >= n_bands || cancel() {
                             break done;
                         }
                         let (by0, by1) = ((b * band_rows) as i64, ((b + 1) * band_rows).min(height) as i64);
@@ -348,7 +353,7 @@ mod tests {
                 passes: 1,
                 forward,
             };
-            apply(&mut rgb, &g, w, h, 300.0, 0.001, 30.0, &p);
+            apply(&mut rgb, &g, w, h, 300.0, 0.001, 30.0, &p, &|| false);
             let near = contrast(&rgb, w, 4, w / 2 - 4, h);
             let far = contrast(&rgb, w, w / 2 + 4, w, h);
             assert!(far < before_far * 0.5, "forward {forward}: far side not blurred");

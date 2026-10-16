@@ -22,9 +22,52 @@ pub enum Job {
     Blocky { scene: Scene },
     /// lighting / post processing changed: repaint the kept G-buffer
     Repaint { scene: Scene },
-    /// "Recalculate a selection": rectangle (left, top, width, height) of
-    /// the image with the raystep divided, optionally only nearer parts
-    Recalc { scene: Scene, rect: [i32; 4], div: f64, nearer: bool },
+    /// "Recalculate a selection" (MB3D's `CalcPartT`): rectangle (left,
+    /// top, width, height) of the image with the raystep divided,
+    /// optionally only nearer parts, its hard shadows (`hs`) and DEAO
+    /// (`deao`) again, the ambient shadows kept (`keep_as`)
+    Recalc { scene: Scene, rect: [i32; 4], div: f64, nearer: bool, hs: bool, deao: bool, keep_as: bool },
+    /// "Calculate reflections" with "Calculate only a selection in the
+    /// image" (MB3D's `CalcSRT` with the selection): the reflections of
+    /// the rectangle only
+    ReflectSel { scene: Scene, rect: [i32; 4] },
+}
+
+/// `rect` clipped to the image (MB3D's `ClipIRect`); None when less than
+/// 3 pixels remain in a direction.
+fn clip_rect(rect: [i32; 4], w: usize, h: usize) -> Option<[usize; 4]> {
+    let x0 = rect[0].max(0) as usize;
+    let y0 = rect[1].max(0) as usize;
+    let x1 = ((rect[0] + rect[2]).max(0) as usize).min(w);
+    let y1 = ((rect[1] + rect[3]).max(0) as usize).min(h);
+    (x1 > x0 + 2 && y1 > y0 + 2).then(|| [x0, y0, x1 - x0, y1 - y0])
+}
+
+/// The pixels of rectangle `r` of an image `w` wide.
+fn take_rect<T: Copy>(buf: &[T], w: usize, r: [usize; 4], per: usize) -> Vec<T> {
+    let [x0, y0, rw, rh] = r;
+    let mut v = Vec::with_capacity(rw * rh * per);
+    for y in y0..y0 + rh {
+        v.extend_from_slice(&buf[(y * w + x0) * per..(y * w + x0 + rw) * per]);
+    }
+    v
+}
+
+/// Writes the pixels of rectangle `r` back (see [`take_rect`]).
+fn put_rect<T: Copy>(buf: &mut [T], w: usize, r: [usize; 4], per: usize, part: &[T]) {
+    let [x0, y0, rw, rh] = r;
+    for y in 0..rh {
+        let d = ((y0 + y) * w + x0) * per;
+        buf[d..d + rw * per].copy_from_slice(&part[y * rw * per..(y + 1) * rw * per]);
+    }
+}
+
+/// The parameters of rectangle `r` of the image of `p` (whose `rect` is
+/// the whole image or tile).
+fn rect_params(p: &CalcParams, r: [usize; 4]) -> CalcParams {
+    let mut q = p.clone();
+    q.rect = [p.rect[0] + r[0] as i32, p.rect[1] + r[1] as i32, r[2] as i32, r[3] as i32];
+    q
 }
 
 /// Statistics of the calculated image (Infos tab).
@@ -365,7 +408,8 @@ fn worker(e: Arc<Inner>) {
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
-            Job::Recalc { scene, rect, div, nearer } => recalc(&e, &scene, rect, div, nearer, &cancel),
+            Job::Recalc { scene, rect, div, nearer, hs, deao, keep_as } => recalc(&e, &scene, rect, div, nearer, (hs, deao, keep_as), &cancel),
+            Job::ReflectSel { scene, rect } => reflect_sel(&e, &scene, rect, &cancel),
         }))
         .unwrap_or_else(|p| {
             let m = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
@@ -510,18 +554,15 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
         e.out.lock().unwrap().stage = "post processing".into();
         let mut g = (*b.raw).clone();
         if needs_post(&target, &b.params) {
-            crate::render::post_process(&target, &b.params, &mut g, crate::render::thread_count(&target));
+            crate::render::post_process_cancellable(&target, &b.params, &mut g, crate::render::thread_count(&target), cancel)?;
         }
         Arc::new(g)
     };
     if cancel() {
         return Err("cancelled".into());
     }
-    let rgb = crate::render::paint(&target, &b.params, &post);
-    // stopped during the reflections: the image stays as it was
-    if cancel() {
-        return Err("cancelled".into());
-    }
+    // (stopped during the reflections or the DoF: the image stays as it was)
+    let rgb = crate::render::paint_cancellable(&target, &b.params, &post, cancel)?;
     e.publish(rgb, b.w, b.h, "", None);
     let mut g = e.base.lock().unwrap();
     // (the buffers painted on meanwhile ("Paint on image") are kept: their
@@ -534,43 +575,105 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     Ok(())
 }
 
-fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+/// MB3D's `CalcPartT`: the selection is marched again (the raystep
+/// divided by `div`; with `nearer` only nearer surfaces replace the old
+/// ones), its hard shadows and DEAO are calculated again there only
+/// (`opts`: hard shadows, DEAO, keep the ambient shadows), and the rows of
+/// the selection are painted again without reflections and depth of field
+/// (`PaintRows`); the rest of the image stays as it is.
+fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (bool, bool, bool), cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let (hs, deao, keep_as) = opts;
     let b = e.base.lock().unwrap().clone().ok_or("calculate the image first (Calculate 3D)")?;
     if sc.width != b.scene.width || sc.height != b.scene.height {
         return Err("the image size changed: calculate the image again".into());
     }
-    let [x0, y0, rw, rh] = rect;
-    if rw < 1 || rh < 1 {
-        return Err("mark a selection in the image first".into());
-    }
+    let (w, h) = (b.w, b.h);
+    let r = clip_rect(rect, w, h).ok_or("the selection must be bigger than 2 pixels in width and height")?;
+    let [x0, y0, rw, rh] = r;
     e.out.lock().unwrap().stage = "recalculating the selection".into();
     let mut rs = sc.clone();
-    rs.calc_rect = Some(rect);
+    rs.calc_rect = Some([x0 as i32, y0 as i32, rw as i32, rh as i32]);
     rs.z_step_div = (rs.z_step_div / div.max(1.0)).max(1e-4);
     let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
     let (_, g) = crate::render::calculate_raw_cancellable(&rs, &progress, cancel)?;
-    let mut merged = (*b.raw).clone();
-    let w = b.w;
-    for y in 0..rh as usize {
-        for x in 0..rw as usize {
-            let n = g[y * rw as usize + x];
-            let o = &mut merged[(y0 as usize + y) * w + x0 as usize + x];
-            if !nearer || n.zpos_fine < o.zpos_fine {
-                *o = n;
-            }
+    let mut target = sc.clone();
+    target.calc_rect = None;
+    let p = CalcParams::new(&target)?;
+    let threads = crate::render::thread_count(&target);
+    // the selection in the kept buffers: the new surfaces in the raw
+    // G-buffer, and in the processed one with its shadows again
+    let mut raw = (*b.raw).clone();
+    let mut post = (*b.post).clone();
+    let mut part = take_rect(&post, w, r, 1);
+    for (i, n) in g.iter().enumerate() {
+        let o = &mut part[i];
+        if nearer && n.zpos_fine >= o.zpos_fine {
+            continue;
+        }
+        let amb = o.amb_shadow;
+        *o = *n;
+        if keep_as {
+            o.amb_shadow = amb;
+        }
+        let (x, y) = (x0 + i % rw, y0 + i / rw);
+        if !nearer || n.zpos_fine < raw[y * w + x].zpos_fine {
+            raw[y * w + x] = *n;
         }
     }
-    let p = CalcParams::new(sc)?;
-    let raw = Arc::new(merged);
-    let post = if needs_post(sc, &p) {
-        let mut g = (*raw).clone();
-        crate::render::post_process(sc, &p, &mut g, crate::render::thread_count(sc));
-        Arc::new(g)
-    } else {
-        raw.clone()
+    let q = rect_params(&p, r);
+    if hs && target.shadows.is_some() {
+        e.out.lock().unwrap().stage = "hard shadows".into();
+        crate::render::hard_shadows_cancellable(&target, &q, &mut part, threads, cancel);
+    }
+    if let (true, false, Some(d), Some(_)) = (deao, keep_as, &target.deao, &target.ao) {
+        e.out.lock().unwrap().stage = "ambient".into();
+        crate::deao::deao(&q, &mut part, rw, rh, d, threads, cancel);
+    }
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    put_rect(&mut post, w, r, 1, &part);
+    // PaintRows: the rows of the selection, the whole width
+    let rows = rect_params(&p, [0, y0, w, rh]);
+    let painted = crate::render::paint_preview(&target, &rows, &post[y0 * w..(y0 + rh) * w]);
+    let cur = e.out.lock().unwrap().rgb.clone().filter(|c| c.len() == w * h * 3);
+    let mut rgb = match cur {
+        Some(c) => (*c).clone(),
+        None => crate::render::paint_preview(&target, &p, &post),
     };
-    let rgb = crate::render::paint(sc, &p, &post);
-    e.publish(rgb, b.w, b.h, "", None);
-    *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw, post, post_sig: post_sig(sc), w: b.w, h: b.h }));
+    rgb[y0 * w * 3..(y0 + rh) * w * 3].copy_from_slice(&painted);
+    e.publish(rgb, w, h, "", None);
+    // (post_sig stays the old one: outside the selection the processing is
+    // the old image's)
+    *e.base.lock().unwrap() = Some(Arc::new(Base { scene: target, params: p, raw: Arc::new(raw), post: Arc::new(post), post_sig: b.post_sig.clone(), w, h }));
+    Ok(())
+}
+
+/// MB3D's `CalcSRT` of a selection ("Calculate only a selection in the
+/// image"): the rectangle is painted with its reflections, the rest of the
+/// image stays as it is (the depth of field needs the whole image: not
+/// here).
+fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let b = e.base.lock().unwrap().clone().ok_or("calculate the image first (Calculate 3D)")?;
+    let (w, h) = (b.w, b.h);
+    let r = clip_rect(rect, w, h).ok_or("the selection must be bigger than 2 pixels in width and height")?;
+    e.out.lock().unwrap().stage = "reflections of the selection".into();
+    let mut target = sc.clone();
+    target.width = b.scene.width;
+    target.height = b.scene.height;
+    target.slice_2d = b.scene.slice_2d;
+    target.calc_rect = None;
+    target.mc.reflections = true;
+    target.dof = None;
+    let q = rect_params(&b.params, r);
+    let part = take_rect(&b.post, w, r, 1);
+    let painted = crate::render::paint_cancellable(&target, &q, &part, cancel)?;
+    let cur = e.out.lock().unwrap().rgb.clone().filter(|c| c.len() == w * h * 3);
+    let mut rgb = match cur {
+        Some(c) => (*c).clone(),
+        None => crate::render::paint_preview(&target, &b.params, &b.post),
+    };
+    put_rect(&mut rgb, w, r, 3, &painted);
+    e.publish(rgb, w, h, "", None);
     Ok(())
 }

@@ -104,7 +104,7 @@ fn build_rays(quality: u8) -> Rays {
 }
 
 /// Calculates `amb_shadow` for all object pixels.
-pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, dp: &DeaoParams, threads: usize) {
+pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, dp: &DeaoParams, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
     // DEAO uses 5 binary search steps
     let mut pc = p.clone();
     pc.de_add_steps = 5;
@@ -121,6 +121,10 @@ pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, d
             let base = &base;
             s.spawn(move || {
                 for (y, row) in list {
+                    // ("Stop": the rows not done keep their values)
+                    if cancel() {
+                        break;
+                    }
                     let y = y + p.rect[1] as usize;
                     let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
                     let mut m = Marcher::new(p, seed);

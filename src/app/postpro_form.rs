@@ -249,6 +249,24 @@ pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
     app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
 }
 
+/// The selection in the image (MB3D's `iRect` with `ClipIRect`'s checks),
+/// in pixels of the image; None (and the message) without one.
+fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
+    if !ui.visible(MAIN, "Shape1") {
+        ui.show_message("Please make a selection in the image first.");
+        return None;
+    }
+    let sh = ui.c(MAIN, "Shape1").rect();
+    let img = ui.c(MAIN, "Image1").rect();
+    let s = app.main.image_scale;
+    let rect = [(sh.x - img.x) * s, (sh.y - img.y) * s, sh.w * s, sh.h * s];
+    if rect[2] <= 2 || rect[3] <= 2 {
+        ui.show_message("The selection must be bigger than 2 pixels in width and height.");
+        return None;
+    }
+    Some(rect)
+}
+
 /// A processing of this window starts (MB3D's `DisableButtons` and
 /// `Label6`): "Calculate 3D" turns into "Stop", the LED blinks and the stage
 /// is shown until it is done.
@@ -324,6 +342,23 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             repaint(app, ui, "ambient shadow calculation");
         }
         "Button11Click" => {
+            if ui.checked(F, "CheckBox25") {
+                // "Calculate only a selection in the image": the reflections
+                // of the selection only (MB3D's CalcSRT with the selection)
+                if app.main.calculating {
+                    app.message(ui, "Wait for the running calculation, or stop it first.");
+                    return;
+                }
+                if app.eng.base().is_none() {
+                    app.message(ui, "Calculate the image first.");
+                    return;
+                }
+                let Some(rect) = selection_rect(app, ui) else { return };
+                app.make_scene(ui);
+                started(app, ui, "reflections of the selection");
+                app.eng.start(super::engine::Job::ReflectSel { scene: app.scene.clone(), rect });
+                return;
+            }
             app.post.refl_now = true;
             repaint(app, ui, "Reflections");
         }
@@ -371,24 +406,18 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "Button13Click" => {
-            let sh = ui.c(MAIN, "Shape1").rect();
-            let img = ui.c(MAIN, "Image1").rect();
-            if !ui.visible(MAIN, "Shape1") {
-                ui.show_message("Please make a selection in the image first.");
-                return;
-            }
-            let s = app.main.image_scale;
-            let rect = [(sh.x - img.x) * s, (sh.y - img.y) * s, sh.w * s, sh.h * s];
-            if rect[2] <= 2 || rect[3] <= 2 {
-                ui.show_message("The selection must be bigger than 2 pixels in width and height.");
-                return;
-            }
+            let Some(rect) = selection_rect(app, ui) else { return };
             app.make_scene(ui);
             let div = pti(&ui.text(F, "Edit12")).max(1) as f64;
             let nearer = ui.checked(F, "CheckBox19");
+            // MB3D's CalcPartT(iRect, CheckBox9, CheckBox19, CheckBox11 and
+            // the DEAO tab, CheckBox30, ...)
+            let hs = ui.checked(F, "CheckBox9");
+            let deao = ui.checked(F, "CheckBox11") && ui.c(F, "TabControl1").tab_index == 3;
+            let keep_as = ui.checked(F, "CheckBox30");
             started(app, ui, "selection recalculation");
             ui.set_visible(MAIN, "ProgressBar1", true);
-            app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer });
+            app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer, hs, deao, keep_as });
         }
         "Button12Click" => {
             // DoubleImageSize: the kept G-buffer interpolated to twice the size

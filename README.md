@@ -482,6 +482,18 @@ in the Animation maker and with `mb3d animate`, with their keyframes,
 sub-frame counts and preview pictures. Their keyframes are brought up to
 date like old parameter files.
 
+### Reflections and recalculation in a selection
+
+In **Post processing**, *Calculate only a selection in the image* lets you
+drag a rectangle on the picture; **Calculate now** then calculates the
+reflections only there, which takes a fraction of the time for the whole
+picture (a second instead of ten in the example below). **Recalculate a
+selection** marches only the rectangle again, with its shadows if they are
+ticked, and repaints its rows; the rest of the picture stays as it was.
+**Stop** ends every post processing step at once.
+
+<a href="docs/img/reflect_selection.jpg"><img src="docs/img/reflect_selection.jpg" width="700" alt="Reflections calculated only in a selected rectangle of the picture"></a>
+
 ### Smaller things
 
 * **Save dialogs:** choosing another file type changes the extension of
