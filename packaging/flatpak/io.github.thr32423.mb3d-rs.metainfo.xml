@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata of the Flatpak (Flathub's page, software centres) -->
+<component type="desktop-application">
+  <id>io.github.thr32423.mb3d-rs</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LGPL-2.1-only</project_license>
+
+  <name>Mandelbulb3D</name>
+  <summary>Render 3D fractals like Mandelbulb3D</summary>
+  <developer id="io.github.thr32423">
+    <name>thr32423</name>
+  </developer>
+
+  <description>
+    <p>
+      Mandelbulb3D (MB3D), the 3D fractal program, rewritten as mb3d-rs so
+      that it runs on Linux, with the picture calculated on the graphics card
+      as well as the processor. It is an independent port of the original
+      Windows program by Jesse and its contributors, not made by them.
+    </p>
+    <p>
+      It opens MB3D's parameter files and the text parameters people share in
+      forums, uses MB3D's formulas and maps, and makes the same pictures. The
+      windows are MB3D's own: Formulas, Lighting, Post processing, Navigator,
+      Animation, Batch, Big renders, Monte Carlo, Voxel export, Bulb Tracer 2
+      and MutaGen. MB3D's tutorials apply.
+    </p>
+    <ul>
+      <li>MB3D's formulas, maps and 80 example parameter files included</li>
+      <li>Calculation on the graphics card (Vulkan) and all processor cores</li>
+      <li>Animations, tiled big renders, Monte Carlo path tracing</li>
+      <li>Voxel and mesh exports for 3D printing</li>
+      <li>16 bit pictures, transparent backgrounds, a noise filter</li>
+      <li>A command line renderer for scripts and batch jobs</li>
+    </ul>
+    <p>
+      The command line renderer is started with:
+      flatpak run --command=mb3d io.github.thr32423.mb3d-rs --help
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.thr32423.mb3d-rs.desktop</launchable>
+  <provides>
+    <binary>Mandelbulb3D</binary>
+    <binary>mb3d</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/thr32423/mb3d-rs</url>
+  <url type="bugtracker">https://github.com/thr32423/mb3d-rs/issues</url>
+  <url type="vcs-browser">https://github.com/thr32423/mb3d-rs</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>The main window with a rendered fractal</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/v0.2.45/docs/img/main_window.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Navigator for flying through a fractal</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/v0.2.45/docs/img/navigator_values.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Painting colours on the image</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/v0.2.45/docs/img/paint_on_image.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The light Daylight theme</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/v0.2.45/docs/img/themes/Daylight.jpg</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>Graphics</category>
+    <category>3DGraphics</category>
+  </categories>
+  <keywords>
+    <keyword>fractal</keyword>
+    <keyword>mandelbulb</keyword>
+    <keyword>mandelbox</keyword>
+    <keyword>MB3D</keyword>
+    <keyword>3D</keyword>
+    <keyword>render</keyword>
+  </keywords>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#e9c9a3</color>
+    <color type="primary" scheme_preference="dark">#5a2414</color>
+  </branding>
+
+  <content_rating type="oars-1.1"/>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <releases>
+    <release version="0.2.45" date="2026-10-16">
+      <description>
+        <p>Big pictures, Linux packaging and the command line:</p>
+        <ul>
+          <li>Pictures above 12000 pixels wide no longer run out of memory; depth of field is many times faster</li>
+          <li>Settings and History in the standard folders when installed as a system program; own formulas, maps and themes in ~/.local/share/mb3d-rs</li>
+          <li>Debian package, Flatpak, a man page and shell completions for mb3d</li>
+          <li>The command line: progress only on a terminal, exit codes, output to a pipe</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.2.44" date="2026-10-15"/>
+  </releases>
+</component>
