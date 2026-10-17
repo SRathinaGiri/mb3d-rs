@@ -18,6 +18,33 @@ It comes as two programs:
   Batch, Big renders, Monte Carlo, Voxel export, Bulb Tracer 2, MutaGen
   and the rest. If you know MB3D, you know this program; MB3D's tutorials
   apply.
+
+  <details><summary>Read more</summary>
+
+  The windows are MB3D's own — made from MB3D's original window
+  definitions, so every button, slider and hint is where it is in MB3D:
+  
+  * **Main window:** open and save parameters (`.m3p`, `.m3i`, text, the
+    clipboard), save pictures (PNG, JPEG, BMP, 16 bit Z-buffer), the mouse
+    modes, the rotation buttons, image size, the quality presets, undo,
+    *Calculate 3D* with the growing picture and the statistics, and all
+    the pages (Calculation, Internal, Infos, Cutting, Julia, Camera,
+    Coloring, Stereo).
+  * **Formulas:** the six formula slots, MB3D's formula lists and options,
+    hybrid types, favourites, and the JIT formula editor.
+  * **Lighting:** lights 1–6, presets, the palette, the Object, Ambient,
+    d.Fog and Back pic pages; changes repaint the picture at once, without a
+    new calculation.
+  * **Post processing:** normals on the z-buffer, hard and ambient shadows,
+    reflections and transparency, depth of field.
+  * **Navigator:** walk and look around with keys and mouse, then *View to
+    main*.
+  * **Animation maker, Batch processing, Big renders, Monte Carlo, Voxel
+    export, Bulb Tracer 2** (meshes) with the mesh preview, the **HeightMap
+    generator, MutaGen, ZBuf16Bit, Map sequences, Ini dirs** — all as in
+    MB3D.
+
+  </details>
 * **mb3d** — a command line renderer for scripts and batch jobs: pictures,
   animations, batch lists, Monte Carlo renders, voxel and mesh exports,
   all without a window.
@@ -65,7 +92,47 @@ you check further on your own:
   processor starts anyway and the card joins in.
 * **An LED in the title bar** shows where the last picture was calculated.
 * **Interface size** from 75 to 200 % for high resolution screens.
-* **Eight looks** for the windows, all of them theme files you can copy and change: two reproduce MB3D's looks, six are new (see [The windows](#the-windows)).
+
+  <a href="docs/img/themes_150.png"><img src="docs/img/themes_150.png" width="300" alt="Visual themes at 150 %"></a>
+
+  <details><summary>Read more</summary>
+
+  **Prefs ▸ Visual themes ▸ Interface size** makes all windows and their
+  text larger or smaller (75 to 200 %), for high resolution screens; the
+  layouts stay exactly as in MB3D.
+  
+  | 100 % | 150 % |
+  |---|---|
+  | ![Visual themes at 100 %](docs/img/themes_100.png) | ![Visual themes at 150 %](docs/img/themes_150.png) |
+
+  </details>
+* **Eight looks** for the windows, all of them theme files you can copy and
+  change: two reproduce MB3D's looks, six are new.
+
+  <a href="docs/img/themes/Midnight.jpg"><img src="docs/img/themes/Midnight.jpg" width="300" alt="The Midnight theme"></a>
+
+  <details><summary>Read more</summary>
+
+  **Prefs ▸ Visual themes** offers eight looks, each a file in the `Themes`
+  folder: *Glossy* (the dark default) and *Windows* reproduce MB3D's own
+  two looks, the other six are new. Click a picture for its full size.
+  
+  | | |
+  |---|---|
+  | <a href="docs/img/themes/Glossy.jpg"><img src="docs/img/themes/Glossy.jpg" width="380" alt="Glossy"></a> | <a href="docs/img/themes/Windows.jpg"><img src="docs/img/themes/Windows.jpg" width="380" alt="Windows"></a> |
+  | **Glossy**: MB3D's default | **Windows**: MB3D's "Themes off" |
+  | <a href="docs/img/themes/Graphite.jpg"><img src="docs/img/themes/Graphite.jpg" width="380" alt="Graphite"></a> | <a href="docs/img/themes/Daylight.jpg"><img src="docs/img/themes/Daylight.jpg" width="380" alt="Daylight"></a> |
+  | **Graphite**: lighter neutral grey, steel-blue accents | **Daylight**: warm light grey, teal accents |
+  | <a href="docs/img/themes/Midnight.jpg"><img src="docs/img/themes/Midnight.jpg" width="380" alt="Midnight"></a> | <a href="docs/img/themes/Ember.jpg"><img src="docs/img/themes/Ember.jpg" width="380" alt="Ember"></a> |
+  | **Midnight**: deep navy, blue accents | **Ember**: warm charcoal, orange accents |
+  | <a href="docs/img/themes/Forest.jpg"><img src="docs/img/themes/Forest.jpg" width="380" alt="Forest"></a> | <a href="docs/img/themes/Highcontrast.jpg"><img src="docs/img/themes/Highcontrast.jpg" width="380" alt="High contrast"></a> |
+  | **Forest**: dark green-grey, green accents | **High contrast**: black, white text, yellow highlights |
+  
+  A theme is a small text file in the `Themes` folder next to the program;
+  copy one, change its colours, and it appears in the list at the next
+  start.
+
+  </details>
 * **Linux, Windows and macOS** (Intel and Apple Silicon).
 * **A command line program** for everything that needs no window.
 * **Very big pictures in one piece**: 15000 x 20000 pixels and more
@@ -523,58 +590,6 @@ to within rounding, and the Auto pictures differ from the processor's by a
 fraction of a percent of the colour range on average (fine detail may
 sparkle in different pixels; the [technical notes](docs/TECHNICAL.md)
 have the measurements).
-
-## The windows
-
-**Prefs ▸ Visual themes** offers eight looks, each a file in the `Themes`
-folder: *Glossy* (the dark default) and *Windows* reproduce MB3D's own
-two looks, the other six are new. Click a picture for its full size.
-
-| | |
-|---|---|
-| <a href="docs/img/themes/Glossy.jpg"><img src="docs/img/themes/Glossy.jpg" width="380" alt="Glossy"></a> | <a href="docs/img/themes/Windows.jpg"><img src="docs/img/themes/Windows.jpg" width="380" alt="Windows"></a> |
-| **Glossy**: MB3D's default | **Windows**: MB3D's "Themes off" |
-| <a href="docs/img/themes/Graphite.jpg"><img src="docs/img/themes/Graphite.jpg" width="380" alt="Graphite"></a> | <a href="docs/img/themes/Daylight.jpg"><img src="docs/img/themes/Daylight.jpg" width="380" alt="Daylight"></a> |
-| **Graphite**: lighter neutral grey, steel-blue accents | **Daylight**: warm light grey, teal accents |
-| <a href="docs/img/themes/Midnight.jpg"><img src="docs/img/themes/Midnight.jpg" width="380" alt="Midnight"></a> | <a href="docs/img/themes/Ember.jpg"><img src="docs/img/themes/Ember.jpg" width="380" alt="Ember"></a> |
-| **Midnight**: deep navy, blue accents | **Ember**: warm charcoal, orange accents |
-| <a href="docs/img/themes/Forest.jpg"><img src="docs/img/themes/Forest.jpg" width="380" alt="Forest"></a> | <a href="docs/img/themes/Highcontrast.jpg"><img src="docs/img/themes/Highcontrast.jpg" width="380" alt="High contrast"></a> |
-| **Forest**: dark green-grey, green accents | **High contrast**: black, white text, yellow highlights |
-
-A theme is a small text file in the `Themes` folder next to the program;
-copy one, change its colours, and it appears in the list at the next
-start.
-
-**Prefs ▸ Visual themes ▸ Interface size** makes all windows and their
-text larger or smaller (75 to 200 %), for high resolution screens; the
-layouts stay exactly as in MB3D.
-
-| 100 % | 150 % |
-|---|---|
-| ![Visual themes at 100 %](docs/img/themes_100.png) | ![Visual themes at 150 %](docs/img/themes_150.png) |
-
-The windows are MB3D's own — made from MB3D's original window
-definitions, so every button, slider and hint is where it is in MB3D:
-
-* **Main window:** open and save parameters (`.m3p`, `.m3i`, text, the
-  clipboard), save pictures (PNG, JPEG, BMP, 16 bit Z-buffer), the mouse
-  modes, the rotation buttons, image size, the quality presets, undo,
-  *Calculate 3D* with the growing picture and the statistics, and all
-  the pages (Calculation, Internal, Infos, Cutting, Julia, Camera,
-  Coloring, Stereo).
-* **Formulas:** the six formula slots, MB3D's formula lists and options,
-  hybrid types, favourites, and the JIT formula editor.
-* **Lighting:** lights 1–6, presets, the palette, the Object, Ambient,
-  d.Fog and Back pic pages; changes repaint the picture at once, without a
-  new calculation.
-* **Post processing:** normals on the z-buffer, hard and ambient shadows,
-  reflections and transparency, depth of field.
-* **Navigator:** walk and look around with keys and mouse, then *View to
-  main*.
-* **Animation maker, Batch processing, Big renders, Monte Carlo, Voxel
-  export, Bulb Tracer 2** (meshes) with the mesh preview, the **HeightMap
-  generator, MutaGen, ZBuf16Bit, Map sequences, Ini dirs** — all as in
-  MB3D.
 
 ## The command line
 
