@@ -76,6 +76,9 @@ you check further on your own:
   smaller and smaller, by Tom Lowe (see [SphereTree](#a-new-formula-spheretree)).
 * **A new formula, UlamSpiral**: Ulam's spiral of prime numbers in 3D, as
   a city, a skyline, spheres or a block (see [UlamSpiral](#a-new-formula-ulamspiral)).
+* **A new formula, PseudoKleinian**: the "Kleinian architecture" of
+  halls, arches and spheres as one formula with its own exact distance
+  (see [PseudoKleinian](#a-new-formula-pseudokleinian)).
 * **Transparent backgrounds** for pictures and animations (see
   [Transparent background](#transparent-background)).
 * **Videos of animations**: an AVI file straight from the program, or
@@ -505,6 +508,39 @@ parameters with it open only in this program.
 
 | <a href="docs/img/ulam_skyline.jpg"><img src="docs/img/ulam_skyline.jpg" width="250" alt="UlamSpiral, divisor skyline"></a> | <a href="docs/img/ulam_spheres.jpg"><img src="docs/img/ulam_spheres.jpg" width="250" alt="UlamSpiral, divisor spheres"></a> | <a href="docs/img/ulam_block.jpg"><img src="docs/img/ulam_block.jpg" width="250" alt="UlamSpiral, a block of primes on cube shells"></a> |
 |:---:|:---:|:---:|
+
+### A new formula: PseudoKleinian
+
+The halls, arches, pillars and nested spheres known as "Kleinian
+architecture" are among the best-loved 3D fractal pictures. In MB3D they
+can only be made as a hybrid of several formulas with carefully matched
+settings, the recipe Theli-at found in 2011; knighty then wrote the same
+thing as one formula with its own distance estimate, and that is
+**PseudoKleinian**. Each level folds the point into a box, inverts it in
+a sphere and adds an offset, and the distance is measured exactly to a
+floor plane after the folds, so the walls come out clean and the picture
+renders fast. The settings are knighty's: *Levels* (8), *Size* (the
+inversion sphere), *CSize X/Y/Z* (the box; his 0.924, 0.908, 0.924 give
+the classic halls, and small changes give new buildings), *Julia X/Y/Z*
+(an offset per level), *Shape* (0 the floor plane, 1 a cylinder-plane of
+*Thickness* through *Offset*, 2 a rounded box), *DE offset* (hollows the
+surface) and *Colour scale* (with *2nd choice*, the orbit trap: the
+smallest orbit radius, the classic Kleinian banding).
+
+The structure fills all of space, so you look at it from inside: start
+with the view centre near the origin and the camera a unit or two back,
+and move through the halls with the Navigator. In the Monte Carlo
+renderer an interior gets almost no sky light, so put a positional light
+into the hall (the first picture) or cut the structure open with a
+cutting plane and look in from above (the second). It runs on the graphics
+card and the processor, needs 1 iteration, works after dIFS transforms
+and in DE combinations like the other dIFS formulas (though inside a
+space-filling structure those change little), and parameters with it
+open only in this program.
+
+<a href="docs/img/kleinian_hall.jpg"><img src="docs/img/kleinian_hall.jpg" width="760" alt="PseudoKleinian from knighty's viewpoint: a hall of arches and nested spheres lit by a lamp inside, in the Monte Carlo renderer with fog, hard shadows and depth of field"></a>
+
+<a href="docs/img/kleinian_top.jpg"><img src="docs/img/kleinian_top.jpg" width="760" alt="PseudoKleinian cut open with a cutting plane and seen from above: the lattice of spheres and the cells between them"></a>
 
 ## Restored Mandelbulb3D functionality
 
@@ -1212,6 +1248,10 @@ the same license.
 ## Credits
 
 * **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
+* **The PseudoKleinian formula** is knighty's (Fragmentarium, 2011,
+  "Theli-at's Pseudo Kleinian" after Theli-at's hybrid discovery of the
+  look on fractalforums.com); this program's version is written in Rust
+  and WGSL from its algorithm.
 * **The SphereTree formula** is by Tom Lowe (TGlad): recursive Eisenstein
   Ford sphere packings on a Riemann sphere projection, published on
   [fractalforums.org](https://fractalforums.org/fractal-mathematics-and-new-theories/28/new-sphere-tree/3557)

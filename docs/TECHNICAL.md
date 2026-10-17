@@ -375,7 +375,8 @@ code. This port runs that code in three tiers:
 
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
-**UlamSpiral**, Ulam's prime spiral in 3D) are
+**UlamSpiral**, Ulam's prime spiral in 3D, and **PseudoKleinian**,
+knighty's pseudo Kleinian) are
 written in Rust and WGSL (`src/x86/handwritten.rs`). Their `.m3f` file has
 the options and a placeholder `[CODE]` that only stores a huge `Rout` (the
 original MB3D loads the formula and shows nothing) and carries the
@@ -401,6 +402,18 @@ capped at 0.5, and bounded by the highest possible shape (the divisor
 count is at most 2√n; the skyline grows with its logarithm). A distance
 cut at the cell border instead would stop the marcher there (false hits).
 The colour value is the logarithm of the divisor count (trial division).
+
+PseudoKleinian is the first of them that is a whole fractal rather than a
+shape: it is still a dIFS formula (DE option 20) because it returns a
+distance of its own, knighty's `Thing2`: per level `p = 2 clamp(p, -CSize,
+CSize) - p`, `k = max(Size / |p|², 1)`, `p *= k` (the scale accumulates
+k), `p += Julia`, stopping when p no longer changes; then
+`|0.5 d(p) / scale - DEoffset|` with d the distance to the floor plane
+z = Offset.z (or the cylinder-plane or rounded box). Its 15 options are
+laid out with the two integers first (pConst−12, −16) so that every
+double sits on an 8-byte cell, which the GPU constants need (cells 29
+down to 17). The colour value is the smallest |p|² over the levels, as a
+radius.
 
 
 All tiers emulate the flat 32-bit address space with the `TIteration3Dext`

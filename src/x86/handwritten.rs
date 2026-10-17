@@ -13,11 +13,14 @@ use super::*;
 pub const SPHERE_TREE_HASH: u64 = 0x03f50568c0ace569;
 /// The hash of `UlamSpiral.m3f`'s placeholder code.
 pub const ULAM_SPIRAL_HASH: u64 = 0x12bc488dcd6d5f0e;
+/// The hash of `PseudoKleinian.m3f`'s placeholder code.
+pub const PSEUDO_KLEINIAN_HASH: u64 = 0xc509eb91a6530527;
 
 pub(super) fn lookup_difs(hash: u64, _ops: usize) -> Option<DifsFn> {
     match hash {
         SPHERE_TREE_HASH => Some(sphere_tree_difs as DifsFn),
         ULAM_SPIRAL_HASH => Some(ulam_spiral_difs as DifsFn),
+        PSEUDO_KLEINIAN_HASH => Some(pseudo_kleinian_difs as DifsFn),
         _ => None,
     }
 }
@@ -50,9 +53,128 @@ pub fn wgsl(hash: u64, name: &str) -> Option<lift_wgsl::WgslFormula> {
             writes_vars: false,
             dyn_var: None,
         }),
+        PSEUDO_KLEINIAN_HASH => Some(WgslFormula {
+            code: PSEUDO_KLEINIAN_WGSL.replace("@NAME@", name),
+            record: [3, 4, 5, 14, 34].iter().map(|&c| (c, CellTy::Whole)).collect(),
+            // Shape and Levels (pConst-16 and -12, cell 30) as the halves
+            // at 0 and 1; then the 13 doubles from Size (-24, cell 29) to
+            // Colour scale (-120, cell 17), two words each from 2
+            constants: std::iter::once((30, CellTy::Halves, 0)).chain((0..13).map(|i| (29 - i, CellTy::Whole, 2 + 2 * i))).collect(),
+            const_len: 28,
+            writes_vars: false,
+            dyn_var: None,
+        }),
         _ => None,
     }
 }
+
+/// `PseudoKleinian.m3f`: Integer Levels (pConst-12), Integer Shape (-16),
+/// then the doubles Size (-24), CSize X, Y, Z (-32, -40, -48), Julia X, Y, Z
+/// (-56, -64, -72), Thickness (-80), DE offset (-88), Offset X, Y, Z (-96,
+/// -104, -112) and Colour scale (-120).
+fn pseudo_kleinian_difs(m: &mut Machine, _p: &Prog, regs: &mut [u32; 8], _max_steps: u64) -> R<()> {
+    let edi = regs[EDI];
+    let levels = m.rd32(edi.wrapping_sub(12))? as i32;
+    let shape = m.rd32(edi.wrapping_sub(16))? as i32;
+    let mut d = [0f64; 13];
+    for (i, v) in d.iter_mut().enumerate() {
+        *v = m.rdf64(edi.wrapping_sub(24 + 8 * i as u32))?;
+    }
+    let it = crate::custom::IT_BASE;
+    use crate::custom::off;
+    let p = [m.rdf64(it + off::X)?, m.rdf64(it + off::X + 8)?, m.rdf64(it + off::X + 16)?];
+    let (de, col) = pseudo_kleinian(p, levels, shape, d[0], [d[1], d[2], d[3]], [d[4], d[5], d[6]], d[7], d[8], [d[9], d[10], d[11]]);
+    m.wrf64(it + off::ROUT, de)?;
+    m.wrf64(it + off::DFREE1, col * d[12])?;
+    regs[ESP] = regs[ESP].wrapping_add(4);
+    Ok(())
+}
+
+/// Knighty's pseudo Kleinian (Fragmentarium, 2011, after Theli-at's
+/// hybrid): `levels` times the point is folded into the box `csize`,
+/// inverted in the sphere of radius sqrt(`size`) when inside it, and
+/// `julia` is added; the distance is that of the folded point to the shape
+/// (0: the plane z = offset.z, 1: a cylinder-plane of `thickness` through
+/// `offset`, 2: a unit box rounded by `thickness` at `offset`), halved and
+/// divided by the accumulated scale, less `de_offset`. Returns it and the
+/// smallest orbit radius (the colour).
+#[allow(clippy::too_many_arguments)]
+pub fn pseudo_kleinian(mut p: [f64; 3], levels: i32, shape: i32, size: f64, csize: [f64; 3], julia: [f64; 3], thickness: f64, de_offset: f64, offset: [f64; 3]) -> (f64, f64) {
+    let mut scale = 1.0;
+    let mut trap = f64::INFINITY;
+    for _ in 0..levels.clamp(0, 100) {
+        let before = p;
+        for k in 0..3 {
+            p[k] = 2.0 * p[k].clamp(-csize[k], csize[k]) - p[k];
+        }
+        let r2 = dot(p, p);
+        trap = trap.min(r2);
+        let k = (size / r2.max(1e-300)).max(1.0);
+        p = p.map(|v| v * k);
+        scale *= k;
+        for k in 0..3 {
+            p[k] += julia[k];
+        }
+        if p == before {
+            break;
+        }
+    }
+    let q = [p[0] - offset[0], p[1] - offset[1], p[2] - offset[2]];
+    let d = match shape {
+        1 => ((q[0] * q[0] + q[1] * q[1]).sqrt() * q[2]).abs() - thickness,
+        2 => {
+            let di = [q[0].abs() - 1.0, q[1].abs() - 1.0, q[2].abs() - 1.0];
+            let k = di[0].max(di[1]).max(di[2]);
+            let o = (di[0].max(0.0).powi(2) + di[1].max(0.0).powi(2) + di[2].max(0.0).powi(2)).sqrt();
+            (k.min(0.0) + o - thickness).abs()
+        }
+        _ => q[2].abs(),
+    };
+    let d = if shape == 1 { d / (dot(q, q) + thickness.abs()).sqrt() } else { d };
+    ((0.5 * d / scale - de_offset).abs(), trap.sqrt())
+}
+
+/// [`pseudo_kleinian`] in WGSL.
+const PSEUDO_KLEINIAN_WGSL: &str = r#"fn @NAME@(cb: u32) {
+    let shape = i32(cst[cb + 0u]);
+    let levels = clamp(i32(cst[cb + 1u]), 0, 100);
+    let size = cst_r(cb + 2u);
+    let csize = vec3<R>(cst_r(cb + 4u), cst_r(cb + 6u), cst_r(cb + 8u));
+    let julia = vec3<R>(cst_r(cb + 10u), cst_r(cb + 12u), cst_r(cb + 14u));
+    let thickness = cst_r(cb + 16u);
+    let de_offset = cst_r(cb + 18u);
+    let offset = vec3<R>(cst_r(cb + 20u), cst_r(cb + 22u), cst_r(cb + 24u));
+    let cscale = cst_r(cb + 26u);
+    var p = vec3<R>(r3f, r4f, r5f);
+    var scale = R(1.0);
+    var trap = R(1e30);
+    for (var i = 0; i < levels; i++) {
+        let before = p;
+        p = 2.0 * clamp(p, -csize, csize) - p;
+        let r2 = dot(p, p);
+        trap = min(trap, r2);
+        let k = max(size / max(r2, R(1e-30)), 1.0);
+        p = p * k;
+        scale *= k;
+        p += julia;
+        if (all(p == before)) { break; }
+    }
+    let q = p - offset;
+    var d: R;
+    if (shape == 1) {
+        d = (abs(length(q.xy) * q.z) - thickness) / sqrt(dot(q, q) + abs(thickness));
+    } else if (shape == 2) {
+        let di = abs(q) - vec3<R>(1.0);
+        let k = max(di.x, max(di.y, di.z));
+        d = abs(min(k, 0.0) + length(max(di, vec3<R>(0.0))) - thickness);
+    } else {
+        d = abs(q.z);
+    }
+    r14f = abs(0.5 * d / scale - de_offset);
+    r34f = sqrt(trap) * cscale;
+    rg[4] = rg[4] + 4u;
+}
+"#;
 
 /// [`ulam_spiral`] in WGSL (the helpers carry the function's name, so that
 /// two slots with the formula do not clash).
@@ -598,6 +720,36 @@ mod tests {
         let m = crate::custom::build_machine(&[Some(&cf)]);
         let p = m.prog(crate::custom::code_addr(0)).unwrap();
         assert_eq!(p.hash, ULAM_SPIRAL_HASH, "hash {:#018x}", p.hash);
+    }
+
+    #[test]
+    fn pseudo_kleinian_placeholder_is_recognised() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("M3Formulas-rs/PseudoKleinian.m3f");
+        let def = crate::m3f::M3f::load(&path).unwrap();
+        assert_eq!(def.de_option, 20);
+        let cf = crate::custom::CustomFormula::new(std::sync::Arc::new(def));
+        let m = crate::custom::build_machine(&[Some(&cf)]);
+        let p = m.prog(crate::custom::code_addr(0)).unwrap();
+        assert_eq!(p.hash, PSEUDO_KLEINIAN_HASH, "hash {:#018x}", p.hash);
+        // the options are where pseudo_kleinian_difs and the WGSL read them
+        let vb = &m.mem[(crate::custom::var_buf_addr(0) - BASE) as usize..][..0x400];
+        let rd = |o: usize| f64::from_le_bytes(vb[o..o + 8].try_into().unwrap());
+        let ri = |o: usize| i32::from_le_bytes(vb[o..o + 4].try_into().unwrap());
+        assert_eq!((ri(244), ri(240)), (8, 0));
+        assert_eq!((rd(256 - 24), rd(256 - 32), rd(256 - 40)), (1.0, 0.92436, 0.90756));
+        assert_eq!((rd(256 - 80), rd(256 - 120)), (0.01, 2.0));
+    }
+
+    #[test]
+    fn pseudo_kleinian_is_finite_and_positive() {
+        let cs = [0.92436, 0.90756, 0.92436];
+        let mut rng = 7u64;
+        for _ in 0..2000 {
+            rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            let r = |k: u32| ((rng >> (11 + k)) & 0xFFFF) as f64 / 65536.0 * 4.0 - 2.0;
+            let (d, c) = pseudo_kleinian([r(0), r(5), r(9)], 8, 0, 1.0, cs, [0.0; 3], 0.01, 0.0, [0.0; 3]);
+            assert!(d.is_finite() && d >= 0.0 && c.is_finite(), "{d} {c}");
+        }
     }
 
     #[test]

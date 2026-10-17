@@ -1,0 +1,39 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.Integer Levels = 8
+.Integer Shape = 0
+.Double Size = 1
+.Double CSize X = 0.92436
+.Double CSize Y = 0.90756
+.Double CSize Z = 0.92436
+.Double Julia X = 0
+.Double Julia Y = 0
+.Double Julia Z = 0
+.Double Thickness = 0.01
+.Double DE offset = 0
+.Double Offset X = 0
+.Double Offset Y = 0
+.Double Offset Z = 0
+.Double Colour scale = 2
+[CODE]
+C746E000000000C746E4FFFFEF7FB86D623364B82D727320B850736575B8646F4B
+6CB865696E00C3
+[END]
+
+Knighty's Pseudo Kleinian (Theli-at's pseudo Kleinian hybrid as one
+formula, Fragmentarium 2011): each level folds the point into the box
+CSize (2*clamp(p) - p), inverts it in the sphere of radius sqrt(Size)
+when it is inside (p *= max(Size/r2, 1)), and adds Julia. The distance
+is that of the folded point to a shape, divided by the accumulated
+scale: Shape 0 the floor plane z = Offset Z (the classic look), 1 a
+cylinder-plane of Thickness through Offset, 2 a rounded unit box
+(rounded by Thickness) at Offset. DE offset hollows the surface.
+
+Calculated by mb3d-rs itself (the code above is only a placeholder; the
+original Mandelbulb3D shows nothing with this formula).
+
+The colour value (orbit trap, "2nd choice" in the Lighting) is the
+smallest distance of the folded point from the origin over the levels,
+scaled by Colour scale. Use 1 iteration; the structure fills space, so
+look at it from inside (knighty: CSize 0.92436, 0.90756, 0.92436).
