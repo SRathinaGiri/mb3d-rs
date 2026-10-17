@@ -65,31 +65,255 @@ you check further on your own:
   processor starts anyway and the card joins in.
 * **An LED in the title bar** shows where the last picture was calculated.
 * **Interface size** from 75 to 200 % for high resolution screens.
-* **Eight looks** for the windows, all of them theme files you can copy and change: two reproduce MB3D's looks, six are new.
+* **Eight looks** for the windows, all of them theme files you can copy and change: two reproduce MB3D's looks, six are new (see [The windows](#the-windows)).
 * **Linux, Windows and macOS** (Intel and Apple Silicon).
 * **A command line program** for everything that needs no window.
-* **16 bit pictures**: PNG files with 65,536 instead of 256 steps per
-  colour, for editing without banding (see [16 bit](#16-bit-pictures)).
-* **A noise filter** for Monte Carlo and all other pictures, the DCT
-  denoising known from GIMP (see [Noise filter](#noise-filter)).
-* **A new formula, SphereTree**: a tree of touching spheres that branch
-  smaller and smaller, by Tom Lowe (see [SphereTree](#a-new-formula-spheretree)).
-* **A new formula, UlamSpiral**: Ulam's spiral of prime numbers in 3D, as
-  a city, a skyline, spheres or a block (see [UlamSpiral](#a-new-formula-ulamspiral)).
-* **A new formula, PseudoKleinian**: the "Kleinian architecture" of
-  halls, arches and spheres as one formula with its own exact distance
-  (see [PseudoKleinian](#a-new-formula-pseudokleinian)).
-* **Transparent backgrounds** for pictures and animations (see
-  [Transparent background](#transparent-background)).
-* **Videos of animations**: an AVI file straight from the program, or
-  the ffmpeg command for a small MP4 (see
-  [Video of an animation](#video-of-an-animation)).
-* **A preview of parameter files** in the Open dialog (see
-  [Preview](#preview-when-opening-parameters)).
 * **Very big pictures in one piece**: 15000 x 20000 pixels and more
   without running out of memory, and the depth of field uses all
   processor cores (11 times faster on 24 threads than before 0.2.45, with
   the same picture).
+* **16 bit pictures:** PNG files with 65,536 instead of 256 steps per
+  colour, for editing without banding.
+
+  <a href="docs/img/png16_compare.png"><img src="docs/img/png16_compare.png" width="300" alt="16 bit pictures"></a>
+
+  <details><summary>Read more</summary>
+
+  MB3D saves 8 bit pictures: 256 steps per colour. That is plenty to look
+  at, but when a picture is edited afterwards — brightness, contrast,
+  curves — smooth areas such as the background or fog break into visible
+  bands. **Save pic ▸ PNG** offers a second file type, **PNG 16 bit
+  colour**: the colours as the program calculated them, before they are
+  rounded to 256 steps, with all shadows, reflections and depth of field.
+  The file looks the same, and stays smooth when it is edited.
+  
+  <a href="docs/img/png16_compare.png"><img src="docs/img/png16_compare.png" width="760" alt="A background gradient after a strong contrast increase: steps in 8 bit, smooth in 16 bit"></a>
+  
+  <a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
+
+  </details>
+* **A noise filter** for Monte Carlo and all other pictures, the DCT
+  denoising known from GIMP.
+
+  <a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="300" alt="Noise filter"></a>
+
+  <details><summary>Read more</summary>
+
+  A **noise filter** removes grain from the pictures: the **DCT denoising**
+  of GIMP's *Filters ▸ Enhance ▸ Noise Reduction ▸ Denoise DCT*, which of
+  GIMP's filters suited these pictures best (see the credits below).
+  
+  * **Monte Carlo window ▸ -noise** (a button MB3D had hidden): filters the
+    shown picture, and the saved one, with a strength that follows the rays
+    per pixel. The rendering itself goes on unfiltered, and its next update
+    shows it unfiltered again.
+  * **Post processing ▸ Noise Filter**: *Filter now* filters the picture of
+    the main window; *Filter new pictures automatically* filters every new
+    one. *Strength* is the strength of the noise to remove (4 is light;
+    higher removes more grain and more fine detail).
+  
+  Monte Carlo pictures have the most grain. Against pictures rendered with
+  512 rays per pixel, the filtered pictures were closer than the unfiltered
+  ones in all 13 tests (four scenes, 4 to 32 rays): by up to 23 % at 4 rays,
+  5 to 10 % at 8 rays, 1 to 3 % at 32 rays, where little grain is left.
+  
+  <a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture with 4 rays per pixel, the same with the noise filter, and with 512 rays"></a>
+  
+  <a href="docs/img/postpro_noise.png"><img src="docs/img/postpro_noise.png" width="260" alt="Post processing: the Noise Filter section"></a>
+
+  </details>
+* **Transparent backgrounds** for pictures and animations.
+
+  <a href="docs/img/transparent.png"><img src="docs/img/transparent.png" width="300" alt="Transparent background"></a>
+
+  <details><summary>Read more</summary>
+
+  Pictures and animation frames can be saved with a **transparent
+  background**, to put the fractal onto another picture or into a video
+  editor: **Save pic ▸ PNG ▸ PNG transparent background**, and in the
+  Animation maker **Transparent background** (PNG frames). With anti-aliasing (a
+  viewing scale of 1:2 or more, or `--aa`) the edges are soft, and they
+  carry no fringe of the old background colour. Depth pictures for
+  compositing were already there (*Save Z buffer too*, `--depth`).
+  
+  <a href="docs/img/transparent.png"><img src="docs/img/transparent.png" width="760" alt="A picture with its background, and with a transparent background shown over a checkerboard"></a>
+
+  </details>
+* **Videos of animations:** an AVI file straight from the program, or
+  the ffmpeg command for a small MP4.
+
+  <a href="docs/img/anim_video.png"><img src="docs/img/anim_video.png" width="300" alt="Video of an animation"></a>
+
+  <details><summary>Read more</summary>
+
+  In the Animation maker, **Also make a video (AVI)** joins the frames into
+  a video when they are rendered, at the **Frames per second** you set:
+  `<project name>.avi` in the output folder, next to the frames, which are
+  kept. It plays in VLC and mpv and opens in video editors (Kdenlive,
+  Shotcut, DaVinci Resolve). Each frame is stored as a whole picture, so the
+  files are big: good for editing and keeping, less for sharing.
+  
+  For a small video to share, **FFmpeg command** puts the command for an MP4
+  (or, with a transparent background, a WebM) on the clipboard and in the
+  messages. Install [ffmpeg](https://ffmpeg.org), paste the command into a
+  terminal when the frames are done, and it makes the video; this program
+  starts no other programs itself.
+  
+  <a href="docs/img/anim_video.png"><img src="docs/img/anim_video.png" width="760" alt="The Animation maker with Also make a video (AVI), Frames per second and FFmpeg command"></a>
+
+  </details>
+* **A preview of parameter files** in the Open dialog.
+
+  <a href="docs/img/open_preview.png"><img src="docs/img/open_preview.png" width="300" alt="Preview when opening parameters"></a>
+
+  <details><summary>Read more</summary>
+
+  **Open ▸ Open m3p** and **Open m3i** show a small picture of the
+  clicked parameter file, with its size and formulas, before it is
+  opened; the arrow keys move through the list with the preview. The
+  picture is calculated in the background on the processor, so the
+  dialog stays responsive, and each file's preview is kept while the
+  program runs.
+  
+  <a href="docs/img/open_preview.png"><img src="docs/img/open_preview.png" width="760" alt="The Open dialog with the preview of a parameter file"></a>
+
+  </details>
+* **Navigator: exact values and Reset view.** Click a value and type it;
+  go back to the view the Navigator started from.
+
+  <a href="docs/img/navigator_values.png"><img src="docs/img/navigator_values.png" width="300" alt="Navigator: exact values and Reset view"></a>
+
+  <details><summary>Read more</summary>
+
+  * **Click a value** in the Navigator's panels — Julia values, formula
+    values, 4D rotation, the Misc values — and type the exact number, as in
+    MB3D (angles in degrees). The slider then continues from that value.
+  * **Click the zoom** and type it, when the zoom steps are too coarse (a
+    wish from MB3D's issue list); a typed zoom stays (*Fixed zoom*).
+  * **Reset view** goes back to the position, direction and zoom the
+    Navigator took from the main window; the adjusted values stay.
+  
+  <a href="docs/img/navigator_values.png"><img src="docs/img/navigator_values.png" width="640" alt="The Navigator with the formula values and the input box of a clicked value"></a>
+
+  </details>
+* **A new formula, SphereTree:** a tree of touching spheres that branch
+  smaller and smaller, by Tom Lowe.
+
+  <a href="docs/img/spheretree_ball.jpg"><img src="docs/img/spheretree_ball.jpg" width="300" alt="A new formula: SphereTree"></a>
+
+  <details><summary>Read more</summary>
+
+  **SphereTree** is a formula Mandelbulb3D does not have: a tree of spheres
+  that touch each other and branch into smaller and smaller spheres, like
+  foam or coral. Tom Lowe, who invented the Mandelbox, published it in 2020
+  (see the credits below). It is in the formula list with the dIFS formulas
+  and has four settings:
+  
+  * **PackRatio** (0 to 1.22): the size of the spheres; at 1 they just
+    touch, above 1 the outer ones break off.
+  * **Levels**: how deep the tree goes (6 is plenty for most pictures).
+  * **Rotated**: 1 turns every level a twelfth of a turn, and the tree
+    becomes a round ball of sphere clusters.
+  * **Colour scale**: every branch of the tree has its own colour. Choose
+    *2nd choice* (the orbit trap) in the colour settings of the Lighting to
+    see them; this setting spreads them over the colour gradient.
+  
+  It works alone and after dIFS transforms (the third picture repeats it
+  with *tilingbrickIFS*), and it is calculated on the graphics card as well
+  as on the processor. Set the iterations to 1: the formula calculates the
+  whole tree at once. Parameters with SphereTree open only in this program,
+  not in Mandelbulb3D.
+  
+  <a href="docs/img/spheretree_ball.jpg"><img src="docs/img/spheretree_ball.jpg" width="760" alt="A SphereTree ball (Rotated) in the Monte Carlo renderer, at dusk"></a>
+  
+  | <a href="docs/img/spheretree_close.jpg"><img src="docs/img/spheretree_close.jpg" width="380" alt="A close-up of the sphere foam of SphereTree"></a> | <a href="docs/img/spheretree_swarm.jpg"><img src="docs/img/spheretree_swarm.jpg" width="380" alt="SphereTree repeated with tilingbrickIFS: a swarm of sphere trees"></a> |
+  |:---:|:---:|
+
+  </details>
+* **A new formula, UlamSpiral:** Ulam's spiral of prime numbers in 3D, as
+  a city, a skyline, spheres or a block.
+
+  <a href="docs/img/ulam_2d.png"><img src="docs/img/ulam_2d.png" width="300" alt="A new formula: UlamSpiral"></a>
+
+  <details><summary>Read more</summary>
+
+  In 1963 the mathematician Stanisław Ulam sat through "a long and very
+  boring paper" at a meeting and doodled on a sheet of squared paper. His
+  first idea was to set up chess problems; instead he numbered the squares
+  1, 2, 3, … in a spiral, 1 in the middle, and circled the prime numbers.
+  The primes lined up on diagonal lines, as if they followed a pattern, and
+  they still do when a computer draws millions of them (Ulam tried 100,000
+  on the MANIAC II at Los Alamos; Martin Gardner put the picture on the
+  cover of Scientific American in 1964). Nobody has fully explained it to
+  this day.
+  
+  <a href="docs/img/ulam_2d.png"><img src="docs/img/ulam_2d.png" width="420" alt="The Ulam spiral: the primes among the numbers 1 to 78,961 on a square spiral, with the start of the spiral drawn in the corner"></a>
+  
+  **UlamSpiral** builds that spiral in 3D, one shape per number, in four
+  forms (*Mode*):
+  
+  * **0, prime towers**: a plate for every number and a tower on each
+    prime. The diagonal lines of primes become rows of towers.
+  * **1, divisor skyline**: a column for every number, the higher the more
+    divisors it has; the primes are the low streets between them.
+  * **2, divisor spheres**: a sphere for every number, the larger the more
+    divisors it has (the primes are the small ones).
+  * **3, a block of primes**: the numbers wound around cube shells instead
+    of a square, a cube on each prime.
+  
+  *Rings* sets the size of the spiral (60 rings are the numbers up to
+  14,641), *Height* the height of the towers or columns, *Gap* the space
+  between them. With *2nd choice* (the orbit trap) in the colour settings
+  the colour follows the number of divisors, so the primes have a colour
+  of their own. Like SphereTree it runs on the graphics card and the
+  processor, works after dIFS transforms, needs only 1 iteration, and
+  parameters with it open only in this program.
+  
+  <a href="docs/img/ulam_city.jpg"><img src="docs/img/ulam_city.jpg" width="760" alt="UlamSpiral, prime towers: the diagonal rows of prime numbers as a city, in the Monte Carlo renderer with fog, hard shadows and depth of field"></a>
+  
+  | <a href="docs/img/ulam_skyline.jpg"><img src="docs/img/ulam_skyline.jpg" width="250" alt="UlamSpiral, divisor skyline"></a> | <a href="docs/img/ulam_spheres.jpg"><img src="docs/img/ulam_spheres.jpg" width="250" alt="UlamSpiral, divisor spheres"></a> | <a href="docs/img/ulam_block.jpg"><img src="docs/img/ulam_block.jpg" width="250" alt="UlamSpiral, a block of primes on cube shells"></a> |
+  |:---:|:---:|:---:|
+
+  </details>
+* **A new formula, PseudoKleinian:** the "Kleinian architecture" of
+  halls, arches and spheres as one formula with its own exact distance.
+
+  <a href="docs/img/kleinian_hall.jpg"><img src="docs/img/kleinian_hall.jpg" width="300" alt="A new formula: PseudoKleinian"></a>
+
+  <details><summary>Read more</summary>
+
+  The halls, arches, pillars and nested spheres known as "Kleinian
+  architecture" are among the best-loved 3D fractal pictures. In MB3D they
+  can only be made as a hybrid of several formulas with carefully matched
+  settings, the recipe Theli-at found in 2011; knighty then wrote the same
+  thing as one formula with its own distance estimate, and that is
+  **PseudoKleinian**. Each level folds the point into a box, inverts it in
+  a sphere and adds an offset, and the distance is measured exactly to a
+  floor plane after the folds, so the walls come out clean and the picture
+  renders fast. The settings are knighty's: *Levels* (8), *Size* (the
+  inversion sphere), *CSize X/Y/Z* (the box; his 0.924, 0.908, 0.924 give
+  the classic halls, and small changes give new buildings), *Julia X/Y/Z*
+  (an offset per level), *Shape* (0 the floor plane, 1 a cylinder-plane of
+  *Thickness* through *Offset*, 2 a rounded box), *DE offset* (hollows the
+  surface) and *Colour scale* (with *2nd choice*, the orbit trap: the
+  smallest orbit radius, the classic Kleinian banding).
+  
+  The structure fills all of space, so you look at it from inside: start
+  with the view centre near the origin and the camera a unit or two back,
+  and move through the halls with the Navigator. In the Monte Carlo
+  renderer an interior gets almost no sky light, so put a positional light
+  into the hall (the first picture) or cut the structure open with a
+  cutting plane and look in from above (the second). It runs on the graphics
+  card and the processor, needs 1 iteration, works after dIFS transforms
+  and in DE combinations like the other dIFS formulas (though inside a
+  space-filling structure those change little), and parameters with it
+  open only in this program.
+  
+  <a href="docs/img/kleinian_hall.jpg"><img src="docs/img/kleinian_hall.jpg" width="760" alt="PseudoKleinian from knighty's viewpoint: a hall of arches and nested spheres lit by a lamp inside, in the Monte Carlo renderer with fog, hard shadows and depth of field"></a>
+  
+  <a href="docs/img/kleinian_top.jpg"><img src="docs/img/kleinian_top.jpg" width="760" alt="PseudoKleinian cut open with a cutting plane and seen from above: the lattice of spheres and the cells between them"></a>
+
+  </details>
 
 ## Download
 
@@ -351,196 +575,6 @@ definitions, so every button, slider and hint is where it is in MB3D:
   export, Bulb Tracer 2** (meshes) with the mesh preview, the **HeightMap
   generator, MutaGen, ZBuf16Bit, Map sequences, Ini dirs** — all as in
   MB3D.
-
-### 16 bit pictures
-
-MB3D saves 8 bit pictures: 256 steps per colour. That is plenty to look
-at, but when a picture is edited afterwards — brightness, contrast,
-curves — smooth areas such as the background or fog break into visible
-bands. **Save pic ▸ PNG** offers a second file type, **PNG 16 bit
-colour**: the colours as the program calculated them, before they are
-rounded to 256 steps, with all shadows, reflections and depth of field.
-The file looks the same, and stays smooth when it is edited.
-
-<a href="docs/img/png16_compare.png"><img src="docs/img/png16_compare.png" width="760" alt="A background gradient after a strong contrast increase: steps in 8 bit, smooth in 16 bit"></a>
-
-<a href="docs/img/save_png16.png"><img src="docs/img/save_png16.png" width="420" alt="The save dialog with 'PNG 16 bit colour'"></a>
-
-### Preview when opening parameters
-
-**Open ▸ Open m3p** and **Open m3i** show a small picture of the
-clicked parameter file, with its size and formulas, before it is
-opened; the arrow keys move through the list with the preview. The
-picture is calculated in the background on the processor, so the
-dialog stays responsive, and each file's preview is kept while the
-program runs.
-
-<a href="docs/img/open_preview.png"><img src="docs/img/open_preview.png" width="760" alt="The Open dialog with the preview of a parameter file"></a>
-
-### Transparent background
-
-Pictures and animation frames can be saved with a **transparent
-background**, to put the fractal onto another picture or into a video
-editor: **Save pic ▸ PNG ▸ PNG transparent background**, and in the
-Animation maker **Transparent background** (PNG frames). With anti-aliasing (a
-viewing scale of 1:2 or more, or `--aa`) the edges are soft, and they
-carry no fringe of the old background colour. Depth pictures for
-compositing were already there (*Save Z buffer too*, `--depth`).
-
-<a href="docs/img/transparent.png"><img src="docs/img/transparent.png" width="760" alt="A picture with its background, and with a transparent background shown over a checkerboard"></a>
-
-### Video of an animation
-
-In the Animation maker, **Also make a video (AVI)** joins the frames into
-a video when they are rendered, at the **Frames per second** you set:
-`<project name>.avi` in the output folder, next to the frames, which are
-kept. It plays in VLC and mpv and opens in video editors (Kdenlive,
-Shotcut, DaVinci Resolve). Each frame is stored as a whole picture, so the
-files are big: good for editing and keeping, less for sharing.
-
-For a small video to share, **FFmpeg command** puts the command for an MP4
-(or, with a transparent background, a WebM) on the clipboard and in the
-messages. Install [ffmpeg](https://ffmpeg.org), paste the command into a
-terminal when the frames are done, and it makes the video; this program
-starts no other programs itself.
-
-<a href="docs/img/anim_video.png"><img src="docs/img/anim_video.png" width="760" alt="The Animation maker with Also make a video (AVI), Frames per second and FFmpeg command"></a>
-
-### Navigator: exact values and Reset view
-
-* **Click a value** in the Navigator's panels — Julia values, formula
-  values, 4D rotation, the Misc values — and type the exact number, as in
-  MB3D (angles in degrees). The slider then continues from that value.
-* **Click the zoom** and type it, when the zoom steps are too coarse (a
-  wish from MB3D's issue list); a typed zoom stays (*Fixed zoom*).
-* **Reset view** goes back to the position, direction and zoom the
-  Navigator took from the main window; the adjusted values stay.
-
-<a href="docs/img/navigator_values.png"><img src="docs/img/navigator_values.png" width="640" alt="The Navigator with the formula values and the input box of a clicked value"></a>
-
-### Noise filter
-
-A **noise filter** removes grain from the pictures: the **DCT denoising**
-of GIMP's *Filters ▸ Enhance ▸ Noise Reduction ▸ Denoise DCT*, which of
-GIMP's filters suited these pictures best (see the credits below).
-
-* **Monte Carlo window ▸ -noise** (a button MB3D had hidden): filters the
-  shown picture, and the saved one, with a strength that follows the rays
-  per pixel. The rendering itself goes on unfiltered, and its next update
-  shows it unfiltered again.
-* **Post processing ▸ Noise Filter**: *Filter now* filters the picture of
-  the main window; *Filter new pictures automatically* filters every new
-  one. *Strength* is the strength of the noise to remove (4 is light;
-  higher removes more grain and more fine detail).
-
-Monte Carlo pictures have the most grain. Against pictures rendered with
-512 rays per pixel, the filtered pictures were closer than the unfiltered
-ones in all 13 tests (four scenes, 4 to 32 rays): by up to 23 % at 4 rays,
-5 to 10 % at 8 rays, 1 to 3 % at 32 rays, where little grain is left.
-
-<a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture with 4 rays per pixel, the same with the noise filter, and with 512 rays"></a>
-
-<a href="docs/img/postpro_noise.png"><img src="docs/img/postpro_noise.png" width="260" alt="Post processing: the Noise Filter section"></a>
-
-### A new formula: SphereTree
-
-**SphereTree** is a formula Mandelbulb3D does not have: a tree of spheres
-that touch each other and branch into smaller and smaller spheres, like
-foam or coral. Tom Lowe, who invented the Mandelbox, published it in 2020
-(see the credits below). It is in the formula list with the dIFS formulas
-and has four settings:
-
-* **PackRatio** (0 to 1.22): the size of the spheres; at 1 they just
-  touch, above 1 the outer ones break off.
-* **Levels**: how deep the tree goes (6 is plenty for most pictures).
-* **Rotated**: 1 turns every level a twelfth of a turn, and the tree
-  becomes a round ball of sphere clusters.
-* **Colour scale**: every branch of the tree has its own colour. Choose
-  *2nd choice* (the orbit trap) in the colour settings of the Lighting to
-  see them; this setting spreads them over the colour gradient.
-
-It works alone and after dIFS transforms (the third picture repeats it
-with *tilingbrickIFS*), and it is calculated on the graphics card as well
-as on the processor. Set the iterations to 1: the formula calculates the
-whole tree at once. Parameters with SphereTree open only in this program,
-not in Mandelbulb3D.
-
-<a href="docs/img/spheretree_ball.jpg"><img src="docs/img/spheretree_ball.jpg" width="760" alt="A SphereTree ball (Rotated) in the Monte Carlo renderer, at dusk"></a>
-
-| <a href="docs/img/spheretree_close.jpg"><img src="docs/img/spheretree_close.jpg" width="380" alt="A close-up of the sphere foam of SphereTree"></a> | <a href="docs/img/spheretree_swarm.jpg"><img src="docs/img/spheretree_swarm.jpg" width="380" alt="SphereTree repeated with tilingbrickIFS: a swarm of sphere trees"></a> |
-|:---:|:---:|
-
-### A new formula: UlamSpiral
-
-In 1963 the mathematician Stanisław Ulam sat through "a long and very
-boring paper" at a meeting and doodled on a sheet of squared paper. His
-first idea was to set up chess problems; instead he numbered the squares
-1, 2, 3, … in a spiral, 1 in the middle, and circled the prime numbers.
-The primes lined up on diagonal lines, as if they followed a pattern, and
-they still do when a computer draws millions of them (Ulam tried 100,000
-on the MANIAC II at Los Alamos; Martin Gardner put the picture on the
-cover of Scientific American in 1964). Nobody has fully explained it to
-this day.
-
-<a href="docs/img/ulam_2d.png"><img src="docs/img/ulam_2d.png" width="420" alt="The Ulam spiral: the primes among the numbers 1 to 78,961 on a square spiral, with the start of the spiral drawn in the corner"></a>
-
-**UlamSpiral** builds that spiral in 3D, one shape per number, in four
-forms (*Mode*):
-
-* **0, prime towers**: a plate for every number and a tower on each
-  prime. The diagonal lines of primes become rows of towers.
-* **1, divisor skyline**: a column for every number, the higher the more
-  divisors it has; the primes are the low streets between them.
-* **2, divisor spheres**: a sphere for every number, the larger the more
-  divisors it has (the primes are the small ones).
-* **3, a block of primes**: the numbers wound around cube shells instead
-  of a square, a cube on each prime.
-
-*Rings* sets the size of the spiral (60 rings are the numbers up to
-14,641), *Height* the height of the towers or columns, *Gap* the space
-between them. With *2nd choice* (the orbit trap) in the colour settings
-the colour follows the number of divisors, so the primes have a colour
-of their own. Like SphereTree it runs on the graphics card and the
-processor, works after dIFS transforms, needs only 1 iteration, and
-parameters with it open only in this program.
-
-<a href="docs/img/ulam_city.jpg"><img src="docs/img/ulam_city.jpg" width="760" alt="UlamSpiral, prime towers: the diagonal rows of prime numbers as a city, in the Monte Carlo renderer with fog, hard shadows and depth of field"></a>
-
-| <a href="docs/img/ulam_skyline.jpg"><img src="docs/img/ulam_skyline.jpg" width="250" alt="UlamSpiral, divisor skyline"></a> | <a href="docs/img/ulam_spheres.jpg"><img src="docs/img/ulam_spheres.jpg" width="250" alt="UlamSpiral, divisor spheres"></a> | <a href="docs/img/ulam_block.jpg"><img src="docs/img/ulam_block.jpg" width="250" alt="UlamSpiral, a block of primes on cube shells"></a> |
-|:---:|:---:|:---:|
-
-### A new formula: PseudoKleinian
-
-The halls, arches, pillars and nested spheres known as "Kleinian
-architecture" are among the best-loved 3D fractal pictures. In MB3D they
-can only be made as a hybrid of several formulas with carefully matched
-settings, the recipe Theli-at found in 2011; knighty then wrote the same
-thing as one formula with its own distance estimate, and that is
-**PseudoKleinian**. Each level folds the point into a box, inverts it in
-a sphere and adds an offset, and the distance is measured exactly to a
-floor plane after the folds, so the walls come out clean and the picture
-renders fast. The settings are knighty's: *Levels* (8), *Size* (the
-inversion sphere), *CSize X/Y/Z* (the box; his 0.924, 0.908, 0.924 give
-the classic halls, and small changes give new buildings), *Julia X/Y/Z*
-(an offset per level), *Shape* (0 the floor plane, 1 a cylinder-plane of
-*Thickness* through *Offset*, 2 a rounded box), *DE offset* (hollows the
-surface) and *Colour scale* (with *2nd choice*, the orbit trap: the
-smallest orbit radius, the classic Kleinian banding).
-
-The structure fills all of space, so you look at it from inside: start
-with the view centre near the origin and the camera a unit or two back,
-and move through the halls with the Navigator. In the Monte Carlo
-renderer an interior gets almost no sky light, so put a positional light
-into the hall (the first picture) or cut the structure open with a
-cutting plane and look in from above (the second). It runs on the graphics
-card and the processor, needs 1 iteration, works after dIFS transforms
-and in DE combinations like the other dIFS formulas (though inside a
-space-filling structure those change little), and parameters with it
-open only in this program.
-
-<a href="docs/img/kleinian_hall.jpg"><img src="docs/img/kleinian_hall.jpg" width="760" alt="PseudoKleinian from knighty's viewpoint: a hall of arches and nested spheres lit by a lamp inside, in the Monte Carlo renderer with fog, hard shadows and depth of field"></a>
-
-<a href="docs/img/kleinian_top.jpg"><img src="docs/img/kleinian_top.jpg" width="760" alt="PseudoKleinian cut open with a cutting plane and seen from above: the lattice of spheres and the cells between them"></a>
 
 ## The command line
 
