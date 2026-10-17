@@ -20,6 +20,12 @@ OPEN = 5  # the newest releases shown open, the rest folded
 START, END = "<!-- updates:start -->", "<!-- updates:end -->"
 
 
+# commits shown with other words than their subject (the user's wish:
+# the fix of issue 7 is not named as such in the README)
+WORDING = {
+    "a97340e": "Big pictures: far less memory (a 15360x15360 picture fits in 32 GB)",
+}
+
 def git(*args):
     return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
 
@@ -53,6 +59,7 @@ def commits(rng):
         short, full, subject = line.split("\x1f")
         if subject.startswith("Version ") and subject[8:9].isdigit():
             subject = "Version number and release notes of this release"
+        subject = WORDING.get(short, subject)
         subject = subject.replace("|", "\\|")
         rows.append(f"| [`{short}`]({URL}/commit/{full}) | {subject} |")
     return rows

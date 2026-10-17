@@ -668,6 +668,17 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.50](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.50) · 17 Oct 2026, 12:15 UTC
+
+| Commit | What it does |
+|---|---|
+| [`e12397d`](https://github.com/thr32423/mb3d-rs/commit/e12397d215316464d53dff19c7cb714ff81433a9) | Version number and release notes of this release |
+| [`a97340e`](https://github.com/thr32423/mb3d-rs/commit/a97340e222edf496d7393d7011279bdf69adc3b8) | Big pictures: far less memory (a 15360x15360 picture fits in 32 GB) |
+| [`8edc11f`](https://github.com/thr32423/mb3d-rs/commit/8edc11fa7ab6113d4a38bf04168b522952b75b89) | README: the windows section folded into the list (themes, interface size, the windows) |
+| [`dc4a2fe`](https://github.com/thr32423/mb3d-rs/commit/dc4a2fe3ac548c8b65fa2758c2db18cd3ed00117) | README: one "What is new" list, with the detailed write-ups as collapsible items |
+| [`2ee83df`](https://github.com/thr32423/mb3d-rs/commit/2ee83df437361a66cdf7a98a2924ee0863d27e64) | README: drop the "Restored Mandelbulb3D functionality" section and its pictures |
+| [`49e2858`](https://github.com/thr32423/mb3d-rs/commit/49e28588b18ca637e9a3a6d99ea65ef113b2fabd) | README: Updates for v0.2.49 |
+
 ### [v0.2.49](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.49) · 17 Oct 2026, 05:37 UTC
 
 | Commit | What it does |
@@ -707,6 +718,8 @@ in UTC.
 | [`8cd70cd`](https://github.com/thr32423/mb3d-rs/commit/8cd70cd39d9353f0609a42b49b871a26337866b5) | Remove the Flatpak files |
 | [`57e5baf`](https://github.com/thr32423/mb3d-rs/commit/57e5baf8356448d9eef568c5e7569c5e636dd8c6) | README: Updates for v0.2.45 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.45)</summary>
+
 ### [v0.2.45](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.45) · 16 Oct 2026, 11:42 UTC
 
 | Commit | What it does |
@@ -722,8 +735,6 @@ in UTC.
 | [`3021a67`](https://github.com/thr32423/mb3d-rs/commit/3021a67924f3ca8ad9d25730b60bbd4d04a5ea89) | Infos: Avg. and Max. iterations as in MB3D |
 | [`9d0b022`](https://github.com/thr32423/mb3d-rs/commit/9d0b0221c147e1133aa71230c1a48271a7653eba) | docs: scanrepo.dev result for 0.2.44 (issue #4) |
 | [`2535b72`](https://github.com/thr32423/mb3d-rs/commit/2535b7225d04492e132eb21665b3108d0f8e591c) | README: Updates for v0.2.44 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.44)</summary>
 
 ### [v0.2.44](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.44) · 15 Oct 2026, 23:01 UTC
 
