@@ -342,6 +342,81 @@ you check further on your own:
   |:---:|:---:|:---:|
 
   </details>
+* **Rendering shared between your computers**, a "swarm": the instances
+  that watch one shared folder render an animation, a batch or a Monte
+  Carlo picture together, without any network connection of their own.
+
+  <details><summary>Read more</summary>
+
+  The swarm needs no setup beyond a folder that every computer can see: a
+  share on a NAS, a Windows or Samba share, or a folder of a sync service.
+  The program opens no network port and talks to nobody; the folder does
+  the sharing, and the operating system's file sharing does the
+  authentication, as safe as your file sharing is.
+
+  On every computer that should help, start a worker on that folder:
+
+  ```sh
+  mb3d swarm worker /mnt/nas/mb3d-swarm --name kitchen-pc
+  ```
+
+  Then, on any computer, render with `--swarm` and the same folder:
+
+  ```sh
+  mb3d big.m3p --tiles 4x3 --swarm /mnt/nas/mb3d-swarm
+  mb3d animate flight.m3a --swarm /mnt/nas/mb3d-swarm
+  mb3d batch *.m3p -o pictures --swarm /mnt/nas/mb3d-swarm
+  mb3d montecarlo scene.m3p --rays 256 --swarm /mnt/nas/mb3d-swarm
+  ```
+
+  In the desktop program the same is the **Swarm** button on the Tools
+  tab: choose the shared folder and tick *Share this computer*. While it
+  is ticked, this computer renders the folder's jobs, and its own renders
+  go to the swarm whenever another computer is in it (alone, it renders
+  as usual): Calculate 3D (the main window's picture, and so the Batch
+  window's, calculated as N x M tiles on every computer and put together
+  here, with everything the usual calculation gives: lighting changes,
+  post processing, saving as m3i), Big renders, Monte Carlo pictures
+  (blocks of passes) and the Animation maker's animations. The
+  window shows who is in the swarm, with each computer's cores, graphics
+  card and what it is doing, the jobs with their progress, and a preview
+  of the newest job: the tiles already rendered, the tiles under way with
+  a progress bar, and the ones still missing.
+
+  <a href="docs/img/swarm_window.png"><img src="docs/img/swarm_window.png" width="760" alt="The Swarm window, opened with the Swarm button on the Tools tab, while two computers render a picture in tiles: the shared folder, Share this computer, the computers and what each is doing, the job, and the preview with rendered tiles, a tile under way and missing ones"></a>
+
+  The computer that starts the render puts the job into the folder, with
+  the formula and map files it needs, renders too, and collects the
+  results where you asked for them. Tiles of a picture, frames and batch
+  pictures are shared one by one, so a fast computer takes more of them.
+  A Monte Carlo
+  picture is split into blocks of passes, each block with its own random
+  rays, and the blocks are averaged at the end: 4 blocks of 64 rays per
+  pixel give the 256 you asked for with `--rays 256`. In the Monte Carlo
+  window it renders as it does on one computer: every computer adds
+  passes to its own block until you press Stop, the picture cleans up
+  with everyone's rays (each computer saves a snapshot of its block
+  every 30 seconds), and Stop collects the blocks and averages them. In
+  the window's batch mode the blocks together stop at the batch's ray
+  count. `mb3d swarm list FOLDER` shows who is
+  in the swarm, what each computer is doing, and how far the jobs are.
+
+  All computers need the same version of the program. A helper renders
+  only what a job asks for and writes only into the job's folder; formula
+  code from a job runs in the formula emulator like every formula. If a
+  helper disappears, its unfinished frame or block is taken by another.
+  A sync service that copies with a delay works, but a real share is
+  faster: a frame is handed out the moment it is claimed. Tiles travel as
+  full image buffers, a few hundred megabytes for a very big picture, so
+  a fast share pays off there. A job whose owner has gone (no sign of it
+  for half an hour) is removed by whoever sees it; a helper of another
+  program version leaves a job alone, and the panel says so; a job that
+  fails on a computer is noted in the panel and left to the others.
+  Switching *Share this computer* off lets the current tile or frame
+  finish first; closing the program gives it up, and another computer
+  takes it.
+
+  </details>
 * **A new formula, PseudoKleinian:** the "Kleinian architecture" of
   halls, arches and spheres as one formula with its own exact distance.
 
@@ -651,7 +726,10 @@ interrupted animation continues and several computers can share one.
 * **Big pictures** can be rendered in one piece (a 15000 x 20000 picture
   needs about 15 GB of memory; with depth of field it takes hours) or in
   tiles, also on several computers (`--tiles`, and the Big renders
-  window), which needs less memory.
+  window), which needs less memory. Calculate 3D does not start a
+  picture that does not fit into the free memory (on Linux, where the
+  free memory can be told) and says so, and a computer of the swarm
+  leaves a tile too big for its memory to the others.
 * **Newer or your own formulas, maps and themes** go into
   `~/.local/share/mb3d-rs/M3Formulas`, `.../M3Maps` and `.../Themes`
   (any way of installing; on Windows `%APPDATA%\mb3d-rs\...`). They

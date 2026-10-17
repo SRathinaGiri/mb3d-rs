@@ -497,6 +497,11 @@ pub fn build_rot_matrix_4d(angles: &[f64]) -> [[f32; 4]; 4] {
 
 /// Finds `<name>.m3f` (case insensitive) in the given directories.
 pub fn find_formula(name: &str, dirs: &[PathBuf]) -> Option<PathBuf> {
+    // a formula is a name, never a path (names come from parameter files
+    // and swarm jobs)
+    if name.contains(['/', '\\', ':']) || name.trim().starts_with('.') {
+        return None;
+    }
     let want = format!("{}.m3f", name.trim()).to_lowercase();
     for d in dirs {
         let p = d.join(format!("{}.m3f", name.trim()));

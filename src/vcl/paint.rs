@@ -996,14 +996,28 @@ impl Form {
     }
 
     #[allow(clippy::too_many_arguments)]
+    /// A list view's rows: (header height, row height, rows shown, the
+    /// largest first row, the first row shown).
+    pub(crate) fn listview_rows(&self, id: Id) -> (i32, i32, i32, i32, i32) {
+        let font = self.font(id);
+        let hh = line_height(&font) + 8;
+        let rh = line_height(&font) + 6;
+        let r = self.abs_rect(id);
+        let vis = ((r.h - 4 - hh) / rh).max(1);
+        let c = &self.ctl[id];
+        let max = (c.cells.len() as i32 - vis).max(0);
+        (hh, rh, vis, max, c.scroll_y.clamp(0, max))
+    }
+
     fn paint_listview(&self, cv: &mut Canvas, th: &Theme, id: Id, r: Rect, en: bool, focused: bool, font: &Font, tc: u32) {
         let c = &self.ctl[id];
         let inner = th.edit_frame(cv, r, en, focused, c.color);
-        let hh = line_height(font) + 8;
-        let rh = line_height(font) + 6;
+        let (hh, rh, vis, max, top) = self.listview_rows(id);
+        let need_sb = c.cells.len() as i32 > vis;
+        let lw = inner.w - if need_sb { SB } else { 0 };
         let old = cv.clip_to(inner);
         let mut x = inner.x;
-        let widths = c.column_widths(inner.w);
+        let widths = c.column_widths(lw);
         for (i, col) in c.cols.iter().enumerate() {
             let w = widths[i];
             let hr = Rect::new(x, inner.y, w, hh);
@@ -1011,38 +1025,45 @@ impl Form {
             cv.text_in(hr.offset(5, 0), &col.caption, font, tc, HAlign::Left, VAlign::Center, false);
             x += w;
         }
-        let mut y = inner.y + hh - c.scroll_y * rh;
-        for (ri, row) in c.cells.iter().enumerate() {
-            if y + rh > inner.y + hh {
-                let rr = Rect::new(inner.x, y, inner.w, rh);
-                let sel = c.item_index == ri as i32;
-                let o2 = cv.clip_to(Rect::new(inner.x, inner.y + hh, inner.w, inner.h - hh));
-                if sel {
-                    th.selection(cv, rr, focused);
-                }
-                let mut x = inner.x;
-                for (ci, _) in c.cols.iter().enumerate() {
-                    let w = widths[ci];
-                    let txt = row.get(ci).map(String::as_str).unwrap_or("");
-                    let o3 = cv.clip_to(Rect::new(x, y, w - 2, rh));
-                    let mut tx = x + 5;
-                    if ci == 0 && c.checkboxes {
-                        let on = c.checks.get(ri).copied().unwrap_or(false);
-                        th.checkbox(cv, Rect::new(x + 3, y + (rh - 13) / 2, 13, 13), on as u8, en, false);
-                        tx += 17;
-                    }
-                    cv.text_in(Rect::new(tx, y, w - 6 - (tx - x - 5), rh), txt, font, if sel { th.selection_text(focused) } else { tc }, HAlign::Left, VAlign::Center, false);
-                    cv.set_clip(o3);
-                    x += w;
-                }
-                cv.set_clip(o2);
+        if need_sb {
+            // the header goes on above the scroll bar
+            th.button(cv, Rect::new(inner.x + lw, inner.y, SB, hh), BtnState { enabled: true, ..Default::default() });
+        }
+        let mut y = inner.y + hh;
+        for (ri, row) in c.cells.iter().enumerate().skip(top as usize) {
+            let rr = Rect::new(inner.x, y, lw, rh);
+            let sel = c.item_index == ri as i32;
+            let o2 = cv.clip_to(Rect::new(inner.x, inner.y + hh, lw, inner.h - hh));
+            if sel {
+                th.selection(cv, rr, focused);
             }
+            let mut x = inner.x;
+            for (ci, _) in c.cols.iter().enumerate() {
+                let w = widths[ci];
+                let txt = row.get(ci).map(String::as_str).unwrap_or("");
+                let o3 = cv.clip_to(Rect::new(x, y, w - 2, rh));
+                let mut tx = x + 5;
+                if ci == 0 && c.checkboxes {
+                    let on = c.checks.get(ri).copied().unwrap_or(false);
+                    th.checkbox(cv, Rect::new(x + 3, y + (rh - 13) / 2, 13, 13), on as u8, en, false);
+                    tx += 17;
+                }
+                cv.text_in(Rect::new(tx, y, w - 6 - (tx - x - 5), rh), txt, font, if sel { th.selection_text(focused) } else { tc }, HAlign::Left, VAlign::Center, false);
+                cv.set_clip(o3);
+                x += w;
+            }
+            cv.set_clip(o2);
             y += rh;
             if y > inner.bottom() {
                 break;
             }
         }
         cv.set_clip(old);
+        if need_sb {
+            let sr = Rect::new(inner.right() - SB, inner.y + hh, SB, inner.h - hh);
+            let hp = if self.hot == Some(id) { self.hot_part } else { PART_NONE };
+            paint_scrollbar(cv, th, sr, true, 0, max as i64, vis as i64, top as i64, hp, if self.capture == Some(id) { self.cap_part } else { PART_NONE }, en);
+        }
     }
 
     fn paint_combo_list(&self, cv: &mut Canvas, th: &Theme, id: Id, hot: i32, top: i32) {

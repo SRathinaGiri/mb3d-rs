@@ -442,6 +442,14 @@ fn end_rendering(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 /// `Button2Click`: renders the frames into the output folder.
+/// "waiting for 3 of 12 units ..." -> (3, 12)
+fn parse_waiting(st: &str) -> Option<(usize, usize)> {
+    let rest = st.strip_prefix("waiting for ")?;
+    let (left, rest) = rest.split_once(" of ")?;
+    let all = rest.split_whitespace().next()?;
+    Some((left.parse().ok()?, all.parse().ok()?))
+}
+
 fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let cap = ui.caption(F, "Button2");
     if cap == "Pause rendering" {
@@ -485,8 +493,52 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let pause = app.anim.pause.clone();
     let prog = app.anim.progress.clone();
     let waker = ui.waker();
+    let swarm_dir = super::swarm_form::anim_folder(app);
+    let swarm_name = app.swarm.name.clone();
     std::thread::spawn(move || {
         let cancel = || stop.load(Ordering::SeqCst);
+        if let Some(dir) = swarm_dir {
+            // all frames with the swarm; the owner's waiting reports give the count
+            let cancel_fn: std::sync::Arc<dyn Fn() -> bool + Send + Sync> = {
+                let s = stop.clone();
+                std::sync::Arc::new(move || s.load(Ordering::SeqCst))
+            };
+            let opts = crate::swarm::RunOptions { name: swarm_name, threads: run.threads, quiet: true, keep: false, cancel: Some(cancel_fn) };
+            let report = |st: &str| {
+                if let Some((left, all)) = parse_waiting(st) {
+                    let mut j = job.lock().unwrap();
+                    j.total = all;
+                    j.done = all.saturating_sub(left);
+                    j.changed = true;
+                }
+                if let Some(w) = &waker {
+                    w.wake();
+                }
+            };
+            let r = crate::swarm::run_animation(&dir, &a, Some(&frames), &opts, &report);
+            let mut j = job.lock().unwrap();
+            match r {
+                Ok(files) => {
+                    j.done = files.len();
+                    j.total = files.len();
+                    if let Some(img) = files.last().and_then(|p| crate::image::load(p).ok()) {
+                        let s = if img.deep { 8 } else { 0 };
+                        let rgb: Vec<u8> = img.data.iter().flat_map(|p| [(p[0] >> s) as u8, (p[1] >> s) as u8, (p[2] >> s) as u8]).collect();
+                        j.last = Some((rgb, img.width, img.height));
+                    }
+                }
+                Err(e) => {
+                    if e != "cancelled" {
+                        j.error = e;
+                    }
+                }
+            }
+            j.changed = true;
+            drop(j);
+            if let Some(w) = &waker {
+                w.wake();
+            }
+        } else {
         for &f in &frames {
             while pause.load(Ordering::SeqCst) && !cancel() {
                 std::thread::sleep(std::time::Duration::from_millis(200));
@@ -522,6 +574,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             if let Some(w) = &waker {
                 w.wake();
             }
+        }
         }
         // the video of the frames, when all of them are there
         if let Some((path, fps)) = video.filter(|_| !cancel() && job.lock().unwrap().error.is_empty()) {

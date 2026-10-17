@@ -24,6 +24,8 @@ struct Shared {
     /// the records after the last finished pass, with a version number
     img: Option<McImage>,
     ver: u64,
+    /// what a swarm render is at (shown in the window)
+    status: String,
     /// the image of the running pass, row by row, with a version number
     live: Option<McImage>,
     live_ver: u64,
@@ -378,6 +380,58 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
     let progress = app.mc.progress.clone();
     let waker = ui.waker();
     let max_rays = if app.mc.in_batch { app.mc.batch_max_rays } else { u32::MAX };
+    if let Some(dir) = super::swarm_form::mc_folder(app) {
+        // the swarm renders a block of passes on every computer, until
+        // Stop (in a batch: until the blocks together have the batch's
+        // rays), and averages the blocks
+        let units = crate::swarm::suggested_units(&dir);
+        let rays = if app.mc.in_batch { (app.mc.batch_max_rays as f64 / units as f64).max(1.0) } else { 0.0 };
+        let name = app.swarm.name.clone();
+        let cancel = stop.clone();
+        let cancel_fn: std::sync::Arc<dyn Fn() -> bool + Send + Sync> = {
+            let c = cancel.clone();
+            std::sync::Arc::new(move || c.load(Ordering::Relaxed))
+        };
+        ui.set_caption(F, "Label8", &if rays > 0.0 { format!("swarm: {units} blocks of {rays:.0} rays/pixel") } else { "swarm: a block on every computer, until Stop".to_string() });
+        std::thread::spawn(move || {
+            let report = |st: &str| {
+                shared.lock().unwrap().status = st.to_string();
+                if let Some(w) = &waker {
+                    w.wake();
+                }
+            };
+            let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn) };
+            // the blocks merged so far, shown as the running pass is
+            let live = |img: McImage| {
+                let mut s = shared.lock().unwrap();
+                s.live = Some(img);
+                s.live_ver += 1;
+                drop(s);
+                if let Some(w) = &waker {
+                    w.wake();
+                }
+            };
+            let r = crate::swarm::run_montecarlo_live(&dir, &p, units, rays, 0, 0.0, &opts, &report, Some(&live));
+            let mut s = shared.lock().unwrap();
+            match r {
+                Ok(merged) => {
+                    s.img = Some(merged);
+                    s.ver += 1;
+                }
+                Err(e) => {
+                    if !cancel.load(Ordering::Relaxed) {
+                        s.error = e;
+                    }
+                }
+            }
+            s.finished = true;
+            drop(s);
+            if let Some(w) = &waker {
+                w.wake();
+            }
+        });
+        return;
+    }
     std::thread::spawn(move || {
         loop {
             let pr = |d: usize, _t: usize| progress.store(d, Ordering::Relaxed);
@@ -466,7 +520,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if ui.c(F, "ProgressBar1").position != pr {
         ui.cm(F, "ProgressBar1").position = pr;
     }
-    let (ver, finished, err, img, live) = {
+    let (ver, finished, err, img, live, status) = {
         let mut s = app.mc.shared.lock().unwrap();
         let img = if s.ver != app.mc.seen_ver { s.img.take() } else { None };
         // the lines of the running pass, a few times a second
@@ -476,8 +530,11 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         } else {
             None
         };
-        (s.ver, s.finished, std::mem::take(&mut s.error), img, live)
+        (s.ver, s.finished, std::mem::take(&mut s.error), img, live, std::mem::take(&mut s.status))
     };
+    if !status.is_empty() {
+        ui.set_caption(F, "Label15", &status);
+    }
     if let (Some(l), Some(p)) = (&live, &app.mc.paras) {
         let rgb = crate::mc::paint(l, &p.mc, p.lighting.gamma);
         set_image(ui, l.width, l.height, &rgb);

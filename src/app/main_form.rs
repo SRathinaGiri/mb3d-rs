@@ -733,6 +733,14 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     if app.scene.width < 1 || app.scene.height < 1 {
         return;
     }
+    // the whole picture is held here (with the swarm too): one that does
+    // not fit would only swap until the system stops the program
+    if calc3d {
+        if let Err(e) = crate::render::check_memory(app.scene.width as usize, app.scene.height as usize) {
+            app.message(ui, &format!("Not calculated: {e}.\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture (with the swarm too)."));
+            return;
+        }
+    }
     app.main.calc3d = calc3d;
     app.main.calc_start = Instant::now();
     ui.set_visible(F, "Shape1", false);
@@ -749,6 +757,11 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         app.main.compile_note = false;
     }
     let slice = if calc3d { 0 } else { app.main.slice_calc.clamp(1, 3) };
+    if let (true, Some(dir)) = (calc3d, super::swarm_form::calc_folder(app)) {
+        let (cols, rows) = app.swarm.tiles;
+        app.eng.start(Job::Swarm { scene: app.scene.clone(), dir, cols, rows, name: app.swarm.name.clone() });
+        return;
+    }
     app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
     app.eng.start(Job::Calc { scene: app.scene.clone(), slice });
 }
@@ -1286,6 +1299,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "IniDirsBtnClick" => ui.show("IniDirForm"),
         "MapSequencesBtnClick" => ui.show("MapSequencesFrm"),
         "VisualThemesBtnClick" => ui.show("VisualThemesFrm"),
+        "SwarmBtnClick" => ui.show("SwarmFrm"),
         // ---- files
         "Button5Click" => {
             let o = crate::vcl::dialogs::FileOptions {
@@ -1417,8 +1431,11 @@ fn stem(title: &str) -> String {
 
 fn form_close(app: &mut Mb3d, ui: &mut Ui) {
     app.eng.stop();
+    super::tools_forms::stop_tiling(app);
     super::mc_form::stop_for_exit(app);
     super::voxel_form::stop(app);
+    // a swarm worker gives its unit up; another computer takes it
+    super::swarm_form::stop_worker(app, true);
     app.make_scene(ui);
     crate::appdirs::store_history(&app.scene, &stem(&app.title));
     let f = ui.f(F);
@@ -1442,6 +1459,7 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     if ui.caption(F, "Button2") == "Stop" {
         app.eng.stop();
         super::voxel_form::stop(app);
+        super::tools_forms::stop_tiling(app);
         enable_buttons(app, ui);
         if app.main.led_running {
             app.main.led_running = false;

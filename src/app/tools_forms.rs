@@ -6,6 +6,7 @@ use crate::scene::Scene;
 use crate::vcl::bitmap::Bitmap;
 use crate::vcl::{DialogResult, Ev, Event, MouseButton, Ui};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 // ---------------------------------------------------------------------------
@@ -322,6 +323,12 @@ pub struct TilingState {
     pub job: Arc<Mutex<Option<Result<(i32, i32), String>>>>,
     pub running: bool,
     pub user_change: bool,
+    /// set by "Stop": the render (and the swarm job) is given up
+    pub cancel: Arc<AtomicBool>,
+    /// a swarm render's state and the tiles it saved so far
+    pub status: Arc<Mutex<String>>,
+    pub saved: Arc<AtomicUsize>,
+    pub shown_saved: usize,
 }
 
 impl Default for TilingState {
@@ -338,6 +345,10 @@ impl Default for TilingState {
             job: Arc::new(Mutex::new(None)),
             running: false,
             user_change: true,
+            cancel: Arc::new(AtomicBool::new(false)),
+            status: Arc::new(Mutex::new(String::new())),
+            saved: Arc::new(AtomicUsize::new(0)),
+            shown_saved: 0,
         }
     }
 }
@@ -614,16 +625,106 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     let zbase = app.tiling.dir.join(format!("ZBuf {}{}", app.tiling.project, tile_index(&d, x, y)));
     let job = app.tiling.job.clone();
     let waker = ui.waker();
+    // with the swarm: all the tiles still to do, as one job, each tile's
+    // files written as this window writes them
+    let swarm = super::swarm_form::calc_folder(app).map(|dir| {
+        let mut list = vec![(x, y)];
+        if !app.tiling.only_this && (ui.checked(TF, "CheckBox4") || ui.checked(TF, "CheckBox6")) {
+            let mut cur = (x, y);
+            loop {
+                let after = if cur.0 < d.cols { (cur.0 + 1, cur.1) } else { (1, cur.1 + 1) };
+                let n = next_tile(&app.tiling, ui, after);
+                if n.0 <= 0 || list.contains(&n) {
+                    break;
+                }
+                list.push(n);
+                cur = n;
+            }
+        }
+        (dir, list, app.swarm.name.clone(), app.tiling.dir.clone(), app.tiling.project.clone())
+    });
     app.tiling.running = true;
+    app.tiling.cancel.store(false, Ordering::SeqCst);
+    app.tiling.saved.store(0, Ordering::SeqCst);
+    app.tiling.shown_saved = 0;
+    *app.tiling.status.lock().unwrap() = String::new();
+    let cancel = app.tiling.cancel.clone();
     super::main_form::disable_buttons(app, ui);
-    let title = format!("{}  Tile X={x} Y={y}", app.tiling.project);
+    let title = match &swarm {
+        Some((_, list, ..)) => format!("{}  {} tiles with the swarm", app.tiling.project, list.len()),
+        None => format!("{}  Tile X={x} Y={y}", app.tiling.project),
+    };
     ui.fm(MAIN).set_caption(&title);
     for c in ["Button2", "SpeedButton1", "SpeedButton2", "SpeedButton11", "SpeedButton9"] {
         ui.set_enabled(TF, c, false);
     }
+    if let Some((dir, list, name, pdir, project)) = swarm {
+        let (status, saved) = (app.tiling.status.clone(), app.tiling.saved.clone());
+        let mut full = sc.clone();
+        full.tiling = Some(crate::scene::Tiling { cols: d.cols as u32, rows: d.rows as u32, pos: None, downscale: d.downscale as u32 });
+        std::thread::spawn(move || {
+            let last = *list.last().unwrap_or(&(x, y));
+            let r = (|| -> Result<(i32, i32), String> {
+                let subset: Vec<usize> = list.iter().map(|&(tx, ty)| ((ty - 1) * d.cols + (tx - 1)) as usize).collect();
+                let stop = cancel.clone();
+                let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, cancel: Some(Arc::new(move || stop.load(Ordering::SeqCst))), ..Default::default() };
+                let ds = d.downscale.max(1) as usize;
+                let collect = |k: usize, m3i: &std::path::Path, png: &std::path::Path| -> Result<(), String> {
+                    let (tx, ty) = ((k as i32 % d.cols) + 1, (k as i32 / d.cols) + 1);
+                    let base = pdir.join(format!("{project}{}", tile_index(&d, tx, ty)));
+                    let zbase = pdir.join(format!("ZBuf {project}{}", tile_index(&d, tx, ty)));
+                    let img = crate::image::load(png)?;
+                    let s = if img.deep { 8 } else { 0 };
+                    let rgb: Vec<u8> = img.data.iter().flat_map(|p| [(p[0] >> s) as u8, (p[1] >> s) as u8, (p[2] >> s) as u8]).collect();
+                    let (rgb, w, h) = if ds > 1 { crate::render::downsample(&rgb, img.width, img.height, ds) } else { (rgb, img.width, img.height) };
+                    let (data, ext) = match d.output {
+                        1 => (crate::jpeg::encode(w, h, &rgb, d.jpeg_q.clamp(1, 100) as u8), "jpg"),
+                        2 => (crate::frames::encode_bmp(w, h, &rgb), "bmp"),
+                        _ => (crate::png::encode_rgb(w, h, &rgb), "png"),
+                    };
+                    let p = base.with_extension(ext);
+                    std::fs::write(&p, data).map_err(|e| format!("{}: {e}", p.display()))?;
+                    if d.save_zbuf || d.save_m3i {
+                        let data = std::fs::read(m3i).map_err(|e| format!("{}: {e}", m3i.display()))?;
+                        let (zw, zh, g) = crate::m3p::gbuffer_from_m3i(&data).ok_or("the tile has no image buffer")?;
+                        if d.save_zbuf {
+                            let z: Vec<u16> = g.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
+                            let _ = std::fs::write(zbase.with_extension("png"), crate::png::encode_gray16(zw, zh, &z));
+                        }
+                        if d.save_m3i {
+                            let mut ts = sc.clone();
+                            ts.width = zw as i32;
+                            ts.height = zh as i32;
+                            ts.tiling = None;
+                            let _ = std::fs::write(base.with_extension("m3i"), crate::m3p::write_m3i(&ts, &g));
+                        }
+                    }
+                    saved.fetch_add(1, Ordering::SeqCst);
+                    if let Some(w) = &waker {
+                        w.wake();
+                    }
+                    Ok(())
+                };
+                let report = |st: &str| {
+                    *status.lock().unwrap() = st.to_string();
+                    if let Some(w) = &waker {
+                        w.wake();
+                    }
+                };
+                crate::swarm::run_tiles_files(&dir, &full, d.cols as u32, d.rows as u32, Some(&subset), &opts, &report, None, &collect)?;
+                Ok(last)
+            })();
+            *job.lock().unwrap() = Some(r);
+            if let Some(w) = waker {
+                w.wake();
+            }
+        });
+        return;
+    }
     std::thread::spawn(move || {
         let r = (|| -> Result<(i32, i32), String> {
-            let res = crate::render::render_tiled(&sc, d.save_zbuf || d.save_m3i, &|_, _| {}, &|_, _, _| {})?;
+            let stop = || cancel.load(Ordering::SeqCst);
+            let res = crate::render::render_tiled_cancellable(&sc, d.save_zbuf || d.save_m3i, &|_, _| {}, &|_, _, _| {}, &stop)?;
             let ds = d.downscale.max(1) as usize;
             let (rgb, w, h) = if ds > 1 { crate::render::downsample(&res.rgb, res.width, res.height, ds) } else { (res.rgb.clone(), res.width, res.height) };
             let (data, ext) = match d.output {
@@ -656,9 +757,29 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     });
 }
 
+/// "Stop" in the main window: the big render ends after the tiles done.
+pub fn stop_tiling(app: &mut Mb3d) {
+    if app.tiling.running {
+        app.tiling.cancel.store(true, Ordering::SeqCst);
+    }
+}
+
 pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
     if !app.tiling.running {
         return;
+    }
+    // a swarm render: the tiles saved so far light up, its state shows
+    let saved = app.tiling.saved.load(Ordering::SeqCst);
+    if saved != app.tiling.shown_saved {
+        app.tiling.shown_saved = saved;
+        scan_project(app, ui);
+    }
+    let st = app.tiling.status.lock().unwrap().clone();
+    if !st.is_empty() && !app.tiling.cancel.load(Ordering::SeqCst) {
+        let text = format!("{saved} {} saved; {st}", if saved == 1 { "tile" } else { "tiles" });
+        if ui.caption(MAIN, "Label6") != text {
+            ui.set_caption(MAIN, "Label6", &text);
+        }
     }
     let Some(r) = app.tiling.job.lock().unwrap().take() else { return };
     app.tiling.running = false;
@@ -670,6 +791,7 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
         Ok((x, y)) => {
             app.message(ui, &format!("Tile X={x} Y={y} saved."));
             scan_project(app, ui);
+            ui.fm(MAIN).set_caption(&app.title.clone());
             let auto = ui.checked(TF, "CheckBox4") || ui.checked(TF, "CheckBox6");
             if !app.tiling.only_this && auto {
                 let n = next_tile(&app.tiling, ui, app.tiling.act);
@@ -678,6 +800,11 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
                     render_tile(app, ui);
                 }
             }
+        }
+        Err(_) if app.tiling.cancel.load(Ordering::SeqCst) => {
+            scan_project(app, ui);
+            ui.fm(MAIN).set_caption(&app.title.clone());
+            app.message(ui, "Big render stopped.");
         }
         Err(e) => app.message(ui, &format!("Big render: {e}")),
     }

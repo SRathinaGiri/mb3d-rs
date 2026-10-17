@@ -104,6 +104,15 @@ impl Form {
                 }
                 PART_NONE
             }
+            Kind::ListView => {
+                let (hh, _, vis, max, top) = self.listview_rows(id);
+                let inner = r.inset(2);
+                if c.cells.len() as i32 > vis && x >= inner.right() - SB && y >= inner.y + hh {
+                    let sr = Rect::new(inner.right() - SB, inner.y + hh, SB, inner.h - hh);
+                    return sb_part(sr, true, 0, max as i64, vis as i64, top as i64, x, y);
+                }
+                PART_NONE
+            }
             Kind::Memo => {
                 if c.scroll_bars & 2 != 0 {
                     let inner = r.inset(if c.border { 2 } else { 0 });
@@ -373,14 +382,16 @@ impl Form {
                     out.push(raw(id, "OnClick", Ev::Click));
                 }
             }
+            Kind::ListView if self.cap_part != PART_NONE => {
+                self.scroll_part(id, self.cap_part, &mut out);
+                self.repeat_at = Some(now + REPEAT_FIRST);
+            }
             Kind::ListView => {
-                let font = self.font(id);
+                let (hh, rh, _, _, top) = self.listview_rows(id);
                 let (lx, ly) = self.local(id, x, y);
                 let c = &mut self.ctl[id];
-                let hh = line_height(&font) + 8;
-                let rh = line_height(&font) + 6;
                 if ly > hh + 2 {
-                    let i = (ly - hh - 2) / rh + c.scroll_y;
+                    let i = (ly - hh - 2) / rh + top;
                     if (i as usize) < c.cells.len() && c.item_index != i {
                         c.item_index = i;
                         out.push(raw(id, "OnSelectItem", Ev::Select));
@@ -512,6 +523,15 @@ impl Form {
                 } else {
                     c.top_index = v;
                 }
+                self.dirty = true;
+            }
+            Kind::ListView if self.cap_part == PART_THUMB => {
+                let (hh, _, vis, max, _) = self.listview_rows(id);
+                let r = self.abs_rect(id);
+                let track = r.h - 4 - hh - 2 * SB;
+                let tl = ((vis as f64 / (max + vis).max(1) as f64) * track as f64).max(8.0);
+                let frac = (y - self.cap_start.1) as f64 / (track as f64 - tl).max(1.0);
+                self.ctl[id].scroll_y = (self.cap_value as f64 + frac * max as f64).round().clamp(0.0, max as f64) as i32;
                 self.dirty = true;
             }
             Kind::ListBox if self.cap_part == PART_NONE => {
@@ -718,8 +738,8 @@ impl Form {
                     true
                 }
                 Kind::ListView => {
-                    let c = &mut self.ctl[id];
-                    c.scroll_y = (c.scroll_y - steps * 3).clamp(0, (c.cells.len() as i32 - 1).max(0));
+                    let (_, _, _, max, top) = self.listview_rows(id);
+                    self.ctl[id].scroll_y = (top - steps * 3).clamp(0, max);
                     true
                 }
                 Kind::TrackBar if self.focus == Some(id) => {
@@ -773,7 +793,7 @@ impl Form {
         }
         match self.ctl[id].kind {
             Kind::UpDown => self.updown_step(id, self.cap_part == PART_UP, &mut out),
-            Kind::ScrollBar | Kind::ListBox | Kind::Memo => {
+            Kind::ScrollBar | Kind::ListBox | Kind::ListView | Kind::Memo => {
                 if self.cap_part != PART_THUMB {
                     self.scroll_part(id, self.cap_part, &mut out)
                 }
@@ -924,6 +944,21 @@ impl Form {
                     _ => 0,
                 };
                 c.top_index = (c.top_index + d).clamp(0, max);
+            }
+            Kind::ListView => {
+                let (_, _, vis, max, top) = self.listview_rows(id);
+                let d = match part {
+                    PART_UP => -1,
+                    PART_DOWN => 1,
+                    PART_PAGE_UP => -vis,
+                    PART_PAGE_DOWN => vis,
+                    PART_THUMB => {
+                        self.cap_value = top as i64;
+                        0
+                    }
+                    _ => 0,
+                };
+                self.ctl[id].scroll_y = (top + d).clamp(0, max);
             }
             Kind::Memo => {
                 let (vis, max) = self.memo_range(id);
@@ -1570,6 +1605,10 @@ impl Form {
                         c.item_index = i;
                         out.push(raw(id, "OnChange", Ev::Change));
                     }
+                    // the selected row stays in view
+                    let (_, _, vis, max, top) = self.listview_rows(id);
+                    let c = &mut self.ctl[id];
+                    c.scroll_y = top.clamp(c.item_index - vis + 1, c.item_index.max(0)).clamp(0, max);
                 } else {
                     c.row = (c.row + d).clamp(c.fixed_rows, c.cells.len() as i32 - 1);
                     out.push(raw(id, "OnSelectCell", Ev::Select));

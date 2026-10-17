@@ -63,6 +63,7 @@ pub mod render;
 pub mod scene;
 pub mod ssao;
 pub mod ssao15;
+pub mod swarm;
 pub mod video;
 pub mod vollight;
 pub mod voxel;

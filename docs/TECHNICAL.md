@@ -485,6 +485,104 @@ After those come `M3Formulas` in the folder of a loaded parameter file or
 the folder above it (MB3D keeps `M3Parameter` next to `M3Formulas`) and,
 last, `~/mb3d-rs/M3Formulas`, where `download.sh` installs the release.
 
+## The swarm (`swarm.rs`)
+
+Rendering shared between computers through a shared folder; no sockets,
+so the program stays without network code (the user's choice, for the
+attack surface and the repository scanners). Everything is files:
+
+| path in the swarm folder | content |
+|---|---|
+| `peers/<id>.txt` | a heartbeat per running instance (name, version, cores, card, state, time), written every 4 s while a unit is calculated and when idle; stale after 30 s, removed after 300 s |
+| `jobs/<id>/job.txt` | the job: `kind = animation | batch | montecarlo | tiles`, name, owner, settings, the unit output names |
+| `jobs/<id>/in/` | the inputs: `anim.m3k` (the keyframes written inline), the parameter files and `list.txt` of a batch, `scene.m3s` of a Monte Carlo render; `M3Formulas/` and `M3Maps/` with the custom formulas and maps the scenes use (`copy_scene_files`) |
+| `jobs/<id>/out/` | one output file per unit; a tile is `tile_<k>.m3i` (its G-buffer, with the shadows and occlusion calculated with the tile's border as a single tile of `render_tiled`) plus `tile_<k>.png` for the previews |
+| `jobs/<id>/done` | written by the owner when the results are collected (the folder is removed unless kept) |
+
+Units are claimed with a marker next to the output (`claim_unit`:
+`<output>.claim`, opened with `create_new` and holding the claimer's
+heartbeat id): an exclusive create is atomic on the server whether a
+computer reaches the folder directly or over the network. Tiles and
+Monte Carlo blocks are written under a
+temporary name and renamed into place (`write_atomic`), frames and batch
+pictures by `frames`; the marker is removed after that (`UnitClaim`'s
+drop), so a unit is done when its output is there and its marker is not
+(`is_done_file`). A marker whose heartbeat is stale or missing (an empty
+one by its age) is taken over: renamed to a name of the taker's first,
+so only one computer takes it, and a half written output is removed.
+Each program keeps its heartbeat going from a thread (`Presence::get`),
+so a long step without progress does not look like a computer gone. The
+owner (`run_animation`,
+`run_batch`, `run_montecarlo`) creates the job, takes part through the
+same `work_on` as a worker, and polls every 5 s until all unit files are
+non-empty, then copies the frames or pictures to the user's output or
+merges the Monte Carlo blocks. A Monte Carlo block k renders the whole
+picture with `McImage::seed_salt = (k + 1) * 0x9E37`, which is XORed into
+every ray's seed (`Tracer::pixel`), until it has the block's share of the
+rays (`--rays` divided by the blocks, default two blocks per instance);
+`McImage::merge` averages the records weighted by their ray counts and
+adds the pass counts. The worker (`mb3d swarm worker DIR`) loops over the
+jobs oldest first, adds a job's `M3Formulas`/`M3Maps` to the search paths
+once, and sleeps 2 s when nothing is left; `--once` makes one round (the
+tests use it). `mb3d swarm list DIR` prints the peers and the jobs.
+
+The Swarm window (`app/swarm_form.rs`, `forms/Swarm.dfm`, the `Swarm`
+button on the main window's Tools tab) keeps the folder, this computer's
+name, the thread count and the tiles in the ini (`SwarmFolder`,
+`SwarmName`, `SwarmThreads`, `SwarmTiles`; sharing is never on at the
+start). *Share this computer* is the one switch: it runs
+`swarm::worker_controlled` in a thread, and while it is on this
+computer's renders go to the swarm when another computer of this version
+is in it (`swarm::others_online`). The parts of one program (the worker,
+the renders that made jobs) share one heartbeat (`Presence`), so a
+computer is listed once, and the worker leaves its own program's jobs to
+the part that made them. Switching sharing off sets `stop`: the unit
+under way is finished and no further one taken; switching it on again
+meanwhile keeps that worker. A timer refreshes the two lists every 2 s
+from the heartbeat and job files, and the status line says with whom
+this computer shares. The Monte Carlo window's start (`mc_form::start`)
+runs `swarm::run_montecarlo_live` in its thread instead of the pass
+loop. Without a rays target (the window's normal, open-ended render) the
+job is open-ended: every computer renders one block until the owner
+writes `stop` (the window's Stop), saving a snapshot (`<unit>.snap`)
+every 30 s that the owner merges into the live picture (`BlockMerge`);
+after Stop the owner waits up to 2 minutes for the blocks under way and
+merges the saved blocks, or a block's last snapshot when its computer
+went away. In batch mode the blocks stop at the batch's ray count. The
+owner's waiting reports arrive through `Shared::status`, and the merged
+image through the usual `Shared::img`. Calculate 3D does not start a
+picture that does not fit into the free memory (`render::check_memory`,
+80 bytes per pixel and 300 MB against `MemAvailable`), and a worker
+leaves a tile that does not fit to the others.
+
+Calculate 3D with the swarm is `engine::Job::Swarm`: the engine thread
+runs `swarm::run_tiles` (the picture in the window's tiles, a `tiles`
+job), publishes the preview the owner gets while it waits (`job_preview`:
+the tiles' pictures put together, units under way as dimmed rectangles
+with the progress their worker's heartbeat says, the rest dark), and
+keeps the stitched G-buffer as a calculated one (`Base`), so lighting
+changes, post processing and saving work as after a local calculation.
+The Batch window goes through the same path, picture by picture. The
+Animation maker's thread calls `swarm::run_animation` for all frames
+when its switch is on, and reads the frame count from the owner's
+waiting reports. The Swarm window shows `job_preview` of the newest job
+every 2 s. Pictures by the swarm are not bit-identical to local ones
+only where a tile's border changes an image-space effect, as with
+MB3D's big-render tiles.
+
+Robustness: `job.txt` carries the owner's heartbeat id and the program
+version. A worker removes a job whose owner has sent no heartbeat for
+`ORPHAN_SECS` (30 min; the job must be that old too), skips jobs of
+another version (noted once in `WorkerControl::note`, shown in the
+window's status line), and when a unit fails it writes
+`errors/<peer id>.txt` (peer name, message), gives that job up for this
+process and goes on; the owner fails its run as soon as every helper of
+its version has an error noted, with that message. An animation job
+carries the frame list (`frames`), so the Animation maker's and
+`animate`'s selections apply. `WorkerControl` has `stop` (no further
+unit, the current one is finished) and `abort` (the current one is given
+up): the window's switch uses `stop`, closing the program `abort`.
+
 ## Scene files (`.m3s`)
 
 The INI-style format holds global keys, then optional `[formula]` sections (up

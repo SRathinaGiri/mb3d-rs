@@ -281,6 +281,9 @@ pub struct McImage {
     /// finished passes and calculation time (seconds)
     pub passes: u32,
     pub seconds: f64,
+    /// mixed into the seeds of all rays: images with different salts have
+    /// different rays (the swarm's blocks), so that they can be merged
+    pub seed_salt: u32,
     avrg_sqr_noise: f64,
     avrg_rcount: f32,
 }
@@ -304,12 +307,42 @@ impl McImage {
             recs: vec![McRecord::default(); width * height],
             passes: 0,
             seconds: 0.0,
+            seed_salt: 0,
             avrg_sqr_noise: 1.0,
             avrg_rcount: 0.0,
         }
     }
 
     /// `CalcAvrgNoise`
+    /// Adds the rays of `other` (the same scene, other random rays, as the
+    /// swarm's blocks are) to this image: the averages of the pixels are
+    /// weighted by their ray counts, the pass counts and times add up.
+    pub fn merge(&mut self, other: &McImage) -> Result<(), String> {
+        if self.width != other.width || self.height != other.height {
+            return Err(format!("cannot merge a {}x{} Monte Carlo image into a {}x{} one", other.width, other.height, self.width, self.height));
+        }
+        for (a, b) in self.recs.iter_mut().zip(&other.recs) {
+            let (na, nb) = (a.ray_count as f64, b.ray_count as f64);
+            if nb == 0.0 {
+                continue;
+            }
+            let n = na + nb;
+            for k in 0..3 {
+                a.col[k] = ((a.col[k] as f64 * na + b.col[k] as f64 * nb) / n) as f32;
+            }
+            a.ysum = (a.ysum * na + b.ysum * nb) / n;
+            a.ysqr = (a.ysqr * na + b.ysqr * nb) / n;
+            a.ray_count = a.ray_count.saturating_add(b.ray_count);
+            a.hit |= b.hit;
+        }
+        self.passes += other.passes;
+        self.seconds += other.seconds;
+        let st = self.stats();
+        self.avrg_rcount = st.avg_rays as f32;
+        self.avrg_sqr_noise = self.avg_sqr_noise();
+        Ok(())
+    }
+
     pub fn stats(&self) -> McStats {
         let l = self.recs.len().max(1) as f64;
         let mut st = McStats::default();
@@ -346,6 +379,8 @@ impl McImage {
 // per render constants (`CalcMCT`)
 
 struct McCtx<'a> {
+    /// see `McImage::seed_salt`
+    seed_salt: i32,
     p: &'a CalcParams,
     lv: &'a LightVals,
     cam: &'a PaintCamera,
@@ -2022,7 +2057,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let sw = p.step_width;
         self.guard = 0;
         self.act_ray_nr = (rec_rays as usize + itcount as usize).min(65535);
-        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32);
+        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32) ^ self.c.seed_salt;
         let (sx, sy) = halton_2d_shifts(x1, y);
         self.shift_x = sx;
         self.shift_y = sy;
@@ -2259,7 +2294,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
     #[allow(clippy::too_many_arguments)]
     async fn pixel(&mut self, x1: i32, y: i32, rec: &mut McRecord, snap: &[McRecord], skip_nonzero: bool, avrg_vari: f64, avrg_rcount: f32, max_new: i32) {
         let sqr = self.c.lv.sqr;
-        self.seed = seed_of(x1, y, 0x8000_0000 | self.pass_nr);
+        self.seed = seed_of(x1, y, 0x8000_0000 | self.pass_nr) ^ self.c.seed_salt;
         let mut total = if rec.ray_count == 0 {
             4
         } else if skip_nonzero {
@@ -2436,6 +2471,7 @@ pub fn pass_rows(
         None => (false, 1e-7, 0.01),
     };
     let ctx = McCtx {
+        seed_salt: img.seed_salt as i32,
         p: &p,
         lv: &lv,
         cam: &cam,

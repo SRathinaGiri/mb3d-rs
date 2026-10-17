@@ -1170,6 +1170,40 @@ pub fn auto_color_range(sc: &mut Scene, gbuf: &[SiLight]) {
     sc.lighting.color_end = tb(hi) as f32;
 }
 
+/// The memory a whole picture of `w` x `h` takes while it is calculated
+/// (measured: the buffers, the card's copies, the picture; on the safe side).
+pub fn memory_needed(w: usize, h: usize) -> u64 {
+    (w as u64).saturating_mul(h as u64).saturating_mul(80).saturating_add(300 << 20)
+}
+
+/// The memory the system can give without swapping (`MemAvailable`); None
+/// where it cannot be told (other systems than Linux).
+pub fn memory_available() -> Option<u64> {
+    let text = std::fs::read_to_string("/proc/meminfo").ok()?;
+    let kb: u64 = text.lines().find_map(|l| l.strip_prefix("MemAvailable:"))?.trim().trim_end_matches("kB").trim().parse().ok()?;
+    Some(kb * 1024)
+}
+
+/// Err when a picture of `w` x `h` does not fit into the free memory: the
+/// calculation would only swap until the system stops it.
+pub fn check_memory(w: usize, h: usize) -> Result<(), String> {
+    let need = memory_needed(w, h);
+    match memory_available() {
+        Some(free) if need > free => Err(format!("a {w} x {h} picture needs about {} of memory, this computer has {} free", gigabytes(need), gigabytes(free))),
+        _ => Ok(()),
+    }
+}
+
+/// "12 GB", "0.5 GB".
+pub fn gigabytes(bytes: u64) -> String {
+    let g = bytes as f64 / (1u64 << 30) as f64;
+    if g >= 10.0 {
+        format!("{g:.0} GB")
+    } else {
+        format!("{g:.1} GB")
+    }
+}
+
 /// Full render: calculation + painting.
 pub fn render(sc: &Scene, progress: &(dyn Fn(usize, usize) + Sync)) -> Result<RenderResult, String> {
     let t0 = Instant::now();
@@ -1244,6 +1278,18 @@ pub fn render_tiled(
     progress: &(dyn Fn(usize, usize) + Sync),
     tile_progress: &dyn Fn(usize, usize, [i32; 4]),
 ) -> Result<TiledResult, String> {
+    render_tiled_cancellable(sc, keep_gbuffer, progress, tile_progress, &|| false)
+}
+
+/// Like [`render_tiled`]; stops early with `Err("cancelled")` as soon as
+/// `cancel` returns true.
+pub fn render_tiled_cancellable(
+    sc: &Scene,
+    keep_gbuffer: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    tile_progress: &dyn Fn(usize, usize, [i32; 4]),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> Result<TiledResult, String> {
     let tl = sc.tiling.ok_or("no tiling set")?;
     let (w, h) = (sc.width, sc.height);
     if let Some((c, r)) = tl.pos {
@@ -1259,7 +1305,7 @@ pub fn render_tiled(
         let mut ts = sc.clone();
         ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
         let t0 = Instant::now();
-        let (p, gbuf) = calculate(&ts, progress)?;
+        let (p, gbuf) = calculate_cancellable(&ts, progress, cancel)?;
         let t1 = Instant::now();
         let trgb = paint(&ts, &p, &gbuf);
         let paint_s = t1.elapsed().as_secs_f64();
@@ -1300,7 +1346,7 @@ pub fn render_tiled(
             }
             let mut ts = sc.clone();
             ts.calc_rect = Some(t);
-            let (_, gbuf) = calculate_inner(&ts, progress, &|| false, 1, None)?;
+            let (_, gbuf) = calculate_inner(&ts, progress, cancel, 1, None)?;
             let tw = t[2] as usize;
             for y in 0..t[3] as usize {
                 let d = (t[1] as usize + y) * wu + t[0] as usize;

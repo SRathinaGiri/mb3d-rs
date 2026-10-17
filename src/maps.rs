@@ -355,7 +355,8 @@ const EXTS: [&str; 5] = ["jpg", "png", "bmp", "jpeg", "pgm"];
 
 /// `FindHeightMap`: `<nr>.<ext>`, or a file starting with the number
 /// followed by a non-digit.
-fn find_map_file(nr: i32) -> Option<PathBuf> {
+/// The file of map number `nr` in the map folders.
+pub fn find_map_file(nr: i32) -> Option<PathBuf> {
     let n = nr.to_string();
     for d in search_dirs() {
         let Ok(rd) = std::fs::read_dir(&d) else { continue };

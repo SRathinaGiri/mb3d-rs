@@ -18,6 +18,7 @@ USAGE:
     mb3d mesh FILE -o mesh.obj|.ply|.stl [OPTIONS]                 triangle mesh
     mb3d mutagen FILE [-o DIR] [OPTIONS]                           random variations
     mb3d montecarlo FILE [-o image.png] [OPTIONS]                  path traced image
+    mb3d swarm worker DIR | list DIR                               share rendering through a shared folder
     (mb3d animate --help, mb3d batch --help, ...)
 
 SCENE_FILE is an INI-style scene description (see examples/*.m3s), a
@@ -63,6 +64,8 @@ OPTIONS:
                              modes, see -s stereo_screen=width,distance,min) and combine
                              them: parallel, cross or anaglyph
     -q, --quiet              No progress output
+        --swarm <DIR>        Render the picture in tiles (--tiles CxR) with the swarm:
+                             the instances that watch this shared folder (mb3d swarm --help)
         --formulas <DIR>     Directory with .m3f formula files (also: MB3D_FORMULAS;
                              M3Formulas in the current folder, in ~/.local/share/mb3d-rs
                              (your own, before the shipped ones), next to the program,
@@ -172,6 +175,7 @@ fn run() -> Result<(), String> {
         Some("mesh") => return mesh_cmd(&all[1..]),
         Some("mutagen") => return mutagen_cmd(&all[1..]),
         Some("montecarlo") | Some("mc") => return mc_cmd(&all[1..]),
+        Some("swarm") => return swarm_cmd(&all[1..]),
         _ => {}
     }
     let mut args = std::env::args().skip(1);
@@ -190,6 +194,7 @@ fn run() -> Result<(), String> {
     let mut denoise = 0f32;
     let mut transparent = false;
     let mut stereo_pair: Option<mb3d::render::StereoLayout> = None;
+    let mut swarm: Option<String> = None;
     while let Some(a) = args.next() {
         let mut val = |name: &str| args.next().ok_or_else(|| format!("{name} needs a value"));
         match a.as_str() {
@@ -247,6 +252,7 @@ fn run() -> Result<(), String> {
             "--stereo-pair" => stereo_pair = Some(mb3d::render::StereoLayout::parse(&val(&a)?)?),
             "--tiles" => overrides.push(format!("tiles = {}", val(&a)?)),
             "--tile" => overrides.push(format!("tile = {}", val(&a)?)),
+            "--swarm" => swarm = Some(val(&a)?),
             "-q" | "--quiet" => quiet = true,
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{USAGE}")),
             s => scene_file = Some(s.to_string()),
@@ -422,6 +428,29 @@ fn run() -> Result<(), String> {
         let rgb = denoised(rgb, ow, oh, denoise);
         write_png(&output, ow, oh, &rgb)?;
     } else if let Some(tl) = scene.tiling {
+        if let Some(dir) = &swarm {
+            // the picture in tiles with the swarm, put together here
+            if tl.pos.is_some() {
+                return Err(usage_err("--swarm renders all tiles; --tile is for one tile by hand"));
+            }
+            let ropts = mb3d::swarm::RunOptions { threads: scene.threads, quiet, ..Default::default() };
+            let report = |st: &str| {
+                if !quiet {
+                    eprintln!("  {st}");
+                }
+            };
+            let full = mb3d::swarm::run_tiles(std::path::Path::new(dir), &scene, tl.cols, tl.rows, &ropts, &report, None)?;
+            let mut fs = scene.clone();
+            fs.tiling = None;
+            let p = mb3d::calc::CalcParams::new(&fs)?;
+            let rgb = mb3d::render::paint(&fs, &p, &full);
+            let (rgb, w, h) = if aa > 1 { mb3d::render::downsample(&rgb, fs.width as usize, fs.height as usize, aa) } else { (rgb, fs.width as usize, fs.height as usize) };
+            write_png(&output, w, h, &rgb)?;
+            if !quiet {
+                eprintln!("wrote {output} ({}x{} tiles from the swarm)", tl.cols, tl.rows);
+            }
+            return Ok(());
+        }
         // anti-aliasing of tile renders: --aa and the tile downscale
         let down = aa * tl.downscale.max(1) as usize;
         if tl.downscale > 1 {
@@ -681,6 +710,9 @@ OPTIONS:
         --list               Print the frames (file index, keyframe, sub-frame) and exit
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --swarm <DIR>        Render the frames with the swarm: the instances that watch
+                             this shared folder (mb3d swarm --help); all frames, the
+                             --from/--to/--every selection does not apply
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps and background pictures
 ";
@@ -699,6 +731,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut depth, mut list, mut render_too, mut quiet) = (false, false, false, false);
     let mut save: Option<String> = None;
     let mut transparent = false;
+    let mut swarm: Option<String> = None;
     let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, 25.0);
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
@@ -756,6 +789,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--fps" => {
                 fps = args.next().ok_or("--fps needs a value")?.trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or("--fps needs a number above 0 (e.g. 25)")?
             }
+            "--swarm" => swarm = Some(args.next().ok_or("--swarm needs a folder")?.clone()),
             "-s" | "--set" => overrides.push(args.next().ok_or("--set needs a value")?.clone()),
             "--save" => save = Some(args.next().ok_or("--save needs a value")?.clone()),
             "--render" => render_too = true,
@@ -970,6 +1004,15 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let t0 = Instant::now();
     let (mut done, mut skipped, mut secs) = (0usize, 0usize, 0.0f64);
     let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
+    if let Some(dir) = &swarm {
+        let opts = mb3d::swarm::RunOptions { threads: run.threads, quiet, ..Default::default() };
+        let files = mb3d::swarm::run_animation(std::path::Path::new(dir), &anim, Some(&frames_to_do), &opts, &|st| {
+            if !quiet {
+                eprintln!("  {st}");
+            }
+        })?;
+        done = files.len();
+    } else {
     for (n, &f) in frames_to_do.iter().enumerate() {
         let label = format!("frame {}/{} ({:06})", n + 1, frames_to_do.len(), anim.file_index(f));
         let progress = |d: usize, t: usize| {
@@ -997,6 +1040,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
                 }
             }
         }
+    }
     }
     if !quiet {
         eprintln!("done: {done} frames rendered, {skipped} skipped, {}", fmt_dur(t0.elapsed().as_secs_f64()));
@@ -1067,6 +1111,8 @@ OPTIONS:
         --dry-run            Only list what would be rendered
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --swarm <DIR>        Render the files with the swarm: the instances that watch
+                             this shared folder (mb3d swarm --help)
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps and background pictures
 ";
@@ -1077,10 +1123,12 @@ fn batch(argv: &[String]) -> Result<(), String> {
     let mut inputs: Vec<String> = Vec::new();
     let mut lists: Vec<String> = Vec::new();
     let (mut quiet, mut dry) = (false, false);
+    let mut swarm: Option<String> = None;
     let mut args = argv.iter();
     while let Some(a) = args.next() {
         let mut val = || args.next().cloned().ok_or_else(|| format!("{a} needs a value"));
         match a.as_str() {
+            "--swarm" => swarm = Some(val()?),
             "-h" | "--help" => {
                 print!("{BATCH_USAGE}");
                 return Ok(());
@@ -1121,6 +1169,18 @@ fn batch(argv: &[String]) -> Result<(), String> {
             if writeln!(out, "{} -> {}{extra}{state}", it.input.display(), o.display()).is_err() {
                 break; // e.g. piped into head
             }
+        }
+        return Ok(());
+    }
+    if let Some(dir) = &swarm {
+        let ropts = mb3d::swarm::RunOptions { threads: opts.threads, quiet, ..Default::default() };
+        mb3d::swarm::run_batch(std::path::Path::new(dir), &items, &outputs, &opts, &ropts, &|st| {
+            if !quiet {
+                eprintln!("  {st}");
+            }
+        })?;
+        if !quiet {
+            eprintln!("swarm done: {} pictures", outputs.len());
         }
         return Ok(());
     }
@@ -1660,6 +1720,9 @@ OPTIONS:
     -s, --set <KEY=VALUE>    Change a scene key (may be repeated)
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --swarm <DIR>        Render with the swarm: the instances that watch this shared
+                             folder each calculate blocks of passes, averaged at the end
+        --units <N>          Blocks of the swarm render (default: two per instance)
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps
 ";
@@ -1672,6 +1735,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     let (mut exposure, mut saturation, mut scale) = (None::<u8>, None::<u8>, None::<f64>);
     // the noise filter: None off, Some(None) sigma estimated from the rays
     let mut denoise: Option<Option<f32>> = None;
+    let (mut swarm, mut units): (Option<String>, Option<usize>) = (None, None);
     let mut args = argv.iter().peekable();
     while let Some(a) = args.next() {
         if a == "--denoise" {
@@ -1694,6 +1758,8 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             "--passes" => passes = Some(f(val()?)?.max(1.0) as u32),
             "--time" => time = Some(f(val()?)?.max(0.0)),
             "--m3c" => m3c = Some(val()?),
+            "--swarm" => swarm = Some(val()?),
+            "--units" => units = Some(f(val()?)?.max(1.0) as usize),
             "--exposure" => exposure = Some(f(val()?)?.clamp(0.0, 255.0) as u8),
             "--saturation" => saturation = Some(f(val()?)?.clamp(0.0, 127.0) as u8),
             "--scale" => scale = Some(f(val()?)?).filter(|v| *v > 0.0),
@@ -1774,6 +1840,31 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         }
         write_png(&out, img.width, img.height, &rgb)
     };
+    if let Some(dir) = &swarm {
+        if is_m3c {
+            return Err(usage_err("--swarm renders a parameter file, not a continued .m3c file"));
+        }
+        let dir = std::path::Path::new(dir);
+        let units = units.unwrap_or_else(|| mb3d::swarm::suggested_units(dir));
+        let rays_per_unit = (target.unwrap_or(64.0) / units as f64).max(1.0);
+        if !quiet {
+            eprintln!("swarm: {units} blocks of {rays_per_unit:.1} rays/pixel each, in {}", dir.display());
+        }
+        let ropts = mb3d::swarm::RunOptions { threads, quiet, ..Default::default() };
+        let merged = mb3d::swarm::run_montecarlo(dir, &scene, units, rays_per_unit, passes.unwrap_or(0), time.unwrap_or(0.0), &ropts, &|st| {
+            if !quiet {
+                eprintln!("  {st}");
+            }
+        })?;
+        write_picture(&merged)?;
+        if let Some(m) = &m3c {
+            std::fs::write(m, mb3d::mc::write_m3c(&scene, &merged)).map_err(|e| output_err(m, e))?;
+        }
+        if !quiet {
+            eprintln!("wrote {out}: {:.1} rays/pixel from {units} blocks, {}", merged.stats().avg_rays, fmt_dur(t0.elapsed().as_secs_f64()));
+        }
+        return Ok(());
+    }
     loop {
         let st = img.stats();
         if let Some(r) = target {
@@ -1849,4 +1940,61 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
 static PASS_HINT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 fn img_passes_hint() -> u32 {
     PASS_HINT.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+// ---------------------------------------------------------------------------
+// mb3d swarm
+
+const SWARM_USAGE: &str = "\
+mb3d swarm - share rendering between computers through a shared folder
+
+USAGE:
+    mb3d swarm worker DIR [OPTIONS]    render what the jobs in the folder have
+    mb3d swarm list DIR                who is in the swarm, what the jobs are at
+
+DIR is a folder every computer of the swarm can see: a NAS share, a Windows
+or Samba share, a folder of a sync service. The program opens no network
+connection itself; the folder does the sharing. A job is made by rendering
+with --swarm DIR: mb3d animate --swarm DIR ..., mb3d batch --swarm DIR ...,
+mb3d montecarlo --swarm DIR .... The computer that made the job renders
+too, collects the results, and removes the job.
+
+OPTIONS of worker:
+        --name <NAME>        How this computer is listed (default: its host name)
+    -t, --threads <N>        Number of threads (default: all cores)
+        --once               Render the current jobs and exit
+    -q, --quiet              No progress output
+";
+
+fn swarm_cmd(argv: &[String]) -> Result<(), String> {
+    let (mut name, mut threads, mut once, mut quiet) = (String::new(), 0usize, false, false);
+    let mut words: Vec<String> = Vec::new();
+    let mut args = argv.iter();
+    while let Some(a) = args.next() {
+        let mut val = || args.next().cloned().ok_or_else(|| format!("{a} needs a value"));
+        match a.as_str() {
+            "-h" | "--help" => {
+                print!("{SWARM_USAGE}");
+                return Ok(());
+            }
+            "--name" => name = val()?,
+            "-t" | "--threads" => threads = val()?.parse().map_err(|_| "bad --threads value".to_string())?,
+            "--once" => once = true,
+            "-q" | "--quiet" => quiet = true,
+            "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
+            "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{SWARM_USAGE}")),
+            s => words.push(s.to_string()),
+        }
+    }
+    args_read();
+    let dir = words.get(1).map(std::path::Path::new);
+    match (words.first().map(|s| s.as_str()), dir) {
+        (Some("worker"), Some(dir)) => mb3d::swarm::worker(dir, &name, threads, once, quiet),
+        (Some("list") | Some("status"), Some(dir)) => {
+            print!("{}", mb3d::swarm::status_text(dir));
+            Ok(())
+        }
+        _ => Err(usage_err(&format!("say what to do and the swarm folder\n\n{SWARM_USAGE}"))),
+    }
 }

@@ -31,6 +31,9 @@ pub enum Job {
     /// image" (MB3D's `CalcSRT` with the selection): the reflections of
     /// the rectangle only
     ReflectSel { scene: Scene, rect: [i32; 4] },
+    /// Calculate 3D with the swarm: the picture in tiles rendered by the
+    /// computers that watch the shared folder `dir`, put together here
+    Swarm { scene: Scene, dir: std::path::PathBuf, cols: u32, rows: u32, name: String },
 }
 
 /// `rect` clipped to the image (MB3D's `ClipIRect`); None when less than
@@ -245,7 +248,7 @@ impl Engine {
             let mut o = self.0.out.lock().unwrap();
             o.running = true;
             o.error.clear();
-            o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. });
+            o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. });
         }
         self.0.progress.store(0, Ordering::Relaxed);
         *self.0.job.lock().unwrap() = Some((gen, job));
@@ -479,6 +482,7 @@ fn worker(e: Arc<Inner>) {
             Job::Preview { scene } => preview(&e, &scene, &cancel),
             Job::Recalc { scene, rect, div, nearer, hs, deao, keep_as } => recalc(&e, &scene, rect, div, nearer, (hs, deao, keep_as), &cancel),
             Job::ReflectSel { scene, rect } => reflect_sel(&e, &scene, rect, &cancel),
+            Job::Swarm { scene, dir, cols, rows, name } => swarm_tiles(&e, &scene, &dir, cols, rows, name, &cancel),
         }))
         .unwrap_or_else(|p| {
             let m = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
@@ -490,6 +494,42 @@ fn worker(e: Arc<Inner>) {
             e.finish(res.err());
         }
     }
+}
+
+/// Calculate 3D with the swarm (`Job::Swarm`): the tiles come from the
+/// swarm folder, the picture so far is shown while they do, the finished
+/// buffer is kept as a calculated one.
+fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, rows: u32, name: String, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let mut sc = sc.clone();
+    sc.slice_2d = 0;
+    sc.calc_rect = None;
+    e.out.lock().unwrap().stage = "swarm: creating the job".into();
+    let gen = e.gen.load(Ordering::SeqCst);
+    let e2 = e.clone();
+    let cancel_fn: Arc<dyn Fn() -> bool + Send + Sync> = Arc::new(move || e2.gen.load(Ordering::SeqCst) != gen);
+    let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn) };
+    let report = |st: &str| {
+        e.out.lock().unwrap().stage = format!("swarm: {st}");
+        e.wake();
+    };
+    let total = (cols * rows) as usize;
+    let preview = |p: crate::swarm::Preview| {
+        e.progress.store((p.done * 1000 / total.max(1)) as u32, Ordering::Relaxed);
+        e.publish(p.rgb, p.width, p.height, &format!("swarm: {} of {} tiles done", p.done, p.total), None);
+    };
+    let t0 = Instant::now();
+    let full = crate::swarm::run_tiles(dir, &sc, cols, rows, &opts, &report, Some(&preview))?;
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let p = CalcParams::new(&sc)?;
+    let (w, h) = (sc.width as usize, sc.height as usize);
+    let raw = Arc::new(full);
+    let rgb = crate::render::paint(&sc, &p, &raw);
+    let stats = stats_of(&raw, &p, t0.elapsed().as_secs_f64(), 0.0);
+    *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw: raw.clone(), post: raw, post_sig: post_sig(&sc), w, h }));
+    e.publish(rgb, w, h, "done (swarm)", Some(stats));
+    Ok(())
 }
 
 fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {

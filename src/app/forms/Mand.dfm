@@ -3097,7 +3097,7 @@ object Mand3DForm: TMand3DForm
           object SpeedButton25: TSpeedButton
             Left = 2
             Top = 4
-            Width = 54
+            Width = 50
             Height = 30
             Hint = 'Convert many M3P files to M3I'
             Caption = 'm3p->m3i'
@@ -3107,9 +3107,9 @@ object Mand3DForm: TMand3DForm
             OnClick = SpeedButton25Click
           end
           object SpeedButton24: TSpeedButton
-            Left = 128
+            Left = 114
             Top = 4
-            Width = 62
+            Width = 60
             Height = 30
             Hint = 'Export a cube as a stack of PNG files'
             Caption = 'Voxelstack'
@@ -3118,9 +3118,9 @@ object Mand3DForm: TMand3DForm
             OnClick = SpeedButton24Click
           end
           object SpeedButton27: TSpeedButton
-            Left = 60
+            Left = 54
             Top = 4
-            Width = 65
+            Width = 58
             Height = 30
             Hint = 'Generate big images by tiling'
             Caption = 'Big render'
@@ -3129,15 +3129,26 @@ object Mand3DForm: TMand3DForm
             OnClick = SpeedButton27Click
           end
           object SpeedButton28: TSpeedButton
-            Left = 195
+            Left = 176
             Top = 4
-            Width = 56
+            Width = 34
             Height = 30
             Hint = 'Monte Carlo rendering'
             Caption = 'M.C.'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton28Click
+          end
+          object SwarmBtn: TSpeedButton
+            Left = 212
+            Top = 4
+            Width = 40
+            Height = 30
+            Hint = 'Share rendering between your computers through a shared folder'
+            Caption = 'Swarm'
+            ParentShowHint = False
+            ShowHint = True
+            OnClick = SwarmBtnClick
           end
         end
         object TabSheet13: TTabSheet
