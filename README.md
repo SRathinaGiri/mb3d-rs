@@ -43,6 +43,8 @@ It comes as two programs:
     export, Bulb Tracer 2** (meshes) with the mesh preview, the **HeightMap
     generator, MutaGen, ZBuf16Bit, Map sequences, Ini dirs** — all as in
     MB3D.
+  * **Swarm** (new, on the Tools tab): your computers render together,
+    see [Rendering on several computers](#rendering-on-several-computers-the-swarm).
 
   </details>
 * **mb3d** — a command line renderer for scripts and batch jobs: pictures,
@@ -342,81 +344,10 @@ you check further on your own:
   |:---:|:---:|:---:|
 
   </details>
-* **Rendering shared between your computers**, a "swarm": the instances
-  that watch one shared folder render an animation, a batch or a Monte
-  Carlo picture together, without any network connection of their own.
-
-  <details><summary>Read more</summary>
-
-  The swarm needs no setup beyond a folder that every computer can see: a
-  share on a NAS, a Windows or Samba share, or a folder of a sync service.
-  The program opens no network port and talks to nobody; the folder does
-  the sharing, and the operating system's file sharing does the
-  authentication, as safe as your file sharing is.
-
-  On every computer that should help, start a worker on that folder:
-
-  ```sh
-  mb3d swarm worker /mnt/nas/mb3d-swarm --name kitchen-pc
-  ```
-
-  Then, on any computer, render with `--swarm` and the same folder:
-
-  ```sh
-  mb3d big.m3p --tiles 4x3 --swarm /mnt/nas/mb3d-swarm
-  mb3d animate flight.m3a --swarm /mnt/nas/mb3d-swarm
-  mb3d batch *.m3p -o pictures --swarm /mnt/nas/mb3d-swarm
-  mb3d montecarlo scene.m3p --rays 256 --swarm /mnt/nas/mb3d-swarm
-  ```
-
-  In the desktop program the same is the **Swarm** button on the Tools
-  tab: choose the shared folder and tick *Share this computer*. While it
-  is ticked, this computer renders the folder's jobs, and its own renders
-  go to the swarm whenever another computer is in it (alone, it renders
-  as usual): Calculate 3D (the main window's picture, and so the Batch
-  window's, calculated as N x M tiles on every computer and put together
-  here, with everything the usual calculation gives: lighting changes,
-  post processing, saving as m3i), Big renders, Monte Carlo pictures
-  (blocks of passes) and the Animation maker's animations. The
-  window shows who is in the swarm, with each computer's cores, graphics
-  card and what it is doing, the jobs with their progress, and a preview
-  of the newest job: the tiles already rendered, the tiles under way with
-  a progress bar, and the ones still missing.
-
-  <a href="docs/img/swarm_window.png"><img src="docs/img/swarm_window.png" width="760" alt="The Swarm window, opened with the Swarm button on the Tools tab, while two computers render a picture in tiles: the shared folder, Share this computer, the computers and what each is doing, the job, and the preview with rendered tiles, a tile under way and missing ones"></a>
-
-  The computer that starts the render puts the job into the folder, with
-  the formula and map files it needs, renders too, and collects the
-  results where you asked for them. Tiles of a picture, frames and batch
-  pictures are shared one by one, so a fast computer takes more of them.
-  A Monte Carlo
-  picture is split into blocks of passes, each block with its own random
-  rays, and the blocks are averaged at the end: 4 blocks of 64 rays per
-  pixel give the 256 you asked for with `--rays 256`. In the Monte Carlo
-  window it renders as it does on one computer: every computer adds
-  passes to its own block until you press Stop, the picture cleans up
-  with everyone's rays (each computer saves a snapshot of its block
-  every 30 seconds), and Stop collects the blocks and averages them. In
-  the window's batch mode the blocks together stop at the batch's ray
-  count. `mb3d swarm list FOLDER` shows who is
-  in the swarm, what each computer is doing, and how far the jobs are.
-
-  All computers need the same version of the program. A helper renders
-  only what a job asks for and writes only into the job's folder; formula
-  code from a job runs in the formula emulator like every formula. If a
-  helper disappears, its unfinished frame or block is taken by another.
-  A sync service that copies with a delay works, but a real share is
-  faster: a frame is handed out the moment it is claimed. Tiles travel as
-  full image buffers, a few hundred megabytes for a very big picture, so
-  a fast share pays off there. A job whose owner has gone (no sign of it
-  for half an hour) is removed by whoever sees it; a helper of another
-  program version leaves a job alone, and the panel says so; a job that
-  fails on a computer is noted in the panel and left to the others.
-  Switching *Share this computer* off lets the current tile or frame
-  finish first; closing the program gives it up, and another computer
-  takes it.
-
-  </details>
+* **Rendering shared between your computers**, a "swarm": computers that
+  see one shared folder render a picture, a Big render, a Monte Carlo
+  picture or an animation together. See
+  [Rendering on several computers](#rendering-on-several-computers-the-swarm).
 * **A new formula, PseudoKleinian:** the "Kleinian architecture" of
   halls, arches and spheres as one formula with its own exact distance.
 
@@ -505,6 +436,108 @@ folder; your settings and History are kept in `~/.config/mb3d-rs` and
 [Getting started](GETTING_STARTED.md) walks through the first steps; older
 versions and the release notes are on the
 [releases](https://github.com/thr32423/mb3d-rs/releases) page.
+
+## Rendering on several computers (the swarm)
+
+Computers that see one shared folder render together: a picture in
+tiles, a Big render, a Monte Carlo picture, an animation or a batch. Each
+computer takes the parts nobody else has, so a fast one takes more of
+them, and the computer that started the render puts the results
+together. The folder does the sharing: the program opens no network
+connection and talks to nobody, so it is as safe as your file sharing.
+
+<a href="docs/img/swarm_window.png"><img src="docs/img/swarm_window.png" width="760" alt="Mandelbulb3D with the Swarm window, opened with the Swarm button on the Tools tab, while two computers render a picture in tiles: the shared folder, Share this computer, the computers and what each is doing, the job, and the preview with rendered tiles, a tile under way and missing ones"></a>
+
+### Setting it up
+
+1. **A folder every computer can write to:** a share on a NAS, a Windows
+   share, a Samba share or NFS. On Linux, mount it as a folder, for
+   example
+   `sudo mount -t cifs //192.168.0.10/Public /mnt/share -o username=me,uid=$(id -u),gid=$(id -g)`;
+   a share only opened in the file manager (`smb://...`) is not a folder
+   the program can use.
+2. **The same version of mb3d-rs on every computer.** A computer with
+   another version is listed but takes no part.
+3. **In Mandelbulb3D:** the **Swarm** button on the Tools tab. Choose the
+   shared folder (the same share on every computer; its path may differ),
+   give the computer a name for the list, and tick **Share this
+   computer**.
+
+That is all. The status line says what happens, for example *Sharing
+with omarchy: renders are split between the 2 computers*. Alone in the
+swarm, everything renders on this computer as usual.
+
+### What is shared
+
+While *Share this computer* is ticked, the computer renders the parts
+other computers put into the folder, and its own renders go to the swarm
+whenever another computer is in it:
+
+* **Calculate 3D** (and the Batch window) — the picture in N x M tiles
+  (set in the Swarm window), put together here with everything the usual
+  calculation gives: lighting changes, post processing, saving as m3i.
+* **Big render** — the tiles are saved one by one as they arrive; the
+  whole picture is never held in memory, so this is the way for pictures
+  of 100000 x 100000 pixels and more.
+* **Monte Carlo** — as on one computer: every computer adds passes to its
+  own block until you press Stop, the picture cleans up with everyone's
+  rays, and Stop averages the blocks. In the window's batch mode the
+  blocks together stop at the batch's ray count.
+* **The Animation maker** — the frames, one by one.
+
+The window lists the computers with their cores, graphics card and what
+each is doing, the jobs with their progress, and a preview of the newest
+job: the tiles rendered, the ones under way with a progress bar, and the
+ones still missing.
+
+### On the command line
+
+On every computer that should help, start a worker on the folder:
+
+```sh
+mb3d swarm worker /mnt/share/mb3d-swarm --name kitchen-pc
+```
+
+Then, on any computer, render with `--swarm` and the same folder:
+
+```sh
+mb3d big.m3p --tiles 4x3 --swarm /mnt/share/mb3d-swarm
+mb3d animate flight.m3a --swarm /mnt/share/mb3d-swarm
+mb3d batch *.m3p -o pictures --swarm /mnt/share/mb3d-swarm
+mb3d montecarlo scene.m3p --rays 256 --swarm /mnt/share/mb3d-swarm
+```
+
+`mb3d swarm list FOLDER` shows who is in the swarm, what each computer is
+doing and how far the jobs are. A Monte Carlo picture on the command line
+is split into blocks with their own random rays: 4 blocks of 64 rays per
+pixel give the 256 asked for with `--rays 256`.
+
+### Good to know
+
+* **If the other computers stay idle** and their job list is empty while
+  this computer renders: the computer that serves the folder with Samba
+  and uses it directly lets the others keep an old listing of it. Turn
+  that caching off in `/etc/samba/smb.conf`: `smb3 directory leases = no`
+  in `[global]`, and `oplocks = no` and `level2 oplocks = no` in the
+  share's section, then `sudo systemctl restart smb` and mount the share
+  again on the other computers.
+* **Memory:** Calculate 3D does not start a picture that does not fit into
+  the free memory (on Linux) and points to Big render; a computer leaves a
+  tile too big for its memory to the others.
+* **Safety:** a computer renders only what a job asks for and writes only
+  into the job's folder; formula code from a job runs in the formula
+  emulator like every formula.
+* **Speed:** tiles travel as full image buffers, a few hundred megabytes
+  for a very big picture, so a fast share pays off. A sync service that
+  copies with a delay works too, but slower.
+* **Computers that go away:** the part a computer was rendering is taken
+  by another once it has not been heard of for half a minute. A job whose
+  owner has gone for half an hour is removed by whoever sees it. A job
+  that fails on a computer is noted in the window and left to the
+  others.
+* **Stopping:** unticking *Share this computer* lets the part under way
+  finish first; closing the program gives it up, and another computer
+  takes it.
 
 ## How the rendering works
 
