@@ -469,9 +469,18 @@ not in Mandelbulb3D.
 
 ### A new formula: UlamSpiral
 
-In 1963 the mathematician Stanisław Ulam wrote the numbers 1, 2, 3, …
-on a square spiral and marked the prime numbers: they line up on
-diagonal lines, which nobody has fully explained to this day.
+In 1963 the mathematician Stanisław Ulam sat through "a long and very
+boring paper" at a meeting and doodled on a sheet of squared paper. His
+first idea was to set up chess problems; instead he numbered the squares
+1, 2, 3, … in a spiral, 1 in the middle, and circled the prime numbers.
+The primes lined up on diagonal lines, as if they followed a pattern, and
+they still do when a computer draws millions of them (Ulam tried 100,000
+on the MANIAC II at Los Alamos; Martin Gardner put the picture on the
+cover of Scientific American in 1964). Nobody has fully explained it to
+this day.
+
+<a href="docs/img/ulam_2d.png"><img src="docs/img/ulam_2d.png" width="420" alt="The Ulam spiral: the primes among the numbers 1 to 78,961 on a square spiral, with the start of the spiral drawn in the corner"></a>
+
 **UlamSpiral** builds that spiral in 3D, one shape per number, in four
 forms (*Mode*):
 
@@ -655,6 +664,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.48](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.48) · 17 Oct 2026, 05:02 UTC
+
+| Commit | What it does |
+|---|---|
+| [`993775a`](https://github.com/thr32423/mb3d-rs/commit/993775aa5c1a51ddfcc528ebf61aaf59d584096b) | Version number and release notes of this release |
+| [`c5e53d2`](https://github.com/thr32423/mb3d-rs/commit/c5e53d2812c8af9e718597f290f107f0e87e1f48) | Main window: picking a point from the image no longer moves the view |
+| [`6090b8a`](https://github.com/thr32423/mb3d-rs/commit/6090b8a7461afa79faf87294596df63b89fdeeb4) | New formula UlamSpiral: Ulam's prime spiral in 3D, on the CPU and the GPU |
+| [`49cf64e`](https://github.com/thr32423/mb3d-rs/commit/49cf64e4dbc0742d61cb1867f45de6a95c7a5e9a) | README: Updates for v0.2.47 |
+
 ### [v0.2.47](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.47) · 16 Oct 2026, 19:16 UTC
 
 | Commit | What it does |
@@ -705,6 +723,8 @@ in UTC.
 | [`1c4e174`](https://github.com/thr32423/mb3d-rs/commit/1c4e17421f9f0dc94f8d9a9351410ddcc2ea8880) | Cargo.toml: drop the removed pcsample example |
 | [`f6a1a4c`](https://github.com/thr32423/mb3d-rs/commit/f6a1a4cf2a0a10f0c2a5e698f3c548ee7b0695ec) | README: Updates for v0.2.43 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.43)</summary>
+
 ### [v0.2.43](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.43) · 15 Oct 2026, 21:36 UTC
 
 | Commit | What it does |
@@ -713,8 +733,6 @@ in UTC.
 | [`dd3c946`](https://github.com/thr32423/mb3d-rs/commit/dd3c94621f6088240b8dd10c71bfc9f3f7c9b6db) | Fewer patterns that code scanners flag (issue #4) |
 | [`3658ae8`](https://github.com/thr32423/mb3d-rs/commit/3658ae8a79c30dfdec49fd2f4b0264d4238acd40) | Start-up lighting as in MB3D |
 | [`2aa1bdc`](https://github.com/thr32423/mb3d-rs/commit/2aa1bdc4f5a76983085447e9a53b8c4584ca6631) | README: Updates for v0.2.42 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.42)</summary>
 
 ### [v0.2.42](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.42) · 15 Oct 2026, 19:26 UTC
 
