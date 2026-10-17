@@ -1417,6 +1417,8 @@ fn stem(title: &str) -> String {
 
 fn form_close(app: &mut Mb3d, ui: &mut Ui) {
     app.eng.stop();
+    super::mc_form::stop_for_exit(app);
+    super::voxel_form::stop(app);
     app.make_scene(ui);
     crate::appdirs::store_history(&app.scene, &stem(&app.title));
     let f = ui.f(F);

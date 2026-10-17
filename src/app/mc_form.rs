@@ -425,6 +425,11 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
     });
 }
 
+/// The program ends: a running render stops (its thread notices the flag).
+pub fn stop_for_exit(app: &mut Mb3d) {
+    app.mc.stop.store(true, Ordering::SeqCst);
+}
+
 /// `StopRendering`
 fn stop(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.stop.store(true, Ordering::SeqCst);

@@ -163,6 +163,9 @@ impl Drop for Engine {
         while self.0.busy.load(Ordering::SeqCst) && t.elapsed().as_secs() < 5 {
             std::thread::sleep(std::time::Duration::from_millis(5));
         }
+        // the other windows' renders (Monte Carlo, big renders, ...) too
+        #[cfg(feature = "gpu")]
+        crate::gpu::wait_idle(std::time::Duration::from_secs(5).saturating_sub(t.elapsed()).max(std::time::Duration::from_secs(1)));
     }
 }
 

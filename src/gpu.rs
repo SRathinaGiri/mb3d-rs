@@ -232,6 +232,14 @@ static LOST: AtomicBool = AtomicBool::new(false);
 /// device is lost) becomes an error for the caller's CPU fallback and
 /// switches the card off, instead of ending the calculation's thread.
 fn guard<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
+    // counted while it runs, so the program's end can wait for it; none
+    // starts once the program ends (counted first, then the flag looked
+    // at: abort_all sets the flag, then waits for the count)
+    IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
+    let _flight = Flight;
+    if ABORT.load(Ordering::SeqCst) {
+        return Err("the program ends".into());
+    }
     let lost = |e: &str| {
         LOST.store(true, Ordering::SeqCst);
         set_status(format!("CPU: the graphics card failed ({e}); calculating on the CPU until the program is restarted"));
@@ -280,9 +288,31 @@ pub fn last_status() -> String {
 /// the card crashes in the driver).
 static ABORT: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// The card calculations running right now (see `guard`).
+static IN_FLIGHT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+struct Flight;
+
+impl Drop for Flight {
+    fn drop(&mut self) {
+        IN_FLIGHT.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
 /// Stops all GPU work for good (the program ends).
 pub fn abort_all() {
     ABORT.store(true, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// Waits (at most `max`) until no calculation is on the card any more and
+/// no shader is being compiled, after [`abort_all`]: a process that exits
+/// while a thread is inside the driver crashes there (a Monte Carlo render
+/// running when the window was closed did).
+pub fn wait_idle(max: std::time::Duration) {
+    let t = std::time::Instant::now();
+    while (IN_FLIGHT.load(Ordering::SeqCst) > 0 || compiling()) && t.elapsed() < max {
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
 }
 
 pub fn set_status(s: String) {
@@ -2243,6 +2273,10 @@ pub fn de_probe(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
     if let Some(r) = unsupported(p) {
         return Err(r);
     }
+    guard(|| de_probe_card(p, mzz))
+}
+
+fn de_probe_card(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
     PROBE_MZZ.with(|m| m.set(mzz));
