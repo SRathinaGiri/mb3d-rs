@@ -700,6 +700,14 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.49](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.49) · 17 Oct 2026, 05:37 UTC
+
+| Commit | What it does |
+|---|---|
+| [`0e863eb`](https://github.com/thr32423/mb3d-rs/commit/0e863ebb66c1997c4dcb5bc3744330c51d1fe059) | Version number and release notes of this release |
+| [`2f71f99`](https://github.com/thr32423/mb3d-rs/commit/2f71f99704f2235a78722be4843df0f699592d39) | New formula PseudoKleinian: knighty's pseudo Kleinian, on the CPU and the GPU |
+| [`27c9634`](https://github.com/thr32423/mb3d-rs/commit/27c96346e428c399c6f074437540cefb2df7c583) | README: Updates for v0.2.48; the 2D Ulam spiral and its story |
+
 ### [v0.2.48](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.48) · 17 Oct 2026, 05:02 UTC
 
 | Commit | What it does |
@@ -747,6 +755,8 @@ in UTC.
 | [`9d0b022`](https://github.com/thr32423/mb3d-rs/commit/9d0b0221c147e1133aa71230c1a48271a7653eba) | docs: scanrepo.dev result for 0.2.44 (issue #4) |
 | [`2535b72`](https://github.com/thr32423/mb3d-rs/commit/2535b7225d04492e132eb21665b3108d0f8e591c) | README: Updates for v0.2.44 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.44)</summary>
+
 ### [v0.2.44](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.44) · 15 Oct 2026, 23:01 UTC
 
 | Commit | What it does |
@@ -758,8 +768,6 @@ in UTC.
 | [`4906b50`](https://github.com/thr32423/mb3d-rs/commit/4906b5050481442116283bb61ca6c9634fa58f4c) | Monte Carlo window: Statistics and Reflections open again |
 | [`1c4e174`](https://github.com/thr32423/mb3d-rs/commit/1c4e17421f9f0dc94f8d9a9351410ddcc2ea8880) | Cargo.toml: drop the removed pcsample example |
 | [`f6a1a4c`](https://github.com/thr32423/mb3d-rs/commit/f6a1a4cf2a0a10f0c2a5e698f3c548ee7b0695ec) | README: Updates for v0.2.43 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.43)</summary>
 
 ### [v0.2.43](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.43) · 15 Oct 2026, 21:36 UTC
 
