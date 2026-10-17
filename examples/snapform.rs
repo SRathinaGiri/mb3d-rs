@@ -2,9 +2,10 @@
 //! layouts without clicking through the windows).
 //! `cargo run --release --example snapform -- [APP ARGS] -- STEPS...` with
 //! the steps `show:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
-//! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`,
+//! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`, `pos:FORM:UPDOWN:N`,
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
+//! `file:TAG:PATH` (a file dialog answered with that file, e.g. `file:tiling:import:x.m3p`),
 //! `key:FORM:CONTROL:HANDLER:KEYCODE` (a key down event), `hit:FORM:X:Y` (the control there),
 //! `mouse:FORM:X:Y[:right]` (a click at client coordinates, as from the mouse),
 //! `drag:FORM:X1:Y1:X2:Y2:STEPS` (a left drag), `wheel:FORM:X:Y:DELTA`,
@@ -31,7 +32,10 @@ fn main() {
             "text" => ui.set_text(p[1], p[2], &p[3..].join(":")),
             "check" => ui.set_checked(p[1], p[2], p[3] == "1"),
             "item" => ui.set_item_index(p[1], p[2], p[3].parse().unwrap()),
+            "pos" => ui.set_position(p[1], p[2], p[3].parse().unwrap()),
             "post" => ui.post(p[1], p[2], p[3], mb3d::vcl::Ev::Click),
+            // a file dialog's answer: `file:TAG:PATH` (the tag as the program opened it, e.g. tiling:import)
+            "file" => ui.post("", &p[1..3].join(":"), "", mb3d::vcl::Ev::DialogResult(mb3d::vcl::DialogResult::File(Some(std::path::PathBuf::from(p[3..].join(":")))))),
             "hit" => {
                 let fi = ui.form_index(p[1]).unwrap();
                 let f = &ui.forms[fi];
@@ -89,6 +93,32 @@ fn main() {
                     app.process(&mut ui);
                     std::thread::sleep(std::time::Duration::from_millis(50));
                 }
+            }
+            // `memreset`: the peak memory starts again from now (Linux)
+            "memreset" => {
+                let _ = std::fs::write("/proc/self/clear_refs", "5");
+            }
+            // `mem`: the peak memory so far (Linux)
+            "mem" => {
+                let st = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
+                for l in st.lines().filter(|l| l.starts_with("VmHWM") || l.starts_with("VmRSS")) {
+                    println!("{l}");
+                }
+            }
+            // `calcwait:MAXSECONDS`: as wait, until the calculation is done
+            "calcwait" => {
+                let t = std::time::Instant::now();
+                std::thread::sleep(std::time::Duration::from_millis(500));
+                while t.elapsed().as_secs_f64() < p[1].parse().unwrap() && app.eng.running() {
+                    app.idle(&mut ui);
+                    app.process(&mut ui);
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                }
+                for _ in 0..10 {
+                    app.idle(&mut ui);
+                    app.process(&mut ui);
+                }
+                println!("calcwait: {:.1} s", t.elapsed().as_secs_f64());
             }
             // as wait, and prints how long the program's idle work blocked
             // the window at most (what a user feels as a frozen window)

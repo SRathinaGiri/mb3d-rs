@@ -220,53 +220,46 @@ fn calculate_inner(
     }
     let p = p;
     let done = AtomicUsize::new(0);
-    let mut rows: Vec<Vec<SiLight>> = vec![Vec::new(); h];
+    // the rows go straight into the G-buffer (no copy of it: big pictures)
+    let mut gbuf = vec![SiLight::default(); w * h];
     std::thread::scope(|s| {
-        let mut handles = Vec::new();
-        for t in 0..threads {
+        // thread t takes the rows t, t + threads, ...
+        let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
+        for (y, row) in gbuf.chunks_mut(w.max(1)).enumerate() {
+            per[y % threads].push((y, row));
+        }
+        for list in per {
             let p = &p;
             let done = &done;
-            handles.push(s.spawn(move || {
+            s.spawn(move || {
                 // MB3D: seed := Round(Random * (iThreadId + 1) * $324594A1 + $24563487)
-                let mut out = Vec::new();
-                let mut y = t;
-                while y < h {
+                for (y, row) in list {
                     if cancel() {
                         break;
                     }
                     let yy = y + y0;
                     let mut m = Marcher::new(p, 0);
-                    let row: Vec<SiLight> = if two_d {
-                        (x0..x0 + w).map(|x| m.slice_pixel(x as i32, yy as i32)).collect()
-                    } else {
-                        (x0..x0 + w)
-                            .map(|x| {
-                                m.seed = crate::calc::pixel_seed(yy as i64, x as i64);
-                                m.march_pixel(x as i32, yy as i32)
-                            })
-                            .collect()
-                    };
-                    if let Some(f) = sink {
-                        f(y, &row);
+                    for (k, px) in row.iter_mut().enumerate() {
+                        let x = x0 + k;
+                        *px = if two_d {
+                            m.slice_pixel(x as i32, yy as i32)
+                        } else {
+                            m.seed = crate::calc::pixel_seed(yy as i64, x as i64);
+                            m.march_pixel(x as i32, yy as i32)
+                        };
                     }
-                    out.push((y, row));
+                    if let Some(f) = sink {
+                        f(y, row);
+                    }
                     let d = done.fetch_add(1, Ordering::Relaxed) + 1;
                     progress(d, h);
-                    y += threads;
                 }
-                out
-            }));
-        }
-        for hnd in handles {
-            for (y, row) in hnd.join().expect("render thread panicked") {
-                rows[y] = row;
-            }
+            });
         }
     });
     if cancel() {
         return Err("cancelled".into());
     }
-    let gbuf: Vec<SiLight> = rows.into_iter().flatten().collect();
     finish_calculation(sc, p, gbuf, post, threads, cancel)
 }
 
@@ -289,7 +282,8 @@ pub fn calculate_blocky(
     let threads = thread_count(&sc).min(bands).max(1);
     let next = AtomicUsize::new(0);
     let done = AtomicUsize::new(0);
-    let out: Vec<std::sync::Mutex<Vec<SiLight>>> = (0..bands).map(|_| std::sync::Mutex::new(Vec::new())).collect();
+    let mut gbuf = vec![SiLight::default(); w * h];
+    let out: Vec<std::sync::Mutex<&mut [SiLight]>> = gbuf.chunks_mut((8 * w).max(1)).map(std::sync::Mutex::new).collect();
     std::thread::scope(|s| {
         for _ in 0..threads {
             s.spawn(|| {
@@ -299,9 +293,9 @@ pub fn calculate_blocky(
                     if b >= bands || cancel() {
                         break;
                     }
-                    let (by0, by1) = (b * 8, (b * 8 + 8).min(h));
+                    let by0 = b * 8;
                     let y = (by0 + 3).min(h - 1) as i32 + y0;
-                    let mut band = vec![SiLight::default(); (by1 - by0) * w];
+                    let mut band = out[b].lock().unwrap();
                     for bx0 in (0..w).step_by(8) {
                         let x = (bx0 + 3).min(w - 1) as i32 + x0;
                         m.seed = crate::calc::pixel_seed(y as i64, x as i64);
@@ -313,16 +307,16 @@ pub fn calculate_blocky(
                     for (k, row) in band.chunks(w).enumerate() {
                         rows(by0 + k, row);
                     }
-                    *out[b].lock().unwrap() = band;
+                    drop(band);
                     progress(done.fetch_add(1, Ordering::Relaxed) + 1, bands);
                 }
             });
         }
     });
+    drop(out);
     if cancel() {
         return Err("cancelled".into());
     }
-    let gbuf = out.into_iter().flat_map(|b| b.into_inner().unwrap()).collect();
     Ok((p, gbuf))
 }
 
@@ -547,14 +541,20 @@ fn march_mixed(
     let h = p.rect[3].max(0) as usize;
     // the rows still free: [top, bottom)
     let free = Mutex::new((0usize, h));
-    let rows: Vec<Mutex<Vec<SiLight>>> = (0..h).map(|_| Mutex::new(Vec::new())).collect();
+    // the rows go straight into the G-buffer (no copy of it: big pictures)
+    let w = p.rect[2].max(1) as usize;
+    let mut gbuf = vec![SiLight::default(); w * h];
+    let rows: Vec<Mutex<&mut [SiLight]>> = gbuf.chunks_mut(w).map(Mutex::new).collect();
     let done = AtomicUsize::new(0);
     let on_card = AtomicUsize::new(0);
-    let put = |y: usize, row: Vec<SiLight>| {
+    let put = |y: usize, row: &[SiLight]| {
         if let Some(f) = sink {
-            f(y, &row);
+            f(y, row);
         }
-        *rows[y].lock().unwrap() = row;
+        let mut dst = rows[y].lock().unwrap();
+        let n = row.len().min(dst.len());
+        dst[..n].copy_from_slice(&row[..n]);
+        drop(dst);
         progress((done.fetch_add(1, Ordering::Relaxed) + 1).min(h), h);
     };
     let mut card_err = None;
@@ -580,7 +580,7 @@ fn march_mixed(
                     f.1 -= 1;
                     f.1
                 };
-                put(y, cpu_row(p, y));
+                put(y, &cpu_row(p, y));
             });
         }
         // the card, once its shader is ready
@@ -625,7 +625,7 @@ fn march_mixed(
             cancel,
             &mut |y, row| {
                 on_card.fetch_add(1, Ordering::Relaxed);
-                put(y, row.to_vec());
+                put(y, row);
             },
         );
         *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
@@ -642,7 +642,7 @@ fn march_mixed(
                             if i >= redo.len() || cancel() {
                                 break;
                             }
-                            put(redo[i], cpu_row(p, redo[i]));
+                            put(redo[i], &cpu_row(p, redo[i]));
                         });
                     }
                 });
@@ -665,7 +665,8 @@ fn march_mixed(
     });
     // (the card's parameters when it joined in double precision)
     let switched = switched.filter(|_| n_card > 0);
-    Ok((rows.into_iter().flat_map(|r| r.into_inner().unwrap()).collect(), n_card, switched, card_secs.into_inner().unwrap()))
+    drop(rows);
+    Ok((gbuf, n_card, switched, card_secs.into_inner().unwrap()))
 }
 
 /// The post calculations after the main calculation (CPU or GPU).
@@ -1053,6 +1054,60 @@ pub fn paint_timed(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> (Vec<u8>, Op
 /// and MB3D's `PaintRows` of a recalculated selection.
 pub fn paint_preview(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
     paint_with::<u8>(sc, p, gbuf, false, &|| false).0
+}
+
+/// The live picture of a calculation at the size it is shown (every
+/// `step`th pixel of every `step`th row, as the window shows it): paints
+/// the display rows `rows` (display row, its pixels) into `rgb` (`dw`
+/// pixels wide); `rows` None paints every row as background (the start).
+/// Base colours only, as [`paint_preview`].  Keeps big pictures (15000 x
+/// 15000) from needing a copy of the whole G-buffer for every update.
+pub fn paint_display_rows(sc: &Scene, p: &CalcParams, step: usize, rows: Option<&[(usize, Vec<SiLight>)]>, rgb: &mut [u8], dw: usize) {
+    let [x0, y0, _, _] = p.rect;
+    let step = step.max(1);
+    let lv = light_vals(sc, &effective_lighting(sc), &paint_camera(sc, p));
+    let cam = paint_camera(sc, p);
+    let bg = SiLight::default();
+    // the work: (display row, its pixels or None for background, its colours)
+    let mut slots: Vec<Option<&mut [u8]>> = rgb.chunks_mut((dw * 3).max(1)).map(Some).collect();
+    let mut work: Vec<(usize, Option<&[SiLight]>, &mut [u8])> = Vec::new();
+    match rows {
+        None => {
+            for (dy, s) in slots.iter_mut().enumerate() {
+                if let Some(out) = s.take() {
+                    work.push((dy, None, out));
+                }
+            }
+        }
+        // (a row marched twice: the last one)
+        Some(rows) => {
+            for (dy, px) in rows.iter().rev() {
+                if let Some(out) = slots.get_mut(*dy).and_then(Option::take) {
+                    work.push((*dy, Some(px.as_slice()), out));
+                }
+            }
+        }
+    }
+    let threads = thread_count(sc).min(work.len()).max(1);
+    let per = work.len().div_ceil(threads).max(1);
+    std::thread::scope(|s| {
+        let mut it = work.into_iter();
+        loop {
+            let part: Vec<_> = it.by_ref().take(per).collect();
+            if part.is_empty() {
+                break;
+            }
+            let (lv, cam, bg) = (&lv, &cam, &bg);
+            s.spawn(move || {
+                for (dy, px, out) in part {
+                    for (dx, c) in out.chunks_exact_mut(3).enumerate() {
+                        let si = px.and_then(|r| r.get(dx)).unwrap_or(bg);
+                        c.copy_from_slice(&lv.pixel_color_s::<u8>(si, (dx * step) as i32 + x0, (dy * step) as i32 + y0, cam));
+                    }
+                }
+            });
+        }
+    });
 }
 
 fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool, cancel: &(dyn Fn() -> bool + Sync)) -> (Vec<S>, Option<f64>) {

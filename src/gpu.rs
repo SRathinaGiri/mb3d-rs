@@ -1056,12 +1056,12 @@ pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize
 fn march_bands_card(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let v = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands), None)?;
+    let (_, len) = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands), None, false)?;
     // pixels whose DE overflowed single precision (see [`march`]): the
     // card's rows are not usable then
     let n = OVERFLOW.with(|c| c.get());
-    if n * 500 > v.len() && !needs_double(p) {
-        return Err(format!("single precision overflows in {} ({n} of {} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + "), v.len()));
+    if n * 500 > len && !needs_double(p) {
+        return Err(format!("single precision overflows in {} ({n} of {len} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + ")));
     }
     Ok(())
 }
@@ -1087,12 +1087,12 @@ fn march_sample_card(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() ->
     let g = gpu()?;
     let sh = scene_shader(&q)?;
     SAMPLE.with(|c| c.set((sx, sy)));
-    let r = run(g, &q, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, &mut |y, row| sink(y * sy + sy / 2, row), None, None);
+    let r = run(g, &q, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, &mut |y, row| sink(y * sy + sy / 2, row), None, None, false);
     SAMPLE.with(|c| c.set((0, 0)));
-    let v = r?;
+    let (_, len) = r?;
     // pixels whose DE overflowed single precision (see [`march_bands`])
     let n = OVERFLOW.with(|c| c.get());
-    if n * 500 > v.len() && !needs_double(p) {
+    if n * 500 > len && !needs_double(p) {
         return Err("single precision overflows".into());
     }
     Ok(())
@@ -1106,11 +1106,32 @@ pub fn post_on_card(p: &CalcParams, gbuf: &mut [SiLight], post: &PostJob, cancel
         let g = gpu()?;
         let sh = scene_shader(p)?;
         let w = p.rect[2].max(0) as usize;
-        let mut done: Vec<(usize, Vec<SiLight>)> = Vec::new();
-        run(g, p, &sh, post, None, &|_, _| {}, cancel, &mut |y, row| done.push((y, row.to_vec())), None, Some(&*gbuf))?;
-        for (y, row) in done {
-            gbuf[y * w..y * w + row.len()].copy_from_slice(&row);
-        }
+        // the bands go up from the buffer and their rows come back into it
+        // (no copy of the whole buffer: 15360 x 15360 is 4.7 GB, issue #7)
+        let buf = std::sync::Mutex::new(gbuf);
+        let band = |row0: usize, rows: usize| {
+            let g = buf.lock().unwrap();
+            let (a, b) = ((row0 * w).min(g.len()), ((row0 + rows) * w).min(g.len()));
+            g[a..b].to_vec()
+        };
+        run(
+            g,
+            p,
+            &sh,
+            post,
+            None,
+            &|_, _| {},
+            cancel,
+            &mut |y, row| {
+                let mut g = buf.lock().unwrap();
+                if y * w + row.len() <= g.len() {
+                    g[y * w..y * w + row.len()].copy_from_slice(row);
+                }
+            },
+            None,
+            Some(&band),
+            false,
+        )?;
         Ok(())
     })
 }
@@ -1590,7 +1611,7 @@ fn march_card(
             prepare(g, sh.code.clone(), "main", march_constants(p, m));
         }
         let t = std::time::Instant::now();
-        r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None, None);
+        r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None, None, true).map(|(v, _)| v);
         if timing {
             eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
         }
@@ -2225,7 +2246,7 @@ pub fn de_probe(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
     PROBE_MZZ.with(|m| m.set(mzz));
-    let v = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {}, None, None)?;
+    let (v, _) = run(g, p, &sh, &PostJob::default(), Some(3), &|_, _| {}, &|| false, &mut |_, _| {}, None, None, true)?;
     Ok(v.iter()
         .map(|s| {
             let rst = f32::from_bits((s.normal[0] as u16 as u32) | (s.normal[1] as u16 as u32) << 16);
@@ -2246,8 +2267,9 @@ fn run(
     cancel: &(dyn Fn() -> bool + Sync),
     sink: &mut dyn FnMut(usize, &[SiLight]),
     bands: Option<&dyn Fn(usize) -> Option<(usize, usize)>>,
-    upload: Option<&[SiLight]>,
-) -> Result<Vec<SiLight>, String> {
+    upload: Option<&dyn Fn(usize, usize) -> Vec<SiLight>>,
+    keep: bool,
+) -> Result<(Vec<SiLight>, usize), String> {
     let (w, h) = (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize);
     let mut res = Resumer::new(g, sh);
     let mut modes = only_mode.map(|m| vec![m]).unwrap_or_else(|| modes(post));
@@ -2256,7 +2278,7 @@ fn run(
     if upload.is_some() {
         modes.retain(|&m| m != 0);
         if modes.is_empty() {
-            return Ok(upload.unwrap().to_vec());
+            return Ok((Vec::new(), 0));
         }
     }
     // the rows of a job: as many as the G-buffer allows (a job ends with
@@ -2336,7 +2358,9 @@ fn run(
             })
         })
         .collect();
-    let mut gbuf = Vec::with_capacity(w * h);
+    // the rows (all of them only with `keep`: else the row at hand)
+    let mut gbuf = Vec::with_capacity(if keep { w * h } else { w });
+    let mut delivered = 0usize;
     let mut overflow = 0usize;
     let mut next = 0;
     // the next band: in order, or from the allocator (the rows from the
@@ -2353,9 +2377,9 @@ fn run(
         if cancel() {
             return Err("cancelled".into());
         }
-        if let Some(gb) = upload {
+        if let Some(up) = upload {
             // as the march writes it (see the end of `main` in the shader)
-            let words: Vec<u32> = gb[row0 * w..(row0 + rows) * w]
+            let words: Vec<u32> = up(row0, rows)
                 .iter()
                 .flat_map(|s| {
                     [
@@ -2395,6 +2419,10 @@ fn run(
                     }
                     let data = read_back(g, &out, &read, (sunk * w * 20) as u64, ((ready - sunk) * w * 20) as u64)?;
                     for (r, row) in data.chunks_exact(w * 20).enumerate() {
+                        if !keep {
+                            gbuf.clear();
+                        }
+                        delivered += w;
                         let start = gbuf.len();
                         for px in row.chunks_exact(20) {
                             let u = |k: usize| u32::from_le_bytes(px[k * 4..k * 4 + 4].try_into().unwrap());
@@ -2424,7 +2452,7 @@ fn run(
         }
     }
     OVERFLOW.with(|c| c.set(overflow));
-    Ok(gbuf)
+    Ok((gbuf, delivered))
 }
 
 /// Copies `len` bytes at `offset` of the storage buffer `out` through the

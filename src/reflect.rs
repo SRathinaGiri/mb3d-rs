@@ -1356,12 +1356,17 @@ fn s3d(v: S3) -> Vec3 {
 }
 
 /// The pixels of one [`reflections_gpu`] call: its state (surfaces, ray
-/// stacks, the card's task buffers) is a few hundred bytes per pixel, so
-/// big pictures go through in bands of rows (8M pixels, so 4K UHD stays
-/// one band; each band costs the card ~1.5 s ramp-up; 15000x20000 at once peaked
-/// at 80 GB).  `MB3D_REFLECT_BAND_PIXELS` changes it (tests).
+/// stacks, the card's task buffers) is about 1.2 KB per pixel, so big
+/// pictures go through in bands of rows: 8M pixels while the picture has
+/// no more (4K UHD stays one band; each band costs the card ~1.5 s
+/// ramp-up), 2M pixels (2.5 GB) for bigger ones, whose other buffers
+/// need the memory (15000x20000 at once peaked at 80 GB; 15360x15360 in
+/// 8M bands ran out of memory with 32 GB, issue #7).
+/// `MB3D_REFLECT_BAND_PIXELS` changes it (tests).
 #[cfg(feature = "gpu")]
 const REFLECT_BAND_PIXELS: usize = 1 << 23;
+#[cfg(feature = "gpu")]
+const REFLECT_BAND_PIXELS_BIG: usize = 1 << 21;
 
 /// `CalcSRT`: the reflection pass over the painted image `rgb` of the
 /// G-buffer `gbuf` (both covering `p.rect`).
@@ -1374,7 +1379,10 @@ pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
         let [x0, y0, w, h] = p.rect;
         let (wu, hu) = (w.max(1) as usize, h.max(0) as usize);
-        let band_px = std::env::var("MB3D_REFLECT_BAND_PIXELS").ok().and_then(|v| v.parse().ok()).unwrap_or(REFLECT_BAND_PIXELS);
+        let band_px = std::env::var("MB3D_REFLECT_BAND_PIXELS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(if wu * hu <= REFLECT_BAND_PIXELS { REFLECT_BAND_PIXELS } else { REFLECT_BAND_PIXELS_BIG });
         let rows = (band_px / wu).max(1);
         let mut q = p.clone();
         let mut y = 0;

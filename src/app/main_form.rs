@@ -749,6 +749,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         app.main.compile_note = false;
     }
     let slice = if calc3d { 0 } else { app.main.slice_calc.clamp(1, 3) };
+    app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
     app.eng.start(Job::Calc { scene: app.scene.clone(), slice });
 }
 
@@ -780,7 +781,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         if running && app.main.last_partial.elapsed().as_millis() >= iv {
             app.main.last_partial = Instant::now();
             if let Some((rgb, w, h)) = app.eng.partial_image() {
-                set_image(app, ui, std::sync::Arc::new(rgb), w, h);
+                // (already at the size shown)
+                show_bitmap(ui, &rgb, w, h);
             }
         }
     }
@@ -898,8 +900,19 @@ pub fn show_external(app: &mut Mb3d, ui: &mut Ui, rgb: std::sync::Arc<Vec<u8>>, 
 
 fn set_image(app: &Mb3d, ui: &mut Ui, rgb: std::sync::Arc<Vec<u8>>, w: usize, h: usize) {
     let s = app.main.image_scale.max(1) as usize;
-    let (px, dw, dh) = if s > 1 { crate::render::downsample(&rgb, w, h, s) } else { ((*rgb).clone(), w, h) };
-    let b = Bitmap::from_rgb(dw, dh, &px);
+    if s > 1 {
+        let (px, dw, dh) = crate::render::downsample(&rgb, w, h, s);
+        show_bitmap(ui, &px, dw, dh);
+    } else {
+        show_bitmap(ui, &rgb, w, h);
+    }
+}
+
+/// Shows `px` as it is (the size shown).
+fn show_bitmap(ui: &mut Ui, px: &[u8], dw: usize, dh: usize) {
+    // (the old picture goes first: two of 15360 x 15360 are 1.9 GB)
+    ui.cm(F, "Image1").picture = None;
+    let b = Bitmap::from_rgb(dw, dh, px);
     let c = ui.cm(F, "Image1");
     c.width = dw as i32;
     c.height = dh as i32;
@@ -967,6 +980,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.main.calc_start = Instant::now();
             ui.set_visible(F, "Shape1", false);
             disable_buttons(app, ui);
+            app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
             app.eng.start(Job::Blocky { scene: app.scene.clone() });
         }
         "Button12Click" => {
@@ -978,6 +992,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.main.calc3d = true;
             disable_buttons(app, ui);
             ui.set_visible(F, "ProgressBar1", true);
+            app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
             app.eng.start(Job::Calc { scene: sc, slice: 0 });
             app.scene.stereo_mode = 0;
         }

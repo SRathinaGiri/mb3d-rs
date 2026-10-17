@@ -7,7 +7,7 @@ use crate::calc::CalcParams;
 use crate::gbuffer::SiLight;
 use crate::scene::Scene;
 use crate::vcl::ui::Waker;
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Instant;
 
@@ -114,12 +114,19 @@ pub struct Output {
     pub was_calc3d: bool,
 }
 
+/// The calculation under way, for its live picture: the rows marched
+/// since the last update, as the window shows them (every `step`th pixel
+/// of every `step`th row; no copy of the whole G-buffer, which a picture
+/// of 15360 x 15360 cannot afford, issue #7).
 struct Partial {
     params: CalcParams,
     scene: Scene,
-    gbuf: Vec<SiLight>,
     w: usize,
-    rows_new: bool,
+    h: usize,
+    step: usize,
+    id: u64,
+    /// (display row, its pixels)
+    pending: Vec<(usize, Vec<SiLight>)>,
 }
 
 pub struct Inner {
@@ -133,6 +140,11 @@ pub struct Inner {
     /// the painted preview of the rows so far, and whether a painter runs
     preview: Mutex<Option<(Vec<u8>, usize, usize)>>,
     painting: AtomicBool,
+    /// the live picture of the calculation `id` (display size)
+    canvas: Mutex<Option<(u64, Vec<u8>, usize, usize)>>,
+    /// how the window shows the picture: 1 in `preview_step` pixels
+    preview_step: AtomicUsize,
+    partial_id: AtomicU64,
     waker: Mutex<Option<Waker>>,
     busy: AtomicBool,
 }
@@ -208,6 +220,9 @@ impl Engine {
             partial: Mutex::new(None),
             preview: Mutex::new(None),
             painting: AtomicBool::new(false),
+            canvas: Mutex::new(None),
+            preview_step: AtomicUsize::new(1),
+            partial_id: AtomicU64::new(0),
             waker: Mutex::new(None),
             busy: AtomicBool::new(false),
         });
@@ -253,6 +268,8 @@ impl Engine {
     /// painting runs on a thread of its own, from a copy of the rows, so
     /// that the window stays responsive: a call starts it, a later call
     /// returns the image.
+    /// The image is at the size the window shows it (see
+    /// [`Engine::set_preview_step`]), painted only where new rows came.
     pub fn partial_image(&self) -> Option<(Vec<u8>, usize, usize)> {
         if let Some(img) = self.0.preview.lock().unwrap().take() {
             return Some(img);
@@ -260,25 +277,39 @@ impl Engine {
         if self.0.painting.load(Ordering::SeqCst) {
             return None;
         }
-        let (scene, params, gbuf, w) = {
+        let (scene, params, rows, step, dw, dh, id) = {
             let mut p = self.0.partial.lock().unwrap();
             let p = p.as_mut()?;
-            if !p.rows_new {
+            if p.pending.is_empty() {
                 return None;
             }
-            p.rows_new = false;
-            (p.scene.clone(), p.params.clone(), p.gbuf.clone(), p.w)
+            (p.scene.clone(), p.params.clone(), std::mem::take(&mut p.pending), p.step, p.w / p.step, p.h / p.step, p.id)
         };
         self.0.painting.store(true, Ordering::SeqCst);
         let e = self.0.clone();
         std::thread::spawn(move || {
-            let rgb = crate::render::paint_preview(&scene, &params, &gbuf);
-            let h = gbuf.len() / w.max(1);
-            *e.preview.lock().unwrap() = Some((rgb, w, h));
+            let mut c = e.canvas.lock().unwrap();
+            if c.as_ref().is_none_or(|(cid, _, cw, ch)| *cid != id || (*cw, *ch) != (dw, dh)) {
+                let mut rgb = vec![0u8; dw * dh * 3];
+                crate::render::paint_display_rows(&scene, &params, step, None, &mut rgb, dw);
+                *c = Some((id, rgb, dw, dh));
+            }
+            let rgb = c.as_mut().map(|c| &mut c.1).expect("the canvas was just made");
+            crate::render::paint_display_rows(&scene, &params, step, Some(&rows), rgb, dw);
+            let out = rgb.clone();
+            drop(c);
+            *e.preview.lock().unwrap() = Some((out, dw, dh));
             e.painting.store(false, Ordering::SeqCst);
             e.wake();
         });
         None
+    }
+
+    /// The window shows the picture downscaled by `step` (its anti
+    /// aliasing): the live picture of the next calculation is made at that
+    /// size.
+    pub fn set_preview_step(&self, step: usize) {
+        self.0.preview_step.store(step.max(1), Ordering::Relaxed);
     }
 
     pub fn base(&self) -> Option<Arc<Base>> {
@@ -386,9 +417,44 @@ impl Inner {
             }
         }
         *self.partial.lock().unwrap() = None;
+        *self.canvas.lock().unwrap() = None;
         self.wake();
     }
+
+    /// A calculation of `w` x `h` pixels begins: its live picture starts.
+    fn begin_partial(&self, params: CalcParams, scene: &Scene, w: usize, h: usize) {
+        let step = self.preview_step.load(Ordering::Relaxed).max(1);
+        let id = self.partial_id.fetch_add(1, Ordering::SeqCst) + 1;
+        *self.partial.lock().unwrap() = Some(Partial { params, scene: scene.clone(), w, h, step, id, pending: Vec::new() });
+    }
+
+    /// A row `y` of the calculation, kept for its live picture as the
+    /// window shows it.
+    fn partial_row(&self, y: usize, row: &[SiLight]) {
+        if let Some(p) = self.partial.lock().unwrap().as_mut() {
+            let s = p.step;
+            if y % s == 0 && y / s < p.h / s {
+                p.pending.push((y / s, row.iter().step_by(s).take(p.w / s).copied().collect()));
+            }
+        }
+    }
+
+    /// Before a big calculation: the last picture's buffers go (the old
+    /// G-buffers and the new one together do not fit, issue #7).  A
+    /// stopped calculation then leaves no picture to repaint.
+    fn free_big_base(&self, w: usize, h: usize) {
+        let mut b = self.base.lock().unwrap();
+        let old = b.as_ref().map_or(0, |b| b.w * b.h);
+        if w * h + old > BIG_PICTURE_PIXELS {
+            *b = None;
+        }
+    }
 }
+
+/// Pictures of more pixels (together with the last one) do not keep the
+/// last picture's buffers while they are calculated: 64M pixels, 1.3 GB a
+/// G-buffer (a picture keeps two).
+const BIG_PICTURE_PIXELS: usize = 64 << 20;
 
 fn worker(e: Arc<Inner>) {
     loop {
@@ -431,21 +497,14 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) ->
     let params = CalcParams::new(&sc)?;
     let [_, _, w, h] = params.rect;
     let (w, h) = (w as usize, h as usize);
-    *e.partial.lock().unwrap() = Some(Partial { params, scene: sc.clone(), gbuf: vec![SiLight::default(); w * h], w, rows_new: false });
+    e.free_big_base(w, h);
+    e.begin_partial(params, &sc, w, h);
     {
         let mut o = e.out.lock().unwrap();
         o.stage = if slice == 0 { "main rendering".into() } else { "2D calculation".into() };
     }
     let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
-    let sink = |y: usize, row: &[SiLight]| {
-        if let Some(p) = e.partial.lock().unwrap().as_mut() {
-            let o = y * p.w;
-            if o + row.len() <= p.gbuf.len() {
-                p.gbuf[o..o + row.len()].copy_from_slice(row);
-                p.rows_new = true;
-            }
-        }
-    };
+    let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
     let (p, raw) = crate::render::calculate_raw_rows(&sc, &progress, cancel, &sink)?;
     *e.partial.lock().unwrap() = None;
     let t1 = Instant::now();
@@ -484,18 +543,11 @@ fn blocky(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(
     let params = CalcParams::new(&sc)?;
     let [_, _, w, h] = params.rect;
     let (w, h) = (w as usize, h as usize);
-    *e.partial.lock().unwrap() = Some(Partial { params, scene: sc.clone(), gbuf: vec![SiLight::default(); w * h], w, rows_new: false });
+    e.free_big_base(w, h);
+    e.begin_partial(params, &sc, w, h);
     e.out.lock().unwrap().stage = "rough image".into();
     let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
-    let sink = |y: usize, row: &[SiLight]| {
-        if let Some(p) = e.partial.lock().unwrap().as_mut() {
-            let o = y * p.w;
-            if o + row.len() <= p.gbuf.len() {
-                p.gbuf[o..o + row.len()].copy_from_slice(row);
-                p.rows_new = true;
-            }
-        }
-    };
+    let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
     let (p, g) = crate::render::calculate_blocky(&sc, &progress, cancel, &sink)?;
     *e.partial.lock().unwrap() = None;
     // painted without the post calculations, as MB3D's PaintRowsNoThreadBlocky

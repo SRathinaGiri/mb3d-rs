@@ -211,7 +211,7 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
     let next = std::sync::atomic::AtomicUsize::new(0);
     let src: &[S] = rgb;
     let (order, next) = (&order, &next);
-    let bands: Vec<(usize, Vec<f32>, Vec<f32>)> = std::thread::scope(|s| {
+    let bands: Vec<(usize, Vec<S>)> = std::thread::scope(|s| {
         let hs: Vec<_> = (0..threads.min(n_bands))
             .map(|_| {
                 s.spawn(move || {
@@ -287,21 +287,24 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
                                 }
                             }
                         }
-                        done.push((by0 as usize, col, transp));
+                        // the band's colours (not its sums: 16 bytes a pixel
+                        // for every band until all are done)
+                        let px: Vec<S> = (0..bn * 3)
+                            .map(|k| {
+                                let t = transp[k / 3];
+                                S::from_dof(col[k] * if t < 1e-10 { 1e10 } else { 1.0 / t })
+                            })
+                            .collect();
+                        done.push((by0 as usize, px));
                     }
                 })
             })
             .collect();
         hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
     });
-    for (by0, col, transp) in bands {
-        let o = by0 * width;
-        for (i, t) in transp.iter().enumerate() {
-            let m = if *t < 1e-10 { 1e10 } else { 1.0 / t };
-            for k in 0..3 {
-                rgb[(o + i) * 3 + k] = S::from_dof(col[i * 3 + k] * m);
-            }
-        }
+    for (by0, px) in bands {
+        let o = by0 * width * 3;
+        rgb[o..o + px.len()].copy_from_slice(&px);
     }
 }
 
