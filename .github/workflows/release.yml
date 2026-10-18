@@ -190,12 +190,17 @@ jobs:
             test -s /tmp/t.png
             dnf remove -y -q mb3d-rs
             test ! -e /usr/bin/mb3d'
+      # one file per artifact (archive: false uploads a single file)
       - uses: actions/upload-artifact@v7
         if: runner.os == 'Linux'
         with:
-          path: |
-            ${{ env.DEB }}
-            ${{ env.RPM }}
+          path: ${{ env.DEB }}
+          archive: false
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        if: runner.os == 'Linux'
+        with:
+          path: ${{ env.RPM }}
           archive: false
           if-no-files-found: error
       # a signed record that this archive was built here from this commit
