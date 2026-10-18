@@ -18,6 +18,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
 - [Linux packaging and the command line](#linux-packaging-and-the-command-line)
 - [Building from source](#building-from-source)
+- [Nightly tests](#nightly-tests)
 
 ## Graphics card
 
@@ -1040,3 +1041,41 @@ the precision probe on parameter files, `cargo run --release --example
 modecheck -- MB3D_DIR 480 OUT_DIR FILES...` repeats the CPU and graphics
 card comparison, and `m3f2rs --gpu-report M3Formulas` says which formulas
 translate and why not (`LIFT_DEBUG=1`).
+
+## Nightly tests
+
+`.github/workflows/nightly.yml` runs every night at 02:30 UTC (and by hand
+from the Actions tab) on Linux, Windows and macOS, with the command line
+renderer alone (the runners have no graphics card, so the processor's path
+is tested). `tools/nightly.py` runs each render in a process of its own
+with a time limit, so a crash or a hang is caught and the rest goes on:
+
+- the 80 example parameter files of the MB3D repository at 15 % of their
+  size (`mb3d batch --scale 0.15`);
+- MutaGen on six of them, chosen by the date, which is also the seed,
+  and every member of the family rendered; a mutation that is unusable is
+  no failure, only crashes and hangs count;
+- one small render of each other kind: a picture, `--tiles`, the swarm
+  with a local folder, Monte Carlo, an animation, a mesh, voxels.
+
+The example pictures are compared with those of the last successful night
+(its `pictures-<system>` artifact): the number of changed pixels and the
+largest difference. Results go to `results.json` per system.
+
+`tools/nightly_issues.py` (with the run's own token, `issues: write`)
+then:
+
+- opens an issue for every failure without one (label `nightly`), with the
+  system, the output, and the command that runs it again; the same failure
+  (test, item, kind, message without numbers) on another system is added
+  to its issue;
+- closes a nightly issue, with a note, when its test passed on every
+  system it had failed on;
+- opens one issue per night that changed example pictures (label
+  `picture-change`), to be closed when the change was meant;
+- opens an issue for a system that left no results (its build failed).
+
+It only touches issues labelled `nightly`; their bodies carry hidden
+markers (`<!-- nightly-sig: ... -->`) by which they are found again.
+`--dry-run` shows what it would do; `GH` names the `gh` program.
+

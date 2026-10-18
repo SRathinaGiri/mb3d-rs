@@ -1,0 +1,113 @@
+name: Nightly
+
+# Every night: the command line renderer renders the example parameter
+# files of the MB3D repository, random MutaGen variations of some of them,
+# and one small render of every other kind, on Linux, Windows and macOS
+# (tools/nightly.py); the example pictures are compared with the night
+# before. Crashes, hangs, errors and changed pictures become issues with the
+# label `nightly`, which are closed again when the test passes
+# (tools/nightly_issues.py). The runners have no graphics card: the
+# processor's path is tested.
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.system }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      # the pictures of the night before
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, system: linux, exe: "", python: python3 }
+          - { os: windows-latest, system: windows, exe: ".exe", python: python }
+          - { os: macos-latest, system: macos, exe: "", python: python3 }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: mb3d-rs
+      - uses: actions/checkout@v7
+        with:
+          repository: thargor6/mb3d
+          path: mb3d
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: mb3d-rs
+      # (the renderer alone: no window, no graphics card)
+      - name: Build
+        working-directory: mb3d-rs
+        run: cargo build --release --no-default-features --bin mb3d
+      - name: The pictures of the night before
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id=$(gh run list -R "$GITHUB_REPOSITORY" --workflow nightly.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$id" ]; then
+            gh run download "$id" -R "$GITHUB_REPOSITORY" -n "pictures-${{ matrix.system }}" -D ref || echo "no pictures in run $id"
+          fi
+      - name: Test
+        env:
+          NIGHTLY_OS: ${{ matrix.system }}
+        run: |
+          ref=""
+          [ -d ref ] && ref="--ref ref"
+          ${{ matrix.python }} mb3d-rs/tools/nightly.py --bin "mb3d-rs/target/release/mb3d${{ matrix.exe }}" --mb3d mb3d --out out $ref
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: results-${{ matrix.system }}
+          path: out/results.json
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pictures-${{ matrix.system }}
+          path: out/pictures
+          retention-days: 30
+          if-no-files-found: ignore
+      # the parameter files of the random variations, to render them again
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: variations-${{ matrix.system }}
+          path: out/mutagen/**/*.m3p
+          retention-days: 30
+          if-no-files-found: ignore
+
+  issues:
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: results-*
+          path: results
+      - name: Issues from the results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 tools/nightly_issues.py results --systems linux,windows,macos --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
