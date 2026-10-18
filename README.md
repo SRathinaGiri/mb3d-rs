@@ -1392,7 +1392,6 @@ Mandelbulb3D, which this program is a port of, was made by these people:
 | **Zeyu-Li** | Documentation on GitHub (2020) |
 | **NASA, GIMP** | Source material for the maps |
 
-* **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
 * **The PseudoKleinian formula** is knighty's (Fragmentarium, 2011,
   "Theli-at's Pseudo Kleinian" after Theli-at's hybrid discovery of the
   look on fractalforums.com); this program's version is written in Rust
