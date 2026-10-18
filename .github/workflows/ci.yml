@@ -3,7 +3,16 @@ name: CI
 on:
   push:
     branches: [main, master]
+    # (documentation alone, e.g. the README update after a release, has
+    # nothing to build or test)
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
   pull_request:
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+
+# a newer push to the same branch replaces a run still going
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
