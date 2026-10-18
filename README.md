@@ -779,6 +779,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.52](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.52) · 18 Oct 2026, 00:19 UTC
+
+| Commit | What it does |
+|---|---|
+| [`3cbdfbc`](https://github.com/thr32423/mb3d-rs/commit/3cbdfbcd26cd9c20b7e3114f5e54e5653297dbaa) | Version number and release notes of this release |
+| [`8c99c20`](https://github.com/thr32423/mb3d-rs/commit/8c99c20ad5f87ad6909c94f6b0833f8f009e0d05) | Swarm: tiles of Calculate 3D no longer paint what nobody uses |
+| [`0e251aa`](https://github.com/thr32423/mb3d-rs/commit/0e251aadc4bfeab41a92f9c6a4911c4d1111826d) | README: the swarm in a section of its own, with how to set it up |
+| [`a1c5e70`](https://github.com/thr32423/mb3d-rs/commit/a1c5e70d626988508bcfa552fdbdbb5d371c1a6d) | README: Updates for v0.2.51 |
+
 ### [v0.2.51](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.51) · 17 Oct 2026, 22:09 UTC
 
 | Commit | What it does |
@@ -816,6 +825,8 @@ in UTC.
 | [`6090b8a`](https://github.com/thr32423/mb3d-rs/commit/6090b8a7461afa79faf87294596df63b89fdeeb4) | New formula UlamSpiral: Ulam's prime spiral in 3D, on the CPU and the GPU |
 | [`49cf64e`](https://github.com/thr32423/mb3d-rs/commit/49cf64e4dbc0742d61cb1867f45de6a95c7a5e9a) | README: Updates for v0.2.47 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.47)</summary>
+
 ### [v0.2.47](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.47) · 16 Oct 2026, 19:16 UTC
 
 | Commit | What it does |
@@ -825,8 +836,6 @@ in UTC.
 | [`fb5f6af`](https://github.com/thr32423/mb3d-rs/commit/fb5f6af7e5de89f49362c7aded629b42fb6a1fdc) | README: banner with the RS icon |
 | [`18877c8`](https://github.com/thr32423/mb3d-rs/commit/18877c893ea8007fbc4dfe3e2a525a0f697d75c6) | download.sh: say which version it installs |
 | [`a87d266`](https://github.com/thr32423/mb3d-rs/commit/a87d2669ccf57c837495175b359c2eceeb7ae79e) | README: Updates for v0.2.46 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.46)</summary>
 
 ### [v0.2.46](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.46) · 16 Oct 2026, 14:45 UTC
 
