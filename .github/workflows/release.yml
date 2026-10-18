@@ -114,7 +114,7 @@ jobs:
           if [ "${{ runner.os }}" != "Windows" ]; then
             mkdir help
             if "$name/mb3d" --version > help/version.txt && "$name/mb3d" --help > help/main.txt; then
-              for c in animate batch voxel mesh mutagen montecarlo; do "$name/mb3d" $c --help > help/$c.txt; done
+              for c in animate batch voxel mesh mutagen montecarlo resume; do "$name/mb3d" $c --help > help/$c.txt; done
               python3 tools/cli_docs.py help "$name"
             else
               echo "::warning::no man page / completions (mb3d does not run on this runner)"

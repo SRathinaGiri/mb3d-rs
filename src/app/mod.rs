@@ -24,6 +24,7 @@ pub mod postpro_form;
 pub mod small_forms;
 pub mod swarm_form;
 pub mod tools_forms;
+pub mod unfinished_form;
 pub mod util;
 pub mod voxel_form;
 
@@ -35,7 +36,7 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "uMapCalcWindow", "VisualThemesGUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "uMapCalcWindow", "VisualThemesGUI",
     "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI",
 ];
 
@@ -60,6 +61,7 @@ pub struct Mb3d {
     pub tiling: tools_forms::TilingState,
     pub mc: mc_form::State,
     pub swarm: swarm_form::State,
+    pub unfinished: unfinished_form::State,
     pub voxel: voxel_form::State,
     pub btracer: bulbtracer_form::State,
     pub mutagen: mutagen_form::State,
@@ -173,6 +175,7 @@ impl App for Mb3d {
             "PostProForm" => postpro_form::event(self, ui, e),
             "VisualThemesFrm" => small_forms::themes_event(self, ui, e),
             "SwarmFrm" => swarm_form::event(self, ui, e),
+            "UnfinishedFrm" => unfinished_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
             "MapSequencesFrm" => small_forms::mapseq_event(self, ui, e),
             "FTextBox" => small_forms::textbox_event(self, ui, e),
@@ -238,6 +241,7 @@ impl Mb3d {
             "heightmap" => meshview::heightmap_dialog(self, ui, what, r),
             "jit" => jit_form::dialog(self, ui, what, r),
             "swarm" => swarm_form::dialog(self, ui, what, r),
+            "unfinished" => unfinished_form::dialog(self, ui, what, r),
             _ => {}
         }
     }
@@ -303,6 +307,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         tiling: tools_forms::TilingState::default(),
         mc: mc_form::State::default(),
         swarm,
+        unfinished: Default::default(),
         voxel: voxel_form::State::default(),
         btracer: bulbtracer_form::State::default(),
         mutagen: mutagen_form::State::default(),

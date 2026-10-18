@@ -2900,8 +2900,19 @@ object Mand3DForm: TMand3DForm
             ShowHint = True
             OnClick = Button5Click
           end
+          object ResumeBtn: TSpeedButton
+            Left = 130
+            Top = 3
+            Width = 40
+            Height = 30
+            Hint = 'Unfinished renders: continue or delete them'
+            Caption = 'Resume'
+            ParentShowHint = False
+            ShowHint = True
+            OnClick = ResumeBtnClick
+          end
           object SpeedButton8: TSpeedButton
-            Left = 168
+            Left = 172
             Top = 3
             Width = 83
             Height = 30

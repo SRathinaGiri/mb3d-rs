@@ -198,6 +198,8 @@ const EDGES: [(usize, usize); 12] =
 /// Collects the triangles with shared vertices (`TFacesList`).
 struct FaceBuilder {
     keys: HashMap<(i64, i64, i64), u32>,
+    /// the key of each vertex, in order (for a checkpoint)
+    key_list: Vec<(i64, i64, i64)>,
     face_keys: HashSet<[u32; 3]>,
     mesh: Mesh,
 }
@@ -206,6 +208,7 @@ impl FaceBuilder {
     fn new(colors: bool) -> Self {
         FaceBuilder {
             keys: HashMap::new(),
+            key_list: Vec::new(),
             face_keys: HashSet::new(),
             mesh: Mesh { colors: colors.then(Vec::new), ..Default::default() },
         }
@@ -223,6 +226,7 @@ impl FaceBuilder {
             c.push(v.col);
         }
         self.keys.insert(key, i);
+        self.key_list.push(key);
         i
     }
 
@@ -269,6 +273,19 @@ pub fn trace(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<Mesh, String> {
+    trace_with(sc, mp, threads, progress, cancel, None)
+}
+
+/// [`trace`] that keeps its state in `ck` ([`MeshCheckpoint::open`]) and
+/// continues from what `ck` kept.
+pub fn trace_with(
+    sc: &Scene,
+    mp: &MeshParams,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    ck: Option<&MeshCheckpoint>,
+) -> Result<Mesh, String> {
     let n = mp.resolution.clamp(4, 4096);
     let sampler = Sampler::new(sc, mp)?;
     let step = GRID / (n - 1) as f64;
@@ -313,9 +330,13 @@ pub fn trace(
         });
         out
     };
-    let mut fb = FaceBuilder::new(mp.colors);
-    let mut a = plane(0);
-    for i in 0..n {
+    let ck = ck.filter(|c| c.side == side && c.colors == mp.colors);
+    let (mut fb, mut a, start) = match ck.and_then(|c| c.restore()) {
+        Some(r) => r,
+        None => (FaceBuilder::new(mp.colors), plane(0), 0),
+    };
+    let mut saved = std::time::Instant::now();
+    for i in start..n {
         if cancel() {
             return Err("cancelled".into());
         }
@@ -350,6 +371,10 @@ pub fn trace(
         }
         a = bp;
         progress(i + 1, n);
+        if let Some(c) = ck.filter(|_| saved.elapsed().as_secs_f64() >= MESH_SAVE_SECS && i + 1 < n) {
+            c.save(&fb, &a, i + 1, n);
+            saved = std::time::Instant::now();
+        }
     }
     let mut mesh = fb.mesh;
     if mp.smooth > 0 {
@@ -357,6 +382,162 @@ pub fn trace(
     }
     mesh.center(1.0);
     Ok(mesh)
+}
+
+/// How often [`trace_with`] keeps its state (seconds).
+const MESH_SAVE_SECS: f64 = 20.0;
+
+/// The checkpoint of a mesh trace (see [`crate::checkpoint`]): the planes
+/// traced, the last plane's samples (`plane-0`, `plane-1` in turn, so the
+/// one before stays whole) and the mesh so far, whose vertices (with
+/// their keys), colours and faces only grow and are appended.  `state`
+/// says how far it got, written last: what the files hold beyond its
+/// counts is cut off on restore.
+pub struct MeshCheckpoint {
+    store: crate::checkpoint::Store,
+    side: usize,
+    colors: bool,
+    /// vertices and faces written so far, and the plane file used last
+    written: std::sync::Mutex<(usize, usize, usize)>,
+}
+
+/// Bytes of one sample in a kept plane (the weight and, with colours, the
+/// colour).
+fn sample_bytes(colors: bool) -> usize {
+    if colors {
+        20
+    } else {
+        4
+    }
+}
+
+impl MeshCheckpoint {
+    /// Opens the checkpoint of the mesh of `sc` with `mp` (its smoothing
+    /// afterwards aside).  None with `Policy::Off` or when it cannot be
+    /// kept.
+    pub fn open(sc: &Scene, mp: &MeshParams, name: &str, policy: crate::checkpoint::Policy) -> Option<MeshCheckpoint> {
+        let n = mp.resolution.clamp(4, 4096);
+        let mut s = sc.clone();
+        s.threads = 0;
+        let mut m = mp.clone();
+        m.smooth = 0;
+        let key = crate::checkpoint::key("mesh", &format!("{}\n{m:?}", s.to_text()));
+        let spec = crate::checkpoint::Spec { kind: "mesh".into(), key, name: name.into(), width: n, height: 1, rec: 1, units: n };
+        let store = crate::checkpoint::Store::open(spec, policy)?;
+        store.put_extra("scene.m3s", sc.to_text().as_bytes());
+        store.set_value("size", &format!("{n}^3"));
+        Some(MeshCheckpoint { store, side: n + 1, colors: mp.colors, written: std::sync::Mutex::new((0, 0, 0)) })
+    }
+
+    /// The kept state: the faces so far, the samples of the plane the next
+    /// layer starts at, and its index.
+    fn restore(&self) -> Option<(FaceBuilder, Vec<Sample>, usize)> {
+        let st = String::from_utf8(self.store.get_extra("state")?).ok()?;
+        let v = |k: &str| st.lines().find_map(|l| l.strip_prefix(k)?.strip_prefix(" = ")?.trim().parse::<usize>().ok());
+        let (plane, nv, nf, file) = (v("plane")?, v("vertices")?, v("faces")?, v("file")?);
+        let read = |name: &str, len: usize| -> Option<Vec<u8>> {
+            let mut d = std::fs::read(self.store.extra_path(name)).ok()?;
+            (d.len() >= len).then(|| {
+                d.truncate(len);
+                d
+            })
+        };
+        let f32s = |d: &[u8]| d.chunks_exact(4).map(|b| f32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<f32>>();
+        let sb = sample_bytes(self.colors);
+        let pd = read(&format!("plane-{file}"), self.side * self.side * sb + 8)?;
+        if u64::from_le_bytes(pd[..8].try_into().unwrap()) != plane as u64 {
+            return None;
+        }
+        let samples = pd[8..]
+            .chunks_exact(sb)
+            .map(|c| {
+                let f = f32s(c);
+                Sample { w: f[0], col: if self.colors { [f[1], f[2], f[3], f[4]] } else { [0.0; 4] } }
+            })
+            .collect();
+        let mut fb = FaceBuilder::new(self.colors);
+        let keys = read("keys", nv * 24)?;
+        fb.key_list = keys.chunks_exact(8).map(|b| i64::from_le_bytes(b.try_into().unwrap())).collect::<Vec<i64>>().chunks_exact(3).map(|k| (k[0], k[1], k[2])).collect();
+        fb.keys = fb.key_list.iter().enumerate().map(|(i, k)| (*k, i as u32)).collect();
+        fb.mesh.vertices = f32s(&read("vertices", nv * 12)?).chunks_exact(3).map(|p| [p[0], p[1], p[2]]).collect();
+        if self.colors {
+            fb.mesh.colors = Some(f32s(&read("colors", nv * 16)?).chunks_exact(4).map(|c| [c[0], c[1], c[2], c[3]]).collect());
+        }
+        let faces = read("faces", nf * 12)?;
+        fb.mesh.faces = faces.chunks_exact(4).map(|b| u32::from_le_bytes(b.try_into().unwrap())).collect::<Vec<u32>>().chunks_exact(3).map(|f| [f[0], f[1], f[2]]).collect();
+        fb.face_keys = fb
+            .mesh
+            .faces
+            .iter()
+            .map(|f| {
+                let mut k = *f;
+                k.sort_unstable();
+                k
+            })
+            .collect();
+        *self.written.lock().unwrap() = (nv, nf, file);
+        Some((fb, samples, plane))
+    }
+
+    /// Keeps the state after the layers before plane `plane` (of `n`).
+    fn save(&self, fb: &FaceBuilder, a: &[Sample], plane: usize, n: usize) {
+        let mut w = self.written.lock().unwrap();
+        let (nv, nf) = (fb.mesh.vertices.len(), fb.mesh.faces.len());
+        let append = |name: &str, from: usize, data: Vec<u8>| -> std::io::Result<()> {
+            let f = std::fs::OpenOptions::new().create(true).write(true).truncate(false).open(self.store.extra_path(name))?;
+            // (what a stopped trace wrote after its last state goes)
+            f.set_len(from as u64)?;
+            let mut f = f;
+            std::io::Seek::seek(&mut f, std::io::SeekFrom::Start(from as u64))?;
+            f.write_all(&data)
+        };
+        let le = |v: &mut Vec<u8>, x: &[f32]| x.iter().for_each(|f| v.extend_from_slice(&f.to_le_bytes()));
+        let ok = (|| -> std::io::Result<()> {
+            let keys: Vec<u8> = fb.key_list[w.0..nv].iter().flat_map(|k| [k.0, k.1, k.2]).flat_map(|x| x.to_le_bytes()).collect();
+            append("keys", w.0 * 24, keys)?;
+            let mut vs = Vec::new();
+            fb.mesh.vertices[w.0..nv].iter().for_each(|p| le(&mut vs, p));
+            append("vertices", w.0 * 12, vs)?;
+            if let Some(c) = &fb.mesh.colors {
+                let mut cs = Vec::new();
+                c[w.0..nv].iter().for_each(|x| le(&mut cs, x));
+                append("colors", w.0 * 16, cs)?;
+            }
+            let fs: Vec<u8> = fb.mesh.faces[w.1..nf].iter().flatten().flat_map(|x| x.to_le_bytes()).collect();
+            append("faces", w.1 * 12, fs)?;
+            Ok(())
+        })();
+        if ok.is_err() {
+            return;
+        }
+        let file = 1 - w.2;
+        let mut pd = Vec::with_capacity(8 + a.len() * sample_bytes(self.colors));
+        pd.extend_from_slice(&(plane as u64).to_le_bytes());
+        for s in a {
+            le(&mut pd, &[s.w]);
+            if self.colors {
+                le(&mut pd, &s.col);
+            }
+        }
+        self.store.put_extra(&format!("plane-{file}"), &pd);
+        self.store.put_extra("state", format!("plane = {plane}\nvertices = {nv}\nfaces = {nf}\nfile = {file}\n").as_bytes());
+        for u in 0..plane {
+            if !self.store.is_done(u) {
+                self.store.put(u, 0, [u, 0, 1, 1], &[1]);
+            }
+        }
+        self.store.set_value("done_text", &format!("{plane} of {n} planes"));
+        *w = (nv, nf, file);
+    }
+
+    pub fn store(&self) -> &crate::checkpoint::Store {
+        &self.store
+    }
+
+    /// The mesh is done (saved, or shown): the checkpoint goes.
+    pub fn finish(self) {
+        self.store.finish();
+    }
 }
 
 impl Mesh {

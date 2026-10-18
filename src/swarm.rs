@@ -29,6 +29,7 @@
 
 use crate::anim::Animation;
 use crate::batch::{BatchItem, BatchOptions, ItemResult};
+use crate::checkpoint::{Policy, Store};
 use crate::frames::{FrameResult, FrameRun};
 use crate::mc::McImage;
 use crate::scene::Scene;
@@ -394,6 +395,15 @@ fn sweep_peers(swarm: &Path) {
             let _ = std::fs::remove_file(swarm.join("peers").join(format!("{}.txt", p.id)));
         }
     }
+    // what is left of removed jobs (a computer wrote into one while it was
+    // removed): a job folder without its job.txt for a while
+    for e in std::fs::read_dir(swarm.join("jobs")).into_iter().flatten().flatten() {
+        let d = e.path();
+        let old = e.metadata().ok().and_then(|m| m.modified().ok()).and_then(|t| t.elapsed().ok()).is_some_and(|a| a.as_secs() > 4 * STALE_SECS);
+        if old && d.is_dir() && !d.join("job.txt").exists() {
+            let _ = std::fs::remove_dir_all(&d);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -478,6 +488,14 @@ impl Job {
             None => (0..self.setting("units").unwrap_or(0)).collect(),
         }
     }
+    /// The blocks of a Monte Carlo job (all of them, or those a continued
+    /// render still needs).
+    pub fn unit_indices(&self) -> Vec<usize> {
+        match self.settings.get("blocks") {
+            Some(list) => list.split_whitespace().filter_map(|k| k.parse().ok()).collect(),
+            None => (0..self.setting("units").unwrap_or(0)).collect(),
+        }
+    }
     /// Made by this version of the program.
     pub fn same_version(&self) -> bool {
         self.version == env!("CARGO_PKG_VERSION")
@@ -509,7 +527,8 @@ impl Job {
     /// owner).
     pub fn note_error(&self, heart: &Heart, msg: &str) {
         let d = self.dir.join("errors");
-        if std::fs::create_dir_all(&d).is_ok() {
+        // (a job given up meanwhile: its folder is not made again)
+        if self.dir.join("job.txt").exists() && std::fs::create_dir_all(&d).is_ok() {
             let _ = write_atomic(&d.join(format!("{}.txt", heart.id())), format!("{}\n{msg}\n", heart.name()).as_bytes());
         }
     }
@@ -523,7 +542,7 @@ impl Job {
         let n: usize = self.setting("units").unwrap_or(0);
         let out = self.out_dir();
         match self.kind {
-            JobKind::MonteCarlo => (0..n).map(|k| out.join(format!("unit_{k}.m3c"))).collect(),
+            JobKind::MonteCarlo => self.unit_indices().into_iter().map(|k| out.join(format!("unit_{k}.m3c"))).collect(),
             JobKind::Tiles => self.tile_indices().into_iter().map(|k| out.join(format!("tile_{k}.m3i"))).collect(),
             _ => (0..n)
                 .map(|k| out.join(self.settings.get(&format!("unit_{k}")).and_then(|u| bare_name(u)).map(String::from).unwrap_or_else(|| format!("unit_{k}"))))
@@ -722,6 +741,10 @@ fn claim_unit(job: &Job, heart: &Heart, out: &Path) -> Result<Option<UnitClaim>,
         return Ok(None);
     }
     let marker = marker_of(out);
+    // (a job given up meanwhile: its folder is not made again)
+    if !job.dir.join("job.txt").exists() {
+        return Ok(None);
+    }
     if let Some(d) = marker.parent() {
         std::fs::create_dir_all(d).map_err(|e| io(d, e))?;
     }
@@ -807,7 +830,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
             for k in a.keyframes.iter_mut() {
                 job_scene(&mut k.scene);
             }
-            let run = FrameRun { threads, ..Default::default() };
+            let run = FrameRun { threads, resume: unit_policy(), ..Default::default() };
             let frames: Vec<usize> = match job.settings.get("frames") {
                 Some(list) => list.split_whitespace().filter_map(|f| f.parse().ok()).filter(|&f| f < a.frame_count()).collect(),
                 None => (0..a.frame_count()).collect(),
@@ -838,7 +861,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
         JobKind::Batch => {
             let list = std::fs::read_to_string(job.in_dir().join("list.txt")).map_err(|e| io(&job.in_dir().join("list.txt"), e))?;
             let mut items = crate::batch::parse_list(&list, &job.in_dir())?;
-            let mut opts = BatchOptions { output_dir: Some(job.out_dir()), skip_existing: true, threads, ..Default::default() };
+            let mut opts = BatchOptions { output_dir: Some(job.out_dir()), skip_existing: true, threads, resume: unit_policy(), ..Default::default() };
             if let Some(f) = job.settings.get("format") {
                 opts.format = crate::anim::OutputFormat::parse(f)?;
             }
@@ -912,7 +935,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 }
                 false
             };
-            for k in 0..units {
+            for k in job.unit_indices() {
                 if cancel() || no_more() || save() {
                     break;
                 }
@@ -921,10 +944,20 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 let unit = format!("block {}/{units}", k + 1);
                 let mut img = McImage::new(scene.width as usize, scene.height as usize);
                 // the block's own random rays
-                img.seed_salt = (k as u32 + 1).wrapping_mul(SALT_STRIDE);
-                let t0 = Instant::now();
+                let salt = (k as u32 + 1).wrapping_mul(SALT_STRIDE);
+                img.seed_salt = salt;
+                // (a block of a fixed size that this computer began before
+                // continues; an open-ended one is saved when it stops)
+                let ck = if open { None } else { crate::mc::McCheckpoint::open(&scene, salt, "", &format!("swarm: {} {unit}", job.name), unit_policy()) };
+                if let Some(c) = &ck {
+                    if c.restore(&mut img) {
+                        img.seed_salt = salt;
+                    }
+                }
+                // (the time of a continued block counts from its start)
+                let t0 = Instant::now() - Duration::from_secs_f64(img.seconds.max(0.0));
                 let mut snapped = Instant::now();
-                let mut done_passes = 0u32;
+                let mut done_passes = img.passes;
                 loop {
                     let st = img.stats();
                     if open {
@@ -939,7 +972,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     // (a pass stopped half way keeps the rows it finished:
                     // the merge weighs every pixel by its rays)
                     let stop = || cancel() || save() || deadline.is_some_and(|d| Instant::now() > d);
-                    match crate::mc::pass(&scene, &mut img, threads, &progress, &stop) {
+                    match crate::mc::pass_with(&scene, &mut img, threads, &progress, &stop, None, ck.as_ref()) {
                         Ok(()) => {}
                         Err(e) if e == "cancelled" => break,
                         Err(e) => return Err(e),
@@ -968,6 +1001,9 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     return Err(e);
                 }
                 drop(claim);
+                if let Some(c) = ck {
+                    c.finish();
+                }
                 let _ = std::fs::remove_file(out.with_extension("snap"));
                 n += 1;
                 if !quiet {
@@ -1022,7 +1058,9 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 // (after the march: the post calculations and the painting)
                 let stage = |s: &str| heart.beat(&format!("{}, {s}", label(&unit)));
                 let t0 = Instant::now();
-                let res = match crate::render::render_tile_staged(&ts, full_paint, &progress, &stage, cancel) {
+                // (rows of the tile this computer calculated before are kept)
+                let ck = crate::render::open_tiles_checkpoint(&ts, &format!("swarm: {} {unit}", job.name), unit_policy());
+                let res = match crate::render::render_tile_staged(&ts, full_paint, &progress, &stage, cancel, ck.as_ref()) {
                     Ok(r) => r,
                     // the claim is dropped empty: another computer takes the tile
                     Err(e) if e == "cancelled" => break,
@@ -1046,6 +1084,9 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     return Err(e);
                 }
                 drop(claim);
+                if let Some(c) = ck {
+                    c.finish();
+                }
                 n += 1;
                 if !quiet {
                     eprintln!("  {} done ({:.1} s)", label(&unit), t0.elapsed().as_secs_f64());
@@ -1175,12 +1216,20 @@ fn participate_open(job: &Job, heart: &Heart, opts: &RunOptions, report: Report)
 fn finish(job: &Job, keep: bool) {
     let _ = std::fs::write(job.dir.join("done"), b"done\n");
     if !keep {
-        let _ = std::fs::remove_dir_all(&job.dir);
+        // (the computers at it stop when its job.txt is gone; one may still
+        // write into it meanwhile)
+        let _ = std::fs::remove_file(job.dir.join("job.txt"));
+        for _ in 0..5 {
+            if std::fs::remove_dir_all(&job.dir).is_ok() || !job.dir.exists() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(200));
+        }
     }
 }
 
 /// Settings of the owner's run.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct RunOptions {
     /// a name for the heartbeat ("" = the machine's)
     pub name: String,
@@ -1188,8 +1237,146 @@ pub struct RunOptions {
     pub quiet: bool,
     /// keep the job folder after the results are collected
     pub keep: bool,
-    /// true to stop: the job is given up and removed
+    /// true to stop: the job is given up and removed (the units finished
+    /// so far are kept, see [`Kept`])
     pub cancel: Option<std::sync::Arc<dyn Fn() -> bool + Send + Sync>>,
+    /// whether the finished units are kept locally, and the units kept by
+    /// the same job before are used (default: off)
+    pub resume: Policy,
+}
+
+impl Default for RunOptions {
+    fn default() -> RunOptions {
+        RunOptions { name: String::new(), threads: 0, quiet: false, keep: false, cancel: None, resume: Policy::Off }
+    }
+}
+
+/// How a computer keeps the unit it is at, so that it continues it when
+/// it gets the unit again (none in the tests).
+fn unit_policy() -> Policy {
+    if cfg!(test) {
+        Policy::Off
+    } else {
+        Policy::Continue
+    }
+}
+
+/// The units of a job the owner has: each finished unit's file is copied
+/// out of the swarm folder into a local checkpoint as soon as it is there,
+/// so a stopped, crashed or abandoned job loses none of them, and the same
+/// job started again makes a new job of the units still missing.
+struct Kept {
+    store: Store,
+    /// the units' file names
+    names: Vec<String>,
+}
+
+impl Kept {
+    /// `text`: what decides the units' results.  None with
+    /// `opts.resume` off (or when it cannot be kept).
+    fn open(kind: JobKind, text: &str, name: &str, names: Vec<String>, opts: &RunOptions) -> Option<Kept> {
+        if names.is_empty() {
+            return None;
+        }
+        let key = crate::checkpoint::key(&format!("swarm-{}", kind.as_str()), &format!("{text}\nunits = {}", names.join(" ")));
+        let spec = crate::checkpoint::Spec { kind: "swarm".into(), key, name: name.into(), width: names.len(), height: 1, rec: 1, units: names.len() };
+        let store = Store::open(spec, opts.resume)?;
+        let what = match kind {
+            JobKind::Animation => "frames",
+            JobKind::Batch => "pictures",
+            JobKind::MonteCarlo => "blocks",
+            JobKind::Tiles => "tiles",
+        };
+        store.set_value("size", &format!("{} {what}", names.len()));
+        let k = Kept { store, names };
+        k.note();
+        Some(k)
+    }
+
+    fn has(&self, k: usize) -> bool {
+        self.store.is_done(k) && self.path(k).is_file()
+    }
+
+    /// The kept file of unit `k`, and with `ext` another file of it (a
+    /// tile's picture).
+    fn path(&self, k: usize) -> PathBuf {
+        self.store.extra_path(&self.names[k])
+    }
+    fn other(&self, k: usize, ext: &str) -> PathBuf {
+        self.store.extra_path(&Path::new(&self.names[k]).with_extension(ext).to_string_lossy())
+    }
+
+    fn count(&self) -> usize {
+        (0..self.names.len()).filter(|&k| self.has(k)).count()
+    }
+
+    /// Copies the units finished in the job folder `out` that it does not
+    /// have yet (with each its file `ext` too, if there is one).
+    fn take(&self, out: &Path, ext: Option<&str>) {
+        let mut new = false;
+        for (k, name) in self.names.iter().enumerate() {
+            let f = out.join(name);
+            if self.has(k) || !is_done_file(&f) {
+                continue;
+            }
+            if let Some(e) = ext {
+                let o = f.with_extension(e);
+                if o.is_file() {
+                    self.store.put_extra_file(&Path::new(name).with_extension(e).to_string_lossy(), &o);
+                }
+            }
+            if self.store.put_extra_file(name, &f) {
+                self.store.put(k, 0, [k, 0, 1, 1], &[1]);
+                new = true;
+            }
+        }
+        if new {
+            self.note();
+        }
+    }
+
+    /// Takes the finished units of the jobs of the same render that are
+    /// still in the swarm folder (their owner was killed, or went away:
+    /// this one holds the checkpoint, so nobody else is collecting them)
+    /// and removes those jobs; their units under way are continued by the
+    /// computers that had them when they get them again.
+    fn adopt(&self, swarm: &Path, ext: Option<&str>) {
+        let key = &self.store.spec().key;
+        for j in jobs(swarm) {
+            if !j.done() && j.settings.get("resume_key") == Some(key) {
+                self.take(&j.out_dir(), ext);
+                finish(&j, false);
+            }
+        }
+    }
+
+    /// Notes the key in the settings of the job about to be made.
+    fn mark(&self, settings: &mut BTreeMap<String, String>) {
+        settings.insert("resume_key".into(), self.store.spec().key.clone());
+    }
+
+    fn note(&self) {
+        self.store.set_value("done_text", &format!("{} of {}", self.count(), self.names.len()));
+    }
+
+    /// After the run: a finished one deletes what it kept, a stopped or
+    /// failed one keeps it (when it has anything).
+    fn end<T>(self, r: &Result<T, String>) {
+        if r.is_ok() {
+            self.store.finish();
+        } else if self.store.done_count() > 0 {
+            self.store.keep();
+        } else {
+            self.store.stop();
+        }
+    }
+}
+
+/// The scene's text as it decides a job's units.
+fn kept_text(scene: &Scene) -> String {
+    let mut s = scene.clone();
+    s.threads = 0;
+    s.to_text()
 }
 
 /// After a run: the job folder stays only when asked for (the error of a
@@ -1218,39 +1405,76 @@ pub fn run_animation(swarm: &Path, anim: &Animation, frames: Option<&[usize]>, o
     if frames.is_empty() {
         return Err("no frames to render".into());
     }
-    settings.insert("frames".into(), frames.iter().map(|f| f.to_string()).collect::<Vec<_>>().join(" "));
-    let mut k = 0;
-    for &f in &frames {
-        for (_, eye) in a.stereo_eyes() {
-            let name = a.frame_file_eye(f, eye).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-            settings.insert(format!("unit_{k}"), name);
-            k += 1;
-        }
+    let text = crate::animfile::write_m3k(&a, None);
+    let eyes = a.stereo_eyes().len();
+    let names: Vec<String> = frames
+        .iter()
+        .flat_map(|&f| a.stereo_eyes().into_iter().map(move |(_, eye)| (f, eye)))
+        .map(|(f, eye)| a.frame_file_eye(f, eye).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
+        .collect();
+    let kept = Kept::open(JobKind::Animation, &format!("{text}\nframes = {frames:?}"), &anim.name, names.clone(), opts);
+    if let Some(c) = &kept {
+        c.adopt(swarm, None);
+        c.mark(&mut settings);
     }
-    settings.insert("units".into(), k.to_string());
-    let job = new_job(swarm, JobKind::Animation, &anim.name, &heart, settings)?;
+    let has = |k: usize| kept.as_ref().is_some_and(|c| c.has(k));
+    // the frames still missing (all eyes of the others are kept)
+    let todo: Vec<usize> = (0..frames.len()).filter(|&i| !(0..eyes).all(|e| has(i * eyes + e))).collect();
+    if todo.len() < frames.len() {
+        report(&format!("continuing: {} of {} frames kept", frames.len() - todo.len(), frames.len()));
+    }
+    let mut job = None;
     let result = (|| -> Result<Vec<PathBuf>, String> {
-        for key in &a.keyframes {
-            copy_scene_files(&job, &key.scene)?;
+        if !todo.is_empty() {
+            settings.insert("frames".into(), todo.iter().map(|&i| frames[i].to_string()).collect::<Vec<_>>().join(" "));
+            let mut k = 0;
+            for &i in &todo {
+                for e in 0..eyes {
+                    settings.insert(format!("unit_{k}"), names[i * eyes + e].clone());
+                    k += 1;
+                }
+            }
+            settings.insert("units".into(), k.to_string());
+            let j = job.insert(new_job(swarm, JobKind::Animation, &anim.name, &heart, std::mem::take(&mut settings))?);
+            for key in &a.keyframes {
+                copy_scene_files(j, &key.scene)?;
+            }
+            std::fs::write(j.in_dir().join("anim.m3k"), &text).map_err(|e| io(&j.in_dir().join("anim.m3k"), e))?;
+            let out = j.out_dir();
+            let report2 = |st: &str| {
+                if let Some(c) = &kept {
+                    c.take(&out, None);
+                }
+                report(st);
+            };
+            let r = participate(j, &heart, opts, &report2);
+            if let Some(c) = &kept {
+                c.take(&out, None);
+            }
+            r?;
         }
-        let text = crate::animfile::write_m3k(&a, None);
-        std::fs::write(job.in_dir().join("anim.m3k"), text).map_err(|e| io(&job.in_dir().join("anim.m3k"), e))?;
-        participate(&job, &heart, opts, report)?;
         // the frames to where the animation wants them
         let target = crate::animfile::resolve_output(anim, Path::new("."));
         std::fs::create_dir_all(&target).map_err(|e| io(&target, e))?;
         let mut files = Vec::new();
-        for &f in &frames {
-            for (_, eye) in a.stereo_eyes() {
-                let src = job.out_dir().join(a.frame_file_eye(f, eye).file_name().unwrap_or_default());
-                let dst = target.join(src.file_name().unwrap_or_default());
-                std::fs::copy(&src, &dst).map_err(|e| io(&src, e))?;
-                files.push(dst);
-            }
+        for (k, name) in names.iter().enumerate() {
+            let src = match (&kept, &job) {
+                (Some(c), _) if c.has(k) => c.path(k),
+                (_, Some(j)) => j.out_dir().join(name),
+                _ => return Err(format!("frame {name} is missing")),
+            };
+            let dst = target.join(name);
+            std::fs::copy(&src, &dst).map_err(|e| io(&src, e))?;
+            files.push(dst);
         }
         Ok(files)
     })();
-    finish(&job, keep_after(opts, result.as_ref().err()));
+    if let Some(j) = &job {
+        finish(j, keep_after(opts, result.as_ref().err()));
+    }
+    if let Some(c) = kept {
+        c.end(&result);
+    }
     heart.leave();
     result
 }
@@ -1268,45 +1492,92 @@ pub fn run_batch(swarm: &Path, items: &[BatchItem], outputs: &[PathBuf], bopts: 
     }
     settings.insert("aa".into(), bopts.aa.to_string());
     settings.insert("depth".into(), bopts.depth.to_string());
-    settings.insert("units".into(), items.len().to_string());
-    let job = new_job(swarm, JobKind::Batch, &name, &heart, settings)?;
-    let result = (|| -> Result<(), String> {
-        // the parameter files (and their formulas, maps) into in/, the list
-        // with the overrides, the output names as the batch names them
-        let mut list = String::new();
-        let mut job_items = Vec::new();
-        for (n, it) in items.iter().enumerate() {
-            let (scene, _, _) = crate::batch::item_scene(it, bopts)?;
-            copy_scene_files(&job, &scene)?;
+    // the job's names of the parameter files and of the pictures (by the
+    // item's place in the whole batch, also in a continued one)
+    let fnames: Vec<String> = items
+        .iter()
+        .enumerate()
+        .map(|(n, it)| {
             let ext = it.input.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_else(|| "m3p".into());
-            let fname = format!("{n:04}_{}.{ext}", sanitised(&it.input.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()));
-            std::fs::copy(&it.input, job.in_dir().join(&fname)).map_err(|e| io(&it.input, e))?;
-            let ov: Vec<String> = bopts.overrides.iter().chain(&it.overrides).cloned().collect();
-            list.push_str(&fname);
-            for o in &ov {
-                list.push_str(" | ");
-                list.push_str(o);
+            format!("{n:04}_{}.{ext}", sanitised(&it.input.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()))
+        })
+        .collect();
+    let named: Vec<BatchItem> = fnames.iter().map(|f| BatchItem { input: PathBuf::from(f), overrides: Vec::new() }).collect();
+    let names: Vec<String> = crate::batch::output_paths(&named, &BatchOptions { output_dir: Some(PathBuf::new()), format: bopts.format, ..Default::default() })
+        .iter()
+        .map(|o| o.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
+        .collect();
+    let mut text = format!("{settings:?}\n");
+    for it in items {
+        let (scene, _, _) = crate::batch::item_scene(it, bopts)?;
+        text.push_str(&kept_text(&scene));
+        text.push_str(&format!("{:?}\n", bopts.overrides.iter().chain(&it.overrides).collect::<Vec<_>>()));
+    }
+    let kept = Kept::open(JobKind::Batch, &text, &name, names.clone(), opts);
+    if let Some(c) = &kept {
+        c.adopt(swarm, None);
+        c.mark(&mut settings);
+    }
+    let todo: Vec<usize> = (0..items.len()).filter(|&k| !kept.as_ref().is_some_and(|c| c.has(k))).collect();
+    if todo.len() < items.len() {
+        report(&format!("continuing: {} of {} pictures kept", items.len() - todo.len(), items.len()));
+    }
+    let mut job = None;
+    let result = (|| -> Result<(), String> {
+        if !todo.is_empty() {
+            settings.insert("units".into(), todo.len().to_string());
+            for (k, &n) in todo.iter().enumerate() {
+                settings.insert(format!("unit_{k}"), names[n].clone());
             }
-            list.push('\n');
-            job_items.push(BatchItem { input: job.in_dir().join(&fname), overrides: Vec::new() });
+            let j = job.insert(new_job(swarm, JobKind::Batch, &name, &heart, std::mem::take(&mut settings))?);
+            // the parameter files (and their formulas, maps) into in/, the
+            // list with the overrides
+            let mut list = String::new();
+            for &n in &todo {
+                let it = &items[n];
+                let (scene, _, _) = crate::batch::item_scene(it, bopts)?;
+                copy_scene_files(j, &scene)?;
+                std::fs::copy(&it.input, j.in_dir().join(&fnames[n])).map_err(|e| io(&it.input, e))?;
+                list.push_str(&fnames[n]);
+                for o in bopts.overrides.iter().chain(&it.overrides) {
+                    list.push_str(" | ");
+                    list.push_str(o);
+                }
+                list.push('\n');
+            }
+            std::fs::write(j.in_dir().join("list.txt"), list).map_err(|e| io(&j.in_dir().join("list.txt"), e))?;
+            let out = j.out_dir();
+            let report2 = |st: &str| {
+                if let Some(c) = &kept {
+                    c.take(&out, None);
+                }
+                report(st);
+            };
+            let r = participate(j, &heart, opts, &report2);
+            if let Some(c) = &kept {
+                c.take(&out, None);
+            }
+            r?;
         }
-        std::fs::write(job.in_dir().join("list.txt"), list).map_err(|e| io(&job.in_dir().join("list.txt"), e))?;
-        let job_outs = crate::batch::output_paths(&job_items, &BatchOptions { output_dir: Some(job.out_dir()), format: bopts.format, ..Default::default() });
-        let mut job2 = job.clone();
-        for (k, o) in job_outs.iter().enumerate() {
-            job2.settings.insert(format!("unit_{k}"), o.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default());
-        }
-        write_job(&job2)?;
-        participate(&job2, &heart, opts, report)?;
-        for (src, dst) in job_outs.iter().zip(outputs) {
+        for (k, dst) in outputs.iter().enumerate() {
+            let src = match (&kept, &job) {
+                (Some(c), _) if c.has(k) => c.path(k),
+                (_, Some(j)) => j.out_dir().join(&names[k]),
+                _ => return Err(format!("picture {} is missing", names[k])),
+            };
             if let Some(d) = dst.parent().filter(|d| !d.as_os_str().is_empty()) {
                 std::fs::create_dir_all(d).map_err(|e| io(d, e))?;
             }
-            std::fs::copy(src, dst).map_err(|e| io(src, e))?;
+            std::fs::copy(&src, dst).map_err(|e| io(&src, e))?;
         }
         Ok(())
     })();
-    finish(&job, keep_after(opts, result.as_ref().err()));
+    if let Some(j) = &job {
+        finish(j, keep_after(opts, result.as_ref().err()));
+    }
+    if let Some(c) = kept {
+        c.end(&result);
+    }
     heart.leave();
     result
 }
@@ -1334,8 +1605,47 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
     settings.insert("rays".into(), rays.to_string());
     settings.insert("passes".into(), passes.to_string());
     settings.insert("time".into(), time.to_string());
+    // (the blocks of a render of a fixed size are kept as they come in; an
+    // open-ended render merges all blocks when it is stopped)
+    let names: Vec<String> = if open { Vec::new() } else { (0..units).map(|k| format!("unit_{k}.m3c")).collect() };
+    let kept = Kept::open(JobKind::MonteCarlo, &format!("{}\n{settings:?}", kept_text(scene)), "monte carlo", names, opts);
+    if let Some(c) = &kept {
+        c.store.put_extra("scene.m3s", scene.to_text().as_bytes());
+        c.adopt(swarm, None);
+        c.mark(&mut settings);
+    }
+    let todo: Vec<usize> = (0..units).filter(|&k| !kept.as_ref().is_some_and(|c| c.has(k))).collect();
+    let kept_img = match &kept {
+        Some(c) if todo.len() < units => {
+            report(&format!("continuing: {} of {units} blocks kept", units - todo.len()));
+            let mut m: Option<McImage> = None;
+            for k in (0..units).filter(|&k| c.has(k)) {
+                let f = c.path(k);
+                let data = std::fs::read(&f).map_err(|e| io(&f, e))?;
+                let (_, img) = crate::mc::read_m3c(&data).map_err(|e| format!("{}: {e}", f.display()))?;
+                match &mut m {
+                    None => m = Some(img),
+                    Some(m) => m.merge(&img)?,
+                }
+            }
+            m
+        }
+        _ => None,
+    };
+    if todo.is_empty() {
+        if let Some(c) = kept {
+            c.store.finish();
+        }
+        return kept_img.ok_or_else(|| "no blocks rendered".to_string());
+    }
+    if todo.len() < units {
+        settings.insert("blocks".into(), todo.iter().map(|k| k.to_string()).collect::<Vec<_>>().join(" "));
+    }
     let job = new_job(swarm, JobKind::MonteCarlo, "monte carlo", &heart, settings)?;
     let result = (|| -> Result<McImage, String> {
+        if let (Some(l), Some(k)) = (live, &kept_img) {
+            l(k.clone());
+        }
         copy_scene_files(&job, scene)?;
         std::fs::write(job.in_dir().join("scene.m3s"), scene.to_text()).map_err(|e| io(&job.in_dir().join("scene.m3s"), e))?;
         // the finished blocks, and the one this computer is at (after each
@@ -1343,6 +1653,9 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
         heart.want_block.store(live.is_some(), std::sync::atomic::Ordering::Relaxed);
         let cache = Mutex::new((BlockMerge::default(), 0u64));
         let report2 = |st: &str| {
+            if let Some(c) = &kept {
+                c.take(&job.out_dir(), None);
+            }
             report(st);
             if let Some(l) = live {
                 let mut c = cache.lock().unwrap_or_else(|e| e.into_inner());
@@ -1363,6 +1676,14 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
                     (None, Some((_, o))) => Some(o),
                     (None, None) => None,
                 };
+                let m = match (m, &kept_img) {
+                    (Some(mut m), Some(k)) => {
+                        let _ = m.merge(k);
+                        Some(m)
+                    }
+                    (None, Some(k)) => Some(k.clone()),
+                    (m, None) => m,
+                };
                 if let Some(m) = m {
                     l(m);
                 }
@@ -1371,12 +1692,22 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
         if open {
             participate_open(&job, &heart, opts, &report2)?;
         } else {
-            participate(&job, &heart, opts, &report2)?;
+            let r = participate(&job, &heart, opts, &report2);
+            if let Some(c) = &kept {
+                c.take(&job.out_dir(), None);
+            }
+            r?;
         }
         // the blocks; of an open-ended render the saved ones, and the last
         // snapshot of a block that was not saved (its computer went away)
+        // (in the order of the blocks, the kept ones among them: the same
+        // picture as a render that did not stop)
+        let files: Vec<PathBuf> = match &kept {
+            Some(c) => (0..units).map(|k| if c.has(k) { c.path(k) } else { job.out_dir().join(&c.names[k]) }).collect(),
+            None => job.unit_files(),
+        };
         let mut merged: Option<McImage> = None;
-        for f in job.unit_files() {
+        for f in files {
             let f = if !open || is_done_file(&f) {
                 f
             } else if f.with_extension("snap").exists() {
@@ -1394,6 +1725,9 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
         merged.ok_or_else(|| "no blocks rendered".to_string())
     })();
     finish(&job, keep_after(opts, result.as_ref().err()));
+    if let Some(c) = kept {
+        c.end(&result);
+    }
     heart.leave();
     result
 }
@@ -1492,7 +1826,43 @@ fn run_tiles_job(
     if !full_paint {
         settings.insert("paint".into(), "preview".into());
     }
+    // the tiles of one picture are kept as they come in (the Big renders
+    // window keeps its tiles itself)
+    let names: Vec<String> = if full_paint { Vec::new() } else { tiles.iter().map(|k| format!("tile_{k}.m3i")).collect() };
+    let kept = Kept::open(JobKind::Tiles, &format!("{}\n{settings:?}", kept_text(&scene)), "picture", names, opts);
+    if let Some(c) = &kept {
+        c.store.put_extra("scene.m3s", scene.to_text().as_bytes());
+        c.adopt(swarm, Some("png"));
+        c.mark(&mut settings);
+    }
+    let todo: Vec<usize> = (0..tiles.len()).filter(|&i| !kept.as_ref().is_some_and(|c| c.has(i))).collect();
+    // the kept tiles' pictures, for the previews
+    let mut kept_rgb = Vec::new();
+    if let Some(c) = kept.as_ref().filter(|_| todo.len() < tiles.len()) {
+        report(&format!("continuing: {} of {} tiles kept", tiles.len() - todo.len(), tiles.len()));
+        for i in (0..tiles.len()).filter(|&i| c.has(i)) {
+            collect(tiles[i], &c.path(i), &c.other(i, "png"))?;
+            if preview.is_some() {
+                if let Ok(img) = crate::image::load(&c.other(i, "png")) {
+                    let sh = if img.deep { 8 } else { 0 };
+                    let rgb: Vec<u8> = img.data.iter().flat_map(|px| [(px[0] >> sh) as u8, (px[1] >> sh) as u8, (px[2] >> sh) as u8]).collect();
+                    let k = tiles[i] as u32;
+                    kept_rgb.push((crate::scene::Tiling { cols, rows, pos: None, downscale: 1 }.tile_rect(scene.width, scene.height, k % cols, k / cols), rgb, img.width, img.height));
+                }
+            }
+        }
+    }
+    if todo.is_empty() {
+        if let Some(c) = kept {
+            c.store.finish();
+        }
+        return Ok(());
+    }
+    if todo.len() < tiles.len() {
+        settings.insert("tiles".into(), todo.iter().map(|&i| tiles[i].to_string()).collect::<Vec<_>>().join(" "));
+    }
     let job = new_job(swarm, JobKind::Tiles, "picture", &heart, settings)?;
+    let tiles: Vec<usize> = todo.iter().map(|&i| tiles[i]).collect();
     let result = (|| -> Result<(), String> {
         copy_scene_files(&job, &scene)?;
         std::fs::write(job.in_dir().join("scene.m3s"), scene.to_text()).map_err(|e| io(&job.in_dir().join("scene.m3s"), e))?;
@@ -1513,15 +1883,27 @@ fn run_tiles_job(
             }
         };
         let report2 = |st: &str| {
+            if let Some(c) = &kept {
+                c.take(&job.out_dir(), Some("png"));
+            }
             collect_ready();
             report(st);
             if let Some(pv) = preview {
-                if let Some(p) = job_preview(&job, 0) {
+                if let Some(mut p) = job_preview(&job, 0) {
+                    for (t, rgb, tw, th) in &kept_rgb {
+                        let r = [t[0].max(0) as usize, t[1].max(0) as usize, t[2].max(0) as usize, t[3].max(0) as usize];
+                        blit_scaled(&mut p.rgb, p.width, p.height, r, rgb, *tw, *th);
+                    }
+                    p.done += kept_rgb.len();
+                    p.total += kept_rgb.len();
                     pv(p);
                 }
             }
         };
         let r = participate(&job, &heart, opts, &report2);
+        if let Some(c) = &kept {
+            c.take(&job.out_dir(), Some("png"));
+        }
         collect_ready();
         if let Some(e) = failed.into_inner().unwrap_or_else(|e| e.into_inner()) {
             return Err(e);
@@ -1534,6 +1916,9 @@ fn run_tiles_job(
         Ok(())
     })();
     finish(&job, keep_after(opts, result.as_ref().err()));
+    if let Some(c) = kept {
+        c.end(&result);
+    }
     heart.leave();
     result
 }
@@ -1870,6 +2255,8 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
             }
             match work_on(&job, &heart, threads, quiet, &mut seen, &cancel, &|| control.stopping()) {
                 Ok(n) => worked += n,
+                // (the owner gave the job up while a unit was under way)
+                Err(_) if !job.dir.join("job.txt").exists() => {}
                 Err(e) => {
                     let msg = format!("job {} of {}: {e}", job.name, job.owner);
                     if !quiet {

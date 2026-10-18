@@ -10,7 +10,7 @@ from the program's own help texts, saved in HELP_DIR as version.txt
 workflow saves the texts and runs this for the Linux and macOS archives:
 
     mkdir help && ./mb3d --version > help/version.txt && ./mb3d --help > help/main.txt
-    for c in animate batch voxel mesh mutagen montecarlo; do ./mb3d $c --help > help/$c.txt; done
+    for c in animate batch voxel mesh mutagen montecarlo resume; do ./mb3d $c --help > help/$c.txt; done
 """
 import os
 import re
@@ -24,6 +24,7 @@ COMMANDS = {
     "mesh": [],
     "mutagen": [],
     "montecarlo": ["mc"],
+    "resume": [],
 }
 
 OPT = re.compile(r"^ {4}(?:(-[A-Za-z]), )?\s*(--[A-Za-z0-9-]+)(?:\s+<([^>]+)>)?\s*(.*)$")

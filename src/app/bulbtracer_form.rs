@@ -543,10 +543,16 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui) {
     }
     super::main_form::disable_buttons(app, ui);
     ui.set_caption(F, "Label13", "Tracing object...");
+    let name = format!("mesh {}", app.title);
     let waker = ui.waker();
     std::thread::spawn(move || {
         let pr = |d: usize, t: usize| progress.store(d * 1000 / t.max(1), Ordering::Relaxed);
-        let r = crate::mesh::trace(&sc, &mp, 0, &pr, &|| stop.load(Ordering::Relaxed));
+        // (a stopped trace of the same object continues where it was)
+        let ck = crate::mesh::MeshCheckpoint::open(&sc, &mp, &name, crate::checkpoint::Policy::Continue);
+        let r = crate::mesh::trace_with(&sc, &mp, 0, &pr, &|| stop.load(Ordering::Relaxed), ck.as_ref());
+        if let (Ok(_), Some(c)) = (&r, ck) {
+            c.finish();
+        }
         shared.lock().unwrap().mesh = Some(r);
         if let Some(w) = &waker {
             w.wake();

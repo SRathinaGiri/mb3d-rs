@@ -222,24 +222,67 @@ pub fn export(
     progress: &dyn Fn(u32, u32),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<u32, String> {
+    export_with(sc, vp, dir, name, threads, &|nr, n, _| progress(nr, n), cancel, crate::checkpoint::Policy::Off).map(|(n, _)| n)
+}
+
+/// [`export`] that a stopped export continues: a checkpoint (see
+/// [`crate::checkpoint`]) notes the slices written, which are not
+/// calculated again while their files are there.  `slice(nr, slices,
+/// voxels)` gets each slice (also those done before, without voxels).
+/// Returns the slice count and how many were done before.
+#[allow(clippy::too_many_arguments)]
+pub fn export_with(
+    sc: &Scene,
+    vp: &VoxelParams,
+    dir: &Path,
+    name: &str,
+    threads: usize,
+    slice: &dyn Fn(u32, u32, Option<&[bool]>),
+    cancel: &(dyn Fn() -> bool + Sync),
+    policy: crate::checkpoint::Policy,
+) -> Result<(u32, u32), String> {
     let s = export_scene(sc, vp);
     let p = CalcParams::new(&s)?;
     let grid = Grid::new(&s, vp);
     std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
     let threads = if threads > 0 { threads } else { std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4) };
+    // (the slices as units of one byte: only their marks matter)
+    let n = grid.slices as usize;
+    let text = format!("{}\n{vp:?}\n{}\n{name}", crate::render::checkpoint_text(&s), dir.display());
+    let spec = crate::checkpoint::Spec { kind: "voxel".into(), key: crate::checkpoint::key("voxel", &text), name: name.into(), width: 1, height: n, rec: 1, units: n };
+    let ck = crate::checkpoint::Store::open(spec, policy);
+    if let Some(c) = &ck {
+        c.set_value("size", &format!("{} x {} x {}", grid.width, grid.height, grid.slices));
+    }
+    let mut before = 0;
     for nr in 1..=grid.slices {
         if cancel() {
             return Err("cancelled".into());
         }
+        let f = vp.slice_file(dir, name, nr);
+        let k = (nr - 1) as usize;
+        if ck.as_ref().is_some_and(|c| c.is_done(k)) && f.exists() {
+            before += 1;
+            slice(nr, grid.slices, None);
+            continue;
+        }
         let mut on = calc_slice(&p, &grid, vp, nr, threads, cancel);
+        if cancel() {
+            return Err("cancelled".into());
+        }
         if vp.white_outside {
             on.iter_mut().for_each(|b| *b = !*b);
         }
-        let f = vp.slice_file(dir, name, nr);
-        std::fs::write(&f, crate::png::encode_gray1(grid.width, grid.height, &on)).map_err(|e| format!("{}: {e}", f.display()))?;
-        progress(nr, grid.slices);
+        crate::checkpoint::write_atomic(&f, &crate::png::encode_gray1(grid.width, grid.height, &on))?;
+        if let Some(c) = &ck {
+            c.put(k, 0, [0, k, 1, 1], &[1]);
+        }
+        slice(nr, grid.slices, Some(&on));
     }
-    Ok(grid.slices)
+    if let Some(c) = ck {
+        c.finish();
+    }
+    Ok((grid.slices, before))
 }
 
 /// A quick look at the voxel object: the slices of a small stack seen from

@@ -5,6 +5,7 @@
 //! (thread t calculates rows t, t + n, t + 2n, ...).
 
 use crate::calc::{CalcParams, HsLight, Marcher, PostJob, ShadowJob};
+use crate::checkpoint::{Policy, Store};
 use crate::gbuffer::SiLight;
 use crate::lighting::{LightVals, PaintCamera};
 use crate::math::normalise_matrix_to;
@@ -54,7 +55,7 @@ pub fn calculate_cancellable(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, 2, None)
+    calculate_inner(sc, progress, cancel, 2, None, None)
 }
 
 /// Like [`calculate_cancellable`] but without the post calculations (hard
@@ -67,7 +68,7 @@ pub fn calculate_raw_cancellable(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, 0, None)
+    calculate_inner(sc, progress, cancel, 0, None, None)
 }
 
 /// A finished row of the calculation: its index in the calculated
@@ -82,7 +83,106 @@ pub fn calculate_raw_rows(
     cancel: &(dyn Fn() -> bool + Sync),
     rows: RowSink,
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, 0, Some(rows))
+    calculate_inner(sc, progress, cancel, 0, Some(rows), None)
+}
+
+/// The text that decides a calculation's G-buffer, for its checkpoint key:
+/// the scene (without what only chooses how it is calculated) and where it
+/// is calculated (the card's rows differ a little from the CPU's).
+pub(crate) fn checkpoint_text(sc: &Scene) -> String {
+    // (the scene text: what the swarm hands on to calculate the same
+    // picture, and the same again when it is loaded)
+    let mut s = sc.clone();
+    s.threads = 0;
+    #[cfg(feature = "gpu")]
+    let gpu = if !crate::gpu::enabled() {
+        "cpu"
+    } else if crate::gpu::auto() {
+        "auto"
+    } else {
+        "card"
+    };
+    #[cfg(not(feature = "gpu"))]
+    let gpu = "cpu";
+    format!("{}\ngpu = {gpu}", s.to_text())
+}
+
+/// The checkpoint key of a calculation of `sc` (Calculate 3D: the same for
+/// the program and the command line).
+pub fn checkpoint_key(sc: &Scene) -> String {
+    crate::checkpoint::key("calc", &checkpoint_text(sc))
+}
+
+/// The checkpoint of a calculation of `sc` (its G-buffer, row by row; see
+/// [`calculate_with`]), `name` shown for it.  None with `Policy::Off` or
+/// when it cannot be kept.
+pub fn open_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<Store> {
+    let p = CalcParams::new(sc).ok()?;
+    let (w, h) = (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize);
+    if w == 0 || h == 0 {
+        return None;
+    }
+    let spec = crate::checkpoint::Spec { kind: "calc".into(), key: checkpoint_key(sc), name: name.into(), width: w, height: h, rec: crate::gbuffer::REC_BYTES, units: h };
+    let s = Store::open(spec, policy)?;
+    s.put_extra("scene.m3s", sc.to_text().as_bytes());
+    Some(s)
+}
+
+/// The calculation of [`calculate_raw_rows`] (`post` 0) or
+/// [`calculate_cancellable`] (`post` 2) with its rows kept in `ck` (from
+/// [`open_checkpoint`]): the rows it holds are not calculated again.  The
+/// caller ends `ck` when the result is saved ([`Store::finish`]); dropped,
+/// it is kept for the next time.
+pub fn calculate_with(
+    sc: &Scene,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    post: u8,
+    rows: Option<RowSink>,
+    ck: Option<&Store>,
+) -> Result<(CalcParams, Vec<SiLight>), String> {
+    calculate_inner(sc, progress, cancel, post, rows, ck)
+}
+
+/// The rows of a calculation in a checkpoint: what its rows hold ("raw":
+/// the march; "card ...": with the card's post passes) is `tag`; rows
+/// that hold something else are forgotten.
+fn ck_tag(ck: Option<&Store>, tag: &str) {
+    if let Some(s) = ck {
+        if s.done_count() > 0 && s.value("rows").as_deref() != Some(tag) {
+            s.reset();
+        }
+        s.set_value("rows", tag);
+    }
+}
+
+/// A G-buffer of `w` x `h` with the rows of `ck` filled in (each also to
+/// `sink`); and their number.
+fn ck_rows(ck: Option<&Store>, w: usize, h: usize, sink: Option<RowSink>) -> (Vec<SiLight>, usize) {
+    let mut gbuf = vec![SiLight::default(); w * h];
+    let Some(s) = ck.filter(|s| s.done_count() > 0) else { return (gbuf, 0) };
+    let mut n = 0;
+    for y in 0..h {
+        if s.is_done(y) {
+            let row = crate::gbuffer::unpack(&s.read([0, y, w, 1]));
+            gbuf[y * w..(y + 1) * w].copy_from_slice(&row);
+            if let Some(f) = sink {
+                f(y, &row);
+            }
+            n += 1;
+        }
+    }
+    (gbuf, n)
+}
+
+fn ck_put(ck: Option<&Store>, y: usize, row: &[SiLight]) {
+    if let Some(s) = ck {
+        s.put(y, 0, [0, y, row.len(), 1], &crate::gbuffer::pack(row));
+    }
+}
+
+fn ck_done(ck: Option<&Store>, y: usize) -> bool {
+    ck.is_some_and(|s| s.is_done(y))
 }
 
 fn calculate_inner(
@@ -91,8 +191,10 @@ fn calculate_inner(
     cancel: &(dyn Fn() -> bool + Sync),
     post: u8,
     sink: Option<RowSink>,
+    ck: Option<&Store>,
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
     let mut p = CalcParams::new(sc)?;
+    let ck = ck.filter(|s| (s.spec().width, s.spec().height) == (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize));
     let threads = thread_count(sc).min(p.rect[3] as usize).max(1);
     let two_d = p.slice_2d != 0;
     if let Some(vp) = sc.vol_light.as_ref().filter(|_| !two_d) {
@@ -154,7 +256,8 @@ fn calculate_inner(
                     crate::gpu::march_prepare(&pd, &job).ok().map(|f| (pd, f))
                 };
                 let t_march = Instant::now();
-                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe)?;
+                ck_tag(ck, "raw");
+                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe, ck)?;
                 let march_secs = t_march.elapsed().as_secs_f64();
                 let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
                 let rate = |n: usize, t: f64| n as f64 / t.max(1e-6);
@@ -208,20 +311,46 @@ fn calculate_inner(
                 return finish_calculation(sc, p, gbuf, post, threads, cancel);
             }
         }
-        let gpu = crate::gpu::march(&p, &job, progress, cancel, |y, row| {
-            if let Some(f) = sink {
-                f(y, row);
+        let card_tag = format!("card {job:?}");
+        if let Some(s) = ck.filter(|s| s.done_count() > 0 && s.value("rows").is_some_and(|t| t == "raw" || t == card_tag)) {
+            // continued: the card marches the rows the checkpoint lacks
+            // (with its post passes as before, or without them, and then
+            // they run on the whole picture)
+            let with_post = s.value("rows").as_deref() == Some(card_tag.as_str());
+            let none = PostJob::default();
+            if let Some(gbuf) = march_card_rest(&p, if with_post { &job } else { &none }, h, progress, cancel, sink, s)? {
+                let mut gbuf = gbuf;
+                if with_post {
+                    p.gpu_post = Some(job);
+                } else if (job.shadows.is_some() || job.deao.is_some()) && crate::gpu::post_on_card(&p, &mut gbuf, &job, cancel).is_ok() {
+                    p.gpu_post = Some(job);
+                }
+                if cancel() {
+                    return Err("cancelled".into());
+                }
+                return finish_calculation(sc, p, gbuf, post, threads, cancel);
             }
-        });
-        if let Some(gbuf) = gpu {
-            p.gpu_post = Some(job);
-            return finish_calculation(sc, p, gbuf, post, threads, cancel);
+            // (the card failed: all on the CPU, from the start)
+            s.reset();
+        } else {
+            ck_tag(ck, &card_tag);
+            let gpu = crate::gpu::march(&p, &job, progress, cancel, |y, row| {
+                if let Some(f) = sink {
+                    f(y, row);
+                }
+                ck_put(ck, y, row);
+            });
+            if let Some(gbuf) = gpu {
+                p.gpu_post = Some(job);
+                return finish_calculation(sc, p, gbuf, post, threads, cancel);
+            }
         }
     }
     let p = p;
-    let done = AtomicUsize::new(0);
+    ck_tag(ck, "raw");
     // the rows go straight into the G-buffer (no copy of it: big pictures)
-    let mut gbuf = vec![SiLight::default(); w * h];
+    let (mut gbuf, had) = ck_rows(ck, w, h, sink);
+    let done = AtomicUsize::new(had);
     std::thread::scope(|s| {
         // thread t takes the rows t, t + threads, ...
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
@@ -237,6 +366,9 @@ fn calculate_inner(
                     if cancel() {
                         break;
                     }
+                    if ck_done(ck, y) {
+                        continue;
+                    }
                     let yy = y + y0;
                     let mut m = Marcher::new(p, 0);
                     for (k, px) in row.iter_mut().enumerate() {
@@ -251,6 +383,7 @@ fn calculate_inner(
                     if let Some(f) = sink {
                         f(y, row);
                     }
+                    ck_put(ck, y, row);
                     let d = done.fetch_add(1, Ordering::Relaxed) + 1;
                     progress(d, h);
                 }
@@ -534,6 +667,7 @@ fn march_mixed(
     sink: Option<RowSink>,
     ready: &std::sync::atomic::AtomicBool,
     on_ready: &(dyn Fn() -> Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)> + Sync),
+    ck: Option<&Store>,
 ) -> Result<(Vec<SiLight>, usize, Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)>, f64), String> {
     use std::sync::Mutex;
     // how long the card marched (its rows per second against the CPU's)
@@ -543,14 +677,16 @@ fn march_mixed(
     let free = Mutex::new((0usize, h));
     // the rows go straight into the G-buffer (no copy of it: big pictures)
     let w = p.rect[2].max(1) as usize;
-    let mut gbuf = vec![SiLight::default(); w * h];
+    // (the rows of a checkpoint are there: the free rows skip them)
+    let (mut gbuf, had) = ck_rows(ck, w, h, sink);
     let rows: Vec<Mutex<&mut [SiLight]>> = gbuf.chunks_mut(w).map(Mutex::new).collect();
-    let done = AtomicUsize::new(0);
+    let done = AtomicUsize::new(had);
     let on_card = AtomicUsize::new(0);
     let put = |y: usize, row: &[SiLight]| {
         if let Some(f) = sink {
             f(y, row);
         }
+        ck_put(ck, y, row);
         let mut dst = rows[y].lock().unwrap();
         let n = row.len().min(dst.len());
         dst[..n].copy_from_slice(&row[..n]);
@@ -574,6 +710,9 @@ fn march_mixed(
                 }
                 let y = {
                     let mut f = free.lock().unwrap();
+                    while f.1 > f.0 && ck_done(ck, f.1 - 1) {
+                        f.1 -= 1;
+                    }
                     if f.1 <= f.0 {
                         break;
                     }
@@ -613,10 +752,16 @@ fn march_mixed(
         let t_card = Instant::now();
         let r = crate::gpu::march_bands(
             cp,
+            &PostJob::default(),
             &|band| {
                 let mut f = free.lock().unwrap();
+                while f.0 < f.1 && ck_done(ck, f.0) {
+                    f.0 += 1;
+                }
                 (f.0 < f.1).then(|| {
-                    let r = (f.0, band.min(f.1 - f.0));
+                    // (up to the next row of the checkpoint)
+                    let n = (f.0..f.1).take(band).take_while(|&y| !ck_done(ck, y)).count();
+                    let r = (f.0, n);
                     f.0 += r.1;
                     claimed.lock().unwrap().push(r);
                     r
@@ -655,7 +800,8 @@ fn march_mixed(
         return Err("cancelled".into());
     }
     let n_card = on_card.load(Ordering::Relaxed);
-    let pct = n_card * 100 / h.max(1);
+    // (of the rows calculated now: not those of a checkpoint)
+    let pct = n_card * 100 / (h - had).max(1);
     crate::gpu::set_status(match card_err {
         Some(e) => format!("CPU: GPU error: {e}"),
         None if n_card == 0 && switched.is_some() => "CPU (the graphics card's double precision shader was still compiling)".into(),
@@ -667,6 +813,56 @@ fn march_mixed(
     let switched = switched.filter(|_| n_card > 0);
     drop(rows);
     Ok((gbuf, n_card, switched, card_secs.into_inner().unwrap()))
+}
+
+/// The rows that `ck` lacks marched on the card (with the post passes of
+/// `post`), into a G-buffer with the rows of `ck`.  None when the card
+/// cannot march them.
+#[cfg(feature = "gpu")]
+fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(usize, usize) + Sync), cancel: &(dyn Fn() -> bool + Sync), sink: Option<RowSink>, ck: &Store) -> Result<Option<Vec<SiLight>>, String> {
+    use std::sync::Mutex;
+    let w = p.rect[2].max(1) as usize;
+    let (mut gbuf, had) = ck_rows(Some(ck), w, h, sink);
+    let next = Mutex::new(0usize);
+    let mut done = had;
+    progress(done, h);
+    let r = crate::gpu::march_bands(
+        p,
+        post,
+        &|band| {
+            let mut y = next.lock().unwrap();
+            while *y < h && ck.is_done(*y) {
+                *y += 1;
+            }
+            (*y < h).then(|| {
+                let n = (*y..h).take(band).take_while(|&r| !ck.is_done(r)).count();
+                let r = (*y, n);
+                *y += n;
+                r
+            })
+        },
+        cancel,
+        &mut |y, row| {
+            if let Some(f) = sink {
+                f(y, row);
+            }
+            ck_put(Some(ck), y, row);
+            gbuf[y * w..(y + 1) * w].copy_from_slice(&row[..w]);
+            done += 1;
+            progress(done.min(h), h);
+        },
+    );
+    match r {
+        Ok(()) => {
+            crate::gpu::set_status(format!("GPU {} (continued)", crate::gpu::name().unwrap_or_default()));
+            Ok(Some(gbuf))
+        }
+        Err(_) if cancel() => Err("cancelled".into()),
+        Err(e) => {
+            crate::gpu::set_status(format!("CPU: GPU error: {e}"));
+            Ok(None)
+        }
+    }
 }
 
 /// The post calculations after the main calculation (CPU or GPU).
@@ -1048,6 +1244,12 @@ pub fn paint_timed(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> (Vec<u8>, Op
     paint_with::<u8>(sc, p, gbuf, true, &|| false)
 }
 
+/// [`paint_timed`] that `cancel` ends early (the picture is then
+/// incomplete: the caller checks `cancel` and drops it).
+pub fn paint_timed_cancellable(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], cancel: &(dyn Fn() -> bool + Sync)) -> (Vec<u8>, Option<f64>) {
+    paint_with::<u8>(sc, p, gbuf, true, cancel)
+}
+
 /// [`paint`] without the reflections and the depth of field: the preview
 /// of the rows calculated so far (both need the whole image, and the
 /// reflections march again, taking as long as the calculation itself),
@@ -1290,26 +1492,74 @@ pub fn render_tiled_cancellable(
     tile_progress: &dyn Fn(usize, usize, [i32; 4]),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<TiledResult, String> {
+    render_tiled_with(sc, keep_gbuffer, progress, tile_progress, cancel, None, Policy::Off)
+}
+
+/// The calculation of one tile of `tl` (with its border, see
+/// [`render_tiled`]): its scene and the tile's rectangle.
+fn single_tile(sc: &Scene, tl: &crate::scene::Tiling, c: u32, r: u32) -> Result<(Scene, [i32; 4]), String> {
+    let (w, h) = (sc.width, sc.height);
+    let t = tl.tile_rect(w, h, c, r);
+    if t[2] <= 0 || t[3] <= 0 {
+        return Err("empty tile".into());
+    }
+    let border = TILE_BORDER.max(tl.downscale as i32);
+    let x0 = (t[0] - border).max(0);
+    let y0 = (t[1] - border).max(0);
+    let x1 = (t[0] + t[2] + border).min(w);
+    let y1 = (t[1] + t[3] + border).min(h);
+    let mut ts = sc.clone();
+    ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
+    Ok((ts, t))
+}
+
+/// The checkpoint of a tiled render of `sc` (for [`render_tiled_with`]):
+/// one tile, its rows; all tiles, the finished tiles (the tile under way
+/// keeps its rows in a checkpoint of its own).
+pub fn open_tiles_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<Store> {
+    let tl = sc.tiling?;
+    if let Some((c, r)) = tl.pos {
+        return open_checkpoint(&single_tile(sc, &tl, c, r).ok()?.0, name, policy);
+    }
+    let (w, h) = (sc.width.max(0) as usize, sc.height.max(0) as usize);
+    let spec = crate::checkpoint::Spec {
+        kind: "tiles".into(),
+        key: crate::checkpoint::key("tiles", &checkpoint_text(sc)),
+        name: name.into(),
+        width: w,
+        height: h,
+        rec: crate::gbuffer::REC_BYTES,
+        units: (tl.cols * tl.rows) as usize,
+    };
+    let s = Store::open(spec, policy)?;
+    s.put_extra("scene.m3s", sc.to_text().as_bytes());
+    Some(s)
+}
+
+/// [`render_tiled_cancellable`] with a checkpoint from
+/// [`open_tiles_checkpoint`]: the tiles (and rows) it holds are not
+/// calculated again; `policy` is that of the tiles' own checkpoints.  The
+/// caller ends `ck` when the result is saved.
+pub fn render_tiled_with(
+    sc: &Scene,
+    keep_gbuffer: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    tile_progress: &dyn Fn(usize, usize, [i32; 4]),
+    cancel: &(dyn Fn() -> bool + Sync),
+    ck: Option<&Store>,
+    policy: Policy,
+) -> Result<TiledResult, String> {
     let tl = sc.tiling.ok_or("no tiling set")?;
     let (w, h) = (sc.width, sc.height);
     if let Some((c, r)) = tl.pos {
-        let t = tl.tile_rect(w, h, c, r);
-        if t[2] <= 0 || t[3] <= 0 {
-            return Err("empty tile".into());
-        }
-        let border = TILE_BORDER.max(tl.downscale as i32);
-        let x0 = (t[0] - border).max(0);
-        let y0 = (t[1] - border).max(0);
-        let x1 = (t[0] + t[2] + border).min(w);
-        let y1 = (t[1] + t[3] + border).min(h);
-        let mut ts = sc.clone();
-        ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
+        let (ts, t) = single_tile(sc, &tl, c, r)?;
+        let [x0, y0] = [ts.calc_rect.unwrap()[0], ts.calc_rect.unwrap()[1]];
         let t0 = Instant::now();
-        let (p, gbuf) = calculate_cancellable(&ts, progress, cancel)?;
+        let (p, gbuf) = calculate_inner(&ts, progress, cancel, 2, None, ck)?;
         let t1 = Instant::now();
         let trgb = paint(&ts, &p, &gbuf);
         let paint_s = t1.elapsed().as_secs_f64();
-        let tw = (x1 - x0) as usize;
+        let tw = ts.calc_rect.unwrap()[2] as usize;
         let (ow, oh) = (t[2] as usize, t[3] as usize);
         let (sx, sy) = ((t[0] - x0) as usize, (t[1] - y0) as usize);
         let mut rgb = Vec::with_capacity(ow * oh * 3);
@@ -1335,6 +1585,7 @@ pub fn render_tiled_cancellable(
     let (wu, hu) = (w as usize, h as usize);
     let mut full = vec![SiLight::default(); wu * hu];
     let total = (tl.cols * tl.rows) as usize;
+    let ck = ck.filter(|s| s.spec().kind == "tiles" && s.spec().units == total && (s.spec().width, s.spec().height) == (wu, hu));
     let t0 = Instant::now();
     let mut n = 0;
     for r in 0..tl.rows {
@@ -1344,13 +1595,31 @@ pub fn render_tiled_cancellable(
             if t[2] <= 0 || t[3] <= 0 {
                 continue;
             }
+            let rect = t.map(|v| v as usize);
+            let tw = t[2] as usize;
+            let k = (r * tl.cols + c) as usize;
+            let put = |full: &mut [SiLight], gbuf: &[SiLight]| {
+                for y in 0..t[3] as usize {
+                    let d = (t[1] as usize + y) * wu + t[0] as usize;
+                    full[d..d + tw].copy_from_slice(&gbuf[y * tw..(y + 1) * tw]);
+                }
+            };
+            // (a tile of the checkpoint)
+            if let Some(s) = ck.filter(|s| s.get(k).is_some_and(|d| d.rect == rect)) {
+                put(&mut full, &crate::gbuffer::unpack(&s.read(rect)));
+                tile_progress(n, total, t);
+                continue;
+            }
             let mut ts = sc.clone();
             ts.calc_rect = Some(t);
-            let (_, gbuf) = calculate_inner(&ts, progress, cancel, 1, None)?;
-            let tw = t[2] as usize;
-            for y in 0..t[3] as usize {
-                let d = (t[1] as usize + y) * wu + t[0] as usize;
-                full[d..d + tw].copy_from_slice(&gbuf[y * tw..(y + 1) * tw]);
+            let tck = ck.and_then(|s| open_checkpoint(&ts, &s.spec().name, policy));
+            let (_, gbuf) = calculate_inner(&ts, progress, cancel, 1, None, tck.as_ref())?;
+            put(&mut full, &gbuf);
+            if let Some(s) = ck {
+                s.put(k, 0, rect, &crate::gbuffer::pack(&gbuf));
+            }
+            if let Some(s) = tck {
+                s.finish();
             }
             tile_progress(n, total, t);
         }
@@ -1380,12 +1649,15 @@ pub fn render_tiled_cancellable(
 /// does not look like a hang.  `full`: painted with the reflections and
 /// the depth of field (the tile is the final picture); else a preview
 /// (the G-buffer is the result, the whole picture is painted from it).
+/// `ck`: the tile's checkpoint ([`open_tiles_checkpoint`]), whose rows
+/// are not calculated again; the caller ends it when the tile is saved.
 pub fn render_tile_staged(
     sc: &Scene,
     full: bool,
     progress: &(dyn Fn(usize, usize) + Sync),
     stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
+    ck: Option<&Store>,
 ) -> Result<TiledResult, String> {
     let tl = sc.tiling.ok_or("no tiling set")?;
     let (c, r) = tl.pos.ok_or("no tile set")?;
@@ -1402,7 +1674,7 @@ pub fn render_tile_staged(
     let mut ts = sc.clone();
     ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
     let t0 = Instant::now();
-    let (p, mut gbuf) = calculate_raw_cancellable(&ts, progress, cancel)?;
+    let (p, mut gbuf) = calculate_inner(&ts, progress, cancel, 0, None, ck)?;
     if post_pending(&ts, &p) {
         stage(match (ts.shadows.is_some(), ts.ao.is_some()) {
             (true, true) => "hard shadows and ambient occlusion",

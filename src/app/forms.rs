@@ -29,6 +29,7 @@ pub const ALL: &[(&str, &str)] = &[
     ("uMapCalcWindow", include_str!("forms/uMapCalcWindow.dfm")),
     ("VisualStylesGUI", include_str!("forms/VisualStylesGUI.dfm")),
     ("Swarm", include_str!("forms/Swarm.dfm")),
+    ("Unfinished", include_str!("forms/Unfinished.dfm")),
     ("VisualThemesGUI", include_str!("forms/VisualThemesGUI.dfm")),
     ("VoxelExport", include_str!("forms/VoxelExport.dfm")),
     ("ZBuf16BitGenUI", include_str!("forms/ZBuf16BitGenUI.dfm")),

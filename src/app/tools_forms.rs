@@ -389,6 +389,16 @@ fn new_project(app: &mut Mb3d, ui: &mut Ui) {
     set_names(app, ui, &p);
 }
 
+/// Writes a tile's picture whole or not at all: into a hidden temporary
+/// file first (a half written tile would count as done, see
+/// [`scan_project`]), then renamed.
+fn write_tile(p: &std::path::Path, data: &[u8]) -> Result<(), String> {
+    let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let tmp = p.with_file_name(format!(".{name}.tmp{}", std::process::id()));
+    std::fs::write(&tmp, data).map_err(|e| format!("{}: {e}", tmp.display()))?;
+    std::fs::rename(&tmp, p).map_err(|e| format!("{}: {e}", p.display()))
+}
+
 /// `ScanProjectFolder`: which tiles are already there.
 fn scan_project(app: &mut Mb3d, ui: &mut Ui) {
     let st = &mut app.tiling;
@@ -683,7 +693,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                         _ => (crate::png::encode_rgb(w, h, &rgb), "png"),
                     };
                     let p = base.with_extension(ext);
-                    std::fs::write(&p, data).map_err(|e| format!("{}: {e}", p.display()))?;
+                    write_tile(&p, &data)?;
                     if d.save_zbuf || d.save_m3i {
                         let data = std::fs::read(m3i).map_err(|e| format!("{}: {e}", m3i.display()))?;
                         let (zw, zh, g) = crate::m3p::gbuffer_from_m3i(&data).ok_or("the tile has no image buffer")?;
@@ -733,7 +743,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                 _ => (crate::png::encode_rgb(w, h, &rgb), "png"),
             };
             let p = base.with_extension(ext);
-            std::fs::write(&p, data).map_err(|e| format!("{}: {e}", p.display()))?;
+            write_tile(&p, &data)?;
             if let Some(g) = &res.gbuffer {
                 if d.save_zbuf {
                     let z: Vec<u16> = g.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();

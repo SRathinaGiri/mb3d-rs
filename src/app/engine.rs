@@ -13,8 +13,9 @@ use std::time::Instant;
 
 #[derive(Clone)]
 pub enum Job {
-    /// main calculation (`slice` 0 = 3D, 1..3 = 2D plane at z start / mid / end)
-    Calc { scene: Scene, slice: u8 },
+    /// main calculation (`slice` 0 = 3D, 1..3 = 2D plane at z start / mid / end);
+    /// a 3D calculation keeps a checkpoint (`resume`, shown as `name`)
+    Calc { scene: Scene, slice: u8, resume: crate::checkpoint::Policy, name: String },
     /// the Navigator's preview: the scene at 1/8, 1/4, 1/2 and full size
     /// (MB3D's NaviStep 8, 4, 2, 1), each pass shown when done
     Preview { scene: Scene },
@@ -476,7 +477,7 @@ fn worker(e: Arc<Inner>) {
         // a panic ends the job with an error message instead of leaving
         // the window waiting for it
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match job {
-            Job::Calc { scene, slice } => calc(&e, &scene, slice, &cancel),
+            Job::Calc { scene, slice, resume, name } => calc(&e, &scene, slice, resume, &name, &cancel),
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
@@ -507,7 +508,7 @@ fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, row
     let gen = e.gen.load(Ordering::SeqCst);
     let e2 = e.clone();
     let cancel_fn: Arc<dyn Fn() -> bool + Send + Sync> = Arc::new(move || e2.gen.load(Ordering::SeqCst) != gen);
-    let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn) };
+    let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn), resume: crate::checkpoint::Policy::Continue };
     let report = |st: &str| {
         e.out.lock().unwrap().stage = format!("swarm: {st}");
         e.wake();
@@ -540,23 +541,41 @@ fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, row
     Ok(())
 }
 
-fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+/// The scene that [`Job::Calc`] calculates.
+fn calc_scene(sc: &Scene, slice: u8) -> Scene {
     let mut sc = sc.clone();
     sc.slice_2d = slice;
     sc.calc_rect = None;
+    sc
+}
+
+/// The unfinished calculation of Calculate 3D of `sc` that a checkpoint
+/// holds (see [`crate::checkpoint`]).
+pub fn unfinished_calc(sc: &Scene) -> Option<crate::checkpoint::Entry> {
+    crate::checkpoint::find(&crate::render::checkpoint_key(&calc_scene(sc, 0)))
+}
+
+fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, name: &str, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let sc = calc_scene(sc, slice);
     let t0 = Instant::now();
     let params = CalcParams::new(&sc)?;
     let [_, _, w, h] = params.rect;
     let (w, h) = (w as usize, h as usize);
     e.free_big_base(w, h);
     e.begin_partial(params, &sc, w, h);
+    // (a 2D slice is quick: no checkpoint)
+    let ck = if slice == 0 { crate::render::open_checkpoint(&sc, name, resume) } else { None };
     {
         let mut o = e.out.lock().unwrap();
-        o.stage = if slice == 0 { "main rendering".into() } else { "2D calculation".into() };
+        o.stage = match (slice, ck.as_ref().is_some_and(|s| s.resumed() > 0)) {
+            (0, false) => "main rendering".into(),
+            (0, true) => "main rendering (continued)".into(),
+            _ => "2D calculation".into(),
+        };
     }
     let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
     let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
-    let (p, raw) = crate::render::calculate_raw_rows(&sc, &progress, cancel, &sink)?;
+    let (p, raw) = crate::render::calculate_with(&sc, &progress, cancel, 0, Some(&sink), ck.as_ref())?;
     *e.partial.lock().unwrap() = None;
     let t1 = Instant::now();
     let raw = Arc::new(raw);
@@ -564,7 +583,7 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) ->
     let post = if needs_post(&sc, &p) {
         e.out.lock().unwrap().stage = if sc.shadows.is_some() { "hard shadow calculation".into() } else { "ambient shadow calculation".into() };
         let mut g = (*raw).clone();
-        stages = crate::render::post_process(&sc, &p, &mut g, crate::render::thread_count(&sc));
+        stages = crate::render::post_process_cancellable(&sc, &p, &mut g, crate::render::thread_count(&sc), cancel)?;
         Arc::new(g)
     } else {
         // the card ran the shadows and the occlusion with the march
@@ -576,13 +595,19 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, cancel: &(dyn Fn() -> bool + Sync)) ->
         return Err("cancelled".into());
     }
     let t2 = Instant::now();
-    let (rgb, refl_s) = crate::render::paint_timed(&sc, &p, &post);
+    let (rgb, refl_s) = crate::render::paint_timed_cancellable(&sc, &p, &post, cancel);
+    if cancel() {
+        return Err("cancelled".into());
+    }
     stages.reflections = refl_s;
     let post_s = if needs_post(&sc, &p) { (t2 - t1).as_secs_f64() } else { 0.0 };
     let mut stats = stats_of(&post, &p, (t1 - t0).as_secs_f64(), post_s);
     stats.stages = stages;
     e.publish(rgb, w, h, "", Some(stats));
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw, post, post_sig: post_sig(&sc), w, h }));
+    if let Some(ck) = ck {
+        ck.finish();
+    }
     Ok(())
 }
 

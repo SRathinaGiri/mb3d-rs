@@ -15,6 +15,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Videos](#videos)
+- [Unfinished renders (`checkpoint.rs`)](#unfinished-renders-checkpointrs)
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
 - [Linux packaging and the command line](#linux-packaging-and-the-command-line)
 - [Building from source](#building-from-source)
@@ -860,6 +861,185 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
 
+## Unfinished renders (`checkpoint.rs`)
+
+A render keeps what it calculated in a checkpoint, a folder
+`resume/<kind>-<hash>` in the cache folder (`MB3D_RESUME_DIR` sets
+another), never in a swarm folder. The name is the key: an FNV-1a hash of
+the kind, the program version and the scene text (`Scene::to_text`, the
+text the swarm hands on, with `threads` cleared) plus where it is
+calculated (`cpu`, `auto`, `card`). Running the same render again finds
+it; the Unfinished renders window loads the scene text it kept
+(`extra-scene.m3s`) and gets the same key back.
+
+| file | content |
+|---|---|
+| `data.bin` | the records of all pixels, row major (a G-buffer: the 18 bytes of a `.m3i` pixel) |
+| `marks.bin` | 28 bytes per unit (a row, a tile): magic, FNV hash of the unit's data, generation, rectangle |
+| `info.txt` | kind, name, size, version, the units done, times; `rows = raw` or `card PostJob {...}` (what the stored rows hold) |
+| `extra-*` | further state, written atomically (`scene.m3s`) |
+| `lock` | held (`try_lock`) by the render that uses it: a second process of the same render runs without a checkpoint |
+
+**Writes.** A finished unit is written at its place (`write_at`), then its
+mark. Nothing waits for the disk: the system's cache holds the data, so a
+killed program leaves everything it finished. Every 5 minutes
+(`MB3D_AUTOSAVE_SECS`) the files are flushed (`sync_data`). Should the
+computer go off between the two writes, a unit whose data does not match
+its mark's hash counts as not done: the files need no ordering on the
+disk. Measured: no time difference with and without a checkpoint (CPU
+and card, 2400x1800 to 3200x2400). A write error (a full disk) ends the
+checkpoint, not the render.
+
+**The G-buffer rows.** `render::calculate_with` takes the checkpoint; the
+rows it holds are loaded (and shown) first and skipped:
+
+- CPU: the threads' interleaved rows skip the done ones.
+- Auto: the free range `[top, bottom)` of `march_mixed` skips done rows at
+  both ends; a band of the card ends before the next done row.
+- Card alone: rows marched with the card's post passes are tagged `card
+  <job>`. A continued render marches the missing bands with the same
+  passes (`gpu::march_bands` with the `PostJob`); rows of a raw
+  checkpoint are marched raw and get `post_on_card` on the whole picture,
+  as in Auto. Rows tagged otherwise than the path that continues them are
+  forgotten (`Store::reset`).
+
+The post calculations (shadows, occlusion), the painting, reflections and
+depth of field run after the march as before and are calculated again
+when a render continues. CPU rows are bit-identical after a continue
+(`pixel_seed` from the picture's coordinates); kill-and-continue tests of
+the CPU, the card and Auto, with shadows and DE occlusion, matched the
+render in one go byte for byte (Auto with hard shadows differs between two
+plain runs already: which device runs the shadows depends on timing).
+
+**Tiles** (`--tiles` without `--tile`): the checkpoint holds the finished
+tiles (their G-buffers after the tile's shadows and occlusion), one unit
+per tile; the tile under way keeps its rows in a checkpoint of its own
+(the key of the tile's scene). SSAO and painting run on the whole picture
+after the tiles as before, so a continued render equals one in one go.
+One tile (`--tile`) is a calculation of its rectangle with the border.
+
+**Ends.** A finished render deletes its checkpoint after its result is
+saved (the command line after the files are written, the program after
+the picture is painted). A stopped render keeps it unless it ran for less
+than a minute and continued nothing (`MB3D_RESUME_KEEP_SECS`): the
+editor's many short calculations leave nothing. Each new checkpoint
+prunes those not written for 30 days and then the oldest above 50 GB in
+all (`MB3D_RESUME_MAX_GB`), never one that is locked.
+
+**The program.** Calculate 3D looks for an unfinished calculation of the
+scene (`engine::unfinished_calc`) and asks whether to continue it (Yes:
+continue, No: delete and start again, Cancel: nothing). Stop and the
+post calculations and painting after it are cancellable now (they ran to
+the end before). The Resume button of the Open tab opens the Unfinished
+renders window (`unfinished_form.rs`): Continue loads the kept scene and
+continues it without asking, Load parameters only loads it.
+`examples/resumecheck.rs` drives this without windows: one go, Stop half
+way, continue from the list, Stop, continue through the question;
+compares the pictures.
+`examples/resumecheck2.rs` adds the answers No and Cancel, Delete and
+Delete all, the list kept up to date while rendering, a Monte Carlo
+render continued from the list after a restart, and the voxel and Bulb
+Tracer windows stopped and continued (compared with one go).
+
+**Monte Carlo** (`mc::McCheckpoint`, `mc::pass_with`). A pass needs the
+whole image as it was when the pass began: its noise statistics, and
+every pixel's neighbours (`calc_n` reads them from the pass's snapshot).
+The checkpoint has two planes of 32-byte records (`McRecord`: colour f32
+x 3, the luminance sums f64 x 2, ray count, hit), one unit per row and
+plane; a row after pass n goes into plane n % 2 with generation n, so the
+other plane still has the row before the pass. On restore, P = the
+smallest generation of all rows: the image after P passes is put
+together from the planes, and the rows that have P + 1 already are not
+calculated in the next pass (`pass_inner`'s skip, on the CPU and the
+card) and get their kept records after it. Kill-and-continue at 3, 6, 9
+and 12 s of a 4-pass render on the CPU matched the render in one go byte
+for byte (on the card two plain runs differ already: the CPU takes a
+share of the rays by timing). The key leaves out exposure and saturation
+(they only paint the records); a render that starts from an `.m3c` has
+that file's hash in its key and writes its first image as a generation.
+The Monte Carlo window asks on Start with an empty image; a batch
+continues without asking. A render is finished, and its checkpoint goes,
+when it reaches its rays (`--rays`, `--passes`, a batch entry's rays);
+one that ends on `--time` or Stop stays.
+
+**Frames and batch pictures.** `frames::render_scaled_with` takes a
+checkpoint of the picture (its tiles when tiled); `render_frame_to_file`
+and `batch::render_item` open it with the frame's or item's file name
+and end it after the file is written (the depth picture is written
+before the frame now, so a frame counts as done only with it). The
+command line's `animate` and `batch` and the Animation window keep one;
+the swarm's units too (below). The Batch window's calculations
+continue without asking.
+
+**Voxel export.** A checkpoint of one-byte units, one per slice (only
+the marks matter): a slice counts as done when it is marked and its file
+is there; slices are written atomically. Killed after 280 of 1200
+slices, the export went on with the rest; all slices matched.
+
+**The swarm.** Nothing new goes into the swarm folder but a
+`resume_key` in `job.txt`; checkpoints stay local, and claims, markers
+and stale takeovers are unchanged.
+
+- *The owner* (`swarm::Kept`, kind `swarm`): one one-byte unit per job
+  unit (a tile, a frame's eye, a batch picture, a Monte Carlo block of a
+  fixed size), and the unit's file copied in (`Store::put_extra_file`;
+  a tile with its `.png`) as soon as it is finished in `out/`: in the
+  owner's report callback (once a second) and after the job. Stop still
+  removes the job, but every finished unit is kept, also those of other
+  computers. Run again, the key (the job kind, the scene text without
+  threads, the settings, the unit names) finds them: the kept tiles go to
+  `collect` first, and the new job has only the missing units (`tiles`,
+  `frames`, a batch's list, `blocks` for Monte Carlo; a batch item keeps
+  its index in its job file name). All units kept: no job. Monte Carlo
+  blocks are merged in block order, kept or not, so the result is the
+  same bit for bit. The previews show the kept tiles and blocks.
+- *A killed owner* leaves its job in the folder, and the other computers
+  go on with it. The owner run again holds the checkpoint's lock, so a
+  job with its `resume_key` has nobody else collecting it: its finished
+  units are taken (`Kept::adopt`) and the job removed.
+- *A unit under way* keeps a checkpoint of its own on the computer that
+  renders it (a tile: `open_tiles_checkpoint` of the tile's scene, a frame
+  or batch picture as on the command line, a Monte Carlo block of a fixed
+  size: `McCheckpoint` with the block's seed salt). It is ended when the
+  unit's file is written; when the job is stopped, the computer stops and
+  keeps it, its claim goes, and if it gets the unit again (in the new
+  job) it continues. On another computer the unit starts anew, with the
+  same seeds. Open-ended Monte Carlo blocks keep their snapshots as before.
+- Removing a job removes its `job.txt` first; a computer writes no claim
+  and no error into a job without it, and folders without one for 2
+  minutes are cleared away (`sweep_peers`), as a computer that was
+  writing into a job while it was removed could leave one.
+
+Kill tests with an owner and a worker on one folder (owner killed at 40 %
+or 45 % of the time alone, run again): tiles (4x3, 1600x1200), Monte Carlo
+(6 blocks of 12 rays), an animation of 9 frames and a batch of 6
+pictures: the results matched a run in one go byte for byte, and neither
+the swarm folder nor the checkpoints kept anything afterwards.
+
+**Bulb Tracer meshes** (`mesh::MeshCheckpoint`, `mesh::trace_with`).
+Keeping every sampled plane would take terabytes at high resolutions, so
+every 20 s the trace keeps its state instead: the vertices (with their
+dedup keys), colours and faces since the last save are appended to their
+files, the samples of the plane the next layer starts at go to `plane-0`
+or `plane-1` in turn, and `state` (plane, counts, plane file) is written
+last. Restore cuts the files to the counts and rebuilds the vertex and
+face maps exactly, so the mesh is the same. The key leaves out the
+smoothing (it runs afterwards). Killed at 60 % of a 1000^3 trace and
+again before its next save, and a 900^3 trace with colours: the files
+matched the export in one go byte for byte. The Bulb Tracer window ends
+the checkpoint when the trace is done, the command line when the file is
+written.
+
+**Big render tiles** are written to `.<name>.tmp<pid>` and renamed: a
+half written file of a tile's name would count as done (`scan_project`).
+
+**Command line.** Every single picture and tiled render continues by
+default, as do `montecarlo`, `animate`, `batch` and `voxel`; `--fresh`
+deletes the checkpoint first, `--no-resume` keeps none.
+`mb3d resume` lists the checkpoints (the done share and the write time are
+read from the marks and the files' times, as a killed render did not
+update `info.txt`); `--clear [KEY]` deletes them.
+
 ## Where the program keeps its files
 
 `src/appdirs.rs` decides between two ways:
@@ -875,7 +1055,7 @@ programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
   |---|---|
   | `Mandelbulb3D.ini`, presets, `Default.m3p` | `$XDG_CONFIG_HOME/mb3d-rs` (`~/.config/mb3d-rs`) |
   | `History`, `BigRenders`, `Meshes` | `$XDG_DATA_HOME/mb3d-rs` (`~/.local/share/mb3d-rs`) |
-  | `ShaderCache` | `$XDG_CACHE_HOME/mb3d-rs` (`~/.cache/mb3d-rs`) |
+  | `ShaderCache`, `resume` (unfinished renders) | `$XDG_CACHE_HOME/mb3d-rs` (`~/.cache/mb3d-rs`) |
 
   On Windows `%APPDATA%\mb3d-rs` and `%LOCALAPPDATA%\mb3d-rs`. A preset
   or `Default.m3p` next to the program is still read as a default when the

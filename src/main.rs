@@ -19,6 +19,7 @@ USAGE:
     mb3d mutagen FILE [-o DIR] [OPTIONS]                           random variations
     mb3d montecarlo FILE [-o image.png] [OPTIONS]                  path traced image
     mb3d swarm worker DIR | list DIR                               share rendering through a shared folder
+    mb3d resume [--clear [KEY]]                                    unfinished renders kept for continuing
     (mb3d animate --help, mb3d batch --help, ...)
 
 SCENE_FILE is an INI-style scene description (see examples/*.m3s), a
@@ -64,6 +65,9 @@ OPTIONS:
                              modes, see -s stereo_screen=width,distance,min) and combine
                              them: parallel, cross or anaglyph
     -q, --quiet              No progress output
+        --fresh              Start again, also when an unfinished render of the same
+                             picture was kept (by default it continues; mb3d resume)
+        --no-resume          Keep no checkpoint of this render
         --swarm <DIR>        Render the picture in tiles (--tiles CxR) with the swarm:
                              the instances that watch this shared folder (mb3d swarm --help)
         --formulas <DIR>     Directory with .m3f formula files (also: MB3D_FORMULAS;
@@ -160,6 +164,44 @@ fn use_gpu(on: bool) {
     }
 }
 
+/// `--fresh` / `--no-resume`: what a render does with the checkpoint of an
+/// unfinished one (by default it continues it).
+static RESUME: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(1);
+
+fn resume_policy() -> mb3d::checkpoint::Policy {
+    match RESUME.load(std::sync::atomic::Ordering::Relaxed) {
+        0 => mb3d::checkpoint::Policy::Off,
+        2 => mb3d::checkpoint::Policy::Fresh,
+        _ => mb3d::checkpoint::Policy::Continue,
+    }
+}
+
+/// The options of every render command for its checkpoint: true when `a`
+/// is one of them.
+fn resume_option(a: &str) -> bool {
+    let v = match a {
+        "--no-resume" => 0,
+        "--fresh" => 2,
+        _ => return false,
+    };
+    RESUME.store(v, std::sync::atomic::Ordering::Relaxed);
+    true
+}
+
+/// The name an output's checkpoint is listed with: the file name.
+fn ck_name(output: &str) -> String {
+    std::path::Path::new(output).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| output.to_string())
+}
+
+/// Says that a render continues an unfinished one.
+fn resumed_note(ck: Option<&mb3d::checkpoint::Store>, what: &str, quiet: bool) {
+    if let Some(s) = ck.filter(|s| s.resumed() > 0) {
+        if !quiet {
+            eprintln!("  continuing an unfinished render: {} of {} {what} were done (--fresh starts again)", s.resumed(), s.spec().units);
+        }
+    }
+}
+
 fn run() -> Result<(), String> {
     #[cfg(feature = "gpu")]
     mb3d::gpu::set_enabled(mb3d::gpu::default_on());
@@ -176,6 +218,7 @@ fn run() -> Result<(), String> {
         Some("mutagen") => return mutagen_cmd(&all[1..]),
         Some("montecarlo") | Some("mc") => return mc_cmd(&all[1..]),
         Some("swarm") => return swarm_cmd(&all[1..]),
+        Some("resume") => return resume_cmd(&all[1..]),
         _ => {}
     }
     let mut args = std::env::args().skip(1);
@@ -254,6 +297,7 @@ fn run() -> Result<(), String> {
             "--tile" => overrides.push(format!("tile = {}", val(&a)?)),
             "--swarm" => swarm = Some(val(&a)?),
             "-q" | "--quiet" => quiet = true,
+            s if resume_option(s) => {}
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{USAGE}")),
             s => scene_file = Some(s.to_string()),
         }
@@ -433,7 +477,7 @@ fn run() -> Result<(), String> {
             if tl.pos.is_some() {
                 return Err(usage_err("--swarm renders all tiles; --tile is for one tile by hand"));
             }
-            let ropts = mb3d::swarm::RunOptions { threads: scene.threads, quiet, ..Default::default() };
+            let ropts = mb3d::swarm::RunOptions { threads: scene.threads, quiet, resume: resume_policy(), ..Default::default() };
             let report = |st: &str| {
                 if !quiet {
                     eprintln!("  {st}");
@@ -476,7 +520,9 @@ fn run() -> Result<(), String> {
                 eprintln!("{cr}  tile {done}/{total} done ({}x{} at {}, {})          ", t[2], t[3], t[0], t[1]);
             }
         };
-        let res = mb3d::render::render_tiled(&scene, stats || depth.is_some() || transparent, &progress, &tile_progress)?;
+        let ck = mb3d::render::open_tiles_checkpoint(&scene, &ck_name(&output), resume_policy());
+        resumed_note(ck.as_ref(), if tl.pos.is_some() { "rows" } else { "tiles" }, quiet);
+        let res = mb3d::render::render_tiled_with(&scene, stats || depth.is_some() || transparent, &progress, &tile_progress, &|| false, ck.as_ref(), resume_policy())?;
         if !quiet {
             eprintln!("  done: calc {:.2}s, paint {:.2}s", res.calc_seconds, res.paint_seconds);
         }
@@ -503,6 +549,9 @@ fn run() -> Result<(), String> {
         }
         if let (Some(d), Some(g)) = (depth, &res.gbuffer) {
             write_depth(&d, g, res.width, res.height)?;
+        }
+        if let Some(ck) = ck {
+            ck.finish();
         }
     } else {
         render_single(&mut scene, auto_color, stats, quiet, aa, bits16, denoise, transparent, &output, depth, &progress)?;
@@ -533,7 +582,9 @@ fn render_single(
 ) -> Result<(), String> {
     let cr = if std::io::IsTerminal::is_terminal(&std::io::stderr()) { "\r" } else { "" };
     let t0 = Instant::now();
-    let (params, gbuffer) = mb3d::render::calculate(scene, progress)?;
+    let ck = mb3d::render::open_checkpoint(scene, &ck_name(output), resume_policy());
+    resumed_note(ck.as_ref(), "rows", quiet);
+    let (params, gbuffer) = mb3d::render::calculate_with(scene, progress, &|| false, 2, None, ck.as_ref())?;
     let t1 = Instant::now();
     if auto_color {
         mb3d::render::auto_color_range(scene, &gbuffer);
@@ -596,8 +647,81 @@ fn render_single(
     if let Some(d) = depth {
         write_depth(&d, &res.gbuffer, res.width, res.height)?;
     }
+    if let Some(ck) = ck {
+        ck.finish();
+    }
     Ok(())
 }
+
+/// `mb3d resume`: the unfinished renders kept for continuing.
+fn resume_cmd(args: &[String]) -> Result<(), String> {
+    let mut clear: Option<Option<String>> = None;
+    let mut it = args.iter().peekable();
+    while let Some(a) = it.next() {
+        match a.as_str() {
+            "-h" | "--help" => {
+                print!("{RESUME_USAGE}");
+                return Ok(());
+            }
+            "--clear" => clear = Some(it.next_if(|v| !v.starts_with('-')).cloned()),
+            s => return Err(format!("unknown option {s}\n\n{RESUME_USAGE}")),
+        }
+    }
+    let list = mb3d::checkpoint::list();
+    if let Some(which) = clear {
+        let mut n = 0;
+        for e in list.iter().filter(|e| which.as_ref().is_none_or(|k| e.key() == *k)) {
+            if mb3d::checkpoint::remove(e) {
+                n += 1;
+            } else if e.busy {
+                eprintln!("  {} is being rendered right now: kept", e.key());
+            }
+        }
+        eprintln!("deleted {n} unfinished render(s)");
+        return Ok(());
+    }
+    if list.is_empty() {
+        println!("no unfinished renders (in {})", mb3d::checkpoint::folder().display());
+        return Ok(());
+    }
+    let total: u64 = list.iter().map(|e| e.bytes).sum();
+    for e in &list {
+        let g = |k: &str| e.info.get(k).map(String::as_str).unwrap_or("");
+        println!(
+            "{}  {:<28} {}  {}{}  {:.1} MB",
+            e.key(),
+            g("name"),
+            e.size_text(),
+            e.summary(),
+            if e.busy { " (running)" } else { "" },
+            e.bytes as f64 / 1e6
+        );
+    }
+    println!("{} unfinished render(s), {:.1} MB in {}", list.len(), total as f64 / 1e6, mb3d::checkpoint::folder().display());
+    println!("Running the same render again continues it; mb3d resume --clear [KEY] deletes them.");
+    Ok(())
+}
+
+const RESUME_USAGE: &str = "\
+mb3d resume - the unfinished renders kept for continuing
+
+USAGE:
+    mb3d resume                 List them
+    mb3d resume --clear [KEY]   Delete them (or the one of KEY)
+
+OPTIONS:
+        --clear              Delete the unfinished renders (with a KEY of the list:
+                             only that one)
+    -h, --help               This help
+
+A render that is stopped, killed or crashes keeps what it calculated in a
+checkpoint (in the cache folder); running the same render again (the same
+parameters and options, the same program version) continues it.  The
+files are flushed to the disk every 5 minutes (MB3D_AUTOSAVE_SECS).
+Checkpoints older than 30 days go, and the oldest when all of them take more
+than 50 GB (MB3D_RESUME_MAX_GB).  --fresh starts a render again, --no-resume
+keeps no checkpoint.
+";
 
 /// `--transparent`: the picture with a transparent background (an RGBA
 /// PNG, see `frames::rgba_of`), reduced by `aa`; the noise filter works on
@@ -711,6 +835,9 @@ OPTIONS:
         --list               Print the frames (file index, keyframe, sub-frame) and exit
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --fresh              Start the frame under way again (a stopped animation
+                             continues in the middle of its frame; mb3d resume)
+        --no-resume          Keep no checkpoint of the frame under way
         --swarm <DIR>        Render the frames with the swarm: the instances that watch
                              this shared folder (mb3d swarm --help); all frames, the
                              --from/--to/--every selection does not apply
@@ -799,10 +926,12 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "-q" | "--quiet" => quiet = true,
             "--formulas" => mb3d::formulas::add_formula_dir(args.next().ok_or("--formulas needs a value")?.into()),
             "--maps" => mb3d::maps::add_map_dir(args.next().ok_or("--maps needs a value")?.into()),
+            s if resume_option(s) => {}
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{ANIMATE_USAGE}")),
             s => files.push(s.to_string()),
         }
     }
+    run.resume = resume_policy();
     if files.is_empty() {
         return Err(format!("no animation or keyframe files given\n\n{ANIMATE_USAGE}"));
     }
@@ -1006,7 +1135,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut done, mut skipped, mut secs) = (0usize, 0usize, 0.0f64);
     let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
     if let Some(dir) = &swarm {
-        let opts = mb3d::swarm::RunOptions { threads: run.threads, quiet, ..Default::default() };
+        let opts = mb3d::swarm::RunOptions { threads: run.threads, quiet, resume: resume_policy(), ..Default::default() };
         let files = mb3d::swarm::run_animation(std::path::Path::new(dir), &anim, Some(&frames_to_do), &opts, &|st| {
             if !quiet {
                 eprintln!("  {st}");
@@ -1023,7 +1152,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             }
         };
         match mb3d::frames::render_frame_to_file(&anim, f, &run, &progress, &|| false)? {
-            mb3d::frames::FrameResult::Written { path, seconds } => {
+            mb3d::frames::FrameResult::Written { path, seconds, continued } => {
                 done += 1;
                 secs += seconds;
                 if !quiet {
@@ -1031,6 +1160,9 @@ fn animate(argv: &[String]) -> Result<(), String> {
                     let eta = if done > 0 { secs / done as f64 * left as f64 } else { 0.0 };
                     let cr = if tty { "\r" } else { "" };
                     eprintln!("{cr}  {label} {:.1}s  {}  (left: {})          ", seconds, path.display(), fmt_dur(eta));
+                    if let Some(c) = continued {
+                        eprintln!("      {c} (--fresh starts again)");
+                    }
                 }
             }
             mb3d::frames::FrameResult::Skipped { path, why } => {
@@ -1112,6 +1244,9 @@ OPTIONS:
         --dry-run            Only list what would be rendered
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --fresh              Start the picture under way again (a stopped batch
+                             continues in the middle of its picture; mb3d resume)
+        --no-resume          Keep no checkpoint of the picture under way
         --swarm <DIR>        Render the files with the swarm: the instances that watch
                              this shared folder (mb3d swarm --help)
         --formulas <DIR>     Directory with .m3f formula files
@@ -1147,10 +1282,12 @@ fn batch(argv: &[String]) -> Result<(), String> {
             "-q" | "--quiet" => quiet = true,
             "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
             "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s if resume_option(s) => {}
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{BATCH_USAGE}")),
             s => inputs.push(s.to_string()),
         }
     }
+    opts.resume = resume_policy();
     let mut items = mb3d::batch::expand_inputs(&inputs)?;
     for l in &lists {
         let text = std::fs::read_to_string(l).map_err(|e| input_err(format!("{l}: {e}")))?;
@@ -1174,7 +1311,7 @@ fn batch(argv: &[String]) -> Result<(), String> {
         return Ok(());
     }
     if let Some(dir) = &swarm {
-        let ropts = mb3d::swarm::RunOptions { threads: opts.threads, quiet, ..Default::default() };
+        let ropts = mb3d::swarm::RunOptions { threads: opts.threads, quiet, resume: resume_policy(), ..Default::default() };
         mb3d::swarm::run_batch(std::path::Path::new(dir), &items, &outputs, &opts, &ropts, &|st| {
             if !quiet {
                 eprintln!("  {st}");
@@ -1306,6 +1443,9 @@ OPTIONS:
     -s, --set <KEY=VALUE>    Change a scene key (may be repeated)
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --fresh              Calculate all slices again (a stopped export continues
+                             with the slices it has not written; mb3d resume)
+        --no-resume          Keep no note of the slices written
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps
 ";
@@ -1369,6 +1509,7 @@ fn voxel_cmd(argv: &[String]) -> Result<(), String> {
             "-q" | "--quiet" => quiet = true,
             "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
             "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s if resume_option(s) => {}
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{VOXEL_USAGE}")),
             s => file = Some(s.to_string()),
         }
@@ -1444,9 +1585,10 @@ fn voxel_cmd(argv: &[String]) -> Result<(), String> {
             let _ = std::io::stderr().flush();
         }
     };
-    let n = mb3d::voxel::export(&scene, &vp, &dir, &name, threads, &progress, &|| false)?;
+    let (n, before) = mb3d::voxel::export_with(&scene, &vp, &dir, &name, threads, &|i, n, _| progress(i, n), &|| false, resume_policy())?;
     if !quiet {
-        eprintln!("\r  {n} slices written in {}          ", fmt_dur(t0.elapsed().as_secs_f64()));
+        let note = if before > 0 { format!(" ({before} of them before: continued; --fresh starts again)") } else { String::new() };
+        eprintln!("\r  {n} slices written in {}{note}          ", fmt_dur(t0.elapsed().as_secs_f64()));
     }
     Ok(())
 }
@@ -1479,6 +1621,9 @@ OPTIONS:
     -s, --set <KEY=VALUE>    Change a scene key (may be repeated)
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --fresh              Start again (a stopped export continues where it was;
+                             mb3d resume)
+        --no-resume          Keep no checkpoint of this export
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps
 ";
@@ -1523,6 +1668,7 @@ fn mesh_cmd(argv: &[String]) -> Result<(), String> {
             "-q" | "--quiet" => quiet = true,
             "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
             "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s if resume_option(s) => {}
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{MESH_USAGE}")),
             s => file = Some(s.to_string()),
         }
@@ -1549,11 +1695,16 @@ fn mesh_cmd(argv: &[String]) -> Result<(), String> {
             let _ = std::io::stderr().flush();
         }
     };
-    let mesh = mb3d::mesh::trace(&scene, &mp, threads, &progress, &|| false)?;
+    let ck = mb3d::mesh::MeshCheckpoint::open(&scene, &mp, &ck_name(&out), resume_policy());
+    resumed_note(ck.as_ref().map(|c| c.store()), "planes", quiet);
+    let mesh = mb3d::mesh::trace_with(&scene, &mp, threads, &progress, &|| false, ck.as_ref())?;
     if mesh.faces.is_empty() {
         return Err("no surface found in the cube (check --scale, --offset and --sharpness)".into());
     }
     mesh.save(std::path::Path::new(&out))?;
+    if let Some(c) = ck {
+        c.finish();
+    }
     if !quiet {
         let (e, open, _) = mesh.edge_stats();
         eprintln!(
@@ -1724,6 +1875,9 @@ OPTIONS:
         --swarm <DIR>        Render with the swarm: the instances that watch this shared
                              folder each calculate blocks of passes, averaged at the end
         --units <N>          Blocks of the swarm render (default: two per instance)
+        --fresh              Start again, also when an unfinished render of the same
+                             picture was kept (by default it continues; mb3d resume)
+        --no-resume          Keep no checkpoint of this render
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps
 ";
@@ -1769,6 +1923,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             "-q" | "--quiet" => quiet = true,
             "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
             "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s if resume_option(s) => {}
             s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{MC_USAGE}")),
             s => file = Some(s.to_string()),
         }
@@ -1777,8 +1932,11 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     args_read();
     let path = std::path::Path::new(&file);
     let is_m3c = path.extension().is_some_and(|e| e.eq_ignore_ascii_case("m3c"));
+    // what the render starts from besides the scene (its checkpoint's key)
+    let mut start = String::new();
     let (mut scene, mut img) = if is_m3c {
         let data = std::fs::read(path).map_err(|e| input_err(format!("{file}: {e}")))?;
+        start = format!("m3c {:016x}", mb3d::checkpoint::fnv64(&data));
         let (f, img) = mb3d::mc::read_m3c(&data).map_err(input_err)?;
         if !quiet {
             for n in &f.warnings {
@@ -1831,7 +1989,22 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         );
     }
     let t0 = Instant::now();
-    let start_passes = img.passes;
+    let mut start_passes = img.passes;
+    // (the swarm's blocks are not kept: the job's units are)
+    let ck = if swarm.is_none() { mb3d::mc::McCheckpoint::open(&scene, img.seed_salt, &start, &ck_name(&out), resume_policy()) } else { None };
+    if let Some(c) = &ck {
+        if c.store().resumed() > 0 && c.restore(&mut img) {
+            // (the passes counted from where the first run began)
+            start_passes = c.store().value("start_passes").and_then(|v| v.parse().ok()).unwrap_or(start_passes);
+            if !quiet {
+                eprintln!("  continuing an unfinished render: {} passes{} were done (--fresh starts again)", img.passes, if c.partial_rows() > 0 { format!(" and {} rows of the next", c.partial_rows()) } else { String::new() });
+            }
+        } else {
+            c.store().set_value("start_passes", &start_passes.to_string());
+            c.start(&img);
+        }
+    }
+    let mut reached = false;
     let write_picture = |img: &mb3d::mc::McImage| -> Result<(), String> {
         let mut rgb = mb3d::mc::paint(img, &scene.mc, scene.lighting.gamma);
         if let Some(sigma) = denoise {
@@ -1851,7 +2024,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         if !quiet {
             eprintln!("swarm: {units} blocks of {rays_per_unit:.1} rays/pixel each, in {}", dir.display());
         }
-        let ropts = mb3d::swarm::RunOptions { threads, quiet, ..Default::default() };
+        let ropts = mb3d::swarm::RunOptions { threads, quiet, resume: resume_policy(), ..Default::default() };
         let merged = mb3d::swarm::run_montecarlo(dir, &scene, units, rays_per_unit, passes.unwrap_or(0), time.unwrap_or(0.0), &ropts, &|st| {
             if !quiet {
                 eprintln!("  {st}");
@@ -1870,10 +2043,12 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         let st = img.stats();
         if let Some(r) = target {
             if !st.zero_counts && st.avg_rays >= r {
+                reached = true;
                 break;
             }
         }
         if passes.is_some_and(|p| img.passes - start_passes >= p) {
+            reached = true;
             break;
         }
         if time.is_some_and(|t| t0.elapsed().as_secs_f64() >= t) {
@@ -1889,7 +2064,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         PASS_HINT.store(img.passes + 1, std::sync::atomic::Ordering::Relaxed);
         let deadline = time.map(|t| t0 + std::time::Duration::from_secs_f64(t));
         let cancel = || deadline.is_some_and(|d| Instant::now() > d);
-        match mb3d::mc::pass(&scene, &mut img, threads, &progress, &cancel) {
+        match mb3d::mc::pass_with(&scene, &mut img, threads, &progress, &cancel, None, ck.as_ref()) {
             Ok(()) => {}
             Err(e) if e == "cancelled" => {
                 if !quiet {
@@ -1934,6 +2109,10 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     }
     if !quiet {
         eprintln!("wrote {out}{}", m3c.map(|m| format!(" and {m}")).unwrap_or_default());
+    }
+    // (a render that ended on its time limit stays: run again, it goes on)
+    if let Some(c) = ck.filter(|_| reached) {
+        c.finish();
     }
     Ok(())
 }

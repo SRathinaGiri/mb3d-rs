@@ -33,6 +33,7 @@ pub mod appdirs;
 pub mod animfile;
 pub mod batch;
 pub mod calc;
+pub mod checkpoint;
 pub mod custom;
 pub mod deao;
 pub mod denoise;

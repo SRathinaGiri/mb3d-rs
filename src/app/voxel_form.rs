@@ -301,27 +301,21 @@ fn start_slices(app: &mut Mb3d, ui: &mut Ui) {
     let waker = ui.waker();
     std::thread::spawn(move || {
         let r = (|| -> Result<(), String> {
-            let s = crate::voxel::export_scene(&sc, &vp);
-            let p = crate::calc::CalcParams::new(&s)?;
-            let grid = crate::voxel::Grid::new(&s, &vp);
-            std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-            let threads = crate::render::thread_count(&s);
-            for nr in 1..=grid.slices {
-                let mut on = crate::voxel::calc_slice(&p, &grid, &vp, nr, threads, &|| stop.load(Ordering::Relaxed));
-                if stop.load(Ordering::Relaxed) {
-                    return Ok(());
+            let threads = crate::render::thread_count(&sc);
+            // (a stopped export continues with the slices it has not written)
+            let slice = |nr: u32, _n: u32, on: Option<&[bool]>| {
+                if let Some(on) = on {
+                    shared.lock().unwrap().slice = Some((nr, on.to_vec()));
+                    if let Some(w) = &waker {
+                        w.wake();
+                    }
                 }
-                if vp.white_outside {
-                    on.iter_mut().for_each(|b| *b = !*b);
-                }
-                let f = vp.slice_file(&dir, &name, nr);
-                std::fs::write(&f, crate::png::encode_gray1(grid.width, grid.height, &on)).map_err(|e| format!("{}: {e}", f.display()))?;
-                shared.lock().unwrap().slice = Some((nr, on));
-                if let Some(w) = &waker {
-                    w.wake();
-                }
+            };
+            match crate::voxel::export_with(&sc, &vp, &dir, &name, threads, &slice, &|| stop.load(Ordering::Relaxed), crate::checkpoint::Policy::Continue) {
+                Ok(_) => Ok(()),
+                Err(e) if e == "cancelled" => Ok(()),
+                Err(e) => Err(e),
             }
-            Ok(())
         })();
         let mut sh = shared.lock().unwrap();
         if let Err(e) = r {

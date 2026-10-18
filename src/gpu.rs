@@ -1075,18 +1075,25 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
     }
 }
 
-/// The march alone on the card, of the bands that `bands` hands out (the
-/// CPU calculates the other rows): their rows go to `sink`.  An error
+/// The march on the card, of the bands that `bands` hands out (the CPU
+/// calculates the other rows, or they were calculated before), with the
+/// post passes of `post` on each band: their rows go to `sink`.  An error
 /// after rows went to `sink` (single precision overflows) means they are
 /// not usable.
-pub fn march_bands(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
-    guard(|| march_bands_card(p, bands, cancel, sink))
+pub fn march_bands(p: &CalcParams, post: &PostJob, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    guard(|| march_bands_card(p, post, bands, cancel, sink))
 }
 
-fn march_bands_card(p: &CalcParams, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+fn march_bands_card(p: &CalcParams, post: &PostJob, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    if let Some(r) = unsupported(p) {
+        return Err(r);
+    }
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let (_, len) = run(g, p, &sh, &PostJob::default(), Some(0), &|_, _| {}, cancel, sink, Some(bands), None, false)?;
+    for m in modes(post) {
+        prepare(g, sh.code.clone(), "main", march_constants(p, m));
+    }
+    let (_, len) = run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), None, false)?;
     // pixels whose DE overflowed single precision (see [`march`]): the
     // card's rows are not usable then
     let n = OVERFLOW.with(|c| c.get());

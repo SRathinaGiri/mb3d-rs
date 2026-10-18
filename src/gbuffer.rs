@@ -44,6 +44,42 @@ impl SiLight {
     }
 }
 
+/// The bytes of a pixel in a file (as in a .m3i: the normal, the depth,
+/// the shadow, ambient shadow, gradient and orbit trap words).
+pub const REC_BYTES: usize = 18;
+
+/// The pixels as [`REC_BYTES`] each, little endian.
+pub fn pack(px: &[SiLight]) -> Vec<u8> {
+    let mut d = Vec::with_capacity(px.len() * REC_BYTES);
+    for s in px {
+        for n in s.normal {
+            d.extend_from_slice(&n.to_le_bytes());
+        }
+        d.extend_from_slice(&s.zpos_fine.to_le_bytes());
+        for w in [s.shadow, s.amb_shadow, s.si_gradient, s.otrap] {
+            d.extend_from_slice(&w.to_le_bytes());
+        }
+    }
+    d
+}
+
+/// The pixels of [`pack`]ed bytes.
+pub fn unpack(d: &[u8]) -> Vec<SiLight> {
+    d.chunks_exact(REC_BYTES)
+        .map(|b| {
+            let h = |k: usize| u16::from_le_bytes([b[k], b[k + 1]]);
+            SiLight {
+                normal: [h(0) as i16, h(2) as i16, h(4) as i16],
+                zpos_fine: u32::from_le_bytes([b[6], b[7], b[8], b[9]]),
+                shadow: h(10),
+                amb_shadow: h(12),
+                si_gradient: h(14),
+                otrap: h(16),
+            }
+        })
+        .collect()
+}
+
 /// `DoubleImageSize` (DoubleSize.pas): the G-buffer at twice the width and
 /// height; the new pixels are the averages of their 2 or 4 neighbours.
 pub fn double_size(g: &[SiLight], w: usize, h: usize) -> Vec<SiLight> {

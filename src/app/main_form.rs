@@ -6,7 +6,7 @@ use super::{Mb3d, MAIN};
 use crate::math::{build_rot_matrix, mat_mul, matrix_to_angles, normalise_matrix_to, rotate_vector_reverse};
 use crate::scene::{CameraOptic, Scene};
 use crate::vcl::bitmap::Bitmap;
-use crate::vcl::form::{MouseButton, MR_YES, SS_LEFT};
+use crate::vcl::form::{MouseButton, MR_CANCEL, MR_NO, MR_YES, SS_LEFT};
 use crate::vcl::{DialogResult, Ev, Event, Ui};
 use std::path::PathBuf;
 use std::time::Instant;
@@ -75,6 +75,12 @@ pub struct State {
     pub sticky: [u8; 3],
     /// the window whose right click menu is open (`StickIt`)
     pub stick_it: usize,
+    /// the calculation that waits for the answer whether to continue its
+    /// unfinished one: its scene and 2D slice
+    pub resume_ask: Option<(Scene, u8)>,
+    /// the next Calculate 3D continues the unfinished calculation of this
+    /// key without asking (the Unfinished renders window's Continue)
+    pub resume_key: Option<String>,
 }
 
 impl Default for State {
@@ -110,6 +116,8 @@ impl Default for State {
             last_history: Instant::now(),
             sticky: [1, 1, 1],
             stick_it: 0,
+            resume_ask: None,
+            resume_key: None,
         }
     }
 }
@@ -762,8 +770,68 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         app.eng.start(Job::Swarm { scene: app.scene.clone(), dir, cols, rows, name: app.swarm.name.clone() });
         return;
     }
+    start_calc(app, ui, app.scene.clone(), slice);
+}
+
+/// Starts the calculation of `sc`; when an unfinished calculation of it
+/// was kept, asks first whether to continue it.
+fn start_calc(app: &mut Mb3d, ui: &mut Ui, sc: Scene, slice: u8) {
+    if let Some(key) = app.main.resume_key.take() {
+        if slice == 0 && super::engine::unfinished_calc(&sc).is_some_and(|e| e.key() == key) {
+            run_calc(app, sc, slice, crate::checkpoint::Policy::Continue);
+        } else {
+            not_started(app, ui);
+            app.message(ui, "The parameters do not match the unfinished calculation any more: press \"Calculate 3D\" to calculate them.");
+        }
+        return;
+    }
+    // (the Batch window goes on without asking)
+    if slice == 0 && app.batch.status == 0 {
+        if let Some(e) = super::engine::unfinished_calc(&sc) {
+            app.main.resume_ask = Some((sc, slice));
+            ui.message_box(
+                "main:resume",
+                "Unfinished calculation",
+                &format!("An unfinished calculation of this picture was kept ({}).\n\nContinue it?  \"No\" calculates it again from the start.", e.summary()),
+                &[MR_YES, MR_NO, MR_CANCEL],
+            );
+            return;
+        }
+    }
+    run_calc(app, sc, slice, crate::checkpoint::Policy::Continue);
+}
+
+/// A calculation prepared by [`calc_mand`] is not started after all.
+fn not_started(app: &mut Mb3d, ui: &mut Ui) {
+    enable_buttons(app, ui);
+    ui.set_visible(F, "ProgressBar1", false);
+    if app.main.led_running {
+        app.main.led_running = false;
+        show_led(ui, app.main.led, false);
+    }
+}
+
+/// Calculate 3D of the current parameters, continuing the unfinished
+/// calculation of `key` (the Unfinished renders window).
+pub fn continue_calc(app: &mut Mb3d, ui: &mut Ui, key: &str) {
+    if app.eng.running() {
+        app.message(ui, "A calculation is running: stop it first.");
+        return;
+    }
+    app.main.resume_key = Some(key.to_string());
+    calc_mand(app, ui, true);
+    // (not started: the key is not left for a later calculation)
+    app.main.resume_key = None;
+}
+
+/// Parameters were loaded (not from a file): into the forms.
+pub fn scene_loaded(app: &mut Mb3d, ui: &mut Ui) {
+    text_pars_load_success(app, ui);
+}
+
+fn run_calc(app: &mut Mb3d, sc: Scene, slice: u8, resume: crate::checkpoint::Policy) {
     app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
-    app.eng.start(Job::Calc { scene: app.scene.clone(), slice });
+    app.eng.start(Job::Calc { scene: sc, slice, resume, name: stem(&app.title) });
 }
 
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
@@ -1005,8 +1073,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.main.calc3d = true;
             disable_buttons(app, ui);
             ui.set_visible(F, "ProgressBar1", true);
-            app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
-            app.eng.start(Job::Calc { scene: sc, slice: 0 });
+            start_calc(app, ui, sc, 0);
             app.scene.stereo_mode = 0;
         }
         "Button2MouseDown" => {
@@ -1300,6 +1367,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "MapSequencesBtnClick" => ui.show("MapSequencesFrm"),
         "VisualThemesBtnClick" => ui.show("VisualThemesFrm"),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
+        "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files
         "Button5Click" => {
             let o = crate::vcl::dialogs::FileOptions {
@@ -1945,6 +2013,14 @@ pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 
 pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
+        ("resume", DialogResult::Button(b)) => {
+            let Some((sc, slice)) = app.main.resume_ask.take() else { return };
+            match *b {
+                MR_YES => run_calc(app, sc, slice, crate::checkpoint::Policy::Continue),
+                MR_NO => run_calc(app, sc, slice, crate::checkpoint::Policy::Fresh),
+                _ => not_started(app, ui),
+            }
+        }
         (_, DialogResult::File(Some(p))) if what.starts_with("open") || what == "" => {
             let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
             if let Some(d) = p.parent() {

@@ -344,6 +344,21 @@ you check further on your own:
   |:---:|:---:|:---:|
 
   </details>
+* **A stopped render continues where it was.** What a render calculated
+  is kept when it is stopped, and also when the program is closed or
+  crashes, or the computer goes off (it is saved to the disk every 5
+  minutes): Calculate 3D, Monte Carlo (also in the middle of a pass), the
+  frame of an animation or the picture of a batch under way, a voxel
+  export, a Bulb Tracer mesh, Big render tiles, and a swarm render (Stop
+  on the computer that made the job keeps every finished part, and each
+  computer keeps the part it was at). Calculate 3D and Monte Carlo of the
+  same parameters ask whether to continue, the others continue by
+  themselves; the **Resume** button (Open tab) lists the unfinished
+  renders, to continue or delete them. On the command line the same
+  command continues by itself (also a picture in `--tiles`, `montecarlo`,
+  `animate`, `batch`, `voxel` and `mesh`); `--fresh` starts again, `mb3d
+  resume` lists them. A continued render is the same as one calculated in
+  one go.
 * **Rendering shared between your computers**, a "swarm": computers that
   see one shared folder render a picture, a Big render, a Monte Carlo
   picture or an animation together. See
@@ -538,6 +553,14 @@ pixel give the 256 asked for with `--rays 256`.
 * **Stopping:** unticking *Share this computer* lets the part under way
   finish first; closing the program gives it up, and another computer
   takes it.
+* **Stopping the job** (Stop on the computer that made it, or closing
+  it, or it crashes): every part already finished is kept on that
+  computer, and each computer keeps the part it was rendering. Starting
+  the same render again makes a job of only the missing parts, and a
+  computer that gets back a part it had begun continues it. The same
+  works on the command line: run the same command again. An open-ended
+  Monte Carlo render (the window's) puts its blocks together when it is
+  stopped, as before.
 
 ## How the rendering works
 
@@ -712,6 +735,7 @@ completes its options in bash, zsh and fish:
 ./mb3d "M3Parameter/6 AM - Torii temple.m3p" --scale 0.25 -o small.png
 ./mb3d pasted.txt -o pasted.png        # parameters copied from a forum post
 ./mb3d City.m3p --tiles 4x4 -o city.png    # a big picture in tiles
+./mb3d resume                              # stopped renders: the same command continues
 ./mb3d --cpu City.m3p -o city.png          # processor only
 ./mb3d --card City.m3p -o city.png         # graphics card only
 ./mb3d City.m3p --bits 16 -o city16.png    # 16 bit colour
@@ -763,6 +787,17 @@ interrupted animation continues and several computers can share one.
   picture that does not fit into the free memory (on Linux, where the
   free memory can be told) and says so, and a computer of the swarm
   leaves a tile too big for its memory to the others.
+* **Unfinished renders** are kept in the cache folder (`~/.cache/mb3d-rs/resume`,
+  on Windows `%LOCALAPPDATA%\mb3d-rs\resume`, or next to the program):
+  18 bytes per pixel for a picture (a 15360 x 15360 picture takes 4.2 GB),
+  64 for a Monte Carlo render. What was calculated is written at once and
+  flushed to the disk every 5 minutes. A render stopped within its first
+  minute keeps nothing; unfinished renders older than 30 days go, and the
+  oldest ones when all of them take more than 50 GB. A render continues
+  only with the same parameters and program version (and the same choice
+  of card or processor; a Monte Carlo render's exposure and saturation
+  may change). A Monte Carlo render stays unfinished until it reaches its
+  rays (a batch, `--rays`, `--passes`) or is deleted in the Resume list.
 * **Newer or your own formulas, maps and themes** go into
   `~/.local/share/mb3d-rs/M3Formulas`, `.../M3Maps` and `.../Themes`
   (any way of installing; on Windows `%APPDATA%\mb3d-rs\...`). They

@@ -185,12 +185,39 @@ pub fn render_scaled(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<FrameImage, String> {
+    render_scaled_with(sc, aa, want_depth, want_alpha, progress, cancel, None, crate::checkpoint::Policy::Off)
+}
+
+/// The checkpoint of a frame's (or a batch item's) picture `sc`, `name`
+/// shown for it: of its tiles when it is tiled.
+pub fn open_frame_checkpoint(sc: &Scene, name: &str, policy: crate::checkpoint::Policy) -> Option<crate::checkpoint::Store> {
+    if sc.tiling.is_some() {
+        crate::render::open_tiles_checkpoint(sc, name, policy)
+    } else {
+        crate::render::open_checkpoint(sc, name, policy)
+    }
+}
+
+/// [`render_scaled`] with the checkpoint `ck` of [`open_frame_checkpoint`]
+/// (`policy`: that of a tiled picture's tiles); the caller ends `ck` when
+/// the picture is saved.
+#[allow(clippy::too_many_arguments)]
+pub fn render_scaled_with(
+    sc: &Scene,
+    aa: usize,
+    want_depth: bool,
+    want_alpha: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    ck: Option<&crate::checkpoint::Store>,
+    policy: crate::checkpoint::Policy,
+) -> Result<FrameImage, String> {
     let t0 = Instant::now();
     let (rgb, w, h, gbuf) = if sc.tiling.is_some() {
-        let r = crate::render::render_tiled(sc, want_depth || want_alpha, progress, &|_, _, _| {})?;
+        let r = crate::render::render_tiled_with(sc, want_depth || want_alpha, progress, &|_, _, _| {}, cancel, ck, policy)?;
         (r.rgb, r.width, r.height, r.gbuffer)
     } else {
-        let (p, g) = crate::render::calculate_cancellable(sc, progress, cancel)?;
+        let (p, g) = crate::render::calculate_with(sc, progress, cancel, 2, None, ck)?;
         let rgb = crate::render::paint(sc, &p, &g);
         (rgb, sc.width as usize, sc.height as usize, Some(g))
     };
@@ -238,11 +265,14 @@ pub struct FrameRun {
     /// Size factor for quick previews (the DE stop is scaled along)
     pub preview: f64,
     pub threads: usize,
+    /// The frame under way keeps a checkpoint (see [`crate::checkpoint`]):
+    /// a stopped animation continues in the middle of its frame
+    pub resume: crate::checkpoint::Policy,
 }
 
 impl Default for FrameRun {
     fn default() -> Self {
-        FrameRun { from_index: None, to_index: None, every: 1, preview: 1.0, threads: 0 }
+        FrameRun { from_index: None, to_index: None, every: 1, preview: 1.0, threads: 0, resume: crate::checkpoint::Policy::Off }
     }
 }
 
@@ -287,8 +317,15 @@ pub fn frame_params(a: &Animation, frame: usize) -> Result<Vec<u8>, String> {
 /// What happened to a frame.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FrameResult {
-    Written { path: PathBuf, seconds: f64 },
+    /// `continued`: what an unfinished render of the frame had done
+    Written { path: PathBuf, seconds: f64, continued: Option<String> },
     Skipped { path: PathBuf, why: Skip },
+}
+
+/// What an unfinished render continued had done ("12 of 900 rows").
+pub fn continued_note(ck: Option<&crate::checkpoint::Store>) -> Option<String> {
+    let c = ck.filter(|c| c.resumed() > 0)?;
+    Some(format!("continued an unfinished render: {} of {} {} were done", c.resumed(), c.spec().units, if c.spec().kind == "tiles" { "tiles" } else { "rows" }))
 }
 
 /// Calculates frame `frame` and writes it into its file (or skips it).
@@ -299,6 +336,7 @@ pub fn render_frame_to_file(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<FrameResult, String> {
+    let mut continued: Option<String> = None;
     let mut result: Option<FrameResult> = None;
     let mut seconds = 0.0;
     for (mode, eye) in a.stereo_eyes() {
@@ -321,15 +359,22 @@ pub fn render_frame_to_file(
             crate::maps::set_current_frame(a.file_index(frame) as i32);
             let mut s = frame_render_scene(a, frame, run)?;
             s.stereo_mode = mode;
-            let img = render_scaled(&s, a.scale.max(1) as usize, a.save_depth, a.transparent && a.format == OutputFormat::Png, progress, cancel)?;
-            c.finish(&encode(a.format, &img)?)?;
+            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            let ck = open_frame_checkpoint(&s, &name, run.resume);
+            continued = continued.or_else(|| continued_note(ck.as_ref()));
+            let img = render_scaled_with(&s, a.scale.max(1) as usize, a.save_depth, a.transparent && a.format == OutputFormat::Png, progress, cancel, ck.as_ref(), run.resume)?;
+            // (the depth first: a frame is done once its file is written)
             if let Some(z) = &img.depth {
                 let p = a.depth_file_eye(frame, eye);
                 std::fs::write(&p, crate::png::encode_gray16(img.width, img.height, z)).map_err(|e| format!("{}: {e}", p.display()))?;
             }
+            c.finish(&encode(a.format, &img)?)?;
+            if let Some(ck) = ck {
+                ck.finish();
+            }
             seconds += img.seconds;
         }
-        result = Some(FrameResult::Written { path, seconds });
+        result = Some(FrameResult::Written { path, seconds, continued: continued.clone() });
     }
     Ok(result.expect("at least one eye"))
 }

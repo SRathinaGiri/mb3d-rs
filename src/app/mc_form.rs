@@ -72,6 +72,8 @@ pub struct State {
     batch_max_rays: u32,
     batch_t0: Instant,
     pending_jpg: Option<PathBuf>,
+    /// Start waits for the answer whether to continue the unfinished render
+    resume_ask: bool,
 }
 
 impl Default for State {
@@ -101,6 +103,7 @@ impl Default for State {
             batch_max_rays: 4,
             batch_t0: Instant::now(),
             pending_jpg: None,
+            resume_ask: false,
         }
     }
 }
@@ -344,12 +347,60 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
 
 /// Starts the render thread: passes until stopped (`StartCalc` + Timer1).
 fn start(app: &mut Mb3d, ui: &mut Ui) {
+    start_with(app, ui, None);
+}
+
+/// The Unfinished renders window's Continue: the main window's parameters
+/// (loaded from the render) imported, and their render continued.
+pub fn continue_render(app: &mut Mb3d, ui: &mut Ui) {
+    if app.mc.running {
+        app.message(ui, "The Monte Carlo window is rendering: stop it first.");
+        return;
+    }
+    ui.show(F);
+    import(app, ui);
+    start_with(app, ui, Some(crate::checkpoint::Policy::Continue));
+}
+
+/// [`start`]; `resume`: what to do with an unfinished render of the
+/// parameters (None: ask when the image is empty and one is kept).
+fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Policy>) {
     update_paras(app, ui);
     let Some(p) = app.mc.paras.clone() else { return };
     let mut img = match app.mc.img.take() {
         Some(i) if i.width == p.width as usize && i.height == p.height as usize => i,
         _ => McImage::new(p.width as usize, p.height as usize),
     };
+    let swarm = super::swarm_form::mc_folder(app).is_some();
+    let empty = img.recs.iter().all(|r| r.ray_count == 0);
+    let resume = match resume {
+        Some(r) => r,
+        // (a batch continues what it has without asking)
+        None if empty && !swarm && !app.mc.in_batch => match crate::checkpoint::find(&crate::mc::McCheckpoint::key_of(&p, img.seed_salt, "")) {
+            Some(e) => {
+                app.mc.img = Some(img);
+                app.mc.resume_ask = true;
+                ui.message_box(
+                    "mc:resume",
+                    "Unfinished render",
+                    &format!("An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  \"No\" renders it again from the start.", e.summary()),
+                    &[crate::vcl::form::MR_YES, crate::vcl::form::MR_NO, crate::vcl::form::MR_CANCEL],
+                );
+                return;
+            }
+            None => crate::checkpoint::Policy::Continue,
+        },
+        None => crate::checkpoint::Policy::Continue,
+    };
+    // the checkpoint (the swarm's blocks are not kept: the job's units are)
+    let ck = if swarm { None } else { crate::mc::McCheckpoint::open(&p, img.seed_salt, "", &app.mc.name, resume) };
+    if let Some(c) = &ck {
+        if c.store().resumed() > 0 && c.restore(&mut img) {
+            app.mc.calc_time = (img.seconds * 10.0) as i64;
+        } else {
+            c.start(&img);
+        }
+    }
     let first = img.recs.iter().all(|r| r.ray_count == 0);
     app.mc.img = Some(img.clone());
     app.mc.stop.store(false, Ordering::SeqCst);
@@ -400,7 +451,7 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
                     w.wake();
                 }
             };
-            let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn) };
+            let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn), resume: crate::checkpoint::Policy::Continue };
             // the blocks merged so far, shown as the running pass is
             let live = |img: McImage| {
                 let mut s = shared.lock().unwrap();
@@ -449,7 +500,7 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
                     wk.wake();
                 }
             };
-            let r = crate::mc::pass_rows(&p, &mut img, 0, &pr, &cancel, Some(&row));
+            let r = crate::mc::pass_with(&p, &mut img, 0, &pr, &cancel, Some(&row), ck.as_ref());
             let mut s = shared.lock().unwrap();
             match r {
                 Ok(()) => {
@@ -472,6 +523,13 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
                 w.wake();
             }
             if done {
+                // (a batch entry with its rays: finished, its checkpoint
+                // goes; a stopped render keeps it)
+                if img.stats().max_rays >= max_rays {
+                    if let Some(c) = ck {
+                        c.finish();
+                    }
+                }
                 break;
             }
             progress.store(0, Ordering::Relaxed);
@@ -1033,6 +1091,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
 
 pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
+        ("resume", DialogResult::Button(b)) if app.mc.resume_ask => {
+            app.mc.resume_ask = false;
+            match *b {
+                crate::vcl::form::MR_YES => start_with(app, ui, Some(crate::checkpoint::Policy::Continue)),
+                crate::vcl::form::MR_NO => start_with(app, ui, Some(crate::checkpoint::Policy::Fresh)),
+                _ => {}
+            }
+        }
         ("open", DialogResult::File(Some(p))) => open_m3c(app, ui, p),
         ("save", DialogResult::File(Some(p))) => {
             app.mc.save_name = Some(p.with_extension("m3c"));

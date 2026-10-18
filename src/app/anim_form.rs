@@ -82,7 +82,8 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     }
     let to = ui.text(F, "Edit11").trim().parse::<i64>().ok();
     let from = ui.text(F, "Edit8").trim().parse::<i64>().ok();
-    let run = FrameRun { from_index: from, to_index: to, ..Default::default() };
+    // (a stopped animation continues in the middle of its frame)
+    let run = FrameRun { from_index: from, to_index: to, resume: crate::checkpoint::Policy::Continue, ..Default::default() };
     let frames = run.frames(&a);
     if frames.is_empty() {
         return Err("No frames to render in this range.".into());
@@ -503,7 +504,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
                 let s = stop.clone();
                 std::sync::Arc::new(move || s.load(Ordering::SeqCst))
             };
-            let opts = crate::swarm::RunOptions { name: swarm_name, threads: run.threads, quiet: true, keep: false, cancel: Some(cancel_fn) };
+            let opts = crate::swarm::RunOptions { name: swarm_name, threads: run.threads, quiet: true, keep: false, cancel: Some(cancel_fn), resume: crate::checkpoint::Policy::Continue };
             let report = |st: &str| {
                 if let Some((left, all)) = parse_waiting(st) {
                     let mut j = job.lock().unwrap();

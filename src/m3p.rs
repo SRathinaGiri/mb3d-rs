@@ -1387,15 +1387,7 @@ pub fn write_m3i(sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> Vec<u8> {
     let p = write(sc);
     let mut d = Vec::with_capacity(p.len() + gbuf.len() * 18);
     d.extend_from_slice(&p[..HEADER_SIZE]);
-    for s in gbuf {
-        for n in s.normal {
-            d.extend_from_slice(&n.to_le_bytes());
-        }
-        d.extend_from_slice(&s.zpos_fine.to_le_bytes());
-        for w in [s.shadow, s.amb_shadow, s.si_gradient, s.otrap] {
-            d.extend_from_slice(&w.to_le_bytes());
-        }
-    }
+    d.extend_from_slice(&crate::gbuffer::pack(gbuf));
     d.extend_from_slice(&p[HEADER_SIZE..]);
     d
 }

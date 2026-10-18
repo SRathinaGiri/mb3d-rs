@@ -2392,6 +2392,203 @@ pub fn pass(
     pass_rows(sc, img, threads, progress, cancel, None)
 }
 
+/// The bytes of a [`McRecord`] in a checkpoint.
+const MC_REC_BYTES: usize = 32;
+
+fn pack_recs(r: &[McRecord]) -> Vec<u8> {
+    let mut d = Vec::with_capacity(r.len() * MC_REC_BYTES);
+    for c in r {
+        for v in c.col {
+            d.extend_from_slice(&v.to_le_bytes());
+        }
+        d.extend_from_slice(&c.ysum.to_le_bytes());
+        d.extend_from_slice(&c.ysqr.to_le_bytes());
+        d.extend_from_slice(&c.ray_count.to_le_bytes());
+        d.extend_from_slice(&[c.hit as u8, 0]);
+    }
+    d
+}
+
+fn unpack_recs(d: &[u8]) -> Vec<McRecord> {
+    d.chunks_exact(MC_REC_BYTES)
+        .map(|b| {
+            let f = |k: usize| f32::from_le_bytes(b[k..k + 4].try_into().unwrap());
+            let g = |k: usize| f64::from_le_bytes(b[k..k + 8].try_into().unwrap());
+            McRecord { col: [f(0), f(4), f(8)], ysum: g(12), ysqr: g(20), ray_count: u16::from_le_bytes([b[28], b[29]]), hit: b[30] != 0 }
+        })
+        .collect()
+}
+
+/// The rows of a pass that a checkpoint had already (done or not, by row)
+/// and their records.
+type PartialPass = (Vec<bool>, Vec<(usize, Vec<McRecord>)>);
+
+/// The checkpoint of a Monte Carlo render (see [`crate::checkpoint`]), so
+/// that a stopped or interrupted render goes on exactly as if it had not
+/// stopped, also in the middle of a pass.  A row is kept after each pass
+/// in one of two planes (the plane of the pass number's parity), so the
+/// plane of the other parity still holds the row as it was before the
+/// pass: a pass needs the whole image as it was at its start (its noise
+/// statistics, and the neighbours of every pixel).
+pub struct McCheckpoint {
+    store: crate::checkpoint::Store,
+    width: usize,
+    height: usize,
+    partial: std::sync::Mutex<Option<PartialPass>>,
+}
+
+impl McCheckpoint {
+    /// Opens the checkpoint of the Monte Carlo render of `sc` (with the
+    /// seed salt `salt`; `start` is what decides its first image besides
+    /// the scene: "" for an empty one, else e.g. the hash of the .m3c it
+    /// continues).  None with `Policy::Off` or when it cannot be kept.
+    pub fn open(sc: &Scene, salt: u32, start: &str, name: &str, policy: crate::checkpoint::Policy) -> Option<McCheckpoint> {
+        let s = mc_scene(sc);
+        let (w, h) = (s.width.max(0) as usize, s.height.max(0) as usize);
+        if w == 0 || h == 0 {
+            return None;
+        }
+        let spec = crate::checkpoint::Spec { kind: "mc".into(), key: Self::key_of(sc, salt, start), name: name.into(), width: w, height: 2 * h, rec: MC_REC_BYTES, units: 2 * h };
+        let store = crate::checkpoint::Store::open(spec, policy)?;
+        store.put_extra("scene.m3s", sc.to_text().as_bytes());
+        store.set_value("seed_salt", &salt.to_string());
+        store.set_value("size", &format!("{w} x {h}"));
+        Some(McCheckpoint { store, width: w, height: h, partial: std::sync::Mutex::new(None) })
+    }
+
+    /// The key of the checkpoint of [`McCheckpoint::open`].
+    pub fn key_of(sc: &Scene, salt: u32, start: &str) -> String {
+        let mut s = mc_scene(sc);
+        // (what only changes the painting of the records)
+        s.mc.contrast = 0;
+        s.mc.saturation = 0;
+        crate::checkpoint::key("mc", &format!("{}\nseed_salt = {salt}\nstart = {start}", crate::render::checkpoint_text(&s)))
+    }
+
+    /// A new checkpoint of a render that does not start from an empty
+    /// image (a continued .m3c): its first image.
+    pub fn start(&self, img: &McImage) {
+        if self.store.resumed() > 0 || img.passes == 0 || (img.width, img.height) != (self.width, self.height) {
+            return;
+        }
+        for y in 0..self.height {
+            self.put_row(img.passes, y, &img.recs[y * self.width..(y + 1) * self.width]);
+        }
+        self.pass_done(img);
+    }
+
+    pub fn store(&self) -> &crate::checkpoint::Store {
+        &self.store
+    }
+
+    /// The checkpoint's image into `img`: the passes all rows have done,
+    /// and the rows of the pass under way (calculated by the next pass of
+    /// [`pass_with`]).  False when it holds nothing.
+    pub fn restore(&self, img: &mut McImage) -> bool {
+        let (w, h) = (self.width, self.height);
+        // the passes of a row in each plane (None: not kept)
+        let gens: Vec<[Option<u32>; 2]> = (0..h).map(|y| [self.store.get(y).map(|d| d.gen), self.store.get(h + y).map(|d| d.gen)]).collect();
+        if gens.iter().all(|g| g[0].is_none() && g[1].is_none()) {
+            return false;
+        }
+        let best = |g: &[Option<u32>; 2]| g[0].max(g[1]).unwrap_or(0);
+        let p = gens.iter().map(best).min().unwrap_or(0);
+        let read = |y: usize, gen: u32| -> Option<Vec<McRecord>> {
+            if gen == 0 {
+                return Some(vec![McRecord::default(); w]);
+            }
+            let k = (gen % 2) as usize;
+            (gens[y][k] == Some(gen)).then(|| unpack_recs(&self.store.read([0, k * h + y, w, 1])))
+        };
+        *img = McImage::new(w, h);
+        let mut done = vec![false; h];
+        let mut rows = Vec::new();
+        for y in 0..h {
+            let b = best(&gens[y]);
+            let now = read(y, b).unwrap_or_else(|| vec![McRecord::default(); w]);
+            // the row as it was when the pass under way began
+            let before = if b > p { read(y, p) } else { None };
+            let row = match before {
+                Some(r) => {
+                    done[y] = true;
+                    rows.push((y, now));
+                    r
+                }
+                // (that version is not kept: the row as it is now)
+                None => now,
+            };
+            img.recs[y * w..(y + 1) * w].copy_from_slice(&row);
+        }
+        img.passes = p;
+        img.seconds = self.store.value("seconds").and_then(|v| v.parse().ok()).unwrap_or(0.0);
+        img.seed_salt = self.store.value("seed_salt").and_then(|v| v.parse().ok()).unwrap_or(0);
+        *self.partial.lock().unwrap() = (!rows.is_empty()).then_some((done, rows));
+        true
+    }
+
+    /// The rows of the pass under way it had (see [`McCheckpoint::restore`]).
+    pub fn partial_rows(&self) -> usize {
+        self.partial.lock().unwrap().as_ref().map_or(0, |(_, r)| r.len())
+    }
+
+    fn put_row(&self, gen: u32, y: usize, recs: &[McRecord]) {
+        let k = (gen % 2) as usize;
+        self.store.put(k * self.height + y, gen, [0, k * self.height + y, recs.len(), 1], &pack_recs(recs));
+    }
+
+    /// A pass is finished.
+    fn pass_done(&self, img: &McImage) {
+        self.store.set_value("passes", &img.passes.to_string());
+        self.store.set_value("done_text", &format!("{} passes", img.passes));
+        self.store.set_value("seconds", &format!("{:.3}", img.seconds));
+    }
+
+    /// The render is done (its result saved): the checkpoint goes.
+    pub fn finish(self) {
+        self.store.finish();
+    }
+}
+
+/// [`pass_rows`] with its rows kept in `ck`: the rows of a pass under way
+/// that the checkpoint had are not calculated again.
+pub fn pass_with(
+    sc: &Scene,
+    img: &mut McImage,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
+    ck: Option<&McCheckpoint>,
+) -> Result<(), String> {
+    let Some(ck) = ck.filter(|c| (c.width, c.height) == (img.width, img.height)) else {
+        return pass_rows(sc, img, threads, progress, cancel, rows);
+    };
+    let partial = ck.partial.lock().unwrap().take();
+    let gen = img.passes + 1;
+    let sink = |y: usize, recs: &[McRecord]| {
+        ck.put_row(gen, y, recs);
+        if let Some(f) = rows {
+            f(y, recs);
+        }
+    };
+    let done = partial.as_ref().map(|(d, _)| d.as_slice());
+    let r = pass_inner(sc, img, threads, progress, cancel, Some(&sink), done);
+    // (the rows it had: also after a stop, as the image in memory)
+    if let Some((_, kept)) = partial {
+        let w = img.width;
+        for (y, recs) in kept {
+            img.recs[y * w..(y + 1) * w].copy_from_slice(&recs);
+            if let Some(f) = rows {
+                f(y, &recs);
+            }
+        }
+    }
+    if r.is_ok() {
+        ck.pass_done(img);
+    }
+    r
+}
+
 /// [`pass`], handing every finished row (its number and records) to
 /// `rows`, so the image can be shown while the pass runs (MB3D draws the
 /// lines as they are calculated).
@@ -2402,6 +2599,20 @@ pub fn pass_rows(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
+) -> Result<(), String> {
+    pass_inner(sc, img, threads, progress, cancel, rows, None)
+}
+
+/// [`pass_rows`] without the rows marked in `skip` (calculated before:
+/// they keep their records, the pass's statistics are those of `img`).
+fn pass_inner(
+    sc: &Scene,
+    img: &mut McImage,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
+    skip: Option<&[bool]>,
 ) -> Result<(), String> {
     let t0 = std::time::Instant::now();
     let sc = mc_scene(sc);
@@ -2519,14 +2730,15 @@ pub fn pass_rows(
     let w = img.width;
     let h = img.height;
     let pass_nr = img.passes;
-    let done = std::sync::atomic::AtomicUsize::new(0);
+    let skipped = |y: usize| skip.is_some_and(|s| s.get(y).copied().unwrap_or(false));
+    let done = std::sync::atomic::AtomicUsize::new((0..h).filter(|&y| skipped(y)).count());
     let ctx = &ctx;
     let snap = &snap;
     let done = &done;
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
         let pa = PassArgs { snap, skip_nonzero, avrg_vari, avrg_rcount, max_new, pass_nr: pass_nr as u32 };
-        match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows) {
+        match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows, &skipped, done.load(std::sync::atomic::Ordering::Relaxed)) {
             Ok(status) => {
                 *MC_STATUS.lock().unwrap() = status;
                 img.seconds += t0.elapsed().as_secs_f64();
@@ -2544,7 +2756,7 @@ pub fn pass_rows(
     *MC_STATUS.lock().unwrap() = "CPU".into();
     std::thread::scope(|s| {
         let mut per: Vec<Vec<(usize, &mut [McRecord])>> = (0..threads).map(|_| Vec::new()).collect();
-        for (y, row) in img.recs.chunks_mut(w).enumerate() {
+        for (y, row) in img.recs.chunks_mut(w).enumerate().filter(|(y, _)| !skipped(*y)) {
             per[y % threads].push((y, row));
         }
         for list in per {
@@ -2702,13 +2914,15 @@ fn pass_gpu(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
+    skipped: &(dyn Fn(usize) -> bool + Sync),
+    done_before: usize,
 ) -> Result<String, String> {
     use std::sync::atomic::Ordering;
     use std::sync::mpsc;
     let w = img.width;
     let h = img.height;
     let p = ctx.p;
-    let done_rows = std::sync::atomic::AtomicUsize::new(0);
+    let done_rows = std::sync::atomic::AtomicUsize::new(done_before);
     let (to_main, from_workers) = mpsc::channel::<MainEv>();
     let mut replies = Vec::new();
     let mut inboxes = Vec::new();
@@ -2722,7 +2936,7 @@ fn pass_gpu(
     let share_cpu = std::env::var("MB3D_MC_CPU_SHARE").map_or(true, |v| v != "0");
     std::thread::scope(|s| {
         let mut per: Vec<Vec<(usize, &mut [McRecord])>> = (0..threads).map(|_| Vec::new()).collect();
-        for (y, row) in img.recs.chunks_mut(w).enumerate() {
+        for (y, row) in img.recs.chunks_mut(w).enumerate().filter(|(y, _)| !skipped(*y)) {
             per[y % threads].push((y, row));
         }
         for ((wi, list), inbox) in per.into_iter().enumerate().zip(inboxes) {

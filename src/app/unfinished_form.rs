@@ -1,0 +1,118 @@
+//! The Unfinished renders window (`UnfinishedFrm`, this program's own,
+//! the Resume button of the Open tab): the renders that keep a checkpoint
+//! (see [`crate::checkpoint`]), to continue one or delete them.
+
+use super::{Mb3d, Ui};
+use crate::vcl::{DialogResult, Event};
+
+const F: &str = "UnfinishedFrm";
+
+/// The listed renders, in the order of the list.
+#[derive(Default)]
+pub struct State {
+    entries: Vec<crate::checkpoint::Entry>,
+}
+
+fn refresh(app: &mut Mb3d, ui: &mut Ui) {
+    app.unfinished.entries = crate::checkpoint::list();
+    let g = |e: &crate::checkpoint::Entry, k: &str| e.info.get(k).cloned().unwrap_or_default();
+    let rows: Vec<Vec<String>> = app
+        .unfinished
+        .entries
+        .iter()
+        .map(|e| {
+            let kind = match g(e, "kind").as_str() {
+                "calc" => "picture".to_string(),
+                "mc" => "Monte Carlo".to_string(),
+                "swarm" => "swarm job".to_string(),
+                "mesh" => "mesh".to_string(),
+                k => k.to_string(),
+            };
+            vec![
+                g(e, "name"),
+                kind,
+                e.size_text(),
+                e.done_text(),
+                if e.busy { "rendering now".into() } else { crate::checkpoint::ago(e.age()) },
+                format!("{:.1}", e.bytes as f64 / 1e6),
+            ]
+        })
+        .collect();
+    let total: u64 = app.unfinished.entries.iter().map(|e| e.bytes).sum();
+    let c = ui.cm(F, "ListView1");
+    c.checks.clear();
+    c.cells = rows;
+    if c.item_index >= c.cells.len() as i32 || c.item_index < 0 {
+        c.item_index = if c.cells.is_empty() { -1 } else { 0 };
+    }
+    ui.set_caption(F, "Label2", &format!("{} render(s), {:.1} MB", app.unfinished.entries.len(), total as f64 / 1e6));
+}
+
+/// The selected render.
+fn selected(app: &Mb3d, ui: &Ui) -> Option<crate::checkpoint::Entry> {
+    let i = ui.item_index(F, "ListView1");
+    (i >= 0).then(|| app.unfinished.entries.get(i as usize).cloned()).flatten()
+}
+
+/// Loads the parameters of `e` into the main window.
+fn load(app: &mut Mb3d, ui: &mut Ui, e: &crate::checkpoint::Entry) -> Result<(), String> {
+    let text = e.scene_text().ok_or("This render kept no parameters.")?;
+    app.scene = crate::scene::Scene::parse(&text)?;
+    app.title = e.info.get("name").cloned().unwrap_or_default();
+    app.eng.clear();
+    super::main_form::scene_loaded(app, ui);
+    Ok(())
+}
+
+pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
+    match e.handler.as_str() {
+        "FormShow" => refresh(app, ui),
+        "Button1Click" | "Button2Click" => {
+            let Some(en) = selected(app, ui) else { return };
+            if en.busy {
+                app.message(ui, "This render is running right now.");
+                return;
+            }
+            if let Err(m) = load(app, ui, &en) {
+                app.message(ui, &m);
+                return;
+            }
+            if e.handler == "Button1Click" {
+                match en.info.get("kind").map(String::as_str) {
+                    Some("calc") => {
+                        ui.hide(F);
+                        super::main_form::continue_calc(app, ui, &en.key());
+                    }
+                    Some("mc") => {
+                        ui.hide(F);
+                        super::mc_form::continue_render(app, ui);
+                    }
+                    _ => app.message(ui, "Parameters loaded: this render continues where it was made (the command line or its window)."),
+                }
+            }
+        }
+        "Button3Click" => {
+            if let Some(en) = selected(app, ui) {
+                if !crate::checkpoint::remove(&en) {
+                    app.message(ui, "This render is running right now.");
+                }
+                refresh(app, ui);
+            }
+        }
+        "Button4Click" => {
+            if !app.unfinished.entries.is_empty() {
+                ui.confirm("unfinished:clear", "Delete what all unfinished renders kept?");
+            }
+        }
+        _ => {}
+    }
+}
+
+pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
+    if let ("clear", DialogResult::Button(crate::vcl::form::MR_YES)) = (what, r) {
+        for e in crate::checkpoint::list() {
+            crate::checkpoint::remove(&e);
+        }
+        refresh(app, ui);
+    }
+}

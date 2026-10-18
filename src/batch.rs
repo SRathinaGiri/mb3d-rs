@@ -17,7 +17,7 @@
 //! ```
 
 use crate::anim::OutputFormat;
-use crate::frames::{claim, render_scaled, Skip};
+use crate::frames::{claim, render_scaled_with, Skip};
 use std::path::{Path, PathBuf};
 
 /// One entry of the batch list.
@@ -45,6 +45,8 @@ pub struct BatchOptions {
     /// Scene changes for every file
     pub overrides: Vec<String>,
     pub threads: usize,
+    /// The item under way keeps a checkpoint (see [`crate::checkpoint`])
+    pub resume: crate::checkpoint::Policy,
 }
 
 impl Default for BatchOptions {
@@ -58,6 +60,7 @@ impl Default for BatchOptions {
             depth: false,
             overrides: Vec::new(),
             threads: 0,
+            resume: crate::checkpoint::Policy::Off,
         }
     }
 }
@@ -186,7 +189,7 @@ pub fn render_item(
 ) -> ItemResult {
     let run = || -> Result<ItemResult, String> {
         // load first: a broken file must not leave a claimed output behind
-        let (s, aa, notes) = item_scene(item, opts)?;
+        let (s, aa, mut notes) = item_scene(item, opts)?;
         let c = match claim(output, !opts.skip_existing)? {
             Ok(c) => c,
             Err(why) => return Ok(ItemResult::Skipped { output: output.to_path_buf(), why }),
@@ -195,12 +198,19 @@ pub fn render_item(
             c.finish(&crate::m3p::write(&s))?;
             return Ok(ItemResult::Done { output: output.to_path_buf(), seconds: 0.0, notes });
         }
-        let img = render_scaled(&s, aa, opts.depth, false, progress, cancel)?;
-        c.finish(&crate::frames::encode(opts.format, &img)?)?;
+        let name = output.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let ck = crate::frames::open_frame_checkpoint(&s, &name, opts.resume);
+        notes.extend(crate::frames::continued_note(ck.as_ref()));
+        let img = render_scaled_with(&s, aa, opts.depth, false, progress, cancel, ck.as_ref(), opts.resume)?;
+        // (the depth first: an item is done once its file is written)
         if let Some(z) = &img.depth {
             let stem = output.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
             let p = output.with_file_name(format!("{stem}_depth.png"));
             std::fs::write(&p, crate::png::encode_gray16(img.width, img.height, z)).map_err(|e| format!("{}: {e}", p.display()))?;
+        }
+        c.finish(&crate::frames::encode(opts.format, &img)?)?;
+        if let Some(ck) = ck {
+            ck.finish();
         }
         Ok(ItemResult::Done { output: output.to_path_buf(), seconds: img.seconds, notes })
     };
