@@ -412,6 +412,7 @@ Ready-to-run programs for the latest release, no installation needed:
 | Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
 | Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
 | Debian, Ubuntu, Mint (installs like other programs) | [mb3d-rs-linux-x64.deb](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.deb) |
+| Fedora, RHEL, Rocky, openSUSE (installs like other programs) | [mb3d-rs-linux-x64.rpm](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.rpm) |
 | macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
 | macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
 
@@ -443,7 +444,10 @@ The Linux programs run on distributions from about 2018 on (Ubuntu 18.04,
 Debian 10, Rocky/RHEL 8 and newer).
 
 **Installed like other programs:** on Debian, Ubuntu and Mint, open the
-`.deb` file above (or `sudo apt install ./mb3d-rs-linux-x64.deb`).
+`.deb` file above (or `sudo apt install ./mb3d-rs-linux-x64.deb`); on
+Fedora, RHEL and Rocky the `.rpm` file (`sudo dnf install
+./mb3d-rs-linux-x64.rpm`, on openSUSE `sudo zypper install
+./mb3d-rs-linux-x64.rpm`).
 Mandelbulb3D is then in the application menu and `mb3d` works in any
 folder; your settings and History are kept in `~/.config/mb3d-rs` and
 `~/.local/share/mb3d-rs`.

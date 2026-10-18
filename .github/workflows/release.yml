@@ -4,13 +4,24 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # run by hand with a tag: builds that tag again and adds the packages a
+  # release made before is missing (the .rpm) to its release
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "existing release tag to add missing packages to (empty: just build)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
   # build provenance attestations of the archives (gh attestation verify)
   id-token: write
   attestations: write
+
+env:
+  # the tag being released (pushed, or given by hand)
+  TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   build:
@@ -28,6 +39,14 @@ jobs:
           - { os: macos-latest, target: x86_64-apple-darwin, ext: "", asset: macos-x64 }
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      # the packaging scripts of this workflow's commit (by hand, the tag's
+      # own may be older)
+      - uses: actions/checkout@v7
+        with:
+          path: ci
+          sparse-checkout: tools
       # the original Mandelbulb3D folder (formulas, maps, parameters, sources)
       # is shipped next to the program
       - uses: actions/checkout@v7
@@ -81,7 +100,7 @@ jobs:
       - name: Package
         shell: bash
         run: |
-          name=mb3d-rs-${GITHUB_REF_NAME}-${{ matrix.target }}
+          name=mb3d-rs-${TAG}-${{ matrix.target }}
           mkdir -p "$name"
           # the folder looks like a Mandelbulb3D installation: the program next
           # to MB3D's data folders and documentation, MB3D's working folders,
@@ -132,13 +151,18 @@ jobs:
           # Debian/Ubuntu: a .deb of the same folder (programs in /usr/bin,
           # MB3D's folders in /usr/share/mb3d-rs)
           if [ "${{ runner.os }}" = "Linux" ]; then
-            v=${GITHUB_REF_NAME#v}
+            v=${TAG#v}
             case "$v" in [0-9]*) ;; *) v=0.0.0~$v ;; esac
-            tools/build_deb.sh "$name" "$v" deb
+            ci/tools/build_deb.sh "$name" "$v" deb
             # without the version, like the archives (the README links to
             # releases/latest/download/mb3d-rs-linux-x64.deb)
             mv deb/mb3d-rs_${v}_amd64.deb mb3d-rs-linux-x64.deb
             echo "DEB=mb3d-rs-linux-x64.deb" >> "$GITHUB_ENV"
+            # Fedora, RHEL, openSUSE: an .rpm of the same files
+            sudo apt-get install -y rpm > /dev/null
+            ci/tools/build_rpm.sh "$name" "$v" rpm
+            mv rpm/mb3d-rs-*.x86_64.rpm mb3d-rs-linux-x64.rpm
+            echo "RPM=mb3d-rs-linux-x64.rpm" >> "$GITHUB_ENV"
           fi
       # the .deb installed on the runner: the programs, their files in
       # /usr/share/mb3d-rs, the man page
@@ -152,19 +176,36 @@ jobs:
           test -s /tmp/t.png
           # the user's files are not written next to the programs
           test ! -e /usr/bin/ShaderCache
+      # the .rpm installed on the oldest system the programs are made for
+      - name: Try the .rpm
+        if: runner.os == 'Linux'
+        run: |
+          docker run --rm -e RPM -v "$PWD:/w" rockylinux:8 sh -ec '
+            dnf install -y -q /w/$RPM
+            rpm -q mb3d-rs
+            mb3d --version
+            test -f /usr/share/man/man1/mb3d.1.gz
+            f=$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i "apollo.*\.m3p$")
+            mb3d -W 64 -H 48 --cpu -q -o /tmp/t.png "/usr/share/mb3d-rs/M3Parameter/$f"
+            test -s /tmp/t.png
+            dnf remove -y -q mb3d-rs
+            test ! -e /usr/bin/mb3d'
       - uses: actions/upload-artifact@v7
         if: runner.os == 'Linux'
         with:
-          path: ${{ env.DEB }}
+          path: |
+            ${{ env.DEB }}
+            ${{ env.RPM }}
           archive: false
           if-no-files-found: error
       # a signed record that this archive was built here from this commit
       - uses: actions/attest-build-provenance@v4
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
         with:
           subject-path: |
             ${{ env.ARCHIVE }}
             ${{ env.DEB }}
+            ${{ env.RPM }}
       # uploaded as it is (not zipped again): the artifact is the archive itself
       - uses: actions/upload-artifact@v7
         with:
@@ -176,17 +217,38 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     # publish what was built even if one platform failed
-    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/') }}
+    if: ${{ !cancelled() && (startsWith(github.ref, 'refs/tags/') || inputs.tag != '') }}
     steps:
       - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
           skip-decompress: true
+      # by hand: the release's own files stay, only the missing ones are added
+      - name: Files of the existing release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir old
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir old --pattern 'mb3d-rs*'
+          for f in old/*; do mv -f "$f" dist/; done
+          ls dist
       # the checksums download.sh verifies before it unpacks an archive
       - name: Checksums
         run: cd dist && sha256sum mb3d-rs* > SHA256SUMS && cat SHA256SUMS
       - name: Create the release
+        if: inputs.tag == ''
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "mb3d-rs $GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "mb3d-rs $TAG" --generate-notes
+      - name: Add the missing files to the release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          have=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets -q '.assets[].name')
+          for f in dist/mb3d-rs*; do
+            grep -qxF "$(basename "$f")" <<< "$have" || gh release upload "$TAG" "$f" --repo "$GITHUB_REPOSITORY"
+          done
+          gh release upload "$TAG" dist/SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber

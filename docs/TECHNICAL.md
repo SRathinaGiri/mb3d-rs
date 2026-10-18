@@ -1145,7 +1145,17 @@ It lays the files out as a system program: `/usr/bin/mb3d`,
 `M3Parameter`, `EM_JIT_M3Formulas`, `Themes`, `examples`) in
 `/usr/share/mb3d-rs`, the menu entry `mb3d-rs.desktop` and its icon, the
 man page and the completions in Debian's folders (zsh:
-`vendor-completions`).
+`vendor-completions`). `mb3d-rs-linux-x64.rpm` (`tools/build_rpm.sh`,
+`rpmbuild` on the runner) has the same files in the same places (zsh:
+`site-functions`). It requires only glibc 2.28 and libgcc, since the
+programs open Vulkan, X11 and Wayland while running, and only recommends
+the Vulkan loader and libxkbcommon (each under its Fedora/RHEL or openSUSE
+name). It is xz-compressed, not stripped again and has no debug package,
+and the workflow installs and removes it in a Rocky Linux 8 container as a
+test. Run by hand with a tag (`gh workflow run release.yml -f
+tag=v0.2.N`), the workflow builds that tag again with the current
+packaging scripts and adds the files that release is missing, together
+with new checksums.
 
 **The icon on the desktops.** The menu entry `mb3d-rs.desktop` names the
 icon `mb3d-rs` (hicolor theme, 16 to 256 px). A running window is matched
