@@ -977,6 +977,11 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
             let cols: u32 = job.setting::<u32>("cols").unwrap_or(1).max(1);
             let rows: u32 = job.setting::<u32>("rows").unwrap_or(1).max(1);
             let downscale: u32 = job.setting("downscale").unwrap_or(1);
+            // the tiles are the final pictures (Big renders), or only their
+            // G-buffers are (the owner paints the whole picture from them:
+            // the tile's own reflections and depth of field would be
+            // calculated for nothing)
+            let full_paint = job.setting::<String>("paint").is_none_or(|p| p != "preview");
             let units = (cols as usize).saturating_mul(rows as usize);
             for k in job.tile_indices() {
                 if cancel() || no_more() {
@@ -1006,8 +1011,10 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 let mut ts = scene.clone();
                 ts.tiling = Some(crate::scene::Tiling { cols, rows, pos: Some((k as u32 % cols, k as u32 / cols)), downscale });
                 let progress = |d: usize, t: usize| heart.beat(&format!("{} {:.0} %", label(&unit), 100.0 * d as f64 / t.max(1) as f64));
+                // (after the march: the post calculations and the painting)
+                let stage = |s: &str| heart.beat(&format!("{}, {s}", label(&unit)));
                 let t0 = Instant::now();
-                let res = match crate::render::render_tiled_cancellable(&ts, true, &progress, &|_, _, _| {}, cancel) {
+                let res = match crate::render::render_tile_staged(&ts, full_paint, &progress, &stage, cancel) {
                     Ok(r) => r,
                     // the claim is dropped empty: another computer takes the tile
                     Err(e) if e == "cancelled" => break,
@@ -1406,7 +1413,7 @@ pub fn run_tiles(swarm: &Path, scene: &Scene, cols: u32, rows: u32, opts: &RunOp
         }
         Ok(())
     };
-    run_tiles_files(swarm, scene, cols, rows, None, opts, report, preview, &collect)?;
+    run_tiles_job(swarm, scene, cols, rows, None, false, opts, report, preview, &collect)?;
     // (each tile's buffer has its shadows and ambient occlusion already,
     // calculated with the tile's border as MB3D's big-render tiles are)
     Ok(full.into_inner().unwrap_or_else(|e| e.into_inner()))
@@ -1425,6 +1432,25 @@ pub fn run_tiles_files(
     cols: u32,
     rows: u32,
     subset: Option<&[usize]>,
+    opts: &RunOptions,
+    report: Report,
+    preview: Option<&(dyn Fn(Preview) + Sync)>,
+    collect: &(dyn Fn(usize, &Path, &Path) -> Result<(), String> + Sync),
+) -> Result<(), String> {
+    run_tiles_job(swarm, scene, cols, rows, subset, true, opts, report, preview, collect)
+}
+
+/// [`run_tiles_files`]; `full_paint`: the tiles' pictures are painted in
+/// full (they are the result), else only as previews (their G-buffers
+/// are).
+#[allow(clippy::too_many_arguments)]
+fn run_tiles_job(
+    swarm: &Path,
+    scene: &Scene,
+    cols: u32,
+    rows: u32,
+    subset: Option<&[usize]>,
+    full_paint: bool,
     opts: &RunOptions,
     report: Report,
     preview: Option<&(dyn Fn(Preview) + Sync)>,
@@ -1454,6 +1480,9 @@ pub fn run_tiles_files(
     settings.insert("height".into(), scene.height.to_string());
     if subset.is_some() {
         settings.insert("tiles".into(), tiles.iter().map(|k| k.to_string()).collect::<Vec<_>>().join(" "));
+    }
+    if !full_paint {
+        settings.insert("paint".into(), "preview".into());
     }
     let job = new_job(swarm, JobKind::Tiles, "picture", &heart, settings)?;
     let result = (|| -> Result<(), String> {

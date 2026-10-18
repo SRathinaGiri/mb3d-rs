@@ -443,6 +443,7 @@ fn run() -> Result<(), String> {
             let mut fs = scene.clone();
             fs.tiling = None;
             let p = mb3d::calc::CalcParams::new(&fs)?;
+            report("all tiles done, painting the picture");
             let rgb = mb3d::render::paint(&fs, &p, &full);
             let (rgb, w, h) = if aa > 1 { mb3d::render::downsample(&rgb, fs.width as usize, fs.height as usize, aa) } else { (rgb, fs.width as usize, fs.height as usize) };
             write_png(&output, w, h, &rgb)?;

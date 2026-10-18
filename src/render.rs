@@ -1374,6 +1374,75 @@ pub fn render_tiled_cancellable(
     })
 }
 
+/// One tile of `sc.tiling` (its `pos` set) as [`render_tiled`] calculates
+/// it, with its border, for the swarm: `stage` is told what runs after the
+/// march (which reports through `progress`), so a long post calculation
+/// does not look like a hang.  `full`: painted with the reflections and
+/// the depth of field (the tile is the final picture); else a preview
+/// (the G-buffer is the result, the whole picture is painted from it).
+pub fn render_tile_staged(
+    sc: &Scene,
+    full: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> Result<TiledResult, String> {
+    let tl = sc.tiling.ok_or("no tiling set")?;
+    let (c, r) = tl.pos.ok_or("no tile set")?;
+    let (w, h) = (sc.width, sc.height);
+    let t = tl.tile_rect(w, h, c, r);
+    if t[2] <= 0 || t[3] <= 0 {
+        return Err("empty tile".into());
+    }
+    let border = TILE_BORDER.max(tl.downscale as i32);
+    let x0 = (t[0] - border).max(0);
+    let y0 = (t[1] - border).max(0);
+    let x1 = (t[0] + t[2] + border).min(w);
+    let y1 = (t[1] + t[3] + border).min(h);
+    let mut ts = sc.clone();
+    ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
+    let t0 = Instant::now();
+    let (p, mut gbuf) = calculate_raw_cancellable(&ts, progress, cancel)?;
+    if post_pending(&ts, &p) {
+        stage(match (ts.shadows.is_some(), ts.ao.is_some()) {
+            (true, true) => "hard shadows and ambient occlusion",
+            (true, false) => "hard shadows",
+            _ => "ambient occlusion",
+        });
+        post_process_cancellable(&ts, &p, &mut gbuf, thread_count(&ts), cancel)?;
+    }
+    let t1 = Instant::now();
+    let trgb = if full {
+        let what = match (ts.mc.reflections, ts.dof.is_some()) {
+            (true, true) => "painting: reflections and depth of field",
+            (true, false) => "painting: reflections",
+            (false, true) => "painting: depth of field",
+            (false, false) => "painting",
+        };
+        stage(what);
+        let rgb = paint_with::<u8>(&ts, &p, &gbuf, true, cancel).0;
+        if cancel() {
+            return Err("cancelled".into());
+        }
+        rgb
+    } else {
+        stage("painting a preview");
+        paint_preview(&ts, &p, &gbuf)
+    };
+    let paint_s = t1.elapsed().as_secs_f64();
+    let tw = (x1 - x0) as usize;
+    let (ow, oh) = (t[2] as usize, t[3] as usize);
+    let (sx, sy) = ((t[0] - x0) as usize, (t[1] - y0) as usize);
+    let mut rgb = Vec::with_capacity(ow * oh * 3);
+    let mut g = Vec::with_capacity(ow * oh);
+    for y in 0..oh {
+        let o = (sy + y) * tw + sx;
+        rgb.extend_from_slice(&trgb[o * 3..(o + ow) * 3]);
+        g.extend_from_slice(&gbuf[o..o + ow]);
+    }
+    Ok(TiledResult { width: ow, height: oh, rgb, gbuffer: Some(g), calc_seconds: (t1 - t0).as_secs_f64(), paint_seconds: paint_s, params: Some(p) })
+}
+
 /// How [`compose_stereo`] puts a left and a right eye image together.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum StereoLayout {
