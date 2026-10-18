@@ -1,6 +1,6 @@
 [package]
 name = "mb3d"
-version = "0.2.51"
+version = "0.2.52"
 edition = "2021"
 description = "Rust port of Mandelbulb3D (MB3D) - renderer and desktop application"
 license = "LGPL-2.1-only"
