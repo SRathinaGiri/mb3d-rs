@@ -814,6 +814,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.54](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.54) · 18 Oct 2026, 11:24 UTC
+
+| Commit | What it does |
+|---|---|
+| [`6752cd9`](https://github.com/thr32423/mb3d-rs/commit/6752cd95f40b5e5d9821fa914770632f8d2df71a) | Version number and release notes of this release |
+| [`0f6b8ed`](https://github.com/thr32423/mb3d-rs/commit/0f6b8ed65b0a69c24ab84ba843f43ea289d51338) | Stopped renders continue where they were |
+| [`13b421e`](https://github.com/thr32423/mb3d-rs/commit/13b421e420bfd64a36337f0b1d44ae39ce498441) | Nightly tests that report problems as issues |
+| [`5e0da28`](https://github.com/thr32423/mb3d-rs/commit/5e0da286986a00970ad2bc073bfed952ea9865de) | README: Updates for v0.2.53 |
+
 ### [v0.2.53](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.53) · 18 Oct 2026, 08:22 UTC
 
 | Commit | What it does |
@@ -854,6 +863,8 @@ in UTC.
 | [`2ee83df`](https://github.com/thr32423/mb3d-rs/commit/2ee83df437361a66cdf7a98a2924ee0863d27e64) | README: drop the "Restored Mandelbulb3D functionality" section and its pictures |
 | [`49e2858`](https://github.com/thr32423/mb3d-rs/commit/49e28588b18ca637e9a3a6d99ea65ef113b2fabd) | README: Updates for v0.2.49 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.49)</summary>
+
 ### [v0.2.49](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.49) · 17 Oct 2026, 05:37 UTC
 
 | Commit | What it does |
@@ -861,8 +872,6 @@ in UTC.
 | [`0e863eb`](https://github.com/thr32423/mb3d-rs/commit/0e863ebb66c1997c4dcb5bc3744330c51d1fe059) | Version number and release notes of this release |
 | [`2f71f99`](https://github.com/thr32423/mb3d-rs/commit/2f71f99704f2235a78722be4843df0f699592d39) | New formula PseudoKleinian: knighty's pseudo Kleinian, on the CPU and the GPU |
 | [`27c9634`](https://github.com/thr32423/mb3d-rs/commit/27c96346e428c399c6f074437540cefb2df7c583) | README: Updates for v0.2.48; the 2D Ulam spiral and its story |
-
-<details><summary>Older releases (v0.1.0 to v0.2.48)</summary>
 
 ### [v0.2.48](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.48) · 17 Oct 2026, 05:02 UTC
 
