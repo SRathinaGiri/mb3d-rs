@@ -179,6 +179,14 @@ struct Presence {
     last: Mutex<Option<Instant>>,
 }
 
+/// The swarm folder as its presences are known by: its real path, the
+/// same before and after the folder is made (on macOS the temporary folder
+/// /var is /private/var, on Windows the real path has a \\?\ prefix).
+fn folder_key(swarm: &Path) -> PathBuf {
+    let _ = std::fs::create_dir_all(swarm);
+    swarm.canonicalize().unwrap_or_else(|_| swarm.to_path_buf())
+}
+
 /// The presences of this program, by swarm folder and name.
 type Presences = Vec<((PathBuf, String), Weak<Presence>)>;
 static PRESENCES: Mutex<Presences> = Mutex::new(Vec::new());
@@ -187,7 +195,7 @@ static NEXT_PART: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::n
 impl Presence {
     /// The presence for this folder and name, shared while any part holds it.
     fn get(swarm: &Path, name: &str) -> Arc<Presence> {
-        let key = (swarm.canonicalize().unwrap_or_else(|_| swarm.to_path_buf()), name.to_string());
+        let key = (folder_key(swarm), name.to_string());
         let mut all = PRESENCES.lock().unwrap_or_else(|e| e.into_inner());
         all.retain(|(_, w)| w.strong_count() > 0);
         if let Some(p) = all.iter().find(|(k, _)| *k == key).and_then(|(_, w)| w.upgrade()) {
@@ -340,7 +348,7 @@ impl Drop for Heart {
 /// program's (`name`: as for [`Heart::new`]), any version.
 pub fn others(swarm: &Path, name: &str) -> Vec<Peer> {
     let name = if name.trim().is_empty() { machine_name() } else { name.trim().to_string() };
-    let key = (swarm.canonicalize().unwrap_or_else(|_| swarm.to_path_buf()), name);
+    let key = (folder_key(swarm), name);
     let own = PRESENCES.lock().unwrap_or_else(|e| e.into_inner()).iter().find(|(k, _)| *k == key).and_then(|(_, w)| w.upgrade()).map(|p| p.peer.id.clone());
     let now = now_secs();
     peers(swarm).into_iter().filter(|p| !p.stale(now) && Some(&p.id) != own.as_ref()).collect()
