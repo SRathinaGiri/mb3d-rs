@@ -122,8 +122,9 @@ impl Default for State {
     }
 }
 
+/// The program's version as it is shown (title bar, main window).
 pub fn version_str() -> String {
-    format!("1.99.37 (mb3d-rs {})", env!("CARGO_PKG_VERSION"))
+    format!("mb3d-rs {}", env!("CARGO_PKG_VERSION"))
 }
 
 fn t(ui: &Ui, c: &str) -> String {
@@ -134,10 +135,14 @@ fn set(ui: &mut Ui, c: &str, s: &str) {
     ui.set_text(F, c, s);
 }
 
-/// The main window's caption: the parameter name, as MB3D shows it.
+/// The main window's caption: the parameter name, as MB3D shows it; the
+/// program's version stays at the right of the title bar (also while a
+/// calculation shows its state in the caption), so a screenshot tells it.
 pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
-    let cap = if app.title.is_empty() { format!("Mandelbulb 3D    v{}", version_str()) } else { app.title.clone() };
-    ui.fm(F).set_caption(&cap);
+    let cap = if app.title.is_empty() { "Mandelbulb 3D".to_string() } else { app.title.clone() };
+    let f = ui.fm(F);
+    f.set_caption(&cap);
+    f.caption_right = version_str();
 }
 
 // ---------------------------------------------------------------------------
@@ -149,7 +154,7 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     app.message(ui, "Welcome to Mandelbulb 3D!");
     app.message(ui, "Visit the official web site for news and updates: https://mb3d.overwhale.com");
     app.message(ui, "");
-    ui.set_caption(F, "Label3", &format!("M3D Version {}", version_str()));
+    ui.set_caption(F, "Label3", &version_str());
     let cpus = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(64) as i64;
     ui.set_position(F, "UpDown3", cpus);
     set(ui, "Edit21", &cpus.to_string());

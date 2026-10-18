@@ -278,7 +278,17 @@ impl Form {
             }
             let lh = line_height(&tf);
             let buttons = caption_buttons(self, th, win_w);
-            let right = buttons.iter().map(|(_, r)| r.x).min().unwrap_or(win_w);
+            let mut right = buttons.iter().map(|(_, r)| r.x).min().unwrap_or(win_w);
+            if !self.caption_right.is_empty() {
+                let rf = Font { bold: false, ..tf.clone() };
+                let rw = cv.text_width(&rf, &self.caption_right);
+                // (only with room for some of the caption left of it)
+                let rx = right - 10 - rw;
+                if rx > tx + 120 {
+                    cv.text(rx, b + (ch - lh) / 2, &self.caption_right, &rf, th.caption_text(active));
+                    right = rx - 12;
+                }
+            }
             let old = cv.clip_to(Rect::new(tx, b, right - tx - 4, ch));
             cv.text(tx, b + (ch - lh) / 2, self.caption(), &tf, th.caption_text(active));
             if let Some(c) = self.caption_led {

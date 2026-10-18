@@ -168,6 +168,9 @@ pub struct Form {
     /// LED in the title bar right of the caption (colour 0xRRGGBB); while
     /// `led_blink` it blinks at half the caret's rate, `led_on` is its phase.
     pub caption_led: Option<u32>,
+    /// text at the right end of the title bar (before its buttons), e.g.
+    /// the program's version; left out where the window is too narrow
+    pub caption_right: String,
     pub led_blink: bool,
     pub led_on: bool,
     /// the LED's hint (shown while the mouse is on it) and where it was
@@ -252,6 +255,7 @@ impl Form {
             active: false,
             caret_on: true,
             caption_led: None,
+            caption_right: String::new(),
             led_blink: false,
             led_on: true,
             led_hint: String::new(),
