@@ -814,6 +814,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.57](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.57) · 18 Oct 2026, 22:43 UTC
+
+| Commit | What it does |
+|---|---|
+| [`6db02d1`](https://github.com/thr32423/mb3d-rs/commit/6db02d1e623002ec42e0f1f3397fa9e2c8fd49cf) | Version number and release notes of this release |
+| [`99e848a`](https://github.com/thr32423/mb3d-rs/commit/99e848ab4768a08a37b0608ebdca977dfdf9ad57) | Auto: the card and the CPU share the shadows and the occlusion |
+| [`397746e`](https://github.com/thr32423/mb3d-rs/commit/397746e6ecf642b1f8c00341b1d45d0bd505e5e0) | The version stays in the title bar |
+| [`23cc639`](https://github.com/thr32423/mb3d-rs/commit/23cc639d81b254d22643dd3760eb4cf90dabc26e) | README: Updates for v0.2.56 |
+
 ### [v0.2.56](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.56) · 18 Oct 2026, 17:04 UTC
 
 | Commit | What it does |
@@ -852,6 +861,8 @@ in UTC.
 | [`c336513`](https://github.com/thr32423/mb3d-rs/commit/c336513f5beacc045642a15b49af9488552c44cb) | README: the authors of Mandelbulb3D in the credits |
 | [`ae8f0fe`](https://github.com/thr32423/mb3d-rs/commit/ae8f0fe56c0d5d7d2c3b74d314e69fb5088b19bc) | README: Updates for v0.2.52 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.52)</summary>
+
 ### [v0.2.52](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.52) · 18 Oct 2026, 00:19 UTC
 
 | Commit | What it does |
@@ -860,8 +871,6 @@ in UTC.
 | [`8c99c20`](https://github.com/thr32423/mb3d-rs/commit/8c99c20ad5f87ad6909c94f6b0833f8f009e0d05) | Swarm: tiles of Calculate 3D no longer paint what nobody uses |
 | [`0e251aa`](https://github.com/thr32423/mb3d-rs/commit/0e251aadc4bfeab41a92f9c6a4911c4d1111826d) | README: the swarm in a section of its own, with how to set it up |
 | [`a1c5e70`](https://github.com/thr32423/mb3d-rs/commit/a1c5e70d626988508bcfa552fdbdbb5d371c1a6d) | README: Updates for v0.2.51 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.51)</summary>
 
 ### [v0.2.51](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.51) · 17 Oct 2026, 22:09 UTC
 
