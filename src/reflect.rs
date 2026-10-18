@@ -1522,6 +1522,11 @@ fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
 #[cfg(feature = "gpu")]
 const CPU_RAYS: usize = 2000;
 
+/// The CPU's part of the rays at which the rest of the reflection rounds
+/// run on the CPU alone (see `reflections_gpu`).
+#[cfg(feature = "gpu")]
+const CPU_FINISH: f64 = 0.6;
+
 /// The per pixel state of the reflection pass on the graphics card: the
 /// tracer fields `calc_ray` keeps between its rays and its frames.
 #[cfg(feature = "gpu")]
@@ -1843,6 +1848,11 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     // Kept per odd and even round: the rounds alternate in what they cost
     // the two (Luna's vase: the CPU's part came out 68 % and 45 % in turn).
     let mut cpu_part: [Option<f64>; 2] = [None; 2];
+    // once the CPU's part of both kinds of round is this big, the card only
+    // adds the cost of its rounds (many small ones with transparency): the
+    // rest of the rounds run here, as small rounds always do
+    let cpu_finish: f64 = std::env::var("MB3D_REFLECT_CPU_FINISH").ok().and_then(|v| v.parse().ok()).unwrap_or(CPU_FINISH);
+    let mut cpu_rest = false;
     loop {
         // ("Stop": rgb is written only at the end, so it stays unchanged)
         if cancel() {
@@ -1919,7 +1929,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         let t0 = std::time::Instant::now();
         let mut res: Vec<Option<RayHit>> = vec![None; all.len()];
         let mut n_gpu = 0usize;
-        if all.len() < CPU_RAYS && !card_only {
+        if (all.len() < CPU_RAYS || cpu_rest) && !card_only {
             for (k, h) in march_cpu(&all, None) {
                 res[k] = Some(h);
             }
@@ -1974,6 +1984,9 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                     res[rest[j]] = Some(h);
                 }
             }
+        }
+        if cpu_part.iter().all(|c| c.is_some_and(|c| c >= cpu_finish)) {
+            cpu_rest = true;
         }
         let n_cpu_done = all.len() - n_gpu;
         if timing {
