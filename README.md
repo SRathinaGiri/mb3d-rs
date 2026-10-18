@@ -814,6 +814,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.56](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.56) · 18 Oct 2026, 17:04 UTC
+
+| Commit | What it does |
+|---|---|
+| [`4a4dcca`](https://github.com/thr32423/mb3d-rs/commit/4a4dcca3f0a65a15d92101fd04bcff981445a04a) | Version number and release notes of this release |
+| [`5b82070`](https://github.com/thr32423/mb3d-rs/commit/5b820705f7403385ba4bd8cc18536bbb1255040c) | Graphics card: single precision finished on the CPU where double was needed |
+| [`e486714`](https://github.com/thr32423/mb3d-rs/commit/e486714a0e41db5a6a22690b93b0d6d75e798152) | Reflections with the graphics card: the CPU finishes when it does most |
+| [`af02f18`](https://github.com/thr32423/mb3d-rs/commit/af02f18fea3acdc29b420ec4cab0d2e11f932eef) | README: Updates for v0.2.55 |
+
 ### [v0.2.55](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.55) · 18 Oct 2026, 13:28 UTC
 
 | Commit | What it does |
@@ -852,6 +861,8 @@ in UTC.
 | [`0e251aa`](https://github.com/thr32423/mb3d-rs/commit/0e251aadc4bfeab41a92f9c6a4911c4d1111826d) | README: the swarm in a section of its own, with how to set it up |
 | [`a1c5e70`](https://github.com/thr32423/mb3d-rs/commit/a1c5e70d626988508bcfa552fdbdbb5d371c1a6d) | README: Updates for v0.2.51 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.51)</summary>
+
 ### [v0.2.51](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.51) · 17 Oct 2026, 22:09 UTC
 
 | Commit | What it does |
@@ -860,8 +871,6 @@ in UTC.
 | [`d8282fe`](https://github.com/thr32423/mb3d-rs/commit/d8282fe94eb30f086f50c6c8f3cebaf26da91ea2) | Swarm: rendering shared between your computers |
 | [`d5d14e6`](https://github.com/thr32423/mb3d-rs/commit/d5d14e6f88d37415825120f21d39ba5787ec5b56) | Quitting during a Monte Carlo render no longer crashes in the driver |
 | [`cdb708f`](https://github.com/thr32423/mb3d-rs/commit/cdb708fc941c37f00f33aee6ed6ce446ca51cf34) | README: Updates for v0.2.50 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.50)</summary>
 
 ### [v0.2.50](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.50) · 17 Oct 2026, 12:15 UTC
 
