@@ -972,7 +972,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     // (a pass stopped half way keeps the rows it finished:
                     // the merge weighs every pixel by its rays)
                     let stop = || cancel() || save() || deadline.is_some_and(|d| Instant::now() > d);
-                    match crate::mc::pass_with(&scene, &mut img, threads, &progress, &stop, None, ck.as_ref()) {
+                    match crate::mc::pass_with(&scene, &mut img, threads, &progress, &stop, None, ck.as_ref(), None) {
                         Ok(()) => {}
                         Err(e) if e == "cancelled" => break,
                         Err(e) => return Err(e),

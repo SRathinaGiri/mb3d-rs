@@ -242,12 +242,26 @@ pub fn calc_bokeh(xx: f32, yy: f32, nr: i32) -> f32 {
 pub struct McRecord {
     /// average colour (square roots of the light with internal gamma 2)
     pub col: [f32; 3],
-    /// average luminance and average squared luminance of the rays
-    pub ysum: f64,
-    pub ysqr: f64,
+    /// average luminance and average squared luminance of the rays (single
+    /// precision as the colour, calculated with in double precision: the
+    /// records of a big image take much memory)
+    pub ysum: f32,
+    pub ysqr: f32,
     pub ray_count: u16,
     /// a ray hit the object (`Zbyte` bit 7)
     pub hit: bool,
+}
+
+impl McRecord {
+    /// the average luminance
+    fn y(&self) -> f64 {
+        self.ysum as f64
+    }
+
+    /// the variance of the luminance of the rays
+    fn noise(&self) -> f64 {
+        self.ysqr as f64 - self.y() * self.y()
+    }
 }
 
 /// `MCRGBtoDouble`: 24 bit value -> -1..~1097
@@ -273,7 +287,7 @@ fn clamp_mc(d: f64) -> f64 {
 
 /// The state of a Monte Carlo rendering: the records plus the statistics
 /// the next pass is steered by.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct McImage {
     pub width: usize,
     pub height: usize,
@@ -297,6 +311,23 @@ pub struct McStats {
     pub max_rays: u32,
     /// some pixels have no ray yet
     pub zero_counts: bool,
+}
+
+impl Clone for McImage {
+    fn clone(&self) -> McImage {
+        let mut c = McImage::new(0, 0);
+        c.clone_from(self);
+        c
+    }
+
+    /// (into the records' buffer when it is big enough: a big image is
+    /// not allocated again)
+    fn clone_from(&mut self, o: &McImage) {
+        let McImage { width, height, recs, passes, seconds, seed_salt, avrg_sqr_noise, avrg_rcount } = o;
+        self.recs.clone_from(recs);
+        (self.width, self.height, self.passes, self.seconds, self.seed_salt) = (*width, *height, *passes, *seconds, *seed_salt);
+        (self.avrg_sqr_noise, self.avrg_rcount) = (*avrg_sqr_noise, *avrg_rcount);
+    }
 }
 
 impl McImage {
@@ -330,8 +361,8 @@ impl McImage {
             for k in 0..3 {
                 a.col[k] = ((a.col[k] as f64 * na + b.col[k] as f64 * nb) / n) as f32;
             }
-            a.ysum = (a.ysum * na + b.ysum * nb) / n;
-            a.ysqr = (a.ysqr * na + b.ysqr * nb) / n;
+            a.ysum = ((a.ysum as f64 * na + b.ysum as f64 * nb) / n) as f32;
+            a.ysqr = ((a.ysqr as f64 * na + b.ysqr as f64 * nb) / n) as f32;
             a.ray_count = a.ray_count.saturating_add(b.ray_count);
             a.hit |= b.hit;
         }
@@ -354,7 +385,7 @@ impl McImage {
             }
             rsum += r.ray_count as f64;
             st.max_rays = st.max_rays.max(r.ray_count as u32);
-            let v = ((r.ysqr - r.ysum * r.ysum) / r.ray_count as f64).max(0.0);
+            let v = (r.noise() / r.ray_count as f64).max(0.0);
             st.avg_noise += v.sqrt();
             st.max_noise = st.max_noise.max(v.sqrt());
         }
@@ -369,7 +400,7 @@ impl McImage {
             .recs
             .iter()
             .filter(|r| r.ray_count != 0)
-            .map(|r| ((r.ysqr - r.ysum * r.ysum) / r.ray_count as f64).max(0.0))
+            .map(|r| (r.noise() / r.ray_count as f64).max(0.0))
             .sum();
         (s / l + 0.002).max(0.002)
     }
@@ -2187,21 +2218,21 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let w = self.c.width;
         let h = self.c.height;
         let at = |x: i32, y: i32| -> &McRecord { &snap[((y - 1) * w + (x - 1)) as usize] };
-        let noise = |r: &McRecord| r.ysqr - r.ysum * r.ysum;
+        let noise = |r: &McRecord| r.noise();
         let (mut maxyd, mut maxyd2, mut maxnoise) = (0f64, 0f64, 0f64);
         let (mut n, mut n2) = (0, 0);
         let mut avg_rc = 0i32;
-        let dt2 = rec.ysum;
+        let dt2 = rec.y();
         if y1 > 1 {
             let r = at(x1, y1 - 1);
-            let dt = r.ysum;
+            let dt = r.y();
             maxyd = (dt - dt2).powi(2);
             maxnoise = noise(r);
             avg_rc = r.ray_count as i32;
             n += 1;
             if x1 > 1 {
                 let r3 = at(x1 - 1, y1 - 1);
-                let dt3 = r3.ysum;
+                let dt3 = r3.y();
                 maxyd += (dt2 - dt3).powi(2);
                 maxyd2 = (dt - dt3).powi(2);
                 maxnoise = maxnoise.max(noise(r3));
@@ -2211,7 +2242,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
             }
             if x1 < w {
                 let r3 = at(x1 + 1, y1 - 1);
-                let dt3 = r3.ysum;
+                let dt3 = r3.y();
                 maxyd += (dt2 - dt3).powi(2);
                 maxyd2 += (dt - dt3).powi(2);
                 maxnoise = maxnoise.max(noise(r3));
@@ -2223,7 +2254,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let mut dt = 0f64;
         if x1 > 1 {
             let r = at(x1 - 1, y1);
-            dt = r.ysum;
+            dt = r.y();
             maxyd += (dt - dt2).powi(2);
             maxnoise = maxnoise.max(noise(r));
             avg_rc += r.ray_count as i32;
@@ -2231,7 +2262,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         }
         if x1 < w {
             let r = at(x1 + 1, y1);
-            let dt3 = r.ysum;
+            let dt3 = r.y();
             maxyd += (dt3 - dt2).powi(2);
             if x1 > 1 {
                 maxyd2 += (dt - dt3).powi(2);
@@ -2243,14 +2274,14 @@ impl<'a, 'c> Tracer<'a, 'c> {
         }
         if y1 < h {
             let r = at(x1, y1 + 1);
-            let dt = r.ysum;
+            let dt = r.y();
             maxyd += (dt - dt2).powi(2);
             maxnoise = maxnoise.max(noise(r));
             avg_rc += r.ray_count as i32;
             n += 1;
             if x1 > 1 {
                 let r3 = at(x1 - 1, y1 + 1);
-                let dt3 = r3.ysum;
+                let dt3 = r3.y();
                 maxyd += (dt2 - dt3).powi(2);
                 maxyd2 += (dt - dt3).powi(2);
                 maxnoise = maxnoise.max(noise(r3));
@@ -2260,7 +2291,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
             }
             if x1 < w {
                 let r3 = at(x1 + 1, y1 + 1);
-                let dt3 = r3.ysum;
+                let dt3 = r3.y();
                 maxyd += (dt2 - dt3).powi(2);
                 maxyd2 += (dt - dt3).powi(2);
                 maxnoise = maxnoise.max(noise(r3));
@@ -2273,7 +2304,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let n2 = n2.max(1) as f64;
         maxyd /= n;
         maxyd2 /= n2;
-        let dt3 = (rec.ysqr - dt2 * dt2) / (dt2.max(0.0) + 0.01);
+        let dt3 = (rec.ysqr as f64 - dt2 * dt2) / (dt2.max(0.0) + 0.01);
         let dm = if !rec.hit {
             0.0
         } else {
@@ -2336,8 +2367,8 @@ impl<'a, 'c> Tracer<'a, 'c> {
             if itcount == 0 {
                 return;
             }
-            let dtmp = rec.ysum;
-            let zz = rec.ysqr;
+            let dtmp = rec.ysum as f64;
+            let zz = rec.ysqr as f64;
             let itmp = rec.ray_count as i32;
             let yy = if itmp != 0 { ((zz - dtmp * dtmp) * 10.0).max(0.03) } else { 0.0 };
             let light = if sqr {
@@ -2350,8 +2381,8 @@ impl<'a, 'c> Tracer<'a, 'c> {
             for k in 0..3 {
                 rec.col[k] = clamp_mc((rec.col[k] as f64 * itmp as f64 + light[k] as f64) * xx) as f32;
             }
-            rec.ysum = clamp_mc((dtmp * itmp as f64 + sum) * xx);
-            rec.ysqr = clamp_mc((zz * itmp as f64 + sqr_sum) * xx);
+            rec.ysum = clamp_mc((dtmp * itmp as f64 + sum) * xx) as f32;
+            rec.ysqr = clamp_mc((zz * itmp as f64 + sqr_sum) * xx) as f32;
             rec.ray_count = (itmp + itcount) as u16;
             let mean = sum / itcount as f64;
             if itmp != 0 && (rec.ray_count as i32) < max_new && (mean - dtmp).powi(2) > yy {
@@ -2401,8 +2432,9 @@ fn pack_recs(r: &[McRecord]) -> Vec<u8> {
         for v in c.col {
             d.extend_from_slice(&v.to_le_bytes());
         }
-        d.extend_from_slice(&c.ysum.to_le_bytes());
-        d.extend_from_slice(&c.ysqr.to_le_bytes());
+        // (double precision, as the records had before)
+        d.extend_from_slice(&(c.ysum as f64).to_le_bytes());
+        d.extend_from_slice(&(c.ysqr as f64).to_le_bytes());
         d.extend_from_slice(&c.ray_count.to_le_bytes());
         d.extend_from_slice(&[c.hit as u8, 0]);
     }
@@ -2414,7 +2446,7 @@ fn unpack_recs(d: &[u8]) -> Vec<McRecord> {
         .map(|b| {
             let f = |k: usize| f32::from_le_bytes(b[k..k + 4].try_into().unwrap());
             let g = |k: usize| f64::from_le_bytes(b[k..k + 8].try_into().unwrap());
-            McRecord { col: [f(0), f(4), f(8)], ysum: g(12), ysqr: g(20), ray_count: u16::from_le_bytes([b[28], b[29]]), hit: b[30] != 0 }
+            McRecord { col: [f(0), f(4), f(8)], ysum: g(12) as f32, ysqr: g(20) as f32, ray_count: u16::from_le_bytes([b[28], b[29]]), hit: b[30] != 0 }
         })
         .collect()
 }
@@ -2550,7 +2582,10 @@ impl McCheckpoint {
 }
 
 /// [`pass_rows`] with its rows kept in `ck`: the rows of a pass under way
-/// that the checkpoint had are not calculated again.
+/// that the checkpoint had are not calculated again.  `start`: the records
+/// of `img` as they are, kept by the caller anyway (the pass needs them as
+/// they were at its start, and else makes a copy of them).
+#[allow(clippy::too_many_arguments)]
 pub fn pass_with(
     sc: &Scene,
     img: &mut McImage,
@@ -2559,9 +2594,10 @@ pub fn pass_with(
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
     ck: Option<&McCheckpoint>,
+    start: Option<&[McRecord]>,
 ) -> Result<(), String> {
     let Some(ck) = ck.filter(|c| (c.width, c.height) == (img.width, img.height)) else {
-        return pass_rows(sc, img, threads, progress, cancel, rows);
+        return pass_inner(sc, img, threads, progress, cancel, rows, None, start);
     };
     let partial = ck.partial.lock().unwrap().take();
     let gen = img.passes + 1;
@@ -2572,7 +2608,7 @@ pub fn pass_with(
         }
     };
     let done = partial.as_ref().map(|(d, _)| d.as_slice());
-    let r = pass_inner(sc, img, threads, progress, cancel, Some(&sink), done);
+    let r = pass_inner(sc, img, threads, progress, cancel, Some(&sink), done, start);
     // (the rows it had: also after a stop, as the image in memory)
     if let Some((_, kept)) = partial {
         let w = img.width;
@@ -2600,11 +2636,13 @@ pub fn pass_rows(
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
 ) -> Result<(), String> {
-    pass_inner(sc, img, threads, progress, cancel, rows, None)
+    pass_inner(sc, img, threads, progress, cancel, rows, None, None)
 }
 
 /// [`pass_rows`] without the rows marked in `skip` (calculated before:
-/// they keep their records, the pass's statistics are those of `img`).
+/// they keep their records, the pass's statistics are those of `img`);
+/// `start` as in [`pass_with`].
+#[allow(clippy::too_many_arguments)]
 fn pass_inner(
     sc: &Scene,
     img: &mut McImage,
@@ -2613,6 +2651,7 @@ fn pass_inner(
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
     skip: Option<&[bool]>,
+    start: Option<&[McRecord]>,
 ) -> Result<(), String> {
     let t0 = std::time::Instant::now();
     let sc = mc_scene(sc);
@@ -2726,14 +2765,20 @@ fn pass_inner(
     let avrg_vari = avrg_sqr_noise.max(0.001);
     let avrg_rcount = img.avrg_rcount;
     let max_new = ((avrg_rcount + avrg_rcount * avrg_rcount * 0.2) * 10.0).round() as i32;
-    let snap = img.recs.clone();
+    let own;
+    let snap: &[McRecord] = match start.filter(|s| s.len() == img.recs.len()) {
+        Some(s) => s,
+        None => {
+            own = img.recs.clone();
+            &own
+        }
+    };
     let w = img.width;
     let h = img.height;
     let pass_nr = img.passes;
     let skipped = |y: usize| skip.is_some_and(|s| s.get(y).copied().unwrap_or(false));
     let done = std::sync::atomic::AtomicUsize::new((0..h).filter(|&y| skipped(y)).count());
     let ctx = &ctx;
-    let snap = &snap;
     let done = &done;
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
@@ -2945,13 +2990,15 @@ fn pass_gpu(
             s.spawn(move || {
                 let march = RefCell::new(McMarch::new(ctx));
                 let active_max = (MC_ACTIVE / threads / 2).max(64);
-                // the pixels in row order: (row, column), every other one
-                // for each group
-                let mut queues: [std::collections::VecDeque<(usize, usize)>; 2] = Default::default();
-                for (i, px) in list.iter().flat_map(|(y, row)| (0..row.len()).map(move |x| (*y, x))).enumerate() {
-                    queues[i & 1].push_back(px);
-                }
-                let mut row_of: std::collections::HashMap<usize, (Vec<McRecord>, usize)> = list.iter().map(|(y, row)| (*y, (row.to_vec(), row.len()))).collect();
+                // the pixels in row order, every other one for each group:
+                // the next pixel of each group (an index into the rows of
+                // `ys`, w pixels each)
+                let ys: Vec<usize> = list.iter().map(|(y, _)| *y).collect();
+                let total = ys.len() * w;
+                let mut next = [0usize, 1];
+                // the rows begun (their records until they are done, and
+                // the pixels to go): a row is kept in the image only whole
+                let mut row_of: std::collections::HashMap<usize, (Vec<McRecord>, usize)> = std::collections::HashMap::new();
                 let mut slices: std::collections::HashMap<usize, &mut [McRecord]> = list.into_iter().collect();
                 type Px<'x> = Pin<Box<dyn Future<Output = McRecord> + 'x>>;
                 struct Group<'x> {
@@ -3020,10 +3067,10 @@ fn pass_gpu(
                         }
                     }
                     let gr = &mut groups[g];
-                    let queue = &mut queues[g];
-                    while gr.active.len() < active_max {
-                        let Some((y, x)) = queue.pop_front() else { break };
-                        let rec = row_of[&y].0[x];
+                    while gr.active.len() < active_max && next[g] < total {
+                        let (y, x) = (ys[next[g] / w], next[g] % w);
+                        next[g] += 2;
+                        let rec = row_of.entry(y).or_insert_with(|| (slices[&y].to_vec(), w)).0[x];
                         let outbox = gr.outbox.clone();
                         let fut = Box::pin(async move {
                             let mut t = Tracer::new(ctx, 0);
@@ -3060,7 +3107,7 @@ fn pass_gpu(
                     }
                     let links: Vec<Rc<Link>> = std::mem::take(&mut *gr.outbox.borrow_mut());
                     if links.is_empty() {
-                        if gr.active.is_empty() && queue.is_empty() {
+                        if gr.active.is_empty() && next[g] >= total {
                             gr.done = true;
                             if to_main.send(MainEv::Round(ToMain { worker: wi, group: g, reqs: None })).is_err() {
                                 return;
@@ -3324,6 +3371,11 @@ fn lab_to_rgb(v: S3) -> S3 {
 /// saturation, the gamma slider of the lighting and HDR soft clipping.
 /// Pixels without rays are black.
 pub fn paint(img: &McImage, mc: &McSettings, gamma: f32) -> Vec<u8> {
+    paint_recs(&img.recs, mc, gamma)
+}
+
+/// [`paint`] of some of the records (e.g. a row), RGB for each.
+pub fn paint_recs(recs: &[McRecord], mc: &McSettings, gamma: f32) -> Vec<u8> {
     let mut contrast = (mc.contrast as f32 / 256.0 + 0.5).powi(2);
     let soft_clip = mc.options & 1 != 0;
     let saturation = (mc.saturation & 0x7F) as f32 / 32.0;
@@ -3339,8 +3391,8 @@ pub fn paint(img: &McImage, mc: &McSettings, gamma: f32) -> Vec<u8> {
     } else {
         (0, 1.0)
     };
-    let mut out = vec![0u8; img.width * img.height * 3];
-    for (o, r) in out.chunks_mut(3).zip(&img.recs) {
+    let mut out = vec![0u8; recs.len() * 3];
+    for (o, r) in out.chunks_mut(3).zip(recs) {
         if r.ray_count == 0 {
             continue;
         }
@@ -3403,7 +3455,7 @@ pub fn write_m3c(sc: &Scene, img: &McImage) -> Vec<u8> {
     let mut d = crate::m3p::write(&s);
     d.reserve(img.recs.len() * REC_SIZE);
     for r in &img.recs {
-        for v in [r.col[0] as f64, r.col[1] as f64, r.col[2] as f64, r.ysum, r.ysqr] {
+        for v in [r.col[0] as f64, r.col[1] as f64, r.col[2] as f64, r.ysum as f64, r.ysqr as f64] {
             d.extend_from_slice(&f64_to_mcrgb(v).to_le_bytes()[..3]);
         }
         d.extend_from_slice(&r.ray_count.to_le_bytes());
@@ -3432,8 +3484,8 @@ pub fn read_m3c(data: &[u8]) -> Result<(crate::m3p::M3pFile, McImage), String> {
     for (i, r) in img.recs.iter_mut().enumerate() {
         let b = &recs[i * REC_SIZE..(i + 1) * REC_SIZE];
         r.col = [mcrgb_to_f64(u24(&b[0..3])) as f32, mcrgb_to_f64(u24(&b[3..6])) as f32, mcrgb_to_f64(u24(&b[6..9])) as f32];
-        r.ysum = mcrgb_to_f64(u24(&b[9..12]));
-        r.ysqr = mcrgb_to_f64(u24(&b[12..15]));
+        r.ysum = mcrgb_to_f64(u24(&b[9..12])) as f32;
+        r.ysqr = mcrgb_to_f64(u24(&b[12..15])) as f32;
         r.ray_count = u16::from_le_bytes([b[15], b[16]]);
         r.hit = b[17] & 128 != 0;
     }
@@ -3515,6 +3567,12 @@ mod tests {
         pass(&sc, &mut a, 1, &|_, _| {}, &|| false).unwrap();
         pass(&sc, &mut b, 3, &|_, _| {}, &|| false).unwrap();
         assert_eq!(a.recs, b.recs);
+    }
+
+    #[test]
+    fn record_size() {
+        // (a 15360 x 15360 image: 5.7 GB of records, held twice in a pass)
+        assert_eq!(std::mem::size_of::<McRecord>(), 24);
     }
 
     #[test]

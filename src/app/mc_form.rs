@@ -4,7 +4,7 @@
 use super::light_form::short_float_str;
 use super::util::{d2byte, d2byte_str, fts_single, parse_float, time_str};
 use super::{Mb3d, MAIN};
-use crate::mc::McImage;
+use crate::mc::{McImage, McRecord};
 use crate::scene::Scene;
 use crate::vcl::bitmap::Bitmap;
 use crate::vcl::form::MR_YES;
@@ -22,13 +22,17 @@ const BATCH_PNL_WIDTH: i32 = 262;
 #[derive(Default)]
 struct Shared {
     /// the records after the last finished pass, with a version number
-    img: Option<McImage>,
+    img: Option<Arc<McImage>>,
     ver: u64,
     /// what a swarm render is at (shown in the window)
     status: String,
-    /// the image of the running pass, row by row, with a version number
-    live: Option<McImage>,
+    /// the blocks of a swarm render merged so far, with a version number
+    live: Option<Arc<McImage>>,
     live_ver: u64,
+    /// the rows of the running pass not shown yet; `rows_reset`: a pass
+    /// began (the window shows the image at its start under its rows)
+    rows: Vec<(usize, Vec<McRecord>)>,
+    rows_reset: bool,
     error: String,
     finished: bool,
 }
@@ -48,7 +52,9 @@ pub struct State {
     pub paras: Option<Scene>,
     /// the DoF settings when DoF is switched off in this window
     dof: crate::dof::DofParams,
-    img: Option<McImage>,
+    /// the records after the last finished pass (while a render runs also
+    /// the records its pass started from, shared with it)
+    img: Option<Arc<McImage>>,
     name: String,
     save_name: Option<PathBuf>,
     shared: Arc<Mutex<Shared>>,
@@ -57,6 +63,9 @@ pub struct State {
     seen_ver: u64,
     seen_live: u64,
     live_painted: Instant,
+    /// the picture is not the painting of `img` (rows of the running pass
+    /// or the noise filter are on it)
+    picture_changed: bool,
     pub running: bool,
     /// the note on the card's shaders compiling was shown for this run
     pub compile_note: bool,
@@ -90,6 +99,7 @@ impl Default for State {
             seen_ver: 0,
             seen_live: 0,
             live_painted: Instant::now(),
+            picture_changed: true,
             running: false,
             compile_note: false,
             start: Instant::now(),
@@ -247,6 +257,24 @@ fn repaint(app: &mut Mb3d, ui: &mut Ui) {
     let Some(img) = &app.mc.img else { return };
     let rgb = crate::mc::paint(img, &p.mc, p.lighting.gamma);
     set_image(ui, img.width, img.height, &rgb);
+    app.mc.picture_changed = false;
+}
+
+/// Rows of the running pass into the shown picture (of `w` x `h`).
+fn paint_rows(ui: &mut Ui, p: &Scene, w: usize, h: usize, rows: &[(usize, Vec<McRecord>)]) {
+    let c = ui.cm(F, "Image1");
+    if !c.picture.as_ref().is_some_and(|b| b.w == w && b.h == h) {
+        c.width = w as i32;
+        c.height = h as i32;
+        c.picture = Some(Bitmap::new(w, h, 0xFF00_0000));
+    }
+    let Some(b) = c.picture.as_mut() else { return };
+    for (y, recs) in rows {
+        let rgb = crate::mc::paint_recs(recs, &p.mc, p.lighting.gamma);
+        for (d, s) in b.px[y * w..y * w + recs.len()].iter_mut().zip(rgb.chunks(3)) {
+            *d = 0xFF00_0000 | (s[0] as u32) << 16 | (s[1] as u32) << 8 | s[2] as u32;
+        }
+    }
 }
 
 fn set_image(ui: &mut Ui, w: usize, h: usize, rgb: &[u8]) {
@@ -273,6 +301,7 @@ fn noise_filter(app: &mut Mb3d, ui: &mut Ui) {
     let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
     let out = crate::denoise::dct_denoise(&rgb, img.width, img.height, sigma, threads);
     set_image(ui, img.width, img.height, &out);
+    app.mc.picture_changed = true;
     app.message(ui, &format!("Noise filter: strength {sigma:.1}"));
 }
 
@@ -368,7 +397,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     update_paras(app, ui);
     let Some(p) = app.mc.paras.clone() else { return };
     let mut img = match app.mc.img.take() {
-        Some(i) if i.width == p.width as usize && i.height == p.height as usize => i,
+        Some(i) if i.width == p.width as usize && i.height == p.height as usize => Arc::try_unwrap(i).unwrap_or_else(|i| (*i).clone()),
         _ => McImage::new(p.width as usize, p.height as usize),
     };
     let swarm = super::swarm_form::mc_folder(app).is_some();
@@ -378,7 +407,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         // (a batch continues what it has without asking)
         None if empty && !swarm && !app.mc.in_batch => match crate::checkpoint::find(&crate::mc::McCheckpoint::key_of(&p, img.seed_salt, "")) {
             Some(e) => {
-                app.mc.img = Some(img);
+                app.mc.img = Some(Arc::new(img));
                 app.mc.resume_ask = true;
                 ui.message_box(
                     "mc:resume",
@@ -402,7 +431,10 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         }
     }
     let first = img.recs.iter().all(|r| r.ray_count == 0);
-    app.mc.img = Some(img.clone());
+    // (the pass's own copy of the records it starts from)
+    let start = Arc::new(img.clone());
+    app.mc.img = Some(start.clone());
+    app.mc.picture_changed = true;
     app.mc.stop.store(false, Ordering::SeqCst);
     app.mc.progress.store(0, Ordering::SeqCst);
     *app.mc.shared.lock().unwrap() = Shared::default();
@@ -455,7 +487,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
             // the blocks merged so far, shown as the running pass is
             let live = |img: McImage| {
                 let mut s = shared.lock().unwrap();
-                s.live = Some(img);
+                s.live = Some(Arc::new(img));
                 s.live_ver += 1;
                 drop(s);
                 if let Some(w) = &waker {
@@ -466,7 +498,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
             let mut s = shared.lock().unwrap();
             match r {
                 Ok(merged) => {
-                    s.img = Some(merged);
+                    s.img = Some(Arc::new(merged));
                     s.ver += 1;
                 }
                 Err(e) => {
@@ -484,27 +516,32 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         return;
     }
     std::thread::spawn(move || {
+        // the records the pass starts from (`img` as it is), the window's
+        // image too
+        let mut start = start;
         loop {
             let pr = |d: usize, _t: usize| progress.store(d, Ordering::Relaxed);
             let cancel = || stop.load(Ordering::Relaxed);
-            shared.lock().unwrap().live = Some(img.clone());
-            let w = img.width;
-            let row = |y: usize, recs: &[crate::mc::McRecord]| {
+            {
                 let mut s = shared.lock().unwrap();
-                if let Some(l) = s.live.as_mut() {
-                    l.recs[y * w..y * w + recs.len()].copy_from_slice(recs);
-                    s.live_ver += 1;
-                }
-                drop(s);
+                s.rows.clear();
+                s.rows_reset = true;
+            }
+            let row = |y: usize, recs: &[McRecord]| {
+                shared.lock().unwrap().rows.push((y, recs.to_vec()));
                 if let Some(wk) = &waker {
                     wk.wake();
                 }
             };
-            let r = crate::mc::pass_with(&p, &mut img, 0, &pr, &cancel, Some(&row), ck.as_ref());
+            let r = crate::mc::pass_with(&p, &mut img, 0, &pr, &cancel, Some(&row), ck.as_ref(), Some(&start.recs));
             let mut s = shared.lock().unwrap();
+            // the image of the pass to the window (the next one starts from
+            // it), and the image before it
+            let mut before = None;
             match r {
                 Ok(()) => {
-                    s.img = Some(img.clone());
+                    before = Some(std::mem::replace(&mut start, Arc::new(std::mem::replace(&mut img, McImage::new(0, 0)))));
+                    s.img = Some(start.clone());
                     s.ver += 1;
                 }
                 Err(e) => {
@@ -514,7 +551,8 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
                     s.finished = true;
                 }
             }
-            let done = s.finished || stop.load(Ordering::Relaxed) || img.stats().max_rays >= max_rays;
+            let cur: &McImage = if before.is_some() { &start } else { &img };
+            let done = s.finished || stop.load(Ordering::Relaxed) || cur.stats().max_rays >= max_rays;
             if done {
                 s.finished = true;
             }
@@ -525,16 +563,44 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
             if done {
                 // (a batch entry with its rays: finished, its checkpoint
                 // goes; a stopped render keeps it)
-                if img.stats().max_rays >= max_rays {
+                if cur.stats().max_rays >= max_rays {
                     if let Some(c) = ck {
                         c.finish();
                     }
                 }
                 break;
             }
+            // the next pass in the buffer of the image before, once the
+            // window let go of it (so that there are not three images at
+            // once), else in a new one
+            if let Some(b) = before {
+                img = match reclaim(b, &stop) {
+                    Some(mut i) => {
+                        i.clone_from(&start);
+                        i
+                    }
+                    None => (*start).clone(),
+                };
+            }
             progress.store(0, Ordering::Relaxed);
         }
     });
+}
+
+/// The image of `old` once nothing else holds it (the window lets go of it
+/// when it takes the next one); None after a while or on Stop.
+fn reclaim(mut old: Arc<McImage>, stop: &AtomicBool) -> Option<McImage> {
+    let t = Instant::now();
+    loop {
+        old = match Arc::try_unwrap(old) {
+            Ok(i) => return Some(i),
+            Err(o) => o,
+        };
+        if stop.load(Ordering::Relaxed) || t.elapsed().as_secs() >= 10 {
+            return None;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
 }
 
 /// The program ends: a running render stops (its thread notices the flag).
@@ -578,17 +644,20 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if ui.c(F, "ProgressBar1").position != pr {
         ui.cm(F, "ProgressBar1").position = pr;
     }
-    let (ver, finished, err, img, live, status) = {
+    let (ver, finished, err, img, live, rows, status) = {
         let mut s = app.mc.shared.lock().unwrap();
         let img = if s.ver != app.mc.seen_ver { s.img.take() } else { None };
-        // the lines of the running pass, a few times a second
-        let live = if img.is_none() && s.live_ver != app.mc.seen_live && app.mc.live_painted.elapsed().as_millis() >= 250 {
+        // the lines of the running pass (or the swarm's merged blocks), a
+        // few times a second
+        let due = img.is_none() && app.mc.live_painted.elapsed().as_millis() >= 250;
+        let live = if due && s.live_ver != app.mc.seen_live {
             app.mc.seen_live = s.live_ver;
             s.live.clone()
         } else {
             None
         };
-        (s.ver, s.finished, std::mem::take(&mut s.error), img, live, std::mem::take(&mut s.status))
+        let rows = if due && (s.rows_reset || !s.rows.is_empty()) { Some((std::mem::take(&mut s.rows_reset), std::mem::take(&mut s.rows))) } else { None };
+        (s.ver, s.finished, std::mem::take(&mut s.error), img, live, rows, std::mem::take(&mut s.status))
     };
     if !status.is_empty() {
         ui.set_caption(F, "Label15", &status);
@@ -596,6 +665,17 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let (Some(l), Some(p)) = (&live, &app.mc.paras) {
         let rgb = crate::mc::paint(l, &p.mc, p.lighting.gamma);
         set_image(ui, l.width, l.height, &rgb);
+        app.mc.live_painted = Instant::now();
+    }
+    if let Some((reset, rows)) = rows {
+        // a new pass: under its rows the image it started from
+        if reset && app.mc.picture_changed {
+            repaint(app, ui);
+        }
+        if let (Some(p), Some(img)) = (&app.mc.paras, &app.mc.img) {
+            paint_rows(ui, p, img.width, img.height, &rows);
+            app.mc.picture_changed = true;
+        }
         app.mc.live_painted = Instant::now();
     }
     if let Some(img) = img {
@@ -672,7 +752,7 @@ fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     if let Some(d) = app.mc.paras.as_ref().and_then(|p| p.dof) {
         app.mc.dof = d;
     }
-    app.mc.img = Some(img);
+    app.mc.img = Some(Arc::new(img));
     set_paras(app, ui);
     ui.set_caption(F, "Button2", "Start rendering");
     repaint(app, ui);

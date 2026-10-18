@@ -2064,7 +2064,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         PASS_HINT.store(img.passes + 1, std::sync::atomic::Ordering::Relaxed);
         let deadline = time.map(|t| t0 + std::time::Duration::from_secs_f64(t));
         let cancel = || deadline.is_some_and(|d| Instant::now() > d);
-        match mb3d::mc::pass_with(&scene, &mut img, threads, &progress, &cancel, None, ck.as_ref()) {
+        match mb3d::mc::pass_with(&scene, &mut img, threads, &progress, &cancel, None, ck.as_ref(), None) {
             Ok(()) => {}
             Err(e) if e == "cancelled" => {
                 if !quiet {
