@@ -117,14 +117,37 @@ double precision. The decision is kept for the scene (its shader, view,
 size and lighting), so calculating it again does not probe again. The
 probe needs the card's single precision shader: with *Auto* it runs once
 that is compiled (from the next calculation of the scene on), with
-*Graphics card* the calculation waits for it. Since 0.2.34 *Auto* leaves
-a scene the probe sends to double precision to the CPU threads
-altogether (consumer cards calculate doubles 16 to 32 times slower:
-*AboxShapes-Misty* took the card 203 s in double precision against 45 s
-on the CPU), *Graphics card* calculates it on the card in double
-precision. Monte Carlo renders use the probe too when the scene's march
-is compiled. `MB3D_GPU_NOPROBE=1` turns it off and `MB3D_PROBE_DEBUG=1`
-prints its result. The command line program waits for a shader still
+*Graphics card* the calculation waits for it.
+
+In such scenes single precision mostly finds the same surfaces; what it
+gets wrong are the values measured at them. So the card marches them in
+single precision all the same and the CPU threads finish its pixels in
+double (`Marcher::finish_pixel`): from the card's depth, the binary
+search within its last digit, the normal, roughness, gradient and colour,
+as the CPU's own march has them when it gets there; the step count (the
+dynamic fog) stays the card's. That costs the CPU a few DE calculations
+a pixel against hundreds for a whole march. The probe finishes its
+sample the same way, and the scene stays in double precision when even
+that differs by more than the limit (2 of the 21 example scenes the
+probe sends to double, *Waste-and-tragedy* and *Bone Menger*: their
+colours come from orbit traps that change with the tiniest move along
+the ray). Scenes with reflections stay in double precision too: their
+rays start from points that differ within the depth's last digit, and on
+fine detail they sparkle differently (*Blood on the dancefloor* differed
+from the CPU's picture by 1.8 % on average, more than any of the 46
+other example scenes does in single precision). With *Auto* the CPU
+threads finish the card's rows before marching their own; with
+*Graphics card* they only finish. The shadows and the occlusion then run
+on the CPU, as after a march in double. Over the 21 scenes (card only,
+480 pixels wide, compiles left out) 49.1 s against 37.5 s: the 13 that
+are finished on the CPU 1.2 to 2.5 times faster (*Shrooms* 5.8 -> 2.3 s,
+*TreePlanet* 1.35 -> 0.59 s), and their pictures differ from the CPU's
+no more than the card's single precision pictures of the other example
+scenes do (at most 1.2 % on average, 5.6 % of the pixels by more than a
+tenth). `MB3D_GPU_MIXED=0` keeps the card in double precision. Monte
+Carlo renders use the probe too (in double precision, as before) when
+the scene's march is compiled. `MB3D_GPU_NOPROBE=1` turns the probe off
+and `MB3D_PROBE_DEBUG=1` prints its result. The command line program waits for a shader still
 compiling before it ends (`gpu::wait_compiles`): a compile the CPU
 threads had overtaken used to die with the process and never reach the
 driver's cache, so a short scene's next run was just as cold.

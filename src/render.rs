@@ -228,6 +228,17 @@ fn calculate_inner(
         // and the card disagrees): double precision (the probe waits for
         // its shader only when the calculation waits for the card anyway)
         p.gpu_double = double_probe(sc, &p, threads, !crate::gpu::auto());
+        // such a scene: the card marches in single precision all the same
+        // and the CPU finishes its pixels in double (the surface, normal,
+        // roughness and colour: what single precision gets wrong; its march
+        // finds the same surfaces)
+        // (the passes after the march, e.g. the reflections on the card,
+        // stay in double: `double_after`)
+        let finish = std::sync::atomic::AtomicBool::new(p.gpu_double && mixed_for(sc, &p));
+        let double_after = finish.load(Ordering::SeqCst);
+        if double_after {
+            p.gpu_double = false;
+        }
         // the reflection pass's pipelines compile meanwhile
         if sc.mc.reflections {
             crate::gpu::reflect_prepare(&p, sc.shadows.is_some(), sc.ao.is_some());
@@ -248,7 +259,11 @@ fn calculate_inner(
                 // 6.8 -> 5.4 s); a slow card just takes fewer rows
                 // (AboxShapes-Misty: 11 %, as fast as the CPU alone).
                 let probe = || {
-                    if p.gpu_double || !double_probe(sc, &p, threads, false) {
+                    if p.gpu_double || finish.load(Ordering::SeqCst) || !double_probe(sc, &p, threads, false) {
+                        return None;
+                    }
+                    if mixed_for(sc, &p) {
+                        finish.store(true, Ordering::SeqCst);
                         return None;
                     }
                     let mut pd = p.clone();
@@ -257,7 +272,7 @@ fn calculate_inner(
                 };
                 let t_march = Instant::now();
                 ck_tag(ck, "raw");
-                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe, ck)?;
+                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe, ck, true, &finish)?;
                 let march_secs = t_march.elapsed().as_secs_f64();
                 let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
                 let rate = |n: usize, t: f64| n as f64 / t.max(1e-6);
@@ -270,7 +285,7 @@ fn calculate_inner(
                 // (not after a march in double precision: the card is slow
                 // in it, and the reflections stay in single precision, as
                 // they were before the card joined in double)
-                let card_posts = n_card > 0 && switched.is_none() && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
+                let card_posts = n_card > 0 && switched.is_none() && !finish.load(Ordering::SeqCst) && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
                 if timing {
                     eprintln!(
                         "  march (card and CPU): {march_secs:.2} s, {n_card} of {h} rows on the card in {card_secs:.2} s; rows/s card {:.1}, CPU {:.1}",
@@ -308,10 +323,25 @@ fn calculate_inner(
                         }
                     }
                 }
+                p.gpu_double |= double_after;
                 return finish_calculation(sc, p, gbuf, post, threads, cancel);
             }
         }
         let card_tag = format!("card {job:?}");
+        if finish.load(Ordering::SeqCst) {
+            // the card marches all rows, the threads finish them (and the
+            // post passes run on the CPU, as after a march in double)
+            if let Ok(flags) = crate::gpu::march_prepare(&p, &PostJob::default()) {
+                ck_tag(ck, "mixed");
+                let (gbuf, n_card, ..) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &|| None, ck, false, &finish)?;
+                if n_card > 0 || ck.is_some_and(|s| s.done_count() == h) {
+                    p.gpu_double |= double_after;
+                    return finish_calculation(sc, p, gbuf, post, threads, cancel);
+                }
+            }
+            // (the card failed: double precision as before)
+            p.gpu_double = true;
+        }
         if let Some(s) = ck.filter(|s| s.done_count() > 0 && s.value("rows").is_some_and(|t| t == "raw" || t == card_tag)) {
             // continued: the card marches the rows the checkpoint lacks
             // (with its post passes as before, or without them, and then
@@ -453,6 +483,31 @@ pub fn calculate_blocky(
     Ok((p, gbuf))
 }
 
+/// Scenes that single precision is too coarse for: the card's march in
+/// single precision finished on the CPU in double (`finish_row`), not the
+/// card in double.  (MB3D_GPU_MIXED=0: in double, as before)
+#[cfg(feature = "gpu")]
+fn mixed_precision() -> bool {
+    std::env::var("MB3D_GPU_MIXED").map_or(true, |v| v != "0")
+}
+
+/// A row of the card's single precision march finished on the CPU in
+/// double precision ([`Marcher::finish_pixel`]).
+#[cfg(feature = "gpu")]
+fn finish_row(p: &CalcParams, y: usize, card: &[SiLight]) -> Vec<SiLight> {
+    let [x0, y0, ..] = p.rect;
+    let yy = y + y0 as usize;
+    let mut m = Marcher::new(p, 0);
+    card.iter()
+        .enumerate()
+        .map(|(k, si)| {
+            let x = x0 as usize + k;
+            m.seed = crate::calc::pixel_seed(yy as i64, x as i64);
+            m.finish_pixel(x as i32, yy as i32, si)
+        })
+        .collect()
+}
+
 /// One row of the main calculation on the CPU (MB3D's per-row seed).
 fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
     let [x0, y0, w, _] = p.rect;
@@ -487,9 +542,16 @@ const PROBE_MS: u64 = 150;
 #[cfg(feature = "gpu")]
 const PROBE_CARD_MS: u64 = 1500;
 
+/// The probe's limit: the mean difference of the colours (a share of full
+/// scale) above which single precision is too coarse.
+#[cfg(feature = "gpu")]
+fn probe_limit() -> f64 {
+    std::env::var("MB3D_PROBE_LIMIT").ok().and_then(|v| v.parse().ok()).unwrap_or(PROBE_LIMIT)
+}
+
 /// The probe's decisions by scene ([`crate::gpu::scene_key`]).
 #[cfg(feature = "gpu")]
-static PROBED: std::sync::Mutex<Vec<(u64, bool)>> = std::sync::Mutex::new(Vec::new());
+static PROBED: std::sync::Mutex<Vec<(u64, bool, bool)>> = std::sync::Mutex::new(Vec::new());
 
 /// Whether the card calculates the scene in double precision although its
 /// zoom allows single: some scenes' fine detail (not deep zooms, mostly
@@ -515,7 +577,7 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
         (key, format!("{:?}", effective_lighting(sc))).hash(&mut h);
         h.finish()
     };
-    if let Some(&(_, d)) = PROBED.lock().unwrap().iter().find(|(k, _)| *k == key) {
+    if let Some(&(_, d, _)) = PROBED.lock().unwrap().iter().find(|(k, ..)| *k == key) {
         return d;
     }
     let ready = if compile {
@@ -536,11 +598,20 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
     }
     let t = Instant::now();
     let f = probe_single(sc, p, threads);
-    let limit = std::env::var("MB3D_PROBE_LIMIT").ok().and_then(|v| v.parse().ok()).unwrap_or(PROBE_LIMIT);
-    let d = f.is_some_and(|(f, _)| f > limit);
+    let limit = probe_limit();
+    let d = f.is_some_and(|f| f.single > limit);
+    // (the card's march finished on the CPU is close enough: `finish_row`)
+    let mixed = d && f.is_some_and(|f| f.mixed <= limit);
     if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
         match f {
-            Some((f, n)) => eprintln!("  probe: {n} pixels, colours differ by {:.2} % in single precision ({:.0} ms): {}", f * 100.0, t.elapsed().as_secs_f64() * 1000.0, if d { "double" } else { "single" }),
+            Some(f) => eprintln!(
+                "  probe: {} pixels, colours differ by {:.2} % in single precision, {:.2} % finished in double ({:.0} ms): {}",
+                f.pixels,
+                f.single * 100.0,
+                f.mixed * 100.0,
+                t.elapsed().as_secs_f64() * 1000.0,
+                if mixed { "single, finished in double" } else if d { "double" } else { "single" }
+            ),
             None => eprintln!("  probe: no result ({:.0} ms)", t.elapsed().as_secs_f64() * 1000.0),
         }
     }
@@ -548,8 +619,38 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
     if list.len() >= 256 {
         list.remove(0);
     }
-    list.push((key, d));
+    list.push((key, d, mixed));
     d
+}
+
+/// For a scene [`double_probe`] sent to double precision: whether the
+/// card marches it in single precision, finished on the CPU in double
+/// (`finish_row`): when its probe found that close enough (as single
+/// precision is for other scenes), and the scene has no reflections (their
+/// rays from the slightly other points within the depth's last digit
+/// sparkle differently on fine detail: *Blood on the dancefloor* differed
+/// from the CPU's picture by 1.8 % on average, more than any scene in
+/// single precision does).
+#[cfg(feature = "gpu")]
+fn mixed_for(sc: &Scene, p: &CalcParams) -> bool {
+    mixed_precision() && !sc.mc.reflections && mixed_ok(sc, p)
+}
+
+/// The probe of [`double_probe`] found the card's march finished on the CPU
+/// in double precision close enough.
+#[cfg(feature = "gpu")]
+fn mixed_ok(sc: &Scene, p: &CalcParams) -> bool {
+    // (the key of the probe's parameters: in single precision)
+    let mut ps = p.clone();
+    ps.gpu_double = false;
+    let Some(key) = crate::gpu::scene_key(&ps) else { return false };
+    let key = {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        (key, format!("{:?}", effective_lighting(sc))).hash(&mut h);
+        h.finish()
+    };
+    PROBED.lock().unwrap().iter().find(|(k, ..)| *k == key).is_some_and(|&(_, _, m)| m)
 }
 
 /// The probe of [`double_probe`]: the mean difference of the colours of a
@@ -562,7 +663,7 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
 /// card cannot march the scene (or not within [`PROBE_CARD_MS`]) or the
 /// CPU did too few pixels in its time.
 #[cfg(feature = "gpu")]
-pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, usize)> {
+pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe> {
     use std::sync::OnceLock;
     let [x0, y0, w, h] = p.rect.map(|v| v.max(0) as usize);
     if w == 0 || h == 0 {
@@ -615,15 +716,16 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
     let soft = lv.lights.iter().any(|l| l.hs_mask == u16::MAX);
     // (MB3D_PROBE_DEBUG: the counts of clear differences: any, the object
     // or not, depth, normal, gradient, roughness)
+    // (painted lit: the soft shadow's light in full, no hard shadows)
+    let lit = |si: &SiLight| SiLight { shadow: if soft { 0xFC00 } else { 0 }, ..*si };
+    let colour = |si: &SiLight, x: usize, y: usize| lv.pixel_color(&lit(si), (x + x0) as i32, (y + y0) as i32, &cam);
+    let off = |u: &[u8; 3], v: &[u8; 3]| u.iter().zip(v).map(|(&u, &v)| (u as f64 - v as f64).abs()).sum::<f64>() / (3.0 * 255.0);
     let mut n = [0usize; 6];
     let (mut total, mut diff) = (0usize, 0f64);
     for (&(y, x), c) in samples.iter().zip(&cpu) {
         let (Some(b), Some(a)) = (c.get(), card.iter().find(|(yy, _)| *yy == y).and_then(|(_, r)| r.get(x / sxy))) else { continue };
         total += 1;
-        // (painted lit: the soft shadow's light in full, no hard shadows)
-        let lit = |si: &SiLight| SiLight { shadow: if soft { 0xFC00 } else { 0 }, ..*si };
-        let (ca, cb) = (lv.pixel_color(&lit(a), (x + x0) as i32, (y + y0) as i32, &cam), lv.pixel_color(&lit(b), (x + x0) as i32, (y + y0) as i32, &cam));
-        diff += ca.iter().zip(&cb).map(|(&u, &v)| (u as f64 - v as f64).abs()).sum::<f64>() / (3.0 * 255.0);
+        diff += off(&colour(a, x, y), &colour(b, x, y));
         let d = if a.is_background() || b.is_background() {
             [a.is_background() != b.is_background(), false, false, false, false]
         } else {
@@ -646,7 +748,54 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<(f64, 
         let pc = |k: usize| n[k] as f64 * 100.0 / total.max(1) as f64;
         eprintln!("  probe: any {:.2} %, object {:.2} %, depth {:.2} %, normal {:.2} %, gradient {:.2} %, roughness {:.2} %", pc(0), pc(1), pc(2), pc(3), pc(4), pc(5));
     }
-    (total >= 100).then(|| (diff / total as f64, total))
+    if total < 100 {
+        return None;
+    }
+    let single = diff / total as f64;
+    if single <= probe_limit() {
+        return Some(Probe { single, mixed: single, pixels: total });
+    }
+    // the card's pixels finished here in double precision (`finish_row`)
+    let fin: Vec<OnceLock<SiLight>> = (0..ns).map(|_| OnceLock::new()).collect();
+    let next = AtomicUsize::new(0);
+    std::thread::scope(|s| {
+        for _ in 0..threads.max(1) {
+            s.spawn(|| {
+                crate::calc::statistics_off(true);
+                loop {
+                    let j = next.fetch_add(1, Ordering::Relaxed);
+                    if j >= ns {
+                        break;
+                    }
+                    let (y, x) = samples[j];
+                    let Some(a) = card.iter().find(|(yy, _)| *yy == y).and_then(|(_, r)| r.get(x / sxy)) else { continue };
+                    let (xx, yy) = ((x + x0) as i32, (y + y0) as i32);
+                    let mut m = Marcher::new(p, crate::calc::pixel_seed(yy as i64, xx as i64));
+                    let _ = fin[j].set(m.finish_pixel(xx, yy, a));
+                }
+            });
+        }
+    });
+    let mut diff_mixed = 0f64;
+    for ((&(y, x), c), f) in samples.iter().zip(&cpu).zip(&fin) {
+        if let (Some(b), Some(f)) = (c.get(), f.get()) {
+            diff_mixed += off(&colour(f, x, y), &colour(b, x, y));
+        }
+    }
+    Some(Probe { single, mixed: diff_mixed / total as f64, pixels: total })
+}
+
+/// What [`probe_single`] found: the mean differences of the colours of the
+/// card's single precision march, and of it finished on the CPU in double
+/// precision (`finish_row`), against the CPU's (shares of full scale; the
+/// latter only where the former is over the probe's limit, else the same);
+/// the pixels compared.
+#[cfg(feature = "gpu")]
+#[derive(Clone, Copy, Debug)]
+pub struct Probe {
+    pub single: f64,
+    pub mixed: f64,
+    pub pixels: usize,
 }
 
 /// How much faster than the CPU threads the card must march for Auto to give
@@ -668,8 +817,16 @@ fn march_mixed(
     ready: &std::sync::atomic::AtomicBool,
     on_ready: &(dyn Fn() -> Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)> + Sync),
     ck: Option<&Store>,
+    cpu_rows: bool,
+    finish: &std::sync::atomic::AtomicBool,
 ) -> Result<(Vec<SiLight>, usize, Option<(CalcParams, Vec<std::sync::Arc<std::sync::atomic::AtomicBool>>)>, f64), String> {
+    use std::sync::atomic::AtomicBool;
     use std::sync::Mutex;
+    // `finish`: the card marches in single precision and its rows are
+    // finished here in double (`finish_row`), the threads take them before
+    // rows of their own (`cpu_rows`: else they only finish the card's)
+    let queue: Mutex<std::collections::VecDeque<(usize, Vec<SiLight>)>> = Mutex::new(std::collections::VecDeque::new());
+    let card_done = AtomicBool::new(false);
     // how long the card marched (its rows per second against the CPU's)
     let card_secs = Mutex::new(0.0f64);
     let h = p.rect[3].max(0) as usize;
@@ -708,21 +865,33 @@ fn march_mixed(
                 if cancel() {
                     break;
                 }
-                let y = {
+                let card_row = queue.lock().unwrap().pop_front();
+                if let Some((y, row)) = card_row {
+                    put(y, &finish_row(p, y, &row));
+                    continue;
+                }
+                let y = if cpu_rows {
                     let mut f = free.lock().unwrap();
                     while f.1 > f.0 && ck_done(ck, f.1 - 1) {
                         f.1 -= 1;
                     }
-                    if f.1 <= f.0 {
-                        break;
-                    }
-                    f.1 -= 1;
-                    f.1
+                    (f.1 > f.0).then(|| {
+                        f.1 -= 1;
+                        f.1
+                    })
+                } else {
+                    None
                 };
-                put(y, &cpu_row(p, y));
+                match y {
+                    Some(y) => put(y, &cpu_row(p, y)),
+                    // (rows of the card still to come)
+                    None if finish.load(Ordering::SeqCst) && !card_done.load(Ordering::SeqCst) => std::thread::sleep(std::time::Duration::from_micros(500)),
+                    None => break,
+                }
             });
         }
         // the card, once its shader is ready
+        let mut run_card = || {
         let wait = |ready: &std::sync::atomic::AtomicBool| loop {
             let left = {
                 let f = free.lock().unwrap();
@@ -770,7 +939,11 @@ fn march_mixed(
             cancel,
             &mut |y, row| {
                 on_card.fetch_add(1, Ordering::Relaxed);
-                put(y, row);
+                if finish.load(Ordering::SeqCst) {
+                    queue.lock().unwrap().push_back((y, row.to_vec()));
+                } else {
+                    put(y, row);
+                }
             },
         );
         *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
@@ -778,6 +951,7 @@ fn march_mixed(
             if e != "cancelled" {
                 // the card's rows (also those it delivered: overflows) on
                 // the CPU, by all threads
+                queue.lock().unwrap().clear();
                 let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).collect();
                 let next = AtomicUsize::new(0);
                 std::thread::scope(|s2| {
@@ -795,7 +969,26 @@ fn march_mixed(
             }
             card_err = Some(e);
         }
+        };
+        run_card();
+        card_done.store(true, Ordering::SeqCst);
     });
+    // the card's rows the threads did not get to
+    let left: Vec<(usize, Vec<SiLight>)> = queue.into_inner().unwrap().into();
+    if !left.is_empty() && !cancel() {
+        let next = AtomicUsize::new(0);
+        std::thread::scope(|s| {
+            for _ in 0..threads {
+                s.spawn(|| loop {
+                    let i = next.fetch_add(1, Ordering::Relaxed);
+                    if i >= left.len() || cancel() {
+                        break;
+                    }
+                    put(left[i].0, &finish_row(p, left[i].0, &left[i].1));
+                });
+            }
+        });
+    }
     if cancel() {
         return Err("cancelled".into());
     }
@@ -807,6 +1000,7 @@ fn march_mixed(
         None if n_card == 0 && switched.is_some() => "CPU (the graphics card's double precision shader was still compiling)".into(),
         None if n_card == 0 => "CPU (the graphics card's shader was still compiling)".into(),
         None if switched.is_some() => format!("GPU {name}: {pct} % of the rows on the card (double precision), {} % on the CPU", 100 - pct),
+        None if finish.load(Ordering::SeqCst) => format!("GPU {name}: {pct} % of the rows on the card (finished on the CPU in double precision), {} % on the CPU", 100 - pct),
         None => format!("GPU {name}: {pct} % of the rows on the card, {} % on the CPU", 100 - pct),
     });
     // (the card's parameters when it joined in double precision)

@@ -1725,10 +1725,10 @@ impl<'a> Marcher<'a> {
         self.calc_vgrads_fov(x + 1);
         self.calc_start_pos(x, y);
         self.it.calc_sit = false;
-        let mut step_count = 0f32;
+        let step_count = 0f32;
         self.mzz = 0.0;
         self.ms_de_stop = p.de_stop;
-        let mut first_step = p.first_step_random;
+        let first_step = p.first_step_random;
 
         // move to the begin of the cutting planes
         let mut cut_plane = 0usize;
@@ -1776,6 +1776,88 @@ impl<'a> Marcher<'a> {
             }
             return si;
         }
+        self.march_from(si, dtmp, first_step, step_count)
+    }
+
+    /// The pixel from the card's single precision march (`card`, its
+    /// G-buffer entry) finished in double precision: at the card's surface
+    /// (its depth), as [`Marcher::march_pixel`] has it when it gets there:
+    /// the binary search (within the depth's last digit), the normal,
+    /// roughness, gradient and colour, which single precision gets wrong
+    /// where it finds the same surfaces.  The step count (the dynamic fog)
+    /// stays the card's.  A background pixel stays as it is, one that
+    /// started in the set (or on a cutting plane) is calculated here.
+    pub fn finish_pixel(&mut self, x: i32, y: i32, card: &SiLight) -> SiLight {
+        let p = self.p;
+        if card.zpos() >= 32768 {
+            return *card;
+        }
+        if card.si_gradient >= 32768 {
+            return self.march_pixel(x, y);
+        }
+        self.cafy = (y as f64 / p.height as f64 - 0.5) * p.fov_y;
+        self.calc_vgrads_fov(x + 1);
+        self.calc_start_pos(x, y);
+        self.it.calc_sit = false;
+        // (as `hs_surface_start`: the middle of the depth's last digit, the
+        // binary search over that digit)
+        let zf = (card.zpos_fine >> 8) as f64;
+        self.mzz = (((8388351.5 - zf) / p.zc_mul + 1.0).powi(2) - 1.0) / p.zcorr;
+        let v = self.vfov;
+        add_weight(&mut self.it.c, &v, self.mzz);
+        self.update_de_stop();
+        self.inside = if p.in_and_outside { card.otrap & 0x8000 == 0 } else { p.inside_rendering };
+        self.calc_inside = self.inside;
+        let dtmp = self.calc_de();
+        let digit = (((8388351.9 - zf) / p.zc_mul + 1.0).powi(2) - 1.0) / p.zcorr - self.mzz;
+        let mut si = SiLight { amb_shadow: 5000, shadow: card.shadow, ..SiLight::default() };
+        self.surface_found(&mut si, dtmp, digit, false);
+        si
+    }
+
+    /// The surface found at the current position (the DE there `dtmp`, the
+    /// step that reached it `last_step`): its binary search, normal,
+    /// gradient, colour, depth and roughness into `si`.  `count`: the
+    /// iterations go into the statistics (`ITS`).
+    fn surface_found(&mut self, si: &mut SiLight, mut dtmp: f64, last_step: f64, count: bool) {
+        let p = self.p;
+        let de_limited = self.it.it_result < self.max_its_result || dtmp < self.ms_de_stop as f64;
+        if p.de_add_steps != 0 {
+            if de_limited {
+                self.bin_search(&mut dtmp, last_step);
+            } else {
+                self.bin_search_it();
+            }
+        }
+        if count {
+            let n = self.it.it_result.max(0);
+            ITS.with(|c| {
+                let (s, k, m) = c.get();
+                c.set((s + n as u64, k + 1, m.max(n)));
+            });
+        }
+        let nn = if p.normals_on_de { self.calculate_normals(si) } else { self.calculate_normals_on_smooth_it(si) };
+        let v = if de_limited {
+            32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((f32::max(p.de_stop, self.ms_de_stop) as f64 * p.step_width).ln() as f32)) * p.mcts_m
+        } else {
+            32767.0 - nn * p.mcts_m
+        };
+        si.si_gradient = min_max_clip_15bit(v);
+        if p.color_on_it != 0 {
+            self.do_color_on_it();
+        }
+        self.do_color(si);
+        self.calc_zpos_and_rough(si);
+        if p.in_and_outside && !self.inside {
+            si.otrap |= 0x8000;
+        }
+    }
+
+    /// The march of [`Marcher::march_pixel`] from the current position (the
+    /// DE there `dtmp`) to the surface or the background, and the surface's
+    /// values.
+    fn march_from(&mut self, mut si: SiLight, mut dtmp: f64, mut first_step: bool, mut step_count: f32) -> SiLight {
+        let p = self.p;
         let mut rsf_mul = 1f32;
         let mut last_step = dtmp * p.z_step_div as f64;
         let mut last_de;
@@ -1854,45 +1936,7 @@ impl<'a> Marcher<'a> {
                 };
             } else {
                 // ##### surface found #####
-                let de_limited =
-                    self.it.it_result < self.max_its_result || dtmp < self.ms_de_stop as f64;
-                if p.de_add_steps != 0 {
-                    if de_limited {
-                        self.bin_search(&mut dtmp, last_step);
-                    } else {
-                        self.bin_search_it();
-                    }
-                }
-                let n = self.it.it_result.max(0);
-                ITS.with(|c| {
-                    let (s, k, m) = c.get();
-                    c.set((s + n as u64, k + 1, m.max(n)));
-                });
-                let nn = if p.normals_on_de {
-                    self.calculate_normals(&mut si)
-                } else {
-                    self.calculate_normals_on_smooth_it(&mut si)
-                };
-                let v = if de_limited {
-                    32767.0
-                        - (nn
-                            + p.d_col_plus
-                            + p.col_var_de_stop_mul
-                                * ((f32::max(p.de_stop, self.ms_de_stop) as f64 * p.step_width).ln()
-                                    as f32))
-                            * p.mcts_m
-                } else {
-                    32767.0 - nn * p.mcts_m
-                };
-                si.si_gradient = min_max_clip_15bit(v);
-                if p.color_on_it != 0 {
-                    self.do_color_on_it();
-                }
-                self.do_color(&mut si);
-                self.calc_zpos_and_rough(&mut si);
-                if p.in_and_outside && !self.inside {
-                    si.otrap |= 0x8000;
-                }
+                self.surface_found(&mut si, dtmp, last_step, true);
                 break;
             }
         }

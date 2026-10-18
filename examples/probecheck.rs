@@ -1,7 +1,8 @@
 //! The double precision probe (`render::probe_single`) on parameter files:
 //! `probecheck mb3d_dir max_width file...` prints one line per file (tab
 //! separated: name, size, probe's mean colour difference %, pixels
-//! compared, probe ms, precision, step precision).  The card's single
+//! compared, probe ms, precision, step precision, the difference % of the
+//! card's march finished on the CPU in double).  The card's single
 //! precision march is compiled first (not timed).
 fn main() {
     let a: Vec<String> = std::env::args().skip(1).collect();
@@ -43,7 +44,7 @@ fn main() {
         let r = mb3d::render::probe_single(&sc, &p, threads);
         let ms = t.elapsed().as_secs_f64() * 1000.0;
         match r {
-            Some((f, n)) => println!("{name}\t{}x{}\t{:.2}\t{n}\t{ms:.0}\t{:.2}\t{:.1}", sc.width, sc.height, f * 100.0, mb3d::gpu::precision(&p), mb3d::gpu::step_precision(&p)),
+            Some(f) => println!("{name}\t{}x{}\t{:.2}\t{}\t{ms:.0}\t{:.2}\t{:.1}\t{:.2}", sc.width, sc.height, f.single * 100.0, f.pixels, mb3d::gpu::precision(&p), mb3d::gpu::step_precision(&p), f.mixed * 100.0),
             None => println!("{name}\t{}x{}\t-\t0\t{ms:.0}", sc.width, sc.height),
         }
     }
