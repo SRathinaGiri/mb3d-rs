@@ -779,6 +779,17 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.53](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.53) · 18 Oct 2026, 08:22 UTC
+
+| Commit | What it does |
+|---|---|
+| [`3134a1a`](https://github.com/thr32423/mb3d-rs/commit/3134a1a67f99a39064fb3acd93665b81504eb858) | Version number and release notes of this release |
+| [`b30996b`](https://github.com/thr32423/mb3d-rs/commit/b30996b8b797f22143b401b8293db1713fc60e50) | Swarm: a computer no longer takes its own program's jobs on Windows and macOS |
+| [`f2686e3`](https://github.com/thr32423/mb3d-rs/commit/f2686e3d994038041c80c60a79a32a9d7cddf0ce) | README: the credits without the separate line on MB3D |
+| [`b0a12b6`](https://github.com/thr32423/mb3d-rs/commit/b0a12b6542d9607679843b2c997d08c80eac3724) | README: the credits table without its sources line |
+| [`c336513`](https://github.com/thr32423/mb3d-rs/commit/c336513f5beacc045642a15b49af9488552c44cb) | README: the authors of Mandelbulb3D in the credits |
+| [`ae8f0fe`](https://github.com/thr32423/mb3d-rs/commit/ae8f0fe56c0d5d7d2c3b74d314e69fb5088b19bc) | README: Updates for v0.2.52 |
+
 ### [v0.2.52](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.52) · 18 Oct 2026, 00:19 UTC
 
 | Commit | What it does |
@@ -816,6 +827,8 @@ in UTC.
 | [`2f71f99`](https://github.com/thr32423/mb3d-rs/commit/2f71f99704f2235a78722be4843df0f699592d39) | New formula PseudoKleinian: knighty's pseudo Kleinian, on the CPU and the GPU |
 | [`27c9634`](https://github.com/thr32423/mb3d-rs/commit/27c96346e428c399c6f074437540cefb2df7c583) | README: Updates for v0.2.48; the 2D Ulam spiral and its story |
 
+<details><summary>Older releases (v0.1.0 to v0.2.48)</summary>
+
 ### [v0.2.48](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.48) · 17 Oct 2026, 05:02 UTC
 
 | Commit | What it does |
@@ -824,8 +837,6 @@ in UTC.
 | [`c5e53d2`](https://github.com/thr32423/mb3d-rs/commit/c5e53d2812c8af9e718597f290f107f0e87e1f48) | Main window: picking a point from the image no longer moves the view |
 | [`6090b8a`](https://github.com/thr32423/mb3d-rs/commit/6090b8a7461afa79faf87294596df63b89fdeeb4) | New formula UlamSpiral: Ulam's prime spiral in 3D, on the CPU and the GPU |
 | [`49cf64e`](https://github.com/thr32423/mb3d-rs/commit/49cf64e4dbc0742d61cb1867f45de6a95c7a5e9a) | README: Updates for v0.2.47 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.47)</summary>
 
 ### [v0.2.47](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.47) · 16 Oct 2026, 19:16 UTC
 
