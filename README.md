@@ -814,6 +814,15 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.55](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.55) · 18 Oct 2026, 13:28 UTC
+
+| Commit | What it does |
+|---|---|
+| [`bf00248`](https://github.com/thr32423/mb3d-rs/commit/bf00248f66b793f37f5feb8b30a0564bb62d31ab) | Version number and release notes of this release |
+| [`4e344a4`](https://github.com/thr32423/mb3d-rs/commit/4e344a4bbf9d77dd72e92c75e0d385a9411aeb96) | Monte Carlo: much less memory for big images |
+| [`dd6598e`](https://github.com/thr32423/mb3d-rs/commit/dd6598e786c7a36938238111259261409406ff81) | CI: no run for documentation-only pushes |
+| [`02ba3c8`](https://github.com/thr32423/mb3d-rs/commit/02ba3c8fb4e9bd4c76fbb287465b061ca3fd9184) | README: Updates for v0.2.54 |
+
 ### [v0.2.54](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.54) · 18 Oct 2026, 11:24 UTC
 
 | Commit | What it does |
@@ -852,6 +861,8 @@ in UTC.
 | [`d5d14e6`](https://github.com/thr32423/mb3d-rs/commit/d5d14e6f88d37415825120f21d39ba5787ec5b56) | Quitting during a Monte Carlo render no longer crashes in the driver |
 | [`cdb708f`](https://github.com/thr32423/mb3d-rs/commit/cdb708fc941c37f00f33aee6ed6ce446ca51cf34) | README: Updates for v0.2.50 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.50)</summary>
+
 ### [v0.2.50](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.50) · 17 Oct 2026, 12:15 UTC
 
 | Commit | What it does |
@@ -862,8 +873,6 @@ in UTC.
 | [`dc4a2fe`](https://github.com/thr32423/mb3d-rs/commit/dc4a2fe3ac548c8b65fa2758c2db18cd3ed00117) | README: one "What is new" list, with the detailed write-ups as collapsible items |
 | [`2ee83df`](https://github.com/thr32423/mb3d-rs/commit/2ee83df437361a66cdf7a98a2924ee0863d27e64) | README: drop the "Restored Mandelbulb3D functionality" section and its pictures |
 | [`49e2858`](https://github.com/thr32423/mb3d-rs/commit/49e28588b18ca637e9a3a6d99ea65ef113b2fabd) | README: Updates for v0.2.49 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.49)</summary>
 
 ### [v0.2.49](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.49) · 17 Oct 2026, 05:37 UTC
 
