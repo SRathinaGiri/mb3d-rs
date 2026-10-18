@@ -1363,10 +1363,7 @@ the same license.
 
 ## Credits
 
-Mandelbulb3D, which this program is a port of, was made by these people
-(from MB3D's readme files, its sources and formula files, fractalforums.com,
-mb3d.overwhale.com and [thargor6/mb3d](https://github.com/thargor6/mb3d);
-the file counts are of the `.m3f` files in `M3Formulas`):
+Mandelbulb3D, which this program is a port of, was made by these people:
 
 | Author | What they did |
 |---|---|
