@@ -1173,6 +1173,27 @@ pub fn post_on_card(p: &CalcParams, gbuf: &mut [SiLight], post: &PostJob, cancel
     })
 }
 
+/// The post passes of `post` (shadows, DE ambient occlusion) on the card
+/// for the bands of rows that `bands` hands out (None: no more), on the
+/// G-buffer rows that `upload` gives (first row, rows); the finished rows
+/// go to `sink`.  The CPU takes the other rows meanwhile (see
+/// `render::post_shared`).
+pub fn post_bands(
+    p: &CalcParams,
+    post: &PostJob,
+    bands: &dyn Fn(usize) -> Option<(usize, usize)>,
+    upload: &dyn Fn(usize, usize) -> Vec<SiLight>,
+    cancel: &(dyn Fn() -> bool + Sync),
+    sink: &mut dyn FnMut(usize, &[SiLight]),
+) -> Result<(), String> {
+    guard(|| {
+        let g = gpu()?;
+        let sh = scene_shader(p)?;
+        run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), Some(upload), false)?;
+        Ok(())
+    })
+}
+
 /// "Calculate on: Auto": the CPU and the card share a calculation - the
 /// CPU starts at once, the card joins when its shader is compiled and
 /// then runs the post passes (otherwise the calculation waits for the

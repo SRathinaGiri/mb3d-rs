@@ -33,7 +33,7 @@ On the **Internal** page of the main window (where the thread count is):
 
 | Setting | What happens |
 |---|---|
-| **Auto** (default) | The graphics card and the CPU share the image: the card takes rows from the top, the CPU threads from the bottom, then the card calculates the shadows and the ambient occlusion. If the card's shader is not ready yet, the CPU starts alone and the card joins when it can - nothing waits. |
+| **Auto** (default) | The graphics card and the CPU share the image: the card takes rows from the top, the CPU threads from the bottom. The shadows and the ambient occlusion are shared the same way, or calculated by the card alone when it is clearly the faster one. If the card's shader is not ready yet, the CPU starts alone and the card joins when it can - nothing waits. |
 | **CPU** | Never uses the graphics card - exactly like the original MB3D. |
 | **Graphics card** | Waits for the shader if needed, then calculates on the card. |
 

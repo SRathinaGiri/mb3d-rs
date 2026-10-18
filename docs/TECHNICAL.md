@@ -41,8 +41,13 @@ whenever the scene allows it, and on the CPU otherwise:
 * "Calculate on" on the Internal tab: **Auto** shares a normal render
   between the card and the CPU: the CPU threads start at once and take
   rows from the bottom, the card takes rows from the top as soon as its
-  shader is compiled, until they meet; the card then calculates the
-  shadows and the ambient occlusion of the whole image. The first time a
+  shader is compiled, until they meet. The hard shadows and the DE
+  ambient occlusion then go to the card when it marched clearly faster
+  (1.5 times the threads' rows per second); otherwise the two share them
+  the same way, the card bands of rows from the top (smaller as the rows
+  run out), the threads rows from the bottom, so that a card as fast as
+  the CPU or slower (a deep zoom in double precision) still helps and
+  neither waits. The first time a
   formula combination is used its shaders compile (10 to 20 s; the
   driver keeps them in `ShaderCache` next to the program for the next
   time) while the CPU already calculates, so

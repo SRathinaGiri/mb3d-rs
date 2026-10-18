@@ -9,7 +9,7 @@ use crate::checkpoint::{Policy, Store};
 use crate::gbuffer::SiLight;
 use crate::lighting::{LightVals, PaintCamera};
 use crate::math::normalise_matrix_to;
-use crate::scene::{CameraOptic, Scene};
+use crate::scene::{CameraOptic, Scene, ShadowParams};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
@@ -322,6 +322,31 @@ fn calculate_inner(
                             crate::gpu::set_status(format!("{s}; post calculations on the CPU: GPU error: {e}"));
                         }
                     }
+                } else if n_card > 0
+                    && switched.is_none()
+                    && !finish.load(Ordering::SeqCst)
+                    && (job.shadows.is_some() || job.deao.is_some())
+                    && flags.iter().all(|f| f.load(Ordering::SeqCst))
+                {
+                    // the card is about as fast as the threads (or slower):
+                    // they share the post passes as they shared the march
+                    // (its pipelines compiled: else the CPU does them alone,
+                    // as the card would only wait for its compile)
+                    let s = crate::gpu::last_status();
+                    let t_post = Instant::now();
+                    let card_rows = post_shared(sc, &p, &mut gbuf, &job, threads, cancel)?;
+                    if timing {
+                        eprintln!("  shadows and DE occlusion shared: {:.2} s, {card_rows} of {h} rows on the card", t_post.elapsed().as_secs_f64());
+                    }
+                    if card_rows > 0 {
+                        let what = match (job.shadows.is_some(), job.deao.is_some()) {
+                            (true, true) => "shadows and AO",
+                            (true, false) => "shadows",
+                            _ => "AO",
+                        };
+                        crate::gpu::set_status(format!("{s} +{what} ({} % on the card)", card_rows * 100 / h.max(1)));
+                    }
+                    p.gpu_post = Some(job);
                 }
                 p.gpu_double |= double_after;
                 return finish_calculation(sc, p, gbuf, post, threads, cancel);
@@ -541,6 +566,109 @@ const PROBE_MS: u64 = 150;
 /// pixels decide (no result when it takes longer).
 #[cfg(feature = "gpu")]
 const PROBE_CARD_MS: u64 = 1500;
+
+/// The post passes of `job` (hard or soft shadows, DE ambient occlusion)
+/// shared by the card and the CPU threads, as [`march_mixed`] shares the
+/// march: the card takes bands of rows from the top (`gpu::post_bands`),
+/// the threads rows from the bottom, both passes of a row on one side; the
+/// rows of a band the card failed are done here.  So the slower of the two
+/// takes fewer rows, and neither waits.  The rows the card did.
+#[cfg(feature = "gpu")]
+fn post_shared(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], job: &PostJob, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) -> Result<usize, String> {
+    use std::sync::Mutex;
+    let (w, h) = (p.rect[2].max(1) as usize, p.rect[3].max(0) as usize);
+    let shadows = job.shadows.as_ref().and_then(|_| ShadowRows::new(sc, p));
+    let deao = match (&job.deao, &sc.deao) {
+        (Some(_), Some(d)) if sc.ao.is_some() => Some(crate::deao::DeaoRows::new(p, d)),
+        _ => None,
+    };
+    // the CPU's passes of a row
+    let cpu = |y: usize, row: &mut [SiLight]| {
+        if let Some(s) = &shadows {
+            s.row(y, row);
+        }
+        if let Some(d) = &deao {
+            d.row(y, row);
+        }
+    };
+    let rows: Vec<Mutex<&mut [SiLight]>> = gbuf.chunks_mut(w).map(Mutex::new).collect();
+    // the rows still free: [top, bottom)
+    let free = Mutex::new((0usize, h));
+    let claimed = Mutex::new(Vec::new());
+    let delivered: Vec<std::sync::atomic::AtomicBool> = (0..h).map(|_| std::sync::atomic::AtomicBool::new(false)).collect();
+    let mut card_err = None;
+    std::thread::scope(|s| {
+        for _ in 0..threads.max(1) {
+            s.spawn(|| loop {
+                if cancel() {
+                    break;
+                }
+                let y = {
+                    let mut f = free.lock().unwrap();
+                    if f.1 <= f.0 {
+                        break;
+                    }
+                    f.1 -= 1;
+                    f.1
+                };
+                cpu(y, &mut rows[y].lock().unwrap());
+            });
+        }
+        let r = crate::gpu::post_bands(
+            p,
+            job,
+            &|band| {
+                let mut f = free.lock().unwrap();
+                // (smaller as the rows run out, so that both end together)
+                (f.0 < f.1).then(|| {
+                    let r = (f.0, band.min(((f.1 - f.0) / 4).max(16)).min(f.1 - f.0));
+                    f.0 += r.1;
+                    claimed.lock().unwrap().push(r);
+                    r
+                })
+            },
+            &|row0, n| (row0..(row0 + n).min(h)).flat_map(|y| rows[y].lock().unwrap().to_vec()).collect(),
+            cancel,
+            &mut |y, row| {
+                if y < h {
+                    let mut dst = rows[y].lock().unwrap();
+                    let n = row.len().min(dst.len());
+                    dst[..n].copy_from_slice(&row[..n]);
+                    delivered[y].store(true, Ordering::Relaxed);
+                }
+            },
+        );
+        if let Err(e) = r {
+            card_err = Some(e);
+        }
+    });
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    // the rows the card took and did not deliver (it failed): here
+    if let Some(e) = &card_err {
+        eprintln!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
+    }
+    let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !delivered[y].load(Ordering::Relaxed)).collect();
+    if !redo.is_empty() {
+        let next = AtomicUsize::new(0);
+        std::thread::scope(|s| {
+            for _ in 0..threads.max(1) {
+                s.spawn(|| loop {
+                    let i = next.fetch_add(1, Ordering::Relaxed);
+                    if i >= redo.len() || cancel() {
+                        break;
+                    }
+                    cpu(redo[i], &mut rows[redo[i]].lock().unwrap());
+                });
+            }
+        });
+        if cancel() {
+            return Err("cancelled".into());
+        }
+    }
+    Ok(delivered.iter().filter(|d| d.load(Ordering::Relaxed)).count())
+}
 
 /// The probe's limit: the mean difference of the colours (a share of full
 /// scale) above which single precision is too coarse.
@@ -1378,17 +1506,11 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 /// [`hard_shadows`] whose rows stop when `cancel` returns true.
 pub fn hard_shadows_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
-    let Some(hs) = &sc.shadows else { return };
-    let Some(job) = shadow_job(sc, p) else { return };
-    // the HS calculation always uses 8 binary search steps
-    let mut p = p.clone();
-    p.de_add_steps = 8;
-    let p = &p;
+    let Some(pass) = ShadowRows::new(sc, p) else { return };
     let w = p.rect[2] as usize;
     let h = p.rect[3] as usize;
-    let (x0, y0) = (p.rect[0], p.rect[1] as usize);
     let threads = threads.min(h).max(1);
-    let lights = &job.lights;
+    let pass = &pass;
     std::thread::scope(|s| {
         let mut rows: Vec<(usize, &mut [SiLight])> = gbuf.chunks_mut(w).enumerate().collect();
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
@@ -1401,18 +1523,42 @@ pub fn hard_shadows_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]
                     if cancel() {
                         break;
                     }
-                    let y = y + y0;
-                    let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
-                    let mut m = Marcher::new(p, seed);
-                    if hs.soft {
-                        m.soft_shadow_row(y as i32, x0, row, &lights[0], hs.soft_radius, hs.max_len_mul);
-                    } else {
-                        m.hard_shadow_row(y as i32, x0, row, lights, hs.max_len_mul);
-                    }
+                    pass.row(y, row);
                 }
             });
         }
     });
+}
+
+/// The pass of [`hard_shadows_cancellable`] row by row: the rows in any
+/// order, by any thread, with the same results.
+struct ShadowRows<'a> {
+    p: CalcParams,
+    hs: &'a ShadowParams,
+    lights: Vec<HsLight>,
+}
+
+impl<'a> ShadowRows<'a> {
+    fn new(sc: &'a Scene, p: &CalcParams) -> Option<Self> {
+        let hs = sc.shadows.as_ref()?;
+        let job = shadow_job(sc, p)?;
+        // the HS calculation always uses 8 binary search steps
+        let mut p = p.clone();
+        p.de_add_steps = 8;
+        Some(ShadowRows { p, hs, lights: job.lights })
+    }
+
+    /// The row `y` (of the calculated rectangle).
+    fn row(&self, y: usize, row: &mut [SiLight]) {
+        let (x0, y) = (self.p.rect[0], y + self.p.rect[1] as usize);
+        let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
+        let mut m = Marcher::new(&self.p, seed);
+        if self.hs.soft {
+            m.soft_shadow_row(y as i32, x0, row, &self.lights[0], self.hs.soft_radius, self.hs.max_len_mul);
+        } else {
+            m.hard_shadow_row(y as i32, x0, row, &self.lights, self.hs.max_len_mul);
+        }
+    }
 }
 
 /// Paints the G-buffer with the scene lighting.

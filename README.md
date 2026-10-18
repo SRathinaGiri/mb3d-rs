@@ -575,7 +575,7 @@ The **"Calculate on"** setting (Internal tab of the main window) chooses:
 
 | | |
 |---|---|
-| **Auto** (default) | The card and the processor share the picture: the card takes rows from the top, the processor's threads from the bottom, until they meet. The card then does the shadows and the ambient occlusion. |
+| **Auto** (default) | The card and the processor share the picture: the card takes rows from the top, the processor's threads from the bottom, until they meet. The shadows and the ambient occlusion are shared the same way, or done by the card alone when it is clearly the faster one. |
 | **CPU** | The processor only, as in MB3D. |
 | **Graphics card** | The card only (it waits until its program is ready). |
 

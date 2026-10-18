@@ -105,11 +105,7 @@ fn build_rays(quality: u8) -> Rays {
 
 /// Calculates `amb_shadow` for all object pixels.
 pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, dp: &DeaoParams, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
-    // DEAO uses 5 binary search steps
-    let mut pc = p.clone();
-    pc.de_add_steps = 5;
-    let p = &pc;
-    let base = build_rays(dp.quality);
+    let pass = DeaoRows::new(p, dp);
     let threads = threads.min(height).max(1);
     std::thread::scope(|s| {
         let rows: Vec<(usize, &mut [SiLight])> = gbuf.chunks_mut(width).enumerate().collect();
@@ -118,22 +114,44 @@ pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, d
             per[i % threads].push((i, r));
         }
         for list in per {
-            let base = &base;
+            let pass = &pass;
             s.spawn(move || {
                 for (y, row) in list {
                     // ("Stop": the rows not done keep their values)
                     if cancel() {
                         break;
                     }
-                    let y = y + p.rect[1] as usize;
-                    let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
-                    let mut m = Marcher::new(p, seed);
-                    let mut rnd = seed;
-                    deao_row(&mut m, y as i32, row, dp, base, &mut rnd);
+                    pass.row(y, row);
                 }
             });
         }
     });
+}
+
+/// The pass of [`deao`] row by row: the rows in any order, by any thread,
+/// with the same results.
+pub(crate) struct DeaoRows<'a> {
+    p: CalcParams,
+    base: Rays,
+    dp: &'a DeaoParams,
+}
+
+impl<'a> DeaoRows<'a> {
+    pub(crate) fn new(p: &CalcParams, dp: &'a DeaoParams) -> Self {
+        // DEAO uses 5 binary search steps
+        let mut pc = p.clone();
+        pc.de_add_steps = 5;
+        DeaoRows { p: pc, base: build_rays(dp.quality), dp }
+    }
+
+    /// The row `y` (of the calculated rectangle).
+    pub(crate) fn row(&self, y: usize, row: &mut [SiLight]) {
+        let y = y + self.p.rect[1] as usize;
+        let seed = (0x24563487u32 as i64 + (y as i64 + 1) * 0x324594A1i64) as i32;
+        let mut m = Marcher::new(&self.p, seed);
+        let mut rnd = seed;
+        deao_row(&mut m, y as i32, row, self.dp, &self.base, &mut rnd);
+    }
 }
 
 fn get_rand(seed: &mut i32) -> f64 {
