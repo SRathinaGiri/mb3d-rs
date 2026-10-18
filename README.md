@@ -1363,6 +1363,38 @@ the same license.
 
 ## Credits
 
+Mandelbulb3D, which this program is a port of, was made by these people
+(from MB3D's readme files, its sources and formula files, fractalforums.com,
+mb3d.overwhale.com and [thargor6/mb3d](https://github.com/thargor6/mb3d);
+the file counts are of the `.m3f` files in `M3Formulas`):
+
+| Author | What they did |
+|---|---|
+| **Jesse** (fractalforums.com) | Wrote the original Mandelbulb3D (2010–2013, Delphi and 32-bit assembly): the distance estimation renderer, Navigator, formula and hybrid system, post processing (shadows, ambient occlusion, depth of field, reflections), Animation maker, Big renders, Monte Carlo renderer. Released it as freeware; his last release was 1.8.9 (April 2013) |
+| **Andreas Maschke** (thargor6) | Maintainer since 2015: published Jesse's source code on GitHub, moved it to Delphi XE6, released 1.9.0 to 1.99.37 (2023). Added the JIT formula editor, MutaGen, BulbTracer and BulbTracer2 mesh export, the HeightMap generator, ZBuf16Bit, animated maps, the themed interface, point cloud export, Monte Carlo batch and network rendering. His code is under the LGPL 2.1 |
+| **DarkBeam** (Luca GN) | By far the most formulas (credited in 210 of 464 `.m3f` files); the formula bundle of 1.8.2; the interim builds 1.8.9 x1 and x2 |
+| **David Makin** | Helped Jesse implement the distance estimation; formulas (12 files) |
+| **Tglad** (Tom Lowe) | Invented the Amazing Box (Mandelbox); formulas (13 files) |
+| **Buddhi** | The fast distance estimation of the Amazing Box; formulas (6 files) |
+| **Daniel White** | With Paul Nylander, the 2009 "triplex" Mandelbulb that MB3D's built-in bulb formula is based on; the fast integer power formulas Jesse used |
+| **Paul Nylander** | With Daniel White, the Mandelbulb |
+| **M. Benesi** | Formulas (33 files) |
+| **Knighty** | Formulas (18 files), among them Knots2, koch_surf, the JCube3 approximation, and JosKn-KleinIFS with Jos Leys |
+| **Aexion** | Formulas (12 files), among them the built-in "Aexion C" |
+| **Kali** | Formulas (8 files), among them Amazing Surf |
+| **Bethchen** | Formulas (8 files) |
+| **msltoe** | The Riemann formula |
+| **Fracmonk** | The CommQuat formula |
+| **Trafassel** | The IdesFormula |
+| **Syntopia** | Inspiration and testing; the Sierpinski4 and Menger4 formulas |
+| **Jos Leys** | JosKn-KleinIFS, with Knighty |
+| **Mark Townsend, Inigo Quilez, T. Gintz, Kerry Mitchell, Pseudogenius, dwsel** | Formulas |
+| **Alef** (Edgar Malinovsky) | The JIT formula pack (`EM_JIT_M3Formulas`) |
+| **Schmiegel** | Test parameters for the 1.99 releases |
+| **Matteo** | Suggested and supported Monte Carlo batch rendering |
+| **Zeyu-Li** | Documentation on GitHub (2020) |
+| **NASA, GIMP** | Source material for the maps |
+
 * **Mandelbulb3D (MB3D)** and its authors: this program is a port of it.
 * **The PseudoKleinian formula** is knighty's (Fragmentarium, 2011,
   "Theli-at's Pseudo Kleinian" after Theli-at's hybrid discovery of the
