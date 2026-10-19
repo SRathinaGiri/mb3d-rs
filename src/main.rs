@@ -584,7 +584,7 @@ fn render_single(
     let t0 = Instant::now();
     let ck = mb3d::render::open_checkpoint(scene, &ck_name(output), resume_policy());
     resumed_note(ck.as_ref(), "rows", quiet);
-    let (params, gbuffer) = mb3d::render::calculate_with(scene, progress, &|| false, 2, None, ck.as_ref())?;
+    let (params, gbuffer) = mb3d::render::calculate_with(scene, progress, &mb3d::render::no_stage, &|| false, 2, None, ck.as_ref())?;
     let t1 = Instant::now();
     if auto_color {
         mb3d::render::auto_color_range(scene, &gbuffer);

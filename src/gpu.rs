@@ -1138,7 +1138,13 @@ fn march_sample_card(p: &CalcParams, sx: usize, sy: usize, cancel: &(dyn Fn() ->
 /// The post passes of `post` (shadows, DE ambient occlusion) on the card
 /// for a G-buffer marched elsewhere (the rows the CPU took in a shared
 /// march): it is uploaded band by band and gets the results.
-pub fn post_on_card(p: &CalcParams, gbuf: &mut [SiLight], post: &PostJob, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+pub fn post_on_card(
+    p: &CalcParams,
+    gbuf: &mut [SiLight],
+    post: &PostJob,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> Result<(), String> {
     guard(|| {
         let g = gpu()?;
         let sh = scene_shader(p)?;
@@ -1157,7 +1163,7 @@ pub fn post_on_card(p: &CalcParams, gbuf: &mut [SiLight], post: &PostJob, cancel
             &sh,
             post,
             None,
-            &|_, _| {},
+            progress,
             cancel,
             &mut |y, row| {
                 let mut g = buf.lock().unwrap();

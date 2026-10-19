@@ -55,7 +55,7 @@ pub fn calculate_cancellable(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, 2, None, None)
+    calculate_inner(sc, progress, &no_stage, cancel, 2, None, None)
 }
 
 /// Like [`calculate_cancellable`] but without the post calculations (hard
@@ -68,7 +68,7 @@ pub fn calculate_raw_cancellable(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, 0, None, None)
+    calculate_inner(sc, progress, &no_stage, cancel, 0, None, None)
 }
 
 /// A finished row of the calculation: its index in the calculated
@@ -83,7 +83,7 @@ pub fn calculate_raw_rows(
     cancel: &(dyn Fn() -> bool + Sync),
     rows: RowSink,
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, 0, Some(rows), None)
+    calculate_inner(sc, progress, &no_stage, cancel, 0, Some(rows), None)
 }
 
 /// The text that decides a calculation's G-buffer, for its checkpoint key:
@@ -133,15 +133,39 @@ pub fn open_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<Store> 
 /// [`open_checkpoint`]): the rows it holds are not calculated again.  The
 /// caller ends `ck` when the result is saved ([`Store::finish`]); dropped,
 /// it is kept for the next time.
+///
+/// `stage` is told the name of each stage after the march as it starts
+/// ("hard shadows (graphics card)", ...): from then on `progress` counts
+/// that stage's rows, from zero again.
 pub fn calculate_with(
     sc: &Scene,
     progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
     post: u8,
     rows: Option<RowSink>,
     ck: Option<&Store>,
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
-    calculate_inner(sc, progress, cancel, post, rows, ck)
+    calculate_inner(sc, progress, stage, cancel, post, rows, ck)
+}
+
+/// A stage callback that ignores the stages.
+pub fn no_stage(_: &str) {}
+
+/// The name of the post passes `shadows` / `occlusion`, run `where_`
+/// ("" for the CPU).
+pub fn post_stage_name(shadows: bool, occlusion: bool, where_: &str) -> String {
+    let what = match (shadows, occlusion) {
+        (true, true) => "hard shadows and ambient occlusion",
+        (true, false) => "hard shadows",
+        (false, true) => "ambient occlusion",
+        (false, false) => "post calculations",
+    };
+    if where_.is_empty() {
+        what.to_string()
+    } else {
+        format!("{what} ({where_})")
+    }
 }
 
 /// The rows of a calculation in a checkpoint: what its rows hold ("raw":
@@ -188,6 +212,7 @@ fn ck_done(ck: Option<&Store>, y: usize) -> bool {
 fn calculate_inner(
     sc: &Scene,
     progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
     post: u8,
     sink: Option<RowSink>,
@@ -299,8 +324,9 @@ fn calculate_inner(
                         std::thread::sleep(std::time::Duration::from_millis(10));
                     }
                     let mut s = crate::gpu::last_status();
+                    stage(&post_stage_name(job.shadows.is_some(), job.deao.is_some(), "graphics card"));
                     let t_post = Instant::now();
-                    let r = crate::gpu::post_on_card(&p, &mut gbuf, &job, cancel);
+                    let r = crate::gpu::post_on_card(&p, &mut gbuf, &job, progress, cancel);
                     if timing {
                         eprintln!("  shadows and DE occlusion on the card: {:.2} s", t_post.elapsed().as_secs_f64());
                     }
@@ -314,6 +340,7 @@ fn calculate_inner(
                             }
                             crate::gpu::set_status(s);
                             p.gpu_post = Some(job);
+                            p.gpu_post_secs = Some(t_post.elapsed().as_secs_f64());
                         }
                         Err(e) => {
                             if cancel() {
@@ -333,8 +360,9 @@ fn calculate_inner(
                     // (its pipelines compiled: else the CPU does them alone,
                     // as the card would only wait for its compile)
                     let s = crate::gpu::last_status();
+                    stage(&post_stage_name(job.shadows.is_some(), job.deao.is_some(), "graphics card and CPU"));
                     let t_post = Instant::now();
-                    let card_rows = post_shared(sc, &p, &mut gbuf, &job, threads, cancel)?;
+                    let card_rows = post_shared(sc, &p, &mut gbuf, &job, threads, progress, cancel)?;
                     if timing {
                         eprintln!("  shadows and DE occlusion shared: {:.2} s, {card_rows} of {h} rows on the card", t_post.elapsed().as_secs_f64());
                     }
@@ -347,9 +375,10 @@ fn calculate_inner(
                         crate::gpu::set_status(format!("{s} +{what} ({} % on the card)", card_rows * 100 / h.max(1)));
                     }
                     p.gpu_post = Some(job);
+                    p.gpu_post_secs = Some(t_post.elapsed().as_secs_f64());
                 }
                 p.gpu_double |= double_after;
-                return finish_calculation(sc, p, gbuf, post, threads, cancel);
+                return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
             }
         }
         let card_tag = format!("card {job:?}");
@@ -361,7 +390,7 @@ fn calculate_inner(
                 let (gbuf, n_card, ..) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &|| None, ck, false, &finish)?;
                 if n_card > 0 || ck.is_some_and(|s| s.done_count() == h) {
                     p.gpu_double |= double_after;
-                    return finish_calculation(sc, p, gbuf, post, threads, cancel);
+                    return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
                 }
             }
             // (the card failed: double precision as before)
@@ -377,13 +406,18 @@ fn calculate_inner(
                 let mut gbuf = gbuf;
                 if with_post {
                     p.gpu_post = Some(job);
-                } else if (job.shadows.is_some() || job.deao.is_some()) && crate::gpu::post_on_card(&p, &mut gbuf, &job, cancel).is_ok() {
-                    p.gpu_post = Some(job);
+                } else if job.shadows.is_some() || job.deao.is_some() {
+                    stage(&post_stage_name(job.shadows.is_some(), job.deao.is_some(), "graphics card"));
+                    let t_post = Instant::now();
+                    if crate::gpu::post_on_card(&p, &mut gbuf, &job, progress, cancel).is_ok() {
+                        p.gpu_post = Some(job);
+                        p.gpu_post_secs = Some(t_post.elapsed().as_secs_f64());
+                    }
                 }
                 if cancel() {
                     return Err("cancelled".into());
                 }
-                return finish_calculation(sc, p, gbuf, post, threads, cancel);
+                return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
             }
             // (the card failed: all on the CPU, from the start)
             s.reset();
@@ -397,7 +431,7 @@ fn calculate_inner(
             });
             if let Some(gbuf) = gpu {
                 p.gpu_post = Some(job);
-                return finish_calculation(sc, p, gbuf, post, threads, cancel);
+                return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
             }
         }
     }
@@ -448,7 +482,7 @@ fn calculate_inner(
     if cancel() {
         return Err("cancelled".into());
     }
-    finish_calculation(sc, p, gbuf, post, threads, cancel)
+    finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel)
 }
 
 /// "Calc-" (MB3D's `CalcMandBlocky`): a rough image of the whole view, one
@@ -574,9 +608,21 @@ const PROBE_CARD_MS: u64 = 1500;
 /// rows of a band the card failed are done here.  So the slower of the two
 /// takes fewer rows, and neither waits.  The rows the card did.
 #[cfg(feature = "gpu")]
-fn post_shared(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], job: &PostJob, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) -> Result<usize, String> {
+#[allow(clippy::too_many_arguments)]
+fn post_shared(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &mut [SiLight],
+    job: &PostJob,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> Result<usize, String> {
     use std::sync::Mutex;
     let (w, h) = (p.rect[2].max(1) as usize, p.rect[3].max(0) as usize);
+    // rows finished by either side, for `progress`
+    let finished = AtomicUsize::new(0);
+    let tick = || progress(finished.fetch_add(1, Ordering::Relaxed) + 1, h);
     let shadows = job.shadows.as_ref().and_then(|_| ShadowRows::new(sc, p));
     let deao = match (&job.deao, &sc.deao) {
         (Some(_), Some(d)) if sc.ao.is_some() => Some(crate::deao::DeaoRows::new(p, d)),
@@ -612,6 +658,7 @@ fn post_shared(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], job: &PostJob, 
                     f.1
                 };
                 cpu(y, &mut rows[y].lock().unwrap());
+                tick();
             });
         }
         let r = crate::gpu::post_bands(
@@ -635,6 +682,7 @@ fn post_shared(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], job: &PostJob, 
                     let n = row.len().min(dst.len());
                     dst[..n].copy_from_slice(&row[..n]);
                     delivered[y].store(true, Ordering::Relaxed);
+                    tick();
                 }
             },
         );
@@ -1188,25 +1236,28 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
 }
 
 /// The post calculations after the main calculation (CPU or GPU).
+#[allow(clippy::too_many_arguments)]
 fn finish_calculation(
     sc: &Scene,
     p: CalcParams,
     mut gbuf: Vec<SiLight>,
     post: u8,
     threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
     let two_d = p.slice_2d != 0;
     if two_d || post == 0 {
         // MB3D runs no post calculations after a 2D calculation
     } else if post == 2 {
-        post_process_cancellable(sc, &p, &mut gbuf, threads, cancel)?;
+        post_process_reporting(sc, &p, &mut gbuf, threads, progress, stage, cancel)?;
     } else if sc.shadows.is_some() || sc.deao.is_some() {
         let mut s2 = sc.clone();
         if s2.deao.is_none() {
             s2.ao = None;
         }
-        post_process_cancellable(&s2, &p, &mut gbuf, threads, cancel)?;
+        post_process_reporting(&s2, &p, &mut gbuf, threads, progress, stage, cancel)?;
     }
     if cancel() {
         return Err("cancelled".into());
@@ -1266,6 +1317,26 @@ pub struct StageTimes {
     pub shadows: Option<Option<f64>>,
     pub ao: Option<Option<f64>>,
     pub reflections: Option<f64>,
+    /// The card ran the occlusion in one pass with the shadows: its time
+    /// is in `shadows`.
+    pub ao_with_shadows: bool,
+}
+
+/// The times of the post passes the card ran with the main calculation
+/// (`p.gpu_post`): after the march they have a time (`p.gpu_post_secs`),
+/// within it they have none (`Some(None)`).
+pub fn card_post_times(sc: &Scene, p: &CalcParams) -> StageTimes {
+    let mut t = StageTimes::default();
+    let Some(job) = &p.gpu_post else { return t };
+    let (hs, ao) = (sc.shadows.is_some() && job.shadows.is_some(), sc.ao.is_some() && job.deao.is_some());
+    if hs {
+        t.shadows = Some(p.gpu_post_secs);
+    }
+    if ao {
+        t.ao_with_shadows = hs && p.gpu_post_secs.is_some();
+        t.ao = Some(if t.ao_with_shadows { None } else { p.gpu_post_secs });
+    }
+    t
 }
 
 /// The automatic post calculations on the G-buffer (hard shadows, ambient
@@ -1280,8 +1351,22 @@ pub fn post_process(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 /// [`post_process`] that stops (`Err("cancelled")`, the G-buffer half
 /// done) when `cancel` returns true: the "Stop" button.
 pub fn post_process_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize, cancel: &(dyn Fn() -> bool + Sync)) -> Result<StageTimes, String> {
+    post_process_reporting(sc, p, gbuf, threads, &|_, _| {}, &no_stage, cancel)
+}
+
+/// [`post_process_cancellable`] that names each pass to `stage` as it
+/// starts and counts its rows in `progress`.
+pub fn post_process_reporting(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &mut [SiLight],
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> Result<StageTimes, String> {
     let stopped = || if cancel() { Err("cancelled".to_string()) } else { Ok(()) };
-    let mut times = StageTimes::default();
+    let mut times = card_post_times(sc, p);
     if sc.normals_on_zbuf {
         crate::reflect::normals_on_zbuf(sc, p, gbuf);
     }
@@ -1301,29 +1386,39 @@ pub fn post_process_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]
             }
         }
     }
-    if sc.shadows.is_some() {
-        times.shadows = Some(None);
-    }
     if sc.shadows.is_some() && !shadows_done {
+        stage(&post_stage_name(true, false, ""));
         let t = Instant::now();
-        hard_shadows_cancellable(sc, p, gbuf, threads, cancel);
+        hard_shadows_reporting(sc, p, gbuf, threads, progress, cancel);
         stopped()?;
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
             eprintln!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
         }
         times.shadows = Some(Some(t.elapsed().as_secs_f64()));
+        // (the card's occlusion keeps the time of its pass, which it no
+        // longer shares with the shadows)
+        if times.ao_with_shadows {
+            times.ao_with_shadows = false;
+            times.ao = Some(p.gpu_post_secs);
+        }
     }
     if let Some(ao) = &sc.ao {
-        times.ao = Some(None);
         let t = Instant::now();
         if let Some(d) = &sc.deao {
             if !deao_done {
-                crate::deao::deao(p, gbuf, p.rect[2] as usize, p.rect[3] as usize, d, threads, cancel);
+                stage(&post_stage_name(false, true, ""));
+                crate::deao::deao(p, gbuf, p.rect[2] as usize, p.rect[3] as usize, d, threads, progress, cancel);
                 times.ao = Some(Some(t.elapsed().as_secs_f64()));
+                times.ao_with_shadows = false;
             }
         } else {
+            // (no rows to count: one step)
+            stage(&post_stage_name(false, true, ""));
+            progress(0, 1);
             ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads);
+            progress(1, 1);
             times.ao = Some(Some(t.elapsed().as_secs_f64()));
+            times.ao_with_shadows = false;
         }
         stopped()?;
     }
@@ -1506,11 +1601,25 @@ pub fn hard_shadows(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: u
 
 /// [`hard_shadows`] whose rows stop when `cancel` returns true.
 pub fn hard_shadows_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight], threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
+    hard_shadows_reporting(sc, p, gbuf, threads, &|_, _| {}, cancel)
+}
+
+/// [`hard_shadows_cancellable`] that counts the rows done in `progress`.
+pub fn hard_shadows_reporting(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &mut [SiLight],
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     let Some(pass) = ShadowRows::new(sc, p) else { return };
     let w = p.rect[2] as usize;
     let h = p.rect[3] as usize;
     let threads = threads.min(h).max(1);
     let pass = &pass;
+    let finished = AtomicUsize::new(0);
+    let finished = &finished;
     std::thread::scope(|s| {
         let mut rows: Vec<(usize, &mut [SiLight])> = gbuf.chunks_mut(w).enumerate().collect();
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
@@ -1524,6 +1633,7 @@ pub fn hard_shadows_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]
                         break;
                     }
                     pass.row(y, row);
+                    progress(finished.fetch_add(1, Ordering::Relaxed) + 1, h);
                 }
             });
         }
@@ -1563,31 +1673,45 @@ impl<'a> ShadowRows<'a> {
 
 /// Paints the G-buffer with the scene lighting.
 pub fn paint(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with::<u8>(sc, p, gbuf, true, &|| false).0
+    paint_with::<u8>(sc, p, gbuf, true, &|_, _| {}, &no_stage, &|| false).0
 }
 
 /// [`paint`] that stops (`Err("cancelled")`) when `cancel` returns true,
 /// also during the reflections and the depth of field: the "Stop" button.
 pub fn paint_cancellable(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], cancel: &(dyn Fn() -> bool + Sync)) -> Result<Vec<u8>, String> {
-    let rgb = paint_with::<u8>(sc, p, gbuf, true, cancel).0;
+    let rgb = paint_with::<u8>(sc, p, gbuf, true, &|_, _| {}, &no_stage, cancel).0;
     if cancel() { Err("cancelled".into()) } else { Ok(rgb) }
 }
 
 /// [`paint`] in 16 bit per colour channel (the colours as calculated,
 /// before MB3D's rounding to 8 bit): `mb3d --bits 16`, "PNG 16 bit colour".
 pub fn paint16(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u16> {
-    paint_with::<u16>(sc, p, gbuf, true, &|| false).0
+    paint_with::<u16>(sc, p, gbuf, true, &|_, _| {}, &no_stage, &|| false).0
 }
 
 /// [`paint`], and the time of the reflections (None without them).
 pub fn paint_timed(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> (Vec<u8>, Option<f64>) {
-    paint_with::<u8>(sc, p, gbuf, true, &|| false)
+    paint_with::<u8>(sc, p, gbuf, true, &|_, _| {}, &no_stage, &|| false)
 }
 
 /// [`paint_timed`] that `cancel` ends early (the picture is then
 /// incomplete: the caller checks `cancel` and drops it).
 pub fn paint_timed_cancellable(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], cancel: &(dyn Fn() -> bool + Sync)) -> (Vec<u8>, Option<f64>) {
-    paint_with::<u8>(sc, p, gbuf, true, cancel)
+    paint_with::<u8>(sc, p, gbuf, true, &|_, _| {}, &no_stage, cancel)
+}
+
+/// [`paint_timed_cancellable`] that names the passes after the lighting
+/// ("reflections", "depth of field") to `stage` and counts their rows in
+/// `progress`.
+pub fn paint_reporting(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &[SiLight],
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> (Vec<u8>, Option<f64>) {
+    paint_with::<u8>(sc, p, gbuf, true, progress, stage, cancel)
 }
 
 /// [`paint`] without the reflections and the depth of field: the preview
@@ -1595,7 +1719,7 @@ pub fn paint_timed_cancellable(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], can
 /// reflections march again, taking as long as the calculation itself),
 /// and MB3D's `PaintRows` of a recalculated selection.
 pub fn paint_preview(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u8> {
-    paint_with::<u8>(sc, p, gbuf, false, &|| false).0
+    paint_with::<u8>(sc, p, gbuf, false, &|_, _| {}, &no_stage, &|| false).0
 }
 
 /// The live picture of a calculation at the size it is shown (every
@@ -1652,7 +1776,15 @@ pub fn paint_display_rows(sc: &Scene, p: &CalcParams, step: usize, rows: Option<
     });
 }
 
-fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], full: bool, cancel: &(dyn Fn() -> bool + Sync)) -> (Vec<S>, Option<f64>) {
+fn paint_with<S: crate::lighting::Sample>(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &[SiLight],
+    full: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> (Vec<S>, Option<f64>) {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);
@@ -1681,12 +1813,17 @@ fn paint_with<S: crate::lighting::Sample>(sc: &Scene, p: &CalcParams, gbuf: &[Si
     }
     let mut refl_s = None;
     if sc.mc.reflections && p.slice_2d == 0 {
+        stage("reflections");
         let t = Instant::now();
-        crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads, cancel);
+        crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads, progress, cancel);
         refl_s = Some(t.elapsed().as_secs_f64());
     }
     if let Some(d) = sc.dof.as_ref().filter(|_| p.slice_2d == 0 && !cancel()) {
+        // (no rows to count: one step)
+        stage("depth of field");
+        progress(0, 1);
         crate::dof::apply(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d, cancel);
+        progress(1, 1);
     }
     (rgb, refl_s)
 }
@@ -1895,7 +2032,7 @@ pub fn render_tiled_with(
         let (ts, t) = single_tile(sc, &tl, c, r)?;
         let [x0, y0] = [ts.calc_rect.unwrap()[0], ts.calc_rect.unwrap()[1]];
         let t0 = Instant::now();
-        let (p, gbuf) = calculate_inner(&ts, progress, cancel, 2, None, ck)?;
+        let (p, gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, 2, None, ck)?;
         let t1 = Instant::now();
         let trgb = paint(&ts, &p, &gbuf);
         let paint_s = t1.elapsed().as_secs_f64();
@@ -1953,7 +2090,7 @@ pub fn render_tiled_with(
             let mut ts = sc.clone();
             ts.calc_rect = Some(t);
             let tck = ck.and_then(|s| open_checkpoint(&ts, &s.spec().name, policy));
-            let (_, gbuf) = calculate_inner(&ts, progress, cancel, 1, None, tck.as_ref())?;
+            let (_, gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, 1, None, tck.as_ref())?;
             put(&mut full, &gbuf);
             if let Some(s) = ck {
                 s.put(k, 0, rect, &crate::gbuffer::pack(&gbuf));
@@ -2014,7 +2151,7 @@ pub fn render_tile_staged(
     let mut ts = sc.clone();
     ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
     let t0 = Instant::now();
-    let (p, mut gbuf) = calculate_inner(&ts, progress, cancel, 0, None, ck)?;
+    let (p, mut gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, 0, None, ck)?;
     if post_pending(&ts, &p) {
         stage(match (ts.shadows.is_some(), ts.ao.is_some()) {
             (true, true) => "hard shadows and ambient occlusion",
@@ -2032,7 +2169,7 @@ pub fn render_tile_staged(
             (false, false) => "painting",
         };
         stage(what);
-        let rgb = paint_with::<u8>(&ts, &p, &gbuf, true, cancel).0;
+        let rgb = paint_with::<u8>(&ts, &p, &gbuf, true, &|_, _| {}, &no_stage, cancel).0;
         if cancel() {
             return Err("cancelled".into());
         }

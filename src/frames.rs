@@ -217,7 +217,7 @@ pub fn render_scaled_with(
         let r = crate::render::render_tiled_with(sc, want_depth || want_alpha, progress, &|_, _, _| {}, cancel, ck, policy)?;
         (r.rgb, r.width, r.height, r.gbuffer)
     } else {
-        let (p, g) = crate::render::calculate_with(sc, progress, cancel, 2, None, ck)?;
+        let (p, g) = crate::render::calculate_with(sc, progress, &crate::render::no_stage, cancel, 2, None, ck)?;
         let rgb = crate::render::paint(sc, &p, &g);
         (rgb, sc.width as usize, sc.height as usize, Some(g))
     };

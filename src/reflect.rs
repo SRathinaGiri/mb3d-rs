@@ -1370,11 +1370,21 @@ const REFLECT_BAND_PIXELS_BIG: usize = 1 << 21;
 
 /// `CalcSRT`: the reflection pass over the painted image `rgb` of the
 /// G-buffer `gbuf` (both covering `p.rect`).
-#[allow(clippy::too_many_arguments)]
 ///
 /// `cancel` ("Stop") ends it early; the picture is then half done (the
 /// callers drop it).
-pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
+#[allow(clippy::too_many_arguments)]
+pub fn reflections<S: Sample>(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &[SiLight],
+    rgb: &mut [S],
+    cam: &PaintCamera,
+    lv: &LightVals,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
         let [x0, y0, w, h] = p.rect;
@@ -1394,14 +1404,18 @@ pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
             q.rect = [x0, y0 + y as i32, w, bh as i32];
             let (g, c) = (&gbuf[y * wu..(y + bh) * wu], &mut rgb[y * wu * 3..(y + bh) * wu * 3]);
             match reflections_gpu(sc, &q, g, c, cam, lv, threads, cancel) {
-                Ok(()) => y += bh,
+                Ok(()) => {
+                    y += bh;
+                    progress(y, hu);
+                }
                 // the program ends (gpu::abort_all): no CPU pass either
                 Err(e) if e == "cancelled" => return,
                 // (a failed band is unchanged: it and the rest on the CPU)
                 Err(e) => {
                     eprintln!("reflections on the GPU failed, calculated on the CPU: {e}");
                     q.rect = [x0, y0 + y as i32, w, (hu - y) as i32];
-                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads, cancel);
+                    // (the rows go on counting from where the card stopped)
+                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads, &|d, _| progress(y + d, hu), cancel);
                 }
             }
         }
@@ -1411,12 +1425,22 @@ pub fn reflections<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         }
         return;
     }
-    reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads, cancel)
+    reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads, progress, cancel)
 }
 
 /// [`reflections`] on the CPU.
 #[allow(clippy::too_many_arguments)]
-fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
+fn reflections_cpu<S: Sample>(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &[SiLight],
+    rgb: &mut [S],
+    cam: &PaintCamera,
+    lv: &LightVals,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     let mc = &sc.mc;
     let mid = sc.stereo_mid();
     let m1 = normalise_matrix_to(1.0, &p.vgrads);
@@ -1465,6 +1489,8 @@ fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     let (wu, hu) = (w as usize, h as usize);
     let threads = threads.min(hu).max(1);
     let ctx = &ctx;
+    let finished = std::sync::atomic::AtomicUsize::new(0);
+    let finished = &finished;
     std::thread::scope(|s| {
         let mut per: Vec<Vec<(usize, &mut [S])>> = (0..threads).map(|_| Vec::new()).collect();
         for (y, row) in rgb.chunks_mut(wu * 3).enumerate() {
@@ -1511,6 +1537,7 @@ fn reflections_cpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                             row[x * 3..x * 3 + 3].copy_from_slice(&c);
                         }
                     }
+                    progress(finished.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1, hu);
                 }
             });
         }

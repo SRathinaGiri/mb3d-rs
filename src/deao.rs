@@ -103,10 +103,23 @@ fn build_rays(quality: u8) -> Rays {
     }
 }
 
-/// Calculates `amb_shadow` for all object pixels.
-pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, dp: &DeaoParams, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) {
+/// Calculates `amb_shadow` for all object pixels; `progress` counts the
+/// rows done.
+#[allow(clippy::too_many_arguments)]
+pub fn deao(
+    p: &CalcParams,
+    gbuf: &mut [SiLight],
+    width: usize,
+    height: usize,
+    dp: &DeaoParams,
+    threads: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     let pass = DeaoRows::new(p, dp);
     let threads = threads.min(height).max(1);
+    let finished = std::sync::atomic::AtomicUsize::new(0);
+    let finished = &finished;
     std::thread::scope(|s| {
         let rows: Vec<(usize, &mut [SiLight])> = gbuf.chunks_mut(width).enumerate().collect();
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
@@ -122,6 +135,7 @@ pub fn deao(p: &CalcParams, gbuf: &mut [SiLight], width: usize, height: usize, d
                         break;
                     }
                     pass.row(y, row);
+                    progress(finished.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1, height);
                 }
             });
         }

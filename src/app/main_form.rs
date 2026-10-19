@@ -44,6 +44,9 @@ pub struct State {
     pub finished_seen: u64,
     pub last_partial: Instant,
     pub calc_start: Instant,
+    /// the stage the window shows and when it began, for the time left
+    pub stage_shown: String,
+    pub stage_start: Instant,
     /// the title bar LED: its state, blinking during a 3D calculation
     pub led: Led,
     pub led_running: bool,
@@ -95,6 +98,8 @@ impl Default for State {
             finished_seen: 0,
             last_partial: Instant::now(),
             calc_start: Instant::now(),
+            stage_shown: String::new(),
+            stage_start: Instant::now(),
             led: Led::Idle,
             led_running: false,
             compile_note: false,
@@ -756,6 +761,8 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     }
     app.main.calc3d = calc3d;
     app.main.calc_start = Instant::now();
+    app.main.stage_shown = "main rendering".into();
+    app.main.stage_start = Instant::now();
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     for l in ["Label8", "Label48", "Label50"] {
@@ -839,6 +846,25 @@ fn run_calc(app: &mut Mb3d, sc: Scene, slice: u8, resume: crate::checkpoint::Pol
     app.eng.start(Job::Calc { scene: sc, slice, resume, name: stem(&app.title) });
 }
 
+/// "hard shadows: 40 %, about 2 min left": the stage, its progress and,
+/// once the rate is known, the time left.
+fn stage_caption(stage: &str, f: f64, secs: f64) -> String {
+    if f <= 0.0 {
+        return stage.to_string();
+    }
+    let pct = format!("{stage}: {} %", (f * 100.0).floor() as i64);
+    if secs < 3.0 || f < 0.02 || f >= 1.0 {
+        return pct;
+    }
+    let left = (secs * (1.0 - f) / f).round() as i64;
+    let t = match left {
+        0..=59 => format!("{} s", left.max(1)),
+        60..=3599 => format!("{} min", (left + 30) / 60),
+        _ => format!("{} h {} min", left / 3600, left % 3600 / 60),
+    };
+    format!("{pct}, about {t} left")
+}
+
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     let (ver, finished, running, stage, err, stats) = {
@@ -858,9 +884,14 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
     }
     if app.main.calculating {
-        ui.set_position(F, "ProgressBar1", (app.eng.progress() * ui.c(F, "ProgressBar1").max as f32) as i64);
+        let f = app.eng.progress();
+        ui.set_position(F, "ProgressBar1", (f * ui.c(F, "ProgressBar1").max as f32) as i64);
         if !stage.is_empty() && app.main.calc3d {
-            ui.set_caption(F, "Label6", &stage);
+            if stage != app.main.stage_shown {
+                app.main.stage_shown = stage.clone();
+                app.main.stage_start = Instant::now();
+            }
+            ui.set_caption(F, "Label6", &stage_caption(&stage, f as f64, app.main.stage_start.elapsed().as_secs_f64()));
         }
         // the rows calculated so far (MB3D shows the image while it grows)
         let iv = if app.scene.width * app.scene.height > 2_000_000 { 900 } else { 300 };
@@ -907,14 +938,16 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 #[cfg(not(feature = "gpu"))]
                 set_led_hint(ui, "Calculated on the CPU");
                 // the stages after the main calculation: "-" when the scene
-                // has none, "in main" when the card ran it with the march
+                // has none, "incl. in main" when the card ran it with the
+                // march, "with HS" when it ran with the hard shadows
                 let stage = |t: Option<Option<f64>>| match t {
                     None => "-".to_string(),
-                    Some(None) => "in main".to_string(),
+                    Some(None) => "incl. in main".to_string(),
                     Some(Some(s)) => time_str(((s * 10.0) as i64).max(1)),
                 };
                 ui.set_caption(F, "Label8", &stage(stats.stages.shadows));
-                ui.set_caption(F, "Label48", &stage(stats.stages.ao));
+                let ao = if stats.stages.ao_with_shadows { "with HS".to_string() } else { stage(stats.stages.ao) };
+                ui.set_caption(F, "Label48", &ao);
                 ui.set_caption(F, "Label50", &stage(stats.stages.reflections.map(Some)));
                 let _ = secs;
                 if let Some(p) = app.main.auto_m3i.take() {

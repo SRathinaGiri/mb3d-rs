@@ -574,28 +574,30 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
         };
     }
     let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    // each stage after the march: its name for the window, the bar from zero
+    let stage = |name: &str| {
+        e.out.lock().unwrap().stage = name.to_string();
+        e.progress.store(0, Ordering::Relaxed);
+    };
     let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
-    let (p, raw) = crate::render::calculate_with(&sc, &progress, cancel, 0, Some(&sink), ck.as_ref())?;
+    let (p, raw) = crate::render::calculate_with(&sc, &progress, &stage, cancel, 0, Some(&sink), ck.as_ref())?;
     *e.partial.lock().unwrap() = None;
     let t1 = Instant::now();
     let raw = Arc::new(raw);
-    let mut stages = crate::render::StageTimes::default();
+    let mut stages = crate::render::card_post_times(&sc, &p);
     let post = if needs_post(&sc, &p) {
-        e.out.lock().unwrap().stage = if sc.shadows.is_some() { "hard shadow calculation".into() } else { "ambient shadow calculation".into() };
         let mut g = (*raw).clone();
-        stages = crate::render::post_process_cancellable(&sc, &p, &mut g, crate::render::thread_count(&sc), cancel)?;
+        stages = crate::render::post_process_reporting(&sc, &p, &mut g, crate::render::thread_count(&sc), &progress, &stage, cancel)?;
         Arc::new(g)
     } else {
-        // the card ran the shadows and the occlusion with the march
-        stages.shadows = sc.shadows.as_ref().map(|_| None);
-        stages.ao = sc.ao.as_ref().map(|_| None);
+        // the card ran the shadows and the occlusion with the main calculation
         raw.clone()
     };
     if cancel() {
         return Err("cancelled".into());
     }
     let t2 = Instant::now();
-    let (rgb, refl_s) = crate::render::paint_timed_cancellable(&sc, &p, &post, cancel);
+    let (rgb, refl_s) = crate::render::paint_reporting(&sc, &p, &post, &progress, &stage, cancel);
     if cancel() {
         return Err("cancelled".into());
     }
@@ -755,7 +757,7 @@ fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (
     }
     if let (true, false, Some(d), Some(_)) = (deao, keep_as, &target.deao, &target.ao) {
         e.out.lock().unwrap().stage = "ambient".into();
-        crate::deao::deao(&q, &mut part, rw, rh, d, threads, cancel);
+        crate::deao::deao(&q, &mut part, rw, rh, d, threads, &|_, _| {}, cancel);
     }
     if cancel() {
         return Err("cancelled".into());
