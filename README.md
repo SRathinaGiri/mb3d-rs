@@ -62,8 +62,8 @@ programming language. Anyone can run it on this repository at any time:
 **[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (click *Rescan* for a fresh result of the current code)
 
-Version 0.2.45 was rated **safe: 6 out of 100, no findings**, as 0.2.44
-before it ([the 0.2.44 result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
+Version 0.2.59 was rated **safe: 0 out of 100, no findings** (earlier:
+[the 0.2.44 result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
 and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
 it is now written to stay this way. The programs contain no code that
 connects to the internet; the only other program they ask your system to
@@ -818,6 +818,14 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.59](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.59) · 19 Oct 2026, 15:15 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1a65ff6`](https://github.com/thr32423/mb3d-rs/commit/1a65ff68da41d7b02184e6a8e1419ba2e10090b5) | Version number and release notes of this release |
+| [`1e4b894`](https://github.com/thr32423/mb3d-rs/commit/1e4b8941032c6fedb587764d37e62241d9c5537d) | Depth of field on the graphics card |
+| [`45d7339`](https://github.com/thr32423/mb3d-rs/commit/45d733929a8d664dfcadd6225c8a8e987abf4a02) | README: Updates for v0.2.58 |
+
 ### [v0.2.58](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.58) · 19 Oct 2026, 10:58 UTC
 
 | Commit | What it does |
@@ -855,6 +863,8 @@ in UTC.
 | [`dd6598e`](https://github.com/thr32423/mb3d-rs/commit/dd6598e786c7a36938238111259261409406ff81) | CI: no run for documentation-only pushes |
 | [`02ba3c8`](https://github.com/thr32423/mb3d-rs/commit/02ba3c8fb4e9bd4c76fbb287465b061ca3fd9184) | README: Updates for v0.2.54 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.54)</summary>
+
 ### [v0.2.54](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.54) · 18 Oct 2026, 11:24 UTC
 
 | Commit | What it does |
@@ -863,8 +873,6 @@ in UTC.
 | [`0f6b8ed`](https://github.com/thr32423/mb3d-rs/commit/0f6b8ed65b0a69c24ab84ba843f43ea289d51338) | Stopped renders continue where they were |
 | [`13b421e`](https://github.com/thr32423/mb3d-rs/commit/13b421e420bfd64a36337f0b1d44ae39ce498441) | Nightly tests that report problems as issues |
 | [`5e0da28`](https://github.com/thr32423/mb3d-rs/commit/5e0da286986a00970ad2bc073bfed952ea9865de) | README: Updates for v0.2.53 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.53)</summary>
 
 ### [v0.2.53](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.53) · 18 Oct 2026, 08:22 UTC
 
