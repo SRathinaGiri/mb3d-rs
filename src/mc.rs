@@ -2558,6 +2558,19 @@ impl McCheckpoint {
         true
     }
 
+    /// `img` (as [`McCheckpoint::restore`] made it) with the rows of the
+    /// pass under way: the picture as it was when the render stopped, to
+    /// show while the pass goes on.
+    pub fn with_partial(&self, img: &McImage) -> McImage {
+        let mut out = img.clone();
+        if let Some((_, rows)) = self.partial.lock().unwrap().as_ref() {
+            for (y, recs) in rows {
+                out.recs[y * img.width..(y + 1) * img.width].copy_from_slice(recs);
+            }
+        }
+        out
+    }
+
     /// The rows of the pass under way it had (see [`McCheckpoint::restore`]).
     pub fn partial_rows(&self) -> usize {
         self.partial.lock().unwrap().as_ref().map_or(0, |(_, r)| r.len())

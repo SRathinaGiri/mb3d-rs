@@ -435,6 +435,15 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     let start = Arc::new(img.clone());
     app.mc.img = Some(start.clone());
     app.mc.picture_changed = true;
+    // a continued render: its picture at once, with the rows of the pass
+    // it stopped in (they come again with the pass's first rows)
+    if let (Some(c), Some(p)) = (&ck, &app.mc.paras) {
+        if c.partial_rows() > 0 {
+            let shown = c.with_partial(&img);
+            set_image(ui, shown.width, shown.height, &crate::mc::paint(&shown, &p.mc, p.lighting.gamma));
+            app.mc.picture_changed = false;
+        }
+    }
     app.mc.stop.store(false, Ordering::SeqCst);
     app.mc.progress.store(0, Ordering::SeqCst);
     *app.mc.shared.lock().unwrap() = Shared::default();
@@ -545,7 +554,13 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
                     s.ver += 1;
                 }
                 Err(e) => {
-                    if !stop.load(Ordering::Relaxed) {
+                    if stop.load(Ordering::Relaxed) {
+                        // the picture as far as the pass got, for the
+                        // window (else it shows the pass's start: black on
+                        // a first pass)
+                        s.img = Some(Arc::new(img.clone()));
+                        s.ver += 1;
+                    } else {
                         s.error = e;
                     }
                     s.finished = true;
@@ -608,10 +623,14 @@ pub fn stop_for_exit(app: &mut Mb3d) {
     app.mc.stop.store(true, Ordering::SeqCst);
 }
 
-/// `StopRendering`
+/// `StopRendering`: the render thread ends its pass and hands over the
+/// picture as far as it got; [`idle`] then finishes.
 fn stop(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.stop.store(true, Ordering::SeqCst);
-    finish(app, ui);
+    if app.mc.running {
+        ui.set_caption(F, "Button2", "Stopping...");
+        ui.set_enabled(F, "Button2", false);
+    }
 }
 
 fn finish(app: &mut Mb3d, ui: &mut Ui) {
@@ -619,6 +638,7 @@ fn finish(app: &mut Mb3d, ui: &mut Ui) {
         return;
     }
     app.mc.running = false;
+    ui.set_enabled(F, "Button2", true);
     super::main_form::show_led(ui, app.main.led, false);
     app.mc.calc_time += (app.mc.start.elapsed().as_secs_f64() * 10.0) as i64;
     ui.set_visible(F, "ProgressBar1", false);
