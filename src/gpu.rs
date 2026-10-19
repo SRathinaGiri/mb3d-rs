@@ -2753,6 +2753,97 @@ fn ssao15_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     Ok(())
 }
 
+/// A strip of rows of a depth of field pass for the card (built by
+/// `dof.rs`): the source records of the rows that can reach it, and per bin
+/// of 64x64 pixels the list of sources (in blending order) that reach it.
+pub struct DofStrip<'a> {
+    pub width: usize,
+    /// first target row and the number of them
+    pub y0: usize,
+    pub rows: usize,
+    /// the row of record 0
+    pub src_y0: usize,
+    /// 8 words per source pixel (see `gpu_dof.wgsl`)
+    pub records: &'a [u32],
+    /// per bin of the strip (row by row, `bins_x` a row): the start of its
+    /// list in `entries`, and the end of the last
+    pub offsets: &'a [u32],
+    pub entries: &'a [u32],
+    pub bins_x: usize,
+    /// `sqrt(i)` as the CPU rounds it, up to the largest disk
+    pub roots: &'a [f32],
+    pub forward: bool,
+    pub sm: f32,
+}
+
+/// Runs one strip of a depth of field pass on the card; returns the colour
+/// and transparency sums (4 floats) of its target pixels.
+pub fn dof_strip(s: &DofStrip, cancel: &(dyn Fn() -> bool + Sync)) -> Result<Vec<f32>, String> {
+    guard(|| dof_strip_card(s, cancel))
+}
+
+fn dof_strip_card(s: &DofStrip, cancel: &(dyn Fn() -> bool + Sync)) -> Result<Vec<f32>, String> {
+    let g = gpu()?;
+    let pl = pipeline_entry(g, include_str!("gpu_dof.wgsl"), "main", None, &[])?;
+    let storage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST;
+    let upload = |label: &'static str, words: &[u32]| {
+        let b = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (words.len().max(1) * 4) as u64, usage: storage, mapped_at_creation: false });
+        if !words.is_empty() {
+            g.queue.write_buffer(&b, 0, &bytes(words));
+        }
+        b
+    };
+    let records = upload("dof records", s.records);
+    let offsets = upload("dof offsets", s.offsets);
+    let entries = upload("dof entries", s.entries);
+    let roots: Vec<u32> = s.roots.iter().map(|v| v.to_bits()).collect();
+    let roots = upload("dof roots", &roots);
+    let out_len = (s.rows * s.width * 4) as u64 * 4;
+    let out = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("dof out"), size: out_len.max(4), usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
+    let read = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("dof read"), size: out_len.max(4), usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    // dispatches of at most ~2^31 pair tests (a fraction of a second, well
+    // under the drivers' timeouts) and 4000 bins
+    let bins = s.offsets.len() - 1;
+    let mut b0 = 0;
+    while b0 < bins {
+        if cancel() {
+            return Err("cancelled".into());
+        }
+        let mut b1 = b0;
+        let mut work = 0u64;
+        while b1 < bins && b1 - b0 < 4000 && (b1 == b0 || work < 1 << 31) {
+            work += (s.offsets[b1 + 1] - s.offsets[b1]) as u64 * 16 * 256;
+            b1 += 1;
+        }
+        let par = [s.width as u32, s.y0 as u32, s.rows as u32, s.src_y0 as u32, s.bins_x as u32, b0 as u32, s.forward as u32, s.sm.to_bits()];
+        let par = upload("dof params", &par);
+        let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("dof"),
+            layout: &pl.get_bind_group_layout(0),
+            entries: &[&par, &records, &offsets, &entries, &roots, &out]
+                .iter()
+                .enumerate()
+                .map(|(i, b)| wgpu::BindGroupEntry { binding: i as u32, resource: b.as_entire_binding() })
+                .collect::<Vec<_>>(),
+        });
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        {
+            let mut pass = enc.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&pl);
+            pass.set_bind_group(0, &bind, &[]);
+            pass.dispatch_workgroups(((b1 - b0) * 16) as u32, 1, 1);
+        }
+        g.queue.submit([enc.finish()]);
+        g.device.poll(wgpu::PollType::wait_indefinitely()).map_err(|e| e.to_string())?;
+        if let Some(e) = take_error() {
+            return Err(e);
+        }
+        b0 = b1;
+    }
+    let v = read_back(g, &out, &read, 0, out_len)?;
+    Ok(v.chunks_exact(4).map(|c| f32::from_le_bytes(c.try_into().unwrap())).collect())
+}
+
 /// Runs `pipeline` once with the storage buffers `inputs` (bindings 0..,
 /// read only) and an output buffer of `out_len` words (the next binding);
 /// `groups` workgroups in x and y.
