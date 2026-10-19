@@ -818,6 +818,16 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.58](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.58) · 19 Oct 2026, 10:58 UTC
+
+| Commit | What it does |
+|---|---|
+| [`cfb1402`](https://github.com/thr32423/mb3d-rs/commit/cfb14029475054f303bc64618942c1b7f48b549f) | Version number and release notes of this release |
+| [`d9cc235`](https://github.com/thr32423/mb3d-rs/commit/d9cc2359c5849aec9dee075e348681fdc24073d7) | Stage names, progress and time left for every stage (#8) |
+| [`e5f3fed`](https://github.com/thr32423/mb3d-rs/commit/e5f3fed7a72932b1b0f55fd208ee48950a8b2383) | Release workflow: the .rpm in an artifact of its own |
+| [`99ddfc3`](https://github.com/thr32423/mb3d-rs/commit/99ddfc3c4defc4a8b8620b1ae90ccdecd9329617) | Linux: .rpm package for Fedora, RHEL, Rocky and openSUSE |
+| [`4d20136`](https://github.com/thr32423/mb3d-rs/commit/4d201362e62eafa2f5d61a0ff7383f3992a1fc81) | README: Updates for v0.2.57 |
+
 ### [v0.2.57](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.57) · 18 Oct 2026, 22:43 UTC
 
 | Commit | What it does |
@@ -854,6 +864,8 @@ in UTC.
 | [`13b421e`](https://github.com/thr32423/mb3d-rs/commit/13b421e420bfd64a36337f0b1d44ae39ce498441) | Nightly tests that report problems as issues |
 | [`5e0da28`](https://github.com/thr32423/mb3d-rs/commit/5e0da286986a00970ad2bc073bfed952ea9865de) | README: Updates for v0.2.53 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.53)</summary>
+
 ### [v0.2.53](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.53) · 18 Oct 2026, 08:22 UTC
 
 | Commit | What it does |
@@ -864,8 +876,6 @@ in UTC.
 | [`b0a12b6`](https://github.com/thr32423/mb3d-rs/commit/b0a12b6542d9607679843b2c997d08c80eac3724) | README: the credits table without its sources line |
 | [`c336513`](https://github.com/thr32423/mb3d-rs/commit/c336513f5beacc045642a15b49af9488552c44cb) | README: the authors of Mandelbulb3D in the credits |
 | [`ae8f0fe`](https://github.com/thr32423/mb3d-rs/commit/ae8f0fe56c0d5d7d2c3b74d314e69fb5088b19bc) | README: Updates for v0.2.52 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.52)</summary>
 
 ### [v0.2.52](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.52) · 18 Oct 2026, 00:19 UTC
 
