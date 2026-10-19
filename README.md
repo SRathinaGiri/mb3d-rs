@@ -818,6 +818,14 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.60](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.60) · 19 Oct 2026, 18:18 UTC
+
+| Commit | What it does |
+|---|---|
+| [`0c4b844`](https://github.com/thr32423/mb3d-rs/commit/0c4b844dc8ac9f79e2322a85b014ae387892bd2d) | Version number and release notes of this release |
+| [`5bfa9e2`](https://github.com/thr32423/mb3d-rs/commit/5bfa9e256860a3f3f45e61583411ec257ad4e134) | Continued renders: kept rows shown at once, stopped renders kept after 10 s |
+| [`abd7263`](https://github.com/thr32423/mb3d-rs/commit/abd72636dd2c6966fa1c1a68c1b277562642ed45) | README: Updates for v0.2.59, scan result |
+
 ### [v0.2.59](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.59) · 19 Oct 2026, 15:15 UTC
 
 | Commit | What it does |
@@ -854,6 +862,8 @@ in UTC.
 | [`e486714`](https://github.com/thr32423/mb3d-rs/commit/e486714a0e41db5a6a22690b93b0d6d75e798152) | Reflections with the graphics card: the CPU finishes when it does most |
 | [`af02f18`](https://github.com/thr32423/mb3d-rs/commit/af02f18fea3acdc29b420ec4cab0d2e11f932eef) | README: Updates for v0.2.55 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.55)</summary>
+
 ### [v0.2.55](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.55) · 18 Oct 2026, 13:28 UTC
 
 | Commit | What it does |
@@ -862,8 +872,6 @@ in UTC.
 | [`4e344a4`](https://github.com/thr32423/mb3d-rs/commit/4e344a4bbf9d77dd72e92c75e0d385a9411aeb96) | Monte Carlo: much less memory for big images |
 | [`dd6598e`](https://github.com/thr32423/mb3d-rs/commit/dd6598e786c7a36938238111259261409406ff81) | CI: no run for documentation-only pushes |
 | [`02ba3c8`](https://github.com/thr32423/mb3d-rs/commit/02ba3c8fb4e9bd4c76fbb287465b061ca3fd9184) | README: Updates for v0.2.54 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.54)</summary>
 
 ### [v0.2.54](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.54) · 18 Oct 2026, 11:24 UTC
 
