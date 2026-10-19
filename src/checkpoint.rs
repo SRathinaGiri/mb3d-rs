@@ -43,10 +43,11 @@ pub enum Policy {
 }
 
 /// A stopped render shorter than this deletes its checkpoint (the editor's
-/// many short calculations leave nothing behind): a minute
+/// many short calculations leave nothing behind): 10 seconds; a minute
+/// lost most stopped renders, which then could not be continued
 /// (MB3D_RESUME_KEEP_SECS sets another).
 pub fn keep_after() -> Duration {
-    Duration::from_secs(std::env::var("MB3D_RESUME_KEEP_SECS").ok().and_then(|v| v.trim().parse().ok()).unwrap_or(60))
+    Duration::from_secs(std::env::var("MB3D_RESUME_KEEP_SECS").ok().and_then(|v| v.trim().parse().ok()).unwrap_or(10))
 }
 
 /// Checkpoints not touched for this many days are deleted.

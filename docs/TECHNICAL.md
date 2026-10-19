@@ -949,7 +949,7 @@ One tile (`--tile`) is a calculation of its rectangle with the border.
 **Ends.** A finished render deletes its checkpoint after its result is
 saved (the command line after the files are written, the program after
 the picture is painted). A stopped render keeps it unless it ran for less
-than a minute and continued nothing (`MB3D_RESUME_KEEP_SECS`): the
+than 10 seconds and continued nothing (`MB3D_RESUME_KEEP_SECS`): the
 editor's many short calculations leave nothing. Each new checkpoint
 prunes those not written for 30 days and then the oldest above 50 GB in
 all (`MB3D_RESUME_MAX_GB`), never one that is locked.

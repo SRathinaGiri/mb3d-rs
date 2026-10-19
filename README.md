@@ -796,7 +796,7 @@ interrupted animation continues and several computers can share one.
   18 bytes per pixel for a picture (a 15360 x 15360 picture takes 4.2 GB),
   64 for a Monte Carlo render. What was calculated is written at once and
   flushed to the disk every 5 minutes. A render stopped within its first
-  minute keeps nothing; unfinished renders older than 30 days go, and the
+  10 seconds keeps nothing; unfinished renders older than 30 days go, and the
   oldest ones when all of them take more than 50 GB. A render continues
   only with the same parameters and program version (and the same choice
   of card or processor; a Monte Carlo render's exposure and saturation

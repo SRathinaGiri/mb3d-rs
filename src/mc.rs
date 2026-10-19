@@ -2607,6 +2607,13 @@ pub fn pass_with(
             f(y, recs);
         }
     };
+    // the rows it had are shown first: the pass goes on below and between
+    // them (issue: they stayed black until the pass was over)
+    if let (Some((_, kept)), Some(f)) = (&partial, rows) {
+        for (y, recs) in kept {
+            f(*y, recs);
+        }
+    }
     let done = partial.as_ref().map(|(d, _)| d.as_slice());
     let r = pass_inner(sc, img, threads, progress, cancel, Some(&sink), done, start);
     // (the rows it had: also after a stop, as the image in memory)
@@ -2614,9 +2621,6 @@ pub fn pass_with(
         let w = img.width;
         for (y, recs) in kept {
             img.recs[y * w..(y + 1) * w].copy_from_slice(&recs);
-            if let Some(f) = rows {
-                f(y, &recs);
-            }
         }
     }
     if r.is_ok() {
