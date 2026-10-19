@@ -818,6 +818,14 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.61](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.61) · 19 Oct 2026, 19:09 UTC
+
+| Commit | What it does |
+|---|---|
+| [`da47383`](https://github.com/thr32423/mb3d-rs/commit/da47383568624693fd66d078afb2079a36857cf8) | Version number and release notes of this release |
+| [`69b796c`](https://github.com/thr32423/mb3d-rs/commit/69b796c7784e8720692a018489582f0c41b28893) | Monte Carlo: no black picture on Stop or when continuing |
+| [`7fa56e4`](https://github.com/thr32423/mb3d-rs/commit/7fa56e463c25d71ff5f35a96c5687c8801ed2a64) | README: Updates for v0.2.60 |
+
 ### [v0.2.60](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.60) · 19 Oct 2026, 18:18 UTC
 
 | Commit | What it does |
@@ -853,6 +861,8 @@ in UTC.
 | [`397746e`](https://github.com/thr32423/mb3d-rs/commit/397746e6ecf642b1f8c00341b1d45d0bd505e5e0) | The version stays in the title bar |
 | [`23cc639`](https://github.com/thr32423/mb3d-rs/commit/23cc639d81b254d22643dd3760eb4cf90dabc26e) | README: Updates for v0.2.56 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.56)</summary>
+
 ### [v0.2.56](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.56) · 18 Oct 2026, 17:04 UTC
 
 | Commit | What it does |
@@ -861,8 +871,6 @@ in UTC.
 | [`5b82070`](https://github.com/thr32423/mb3d-rs/commit/5b820705f7403385ba4bd8cc18536bbb1255040c) | Graphics card: single precision finished on the CPU where double was needed |
 | [`e486714`](https://github.com/thr32423/mb3d-rs/commit/e486714a0e41db5a6a22690b93b0d6d75e798152) | Reflections with the graphics card: the CPU finishes when it does most |
 | [`af02f18`](https://github.com/thr32423/mb3d-rs/commit/af02f18fea3acdc29b420ec4cab0d2e11f932eef) | README: Updates for v0.2.55 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.55)</summary>
 
 ### [v0.2.55](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.55) · 18 Oct 2026, 13:28 UTC
 
