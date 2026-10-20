@@ -1114,6 +1114,28 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             start_calc(app, ui, sc, 0);
             app.scene.stereo_mode = 0;
         }
+        "StereoPairClick" => {
+            app.make_scene(ui);
+            store_undo(app);
+            let layout = if ui.checked(F, "StereoCrossCheck") {
+                crate::render::StereoLayout::Cross
+            } else {
+                crate::render::StereoLayout::Parallel
+            };
+            app.main.calc3d = true;
+            app.main.calc_start = Instant::now();
+            app.main.stage_shown = "stereo: rendering left eye".into();
+            app.main.stage_start = Instant::now();
+            ui.set_visible(F, "Shape1", false);
+            disable_buttons(app, ui);
+            ui.set_visible(F, "ProgressBar1", true);
+            ui.set_caption(F, "Label6", "stereo: rendering left eye");
+            app.main.led_running = true;
+            app.main.compile_note = false;
+            #[cfg(feature = "gpu")]
+            crate::gpu::set_status(String::new());
+            app.eng.start(Job::Stereo { scene: app.scene.clone(), layout });
+        }
         "Button2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
                 if ui.caption(F, "Button2") == "Calculate 3D" {
