@@ -1,13 +1,12 @@
 # Getting started with mb3d-rs
 
 mb3d-rs is a Rust port of [Mandelbulb3D](https://github.com/thargor6/mb3d)
-(MB3D). It has two programs: **Mandelbulb3D**, the desktop program with
-MB3D's windows, and **mb3d**, the command line renderer. They need no
-installation.
+(MB3D). It has a Windows desktop program, **Mandelbulb3D**, and a Windows/Linux
+command-line renderer, **mb3d**. They need no installation.
 
 ## 1. Get the program
 
-On Linux and macOS, this line runs the script [download.sh](download.sh),
+On Linux, this line runs the script [download.sh](download.sh),
 which downloads the latest release into `~/mb3d-rs` (the script is also in
 the program's folder; run it again to update):
 
@@ -15,7 +14,7 @@ the program's folder; run it again to update):
 curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
 ```
 
-Then start it with `~/mb3d-rs/Mandelbulb3D`.
+Then run it with `~/mb3d-rs/mb3d --help`.
 
 On Windows, download
 [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip)
@@ -29,7 +28,7 @@ the whole original Mandelbulb3D repository (from
 [thargor6/mb3d](https://github.com/thargor6/mb3d), see `MB3D-SOURCE.txt`):
 
 ```
-Mandelbulb3D(.exe)    the program with MB3D's windows
+Mandelbulb3D.exe      the Windows program with MB3D's windows
 mb3d(.exe)            the command line renderer
 M3Formulas/           MB3D's formula files
 M3Maps/               maps for light maps, colour maps and backgrounds
@@ -60,10 +59,10 @@ installation) can be added with options; `mb3d` searches, in this order:
 In Mandelbulb3D, *Prefs ▸ Ini dirs* sets the folders, as in MB3D; they are
 kept in `Mandelbulb3D.ini` next to the program.
 
-## 3. The Mandelbulb3D program
+## 3. The Windows Mandelbulb3D program
 
-Start `Mandelbulb3D` in the unpacked folder (double-click it;
-`Mandelbulb3D.exe` on Windows), or from a terminal in that folder,
+On Windows, start `Mandelbulb3D.exe` in the unpacked folder (double-click it),
+or from a terminal in that folder,
 optionally with a parameter file:
 
 ```sh

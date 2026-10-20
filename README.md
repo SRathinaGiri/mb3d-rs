@@ -1,10 +1,11 @@
-<img src="assets/social-preview.png" width="760" alt="mb3d-rs: Mandelbulb3D for Linux, Windows and macOS">
+<img src="assets/social-preview.png" width="760" alt="mb3d-rs: Mandelbulb3D for Windows and Linux">
 
-# mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
+# mb3d-rs — Mandelbulb3D for Windows and Linux
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
-3D fractal program, rewritten so that it runs on today's computers: on
-**Linux, Windows and macOS**, and with the picture calculated on the
+3D fractal program, rewritten so that it runs on today's computers: as a
+**Windows desktop application** and a **Windows/Linux command-line renderer**,
+with the picture calculated on the
 **graphics card** where MB3D could only use the processor. It opens MB3D's
 parameter files (`.m3p`, `.m3i`, text parameters from forums), uses MB3D's
 formulas and maps, and makes the same pictures.
@@ -135,8 +136,7 @@ you check further on your own:
   start.
 
   </details>
-* **Linux, Windows and macOS** (Intel and Apple Silicon).
-* **A command line program** for everything that needs no window.
+* **Windows desktop application** and a **Windows/Linux command line renderer**.
 * **Very big pictures in one piece**: 15000 x 20000 pixels and more
   without running out of memory, and the depth of field uses all
   processor cores (11 times faster on 24 threads than before 0.2.45, with
@@ -413,19 +413,14 @@ Ready-to-run programs for the latest release, no installation needed:
 | Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
 | Debian, Ubuntu, Mint (installs like other programs) | [mb3d-rs-linux-x64.deb](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.deb) |
 | Fedora, RHEL, Rocky, openSUSE (installs like other programs) | [mb3d-rs-linux-x64.rpm](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.rpm) |
-| macOS, Apple silicon (M1 and later) | [mb3d-rs-macos-arm64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-arm64.tar.gz) |
-| macOS, Intel | [mb3d-rs-macos-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-macos-x64.tar.gz) |
 
-Unpack it and start **Mandelbulb3D** (`Mandelbulb3D.exe` on Windows) in
-the unpacked folder. The folder is laid out like an MB3D installation,
+Unpack the Windows archive and start **Mandelbulb3D.exe**. The Linux archive
+contains the headless **mb3d** renderer. Each is laid out like an MB3D installation,
 with MB3D's formulas, maps and 80 example parameter files.
 
 * If Windows shows "Windows protected your PC", click *More info* ▸
   *Run anyway*.
-* macOS blocks downloaded programs that are not signed: run
-  `xattr -dr com.apple.quarantine .` in the unpacked folder once.
-
-**Alternative for Linux and macOS:** instead of downloading by hand, this
+**Linux command-line installer:** instead of downloading by hand, this
 one line fetches the latest release into `~/mb3d-rs` (run it again later
 to update; the script [download.sh](download.sh) is also in the program's
 folder):
@@ -730,7 +725,7 @@ have the measurements).
 
 `mb3d` renders without a window. Open a terminal in the program's folder
 (on Windows a command prompt in the unpacked folder, and type `mb3d`
-instead of `./mb3d`). After the one-line install on Linux or macOS, `mb3d`
+instead of `./mb3d`). After the one-line install on Linux, `mb3d`
 works in any folder, `man mb3d` shows its manual, and the Tab key
 completes its options in bash, zsh and fish:
 

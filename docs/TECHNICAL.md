@@ -1114,7 +1114,7 @@ newer glibc slips in (`objdump -T`). The programs link only libc, libm and
 libgcc_s; Vulkan, X11 and Wayland are loaded at run time. `mb3d` contains
 no code of the window libraries (the linker drops them).
 
-**In the archive** (Linux and macOS): `man/mb3d.1` and
+**In the Linux archive:** `man/mb3d.1` and
 `completions/{mb3d.bash,_mb3d,mb3d.fish}`, made by `tools/cli_docs.py`
 from `mb3d --help` and the sub-commands' `--help`, so they always match
 the program; and `mb3d-rs.png`, the icon of the menu entry.
@@ -1263,7 +1263,7 @@ translate and why not (`LIFT_DEBUG=1`).
 ## Nightly tests
 
 `.github/workflows/nightly.yml` runs every night at 02:30 UTC (and by hand
-from the Actions tab) on Linux, Windows and macOS, with the command line
+from the Actions tab) on Linux and Windows, with the command line
 renderer alone (the runners have no graphics card, so the processor's path
 is tested). `tools/nightly.py` runs each render in a process of its own
 with a time limit, so a crash or a hang is caught and the rest goes on:

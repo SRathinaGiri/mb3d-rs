@@ -2,7 +2,7 @@ name: Nightly
 
 # Every night: the command line renderer renders the example parameter
 # files of the MB3D repository, random MutaGen variations of some of them,
-# and one small render of every other kind, on Linux, Windows and macOS
+# and one small render of every other kind, on Linux and Windows
 # (tools/nightly.py); the example pictures are compared with the night
 # before. Crashes, hangs, errors and changed pictures become issues with the
 # label `nightly`, which are closed again when the test passes
@@ -36,7 +36,6 @@ jobs:
         include:
           - { os: ubuntu-latest, system: linux, exe: "", python: python3 }
           - { os: windows-latest, system: windows, exe: ".exe", python: python }
-          - { os: macos-latest, system: macos, exe: "", python: python3 }
     defaults:
       run:
         shell: bash
@@ -110,4 +109,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: python3 tools/nightly_issues.py results --systems linux,windows,macos --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: python3 tools/nightly_issues.py results --systems linux,windows --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
