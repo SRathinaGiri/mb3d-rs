@@ -1534,6 +1534,18 @@ Mandelbulb3D, which this program is a port of, was made by these people:
 * **Contributors to this program**: Rathinagiri S
   ([SRathinaGiri](https://github.com/SRathinaGiri)), the stereo pair
   preview ([#12](https://github.com/thr32423/mb3d-rs/pull/12)).
+* **Bug reports and suggestions**:
+  [kronpano](https://github.com/kronpano)
+  ([#1](https://github.com/thr32423/mb3d-rs/issues/1),
+  [#2](https://github.com/thr32423/mb3d-rs/issues/2),
+  [#3](https://github.com/thr32423/mb3d-rs/issues/3),
+  [#4](https://github.com/thr32423/mb3d-rs/issues/4),
+  [#8](https://github.com/thr32423/mb3d-rs/issues/8)),
+  [lukastrips](https://github.com/lukastrips)
+  ([#6](https://github.com/thr32423/mb3d-rs/issues/6)),
+  [Rodrigo-Spacecraft](https://github.com/Rodrigo-Spacecraft)
+  ([#9](https://github.com/thr32423/mb3d-rs/issues/9)), Michael Pettovello,
+  Geoffrey N. Barnes.
 * **The PseudoKleinian formula** is knighty's (Fragmentarium, 2011,
   "Theli-at's Pseudo Kleinian" after Theli-at's hybrid discovery of the
   look on fractalforums.com); this program's version is written in Rust
