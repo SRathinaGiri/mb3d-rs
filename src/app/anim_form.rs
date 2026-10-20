@@ -434,6 +434,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 
 fn end_rendering(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_caption(F, "Button2", "Start rendering animation images");
+    if !app.main.calculating && ui.caption(MAIN, "Button2") == "Stop" {
+        super::main_form::enable_buttons(app, ui);
+    }
     ui.set_enabled(F, "Button2", count(app) > 1);
     for b in ["SpeedButton1", "SpeedButton9", "SpeedButton10", "SpeedButton11", "Edit1", "Button3"] {
         ui.set_enabled(F, b, true);
@@ -482,6 +485,9 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_enabled(F, b, false);
     }
     ui.set_caption(F, "Button2", "Pause rendering");
+    // as in MB3D, the main window's Calculate button stops the animation
+    ui.set_caption(MAIN, "Button2", "Stop");
+    ui.cm(MAIN, "Button2").hint = "Stop rendering the animation.".into();
     app.anim.started = Instant::now();
     app.anim.stop.store(false, Ordering::SeqCst);
     app.anim.pause.store(false, Ordering::SeqCst);

@@ -1585,6 +1585,8 @@ fn form_close(app: &mut Mb3d, ui: &mut Ui) {
 fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     crate::maps::set_current_frame(pti(&t(ui, "FrameEdit")).max(1));
     if ui.caption(F, "Button2") == "Stop" {
+        let anim = app.anim.job.lock().unwrap().running;
+        app.anim.stop.store(true, std::sync::atomic::Ordering::SeqCst);
         app.eng.stop();
         super::voxel_form::stop(app);
         super::tools_forms::stop_tiling(app);
@@ -1593,7 +1595,10 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
             app.main.led_running = false;
             show_led(ui, app.main.led, false);
         }
-        app.message(ui, "Calculation stopped.");
+        if anim {
+            ui.set_caption("AnimationForm", "Button2", "Start rendering animation images");
+        }
+        app.message(ui, if anim { "Animation rendering stopped." } else { "Calculation stopped." });
         return;
     }
     app.main.image_text = false;
