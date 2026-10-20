@@ -409,10 +409,10 @@ Ready-to-run programs for the latest release, no installation needed:
 
 | System | Download |
 |---|---|
-| Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
-| Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
-| Debian, Ubuntu, Mint (installs like other programs) | [mb3d-rs-linux-x64.deb](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.deb) |
-| Fedora, RHEL, Rocky, openSUSE (installs like other programs) | [mb3d-rs-linux-x64.rpm](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.rpm) |
+| Windows (64 bit) | [mb3d-rs-windows-x64.zip](https://github.com/SRathinaGiri/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip) |
+| Linux (64 bit) | [mb3d-rs-linux-x64.tar.gz](https://github.com/SRathinaGiri/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.tar.gz) |
+| Debian, Ubuntu, Mint (installs like other programs) | [mb3d-rs-linux-x64.deb](https://github.com/SRathinaGiri/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.deb) |
+| Fedora, RHEL, Rocky, openSUSE (installs like other programs) | [mb3d-rs-linux-x64.rpm](https://github.com/SRathinaGiri/mb3d-rs/releases/latest/download/mb3d-rs-linux-x64.rpm) |
 
 Unpack the Windows archive and start **Mandelbulb3D.exe**. The Linux archive
 contains the headless **mb3d** renderer. Each is laid out like an MB3D installation,
@@ -426,7 +426,7 @@ to update; the script [download.sh](download.sh) is also in the program's
 folder):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
+curl -fsSL https://raw.githubusercontent.com/SRathinaGiri/mb3d-rs/master/download.sh | sh
 ```
 
 It checks the download before unpacking it, puts **Mandelbulb3D** in
@@ -449,7 +449,7 @@ folder; your settings and History are kept in `~/.config/mb3d-rs` and
 
 [Getting started](GETTING_STARTED.md) walks through the first steps; older
 versions and the release notes are on the
-[releases](https://github.com/thr32423/mb3d-rs/releases) page.
+[releases](https://github.com/SRathinaGiri/mb3d-rs/releases) page.
 
 ## Rendering on several computers (the swarm)
 

@@ -11,13 +11,13 @@ which downloads the latest release into `~/mb3d-rs` (the script is also in
 the program's folder; run it again to update):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/thr32423/mb3d-rs/master/download.sh | sh
+curl -fsSL https://raw.githubusercontent.com/SRathinaGiri/mb3d-rs/master/download.sh | sh
 ```
 
 Then run it with `~/mb3d-rs/mb3d --help`.
 
 On Windows, download
-[mb3d-rs-windows-x64.zip](https://github.com/thr32423/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip)
+[mb3d-rs-windows-x64.zip](https://github.com/SRathinaGiri/mb3d-rs/releases/latest/download/mb3d-rs-windows-x64.zip)
 from the [releases](../../releases) page (older versions are there too),
 unpack it and start `Mandelbulb3D.exe`.
 
