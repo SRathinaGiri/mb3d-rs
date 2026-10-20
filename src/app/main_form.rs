@@ -111,6 +111,9 @@ pub struct State {
     pub undo_pos: usize,
     pub authors: [String; 2],
     pub auto_m3i: Option<PathBuf>,
+    /// Destination selected before a stereo-pair render starts.  Saving at
+    /// completion means a long unattended render is not lost afterwards.
+    pub auto_stereo: Option<PathBuf>,
     pub waker_set: bool,
     pub image_text: bool,
     /// full size image (for saving)
@@ -178,6 +181,7 @@ impl Default for State {
             undo_pos: 0,
             authors: [String::new(), String::new()],
             auto_m3i: None,
+            auto_stereo: None,
             waker_set: false,
             image_text: false,
             rgb: None,
@@ -868,6 +872,30 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     start_calc(app, ui, app.scene.clone(), slice);
 }
 
+/// Starts a two-eye render after its output filename was selected.
+fn start_stereo_pair(app: &mut Mb3d, ui: &mut Ui) {
+    app.make_scene(ui);
+    store_undo(app);
+    let layout = if ui.checked(F, "StereoCrossCheck") {
+        crate::render::StereoLayout::Cross
+    } else {
+        crate::render::StereoLayout::Parallel
+    };
+    app.main.calc3d = true;
+    app.main.calc_start = Instant::now();
+    app.main.stage_shown = "stereo: rendering left eye".into();
+    app.main.stage_start = Instant::now();
+    ui.set_visible(F, "Shape1", false);
+    disable_buttons(app, ui);
+    ui.set_visible(F, "ProgressBar1", true);
+    ui.set_caption(F, "Label6", "stereo: rendering left eye");
+    app.main.led_running = true;
+    app.main.compile_note = false;
+    #[cfg(feature = "gpu")]
+    crate::gpu::set_status(String::new());
+    app.eng.start(Job::Stereo { scene: app.scene.clone(), layout });
+}
+
 /// Starts the calculation of `sc`; when an unfinished calculation of it
 /// was kept, asks first whether to continue it.
 fn start_calc(app: &mut Mb3d, ui: &mut Ui, sc: Scene, slice: u8) {
@@ -1307,6 +1335,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 if let Some(p) = app.main.auto_m3i.take() {
                     save_m3i(app, ui, &p);
                 }
+                if let Some(p) = app.main.auto_stereo.take() {
+                    save_image(app, ui, &p);
+                }
             } else {
                 super::postpro_form::calc_finished(app, ui);
             }
@@ -1469,26 +1500,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.scene.stereo_mode = 0;
         }
         "StereoPairClick" => {
-            app.make_scene(ui);
-            store_undo(app);
-            let layout = if ui.checked(F, "StereoCrossCheck") {
-                crate::render::StereoLayout::Cross
-            } else {
-                crate::render::StereoLayout::Parallel
+            let o = crate::vcl::dialogs::FileOptions {
+                filter: "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|Bitmap (*.bmp)|*.bmp".into(),
+                default_ext: "png".into(),
+                initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
+                file_name: format!("{}-stereo", stem(&app.title)),
+                ..Default::default()
             };
-            app.main.calc3d = true;
-            app.main.calc_start = Instant::now();
-            app.main.stage_shown = "stereo: rendering left eye".into();
-            app.main.stage_start = Instant::now();
-            ui.set_visible(F, "Shape1", false);
-            disable_buttons(app, ui);
-            ui.set_visible(F, "ProgressBar1", true);
-            ui.set_caption(F, "Label6", "stereo: rendering left eye");
-            app.main.led_running = true;
-            app.main.compile_note = false;
-            #[cfg(feature = "gpu")]
-            crate::gpu::set_status(String::new());
-            app.eng.start(Job::Stereo { scene: app.scene.clone(), layout });
+            ui.save_dialog("main:autostereo", &o);
         }
         "Button2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
@@ -2473,6 +2492,13 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         ("autom3i", DialogResult::File(Some(p))) => {
             app.main.auto_m3i = Some(p.with_extension("m3i"));
             button2_click(app, ui);
+        }
+        ("autostereo", DialogResult::File(Some(p))) => {
+            if let Some(d) = p.parent() {
+                app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
+            }
+            app.main.auto_stereo = Some(if p.extension().is_some() { p.to_path_buf() } else { p.with_extension("png") });
+            start_stereo_pair(app, ui);
         }
         ("savepng" | "savejpg", DialogResult::File(Some(p))) => {
             if let Some(d) = p.parent() {
