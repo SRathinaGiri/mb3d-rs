@@ -237,8 +237,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir old
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir old --pattern 'mb3d-rs*'
-          for f in old/*; do mv -f "$f" dist/; done
+          # A newly created draft intentionally has no assets yet.  Keep the
+          # current build's files in that case; download only preserves files
+          # uploaded by an earlier partial run.
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir old --pattern 'mb3d-rs*' || true
+          for f in old/*; do [ -e "$f" ] && mv -f "$f" dist/; done
           ls dist
       # the checksums download.sh verifies before it unpacks an archive
       - name: Checksums
