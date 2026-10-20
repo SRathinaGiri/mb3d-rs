@@ -402,6 +402,25 @@ you check further on your own:
   <a href="docs/img/kleinian_top.jpg"><img src="docs/img/kleinian_top.jpg" width="760" alt="PseudoKleinian cut open with a cutting plane and seen from above: the lattice of spheres and the cells between them"></a>
 
   </details>
+* **Stereo pairs in one step**: both eye images rendered and shown side by
+  side, for parallel or cross-eyed viewing. Contributed by Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri)).
+
+  <a href="docs/img/stereo_pair.jpg"><img src="docs/img/stereo_pair.jpg" width="300" alt="A stereo pair of Dainbramage's Hydra, side by side for parallel viewing"></a>
+
+  <details><summary>Read more</summary>
+
+  **Stereo ▸ Render stereo pair** renders the left and then the right eye
+  image with the tab's stereo settings and shows them side by side in the
+  main window. They are placed for parallel viewing (left image on the
+  left); **Cross-eyed preview** swaps them for cross-eyed viewing. It is a
+  preview: lighting and colours
+  cannot be changed afterwards without rendering again, and it does not
+  work with tiles. The buttons for the single eye images are still there.
+  
+  <a href="docs/img/stereo_pair.jpg"><img src="docs/img/stereo_pair.jpg" width="760" alt="A stereo pair of Dainbramage's Hydra, side by side for parallel viewing"></a>
+
+  </details>
 
 ## Download
 
@@ -1512,6 +1531,9 @@ Mandelbulb3D, which this program is a port of, was made by these people:
 | **Zeyu-Li** | Documentation on GitHub (2020) |
 | **NASA, GIMP** | Source material for the maps |
 
+* **Contributors to this program**: Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri)), the stereo pair
+  preview ([#12](https://github.com/thr32423/mb3d-rs/pull/12)).
 * **The PseudoKleinian formula** is knighty's (Fragmentarium, 2011,
   "Theli-at's Pseudo Kleinian" after Theli-at's hybrid discovery of the
   look on fractalforums.com); this program's version is written in Rust
