@@ -6,6 +6,8 @@
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
 //! `file:TAG:PATH` (a file dialog answered with that file, e.g. `file:tiling:import:x.m3p`),
+//! `answer:TAG:BUTTON` (a message box answered, e.g. `answer:main:resume:6`),
+//! `watch:FORM:CONTROL:SECONDS` (its caption with the time, until it is empty),
 //! `key:FORM:CONTROL:HANDLER:KEYCODE` (a key down event), `hit:FORM:X:Y` (the control there),
 //! `mouse:FORM:X:Y[:right]` (a click at client coordinates, as from the mouse),
 //! `drag:FORM:X1:Y1:X2:Y2:STEPS` (a left drag), `wheel:FORM:X:Y:DELTA`,
@@ -36,6 +38,8 @@ fn main() {
             "post" => ui.post(p[1], p[2], p[3], mb3d::vcl::Ev::Click),
             // a file dialog's answer: `file:TAG:PATH` (the tag as the program opened it, e.g. tiling:import)
             "file" => ui.post("", &p[1..3].join(":"), "", mb3d::vcl::Ev::DialogResult(mb3d::vcl::DialogResult::File(Some(std::path::PathBuf::from(p[3..].join(":")))))),
+            // a message box's answer: `answer:TAG:BUTTON` (e.g. `answer:main:resume:6`, 6 Yes, 7 No)
+            "answer" => ui.post("", &p[1..p.len() - 1].join(":"), "", mb3d::vcl::Ev::DialogResult(mb3d::vcl::DialogResult::Button(p[p.len() - 1].parse().unwrap()))),
             "hit" => {
                 let fi = ui.form_index(p[1]).unwrap();
                 let f = &ui.forms[fi];
@@ -92,6 +96,35 @@ fn main() {
                     app.idle(&mut ui);
                     app.process(&mut ui);
                     std::thread::sleep(std::time::Duration::from_millis(50));
+                }
+            }
+            // `watch:FORM:CONTROL:SECONDS`: its caption every half second
+            // with the time, until it is empty (a calculation's stage line
+            // when it is done) or the seconds are over; with `:BAR`, also
+            // that progress bar's position in %
+            "watch" => {
+                let t = std::time::Instant::now();
+                let mut next = 0.0;
+                let mut seen = false;
+                while t.elapsed().as_secs_f64() < p[3].parse().unwrap() {
+                    app.idle(&mut ui);
+                    app.process(&mut ui);
+                    let c = ui.c(p[1], p[2]).caption.clone();
+                    let el = t.elapsed().as_secs_f64();
+                    if c.is_empty() && seen {
+                        println!("watch {el:.1} done");
+                        break;
+                    }
+                    seen |= !c.is_empty();
+                    if el >= next {
+                        let bar = p.get(4).map_or(String::new(), |b| {
+                            let max = ui.c(p[1], b).max.max(1) as f64;
+                            format!(" | bar {:.0} %", ui.position(p[1], b) as f64 * 100.0 / max)
+                        });
+                        println!("watch {el:.1} {c}{bar}");
+                        next += 0.5;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(20));
                 }
             }
             // `memreset`: the peak memory starts again from now (Linux)

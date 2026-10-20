@@ -15,7 +15,7 @@ use crate::formulas::Formula;
 use crate::gbuffer::SiLight;
 use crate::iteration::HybridMode;
 use crate::scene::CameraOptic;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
@@ -917,9 +917,35 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
         eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
     }
+    COMPILE_MS.fetch_add((t.elapsed().as_secs_f64() * 1000.0) as u64, Ordering::Relaxed);
+    // MB3D_COMPILE_LOG=FILE: a line per compile (the window's estimate of
+    // the compile time is fitted on them)
+    if let Some(path) = std::env::var_os("MB3D_COMPILE_LOG") {
+        use std::io::Write;
+        let line = format!(
+            "{{\"entry\":{entry:?},\"key\":\"{key:016x}\",\"lines\":{},\"bytes\":{},\"double\":{},\"constants\":{},\"secs\":{:.3},\"module\":{module_s:.3}}}\n",
+            code.lines().count(),
+            code.len(),
+            code.contains("f64"),
+            constants.len(),
+            t.elapsed().as_secs_f64()
+        );
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+            let _ = f.write_all(line.as_bytes());
+        }
+    }
     let pl = std::sync::Arc::new(pl);
     g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
     Ok(pl)
+}
+
+/// The time spent compiling shaders so far, in milliseconds.
+static COMPILE_MS: AtomicU64 = AtomicU64::new(0);
+
+/// [`COMPILE_MS`] (the window takes it out of the stages' times it learns:
+/// a picture calculated again finds its shaders compiled).
+pub fn compile_ms() -> u64 {
+    COMPILE_MS.load(Ordering::Relaxed)
 }
 
 fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {

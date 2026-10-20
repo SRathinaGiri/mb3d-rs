@@ -2,7 +2,7 @@
 //! scaling question (ColorOptionForm.pas).
 
 use super::light_form::short_float_str;
-use super::util::{d2byte, d2byte_str, fts_single, parse_float, time_str};
+use super::util::{about_str, d2byte, smooth_left, d2byte_str, fts_single, parse_float, time_str};
 use super::{Mb3d, MAIN};
 use crate::mc::{McImage, McRecord};
 use crate::scene::Scene;
@@ -70,6 +70,15 @@ pub struct State {
     /// the note on the card's shaders compiling was shown for this run
     pub compile_note: bool,
     start: Instant,
+    /// the passes finished in this run, when the running one began and how
+    /// long the last one took (for the time left in the pass); `kept`: rows
+    /// of a continued pass done before it (not counted in its rate)
+    passes: u32,
+    kept: i64,
+    /// the time left in the pass as shown, and when
+    pass_left: Option<(f64, Instant)>,
+    pass_start: Instant,
+    last_pass: Option<f64>,
     last_saved: Instant,
     /// total calculation time in tenths of seconds (`iCalcTime`)
     calc_time: i64,
@@ -103,6 +112,11 @@ impl Default for State {
             running: false,
             compile_note: false,
             start: Instant::now(),
+            passes: 0,
+            kept: 0,
+            pass_left: None,
+            pass_start: Instant::now(),
+            last_pass: None,
             last_saved: Instant::now(),
             calc_time: 0,
             user_change: true,
@@ -454,6 +468,11 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     app.main.led = super::main_form::Led::Cpu;
     super::main_form::show_led(ui, app.main.led, true);
     app.mc.start = Instant::now();
+    app.mc.passes = 0;
+    app.mc.pass_left = None;
+    app.mc.kept = ck.as_ref().map_or(0, |c| c.partial_rows() as i64);
+    app.mc.pass_start = app.mc.start;
+    app.mc.last_pass = None;
     ui.set_caption(F, "Button2", "Stop rendering");
     for c in ["Button3", "Button8", "Button9"] {
         ui.set_enabled(F, c, false);
@@ -681,6 +700,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     };
     if !status.is_empty() {
         ui.set_caption(F, "Label15", &status);
+    } else if super::swarm_form::mc_folder(app).is_none() {
+        let (rows, kept) = (ui.c(F, "ProgressBar1").max, app.mc.kept);
+        let f = (pr - kept) as f64 / (rows - kept).max(1) as f64;
+        let est = pass_left(app.mc.last_pass, f, app.mc.pass_start.elapsed().as_secs_f64());
+        // (smoothed: the rows of the threads end unevenly)
+        app.mc.pass_left = est.map(|e| smooth_left(app.mc.pass_left, e, 8.0));
+        ui.set_caption(F, "Label15", &pass_caption(app.mc.passes, app.mc.pass_left.map(|l| l.0), app.mc.last_pass));
     }
     if let (Some(l), Some(p)) = (&live, &app.mc.paras) {
         let rgb = crate::mc::paint(l, &p.mc, p.lighting.gamma);
@@ -700,6 +726,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     if let Some(img) = img {
         app.mc.seen_ver = ver;
+        if !finished {
+            app.mc.passes += 1;
+            app.mc.kept = 0;
+            app.mc.pass_left = None;
+            app.mc.last_pass = Some(app.mc.pass_start.elapsed().as_secs_f64());
+            app.mc.pass_start = Instant::now();
+        }
         app.mc.img = Some(img);
         // the LED: the marches of the pass on the graphics card or the CPU
         let led = if crate::mc::last_status().contains("on the card") { super::main_form::Led::Gpu } else { super::main_form::Led::Cpu };
@@ -740,6 +773,32 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             next_batch_entry(app, ui);
         }
     }
+}
+
+/// The time left in the running pass: from the last pass, or from its own
+/// rate in the first (`f` its progress, `secs` its time so far).
+fn pass_left(last: Option<f64>, f: f64, secs: f64) -> Option<f64> {
+    let f = f.clamp(0.0, 1.0);
+    // (the rows of a pass end unevenly: the last pass's time is the better
+    // guess)
+    match last {
+        Some(l) => Some((l - secs).max(l * (1.0 - f))),
+        None if f >= 0.02 && secs >= 3.0 => Some(secs * (1.0 - f) / f),
+        None => None,
+    }
+}
+
+/// "pass 3, about 40 s left · last pass 1:12.4": the running pass, its
+/// time left and how long the last pass took.
+fn pass_caption(passes: u32, left: Option<f64>, last: Option<f64>) -> String {
+    let mut t = format!("pass {}", passes + 1);
+    if let Some(l) = left {
+        t += &format!(", about {} left", about_str(l));
+    }
+    if let Some(l) = last {
+        t += &format!(" · last pass {}", time_str((l * 10.0) as i64));
+    }
+    t
 }
 
 fn save_m3c(app: &mut Mb3d, ui: &mut Ui) {

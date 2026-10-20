@@ -31,6 +31,10 @@ impl RenderResult {
     }
 }
 
+/// The rows of the running march the card calculated (for the window's
+/// time estimate: how much the card adds to the CPU threads).
+pub static CARD_ROWS: AtomicUsize = AtomicUsize::new(0);
+
 pub(crate) fn thread_count(sc: &Scene) -> usize {
     if sc.threads > 0 {
         sc.threads
@@ -1015,6 +1019,7 @@ fn march_mixed(
     let rows: Vec<Mutex<&mut [SiLight]>> = gbuf.chunks_mut(w).map(Mutex::new).collect();
     let done = AtomicUsize::new(had);
     let on_card = AtomicUsize::new(0);
+    CARD_ROWS.store(0, Ordering::Relaxed);
     let put = |y: usize, row: &[SiLight]| {
         if let Some(f) = sink {
             f(y, row);
@@ -1115,6 +1120,7 @@ fn march_mixed(
             cancel,
             &mut |y, row| {
                 on_card.fetch_add(1, Ordering::Relaxed);
+                CARD_ROWS.fetch_add(1, Ordering::Relaxed);
                 if finish.load(Ordering::SeqCst) {
                     queue.lock().unwrap().push_back((y, row.to_vec()));
                 } else {
@@ -1142,6 +1148,7 @@ fn march_mixed(
                     }
                 });
                 on_card.store(0, Ordering::Relaxed);
+                CARD_ROWS.store(0, Ordering::Relaxed);
             }
             card_err = Some(e);
         }

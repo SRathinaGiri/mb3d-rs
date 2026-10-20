@@ -8,6 +8,8 @@
 pub mod anim_form;
 pub mod bulbtracer_form;
 pub mod engine;
+pub mod eta;
+mod eta_model;
 pub mod file_preview;
 pub mod forms;
 pub mod formula_form;

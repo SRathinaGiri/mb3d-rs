@@ -114,6 +114,9 @@ pub struct Output {
     pub ver: u64,
     pub running: bool,
     pub stage: String,
+    /// the part of the stage done before it began (rows of a continued
+    /// calculation), not counted in its rate
+    pub stage_base: f32,
     pub error: String,
     pub stats: Stats,
     /// the last job finished (for "Calculate 3D" -> enable buttons)
@@ -141,6 +144,12 @@ pub struct Inner {
     cv: Condvar,
     gen: AtomicU64,
     pub progress: AtomicU32,
+    /// of the rows calculated so far: their pixels, those on a surface and
+    /// their DE steps (the window's time estimate)
+    pub rows_px: AtomicU64,
+    pub rows_hits: AtomicU64,
+    pub rows_steps: AtomicU64,
+    pub rows: AtomicU64,
     pub out: Mutex<Output>,
     pub base: Mutex<Option<Arc<Base>>>,
     partial: Mutex<Option<Partial>>,
@@ -225,6 +234,10 @@ impl Engine {
             cv: Condvar::new(),
             gen: AtomicU64::new(0),
             progress: AtomicU32::new(0),
+            rows_px: AtomicU64::new(0),
+            rows_hits: AtomicU64::new(0),
+            rows_steps: AtomicU64::new(0),
+            rows: AtomicU64::new(0),
             out: Mutex::new(Output::default()),
             base: Mutex::new(None),
             partial: Mutex::new(None),
@@ -435,12 +448,21 @@ impl Inner {
     fn begin_partial(&self, params: CalcParams, scene: &Scene, w: usize, h: usize) {
         let step = self.preview_step.load(Ordering::Relaxed).max(1);
         let id = self.partial_id.fetch_add(1, Ordering::SeqCst) + 1;
+        for a in [&self.rows_px, &self.rows_hits, &self.rows_steps, &self.rows] {
+            a.store(0, Ordering::Relaxed);
+        }
         *self.partial.lock().unwrap() = Some(Partial { params, scene: scene.clone(), w, h, step, id, pending: Vec::new() });
     }
 
     /// A row `y` of the calculation, kept for its live picture as the
     /// window shows it.
     fn partial_row(&self, y: usize, row: &[SiLight]) {
+        let hits = row.iter().filter(|s| !s.is_background()).count() as u64;
+        let steps: u64 = row.iter().map(|s| (s.shadow & 0x3FF) as u64).sum();
+        self.rows_px.fetch_add(row.len() as u64, Ordering::Relaxed);
+        self.rows_hits.fetch_add(hits, Ordering::Relaxed);
+        self.rows_steps.fetch_add(steps, Ordering::Relaxed);
+        self.rows.fetch_add(1, Ordering::Relaxed);
         if let Some(p) = self.partial.lock().unwrap().as_mut() {
             let s = p.step;
             if y % s == 0 && y / s < p.h / s {
@@ -619,6 +641,7 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
     let ck = if slice == 0 { crate::render::open_checkpoint(&sc, name, resume) } else { None };
     {
         let mut o = e.out.lock().unwrap();
+        o.stage_base = ck.as_ref().map_or(0.0, |s| s.resumed() as f32 / h.max(1) as f32);
         o.stage = match (slice, ck.as_ref().is_some_and(|s| s.resumed() > 0)) {
             (0, false) => "main rendering".into(),
             (0, true) => "main rendering (continued)".into(),
@@ -628,7 +651,9 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
     let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
     // each stage after the march: its name for the window, the bar from zero
     let stage = |name: &str| {
-        e.out.lock().unwrap().stage = name.to_string();
+        let mut o = e.out.lock().unwrap();
+        o.stage = name.to_string();
+        o.stage_base = 0.0;
         e.progress.store(0, Ordering::Relaxed);
     };
     let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
