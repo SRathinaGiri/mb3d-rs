@@ -21,6 +21,9 @@ pub enum Job {
     Preview { scene: Scene },
     /// "Calc-": the rough image of 8x8 blocks (MB3D's `CalcMandBlocky`)
     Blocky { scene: Scene },
+    /// Both stereo eyes, combined for viewing.  This deliberately keeps no
+    /// G-buffer: a side-by-side picture cannot be repainted as one camera.
+    Stereo { scene: Scene, layout: crate::render::StereoLayout },
     /// lighting / post processing changed: repaint the kept G-buffer
     Repaint { scene: Scene },
     /// "Recalculate a selection" (MB3D's `CalcPartT`): rectangle (left,
@@ -249,7 +252,7 @@ impl Engine {
             let mut o = self.0.out.lock().unwrap();
             o.running = true;
             o.error.clear();
-            o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. });
+            o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. } | Job::Stereo { .. });
         }
         self.0.progress.store(0, Ordering::Relaxed);
         *self.0.job.lock().unwrap() = Some((gen, job));
@@ -480,6 +483,7 @@ fn worker(e: Arc<Inner>) {
             Job::Calc { scene, slice, resume, name } => calc(&e, &scene, slice, resume, &name, &cancel),
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
+            Job::Stereo { scene, layout } => stereo(&e, &scene, layout, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
             Job::Recalc { scene, rect, div, nearer, hs, deao, keep_as } => recalc(&e, &scene, rect, div, nearer, (hs, deao, keep_as), &cancel),
             Job::ReflectSel { scene, rect } => reflect_sel(&e, &scene, rect, &cancel),
@@ -495,6 +499,54 @@ fn worker(e: Arc<Inner>) {
             e.finish(res.err());
         }
     }
+}
+
+/// Renders the two eye cameras one after the other, then places them beside
+/// each other for parallel or cross-eyed viewing.  Rendering the eyes in
+/// sequence avoids doubling the already substantial G-buffer memory use.
+fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    if sc.tiling.is_some() {
+        return Err("Stereo pairs cannot be rendered with tiles. Turn tiling off first.".into());
+    }
+    let eye = |mode: u8, name: &str, offset: usize| -> Result<(Vec<u8>, usize, usize, f64, f64), String> {
+        let mut s = sc.clone();
+        s.slice_2d = 0;
+        s.calc_rect = None;
+        s.stereo_mode = mode;
+        e.out.lock().unwrap().stage = format!("stereo: rendering {name} eye");
+        e.progress.store(offset as u32, Ordering::Relaxed);
+        let started = Instant::now();
+        let progress = |done: usize, total: usize| {
+            e.progress.store((offset + done * 500 / total.max(1)) as u32, Ordering::Relaxed);
+        };
+        let (params, gbuffer) = crate::render::calculate_cancellable(&s, &progress, cancel)?;
+        if cancel() {
+            return Err("cancelled".into());
+        }
+        let painted_from = Instant::now();
+        let rgb = crate::render::paint(&s, &params, &gbuffer);
+        Ok((rgb, params.rect[2] as usize, params.rect[3] as usize, (painted_from - started).as_secs_f64(), painted_from.elapsed().as_secs_f64()))
+    };
+    let (left, w, h, left_calc, left_paint) = eye(4, "left", 0)?;
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let (right, rw, rh, right_calc, right_paint) = eye(3, "right", 500)?;
+    if (w, h) != (rw, rh) {
+        return Err("The stereo eye images have different sizes.".into());
+    }
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    e.out.lock().unwrap().stage = "stereo: composing preview".into();
+    let (rgb, ow, oh) = crate::render::compose_stereo(&left, &right, w, h, layout);
+    *e.base.lock().unwrap() = None;
+    e.publish(rgb, ow, oh, "stereo preview ready", Some(Stats {
+        calc_s: left_calc + right_calc,
+        post_s: left_paint + right_paint,
+        ..Default::default()
+    }));
+    Ok(())
 }
 
 /// Calculate 3D with the swarm (`Job::Swarm`): the tiles come from the

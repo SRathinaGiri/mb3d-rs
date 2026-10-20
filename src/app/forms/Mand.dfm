@@ -1583,6 +1583,7 @@ object Mand3DForm: TMand3DForm
           Width = 124
           Height = 13
           Caption = 'All realworld units in meter.'
+          Visible = False
         end
         object Edit15: TEdit
           Left = 91
@@ -1629,12 +1630,23 @@ object Mand3DForm: TMand3DForm
           Top = 175
           Width = 131
           Height = 22
-          Hint = 'Use the default image for the right eye'
-          Caption = 'Calc very left from midpos'
+          Hint = 'Render both eye images and show a side-by-side stereo preview.'
+          Caption = 'Render stereo pair'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
-          OnClick = Button12Click
+          OnClick = StereoPairClick
+        end
+        object StereoCrossCheck: TCheckBox
+          Left = 8
+          Top = 8
+          Width = 135
+          Height = 17
+          Hint = 'Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.'
+          Caption = 'Cross-eyed preview'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 7
         end
         object Button17: TButton
           Tag = 4
