@@ -421,6 +421,30 @@ you check further on your own:
   <a href="docs/img/stereo_pair.jpg"><img src="docs/img/stereo_pair.jpg" width="760" alt="A stereo pair of Dainbramage's Hydra, side by side for parallel viewing"></a>
 
   </details>
+* **Time left for the whole picture**: the bar under the picture fills once
+  over the whole calculation, and beside it the time left until the picture
+  is finished, shadows, occlusion and reflections included.
+
+  <a href="docs/img/time_left.png"><img src="docs/img/time_left_bar.png" width="300" alt="The progress bar and the time left in total"></a>
+
+  <details><summary>Read more</summary>
+
+  MB3D's bar starts again at every stage. Here it shows the whole
+  calculation: the main rendering, then the hard shadows and ambient
+  occlusion, the reflections and the depth of field. How long the stages
+  after the main rendering take is estimated from what the scene asks for
+  and how the main rendering went; the estimate was fitted on about 700
+  renders of 345 scenes. A picture calculated again expects the times it
+  took the last time.
+  
+  The first picture with new formulas on the graphics card waits for its
+  shaders to compile: the line then says *shaders compiling* and the bar
+  appears once they are ready. Details in
+  [TECHNICAL.md](docs/TECHNICAL.md#time-left-and-the-progress-bar).
+  
+  <a href="docs/img/time_left.png"><img src="docs/img/time_left.png" width="640" alt="The main window during the hard shadows and ambient occlusion, with the time left in total"></a>
+
+  </details>
 
 ## Download
 

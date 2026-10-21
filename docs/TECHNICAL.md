@@ -15,6 +15,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Videos](#videos)
+- [Time left and the progress bar](#time-left-and-the-progress-bar)
 - [Unfinished renders (`checkpoint.rs`)](#unfinished-renders-checkpointrs)
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
 - [Linux packaging and the command line](#linux-packaging-and-the-command-line)
@@ -888,6 +889,43 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 `mb3d animate` prints it at the end; the Animation maker's *FFmpeg
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
+
+## Time left and the progress bar
+
+The main window's bar shows the whole 3D calculation, and the line beside
+it the stage and the time left in total (`main_form.rs`: `time_left`,
+`stage_caption`).
+
+- **The main rendering's time left** comes from its own progress: the
+  rate of the last third of its time (at least 5 s), or, for a picture
+  calculated again, the progress curve of the last time at the pace of
+  this one.
+- **The later stages** (hard shadows and ambient occlusion together,
+  reflections, depth of field) are expected at a ratio to the whole main
+  rendering's time. The ratios come from a model (`src/app/eta.rs`,
+  weights in `eta_model.rs`): 24 features of the scene and the computer
+  (picture size, threads, graphics card, the shadow, occlusion, reflection
+  and DOF settings, and from the rows marched so far the part on a
+  surface, the DE steps per pixel and the pixels per second) into five
+  small networks (24 → 16 tanh → 3 log ratios), averaged. It was fitted on
+  707 renders of 345 scenes without shader compiles; on scenes it had not
+  seen, the time left at 10/25/50/75 % of a render was off by a median
+  19/14/11/6 % of the render's time, against 27/25/22/14 % for the fixed
+  ratios before. A picture calculated again expects its stages' times of
+  the last time instead.
+- **The bar** is the time done over the time done plus the time left
+  (smoothed over a few seconds as the caption); before the time left is
+  known, the main rendering's part by the expected ratios. It never goes
+  back.
+- **Shader compiles**: while the graphics card's shaders compile, the line
+  says so and there is no bar (the CPU marches alone until the card
+  joins). After them the main rendering's time is taken at the pace since;
+  a main rendering that ended before that is no measure for the later
+  stages, so they show only their own progress. A stage that ran while
+  shaders compiled is not kept as the time of the next render.
+- `MB3D_ETA_LOG=FILE` appends a line per finished calculation (features,
+  stage times, whether shaders compiled), `MB3D_COMPILE_LOG=FILE` a line
+  per shader compile: the data the model is fitted on.
 
 ## Unfinished renders (`checkpoint.rs`)
 
