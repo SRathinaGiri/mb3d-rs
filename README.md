@@ -885,6 +885,17 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.64](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.64) · 21 Oct 2026, 06:20 UTC
+
+| Commit | What it does |
+|---|---|
+| [`eeefaee`](https://github.com/thr32423/mb3d-rs/commit/eeefaee2c6a00c3d678f97f93955cf5627b25799) | Version number and release notes of this release |
+| [`083cf9c`](https://github.com/thr32423/mb3d-rs/commit/083cf9c2369bbbc8a5f9b64bc39888b4e6c769db) | README: lighting stays live; time left while shaders compile |
+| [`8d80bd9`](https://github.com/thr32423/mb3d-rs/commit/8d80bd9f4d593c2fd92f7f30e886e500c13d73b7) | Time left while the card's shaders compile |
+| [`a719a67`](https://github.com/thr32423/mb3d-rs/commit/a719a678825b8853698c1d56efa4a8b0aa053274) | ETA data: compile jobs and main pass times per calculation in MB3D_ETA_LOG |
+| [`038aa76`](https://github.com/thr32423/mb3d-rs/commit/038aa769486efa94c87a6548f365c7d3d3fa1d82) | Lighting changes repaint at once, as in MB3D; stopped renders survive lighting changes |
+| [`f664bd4`](https://github.com/thr32423/mb3d-rs/commit/f664bd49278e66487cb35be2f0057a96c08315b5) | README: Updates for v0.2.63 |
+
 ### [v0.2.63](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.63) · 21 Oct 2026, 00:24 UTC
 
 | Commit | What it does |
@@ -920,6 +931,8 @@ in UTC.
 | [`5bfa9e2`](https://github.com/thr32423/mb3d-rs/commit/5bfa9e256860a3f3f45e61583411ec257ad4e134) | Continued renders: kept rows shown at once, stopped renders kept after 10 s |
 | [`abd7263`](https://github.com/thr32423/mb3d-rs/commit/abd72636dd2c6966fa1c1a68c1b277562642ed45) | README: Updates for v0.2.59, scan result |
 
+<details><summary>Older releases (v0.1.0 to v0.2.59)</summary>
+
 ### [v0.2.59](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.59) · 19 Oct 2026, 15:15 UTC
 
 | Commit | What it does |
@@ -927,8 +940,6 @@ in UTC.
 | [`1a65ff6`](https://github.com/thr32423/mb3d-rs/commit/1a65ff68da41d7b02184e6a8e1419ba2e10090b5) | Version number and release notes of this release |
 | [`1e4b894`](https://github.com/thr32423/mb3d-rs/commit/1e4b8941032c6fedb587764d37e62241d9c5537d) | Depth of field on the graphics card |
 | [`45d7339`](https://github.com/thr32423/mb3d-rs/commit/45d733929a8d664dfcadd6225c8a8e987abf4a02) | README: Updates for v0.2.58 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.58)</summary>
 
 ### [v0.2.58](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.58) · 19 Oct 2026, 10:58 UTC
 
