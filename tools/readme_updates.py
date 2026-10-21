@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Writes the "Updates" section of README.md: every release (newest first)
-with its publish time and a table of its commits, plus the commits not
-released yet.
+"""Writes the release history: docs/UPDATES.md with every release (newest
+first), its publish time and a table of its commits, and the "Updates"
+section of README.md with the commits not released yet, the newest
+releases and a link to the whole list.
 
 Run from the repository: `python3 tools/readme_updates.py`. The release
 times come from GitHub (`gh release list`); a tag without a GitHub release
-uses the time of its commit. The section sits between the markers
-<!-- updates:start --> and <!-- updates:end --> in README.md.
+uses the time of its commit. The README's section sits between the markers
+<!-- updates:start --> and <!-- updates:end -->.
 """
 import datetime
 import json
@@ -16,7 +17,8 @@ import sys
 
 REPO = "thr32423/mb3d-rs"
 URL = f"https://github.com/{REPO}"
-OPEN = 5  # the newest releases shown open, the rest folded
+SHOWN = 3  # the newest releases in the README (all in docs/UPDATES.md)
+HISTORY = "docs/UPDATES.md"
 START, END = "<!-- updates:start -->", "<!-- updates:end -->"
 
 
@@ -85,14 +87,24 @@ def main():
         link = f"[{tag}]({URL}/releases/tag/{tag})" if tag in times else tag
         blocks.append([f"### {link} · {when(t)}{note}", "", *table(commits(rng)), ""])
     blocks.reverse()
-    for b in blocks[:OPEN]:
+    history = [
+        "# Updates",
+        "",
+        "Every release of mb3d-rs, newest first, with the time it was published",
+        "(UTC) and the changes (commits) it brought. Each commit links to its full",
+        "description and code; the downloads of a release are on its page. Back to",
+        "the [README](../README.md).",
+        "",
+    ]
+    if unreleased:
+        history += ["## Not released yet", "", *table(unreleased), ""]
+    for b in blocks:
+        history += [b[0].replace("### ", "## ", 1), *b[1:]]
+    open(HISTORY, "w", encoding="utf-8").write("\n".join(history).rstrip("\n") + "\n")
+    for b in blocks[:SHOWN]:
         parts += b
-    if len(blocks) > OPEN:
-        oldest, newest = tags[0], tags[-OPEN - 1]
-        parts += [f"<details><summary>Older releases ({oldest} to {newest})</summary>", ""]
-        for b in blocks[OPEN:]:
-            parts += b
-        parts += ["</details>", ""]
+    if len(blocks) > SHOWN:
+        parts += [f"All {len(blocks)} releases, back to {tags[0]}: [the whole list](docs/UPDATES.md).", ""]
     body = "\n".join(parts).rstrip("\n")
 
     readme = open("README.md", encoding="utf-8").read()
@@ -102,7 +114,7 @@ def main():
     b = readme.index(END)
     readme = readme[:a] + "\n" + body + "\n" + readme[b:]
     open("README.md", "w", encoding="utf-8").write(readme)
-    print(f"README.md: {len(tags)} releases, {len(unreleased)} commits not released yet")
+    print(f"README.md and {HISTORY}: {len(tags)} releases, {len(unreleased)} commits not released yet")
 
 
 if __name__ == "__main__":
