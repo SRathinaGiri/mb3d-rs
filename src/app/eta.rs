@@ -3,8 +3,8 @@
 //! reflections, depth of field), what the main rendering found (how much
 //! of the picture is surface, how far its rays marched) and the computer
 //! (threads, the graphics card and how much it added to the CPU threads).
-//! The model ([`later_ratios`]) was fitted on 700 calculations of 345
-//! scenes (`eta_model.rs`).
+//! The model ([`later_ratios`]) was fitted on 1418 calculations of 366
+//! scenes, 270 of them with the card's shaders compiling (`eta_model.rs`).
 //!
 //! `MB3D_ETA_LOG=FILE`: each finished calculation adds a line to FILE
 //! (these values and the stages' times, to fit the model on).
@@ -13,7 +13,12 @@ use super::engine::Inner;
 use crate::scene::Scene;
 use std::sync::atomic::Ordering;
 
-pub const FEATURES: usize = 24;
+pub const FEATURES: usize = 25;
+
+/// The feature saying the main rendering ran on the CPU alone because the
+/// card's shaders were still compiling (its time is then the CPU's, and the
+/// later stages often run on the card).
+pub const CPU_ALONE: usize = 24;
 
 /// The scene's part of the features (known when the calculation starts).
 pub fn scene_features(sc: &Scene) -> [f32; FEATURES] {
@@ -115,6 +120,27 @@ pub struct LogExtra {
     pub f_compiled: Option<f64>,
 }
 
+/// The time the shaders now compiling still take (seconds; None when none
+/// compiles), predicted from each running job's shader size, precision,
+/// constants and how many compiled at once when it began. A job past its
+/// prediction is given another 30 % of its time so far.
+#[cfg(feature = "gpu")]
+pub fn compile_left(since: std::time::Instant) -> Option<f64> {
+    use super::eta_model::COMPILE_W;
+    let jobs = crate::gpu::compile_jobs(since);
+    let now = std::time::Instant::now();
+    let running = |at: std::time::Instant| jobs.iter().filter(|q| q.start <= at && q.secs.is_none_or(|s| q.start + std::time::Duration::from_secs_f64(s) > at)).count();
+    jobs.iter()
+        .filter(|j| j.secs.is_none())
+        .map(|j| {
+            let x = [(j.bytes.max(1) as f64).ln(), j.double as u8 as f64, j.constants as f64, (running(j.start).max(1) as f64).ln(), 1.0];
+            let pred = (x.iter().zip(COMPILE_W).map(|(a, w)| a * w).sum::<f64>()).exp() - 0.01;
+            let ran = now.saturating_duration_since(j.start).as_secs_f64();
+            if pred > ran { pred - ran } else { 0.3 * ran }
+        })
+        .reduce(f64::max)
+}
+
 /// A finished calculation for `MB3D_ETA_LOG`: its features, the main
 /// rendering's time (at its pace without compiling), the later stages'
 /// times (None: not in it), whether shaders were compiled meanwhile, and
@@ -165,7 +191,13 @@ mod tests {
         f[..7].copy_from_slice(&[-1.61098, 2.48491, 1.0, 0.0, 1.0, 4.79103, -2.55766]);
         f[11] = 1.0;
         let r = later_ratios(&f);
-        for (a, b) in r.iter().zip([0.059099, 2.039501, 0.007048]) {
+        for (a, b) in r.iter().zip([0.061912, 1.104704, 0.004416]) {
+            assert!((a - b).abs() < 1e-3 * b.max(0.01), "{r:?}");
+        }
+        // the same with the main rendering on the CPU alone
+        f[CPU_ALONE] = 1.0;
+        let r = later_ratios(&f);
+        for (a, b) in r.iter().zip([0.067129, 1.178014, 0.006012]) {
             assert!((a - b).abs() < 1e-3 * b.max(0.01), "{r:?}");
         }
     }

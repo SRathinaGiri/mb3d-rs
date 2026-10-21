@@ -61,8 +61,8 @@ pub struct State {
     later_ratio: [f64; 3],
     progress_shown: f64,
     /// the card's shaders compiled during the main rendering, and it ended
-    /// before its pace without compiling was known (its time is then no
-    /// measure for the later stages)
+    /// before its pace without compiling was known (the CPU did it alone:
+    /// the model's `CPU_ALONE` ratios then)
     main_cold: bool,
     main_unmeasured: bool,
     /// (for `MB3D_ETA_LOG`) the main rendering's own time and its progress
@@ -989,7 +989,7 @@ fn expected(m: &State, k: Later) -> Option<f64> {
             return Some(t);
         }
     }
-    m.main_full.filter(|_| !m.main_unmeasured).map(|full| m.later_ratio[k as usize] * full)
+    m.main_full.map(|full| m.later_ratio[k as usize] * full)
 }
 
 /// The time left in the stage: `f` its progress, `base` the part done
@@ -1067,10 +1067,12 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> (Option<f64>, Op
     if main && m.main_cold && !compiling && m.f_compiled.is_none() {
         m.f_compiled = Some(f);
     }
-    if compiling {
+    // (later stages go on as usual: their times come from the main
+    // rendering's, the CPU's alone if it ran while compiling)
+    if compiling && main {
         m.samples.clear();
-        m.main_cold |= main;
-        return (None, None, None);
+        m.main_cold = true;
+        return compiling_estimate(m, f, base, secs);
     }
     // a later stage without progress (e.g. the reflections on the card):
     // its expected time (for the bar also when it takes longer)
@@ -1122,6 +1124,41 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> (Option<f64>, Op
     (left, Some(shown.0), p)
 }
 
+/// The time left in total while the card's shaders compile during the
+/// main rendering (None for the stage's own time): the CPU threads' pace so
+/// far finishes it, unless the shaders are predicted done clearly before
+/// (by half again): then the card joins and the rest runs `SPEEDUP` times
+/// faster. The later stages at the model's ratios to that main rendering.
+/// The whole calculation's progress with it.
+fn compiling_estimate(m: &mut State, f: f64, base: f64, secs: f64) -> (Option<f64>, Option<f64>, Option<f64>) {
+    let g = f - base;
+    if secs < 2.0 || g < 0.01 {
+        return (None, None, None);
+    }
+    let rate = g / secs;
+    let cpu_left = (1.0 - f) / rate;
+    #[cfg(feature = "gpu")]
+    let tc = super::eta::compile_left(m.calc_start);
+    #[cfg(not(feature = "gpu"))]
+    let tc: Option<f64> = None;
+    let (main_left, full, alone) = match tc {
+        Some(tc) if cpu_left > 1.5 * tc => {
+            let warm = 1.0 / rate / super::eta_model::SPEEDUP;
+            (tc + (1.0 - (f + rate * tc).min(1.0)) * warm, warm, 0.0)
+        }
+        _ => (cpu_left, 1.0 / rate, 1.0),
+    };
+    let mut ef = m.eta_f;
+    ef[super::eta::CPU_ALONE] = alone;
+    let ratio = super::eta::later_ratios(&ef);
+    let rest: f64 = m.later.iter().map(|k| ratio[*k as usize] * full).sum();
+    let shown = super::util::smooth_left(m.total_shown, main_left + rest, 4.0);
+    m.total_shown = Some(shown);
+    // (a continued calculation's rows done before, at this pace)
+    let done = secs + base / rate;
+    (None, Some(shown.0), Some(done / (done + shown.0).max(1e-6)))
+}
+
 /// The whole calculation's progress before its time left is known: the
 /// main rendering's part of it by the stages' expected ratios (None in a
 /// later stage, `f` in one of its own, e.g. the swarm's).
@@ -1171,6 +1208,11 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64) {
         // to a main rendering without compiling)
         m.main_full = Some(after_compile.unwrap_or(secs / (1.0 - base).max(0.02)));
         m.main_unmeasured = m.main_cold && after_compile.is_none();
+        // (the later stages then at the model's ratios to a CPU-only main rendering)
+        if m.main_unmeasured {
+            m.eta_f[super::eta::CPU_ALONE] = 1.0;
+            m.later_ratio = super::eta::later_ratios(&m.eta_f);
+        }
         m.main_secs = secs;
     } else if let Some(k) = later_of(stage) {
         // (the shadows and the occlusion one after the other on the CPU:
@@ -1222,15 +1264,19 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             }
             app.main.stage_base = base as f64;
             let (left, total, p) = time_left(app, &stage, f as f64, base as f64);
-            // the card's shaders compiling: no progress (the time it takes
-            // is known once they are)
+            // the card's shaders compiling: the time left with them, once
+            // the CPU threads' pace is known
             let compiling = shaders_compiling();
-            let caption = if compiling { format!("{} · shaders compiling", short_stage(&stage)) } else { stage_caption(&stage, f as f64, left, total) };
+            let caption = match (compiling, total.or(left)) {
+                (true, Some(tl)) => format!("shaders compiling · {} left", super::util::about_str(tl)),
+                (true, None) => format!("{} · shaders compiling", short_stage(&stage)),
+                _ => stage_caption(&stage, f as f64, left, total),
+            };
             ui.set_caption(F, "Label6", &caption);
             // the bar: the whole calculation's progress, not the stage's
             // (it does not go back when an estimate grows); none without
             // an estimate of the whole
-            let p = if compiling || app.main.main_unmeasured { None } else { p.or_else(|| rough_progress(&app.main, &stage, f as f64)) };
+            let p = if compiling { p } else { p.or_else(|| rough_progress(&app.main, &stage, f as f64)) };
             if let Some(p) = p {
                 app.main.progress_shown = app.main.progress_shown.max(p.clamp(0.0, 1.0));
             }
