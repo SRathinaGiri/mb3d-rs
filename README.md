@@ -463,7 +463,8 @@ you check further on your own:
   beside the bar says what follows. A new change stops it.
   
   A calculation you stopped can also still be continued after you changed
-  the lighting. Details in
+  the lighting. A way of working with it: [Lighting workflow](https://github.com/thr32423/mb3d-rs/wiki/Lighting-workflow)
+  in the wiki. Details in
   [TECHNICAL.md](docs/TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
   
   <a href="docs/img/lighting_live.png"><img src="docs/img/lighting_live.png" width="760" alt="The main window and the Lighting window right after a lighting change: the picture already brighter, the reflections following"></a>
@@ -523,6 +524,17 @@ folder; your settings and History are kept in `~/.config/mb3d-rs` and
 versions and the release notes are on the
 [releases](https://github.com/thr32423/mb3d-rs/releases) page.
 
+## Guides and help
+
+Step-by-step guides are in the [wiki](https://github.com/thr32423/mb3d-rs/wiki):
+
+* [Installing](https://github.com/thr32423/mb3d-rs/wiki/Installing): Windows, macOS and Linux, updating, where your files are
+* [Lighting workflow](https://github.com/thr32423/mb3d-rs/wiki/Lighting-workflow): render plainly, then try out lights, shadows and reflections
+* [Swarm setup](https://github.com/thr32423/mb3d-rs/wiki/Swarm-setup): rendering on several computers through a shared folder
+* [Troubleshooting and FAQ](https://github.com/thr32423/mb3d-rs/wiki/Troubleshooting-and-FAQ): when something does not work as expected
+
+Every release with its changes: [the whole list](docs/UPDATES.md).
+
 ## Rendering on several computers (the swarm)
 
 Computers that see one shared folder render together: a picture in
@@ -535,6 +547,8 @@ connection and talks to nobody, so it is as safe as your file sharing.
 <a href="docs/img/swarm_window.png"><img src="docs/img/swarm_window.png" width="760" alt="Mandelbulb3D with the Swarm window, opened with the Swarm button on the Tools tab, while two computers render a picture in tiles: the shared folder, Share this computer, the computers and what each is doing, the job, and the preview with rendered tiles, a tile under way and missing ones"></a>
 
 ### Setting it up
+
+Step by step with what to check: [Swarm setup](https://github.com/thr32423/mb3d-rs/wiki/Swarm-setup) in the wiki.
 
 1. **A folder every computer can write to:** a share on a NAS, a Windows
    share, a Samba share or NFS. On Linux, mount it as a folder, for
