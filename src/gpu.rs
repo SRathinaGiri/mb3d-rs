@@ -891,6 +891,7 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
     // MB3D_GPU_NOCACHE: a different shader text every time (the driver's
     // cache misses: the compile time of a new scene), MB3D_GPU_TIMING: print it
     let t = std::time::Instant::now();
+    let job = start_job(t, code, constants.len());
     let salted;
     let code = if std::env::var_os("MB3D_GPU_NOCACHE").is_some() {
         // a different constant inside the entry point every time
@@ -911,7 +912,9 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
         cache: None,
     });
-    if let Some(e) = pollster::block_on(scope.pop()) {
+    let error = pollster::block_on(scope.pop());
+    end_job(job, t.elapsed().as_secs_f64());
+    if let Some(e) = error {
         return Err(format!("the shader does not compile: {e}"));
     }
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
@@ -942,10 +945,42 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
 /// The time spent compiling shaders so far, in milliseconds.
 static COMPILE_MS: AtomicU64 = AtomicU64::new(0);
 
-/// [`COMPILE_MS`] (the window takes it out of the stages' times it learns:
-/// a picture calculated again finds its shaders compiled).
+/// [`COMPILE_MS`] (of compiles that run side by side: more than the time
+/// they took; the window sees from it that shaders compiled meanwhile).
 pub fn compile_ms() -> u64 {
     COMPILE_MS.load(Ordering::Relaxed)
+}
+
+/// A shader compile: when it began, its time (None while it runs) and its
+/// shader's size, for the window's estimate of the time left.
+#[derive(Clone, Debug)]
+pub struct CompileJob {
+    pub start: std::time::Instant,
+    pub secs: Option<f64>,
+    pub bytes: usize,
+    pub lines: usize,
+    pub double: bool,
+    pub constants: usize,
+}
+
+/// The compiles of this run, in the order they began (a few hundred at most).
+static JOBS: Mutex<Vec<CompileJob>> = Mutex::new(Vec::new());
+
+fn start_job(start: std::time::Instant, code: &str, constants: usize) -> usize {
+    let mut j = JOBS.lock().unwrap();
+    j.push(CompileJob { start, secs: None, bytes: code.len(), lines: code.lines().count(), double: code.contains("f64"), constants });
+    j.len() - 1
+}
+
+fn end_job(i: usize, secs: f64) {
+    if let Some(j) = JOBS.lock().unwrap().get_mut(i) {
+        j.secs = Some(secs);
+    }
+}
+
+/// The compiles that ran at some time after `since` (or still run).
+pub fn compile_jobs(since: std::time::Instant) -> Vec<CompileJob> {
+    JOBS.lock().unwrap().iter().filter(|j| j.secs.is_none_or(|s| j.start + std::time::Duration::from_secs_f64(s) > since)).cloned().collect()
 }
 
 fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {

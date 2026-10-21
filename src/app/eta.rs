@@ -105,21 +105,48 @@ pub fn later_ratios(f: &[f32; FEATURES]) -> [f64; 3] {
     sum.map(|s| ((s / NETS as f64).exp() - 0.01).max(0.0))
 }
 
+/// What a finished calculation did besides its stages' times, for
+/// `MB3D_ETA_LOG`: its whole time and the main rendering's, the main
+/// rendering's progress when the card's shaders had compiled, and the
+/// compiles that ran meanwhile.
+pub struct LogExtra {
+    pub start: std::time::Instant,
+    pub main_secs: f64,
+    pub f_compiled: Option<f64>,
+}
+
 /// A finished calculation for `MB3D_ETA_LOG`: its features, the main
-/// rendering's time, the later stages' times (None: not in it), whether
-/// shaders were compiled meanwhile, and the scene's name.
-pub fn log(f: &[f32; FEATURES], main: f64, later: [Option<f64>; 3], cold: bool, name: &str) {
+/// rendering's time (at its pace without compiling), the later stages'
+/// times (None: not in it), whether shaders were compiled meanwhile, and
+/// the scene's name.
+pub fn log(f: &[f32; FEATURES], main: f64, later: [Option<f64>; 3], cold: bool, name: &str, x: &LogExtra) {
     let Some(path) = std::env::var_os("MB3D_ETA_LOG") else { return };
     let feats: Vec<String> = f.iter().map(|v| format!("{v:.5}")).collect();
     let t = |v: Option<f64>| v.map_or("null".to_string(), |v| format!("{v:.3}"));
+    // the compiles: [began after the calculation's start (s), time, bytes,
+    // lines, double precision, constants]
+    #[cfg(feature = "gpu")]
+    let jobs: Vec<String> = crate::gpu::compile_jobs(x.start)
+        .iter()
+        .map(|j| {
+            let at = j.start.saturating_duration_since(x.start).as_secs_f64() - x.start.saturating_duration_since(j.start).as_secs_f64();
+            format!("[{at:.3},{},{},{},{},{}]", t(j.secs), j.bytes, j.lines, j.double, j.constants)
+        })
+        .collect();
+    #[cfg(not(feature = "gpu"))]
+    let jobs: Vec<String> = Vec::new();
     let line = format!(
-        "{{\"name\":{:?},\"cold\":{},\"main\":{main:.3},\"post\":{},\"refl\":{},\"dof\":{},\"f\":[{}]}}\n",
+        "{{\"name\":{:?},\"cold\":{},\"main\":{main:.3},\"post\":{},\"refl\":{},\"dof\":{},\"f\":[{}],\"total\":{:.3},\"main_secs\":{:.3},\"f_compiled\":{},\"jobs\":[{}]}}\n",
         name,
         cold,
         t(later[0]),
         t(later[1]),
         t(later[2]),
-        feats.join(",")
+        feats.join(","),
+        x.start.elapsed().as_secs_f64(),
+        x.main_secs,
+        t(x.f_compiled),
+        jobs.join(",")
     );
     use std::io::Write;
     if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(path) {

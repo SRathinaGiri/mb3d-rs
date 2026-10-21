@@ -65,6 +65,10 @@ pub struct State {
     /// measure for the later stages)
     main_cold: bool,
     main_unmeasured: bool,
+    /// (for `MB3D_ETA_LOG`) the main rendering's own time and its progress
+    /// when the shaders had compiled
+    main_secs: f64,
+    f_compiled: Option<f64>,
     /// the later stages' times in this calculation, and in the last one
     /// finished with the picture it had (`last_sig`): a picture calculated
     /// again expects them (the main rendering's own time varies more, e.g.
@@ -152,6 +156,8 @@ impl Default for State {
             progress_shown: 0.0,
             main_cold: false,
             main_unmeasured: false,
+            main_secs: 0.0,
+            f_compiled: None,
             later_secs: [None; 3],
             later_cold: [false; 3],
             last_secs: [None; 3],
@@ -839,6 +845,8 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     app.main.progress_shown = 0.0;
     app.main.main_cold = false;
     app.main.main_unmeasured = false;
+    app.main.main_secs = 0.0;
+    app.main.f_compiled = None;
     app.main.calc_compile = compile_secs();
     app.main.later_secs = [None; 3];
     app.main.later_cold = [false; 3];
@@ -1055,7 +1063,11 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> (Option<f64>, Op
     let mut left = stage_left(f, base, secs, &m.samples, last);
     // the card's shaders compiling: the CPU threads alone so far, much
     // slower than with the card once it joins
-    if shaders_compiling() {
+    let compiling = shaders_compiling();
+    if main && m.main_cold && !compiling && m.f_compiled.is_none() {
+        m.f_compiled = Some(f);
+    }
+    if compiling {
         m.samples.clear();
         m.main_cold |= main;
         return (None, None, None);
@@ -1159,6 +1171,7 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64) {
         // to a main rendering without compiling)
         m.main_full = Some(after_compile.unwrap_or(secs / (1.0 - base).max(0.02)));
         m.main_unmeasured = m.main_cold && after_compile.is_none();
+        m.main_secs = secs;
     } else if let Some(k) = later_of(stage) {
         // (the shadows and the occlusion one after the other on the CPU:
         // together)
@@ -1266,7 +1279,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                         let has = |k: Later| m.later.contains(&k);
                         let t = |k: Later| if has(k) { m.later_secs[k as usize].or(Some(0.0)) } else { None };
                         let cold = compile_secs() - m.calc_compile > 0.2;
-                        super::eta::log(&m.eta_f, m.main_full.unwrap_or(0.0), [t(Later::Post), t(Later::Reflections), t(Later::Dof)], cold, &stem(&app.title));
+                        let x = super::eta::LogExtra { start: m.calc_start, main_secs: m.main_secs, f_compiled: m.f_compiled };
+                        super::eta::log(&m.eta_f, m.main_full.unwrap_or(0.0), [t(Later::Post), t(Later::Reflections), t(Later::Dof)], cold, &stem(&app.title), &x);
                     }
                     let m = &mut app.main;
                     m.last_secs = std::array::from_fn(|k| m.later_secs[k].filter(|_| !m.later_cold[k]));
