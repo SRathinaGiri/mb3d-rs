@@ -90,16 +90,10 @@ pub fn calculate_raw_rows(
     calculate_inner(sc, progress, &no_stage, cancel, 0, Some(rows), None)
 }
 
-/// The text that decides a calculation's G-buffer, for its checkpoint key:
-/// the scene (without what only chooses how it is calculated) and where it
-/// is calculated (the card's rows differ a little from the CPU's).
-pub(crate) fn checkpoint_text(sc: &Scene) -> String {
-    // (the scene text: what the swarm hands on to calculate the same
-    // picture, and the same again when it is loaded)
-    let mut s = sc.clone();
-    s.threads = 0;
+/// Where a calculation runs (the card's rows differ a little from the CPU's).
+fn gpu_mode() -> &'static str {
     #[cfg(feature = "gpu")]
-    let gpu = if !crate::gpu::enabled() {
+    return if !crate::gpu::enabled() {
         "cpu"
     } else if crate::gpu::auto() {
         "auto"
@@ -107,14 +101,46 @@ pub(crate) fn checkpoint_text(sc: &Scene) -> String {
         "card"
     };
     #[cfg(not(feature = "gpu"))]
-    let gpu = "cpu";
-    format!("{}\ngpu = {gpu}", s.to_text())
+    "cpu"
+}
+
+/// The text that decides a whole result (Monte Carlo, tiles, voxels), for
+/// its checkpoint key: the scene without what only chooses how it is
+/// calculated, and where it is calculated.
+pub(crate) fn checkpoint_text(sc: &Scene) -> String {
+    // (the scene text: what the swarm hands on to calculate the same
+    // picture, and the same again when it is loaded)
+    let mut s = sc.clone();
+    s.threads = 0;
+    format!("{}\ngpu = {}", s.to_text(), gpu_mode())
+}
+
+/// Everything the ray marching (the raw G-buffer) depends on: the scene
+/// without the lighting (unless the volumetric light needs it) and without
+/// the passes after the march.
+pub fn march_sig(sc: &Scene) -> String {
+    let mut s = sc.clone();
+    if s.vol_light.is_none() {
+        s.lighting = Default::default();
+    }
+    s.ao = None;
+    s.shadows = None;
+    s.deao = None;
+    s.normals_on_zbuf = false;
+    s.dof = None;
+    s.mc = Default::default();
+    s.threads = 0;
+    s.to_text()
 }
 
 /// The checkpoint key of a calculation of `sc` (Calculate 3D: the same for
-/// the program and the command line).
+/// the program and the command line).  Its rows are the raw G-buffer, so
+/// the key leaves out the lighting and the passes after the march: a
+/// stopped render changed only in those still continues (rows the card
+/// shadowed during the march carry their shadows' settings, checked when
+/// continuing).
 pub fn checkpoint_key(sc: &Scene) -> String {
-    crate::checkpoint::key("calc", &checkpoint_text(sc))
+    crate::checkpoint::key("calc", &format!("{}\ngpu = {}", march_sig(sc), gpu_mode()))
 }
 
 /// The checkpoint of a calculation of `sc` (its G-buffer, row by row; see

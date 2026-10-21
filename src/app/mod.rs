@@ -204,6 +204,7 @@ impl App for Mb3d {
 
     fn idle(&mut self, ui: &mut Ui) {
         main_form::idle(self, ui);
+        light_form::idle(self, ui);
         if ui.showing("FNavigator") {
             navi_form::idle(self, ui);
         }

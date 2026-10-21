@@ -26,6 +26,10 @@ pub enum Job {
     Stereo { scene: Scene, layout: crate::render::StereoLayout },
     /// lighting / post processing changed: repaint the kept G-buffer
     Repaint { scene: Scene },
+    /// the lighting changed (the Lighting window): repaint at once with the
+    /// kept shadows, without reflections and depth of field (MB3D's
+    /// repaint); a `Repaint` adds them afterwards
+    Relight { scene: Scene },
     /// "Recalculate a selection" (MB3D's `CalcPartT`): rectangle (left,
     /// top, width, height) of the image with the raystep divided,
     /// optionally only nearer parts, its hard shadows (`hs`) and DEAO
@@ -185,13 +189,24 @@ impl Drop for Engine {
     }
 }
 
-/// Everything the post calculations depend on.
+/// Everything the post calculations depend on: with hard shadows, of the
+/// lights only what casts them (on, shadowing, direction or position, a
+/// positional light's reach), not their colours or shading, so that those
+/// repaint at once without calculating the shadows again.
 pub fn post_sig(sc: &Scene) -> String {
     let mut s = sc.clone();
     let lights = s.lighting.lights.clone();
     s.lighting = Default::default();
     if s.shadows.is_some() {
-        s.lighting.lights = lights;
+        s.lighting.lights = lights.map(|l| crate::lighting::Light {
+            color: [0; 3],
+            spec_func: 0,
+            diff_func: 0,
+            map_rot: [0; 3],
+            // (the reach of a positional light's shadow grows with it)
+            amplitude: if l.positional { l.amplitude } else { 0.0 },
+            ..l
+        });
     }
     s.dof = None;
     s.mc = Default::default();
@@ -201,18 +216,7 @@ pub fn post_sig(sc: &Scene) -> String {
 
 /// Everything the ray marching depends on.
 pub fn calc_sig(sc: &Scene) -> String {
-    let mut s = sc.clone();
-    if s.vol_light.is_none() {
-        s.lighting = Default::default();
-    }
-    s.ao = None;
-    s.shadows = None;
-    s.deao = None;
-    s.normals_on_zbuf = false;
-    s.dof = None;
-    s.mc = Default::default();
-    s.threads = 0;
-    s.to_text()
+    crate::render::march_sig(sc)
 }
 
 fn needs_post(sc: &Scene, p: &CalcParams) -> bool {
@@ -504,6 +508,7 @@ fn worker(e: Arc<Inner>) {
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match job {
             Job::Calc { scene, slice, resume, name } => calc(&e, &scene, slice, resume, &name, &cancel),
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
+            Job::Relight { scene } => relight(&e, &scene),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Stereo { scene, layout } => stereo(&e, &scene, layout, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
@@ -780,6 +785,35 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     };
     *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig: psig, w: b.w, h: b.h }));
     Ok(())
+}
+
+/// The kept G-buffer painted with the new lighting at once: its hard
+/// shadows as they were calculated (stale when a shadowing light moved,
+/// as in MB3D), no reflections or depth of field (both take about as long
+/// as the calculation). The kept buffers and their signature stay, so a
+/// following `Repaint` knows what to calculate again.
+fn relight(e: &Inner, sc: &Scene) -> Result<(), String> {
+    let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
+    let mut target = sc.clone();
+    target.width = b.scene.width;
+    target.height = b.scene.height;
+    target.slice_2d = b.scene.slice_2d;
+    target.calc_rect = None;
+    let rgb = crate::render::paint_preview(&target, &b.params, &b.post);
+    e.publish(rgb, b.w, b.h, "", None);
+    let mut g = e.base.lock().unwrap();
+    let (raw, post, post_sig) = match g.as_ref() {
+        Some(cur) => (cur.raw.clone(), cur.post.clone(), cur.post_sig.clone()),
+        None => (b.raw.clone(), b.post.clone(), b.post_sig.clone()),
+    };
+    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig, w: b.w, h: b.h }));
+    Ok(())
+}
+
+/// Whether a picture painted by `Relight` lacks something a `Repaint`
+/// adds: reflections, depth of field, or hard shadows of lights that moved.
+pub fn relight_incomplete(sc: &Scene, b: &Base) -> bool {
+    b.params.slice_2d == 0 && (sc.mc.reflections || sc.dof.is_some() || post_sig(sc) != b.post_sig)
 }
 
 /// MB3D's `CalcPartT`: the selection is marched again (the raystep
