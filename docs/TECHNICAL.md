@@ -684,6 +684,17 @@ itself per light.
 The volumetric light map is calculated before the image, with a ray march
 per map pixel, so it adds noticeable time.
 
+**Changing the lighting after a calculation** (the Lighting window,
+`light_form.rs`: `trigger_repaint`, `idle`; `engine.rs`: `Job::Relight`)
+repaints at once from the kept G-buffer, as MB3D does: the hard shadows as
+they were calculated, without reflections and depth of field. Only what
+casts the shadows counts for them (`post_sig`: on, shadowing, direction or
+position, a positional light's reach), so colour, intensity and shading
+never calculate them again. When the lighting has not changed for 1.5 s,
+a full repaint adds the reflections, the DoF and the shadows of a moved
+light (the line says "reflections next" / "shadows next", then "adding
+reflections" / "redoing shadows"); the next change stops it.
+
 ## Reflections and transparency, normals on the z-buffer
 
 | key | values | MB3D |
@@ -903,26 +914,36 @@ it the stage and the time left in total (`main_form.rs`: `time_left`,
 - **The later stages** (hard shadows and ambient occlusion together,
   reflections, depth of field) are expected at a ratio to the whole main
   rendering's time. The ratios come from a model (`src/app/eta.rs`,
-  weights in `eta_model.rs`): 24 features of the scene and the computer
+  weights in `eta_model.rs`): 25 features of the scene and the computer
   (picture size, threads, graphics card, the shadow, occlusion, reflection
-  and DOF settings, and from the rows marched so far the part on a
-  surface, the DE steps per pixel and the pixels per second) into five
-  small networks (24 → 16 tanh → 3 log ratios), averaged. It was fitted on
-  707 renders of 345 scenes without shader compiles; on scenes it had not
-  seen, the time left at 10/25/50/75 % of a render was off by a median
-  19/14/11/6 % of the render's time, against 27/25/22/14 % for the fixed
-  ratios before. A picture calculated again expects its stages' times of
-  the last time instead.
+  and DOF settings, from the rows marched so far the part on a surface,
+  the DE steps per pixel and the pixels per second, and whether the CPU
+  did the main rendering alone while the card's shaders compiled) into
+  five small networks (25 → 16 tanh → 3 log ratios), averaged. It was
+  fitted on 1418 renders of 366 scenes, 270 of them compiling shaders; on
+  scenes it had not seen, the later stages' time at the end of the main
+  rendering was off by a median 0.7 % of the whole render (90 %: 8 %),
+  against 20 % (29 %) for the fixed ratios before and 1.1 % (12 %) for a
+  linear fit. A picture calculated again expects its stages' times of the
+  last time instead.
 - **The bar** is the time done over the time done plus the time left
   (smoothed over a few seconds as the caption); before the time left is
   known, the main rendering's part by the expected ratios. It never goes
   back.
-- **Shader compiles**: while the graphics card's shaders compile, the line
-  says so and there is no bar (the CPU marches alone until the card
-  joins). After them the main rendering's time is taken at the pace since;
-  a main rendering that ended before that is no measure for the later
-  stages, so they show only their own progress. A stage that ran while
-  shaders compiled is not kept as the time of the next render.
+- **Shader compiles**: while the graphics card's shaders compile, the CPU
+  marches alone. The time left then comes from the CPU threads' pace,
+  unless the shaders are predicted done clearly earlier (by half again):
+  then the card joins and the rest runs about 3 times faster
+  (`compiling_estimate`). A shader job's compile time is predicted from
+  its size, precision, constants and how many compile at once
+  (`eta::compile_left`; median error 28 % for jobs over a second). On the
+  compiling renders of the data the total time left was off by a median
+  1–4 % of the render's time; when the card joins part-way, the estimate
+  is too high until the shaders are done (median 45 %). After them the
+  main rendering's time is taken at the pace since; a main rendering the
+  CPU finished alone gives the later stages the model's CPU-alone ratios.
+  A stage that ran while shaders compiled is not kept as the time of the
+  next render.
 - `MB3D_ETA_LOG=FILE` appends a line per finished calculation (features,
   stage times, whether shaders compiled), `MB3D_COMPILE_LOG=FILE` a line
   per shader compile: the data the model is fitted on.
@@ -934,8 +955,13 @@ A render keeps what it calculated in a checkpoint, a folder
 another), never in a swarm folder. The name is the key: an FNV-1a hash of
 the kind, the program version and the scene text (`Scene::to_text`, the
 text the swarm hands on, with `threads` cleared) plus where it is
-calculated (`cpu`, `auto`, `card`). Running the same render again finds
-it; the Unfinished renders window loads the scene text it kept
+calculated (`cpu`, `auto`, `card`). For a calculation (`calc`) only what
+its rows depend on counts (`render::march_sig`: not the lighting unless
+the volumetric light uses it, not the shadows, occlusion, reflections or
+DoF), so a stopped render changed only in those still continues; rows the
+card shadowed during the march carry their shadows' settings, checked when
+continuing. Monte Carlo, tiles and voxels keep the whole scene. Running the
+same render again finds it; the Unfinished renders window loads the scene text it kept
 (`extra-scene.m3s`) and gets the same key back.
 
 | file | content |

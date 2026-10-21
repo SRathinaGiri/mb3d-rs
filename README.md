@@ -433,16 +433,40 @@ you check further on your own:
   calculation: the main rendering, then the hard shadows and ambient
   occlusion, the reflections and the depth of field. How long the stages
   after the main rendering take is estimated from what the scene asks for
-  and how the main rendering went; the estimate was fitted on about 700
-  renders of 345 scenes. A picture calculated again expects the times it
+  and how the main rendering went; the estimate was fitted on about 1400
+  renders of 366 scenes. A picture calculated again expects the times it
   took the last time.
   
   The first picture with new formulas on the graphics card waits for its
-  shaders to compile: the line then says *shaders compiling* and the bar
-  appears once they are ready. Details in
+  shaders to compile: the line then says *shaders compiling* with the time
+  left, which takes the processor's pace and, when the shaders will be
+  ready in time, the card joining in. Details in
   [TECHNICAL.md](docs/TECHNICAL.md#time-left-and-the-progress-bar).
   
   <a href="docs/img/time_left.png"><img src="docs/img/time_left.png" width="640" alt="The main window during the hard shadows and ambient occlusion, with the time left in total"></a>
+
+  </details>
+* **Lighting stays live** after hard shadows and reflections: move a light
+  or change its colour and the picture changes at once; reflections and the
+  shadows of a moved light follow by themselves a moment later.
+
+  <a href="docs/img/lighting_live.png"><img src="docs/img/lighting_live_small.png" width="300" alt="The main window and the Lighting window right after a lighting change"></a>
+
+  <details><summary>Read more</summary>
+
+  Render plainly, then try out light positions and colours: each change in
+  the Lighting window repaints at once with the shadows as they were
+  calculated, as in Mandelbulb3D. Changing a light's colour or intensity
+  never calculates the shadows again. When you leave the lighting alone for
+  a second and a half, the reflections and the depth of field are added
+  back, and the shadows of a light you moved are calculated again; the line
+  beside the bar says what follows. A new change stops it.
+  
+  A calculation you stopped can also still be continued after you changed
+  the lighting. Details in
+  [TECHNICAL.md](docs/TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+  
+  <a href="docs/img/lighting_live.png"><img src="docs/img/lighting_live.png" width="760" alt="The main window and the Lighting window right after a lighting change: the picture already brighter, the reflections following"></a>
 
   </details>
 
