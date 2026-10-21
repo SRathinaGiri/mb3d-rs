@@ -861,6 +861,25 @@ and code on GitHub; the downloads of a release are on its page. Times are
 in UTC.
 
 <!-- updates:start -->
+### [v0.2.63](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.63) · 21 Oct 2026, 00:24 UTC
+
+| Commit | What it does |
+|---|---|
+| [`e0f3014`](https://github.com/thr32423/mb3d-rs/commit/e0f30142c7358127d82585a72c4eb176bcda0887) | Version number and release notes of this release |
+| [`c9b9877`](https://github.com/thr32423/mb3d-rs/commit/c9b987788ce0f39ae76db2f5434a693cb466806a) | README: time left for the whole picture |
+| [`56e9ee2`](https://github.com/thr32423/mb3d-rs/commit/56e9ee2a2055f0628db9a6634f345b6b903e34bd) | Main window: time left in total, progress bar over the whole calculation |
+| [`300e981`](https://github.com/thr32423/mb3d-rs/commit/300e9819619fa38d44d3564d554e9b1c168f1e89) | README: issue reporters in the credits |
+
+### [v0.2.62](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.62) · 20 Oct 2026, 11:50 UTC
+
+| Commit | What it does |
+|---|---|
+| [`4700559`](https://github.com/thr32423/mb3d-rs/commit/4700559eb6d6943ee86d4ac50bc35debe084650c) | Version number and release notes of this release |
+| [`4f74a5f`](https://github.com/thr32423/mb3d-rs/commit/4f74a5fb981cdf03d5047e7071063130e4588baa) | README: the stereo pair preview, with credit to its contributor |
+| [`3fd7f33`](https://github.com/thr32423/mb3d-rs/commit/3fd7f332ee2e24ccb1348d1ecd2f9f66ca0d5fb1) | Main window's Stop stops an animation render (#9) |
+| [`556d44e`](https://github.com/thr32423/mb3d-rs/commit/556d44ebf4dd0a6c6223208030281679d8e17d41) | Add GUI stereo pair preview |
+| [`d32154f`](https://github.com/thr32423/mb3d-rs/commit/d32154faf83b3b785b448d63aaf6accfd7416aac) | README: Updates for v0.2.61 |
+
 ### [v0.2.61](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.61) · 19 Oct 2026, 19:09 UTC
 
 | Commit | What it does |
@@ -885,6 +904,8 @@ in UTC.
 | [`1e4b894`](https://github.com/thr32423/mb3d-rs/commit/1e4b8941032c6fedb587764d37e62241d9c5537d) | Depth of field on the graphics card |
 | [`45d7339`](https://github.com/thr32423/mb3d-rs/commit/45d733929a8d664dfcadd6225c8a8e987abf4a02) | README: Updates for v0.2.58 |
 
+<details><summary>Older releases (v0.1.0 to v0.2.58)</summary>
+
 ### [v0.2.58](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.58) · 19 Oct 2026, 10:58 UTC
 
 | Commit | What it does |
@@ -903,8 +924,6 @@ in UTC.
 | [`99e848a`](https://github.com/thr32423/mb3d-rs/commit/99e848ab4768a08a37b0608ebdca977dfdf9ad57) | Auto: the card and the CPU share the shadows and the occlusion |
 | [`397746e`](https://github.com/thr32423/mb3d-rs/commit/397746e6ecf642b1f8c00341b1d45d0bd505e5e0) | The version stays in the title bar |
 | [`23cc639`](https://github.com/thr32423/mb3d-rs/commit/23cc639d81b254d22643dd3760eb4cf90dabc26e) | README: Updates for v0.2.56 |
-
-<details><summary>Older releases (v0.1.0 to v0.2.56)</summary>
 
 ### [v0.2.56](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.56) · 18 Oct 2026, 17:04 UTC
 
