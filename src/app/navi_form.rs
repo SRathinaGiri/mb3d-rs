@@ -8,7 +8,7 @@ use super::engine::{Engine, Job};
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
 use crate::lighting::Lighting;
-use crate::math::{build_rot_matrix, len, mat_mul, normalize, Vec3};
+use crate::math::{build_rot_matrix, len, mat_mul, normalise_matrix_to, normalize, Vec3};
 use crate::scene::Scene;
 use crate::vcl::bitmap::Bitmap;
 use crate::vcl::{Ev, Event, MouseButton, Ui};
@@ -300,8 +300,92 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     let l = app.navi.lightness;
     let px: Vec<u8> = if (l - 1.0).abs() > 1e-3 { rgb.iter().map(|&v| (v as f64 * l).min(255.0) as u8).collect() } else { (*rgb).clone() };
     let mut b = Bitmap::from_rgb(w, h, &px);
+    paint_coords(ui, &app.navi.scene, &mut b);
     paint_guides(ui, &mut b);
     ui.set_picture(F, "Image1", Some(b));
+}
+
+/// `PaintCoord`: the original Navigator's coloured world-axis triad.  It is
+/// drawn into the preview here rather than in a separate transparent image,
+/// so it remains centred when the navigator size changes.
+fn paint_coords(ui: &Ui, sc: &Scene, b: &mut Bitmap) {
+    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() {
+        return;
+    }
+    let m = normalise_matrix_to(1.0, &sc.vgrads);
+    let mut axes = [0usize, 1, 2];
+    // Draw the far axes first, preserving the helpful depth cue from MB3D.
+    axes.sort_by(|&a, &z| m[2][z].partial_cmp(&m[2][a]).unwrap_or(std::cmp::Ordering::Equal));
+    let colors = [0xFFFF_5000, 0xFF30_F040, 0xFF00_B0FF];
+    let (cx, cy) = (b.w as f64 * 0.5, b.h as f64 * 0.5);
+    for axis in axes {
+        let (x, y, z) = (m[0][axis], m[1][axis], m[2][axis]);
+        let (ex, ey) = (cx + x * 38.0, cy + y * 38.0);
+        let tip = (2.0 - z) * 2.0 / (x.hypot(y)).max(0.1);
+        let c = colors[axis];
+        line(b, cx, cy, ex, ey, c, 2);
+        line(b, ex, ey, ex - x * 8.0 - y * tip, ey - y * 8.0 + x * tip, c, 2);
+        line(b, ex, ey, ex - x * 8.0 + y * tip, ey - y * 8.0 - x * tip, c, 2);
+        let text_size = (3.0 - z) * 4.0;
+        let (tx, ty) = (ex + x * text_size * 0.8, ey + y * text_size * 0.8);
+        axis_letter(b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c);
+    }
+}
+
+/// A clipped, two-pixel-wide line on a preview bitmap.
+fn line(b: &mut Bitmap, x0: f64, y0: f64, x1: f64, y1: f64, c: u32, width: i32) {
+    let (mut x, mut y) = (x0.round() as i32, y0.round() as i32);
+    let (xe, ye) = (x1.round() as i32, y1.round() as i32);
+    let (dx, dy) = ((xe - x).abs(), -(ye - y).abs());
+    let (sx, sy) = (if x < xe { 1 } else { -1 }, if y < ye { 1 } else { -1 });
+    let mut err = dx + dy;
+    loop {
+        for oy in -width / 2..=(width - 1) / 2 {
+            for ox in -width / 2..=(width - 1) / 2 {
+                let (px, py) = (x + ox, y + oy);
+                if px >= 0 && py >= 0 && (px as usize) < b.w && (py as usize) < b.h {
+                    b.px[py as usize * b.w + px as usize] = c;
+                }
+            }
+        }
+        if x == xe && y == ye {
+            break;
+        }
+        let e2 = 2 * err;
+        if e2 >= dy {
+            err += dy;
+            x += sx;
+        }
+        if e2 <= dx {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+
+/// A small, legible X/Y/Z label for the navigator overlay.
+fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32) {
+    let glyph: [u8; 7] = match axis {
+        0 => [0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001], // X
+        1 => [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100], // Y
+        _ => [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111], // Z
+    };
+    let (x0, y0) = (x.round() as i32, y.round() as i32);
+    for (row, bits) in glyph.into_iter().enumerate() {
+        for col in 0..5 {
+            if bits & (1 << (4 - col)) == 0 {
+                continue;
+            }
+            for oy in 0..2 {
+                for ox in 0..2 {
+                    let (px, py) = (x0 + col * 2 + ox, y0 + row as i32 * 2 + oy);
+                    if px >= 0 && py >= 0 && (px as usize) < b.w && (py as usize) < b.h {
+                        b.px[py as usize * b.w + px as usize] = c;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// `PaintGuides`: thirds and the golden ratio lines over the preview.

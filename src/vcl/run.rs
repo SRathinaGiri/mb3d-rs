@@ -355,6 +355,23 @@ impl<A: App> Runner<A> {
     fn create_window(&mut self, el: &ActiveEventLoop, fi: usize) {
         let theme = self.ui.theme;
         let us = self.ui.ui_scale;
+        // Auxiliary VCL forms are dialogs owned by the main form.  On
+        // Windows this keeps the application's taskbar representation to one
+        // entry instead of one entry per floating parameter window.
+        #[cfg(target_os = "windows")]
+        let main_owner = if fi == self.ui.main_form {
+            None
+        } else {
+            use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+            self.by_form
+                .get(&self.ui.main_form)
+                .and_then(|id| self.wins.get(id))
+                .and_then(|w| w.window.window_handle().ok())
+                .and_then(|h| match h.as_raw() {
+                    RawWindowHandle::Win32(h) => Some(h.hwnd.get()),
+                    _ => None,
+                })
+        };
         let f = &mut self.ui.forms[fi];
         f.layout();
         let (w, h) = f.outer_size(&theme);
@@ -373,6 +390,14 @@ impl<A: App> Runner<A> {
             .with_decorations(false)
             .with_resizable(f.sizeable())
             .with_window_icon(app_icon());
+        #[cfg(target_os = "windows")]
+        if fi != self.ui.main_form {
+            use winit::platform::windows::WindowAttributesExtWindows;
+            attrs = attrs.with_skip_taskbar(true);
+            if let Some(owner) = main_owner {
+                attrs = attrs.with_owner_window(owner);
+            }
+        }
         if f.sizeable() {
             let b = f.frame_w() * 2;
             let min_w = f.ctl[0].min_w.max(120) + b;
