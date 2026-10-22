@@ -1493,8 +1493,10 @@ impl Form {
             Kind::Edit | Kind::Memo | Kind::ComboBox if self.editable(id) || kind != Kind::ComboBox => {
                 if kind == Kind::ComboBox && (key == vk::UP || key == vk::DOWN) {
                     let c = &self.ctl[id];
-                    let i = (c.item_index + if key == vk::UP { -1 } else { 1 }).clamp(0, c.items.len() as i32 - 1);
-                    self.combo_select(id, i, &mut out);
+                    if !c.items.is_empty() {
+                        let i = (c.item_index + if key == vk::UP { -1 } else { 1 }).clamp(0, c.items.len() as i32 - 1);
+                        self.combo_select(id, i, &mut out);
+                    }
                     return out;
                 }
                 if kind == Kind::ComboBox && (key == vk::F4 || (key == vk::DOWN && shift & SS_ALT != 0)) {
@@ -1507,6 +1509,9 @@ impl Form {
                 vk::UP | vk::DOWN | vk::HOME | vk::END | vk::PRIOR | vk::NEXT if shift & SS_ALT == 0 => {
                     let c = &self.ctl[id];
                     let n = c.items.len() as i32;
+                    if n == 0 {
+                        return out;
+                    }
                     let i = match key {
                         vk::UP => c.item_index - 1,
                         vk::DOWN => c.item_index + 1,
@@ -1589,8 +1594,8 @@ impl Form {
             Kind::RadioGroup if matches!(key, vk::UP | vk::DOWN | vk::LEFT | vk::RIGHT) => {
                 let c = &mut self.ctl[id];
                 let n = c.items.len() as i32;
-                let i = (c.item_index + if key == vk::UP || key == vk::LEFT { -1 } else { 1 }).clamp(0, n - 1);
-                if i != c.item_index {
+                let i = (c.item_index + if key == vk::UP || key == vk::LEFT { -1 } else { 1 }).clamp(0, (n - 1).max(0));
+                if n > 0 && i != c.item_index {
                     c.item_index = i;
                     out.push(raw(id, "OnClick", Ev::Click));
                 }
@@ -1600,8 +1605,8 @@ impl Form {
                 let c = &mut self.ctl[id];
                 let d = if key == vk::UP { -1 } else { 1 };
                 if kind == Kind::ListView {
-                    let i = (c.item_index + d).clamp(0, c.cells.len() as i32 - 1);
-                    if i != c.item_index {
+                    let i = (c.item_index + d).clamp(0, (c.cells.len() as i32 - 1).max(0));
+                    if !c.cells.is_empty() && i != c.item_index {
                         c.item_index = i;
                         out.push(raw(id, "OnChange", Ev::Change));
                     }
@@ -1609,7 +1614,7 @@ impl Form {
                     let (_, _, vis, max, top) = self.listview_rows(id);
                     let c = &mut self.ctl[id];
                     c.scroll_y = top.clamp(c.item_index - vis + 1, c.item_index.max(0)).clamp(0, max);
-                } else {
+                } else if (c.cells.len() as i32) > c.fixed_rows {
                     c.row = (c.row + d).clamp(c.fixed_rows, c.cells.len() as i32 - 1);
                     out.push(raw(id, "OnSelectCell", Ev::Select));
                 }
