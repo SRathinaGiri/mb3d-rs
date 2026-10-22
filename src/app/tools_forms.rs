@@ -287,7 +287,7 @@ impl BigData {
             return None;
         }
         let i = |o: usize| i32::from_le_bytes(d[o..o + 4].try_into().unwrap());
-        let version = i(64);
+        let version = i(68);
         Some(BigData {
             scale: f64::from_le_bytes(d[0..8].try_into().unwrap()),
             width: i(8),
@@ -303,10 +303,10 @@ impl BigData {
             save_m3i: i(48) != 0,
             jpeg_q: i(56),
             sharp: i(60),
-            rows_from: if version < 2 { 1 } else { i(68) },
-            rows_to: if version < 2 { 999 } else { i(72) },
-            render_rows: version >= 2 && i(76) != 0,
-            single_number: version >= 3 && i(80) != 0,
+            rows_from: if version < 2 { 1 } else { i(72) },
+            rows_to: if version < 2 { 999 } else { i(76) },
+            render_rows: version >= 2 && i(80) != 0,
+            single_number: version >= 3 && i(84) != 0,
         })
     }
 }
@@ -960,5 +960,18 @@ pub fn tiling_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) 
             }
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn big_data_round_trip() {
+        let d = BigData { rows_from: 3, rows_to: 7, render_rows: true, single_number: true, sharp: 2, ..BigData::default() };
+        let b = BigData::from_bytes(&d.to_bytes()).unwrap();
+        assert_eq!((b.rows_from, b.rows_to, b.render_rows, b.single_number), (3, 7, true, true));
+        assert_eq!((b.jpeg_q, b.sharp, b.cols, b.rows), (95, 2, 4, 4));
     }
 }
