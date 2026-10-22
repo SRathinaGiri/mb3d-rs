@@ -2938,7 +2938,7 @@ mod tests {
         foreign.version = "0.0.1".into();
         write_job(&foreign).unwrap();
         // a job whose owner was never heard of, old enough: removed
-        let mut old = new_job(&d, JobKind::MonteCarlo, "old", &h, settings).unwrap();
+        let old = new_job(&d, JobKind::MonteCarlo, "old", &h, settings).unwrap();
         std::fs::write(old.in_dir().join("scene.m3s"), s.to_text()).unwrap();
         write_job(&old).unwrap();
         let t = SystemTime::now() - Duration::from_secs(ORPHAN_SECS + 1);
