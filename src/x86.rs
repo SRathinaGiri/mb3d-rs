@@ -1881,8 +1881,15 @@ impl Machine {
                     let n = self.regs[EAX] & 0xFFFF;
                     let (q, r) = if signed {
                         let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32);
-                        ((n / d) as u32, (n % d) as u32)
+                        let q = n / d;
+                        if q != q as i8 as i32 {
+                            return Err(EmuError::Halt(at));
+                        }
+                        (q as u32, (n % d) as u32)
                     } else {
+                        if n / b > 0xFF {
+                            return Err(EmuError::Halt(at));
+                        }
                         (n / b, n % b)
                     };
                     self.set_reg(0, 1, q);
@@ -1890,9 +1897,17 @@ impl Machine {
                 } else {
                     let n = (self.regs[EDX] & 0xFFFF) << 16 | (self.regs[EAX] & 0xFFFF);
                     let (q, r) = if signed {
+                        // i32::MIN / -1 overflows; like a quotient out of
+                        // range it is a divide error on the CPU
                         let (n, d) = (n as i32, b as u16 as i16 as i32);
-                        ((n / d) as u32, (n % d) as u32)
+                        match n.checked_div(d) {
+                            Some(q) if q == q as i16 as i32 => (q as u32, (n % d) as u32),
+                            _ => return Err(EmuError::Halt(at)),
+                        }
                     } else {
+                        if n / b > 0xFFFF {
+                            return Err(EmuError::Halt(at));
+                        }
                         (n / b, n % b)
                     };
                     self.set_reg(0, 2, q);
@@ -1916,10 +1931,9 @@ impl Machine {
                 } else {
                     let n = n as i64;
                     let b = b as i32 as i64;
-                    let q = n / b;
-                    if q > i32::MAX as i64 || q < i32::MIN as i64 {
+                    let Some(q) = n.checked_div(b).filter(|q| *q == *q as i32 as i64) else {
                         return Err(EmuError::Halt(at));
-                    }
+                    };
                     self.regs[EAX] = q as u32;
                     self.regs[EDX] = (n % b) as u32;
                 }
@@ -2827,6 +2841,30 @@ mod tests {
         let nz = m.rdf64(it - 16).unwrap();
         assert!(nx.is_finite() && ny.is_finite() && nz.is_finite());
         assert!(nx != x || ny != y || nz != z);
+    }
+
+    fn run_code(code: &[u8]) -> R<()> {
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, code).unwrap();
+        m.predecode(&[CODE_START]);
+        m.regs[ESP] = BASE + 0x7F00;
+        m.push(RETURN_SENTINEL).unwrap();
+        m.run(CODE_START, 1000)
+    }
+
+    #[test]
+    fn idiv_overflow_halts() {
+        // mov edx, 0x8000; xor eax, eax; mov cx, -1; idiv cx; ret
+        let r = run_code(&[0xBA, 0, 0x80, 0, 0, 0x31, 0xC0, 0x66, 0xB9, 0xFF, 0xFF, 0x66, 0xF7, 0xF9, 0xC3]);
+        assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 11), "{r:?}");
+        // mov edx, 0x80000000; xor eax, eax; mov ecx, -1; idiv ecx; ret
+        let r = run_code(&[0xBA, 0, 0, 0, 0x80, 0x31, 0xC0, 0xB9, 0xFF, 0xFF, 0xFF, 0xFF, 0xF7, 0xF9, 0xC3]);
+        assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 12), "{r:?}");
+        // mov ax, 0x8000; mov cl, -1; idiv cl; ret (quotient out of range)
+        let r = run_code(&[0x66, 0xB8, 0, 0x80, 0xB1, 0xFF, 0xF6, 0xF9, 0xC3]);
+        assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 6), "{r:?}");
+        // mov edx, -1; mov eax, -7; mov ecx, 2; idiv ecx; ret
+        assert!(run_code(&[0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xB8, 0xF9, 0xFF, 0xFF, 0xFF, 0xB9, 2, 0, 0, 0, 0xF7, 0xF9, 0xC3]).is_ok());
     }
 }
 
