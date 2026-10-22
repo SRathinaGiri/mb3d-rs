@@ -1269,6 +1269,8 @@ struct Kept {
     store: Store,
     /// the units' file names
     names: Vec<String>,
+    /// the units' depth images (none: no depth output)
+    depth: Vec<String>,
 }
 
 impl Kept {
@@ -1288,7 +1290,7 @@ impl Kept {
             JobKind::Tiles => "tiles",
         };
         store.set_value("size", &format!("{} {what}", names.len()));
-        let k = Kept { store, names };
+        let k = Kept { store, names, depth: Vec::new() };
         k.note();
         Some(k)
     }
@@ -1304,6 +1306,13 @@ impl Kept {
     }
     fn other(&self, k: usize, ext: &str) -> PathBuf {
         self.store.extra_path(&Path::new(&self.names[k]).with_extension(ext).to_string_lossy())
+    }
+
+    /// The kept depth image of unit `k` (None: not kept, or the unit has
+    /// none, as a parameter file).
+    fn depth_file(&self, k: usize) -> Option<PathBuf> {
+        let kept = self.store.extra_path(self.depth.get(k)?);
+        (self.has(k) && kept.is_file()).then_some(kept)
     }
 
     fn count(&self) -> usize {
@@ -1323,6 +1332,13 @@ impl Kept {
                 let o = f.with_extension(e);
                 if o.is_file() {
                     self.store.put_extra_file(&Path::new(name).with_extension(e).to_string_lossy(), &o);
+                }
+            }
+            // (its depth image is written before it)
+            if let Some(dn) = self.depth.get(k) {
+                let o = out.join(dn);
+                if o.is_file() {
+                    self.store.put_extra_file(dn, &o);
                 }
             }
             if self.store.put_extra_file(name, &f) {
@@ -1412,7 +1428,17 @@ pub fn run_animation(swarm: &Path, anim: &Animation, frames: Option<&[usize]>, o
         .flat_map(|&f| a.stereo_eyes().into_iter().map(move |(_, eye)| (f, eye)))
         .map(|(f, eye)| a.frame_file_eye(f, eye).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
         .collect();
-    let kept = Kept::open(JobKind::Animation, &format!("{text}\nframes = {frames:?}"), &anim.name, names.clone(), opts);
+    // the depth images, as the frames' files
+    let depth: Vec<String> = if a.save_depth {
+        frames
+            .iter()
+            .flat_map(|&f| a.stereo_eyes().into_iter().map(move |(_, eye)| (f, eye)))
+            .map(|(f, eye)| a.depth_file_eye(f, eye).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
+            .collect()
+    } else {
+        Vec::new()
+    };
+    let kept = Kept::open(JobKind::Animation, &format!("{text}\nframes = {frames:?}"), &anim.name, names.clone(), opts).map(|c| Kept { depth: depth.clone(), ..c });
     if let Some(c) = &kept {
         c.adopt(swarm, None);
         c.mark(&mut settings);
@@ -1466,6 +1492,12 @@ pub fn run_animation(swarm: &Path, anim: &Animation, frames: Option<&[usize]>, o
             let dst = target.join(name);
             std::fs::copy(&src, &dst).map_err(|e| io(&src, e))?;
             files.push(dst);
+            if let Some(dn) = depth.get(k) {
+                let out = job.as_ref().map(|j| j.out_dir().join(dn)).filter(|f| f.is_file());
+                if let Some(z) = kept.as_ref().and_then(|c| c.depth_file(k)).or(out) {
+                    std::fs::copy(&z, target.join(dn)).map_err(|e| io(&z, e))?;
+                }
+            }
         }
         Ok(files)
     })();
@@ -1513,7 +1545,10 @@ pub fn run_batch(swarm: &Path, items: &[BatchItem], outputs: &[PathBuf], bopts: 
         text.push_str(&kept_text(&scene));
         text.push_str(&format!("{:?}\n", bopts.overrides.iter().chain(&it.overrides).collect::<Vec<_>>()));
     }
-    let kept = Kept::open(JobKind::Batch, &text, &name, names.clone(), opts);
+    // the depth images, as the batch writes them: `<stem>_depth.png`
+    let depth_of = |p: &Path| p.with_file_name(format!("{}_depth.png", p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()));
+    let depth: Vec<String> = if bopts.depth { names.iter().map(|n| depth_of(Path::new(n)).to_string_lossy().into_owned()).collect() } else { Vec::new() };
+    let kept = Kept::open(JobKind::Batch, &text, &name, names.clone(), opts).map(|c| Kept { depth: depth.clone(), ..c });
     if let Some(c) = &kept {
         c.adopt(swarm, None);
         c.mark(&mut settings);
@@ -1569,6 +1604,12 @@ pub fn run_batch(swarm: &Path, items: &[BatchItem], outputs: &[PathBuf], bopts: 
                 std::fs::create_dir_all(d).map_err(|e| io(d, e))?;
             }
             std::fs::copy(&src, dst).map_err(|e| io(&src, e))?;
+            if let Some(dn) = depth.get(k) {
+                let out = job.as_ref().map(|j| j.out_dir().join(dn)).filter(|f| f.is_file());
+                if let Some(z) = kept.as_ref().and_then(|c| c.depth_file(k)).or(out) {
+                    std::fs::copy(&z, depth_of(dst)).map_err(|e| io(&z, e))?;
+                }
+            }
         }
         Ok(())
     })();
@@ -2578,11 +2619,13 @@ mod tests {
         std::fs::write(d.join("a.m3s"), s.to_text()).unwrap();
         std::fs::write(d.join("b.m3s"), s.to_text()).unwrap();
         let items = vec![BatchItem { input: d.join("a.m3s"), overrides: vec![] }, BatchItem { input: d.join("b.m3s"), overrides: vec!["width = 16".into()] }];
-        let bopts = BatchOptions { output_dir: Some(d.join("pics")), ..Default::default() };
+        let bopts = BatchOptions { output_dir: Some(d.join("pics")), depth: true, ..Default::default() };
         let outs = crate::batch::output_paths(&items, &bopts);
         let swarm = d.join("swarm");
         run_batch(&swarm, &items, &outs, &bopts, &RunOptions { name: "owner".into(), quiet: true, ..Default::default() }, &|_| {}).unwrap();
         assert!(outs.iter().all(|o| o.exists()), "{outs:?}");
+        // the depth images come back with the pictures
+        assert!(d.join("pics/a_depth.png").is_file() && d.join("pics/b_depth.png").is_file());
         assert!(jobs(&swarm).is_empty(), "the job folder is removed");
         let _ = std::fs::remove_dir_all(&d);
     }
@@ -2628,9 +2671,11 @@ mod tests {
         a.keyframes.push(crate::anim::Keyframe::new(s2, 1));
         a.set_size_from(&s);
         a.output_folder = d.join("frames").to_string_lossy().into_owned();
+        a.save_depth = true;
         let files = run_animation(&d.join("swarm"), &a, None, &RunOptions { name: "owner".into(), quiet: true, ..Default::default() }, &|_| {}).unwrap();
         assert_eq!(files.len(), a.frame_count());
         assert!(files.iter().all(|f| is_done_file(f)), "{files:?}");
+        assert!((0..a.frame_count()).all(|f| a.depth_file(f).is_file()));
         let _ = std::fs::remove_dir_all(&d);
     }
 
