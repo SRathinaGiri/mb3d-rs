@@ -1,6 +1,6 @@
 //! Batch processing (BatchForm.pas) and big renders in tiles (Tiling.pas).
 
-use super::eta::{ItemsLeft, Pace};
+use super::eta::ItemsLeft;
 use super::util::{fts, left_str, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::scene::Scene;
@@ -368,13 +368,9 @@ pub struct TilingState {
     pub status: Arc<Mutex<String>>,
     pub saved: Arc<AtomicUsize>,
     pub shown_saved: usize,
-    /// the time left: the running tile's progress (the weight of its rows
-    /// done, of all), when it began and its pace, the tiles' times, and
+    /// the time left: when the running tile began, the tiles' times, and
     /// the time left as shown
-    pub tile_done: Arc<AtomicUsize>,
-    pub tile_total: Arc<AtomicUsize>,
     pub tile_start: Instant,
-    pub pace: Pace,
     pub items: ItemsLeft,
     pub left_shown: Option<Shown>,
 }
@@ -397,10 +393,7 @@ impl Default for TilingState {
             status: Arc::new(Mutex::new(String::new())),
             saved: Arc::new(AtomicUsize::new(0)),
             shown_saved: 0,
-            tile_done: Arc::new(AtomicUsize::new(0)),
-            tile_total: Arc::new(AtomicUsize::new(0)),
             tile_start: Instant::now(),
-            pace: Pace::default(),
             items: ItemsLeft::default(),
             left_shown: None,
         }
@@ -644,15 +637,15 @@ fn tiles_after(st: &TilingState, ui: &Ui) -> usize {
         .count()
 }
 
-/// "tile X=1 Y=2 · about 25 min left in total" (tiles follow), "tile X=1
-/// Y=2: 40 % · 2 min left" (the last one): the main window's stage line
-/// of a big render.
-fn tile_caption(x: i32, y: i32, f: f64, left: Option<f64>, more: bool) -> String {
+/// "tile X=1 Y=2 · about 25 min left in total" (tiles follow), "tile X=2
+/// Y=2 · 2 min left" (the last one): the main window's stage line of a big
+/// render (the first tile has no time left: the tile's progress restarts
+/// with each of its stages, nothing to measure a whole tile by).
+fn tile_caption(x: i32, y: i32, left: Option<f64>, more: bool) -> String {
     let name = format!("tile X={x} Y={y}");
     match left {
         Some(l) if more => format!("{name} · {} in total", left_str(l)),
-        Some(l) => format!("{name}: {} % · {}", (f * 100.0).floor() as i64, left_str(l)),
-        None if f > 0.0 => format!("{name}: {} %", (f * 100.0).floor() as i64),
+        Some(l) => format!("{name} · {}", left_str(l)),
         None => name,
     }
 }
@@ -746,11 +739,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     app.tiling.saved.store(0, Ordering::SeqCst);
     app.tiling.shown_saved = 0;
     *app.tiling.status.lock().unwrap() = String::new();
-    app.tiling.tile_done.store(0, Ordering::Relaxed);
-    app.tiling.tile_total.store(0, Ordering::Relaxed);
     app.tiling.tile_start = Instant::now();
-    app.tiling.pace = Pace::default();
-    let (tile_done, tile_total) = (app.tiling.tile_done.clone(), app.tiling.tile_total.clone());
     let cancel = app.tiling.cancel.clone();
     super::main_form::disable_buttons(app, ui);
     let title = match &swarm {
@@ -827,11 +816,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     std::thread::spawn(move || {
         let r = (|| -> Result<(i32, i32), String> {
             let stop = || cancel.load(Ordering::SeqCst);
-            let progress = |done: usize, total: usize| {
-                tile_total.store(total, Ordering::Relaxed);
-                tile_done.store(done, Ordering::Relaxed);
-            };
-            let res = crate::render::render_tiled_cancellable(&sc, d.save_zbuf || d.save_m3i, &progress, &|_, _, _| {}, &stop)?;
+            let res = crate::render::render_tiled_cancellable(&sc, d.save_zbuf || d.save_m3i, &|_, _| {}, &|_, _, _| {}, &stop)?;
             let ds = d.downscale.max(1) as usize;
             let (rgb, w, h) = if ds > 1 { crate::render::downsample(&res.rgb, res.width, res.height, ds) } else { (res.rgb.clone(), res.width, res.height) };
             let (data, ext) = match d.output {
@@ -890,18 +875,16 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
             ui.set_caption(MAIN, "Label6", &text);
         }
     }
-    // a render here: the tile under way at its pace, the tiles to come at
-    // the finished ones' time (shown smoothed, like a calculation's)
+    // a render here: the tile under way and the tiles to come at the
+    // finished ones' time (shown smoothed, like a calculation's)
     if st.is_empty() && !app.tiling.cancel.load(Ordering::SeqCst) {
         let after = tiles_after(&app.tiling, ui);
         let now = Instant::now();
         let t = &mut app.tiling;
-        let f = t.tile_done.load(Ordering::Relaxed) as f64 / t.tile_total.load(Ordering::Relaxed).max(1) as f64;
         let secs = now.saturating_duration_since(t.tile_start).as_secs_f64();
-        t.pace.at(f, secs);
-        let left = t.pace.left(&t.items, f, secs, after);
+        let left = t.items.left(0.0, secs, None, after);
         t.left_shown = left.map(|l| smooth_shown(t.left_shown, l, now)).or(t.left_shown);
-        let text = tile_caption(t.act.0, t.act.1, f, t.left_shown.map(|s| s.0), after > 0);
+        let text = tile_caption(t.act.0, t.act.1, t.left_shown.map(|s| s.0), after > 0);
         if ui.caption(MAIN, "Label6") != text {
             ui.set_caption(MAIN, "Label6", &text);
         }
@@ -1095,10 +1078,9 @@ mod tests {
 
     #[test]
     fn time_left_captions() {
-        assert_eq!(tile_caption(1, 2, 0.0, None, true), "tile X=1 Y=2");
-        assert_eq!(tile_caption(1, 2, 0.4, None, true), "tile X=1 Y=2: 40 %");
-        assert_eq!(tile_caption(1, 2, 0.4, Some(1500.0), true), "tile X=1 Y=2 · about 25 min left in total");
-        assert_eq!(tile_caption(3, 3, 0.4, Some(120.0), false), "tile X=3 Y=3: 40 % · 2 min left");
+        assert_eq!(tile_caption(1, 2, None, true), "tile X=1 Y=2");
+        assert_eq!(tile_caption(1, 2, Some(1500.0), true), "tile X=1 Y=2 · about 25 min left in total");
+        assert_eq!(tile_caption(3, 3, Some(120.0), false), "tile X=3 Y=3 · 2 min left");
         // the picture's time left from the main window's stage line
         assert_eq!(picture_left("main rendering · about 7 min left in total"), Some("about 7 min left"));
         assert_eq!(picture_left("hard shadows: 40 % · 20 s left"), Some("20 s left"));
