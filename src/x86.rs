@@ -711,7 +711,8 @@ fn decode_fpu(d: &mut Dec, op: u8, addr: u32) -> R<Ins> {
         _ => match m {
             // DF
             0xE0 => Ins::FnstswAx,
-            0xC0..=0xC7 => Ins::FFree(i), // ffreep
+            // ffreep: no tag word is kept, so freeing st(i) and popping is fstp st(0)
+            0xC0..=0xC7 => Ins::FStSt(0, true),
             0xE8..=0xF7 => Ins::FComi { i, pop: true },
             _ => return Err(unsup(addr, format!("DF {m:02X}"))),
         },
@@ -2876,6 +2877,36 @@ mod tests {
         assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 6), "{r:?}");
         // mov edx, -1; mov eax, -7; mov ecx, 2; idiv ecx; ret
         assert!(run_code(&[0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xB8, 0xF9, 0xFF, 0xFF, 0xFF, 0xB9, 2, 0, 0, 0, 0xF7, 0xF9, 0xC3]).is_ok());
+    }
+
+    /// Runs `code` (ending in a ret) interpreted and compiled; returns the
+    /// f64 at `BASE + 0x2000` of both runs.
+    fn run_both(code: &[u8]) -> (f64, f64) {
+        let mut out = [0.0; 2];
+        for (k, o) in out.iter_mut().enumerate() {
+            let mut m = Machine::new();
+            m.write_bytes(CODE_START, code).unwrap();
+            m.predecode(&[CODE_START]);
+            m.regs[ESP] = BASE + 0x7F00;
+            m.push(RETURN_SENTINEL).unwrap();
+            if k == 0 {
+                m.run(CODE_START, 1000).unwrap();
+            } else {
+                let p = m.compile(CODE_START).expect("compiles");
+                m.run_prog(&p, 1000).unwrap();
+            }
+            *o = m.rdf64(BASE + 0x2000).unwrap();
+        }
+        (out[0], out[1])
+    }
+
+    #[test]
+    fn ffreep_pops() {
+        // fld1; fldz; ffreep st(1); fstp qword [BASE+0x2000]; ret
+        let mut code = vec![0xD9, 0xE8, 0xD9, 0xEE, 0xDF, 0xC1, 0xDD, 0x1D];
+        code.extend_from_slice(&(BASE + 0x2000).to_le_bytes());
+        code.push(0xC3);
+        assert_eq!(run_both(&code), (1.0, 1.0));
     }
 
     #[test]
