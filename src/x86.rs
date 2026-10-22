@@ -2866,6 +2866,21 @@ mod tests {
         // mov edx, -1; mov eax, -7; mov ecx, 2; idiv ecx; ret
         assert!(run_code(&[0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xB8, 0xF9, 0xFF, 0xFF, 0xFF, 0xB9, 2, 0, 0, 0, 0xF7, 0xF9, 0xC3]).is_ok());
     }
+
+    #[test]
+    fn compiled_ret_loop_hits_step_limit() {
+        // L: push L; ret
+        let mut code = vec![0x68];
+        code.extend_from_slice(&CODE_START.to_le_bytes());
+        code.push(0xC3);
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, &code).unwrap();
+        m.predecode(&[CODE_START]);
+        let p = m.compile(CODE_START).expect("compiles");
+        m.regs[ESP] = BASE + 0x7F00;
+        m.push(RETURN_SENTINEL).unwrap();
+        assert!(matches!(m.run_prog(&p, 1000), Err(EmuError::StepLimit)));
+    }
 }
 
 // ===========================================================================
@@ -3524,12 +3539,20 @@ impl Machine {
                     continue;
                 }
                 Op::Call { target, ret } => {
+                    self.steps += 1;
+                    if self.steps > limit {
+                        return Err(EmuError::StepLimit);
+                    }
                     self.push(*ret)?;
                     pc = *target as usize;
                     continue;
                 }
                 Op::CallRot { target, ret, rot } => {
                     f.rotate_right(*rot as usize);
+                    self.steps += 1;
+                    if self.steps > limit {
+                        return Err(EmuError::StepLimit);
+                    }
                     self.push(*ret)?;
                     pc = *target as usize;
                     continue;
@@ -3538,6 +3561,11 @@ impl Machine {
                     let r = self.pop()?;
                     self.regs[ESP] = self.regs[ESP].wrapping_add(*k as u32);
                     if r != RETURN_SENTINEL {
+                        // a loop through ret (push L; ret) must run out of steps too
+                        self.steps += 1;
+                        if self.steps > limit {
+                            return Err(EmuError::StepLimit);
+                        }
                         match p.index.get(&r) {
                             Some(&i) => {
                                 pc = i;
