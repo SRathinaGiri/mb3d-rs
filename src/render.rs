@@ -140,7 +140,10 @@ pub fn march_sig(sc: &Scene) -> String {
 /// shadowed during the march carry their shadows' settings, checked when
 /// continuing).
 pub fn checkpoint_key(sc: &Scene) -> String {
-    crate::checkpoint::key("calc", &format!("{}\ngpu = {}", march_sig(sc), gpu_mode()))
+    // (the part of the picture calculated: the scene text leaves it out,
+    // and the tiles of a tiled render differ only in it)
+    let rect = sc.calc_rect.map(|r| format!("\ncalc_rect = {} {} {} {}", r[0], r[1], r[2], r[3])).unwrap_or_default();
+    crate::checkpoint::key("calc", &format!("{}\ngpu = {}{rect}", march_sig(sc), gpu_mode()))
 }
 
 /// The checkpoint of a calculation of `sc` (its G-buffer, row by row; see
@@ -2299,5 +2302,27 @@ pub fn compose_stereo(left: &[u8], right: &[u8], w: usize, h: usize, layout: Ste
             }
             (out, w * 2, h)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn checkpoint_key_differs_per_tile() {
+        let mut sc = Scene { width: 64, height: 64, ..Default::default() };
+        let tl = crate::scene::Tiling { cols: 2, rows: 2, pos: None, downscale: 1 };
+        let whole = checkpoint_key(&sc);
+        let mut keys = Vec::new();
+        for (c, r) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+            sc.calc_rect = Some(tl.tile_rect(64, 64, c, r));
+            keys.push(checkpoint_key(&sc));
+        }
+        keys.push(whole);
+        let n = keys.len();
+        keys.sort();
+        keys.dedup();
+        assert_eq!(keys.len(), n);
     }
 }
