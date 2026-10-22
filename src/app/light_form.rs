@@ -901,6 +901,55 @@ fn update_tab_header(app: &Mb3d, ui: &mut Ui) {
     ui.cm(F, "TabControl1").tabs = tabs;
 }
 
+/// `FindVecAngles`: the light angles (-LX, LY) whose light vector (rotated
+/// back with `m` when `abs`, i.e. relative to the object) is `sv`; None when
+/// the search ends farther than 1e-3 off.
+fn find_vec_angles(sv: &crate::math::Vec3, m: &crate::math::Mat3, abs: bool) -> Option<(f64, f64)> {
+    use std::f64::consts::PI;
+    let vec = |d1: f64, d2: f64| {
+        let v = crate::math::scale(crate::math::build_view_vector_dfov(d2, d1), -1.0);
+        crate::math::normalize(if abs { crate::math::rotate_vector_reverse(&v, m) } else { v })
+    };
+    let err = |v: crate::math::Vec3| (sv[0] - v[0]).abs() + (sv[1] - v[1]).abs() + (sv[2] - v[2]).abs();
+    let (mut dmin, mut b1, mut b2) = (1000.0, 0.0, 0.0);
+    for y in -5..=5 {
+        for x in -5..=5 {
+            let (d1, d2) = (x as f64 * PI * 0.2, y as f64 * PI * 0.2);
+            let dt = err(vec(d1, d2));
+            if dt < dmin {
+                (dmin, b1, b2) = (dt, d1, d2);
+            }
+        }
+    }
+    let mut i = 4000;
+    while i >= 0 && dmin >= 1e-7 {
+        // (a probe step gives the gradient, then the step from it)
+        let (mut d1, mut d2) = (b1, b2);
+        if i & 1 == 1 { d1 = b1 + dmin * 0.001 } else { d2 = b2 + dmin * 0.001 }
+        let dt = err(vec(d1, d2));
+        // (NonZero)
+        let q = dmin - dt;
+        let q = if q.abs() < 1e-40 { 1e-3 } else if q.abs() < 1e-3 { q.signum() * 1e-3 } else { q };
+        let dt = dmin * dmin * 0.001 / q;
+        if i & 1 == 1 { d1 = b1 + dt } else { d2 = b2 + dt }
+        let dt = err(vec(d1, d2));
+        if dt < dmin {
+            (dmin, b1, b2) = (dt, d1, d2);
+        }
+        i -= 1;
+    }
+    let wrap = |mut d: f64| {
+        while d < -PI {
+            d += PI * 2.0;
+        }
+        while d > PI {
+            d -= PI * 2.0;
+        }
+        d
+    };
+    (dmin < 1e-3).then(|| (wrap(b1), wrap(b2)))
+}
+
 /// `TabControl1Change`: shows light `TabIndex`.
 fn tab_control1_change(app: &mut Mb3d, ui: &mut Ui) {
     let b = app.light.user_change;
@@ -1257,11 +1306,20 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 if e.sender == "CheckBox6" && !l.positional {
                     // keep the light direction when switching between
                     // viewer and object relative angles
-                    let v = crate::math::build_view_vector_dfov(l.y_angle, -l.x_angle);
-                    let m = app.scene.vgrads;
-                    let mm = crate::math::normalise_matrix_to(1.0, &m);
-                    let target = if on { crate::math::rotate_vector_reverse(&v, &mm) } else { crate::math::rotate_vector(&v, &mm) };
-                    let _ = target;
+                    let mm = crate::math::normalise_matrix_to(1.0, &app.scene.vgrads);
+                    let mut v = crate::math::scale(crate::math::build_view_vector_dfov(l.y_angle, -l.x_angle), -1.0);
+                    if !on {
+                        v = crate::math::normalize(crate::math::rotate_vector_reverse(&v, &mm));
+                    }
+                    if let Some((d1, d2)) = find_vec_angles(&v, &mm, on) {
+                        l.x_angle = -d1;
+                        l.y_angle = d2;
+                        let b = app.light.user_change;
+                        app.light.user_change = false;
+                        setp(ui, "TrackBar1", (d1 / PID180).round() as i64);
+                        setp(ui, "TrackBar2", (d2 / PID180).round() as i64);
+                        app.light.user_change = b;
+                    }
                 }
                 l.relative_to_object = on;
                 trigger_repaint(app, ui);
@@ -1814,5 +1872,21 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_vec_angles_keeps_the_light_vector() {
+        // a rotated view; light at -LX = 0.7, LY = -0.4, viewer relative
+        let m = crate::math::normalise_matrix_to(1.0, &[[0.8, 0.0, -0.6], [0.0, 1.0, 0.0], [0.6, 0.0, 0.8]]);
+        let v = crate::math::scale(crate::math::build_view_vector_dfov(-0.4, 0.7), -1.0);
+        let (d1, d2) = find_vec_angles(&v, &m, true).unwrap();
+        let w = crate::math::scale(crate::math::build_view_vector_dfov(d2, d1), -1.0);
+        let w = crate::math::normalize(crate::math::rotate_vector_reverse(&w, &m));
+        assert!((0..3).all(|k| (v[k] - w[k]).abs() < 1e-3), "{v:?} {w:?}");
     }
 }
