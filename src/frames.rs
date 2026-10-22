@@ -51,11 +51,13 @@ impl Claim {
 impl Drop for Claim {
     fn drop(&mut self) {
         if !self.written {
-            // `CloseOutPutStream`: an unfinished, empty file is removed again
-            let _ = self.file.unlock();
+            // `CloseOutPutStream`: an unfinished, empty file is removed again,
+            // still locked (else another process may claim it first; Rust
+            // opens files deletable on Windows too)
             if self.file.metadata().map(|m| m.len() <= 1).unwrap_or(false) {
                 let _ = std::fs::remove_file(&self.path);
             }
+            let _ = self.file.unlock();
         }
     }
 }
@@ -65,11 +67,39 @@ fn is_done(path: &Path) -> bool {
     std::fs::metadata(path).map(|m| m.len() > 1).unwrap_or(false)
 }
 
+/// Whether `path` still names the open `file` (not removed or replaced
+/// since it was opened).
+fn is_at(file: &File, path: &Path) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        match (file.metadata(), std::fs::metadata(path)) {
+            (Ok(a), Ok(b)) => (a.dev(), a.ino()) == (b.dev(), b.ino()),
+            _ => false,
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = file;
+        path.exists()
+    }
+}
+
 /// Reserves `path` for writing.  Skips files that exist when `overwrite` is
 /// off, and files that another process holds.
 pub fn claim(path: &Path, overwrite: bool) -> Result<Result<Claim, Skip>, String> {
+    // again when the file was removed under us by its last holder
+    for _ in 0..3 {
+        if let Some(r) = claim_once(path, overwrite)? {
+            return Ok(r);
+        }
+    }
+    Ok(Err(Skip::Busy))
+}
+
+fn claim_once(path: &Path, overwrite: bool) -> Result<Option<Result<Claim, Skip>>, String> {
     if !overwrite && is_done(path) {
-        return Ok(Err(Skip::Exists));
+        return Ok(Some(Err(Skip::Exists)));
     }
     if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
         std::fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
@@ -83,15 +113,18 @@ pub fn claim(path: &Path, overwrite: bool) -> Result<Result<Claim, Skip>, String
         .map_err(|e| format!("{}: {e}", path.display()))?;
     match file.try_lock() {
         Ok(()) => {}
-        Err(std::fs::TryLockError::WouldBlock) => return Ok(Err(Skip::Busy)),
+        Err(std::fs::TryLockError::WouldBlock) => return Ok(Some(Err(Skip::Busy))),
         Err(std::fs::TryLockError::Error(e)) => return Err(format!("{}: {e}", path.display())),
+    }
+    if !is_at(&file, path) {
+        return Ok(None);
     }
     // another process may have finished it between the check and the lock
     if !overwrite && file.metadata().map(|m| m.len() > 1).unwrap_or(false) {
         let _ = file.unlock();
-        return Ok(Err(Skip::Exists));
+        return Ok(Some(Err(Skip::Exists)));
     }
-    Ok(Ok(Claim { file, path: path.to_path_buf(), written: false }))
+    Ok(Some(Ok(Claim { file, path: path.to_path_buf(), written: false })))
 }
 
 /// A 24 bit BMP file (`SaveBMP`, pf24bit).
@@ -439,6 +472,16 @@ mod tests {
         let c = claim(&p, false).unwrap().unwrap();
         drop(c);
         assert!(!p.exists());
+        // a file removed (and made again) since it was opened is not the claim
+        #[cfg(unix)]
+        {
+            std::fs::write(&p, b"").unwrap();
+            let f = File::open(&p).unwrap();
+            assert!(is_at(&f, &p));
+            std::fs::remove_file(&p).unwrap();
+            std::fs::write(&p, b"").unwrap();
+            assert!(!is_at(&f, &p));
+        }
         let _ = std::fs::remove_dir_all(&dir);
     }
 
