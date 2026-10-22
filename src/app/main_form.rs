@@ -608,8 +608,8 @@ fn scale_rclip(ui: &mut Ui, s: f64) {
 // calculation
 // ---------------------------------------------------------------------------
 
-const CALC_BUTTONS: [&str; 22] = [
-    "SpeedButton32", "SpeedButton33", "SpeedButton34", "Button1", "Button6", "Button5", "Button9", "Button11", "Button12", "SpeedButton8",
+const CALC_BUTTONS: [&str; 23] = [
+    "SpeedButton32", "SpeedButton33", "SpeedButton34", "Button1", "Button6", "Button5", "Button9", "Button11", "Button12", "StereoPairSaveButton", "SpeedButton8",
     "SpeedButton11", "SpeedButton16", "SpeedButton17", "SpeedButton18", "SpeedButton22", "SpeedButton23", "SpeedButton1", "SpeedButton2",
     "SpeedButton4", "IniDirsBtn", "MapSequencesBtn", "VisualThemesBtn",
 ];
@@ -944,6 +944,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 show_led(ui, app.main.led, false);
             }
             if !err.is_empty() {
+                app.main.auto_stereo = None;
                 app.message(ui, &err);
             } else if app.main.calc3d {
                 let secs = app.main.calc_start.elapsed().as_secs_f64();
@@ -1146,6 +1147,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.scene.stereo_mode = 0;
         }
         "StereoPairClick" => {
+            start_stereo_pair(app, ui);
+        }
+        "StereoPairSaveClick" => {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|Bitmap (*.bmp)|*.bmp".into(),
                 default_ext: "png".into(),
