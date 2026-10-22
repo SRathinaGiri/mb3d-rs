@@ -853,7 +853,9 @@ impl Scene {
                                 return Err(err("tile counts must be 1..127".into()));
                             }
                             let old = s.tiling.unwrap_or(Tiling { cols: 1, rows: 1, pos: None, downscale: 1 });
-                            s.tiling = Some(Tiling { cols: a, rows: b, ..old });
+                            // a single tile outside of the new grid is dropped
+                            let pos = old.pos.filter(|&(c, r)| c < a && r < b);
+                            s.tiling = Some(Tiling { cols: a, rows: b, pos, ..old });
                         }
                     }
                     "tile" => {
@@ -1354,6 +1356,18 @@ mod tests {
         assert!(matches!(s.formulas[0].formula, Formula::AmazingBox { scale, .. } if scale == -1.5));
         assert_eq!(s.lighting.lights[0].color, [255, 128, 0]);
         assert!(!s.lighting.lights[1].on);
+    }
+
+    #[test]
+    fn fewer_tiles_drop_an_outside_tile() {
+        let s = Scene::parse("tiles = 4x4
+tile = 4, 2
+").unwrap();
+        assert_eq!(s.tiling.unwrap().pos, Some((3, 1)));
+        assert_eq!(s.clone().apply("tiles = 2x2
+").unwrap().tiling.unwrap().pos, None);
+        assert_eq!(s.apply("tiles = 4x2
+").unwrap().tiling.unwrap().pos, Some((3, 1)));
     }
 
     #[test]
