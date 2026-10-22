@@ -173,6 +173,11 @@ fn lzw(idx: &[u8]) -> Vec<u8> {
         cur = v as u16;
     }
     put(&mut out, cur, size);
+    // the decoder adds one more entry after the last code (unless it was
+    // the first after a clear) and may widen its codes with it
+    if max > CLEAR + 1 && max as u32 + 1 >= 1 << size && size < 12 {
+        size += 1;
+    }
     put(&mut out, CLEAR, size);
     put(&mut out, CLEAR + 1, 9);
     if bits > 0 {
@@ -207,16 +212,20 @@ mod tests {
         reset(&mut dict);
         let mut out = Vec::new();
         let mut prev: Option<Vec<u8>> = None;
+        let mut last = 0u16;
         loop {
             let c = get(&mut pos, size);
+            if c == 257 {
+                // the data ends with a clean clear and end code
+                assert_eq!(last, 256, "garbage before the end code");
+                break;
+            }
+            last = c;
             if c == 256 {
                 reset(&mut dict);
                 size = 9;
                 prev = None;
                 continue;
-            }
-            if c == 257 {
-                break;
             }
             let e = if (c as usize) < dict.len() {
                 dict[c as usize].clone()
@@ -252,6 +261,10 @@ mod tests {
             .collect();
         assert_eq!(unlzw(&lzw(&data)), data);
         assert_eq!(unlzw(&lzw(&[5])), vec![5]);
+        // every length around the code width changes ends cleanly
+        for n in 1..3000 {
+            assert_eq!(unlzw(&lzw(&data[1500..1500 + n])), data[1500..1500 + n], "length {n}");
+        }
     }
 
     #[test]
