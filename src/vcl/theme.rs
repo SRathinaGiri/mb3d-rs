@@ -228,11 +228,12 @@ fn parse(text: &str, known: &[&'static ThemeData]) -> Result<ThemeData, Missing>
                 let key = a[..eq].trim();
                 let v = a[eq + 1..].trim_start();
                 let q = v.chars().next()?;
-                let close = v[1..].find(q)? + 1;
+                let ql = q.len_utf8();
+                let close = v[ql..].find(q)? + ql;
                 if key == n {
-                    return Some(v[1..close].to_string());
+                    return Some(v[ql..close].to_string());
                 }
-                a = &v[close + 1..];
+                a = &v[close + ql..];
             }
             None
         };
@@ -1100,6 +1101,8 @@ mod tests {
         assert_eq!(t.vals["caption.height"], 28);
         assert_eq!(t.vals["text"], data(Style::from_name("Windows").unwrap()).vals["text"]);
         assert!(parse("<theme name=\"X\" family=\"round\"/>", &known).is_err());
+        assert!(parse("<theme name=éXé family=\"flat\"/>", &known).is_ok());
+        assert!(parse("<theme name=é family=\"flat\"/>", &known).is_err());
         assert!(parse("<theme name=\"X\" family=\"gloss\"><color name=\"face\" value=\"red\"/></theme>", &known).is_err());
     }
 
