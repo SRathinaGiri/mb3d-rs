@@ -1253,9 +1253,9 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64) {
 
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
-    let (ver, finished, running, stage, base, err, stats) = {
+    let (ver, finished, running, stage, base, err, stats, cancelled) = {
         let o = app.eng.0.out.lock().unwrap();
-        (o.ver, o.finished, o.running, o.stage.clone(), o.stage_base, o.error.clone(), o.stats)
+        (o.ver, o.finished, o.running, o.stage.clone(), o.stage_base, o.error.clone(), o.stats, o.cancelled)
     };
     if app.main.calculating && app.main.led_running {
         let led = running_led(app).unwrap_or(app.main.led);
@@ -1334,7 +1334,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.main.led_running = false;
                 show_led(ui, app.main.led, false);
             }
-            if !err.is_empty() {
+            if cancelled {
+                // (new parameters were loaded during it: nothing of it is kept)
+            } else if !err.is_empty() {
                 app.message(ui, &err);
             } else if app.main.calc3d {
                 let secs = app.main.calc_start.elapsed().as_secs_f64();
@@ -1401,7 +1403,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             } else {
                 super::postpro_form::calc_finished(app, ui);
             }
-            if app.batch.status != 0 {
+            if app.batch.status != 0 && !cancelled {
                 super::tools_forms::batch_finished(app, ui);
             }
         }

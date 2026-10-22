@@ -126,6 +126,8 @@ pub struct Output {
     /// the last job finished (for "Calculate 3D" -> enable buttons)
     pub finished: u64,
     pub was_calc3d: bool,
+    /// the last job was cancelled (by Stop or new parameters)
+    pub cancelled: bool,
 }
 
 /// The calculation under way, for its live picture: the rows marched
@@ -386,8 +388,12 @@ impl Engine {
         true
     }
 
-    /// Drops the kept image (a new parameter set was loaded).
+    /// Drops the kept image (a new parameter set was loaded); a calculation
+    /// under way stops (its picture is of the old parameters).
     pub fn clear(&self) {
+        self.stop();
+        *self.0.partial.lock().unwrap() = None;
+        *self.0.preview.lock().unwrap() = None;
         *self.0.base.lock().unwrap() = None;
         let mut o = self.0.out.lock().unwrap();
         o.rgb = None;
@@ -437,6 +443,7 @@ impl Inner {
             let mut o = self.out.lock().unwrap();
             o.running = false;
             o.finished += 1;
+            o.cancelled = err.as_deref() == Some("cancelled");
             if let Some(e) = err {
                 if e != "cancelled" {
                     o.error = e;
