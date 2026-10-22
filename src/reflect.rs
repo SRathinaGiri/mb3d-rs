@@ -1398,6 +1398,8 @@ pub fn reflections<S: Sample>(
             .and_then(|v| v.parse().ok())
             .unwrap_or(if wu * hu <= REFLECT_BAND_PIXELS { REFLECT_BAND_PIXELS } else { REFLECT_BAND_PIXELS_BIG });
         let rows = (band_px / wu).max(1);
+        // (the bands come in order; weighed by their surface pixels)
+        let sw = crate::render::RowWeights::surface(gbuf, wu, hu);
         let mut q = p.clone();
         let mut y = 0;
         while y < hu {
@@ -1410,7 +1412,7 @@ pub fn reflections<S: Sample>(
             match reflections_gpu(sc, &q, g, c, cam, lv, threads, cancel) {
                 Ok(()) => {
                     y += bh;
-                    progress(y, hu);
+                    progress(sw.before(y), sw.total());
                 }
                 // the program ends (gpu::abort_all): no CPU pass either
                 Err(e) if e == "cancelled" => return,
@@ -1418,8 +1420,10 @@ pub fn reflections<S: Sample>(
                 Err(e) => {
                     eprintln!("reflections on the GPU failed, calculated on the CPU: {e}");
                     q.rect = [x0, y0 + y as i32, w, (hu - y) as i32];
-                    // (the rows go on counting from where the card stopped)
-                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads, &|d, _| progress(y + d, hu), cancel);
+                    // (the rows go on counting from where the card stopped:
+                    // the rest's weights are the whole's minus the bands')
+                    let before = sw.before(y);
+                    return reflections_cpu(sc, &q, &gbuf[y * wu..], &mut rgb[y * wu * 3..], cam, lv, threads, &|d, t| progress(before + d, before + t), cancel);
                 }
             }
         }
@@ -1493,6 +1497,8 @@ fn reflections_cpu<S: Sample>(
     let (wu, hu) = (w as usize, h as usize);
     let threads = threads.min(hu).max(1);
     let ctx = &ctx;
+    // (the rows weighed by their surface pixels: the pass works on those)
+    let sw = &crate::render::RowWeights::surface(gbuf, wu, hu);
     let finished = std::sync::atomic::AtomicUsize::new(0);
     let finished = &finished;
     std::thread::scope(|s| {
@@ -1541,7 +1547,7 @@ fn reflections_cpu<S: Sample>(
                             row[x * 3..x * 3 + 3].copy_from_slice(&c);
                         }
                     }
-                    progress(finished.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1, hu);
+                    progress(finished.fetch_add(sw.weight(ry), std::sync::atomic::Ordering::Relaxed) + sw.weight(ry), sw.total());
                 }
             });
         }

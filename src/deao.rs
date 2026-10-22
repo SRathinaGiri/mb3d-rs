@@ -104,7 +104,7 @@ fn build_rays(quality: u8) -> Rays {
 }
 
 /// Calculates `amb_shadow` for all object pixels; `progress` counts the
-/// rows done.
+/// rows done, weighed by their surface pixels.
 #[allow(clippy::too_many_arguments)]
 pub fn deao(
     p: &CalcParams,
@@ -118,6 +118,8 @@ pub fn deao(
 ) {
     let pass = DeaoRows::new(p, dp);
     let threads = threads.min(height).max(1);
+    // (the rows weighed by their surface pixels: the pass works on those)
+    let sw = &crate::render::RowWeights::surface(gbuf, width, height);
     let finished = std::sync::atomic::AtomicUsize::new(0);
     let finished = &finished;
     std::thread::scope(|s| {
@@ -135,7 +137,7 @@ pub fn deao(
                         break;
                     }
                     pass.row(y, row);
-                    progress(finished.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1, height);
+                    progress(finished.fetch_add(sw.weight(y), std::sync::atomic::Ordering::Relaxed) + sw.weight(y), sw.total());
                 }
             });
         }
