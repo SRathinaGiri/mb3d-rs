@@ -984,9 +984,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             insert_keyframe(app, ui, s);
         }
         "SpeedButton4Click" => {
-            // a keyframe between this and the next
-            let s = main_scene(app, ui);
+            // a keyframe between this and the next (as the button's state:
+            // it is not refreshed while a preview runs)
             let cur = app.anim.current;
+            if cur >= n {
+                return;
+            }
+            let s = main_scene(app, ui);
             let frames = pti(&ui.text(F, "Edit5")).max(0) as u32;
             app.anim.anim.keyframes.insert(cur, Keyframe::new(s, frames));
             app.anim.thumbs.insert(cur, None);
