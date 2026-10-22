@@ -2989,6 +2989,9 @@ enum MainEv {
 /// or a batch to help with when idle.
 #[cfg(feature = "gpu")]
 enum ToWorker {
+    /// the pass was cancelled: the thread ends (it does not look at
+    /// `cancel` while it waits for an answer)
+    Quit,
     Results(usize, Vec<McRes>),
     Cpu(usize),
     Help(std::sync::Arc<SharedRound>),
@@ -3109,14 +3112,29 @@ fn pass_gpu(
                                             continue;
                                         }
                                         drop(m);
-                                        match inbox.recv() {
+                                        match inbox.recv_timeout(std::time::Duration::from_secs(5)) {
                                             Ok(m) => m,
+                                            Err(mpsc::RecvTimeoutError::Timeout) => {
+                                                if std::env::var_os("MB3D_MC_DEBUG").is_some() {
+                                                    eprintln!(
+                                                        "  worker {wi} waits for group {g}: done {:?}, waiting {:?}, active {:?}, next {:?} of {total}, stash {}, cancel {}",
+                                                        [groups[0].done, groups[1].done],
+                                                        [groups[0].waiting.is_some(), groups[1].waiting.is_some()],
+                                                        [groups[0].active.len(), groups[1].active.len()],
+                                                        next,
+                                                        stash.iter().map(|m| match m { ToWorker::Results(k, r) => format!("results {k} ({})", r.len()), ToWorker::Cpu(k) => format!("cpu {k}"), ToWorker::Help(_) => "help".into(), ToWorker::Quit => "quit".into() }).collect::<Vec<_>>().join(", "),
+                                                        cancel()
+                                                    );
+                                                }
+                                                continue;
+                                            }
                                             Err(_) => return,
                                         }
                                     }
                                 }
                             };
                             match m {
+                                ToWorker::Quit => return,
                                 ToWorker::Help(round) => helping.push(round),
                                 ToWorker::Results(k, res) if k == g => break res,
                                 ToWorker::Cpu(k) if k == g => {
@@ -3131,45 +3149,59 @@ fn pass_gpu(
                         }
                     }
                     let gr = &mut groups[g];
-                    while gr.active.len() < active_max && next[g] < total {
-                        let (y, x) = (ys[next[g] / w], next[g] % w);
-                        next[g] += 2;
-                        let rec = row_of.entry(y).or_insert_with(|| (slices[&y].to_vec(), w)).0[x];
-                        let outbox = gr.outbox.clone();
-                        let fut = Box::pin(async move {
-                            let mut t = Tracer::new(ctx, 0);
-                            t.link = Some((Rc::new(Link::default()), &*outbox));
-                            t.row_y = y as i32;
-                            t.pass_nr = pa.pass_nr;
-                            let mut r = rec;
-                            t.pixel(x as i32 + 1, y as i32, &mut r, pa.snap, pa.skip_nonzero, pa.avrg_vari, pa.avrg_rcount, pa.max_new).await;
-                            r
-                        }) as Px;
-                        gr.active.push((y, x, fut));
-                    }
-                    // the futures run until they wait for a march
-                    let mut k = 0;
-                    while k < gr.active.len() {
-                        if let Poll::Ready(r) = gr.active[k].2.as_mut().poll(&mut cx) {
-                            let (y, x, _) = gr.active.swap_remove(k);
-                            let e = row_of.get_mut(&y).unwrap();
-                            e.0[x] = r;
-                            e.1 -= 1;
-                            if e.1 == 0 {
-                                let (recs, _) = row_of.remove(&y).unwrap();
-                                let row = slices.remove(&y).unwrap();
-                                row.copy_from_slice(&recs);
-                                if let Some(f) = rows {
-                                    f(y, row);
-                                }
-                                let d = done_rows.fetch_add(wt.weight(y), Ordering::Relaxed) + wt.weight(y);
-                                progress(d, wt.total());
-                            }
-                        } else {
-                            k += 1;
+                    // Every turn of a group that is not done sends a round:
+                    // the pass waits for one from every thread, and a thread
+                    // whose turn had nothing to march (its pixels all
+                    // finished, e.g. sky) and that then waited for its other
+                    // group deadlocked with a thread in the same state the
+                    // other way round.  So new pixels start in the same turn
+                    // when the running ones finished without a march.
+                    let links = loop {
+                        while gr.active.len() < active_max && next[g] < total {
+                            let (y, x) = (ys[next[g] / w], next[g] % w);
+                            next[g] += 2;
+                            let rec = row_of.entry(y).or_insert_with(|| (slices[&y].to_vec(), w)).0[x];
+                            let outbox = gr.outbox.clone();
+                            let fut = Box::pin(async move {
+                                let mut t = Tracer::new(ctx, 0);
+                                t.link = Some((Rc::new(Link::default()), &*outbox));
+                                t.row_y = y as i32;
+                                t.pass_nr = pa.pass_nr;
+                                let mut r = rec;
+                                t.pixel(x as i32 + 1, y as i32, &mut r, pa.snap, pa.skip_nonzero, pa.avrg_vari, pa.avrg_rcount, pa.max_new).await;
+                                r
+                            }) as Px;
+                            gr.active.push((y, x, fut));
                         }
-                    }
-                    let links: Vec<Rc<Link>> = std::mem::take(&mut *gr.outbox.borrow_mut());
+                        // the futures run until they wait for a march
+                        let mut k = 0;
+                        while k < gr.active.len() {
+                            if let Poll::Ready(r) = gr.active[k].2.as_mut().poll(&mut cx) {
+                                let (y, x, _) = gr.active.swap_remove(k);
+                                let e = row_of.get_mut(&y).unwrap();
+                                e.0[x] = r;
+                                e.1 -= 1;
+                                if e.1 == 0 {
+                                    let (recs, _) = row_of.remove(&y).unwrap();
+                                    let row = slices.remove(&y).unwrap();
+                                    row.copy_from_slice(&recs);
+                                    if let Some(f) = rows {
+                                        f(y, row);
+                                    }
+                                    let d = done_rows.fetch_add(wt.weight(y), Ordering::Relaxed) + wt.weight(y);
+                                    progress(d, wt.total());
+                                }
+                            } else {
+                                k += 1;
+                            }
+                        }
+                        let links: Vec<Rc<Link>> = std::mem::take(&mut *gr.outbox.borrow_mut());
+                        // (a pending future waits for a march, so no links
+                        // means no active futures)
+                        if !links.is_empty() || !gr.active.is_empty() || next[g] >= total {
+                            break links;
+                        }
+                    };
                     if links.is_empty() {
                         if gr.active.is_empty() && next[g] >= total {
                             gr.done = true;
@@ -3177,7 +3209,6 @@ fn pass_gpu(
                                 return;
                             }
                         }
-                        // (only new pixels: they start in the next turn)
                     } else {
                         let reqs: Vec<McReq> = links.iter().map(|l| l.req.take().unwrap()).collect();
                         if to_main.send(MainEv::Round(ToMain { worker: wi, group: g, reqs: Some(reqs.clone()) })).is_err() {
@@ -3238,6 +3269,8 @@ fn pass_gpu(
         let mut batches = 0usize;
         let (mut n_card, mut n_cpu) = (0usize, 0usize);
         let timing = std::env::var_os("MB3D_MC_TIMING").is_some();
+        // MB3D_MC_DEBUG: the state of the pass when it waits
+        let debug = std::env::var_os("MB3D_MC_DEBUG").is_some();
         let (mut t_card, mut t_wait) = (0f64, 0f64);
         // the CPU's part of a batch, from the rates of the last one
         let mut cpu_part = 0.3f64;
@@ -3286,6 +3319,7 @@ fn pass_gpu(
             }
             // the next event; meanwhile this thread helps too
             let tw = std::time::Instant::now();
+            let mut stalled = false;
             let ev = loop {
                 match from_workers.try_recv() {
                     Ok(e) => break Some(e),
@@ -3294,7 +3328,39 @@ fn pass_gpu(
                         if share_cpu && batches_q.iter().any(|b| b.sr.help_piece(&mut main_march)) {
                             continue;
                         }
-                        break from_workers.recv().ok();
+                        match from_workers.recv_timeout(std::time::Duration::from_millis(200)) {
+                            Ok(e) => break Some(e),
+                            Err(mpsc::RecvTimeoutError::Timeout) => {
+                                // Stop while nothing happens: the threads
+                                // waiting for an answer are told to end
+                                // (issue: a pass that waited for a round
+                                // that never came hung for good, Stop or not)
+                                if cancel() {
+                                    for r in &replies {
+                                        let _ = r.send(ToWorker::Quit);
+                                    }
+                                    *failed.lock().unwrap() = Some("cancelled".into());
+                                    break 'pass;
+                                }
+                                if debug && tw.elapsed().as_secs() >= 5 && !stalled {
+                                    stalled = true;
+                                    let ids = |g: usize| {
+                                        let mut v: Vec<(usize, usize)> = pending[g].iter().map(|r| (r.0, r.1.len())).collect();
+                                        v.sort_unstable();
+                                        v
+                                    };
+                                    eprintln!(
+                                        "  pass waits: live {live:?}, pending {:?} / {:?}, batches {:?}, on_card {on_card}, ready {}",
+                                        ids(0),
+                                        ids(1),
+                                        batches_q.iter().map(|b| (b.group, b.round.len())).collect::<Vec<_>>(),
+                                        card_ready()
+                                    );
+                                }
+                                continue;
+                            }
+                            Err(_) => break None,
+                        }
                     }
                 }
             };
