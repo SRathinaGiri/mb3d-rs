@@ -3508,12 +3508,15 @@ pub fn read_m3c(data: &[u8]) -> Result<(crate::m3p::M3pFile, McImage), String> {
         return Err("not a Monte Carlo file (.m3c): too short".into());
     }
     let f = crate::m3p::parse(&data[..hl])?;
+    if f.scene.width < 1 || f.scene.height < 1 {
+        return Err("the .m3c file has no image size".into());
+    }
     let (w, h) = (f.scene.width as usize, f.scene.height as usize);
     if data[124] & 128 != 0 {
         return Err("this .m3c file uses the experimental record format of a MB3D development version".into());
     }
     let recs = &data[hl..];
-    if recs.len() < w * h * REC_SIZE {
+    if w.checked_mul(h).and_then(|n| n.checked_mul(REC_SIZE)).is_none_or(|n| recs.len() < n) {
         return Err(format!("the .m3c file is incomplete ({} of {} pixels)", recs.len() / REC_SIZE, w * h));
     }
     let mut img = McImage::new(w, h);
