@@ -1528,7 +1528,7 @@ pub(super) fn f_55905c9bc6aae0dd(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
         { let bv = 0x0u32; let av = rg[1]; let r = fl.alu(Alu::Cmp, av, bv, 4); }
         if fl.cond(14) { break 'b6; }
         // block 5
-        { let b = rg[1]; if b == 0 { return Err(EmuError::Halt(0)); } let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if false { let (n, d) = (n as i64, b as i32 as i64); ((n / d) as u32, (n % d) as u32) } else { ((n / b as u64) as u32, (n % b as u64) as u32) }; rg[EAX] = q; rg[EDX] = r; }
+        { let b = rg[1]; if b == 0 { return Err(EmuError::Halt(0)); } let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if false { let (n, d) = (n as i64, b as i32 as i64); match n.checked_div(d) { Some(q) if q == q as i32 as i64 => (q as u32, (n % d) as u32), _ => return Err(EmuError::Halt(0)) } } else { if n / b as u64 > u32::MAX as u64 { return Err(EmuError::Halt(0)); } ((n / b as u64) as u32, (n % b as u64) as u32) }; rg[EAX] = q; rg[EDX] = r; }
         { let bv = 0x1u32; let av = rg[2]; let r = fl.alu(Alu::Cmp, av, bv, 4); }
         if fl.cond(5) { break 'b18; }
         } // 'b6
