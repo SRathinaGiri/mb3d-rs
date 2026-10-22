@@ -62,7 +62,7 @@ programming language. Anyone can run it on this repository at any time:
 **[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (click *Rescan* for a fresh result of the current code)
 
-Version 0.2.59 was rated **safe: 0 out of 100, no findings** (earlier:
+Version 0.2.66 was rated **safe: 0 out of 100, no findings** (earlier:
 [the 0.2.44 result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
 and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
 it is now written to stay this way. The programs contain no code that
