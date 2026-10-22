@@ -140,6 +140,60 @@ pub fn smooth_left(shown: Option<(f64, std::time::Instant)>, est: f64, tau: f64)
     (v, now)
 }
 
+/// A time left as the window shows it, and when.
+pub type Shown = (f64, std::time::Instant);
+
+/// A time left as shown, following the estimates the way a download's
+/// does (Firefox's `getTimeLeft`): `prev` the last one shown and when,
+/// `est` the new estimate (see [`shown_step`]).
+pub fn smooth_shown(prev: Option<Shown>, est: f64, now: std::time::Instant) -> Shown {
+    let v = match prev {
+        Some((s, t)) => shown_step(s, est, now.saturating_duration_since(t).as_secs_f64()),
+        None => est,
+    };
+    (v, now)
+}
+
+/// The time left shown `dt` seconds after `shown` was, with the new
+/// estimate `est`: it counts down meanwhile; a drop to half or less is
+/// taken at once, a change under 5 seconds and 5 % not at all (it keeps
+/// counting down), else it moves part of the way (30 % per second
+/// downward, 10 % upward: a long render is more often slower than
+/// predicted than faster).
+pub fn shown_step(shown: f64, est: f64, dt: f64) -> f64 {
+    let s = (shown - dt.max(0.0)).max(0.0);
+    let d = est - s;
+    if est <= s / 2.0 {
+        est
+    } else if d.abs() < 5.0 || d.abs() < 0.05 * s {
+        s
+    } else if d < 0.0 {
+        s + d * (1.0 - 0.7f64.powf(dt))
+    } else {
+        s + d * (1.0 - 0.9f64.powf(dt))
+    }
+}
+
+/// A time left in words: "a few seconds left", "12 s left", "2 min 30 s
+/// left", "about 7 min left" (from 4 minutes), "about 1 h 20 min left".
+pub fn left_str(secs: f64) -> String {
+    let s = secs.round().max(0.0) as i64;
+    match s {
+        ..=3 => "a few seconds left".into(),
+        4..=59 => format!("{s} s left"),
+        60..=239 if s % 60 == 0 => format!("{} min left", s / 60),
+        60..=239 => format!("{} min {} s left", s / 60, s % 60),
+        240..=3599 => format!("about {} min left", (s + 30) / 60),
+        _ => {
+            let m = (s + 30) / 60;
+            match m % 60 {
+                0 => format!("about {} h left", m / 60),
+                r => format!("about {} h {r} min left", m / 60),
+            }
+        }
+    }
+}
+
 /// `D2ByteToStr`: 0..250 as "0.00".."2.50".
 pub fn d2byte_str(b: u8) -> String {
     let s = format!("{b:03}");
@@ -183,5 +237,48 @@ mod tests {
         assert_eq!(pti("-3"), -3);
         assert_eq!(pti("2.5"), 0);
         assert_eq!(pti("640,5"), 0);
+    }
+
+    #[test]
+    fn shown_time_left_follows_a_download_display() {
+        // a drop to half or less: at once
+        assert_eq!(shown_step(100.0, 50.0, 0.0), 50.0);
+        assert_eq!(shown_step(100.0, 20.0, 1.0), 20.0);
+        // an increase: damped, a tenth of the way per second
+        let s = shown_step(100.0, 200.0, 1.0);
+        assert!((s - (99.0 + 101.0 * 0.1)).abs() < 1e-9, "{s}");
+        assert!(shown_step(100.0, 200.0, 3.0) < shown_step(100.0, 200.0, 5.0));
+        // a decrease short of half: faster, 30 % per second
+        let s = shown_step(100.0, 60.0, 1.0);
+        assert!((s - (99.0 - 39.0 * 0.3)).abs() < 1e-9, "{s}");
+        // a small change (under 5 s or 5 %): only counting down
+        assert_eq!(shown_step(100.0, 103.0, 1.0), 99.0);
+        assert_eq!(shown_step(100.0, 96.0, 1.0), 99.0);
+        assert_eq!(shown_step(1000.0, 1040.0, 2.0), 998.0);
+        // never up by less than 5 %
+        for est in [101.0, 103.0, 104.0] {
+            assert!(shown_step(100.0, est, 0.5) <= 99.5, "{est}");
+        }
+        // and never below zero
+        assert_eq!(shown_step(1.0, 0.0, 5.0), 0.0);
+        let now = std::time::Instant::now();
+        assert_eq!(smooth_shown(None, 42.0, now), (42.0, now));
+    }
+
+    #[test]
+    fn time_left_words() {
+        assert_eq!(left_str(0.0), "a few seconds left");
+        assert_eq!(left_str(3.4), "a few seconds left");
+        assert_eq!(left_str(3.6), "4 s left");
+        assert_eq!(left_str(59.0), "59 s left");
+        assert_eq!(left_str(60.0), "1 min left");
+        assert_eq!(left_str(150.0), "2 min 30 s left");
+        assert_eq!(left_str(239.0), "3 min 59 s left");
+        assert_eq!(left_str(240.0), "about 4 min left");
+        assert_eq!(left_str(449.0), "about 7 min left");
+        assert_eq!(left_str(3599.0), "about 60 min left");
+        assert_eq!(left_str(3600.0), "about 1 h left");
+        assert_eq!(left_str(4800.0), "about 1 h 20 min left");
+        assert_eq!(left_str(7199.0), "about 2 h left");
     }
 }

@@ -8,6 +8,11 @@
 //!
 //! `MB3D_ETA_LOG=FILE`: each finished calculation adds a line to FILE
 //! (these values and the stages' times, to fit the model on).
+//!
+//! The estimator's pieces every window shares ([`RateEma`], [`blend`],
+//! [`slowdown`], [`ItemsLeft`]): a stage's time is its measurement blended
+//! with a prior (last run's time, or the model's), and the stages still to
+//! come are the priors scaled by how much slower this run goes.
 
 use super::engine::Inner;
 use crate::scene::Scene;
@@ -19,6 +24,92 @@ pub const FEATURES: usize = 25;
 /// card's shaders were still compiling (its time is then the CPU's, and the
 /// later stages often run on the card).
 pub const CPU_ALONE: usize = 24;
+
+/// A pace as tqdm smooths it: the progress made and the time it took are
+/// averaged apart, each sample weighted by `exp(-dt / TAU)` of the ones
+/// before, so the rate follows a change (the card joining) in seconds.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct RateEma {
+    df: f64,
+    dt: f64,
+}
+
+impl RateEma {
+    /// The time constant in seconds.
+    pub const TAU: f64 = 8.0;
+
+    /// A sample: `df` more progress in `dt` seconds.
+    pub fn add(&mut self, df: f64, dt: f64) {
+        let w = (-dt.max(0.0) / Self::TAU).exp();
+        self.df = w * self.df + df.max(0.0);
+        self.dt = w * self.dt + dt.max(0.0);
+    }
+
+    /// Progress per second (None before progress was made).
+    pub fn rate(&self) -> Option<f64> {
+        (self.df > 0.0 && self.dt > 0.0).then(|| self.df / self.dt)
+    }
+}
+
+/// The progress within a stage at which its measurement and its prior
+/// count the same (see [`blend`]).
+pub const BLEND_HALF: f64 = 0.08;
+
+/// A stage's whole time: its measured one and its prior (what it took
+/// last time, or the model's) blended by the progress `g` (0..1) it made,
+/// half and half at [`BLEND_HALF`]; the one of them that exists when the
+/// other is missing (None without both).
+pub fn blend(measured: Option<f64>, prior: Option<f64>, g: f64) -> Option<f64> {
+    match (measured, prior) {
+        (Some(m), Some(p)) => {
+            let a = g.clamp(0.0, 1.0) / (g.clamp(0.0, 1.0) + BLEND_HALF);
+            Some(a * m + (1.0 - a) * p)
+        }
+        (m, p) => m.or(p),
+    }
+}
+
+/// How much slower a stage ran than its prior said (1 for a prior too
+/// short to tell), held within 0.25..4: the factor for the priors of the
+/// stages still to come.
+pub fn slowdown(measured: f64, prior: f64) -> f64 {
+    if prior < 0.5 || measured <= 0.0 {
+        return 1.0;
+    }
+    (measured / prior).clamp(0.25, 4.0)
+}
+
+/// Items of about the same cost one after another (Monte Carlo passes,
+/// animation frames, tiles): the time each takes from those finished, and
+/// the time left with the running item's own estimate.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ItemsLeft {
+    per: Option<f64>,
+    n: u32,
+}
+
+impl ItemsLeft {
+    /// An item finished after `secs`: averaged with the last few.
+    pub fn done(&mut self, secs: f64) {
+        self.n += 1;
+        let w = 1.0 / self.n.min(4) as f64;
+        self.per = Some(self.per.map_or(secs, |p| p + (secs - p) * w));
+    }
+
+    /// The time an item takes (None before one finished).
+    pub fn per_item(&self) -> Option<f64> {
+        self.per
+    }
+
+    /// The time left: the running item's (its progress `g`, its time so far
+    /// `secs` and its measured whole time `measured`, None without one,
+    /// blended with the finished items' time) and `after` items more (None
+    /// while nothing says how long an item takes).
+    pub fn left(&self, g: f64, secs: f64, measured: Option<f64>, after: usize) -> Option<f64> {
+        let total = blend(measured, self.per, g)?;
+        Some((total - secs).max(0.0) + after as f64 * self.per.unwrap_or(total))
+    }
+}
 
 /// The scene's part of the features (known when the calculation starts).
 pub fn scene_features(sc: &Scene) -> [f32; FEATURES] {
@@ -183,6 +274,72 @@ pub fn log(f: &[f32; FEATURES], main: f64, later: [Option<f64>; 3], cold: bool, 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rate_ema_follows_a_constant_speed() {
+        // 2 % every quarter second: 8 % per second, whatever the length
+        let mut r = RateEma::default();
+        assert_eq!(r.rate(), None);
+        for _ in 0..40 {
+            r.add(0.02, 0.25);
+            assert!((r.rate().unwrap() - 0.08).abs() < 1e-9);
+        }
+        // the pace halves: within a few time constants the rate follows
+        for _ in 0..100 {
+            r.add(0.01, 0.25);
+        }
+        assert!((r.rate().unwrap() - 0.04).abs() < 0.002, "{:?}", r.rate());
+        // samples with the same speed but at different intervals agree
+        let mut u = RateEma::default();
+        u.add(0.1, 1.0);
+        u.add(0.3, 3.0);
+        assert!((u.rate().unwrap() - 0.1).abs() < 1e-9);
+    }
+
+    #[test]
+    fn blend_moves_from_the_prior_to_the_measurement() {
+        assert_eq!(blend(None, None, 0.5), None);
+        assert_eq!(blend(Some(10.0), None, 0.0), Some(10.0));
+        assert_eq!(blend(None, Some(20.0), 0.9), Some(20.0));
+        let at = |g| blend(Some(10.0), Some(20.0), g).unwrap();
+        assert!((at(0.0) - 20.0).abs() < 1e-9);
+        assert!((at(BLEND_HALF) - 15.0).abs() < 1e-9);
+        assert!(at(0.02) > at(0.04) && at(0.04) > at(0.5));
+        assert!((at(1.0) - 10.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn slowdown_scales_the_next_stages() {
+        // the shadows took half again as long as last time: so will the rest
+        let k = slowdown(30.0, 20.0);
+        assert!((k - 1.5).abs() < 1e-9);
+        let priors = [40.0, 10.0];
+        let rest: f64 = priors.iter().map(|p| p * k).sum();
+        assert!((rest - 75.0).abs() < 1e-9);
+        assert_eq!(slowdown(100.0, 1.0), 4.0);
+        assert_eq!(slowdown(1.0, 100.0), 0.25);
+        // (a prior too short to tell, no measurement: as expected)
+        assert_eq!(slowdown(3.0, 0.1), 1.0);
+        assert_eq!(slowdown(0.0, 10.0), 1.0);
+    }
+
+    #[test]
+    fn items_left_from_the_finished_ones() {
+        let mut it = ItemsLeft::default();
+        assert_eq!(it.per_item(), None);
+        // the first item, half done at its own pace: three more like it
+        assert_eq!(it.left(0.5, 5.0, Some(10.0), 3), Some(5.0 + 30.0));
+        assert_eq!(it.left(0.0, 0.0, None, 3), None);
+        it.done(10.0);
+        it.done(12.0);
+        assert!((it.per_item().unwrap() - 11.0).abs() < 1e-9);
+        // the running item just began: the finished ones' time for all
+        let l = it.left(0.0, 0.0, Some(30.0), 2).unwrap();
+        assert!((l - 33.0).abs() < 1e-9, "{l}");
+        // nearly done and measured slower: its own time for itself
+        let l = it.left(0.9, 18.0, Some(20.0), 1).unwrap();
+        assert!((l - (20.0 * 0.9 / 0.98 + 11.0 * 0.08 / 0.98 - 18.0 + 11.0)).abs() < 1e-6, "{l}");
+    }
 
     #[test]
     fn model_as_fitted() {
