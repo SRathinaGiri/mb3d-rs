@@ -435,7 +435,7 @@ object Mand3DForm: TMand3DForm
       Left = 1
       Top = 446
       Width = 151
-      Height = 264
+      Height = 292
       ActivePage = TabSheet5
       Align = alTop
       BiDiMode = bdLeftToRight
