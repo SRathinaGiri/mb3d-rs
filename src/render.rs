@@ -463,8 +463,12 @@ fn calculate_inner(
                 p.gpu_post = Some(job);
                 return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
             }
-            // (stopped, not failed: the card's rows stay in the checkpoint)
+            // (stopped, not failed: the card's rows stay in the checkpoint,
+            // unless too many of their pixels overflowed single precision)
             if cancel() || crate::gpu::aborted() {
+                if crate::gpu::rows_overflowed() {
+                    ck_tag(ck, "raw");
+                }
                 return Err("cancelled".into());
             }
         }
@@ -1051,11 +1055,18 @@ fn march_mixed(
     let done = AtomicUsize::new(had);
     let on_card = AtomicUsize::new(0);
     CARD_ROWS.store(0, Ordering::Relaxed);
-    let put = |y: usize, row: &[SiLight]| {
+    // the card's rows go to the checkpoint after its verdict on them (see
+    // `gpu::rows_overflowed`): they wait here
+    let pending = Mutex::new(Vec::new());
+    let put = |y: usize, row: &[SiLight], card: bool| {
         if let Some(f) = sink {
             f(y, row);
         }
-        ck_put(ck, y, row);
+        if card {
+            pending.lock().unwrap().push(y);
+        } else {
+            ck_put(ck, y, row);
+        }
         let mut dst = rows[y].lock().unwrap();
         let n = row.len().min(dst.len());
         dst[..n].copy_from_slice(&row[..n]);
@@ -1064,6 +1075,7 @@ fn march_mixed(
     };
     let mut card_err = None;
     let mut switched = None;
+    let mut card_ok = false;
     let name = crate::gpu::name().unwrap_or_default();
     crate::gpu::set_status(if ready.load(Ordering::SeqCst) {
         format!("GPU {name}: the march shared with the CPU")
@@ -1079,7 +1091,7 @@ fn march_mixed(
                 }
                 let card_row = queue.lock().unwrap().pop_front();
                 if let Some((y, row)) = card_row {
-                    put(y, &finish_row(p, y, &row));
+                    put(y, &finish_row(p, y, &row), true);
                     continue;
                 }
                 let y = if cpu_rows {
@@ -1095,7 +1107,7 @@ fn march_mixed(
                     None
                 };
                 match y {
-                    Some(y) => put(y, &cpu_row(p, y)),
+                    Some(y) => put(y, &cpu_row(p, y), false),
                     // (rows of the card still to come)
                     None if finish.load(Ordering::SeqCst) && !card_done.load(Ordering::SeqCst) => std::thread::sleep(std::time::Duration::from_micros(500)),
                     None => break,
@@ -1155,11 +1167,14 @@ fn march_mixed(
                 if finish.load(Ordering::SeqCst) {
                     queue.lock().unwrap().push_back((y, row.to_vec()));
                 } else {
-                    put(y, row);
+                    put(y, row, true);
                 }
             },
         );
         *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
+        // (stopped: its rows are kept when the card's verdict on them so
+        // far is good)
+        card_ok = r.is_ok() || (r.as_ref().is_err_and(|e| e == "cancelled") && !crate::gpu::rows_overflowed());
         if let Err(e) = r {
             if e != "cancelled" {
                 // the card's rows (also those it delivered: overflows) on
@@ -1174,7 +1189,7 @@ fn march_mixed(
                             if i >= redo.len() || cancel() {
                                 break;
                             }
-                            put(redo[i], &cpu_row(p, redo[i]));
+                            put(redo[i], &cpu_row(p, redo[i]), false);
                         });
                     }
                 });
@@ -1198,10 +1213,15 @@ fn march_mixed(
                     if i >= left.len() || cancel() {
                         break;
                     }
-                    put(left[i].0, &finish_row(p, left[i].0, &left[i].1));
+                    put(left[i].0, &finish_row(p, left[i].0, &left[i].1), true);
                 });
             }
         });
+    }
+    if card_ok {
+        for y in pending.into_inner().unwrap() {
+            ck_put(ck, y, &rows[y].lock().unwrap());
+        }
     }
     if cancel() {
         return Err("cancelled".into());
@@ -1265,7 +1285,14 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
             crate::gpu::set_status(format!("GPU {} (continued)", crate::gpu::name().unwrap_or_default()));
             Ok(Some(gbuf))
         }
-        Err(_) if cancel() || crate::gpu::aborted() => Err("cancelled".into()),
+        Err(_) if cancel() || crate::gpu::aborted() => {
+            // (the rows of a march that overflowed are not usable: all on
+            // the CPU next time, as when it fails)
+            if crate::gpu::rows_overflowed() {
+                ck.reset();
+            }
+            Err("cancelled".into())
+        }
         Err(e) => {
             crate::gpu::set_status(format!("CPU: GPU error: {e}"));
             Ok(None)

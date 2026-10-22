@@ -1156,6 +1156,7 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
 /// after rows went to `sink` (single precision overflows) means they are
 /// not usable.
 pub fn march_bands(p: &CalcParams, post: &PostJob, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    ROWS_BAD.with(|c| c.set(false));
     guard(|| march_bands_card(p, post, bands, cancel, sink))
 }
 
@@ -1168,9 +1169,13 @@ fn march_bands_card(p: &CalcParams, post: &PostJob, bands: &dyn Fn(usize) -> Opt
     for m in modes(post) {
         prepare(g, sh.code.clone(), "main", march_constants(p, m));
     }
-    let (_, len) = run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), None, false)?;
+    let r = run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), None, false);
     // pixels whose DE overflowed single precision (see [`march`]): the
-    // card's rows are not usable then
+    // card's rows are not usable then (also those of a stopped run)
+    if overflowed(p) {
+        ROWS_BAD.with(|c| c.set(true));
+    }
+    let (_, len) = r?;
     let n = OVERFLOW.with(|c| c.get());
     if n * 500 > len && !needs_double(p) {
         return Err(format!("single precision overflows in {} ({n} of {len} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + ")));
@@ -1688,6 +1693,25 @@ thread_local! {
     static SAMPLE: std::cell::Cell<(usize, usize)> = const { std::cell::Cell::new((0, 0)) };
     /// the pixels of the last [`run`] whose DE overflowed single precision
     static OVERFLOW: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// the pixels the last [`run`] delivered so far (also when it stopped)
+    static SUNK: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// the rows of the last [`march`] / [`march_bands`] are not usable
+    /// (see [`rows_overflowed`])
+    static ROWS_BAD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Too many of the pixels the last [`run`] delivered (all, or those before
+/// it stopped) overflowed single precision: its rows are not usable.
+fn overflowed(p: &CalcParams) -> bool {
+    OVERFLOW.with(|c| c.get()) * 500 > SUNK.with(|c| c.get()) && !needs_double(p)
+}
+
+/// The rows the last [`march`] or [`march_bands`] of this thread sent to
+/// its sink are not usable (single precision overflowed in too many of
+/// them), also when it was stopped before its verdict: a checkpoint must
+/// not keep them.
+pub fn rows_overflowed() -> bool {
+    ROWS_BAD.with(|c| c.get())
 }
 
 fn bytes(v: &[u32]) -> Vec<u8> {
@@ -1705,6 +1729,7 @@ pub fn march(
     cancel: &(dyn Fn() -> bool + Sync),
     sink: impl FnMut(usize, &[SiLight]),
 ) -> Option<Vec<SiLight>> {
+    ROWS_BAD.with(|c| c.set(false));
     guard(|| Ok(march_card(p, post, progress, cancel, sink))).ok().flatten()
 }
 
@@ -1753,6 +1778,10 @@ fn march_card(
         r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None, None, true).map(|(v, _)| v);
         if timing {
             eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
+        }
+        // (its rows went to `sink`: stopped or not, they are not usable)
+        if overflowed(p) {
+            ROWS_BAD.with(|c| c.set(true));
         }
         // pixels whose DE overflowed single precision: a formula not made
         // for f32 (folds of huge values); a few are harmless, many are not.
@@ -2513,6 +2542,8 @@ fn run(
     let mut gbuf = Vec::with_capacity(if keep { w * h } else { w });
     let mut delivered = 0usize;
     let mut overflow = 0usize;
+    OVERFLOW.with(|c| c.set(0));
+    SUNK.with(|c| c.set(0));
     let mut next = 0;
     // the next band: in order, or from the allocator (the rows from the
     // top that the CPU has not taken)
@@ -2590,6 +2621,9 @@ fn run(
                         }
                         sink(row0 + sunk + r, &gbuf[start..]);
                     }
+                    // (so far: for the verdict on a stopped run)
+                    OVERFLOW.with(|c| c.set(overflow));
+                    SUNK.with(|c| c.set(delivered));
                     sunk = ready;
                     if bands.is_none() {
                         progress(row0 + sunk, h);
