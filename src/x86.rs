@@ -799,7 +799,9 @@ fn decode_0f(d: &mut Dec, addr: u32, p66: bool, rep: Option<u8>, osz: u8) -> R<I
                 _ => return Err(unsup(addr, "movmskpd mem".into())),
             }
         }
+        0x51 if !f2 && !f3 && !p66 => return Err(unsup(addr, "sqrtps".into())),
         0x51 => xop(d, if f2 { SseOp::SqrtSd } else if f3 { SseOp::SqrtSs } else { SseOp::SqrtPd })?,
+        0x5D | 0x5F if !f2 && !f3 && !p66 => return Err(unsup(addr, "minps/maxps".into())),
         0x54 => xop(d, SseOp::And)?,
         0x55 => xop(d, SseOp::AndN)?,
         0x56 => xop(d, SseOp::Or)?,
@@ -820,7 +822,8 @@ fn decode_0f(d: &mut Dec, addr: u32, p66: bool, rep: Option<u8>, osz: u8) -> R<I
             } else if f3 {
                 [SseOp::AddSs, SseOp::MulSs, SseOp::SubSs, SseOp::MinSs, SseOp::DivSs, SseOp::MaxSs]
             } else {
-                [SseOp::AddPs, SseOp::MulPs, SseOp::SubPs, SseOp::MinSs, SseOp::DivPs, SseOp::MaxSs]
+                // minps/maxps (indices 3, 5) are rejected above
+                [SseOp::AddPs, SseOp::MulPs, SseOp::SubPs, SseOp::AddPs, SseOp::DivPs, SseOp::AddPs]
             };
             xop(d, ops[idx])?
         }
@@ -2907,6 +2910,15 @@ mod tests {
         code.extend_from_slice(&(BASE + 0x2000).to_le_bytes());
         code.push(0xC3);
         assert_eq!(run_both(&code), (1.0, 1.0));
+    }
+
+    #[test]
+    fn packed_single_sqrt_min_max_unsupported() {
+        for op in [0x51, 0x5D, 0x5F] {
+            assert!(decode(&[0x0F, op, 0xC1], CODE_START).is_err(), "0F {op:02X}");
+            assert!(decode(&[0x66, 0x0F, op, 0xC1], CODE_START).is_ok(), "66 0F {op:02X}");
+            assert!(decode(&[0xF3, 0x0F, op, 0xC1], CODE_START).is_ok(), "F3 0F {op:02X}");
+        }
     }
 
     #[test]
