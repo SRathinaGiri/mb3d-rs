@@ -313,6 +313,9 @@ fn run() -> Result<(), String> {
                 || std::fs::read(f).map(|d| String::from_utf8_lossy(&d).contains("Mandelbulb3Dv")).unwrap_or(false)
         })
         .unwrap_or(false);
+    if is_m3p && formula.is_some() {
+        return Err(usage_err("-f/--formula is for presets and scene files (not for MB3D parameters: use --set)"));
+    }
     let raw_copy = is_m3p && overrides.is_empty() && scale.is_none();
     if raw_copy && (save_text.is_some() || save_m3p.is_some()) {
         let path = scene_file.clone().unwrap();
@@ -453,6 +456,9 @@ fn run() -> Result<(), String> {
         if scene.tiling.is_some() {
             return Err(usage_err("--stereo-pair does not work with tiles"));
         }
+        if depth.is_some() || stats {
+            return Err(usage_err("--stereo-pair writes no depth image or statistics (not with --depth or --stats)"));
+        }
         if auto_color {
             let (_, g) = mb3d::render::calculate(&scene, &|_, _| {})?;
             mb3d::render::auto_color_range(&mut scene, &g);
@@ -477,6 +483,9 @@ fn run() -> Result<(), String> {
             if tl.pos.is_some() {
                 return Err(usage_err("--swarm renders all tiles; --tile is for one tile by hand"));
             }
+            if auto_color || tl.downscale > 1 {
+                return Err(usage_err("--swarm does not work with --auto-color or tile_downscale"));
+            }
             let ropts = mb3d::swarm::RunOptions { threads: scene.threads, quiet, resume: resume_policy(), ..Default::default() };
             let report = |st: &str| {
                 if !quiet {
@@ -489,8 +498,20 @@ fn run() -> Result<(), String> {
             let p = mb3d::calc::CalcParams::new(&fs)?;
             report("all tiles done, painting the picture");
             let rgb = mb3d::render::paint(&fs, &p, &full);
-            let (rgb, w, h) = if aa > 1 { mb3d::render::downsample(&rgb, fs.width as usize, fs.height as usize, aa) } else { (rgb, fs.width as usize, fs.height as usize) };
-            write_png(&output, w, h, &rgb)?;
+            let (fw, fh) = (fs.width as usize, fs.height as usize);
+            if stats {
+                print_stats(&mb3d::RenderResult { width: fw, height: fh, gbuffer: full.clone(), rgb: Vec::new(), calc_seconds: 0.0, paint_seconds: 0.0 });
+            }
+            if transparent {
+                write_transparent(&output, &rgb, &full, fw, fh, aa, denoise)?;
+            } else {
+                let (rgb, w, h) = if aa > 1 { mb3d::render::downsample(&rgb, fw, fh, aa) } else { (rgb, fw, fh) };
+                let rgb = denoised(rgb, w, h, denoise);
+                write_png(&output, w, h, &rgb)?;
+            }
+            if let Some(d) = depth {
+                write_depth(&d, &full, fw, fh, aa)?;
+            }
             if !quiet {
                 eprintln!("wrote {output} ({}x{} tiles from the swarm)", tl.cols, tl.rows);
             }
