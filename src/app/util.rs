@@ -89,10 +89,10 @@ pub fn ptf(s: &str) -> f64 {
     parse_float(s).unwrap_or(0.0)
 }
 
-/// `StrToIntTrim`.
+/// `StrToIntTrim`: 0 when the text is no whole number (MB3D's StrToInt
+/// rejects "2.5" too).
 pub fn pti(s: &str) -> i32 {
-    let t: String = s.trim().chars().filter(|c| *c != ',' && *c != '.').collect();
-    t.parse::<i64>().map(|v| v.clamp(i32::MIN as i64, i32::MAX as i64) as i32).unwrap_or(0)
+    s.trim().parse::<i64>().map(|v| v.clamp(i32::MIN as i64, i32::MAX as i64) as i32).unwrap_or(0)
 }
 
 /// `IntToTimeStr` (tenths of seconds).
@@ -179,5 +179,9 @@ mod tests {
         assert_eq!(parse_float("x"), None);
         assert_eq!(time_str(125), "0:12.5");
         assert_eq!(d2byte_str(5), "0.05");
+        assert_eq!(pti(" 640 "), 640);
+        assert_eq!(pti("-3"), -3);
+        assert_eq!(pti("2.5"), 0);
+        assert_eq!(pti("640,5"), 0);
     }
 }
