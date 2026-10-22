@@ -124,14 +124,25 @@ fn matches(pats: &[String], name: &str) -> bool {
 
 impl Ui {
     fn dialog_form(&mut self, name: &str, dfm: &str) -> usize {
-        let f = Form::from_dfm(dfm, &self.theme).expect("dialog form");
-        match self.form_index(name) {
-            Some(i) => {
-                self.forms[i] = f;
-                i
+        let mut f = Form::from_dfm(dfm, &self.theme).expect("dialog form");
+        // one still open (a confirm not answered yet) is kept: the new one
+        // opens over it as "MessageBoxDlg1" ..., both report their results
+        for n in 0.. {
+            let nm = if n == 0 { name.to_string() } else { format!("{name}{n}") };
+            match self.form_index(&nm) {
+                Some(i) if self.forms[i].visible => {}
+                Some(i) => {
+                    f.name = nm;
+                    self.forms[i] = f;
+                    return i;
+                }
+                None => {
+                    f.name = nm;
+                    return self.add_built(f);
+                }
             }
-            None => self.add_built(f),
         }
+        unreachable!()
     }
 
     fn center_on_main(&mut self, i: usize) {
@@ -649,5 +660,30 @@ mod tests {
             _ => None,
         });
         assert_eq!(got, Some(dir.join("noext.png")));
+    }
+
+    /// A message while a confirm is open opens over it; the confirm still
+    /// gets its answer.
+    #[test]
+    fn dialog_over_open_confirm() {
+        let mut ui = Ui::default();
+        ui.confirm("ask", "Sure?");
+        let a = ui.form_index("MessageBoxDlg").unwrap();
+        ui.show_message("Something else");
+        let b = ui.form_index("MessageBoxDlg1").unwrap();
+        assert_ne!(a, b);
+        assert_eq!(ui.modal_top(), Some(b));
+        ui.close_index(b);
+        assert_eq!(ui.modal_top(), Some(a));
+        ui.forms[a].modal_result = MR_YES;
+        ui.close_index(a);
+        let got = ui.events.iter().find_map(|e| match &e.ev {
+            Ev::DialogResult(DialogResult::Button(mr)) if e.sender == "ask" => Some(*mr),
+            _ => None,
+        });
+        assert_eq!(got, Some(MR_YES));
+        // closed, the first is used again
+        ui.show_message("Again");
+        assert_eq!(ui.modal_top(), Some(a));
     }
 }
