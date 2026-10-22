@@ -242,6 +242,19 @@ fn update_paras(app: &mut Mb3d, ui: &Ui) {
     p.lighting.gamma = ui.position(F, "TrackBar3").clamp(0, 63) as f32;
 }
 
+/// `CategoryPanel2Collapse`: the category group as high as its panels,
+/// Label33 below it.
+fn category_group_height(ui: &mut Ui) {
+    let f = ui.fm(F);
+    f.layout();
+    let Some(g) = f.id("CategoryPanelGroup2") else { return };
+    let h: i32 = ["CategoryPanel1", "CategoryPanel2", "CategoryPanel5", "CategoryPanel6"].iter().filter_map(|c| f.id(c)).map(|k| f.ctl[k].height).sum();
+    // (plus the group's border)
+    let h = h + f.ctl[g].height - f.align_rect(g).h;
+    f.ctl[g].height = h;
+    ui.cm(F, "Label33").top = h + 8;
+}
+
 fn check_box2(ui: &mut Ui) {
     let on = ui.checked(F, "CheckBox2");
     for c in ["Edit1", "Edit2", "UpDown1", "Button5", "CheckBox3"] {
@@ -1217,7 +1230,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     ui.cm(F, c).collapsed = true;
                 }
             }
+            category_group_height(ui);
         }
+        "CategoryPanel2Collapse" => category_group_height(ui),
         "ToggleBatchPnlBtnClick" => {
             let v = !ui.visible(F, "BatchPnl");
             ui.set_visible(F, "BatchPnl", v);
