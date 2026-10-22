@@ -2950,6 +2950,9 @@ struct ToMain {
 enum MainEv {
     Round(ToMain),
     Card(Result<(Vec<McRes>, usize, Vec<usize>), String>, f64),
+    /// a thread panicked: the pass ends (the panic comes back at the
+    /// threads' join)
+    Died,
 }
 
 /// The answer to a group's round: the results, or "march them yourself";
@@ -2996,6 +2999,18 @@ fn pass_gpu(
     let failed: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
     let mut status = String::new();
     let share_cpu = std::env::var("MB3D_MC_CPU_SHARE").map_or(true, |v| v != "0");
+    // a thread that panics tells the pass, which would otherwise wait for
+    // its rounds and pieces forever
+    let died = std::sync::atomic::AtomicBool::new(false);
+    struct Dying<'a>(&'a std::sync::atomic::AtomicBool, mpsc::Sender<MainEv>);
+    impl Drop for Dying<'_> {
+        fn drop(&mut self) {
+            if std::thread::panicking() {
+                self.0.store(true, Ordering::SeqCst);
+                let _ = self.1.send(MainEv::Died);
+            }
+        }
+    }
     std::thread::scope(|s| {
         let mut per: Vec<Vec<(usize, &mut [McRecord])>> = (0..threads).map(|_| Vec::new()).collect();
         for (y, row) in img.recs.chunks_mut(w).enumerate().filter(|(y, _)| !skipped(*y)) {
@@ -3004,7 +3019,9 @@ fn pass_gpu(
         for ((wi, list), inbox) in per.into_iter().enumerate().zip(inboxes) {
             let to_main = to_main.clone();
             let done_rows = &done_rows;
+            let dying = Dying(&died, to_main.clone());
             s.spawn(move || {
+                let _dying = dying;
                 let march = RefCell::new(McMarch::new(ctx));
                 let active_max = (MC_ACTIVE / threads / 2).max(64);
                 // the pixels in row order, every other one for each group:
@@ -3194,7 +3211,7 @@ fn pass_gpu(
         let (mut t_card, mut t_wait) = (0f64, 0f64);
         // the CPU's part of a batch, from the rates of the last one
         let mut cpu_part = 0.3f64;
-        loop {
+        'pass: loop {
             // complete rounds become batches (or CPU rounds)
             for g in 0..2 {
                 if live[g] == 0 || pending[g].len() < live[g] || batches_q.iter().any(|b| b.group == g) {
@@ -3253,7 +3270,7 @@ fn pass_gpu(
             };
             t_wait += tw.elapsed().as_secs_f64();
             let (r, card_s) = match ev {
-                None => break,
+                None | Some(MainEv::Died) => break,
                 Some(MainEv::Round(ToMain { worker, group, reqs: Some(r) })) => {
                     pending[group].push((worker, r));
                     continue;
@@ -3303,6 +3320,9 @@ fn pass_gpu(
             // the pieces the threads took
             for i in mine.into_iter().chain(meet..total) {
                 while sr.cpu_res[i].get().is_none() {
+                    if died.load(Ordering::SeqCst) {
+                        break 'pass;
+                    }
                     std::thread::yield_now();
                 }
             }
