@@ -548,7 +548,7 @@ fn run() -> Result<(), String> {
             write_png(&output, ow, oh, &rgb)?;
         }
         if let (Some(d), Some(g)) = (depth, &res.gbuffer) {
-            write_depth(&d, g, res.width, res.height)?;
+            write_depth(&d, g, res.width, res.height, down)?;
         }
         if let Some(ck) = ck {
             ck.finish();
@@ -645,7 +645,7 @@ fn render_single(
         write_png(&output, ow, oh, &rgb)?;
     }
     if let Some(d) = depth {
-        write_depth(&d, &res.gbuffer, res.width, res.height)?;
+        write_depth(&d, &res.gbuffer, res.width, res.height, aa)?;
     }
     if let Some(ck) = ck {
         ck.finish();
@@ -746,9 +746,10 @@ fn denoised(rgb: Vec<u8>, w: usize, h: usize, sigma: f32) -> Vec<u8> {
     mb3d::denoise::dct_denoise(&rgb, w, h, sigma, std::thread::available_parallelism().map_or(4, |n| n.get()))
 }
 
-fn write_depth(path: &str, g: &[mb3d::gbuffer::SiLight], w: usize, h: usize) -> Result<(), String> {
-    let z: Vec<u16> =
-        g.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
+/// The depth image of the G-buffer `w` x `h`, reduced by `n` to the size
+/// of the picture.
+fn write_depth(path: &str, g: &[mb3d::gbuffer::SiLight], w: usize, h: usize, n: usize) -> Result<(), String> {
+    let (z, w, h) = mb3d::frames::depth_of(g, w, h, n);
     mb3d::png::write_gray16(path, w, h, &z).map_err(|e| output_err(path, e))
 }
 

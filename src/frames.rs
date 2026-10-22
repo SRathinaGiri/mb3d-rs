@@ -174,6 +174,16 @@ pub fn rgba_of(rgb: &[u8], gbuf: &[SiLight], w: usize, h: usize, n: usize) -> (V
     (out, w2, h2)
 }
 
+/// The 16 bit depth image of a G-buffer `w` x `h` reduced by `n`
+/// (anti-aliasing, 1 = none) to the size of the picture: the depth of
+/// the block centres (background 0).
+pub fn depth_of(gbuf: &[SiLight], w: usize, h: usize, n: usize) -> (Vec<u16>, usize, usize) {
+    let n = n.max(1);
+    let z = |s: &SiLight| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 };
+    let (ow, oh) = (w / n, h / n);
+    ((0..ow * oh).map(|i| z(&gbuf[((i / ow) * n + n / 2) * w + (i % ow) * n + n / 2])).collect(), ow, oh)
+}
+
 /// Renders a scene that is `aa` times larger than the wanted image and
 /// reduces it (`UpdateAndScaleImageFull`).  Tiled scenes are rendered tile
 /// by tile.
@@ -222,21 +232,7 @@ pub fn render_scaled_with(
         (rgb, sc.width as usize, sc.height as usize, Some(g))
     };
     let rgba = if want_alpha { gbuf.as_ref().map(|g| rgba_of(&rgb, g, w, h, aa).0) } else { None };
-    let depth = if want_depth {
-        gbuf.map(|g| {
-            let z: Vec<u16> =
-                g.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
-            if aa > 1 {
-                // the depth of the block centres
-                let (ow, oh) = (w / aa, h / aa);
-                (0..ow * oh).map(|i| z[((i / ow) * aa + aa / 2) * w + (i % ow) * aa + aa / 2]).collect()
-            } else {
-                z
-            }
-        })
-    } else {
-        None
-    };
+    let depth = if want_depth { gbuf.map(|g| depth_of(&g, w, h, aa).0) } else { None };
     let (rgb, w, h) = if aa > 1 { crate::render::downsample(&rgb, w, h, aa) } else { (rgb, w, h) };
     Ok(FrameImage { width: w, height: h, rgb, depth, rgba, seconds: t0.elapsed().as_secs_f64() })
 }
