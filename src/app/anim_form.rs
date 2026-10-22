@@ -1263,11 +1263,12 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 return;
             }
             let total = app.anim.anim.keyframes[cur - 1].frames;
-            let sf = sf.saturating_sub(1);
-            if sf >= total {
+            // (subframes count from 1: 0 is no subframe)
+            if sf < 1 || sf - 1 >= total {
                 ui.show_message("Value not guilty");
                 return;
             }
+            let sf = sf - 1;
             // linear interpolation between this and the next keyframe
             let w2 = sf as f64 / total.max(1) as f64;
             let s1 = app.anim.anim.keyframes[cur - 1].scene.clone();
