@@ -71,16 +71,23 @@ impl AVal {
             // a pointer that walks over the variable buffer (a loop over the
             // formula's options): somewhere in it, the address at run time
             (AVal::Pv(a), AVal::Pv(b)) | (AVal::Pv(a), AVal::Dyn(true, b)) | (AVal::Dyn(true, a), AVal::Pv(b)) | (AVal::Dyn(true, a), AVal::Dyn(true, b)) => AVal::Dyn(true, a.min(b)),
-            (AVal::Bnd(a), AVal::Bnd(b)) => AVal::Bnd(a.max(b)),
-            (AVal::BndS(a, s), AVal::BndS(b, t)) if s == t => AVal::BndS(a.max(b), s),
+            // the index is selected by reg & mask: the joined mask covers
+            // the bits of both (2^n - 1)
+            (AVal::Bnd(a), AVal::Bnd(b)) => AVal::Bnd(low_bits(a | b)),
+            (AVal::BndS(a, s), AVal::BndS(b, t)) if s == t => AVal::BndS(low_bits(a | b), s),
             (AVal::BndS(..), _) | (_, AVal::BndS(..)) => AVal::D,
-            (AVal::Bnd(m), AVal::K(k)) | (AVal::K(k), AVal::Bnd(m)) if k <= m => AVal::Bnd(m),
+            (AVal::Bnd(m), AVal::K(k)) | (AVal::K(k), AVal::Bnd(m)) if k <= m => AVal::Bnd(low_bits(m | k)),
             (AVal::Bnd(_), AVal::D | AVal::K(_) | AVal::Ks(_)) | (AVal::D | AVal::K(_) | AVal::Ks(_), AVal::Bnd(_)) => AVal::D,
             // constants used as data (masks, immediates) on one path
             (AVal::D, AVal::K(_) | AVal::Ks(_)) | (AVal::K(_) | AVal::Ks(_), AVal::D) => AVal::D,
             _ => AVal::Top,
         }
     }
+}
+
+/// The mask 2^n - 1 that covers the bits of `x`.
+fn low_bits(x: u32) -> u32 {
+    u32::MAX.checked_shr(x.leading_zeros()).unwrap_or(0)
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -774,5 +781,18 @@ mod tests {
         code.extend_from_slice(&[0x66, 0x8B, 0xF0, 0xDD, 0x06, 0xDD, 0xD8, 0xC3]);
         let r = report(&code);
         assert!(r.accesses.iter().any(|(_, l, _)| *l == Loc::Unresolved), "{r:?}");
+    }
+
+    #[test]
+    fn joined_index_masks_cover_both() {
+        assert_eq!((low_bits(0), low_bits(1), low_bits(5), low_bits(8)), (0, 1, 7, 15));
+        // imul eax, eax; test ebx, ebx; jz L; and eax, 5; jmp M;
+        // L: and eax, 2; M: mov ecx, IT_BASE; fld qword [ecx+eax*8];
+        // fstp st0; ret
+        let mut code = vec![0x0F, 0xAF, 0xC0, 0x85, 0xDB, 0x74, 0x05, 0x83, 0xE0, 0x05, 0xEB, 0x03, 0x83, 0xE0, 0x02, 0xB9];
+        code.extend_from_slice(&IT_BASE.to_le_bytes());
+        code.extend_from_slice(&[0xDD, 0x04, 0xC1, 0xDD, 0xD8, 0xC3]);
+        let r = report(&code);
+        assert!(r.accesses.iter().any(|(_, l, _)| *l == Loc::FieldIdx(0, 8, 7)), "{r:?}");
     }
 }
