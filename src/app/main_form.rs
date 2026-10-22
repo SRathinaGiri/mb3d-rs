@@ -709,6 +709,9 @@ pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "ProgressBar1", false);
     ui.set_visible(F, "Panel7", true);
     app.main.calculating = false;
+    // a stopped or failed calculation saves nothing later
+    app.main.auto_m3i = None;
+    app.main.auto_stereo = None;
     set_image_cursor(app, ui);
 }
 
@@ -825,12 +828,14 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         store_undo(app);
     }
     if app.scene.width < 1 || app.scene.height < 1 {
+        app.main.auto_m3i = None;
         return;
     }
     // the whole picture is held here (with the swarm too): one that does
     // not fit would only swap until the system stops the program
     if calc3d {
         if let Err(e) = crate::render::check_memory(app.scene.width as usize, app.scene.height as usize) {
+            app.main.auto_m3i = None;
             app.message(ui, &format!("Not calculated: {e}.\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture (with the swarm too)."));
             return;
         }
@@ -1329,6 +1334,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if finished != app.main.finished_seen && !running {
         app.main.finished_seen = finished;
         if app.main.calculating {
+            // (saved only after a calculation that finished)
+            let (auto_m3i, auto_stereo) = (app.main.auto_m3i.take(), app.main.auto_stereo.take());
             enable_buttons(app, ui);
             if app.main.led_running {
                 app.main.led_running = false;
@@ -1394,10 +1401,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 ui.set_caption(F, "Label48", &ao);
                 ui.set_caption(F, "Label50", &stage(stats.stages.reflections.map(Some)));
                 let _ = secs;
-                if let Some(p) = app.main.auto_m3i.take() {
+                if let Some(p) = auto_m3i {
                     save_m3i(app, ui, &p);
                 }
-                if let Some(p) = app.main.auto_stereo.take() {
+                if let Some(p) = auto_stereo {
                     save_image(app, ui, &p);
                 }
             } else {
