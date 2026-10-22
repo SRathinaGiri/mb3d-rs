@@ -2741,7 +2741,18 @@ fn f80_to_f64(mant: u64, se: u16) -> f64 {
     if exp == 0x7FFF {
         return if mant << 1 == 0 { sign * f64::INFINITY } else { f64::NAN };
     }
-    sign * (mant as f64) * 2f64.powi(exp - 16383 - 63)
+    // scale in steps: 2^(e-63) alone can be out of the f64 range (1e-300 is about 2^-997)
+    let mut x = (mant as f64) * 2f64.powi(-63);
+    let mut e = exp - 16383;
+    while e > 1023 {
+        x *= 2f64.powi(1023);
+        e -= 1023;
+    }
+    while e < -1022 {
+        x *= 2f64.powi(-1022);
+        e += 1022;
+    }
+    sign * x * 2f64.powi(e)
 }
 
 fn f64_to_f80(v: f64) -> (u64, u16) {
@@ -2761,7 +2772,7 @@ fn f64_to_f80(v: f64) -> (u64, u16) {
     let (mant, exp) = if e == 0 {
         // subnormal
         let lz = f.leading_zeros() as i32 - 11;
-        (f << (11 + lz + 1), -1022 - lz - 1)
+        (f << (11 + lz), -1022 - lz)
     } else {
         ((f << 11) | (1u64 << 63), e - 1023)
     };
@@ -2808,7 +2819,7 @@ mod tests {
 
     #[test]
     fn f80_round_trip() {
-        for v in [1.0, -2.5, 1e-300, 3.14159e200, 0.1] {
+        for v in [1.0, -2.5, 1e-300, 3.14159e200, 0.1, f64::MIN_POSITIVE, 1e-310, f64::from_bits(1), f64::MAX] {
             let (m, e) = f64_to_f80(v);
             assert_eq!(f80_to_f64(m, e), v);
         }
