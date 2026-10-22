@@ -189,6 +189,10 @@ fn delete_selected(app: &Mb3d, ui: &mut Ui) {
     let mut rows = batch_rows(ui);
     if i >= 0 && (i as usize) < rows.len() {
         rows.remove(i as usize);
+        let checks = &mut ui.cm(BF, "ListView1").checks;
+        if (i as usize) < checks.len() {
+            checks.remove(i as usize);
+        }
         batch_set_rows(ui, rows);
     }
 }
