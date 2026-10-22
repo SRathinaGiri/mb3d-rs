@@ -661,6 +661,10 @@ impl Form {
             Kind::CategoryPanelGroup => {
                 let ar = self.align_rect(id);
                 let mut y = ar.y;
+                // stacked in the order of their design Top (the file order
+                // can differ), like the VCL
+                let mut kids = kids.clone();
+                kids.sort_by_key(|&k| self.ctl[k].design.y);
                 for &k in &kids {
                     if !self.ctl[k].visible || self.ctl[k].kind != Kind::CategoryPanel {
                         continue;
