@@ -1936,7 +1936,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     let mut start = String::new();
     let (mut scene, mut img) = if is_m3c {
         let data = std::fs::read(path).map_err(|e| input_err(format!("{file}: {e}")))?;
-        start = format!("m3c {:016x}", mb3d::checkpoint::fnv64(&data));
+        start = mb3d::mc::McCheckpoint::m3c_start(&data);
         let (f, img) = mb3d::mc::read_m3c(&data).map_err(input_err)?;
         if !quiet {
             for n in &f.warnings {

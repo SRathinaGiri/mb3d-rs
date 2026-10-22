@@ -57,6 +57,10 @@ pub struct State {
     img: Option<Arc<McImage>>,
     name: String,
     save_name: Option<PathBuf>,
+    /// what `img` started from besides the parameters, for its checkpoint's
+    /// key (see `McCheckpoint::open`): "" for an empty image, else the .m3c
+    /// it was loaded from
+    ck_start: String,
     shared: Arc<Mutex<Shared>>,
     stop: Arc<AtomicBool>,
     progress: Arc<AtomicUsize>,
@@ -102,6 +106,7 @@ impl Default for State {
             img: None,
             name: String::new(),
             save_name: None,
+            ck_start: String::new(),
             shared: Arc::new(Mutex::new(Shared::default())),
             stop: Arc::new(AtomicBool::new(false)),
             progress: Arc::new(AtomicUsize::new(0)),
@@ -366,6 +371,7 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
     }
     app.mc.calc_time = 0;
     app.mc.img = None;
+    app.mc.ck_start.clear();
     app.mc.paras = Some(p);
     proof_light_amount(app, ui, false);
     set_paras(app, ui);
@@ -440,7 +446,8 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         None => crate::checkpoint::Policy::Continue,
     };
     // the checkpoint (the swarm's blocks are not kept: the job's units are)
-    let ck = if swarm { None } else { crate::mc::McCheckpoint::open(&p, img.seed_salt, "", &app.mc.name, resume) };
+    let ck_start = if empty { "" } else { app.mc.ck_start.as_str() };
+    let ck = if swarm { None } else { crate::mc::McCheckpoint::open(&p, img.seed_salt, ck_start, &app.mc.name, resume) };
     if let Some(c) = &ck {
         if c.store().resumed() > 0 && c.restore(&mut img) {
             app.mc.calc_time = (img.seconds * 10.0) as i64;
@@ -817,12 +824,13 @@ fn save_m3c(app: &mut Mb3d, ui: &mut Ui) {
 
 fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     app.mc.stop.store(true, Ordering::SeqCst);
-    let r = std::fs::read(path).map_err(|e| e.to_string()).and_then(|d| crate::mc::read_m3c(&d));
-    let (f, img) = match r {
+    let r = std::fs::read(path).map_err(|e| e.to_string()).and_then(|d| crate::mc::read_m3c(&d).map(|v| (v, crate::mc::McCheckpoint::m3c_start(&d))));
+    let ((f, img), ck_start) = match r {
         Ok(v) => v,
         Err(e) => return ui.show_message(&format!("{}: {e}", path.display())),
     };
     app.mc.save_name = Some(path.to_path_buf());
+    app.mc.ck_start = ck_start;
     ui.set_enabled(F, "CheckBox5", true);
     ui.set_checked(F, "WithZBufferCbx", false);
     let mut info = format!("Parameters: MandId {}", f.mand_id);

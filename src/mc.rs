@@ -2488,6 +2488,12 @@ impl McCheckpoint {
         Some(McCheckpoint { store, width: w, height: h, partial: std::sync::Mutex::new(None) })
     }
 
+    /// The `start` of [`McCheckpoint::open`] of a render that continues
+    /// the .m3c file `data`.
+    pub fn m3c_start(data: &[u8]) -> String {
+        format!("m3c {:016x}", crate::checkpoint::fnv64(data))
+    }
+
     /// The key of the checkpoint of [`McCheckpoint::open`].
     pub fn key_of(sc: &Scene, salt: u32, start: &str) -> String {
         let mut s = mc_scene(sc);
