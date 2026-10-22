@@ -513,9 +513,13 @@ impl Ui {
                     }
                 }
                 ("FileList", "OnClick") => {
+                    // -1: the list was just refilled (a double-clicked folder)
                     let k = self.forms[i].c("FileList").item_index;
+                    if k < 0 {
+                        return;
+                    }
                     if let Some(DialogState::File(d)) = self.dialogs.get(&i) {
-                        if let Some((false, n)) = d.entries.get(k.max(0) as usize).cloned() {
+                        if let Some((false, n)) = d.entries.get(k as usize).cloned() {
                             if d.preview {
                                 self.file_preview = Some(d.dir.join(&n));
                             }
