@@ -101,7 +101,8 @@ fn pseudo_kleinian_difs(m: &mut Machine, _p: &Prog, regs: &mut [u32; 8], _max_st
 #[allow(clippy::too_many_arguments)]
 pub fn pseudo_kleinian(mut p: [f64; 3], levels: i32, shape: i32, size: f64, csize: [f64; 3], julia: [f64; 3], thickness: f64, de_offset: f64, offset: [f64; 3]) -> (f64, f64) {
     let mut scale = 1.0;
-    let mut trap = f64::INFINITY;
+    // finite like on the GPU (f32 there): Levels 0 gives the colour 1e15
+    let mut trap = 1e30_f64;
     for _ in 0..levels.clamp(0, 100) {
         let before = p;
         for k in 0..3 {
@@ -750,6 +751,9 @@ mod tests {
             let (d, c) = pseudo_kleinian([r(0), r(5), r(9)], 8, 0, 1.0, cs, [0.0; 3], 0.01, 0.0, [0.0; 3]);
             assert!(d.is_finite() && d >= 0.0 && c.is_finite(), "{d} {c}");
         }
+        // no folds: the colour of the GPU code (trap 1e30)
+        let (_, c) = pseudo_kleinian([0.5, 0.0, 0.0], 0, 0, 1.0, cs, [0.0; 3], 0.01, 0.0, [0.0; 3]);
+        assert_eq!(c, 1e15);
     }
 
     #[test]
