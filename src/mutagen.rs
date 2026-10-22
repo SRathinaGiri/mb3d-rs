@@ -427,9 +427,9 @@ pub fn preview(s: &Scene, w: usize, h: usize, blank: bool, threads: usize) -> Re
 }
 
 /// `CalcFilteredCoverage`: share of pixels with a strong horizontal edge
-/// (Sobel filter, luminance > 20).
+/// (Sobel filter, luminance > 20); 0 without an image (a failed preview).
 pub fn filtered_coverage(rgb: &[u8], w: usize, h: usize) -> f64 {
-    if w < 3 || h < 3 {
+    if w < 3 || h < 3 || rgb.len() < w * h * 3 {
         return 0.0;
     }
     let px = |x: usize, y: usize, c: usize| rgb[(y * w + x) * 3 + c] as f64;
@@ -636,6 +636,16 @@ pub fn caption(s: &Scene) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn coverage_of_a_failed_preview() {
+        assert_eq!(filtered_coverage(&[], 40, 32), 0.0);
+        // a scene the renderer refuses still gives a root member
+        let mut s = Scene::preset("Amazing Box").unwrap();
+        s.formulas.clear();
+        let cfg = MutationConfig { probe_width: 16, probe_height: 12, ..Default::default() };
+        assert_eq!(root(&cfg, &s, 1).coverage, 0.0);
+    }
 
     #[test]
     fn rng_range() {
