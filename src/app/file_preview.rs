@@ -66,7 +66,8 @@ fn start(app: &mut Mb3d, ui: &Ui, path: PathBuf) {
     let slot = app.preview.result.clone();
     let waker = ui.waker();
     std::thread::spawn(move || {
-        let (r, text) = calculate(&path);
+        // (a panic must not leave `busy` set: no more previews then)
+        let (r, text) = std::panic::catch_unwind(|| calculate(&path)).unwrap_or_else(|_| (Err("the calculation failed".into()), String::new()));
         *slot.lock().unwrap() = Some((path, r, text));
         if let Some(w) = &waker {
             w.wake();
