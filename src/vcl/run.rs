@@ -792,7 +792,9 @@ impl<A: App> Runner<A> {
             }
             self.dispatch(fi, raws);
             if let Some(t) = &ev.text {
-                if shift & (SS_CTRL | SS_ALT) == 0 || (shift & SS_CTRL != 0 && shift & SS_ALT != 0) {
+                // Ctrl+Alt is AltGr; on macOS Option alone types characters (@, [ ...)
+                let (ctrl, alt) = (shift & SS_CTRL != 0, shift & SS_ALT != 0);
+                if ctrl == alt || alt && cfg!(target_os = "macos") {
                     let raws = self.ui.forms[fi].text_input(t);
                     self.dispatch(fi, raws);
                 }
