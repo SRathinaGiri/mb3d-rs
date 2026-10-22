@@ -65,6 +65,41 @@ fn now_secs() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
+/// When the file `p` in the swarm folder was last written, in seconds
+/// since the epoch of this computer's clock: the file's time (set by the
+/// clock of the folder's computer, the file server) less how far that
+/// clock is off from this one. Heartbeats, claims and jobs are aged by it,
+/// not by the times their writers' clocks put in them, so a computer whose
+/// clock is wrong does not make the others look gone. Opened first, so a
+/// network share gives its current time, not one it cached.
+fn written_at(swarm: &Path, p: &Path) -> Option<u64> {
+    let t = std::fs::File::open(p).and_then(|f| f.metadata()).or_else(|_| std::fs::metadata(p)).ok()?.modified().ok()?;
+    let t = t.duration_since(UNIX_EPOCH).ok()?.as_secs() as i64;
+    Some((t - share_offset(swarm)).max(0) as u64)
+}
+
+/// How far the swarm folder's clock is ahead of this computer's, in
+/// seconds: measured with a file written there, once a minute.
+fn share_offset(swarm: &Path) -> i64 {
+    static OFFSETS: Mutex<Vec<(PathBuf, i64, Instant)>> = Mutex::new(Vec::new());
+    let dir = swarm.join("peers");
+    let mut all = OFFSETS.lock().unwrap_or_else(|e| e.into_inner());
+    all.retain(|(_, _, at)| at.elapsed().as_secs() < 60);
+    match all.iter().find(|(d, _, _)| *d == dir) {
+        Some(&(_, off, _)) => off,
+        None => {
+            let probe = dir.join(format!(".clock-{}", random_suffix()));
+            let before = now_secs() as i64;
+            let at = std::fs::create_dir_all(&dir).and_then(|_| std::fs::write(&probe, b"")).and_then(|_| std::fs::File::open(&probe)?.metadata()?.modified());
+            let _ = std::fs::remove_file(&probe);
+            let at = at.ok().and_then(|t| t.duration_since(UNIX_EPOCH).ok());
+            let off = at.map_or(0, |t| t.as_secs() as i64 - (before + now_secs() as i64) / 2);
+            all.push((dir, off, Instant::now()));
+            off
+        }
+    }
+}
+
 fn io(path: &Path, e: std::io::Error) -> String {
     format!("{}: {e}", path.display())
 }
@@ -158,7 +193,8 @@ pub struct Peer {
     pub card: String,
     /// what it is doing ("idle", "rendering ...")
     pub state: String,
-    /// seconds since the epoch of the last heartbeat
+    /// seconds since the epoch of the last heartbeat (by this computer's
+    /// clock, from the time of its file)
     pub time: u64,
 }
 
@@ -372,6 +408,7 @@ pub fn peers(swarm: &Path) -> Vec<Peer> {
         .filter_map(|e| {
             let text = std::fs::read_to_string(e.path()).ok()?;
             let m = parse_kv(&text);
+            let time = written_at(swarm, &e.path()).or_else(|| m.get("time").and_then(|t| t.parse().ok())).unwrap_or(0);
             Some(Peer {
                 id: e.path().file_stem()?.to_string_lossy().into_owned(),
                 name: m.get("name").cloned().unwrap_or_default(),
@@ -379,7 +416,7 @@ pub fn peers(swarm: &Path) -> Vec<Peer> {
                 cores: m.get("cores").and_then(|c| c.parse().ok()).unwrap_or(0),
                 card: m.get("card").cloned().unwrap_or_default(),
                 state: m.get("state").cloned().unwrap_or_default(),
-                time: m.get("time").and_then(|t| t.parse().ok()).unwrap_or(0),
+                time,
             })
         })
         .collect();
@@ -399,7 +436,7 @@ fn sweep_peers(swarm: &Path) {
     // removed): a job folder without its job.txt for a while
     for e in std::fs::read_dir(swarm.join("jobs")).into_iter().flatten().flatten() {
         let d = e.path();
-        let old = e.metadata().ok().and_then(|m| m.modified().ok()).and_then(|t| t.elapsed().ok()).is_some_and(|a| a.as_secs() > 4 * STALE_SECS);
+        let old = written_at(swarm, &e.path()).is_some_and(|t| now.saturating_sub(t) > 4 * STALE_SECS);
         if old && d.is_dir() && !d.join("job.txt").exists() {
             let _ = std::fs::remove_dir_all(&d);
         }
@@ -503,7 +540,8 @@ impl Job {
     /// The owner has sent no heartbeat for [`ORPHAN_SECS`] (and the job
     /// is at least that old): nobody will collect it.
     pub fn orphaned(&self, swarm: &Path, now: u64) -> bool {
-        if now.saturating_sub(self.created) < ORPHAN_SECS {
+        let created = written_at(swarm, &self.dir.join("job.txt")).unwrap_or(now);
+        if now.saturating_sub(created) < ORPHAN_SECS {
             return false;
         }
         let owner = peers(swarm).into_iter().find(|p| p.id == self.owner_id);
@@ -713,8 +751,7 @@ fn marker_stale(swarm: &Path, marker: &Path) -> bool {
     let id = id.trim();
     let now = now_secs();
     if id.is_empty() {
-        let age = std::fs::metadata(marker).and_then(|m| m.modified()).ok().and_then(|t| t.elapsed().ok()).map_or(0, |d| d.as_secs());
-        return age > STALE_SECS;
+        return written_at(swarm, marker).is_some_and(|t| now.saturating_sub(t) > STALE_SECS);
     }
     peers(swarm).iter().find(|p| p.id == id).is_none_or(|p| p.stale(now))
 }
@@ -2410,6 +2447,14 @@ mod tests {
         assert!(ps[0].stale(now_secs() + STALE_SECS + 1));
         h.leave();
         assert!(peers(&d).is_empty());
+        // aged by the file's time, not the writer's clock: a heartbeat
+        // from a clock an hour ahead is fresh, an old file is stale
+        let f = d.join("peers").join("ahead-1.txt");
+        std::fs::write(&f, format!("name = ahead\ntime = {}\n", now_secs() + 3600)).unwrap();
+        assert!(!peers(&d)[0].stale(now_secs()));
+        let old = SystemTime::now() - Duration::from_secs(STALE_SECS + 10);
+        std::fs::File::options().write(true).open(&f).unwrap().set_modified(old).unwrap();
+        assert!(peers(&d)[0].stale(now_secs()));
         let _ = std::fs::remove_dir_all(&d);
     }
 
@@ -2889,8 +2934,9 @@ mod tests {
         // a job whose owner was never heard of, old enough: removed
         let mut old = new_job(&d, JobKind::MonteCarlo, "old", &h, settings).unwrap();
         std::fs::write(old.in_dir().join("scene.m3s"), s.to_text()).unwrap();
-        old.created = now_secs() - ORPHAN_SECS - 1;
         write_job(&old).unwrap();
+        let t = SystemTime::now() - Duration::from_secs(ORPHAN_SECS + 1);
+        std::fs::File::options().write(true).open(old.dir.join("job.txt")).unwrap().set_modified(t).unwrap();
         worker(&d, "w1", 0, true, true).unwrap();
         let left: Vec<String> = jobs(&d).into_iter().map(|j| j.name).collect();
         assert_eq!(left, vec!["foreign"]);
