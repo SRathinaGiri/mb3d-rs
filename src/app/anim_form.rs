@@ -181,7 +181,7 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     a.overwrite = ui.checked(F, "CheckBox6");
     a.save_depth = ui.checked(F, "CheckBox7");
     a.transparent = ui.checked(F, "TransparentCheck") && a.format == OutputFormat::Png;
-    a.stereo_bits = if ui.checked(F, "CheckBox4") { 1 | if ui.checked(F, "CheckBox5") { 2 } else { 0 } } else { 0 };
+    a.stereo_bits = if ui.checked(F, "CheckBox4") { 0x40 | if ui.checked(F, "CheckBox5") { 0x80 } else { 0 } } else { 0 };
 }
 
 fn write_settings(app: &Mb3d, ui: &mut Ui) {
@@ -198,9 +198,9 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_text(F, "Edit4", &a.index_step.to_string());
     ui.set_checked(F, "CheckBox6", a.overwrite);
     ui.set_checked(F, "CheckBox7", a.save_depth);
-    ui.set_checked(F, "CheckBox4", a.stereo_bits & 1 != 0);
-    ui.set_checked(F, "CheckBox5", a.stereo_bits & 2 != 0);
-    ui.set_enabled(F, "CheckBox5", a.stereo_bits & 1 != 0);
+    ui.set_checked(F, "CheckBox4", a.stereo_bits & 0x40 != 0);
+    ui.set_checked(F, "CheckBox5", a.stereo_bits & 0x80 != 0);
+    ui.set_enabled(F, "CheckBox5", a.stereo_bits & 0x40 != 0);
 }
 
 fn show_project_name(app: &Mb3d, ui: &mut Ui) {
