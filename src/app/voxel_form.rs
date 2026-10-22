@@ -1,6 +1,7 @@
 //! The voxel export window (VoxelExport.pas): PNG slices of the object.
 
-use super::util::{fts, fts_single, parse_float, pti};
+use super::eta::ItemsLeft;
+use super::util::{fts, fts_single, left_str, parse_float, pti, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::scene::{InsideMode, Scene};
 use crate::vcl::bitmap::Bitmap;
@@ -9,14 +10,15 @@ use crate::voxel::{ObjectTest, VoxelParams};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 const F: &str = "FVoxelExport";
 const PV_BG: u32 = 0xFF40_3020;
 
 #[derive(Default)]
 struct Shared {
-    /// the last finished slice (number, pixels) of the export
-    slice: Option<(u32, Vec<bool>)>,
+    /// the last finished slice (number, of how many, pixels) of the export
+    slice: Option<(u32, u32, Vec<bool>)>,
     /// the preview picture and whether it changed
     preview: Option<Bitmap>,
     preview_changed: bool,
@@ -38,6 +40,12 @@ pub struct State {
     /// the preview should be calculated again when the current one is stopped
     restart_preview: bool,
     slice_size: (usize, usize),
+    /// the time left: the slices' times, when the last one finished, which
+    /// one it was (number, of how many), and the time left as shown
+    items: ItemsLeft,
+    slice_at: Instant,
+    slice_nr: Option<(u32, u32)>,
+    left_shown: Option<Shown>,
 }
 
 impl Default for State {
@@ -53,6 +61,10 @@ impl Default for State {
             running: 0,
             restart_preview: false,
             slice_size: (0, 0),
+            items: ItemsLeft::default(),
+            slice_at: Instant::now(),
+            slice_nr: None,
+            left_shown: None,
         }
     }
 }
@@ -299,15 +311,19 @@ fn start_slices(app: &mut Mb3d, ui: &mut Ui) {
     let stop = app.voxel.stop.clone();
     app.voxel.running = 1;
     app.voxel.slice_size = vp.size();
+    app.voxel.items = ItemsLeft::default();
+    app.voxel.slice_at = Instant::now();
+    app.voxel.slice_nr = None;
+    app.voxel.left_shown = None;
     super::main_form::disable_buttons(app, ui);
     let waker = ui.waker();
     std::thread::spawn(move || {
         let r = (|| -> Result<(), String> {
             let threads = crate::render::thread_count(&sc);
             // (a stopped export continues with the slices it has not written)
-            let slice = |nr: u32, _n: u32, on: Option<&[bool]>| {
+            let slice = |nr: u32, n: u32, on: Option<&[bool]>| {
                 if let Some(on) = on {
-                    shared.lock().unwrap().slice = Some((nr, on.to_vec()));
+                    shared.lock().unwrap().slice = Some((nr, n, on.to_vec()));
                     if let Some(w) = &waker {
                         w.wake();
                     }
@@ -348,12 +364,22 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(b) = preview {
         ui.set_picture(F, "Image1", Some(b));
     }
-    if let Some((nr, on)) = slice {
+    if let Some((nr, n, on)) = slice {
         let (w, h) = app.voxel.slice_size;
         // the slice in the main window (white = object)
         let rgb: Vec<u8> = on.iter().flat_map(|&b| if b { [255u8; 3] } else { [0u8; 3] }).collect();
         super::main_form::show_external(app, ui, Arc::new(rgb), w, h);
-        ui.set_caption(F, "Label13", &format!("Rendering slice: {}", nr + 1));
+        app.voxel.items.done(app.voxel.slice_at.elapsed().as_secs_f64());
+        app.voxel.slice_at = Instant::now();
+        app.voxel.slice_nr = Some((nr, n));
+    }
+    // the slice under way and the time left (the slices' times so far)
+    if let (1, Some((nr, n))) = (app.voxel.running, app.voxel.slice_nr) {
+        let now = Instant::now();
+        let v = &mut app.voxel;
+        let left = (nr + 1 < n).then(|| v.items.left(0.0, now.saturating_duration_since(v.slice_at).as_secs_f64(), None, (n - nr - 2) as usize)).flatten();
+        v.left_shown = left.map(|l| smooth_shown(v.left_shown, l, now)).or(v.left_shown);
+        ui.set_caption(F, "Label13", &slice_caption(nr, n, v.left_shown.map(|s| s.0)));
     }
     if !err.is_empty() {
         app.message(ui, &err);
@@ -375,6 +401,16 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             }
         }
     }
+}
+
+/// "Rendering slice: 4 of 120 · about 7 min left": the slice under way
+/// after `nr` (0-based) finished, of `n`, and the time left.
+fn slice_caption(nr: u32, n: u32, left: Option<f64>) -> String {
+    let mut t = format!("Rendering slice: {} of {n}", (nr + 2).min(n));
+    if let Some(l) = left.filter(|_| nr + 1 < n) {
+        t += &format!(" · {}", left_str(l));
+    }
+    t
 }
 
 /// Stops the slice export (the main window's Stop button).
@@ -644,4 +680,17 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         _ => {}
     }
     let _ = MAIN;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn slice_captions() {
+        assert_eq!(slice_caption(0, 120, None), "Rendering slice: 2 of 120");
+        assert_eq!(slice_caption(2, 120, Some(449.0)), "Rendering slice: 4 of 120 · about 7 min left");
+        // the last slice finished: nothing left to say
+        assert_eq!(slice_caption(119, 120, Some(3.0)), "Rendering slice: 120 of 120");
+    }
 }

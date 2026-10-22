@@ -5,6 +5,8 @@
 //! renders, Monte Carlo, animations) go to the swarm when another computer
 //! is in it.
 
+use super::eta::ItemsLeft;
+use super::util::{left_str, smooth_shown, Shown};
 use super::{Mb3d, Ui};
 use crate::vcl::{DialogResult, Event};
 use std::path::{Path, PathBuf};
@@ -38,11 +40,30 @@ pub struct State {
     preview_of: Option<String>,
     /// the Monte Carlo blocks merged for the preview
     merge: crate::swarm::BlockMerge,
+    /// the time left of the job shown: the units finished while the window
+    /// looked (the clock's time between them: the computers work side by
+    /// side), how many were done when, and the time left as shown
+    units: ItemsLeft,
+    units_seen: Option<(String, usize, std::time::Instant)>,
+    left_shown: Option<Shown>,
 }
 
 impl Default for State {
     fn default() -> Self {
-        State { folder: String::new(), name: String::new(), threads: 0, share: false, tiles: (4, 3), worker: None, shown: (Vec::new(), Vec::new()), preview_of: None, merge: crate::swarm::BlockMerge::default() }
+        State {
+            folder: String::new(),
+            name: String::new(),
+            threads: 0,
+            share: false,
+            tiles: (4, 3),
+            worker: None,
+            shown: (Vec::new(), Vec::new()),
+            preview_of: None,
+            merge: crate::swarm::BlockMerge::default(),
+            units: ItemsLeft::default(),
+            units_seen: None,
+            left_shown: None,
+        }
     }
 }
 
@@ -334,8 +355,36 @@ fn show_preview(app: &mut Mb3d, ui: &mut Ui, dir: &Path) {
         "animation" => "frames",
         _ => "pictures",
     };
-    ui.set_caption(F, "Label8", &format!("{} ({}, by {}): {} of {} {what} done{}", job.name, job.kind_name(), job.owner, p.done, p.total, if p.working.is_empty() { String::new() } else { format!(", {} under way", p.working.len()) }));
+    let left = units_left(&mut app.swarm, &job.id, p.done, p.total, std::time::Instant::now()).map(|l| format!(" · {}", left_str(l))).unwrap_or_default();
+    ui.set_caption(F, "Label8", &format!("{} ({}, by {}): {} of {} {what} done{}{left}", job.name, job.kind_name(), job.owner, p.done, p.total, if p.working.is_empty() { String::new() } else { format!(", {} under way", p.working.len()) }));
     app.swarm.preview_of = Some(job.id);
+}
+
+/// The time left in the job `id` with `done` of `total` units at `now`:
+/// from the units finished since the window first saw the job (None before
+/// one did, or once all are done).
+fn units_left(sw: &mut State, id: &str, done: usize, total: usize, now: std::time::Instant) -> Option<f64> {
+    match &mut sw.units_seen {
+        Some((seen, d, at)) if seen == id => {
+            if done > *d {
+                let each = now.saturating_duration_since(*at).as_secs_f64() / (done - *d) as f64;
+                for _ in *d..done {
+                    sw.units.done(each);
+                }
+                *d = done;
+                *at = now;
+            }
+            let left = (done < total).then(|| sw.units.left(0.0, now.saturating_duration_since(*at).as_secs_f64(), None, total - done - 1)).flatten();
+            sw.left_shown = left.map(|l| smooth_shown(sw.left_shown, l, now)).or(sw.left_shown);
+            left.and(sw.left_shown.map(|s| s.0))
+        }
+        _ => {
+            sw.units_seen = Some((id.to_string(), done, now));
+            sw.units = ItemsLeft::default();
+            sw.left_shown = None;
+            None
+        }
+    }
 }
 
 fn set_rows(ui: &mut Ui, ctl: &str, rows: Vec<Vec<String>>, shown: &mut Vec<Vec<String>>) {
@@ -407,4 +456,26 @@ pub fn summary(dir: &Path) -> String {
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let n = crate::swarm::peers(dir).iter().filter(|p| !p.stale(now)).count();
     format!("swarm: {n} computer{}", if n == 1 { "" } else { "s" })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn units_left_from_the_units_finished() {
+        let t0 = std::time::Instant::now();
+        let at = |s: f64| t0 + std::time::Duration::from_secs_f64(s);
+        let mut sw = State::default();
+        // the job first seen with 2 of 12 done: nothing to say yet
+        assert_eq!(units_left(&mut sw, "job1", 2, 12, at(0.0)), None);
+        // two more after 20 s (10 s each): the running one and 7 more
+        let l = units_left(&mut sw, "job1", 4, 12, at(20.0)).unwrap();
+        assert!((l - 80.0).abs() < 1e-6, "{l}");
+        // another job: from the start again
+        assert_eq!(units_left(&mut sw, "job2", 0, 3, at(21.0)), None);
+        let l = units_left(&mut sw, "job2", 1, 3, at(26.0)).unwrap();
+        assert!((l - 10.0).abs() < 1e-6, "{l}");
+        assert_eq!(units_left(&mut sw, "job2", 3, 3, at(36.0)), None);
+    }
 }
