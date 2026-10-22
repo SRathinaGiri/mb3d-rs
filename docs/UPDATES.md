@@ -5,11 +5,110 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
-## Not released yet
+## [v0.2.66](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.66) · 22 Oct 2026, 06:58 UTC
 
 | Commit | What it does |
 |---|---|
+| [`f86a93b`](https://github.com/thr32423/mb3d-rs/commit/f86a93b043787d0f6806630893cf06792acffc68) | Version number and release notes of this release |
+| [`3b32ebb`](https://github.com/thr32423/mb3d-rs/commit/3b32ebba024b7f520fd5e19b8f5aa4f415cef0e9) | Swarm test: no needless mut |
+| [`00e4d36`](https://github.com/thr32423/mb3d-rs/commit/00e4d36672a76ee6712291764b3c46871af699df) | The program no longer crashes when it ends while the graphics card is being opened or a shader prepared |
+| [`86ab723`](https://github.com/thr32423/mb3d-rs/commit/86ab72392f8292a3327ff8f4b4a6f41e3d435f6d) | Loading parameters also drops a calculation that finished but was not shown yet |
+| [`c660b2c`](https://github.com/thr32423/mb3d-rs/commit/c660b2c0a422a7a415149e6e59d51a072fde80e7) | Swarm: a job of the same render is taken over only when its owner is gone, not from another computer running it too. |
+| [`f0825c2`](https://github.com/thr32423/mb3d-rs/commit/f0825c2de12d1a6b5b63130e8be41d970421aea9) | Swarm: heartbeats, claims and jobs are aged by their files' times on the shared folder, not by the writers' clocks. |
+| [`070fd31`](https://github.com/thr32423/mb3d-rs/commit/070fd31941090a033470f178e63466535c8c7f80) | An unfinished output is removed while still claimed; a claim checks that its file was not removed under it. |
+| [`2226dc8`](https://github.com/thr32423/mb3d-rs/commit/2226dc89ba86f3349807bdf1d3c29441fee33cd7) | .m3k keyframe files are found from the .m3k's folder, also when saving it elsewhere. |
+| [`03c2370`](https://github.com/thr32423/mb3d-rs/commit/03c23708f60f9a17774036c0d95b170e755f56f2) | Text parameters keep a last formula with negative iterations. |
+| [`8d6924c`](https://github.com/thr32423/mb3d-rs/commit/8d6924c0afe472b9f8902bfd6781f3d8df26c001) | ffmpeg command on Windows: frames with gaps through a list file, not a numbered input that stops at the first gap. |
+| [`f7417ca`](https://github.com/thr32423/mb3d-rs/commit/f7417ca3f4c8831ceb5a687dceed989cd07256cd) | GIF: the end clear code in the width the decoder expects. |
+| [`06646c0`](https://github.com/thr32423/mb3d-rs/commit/06646c0831f90c35b75960eedadb531559535914) | Native formulas: regenerated with the div range check |
+| [`3d63210`](https://github.com/thr32423/mb3d-rs/commit/3d63210afd8d8c4a99dbb6418207d09af1d8bb8f) | PseudoKleinian: the CPU starts the orbit trap at 1e30 like the GPU |
+| [`8934f0d`](https://github.com/thr32423/mb3d-rs/commit/8934f0db697548c1a96bb171c4dd6623a070f833) | Lifted formulas: div and idiv halt on a quotient out of range |
+| [`d6a2474`](https://github.com/thr32423/mb3d-rs/commit/d6a2474fca37bed396eeb48deda6d04339d690ba) | Lifting: joined index masks cover the bits of both |
+| [`ad0f673`](https://github.com/thr32423/mb3d-rs/commit/ad0f6738951be4e0a19a4c357c090d7e232c2581) | Lifting: a 16-bit write makes its own register data |
+| [`bb9e1ec`](https://github.com/thr32423/mb3d-rs/commit/bb9e1ec6f39288feb085761f0b73a17942d5b745) | Lifted formulas: push esp stores the old value, pop esp sets the popped one |
+| [`32d67c7`](https://github.com/thr32423/mb3d-rs/commit/32d67c7a9acff31014f92f5b779fc72ea4d9bfa3) | GPU formulas: a jump back to a loop header is found by its block |
+| [`705083f`](https://github.com/thr32423/mb3d-rs/commit/705083f78bedd6e321ca820cca2407116ed5fa9e) | GPU formulas: andnpd complements only its destination |
+| [`53fa1e6`](https://github.com/thr32423/mb3d-rs/commit/53fa1e605a2cf753af2881dc1d3774f1905b7445) | Formulas: compiled code rotates the x87 stack on a return into a join point |
+| [`5c303a6`](https://github.com/thr32423/mb3d-rs/commit/5c303a6507dbf1fee9ea73a0dc4a1dfbd2db9c7a) | Formulas: sqrtps, minps and maxps are not taken for other instructions |
+| [`a3502b6`](https://github.com/thr32423/mb3d-rs/commit/a3502b65600f47404de4a51c35d727c85919bca0) | Formulas: ffreep pops the x87 stack |
+| [`c9231ea`](https://github.com/thr32423/mb3d-rs/commit/c9231ea304ee4aa5a4cf8fef5c34b52ea70507f5) | Monte Carlo swarm blocks no longer repeat each other's primary rays, lens points and first bounces |
+| [`95d98f9`](https://github.com/thr32423/mb3d-rs/commit/95d98f9205913709626833c4f9b87cc6820f1bc3) | DEAO on the card: the first step random of neighbouring pixels no longer shares random numbers |
+| [`69c849f`](https://github.com/thr32423/mb3d-rs/commit/69c849f1a936ad80b660c2a8d4a348f60f6b31eb) | Reflection pass on the card: the shadow rays end at the cutting planes as on the CPU |
+| [`0d85596`](https://github.com/thr32423/mb3d-rs/commit/0d85596133ba5785d98d28b98b58f43dfce227e9) | Animation help: --swarm renders the selected frames |
+| [`96cc33d`](https://github.com/thr32423/mb3d-rs/commit/96cc33d38c2d23fd42a688d3b5a84ab33057372d) | The command line refuses options it would ignore; swarm tiles write --depth, --transparent, --denoise and --stats |
+| [`1fc736d`](https://github.com/thr32423/mb3d-rs/commit/1fc736d0deb3b484333bf74b18a82acf0f9cfea5) | Depth images have the size of the picture |
+| [`e3f5ddd`](https://github.com/thr32423/mb3d-rs/commit/e3f5ddddf625c3e010f31f029c89da4d0ab17499) | Normals on the Z-buffer are right along the top of a tile |
+| [`c6dad62`](https://github.com/thr32423/mb3d-rs/commit/c6dad629f7eae87ac003c83234977dc4b1a5cb7e) | Tiled pictures get the normals on the Z-buffer of the whole picture |
+| [`4e87780`](https://github.com/thr32423/mb3d-rs/commit/4e877807782a41473fe45138c8fa48b9c9fc62f5) | Navigator: 'value from main' on the DE stop slider takes the DE stop |
+| [`336beba`](https://github.com/thr32423/mb3d-rs/commit/336beba53e95d23ef547a5f4e58eb2a2ac5ef2c5) | Animation: subframe 0 is rejected when interpolating a keyframe |
+| [`2dad205`](https://github.com/thr32423/mb3d-rs/commit/2dad2052a136f9aa6b2dad33fd37997c22e1a20e) | Integer fields no longer read '2.5' as 25 |
+| [`007832b`](https://github.com/thr32423/mb3d-rs/commit/007832b27503be25ee48785b9a700b9c226915bf) | Navigator: 'send value to formula window' sends the focused value |
+| [`a32b22d`](https://github.com/thr32423/mb3d-rs/commit/a32b22dad8df382c6eaad1d8eaf02e4f1df4953f) | Lighting: 'relative to object' keeps the light direction again |
+| [`60d0a02`](https://github.com/thr32423/mb3d-rs/commit/60d0a023025bfd418e192e77c24bfb7d5fd3b53f) | Lighting: undo and redo step through the changes again |
+| [`d649f8c`](https://github.com/thr32423/mb3d-rs/commit/d649f8ce417c1d5fe9b62139528d358ae33a4260) | Animation: the stereo checkboxes work again |
+| [`409dd4d`](https://github.com/thr32423/mb3d-rs/commit/409dd4db803c12c949e7e6f212e6d1a3594a9c22) | Moving or sizing a window does not leave the left button held |
+| [`52c4a40`](https://github.com/thr32423/mb3d-rs/commit/52c4a40b65a61fa88aebedc8c2965e2e6d1b0ecb) | Option types characters on macOS |
+| [`d1dfa9d`](https://github.com/thr32423/mb3d-rs/commit/d1dfa9db4a74afa2e767870294c9dd93e4c621a8) | A message opened over an unanswered dialog no longer swallows its answer |
+| [`20e1fa9`](https://github.com/thr32423/mb3d-rs/commit/20e1fa97cb33ce52e800640a9f7f77aaa9a17b45) | Scrolling down moves as far as scrolling up; touchpad scrolling adds up to whole notches |
+| [`4e4e780`](https://github.com/thr32423/mb3d-rs/commit/4e4e7802bbaa5ff2073a4e48e8ae6864d71d8f2c) | Opening a dialog from a mouse press releases the mouse |
+| [`337174e`](https://github.com/thr32423/mb3d-rs/commit/337174eb1e3f0fccf17bff53f924c4ddbb43f58d) | Monte Carlo window: the category group follows the height of its panels |
+| [`9277b32`](https://github.com/thr32423/mb3d-rs/commit/9277b3230409436d2322b154baeb02985cf30156) | Category panels: stacked in the order of their Top, not of the form file |
+| [`4e811d2`](https://github.com/thr32423/mb3d-rs/commit/4e811d237be93fcb783d1583a1890a39c8b59bf1) | File preview: a panicking calculation no longer stops all later previews |
+| [`a23f4dd`](https://github.com/thr32423/mb3d-rs/commit/a23f4ddc1ff23a05f5d3bc66ce6921b8b53f8b19) | Bulb Tracer: a preview still stopping no longer paints beside the next one |
+| [`5c7551c`](https://github.com/thr32423/mb3d-rs/commit/5c7551c17e9dff6f920d1503603a43ed488fdbf3) | Voxel window: a preview still stopping no longer ends or unstops the slice export |
+| [`1351e53`](https://github.com/thr32423/mb3d-rs/commit/1351e535d8c1da6cc7f951748c99dc53fc687041) | Palette: swap the alpha with the colour when dragging past a neighbour |
+| [`4df3d8d`](https://github.com/thr32423/mb3d-rs/commit/4df3d8dbb490b518252f8f6bce7583e3688ada5d) | Swarm: a claim just made is not taken for a stale empty one |
+| [`bfd70a2`](https://github.com/thr32423/mb3d-rs/commit/bfd70a2596cc10553c672159a57b08ce6242800b) | Swarm: a claim taken over leaves the new claimer's marker |
+| [`19a88b6`](https://github.com/thr32423/mb3d-rs/commit/19a88b69e5f7ed2f841f136f20b1e6147b26e832) | Swarm: depth images come back with the pictures |
+| [`92fca20`](https://github.com/thr32423/mb3d-rs/commit/92fca20c9dd25aaf260aab8b63919d99dde3e491) | Monte Carlo: re-exporting a finished .m3c leaves no checkpoint behind |
+| [`4ff221b`](https://github.com/thr32423/mb3d-rs/commit/4ff221b64f227ea08032e2f8697da567eda41ae9) | Monte Carlo window: a loaded .m3c keeps a checkpoint of its own |
+| [`5025ff9`](https://github.com/thr32423/mb3d-rs/commit/5025ff944cfdca6dfe86b73b23d6ac9901418be2) | Resume: each tile of a tiled render keeps a checkpoint of its own |
+| [`c4fb861`](https://github.com/thr32423/mb3d-rs/commit/c4fb861dbf5e421d064bb254ac7d47d4d8eed462) | Resume: card rows that overflowed single precision stay out of the checkpoint |
+| [`4690661`](https://github.com/thr32423/mb3d-rs/commit/4690661f85fc6cfc08a07f4640f5a595006ac81a) | Resume: stopping a card render keeps its checkpoint |
+| [`77737e1`](https://github.com/thr32423/mb3d-rs/commit/77737e1ceec6509ffabafab91fe1b677885bf9a4) | Menus: a click on a menu's border no longer fires its first item |
+| [`0b308a8`](https://github.com/thr32423/mb3d-rs/commit/0b308a8856a18391571687244ef4dbae1acc3392) | File dialog: double-clicking a folder no longer picks its first file |
+| [`c081f8f`](https://github.com/thr32423/mb3d-rs/commit/c081f8f5ec98447d6fa60ac482659779d9d81135) | File dialog: Enter in the folder field only changes the folder |
+| [`aa156e5`](https://github.com/thr32423/mb3d-rs/commit/aa156e57be57236fc61e1302847d6d222deb7c99) | Big renders: a from-row of 0 or less no longer picks a bogus tile |
+| [`b87800d`](https://github.com/thr32423/mb3d-rs/commit/b87800dd9aa3aa58f5c4f52f3bcb59c8cae17a1b) | Batch render: deleting a row keeps the check marks of the rows below it |
+| [`8a4589b`](https://github.com/thr32423/mb3d-rs/commit/8a4589b5ca0c931265b69cdc5548717ea7eea21f) | Big renders: .big files load their row settings again |
+| [`bbf2612`](https://github.com/thr32423/mb3d-rs/commit/bbf2612e5f9d53f5542d586a08071235f9111443) | Swarm: a calculation started since stops the swarm job |
+| [`ee79b86`](https://github.com/thr32423/mb3d-rs/commit/ee79b869b69427d1c07dc04d07b3440f883236e5) | Starting a calculation as the last one ends no longer reports the new one finished |
+| [`de5161d`](https://github.com/thr32423/mb3d-rs/commit/de5161dbddddfb9ffe57bbb81e186106698892c7) | A stopped or failed calculation no longer leaves its save path for the next one |
+| [`7d59abe`](https://github.com/thr32423/mb3d-rs/commit/7d59abe6252c87b31434dbe92d79109efb1a93cf) | Loading parameters during a calculation stops it first, its old picture is not kept |
+| [`64453b3`](https://github.com/thr32423/mb3d-rs/commit/64453b33a3602a3119baa448704a85690370ca05) | Paste parameters no longer loads the last parameters copied here when the clipboard holds no text |
+| [`7205fa8`](https://github.com/thr32423/mb3d-rs/commit/7205fa85f4ff9fa998827b0af59ff01ef6a669e5) | Formulas: 80-bit floats convert right for very small values |
+| [`a224d5b`](https://github.com/thr32423/mb3d-rs/commit/a224d5b04450eea105f3acb2c55323bf509c2a36) | Monte Carlo files: a bad image size is an error instead of a crash |
+| [`0a4f8cd`](https://github.com/thr32423/mb3d-rs/commit/0a4f8cdf11b410fe128f1733732c2d3cb38d822c) | Scenes: fewer tiles drop a chosen tile outside of the new grid instead of crashing the render |
+| [`c222ab8`](https://github.com/thr32423/mb3d-rs/commit/c222ab8626d44d38e2cdc5e13b90ed0af7e92700) | Mutagen: a scene that cannot be previewed no longer crashes the first member |
+| [`e33ef04`](https://github.com/thr32423/mb3d-rs/commit/e33ef04ea02a445c0b9e0453b40b7fd72c923dab) | Themes: an attribute value quoted with a non-ASCII character no longer crashes the start |
+| [`de833de`](https://github.com/thr32423/mb3d-rs/commit/de833de393d69d12bbb36de774d15b550f3081f9) | Pictures: malformed PNG, BMP and JPEG files are errors instead of crashes, and PGM samples are scaled to their maximum value |
+| [`6b222d6`](https://github.com/thr32423/mb3d-rs/commit/6b222d67f2cfb563add1bc7b037d45fc630229e9) | Old images: a huge size in the header is no G-buffer instead of a crash |
+| [`c01a627`](https://github.com/thr32423/mb3d-rs/commit/c01a627a9a288fefddd1f5604019d3cf1f50588f) | Images: a huge size in an .m3i header is no G-buffer instead of a crash |
+| [`78ab85a`](https://github.com/thr32423/mb3d-rs/commit/78ab85aac5d955b680952f1c949d5717198b7f1b) | Parameter files: a bad image size or zoom is an error instead of a crash |
+| [`d337240`](https://github.com/thr32423/mb3d-rs/commit/d337240ff8e1bbee4028708fed7cf6df2db0e87c) | Mesh viewer: zooming into a mesh no longer freezes the window |
+| [`b28d8eb`](https://github.com/thr32423/mb3d-rs/commit/b28d8ebaeeba5d116c17eb81a1a97bd86cd9d9c7) | Monte Carlo: Batch render waits until a running render has stopped |
+| [`6e28c83`](https://github.com/thr32423/mb3d-rs/commit/6e28c83edce7913d955947961fb9c637014adf97) | Animation: inserting a keyframe past the last one no longer crashes |
+| [`30d78d0`](https://github.com/thr32423/mb3d-rs/commit/30d78d0fcaaeedcf292929344805cb572498cff9) | Animation: no rendering or second preview while a preview runs |
+| [`8e38435`](https://github.com/thr32423/mb3d-rs/commit/8e38435ee26ff2dc731beaa009be87d387781f5e) | Lists: Up and Down on an empty list no longer crash |
+| [`9bc7ca2`](https://github.com/thr32423/mb3d-rs/commit/9bc7ca223eae720dc105164ab2b36662ad1516e9) | Formulas: a constant that uses a variable is a compile error instead of a crash |
+| [`f14de1d`](https://github.com/thr32423/mb3d-rs/commit/f14de1d61258289a87be72b7f772826d98ca75ad) | Formulas: compiled code counts calls and returns against the step limit |
+| [`cae790d`](https://github.com/thr32423/mb3d-rs/commit/cae790d7c126138b9f5bfc7524f21dc045a38dd4) | Formulas: idiv overflow halts the formula instead of crashing |
+| [`b1e684d`](https://github.com/thr32423/mb3d-rs/commit/b1e684da8408928cded89399d381d76cf81e7101) | Monte Carlo on the card: a thread that panics ends the pass instead of leaving it waiting |
+| [`faccf73`](https://github.com/thr32423/mb3d-rs/commit/faccf7372bf64ce8bcf63faf9244a3ecaf73c7c7) | Graphics card: a shader compile that fails in the background no longer leaves its waiters waiting forever |
+| [`2e0ea4b`](https://github.com/thr32423/mb3d-rs/commit/2e0ea4bffc129965b7a38dfb665f51bfcc2f9bab) | Reflections: the CPU workers no longer wait forever when the card fails |
+| [`c2ae0e7`](https://github.com/thr32423/mb3d-rs/commit/c2ae0e7b4ffe247e72a4a914868eeb2198342610) | .m3k files keep stereo and transparency |
+
+## [v0.2.65](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.65) · 21 Oct 2026, 15:27 UTC
+
+| Commit | What it does |
+|---|---|
+| [`f28eac1`](https://github.com/thr32423/mb3d-rs/commit/f28eac1602ef842b9e66b3f98a686d0e7a99ce00) | Version number and release notes of this release |
+| [`6655c59`](https://github.com/thr32423/mb3d-rs/commit/6655c59db2127c1138b989b2a92cabffd8890e8a) | README: guides and help in the wiki |
+| [`341d840`](https://github.com/thr32423/mb3d-rs/commit/341d8400a92ff04d98de61de900b781331b5a547) | README: newest releases only; the whole history in docs/UPDATES.md |
 | [`92753a5`](https://github.com/thr32423/mb3d-rs/commit/92753a5b0c65d635fbb75073b75c3ec4bd3d047c) | README: Updates for v0.2.64 |
+| [`be968e4`](https://github.com/thr32423/mb3d-rs/commit/be968e4897b3c0af6dd8c92bb121e825a25eae2d) | Group auxiliary Windows forms under main taskbar entry |
+| [`0c6e8a0`](https://github.com/thr32423/mb3d-rs/commit/0c6e8a0b0fb9dd86d0ab7dcc1689991241bb0bb8) | Restore navigator coordinate triad |
+| [`4a5aa72`](https://github.com/thr32423/mb3d-rs/commit/4a5aa724fb160d15cfe8ad490c10488d08ae5335) | Auto-save completed stereo renders |
 
 ## [v0.2.64](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.64) · 21 Oct 2026, 06:20 UTC
 
