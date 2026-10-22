@@ -899,6 +899,35 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.67](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.67) · 22 Oct 2026, 11:14 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1c377d7`](https://github.com/thr32423/mb3d-rs/commit/1c377d77924131a5f0098fa7d09d02a1fc4d165f) | Version number and release notes of this release |
+| [`98a3b44`](https://github.com/thr32423/mb3d-rs/commit/98a3b44093e793098bf8251a197627bc1bff5b2f) | Time left: a stage that waits for its shader counts as cold while the compile runs |
+| [`d8debbd`](https://github.com/thr32423/mb3d-rs/commit/d8debbd8a87d8119d615a1940bcb6150c3f2689f) | Big render: the tile under way at the finished tiles' time, not at its progress |
+| [`3bd0c1d`](https://github.com/thr32423/mb3d-rs/commit/3bd0c1df663fb311073eea47b50c370494d5dd90) | ssaobench, postcheck: the 15 bit SSAO's progress argument |
+| [`4e8f908`](https://github.com/thr32423/mb3d-rs/commit/4e8f9086a8b17fe10c227b6f39e5abdc0c01b8cd) | util: smooth_left and about_str go, nothing shows a time left with them any more |
+| [`6450cbf`](https://github.com/thr32423/mb3d-rs/commit/6450cbfe5d67af422dd7cd9d8976a38434835374) | Voxel slices and the swarm's units: the time left from the ones finished |
+| [`9b42756`](https://github.com/thr32423/mb3d-rs/commit/9b42756e04869e17a9d1f49a33d5b8396992a29f) | Big render: the time left in total from the tiles done; the Batch window says which picture |
+| [`d1b7475`](https://github.com/thr32423/mb3d-rs/commit/d1b74757259165799434356f16da953d5107aa7c) | Animation window: the time left from the frames finished and the running frame's pace |
+| [`05a5442`](https://github.com/thr32423/mb3d-rs/commit/05a5442ce36f370dd03d1d71fbc58b1f24a5f676) | Command line: the time left of the Monte Carlo passes, the frames and the tiles |
+| [`35314d0`](https://github.com/thr32423/mb3d-rs/commit/35314d01fe4c5ee378dd47f898fd01832425ad94) | Monte Carlo window: the time left in the pass measured, and in total when the batch has a target |
+| [`cde462f`](https://github.com/thr32423/mb3d-rs/commit/cde462ffd6399b40f4486d8b538683c05b3297fe) | The depth of field and the 15 bit occlusion report their rows, so their time left is measured |
+| [`577ca59`](https://github.com/thr32423/mb3d-rs/commit/577ca590c87323377f5f9688f9ddcdeda9348428) | Time left: the model's stage ratios learn this computer's bias |
+| [`bab3679`](https://github.com/thr32423/mb3d-rs/commit/bab36794b1f07aa407aa3d3674756be342fd8e4a) | Time left: the probe's measurements feed the model from the start, and a stage whose shaders compile is not the pace of the rest |
+| [`54c5b73`](https://github.com/thr32423/mb3d-rs/commit/54c5b73be5390388e25b79192a40ffb934901653) | Time left: one estimate for all stages, shown the way downloads show it |
+| [`33f886d`](https://github.com/thr32423/mb3d-rs/commit/33f886dd89235f7f52200e47b6e5db24aa633c55) | Time left: the shared pieces of the estimator, with tests |
+| [`a411f42`](https://github.com/thr32423/mb3d-rs/commit/a411f425a18996aa3e6bfd9f75aa3a4805fc296c) | A continued calculation's base is the work kept, not the rows kept |
+| [`8035f9a`](https://github.com/thr32423/mb3d-rs/commit/8035f9a5fa1c20db860a213f70b1ff536ced3a56) | Monte Carlo passes weigh their rows by the pixels on the object |
+| [`d7f8d46`](https://github.com/thr32423/mb3d-rs/commit/d7f8d46ae2ca35cdfda14cdc4f327ba3884e164a) | The DE occlusion and the reflections weigh their rows by the surface pixels too |
+| [`88bc844`](https://github.com/thr32423/mb3d-rs/commit/88bc844b32a19d98ba569fb10d588bd8cd2b9db6) | Progress counts the work done, not the rows: a quick probe weighs the rows first |
+| [`91b1dd3`](https://github.com/thr32423/mb3d-rs/commit/91b1dd39b769587755463fe36f0041ccf060370e) | No warnings in the build without the graphics card part |
+| [`35c1628`](https://github.com/thr32423/mb3d-rs/commit/35c1628fb17da176e00eb4f713abf83f0e44005d) | Stereo tab: room for the Render & save stereo pair button |
+| [`3242046`](https://github.com/thr32423/mb3d-rs/commit/3242046deab2d2b758aac63c925893cdcdeadd26) | README: scan result of v0.2.66 |
+| [`0d91268`](https://github.com/thr32423/mb3d-rs/commit/0d9126844b8be6cfe2d4fa1aa51aba858ed064d6) | README: Updates for v0.2.66 |
+| [`529c48d`](https://github.com/thr32423/mb3d-rs/commit/529c48d48d0e2eabca292e5348ec21ac2b97113e) | Separate stereo preview and save actions |
+
 ### [v0.2.66](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.66) · 22 Oct 2026, 06:58 UTC
 
 | Commit | What it does |
@@ -1004,18 +1033,7 @@ of a release are on its page. Times are in UTC.
 | [`0c6e8a0`](https://github.com/thr32423/mb3d-rs/commit/0c6e8a0b0fb9dd86d0ab7dcc1689991241bb0bb8) | Restore navigator coordinate triad |
 | [`4a5aa72`](https://github.com/thr32423/mb3d-rs/commit/4a5aa724fb160d15cfe8ad490c10488d08ae5335) | Auto-save completed stereo renders |
 
-### [v0.2.64](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.64) · 21 Oct 2026, 06:20 UTC
-
-| Commit | What it does |
-|---|---|
-| [`eeefaee`](https://github.com/thr32423/mb3d-rs/commit/eeefaee2c6a00c3d678f97f93955cf5627b25799) | Version number and release notes of this release |
-| [`083cf9c`](https://github.com/thr32423/mb3d-rs/commit/083cf9c2369bbbc8a5f9b64bc39888b4e6c769db) | README: lighting stays live; time left while shaders compile |
-| [`8d80bd9`](https://github.com/thr32423/mb3d-rs/commit/8d80bd9f4d593c2fd92f7f30e886e500c13d73b7) | Time left while the card's shaders compile |
-| [`a719a67`](https://github.com/thr32423/mb3d-rs/commit/a719a678825b8853698c1d56efa4a8b0aa053274) | ETA data: compile jobs and main pass times per calculation in MB3D_ETA_LOG |
-| [`038aa76`](https://github.com/thr32423/mb3d-rs/commit/038aa769486efa94c87a6548f365c7d3d3fa1d82) | Lighting changes repaint at once, as in MB3D; stopped renders survive lighting changes |
-| [`f664bd4`](https://github.com/thr32423/mb3d-rs/commit/f664bd49278e66487cb35be2f0057a96c08315b5) | README: Updates for v0.2.63 |
-
-All 77 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 78 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
