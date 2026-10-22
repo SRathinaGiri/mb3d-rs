@@ -2,7 +2,8 @@
 //! scaling question (ColorOptionForm.pas).
 
 use super::light_form::short_float_str;
-use super::util::{about_str, d2byte, smooth_left, d2byte_str, fts_single, parse_float, time_str};
+use super::eta::{ItemsLeft, Pace};
+use super::util::{d2byte, d2byte_str, fts_single, left_str, parse_float, smooth_shown, time_str, Shown};
 use super::{Mb3d, MAIN};
 use crate::mc::{McImage, McRecord};
 use crate::scene::Scene;
@@ -63,7 +64,9 @@ pub struct State {
     ck_start: String,
     shared: Arc<Mutex<Shared>>,
     stop: Arc<AtomicBool>,
+    /// the running pass's progress: the weight of its rows done, of all
     progress: Arc<AtomicUsize>,
+    total: Arc<AtomicUsize>,
     seen_ver: u64,
     seen_live: u64,
     live_painted: Instant,
@@ -75,14 +78,20 @@ pub struct State {
     pub compile_note: bool,
     start: Instant,
     /// the passes finished in this run, when the running one began and how
-    /// long the last one took (for the time left in the pass); `kept`: rows
-    /// of a continued pass done before it (not counted in its rate)
+    /// long the last one took
     passes: u32,
-    kept: i64,
-    /// the time left in the pass as shown, and when
-    pass_left: Option<(f64, Instant)>,
     pass_start: Instant,
     last_pass: Option<f64>,
+    /// the time left: the running pass's pace, the passes' times, and the
+    /// time left in the pass and in total (a render with a target) as shown
+    pace: Pace,
+    items: ItemsLeft,
+    pass_shown: Option<Shown>,
+    total_shown: Option<Shown>,
+    /// the rays per pixel (the most) when the run began and now: how many
+    /// a pass adds, for the passes a target still needs
+    rays0: u32,
+    rays: u32,
     last_saved: Instant,
     /// total calculation time in tenths of seconds (`iCalcTime`)
     calc_time: i64,
@@ -110,6 +119,7 @@ impl Default for State {
             shared: Arc::new(Mutex::new(Shared::default())),
             stop: Arc::new(AtomicBool::new(false)),
             progress: Arc::new(AtomicUsize::new(0)),
+            total: Arc::new(AtomicUsize::new(0)),
             seen_ver: 0,
             seen_live: 0,
             live_painted: Instant::now(),
@@ -118,10 +128,14 @@ impl Default for State {
             compile_note: false,
             start: Instant::now(),
             passes: 0,
-            kept: 0,
-            pass_left: None,
             pass_start: Instant::now(),
             last_pass: None,
+            pace: Pace::default(),
+            items: ItemsLeft::default(),
+            pass_shown: None,
+            total_shown: None,
+            rays0: 0,
+            rays: 0,
             last_saved: Instant::now(),
             calc_time: 0,
             user_change: true,
@@ -484,6 +498,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     }
     app.mc.stop.store(false, Ordering::SeqCst);
     app.mc.progress.store(0, Ordering::SeqCst);
+    app.mc.total.store(0, Ordering::SeqCst);
     *app.mc.shared.lock().unwrap() = Shared::default();
     app.mc.seen_ver = 0;
     app.mc.seen_live = 0;
@@ -494,10 +509,14 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     super::main_form::show_led(ui, app.main.led, true);
     app.mc.start = Instant::now();
     app.mc.passes = 0;
-    app.mc.pass_left = None;
-    app.mc.kept = ck.as_ref().map_or(0, |c| c.partial_rows() as i64);
     app.mc.pass_start = app.mc.start;
     app.mc.last_pass = None;
+    app.mc.pace = Pace::default();
+    app.mc.items = ItemsLeft::default();
+    app.mc.pass_shown = None;
+    app.mc.total_shown = None;
+    app.mc.rays0 = start.stats().max_rays;
+    app.mc.rays = app.mc.rays0;
     ui.set_caption(F, "Button2", "Stop rendering");
     for c in ["Button3", "Button8", "Button9"] {
         ui.set_enabled(F, c, false);
@@ -514,6 +533,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     let shared = app.mc.shared.clone();
     let stop = app.mc.stop.clone();
     let progress = app.mc.progress.clone();
+    let total = app.mc.total.clone();
     let waker = ui.waker();
     let max_rays = if app.mc.in_batch { app.mc.batch_max_rays } else { u32::MAX };
     if let Some(dir) = super::swarm_form::mc_folder(app) {
@@ -573,7 +593,10 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         // image too
         let mut start = start;
         loop {
-            let pr = |d: usize, _t: usize| progress.store(d, Ordering::Relaxed);
+            let pr = |d: usize, t: usize| {
+                total.store(t, Ordering::Relaxed);
+                progress.store(d, Ordering::Relaxed);
+            };
             let cancel = || stop.load(Ordering::Relaxed);
             {
                 let mut s = shared.lock().unwrap();
@@ -705,7 +728,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     let el = app.mc.start.elapsed();
     ui.set_caption(F, "Label14", &time_str((el.as_secs_f64() * 10.0) as i64));
+    // (the rows weighed by their pixels on the object: the bar's range
+    // is their weight)
     let pr = app.mc.progress.load(Ordering::Relaxed) as i64;
+    let tot = app.mc.total.load(Ordering::Relaxed) as i64;
+    if tot > 0 && ui.c(F, "ProgressBar1").max != tot {
+        ui.cm(F, "ProgressBar1").max = tot;
+    }
     if ui.c(F, "ProgressBar1").position != pr {
         ui.cm(F, "ProgressBar1").position = pr;
     }
@@ -727,12 +756,20 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if !status.is_empty() {
         ui.set_caption(F, "Label15", &status);
     } else if super::swarm_form::mc_folder(app).is_none() {
-        let (rows, kept) = (ui.c(F, "ProgressBar1").max, app.mc.kept);
-        let f = (pr - kept) as f64 / (rows - kept).max(1) as f64;
-        let est = pass_left(app.mc.last_pass, f, app.mc.pass_start.elapsed().as_secs_f64());
-        // (smoothed: the rows of the threads end unevenly)
-        app.mc.pass_left = est.map(|e| smooth_left(app.mc.pass_left, e, 8.0));
-        ui.set_caption(F, "Label15", &pass_caption(app.mc.passes, app.mc.pass_left.map(|l| l.0), app.mc.last_pass));
+        // the time left in the pass, and in total when the render has a
+        // target (shown smoothed; the rows of the threads end unevenly)
+        let f = pr as f64 / tot.max(1) as f64;
+        let now = Instant::now();
+        let secs = now.saturating_duration_since(app.mc.pass_start).as_secs_f64();
+        let m = &mut app.mc;
+        m.pace.at(f, secs);
+        let target = m.in_batch.then_some(m.batch_max_rays);
+        let left = m.pace.left(&m.items, f, secs, 0);
+        let total = passes_after(target, m.rays0, m.rays, m.passes).and_then(|n| m.pace.left(&m.items, f, secs, n));
+        m.pass_shown = left.map(|l| smooth_shown(m.pass_shown, l, now)).or(m.pass_shown);
+        m.total_shown = total.map(|t| smooth_shown(m.total_shown, t, now)).or(m.total_shown);
+        let caption = pass_caption(m.passes, m.pass_shown.map(|s| s.0), m.total_shown.map(|s| s.0), m.last_pass);
+        ui.set_caption(F, "Label15", &caption);
     }
     if let (Some(l), Some(p)) = (&live, &app.mc.paras) {
         let rgb = crate::mc::paint(l, &p.mc, p.lighting.gamma);
@@ -753,10 +790,12 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(img) = img {
         app.mc.seen_ver = ver;
         if !finished {
+            let secs = app.mc.pass_start.elapsed().as_secs_f64();
             app.mc.passes += 1;
-            app.mc.kept = 0;
-            app.mc.pass_left = None;
-            app.mc.last_pass = Some(app.mc.pass_start.elapsed().as_secs_f64());
+            app.mc.last_pass = Some(secs);
+            app.mc.items.done(secs);
+            app.mc.pace = Pace::default();
+            app.mc.pass_shown = None;
             app.mc.pass_start = Instant::now();
         }
         app.mc.img = Some(img);
@@ -773,6 +812,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
         repaint(app, ui);
         let max_rays = show_stats(app, ui);
+        app.mc.rays = max_rays;
         ui.set_caption(F, "Label8", "..til next update");
         ui.set_enabled(F, "SpeedButton1", true);
         let total = app.mc.calc_time + (el.as_secs_f64() * 10.0) as i64;
@@ -801,25 +841,33 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
 }
 
-/// The time left in the running pass: from the last pass, or from its own
-/// rate in the first (`f` its progress, `secs` its time so far).
-fn pass_left(last: Option<f64>, f: f64, secs: f64) -> Option<f64> {
-    let f = f.clamp(0.0, 1.0);
-    // (the rows of a pass end unevenly: the last pass's time is the better
-    // guess)
-    match last {
-        Some(l) => Some((l - secs).max(l * (1.0 - f))),
-        None if f >= 0.02 && secs >= 3.0 => Some(secs * (1.0 - f) / f),
-        None => None,
+/// The passes after the running one until the most rays a pixel has reach
+/// `target`: from `rays0` when the run began to `rays` now in `passes`
+/// passes (None without a target, or before a finished pass told how many
+/// rays a pass adds).
+fn passes_after(target: Option<u32>, rays0: u32, rays: u32, passes: u32) -> Option<usize> {
+    let target = target?;
+    if rays >= target {
+        return Some(0);
     }
+    if passes == 0 || rays <= rays0 {
+        return None;
+    }
+    let per = (rays - rays0) as f64 / passes as f64;
+    // (the running pass adds its share too)
+    Some((((target - rays) as f64 / per).ceil() as usize).saturating_sub(1))
 }
 
-/// "pass 3, about 40 s left · last pass 1:12.4": the running pass, its
-/// time left and how long the last pass took.
-fn pass_caption(passes: u32, left: Option<f64>, last: Option<f64>) -> String {
+/// "pass 3 · 40 s left · last pass 1:12.4", or with a target "pass 3 ·
+/// about 4 min left in total · last pass 1:12.4": the running pass, the
+/// time left in it (or in the whole render) and how long the last pass
+/// took.
+fn pass_caption(passes: u32, left: Option<f64>, total: Option<f64>, last: Option<f64>) -> String {
     let mut t = format!("pass {}", passes + 1);
-    if let Some(l) = left {
-        t += &format!(", about {} left", about_str(l));
+    match (total, left) {
+        (Some(tl), _) => t += &format!(" · {} in total", left_str(tl)),
+        (None, Some(l)) => t += &format!(" · {}", left_str(l)),
+        _ => {}
     }
     if let Some(l) = last {
         t += &format!(" · last pass {}", time_str((l * 10.0) as i64));
@@ -1342,4 +1390,31 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         _ => {}
     }
     let _ = MAIN;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn passes_until_the_target() {
+        // no target: nothing to say; the first pass: not yet
+        assert_eq!(passes_after(None, 0, 4, 1), None);
+        assert_eq!(passes_after(Some(20), 0, 0, 0), None);
+        // 4 rays a pass, 20 wanted: after the running one three more
+        assert_eq!(passes_after(Some(20), 0, 4, 1), Some(3));
+        assert_eq!(passes_after(Some(20), 0, 12, 2), Some(1));
+        // the target reached: the running pass is the last
+        assert_eq!(passes_after(Some(20), 0, 20, 4), Some(0));
+        // a continued render: the passes before do not tell
+        assert_eq!(passes_after(Some(20), 8, 8, 0), None);
+        assert_eq!(passes_after(Some(20), 8, 14, 1), Some(0));
+    }
+
+    #[test]
+    fn pass_captions() {
+        assert_eq!(pass_caption(0, None, None, None), "pass 1");
+        assert_eq!(pass_caption(2, Some(40.0), None, Some(72.4)), "pass 3 · 40 s left · last pass 1:12.4");
+        assert_eq!(pass_caption(2, Some(40.0), Some(250.0), Some(72.4)), "pass 3 · about 4 min left in total · last pass 1:12.4");
+    }
 }
