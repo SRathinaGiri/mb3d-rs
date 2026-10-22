@@ -1016,10 +1016,16 @@ impl Prog {
             Op::MovMR { mem, r } => t.wr_u(loc(mem)?, 4, &format!("rg[{r}]"))?,
             Op::MovRR { d, s } => format!("rg[{d}] = rg[{s}];"),
             Op::Lea { r, mem } => format!("rg[{r}] = {};", ea_wgsl(mem)),
+            // push esp stores the old value, pop esp sets the popped one
+            Op::PushR(4) => {
+                let w = t.wr_u(region(an.stack_loc(k, cs, true))?, 4, "v")?;
+                format!("{{ let v = rg[4]; rg[4] = rg[4] - 4u; {w} }}")
+            }
             Op::PushR(r) => {
                 let w = t.wr_u(region(an.stack_loc(k, cs, true))?, 4, &format!("rg[{r}]"))?;
                 format!("rg[4] = rg[4] - 4u; {w}")
             }
+            Op::PopR(4) => format!("rg[4] = {};", t.rd_u(region(an.stack_loc(k, cs, false))?, 4)?),
             Op::PopR(r) => {
                 let v = t.rd_u(region(an.stack_loc(k, cs, false))?, 4)?;
                 format!("rg[{r}] = {v}; rg[4] = rg[4] + 4u;")

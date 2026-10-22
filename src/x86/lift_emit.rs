@@ -1256,10 +1256,16 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
             Op::MovMR { mem, r } => c.wr(loc(mem)?, 4, &format!("rg[{r}] as u64")),
             Op::MovRR { d, s } => format!("rg[{d}] = rg[{s}];"),
             Op::Lea { r, mem } => format!("rg[{r}] = {};", ea_expr(mem).replace("m.regs[", "rg[")),
+            // push esp stores the old value, pop esp sets the popped one
+            Op::PushR(r) if *r as usize == ESP => {
+                let w = c.wr(region(an.stack_loc(k, cs, true))?, 4, "v as u64");
+                format!("{{ let v = rg[ESP]; rg[ESP] = rg[ESP].wrapping_sub(4); {w} }}")
+            }
             Op::PushR(r) => {
                 let w = c.wr(region(an.stack_loc(k, cs, true))?, 4, &format!("rg[{r}] as u64"));
                 format!("{{ rg[ESP] = rg[ESP].wrapping_sub(4); {w} }}")
             }
+            Op::PopR(r) if *r as usize == ESP => format!("rg[ESP] = {} as u32;", c.rd(region(an.stack_loc(k, cs, false))?, 4)),
             Op::PopR(r) => {
                 let v = c.rd(region(an.stack_loc(k, cs, false))?, 4);
                 format!("{{ rg[{r}] = {v} as u32; rg[ESP] = rg[ESP].wrapping_add(4); }}")
@@ -1527,5 +1533,24 @@ mod tests {
         let blocks = vec![block(&[], Some(3)), block(&[cond(2)], Some(3)), block(&[Jump::RETURN.to_string()], None), block(&[cond(1)], Some(2))];
         let w = structure_wgsl(&blocks, 0).expect("structured");
         assert!(w.contains("else if (cont == 3u) {"), "{w}");
+    }
+
+    fn prog_of(code: &[u8]) -> Prog {
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, code).unwrap();
+        m.predecode(&[CODE_START]);
+        m.compile(CODE_START).expect("compiles")
+    }
+
+    #[test]
+    fn push_pop_esp() {
+        // push esp; pop eax; push eax; pop esp; ret
+        let p = prog_of(&[0x54, 0x58, 0x50, 0x5C, 0xC3]);
+        let r = p.emit_lifted("f", false).expect("lifts");
+        assert!(r.contains("{ let v = rg[ESP]; rg[ESP] = rg[ESP].wrapping_sub(4); s2014 = (s2014 & !(0xffffffffu64 << 0)) | (((v as u64)"), "{r}");
+        assert!(r.contains("\n        rg[ESP] = ((s2014 >> 0) & 0xffffffffu64) as u32;\n"), "{r}");
+        let w = p.emit_wgsl("f", false).expect("lifts").code;
+        assert!(w.contains("{ let v = rg[4]; rg[4] = rg[4] - 4u; s2014l = (v); }"), "{w}");
+        assert!(w.contains("\n    rg[4] = s2014l;\n"), "{w}");
     }
 }
