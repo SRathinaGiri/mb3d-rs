@@ -2105,6 +2105,10 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         if !quiet {
             eprintln!("wrote {out} (no new pass: the target was reached already)");
         }
+        // (the checkpoint opened for it holds only the .m3c: not kept)
+        if let Some(c) = ck.filter(|c| reached && c.store().resumed() == 0) {
+            c.finish();
+        }
         return Ok(());
     }
     if !quiet {
