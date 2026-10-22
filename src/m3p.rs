@@ -289,8 +289,8 @@ pub fn gbuffer_from_m3i(data: &[u8]) -> Option<(usize, usize, Vec<crate::gbuffer
         return None;
     }
     let (w, h) = (w as usize, h as usize);
-    let end = HEADER_SIZE + w * h * 18;
-    if data.len() < end {
+    let end = w.checked_mul(h).and_then(|n| n.checked_mul(18)).and_then(|n| n.checked_add(HEADER_SIZE));
+    if end.is_none_or(|end| data.len() < end) {
         return None;
     }
     let g = (0..w * h)
@@ -1317,6 +1317,12 @@ mod tests {
         let back = parse(&raw).unwrap().scene;
         assert_eq!((back.width, back.height), (24, 16));
         assert_eq!(back.formulas[0].formula.name(), "Integer Power");
+        assert_eq!(gbuffer_from_m3i(&d).unwrap().2[5].si_gradient, 1234);
+        // a huge image size in the header is no image, not an overflow
+        let mut big = d.clone();
+        big[4..8].copy_from_slice(&i32::MAX.to_le_bytes());
+        big[8..12].copy_from_slice(&i32::MAX.to_le_bytes());
+        assert!(gbuffer_from_m3i(&big).is_none());
     }
 
     #[test]
