@@ -4,7 +4,8 @@
 //! number of subframes to the next one; the frames are interpolated with
 //! MB3D's functions ([`crate::anim`]) and written into the output folder.
 
-use super::util::{fts_single, parse_float, pti, ptf};
+use super::eta::{ItemsLeft, Pace};
+use super::util::{fts_single, left_str, parse_float, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::anim::{Animation, Interpolation, Keyframe, OutputFormat};
 use crate::frames::{FrameResult, FrameRun};
@@ -126,6 +127,14 @@ pub struct State {
     pub pause: Arc<AtomicBool>,
     pub progress: Arc<AtomicU32>,
     pub started: Instant,
+    /// the time left: the frames' times (the clock's between the frames
+    /// finished, the swarm's come several at once), the running frame's
+    /// pace and when it began, and the time left as shown
+    pub items: ItemsLeft,
+    pub pace: Pace,
+    pub frame_start: Instant,
+    pub last_done: usize,
+    pub left_shown: Option<Shown>,
     pub first_show: bool,
     pub drag: Option<(i32, i32)>,
     pub preview_step: usize,
@@ -147,6 +156,11 @@ impl Default for State {
             pause: Arc::new(AtomicBool::new(false)),
             progress: Arc::new(AtomicU32::new(0)),
             started: Instant::now(),
+            items: ItemsLeft::default(),
+            pace: Pace::default(),
+            frame_start: Instant::now(),
+            last_done: 0,
+            left_shown: None,
             first_show: true,
             drag: None,
             preview_step: 1,
@@ -415,7 +429,31 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if making_video {
         ui.set_caption(F, "Label19", "Making the video...");
     } else if running || done > 0 {
-        ui.set_caption(F, "Label19", &format!("Done: {done} of {total}"));
+        let now = Instant::now();
+        let a = &mut app.anim;
+        if done > a.last_done {
+            let n = done - a.last_done;
+            let each = now.saturating_duration_since(a.frame_start).as_secs_f64() / n as f64;
+            for _ in 0..n {
+                a.items.done(each);
+            }
+            a.last_done = done;
+            a.frame_start = now;
+            a.pace = Pace::default();
+            a.progress.store(0, Ordering::Relaxed);
+        }
+        let mut left = String::new();
+        if running && done < total {
+            let f = a.progress.load(Ordering::Relaxed) as f64 / 1000.0;
+            let secs = now.saturating_duration_since(a.frame_start).as_secs_f64();
+            a.pace.at(f, secs);
+            let l = a.pace.left(&a.items, f, secs, total - done - 1);
+            a.left_shown = l.map(|l| smooth_shown(a.left_shown, l, now)).or(a.left_shown);
+            if let Some((l, _)) = a.left_shown {
+                left = format!(" · {}", left_str(l));
+            }
+        }
+        ui.set_caption(F, "Label19", &format!("Done: {done} of {total}{left}"));
         ui.set_caption(F, "Label22", &format!("{}:{:02}:{:02}", el / 3600, el / 60 % 60, el % 60));
     }
     if !running {
@@ -495,6 +533,12 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     app.anim.started = Instant::now();
     app.anim.stop.store(false, Ordering::SeqCst);
     app.anim.pause.store(false, Ordering::SeqCst);
+    app.anim.progress.store(0, Ordering::Relaxed);
+    app.anim.items = ItemsLeft::default();
+    app.anim.pace = Pace::default();
+    app.anim.frame_start = app.anim.started;
+    app.anim.last_done = 0;
+    app.anim.left_shown = None;
     {
         let mut j = app.anim.job.lock().unwrap();
         *j = Job { running: true, total: frames.len(), changed: true, ..Default::default() };
