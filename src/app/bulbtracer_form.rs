@@ -363,14 +363,12 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let h = app.btracer.h.clone();
     let size = 16usize << ui.item_index(F, "VoxelPreviewSizeGrp").clamp(0, 4);
     app.btracer.pv_dep = size;
+    // fresh ones for each preview: a stopped one still finishing must not report into this one
+    app.btracer.preview_stop = Arc::new(AtomicBool::new(false));
+    app.btracer.shared = Arc::new(Mutex::new(Shared::default()));
+    app.btracer.progress = Arc::new(AtomicUsize::new(0));
     let stop = app.btracer.preview_stop.clone();
-    stop.store(false, Ordering::SeqCst);
     let shared = app.btracer.shared.clone();
-    {
-        let mut sh = shared.lock().unwrap();
-        sh.preview_done = false;
-        sh.preview_changed = false;
-    }
     app.btracer.previewing = true;
     ui.set_caption(F, "RefreshPreviewBtn", "Stop");
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
@@ -380,7 +378,6 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
         c.position = 0;
     }
     let progress = app.btracer.progress.clone();
-    progress.store(0, Ordering::SeqCst);
     let waker = ui.waker();
     std::thread::spawn(move || {
         let r = (|| -> Result<(), String> {
