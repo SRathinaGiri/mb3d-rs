@@ -212,13 +212,18 @@ pub(super) fn dispatch_wgsl(blocks: &[Block]) -> String {
     body
 }
 
+/// The unset value of the `brk` and `cont` flags of [`structure_wgsl`].
+pub(super) const NO_FLAG: &str = "0xffffffffu";
+
 /// [`structure`] in WGSL (the same layout; kept apart so that the Rust
 /// code stays as it is).  WGSL has no labels: a label scope is a one-pass
 /// `loop { ... break; }`, a jump out of a scope that is not the innermost
 /// one sets `brk` (the target scope) or `cont` (the target loop) and
 /// breaks; every scope and loop end checks the flags and breaks on until
-/// the target is reached.  Loops are guarded by `guard` like the
-/// dispatcher.  None when the flow does not nest (the dispatcher then).
+/// the target is reached.  The flags hold block ids, `NO_FLAG` when unset
+/// (the entry block 0 can be a loop header).  Loops are guarded by `guard`
+/// like the dispatcher.  None when the flow does not nest (the dispatcher
+/// then).
 pub(super) fn structure_wgsl(blocks: &[Block], entry: usize) -> Option<String> {
     let nb = blocks.len();
     let mut order = Vec::with_capacity(nb);
@@ -294,14 +299,15 @@ pub(super) fn structure_wgsl(blocks: &[Block], entry: usize) -> Option<String> {
     let check = |open: &[Open], arrive: Option<usize>| -> String {
         let mut c = String::new();
         if let Some(q) = arrive {
-            let _ = write!(c, "if (brk == {q}u) {{ brk = 0u; }} else ");
+            let _ = write!(c, "if (brk == {q}u) {{ brk = {NO_FLAG}; }} else ");
         }
         match open.last() {
             Some(Open::Loop(h)) => {
-                let _ = write!(c, "if (cont == {h}u) {{ cont = 0u; {step} continue; }} else if (brk != 0u || cont != 0u) {{ break; }}");
+                let h = order[*h];
+                let _ = write!(c, "if (cont == {h}u) {{ cont = {NO_FLAG}; {step} continue; }} else if (brk != {NO_FLAG} || cont != {NO_FLAG}) {{ break; }}");
             }
             Some(Open::Scope(_)) => {
-                let _ = write!(c, "if (brk != 0u || cont != 0u) {{ break; }}");
+                let _ = write!(c, "if (brk != {NO_FLAG} || cont != {NO_FLAG}) {{ break; }}");
             }
             None => {
                 let _ = write!(c, "{{}}");
@@ -1502,5 +1508,24 @@ mod tests {
         assert!(s.code.contains("'l1: loop {"), "{}", s.code);
         assert!(s.code.contains("continue 'l1;"), "{}", s.code);
         assert!(s.code.contains("break 'b2;"), "{}", s.code);
+    }
+
+    #[test]
+    fn structure_wgsl_loop_flags() {
+        let cond = |t| format!("if (cond(4u)) {{ {} }}", Jump::mark(t, true));
+        // 0: if c goto 2, else 1; 1: if c goto 0, else 2; 2: if c goto 0,
+        // else 3; 3: return.  The jump of 1 back to the entry block (the
+        // loop header) leaves the scope 'b2 through `cont`
+        let blocks = vec![block(&[cond(2)], Some(1)), block(&[cond(0)], Some(2)), block(&[cond(0)], Some(3)), block(&[Jump::RETURN.to_string()], None)];
+        let w = structure_wgsl(&blocks, 0).expect("structured");
+        assert!(w.contains("if (cond(4u)) { cont = 0u; break; }"), "{w}");
+        assert!(w.contains("else if (cont == 0u) { cont = 0xffffffffu;"), "{w}");
+        assert!(w.contains("else if (brk != 0xffffffffu || cont != 0xffffffffu) { break; }"), "{w}");
+        // 0 -> 3; 3: if c goto 1, else 2; 1: if c goto 2, else 3; 2: return.
+        // The loop header is block 3 at position 1: the flag check tests
+        // the block id
+        let blocks = vec![block(&[], Some(3)), block(&[cond(2)], Some(3)), block(&[Jump::RETURN.to_string()], None), block(&[cond(1)], Some(2))];
+        let w = structure_wgsl(&blocks, 0).expect("structured");
+        assert!(w.contains("else if (cont == 3u) {"), "{w}");
     }
 }

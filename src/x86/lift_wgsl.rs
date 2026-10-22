@@ -14,7 +14,7 @@
 //! the GPU); the x87 registers are an `f32` array.
 
 use super::lift::Analysis;
-use super::lift_emit::{dispatch_wgsl, structure_wgsl, Block, Jump};
+use super::lift_emit::{dispatch_wgsl, structure_wgsl, Block, Jump, NO_FLAG};
 use super::*;
 use crate::custom::STACK_TOP;
 use std::collections::{BTreeMap, HashMap};
@@ -901,8 +901,8 @@ impl Prog {
         match structured {
             Some(code) => {
                 let _ = writeln!(o, "    var guard = 0u;");
-                let _ = writeln!(o, "    var brk = 0u;");
-                let _ = writeln!(o, "    var cont = 0u;");
+                let _ = writeln!(o, "    var brk = {NO_FLAG};");
+                let _ = writeln!(o, "    var cont = {NO_FLAG};");
                 o.push_str(&code);
                 let _ = writeln!(o, "}}");
             }
