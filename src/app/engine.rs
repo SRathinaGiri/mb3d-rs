@@ -402,6 +402,8 @@ impl Engine {
         let mut o = self.0.out.lock().unwrap();
         o.rgb = None;
         o.ver += 1;
+        // a job that finished but was not taken yet is of the old parameters too
+        o.cancelled = true;
     }
 
     /// Sets the kept G-buffer from an .m3i file and paints it.
