@@ -1689,11 +1689,8 @@ pub fn post_process_reporting(
                 times.ao_with_shadows = false;
             }
         } else {
-            // (no rows to count: one step)
             stage(&post_stage_name(false, true, ""));
-            progress(0, 1);
-            ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads);
-            progress(1, 1);
+            ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads, progress);
             times.ao = Some(Some(t.elapsed().as_secs_f64()));
             times.ao_with_shadows = false;
         }
@@ -1702,9 +1699,11 @@ pub fn post_process_reporting(
     Ok(times)
 }
 
-fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize) {
+/// `progress`: the 15 bit kind counts its rows; the others are one step.
+fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize, progress: &(dyn Fn(usize, usize) + Sync)) {
     // a panorama wraps around: its left and right edges are neighbours
     let ao = &crate::ssao::SsaoParams { wrap_x: p.optic == CameraOptic::Panorama, ..*ao };
+    progress(0, 1);
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && !crate::gpu::compiling() {
         // only the depth buffer is needed: also after a CPU calculation
@@ -1717,15 +1716,17 @@ fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ss
                 if s.starts_with("GPU") && !s.contains("+SSAO") {
                     crate::gpu::set_status(format!("{s} +SSAO"));
                 }
+                progress(1, 1);
                 return;
             }
             Err(e) => eprintln!("SSAO on the GPU failed, calculated on the CPU: {e}"),
         }
     }
     if ao.bits15 {
-        crate::ssao15::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao, threads);
+        crate::ssao15::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao, threads, progress);
     } else {
         crate::ssao::ssao24(gbuf, w, h, p.zc_mul, p.zcorr, ao, threads);
+        progress(1, 1);
     }
 }
 
@@ -2099,11 +2100,8 @@ fn paint_with<S: crate::lighting::Sample>(
         refl_s = Some(t.elapsed().as_secs_f64());
     }
     if let Some(d) = sc.dof.as_ref().filter(|_| p.slice_2d == 0 && !cancel()) {
-        // (no rows to count: one step)
         stage("depth of field");
-        progress(0, 1);
-        crate::dof::apply(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d, cancel);
-        progress(1, 1);
+        crate::dof::apply_reporting(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d, progress, cancel);
     }
     (rgb, refl_s)
 }
@@ -2401,7 +2399,7 @@ pub fn render_tiled_with(
         }
     }
     if let (Some(ao), None) = (&sc.ao, &sc.deao) {
-        ssao(&mut full, wu, hu, &p, ao, thread_count(sc));
+        ssao(&mut full, wu, hu, &p, ao, thread_count(sc), &|_, _| {});
     }
     let t1 = Instant::now();
     let rgb = paint(&fs, &p, &full);

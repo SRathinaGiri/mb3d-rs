@@ -163,6 +163,44 @@ impl ItemsLeft {
     }
 }
 
+/// The running item's pace from its progress reports (a Monte Carlo pass,
+/// a tile, a frame): what [`ItemsLeft::left`] asks about it.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Pace {
+    rate: RateEma,
+    /// the first and the last sample (progress, seconds)
+    first: Option<(f64, f64)>,
+    last: Option<(f64, f64)>,
+}
+
+impl Pace {
+    /// The item is at the progress `f` (0..1) after `secs`: a sample at
+    /// most every quarter second.
+    pub fn at(&mut self, f: f64, secs: f64) {
+        if f <= 0.0 {
+            return;
+        }
+        match self.last {
+            Some((f0, t0)) if secs - t0 < 0.25 || f <= f0 => return,
+            Some((f0, t0)) => self.rate.add(f - f0, secs - t0),
+            None => self.first = Some((f, secs)),
+        }
+        self.last = Some((f, secs));
+    }
+
+    /// The time left in this item and `after` more: its progress `f` after
+    /// `secs`, its whole time at its pace so far (none before progress was
+    /// made, or past its end) blended with the finished items' time.
+    pub fn left(&self, items: &ItemsLeft, f: f64, secs: f64, after: usize) -> Option<f64> {
+        // the progress made under measurement (not what was done before,
+        // e.g. the rows of a continued pass)
+        let from = self.first.map_or(0.0, |s| s.0);
+        let g = ((f - from) / (1.0 - from).max(1e-6)).clamp(0.0, 1.0);
+        let measured = self.rate.rate().filter(|_| f < 1.0).map(|r| secs + (1.0 - f) / r);
+        items.left(g, secs, measured, after)
+    }
+}
+
 /// The scene's part of the features (known when the calculation starts).
 pub fn scene_features(sc: &Scene) -> [f32; FEATURES] {
     let mut f = [0f32; FEATURES];
@@ -422,6 +460,41 @@ mod tests {
         // nearly done and measured slower: its own time for itself
         let l = it.left(0.9, 18.0, Some(20.0), 1).unwrap();
         assert!((l - (20.0 * 0.9 / 0.98 + 11.0 * 0.08 / 0.98 - 18.0 + 11.0)).abs() < 1e-6, "{l}");
+    }
+
+    #[test]
+    fn pace_measures_the_running_item() {
+        let (mut p, mut it) = (Pace::default(), ItemsLeft::default());
+        assert_eq!(p.left(&it, 0.0, 0.0, 2), None);
+        // 10 % a second: after 3 seconds, 7 more and two items of 10
+        for i in 0..=6 {
+            p.at(i as f64 * 0.05, i as f64 * 0.5);
+        }
+        let l = p.left(&it, 0.3, 3.0, 2).unwrap();
+        assert!((l - 27.0).abs() < 1e-6, "{l}");
+        // (samples closer than a quarter second, or without progress, are skipped)
+        let q = p;
+        p.at(0.31, 3.1);
+        p.at(0.2, 3.5);
+        assert_eq!(p, q);
+        // finished items of 20 s: at the start of the next one their time
+        // counts, as it goes the measurement takes over
+        it.done(20.0);
+        it.done(20.0);
+        let mut p = Pace::default();
+        assert_eq!(p.left(&it, 0.0, 0.0, 1), Some(40.0));
+        for i in 0..=10 {
+            p.at(i as f64 * 0.05, i as f64 * 0.5);
+        }
+        let l = p.left(&it, 0.5, 5.0, 1).unwrap();
+        assert!(l > 25.0 && l < 27.0, "{l}");
+        // a continued pass: the rows done before do not count as measured
+        let mut p = Pace::default();
+        p.at(0.5, 0.0);
+        p.at(0.55, 1.0);
+        // (a tenth of it measured at 10 s a pass, the rest the 20 s of before)
+        let l = p.left(&it, 0.55, 1.0, 0).unwrap();
+        assert!((l - ((10.0 * 0.1 + 20.0 * 0.08) / 0.18 - 1.0)).abs() < 1e-6, "{l}");
     }
 
     #[test]

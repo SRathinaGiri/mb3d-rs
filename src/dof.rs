@@ -81,22 +81,60 @@ fn focus(p: &DofParams, pass: u32, sorted: bool, width: usize, height: usize, fo
 /// within a pass; the picture is then half done and dropped by the callers).
 #[allow(clippy::too_many_arguments)]
 pub fn apply<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc_mul: f64, zcorr: f64, fov_y_deg: f64, p: &DofParams, cancel: &(dyn Fn() -> bool + Sync)) {
+    apply_reporting(rgb, gbuf, width, height, zc_mul, zcorr, fov_y_deg, p, &|_, _| {}, cancel);
+}
+
+/// [`apply`] that counts the rows done over all its passes in `progress`,
+/// weighed by their surface pixels (a pass on the card counts as a whole).
+#[allow(clippy::too_many_arguments)]
+pub fn apply_reporting<S: Sample>(
+    rgb: &mut [S],
+    gbuf: &[SiLight],
+    width: usize,
+    height: usize,
+    zc_mul: f64,
+    zcorr: f64,
+    fov_y_deg: f64,
+    p: &DofParams,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     let zc = ZConv { zc_mul_inv: 1.0 / zc_mul, zcorr_inv: 1.0 / zcorr };
-    for pass in 0..p.passes.clamp(1, 4) as u32 {
+    let sw = &crate::render::RowWeights::surface(gbuf, width, height);
+    let passes = p.passes.clamp(1, 4) as u32;
+    let total = passes as usize * sw.total();
+    for pass in 0..passes {
         if cancel() {
             return;
         }
+        let base = pass as usize * sw.total();
+        let report = |done: usize| progress(base + done, total);
         if p.forward {
-            dof_forward(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass, cancel);
+            dof_forward(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass, sw, &report, cancel);
         } else {
-            dof_sorted(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass, cancel);
+            dof_sorted(rgb, gbuf, width, height, &zc, fov_y_deg, p, pass, sw, &report, cancel);
         }
+    }
+    if !cancel() {
+        progress(total, total);
     }
 }
 
-/// `doDOF`
+/// `doDOF`; `report`: the weights of the rows done so far (`sw`).
 #[allow(clippy::too_many_arguments)]
-fn dof_forward<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32, cancel: &(dyn Fn() -> bool + Sync)) {
+fn dof_forward<S: Sample>(
+    rgb: &mut [S],
+    gbuf: &[SiLight],
+    width: usize,
+    height: usize,
+    zc: &ZConv,
+    fov: f64,
+    p: &DofParams,
+    pass: u32,
+    sw: &crate::render::RowWeights,
+    report: &(dyn Fn(usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     let (ap, dsf, z_sharp, r_sub) = focus(p, pass, false, width, height, fov);
     let clip_r = p.clip_r.clamp(0.1, 1000.0);
     let n = width * height;
@@ -124,8 +162,10 @@ fn dof_forward<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height:
             [c[0].to_bits(), c[1].to_bits(), c[2].to_bits(), s_ms.to_bits(), (0.5 / s_ms).to_bits(), rr.to_bits(), r_of[i] as u32, 0]
         };
         let rmax = (max_r + 0.5).round_ties_even() as i64;
+        report(0);
         if let Some(out) = card::run::<S>(width, height, &r_of, None, &record, rmax, 1, true, sm, cancel) {
             rgb.copy_from_slice(&out);
+            report(sw.total());
             return;
         }
         if cancel() {
@@ -138,6 +178,7 @@ fn dof_forward<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height:
     let mut col = vec![0f32; n * 3];
     let (wi, hi) = (width as i64, height as i64);
     for y in 0..hi {
+        report(sw.before(y as usize));
         for x in 0..wi {
             let i = (y * wi + x) as usize;
             let rr = rbuf[i];
@@ -210,7 +251,19 @@ fn sorted_src(iz: i32, zc: &ZConv, z_sharp: f32, ap: f32, dsf: f32, r_sub: f32, 
 
 /// `doDOFsort`
 #[allow(clippy::too_many_arguments)]
-fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: usize, zc: &ZConv, fov: f64, p: &DofParams, pass: u32, cancel: &(dyn Fn() -> bool + Sync)) {
+fn dof_sorted<S: Sample>(
+    rgb: &mut [S],
+    gbuf: &[SiLight],
+    width: usize,
+    height: usize,
+    zc: &ZConv,
+    fov: f64,
+    p: &DofParams,
+    pass: u32,
+    sw: &crate::render::RowWeights,
+    report: &(dyn Fn(usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) {
     let (ap, dsf, z_sharp, r_sub) = focus(p, pass, true, width, height, fov);
     let clip_r = p.clip_r.clamp(0.1, 1000.0);
     let n = width * height;
@@ -260,8 +313,10 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
             [c[0].to_bits(), c[1].to_bits(), c[2].to_bits(), t.s_ms.to_bits(), t.sw.to_bits(), t.ims as u32, t.r as u32, t.descale as u32 | (t.bg as u32) << 1]
         };
         let max_ims = ((max_r + 1.0) * (max_r + 1.0)) as usize + 1;
+        report(0);
         if let Some(out) = card::run::<S>(width, height, &r_of, Some(&order), &record, rmax, max_ims, false, 0.0, cancel) {
             rgb.copy_from_slice(&out);
+            report(sw.total());
             return;
         }
         if cancel() {
@@ -276,8 +331,9 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
     let band_rows = height.div_ceil(threads * 4).max(1);
     let n_bands = height.div_ceil(band_rows);
     let next = std::sync::atomic::AtomicUsize::new(0);
+    let finished = std::sync::atomic::AtomicUsize::new(0);
     let src: &[S] = rgb;
-    let (order, next) = (&order, &next);
+    let (order, next, finished) = (&order, &next, &finished);
     let bands: Vec<(usize, Vec<S>)> = std::thread::scope(|s| {
         let hs: Vec<_> = (0..threads.min(n_bands))
             .map(|_| {
@@ -354,6 +410,8 @@ fn dof_sorted<S: Sample>(rgb: &mut [S], gbuf: &[SiLight], width: usize, height: 
                             })
                             .collect();
                         done.push((by0 as usize, px));
+                        let bw = sw.before(by1 as usize) - sw.before(by0 as usize);
+                        report(finished.fetch_add(bw, std::sync::atomic::Ordering::Relaxed) + bw);
                     }
                 })
             })
