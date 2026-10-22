@@ -186,10 +186,11 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let (full_w, _) = vp.size();
     s.de_stop = vp.de * pw as f64 / full_w.max(1) as f64;
     v.de = s.de_stop;
+    // fresh ones for each run: a stopped run still finishing must not report into this one
+    app.voxel.shared = Arc::new(Mutex::new(Shared::default()));
+    app.voxel.stop = Arc::new(AtomicBool::new(false));
     let shared = app.voxel.shared.clone();
     let stop = app.voxel.stop.clone();
-    stop.store(false, Ordering::SeqCst);
-    *shared.lock().unwrap() = Shared::default();
     app.voxel.running = 2;
     ui.set_caption(F, "Button5", "Stop");
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
@@ -291,10 +292,11 @@ fn start_slices(app: &mut Mb3d, ui: &mut Ui) {
     let vp = app.voxel.vp.clone();
     let dir = PathBuf::from(&vp.output_folder);
     let name = app.voxel.project.clone();
+    // fresh ones for each run: a stopped run still finishing must not report into this one
+    app.voxel.shared = Arc::new(Mutex::new(Shared::default()));
+    app.voxel.stop = Arc::new(AtomicBool::new(false));
     let shared = app.voxel.shared.clone();
     let stop = app.voxel.stop.clone();
-    stop.store(false, Ordering::SeqCst);
-    *shared.lock().unwrap() = Shared::default();
     app.voxel.running = 1;
     app.voxel.slice_size = vp.size();
     super::main_form::disable_buttons(app, ui);
@@ -478,6 +480,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button2Click" => {
             if app.voxel.running == 2 {
                 app.voxel.stop.store(true, Ordering::SeqCst);
+                app.voxel.restart_preview = false;
+                ui.set_caption(F, "Button5", "Calculate preview");
             }
             if app.voxel.running != 1 {
                 start_slices(app, ui);
