@@ -324,6 +324,8 @@ struct RayReq {
     origin: Vec3,
     dir: Vec3,
     zz: f64,
+    // (read by the card's reflection pass only)
+    #[cfg_attr(not(feature = "gpu"), allow(dead_code))]
     inside: bool,
     rit: i32,
     max_l: f64,

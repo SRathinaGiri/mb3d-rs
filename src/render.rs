@@ -609,6 +609,7 @@ fn finish_row(p: &CalcParams, y: usize, card: &[SiLight]) -> Vec<SiLight> {
 }
 
 /// One row of the main calculation on the CPU (MB3D's per-row seed).
+#[cfg(feature = "gpu")]
 fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
     let [x0, y0, w, _] = p.rect;
     let yy = y + y0 as usize;
