@@ -297,6 +297,8 @@ pub fn write_m3a(a: &Animation, previews: &[Option<Preview>]) -> Vec<u8> {
 /// index_step = 1
 /// overwrite = true
 /// save_depth = false
+/// transparent = false    # PNG frames with a transparent background
+/// stereo = off           # pair (<name>Right/<name>Left images), very_left
 ///
 /// [keyframe]
 /// frames = 50            # sub-frames to the next keyframe
@@ -428,6 +430,15 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
             "index_step" => a.index_step = num(v)?.max(1),
             "overwrite" => a.overwrite = boolean(v)?,
             "save_depth" => a.save_depth = boolean(v)?,
+            "transparent" => a.transparent = boolean(v)?,
+            "stereo" => {
+                a.stereo_bits = match plain(v).to_ascii_lowercase().as_str() {
+                    "pair" | "on" | "yes" => 0x40,
+                    "very_left" | "very-left" => 0xC0,
+                    "off" | "no" => 0,
+                    o => return Err(err(format!("stereo: '{o}' (pair, very_left, off)"))),
+                }
+            }
             _ => return Err(err(format!("unknown animation key '{k}'"))),
         }
     }
@@ -481,6 +492,14 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
     let _ = writeln!(t, "name = {}\nformat = {}", a.name, a.format.extension());
     let _ = writeln!(t, "start_index = {}\nindex_step = {}", a.start_index, a.index_step);
     let _ = writeln!(t, "overwrite = {}\nsave_depth = {}", a.overwrite, a.save_depth);
+    let stereo = if a.stereo_bits & 0x40 == 0 {
+        "off"
+    } else if a.stereo_bits & 0x80 != 0 {
+        "very_left"
+    } else {
+        "pair"
+    };
+    let _ = writeln!(t, "transparent = {}\nstereo = {stereo}", a.transparent);
     for (i, k) in a.keyframes.iter().enumerate() {
         let _ = writeln!(t, "\n[keyframe]  # {}", i + 1);
         let _ = writeln!(t, "frames = {}", k.frames);
@@ -602,6 +621,25 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn m3k_stereo_and_transparent() {
+        let mut a = sample();
+        for (bits, transparent) in [(0x40, true), (0xC0, false), (0, true)] {
+            a.stereo_bits = bits;
+            a.transparent = transparent;
+            let b = parse_m3k(&write_m3k(&a, None), Path::new("."), "x").unwrap().anim;
+            assert_eq!((b.stereo_bits, b.transparent), (bits, transparent));
+        }
+        // older files without the keys: no stereo, opaque
+        let text: String = write_m3k(&a, None)
+            .lines()
+            .filter(|l| !l.starts_with("stereo") && !l.starts_with("transparent"))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        let b = parse_m3k(&text, Path::new("."), "x").unwrap().anim;
+        assert_eq!((b.stereo_bits, b.transparent), (0, false));
     }
 
     #[test]
