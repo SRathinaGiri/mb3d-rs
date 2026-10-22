@@ -408,6 +408,10 @@ pub fn continue_render(app: &mut Mb3d, ui: &mut Ui) {
 /// [`start`]; `resume`: what to do with an unfinished render of the
 /// parameters (None: ask when the image is empty and one is kept).
 fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Policy>) {
+    // (the thread of a running render shares `stop` and `shared`)
+    if app.mc.running {
+        return;
+    }
     update_paras(app, ui);
     let Some(p) = app.mc.paras.clone() else { return };
     let mut img = match app.mc.img.take() {
@@ -464,6 +468,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     app.mc.seen_ver = 0;
     app.mc.seen_live = 0;
     app.mc.running = true;
+    enable_batch_controls(app, ui);
     app.mc.compile_note = false;
     app.main.led = super::main_form::Led::Cpu;
     super::main_form::show_led(ui, app.main.led, true);
@@ -657,6 +662,7 @@ fn finish(app: &mut Mb3d, ui: &mut Ui) {
         return;
     }
     app.mc.running = false;
+    enable_batch_controls(app, ui);
     ui.set_enabled(F, "Button2", true);
     super::main_form::show_led(ui, app.main.led, false);
     app.mc.calc_time += (app.mc.start.elapsed().as_secs_f64() * 10.0) as i64;
@@ -1053,7 +1059,7 @@ fn enable_batch_controls(app: &Mb3d, ui: &mut Ui) {
     let any = !app.mc.batch.is_empty();
     ui.set_enabled(F, "ClearBatchLstBtn", any);
     ui.set_enabled(F, "RemoveBatchLstEntryBtn", any);
-    ui.set_enabled(F, "BatchRenderBtn", !app.mc.in_batch);
+    ui.set_enabled(F, "BatchRenderBtn", !app.mc.in_batch && !app.mc.running);
 }
 
 fn save_batch_image(app: &mut Mb3d, ui: &mut Ui) {
@@ -1231,7 +1237,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 enable_batch_controls(app, ui);
             }
         }
-        "BatchRenderBtnClick" => {
+        "BatchRenderBtnClick" if !app.mc.in_batch && !app.mc.running => {
             app.mc.batch_max_rays = ui.text(F, "BatchMaxRayCountEdit").trim().parse().unwrap_or(20);
             app.mc.work = (0..app.mc.batch.len()).filter(|&i| !app.mc.batch[i].finished).collect();
             {
