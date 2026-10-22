@@ -525,7 +525,7 @@ fn worker(e: Arc<Inner>) {
             Job::Preview { scene } => preview(&e, &scene, &cancel),
             Job::Recalc { scene, rect, div, nearer, hs, deao, keep_as } => recalc(&e, &scene, rect, div, nearer, (hs, deao, keep_as), &cancel),
             Job::ReflectSel { scene, rect } => reflect_sel(&e, &scene, rect, &cancel),
-            Job::Swarm { scene, dir, cols, rows, name } => swarm_tiles(&e, &scene, &dir, cols, rows, name, &cancel),
+            Job::Swarm { scene, dir, cols, rows, name } => swarm_tiles(&e, &scene, &dir, cols, rows, name, gen, &cancel),
         }))
         .unwrap_or_else(|p| {
             let m = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
@@ -591,12 +591,13 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
 /// Calculate 3D with the swarm (`Job::Swarm`): the tiles come from the
 /// swarm folder, the picture so far is shown while they do, the finished
 /// buffer is kept as a calculated one.
-fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, rows: u32, name: String, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+#[allow(clippy::too_many_arguments)]
+fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, rows: u32, name: String, gen: u64, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     let mut sc = sc.clone();
     sc.slice_2d = 0;
     sc.calc_rect = None;
     e.out.lock().unwrap().stage = "swarm: creating the job".into();
-    let gen = e.gen.load(Ordering::SeqCst);
+    // (the job's own generation: one started since cancels it)
     let e2 = e.clone();
     let cancel_fn: Arc<dyn Fn() -> bool + Send + Sync> = Arc::new(move || e2.gen.load(Ordering::SeqCst) != gen);
     let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn), resume: crate::checkpoint::Policy::Continue };
