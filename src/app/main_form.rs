@@ -101,6 +101,9 @@ pub struct State {
     /// when they compile now
     stage_cold: f64,
     cold_from: Option<f64>,
+    /// the compile time counted in the stage so far (a compile inside it,
+    /// which no flag shows: its pace starts again after)
+    compiled_seen: f64,
     /// the running stage's progress over its time, (progress, seconds); the
     /// stages' of this calculation and of the last one finished (`last_sig`)
     /// by name: the same picture again progresses alike (its hard rows
@@ -194,6 +197,7 @@ impl Default for State {
             stage_compile: 0.0,
             stage_cold: 0.0,
             cold_from: None,
+            compiled_seen: 0.0,
             samples: Vec::new(),
             eta_f: [0.0; super::eta::FEATURES],
             calc_compile: 0.0,
@@ -1065,6 +1069,7 @@ impl State {
         self.stage_compile = compile_secs();
         self.stage_cold = 0.0;
         self.cold_from = None;
+        self.compiled_seen = 0.0;
         self.calc_compile = compile_secs();
         self.later = later;
         self.passed.clear();
@@ -1201,9 +1206,13 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     } else if let Some(c) = m.cold_from.take() {
         m.stage_cold += secs - c;
     }
-    let cold = m.stage_cold + m.cold_from.map_or(0.0, |c| secs - c);
+    // (a compile inside the stage shows in the compile time counted)
+    let compiled_now = (compile_secs() - m.stage_compile).max(0.0);
+    let cold = (m.stage_cold + m.cold_from.map_or(0.0, |c| secs - c)).max(compiled_now);
     let work = if main { secs } else { secs - cold };
-    if compiling && !main {
+    let compiled_more = compiled_now > m.compiled_seen + 0.01;
+    m.compiled_seen = compiled_now;
+    if (compiling || compiled_more) && !main {
         if let Kind::Later(k) = kind {
             m.later_cold[k as usize] = true;
         }
@@ -1345,8 +1354,9 @@ fn rough_progress(m: &State, stage: &str, f: f64) -> Option<f64> {
 
 /// Whether the graphics card's shaders are being compiled.
 fn shaders_compiling() -> bool {
+    // (prepared in the background, or compiled by a stage that waits for it)
     #[cfg(feature = "gpu")]
-    return crate::gpu::compiling();
+    return crate::gpu::compiling() || crate::gpu::compile_jobs(Instant::now()).iter().any(|j| j.secs.is_none());
     #[cfg(not(feature = "gpu"))]
     false
 }
@@ -1381,8 +1391,8 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
     // when the card's shaders compiled meanwhile, at the pace it had after:
     // the later stages' ratios are to a main rendering without compiling)
     // (a later stage's time with the card's shaders compiling is not its own)
-    let cold_stage = m.stage_cold > 0.0 || m.cold_from.is_some();
-    let work = secs - m.stage_cold - m.cold_from.map_or(0.0, |c| secs - c);
+    let cold_stage = m.stage_cold > 0.0 || m.cold_from.is_some() || compiled > 0.0 || shaders_compiling();
+    let work = secs - (m.stage_cold + m.cold_from.map_or(0.0, |c| secs - c)).max(compiled);
     let whole = match kind {
         Kind::Main => after_compile.unwrap_or(secs / (1.0 - base).max(0.02)),
         Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0) + work,
@@ -1470,6 +1480,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.main.stage_compile = compile_secs();
                 app.main.stage_cold = 0.0;
                 app.main.cold_from = None;
+                app.main.compiled_seen = 0.0;
             }
             app.main.stage_base = base as f64;
             let Left { stage: left, total, progress: p } = time_left(app, &stage, f as f64, base as f64);
