@@ -781,7 +781,9 @@ fn claim_unit(job: &Job, heart: &Heart, out: &Path) -> Result<Option<UnitClaim>,
                     // another computer took it over first
                     return Ok(None);
                 }
-                if std::fs::read_to_string(&private).unwrap_or_default() != stale_id {
+                // (an empty one just made reads as the stale empty one: its
+                // age tells them apart, a rename keeps it)
+                if std::fs::read_to_string(&private).unwrap_or_default() != stale_id || !marker_stale(swarm, &private) {
                     // the marker renamed was a new one of another computer
                     let _ = std::fs::rename(&private, &marker);
                     return Ok(None);
@@ -2622,6 +2624,14 @@ mod tests {
         std::fs::write(marker_of(&out), a.id()).unwrap();
         drop(cb);
         assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), a.id());
+        // an empty marker: kept while it is new, taken over when old
+        std::fs::write(marker_of(&out), "").unwrap();
+        assert!(claim_unit(&job, &b, &out).unwrap().is_none());
+        let old = std::time::SystemTime::now() - Duration::from_secs(STALE_SECS + 10);
+        std::fs::File::options().write(true).open(marker_of(&out)).unwrap().set_modified(old).unwrap();
+        let cb = claim_unit(&job, &b, &out).unwrap().expect("b takes it over");
+        assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), b.id());
+        drop(cb);
         let _ = std::fs::remove_dir_all(&d);
     }
 
