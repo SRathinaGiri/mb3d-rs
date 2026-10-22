@@ -1366,10 +1366,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     }
                 }
                 4 => n.rstop = m.rstop,
-                5 | 6 => {
+                5 => {
                     if let (Some(a), Some(b)) = (n.decomb.as_mut(), m.decomb) {
                         a.smooth = b.smooth;
                     }
+                }
+                // (MB3D copies the DE combine smooth value here too)
+                6 => {
+                    n.de_stop = m.de_stop;
+                    app.navi.destop_changed = false;
                 }
                 7 => n.iterations = m.iterations,
                 _ => return,
