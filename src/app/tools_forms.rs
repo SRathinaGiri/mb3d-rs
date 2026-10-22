@@ -563,7 +563,7 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
 fn next_tile(st: &TilingState, ui: &Ui, from: (i32, i32)) -> (i32, i32) {
     let d = &st.data;
     let (ya, ye) = if ui.checked(TF, "CheckBox6") {
-        (from.1.max(pti(&ui.text(TF, "Edit2"))), d.rows.min(pti(&ui.text(TF, "Edit3"))))
+        (from.1.max(pti(&ui.text(TF, "Edit2"))).max(1), d.rows.min(pti(&ui.text(TF, "Edit3"))))
     } else {
         (from.1.max(1), d.rows)
     };
