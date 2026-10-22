@@ -1159,7 +1159,11 @@ impl Prog {
             Some(format!("{{ let s = {}; let a = xmm[{d}]; xmm[{d}] = vec2<R>({}, {}); }}", sf2(t)?, bin(o, "a.x", "s.x"), bin(o, "a.y", "s.y")))
         };
         let sd = |o: &str| -> Option<String> { Some(format!("xmm[{d}].x = {};", bin(o, &format!("xmm[{d}].x"), &format!("({})", sf1(t)?)))) };
-        let logic = |o: &str| -> Option<String> { Some(format!("xmm[{d}] = xfrom({}xbits(xmm[{d}]) {o} {});", if o == "&~" { "~" } else { "" }, sb4(t)?)) };
+        // andnpd is "&~": ~d & s (WGSL has no &~ operator)
+        let logic = |o: &str| -> Option<String> {
+            let (not, o) = if o == "&~" { ("~", "&") } else { ("", o) };
+            Some(format!("xmm[{d}] = xfrom({not}xbits(xmm[{d}]) {o} {});", sb4(t)?))
+        };
         Some(match op {
             UComiSd | ComiSd => format!(
                 "{{ let b = {}; let a = xmm[{d}].x; xof = false; xsf = false; xaf = false; \
@@ -1366,4 +1370,24 @@ pub fn record_globals(formulas: &[&WgslFormula]) -> Option<String> {
         }
     }
     Some(o)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn wgsl_of(code: &[u8]) -> String {
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, code).unwrap();
+        m.predecode(&[CODE_START]);
+        let p = m.compile(CODE_START).expect("compiles");
+        p.emit_wgsl("f", false).expect("lifts").code
+    }
+
+    #[test]
+    fn andnpd_complements_the_destination_only() {
+        // andnpd xmm0, xmm1; ret
+        let w = wgsl_of(&[0x66, 0x0F, 0x55, 0xC1, 0xC3]);
+        assert!(w.contains("xmm[0] = xfrom(~xbits(xmm[0]) & xbits(xmm[1]));"), "{w}");
+    }
 }
