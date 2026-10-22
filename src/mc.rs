@@ -2087,9 +2087,18 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let p = c.p;
         let sw = p.step_width;
         self.guard = 0;
+        let salt = self.c.seed_salt;
         self.act_ray_nr = (rec_rays as usize + itcount as usize).min(65535);
-        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32) ^ self.c.seed_salt;
-        let (sx, sy) = halton_2d_shifts(x1, y);
+        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32) ^ salt;
+        let (mut sx, mut sy) = halton_2d_shifts(x1, y);
+        if salt != 0 {
+            // a salted image (a swarm block) takes its own part of the
+            // sequence and its own shifts, so its rays are not the others'
+            self.act_ray_nr = (self.act_ray_nr + (salt as u32 & 0xFFFF) as usize) & 0xFFFF;
+            let (tx, ty) = halton_2d_shifts(salt, salt.rotate_left(16));
+            sx = frac_s(sx + tx);
+            sy = frac_s(sy + ty);
+        }
         self.shift_x = sx;
         self.shift_y = sy;
         let h = halton_seq()[self.act_ray_nr];
@@ -2099,7 +2108,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         set_zpos_word(&mut self.main_si, 32768);
         self.main_si.shadow = 0;
         self.main_si.si_gradient = 0;
-        let (xx, yy) = if rec_rays == 0 {
+        let (xx, yy) = if rec_rays == 0 && salt == 0 {
             (x1 as f32 - (itcount & 1) as f32 * 0.5 - 0.75, y as f32 + (itcount & 2) as f32 * 0.25 - 0.25)
         } else {
             let (gx, gy) = self.sub_pixel_shift();
