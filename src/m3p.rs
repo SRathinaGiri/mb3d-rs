@@ -402,6 +402,12 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     s.mid = [r.f64(36), r.f64(44), r.f64(52)];
     s.rot_4d = [r.f64(60), r.f64(68), r.f64(76)];
     s.zoom = r.f64(84);
+    if !(1..32768).contains(&s.width) || !(1..32768).contains(&s.height) {
+        return Err(format!("invalid image size {}x{}", s.width, s.height));
+    }
+    if !(s.zoom.is_finite() && s.zoom > 0.0) {
+        return Err(format!("invalid zoom {}", s.zoom));
+    }
     s.rstop = Some(r.f64(92));
     s.fov_y = r.f64(108);
     s.normals_on_de = r.u8(132) != 0;
@@ -1377,6 +1383,17 @@ mod tests {
         assert_eq!(s.formulas[0].iterations, 3);
         assert_eq!(s.formulas[0].formula, Formula::AmazingBox { scale: -1.5, min_r: 0.5, fold: 1.0 });
         assert!(m.warnings.is_empty(), "{:?}", m.warnings);
+        // a bad image size or zoom is an error
+        for (o, v) in [(4, -1i32), (8, 0), (4, 40000)] {
+            let mut b = d.clone();
+            put_i32(&mut b, o, v);
+            assert!(parse(&b).is_err());
+        }
+        for z in [0.0, f64::NAN, -1.0] {
+            let mut b = d.clone();
+            put_f64(&mut b, 84, z);
+            assert!(parse(&b).is_err());
+        }
     }
 }
 
