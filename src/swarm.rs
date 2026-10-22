@@ -720,14 +720,19 @@ fn marker_stale(swarm: &Path, marker: &Path) -> bool {
 }
 
 /// A unit claimed by this computer: its marker, removed when the claim is
-/// dropped (after the result is in place, or when the unit is given up).
+/// dropped (after the result is in place, or when the unit is given up)
+/// while it is still this computer's (one taken over meanwhile by another
+/// computer, as this one was thought gone, stays).
 struct UnitClaim {
     marker: PathBuf,
+    id: String,
 }
 
 impl Drop for UnitClaim {
     fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.marker);
+        if std::fs::read_to_string(&self.marker).is_ok_and(|id| id.trim() == self.id) {
+            let _ = std::fs::remove_file(&self.marker);
+        }
     }
 }
 
@@ -752,8 +757,11 @@ fn claim_unit(job: &Job, heart: &Heart, out: &Path) -> Result<Option<UnitClaim>,
         match std::fs::OpenOptions::new().write(true).create_new(true).open(&marker) {
             Ok(mut f) => {
                 use std::io::Write;
-                let claim = UnitClaim { marker: marker.clone() };
-                f.write_all(heart.id().as_bytes()).map_err(|e| io(&marker, e))?;
+                if let Err(e) = f.write_all(heart.id().as_bytes()) {
+                    let _ = std::fs::remove_file(&marker);
+                    return Err(io(&marker, e));
+                }
+                let claim = UnitClaim { marker: marker.clone(), id: heart.id().to_string() };
                 // finished by another computer just before (its marker
                 // was removed after its result was in place)
                 if std::fs::metadata(out).map(|m| m.len() > 1).unwrap_or(false) {
@@ -2609,6 +2617,11 @@ mod tests {
         assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), a.id());
         assert!(claim_unit(&job, &b, &out).unwrap().is_none());
         drop(ca);
+        // a claimer taken over meanwhile leaves the new claimer's marker
+        let cb = claim_unit(&job, &b, &out).unwrap().expect("b claims");
+        std::fs::write(marker_of(&out), a.id()).unwrap();
+        drop(cb);
+        assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), a.id());
         let _ = std::fs::remove_dir_all(&d);
     }
 
