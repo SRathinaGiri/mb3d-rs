@@ -205,16 +205,21 @@ pub fn ffmpeg_command(folder: &Path, name: &str, ext: &str, first_index: i64, st
     let dir = folder.to_string_lossy();
     let join = |file: &str| if dir.is_empty() { file.to_string() } else { format!("{}{}{file}", dir.trim_end_matches(['/', '\\']), std::path::MAIN_SEPARATOR) };
     let fps = format!("{}", (fps * 1000.0).round() / 1000.0);
-    // ffmpeg's numbered input needs consecutive indices; else a pattern
-    let input = if step == 1 || win {
-        format!("-start_number {first_index} -i {}", quote(&join(&format!("{}%06d.{ext}", name.replace('%', "%%")))))
+    // ffmpeg's numbered input needs consecutive indices; else a pattern, or
+    // on Windows (its ffmpeg has no glob) a list of the frames made by cmd
+    let (pre, input) = if step == 1 {
+        (String::new(), format!("-framerate {fps} -start_number {first_index} -i {}", quote(&join(&format!("{}%06d.{ext}", name.replace('%', "%%"))))))
+    } else if win {
+        let list = quote(&join(&format!("{name}_frames.txt")));
+        let frames = quote(&join(&format!("{name}??????.{ext}")));
+        (format!("cmd /c \"(for %f in ({frames}) do @echo file '%~ff') > {list}\" && "), format!("-f concat -safe 0 -r {fps} -i {list}"))
     } else {
-        format!("-pattern_type glob -i {}", quote(&join(&format!("{name}[0-9][0-9][0-9][0-9][0-9][0-9].{ext}"))))
+        (String::new(), format!("-framerate {fps} -pattern_type glob -i {}", quote(&join(&format!("{name}[0-9][0-9][0-9][0-9][0-9][0-9].{ext}")))))
     };
     if transparent && ext == "png" {
-        format!("ffmpeg -framerate {fps} {input} -c:v libvpx-vp9 -pix_fmt yuva420p -crf 30 -b:v 0 {}", quote(&join(&format!("{name}.webm"))))
+        format!("{pre}ffmpeg {input} -c:v libvpx-vp9 -pix_fmt yuva420p -crf 30 -b:v 0 {}", quote(&join(&format!("{name}.webm"))))
     } else {
-        format!("ffmpeg -framerate {fps} {input} -c:v libx264 -crf 18 -pix_fmt yuv420p {}", quote(&join(&format!("{name}.mp4"))))
+        format!("{pre}ffmpeg {input} -c:v libx264 -crf 18 -pix_fmt yuv420p {}", quote(&join(&format!("{name}.mp4"))))
     }
 }
 
@@ -262,6 +267,9 @@ mod tests {
             assert_eq!(c, "ffmpeg -framerate 25 -start_number 1 -i '/home/you/frames/flight%06d.png' -c:v libx264 -crf 18 -pix_fmt yuv420p '/home/you/frames/flight.mp4'");
             let t = ffmpeg_command(Path::new("/f"), "a", "png", 10, 2, 29.97, true);
             assert!(t.contains("-pattern_type glob") && t.contains("libvpx-vp9") && t.contains("-framerate 29.97"), "{t}");
+        } else {
+            let t = ffmpeg_command(Path::new("C:\\f"), "a", "png", 10, 2, 25.0, false);
+            assert_eq!(t, r#"cmd /c "(for %f in ("C:\f\a??????.png") do @echo file '%~ff') > "C:\f\a_frames.txt"" && ffmpeg -f concat -safe 0 -r 25 -i "C:\f\a_frames.txt" -c:v libx264 -crf 18 -pix_fmt yuv420p "C:\f\a.mp4""#);
         }
     }
 }
