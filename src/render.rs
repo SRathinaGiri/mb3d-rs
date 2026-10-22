@@ -1321,7 +1321,10 @@ fn finish_calculation(
     } else if post == 2 {
         post_process_reporting(sc, &p, &mut gbuf, threads, progress, stage, cancel)?;
     } else if sc.shadows.is_some() || sc.deao.is_some() {
+        // (a tile: the normals on the Z-buffer need the neighbour tiles,
+        // they run on the whole picture)
         let mut s2 = sc.clone();
+        s2.normals_on_zbuf = false;
         if s2.deao.is_none() {
             s2.ao = None;
         }
@@ -2157,6 +2160,11 @@ pub fn render_tiled_with(
             }
             let mut ts = sc.clone();
             ts.calc_rect = Some(t);
+            // (the DE occlusion uses the normals: after them, on the
+            // whole picture)
+            if sc.normals_on_zbuf {
+                ts.deao = None;
+            }
             let tck = ck.and_then(|s| open_checkpoint(&ts, &s.spec().name, policy));
             let (_, gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, 1, None, tck.as_ref())?;
             put(&mut full, &gbuf);
@@ -2172,6 +2180,17 @@ pub fn render_tiled_with(
     let mut fs = sc.clone();
     fs.calc_rect = None;
     let p = CalcParams::new(&fs)?;
+    // (in the order of post_process: the normals, the shadows (per tile),
+    // the occlusion)
+    if sc.normals_on_zbuf && p.slice_2d == 0 {
+        crate::reflect::normals_on_zbuf(&fs, &p, &mut full);
+        if let (Some(_), Some(d)) = (&sc.ao, &sc.deao) {
+            crate::deao::deao(&p, &mut full, wu, hu, d, thread_count(sc), progress, cancel);
+            if cancel() {
+                return Err("cancelled".into());
+            }
+        }
+    }
     if let (Some(ao), None) = (&sc.ao, &sc.deao) {
         ssao(&mut full, wu, hu, &p, ao, thread_count(sc));
     }
@@ -2324,5 +2343,17 @@ mod tests {
         keys.sort();
         keys.dedup();
         assert_eq!(keys.len(), n);
+    }
+
+    #[test]
+    fn tiles_with_normals_on_zbuf_match_the_whole_picture() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        (sc.width, sc.height, sc.threads) = (64, 48, 2);
+        sc.normals_on_zbuf = true;
+        let whole = crate::render(&sc, &|_, _| {}).unwrap();
+        sc.tiling = Some(crate::scene::Tiling { cols: 2, rows: 2, pos: None, downscale: 1 });
+        let t = render_tiled(&sc, true, &|_, _| {}, &|_, _, _| {}).unwrap();
+        assert!(t.gbuffer.unwrap() == whole.gbuffer);
+        assert_eq!(t.rgb, whole.rgb);
     }
 }
