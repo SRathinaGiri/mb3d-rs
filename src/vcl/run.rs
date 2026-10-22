@@ -4,7 +4,7 @@
 use super::canvas::Canvas;
 use super::control::Kind;
 use super::form::*;
-use super::input::{vk, Raw};
+use super::input::{vk, wheel_steps, Raw};
 use super::paint::caption_buttons;
 use super::ui::{App, Request, Ui, Waker};
 use std::collections::HashMap;
@@ -66,6 +66,8 @@ struct Runner<A: App> {
     /// the form in mouse-look mode
     look: Option<usize>,
     buttons: u8,
+    /// wheel delta short of a notch (120), for the next event
+    wheel_rest: i32,
 }
 
 /// The event loop. On Linux X11 is preferred, also on a Wayland desktop
@@ -111,6 +113,7 @@ pub fn run<A: App + 'static>(mut ui: Ui, app: A) -> Result<(), String> {
         caption_click: (Instant::now() - Duration::from_secs(10), usize::MAX),
         look: None,
         buttons: 0,
+        wheel_rest: 0,
     };
     el.run_app(&mut r).map_err(|e| e.to_string())
 }
@@ -1023,7 +1026,8 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                 if d != 0 {
                     let (x, y) = self.wins[&id].cursor;
                     let (cx, cy) = self.client_xy(fi, x, y);
-                    let raws = self.ui.forms[fi].wheel(d, cx, cy, shift_of(self.mods));
+                    let steps = wheel_steps(&mut self.wheel_rest, d);
+                    let raws = self.ui.forms[fi].wheel_by(d, steps, cx, cy, shift_of(self.mods));
                     self.dispatch(fi, raws);
                 }
             }

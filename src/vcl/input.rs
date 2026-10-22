@@ -45,6 +45,20 @@ fn raw(id: Id, name: &'static str, ev: Ev) -> Raw {
     Raw { id, name, ev }
 }
 
+/// Adds a wheel event's `delta` to what was left over and returns the
+/// whole notches (120 each, at most 10) in it, the sign of the turn kept;
+/// the rest waits for the next event (touchpads, hi-res wheels).
+pub fn wheel_steps(rest: &mut i32, delta: i32) -> i32 {
+    if delta.signum() != rest.signum() {
+        *rest = 0;
+    }
+    *rest += delta;
+    let n = (rest.abs() / 120).min(10);
+    let steps = n * rest.signum();
+    *rest = if n == 10 { 0 } else { *rest - steps * 120 };
+    steps
+}
+
 const REPEAT_FIRST: Duration = Duration::from_millis(400);
 const REPEAT_NEXT: Duration = Duration::from_millis(60);
 
@@ -691,7 +705,14 @@ impl Form {
         out
     }
 
+    /// A wheel event of whole notches.
     pub fn wheel(&mut self, delta: i32, x: i32, y: i32, shift: u8) -> Vec<Raw> {
+        self.wheel_by(delta, wheel_steps(&mut 0, delta), x, y, shift)
+    }
+
+    /// `steps`: the whole notches of `delta` (see `wheel_steps`), the
+    /// controls scroll by them; `OnMouseWheel` gets `delta` itself.
+    pub fn wheel_by(&mut self, delta: i32, steps: i32, x: i32, y: i32, shift: u8) -> Vec<Raw> {
         let mut out = Vec::new();
         self.layout();
         self.hint = None;
@@ -700,7 +721,7 @@ impl Form {
             let lr = combo_list_rect(self, id);
             let ih = line_height(&self.font(id)) + 2;
             let vis = (lr.h - 2) / ih;
-            let t = (top - delta.signum() * 3).clamp(0, (n - vis).max(0));
+            let t = (top - steps * 3).clamp(0, (n - vis).max(0));
             self.popup = Some(Popup::Combo { id, hot, top: t });
             self.dirty = true;
             return out;
@@ -722,7 +743,6 @@ impl Form {
                 k = self.ctl[id].parent;
                 continue;
             }
-            let steps = (delta / 120).max(1).min(10) * delta.signum();
             let kind = self.ctl[id].kind;
             let done = match kind {
                 Kind::ListBox => {
@@ -1864,5 +1884,34 @@ fn thousands(v: i64) -> String {
         format!("-{o}")
     } else {
         o
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wheel_steps;
+
+    #[test]
+    fn wheel_notches_both_ways() {
+        let mut r = 0;
+        assert_eq!(wheel_steps(&mut r, 240), 2);
+        assert_eq!(wheel_steps(&mut r, -240), -2);
+        assert_eq!(wheel_steps(&mut r, -120), -1);
+        assert_eq!(wheel_steps(&mut r, 120 * 30), 10);
+        assert_eq!(wheel_steps(&mut r, -120 * 30), -10);
+        assert_eq!(r, 0);
+    }
+
+    #[test]
+    fn wheel_partial_deltas_add_up() {
+        let mut r = 0;
+        assert_eq!(wheel_steps(&mut r, 40), 0);
+        assert_eq!(wheel_steps(&mut r, 40), 0);
+        assert_eq!(wheel_steps(&mut r, 60), 1);
+        assert_eq!(r, 20);
+        // turning back drops the rest
+        assert_eq!(wheel_steps(&mut r, -100), 0);
+        assert_eq!(wheel_steps(&mut r, -30), -1);
+        assert_eq!(r, -10);
     }
 }
