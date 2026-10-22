@@ -304,6 +304,12 @@ pub fn abort_all() {
     ABORT.store(true, std::sync::atomic::Ordering::SeqCst);
 }
 
+/// True once [`abort_all`] was called: card work that failed then was
+/// stopped, it did not fail.
+pub fn aborted() -> bool {
+    ABORT.load(std::sync::atomic::Ordering::SeqCst)
+}
+
 /// Waits (at most `max`) until no calculation is on the card any more and
 /// no shader is being compiled, after [`abort_all`]: a process that exits
 /// while a thread is inside the driver crashes there (a Monte Carlo render

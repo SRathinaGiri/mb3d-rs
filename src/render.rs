@@ -463,6 +463,10 @@ fn calculate_inner(
                 p.gpu_post = Some(job);
                 return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
             }
+            // (stopped, not failed: the card's rows stay in the checkpoint)
+            if cancel() || crate::gpu::aborted() {
+                return Err("cancelled".into());
+            }
         }
     }
     let p = p;
@@ -1261,7 +1265,7 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
             crate::gpu::set_status(format!("GPU {} (continued)", crate::gpu::name().unwrap_or_default()));
             Ok(Some(gbuf))
         }
-        Err(_) if cancel() => Err("cancelled".into()),
+        Err(_) if cancel() || crate::gpu::aborted() => Err("cancelled".into()),
         Err(e) => {
             crate::gpu::set_status(format!("CPU: GPU error: {e}"));
             Ok(None)
