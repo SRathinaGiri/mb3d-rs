@@ -79,6 +79,58 @@ pub fn slowdown(measured: f64, prior: f64) -> f64 {
     (measured / prior).clamp(0.1, 10.0)
 }
 
+/// The model's stage ratios as this computer finds them: the log of a
+/// stage's time over the model's expectation, smoothed over the stages
+/// measured (hard shadows and ambient occlusion, reflections, depth of
+/// field; on the card and on the CPU apart). Kept in the ini, so the model's
+/// bias on this computer is gone after a few renders.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Calib {
+    /// the log ratios, and how many stages each was learnt from
+    pub log: [[f64; 3]; 2],
+    pub n: [[u32; 3]; 2],
+}
+
+impl Calib {
+    /// From the ini's line (six numbers and their counts), none without one.
+    pub fn parse(s: Option<&str>) -> Calib {
+        let v: Vec<f64> = s.unwrap_or("").split_whitespace().filter_map(|x| x.parse().ok()).collect();
+        if v.len() != 12 {
+            return Calib::default();
+        }
+        let mut c = Calib::default();
+        for i in 0..6 {
+            c.log[i / 3][i % 3] = v[i];
+            c.n[i / 3][i % 3] = v[6 + i] as u32;
+        }
+        c
+    }
+
+    pub fn text(&self) -> String {
+        let logs = self.log.iter().flatten().map(|x| format!("{x:.3}"));
+        let ns = self.n.iter().flatten().map(|n| n.to_string());
+        logs.chain(ns).collect::<Vec<_>>().join(" ")
+    }
+
+    /// What the model's expectation of stage `k` is multiplied by.
+    pub fn factor(&self, card: bool, k: usize) -> f64 {
+        self.log[card as usize][k].exp()
+    }
+
+    /// A stage took `measured` where the model expected `expected`: the
+    /// mean of the first few, then moving (a computer changes).
+    pub fn learn(&mut self, card: bool, k: usize, measured: f64, expected: f64) {
+        if measured < 0.5 || expected < 0.5 {
+            return;
+        }
+        let l = (measured / expected).ln().clamp(0.05f64.ln(), 20f64.ln());
+        let (c, n) = (&mut self.log[card as usize][k], &mut self.n[card as usize][k]);
+        let w = (1.0 / (*n as f64 + 1.0)).max(0.3);
+        *c = (1.0 - w) * *c + w * l;
+        *n += 1;
+    }
+}
+
 /// Items of about the same cost one after another (Monte Carlo passes,
 /// animation frames, tiles): the time each takes from those finished, and
 /// the time left with the running item's own estimate.
@@ -316,6 +368,27 @@ mod tests {
         assert!((at(BLEND_HALF) - 15.0).abs() < 1e-9);
         assert!(at(0.02) > at(0.04) && at(0.04) > at(0.5));
         assert!((at(1.0) - 10.0).abs() < 1.0);
+    }
+
+    #[test]
+    fn calibration_learns_the_models_bias() {
+        let mut c = Calib::default();
+        // the model expects 10 s, the stage takes 40 s: learnt at once, and
+        // a stage of 20 s then averages in
+        c.learn(true, 1, 40.0, 10.0);
+        assert!((c.factor(true, 1) - 4.0).abs() < 1e-9);
+        c.learn(true, 1, 20.0, 10.0);
+        let f = c.factor(true, 1);
+        assert!(f > 2.7 && f < 2.9, "{f}");
+        assert_eq!(c.factor(false, 1), 1.0);
+        // round trip through the ini, and a bad line
+        let back = Calib::parse(Some(&c.text()));
+        assert!((back.factor(true, 1) - f).abs() < 0.01);
+        assert_eq!(back.n, c.n);
+        assert_eq!(Calib::parse(Some("1 2")), Calib::default());
+        // too short to tell: unchanged
+        c.learn(false, 0, 0.1, 10.0);
+        assert_eq!(c.factor(false, 0), 1.0);
     }
 
     #[test]

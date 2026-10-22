@@ -62,6 +62,8 @@ pub struct State {
     /// time of a continued calculation's rows done before it
     rate: RateEma,
     slow: [f64; 2],
+    /// the model's expectations as this computer finds them (see eta::Calib)
+    calib: super::eta::Calib,
     before_secs: f64,
     /// how long each later stage takes relative to the main rendering (the
     /// model's, from [`super::eta::later_ratios`]), and the whole
@@ -174,6 +176,7 @@ impl Default for State {
             total_shown: None,
             rate: RateEma::default(),
             slow: [1.0; 2],
+            calib: Default::default(),
             before_secs: 0.0,
             later_ratio: [0.0; 3],
             progress_shown: 0.0,
@@ -868,7 +871,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     app.main.stage_shown = "main rendering".into();
     let later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
     let sig = if calc3d { picture_sig(&app.scene) } else { String::new() };
-    app.main.start_eta(&app.scene, later, sig);
+    app.main.start_eta(&app.scene, later, sig, super::eta::Calib::parse(app.ini.get_extra("eta_calib")));
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     for l in ["Label8", "Label48", "Label50"] {
@@ -902,7 +905,7 @@ fn start_stereo_pair(app: &mut Mb3d, ui: &mut Ui) {
     };
     app.main.calc3d = true;
     app.main.stage_shown = "stereo: rendering left eye".into();
-    app.main.start_eta(&app.scene, Vec::new(), String::new());
+    app.main.start_eta(&app.scene, Vec::new(), String::new(), super::eta::Calib::parse(app.ini.get_extra("eta_calib")));
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     ui.set_visible(F, "ProgressBar1", true);
@@ -1055,7 +1058,8 @@ enum Prior {
 
 impl State {
     /// A 3D calculation begins: the time left starts over.
-    fn start_eta(&mut self, sc: &Scene, later: Vec<Later>, sig: String) {
+    fn start_eta(&mut self, sc: &Scene, later: Vec<Later>, sig: String, calib: super::eta::Calib) {
+        self.calib = calib;
         self.calc_start = Instant::now();
         self.stage_start = Instant::now();
         self.stage_compile = compile_secs();
@@ -1096,11 +1100,16 @@ impl State {
             Kind::Main => self.last_main.filter(|_| same).map(|t| (t, Prior::Last)),
             Kind::Later(k) => match self.last_secs[k as usize].filter(|_| same) {
                 Some(t) => Some((t, Prior::Last)),
-                None => self.main_full.map(|full| (self.later_ratio[k as usize] * full, Prior::Model)),
+                None => self.main_full.map(|full| (self.later_ratio[k as usize] * full * self.calib.factor(self.on_card(), k as usize), Prior::Model)),
             },
             Kind::Eye(1) => self.eye_secs.map(|t| (t, Prior::Last)),
             _ => None,
         }
+    }
+
+    /// Whether the card takes part (the model's feature).
+    fn on_card(&self) -> bool {
+        self.eta_f[2] > 0.5
     }
 
     /// The prior at this run's pace: slower or faster than last time as
@@ -1243,8 +1252,9 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let prior = curve.or_else(|| m.expected(kind).map(|t| (t - spent).max(0.0))).map(|t| t * (1.0 - base));
     let whole = super::eta::blend(measured, prior, g)
         .filter(|_| prior.is_some() || (secs >= 3.0 && g >= 0.02))
-        // (a stage without progress that runs past its prior: nothing to say)
-        .filter(|t| measured.is_some() || *t > work + 1.0);
+        // (a stage without progress that runs past its prior: nothing to say;
+        // one whose progress is complete goes on for the stages to come)
+        .filter(|t| measured.is_some() || *t > work + 1.0 || f >= 1.0);
     // (a later stage's compile: what it still takes, on top)
     let compile = if compiling && !main { super::eta::compile_left(m.stage_start).unwrap_or(0.0) } else { 0.0 };
     let left = whole.map(|t| (t - work).max(0.0) + compile);
@@ -1381,9 +1391,16 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
     // slower or faster than its prior said: so will the stages to come be
     // (the shadows and the occlusion share one: once both ran; not from a
     // stage that waited for its shaders)
+    let mut learned = None;
     if !(cold_stage && kind != Kind::Main) && next.is_none_or(|n| kind_of(n) != kind) {
         if let Some((p, src)) = m.prior(kind) {
             m.slow[src as usize] = super::eta::slowdown(whole, p);
+            // the model's expectation on this computer (kept for next time)
+            if let (Kind::Later(k), Prior::Model) = (kind, src) {
+                let card = m.on_card();
+                m.calib.learn(card, k as usize, whole, p / m.calib.factor(card, k as usize));
+                learned = Some(m.calib.text());
+            }
         }
     }
     match kind {
@@ -1408,6 +1425,10 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
     }
     m.stage_cold = 0.0;
     m.cold_from = None;
+    if let Some(text) = learned {
+        app.ini.set_extra("eta_calib", &text);
+        let _ = app.ini.save();
+    }
 }
 
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
