@@ -899,6 +899,14 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.68](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.68) · 22 Oct 2026, 16:35 UTC
+
+| Commit | What it does |
+|---|---|
+| [`625cb00`](https://github.com/thr32423/mb3d-rs/commit/625cb009bd35528942c989f6862a3850df0cf0ba) | Version number and release notes of this release |
+| [`67f0c4d`](https://github.com/thr32423/mb3d-rs/commit/67f0c4de66b704af608d30ff860a83f269656898) | Monte Carlo on the card: a pass no longer hangs when a thread's turn had nothing to march |
+| [`11762fe`](https://github.com/thr32423/mb3d-rs/commit/11762fe38584735f968005c9fd69d4c24d15091e) | README: Updates for v0.2.67 |
+
 ### [v0.2.67](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.67) · 22 Oct 2026, 11:14 UTC
 
 | Commit | What it does |
@@ -1021,19 +1029,7 @@ of a release are on its page. Times are in UTC.
 | [`2e0ea4b`](https://github.com/thr32423/mb3d-rs/commit/2e0ea4bffc129965b7a38dfb665f51bfcc2f9bab) | Reflections: the CPU workers no longer wait forever when the card fails |
 | [`c2ae0e7`](https://github.com/thr32423/mb3d-rs/commit/c2ae0e7b4ffe247e72a4a914868eeb2198342610) | .m3k files keep stereo and transparency |
 
-### [v0.2.65](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.65) · 21 Oct 2026, 15:27 UTC
-
-| Commit | What it does |
-|---|---|
-| [`f28eac1`](https://github.com/thr32423/mb3d-rs/commit/f28eac1602ef842b9e66b3f98a686d0e7a99ce00) | Version number and release notes of this release |
-| [`6655c59`](https://github.com/thr32423/mb3d-rs/commit/6655c59db2127c1138b989b2a92cabffd8890e8a) | README: guides and help in the wiki |
-| [`341d840`](https://github.com/thr32423/mb3d-rs/commit/341d8400a92ff04d98de61de900b781331b5a547) | README: newest releases only; the whole history in docs/UPDATES.md |
-| [`92753a5`](https://github.com/thr32423/mb3d-rs/commit/92753a5b0c65d635fbb75073b75c3ec4bd3d047c) | README: Updates for v0.2.64 |
-| [`be968e4`](https://github.com/thr32423/mb3d-rs/commit/be968e4897b3c0af6dd8c92bb121e825a25eae2d) | Group auxiliary Windows forms under main taskbar entry |
-| [`0c6e8a0`](https://github.com/thr32423/mb3d-rs/commit/0c6e8a0b0fb9dd86d0ab7dcc1689991241bb0bb8) | Restore navigator coordinate triad |
-| [`4a5aa72`](https://github.com/thr32423/mb3d-rs/commit/4a5aa724fb160d15cfe8ad490c10488d08ae5335) | Auto-save completed stereo renders |
-
-All 78 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 79 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
