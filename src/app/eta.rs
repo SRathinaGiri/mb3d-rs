@@ -70,13 +70,13 @@ pub fn blend(measured: Option<f64>, prior: Option<f64>, g: f64) -> Option<f64> {
 }
 
 /// How much slower a stage ran than its prior said (1 for a prior too
-/// short to tell), held within 0.25..4: the factor for the priors of the
+/// short to tell), held within 0.1..10: the factor for the priors of the
 /// stages still to come.
 pub fn slowdown(measured: f64, prior: f64) -> f64 {
     if prior < 0.5 || measured <= 0.0 {
         return 1.0;
     }
-    (measured / prior).clamp(0.25, 4.0)
+    (measured / prior).clamp(0.1, 10.0)
 }
 
 /// Items of about the same cost one after another (Monte Carlo passes,
@@ -163,6 +163,16 @@ pub fn scene_features(sc: &Scene) -> [f32; FEATURES] {
 /// far the rays marched and the pixels per second.
 pub fn march_features(f: &mut [f32; FEATURES], e: &Inner, secs: f64) {
     let rows = e.rows.load(Ordering::Relaxed).max(1) as f32;
+    if e.rows_px.load(Ordering::Relaxed) == 0 {
+        // no row yet: the probe that weighed the rows saw the picture (its
+        // pace is the calculation's, it took the same path)
+        if let Some(p) = crate::render::work_probe() {
+            f[4] = p.surface as f32;
+            f[5] = (p.mean_steps + 1.0).ln() as f32;
+            f[6] = (p.pixels as f64 / p.seconds.max(0.001) / 1e6).max(1e-6).ln() as f32;
+        }
+        return;
+    }
     let px = e.rows_px.load(Ordering::Relaxed).max(1) as f64;
     f[3] = (crate::render::CARD_ROWS.load(Ordering::Relaxed) as f32 / rows).min(1.0);
     f[4] = (e.rows_hits.load(Ordering::Relaxed) as f64 / px) as f32;
@@ -316,8 +326,8 @@ mod tests {
         let priors = [40.0, 10.0];
         let rest: f64 = priors.iter().map(|p| p * k).sum();
         assert!((rest - 75.0).abs() < 1e-9);
-        assert_eq!(slowdown(100.0, 1.0), 4.0);
-        assert_eq!(slowdown(1.0, 100.0), 0.25);
+        assert_eq!(slowdown(100.0, 1.0), 10.0);
+        assert_eq!(slowdown(1.0, 100.0), 0.1);
         // (a prior too short to tell, no measurement: as expected)
         assert_eq!(slowdown(3.0, 0.1), 1.0);
         assert_eq!(slowdown(0.0, 10.0), 1.0);

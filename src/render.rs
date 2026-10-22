@@ -130,6 +130,8 @@ pub struct WorkProbe {
     pub surface: f64,
     pub mean_steps: f64,
     pub seconds: f64,
+    /// the pixels it marched (its pace: `pixels / seconds`)
+    pub pixels: usize,
 }
 
 static WORK_PROBE: std::sync::Mutex<Option<WorkProbe>> = std::sync::Mutex::new(None);
@@ -179,6 +181,7 @@ fn row_weights(sc: &Scene, p: &CalcParams, cancel: &(dyn Fn() -> bool + Sync)) -
         surface: g.iter().filter(|s| !s.is_background()).count() as f64 / n,
         mean_steps: g.iter().map(|s| (s.shadow & 0x3FF) as f64).sum::<f64>() / n,
         seconds: t.elapsed().as_secs_f64(),
+        pixels: g.len(),
     };
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
         eprintln!("  work probe: {pw}x{ph} in {:.0} ms, {:.0} % surface, {:.0} DE steps per pixel", probe.seconds * 1000.0, probe.surface * 100.0, probe.mean_steps);

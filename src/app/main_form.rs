@@ -94,6 +94,11 @@ pub struct State {
     /// [`compile_secs`]), and whether the main rendering compiled hardly
     /// any (its time is then a measure for the later stages' ratios)
     stage_compile: f64,
+    /// the running stage's seconds with the card's shaders compiling (a
+    /// later stage's: not its pace, nor a prior for next time), and since
+    /// when they compile now
+    stage_cold: f64,
+    cold_from: Option<f64>,
     /// the running stage's progress over its time, (progress, seconds); the
     /// stages' of this calculation and of the last one finished (`last_sig`)
     /// by name: the same picture again progresses alike (its hard rows
@@ -184,6 +189,8 @@ impl Default for State {
             last_sig: String::new(),
             eye_secs: None,
             stage_compile: 0.0,
+            stage_cold: 0.0,
+            cold_from: None,
             samples: Vec::new(),
             eta_f: [0.0; super::eta::FEATURES],
             calc_compile: 0.0,
@@ -1052,6 +1059,8 @@ impl State {
         self.calc_start = Instant::now();
         self.stage_start = Instant::now();
         self.stage_compile = compile_secs();
+        self.stage_cold = 0.0;
+        self.cold_from = None;
         self.calc_compile = compile_secs();
         self.later = later;
         self.passed.clear();
@@ -1175,7 +1184,23 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
         Kind::Eye(i) => ((f - 0.5 * i as f64) * 2.0, 0.0),
         _ => (f, base),
     };
-    let compiling = main && shaders_compiling();
+    let compiling = shaders_compiling();
+    // a later stage with the card's shaders compiling: its time so far is
+    // not its pace (the main rendering's: `compiling_main`)
+    if compiling {
+        m.cold_from.get_or_insert(secs);
+    } else if let Some(c) = m.cold_from.take() {
+        m.stage_cold += secs - c;
+    }
+    let cold = m.stage_cold + m.cold_from.map_or(0.0, |c| secs - c);
+    let work = if main { secs } else { secs - cold };
+    if compiling && !main {
+        if let Kind::Later(k) = kind {
+            m.later_cold[k as usize] = true;
+        }
+        m.samples.clear();
+        m.rate = RateEma::default();
+    }
     // a sample at most every quarter second: the pace, and the curve
     if f > 0.0 && m.samples.last().is_none_or(|s| secs - s.1 >= 0.25 && f > s.0) {
         if let Some(&(f0, t0)) = m.samples.last() {
@@ -1192,17 +1217,19 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     if main && m.main_cold && !compiling && m.f_compiled.is_none() {
         m.f_compiled = Some(f);
     }
-    if compiling {
+    if compiling && main {
         m.samples.clear();
         m.rate = RateEma::default();
         m.main_cold = true;
     }
     // the stage's whole time as measured: at its pace, the rest of it (none
     // once its progress is complete but it goes on, e.g. an eye's shadows)
-    let measured = if compiling {
+    let measured = if compiling && main {
         compiling_main(m, f, base, secs).map(|l| secs + l)
+    } else if compiling {
+        None
     } else {
-        m.rate.rate().filter(|_| f < 1.0).map(|r| secs + (1.0 - f) / r)
+        m.rate.rate().filter(|_| f < 1.0).map(|r| work + (1.0 - f) / r)
     };
     // and as expected before it ran (a continued one: the rows it has
     // left; the occlusion after the shadows: what is left of their
@@ -1217,18 +1244,10 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let whole = super::eta::blend(measured, prior, g)
         .filter(|_| prior.is_some() || (secs >= 3.0 && g >= 0.02))
         // (a stage without progress that runs past its prior: nothing to say)
-        .filter(|t| measured.is_some() || *t > secs + 1.0);
-    // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
-    if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
-        eprintln!(
-            "eta {stage}: secs {secs:.1} f {f:.3} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} slow {:?} ratio {:?} main_full {:?}",
-            m.rate.rate(),
-            m.slow,
-            m.later_ratio,
-            m.main_full
-        );
-    }
-    let left = whole.map(|t| (t - secs).max(0.0));
+        .filter(|t| measured.is_some() || *t > work + 1.0);
+    // (a later stage's compile: what it still takes, on top)
+    let compile = if compiling && !main { super::eta::compile_left(m.stage_start).unwrap_or(0.0) } else { 0.0 };
+    let left = whole.map(|t| (t - work).max(0.0) + compile);
     if main && !compiling {
         // the time a whole main rendering takes, for the model's ratios
         // (after the card's shaders compiled: at the pace since)
@@ -1242,6 +1261,16 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     // the stages to come (the right eye as long as the left one looks)
     let rest = m.following(kind).iter().map(|k| m.expected(*k).or(whole.filter(|_| *k == Kind::Eye(1)))).sum::<Option<f64>>();
     let total = left.zip(rest).map(|(l, r)| l + r);
+    // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
+    if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
+        eprintln!(
+            "eta {stage}: secs {secs:.1} f {f:.3} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} rest {rest:?} slow {:?} ratio {:?} main_full {:?}",
+            m.rate.rate(),
+            m.slow,
+            m.later_ratio,
+            m.main_full
+        );
+    }
     // (shown smoothed; what was shown stays while there is no estimate,
     // e.g. the first seconds of a stage without a prior, counting down)
     let stage_shown = left.map(|l| smooth_shown(m.stage_left_shown, l, now));
@@ -1341,14 +1370,18 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
     // the stage as a whole (the main rendering's: the whole picture's;
     // when the card's shaders compiled meanwhile, at the pace it had after:
     // the later stages' ratios are to a main rendering without compiling)
+    // (a later stage's time with the card's shaders compiling is not its own)
+    let cold_stage = m.stage_cold > 0.0 || m.cold_from.is_some();
+    let work = secs - m.stage_cold - m.cold_from.map_or(0.0, |c| secs - c);
     let whole = match kind {
         Kind::Main => after_compile.unwrap_or(secs / (1.0 - base).max(0.02)),
-        Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0) + secs,
+        Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0) + work,
         _ => secs,
     };
     // slower or faster than its prior said: so will the stages to come be
-    // (the shadows and the occlusion share one: once both ran)
-    if next.is_none_or(|n| kind_of(n) != kind) {
+    // (the shadows and the occlusion share one: once both ran; not from a
+    // stage that waited for its shaders)
+    if !(cold_stage && kind != Kind::Main) && next.is_none_or(|n| kind_of(n) != kind) {
         if let Some((p, src)) = m.prior(kind) {
             m.slow[src as usize] = super::eta::slowdown(whole, p);
         }
@@ -1368,11 +1401,13 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
             // (the shadows and the occlusion one after the other on the CPU:
             // together)
             m.later_secs[k as usize] = Some(whole);
-            m.later_cold[k as usize] |= compiled > 0.0 || shaders_compiling();
+            m.later_cold[k as usize] |= compiled > 0.0 || shaders_compiling() || cold_stage;
         }
         Kind::Eye(0) => m.eye_secs = Some(secs),
         _ => {}
     }
+    m.stage_cold = 0.0;
+    m.cold_from = None;
 }
 
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
@@ -1412,6 +1447,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 }
                 app.main.stage_start = Instant::now();
                 app.main.stage_compile = compile_secs();
+                app.main.stage_cold = 0.0;
+                app.main.cold_from = None;
             }
             app.main.stage_base = base as f64;
             let Left { stage: left, total, progress: p } = time_left(app, &stage, f as f64, base as f64);
