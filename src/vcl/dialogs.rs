@@ -30,6 +30,9 @@ pub(crate) struct FileDlg {
     entries: Vec<(bool, String)>,
     /// a preview column: a clicked file goes to `Ui::file_preview`
     preview: bool,
+    /// Enter in DirEdit was handled there (Delphi's Key := #0): the default
+    /// button's click that follows it is dropped
+    eat_ok: bool,
 }
 
 /// Options of a file dialog (TOpenDialog / TSaveDialog properties).
@@ -321,6 +324,7 @@ impl Ui {
             folder: o.folder,
             entries: Vec::new(),
             preview: o.preview,
+            eat_ok: false,
         };
         {
             let f = &mut self.forms[i];
@@ -477,7 +481,12 @@ impl Ui {
         let is_file = matches!(self.dialogs.get(&i), Some(DialogState::File(_)));
         let is_color = matches!(self.dialogs.get(&i), Some(DialogState::Color { .. }));
         if is_file {
+            let eat_ok = match self.dialogs.get_mut(&i) {
+                Some(DialogState::File(d)) => std::mem::take(&mut d.eat_ok),
+                _ => false,
+            };
             match (name.as_str(), r.name) {
+                ("OkBtn", "OnClick") if eat_ok => {}
                 ("OkBtn", "OnClick") => {
                     self.file_accept(i);
                 }
@@ -495,11 +504,12 @@ impl Ui {
                 }
                 ("DirEdit", "OnKeyPress") if r.ev == Ev::KeyPress('\r') => {
                     let t = PathBuf::from(self.forms[i].c("DirEdit").text.trim());
-                    if t.is_dir() {
-                        if let Some(DialogState::File(d)) = self.dialogs.get_mut(&i) {
+                    if let Some(DialogState::File(d)) = self.dialogs.get_mut(&i) {
+                        d.eat_ok = true;
+                        if t.is_dir() {
                             d.dir = t;
+                            self.file_refresh(i);
                         }
-                        self.file_refresh(i);
                     }
                 }
                 ("FileList", "OnClick") => {
