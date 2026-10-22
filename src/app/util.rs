@@ -108,38 +108,6 @@ pub fn time_str(tenths: i64) -> String {
     }
 }
 
-/// A time left, rounded: "40 s", "3 min", "2 h 5 min".
-pub fn about_str(secs: f64) -> String {
-    let s = secs.round() as i64;
-    match s {
-        ..=59 => format!("{} s", s.max(1)),
-        60..=3599 => format!("{} min", (s + 30) / 60),
-        _ => format!("{} h {} min", s / 3600, s % 3600 / 60),
-    }
-}
-
-/// A time left as shown, smoothed: `shown` the last one and when, `est`
-/// the new estimate; it counts down meanwhile and moves toward the
-/// estimate over about `tau` seconds (at once when it is twice as far or
-/// half as far).
-pub fn smooth_left(shown: Option<(f64, std::time::Instant)>, est: f64, tau: f64) -> (f64, std::time::Instant) {
-    let now = std::time::Instant::now();
-    let v = match shown {
-        Some((v, t)) => {
-            let dt = (now - t).as_secs_f64();
-            let was = (v - dt).max(0.0);
-            // (far off, e.g. once the graphics card joined: at once)
-            if est > 2.0 * was || est < 0.5 * was {
-                est
-            } else {
-                was + (est - was) * (1.0 - (-dt / tau).exp())
-            }
-        }
-        None => est,
-    };
-    (v, now)
-}
-
 /// A time left as the window shows it, and when.
 pub type Shown = (f64, std::time::Instant);
 
