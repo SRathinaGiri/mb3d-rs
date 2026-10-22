@@ -1593,7 +1593,7 @@ object Mand3DForm: TMand3DForm
           Hint = 'Defines the realworld image width on the screen in meters.'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 0
+          TabOrder = 2
           Text = '1.0'
           OnChange = SpinEdit2Change
         end
@@ -1620,22 +1620,34 @@ object Mand3DForm: TMand3DForm
             ' appear.'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 2
+          TabOrder = 3
           Text = '1.5'
           OnChange = SpinEdit2Change
         end
         object Button12: TButton
           Tag = 1
           Left = 8
-          Top = 175
+          Top = 170
           Width = 131
           Height = 22
-          Hint = 'Render both eye images and show a side-by-side stereo preview.'
+          Hint = 'Render both eye images and show a side-by-side stereo preview without saving it.'
           Caption = 'Render stereo pair'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 3
+          TabOrder = 6
           OnClick = StereoPairClick
+        end
+        object StereoPairSaveButton: TButton
+          Left = 8
+          Top = 198
+          Width = 131
+          Height = 22
+          Hint = 'Choose a filename, then render both eye images and save the completed stereo pair automatically.'
+          Caption = 'Render && save stereo pair'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 7
+          OnClick = StereoPairSaveClick
         end
         object StereoCrossCheck: TCheckBox
           Left = 8
@@ -1646,7 +1658,7 @@ object Mand3DForm: TMand3DForm
           Caption = 'Cross-eyed preview'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 7
+          TabOrder = 0
         end
         object Button17: TButton
           Tag = 4
@@ -1661,7 +1673,7 @@ object Mand3DForm: TMand3DForm
           Caption = 'Get min.dist. from image'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 4
+          TabOrder = 8
           Visible = False
           OnClick = Button16Click
         end
@@ -1678,7 +1690,7 @@ object Mand3DForm: TMand3DForm
           Caption = 'Calculate left eye image'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 5
+          TabOrder = 4
           OnClick = Button12Click
         end
         object Button6: TButton
@@ -1694,7 +1706,7 @@ object Mand3DForm: TMand3DForm
           Caption = 'Calculate right eye image'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 6
+          TabOrder = 5
           OnClick = Button12Click
         end
       end
