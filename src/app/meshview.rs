@@ -215,7 +215,9 @@ pub fn render(m: &GlMesh, v: &View, style: Style, ap: &Appearance, w: usize, h: 
         let e = xf(&mv, [p[0] as f64, p[1] as f64, p[2] as f64, 1.0]);
         let c = xf(&pr, e);
         eye.push([e[0], e[1], e[2]]);
-        if c[3] <= 1e-9 {
+        // (in front of the near plane: no clipping, its faces and edges go;
+        // a tiny w would put it millions of pixels away)
+        if c[3] < NEAR {
             win.push(None);
         } else {
             let (nx, ny, nz) = (c[0] / c[3], c[1] / c[3], c[2] / c[3]);
@@ -363,9 +365,25 @@ pub fn render(m: &GlMesh, v: &View, style: Style, ap: &Appearance, w: usize, h: 
         for fc in &m.faces {
             for (p, q) in [(fc[0], fc[1]), (fc[1], fc[2])] {
                 let (Some(a), Some(b)) = (win.get(p as usize).copied().flatten(), win.get(q as usize).copied().flatten()) else { continue };
-                let steps = (b[0] - a[0]).abs().max((b[1] - a[1]).abs()).ceil().max(1.0) as i64;
+                // the part of the edge on the screen (Liang-Barsky)
+                let (mut t0, mut t1) = (0.0f64, 1.0f64);
+                for (d, lo, hi) in [(b[0] - a[0], -1.0 - a[0], w as f64 + 1.0 - a[0]), (b[1] - a[1], -1.0 - a[1], h as f64 + 1.0 - a[1])] {
+                    if d.abs() < 1e-12 {
+                        if lo > 0.0 || hi < 0.0 {
+                            t1 = -1.0;
+                        }
+                    } else {
+                        let (u, v) = if d > 0.0 { (lo / d, hi / d) } else { (hi / d, lo / d) };
+                        t0 = t0.max(u);
+                        t1 = t1.min(v);
+                    }
+                }
+                if t0 > t1 {
+                    continue;
+                }
+                let steps = ((b[0] - a[0]).abs().max((b[1] - a[1]).abs()) * (t1 - t0)).ceil().max(1.0) as i64;
                 for k in 0..=steps {
-                    let t = k as f64 / steps as f64;
+                    let t = t0 + (t1 - t0) * k as f64 / steps as f64;
                     let z = a[2] + (b[2] - a[2]) * t - 2e-5;
                     plot((a[0] + (b[0] - a[0]) * t) as i64, (a[1] + (b[1] - a[1]) * t) as i64, z, col, &mut img, &mut depth);
                 }
