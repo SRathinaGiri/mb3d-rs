@@ -547,6 +547,10 @@ impl Job {
         let owner = peers(swarm).into_iter().find(|p| p.id == self.owner_id);
         owner.is_none_or(|p| now.saturating_sub(p.time) > ORPHAN_SECS)
     }
+    /// The owner's heartbeat is stale or missing.
+    fn owner_gone(&self, swarm: &Path) -> bool {
+        peers(swarm).iter().find(|p| p.id == self.owner_id).is_none_or(|p| p.stale(now_secs()))
+    }
     /// The errors workers met in this job: (peer name, message).
     pub fn errors(&self) -> Vec<(String, String)> {
         let Ok(rd) = std::fs::read_dir(self.dir.join("errors")) else { return Vec::new() };
@@ -1402,11 +1406,13 @@ impl Kept {
     /// still in the swarm folder (their owner was killed, or went away:
     /// this one holds the checkpoint, so nobody else is collecting them)
     /// and removes those jobs; their units under way are continued by the
-    /// computers that had them when they get them again.
-    fn adopt(&self, swarm: &Path, ext: Option<&str>) {
+    /// computers that had them when they get them again. Only jobs whose
+    /// owner is gone (or is `own`, this program): the checkpoint is held on
+    /// this computer only, another one may be running the same render.
+    fn adopt(&self, swarm: &Path, own: &str, ext: Option<&str>) {
         let key = &self.store.spec().key;
         for j in jobs(swarm) {
-            if !j.done() && j.settings.get("resume_key") == Some(key) {
+            if !j.done() && j.settings.get("resume_key") == Some(key) && (j.owner_id == own || j.owner_gone(swarm)) {
                 self.take(&j.out_dir(), ext);
                 finish(&j, false);
             }
@@ -1487,7 +1493,7 @@ pub fn run_animation(swarm: &Path, anim: &Animation, frames: Option<&[usize]>, o
     };
     let kept = Kept::open(JobKind::Animation, &format!("{text}\nframes = {frames:?}"), &anim.name, names.clone(), opts).map(|c| Kept { depth: depth.clone(), ..c });
     if let Some(c) = &kept {
-        c.adopt(swarm, None);
+        c.adopt(swarm, heart.id(), None);
         c.mark(&mut settings);
     }
     let has = |k: usize| kept.as_ref().is_some_and(|c| c.has(k));
@@ -1597,7 +1603,7 @@ pub fn run_batch(swarm: &Path, items: &[BatchItem], outputs: &[PathBuf], bopts: 
     let depth: Vec<String> = if bopts.depth { names.iter().map(|n| depth_of(Path::new(n)).to_string_lossy().into_owned()).collect() } else { Vec::new() };
     let kept = Kept::open(JobKind::Batch, &text, &name, names.clone(), opts).map(|c| Kept { depth: depth.clone(), ..c });
     if let Some(c) = &kept {
-        c.adopt(swarm, None);
+        c.adopt(swarm, heart.id(), None);
         c.mark(&mut settings);
     }
     let todo: Vec<usize> = (0..items.len()).filter(|&k| !kept.as_ref().is_some_and(|c| c.has(k))).collect();
@@ -1699,7 +1705,7 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
     let kept = Kept::open(JobKind::MonteCarlo, &format!("{}\n{settings:?}", kept_text(scene)), "monte carlo", names, opts);
     if let Some(c) = &kept {
         c.store.put_extra("scene.m3s", scene.to_text().as_bytes());
-        c.adopt(swarm, None);
+        c.adopt(swarm, heart.id(), None);
         c.mark(&mut settings);
     }
     let todo: Vec<usize> = (0..units).filter(|&k| !kept.as_ref().is_some_and(|c| c.has(k))).collect();
@@ -1920,7 +1926,7 @@ fn run_tiles_job(
     let kept = Kept::open(JobKind::Tiles, &format!("{}\n{settings:?}", kept_text(&scene)), "picture", names, opts);
     if let Some(c) = &kept {
         c.store.put_extra("scene.m3s", scene.to_text().as_bytes());
-        c.adopt(swarm, Some("png"));
+        c.adopt(swarm, heart.id(), Some("png"));
         c.mark(&mut settings);
     }
     let todo: Vec<usize> = (0..tiles.len()).filter(|&i| !kept.as_ref().is_some_and(|c| c.has(i))).collect();
@@ -2941,6 +2947,18 @@ mod tests {
         let left: Vec<String> = jobs(&d).into_iter().map(|j| j.name).collect();
         assert_eq!(left, vec!["foreign"]);
         assert_eq!(jobs(&d)[0].progress(), (0, 1), "the foreign job was not rendered");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn a_job_is_adopted_only_when_its_owner_is_gone() {
+        let d = temp("adopt");
+        let other = Heart::new(&d, "other");
+        other.beat_now("rendering").unwrap();
+        let job = new_job(&d, JobKind::Batch, "live", &other, BTreeMap::new()).unwrap();
+        assert!(!job.owner_gone(&d));
+        other.leave();
+        assert!(job.owner_gone(&d));
         let _ = std::fs::remove_dir_all(&d);
     }
 
