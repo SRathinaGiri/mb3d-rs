@@ -402,6 +402,9 @@ fn move_slider(app: &mut Mb3d, ui: &mut Ui) {
             if t > 1 && xp < posof(l, t - 1) {
                 if out {
                     l.palette.swap(t - 1, t);
+                    if let Some(a) = l.palette_alpha.as_mut() {
+                        a.swap(t - 1, t);
+                    }
                 } else {
                     l.interior.swap(t - 1, t);
                     l.interior_spec.swap(t - 1, t);
@@ -410,6 +413,9 @@ fn move_slider(app: &mut Mb3d, ui: &mut Ui) {
             } else if t < n - 1 && xp > posof(l, t + 1) {
                 if out {
                     l.palette.swap(t + 1, t);
+                    if let Some(a) = l.palette_alpha.as_mut() {
+                        a.swap(t + 1, t);
+                    }
                 } else {
                     l.interior.swap(t + 1, t);
                     l.interior_spec.swap(t + 1, t);
