@@ -598,7 +598,8 @@ impl Form {
                 if !lv.rect.contains(x, y) {
                     continue;
                 }
-                if let Some((k, _)) = menu_item_rects(self, lv).into_iter().nth(lv.hot.max(0) as usize) {
+                // hot -1: the border or padding, no item
+                if let Some((k, _)) = usize::try_from(lv.hot).ok().and_then(|h| menu_item_rects(self, lv).into_iter().nth(h)) {
                     let c = &self.ctl[k];
                     if c.enabled && c.caption != "-" && menu_items(self, k).is_empty() {
                         self.popup = None;
