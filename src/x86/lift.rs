@@ -311,8 +311,9 @@ impl Ctx<'_> {
     fn write_rm(&mut self, k: usize, s: &mut State, rm: &Rm, size: u8, v: AVal) {
         match rm {
             Rm::Reg(r) if size == 4 => s.regs[*r as usize] = v,
-            // a part of a register: data
-            Rm::Reg(r) => s.regs[(*r & 3) as usize] = AVal::D,
+            // a part of a register: data (r = 4..7 are ah..bh for bytes)
+            Rm::Reg(r) if size == 1 => s.regs[(*r & 3) as usize] = AVal::D,
+            Rm::Reg(r) => s.regs[*r as usize] = AVal::D,
             Rm::Mem(m) => {
                 let a = self.access(k, s, m, true);
                 self.store(s, a, if size == 4 { v } else { AVal::D }, size as u32);
@@ -751,5 +752,27 @@ impl Prog {
         ctx.rep.problems.sort();
         ctx.rep.problems.dedup();
         Analysis { states, report: ctx.rep }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn report(code: &[u8]) -> LiftReport {
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, code).unwrap();
+        m.predecode(&[CODE_START]);
+        m.compile(CODE_START).expect("compiles").lift_report(false)
+    }
+
+    #[test]
+    fn word_write_clobbers_its_register() {
+        // mov esi, IT_BASE; mov si, ax; fld qword [esi]; fstp st0; ret
+        let mut code = vec![0xBE];
+        code.extend_from_slice(&IT_BASE.to_le_bytes());
+        code.extend_from_slice(&[0x66, 0x8B, 0xF0, 0xDD, 0x06, 0xDD, 0xD8, 0xC3]);
+        let r = report(&code);
+        assert!(r.accesses.iter().any(|(_, l, _)| *l == Loc::Unresolved), "{r:?}");
     }
 }
