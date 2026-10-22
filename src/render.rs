@@ -792,7 +792,8 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
                 while !flags[0].load(Ordering::SeqCst) {
                     std::thread::sleep(std::time::Duration::from_millis(5));
                 }
-                true
+                // (the card failed in the compile: no probe)
+                crate::gpu::enabled()
             }
             Err(_) => false,
         }

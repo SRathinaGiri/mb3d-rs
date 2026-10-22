@@ -878,6 +878,9 @@ fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipeli
         while !f.load(Ordering::SeqCst) {
             std::thread::sleep(std::time::Duration::from_millis(5));
         }
+        if LOST.load(Ordering::SeqCst) {
+            return Err("the graphics card was lost".into());
+        }
     }
     compile_entry(g, code, entry, layout, constants, key)
 }
@@ -1037,7 +1040,12 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
     list.push((key, flag.clone()));
     let f = flag.clone();
     std::thread::spawn(move || {
-        let _ = compile_entry(g, &code, entry, None, &constants, key);
+        // a panic (the device lost) switches the card off, as in `guard`:
+        // the waiters then find it off instead of waiting forever
+        if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| compile_entry(g, &code, entry, None, &constants, key))).is_err() {
+            LOST.store(true, Ordering::SeqCst);
+            set_status("CPU: the graphics card failed (compiling a shader); calculating on the CPU until the program is restarted".into());
+        }
         f.store(true, Ordering::SeqCst);
         PREPARING.lock().unwrap().retain(|(k, _)| *k != key);
     });
