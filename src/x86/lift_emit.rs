@@ -1425,7 +1425,8 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 let m = super::mask(u32::MAX, *size);
                 format!("{{ let v = {v}; let r = fl.alu(Alu::Sub, 0, v, {size}); fl.cf = v & {m:#x} != 0; {} }}", wr(c, rm, *size, "r")?)
             }
-            // one-operand mul / imul / div / idiv (Machine::exec)
+            // one-operand mul / imul / div / idiv (Machine::exec; a quotient
+            // out of range halts)
             Ins::Mul(rm, size) | Ins::IMul1(rm, size) => {
                 let sg = matches!(ins, Ins::IMul1(..));
                 let b = rd(c, rm, *size)?;
@@ -1439,9 +1440,9 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 let sg = matches!(ins, Ins::IDiv(..));
                 let b = rd(c, rm, *size)?;
                 match size {
-                    1 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = rg[EAX] & 0xFFFF; let (q, r) = if {sg} {{ let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32); ((n / d) as u32, (n % d) as u32) }} else {{ (n / b, n % b) }}; reg_set(&mut rg, 0, 1, q); reg_set(&mut rg, 4, 1, r); }}"),
-                    2 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] & 0xFFFF) << 16 | (rg[EAX] & 0xFFFF); let (q, r) = if {sg} {{ let (n, d) = (n as i32, b as u16 as i16 as i32); ((n / d) as u32, (n % d) as u32) }} else {{ (n / b, n % b) }}; reg_set(&mut rg, 0, 2, q); reg_set(&mut rg, 2, 2, r); }}"),
-                    _ => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if {sg} {{ let (n, d) = (n as i64, b as i32 as i64); ((n / d) as u32, (n % d) as u32) }} else {{ ((n / b as u64) as u32, (n % b as u64) as u32) }}; rg[EAX] = q; rg[EDX] = r; }}"),
+                    1 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = rg[EAX] & 0xFFFF; let (q, r) = if {sg} {{ let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32); let q = n / d; if q != q as i8 as i32 {{ return Err(EmuError::Halt(0)); }} (q as u32, (n % d) as u32) }} else {{ if n / b > 0xFF {{ return Err(EmuError::Halt(0)); }} (n / b, n % b) }}; reg_set(&mut rg, 0, 1, q); reg_set(&mut rg, 4, 1, r); }}"),
+                    2 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] & 0xFFFF) << 16 | (rg[EAX] & 0xFFFF); let (q, r) = if {sg} {{ let (n, d) = (n as i32, b as u16 as i16 as i32); match n.checked_div(d) {{ Some(q) if q == q as i16 as i32 => (q as u32, (n % d) as u32), _ => return Err(EmuError::Halt(0)) }} }} else {{ if n / b > 0xFFFF {{ return Err(EmuError::Halt(0)); }} (n / b, n % b) }}; reg_set(&mut rg, 0, 2, q); reg_set(&mut rg, 2, 2, r); }}"),
+                    _ => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if {sg} {{ let (n, d) = (n as i64, b as i32 as i64); match n.checked_div(d) {{ Some(q) if q == q as i32 as i64 => (q as u32, (n % d) as u32), _ => return Err(EmuError::Halt(0)) }} }} else {{ if n / b as u64 > u32::MAX as u64 {{ return Err(EmuError::Halt(0)); }} ((n / b as u64) as u32, (n % b as u64) as u32) }}; rg[EAX] = q; rg[EDX] = r; }}"),
                 }
             }
             Ins::Inc(rm, size) | Ins::Dec(rm, size) => {
@@ -1552,5 +1553,16 @@ mod tests {
         let w = p.emit_wgsl("f", false).expect("lifts").code;
         assert!(w.contains("{ let v = rg[4]; rg[4] = rg[4] - 4u; s2014l = (v); }"), "{w}");
         assert!(w.contains("\n    rg[4] = s2014l;\n"), "{w}");
+    }
+
+    #[test]
+    fn div_quotient_out_of_range_halts() {
+        // div ecx; idiv ecx; div cx; idiv cl; ret
+        let p = prog_of(&[0xF7, 0xF1, 0xF7, 0xF9, 0x66, 0xF7, 0xF1, 0xF6, 0xF9, 0xC3]);
+        let r = p.emit_lifted("f", false).expect("lifts");
+        assert!(r.contains("if n / b as u64 > u32::MAX as u64 { return Err(EmuError::Halt(0)); }"), "{r}");
+        assert!(r.contains("Some(q) if q == q as i32 as i64 =>"), "{r}");
+        assert!(r.contains("if n / b > 0xFFFF { return Err(EmuError::Halt(0)); }"), "{r}");
+        assert!(r.contains("if q != q as i8 as i32 { return Err(EmuError::Halt(0)); }"), "{r}");
     }
 }
