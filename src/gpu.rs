@@ -1886,10 +1886,18 @@ pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sha
 }
 
 fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
-    if tasks.is_empty() {
-        if let Some(sh) = share {
-            sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
+    // every way out (an error, a panic of the card) ends the card's part:
+    // the CPU's workers wait for `done`
+    struct Done<'a>(Option<&'a RaySharing>);
+    impl Drop for Done<'_> {
+        fn drop(&mut self) {
+            if let Some(sh) = self.0 {
+                sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
         }
+    }
+    let _done = Done(share);
+    if tasks.is_empty() {
         return Ok((Vec::new(), 0, Vec::new()));
     }
     if let Some(r) = unsupported(p) {
