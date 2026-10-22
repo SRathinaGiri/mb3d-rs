@@ -267,6 +267,9 @@ impl Engine {
     /// Starts a job; a running one is cancelled.
     pub fn start(&self, job: Job) {
         let gen = self.0.gen.fetch_add(1, Ordering::SeqCst) + 1;
+        // (under the job's lock: the worker ending the last job does not
+        // see it running without the new one, see `worker`)
+        let mut j = self.0.job.lock().unwrap();
         {
             let mut o = self.0.out.lock().unwrap();
             o.running = true;
@@ -274,7 +277,8 @@ impl Engine {
             o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. } | Job::Stereo { .. });
         }
         self.0.progress.store(0, Ordering::Relaxed);
-        *self.0.job.lock().unwrap() = Some((gen, job));
+        *j = Some((gen, job));
+        drop(j);
         self.0.cv.notify_all();
     }
 
@@ -529,7 +533,8 @@ fn worker(e: Arc<Inner>) {
         });
         e.busy.store(false, Ordering::SeqCst);
         // a newer job may already wait: only report when this one is the last
-        if e.job.lock().unwrap().is_none() {
+        let j = e.job.lock().unwrap();
+        if j.is_none() {
             e.finish(res.err());
         }
     }
