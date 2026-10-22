@@ -1,6 +1,7 @@
 //! Batch processing (BatchForm.pas) and big renders in tiles (Tiling.pas).
 
-use super::util::{fts, pti, ptf};
+use super::eta::{ItemsLeft, Pace};
+use super::util::{fts, left_str, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::scene::Scene;
 use crate::vcl::bitmap::Bitmap;
@@ -8,6 +9,7 @@ use crate::vcl::{DialogResult, Ev, Event, MouseButton, Ui};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 // ---------------------------------------------------------------------------
 // BatchForm1
@@ -20,6 +22,9 @@ pub struct BatchState {
     /// status > 0: rendering, < 0: stopping
     pub status: i32,
     pub index: usize,
+    /// the picture under way (1-based) and how many the run has
+    pub nr: usize,
+    pub total: usize,
 }
 
 fn batch_rows(ui: &Ui) -> Vec<Vec<String>> {
@@ -87,13 +92,40 @@ pub fn batch_next(app: &mut Mb3d, ui: &mut Ui) {
     batch_set_rows(ui, rows.clone());
     ui.cm(BF, "ListView1").checks = checks;
     if i < rows.len() {
+        app.batch.nr += 1;
         super::main_form::calc_mand(app, ui, true);
     } else {
         app.batch.status = 0;
         app.batch.index = usize::MAX;
         ui.set_enabled(BF, "Button1", true);
         ui.set_caption(BF, "Button1", "Start batch rendering");
+        ui.fm(BF).set_caption(BATCH_TITLE);
     }
+}
+
+const BATCH_TITLE: &str = "Batch processing";
+
+/// The window's title while the batch renders: "Batch processing: picture
+/// 3 of 8 · about 7 min left", the picture's time left as the main window
+/// shows it (the pictures differ too much for a total).
+pub fn batch_idle(app: &mut Mb3d, ui: &mut Ui) {
+    if app.batch.status <= 0 {
+        return;
+    }
+    let left = picture_left(&ui.caption(MAIN, "Label6")).map(|l| format!(" · {l}")).unwrap_or_default();
+    let text = format!("{BATCH_TITLE}: picture {} of {}{left}", app.batch.nr, app.batch.total);
+    if ui.fm(BF).caption() != text {
+        ui.fm(BF).set_caption(&text);
+    }
+}
+
+/// The time left in the main window's stage line ("main rendering · about
+/// 7 min left in total", "hard shadows: 40 % · 20 s left"): "about 7 min
+/// left" (None while it says none).
+fn picture_left(caption: &str) -> Option<&str> {
+    let (_, l) = caption.rsplit_once(" · ")?;
+    let l = l.strip_suffix(" in total").unwrap_or(l);
+    l.ends_with(" left").then_some(l)
 }
 
 /// A batch image is calculated: store the .m3i (and a PNG preview).
@@ -146,10 +178,13 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.eng.stop();
                 super::main_form::enable_buttons(app, ui);
                 ui.set_caption(BF, "Button1", "Start batch rendering");
+                ui.fm(BF).set_caption(BATCH_TITLE);
             } else {
                 ui.set_caption(BF, "Button1", "Stop batch rendering");
                 app.batch.status = 1;
                 app.batch.index = usize::MAX;
+                app.batch.nr = 0;
+                app.batch.total = ui.c(BF, "ListView1").checks.iter().filter(|c| **c).count();
                 batch_next(app, ui);
             }
         }
@@ -333,6 +368,15 @@ pub struct TilingState {
     pub status: Arc<Mutex<String>>,
     pub saved: Arc<AtomicUsize>,
     pub shown_saved: usize,
+    /// the time left: the running tile's progress (the weight of its rows
+    /// done, of all), when it began and its pace, the tiles' times, and
+    /// the time left as shown
+    pub tile_done: Arc<AtomicUsize>,
+    pub tile_total: Arc<AtomicUsize>,
+    pub tile_start: Instant,
+    pub pace: Pace,
+    pub items: ItemsLeft,
+    pub left_shown: Option<Shown>,
 }
 
 impl Default for TilingState {
@@ -353,6 +397,12 @@ impl Default for TilingState {
             status: Arc::new(Mutex::new(String::new())),
             saved: Arc::new(AtomicUsize::new(0)),
             shown_saved: 0,
+            tile_done: Arc::new(AtomicUsize::new(0)),
+            tile_total: Arc::new(AtomicUsize::new(0)),
+            tile_start: Instant::now(),
+            pace: Pace::default(),
+            items: ItemsLeft::default(),
+            left_shown: None,
         }
     }
 }
@@ -579,6 +629,40 @@ fn next_tile(st: &TilingState, ui: &Ui, from: (i32, i32)) -> (i32, i32) {
     (0, 0)
 }
 
+/// The tiles still to do after the running one (none when only it is).
+fn tiles_after(st: &TilingState, ui: &Ui) -> usize {
+    if st.only_this || !(ui.checked(TF, "CheckBox4") || ui.checked(TF, "CheckBox6")) {
+        return 0;
+    }
+    let d = &st.data;
+    let (ya, ye) = if ui.checked(TF, "CheckBox6") { (pti(&ui.text(TF, "Edit2")).max(1), d.rows.min(pti(&ui.text(TF, "Edit3")))) } else { (1, d.rows) };
+    let (ax, ay) = st.act;
+    (ya..=ye)
+        .flat_map(|y| (1..=d.cols).map(move |x| (x, y)))
+        .filter(|&(x, y)| (y, x) > (ay, ax))
+        .filter(|&(x, y)| !st.done.get(y as usize - 1).and_then(|r| r.get(x as usize - 1)).copied().unwrap_or(false))
+        .count()
+}
+
+/// "tile X=1 Y=2 · about 25 min left in total" (tiles follow), "tile X=1
+/// Y=2: 40 % · 2 min left" (the last one): the main window's stage line
+/// of a big render.
+fn tile_caption(x: i32, y: i32, f: f64, left: Option<f64>, more: bool) -> String {
+    let name = format!("tile X={x} Y={y}");
+    match left {
+        Some(l) if more => format!("{name} · {} in total", left_str(l)),
+        Some(l) => format!("{name}: {} % · {}", (f * 100.0).floor() as i64, left_str(l)),
+        None if f > 0.0 => format!("{name}: {} %", (f * 100.0).floor() as i64),
+        None => name,
+    }
+}
+
+/// A run of tiles begins: the tiles' times start afresh.
+fn begin_tiles(app: &mut Mb3d) {
+    app.tiling.items = ItemsLeft::default();
+    app.tiling.left_shown = None;
+}
+
 fn save_project(app: &Mb3d, p: &Path) -> Result<(), String> {
     let Some(o) = &app.tiling.orig else { return Err("no parameters".into()) };
     let mut d = app.tiling.data.to_bytes();
@@ -662,6 +746,11 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     app.tiling.saved.store(0, Ordering::SeqCst);
     app.tiling.shown_saved = 0;
     *app.tiling.status.lock().unwrap() = String::new();
+    app.tiling.tile_done.store(0, Ordering::Relaxed);
+    app.tiling.tile_total.store(0, Ordering::Relaxed);
+    app.tiling.tile_start = Instant::now();
+    app.tiling.pace = Pace::default();
+    let (tile_done, tile_total) = (app.tiling.tile_done.clone(), app.tiling.tile_total.clone());
     let cancel = app.tiling.cancel.clone();
     super::main_form::disable_buttons(app, ui);
     let title = match &swarm {
@@ -738,7 +827,11 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     std::thread::spawn(move || {
         let r = (|| -> Result<(i32, i32), String> {
             let stop = || cancel.load(Ordering::SeqCst);
-            let res = crate::render::render_tiled_cancellable(&sc, d.save_zbuf || d.save_m3i, &|_, _| {}, &|_, _, _| {}, &stop)?;
+            let progress = |done: usize, total: usize| {
+                tile_total.store(total, Ordering::Relaxed);
+                tile_done.store(done, Ordering::Relaxed);
+            };
+            let res = crate::render::render_tiled_cancellable(&sc, d.save_zbuf || d.save_m3i, &progress, &|_, _, _| {}, &stop)?;
             let ds = d.downscale.max(1) as usize;
             let (rgb, w, h) = if ds > 1 { crate::render::downsample(&res.rgb, res.width, res.height, ds) } else { (res.rgb.clone(), res.width, res.height) };
             let (data, ext) = match d.output {
@@ -779,6 +872,8 @@ pub fn stop_tiling(app: &mut Mb3d) {
 }
 
 pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
+    // (the Batch window's title too: the same idle call)
+    batch_idle(app, ui);
     if !app.tiling.running {
         return;
     }
@@ -795,8 +890,25 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
             ui.set_caption(MAIN, "Label6", &text);
         }
     }
+    // a render here: the tile under way at its pace, the tiles to come at
+    // the finished ones' time (shown smoothed, like a calculation's)
+    if st.is_empty() && !app.tiling.cancel.load(Ordering::SeqCst) {
+        let after = tiles_after(&app.tiling, ui);
+        let now = Instant::now();
+        let t = &mut app.tiling;
+        let f = t.tile_done.load(Ordering::Relaxed) as f64 / t.tile_total.load(Ordering::Relaxed).max(1) as f64;
+        let secs = now.saturating_duration_since(t.tile_start).as_secs_f64();
+        t.pace.at(f, secs);
+        let left = t.pace.left(&t.items, f, secs, after);
+        t.left_shown = left.map(|l| smooth_shown(t.left_shown, l, now)).or(t.left_shown);
+        let text = tile_caption(t.act.0, t.act.1, f, t.left_shown.map(|s| s.0), after > 0);
+        if ui.caption(MAIN, "Label6") != text {
+            ui.set_caption(MAIN, "Label6", &text);
+        }
+    }
     let Some(r) = app.tiling.job.lock().unwrap().take() else { return };
     app.tiling.running = false;
+    app.tiling.items.done(app.tiling.tile_start.elapsed().as_secs_f64());
     super::main_form::enable_buttons(app, ui);
     for c in ["Button2", "SpeedButton1", "SpeedButton2", "SpeedButton11", "SpeedButton9"] {
         ui.set_enabled(TF, c, true);
@@ -896,6 +1008,7 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             scan_project(app, ui);
             app.tiling.act = next_tile(&app.tiling, ui, (0, 0));
             app.tiling.only_this = false;
+            begin_tiles(app);
             render_tile(app, ui);
         }
         "Image1MouseDown" => {
@@ -912,6 +1025,7 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "Renderthistile1Click" => {
+            begin_tiles(app);
             app.tiling.act = app.tiling.selected;
             app.tiling.only_this = !ui.checked(TF, "CheckBox4");
             render_tile(app, ui);
@@ -977,5 +1091,18 @@ mod tests {
         let b = BigData::from_bytes(&d.to_bytes()).unwrap();
         assert_eq!((b.rows_from, b.rows_to, b.render_rows, b.single_number), (3, 7, true, true));
         assert_eq!((b.jpeg_q, b.sharp, b.cols, b.rows), (95, 2, 4, 4));
+    }
+
+    #[test]
+    fn time_left_captions() {
+        assert_eq!(tile_caption(1, 2, 0.0, None, true), "tile X=1 Y=2");
+        assert_eq!(tile_caption(1, 2, 0.4, None, true), "tile X=1 Y=2: 40 %");
+        assert_eq!(tile_caption(1, 2, 0.4, Some(1500.0), true), "tile X=1 Y=2 · about 25 min left in total");
+        assert_eq!(tile_caption(3, 3, 0.4, Some(120.0), false), "tile X=3 Y=3: 40 % · 2 min left");
+        // the picture's time left from the main window's stage line
+        assert_eq!(picture_left("main rendering · about 7 min left in total"), Some("about 7 min left"));
+        assert_eq!(picture_left("hard shadows: 40 % · 20 s left"), Some("20 s left"));
+        assert_eq!(picture_left("main rendering · shaders compiling"), None);
+        assert_eq!(picture_left("main rendering"), None);
     }
 }
