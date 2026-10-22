@@ -129,12 +129,14 @@ pub fn normals_on_zbuf(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]) {
         let v = view_vec((c as i32 + 1 + left) as f32 / fw, ypos);
         add3(sc3(v, dist(si)), xp)
     };
-    // the first two rows
+    // the first two rows (MB3D leaves out the top of the calculated
+    // rectangle in their y here, not in the rows after them: wrong
+    // vertical differences along the top of a tile)
     for y in 1..=2usize {
         let r = y - 1;
         for x in 0..w {
             buf[x + y * w1] = if r < h && valid(&gbuf[r * w + x]) {
-                pos(&gbuf[r * w + x], x, y as f32 * sw, (r as i32 + top) as f32 / fh)
+                pos(&gbuf[r * w + x], x, (y as i32 + top) as f32 * sw, (r as i32 + top) as f32 / fh)
             } else {
                 [INV, 0.0, 0.0]
             };
@@ -197,7 +199,7 @@ pub fn normals_on_zbuf(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]) {
         let nr = r + 2;
         for x in 0..w {
             buf[x + 2 * w1] = if y < h.saturating_sub(1) && nr < h && valid(&gbuf[nr * w + x]) {
-                pos(&gbuf[nr * w + x], x, (y + 2) as f32 * sw + top as f32 * sw, (y as i32 + 1 + top) as f32 / fh)
+                pos(&gbuf[nr * w + x], x, (y as i32 + 2 + top) as f32 * sw, (y as i32 + 1 + top) as f32 / fh)
             } else {
                 [INV, 0.0, 0.0]
             };
@@ -2048,4 +2050,29 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         rgb[i * 3..i * 3 + 3].copy_from_slice(&c);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::scene::Scene;
+
+    #[test]
+    fn normals_on_zbuf_of_a_rectangle_below_the_top() {
+        // the rows of a rectangle that starts at row 10 get the normals of
+        // the same rows in the whole picture (but its first and last row)
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        (sc.width, sc.height, sc.threads) = (64, 48, 2);
+        let (p, mut whole) = crate::render::calculate_raw_cancellable(&sc, &|_, _| {}, &|| false).unwrap();
+        let (top, h) = (10usize, 20usize);
+        let mut part = whole[top * 64..(top + h) * 64].to_vec();
+        super::normals_on_zbuf(&sc, &p, &mut whole);
+        sc.calc_rect = Some([0, top as i32, 64, h as i32]);
+        let pp = crate::calc::CalcParams::new(&sc).unwrap();
+        super::normals_on_zbuf(&sc, &pp, &mut part);
+        for y in 1..h - 1 {
+            for x in 0..64 {
+                assert_eq!(part[y * 64 + x].normal, whole[(top + y) * 64 + x].normal, "{x}, {y}");
+            }
+        }
+    }
 }
