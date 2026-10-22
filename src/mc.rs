@@ -2421,7 +2421,8 @@ fn mc_scene(sc: &Scene) -> Scene {
 /// One pass of the Monte Carlo calculation over the whole image
 /// (`TMCForm.StartCalc` + `CalcMCT`).  The first pass shoots 4 rays per
 /// pixel, the following ones add rays where the noise is high.
-/// `progress(done_rows, rows)`; `cancel` is checked per row.
+/// `progress(done, total)` counts the rows done, weighed by their pixels on
+/// the object (equal in the first pass); `cancel` is checked per row.
 pub fn pass(
     sc: &Scene,
     img: &mut McImage,
@@ -2809,13 +2810,16 @@ fn pass_inner(
     let h = img.height;
     let pass_nr = img.passes;
     let skipped = |y: usize| skip.is_some_and(|s| s.get(y).copied().unwrap_or(false));
-    let done = std::sync::atomic::AtomicUsize::new((0..h).filter(|&y| skipped(y)).count());
+    // the rows weighed for `progress` by the pixels on the object (a row
+    // of sky is done at once); the first pass does not know them yet
+    let wt = &pass_weights(snap, w, h, fresh);
+    let done = std::sync::atomic::AtomicUsize::new((0..h).filter(|&y| skipped(y)).map(|y| wt.weight(y)).sum());
     let ctx = &ctx;
     let done = &done;
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
         let pa = PassArgs { snap, skip_nonzero, avrg_vari, avrg_rcount, max_new, pass_nr: pass_nr as u32 };
-        match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows, &skipped, done.load(std::sync::atomic::Ordering::Relaxed)) {
+        match pass_gpu(ctx, img, threads, &pa, progress, wt, cancel, rows, &skipped, done.load(std::sync::atomic::Ordering::Relaxed)) {
             Ok(status) => {
                 *MC_STATUS.lock().unwrap() = status;
                 img.seconds += t0.elapsed().as_secs_f64();
@@ -2853,8 +2857,8 @@ fn pass_inner(
                     if let Some(f) = rows {
                         f(y, row);
                     }
-                    let d = done.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
-                    progress(d, h);
+                    let d = done.fetch_add(wt.weight(y), std::sync::atomic::Ordering::Relaxed) + wt.weight(y);
+                    progress(d, wt.total());
                 }
             });
         }
@@ -2865,6 +2869,17 @@ fn pass_inner(
     }
     img.passes += 1;
     Ok(())
+}
+
+/// The weights of the rows of a pass for its `progress`: the pixels of
+/// `recs` (`w` x `h`) that hit the object plus one.  Equal in the first
+/// pass (`fresh`: no ray has told yet).
+fn pass_weights(recs: &[McRecord], w: usize, h: usize, fresh: bool) -> crate::render::RowWeights {
+    if fresh {
+        return crate::render::RowWeights::equal(h);
+    }
+    let w = w.max(1);
+    crate::render::RowWeights::new((0..h).map(|y| recs.get(y * w..(y + 1) * w).map_or(0, |r| r.iter().filter(|r| r.hit).count()) + 1).collect())
 }
 
 /// Where the last pass was calculated ("CPU" or the GPU's status).
@@ -2992,6 +3007,7 @@ fn pass_gpu(
     threads: usize,
     pa: &PassArgs,
     progress: &(dyn Fn(usize, usize) + Sync),
+    wt: &crate::render::RowWeights,
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
     skipped: &(dyn Fn(usize) -> bool + Sync),
@@ -3000,7 +3016,6 @@ fn pass_gpu(
     use std::sync::atomic::Ordering;
     use std::sync::mpsc;
     let w = img.width;
-    let h = img.height;
     let p = ctx.p;
     let done_rows = std::sync::atomic::AtomicUsize::new(done_before);
     let (to_main, from_workers) = mpsc::channel::<MainEv>();
@@ -3147,8 +3162,8 @@ fn pass_gpu(
                                 if let Some(f) = rows {
                                     f(y, row);
                                 }
-                                let d = done_rows.fetch_add(1, Ordering::Relaxed) + 1;
-                                progress(d, h);
+                                let d = done_rows.fetch_add(wt.weight(y), Ordering::Relaxed) + wt.weight(y);
+                                progress(d, wt.total());
                             }
                         } else {
                             k += 1;
@@ -3551,6 +3566,23 @@ pub fn read_m3c(data: &[u8]) -> Result<(crate::m3p::M3pFile, McImage), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pass_weights_count_the_hits() {
+        let mut recs = vec![McRecord::default(); 4 * 3];
+        for r in &mut recs[4..] {
+            r.hit = true;
+        }
+        recs[8].hit = false;
+        // the first pass: nothing known, equal
+        let w = pass_weights(&recs, 4, 3, true);
+        assert_eq!((w.weight(0), w.weight(1), w.total()), (1, 1, 3));
+        // then the hits plus one
+        let w = pass_weights(&recs, 4, 3, false);
+        assert_eq!((w.weight(0), w.weight(1), w.weight(2), w.total()), (1, 5, 4, 10));
+        // the sky row done: a tenth, not a third
+        assert_eq!(w.weight(0) * 1000 / w.total(), 100);
+    }
 
     #[test]
     fn halton_values() {
