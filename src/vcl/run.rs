@@ -262,6 +262,20 @@ impl<A: App> Runner<A> {
             }
             self.app.event(&mut self.ui, &e);
         }
+        // a modal form opened: the others lose the mouse capture (their
+        // release would never come) and stop auto-repeating
+        if let Some(m) = self.ui.modal_top() {
+            for (i, f) in self.ui.forms.iter_mut().enumerate() {
+                if i != m && (f.capture.is_some() || f.repeat_at.is_some()) {
+                    f.capture = None;
+                    f.cap_button = None;
+                    f.cap_part = PART_NONE;
+                    f.cap_value = 0;
+                    f.repeat_at = None;
+                    f.dirty = true;
+                }
+            }
+        }
     }
 
     fn dispatch(&mut self, fi: usize, raws: Vec<Raw>) {
