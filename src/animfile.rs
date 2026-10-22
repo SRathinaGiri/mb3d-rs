@@ -371,7 +371,8 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                         warnings.push(format!("{f}: {w}"));
                     }
                     kf.scene = Some(s);
-                    kf.source = Some(f);
+                    // as found from here (write_m3k makes it relative again)
+                    kf.source = Some(p.to_string_lossy().into_owned());
                 }
                 "params" => {
                     let mut t = v.to_string();
@@ -506,7 +507,7 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
         match &k.source {
             Some(src) => {
                 let mut parts = src.split('\u{0}');
-                let _ = writeln!(t, "file = {}", parts.next().unwrap_or(""));
+                let _ = writeln!(t, "file = {}", rel(parts.next().unwrap_or("")));
                 for s in parts {
                     let _ = writeln!(t, "set = {s}");
                 }
@@ -652,6 +653,7 @@ mod tests {
         assert_eq!(f.anim.keyframes[0].scene.iterations, 33);
         assert_eq!(f.anim.keyframes[0].frames, 7);
         assert_eq!(f.anim.keyframes[1].frames, 50);
+        assert_eq!(f.anim.keyframes[1].source.as_deref(), Some(dir.join("k1.m3s").to_str().unwrap()));
         let out = write_m3k(&f.anim, Some(&dir));
         assert!(out.contains("file = k1.m3s\nset = iterations = 33\n"), "{out}");
         let g = parse_m3k(&out, &dir, "x").unwrap();
