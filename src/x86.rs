@@ -2913,6 +2913,18 @@ mod tests {
     }
 
     #[test]
+    fn compiled_call_return_into_forced_join_rotates() {
+        // xor eax, eax; jz L; fld1; fld1; jmp J; L: fldpi; call S;
+        // J: fstp qword [BASE+0x2000]; ret; S: ret
+        // (J is forced to depth 2, the return from S arrives with depth 1)
+        let mut code = vec![0x31, 0xC0, 0x74, 0x06, 0xD9, 0xE8, 0xD9, 0xE8, 0xEB, 0x07, 0xD9, 0xEB, 0xE8, 7, 0, 0, 0, 0xDD, 0x1D];
+        code.extend_from_slice(&(BASE + 0x2000).to_le_bytes());
+        code.extend_from_slice(&[0xC3, 0xC3]);
+        let pi = std::f64::consts::PI;
+        assert_eq!(run_both(&code), (pi, pi));
+    }
+
+    #[test]
     fn packed_single_sqrt_min_max_unsupported() {
         for op in [0x51, 0x5D, 0x5F] {
             assert!(decode(&[0x0F, op, 0xC1], CODE_START).is_err(), "0F {op:02X}");
@@ -3474,14 +3486,23 @@ impl Machine {
                 Ins::Lea { reg, mem } => Op::Lea { r: *reg, mem: *mem },
                 other => Op::Gen(Box::new(other.clone()), next, a),
             };
-            if let (Op::Call { target, .. }, Some(&rot)) = (&op, call_rot.get(&a)) {
+            if let Op::Call { target, .. } = &op {
                 // the subroutine was compiled for another x87 depth: rotate the
-                // register file around the call; it returns to a landing op
-                let fake = 0xFFFE_0000 | ops.len() as u32;
-                ops.push(Op::CallRot { target: *target, ret: fake, rot: rot.rem_euclid(8) as u8 });
-                index.insert(fake, ops.len());
-                ops.push(Op::JmpRot { target: next, rot: (-rot).rem_euclid(8) as u8 });
-                continue;
+                // register file around the call; it returns to a landing op,
+                // which also rotates into a join point forced to another depth
+                let rot = call_rot.get(&a).copied().unwrap_or(0);
+                let back = bad.get(&(a, next)).copied().unwrap_or(0) - rot;
+                if rot != 0 || back != 0 {
+                    let fake = 0xFFFE_0000 | ops.len() as u32;
+                    ops.push(if rot != 0 {
+                        Op::CallRot { target: *target, ret: fake, rot: rot.rem_euclid(8) as u8 }
+                    } else {
+                        Op::Call { target: *target, ret: fake }
+                    });
+                    index.insert(fake, ops.len());
+                    ops.push(Op::JmpRot { target: next, rot: back.rem_euclid(8) as u8 });
+                    continue;
+                }
             }
             ops.push(op);
             if falls {
