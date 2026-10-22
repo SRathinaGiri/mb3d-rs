@@ -1476,6 +1476,21 @@ fn r_max_len() -> R {
     return len;
 }
 
+// a reflection pass shadow ray (from `c` along -v): its length `len`
+// up to the nearest cutting plane ahead
+fn hs_cut_len(v: vec3<R>, len: R) -> R {
+    var l = len;
+    for (var k = 0u; k < 3u; k++) {
+        if (((P[CUT_OPT] >> k) & 1u) != 0u && abs(v[k]) > 1e-20) {
+            let t = (c[k] - pf(CUT_POS + k)) / v[k];
+            if (t > 0.0 && t < l) {
+                l = t;
+            }
+        }
+    }
+    return l;
+}
+
 // AtCutPlane2: closer than `plus_d` to a cutting plane
 fn at_cut_plane(plus_d: R) -> bool {
     for (var k = 0u; k < 3u; k++) {
@@ -2977,6 +2992,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                     zrs_mul = select(R(40.0), R(70.0), (P[pb + 2u] & 6u) == 2u) / max(pf(HS_SOFT_RADIUS), 0.001);
                                 }
                             }
+                        }
+                        if (reflect && P[CUT_OPT] != 0u) {
+                            dt1 = hs_cut_len(lvec, dt1);
                         }
                         dmax_l = dt1;
                         zz2mul = -dot(lvec, vfov_px) / max(sqrt(dot(lvec, lvec) * dot(vfov_px, vfov_px)), 1e-30);
