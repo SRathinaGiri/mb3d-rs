@@ -536,9 +536,15 @@ fn run() -> Result<(), String> {
                 None => eprintln!("  {}x{} tiles", tl.cols, tl.rows),
             }
         }
+        // (the time left from the tiles' times: they differ, as rows do)
+        let tiles = std::cell::RefCell::new((ItemsLeft::default(), Instant::now()));
         let tile_progress = |done: usize, total: usize, t: [i32; 4]| {
+            let (items, last) = &mut *tiles.borrow_mut();
+            items.done(last.elapsed().as_secs_f64());
+            *last = Instant::now();
             if !quiet {
-                eprintln!("{cr}  tile {done}/{total} done ({}x{} at {}, {})          ", t[2], t[3], t[0], t[1]);
+                let left = items.per_item().filter(|_| done < total).map(|p| format!(" · {}", left_str(p * (total - done) as f64))).unwrap_or_default();
+                eprintln!("{cr}  tile {done}/{total} done ({}x{} at {}, {}){left}          ", t[2], t[3], t[0], t[1]);
             }
         };
         let ck = mb3d::render::open_tiles_checkpoint(&scene, &ck_name(&output), resume_policy());
@@ -1154,7 +1160,8 @@ fn animate(argv: &[String]) -> Result<(), String> {
         );
     }
     let t0 = Instant::now();
-    let (mut done, mut skipped, mut secs) = (0usize, 0usize, 0.0f64);
+    let (mut done, mut skipped) = (0usize, 0usize);
+    let mut items = ItemsLeft::default();
     let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
     if let Some(dir) = &swarm {
         let opts = mb3d::swarm::RunOptions { threads: run.threads, quiet, resume: resume_policy(), ..Default::default() };
@@ -1167,21 +1174,24 @@ fn animate(argv: &[String]) -> Result<(), String> {
     } else {
     for (n, &f) in frames_to_do.iter().enumerate() {
         let label = format!("frame {}/{} ({:06})", n + 1, frames_to_do.len(), anim.file_index(f));
+        let after = frames_to_do.len() - n - 1;
+        let frame_t0 = Instant::now();
         let progress = |d: usize, t: usize| {
             if !quiet && tty && (d % 8 == 0 || d == t) {
-                eprint!("\r  {label} {:5.1}%", 100.0 * d as f64 / t as f64);
+                let f = d as f64 / t.max(1) as f64;
+                let left = item_left(&items, f, frame_t0.elapsed().as_secs_f64(), after).map(|l| format!(" · {}", left_str(l))).unwrap_or_default();
+                eprint!("\r  {label} {:5.1}%{left}          ", 100.0 * f);
                 let _ = std::io::stderr().flush();
             }
         };
         match mb3d::frames::render_frame_to_file(&anim, f, &run, &progress, &|| false)? {
             mb3d::frames::FrameResult::Written { path, seconds, continued } => {
                 done += 1;
-                secs += seconds;
+                items.done(seconds);
                 if !quiet {
-                    let left = frames_to_do.len() - n - 1;
-                    let eta = if done > 0 { secs / done as f64 * left as f64 } else { 0.0 };
+                    let left = items.per_item().filter(|_| after > 0).map(|p| format!("  · {}", left_str(p * after as f64))).unwrap_or_default();
                     let cr = if tty { "\r" } else { "" };
-                    eprintln!("{cr}  {label} {:.1}s  {}  (left: {})          ", seconds, path.display(), fmt_dur(eta));
+                    eprintln!("{cr}  {label} {:.1}s  {}{left}          ", seconds, path.display());
                     if let Some(c) = continued {
                         eprintln!("      {c} (--fresh starts again)");
                     }
@@ -1236,6 +1246,92 @@ fn fmt_dur(s: f64) -> String {
         format!("{}m{:02}s", s / 60, s % 60)
     } else {
         format!("{s}s")
+    }
+}
+
+/// A time left in words, as the windows say it: "a few seconds left",
+/// "12 s left", "2 min 30 s left", "about 7 min left", "about 1 h 20 min
+/// left".
+fn left_str(secs: f64) -> String {
+    let s = secs.round().max(0.0) as i64;
+    match s {
+        ..=3 => "a few seconds left".into(),
+        4..=59 => format!("{s} s left"),
+        60..=239 if s % 60 == 0 => format!("{} min left", s / 60),
+        60..=239 => format!("{} min {} s left", s / 60, s % 60),
+        240..=3599 => format!("about {} min left", (s + 30) / 60),
+        _ => {
+            let m = (s + 30) / 60;
+            match m % 60 {
+                0 => format!("about {} h left", m / 60),
+                r => format!("about {} h {r} min left", m / 60),
+            }
+        }
+    }
+}
+
+#[cfg(feature = "gui")]
+use mb3d::app::eta::ItemsLeft;
+
+/// The windows' `ItemsLeft` (items of about the same cost one after
+/// another: frames, tiles, passes) for the build without them.
+#[cfg(not(feature = "gui"))]
+#[derive(Default)]
+struct ItemsLeft {
+    per: Option<f64>,
+    n: u32,
+}
+
+#[cfg(not(feature = "gui"))]
+impl ItemsLeft {
+    fn done(&mut self, secs: f64) {
+        self.n += 1;
+        let w = 1.0 / self.n.min(4) as f64;
+        self.per = Some(self.per.map_or(secs, |p| p + (secs - p) * w));
+    }
+
+    fn per_item(&self) -> Option<f64> {
+        self.per
+    }
+
+    fn left(&self, g: f64, secs: f64, measured: Option<f64>, after: usize) -> Option<f64> {
+        let total = match (measured, self.per) {
+            (Some(m), Some(p)) => {
+                let a = g.clamp(0.0, 1.0) / (g.clamp(0.0, 1.0) + 0.08);
+                a * m + (1.0 - a) * p
+            }
+            (m, p) => m.or(p)?,
+        };
+        Some((total - secs).max(0.0) + after as f64 * self.per.unwrap_or(total))
+    }
+}
+
+/// The time left in the running item and `after` more: its progress `f`
+/// after `secs` at a steady pace, blended with the finished items' time.
+fn item_left(items: &ItemsLeft, f: f64, secs: f64, after: usize) -> Option<f64> {
+    let measured = (f >= 0.02 && f < 1.0 && secs >= 1.0).then(|| secs / f);
+    items.left(f, secs, measured, after)
+}
+
+/// The Monte Carlo passes after the running one until the render's end:
+/// `passes` in this run (`done` of them finished), or `rays` per pixel on
+/// average, with `rays0` when the run began and `avg` now (None while
+/// nothing says, e.g. before a pass told how many rays a pass adds).
+fn passes_after(passes: Option<u32>, done: u32, rays: Option<f64>, rays0: f64, avg: f64) -> Option<usize> {
+    let by_passes = passes.map(|p| (p.saturating_sub(done) as usize).saturating_sub(1));
+    let by_rays = rays.and_then(|r| {
+        if avg >= r {
+            return Some(0);
+        }
+        if done == 0 || avg <= rays0 {
+            return None;
+        }
+        let per = (avg - rays0) / done as f64;
+        Some((((r - avg) / per).ceil() as usize).saturating_sub(1))
+    });
+    match (by_passes, by_rays) {
+        (Some(a), Some(b)) => Some(a.min(b)),
+        (a, b) => a.or(b),
     }
 }
 
@@ -2061,6 +2157,8 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         }
         return Ok(());
     }
+    let mut items = ItemsLeft::default();
+    let rays0 = img.stats().avg_rays;
     loop {
         let st = img.stats();
         if let Some(r) = target {
@@ -2078,13 +2176,25 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
         }
         let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
         let cr = if tty { "\r" } else { "" };
+        // the time left: the pass at its pace blended with the passes
+        // before, and the passes the target still needs (or its time)
+        let after = passes_after(passes, img.passes - start_passes, target, rays0, st.avg_rays);
+        let deadline = time.map(|t| t0 + std::time::Duration::from_secs_f64(t));
+        let pass_t0 = Instant::now();
         let progress = |d: usize, n: usize| {
             if !quiet && tty && (d % 8 == 0 || d == n) {
-                eprint!("\r  pass {:3}: {:5.1} %", img_passes_hint(), 100.0 * d as f64 / n as f64);
+                let f = d as f64 / n.max(1) as f64;
+                let left = after.and_then(|a| item_left(&items, f, pass_t0.elapsed().as_secs_f64(), a));
+                let until = deadline.map(|d| d.saturating_duration_since(Instant::now()).as_secs_f64());
+                let left = match (left, until) {
+                    (Some(l), Some(u)) => Some(l.min(u)),
+                    (l, u) => l.or(u),
+                };
+                let left = left.map(|l| format!(" · {}", left_str(l))).unwrap_or_default();
+                eprint!("\r  pass {:3}: {:5.1} %{left}          ", img_passes_hint(), 100.0 * f);
             }
         };
         PASS_HINT.store(img.passes + 1, std::sync::atomic::Ordering::Relaxed);
-        let deadline = time.map(|t| t0 + std::time::Duration::from_secs_f64(t));
         let cancel = || deadline.is_some_and(|d| Instant::now() > d);
         match mb3d::mc::pass_with(&scene, &mut img, threads, &progress, &cancel, None, ck.as_ref(), None) {
             Ok(()) => {}
@@ -2095,13 +2205,19 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             }
             Err(e) => return Err(e),
         }
+        items.done(pass_t0.elapsed().as_secs_f64());
         let st = img.stats();
         if !quiet && img.passes == start_passes + 1 {
             eprintln!("{cr}  calculated on: {}", mb3d::mc::last_status());
         }
         if !quiet {
+            // (the passes to come, from the rays this one brought)
+            let done = img.passes - start_passes;
+            let ended = target.is_some_and(|r| st.avg_rays >= r) || passes.is_some_and(|p| done >= p);
+            let more = passes_after(passes, done, target, rays0, st.avg_rays).filter(|_| !ended).map(|n| n + 1);
+            let left = more.zip(items.per_item()).map(|(n, p)| format!(" · {}", left_str(p * n as f64))).unwrap_or_default();
             eprintln!(
-                "{cr}  pass {:3}: {:6.1} rays/pixel (max {}), noise {:.4}, {}",
+                "{cr}  pass {:3}: {:6.1} rays/pixel (max {}), noise {:.4}, {}{left}",
                 img.passes,
                 st.avg_rays,
                 st.max_rays,
@@ -2202,5 +2318,32 @@ fn swarm_cmd(argv: &[String]) -> Result<(), String> {
             Ok(())
         }
         _ => Err(usage_err(&format!("say what to do and the swarm folder\n\n{SWARM_USAGE}"))),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn time_left_of_the_items() {
+        assert_eq!(left_str(0.0), "a few seconds left");
+        assert_eq!(left_str(150.0), "2 min 30 s left");
+        assert_eq!(left_str(449.0), "about 7 min left");
+        assert_eq!(left_str(4800.0), "about 1 h 20 min left");
+        // the first item, half done after 10 s: 10 more and two like it
+        let mut it = ItemsLeft::default();
+        assert_eq!(item_left(&it, 0.5, 10.0, 2), Some(50.0));
+        assert_eq!(item_left(&it, 0.0, 0.0, 2), None);
+        it.done(20.0);
+        assert_eq!(it.per_item(), Some(20.0));
+        assert_eq!(item_left(&it, 0.0, 0.0, 2), Some(60.0));
+        // the passes until 64 rays: 4 a pass so far, 8 there
+        assert_eq!(passes_after(None, 2, Some(64.0), 0.0, 8.0), Some(13));
+        assert_eq!(passes_after(None, 0, Some(64.0), 0.0, 0.0), None);
+        assert_eq!(passes_after(Some(10), 3, None, 0.0, 0.0), Some(6));
+        // both: the nearer end
+        assert_eq!(passes_after(Some(5), 2, Some(64.0), 0.0, 8.0), Some(2));
+        assert_eq!(passes_after(None, 4, Some(64.0), 0.0, 64.0), Some(0));
     }
 }
