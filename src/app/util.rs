@@ -155,22 +155,23 @@ pub fn smooth_shown(prev: Option<Shown>, est: f64, now: std::time::Instant) -> S
 }
 
 /// The time left shown `dt` seconds after `shown` was, with the new
-/// estimate `est`: it counts down meanwhile; a drop to half or less is
-/// taken at once, a change under 5 seconds and 5 % not at all (it keeps
-/// counting down), else it moves part of the way (30 % per second
-/// downward, 10 % upward: a long render is more often slower than
-/// predicted than faster).
+/// estimate `est`: a drop to half or less is taken at once; a change under
+/// 5 seconds and 5 % is not, it counts down with the clock instead (holds,
+/// when the estimate is the larger: it must not fall behind); else it
+/// moves part of the way (30 % per second downward, 10 % upward: a long
+/// render is more often slower than predicted than faster; the estimate
+/// itself counts down, so the shown value follows it without adding the
+/// clock, which would outrun a rising estimate).
 pub fn shown_step(shown: f64, est: f64, dt: f64) -> f64 {
-    let s = (shown - dt.max(0.0)).max(0.0);
-    let d = est - s;
-    if est <= s / 2.0 {
+    let d = est - shown;
+    if est <= shown / 2.0 {
         est
-    } else if d.abs() < 5.0 || d.abs() < 0.05 * s {
-        s
+    } else if d.abs() < 5.0 || d.abs() < 0.05 * shown {
+        if d > 0.0 { shown } else { (shown - dt.max(0.0)).max(0.0) }
     } else if d < 0.0 {
-        s + d * (1.0 - 0.7f64.powf(dt))
+        shown + d * (1.0 - 0.7f64.powf(dt))
     } else {
-        s + d * (1.0 - 0.9f64.powf(dt))
+        shown + d * (1.0 - 0.9f64.powf(dt))
     }
 }
 
@@ -245,22 +246,28 @@ mod tests {
         assert_eq!(shown_step(100.0, 50.0, 0.0), 50.0);
         assert_eq!(shown_step(100.0, 20.0, 1.0), 20.0);
         // an increase: damped, a tenth of the way per second
-        let s = shown_step(100.0, 200.0, 1.0);
-        assert!((s - (99.0 + 101.0 * 0.1)).abs() < 1e-9, "{s}");
+        assert!((shown_step(100.0, 200.0, 1.0) - 110.0).abs() < 1e-9);
         assert!(shown_step(100.0, 200.0, 3.0) < shown_step(100.0, 200.0, 5.0));
         // a decrease short of half: faster, 30 % per second
-        let s = shown_step(100.0, 60.0, 1.0);
-        assert!((s - (99.0 - 39.0 * 0.3)).abs() < 1e-9, "{s}");
-        // a small change (under 5 s or 5 %): only counting down
-        assert_eq!(shown_step(100.0, 103.0, 1.0), 99.0);
+        assert!((shown_step(100.0, 60.0, 1.0) - 88.0).abs() < 1e-9);
+        // a small change (under 5 s or 5 %): only counting down, or holding
+        assert_eq!(shown_step(100.0, 103.0, 1.0), 100.0);
         assert_eq!(shown_step(100.0, 96.0, 1.0), 99.0);
-        assert_eq!(shown_step(1000.0, 1040.0, 2.0), 998.0);
+        assert_eq!(shown_step(1000.0, 1040.0, 2.0), 1000.0);
+        assert_eq!(shown_step(1000.0, 960.0, 2.0), 998.0);
         // never up by less than 5 %
         for est in [101.0, 103.0, 104.0] {
-            assert!(shown_step(100.0, est, 0.5) <= 99.5, "{est}");
+            assert!(shown_step(100.0, est, 0.5) <= 100.0, "{est}");
         }
+        // an estimate that stays above what is shown is reached in time
+        let mut s = 0.0;
+        for _ in 0..40 {
+            s = shown_step(s, 10.0, 0.5);
+        }
+        assert!(s > 5.0, "{s}");
         // and never below zero
         assert_eq!(shown_step(1.0, 0.0, 5.0), 0.0);
+        assert_eq!(shown_step(1.0, 2.0, 5.0), 1.0);
         let now = std::time::Instant::now();
         assert_eq!(smooth_shown(None, 42.0, now), (42.0, now));
     }

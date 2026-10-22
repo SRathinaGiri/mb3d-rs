@@ -1,7 +1,8 @@
 //! The main window (Mand.pas, `TMand3DForm`).
 
 use super::engine::Job;
-use super::util::{fts, fts_single, parse_float, pti, ptf, time_str};
+use super::eta::RateEma;
+use super::util::{fts, fts_single, left_str, parse_float, pti, ptf, smooth_shown, time_str, Shown};
 use super::{Mb3d, MAIN};
 use crate::math::{build_rot_matrix, mat_mul, matrix_to_angles, normalise_matrix_to, rotate_vector_reverse};
 use crate::scene::{CameraOptic, Scene};
@@ -48,13 +49,20 @@ pub struct State {
     pub stage_shown: String,
     pub stage_start: Instant,
     /// the stages after the main rendering this calculation has, the time
-    /// a whole main rendering takes (once known) and the time left in
-    /// total as shown, with when (for the smoothing)
+    /// a whole main rendering takes (once known), and the time left in the
+    /// stage and in total as shown (see [`time_left`])
     later: Vec<Later>,
     passed: Vec<Later>,
     stage_base: f64,
     main_full: Option<f64>,
-    total_shown: Option<(f64, Instant)>,
+    stage_left_shown: Option<Shown>,
+    total_shown: Option<Shown>,
+    /// the running stage's pace, how much slower than their priors the
+    /// stages ran (one factor per kind of prior, see [`Prior`]), and the
+    /// time of a continued calculation's rows done before it
+    rate: RateEma,
+    slow: [f64; 2],
+    before_secs: f64,
     /// how long each later stage takes relative to the main rendering (the
     /// model's, from [`super::eta::later_ratios`]), and the whole
     /// calculation's progress as the bar shows it (it only grows)
@@ -77,8 +85,11 @@ pub struct State {
     later_secs: [Option<f64>; 3],
     later_cold: [bool; 3],
     last_secs: [Option<f64>; 3],
+    last_main: Option<f64>,
     calc_sig: String,
     last_sig: String,
+    /// a stereo pair's left eye's time: the right one takes the same
+    eye_secs: Option<f64>,
     /// the shaders' compile time when the stage began (see
     /// [`compile_secs`]), and whether the main rendering compiled hardly
     /// any (its time is then a measure for the later stages' ratios)
@@ -154,7 +165,11 @@ impl Default for State {
             passed: Vec::new(),
             stage_base: 0.0,
             main_full: None,
+            stage_left_shown: None,
             total_shown: None,
+            rate: RateEma::default(),
+            slow: [1.0; 2],
+            before_secs: 0.0,
             later_ratio: [0.0; 3],
             progress_shown: 0.0,
             main_cold: false,
@@ -164,8 +179,10 @@ impl Default for State {
             later_secs: [None; 3],
             later_cold: [false; 3],
             last_secs: [None; 3],
+            last_main: None,
             calc_sig: String::new(),
             last_sig: String::new(),
+            eye_secs: None,
             stage_compile: 0.0,
             samples: Vec::new(),
             eta_f: [0.0; super::eta::FEATURES],
@@ -841,28 +858,10 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         }
     }
     app.main.calc3d = calc3d;
-    app.main.calc_start = Instant::now();
     app.main.stage_shown = "main rendering".into();
-    app.main.stage_start = Instant::now();
-    app.main.stage_compile = compile_secs();
-    app.main.later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
-    app.main.passed.clear();
-    app.main.samples.clear();
-    app.main.curves.clear();
-    app.main.eta_f = super::eta::scene_features(&app.scene);
-    app.main.later_ratio = super::eta::later_ratios(&app.main.eta_f);
-    app.main.progress_shown = 0.0;
-    app.main.main_cold = false;
-    app.main.main_unmeasured = false;
-    app.main.main_secs = 0.0;
-    app.main.f_compiled = None;
-    app.main.calc_compile = compile_secs();
-    app.main.later_secs = [None; 3];
-    app.main.later_cold = [false; 3];
-    app.main.calc_sig = if calc3d { picture_sig(&app.scene) } else { String::new() };
-    app.main.stage_base = 0.0;
-    app.main.main_full = None;
-    app.main.total_shown = None;
+    let later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
+    let sig = if calc3d { picture_sig(&app.scene) } else { String::new() };
+    app.main.start_eta(&app.scene, later, sig);
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     for l in ["Label8", "Label48", "Label50"] {
@@ -895,9 +894,8 @@ fn start_stereo_pair(app: &mut Mb3d, ui: &mut Ui) {
         crate::render::StereoLayout::Parallel
     };
     app.main.calc3d = true;
-    app.main.calc_start = Instant::now();
     app.main.stage_shown = "stereo: rendering left eye".into();
-    app.main.stage_start = Instant::now();
+    app.main.start_eta(&app.scene, Vec::new(), String::new());
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     ui.set_visible(F, "ProgressBar1", true);
@@ -1014,47 +1012,116 @@ fn picture_sig(sc: &Scene) -> String {
     format!("{s:?}")
 }
 
-/// The time later stage `k` is expected to take: as the last time for the
-/// same picture, else from the main rendering's and the model's ratio.
-fn expected(m: &State, k: Later) -> Option<f64> {
-    if m.calc_sig == m.last_sig {
-        if let Some(t) = m.last_secs[k as usize] {
-            return Some(t);
-        }
-    }
-    m.main_full.map(|full| m.later_ratio[k as usize] * full)
+/// Which stage of a 3D calculation runs, for the time left: the main
+/// rendering, a stage after it, an eye of a stereo pair (0 left, 1 right)
+/// or one on its own (a 2D calculation, the swarm's).
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Kind {
+    Main,
+    Later(Later),
+    Eye(u8),
+    Other,
 }
 
-/// The time left in the stage: `f` its progress, `base` the part done
-/// before it began, `secs` its time so far (None while too early).
-fn stage_left(f: f64, base: f64, secs: f64, samples: &[(f64, f64)], last: Option<&[(f64, f64)]>) -> Option<f64> {
-    let g = (f - base) / (1.0 - base).max(1e-6);
-    if secs < 3.0 || g < 0.02 || f >= 1.0 {
-        return None;
+fn kind_of(stage: &str) -> Kind {
+    if stage.starts_with("main rendering") {
+        Kind::Main
+    } else if let Some(k) = later_of(stage) {
+        Kind::Later(k)
+    } else if stage.starts_with("stereo: rendering left") {
+        Kind::Eye(0)
+    } else if stage.starts_with("stereo: rendering right") {
+        Kind::Eye(1)
+    } else {
+        Kind::Other
     }
-    // the same stage of the same picture before: its time from here on,
-    // at the pace of this one so far
-    if let Some(c) = last.filter(|c| base == 0.0 && c.len() >= 4) {
-        let at = |f: f64| {
-            let i = c.partition_point(|s| s.0 < f).clamp(1, c.len() - 1);
-            let ((f0, t0), (f1, t1)) = (c[i - 1], c[i]);
-            t0 + (t1 - t0) * ((f - f0) / (f1 - f0).max(1e-9)).clamp(0.0, 1.0)
-        };
-        let (then, end) = (at(f), c[c.len() - 1].1);
-        if then > 1.0 {
-            return Some((end - then) * (secs / then).clamp(0.33, 3.0));
+}
+
+/// Where a stage's prior comes from: the same stage of the same picture
+/// last time, or the model's ratio to this run's main rendering. Each has
+/// its own slowdown factor: the model's already sees this run's pace.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Prior {
+    Last,
+    Model,
+}
+
+impl State {
+    /// A 3D calculation begins: the time left starts over.
+    fn start_eta(&mut self, sc: &Scene, later: Vec<Later>, sig: String) {
+        self.calc_start = Instant::now();
+        self.stage_start = Instant::now();
+        self.stage_compile = compile_secs();
+        self.calc_compile = compile_secs();
+        self.later = later;
+        self.passed.clear();
+        self.samples.clear();
+        self.curves.clear();
+        self.rate = RateEma::default();
+        self.eta_f = super::eta::scene_features(sc);
+        self.later_ratio = super::eta::later_ratios(&self.eta_f);
+        self.progress_shown = 0.0;
+        self.main_cold = false;
+        self.main_unmeasured = false;
+        self.main_secs = 0.0;
+        self.f_compiled = None;
+        self.later_secs = [None; 3];
+        self.later_cold = [false; 3];
+        self.calc_sig = sig;
+        self.eye_secs = None;
+        self.stage_base = 0.0;
+        self.before_secs = 0.0;
+        self.main_full = None;
+        self.slow = [1.0; 2];
+        self.stage_left_shown = None;
+        self.total_shown = None;
+    }
+
+    /// What a stage is expected to take as a whole, before it runs: the
+    /// same stage's time last time for the same picture, else (a later
+    /// stage) the main rendering's time at the model's ratio; a stereo
+    /// pair's right eye takes what the left one did.
+    fn prior(&self, kind: Kind) -> Option<(f64, Prior)> {
+        let same = !self.calc_sig.is_empty() && self.calc_sig == self.last_sig;
+        match kind {
+            Kind::Main => self.last_main.filter(|_| same).map(|t| (t, Prior::Last)),
+            Kind::Later(k) => match self.last_secs[k as usize].filter(|_| same) {
+                Some(t) => Some((t, Prior::Last)),
+                None => self.main_full.map(|full| (self.later_ratio[k as usize] * full, Prior::Model)),
+            },
+            Kind::Eye(1) => self.eye_secs.map(|t| (t, Prior::Last)),
+            _ => None,
         }
     }
-    // the rate of the last stretch (a third of the time so far, at least 5
-    // seconds): it changes, e.g. when the card joins the CPU threads
-    let from = secs - (secs / 3.0).max(5.0);
-    // (else since the first sample: those of the card's compile are gone)
-    let rate = match samples.iter().rev().find(|s| s.1 <= from).or(samples.first()) {
-        Some(&(f0, t0)) if f > f0 && secs - t0 >= 2.0 => (f - f0) / (secs - t0),
-        Some(_) => return None,
-        None => (f - base) / secs,
-    };
-    Some((1.0 - f) / rate.max(1e-9))
+
+    /// The prior at this run's pace: slower or faster than last time as
+    /// the stages so far were.
+    fn expected(&self, kind: Kind) -> Option<f64> {
+        self.prior(kind).map(|(t, p)| t * self.slow[p as usize])
+    }
+
+    /// The stages after this one.
+    fn following(&self, kind: Kind) -> Vec<Kind> {
+        match kind {
+            Kind::Main => self.later.iter().map(|k| Kind::Later(*k)).collect(),
+            Kind::Later(k) => self.later.iter().copied().skip_while(|l| *l != k).skip(1).map(Kind::Later).collect(),
+            Kind::Eye(0) => vec![Kind::Eye(1)],
+            _ => Vec::new(),
+        }
+    }
+}
+
+/// The same stage of the same picture last time, as a whole at this run's
+/// pace so far (its curve tells where its hard rows were; None too early
+/// into it): `f` the progress now, `secs` the time it took.
+fn curve_total(c: &[(f64, f64)], f: f64, secs: f64) -> Option<f64> {
+    if c.len() < 4 {
+        return None;
+    }
+    let i = c.partition_point(|s| s.0 < f).clamp(1, c.len() - 1);
+    let ((f0, t0), (f1, t1)) = (c[i - 1], c[i]);
+    let then = t0 + (t1 - t0) * ((f - f0) / (f1 - f0).max(1e-9)).clamp(0.0, 1.0);
+    (then > 1.0).then(|| c[c.len() - 1].1 * (secs / then).clamp(0.33, 3.0))
 }
 
 /// A stage's name as the bar's caption shows it: without where it runs.
@@ -1062,111 +1129,146 @@ fn short_stage(stage: &str) -> String {
     stage.split(" (").next().unwrap_or(stage).replace("hard shadows and ambient occlusion", "shadows and AO")
 }
 
-/// "reflections · 6 min left in total", "hard shadows: 40 % · 20 s left":
-/// the stage, and once the rate is known the time left in the whole
+/// "reflections · about 6 min left in total", "hard shadows: 40 % · 20 s
+/// left": the stage, and once the rate is known the time left in the whole
 /// calculation, else its progress and time left (short: it has the room
 /// beside the bar; the LED shows where it runs).
 fn stage_caption(stage: &str, f: f64, left: Option<f64>, total: Option<f64>) -> String {
     let name = short_stage(stage);
     if let Some(tl) = total {
-        return format!("{name} · {} left in total", super::util::about_str(tl));
+        return format!("{name} · {} in total", left_str(tl));
     }
     let mut t = if f <= 0.0 { name } else { format!("{name}: {} %", (f * 100.0).floor() as i64) };
     if let Some(l) = left {
-        t += &format!(" · {} left", super::util::about_str(l));
+        t += &format!(" · {}", left_str(l));
     }
     t
 }
 
-/// The time left in the stage, and in total when stages follow it (from
-/// the time a whole main rendering takes and the stages' ratios); and the
-/// whole calculation's progress, once its time left is known.
-fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> (Option<f64>, Option<f64>, Option<f64>) {
+/// What [`time_left`] found: the time left in the stage and in the whole
+/// calculation (None when nothing follows the stage, or the times of the
+/// stages to come are unknown yet), and the whole calculation's progress.
+#[derive(Default)]
+struct Left {
+    stage: Option<f64>,
+    total: Option<f64>,
+    progress: Option<f64>,
+}
+
+/// The time left, one estimate for every stage: the running one's whole
+/// time as measured (its pace, [`RateEma`]) blended with its prior (see
+/// [`State::prior`]) as it progresses, plus the priors of the stages to
+/// come at this run's pace; shown smoothed the way a download's time left
+/// is. `f` the progress, `base` the part done before a continued one began.
+fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let m = &mut app.main;
-    let secs = m.stage_start.elapsed().as_secs_f64();
-    let main = stage.starts_with("main rendering");
+    let now = Instant::now();
+    let secs = now.saturating_duration_since(m.stage_start).as_secs_f64();
+    let kind = kind_of(stage);
+    let main = kind == Kind::Main;
     if main {
         super::eta::march_features(&mut m.eta_f, &app.eng.0, secs);
         m.later_ratio = super::eta::later_ratios(&m.eta_f);
     }
+    // (an eye of a stereo pair has half the bar)
+    let (f, base) = match kind {
+        Kind::Eye(i) => ((f - 0.5 * i as f64) * 2.0, 0.0),
+        _ => (f, base),
+    };
+    let compiling = main && shaders_compiling();
+    // a sample at most every quarter second: the pace, and the curve
     if f > 0.0 && m.samples.last().is_none_or(|s| secs - s.1 >= 0.25 && f > s.0) {
+        if let Some(&(f0, t0)) = m.samples.last() {
+            m.rate.add(f - f0, secs - t0);
+        }
         m.samples.push((f, secs));
     }
-    let last = if m.calc_sig == m.last_sig { m.last_curves.iter().find(|c| c.0 == stage).map(|c| c.1.as_slice()) } else { None };
-    let mut left = stage_left(f, base, secs, &m.samples, last);
-    // the card's shaders compiling: the CPU threads alone so far, much
-    // slower than with the card once it joins
-    let compiling = shaders_compiling();
+    // the progress made under measurement (not the rows a stage has
+    // nothing to do for, which show up at once)
+    let from = m.samples.first().map_or(base, |s| s.0.max(base));
+    let g = ((f - from) / (1.0 - from).max(1e-6)).clamp(0.0, 1.0);
+    // the card's shaders compiling during the main rendering: the CPU
+    // threads alone so far, much slower than with the card once it joins
     if main && m.main_cold && !compiling && m.f_compiled.is_none() {
         m.f_compiled = Some(f);
     }
-    // (later stages go on as usual: their times come from the main
-    // rendering's, the CPU's alone if it ran while compiling)
-    if compiling && main {
+    if compiling {
         m.samples.clear();
+        m.rate = RateEma::default();
         m.main_cold = true;
-        return compiling_estimate(m, f, base, secs);
     }
-    // a later stage without progress (e.g. the reflections on the card):
-    // its expected time (for the bar also when it takes longer)
-    let mut bar_left = left;
-    if let (None, Some(k)) = (left, later_of(stage)) {
-        let l = expected(m, k).unwrap_or(0.0) - secs;
-        if f <= 0.0 && l > 1.0 {
-            left = Some(l);
-        }
-        bar_left = expected(m, k).map(|e| (e - secs).max(0.0));
+    // the stage's whole time as measured: at its pace, the rest of it (none
+    // once its progress is complete but it goes on, e.g. an eye's shadows)
+    let measured = if compiling {
+        compiling_main(m, f, base, secs).map(|l| secs + l)
+    } else {
+        m.rate.rate().filter(|_| f < 1.0).map(|r| secs + (1.0 - f) / r)
+    };
+    // and as expected before it ran (a continued one: the rows it has
+    // left; the occlusion after the shadows: what is left of their
+    // common prior); without one the measurement, once the pace shows
+    let same = !m.calc_sig.is_empty() && m.calc_sig == m.last_sig && base == 0.0;
+    let spent = match kind {
+        Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0),
+        _ => 0.0,
+    };
+    let curve = m.last_curves.iter().find(|c| same && c.0 == stage).and_then(|c| curve_total(&c.1, f, secs));
+    let prior = curve.or_else(|| m.expected(kind).map(|t| (t - spent).max(0.0))).map(|t| t * (1.0 - base));
+    let whole = super::eta::blend(measured, prior, g)
+        .filter(|_| prior.is_some() || (secs >= 3.0 && g >= 0.02))
+        // (a stage without progress that runs past its prior: nothing to say)
+        .filter(|t| measured.is_some() || *t > secs + 1.0);
+    // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
+    if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
+        eprintln!(
+            "eta {stage}: secs {secs:.1} f {f:.3} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} slow {:?} ratio {:?} main_full {:?}",
+            m.rate.rate(),
+            m.slow,
+            m.later_ratio,
+            m.main_full
+        );
     }
-    let at = if main {
-        // (the whole picture, also when continued; after the card's
-        // shaders compiled, at the pace since)
+    let left = whole.map(|t| (t - secs).max(0.0));
+    if main && !compiling {
+        // the time a whole main rendering takes, for the model's ratios
+        // (after the card's shaders compiled: at the pace since)
         if let Some(l) = left {
             m.main_full = Some(if m.main_cold { l / (1.0 - f).max(0.02) } else { (secs + l) / (1.0 - base).max(0.02) });
         }
-        None
-    } else {
-        match later_of(stage) {
-            Some(k) => Some(k),
-            None => return (left, None, None),
-        }
-    };
-    let after: Vec<Later> = match at {
-        None => m.later.clone(),
-        Some(k) => m.later.iter().copied().skip_while(|l| *l != k).skip(1).collect(),
-    };
-    let Some(rest) = after.iter().map(|k| expected(m, *k)).sum::<Option<f64>>() else { return (left, None, None) };
-    // the time the calculation took so far: the main rendering's part done
-    // (also of a continued one), the later stages', this one's
-    let done = match m.main_full {
-        Some(full) if main => left.map(|l| (full - l).max(0.0)),
-        Some(full) => Some(full + m.later_secs.iter().flatten().sum::<f64>() + secs),
-        None => None,
-    };
-    let Some(l) = left else {
-        let p = done.zip(bar_left).map(|(d, l)| d / (d + l + rest).max(1e-6));
-        return (left, None, p);
-    };
-    // smoothed over a few seconds: the rate of a stage changes as it goes
-    let shown = super::util::smooth_left(m.total_shown, l + rest, 4.0);
-    m.total_shown = Some(shown);
-    let p = done.map(|d| d / (d + shown.0).max(1e-6));
-    // (no total when the stages after it are short)
-    if rest < 2.0 {
-        return (left, None, p);
     }
-    (left, Some(shown.0), p)
+    if main {
+        m.before_secs = base * m.main_full.unwrap_or(0.0);
+    }
+    // the stages to come (the right eye as long as the left one looks)
+    let rest = m.following(kind).iter().map(|k| m.expected(*k).or(whole.filter(|_| *k == Kind::Eye(1)))).sum::<Option<f64>>();
+    let total = left.zip(rest).map(|(l, r)| l + r);
+    // (shown smoothed; what was shown stays while there is no estimate,
+    // e.g. the first seconds of a stage without a prior, counting down)
+    let stage_shown = left.map(|l| smooth_shown(m.stage_left_shown, l, now));
+    let total_shown = total.map(|t| smooth_shown(m.total_shown, t, now));
+    m.stage_left_shown = stage_shown.or(m.stage_left_shown);
+    m.total_shown = total_shown.or(m.total_shown);
+    // the whole calculation's progress: its time so far (a continued one's
+    // rows before too) over that and the time left
+    let done = now.saturating_duration_since(m.calc_start).as_secs_f64() + m.before_secs;
+    Left {
+        stage: stage_shown.map(|s| s.0),
+        // (no total when the stages after it are short)
+        total: total_shown.map(|s| s.0).filter(|_| rest.is_some_and(|r| r >= 2.0)),
+        progress: total_shown.map(|(t, _)| done / (done + t).max(1e-6)),
+    }
 }
 
-/// The time left in total while the card's shaders compile during the
-/// main rendering (None for the stage's own time): the CPU threads' pace so
-/// far finishes it, unless the shaders are predicted done clearly before
-/// (by half again): then the card joins and the rest runs `SPEEDUP` times
-/// faster. The later stages at the model's ratios to that main rendering.
-/// The whole calculation's progress with it.
-fn compiling_estimate(m: &mut State, f: f64, base: f64, secs: f64) -> (Option<f64>, Option<f64>, Option<f64>) {
+/// The main rendering's time left while the card's shaders compile: the
+/// CPU threads' pace so far finishes it, unless the shaders are predicted
+/// done clearly before (by half again): then the card joins and the rest
+/// runs `SPEEDUP` times faster. The time a main rendering takes without
+/// compiling, and the model's ratios to it, go with it (None before the
+/// CPU threads' pace is known).
+fn compiling_main(m: &mut State, f: f64, base: f64, secs: f64) -> Option<f64> {
     let g = f - base;
-    if secs < 2.0 || g < 0.01 {
-        return (None, None, None);
+    if secs <= 0.0 || g <= 0.0 {
+        return None;
     }
     let rate = g / secs;
     let cpu_left = (1.0 - f) / rate;
@@ -1174,7 +1276,7 @@ fn compiling_estimate(m: &mut State, f: f64, base: f64, secs: f64) -> (Option<f6
     let tc = super::eta::compile_left(m.calc_start);
     #[cfg(not(feature = "gpu"))]
     let tc: Option<f64> = None;
-    let (main_left, full, alone) = match tc {
+    let (left, full, alone) = match tc {
         Some(tc) if cpu_left > 1.5 * tc => {
             let warm = 1.0 / rate / super::eta_model::SPEEDUP;
             (tc + (1.0 - (f + rate * tc).min(1.0)) * warm, warm, 0.0)
@@ -1183,26 +1285,22 @@ fn compiling_estimate(m: &mut State, f: f64, base: f64, secs: f64) -> (Option<f6
     };
     let mut ef = m.eta_f;
     ef[super::eta::CPU_ALONE] = alone;
-    let ratio = super::eta::later_ratios(&ef);
-    let rest: f64 = m.later.iter().map(|k| ratio[*k as usize] * full).sum();
-    let shown = super::util::smooth_left(m.total_shown, main_left + rest, 4.0);
-    m.total_shown = Some(shown);
-    // (a continued calculation's rows done before, at this pace)
-    let done = secs + base / rate;
-    (None, Some(shown.0), Some(done / (done + shown.0).max(1e-6)))
+    m.later_ratio = super::eta::later_ratios(&ef);
+    m.main_full = Some(full);
+    Some(left)
 }
 
 /// The whole calculation's progress before its time left is known: the
 /// main rendering's part of it by the stages' expected ratios (None in a
 /// later stage, `f` in one of its own, e.g. the swarm's).
 fn rough_progress(m: &State, stage: &str, f: f64) -> Option<f64> {
-    if stage.starts_with("main rendering") {
-        let rest: f64 = m.later.iter().map(|k| m.later_ratio[*k as usize]).sum();
-        Some(f / (1.0 + rest))
-    } else if later_of(stage).is_some() {
-        None
-    } else {
-        Some(f)
+    match kind_of(stage) {
+        Kind::Main => {
+            let rest: f64 = m.later.iter().map(|k| m.later_ratio[*k as usize]).sum();
+            Some(f / (1.0 + rest))
+        }
+        Kind::Later(_) => None,
+        _ => Some(f),
     }
 }
 
@@ -1222,37 +1320,58 @@ fn compile_secs() -> f64 {
     0.0
 }
 
-/// A stage ended after `secs`: the main rendering's whole time, a later
-/// stage's time (and whether shaders compiled meanwhile).
-fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64) {
+/// A stage ended after `secs`, `next` begins (None: the calculation is
+/// done): the main rendering's whole time, a later stage's time (and
+/// whether shaders compiled meanwhile), and how much slower than its prior
+/// it ran, for the stages to come.
+fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&str>) {
     let m = &mut app.main;
+    let kind = kind_of(stage);
     let compiled = compile_secs() - m.stage_compile;
     // (its curve ends where it ended; not one of a continued stage)
     let mut c = std::mem::take(&mut m.samples);
+    m.rate = RateEma::default();
+    m.stage_left_shown = None;
     // (its pace since the card's shaders compiled: the samples start there)
     let after_compile = c.first().filter(|s| m.main_cold && s.0 < 0.9).map(|&(f0, t0)| (secs - t0) / (1.0 - f0));
     if base == 0.0 && c.len() >= 4 {
         c.push((1.0, secs));
         m.curves.push((stage.to_string(), c));
     }
-    if stage.starts_with("main rendering") {
-        // the whole main rendering's time; when the card's shaders compiled
-        // meanwhile, at the pace it had after (the later stages' ratios are
-        // to a main rendering without compiling)
-        m.main_full = Some(after_compile.unwrap_or(secs / (1.0 - base).max(0.02)));
-        m.main_unmeasured = m.main_cold && after_compile.is_none();
-        // (the later stages then at the model's ratios to a CPU-only main rendering)
-        if m.main_unmeasured {
-            m.eta_f[super::eta::CPU_ALONE] = 1.0;
-            m.later_ratio = super::eta::later_ratios(&m.eta_f);
+    // the stage as a whole (the main rendering's: the whole picture's;
+    // when the card's shaders compiled meanwhile, at the pace it had after:
+    // the later stages' ratios are to a main rendering without compiling)
+    let whole = match kind {
+        Kind::Main => after_compile.unwrap_or(secs / (1.0 - base).max(0.02)),
+        Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0) + secs,
+        _ => secs,
+    };
+    // slower or faster than its prior said: so will the stages to come be
+    // (the shadows and the occlusion share one: once both ran)
+    if next.is_none_or(|n| kind_of(n) != kind) {
+        if let Some((p, src)) = m.prior(kind) {
+            m.slow[src as usize] = super::eta::slowdown(whole, p);
         }
-        m.main_secs = secs;
-    } else if let Some(k) = later_of(stage) {
-        // (the shadows and the occlusion one after the other on the CPU:
-        // together)
-        let t = m.later_secs[k as usize].unwrap_or(0.0) + secs;
-        m.later_secs[k as usize] = Some(t);
-        m.later_cold[k as usize] |= compiled > 0.0 || shaders_compiling();
+    }
+    match kind {
+        Kind::Main => {
+            m.main_full = Some(whole);
+            m.main_unmeasured = m.main_cold && after_compile.is_none();
+            // (the later stages then at the model's ratios to a CPU-only main rendering)
+            if m.main_unmeasured {
+                m.eta_f[super::eta::CPU_ALONE] = 1.0;
+                m.later_ratio = super::eta::later_ratios(&m.eta_f);
+            }
+            m.main_secs = secs;
+        }
+        Kind::Later(k) => {
+            // (the shadows and the occlusion one after the other on the CPU:
+            // together)
+            m.later_secs[k as usize] = Some(whole);
+            m.later_cold[k as usize] |= compiled > 0.0 || shaders_compiling();
+        }
+        Kind::Eye(0) => m.eye_secs = Some(secs),
+        _ => {}
     }
 }
 
@@ -1280,7 +1399,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         if !stage.is_empty() && app.main.calc3d {
             if stage != app.main.stage_shown {
                 let was = std::mem::replace(&mut app.main.stage_shown, stage.clone());
-                stage_ended(app, &was, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base);
+                stage_ended(app, &was, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base, Some(&stage));
                 // the stages it skipped (run with the main rendering on the
                 // card): none next time
                 if let Some(k) = later_of(&stage) {
@@ -1293,15 +1412,14 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 }
                 app.main.stage_start = Instant::now();
                 app.main.stage_compile = compile_secs();
-                app.main.total_shown = None;
             }
             app.main.stage_base = base as f64;
-            let (left, total, p) = time_left(app, &stage, f as f64, base as f64);
+            let Left { stage: left, total, progress: p } = time_left(app, &stage, f as f64, base as f64);
             // the card's shaders compiling: the time left with them, once
             // the CPU threads' pace is known
             let compiling = shaders_compiling();
             let caption = match (compiling, total.or(left)) {
-                (true, Some(tl)) => format!("shaders compiling · {} left", super::util::about_str(tl)),
+                (true, Some(tl)) => format!("shaders compiling · {}", left_str(tl)),
                 (true, None) => format!("{} · shaders compiling", short_stage(&stage)),
                 _ => stage_caption(&stage, f as f64, left, total),
             };
@@ -1350,7 +1468,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 // the last stage's time, and the later stages that did not
                 // run (with the main rendering on the card): none next time
                 let last = std::mem::take(&mut app.main.stage_shown);
-                stage_ended(app, &last, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base);
+                stage_ended(app, &last, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base, None);
                 if app.main.main_full.is_some() {
                     for l in app.main.later.clone() {
                         if !app.main.passed.contains(&l) {
@@ -1367,6 +1485,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                     }
                     let m = &mut app.main;
                     m.last_secs = std::array::from_fn(|k| m.later_secs[k].filter(|_| !m.later_cold[k]));
+                    m.last_main = m.main_full.filter(|_| !m.main_unmeasured);
                     app.main.last_curves = std::mem::take(&mut app.main.curves);
                     app.main.last_sig = std::mem::take(&mut app.main.calc_sig);
                 }
