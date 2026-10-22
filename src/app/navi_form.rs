@@ -1268,8 +1268,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton26Click" => update_adjust(app, ui, "SpeedButton26"),
         "SpeedButton27Click" => {
-            let fi = app.navi.findex;
-            let v = app.navi.vals[3 + app.navi.focused.min(2)];
+            // (FormulaIndex(FocusedSlider): the focus moves without update_adjust)
+            let foc = app.navi.focused.min(2);
+            let fi = formula_index(app, ui, foc);
+            let v = app.navi.vals[3 + foc];
             if let Some(slot) = app.formula.slots.get_mut(fi.0).and_then(|s| s.as_mut()) {
                 super::formula_form::set_option_index(slot, fi.1, v);
             }
