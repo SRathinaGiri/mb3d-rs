@@ -32,6 +32,8 @@ pub struct State {
     pub status_shown: bool,
     pub undo: Vec<Lighting>,
     pub undo_pos: usize,
+    /// the running relight shows an undo/redo step: it stores no undo entry
+    pub undo_relight: bool,
     pub hist: Vec<u32>,
     pub hist_ot: Vec<u32>,
     pub hist_int: Vec<u32>,
@@ -53,6 +55,7 @@ impl Default for State {
             status_shown: false,
             undo: Vec::new(),
             undo_pos: 0,
+            undo_relight: false,
             hist: Vec::new(),
             hist_ot: Vec::new(),
             hist_int: Vec::new(),
@@ -715,6 +718,7 @@ pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
     if app.main.calculating {
         return;
     }
+    app.light.undo_relight = false;
     app.make_scene(ui);
     if let Some(b) = app.eng.base() {
         app.eng.start(super::engine::Job::Relight { scene: app.scene.clone() });
@@ -757,6 +761,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 fn store_undo_light(app: &mut Mb3d) {
     let l = app.scene.lighting.clone();
     let st = &mut app.light;
+    // (as CompareMem in MB3D: an unchanged lighting is no new step)
+    if st.undo_pos > 0 && st.undo.get(st.undo_pos - 1).is_some_and(|u| format!("{u:?}") == format!("{l:?}")) {
+        return;
+    }
     st.undo.truncate(st.undo_pos);
     st.undo.push(l);
     if st.undo.len() > 40 {
@@ -795,7 +803,9 @@ pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
         app.light.hist_int = hi;
         repaint_col_histo(app, ui);
     }
-    store_undo_light(app);
+    if !std::mem::take(&mut app.light.undo_relight) {
+        store_undo_light(app);
+    }
     let n = app.light.undo.len();
     ui.set_enabled(F, "SpeedButton9", n > 1);
 }
@@ -1581,6 +1591,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     set_from_header(app, ui);
                     ui.set_item_index(F, "ComboBox3", -1);
                     trigger_repaint(app, ui);
+                    app.light.undo_relight = app.eng.running();
                 }
             }
         }
