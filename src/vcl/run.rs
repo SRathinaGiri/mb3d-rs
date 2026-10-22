@@ -711,6 +711,8 @@ impl<A: App> Runner<A> {
         if pressed {
             match nc {
                 Nc::Border(d) if button == MouseButton::Left => {
+                    // the window manager takes the press and often its release too
+                    self.buttons &= !SS_LEFT;
                     let _ = self.wins[&id].window.drag_resize_window(d);
                     return;
                 }
@@ -722,6 +724,7 @@ impl<A: App> Runner<A> {
                         self.caption_click = (now - Duration::from_secs(10), usize::MAX);
                     } else {
                         self.caption_click = (now, fi);
+                        self.buttons &= !SS_LEFT;
                         let _ = self.wins[&id].window.drag_window();
                     }
                     return;
