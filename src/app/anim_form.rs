@@ -466,6 +466,10 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_caption(F, "Button2", "Pause rendering");
         return;
     }
+    // (a preview still runs)
+    if app.anim.job.lock().unwrap().running {
+        return;
+    }
     let (a, run, frames) = match output_plan(app, ui) {
         Ok(p) => p,
         // (fewer than two keyframes: nothing to render, as before)
@@ -618,7 +622,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
 fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     read_settings(app, ui);
     let a = app.anim.anim.clone();
-    if a.keyframes.len() < 2 {
+    if a.keyframes.len() < 2 || app.anim.job.lock().unwrap().running {
         return;
     }
     let every = ui.position(F, "UpDown1").max(1) as usize;
@@ -638,6 +642,9 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
         let mut j = app.anim.job.lock().unwrap();
         *j = Job { running: true, total: frames.len(), frames: vec![None; frames.len()], changed: true, ..Default::default() };
     }
+    // no new job while this one runs (end_rendering enables them again)
+    ui.set_enabled(F, "Button2", false);
+    ui.set_enabled(F, "Button4", false);
     // the preview window: an image of the frame size
     let (w, h) = ((a.width as f64 / down).round() as i32, (a.height as f64 / down).round() as i32);
     setup_preview_window(ui, w, h, frames.len());
@@ -670,7 +677,9 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
             let mut j = job.lock().unwrap();
             match r {
                 Ok(img) => {
-                    j.frames[k] = Some(Bitmap::from_rgb(img.width, img.height, &img.rgb));
+                    if let Some(s) = j.frames.get_mut(k) {
+                        *s = Some(Bitmap::from_rgb(img.width, img.height, &img.rgb));
+                    }
                     j.done = k + 1;
                     j.last = None;
                 }
@@ -800,7 +809,10 @@ pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormHide" => {
             app.anim.stop.store(true, Ordering::SeqCst);
             app.anim.playing = false;
-            ui.set_enabled(F, "Button4", count(app) > 1);
+            // (while the preview thread still runs, end_rendering does this)
+            if !app.anim.job.lock().unwrap().running {
+                ui.set_enabled(F, "Button4", count(app) > 1);
+            }
         }
         "SpeedButton1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
