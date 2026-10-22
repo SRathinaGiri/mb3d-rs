@@ -3118,6 +3118,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     update_de_stop();
                     let msl = min(ms_de_stop, 1e6);
                     ic = c;
+                    if (MODE_KIND == 2u) {
+                        // the first step random: up to 33 draws per pixel, so
+                        // a disjoint run of the row's generator for each
+                        seed = pixel_seed(y, x * 33);
+                    }
                     step_ao = msl / pf(DE_STOP);
                     let s_max_d = pf(AO_MAX_LEN) * 0.5 * sqrt(R(pi(HEIGHT)) * R(pi(HEIGHT)) + R(pi(WIDTH)) * R(pi(WIDTH)));
                     max_dist = s_max_d * sqrt(step_ao);
