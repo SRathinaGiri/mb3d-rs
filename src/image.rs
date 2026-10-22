@@ -35,6 +35,14 @@ pub fn decode(bytes: &[u8]) -> Result<Image, String> {
     }
 }
 
+/// The pixels of a `w`×`h` image, refusing sizes no picture file has.
+fn pixels(w: usize, h: usize) -> Result<Vec<[u16; 3]>, String> {
+    match w.checked_mul(h) {
+        Some(n) if n <= 1 << 28 => Ok(vec![[0u16; 3]; n]),
+        _ => Err(format!("image size {w}x{h} is too large")),
+    }
+}
+
 pub fn load(path: &std::path::Path) -> Result<Image, String> {
     let b = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
     decode(&b).map_err(|e| format!("{}: {e}", path.display()))
@@ -249,6 +257,9 @@ fn decode_png(b: &[u8]) -> Result<Image, String> {
         let data = b.get(p + 8..p + 8 + len).ok_or("png: truncated chunk")?;
         match ty {
             b"IHDR" => {
+                if data.len() < 13 {
+                    return Err("png: bad header".into());
+                }
                 w = u32::from_be_bytes(data[0..4].try_into().unwrap()) as usize;
                 h = u32::from_be_bytes(data[4..8].try_into().unwrap()) as usize;
                 depth = data[8];
@@ -265,6 +276,10 @@ fn decode_png(b: &[u8]) -> Result<Image, String> {
     if w == 0 || h == 0 || idat.len() < 2 {
         return Err("png: no image data".into());
     }
+    if ![1, 2, 4, 8, 16].contains(&depth) {
+        return Err(format!("png: bit depth {depth}"));
+    }
+    let data = pixels(w, h)?;
     let raw = inflate(&idat[2..])?;
     let channels = match ctype {
         0 => 1,
@@ -277,7 +292,7 @@ fn decode_png(b: &[u8]) -> Result<Image, String> {
     let bpp_bits = channels * depth as usize;
     let bpp = bpp_bits.div_ceil(8).max(1);
     let deep = depth == 16 && ctype != 3;
-    let mut img = Image { width: w, height: h, deep, data: vec![[0u16; 3]; w * h] };
+    let mut img = Image { width: w, height: h, deep, data };
     // (x0, y0, dx, dy) of the Adam7 passes, or one pass
     let passes: Vec<(usize, usize, usize, usize)> = if interlace == 1 {
         vec![(0, 0, 8, 8), (4, 0, 8, 8), (0, 4, 4, 8), (2, 0, 4, 4), (0, 2, 2, 4), (1, 0, 2, 2), (0, 1, 1, 2)]
@@ -371,15 +386,16 @@ fn decode_bmp(b: &[u8]) -> Result<Image, String> {
     let hsize = u32le(14)? as usize;
     let w = u32le(18)? as i32;
     let hh = u32le(22)? as i32;
-    let bits = u16::from_le_bytes([b[28], b[29]]);
+    let bits = u16::from_le_bytes(b.get(28..30).ok_or("bmp: truncated")?.try_into().unwrap());
     let comp = u32le(30)?;
     if comp != 0 && comp != 3 {
         return Err("bmp: compressed bitmaps are not supported".into());
     }
     let (w, h, flip) = (w.unsigned_abs() as usize, hh.unsigned_abs() as usize, hh > 0);
+    let data = pixels(w, h)?;
     let stride = (w * bits as usize).div_ceil(32) * 4;
     let pal_off = 14 + hsize;
-    let mut img = Image { width: w, height: h, deep: false, data: vec![[0u16; 3]; w * h] };
+    let mut img = Image { width: w, height: h, deep: false, data };
     for y in 0..h {
         let row = off + y * stride;
         let ty = if flip { h - 1 - y } else { y };
@@ -426,16 +442,22 @@ fn decode_pgm(b: &[u8]) -> Result<Image, String> {
     }
     p += 1;
     let (w, h, max) = (fields[0], fields[1], fields[2]);
+    if !(1..=65535).contains(&max) {
+        return Err(format!("pgm: maximum value {max}"));
+    }
     let deep = max > 255;
-    let mut img = Image { width: w, height: h, deep, data: Vec::with_capacity(w * h) };
-    for i in 0..w * h {
+    let mut img = Image { width: w, height: h, deep, data: pixels(w, h)? };
+    // samples scaled from 0..max to 0..255 or 0..65535
+    let full = if deep { 65535 } else { 255 };
+    for (i, px) in img.data.iter_mut().enumerate() {
         let v = if deep {
             let o = p + i * 2;
             u16::from_be_bytes([*b.get(o).ok_or("pgm: truncated")?, *b.get(o + 1).ok_or("pgm: truncated")?])
         } else {
             *b.get(p + i).ok_or("pgm: truncated")? as u16
         };
-        img.data.push([v, v, v]);
+        let v = (v.min(max as u16) as u32 * full / max as u32) as u16;
+        *px = [v, v, v];
     }
     Ok(img)
 }
@@ -550,6 +572,14 @@ fn extend(v: u32, s: u32) -> i32 {
     }
 }
 
+/// The bit count of a DC difference (at most 16 by the standard).
+fn dc_size(s: u8) -> Result<u32, String> {
+    if s > 16 {
+        return Err("jpeg: bad DC difference".into());
+    }
+    Ok(s as u32)
+}
+
 struct JComp {
     id: u8,
     h: usize,
@@ -605,6 +635,9 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                     let pq = seg[q] >> 4;
                     let t = (seg[q] & 3) as usize;
                     q += 1;
+                    if seg.len() < q + if pq == 0 { 64 } else { 128 } {
+                        return Err("jpeg: truncated quantisation table".into());
+                    }
                     for k in 0..64 {
                         qt[t][ZIGZAG[k]] = if pq == 0 {
                             seg[q + k] as u16
@@ -620,9 +653,9 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                 while q < seg.len() {
                     let class = seg[q] >> 4;
                     let t = (seg[q] & 3) as usize;
-                    let counts: [u8; 16] = seg[q + 1..q + 17].try_into().unwrap();
+                    let counts: [u8; 16] = seg.get(q + 1..q + 17).ok_or("jpeg: truncated Huffman table")?.try_into().unwrap();
                     let n: usize = counts.iter().map(|&c| c as usize).sum();
-                    let vals = seg[q + 17..q + 17 + n].to_vec();
+                    let vals = seg.get(q + 17..q + 17 + n).ok_or("jpeg: truncated Huffman table")?.to_vec();
                     let tbl = JHuff::new(&counts, vals);
                     if class == 0 {
                         dc_t[t] = tbl;
@@ -634,6 +667,9 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
             }
             0xC0 | 0xC1 | 0xC2 => {
                 progressive = m == 0xC2;
+                if seg.len() < 6 || seg.len() < 6 + seg[5] as usize * 3 {
+                    return Err("jpeg: truncated frame header".into());
+                }
                 if seg[0] != 8 {
                     return Err("jpeg: only 8 bit precision is supported".into());
                 }
@@ -643,6 +679,7 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                 if n != 1 && n != 3 {
                     return Err(format!("jpeg: {n} components are not supported"));
                 }
+                comps.clear();
                 for i in 0..n {
                     let c = &seg[6 + i * 3..9 + i * 3];
                     comps.push(JComp {
@@ -673,7 +710,10 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                 if comps.is_empty() {
                     return Err("jpeg: scan before frame header".into());
                 }
-                let ns = seg[0] as usize;
+                let ns = *seg.first().ok_or("jpeg: truncated scan header")? as usize;
+                if ns == 0 || seg.len() < 4 + ns * 2 {
+                    return Err("jpeg: truncated scan header".into());
+                }
                 let mut sc: Vec<(usize, usize, usize)> = Vec::new(); // comp index, dc table, ac table
                 for i in 0..ns {
                     let cid = seg[1 + i * 2];
@@ -683,6 +723,9 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                 }
                 let o = 1 + ns * 2;
                 let (ss, se, ah, al) = (seg[o] as usize, seg[o + 1] as usize, (seg[o + 2] >> 4) as u32, (seg[o + 2] & 15) as u32);
+                if progressive && (ss > se || se > 63) {
+                    return Err("jpeg: bad spectral selection".into());
+                }
                 let data = &b[p + len..];
                 let mut br = JBits { d: data, pos: 0, acc: 0, n: 0, marker: false };
                 for c in comps.iter_mut() {
@@ -718,9 +761,9 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                                     let blk = &mut c.coefs[idx];
                                     if !progressive {
                                         // baseline: whole block
-                                        let s = br.decode(&dc_t[td])? as u32;
+                                        let s = dc_size(br.decode(&dc_t[td])?)?;
                                         let diff = extend(br.bits(s), s);
-                                        c.dc_pred += diff;
+                                        c.dc_pred = c.dc_pred.wrapping_add(diff);
                                         blk[0] = c.dc_pred;
                                         let mut k = 1;
                                         while k < 64 {
@@ -743,9 +786,9 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                                     } else if ss == 0 {
                                         // DC scan
                                         if ah == 0 {
-                                            let s = br.decode(&dc_t[td])? as u32;
+                                            let s = dc_size(br.decode(&dc_t[td])?)?;
                                             let diff = extend(br.bits(s), s);
-                                            c.dc_pred += diff;
+                                            c.dc_pred = c.dc_pred.wrapping_add(diff);
                                             blk[0] = c.dc_pred << al;
                                         } else if br.bit() == 1 {
                                             blk[0] |= 1 << al;
@@ -866,7 +909,7 @@ fn decode_jpeg(b: &[u8]) -> Result<Image, String> {
                     let blk = &c.coefs[by * c.bw + bx];
                     let mut f = [0f32; 64];
                     for i in 0..64 {
-                        f[i] = (blk[i] * q[i] as i32) as f32;
+                        f[i] = blk[i].wrapping_mul(q[i] as i32) as f32;
                     }
                     // rows
                     let mut t = [0f32; 64];
@@ -955,5 +998,51 @@ mod tests {
             let p = img.data[i];
             assert_eq!([p[0] as u8, p[1] as u8, p[2] as u8], [rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2]]);
         }
+    }
+
+    #[test]
+    fn malformed_files_are_errors() {
+        // PNG with a short IHDR
+        let mut png = vec![0x89, b'P', b'N', b'G', 13, 10, 26, 10, 0, 0, 0, 2];
+        png.extend_from_slice(b"IHDR\0\0\0\0\0\0");
+        assert!(decode(&png).is_err());
+        assert!(decode(b"BM\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0").is_err());
+        let jpeg = |seg: &[u8]| {
+            let mut j = vec![0xFF, 0xD8];
+            j.extend_from_slice(seg);
+            j.extend_from_slice(&[0xFF, 0xD9]);
+            j
+        };
+        let sof = [0xFF, 0xC2, 0, 11, 8, 0, 8, 0, 8, 1, 1, 0x11, 0];
+        for seg in [
+            &[0xFF, 0xDB, 0, 4, 0, 1][..],                    // short DQT
+            &[0xFF, 0xC4, 0, 6, 0, 1, 2, 3][..],              // short DHT
+            &[0xFF, 0xC0, 0, 5, 8, 0, 8][..],                 // short SOF
+            &[0xFF, 0xC0, 0, 8, 8, 0, 8, 0, 8, 3][..],        // SOF missing components
+        ] {
+            assert!(decode(&jpeg(seg)).is_err());
+        }
+        // scans: no components, short header, spectral end past 63
+        for sos in [&[0xFF, 0xDA, 0, 6, 0, 0, 63, 0][..], &[0xFF, 0xDA, 0, 4, 1, 1][..], &[0xFF, 0xDA, 0, 8, 1, 1, 0, 1, 70, 0][..]] {
+            let mut seg = sof.to_vec();
+            seg.extend_from_slice(sos);
+            assert!(decode(&jpeg(&seg)).is_err());
+        }
+        // a DC size symbol of 40 (one code of length 1)
+        let mut seg = vec![0xFF, 0xC0, 0, 11, 8, 0, 8, 0, 8, 1, 1, 0x11, 0];
+        seg.extend_from_slice(&[0xFF, 0xC4, 0, 20, 0x00, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 40]);
+        seg.extend_from_slice(&[0xFF, 0xDA, 0, 8, 1, 1, 0, 0, 63, 0, 0, 0]);
+        assert!(decode(&jpeg(&seg)).is_err());
+    }
+
+    #[test]
+    fn pgm_samples_are_scaled_to_the_maximum() {
+        let img = decode(b"P5 2 1 15\n\x00\x0F").unwrap();
+        assert!(!img.deep);
+        assert_eq!((img.data[0][0], img.data[1][0]), (0, 255));
+        let img = decode(b"P5 2 1 1023\n\x01\xFF\x03\xFF").unwrap();
+        assert!(img.deep);
+        assert_eq!((img.data[0][0], img.data[1][0]), ((511u32 * 65535 / 1023) as u16, 65535));
+        assert!(decode(b"P5 1 1 0\n\x00").is_err());
     }
 }
