@@ -861,8 +861,8 @@ OPTIONS:
                              continues in the middle of its frame; mb3d resume)
         --no-resume          Keep no checkpoint of the frame under way
         --swarm <DIR>        Render the frames with the swarm: the instances that watch
-                             this shared folder (mb3d swarm --help); all frames, the
-                             --from/--to/--every selection does not apply
+                             this shared folder (mb3d swarm --help); the frames of the
+                             --from/--to/--frame/--every selection
         --formulas <DIR>     Directory with .m3f formula files
         --maps <DIR>         Directory with maps and background pictures
 ";
