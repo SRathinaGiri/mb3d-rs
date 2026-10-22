@@ -299,6 +299,16 @@ impl Drop for Flight {
     }
 }
 
+/// Counts card work outside `guard` (the compiles started in the
+/// background, which may open the device first), None once the program
+/// ends: a process that exits while the driver opens the device or
+/// compiles crashes in the driver.
+fn flight() -> Option<Flight> {
+    IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
+    let f = Flight;
+    (!ABORT.load(Ordering::SeqCst)).then_some(f)
+}
+
 /// Stops all GPU work for good (the program ends).
 pub fn abort_all() {
     ABORT.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -1070,6 +1080,7 @@ pub fn mc_prepare(p: &CalcParams) -> Result<std::sync::Arc<AtomicBool>, String> 
     if let Some(r) = unsupported(p) {
         return Err(r);
     }
+    let Some(_flight) = flight() else { return Err("the program ends".into()) };
     let g = gpu()?;
     let sh = scene_shader(p)?;
     Ok(prepare(g, sh.code, "main", mc_constants(p)))
@@ -1113,6 +1124,7 @@ pub fn march_prepare(p: &CalcParams, post: &PostJob) -> Result<Vec<std::sync::Ar
     if let Some(r) = unsupported(p) {
         return Err(r);
     }
+    let Some(_flight) = flight() else { return Err("the program ends".into()) };
     let g = gpu()?;
     let sh = scene_shader(p)?;
     Ok(modes(post).into_iter().map(|m| prepare(g, sh.code.clone(), "main", march_constants(p, m))).collect())
@@ -1140,6 +1152,7 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
     if unsupported(p).is_some() {
         return;
     }
+    let Some(_flight) = flight() else { return };
     let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return };
     let split = (hs || ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
     if split {
@@ -1319,7 +1332,14 @@ pub fn use_own_driver_cache() {
 
 fn gpu() -> Result<&'static Gpu, String> {
     static G: OnceLock<Result<Gpu, String>> = OnceLock::new();
-    G.get_or_init(|| pollster::block_on(init())).as_ref().map_err(|e| e.clone())
+    // (opening the device is counted too: see `flight`)
+    G.get_or_init(|| {
+        IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
+        let _flight = Flight;
+        pollster::block_on(init())
+    })
+    .as_ref()
+    .map_err(|e| e.clone())
 }
 
 async fn init() -> Result<Gpu, String> {
@@ -2142,6 +2162,7 @@ pub fn vol_map_prepare(p: &CalcParams) -> Option<std::sync::Arc<AtomicBool>> {
     if !enabled() || unsupported(p).is_some() || LOST.load(Ordering::SeqCst) {
         return None;
     }
+    let _flight = flight()?;
     let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return None };
     Some(prepare(g, sh.code.clone(), "main", march_constants(p, 1)))
 }
