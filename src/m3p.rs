@@ -208,6 +208,8 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
 }
 
 /// `MakeTextparas`: the parameters as MB3D text (`Mandelbulb3Dv18{...}`).
+/// Formulas with negative iterations count as used (MB3D looks for > 0
+/// here only, dropping a last one that its own files and renders keep).
 pub fn raw_to_text(raw: &[u8], title: &str) -> String {
     let mut raw = raw.to_vec();
     raw.resize(HEADER_SIZE + ADDON_SIZE, 0);
@@ -216,7 +218,7 @@ pub fn raw_to_text(raw: &[u8], title: &str) -> String {
     let n = if raw[a + 1] & 3 == 1 {
         1
     } else {
-        (0..6).rev().find(|&i| i32::from_le_bytes(raw[a + 8 + i * 188..a + 12 + i * 188].try_into().unwrap()) > 0).map(|i| i as i32).unwrap_or(-1)
+        (0..6).rev().find(|&i| i32::from_le_bytes(raw[a + 8 + i * 188..a + 12 + i * 188].try_into().unwrap()) != 0).map(|i| i as i32).unwrap_or(-1)
     };
     raw[a + 4] = (n + 1) as u8;
     let mut out = String::from("Mandelbulb3Dv18{\r\n");
@@ -1347,6 +1349,11 @@ mod tests {
         // the used formula slots survive, iFCount is set
         assert_eq!(back[a + 4], 3);
         assert_eq!(back[a + 8..a + 8 + 3 * 188], raw[a + 8..a + 8 + 3 * 188]);
+        // a last formula with negative (uncounted) iterations is used too
+        raw[a + 8 + 3 * 188..a + 12 + 3 * 188].copy_from_slice(&(-3i32).to_le_bytes());
+        let (back, _) = raw_from_text(&raw_to_text(&raw, "Test scene")).unwrap();
+        assert_eq!(back[a + 4], 4);
+        assert_eq!(back[a + 8..a + 8 + 4 * 188], raw[a + 8..a + 8 + 4 * 188]);
     }
 
     #[test]
