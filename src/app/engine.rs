@@ -668,9 +668,18 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
             _ => "2D calculation".into(),
         };
     }
-    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    // (a continued calculation: the rows kept count as work done in the
+    // first report, which weighs the rows; the base in rows until then)
+    let base_pending = AtomicBool::new(ck.as_ref().is_some_and(|s| s.resumed() > 0));
+    let progress = |d: usize, t: usize| {
+        e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+        if d > 0 && base_pending.swap(false, Ordering::Relaxed) {
+            e.out.lock().unwrap().stage_base = d as f32 / t.max(1) as f32;
+        }
+    };
     // each stage after the march: its name for the window, the bar from zero
     let stage = |name: &str| {
+        base_pending.store(false, Ordering::Relaxed);
         let mut o = e.out.lock().unwrap();
         o.stage = name.to_string();
         o.stage_base = 0.0;
