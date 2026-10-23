@@ -167,7 +167,6 @@ impl ItemsLeft {
 /// a tile, a frame): what [`ItemsLeft::left`] asks about it.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Pace {
-    rate: RateEma,
     /// the first and the last sample (progress, seconds)
     first: Option<(f64, f64)>,
     last: Option<(f64, f64)>,
@@ -182,7 +181,7 @@ impl Pace {
         }
         match self.last {
             Some((f0, t0)) if secs - t0 < 0.25 || f <= f0 => return,
-            Some((f0, t0)) => self.rate.add(f - f0, secs - t0),
+            Some(_) => {}
             None => self.first = Some((f, secs)),
         }
         self.last = Some((f, secs));
@@ -191,12 +190,19 @@ impl Pace {
     /// The time left in this item and `after` more: its progress `f` after
     /// `secs`, its whole time at its pace so far (none before progress was
     /// made, or past its end) blended with the finished items' time.
+    /// The pace is the average since the first sample: an item's progress
+    /// comes in clumps (the card's rows, a band at a time) that the
+    /// recent pace of [`RateEma`] would follow, a clump at a time.
     pub fn left(&self, items: &ItemsLeft, f: f64, secs: f64, after: usize) -> Option<f64> {
         // the progress made under measurement (not what was done before,
         // e.g. the rows of a continued pass)
         let from = self.first.map_or(0.0, |s| s.0);
         let g = ((f - from) / (1.0 - from).max(1e-6)).clamp(0.0, 1.0);
-        let measured = self.rate.rate().filter(|_| f < 1.0).map(|r| secs + (1.0 - f) / r);
+        let rate = match (self.first, self.last) {
+            (Some((f0, t0)), Some((f1, t1))) if f1 > f0 && t1 > t0 => Some((f1 - f0) / (t1 - t0)),
+            _ => None,
+        };
+        let measured = rate.filter(|_| f < 1.0).map(|r| secs + (1.0 - f) / r);
         items.left(g, secs, measured, after)
     }
 }

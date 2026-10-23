@@ -67,9 +67,16 @@ pub struct State {
     before_secs: f64,
     /// how long each later stage takes relative to the main rendering (the
     /// model's, from [`super::eta::later_ratios`]), and the whole
-    /// calculation's progress as the bar shows it (it only grows)
+    /// calculation's progress as the bar shows it: it only grows, and it
+    /// glides to the estimate (`bar_target`) instead of leaping when an
+    /// estimate changes (see [`idle`])
     later_ratio: [f64; 3],
     progress_shown: f64,
+    bar_target: f64,
+    bar_at: Instant,
+    /// the caption of a calculation stopped with the Stop button (its stage,
+    /// progress and time left), kept with the bar until it is replaced
+    stopped_status: Option<String>,
     /// the card's shaders compiled during the main rendering, and it ended
     /// before its pace without compiling was known (the CPU did it alone:
     /// the model's `CPU_ALONE` ratios then)
@@ -183,6 +190,9 @@ impl Default for State {
             before_secs: 0.0,
             later_ratio: [0.0; 3],
             progress_shown: 0.0,
+            bar_target: 0.0,
+            bar_at: Instant::now(),
+            stopped_status: None,
             main_cold: false,
             main_unmeasured: false,
             main_secs: 0.0,
@@ -725,6 +735,7 @@ pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_position(F, "ProgressBar1", 0);
     // (the frame number makes room for the stage and its time left)
     ui.set_visible(F, "Panel7", false);
+    app.main.stopped_status = None;
     app.main.calculating = true;
 }
 
@@ -1076,20 +1087,27 @@ impl State {
         self.samples.clear();
         self.curves.clear();
         self.rate = RateEma::default();
-        self.eta_f = super::eta::scene_features(sc);
-        self.later_ratio = super::eta::later_ratios(&self.eta_f);
         self.progress_shown = 0.0;
+        self.bar_target = 0.0;
+        self.bar_at = Instant::now();
         self.main_cold = false;
         self.main_unmeasured = false;
         self.main_secs = 0.0;
         self.f_compiled = None;
         self.later_secs = [None; 3];
         self.later_cold = [false; 3];
+        // (the same picture continued after a stop: its main rendering's
+        // time is known, the continued rendering measures little of it)
+        let same = !sig.is_empty() && sig == self.calc_sig;
         self.calc_sig = sig;
         self.eye_secs = None;
         self.stage_base = 0.0;
         self.before_secs = 0.0;
-        self.main_full = None;
+        if !same {
+            self.main_full = None;
+            self.eta_f = super::eta::scene_features(sc);
+            self.later_ratio = super::eta::later_ratios(&self.eta_f);
+        }
         self.slow = [1.0; 2];
         self.stage_left_shown = None;
         self.total_shown = None;
@@ -1152,17 +1170,14 @@ fn short_stage(stage: &str) -> String {
     stage.split(" (").next().unwrap_or(stage).replace("hard shadows and ambient occlusion", "shadows and AO")
 }
 
-/// "reflections · about 6 min left in total", "hard shadows: 40 % · 20 s
-/// left": the stage, and once the rate is known the time left in the whole
-/// calculation, else its progress and time left (short: it has the room
-/// beside the bar; the LED shows where it runs).
+/// "hard shadows: 40 % · about 6 min left": the stage, its progress and
+/// the time left in the whole calculation (one figure throughout, not the
+/// stage's: that only when the stages to come are unknown; short: it has
+/// the room beside the bar; the LED shows where it runs).
 fn stage_caption(stage: &str, f: f64, left: Option<f64>, total: Option<f64>) -> String {
     let name = short_stage(stage);
-    if let Some(tl) = total {
-        return format!("{name} · {} in total", left_str(tl));
-    }
     let mut t = if f <= 0.0 { name } else { format!("{name}: {} %", (f * 100.0).floor() as i64) };
-    if let Some(l) = left {
+    if let Some(l) = total.or(left) {
         t += &format!(" · {}", left_str(l));
     }
     t
@@ -1189,7 +1204,9 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let secs = now.saturating_duration_since(m.stage_start).as_secs_f64();
     let kind = kind_of(stage);
     let main = kind == Kind::Main;
-    if main {
+    // (a continued one keeps the features of its first run: the rows read
+    // back from its checkpoint are not marched)
+    if main && base == 0.0 {
         super::eta::march_features(&mut m.eta_f, &app.eng.0, secs);
         m.later_ratio = super::eta::later_ratios(&m.eta_f);
     }
@@ -1223,6 +1240,12 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     if f > 0.0 && m.samples.last().is_none_or(|s| secs - s.1 >= 0.25 && f > s.0) {
         if let Some(&(f0, t0)) = m.samples.last() {
             m.rate.add(f - f0, secs - t0);
+        } else if work >= 1.0 && f > base {
+            // the first report well into the stage (the reflections' first
+            // round): work done since it began, measured from its start
+            // (rows a stage has nothing to do for show up at once instead)
+            m.rate.add(f - base, work);
+            m.samples.push((base, secs - work));
         }
         m.samples.push((f, secs));
     }
@@ -1259,8 +1282,10 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     };
     let curve = m.last_curves.iter().find(|c| same && c.0 == stage).and_then(|c| curve_total(&c.1, f, secs));
     let prior = curve.or_else(|| m.expected(kind).map(|t| (t - spent).max(0.0))).map(|t| t * (1.0 - base));
+    // (the main rendering with the shaders compiling: its estimate is the
+    // CPU threads' pace with the compile, not the samples, which are cleared)
     let whole = super::eta::blend(measured, prior, g)
-        .filter(|_| prior.is_some() || (secs >= 3.0 && g >= 0.02))
+        .filter(|_| prior.is_some() || (secs >= 3.0 && g >= 0.02) || (compiling && main))
         // (a stage without progress that runs past its prior: nothing to say;
         // one whose progress is complete goes on for the stages to come)
         .filter(|t| measured.is_some() || *t > work + 1.0 || f >= 1.0);
@@ -1269,9 +1294,20 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let left = whole.map(|t| (t - work).max(0.0) + compile);
     if main && !compiling {
         // the time a whole main rendering takes, for the model's ratios
-        // (after the card's shaders compiled: at the pace since)
+        // (after the card's shaders compiled: at the pace since, from the
+        // first sample after them, once that pace is a couple of seconds
+        // old: the rows the card delivers at once when it joins are not
+        // its pace; until then the compile's estimate stays)
         if let Some(l) = left {
-            m.main_full = Some(if m.main_cold { l / (1.0 - f).max(0.02) } else { (secs + l) / (1.0 - base).max(0.02) });
+            match (m.main_cold, m.samples.first()) {
+                (true, Some(&(f0, t0))) => {
+                    if secs - t0 >= 2.0 {
+                        m.main_full = Some((secs - t0 + l) / (1.0 - f0).max(0.02));
+                    }
+                }
+                (true, None) => {}
+                _ => m.main_full = Some((secs + l) / (1.0 - base).max(0.02)),
+            }
         }
     }
     if main {
@@ -1301,8 +1337,7 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let done = now.saturating_duration_since(m.calc_start).as_secs_f64() + m.before_secs;
     Left {
         stage: stage_shown.map(|s| s.0),
-        // (no total when the stages after it are short)
-        total: total_shown.map(|s| s.0).filter(|_| rest.is_some_and(|r| r >= 2.0)),
+        total: total_shown.map(|s| s.0),
         progress: total_shown.map(|(t, _)| done / (done + t).max(1e-6)),
     }
 }
@@ -1415,7 +1450,12 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
     }
     match kind {
         Kind::Main => {
-            m.main_full = Some(whole);
+            // (a continued one with most rows from its checkpoint, or one
+            // over before the window saw it: what it measured, extrapolated,
+            // is noise; the time known stays)
+            if m.main_full.is_none() || (base < 0.5 && secs >= 1.0) {
+                m.main_full = Some(whole);
+            }
             m.main_unmeasured = m.main_cold && after_compile.is_none();
             // (the later stages then at the model's ratios to a CPU-only main rendering)
             if m.main_unmeasured {
@@ -1459,10 +1499,28 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             app.message(ui, COMPILE_NOTE);
         }
     }
+    // a stopped calculation's caption was replaced (parameters changed, a
+    // picture loaded): its bar goes, the frame number comes back
+    if app.main.stopped_status.as_ref().is_some_and(|s| ui.caption(F, "Label6") != *s) {
+        app.main.stopped_status = None;
+        ui.set_visible(F, "ProgressBar1", false);
+        ui.set_visible(F, "Panel7", true);
+    }
     if app.main.calculating {
         let f = app.eng.progress();
-        let mut bar = f as f64;
-        if !stage.is_empty() && app.main.calc3d {
+        // (a 3D calculation's bar is the whole calculation's, never a
+        // stage's raw progress: before the job runs, the engine still
+        // shows the last one's)
+        let mut bar = if app.main.calc3d { app.main.progress_shown } else { f as f64 };
+        // (not before the job runs: the question whether to continue an
+        // unfinished calculation is asked while the engine still shows the
+        // stopped one's stage and progress)
+        if !stage.is_empty() && app.main.calc3d && running {
+            // (the main rendering named "(continued)" once its checkpoint
+            // is read: the stage it was, not a stage ended)
+            if stage != app.main.stage_shown && kind_of(&stage) == Kind::Main && kind_of(&app.main.stage_shown) == Kind::Main {
+                app.main.stage_shown = stage.clone();
+            }
             if stage != app.main.stage_shown {
                 let was = std::mem::replace(&mut app.main.stage_shown, stage.clone());
                 stage_ended(app, &was, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base, Some(&stage));
@@ -1493,14 +1551,19 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 _ => stage_caption(&stage, f as f64, left, total),
             };
             ui.set_caption(F, "Label6", &caption);
-            // the bar: the whole calculation's progress, not the stage's
-            // (it does not go back when an estimate grows); none without
-            // an estimate of the whole
+            // the bar: the whole calculation's progress, not the stage's.
+            // It does not go back when an estimate grows, and it glides to
+            // an estimate that leapt ahead (70 % of the gap a second) instead
+            // of jumping; without an estimate it holds where it was
             let p = if compiling { p } else { p.or_else(|| rough_progress(&app.main, &stage, f as f64)) };
+            let now = Instant::now();
             if let Some(p) = p {
-                app.main.progress_shown = app.main.progress_shown.max(p.clamp(0.0, 1.0));
+                app.main.bar_target = app.main.bar_target.max(p.clamp(0.0, 1.0));
             }
-            ui.set_visible(F, "ProgressBar1", p.is_some());
+            let dt = now.saturating_duration_since(app.main.bar_at).as_secs_f64();
+            app.main.bar_at = now;
+            let gap = (app.main.bar_target - app.main.progress_shown).max(0.0);
+            app.main.progress_shown += gap * (1.0 - 0.3f64.powf(dt));
             bar = app.main.progress_shown;
         }
         ui.set_position(F, "ProgressBar1", (bar * ui.c(F, "ProgressBar1").max as f64) as i64);
@@ -2223,7 +2286,18 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
         app.eng.stop();
         super::voxel_form::stop(app);
         super::tools_forms::stop_tiling(app);
+        let status = ui.caption(F, "Label6");
+        let bar_shown = app.main.calc3d && ui.visible(F, "ProgressBar1") && !status.is_empty();
         enable_buttons(app, ui);
+        // the stopped calculation's stage, progress and time left stay (the
+        // frame number keeps making room) until they are replaced or a
+        // calculation starts
+        if bar_shown {
+            ui.set_caption(F, "Label6", &status);
+            ui.set_visible(F, "ProgressBar1", true);
+            ui.set_visible(F, "Panel7", false);
+            app.main.stopped_status = Some(status);
+        }
         if app.main.led_running {
             app.main.led_running = false;
             show_led(ui, app.main.led, false);

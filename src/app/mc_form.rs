@@ -766,6 +766,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         let target = m.in_batch.then_some(m.batch_max_rays);
         let left = m.pace.left(&m.items, f, secs, 0);
         let total = passes_after(target, m.rays0, m.rays, m.passes).and_then(|n| m.pace.left(&m.items, f, secs, n));
+        // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
+        if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
+            eprintln!("eta pass {}: secs {secs:.1} f {f:.4} ({pr}/{tot}) pace {:?} per {:?} left {left:?} total {total:?}", m.passes, m.pace, m.items.per_item());
+        }
         m.pass_shown = left.map(|l| smooth_shown(m.pass_shown, l, now)).or(m.pass_shown);
         m.total_shown = total.map(|t| smooth_shown(m.total_shown, t, now)).or(m.total_shown);
         let caption = pass_caption(m.passes, m.pass_shown.map(|s| s.0), m.total_shown.map(|s| s.0), m.last_pass);

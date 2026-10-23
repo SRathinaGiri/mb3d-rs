@@ -517,6 +517,11 @@ fn calculate_rows(
                 };
                 let t_march = Instant::now();
                 ck_tag(ck, "raw");
+                // (a continued calculation with every row in its checkpoint
+                // marches nothing: the card's pace against the threads' is
+                // not measured, the post passes go to the card as they
+                // mostly do when it joins)
+                let unmeasured = ck.is_some_and(|s| s.done_count() >= h);
                 let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, wm, cancel, sink, &flags[0], &probe, ck, true, &finish)?;
                 let march_secs = t_march.elapsed().as_secs_f64();
                 let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
@@ -530,7 +535,9 @@ fn calculate_rows(
                 // (not after a march in double precision: the card is slow
                 // in it, and the reflections stay in single precision, as
                 // they were before the card joined in double)
-                let card_posts = n_card > 0 && switched.is_none() && !finish.load(Ordering::SeqCst) && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
+                let card_posts = switched.is_none()
+                    && !finish.load(Ordering::SeqCst)
+                    && (n_card > 0 && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs) || unmeasured && n_card == 0);
                 if timing {
                     eprintln!(
                         "  march (card and CPU): {march_secs:.2} s, {n_card} of {h} rows on the card in {card_secs:.2} s; rows/s card {:.1}, CPU {:.1}",

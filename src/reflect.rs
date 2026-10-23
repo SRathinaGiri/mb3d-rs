@@ -1409,7 +1409,11 @@ pub fn reflections<S: Sample>(
             let bh = rows.min(hu - y);
             q.rect = [x0, y0 + y as i32, w, bh as i32];
             let (g, c) = (&gbuf[y * wu..(y + bh) * wu], &mut rgb[y * wu * 3..(y + bh) * wu * 3]);
-            match reflections_gpu(sc, &q, g, c, cam, lv, threads, cancel) {
+            // (within the band: the share of its rays marched, a round at
+            // a time)
+            let (b0, b1) = (sw.before(y), sw.before(y + bh));
+            let band_progress = |frac: f64| progress(b0 + ((b1 - b0) as f64 * frac) as usize, sw.total());
+            match reflections_gpu(sc, &q, g, c, cam, lv, threads, &band_progress, cancel) {
                 Ok(()) => {
                     y += bh;
                     progress(sw.before(y), sw.total());
@@ -1593,7 +1597,7 @@ struct RPix {
 /// next ray of each pixel.
 #[cfg(feature = "gpu")]
 #[allow(clippy::too_many_arguments)]
-fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb: &mut [S], cam: &PaintCamera, lv: &LightVals, threads: usize, band_progress: &dyn Fn(f64), cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     use crate::gpu::{ReflectLight, ReflectOpts, ReflectTask};
     let mc = &sc.mc;
     let mid = sc.stereo_mid();
@@ -1876,6 +1880,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         })
     };
     let mut round = 0;
+    let mut rays_done = 0usize;
     // MB3D_REFLECT_CPU_SHARE=0: all rays on the card (comparisons)
     let card_only = std::env::var("MB3D_REFLECT_CPU_SHARE").is_ok_and(|v| v == "0");
     let mut t_steps = 0.0;
@@ -1953,6 +1958,10 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
             handles.into_iter().flat_map(|h| h.join().unwrap()).collect()
         });
         t_steps += ts.elapsed().as_secs_f64();
+        // (the rays marched so far over them and the round's: the time a
+        // round takes goes with its rays)
+        band_progress(rays_done as f64 / (rays_done + reqs.len()).max(1) as f64);
+        rays_done += reqs.len();
         if reqs.is_empty() {
             break;
         }

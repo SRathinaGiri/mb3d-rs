@@ -274,6 +274,9 @@ impl Engine {
             let mut o = self.0.out.lock().unwrap();
             o.running = true;
             o.error.clear();
+            // (the last job's stage is not this one's)
+            o.stage.clear();
+            o.stage_base = 0.0;
             o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. } | Job::Stereo { .. });
         }
         self.0.progress.store(0, Ordering::Relaxed);
