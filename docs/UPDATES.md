@@ -5,6 +5,15 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.69](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.69) · 23 Oct 2026, 14:10 UTC
+
+| Commit | What it does |
+|---|---|
+| [`91a47b9`](https://github.com/thr32423/mb3d-rs/commit/91a47b9fabdaf59d618a4ed18168b117f76a917d) | Version number and release notes of this release |
+| [`503ec76`](https://github.com/thr32423/mb3d-rs/commit/503ec76e16762bf37aef178d02eb6723f63926cf) | Stop ends the card's reflection batch at its next submission, not after the band's rays |
+| [`56830e7`](https://github.com/thr32423/mb3d-rs/commit/56830e74e2184c47fc88a173d01080294d753e10) | Time left: one average pace, a bar that glides, and a stopped calculation keeps its status |
+| [`837abce`](https://github.com/thr32423/mb3d-rs/commit/837abce95ccc30fd3a20531aed7a643eb13a9579) | README: Updates for v0.2.68 |
+
 ## [v0.2.68](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.68) · 22 Oct 2026, 16:35 UTC
 
 | Commit | What it does |
