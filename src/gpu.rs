@@ -1944,11 +1944,11 @@ pub struct RaySharing {
 /// Runs the tasks of the reflection pass on the graphics card (the march
 /// of every bounce with the normals, colour, shadows and ambient occlusion
 /// of its hit, as `reflect.rs` does on the CPU).
-pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
-    guard(|| reflect_batch_card(p, tasks, o, share))
+pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+    guard(|| reflect_batch_card(p, tasks, o, share, cancel))
 }
 
-fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
     // every way out (an error, a panic of the card) ends the card's part:
     // the CPU's workers wait for `done`
     struct Done<'a>(Option<&'a RaySharing>);
@@ -2076,7 +2076,9 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
             n,
             &lim,
             &give_up,
-            &|| false,
+            // ("Stop" ends the batch at its next submission, not after
+            // the whole band's rays: a band can take half a minute)
+            &|| cancel(),
             |enc, groups| {
                 let mut pass = enc.begin_compute_pass(&Default::default());
                 pass.set_pipeline(pl);
