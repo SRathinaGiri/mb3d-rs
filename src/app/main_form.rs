@@ -54,6 +54,9 @@ pub struct State {
     later: Vec<Later>,
     passed: Vec<Later>,
     stage_base: f64,
+    /// the time the rows of a continued calculation took before this run
+    /// (from its checkpoint; 0 when unknown)
+    kept_secs: f64,
     main_full: Option<f64>,
     stage_left_shown: Option<Shown>,
     total_shown: Option<Shown>,
@@ -181,6 +184,7 @@ impl Default for State {
             later: Vec::new(),
             passed: Vec::new(),
             stage_base: 0.0,
+            kept_secs: 0.0,
             main_full: None,
             stage_left_shown: None,
             total_shown: None,
@@ -887,8 +891,16 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     let later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
     let sig = if calc3d { picture_sig(&app.scene) } else { String::new() };
     app.main.start_eta(&app.scene, later, sig, super::eta::Calib::parse(app.ini.get_extra("eta_calib")));
+    // the bar of a stopped calculation that may be continued stays where
+    // it was (it goes on from there, or restarts when the calculation does,
+    // see `dialog`); any other calculation's starts from zero
+    let swarm = calc3d && super::swarm_form::calc_folder(app).is_some();
+    if !calc3d || swarm || super::engine::unfinished_calc(&app.scene).is_none() {
+        app.main.bar_restart();
+    }
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
+    ui.set_position(F, "ProgressBar1", (app.main.progress_shown * ui.c(F, "ProgressBar1").max as f64) as i64);
     for l in ["Label8", "Label48", "Label50"] {
         ui.set_caption(F, l, "-");
     }
@@ -901,7 +913,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         app.main.compile_note = false;
     }
     let slice = if calc3d { 0 } else { app.main.slice_calc.clamp(1, 3) };
-    if let (true, Some(dir)) = (calc3d, super::swarm_form::calc_folder(app)) {
+    if let (true, Some(dir)) = (swarm, super::swarm_form::calc_folder(app)) {
         let (cols, rows) = app.swarm.tiles;
         app.eng.start(Job::Swarm { scene: app.scene.clone(), dir, cols, rows, name: app.swarm.name.clone() });
         return;
@@ -1087,9 +1099,6 @@ impl State {
         self.samples.clear();
         self.curves.clear();
         self.rate = RateEma::default();
-        self.progress_shown = 0.0;
-        self.bar_target = 0.0;
-        self.bar_at = Instant::now();
         self.main_cold = false;
         self.main_unmeasured = false;
         self.main_secs = 0.0;
@@ -1102,8 +1111,12 @@ impl State {
         self.calc_sig = sig;
         self.eye_secs = None;
         self.stage_base = 0.0;
+        self.kept_secs = 0.0;
         self.before_secs = 0.0;
+        // (the same picture continued: the bar goes on where the stopped
+        // one's was, see `calc_mand`)
         if !same {
+            self.bar_restart();
             self.main_full = None;
             self.eta_f = super::eta::scene_features(sc);
             self.later_ratio = super::eta::later_ratios(&self.eta_f);
@@ -1111,6 +1124,14 @@ impl State {
         self.slow = [1.0; 2];
         self.stage_left_shown = None;
         self.total_shown = None;
+    }
+
+    /// The bar starts from zero: a calculation that does not continue a
+    /// stopped one.
+    fn bar_restart(&mut self) {
+        self.progress_shown = 0.0;
+        self.bar_target = 0.0;
+        self.bar_at = Instant::now();
     }
 
     /// What a stage is expected to take as a whole, before it runs: the
@@ -1210,6 +1231,11 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
         super::eta::march_features(&mut m.eta_f, &app.eng.0, secs);
         m.later_ratio = super::eta::later_ratios(&m.eta_f);
     }
+    // (a continued one after the program was restarted: the time its rows
+    // took, kept with them, says what the whole main rendering takes)
+    if main && m.main_full.is_none() && m.kept_secs > 0.0 && base >= 0.05 {
+        m.main_full = Some(m.kept_secs / base);
+    }
     // (an eye of a stereo pair has half the bar)
     let (f, base) = match kind {
         Kind::Eye(i) => ((f - 0.5 * i as f64) * 2.0, 0.0),
@@ -1240,10 +1266,12 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     if f > 0.0 && m.samples.last().is_none_or(|s| secs - s.1 >= 0.25 && f > s.0) {
         if let Some(&(f0, t0)) = m.samples.last() {
             m.rate.add(f - f0, secs - t0);
-        } else if work >= 1.0 && f > base {
+        } else if work >= 1.0 && f > base && !(main && base > 0.0) {
             // the first report well into the stage (the reflections' first
             // round): work done since it began, measured from its start
-            // (rows a stage has nothing to do for show up at once instead)
+            // (rows a stage has nothing to do for show up at once instead;
+            // a continued main rendering's first report, after the probe
+            // weighed its rows, is the rows kept: no work)
             m.rate.add(f - base, work);
             m.samples.push((base, secs - work));
         }
@@ -1311,7 +1339,7 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
         }
     }
     if main {
-        m.before_secs = base * m.main_full.unwrap_or(0.0);
+        m.before_secs = if m.kept_secs > 0.0 { m.kept_secs } else { base * m.main_full.unwrap_or(0.0) };
     }
     // the stages to come (the right eye as long as the left one looks)
     let rest = m.following(kind).iter().map(|k| m.expected(*k).or(whole.filter(|_| *k == Kind::Eye(1)))).sum::<Option<f64>>();
@@ -1319,7 +1347,8 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
     if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
         eprintln!(
-            "eta {stage}: secs {secs:.1} f {f:.3} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} rest {rest:?} slow {:?} ratio {:?} main_full {:?}",
+            "eta {stage}: secs {secs:.1} f {f:.3} base {base:.3} before {:.1} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} rest {rest:?} slow {:?} ratio {:?} main_full {:?}",
+            m.before_secs,
             m.rate.rate(),
             m.slow,
             m.later_ratio,
@@ -1380,7 +1409,8 @@ fn rough_progress(m: &State, stage: &str, f: f64) -> Option<f64> {
     match kind_of(stage) {
         Kind::Main => {
             let rest: f64 = m.later.iter().map(|k| m.later_ratio[*k as usize]).sum();
-            Some(f / (1.0 + rest))
+            // (a continued one: the rows kept, before its first report)
+            Some(f.max(m.stage_base) / (1.0 + rest))
         }
         Kind::Later(_) => None,
         _ => Some(f),
@@ -1483,9 +1513,9 @@ fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&
 
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
-    let (ver, finished, running, stage, base, err, stats, cancelled) = {
+    let (ver, finished, running, stage, base, kept, err, stats, cancelled) = {
         let o = app.eng.0.out.lock().unwrap();
-        (o.ver, o.finished, o.running, o.stage.clone(), o.stage_base, o.error.clone(), o.stats, o.cancelled)
+        (o.ver, o.finished, o.running, o.stage.clone(), o.stage_base, o.kept_secs, o.error.clone(), o.stats, o.cancelled)
     };
     if app.main.calculating && app.main.led_running {
         let led = running_led(app).unwrap_or(app.main.led);
@@ -1541,6 +1571,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.main.compiled_seen = 0.0;
             }
             app.main.stage_base = base as f64;
+            app.main.kept_secs = kept as f64;
             let Left { stage: left, total, progress: p } = time_left(app, &stage, f as f64, base as f64);
             // the card's shaders compiling: the time left with them, once
             // the CPU threads' pace is known
@@ -1558,7 +1589,14 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             let p = if compiling { p } else { p.or_else(|| rough_progress(&app.main, &stage, f as f64)) };
             let now = Instant::now();
             if let Some(p) = p {
-                app.main.bar_target = app.main.bar_target.max(p.clamp(0.0, 1.0));
+                let p = p.clamp(0.0, 1.0);
+                // (the first estimate of a bar from zero: at once, not a
+                // glide from nothing, e.g. a calculation continued from the
+                // Unfinished renders window starts at its rows kept)
+                if app.main.bar_target == 0.0 {
+                    app.main.progress_shown = p;
+                }
+                app.main.bar_target = app.main.bar_target.max(p);
             }
             let dt = now.saturating_duration_since(app.main.bar_at).as_secs_f64();
             app.main.bar_at = now;
@@ -2789,7 +2827,10 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let Some((sc, slice)) = app.main.resume_ask.take() else { return };
             match *b {
                 MR_YES => run_calc(app, sc, slice, crate::checkpoint::Policy::Continue),
-                MR_NO => run_calc(app, sc, slice, crate::checkpoint::Policy::Fresh),
+                MR_NO => {
+                    app.main.bar_restart();
+                    run_calc(app, sc, slice, crate::checkpoint::Policy::Fresh)
+                }
                 _ => not_started(app, ui),
             }
         }

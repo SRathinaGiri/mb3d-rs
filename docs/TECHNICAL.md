@@ -968,7 +968,7 @@ same render again finds it; the Unfinished renders window loads the scene text i
 |---|---|
 | `data.bin` | the records of all pixels, row major (a G-buffer: the 18 bytes of a `.m3i` pixel) |
 | `marks.bin` | 28 bytes per unit (a row, a tile): magic, FNV hash of the unit's data, generation, rectangle |
-| `info.txt` | kind, name, size, version, the units done, times; `rows = raw` or `card PostJob {...}` (what the stored rows hold) |
+| `info.txt` | kind, name, size, version, the units done, times; `rows = raw` or `card PostJob {...}` (what the stored rows hold); `secs`, the time the main rendering of a picture took so far (the window's progress and time left go on from it) |
 | `extra-*` | further state, written atomically (`scene.m3s`) |
 | `lock` | held (`try_lock`) by the render that uses it: a second process of the same render runs without a checkpoint |
 

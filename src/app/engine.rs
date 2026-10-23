@@ -121,6 +121,9 @@ pub struct Output {
     /// the part of the stage done before it began (rows of a continued
     /// calculation), not counted in its rate
     pub stage_base: f32,
+    /// the time the rows of a continued calculation took (its checkpoint
+    /// keeps it, through earlier runs); 0 when none or unknown
+    pub kept_secs: f32,
     pub error: String,
     pub stats: Stats,
     /// the last job finished (for "Calculate 3D" -> enable buttons)
@@ -277,6 +280,7 @@ impl Engine {
             // (the last job's stage is not this one's)
             o.stage.clear();
             o.stage_base = 0.0;
+            o.kept_secs = 0.0;
             o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. } | Job::Stereo { .. });
         }
         self.0.progress.store(0, Ordering::Relaxed);
@@ -662,9 +666,21 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
     e.begin_partial(params, &sc, w, h);
     // (a 2D slice is quick: no checkpoint)
     let ck = if slice == 0 { crate::render::open_checkpoint(&sc, name, resume) } else { None };
+    // the time the main rendering took so far, kept with its rows (the
+    // window's time left and progress go on from it)
+    let kept_secs: f64 = ck.as_ref().filter(|s| s.resumed() > 0).and_then(|s| s.value("secs")).and_then(|v| v.parse().ok()).unwrap_or(0.0);
+    let main_done = AtomicBool::new(false);
+    let note_secs = |done: bool| {
+        if let Some(s) = ck.as_ref() {
+            if !main_done.swap(done, Ordering::Relaxed) {
+                s.set_value("secs", &format!("{:.1}", kept_secs + t0.elapsed().as_secs_f64()));
+            }
+        }
+    };
     {
         let mut o = e.out.lock().unwrap();
         o.stage_base = ck.as_ref().map_or(0.0, |s| s.resumed() as f32 / h.max(1) as f32);
+        o.kept_secs = kept_secs as f32;
         o.stage = match (slice, ck.as_ref().is_some_and(|s| s.resumed() > 0)) {
             (0, false) => "main rendering".into(),
             (0, true) => "main rendering (continued)".into(),
@@ -683,13 +699,18 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
     // each stage after the march: its name for the window, the bar from zero
     let stage = |name: &str| {
         base_pending.store(false, Ordering::Relaxed);
+        note_secs(true);
         let mut o = e.out.lock().unwrap();
         o.stage = name.to_string();
         o.stage_base = 0.0;
         e.progress.store(0, Ordering::Relaxed);
     };
     let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
-    let (p, raw) = crate::render::calculate_with(&sc, &progress, &stage, cancel, 0, Some(&sink), ck.as_ref())?;
+    let r = crate::render::calculate_with(&sc, &progress, &stage, cancel, 0, Some(&sink), ck.as_ref());
+    // (stopped during the main rendering, or over without a later stage
+    // of its own: its time so far)
+    note_secs(true);
+    let (p, raw) = r?;
     *e.partial.lock().unwrap() = None;
     let t1 = Instant::now();
     let raw = Arc::new(raw);
