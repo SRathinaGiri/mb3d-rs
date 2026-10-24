@@ -708,9 +708,8 @@ pictures: what Auto does the first time, why the card is not always the
 faster choice, and what the colours of the LED mean.
 
 Not everything can go to the card: a few formulas cannot be translated for
-it, scenes with volumetric light stay on the processor, and views zoomed
-in very deeply are calculated in double precision (which only some cards
-can do). The program decides all of this by itself; you only see it in the
+it, and views zoomed in very deeply are calculated in double precision
+(which only some cards can do). The program decides all of this by itself; you only see it in the
 LED.
 
 ## Speed

@@ -16,7 +16,7 @@ compared with the original program are listed in the
 |---|---|---|
 | What it runs | MB3D's calculation, ported line by line | the same calculation, translated into a *shader* (a program for the card) |
 | Speed | close to MB3D's own speed | in the 80 example files a median of 5 times faster (up to 87 times) |
-| Scenes | all of them | 73 of the 80 examples (not: volumetric light, 2D slices, the few formulas that cannot be translated, formulas whose numbers grow beyond single precision - those go to the CPU by themselves) |
+| Scenes | all of them | 73 of the 80 examples (not: 2D slices, the few formulas that cannot be translated, formulas whose numbers grow beyond single precision - those go to the CPU by themselves) |
 | Result | MB3D's result | the same image within rounding (see the [comparison of all 80 example files](../README.md#speed) and the [image differences](TECHNICAL.md#cpu-and-graphics-card-compared-gtx-1650-earlier-measurement)) |
 | Start-up | none | the **first** time a formula combination is used, its shader must be *compiled*: 10–20 s. The graphics driver keeps the compiled shader (on Linux in the `ShaderCache` folder next to the program), so the next time it is ready at once |
 

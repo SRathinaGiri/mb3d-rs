@@ -102,7 +102,10 @@ inverted maximum, the two smooth minima and the dIFS mix), also with
 cutting planes, inside or inside-and-outside rendering and colour on
 iteration; formulas that read maps through MB3D's map functions get the
 maps uploaded to the card. Everything else is calculated on the CPU as
-before: the formulas the lifter cannot resolve and volumetric light. Views zoomed so far that single precision would show
+before: the formulas the lifter cannot resolve. Volumetric light runs on the
+card too: its map is marched there as shadow rays shared with the CPU
+threads (the CPU only takes it when the map is too big for one buffer).
+Views zoomed so far that single precision would show
 as noise are calculated in double precision on cards with doubles in
 shaders (Vulkan and DirectX 12 on NVIDIA, AMD and Intel; not Metal): the
 shader's real type becomes f64, with sine, cosine, logarithm and
