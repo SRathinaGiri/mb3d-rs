@@ -63,6 +63,10 @@ pub struct Ui {
     /// the file type chosen in the last file dialog (1 = the first of its
     /// filter, as TOpenDialog.FilterIndex after Execute)
     pub filter_index: usize,
+    /// The sort choice used by the built-in file dialogs.  Keeping it here
+    /// makes a choice such as "Date modified (newest)" carry over to the
+    /// next Open or Save dialog during this session.
+    pub(crate) file_sort: usize,
     /// the file clicked in a file dialog with a preview column (taken by
     /// the application, which shows its preview there)
     pub file_preview: Option<std::path::PathBuf>,
@@ -95,6 +99,7 @@ impl Ui {
             close_pending: Vec::new(),
             dialogs: HashMap::new(),
             filter_index: 1,
+            file_sort: 0,
             file_preview: None,
             busy: false,
             ui_scale: 1.0,
