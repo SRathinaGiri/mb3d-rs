@@ -4,7 +4,7 @@
 //! number of subframes to the next one; the frames are interpolated with
 //! MB3D's functions ([`crate::anim`]) and written into the output folder.
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::eta::{ItemsLeft, Pace};
 use super::util::{fts_single, left_str, parse_float, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
@@ -46,16 +46,16 @@ fn save_output_settings(app: &mut Mb3d, ui: &Ui) {
 
 /// The frames per second of the video and the ffmpeg command.
 fn video_fps(ui: &Ui) -> Result<f64, String> {
-    ui.text(F, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or_else(|| "The frames per second must be a number above 0 (e.g. 25).".to_string())
+    ui.text(F, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or_else(|| tr("The frames per second must be a number above 0 (e.g. 25)."))
 }
 
 /// A video needs images, one per frame.
 fn video_check(a: &Animation) -> Result<(), String> {
     if a.format == OutputFormat::M3p {
-        return Err("A video needs images: choose BMP, PNG or JPG as the output format.".into());
+        return Err(tr("A video needs images: choose BMP, PNG or JPG as the output format."));
     }
     if a.stereo_eyes().len() != 1 {
-        return Err("A video of a stereo animation is not made: switch off 'Render stereo animation'.".into());
+        return Err(tr("A video of a stereo animation is not made: switch off 'Render stereo animation'."));
     }
     Ok(())
 }
@@ -77,7 +77,7 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     read_settings(app, ui);
     let mut a = app.anim.anim.clone();
     if a.keyframes.len() < 2 {
-        return Err("The animation needs at least two keyframes.".into());
+        return Err(tr("The animation needs at least two keyframes."));
     }
     if a.output_folder.trim().is_empty() {
         a.output_folder = app.ini.dir(super::ini::DIR_ANIOUT).display().to_string();
@@ -88,7 +88,7 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     let run = FrameRun { from_index: from, to_index: to, resume: crate::checkpoint::Policy::Continue, ..Default::default() };
     let frames = run.frames(&a);
     if frames.is_empty() {
-        return Err("No frames to render in this range.".into());
+        return Err(tr("No frames to render in this range."));
     }
     Ok((a, run, frames))
 }
@@ -112,7 +112,7 @@ fn ffmpeg_command(app: &mut Mb3d, ui: &mut Ui) {
     let step = if frames.len() > 1 { a.file_index(frames[1]) - a.file_index(frames[0]) } else { 1 };
     let cmd = crate::video::ffmpeg_command(std::path::Path::new(&a.output_folder), &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent);
     crate::vcl::clipboard::set(&cmd);
-    app.message(ui, "Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):");
+    app.message(ui, &tr("Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):"));
     app.message(ui, &cmd);
 }
 
@@ -220,7 +220,7 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
 
 fn show_project_name(app: &Mb3d, ui: &mut Ui) {
     let n = app.anim.anim.name.clone();
-    ui.fm(F).set_caption(&format!("Animation maker   ({n})"));
+    ui.fm(F).set_caption(&trf("Animation maker   ({})", &[&n]));
 }
 
 /// Renders the small keyframe image in the background (`RenderPrevBMP`).
@@ -388,7 +388,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         (j.making_video, v)
     };
     if let Some(v) = video {
-        app.message(ui, &format!("Animation: video written: {}", v.display()));
+        app.message(ui, &trf("Animation: video written: {}", &[&v.display()]));
     }
     let (changed, thumbs, running, done, total, err, last, frames_len) = {
         let mut j = app.anim.job.lock().unwrap();
@@ -454,13 +454,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 left = format!(" · {}", left_str(l));
             }
         }
-        ui.set_caption(F, "Label19", &format!("Done: {done} of {total}{left}"));
+        ui.set_caption(F, "Label19", &trf("Done: {} of {}{}", &[&done, &total, &left]));
         ui.set_caption(F, "Label22", &format!("{}:{:02}:{:02}", el / 3600, el / 60 % 60, el % 60));
     }
     if !running {
         end_rendering(app, ui);
         if !err.is_empty() {
-            app.message(ui, &format!("Animation: {err}"));
+            app.message(ui, &trf("Animation: {}", &[&err]));
         }
         if ui.showing(PV) {
             ui.set_visible(PV, "ProgressBar1", false);
@@ -473,7 +473,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 
 fn end_rendering(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_caption(F, "Button2", &tr("Start rendering animation images"));
-    if !app.main.calculating && ui.caption(MAIN, "Button2") == "Stop" {
+    if !app.main.calculating && ui.caption(MAIN, "Button2") == tr("Stop") {
         super::main_form::enable_buttons(app, ui);
     }
     ui.set_enabled(F, "Button2", count(app) > 1);
@@ -495,12 +495,12 @@ fn parse_waiting(st: &str) -> Option<(usize, usize)> {
 
 fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let cap = ui.caption(F, "Button2");
-    if cap == "Pause rendering" {
+    if cap == tr("Pause rendering") {
         app.anim.pause.store(true, Ordering::SeqCst);
         ui.set_caption(F, "Button2", &tr("Paused, press to continue"));
         return;
     }
-    if cap == "Paused, press to continue" {
+    if cap == tr("Paused, press to continue") {
         app.anim.pause.store(false, Ordering::SeqCst);
         ui.set_caption(F, "Button2", &tr("Pause rendering"));
         return;
@@ -517,7 +517,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     };
     let _ = std::fs::create_dir_all(&a.output_folder);
     if ui.checked(F, "TransparentCheck") && a.format != OutputFormat::Png {
-        return ui.show_message("A transparent background needs PNG frames: choose PNG as the output format.");
+        return ui.show_message(&tr("A transparent background needs PNG frames: choose PNG as the output format."));
     }
     let video = match video_settings(ui, &a) {
         Ok(v) => v,
@@ -650,7 +650,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             match r {
                 Ok(_) => j.video = Some(path),
                 Err(e) if e == "cancelled" => {}
-                Err(e) => j.error = format!("video: {e}"),
+                Err(e) => j.error = trf("video: {}", &[&e]),
             }
         }
         let mut j = job.lock().unwrap();
@@ -803,7 +803,7 @@ fn save_ani_gif(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
     let fps = pti(&ui.text(PV, "Edit1")).clamp(1, 60) as f64;
     let gif = crate::gif::encode_animation(&frames, (100.0 / fps).round() as u16);
     if let Err(e) = std::fs::write(p, gif) {
-        ui.show_message(&format!("Could not write {}: {e}", p.display()));
+        ui.show_message(&trf("Could not write {}: {}", &[&p.display(), &e]));
     }
 }
 
@@ -861,7 +861,7 @@ pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Animated Gif|*.gif".into(),
+                filter: format!("{}|*.gif", tr("Animated Gif")),
                 default_ext: "gif".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 file_name: app.anim.anim.name.clone(),
@@ -1147,12 +1147,12 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let cur = app.anim.current;
             if cur >= 1 && cur < n {
                 let c = app.anim.anim.keyframes[cur - 1].frames;
-                ui.input_query("anim:between", "Linear interpolate a keyframe inbetween", "At which subframe:", &((c + 1) / 2).to_string());
+                ui.input_query("anim:between", &tr("Linear interpolate a keyframe inbetween"), &tr("At which subframe:"), &((c + 1) / 2).to_string());
             }
         }
         "SpeedButton13Click" => {
             if n > 0 {
-                ui.confirm("anim:clear", "Do you really want to delete everything?");
+                ui.confirm("anim:clear", &tr("Do you really want to delete everything?"));
             }
         }
         "Edit1Change" => {
@@ -1173,7 +1173,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Edit2Change" => app.anim.anim.output_folder = ui.text(F, "Edit2"),
         "Button3Click" => {
             let d = std::path::PathBuf::from(ui.text(F, "Edit2"));
-            ui.folder_dialog("anim:outdir", "Output folder", Some(d));
+            ui.folder_dialog("anim:outdir", &tr("Output folder"), Some(d));
         }
         "Edit3Change" => {
             let t = ui.text(F, "Edit3");
@@ -1198,7 +1198,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton10Click" => ui.show(PR),
         "SpeedButton9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Animation (*.m3a)|*.m3a".into(),
+                filter: format!("{}|*.m3a", tr("M3D Animation (*.m3a)")),
                 default_ext: "m3a".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3A)),
                 file_name: app.anim.anim.name.clone(),
@@ -1208,7 +1208,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Animation (*.m3a)|*.m3a|Keyframe list (*.m3k)|*.m3k".into(),
+                filter: format!("{}|*.m3a|{}|*.m3k", tr("M3D Animation (*.m3a)"), tr("Keyframe list (*.m3k)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3A)),
                 ..Default::default()
             };
@@ -1310,7 +1310,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let total = app.anim.anim.keyframes[cur - 1].frames;
             // (subframes count from 1: 0 is no subframe)
             if sf < 1 || sf - 1 >= total {
-                ui.show_message("Value not guilty");
+                ui.show_message(&tr("Value not guilty"));
                 return;
             }
             let sf = sf - 1;

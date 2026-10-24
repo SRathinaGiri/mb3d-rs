@@ -3,6 +3,7 @@
 //! (heightmapgen/HeightMapGenUI.pas).  This program draws the meshes with
 //! a small z-buffer rasteriser using the same projection and transforms.
 
+use crate::vcl::lang::{tr, trf};
 use super::util::{fts, parse_float, pti};
 use super::Mb3d;
 use crate::mesh::Mesh;
@@ -432,7 +433,7 @@ pub fn read_obj(text: &str) -> Result<Mesh, String> {
         }
     }
     if m.faces.is_empty() {
-        return Err("no faces in the file".into());
+        return Err(tr("no faces in the file"));
     }
     Ok(m)
 }
@@ -497,7 +498,8 @@ impl Default for State {
             style: Style::SmoothEdges,
             ap: Appearance::default(),
             preview_drag: Drag::default(),
-            preview_title: "Generated Mesh".into(),
+            // (empty: "Generated Mesh" in the language shown)
+            preview_title: String::new(),
             hm_mesh: GlMesh::default(),
             hm_view: View { pos: [0.0; 3], angle: [0.0; 2], scale: 0.5, fov: 10.0, scale_distance: false },
             hm_drag: Drag::default(),
@@ -542,8 +544,12 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             st.hm_size = (w, h);
         }
         ui.set_picture(form, "GLView", Some(fr.img));
-        let (mesh, title) = if k == 0 { (&st.preview_mesh, st.preview_title.clone()) } else { (&st.hm_mesh, "HeightMap Generator Preview".to_string()) };
-        let cap = format!("{title} [{} Vertices, {} Faces]", mesh.verts.len(), mesh.faces.len());
+        let (mesh, title) = if k == 0 {
+            (&st.preview_mesh, if st.preview_title.is_empty() { tr("Generated Mesh") } else { st.preview_title.clone() })
+        } else {
+            (&st.hm_mesh, tr("HeightMap Generator Preview"))
+        };
+        let cap = trf("{} [{} Vertices, {} Faces]", &[&title, &mesh.verts.len(), &mesh.faces.len()]);
         ui.fm(form).set_caption(&cap);
     }
 }
@@ -771,7 +777,7 @@ fn save_height_map(app: &Mb3d, path: &Path) -> Result<(), String> {
     let st = &app.meshview;
     let (w, h) = st.hm_size;
     if st.hm_depth.len() != w * h || w == 0 {
-        return Err("nothing to save".into());
+        return Err(tr("nothing to save"));
     }
     let (zn, zf) = (NEAR, FAR);
     let lin: Vec<f64> = st.hm_depth.iter().map(|&d| (2.0 * zn) / (zf + zn - d as f64 * (zf - zn))).collect();
@@ -816,7 +822,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "FormCreate" => {
-            ui.set_items(HM, "MapTypeCmb", vec!["8 Bit PNG".into(), "16 Bit PGM".into()]);
+            ui.set_items(HM, "MapTypeCmb", vec![tr("8 Bit PNG"), tr("16 Bit PGM")]);
             ui.set_item_index(HM, "MapTypeCmb", 1);
             let dir = app.ini.dir(super::ini::DIR_MAPS);
             let mut i = 1;
@@ -855,7 +861,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "LoadMeshBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Wavefront OBJ (*.obj)|*.obj".into(),
+                filter: format!("{}|*.obj", tr("Wavefront OBJ (*.obj)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_MESHES)),
                 ..Default::default()
             };
@@ -864,7 +870,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SaveImgBtnClick" => {
             let ext = hm_ext(ui);
             let o = crate::vcl::dialogs::FileOptions {
-                filter: if ext == "png" { "Portable Network Graphic|*.png".into() } else { "Portable Gray Map|*.pgm".into() },
+                filter: if ext == "png" { format!("{}|*.png", tr("Portable Network Graphic")) } else { format!("{}|*.pgm", tr("Portable Gray Map")) },
                 default_ext: ext.into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
                 ..Default::default()
@@ -877,7 +883,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let p = dir.join(format!("{nr}.{}", hm_ext(ui)));
             if p.exists() || find_height_map(&dir, nr).is_some() {
                 app.meshview.pending_save = Some(p);
-                ui.confirm("heightmap:overwrite", "This file already exists. Do you really want to overwrite it?");
+                ui.confirm("heightmap:overwrite", &tr("This file already exists. Do you really want to overwrite it?"));
             } else if let Err(e) = save_height_map(app, &p) {
                 ui.show_message(&e);
             }

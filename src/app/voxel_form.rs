@@ -1,6 +1,6 @@
 //! The voxel export window (VoxelExport.pas): PNG slices of the object.
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::eta::ItemsLeft;
 use super::util::{fts, fts_single, left_str, parse_float, pti, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
@@ -134,7 +134,9 @@ fn show_size(app: &Mb3d, ui: &mut Ui) {
 
 fn set_project_name(app: &mut Mb3d, ui: &mut Ui, name: &str) {
     app.voxel.project = name.to_string();
-    ui.set_caption(F, "Label7", &format!("Project: {name}"));
+    // ("new": no project file yet, the word shown in the language)
+    let shown = if name == "new" { tr("new") } else { name.to_string() };
+    ui.set_caption(F, "Label7", &trf("Project: {}", &[&shown]));
 }
 
 fn enable(ui: &mut Ui) {
@@ -392,7 +394,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             super::main_form::enable_buttons(app, ui);
             ui.set_caption(F, "Label13", "");
             if err.is_empty() && !app.voxel.stop.load(Ordering::SeqCst) {
-                app.message(ui, "Finished rendering slices.");
+                app.message(ui, &tr("Finished rendering slices."));
             }
         } else {
             ui.set_caption(F, "Button5", &tr("Calculate preview"));
@@ -407,7 +409,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 /// "Rendering slice: 4 of 120 · about 7 min left": the slice under way
 /// after `nr` (0-based) finished, of `n`, and the time left.
 fn slice_caption(nr: u32, n: u32, left: Option<f64>) -> String {
-    let mut t = format!("Rendering slice: {} of {n}", (nr + 2).min(n));
+    let mut t = trf("Rendering slice: {} of {}", &[&(nr + 2).min(n), &n]);
     if let Some(l) = left.filter(|_| nr + 1 < n) {
         t += &format!(" · {}", left_str(l));
     }
@@ -463,7 +465,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button1Click" => ui.hide(F),
         "Button3Click" => {
             let start = ui.text(F, "Edit2");
-            ui.folder_dialog("voxel:folder", "Output folder", Some(PathBuf::from(start)));
+            ui.folder_dialog("voxel:folder", &tr("Output folder"), Some(PathBuf::from(start)));
         }
         "Button4Click" => {
             // import the parameters of the main window
@@ -484,7 +486,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D voxel project (*.m3v)|*.m3v".into(),
+                filter: format!("{}|*.m3v", tr("M3D voxel project (*.m3v)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_VOXEL)),
                 ..Default::default()
             };
@@ -493,7 +495,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton9Click" => {
             make_m3v(app, ui);
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D voxel project (*.m3v)|*.m3v".into(),
+                filter: format!("{}|*.m3v", tr("M3D voxel project (*.m3v)")),
                 default_ext: "m3v".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_VOXEL)),
                 file_name: if app.voxel.project == "new" { String::new() } else { app.voxel.project.clone() },
