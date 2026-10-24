@@ -284,7 +284,7 @@ impl Ui {
 
     /// Asks yes / no; the result comes as `DialogResult::Button(MR_YES / MR_NO)`.
     pub fn confirm(&mut self, tag: &str, text: &str) {
-        self.message_box(tag, "Confirm", text, &[MR_YES, MR_NO]);
+        self.message_box(tag, &tr("Confirm"), text, &[MR_YES, MR_NO]);
     }
 
     /// `InputQuery`: the result comes as `DialogResult::Text`.

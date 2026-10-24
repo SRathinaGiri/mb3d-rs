@@ -1,6 +1,8 @@
 //! Number conversions as MB3D does them (DivUtils.pas), so the edits show
 //! the same texts as in the original.
 
+use crate::vcl::lang::{tr, trf};
+
 /// Delphi `FloatToStrF(v, ffGeneral, precision, 0)`: the shortest form with
 /// up to `precision` significant digits; scientific notation ("1E-5",
 /// "1.5E20") for very small or large values.
@@ -148,16 +150,16 @@ pub fn shown_step(shown: f64, est: f64, dt: f64) -> f64 {
 pub fn left_str(secs: f64) -> String {
     let s = secs.round().max(0.0) as i64;
     match s {
-        ..=3 => "a few seconds left".into(),
-        4..=59 => format!("{s} s left"),
-        60..=239 if s % 60 == 0 => format!("{} min left", s / 60),
-        60..=239 => format!("{} min {} s left", s / 60, s % 60),
-        240..=3599 => format!("about {} min left", (s + 30) / 60),
+        ..=3 => tr("a few seconds left"),
+        4..=59 => trf("{} s left", &[&s]),
+        60..=239 if s % 60 == 0 => trf("{} min left", &[&(s / 60)]),
+        60..=239 => trf("{} min {} s left", &[&(s / 60), &(s % 60)]),
+        240..=3599 => trf("about {} min left", &[&((s + 30) / 60)]),
         _ => {
             let m = (s + 30) / 60;
             match m % 60 {
-                0 => format!("about {} h left", m / 60),
-                r => format!("about {} h {r} min left", m / 60),
+                0 => trf("about {} h left", &[&(m / 60)]),
+                r => trf("about {} h {} min left", &[&(m / 60), &r]),
             }
         }
     }

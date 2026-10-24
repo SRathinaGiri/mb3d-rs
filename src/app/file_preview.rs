@@ -11,6 +11,7 @@ use crate::vcl::{bitmap::Bitmap, Ui};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
+use crate::vcl::lang::{tr, trf};
 
 const DLG: &str = "FileDlg";
 
@@ -67,7 +68,7 @@ fn start(app: &mut Mb3d, ui: &Ui, path: PathBuf) {
     let waker = ui.waker();
     std::thread::spawn(move || {
         // (a panic must not leave `busy` set: no more previews then)
-        let (r, text) = std::panic::catch_unwind(|| calculate(&path)).unwrap_or_else(|_| (Err("the calculation failed".into()), String::new()));
+        let (r, text) = std::panic::catch_unwind(|| calculate(&path)).unwrap_or_else(|_| (Err(tr("the calculation failed")), String::new()));
         *slot.lock().unwrap() = Some((path, r, text));
         if let Some(w) = &waker {
             w.wake();
@@ -83,13 +84,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             match app.preview.cache.get(&p) {
                 Some((b, t)) => show(ui, b.clone(), t),
                 None => {
-                    show(ui, None, "Calculating the preview...");
+                    show(ui, None, &tr("Calculating the preview..."));
                     app.preview.want = Some(p);
                 }
             }
         } else {
             app.preview.shown = None;
-            show(ui, None, "No preview for this file.");
+            show(ui, None, &tr("No preview for this file."));
         }
     }
     let done = app.preview.result.lock().unwrap().take();
@@ -97,7 +98,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         app.preview.busy = false;
         let entry = match r {
             Ok((rgb, w, h)) => (Some(Bitmap::from_rgb(w, h, &rgb)), text),
-            Err(e) => (None, format!("No preview: {e}")),
+            Err(e) => (None, trf("No preview: {}", &[&e])),
         };
         if app.preview.shown.as_ref() == Some(&p) {
             show(ui, entry.0.clone(), &entry.1);
