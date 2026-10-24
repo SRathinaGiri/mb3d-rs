@@ -260,7 +260,10 @@ impl Form {
         }
         let (lx, ly) = self.local(id, x, y);
         out.push(raw(id, "OnMouseDown", Ev::MouseDown { x: lx, y: ly, button, shift }));
-        if dbl {
+        // a double click on a list view's column headers is two column
+        // clicks, not a double click on its selected row
+        let on_header = kind == Kind::ListView && ly <= self.listview_rows(id).0 + 2;
+        if dbl && !on_header {
             out.push(raw(id, "OnDblClick", Ev::DblClick));
         }
         if button != MouseButton::Left {

@@ -72,9 +72,9 @@ fn entry_cmp(a: &FileEntry, b: &FileEntry, column: usize, desc: bool) -> Orderin
 
 fn entry_type(e: &FileEntry) -> String {
     if e.is_dir {
-        "Folder".into()
+        tr("Folder")
     } else {
-        Path::new(&e.name).extension().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "File".into())
+        Path::new(&e.name).extension().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| tr("File"))
     }
 }
 
@@ -634,7 +634,9 @@ impl Ui {
                         }
                     }
                 }
-                ("FileList", "OnClick") => {
+                // a click, and the arrow keys (the list view reports those as
+                // OnChange only): the file's name and its preview
+                ("FileList", "OnClick") | ("FileList", "OnChange") => {
                     // -1: the list was just refilled (a double-clicked folder)
                     let k = self.forms[i].c("FileList").item_index;
                     if k < 0 {
@@ -656,7 +658,8 @@ impl Ui {
                 ("FileList", "OnDblClick") => {
                     let k = self.forms[i].c("FileList").item_index;
                     let entry = match self.dialogs.get(&i) {
-                        Some(DialogState::File(d)) => d.entries.get(k.max(0) as usize).cloned(),
+                        // (no row selected: nothing to open)
+                        Some(DialogState::File(d)) if k >= 0 => d.entries.get(k as usize).cloned(),
                         _ => None,
                     };
                     match entry {
