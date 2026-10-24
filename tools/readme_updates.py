@@ -7,7 +7,9 @@ releases and a link to the whole list.
 Run from the repository: `python3 tools/readme_updates.py`. The release
 times come from GitHub (`gh release list`); a tag without a GitHub release
 uses the time of its commit. The README's section sits between the markers
-<!-- updates:start --> and <!-- updates:end -->.
+<!-- updates:start --> and <!-- updates:end -->; the newest published
+release is named at the top of the page, between <!-- latest:start --> and
+<!-- latest:end -->.
 """
 import datetime
 import json
@@ -20,6 +22,7 @@ URL = f"https://github.com/{REPO}"
 SHOWN = 3  # the newest releases in the README (all in docs/UPDATES.md)
 HISTORY = "docs/UPDATES.md"
 START, END = "<!-- updates:start -->", "<!-- updates:end -->"
+LATEST_START, LATEST_END = "<!-- latest:start -->", "<!-- latest:end -->"
 
 
 # commits shown with other words than their subject (the user's wish:
@@ -113,6 +116,15 @@ def main():
     a = readme.index(START) + len(START)
     b = readme.index(END)
     readme = readme[:a] + "\n" + body + "\n" + readme[b:]
+    # the newest published release, at the top of the page
+    released = [t for t in tags if t in times]
+    if released and LATEST_START in readme:
+        tag = released[-1]
+        line = (f"**Latest release: [{tag}]({URL}/releases/tag/{tag})** ({when(times[tag])}) · "
+                f"[Download](#download) · [What's new](docs/UPDATES.md)")
+        a = readme.index(LATEST_START) + len(LATEST_START)
+        b = readme.index(LATEST_END)
+        readme = readme[:a] + "\n" + line + "\n" + readme[b:]
     open("README.md", "w", encoding="utf-8").write(readme)
     print(f"README.md and {HISTORY}: {len(tags)} releases, {len(unreleased)} commits not released yet")
 

@@ -5,6 +5,17 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.70](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.70) · 24 Oct 2026, 10:17 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1b250b3`](https://github.com/thr32423/mb3d-rs/commit/1b250b3142db7d6f9e4296e8b05bf7505e1be256) | Version number and release notes of this release |
+| [`3775231`](https://github.com/thr32423/mb3d-rs/commit/37752317a048ac481edbdad21c4eb5ad012d4496) | Windows: the C runtime linked in, so the program needs no Visual C++ redistributable (#18) |
+| [`759974c`](https://github.com/thr32423/mb3d-rs/commit/759974cf8ae476ce8159aaa470bafb14e695b362) | Interface language: eleven languages from text files, a badge and a window to choose, captions made to fit |
+| [`639dfbf`](https://github.com/thr32423/mb3d-rs/commit/639dfbf2683fd8ff3c7e8d667673cec7f2b57f7e) | Add file dialog sorting |
+| [`57f96a7`](https://github.com/thr32423/mb3d-rs/commit/57f96a7151ab9a72141497a304b0706dc31a3dd7) | A continued calculation's bar goes on where the stopped one's was |
+| [`134f1c6`](https://github.com/thr32423/mb3d-rs/commit/134f1c6c2aeb28f82b9f5865e920f6a430f26e34) | README: Updates for v0.2.69 |
+
 ## [v0.2.69](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.69) · 23 Oct 2026, 14:10 UTC
 
 | Commit | What it does |
