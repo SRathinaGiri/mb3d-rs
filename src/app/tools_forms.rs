@@ -1,5 +1,6 @@
 //! Batch processing (BatchForm.pas) and big renders in tiles (Tiling.pas).
 
+use crate::vcl::lang::tr;
 use super::eta::ItemsLeft;
 use super::util::{fts, left_str, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
@@ -98,7 +99,7 @@ pub fn batch_next(app: &mut Mb3d, ui: &mut Ui) {
         app.batch.status = 0;
         app.batch.index = usize::MAX;
         ui.set_enabled(BF, "Button1", true);
-        ui.set_caption(BF, "Button1", "Start batch rendering");
+        ui.set_caption(BF, "Button1", &tr("Start batch rendering"));
         ui.fm(BF).set_caption(BATCH_TITLE);
     }
 }
@@ -177,10 +178,10 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.batch.index = usize::MAX;
                 app.eng.stop();
                 super::main_form::enable_buttons(app, ui);
-                ui.set_caption(BF, "Button1", "Start batch rendering");
+                ui.set_caption(BF, "Button1", &tr("Start batch rendering"));
                 ui.fm(BF).set_caption(BATCH_TITLE);
             } else {
-                ui.set_caption(BF, "Button1", "Stop batch rendering");
+                ui.set_caption(BF, "Button1", &tr("Stop batch rendering"));
                 app.batch.status = 1;
                 app.batch.index = usize::MAX;
                 app.batch.nr = 0;
@@ -922,8 +923,8 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
 pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "FormShow" => {
-            ui.cm(TF, "Edit5").hint = "1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing".into();
-            ui.cm(TF, "Edit4").hint = "Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening".into();
+            ui.cm(TF, "Edit5").hint = tr("1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing");
+            ui.cm(TF, "Edit4").hint = tr("Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening");
         }
         "Button1Click" => ui.hide(TF),
         "SpeedButton2Click" => {

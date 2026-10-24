@@ -14,6 +14,7 @@ pub const ALL: &[(&str, &str)] = &[
     ("HeightMapGenUI", include_str!("forms/HeightMapGenUI.dfm")),
     ("IniDirsForm", include_str!("forms/IniDirsForm.dfm")),
     ("JITFormulaEditGUI", include_str!("forms/JITFormulaEditGUI.dfm")),
+    ("LanguageGUI", include_str!("forms/LanguageGUI.dfm")),
     ("LightAdjust", include_str!("forms/LightAdjust.dfm")),
     ("Mand", include_str!("forms/Mand.dfm")),
     ("MapSequencesGUI", include_str!("forms/MapSequencesGUI.dfm")),

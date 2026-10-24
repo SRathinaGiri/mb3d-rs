@@ -291,11 +291,22 @@ impl Form {
             }
             let old = cv.clip_to(Rect::new(tx, b, right - tx - 4, ch));
             cv.text(tx, b + (ch - lh) / 2, self.caption(), &tf, th.caption_text(active));
+            let mut bx = tx + cv.text_width(&tf, self.caption()) + 10;
             if let Some(c) = self.caption_led {
-                let lx = tx + cv.text_width(&tf, self.caption()) + 10;
-                let r = Rect::new(lx, b + (ch - 9) / 2, 18, 9);
+                let r = Rect::new(bx, b + (ch - 9) / 2, 18, 9);
                 draw_led(cv, r, c, self.led_on);
                 self.led_rect.set(r);
+                bx = r.right() + 6;
+            }
+            if self.caption_lang.is_empty() {
+                self.lang_rect.set(Rect::default());
+            } else {
+                let bf = Font { bold: true, height: -9, ..Font::default() };
+                let tw = cv.text_width(&bf, &self.caption_lang);
+                let iw = self.caption_flag.as_ref().map(|f| f.w as i32).unwrap_or(9);
+                let r = Rect::new(bx, b + (ch - 16) / 2, tw + iw + 11, 16);
+                draw_lang_badge(cv, r, &self.caption_lang, &bf, self.nc_hot == NC_LANG, self.caption_flag.as_ref());
+                self.lang_rect.set(r);
             }
             cv.set_clip(old);
             for (k, r) in buttons {
@@ -389,13 +400,13 @@ impl Form {
                 } else {
                     strip_amp(&c.caption)
                 };
-                cv.text_in(r, &text, &font, tc, c.alignment, c.layout, c.word_wrap);
+                cv.text_fit(r, &text, &font, tc, c.alignment, c.layout, c.word_wrap);
             }
             Kind::Button => {
                 let st = BtnState { hot, pressed, enabled: en, focused, default: c.default, ..Default::default() };
                 th.button(cv, r, st);
                 let off = if pressed && !th.glossy() { 1 } else { 0 };
-                cv.text_in(r.inset(2).offset(off, off), &strip_amp(&c.caption), &font, th.button_text(&st), HAlign::Center, VAlign::Center, c.word_wrap);
+                cv.text_fit(r.inset(2).offset(off, off), &strip_amp(&c.caption), &font, th.button_text(&st), HAlign::Center, VAlign::Center, c.word_wrap);
             }
             Kind::SpeedButton => self.paint_speed_button(cv, th, id, r, en, hot, pressed),
             Kind::ColorButton => {
@@ -421,7 +432,7 @@ impl Form {
                 }
                 let tr = if box_right { Rect::new(r.x, r.y, r.w - bs - 5, r.h) } else { Rect::new(r.x + bs + 4, r.y, r.w - bs - 4, r.h) };
                 let old = cv.clip_to(tr);
-                cv.text_in(tr, &strip_amp(&c.caption), &font, tc, if box_right { HAlign::Left } else { HAlign::Left }, VAlign::Center, c.word_wrap);
+                cv.text_fit(tr, &strip_amp(&c.caption), &font, tc, HAlign::Left, VAlign::Center, c.word_wrap);
                 cv.set_clip(old);
             }
             Kind::GroupBox | Kind::RadioGroup => {
@@ -429,11 +440,12 @@ impl Form {
                 th.fill_face(cv, r, bg);
                 let lh = line_height(&font);
                 let cap = strip_amp(&c.caption);
-                let tw = if cap.is_empty() { 0 } else { self.measure(&font, &cap) + 4 };
+                let (cfont, cap) = if cap.is_empty() { (font.clone(), cap) } else { cv.fit(Rect::new(r.x + 8, r.y, r.w - 16, lh), &cap, &font, false) };
+                let tw = if cap.is_empty() { 0 } else { self.measure(&cfont, &cap) + 4 };
                 let fr = Rect::new(r.x, r.y + lh / 2, r.w, r.h - lh / 2);
                 th.groupbox(cv, fr, if tw > 0 { Some((r.x + 6, tw)) } else { None });
                 if tw > 0 {
-                    cv.text(r.x + 8, r.y, &cap, &font, tc);
+                    cv.text(r.x + 8, r.y + (lh - line_height(&cfont)) / 2, &cap, &cfont, tc);
                 }
                 if c.kind == Kind::RadioGroup {
                     for (i, ir) in radio_items(self, id).iter().enumerate() {
@@ -659,7 +671,8 @@ impl Form {
                         cv.line_aa(cx as f32, (cy - 2 + o) as f32 - 2.0, (cx + 3) as f32, (cy + 1 + o) as f32 - 2.0, 1.2, col);
                     }
                 }
-                cv.text_in(hr, &strip_amp(&c.caption), &font, tc, HAlign::Center, VAlign::Center, false);
+                // (the caption keeps clear of the chevrons)
+                cv.text_fit(Rect::new(hr.x + 22, hr.y, hr.w - 44, hr.h), &strip_amp(&c.caption), &font, tc, HAlign::Center, VAlign::Center, false);
             }
             _ => {}
         }
@@ -703,13 +716,16 @@ impl Form {
             (g, _, _) => g,
         };
         let cap = strip_amp(&c.caption);
-        let lh = line_height(&font);
-        let tw = if cap.is_empty() { 0 } else { self.measure(&font, &cap) };
         let off = if (pressed || c.down) && !th.glossy() { 1 } else { 0 };
         let (gw, gh) = glyph.as_ref().map(|g| (g.w as i32, g.h as i32)).unwrap_or((0, 0));
-        let sp = if gw > 0 && tw > 0 { c.spacing.max(0) } else { 0 };
+        let sp = if gw > 0 && !cap.is_empty() { c.spacing.max(0) } else { 0 };
         let layout = c.style.as_str();
         let vertical = layout == "blGlyphTop" || layout == "blGlyphBottom";
+        // a caption too long for the button (a translation): smaller, then shortened
+        let avail = if vertical { r.w - 2 } else { r.w - 2 - gw - sp };
+        let (font, cap) = if !cap.is_empty() && !c.word_wrap && self.measure(&font, &cap) > avail + super::canvas::SLACK { cv.fit(Rect::new(r.x, r.y, avail.max(1), r.h), &cap, &font, false) } else { (font, cap) };
+        let lh = line_height(&font);
+        let tw = if cap.is_empty() { 0 } else { self.measure(&font, &cap) };
         if vertical {
             let total = gh + sp + if tw > 0 { lh } else { 0 };
             let mut y = r.y + (r.h - total) / 2 + off;
@@ -763,7 +779,7 @@ impl Form {
                 }
                 if tw > 0 {
                     if c.word_wrap && tw > r.w - 4 {
-                        cv.text_in(r.inset(2), &cap, &font, tc, HAlign::Center, VAlign::Center, true);
+                        cv.text_fit(r.inset(2), &cap, &font, tc, HAlign::Center, VAlign::Center, true);
                     } else {
                         cv.text(x, ty, &cap, &font, tc);
                     }
@@ -900,10 +916,14 @@ impl Form {
             let col = c.item_colors.get(i).copied().flatten().unwrap_or(tc);
             if sel {
                 th.selection(cv, ir, focused);
-                cv.text_in(ir.offset(2, 0), it, font, th.selection_text(focused), HAlign::Left, VAlign::Center, false);
-            } else {
-                cv.text_in(ir.offset(2, 0), it, font, col, HAlign::Left, VAlign::Center, false);
             }
+            let mut tx = 2;
+            if let Some(b) = c.item_images.get(i).filter(|b| !b.is_empty()) {
+                cv.image(ir.x + 3, ir.y + (ih - b.h as i32) / 2, b);
+                tx += b.w as i32 + 5;
+            }
+            let tc = if sel { th.selection_text(focused) } else { col };
+            cv.text_in(Rect::new(ir.x + tx, ir.y, ir.w - tx, ir.h), it, font, tc, HAlign::Left, VAlign::Center, false);
         }
         cv.set_clip(old);
         if need_sb {
@@ -914,8 +934,9 @@ impl Form {
         }
     }
 
-    fn paint_tabs(&self, cv: &mut Canvas, th: &Theme, id: Id, r: Rect, font: &Font) {
+    fn paint_tabs(&self, cv: &mut Canvas, th: &Theme, id: Id, r: Rect, _font: &Font) {
         let c = &self.ctl[id];
+        let font = &super::form::tab_font(self, id);
         let buttons = c.style == "tsButtons" || c.style == "tsFlatButtons";
         let rects = self.tab_rects(id);
         let bottom = rects.iter().map(|(_, rr)| rr.bottom()).max().unwrap_or(0);
@@ -934,7 +955,7 @@ impl Form {
             th.tab(cv, tr, sel, hot, buttons);
             let text = if c.kind == Kind::PageControl { strip_amp(&self.ctl[*key].caption) } else { strip_amp(&c.tabs[*key]) };
             let col = if !self.enabled(id) { th.text_disabled() } else if buttons && (sel || hot) && th.glossy() { th.v("button.active.text") } else { th.tab_text(sel) };
-            cv.text_in(tr, &text, font, col, HAlign::Center, VAlign::Center, false);
+            cv.text_fit(tr, &text, font, col, HAlign::Center, VAlign::Center, false);
         }
     }
 
@@ -1260,4 +1281,31 @@ fn draw_led(cv: &mut Canvas, r: Rect, c: u32, on: bool) {
     } else {
         cv.fill(lamp, 0xFF00_0000 | mix(c, 0, 170));
     }
+}
+
+/// The title bar's language badge: the language's flag (or a small globe)
+/// and its code in a sunken frame like the LED's; `hot` while the mouse is
+/// on it.
+fn draw_lang_badge(cv: &mut Canvas, r: Rect, code: &str, f: &Font, hot: bool, flag: Option<&super::bitmap::Bitmap>) {
+    cv.fill(r, 0xFF20_2020);
+    let inner = r.inset(1);
+    let bg = if hot { 0xFF4A_5262 } else { 0xFF36_3C46 };
+    cv.fill(inner, bg);
+    let right = match flag {
+        Some(b) => {
+            cv.image(inner.x + 2, inner.y + (inner.h - b.h as i32) / 2, b);
+            inner.x + 2 + b.w as i32
+        }
+        None => {
+            // the globe: a circle with its equator and a meridian
+            let g = Rect::new(inner.x + 2, inner.y + (inner.h - 9) / 2, 9, 9);
+            let line = if hot { 0xFFDC_E4F0 } else { 0xFFB8_C0CC };
+            cv.ellipse(g, Some(bg), Some(line));
+            cv.hline(g.x + 2, g.right() - 2, g.y + g.h / 2, line);
+            cv.vline(g.x + g.w / 2, g.y + 2, g.bottom() - 2, line);
+            g.right()
+        }
+    };
+    let lh = line_height(f);
+    cv.text(right + 3, r.y + (r.h - lh) / 2, code, f, 0xFFF0_F0F0);
 }

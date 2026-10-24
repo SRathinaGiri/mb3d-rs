@@ -1,5 +1,6 @@
 //! The voxel export window (VoxelExport.pas): PNG slices of the object.
 
+use crate::vcl::lang::tr;
 use super::eta::ItemsLeft;
 use super::util::{fts, fts_single, left_str, parse_float, pti, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
@@ -204,7 +205,7 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let shared = app.voxel.shared.clone();
     let stop = app.voxel.stop.clone();
     app.voxel.running = 2;
-    ui.set_caption(F, "Button5", "Stop");
+    ui.set_caption(F, "Button5", &tr("Stop"));
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
     let waker = ui.waker();
     std::thread::spawn(move || {
@@ -394,7 +395,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.message(ui, "Finished rendering slices.");
             }
         } else {
-            ui.set_caption(F, "Button5", "Calculate preview");
+            ui.set_caption(F, "Button5", &tr("Calculate preview"));
             if app.voxel.restart_preview {
                 app.voxel.restart_preview = false;
                 start_preview(app, ui);
@@ -448,7 +449,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.voxel.user_change = true;
             if app.voxel.first_show {
                 app.voxel.first_show = false;
-                ui.cm(F, "RadioGroup1").hint = " Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!".into();
+                ui.cm(F, "RadioGroup1").hint = tr(" Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!");
                 let d = app.ini.dir(super::ini::DIR_VOXEL);
                 let mut s = d.display().to_string();
                 if !s.ends_with(std::path::MAIN_SEPARATOR) {
@@ -517,7 +518,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if app.voxel.running == 2 {
                 app.voxel.stop.store(true, Ordering::SeqCst);
                 app.voxel.restart_preview = false;
-                ui.set_caption(F, "Button5", "Calculate preview");
+                ui.set_caption(F, "Button5", &tr("Calculate preview"));
             }
             if app.voxel.running != 1 {
                 start_slices(app, ui);

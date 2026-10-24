@@ -4,6 +4,7 @@
 
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Face {
@@ -88,6 +89,25 @@ pub struct Glyph {
 struct Fonts {
     faces: [fontdue::Font; 3],
     glyphs: HashMap<(Face, u32, char), std::rc::Rc<Glyph>>,
+    /// the change count of [`FALLBACKS`] the cache was filled under
+    fallback_gen: u64,
+}
+
+/// Fonts with the glyphs the embedded faces lack (Japanese, Chinese,
+/// Korean ...), named by the language files (see `lang`), the current
+/// language's first; `.0` counts the changes, the glyph caches follow.
+static FALLBACKS: RwLock<(u64, Vec<Arc<fontdue::Font>>)> = RwLock::new((0, Vec::new()));
+
+/// Reads a font file (.ttf, .otf; of a collection the first font).
+pub fn load_font(data: Vec<u8>) -> Option<Arc<fontdue::Font>> {
+    fontdue::Font::from_bytes(data, fontdue::FontSettings::default()).ok().map(Arc::new)
+}
+
+/// Sets the fallback fonts, in the order they are searched.
+pub fn set_fallbacks(fonts: Vec<Arc<fontdue::Font>>) {
+    let mut w = FALLBACKS.write().unwrap();
+    w.0 += 1;
+    w.1 = fonts;
 }
 
 fn system_face(names: &[&str]) -> Option<fontdue::Font> {
@@ -111,6 +131,7 @@ thread_local! {
                 load(MONO),
             ],
             glyphs: HashMap::new(),
+            fallback_gen: 0,
         }
     });
 }
@@ -128,12 +149,23 @@ pub fn glyph(face: Face, px: f32, c: char) -> std::rc::Rc<Glyph> {
     let key = (face, (px * 16.0).round() as u32, c);
     FONTS.with(|f| {
         let mut f = f.borrow_mut();
+        let fallbacks = FALLBACKS.read().unwrap();
+        if f.fallback_gen != fallbacks.0 {
+            f.glyphs.clear();
+            f.fallback_gen = fallbacks.0;
+        }
         if let Some(g) = f.glyphs.get(&key) {
             return g.clone();
         }
         let font = &f.faces[idx(face)];
-        let c2 = if font.lookup_glyph_index(c) == 0 && c != ' ' { '?' } else { c };
-        let (m, cov) = font.rasterize(c2, px);
+        let (m, cov) = if font.lookup_glyph_index(c) == 0 && c != ' ' {
+            match fallbacks.1.iter().find(|fb| fb.lookup_glyph_index(c) != 0) {
+                Some(fb) => fb.rasterize(c, px),
+                None => font.rasterize('?', px),
+            }
+        } else {
+            font.rasterize(c, px)
+        };
         let g = std::rc::Rc::new(Glyph {
             w: m.width,
             h: m.height,

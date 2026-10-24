@@ -90,6 +90,9 @@ tutorials apply. A short tour:
   presets and the palette are at the top.
 * **Prefs ▸ Visual themes** switches between MB3D's Glossy look and the
   Windows look.
+* **Language:** the badge right of the LED in the title bar shows the
+  interface language; click it to choose another or to create the file
+  of your own translation.
 
 Every change marks the image as old; *Calculate 3D* calculates it at full
 size. After that, changes in the Lighting window only repaint it and changes

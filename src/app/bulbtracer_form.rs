@@ -1,5 +1,6 @@
 //! The mesh export window (bulbtracer2/BulbTracer2UI.pas).
 
+use crate::vcl::lang::tr;
 use super::util::{fts, fts_single, parse_float, pti};
 use super::Mb3d;
 use crate::mesh::{Mesh, MeshParams};
@@ -314,7 +315,7 @@ fn enable_controls(app: &Mb3d, ui: &mut Ui, en: bool) {
     ui.set_enabled(F, "OpenGLPreviewCheckbox", false);
     ui.set_enabled(F, "RefreshPreviewBtn", en && app.btracer.enabled);
     if en {
-        ui.set_caption(F, "RefreshPreviewBtn", "Calculate preview");
+        ui.set_caption(F, "RefreshPreviewBtn", &tr("Calculate preview"));
     }
     ui.set_enabled(F, "CancelBtn", app.btracer.calculating);
     ui.set_enabled(F, "CalculateBtn", app.btracer.enabled && !app.btracer.calculating);
@@ -370,7 +371,7 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let stop = app.btracer.preview_stop.clone();
     let shared = app.btracer.shared.clone();
     app.btracer.previewing = true;
-    ui.set_caption(F, "RefreshPreviewBtn", "Stop");
+    ui.set_caption(F, "RefreshPreviewBtn", &tr("Stop"));
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
     {
         let c = ui.cm(F, "PreviewProgressBar");
@@ -539,7 +540,7 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui) {
         c.position = 0;
     }
     super::main_form::disable_buttons(app, ui);
-    ui.set_caption(F, "Label13", "Tracing object...");
+    ui.set_caption(F, "Label13", &tr("Tracing object..."));
     let name = format!("mesh {}", app.title);
     let waker = ui.waker();
     std::thread::spawn(move || {
@@ -580,7 +581,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         ui.cm(F, "PreviewProgressBar").position = p;
         if pv_done {
             app.btracer.previewing = false;
-            ui.set_caption(F, "RefreshPreviewBtn", "Calculate preview");
+            ui.set_caption(F, "RefreshPreviewBtn", &tr("Calculate preview"));
             if let Some(Err(e)) = &mesh {
                 app.message(ui, e);
             }

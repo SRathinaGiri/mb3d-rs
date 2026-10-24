@@ -1,6 +1,7 @@
 //! The Monte Carlo rendering window (MonteCarloForm.pas) and the colour
 //! scaling question (ColorOptionForm.pas).
 
+use crate::vcl::lang::tr;
 use super::light_form::short_float_str;
 use super::eta::{ItemsLeft, Pace};
 use super::util::{d2byte, d2byte_str, fts_single, left_str, parse_float, smooth_shown, time_str, Shown};
@@ -517,7 +518,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     app.mc.total_shown = None;
     app.mc.rays0 = start.stats().max_rays;
     app.mc.rays = app.mc.rays0;
-    ui.set_caption(F, "Button2", "Stop rendering");
+    ui.set_caption(F, "Button2", &tr("Stop rendering"));
     for c in ["Button3", "Button8", "Button9"] {
         ui.set_enabled(F, c, false);
     }
@@ -695,7 +696,7 @@ pub fn stop_for_exit(app: &mut Mb3d) {
 fn stop(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.stop.store(true, Ordering::SeqCst);
     if app.mc.running {
-        ui.set_caption(F, "Button2", "Stopping...");
+        ui.set_caption(F, "Button2", &tr("Stopping..."));
         ui.set_enabled(F, "Button2", false);
     }
 }
@@ -713,7 +714,7 @@ fn finish(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "Label8", false);
     ui.set_caption(F, "Label14", "");
     ui.set_caption(F, "Label15", "");
-    ui.set_caption(F, "Button2", "Start rendering");
+    ui.set_caption(F, "Button2", &tr("Start rendering"));
     for c in ["Button3", "Button8", "Button9", "SpeedButton1"] {
         ui.set_enabled(F, c, true);
     }
@@ -817,7 +818,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         repaint(app, ui);
         let max_rays = show_stats(app, ui);
         app.mc.rays = max_rays;
-        ui.set_caption(F, "Label8", "..til next update");
+        ui.set_caption(F, "Label8", &tr("..til next update"));
         ui.set_enabled(F, "SpeedButton1", true);
         let total = app.mc.calc_time + (el.as_secs_f64() * 10.0) as i64;
         ui.set_caption(F, "Label19", &time_str(total));
@@ -912,7 +913,7 @@ fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     }
     app.mc.img = Some(Arc::new(img));
     set_paras(app, ui);
-    ui.set_caption(F, "Button2", "Start rendering");
+    ui.set_caption(F, "Button2", &tr("Start rendering"));
     repaint(app, ui);
     show_stats(app, ui);
     ui.set_enabled(F, "SpeedButton1", true);
@@ -1189,7 +1190,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "FormCreate" => {
             ui.set_visible(F, "BatchPnl", false);
-            ui.cm(F, "ComboBox1").hint = "Box: sharp, good AA\nGauss: bit blurry, very good AA".into();
+            ui.cm(F, "ComboBox1").hint = tr("Box: sharp, good AA\nGauss: bit blurry, very good AA");
             set_bokeh(app, ui, 0);
             message_image(ui, 250, 30, "");
             refresh_batch_grid(app, ui);

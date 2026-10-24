@@ -126,6 +126,9 @@ pub const PART_VSCROLL: i32 = -16;
 pub const PART_HSCROLL: i32 = -17;
 pub const PART_HEADER: i32 = -18;
 
+/// `Form::nc_hot` while the mouse is on the title bar's language badge.
+pub const NC_LANG: i32 = 3;
+
 pub struct Form {
     pub name: String,
     pub class: String,
@@ -178,9 +181,18 @@ pub struct Form {
     pub led_hint: String,
     pub led_rect: std::cell::Cell<super::canvas::Rect>,
     pub led_hint_shown: bool,
+    /// the language badge in the title bar right of the LED: the language's
+    /// code (`EN`; empty: none), its hint and where it was painted; a
+    /// click posts the form a `LanguageBadgeClick` event
+    pub caption_lang: String,
+    pub lang_hint: String,
+    pub lang_rect: std::cell::Cell<super::canvas::Rect>,
+    /// the language's flag on the badge (none: a globe)
+    pub caption_flag: Option<super::bitmap::Bitmap>,
     pub repeat_at: Option<Instant>,
     pub last_click: (Instant, i32, i32, Option<Id>),
-    /// title bar button under the mouse / pressed (0 close, 1 max, 2 min)
+    /// title bar button under the mouse / pressed (0 close, 1 max, 2 min,
+    /// [`NC_LANG`] the language badge)
     pub nc_hot: i32,
     pub nc_pressed: i32,
     pub maximized: bool,
@@ -190,9 +202,12 @@ pub struct Form {
     dummy: Control,
 }
 
-fn walk_build(f: &mut Form, o: &Obj, parent: Option<Id>, theme: &Theme) {
+fn walk_build(f: &mut Form, o: &Obj, parent: Option<Id>, theme: &Theme, translate: bool) {
     let pfont = parent.and_then(|p| f.font_opt(p));
     let mut c = control::from_obj(o, theme, pfont.as_ref());
+    if translate {
+        super::lang::translate_new(&f.name, parent.is_none(), &mut c);
+    }
     c.parent = parent;
     let id = f.ctl.len();
     if let Some(p) = parent {
@@ -206,7 +221,7 @@ fn walk_build(f: &mut Form, o: &Obj, parent: Option<Id>, theme: &Theme) {
         f.ctl[p].children.push(id);
     }
     for ch in &o.children {
-        walk_build(f, ch, Some(id), theme);
+        walk_build(f, ch, Some(id), theme, translate);
     }
 }
 
@@ -214,10 +229,17 @@ impl Form {
     /// Builds a form from its form file text.
     pub fn from_dfm(text: &str, theme: &Theme) -> Result<Form, String> {
         let o = super::dfm::parse(text)?;
-        Ok(Form::from_obj(&o, theme))
+        Ok(Form::from_obj(&o, theme, false))
     }
 
-    pub fn from_obj(o: &Obj, theme: &Theme) -> Form {
+    /// [`from_dfm`](Form::from_dfm) with the texts of the controls in the
+    /// interface language ([`lang`](super::lang)).
+    pub fn from_dfm_translated(text: &str, theme: &Theme) -> Result<Form, String> {
+        let o = super::dfm::parse(text)?;
+        Ok(Form::from_obj(&o, theme, true))
+    }
+
+    pub fn from_obj(o: &Obj, theme: &Theme, translate: bool) -> Form {
         let mut f = Form {
             name: o.name.clone(),
             class: o.class.clone(),
@@ -261,6 +283,10 @@ impl Form {
             led_hint: String::new(),
             led_rect: Default::default(),
             led_hint_shown: false,
+            caption_lang: String::new(),
+            lang_hint: String::new(),
+            lang_rect: Default::default(),
+            caption_flag: None,
             repeat_at: None,
             last_click: (Instant::now(), 0, 0, None),
             nc_hot: -1,
@@ -270,7 +296,7 @@ impl Form {
             created: false,
             dummy: Control::new("", "TUnknown"),
         };
-        walk_build(&mut f, o, None, theme);
+        walk_build(&mut f, o, None, theme, translate);
         let root = &mut f.ctl[0];
         root.kind = Kind::Form;
         root.left = 0;
@@ -343,6 +369,16 @@ impl Form {
 
     pub fn set_caption(&mut self, s: &str) {
         self.ctl[0].caption = s.to_string();
+        self.dirty = true;
+    }
+
+    /// Changes the texts of the controls from language `old` to `new` (see
+    /// [`lang::retranslate`](super::lang::retranslate)).
+    pub fn retranslate(&mut self, old: &super::lang::Language, new: &super::lang::Language) {
+        let name = self.name.clone();
+        for (i, c) in self.ctl.iter_mut().enumerate() {
+            super::lang::retranslate(&name, i == 0, c, old, new);
+        }
         self.dirty = true;
     }
 
@@ -628,6 +664,7 @@ impl Form {
         }
         let lines: Vec<&str> = text.split(['\n']).map(|l| l.trim_end_matches('\r')).collect();
         let w = lines.iter().map(|l| self.measure(&f, l)).max().unwrap_or(0).max(if text.is_empty() { 0 } else { 1 });
+        let w = self.autosize_limit(id, w);
         let h = lh * lines.len().max(1) as i32;
         let c = &mut self.ctl[id];
         if c.alignment == super::canvas::HAlign::Right {
@@ -635,6 +672,42 @@ impl Form {
         }
         c.width = w;
         c.height = h;
+    }
+
+    /// A label grown past its form file width (a translated caption) stops
+    /// short of the next control to its right (and of its parent's edge)
+    /// instead of running under it; the caption is then drawn smaller or
+    /// shortened.
+    fn autosize_limit(&self, id: Id, w: i32) -> i32 {
+        let c = &self.ctl[id];
+        if w <= c.design.w {
+            return w;
+        }
+        let Some(p) = c.parent else { return w };
+        let (top, bottom) = (c.top, c.top + c.height.max(1));
+        let beside = |s: &Control| s.visible && !s.kind.non_visual() && s.top < bottom && s.top + s.height > top;
+        let siblings = self.ctl[p].children.iter().copied().filter(|&k| k != id).map(|k| &self.ctl[k]);
+        let room = if c.alignment == super::canvas::HAlign::Right {
+            // grows to the left, the right edge stays
+            let right = c.design.x + c.design.w;
+            let mut limit = 0;
+            for s in siblings {
+                if beside(s) && s.left + s.width <= c.design.x + 2 {
+                    limit = limit.max(s.left + s.width + 2);
+                }
+            }
+            right - limit
+        } else {
+            let edge = c.design.x + c.design.w;
+            let mut limit = self.ctl[p].width;
+            for s in siblings {
+                if beside(s) && s.left >= edge - 2 {
+                    limit = limit.min(s.left - 2);
+                }
+            }
+            limit - c.design.x
+        };
+        if w <= room + super::canvas::SLACK { w } else { room.max(c.design.w) }
     }
 
     fn layout_children(&mut self, id: Id) {
@@ -937,9 +1010,30 @@ fn tab_labels(f: &Form, id: Id) -> Vec<(usize, String)> {
     }
 }
 
+/// The tabs' font: the control's, smaller (down to 8 pixels) where the
+/// tabs would not all fit in its width (translated captions).
+pub(crate) fn tab_font(f: &Form, id: Id) -> Font {
+    let c = &f.ctl[id];
+    let mut font = f.font(id);
+    if c.tab_width > 0 || c.multi_line {
+        return font;
+    }
+    let buttons = c.style == "tsButtons" || c.style == "tsFlatButtons";
+    let (pad, gap) = if buttons { (14, 3) } else { (12, 0) };
+    let labels = tab_labels(f, id);
+    let total = |font: &Font| labels.iter().map(|(_, t)| f.measure(font, t) + pad + gap).sum::<i32>();
+    let maxw = c.width - 4;
+    let mut h = font.em().round() as i32 - 1;
+    while total(&font) > maxw && h >= 8 {
+        font.height = -h;
+        h -= 1;
+    }
+    font
+}
+
 pub(crate) fn tab_rects(f: &Form, id: Id) -> Vec<(usize, Rect)> {
     let c = &f.ctl[id];
-    let font = f.font(id);
+    let font = tab_font(f, id);
     let th = tab_h(f, id);
     let buttons = c.style == "tsButtons" || c.style == "tsFlatButtons";
     let labels = tab_labels(f, id);

@@ -20,11 +20,13 @@ pub mod dialogs;
 pub mod font;
 pub mod form;
 pub mod input;
+pub mod lang;
 pub mod paint;
 pub mod run;
 pub mod theme;
 pub mod ui;
 
 pub use form::{DialogResult, Ev, Event, MouseButton};
+pub use lang::{tr, trf};
 pub use theme::Style;
 pub use ui::{App, Ui};

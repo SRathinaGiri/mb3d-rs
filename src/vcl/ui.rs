@@ -110,9 +110,10 @@ impl Ui {
         }
     }
 
-    /// Adds a form from its form file text; OnCreate is queued.
+    /// Adds a form from its form file text, its texts in the interface
+    /// language; OnCreate is queued.
     pub fn add_form(&mut self, dfm: &str) -> Result<usize, String> {
-        let f = Form::from_dfm(dfm, &self.theme)?;
+        let f = Form::from_dfm_translated(dfm, &self.theme)?;
         Ok(self.add_built(f))
     }
 
@@ -132,6 +133,33 @@ impl Ui {
         self.theme = Theme::new(style);
         for f in &mut self.forms {
             f.dirty = true;
+        }
+    }
+
+    /// Changes the interface language: the texts of all forms follow (those
+    /// the program changed meanwhile stay); false if there is no such
+    /// language.
+    pub fn set_language(&mut self, name: &str) -> bool {
+        let old = super::lang::current();
+        if !super::lang::select(name) {
+            return false;
+        }
+        self.language_changed(&old);
+        true
+    }
+
+    /// Reads the language files again and applies the current one (after
+    /// the user edited it).
+    pub fn reload_languages(&mut self) {
+        let old = super::lang::current();
+        super::lang::reload();
+        self.language_changed(&old);
+    }
+
+    fn language_changed(&mut self, old: &super::lang::Language) {
+        let new = super::lang::current();
+        for f in &mut self.forms {
+            f.retranslate(old, &new);
         }
     }
 
@@ -252,6 +280,11 @@ impl Ui {
             c.item_index = -1;
         }
         c.top_index = c.top_index.min((c.items.len() as i32 - 1).max(0));
+    }
+    /// The pictures before a list box's items (one per item, an empty
+    /// bitmap for none).
+    pub fn set_item_images(&mut self, form: &str, ctl: &str, imgs: Vec<Bitmap>) {
+        self.cm(form, ctl).item_images = imgs;
     }
     pub fn set_picture(&mut self, form: &str, ctl: &str, b: Option<Bitmap>) {
         self.cm(form, ctl).picture = b;

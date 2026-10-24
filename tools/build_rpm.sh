@@ -55,7 +55,7 @@ r=%{buildroot}
 install -Dm755 "\$s/mb3d" "\$r/usr/bin/mb3d"
 install -Dm755 "\$s/Mandelbulb3D" "\$r/usr/bin/Mandelbulb3D"
 mkdir -p "\$r/usr/share/mb3d-rs"
-for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes examples; do
+for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes Languages examples; do
   [ -d "\$s/\$d" ] && cp -r "\$s/\$d" "\$r/usr/share/mb3d-rs/"
 done
 install -Dm644 "\$s/mb3d-rs.png" "\$r/usr/share/icons/hicolor/256x256/apps/mb3d-rs.png"

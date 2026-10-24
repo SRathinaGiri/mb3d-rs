@@ -245,6 +245,8 @@ pub struct Control {
 
     // ---- lists
     pub items: Vec<String>,
+    /// a small picture before each item (a list box; empty: none)
+    pub item_images: Vec<bitmap::Bitmap>,
     pub item_index: i32,
     pub item_height: i32,
     pub top_index: i32,
@@ -426,6 +428,7 @@ impl Control {
             cancel: false,
             modal_result: 0,
             items: Vec::new(),
+            item_images: Vec::new(),
             item_index: -1,
             item_height: 13,
             top_index: 0,

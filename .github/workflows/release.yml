@@ -139,8 +139,9 @@ jobs:
               echo "::warning::no man page / completions (mb3d does not run on this runner)"
             fi
           fi
-          # the themes (the program reads them from here)
+          # the themes and the languages (the program reads them from here)
           cp -r Themes "$name"/
+          cp -r Languages "$name"/
           mkdir -p "$name/examples"
           cp examples/*.m3s "$name/examples"/
           # the archive name has no version, so that the README can link to

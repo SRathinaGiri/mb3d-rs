@@ -100,6 +100,10 @@ pub fn strip_amp(s: &str) -> String {
 }
 
 /// Logical line height of a font (VCL `TextHeight`).
+/// How far a caption may stand over its control before it is made to fit
+/// (see [`Canvas::fit`]).
+pub const SLACK: i32 = 2;
+
 pub fn line_height(f: &Font) -> i32 {
     f.line_height()
 }
@@ -535,6 +539,69 @@ impl<'a> Canvas<'a> {
             };
             self.text(x, y, l, f, color);
             y += lh;
+        }
+    }
+
+    /// The least change that fits a caption into `r`: a text too wide for it
+    /// is drawn in a smaller font (down to 8 pixels), and what still does
+    /// not fit ends in "..." (one-line texts; wrapped text is left to the
+    /// caller's clipping).  Translated captions are often longer than the
+    /// English the windows were laid out for.
+    pub fn fit(&self, r: Rect, s: &str, f: &Font, wrap: bool) -> (Font, String) {
+        if self.fits(r, s, f, wrap) {
+            return (f.clone(), s.to_string());
+        }
+        let mut font = f.clone();
+        let mut h = f.em().round() as i32 - 1;
+        while h >= 8 {
+            font.height = -h;
+            if self.fits(r, s, &font, wrap) {
+                return (font, s.to_string());
+            }
+            h -= 1;
+        }
+        if wrap || s.contains('\n') {
+            return (font, s.to_string());
+        }
+        let short = self.elide(s, &font, r.w);
+        (font, short)
+    }
+
+    /// Whether `s` (wrapped to `r.w` when `wrap`) fits into `r`; a line may
+    /// stand over by [`SLACK`] pixels, as the English captions of the form
+    /// files do here and there.
+    fn fits(&self, r: Rect, s: &str, f: &Font, wrap: bool) -> bool {
+        let lines = self.layout_lines(s, f, r.w, wrap);
+        lines.iter().all(|l| self.text_width(f, l) <= r.w + SLACK) && (!wrap || lines.len() as i32 * line_height(f) <= r.h)
+    }
+
+    /// One line shortened with "..." to `w` pixels.
+    fn elide(&self, s: &str, f: &Font, w: i32) -> String {
+        let mut t: Vec<char> = s.chars().collect();
+        while !t.is_empty() {
+            t.pop();
+            let cand = format!("{}...", t.iter().collect::<String>().trim_end());
+            if self.text_width(f, &cand) <= w {
+                return cand;
+            }
+        }
+        String::new()
+    }
+
+    /// [`text_in`](Canvas::text_in) with the text made to fit (see [`fit`](Canvas::fit)).
+    #[allow(clippy::too_many_arguments)]
+    pub fn text_fit(&mut self, r: Rect, s: &str, f: &Font, color: u32, ha: HAlign, va: VAlign, wrap: bool) {
+        let (font, text) = self.fit(r, s, f, wrap);
+        if wrap && !self.fits(r, &text, &font, true) {
+            // the smallest font still has a word too long for the width, or
+            // too many lines: what does not fit goes, line by line
+            let max_lines = (r.h / line_height(&font)).max(1) as usize;
+            let mut lines = self.layout_lines(&text, &font, r.w, true);
+            lines.truncate(max_lines);
+            let lines: Vec<String> = lines.iter().map(|l| if self.text_width(&font, l) > r.w { self.elide(l, &font, r.w) } else { l.clone() }).collect();
+            self.text_in(r, &lines.join("\n"), &font, color, ha, va, false);
+        } else {
+            self.text_in(r, &text, &font, color, ha, va, wrap);
         }
     }
 

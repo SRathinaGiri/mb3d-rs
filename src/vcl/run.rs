@@ -46,6 +46,8 @@ struct Win {
 enum Nc {
     Client,
     Caption,
+    /// the language badge of the title bar
+    Lang,
     Button(i32),
     Border(ResizeDirection),
 }
@@ -543,6 +545,9 @@ impl<A: App> Runner<A> {
                     return Nc::Button(k);
                 }
             }
+            if f.lang_rect.get().contains(x, y) {
+                return Nc::Lang;
+            }
             return Nc::Caption;
         }
         Nc::Client
@@ -563,6 +568,7 @@ impl<A: App> Runner<A> {
         let Some(w) = self.wins.get(&id) else { return };
         let f = &self.ui.forms[w.form];
         let icon = match w.nc {
+            Nc::Lang => CursorIcon::Pointer,
             Nc::Border(d) => match d {
                 ResizeDirection::East | ResizeDirection::West => CursorIcon::EwResize,
                 ResizeDirection::North | ResizeDirection::South => CursorIcon::NsResize,
@@ -622,7 +628,11 @@ impl<A: App> Runner<A> {
             w.nc = nc;
         }
         let f = &mut self.ui.forms[fi];
-        let nh = if let Nc::Button(k) = nc { k } else { -1 };
+        let nh = match nc {
+            Nc::Button(k) => k,
+            Nc::Lang => NC_LANG,
+            _ => -1,
+        };
         if nh != f.nc_hot {
             f.nc_hot = nh;
             f.dirty = true;
@@ -632,16 +642,25 @@ impl<A: App> Runner<A> {
         }
         let (cx, cy) = self.client_xy(fi, x, y);
         {
-            // the LED's hint, at once
+            // the hints of the LED and the language badge, at once
             let f = &mut self.ui.forms[fi];
             let r = f.led_rect.get();
             let (xi, yi) = (x as i32, y as i32);
-            let on = nc == Nc::Caption && f.caption_led.is_some() && !f.led_hint.is_empty() && xi >= r.x - 3 && xi < r.x + r.w + 3 && yi >= r.y - 4 && yi < r.y + r.h + 4;
-            if on && !f.led_hint_shown {
-                f.hint = Some((f.led_hint.clone(), cx as i32, 2));
-                f.led_hint_shown = true;
-                f.dirty = true;
-            } else if !on && f.led_hint_shown {
+            let on_led = nc == Nc::Caption && f.caption_led.is_some() && !f.led_hint.is_empty() && xi >= r.x - 3 && xi < r.x + r.w + 3 && yi >= r.y - 4 && yi < r.y + r.h + 4;
+            let text = if nc == Nc::Lang && !f.lang_hint.is_empty() {
+                Some(&f.lang_hint)
+            } else if on_led {
+                Some(&f.led_hint)
+            } else {
+                None
+            };
+            if let Some(t) = text {
+                if !f.led_hint_shown || f.hint.as_ref().map(|h| &h.0) != Some(t) {
+                    f.hint = Some((t.clone(), cx as i32, 2));
+                    f.led_hint_shown = true;
+                    f.dirty = true;
+                }
+            } else if f.led_hint_shown {
                 f.hint = None;
                 f.led_hint_shown = false;
                 f.dirty = true;
@@ -714,6 +733,14 @@ impl<A: App> Runner<A> {
                     // the window manager takes the press and often its release too
                     self.buttons &= !SS_LEFT;
                     let _ = self.wins[&id].window.drag_resize_window(d);
+                    return;
+                }
+                Nc::Lang if button == MouseButton::Left => {
+                    // the program opens its language window
+                    let name = self.ui.forms[fi].name.clone();
+                    self.ui.post(&name, &name, "LanguageBadgeClick", Ev::Click);
+                    self.process();
+                    self.redraw_dirty();
                     return;
                 }
                 Nc::Caption if button == MouseButton::Left => {

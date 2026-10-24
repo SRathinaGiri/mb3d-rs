@@ -3,6 +3,7 @@
 //! text parameters (TextBox.pas) and the 16 bit z-buffer generator
 //! (ZBuf16BitGenUI.pas).
 
+use crate::vcl::lang::tr;
 use super::util::{fts, parse_float, pti, ptf};
 use super::Mb3d;
 use crate::vcl::bitmap::Bitmap;
@@ -330,7 +331,7 @@ fn zb_values(ui: &Ui) -> (f64, f64, bool) {
 fn zb_refresh(app: &mut Mb3d, ui: &mut Ui) {
     let (o, s, inv) = zb_values(ui);
     let Some((w, h, z, info)) = zbuf16(app, o, s, inv) else {
-        ui.set_text(ZB, "InfoMemo", "Calculate the image first.");
+        ui.set_text(ZB, "InfoMemo", &tr("Calculate the image first."));
         return;
     };
     let mut b = Bitmap::new(w, h, 0);

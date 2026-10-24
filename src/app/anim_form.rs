@@ -4,6 +4,7 @@
 //! number of subframes to the next one; the frames are interpolated with
 //! MB3D's functions ([`crate::anim`]) and written into the output folder.
 
+use crate::vcl::lang::tr;
 use super::eta::{ItemsLeft, Pace};
 use super::util::{fts_single, left_str, parse_float, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
@@ -326,7 +327,7 @@ fn calc_time(app: &Mb3d, ui: &mut Ui) {
     let n = count(app);
     if n == 0 {
         ui.set_caption(F, "Label14", "0:00");
-        ui.set_caption(F, "Label25", "  MB");
+        ui.set_caption(F, "Label25", &tr("  MB"));
         return;
     }
     let every = ui.position(F, "UpDown1").max(1) as f64;
@@ -427,7 +428,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     let el = app.anim.started.elapsed().as_secs();
     if making_video {
-        ui.set_caption(F, "Label19", "Making the video...");
+        ui.set_caption(F, "Label19", &tr("Making the video..."));
     } else if running || done > 0 {
         let now = Instant::now();
         let a = &mut app.anim;
@@ -471,7 +472,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn end_rendering(app: &mut Mb3d, ui: &mut Ui) {
-    ui.set_caption(F, "Button2", "Start rendering animation images");
+    ui.set_caption(F, "Button2", &tr("Start rendering animation images"));
     if !app.main.calculating && ui.caption(MAIN, "Button2") == "Stop" {
         super::main_form::enable_buttons(app, ui);
     }
@@ -496,12 +497,12 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let cap = ui.caption(F, "Button2");
     if cap == "Pause rendering" {
         app.anim.pause.store(true, Ordering::SeqCst);
-        ui.set_caption(F, "Button2", "Paused, press to continue");
+        ui.set_caption(F, "Button2", &tr("Paused, press to continue"));
         return;
     }
     if cap == "Paused, press to continue" {
         app.anim.pause.store(false, Ordering::SeqCst);
-        ui.set_caption(F, "Button2", "Pause rendering");
+        ui.set_caption(F, "Button2", &tr("Pause rendering"));
         return;
     }
     // (a preview still runs)
@@ -526,10 +527,10 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     for b in ["SpeedButton1", "SpeedButton2", "SpeedButton3", "SpeedButton4", "SpeedButton5", "SpeedButton8", "SpeedButton9", "SpeedButton10", "SpeedButton11", "SpeedButton12", "SpeedButton14", "Edit1", "Button3", "Button4"] {
         ui.set_enabled(F, b, false);
     }
-    ui.set_caption(F, "Button2", "Pause rendering");
+    ui.set_caption(F, "Button2", &tr("Pause rendering"));
     // as in MB3D, the main window's Calculate button stops the animation
-    ui.set_caption(MAIN, "Button2", "Stop");
-    ui.cm(MAIN, "Button2").hint = "Stop rendering the animation.".into();
+    ui.set_caption(MAIN, "Button2", &tr("Stop"));
+    ui.cm(MAIN, "Button2").hint = tr("Stop rendering the animation.");
     app.anim.started = Instant::now();
     app.anim.stop.store(false, Ordering::SeqCst);
     app.anim.pause.store(false, Ordering::SeqCst);
@@ -998,7 +999,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormShow" => {
             if app.anim.first_show {
                 app.anim.first_show = false;
-                ui.cm(F, "Edit21").hint = "1:  none\n2:  2x2\n3:  3x3".into();
+                ui.cm(F, "Edit21").hint = tr("1:  none\n2:  2x2\n3:  3x3");
                 ui.set_item_index(F, "RadioGroup2", app.ini.get("AniSmoothPar").parse::<i32>().unwrap_or(1).clamp(0, 1));
                 let out = app.ini.dir(super::ini::DIR_ANIOUT).display().to_string();
                 ui.set_text(F, "Edit2", &out);

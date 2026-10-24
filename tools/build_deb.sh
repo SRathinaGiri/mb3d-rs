@@ -35,7 +35,7 @@ share="$root/usr/share"
 install -Dm755 "$src/mb3d" "$root/usr/bin/mb3d"
 install -Dm755 "$src/Mandelbulb3D" "$root/usr/bin/Mandelbulb3D"
 mkdir -p "$share/mb3d-rs"
-for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes examples; do
+for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes Languages examples; do
   [ -d "$src/$d" ] && cp -r "$src/$d" "$share/mb3d-rs/"
 done
 # the icon in the sizes of the hicolor theme (Debian's icon triggers refresh

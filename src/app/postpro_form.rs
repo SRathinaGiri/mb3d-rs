@@ -4,6 +4,7 @@
 //! "Calculate now" applies a processing to the kept image; the
 //! "automatically" boxes put it into the parameters of the next calculation.
 
+use crate::vcl::lang::tr;
 use super::util::{d2byte, d2byte_str, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
 use crate::dof::DofParams;
@@ -302,8 +303,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "NoiseAutoCbxClick" => update_captions(ui),
         "FormShow" => {
             super::main_form::place_sticky(app, ui, Some(F), true);
-            ui.cm(F, "Edit11").hint = "Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.".into();
-            ui.cm(F, "Edit12").hint = "Divides the actual \"Raystep multiplier\" by this value,\nincrease the value to reduce overstepping.".into();
+            ui.cm(F, "Edit11").hint = tr("Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.");
+            ui.cm(F, "Edit12").hint = tr("Divides the actual \"Raystep multiplier\" by this value,\nincrease the value to reduce overstepping.");
             align_panels(ui);
             update_captions(ui);
         }
@@ -378,7 +379,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.cm(MAIN, "Image1").cursor = "crDefault".into();
             } else {
                 app.main.get_pos = tg;
-                ui.set_caption(F, &e.sender, "Click on image");
+                ui.set_caption(F, &e.sender, &tr("Click on image"));
                 ui.cm(MAIN, "Image1").cursor = "crCross".into();
             }
         }

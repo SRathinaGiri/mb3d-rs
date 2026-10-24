@@ -3,6 +3,7 @@
 //! ambient / fog / background pages.  Changes repaint the kept image
 //! without a new calculation, as in MB3D.
 
+use crate::vcl::lang::tr;
 use super::util::{argb, fts_single, parse_float, pti, rgb_of};
 use super::{Mb3d, MAIN};
 use crate::lighting::{Light, Lighting, PaletteColor};
@@ -1104,7 +1105,7 @@ fn move_pos_light(app: &mut Mb3d, ui: &mut Ui) {
 /// Light position from a point picked in the main image (`iGetPosFromImage = 2`).
 pub fn set_pos_light_from_image(app: &mut Mb3d, ui: &mut Ui, p: [f64; 3]) {
     let i = tab(ui);
-    ui.set_caption(F, "ButtonGetPos", "mid");
+    ui.set_caption(F, "ButtonGetPos", &tr("mid"));
     app.scene.lighting.lights[i].position = p;
     trigger_repaint(app, ui);
 }
@@ -1419,11 +1420,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "ButtonGetPosClick" => {
             if ui.caption(F, "ButtonGetPos") == "image" {
-                ui.set_caption(F, "ButtonGetPos", "mid");
+                ui.set_caption(F, "ButtonGetPos", &tr("mid"));
                 app.main.get_pos = 0;
                 ui.cm(super::MAIN, "Image1").cursor = "crDefault".into();
             } else {
-                ui.set_caption(F, "ButtonGetPos", "image");
+                ui.set_caption(F, "ButtonGetPos", &tr("image"));
                 app.main.get_pos = 2;
                 ui.cm(super::MAIN, "Image1").cursor = "crCross".into();
             }

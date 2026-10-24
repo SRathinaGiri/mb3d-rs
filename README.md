@@ -135,6 +135,28 @@ you check further on your own:
   start.
 
   </details>
+* **The interface in your language**: every text of the windows comes
+  from a language file; eleven languages ship, and the program writes the
+  file of a new language for you to translate.
+
+  <details><summary>Read more</summary>
+
+  The language badge right of the LED in the title bar of the main window
+  shows the interface language (`EN`); a click opens the language window.
+  A language is a text file in the `Languages` folder next to the program.
+  Shipped: English, Deutsch, Français, Italiano, Nederlands, Polski,
+  Kaszëbsczi, 日本語, 한국어, 简体中文 and 繁體中文 (each with its flag; the
+  East Asian ones bring a subset of Noto Sans CJK for their characters).
+  The translations were machine made and checked for structure, not by
+  native speakers: corrections are welcome, each is one line of the file. To translate: type the name of your language and
+  press *Create language file*; the program writes `Languages/<name>.lng`
+  with every text in English, one per line (`Button2.Caption = Calculate
+  3D`). Translate the texts right of the `=` with a text editor and press
+  *Reload*: the windows follow at once, without a restart. A line left out
+  keeps the English text. *Save + exit* keeps the language for the next
+  start.
+
+  </details>
 * **Linux, Windows and macOS** (Intel and Apple Silicon).
 * **A command line program** for everything that needs no window.
 * **Very big pictures in one piece**: 15000 x 20000 pixels and more
@@ -883,8 +905,8 @@ interrupted animation continues and several computers can share one.
   of card or processor; a Monte Carlo render's exposure and saturation
   may change). A Monte Carlo render stays unfinished until it reaches its
   rays (a batch, `--rays`, `--passes`) or is deleted in the Resume list.
-* **Newer or your own formulas, maps and themes** go into
-  `~/.local/share/mb3d-rs/M3Formulas`, `.../M3Maps` and `.../Themes`
+* **Newer or your own formulas, maps, themes and languages** go into
+  `~/.local/share/mb3d-rs/M3Formulas`, `.../M3Maps`, `.../Themes` and `.../Languages`
   (any way of installing; on Windows `%APPDATA%\mb3d-rs\...`). They
   are used in addition to the ones that
   come with the program, and replace a shipped file of the same name, so

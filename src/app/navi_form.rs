@@ -4,6 +4,7 @@
 //! camera, the mouse look mode, the adjustment panel (julia, formula, 4D
 //! rotation and other values) and sending the view back to the main window.
 
+use crate::vcl::lang::tr;
 use super::engine::{Engine, Job};
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
@@ -737,12 +738,12 @@ fn update_adjust(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
     match app.navi.scene.interpolation {
         Some(w) => {
             ui.set_caption(F, "Label47", &fts_single(w.get(fi.0).copied().unwrap_or(0.0) as f64));
-            ui.set_caption(F, "Label42", "Weight:");
+            ui.set_caption(F, "Label42", &tr("Weight:"));
         }
         None => {
             let its = app.navi.scene.formulas.get(fi.0).map(|e| e.iterations).unwrap_or(0);
             ui.set_caption(F, "Label47", &its.to_string());
-            ui.set_caption(F, "Label42", "Iterations:");
+            ui.set_caption(F, "Label42", &tr("Iterations:"));
         }
     }
     for i in 3..6 {
@@ -935,7 +936,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let q = app.ini.get("NaviSize").to_string();
             let i = ui.c(F, "NaviSizeCmb").items.iter().position(|s| *s == q).map(|i| i as i32).unwrap_or(6);
             ui.set_item_index(F, "NaviSizeCmb", i);
-            ui.set_caption(F, "CheckBox4", "HiQual 1");
+            ui.set_caption(F, "CheckBox4", &tr("HiQual 1"));
         }
         "FormShow" => {
             if app.navi.first {

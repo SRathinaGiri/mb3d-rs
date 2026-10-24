@@ -1,5 +1,6 @@
 //! The main window (Mand.pas, `TMand3DForm`).
 
+use crate::vcl::lang::{tr, trf};
 use super::engine::Job;
 use super::eta::RateEma;
 use super::util::{fts, fts_single, left_str, parse_float, pti, ptf, smooth_shown, time_str, Shown};
@@ -274,6 +275,7 @@ pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
 
 /// FormCreate, SetM3Dini, FirstShowUpdate and LoadStartupParas.
 pub fn start(app: &mut Mb3d, ui: &mut Ui) {
+    set_language_badge(ui);
     app.message(ui, "Welcome to Mandelbulb 3D!");
     app.message(ui, "Visit the official web site for news and updates: https://mb3d.overwhale.com");
     app.message(ui, "");
@@ -339,11 +341,11 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         f.ctl[0].height = (h - 38).max(300);
     }
     // FirstShowUpdate
-    ui.cm(F, "RadioGroup2").hint = "Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.".into();
-    ui.cm(F, "Edit19").hint = "If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.".into();
-    ui.cm(F, "Edit20").hint = "Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.".into();
-    ui.cm(F, "UpDown4").hint = "Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening".into();
-    ui.cm(F, "Edit16").hint = "Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.".into();
+    ui.cm(F, "RadioGroup2").hint = tr("Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.");
+    ui.cm(F, "Edit19").hint = tr("If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.");
+    ui.cm(F, "Edit20").hint = tr("Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.");
+    ui.cm(F, "UpDown4").hint = tr("Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening");
+    ui.cm(F, "Edit16").hint = tr("Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.");
     for i in 0..4 {
         load_acc_preset(app, i);
     }
@@ -483,6 +485,16 @@ pub fn show_led(ui: &mut Ui, led: Led, blinking: bool) {
 /// compile.
 pub const COMPILE_NOTE: &str = "First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.";
 
+/// The title bar's language badge: the interface language's code, its
+/// name in the hint; a click opens the language window.
+pub fn set_language_badge(ui: &mut Ui) {
+    let l = crate::vcl::lang::current();
+    let f = ui.fm(F);
+    f.caption_lang = l.code.clone();
+    f.caption_flag = l.flag.as_ref().map(|b| (**b).clone());
+    f.lang_hint = trf("Interface language: {} (click to change)", &[&l.name]);
+}
+
 /// The LED's hint: where the last calculation ran.
 pub fn set_led_hint(ui: &mut Ui, text: &str) {
     let f = ui.fm(F);
@@ -543,14 +555,14 @@ fn set_edit16(app: &Mb3d, ui: &mut Ui) {
     match &app.scene.vol_light {
         None => {
             set(ui, "Edit16", &app.scene.dfog_on_it.to_string());
-            ui.set_caption(F, "ButtonVolLight", "Dyn. fog on It.:");
+            ui.set_caption(F, "ButtonVolLight", &tr("Dyn. fog on It.:"));
             ui.cm(F, "Edit16").width = w35;
             ui.set_visible(F, "UpDown5", false);
             ui.set_visible(F, "Label61", false);
         }
         Some(v) => {
             set(ui, "Edit16", &(v.light + 1).to_string());
-            ui.set_caption(F, "ButtonVolLight", "Volume light nr:");
+            ui.set_caption(F, "ButtonVolLight", &tr("Volume light nr:"));
             let ud = ui.c(F, "UpDown5").left;
             let el = ui.c(F, "Edit16").left;
             ui.cm(F, "Edit16").width = ud - el - 2;
@@ -733,8 +745,8 @@ pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_enabled(F, b, false);
     }
     ui.set_enabled(F, "SpeedButton9", false);
-    ui.set_caption(F, "Button2", "Stop");
-    ui.cm(F, "Button2").hint = "Stop the current calculation.".into();
+    ui.set_caption(F, "Button2", &tr("Stop"));
+    ui.cm(F, "Button2").hint = tr("Stop the current calculation.");
     ui.cm(F, "Image1").cursor = "crHourGlass".into();
     ui.set_position(F, "ProgressBar1", 0);
     // (the frame number makes room for the stage and its time left)
@@ -745,8 +757,8 @@ pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
 
 pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_caption(F, "Label6", "");
-    ui.set_caption(F, "Button2", "Calculate 3D");
-    ui.cm(F, "Button2").hint = "Sart the main rendering of the image.".into();
+    ui.set_caption(F, "Button2", &tr("Calculate 3D"));
+    ui.cm(F, "Button2").hint = tr("Sart the main rendering of the image.");
     for b in CALC_BUTTONS {
         ui.set_enabled(F, b, true);
     }
@@ -906,7 +918,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     }
     ui.set_visible(F, "ProgressBar1", calc3d);
     if calc3d {
-        ui.set_caption(F, "Label6", "main rendering");
+        ui.set_caption(F, "Label6", &tr("main rendering"));
         #[cfg(feature = "gpu")]
         crate::gpu::set_status(String::new());
         app.main.led_running = true;
@@ -936,7 +948,7 @@ fn start_stereo_pair(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     ui.set_visible(F, "ProgressBar1", true);
-    ui.set_caption(F, "Label6", "stereo: rendering left eye");
+    ui.set_caption(F, "Label6", &tr("stereo: rendering left eye"));
     app.main.led_running = true;
     app.main.compile_note = false;
     #[cfg(feature = "gpu")]
@@ -1674,9 +1686,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.main.led = running_led(app).unwrap_or(Led::Cpu);
                 show_led(ui, app.main.led, false);
                 #[cfg(feature = "gpu")]
-                set_led_hint(ui, &format!("Calculated on: {}", crate::gpu::last_status()));
+                set_led_hint(ui, &trf("Calculated on: {}", &[&crate::gpu::last_status()]));
                 #[cfg(not(feature = "gpu"))]
-                set_led_hint(ui, "Calculated on the CPU");
+                set_led_hint(ui, &tr("Calculated on the CPU"));
                 // the stages after the main calculation: "-" when the scene
                 // has none, "incl. in main" when the card ran it with the
                 // march, "with HS" when it ran with the hard shadows
@@ -1795,7 +1807,7 @@ fn clear_screen(app: &mut Mb3d, ui: &mut Ui) {
 /// `ParasChanged`: the hint on the image.
 fn paras_changed(app: &mut Mb3d, ui: &mut Ui) {
     app.main.image_text = true;
-    ui.set_caption(F, "Label6", "Press 'Calculate 3D' to render");
+    ui.set_caption(F, "Label6", &tr("Press 'Calculate 3D' to render"));
 }
 
 pub fn update_scale(app: &mut Mb3d, ui: &mut Ui, scale: i32) {
@@ -1896,11 +1908,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton30Click" => {
             if ui.caption(F, "SpeedButton30") == "click image" {
-                ui.set_caption(F, "SpeedButton30", "get midpoint");
+                ui.set_caption(F, "SpeedButton30", &tr("get midpoint"));
                 app.main.get_pos = 0;
                 set_image_cursor(app, ui);
             } else {
-                ui.set_caption(F, "SpeedButton30", "click image");
+                ui.set_caption(F, "SpeedButton30", &tr("click image"));
                 app.main.get_pos = 22;
                 ui.cm(F, "Image1").cursor = "crCross".into();
             }
@@ -2079,7 +2091,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.main.get_pos = 0;
                 set_image_cursor(app, ui);
             } else {
-                ui.set_caption(F, &e.sender, "Click on image");
+                ui.set_caption(F, &e.sender, &tr("Click on image"));
                 app.main.get_pos = tg;
                 ui.cm(F, "Image1").cursor = "crCross".into();
             }
@@ -2160,6 +2172,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "IniDirsBtnClick" => ui.show("IniDirForm"),
         "MapSequencesBtnClick" => ui.show("MapSequencesFrm"),
         "VisualThemesBtnClick" => ui.show("VisualThemesFrm"),
+        "LanguageBadgeClick" => ui.show("LanguageFrm"),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files
@@ -2341,7 +2354,7 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
             show_led(ui, app.main.led, false);
         }
         if anim {
-            ui.set_caption("AnimationForm", "Button2", "Start rendering animation images");
+            ui.set_caption("AnimationForm", "Button2", &tr("Start rendering animation images"));
         }
         app.message(ui, if anim { "Animation rendering stopped." } else { "Calculation stopped." });
         return;
@@ -2502,10 +2515,10 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                     if ui.has_form("PostProForm") {
                         if gp == 1 {
                             ui.set_text("PostProForm", "Edit1", &fts_single(z));
-                            ui.set_caption("PostProForm", "Button2", "Get Z1");
+                            ui.set_caption("PostProForm", "Button2", &tr("Get Z1"));
                         } else {
                             ui.set_text("PostProForm", "Edit10", &fts_single(z));
-                            ui.set_caption("PostProForm", "Button18", "Get Z2");
+                            ui.set_caption("PostProForm", "Button18", &tr("Get Z2"));
                         }
                     }
                 }
@@ -2525,7 +2538,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                             set(ui, "Edit30", &fts(v[2]));
                             set(ui, "Edit7", &fts(v[3]));
                             ui.set_checked(F, "CheckBox7", true);
-                            ui.set_caption(F, "Button16", "Get values from image");
+                            ui.set_caption(F, "Button16", &tr("Get values from image"));
                         }
                         22 => {
                             let (zs, ze) = (app.scene.mid[2] - app.scene.z_start, app.scene.z_end - app.scene.mid[2]);
@@ -2534,7 +2547,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                             set(ui, "Edit3", &fts(p[2] + ze));
                             set(ui, "Edit9", &fts(p[0]));
                             set(ui, "Edit10", &fts(p[1]));
-                            ui.set_caption(F, "SpeedButton30", "get midpoint");
+                            ui.set_caption(F, "SpeedButton30", &tr("get midpoint"));
                         }
                         _ => {
                             set(ui, "Edit23", &fts(p[0]));
@@ -2543,7 +2556,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                             ui.set_checked(F, "CheckBox4", true);
                             ui.set_checked(F, "CheckBox5", true);
                             ui.set_checked(F, "CheckBox6", true);
-                            ui.set_caption(F, "Button20", "Get values from image");
+                            ui.set_caption(F, "Button20", &tr("Get values from image"));
                         }
                     }
                     page_control1_change(app, ui);
@@ -2553,7 +2566,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                 }
             }
             _ => {
-                ui.set_caption(F, "Button17", "Get min.dist. from image");
+                ui.set_caption(F, "Button17", &tr("Get min.dist. from image"));
             }
         }
         app.main.get_pos = 0;

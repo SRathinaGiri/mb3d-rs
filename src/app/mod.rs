@@ -15,6 +15,7 @@ pub mod forms;
 pub mod formula_form;
 pub mod ini;
 pub mod jit_form;
+pub mod lang_form;
 pub mod light_form;
 pub mod main_form;
 pub mod mc_form;
@@ -39,7 +40,7 @@ pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
     "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "uMapCalcWindow", "VisualThemesGUI",
-    "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI",
+    "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI",
 ];
 
 pub const MAIN: &str = "Mand3DForm";
@@ -176,6 +177,7 @@ impl App for Mb3d {
             "LightAdjustForm" => light_form::event(self, ui, e),
             "PostProForm" => postpro_form::event(self, ui, e),
             "VisualThemesFrm" => small_forms::themes_event(self, ui, e),
+            "LanguageFrm" => lang_form::event(self, ui, e),
             "SwarmFrm" => swarm_form::event(self, ui, e),
             "UnfinishedFrm" => unfinished_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
@@ -284,6 +286,12 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
     // the themes of the `Themes` folder next to the program
     crate::vcl::theme::check()?;
     let style = Style::from_name(ini.get("VisualTheme")).unwrap_or_default();
+    // the interface language (`Language` in the ini): the forms are built in it
+    if let Some(l) = ini.get_extra("Language") {
+        if !crate::vcl::lang::select(l) {
+            eprintln!("no language file for '{l}': English");
+        }
+    }
     let mut ui = Ui::new(style);
     ui.set_ui_scale(scale_pct.clamp(50, 400) as f64 / 100.0);
     for f in FORMS {

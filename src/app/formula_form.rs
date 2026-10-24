@@ -3,6 +3,7 @@
 //! 4Da / Ads / dIFS buttons, the formula options, bailout, iterations and
 //! the hybrid type (alternating, interpolated, DE combined).
 
+use crate::vcl::lang::tr;
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::Mb3d;
 use crate::formulas::Formula;
@@ -417,12 +418,12 @@ fn radio_group1_click(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "Edit25", k > 4);
     ui.set_visible(F, "Label27", k > 4);
     if l18 && k <= 4 {
-        ui.set_caption(F, "Label18", "Ds:");
+        ui.set_caption(F, "Label18", &tr("Ds:"));
         ui.set_text(F, "Edit23", &fts_single(app.formula.decomb_smooth.clamp(0.0, 100.0) as f64));
-        ui.cm(F, "Edit23").hint = "Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.".into();
+        ui.cm(F, "Edit23").hint = tr("Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.");
     } else if l18 {
-        ui.set_caption(F, "Label18", "Co:");
-        ui.cm(F, "Edit23").hint = "Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.".into();
+        ui.set_caption(F, "Label18", &tr("Co:"));
+        ui.cm(F, "Edit23").hint = tr("Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.");
         ui.set_text(F, "Edit23", &app.formula.mix_color.to_string());
         ui.set_text(F, "Edit25", &fts_single(app.formula.mix_pow as f64));
     }
@@ -540,7 +541,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             tab_control1_change(app, ui);
         }
         "FormCreate" => {
-            ui.cm(F, "DECombineCmb").hint = "Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.".into();
+            ui.cm(F, "DECombineCmb").hint = tr("Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.");
         }
         "FormHide" => {
             let f = ui.f(F);
