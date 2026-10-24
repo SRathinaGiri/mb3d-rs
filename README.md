@@ -145,7 +145,7 @@ you check further on your own:
 
   <details><summary>Read more</summary>
 
-  The language badge right of the LED in the title bar of the main window
+  The language badge at the right end of the main window's title bar
   shows the interface language (`EN`); a click opens the language window.
   A language is a text file in the `Languages` folder next to the program.
   Shipped: English, Deutsch, Français, Italiano, Nederlands, Polski,

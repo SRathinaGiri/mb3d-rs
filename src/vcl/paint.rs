@@ -279,6 +279,20 @@ impl Form {
             let lh = line_height(&tf);
             let buttons = caption_buttons(self, th, win_w);
             let mut right = buttons.iter().map(|(_, r)| r.x).min().unwrap_or(win_w);
+            // the language badge at the right end, before the window's
+            // buttons (the version left of it)
+            if self.caption_lang.is_empty() {
+                self.lang_rect.set(Rect::default());
+            } else {
+                let bf = Font { bold: true, height: -9, ..Font::default() };
+                let tw = cv.text_width(&bf, &self.caption_lang);
+                let iw = self.caption_flag.as_ref().map(|f| f.w as i32).unwrap_or(9);
+                let w = tw + iw + 11;
+                let r = Rect::new(right - 8 - w, b + (ch - 16) / 2, w, 16);
+                draw_lang_badge(cv, r, &self.caption_lang, &bf, self.nc_hot == NC_LANG, self.caption_flag.as_ref());
+                self.lang_rect.set(r);
+                right = r.x - 2;
+            }
             if !self.caption_right.is_empty() {
                 let rf = Font { bold: false, ..tf.clone() };
                 let rw = cv.text_width(&rf, &self.caption_right);
@@ -291,22 +305,11 @@ impl Form {
             }
             let old = cv.clip_to(Rect::new(tx, b, right - tx - 4, ch));
             cv.text(tx, b + (ch - lh) / 2, self.caption(), &tf, th.caption_text(active));
-            let mut bx = tx + cv.text_width(&tf, self.caption()) + 10;
+            let bx = tx + cv.text_width(&tf, self.caption()) + 10;
             if let Some(c) = self.caption_led {
                 let r = Rect::new(bx, b + (ch - 9) / 2, 18, 9);
                 draw_led(cv, r, c, self.led_on);
                 self.led_rect.set(r);
-                bx = r.right() + 6;
-            }
-            if self.caption_lang.is_empty() {
-                self.lang_rect.set(Rect::default());
-            } else {
-                let bf = Font { bold: true, height: -9, ..Font::default() };
-                let tw = cv.text_width(&bf, &self.caption_lang);
-                let iw = self.caption_flag.as_ref().map(|f| f.w as i32).unwrap_or(9);
-                let r = Rect::new(bx, b + (ch - 16) / 2, tw + iw + 11, 16);
-                draw_lang_badge(cv, r, &self.caption_lang, &bf, self.nc_hot == NC_LANG, self.caption_flag.as_ref());
-                self.lang_rect.set(r);
             }
             cv.set_clip(old);
             for (k, r) in buttons {
