@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.73](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.73)** (24 Oct 2026, 14:21 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.74](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.74)** (24 Oct 2026, 14:49 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -925,6 +925,14 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.74](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.74) · 24 Oct 2026, 14:49 UTC
+
+| Commit | What it does |
+|---|---|
+| [`2536bca`](https://github.com/thr32423/mb3d-rs/commit/2536bcaeb6316a3249554bacebb2e18fd9438c28) | Version number and release notes of this release |
+| [`4b8aff1`](https://github.com/thr32423/mb3d-rs/commit/4b8aff1f4412b4a96e3eb0bb781aa34ea531e654) | The language badge in the theme's title bar colours, its flag muted there |
+| [`c89147c`](https://github.com/thr32423/mb3d-rs/commit/c89147c25a4247ef4be59ac7d73dc4b9bf026222) | README: Updates for v0.2.73 |
+
 ### [v0.2.73](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.73) · 24 Oct 2026, 14:21 UTC
 
 | Commit | What it does |
@@ -955,15 +963,7 @@ of a release are on its page. Times are in UTC.
 | [`9b62e28`](https://github.com/thr32423/mb3d-rs/commit/9b62e283c8d581e43d4b1db2f5bbf9d3144d532f) | Keep translated file dialog labels |
 | [`70aa2ce`](https://github.com/thr32423/mb3d-rs/commit/70aa2ce3c58aaaf6a36993970481f938b4143724) | Use sortable columns in file dialogs |
 
-### [v0.2.71](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.71) · 24 Oct 2026, 11:07 UTC
-
-| Commit | What it does |
-|---|---|
-| [`68e0b2b`](https://github.com/thr32423/mb3d-rs/commit/68e0b2b7de9a27d5094c95c80f8b91cdc856a292) | Version number and release notes of this release |
-| [`b6f510d`](https://github.com/thr32423/mb3d-rs/commit/b6f510d3488fc66e72273a5b0d7fbe24fb65f988) | Languages: the flag pictures in the repository (they were ignored with *.png), spl-test.lng removed |
-| [`8e19da0`](https://github.com/thr32423/mb3d-rs/commit/8e19da0bcb97882cf5d3de2a99b416eeb8dd5019) | README: Updates for v0.2.70, and the latest release at the top of the page |
-
-All 84 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 85 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
