@@ -4,3 +4,11 @@
 # on the CPU), with it 63 s, and the 80 example files in total 1043 s -> 1030 s.
 [build]
 rustflags = ["-C", "llvm-args=-align-all-functions=6", "-C", "llvm-args=-align-all-nofallthru-blocks=5"]
+
+# Windows: the C runtime linked in, so the program needs no "Visual C++
+# Redistributable" (wgpu's bundled DirectX shader compiler is C++; with the
+# runtime as DLLs an old or missing MSVCP140.dll crashed the program before
+# its first window, issue #18). Target rustflags replace [build]'s, so the
+# alignment flags are repeated here.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "llvm-args=-align-all-functions=6", "-C", "llvm-args=-align-all-nofallthru-blocks=5", "-C", "target-feature=+crt-static"]

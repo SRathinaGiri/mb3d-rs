@@ -96,6 +96,13 @@ jobs:
             done
           else
             cargo build --release --features gpu --target ${{ matrix.target }}
+            # the C runtime is linked in (.cargo/config.toml, issue #18): the
+            # program must not need the Visual C++ redistributable DLLs
+            for exe in Mandelbulb3D mb3d; do
+              if grep -a -i -q -E "MSVCP140\.dll|VCRUNTIME140\.dll" "target/${{ matrix.target }}/release/$exe.exe"; then
+                echo "::error::$exe imports the Visual C++ runtime DLLs"; exit 1
+              fi
+            done
           fi
       - name: Package
         shell: bash
