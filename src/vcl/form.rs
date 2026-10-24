@@ -759,6 +759,24 @@ impl Form {
                 self.layout_children(k);
             }
         }
+        if kind == Kind::ScrollBox {
+            self.clamp_scroll(id);
+        }
+    }
+
+    /// A scroll box whose contents got smaller (a smaller picture, a
+    /// smaller viewing scale) keeps no scroll position past their end, as
+    /// TScrollBox: else they stay shifted out of view, cut off at the top
+    /// left (issue #20).
+    fn clamp_scroll(&mut self, id: Id) {
+        let b = if self.ctl[id].border { 2 } else { 0 };
+        let (vs, hs) = scrollbox_bars(self, id);
+        let (ex, ey) = scrollbox_extent(self, id);
+        let c = &mut self.ctl[id];
+        let cw = c.width - 2 * b - if vs { 17 } else { 0 };
+        let ch = c.height - 2 * b - if hs { 17 } else { 0 };
+        c.scroll_x = c.scroll_x.clamp(0, (ex - cw).max(0));
+        c.scroll_y = c.scroll_y.clamp(0, (ey - ch).max(0));
     }
 
     fn align_controls(&mut self, id: Id, kids: &[Id]) {
@@ -1068,6 +1086,35 @@ pub(crate) fn display_rect(f: &Form, id: Id) -> Rect {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A scroll box scrolled to the end of a big picture shows a smaller
+    /// one from its top left, not shifted out of view (issue #20: a
+    /// 3840 x 2880 picture at 1:1, scrolled, then viewed at 1:7 or
+    /// calculated again at 480 x 360).
+    #[test]
+    fn smaller_contents_reset_the_scroll_position() {
+        let text = "object F: TForm\n  ClientWidth = 300\n  ClientHeight = 200\n  object S: TScrollBox\n    Left = 0\n    Top = 0\n    Width = 300\n    Height = 200\n    object I: TImage\n      Left = 0\n      Top = 0\n      Width = 3840\n      Height = 2880\n    end\n  end\nend\n";
+        let mut f = Form::from_dfm(text, &Theme::new(super::super::theme::Style::default())).unwrap();
+        f.layout();
+        let (s, i) = (f.id("S").unwrap(), f.id("I").unwrap());
+        f.ctl[s].scroll_x = 3000;
+        f.ctl[s].scroll_y = 2500;
+        f.layout();
+        assert_eq!((f.ctl[s].scroll_x, f.ctl[s].scroll_y), (3000, 2500), "a valid position stays");
+        // viewed at 1:7: 549 x 412, still larger than the box
+        f.ctl[i].width = 549;
+        f.ctl[i].height = 412;
+        f.layout();
+        // (the box: a 2 pixel border, the scroll bars 17)
+        let (cw, ch) = (300 - 4 - 17, 200 - 4 - 17);
+        assert_eq!((f.ctl[s].scroll_x, f.ctl[s].scroll_y), (549 - cw, 412 - ch));
+        // a picture that fits: no scrolling at all
+        f.ctl[i].width = 240;
+        f.ctl[i].height = 180;
+        f.layout();
+        assert_eq!((f.ctl[s].scroll_x, f.ctl[s].scroll_y), (0, 0));
+        assert_eq!((f.abs_rect(i).x, f.abs_rect(i).y), (f.abs_rect(s).x + 2, f.abs_rect(s).y + 2), "the picture starts inside the box's border");
+    }
 
     /// The scroll range of a scroll box does not change while scrolling
     /// (it grew with the position, so the thumb shrank and stopped).
