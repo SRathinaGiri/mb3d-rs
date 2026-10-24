@@ -403,13 +403,48 @@ impl Form {
             Kind::ListView => {
                 let (hh, rh, _, _, top) = self.listview_rows(id);
                 let (lx, ly) = self.local(id, x, y);
-                let c = &mut self.ctl[id];
-                if ly > hh + 2 {
+                if ly <= hh + 2 {
+                    // A report-style ListView uses its column headers as
+                    // ordinary clickable controls.  The chosen column is
+                    // exposed through `col` for the OnColumnClick handler.
+                    let r = self.abs_rect(id);
+                    let c = &self.ctl[id];
+                    let widths = c.column_widths(r.w - 4);
+                    let mut x = 0;
+                    let col = widths.iter().position(|w| {
+                        let hit = lx >= x && lx < x + *w;
+                        x += *w;
+                        hit
+                    });
+                    if let Some(col) = col {
+                        self.ctl[id].col = col as i32;
+                        out.push(raw(id, "OnColumnClick", Ev::Click));
+                    }
+                } else {
                     let i = (ly - hh - 2) / rh + top;
-                    if (i as usize) < c.cells.len() && c.item_index != i {
-                        c.item_index = i;
-                        out.push(raw(id, "OnSelectItem", Ev::Select));
-                        out.push(raw(id, "OnChange", Ev::Change));
+                    let c = &mut self.ctl[id];
+                    if (i as usize) < c.cells.len() {
+                        if c.multi_select {
+                            let n = c.cells.len();
+                            c.selected.resize(n, false);
+                            if shift & SS_CTRL != 0 {
+                                c.selected[i as usize] ^= true;
+                            } else if shift & SS_SHIFT != 0 && c.item_index >= 0 {
+                                let (a, b) = (c.item_index.min(i), c.item_index.max(i));
+                                c.selected.fill(false);
+                                for selected in &mut c.selected[a as usize..=b as usize] {
+                                    *selected = true;
+                                }
+                            } else {
+                                c.selected.fill(false);
+                                c.selected[i as usize] = true;
+                            }
+                        }
+                        if c.item_index != i {
+                            c.item_index = i;
+                            out.push(raw(id, "OnSelectItem", Ev::Select));
+                            out.push(raw(id, "OnChange", Ev::Change));
+                        }
                     }
                     if c.checkboxes && lx < 22 && (i as usize) < c.cells.len() {
                         let n = c.cells.len();

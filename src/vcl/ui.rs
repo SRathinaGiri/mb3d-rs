@@ -67,6 +67,8 @@ pub struct Ui {
     /// makes a choice such as "Date modified (newest)" carry over to the
     /// next Open or Save dialog during this session.
     pub(crate) file_sort: usize,
+    /// Whether the remembered file-dialog ordering is descending.
+    pub(crate) file_sort_desc: bool,
     /// the file clicked in a file dialog with a preview column (taken by
     /// the application, which shows its preview there)
     pub file_preview: Option<std::path::PathBuf>,
@@ -100,6 +102,7 @@ impl Ui {
             dialogs: HashMap::new(),
             filter_index: 1,
             file_sort: 0,
+            file_sort_desc: false,
             file_preview: None,
             busy: false,
             ui_scale: 1.0,

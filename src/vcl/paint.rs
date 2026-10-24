@@ -1042,7 +1042,8 @@ impl Form {
         let mut y = inner.y + hh;
         for (ri, row) in c.cells.iter().enumerate().skip(top as usize) {
             let rr = Rect::new(inner.x, y, lw, rh);
-            let sel = c.item_index == ri as i32;
+            let sel = c.item_index == ri as i32
+                || (c.multi_select && c.selected.get(ri).copied().unwrap_or(false));
             let o2 = cv.clip_to(Rect::new(inner.x, inner.y + hh, lw, inner.h - hh));
             if sel {
                 th.selection(cv, rr, focused);
