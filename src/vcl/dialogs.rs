@@ -8,7 +8,9 @@ use super::font::Font;
 use super::form::*;
 use super::input::Raw;
 use super::ui::Ui;
+use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 pub(crate) enum DialogState {
     Message { tag: String },
@@ -26,13 +28,43 @@ pub(crate) struct FileDlg {
     default_ext: String,
     /// choose a folder instead of a file
     folder: bool,
-    /// list entries: (is directory, name)
-    entries: Vec<(bool, String)>,
+    /// List entries, with the metadata needed by the file-sort choices.
+    entries: Vec<FileEntry>,
     /// a preview column: a clicked file goes to `Ui::file_preview`
     preview: bool,
     /// Enter in DirEdit was handled there (Delphi's Key := #0): the default
     /// button's click that follows it is dropped
     eat_ok: bool,
+}
+
+#[derive(Clone)]
+struct FileEntry {
+    is_dir: bool,
+    name: String,
+    modified: Option<SystemTime>,
+    size: u64,
+}
+
+fn name_cmp(a: &FileEntry, b: &FileEntry) -> Ordering {
+    a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase())
+}
+
+fn type_cmp(a: &FileEntry, b: &FileEntry) -> Ordering {
+    let ext = |e: &FileEntry| Path::new(&e.name).extension().map(|s| s.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+    ext(a).cmp(&ext(b)).then_with(|| name_cmp(a, b))
+}
+
+/// Sort a single directory's entries.  Directories themselves are kept
+/// before files, as in the native Windows picker.
+fn entry_cmp(a: &FileEntry, b: &FileEntry, sort: usize) -> Ordering {
+    match sort {
+        // Newest first.  Unreadable timestamps sort after dated files.
+        1 => b.modified.cmp(&a.modified).then_with(|| name_cmp(a, b)),
+        2 => type_cmp(a, b),
+        // Largest first.
+        3 => b.size.cmp(&a.size).then_with(|| name_cmp(a, b)),
+        _ => name_cmp(a, b),
+    }
 }
 
 /// Options of a file dialog (TOpenDialog / TSaveDialog properties).
@@ -300,14 +332,16 @@ impl Ui {
             "  object LookLabel: TLabel\n    Left = 8\n    Top = 12\n    Width = 40\n    Height = 13\n    Caption = 'Look &in:'\n  end\n\
              \x20 object DirEdit: TEdit\n    Left = 62\n    Top = 8\n    Width = 410\n    Height = 21\n    Anchors = [akLeft, akTop, akRight]\n    TabOrder = 0\n  end\n\
              \x20 object UpBtn: TButton\n    Left = 478\n    Top = 7\n    Width = 74\n    Height = 23\n    Anchors = [akTop, akRight]\n    Caption = 'Up one level'\n    TabOrder = 1\n  end\n\
-             \x20 object FileList: TListBox\n    Left = 8\n    Top = 36\n    Width = 544\n    Height = 268\n    Anchors = [akLeft, akTop, akRight, akBottom]\n    ItemHeight = 16\n    TabOrder = 2\n  end\n\
+             \x20 object SortLabel: TLabel\n    Left = 8\n    Top = 42\n    Width = 45\n    Height = 13\n    Caption = 'Sort &by:'\n  end\n\
+             \x20 object SortCombo: TComboBox\n    Left = 62\n    Top = 36\n    Width = 210\n    Height = 21\n    Style = csDropDownList\n    TabOrder = 2\n    OnChange = SortComboChange\n  end\n\
+             \x20 object FileList: TListBox\n    Left = 8\n    Top = 62\n    Width = 544\n    Height = 242\n    Anchors = [akLeft, akTop, akRight, akBottom]\n    ItemHeight = 16\n    TabOrder = 3\n  end\n\
              \x20 object NameLabel: TLabel\n    Left = 8\n    Top = 320\n    Width = 50\n    Height = 13\n    Anchors = [akLeft, akBottom]\n    Caption = 'File &name:'\n  end\n\
-             \x20 object NameEdit: TEdit\n    Left = 96\n    Top = 316\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    TabOrder = 3\n  end\n\
+             \x20 object NameEdit: TEdit\n    Left = 96\n    Top = 316\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    TabOrder = 4\n  end\n\
              \x20 object TypeLabel: TLabel\n    Left = 8\n    Top = 352\n    Width = 70\n    Height = 13\n    Anchors = [akLeft, akBottom]\n    Caption = 'Files of &type:'\n  end\n\
-             \x20 object TypeCombo: TComboBox\n    Left = 96\n    Top = 348\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    Style = csDropDownList\n    TabOrder = 4\n  end\n",
+             \x20 object TypeCombo: TComboBox\n    Left = 96\n    Top = 348\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    Style = csDropDownList\n    TabOrder = 5\n  end\n",
         );
-        d.push_str(&button("OkBtn", if o.folder { "&Select" } else if save { "&Save" } else { "&Open" }, 477, 314, 75, 0, true, false).replace("TabOrder = 0", "TabOrder = 5\n    Anchors = [akRight, akBottom]"));
-        d.push_str(&button("CancelBtn", "Cancel", 477, 346, 75, MR_CANCEL, false, true).replace("TabOrder = 0", "TabOrder = 6\n    Anchors = [akRight, akBottom]"));
+        d.push_str(&button("OkBtn", if o.folder { "&Select" } else if save { "&Save" } else { "&Open" }, 477, 314, 75, 0, true, false).replace("TabOrder = 0", "TabOrder = 6\n    Anchors = [akRight, akBottom]"));
+        d.push_str(&button("CancelBtn", "Cancel", 477, 346, 75, MR_CANCEL, false, true).replace("TabOrder = 0", "TabOrder = 7\n    Anchors = [akRight, akBottom]"));
         if o.preview {
             d.push_str(
                 "  object PreviewImage: TImage\n    Left = 564\n    Top = 36\n    Width = 240\n    Height = 180\n    Anchors = [akTop, akRight]\n    Center = True\n  end\n\
@@ -345,6 +379,9 @@ impl Ui {
             c.set_item_index(fi as i32);
             f.c_mut("NameEdit").set_text(&name);
             f.c_mut("FileList").multi_select = o.multi && !save;
+            let sort = f.c_mut("SortCombo");
+            sort.items = vec!["Name".into(), "Date modified (newest)".into(), "Type".into(), "Size (largest)".into()];
+            sort.set_item_index(self.file_sort.min(sort.items.len().saturating_sub(1)) as i32);
         }
         self.dialogs.insert(i, DialogState::File(dlg));
         self.file_refresh(i);
@@ -358,6 +395,7 @@ impl Ui {
 
     fn file_refresh(&mut self, i: usize) {
         let sel = self.forms[i].c("TypeCombo").item_index.max(0) as usize;
+        let sort = self.forms[i].c("SortCombo").item_index.max(0) as usize;
         let Some(DialogState::File(d)) = self.dialogs.get_mut(&i) else { return };
         let pats = d.filters.get(sel).map(|f| f.1.clone()).unwrap_or_else(|| vec!["*.*".into()]);
         let mut dirs = Vec::new();
@@ -369,18 +407,24 @@ impl Ui {
                     continue;
                 }
                 let is_dir = e.path().is_dir();
+                let metadata = e.metadata().ok();
+                let entry = FileEntry {
+                    is_dir,
+                    name: n,
+                    modified: metadata.as_ref().and_then(|m| m.modified().ok()),
+                    size: metadata.as_ref().map(|m| m.len()).unwrap_or(0),
+                };
                 if is_dir {
-                    dirs.push(n);
-                } else if !d.folder && matches(&pats, &n) {
-                    files.push(n);
+                    dirs.push(entry);
+                } else if !d.folder && matches(&pats, &entry.name) {
+                    files.push(entry);
                 }
             }
         }
-        let key = |s: &String| s.to_lowercase();
-        dirs.sort_by_key(key);
-        files.sort_by_key(key);
-        d.entries = dirs.into_iter().map(|n| (true, n)).chain(files.into_iter().map(|n| (false, n))).collect();
-        let items: Vec<String> = d.entries.iter().map(|(dir, n)| if *dir { format!("[{n}]") } else { n.clone() }).collect();
+        dirs.sort_by(|a, b| entry_cmp(a, b, sort));
+        files.sort_by(|a, b| entry_cmp(a, b, sort));
+        d.entries = dirs.into_iter().chain(files).collect();
+        let items: Vec<String> = d.entries.iter().map(|e| if e.is_dir { format!("[{}]", e.name) } else { e.name.clone() }).collect();
         let dir_s = d.dir.display().to_string();
         let f = &mut self.forms[i];
         f.c_mut("DirEdit").set_text(&dir_s);
@@ -426,8 +470,8 @@ impl Ui {
                 .selected
                 .iter()
                 .enumerate()
-                .filter(|(k, s)| **s && !d.entries.get(*k).map(|e| e.0).unwrap_or(true))
-                .map(|(k, _)| d.dir.join(&d.entries[k].1))
+                .filter(|(k, s)| **s && !d.entries.get(*k).map(|e| e.is_dir).unwrap_or(true))
+                .map(|(k, _)| d.dir.join(&d.entries[k].name))
                 .collect();
             if picked.len() > 1 {
                 let tag = d.tag.clone();
@@ -513,6 +557,10 @@ impl Ui {
                     self.file_type_change(i);
                     self.file_refresh(i);
                 }
+                ("SortCombo", "OnChange") => {
+                    self.file_sort = self.forms[i].c("SortCombo").item_index.max(0) as usize;
+                    self.file_refresh(i);
+                }
                 ("DirEdit", "OnKeyPress") if r.ev == Ev::KeyPress('\r') => {
                     let t = PathBuf::from(self.forms[i].c("DirEdit").text.trim());
                     if let Some(DialogState::File(d)) = self.dialogs.get_mut(&i) {
@@ -530,7 +578,11 @@ impl Ui {
                         return;
                     }
                     if let Some(DialogState::File(d)) = self.dialogs.get(&i) {
-                        if let Some((false, n)) = d.entries.get(k as usize).cloned() {
+                        if let Some(entry) = d.entries.get(k as usize) {
+                            if entry.is_dir {
+                                return;
+                            }
+                            let n = entry.name.clone();
                             if d.preview {
                                 self.file_preview = Some(d.dir.join(&n));
                             }
@@ -545,15 +597,15 @@ impl Ui {
                         _ => None,
                     };
                     match entry {
-                        Some((true, n)) => {
+                        Some(entry) if entry.is_dir => {
                             if let Some(DialogState::File(d)) = self.dialogs.get_mut(&i) {
-                                d.dir = d.dir.join(n);
+                                d.dir = d.dir.join(entry.name);
                             }
                             self.forms[i].c_mut("NameEdit").set_text("");
                             self.file_refresh(i);
                         }
-                        Some((false, n)) => {
-                            self.forms[i].c_mut("NameEdit").set_text(&n);
+                        Some(entry) => {
+                            self.forms[i].c_mut("NameEdit").set_text(&entry.name);
                             self.file_accept(i);
                         }
                         None => {}
