@@ -181,7 +181,8 @@ pub struct Form {
     pub led_hint: String,
     pub led_rect: std::cell::Cell<super::canvas::Rect>,
     pub led_hint_shown: bool,
-    /// the language badge in the title bar right of the LED: the language's
+    /// the language badge at the right end of the title bar (left of the
+    /// window buttons, the version left of it): the language's
     /// code (`EN`; empty: none), its hint and where it was painted; a
     /// click posts the form a `LanguageBadgeClick` event
     pub caption_lang: String,
@@ -1028,12 +1029,55 @@ fn tab_labels(f: &Form, id: Id) -> Vec<(usize, String)> {
     }
 }
 
+/// The rows a multi-line tab strip needs for `labels` in `font` (as
+/// [`tab_rects`] places them).
+fn tab_rows(f: &Form, id: Id, labels: &[String], font: &Font) -> i32 {
+    let c = &f.ctl[id];
+    let buttons = c.style == "tsButtons" || c.style == "tsFlatButtons";
+    let (pad, gap, x0) = if buttons { (14, 3, 0) } else { (12, 0, 2) };
+    let maxw = c.width - 4;
+    let (mut x, mut rows) = (x0, 1);
+    for t in labels {
+        let w = f.measure(font, t) + pad;
+        if x > 2 && x + w > maxw {
+            x = x0;
+            rows += 1;
+        }
+        x += w + gap;
+    }
+    rows
+}
+
+/// The English texts of a tab strip's labels (the form file's, before
+/// the interface language), for the rows the layout was made for.
+fn tab_labels_english(f: &Form, id: Id) -> Vec<String> {
+    let c = &f.ctl[id];
+    let form = &f.name;
+    let original = |key: String, now: &str| super::lang::original(&key).map(|t| super::canvas::strip_amp(&t)).unwrap_or_else(|| now.to_string());
+    tab_labels(f, id)
+        .into_iter()
+        .map(|(k, now)| if c.kind == Kind::PageControl { original(format!("{form}.{}.Caption", f.ctl[k].name), &now) } else { original(format!("{form}.{}.Tabs.{}", c.name, k + 1), &now) })
+        .collect()
+}
+
 /// The tabs' font: the control's, smaller (down to 8 pixels) where the
-/// tabs would not all fit in its width (translated captions).
+/// translated captions would not fit: in one row the control's width, in a
+/// multi-line strip the rows the English captions take (more rows would
+/// push the pages' contents down, out of the page).
 pub(crate) fn tab_font(f: &Form, id: Id) -> Font {
     let c = &f.ctl[id];
     let mut font = f.font(id);
-    if c.tab_width > 0 || c.multi_line {
+    if c.tab_width > 0 {
+        return font;
+    }
+    if c.multi_line {
+        let labels: Vec<String> = tab_labels(f, id).into_iter().map(|(_, t)| t).collect();
+        let rows = tab_rows(f, id, &tab_labels_english(f, id), &font);
+        let mut h = font.em().round() as i32 - 1;
+        while tab_rows(f, id, &labels, &font) > rows && h >= 8 {
+            font.height = -h;
+            h -= 1;
+        }
         return font;
     }
     let buttons = c.style == "tsButtons" || c.style == "tsFlatButtons";
