@@ -1009,8 +1009,14 @@ Mandelbulb3D, which this program is a port of, was made by these people:
 | **NASA, GIMP** | Source material for the maps |
 
 * **Contributors to this program**: Rathinagiri S
-  ([SRathinaGiri](https://github.com/SRathinaGiri)), the stereo pair
-  preview ([#12](https://github.com/thr32423/mb3d-rs/pull/12)).
+  ([SRathinaGiri](https://github.com/SRathinaGiri)): the stereo pair
+  preview ([#12](https://github.com/thr32423/mb3d-rs/pull/12)), saving stereo pairs, the
+  Navigator's axes and the grouped taskbar
+  ([#13](https://github.com/thr32423/mb3d-rs/pull/13)), the stereo controls
+  ([#14](https://github.com/thr32423/mb3d-rs/pull/14)), sorting in the file dialogs
+  ([#17](https://github.com/thr32423/mb3d-rs/pull/17)) and their sortable columns
+  ([#19](https://github.com/thr32423/mb3d-rs/pull/19)), and the program icon in the Windows
+  executable.
 * **Bug reports and suggestions**:
   [kronpano](https://github.com/kronpano)
   ([#1](https://github.com/thr32423/mb3d-rs/issues/1),
@@ -1019,7 +1025,8 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   [#4](https://github.com/thr32423/mb3d-rs/issues/4),
   [#8](https://github.com/thr32423/mb3d-rs/issues/8)),
   [lukastrips](https://github.com/lukastrips)
-  ([#6](https://github.com/thr32423/mb3d-rs/issues/6)),
+  ([#6](https://github.com/thr32423/mb3d-rs/issues/6),
+  [#20](https://github.com/thr32423/mb3d-rs/issues/20)),
   [Rodrigo-Spacecraft](https://github.com/Rodrigo-Spacecraft)
   ([#9](https://github.com/thr32423/mb3d-rs/issues/9)), Michael Pettovello,
   Geoffrey N. Barnes.
