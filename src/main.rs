@@ -611,8 +611,10 @@ fn render_single(
     let t0 = Instant::now();
     let ck = mb3d::render::open_checkpoint(scene, &ck_name(output), resume_policy());
     resumed_note(ck.as_ref(), "rows", quiet);
+    mb3d::render::stage_mark("march");
     let (params, gbuffer) = mb3d::render::calculate_with(scene, progress, &mb3d::render::no_stage, &|| false, 2, None, ck.as_ref())?;
     let t1 = Instant::now();
+    mb3d::render::stage_mark("paint");
     if auto_color {
         mb3d::render::auto_color_range(scene, &gbuffer);
         if !quiet {
@@ -624,6 +626,7 @@ fn render_single(
     }
     // 16 bit: the colours before the rounding to 8 bit
     let (rgb, rgb16) = if bits16 { (Vec::new(), Some(mb3d::render::paint16(scene, &params, &gbuffer))) } else { (mb3d::render::paint(scene, &params, &gbuffer), None) };
+    mb3d::render::stage_times_print();
     let res = mb3d::RenderResult {
         width: scene.width as usize,
         height: scene.height as usize,

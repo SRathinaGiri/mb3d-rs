@@ -339,7 +339,60 @@ pub fn calculate_with(
 }
 
 /// A stage callback that ignores the stages.
-pub fn no_stage(_: &str) {}
+pub fn no_stage(name: &str) {
+    stage_mark(name);
+}
+
+/// `MB3D_STAGE_TIMES=1`: the time of every stage of a render is measured
+/// (the stage names that the calculation reports, [`no_stage`]) and
+/// printed when it ends ([`stage_times_print`]); for finding where a
+/// scene's time goes. Off: nothing is measured.
+fn stage_times_on() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("MB3D_STAGE_TIMES").is_some_and(|v| v != "0"))
+}
+
+type StageLog = (Instant, String, Vec<(String, f64)>);
+static STAGE_LOG: std::sync::Mutex<Option<StageLog>> = std::sync::Mutex::new(None);
+
+/// A stage begins (the one before ends): see [`stage_times_on`].
+pub fn stage_mark(name: &str) {
+    if !stage_times_on() {
+        return;
+    }
+    let mut g = STAGE_LOG.lock().unwrap();
+    let now = Instant::now();
+    match g.as_mut() {
+        Some((t, n, v)) => {
+            if n != name {
+                v.push((std::mem::take(n), now.duration_since(*t).as_secs_f64()));
+                *t = now;
+                *n = name.to_string();
+            }
+        }
+        None => *g = Some((now, name.to_string(), Vec::new())),
+    }
+}
+
+/// Ends the measured render and prints its stages on stderr, one line:
+/// `stage times: march 1.23 | hard shadows (graphics card) 4.56 | ...`
+/// (seconds; a stage reported twice is summed).
+pub fn stage_times_print() {
+    if !stage_times_on() {
+        return;
+    }
+    stage_mark("");
+    let Some((_, _, v)) = STAGE_LOG.lock().unwrap().take() else { return };
+    let mut sums: Vec<(String, f64)> = Vec::new();
+    for (n, t) in v {
+        match sums.iter_mut().find(|(m, _)| *m == n) {
+            Some(e) => e.1 += t,
+            None => sums.push((n, t)),
+        }
+    }
+    let parts: Vec<String> = sums.iter().filter(|(n, _)| !n.is_empty()).map(|(n, t)| format!("{n} {t:.3}")).collect();
+    eprintln!("stage times: {}", parts.join(" | "));
+}
 
 /// The name of the post passes `shadows` / `occlusion`, run `where_`
 /// ("" for the CPU).
