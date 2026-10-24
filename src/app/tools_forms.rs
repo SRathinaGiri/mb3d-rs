@@ -111,20 +111,11 @@ pub fn batch_idle(app: &mut Mb3d, ui: &mut Ui) {
     if app.batch.status <= 0 {
         return;
     }
-    let left = picture_left(&ui.caption(MAIN, "Label6")).map(|l| format!(" · {l}")).unwrap_or_default();
+    let left = app.main.left_shown.filter(|_| app.main.calculating).map(|l| format!(" · {}", super::util::left_str(l))).unwrap_or_default();
     let text = trf("Batch processing: picture {} of {}", &[&app.batch.nr, &app.batch.total]) + &left;
     if ui.fm(BF).caption() != text {
         ui.fm(BF).set_caption(&text);
     }
-}
-
-/// The time left in the main window's stage line ("main rendering · about
-/// 7 min left in total", "hard shadows: 40 % · 20 s left"): "about 7 min
-/// left" (None while it says none).
-fn picture_left(caption: &str) -> Option<&str> {
-    let (_, l) = caption.rsplit_once(" · ")?;
-    let l = l.strip_suffix(" in total").unwrap_or(l);
-    l.ends_with(" left").then_some(l)
 }
 
 /// A batch image is calculated: store the .m3i (and a PNG preview).
@@ -1080,10 +1071,5 @@ mod tests {
         assert_eq!(tile_caption(1, 2, None, true), "tile X=1 Y=2");
         assert_eq!(tile_caption(1, 2, Some(1500.0), true), "tile X=1 Y=2 · about 25 min left in total");
         assert_eq!(tile_caption(3, 3, Some(120.0), false), "tile X=3 Y=3 · 2 min left");
-        // the picture's time left from the main window's stage line
-        assert_eq!(picture_left("main rendering · about 7 min left in total"), Some("about 7 min left"));
-        assert_eq!(picture_left("hard shadows: 40 % · 20 s left"), Some("20 s left"));
-        assert_eq!(picture_left("main rendering · shaders compiling"), None);
-        assert_eq!(picture_left("main rendering"), None);
     }
 }

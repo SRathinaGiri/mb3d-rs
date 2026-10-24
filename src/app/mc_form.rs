@@ -813,7 +813,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         super::main_form::set_led_hint(ui, &trf("Monte Carlo calculated on: {}", &[&crate::mc::last_status()]));
         if !app.mc.compile_note && crate::mc::last_status().contains("still compiling") {
             app.mc.compile_note = true;
-            app.message(ui, super::main_form::COMPILE_NOTE);
+            app.message(ui, &super::main_form::compile_note());
         }
         repaint(app, ui);
         let max_rays = show_stats(app, ui);

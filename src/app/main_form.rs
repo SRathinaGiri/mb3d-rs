@@ -81,6 +81,9 @@ pub struct State {
     /// the caption of a calculation stopped with the Stop button (its stage,
     /// progress and time left), kept with the bar until it is replaced
     stopped_status: Option<String>,
+    /// the time left the status line shows (seconds; the batch window
+    /// puts it into its title)
+    pub left_shown: Option<f64>,
     /// the card's shaders compiled during the main rendering, and it ended
     /// before its pace without compiling was known (the CPU did it alone:
     /// the model's `CPU_ALONE` ratios then)
@@ -198,6 +201,7 @@ impl Default for State {
             bar_target: 0.0,
             bar_at: Instant::now(),
             stopped_status: None,
+            left_shown: None,
             main_cold: false,
             main_unmeasured: false,
             main_secs: 0.0,
@@ -757,6 +761,7 @@ pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     // (the frame number makes room for the stage and its time left)
     ui.set_visible(F, "Panel7", false);
     app.main.stopped_status = None;
+    app.main.left_shown = None;
     app.main.calculating = true;
 }
 
@@ -1203,9 +1208,34 @@ fn curve_total(c: &[(f64, f64)], f: f64, secs: f64) -> Option<f64> {
     (then > 1.0).then(|| c[c.len() - 1].1 * (secs / then).clamp(0.33, 3.0))
 }
 
-/// A stage's name as the bar's caption shows it: without where it runs.
+/// A stage's name as the bar's caption shows it: without where it runs,
+/// in the interface language (the engine's names stay English: the code
+/// tells the stages apart by them).
 fn short_stage(stage: &str) -> String {
-    stage.split(" (").next().unwrap_or(stage).replace("hard shadows and ambient occlusion", "shadows and AO")
+    let name = stage.split(" (").next().unwrap_or(stage);
+    match name {
+        "main rendering" => tr("main rendering"),
+        "hard shadows and ambient occlusion" => tr("shadows and AO"),
+        "hard shadows" => tr("hard shadows"),
+        "ambient occlusion" => tr("ambient occlusion"),
+        "ambient" => tr("ambient"),
+        "post calculations" => tr("post calculations"),
+        "post processing" => tr("post processing"),
+        "reflections" => tr("reflections"),
+        "reflections of the selection" => tr("reflections of the selection"),
+        "depth of field" => tr("depth of field"),
+        "painting a preview" => tr("painting a preview"),
+        "rough image" => tr("rough image"),
+        "recalculating the selection" => tr("recalculating the selection"),
+        "stereo: rendering left eye" => tr("stereo: rendering left eye"),
+        "stereo: rendering right eye" => tr("stereo: rendering right eye"),
+        "stereo: composing preview" => tr("stereo: composing preview"),
+        "swarm: creating the job" => tr("swarm: creating the job"),
+        _ => match name.strip_prefix("swarm: ") {
+            Some(rest) => trf("swarm: {}", &[&rest]),
+            None => name.to_string(),
+        },
+    }
 }
 
 /// "hard shadows: 40 % · about 6 min left": the stage, its progress and
@@ -1599,6 +1629,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 _ => stage_caption(&stage, f as f64, left, total),
             };
             ui.set_caption(F, "Label6", &caption);
+            app.main.left_shown = total.or(left);
             // the bar: the whole calculation's progress, not the stage's.
             // It does not go back when an estimate grows, and it glides to
             // an estimate that leapt ahead (70 % of the gap a second) instead
