@@ -289,7 +289,7 @@ impl Form {
                 let iw = self.caption_flag.as_ref().map(|f| f.w as i32).unwrap_or(9);
                 let w = tw + iw + 11;
                 let r = Rect::new(right - 8 - w, b + (ch - 16) / 2, w, 16);
-                draw_lang_badge(cv, r, &self.caption_lang, &bf, self.nc_hot == NC_LANG, self.caption_flag.as_ref());
+                draw_lang_badge(cv, th, active, r, &self.caption_lang, &bf, self.nc_hot == NC_LANG, self.caption_flag.as_ref());
                 self.lang_rect.set(r);
                 right = r.x - 2;
             }
@@ -1288,28 +1288,48 @@ fn draw_led(cv: &mut Canvas, r: Rect, c: u32, on: bool) {
 }
 
 /// The title bar's language badge: the language's flag (or a small globe)
-/// and its code in a sunken frame like the LED's; `hot` while the mouse is
-/// on it.
-fn draw_lang_badge(cv: &mut Canvas, r: Rect, code: &str, f: &Font, hot: bool, flag: Option<&super::bitmap::Bitmap>) {
-    cv.fill(r, 0xFF20_2020);
+/// and its code, in the theme's title bar colours (a shade darker or
+/// lighter, with a thin frame; more so while the mouse is on it). The
+/// flag is muted toward the title bar, so it does not stand out; the
+/// language window shows it as it is.
+#[allow(clippy::too_many_arguments)]
+fn draw_lang_badge(cv: &mut Canvas, th: &Theme, active: bool, r: Rect, code: &str, f: &Font, hot: bool, flag: Option<&super::bitmap::Bitmap>) {
+    let bg = th.caption_bg(active);
+    let text = th.caption_text(active);
+    cv.fill(r, super::canvas::mix(bg, text, if hot { 0.16 } else { 0.07 }));
+    cv.frame(r, super::canvas::mix(bg, text, if hot { 0.45 } else { 0.25 }));
     let inner = r.inset(1);
-    let bg = if hot { 0xFF4A_5262 } else { 0xFF36_3C46 };
-    cv.fill(inner, bg);
     let right = match flag {
         Some(b) => {
-            cv.image(inner.x + 2, inner.y + (inner.h - b.h as i32) / 2, b);
+            let muted = muted_flag(b, bg);
+            cv.image(inner.x + 2, inner.y + (inner.h - muted.h as i32) / 2, &muted);
             inner.x + 2 + b.w as i32
         }
         None => {
             // the globe: a circle with its equator and a meridian
             let g = Rect::new(inner.x + 2, inner.y + (inner.h - 9) / 2, 9, 9);
-            let line = if hot { 0xFFDC_E4F0 } else { 0xFFB8_C0CC };
-            cv.ellipse(g, Some(bg), Some(line));
+            let line = super::canvas::mix(text, bg, 0.25);
+            cv.ellipse(g, None, Some(line));
             cv.hline(g.x + 2, g.right() - 2, g.y + g.h / 2, line);
             cv.vline(g.x + g.w / 2, g.y + 2, g.bottom() - 2, line);
             g.right()
         }
     };
     let lh = line_height(f);
-    cv.text(right + 3, r.y + (r.h - lh) / 2, code, f, 0xFFF0_F0F0);
+    cv.text(right + 3, r.y + (r.h - lh) / 2, code, f, text);
+}
+
+/// A flag a little faded toward the title bar's colour `bg`: less
+/// saturated (40 % toward its grey) and 25 % toward `bg`.
+fn muted_flag(b: &super::bitmap::Bitmap, bg: u32) -> super::bitmap::Bitmap {
+    let mut m = b.clone();
+    for p in &mut m.px {
+        let (r, g, bl) = ((*p >> 16 & 255) as f32, (*p >> 8 & 255) as f32, (*p & 255) as f32);
+        let grey = 0.299 * r + 0.587 * g + 0.114 * bl;
+        let de = |c: f32| c + (grey - c) * 0.4;
+        let toward = |c: f32, t: u32| (c + (t as f32 - c) * 0.25).round().clamp(0.0, 255.0) as u32;
+        let (r, g, bl) = (toward(de(r), bg >> 16 & 255), toward(de(g), bg >> 8 & 255), toward(de(bl), bg & 255));
+        *p = (*p & 0xFF00_0000) | r << 16 | g << 8 | bl;
+    }
+    m
 }

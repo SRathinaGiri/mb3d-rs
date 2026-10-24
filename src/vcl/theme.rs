@@ -958,6 +958,17 @@ impl Theme {
             }
         }
     }
+    /// The title bar's colour behind small things drawn on it (a gloss
+    /// theme's gradient: its middle).
+    pub fn caption_bg(&self, active: bool) -> u32 {
+        match (self.d.family, active) {
+            (Family::Gloss, true) => self.v("caption.active.mid"),
+            (Family::Gloss, false) => self.v("caption.inactive.mid"),
+            (Family::Flat, true) => self.v("caption.active"),
+            (Family::Flat, false) => self.v("caption.inactive"),
+        }
+    }
+
     pub fn caption_text(&self, active: bool) -> u32 {
         match self.d.family {
             Family::Gloss => {
