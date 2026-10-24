@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.71](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.71)** (24 Oct 2026, 11:07 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.72](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.72)** (24 Oct 2026, 12:52 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -925,6 +925,18 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.72](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.72) · 24 Oct 2026, 12:52 UTC
+
+| Commit | What it does |
+|---|---|
+| [`5235f79`](https://github.com/thr32423/mb3d-rs/commit/5235f798e2c94c3f4572b5575e15ef08ebf02000) | Version number and release notes of this release |
+| [`cff2dd9`](https://github.com/thr32423/mb3d-rs/commit/cff2dd966c8414a92709507cfc623005b84bc301) | A smaller picture is no longer shown shifted out of view after scrolling a big one (#20) |
+| [`4d5a194`](https://github.com/thr32423/mb3d-rs/commit/4d5a19492c448972c74432032aee43c15ed3f752) | File dialog table: a double click on a column header no longer opens the selected file; arrow keys fill the name; texts translated |
+| [`668c6c2`](https://github.com/thr32423/mb3d-rs/commit/668c6c21cc5318d7a1d6e0efafa4abde79f6ebe8) | Embed icon in Windows executable |
+| [`d00cf66`](https://github.com/thr32423/mb3d-rs/commit/d00cf662a327447ef03e6bc66b3db9c42f7ecf38) | README: Updates for v0.2.71 |
+| [`9b62e28`](https://github.com/thr32423/mb3d-rs/commit/9b62e283c8d581e43d4b1db2f5bbf9d3144d532f) | Keep translated file dialog labels |
+| [`70aa2ce`](https://github.com/thr32423/mb3d-rs/commit/70aa2ce3c58aaaf6a36993970481f938b4143724) | Use sortable columns in file dialogs |
+
 ### [v0.2.71](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.71) · 24 Oct 2026, 11:07 UTC
 
 | Commit | What it does |
@@ -944,16 +956,7 @@ of a release are on its page. Times are in UTC.
 | [`57f96a7`](https://github.com/thr32423/mb3d-rs/commit/57f96a7151ab9a72141497a304b0706dc31a3dd7) | A continued calculation's bar goes on where the stopped one's was |
 | [`134f1c6`](https://github.com/thr32423/mb3d-rs/commit/134f1c6c2aeb28f82b9f5865e920f6a430f26e34) | README: Updates for v0.2.69 |
 
-### [v0.2.69](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.69) · 23 Oct 2026, 14:10 UTC
-
-| Commit | What it does |
-|---|---|
-| [`91a47b9`](https://github.com/thr32423/mb3d-rs/commit/91a47b9fabdaf59d618a4ed18168b117f76a917d) | Version number and release notes of this release |
-| [`503ec76`](https://github.com/thr32423/mb3d-rs/commit/503ec76e16762bf37aef178d02eb6723f63926cf) | Stop ends the card's reflection batch at its next submission, not after the band's rays |
-| [`56830e7`](https://github.com/thr32423/mb3d-rs/commit/56830e74e2184c47fc88a173d01080294d753e10) | Time left: one average pace, a bar that glides, and a stopped calculation keeps its status |
-| [`837abce`](https://github.com/thr32423/mb3d-rs/commit/837abce95ccc30fd3a20531aed7a643eb13a9579) | README: Updates for v0.2.68 |
-
-All 82 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 83 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
