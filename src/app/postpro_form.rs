@@ -4,7 +4,7 @@
 //! "Calculate now" applies a processing to the kept image; the
 //! "automatically" boxes put it into the parameters of the next calculation.
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::util::{d2byte, d2byte_str, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
 use crate::dof::DofParams;
@@ -25,7 +25,7 @@ pub struct State {
     pub refl_now: bool,
     /// the processing running from this window (its name for the status
     /// line) and its start
-    pub running: Option<(&'static str, std::time::Instant)>,
+    pub running: Option<(String, std::time::Instant)>,
 }
 
 const PANELS: [(&str, &str, &str); 7] = [
@@ -236,13 +236,13 @@ fn toggle(ui: &mut Ui, btn: &str, pnl: &str) {
 
 /// The image is repainted with the post processing of the parameters;
 /// `stage` is shown in the main window while it runs.
-pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
+pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
     if app.main.calculating {
-        app.message(ui, "Wait for the running calculation, or stop it first.");
+        app.message(ui, &tr("Wait for the running calculation, or stop it first."));
         return;
     }
     if app.eng.base().is_none() {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("Calculate the image first."));
         return;
     }
     app.make_scene(ui);
@@ -254,7 +254,7 @@ pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
 /// in pixels of the image; None (and the message) without one.
 fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
     if !ui.visible(MAIN, "Shape1") {
-        ui.show_message("Please make a selection in the image first.");
+        ui.show_message(&tr("Please make a selection in the image first."));
         return None;
     }
     let sh = ui.c(MAIN, "Shape1").rect();
@@ -262,7 +262,7 @@ fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
     let s = app.main.image_scale;
     let rect = [(sh.x - img.x) * s, (sh.y - img.y) * s, sh.w * s, sh.h * s];
     if rect[2] <= 2 || rect[3] <= 2 {
-        ui.show_message("The selection must be bigger than 2 pixels in width and height.");
+        ui.show_message(&tr("The selection must be bigger than 2 pixels in width and height."));
         return None;
     }
     Some(rect)
@@ -271,22 +271,22 @@ fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
 /// A processing of this window starts (MB3D's `DisableButtons` and
 /// `Label6`): "Calculate 3D" turns into "Stop", the LED blinks and the stage
 /// is shown until it is done.
-fn started(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
+fn started(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
     super::main_form::disable_buttons(app, ui);
     app.main.calc3d = false;
     app.main.led_running = true;
     super::main_form::show_led(ui, app.main.led, true);
     ui.set_caption(MAIN, "Label6", stage);
-    app.post.running = Some((stage, std::time::Instant::now()));
+    app.post.running = Some((stage.to_string(), std::time::Instant::now()));
 }
 
 /// The processing finished (not stopped): a line in the status.
 pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
     if let Some((stage, t)) = app.post.running.take() {
         let tenths = (t.elapsed().as_secs_f64() * 10.0).round().max(1.0) as i64;
-        let mut s = stage.to_string();
-        s[..1].make_ascii_uppercase();
-        app.message(ui, &format!("{s} done ({}).", super::util::time_str(tenths)));
+        let mut c = stage.chars();
+        let s: String = c.next().map(|f| f.to_uppercase().chain(c).collect()).unwrap_or_default();
+        app.message(ui, &trf("{} done ({}).", &[&s, &super::util::time_str(tenths)]));
     }
 }
 
@@ -319,15 +319,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "UpDown1ChangingEx" => radio_group3_click(ui),
         "Button14Click" => {
             app.post.normals_now = true;
-            repaint(app, ui, "Normals on ZBuf");
+            repaint(app, ui, &tr("Normals on ZBuf"));
         }
         "Button3Click" => {
             if shadow_params(ui).lights == 0 {
-                ui.show_message("Please select the lights first.  No HS for lightmaps.");
+                ui.show_message(&tr("Please select the lights first.  No HS for lightmaps."));
                 return;
             }
             app.post.hs_now = true;
-            repaint(app, ui, "hard shadow calculation");
+            repaint(app, ui, &tr("hard shadow calculation"));
         }
         "Button4Click" => {
             // reset the hard shadow of a light
@@ -336,45 +336,45 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if shadow_params(ui).lights == 0 {
                 app.post.hs_now = false;
             }
-            repaint(app, ui, "hard shadow calculation");
+            repaint(app, ui, &tr("hard shadow calculation"));
         }
         "Button10Click" => {
             app.post.ao_now = true;
-            repaint(app, ui, "ambient shadow calculation");
+            repaint(app, ui, &tr("ambient shadow calculation"));
         }
         "Button11Click" => {
             if ui.checked(F, "CheckBox25") {
                 // "Calculate only a selection in the image": the reflections
                 // of the selection only (MB3D's CalcSRT with the selection)
                 if app.main.calculating {
-                    app.message(ui, "Wait for the running calculation, or stop it first.");
+                    app.message(ui, &tr("Wait for the running calculation, or stop it first."));
                     return;
                 }
                 if app.eng.base().is_none() {
-                    app.message(ui, "Calculate the image first.");
+                    app.message(ui, &tr("Calculate the image first."));
                     return;
                 }
                 let Some(rect) = selection_rect(app, ui) else { return };
                 app.make_scene(ui);
-                started(app, ui, "reflections of the selection");
+                started(app, ui, &tr("reflections of the selection"));
                 app.eng.start(super::engine::Job::ReflectSel { scene: app.scene.clone(), rect });
                 return;
             }
             app.post.refl_now = true;
-            repaint(app, ui, "Reflections");
+            repaint(app, ui, &tr("Reflections"));
         }
         "Button1Click" => {
             if app.scene.tiling.is_some() {
-                ui.show_message("No DoF on tiles.");
+                ui.show_message(&tr("No DoF on tiles."));
                 return;
             }
             app.post.dof_now = true;
-            repaint(app, ui, "DoF calculation");
+            repaint(app, ui, &tr("DoF calculation"));
         }
         "Button2Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
-            if ui.caption(F, &e.sender) == "Click on image" {
-                ui.set_caption(F, &e.sender, if tg == 1 { "Get Z1" } else { "Get Z2" });
+            if ui.caption(F, &e.sender) == tr("Click on image") {
+                ui.set_caption(F, &e.sender, &if tg == 1 { tr("Get Z1") } else { tr("Get Z2") });
                 app.main.get_pos = 0;
                 ui.cm(MAIN, "Image1").cursor = "crDefault".into();
             } else {
@@ -390,7 +390,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button16Click" => {
             // "Reset now": the processings applied by hand are dropped
             app.post = State::default();
-            repaint(app, ui, "post processing");
+            repaint(app, ui, &tr("post processing"));
         }
         "CheckBox21Click" | "CheckBox25Click" => {
             update_captions(ui);
@@ -416,7 +416,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let hs = ui.checked(F, "CheckBox9");
             let deao = ui.checked(F, "CheckBox11") && ui.c(F, "TabControl1").tab_index == 3;
             let keep_as = ui.checked(F, "CheckBox30");
-            started(app, ui, "selection recalculation");
+            started(app, ui, &tr("selection recalculation"));
             ui.set_visible(MAIN, "ProgressBar1", true);
             app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer, hs, deao, keep_as });
         }
@@ -425,7 +425,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if app.main.calculating {
                 return;
             }
-            let Some(b) = app.eng.base() else { return ui.show_message("No image calculated yet.") };
+            let Some(b) = app.eng.base() else { return ui.show_message(&tr("No image calculated yet.")) };
             let g = crate::gbuffer::double_size(&b.post, b.w, b.h);
             let mut sc = b.scene.clone();
             sc.width *= 2;

@@ -3,7 +3,7 @@
 //! ambient / fog / background pages.  Changes repaint the kept image
 //! without a new calculation, as in MB3D.
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::util::{argb, fts_single, parse_float, pti, rgb_of};
 use super::{Mb3d, MAIN};
 use crate::lighting::{Light, Lighting, PaletteColor};
@@ -730,7 +730,7 @@ pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
         if st.repaint_pending {
             // (short: the line has little room beside the Frame field)
             let shadows = super::engine::post_sig(&app.scene) != b.post_sig;
-            ui.set_caption(MAIN, "Label6", if shadows { "shadows next" } else { "reflections next" });
+            ui.set_caption(MAIN, "Label6", &if shadows { tr("shadows next") } else { tr("reflections next") });
             st.status_shown = true;
         }
     }
@@ -754,7 +754,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     app.light.repaint_pending = false;
     app.light.full_running = true;
     let shadows = app.eng.base().is_some_and(|b| super::engine::post_sig(&app.scene) != b.post_sig);
-    ui.set_caption(MAIN, "Label6", if shadows { "redoing shadows" } else { "adding reflections" });
+    ui.set_caption(MAIN, "Label6", &if shadows { tr("redoing shadows") } else { tr("adding reflections") });
     app.light.status_shown = true;
     app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
 }
@@ -1410,8 +1410,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Edit2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, .. } = e.ev {
                 let o = crate::vcl::dialogs::FileOptions {
-                    title: "Choose a map".into(),
-                    filter: "Images|*.png;*.jpg;*.jpeg;*.bmp|All files (*.*)|*.*".into(),
+                    title: tr("Choose a map"),
+                    filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp|{}|*.*", tr("Images"), tr("All files (*.*)")),
                     initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
                     ..Default::default()
                 };
@@ -1419,7 +1419,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "ButtonGetPosClick" => {
-            if ui.caption(F, "ButtonGetPos") == "image" {
+            if ui.caption(F, "ButtonGetPos") == tr("image") {
                 ui.set_caption(F, "ButtonGetPos", &tr("mid"));
                 app.main.get_pos = 0;
                 ui.cm(super::MAIN, "Image1").cursor = "crDefault".into();
@@ -1599,13 +1599,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "CheckBox16Click" => {
             let m = ui.item_index(F, "RadioGroup1");
             let (a, b, c) = match m {
-                1 => ("Rotation X:", "Rotation Y:", "Rotation Z:"),
-                0 => ("Offset X:", "Offset Y:", "Rotation:"),
-                _ => ("Offset X:", "Offset Y:", ""),
+                1 => (tr("Rotation X:"), tr("Rotation Y:"), tr("Rotation Z:")),
+                0 => (tr("Offset X:"), tr("Offset Y:"), tr("Rotation:")),
+                _ => (tr("Offset X:"), tr("Offset Y:"), String::new()),
             };
-            ui.set_caption(F, "Label35", a);
-            ui.set_caption(F, "Label36", b);
-            ui.set_caption(F, "Label41", c);
+            ui.set_caption(F, "Label35", &a);
+            ui.set_caption(F, "Label36", &b);
+            ui.set_caption(F, "Label41", &c);
             ui.set_visible(F, "TrackBar30", m < 2);
             ui.set_visible(F, "Label38", m != 1);
             ui.set_visible(F, "TrackBar31", m != 1);
@@ -1617,8 +1617,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if uc {
                 if ui.checked(F, "CheckBox8") {
                     let o = crate::vcl::dialogs::FileOptions {
-                        title: "Background image".into(),
-                        filter: "Images|*.png;*.jpg;*.jpeg;*.bmp|All files (*.*)|*.*".into(),
+                        title: tr("Background image"),
+                        filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp|{}|*.*", tr("Images"), tr("All files (*.*)")),
                         initial_dir: Some(app.ini.dir(super::ini::DIR_BGPIC)),
                         ..Default::default()
                     };
@@ -1664,7 +1664,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Light parameter (*.m3l)|*.m3l".into(),
+                filter: format!("{}|*.m3l", tr("M3D Light parameter (*.m3l)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_LIGHTS)),
                 ..Default::default()
             };
@@ -1672,7 +1672,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button2Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Light parameter (*.m3l)|*.m3l".into(),
+                filter: format!("{}|*.m3l", tr("M3D Light parameter (*.m3l)")),
                 default_ext: "m3l".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_LIGHTS)),
                 ..Default::default()
@@ -1779,7 +1779,7 @@ fn make_depth_col_list(ui: &mut Ui) {
 /// `GetLightParaFile`: a .m3l file (TLightingParas9).
 fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
     let Ok(d) = std::fs::read(p) else {
-        app.message(ui, &format!("{}: cannot read", p.display()));
+        app.message(ui, &trf("{}: cannot read", &[&p.display()]));
         return;
     };
     match crate::m3p::light_from_record(&d) {
@@ -1792,7 +1792,7 @@ fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
             trigger_repaint(app, ui);
             ui.cm(F, "ComboBox3").font = None;
         }
-        None => app.message(ui, &format!("{}: no light parameters", p.display())),
+        None => app.message(ui, &trf("{}: no light parameters", &[&p.display()])),
     }
 }
 
@@ -1829,7 +1829,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let rec = crate::m3p::write(&app.scene);
             let p = p.with_extension("m3l");
             match std::fs::write(&p, &rec[432..840]) {
-                Ok(()) => app.message(ui, &format!("Saved {}", p.display())),
+                Ok(()) => app.message(ui, &trf("Saved {}", &[&p.display()])),
                 Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
             }
             update_quick_load(app, ui);
@@ -1843,7 +1843,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                     }
                     app.scene.lighting.bg_image = p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
                     if crate::maps::by_name(&app.scene.lighting.bg_image).is_none() {
-                        app.message(ui, "The background image could not be loaded.");
+                        app.message(ui, &tr("The background image could not be loaded."));
                         app.scene.lighting.bg_image.clear();
                         app.light.user_change = false;
                         ui.set_checked(F, "CheckBox8", false);
