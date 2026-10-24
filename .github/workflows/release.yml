@@ -33,10 +33,6 @@ jobs:
         include:
           - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, ext: "", asset: linux-x64 }
           - { os: windows-latest, target: x86_64-pc-windows-msvc, ext: ".exe", asset: windows-x64 }
-          - { os: macos-latest, target: aarch64-apple-darwin, ext: "", asset: macos-arm64 }
-          # Intel Macs: cross-compiled on the Apple silicon runner (the
-          # Intel macOS runners are retired)
-          - { os: macos-latest, target: x86_64-apple-darwin, ext: "", asset: macos-x64 }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -87,9 +83,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
-            cargo zigbuild --release --features gpu --target ${{ matrix.target }}.2.28
+            cargo zigbuild --release --no-default-features --features gpu --bin mb3d --target ${{ matrix.target }}.2.28
             # no symbol may need a newer glibc than 2.28
-            for exe in Mandelbulb3D mb3d; do
+            for exe in mb3d; do
               v=$(objdump -T "target/${{ matrix.target }}/release/$exe" | grep -oE 'GLIBC_[0-9.]+' | sort -t. -k2,2n -k3,3n -u | tail -1)
               echo "$exe needs $v"
               case "$v" in GLIBC_2.[0-9]|GLIBC_2.1[0-9]|GLIBC_2.2[0-8]) ;; *) echo "::error::$exe needs $v"; exit 1;; esac
@@ -121,13 +117,18 @@ jobs:
           echo "Meshes exported with BTracer2 are saved here, as in MB3D." > "$name/Meshes/README.txt"
           echo "Folder for big renders (tiles), as in MB3D." > "$name/BigRenders/README.txt"
           mv MB3D-SOURCE.txt "$name"/
-          # Mandelbulb3D: the windows of MB3D; mb3d: the command line renderer
-          for exe in Mandelbulb3D mb3d; do
-            cp "target/${{ matrix.target }}/release/$exe${{ matrix.ext }}" "$name"/
-          done
+          # Windows carries the desktop application and the CLI. Linux is
+          # intentionally a headless CLI release.
+          cp "target/${{ matrix.target }}/release/mb3d${{ matrix.ext }}" "$name"/
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "target/${{ matrix.target }}/release/Mandelbulb3D${{ matrix.ext }}" "$name"/
+          fi
           cp README.md GETTING_STARTED.md LICENSE download.sh "$name"/
-          # the application menu entry and its icon (download.sh, the .deb)
-          cp assets/mb3d-rs*.png assets/mb3d-rs.desktop "$name"/
+          # The application menu entry and icons are only for the Windows
+          # desktop package; Linux is command-line only.
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp assets/mb3d-rs*.png assets/mb3d-rs.desktop "$name"/
+          fi
           # the man page and the bash, zsh and fish completions, made from the
           # program's own help (download.sh installs them)
           if [ "${{ runner.os }}" != "Windows" ]; then
@@ -139,8 +140,8 @@ jobs:
               echo "::warning::no man page / completions (mb3d does not run on this runner)"
             fi
           fi
-          # the themes (the program reads them from here)
-          cp -r Themes "$name"/
+          # The themes are read by the Windows desktop application.
+          if [ "${{ runner.os }}" = "Windows" ]; then cp -r Themes "$name"/; fi
           mkdir -p "$name/examples"
           cp examples/*.m3s "$name/examples"/
           # the archive name has no version, so that the README can link to
