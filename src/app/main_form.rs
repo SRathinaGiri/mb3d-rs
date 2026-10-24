@@ -276,8 +276,8 @@ pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
 /// FormCreate, SetM3Dini, FirstShowUpdate and LoadStartupParas.
 pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     set_language_badge(ui);
-    app.message(ui, "Welcome to Mandelbulb 3D!");
-    app.message(ui, "Visit the official web site for news and updates: https://mb3d.overwhale.com");
+    app.message(ui, &tr("Welcome to Mandelbulb 3D!"));
+    app.message(ui, &tr("Visit the official web site for news and updates: https://mb3d.overwhale.com"));
     app.message(ui, "");
     ui.set_caption(F, "Label3", &version_str());
     let cpus = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(64) as i64;
@@ -371,7 +371,7 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         match app.load_params(ui, &p) {
             Ok(()) => {
                 if app.startup_file.is_some() {
-                    app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
+                    app.message(ui, &tr("Parameters loaded, press \"Calculate 3D\" to render."));
                     start_timer = false;
                 }
             }
@@ -484,6 +484,11 @@ pub fn show_led(ui: &mut Ui, led: Led, blinking: bool) {
 /// Shown when a calculation starts on the CPU while the card's shaders
 /// compile.
 pub const COMPILE_NOTE: &str = "First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.";
+
+/// [`COMPILE_NOTE`] in the current language.
+pub fn compile_note() -> String {
+    tr("First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.")
+}
 
 /// The title bar's language badge: the interface language's code, its
 /// name in the hint; a click opens the language window.
@@ -681,7 +686,7 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.vary_de_stop_on_fov = ui.checked(F, "CheckBox9");
     sc.color_option = ui.item_index(F, "RadioGroup1").clamp(0, 5) as u8;
     sc.color_on_it = (pti(&t(ui, "Edit35")) + 1).clamp(0, 255) as u8;
-    if ui.caption(F, "ButtonVolLight") == "Dyn. fog on It.:" {
+    if ui.caption(F, "ButtonVolLight") != tr("Volume light nr:") {
         sc.vol_light = None;
         sc.dfog_on_it = pti(&t(ui, "Edit16")).clamp(0, 65535) as u16;
     } else {
@@ -697,14 +702,14 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
 /// `PageControl1Change`: tab captions show active options.
 pub fn page_control1_change(_app: &Mb3d, ui: &mut Ui) {
     let julia = ui.checked(F, "CheckBox7");
-    ui.cm(F, "TabSheet9").caption = if julia { "Julia On".into() } else { "Julia Off".into() };
+    ui.cm(F, "TabSheet9").caption = if julia { tr("Julia On") } else { tr("Julia Off") };
     let cut = ui.checked(F, "CheckBox4") || ui.checked(F, "CheckBox5") || ui.checked(F, "CheckBox6");
-    ui.cm(F, "TabSheet8").caption = if cut { "Cutting*".into() } else { "Cutting".into() };
+    ui.cm(F, "TabSheet8").caption = if cut { tr("Cutting*") } else { tr("Cutting") };
 }
 
 fn update_aspect_caption(app: &Mb3d, ui: &mut Ui) {
     let (x, y) = app.main.user_aspect;
-    let c = if x > 0 { format!("{x}:{y}") } else { "user".into() };
+    let c = if x > 0 { format!("{x}:{y}") } else { tr("user") };
     ui.set_caption(F, "SpeedButton21", &c);
 }
 
@@ -894,7 +899,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     if calc3d {
         if let Err(e) = crate::render::check_memory(app.scene.width as usize, app.scene.height as usize) {
             app.main.auto_m3i = None;
-            app.message(ui, &format!("Not calculated: {e}.\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture (with the swarm too)."));
+            app.message(ui, &trf("Not calculated: {}.\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture (with the swarm too).", &[&e]));
             return;
         }
     }
@@ -964,7 +969,7 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui, sc: Scene, slice: u8) {
             run_calc(app, sc, slice, crate::checkpoint::Policy::Continue);
         } else {
             not_started(app, ui);
-            app.message(ui, "The parameters do not match the unfinished calculation any more: press \"Calculate 3D\" to calculate them.");
+            app.message(ui, &tr("The parameters do not match the unfinished calculation any more: press \"Calculate 3D\" to calculate them."));
         }
         return;
     }
@@ -974,8 +979,8 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui, sc: Scene, slice: u8) {
             app.main.resume_ask = Some((sc, slice));
             ui.message_box(
                 "main:resume",
-                "Unfinished calculation",
-                &format!("An unfinished calculation of this picture was kept ({}).\n\nContinue it?  \"No\" calculates it again from the start.", e.summary()),
+                &tr("Unfinished calculation"),
+                &trf("An unfinished calculation of this picture was kept ({}).\n\nContinue it?  \"No\" calculates it again from the start.", &[&e.summary()]),
                 &[MR_YES, MR_NO, MR_CANCEL],
             );
             return;
@@ -998,7 +1003,7 @@ fn not_started(app: &mut Mb3d, ui: &mut Ui) {
 /// calculation of `key` (the Unfinished renders window).
 pub fn continue_calc(app: &mut Mb3d, ui: &mut Ui, key: &str) {
     if app.eng.running() {
-        app.message(ui, "A calculation is running: stop it first.");
+        app.message(ui, &tr("A calculation is running: stop it first."));
         return;
     }
     app.main.resume_key = Some(key.to_string());
@@ -1538,7 +1543,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         #[cfg(feature = "gpu")]
         if !app.main.compile_note && crate::gpu::last_status().contains("shaders are compiling") {
             app.main.compile_note = true;
-            app.message(ui, COMPILE_NOTE);
+            app.message(ui, &compile_note());
         }
     }
     // a stopped calculation's caption was replaced (parameters changed, a
@@ -1589,8 +1594,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             // the CPU threads' pace is known
             let compiling = shaders_compiling();
             let caption = match (compiling, total.or(left)) {
-                (true, Some(tl)) => format!("shaders compiling · {}", left_str(tl)),
-                (true, None) => format!("{} · shaders compiling", short_stage(&stage)),
+                (true, Some(tl)) => format!("{} · {}", tr("shaders compiling"), left_str(tl)),
+                (true, None) => format!("{} · {}", short_stage(&stage), tr("shaders compiling")),
                 _ => stage_caption(&stage, f as f64, left, total),
             };
             ui.set_caption(F, "Label6", &caption);
@@ -1694,11 +1699,11 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 // march, "with HS" when it ran with the hard shadows
                 let stage = |t: Option<Option<f64>>| match t {
                     None => "-".to_string(),
-                    Some(None) => "incl. in main".to_string(),
+                    Some(None) => tr("incl. in main"),
                     Some(Some(s)) => time_str(((s * 10.0) as i64).max(1)),
                 };
                 ui.set_caption(F, "Label8", &stage(stats.stages.shadows));
-                let ao = if stats.stages.ao_with_shadows { "with HS".to_string() } else { stage(stats.stages.ao) };
+                let ao = if stats.stages.ao_with_shadows { tr("with HS") } else { stage(stats.stages.ao) };
                 ui.set_caption(F, "Label48", &ao);
                 ui.set_caption(F, "Label50", &stage(stats.stages.reflections.map(Some)));
                 let _ = secs;
@@ -1756,12 +1761,12 @@ fn denoised(rgb: &[u8], w: usize, h: usize, sigma: f32) -> Vec<u8> {
 /// ([`crate::denoise`]) on the shown picture, which is also the saved one.
 pub fn denoise_picture(app: &mut Mb3d, ui: &mut Ui, sigma: f32) {
     let Some((rgb, w, h)) = app.main.rgb.clone() else {
-        return app.message(ui, "Calculate the image first.");
+        return app.message(ui, &tr("Calculate the image first."));
     };
     let out = std::sync::Arc::new(denoised(&rgb, w, h, sigma));
     app.main.rgb = Some((out.clone(), w, h));
     set_image(app, ui, out, w, h);
-    app.message(ui, &format!("Noise filter: strength {sigma}"));
+    app.message(ui, &trf("Noise filter: strength {}", &[&sigma]));
 }
 
 /// Shows a picture of another window in the main window (voxel slices).
@@ -1874,7 +1879,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "StereoPairSaveClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|Bitmap (*.bmp)|*.bmp".into(),
+                filter: format!("PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|{}|*.bmp", tr("Bitmap (*.bmp)")),
                 default_ext: "png".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 file_name: format!("{}-stereo", stem(&app.title)),
@@ -1884,14 +1889,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
-                if ui.caption(F, "Button2") == "Calculate 3D" {
+                if ui.caption(F, "Button2") != tr("Stop") {
                     ui.popup_menu(F, "PopupMenu3", "Button2", x, y);
                 }
             }
         }
         "StartrenderingandsaveafterwardstheM3Ifile1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
+                filter: format!("{}|*.m3i", tr("M3D Image + Parameter (*.m3i)")),
                 default_ext: "m3i".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
                 ..Default::default()
@@ -1907,7 +1912,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_visible(F, "RotationPnl", v);
         }
         "SpeedButton30Click" => {
-            if ui.caption(F, "SpeedButton30") == "click image" {
+            if ui.caption(F, "SpeedButton30") == tr("click image") {
                 ui.set_caption(F, "SpeedButton30", &tr("get midpoint"));
                 app.main.get_pos = 0;
                 set_image_cursor(app, ui);
@@ -2040,7 +2045,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton21MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, .. } = e.ev {
-                ui.input_query("main:aspectx", "User defined aspect ratio", "Input the width factor:", "16");
+                ui.input_query("main:aspectx", &tr("User defined aspect ratio"), &tr("Input the width factor:"), "16");
             }
         }
         "SpeedButton18MouseUp" => {
@@ -2085,9 +2090,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button16Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
-            if ui.caption(F, &e.sender) == "Click on image" {
-                let c = if tg == 4 { "Get min.dist. from image" } else { "Get values from image" };
-                ui.set_caption(F, &e.sender, c);
+            if ui.caption(F, &e.sender) == tr("Click on image") {
+                let c = if tg == 4 { tr("Get min.dist. from image") } else { tr("Get values from image") };
+                ui.set_caption(F, &e.sender, &c);
                 app.main.get_pos = 0;
                 set_image_cursor(app, ui);
             } else {
@@ -2111,7 +2116,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "CheckBox7Click" | "PageControl1Change" => page_control1_change(app, ui),
         "ButtonVolLightClick" => {
-            if ui.caption(F, "ButtonVolLight") == "Dyn. fog on It.:" {
+            if ui.caption(F, "ButtonVolLight") != tr("Volume light nr:") {
                 app.scene.vol_light = Some(crate::vollight::VolLightParams { light: 0, map_size: 0 });
             } else {
                 app.scene.vol_light = None;
@@ -2120,7 +2125,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "ButtonAuthorClick" => {
             let a = app.ini.get("Author").to_string();
-            ui.input_query("main:author", "Author", "Your author name (stored in the parameters):", &a);
+            ui.input_query("main:author", &tr("Author"), &tr("Your author name (stored in the parameters):"), &a);
         }
         "ButtonInsertAuthorClick" => {
             let a = app.ini.get("Author").to_string();
@@ -2178,7 +2183,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         // ---- files
         "Button5Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p|All files (*.*)|*.*".into(),
+                filter: format!("{}|*.m3p|{}|*.*", tr("M3D Parameter (*.m3p)"), tr("All files (*.*)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 preview: true,
                 ..Default::default()
@@ -2187,7 +2192,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
+                filter: format!("{}|*.m3i", tr("M3D Image + Parameter (*.m3i)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
                 preview: true,
                 ..Default::default()
@@ -2196,7 +2201,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button4Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                filter: format!("{}|*.m3p", tr("M3D Parameter (*.m3p)")),
                 default_ext: "m3p".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 file_name: stem(&app.title),
@@ -2206,11 +2211,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button8Click" => {
             if app.eng.base().is_none() {
-                app.message(ui, "Calculate the image first.");
+                app.message(ui, &tr("Calculate the image first."));
                 return;
             }
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
+                filter: format!("{}|*.m3i", tr("M3D Image + Parameter (*.m3i)")),
                 default_ext: "m3i".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
                 file_name: stem(&app.title),
@@ -2223,7 +2228,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let raw = crate::m3p::write(&app.scene);
             let name = stem(&app.title);
             crate::vcl::clipboard::set(&crate::m3p::raw_to_text(&raw, if name.is_empty() { "Mandelbulb 3D" } else { &name }));
-            app.message(ui, "Parameters copied to the clipboard.");
+            app.message(ui, &tr("Parameters copied to the clipboard."));
         }
         "SpeedButton8Click" => {
             let text = crate::vcl::clipboard::get().unwrap_or_default();
@@ -2241,7 +2246,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     if ui.has_form("FTextBox") {
                         ui.show("FTextBox");
                     } else {
-                        app.message(ui, "No text parameters found in the clipboard.");
+                        app.message(ui, &tr("No text parameters found in the clipboard."));
                     }
                 }
             }
@@ -2289,7 +2294,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FormCloseQuery" => {
             if app.eng.running() && app.main.calc_start.elapsed().as_secs() > 900 {
-                ui.message_box("main:closequery", "Warning", "Do you really want to stop the calculations?", &[MR_YES, crate::vcl::form::MR_NO]);
+                ui.message_box("main:closequery", &tr("Warning"), &tr("Do you really want to stop the calculations?"), &[MR_YES, crate::vcl::form::MR_NO]);
             } else {
                 app.eng.stop();
                 ui.close_ok(F);
@@ -2331,7 +2336,7 @@ fn form_close(app: &mut Mb3d, ui: &mut Ui) {
 
 fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     crate::maps::set_current_frame(pti(&t(ui, "FrameEdit")).max(1));
-    if ui.caption(F, "Button2") == "Stop" {
+    if ui.caption(F, "Button2") == tr("Stop") {
         let anim = app.anim.job.lock().unwrap().running;
         app.anim.stop.store(true, std::sync::atomic::Ordering::SeqCst);
         app.eng.stop();
@@ -2356,7 +2361,7 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
         if anim {
             ui.set_caption("AnimationForm", "Button2", &tr("Start rendering animation images"));
         }
-        app.message(ui, if anim { "Animation rendering stopped." } else { "Calculation stopped." });
+        app.message(ui, &if anim { tr("Animation rendering stopped.") } else { tr("Calculation stopped.") });
         return;
     }
     app.main.image_text = false;
@@ -2562,7 +2567,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                     page_control1_change(app, ui);
                     paras_changed(app, ui);
                 } else {
-                    app.message(ui, "No object at this point.");
+                    app.message(ui, &tr("No object at this point."));
                 }
             }
             _ => {
@@ -2709,24 +2714,24 @@ fn text_pars_load_success(app: &mut Mb3d, ui: &mut Ui) {
     app.main.intern_aspect = app.scene.width as f64 / app.scene.height.max(1) as f64;
     app.scene_to_forms(ui);
     all_presets_up(ui);
-    app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
+    app.message(ui, &tr("Parameters loaded, press \"Calculate 3D\" to render."));
     show_image(app, ui);
     set_caption(app, ui);
 }
 
 fn save_pic_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str) {
     if what != "jpgp" && what != "zbuf" && app.main.rgb.is_none() {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("Calculate the image first."));
         return;
     }
     let (filter, ext) = match what {
-        "png" => ("PNG (*.png)|*.png|PNG 16 bit colour (*.png)|*.png|PNG transparent background (*.png)|*.png|Bitmap (*.bmp)|*.bmp", "png"),
-        "jpg" => ("JPEG (*.jpg)|*.jpg", "jpg"),
-        "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png", "jpg"),
-        _ => ("PNG 16 bit (*.png)|*.png", "png"),
+        "png" => (format!("PNG (*.png)|*.png|{}|*.png|{}|*.png|{}|*.bmp", tr("PNG 16 bit colour (*.png)"), tr("PNG transparent background (*.png)"), tr("Bitmap (*.bmp)")), "png"),
+        "jpg" => ("JPEG (*.jpg)|*.jpg".to_string(), "jpg"),
+        "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png".to_string(), "jpg"),
+        _ => (format!("{}|*.png", tr("PNG 16 bit (*.png)")), "png"),
     };
     let o = crate::vcl::dialogs::FileOptions {
-        filter: filter.into(),
+        filter,
         default_ext: ext.into(),
         initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
         file_name: stem(&app.title),
@@ -2763,7 +2768,7 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         }
     };
     match res {
-        Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+        Ok(()) => app.message(ui, &trf("Saved {}", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -2773,7 +2778,7 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 /// by the viewing scale as the 8 bit picture.
 fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("Calculate the image first."));
         return;
     };
     let rgb = crate::render::paint16(&b.scene, &b.params, &b.post);
@@ -2785,7 +2790,7 @@ fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         data = crate::png::with_text(data, "Comment", &text);
     }
     match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &format!("Saved {} (16 bit colour)", path.display())),
+        Ok(()) => app.message(ui, &trf("Saved {} (16 bit colour)", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -2794,11 +2799,11 @@ fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 /// transparent ([`crate::frames::rgba_of`]), reduced by the viewing scale.
 fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let (Some((rgb, w, h)), Some(b)) = (app.main.rgb.clone(), app.eng.base()) else {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("Calculate the image first."));
         return;
     };
     if b.post.len() != w * h {
-        return app.message(ui, "The picture does not match its calculation: calculate it again.");
+        return app.message(ui, &tr("The picture does not match its calculation: calculate it again."));
     }
     let s = app.main.image_scale.max(1) as usize;
     let (rgba, ow, oh) = crate::frames::rgba_of(&rgb, &b.post, w, h, s);
@@ -2808,19 +2813,19 @@ fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         data = crate::png::with_text(data, "Comment", &text);
     }
     match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &format!("Saved {} (transparent background)", path.display())),
+        Ok(()) => app.message(ui, &trf("Saved {} (transparent background)", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
 
 fn save_zbuf(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("Calculate the image first."));
         return;
     };
     let z: Vec<u16> = b.post.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
     match crate::png::write_gray16(&path.to_string_lossy(), b.w, b.h, &z) {
-        Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+        Ok(()) => app.message(ui, &trf("Saved {}", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -2829,7 +2834,7 @@ pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else { return };
     let data = crate::m3p::write_m3i(&b.scene, &b.post);
     match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+        Ok(()) => app.message(ui, &trf("Saved {}", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -2857,7 +2862,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 Ok(()) => {
                     all_presets_up(ui);
                     if app.eng.base().is_none() {
-                        app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
+                        app.message(ui, &tr("Parameters loaded, press \"Calculate 3D\" to render."));
                     }
                     show_image(app, ui);
                 }
@@ -2871,7 +2876,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 Ok(()) => {
                     app.title = p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
                     set_caption(app, ui);
-                    app.message(ui, &format!("Saved {}", p.display()));
+                    app.message(ui, &trf("Saved {}", &[&p.display()]));
                 }
                 Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
             }
@@ -2911,7 +2916,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let i = pti(s);
             if i >= 1 {
                 app.main.user_aspect.0 = i;
-                ui.input_query("main:aspecty", "User defined aspect ratio", "Input the height divisor:", "9");
+                ui.input_query("main:aspecty", &tr("User defined aspect ratio"), &tr("Input the height divisor:"), "9");
             }
         }
         ("aspecty", DialogResult::Text(v)) => {
@@ -2922,7 +2927,9 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 app.main.user_aspect.1 = i;
             }
             update_aspect_caption(app, ui);
-            app.ini.set("UserAspect", &ui.caption(F, "SpeedButton21"));
+            // (the ini keeps the English "user", not the caption's language)
+            let (x, y) = app.main.user_aspect;
+            app.ini.set("UserAspect", &if x > 0 { format!("{x}:{y}") } else { "user".into() });
         }
         ("author", DialogResult::Text(Some(s))) => {
             app.ini.set("Author", s.trim());
