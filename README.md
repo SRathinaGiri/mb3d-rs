@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.70](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.70)** (24 Oct 2026, 10:17 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.71](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.71)** (24 Oct 2026, 11:07 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -925,6 +925,14 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.71](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.71) · 24 Oct 2026, 11:07 UTC
+
+| Commit | What it does |
+|---|---|
+| [`68e0b2b`](https://github.com/thr32423/mb3d-rs/commit/68e0b2b7de9a27d5094c95c80f8b91cdc856a292) | Version number and release notes of this release |
+| [`b6f510d`](https://github.com/thr32423/mb3d-rs/commit/b6f510d3488fc66e72273a5b0d7fbe24fb65f988) | Languages: the flag pictures in the repository (they were ignored with *.png), spl-test.lng removed |
+| [`8e19da0`](https://github.com/thr32423/mb3d-rs/commit/8e19da0bcb97882cf5d3de2a99b416eeb8dd5019) | README: Updates for v0.2.70, and the latest release at the top of the page |
+
 ### [v0.2.70](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.70) · 24 Oct 2026, 10:17 UTC
 
 | Commit | What it does |
@@ -945,15 +953,7 @@ of a release are on its page. Times are in UTC.
 | [`56830e7`](https://github.com/thr32423/mb3d-rs/commit/56830e74e2184c47fc88a173d01080294d753e10) | Time left: one average pace, a bar that glides, and a stopped calculation keeps its status |
 | [`837abce`](https://github.com/thr32423/mb3d-rs/commit/837abce95ccc30fd3a20531aed7a643eb13a9579) | README: Updates for v0.2.68 |
 
-### [v0.2.68](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.68) · 22 Oct 2026, 16:35 UTC
-
-| Commit | What it does |
-|---|---|
-| [`625cb00`](https://github.com/thr32423/mb3d-rs/commit/625cb009bd35528942c989f6862a3850df0cf0ba) | Version number and release notes of this release |
-| [`67f0c4d`](https://github.com/thr32423/mb3d-rs/commit/67f0c4de66b704af608d30ff860a83f269656898) | Monte Carlo on the card: a pass no longer hangs when a thread's turn had nothing to march |
-| [`11762fe`](https://github.com/thr32423/mb3d-rs/commit/11762fe38584735f968005c9fd69d4c24d15091e) | README: Updates for v0.2.67 |
-
-All 81 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 82 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers

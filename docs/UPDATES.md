@@ -5,6 +5,14 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.71](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.71) · 24 Oct 2026, 11:07 UTC
+
+| Commit | What it does |
+|---|---|
+| [`68e0b2b`](https://github.com/thr32423/mb3d-rs/commit/68e0b2b7de9a27d5094c95c80f8b91cdc856a292) | Version number and release notes of this release |
+| [`b6f510d`](https://github.com/thr32423/mb3d-rs/commit/b6f510d3488fc66e72273a5b0d7fbe24fb65f988) | Languages: the flag pictures in the repository (they were ignored with *.png), spl-test.lng removed |
+| [`8e19da0`](https://github.com/thr32423/mb3d-rs/commit/8e19da0bcb97882cf5d3de2a99b416eeb8dd5019) | README: Updates for v0.2.70, and the latest release at the top of the page |
+
 ## [v0.2.70](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.70) · 24 Oct 2026, 10:17 UTC
 
 | Commit | What it does |
