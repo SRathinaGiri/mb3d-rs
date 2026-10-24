@@ -23,6 +23,9 @@ wgpu = { version = "30.0.1", optional = true }
 pollster = { version = "1.0.1", optional = true }
 open = { version = "5", optional = true }
 
+[build-dependencies]
+winres = "0.1"
+
 # Windows: Microsoft's current shader compiler (DXC) built in; the old FXC
 # that wgpu falls back to without it cannot compile the ray marcher
 [target.'cfg(windows)'.dependencies]
