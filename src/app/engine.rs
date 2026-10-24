@@ -6,6 +6,7 @@
 use crate::calc::CalcParams;
 use crate::gbuffer::SiLight;
 use crate::scene::Scene;
+use crate::vcl::lang::{tr, trf};
 use crate::vcl::ui::Waker;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
@@ -418,7 +419,7 @@ impl Engine {
         let p = CalcParams::new(sc)?;
         let (w, h) = (sc.width as usize, sc.height as usize);
         if gbuf.len() != w * h {
-            return Err("the image buffer has the wrong size".into());
+            return Err(tr("the image buffer has the wrong size"));
         }
         let raw = Arc::new(gbuf);
         let rgb = crate::render::paint(sc, &p, &raw);
@@ -538,7 +539,7 @@ fn worker(e: Arc<Inner>) {
         }))
         .unwrap_or_else(|p| {
             let m = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
-            Err(format!("The calculation failed: {}", m.lines().last().unwrap_or("").trim()))
+            Err(trf("The calculation failed: {}", &[&m.lines().last().unwrap_or("").trim()]))
         });
         e.busy.store(false, Ordering::SeqCst);
         // a newer job may already wait: only report when this one is the last
@@ -554,7 +555,7 @@ fn worker(e: Arc<Inner>) {
 /// sequence avoids doubling the already substantial G-buffer memory use.
 fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     if sc.tiling.is_some() {
-        return Err("Stereo pairs cannot be rendered with tiles. Turn tiling off first.".into());
+        return Err(tr("Stereo pairs cannot be rendered with tiles. Turn tiling off first."));
     }
     let eye = |mode: u8, name: &str, offset: usize| -> Result<(Vec<u8>, usize, usize, f64, f64), String> {
         let mut s = sc.clone();
@@ -581,7 +582,7 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
     }
     let (right, rw, rh, right_calc, right_paint) = eye(3, "right", 500)?;
     if (w, h) != (rw, rh) {
-        return Err("The stereo eye images have different sizes.".into());
+        return Err(tr("The stereo eye images have different sizes."));
     }
     if cancel() {
         return Err("cancelled".into());
@@ -872,12 +873,12 @@ pub fn relight_incomplete(sc: &Scene, b: &Base) -> bool {
 /// (`PaintRows`); the rest of the image stays as it is.
 fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (bool, bool, bool), cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     let (hs, deao, keep_as) = opts;
-    let b = e.base.lock().unwrap().clone().ok_or("calculate the image first (Calculate 3D)")?;
+    let b = e.base.lock().unwrap().clone().ok_or_else(|| tr("calculate the image first (Calculate 3D)"))?;
     if sc.width != b.scene.width || sc.height != b.scene.height {
-        return Err("the image size changed: calculate the image again".into());
+        return Err(tr("the image size changed: calculate the image again"));
     }
     let (w, h) = (b.w, b.h);
-    let r = clip_rect(rect, w, h).ok_or("the selection must be bigger than 2 pixels in width and height")?;
+    let r = clip_rect(rect, w, h).ok_or_else(|| tr("the selection must be bigger than 2 pixels in width and height"))?;
     let [x0, y0, rw, rh] = r;
     e.out.lock().unwrap().stage = "recalculating the selection".into();
     let mut rs = sc.clone();
@@ -943,9 +944,9 @@ fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (
 /// image stays as it is (the depth of field needs the whole image: not
 /// here).
 fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
-    let b = e.base.lock().unwrap().clone().ok_or("calculate the image first (Calculate 3D)")?;
+    let b = e.base.lock().unwrap().clone().ok_or_else(|| tr("calculate the image first (Calculate 3D)"))?;
     let (w, h) = (b.w, b.h);
-    let r = clip_rect(rect, w, h).ok_or("the selection must be bigger than 2 pixels in width and height")?;
+    let r = clip_rect(rect, w, h).ok_or_else(|| tr("the selection must be bigger than 2 pixels in width and height"))?;
     e.out.lock().unwrap().stage = "reflections of the selection".into();
     let mut target = sc.clone();
     target.width = b.scene.width;

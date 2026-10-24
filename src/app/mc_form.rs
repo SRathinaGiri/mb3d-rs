@@ -1,7 +1,7 @@
 //! The Monte Carlo rendering window (MonteCarloForm.pas) and the colour
 //! scaling question (ColorOptionForm.pas).
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::light_form::short_float_str;
 use super::eta::{ItemsLeft, Pace};
 use super::util::{d2byte, d2byte_str, fts_single, left_str, parse_float, smooth_shown, time_str, Shown};
@@ -349,7 +349,7 @@ fn noise_filter(app: &mut Mb3d, ui: &mut Ui) {
     let out = crate::denoise::dct_denoise(&rgb, img.width, img.height, sigma, threads);
     set_image(ui, img.width, img.height, &out);
     app.mc.picture_changed = true;
-    app.message(ui, &format!("Noise filter: strength {sigma:.1}"));
+    app.message(ui, &trf("Noise filter: strength {}", &[&format!("{sigma:.1}")]));
 }
 
 /// The shown picture as RGB (MB3D saves `Image1`, so also a picture the
@@ -413,7 +413,7 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.name = name.clone();
     ui.fm(F).set_caption(&name);
     let (w, h) = (app.scene.width as usize, app.scene.height as usize);
-    message_image(ui, w, h, "Press 'Start rendering' to calculate the image");
+    message_image(ui, w, h, &tr("Press 'Start rendering' to calculate the image"));
     set_form_size(app, ui);
     ui.set_enabled(F, "SpeedButton1", false);
     ui.set_enabled(F, "CheckBox5", false);
@@ -431,7 +431,7 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
 /// (loaded from the render) imported, and their render continued.
 pub fn continue_render(app: &mut Mb3d, ui: &mut Ui) {
     if app.mc.running {
-        app.message(ui, "The Monte Carlo window is rendering: stop it first.");
+        app.message(ui, &tr("The Monte Carlo window is rendering: stop it first."));
         return;
     }
     ui.show(F);
@@ -463,8 +463,8 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
                 app.mc.resume_ask = true;
                 ui.message_box(
                     "mc:resume",
-                    "Unfinished render",
-                    &format!("An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  \"No\" renders it again from the start.", e.summary()),
+                    &tr("Unfinished render"),
+                    &trf("An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  \"No\" renders it again from the start.", &[&e.summary()]),
                     &[crate::vcl::form::MR_YES, crate::vcl::form::MR_NO, crate::vcl::form::MR_CANCEL],
                 );
                 return;
@@ -523,7 +523,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         ui.set_enabled(F, c, false);
     }
     ui.set_caption(F, "Label15", "");
-    ui.set_caption(F, "Label8", if first { "first 4 rays (noisy)" } else { "..til next update" });
+    ui.set_caption(F, "Label8", &if first { tr("first 4 rays (noisy)") } else { tr("..til next update") });
     ui.set_visible(F, "Label8", true);
     ui.set_visible(F, "ProgressBar1", true);
     {
@@ -549,7 +549,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
             let c = cancel.clone();
             std::sync::Arc::new(move || c.load(Ordering::Relaxed))
         };
-        ui.set_caption(F, "Label8", &if rays > 0.0 { format!("swarm: {units} blocks of {rays:.0} rays/pixel") } else { "swarm: a block on every computer, until Stop".to_string() });
+        ui.set_caption(F, "Label8", &if rays > 0.0 { trf("swarm: {} blocks of {} rays/pixel", &[&units, &format!("{rays:.0}")]) } else { tr("swarm: a block on every computer, until Stop") });
         std::thread::spawn(move || {
             let report = |st: &str| {
                 shared.lock().unwrap().status = st.to_string();
@@ -810,7 +810,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             app.main.led = led;
             super::main_form::show_led(ui, led, app.mc.running);
         }
-        super::main_form::set_led_hint(ui, &format!("Monte Carlo calculated on: {}", crate::mc::last_status()));
+        super::main_form::set_led_hint(ui, &trf("Monte Carlo calculated on: {}", &[&crate::mc::last_status()]));
         if !app.mc.compile_note && crate::mc::last_status().contains("still compiling") {
             app.mc.compile_note = true;
             app.message(ui, super::main_form::COMPILE_NOTE);
@@ -832,7 +832,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
     }
     if !err.is_empty() {
-        app.message(ui, &format!("Monte Carlo: {err}"));
+        app.message(ui, &trf("Monte Carlo: {}", &[&err]));
         ui.show_message(&err);
         app.mc.in_batch = false;
     }
@@ -868,14 +868,14 @@ fn passes_after(target: Option<u32>, rays0: u32, rays: u32, passes: u32) -> Opti
 /// time left in it (or in the whole render) and how long the last pass
 /// took.
 fn pass_caption(passes: u32, left: Option<f64>, total: Option<f64>, last: Option<f64>) -> String {
-    let mut t = format!("pass {}", passes + 1);
+    let mut t = trf("pass {}", &[&(passes + 1)]);
     match (total, left) {
-        (Some(tl), _) => t += &format!(" · {} in total", left_str(tl)),
+        (Some(tl), _) => t += &trf(" · {} in total", &[&left_str(tl)]),
         (None, Some(l)) => t += &format!(" · {}", left_str(l)),
         _ => {}
     }
     if let Some(l) = last {
-        t += &format!(" · last pass {}", time_str((l * 10.0) as i64));
+        t += &trf(" · last pass {}", &[&time_str((l * 10.0) as i64)]);
     }
     t
 }
@@ -899,7 +899,7 @@ fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     app.mc.ck_start = ck_start;
     ui.set_enabled(F, "CheckBox5", true);
     ui.set_checked(F, "WithZBufferCbx", false);
-    let mut info = format!("Parameters: MandId {}", f.mand_id);
+    let mut info = trf("Parameters: MandId {}", &[&f.mand_id]);
     let notes = f.warnings.clone();
     if !notes.is_empty() {
         info.push('\n');
@@ -950,7 +950,7 @@ fn save_picture(app: &mut Mb3d, ui: &mut Ui, path: &Path, jpeg_q: u8) {
                 let zp = path.with_file_name(name).with_extension("png");
                 let _ = std::fs::write(zp, crate::png::encode_gray16(w, h, &z));
             }
-            Err(e) => app.message(ui, &format!("Z-buffer: {e}")),
+            Err(e) => app.message(ui, &trf("Z-buffer: {}", &[&e])),
         }
     }
 }
@@ -963,7 +963,7 @@ fn proof_light_amount(app: &mut Mb3d, ui: &mut Ui, verbose: bool) {
     }
     if p.lighting.diff_map != 0 {
         if !ui.checked(F, "CheckBox7") {
-            ui.show_message("When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.");
+            ui.show_message(&tr("When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors."));
             ui.set_checked(F, "CheckBox7", true);
         }
         return;
@@ -973,9 +973,9 @@ fn proof_light_amount(app: &mut Mb3d, ui: &mut Ui, verbose: bool) {
         (0..3).any(|k| d[k] * sd + s[k] * spec > 1.005)
     });
     if too_much {
-        ui.confirm("mc:colors", "The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?");
+        ui.confirm("mc:colors", &tr("The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?"));
     } else if verbose {
-        ui.show_message("All colors are ok.");
+        ui.show_message(&tr("All colors are ok."));
     }
 }
 
@@ -1101,13 +1101,13 @@ pub fn color_options_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
 // ---- batch rendering (`BatchPnl`)
 
 fn refresh_batch_grid(app: &Mb3d, ui: &mut Ui) {
-    let mut rows = vec![vec!["Name".to_string(), "Elapsed".into(), "Status".into()]];
+    let mut rows = vec![vec![tr("Name"), tr("Elapsed"), tr("Status")]];
     for b in &app.mc.batch {
         let name = b.m3p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
         let (el, st) = if b.finished {
             (
                 if b.elapsed > 0.0 { format!("{}s", super::util::fts((b.elapsed * 1000.0).round() / 1000.0)) } else { String::new() },
-                if b.image_exists { "Image exists" } else { "Done" }.to_string(),
+                if b.image_exists { tr("Image exists") } else { tr("Done") },
             )
         } else {
             (String::new(), String::new())
@@ -1116,9 +1116,9 @@ fn refresh_batch_grid(app: &Mb3d, ui: &mut Ui) {
     }
     let c = ui.cm(F, "BatchEntriesGrid");
     c.cols = vec![
-        crate::vcl::control::Column { caption: "Name".into(), width: 120, auto: false },
-        crate::vcl::control::Column { caption: "Elapsed".into(), width: 50, auto: false },
-        crate::vcl::control::Column { caption: "Status".into(), width: 100, auto: false },
+        crate::vcl::control::Column { caption: tr("Name"), width: 120, auto: false },
+        crate::vcl::control::Column { caption: tr("Elapsed"), width: 50, auto: false },
+        crate::vcl::control::Column { caption: tr("Status"), width: 100, auto: false },
     ];
     c.cells = rows;
     if c.row < 1 && !app.mc.batch.is_empty() {
@@ -1198,7 +1198,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormShow" => enable_batch_controls(app, ui),
         "FormHide" => {
             if app.mc.running {
-                ui.confirm("mc:stophide", "Should i stop calculations?");
+                ui.confirm("mc:stophide", &tr("Should i stop calculations?"));
             }
         }
         "Button1Click" => ui.hide(F),
@@ -1242,7 +1242,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button8Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D monte carlo file (*.m3c)|*.m3c".into(),
+                filter: format!("{}|*.m3c", tr("M3D monte carlo file (*.m3c)")),
                 default_ext: "m3c".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3C)),
                 file_name: app.mc.name.clone(),
@@ -1252,7 +1252,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D monte carlo file (*.m3c)|*.m3c".into(),
+                filter: format!("{}|*.m3c", tr("M3D monte carlo file (*.m3c)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3C)),
                 ..Default::default()
             };
@@ -1261,7 +1261,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton1Click" => {
             let fi = app.ini.get("SaveImageType").parse::<i32>().map(|i| i + 1).unwrap_or(2).clamp(1, 3) as usize;
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Bitmap (*.bmp)|*.bmp|PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg".into(),
+                filter: format!("{}|*.bmp|{}|*.png|{}|*.jpg", tr("Bitmap (*.bmp)"), tr("PNG (*.png)"), tr("JPEG (*.jpg)")),
                 filter_index: fi,
                 default_ext: ["bmp", "png", "jpg"][fi - 1].into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
@@ -1296,7 +1296,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "BatchOpenM3PSequenceBtnClick" => {
             if !app.mc.in_batch {
                 let o = crate::vcl::dialogs::FileOptions {
-                    filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                    filter: format!("{}|*.m3p", tr("M3D Parameter (*.m3p)")),
                     initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                     multi: true,
                     ..Default::default()
@@ -1304,7 +1304,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.open_dialog("mc:batchopen", &o);
             }
         }
-        "ClearBatchLstBtnClick" => ui.confirm("mc:batchclear", "Do you really want to clear the batch list?"),
+        "ClearBatchLstBtnClick" => ui.confirm("mc:batchclear", &tr("Do you really want to clear the batch list?")),
         "RemoveBatchLstEntryBtnClick" => {
             let r = ui.c(F, "BatchEntriesGrid").row;
             if r > 0 && (r as usize) <= app.mc.batch.len() && !app.mc.in_batch {
@@ -1354,7 +1354,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
             if ext == "jpg" || ext == "jpeg" {
                 app.mc.pending_jpg = Some(p.clone());
-                ui.input_query("mc:jpgq", "JPEG quality or size", "Type in the quality (0..100) or the maximal output filesize in KB (>100):", "95");
+                ui.input_query("mc:jpgq", &tr("JPEG quality or size"), &tr("Type in the quality (0..100) or the maximal output filesize in KB (>100):"), "95");
             } else {
                 save_picture(app, ui, p, 95);
             }
@@ -1388,7 +1388,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
             refresh_batch_grid(app, ui);
             if added == 0 {
-                ui.show_message("No file added");
+                ui.show_message(&tr("No file added"));
             }
             enable_batch_controls(app, ui);
         }

@@ -3,6 +3,7 @@
 use super::Mb3d;
 use crate::mutagen::{Member, MutationConfig, Rng, TREE};
 use crate::vcl::bitmap::Bitmap;
+use crate::vcl::lang::{tr, trf};
 use crate::vcl::{DialogResult, Ev, Event, Ui};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -118,7 +119,7 @@ fn layout(app: &mut Mb3d, ui: &mut Ui) {
         rects[i] = (l, t, w, h);
         let c = ui.cm(F, &panel_name(i));
         c.set_bounds(l, t, w, h);
-        c.caption = if i == 0 { "Root".into() } else { format!("Mutation {}", &TREE[i].0[2..]) };
+        c.caption = if i == 0 { tr("Root") } else { trf("Mutation {}", &[&&TREE[i].0[2..]]) };
         // the picture fills the panel (alClient with 5 pixel margins), the
         // caption below it
         ui.cm(F, &image_name(i)).set_bounds(5, 5, (w - 10).max(8), (h - 10 - 14).max(8));
@@ -185,12 +186,12 @@ fn blank(ui: &mut Ui) -> Bitmap {
 }
 
 fn refresh_generation_label(app: &Mb3d, ui: &mut Ui) {
-    let t = format!("Generation {} of {}", app.mutagen.current + 1, app.mutagen.generations.len());
+    let t = trf("Generation {} of {}", &[&(app.mutagen.current + 1), &app.mutagen.generations.len()]);
     ui.set_text(F, "GenerationEdit", &t);
 }
 
 fn refresh_mutate_caption(app: &Mb3d, ui: &mut Ui) {
-    ui.set_caption(F, "MutateBtn", if app.mutagen.running { "Cancel" } else { "Mutate!" });
+    ui.set_caption(F, "MutateBtn", &if app.mutagen.running { tr("Cancel") } else { tr("Mutate!") });
 }
 
 fn enable_controls(app: &Mb3d, ui: &mut Ui) {
@@ -408,7 +409,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         ui.cm(F, "ProgressBar").position += 1;
     }
     if !err.is_empty() {
-        app.message(ui, &format!("MutaGen: {err}"));
+        app.message(ui, &trf("MutaGen: {}", &[&err]));
     }
     if finished {
         app.mutagen.running = false;
@@ -471,19 +472,19 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "ClearPrevGenerationsClick" => {
             if app.mutagen.current > 0 && app.mutagen.current < app.mutagen.generations.len() {
-                ui.confirm("mutagen:clear", "Do you really want to clear all previous generations?");
+                ui.confirm("mutagen:clear", &tr("Do you really want to clear all previous generations?"));
             }
         }
         "ToClipboardItmClick" => {
-            let Some((i, m)) = popup_member(app, ui) else { return ui.show_message("No params to send to main editor") };
+            let Some((i, m)) = popup_member(app, ui) else { return ui.show_message(&tr("No params to send to main editor")) };
             let t = crate::m3p::raw_to_text(&crate::m3p::write(&m.scene), &caption(i, app.mutagen.current));
             crate::vcl::clipboard::set(&t);
         }
         "SendtoMainItmClick" => {
             if app.main.calculating {
-                return ui.show_message("The main editor is still rendering. Please stop it first or wait until it is done.");
+                return ui.show_message(&tr("The main editor is still rendering. Please stop it first or wait until it is done."));
             }
-            let Some((i, m)) = popup_member(app, ui) else { return ui.show_message("No params to send to main editor") };
+            let Some((i, m)) = popup_member(app, ui) else { return ui.show_message(&tr("No params to send to main editor")) };
             let t = crate::m3p::raw_to_text(&crate::m3p::write(&m.scene), &caption(i, app.mutagen.current));
             crate::vcl::clipboard::set(&t);
             app.scene = m.scene;

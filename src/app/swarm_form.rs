@@ -8,6 +8,7 @@
 use super::eta::ItemsLeft;
 use super::util::{left_str, smooth_shown, Shown};
 use super::{Mb3d, Ui};
+use crate::vcl::lang::{tr, trf};
 use crate::vcl::{DialogResult, Event};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
@@ -154,7 +155,7 @@ fn read_fields(app: &mut Mb3d, ui: &Ui) {
 
 fn start_worker(app: &mut Mb3d) -> Result<(), String> {
     let Some(dir) = app.swarm.folder() else {
-        return Err("choose a shared folder first (one every computer of the swarm can see)".into());
+        return Err(tr("choose a shared folder first (one every computer of the swarm can see)"));
     };
     std::fs::create_dir_all(dir.join("jobs")).map_err(|e| format!("{}: {e}", dir.display()))?;
     // a worker that still finishes its last unit in the same folder goes
@@ -209,14 +210,14 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
         // the worker ended by itself (the folder went away, ...)
         stop_worker(app, true);
         ui.set_checked(F, "CheckBox1", false);
-        ui.set_caption(F, "Label7", &format!("sharing stopped: {e}"));
+        ui.set_caption(F, "Label7", &trf("sharing stopped: {}", &[&e]));
     }
     // a worker that ended just as sharing was switched on again
     if app.swarm.sharing() && app.swarm.worker.as_ref().is_some_and(|w| w.thread.as_ref().is_some_and(|t| t.is_finished())) {
         stop_worker(app, true);
         if let Err(e) = start_worker(app) {
             ui.set_checked(F, "CheckBox1", false);
-            ui.set_caption(F, "Label7", &format!("sharing stopped: {e}"));
+            ui.set_caption(F, "Label7", &trf("sharing stopped: {}", &[&e]));
         }
     }
     // a worker that finished its last unit after sharing was switched off
@@ -227,7 +228,7 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
     let Some(dir) = app.swarm.folder() else {
         set_rows(ui, "ListView1", Vec::new(), &mut app.swarm.shown.0);
         set_rows(ui, "ListView2", Vec::new(), &mut app.swarm.shown.1);
-        ui.set_caption(F, "Label7", if app.swarm.folder.is_empty() { "no shared folder chosen" } else { "the folder does not exist (or is not reachable)" });
+        ui.set_caption(F, "Label7", &if app.swarm.folder.is_empty() { tr("no shared folder chosen") } else { tr("the folder does not exist (or is not reachable)") });
         return;
     };
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
@@ -255,8 +256,8 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
                 p.name.clone(),
                 p.version.clone(),
                 p.cores.to_string(),
-                if p.card.is_empty() { "processor".into() } else { p.card.clone() },
-                if gone { format!("gone (last seen {} s ago)", now.saturating_sub(p.time)) } else { p.state.clone() },
+                if p.card.is_empty() { tr("processor") } else { p.card.clone() },
+                if gone { trf("gone (last seen {} s ago)", &[&now.saturating_sub(p.time)]) } else { p.state.clone() },
             ]
         })
         .collect();
@@ -272,9 +273,10 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
                 j.kind_name().to_string(),
                 j.owner.clone(),
                 format!(
-                    "{d} of {n} units done{}{}",
-                    if j.same_version() { String::new() } else { format!(", version {}", j.version) },
-                    if errs.is_empty() { String::new() } else { format!(", error at {}: {}", errs[0].0, errs[0].1) }
+                    "{}{}{}",
+                    trf("{} of {} units done", &[&d, &n]),
+                    if j.same_version() { String::new() } else { trf(", version {}", &[&j.version]) },
+                    if errs.is_empty() { String::new() } else { trf(", error at {}: {}", &[&errs[0].0, &errs[0].1]) }
                 ),
             ]
         })
@@ -288,26 +290,26 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
         match n.len() {
             0 => String::new(),
             1 => n[0].to_string(),
-            k => format!("{} and {}", n[..k - 1].join(", "), n[k - 1]),
+            k => trf("{} and {}", &[&n[..k - 1].join(", "), &n[k - 1]]),
         }
     };
     let helpers: Vec<&crate::swarm::Peer> = others.iter().filter(|p| p.version == env!("CARGO_PKG_VERSION")).collect();
     let foreign: Vec<&crate::swarm::Peer> = others.iter().filter(|p| p.version != env!("CARGO_PKG_VERSION")).collect();
     let mut text = if app.swarm.sharing() {
         if helpers.is_empty() {
-            "Sharing, but no other computer is in the swarm yet: renders run on this computer alone".to_string()
+            tr("Sharing, but no other computer is in the swarm yet: renders run on this computer alone")
         } else {
-            format!("Sharing with {}: renders are split between the {} computers", names(&helpers), helpers.len() + 1)
+            trf("Sharing with {}: renders are split between the {} computers", &[&names(&helpers), &(helpers.len() + 1)])
         }
     } else if app.swarm.finishing() {
-        "Stopping: this computer finishes the part it is rendering".to_string()
+        tr("Stopping: this computer finishes the part it is rendering")
     } else if helpers.is_empty() {
-        "Not sharing: tick \"Share this computer\" to render together with other computers".to_string()
+        tr("Not sharing: tick \"Share this computer\" to render together with other computers")
     } else {
-        format!("Not sharing: tick \"Share this computer\" to render together with {}", names(&helpers))
+        trf("Not sharing: tick \"Share this computer\" to render together with {}", &[&names(&helpers)])
     };
     if !foreign.is_empty() {
-        text += &format!("; {} cannot take part (another version of the program)", names(&foreign));
+        text += &trf("; {} cannot take part (another version of the program)", &[&names(&foreign)]);
     }
     if !note.is_empty() {
         text += &format!("; {note}");
@@ -328,7 +330,7 @@ fn show_preview(app: &mut Mb3d, ui: &mut Ui, dir: &Path) {
     };
     let (iw, ih) = (ui.c(F, "Image1").width.max(16) as usize, ui.c(F, "Image1").height.max(16) as usize);
     let Some(mut p) = crate::swarm::job_preview_merged(&job, iw, Some(&mut app.swarm.merge)) else {
-        ui.set_caption(F, "Label8", &format!("{}: nothing rendered yet", job.name));
+        ui.set_caption(F, "Label8", &trf("{}: nothing rendered yet", &[&job.name]));
         return;
     };
     // a progress bar at the bottom of every unit under way
@@ -350,13 +352,13 @@ fn show_preview(app: &mut Mb3d, ui: &mut Ui, dir: &Path) {
     }
     ui.set_picture(F, "Image1", Some(crate::vcl::bitmap::Bitmap::from_rgb(p.width, p.height, &p.rgb)));
     let what = match job.kind_name() {
-        "tiles" => "tiles",
-        "montecarlo" => "blocks",
-        "animation" => "frames",
-        _ => "pictures",
+        "tiles" => tr("tiles"),
+        "montecarlo" => tr("blocks"),
+        "animation" => tr("frames"),
+        _ => tr("pictures"),
     };
     let left = units_left(&mut app.swarm, &job.id, p.done, p.total, std::time::Instant::now()).map(|l| format!(" · {}", left_str(l))).unwrap_or_default();
-    ui.set_caption(F, "Label8", &format!("{} ({}, by {}): {} of {} {what} done{}{left}", job.name, job.kind_name(), job.owner, p.done, p.total, if p.working.is_empty() { String::new() } else { format!(", {} under way", p.working.len()) }));
+    ui.set_caption(F, "Label8", &format!("{}{}{left}", trf("{} ({}, by {}): {} of {} {} done", &[&job.name, &job.kind_name(), &job.owner, &p.done, &p.total, &what]), if p.working.is_empty() { String::new() } else { trf(", {} under way", &[&p.working.len()]) }));
     app.swarm.preview_of = Some(job.id);
 }
 
@@ -414,7 +416,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button1Click" => {
             let cur = app.swarm.folder().unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
-            ui.folder_dialog("swarm:folder", "The shared folder of the swarm", Some(cur));
+            ui.folder_dialog("swarm:folder", &tr("The shared folder of the swarm"), Some(cur));
         }
         "CheckBox1Click" => {
             read_fields(app, ui);
@@ -455,7 +457,7 @@ pub fn mc_folder(app: &Mb3d) -> Option<PathBuf> {
 pub fn summary(dir: &Path) -> String {
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let n = crate::swarm::peers(dir).iter().filter(|p| !p.stale(now)).count();
-    format!("swarm: {n} computer{}", if n == 1 { "" } else { "s" })
+    if n == 1 { trf("swarm: {} computer", &[&n]) } else { trf("swarm: {} computers", &[&n]) }
 }
 
 #[cfg(test)]
