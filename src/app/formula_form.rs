@@ -3,7 +3,7 @@
 //! 4Da / Ads / dIFS buttons, the formula options, bailout, iterations and
 //! the hybrid type (alternating, interpolated, DE combined).
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::Mb3d;
 use crate::formulas::Formula;
@@ -306,7 +306,7 @@ fn set_tab_names(app: &mut Mb3d, ui: &mut Ui) {
     let tabs: Vec<String> = (0..n)
         .map(|t| {
             let used = if st.hybrid == 1 { st.slots[t].is_some() } else { st.its[t] > 0 && st.slots[t].is_some() };
-            let base = if t == 0 { "Formula1".to_string() } else { format!("Fo.{}", t + 1) };
+            let base = if t == 0 { tr("Formula1") } else { trf("Fo.{}", &[&(t + 1)]) };
             if used {
                 format!("{base} \u{00BB}")
             } else {
@@ -317,7 +317,7 @@ fn set_tab_names(app: &mut Mb3d, ui: &mut Ui) {
     let c = ui.cm(F, "TabControl1");
     c.tabs = tabs;
     c.tab_index = c.tab_index.clamp(0, n as i32 - 1);
-    ui.set_caption(F, "LabelItCount", if n == 6 { "Iterationcount" } else { "Weight" });
+    ui.set_caption(F, "LabelItCount", &if n == 6 { tr("Iterationcount") } else { tr("Weight") });
     ui.set_visible(F, "CheckBox1", n == 6);
 }
 
@@ -394,7 +394,7 @@ fn adjust_tc1_height(ui: &mut Ui) {
 /// `TabControl2Change` without a user change (header -> controls).
 fn tab_control2_update(app: &mut Mb3d, ui: &mut Ui) {
     let h = app.formula.hybrid;
-    ui.set_caption(F, "Label20", if h == 2 { "Maxits hybrid part1:" } else { "Max. iterations:" });
+    ui.set_caption(F, "Label20", &if h == 2 { tr("Maxits hybrid part1:") } else { tr("Max. iterations:") });
     ui.set_visible(F, "Label28", h == 2);
     ui.set_visible(F, "UpDown1", h == 2);
     let p = app.formula.start2.max(1) as i64 + 1;
@@ -456,7 +456,7 @@ pub fn select_formula(app: &mut Mb3d, ui: &mut Ui, name: &str) {
             app.formula.slots[t] = None;
             app.formula.its[t] = 0;
             if !s.is_empty() {
-                app.message(ui, &format!("Formula '{s}' not found."));
+                app.message(ui, &trf("Formula '{}' not found.", &[&s]));
             }
             tab_control1_change(app, ui);
         }
@@ -556,9 +556,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 for (i, it) in items.iter().enumerate() {
                     ui.set_enabled(F, it, i != t);
                 }
-                ui.set_caption(F, "Shiftallformulasonetotheright1", &format!("Shift formulas {} to 5 a position to the right", t + 1));
+                ui.set_caption(F, "Shiftallformulasonetotheright1", &trf("Shift formulas {} to 5 a position to the right", &[&(t + 1)]));
                 ui.set_visible(F, "Shiftallformulasonetotheright1", t < 5);
-                ui.set_caption(F, "Shifttotheleft1", &format!("Shift formulas {} to 6 a position to the left", t + 1));
+                ui.set_caption(F, "Shifttotheleft1", &trf("Shift formulas {} to 6 a position to the left", &[&(t + 1)]));
                 ui.popup_menu(F, "PopupMenu2", "TabControl1", x, y);
             }
         }
@@ -811,7 +811,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D formula (*.m3f)|*.m3f".into(),
+                filter: format!("{}|*.m3f", tr("M3D formula (*.m3f)")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_FORMULAS)),
                 ..Default::default()
             };
@@ -926,7 +926,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Copythevaluesto1Click" => {
             let src = tab(ui);
             let d = if src == 0 { 2 } else { 1 };
-            ui.input_query("formula:copyvalues", "Copy the values", "to formula nr:", &d.to_string());
+            ui.input_query("formula:copyvalues", &tr("Copy the values"), &tr("to formula nr:"), &d.to_string());
         }
         "ExchangeFormulaLeftBtnClick" | "ExchangeFormulaRightBtnClick" => {
             let t = tab(ui);

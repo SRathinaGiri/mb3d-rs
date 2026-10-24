@@ -3,6 +3,7 @@
 
 use super::util::fts;
 use super::Mb3d;
+use crate::vcl::lang::{tr, trf};
 use crate::vcl::{DialogResult, Ev, Event, Ui};
 use std::path::PathBuf;
 
@@ -136,7 +137,7 @@ impl JitFormula {
             }
         }
         if code.is_empty() {
-            return Err(format!("{name}: no [SOURCE] section, this is not a JIT formula"));
+            return Err(trf("{}: no [SOURCE] section, this is not a JIT formula", &[&name]));
         }
         f.code = code.join("\n");
         f.description = desc.join("\n");
@@ -272,7 +273,7 @@ fn init(app: &mut Mb3d, ui: &mut Ui) {
             let p = formula_dir(app).join(format!("{n}.m3f"));
             let p = if p.exists() { p } else { crate::formulas::custom_path(&n).unwrap_or(p) };
             std::fs::read(&p)
-                .map_err(|e| format!("Could not load formula <{}>: {e}", p.display()))
+                .map_err(|e| trf("Could not load formula <{}>: {}", &[&p.display(), &e]))
                 .and_then(|d| JitFormula::parse(&n, &String::from_utf8_lossy(&d)))
         }
         None => Ok(JitFormula::new_formula()),
@@ -300,7 +301,7 @@ fn compile(app: &mut Mb3d, ui: &mut Ui) -> bool {
     let f = &app.jit.f;
     match crate::m3f::M3f::parse(&f.name, &f.to_text()) {
         Ok(_) => {
-            info(ui, "Compiling succeeded");
+            info(ui, &tr("Compiling succeeded"));
             true
         }
         Err(e) => {
@@ -314,13 +315,13 @@ fn compile(app: &mut Mb3d, ui: &mut Ui) -> bool {
 fn save_code(app: &mut Mb3d, ui: &mut Ui) {
     take_fields(app, ui);
     if !app.jit.f.name.starts_with("JIT") {
-        ui.show_message("The formula name should start with \"JIT\" in order to distinguish those formulas from the ASM-based formulas");
+        ui.show_message(&tr("The formula name should start with \"JIT\" in order to distinguish those formulas from the ASM-based formulas"));
         app.jit.saving_and_exit = false;
         return;
     }
     let p = formula_dir(app).join(format!("{}.m3f", app.jit.f.name));
     if p.exists() {
-        ui.confirm("jit:overwrite", &format!("The file <{}.m3f> already exists. Do you want to overwrite it?", app.jit.f.name));
+        ui.confirm("jit:overwrite", &trf("The file <{}.m3f> already exists. Do you want to overwrite it?", &[&app.jit.f.name]));
     } else {
         write_formula(app, ui);
     }
@@ -332,7 +333,7 @@ fn write_formula(app: &mut Mb3d, ui: &mut Ui) {
     let p = dir.join(format!("{}.m3f", app.jit.f.name));
     match std::fs::write(&p, app.jit.f.to_text()) {
         Ok(()) => {
-            info(ui, "Saving succeeded");
+            info(ui, &tr("Saving succeeded"));
             crate::formulas::forget_custom(&app.jit.f.name);
             if std::mem::take(&mut app.jit.saving_and_exit) {
                 ui.hide(F);
@@ -349,12 +350,12 @@ fn write_formula(app: &mut Mb3d, ui: &mut Ui) {
 /// Opens the value dialog (`ParamValueEditFrm.Clear` + `ShowModal`).
 fn edit_value(app: &mut Mb3d, ui: &mut Ui, k: Kind, idx: Option<usize>) {
     let title = match (k, idx.is_some()) {
-        (Kind::Option, false) => "Add option value",
-        (Kind::Option, true) => "Edit option value",
-        (Kind::Const, false) => "Add named constant value",
-        (Kind::Const, true) => "Edit named constant value",
-        (Kind::Param, false) => "Add named param",
-        (Kind::Param, true) => "Edit named param",
+        (Kind::Option, false) => tr("Add option value"),
+        (Kind::Option, true) => tr("Edit option value"),
+        (Kind::Const, false) => tr("Add named constant value"),
+        (Kind::Const, true) => tr("Edit named constant value"),
+        (Kind::Param, false) => tr("Add named param"),
+        (Kind::Param, true) => tr("Edit named param"),
     };
     ui.cm(PV, "ParamnameEdit").read_only = idx.is_some();
     let (name, ty, val) = match idx.and_then(|i| values(&mut app.jit, k).get(i).cloned()) {
@@ -365,7 +366,7 @@ fn edit_value(app: &mut Mb3d, ui: &mut Ui, k: Kind, idx: Option<usize>) {
     let ti = ui.c(PV, "TypeCmb").items.iter().position(|s| s == ty).map(|i| i as i32).unwrap_or(-1);
     ui.set_item_index(PV, "TypeCmb", ti);
     ui.set_text(PV, "ValueEdit", &val);
-    ui.fm(PV).set_caption(title);
+    ui.fm(PV).set_caption(&title);
     app.jit.pending = Some((k, idx));
     ui.show_modal(PV);
 }
@@ -374,22 +375,22 @@ fn edit_value(app: &mut Mb3d, ui: &mut Ui, k: Kind, idx: Option<usize>) {
 fn value_ok(app: &mut Mb3d, ui: &mut Ui) {
     let name = ui.text(PV, "ParamnameEdit").trim().to_string();
     if name.is_empty() {
-        return ui.show_message("Param name must not be empty");
+        return ui.show_message(&tr("Param name must not be empty"));
     }
     let ti = ui.item_index(PV, "TypeCmb");
     let Some(ty) = ui.c(PV, "TypeCmb").items.get(ti.max(0) as usize).and_then(|s| Datatype::parse(s)).filter(|_| ti >= 0) else {
-        return ui.show_message("Type must not be empty");
+        return ui.show_message(&tr("Type must not be empty"));
     };
     let vt = ui.text(PV, "ValueEdit");
     let value = if ty == Datatype::Int64 {
         match vt.trim().parse::<i64>() {
             Ok(v) => v as f64,
-            Err(_) => return ui.show_message(&format!("'{}' is not a valid integer value", vt.trim())),
+            Err(_) => return ui.show_message(&trf("'{}' is not a valid integer value", &[&vt.trim()])),
         }
     } else {
         match super::util::parse_float(&vt) {
             Some(v) => v,
-            None => return ui.show_message(&format!("'{}' is not a valid floating point value", vt.trim())),
+            None => return ui.show_message(&trf("'{}' is not a valid floating point value", &[&vt.trim()])),
         }
     };
     let Some((k, idx)) = app.jit.pending.take() else { return ui.hide(PV) };
@@ -405,12 +406,12 @@ fn value_ok(app: &mut Mb3d, ui: &mut Ui) {
         None => {
             if list.iter().any(|p| p.name.eq_ignore_ascii_case(&name)) {
                 let what = match k {
-                    Kind::Option => "Option",
-                    Kind::Const => "Constant",
-                    Kind::Param => "Param",
+                    Kind::Option => tr("Option"),
+                    Kind::Const => tr("Constant"),
+                    Kind::Param => tr("Param"),
                 };
                 ui.hide(PV);
-                return ui.show_message(&format!("{what} <{name}> already exists"));
+                return ui.show_message(&trf("{} <{}> already exists", &[&what, &name]));
             }
             list.push(Pair { name, ty, value });
             list.len() - 1
@@ -461,7 +462,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         },
         "LoadFormulaBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Formula (*.m3f)|*.m3f".into(),
+                filter: format!("{}|*.m3f", tr("Formula (*.m3f)")),
                 initial_dir: Some(formula_dir(app)),
                 ..Default::default()
             };

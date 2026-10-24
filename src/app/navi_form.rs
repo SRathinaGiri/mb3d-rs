@@ -4,7 +4,7 @@
 //! camera, the mouse look mode, the adjustment panel (julia, formula, 4D
 //! rotation and other values) and sending the view back to the main window.
 
-use crate::vcl::lang::tr;
+use crate::vcl::lang::{tr, trf};
 use super::engine::{Engine, Job};
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
@@ -295,7 +295,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     app.navi.ver = ver;
     if !err.is_empty() {
-        app.message(ui, &format!("Navigator: {err}"));
+        app.message(ui, &trf("Navigator: {}", &[&err]));
     }
     let Some(rgb) = rgb else { return };
     let l = app.navi.lightness;
@@ -437,7 +437,7 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
     let df = app.navi.scene.lighting.dyn_fog as i64;
     ui.set_position(F, "UpDown1", df);
     ui.set_caption(F, "Label38", &(df - 53).to_string());
-    let cap = if app.title.is_empty() { "main paras".to_string() } else { app.title.clone() };
+    let cap = if app.title.is_empty() { tr("main paras") } else { app.title.clone() };
     ui.fm(F).set_caption(&cap);
     set_zoom(app, ui);
     set_window_size(app, ui, ui.visible(F, "Panel2"));
@@ -498,9 +498,9 @@ fn view_to_main(app: &mut Mb3d, ui: &mut Ui) {
     *m = mm;
     app.scene_to_forms(ui);
     let t = ui.f(F).caption().to_string();
-    app.title = if t.is_empty() || t == "main paras" { app.title.clone() } else if t.ends_with('~') { t } else { format!("{t}~") };
+    app.title = if t.is_empty() || t == tr("main paras") { app.title.clone() } else if t.ends_with('~') { t } else { format!("{t}~") };
     super::main_form::set_caption(app, ui);
-    app.message(ui, "Navigator view sent to the main window, press \"Calculate 3D\".");
+    app.message(ui, &tr("Navigator view sent to the main window, press \"Calculate 3D\"."));
 }
 
 fn round_fvals(f: &[crate::scene::FormulaEntry]) -> Vec<crate::scene::FormulaEntry> {
@@ -682,6 +682,12 @@ fn option_count(app: &Mb3d, f: usize) -> usize {
     app.navi.scene.formulas.get(f).map(|e| e.formula.options().len()).unwrap_or(0)
 }
 
+/// SpeedButton33 shows "Dyn Fog on its:" (its form text, in any language)
+/// until the program sets it to "Color on its:".
+fn dyn_fog_shown(ui: &Ui) -> bool {
+    ui.caption(F, "SpeedButton33") != tr("Color on its:")
+}
+
 /// `UpdateFormulaLabels`.
 fn update_formula_labels(app: &Mb3d, ui: &mut Ui) {
     let f = formula_nr(ui);
@@ -706,7 +712,7 @@ fn update_formula_labels(app: &Mb3d, ui: &mut Ui) {
 
 fn update_divers_labels(app: &Mb3d, ui: &mut Ui) {
     let sc = &app.navi.scene;
-    let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+    let fog = dyn_fog_shown(ui);
     ui.set_caption(F, "LabelV3", &if fog { sc.dfog_on_it.to_string() } else { (sc.color_on_it as i32 - 1).to_string() });
     ui.set_caption(F, "LabelV4", &fts_single(sc.effective_rstop()));
     ui.set_caption(F, "LabelV5", &fts_single(sc.decomb.map(|d| d.smooth as f64).unwrap_or(0.5)));
@@ -755,7 +761,7 @@ fn update_adjust(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
     }
     update_formula_labels(app, ui);
     let sc = &app.navi.scene;
-    let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+    let fog = dyn_fog_shown(ui);
     let p = [
         if fog { sc.dfog_on_it as f64 } else { sc.color_on_it as f64 - 1.0 },
         sc.effective_rstop(),
@@ -864,7 +870,7 @@ fn apply_value(app: &mut Mb3d, ui: &mut Ui, t: usize, formula_shown: bool) {
         st.focused = t - 6;
         let lv = format!("LabelV{}", t - 6);
         let old = ui.caption(F, &lv);
-        let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+        let fog = dyn_fog_shown(ui);
         let sc = &mut st.scene;
         let cap = match t {
             9 => {
@@ -1121,8 +1127,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_caption(F, "Label12", if az { "(z)" } else { "(w)" });
         }
         "CheckBox5Click" => {
-            let c = if ui.checked(F, "CheckBox5") { "Ani keyframe" } else { "Ani keyfr. (f)" };
-            ui.set_caption(F, "SpeedButton18", c);
+            let c = if ui.checked(F, "CheckBox5") { tr("Ani keyframe") } else { tr("Ani keyfr. (f)") };
+            ui.set_caption(F, "SpeedButton18", &c);
         }
         "CheckBox1Click" => {
             let v = ui.checked(F, "CheckBox1");
@@ -1186,7 +1192,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 let q = (app.navi.quality + if up { 1 } else { -1 }).clamp(1, 7);
                 if q != app.navi.quality {
                     app.navi.quality = q;
-                    ui.set_caption(F, "CheckBox4", &format!("HiQual {q}"));
+                    ui.set_caption(F, "CheckBox4", &trf("HiQual {}", &[&q]));
                     new_calc(app, ui);
                 }
             }
@@ -1356,7 +1362,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.make_scene(ui);
             let m = app.scene.clone();
             let foc = app.navi.focused;
-            let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+            let fog = dyn_fog_shown(ui);
             let n = &mut app.navi.scene;
             match foc {
                 3 => {
@@ -1386,7 +1392,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton32Click" => {
             let foc = app.navi.focused;
             let n = app.navi.scene.clone();
-            let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+            let fog = dyn_fog_shown(ui);
             match foc {
                 3 => {
                     if fog {
@@ -1403,8 +1409,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "SpeedButton33Click" => {
-            let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
-            ui.set_caption(F, "SpeedButton33", if fog { "Color on its:" } else { "Dyn Fog on its:" });
+            let fog = dyn_fog_shown(ui);
+            ui.set_caption(F, "SpeedButton33", &if fog { tr("Color on its:") } else { tr("Dyn Fog on its:") });
             ui.set_visible(F, "Label38", !fog);
             ui.set_visible(F, "UpDown1", !fog);
             let sc = &app.navi.scene;
@@ -1415,7 +1421,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Label24Click" => {
             let z = crate::app::util::float_general(app.navi.scene.zoom, 6);
-            ui.input_query("navi:zoom", "Zoom", "New zoom:", &z);
+            ui.input_query("navi:zoom", &tr("Zoom"), &tr("New zoom:"), &z);
         }
         "ResetViewBtnClick" => reset_view(app, ui),
         "Label39MouseDown" => {
@@ -1425,7 +1431,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if t < 14 {
                 let v = app.navi.vals[t];
                 let s = if (6..9).contains(&t) { fts_single(v.to_degrees()) } else if is_int_type(app.navi.vtype[t]) { (v.round() as i64).to_string() } else { fts_single(v) };
-                ui.input_query(&format!("navi:val{t}"), "Input", "New value:", &s);
+                ui.input_query(&format!("navi:val{t}"), &tr("Input"), &tr("New value:"), &s);
             }
             if (3..=5).contains(&t) {
                 app.navi.focused = t - 3;
