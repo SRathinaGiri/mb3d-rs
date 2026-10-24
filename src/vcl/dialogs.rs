@@ -388,6 +388,7 @@ impl Ui {
              \x20 object NameEdit: TEdit\n    Left = 96\n    Top = 316\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    TabOrder = 3\n  end\n\
              \x20 object TypeLabel: TLabel\n    Left = 8\n    Top = 352\n    Width = 70\n    Height = 13\n    Anchors = [akLeft, akBottom]\n    Caption = {}\n  end\n\
              \x20 object TypeCombo: TComboBox\n    Left = 96\n    Top = 348\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    Style = csDropDownList\n    TabOrder = 4\n  end\n",
+            esc(&tr("Look &in:")),
             esc(&tr("Up one level")),
             esc(&tr("File &name:")),
             esc(&tr("Files of &type:"))
