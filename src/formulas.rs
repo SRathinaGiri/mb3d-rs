@@ -680,6 +680,12 @@ impl Formula {
             Formula::IntPow { .. } => vec![10, 0],
             Formula::FoldingIntPow { .. } => vec![10, 0, 0],
             Formula::AexionC { .. } => vec![0, 0, 2, 2, 0, 0, 2, 2],
+            // The last six controls of these formulas are Rotate X/Y/Z
+            // (DoubleAngle = 3) and the three ordinary pair folds.
+            Formula::SinCosBulb { .. } | Formula::TailsBulb { .. } => {
+                vec![0, 0, 0, 0, 3, 3, 3, 0, 0, 0]
+            }
+            Formula::MandelbarBulb { .. } => vec![0, 0, 3, 3, 3, 0, 0, 0],
             _ => vec![0; self.options().len()],
         }
     }
@@ -1241,6 +1247,26 @@ mod tests {
             let mut j = [0.1, -0.2, 0.3, 0.0];
             f.iterate(&mut v, &mut j, 0.29, false);
             assert!(v[..3].iter().all(|x| x.is_finite()), "{name}: {v:?}");
+        }
+    }
+
+    #[test]
+    fn modern_bulb_rotation_options_are_angles() {
+        for name in ["SinCos Bulb", "Tails Bulb", "Mandelbar Bulb"] {
+            let f = Formula::default_for(name).unwrap();
+            let options = f.options();
+            let types = f.option_types();
+            for (index, (option, _)) in options.iter().enumerate() {
+                match option.as_str() {
+                    "Rotate X (degrees)" | "Rotate Y (degrees)" | "Rotate Z (degrees)" => {
+                        assert_eq!(types[index], 3, "{name}: {option}");
+                    }
+                    "Fold XY" | "Fold YZ" | "Fold XZ" => {
+                        assert_eq!(types[index], 0, "{name}: {option}");
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 
