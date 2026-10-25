@@ -1322,6 +1322,17 @@ impl Machine {
         Some(self.with_prog(i, |m, p| f(m, p, it, pvar, max_steps)))
     }
 
+    /// The number of the compiled program at `entry` if it has a direct
+    /// version ([`Progs::direct_fn`] calls it); None as for
+    /// [`Machine::call_direct`].
+    pub fn direct_index(&self, entry: u32) -> Option<usize> {
+        if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+            return None;
+        }
+        let i = self.progs().iter().position(|(e, _)| *e == entry)?;
+        self.progs()[i].1.direct.map(|_| i)
+    }
+
     /// The compiled programs, taken out of the machine (so that a loop can
     /// call [`DifsFn`]s with them); [`Machine::restore_progs`] puts them
     /// back.
@@ -3216,6 +3227,18 @@ impl Progs {
         }
         let (_, p) = self.0.as_ref()?.iter().find(|(e, _)| *e == entry)?;
         Some((p.difs?, p))
+    }
+
+    /// The direct version of program number `i` (from
+    /// [`Machine::direct_index`]) and the program, if that program is the
+    /// one at `entry`.
+    #[inline]
+    pub fn direct_fn(&self, i: usize, entry: u32) -> Option<(DirectFn, &Prog)> {
+        let (e, p) = self.0.as_ref()?.get(i)?;
+        if *e != entry {
+            return None;
+        }
+        Some((p.direct?, p))
     }
 }
 

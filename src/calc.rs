@@ -830,6 +830,7 @@ impl CalcParams {
             dfree: [0.0; 2],
             emu: self.machine.as_ref().map(|m| Box::new(self.init_machine(m))),
             ipol: self.ipol,
+            direct: Default::default(),
         }
     }
 

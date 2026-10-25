@@ -78,6 +78,23 @@ pub struct Iteration {
     /// Weights of the two formulas of an interpolation hybrid
     /// (`PSingle(@nHybrid[0..1])^`).
     pub ipol: [f32; 2],
+    /// The translated programs of the custom slots, for the direct calls of
+    /// the alternating hybrid loop (found once per slot list).
+    pub direct: DirectSlots,
+}
+
+/// Most slots of a hybrid for [`DirectSlots`].
+const DIRECT_SLOTS: usize = 8;
+
+/// The program numbers ([`Machine::direct_index`]) of the custom slots of a
+/// slot list: `run` calls their direct versions without the per call set up
+/// of [`Iteration::run_custom`].
+#[derive(Clone, Debug, Default)]
+pub struct DirectSlots {
+    /// the slot list (address, length) the numbers are for
+    key: (usize, usize),
+    /// the program number of each slot (`u8::MAX`: none)
+    prog: [u8; DIRECT_SLOTS],
 }
 
 impl Iteration {
@@ -97,10 +114,70 @@ impl Iteration {
         }
     }
 
+    /// The program numbers of the custom slots of `slots` (`self.direct`),
+    /// found again when the slot list changes.
+    fn direct_progs(&mut self, slots: &[HybridSlot]) -> [u8; DIRECT_SLOTS] {
+        let key = (slots.as_ptr() as usize, slots.len());
+        if self.direct.key != key {
+            let mut prog = [u8::MAX; DIRECT_SLOTS];
+            for (n, p) in prog.iter_mut().enumerate().take(slots.len()) {
+                if let Some(i) = self.emu.as_deref().and_then(|m| m.direct_index(custom::code_addr(n))) {
+                    *p = i.min(u8::MAX as usize) as u8;
+                }
+            }
+            self.direct = DirectSlots { key, prog };
+        }
+        self.direct.prog
+    }
+
     /// The core alternating hybrid loop shared by all variants.  Returns the
-    /// index of the last formula used.
+    /// index of the last formula used.  When every custom slot has a direct
+    /// version, the machine and its programs are taken out once for the
+    /// whole loop instead of once per formula call.
     #[inline]
     fn run(&mut self, slots: &[HybridSlot], four_d: bool) -> usize {
+        if self.emu.is_none() || slots.len() > DIRECT_SLOTS || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
+            return self.run_with(slots, four_d, |it, n| it.call_slot(slots, n));
+        }
+        let prog = self.direct_progs(slots);
+        let Some(mut m) = self.emu.take() else { unreachable!("checked above") };
+        let progs = m.take_progs();
+        // the direct version of every custom slot (the program numbers are
+        // checked against the machine: a missing one runs the old way)
+        let mut direct: [Option<(crate::x86::DirectFn, &crate::x86::Prog)>; DIRECT_SLOTS] = [None; DIRECT_SLOTS];
+        let mut all = true;
+        for (n, slot) in slots.iter().enumerate() {
+            if let Formula::Custom(c) = &slot.formula {
+                if c.def.jit.is_none() {
+                    direct[n] = progs.direct_fn(prog[n] as usize, custom::code_addr(n));
+                    all &= direct[n].is_some();
+                }
+            }
+        }
+        if !all {
+            m.restore_progs(progs);
+            self.emu = Some(m);
+            return self.run_with(slots, four_d, |it, n| it.call_slot(slots, n));
+        }
+        let r = self.run_with(slots, four_d, |it, n| match direct[n] {
+            Some((f, p)) => {
+                if f(&mut m, p, it, custom::pconst_addr(n), custom::MAX_STEPS).is_err() {
+                    CUSTOM_ERRORS.fetch_add(1, Ordering::Relaxed);
+                    it.v = [f64::INFINITY; 4];
+                    it.rout = f64::INFINITY;
+                }
+            }
+            None => it.call_slot(slots, n),
+        });
+        m.restore_progs(progs);
+        self.emu = Some(m);
+        r
+    }
+
+    /// The loop of [`Iteration::run`], with the formula of slot `n` called
+    /// by `call(self, n)`.
+    #[inline(always)]
+    fn run_with(&mut self, slots: &[HybridSlot], four_d: bool, mut call: impl FnMut(&mut Self, usize)) -> usize {
         let mut n = self.start_from;
         let mut btmp = slots[n].iterations.max(0);
         self.it_result = 0;
@@ -122,7 +199,7 @@ impl Iteration {
                 }
             }
             let slot = &slots[n];
-            self.call_slot(slots, n);
+            call(self, n);
             btmp -= 1;
             if slot.uncounted {
                 uncounted_guard += 1;
