@@ -105,7 +105,10 @@ const DIRECT_SLOTS: usize = 8;
 pub struct DirectSlots {
     /// the slot list (address, length) the numbers are for
     key: (usize, usize),
-    /// the program number of each slot (`u8::MAX`: none)
+    /// the program number of each slot (`u8::MAX`: none); the last one is
+    /// 1 if every custom slot (not JIT) has a direct version (a hybrid has
+    /// at most 6 slots: kept in this array, so that the iteration state
+    /// does not grow, which made the reflections of some scenes slower)
     prog: [u8; DIRECT_SLOTS],
 }
 
@@ -127,19 +130,25 @@ impl Iteration {
     }
 
     /// The program numbers of the custom slots of `slots` (`self.direct`),
-    /// found again when the slot list changes.
-    fn direct_progs(&mut self, slots: &[HybridSlot]) -> [u8; DIRECT_SLOTS] {
+    /// found again when the slot list changes; None if a custom slot has
+    /// no direct version (the loop runs the old way, without the set up).
+    fn direct_progs(&mut self, slots: &[HybridSlot]) -> Option<[u8; DIRECT_SLOTS]> {
         let key = (slots.as_ptr() as usize, slots.len());
         if self.direct.key != key {
             let mut prog = [u8::MAX; DIRECT_SLOTS];
-            for (n, p) in prog.iter_mut().enumerate().take(slots.len()) {
+            let mut all = slots.len() < DIRECT_SLOTS;
+            for (n, (p, slot)) in prog.iter_mut().zip(slots).enumerate() {
                 if let Some(i) = self.emu.as_deref().and_then(|m| m.direct_index(custom::code_addr(n))) {
                     *p = i.min(u8::MAX as usize) as u8;
                 }
+                if matches!(&slot.formula, Formula::Custom(c) if c.def.jit.is_none()) {
+                    all &= *p != u8::MAX;
+                }
             }
+            prog[DIRECT_SLOTS - 1] = all as u8;
             self.direct = DirectSlots { key, prog };
         }
-        self.direct.prog
+        (self.direct.prog[DIRECT_SLOTS - 1] == 1).then_some(self.direct.prog)
     }
 
     /// The core alternating hybrid loop shared by all variants.  Returns the
@@ -148,10 +157,12 @@ impl Iteration {
     /// whole loop instead of once per formula call.
     #[inline]
     fn run(&mut self, slots: &[HybridSlot], four_d: bool) -> usize {
-        if self.emu.is_none() || slots.len() > DIRECT_SLOTS || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
+        if self.emu.is_none() || slots.len() >= DIRECT_SLOTS || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
             return self.run_with(slots, four_d, |it, n| it.call_slot(slots, n));
         }
-        let prog = self.direct_progs(slots);
+        let Some(prog) = self.direct_progs(slots) else {
+            return self.run_with(slots, four_d, |it, n| it.call_slot(slots, n));
+        };
         let Some(mut m) = self.emu.take() else { unreachable!("checked above") };
         let progs = m.take_progs();
         // the direct version of every custom slot (the program numbers are
@@ -221,7 +232,7 @@ impl Iteration {
                 continue;
             }
             self.it_result += 1;
-            let [x, y, z, w] = scalar_loads(&self.v);
+            let [x, y, z, w] = if four_d { self.v } else { scalar_loads(&self.v) };
             self.rout = if four_d { x * x + y * y + z * z + w * w } else { x * x + y * y + z * z };
             if self.rout < self.otrap {
                 self.otrap = self.rout;
