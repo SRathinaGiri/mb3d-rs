@@ -8,13 +8,14 @@ license = "LGPL-2.1-only"
 [features]
 # the desktop application (Mandelbulb3D window and forms); without it only
 # the command line renderer is built, which has no dependencies
-default = ["gui", "gpu"]
+default = ["gui", "gpu", "jit"]
 gui = ["dep:winit", "dep:softbuffer", "dep:fontdue", "dep:arboard", "dep:open"]
 # ray marching on the graphics card (wgpu: Vulkan, Metal, DirectX 12),
 # see src/gpu.rs
 gpu = ["dep:wgpu", "dep:pollster"]
 # the formulas of a hybrid compiled together at run time (Cranelift), see
-# src/x86/lift_clif.rs
+# src/x86/lift_clif.rs; not on macOS (not tested there yet: the compiled
+# code needs MAP_JIT memory on Apple silicon), see build.rs
 jit = ["dep:cranelift-codegen", "dep:cranelift-frontend", "dep:cranelift-jit", "dep:cranelift-module", "dep:cranelift-native"]
 
 [dependencies]
@@ -25,6 +26,8 @@ arboard = { version = "3", optional = true, default-features = false, features =
 wgpu = { version = "30.0.1", optional = true }
 pollster = { version = "1.0.1", optional = true }
 open = { version = "5", optional = true }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
 cranelift-codegen = { version = "0.130", optional = true }
 cranelift-frontend = { version = "0.130", optional = true }
 cranelift-jit = { version = "0.130", optional = true }
@@ -48,9 +51,6 @@ required-features = ["gui"]
 name = "wintest"
 required-features = ["gui"]
 
-[[example]]
-name = "clifcheck"
-required-features = ["jit"]
 
 [profile.release]
 opt-level = 3

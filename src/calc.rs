@@ -798,7 +798,7 @@ impl CalcParams {
             its: Default::default(),
             machine,
         };
-        #[cfg(feature = "jit")]
+        #[cfg(jit)]
         p.attach_jit();
         Ok(p)
     }
@@ -808,7 +808,7 @@ impl CalcParams {
     /// points of three rays of the view; the result is kept with the
     /// compiled code, see `clif_jit::cached`).  `MB3D_JIT=force`: without
     /// the timing.
-    #[cfg(feature = "jit")]
+    #[cfg(jit)]
     fn attach_jit(&mut self) {
         use crate::x86::clif_jit;
         if self.difs || !matches!(self.mode, HybridMode::Alt3D | HybridMode::Alt4D) || !clif_jit::enabled() {
@@ -833,7 +833,7 @@ impl CalcParams {
 
     /// Whether the compiled hybrid `h` is faster than the formulas called
     /// one by one (at least 3 %, the best of three rounds each).
-    #[cfg(feature = "jit")]
+    #[cfg(jit)]
     fn jit_is_faster(&mut self, h: &std::sync::Arc<crate::x86::clif_jit::HybridJit>) -> bool {
         let rays = [(0.5, 0.5), (0.25, 0.3), (0.7, 0.65)];
         let pts: Vec<Vec3> = rays

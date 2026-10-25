@@ -889,7 +889,14 @@ interrupted animation continues and several computers can share one.
 * **Speed on the processor** is close to MB3D's: the formulas' machine
   code from MB3D's `.m3f` files was translated so that it runs on any
   processor (also Apple Silicon), at a small cost; the ray marching
-  itself is faster. See the tables above.
+  itself is faster. See the tables above. On Linux and Windows the
+  formulas of a scene's hybrid are also compiled together into one
+  function when a picture starts (in a few milliseconds, with Cranelift),
+  so that they hand their values on in the processor's registers.
+  Together with a faster loop over the formulas (on every system), CPU
+  renders of the 80 example files take 20 % less time than in v0.2.74
+  (up to 60 % in some), the pictures the same to the bit. A scene keeps the compiled hybrid only if it
+  measures faster; `MB3D_NO_JIT=1` switches it off. Not yet on macOS.
 * **Big pictures** can be rendered in one piece (a 15000 x 20000 picture
   needs about 15 GB of memory; with depth of field it takes hours) or in
   tiles, also on several computers (`--tiles`, and the Big renders
@@ -1062,3 +1069,6 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   its own implementation of the algorithm, written from the paper; it
   contains no code of GIMP or GEGL (GEGL is under the LGPL 3, this
   program under the LGPL 2.1).
+* **The formulas are compiled at run time** with
+  [Cranelift](https://cranelift.dev) of the Bytecode Alliance
+  (Apache License 2.0 with LLVM exception), on Linux and Windows.

@@ -1139,7 +1139,7 @@ pub struct Machine {
     pub steps: u64,
     /// the alternating hybrid of the scene compiled at run time (set on the
     /// prototype machine of a scene, see `clif_jit::compile_hybrid`)
-    #[cfg(feature = "jit")]
+    #[cfg(jit)]
     pub jit: Option<std::sync::Arc<clif_jit::HybridJit>>,
 }
 
@@ -1206,7 +1206,7 @@ impl Machine {
             progs: Some(std::sync::Arc::new(Vec::new())),
             host: Vec::new(),
             steps: 0,
-            #[cfg(feature = "jit")]
+            #[cfg(jit)]
             jit: None,
         }
     }
@@ -3232,11 +3232,11 @@ pub mod lift;
 mod lift_emit;
 
 pub mod lift_wgsl;
-#[cfg(feature = "jit")]
+#[cfg(jit)]
 mod lift_clif;
-#[cfg(feature = "jit")]
+#[cfg(jit)]
 pub mod clif_jit;
-#[cfg(feature = "jit")]
+#[cfg(jit)]
 pub mod clif_builtin;
 
 /// The compiled programs of a machine while they are out of it (see

@@ -157,7 +157,7 @@ impl Iteration {
     /// whole loop instead of once per formula call.
     #[inline]
     fn run(&mut self, slots: &[HybridSlot], four_d: bool) -> usize {
-        #[cfg(feature = "jit")]
+        #[cfg(jit)]
         if let Some(n) = self.run_jit(slots, four_d) {
             return n;
         }
@@ -203,7 +203,7 @@ impl Iteration {
 
     /// The loop compiled for the scene (`clif_jit::compile_hybrid`), if it
     /// is the one of these parameters.
-    #[cfg(feature = "jit")]
+    #[cfg(jit)]
     #[inline]
     fn run_jit(&mut self, slots: &[HybridSlot], four_d: bool) -> Option<usize> {
         let h = self.emu.as_deref()?.jit.as_deref()?;

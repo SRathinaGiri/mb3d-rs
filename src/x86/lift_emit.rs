@@ -597,7 +597,7 @@ impl Cells {
     }
 
     /// The cells the formula reads or writes.
-    #[cfg(feature = "jit")]
+    #[cfg(jit)]
     pub(super) fn used_cells(&self) -> impl Iterator<Item = (char, u32)> + '_ {
         self.used.iter().copied()
     }
