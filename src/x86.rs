@@ -1137,6 +1137,10 @@ pub struct Machine {
     progs: Option<std::sync::Arc<Vec<(u32, Prog)>>>,
     pub host: Vec<(u32, HostFn)>,
     pub steps: u64,
+    /// the alternating hybrid of the scene compiled at run time (set on the
+    /// prototype machine of a scene, see `clif_jit::compile_hybrid`)
+    #[cfg(feature = "jit")]
+    pub jit: Option<std::sync::Arc<clif_jit::HybridJit>>,
 }
 
 const TRIG_SLOTS: usize = 256;
@@ -1202,6 +1206,8 @@ impl Machine {
             progs: Some(std::sync::Arc::new(Vec::new())),
             host: Vec::new(),
             steps: 0,
+            #[cfg(feature = "jit")]
+            jit: None,
         }
     }
 
@@ -3226,6 +3232,12 @@ pub mod lift;
 mod lift_emit;
 
 pub mod lift_wgsl;
+#[cfg(feature = "jit")]
+mod lift_clif;
+#[cfg(feature = "jit")]
+pub mod clif_jit;
+#[cfg(feature = "jit")]
+pub mod clif_builtin;
 
 /// The compiled programs of a machine while they are out of it (see
 /// [`Machine::take_progs`]).

@@ -32,7 +32,7 @@ const STACK_LOW: u32 = BASE + 0x4000;
 
 /// A region and byte offset in it: 'r' record (from IT_BASE), 'v' variable
 /// buffer (from its start), 's' stack (from STACK_LOW).
-fn region(loc: Loc) -> Option<(char, u32)> {
+pub(super) fn region(loc: Loc) -> Option<(char, u32)> {
     match loc {
         Loc::Field(o) => Some(('r', o)),
         Loc::Var(o) => Some(('v', (o + crate::m3f::CONST_OFFSET as i32) as u32)),
@@ -594,6 +594,12 @@ impl Cells {
     /// The cells the formula writes.
     pub(super) fn written_cells(&self) -> impl Iterator<Item = (char, u32)> + '_ {
         self.written.iter().copied()
+    }
+
+    /// The cells the formula reads or writes.
+    #[cfg(feature = "jit")]
+    pub(super) fn used_cells(&self) -> impl Iterator<Item = (char, u32)> + '_ {
+        self.used.iter().copied()
     }
 
     /// Expression (u64) of `n` bytes at `off` in region `p`.

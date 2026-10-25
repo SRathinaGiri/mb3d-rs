@@ -157,6 +157,10 @@ impl Iteration {
     /// whole loop instead of once per formula call.
     #[inline]
     fn run(&mut self, slots: &[HybridSlot], four_d: bool) -> usize {
+        #[cfg(feature = "jit")]
+        if let Some(n) = self.run_jit(slots, four_d) {
+            return n;
+        }
         if self.emu.is_none() || slots.len() >= DIRECT_SLOTS || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
             return self.run_with(slots, four_d, |it, n| it.call_slot(slots, n));
         }
@@ -195,6 +199,30 @@ impl Iteration {
         m.restore_progs(progs);
         self.emu = Some(m);
         r
+    }
+
+    /// The loop compiled for the scene (`clif_jit::compile_hybrid`), if it
+    /// is the one of these parameters.
+    #[cfg(feature = "jit")]
+    #[inline]
+    fn run_jit(&mut self, slots: &[HybridSlot], four_d: bool) -> Option<usize> {
+        let h = self.emu.as_deref()?.jit.as_deref()?;
+        if h.four_d != four_d || h.start != self.start_from || h.end != self.end_to || h.repeat != self.repeat_from || h.slots != slots.len() || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
+            return None;
+        }
+        let f = h.f;
+        let mut m = self.emu.take()?;
+        let mut errs = 0u64;
+        let mp: *mut crate::x86::Machine = &mut *m;
+        // SAFETY: the compiled loop reads and writes the iteration's fields
+        // (not `emu`, which is taken out), the machine's memory image, and
+        // the slots it was compiled for
+        let n = unsafe { f(self, (*mp).mem.as_mut_ptr(), mp, custom::MAX_STEPS, slots.as_ptr(), &mut errs) };
+        self.emu = Some(m);
+        if errs > 0 {
+            CUSTOM_ERRORS.fetch_add(errs, Ordering::Relaxed);
+        }
+        Some(n as usize)
     }
 
     /// The loop of [`Iteration::run`], with the formula of slot `n` called

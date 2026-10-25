@@ -725,7 +725,8 @@ impl CalcParams {
         let mcts_m = 32767.0 / ((its + 1).max(1) as f32);
         let d_col_plus = d_col_plus + its as f32 * 0.1;
 
-        Ok(CalcParams {
+        #[allow(unused_mut)]
+        let mut p = CalcParams {
             slots,
             mode,
             ipol: ipol.unwrap_or([1.0, 0.0]),
@@ -796,7 +797,75 @@ impl CalcParams {
             gpu_double: false,
             its: Default::default(),
             machine,
-        })
+        };
+        #[cfg(feature = "jit")]
+        p.attach_jit();
+        Ok(p)
+    }
+
+    /// The alternating hybrid compiled at run time (`clif_jit`), if it is
+    /// faster than the formulas called one by one (timed once per hybrid on
+    /// points of three rays of the view; the result is kept with the
+    /// compiled code, see `clif_jit::cached`).  `MB3D_JIT=force`: without
+    /// the timing.
+    #[cfg(feature = "jit")]
+    fn attach_jit(&mut self) {
+        use crate::x86::clif_jit;
+        if self.difs || !matches!(self.mode, HybridMode::Alt3D | HybridMode::Alt4D) || !clif_jit::enabled() {
+            return;
+        }
+        let Some(m) = self.machine.as_ref() else { return };
+        let four_d = self.mode == HybridMode::Alt4D;
+        let key = clif_jit::hybrid_key(m, &self.slots, 0, self.end_to, self.repeat_from, four_d);
+        let jit = match clif_jit::cached(key) {
+            Some(j) => j,
+            None => {
+                let h = clif_jit::compile_hybrid(m, &self.slots, 0, self.end_to, self.repeat_from, four_d).map(std::sync::Arc::new);
+                let keep = h.filter(|h| clif_jit::forced() || self.jit_is_faster(h));
+                clif_jit::cache(key, keep.clone());
+                keep
+            }
+        };
+        if let Some(m) = self.machine.as_mut() {
+            m.jit = jit;
+        }
+    }
+
+    /// Whether the compiled hybrid `h` is faster than the formulas called
+    /// one by one (at least 3 %, the best of three rounds each).
+    #[cfg(feature = "jit")]
+    fn jit_is_faster(&mut self, h: &std::sync::Arc<crate::x86::clif_jit::HybridJit>) -> bool {
+        let rays = [(0.5, 0.5), (0.25, 0.3), (0.7, 0.65)];
+        let pts: Vec<Vec3> = rays
+            .iter()
+            .flat_map(|&(fx, fy)| {
+                (0..200).map(move |k| (fx, fy, k as f64 / 200.0))
+            })
+            .map(|(fx, fy, s)| {
+                let mut c = [0.0; 3];
+                for (i, ci) in c.iter_mut().enumerate() {
+                    *ci = self.ystart[i] + self.vgrads[0][i] * (self.width as f64 * fx) + self.vgrads[1][i] * (self.height as f64 * fy) + self.vgrads[2][i] * s * 400.0;
+                }
+                c
+            })
+            .collect();
+        let time = |p: &mut CalcParams, jit: Option<std::sync::Arc<crate::x86::clif_jit::HybridJit>>| -> f64 {
+            if let Some(m) = p.machine.as_mut() {
+                m.jit = jit;
+            }
+            let mut mr = Marcher::new(p, 1);
+            let t = std::time::Instant::now();
+            for c in &pts {
+                mr.iterations_at(*c);
+            }
+            t.elapsed().as_secs_f64()
+        };
+        let (mut tj, mut tr) = (f64::MAX, f64::MAX);
+        for _ in 0..3 {
+            tj = tj.min(time(self, Some(h.clone())));
+            tr = tr.min(time(self, None));
+        }
+        tj < tr * 0.97
     }
 
     /// `IniIt3D`
