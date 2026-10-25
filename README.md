@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.74](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.74)** (24 Oct 2026, 14:49 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.75](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.75)** (25 Oct 2026, 12:46 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -931,6 +931,23 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.75](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.75) · 25 Oct 2026, 12:46 UTC
+
+| Commit | What it does |
+|---|---|
+| [`b1edcac`](https://github.com/thr32423/mb3d-rs/commit/b1edcac66c0ea62daaa8913cda8f0441e4360fe6) | Version number and release notes of this release |
+| [`fee7b2f`](https://github.com/thr32423/mb3d-rs/commit/fee7b2f8a9f32760dceb33a70cc1100e5145eeeb) | JIT: SSE, indexed record fields and the dIFS loop compiled |
+| [`9ba38c2`](https://github.com/thr32423/mb3d-rs/commit/9ba38c217ca49720c216aab404963a9789369f15) | JIT: all built-in formulas compiled, also in hybrids of built-ins only |
+| [`09fc1f9`](https://github.com/thr32423/mb3d-rs/commit/09fc1f9c10bf0a7922b27ba560a056c87c87fc58) | The formulas compiled at run time by default, except on macOS |
+| [`fe8cdd7`](https://github.com/thr32423/mb3d-rs/commit/fe8cdd7cc8e607120e6d461b04134e763c403311) | Formulas compiled at run time (Cranelift, cargo feature "jit") |
+| [`3f4a17a`](https://github.com/thr32423/mb3d-rs/commit/3f4a17a90726386ad1f3bce9725fdf828813a72e) | CPU: no direct-call set up for hybrids with a formula that has none |
+| [`4d1365b`](https://github.com/thr32423/mb3d-rs/commit/4d1365b4968f2d5610159a74b2396913c1c6277e) | Translated formulas keep their stack in locals |
+| [`87a1523`](https://github.com/thr32423/mb3d-rs/commit/87a152371b6a3ae52db4682fa6cbb67c47cf3756) | CPU: the hybrid loops read the iterated vector as separate loads |
+| [`180b318`](https://github.com/thr32423/mb3d-rs/commit/180b3187a38fa8c9c34c9a4b0a4809d4a8ce4fd0) | CPU: the hybrid loop calls the translated formulas without the per call set up |
+| [`b16bf81`](https://github.com/thr32423/mb3d-rs/commit/b16bf81ef6f39ca9074d92a88a3016f78aa228fb) | Docs: volumetric light runs on the card (since 535d92a), no longer named as a reason for the CPU |
+| [`d7b9621`](https://github.com/thr32423/mb3d-rs/commit/d7b962170b7f7fe377accffaac06bb23fa49111d) | Command line: MB3D_STAGE_TIMES=1 prints the time of every stage of a render |
+| [`1770792`](https://github.com/thr32423/mb3d-rs/commit/17707927660cd8406199e6888ea366a840fa2e8b) | README: Updates for v0.2.74 |
+
 ### [v0.2.74](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.74) · 24 Oct 2026, 14:49 UTC
 
 | Commit | What it does |
@@ -957,19 +974,7 @@ of a release are on its page. Times are in UTC.
 | [`06fdd41`](https://github.com/thr32423/mb3d-rs/commit/06fdd41bd13165fe5112833f1f103bb3589f9347) | Run-time texts translatable: light_form, postpro_form, palette_form |
 | [`b1f3842`](https://github.com/thr32423/mb3d-rs/commit/b1f3842bc0a1b0fff1e2ea4cbf643c7be410ac56) | README: Updates for v0.2.72 |
 
-### [v0.2.72](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.72) · 24 Oct 2026, 12:52 UTC
-
-| Commit | What it does |
-|---|---|
-| [`5235f79`](https://github.com/thr32423/mb3d-rs/commit/5235f798e2c94c3f4572b5575e15ef08ebf02000) | Version number and release notes of this release |
-| [`cff2dd9`](https://github.com/thr32423/mb3d-rs/commit/cff2dd966c8414a92709507cfc623005b84bc301) | A smaller picture is no longer shown shifted out of view after scrolling a big one (#20) |
-| [`4d5a194`](https://github.com/thr32423/mb3d-rs/commit/4d5a19492c448972c74432032aee43c15ed3f752) | File dialog table: a double click on a column header no longer opens the selected file; arrow keys fill the name; texts translated |
-| [`668c6c2`](https://github.com/thr32423/mb3d-rs/commit/668c6c21cc5318d7a1d6e0efafa4abde79f6ebe8) | Embed icon in Windows executable |
-| [`d00cf66`](https://github.com/thr32423/mb3d-rs/commit/d00cf662a327447ef03e6bc66b3db9c42f7ecf38) | README: Updates for v0.2.71 |
-| [`9b62e28`](https://github.com/thr32423/mb3d-rs/commit/9b62e283c8d581e43d4b1db2f5bbf9d3144d532f) | Keep translated file dialog labels |
-| [`70aa2ce`](https://github.com/thr32423/mb3d-rs/commit/70aa2ce3c58aaaf6a36993970481f938b4143724) | Use sortable columns in file dialogs |
-
-All 85 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 86 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
