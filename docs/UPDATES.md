@@ -5,6 +5,14 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76) · 25 Oct 2026, 15:31 UTC
+
+| Commit | What it does |
+|---|---|
+| [`66617ba`](https://github.com/thr32423/mb3d-rs/commit/66617ba3c14579ad8acb2f564cb786d2882b1a71) | Version number and release notes of this release |
+| [`e883349`](https://github.com/thr32423/mb3d-rs/commit/e883349dab09c59626caf6adc40e9eed1336ccf0) | Monte Carlo: the neural noise filter (Intel Open Image Denoise), shipped with the program; macOS packages with the JIT for testing |
+| [`8368442`](https://github.com/thr32423/mb3d-rs/commit/8368442472ba1504e425e0959374534eb7eabd49) | README: Updates for v0.2.75 |
+
 ## [v0.2.75](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.75) · 25 Oct 2026, 12:46 UTC
 
 | Commit | What it does |

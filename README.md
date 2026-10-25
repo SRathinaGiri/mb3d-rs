@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.75](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.75)** (25 Oct 2026, 12:46 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76)** (25 Oct 2026, 15:31 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -965,6 +965,14 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76) · 25 Oct 2026, 15:31 UTC
+
+| Commit | What it does |
+|---|---|
+| [`66617ba`](https://github.com/thr32423/mb3d-rs/commit/66617ba3c14579ad8acb2f564cb786d2882b1a71) | Version number and release notes of this release |
+| [`e883349`](https://github.com/thr32423/mb3d-rs/commit/e883349dab09c59626caf6adc40e9eed1336ccf0) | Monte Carlo: the neural noise filter (Intel Open Image Denoise), shipped with the program; macOS packages with the JIT for testing |
+| [`8368442`](https://github.com/thr32423/mb3d-rs/commit/8368442472ba1504e425e0959374534eb7eabd49) | README: Updates for v0.2.75 |
+
 ### [v0.2.75](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.75) · 25 Oct 2026, 12:46 UTC
 
 | Commit | What it does |
@@ -990,25 +998,7 @@ of a release are on its page. Times are in UTC.
 | [`4b8aff1`](https://github.com/thr32423/mb3d-rs/commit/4b8aff1f4412b4a96e3eb0bb781aa34ea531e654) | The language badge in the theme's title bar colours, its flag muted there |
 | [`c89147c`](https://github.com/thr32423/mb3d-rs/commit/c89147c25a4247ef4be59ac7d73dc4b9bf026222) | README: Updates for v0.2.73 |
 
-### [v0.2.73](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.73) · 24 Oct 2026, 14:21 UTC
-
-| Commit | What it does |
-|---|---|
-| [`af4fb2f`](https://github.com/thr32423/mb3d-rs/commit/af4fb2fd78fd622eb18c3188e756362e501c4e6e) | Version number and release notes of this release |
-| [`ffa15a2`](https://github.com/thr32423/mb3d-rs/commit/ffa15a2889a1beb0f2eb769e129d5d98712f5c08) | README: credits for the pull requests #13, #14, #17 and #19 and the report #20 |
-| [`39705af`](https://github.com/thr32423/mb3d-rs/commit/39705afb42b0f891f7dcd5fdb3ac53b200b9eb69) | The language badge at the right end of the title bar, next to the version |
-| [`a5a2b85`](https://github.com/thr32423/mb3d-rs/commit/a5a2b8522c163cf690c44c399f333ca98b50c24a) | Tab strips: translated tab names no longer wrap onto more rows than the English |
-| [`42cc7c7`](https://github.com/thr32423/mb3d-rs/commit/42cc7c7df0419510fa4dc424100a4c139b4bf52d) | Languages: the 308 run-time texts in the ten translations, captions consistent |
-| [`b37f960`](https://github.com/thr32423/mb3d-rs/commit/b37f960d1772f8fcb4cc508bd3f2f7aefa8c752b) | Run-time texts: the stage names in the status line translated, the batch window's time left kept as a value |
-| [`f26f01e`](https://github.com/thr32423/mb3d-rs/commit/f26f01e69cb037a6f2706f0868323185c6c81d68) | Run-time texts translatable: src/app/main_form.rs |
-| [`f3187bb`](https://github.com/thr32423/mb3d-rs/commit/f3187bbd42a66f37d61d562668e2914932679924) | Run-time texts translatable: anim_form, bulbtracer_form, voxel_form, meshview |
-| [`ec3940c`](https://github.com/thr32423/mb3d-rs/commit/ec3940c4152dddf8c191794bec68e38c5d0a9c6c) | Run-time texts translatable: tools_forms, small_forms, unfinished_form, file_preview, util, dialogs (Confirm) |
-| [`c685c58`](https://github.com/thr32423/mb3d-rs/commit/c685c58c50f13680a6fee2d724623111b59fdd3b) | Run-time texts translatable: mc_form, swarm_form, mutagen_form, engine |
-| [`7319ac5`](https://github.com/thr32423/mb3d-rs/commit/7319ac531dc1e7a36911513396524b31045bdd02) | Run-time texts translatable: formula_form.rs, jit_form.rs, navi_form.rs |
-| [`06fdd41`](https://github.com/thr32423/mb3d-rs/commit/06fdd41bd13165fe5112833f1f103bb3589f9347) | Run-time texts translatable: light_form, postpro_form, palette_form |
-| [`b1f3842`](https://github.com/thr32423/mb3d-rs/commit/b1f3842bc0a1b0fff1e2ea4cbf643c7be410ac56) | README: Updates for v0.2.72 |
-
-All 86 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 87 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
