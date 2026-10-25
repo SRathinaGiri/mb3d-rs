@@ -134,6 +134,17 @@ pub struct Env<'a> {
     pub max_steps: Value,
     /// the block that ends the function with an error
     pub err: Block,
+    /// the SSE registers (two F64 halves each), kept by the caller: they
+    /// are machine state a formula may find from the one before
+    pub xmm: [[Variable; 2]; 8],
+}
+
+/// Whether the formula uses SSE registers (the caller then keeps them in
+/// variables, see `Env::xmm`).
+impl Prog {
+    pub fn clif_uses_sse(&self) -> bool {
+        self.ops.iter().any(|op| matches!(op, Op::Gen(ins, _, _) if matches!(ins.as_ref(), Ins::Sse { .. } | Ins::SseStore { .. })))
+    }
 }
 
 /// A cell variable and its type.
@@ -170,6 +181,15 @@ struct St<'e, 'a> {
     ah: Option<[Bit; 8]>,
 }
 
+/// The index of an indexed location (`Prog::idx_sel`): index register, its
+/// shift, mask, reversed, first cell, element size.
+type IdxSel = (u8, u32, u32, bool, (char, u32), u32);
+
+/// The record cells of a dIFS formula (`Prog::clif_difs_cells`): used (with
+/// whether only as whole doubles), written, and whether it writes its
+/// variable buffer.
+pub type DifsCells = (Vec<(u32, bool)>, Vec<u32>, bool);
+
 /// A bit of a value known while compiling: a constant or an I8 (0 or 1).
 #[derive(Clone, Copy)]
 enum Bit {
@@ -185,13 +205,41 @@ const PF: usize = 4;
 const AF: usize = 5;
 
 impl Prog {
+    /// The x87 double ops `lifted_idx_op` translates with an indexed memory
+    /// operand.
+    fn idx_op_kind(op: &Op) -> bool {
+        match op {
+            Op::FLd64 { .. } | Op::FSt64 { .. } | Op::FArithM64 { .. } => true,
+            Op::FLd { kind, .. } | Op::FSt { kind, .. } | Op::FArithM { kind, .. } | Op::FComM { kind, .. } => *kind == FKind::F64,
+            _ => false,
+        }
+    }
+
+    /// The index of an indexed location as `lifted_idx_op` takes it: (index
+    /// register, its shift, mask, reversed, first cell, element size).
+    fn idx_sel(&self, ir: Option<(u8, u8)>, l: Loc) -> Option<IdxSel> {
+        let (first, sc, mk) = super::lift_emit::idx_region(l)?;
+        let (mask, rev) = ((mk & 0x7F) as u32, mk & 0x80 != 0);
+        let (ireg, isc) = ir?;
+        if sc < isc || !(sc / isc).is_power_of_two() {
+            return None;
+        }
+        Some((ireg, (sc / isc).trailing_zeros(), mask, rev, first, sc as u32))
+    }
+
     /// Why the formula cannot be compiled with Cranelift; None if it can.
     pub fn clif_unsupported(&self) -> Option<String> {
-        let an = self.analyse(false);
+        self.clif_unsupported_mode(false)
+    }
+
+    /// [`Prog::clif_unsupported`] for a direct (`difs` false) or a dIFS
+    /// formula.
+    pub fn clif_unsupported_mode(&self, difs: bool) -> Option<String> {
+        let an = self.analyse(difs);
         if !an.report.problems.is_empty() {
             return Some(format!("not lifted: {:?}", an.report.problems));
         }
-        if self.direct.is_none() {
+        if if difs { self.difs.is_none() } else { self.direct.is_none() } {
             return Some("no direct translation".into());
         }
         for ((k, cs), _) in an.states.iter() {
@@ -199,6 +247,8 @@ impl Prog {
             if let Some(mm) = super::lift_emit::op_mem(op) {
                 match an.loc(*k, cs, &mm) {
                     Loc::Field(_) | Loc::Var(_) | Loc::Stack(_) => {}
+                    // a double chosen by an index (`St::idx_op`)
+                    l @ (Loc::FieldIdx(..) | Loc::StackIdx(..)) if Self::idx_op_kind(op) && self.idx_sel(an.idx_reg(*k, cs, &mm), l).is_some() => {}
                     l => return Some(format!("op {k}: memory {l:?}")),
                 }
             }
@@ -208,7 +258,9 @@ impl Prog {
                     Ins::Nop | Ins::Sahf | Ins::Test { .. } | Ins::Mov { .. } | Ins::Not(..) | Ins::Neg(..) | Ins::Inc(..) | Ins::Dec(..) | Ins::Mul(_, 4) | Ins::IMul1(_, 4)
                 ) || matches!(ins.as_ref(), Ins::Alu { op, .. } if !matches!(op, Alu::Adc | Alu::Sbb))
                     || matches!(ins.as_ref(), Ins::Shift { op: Shift::Rcl | Shift::Rcr, dst: Rm::Reg(_), cnt: Some(1), size: 4 })
-                    || matches!(ins.as_ref(), Ins::Shift { op: Shift::Shl | Shift::Shr | Shift::Sar, dst: Rm::Reg(_), cnt: Some(_), .. }),
+                    || matches!(ins.as_ref(), Ins::Shift { op: Shift::Shl | Shift::Shr | Shift::Sar, dst: Rm::Reg(_), cnt: Some(_), .. })
+                    || matches!(ins.as_ref(), Ins::Sse { op, src, .. } if super::sse_native(*op, src))
+                    || matches!(ins.as_ref(), Ins::SseStore { op: SseOp::MovStore | SseOp::MovSdStore | SseOp::MovLpdStore | SseOp::MovqStore | SseOp::MovHpdStore, .. }),
                 Op::CallHost(_) => false,
                 Op::FLd { kind, .. } | Op::FArithM { kind, .. } | Op::FComM { kind, .. } => *kind != FKind::F80,
                 Op::FSt { kind, .. } => matches!(kind, FKind::F32 | FKind::F64 | FKind::I16 | FKind::I32),
@@ -224,7 +276,7 @@ impl Prog {
             }
         }
         // the Rust translation must exist (the cells and their typing)
-        self.emit_lifted_cells("f", false).map(|_| ()).is_none().then(|| "no lifted Rust code".to_string())
+        self.emit_lifted_cells("f", difs).map(|_| ()).is_none().then(|| "no lifted Rust code".to_string())
     }
 
     /// The record cells the formula writes.
@@ -233,13 +285,39 @@ impl Prog {
         Some(cells.written_cells().filter(|c| c.0 == 'r').map(|c| c.1).collect())
     }
 
+    /// The cells a dIFS formula uses and writes: (record cells used, with
+    /// whether only as whole doubles; written; whether it writes its
+    /// variable buffer).
+    pub fn clif_difs_cells(&self) -> Option<DifsCells> {
+        let (_, cells) = self.emit_lifted_cells("f", true)?;
+        let mut whole: HashMap<u32, bool> = HashMap::new();
+        for (cell, sh, n, kind) in &cells.log {
+            if cell.0 == 'r' {
+                let w = whole.entry(cell.1).or_insert(true);
+                *w &= *sh == 0 && *n == 8 && *kind == 'd';
+            }
+        }
+        let used = cells.used_cells().filter(|c| c.0 == 'r').map(|c| (c.1, whole.get(&c.1).copied().unwrap_or(false))).collect();
+        let written = cells.written_cells().filter(|c| c.0 == 'r').map(|c| c.1).collect();
+        let vars = cells.written_cells().any(|c| c.0 == 'v');
+        Some((used, written, vars))
+    }
+
     /// Emits the formula into `b` (positioned in an open block): the code of
     /// one call, which continues in the block it returns (open).  None if
     /// the formula cannot be compiled (see [`Prog::clif_unsupported`]); the
     /// function being built is then unusable.
     pub fn clif_emit(&self, b: &mut FunctionBuilder, env: &Env, rec: &mut dyn Record) -> Option<Block> {
-        let an = self.analyse(false);
-        let (_, cells) = self.emit_lifted_cells("f", false)?;
+        self.clif_emit_mode(b, env, rec, None).map(|r| r.0)
+    }
+
+    /// [`Prog::clif_emit`]; with `difs_regs` (the registers
+    /// `Machine::difs_regs` sets up) a dIFS formula, whose registers at its
+    /// return come back (read in the returned block).
+    pub fn clif_emit_mode(&self, b: &mut FunctionBuilder, env: &Env, rec: &mut dyn Record, difs_regs: Option<[Value; 8]>) -> Option<(Block, [Value; 8])> {
+        let difs = difs_regs.is_some();
+        let an = self.analyse(difs);
+        let (_, cells) = self.emit_lifted_cells("f", difs)?;
         // typing: a cell only read and written as a whole double is an F64
         let mut whole: HashMap<(char, u32), bool> = HashMap::new();
         for ((cell, sh, n, kind), _) in cells.log.iter().zip(&cells.log_ops) {
@@ -260,12 +338,22 @@ impl Prog {
             ah: None,
             consts: HashMap::new(),
         };
-        // the start: registers of a direct call, cells from their sources
-        let x = IT_C1 - 32;
-        let regs0 = [x, x + 16, x + 8, 0, STACK_TOP - 12, 0, 0, 0];
-        for (r, v) in regs0.iter().enumerate() {
-            let c = b.ins().iconst(I32, *v as i64);
-            st.set_rg(b, r, c);
+        // the start: registers of a direct call (or the dIFS ones), cells
+        // from their sources
+        match difs_regs {
+            Some(rv) => {
+                for (r, v) in rv.iter().enumerate() {
+                    st.set_rg(b, r, *v);
+                }
+            }
+            None => {
+                let x = IT_C1 - 32;
+                let regs0 = [x, x + 16, x + 8, 0, STACK_TOP - 12, 0, 0, 0];
+                for (r, v) in regs0.iter().enumerate() {
+                    let c = b.ins().iconst(I32, *v as i64);
+                    st.set_rg(b, r, c);
+                }
+            }
         }
         let z = b.ins().f64const(0.0);
         for r in st.f {
@@ -300,7 +388,7 @@ impl Prog {
                     }
                 }
                 _ => {
-                    let bits = stack_init(c);
+                    let bits = stack_init(c, difs);
                     if ty == F64 {
                         b.ins().f64const(f64::from_bits(bits))
                     } else {
@@ -368,7 +456,8 @@ impl Prog {
                 _ => {}
             }
         }
-        Some(ret)
+        let regs: [Value; 8] = std::array::from_fn(|r| st.get_rg(b, r));
+        Some((ret, regs))
     }
 }
 
@@ -378,10 +467,10 @@ fn mem_off(a: u32) -> i32 {
 }
 
 /// The start value of stack cell `c` of a direct call (what the call
-/// pushes, 0 elsewhere).
-fn stack_init(c: u32) -> u64 {
+/// pushes, 0 elsewhere); of a dIFS call: the return address only.
+fn stack_init(c: u32, difs: bool) -> u64 {
     let x = IT_C1 - 32;
-    let call = [(STACK_TOP - 12, RETURN_SENTINEL), (STACK_TOP - 8, IT_C1), (STACK_TOP - 4, x + 24)];
+    let call: &[(u32, u32)] = if difs { &[(STACK_TOP - 4, RETURN_SENTINEL)] } else { &[(STACK_TOP - 12, RETURN_SENTINEL), (STACK_TOP - 8, IT_C1), (STACK_TOP - 4, x + 24)] };
     let half = |a: u32| call.iter().find(|(ca, _)| *ca == a).map_or(0, |(_, v)| *v) as u64;
     let a = STACK_LOW + 8 * c;
     half(a) | half(a + 4) << 32
@@ -938,6 +1027,14 @@ impl St<'_, '_> {
                 b.ins().jump(t.1, &[]);
             }
         };
+        if let Some(mm) = super::lift_emit::op_mem(&p.ops[k]) {
+            let l = an.loc(k, cs, &mm);
+            if matches!(l, Loc::FieldIdx(..) | Loc::StackIdx(..)) {
+                let sel = p.idx_sel(an.idx_reg(k, cs, &mm), l)?;
+                self.idx_op(b, &p.ops[k], sel)?;
+                return Some(false);
+            }
+        }
         let keeps_ah = match &p.ops[k] {
             Op::Gen(ins, _, _) => Self::ah_idiom(ins),
             Op::MovRM { r, .. } | Op::Lea { r, .. } => *r as usize != EAX,
@@ -1233,6 +1330,274 @@ impl St<'_, '_> {
         Some(false)
     }
 
+    /// An x87 double access to one of a few cells chosen by an index
+    /// register (`lifted_idx_op`): selects over the cells.
+    fn idx_op(&mut self, b: &mut FunctionBuilder, op: &Op, (ireg, ish, mask, rev, first, sc): IdxSel) -> Option<()> {
+        let r = self.get_rg(b, ireg as usize);
+        let sel = if rev {
+            // mask - ((0 - r) >> ish & mask)
+            let z = b.ins().iconst(I32, 0);
+            let n = b.ins().isub(z, r);
+            let n = b.ins().ushr_imm(n, ish as i64);
+            let n = b.ins().band_imm(n, mask as i64);
+            let mv = b.ins().iconst(I32, mask as i64);
+            b.ins().isub(mv, n)
+        } else {
+            let n = b.ins().ushr_imm(r, ish as i64);
+            b.ins().band_imm(n, mask as i64)
+        };
+        let cell = |i: u32| (first.0, first.1 + sc * i);
+        let read = |st: &mut Self, b: &mut FunctionBuilder| -> Option<Value> {
+            // `_ => 0` (bits) for an index outside the cells
+            let mut acc = b.ins().f64const(0.0);
+            for i in 0..=mask {
+                let x = st.rd_f64(b, cell(i))?;
+                let is = b.ins().icmp_imm(IntCC::Equal, sel, i as i64);
+                acc = b.ins().select(is, x, acc);
+            }
+            Some(acc)
+        };
+        match op {
+            Op::FLd64 { dst, .. } | Op::FLd { dst, .. } => {
+                let v = read(self, b)?;
+                self.set_f(b, *dst, v);
+            }
+            Op::FArithM64 { op: o, dst, .. } | Op::FArithM { op: o, dst, .. } => {
+                let v = read(self, b)?;
+                let a = self.fv(b, *dst);
+                let r = self.fop(b, o, a, v);
+                self.set_f(b, *dst, r);
+            }
+            Op::FComM { a, .. } => {
+                let v = read(self, b)?;
+                let x = self.fv(b, *a);
+                self.fcompare(b, x, v);
+            }
+            Op::FSt64 { src, .. } | Op::FSt { src, .. } => {
+                let v = self.fv(b, *src);
+                for i in 0..=mask {
+                    let old = self.rd_f64(b, cell(i))?;
+                    let is = b.ins().icmp_imm(IntCC::Equal, sel, i as i64);
+                    let nv = b.ins().select(is, v, old);
+                    self.wr_f64(b, cell(i), nv)?;
+                }
+            }
+            _ => return None,
+        }
+        Some(())
+    }
+
+    /// One SSE op (`emit_sse_with`), the registers as two F64 halves.
+    fn sse(&mut self, b: &mut FunctionBuilder, op: SseOp, d: usize, src: &Rm, imm: u8, loc: &dyn Fn(&Mem) -> Option<(char, u32)>) -> Option<()> {
+        use SseOp::*;
+        let xd = self.env.xmm[d];
+        // the source: 16 bytes (two halves) and the low 8 bytes
+        let s16 = |st: &mut Self, b: &mut FunctionBuilder| -> Option<[Value; 2]> {
+            Some(match src {
+                Rm::Reg(r) => [b.use_var(st.env.xmm[*r as usize][0]), b.use_var(st.env.xmm[*r as usize][1])],
+                Rm::Mem(mm) => {
+                    let r = loc(mm)?;
+                    [st.rd_f64(b, r)?, st.rd_f64(b, (r.0, r.1 + 8))?]
+                }
+            })
+        };
+        let s8 = |st: &mut Self, b: &mut FunctionBuilder| -> Option<Value> {
+            Some(match src {
+                Rm::Reg(r) => b.use_var(st.env.xmm[*r as usize][0]),
+                Rm::Mem(mm) => st.rd_f64(b, loc(mm)?)?,
+            })
+        };
+        let bits = |b: &mut FunctionBuilder, x: Value| b.ins().bitcast(I64, MemFlags::new(), x);
+        let dbl = |b: &mut FunctionBuilder, x: Value| b.ins().bitcast(F64, MemFlags::new(), x);
+        let zero = |b: &mut FunctionBuilder| b.ins().f64const(0.0);
+        // `if p < q { p } else { q }` (min) / `if p > q { p } else { q }` (max)
+        let mm = |b: &mut FunctionBuilder, max: bool, p: Value, q: Value| {
+            let c = b.ins().fcmp(if max { FloatCC::GreaterThan } else { FloatCC::LessThan }, p, q);
+            b.ins().select(c, p, q)
+        };
+        let arith = |b: &mut FunctionBuilder, o: SseOp, p: Value, q: Value| -> Value {
+            match o {
+                AddPd | AddSd => b.ins().fadd(p, q),
+                SubPd | SubSd => b.ins().fsub(p, q),
+                MulPd | MulSd => b.ins().fmul(p, q),
+                DivPd | DivSd => b.ins().fdiv(p, q),
+                MinPd | MinSd => mm(b, false, p, q),
+                _ => mm(b, true, p, q),
+            }
+        };
+        match op {
+            UComiSd | ComiSd => {
+                let y = s8(self, b)?;
+                let x = b.use_var(xd[0]);
+                for f in [OF, SF, AF] {
+                    self.set_flag_c(b, f, false);
+                }
+                let un = b.ins().fcmp(FloatCC::Unordered, x, y);
+                let eq = b.ins().fcmp(FloatCC::Equal, x, y);
+                let lt = b.ins().fcmp(FloatCC::LessThan, x, y);
+                let zf = b.ins().bor(un, eq);
+                let cf = b.ins().bor(un, lt);
+                self.set_flag(b, ZF, zf);
+                self.set_flag(b, PF, un);
+                self.set_flag(b, CF, cf);
+            }
+            Pshufd => {
+                let s = s16(self, b)?;
+                let s = [bits(b, s[0]), bits(b, s[1])];
+                let dw = |b: &mut FunctionBuilder, i: u8| -> Value {
+                    let v = b.ins().ushr_imm(s[(i >> 1) as usize], ((i & 1) * 32) as i64);
+                    b.ins().band_imm(v, 0xFFFF_FFFF)
+                };
+                let lo0 = dw(b, imm & 3);
+                let hi0 = dw(b, (imm >> 2) & 3);
+                let hi0 = b.ins().ishl_imm(hi0, 32);
+                let lo1 = dw(b, (imm >> 4) & 3);
+                let hi1 = dw(b, (imm >> 6) & 3);
+                let hi1 = b.ins().ishl_imm(hi1, 32);
+                let r0 = b.ins().bor(lo0, hi0);
+                let r1 = b.ins().bor(lo1, hi1);
+                let (r0, r1) = (dbl(b, r0), dbl(b, r1));
+                b.def_var(xd[0], r0);
+                b.def_var(xd[1], r1);
+            }
+            MovU => {
+                let s = s16(self, b)?;
+                b.def_var(xd[0], s[0]);
+                b.def_var(xd[1], s[1]);
+            }
+            MovSdLoad if matches!(src, Rm::Reg(_)) => {
+                let s = s8(self, b)?;
+                b.def_var(xd[0], s);
+            }
+            MovSdLoad | MovqLoad => {
+                let s = s8(self, b)?;
+                b.def_var(xd[0], s);
+                let z = zero(b);
+                b.def_var(xd[1], z);
+            }
+            MovLpdLoad => {
+                let s = s8(self, b)?;
+                b.def_var(xd[0], s);
+            }
+            MovHpdLoad => {
+                let s = s8(self, b)?;
+                b.def_var(xd[1], s);
+            }
+            MovHlps => {
+                let s = s16(self, b)?;
+                b.def_var(xd[0], s[1]);
+            }
+            MovLhps => {
+                let s = s16(self, b)?;
+                b.def_var(xd[1], s[0]);
+            }
+            AddPd | SubPd | MulPd | DivPd | MinPd | MaxPd => {
+                let s = s16(self, b)?;
+                let a = [b.use_var(xd[0]), b.use_var(xd[1])];
+                let r0 = arith(b, op, a[0], s[0]);
+                let r1 = arith(b, op, a[1], s[1]);
+                b.def_var(xd[0], r0);
+                b.def_var(xd[1], r1);
+            }
+            AddSd | SubSd | MulSd | DivSd | MinSd | MaxSd => {
+                let s = s8(self, b)?;
+                let a = b.use_var(xd[0]);
+                let r = arith(b, op, a, s);
+                b.def_var(xd[0], r);
+            }
+            SqrtPd => {
+                let s = s16(self, b)?;
+                let r0 = b.ins().sqrt(s[0]);
+                let r1 = b.ins().sqrt(s[1]);
+                b.def_var(xd[0], r0);
+                b.def_var(xd[1], r1);
+            }
+            SqrtSd => {
+                let s = s8(self, b)?;
+                let r = b.ins().sqrt(s);
+                b.def_var(xd[0], r);
+            }
+            And | AndN | Or | Xor => {
+                let s = s16(self, b)?;
+                for k in 0..2 {
+                    let a = b.use_var(xd[k]);
+                    let (x, y) = (bits(b, a), bits(b, s[k]));
+                    let r = match op {
+                        And => b.ins().band(x, y),
+                        AndN => {
+                            let nx = b.ins().bnot(x);
+                            b.ins().band(nx, y)
+                        }
+                        Or => b.ins().bor(x, y),
+                        _ => b.ins().bxor(x, y),
+                    };
+                    let r = dbl(b, r);
+                    b.def_var(xd[k], r);
+                }
+            }
+            UnpckLpd => {
+                let s = s16(self, b)?;
+                b.def_var(xd[1], s[0]);
+            }
+            UnpckHpd => {
+                let s = s16(self, b)?;
+                let a1 = b.use_var(xd[1]);
+                b.def_var(xd[0], a1);
+                b.def_var(xd[1], s[1]);
+            }
+            ShufPd => {
+                let s = s16(self, b)?;
+                let a = [b.use_var(xd[0]), b.use_var(xd[1])];
+                b.def_var(xd[0], a[(imm & 1) as usize]);
+                b.def_var(xd[1], s[((imm >> 1) & 1) as usize]);
+            }
+            CvtPd2Dq => {
+                let s = s16(self, b)?;
+                let c = |b: &mut FunctionBuilder, v: Value| -> Value {
+                    let r = b.ins().nearest(v);
+                    let lo = b.ins().f64const(-2147483648.0);
+                    let hi = b.ins().f64const(2147483647.0);
+                    let c1 = b.ins().fcmp(FloatCC::GreaterThanOrEqual, r, lo);
+                    let c2 = b.ins().fcmp(FloatCC::LessThanOrEqual, r, hi);
+                    let inr = b.ins().band(c1, c2);
+                    let i = b.ins().fcvt_to_sint_sat(I32, r);
+                    let i = b.ins().uextend(I64, i);
+                    let ind = b.ins().iconst(I64, 0x8000_0000);
+                    b.ins().select(inr, i, ind)
+                };
+                let a = c(b, s[0]);
+                let h = c(b, s[1]);
+                let h = b.ins().ishl_imm(h, 32);
+                let r = b.ins().bor(a, h);
+                let r = dbl(b, r);
+                b.def_var(xd[0], r);
+                let z = zero(b);
+                b.def_var(xd[1], z);
+            }
+            CvtDq2Pd => {
+                let s = s8(self, b)?;
+                let s = bits(b, s);
+                let lo = b.ins().ireduce(I32, s);
+                let hi = b.ins().ushr_imm(s, 32);
+                let hi = b.ins().ireduce(I32, hi);
+                let lo = b.ins().fcvt_from_sint(F64, lo);
+                let hi = b.ins().fcvt_from_sint(F64, hi);
+                b.def_var(xd[0], lo);
+                b.def_var(xd[1], hi);
+            }
+            HAddPd => {
+                let s = s16(self, b)?;
+                let a = [b.use_var(xd[0]), b.use_var(xd[1])];
+                let r0 = b.ins().fadd(a[0], a[1]);
+                let r1 = b.ins().fadd(s[0], s[1]);
+                b.def_var(xd[0], r0);
+                b.def_var(xd[1], r1);
+            }
+            _ => return None,
+        }
+        Some(())
+    }
+
     /// The ops that test the condition bits in AH (see `St::ah`).
     fn ah_idiom(ins: &Ins) -> bool {
         matches!(
@@ -1365,6 +1730,28 @@ impl St<'_, '_> {
 
     fn gen_generic(&mut self, b: &mut FunctionBuilder, ins: &Ins, loc: &dyn Fn(&Mem) -> Option<(char, u32)>) -> Option<()> {
         match ins {
+            Ins::Sse { op, dst, src, imm } if super::sse_native(*op, src) => self.sse(b, *op, *dst as usize, src, *imm, loc)?,
+            Ins::SseStore { op, dst, src } => {
+                let r = loc(dst)?;
+                let x = self.env.xmm[*src as usize];
+                match op {
+                    SseOp::MovStore => {
+                        let a = b.use_var(x[0]);
+                        self.wr_f64(b, r, a)?;
+                        let c = b.use_var(x[1]);
+                        self.wr_f64(b, (r.0, r.1 + 8), c)?;
+                    }
+                    SseOp::MovHpdStore => {
+                        let c = b.use_var(x[1]);
+                        self.wr_f64(b, r, c)?;
+                    }
+                    SseOp::MovSdStore | SseOp::MovLpdStore | SseOp::MovqStore => {
+                        let a = b.use_var(x[0]);
+                        self.wr_f64(b, r, a)?;
+                    }
+                    _ => return None,
+                }
+            }
             Ins::Nop => {}
             Ins::Sahf => {
                 let a = b.use_var(self.rg[EAX]);

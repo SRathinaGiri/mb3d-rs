@@ -565,6 +565,32 @@ impl Iteration {
         let mut edi = custom::pconst_addr(n);
         let mut guard = 0u32;
         let mut failed = false;
+        // the loop compiled for the scene (`clif_jit::compile_difs`), if it
+        // is the one of these parameters; it leaves the point to the loop
+        // below (having changed nothing) when a formula sends it where the
+        // compiled code does not go
+        #[cfg(jit)]
+        let done = match m.difs_jit.as_deref() {
+            Some(h) if h.start == self.start_from && h.end == self.end_to && h.repeat == self.repeat_from && h.slots == slots.len() && crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) => {
+                let f = h.f;
+                let mut out = crate::x86::clif_jit::DifsOut::default();
+                let mp: *mut crate::x86::Machine = m;
+                // SAFETY: the compiled loop reads and writes the machine's
+                // memory image and SSE registers
+                let r = unsafe { f((*mp).mem.as_mut_ptr(), mp, custom::MAX_STEPS, inside as i32, rstopd, self.max_it, &mut out) };
+                if r != 2 {
+                    it_min = out.it_min;
+                    dfree2 = out.dfree2;
+                    min_de = out.min_de;
+                    failed = r == 1;
+                }
+                r != 2
+            }
+            _ => false,
+        };
+        #[cfg(not(jit))]
+        let done = false;
+        if !done {
         // the translated formulas called directly (without call_difs and
         // the program lookup per call); the programs are out of the machine
         // for the loop, so that they can be borrowed while the machine changes
@@ -632,6 +658,7 @@ impl Iteration {
             }
         }
         m.restore_progs(progs);
+        }
         if failed {
             CUSTOM_ERRORS.fetch_add(1, Ordering::Relaxed);
             min_de = f64::INFINITY;

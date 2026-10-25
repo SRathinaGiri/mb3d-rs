@@ -811,7 +811,34 @@ impl CalcParams {
     #[cfg(jit)]
     fn attach_jit(&mut self) {
         use crate::x86::clif_jit;
-        if self.difs || !matches!(self.mode, HybridMode::Alt3D | HybridMode::Alt4D) || !clif_jit::enabled() {
+        if !clif_jit::enabled() {
+            return;
+        }
+        if self.difs {
+            // the dIFS loop
+            let Some(m) = self.machine.as_ref() else { return };
+            let key = clif_jit::hybrid_key(m, &self.slots, 0, self.end_to, self.repeat_from, false) ^ 0xD1F5;
+            let jit = match clif_jit::cached_difs(key) {
+                Some(j) => j,
+                None => {
+                    let h = clif_jit::compile_difs(m, &self.slots, 0, self.end_to, self.repeat_from).map(std::sync::Arc::new);
+                    let keep = h.filter(|h| {
+                        clif_jit::forced()
+                            || self.jit_is_faster(
+                                &|m: &mut crate::x86::Machine, on: bool| m.difs_jit = if on { Some(h.clone()) } else { None },
+                                false,
+                            )
+                    });
+                    clif_jit::cache_difs(key, keep.clone());
+                    keep
+                }
+            };
+            if let Some(m) = self.machine.as_mut() {
+                m.difs_jit = jit;
+            }
+            return;
+        }
+        if !matches!(self.mode, HybridMode::Alt3D | HybridMode::Alt4D) {
             return;
         }
         // a hybrid of built-in formulas only has no machine: an empty one
@@ -830,7 +857,7 @@ impl CalcParams {
             Some(j) => j,
             None => {
                 let h = clif_jit::compile_hybrid(m, &self.slots, 0, self.end_to, self.repeat_from, four_d).map(std::sync::Arc::new);
-                let keep = h.filter(|h| clif_jit::forced() || self.jit_is_faster(h, builtin_only));
+                let keep = h.filter(|h| clif_jit::forced() || self.jit_is_faster(&|m: &mut crate::x86::Machine, on: bool| m.jit = if on { Some(h.clone()) } else { None }, builtin_only));
                 clif_jit::cache(key, keep.clone());
                 keep
             }
@@ -842,10 +869,11 @@ impl CalcParams {
         }
     }
 
-    /// Whether the compiled hybrid `h` is faster than the formulas called
-    /// one by one (at least 3 %, the best of three rounds each).
+    /// Whether the compiled hybrid is faster than the formulas called one
+    /// by one (at least 3 %, the best of three rounds each); `set` puts it
+    /// into the machine (true) or takes it out.
     #[cfg(jit)]
-    fn jit_is_faster(&mut self, h: &std::sync::Arc<crate::x86::clif_jit::HybridJit>, builtin_only: bool) -> bool {
+    fn jit_is_faster(&mut self, set: &dyn Fn(&mut crate::x86::Machine, bool), builtin_only: bool) -> bool {
         let rays = [(0.5, 0.5), (0.25, 0.3), (0.7, 0.65)];
         let pts: Vec<Vec3> = rays
             .iter()
@@ -862,10 +890,10 @@ impl CalcParams {
             .collect();
         // the loop without the compiled hybrid runs as it would: without
         // the machine for a hybrid of built-in formulas
-        let time = |p: &mut CalcParams, jit: Option<std::sync::Arc<crate::x86::clif_jit::HybridJit>>| -> f64 {
-            let without = jit.is_none();
+        let time = |p: &mut CalcParams, on: bool| -> f64 {
+            let without = !on;
             if let Some(m) = p.machine.as_mut() {
-                m.jit = jit;
+                set(m, on);
             }
             let saved = if without && builtin_only { p.machine.take() } else { None };
             let mut mr = Marcher::new(p, 1);
@@ -882,8 +910,8 @@ impl CalcParams {
         };
         let (mut tj, mut tr) = (f64::MAX, f64::MAX);
         for _ in 0..3 {
-            tj = tj.min(time(self, Some(h.clone())));
-            tr = tr.min(time(self, None));
+            tj = tj.min(time(self, true));
+            tr = tr.min(time(self, false));
         }
         tj < tr * 0.97
     }

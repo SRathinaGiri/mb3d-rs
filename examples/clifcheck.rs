@@ -71,7 +71,8 @@ mod imp {
             let Ok(def) = M3f::load(path) else { continue };
             let def = Arc::new(def);
             if def.de_option >= 20 {
-                continue; // dIFS: not yet
+                difs_one(&mut jit, &def, trials, &mut reasons, &mut same, &mut differ, &mut direct);
+                continue;
             }
             let cf = CustomFormula::new(def.clone());
             let mut slots: Vec<Option<&CustomFormula>> = vec![None; slot];
@@ -102,6 +103,10 @@ mod imp {
                 for a in (STACK_TOP - 0x1000..STACK_TOP).step_by(4) {
                     m.wr32(a, rng.range(0.0, 4294967295.0) as u32).unwrap();
                 }
+                // the SSE registers a formula may find from the one before
+                for x in m.xmm.iter_mut() {
+                    *x = [rng.range(-3.0, 3.0).to_bits(), rng.range(-3.0, 3.0).to_bits()];
+                }
                 let mut it = Iteration::default();
                 it.v = [rng.range(-1.5, 1.5), rng.range(-1.5, 1.5), rng.range(-1.5, 1.5), rng.range(-0.5, 0.5)];
                 it.c = [rng.range(-1.2, 1.2), rng.range(-1.2, 1.2), rng.range(-1.2, 1.2)];
@@ -128,11 +133,13 @@ mod imp {
                 let r2 = unsafe { f(&mut it2, m2.mem.as_mut_ptr(), &m2, MAX_STEPS) };
                 let ok1 = matches!(r1, Some(Ok(())));
                 let mem_diff = (0..m.mem.len()).find(|&i| m.mem[i] != m2.mem[i]);
+                let canon = |x: u64| if std::env::var_os("CANON_NAN").is_some() && f64::from_bits(x).is_nan() { u64::MAX } else { x };
+                let xmm_diff = (0..8).find(|&r| m.xmm[r].map(canon) != m2.xmm[r].map(canon));
                 // NaN results compare by their bits (both sides run the same
                 // operations, so even the NaN payloads agree)
-                if ok1 != (r2 == 0) || (ok1 && (fields(&it) != fields(&it2) || mem_diff.is_some())) {
+                if ok1 != (r2 == 0) || (ok1 && (fields(&it) != fields(&it2) || mem_diff.is_some() || xmm_diff.is_some())) {
                     let fd: Vec<usize> = fields(&it).iter().zip(fields(&it2)).enumerate().filter(|(_, (a, b))| *a != b).map(|(i, _)| i).collect();
-                    status = Some(format!("trial {t}: translated {r1:?}, compiled {r2}, fields differ {fd:?}, memory differs at {mem_diff:?}"));
+                    status = Some(format!("trial {t}: translated {r1:?}, compiled {r2}, fields differ {fd:?}, memory differs at {mem_diff:?}, xmm differs {xmm_diff:?}"));
                     break;
                 }
             }
@@ -144,10 +151,98 @@ mod imp {
                 }
             }
         }
-        println!("{direct} direct formulas: {same} compiled and identical, {differ} differ; not compiled:");
+        println!("{direct} formulas (direct and dIFS): {same} compiled and identical, {differ} differ; not compiled:");
         for (k, v) in reasons {
             println!("  {v:4} {k}");
         }
+    }
+
+    /// A dIFS formula compiled on its own against its translated version
+    /// (`Machine::call_difs`): registers, memory (above the stack) and SSE
+    /// registers.
+    fn difs_one(jit: &mut Jit, def: &Arc<M3f>, trials: usize, reasons: &mut BTreeMap<String, usize>, same: &mut usize, differ: &mut usize, count: &mut usize) {
+        let slot = 2;
+        let cf = CustomFormula::new(def.clone());
+        let mut slots: Vec<Option<&CustomFormula>> = vec![None; slot];
+        slots.push(Some(&cf));
+        let base = build_machine(&slots);
+        let Some(prog) = base.prog(code_addr(slot)) else { return };
+        if !prog.is_native() {
+            return;
+        }
+        *count += 1;
+        if let Some(why) = prog.clif_unsupported_mode(true) {
+            *reasons.entry(format!("dIFS: {}", why.split(':').next().unwrap_or(""))).or_insert(0) += 1;
+            return;
+        }
+        let Some(f) = jit.compile_difs_one(&base, code_addr(slot), pconst_addr(slot)) else {
+            *reasons.entry("dIFS compile failed".into()).or_insert(0) += 1;
+            println!("COMPILE FAILED {}", def.name);
+            return;
+        };
+        let mut rng = Rng(0x9e37 ^ (def.name.len() as u64 * 7919));
+        let canon = |x: u64| if std::env::var_os("CANON_NAN").is_some() && f64::from_bits(x).is_nan() { u64::MAX } else { x };
+        for t in 0..trials {
+            let mut m = base.clone();
+            for a in (STACK_TOP - 0x1000..STACK_TOP).step_by(4) {
+                m.wr32(a, rng.range(0.0, 4294967295.0) as u32).unwrap();
+            }
+            for x in m.xmm.iter_mut() {
+                *x = [rng.range(-3.0, 3.0).to_bits(), rng.range(-3.0, 3.0).to_bits()];
+            }
+            // the record as doHybridIFS3D leaves it (as m3fcheck)
+            let w = |m: &mut mb3d::x86::Machine, o: u32, v: f64| m.wrf64(IT_BASE + o, v).unwrap();
+            let c = [rng.range(-1.2, 1.2), rng.range(-1.2, 1.2), rng.range(-1.2, 1.2)];
+            for (k, ck) in c.iter().enumerate() {
+                w(&mut m, off::X + 8 * k as u32, rng.range(-1.5, 1.5));
+                w(&mut m, off::C1 + 8 * k as u32, *ck);
+                w(&mut m, off::J1 + 8 * k as u32, *ck);
+            }
+            w(&mut m, off::ROLD, 0.01);
+            w(&mut m, off::RSTOPD, 0.01);
+            w(&mut m, off::VARY_SCALE, 1.0);
+            w(&mut m, off::DERIV1, 1.0);
+            m.wr32(IT_BASE + off::MAX_IT, 60).unwrap();
+            m.wr32(IT_BASE + off::IT_RESULT, t as u32 % 5).unwrap();
+            for (o, v) in [(12u32, 1u32), (28, 1), (32, IT_BASE + 144), (36, pconst_addr(slot)), (40, 0)] {
+                m.wr32(mb3d::x86::BASE + o, v).unwrap();
+            }
+            let mut m2 = m.clone();
+            let r1 = m.call_difs(code_addr(slot), IT_BASE + 144, pconst_addr(slot), slot as u32, 1, STACK_TOP, MAX_STEPS);
+            let mut regs = [0u32; 8];
+            regs[6] = IT_BASE + 144;
+            regs[7] = pconst_addr(slot);
+            regs[3] = slot as u32;
+            regs[1] = 1;
+            regs[2] = IT_BASE + 144 + 128;
+            regs[4] = STACK_TOP - 4;
+            // SAFETY: the compiled function takes these pointers
+            let r2 = unsafe { f(&mut regs, m2.mem.as_mut_ptr(), &m2, MAX_STEPS) };
+            // the stack below the top is dead (the call pushes there)
+            let dead = |i: usize| {
+                let a = i as u32 + mb3d::x86::BASE;
+                (STACK_TOP - 0x1000..STACK_TOP).contains(&a)
+            };
+            let mem_diff = (0..m.mem.len()).find(|&i| m.mem[i] != m2.mem[i] && !dead(i));
+            let mem_diff = mem_diff.filter(|&i| {
+                // NaN payloads (CANON_NAN): compare the 8-byte cell as doubles
+                let a = i & !7;
+                let x = u64::from_le_bytes(m.mem[a..a + 8].try_into().unwrap());
+                let y = u64::from_le_bytes(m2.mem[a..a + 8].try_into().unwrap());
+                canon(x) != canon(y)
+            });
+            let regs_out: Vec<u32> = (0..8).map(|r| m.reg(r)).collect();
+            // esp: the native call returns with the stack pointer at the top
+            let regs_ok = (0..8).all(|r| r == 4 || regs_out[r] == regs[r]);
+            let xmm_diff = (0..8).find(|&r| m.xmm[r].map(canon) != m2.xmm[r].map(canon));
+            let ok1 = r1.is_ok();
+            if ok1 != (r2 == 0) || (ok1 && (mem_diff.is_some() || !regs_ok || xmm_diff.is_some())) {
+                *differ += 1;
+                println!("DIFF  {} (dIFS): trial {t}: translated {r1:?}, compiled {r2}, memory differs at {mem_diff:?}, registers {regs_out:x?} vs {regs:x?}, xmm {xmm_diff:?}", def.name);
+                return;
+            }
+        }
+        *same += 1;
     }
 
     /// The compiled built-in formulas against `Formula::iterate`.

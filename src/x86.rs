@@ -1141,6 +1141,9 @@ pub struct Machine {
     /// prototype machine of a scene, see `clif_jit::compile_hybrid`)
     #[cfg(jit)]
     pub jit: Option<std::sync::Arc<clif_jit::HybridJit>>,
+    /// the dIFS hybrid of the scene compiled at run time
+    #[cfg(jit)]
+    pub difs_jit: Option<std::sync::Arc<clif_jit::DifsJit>>,
 }
 
 const TRIG_SLOTS: usize = 256;
@@ -1208,6 +1211,8 @@ impl Machine {
             steps: 0,
             #[cfg(jit)]
             jit: None,
+            #[cfg(jit)]
+            difs_jit: None,
         }
     }
 
