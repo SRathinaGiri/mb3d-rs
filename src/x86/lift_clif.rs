@@ -36,7 +36,19 @@ const STACK_LOW: u32 = BASE + 0x4000;
 
 /// The Rust functions the compiled code calls: (name, address, number of
 /// f64 arguments; `round_int` takes the machine first).
-pub const HELPERS: [(&str, usize); 8] = [("mb3d_sin", 1), ("mb3d_cos", 1), ("mb3d_tan", 1), ("mb3d_atan2", 2), ("mb3d_exp2", 1), ("mb3d_log2", 1), ("mb3d_fmod", 2), ("mb3d_round_int", 1)];
+pub const HELPERS: [(&str, usize); 11] = [
+    ("mb3d_sin", 1),
+    ("mb3d_cos", 1),
+    ("mb3d_tan", 1),
+    ("mb3d_atan2", 2),
+    ("mb3d_exp2", 1),
+    ("mb3d_log2", 1),
+    ("mb3d_fmod", 2),
+    ("mb3d_round_int", 1),
+    ("mb3d_ln", 1),
+    ("mb3d_exp", 1),
+    ("mb3d_powf", 2),
+];
 
 pub extern "C" fn mb3d_sin(x: f64) -> f64 {
     x.sin()
@@ -59,6 +71,15 @@ pub extern "C" fn mb3d_log2(x: f64) -> f64 {
 pub extern "C" fn mb3d_fmod(x: f64, y: f64) -> f64 {
     x % y
 }
+pub extern "C" fn mb3d_ln(x: f64) -> f64 {
+    x.ln()
+}
+pub extern "C" fn mb3d_exp(x: f64) -> f64 {
+    x.exp()
+}
+pub extern "C" fn mb3d_powf(x: f64, y: f64) -> f64 {
+    x.powf(y)
+}
 /// `Machine::round_int` (the rounding of the machine's control word)
 ///
 /// # Safety
@@ -69,7 +90,7 @@ pub unsafe extern "C" fn mb3d_round_int(m: *const Machine, x: f64) -> f64 {
 }
 
 /// The addresses of [`HELPERS`], for the JIT's symbol table.
-pub fn helper_addresses() -> [(&'static str, *const u8); 8] {
+pub fn helper_addresses() -> [(&'static str, *const u8); 11] {
     [
         ("mb3d_sin", mb3d_sin as *const u8),
         ("mb3d_cos", mb3d_cos as *const u8),
@@ -79,11 +100,14 @@ pub fn helper_addresses() -> [(&'static str, *const u8); 8] {
         ("mb3d_log2", mb3d_log2 as *const u8),
         ("mb3d_fmod", mb3d_fmod as *const u8),
         ("mb3d_round_int", mb3d_round_int as *const u8),
+        ("mb3d_ln", mb3d_ln as *const u8),
+        ("mb3d_exp", mb3d_exp as *const u8),
+        ("mb3d_powf", mb3d_powf as *const u8),
     ]
 }
 
 /// The helpers declared in the function being built (order of [`HELPERS`]).
-pub struct Helpers(pub [FuncRef; 8]);
+pub struct Helpers(pub [FuncRef; 11]);
 
 /// Where the record cells of a formula come from.
 pub trait Record {

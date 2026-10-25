@@ -168,6 +168,20 @@ mod imp {
         fs.push(Formula::Quaternion { yw_mul: 0.5, w_add: 0.3 });
         fs.push(Formula::Tricorn { z_mul: -1.0, cz_mul: 1.0 });
         fs.push(Formula::Tricorn { z_mul: 0.8, cz_mul: -0.5 });
+        for (power, z_mul) in [(8.0, -1.0), (3.5, 1.0), (-2.2, 0.7)] {
+            fs.push(Formula::RealPower { power, z_mul });
+        }
+        for (r_threshold, r_threshold2) in [(1.0, 0.5), (2.0, 1.2), (0.6, 0.6)] {
+            fs.push(Formula::Bulbox { scale: 2.0, min_r: 0.5, fold: 1.0, bulb_scale: 1.0, r_threshold, r_threshold2 });
+            fs.push(Formula::Bulbox { scale: -1.7, min_r: 0.3, fold: 0.8, bulb_scale: 1.4, r_threshold, r_threshold2 });
+        }
+        if let Some(Formula::AexionC { power, z_mul, power_c, cz_mul, .. }) = Formula::default_for("Aexion C") {
+            for mode in 0..32 {
+                for (rot_c, cond_phi, powc_dist) in [(false, false, false), (true, false, false), (true, true, false), (true, true, true), (true, false, true)] {
+                    fs.push(Formula::AexionC { power, z_mul, rot_c, cond_phi, power_c, cz_mul, powc_dist, mode });
+                }
+            }
+        }
         let mut rng = Rng(0x5eed);
         let (mut ok, mut bad) = (0, 0);
         for f in &fs {

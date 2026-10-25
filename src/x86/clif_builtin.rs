@@ -6,7 +6,8 @@
 
 use crate::formulas::Formula;
 use cranelift_codegen::ir::condcodes::FloatCC;
-use cranelift_codegen::ir::{InstBuilder, Value};
+use super::lift_clif::Helpers;
+use cranelift_codegen::ir::{FuncRef, InstBuilder, MemFlags, Value};
 use cranelift_frontend::FunctionBuilder;
 use std::cell::Cell;
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -14,6 +15,17 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 thread_local! {
     /// the builder the operators of [`X`] emit into (while `emit` runs)
     static FB: Cell<*mut ()> = const { Cell::new(std::ptr::null_mut()) };
+    /// the maths helpers of the function being built (while `emit` runs)
+    static HELP: Cell<[Option<FuncRef>; 11]> = const { Cell::new([None; 11]) };
+}
+
+/// helper `h` of `lift_clif::HELPERS` on `args`
+fn call(h: usize, args: &[Value]) -> X {
+    let f = HELP.with(|c| c.get())[h].expect("helpers set by emit");
+    X(with_b(|b| {
+        let c = b.ins().call(f, args);
+        b.inst_results(c)[0]
+    }))
 }
 
 fn with_b<T>(f: impl FnOnce(&mut FunctionBuilder) -> T) -> T {
@@ -39,6 +51,37 @@ impl X {
     }
     fn abs(self) -> X {
         X(with_b(|b| b.ins().fabs(self.0)))
+    }
+    fn sin(self) -> X {
+        call(0, &[self.0])
+    }
+    fn cos(self) -> X {
+        call(1, &[self.0])
+    }
+    /// `f64::sin_cos` is `(sin, cos)`
+    fn sin_cos(self) -> (X, X) {
+        (self.sin(), self.cos())
+    }
+    fn atan2(self, x: X) -> X {
+        call(3, &[self.0, x.0])
+    }
+    fn ln(self) -> X {
+        call(8, &[self.0])
+    }
+    fn exp(self) -> X {
+        call(9, &[self.0])
+    }
+    fn powf(self, y: f64) -> X {
+        let y = k(y);
+        call(10, &[self.0, y.0])
+    }
+    /// `if !self.is_sign_negative() { a } else { b }`
+    fn sign_select(self, a: X, c: X) -> X {
+        X(with_b(|b| {
+            let bits = b.ins().bitcast(cranelift_codegen::ir::types::I64, MemFlags::new(), self.0);
+            let neg = b.ins().icmp_imm(cranelift_codegen::ir::condcodes::IntCC::SignedLessThan, bits, 0);
+            b.ins().select(neg, c.0, a.0)
+        }))
     }
     /// `if self < o { a } else { b }`
     fn lt_select(self, o: X, a: X, c: X) -> X {
@@ -88,20 +131,60 @@ impl Neg for X {
 /// Whether [`emit`] compiles `f` (the others are called through
 /// `mb3d_builtin`).
 pub fn supported(f: &Formula) -> bool {
-    matches!(f, Formula::IntPow { .. } | Formula::Quaternion { .. } | Formula::Tricorn { .. } | Formula::AmazingBox { .. } | Formula::FoldingIntPow { .. })
+    matches!(
+        f,
+        Formula::IntPow { .. } | Formula::RealPower { .. } | Formula::Quaternion { .. } | Formula::Tricorn { .. } | Formula::AmazingBox { .. } | Formula::Bulbox { .. } | Formula::FoldingIntPow { .. } | Formula::AexionC { .. }
+    )
+}
+
+/// Whether `f` changes `j` (the compiled loop then keeps it in variables).
+pub fn writes_j(f: &Formula) -> bool {
+    matches!(f, Formula::AexionC { rot_c: true, .. })
 }
 
 /// One iteration of the built-in formula `f` on `v`, `j` (`Formula::iterate`
 /// with `rout` and `ade`); false if it is not one of the compiled ones.
-pub fn emit(b: &mut FunctionBuilder, f: &Formula, v: &mut [Value; 4], j: &mut [Value; 4], rout: Value, ade: bool) -> bool {
+pub fn emit(b: &mut FunctionBuilder, h: &Helpers, f: &Formula, v: &mut [Value; 4], j: &mut [Value; 4], rout: Value, ade: bool) -> bool {
     if !supported(f) {
         return false;
     }
-    let _ = rout;
     FB.with(|c| c.set(b as *mut FunctionBuilder as *mut ()));
+    HELP.with(|c| c.set(h.0.map(Some)));
     let mut vx = v.map(X);
-    let jx = j.map(X);
+    let mut jx = j.map(X);
+    let rout = X(rout);
     match *f {
+        Formula::RealPower { power, z_mul } => real_power(power, z_mul, &mut vx, &jx, rout),
+        Formula::Bulbox { scale, min_r, fold, bulb_scale, r_threshold, r_threshold2 } => {
+            // HybridSuperCube2: the three results, the one of rout chosen
+            let rt1 = r_threshold * r_threshold;
+            let rt2 = r_threshold2 * r_threshold2;
+            let v0 = vx;
+            let mut pa = v0;
+            int_pow2_scale(bulb_scale, &mut pa, &jx);
+            let mut pc = v0;
+            amazing_box(scale, min_r, fold, &mut pc, &jx, false);
+            // the blend (as `Formula::iterate`: the box of the start, the
+            // power's result as `out`)
+            let m = (rout - rt2) / k(rt1 - rt2);
+            let out = [pa[0], pa[1], pa[2]];
+            let mut w = pc;
+            let r1 = (w[0] * w[0] + w[1] * w[1] + w[2] * w[2]).sqrt();
+            let m2 = 1.0 - m;
+            let r2 = r1 * m + m2 * (out[0] * out[0] + out[1] * out[1] + out[2] * out[2]).sqrt();
+            w[0] = w[0] * m + m2 * out[0];
+            w[1] = w[1] * m + m2 * out[1];
+            w[2] = w[2] * m + m2 * out[2];
+            let r1 = r2 / (w[0] * w[0] + w[1] * w[1] + w[2] * w[2] + 1e-40).sqrt();
+            w[0] = w[0] * r1;
+            w[1] = w[1] * r1;
+            w[2] = w[2] * r1;
+            for i in 0..4 {
+                let inner = rout.lt_select(k(rt2), pa[i], w[i]);
+                vx[i] = rout.lt_select(k(rt1), inner, pc[i]);
+            }
+        }
+        Formula::AexionC { .. } => aexion_c(f, &mut vx, &mut jx),
         Formula::IntPow { power, z_mul } => int_pow(power, z_mul, &mut vx, &jx),
         Formula::Quaternion { yw_mul, w_add } => {
             let (x, y, z, w) = (vx[0], vx[1], vx[2], vx[3]);
@@ -126,8 +209,92 @@ pub fn emit(b: &mut FunctionBuilder, f: &Formula, v: &mut [Value; 4], j: &mut [V
         _ => unreachable!(),
     }
     FB.with(|c| c.set(std::ptr::null_mut()));
+    HELP.with(|c| c.set([None; 11]));
     *v = vx.map(|x| x.0);
+    *j = jx.map(|x| x.0);
     true
+}
+
+fn int_pow2_scale(scaling: f64, v: &mut [X; 4], j: &[X; 4]) {
+    let s = 1.0 / scaling;
+    let x = v[0] * s;
+    let y = v[1] * s;
+    let z = v[2] * s;
+    let xx = x * x;
+    let yy = y * y;
+    let r = xx + yy;
+    v[2] = -((r.sqrt() * z) * 2.0) * scaling + j[2];
+    let a = (r - z * z) / r;
+    v[0] = (xx - yy) * a * scaling + j[0];
+    v[1] = (x * y * a) * 2.0 * scaling + j[1];
+}
+
+fn real_power(pow: f64, z_mul: f64, v: &mut [X; 4], j: &[X; 4], rout: X) {
+    let (x, y, z) = (v[0], v[1], v[2]);
+    let theta = y.atan2(x) * pow;
+    let (sin_t, cos_t) = theta.sin_cos();
+    let phi = z.atan2((x * x + y * y).sqrt()) * pow;
+    let (sin_p, cos_p) = phi.sin_cos();
+    let r = rout.powf(pow * 0.5);
+    v[0] = cos_t * cos_p * r + j[0];
+    v[1] = sin_t * cos_p * r + j[1];
+    v[2] = sin_p * r * z_mul + j[2];
+}
+
+fn aexion_c(f: &Formula, v: &mut [X; 4], j: &mut [X; 4]) {
+    let Formula::AexionC { power, z_mul, rot_c, cond_phi, power_c, cz_mul, powc_dist, mode } = *f else { return };
+    let (x, y, z) = (v[0], v[1], v[2]);
+    let r1 = x * x + y * y + z * z;
+    let th = (x * x + z * z).sqrt().atan2(y) * power;
+    let ph = z.atan2(x) * power;
+    let r1 = (r1.ln() * power * 0.5).exp();
+    let (st, ct) = th.sin_cos();
+    let (sp, cp) = ph.sin_cos();
+    v[0] = cp * ct * r1 + j[0];
+    v[2] = st * r1 * z_mul + j[2];
+    v[1] = ct * sp * r1 + j[1];
+    if !rot_c {
+        return;
+    }
+    let mut pd = k(power_c);
+    if powc_dist {
+        let d = [v[0] - j[0], v[1] - j[1], v[2] - j[2]];
+        pd = pd * (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt();
+    }
+    let r = (j[0] * j[0] + j[1] * j[1] + j[2] * j[2]).sqrt();
+    let (mut a, mut b, c) = if mode & 16 != 0 { (v[1] - j[1], v[2] - j[2], v[0] - j[0]) } else { (j[1], j[2], j[0]) };
+    let mut ofs = 0;
+    let mut ecx = 8;
+    if mode & 8 != 0 {
+        std::mem::swap(&mut a, &mut b);
+        ecx = 16;
+    }
+    let s = (b * b + c * c).sqrt();
+    let mut th = if mode & 1 != 0 { a.atan2(s) } else { s.atan2(a) };
+    let mut ph = if mode & 2 != 0 {
+        ofs = 24 - ecx;
+        c.atan2(b)
+    } else {
+        b.atan2(c)
+    };
+    if mode & 4 != 0 {
+        std::mem::swap(&mut th, &mut ph);
+        ofs = ecx;
+    }
+    if cond_phi {
+        let t = match ofs {
+            0 => v[0],
+            8 => v[1],
+            _ => v[2],
+        };
+        // if !t.is_sign_negative() { ph = -ph }
+        ph = t.sign_select(-ph, ph);
+    }
+    let (sa, ca) = (ph * pd).sin_cos();
+    let (sb, cb) = (th * pd).sin_cos();
+    j[0] = ca * cb * r;
+    j[2] = sb * r * cz_mul;
+    j[1] = cb * sa * r;
 }
 
 fn box_fold(x: X, fold: f64) -> X {

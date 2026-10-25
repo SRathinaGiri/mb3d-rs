@@ -433,7 +433,11 @@ pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usiz
                 }
                 written.extend(prog.clif_record_written()?.into_iter().filter(|c| it_settable(*c)));
             }
-            f if super::clif_builtin::supported(f) => {}
+            f if super::clif_builtin::supported(f) => {
+                if super::clif_builtin::writes_j(f) {
+                    written.extend([0, 10, 11, 12]);
+                }
+            }
             _ => written.extend([0, 10, 11, 12]),
         }
     }
@@ -542,9 +546,14 @@ pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usiz
                     let mut v: [Value; 4] = V.map(|c| st.read(&mut b, c));
                     let mut jv: [Value; 4] = J.map(|c| st.read(&mut b, c));
                     let ro = st.read(&mut b, 14);
-                    super::clif_builtin::emit(&mut b, f, &mut v, &mut jv, ro, s.ade);
+                    super::clif_builtin::emit(&mut b, &helpers, f, &mut v, &mut jv, ro, s.ade);
                     for (c, x) in V.iter().zip(v) {
                         st.write(&mut b, *c, x);
+                    }
+                    if super::clif_builtin::writes_j(f) {
+                        for (c, x) in J.iter().zip(jv) {
+                            st.write(&mut b, *c, x);
+                        }
                     }
                     b.ins().jump(after, &[]);
                 }
@@ -681,6 +690,8 @@ impl Jit {
         let mut fctx = FunctionBuilderContext::new();
         {
             let mut b = FunctionBuilder::new(&mut ctx.func, &mut fctx);
+            let refs: Vec<_> = self.helpers.iter().map(|id| self.module.declare_func_in_func(*id, b.func)).collect();
+            let helpers = Helpers(refs.try_into().ok()?);
             let e = b.create_block();
             b.append_block_params_for_function_params(e);
             b.switch_to_block(e);
@@ -688,9 +699,12 @@ impl Jit {
             let fl = MemFlags::trusted();
             let mut v: [Value; 4] = std::array::from_fn(|k| b.ins().load(F64, fl, p[0], 8 * k as i32));
             let mut j: [Value; 4] = std::array::from_fn(|k| b.ins().load(F64, fl, p[1], 8 * k as i32));
-            super::clif_builtin::emit(&mut b, f, &mut v, &mut j, p[2], ade);
+            super::clif_builtin::emit(&mut b, &helpers, f, &mut v, &mut j, p[2], ade);
             for (k, x) in v.iter().enumerate() {
                 b.ins().store(fl, *x, p[0], 8 * k as i32);
+            }
+            for (k, x) in j.iter().enumerate() {
+                b.ins().store(fl, *x, p[1], 8 * k as i32);
             }
             b.ins().return_(&[]);
             b.seal_all_blocks();
