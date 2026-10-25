@@ -557,6 +557,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 let f = |x: &f64| (*x as f32).to_bits();
                 slotx[n] = [f(power), f(z_mul), 0, 0, 0, 0, 0, 0];
             }
+            Formula::Lambdabulb { .. } | Formula::Hopfbrot { .. } | Formula::TetrahedralBox { .. } => {
+                return Err(format!("{} is calculated on the CPU while its GPU shader is prepared", sl.formula.name()));
+            }
             Formula::Custom(c) if c.def.jit.is_none() => {
                 let m = p.machine.as_ref().ok_or("no formula machine")?;
                 let prog = m.prog(crate::custom::code_addr(n)).ok_or_else(|| format!("{}: not compiled", c.name()))?;

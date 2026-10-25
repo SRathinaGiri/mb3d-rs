@@ -78,6 +78,12 @@ pub enum Formula {
     /// A three-dimensional Mandelbar: a power bulb conjugated across the
     /// xz-plane before each power step.
     MandelbarBulb { power: f64, z_mul: f64 },
+    /// Independently implemented from the published Lambdabulb definition.
+    Lambdabulb { power: f64, phase: f64, c_scale: f64 },
+    /// A four-dimensional Hopf-coordinate power bulb.
+    Hopfbrot { power: f64 },
+    /// A clean-room 4D box fold projected into the tetrahedral hyperplane.
+    TetrahedralBox { scale: f64, min_r: f64, fold: f64 },
     /// A custom formula from a `.m3f` file, run by the x86 interpreter.
     Custom(Box<CustomFormula>),
 }
@@ -264,6 +270,9 @@ impl Formula {
             Formula::SinCosBulb { .. } => "SinCos Bulb V3",
             Formula::TailsBulb { .. } => "Tails Bulb",
             Formula::MandelbarBulb { .. } => "Mandelbar Bulb",
+            Formula::Lambdabulb { .. } => "Lambdabulb",
+            Formula::Hopfbrot { .. } => "Hopfbrot",
+            Formula::TetrahedralBox { .. } => "Tetrahedral Box",
         }
     }
 
@@ -283,6 +292,12 @@ impl Formula {
             "SinCos Bulb V3",
             "Tails Bulb",
             "Mandelbar Bulb",
+            "Lambdabulb",
+            "Hopfbrot",
+            "Tetrahedral Box",
+            "Lambdabulb",
+            "Hopfbrot",
+            "Tetrahedral Box",
         ]
     }
 
@@ -351,6 +366,9 @@ impl Formula {
                 z_mul: 1.0,
             },
             "mandelbar bulb" | "mandelbar" => Formula::MandelbarBulb { power: 8.0, z_mul: 1.0 },
+            "lambdabulb" | "lambda bulb" => Formula::Lambdabulb { power: 4.0, phase: 1.815_142, c_scale: 1.0 },
+            "hopfbrot" => Formula::Hopfbrot { power: 2.0 },
+            "tetrahedral box" | "tetra box" => Formula::TetrahedralBox { scale: 2.0, min_r: 0.5, fold: 1.0 },
             _ => return None,
         })
     }
@@ -416,6 +434,13 @@ impl Formula {
             Formula::MandelbarBulb { power, z_mul } => {
                 vec![("Power", power), ("Z multiplier", z_mul)]
             }
+            Formula::Lambdabulb { power, phase, c_scale } => vec![
+                ("Power", power), ("Phase (radians)", phase), ("C multiplier", c_scale),
+            ],
+            Formula::Hopfbrot { power } => vec![("Power", power)],
+            Formula::TetrahedralBox { scale, min_r, fold } => vec![
+                ("Scale", scale), ("Min radius", min_r), ("Fold", fold),
+            ],
         };
         v.into_iter().map(|(k, x)| (k.to_string(), x)).collect()
     }
@@ -502,6 +527,29 @@ impl Formula {
                     "power" => *power = value,
                     "z mul" | "z multiplier" | "zmul" => *z_mul = value,
                     _ => return Err(format!("unknown option '{key}' for Mandelbar Bulb")),
+                }
+                true
+            }
+            Formula::Lambdabulb { power, phase, c_scale } => {
+                match k.as_str() {
+                    "power" => *power = value,
+                    "phase" | "phase radians" | "phase (radians)" => *phase = value,
+                    "c multiplier" | "c scale" => *c_scale = value,
+                    _ => return Err(format!("unknown option '{key}' for Lambdabulb")),
+                }
+                true
+            }
+            Formula::Hopfbrot { power } => {
+                if k != "power" { return Err(format!("unknown option '{key}' for Hopfbrot")); }
+                *power = value;
+                true
+            }
+            Formula::TetrahedralBox { scale, min_r, fold } => {
+                match k.as_str() {
+                    "scale" => *scale = value,
+                    "min radius" | "min r" => *min_r = value,
+                    "fold" => *fold = value,
+                    _ => return Err(format!("unknown option '{key}' for Tetrahedral Box")),
                 }
                 true
             }
@@ -593,7 +641,7 @@ impl Formula {
     pub fn de_option(&self) -> i32 {
         match self {
             Formula::Custom(c) => c.def.de_option,
-            Formula::Quaternion { .. } => 4,
+            Formula::Quaternion { .. } | Formula::Hopfbrot { .. } | Formula::TetrahedralBox { .. } => 4,
             Formula::AmazingBox { .. } => 11,
             _ => 0,
         }
@@ -642,7 +690,9 @@ impl Formula {
             }
             Formula::SinCosBulb { power, .. }
             | Formula::TailsBulb { power, .. }
-            | Formula::MandelbarBulb { power, .. } => power,
+            | Formula::MandelbarBulb { power, .. }
+            | Formula::Lambdabulb { power, .. }
+            | Formula::Hopfbrot { power } => power,
             _ => 2.0,
         }
     }
@@ -744,8 +794,53 @@ impl Formula {
                 tails_bulb(power, tail, frequency, z_mul, v, j, rout)
             }
             Formula::MandelbarBulb { power, z_mul } => mandelbar_bulb(power, z_mul, v, j, rout),
+            Formula::Lambdabulb { power, phase, c_scale } => lambdabulb(power, phase, c_scale, v, j),
+            Formula::Hopfbrot { power } => hopfbrot(power, v, j),
+            Formula::TetrahedralBox { scale, min_r, fold } => tetrahedral_box(scale, min_r, fold, v, j),
         }
     }
+}
+
+/// Lambdabulb, from the mathematical iteration published by mathr.co.uk.
+/// This is an independent implementation, not a translation of source code.
+fn lambdabulb(power: f64, phase: f64, c_scale: f64, v: &mut [f64; 4], j: &[f64; 4]) {
+    let r = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
+    if r <= 1e-300 { *v = [0.0; 4]; return; }
+    let theta = v[1].atan2(v[0]) * power;
+    let phi = (v[2] / r).clamp(-1.0, 1.0).acos() * power + phase;
+    let rp = r.powf(power);
+    let p = [rp * phi.sin() * theta.cos(), rp * phi.sin() * theta.sin(), rp * phi.cos()];
+    let a = [v[0] - p[0], v[1] - p[1], v[2] - p[2]];
+    let c = [j[0] * c_scale, j[1] * c_scale, j[2] * c_scale];
+    let (rc, ra) = ((c[0] * c[0] + c[1] * c[1] + c[2] * c[2]).sqrt(), (a[0] * a[0] + a[1] * a[1] + a[2] * a[2]).sqrt());
+    if rc <= 1e-300 || ra <= 1e-300 { *v = [0.0; 4]; return; }
+    let q = 1.0 - c[2] * a[2] / (rc * ra);
+    v[0] = q * (c[0] * a[0] - c[1] * a[1]);
+    v[1] = q * (a[0] * c[1] + c[0] * a[1]);
+    v[2] = ra * c[2] + rc * a[2];
+}
+
+/// Hopfbrot in four-dimensional Hopf coordinates (clean-room from the
+/// published definition); numerical 4D DE is used by the renderer.
+fn hopfbrot(power: f64, v: &mut [f64; 4], j: &[f64; 4]) {
+    let r = v.iter().map(|x| x * x).sum::<f64>().sqrt();
+    if r <= 1e-300 { *v = *j; return; }
+    let t = (v[2] * v[2] + v[3] * v[3]).sqrt().atan2((v[0] * v[0] + v[1] * v[1]).sqrt()) * power;
+    let u = v[1].atan2(v[0]) * power;
+    let q = v[3].atan2(v[2]) * power;
+    let rp = r.powf(power);
+    *v = [rp * t.cos() * u.cos() + j[0], rp * t.cos() * u.sin() + j[1], rp * t.sin() * q.cos() + j[2], rp * t.sin() * q.sin() + j[3]];
+}
+
+/// A 4D box fold projected into the sum-zero tetrahedral hyperplane. This is
+/// a clean-room formula inspired by Jeannot's linked-coordinate experiments.
+fn tetrahedral_box(scale: f64, min_r: f64, fold: f64, v: &mut [f64; 4], j: &[f64; 4]) {
+    let mut p = *v;
+    let avg = p.iter().sum::<f64>() * 0.25;
+    for x in &mut p { *x = box_fold(*x - avg, fold); }
+    let r2 = p.iter().map(|x| x * x).sum::<f64>();
+    let k = if r2 < min_r * min_r { scale / (min_r * min_r) } else if r2 < 1.0 { scale / r2 } else { scale };
+    *v = [p[0] * k + j[0], p[1] * k + j[1], p[2] * k + j[2], p[3] * k + j[3]];
 }
 
 /// Clean-room angular power bulb variants. Numerical DE is used by the

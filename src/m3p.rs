@@ -1288,7 +1288,8 @@ pub fn write(sc: &Scene) -> Vec<u8> {
             Formula::Bulbox { .. } => (5, vec![0; 6]),
             Formula::FoldingIntPow { .. } => (6, vec![2, 0, 0]),
             Formula::AexionC { .. } => (9, vec![0, 0, 2, 2, 0, 0, 2, 2]),
-            Formula::SinCosBulb { .. } | Formula::TailsBulb { .. } | Formula::MandelbarBulb { .. } => {
+            Formula::SinCosBulb { .. } | Formula::TailsBulb { .. } | Formula::MandelbarBulb { .. }
+            | Formula::Lambdabulb { .. } | Formula::Hopfbrot { .. } | Formula::TetrahedralBox { .. } => {
                 // New formulas use the existing custom-formula record so
                 // their name and options round-trip without claiming an old
                 // Mandelbulb3D internal formula number.
@@ -1316,7 +1317,7 @@ mod tests {
 
     #[test]
     fn modern_formulas_round_trip_as_named_formulas() {
-        for name in ["SinCos Bulb", "SinCos Bulb V2", "SinCos Bulb V3", "Tails Bulb", "Mandelbar Bulb"] {
+        for name in ["SinCos Bulb", "SinCos Bulb V2", "SinCos Bulb V3", "Tails Bulb", "Mandelbar Bulb", "Lambdabulb", "Hopfbrot", "Tetrahedral Box"] {
             let scene = Scene::preset(name).unwrap();
             let back = parse(&write(&scene)).unwrap().scene;
             assert_eq!(back.formulas[0].formula.name(), name);
