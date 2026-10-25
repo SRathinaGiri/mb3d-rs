@@ -83,6 +83,18 @@ pub struct Iteration {
     pub direct: DirectSlots,
 }
 
+/// The vector a formula just stored, read as four separate loads: the
+/// compiler would read two of them with one 16 byte load, which the
+/// processor cannot forward from the formula's two 8 byte stores (it waits
+/// for them to reach the cache, and the hybrid loop is a chain of such
+/// waits).
+#[inline(always)]
+fn scalar_loads(v: &[f64; 4]) -> [f64; 4] {
+    // volatile: kept as four loads (never merged); plain loads otherwise
+    // SAFETY: the references are valid and aligned
+    unsafe { [std::ptr::read_volatile(&v[0]), std::ptr::read_volatile(&v[1]), std::ptr::read_volatile(&v[2]), std::ptr::read_volatile(&v[3])] }
+}
+
 /// Most slots of a hybrid for [`DirectSlots`].
 const DIRECT_SLOTS: usize = 8;
 
@@ -209,7 +221,7 @@ impl Iteration {
                 continue;
             }
             self.it_result += 1;
-            let [x, y, z, w] = self.v;
+            let [x, y, z, w] = scalar_loads(&self.v);
             self.rout = if four_d { x * x + y * y + z * z + w * w } else { x * x + y * y + z * z };
             if self.rout < self.otrap {
                 self.otrap = self.rout;
@@ -248,14 +260,14 @@ impl Iteration {
             let y1 = self.v;
             let dt = self.deriv1;
             self.call_slot(slots, 0);
-            let x1 = self.v;
+            let x1 = scalar_loads(&self.v);
             self.v = y1;
             let dd = self.deriv1;
             if four_d && de {
                 self.deriv1 = dt;
             }
             self.call_slot(slots, 1);
-            let [x, y, z, w] = self.v;
+            let [x, y, z, w] = scalar_loads(&self.v);
             let (xx, yy) = if four_d {
                 ((x1[0] * x1[0] + x1[1] * x1[1] + x1[2] * x1[2] + x1[3] * x1[3]).sqrt(), (x * x + y * y + z * z + w * w).sqrt())
             } else {
