@@ -26,6 +26,11 @@ impl Rng {
 
 fn setup(m: &mut Machine, rng: &mut Rng, de_option: i32, first_it: i32, slot: usize) {
     let w = |m: &mut Machine, o: u32, v: f64| m.wrf64(IT_BASE + o, v).unwrap();
+    // garbage below the call's stack: a formula must not read stack memory
+    // it did not write (the translated code keeps its stack in locals)
+    for a in (STACK_TOP - 0x1000..STACK_TOP).step_by(4) {
+        m.wr32(a, (rng.range(0.0, 4294967295.0)) as u32).unwrap();
+    }
     let c = [rng.range(-1.2, 1.2), rng.range(-1.2, 1.2), rng.range(-1.2, 1.2)];
     let v = [rng.range(-1.5, 1.5), rng.range(-1.5, 1.5), rng.range(-1.5, 1.5), rng.range(-0.5, 0.5)];
     for k in 0..4 {

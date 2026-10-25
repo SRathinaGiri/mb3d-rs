@@ -3074,6 +3074,20 @@ fn direct_regs(m: &mut Machine) -> [u32; 8] {
     rg
 }
 
+/// The registers of [`direct_regs`] without the call's stack in the
+/// machine (for formulas that keep their stack in locals).
+#[inline(always)]
+fn direct_regs_local() -> [u32; 8] {
+    use crate::custom::{IT_C1, STACK_TOP};
+    let x = IT_C1 - 32;
+    let mut rg = [0u32; 8];
+    rg[EAX] = x;
+    rg[EDX] = x + 8;
+    rg[ECX] = x + 16;
+    rg[ESP] = STACK_TOP - 12;
+    rg
+}
+
 /// Cell `c` (the 8 bytes at `J4 + 8c`) of the iteration record for a direct
 /// formula: the fields `Iteration::run_custom` copies into the record come
 /// from `it`, the others from the record in memory.

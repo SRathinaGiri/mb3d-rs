@@ -6,7 +6,11 @@
 //! 24..32, `v..` the variable buffer, `s..` the stack).  They are read from
 //! the machine at the start and the written ones go back at the end, so the
 //! machine ends in the same state as with the interpreter (checked by
-//! `m3fcheck --translated`).  Accesses to parts of a cell are bit
+//! `m3fcheck --translated`).  The direct and dIFS versions keep the stack
+//! in locals only, as the GPU code does: it starts with what the call
+//! pushes and 0 below, and is dead after the return (`m3fcheck` puts
+//! garbage there, so a formula reading stack it did not write would show).
+//! Accesses to parts of a cell are bit
 //! operations on the local.  Local subroutines are generated once per call
 //! site (the analysis follows call strings), so every return has a fixed
 //! target.  The operations are those of `emit_rust`; formulas whose code
@@ -566,6 +570,10 @@ fn structure(blocks: &[Block], entry: usize) -> Option<Structured> {
     Some(Structured { code, loops: !loops.is_empty() })
 }
 
+/// Machine accesses of generated code at computed addresses (see
+/// `local_stack` in `emit_lifted_mode`).
+const DYNAMIC_ACCESS: [&str; 9] = ["m.rd32(", "m.wr32(", "m.rd32u(", "m.wr32u(", "m.rdf64(", "m.rdf64u(", "m.wrf64u(", "m.floadu(", "m.exec_op("];
+
 /// The cells and the code that uses them.
 #[derive(Default)]
 pub(super) struct Cells {
@@ -1044,13 +1052,35 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 _ => format!("m.rd64u({})", addr(p, c)),
             }
         };
+        // the stack of a direct or dIFS formula in locals only (as on the
+        // GPU): the cells start with what the call pushes, the others with
+        // 0, and nothing goes back to the machine (callers read nothing
+        // below the stack pointer).  Not when the code addresses memory
+        // through registers (the stack could be among it).
+        let local_stack = conv != Conv::Machine && !DYNAMIC_ACCESS.iter().any(|f| body.contains(f));
+        let stack_init = |c: u32| -> String {
+            let call_cells: Vec<(u32, u32)> = if difs {
+                vec![(STACK_TOP - 4, RETURN_SENTINEL)]
+            } else {
+                let x = crate::custom::IT_C1 - 32;
+                vec![(STACK_TOP - 12, RETURN_SENTINEL), (STACK_TOP - 8, crate::custom::IT_C1), (STACK_TOP - 4, x + 24)]
+            };
+            let half = |a: u32| call_cells.iter().find(|(ca, _)| *ca == a).map_or(0, |(_, v)| *v) as u64;
+            let a = STACK_LOW + 8 * c;
+            format!("{:#x}u64", half(a) | half(a + 4) << 32)
+        };
+        let load = |p: char, c: u32| -> String { if p == 's' && local_stack { stack_init(c) } else { load(p, c) } };
         let mut o = String::new();
         if direct {
             // the state `Machine::call_compiled` sets up, without the machine
             let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {{");
             let _ = writeln!(o, "    let _ = p;");
             let _ = writeln!(o, "    let mut f = [0f64; 8];");
-            let _ = writeln!(o, "    let mut rg = direct_regs(m);");
+            if local_stack {
+                let _ = writeln!(o, "    let mut rg = direct_regs_local();");
+            } else {
+                let _ = writeln!(o, "    let mut rg = direct_regs(m);");
+            }
             let _ = writeln!(o, "    let mut fl = Flags::default();");
             let _ = writeln!(o, "    let mut fsw = 0u16;");
             if steps {
@@ -1117,6 +1147,9 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
         // after an error)
         let write_back = |o: &mut String, ind: &str| {
             for (p, c) in &cells.written {
+                if *p == 's' && local_stack {
+                    continue;
+                }
                 if direct && *p == 'r' {
                     let _ = writeln!(o, "{ind}rec_set(m, it, {c}, r{c});");
                 } else {
