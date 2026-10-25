@@ -295,9 +295,6 @@ impl Formula {
             "Lambdabulb",
             "Hopfbrot",
             "Tetrahedral Box",
-            "Lambdabulb",
-            "Hopfbrot",
-            "Tetrahedral Box",
         ]
     }
 
@@ -1136,6 +1133,15 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn builtin_formula_names_are_unique() {
+        let mut names = Formula::all_names().to_vec();
+        let count = names.len();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), count, "formula picker contains duplicate names");
+    }
 
     #[test]
     fn modern_bulbs_produce_finite_steps() {
