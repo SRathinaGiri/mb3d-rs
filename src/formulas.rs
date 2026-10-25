@@ -63,6 +63,21 @@ pub enum Formula {
         /// 8 swap Cy/Cz, 16 use Z - C instead of C for the angles
         mode: i32,
     },
+    /// A clean-room, angularly warped power bulb.  The three variants use
+    /// distinct radial modulations; the names follow recent formula-family
+    /// terminology, but the implementation belongs to mb3d-rs.
+    SinCosBulb {
+        variant: u8,
+        power: f64,
+        warp: f64,
+        frequency: f64,
+        z_mul: f64,
+    },
+    /// A power bulb with a radius-dependent "tail" modulation.
+    TailsBulb { power: f64, tail: f64, frequency: f64, z_mul: f64 },
+    /// A three-dimensional Mandelbar: a power bulb conjugated across the
+    /// xz-plane before each power step.
+    MandelbarBulb { power: f64, z_mul: f64 },
     /// A custom formula from a `.m3f` file, run by the x86 interpreter.
     Custom(Box<CustomFormula>),
 }
@@ -244,6 +259,11 @@ impl Formula {
             Formula::Bulbox { .. } => "Bulbox",
             Formula::FoldingIntPow { .. } => "Folding Int Pow",
             Formula::AexionC { .. } => "Aexion C",
+            Formula::SinCosBulb { variant: 1, .. } => "SinCos Bulb",
+            Formula::SinCosBulb { variant: 2, .. } => "SinCos Bulb V2",
+            Formula::SinCosBulb { .. } => "SinCos Bulb V3",
+            Formula::TailsBulb { .. } => "Tails Bulb",
+            Formula::MandelbarBulb { .. } => "Mandelbar Bulb",
         }
     }
 
@@ -258,6 +278,11 @@ impl Formula {
             "Bulbox",
             "Folding Int Pow",
             "Aexion C",
+            "SinCos Bulb",
+            "SinCos Bulb V2",
+            "SinCos Bulb V3",
+            "Tails Bulb",
+            "Mandelbar Bulb",
         ]
     }
 
@@ -298,6 +323,34 @@ impl Formula {
                 powc_dist: false,
                 mode: 0,
             },
+            "sincos bulb" | "sincos" => Formula::SinCosBulb {
+                variant: 1,
+                power: 8.0,
+                warp: 0.22,
+                frequency: 3.0,
+                z_mul: 1.0,
+            },
+            "sincos bulb v2" | "sincos v2" => Formula::SinCosBulb {
+                variant: 2,
+                power: 8.0,
+                warp: 0.22,
+                frequency: 3.0,
+                z_mul: 1.0,
+            },
+            "sincos bulb v3" | "sincos v3" => Formula::SinCosBulb {
+                variant: 3,
+                power: 8.0,
+                warp: 0.22,
+                frequency: 3.0,
+                z_mul: 1.0,
+            },
+            "tails bulb" | "tails" => Formula::TailsBulb {
+                power: 8.0,
+                tail: 0.35,
+                frequency: 2.5,
+                z_mul: 1.0,
+            },
+            "mandelbar bulb" | "mandelbar" => Formula::MandelbarBulb { power: 8.0, z_mul: 1.0 },
             _ => return None,
         })
     }
@@ -348,6 +401,21 @@ impl Formula {
                 ("PowC on dist Vec-C (0,1)", powc_dist as i32 as f64),
                 ("Mode (0..31)", mode as f64),
             ],
+            Formula::SinCosBulb { power, warp, frequency, z_mul, .. } => vec![
+                ("Power", power),
+                ("Angular warp", warp),
+                ("Frequency", frequency),
+                ("Z multiplier", z_mul),
+            ],
+            Formula::TailsBulb { power, tail, frequency, z_mul } => vec![
+                ("Power", power),
+                ("Tail strength", tail),
+                ("Tail frequency", frequency),
+                ("Z multiplier", z_mul),
+            ],
+            Formula::MandelbarBulb { power, z_mul } => {
+                vec![("Power", power), ("Z multiplier", z_mul)]
+            }
         };
         v.into_iter().map(|(k, x)| (k.to_string(), x)).collect()
     }
@@ -371,6 +439,12 @@ impl Formula {
                     c.def.options.iter().map(|o| o.name.clone()).collect::<Vec<_>>().join(", ")
                 )),
             };
+        }
+        if let Some(i) = k.strip_prefix("option").and_then(|n| n.trim().parse::<usize>().ok()) {
+            let Some(name) = self.options().get(i).map(|(name, _)| name.clone()) else {
+                return Err(format!("unknown option '{key}' for {}", self.name()));
+            };
+            return self.set_option(&name, value);
         }
         let ok = match self {
             Formula::IntPow { power, z_mul } | Formula::FoldingIntPow { power, z_mul, .. }
@@ -400,6 +474,34 @@ impl Formula {
                     "powc on dist" | "powc on dist vec c (0,1)" | "powc on dist vec c" => *powc_dist = on,
                     "mode" | "mode (0..31)" => *mode = (value.round() as i32).clamp(0, 31),
                     _ => return Err(format!("unknown option '{key}' for Aexion C")),
+                }
+                true
+            }
+            Formula::SinCosBulb { power, warp, frequency, z_mul, .. } => {
+                match k.as_str() {
+                    "power" => *power = value,
+                    "angular warp" | "warp" => *warp = value,
+                    "frequency" => *frequency = value,
+                    "z mul" | "z multiplier" | "zmul" => *z_mul = value,
+                    _ => return Err(format!("unknown option '{key}' for {}", self.name())),
+                }
+                true
+            }
+            Formula::TailsBulb { power, tail, frequency, z_mul } => {
+                match k.as_str() {
+                    "power" => *power = value,
+                    "tail strength" | "tail" => *tail = value,
+                    "tail frequency" | "frequency" => *frequency = value,
+                    "z mul" | "z multiplier" | "zmul" => *z_mul = value,
+                    _ => return Err(format!("unknown option '{key}' for Tails Bulb")),
+                }
+                true
+            }
+            Formula::MandelbarBulb { power, z_mul } => {
+                match k.as_str() {
+                    "power" => *power = value,
+                    "z mul" | "z multiplier" | "zmul" => *z_mul = value,
+                    _ => return Err(format!("unknown option '{key}' for Mandelbar Bulb")),
                 }
                 true
             }
@@ -538,6 +640,9 @@ impl Formula {
                     power
                 }
             }
+            Formula::SinCosBulb { power, .. }
+            | Formula::TailsBulb { power, .. }
+            | Formula::MandelbarBulb { power, .. } => power,
             _ => 2.0,
         }
     }
@@ -632,8 +737,55 @@ impl Formula {
                 int_pow(power, z_mul, v, j);
             }
             Formula::AexionC { .. } => aexion_c(self, v, j),
+            Formula::SinCosBulb { variant, power, warp, frequency, z_mul } => {
+                sincos_bulb(variant, power, warp, frequency, z_mul, v, j, rout)
+            }
+            Formula::TailsBulb { power, tail, frequency, z_mul } => {
+                tails_bulb(power, tail, frequency, z_mul, v, j, rout)
+            }
+            Formula::MandelbarBulb { power, z_mul } => mandelbar_bulb(power, z_mul, v, j, rout),
         }
     }
+}
+
+/// Clean-room angular power bulb variants. Numerical DE is used by the
+/// renderer, so these intentionally do not claim an analytic derivative.
+fn sincos_bulb(variant: u8, power: f64, warp: f64, frequency: f64, z_mul: f64, v: &mut [f64; 4], j: &[f64; 4], rout: f64) {
+    let (x, y, z) = (v[0], v[1], v[2]);
+    let base_theta = y.atan2(x);
+    let base_phi = z.atan2((x * x + y * y).sqrt());
+    let theta = power * base_theta + warp * (frequency * base_phi).sin();
+    let phi = power * base_phi + warp * (frequency * base_theta).cos();
+    let mut radius = rout.max(1e-300).powf(power * 0.5);
+    match variant {
+        2 => radius *= 1.0 + warp * (frequency * rout.sqrt()).sin(),
+        3 => radius *= 1.0 + warp * (frequency * base_theta).cos() * (frequency * base_phi).sin(),
+        _ => {}
+    }
+    v[0] = theta.cos() * phi.cos() * radius + j[0];
+    v[1] = theta.sin() * phi.cos() * radius + j[1];
+    v[2] = phi.sin() * radius * z_mul + j[2];
+}
+
+fn tails_bulb(power: f64, tail: f64, frequency: f64, z_mul: f64, v: &mut [f64; 4], j: &[f64; 4], rout: f64) {
+    let (x, y, z) = (v[0], v[1], v[2]);
+    let theta = power * y.atan2(x);
+    let phi = power * z.atan2((x * x + y * y).sqrt());
+    let r = rout.sqrt();
+    let radius = rout.max(1e-300).powf(power * 0.5) * (1.0 + tail * (frequency * r).sin() / (1.0 + r));
+    v[0] = theta.cos() * phi.cos() * radius + j[0];
+    v[1] = theta.sin() * phi.cos() * radius + j[1];
+    v[2] = phi.sin() * radius * z_mul + j[2];
+}
+
+fn mandelbar_bulb(power: f64, z_mul: f64, v: &mut [f64; 4], j: &[f64; 4], rout: f64) {
+    let (x, y, z) = (v[0], v[1], v[2]);
+    let theta = -power * y.atan2(x);
+    let phi = power * z.atan2((x * x + y * y).sqrt());
+    let radius = rout.max(1e-300).powf(power * 0.5);
+    v[0] = theta.cos() * phi.cos() * radius + j[0];
+    v[1] = theta.sin() * phi.cos() * radius + j[1];
+    v[2] = phi.sin() * radius * z_mul + j[2];
 }
 
 /// `AexionC` (formulas.pas, x87 code): a real power bulb step (angles as
@@ -889,6 +1041,24 @@ mod tests {
     }
 
     use super::*;
+
+    #[test]
+    fn modern_bulbs_produce_finite_steps() {
+        for name in [
+            "SinCos Bulb",
+            "SinCos Bulb V2",
+            "SinCos Bulb V3",
+            "Tails Bulb",
+            "Mandelbar Bulb",
+        ] {
+            let f = Formula::default_for(name).unwrap();
+            let mut v = [0.31, -0.42, 0.27, 0.0];
+            let mut j = [0.12, -0.08, 0.20, 0.0];
+            let rout = v[..3].iter().map(|x| x * x).sum();
+            f.iterate(&mut v, &mut j, rout, false);
+            assert!(v[..3].iter().all(|x| x.is_finite()), "{name}: {v:?}");
+        }
+    }
 
     /// Reference triplex power formula (spherical coordinates, as used by
     /// White/Nylander):  r^n (cos(n th) cos(n ph), sin(n th) cos(n ph), -sin(n ph))

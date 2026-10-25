@@ -464,6 +464,48 @@ fn real_power(n: u32) {
     v = vec3<R>(r_cos(theta) * r_cos(phi) * r + j.x, r_sin(theta) * r_cos(phi) * r + j.y, r_sin(phi) * r * slotx(n, 1u) + j.z);
 }
 
+// Clean-room modern bulb family (formulas.rs).  Slot parameters are stored
+// as f32 and promoted to R, matching the other GPU formula implementations.
+fn sincos_bulb(n: u32) {
+    let power = slotx(n, 0u);
+    let warp = slotx(n, 1u);
+    let frequency = slotx(n, 2u);
+    let z_mul = slotx(n, 3u);
+    let theta0 = r_atan2(v.y, v.x);
+    let phi0 = r_atan2(v.z, sqrt(v.x * v.x + v.y * v.y));
+    let theta = power * theta0 + warp * r_sin(frequency * phi0);
+    let phi = power * phi0 + warp * r_cos(frequency * theta0);
+    var radius = r_pow(max(rout, R(1e-30)), power * 0.5);
+    let variant = slot(n, 4u);
+    if (variant == 2u) {
+        radius *= 1.0 + warp * r_sin(frequency * sqrt(rout));
+    } else if (variant == 3u) {
+        radius *= 1.0 + warp * r_cos(frequency * theta0) * r_sin(frequency * phi0);
+    }
+    v = vec3<R>(r_cos(theta) * r_cos(phi) * radius + j.x, r_sin(theta) * r_cos(phi) * radius + j.y, r_sin(phi) * radius * z_mul + j.z);
+}
+
+fn tails_bulb(n: u32) {
+    let power = slotx(n, 0u);
+    let tail = slotx(n, 1u);
+    let frequency = slotx(n, 2u);
+    let z_mul = slotx(n, 3u);
+    let theta = power * r_atan2(v.y, v.x);
+    let phi = power * r_atan2(v.z, sqrt(v.x * v.x + v.y * v.y));
+    let radius0 = sqrt(rout);
+    let radius = r_pow(max(rout, R(1e-30)), power * 0.5) * (1.0 + tail * r_sin(frequency * radius0) / (1.0 + radius0));
+    v = vec3<R>(r_cos(theta) * r_cos(phi) * radius + j.x, r_sin(theta) * r_cos(phi) * radius + j.y, r_sin(phi) * radius * z_mul + j.z);
+}
+
+fn mandelbar_bulb(n: u32) {
+    let power = slotx(n, 0u);
+    let z_mul = slotx(n, 1u);
+    let theta = -power * r_atan2(v.y, v.x);
+    let phi = power * r_atan2(v.z, sqrt(v.x * v.x + v.y * v.y));
+    let radius = r_pow(max(rout, R(1e-30)), power * 0.5);
+    v = vec3<R>(r_cos(theta) * r_cos(phi) * radius + j.x, r_sin(theta) * r_cos(phi) * radius + j.y, r_sin(phi) * radius * z_mul + j.z);
+}
+
 // HybridItIntPow2scale: sine bulb power 2 with scaling (Bulbox)
 fn int_pow2_scale(scaling: R) {
     let s = 1.0 / scaling;

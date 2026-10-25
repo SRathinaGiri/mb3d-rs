@@ -541,6 +541,22 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 row[6] = 9;
                 slotx[n] = [*power as u32, (*z_mul as f32).to_bits(), (*fold as f32).to_bits(), 0, 0, 0, 0, 0];
             }
+            Formula::SinCosBulb { variant, power, warp, frequency, z_mul } => {
+                row[4] = *variant as u32;
+                row[6] = 10;
+                let f = |x: &f64| (*x as f32).to_bits();
+                slotx[n] = [f(power), f(warp), f(frequency), f(z_mul), 0, 0, 0, 0];
+            }
+            Formula::TailsBulb { power, tail, frequency, z_mul } => {
+                row[6] = 11;
+                let f = |x: &f64| (*x as f32).to_bits();
+                slotx[n] = [f(power), f(tail), f(frequency), f(z_mul), 0, 0, 0, 0];
+            }
+            Formula::MandelbarBulb { power, z_mul } => {
+                row[6] = 12;
+                let f = |x: &f64| (*x as f32).to_bits();
+                slotx[n] = [f(power), f(z_mul), 0, 0, 0, 0, 0, 0];
+            }
             Formula::Custom(c) if c.def.jit.is_none() => {
                 let m = p.machine.as_ref().ok_or("no formula machine")?;
                 let prog = m.prog(crate::custom::code_addr(n)).ok_or_else(|| format!("{}: not compiled", c.name()))?;
@@ -782,6 +798,15 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             }
             9 => {
                 let _ = writeln!(g, "        case {n}u: {{ folding_int_pow({n}u); }}");
+            }
+            10 => {
+                let _ = writeln!(g, "        case {n}u: {{ sincos_bulb({n}u); }}");
+            }
+            11 => {
+                let _ = writeln!(g, "        case {n}u: {{ tails_bulb({n}u); }}");
+            }
+            12 => {
+                let _ = writeln!(g, "        case {n}u: {{ mandelbar_bulb({n}u); }}");
             }
             _ => {}
         }

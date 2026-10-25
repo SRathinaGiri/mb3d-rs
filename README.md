@@ -291,6 +291,15 @@ you check further on your own:
   <a href="docs/img/navigator_values.png"><img src="docs/img/navigator_values.png" width="640" alt="The Navigator with the formula values and the input box of a clicked value"></a>
 
   </details>
+* **Five modern power-bulb formulas:** **SinCos Bulb**, **SinCos Bulb V2**,
+  **SinCos Bulb V3**, **Tails Bulb**, and **Mandelbar Bulb**. They are
+  clean-room, built-in formulas with editable Power and shape controls,
+  available in the desktop formula list and through `mb3d --formula` on the
+  command line. They run on both the processor and the graphics card.
+
+  Their names and controls are saved in mb3d-rs parameter files. Original
+  Mandelbulb3D does not know these new formula names, so use **Save m3s** (or
+  mb3d-rs) when sharing a scene that uses them.
 * **A new formula, SphereTree:** a tree of touching spheres that branch
   smaller and smaller, by Tom Lowe.
 
