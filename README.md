@@ -295,7 +295,10 @@ you check further on your own:
   **SinCos Bulb V3**, **Tails Bulb**, and **Mandelbar Bulb**. They are
   clean-room, built-in formulas with editable Power and shape controls,
   available in the desktop formula list and through `mb3d --formula` on the
-  command line. They run on both the processor and the graphics card.
+  command line. They run on both the processor and the graphics card. Each
+  also has optional pre-iteration **Rotate X/Y/Z** (degrees) and **Fold
+  XY/YZ/XZ** controls; all default to zero, so existing scenes remain
+  unchanged.
 
   Their names and controls are saved in mb3d-rs parameter files. Original
   Mandelbulb3D does not know these new formula names, so use **Save m3s** (or

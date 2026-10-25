@@ -116,13 +116,13 @@ const N_SLOTS: u32 = 166u;        // resumable marching: the slots (64 per work 
 const ITEM_END: u32 = 167u;       // the pixels (from ROW0, RECT_W per row) or tasks of the job
 const SAMPLE_X: u32 = 220u;      // > 0: a sample of the pixels (render.rs probe_single): every
 const SAMPLE_Y: u32 = 221u;      // SAMPLE_X-th column of every SAMPLE_Y-th row (RECT_W, ROW0 count them)
-const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
+const TURN_BUDGET: u32 = 284u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
 const STATE_FIXED: u32 = 591u;
-const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
+const HYB_KIND: u32 = 285u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
-const P2_HYB_KIND: u32 = 274u;    // the second part's
+const P2_HYB_KIND: u32 = 286u;    // the second part's
 // the reflection pass (M_REFLECT): tasks instead of pixels
 const R_FAR_FOG: u32 = 168u;     // far fog / squared depth: the depth of a hit from the fog formula
 const R_SURFACE: u32 = 169u;     // 1: the tasks are the pixels' surfaces (no march)
@@ -153,39 +153,39 @@ const MC_WORDS: u32 = 23u;       // a task: 0-2 position, 3-5 direction, 6 zz, 7
 // 3 Amazing Box: see amazing_box)
 const SLOTS: u32 = 64u;
 fn slot(n: u32, k: u32) -> u32 { return P[SLOTS + n * 8u + k]; }
-// the parameters of the built-in formulas (8 per slot)
+// the parameters of the built-in formulas (10 per slot)
 const SLOTX: u32 = 224u;
-fn slotx(n: u32, k: u32) -> R { return R(bitcast<f32>(P[SLOTX + n * 8u + k])); }
-fn slotxi(n: u32, k: u32) -> i32 { return bitcast<i32>(P[SLOTX + n * 8u + k]); }
+fn slotx(n: u32, k: u32) -> R { return R(bitcast<f32>(P[SLOTX + n * 10u + k])); }
+fn slotxi(n: u32, k: u32) -> i32 { return bitcast<i32>(P[SLOTX + n * 10u + k]); }
 // the 4D rotation (smatrix4, 4 rows of 3) of the 4D hybrids
-const SMATRIX4: u32 = 275u;
-const IPOL_W: u32 = 287u;         // the weights of the two formulas of an interpolation hybrid
-const INSIDE_FLAGS: u32 = 289u;   // 1 inside rendering, 2 inside and outside
-const COLOR_ON_IT: u32 = 290u;    // doColorOnIt: 0 off, 1 the start vector, n the vector after n - 1 iterations
-const CUT_OPT: u32 = 291u;        // the cutting planes: bits 0-2 the axes, 4-6 their sides
-const CUT_POS: u32 = 292u;        // 3 values
-const DP: u32 = 296u;             // the coordinates as doubles: start (3), view gradients (9), julia (4),
+const SMATRIX4: u32 = 287u;
+const IPOL_W: u32 = 299u;         // the weights of the two formulas of an interpolation hybrid
+const INSIDE_FLAGS: u32 = 301u;   // 1 inside rendering, 2 inside and outside
+const COLOR_ON_IT: u32 = 302u;    // doColorOnIt: 0 off, 1 the start vector, n the vector after n - 1 iterations
+const CUT_OPT: u32 = 303u;        // the cutting planes: bits 0-2 the axes, 4-6 their sides
+const CUT_POS: u32 = 304u;        // 3 values
+const DP: u32 = 308u;             // the coordinates as doubles: start (3), view gradients (9), julia (4),
                                   // the volumetric light's position (3), the shadow lights' positions (6 x 3)
 // the volumetric light (vollight.rs VolLightMap): its map is in MAPS from
 // VOL_BASE (the cube sides of a positional light, one side for a global one)
-const VOL_ON: u32 = 370u;
-const VOL_POS: u32 = 371u;        // 3 values (f32; double mode: pdd(16..18))
-const VOL_ROT: u32 = 374u;        // 9 values, the rows of the global light's map
-const VOL_CUBE: u32 = 383u;
-const VOL_HALF: u32 = 384u;
-const VOL_SIZE_FACTOR: u32 = 385u;
-const VOL_STRETCH: u32 = 386u;
-const VOL_IS_POS: u32 = 387u;
-const VOL_MUL: u32 = 388u;
-const VOL_STEP_MUL: u32 = 389u;
-const VOL_BASE: u32 = 390u;
+const VOL_ON: u32 = 382u;
+const VOL_POS: u32 = 383u;        // 3 values (f32; double mode: pdd(16..18))
+const VOL_ROT: u32 = 386u;        // 9 values, the rows of the global light's map
+const VOL_CUBE: u32 = 395u;
+const VOL_HALF: u32 = 396u;
+const VOL_SIZE_FACTOR: u32 = 397u;
+const VOL_STRETCH: u32 = 398u;
+const VOL_IS_POS: u32 = 399u;
+const VOL_MUL: u32 = 400u;
+const VOL_STEP_MUL: u32 = 401u;
+const VOL_BASE: u32 = 402u;
 // the shadow pass's positional lights: 6 x (positional, sLmaxL * the
 // length multiplier, iLightPos and 14); the position is in HS_LIGHTS'
 // vector (double mode: pdd(19 + 3 i ..))
-const HS_POS: u32 = 391u;
+const HS_POS: u32 = 403u;
 // M_VLMAP: the light map's march (vollight.rs build / vl_trace)
-const VOL_MIN_DIST: u32 = 409u;
-const VOL_MAX_DIST: u32 = 410u;   // in steps
+const VOL_MIN_DIST: u32 = 421u;
+const VOL_MAX_DIST: u32 = 422u;   // in steps
 
 const PI: R = 3.14159265358979;
 
@@ -466,11 +466,36 @@ fn real_power(n: u32) {
 
 // Clean-room modern bulb family (formulas.rs).  Slot parameters are stored
 // as f32 and promoted to R, matching the other GPU formula implementations.
+fn power_bulb_transform(n: u32) -> R {
+    let rx = slotx(n, 4u) * PI / 180.0;
+    let ry = slotx(n, 5u) * PI / 180.0;
+    let rz = slotx(n, 6u) * PI / 180.0;
+    let cx = r_cos(rx); let sx = r_sin(rx);
+    var y = cx * v.y - sx * v.z;
+    var z = sx * v.y + cx * v.z;
+    let cy = r_cos(ry); let sy = r_sin(ry);
+    var x = cy * v.x + sy * z;
+    z = -sy * v.x + cy * z;
+    let cz = r_cos(rz); let sz = r_sin(rz);
+    let xr = cz * x - sz * y;
+    y = sz * x + cz * y;
+    x = xr;
+    let fxy = slotx(n, 7u);
+    if (fxy > 0.0) { x = box_fold(x, fxy); y = box_fold(y, fxy); }
+    let fyz = slotx(n, 8u);
+    if (fyz > 0.0) { y = box_fold(y, fyz); z = box_fold(z, fyz); }
+    let fxz = slotx(n, 9u);
+    if (fxz > 0.0) { x = box_fold(x, fxz); z = box_fold(z, fxz); }
+    v = vec3<R>(x, y, z);
+    return dot(v, v);
+}
+
 fn sincos_bulb(n: u32) {
     let power = slotx(n, 0u);
     let warp = slotx(n, 1u);
     let frequency = slotx(n, 2u);
     let z_mul = slotx(n, 3u);
+    rout = power_bulb_transform(n);
     let theta0 = r_atan2(v.y, v.x);
     let phi0 = r_atan2(v.z, sqrt(v.x * v.x + v.y * v.y));
     let theta = power * theta0 + warp * r_sin(frequency * phi0);
@@ -490,6 +515,7 @@ fn tails_bulb(n: u32) {
     let tail = slotx(n, 1u);
     let frequency = slotx(n, 2u);
     let z_mul = slotx(n, 3u);
+    rout = power_bulb_transform(n);
     let theta = power * r_atan2(v.y, v.x);
     let phi = power * r_atan2(v.z, sqrt(v.x * v.x + v.y * v.y));
     let radius0 = sqrt(rout);
@@ -500,6 +526,7 @@ fn tails_bulb(n: u32) {
 fn mandelbar_bulb(n: u32) {
     let power = slotx(n, 0u);
     let z_mul = slotx(n, 1u);
+    rout = power_bulb_transform(n);
     let theta = -power * r_atan2(v.y, v.x);
     let phi = power * r_atan2(v.z, sqrt(v.x * v.x + v.y * v.y));
     let radius = r_pow(max(rout, R(1e-30)), power * 0.5);

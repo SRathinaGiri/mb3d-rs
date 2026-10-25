@@ -40,7 +40,7 @@ const R_W: usize = 256;
 const SLOTS_WORD: usize = 165;
 
 /// The parameter word `TURN_BUDGET`.
-const BUDGET_WORD: usize = 272;
+const BUDGET_WORD: usize = 284;
 
 /// Resumable marching (`STATE` in the shader): every thread is a slot for
 /// a pixel (or task) of a job; a submission gives each a budget of turns
@@ -382,7 +382,7 @@ struct SceneShader {
     /// z multiplier bits, kind, 0
     slots: [[u32; 8]; 6],
     /// per slot: the parameters of the built-in formulas (f32 / i32 bits)
-    slotx: [[u32; 8]; 6],
+    slotx: [[u32; 10]; 6],
     /// the words of the record cells in a pixel's state slot
     record_words: u32,
     /// the maps of the formulas' map functions (the shader's MAPS)
@@ -457,7 +457,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
         return Err("the zoom needs double precision (the graphics card has no doubles)".into());
     }
     let mut slots = [[0u32; 8]; 6];
-    let mut slotx = [[0u32; 8]; 6];
+    let mut slotx = [[0u32; 10]; 6];
     let mut wfs: Vec<(usize, WgslFormula)> = Vec::new();
     let mut cst: Vec<u32> = Vec::new();
     if p.slots.len() > 6 {
@@ -517,45 +517,45 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
             }
             Formula::Tricorn { z_mul, cz_mul } => {
                 row[6] = 5;
-                slotx[n] = [(*z_mul as f32).to_bits(), (*cz_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0];
+                slotx[n] = [(*z_mul as f32).to_bits(), (*cz_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0, 0, 0];
             }
             Formula::Bulbox { scale, min_r, fold, bulb_scale, r_threshold, r_threshold2 } => {
                 row[6] = 6;
                 let f = |x: &f64| (*x as f32).to_bits();
-                slotx[n] = [f(scale), f(min_r), f(fold), f(bulb_scale), f(r_threshold), f(r_threshold2), 0, 0];
+                slotx[n] = [f(scale), f(min_r), f(fold), f(bulb_scale), f(r_threshold), f(r_threshold2), 0, 0, 0, 0];
             }
             Formula::AexionC { power, z_mul, rot_c, cond_phi, power_c, cz_mul, powc_dist, mode } => {
                 row[6] = 7;
                 let f = |x: &f64| (*x as f32).to_bits();
-                slotx[n] = [f(power), f(z_mul), *rot_c as u32, *cond_phi as u32, f(power_c), f(cz_mul), *powc_dist as u32, *mode as u32];
+                slotx[n] = [f(power), f(z_mul), *rot_c as u32, *cond_phi as u32, f(power_c), f(cz_mul), *powc_dist as u32, *mode as u32, 0, 0];
             }
             Formula::RealPower { power, z_mul } => {
                 row[6] = 4;
-                slotx[n] = [(*power as f32).to_bits(), (*z_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0];
+                slotx[n] = [(*power as f32).to_bits(), (*z_mul as f32).to_bits(), 0, 0, 0, 0, 0, 0, 0, 0];
             }
             Formula::Quaternion { yw_mul, w_add } => {
                 row[6] = 8;
-                slotx[n] = [(*yw_mul as f32).to_bits(), (*w_add as f32).to_bits(), 0, 0, 0, 0, 0, 0];
+                slotx[n] = [(*yw_mul as f32).to_bits(), (*w_add as f32).to_bits(), 0, 0, 0, 0, 0, 0, 0, 0];
             }
             Formula::FoldingIntPow { power, z_mul, fold } => {
                 row[6] = 9;
-                slotx[n] = [*power as u32, (*z_mul as f32).to_bits(), (*fold as f32).to_bits(), 0, 0, 0, 0, 0];
+                slotx[n] = [*power as u32, (*z_mul as f32).to_bits(), (*fold as f32).to_bits(), 0, 0, 0, 0, 0, 0, 0];
             }
-            Formula::SinCosBulb { variant, power, warp, frequency, z_mul } => {
+            Formula::SinCosBulb { variant, power, warp, frequency, z_mul, transform } => {
                 row[4] = *variant as u32;
                 row[6] = 10;
                 let f = |x: &f64| (*x as f32).to_bits();
-                slotx[n] = [f(power), f(warp), f(frequency), f(z_mul), 0, 0, 0, 0];
+                slotx[n] = [f(power), f(warp), f(frequency), f(z_mul), f(&transform.rotate[0]), f(&transform.rotate[1]), f(&transform.rotate[2]), f(&transform.fold[0]), f(&transform.fold[1]), f(&transform.fold[2])];
             }
-            Formula::TailsBulb { power, tail, frequency, z_mul } => {
+            Formula::TailsBulb { power, tail, frequency, z_mul, transform } => {
                 row[6] = 11;
                 let f = |x: &f64| (*x as f32).to_bits();
-                slotx[n] = [f(power), f(tail), f(frequency), f(z_mul), 0, 0, 0, 0];
+                slotx[n] = [f(power), f(tail), f(frequency), f(z_mul), f(&transform.rotate[0]), f(&transform.rotate[1]), f(&transform.rotate[2]), f(&transform.fold[0]), f(&transform.fold[1]), f(&transform.fold[2])];
             }
-            Formula::MandelbarBulb { power, z_mul } => {
+            Formula::MandelbarBulb { power, z_mul, transform } => {
                 row[6] = 12;
                 let f = |x: &f64| (*x as f32).to_bits();
-                slotx[n] = [f(power), f(z_mul), 0, 0, 0, 0, 0, 0];
+                slotx[n] = [f(power), f(z_mul), 0, 0, f(&transform.rotate[0]), f(&transform.rotate[1]), f(&transform.rotate[2]), f(&transform.fold[0]), f(&transform.fold[1]), f(&transform.fold[2])];
             }
             Formula::Lambdabulb { .. } | Formula::Hopfbrot { .. } | Formula::TetrahedralBox { .. } => {
                 return Err(format!("{} is calculated on the CPU while its GPU shader is prepared", sl.formula.name()));
@@ -1654,7 +1654,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
             d(pos[k]);
         }
     }
-    debug_assert_eq!(v.len(), 370);
+    debug_assert_eq!(v.len(), 382);
     if let Some(m) = vol {
         let f = |v: &mut Vec<u32>, x: f32| v.push(x.to_bits());
         v.push(1);
@@ -1675,7 +1675,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
         f(&mut v, m.vl_step_mul);
         v.push(scene.maps.len().max(1) as u32);
     }
-    v.resize(391, 0);
+    v.resize(403, 0);
     for li in 0..6 {
         match hs.and_then(|j| j.lights.get(li)) {
             Some(l) => {
@@ -1729,10 +1729,10 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 416;
+const PARAM_WORDS: usize = 428;
 
 /// The parameter word of the coordinates as doubles (`DP` in the shader).
-const DOUBLE_WORD: usize = 296;
+const DOUBLE_WORD: usize = 308;
 
 thread_local! {
     /// the depth of [`de_probe`] (a parameter of the shader)

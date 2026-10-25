@@ -1325,6 +1325,21 @@ mod tests {
     }
 
     #[test]
+    fn modern_bulb_transform_options_round_trip() {
+        let mut scene = Scene::preset("Tails Bulb").unwrap();
+        let f = &mut scene.formulas[0].formula;
+        f.set_option("Rotate X", 27.0).unwrap();
+        f.set_option("Rotate Y", -13.0).unwrap();
+        f.set_option("Fold YZ", 0.75).unwrap();
+        let back = parse(&write(&scene)).unwrap().scene;
+        let options = back.formulas[0].formula.options();
+        for (name, expected) in [("Rotate X (degrees)", 27.0), ("Rotate Y (degrees)", -13.0), ("Fold YZ", 0.75)] {
+            let value = options.iter().find(|(k, _)| k == name).unwrap().1;
+            assert!((value - expected).abs() < 1e-12, "{name}: {value}");
+        }
+    }
+
+    #[test]
     fn m3i_round_trip() {
         let mut sc = Scene::preset("Integer Power").unwrap();
         sc.width = 24;
