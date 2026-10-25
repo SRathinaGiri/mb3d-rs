@@ -42,6 +42,10 @@ pub struct State {
     pub slice_calc: u8,
     pub calculating: bool,
     pub calc3d: bool,
+    /// A Calculate request made while Navigator is open.  Navigator preview
+    /// wake-ups must not repaint an old main image, but this request's image
+    /// must be shown without closing Navigator.
+    pub show_while_navigator: bool,
     pub img_ver: u64,
     pub finished_seen: u64,
     pub last_partial: Instant,
@@ -182,6 +186,7 @@ impl Default for State {
             slice_calc: 2,
             calculating: false,
             calc3d: false,
+            show_while_navigator: false,
             img_ver: 0,
             finished_seen: 0,
             last_partial: Instant::now(),
@@ -930,6 +935,7 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
 /// [`calc_mand`] after its checks: the calculation of `app.scene` starts.
 fn calc_mand_go(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     app.main.calc3d = calc3d;
+    app.main.show_while_navigator = true;
     app.main.stage_shown = "main rendering".into();
     let later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
     let sig = if calc3d { picture_sig(&app.scene) } else { String::new() };
@@ -1700,7 +1706,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             }
         }
     }
-    if ver != app.main.img_ver {
+    if (!app.navi.active || app.main.show_while_navigator) && ver != app.main.img_ver {
         app.main.img_ver = ver;
         show_image(app, ui);
     }
@@ -1789,6 +1795,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             }
         }
         super::light_form::calc_finished(app, ui);
+        app.main.show_while_navigator = false;
     }
     // the history keeps the parameters after lighting changes (Timer2)
     if !app.main.calculating && app.main.last_history.elapsed().as_secs() >= 300 {

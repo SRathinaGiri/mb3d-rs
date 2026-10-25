@@ -45,6 +45,9 @@ pub struct State {
     /// the view taken from the main window and "Fixed zoom" then ("Reset view")
     pub start: Option<Scene>,
     pub start_fixed: bool,
+    /// Remains true while a Navigator input dialog is in front of the form.
+    /// `Ui::showing(FNavigator)` is false during such a dialog.
+    pub active: bool,
 }
 
 impl Default for State {
@@ -76,6 +79,7 @@ impl Default for State {
             waker_set: false,
             start: None,
             start_fixed: false,
+            active: false,
         }
     }
 }
@@ -945,6 +949,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_caption(F, "CheckBox4", &tr("HiQual 1"));
         }
         "FormShow" => {
+            app.navi.active = true;
             if app.navi.first {
                 app.navi.first = false;
                 ui.set_text(F, "Edit1", &app.ini.get("NavSlideStep").to_string());
@@ -979,6 +984,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "FormCloseQuery" => {
+            app.navi.active = false;
             app.navi.eng.stop();
             ui.close_ok(F);
         }
