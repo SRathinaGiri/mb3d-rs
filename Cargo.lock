@@ -1142,6 +1142,7 @@ dependencies = [
  "cranelift-module",
  "cranelift-native",
  "fontdue",
+ "libloading",
  "open",
  "pollster",
  "softbuffer",

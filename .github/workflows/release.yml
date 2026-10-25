@@ -31,12 +31,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, ext: "", asset: linux-x64 }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc, ext: ".exe", asset: windows-x64 }
-          - { os: macos-latest, target: aarch64-apple-darwin, ext: "", asset: macos-arm64 }
+          # oidn: Intel Open Image Denoise's release package for the system
+          # and its SHA-256 (the Monte Carlo renders' neural noise filter,
+          # shipped whole in the package's oidn/ folder)
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, ext: "", asset: linux-x64,
+              oidn: oidn-2.5.1.x86_64.linux.tar.gz, oidn_sha: 743c3e2aff8c220d5d70fe6cb970fb3d36f2702d2693c61d1d148e404cf37cd6 }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, ext: ".exe", asset: windows-x64,
+              oidn: oidn-2.5.1.x64.windows.zip, oidn_sha: f11f91bc072a5e3a564515724cb72ab8fcfbc445c84a84c197ff9b16cc01396f }
+          - { os: macos-latest, target: aarch64-apple-darwin, ext: "", asset: macos-arm64,
+              oidn: oidn-2.5.1.arm64.macos.tar.gz, oidn_sha: 98e0aca8e7ab69e9f4f0191582a500fd8b0d9085d68662f18ab6469e934a6efd }
           # Intel Macs: cross-compiled on the Apple silicon runner (the
           # Intel macOS runners are retired)
-          - { os: macos-latest, target: x86_64-apple-darwin, ext: "", asset: macos-x64 }
+          - { os: macos-latest, target: x86_64-apple-darwin, ext: "", asset: macos-x64,
+              oidn: oidn-2.5.1.x86_64.macos.tar.gz, oidn_sha: a4341639005a33ce0d944bd7c771ce34de1465be7eb3189b7c3b5b0064429832 }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -85,6 +92,11 @@ jobs:
           echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
       - name: Build
         shell: bash
+        # macOS: the formulas compiled at run time are built in, but only
+        # used with MB3D_JIT=1 (not tested there yet; the package has
+        # clifcheck and jit_check.sh to test them)
+        env:
+          MB3D_JIT_MACOS: ${{ runner.os == 'macOS' && '1' || '' }}
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             cargo zigbuild --release --features gpu --target ${{ matrix.target }}.2.28
@@ -96,6 +108,9 @@ jobs:
             done
           else
             cargo build --release --features gpu --target ${{ matrix.target }}
+            if [ "${{ runner.os }}" = "macOS" ]; then
+              cargo build --release --features gpu --target ${{ matrix.target }} --example clifcheck
+            fi
             # the C runtime is linked in (.cargo/config.toml, issue #18): the
             # program must not need the Visual C++ redistributable DLLs
             for exe in Mandelbulb3D mb3d; do
@@ -104,6 +119,19 @@ jobs:
               fi
             done
           fi
+      # Intel's package as it is (the libraries, their licences and
+      # documentation), checked against the SHA-256 above
+      - name: Intel Open Image Denoise
+        shell: bash
+        run: |
+          f=${{ matrix.oidn }}
+          curl -sSfL -o "$f" "https://github.com/RenderKit/oidn/releases/download/v2.5.1/$f"
+          if command -v sha256sum > /dev/null; then sum="sha256sum"; else sum="shasum -a 256"; fi
+          echo "${{ matrix.oidn_sha }}  $f" | $sum -c -
+          mkdir oidn-pkg
+          case "$f" in *.zip) 7z x -ooidn-pkg "$f" > /dev/null ;; *) tar xzf "$f" -C oidn-pkg ;; esac
+          mv oidn-pkg/oidn-* oidn
+          ls oidn
       - name: Package
         shell: bash
         run: |
@@ -132,6 +160,13 @@ jobs:
           for exe in Mandelbulb3D mb3d; do
             cp "target/${{ matrix.target }}/release/$exe${{ matrix.ext }}" "$name"/
           done
+          # Intel Open Image Denoise (Apache 2.0, its licences in oidn/doc)
+          mv oidn "$name/oidn"
+          # macOS: the check of the formulas compiled at run time
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            cp "target/${{ matrix.target }}/release/examples/clifcheck" "$name"/
+            cp tools/jit_check.sh "$name"/
+          fi
           cp README.md GETTING_STARTED.md LICENSE download.sh "$name"/
           # the application menu entry and its icon (download.sh, the .deb)
           cp assets/mb3d-rs*.png assets/mb3d-rs.desktop "$name"/
@@ -151,6 +186,18 @@ jobs:
           cp -r Languages "$name"/
           mkdir -p "$name/examples"
           cp examples/*.m3s "$name/examples"/
+          # the neural noise filter loads from the package (not on the Intel
+          # Macs' build, which cannot run here)
+          if [ "${{ matrix.target }}" != "x86_64-apple-darwin" ]; then
+            p=$(ls "$name"/M3Parameter/*.m3p | grep -m1 -i 'apollo')
+            MB3D_GPU=0 "$name/mb3d${{ matrix.ext }}" montecarlo "$p" --scale 0.1 --rays 4 --denoise-ai --no-resume -q -o ai-test.png
+            test -s ai-test.png
+          fi
+          if [ "${{ runner.os }}" = "macOS" ] && [ "${{ matrix.target }}" = "aarch64-apple-darwin" ]; then
+            # the JIT runs on the runner (a short check, not the whole one)
+            MB3D_JIT=1 MB3D_GPU=0 "$name/mb3d" montecarlo "$p" --scale 0.1 --rays 4 --no-resume -q -o jit-test.png
+            test -s jit-test.png
+          fi
           # the archive name has no version, so that the README can link to
           # releases/latest/download/<archive>
           if [ "${{ runner.os }}" = "Windows" ]; then archive=mb3d-rs-${{ matrix.asset }}.zip; 7z a "$archive" "$name" > /dev/null
@@ -182,6 +229,9 @@ jobs:
           test -f /usr/share/man/man1/mb3d.1.gz
           mb3d -W 64 -H 48 --cpu -q -o /tmp/t.png "/usr/share/mb3d-rs/M3Parameter/$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i 'apollo.*\.m3p$')"
           test -s /tmp/t.png
+          # the neural noise filter from /usr/lib/mb3d-rs/oidn
+          MB3D_GPU=0 mb3d montecarlo "/usr/share/mb3d-rs/M3Parameter/$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i 'apollo.*\.m3p$')" --scale 0.1 --rays 4 --denoise-ai --no-resume -q -o /tmp/ai.png
+          test -s /tmp/ai.png
           # the user's files are not written next to the programs
           test ! -e /usr/bin/ShaderCache
       # the .rpm installed on the oldest system the programs are made for
@@ -196,6 +246,8 @@ jobs:
             f=$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i "apollo.*\.m3p$")
             mb3d -W 64 -H 48 --cpu -q -o /tmp/t.png "/usr/share/mb3d-rs/M3Parameter/$f"
             test -s /tmp/t.png
+            MB3D_GPU=0 mb3d montecarlo "/usr/share/mb3d-rs/M3Parameter/$f" --scale 0.1 --rays 4 --denoise-ai --no-resume -q -o /tmp/ai.png
+            test -s /tmp/ai.png
             dnf remove -y -q mb3d-rs
             test ! -e /usr/bin/mb3d'
       # one file per artifact (archive: false uploads a single file)

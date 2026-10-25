@@ -188,7 +188,8 @@ you check further on your own:
 
   </details>
 * **A noise filter** for Monte Carlo and all other pictures, the DCT
-  denoising known from GIMP.
+  denoising known from GIMP, and for Monte Carlo renders also a neural
+  one, Intel Open Image Denoise.
 
   <a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="300" alt="Noise filter"></a>
 
@@ -215,6 +216,35 @@ you check further on your own:
   <a href="docs/img/mc_noise.png"><img src="docs/img/mc_noise.png" width="760" alt="A Monte Carlo picture with 4 rays per pixel, the same with the noise filter, and with 512 rays"></a>
   
   <a href="docs/img/postpro_noise.png"><img src="docs/img/postpro_noise.png" width="260" alt="Post processing: the Noise Filter section"></a>
+
+  The **neural noise filter** is
+  [Intel Open Image Denoise](https://www.openimagedenoise.org), the
+  filter of Blender's Cycles and many other path tracers, trained on
+  rendered pictures. It filters the rendering's averages of the rays
+  (before exposure and saturation), so the picture keeps its brightness.
+  Intel's library comes with the program (the `oidn` folder; in the .deb
+  and .rpm, `/usr/lib/mb3d-rs/oidn`); `MB3D_OIDN` can name another one.
+
+  * **Monte Carlo window ▸ -noise AI**: filters the shown picture, and the
+    saved one, as *-noise* does; the rendering goes on unfiltered.
+  * **Command line**: `mb3d montecarlo scene.m3p --rays 8 --denoise-ai`.
+  * It takes 0.2 to 0.6 seconds for a 640 x 480 picture on the processor.
+
+  The difference from the 512-ray picture (mean over all pixels, lower is
+  better):
+
+  | Scene | 4 rays | DCT filter | neural filter | 8 rays | DCT filter | neural filter |
+  |---|---|---|---|---|---|---|
+  | TreePlanet | 1.89 % | 1.52 % | **1.23 %** | 0.88 % | 0.82 % | **0.79 %** |
+  | Cutted sphere over carpet | 5.30 % | 3.87 % | **2.34 %** | 2.80 % | 2.37 % | **1.66 %** |
+  | Julia on box | 1.61 % | **1.01 %** | 1.08 % | 0.98 % | **0.81 %** | 0.84 % |
+  | MengerTrees | 1.95 % | 1.54 % | **1.26 %** | 1.15 % | 1.05 % | **0.94 %** |
+
+  The neural filter is closest in three of the four scenes; on the Julia
+  set's fine grain the DCT filter is a little closer. It shows most on
+  glass and mirrors, where few rays leave the most grain:
+
+  <a href="docs/img/mc_noise_ai.jpg"><img src="docs/img/mc_noise_ai.jpg" width="760" alt="A Monte Carlo picture with 4 rays per pixel, with the DCT filter, with the neural filter, and with 512 rays"></a>
 
   </details>
 * **Transparent backgrounds** for pictures and animations.
@@ -896,7 +926,11 @@ interrupted animation continues and several computers can share one.
   Together with a faster loop over the formulas (on every system), CPU
   renders of the 80 example files take 20 % less time than in v0.2.74
   (up to 60 % in some), the pictures the same to the bit. A scene keeps the compiled hybrid only if it
-  measures faster; `MB3D_NO_JIT=1` switches it off. Not yet on macOS.
+  measures faster; `MB3D_NO_JIT=1` switches it off. On macOS it is in
+  the program but only used with `MB3D_JIT=1` until it has been tested
+  there: `./jit_check.sh` in the unpacked folder checks it (it compares
+  the compiled formulas with the translated ones and renders the example
+  files with and without it; the pictures must be the same).
 * **Big pictures** can be rendered in one piece (a 15000 x 20000 picture
   needs about 15 GB of memory; with depth of field it takes hours) or in
   tiles, also on several computers (`--tiles`, and the Big renders
@@ -1074,6 +1108,12 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   its own implementation of the algorithm, written from the paper; it
   contains no code of GIMP or GEGL (GEGL is under the LGPL 3, this
   program under the LGPL 2.1).
+* **The neural noise filter** is
+  [Intel Open Image Denoise](https://www.openimagedenoise.org) by Intel
+  (Apache License 2.0), shipped as Intel releases it, with the
+  [oneTBB](https://github.com/uxlfoundation/oneTBB) library it uses
+  (Apache License 2.0); their licences are in `oidn/doc`. The program
+  loads it while running.
 * **The formulas are compiled at run time** with
   [Cranelift](https://cranelift.dev) of the Bytecode Alliance
   (Apache License 2.0 with LLVM exception), on Linux and Windows.

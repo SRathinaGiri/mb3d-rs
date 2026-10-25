@@ -767,6 +767,28 @@ fn write_transparent(output: &str, rgb: &[u8], g: &[mb3d::gbuffer::SiLight], w: 
     write_out(output, &mb3d::png::encode_rgba(ow, oh, &rgba))
 }
 
+/// `--denoise-ai`: whether Intel Open Image Denoise can be loaded.
+fn ai_denoise_check() -> Result<(), String> {
+    #[cfg(feature = "oidn")]
+    return match mb3d::oidn::unavailable_reason() {
+        None => Ok(()),
+        Some(e) => Err(usage_err(&format!("--denoise-ai: {e}"))),
+    };
+    #[cfg(not(feature = "oidn"))]
+    Err(usage_err("--denoise-ai: this program was built without Intel Open Image Denoise"))
+}
+
+/// `--denoise-ai`: the picture through Intel Open Image Denoise.
+fn ai_denoised(img: &mb3d::mc::McImage, sc: &mb3d::scene::Scene) -> Result<Vec<u8>, String> {
+    #[cfg(feature = "oidn")]
+    return mb3d::oidn::denoised_mc_picture(img, &sc.mc, sc.lighting.gamma);
+    #[cfg(not(feature = "oidn"))]
+    {
+        let _ = (img, sc);
+        Err("built without Intel Open Image Denoise".into())
+    }
+}
+
 /// `--denoise`: the DCT noise filter (GIMP's "Denoise DCT") with this
 /// strength, 0 = off.
 fn denoised(rgb: Vec<u8>, w: usize, h: usize, sigma: f32) -> Vec<u8> {
@@ -1989,6 +2011,9 @@ OPTIONS:
         --denoise [SIGMA]    DCT noise filter on the written picture (GIMP's Denoise DCT):
                              the noise strength SIGMA (0..255), default: 64 / rays per
                              pixel (at most 12); the --m3c records stay unfiltered
+        --denoise-ai         Neural noise filter on the written picture instead: Intel
+                             Open Image Denoise (installed with the program, or the
+                             system's; MB3D_OIDN names its folder); --m3c unfiltered
         --scale <F>          Scale the image size
     -s, --set <KEY=VALUE>    Change a scene key (may be repeated)
     -t, --threads <N>        Number of threads (default: all cores)
@@ -2011,9 +2036,15 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     let (mut exposure, mut saturation, mut scale) = (None::<u8>, None::<u8>, None::<f64>);
     // the noise filter: None off, Some(None) sigma estimated from the rays
     let mut denoise: Option<Option<f32>> = None;
+    // the neural noise filter (Intel Open Image Denoise)
+    let mut denoise_ai = false;
     let (mut swarm, mut units): (Option<String>, Option<usize>) = (None, None);
     let mut args = argv.iter().peekable();
     while let Some(a) = args.next() {
+        if a == "--denoise-ai" {
+            denoise_ai = true;
+            continue;
+        }
         if a == "--denoise" {
             let v = args.peek().and_then(|v| v.trim().parse::<f32>().ok());
             if v.is_some() {
@@ -2051,6 +2082,12 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     }
     let file = file.ok_or_else(|| format!("no parameter file given\n\n{MC_USAGE}"))?;
     args_read();
+    if denoise_ai && denoise.is_some() {
+        return Err(usage_err("--denoise and --denoise-ai are two noise filters: one of them"));
+    }
+    if denoise_ai {
+        ai_denoise_check()?;
+    }
     let path = std::path::Path::new(&file);
     let is_m3c = path.extension().is_some_and(|e| e.eq_ignore_ascii_case("m3c"));
     // what the render starts from besides the scene (its checkpoint's key)
@@ -2127,8 +2164,8 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
     }
     let mut reached = false;
     let write_picture = |img: &mb3d::mc::McImage| -> Result<(), String> {
-        let mut rgb = mb3d::mc::paint(img, &scene.mc, scene.lighting.gamma);
-        if let Some(sigma) = denoise {
+        let mut rgb = if denoise_ai { ai_denoised(img, &scene)? } else { mb3d::mc::paint(img, &scene.mc, scene.lighting.gamma) };
+        if let (false, Some(sigma)) = (denoise_ai, denoise) {
             let sigma = sigma.unwrap_or_else(|| mb3d::mc::noise_sigma(img));
             let n = if threads > 0 { threads } else { std::thread::available_parallelism().map_or(4, |n| n.get()) };
             rgb = mb3d::denoise::dct_denoise(&rgb, img.width, img.height, sigma, n);

@@ -32,7 +32,7 @@ Name: mb3d-rs
 Version: $version
 Release: 1
 Summary: Mandelbulb3D 3D fractal renderer (Rust port)
-License: LGPL-2.1-only AND OFL-1.1
+License: LGPL-2.1-only AND OFL-1.1 AND Apache-2.0
 URL: https://github.com/thr32423/mb3d-rs
 # the libraries the programs link are in every glibc system; the rest
 # (Vulkan, X11/Wayland) is opened while running, so rpm's search for
@@ -55,6 +55,10 @@ r=%{buildroot}
 install -Dm755 "\$s/mb3d" "\$r/usr/bin/mb3d"
 install -Dm755 "\$s/Mandelbulb3D" "\$r/usr/bin/Mandelbulb3D"
 mkdir -p "\$r/usr/share/mb3d-rs"
+if [ -d "\$s/oidn" ]; then
+  mkdir -p "\$r/usr/lib/mb3d-rs"
+  cp -a "\$s/oidn" "\$r/usr/lib/mb3d-rs/"
+fi
 for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes Languages examples; do
   [ -d "\$s/\$d" ] && cp -r "\$s/\$d" "\$r/usr/share/mb3d-rs/"
 done
@@ -77,6 +81,7 @@ done
 /usr/bin/mb3d
 /usr/bin/Mandelbulb3D
 /usr/share/mb3d-rs
+/usr/lib/mb3d-rs
 /usr/share/icons/hicolor/*/apps/mb3d-rs.png
 /usr/share/man/man1/mb3d.1.gz
 /usr/share/bash-completion/completions/mb3d

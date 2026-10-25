@@ -250,6 +250,21 @@ object MCForm: TMCForm
       TabOrder = 2
       OnClick = Button6Click
     end
+    object Button10: TButton
+      Left = 196
+      Top = 12
+      Width = 44
+      Height = 25
+      Hint = 
+        'Neural noise filter on the shown picture (Intel Open Image Denoi' +
+        'se).'#13#10'The rendering itself is not changed; the next update sho' +
+        'ws it unfiltered again.'
+      Caption = '-noise AI'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 6
+      OnClick = Button10Click
+    end
     object WithZBufferCbx: TCheckBox
       Left = 539
       Top = 15

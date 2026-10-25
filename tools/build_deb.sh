@@ -35,6 +35,12 @@ share="$root/usr/share"
 install -Dm755 "$src/mb3d" "$root/usr/bin/mb3d"
 install -Dm755 "$src/Mandelbulb3D" "$root/usr/bin/Mandelbulb3D"
 mkdir -p "$share/mb3d-rs"
+# Intel Open Image Denoise as shipped (the programs look in
+# /usr/lib/mb3d-rs/oidn/lib, src/oidn.rs)
+if [ -d "$src/oidn" ]; then
+  mkdir -p "$root/usr/lib/mb3d-rs"
+  cp -a "$src/oidn" "$root/usr/lib/mb3d-rs/"
+fi
 for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes Languages examples; do
   [ -d "$src/$d" ] && cp -r "$src/$d" "$share/mb3d-rs/"
 done
@@ -72,6 +78,14 @@ Files: usr/share/icons/*
 Copyright: Mandelbulb3D's icon (m3d128.ico, thargor6/mb3d); modified for
  mb3d-rs (transparent background, the letters "RS" added)
 License: LGPL-2.1-only
+
+Files: usr/lib/mb3d-rs/oidn/*
+Copyright: Intel Corporation (Intel Open Image Denoise, oneTBB)
+License: Apache-2.0
+ Intel Open Image Denoise, https://www.openimagedenoise.org, as released
+ by Intel; the licences of it and of the libraries it includes are in
+ /usr/lib/mb3d-rs/oidn/doc. On Debian systems the Apache 2.0 licence is in
+ /usr/share/common-licenses/Apache-2.0.
 
 Files: usr/bin/Mandelbulb3D
 Copyright: Liberation fonts (embedded): Red Hat, Inc.

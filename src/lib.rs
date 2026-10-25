@@ -37,6 +37,8 @@ pub mod checkpoint;
 pub mod custom;
 pub mod deao;
 pub mod denoise;
+#[cfg(feature = "oidn")]
+pub mod oidn;
 pub mod dof;
 pub mod formulas;
 pub mod frames;

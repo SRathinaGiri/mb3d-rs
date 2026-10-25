@@ -352,6 +352,30 @@ fn noise_filter(app: &mut Mb3d, ui: &mut Ui) {
     app.message(ui, &trf("Noise filter: strength {}", &[&format!("{sigma:.1}")]));
 }
 
+/// "-noise AI": the neural noise filter, Intel Open Image Denoise
+/// ([`crate::oidn`], loaded when it is there), on the rendering's records
+/// (not on a picture the other filter changed).  Like [`noise_filter`],
+/// only the shown picture changes.
+fn ai_noise_filter(app: &mut Mb3d, ui: &mut Ui) {
+    let (Some(p), Some(img)) = (&app.mc.paras, &app.mc.img) else { return };
+    let (w, h) = (img.width, img.height);
+    #[cfg(feature = "oidn")]
+    let r = crate::oidn::denoised_mc_picture(img, &p.mc, p.lighting.gamma);
+    #[cfg(not(feature = "oidn"))]
+    let r: Result<Vec<u8>, String> = {
+        let _ = p;
+        Err(tr("built without Intel Open Image Denoise"))
+    };
+    match r {
+        Ok(out) => {
+            set_image(ui, w, h, &out);
+            app.mc.picture_changed = true;
+            app.message(ui, &tr("Neural noise filter: done"));
+        }
+        Err(e) => app.message(ui, &trf("Neural noise filter: {}", &[&e])),
+    }
+}
+
 /// The shown picture as RGB (MB3D saves `Image1`, so also a picture the
 /// noise filter changed), or the painted records when there is none.
 fn shown_rgb(ui: &Ui, img: &crate::mc::McImage, p: &crate::scene::Scene) -> Vec<u8> {
@@ -1231,6 +1255,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             proof_light_amount(app, ui, true);
         }
         "Button6Click" => noise_filter(app, ui),
+        "Button10Click" => ai_noise_filter(app, ui),
         "Button2Click" => {
             if app.mc.running {
                 app.mc.in_batch = false;
