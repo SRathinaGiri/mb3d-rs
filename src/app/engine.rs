@@ -800,6 +800,21 @@ fn preview(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     Ok(())
 }
 
+/// A post processing job's progress: the rows of its running stage done,
+/// for the main window's bar (see [`stage_namer`]).
+fn stage_progress(e: &Inner) -> impl Fn(usize, usize) + Sync + '_ {
+    move |d, t| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed)
+}
+
+/// A post processing job's stage begins: its name for the main window,
+/// the bar from zero.
+fn stage_namer(e: &Inner) -> impl Fn(&str) + Sync + '_ {
+    move |name| {
+        e.out.lock().unwrap().stage = name.to_string();
+        e.progress.store(0, Ordering::Relaxed);
+    }
+}
+
 fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
     let mut target = sc.clone();
@@ -809,13 +824,14 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     target.calc_rect = None;
     let psig = post_sig(&target);
     let reuse = psig == b.post_sig || b.params.slice_2d != 0;
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
     let post = if reuse {
         b.post.clone()
     } else {
-        e.out.lock().unwrap().stage = "post processing".into();
+        stage("post processing");
         let mut g = (*b.raw).clone();
         if needs_post(&target, &b.params) {
-            crate::render::post_process_cancellable(&target, &b.params, &mut g, crate::render::thread_count(&target), cancel)?;
+            crate::render::post_process_reporting(&target, &b.params, &mut g, crate::render::thread_count(&target), &progress, &stage, cancel)?;
         }
         Arc::new(g)
     };
@@ -823,7 +839,10 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
         return Err("cancelled".into());
     }
     // (stopped during the reflections or the DoF: the image stays as it was)
-    let rgb = crate::render::paint_cancellable(&target, &b.params, &post, cancel)?;
+    let rgb = crate::render::paint_reporting(&target, &b.params, &post, &progress, &stage, cancel).0;
+    if cancel() {
+        return Err("cancelled".into());
+    }
     e.publish(rgb, b.w, b.h, "", None);
     let mut g = e.base.lock().unwrap();
     // (the buffers painted on meanwhile ("Paint on image") are kept: their
@@ -880,11 +899,11 @@ fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (
     let (w, h) = (b.w, b.h);
     let r = clip_rect(rect, w, h).ok_or_else(|| tr("the selection must be bigger than 2 pixels in width and height"))?;
     let [x0, y0, rw, rh] = r;
-    e.out.lock().unwrap().stage = "recalculating the selection".into();
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
+    stage("recalculating the selection");
     let mut rs = sc.clone();
     rs.calc_rect = Some([x0 as i32, y0 as i32, rw as i32, rh as i32]);
     rs.z_step_div = (rs.z_step_div / div.max(1.0)).max(1e-4);
-    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
     let (_, g) = crate::render::calculate_raw_cancellable(&rs, &progress, cancel)?;
     let mut target = sc.clone();
     target.calc_rect = None;
@@ -912,12 +931,12 @@ fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (
     }
     let q = rect_params(&p, r);
     if hs && target.shadows.is_some() {
-        e.out.lock().unwrap().stage = "hard shadows".into();
-        crate::render::hard_shadows_cancellable(&target, &q, &mut part, threads, cancel);
+        stage("hard shadows");
+        crate::render::hard_shadows_reporting(&target, &q, &mut part, threads, &progress, cancel);
     }
     if let (true, false, Some(d), Some(_)) = (deao, keep_as, &target.deao, &target.ao) {
-        e.out.lock().unwrap().stage = "ambient".into();
-        crate::deao::deao(&q, &mut part, rw, rh, d, threads, &|_, _| {}, cancel);
+        stage("ambient");
+        crate::deao::deao(&q, &mut part, rw, rh, d, threads, &progress, cancel);
     }
     if cancel() {
         return Err("cancelled".into());
@@ -947,7 +966,8 @@ fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool
     let b = e.base.lock().unwrap().clone().ok_or_else(|| tr("calculate the image first (Calculate 3D)"))?;
     let (w, h) = (b.w, b.h);
     let r = clip_rect(rect, w, h).ok_or_else(|| tr("the selection must be bigger than 2 pixels in width and height"))?;
-    e.out.lock().unwrap().stage = "reflections of the selection".into();
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
+    stage("reflections of the selection");
     let mut target = sc.clone();
     target.width = b.scene.width;
     target.height = b.scene.height;
@@ -957,7 +977,11 @@ fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool
     target.dof = None;
     let q = rect_params(&b.params, r);
     let part = take_rect(&b.post, w, r, 1);
-    let painted = crate::render::paint_cancellable(&target, &q, &part, cancel)?;
+    // (the reflections keep the selection's name: it is one stage)
+    let painted = crate::render::paint_reporting(&target, &q, &part, &progress, &|_| {}, cancel).0;
+    if cancel() {
+        return Err("cancelled".into());
+    }
     let cur = e.out.lock().unwrap().rgb.clone().filter(|c| c.len() == w * h * 3);
     let mut rgb = match cur {
         Some(c) => (*c).clone(),

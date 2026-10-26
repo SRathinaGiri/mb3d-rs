@@ -26,6 +26,45 @@ pub struct State {
     /// the processing running from this window (its name for the status
     /// line) and its start
     pub running: Option<(String, std::time::Instant)>,
+    /// its running stage's pace, for the time left
+    pub pace: Pace,
+}
+
+/// The pace of a post processing's running stage (the engine names it
+/// and counts its rows from zero): its time left from the progress made
+/// since the stage began, smoothed as the main rendering's is.
+#[derive(Default)]
+pub struct Pace {
+    stage: String,
+    start: Option<std::time::Instant>,
+    last: (f64, f64),
+    rate: super::eta::RateEma,
+    shown: Option<super::util::Shown>,
+}
+
+impl Pace {
+    /// The time left in `stage` at progress `f`: its pace (once a couple
+    /// of seconds and percent into it) blended with `prior`, what the
+    /// stage took in the last calculation (the card's reflections count
+    /// their rows only at the end of a band). None without either.
+    pub fn left(&mut self, stage: &str, f: f64, prior: Option<f64>, now: std::time::Instant) -> Option<f64> {
+        if self.stage != stage || self.start.is_none() {
+            *self = Pace { stage: stage.to_string(), start: Some(now), ..Default::default() };
+        }
+        let secs = self.start.map_or(0.0, |t| now.saturating_duration_since(t).as_secs_f64());
+        // a sample at most every quarter second
+        let (f0, t0) = self.last;
+        if f > f0 && secs - t0 >= 0.25 {
+            self.rate.add(f - f0, secs - t0);
+            self.last = (f, secs);
+        }
+        let measured = self.rate.rate().filter(|_| secs >= 2.0 && f >= 0.02 && f < 1.0).map(|r| secs + (1.0 - f) / r);
+        // (a stage that runs past its prior without progress: nothing to say)
+        let whole = super::eta::blend(measured, prior, f).filter(|t| measured.is_some() || *t > secs + 1.0);
+        let est = whole.map(|t| (t - secs).max(0.0));
+        self.shown = est.map(|l| super::util::smooth_shown(self.shown, l, now)).or(self.shown);
+        self.shown.map(|s| s.0)
+    }
 }
 
 const PANELS: [(&str, &str, &str); 7] = [
@@ -277,7 +316,10 @@ fn started(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
     app.main.led_running = true;
     super::main_form::show_led(ui, app.main.led, true);
     ui.set_caption(MAIN, "Label6", stage);
+    // the bar: the running stage's progress (issue #2)
+    ui.set_visible(MAIN, "ProgressBar1", true);
     app.post.running = Some((stage.to_string(), std::time::Instant::now()));
+    app.post.pace = Pace::default();
 }
 
 /// The processing finished (not stopped): a line in the status.
@@ -417,7 +459,6 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let deao = ui.checked(F, "CheckBox11") && ui.c(F, "TabControl1").tab_index == 3;
             let keep_as = ui.checked(F, "CheckBox30");
             started(app, ui, &tr("selection recalculation"));
-            ui.set_visible(MAIN, "ProgressBar1", true);
             app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer, hs, deao, keep_as });
         }
         "Button12Click" => {
@@ -453,5 +494,38 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FormMouseWheel" => {}
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Pace;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn pace_time_left() {
+        let t0 = Instant::now();
+        let at = |s: f64| t0 + Duration::from_secs_f64(s);
+        let mut p = Pace::default();
+        // 5 % a second: nothing in the first seconds, then the rest at that pace
+        assert_eq!(p.left("hard shadows", 0.0, None, at(0.0)), None);
+        assert_eq!(p.left("hard shadows", 0.05, None, at(1.0)), None);
+        let l = p.left("hard shadows", 0.10, None, at(2.0)).unwrap();
+        assert!((l - 18.0).abs() < 0.5, "{l}");
+        // a new stage starts over
+        assert_eq!(p.left("reflections", 0.0, None, at(3.0)), None);
+    }
+
+    #[test]
+    fn pace_prior_without_progress() {
+        let t0 = Instant::now();
+        let at = |s: f64| t0 + Duration::from_secs_f64(s);
+        let mut p = Pace::default();
+        // the card's reflections: no rows counted, the last time 10 s
+        assert_eq!(p.left("reflections", 0.0, Some(10.0), at(0.0)), Some(10.0));
+        let l = p.left("reflections", 0.0, Some(10.0), at(4.0)).unwrap();
+        assert!((l - 6.0).abs() < 0.5, "{l}");
+        // past it: the last shown stays (counting down to zero)
+        assert!(p.left("reflections", 0.0, Some(10.0), at(12.0)).is_some());
     }
 }

@@ -1651,6 +1651,22 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             let gap = (app.main.bar_target - app.main.progress_shown).max(0.0);
             app.main.progress_shown += gap * (1.0 - 0.3f64.powf(dt));
             bar = app.main.progress_shown;
+        } else if !stage.is_empty() && running && app.post.running.is_some() {
+            // a post processing: its running stage, its progress and time
+            // left (the reflections' and the depth of field's prior: their
+            // time in the last calculation; the shadows' and the
+            // occlusion's is the two together, not this one's)
+            let prior = match kind_of(&stage) {
+                Kind::Later(k @ (Later::Reflections | Later::Dof)) => app.main.last_secs[k as usize],
+                _ => None,
+            };
+            let left = app.post.pace.left(&stage, f as f64, prior, Instant::now());
+            let caption = if shaders_compiling() {
+                format!("{} · {}", short_stage(&stage), tr("shaders compiling"))
+            } else {
+                stage_caption(&stage, f as f64, left, None)
+            };
+            ui.set_caption(F, "Label6", &caption);
         }
         ui.set_position(F, "ProgressBar1", (bar * ui.c(F, "ProgressBar1").max as f64) as i64);
         // the rows calculated so far (MB3D shows the image while it grows)
