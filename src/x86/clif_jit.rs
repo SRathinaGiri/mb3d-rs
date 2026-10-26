@@ -801,7 +801,7 @@ impl Jit {
     /// compiled on its own; None if it cannot be compiled.
     pub fn compile_difs_one(&mut self, m: &Machine, entry: u32, pvar: u32) -> Option<CompiledDifs> {
         let prog = m.prog(entry)?;
-        if prog.clif_unsupported_mode(true).is_some() {
+        if prog.clif_unsupported_mode(true).is_some() || handwritten::lookup_difs(prog.hash, 0).is_some() {
             return None;
         }
         let ptr = self.module.target_config().pointer_type();
@@ -943,7 +943,9 @@ pub fn compile_difs(m: &Machine, slots: &[HybridSlot], start: usize, end: usize,
             return None;
         }
         let Some(prog) = m.prog(code_addr(n)) else { continue };
-        if prog.clif_unsupported_mode(true).is_some() {
+        // the formulas written in Rust (handwritten.rs): their code is only
+        // a placeholder
+        if prog.clif_unsupported_mode(true).is_some() || handwritten::lookup_difs(prog.hash, 0).is_some() {
             if s.iterations > 0 {
                 return None;
             }
