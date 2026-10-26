@@ -15,12 +15,15 @@ pub const SPHERE_TREE_HASH: u64 = 0x03f50568c0ace569;
 pub const ULAM_SPIRAL_HASH: u64 = 0x12bc488dcd6d5f0e;
 /// The hash of `PseudoKleinian.m3f`'s placeholder code.
 pub const PSEUDO_KLEINIAN_HASH: u64 = 0xc509eb91a6530527;
+/// The hash of `DomeTree.m3f`'s placeholder code.
+pub const DOME_TREE_HASH: u64 = 0x1db6fe86f28027ba;
 
 pub(super) fn lookup_difs(hash: u64, _ops: usize) -> Option<DifsFn> {
     match hash {
         SPHERE_TREE_HASH => Some(sphere_tree_difs as DifsFn),
         ULAM_SPIRAL_HASH => Some(ulam_spiral_difs as DifsFn),
         PSEUDO_KLEINIAN_HASH => Some(pseudo_kleinian_difs as DifsFn),
+        DOME_TREE_HASH => Some(dome_tree_difs as DifsFn),
         _ => None,
     }
 }
@@ -61,6 +64,17 @@ pub fn wgsl(hash: u64, name: &str) -> Option<lift_wgsl::WgslFormula> {
             // Colour scale (-120, cell 17), two words each from 2
             constants: std::iter::once((30, CellTy::Halves, 0)).chain((0..13).map(|i| (29 - i, CellTy::Whole, 2 + 2 * i))).collect(),
             const_len: 28,
+            writes_vars: false,
+            dyn_var: None,
+        }),
+        DOME_TREE_HASH => Some(WgslFormula {
+            code: DOME_TREE_WGSL.replace("@NAME@", name).replace("@TABLE@", &dome_tree_table()),
+            record: [3, 4, 5, 14, 34].iter().map(|&c| (c, CellTy::Whole)).collect(),
+            // Children and Levels (pConst-16 and -12, cell 30) as the halves
+            // at 0 and 1; Bend angle (-24, cell 29) at 2, Colour scale (-32,
+            // cell 28) at 4; Start curved (-36, cell 27) as the half at 7
+            constants: vec![(30, CellTy::Halves, 0), (29, CellTy::Whole, 2), (28, CellTy::Whole, 4), (27, CellTy::Halves, 6)],
+            const_len: 8,
             writes_vars: false,
             dyn_var: None,
         }),
@@ -531,6 +545,212 @@ pub fn sphere_tree(mut p: [f64; 3], levels: i32, k: f64, rotated: bool) -> (f64,
     ((dot(q, q).sqrt() - 0.5 * k) * scale, col)
 }
 
+/// [`dome_tree`] in WGSL.
+const DOME_TREE_WGSL: &str = r#"fn @NAME@(cb: u32) {
+    let n = clamp(i32(cst[cb + 0u]), 4, 10);
+    let levels = clamp(i32(cst[cb + 1u]), 0, 100);
+    // (the double shader has no trigonometry: the constants per child
+    // count are a table, the bend's in single precision)
+    var tab = array<R, 49>(@TABLE@);
+    let j = 7 * (n - 4);
+    let r = tab[j];
+    let l = tab[j + 1];
+    let l4 = tab[j + 2];
+    let minr = l4 * l4;
+    let centre = vec3<R>(l * tab[j + 3], l * tab[j + 4], 0.0);
+    let c2 = tab[j + 5];
+    let s2 = tab[j + 6];
+    let sector = f32(6.283185307179586) / f32(n);
+    let bend = f32(cst_r(cb + 2u));
+    let omega = f32(1.5707963267948966) - bend;
+    let big_r = R(1.0 / cos(omega));
+    let d = R(tan(omega));
+    let d2 = minr * R(tan(bend / 2.0));
+    let r2 = minr / R(cos(bend / 2.0));
+    var p = vec3<R>(r3f, r4f, r5f);
+    var scale = R(1.0);
+    var recurse = cst[cb + 7u] != 0u;
+    var col = R(0.0);
+    var cw = R(1.0);
+    for (var i = 0; i < levels; i += 1) {
+        if (recurse) {
+            p.z += d + big_r;
+            let sc = 4.0 * big_r * big_r / max(dot(p, p), R(1e-30));
+            p = p * sc;
+            scale *= sc;
+            p.z -= 2.0 * big_r;
+            p.z = -p.z;
+            let size = 2.0 * big_r / (big_r + d);
+            scale /= size;
+            p = p / size;
+            recurse = false;
+        }
+        var angle = atan2(f32(p.y), f32(p.x));
+        if (angle < 0.0) { angle += f32(6.283185307179586); }
+        let ki = clamp(i32(floor(angle / sector)), 0, n - 1);
+        let k = R(ki);
+        for (var m = 0; m < ki; m += 1) {
+            let x = p.x;
+            p.x = x * c2 + p.y * s2;
+            p.y = -x * s2 + p.y * c2;
+        }
+        var t = p - centre;
+        let len2 = dot(t, t);
+        let ring = len2 < r * r;
+        if (ring) {
+            let sc = r * r / max(len2, R(1e-30));
+            t = t * sc;
+            scale *= sc;
+        }
+        p = t + centre;
+        let pm = p - vec3<R>(0.0, 0.0, d2);
+        if (dot(pm, pm) <= r2 * r2) {
+            p = p / minr;
+            scale /= minr;
+            recurse = true;
+            let h = select(R(0.9), k * 0.6180339887 + 0.25, ring);
+            col += cw * (h - floor(h));
+            cw *= 0.5;
+        } else if (dot(p, p) < l4 * l4) {
+            let sc = l4 * l4 / max(dot(p, p), R(1e-30));
+            p = p * sc;
+            scale *= sc;
+        }
+    }
+    r14f = p.z / scale;
+    r34f = col * cst_r(cb + 4u);
+    rg[4] = rg[4] + 4u;
+}
+"#;
+
+/// The constants of [`DOME_TREE_WGSL`] for 4..10 children: r, l, l4 (see
+/// [`dome_tree_consts`]), the cosine and sine of half a sector and of a
+/// sector.
+fn dome_tree_table() -> String {
+    use std::f64::consts::PI;
+    let mut v = Vec::new();
+    for n in 4..=10 {
+        let (r, l, _, l4) = dome_tree_consts(n);
+        let h = PI / n as f64;
+        v.extend([r, l, l4, h.cos(), h.sin(), (2.0 * h).cos(), (2.0 * h).sin()]);
+    }
+    v.iter().map(|x| format!("R({x:?})")).collect::<Vec<_>>().join(", ")
+}
+
+/// `DomeTree.m3f`: options Integer Levels (pConst-12), Integer Children
+/// (-16), Double Bend angle (-24), Double Colour scale (-32), Integer Start
+/// curved (-36).
+fn dome_tree_difs(m: &mut Machine, _p: &Prog, regs: &mut [u32; 8], _max_steps: u64) -> R<()> {
+    let edi = regs[EDI];
+    let levels = m.rd32(edi.wrapping_sub(12))? as i32;
+    let children = m.rd32(edi.wrapping_sub(16))? as i32;
+    let bend = m.rdf64(edi.wrapping_sub(24))?;
+    let colour_scale = m.rdf64(edi.wrapping_sub(32))?;
+    let start_curved = m.rd32(edi.wrapping_sub(36))? != 0;
+    let it = crate::custom::IT_BASE;
+    use crate::custom::off;
+    let p = [m.rdf64(it + off::X)?, m.rdf64(it + off::X + 8)?, m.rdf64(it + off::X + 16)?];
+    let (d, col) = dome_tree(p, levels, children, bend, start_curved);
+    m.wrf64(it + off::ROUT, d)?;
+    m.wrf64(it + off::DFREE1, col * colour_scale)?;
+    regs[ESP] = regs[ESP].wrapping_add(4);
+    Ok(())
+}
+
+/// The constants of [`dome_tree`] for `children` domes per ring: the
+/// child circles' radius `r` and distance `l` from the axis, and the radii
+/// `minr` (a child's size) and `l4` (the inversion that closes the gaps).
+fn dome_tree_consts(n: i32) -> (f64, f64, f64, f64) {
+    use std::f64::consts::PI;
+    let o1 = if n <= 4 { 5.0 } else if n <= 6 { 4.0 } else { 3.0 };
+    let o2 = 3.0;
+    let n = n as f64;
+    let sec = 1.0 / (PI / o1).cos();
+    let csc = 1.0 / (PI / n).sin();
+    let r = sec / (csc * csc - sec * sec).sqrt();
+    let l = (1.0 + r * r).sqrt();
+    let theta = (r * (PI - PI / o2).sin() / l).asin();
+    let l4 = l * (PI / o2 - theta).sin() / (PI - PI / o2).sin();
+    (r, l, l4 * l4, l4)
+}
+
+/// TGlad's dome tree (`DomeTree.frag` in github.com/TGlad/FragmentariumExamples):
+/// the floor z = 0 (with `start_curved` first bent into a ball) is folded
+/// into `children` sectors, pushed out of a circle per sector and, where a
+/// child dome is, scaled up into the next level. Returns the distance
+/// estimate (the folded height over the scale; negative inside) and a
+/// colour value per branch (0..2: the child dome at each level the point
+/// went into, by its sector, the first level weighted most).
+pub fn dome_tree(mut p: [f64; 3], levels: i32, children: i32, bend: f64, start_curved: bool) -> (f64, f64) {
+    use std::f64::consts::PI;
+    let n = children.clamp(4, 10);
+    let (r, l, minr, l4) = dome_tree_consts(n);
+    let sector = 2.0 * PI / n as f64;
+    let mut scale = 1.0;
+    let omega = PI / 2.0 - bend;
+    let big_r = 1.0 / omega.cos();
+    let d = omega.tan();
+    let (sin1, cos1) = (PI / n as f64).sin_cos();
+    let centre = [l * cos1, l * sin1, 0.0];
+    let o2 = bend / 2.0;
+    let d2 = minr * o2.tan();
+    let r2 = minr / o2.cos();
+    let mut recurse = start_curved;
+    let mut col = 0.0;
+    let mut cw = 1.0;
+    for _ in 0..levels.min(100) {
+        if recurse {
+            // bend the floor of this level into a dome
+            p[2] += d + big_r;
+            let sc = 4.0 * big_r * big_r / dot(p, p).max(1e-300);
+            p = p.map(|v| v * sc);
+            scale *= sc;
+            p[2] -= 2.0 * big_r;
+            p[2] = -p[2];
+            let size = 2.0 * big_r / (big_r + d);
+            scale /= size;
+            p = p.map(|v| v / size);
+            recurse = false;
+        }
+        // into the first sector
+        let mut angle = p[1].atan2(p[0]);
+        if angle < 0.0 {
+            angle += 2.0 * PI;
+        }
+        let k = (angle / sector).floor();
+        let angle = fmod(angle, sector);
+        let mag = (p[0] * p[0] + p[1] * p[1]).sqrt();
+        p[0] = mag * angle.cos();
+        p[1] = mag * angle.sin();
+        // out of the sector's circle
+        let mut t = [p[0] - centre[0], p[1] - centre[1], p[2]];
+        let len2 = dot(t, t);
+        let ring = len2 < r * r;
+        if ring {
+            let sc = r * r / len2.max(1e-300);
+            t = t.map(|v| v * sc);
+            scale *= sc;
+        }
+        p = [t[0] + centre[0], t[1] + centre[1], t[2]];
+        let pm = [p[0], p[1], p[2] - d2];
+        if dot(pm, pm) <= r2 * r2 {
+            // a child dome: its level, scaled up
+            p = p.map(|v| v / minr);
+            scale /= minr;
+            recurse = true;
+            // the colour: the ring child (its sector) or the middle one
+            let h = if ring { k * 0.6180339887 + 0.25 } else { 0.9 };
+            col += cw * (h - h.floor());
+            cw *= 0.5;
+        } else if dot(p, p) < l4 * l4 {
+            let sc = l4 * l4 / dot(p, p).max(1e-300);
+            p = p.map(|v| v * sc);
+            scale *= sc;
+        }
+    }
+    (p[2] / scale, col)
+}
+
 /// `UlamSpiral.m3f`: options Integer Mode, Integer Rings, Double Height,
 /// Double Gap, Double Colour scale.
 fn ulam_spiral_difs(m: &mut Machine, _p: &Prog, regs: &mut [u32; 8], _max_steps: u64) -> R<()> {
@@ -710,6 +930,41 @@ mod tests {
         let m = crate::custom::build_machine(&[Some(&cf)]);
         let p = m.prog(crate::custom::code_addr(0)).unwrap();
         assert_eq!(p.hash, SPHERE_TREE_HASH, "hash {:#018x}", p.hash);
+    }
+
+    #[test]
+    fn dome_tree_placeholder_is_recognised() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("M3Formulas-rs/DomeTree.m3f");
+        let def = crate::m3f::M3f::load(&path).unwrap();
+        assert_eq!(def.de_option, 20);
+        let cf = crate::custom::CustomFormula::new(std::sync::Arc::new(def));
+        let m = crate::custom::build_machine(&[Some(&cf)]);
+        let p = m.prog(crate::custom::code_addr(0)).unwrap();
+        assert_eq!(p.hash, DOME_TREE_HASH, "hash {:#018x}", p.hash);
+        // the options are where dome_tree_difs and the WGSL read them
+        let vb = &m.mem[(crate::custom::var_buf_addr(0) - BASE) as usize..][..0x400];
+        let rd = |o: usize| f64::from_le_bytes(vb[o..o + 8].try_into().unwrap());
+        let ri = |o: usize| i32::from_le_bytes(vb[o..o + 4].try_into().unwrap());
+        assert_eq!((ri(256 - 12), ri(256 - 16), ri(256 - 36)), (16, 8, 1));
+        assert_eq!((rd(256 - 24), rd(256 - 32)), (1.0, 3.0));
+    }
+
+    #[test]
+    fn dome_tree_distances() {
+        for n in 4..=10 {
+            for (bend, curved) in [(1.0, true), (0.8, false), (2.0, true)] {
+                let mut rng = 11u64;
+                for _ in 0..500 {
+                    rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+                    let r = |k: u32| ((rng >> (11 + k)) & 0xFFFF) as f64 / 65536.0 * 6.0 - 3.0;
+                    let (d, c) = dome_tree([r(0), r(5), r(9)], 16, n, bend, curved);
+                    assert!(d.is_finite() && c.is_finite(), "{n} {bend}: {d} {c}");
+                }
+            }
+        }
+        // the flat floor far from the tree: the height
+        let (d, _) = dome_tree([0.0, 0.0, 5.0], 16, 8, 1.0, false);
+        assert!(d > 0.0, "{d}");
     }
 
     #[test]

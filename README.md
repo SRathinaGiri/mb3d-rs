@@ -355,6 +355,40 @@ you check further on your own:
   |:---:|:---:|
 
   </details>
+* **A new formula, DomeTree:** a dome that sprouts a ring of smaller
+  domes, each with its own ring, by Tom Lowe.
+
+  <a href="docs/img/dometree_mc.jpg"><img src="docs/img/dometree_mc.jpg" width="300" alt="A new formula: DomeTree"></a>
+
+  <details><summary>Read more</summary>
+
+  **DomeTree** is Tom Lowe's second tree after SphereTree (see the
+  credits): a ball whose one side grows a ring of domes, each dome its
+  own smaller ring, level after level, made of circle inversions. It is
+  in the formula list with the dIFS formulas and has five settings:
+
+  * **Levels**: how deep the tree goes (16 is plenty).
+  * **Children**: the domes in each ring, 4 to 10.
+  * **Bend angle** (0.3 to 1.3 work best): how far the domes bulge; low
+    values give flat discs, high ones round domes. Above about 1.3 the
+    surface turns grainy.
+  * **Colour scale**: every dome has its own colour. Choose *2nd choice*
+    (the orbit trap) in the colour settings of the Lighting and a wide
+    colour range (for example 0 to 100) to see them.
+  * **Start curved**: 1 (the default) starts with the ball, 0 with a flat
+    floor that grows the first ring.
+
+  Use a small *Raystep* (0.2; 0.05 with 9 or 10 children): the shape's
+  distance estimate is rough, as in TGlad's own Fragmentarium file. Like
+  SphereTree it runs on the graphics card and the processor, needs only
+  1 iteration, and parameters with it open only in this program.
+
+  <a href="docs/img/dometree_mc.jpg"><img src="docs/img/dometree_mc.jpg" width="760" alt="DomeTree with 8 children in the Monte Carlo renderer, coloured per dome"></a>
+
+  | <a href="docs/img/dometree_5.jpg"><img src="docs/img/dometree_5.jpg" width="250" alt="DomeTree, 5 children, bend angle 1.2"></a> | <a href="docs/img/dometree_flat.jpg"><img src="docs/img/dometree_flat.jpg" width="250" alt="DomeTree, 6 children, bend angle 0.5: flat domes"></a> | <a href="docs/img/dometree_10.jpg"><img src="docs/img/dometree_10.jpg" width="250" alt="DomeTree, 10 children: lace between the domes and a large ball"></a> |
+  |:---:|:---:|:---:|
+
+  </details>
 * **A new formula, UlamSpiral:** Ulam's spiral of prime numbers in 3D, as
   a city, a skyline, spheres or a block.
 
@@ -1083,6 +1117,10 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   ([TGlad/FragmentariumExamples](https://github.com/TGlad/FragmentariumExamples)).
   This program's version is written in Rust and WGSL from that
   algorithm; the colouring per branch was added.
+* **The DomeTree formula** is by Tom Lowe (TGlad), `DomeTree.frag` in
+  [TGlad/FragmentariumExamples](https://github.com/TGlad/FragmentariumExamples);
+  this program's version is written in Rust and WGSL from that
+  algorithm, with a colour per dome added.
 * **The icon** is Mandelbulb3D's own icon (`m3d128.ico` from
   [thargor6/mb3d](https://github.com/thargor6/mb3d), LGPL 2.1), with its
   background made transparent and the letters "RS" (for the Rust port)

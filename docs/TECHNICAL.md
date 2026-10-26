@@ -409,8 +409,8 @@ code. This port runs that code in three tiers:
 
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
-**UlamSpiral**, Ulam's prime spiral in 3D, and **PseudoKleinian**,
-knighty's pseudo Kleinian) are
+**UlamSpiral**, Ulam's prime spiral in 3D, **PseudoKleinian**,
+knighty's pseudo Kleinian, and **DomeTree**, TGlad's dome tree) are
 written in Rust and WGSL (`src/x86/handwritten.rs`). Their `.m3f` file has
 the options and a placeholder `[CODE]` that only stores a huge `Rout` (the
 original MB3D loads the formula and shows nothing) and carries the
@@ -448,6 +448,21 @@ laid out with the two integers first (pConst−12, −16) so that every
 double sits on an 8-byte cell, which the GPU constants need (cells 29
 down to 17). The colour value is the smallest |p|² over the levels, as a
 radius.
+
+DomeTree reads Levels (pConst−12), Children (−16), Bend angle (−24),
+Colour scale (−32) and Start curved (−36). Per level the point is turned
+into the first of n sectors, inverted out of the sector's circle, and
+either scaled up by 1/minr when it is inside the child dome on the axis
+(the next level starts by bending its floor into a dome) or inverted in
+the circle of radius L4; the distance is the height over the scale, as
+in TGlad's `DomeTree.frag`. The GPU's double precision shader has no
+trigonometry, so the WGSL takes the constants per child count (r, l, L4
+and the sector's cosine and sine) from a table written by
+`dome_tree_table`, the bend's in single precision, and turns the point
+into its sector by k multiplications (the sector k from a single
+precision `atan2`). The JIT leaves the formulas of this file alone: their
+code is only the placeholder (`clif_jit::compile_difs` checks
+`handwritten::lookup_difs`).
 
 
 All tiers emulate the flat 32-bit address space with the `TIteration3Dext`

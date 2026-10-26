@@ -41,9 +41,9 @@ echo "== $(uname -sm), $("$bin/mb3d" --version)"
 now() { perl -MTime::HiRes=time -e 'printf "%.2f", time'; }
 rm -rf "$out/formulas"
 mkdir -p "$out/formulas"
-# the formulas of MB3D (without this program's own three, which are Rust)
+# the formulas of MB3D (without this program's own four, which are Rust)
 for f in "$dir"/M3Formulas/*.m3f; do
-    case "$(basename "$f")" in SphereTree.m3f|UlamSpiral.m3f|PseudoKleinian.m3f) ;; *) cp "$f" "$out/formulas/" ;; esac
+    case "$(basename "$f")" in SphereTree.m3f|UlamSpiral.m3f|PseudoKleinian.m3f|DomeTree.m3f) ;; *) cp "$f" "$out/formulas/" ;; esac
 done
 export MB3D_JIT=1
 echo "== formulas compiled on their own vs translated"
