@@ -103,15 +103,33 @@ type Shaped = std::rc::Rc<Vec<(u16, i32, i32, i32, usize)>>;
 struct Fonts {
     faces: [fontdue::Font; 3],
     glyphs: HashMap<(Face, u32, GlyphKey), std::rc::Rc<Glyph>>,
-    shaped: HashMap<(usize, String), Shaped>,
+    /// per fallback font: the runs shaped in it, and its shaping plan
+    shaped: Vec<HashMap<String, Shaped>>,
+    plans: Vec<Option<rustybuzz::ShapePlan>>,
+    /// the widths of the lines with shaped runs (the windows measure the
+    /// same texts over and over while they lay out and paint)
+    widths: HashMap<(Face, u32), HashMap<String, f32>>,
     /// the change count of [`FALLBACKS`] the cache was filled under
     fallback_gen: u64,
 }
 
-/// A font file of a language: for drawing, and its bytes for shaping.
+impl Fonts {
+    /// Empties the caches when the fallback fonts changed.
+    fn follow(&mut self, gen: u64) {
+        if self.fallback_gen != gen {
+            self.glyphs.clear();
+            self.shaped.clear();
+            self.plans.clear();
+            self.widths.clear();
+            self.fallback_gen = gen;
+        }
+    }
+}
+
+/// A font file of a language: for drawing, and parsed for shaping.
 pub struct FontFile {
     font: fontdue::Font,
-    data: Vec<u8>,
+    face: Option<rustybuzz::Face<'static>>,
 }
 
 /// Fonts with the glyphs the embedded faces lack (Japanese, Chinese,
@@ -122,7 +140,10 @@ static FALLBACKS: RwLock<(u64, Vec<Arc<FontFile>>)> = RwLock::new((0, Vec::new()
 /// Reads a font file (.ttf, .otf; of a collection the first font).
 pub fn load_font(data: Vec<u8>) -> Option<Arc<FontFile>> {
     let font = fontdue::Font::from_bytes(data.as_slice(), fontdue::FontSettings::default()).ok()?;
-    Some(Arc::new(FontFile { font, data }))
+    // the shaper reads the file where it is: it stays for the program's
+    // life (a language's font is read once, see `lang`)
+    let data: &'static [u8] = Box::leak(data.into_boxed_slice());
+    Some(Arc::new(FontFile { font, face: rustybuzz::Face::from_slice(data, 0) }))
 }
 
 /// Sets the fallback fonts, in the order they are searched.
@@ -153,7 +174,9 @@ thread_local! {
                 load(MONO),
             ],
             glyphs: HashMap::new(),
-            shaped: HashMap::new(),
+            shaped: Vec::new(),
+            plans: Vec::new(),
+            widths: HashMap::new(),
             fallback_gen: 0,
         }
     });
@@ -177,11 +200,7 @@ fn glyph_of(face: Face, px: f32, key: GlyphKey) -> std::rc::Rc<Glyph> {
     FONTS.with(|f| {
         let mut f = f.borrow_mut();
         let fallbacks = FALLBACKS.read().unwrap();
-        if f.fallback_gen != fallbacks.0 {
-            f.glyphs.clear();
-            f.shaped.clear();
-            f.fallback_gen = fallbacks.0;
-        }
+        f.follow(fallbacks.0);
         if let Some(g) = f.glyphs.get(&ckey) {
             return g.clone();
         }
@@ -226,22 +245,24 @@ fn shape(run: &str) -> Option<(usize, Shaped, f32)> {
     FONTS.with(|f| {
         let mut f = f.borrow_mut();
         let fallbacks = FALLBACKS.read().unwrap();
-        if f.fallback_gen != fallbacks.0 {
-            f.glyphs.clear();
-            f.shaped.clear();
-            f.fallback_gen = fallbacks.0;
-        }
+        f.follow(fallbacks.0);
         let i = fallbacks.1.iter().position(|fb| fb.font.lookup_glyph_index(first) != 0)?;
-        let fb = &fallbacks.1[i];
-        let face = rustybuzz::Face::from_slice(&fb.data, 0)?;
+        let face = fallbacks.1[i].face.as_ref()?;
         let upem = face.units_per_em() as f32;
-        if let Some(s) = f.shaped.get(&(i, run.to_string())) {
+        if f.shaped.len() <= i {
+            f.shaped.resize_with(i + 1, HashMap::new);
+            f.plans.resize_with(i + 1, || None);
+        }
+        if let Some(s) = f.shaped[i].get(run) {
             return Some((i, s.clone(), upem));
         }
+        let (dir, script) = (rustybuzz::Direction::LeftToRight, rustybuzz::script::DEVANAGARI);
+        let plan = f.plans[i].get_or_insert_with(|| rustybuzz::ShapePlan::new(face, dir, Some(script), None, &[]));
         let mut buf = rustybuzz::UnicodeBuffer::new();
         buf.push_str(run);
-        buf.guess_segment_properties();
-        let out = rustybuzz::shape(&face, &[], buf);
+        buf.set_direction(dir);
+        buf.set_script(script);
+        let out = rustybuzz::shape_with_plan(face, plan, buf);
         let s: Shaped = std::rc::Rc::new(
             out.glyph_infos()
                 .iter()
@@ -249,10 +270,10 @@ fn shape(run: &str) -> Option<(usize, Shaped, f32)> {
                 .map(|(g, p)| (g.glyph_id as u16, p.x_advance, p.x_offset, p.y_offset, g.cluster as usize))
                 .collect(),
         );
-        if f.shaped.len() > 5000 {
-            f.shaped.clear();
+        if f.shaped[i].len() > 50000 {
+            f.shaped[i].clear();
         }
-        f.shaped.insert((i, run.to_string()), s.clone());
+        f.shaped[i].insert(run.to_string(), s.clone());
         Some((i, s, upem))
     })
 }
@@ -346,7 +367,25 @@ pub fn text_width(face: Face, px: f32, text: &str) -> f32 {
         }
         return x.round();
     }
-    layout(face, px, text, 0.0).1.round()
+    let key = (face, (px * 16.0).round() as u32);
+    let known = FONTS.with(|f| {
+        let mut f = f.borrow_mut();
+        f.follow(FALLBACKS.read().unwrap().0);
+        f.widths.get(&key).and_then(|m| m.get(text)).copied()
+    });
+    if let Some(w) = known {
+        return w;
+    }
+    let w = layout(face, px, text, 0.0).1.round();
+    FONTS.with(|f| {
+        let mut f = f.borrow_mut();
+        let m = f.widths.entry(key).or_default();
+        if m.len() > 50000 {
+            m.clear();
+        }
+        m.insert(text.to_string(), w);
+    });
+    w
 }
 
 #[cfg(test)]
