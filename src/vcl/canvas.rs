@@ -458,10 +458,11 @@ impl<'a> Canvas<'a> {
         let mut pen = self.dx(x) as f32;
         let x_start = pen;
         let italic = f.italic;
-        for ch in s.chars() {
-            let g = font::glyph(face, px, ch);
-            let gx = pen.round() as i32 + g.ox;
-            let gy = base + g.oy;
+        let (glyphs, end) = font::layout(face, px, s, pen);
+        for p in &glyphs {
+            let g = &p.g;
+            let gx = (p.x + p.dx).round() as i32 + g.ox;
+            let gy = base + g.oy - p.dy.round() as i32;
             if gx > self.clip[2] {
                 break;
             }
@@ -487,8 +488,8 @@ impl<'a> Canvas<'a> {
                     }
                 }
             }
-            pen += g.advance;
         }
+        pen = end;
         if f.underline {
             let t = self.px1();
             self.fill_dev(x_start as i32, base + t, pen.round() as i32, base + 2 * t, color);

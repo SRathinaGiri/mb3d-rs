@@ -140,7 +140,7 @@ you check further on your own:
 
   </details>
 * **The interface in your language**: every text of the windows comes
-  from a language file; eleven languages ship, and the program writes the
+  from a language file; twelve languages ship, and the program writes the
   file of a new language for you to translate.
 
   <details><summary>Read more</summary>
@@ -149,8 +149,10 @@ you check further on your own:
   shows the interface language (`EN`); a click opens the language window.
   A language is a text file in the `Languages` folder next to the program.
   Shipped: English, Deutsch, Français, Italiano, Nederlands, Polski,
-  Kaszëbsczi, 日本語, 한국어, 简体中文 and 繁體中文 (each with its flag; the
-  East Asian ones bring a subset of Noto Sans CJK for their characters).
+  Kaszëbsczi, हिन्दी, 日本語, 한국어, 简体中文 and 繁體中文 (each with its flag; the
+  East Asian ones bring a subset of Noto Sans CJK for their characters,
+  Hindi brings Noto Sans Devanagari, whose joined letters and vowel signs
+  are set with the rustybuzz text shaper).
   The translations were machine made and checked for structure, not by
   native speakers: corrections are welcome, each is one line of the file. To translate: type the name of your language and
   press *Create language file*; the program writes `Languages/<name>.lng`
@@ -1123,6 +1125,11 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   [TGlad/FragmentariumExamples](https://github.com/TGlad/FragmentariumExamples);
   this program's version is written in Rust and WGSL from that
   algorithm, with a colour per dome added.
+* **The fonts of the languages** are Noto Sans CJK (subsets) and Noto
+  Sans Devanagari by the Noto Project Authors (SIL Open Font License,
+  `Languages/OFL-*.txt`); Devanagari is shaped with
+  [rustybuzz](https://github.com/harfbuzz/rustybuzz) (MIT), the Rust port
+  of HarfBuzz.
 * **The icon** is Mandelbulb3D's own icon (`m3d128.ico` from
   [thargor6/mb3d](https://github.com/thargor6/mb3d), LGPL 2.1), with its
   background made transparent and the letters "RS" (for the Rust port)

@@ -1281,8 +1281,8 @@ gh attestation verify mb3d-rs-linux-x64.tar.gz --repo thr32423/mb3d-rs
 
 This section is for developers; the release downloads above need none of
 it. The renderer has **no external dependencies** (std only, including its
-own PNG and JPEG encoders); the windows use four crates (winit, softbuffer,
-fontdue, arboard) and the graphics card two (wgpu, pollster). Everything
+own PNG and JPEG encoders); the windows use five crates (winit, softbuffer,
+fontdue, rustybuzz for scripts with joined letters, arboard) and the graphics card two (wgpu, pollster). Everything
 builds with any recent stable Rust:
 
 ```sh

@@ -371,7 +371,7 @@ pub fn reload() {
 /// program's fonts, the current language's first (the languages share
 /// many characters, drawn in the shapes of the language in use).
 fn apply_fonts() {
-    static LOADED: RwLock<Option<HashMap<PathBuf, Option<Arc<fontdue::Font>>>>> = RwLock::new(None);
+    static LOADED: RwLock<Option<HashMap<PathBuf, Option<Arc<super::font::FontFile>>>>> = RwLock::new(None);
     let cur = current();
     let mut order = vec![cur.clone()];
     order.extend(registry().into_iter().filter(|l| l.name != cur.name));

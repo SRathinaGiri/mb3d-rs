@@ -137,14 +137,7 @@ pub fn memo_lines(f: &Form, id: Id) -> Vec<(usize, String)> {
 
 /// Logical x positions of the caret before each character (n + 1 values).
 pub fn char_xs(font: &Font, s: &str) -> Vec<i32> {
-    let mut v = Vec::with_capacity(s.len() + 1);
-    let mut x = 0f32;
-    v.push(0);
-    for ch in s.chars() {
-        x += font::glyph(font.face(), font.em(), ch).advance;
-        v.push(x.round() as i32);
-    }
-    v
+    font::caret_xs(font.face(), font.em(), s).into_iter().map(|x| x.round() as i32).collect()
 }
 
 /// Radio group item rectangles (VCL's ArrangeButtons), control coordinates.
