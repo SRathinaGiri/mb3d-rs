@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76)** (25 Oct 2026, 15:31 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.77](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.77)** (26 Oct 2026, 15:04 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -999,6 +999,16 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.77](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.77) · 26 Oct 2026, 15:04 UTC
+
+| Commit | What it does |
+|---|---|
+| [`5433d50`](https://github.com/thr32423/mb3d-rs/commit/5433d5004f88714950d4786767b6055ec0b2f072) | Version number and release notes of this release |
+| [`c4f9b0e`](https://github.com/thr32423/mb3d-rs/commit/c4f9b0ed86c0228b7cdcee8aaba4c446f772c261) | New formula DomeTree (TGlad's dome tree), on the CPU and the GPU |
+| [`6c523cd`](https://github.com/thr32423/mb3d-rs/commit/6c523cd905cfb0447c04cc2f4befa96c5c2d8c76) | JIT: leave the formulas written in Rust alone |
+| [`e593cdd`](https://github.com/thr32423/mb3d-rs/commit/e593cddd8c9c5e41e62892efe244624e171123d0) | Post processing: the bar and the time left while it runs (#2) |
+| [`b172551`](https://github.com/thr32423/mb3d-rs/commit/b1725511f586d675bb1394a02aac34765b3426de) | README: Updates for v0.2.76 |
+
 ### [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76) · 25 Oct 2026, 15:31 UTC
 
 | Commit | What it does |
@@ -1024,15 +1034,7 @@ of a release are on its page. Times are in UTC.
 | [`d7b9621`](https://github.com/thr32423/mb3d-rs/commit/d7b962170b7f7fe377accffaac06bb23fa49111d) | Command line: MB3D_STAGE_TIMES=1 prints the time of every stage of a render |
 | [`1770792`](https://github.com/thr32423/mb3d-rs/commit/17707927660cd8406199e6888ea366a840fa2e8b) | README: Updates for v0.2.74 |
 
-### [v0.2.74](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.74) · 24 Oct 2026, 14:49 UTC
-
-| Commit | What it does |
-|---|---|
-| [`2536bca`](https://github.com/thr32423/mb3d-rs/commit/2536bcaeb6316a3249554bacebb2e18fd9438c28) | Version number and release notes of this release |
-| [`4b8aff1`](https://github.com/thr32423/mb3d-rs/commit/4b8aff1f4412b4a96e3eb0bb781aa34ea531e654) | The language badge in the theme's title bar colours, its flag muted there |
-| [`c89147c`](https://github.com/thr32423/mb3d-rs/commit/c89147c25a4247ef4be59ac7d73dc4b9bf026222) | README: Updates for v0.2.73 |
-
-All 87 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 88 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers

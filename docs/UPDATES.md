@@ -5,6 +5,16 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.77](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.77) · 26 Oct 2026, 15:04 UTC
+
+| Commit | What it does |
+|---|---|
+| [`5433d50`](https://github.com/thr32423/mb3d-rs/commit/5433d5004f88714950d4786767b6055ec0b2f072) | Version number and release notes of this release |
+| [`c4f9b0e`](https://github.com/thr32423/mb3d-rs/commit/c4f9b0ed86c0228b7cdcee8aaba4c446f772c261) | New formula DomeTree (TGlad's dome tree), on the CPU and the GPU |
+| [`6c523cd`](https://github.com/thr32423/mb3d-rs/commit/6c523cd905cfb0447c04cc2f4befa96c5c2d8c76) | JIT: leave the formulas written in Rust alone |
+| [`e593cdd`](https://github.com/thr32423/mb3d-rs/commit/e593cddd8c9c5e41e62892efe244624e171123d0) | Post processing: the bar and the time left while it runs (#2) |
+| [`b172551`](https://github.com/thr32423/mb3d-rs/commit/b1725511f586d675bb1394a02aac34765b3426de) | README: Updates for v0.2.76 |
+
 ## [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76) · 25 Oct 2026, 15:31 UTC
 
 | Commit | What it does |
