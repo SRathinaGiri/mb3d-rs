@@ -5,6 +5,15 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78) · 26 Oct 2026, 18:41 UTC
+
+| Commit | What it does |
+|---|---|
+| [`ec68907`](https://github.com/thr32423/mb3d-rs/commit/ec68907d338c04aab65db16b2684ce1562561b6f) | Version number and release notes of this release |
+| [`de9eac4`](https://github.com/thr32423/mb3d-rs/commit/de9eac436b621786362186772c521862509dcbe0) | Hindi: the shaper's font, plan and the line widths kept, so the windows no longer freeze while they lay out |
+| [`01ec189`](https://github.com/thr32423/mb3d-rs/commit/01ec18959de088704fb5b0cf5811d13fe3963343) | Languages: Hindi, its joined letters shaped with rustybuzz in Noto Sans Devanagari |
+| [`0a20527`](https://github.com/thr32423/mb3d-rs/commit/0a20527dd9eaa2739a57a5cd0fd6de61cba25326) | README: Updates for v0.2.77 |
+
 ## [v0.2.77](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.77) · 26 Oct 2026, 15:04 UTC
 
 | Commit | What it does |

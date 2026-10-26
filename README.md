@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.77](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.77)** (26 Oct 2026, 15:04 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78)** (26 Oct 2026, 18:41 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1001,6 +1001,15 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78) · 26 Oct 2026, 18:41 UTC
+
+| Commit | What it does |
+|---|---|
+| [`ec68907`](https://github.com/thr32423/mb3d-rs/commit/ec68907d338c04aab65db16b2684ce1562561b6f) | Version number and release notes of this release |
+| [`de9eac4`](https://github.com/thr32423/mb3d-rs/commit/de9eac436b621786362186772c521862509dcbe0) | Hindi: the shaper's font, plan and the line widths kept, so the windows no longer freeze while they lay out |
+| [`01ec189`](https://github.com/thr32423/mb3d-rs/commit/01ec18959de088704fb5b0cf5811d13fe3963343) | Languages: Hindi, its joined letters shaped with rustybuzz in Noto Sans Devanagari |
+| [`0a20527`](https://github.com/thr32423/mb3d-rs/commit/0a20527dd9eaa2739a57a5cd0fd6de61cba25326) | README: Updates for v0.2.77 |
+
 ### [v0.2.77](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.77) · 26 Oct 2026, 15:04 UTC
 
 | Commit | What it does |
@@ -1019,24 +1028,7 @@ of a release are on its page. Times are in UTC.
 | [`e883349`](https://github.com/thr32423/mb3d-rs/commit/e883349dab09c59626caf6adc40e9eed1336ccf0) | Monte Carlo: the neural noise filter (Intel Open Image Denoise), shipped with the program; macOS packages with the JIT for testing |
 | [`8368442`](https://github.com/thr32423/mb3d-rs/commit/8368442472ba1504e425e0959374534eb7eabd49) | README: Updates for v0.2.75 |
 
-### [v0.2.75](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.75) · 25 Oct 2026, 12:46 UTC
-
-| Commit | What it does |
-|---|---|
-| [`b1edcac`](https://github.com/thr32423/mb3d-rs/commit/b1edcac66c0ea62daaa8913cda8f0441e4360fe6) | Version number and release notes of this release |
-| [`fee7b2f`](https://github.com/thr32423/mb3d-rs/commit/fee7b2f8a9f32760dceb33a70cc1100e5145eeeb) | JIT: SSE, indexed record fields and the dIFS loop compiled |
-| [`9ba38c2`](https://github.com/thr32423/mb3d-rs/commit/9ba38c217ca49720c216aab404963a9789369f15) | JIT: all built-in formulas compiled, also in hybrids of built-ins only |
-| [`09fc1f9`](https://github.com/thr32423/mb3d-rs/commit/09fc1f9c10bf0a7922b27ba560a056c87c87fc58) | The formulas compiled at run time by default, except on macOS |
-| [`fe8cdd7`](https://github.com/thr32423/mb3d-rs/commit/fe8cdd7cc8e607120e6d461b04134e763c403311) | Formulas compiled at run time (Cranelift, cargo feature "jit") |
-| [`3f4a17a`](https://github.com/thr32423/mb3d-rs/commit/3f4a17a90726386ad1f3bce9725fdf828813a72e) | CPU: no direct-call set up for hybrids with a formula that has none |
-| [`4d1365b`](https://github.com/thr32423/mb3d-rs/commit/4d1365b4968f2d5610159a74b2396913c1c6277e) | Translated formulas keep their stack in locals |
-| [`87a1523`](https://github.com/thr32423/mb3d-rs/commit/87a152371b6a3ae52db4682fa6cbb67c47cf3756) | CPU: the hybrid loops read the iterated vector as separate loads |
-| [`180b318`](https://github.com/thr32423/mb3d-rs/commit/180b3187a38fa8c9c34c9a4b0a4809d4a8ce4fd0) | CPU: the hybrid loop calls the translated formulas without the per call set up |
-| [`b16bf81`](https://github.com/thr32423/mb3d-rs/commit/b16bf81ef6f39ca9074d92a88a3016f78aa228fb) | Docs: volumetric light runs on the card (since 535d92a), no longer named as a reason for the CPU |
-| [`d7b9621`](https://github.com/thr32423/mb3d-rs/commit/d7b962170b7f7fe377accffaac06bb23fa49111d) | Command line: MB3D_STAGE_TIMES=1 prints the time of every stage of a render |
-| [`1770792`](https://github.com/thr32423/mb3d-rs/commit/17707927660cd8406199e6888ea366a840fa2e8b) | README: Updates for v0.2.74 |
-
-All 88 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 89 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
