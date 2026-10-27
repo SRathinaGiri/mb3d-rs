@@ -5,6 +5,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 ## Contents
 
 - [Graphics card](#graphics-card)
+- [Several graphics cards](#several-graphics-cards)
 - [What is ported](#what-is-ported)
 - [Custom formulas (.m3f)](#custom-formulas-m3f)
 - [Scene files (.m3s)](#scene-files-m3s)
@@ -325,6 +326,28 @@ the final images to the CPU's.
 | Waste-and-tragedy - Mandalex | 36.8 s | 22.2 s | 1.7× | 2.52 % | 1.45 % |
 
 </details>
+
+## Several graphics cards
+
+`gpu::cards` finds and opens every card (the system's high performance
+card first, one entry per physical card, no software renderers unless
+`MB3D_GPU_ALLOW_SOFTWARE=1`; a dedicated card before integrated
+graphics). A thread calculates on the card `gpu::on_card` gives it
+(thread local; `solo_card` keeps a frame on one card), with pipelines,
+errors and background compiles per card; a further card that fails is
+left out alone (`FAILED`). In Auto and "Graphics card" mode each further
+card is a worker of its own taking bands from the shared rows
+(`render::Board`: which rows are delivered, which have a second worker;
+once the free rows are gone, an idle card or CPU thread takes the rows a
+card took and has not delivered, the first result counts, and a card whose
+rows all came from others stops, or goes on with rows still open). Ray
+batches (`gpu::on_cards`) give each further card a slice sized by its
+measured rays per second; the first card takes back a slow card's
+unstarted rays and races its started ones. Animations render a frame per
+card (`frames::render_frames`), the last frames raced on an idle card.
+`MB3D_GPU_TWICE=1` opens the first card twice for tests,
+`MB3D_CARDS_DEBUG=1` prints what the further cards did. See
+`docs/MULTI_GPU_PLAN.md` for the measurements.
 
 ## What is ported
 

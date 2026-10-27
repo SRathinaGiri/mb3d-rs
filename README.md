@@ -139,6 +139,18 @@ you check further on your own:
   start.
 
   </details>
+* **All the graphics cards of the computer calculate**, with nothing to
+  set: every card found takes bands of rows of the picture from the same
+  pool as the first card and the processor, so a faster card simply
+  takes more; the shadows, the occlusion, the Monte Carlo rays and the
+  reflections are shared the same way, and an animation renders a frame
+  per card at once. A slow card (integrated graphics beside a dedicated
+  one) does what it can and never holds a picture up: once the free rows
+  are gone, the idle cards and the processor take over the rows it has
+  not delivered. A card that fails is left out, the others carry on.
+  `mb3d --list-cards` shows what was found. (Tested with one card opened
+  twice and with a software Vulkan driver as a second card; not yet on a
+  computer with two real cards.)
 * **An unfinished picture is a `.m3i` file.** What a stopped, crashed or
   killed render has calculated is kept in the cache (the Unfinished
   renders window, `mb3d resume`); for a picture that file is now a
