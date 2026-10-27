@@ -8,7 +8,6 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [What is ported](#what-is-ported)
 - [Custom formulas (.m3f)](#custom-formulas-m3f)
 - [Scene files (.m3s)](#scene-files-m3s)
-- [The march](#the-march)
 - [Ambient occlusion and shadows](#ambient-occlusion-and-shadows)
 - [Lights, volumetric light, cutting planes, depth of field](#lights-volumetric-light-cutting-planes-depth-of-field)
 - [Reflections and transparency, normals on the z-buffer](#reflections-and-transparency-normals-on-the-z-buffer)
@@ -649,28 +648,6 @@ The light values use MB3D's slider units (for example `diffuse = 50` means
 onto them directly in phase 2. `color_start`/`color_end` are the colour-range
 sliders (`TBpos[9]`, `TBpos[10]`). `--auto-color` fits them to the rendered
 surface; this convenience is not in MB3D.
-
-## The march
-
-The ray march is MB3D's: the step is the distance estimate times the
-Raystep multiplier, slowed down (`rsf_mul`) when the DE shrinks faster
-than the step, capped by the step limiter (`mh04zsd`, also what the
-dynamic fog counts), and the surface, where the DE falls below the DE
-stop, is refined by the binary search. `step_relax` (`CalcParams::relax`,
-`RELAX` in the shader) enlarges a step by that factor when nothing slows
-it; the DE after the step must still overlap the last one (`dtmp + last_de
->= last_step`), else the step is taken again at its safe length. The
-dynamic fog counts a relaxed step as the safe steps it stands for. In the
-20 example scenes a factor of 1.3 saves 13 % of the time (relaxed steps
-practically never overshoot, MB3D's DE being conservative) and changes
-0.1 - 3 % of the pixels by more than 8 levels, the surface being met at
-another point of its tolerance band; so it is a setting, off by default.
-
-Two other ideas were measured and dropped: a secant instead of the
-bisection (the DE is not smooth at that scale: 1 - 5 % faster, 1 % of the
-pixels changed), and no step cap when there is no dynamic fog (no gain in
-the examples, and formulas whose DE is no bound, `disable_analytic_de`,
-lose their object).
 
 ## Ambient occlusion and shadows
 

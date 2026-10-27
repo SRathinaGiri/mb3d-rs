@@ -1658,8 +1658,6 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
             None => v.extend_from_slice(&[0; 3]),
         }
     }
-    v.resize(409, 0);
-    f(&mut v, p.relax as f64);
     while v.len() < PARAM_WORDS {
         v.push(0);
     }

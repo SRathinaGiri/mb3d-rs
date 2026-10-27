@@ -82,9 +82,6 @@ pub struct Scene {
     pub z_step_div: f64,
     /// `sRaystepLimiter`
     pub raystep_limiter: f64,
-    /// the march steps enlarged by this, 1 .. 2 (1: not): faster, the
-    /// fine shading a little different, see `calc::CalcParams::relax`
-    pub step_relax: f64,
     /// Smooth normals 0..8 (`iOptions shr 6`)
     pub smooth_normals: i32,
     /// Binary search steps after DE stop (`bStepsafterDEStop`)
@@ -272,7 +269,6 @@ impl Default for Scene {
             de_stop: 1.0,
             z_step_div: 0.5,
             raystep_limiter: 1.0,
-            step_relax: 1.0,
             smooth_normals: 0,
             bin_search_steps: 8,
             first_step_random: true,
@@ -479,7 +475,7 @@ impl Scene {
             m[0][0], m[0][1], m[0][2], m[1][0], m[1][1], m[1][2], m[2][0], m[2][1], m[2][2]
         );
         let _ = writeln!(t, "fov = {}\noptic = {}", self.fov_y, self.optic as i32);
-        let _ = writeln!(t, "de_stop = {}\nraystep = {}\nraystep_limiter = {}\nstep_relax = {}", self.de_stop, self.z_step_div, self.raystep_limiter, self.step_relax);
+        let _ = writeln!(t, "de_stop = {}\nraystep = {}\nraystep_limiter = {}", self.de_stop, self.z_step_div, self.raystep_limiter);
         let _ = writeln!(t, "smooth_normals = {}\nbin_search = {}", self.smooth_normals, self.bin_search_steps);
         let _ = writeln!(t, "first_step_random = {}\nstep_sub_de_stop = {}", self.first_step_random, self.step_sub_de_stop);
         let _ = writeln!(t, "vary_de_stop = {}\nnormals_on_de = {}", self.vary_de_stop_on_fov, self.normals_on_de);
@@ -990,7 +986,6 @@ impl Scene {
                         s.z_step_div = num()?.clamp(0.001, 1.0)
                     }
                     "raystep_limiter" => s.raystep_limiter = num()?,
-                    "step_relax" | "relax" => s.step_relax = num()?.clamp(1.0, 2.0),
                     "smooth_normals" => s.smooth_normals = int()?.clamp(0, 8),
                     "bin_search" | "bin_search_steps" => s.bin_search_steps = int()?.clamp(0, 255),
                     "first_step_random" => s.first_step_random = boolean()?,

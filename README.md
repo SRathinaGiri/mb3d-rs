@@ -139,17 +139,6 @@ you check further on your own:
   start.
 
   </details>
-* **Step relax**: a new field on the Calculation tab (scene key
-  `step_relax`, 1 = off) enlarges the march steps by that factor, 1.25
-  to 1.5 recommended: a step whose distance estimate no longer overlaps
-  the last one is taken again at its safe length (over-relaxed sphere
-  tracing, Keinert et al. 2014). 15 - 30 % fewer distance estimates on
-  the march, about 13 % off the time of the 20 example scenes at 1.3. The
-  surface is met at a slightly different point of the tolerance band, so
-  the fine shading differs a little from the same picture without it (in
-  the examples 0.1 - 3 % of the pixels by more than 8 levels), which is
-  why it is off by default. The dynamic fog, which counts the steps, is
-  kept as it is.
 * **Hotkeys for the windows**: a key combination brings the main window,
   the Navigator, the Animation, Formulas, Lighting, Post processing or
   Monte Carlo window to the front from any window (Ctrl+1 to Ctrl+7), and
