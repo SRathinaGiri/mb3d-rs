@@ -139,6 +139,10 @@ you check further on your own:
   start.
 
   </details>
+* **A crash leaves a note on every system**: a panic of the program (or
+  the error it ends with) is appended to `mb3d_crash.txt`, next to the
+  program or in its data folder (before only on Windows). Send that file
+  with a bug report.
 * **All the graphics cards of the computer calculate**, with nothing to
   set: every card found takes bands of rows of the picture from the same
   pool as the first card and the processor, so a faster card simply

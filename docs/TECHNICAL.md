@@ -1197,6 +1197,16 @@ update `info.txt`); `--clear [KEY]` deletes them.
 
 `MB3D_PORTABLE=1` or `0` chooses a way regardless of the folder.
 
+**Crashes.** A panic of either program (any thread), or the error the
+desktop program ends with, is appended to `mb3d_crash.txt` with the
+program, version, time, system and backtrace (`src/crash.rs`): next to
+the program in the one-folder way, else in the data folder above
+(`~/.local/share/mb3d-rs` on Linux and macOS, `%APPDATA%\mb3d-rs` on
+Windows), on every system since v0.2.80
+(before only on Windows). A crash of the graphics driver or a kill by the
+system (out of memory) is no panic and leaves no note; the unfinished
+render's checkpoint is what remains then.
+
 The shipped folders are found next to the program, in the user's data
 folder and in `$XDG_DATA_DIRS/mb3d-rs` (`/usr/local/share/mb3d-rs`,
 `/usr/share/mb3d-rs`). Formulas are searched in this order:

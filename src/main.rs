@@ -96,6 +96,9 @@ EXIT STATUS:
 fn main() -> ExitCode {
     #[cfg(feature = "gpu")]
     mb3d::gpu::use_own_driver_cache();
+    // a panic goes to mb3d_crash.txt as well (see crash.rs): a swarm
+    // worker or an animation running on its own leaves a trace
+    mb3d::crash::install("mb3d");
     let r = run();
     // a shader still compiling in the background is finished and cached
     // before the program ends (see gpu::wait_compiles)

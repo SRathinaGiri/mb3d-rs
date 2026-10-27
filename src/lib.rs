@@ -30,6 +30,7 @@ pub mod anim;
 #[cfg(feature = "gui")]
 pub mod app;
 pub mod appdirs;
+pub mod crash;
 pub mod animfile;
 pub mod batch;
 pub mod calc;
