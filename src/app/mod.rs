@@ -13,6 +13,7 @@ mod eta_model;
 pub mod file_preview;
 pub mod forms;
 pub mod formula_form;
+pub mod hotkeys;
 pub mod ini;
 pub mod jit_form;
 pub mod lang_form;
@@ -40,7 +41,7 @@ pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
     "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "uMapCalcWindow", "VisualThemesGUI",
-    "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI",
+    "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
 pub const MAIN: &str = "Mand3DForm";
@@ -178,6 +179,7 @@ impl App for Mb3d {
             "PostProForm" => postpro_form::event(self, ui, e),
             "VisualThemesFrm" => small_forms::themes_event(self, ui, e),
             "LanguageFrm" => lang_form::event(self, ui, e),
+            "HotkeysFrm" => hotkeys::event(self, ui, e),
             "SwarmFrm" => swarm_form::event(self, ui, e),
             "UnfinishedFrm" => unfinished_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
@@ -202,6 +204,10 @@ impl App for Mb3d {
             "FColorOptions" => mc_form::color_options_event(self, ui, e),
             _ => {}
         }
+    }
+
+    fn hotkey(&mut self, ui: &mut Ui, form: usize, key: u16, shift: u8) -> bool {
+        hotkeys::hotkey(self, ui, form, key, shift)
     }
 
     fn idle(&mut self, ui: &mut Ui) {
@@ -354,6 +360,9 @@ struct Starter(Mb3d);
 impl App for Starter {
     fn event(&mut self, ui: &mut Ui, e: &Event) {
         self.0.event(ui, e)
+    }
+    fn hotkey(&mut self, ui: &mut Ui, form: usize, key: u16, shift: u8) -> bool {
+        self.0.hotkey(ui, form, key, shift)
     }
     fn idle(&mut self, ui: &mut Ui) {
         if ui.waker().is_some() && !self.0.main.waker_set {

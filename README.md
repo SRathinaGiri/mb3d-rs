@@ -139,6 +139,11 @@ you check further on your own:
   start.
 
   </details>
+* **Hotkeys for the windows**: a key combination brings the main window,
+  the Navigator, the Animation, Formulas, Lighting, Post processing or
+  Monte Carlo window to the front from any window (Ctrl+1 to Ctrl+7), and
+  Ctrl+W closes the window you are in (on macOS Cmd). Set your own under *Prefs > Hotkeys*: click a field and
+  press the keys, Backspace takes a hotkey away.
 * **The interface in your language**: every text of the windows comes
   from a language file; twelve languages ship, and the program writes the
   file of a new language for you to translate.

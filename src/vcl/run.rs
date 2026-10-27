@@ -816,6 +816,11 @@ impl<A: App> Runner<A> {
         };
         let shift = shift_of(self.mods);
         if ev.state == ElementState::Pressed {
+            if code != 0 && !ev.repeat && self.app.hotkey(&mut self.ui, fi, code, shift) {
+                self.process();
+                self.redraw_dirty();
+                return;
+            }
             let mut raws = Vec::new();
             if code != 0 {
                 raws = self.ui.forms[fi].key_down(code, shift);

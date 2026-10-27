@@ -19,6 +19,11 @@ pub trait App {
     /// Called when a background thread woke the loop (see [`Ui::waker`])
     /// and regularly while windows are open.
     fn idle(&mut self, _ui: &mut Ui) {}
+    /// A key pressed in form `form`, before the form gets it: true when the
+    /// program used it up (a hotkey of its own).
+    fn hotkey(&mut self, _ui: &mut Ui, _form: usize, _key: u16, _shift: u8) -> bool {
+        false
+    }
 }
 
 /// Wakes the event loop from other threads.

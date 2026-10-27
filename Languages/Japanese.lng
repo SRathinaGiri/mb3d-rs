@@ -252,6 +252,8 @@ MapSequencesBtn.Caption = マップシーケンス
 MapSequencesBtn.Hint = ハイトマップとカラーマップをアニメーションさせる画像シーケンスを定義します
 VisualThemesBtn.Caption = テーマ
 VisualThemesBtn.Hint = アプリケーションの表示テーマを設定します
+HotkeysBtn.Caption = ホットキー
+HotkeysBtn.Hint = どのウィンドウからでもウィンドウを前面に出すキー
 GroupBox2.Caption = 表示
 SpeedButton35.Hint = 表示用、および jpeg、png、bmp 保存用の画像縮小率です。\n1:2 と 1:3 のスケールでのみ、保存時にアンチエイリアスフィルターが適用されます。\nクリックで選択メニューを開きます。
 N12aa1.Caption = 1:2  aa
@@ -1573,6 +1575,30 @@ ReloadBtn.Caption = 再読み込み
 ReloadBtn.Hint = 言語ファイルを編集した後に、もう一度読み込みます。
 NoteLabel.Caption = 言語ファイルは1行に1つのテキストです: 「=」の左がその場所または英語のテキスト、右があなたのテキストです。
 
+[HotkeysFrm]
+Caption = ホットキー
+InfoLabel.Caption = ウィンドウを前面に出す／閉じるキーです。\n欄をクリックしてキーを押してください。\nBackspace でホットキーを解除します。
+Label1.Caption = メインウィンドウ:
+Edit1.Hint = クリックしてホットキーのキーを押してください
+Label2.Caption = ナビゲーター:
+Edit2.Hint = クリックしてホットキーのキーを押してください
+Label3.Caption = アニメーション:
+Edit3.Hint = クリックしてホットキーのキーを押してください
+Label4.Caption = 数式:
+Edit4.Hint = クリックしてホットキーのキーを押してください
+Label5.Caption = ライティング:
+Edit5.Hint = クリックしてホットキーのキーを押してください
+Label6.Caption = ポストプロセス:
+Edit6.Hint = クリックしてホットキーのキーを押してください
+Label7.Caption = モンテカルロ:
+Edit7.Hint = クリックしてホットキーのキーを押してください
+Label8.Caption = 現在のウィンドウを閉じる:
+Edit8.Hint = クリックしてホットキーのキーを押してください
+DefaultsBtn.Caption = 既定値
+DefaultsBtn.Hint = Ctrl+1 から Ctrl+7 はリストの順、Ctrl+W で閉じる
+SaveAndExitBtn.Caption = 保存して終了
+SaveAndExitBtn.Hint = 次回の起動のためにホットキーを保存します
+
 [Strings]
 \s\sMB = \s\sMB
 \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode! = \s物体判定の方式です。Max its を下げるか DE を上げると\n(選んだオプションによります)、物体が太くなります。\n注意:  DEcombinate の式は距離推定モードでのみ動作します!
@@ -1912,6 +1938,7 @@ new = 新規
 no faces in the file = ファイルに面がありません
 no parameters = パラメータなし
 no shared folder chosen = 共有フォルダが選ばれていません
+none = なし
 not a big render project = 大判レンダリングのプロジェクトではありません
 nothing to save = 保存するものがありません
 painting a preview = プレビューを描画中

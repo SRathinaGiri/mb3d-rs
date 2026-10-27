@@ -252,6 +252,8 @@ MapSequencesBtn.Caption = मैप अनुक्रम
 MapSequencesBtn.Hint = हाइट- और रंग मैप को एनिमेट करने के लिए छवि अनुक्रम तय करें
 VisualThemesBtn.Caption = थीम
 VisualThemesBtn.Hint = एप्लिकेशन की दृश्य थीम सेट करें
+HotkeysBtn.Caption = हॉटकी
+HotkeysBtn.Hint = वे कुंजियाँ जो किसी भी विंडो से एक विंडो को सामने लाती हैं
 GroupBox2.Caption = दृश्य
 SpeedButton35.Hint = देखने के लिए और jpeg, png या bmp के रूप में सहेजने के लिए छवि को छोटा करना।\nकेवल 1:2 और 1:3 स्केल पर सहेजते समय एंटी-एलियासिंग फ़िल्टर लगाया जाता है।\nचयन मेनू के लिए क्लिक करें।
 N12aa1.Caption = 1:2  aa
@@ -1573,6 +1575,30 @@ ReloadBtn.Caption = फिर से लोड करें
 ReloadBtn.Hint = किसी फ़ाइल को संपादित करने के बाद भाषा फ़ाइलें फिर से पढ़ता है
 NoteLabel.Caption = एक भाषा फ़ाइल में हर पंक्ति में एक टेक्स्ट होता है: "=" के बाईं ओर उसका स्थान या अंग्रेज़ी टेक्स्ट, दाईं ओर आपका टेक्स्ट।
 
+[HotkeysFrm]
+Caption = हॉटकी
+InfoLabel.Caption = किसी भी विंडो से विंडो को सामने लाती है, या मौजूदा विंडो बंद करती है। किसी फ़ील्ड पर क्लिक करें और कुंजियाँ दबाएँ; Backspace हॉटकी हटा देता है।
+Label1.Caption = मुख्य विंडो:
+Edit1.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label2.Caption = नेविगेटर:
+Edit2.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label3.Caption = एनिमेशन:
+Edit3.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label4.Caption = फ़ॉर्मूले:
+Edit4.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label5.Caption = प्रकाश व्यवस्था:
+Edit5.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label6.Caption = पोस्ट प्रोसेस:
+Edit6.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label7.Caption = Monte Carlo:
+Edit7.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+Label8.Caption = मौजूदा विंडो बंद करें:
+Edit8.Hint = क्लिक करें और हॉटकी की कुंजियाँ दबाएँ
+DefaultsBtn.Caption = डिफ़ॉल्ट
+DefaultsBtn.Hint = Ctrl+1 से Ctrl+7 सूची के क्रम में, बंद करने के लिए Ctrl+W
+SaveAndExitBtn.Caption = सहेजें + बाहर
+SaveAndExitBtn.Hint = अगली शुरुआत के लिए हॉटकी रखता है
+
 [Strings]
 \s\sMB = \s\sMB
 \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode! = \sवस्तु निर्धारण का प्रकार; अधिकतम पुनरावृत्तियाँ घटाने या DE बढ़ाने से\n(चुने गए विकल्प के अनुसार) वस्तु मोटी हो जाएगी।\nध्यान दें:  DEcombinate फ़ॉर्मूले केवल Distance estimation मोड में काम करते हैं!
@@ -1910,6 +1936,7 @@ new = नया
 no faces in the file = फ़ाइल में कोई फ़ेस नहीं
 no parameters = कोई पैरामीटर नहीं
 no shared folder chosen = कोई साझा फ़ोल्डर नहीं चुना गया
+none = कोई नहीं
 not a big render project = बड़ा रेंडर प्रोजेक्ट नहीं है
 nothing to save = सहेजने के लिए कुछ नहीं
 painting a preview = पूर्वावलोकन बनाया जा रहा है

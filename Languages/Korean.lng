@@ -252,6 +252,8 @@ MapSequencesBtn.Caption = 맵 시퀀스
 MapSequencesBtn.Hint = 높이맵과 색상 맵을 애니메이션할 이미지 시퀀스를 정합니다
 VisualThemesBtn.Caption = 테마
 VisualThemesBtn.Hint = 응용 프로그램의 시각 테마를 설정합니다
+HotkeysBtn.Caption = 단축키
+HotkeysBtn.Hint = 어느 창에서나 창을 앞으로 가져오는 키
 GroupBox2.Caption = 보기
 SpeedButton35.Hint = 보기와 jpeg, png, bmp 저장을 위한 이미지 축소입니다.\n1:2 및 1:3 배율에서만 저장 시 안티에일리어싱 필터가 적용됩니다.\n클릭하면 선택 메뉴가 나옵니다.
 N12aa1.Caption = 1:2  aa
@@ -1573,6 +1575,30 @@ ReloadBtn.Caption = 다시 불러오기
 ReloadBtn.Hint = 언어 파일을 편집한 뒤 다시 읽어 들입니다.
 NoteLabel.Caption = 언어 파일은 한 줄에 텍스트 하나입니다: "=" 왼쪽은 위치 또는 영어 텍스트, 오른쪽은 번역한 텍스트입니다.
 
+[HotkeysFrm]
+Caption = 단축키
+InfoLabel.Caption = 어느 창에서나 창을 앞으로 가져오거나 현재 창을 닫습니다. 칸을 클릭하고 키를 누르세요. Backspace로 단축키를 지웁니다.
+Label1.Caption = 메인 창:
+Edit1.Hint = 클릭하고 단축키의 키를 누르세요
+Label2.Caption = 내비게이터:
+Edit2.Hint = 클릭하고 단축키의 키를 누르세요
+Label3.Caption = 애니메이션:
+Edit3.Hint = 클릭하고 단축키의 키를 누르세요
+Label4.Caption = 공식:
+Edit4.Hint = 클릭하고 단축키의 키를 누르세요
+Label5.Caption = 조명:
+Edit5.Hint = 클릭하고 단축키의 키를 누르세요
+Label6.Caption = 후처리:
+Edit6.Hint = 클릭하고 단축키의 키를 누르세요
+Label7.Caption = 몬테카를로:
+Edit7.Hint = 클릭하고 단축키의 키를 누르세요
+Label8.Caption = 현재 창 닫기:
+Edit8.Hint = 클릭하고 단축키의 키를 누르세요
+DefaultsBtn.Caption = 기본값
+DefaultsBtn.Hint = Ctrl+1부터 Ctrl+7까지 목록 순서대로, Ctrl+W로 닫기
+SaveAndExitBtn.Caption = 저장 + 종료
+SaveAndExitBtn.Hint = 다음 시작을 위해 단축키를 저장합니다
+
 [Strings]
 \s\sMB = \s\sMB
 \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode! = \s객체 판정 방식입니다. Max its를 낮추거나 DE를 높이면\n(선택한 옵션에 따라) 객체가 더 두꺼워집니다.\n참고:  DEcombinate 수식은 거리 추정 모드에서만 작동합니다!
@@ -1912,6 +1938,7 @@ new = 새로 만듦
 no faces in the file = 파일에 면이 없습니다
 no parameters = 매개변수 없음
 no shared folder chosen = 선택한 공유 폴더 없음
+none = 없음
 not a big render project = 대형 렌더링 프로젝트가 아닙니다
 nothing to save = 저장할 내용이 없습니다
 painting a preview = 미리보기 그리는 중

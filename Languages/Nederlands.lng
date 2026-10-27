@@ -251,6 +251,8 @@ MapSequencesBtn.Caption = Map-reeksen
 MapSequencesBtn.Hint = Afbeeldingsreeksen instellen om hoogte- en kleurmaps te animeren
 VisualThemesBtn.Caption = Thema's
 VisualThemesBtn.Hint = Het visuele thema van het programma instellen
+HotkeysBtn.Caption = Sneltoetsen
+HotkeysBtn.Hint = Toetsen die een venster vanuit elk venster naar voren halen
 GroupBox2.Caption = Weergave
 SpeedButton35.Hint = Verkleining van de afbeelding voor weergave en voor opslaan als jpeg, png of bmp.\nAlleen bij schaal 1:2 en 1:3 wordt bij het opslaan een anti-aliasingfilter toegepast.\nKlik voor een keuzemenu.
 N12aa1.Caption = 1:2  aa
@@ -1572,6 +1574,30 @@ ReloadBtn.Caption = Opnieuw laden
 ReloadBtn.Hint = Leest de taalbestanden opnieuw in, nadat u er een hebt bewerkt
 NoteLabel.Caption = Een taalbestand heeft één tekst per regel: links van de "=" de plaats ervan of de Engelse tekst, rechts ervan uw tekst.
 
+[HotkeysFrm]
+Caption = Sneltoetsen
+InfoLabel.Caption = Haalt het venster vanuit elk venster naar voren, of sluit het huidige. Klik op een veld en druk op de toetsen; Backspace verwijdert de sneltoets.
+Label1.Caption = Hoofdvenster:
+Edit1.Hint = Klik en druk op de toetsen van de sneltoets
+Label2.Caption = Navigator:
+Edit2.Hint = Klik en druk op de toetsen van de sneltoets
+Label3.Caption = Animaties:
+Edit3.Hint = Klik en druk op de toetsen van de sneltoets
+Label4.Caption = Formules:
+Edit4.Hint = Klik en druk op de toetsen van de sneltoets
+Label5.Caption = Belichting:
+Edit5.Hint = Klik en druk op de toetsen van de sneltoets
+Label6.Caption = Nabewerking:
+Edit6.Hint = Klik en druk op de toetsen van de sneltoets
+Label7.Caption = Monte Carlo:
+Edit7.Hint = Klik en druk op de toetsen van de sneltoets
+Label8.Caption = Huidig venster sluiten:
+Edit8.Hint = Klik en druk op de toetsen van de sneltoets
+DefaultsBtn.Caption = Standaard
+DefaultsBtn.Hint = Ctrl+1 tot Ctrl+7 in de volgorde van de lijst, Ctrl+W om te sluiten
+SaveAndExitBtn.Caption = Opslaan + afsluiten
+SaveAndExitBtn.Hint = Bewaart de sneltoetsen voor de volgende start
+
 [Strings]
 \s\sMB = \s\sMB
 \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode! = \sType objectbepaling; Max its verlagen of DE verhogen\n(afhankelijk van de gekozen optie) maakt het object dikker.\nOpmerking:  DEcombinate-formules werken alleen in de modus Afstandsschatting!
@@ -1911,6 +1937,7 @@ new = nieuw
 no faces in the file = geen vlakken in het bestand
 no parameters = geen parameters
 no shared folder chosen = geen gedeelde map gekozen
+none = geen
 not a big render project = geen project voor grote render
 nothing to save = niets om op te slaan
 painting a preview = voorbeeld tekenen

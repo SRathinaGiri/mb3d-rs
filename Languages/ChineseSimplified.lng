@@ -252,6 +252,8 @@ MapSequencesBtn.Caption = 贴图序列
 MapSequencesBtn.Hint = 定义用于动画化高度图和颜色贴图的图像序列
 VisualThemesBtn.Caption = 主题
 VisualThemesBtn.Hint = 设置应用程序的视觉主题
+HotkeysBtn.Caption = 快捷键
+HotkeysBtn.Hint = 从任意窗口将某个窗口调到前面的按键
 GroupBox2.Caption = 查看
 SpeedButton35.Hint = 用于查看以及保存为 jpeg、png 或 bmp 的图像缩小比例。\n仅在 1:2 和 1:3 比例下保存时才执行抗锯齿滤镜。\n点击打开选择菜单。
 N12aa1.Caption = 1:2  aa
@@ -1573,6 +1575,30 @@ ReloadBtn.Caption = 重新加载
 ReloadBtn.Hint = 在您编辑了某个语言文件之后，重新读取语言文件
 NoteLabel.Caption = 语言文件每行一条文本："=" 左侧是其位置或英文文本，右侧是您的译文。
 
+[HotkeysFrm]
+Caption = 快捷键
+InfoLabel.Caption = 从任意窗口将该窗口调到前面，或关闭当前窗口。\n单击一个字段并按下按键；\nBackspace 删除快捷键。
+Label1.Caption = 主窗口:
+Edit1.Hint = 单击并按下快捷键的按键
+Label2.Caption = 导航器:
+Edit2.Hint = 单击并按下快捷键的按键
+Label3.Caption = 动画:
+Edit3.Hint = 单击并按下快捷键的按键
+Label4.Caption = 公式:
+Edit4.Hint = 单击并按下快捷键的按键
+Label5.Caption = 光照:
+Edit5.Hint = 单击并按下快捷键的按键
+Label6.Caption = 后期处理:
+Edit6.Hint = 单击并按下快捷键的按键
+Label7.Caption = 蒙特卡洛:
+Edit7.Hint = 单击并按下快捷键的按键
+Label8.Caption = 关闭当前窗口:
+Edit8.Hint = 单击并按下快捷键的按键
+DefaultsBtn.Caption = 默认
+DefaultsBtn.Hint = Ctrl+1 到 Ctrl+7 按列表顺序，Ctrl+W 关闭
+SaveAndExitBtn.Caption = 保存并退出
+SaveAndExitBtn.Hint = 保留快捷键供下次启动使用
+
 [Strings]
 \s\sMB = \s\sMB
 \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode! = \s对象判定方式。降低 Max its 或增大 DE\n（取决于所选选项）会使对象变厚。\n注意：  DEcombinate 公式仅在距离估计模式下有效！
@@ -1912,6 +1938,7 @@ new = 新建
 no faces in the file = 文件中没有面
 no parameters = 无参数
 no shared folder chosen = 未选择共享文件夹
+none = 无
 not a big render project = 不是大图渲染项目
 nothing to save = 没有可保存的内容
 painting a preview = 正在绘制预览

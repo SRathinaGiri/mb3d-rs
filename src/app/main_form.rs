@@ -2224,6 +2224,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "IniDirsBtnClick" => ui.show("IniDirForm"),
         "MapSequencesBtnClick" => ui.show("MapSequencesFrm"),
         "VisualThemesBtnClick" => ui.show("VisualThemesFrm"),
+        "HotkeysBtnClick" => ui.show("HotkeysFrm"),
         "LanguageBadgeClick" => ui.show("LanguageFrm"),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),

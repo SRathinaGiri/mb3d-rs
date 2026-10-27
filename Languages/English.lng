@@ -254,6 +254,8 @@ MapSequencesBtn.Caption = Map Sequences
 MapSequencesBtn.Hint = Define image sequences to animate height- and color maps
 VisualThemesBtn.Caption = Themes
 VisualThemesBtn.Hint = Set the visual theme of the application
+HotkeysBtn.Caption = Hotkeys
+HotkeysBtn.Hint = Keys that bring a window to the front from any window
 GroupBox2.Caption = Viewing
 SpeedButton35.Hint = Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
 N12aa1.Caption = 1:2  aa
@@ -1575,6 +1577,30 @@ ReloadBtn.Caption = Reload
 ReloadBtn.Hint = Reads the language files again, after you edited one
 NoteLabel.Caption = A language file has one text per line: left of the "=" its place or the English text, right of it your text.
 
+[HotkeysFrm]
+Caption = Hotkeys
+InfoLabel.Caption = Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Label1.Caption = Main window:
+Edit1.Hint = Click and press the keys of the hotkey
+Label2.Caption = Navigator:
+Edit2.Hint = Click and press the keys of the hotkey
+Label3.Caption = Animation:
+Edit3.Hint = Click and press the keys of the hotkey
+Label4.Caption = Formulas:
+Edit4.Hint = Click and press the keys of the hotkey
+Label5.Caption = Lighting:
+Edit5.Hint = Click and press the keys of the hotkey
+Label6.Caption = Post processing:
+Edit6.Hint = Click and press the keys of the hotkey
+Label7.Caption = Monte Carlo:
+Edit7.Hint = Click and press the keys of the hotkey
+Label8.Caption = Close the current window:
+Edit8.Hint = Click and press the keys of the hotkey
+DefaultsBtn.Caption = Defaults
+DefaultsBtn.Hint = Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+SaveAndExitBtn.Caption = Save + exit
+SaveAndExitBtn.Hint = Keeps the hotkeys for the next start
+
 [Strings]
 \s\sMB = \s\sMB
 \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode! = \sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
@@ -1912,6 +1938,7 @@ new = new
 no faces in the file = no faces in the file
 no parameters = no parameters
 no shared folder chosen = no shared folder chosen
+none = none
 not a big render project = not a big render project
 nothing to save = nothing to save
 painting a preview = painting a preview
