@@ -224,6 +224,35 @@ fn folder_key(swarm: &Path) -> PathBuf {
     swarm.canonicalize().unwrap_or_else(|_| swarm.to_path_buf())
 }
 
+/// A computer's cards in a column of `w` characters: the interface in
+/// brackets goes first, then the names are cut, the count of identical
+/// cards (`×2`) kept.
+fn card_column(card: &str, w: usize) -> String {
+    if card.chars().count() <= w {
+        return card.to_string();
+    }
+    let mut t = String::new();
+    let mut depth = 0;
+    for c in card.chars() {
+        match c {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            _ if depth == 0 => t.push(c),
+            _ => {}
+        }
+    }
+    let t = t.split_whitespace().collect::<Vec<_>>().join(" ");
+    if t.chars().count() <= w {
+        return t;
+    }
+    let (body, count) = match t.rfind(" ×") {
+        Some(i) if t[i + 3..].chars().all(|c| c.is_ascii_digit()) => (&t[..i], &t[i..]),
+        _ => (t.as_str(), ""),
+    };
+    let keep = w.saturating_sub(count.chars().count() + 1);
+    format!("{}…{count}", body.chars().take(keep).collect::<String>().trim_end())
+}
+
 /// The presences of this program, by swarm folder and name.
 type Presences = Vec<((PathBuf, String), Weak<Presence>)>;
 static PRESENCES: Mutex<Presences> = Mutex::new(Vec::new());
@@ -2398,7 +2427,7 @@ pub fn status_text(swarm: &Path) -> String {
             p.name,
             p.version,
             p.cores,
-            if p.card.is_empty() { "processor".to_string() } else { p.card.chars().take(28).collect() },
+            if p.card.is_empty() { "processor".to_string() } else { card_column(&p.card, 28) },
             p.state,
             if p.stale(now) { format!("  (gone, last seen {age} s ago)") } else { String::new() }
         ));
@@ -2424,6 +2453,15 @@ pub fn status_text(swarm: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn card_columns() {
+        assert_eq!(super::card_column("NVIDIA GeForce RTX 2060 (Vulkan)", 28), "NVIDIA GeForce RTX 2060");
+        assert_eq!(super::card_column("NVIDIA GeForce RTX 2060 (Vulkan) ×2", 28), "NVIDIA GeForce RTX 2060 ×2");
+        assert!(super::card_column("AMD Radeon RX 7900 XTX (Vulkan) + NVIDIA GeForce RTX 4090 (Vulkan)", 28).chars().count() <= 28);
+        assert_eq!(super::card_column("NVIDIA GeForce RTX 4090 Laptop GPU (Vulkan) ×2", 28), "NVIDIA GeForce RTX 4090… ×2");
+        assert_eq!(super::card_column("Apple M2 (Metal)", 28), "Apple M2 (Metal)");
+    }
+
     use super::*;
 
     fn temp(name: &str) -> PathBuf {

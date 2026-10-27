@@ -250,11 +250,19 @@ pub fn set_enabled(on: bool) {
 }
 
 /// The graphics card's name (None without a usable card); with several,
-/// those still working, joined by " + ".
+/// those still working: identical ones counted (`RTX 2060 (Vulkan) ×2`),
+/// different ones joined by " + ".
 pub fn name() -> Option<String> {
     let c = cards().ok()?;
     let failed = FAILED.load(Ordering::SeqCst);
-    Some(c.iter().enumerate().filter(|(i, _)| *i == 0 || *i >= 64 || failed & (1 << i) == 0).map(|(_, g)| g.name.as_str()).collect::<Vec<_>>().join(" + "))
+    let mut groups: Vec<(&str, usize)> = Vec::new();
+    for (_, g) in c.iter().enumerate().filter(|(i, _)| *i == 0 || *i >= 64 || failed & (1 << i) == 0) {
+        match groups.iter_mut().find(|(n, _)| *n == g.name) {
+            Some(e) => e.1 += 1,
+            None => groups.push((&g.name, 1)),
+        }
+    }
+    Some(groups.iter().map(|(n, k)| if *k > 1 { format!("{n} ×{k}") } else { n.to_string() }).collect::<Vec<_>>().join(" + "))
 }
 
 pub fn enabled() -> bool {
