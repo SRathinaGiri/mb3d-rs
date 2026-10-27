@@ -64,6 +64,10 @@ pub struct CalcParams {
     pub col_var_de_stop_mul: f32,
     pub first_step_random: bool,
     pub mh04zsd: f32,
+    /// the march steps enlarged by this (over-relaxation, 1: not): the
+    /// DE after a relaxed step must still overlap the last one, else the
+    /// step is taken again at its safe length (`step_relax` of the scene)
+    pub relax: f32,
     pub de_stop_factor: f32,
     pub ln_rstop: f32,
     pub normals_on_de: bool,
@@ -766,6 +770,7 @@ impl CalcParams {
             col_var_de_stop_mul: col_var,
             first_step_random: sc.first_step_random,
             mh04zsd,
+            relax: sc.step_relax.clamp(1.0, 2.0) as f32,
             de_stop_factor,
             ln_rstop,
             normals_on_de: sc.normals_on_de || is_custom_de || dc.is_some(),
@@ -2029,7 +2034,26 @@ impl<'a> Marcher<'a> {
                     self.seed = self.seed.wrapping_mul(214013).wrapping_add(2531011);
                     d *= (self.seed & 0x7FFF_FFFF) as f64 * (1.0 / 0x7FFF_FFFF as f64);
                 }
+                // the step relaxed (`relax` > 1: over-relaxation, its DE
+                // must still overlap the last one, see below); the dynamic
+                // fog counts it as the safe steps
+                let relax = p.relax as f64;
+                let mut relaxed = false;
+                if relax > 1.0 && rsf_mul >= 1.0 && d < s1 {
+                    d *= relax;
+                    relaxed = true;
+                    if count {
+                        step_count += (relax - 1.0) as f32;
+                    }
+                }
                 self.mzz += d;
+                if relaxed && self.mzz > p.zend {
+                    // (the background only at the safe step)
+                    self.mzz -= d;
+                    d /= relax;
+                    self.mzz += d;
+                    relaxed = false;
+                }
                 if self.mzz > p.zend {
                     // background
                     if let Some(vl) = &p.vol {
@@ -2043,6 +2067,16 @@ impl<'a> Marcher<'a> {
                 self.step(d);
                 self.update_de_stop();
                 dtmp = self.calc_de();
+                if relaxed && (dtmp < 0.0 || dtmp + last_de < last_step) && self.it.it_result < self.max_its_result {
+                    // the relaxed step overshot (the DE spheres do not
+                    // overlap): back to the safe step
+                    let back = last_step - last_de;
+                    self.mzz -= back;
+                    self.step(-back);
+                    self.update_de_stop();
+                    last_step = last_de;
+                    dtmp = self.calc_de();
+                }
                 if dtmp > last_de + last_step {
                     dtmp = last_de + last_step;
                 }

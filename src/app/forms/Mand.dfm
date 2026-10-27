@@ -709,6 +709,28 @@ object Mand3DForm: TMand3DForm
           ShowHint = True
           TabOrder = 8
         end
+        object RelaxLabel: TLabel
+          Left = 24
+          Top = 201
+          Width = 61
+          Height = 13
+          Alignment = taRightJustify
+          Caption = 'Step relax:'
+        end
+        object RelaxEdit: TEdit
+          Left = 92
+          Top = 198
+          Width = 49
+          Height = 21
+          Hint = 
+            'Longer march steps (1 = off, 1.25 .. 1.5 recommended): 15 - 30 %' +
+            ' fewer distance estimates, the fine shading a little different.' +
+            ' A step that oversteps is taken again at its safe length.'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 12
+          Text = '1'
+        end
       end
       object TabSheet4: TTabSheet
         Caption = 'Internal'

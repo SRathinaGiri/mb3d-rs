@@ -66,6 +66,8 @@ CheckBox8.Hint = Useful for steep heightmaps
 Edit8.Hint = Use values lower than 1 to reduce overstepping.
 CheckBox2.Caption = Raystep sub DEstop:
 CheckBox2.Hint = Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+RelaxLabel.Caption = Step relax:
+RelaxEdit.Hint = Longer march steps (1 = off, 1.25 .. 1.5 recommended): 15 - 30 % fewer distance estimates, the fine shading a little different. A step that oversteps is taken again at its safe length.
 TabSheet4.Caption = Internal
 Label15.Caption = Threadcount  \nin Calculations
 Label17.Caption = its for free!

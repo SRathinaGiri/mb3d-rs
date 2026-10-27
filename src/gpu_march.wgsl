@@ -119,7 +119,7 @@ const SAMPLE_Y: u32 = 221u;      // SAMPLE_X-th column of every SAMPLE_Y-th row 
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 591u;
+const STATE_FIXED: u32 = 592u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -183,6 +183,7 @@ const VOL_BASE: u32 = 390u;
 // length multiplier, iLightPos and 14); the position is in HS_LIGHTS'
 // vector (double mode: pdd(19 + 3 i ..))
 const HS_POS: u32 = 391u;
+const RELAX: u32 = 409u;          // the march steps enlarged by this (1: not), see calc.rs CalcParams.relax
 // M_VLMAP: the light map's march (vollight.rs build / vl_trace)
 const VOL_MIN_DIST: u32 = 409u;
 const VOL_MAX_DIST: u32 = 410u;   // in steps
@@ -1815,6 +1816,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
     // march
     var dtmp = R(0.0);
     var rsf_mul = R(1.0);
+    // a relaxed step (RELAX) is under way: its DE must overlap the last
+    var relaxed = false;
     var last_step = R(0.0);
     var last_de = R(0.0);
     var dt1 = R(0.0);
@@ -2010,6 +2013,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
         rsf_mul = rget(so + 507u * ns, ns);
         last_step = rget(so + 509u * ns, ns);
         last_de = rget(so + 511u * ns, ns);
+        relaxed = (STATE[so + 591u * ns] != 0u);
         dt1 = rget(so + 513u * ns, ns);
         de_limited = (STATE[so + 515u * ns] != 0u);
         itmp = bitcast<i32>(STATE[so + 516u * ns]);
@@ -2205,6 +2209,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
             rput(so + 507u * ns, ns, rsf_mul);
             rput(so + 509u * ns, ns, last_step);
             rput(so + 511u * ns, ns, last_de);
+            STATE[so + 591u * ns] = select(0u, 1u, relaxed);
             rput(so + 513u * ns, ns, dt1);
             STATE[so + 515u * ns] = select(0u, 1u, de_limited);
             STATE[so + 516u * ns] = bitcast<u32>(itmp);
@@ -2426,7 +2431,26 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             seed = seed * 214013 + 2531011;
                             d *= R(u32(seed) & 0x7FFFFFFFu) * (1.0 / 2147483647.0);
                         }
+                        // the step relaxed (RELAX > 1: over-relaxation, its
+                        // DE must still overlap the last one, see P_STEP);
+                        // the dynamic fog counts it as the safe steps
+                        let relax = pf(RELAX);
+                        relaxed = false;
+                        if (relax > 1.0 && rsf_mul >= 1.0 && d < st1) {
+                            d *= relax;
+                            relaxed = true;
+                            if (count) {
+                                step_count += relax - 1.0;
+                            }
+                        }
                         mzz += d;
+                        if (relaxed && mzz > pf(ZEND)) {
+                            // (the background only at the safe step)
+                            mzz -= d;
+                            d /= relax;
+                            mzz += d;
+                            relaxed = false;
+                        }
                         if (mzz > pf(ZEND)) {
                             // background (`break` here would only leave the switch)
                             if (pi(VOL_ON) != 0) {
@@ -2472,6 +2496,21 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_STEP: {
                 if (MODE_KIND == 0u) {
                     dtmp = r;
+                    if (relaxed && (dtmp < 0.0 || dtmp + last_de < last_step) && it_result < max_its_result) {
+                        // the relaxed step overshot (the DE spheres do not
+                        // overlap): back to the safe step, its DE next
+                        relaxed = false;
+                        let back = last_step - last_de;
+                        mzz -= back;
+                        setc();
+                        update_de_stop();
+                        last_step = last_de;
+                        need = true;
+                        want_de = true;
+                        pc = P_STEP;
+                        break;
+                    }
+                    relaxed = false;
                     if (dtmp > last_de + last_step) {
                         dtmp = last_de + last_step;
                     }

@@ -619,6 +619,7 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     set(ui, "Edit14", &fts(sc.fov_y));
     set(ui, "Edit2", &fts_single(sc.color_mul));
     set(ui, "Edit8", &fts_single(sc.raystep_limiter));
+    set(ui, "RelaxEdit", &fts_single(sc.step_relax));
     set(ui, "Edit15", &fts_single(sc.stereo_screen[0] as f64));
     set(ui, "Edit18", &fts_single(sc.stereo_screen[1] as f64));
     set(ui, "Edit13", &fts_single(sc.stereo_screen[2] as f64));
@@ -686,6 +687,7 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.julia_c = [ptf(&t(ui, "Edit28")), ptf(&t(ui, "Edit29")), ptf(&t(ui, "Edit30")), ptf(&t(ui, "Edit7"))];
     sc.color_mul = ptf(&t(ui, "Edit2"));
     sc.raystep_limiter = ptf(&t(ui, "Edit8"));
+    sc.step_relax = ptf(&t(ui, "RelaxEdit")).clamp(1.0, 2.0);
     sc.stereo_screen = [ptf(&t(ui, "Edit15")) as f32, ptf(&t(ui, "Edit18")) as f32, ptf(&t(ui, "Edit13")) as f32];
     sc.vary_de_stop_on_fov = ui.checked(F, "CheckBox9");
     sc.color_option = ui.item_index(F, "RadioGroup1").clamp(0, 5) as u8;
