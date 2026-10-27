@@ -47,3 +47,18 @@ stand-in second card (`MB3D_GPU_ALLOW_SOFTWARE`). Speed: needs the
 user's machine with two cards (asked, not answered yet).
 
 Order: 1, 2, 4, 3.
+
+## Done (local branch)
+
+- Step 1 (1cc245e): all cards found and opened, `mb3d --list-cards`.
+- Step 2 (Auto mode): each further card a worker of its own
+  (`gpu::on_card`, a thread-local card index; pipelines and errors per
+  card) in `march_mixed` (waits for the first card's choice of precision)
+  and in the shadow / occlusion pass (`post_bands`); a failing extra card
+  is left out alone (`FAILED`), its rows redone on the CPU.
+  Tested with `MB3D_GPU_TWICE=1` (the RTX 2060 opened twice): the cards
+  share the rows about evenly, pictures as close to the CPU's as with one
+  card. `MB3D_CARDS_DEBUG=1` prints the rows of each further card.
+- Still single-card: the "Graphics card" mode (`gpu::march`, one call over
+  the whole picture), Monte Carlo, reflections (step 3), animations
+  (step 4). Not tested yet with a real second card or lavapipe.
