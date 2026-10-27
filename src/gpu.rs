@@ -1533,19 +1533,16 @@ async fn init() -> Result<Vec<Gpu>, String> {
     Ok(list)
 }
 
-/// The cards used, by their kinds (the system's first): integrated
-/// graphics only when there is no dedicated card (a few times slower, it
-/// would hold up the others at the end of every picture, and it shares the
-/// CPU's power and memory), a dedicated card first.
+/// The order of the cards, by their kinds (the system's first): all of
+/// them (a slower one, integrated graphics, does what it can: its rows are
+/// taken over at the end of a picture, see `render::Board`), a dedicated
+/// card first (the first card shares the ray batches with the CPU and
+/// takes over the others' work).
 fn card_order(kinds: &[wgpu::DeviceType]) -> Vec<usize> {
-    use wgpu::DeviceType::{DiscreteGpu, IntegratedGpu};
     let mut v: Vec<usize> = (0..kinds.len()).collect();
-    if kinds.contains(&DiscreteGpu) {
-        v.retain(|&i| kinds[i] != IntegratedGpu);
-        if let Some(p) = v.iter().position(|&i| kinds[i] == DiscreteGpu) {
-            let d = v.remove(p);
-            v.insert(0, d);
-        }
+    if let Some(p) = v.iter().position(|&i| kinds[i] == wgpu::DeviceType::DiscreteGpu) {
+        let d = v.remove(p);
+        v.insert(0, d);
     }
     v
 }
@@ -3464,16 +3461,14 @@ pub fn run_compute(wgsl: &str, inputs: &[&[u32]], out_len: usize, groups: u32) -
 #[cfg(test)]
 mod tests {
     #[test]
-    fn integrated_left_out_beside_a_dedicated_card() {
+    fn a_dedicated_card_first() {
         use wgpu::DeviceType::{Cpu, DiscreteGpu as D, IntegratedGpu as I};
-        assert_eq!(super::card_order(&[D, I]), vec![0]);
+        assert_eq!(super::card_order(&[D, I]), vec![0, 1]);
         // the system offered the integrated one first
-        assert_eq!(super::card_order(&[I, D]), vec![1]);
-        assert_eq!(super::card_order(&[I, D, I, D]), vec![1, 3]);
+        assert_eq!(super::card_order(&[I, D]), vec![1, 0]);
+        assert_eq!(super::card_order(&[I, D, I, D]), vec![1, 0, 2, 3]);
         assert_eq!(super::card_order(&[I]), vec![0]);
-        assert_eq!(super::card_order(&[I, I]), vec![0, 1]);
         assert_eq!(super::card_order(&[D, D]), vec![0, 1]);
-        // (software renderers are only there for tests: kept)
         assert_eq!(super::card_order(&[D, Cpu]), vec![0, 1]);
     }
 

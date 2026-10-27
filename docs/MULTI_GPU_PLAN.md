@@ -78,11 +78,15 @@ Order: 1, 2, 4, 3.
 - The threads a render starts that call the card carry the picture's card
   (`gpu::card_here` / `as_card`: Monte Carlo's card thread, reflections,
   volumetric light); background compiles and their failures are per card.
-- Integrated graphics left out when a dedicated card is there (the
-  user's decision), a dedicated card first (`card_order`).
-- lavapipe as a second device (`MB3D_GPU_ALLOW_SOFTWARE=1`): pictures as
-  close to the CPU's as with one card; but a much slower card holds up
-  the others at the end of a picture (DEcomb1 Auto 19 s -> 91 s, a small
-  scene in card mode 0.4 s -> 14 s): a speed gate is still needed (leave
-  out a card much slower than the first, small first bands until a card
-  is measured).
+- A slow card no longer holds up a picture (cdef4e0): once the free rows
+  are gone, idle cards and CPU threads take the rows a card took and has
+  not delivered (`render::Board`, the first result of a row counts, a card
+  whose rows all came stops); ray batches take back a slow card's
+  unstarted rays and race its started ones (`gpu::on_cards`); the last
+  frames of an animation race on an idle card (`frames::render_frames`);
+  further cards compile in the background and join when ready.
+  lavapipe as a second card: Bill-Snowzell calc 1.22 s alone and with it,
+  DEcomb1 card mode 75 s -> 41 s, animation 9.0 s -> 7.6 s (Auto with a
+  software card is slower: lavapipe takes the CPU threads' cores).
+- So integrated graphics is used too (the user's decision after the
+  stealing worked); a dedicated card goes first (`card_order`).
