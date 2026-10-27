@@ -59,6 +59,9 @@ Order: 1, 2, 4, 3.
   Tested with `MB3D_GPU_TWICE=1` (the RTX 2060 opened twice): the cards
   share the rows about evenly, pictures as close to the CPU's as with one
   card. `MB3D_CARDS_DEBUG=1` prints the rows of each further card.
-- Still single-card: the "Graphics card" mode (`gpu::march`, one call over
-  the whole picture), Monte Carlo, reflections (step 3), animations
+- "Graphics card" mode: with further cards, `march_card_rest` (bands
+  from a row counter, all cards; a failed further card's bands done again
+  on the first) instead of `gpu::march`; one card: `gpu::march` as before.
+  With the card opened twice: byte-identical to one card (shadows, AO).
+- Still single-card: Monte Carlo, reflections (step 3), animations
   (step 4). Not tested yet with a real second card or lavapipe.
