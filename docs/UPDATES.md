@@ -5,6 +5,33 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.80](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.80) · 27 Oct 2026, 17:55 UTC
+
+| Commit | What it does |
+|---|---|
+| [`5ccdbf9`](https://github.com/thr32423/mb3d-rs/commit/5ccdbf95533640aca1cb65fa8e062352ad46c365) | Version number and release notes of this release |
+| [`0b1efb3`](https://github.com/thr32423/mb3d-rs/commit/0b1efb3e45e00b31096cd8627de1e036c37d04aa) | A crash leaves a note in mb3d_crash.txt on every system, from both programs (before only the desktop program on Windows) |
+| [`f80d128`](https://github.com/thr32423/mb3d-rs/commit/f80d128feef62f27e2ef628ab28f1aa438a609b8) | README, TECHNICAL: several graphics cards |
+| [`e5f390c`](https://github.com/thr32423/mb3d-rs/commit/e5f390c086458dbc9ceacb7c66e0f8cf663b5b95) | Unfinished renders: Save m3i and mb3d resume --m3i write the picture of any checkpoint as a .m3i, also an earlier version's data.bin, the rows not done as background |
+| [`8adb62c`](https://github.com/thr32423/mb3d-rs/commit/8adb62caf7a0e29d9d2af1ceef8a295ec6c8739c) | Unfinished renders: the checkpoint of a picture is a .m3i image file (image.m3i, the rows not done as background); Save m3i in the Unfinished renders window |
+| [`7bc65d0`](https://github.com/thr32423/mb3d-rs/commit/7bc65d0697e71f370e22928085d8c279671bbe7a) | Revert "Step relax: over-relaxed march steps as a setting (scene key step_relax, Calculation tab), on the CPU and the card; the dynamic fog keeps its step count" |
+| [`e8f0bcb`](https://github.com/thr32423/mb3d-rs/commit/e8f0bcb1b825cc870cfa4e89ba1dfadb3748daa8) | Step relax: over-relaxed march steps as a setting (scene key step_relax, Calculation tab), on the CPU and the card; the dynamic fog keeps its step count |
+| [`a2401cb`](https://github.com/thr32423/mb3d-rs/commit/a2401cb0d7bd632baec7f15596ecf1b8da28855f) | Graphics cards: a card stopped because its rows came from others goes on with rows still open instead of idling until the pass ends |
+| [`caadf59`](https://github.com/thr32423/mb3d-rs/commit/caadf59b65a488823e3fbebb1746b427961987aa) | Graphics cards: integrated graphics used too (a slow card no longer holds up a picture), a dedicated card first |
+| [`cdef4e0`](https://github.com/thr32423/mb3d-rs/commit/cdef4e0893367f478e49b18359f78df00915c1d0) | Graphics cards: a slow card no longer holds up a picture: once the free rows are gone, idle cards and CPU threads take the rows a card took and has not delivered (the first result counts, the card whose rows all came stops); ray batches take back a slow card's unstarted rays and race its started ones; the last frames of an animation race on an idle card; further cards compile in the background and join when ready; compiling() per card |
+| [`7f76ddc`](https://github.com/thr32423/mb3d-rs/commit/7f76ddc65f5dc86a28ecb5635181c1770e161a61) | Graphics cards: integrated graphics left out when there is a dedicated card, a dedicated card first |
+| [`3162ae5`](https://github.com/thr32423/mb3d-rs/commit/3162ae55c27b1d0bfcffbd29242cd36695feb139) | Graphics cards: volumetric light keeps the picture's card; background compiles and their failures per card |
+| [`b4dd914`](https://github.com/thr32423/mb3d-rs/commit/b4dd9145e8890011343a144ce5d4e65e726f5907) | Graphics cards: animations render a frame per card at once (not with map sequences), in the command line and the animation window; mb3d animate --card / --cpu |
+| [`78141b6`](https://github.com/thr32423/mb3d-rs/commit/78141b6fd667a96a023c4e01e4baeb484782fd6e) | Graphics cards: Monte Carlo and reflection batches on all of them, each further card a slice at the front sized by its speed, the first card and the CPU sharing the rest as before; resumers kept per card |
+| [`0c61ba3`](https://github.com/thr32423/mb3d-rs/commit/0c61ba3ab1d0ab7523d26df94e8c8d35092bfb69) | Graphics cards: all of them in the "Graphics card" mode too, taking bands of the rows (one card: as before) |
+| [`cf9e10b`](https://github.com/thr32423/mb3d-rs/commit/cf9e10bb42e1d7c995475fa57ad74cb6268a5fc4) | Graphics cards: identical cards counted in the name (RTX 2060 ×2); the swarm's list of computers keeps the count when it shortens the name |
+| [`a209e59`](https://github.com/thr32423/mb3d-rs/commit/a209e5957ce19d228756c2dd55c5aa814f560676) | Plan: what is done |
+| [`2a6640e`](https://github.com/thr32423/mb3d-rs/commit/2a6640eefab7f9897dbfd7aec97cb810d4eec089) | Graphics cards: all of them march, shade and occlude every picture in Auto mode, taking bands from the shared rows; a failing card is left out alone (MB3D_GPU_TWICE opens the first card twice for tests) |
+| [`1cc245e`](https://github.com/thr32423/mb3d-rs/commit/1cc245e177921eeda87733ae2a30368fac1cee23) | Graphics cards: all of them found and opened (the system's high performance card first, one entry per physical card); mb3d --list-cards |
+| [`bfdc8fd`](https://github.com/thr32423/mb3d-rs/commit/bfdc8fdb8ff4ed7a0e80393360ea846541fb706a) | Plan: the cards found and used automatically, no manual choice |
+| [`ebb7c9b`](https://github.com/thr32423/mb3d-rs/commit/ebb7c9ba846df288df1f9aa27e35ce79c370f07d) | Plan: several graphics cards (parked) |
+| [`d4e151d`](https://github.com/thr32423/mb3d-rs/commit/d4e151df8083fa440c04342337d8ab5fca8663c3) | README: Updates for v0.2.79 |
+
 ## [v0.2.79](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.79) · 27 Oct 2026, 03:50 UTC
 
 | Commit | What it does |
