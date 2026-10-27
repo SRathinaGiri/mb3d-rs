@@ -595,17 +595,17 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
                 w.wake();
             }
         } else {
-        for &f in &frames {
+        // (several frames at once on a computer with several graphics
+        // cards: see `frames::render_frames`)
+        let before = || {
             while pause.load(Ordering::SeqCst) && !cancel() {
                 std::thread::sleep(std::time::Duration::from_millis(200));
             }
-            if cancel() {
-                break;
-            }
-            let progress = |d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
-            let r = crate::frames::render_frame_to_file(&a, f, &run, &progress, &cancel);
+        };
+        let progress = |_f: usize, d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+        crate::frames::render_frames(&a, &frames, &run, &before, &progress, &cancel, &mut |_f, r| {
             let mut j = job.lock().unwrap();
-            match r {
+            let go = match r {
                 Ok(FrameResult::Written { path, .. }) => {
                     j.done += 1;
                     if let Ok(img) = crate::image::load(&path) {
@@ -615,22 +615,26 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
                         }).collect();
                         j.last = Some((rgb, img.width, img.height));
                     }
+                    true
                 }
-                Ok(FrameResult::Skipped { .. }) => j.done += 1,
+                Ok(FrameResult::Skipped { .. }) => {
+                    j.done += 1;
+                    true
+                }
                 Err(e) => {
                     if e != "cancelled" {
                         j.error = e;
                     }
-                    j.changed = true;
-                    break;
+                    false
                 }
-            }
+            };
             j.changed = true;
             drop(j);
             if let Some(w) = &waker {
                 w.wake();
             }
-        }
+            go
+        });
         }
         // the video of the frames, when all of them are there
         if let Some((path, fps)) = video.filter(|_| !cancel() && job.lock().unwrap().error.is_empty()) {

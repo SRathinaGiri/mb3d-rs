@@ -248,7 +248,9 @@ pub fn build(
             card_done.store(false, std::sync::atomic::Ordering::SeqCst);
             let max_dist = if positional { max_dist_pos } else { max_dist_glob };
             let (free, card_done) = (&free, &card_done);
-            sc.spawn(move || {
+            // (the card of this thread's picture)
+            let card = crate::gpu::card_here();
+            sc.spawn(move || crate::gpu::as_card(card, || {
                 use std::sync::atomic::Ordering::SeqCst;
                 let left = || {
                     let f = free.lock().unwrap();
@@ -267,7 +269,7 @@ pub fn build(
                 });
                 card_done.store(true, SeqCst);
                 r
-            })
+            }))
         });
         const PIECE: usize = 64;
         let workers: Vec<_> = (0..threads)

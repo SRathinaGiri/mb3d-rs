@@ -408,6 +408,196 @@ pub fn render_frame_to_file(
     Ok(result.expect("at least one eye"))
 }
 
+/// How many frames of `a` are rendered at once: one per graphics card
+/// when the computer has several (each frame on its card alone), else one;
+/// one too with map sequences, whose frame number is the program's (see
+/// `maps::set_current_frame`), and for parameter files.
+pub fn frames_at_once(a: &Animation) -> usize {
+    #[cfg(feature = "gpu")]
+    {
+        let n = crate::gpu::card_count();
+        if n > 1 && a.format != OutputFormat::M3p && crate::gpu::enabled() && crate::maps::map_sequences().is_empty() {
+            return n;
+        }
+    }
+    let _ = a;
+    1
+}
+
+/// Renders the frames of `list` ([`render_frame_to_file`]), several at once
+/// on a computer with several graphics cards (see [`frames_at_once`]; the
+/// CPU threads shared between them).  `before` runs before each frame (a
+/// pause waits there), `progress` gets the frame and its progress, `done`
+/// each result as the frames end (on this thread, in the order they end);
+/// it stops the run by returning false.
+pub fn render_frames(
+    a: &Animation,
+    list: &[usize],
+    run: &FrameRun,
+    before: &(dyn Fn() + Sync),
+    progress: &(dyn Fn(usize, usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    done: &mut dyn FnMut(usize, Result<FrameResult, String>) -> bool,
+) {
+    let n = frames_at_once(a).min(list.len().max(1));
+    if n <= 1 {
+        for &f in list {
+            before();
+            if cancel() {
+                break;
+            }
+            let r = render_frame_to_file(a, f, run, &|d, t| progress(f, d, t), cancel);
+            if !done(f, r) {
+                break;
+            }
+        }
+        return;
+    }
+    use std::sync::atomic::{AtomicBool, Ordering::SeqCst};
+    let threads = if run.threads == 0 { std::thread::available_parallelism().map_or(1, |n| n.get()) } else { run.threads };
+    let run = FrameRun { threads: (threads / n).max(1), ..run.clone() };
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let stop = AtomicBool::new(false);
+    let halt = || stop.load(SeqCst) || cancel();
+    // the frames under way: when a card has no frames left, it calculates
+    // the one a slower card has been on longest as well, and the first
+    // copy done is written (the other stopped): a slow card does not hold
+    // up the end of the animation
+    struct Flight {
+        frame: usize,
+        card: usize,
+        started: Instant,
+        finished: AtomicBool,
+        ok: AtomicBool,
+        copied: AtomicBool,
+        copy_won: AtomicBool,
+    }
+    let flights: std::sync::Mutex<Vec<std::sync::Arc<Flight>>> = Default::default();
+    let debug = std::env::var_os("MB3D_CARDS_DEBUG").is_some();
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::scope(|s| {
+        for k in 0..n {
+            let (tx, next, halt, run, flights) = (tx.clone(), &next, &halt, &run, &flights);
+            s.spawn(move || loop {
+                before();
+                if halt() {
+                    break;
+                }
+                #[cfg(feature = "gpu")]
+                let on_mine = |f: &mut dyn FnMut()| crate::gpu::solo_card(k, f);
+                #[cfg(not(feature = "gpu"))]
+                let on_mine = |f: &mut dyn FnMut()| f();
+                if let Some(&f) = list.get(next.fetch_add(1, SeqCst)) {
+                    let fl = std::sync::Arc::new(Flight { frame: f, card: k, started: Instant::now(), finished: AtomicBool::new(false), ok: AtomicBool::new(false), copied: AtomicBool::new(false), copy_won: AtomicBool::new(false) });
+                    flights.lock().unwrap().push(fl.clone());
+                    let mut r = None;
+                    on_mine(&mut || r = Some(render_frame_to_file(a, f, run, &|d, t| progress(f, d, t), &|| halt() || fl.copy_won.load(SeqCst))));
+                    let r = r.unwrap();
+                    fl.ok.store(r.is_ok(), SeqCst);
+                    fl.finished.store(true, SeqCst);
+                    // (stopped for the other card's copy: that one reports)
+                    if r.as_ref().is_err_and(|e| e == "cancelled") && fl.copy_won.load(SeqCst) && !halt() {
+                        continue;
+                    }
+                    let failed = r.is_err();
+                    if tx.send((f, r)).is_err() || failed {
+                        break;
+                    }
+                    continue;
+                }
+                // no frames left: the frame another card has been on longest
+                let fl = flights.lock().unwrap().iter().filter(|x| x.card != k && !x.finished.load(SeqCst) && !x.copied.load(SeqCst)).min_by_key(|x| x.started).cloned();
+                let Some(fl) = fl else { break };
+                if fl.copied.swap(true, SeqCst) {
+                    continue;
+                }
+                let mut r = None;
+                on_mine(&mut || r = Some(frame_files(a, fl.frame, run, &|| halt() || fl.finished.load(SeqCst))));
+                let Some(Ok((files, seconds))) = r else { continue };
+                if fl.finished.load(SeqCst) {
+                    continue;
+                }
+                // first: the slower card stops at its next step, then this
+                // copy is written
+                fl.copy_won.store(true, SeqCst);
+                while !fl.finished.load(SeqCst) {
+                    std::thread::sleep(std::time::Duration::from_millis(5));
+                }
+                if fl.ok.load(SeqCst) {
+                    continue;
+                }
+                if debug {
+                    eprintln!("frame {}: card {} slow, the copy of card {} written", fl.frame, fl.card + 1, k + 1);
+                }
+                let r = write_frame_files(a, fl.frame, run, files).map(|path| FrameResult::Written { path, seconds, continued: None });
+                let failed = r.is_err();
+                if tx.send((fl.frame, r)).is_err() || failed {
+                    break;
+                }
+            });
+        }
+        drop(tx);
+        for (f, r) in rx {
+            if !stop.load(std::sync::atomic::Ordering::SeqCst) && !done(f, r) {
+                stop.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+    });
+}
+
+/// The files of frame `frame` calculated, not written: each eye's picture
+/// (true) and depth file with its contents, and the seconds it took (a
+/// card's copy of a frame another card is slow on, see [`render_frames`]).
+type FrameFiles = (Vec<(PathBuf, bool, Vec<u8>)>, f64);
+fn frame_files(a: &Animation, frame: usize, run: &FrameRun, cancel: &(dyn Fn() -> bool + Sync)) -> Result<FrameFiles, String> {
+    let mut files = Vec::new();
+    let mut seconds = 0.0;
+    for (mode, eye) in a.stereo_eyes() {
+        let mut s = frame_render_scene(a, frame, run)?;
+        s.stereo_mode = mode;
+        let img = render_scaled_with(&s, a.scale.max(1) as usize, a.save_depth, a.transparent && a.format == OutputFormat::Png, &|_, _| {}, cancel, None, run.resume)?;
+        if let Some(z) = &img.depth {
+            files.push((a.depth_file_eye(frame, eye), false, crate::png::encode_gray16(img.width, img.height, z)));
+        }
+        files.push((a.frame_file_eye(frame, eye), true, encode(a.format, &img)?));
+        seconds += img.seconds;
+    }
+    Ok((files, seconds))
+}
+
+/// Writes the files of [`frame_files`] (once the slower card has let go of
+/// them) and removes that card's checkpoint of the frame; the first
+/// picture's path.
+fn write_frame_files(a: &Animation, frame: usize, run: &FrameRun, files: Vec<(PathBuf, bool, Vec<u8>)>) -> Result<PathBuf, String> {
+    let mut first = None;
+    for (path, picture, data) in files {
+        if !picture {
+            std::fs::write(&path, &data).map_err(|e| format!("{}: {e}", path.display()))?;
+            continue;
+        }
+        let t = Instant::now();
+        let c = loop {
+            match claim(&path, true)? {
+                Ok(c) => break c,
+                Err(_) if t.elapsed().as_secs() < 60 => std::thread::sleep(std::time::Duration::from_millis(20)),
+                Err(_) => return Err(format!("{}: held by another process", path.display())),
+            }
+        };
+        c.finish(&data)?;
+        first.get_or_insert(path);
+    }
+    for (mode, eye) in a.stereo_eyes() {
+        let mut s = frame_render_scene(a, frame, run)?;
+        s.stereo_mode = mode;
+        let path = a.frame_file_eye(frame, eye);
+        let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        if let Some(ck) = open_frame_checkpoint(&s, &name, run.resume) {
+            ck.finish();
+        }
+    }
+    first.ok_or_else(|| "no picture".to_string())
+}
+
 /// Renders the small keyframe images of a `.m3a` file (`RenderPrevBMP`).
 pub fn keyframe_preview(a: &Animation, key: usize) -> Result<crate::animfile::Preview, String> {
     let (w, h) = crate::animfile::preview_size(a.width, a.height);
