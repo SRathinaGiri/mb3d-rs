@@ -42,6 +42,43 @@ fn take_error() -> Option<String> {
 thread_local! {
     /// The card of [`cards`] this thread calculates on (see [`on_card`]).
     static CARD: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// This thread's calculations stay on its card alone, the further
+    /// cards being busy with other pictures (see [`solo_card`]).
+    static SOLO: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The number of graphics cards found (0 without one).
+pub fn card_count() -> usize {
+    cards().map(|c| c.len()).unwrap_or(0)
+}
+
+/// Runs `f` on card `i` of [`cards`] alone: the pictures it calculates do
+/// not share their work with the other cards (animations: a frame per
+/// card).
+pub fn solo_card<R>(i: usize, f: impl FnOnce() -> R) -> R {
+    struct Back(bool);
+    impl Drop for Back {
+        fn drop(&mut self) {
+            SOLO.with(|c| c.set(self.0));
+        }
+    }
+    let _back = Back(SOLO.with(|c| c.replace(true)));
+    on_card(i, f)
+}
+
+/// This thread's card and whether it is alone on it, for a thread that
+/// calculates on its behalf (see [`as_card`]).
+pub fn card_here() -> (usize, bool) {
+    (CARD.with(|c| c.get()), SOLO.with(|c| c.get()))
+}
+
+/// Runs `f` on the card of [`card_here`].
+pub fn as_card<R>(c: (usize, bool), f: impl FnOnce() -> R) -> R {
+    if c.1 {
+        solo_card(c.0, f)
+    } else {
+        on_card(c.0, f)
+    }
 }
 
 /// The cards besides the first that failed: left out until the program
@@ -63,6 +100,9 @@ pub fn on_card<R>(i: usize, f: impl FnOnce() -> R) -> R {
 /// The cards besides the first that can take part in the calculation of
 /// `p` (not failed, and with doubles when it needs them).
 pub fn extra_cards(p: &CalcParams) -> Vec<usize> {
+    if SOLO.with(|c| c.get()) {
+        return Vec::new();
+    }
     let n = cards().map(|c| c.len()).unwrap_or(0);
     (1..n.min(64)).filter(|&i| FAILED.load(Ordering::SeqCst) & (1 << i) == 0 && on_card(i, || unsupported(p).is_none())).collect()
 }

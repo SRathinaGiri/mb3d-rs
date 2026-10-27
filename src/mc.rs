@@ -3226,10 +3226,12 @@ fn pass_gpu(
         let (to_card, card_in) = mpsc::channel::<std::sync::Arc<SharedRound>>();
         {
             let to_main = to_main.clone();
+            // (the card of this thread's picture)
+            let card = crate::gpu::card_here();
             s.spawn(move || {
                 while let Ok(sr) = card_in.recv() {
                     let t = std::time::Instant::now();
-                    let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));
+                    let r = crate::gpu::as_card(card, || crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share)));
                     if to_main.send(MainEv::Card(r, t.elapsed().as_secs_f64())).is_err() {
                         return;
                     }

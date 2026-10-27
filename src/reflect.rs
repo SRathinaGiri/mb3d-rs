@@ -1991,10 +1991,12 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
             let cap = cpu_part[round % 2].or(cpu_part[(round + 1) % 2]).map_or(usize::MAX, |c| n - (n as f64 * c) as usize);
             let sh = crate::gpu::RaySharing { state: std::sync::Mutex::new((0, n)), done: std::sync::Arc::new(false.into()), tail: threads * 2, cap };
             busy_ns.store(0, std::sync::atomic::Ordering::Relaxed);
+            // (the card of this thread's picture)
+            let card = crate::gpu::card_here();
             let ((gpu, t_card), cpu) = std::thread::scope(|s| {
                 let g = s.spawn(|| {
                     let t = std::time::Instant::now();
-                    (march_gpu(&all, Some(&sh)), t.elapsed().as_secs_f64())
+                    (crate::gpu::as_card(card, || march_gpu(&all, Some(&sh))), t.elapsed().as_secs_f64())
                 });
                 let c = march_cpu(&all, Some(&sh));
                 (g.join().unwrap(), c)

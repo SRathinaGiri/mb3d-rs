@@ -408,6 +408,88 @@ pub fn render_frame_to_file(
     Ok(result.expect("at least one eye"))
 }
 
+/// How many frames of `a` are rendered at once: one per graphics card
+/// when the computer has several (each frame on its card alone), else one;
+/// one too with map sequences, whose frame number is the program's (see
+/// `maps::set_current_frame`), and for parameter files.
+pub fn frames_at_once(a: &Animation) -> usize {
+    #[cfg(feature = "gpu")]
+    {
+        let n = crate::gpu::card_count();
+        if n > 1 && a.format != OutputFormat::M3p && crate::gpu::enabled() && crate::maps::map_sequences().is_empty() {
+            return n;
+        }
+    }
+    let _ = a;
+    1
+}
+
+/// Renders the frames of `list` ([`render_frame_to_file`]), several at once
+/// on a computer with several graphics cards (see [`frames_at_once`]; the
+/// CPU threads shared between them).  `before` runs before each frame (a
+/// pause waits there), `progress` gets the frame and its progress, `done`
+/// each result as the frames end (on this thread, in the order they end);
+/// it stops the run by returning false.
+pub fn render_frames(
+    a: &Animation,
+    list: &[usize],
+    run: &FrameRun,
+    before: &(dyn Fn() + Sync),
+    progress: &(dyn Fn(usize, usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    done: &mut dyn FnMut(usize, Result<FrameResult, String>) -> bool,
+) {
+    let n = frames_at_once(a).min(list.len().max(1));
+    if n <= 1 {
+        for &f in list {
+            before();
+            if cancel() {
+                break;
+            }
+            let r = render_frame_to_file(a, f, run, &|d, t| progress(f, d, t), cancel);
+            if !done(f, r) {
+                break;
+            }
+        }
+        return;
+    }
+    let threads = if run.threads == 0 { std::thread::available_parallelism().map_or(1, |n| n.get()) } else { run.threads };
+    let run = FrameRun { threads: (threads / n).max(1), ..run.clone() };
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let halt = || stop.load(std::sync::atomic::Ordering::SeqCst) || cancel();
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::scope(|s| {
+        for k in 0..n {
+            let (tx, next, halt, run) = (tx.clone(), &next, &halt, &run);
+            s.spawn(move || loop {
+                before();
+                if halt() {
+                    break;
+                }
+                let Some(&f) = list.get(next.fetch_add(1, std::sync::atomic::Ordering::SeqCst)) else { break };
+                #[cfg(feature = "gpu")]
+                let r = crate::gpu::solo_card(k, || render_frame_to_file(a, f, run, &|d, t| progress(f, d, t), halt));
+                #[cfg(not(feature = "gpu"))]
+                let r = {
+                    let _ = k;
+                    render_frame_to_file(a, f, run, &|d, t| progress(f, d, t), halt)
+                };
+                let failed = r.is_err();
+                if tx.send((f, r)).is_err() || failed {
+                    break;
+                }
+            });
+        }
+        drop(tx);
+        for (f, r) in rx {
+            if !stop.load(std::sync::atomic::Ordering::SeqCst) && !done(f, r) {
+                stop.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+    });
+}
+
 /// Renders the small keyframe images of a `.m3a` file (`RenderPrevBMP`).
 pub fn keyframe_preview(a: &Animation, key: usize) -> Result<crate::animfile::Preview, String> {
     let (w, h) = crate::animfile::preview_size(a.width, a.height);

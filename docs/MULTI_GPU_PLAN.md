@@ -63,5 +63,19 @@ Order: 1, 2, 4, 3.
   from a row counter, all cards; a failed further card's bands done again
   on the first) instead of `gpu::march`; one card: `gpu::march` as before.
   With the card opened twice: byte-identical to one card (shadows, AO).
-- Still single-card: Monte Carlo, reflections (step 3), animations
-  (step 4). Not tested yet with a real second card or lavapipe.
+- Step 3 (78141b6): Monte Carlo and reflection batches (`on_cards`): each
+  further card a slice at the front by its measured rays per second, the
+  first card and the CPU share the rest as before (the first card starts
+  behind the slices, `offset`); resumers cached per card. With the card
+  opened twice: Monte Carlo byte-identical to one card (with
+  `MB3D_MC_CPU_SHARE=0`); reflections differ only as two one-card runs do.
+- Step 4: animations a frame per card (`frames::render_frames`,
+  `gpu::solo_card`: the frame stays on its card), the CPU threads split;
+  not with map sequences (their frame number is global). Command line and
+  animation window; the swarm renders its frames one at a time (each on
+  all cards). `mb3d animate --card / --cpu`. Card opened twice: all frames
+  byte-identical to one card.
+- Not tested yet with a real second card or lavapipe. Threads a render
+  spawns that call the card without `gpu::as_card` use the first card
+  (results right; only Monte Carlo's card thread and reflections carry
+  the frame's card so far).

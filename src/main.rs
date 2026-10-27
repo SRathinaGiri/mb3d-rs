@@ -896,6 +896,8 @@ OPTIONS:
         --list               Print the frames (file index, keyframe, sub-frame) and exit
     -t, --threads <N>        Number of threads (default: all cores)
     -q, --quiet              No progress output
+        --cpu                Calculate on the CPU only
+        --card               Calculate on the graphics card only (as mb3d render --card)
         --fresh              Start the frame under way again (a stopped animation
                              continues in the middle of its frame; mb3d resume)
         --no-resume          Keep no checkpoint of the frame under way
@@ -984,6 +986,12 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--render" => render_too = true,
             "--list" => list = true,
             "-t" | "--threads" => run.threads = num(a, args.next())?.max(0) as usize,
+            "--cpu" => use_gpu(false),
+            "--card" => {
+                use_gpu(true);
+                #[cfg(feature = "gpu")]
+                mb3d::gpu::set_auto(false);
+            }
             "-q" | "--quiet" => quiet = true,
             "--formulas" => mb3d::formulas::add_formula_dir(args.next().ok_or("--formulas needs a value")?.into()),
             "--maps" => mb3d::maps::add_map_dir(args.next().ok_or("--maps needs a value")?.into()),
@@ -1205,39 +1213,59 @@ fn animate(argv: &[String]) -> Result<(), String> {
         })?;
         done = files.len();
     } else {
-    for (n, &f) in frames_to_do.iter().enumerate() {
-        let label = format!("frame {}/{} ({:06})", n + 1, frames_to_do.len(), anim.file_index(f));
-        let after = frames_to_do.len() - n - 1;
-        let frame_t0 = Instant::now();
-        let progress = |d: usize, t: usize| {
-            if !quiet && tty && (d % 8 == 0 || d == t) {
-                let f = d as f64 / t.max(1) as f64;
-                let left = item_left(&items, f, frame_t0.elapsed().as_secs_f64(), after).map(|l| format!(" · {}", left_str(l))).unwrap_or_default();
-                eprint!("\r  {label} {:5.1}%{left}          ", 100.0 * f);
-                let _ = std::io::stderr().flush();
-            }
-        };
-        match mb3d::frames::render_frame_to_file(&anim, f, &run, &progress, &|| false)? {
-            mb3d::frames::FrameResult::Written { path, seconds, continued } => {
+    // (several at once on a computer with several graphics cards: the time
+    // left counts them)
+    let at_once = mb3d::frames::frames_at_once(&anim);
+    let total = frames_to_do.len();
+    let pos = |f: usize| frames_to_do.iter().position(|&x| x == f).unwrap_or(0);
+    let label = |f: usize| format!("frame {}/{} ({:06})", pos(f) + 1, total, anim.file_index(f));
+    let items_m = std::sync::Mutex::new(std::mem::take(&mut items));
+    let started = std::sync::Mutex::new(std::collections::HashMap::<usize, Instant>::new());
+    let finished = std::sync::atomic::AtomicUsize::new(0);
+    let progress = |f: usize, d: usize, t: usize| {
+        if !quiet && tty && (d % 8 == 0 || d == t) {
+            let secs = started.lock().unwrap().entry(f).or_insert_with(Instant::now).elapsed().as_secs_f64();
+            let frac = d as f64 / t.max(1) as f64;
+            let after = total.saturating_sub(finished.load(std::sync::atomic::Ordering::Relaxed) + at_once).div_ceil(at_once);
+            let left = item_left(&items_m.lock().unwrap(), frac, secs, after).map(|l| format!(" · {}", left_str(l))).unwrap_or_default();
+            eprint!("\r  {} {:5.1}%{left}          ", label(f), 100.0 * frac);
+            let _ = std::io::stderr().flush();
+        }
+    };
+    let mut failed = None;
+    mb3d::frames::render_frames(&anim, &frames_to_do, &run, &|| {}, &progress, &|| false, &mut |f, r| {
+        let after = total - finished.fetch_add(1, std::sync::atomic::Ordering::Relaxed) - 1;
+        match r {
+            Ok(mb3d::frames::FrameResult::Written { path, seconds, continued }) => {
                 done += 1;
+                let mut items = items_m.lock().unwrap();
                 items.done(seconds);
                 if !quiet {
-                    let left = items.per_item().filter(|_| after > 0).map(|p| format!("  · {}", left_str(p * after as f64))).unwrap_or_default();
+                    let left = items.per_item().filter(|_| after > 0).map(|p| format!("  · {}", left_str(p * after.div_ceil(at_once) as f64))).unwrap_or_default();
                     let cr = if tty { "\r" } else { "" };
-                    eprintln!("{cr}  {label} {:.1}s  {}{left}          ", seconds, path.display());
+                    eprintln!("{cr}  {} {:.1}s  {}{left}          ", label(f), seconds, path.display());
                     if let Some(c) = continued {
                         eprintln!("      {c} (--fresh starts again)");
                     }
                 }
+                true
             }
-            mb3d::frames::FrameResult::Skipped { path, why } => {
+            Ok(mb3d::frames::FrameResult::Skipped { path, why }) => {
                 skipped += 1;
                 if !quiet {
                     let w = if why == mb3d::frames::Skip::Busy { "being rendered by another process" } else { "exists" };
-                    eprintln!("  {label} skipped, {} {w}", path.display());
+                    eprintln!("  {} skipped, {} {w}", label(f), path.display());
                 }
+                true
+            }
+            Err(e) => {
+                failed = Some(e);
+                false
             }
         }
+    });
+    if let Some(e) = failed {
+        return Err(e);
     }
     }
     if !quiet {
