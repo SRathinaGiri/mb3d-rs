@@ -946,6 +946,27 @@ fn post_shared(
     let claimed = Mutex::new(Vec::new());
     let delivered: Vec<std::sync::atomic::AtomicBool> = (0..h).map(|_| std::sync::atomic::AtomicBool::new(false)).collect();
     let mut card_err = None;
+    // a band of rows for a card (smaller as the rows run out, so that
+    // all end together), the G-buffer rows it needs, a row it finished
+    let band = |band: usize| {
+        let mut f = free.lock().unwrap();
+        (f.0 < f.1).then(|| {
+            let r = (f.0, band.min(((f.1 - f.0) / 4).max(16)).min(f.1 - f.0));
+            f.0 += r.1;
+            claimed.lock().unwrap().push(r);
+            r
+        })
+    };
+    let upload = |row0: usize, n: usize| (row0..(row0 + n).min(h)).flat_map(|y| rows[y].lock().unwrap().to_vec()).collect();
+    let done_row = |y: usize, row: &[SiLight]| {
+        if y < h {
+            let mut dst = rows[y].lock().unwrap();
+            let n = row.len().min(dst.len());
+            dst[..n].copy_from_slice(&row[..n]);
+            delivered[y].store(true, Ordering::Relaxed);
+            tick(y);
+        }
+    };
     std::thread::scope(|s| {
         for _ in 0..threads.max(1) {
             s.spawn(|| loop {
@@ -964,31 +985,15 @@ fn post_shared(
                 tick(y);
             });
         }
-        let r = crate::gpu::post_bands(
-            p,
-            job,
-            &|band| {
-                let mut f = free.lock().unwrap();
-                // (smaller as the rows run out, so that both end together)
-                (f.0 < f.1).then(|| {
-                    let r = (f.0, band.min(((f.1 - f.0) / 4).max(16)).min(f.1 - f.0));
-                    f.0 += r.1;
-                    claimed.lock().unwrap().push(r);
-                    r
-                })
-            },
-            &|row0, n| (row0..(row0 + n).min(h)).flat_map(|y| rows[y].lock().unwrap().to_vec()).collect(),
-            cancel,
-            &mut |y, row| {
-                if y < h {
-                    let mut dst = rows[y].lock().unwrap();
-                    let n = row.len().min(dst.len());
-                    dst[..n].copy_from_slice(&row[..n]);
-                    delivered[y].store(true, Ordering::Relaxed);
-                    tick(y);
-                }
-            },
-        );
+        // the other cards of the computer too (what one of them took and
+        // did not deliver is done below, as the first card's)
+        for k in crate::gpu::extra_cards(p) {
+            let (band, upload, done_row) = (&band, &upload, &done_row);
+            s.spawn(move || {
+                let _ = crate::gpu::on_card(k, || crate::gpu::post_bands(p, job, band, upload, cancel, &mut |y, row| done_row(y, row)));
+            });
+        }
+        let r = crate::gpu::post_bands(p, job, &band, &upload, cancel, &mut |y, row| done_row(y, row));
         if let Err(e) = r {
             card_err = Some(e);
         }
@@ -1343,6 +1348,33 @@ fn march_mixed(
     let mut card_err = None;
     let mut switched = None;
     let mut card_ok = false;
+    // the first card's choice of precision, for the others (see below)
+    let decided: Mutex<Option<Option<CalcParams>>> = Mutex::new(None);
+    // a band of free rows for a card (up to the next row of the
+    // checkpoint), noted in `claimed`
+    let claim = |band: usize, claimed: &Mutex<Vec<(usize, usize)>>| {
+        let mut f = free.lock().unwrap();
+        while f.0 < f.1 && ck_done(ck, f.0) {
+            f.0 += 1;
+        }
+        (f.0 < f.1).then(|| {
+            let n = (f.0..f.1).take(band).take_while(|&y| !ck_done(ck, y)).count();
+            let r = (f.0, n);
+            f.0 += r.1;
+            claimed.lock().unwrap().push(r);
+            r
+        })
+    };
+    // a row a card marched
+    let card_row = |y: usize, row: &[SiLight]| {
+        on_card.fetch_add(1, Ordering::Relaxed);
+        CARD_ROWS.fetch_add(1, Ordering::Relaxed);
+        if finish.load(Ordering::SeqCst) {
+            queue.lock().unwrap().push_back((y, row.to_vec()));
+        } else {
+            put(y, row, true);
+        }
+    };
     let name = crate::gpu::name().unwrap_or_default();
     crate::gpu::set_status(if ready.load(Ordering::SeqCst) {
         format!("GPU {name}: the march shared with the CPU")
@@ -1381,6 +1413,55 @@ fn march_mixed(
                 }
             });
         }
+        // the other cards of the computer take bands from the same rows,
+        // once the first card has chosen the precision (the parameters in
+        // double precision, or None: as they are)
+        for k in crate::gpu::extra_cards(p) {
+            let (decided, claim, card_row, free) = (&decided, &claim, &card_row, &free);
+            s.spawn(move || {
+                crate::gpu::on_card(k, || {
+                    let cp = loop {
+                        let left = {
+                            let f = free.lock().unwrap();
+                            f.0 < f.1
+                        };
+                        if !left || cancel() {
+                            return;
+                        }
+                        if let Some(d) = decided.lock().unwrap().clone() {
+                            break d;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                    };
+                    let cp = cp.as_ref().unwrap_or(p);
+                    if crate::gpu::unsupported(cp).is_some() {
+                        return;
+                    }
+                    let claimed = Mutex::new(Vec::new());
+                    let mine = AtomicUsize::new(0);
+                    let r = crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(band, &claimed), cancel, &mut |y, row| {
+                        mine.fetch_add(1, Ordering::Relaxed);
+                        card_row(y, row)
+                    });
+                    // (MB3D_CARDS_DEBUG: what each of the other cards did)
+                    if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
+                        eprintln!("card {}: {} rows marched ({r:?})", k + 1, mine.load(Ordering::Relaxed));
+                    }
+                    // failed (or its rows overflowed single precision):
+                    // what it took, on the CPU here
+                    if r.as_ref().is_err_and(|e| e != "cancelled") || crate::gpu::rows_overflowed() {
+                        for (r0, n) in claimed.into_inner().unwrap() {
+                            for y in r0..r0 + n {
+                                if cancel() {
+                                    return;
+                                }
+                                put(y, &cpu_row(p, y), false);
+                            }
+                        }
+                    }
+                });
+            });
+        }
         // the card, once its shader is ready
         let mut run_card = || {
         let wait = |ready: &std::sync::atomic::AtomicBool| loop {
@@ -1408,36 +1489,10 @@ fn march_mixed(
             }
         }
         let cp = switched.as_ref().map_or(p, |(pd, _)| pd);
+        *decided.lock().unwrap() = Some(switched.as_ref().map(|(pd, _)| pd.clone()));
         let claimed = Mutex::new(Vec::new());
         let t_card = Instant::now();
-        let r = crate::gpu::march_bands(
-            cp,
-            &PostJob::default(),
-            &|band| {
-                let mut f = free.lock().unwrap();
-                while f.0 < f.1 && ck_done(ck, f.0) {
-                    f.0 += 1;
-                }
-                (f.0 < f.1).then(|| {
-                    // (up to the next row of the checkpoint)
-                    let n = (f.0..f.1).take(band).take_while(|&y| !ck_done(ck, y)).count();
-                    let r = (f.0, n);
-                    f.0 += r.1;
-                    claimed.lock().unwrap().push(r);
-                    r
-                })
-            },
-            cancel,
-            &mut |y, row| {
-                on_card.fetch_add(1, Ordering::Relaxed);
-                CARD_ROWS.fetch_add(1, Ordering::Relaxed);
-                if finish.load(Ordering::SeqCst) {
-                    queue.lock().unwrap().push_back((y, row.to_vec()));
-                } else {
-                    put(y, row, true);
-                }
-            },
-        );
+        let r = crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(band, &claimed), cancel, &mut |y, row| card_row(y, row));
         *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
         // (stopped: its rows are kept when the card's verdict on them so
         // far is good)

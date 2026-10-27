@@ -20,17 +20,51 @@ use std::sync::{Mutex, OnceLock};
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static LAST: Mutex<String> = Mutex::new(String::new());
-/// The last error wgpu reported outside an error scope.
-static ERROR: Mutex<Option<String>> = Mutex::new(None);
+/// The last error wgpu reported outside an error scope, per card.
+static ERROR: Mutex<Vec<(usize, String)>> = Mutex::new(Vec::new());
 
-fn set_error(e: String) {
+fn set_error(card: usize, e: String) {
     if let Ok(mut l) = ERROR.lock() {
-        l.get_or_insert(e);
+        if !l.iter().any(|(c, _)| *c == card) {
+            l.push((card, e));
+        }
     }
 }
 
+/// The error of this thread's card (see [`on_card`]).
 fn take_error() -> Option<String> {
-    ERROR.lock().ok().and_then(|mut l| l.take())
+    let card = CARD.with(|c| c.get());
+    let mut l = ERROR.lock().ok()?;
+    let i = l.iter().position(|(c, _)| *c == card)?;
+    Some(l.remove(i).1)
+}
+
+thread_local! {
+    /// The card of [`cards`] this thread calculates on (see [`on_card`]).
+    static CARD: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// The cards besides the first that failed: left out until the program
+/// ends (the first failing switches the card off altogether, see `LOST`).
+static FAILED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Runs `f` with this thread's calculations on card `i` of [`cards`].
+pub fn on_card<R>(i: usize, f: impl FnOnce() -> R) -> R {
+    struct Back(usize);
+    impl Drop for Back {
+        fn drop(&mut self) {
+            CARD.with(|c| c.set(self.0));
+        }
+    }
+    let _back = Back(CARD.with(|c| c.replace(i)));
+    f()
+}
+
+/// The cards besides the first that can take part in the calculation of
+/// `p` (not failed, and with doubles when it needs them).
+pub fn extra_cards(p: &CalcParams) -> Vec<usize> {
+    let n = cards().map(|c| c.len()).unwrap_or(0);
+    (1..n.min(64)).filter(|&i| FAILED.load(Ordering::SeqCst) & (1 << i) == 0 && on_card(i, || unsupported(p).is_none())).collect()
 }
 
 /// The tasks per dispatch row of the reflection pass (`R_W` in the shader).
@@ -215,9 +249,12 @@ pub fn set_enabled(on: bool) {
     ENABLED.store(on, Ordering::Relaxed);
 }
 
-/// The graphics card's name (None without a usable card).
+/// The graphics card's name (None without a usable card); with several,
+/// those still working, joined by " + ".
 pub fn name() -> Option<String> {
-    gpu().ok().map(|g| g.name.clone())
+    let c = cards().ok()?;
+    let failed = FAILED.load(Ordering::SeqCst);
+    Some(c.iter().enumerate().filter(|(i, _)| *i == 0 || *i >= 64 || failed & (1 << i) == 0).map(|(_, g)| g.name.as_str()).collect::<Vec<_>>().join(" + "))
 }
 
 pub fn enabled() -> bool {
@@ -240,9 +277,16 @@ fn guard<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     if ABORT.load(Ordering::SeqCst) {
         return Err("the program ends".into());
     }
-    let lost = |e: &str| {
-        LOST.store(true, Ordering::SeqCst);
-        set_status(format!("CPU: the graphics card failed ({e}); calculating on the CPU until the program is restarted"));
+    let lost = |e: &str| match CARD.with(|c| c.get()) {
+        0 => {
+            LOST.store(true, Ordering::SeqCst);
+            set_status(format!("CPU: the graphics card failed ({e}); calculating on the CPU until the program is restarted"));
+        }
+        // another card: only that one is left out
+        i => {
+            FAILED.fetch_or(1 << i.min(63), Ordering::SeqCst);
+            eprintln!("graphics card {} failed ({e}): left out until the program is restarted", i + 1);
+        }
     };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
         Ok(Err(e)) if e.to_ascii_lowercase().contains("lost") => {
@@ -1330,9 +1374,11 @@ pub fn use_own_driver_cache() {
     set("MESA_SHADER_CACHE_MAX_SIZE", "4G".as_ref());
 }
 
-/// The graphics card the calculations run on: the first of [`cards`].
+/// The graphics card this thread calculates on: the first of [`cards`]
+/// unless [`on_card`] chose another.
 fn gpu() -> Result<&'static Gpu, String> {
-    cards().map(|c| &c[0])
+    let i = CARD.with(|c| c.get());
+    cards().and_then(|c| c.get(i).ok_or_else(|| format!("no graphics card {}", i + 1)))
 }
 
 /// All the graphics cards of the computer, found and opened when a card
@@ -1382,7 +1428,7 @@ async fn init() -> Result<Vec<Gpu>, String> {
     if info.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
         return Err(format!("only a software renderer ({})", info.name));
     }
-    let mut list = vec![open(&adapter).await?];
+    let mut list = vec![open(&adapter, 0).await?];
     // the other cards: the same interface as the first (a card can show up
     // under Vulkan and DirectX 12 both), each physical card once
     let same = |a: &wgpu::AdapterInfo| {
@@ -1403,16 +1449,21 @@ async fn init() -> Result<Vec<Gpu>, String> {
             first_skipped = true;
             continue;
         }
-        match open(&a).await {
+        match open(&a, list.len()).await {
             Ok(g) => list.push(g),
             Err(e) => eprintln!("graphics card {} not used: {e}", i.name),
         }
+    }
+    // MB3D_GPU_TWICE (tests): the first card opened a second time, as a
+    // device of its own, standing in for a second card
+    if std::env::var_os("MB3D_GPU_TWICE").is_some() {
+        list.push(open(&adapter, list.len()).await?);
     }
     Ok(list)
 }
 
 /// Opens a card as a device of its own.
-async fn open(adapter: &wgpu::Adapter) -> Result<Gpu, String> {
+async fn open(adapter: &wgpu::Adapter, index: usize) -> Result<Gpu, String> {
     let info = adapter.get_info();
     // doubles in shaders (Vulkan, DirectX 12; not Metal): the deep zooms
     let dbl = wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64;
@@ -1429,7 +1480,7 @@ async fn open(adapter: &wgpu::Adapter) -> Result<Gpu, String> {
         .map_err(|e| format!("{}: {e}", info.name))?;
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
-    device.on_uncaptured_error(std::sync::Arc::new(|e: wgpu::Error| set_error(e.to_string())));
+    device.on_uncaptured_error(std::sync::Arc::new(move |e: wgpu::Error| set_error(index, e.to_string())));
     Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64 })
 }
 
