@@ -647,6 +647,58 @@ pub fn remove(e: &Entry) -> bool {
     !e.busy && std::fs::remove_dir_all(&e.dir).is_ok()
 }
 
+/// Writes the picture of a checkpoint (`calc` or `tiles`, of this or an
+/// earlier version: `data.bin` as well as `image.m3i`) as a `.m3i` file
+/// to `out`: the rows done as they are, the others as background.
+pub fn export_m3i(e: &Entry, out: &Path) -> Result<(), String> {
+    use std::io::Write;
+    let kind = e.info.get("kind").map(String::as_str).unwrap_or("");
+    if kind != "calc" && kind != "tiles" {
+        return Err("only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export)".into());
+    }
+    let n = |k: &str| e.info.get(k).and_then(|v| v.parse::<usize>().ok()).ok_or_else(|| format!("{k} missing in info.txt"));
+    let (width, height, rec, units) = (n("width")?, n("height")?, n("rec")?, n("units")?);
+    let text = e.scene_text().ok_or("this render kept no parameters")?;
+    let sc = crate::scene::Scene::parse(&text)?;
+    let (head, tail) = crate::m3p::m3i_parts(&sc);
+    let fill = crate::gbuffer::pack(&[crate::gbuffer::SiLight::default()]);
+    if rec != fill.len() || width != sc.width.max(0) as usize || height != sc.height.max(0) as usize {
+        return Err("the checkpoint does not match its parameters".into());
+    }
+    let (name, data_off) = if e.dir.join("image.m3i").is_file() { ("image.m3i", head.len() as u64) } else { ("data.bin", 0) };
+    let data = File::open(e.dir.join(name)).map_err(|er| format!("{name}: {er}"))?;
+    let marks = File::open(e.dir.join("marks.bin")).map_err(|er| format!("marks.bin: {er}"))?;
+    let spec = Spec { kind: kind.into(), key: e.key(), name: String::new(), width, height, rec, units, image: None };
+    let mut done = vec![None; units];
+    read_marks(&data, data_off, &marks, &spec, &mut done);
+    // which rows are there (a tile covers several rows in part: its
+    // pixels are read, the rest of the row is background)
+    let mut have = vec![false; width * height];
+    for d in done.iter().flatten() {
+        let [x, y, w, h] = d.rect;
+        for yy in y..(y + h).min(height) {
+            for xx in x..(x + w).min(width) {
+                have[yy * width + xx] = true;
+            }
+        }
+    }
+    let mut f = std::io::BufWriter::new(File::create(out).map_err(|er| format!("{}: {er}", out.display()))?);
+    let w = |f: &mut std::io::BufWriter<File>, b: &[u8]| f.write_all(b).map_err(|er| format!("{}: {er}", out.display()));
+    w(&mut f, &head)?;
+    let mut row = vec![0u8; width * rec];
+    for y in 0..height {
+        let _ = read_at(&data, &mut row, data_off + (y * width * rec) as u64);
+        for x in 0..width {
+            if !have[y * width + x] {
+                row[x * rec..(x + 1) * rec].copy_from_slice(&fill);
+            }
+        }
+        w(&mut f, &row)?;
+    }
+    w(&mut f, &tail)?;
+    f.flush().map_err(|er| format!("{}: {er}", out.display()))
+}
+
 /// Deletes the old checkpoints, then the oldest ones over [`max_bytes`]
 /// (not `keep`, not those a render holds).
 fn prune(root: &Path, keep: Option<&str>) {

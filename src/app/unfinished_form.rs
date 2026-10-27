@@ -109,7 +109,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button5Click" => {
             let Some(en) = selected(app, ui) else { return };
-            if en.image_file().is_none() {
+            if !matches!(en.info.get("kind").map(String::as_str), Some("calc") | Some("tiles")) {
                 app.message(ui, &tr("Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export)."));
                 return;
             }
@@ -137,9 +137,8 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         }
         ("m3i", DialogResult::File(Some(p))) => {
             let Some(key) = app.unfinished.saving.take() else { return };
-            let file = crate::checkpoint::find(&key).or_else(|| crate::checkpoint::list().into_iter().find(|e| e.key() == key)).and_then(|e| e.image_file());
-            let r = match file {
-                Some(f) => std::fs::copy(&f, p).map(|_| ()).map_err(|e| format!("{}: {e}", p.display())),
+            let r = match crate::checkpoint::list().into_iter().find(|e| e.key() == key) {
+                Some(e) => crate::checkpoint::export_m3i(&e, p),
                 None => Err(tr("This render keeps no image.")),
             };
             if let Err(m) = r {

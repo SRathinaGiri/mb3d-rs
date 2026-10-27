@@ -144,10 +144,11 @@ you check further on your own:
   renders window, `mb3d resume`); for a picture that file is now a
   `.m3i` image file at every moment, `image.m3i` in the render's folder,
   with the rows not calculated yet as background. Copy it out whenever
-  you like, or press *Save m3i* in the Unfinished renders window, and
-  open it here or in Mandelbulb3D, no conversion needed. (Monte Carlo
-  renders keep their own records, the `.m3c` of a pass is written with
-  `--m3c`.)
+  you like, or press *Save m3i* in the Unfinished renders window (`mb3d
+  resume --m3i KEY file.m3i` on the command line; both also write the
+  `data.bin` of an earlier version as a `.m3i`), and open it here or in
+  Mandelbulb3D, no conversion needed. (Monte Carlo renders keep their
+  own records, the `.m3c` of a pass is written with `--m3c`.)
 * **Hotkeys for the windows**: a key combination brings the main window,
   the Navigator, the Animation, Formulas, Lighting, Post processing or
   Monte Carlo window to the front from any window (Ctrl+1 to Ctrl+7), and

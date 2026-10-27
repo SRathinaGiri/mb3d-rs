@@ -19,7 +19,7 @@ USAGE:
     mb3d mutagen FILE [-o DIR] [OPTIONS]                           random variations
     mb3d montecarlo FILE [-o image.png] [OPTIONS]                  path traced image
     mb3d swarm worker DIR | list DIR                               share rendering through a shared folder
-    mb3d resume [--clear [KEY]]                                    unfinished renders kept for continuing
+    mb3d resume [--clear [KEY]] [--m3i KEY FILE]                   unfinished renders kept for continuing
     (mb3d animate --help, mb3d batch --help, ...)
 
 SCENE_FILE is an INI-style scene description (see examples/*.m3s), a
@@ -694,6 +694,14 @@ fn resume_cmd(args: &[String]) -> Result<(), String> {
                 return Ok(());
             }
             "--clear" => clear = Some(it.next_if(|v| !v.starts_with('-')).cloned()),
+            "--m3i" => {
+                let key = it.next().ok_or("--m3i needs the render's KEY and the FILE to write")?.clone();
+                let file = it.next().ok_or("--m3i needs the FILE to write")?.clone();
+                let e = mb3d::checkpoint::list().into_iter().find(|e| e.key() == key).ok_or_else(|| format!("no unfinished render {key} (mb3d resume lists them)"))?;
+                mb3d::checkpoint::export_m3i(&e, std::path::Path::new(&file))?;
+                eprintln!("wrote {file}: {}", e.summary());
+                return Ok(());
+            }
             s => return Err(format!("unknown option {s}\n\n{RESUME_USAGE}")),
         }
     }
@@ -738,6 +746,9 @@ mb3d resume - the unfinished renders kept for continuing
 USAGE:
     mb3d resume                 List them
     mb3d resume --clear [KEY]   Delete them (or the one of KEY)
+    mb3d resume --m3i KEY FILE  Write the picture of the render KEY as it is now (the
+                                rows not done as background) as a .m3i file; also the
+                                data.bin of an earlier version
 
 OPTIONS:
         --clear              Delete the unfinished renders (with a KEY of the list:
