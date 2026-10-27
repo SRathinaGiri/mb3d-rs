@@ -78,6 +78,7 @@ OPTIONS:
         --maps <DIR>         Directory with maps and background pictures (also: MB3D_MAPS;
                              M3Maps next to the formula directory is searched too)
         --list-formulas      List the built-in formulas and their options
+        --list-cards         List the graphics cards found
     -h, --help               Show this help
     -V, --version            Show the version
 
@@ -247,6 +248,13 @@ fn run() -> Result<(), String> {
             }
             "-V" | "--version" => {
                 println!("mb3d {}", env!("CARGO_PKG_VERSION"));
+                return Ok(());
+            }
+            "--list-cards" => {
+                #[cfg(feature = "gpu")]
+                for (i, n) in mb3d::gpu::card_names().iter().enumerate() {
+                    println!("{} {n}", i + 1);
+                }
                 return Ok(());
             }
             "--list-formulas" => {

@@ -1330,19 +1330,42 @@ pub fn use_own_driver_cache() {
     set("MESA_SHADER_CACHE_MAX_SIZE", "4G".as_ref());
 }
 
+/// The graphics card the calculations run on: the first of [`cards`].
 fn gpu() -> Result<&'static Gpu, String> {
-    static G: OnceLock<Result<Gpu, String>> = OnceLock::new();
-    // (opening the device is counted too: see `flight`)
+    cards().map(|c| &c[0])
+}
+
+/// All the graphics cards of the computer, found and opened when a card
+/// is first needed (no choice to make): the one the system offers for high
+/// performance first, then the others of the same interface (Vulkan,
+/// Metal, DirectX 12), one entry per physical card, without software
+/// renderers.
+fn cards() -> Result<&'static [Gpu], String> {
+    static G: OnceLock<Result<Vec<Gpu>, String>> = OnceLock::new();
+    // (opening the devices is counted too: see `flight`)
     G.get_or_init(|| {
         IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
         let _flight = Flight;
         pollster::block_on(init())
     })
     .as_ref()
+    .map(|v| v.as_slice())
     .map_err(|e| e.clone())
 }
 
-async fn init() -> Result<Gpu, String> {
+/// The names of the cards found (see [`cards`]; empty without one).
+pub fn card_names() -> Vec<String> {
+    cards().map(|c| c.iter().map(|g| g.name.clone()).collect()).unwrap_or_default()
+}
+
+/// Software renderers (llvmpipe, lavapipe, WARP) are slower than the CPU
+/// renderer; MB3D_GPU_ALLOW_SOFTWARE lets them in, for tests (e.g. Mesa's
+/// lavapipe as a second card).
+fn software_allowed() -> bool {
+    std::env::var_os("MB3D_GPU_ALLOW_SOFTWARE").is_some()
+}
+
+async fn init() -> Result<Vec<Gpu>, String> {
     // Vulkan, Metal, DirectX 12 (OpenGL lost the device on the ray marcher;
     // WGPU_BACKEND still chooses any)
     let mut desc = wgpu::InstanceDescriptor::new_without_display_handle();
@@ -1356,12 +1379,41 @@ async fn init() -> Result<Gpu, String> {
         .await
         .map_err(|e| format!("no graphics card found: {e}"))?;
     let info = adapter.get_info();
-    // (MB3D_GPU_ALLOW_SOFTWARE: tests on a software renderer, e.g. Mesa's
-    // lavapipe for a driver other than the card's)
-    if info.device_type == wgpu::DeviceType::Cpu && std::env::var_os("MB3D_GPU_ALLOW_SOFTWARE").is_none() {
-        // llvmpipe, WARP: slower than the CPU renderer
+    if info.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
         return Err(format!("only a software renderer ({})", info.name));
     }
+    let mut list = vec![open(&adapter).await?];
+    // the other cards: the same interface as the first (a card can show up
+    // under Vulkan and DirectX 12 both), each physical card once
+    let same = |a: &wgpu::AdapterInfo| {
+        if !a.device_pci_bus_id.is_empty() || !info.device_pci_bus_id.is_empty() {
+            a.device_pci_bus_id == info.device_pci_bus_id
+        } else {
+            (a.vendor, a.device, &a.name) == (info.vendor, info.device, &info.name)
+        }
+    };
+    let mut first_skipped = false;
+    for a in instance.enumerate_adapters(wgpu::Backends::all()).await {
+        let i = a.get_info();
+        if i.backend != info.backend || i.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
+            continue;
+        }
+        // (two identical cards without a bus id: only the first match is the first card)
+        if same(&i) && !first_skipped {
+            first_skipped = true;
+            continue;
+        }
+        match open(&a).await {
+            Ok(g) => list.push(g),
+            Err(e) => eprintln!("graphics card {} not used: {e}", i.name),
+        }
+    }
+    Ok(list)
+}
+
+/// Opens a card as a device of its own.
+async fn open(adapter: &wgpu::Adapter) -> Result<Gpu, String> {
+    let info = adapter.get_info();
     // doubles in shaders (Vulkan, DirectX 12; not Metal): the deep zooms
     let dbl = wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64;
     let f64 = adapter.features().contains(dbl);
