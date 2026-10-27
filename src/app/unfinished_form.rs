@@ -12,6 +12,8 @@ const F: &str = "UnfinishedFrm";
 #[derive(Default)]
 pub struct State {
     entries: Vec<crate::checkpoint::Entry>,
+    /// the key of the render whose image the save dialog is for
+    saving: Option<String>,
 }
 
 fn refresh(app: &mut Mb3d, ui: &mut Ui) {
@@ -105,15 +107,45 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.confirm("unfinished:clear", &tr("Delete what all unfinished renders kept?"));
             }
         }
+        "Button5Click" => {
+            let Some(en) = selected(app, ui) else { return };
+            if en.image_file().is_none() {
+                app.message(ui, &tr("Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export)."));
+                return;
+            }
+            let o = crate::vcl::dialogs::FileOptions {
+                filter: tr("MB3D image (*.m3i)|*.m3i"),
+                default_ext: "m3i".into(),
+                initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
+                file_name: super::main_form::stem(&en.info.get("name").cloned().unwrap_or_default()).to_string(),
+                ..Default::default()
+            };
+            app.unfinished.saving = Some(en.key());
+            ui.save_dialog("unfinished:m3i", &o);
+        }
         _ => {}
     }
 }
 
 pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
-    if let ("clear", DialogResult::Button(crate::vcl::form::MR_YES)) = (what, r) {
-        for e in crate::checkpoint::list() {
-            crate::checkpoint::remove(&e);
+    match (what, r) {
+        ("clear", DialogResult::Button(crate::vcl::form::MR_YES)) => {
+            for e in crate::checkpoint::list() {
+                crate::checkpoint::remove(&e);
+            }
+            refresh(app, ui);
         }
-        refresh(app, ui);
+        ("m3i", DialogResult::File(Some(p))) => {
+            let Some(key) = app.unfinished.saving.take() else { return };
+            let file = crate::checkpoint::find(&key).or_else(|| crate::checkpoint::list().into_iter().find(|e| e.key() == key)).and_then(|e| e.image_file());
+            let r = match file {
+                Some(f) => std::fs::copy(&f, p).map(|_| ()).map_err(|e| format!("{}: {e}", p.display())),
+                None => Err(tr("This render keeps no image.")),
+            };
+            if let Err(m) = r {
+                app.message(ui, &m);
+            }
+        }
+        _ => {}
     }
 }

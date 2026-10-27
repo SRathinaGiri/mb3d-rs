@@ -2490,7 +2490,7 @@ impl McCheckpoint {
         if w == 0 || h == 0 {
             return None;
         }
-        let spec = crate::checkpoint::Spec { kind: "mc".into(), key: Self::key_of(sc, salt, start), name: name.into(), width: w, height: 2 * h, rec: MC_REC_BYTES, units: 2 * h };
+        let spec = crate::checkpoint::Spec { kind: "mc".into(), key: Self::key_of(sc, salt, start), name: name.into(), width: w, height: 2 * h, rec: MC_REC_BYTES, units: 2 * h, image: None };
         let store = crate::checkpoint::Store::open(spec, policy)?;
         store.put_extra("scene.m3s", sc.to_text().as_bytes());
         store.set_value("seed_salt", &salt.to_string());

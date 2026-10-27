@@ -302,6 +302,13 @@ pub fn checkpoint_key(sc: &Scene) -> String {
     crate::checkpoint::key("calc", &format!("{}\ngpu = {}{rect}", march_sig(sc), gpu_mode()))
 }
 
+/// What makes the checkpoint's data file a `.m3i` of `sc` (see
+/// [`crate::checkpoint::Image`]).
+fn image_of(sc: &Scene) -> crate::checkpoint::Image {
+    let (head, tail) = crate::m3p::m3i_parts(sc);
+    crate::checkpoint::Image { head, tail, fill: crate::gbuffer::pack(&[SiLight::default()]) }
+}
+
 /// The checkpoint of a calculation of `sc` (its G-buffer, row by row; see
 /// [`calculate_with`]), `name` shown for it.  None with `Policy::Off` or
 /// when it cannot be kept.
@@ -311,7 +318,9 @@ pub fn open_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<Store> 
     if w == 0 || h == 0 {
         return None;
     }
-    let spec = crate::checkpoint::Spec { kind: "calc".into(), key: checkpoint_key(sc), name: name.into(), width: w, height: h, rec: crate::gbuffer::REC_BYTES, units: h };
+    // (the whole picture: its file is a .m3i; a selection's rows are not)
+    let image = (sc.calc_rect.is_none() && w == sc.width.max(0) as usize && h == sc.height.max(0) as usize).then(|| image_of(sc));
+    let spec = crate::checkpoint::Spec { kind: "calc".into(), key: checkpoint_key(sc), name: name.into(), width: w, height: h, rec: crate::gbuffer::REC_BYTES, units: h, image };
     let s = Store::open(spec, policy)?;
     s.put_extra("scene.m3s", sc.to_text().as_bytes());
     Some(s)
@@ -2345,6 +2354,7 @@ pub fn open_tiles_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<S
         height: h,
         rec: crate::gbuffer::REC_BYTES,
         units: (tl.cols * tl.rows) as usize,
+        image: Some(image_of(sc)),
     };
     let s = Store::open(spec, policy)?;
     s.put_extra("scene.m3s", sc.to_text().as_bytes());

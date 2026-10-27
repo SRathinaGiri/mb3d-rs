@@ -249,7 +249,7 @@ pub fn export_with(
     // (the slices as units of one byte: only their marks matter)
     let n = grid.slices as usize;
     let text = format!("{}\n{vp:?}\n{}\n{name}", crate::render::checkpoint_text(&s), dir.display());
-    let spec = crate::checkpoint::Spec { kind: "voxel".into(), key: crate::checkpoint::key("voxel", &text), name: name.into(), width: 1, height: n, rec: 1, units: n };
+    let spec = crate::checkpoint::Spec { kind: "voxel".into(), key: crate::checkpoint::key("voxel", &text), name: name.into(), width: 1, height: n, rec: 1, units: n, image: None };
     let ck = crate::checkpoint::Store::open(spec, policy);
     if let Some(c) = &ck {
         c.set_value("size", &format!("{} x {} x {}", grid.width, grid.height, grid.slices));

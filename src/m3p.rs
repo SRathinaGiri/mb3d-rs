@@ -1414,10 +1414,18 @@ mod tests {
 /// G-buffer (`TsiLight5`, 18 bytes per pixel), which MB3D opens without
 /// recalculating ("Save m3i" without the "Img" option).
 pub fn write_m3i(sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> Vec<u8> {
-    let p = write(sc);
-    let mut d = Vec::with_capacity(p.len() + gbuf.len() * 18);
-    d.extend_from_slice(&p[..HEADER_SIZE]);
+    let (head, tail) = m3i_parts(sc);
+    let mut d = Vec::with_capacity(head.len() + gbuf.len() * 18 + tail.len());
+    d.extend_from_slice(&head);
     d.extend_from_slice(&crate::gbuffer::pack(gbuf));
-    d.extend_from_slice(&p[HEADER_SIZE..]);
+    d.extend_from_slice(&tail);
     d
+}
+
+/// The parts of a `.m3i` around its pixels: the header before them and
+/// the rest of the parameters after them (a checkpoint keeps its rows
+/// between the two, see `checkpoint::Image`).
+pub fn m3i_parts(sc: &Scene) -> (Vec<u8>, Vec<u8>) {
+    let p = write(sc);
+    (p[..HEADER_SIZE].to_vec(), p[HEADER_SIZE..].to_vec())
 }

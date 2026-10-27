@@ -112,10 +112,22 @@ object UnfinishedFrm: TUnfinishedFrm
     TabOrder = 4
     OnClick = Button4Click
   end
+  object Button5: TButton
+    Left = 400
+    Top = 234
+    Width = 90
+    Height = 25
+    Hint = 'Writes the picture as it is now (the rows not done as background) as a .m3i file'
+    Caption = 'Save m3i'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 5
+    OnClick = Button5Click
+  end
   object Label2: TLabel
-    Left = 402
+    Left = 498
     Top = 240
-    Width = 230
+    Width = 134
     Height = 13
     AutoSize = False
     Caption = ''

@@ -1332,7 +1332,7 @@ impl Kept {
             return None;
         }
         let key = crate::checkpoint::key(&format!("swarm-{}", kind.as_str()), &format!("{text}\nunits = {}", names.join(" ")));
-        let spec = crate::checkpoint::Spec { kind: "swarm".into(), key, name: name.into(), width: names.len(), height: 1, rec: 1, units: names.len() };
+        let spec = crate::checkpoint::Spec { kind: "swarm".into(), key, name: name.into(), width: names.len(), height: 1, rec: 1, units: names.len(), image: None };
         let store = Store::open(spec, opts.resume)?;
         let what = match kind {
             JobKind::Animation => "frames",

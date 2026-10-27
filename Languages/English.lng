@@ -1242,6 +1242,8 @@ Button3.Caption = Delete
 Button3.Hint = Delete what the selected render kept
 Button4.Caption = Delete all
 Button4.Hint = Delete what all unfinished renders kept
+Button5.Caption = Save m3i
+Button5.Hint = Writes the picture as it is now (the rows not done as background) as a .m3i file
 
 [MapCalcWindow]
 Caption = Calculating volumetric light map
@@ -1752,6 +1754,7 @@ M3D formula (*.m3f) = M3D formula (*.m3f)
 M3D monte carlo file (*.m3c) = M3D monte carlo file (*.m3c)
 M3D voxel project (*.m3v) = M3D voxel project (*.m3v)
 M3I done = M3I done
+MB3D image (*.m3i)|*.m3i = MB3D image (*.m3i)|*.m3i
 Making the video... = Making the video...
 Max. iterations: = Max. iterations:
 Maxits hybrid part1: = Maxits hybrid part1:
@@ -1793,6 +1796,7 @@ OK = OK
 Offset X: = Offset X:
 Offset Y: = Offset Y:
 Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs. = Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export). = Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
 Open = Open
 Operation cancelled = Operation cancelled
 Option = Option
@@ -1876,6 +1880,7 @@ The stereo eye images have different sizes. = The stereo eye images have differe
 There is a file {} already. = There is a file {} already.
 This file already exists. Do you really want to overwrite it? = This file already exists. Do you really want to overwrite it?
 This render is running right now. = This render is running right now.
+This render keeps no image. = This render keeps no image.
 This render kept no parameters. = This render kept no parameters.
 Tile X\={} Y\={} saved. = Tile X={} Y={} saved.
 Tile: X\={} Y\={} = Tile: X={} Y={}

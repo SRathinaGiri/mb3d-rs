@@ -422,7 +422,7 @@ impl MeshCheckpoint {
         let mut m = mp.clone();
         m.smooth = 0;
         let key = crate::checkpoint::key("mesh", &format!("{}\n{m:?}", s.to_text()));
-        let spec = crate::checkpoint::Spec { kind: "mesh".into(), key, name: name.into(), width: n, height: 1, rec: 1, units: n };
+        let spec = crate::checkpoint::Spec { kind: "mesh".into(), key, name: name.into(), width: n, height: 1, rec: 1, units: n, image: None };
         let store = crate::checkpoint::Store::open(spec, policy)?;
         store.put_extra("scene.m3s", sc.to_text().as_bytes());
         store.set_value("size", &format!("{n}^3"));

@@ -2353,7 +2353,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     }
 }
 
-fn stem(title: &str) -> String {
+pub(crate) fn stem(title: &str) -> String {
     std::path::Path::new(title).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
 }
 

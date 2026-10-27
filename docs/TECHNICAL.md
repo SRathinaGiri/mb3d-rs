@@ -984,7 +984,8 @@ same render again finds it; the Unfinished renders window loads the scene text i
 
 | file | content |
 |---|---|
-| `data.bin` | the records of all pixels, row major (a G-buffer: the 18 bytes of a `.m3i` pixel) |
+| `data.bin` | the records of all pixels, row major (Monte Carlo, voxels, the swarm) |
+| `image.m3i` | the same for a picture or a big render, as a `.m3i` image file: the file's header before the records, the rest of the parameters after them, the rows not done as background (`checkpoint::Image`). A valid image at every moment: copy it out, open it in this program or in MB3D (`Entry::image_file`, "Save m3i" in the Unfinished renders window) |
 | `marks.bin` | 28 bytes per unit (a row, a tile): magic, FNV hash of the unit's data, generation, rectangle |
 | `info.txt` | kind, name, size, version, the units done, times; `rows = raw` or `card PostJob {...}` (what the stored rows hold); `secs`, the time the main rendering of a picture took so far (the window's progress and time left go on from it) |
 | `extra-*` | further state, written atomically (`scene.m3s`) |
