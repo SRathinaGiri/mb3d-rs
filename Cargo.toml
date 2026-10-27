@@ -14,9 +14,8 @@ gui = ["dep:winit", "dep:softbuffer", "dep:fontdue", "dep:rustybuzz", "dep:arboa
 # see src/gpu.rs
 gpu = ["dep:wgpu", "dep:pollster"]
 # the formulas of a hybrid compiled together at run time (Cranelift), see
-# src/x86/lift_clif.rs; on macOS only with MB3D_JIT_MACOS=1 at build time,
-# and there only used with MB3D_JIT=1 at run time (not tested there yet),
-# see build.rs and tools/jit_check.sh
+# src/x86/lift_clif.rs; MB3D_NO_JIT=1 switches it off at run time (on macOS
+# being tested: tools/jit_check.sh)
 jit = ["dep:cranelift-codegen", "dep:cranelift-frontend", "dep:cranelift-jit", "dep:cranelift-module", "dep:cranelift-native"]
 # the Monte Carlo renders' neural noise filter: Intel Open Image Denoise,
 # loaded at run time when it is there (src/oidn.rs)
@@ -33,7 +32,6 @@ pollster = { version = "1.0.1", optional = true }
 open = { version = "5", optional = true }
 libloading = { version = "0.8", optional = true }
 
-# (on macOS the JIT is only built in with MB3D_JIT_MACOS=1, see build.rs)
 cranelift-codegen = { version = "0.130", optional = true }
 cranelift-frontend = { version = "0.130", optional = true }
 cranelift-jit = { version = "0.130", optional = true }

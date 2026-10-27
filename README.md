@@ -967,9 +967,9 @@ interrupted animation continues and several computers can share one.
   Together with a faster loop over the formulas (on every system), CPU
   renders of the 80 example files take 20 % less time than in v0.2.74
   (up to 60 % in some), the pictures the same to the bit. A scene keeps the compiled hybrid only if it
-  measures faster; `MB3D_NO_JIT=1` switches it off. On macOS it is in
-  the program but only used with `MB3D_JIT=1` until it has been tested
-  there: `./jit_check.sh` in the unpacked folder checks it (it compares
+  measures faster; `MB3D_NO_JIT=1` switches it off. On macOS it is on
+  too, but still being tested there: `./jit_check.sh` in the unpacked
+  folder checks it (it compares
   the compiled formulas with the translated ones and renders the example
   files with and without it; the pictures must be the same).
 * **Big pictures** can be rendered in one piece (a 15000 x 20000 picture

@@ -92,11 +92,8 @@ jobs:
           echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
       - name: Build
         shell: bash
-        # macOS: the formulas compiled at run time are built in, but only
-        # used with MB3D_JIT=1 (not tested there yet; the package has
-        # clifcheck and jit_check.sh to test them)
-        env:
-          MB3D_JIT_MACOS: ${{ runner.os == 'macOS' && '1' || '' }}
+        # (the macOS package has clifcheck and jit_check.sh to test the
+        # formulas compiled at run time there)
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             cargo zigbuild --release --features gpu --target ${{ matrix.target }}.2.28
@@ -195,7 +192,7 @@ jobs:
           fi
           if [ "${{ runner.os }}" = "macOS" ] && [ "${{ matrix.target }}" = "aarch64-apple-darwin" ]; then
             # the JIT runs on the runner (a short check, not the whole one)
-            MB3D_JIT=1 MB3D_GPU=0 "$name/mb3d" montecarlo "$p" --scale 0.1 --rays 4 --no-resume -q -o jit-test.png
+            MB3D_GPU=0 "$name/mb3d" montecarlo "$p" --scale 0.1 --rays 4 --no-resume -q -o jit-test.png
             test -s jit-test.png
           fi
           # the archive name has no version, so that the README can link to

@@ -20,14 +20,9 @@ use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{Linkage, Module};
 use std::mem::offset_of;
 
-/// Whether hybrids are compiled (`MB3D_NO_JIT=1` switches it off; on
-/// macOS, where it is not tested yet, only `MB3D_JIT=1` or `force` switch
-/// it on).
+/// Whether hybrids are compiled (`MB3D_NO_JIT=1` switches it off).
 pub fn enabled() -> bool {
     static ON: std::sync::LazyLock<bool> = std::sync::LazyLock::new(|| {
-        if cfg!(target_os = "macos") {
-            return std::env::var("MB3D_JIT").is_ok_and(|v| v == "1" || v == "force");
-        }
         std::env::var_os("MB3D_NO_JIT").is_none_or(|v| v.is_empty() || v == "0")
     });
     *ON

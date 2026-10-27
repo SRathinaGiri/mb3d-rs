@@ -1,6 +1,6 @@
 #!/bin/sh
 # Checks the formulas compiled at run time (the JIT, Cranelift) on this
-# computer, e.g. on a Mac, where they are switched off by default:
+# computer, e.g. on a Mac, where they are new:
 #
 #   tools/jit_check.sh <MB3D folder>     (in the source repository)
 #   ./jit_check.sh                       (in the unpacked macOS package)
@@ -8,8 +8,8 @@
 # <MB3D folder> holds M3Formulas and M3Parameter (an MB3D installation, or
 # the unpacked mb3d-rs release package; the package's own folder by
 # default). The script
-#   1. in the repository: builds mb3d and examples/clifcheck with the JIT
-#      (on macOS with MB3D_JIT_MACOS=1); in the package: takes the programs
+#   1. in the repository: builds mb3d and examples/clifcheck with the JIT;
+#      in the package: takes the programs
 #      next to it,
 #   2. compares every formula compiled on its own with its translated
 #      version, and the compiled built-in formulas with the Rust ones,
@@ -30,7 +30,7 @@ else
     dir=${1:?usage: tools/jit_check.sh <MB3D folder with M3Formulas and M3Parameter>}
     cd "$here/.."
     echo "== build"
-    MB3D_JIT_MACOS=1 cargo build --release --bin mb3d --example clifcheck
+    cargo build --release --bin mb3d --example clifcheck
     tgt=${CARGO_TARGET_DIR:-target}
     mkdir -p "$tgt/release/examples"
     bin=$(cd "$tgt/release" && pwd)
