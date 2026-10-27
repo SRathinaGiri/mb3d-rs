@@ -78,4 +78,11 @@ Order: 1, 2, 4, 3.
 - The threads a render starts that call the card carry the picture's card
   (`gpu::card_here` / `as_card`: Monte Carlo's card thread, reflections,
   volumetric light); background compiles and their failures are per card.
-- Not tested yet with a real second card or lavapipe.
+- Integrated graphics left out when a dedicated card is there (the
+  user's decision), a dedicated card first (`card_order`).
+- lavapipe as a second device (`MB3D_GPU_ALLOW_SOFTWARE=1`): pictures as
+  close to the CPU's as with one card; but a much slower card holds up
+  the others at the end of a picture (DEcomb1 Auto 19 s -> 91 s, a small
+  scene in card mode 0.4 s -> 14 s): a speed gate is still needed (leave
+  out a card much slower than the first, small first bands until a card
+  is measured).

@@ -1485,7 +1485,6 @@ async fn init() -> Result<Vec<Gpu>, String> {
     if info.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
         return Err(format!("only a software renderer ({})", info.name));
     }
-    let mut list = vec![open(&adapter, 0).await?];
     // the other cards: the same interface as the first (a card can show up
     // under Vulkan and DirectX 12 both), each physical card once
     let same = |a: &wgpu::AdapterInfo| {
@@ -1495,6 +1494,7 @@ async fn init() -> Result<Vec<Gpu>, String> {
             (a.vendor, a.device, &a.name) == (info.vendor, info.device, &info.name)
         }
     };
+    let mut found = vec![adapter.clone()];
     let mut first_skipped = false;
     for a in instance.enumerate_adapters(wgpu::Backends::all()).await {
         let i = a.get_info();
@@ -1506,9 +1506,16 @@ async fn init() -> Result<Vec<Gpu>, String> {
             first_skipped = true;
             continue;
         }
-        match open(&a, list.len()).await {
+        found.push(a);
+    }
+    let kinds: Vec<wgpu::DeviceType> = found.iter().map(|a| a.get_info().device_type).collect();
+    let mut list = Vec::new();
+    for a in card_order(&kinds).into_iter().map(|i| &found[i]) {
+        match open(a, list.len()).await {
             Ok(g) => list.push(g),
-            Err(e) => eprintln!("graphics card {} not used: {e}", i.name),
+            // (the first card must open: the others may fail)
+            Err(e) if list.is_empty() => return Err(e),
+            Err(e) => eprintln!("graphics card {} not used: {e}", a.get_info().name),
         }
     }
     // MB3D_GPU_TWICE (tests): the first card opened a second time, as a
@@ -1517,6 +1524,23 @@ async fn init() -> Result<Vec<Gpu>, String> {
         list.push(open(&adapter, list.len()).await?);
     }
     Ok(list)
+}
+
+/// The cards used, by their kinds (the system's first): integrated
+/// graphics only when there is no dedicated card (a few times slower, it
+/// would hold up the others at the end of every picture, and it shares the
+/// CPU's power and memory), a dedicated card first.
+fn card_order(kinds: &[wgpu::DeviceType]) -> Vec<usize> {
+    use wgpu::DeviceType::{DiscreteGpu, IntegratedGpu};
+    let mut v: Vec<usize> = (0..kinds.len()).collect();
+    if kinds.contains(&DiscreteGpu) {
+        v.retain(|&i| kinds[i] != IntegratedGpu);
+        if let Some(p) = v.iter().position(|&i| kinds[i] == DiscreteGpu) {
+            let d = v.remove(p);
+            v.insert(0, d);
+        }
+    }
+    v
 }
 
 /// Opens a card as a device of its own.
@@ -3344,6 +3368,20 @@ pub fn run_compute(wgsl: &str, inputs: &[&[u32]], out_len: usize, groups: u32) -
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn integrated_left_out_beside_a_dedicated_card() {
+        use wgpu::DeviceType::{Cpu, DiscreteGpu as D, IntegratedGpu as I};
+        assert_eq!(super::card_order(&[D, I]), vec![0]);
+        // the system offered the integrated one first
+        assert_eq!(super::card_order(&[I, D]), vec![1]);
+        assert_eq!(super::card_order(&[I, D, I, D]), vec![1, 3]);
+        assert_eq!(super::card_order(&[I]), vec![0]);
+        assert_eq!(super::card_order(&[I, I]), vec![0, 1]);
+        assert_eq!(super::card_order(&[D, D]), vec![0, 1]);
+        // (software renderers are only there for tests: kept)
+        assert_eq!(super::card_order(&[D, Cpu]), vec![0, 1]);
+    }
+
     use super::*;
     use crate::calc::Marcher;
 
