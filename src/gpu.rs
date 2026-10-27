@@ -104,7 +104,7 @@ struct Resumer {
 
 /// The [`Resumer`] of the reflection batches with the hash of their shader
 /// (another scene starts with a new one: its turns may take much longer).
-static REFLECT_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+static REFLECT_RESUMER: std::sync::Mutex<Vec<(usize, u64, Resumer)>> = std::sync::Mutex::new(Vec::new());
 
 /// Slots at most (about 1.3 KB of state each).
 const RESUME_SLOTS: usize = 1 << 15;
@@ -2056,10 +2056,11 @@ pub struct RaySharing {
 /// of every bounce with the normals, colour, shadows and ambient occlusion
 /// of its hit, as `reflect.rs` does on the CPU).
 pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
-    guard(|| reflect_batch_card(p, tasks, o, share, cancel))
+    guard(|| on_cards(p, tasks.len(), share, 1, &|at, len, sh| reflect_batch_card(p, &tasks[at..at + len], at, o, sh, cancel)))
 }
 
-fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+/// `tasks` (the batch from `offset` on) on this thread's card.
+fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
     // every way out (an error, a panic of the card) ends the card's part:
     // the CPU's workers wait for `done`
     struct Done<'a>(Option<&'a RaySharing>);
@@ -2133,10 +2134,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         sh.code.hash(&mut h);
         h.finish()
     };
-    let mut res = match REFLECT_RESUMER.lock().unwrap().take() {
-        Some((k, r)) if k == key => r,
-        _ => Resumer::new(g, &sh),
-    };
+    let mut res = cached_resumer(&REFLECT_RESUMER, key, g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
     base[SLOTS_WORD] = split as u32;
@@ -2163,6 +2161,8 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         // shadows and occlusion follow for the card's part
         let lim = |started: usize, free: usize| -> usize {
             let Some(sh) = share.filter(|_| pi == 0) else { return n_card.get() };
+            // (the sharing counts in the whole batch: `offset` on)
+            let started = offset + started;
             let mut want = started + free;
             // the CPU's share: the card does not go beyond it (its rays
             // still need the shadow and occlusion pass after the march,
@@ -2170,7 +2170,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
             want = want.min(sh.cap.max(started));
             let mut st = sh.state.lock().unwrap();
             st.0 = st.0.max(want.min(st.1));
-            st.0
+            st.0.saturating_sub(offset)
         };
         // the last few rays of the march: the CPU, when it has nothing else
         // to do, is faster for single long rays
@@ -2211,7 +2211,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
             eprintln!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
         }
     }
-    *REFLECT_RESUMER.lock().unwrap() = Some((key, res));
+    keep_resumer(&REFLECT_RESUMER, key, res);
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
@@ -2263,7 +2263,124 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
 }
 
 /// The [`Resumer`] of the Monte Carlo batches with the hash of their shader.
-static MC_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+static MC_RESUMER: std::sync::Mutex<Vec<(usize, u64, Resumer)>> = std::sync::Mutex::new(Vec::new());
+
+/// The resumer of `key` on this thread's card kept from the last batch, or
+/// a new one (one is kept per card: see [`keep_resumer`]).
+fn cached_resumer(cache: &Mutex<Vec<(usize, u64, Resumer)>>, key: u64, g: &Gpu, sh: &SceneShader) -> Resumer {
+    let card = CARD.with(|c| c.get());
+    let mut c = cache.lock().unwrap();
+    match c.iter().position(|(k, h, _)| *k == card && *h == key) {
+        Some(i) => c.swap_remove(i).2,
+        None => Resumer::new(g, sh),
+    }
+}
+
+fn keep_resumer(cache: &Mutex<Vec<(usize, u64, Resumer)>>, key: u64, r: Resumer) {
+    let card = CARD.with(|c| c.get());
+    let mut c = cache.lock().unwrap();
+    c.retain(|(k, ..)| *k != card);
+    c.push((card, key, r));
+}
+
+/// Rays per second of each card, by kind of batch (0 Monte Carlo, 1
+/// reflections): the further cards' slices of a batch (see [`on_cards`]).
+static RAY_RATES: Mutex<[[f64; 64]; 2]> = Mutex::new([[0.0; 64]; 2]);
+
+/// The results of a batch of rays: per ray, how many from the start are
+/// done, the indices left to the CPU.
+type Batch<T> = Result<(Vec<T>, usize, Vec<usize>), String>;
+
+/// A batch of `n` rays on all the cards: each further card marches a slice
+/// at the front, sized by its speed, the first card the rest (`run` with
+/// the slice's start and length, and the sharing with the CPU for the first
+/// card), shared with the CPU as with one card.  The results as one card's;
+/// a further card that failed leaves its slice to the CPU.
+fn on_cards<T: Clone + Default + Send>(p: &CalcParams, n: usize, share: Option<&RaySharing>, kind: usize, run: &(dyn Fn(usize, usize, Option<&RaySharing>) -> Batch<T> + Sync)) -> Batch<T> {
+    let extra = if n >= 4096 { extra_cards(p) } else { Vec::new() };
+    if extra.is_empty() {
+        return run(0, n, share);
+    }
+    // the cards' part: before the CPU's (with one card its limit)
+    let region = share.map_or(n, |sh| sh.cap.min(n));
+    let rates = RAY_RATES.lock().unwrap()[kind];
+    let rate = |i: usize| if rates[i.min(63)] > 0.0 { rates[i.min(63)] } else { 1.0 };
+    let all: f64 = rate(0) + extra.iter().map(|&k| rate(k)).sum::<f64>();
+    let mut slices = Vec::new();
+    let mut at = 0;
+    for &k in &extra {
+        let len = ((region as f64 * rate(k) / all) as usize).min(region - at);
+        slices.push((k, at, len));
+        at += len;
+    }
+    // (the CPU stays behind them)
+    if let Some(sh) = share {
+        let mut st = sh.state.lock().unwrap();
+        st.0 = st.0.max(at.min(st.1));
+    }
+    let set_rate = |k: usize, rays: usize, secs: f64| {
+        if rays > 0 && secs > 0.0 {
+            let r = &mut RAY_RATES.lock().unwrap()[kind][k.min(63)];
+            let now = rays as f64 / secs;
+            *r = if *r > 0.0 { 0.7 * *r + 0.3 * now } else { now };
+        }
+    };
+    let mut out: Vec<T> = vec![T::default(); n];
+    let mut left = Vec::new();
+    let mut first = None;
+    std::thread::scope(|s| {
+        let others: Vec<_> = slices
+            .iter()
+            .map(|&(k, a, len)| {
+                s.spawn(move || {
+                    let t = std::time::Instant::now();
+                    let r = on_card(k, || guard(|| run(a, len, None)));
+                    (k, a, len, r, t.elapsed().as_secs_f64())
+                })
+            })
+            .collect();
+        let t = std::time::Instant::now();
+        let r0 = run(at, n - at, share);
+        if let Ok((_, took, _)) = &r0 {
+            set_rate(0, *took, t.elapsed().as_secs_f64());
+        }
+        first = Some(r0);
+        for h in others {
+            let (k, a, len, r, secs) = h.join().unwrap_or_else(|_| (0, 0, 0, Err("a panic".into()), 0.0));
+            // (MB3D_CARDS_DEBUG: what each of the other cards did)
+            if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
+                eprintln!("card {}: {len} of {n} rays in {:.0} ms ({})", k + 1, secs * 1000.0, if r.is_ok() { "ok" } else { "failed" });
+            }
+            match r {
+                Ok((v, took, gave_up)) => {
+                    set_rate(k, took, secs);
+                    for (i, x) in v.into_iter().take(took.min(len)).enumerate() {
+                        out[a + i] = x;
+                    }
+                    left.extend((a + took.min(len))..(a + len));
+                    left.extend(gave_up.into_iter().filter(|&i| i < took).map(|i| a + i));
+                }
+                Err(e) => {
+                    if e != "cancelled" {
+                        eprintln!("graphics card {}: a batch of rays failed, done on the CPU: {e}", k + 1);
+                    }
+                    left.extend(a..a + len);
+                }
+            }
+        }
+    });
+    let (v, took, gave_up) = first.unwrap()?;
+    // (as long as the first card's: Monte Carlo its done rays, reflections all)
+    let len = at + v.len();
+    for (i, x) in v.into_iter().enumerate() {
+        if at + i < n {
+            out[at + i] = x;
+        }
+    }
+    left.extend(gave_up.into_iter().map(|i| at + i));
+    out.truncate(len.min(n));
+    Ok((out, at + took, left))
+}
 
 /// The shader's M_VLMAP: the volumetric light's map.
 const M_VLMAP: u32 = 6;
@@ -2372,10 +2489,11 @@ const MC_WORDS: usize = 23;
 /// returns the results (those the card did not take are default), the
 /// number it took and those of them it did not finish.
 pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
-    guard(|| mc_batch_card(p, tasks, secant, share))
+    guard(|| on_cards(p, tasks.len(), share, 0, &|at, len, sh| mc_batch_card(p, &tasks[at..at + len], at, secant, sh)))
 }
 
-fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
+/// `tasks` (the batch from `offset` on) on this thread's card.
+fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
     use crate::mc::McRes;
     if tasks.is_empty() {
         if let Some(sh) = share {
@@ -2433,10 +2551,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         sh.code.hash(&mut h);
         h.finish()
     };
-    let mut res = match MC_RESUMER.lock().unwrap().take() {
-        Some((k, r)) if k == key => r,
-        _ => Resumer::new(g, &sh),
-    };
+    let mut res = cached_resumer(&MC_RESUMER, key, g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut base = params(p, 0, n.div_ceil(R_W), &sh, 5, &PostJob::default(), None);
     base[171] = secant as u32;
@@ -2456,9 +2571,11 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
     use std::sync::atomic::Ordering;
     // (the first call has all slots free)
     let slots = std::cell::Cell::new(0usize);
+    // (the sharing counts in the whole batch: `offset` on)
     let lim = |started: usize, free: usize| -> usize {
         let Some(sh) = share else { return n };
         slots.set(slots.get().max(free));
+        let started = offset + started;
         let mut want = started + free;
         // the CPU's share: the card goes beyond it only once it has
         // started all of its own and runs low on rays
@@ -2467,7 +2584,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         }
         let mut st = sh.state.lock().unwrap();
         st.0 = st.0.max(want.min(st.1));
-        st.0
+        st.0.saturating_sub(offset)
     };
     let give_up = |left: usize| -> bool {
         share.is_some_and(|sh| {
@@ -2495,7 +2612,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         sh.done.store(true, Ordering::SeqCst);
     }
     let (n_card, unfinished) = r?;
-    *MC_RESUMER.lock().unwrap() = Some((key, res));
+    keep_resumer(&MC_RESUMER, key, res);
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
