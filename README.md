@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78)** (26 Oct 2026, 18:41 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.79](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.79)** (27 Oct 2026, 03:50 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1006,6 +1006,15 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.79](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.79) · 27 Oct 2026, 03:50 UTC
+
+| Commit | What it does |
+|---|---|
+| [`af5c449`](https://github.com/thr32423/mb3d-rs/commit/af5c44969caa4c6df3c3d5a8eae9f366ed08bd40) | Version number and release notes of this release |
+| [`86b0997`](https://github.com/thr32423/mb3d-rs/commit/86b09973f3551f83f559563c1e841bb8d1fd4bf1) | macOS: the formulas compiled at run time on by default, for testing there |
+| [`988fc03`](https://github.com/thr32423/mb3d-rs/commit/988fc03b4f663c3518e3e2d7a84a72f14d87348e) | Hotkeys: a key combination per window brings it to the front, one closes the current window; set under Prefs > Hotkeys |
+| [`1e821fa`](https://github.com/thr32423/mb3d-rs/commit/1e821fabaea88d376615e6363acf7cfd5f21d8eb) | README: Updates for v0.2.78 |
+
 ### [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78) · 26 Oct 2026, 18:41 UTC
 
 | Commit | What it does |
@@ -1025,15 +1034,7 @@ of a release are on its page. Times are in UTC.
 | [`e593cdd`](https://github.com/thr32423/mb3d-rs/commit/e593cddd8c9c5e41e62892efe244624e171123d0) | Post processing: the bar and the time left while it runs (#2) |
 | [`b172551`](https://github.com/thr32423/mb3d-rs/commit/b1725511f586d675bb1394a02aac34765b3426de) | README: Updates for v0.2.76 |
 
-### [v0.2.76](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.76) · 25 Oct 2026, 15:31 UTC
-
-| Commit | What it does |
-|---|---|
-| [`66617ba`](https://github.com/thr32423/mb3d-rs/commit/66617ba3c14579ad8acb2f564cb786d2882b1a71) | Version number and release notes of this release |
-| [`e883349`](https://github.com/thr32423/mb3d-rs/commit/e883349dab09c59626caf6adc40e9eed1336ccf0) | Monte Carlo: the neural noise filter (Intel Open Image Denoise), shipped with the program; macOS packages with the JIT for testing |
-| [`8368442`](https://github.com/thr32423/mb3d-rs/commit/8368442472ba1504e425e0959374534eb7eabd49) | README: Updates for v0.2.75 |
-
-All 89 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 90 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers

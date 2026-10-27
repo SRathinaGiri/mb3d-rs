@@ -5,6 +5,15 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.79](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.79) · 27 Oct 2026, 03:50 UTC
+
+| Commit | What it does |
+|---|---|
+| [`af5c449`](https://github.com/thr32423/mb3d-rs/commit/af5c44969caa4c6df3c3d5a8eae9f366ed08bd40) | Version number and release notes of this release |
+| [`86b0997`](https://github.com/thr32423/mb3d-rs/commit/86b09973f3551f83f559563c1e841bb8d1fd4bf1) | macOS: the formulas compiled at run time on by default, for testing there |
+| [`988fc03`](https://github.com/thr32423/mb3d-rs/commit/988fc03b4f663c3518e3e2d7a84a72f14d87348e) | Hotkeys: a key combination per window brings it to the front, one closes the current window; set under Prefs > Hotkeys |
+| [`1e821fa`](https://github.com/thr32423/mb3d-rs/commit/1e821fabaea88d376615e6363acf7cfd5f21d8eb) | README: Updates for v0.2.78 |
+
 ## [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78) · 26 Oct 2026, 18:41 UTC
 
 | Commit | What it does |
