@@ -968,6 +968,8 @@ struct Gpu {
     name: String,
     /// the shaders can calculate in doubles (SHADER_F64, SHADER_INT64)
     f64: bool,
+    /// its place in [`cards`]
+    index: usize,
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
@@ -981,12 +983,12 @@ fn pipeline(g: &Gpu, code: &str, constants: &[(&str, f64)]) -> Result<std::sync:
 fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
     let key = pipeline_key(code, entry, constants);
     // compiled in the background (see [`prepare`]): wait for it
-    let pending = PREPARING.lock().unwrap().iter().find(|(k, _)| *k == key).map(|(_, f)| f.clone());
+    let pending = PREPARING.lock().unwrap().iter().find(|(c, k, _)| (*c, *k) == (g.index, key)).map(|(.., f)| f.clone());
     if let Some(f) = pending {
         while !f.load(Ordering::SeqCst) {
             std::thread::sleep(std::time::Duration::from_millis(5));
         }
-        if LOST.load(Ordering::SeqCst) {
+        if LOST.load(Ordering::SeqCst) && g.index == 0 || g.index > 0 && FAILED.load(Ordering::SeqCst) & (1 << g.index.min(63)) != 0 {
             return Err("the graphics card was lost".into());
         }
     }
@@ -1104,8 +1106,9 @@ fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {
     h.finish()
 }
 
-/// The pipelines being compiled in the background, with their flags.
-static PREPARING: Mutex<Vec<(u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
+/// The pipelines being compiled in the background (card, key), with their
+/// flags.
+static PREPARING: Mutex<Vec<(usize, u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
 
 /// Whether a shader is being compiled in the background right now.  Work
 /// sent to the card meanwhile waits behind the driver's compile (the
@@ -1141,21 +1144,27 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
         return std::sync::Arc::new(AtomicBool::new(true));
     }
     let mut list = PREPARING.lock().unwrap();
-    if let Some((_, f)) = list.iter().find(|(k, _)| *k == key) {
+    if let Some((.., f)) = list.iter().find(|(c, k, _)| (*c, *k) == (g.index, key)) {
         return f.clone();
     }
     let flag = std::sync::Arc::new(AtomicBool::new(false));
-    list.push((key, flag.clone()));
+    list.push((g.index, key, flag.clone()));
     let f = flag.clone();
     std::thread::spawn(move || {
-        // a panic (the device lost) switches the card off, as in `guard`:
-        // the waiters then find it off instead of waiting forever
+        // a panic (the device lost) switches the card off, as in `guard`
+        // (a further card: only that one), so that the waiters find it off
+        // instead of waiting forever
         if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| compile_entry(g, &code, entry, None, &constants, key))).is_err() {
-            LOST.store(true, Ordering::SeqCst);
-            set_status("CPU: the graphics card failed (compiling a shader); calculating on the CPU until the program is restarted".into());
+            if g.index == 0 {
+                LOST.store(true, Ordering::SeqCst);
+                set_status("CPU: the graphics card failed (compiling a shader); calculating on the CPU until the program is restarted".into());
+            } else {
+                FAILED.fetch_or(1 << g.index.min(63), Ordering::SeqCst);
+                eprintln!("graphics card {} failed (compiling a shader): left out until the program is restarted", g.index + 1);
+            }
         }
         f.store(true, Ordering::SeqCst);
-        PREPARING.lock().unwrap().retain(|(k, _)| *k != key);
+        PREPARING.lock().unwrap().retain(|(c, k, _)| (*c, *k) != (g.index, key));
     });
     flag
 }
@@ -1529,7 +1538,7 @@ async fn open(adapter: &wgpu::Adapter, index: usize) -> Result<Gpu, String> {
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
     device.on_uncaptured_error(std::sync::Arc::new(move |e: wgpu::Error| set_error(index, e.to_string())));
-    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64 })
+    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64, index })
 }
 
 /// The parameters in the order of the indices in `gpu_march.wgsl`.

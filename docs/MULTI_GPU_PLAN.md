@@ -75,7 +75,7 @@ Order: 1, 2, 4, 3.
   animation window; the swarm renders its frames one at a time (each on
   all cards). `mb3d animate --card / --cpu`. Card opened twice: all frames
   byte-identical to one card.
-- Not tested yet with a real second card or lavapipe. Threads a render
-  spawns that call the card without `gpu::as_card` use the first card
-  (results right; only Monte Carlo's card thread and reflections carry
-  the frame's card so far).
+- The threads a render starts that call the card carry the picture's card
+  (`gpu::card_here` / `as_card`: Monte Carlo's card thread, reflections,
+  volumetric light); background compiles and their failures are per card.
+- Not tested yet with a real second card or lavapipe.
