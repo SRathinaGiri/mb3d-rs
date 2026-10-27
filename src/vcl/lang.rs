@@ -205,7 +205,9 @@ pub fn wanted(s: &str) -> bool {
     let mut prev = false;
     for c in s.chars() {
         let a = c.is_alphabetic();
-        if a && prev {
+        // (one letter of another script is a word: 中, 幅; one Latin
+        // letter is a name or a unit: "X:", "1e-5")
+        if a && (prev || !c.is_ascii()) {
             return true;
         }
         prev = a;
@@ -520,6 +522,8 @@ mod tests {
     fn wanted_texts() {
         assert!(wanted("Calculate 3D") && wanted("Ds:") && wanted("&File"));
         assert!(!wanted("-") && !wanted("0.5") && !wanted("X:") && !wanted("1e-5") && !wanted(""));
+        // a one character text of another script (Japanese 中, 幅:)
+        assert!(wanted("中") && wanted("幅:") && wanted("高"));
     }
 
     #[test]
