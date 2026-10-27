@@ -418,7 +418,7 @@ pub fn aborted() -> bool {
 /// running when the window was closed did).
 pub fn wait_idle(max: std::time::Duration) {
     let t = std::time::Instant::now();
-    while (IN_FLIGHT.load(Ordering::SeqCst) > 0 || compiling()) && t.elapsed() < max {
+    while (IN_FLIGHT.load(Ordering::SeqCst) > 0 || compiling_any()) && t.elapsed() < max {
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
 }
@@ -1110,12 +1110,19 @@ fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {
 /// flags.
 static PREPARING: Mutex<Vec<(usize, u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
 
-/// Whether a shader is being compiled in the background right now.  Work
+/// Whether this thread's card compiles a shader in the background now.  Work
 /// sent to the card meanwhile waits behind the driver's compile (the
 /// screen space occlusion of a picture the CPU finished alone waited 13 s
 /// for a double precision shader it never used), so short passes run on
 /// the CPU then.
 pub fn compiling() -> bool {
+    let card = CARD.with(|c| c.get());
+    PREPARING.lock().map(|l| l.iter().any(|(c, ..)| *c == card)).unwrap_or(false)
+}
+
+/// Whether any card compiles a shader in the background (the program's end
+/// waits for those).
+fn compiling_any() -> bool {
     PREPARING.lock().map(|l| !l.is_empty()).unwrap_or(false)
 }
 
@@ -1126,7 +1133,7 @@ pub fn compiling() -> bool {
 pub fn wait_compiles(max: std::time::Duration) {
     let t = std::time::Instant::now();
     let mut said = false;
-    while compiling() && t.elapsed() < max {
+    while compiling_any() && t.elapsed() < max {
         if !said {
             eprintln!("  (waiting for the graphics card's shader compile, kept for the next time)");
             said = true;
@@ -2125,15 +2132,30 @@ pub struct RaySharing {
     pub cap: usize,
 }
 
+/// Whether this thread's card has the pipelines of a reflection batch with
+/// `o` compiled (else their compile starts in the background).
+fn reflect_ready(p: &CalcParams, o: &ReflectOpts) -> bool {
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return false };
+    let r_hs = !o.lights.is_empty() || o.soft_radius > 0.0;
+    let r_ao = o.ao.is_some();
+    let split = (r_hs || r_ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
+    let kinds: Vec<(bool, bool, bool)> = if split { vec![(true, false, false), (false, r_hs, r_ao)] } else { vec![(true, r_hs, r_ao)] };
+    kinds.into_iter().map(|(m, hs, ao)| prepare(g, sh.code.clone(), "main", reflect_constants(p, m, hs, ao))).collect::<Vec<_>>().iter().all(|f| f.load(Ordering::SeqCst))
+}
+
 /// Runs the tasks of the reflection pass on the graphics card (the march
 /// of every bounce with the normals, colour, shadows and ambient occlusion
 /// of its hit, as `reflect.rs` does on the CPU).
 pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
-    guard(|| on_cards(p, tasks.len(), share, 1, &|at, len, sh| reflect_batch_card(p, &tasks[at..at + len], at, o, sh, cancel)))
+    guard(|| {
+        on_cards(p, tasks.len(), share, 1, &|| reflect_ready(p, o), &|at, len, sh, offset, stop| {
+            reflect_batch_card(p, &tasks[at..at + len], offset, o, sh, &|| cancel() || stop())
+        })
+    })
 }
 
 /// `tasks` (the batch from `offset` on) on this thread's card.
-fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &ReflectOpts, share: Option<&RaySharing>, cancel: &dyn Fn() -> bool) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
     // every way out (an error, a panic of the card) ends the card's part:
     // the CPU's workers wait for `done`
     struct Done<'a>(Option<&'a RaySharing>);
@@ -2365,14 +2387,25 @@ static RAY_RATES: Mutex<[[f64; 64]; 2]> = Mutex::new([[0.0; 64]; 2]);
 type Batch<T> = Result<(Vec<T>, usize, Vec<usize>), String>;
 
 /// A batch of `n` rays on all the cards: each further card marches a slice
-/// at the front, sized by its speed, the first card the rest (`run` with
-/// the slice's start and length, and the sharing with the CPU for the first
-/// card), shared with the CPU as with one card.  The results as one card's;
-/// a further card that failed leaves its slice to the CPU.
-fn on_cards<T: Clone + Default + Send>(p: &CalcParams, n: usize, share: Option<&RaySharing>, kind: usize, run: &(dyn Fn(usize, usize, Option<&RaySharing>) -> Batch<T> + Sync)) -> Batch<T> {
-    let extra = if n >= 4096 { extra_cards(p) } else { Vec::new() };
+/// at the front, sized by its speed, the first card the rest, shared with
+/// the CPU as with one card (`run` with the slice's start and length, the
+/// sharing and the offset of its counts, and a stop).  A further card joins
+/// once its pipelines are compiled (`ready`, on that card).  When the first
+/// card is done, it takes over what a further card has not started yet, and
+/// does what it started as well (the first result counts, the other is
+/// stopped): a slow card does not hold up the batch.  The results as one
+/// card's; what nobody finished goes to the CPU.
+fn on_cards<T: Clone + Default + Send>(
+    p: &CalcParams,
+    n: usize,
+    share: Option<&RaySharing>,
+    kind: usize,
+    ready: &(dyn Fn() -> bool + Sync),
+    run: &(dyn Fn(usize, usize, Option<&RaySharing>, usize, &(dyn Fn() -> bool + Sync)) -> Batch<T> + Sync),
+) -> Batch<T> {
+    let extra: Vec<usize> = if n >= 4096 { extra_cards(p).into_iter().filter(|&k| on_card(k, ready)).collect() } else { Vec::new() };
     if extra.is_empty() {
-        return run(0, n, share);
+        return run(0, n, share, 0, &|| false);
     }
     // the cards' part: before the CPU's (with one card its limit)
     let region = share.map_or(n, |sh| sh.cap.min(n));
@@ -2391,6 +2424,14 @@ fn on_cards<T: Clone + Default + Send>(p: &CalcParams, n: usize, share: Option<&
         let mut st = sh.state.lock().unwrap();
         st.0 = st.0.max(at.min(st.1));
     }
+    // each slice's counts: the rays its card started (`.0`), the end it may
+    // go to (`.1`); whether its card is done, and told to stop
+    let counts: Vec<RaySharing> = slices
+        .iter()
+        .map(|&(_, _, len)| RaySharing { state: Mutex::new((0, len)), done: std::sync::Arc::new(AtomicBool::new(false)), tail: 0, cap: usize::MAX })
+        .collect();
+    let finished: Vec<AtomicBool> = slices.iter().map(|_| AtomicBool::new(false)).collect();
+    let stops: Vec<AtomicBool> = slices.iter().map(|_| AtomicBool::new(false)).collect();
     let set_rate = |k: usize, rays: usize, secs: f64| {
         if rays > 0 && secs > 0.0 {
             let r = &mut RAY_RATES.lock().unwrap()[kind][k.min(63)];
@@ -2398,51 +2439,101 @@ fn on_cards<T: Clone + Default + Send>(p: &CalcParams, n: usize, share: Option<&
             *r = if *r > 0.0 { 0.7 * *r + 0.3 * now } else { now };
         }
     };
-    let mut out: Vec<T> = vec![T::default(); n];
-    let mut left = Vec::new();
+    let debug = std::env::var_os("MB3D_CARDS_DEBUG").is_some();
     let mut first = None;
+    // per slice: the rays its card had started when the first card came,
+    // the first card's result for the rest and for those
+    let mut taken: Vec<(usize, Option<Batch<T>>, Option<Batch<T>>)> = slices.iter().map(|s| (s.2, None, None)).collect();
+    let mut theirs = Vec::new();
     std::thread::scope(|s| {
         let others: Vec<_> = slices
             .iter()
-            .map(|&(k, a, len)| {
+            .enumerate()
+            .map(|(i, &(k, a, len))| {
+                let (counts, finished, stops) = (&counts, &finished, &stops);
                 s.spawn(move || {
                     let t = std::time::Instant::now();
-                    let r = on_card(k, || guard(|| run(a, len, None)));
-                    (k, a, len, r, t.elapsed().as_secs_f64())
+                    let r = on_card(k, || guard(|| run(a, len, Some(&counts[i]), 0, &|| stops[i].load(Ordering::SeqCst))));
+                    finished[i].store(true, Ordering::SeqCst);
+                    (r, t.elapsed().as_secs_f64())
                 })
             })
             .collect();
         let t = std::time::Instant::now();
-        let r0 = run(at, n - at, share);
+        let r0 = run(at, n - at, share, at, &|| false);
         if let Ok((_, took, _)) = &r0 {
             set_rate(0, *took, t.elapsed().as_secs_f64());
         }
-        first = Some(r0);
-        for h in others {
-            let (k, a, len, r, secs) = h.join().unwrap_or_else(|_| (0, 0, 0, Err("a panic".into()), 0.0));
-            // (MB3D_CARDS_DEBUG: what each of the other cards did)
-            if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
-                eprintln!("card {}: {len} of {n} rays in {:.0} ms ({})", k + 1, secs * 1000.0, if r.is_ok() { "ok" } else { "failed" });
-            }
-            match r {
-                Ok((v, took, gave_up)) => {
-                    set_rate(k, took, secs);
-                    for (i, x) in v.into_iter().take(took.min(len)).enumerate() {
-                        out[a + i] = x;
-                    }
-                    left.extend((a + took.min(len))..(a + len));
-                    left.extend(gave_up.into_iter().filter(|&i| i < took).map(|i| a + i));
+        if r0.is_ok() {
+            for (i, &(k, a, len)) in slices.iter().enumerate() {
+                if finished[i].load(Ordering::SeqCst) {
+                    continue;
                 }
-                Err(e) => {
-                    if e != "cancelled" {
-                        eprintln!("graphics card {}: a batch of rays failed, done on the CPU: {e}", k + 1);
+                // what it has not started: no more for it, the first card's
+                let s0 = {
+                    let mut st = counts[i].state.lock().unwrap();
+                    st.1 = st.0;
+                    st.0
+                };
+                taken[i].0 = s0;
+                if s0 < len {
+                    taken[i].1 = Some(run(a + s0, len - s0, None, 0, &|| false));
+                }
+                // what it started: here too, the first one done counts
+                if s0 > 0 && !finished[i].load(Ordering::SeqCst) {
+                    let r = run(a, s0, None, 0, &|| finished[i].load(Ordering::SeqCst));
+                    if r.is_ok() {
+                        stops[i].store(true, Ordering::SeqCst);
+                        taken[i].2 = Some(r);
                     }
-                    left.extend(a..a + len);
+                }
+                if debug {
+                    eprintln!("card {}: slow, the first card took {} of its {len} rays (and did its {s0} started ones too: {})", k + 1, len - s0, taken[i].2.is_some());
                 }
             }
         }
+        first = Some(r0);
+        theirs = others.into_iter().map(|h| h.join().unwrap_or_else(|_| (Err("a panic".into()), 0.0))).collect();
     });
     let (v, took, gave_up) = first.unwrap()?;
+    let mut out: Vec<T> = vec![T::default(); n];
+    let mut left = Vec::new();
+    // a result for rays `from..from + len` of the batch (done ones in place,
+    // the others to the CPU)
+    let place = |from: usize, len: usize, r: Batch<T>, out: &mut Vec<T>, left: &mut Vec<usize>| match r {
+        Ok((v, took, gave_up)) => {
+            for (i, x) in v.into_iter().take(took.min(len)).enumerate() {
+                out[from + i] = x;
+            }
+            left.extend((from + took.min(len))..(from + len));
+            left.extend(gave_up.into_iter().filter(|&i| i < took.min(len)).map(|i| from + i));
+        }
+        Err(_) => left.extend(from..from + len),
+    };
+    for (i, (&(k, a, len), (r, secs))) in slices.iter().zip(theirs).enumerate() {
+        let (s0, rest, again) = std::mem::replace(&mut taken[i], (0, None, None));
+        let s0 = if rest.is_some() || again.is_some() { s0 } else { len };
+        if debug {
+            eprintln!("card {}: {len} of {n} rays in {:.0} ms ({})", k + 1, secs * 1000.0, if r.is_ok() { "ok" } else { "stopped or failed" });
+        }
+        match again {
+            Some(again) => place(a, s0, again, &mut out, &mut left),
+            None => {
+                if let Ok((_, t, _)) = &r {
+                    set_rate(k, *t, secs);
+                }
+                if let Err(e) = &r {
+                    if e != "cancelled" {
+                        eprintln!("graphics card {}: a batch of rays failed, done on the CPU: {e}", k + 1);
+                    }
+                }
+                place(a, s0, r, &mut out, &mut left);
+            }
+        }
+        if let Some(rest) = rest {
+            place(a + s0, len - s0, rest, &mut out, &mut left);
+        }
+    }
     // (as long as the first card's: Monte Carlo its done rays, reflections all)
     let len = at + v.len();
     for (i, x) in v.into_iter().enumerate() {
@@ -2562,11 +2653,15 @@ const MC_WORDS: usize = 23;
 /// returns the results (those the card did not take are default), the
 /// number it took and those of them it did not finish.
 pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
-    guard(|| on_cards(p, tasks.len(), share, 0, &|at, len, sh| mc_batch_card(p, &tasks[at..at + len], at, secant, sh)))
+    guard(|| {
+        on_cards(p, tasks.len(), share, 0, &|| mc_prepare(p).is_ok_and(|f| f.load(Ordering::SeqCst)), &|at, len, sh, offset, stop| {
+            mc_batch_card(p, &tasks[at..at + len], offset, secant, sh, stop)
+        })
+    })
 }
 
 /// `tasks` (the batch from `offset` on) on this thread's card.
-fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
+fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, secant: bool, share: Option<&RaySharing>, stop: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
     use crate::mc::McRes;
     if tasks.is_empty() {
         if let Some(sh) = share {
@@ -2672,7 +2767,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, seca
         n,
         &lim,
         &give_up,
-        &|| false,
+        &|| stop(),
         |enc, groups| {
             let mut pass = enc.begin_compute_pass(&Default::default());
             pass.set_pipeline(&pl);

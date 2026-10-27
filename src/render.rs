@@ -949,29 +949,47 @@ fn post_shared(
     // the rows still free: [top, bottom)
     let free = Mutex::new((0usize, h));
     let claimed = Mutex::new(Vec::new());
-    let delivered: Vec<std::sync::atomic::AtomicBool> = (0..h).map(|_| std::sync::atomic::AtomicBool::new(false)).collect();
+    // which rows are where (see `Board`), and how many the cards did
+    let board = Board::new(h);
+    let card_rows = AtomicUsize::new(0);
     let mut card_err = None;
-    // a band of rows for a card (smaller as the rows run out, so that
-    // all end together), the G-buffer rows it needs, a row it finished
-    let band = |band: usize| {
+    let left = || {
+        let f = free.lock().unwrap();
+        f.0 < f.1
+    };
+    // a band of rows for card `k` (smaller as the rows run out, so that
+    // all end together; then rows another card took and has not
+    // delivered), the G-buffer rows it needs, a row it finished (the
+    // first result of the row)
+    let band = |k: usize, band: usize| {
         let mut f = free.lock().unwrap();
-        (f.0 < f.1).then(|| {
+        let r = if f.0 < f.1 {
             let r = (f.0, band.min(((f.1 - f.0) / 4).max(16)).min(f.1 - f.0));
             f.0 += r.1;
+            board.took(k, r);
+            Some(r)
+        } else {
+            drop(f);
+            board.steal(Some(k), band)
+        };
+        if let Some(r) = r {
             claimed.lock().unwrap().push(r);
-            r
-        })
+        }
+        r
     };
     let upload = |row0: usize, n: usize| (row0..(row0 + n).min(h)).flat_map(|y| rows[y].lock().unwrap().to_vec()).collect();
     let done_row = |y: usize, row: &[SiLight]| {
-        if y < h {
+        if y < h && board.deliver(y) {
             let mut dst = rows[y].lock().unwrap();
             let n = row.len().min(dst.len());
             dst[..n].copy_from_slice(&row[..n]);
-            delivered[y].store(true, Ordering::Relaxed);
+            drop(dst);
+            card_rows.fetch_add(1, Ordering::Relaxed);
             tick(y);
         }
     };
+    // card `k` stops once the free rows are gone and all of its rows came
+    let stop = |k: usize| cancel() || !left() && board.done_for(k);
     std::thread::scope(|s| {
         for _ in 0..threads.max(1) {
             s.spawn(|| loop {
@@ -980,26 +998,49 @@ fn post_shared(
                 }
                 let y = {
                     let mut f = free.lock().unwrap();
-                    if f.1 <= f.0 {
-                        break;
-                    }
-                    f.1 -= 1;
-                    f.1
+                    (f.1 > f.0).then(|| {
+                        f.1 -= 1;
+                        f.1
+                    })
                 };
-                cpu(y, &mut rows[y].lock().unwrap());
-                tick(y);
+                match y {
+                    Some(y) => {
+                        board.set_delivered(y);
+                        cpu(y, &mut rows[y].lock().unwrap());
+                        tick(y);
+                    }
+                    // a row a card took and has not delivered: on a copy,
+                    // kept when it comes first
+                    None => match board.steal(None, 1) {
+                        Some((y, _)) => {
+                            let mut row = rows[y].lock().unwrap().to_vec();
+                            cpu(y, &mut row);
+                            if board.deliver(y) {
+                                rows[y].lock().unwrap().copy_from_slice(&row);
+                                tick(y);
+                            }
+                        }
+                        None => break,
+                    },
+                }
             });
         }
-        // the other cards of the computer too (what one of them took and
-        // did not deliver is done below, as the first card's)
+        // the other cards of the computer too, once their pipelines are
+        // compiled (what one of them took and did not deliver is done
+        // below, as the first card's)
         for k in crate::gpu::extra_cards(p) {
-            let (band, upload, done_row) = (&band, &upload, &done_row);
+            let (band, upload, done_row, stop, left) = (&band, &upload, &done_row, &stop, &left);
             s.spawn(move || {
-                let _ = crate::gpu::on_card(k, || crate::gpu::post_bands(p, job, band, upload, cancel, &mut |y, row| done_row(y, row)));
+                crate::gpu::on_card(k, || {
+                    let Ok(flags) = crate::gpu::march_prepare(p, job) else { return };
+                    if compiled_in_time(&flags, left, cancel) {
+                        let _ = crate::gpu::post_bands(p, job, &|n| band(k, n), upload, &|| stop(k), &mut |y, row| done_row(y, row));
+                    }
+                })
             });
         }
-        let r = crate::gpu::post_bands(p, job, &band, &upload, cancel, &mut |y, row| done_row(y, row));
-        if let Err(e) = r {
+        let r = crate::gpu::post_bands(p, job, &|n| band(0, n), &upload, &|| stop(0), &mut |y, row| done_row(y, row));
+        if let Err(e) = r.or_else(|e| if e == "cancelled" && !cancel() { Ok(()) } else { Err(e) }) {
             card_err = Some(e);
         }
     });
@@ -1010,7 +1051,7 @@ fn post_shared(
     if let Some(e) = &card_err {
         eprintln!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
     }
-    let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !delivered[y].load(Ordering::Relaxed)).collect();
+    let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !board.delivered[y].load(Ordering::Relaxed)).collect();
     if !redo.is_empty() {
         let next = AtomicUsize::new(0);
         std::thread::scope(|s| {
@@ -1028,7 +1069,7 @@ fn post_shared(
             return Err("cancelled".into());
         }
     }
-    Ok(delivered.iter().filter(|d| d.load(Ordering::Relaxed)).count())
+    Ok(card_rows.into_inner())
 }
 
 /// The probe's limit: the mean difference of the colours (a share of full
@@ -1293,6 +1334,107 @@ pub struct Probe {
 #[cfg(feature = "gpu")]
 const POST_ON_CARD_RATIO: f64 = 1.5;
 
+/// The rows of a picture shared out to the cards (and the CPU's threads):
+/// the bands each card took, which rows are delivered (the first result of
+/// a row counts, a later one is dropped) and which have a second worker on
+/// them.  Once the free rows are gone, a worker without work takes rows a
+/// card took and has not delivered yet, so that a slow card no longer
+/// holds up the picture; a card whose rows all came from others stops.
+#[cfg(feature = "gpu")]
+struct Board {
+    delivered: Vec<std::sync::atomic::AtomicBool>,
+    backup: Vec<std::sync::atomic::AtomicBool>,
+    /// (card, first row, rows)
+    bands: std::sync::Mutex<Vec<(usize, usize, usize)>>,
+}
+
+#[cfg(feature = "gpu")]
+impl Board {
+    fn new(h: usize) -> Self {
+        let flags = || (0..h).map(|_| std::sync::atomic::AtomicBool::new(false)).collect();
+        Board { delivered: flags(), backup: flags(), bands: Default::default() }
+    }
+
+    /// `card` took the band `r` (first row, rows).
+    fn took(&self, card: usize, r: (usize, usize)) {
+        self.bands.lock().unwrap().push((card, r.0, r.1));
+    }
+
+    /// Row `y` arrived: true for its first result (that one counts).
+    fn deliver(&self, y: usize) -> bool {
+        !self.delivered[y].swap(true, Ordering::SeqCst)
+    }
+
+    /// Row `y` is delivered (also a result that replaces the first).
+    fn set_delivered(&self, y: usize) {
+        self.delivered[y].store(true, Ordering::SeqCst);
+    }
+
+    /// Up to `max` rows in a row that another card took and has not
+    /// delivered, nobody else backing them up: now also `card`'s (noted as
+    /// its band; `card` None: a CPU thread, one row).
+    fn steal(&self, card: Option<usize>, max: usize) -> Option<(usize, usize)> {
+        let bands = self.bands.lock().unwrap().clone();
+        let open = |y: usize| !self.delivered[y].load(Ordering::SeqCst) && !self.backup[y].load(Ordering::SeqCst);
+        for (k, r0, n) in bands {
+            if Some(k) == card {
+                continue;
+            }
+            let Some(y) = (r0..r0 + n).find(|&y| open(y)) else { continue };
+            let mut m = 0;
+            while y + m < r0 + n && m < max.max(1) && open(y + m) && !self.backup[y + m].swap(true, Ordering::SeqCst) {
+                m += 1;
+            }
+            if m > 0 {
+                if let Some(c) = card {
+                    self.took(c, (y, m));
+                }
+                return Some((y, m));
+            }
+        }
+        None
+    }
+
+    /// All the rows `card` took are delivered (by it or by others).
+    fn done_for(&self, card: usize) -> bool {
+        self.bands.lock().unwrap().iter().filter(|b| b.0 == card).all(|&(_, r0, n)| (r0..r0 + n).all(|y| self.delivered[y].load(Ordering::SeqCst)))
+    }
+}
+
+/// Whether the pipelines of `flags` (compiling in the background on a
+/// further card) are ready before the rows run out (`left`): the card
+/// joins then; else it stays out of this picture and its compile goes on
+/// for the next (a picture does not wait for a slow compile).
+#[cfg(feature = "gpu")]
+fn compiled_in_time(flags: &[std::sync::Arc<std::sync::atomic::AtomicBool>], left: &dyn Fn() -> bool, cancel: &(dyn Fn() -> bool + Sync)) -> bool {
+    loop {
+        if flags.iter().all(|f| f.load(Ordering::SeqCst)) {
+            return true;
+        }
+        if !left() || cancel() {
+            return false;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+}
+
+/// A card's march that ended because others delivered its rows ("cancelled"
+/// without a Stop) as an ended one; its rows are unusable all the same when
+/// they overflowed single precision.
+#[cfg(feature = "gpu")]
+fn stopped_as_done(r: Result<(), String>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    match r {
+        Err(e) if e == "cancelled" && !cancel() => {
+            if crate::gpu::rows_overflowed() {
+                Err("single precision overflows".into())
+            } else {
+                Ok(())
+            }
+        }
+        r => r,
+    }
+}
+
 /// The march with the CPU threads taking rows from the bottom at once and
 /// the card from the top once `ready` (its shader compiled) - until they
 /// meet.  Returns the G-buffer and the number of rows the card marched
@@ -1334,6 +1476,9 @@ fn march_mixed(
     // the card's rows go to the checkpoint after its verdict on them (see
     // `gpu::rows_overflowed`): they wait here
     let pending = Mutex::new(Vec::new());
+    // which rows are where (see `Board`)
+    let board = Board::new(h);
+    // (the callers decide whether the row counts: `Board::deliver`)
     let put = |y: usize, row: &[SiLight], card: bool| {
         if let Some(f) = sink {
             f(y, row);
@@ -1355,23 +1500,40 @@ fn march_mixed(
     let mut card_ok = false;
     // the first card's choice of precision, for the others (see below)
     let decided: Mutex<Option<Option<CalcParams>>> = Mutex::new(None);
-    // a band of free rows for a card (up to the next row of the
-    // checkpoint), noted in `claimed`
-    let claim = |band: usize, claimed: &Mutex<Vec<(usize, usize)>>| {
+    let left = || {
+        let f = free.lock().unwrap();
+        f.0 < f.1
+    };
+    // a band of free rows for card `k` (up to the next row of the
+    // checkpoint), noted in `claimed`; once they are gone, rows another
+    // card took and has not delivered
+    let claim = |k: usize, band: usize, claimed: &Mutex<Vec<(usize, usize)>>| {
         let mut f = free.lock().unwrap();
         while f.0 < f.1 && ck_done(ck, f.0) {
             f.0 += 1;
         }
-        (f.0 < f.1).then(|| {
+        let r = if f.0 < f.1 {
             let n = (f.0..f.1).take(band).take_while(|&y| !ck_done(ck, y)).count();
             let r = (f.0, n);
             f.0 += r.1;
+            board.took(k, r);
+            Some(r)
+        } else {
+            drop(f);
+            board.steal(Some(k), band)
+        };
+        if let Some(r) = r {
             claimed.lock().unwrap().push(r);
-            r
-        })
+        }
+        r
     };
-    // a row a card marched
+    // card `k` stops once the free rows are gone and all of its rows came
+    let stop = |k: usize| cancel() || !left() && board.done_for(k);
+    // a row a card marched (the first result of the row)
     let card_row = |y: usize, row: &[SiLight]| {
+        if !board.deliver(y) {
+            return;
+        }
         on_card.fetch_add(1, Ordering::Relaxed);
         CARD_ROWS.fetch_add(1, Ordering::Relaxed);
         if finish.load(Ordering::SeqCst) {
@@ -1398,6 +1560,8 @@ fn march_mixed(
                     put(y, &finish_row(p, y, &row), true);
                     continue;
                 }
+                // (rows a card took and has not delivered: see `Board`)
+                let stolen = || if cpu_rows && !left() { board.steal(None, 1).map(|r| r.0) } else { None };
                 let y = if cpu_rows {
                     let mut f = free.lock().unwrap();
                     while f.1 > f.0 && ck_done(ck, f.1 - 1) {
@@ -1411,10 +1575,21 @@ fn march_mixed(
                     None
                 };
                 match y {
-                    Some(y) => put(y, &cpu_row(p, y), false),
-                    // (rows of the card still to come)
-                    None if finish.load(Ordering::SeqCst) && !card_done.load(Ordering::SeqCst) => std::thread::sleep(std::time::Duration::from_micros(500)),
-                    None => break,
+                    Some(y) => {
+                        board.set_delivered(y);
+                        put(y, &cpu_row(p, y), false)
+                    }
+                    None => match stolen() {
+                        Some(y) => {
+                            let row = cpu_row(p, y);
+                            if board.deliver(y) {
+                                put(y, &row, false);
+                            }
+                        }
+                        // (rows of the card still to come)
+                        None if finish.load(Ordering::SeqCst) && !card_done.load(Ordering::SeqCst) => std::thread::sleep(std::time::Duration::from_micros(500)),
+                        None => break,
+                    },
                 }
             });
         }
@@ -1422,7 +1597,7 @@ fn march_mixed(
         // once the first card has chosen the precision (the parameters in
         // double precision, or None: as they are)
         for k in crate::gpu::extra_cards(p) {
-            let (decided, claim, card_row, free) = (&decided, &claim, &card_row, &free);
+            let (decided, claim, card_row, free, stop, board, left) = (&decided, &claim, &card_row, &free, &stop, &board, &left);
             s.spawn(move || {
                 crate::gpu::on_card(k, || {
                     let cp = loop {
@@ -1439,15 +1614,17 @@ fn march_mixed(
                         std::thread::sleep(std::time::Duration::from_millis(10));
                     };
                     let cp = cp.as_ref().unwrap_or(p);
-                    if crate::gpu::unsupported(cp).is_some() {
+                    let Ok(flags) = crate::gpu::march_prepare(cp, &PostJob::default()) else { return };
+                    if !compiled_in_time(&flags, &left, cancel) {
                         return;
                     }
                     let claimed = Mutex::new(Vec::new());
                     let mine = AtomicUsize::new(0);
-                    let r = crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(band, &claimed), cancel, &mut |y, row| {
+                    let r = crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(k, band, &claimed), &|| stop(k), &mut |y, row| {
                         mine.fetch_add(1, Ordering::Relaxed);
                         card_row(y, row)
                     });
+                    let r = stopped_as_done(r, cancel);
                     // (MB3D_CARDS_DEBUG: what each of the other cards did)
                     if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
                         eprintln!("card {}: {} rows marched ({r:?})", k + 1, mine.load(Ordering::Relaxed));
@@ -1460,6 +1637,7 @@ fn march_mixed(
                                 if cancel() {
                                     return;
                                 }
+                                board.set_delivered(y);
                                 put(y, &cpu_row(p, y), false);
                             }
                         }
@@ -1497,7 +1675,8 @@ fn march_mixed(
         *decided.lock().unwrap() = Some(switched.as_ref().map(|(pd, _)| pd.clone()));
         let claimed = Mutex::new(Vec::new());
         let t_card = Instant::now();
-        let r = crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(band, &claimed), cancel, &mut |y, row| card_row(y, row));
+        let r = crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(0, band, &claimed), &|| stop(0), &mut |y, row| card_row(y, row));
+        let r = stopped_as_done(r, cancel);
         *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
         // (stopped: its rows are kept when the card's verdict on them so
         // far is good)
@@ -1585,19 +1764,42 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
     let next = Mutex::new(0usize);
     let done = AtomicUsize::new(wm.done_in(ck));
     progress(done.load(Ordering::Relaxed), wm.total());
-    let band = |band: usize| {
+    // which rows are where (see `Board`)
+    let board = Board::new(h);
+    let left = || {
         let mut y = next.lock().unwrap();
         while *y < h && ck_done(ck, *y) {
             *y += 1;
         }
-        (*y < h).then(|| {
+        *y < h
+    };
+    // a band for card `k`: free rows, then rows another card took and has
+    // not delivered
+    let band = |k: usize, band: usize| {
+        let mut y = next.lock().unwrap();
+        while *y < h && ck_done(ck, *y) {
+            *y += 1;
+        }
+        if *y < h {
             let n = (*y..h).take(band).take_while(|&r| !ck_done(ck, r)).count();
             let r = (*y, n);
             *y += n;
-            r
-        })
+            board.took(k, r);
+            Some(r)
+        } else {
+            drop(y);
+            board.steal(Some(k), band)
+        }
     };
-    let row_in = |y: usize, row: &[SiLight]| {
+    // card `k` stops once the free rows are gone and all of its rows came
+    let stop = |k: usize| cancel() || !left() && board.done_for(k);
+    // a row: its first result counts (`force`: it replaces that one)
+    let row_in = |y: usize, row: &[SiLight], force: bool| {
+        if force {
+            board.set_delivered(y);
+        } else if !board.deliver(y) {
+            return;
+        }
         if let Some(f) = sink {
             f(y, row);
         }
@@ -1611,27 +1813,33 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
     let mut r = Ok(());
     std::thread::scope(|s| {
         for k in crate::gpu::extra_cards(p) {
-            let (band, row_in, failed) = (&band, &row_in, &failed);
+            let (band, row_in, failed, stop, left) = (&band, &row_in, &failed, &stop, &left);
             s.spawn(move || {
                 crate::gpu::on_card(k, || {
+                    // (once its pipelines are compiled)
+                    let Ok(flags) = crate::gpu::march_prepare(p, post) else { return };
+                    if !compiled_in_time(&flags, left, cancel) {
+                        return;
+                    }
                     let claimed = Mutex::new(Vec::new());
                     let mine = AtomicUsize::new(0);
                     let rk = crate::gpu::march_bands(
                         p,
                         post,
                         &|n| {
-                            let b = band(n);
+                            let b = band(k, n);
                             if let Some(b) = b {
                                 claimed.lock().unwrap().push(b);
                             }
                             b
                         },
-                        cancel,
+                        &|| stop(k),
                         &mut |y, row| {
                             mine.fetch_add(1, Ordering::Relaxed);
-                            row_in(y, row)
+                            row_in(y, row, false)
                         },
                     );
+                    let rk = stopped_as_done(rk, cancel);
                     if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
                         eprintln!("card {}: {} rows marched ({rk:?})", k + 1, mine.load(Ordering::Relaxed));
                     }
@@ -1641,7 +1849,7 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
                 });
             });
         }
-        r = crate::gpu::march_bands(p, post, &band, cancel, &mut |y, row| row_in(y, row));
+        r = stopped_as_done(crate::gpu::march_bands(p, post, &|n| band(0, n), &|| stop(0), &mut |y, row| row_in(y, row, false)), cancel);
     });
     // (on the first card again)
     let redo = failed.into_inner().unwrap();
@@ -1656,7 +1864,7 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
                 redo.get(*i - 1).copied()
             },
             cancel,
-            &mut |y, row| row_in(y, row),
+            &mut |y, row| row_in(y, row, true),
         );
     }
     drop(rows);
