@@ -5,6 +5,15 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81) · 28 Oct 2026, 06:45 UTC
+
+| Commit | What it does |
+|---|---|
+| [`30158e3`](https://github.com/thr32423/mb3d-rs/commit/30158e3840ba84159e24f8bd94b62a7e7c944c8c) | Version number and release notes of this release |
+| [`028b520`](https://github.com/thr32423/mb3d-rs/commit/028b5207fd27babd11002d03f876bb37b0f85b1b) | Memory: the card's ambient occlusion uploads its depth buffer and the parameters of all its levels once (an upload per block and level queued 60 GB and left 7 GB behind at 12000 x 6000: the Windows "freeze" of big pictures), the reflections in bands of 2M pixels at every size with their lists dropped as used (1.1 GB instead of up to 4.5 GB), a question before Calculate 3D when the picture needs more than the free memory (Windows and macOS too, no longer a Linux-only refusal), .m3i files written row by row; MB3D_STAGE_TIMES and MB3D_GPU_TIMING print the process memory |
+| [`7948665`](https://github.com/thr32423/mb3d-rs/commit/79486652c981b41eb703e194149ad6bf54dbc88d) | Languages: a one character text of another script (Japanese 中, 幅:) is translated back when the language changes |
+| [`f7c79d5`](https://github.com/thr32423/mb3d-rs/commit/f7c79d5b6ac78ff9f69f63f3abca5c49ced9e5ab) | README: Updates for v0.2.80 |
+
 ## [v0.2.80](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.80) · 27 Oct 2026, 17:55 UTC
 
 | Commit | What it does |

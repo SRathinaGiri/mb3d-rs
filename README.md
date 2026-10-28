@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.80](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.80)** (27 Oct 2026, 17:55 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81)** (28 Oct 2026, 06:45 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1039,6 +1039,15 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81) · 28 Oct 2026, 06:45 UTC
+
+| Commit | What it does |
+|---|---|
+| [`30158e3`](https://github.com/thr32423/mb3d-rs/commit/30158e3840ba84159e24f8bd94b62a7e7c944c8c) | Version number and release notes of this release |
+| [`028b520`](https://github.com/thr32423/mb3d-rs/commit/028b5207fd27babd11002d03f876bb37b0f85b1b) | Memory: the card's ambient occlusion uploads its depth buffer and the parameters of all its levels once (an upload per block and level queued 60 GB and left 7 GB behind at 12000 x 6000: the Windows "freeze" of big pictures), the reflections in bands of 2M pixels at every size with their lists dropped as used (1.1 GB instead of up to 4.5 GB), a question before Calculate 3D when the picture needs more than the free memory (Windows and macOS too, no longer a Linux-only refusal), .m3i files written row by row; MB3D_STAGE_TIMES and MB3D_GPU_TIMING print the process memory |
+| [`7948665`](https://github.com/thr32423/mb3d-rs/commit/79486652c981b41eb703e194149ad6bf54dbc88d) | Languages: a one character text of another script (Japanese 中, 幅:) is translated back when the language changes |
+| [`f7c79d5`](https://github.com/thr32423/mb3d-rs/commit/f7c79d5b6ac78ff9f69f63f3abca5c49ced9e5ab) | README: Updates for v0.2.80 |
+
 ### [v0.2.80](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.80) · 27 Oct 2026, 17:55 UTC
 
 | Commit | What it does |
@@ -1075,16 +1084,7 @@ of a release are on its page. Times are in UTC.
 | [`988fc03`](https://github.com/thr32423/mb3d-rs/commit/988fc03b4f663c3518e3e2d7a84a72f14d87348e) | Hotkeys: a key combination per window brings it to the front, one closes the current window; set under Prefs > Hotkeys |
 | [`1e821fa`](https://github.com/thr32423/mb3d-rs/commit/1e821fabaea88d376615e6363acf7cfd5f21d8eb) | README: Updates for v0.2.78 |
 
-### [v0.2.78](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.78) · 26 Oct 2026, 18:41 UTC
-
-| Commit | What it does |
-|---|---|
-| [`ec68907`](https://github.com/thr32423/mb3d-rs/commit/ec68907d338c04aab65db16b2684ce1562561b6f) | Version number and release notes of this release |
-| [`de9eac4`](https://github.com/thr32423/mb3d-rs/commit/de9eac436b621786362186772c521862509dcbe0) | Hindi: the shaper's font, plan and the line widths kept, so the windows no longer freeze while they lay out |
-| [`01ec189`](https://github.com/thr32423/mb3d-rs/commit/01ec18959de088704fb5b0cf5811d13fe3963343) | Languages: Hindi, its joined letters shaped with rustybuzz in Noto Sans Devanagari |
-| [`0a20527`](https://github.com/thr32423/mb3d-rs/commit/0a20527dd9eaa2739a57a5cd0fd6de61cba25326) | README: Updates for v0.2.77 |
-
-All 91 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 92 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
