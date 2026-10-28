@@ -1355,20 +1355,31 @@ impl<'a, 'c> SrTracer<'a, 'c> {
 }
 
 #[inline]
+/// The resident memory of the process in MB (Linux; 0 elsewhere): the
+/// memory prints of `MB3D_GPU_TIMING`.
+pub fn rss_mb() -> u64 {
+    std::fs::read_to_string("/proc/self/status")
+        .ok()
+        .and_then(|s| s.lines().find(|l| l.starts_with("VmRSS:")).and_then(|l| l.split_whitespace().nth(1)?.parse::<u64>().ok()))
+        .unwrap_or(0)
+        / 1024
+}
+
 fn s3d(v: S3) -> Vec3 {
     [v[0] as f64, v[1] as f64, v[2] as f64]
 }
 
 /// The pixels of one [`reflections_gpu`] call: its state (surfaces, ray
 /// stacks, the card's task buffers) is about 1.2 KB per pixel, so big
-/// pictures go through in bands of rows: 8M pixels while the picture has
-/// no more (4K UHD stays one band; each band costs the card ~1.5 s
-/// ramp-up), 2M pixels (2.5 GB) for bigger ones, whose other buffers
-/// need the memory (15000x20000 at once peaked at 80 GB; 15360x15360 in
-/// 8M bands ran out of memory with 32 GB, issue #7).
-/// `MB3D_REFLECT_BAND_PIXELS` changes it (tests).
+/// pictures go through in bands of rows of 2M pixels: a band's state is
+/// about 550 bytes per pixel (1.1 GB), whatever the picture's size, so
+/// that a PC with 8 GB keeps up (before 2026-10-28 a picture of up to 8M
+/// pixels was one band of up to 4.5 GB; each band costs the card about
+/// 1.5 s of ramp-up, 5 % of the pass at 4.5M pixels; 15000x20000 at once
+/// peaked at 80 GB; 15360x15360 in 8M bands ran out of memory with 32 GB,
+/// issue #7).  `MB3D_REFLECT_BAND_PIXELS` changes it (tests).
 #[cfg(feature = "gpu")]
-const REFLECT_BAND_PIXELS: usize = 1 << 23;
+const REFLECT_BAND_PIXELS: usize = 1 << 21;
 #[cfg(feature = "gpu")]
 const REFLECT_BAND_PIXELS_BIG: usize = 1 << 21;
 
@@ -1400,6 +1411,9 @@ pub fn reflections<S: Sample>(
         let rows = (band_px / wu).max(1);
         // (the bands come in order; weighed by their surface pixels)
         let sw = crate::render::RowWeights::surface(gbuf, wu, hu);
+        if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+            eprintln!("  reflections: {wu}x{hu} in bands of {rows} rows, rss {} MB", rss_mb());
+        }
         let mut q = p.clone();
         let mut y = 0;
         while y < hu {
@@ -1685,13 +1699,18 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         }
     }
     let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    if timing {
+        eprintln!("  reflections: band of {wu}x{hu}, {} surfaces, rss {} MB (RPix {} B, Frame {} B, RayHit {} B, ReflectHit {} B, ReflectTask {} B)", tasks.len(), rss_mb(), std::mem::size_of::<RPix>(), std::mem::size_of::<Frame>(), std::mem::size_of::<RayHit>(), std::mem::size_of::<crate::gpu::ReflectHit>(), std::mem::size_of::<ReflectTask>());
+    }
     let t0 = std::time::Instant::now();
     let (hits, _, _) = crate::gpu::reflect_batch(p, &tasks, &ReflectOpts { surface: true, hs_mul, ..Default::default() }, None, cancel)?;
     if timing {
-        eprintln!("  reflections: {} surfaces in {:.2} s", tasks.len(), t0.elapsed().as_secs_f64());
+        eprintln!("  reflections: {} surfaces in {:.2} s, rss {} MB", tasks.len(), t0.elapsed().as_secs_f64(), rss_mb());
     }
     let chunk = |n: usize| n.div_ceil(threads).max(1);
     let pairs: Vec<(usize, crate::gpu::ReflectHit)> = tasks.iter().zip(&hits).map(|(t, h)| (t.pixel as usize, *h)).collect();
+    // (the memory of a band: the lists are dropped as soon as they are used)
+    drop((tasks, hits));
     std::thread::scope(|s| {
         let mut rest: &mut [Option<RPix>] = &mut px;
         let mut start = 0usize;
@@ -1783,6 +1802,10 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
             start = hi;
         }
     });
+    drop(pairs);
+    if timing {
+        eprintln!("  reflections: pixel states built, rss {} MB", rss_mb());
+    }
     // the rays: every round runs each pixel to its next ray, the rays are
     // marched in a batch per bounce (the AO quality depends on it)
     let rit_q = |rit: i32| match rit {
@@ -2039,10 +2062,11 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         let n_cpu_done = all.len() - n_gpu;
         if timing {
             eprintln!(
-                "  reflections: round {round}: {} rays, {n_gpu} on the card, {n_cpu_done} on the CPU, in {:.2} s (CPU's part {:.0} %)",
+                "  reflections: round {round}: {} rays, {n_gpu} on the card, {n_cpu_done} on the CPU, in {:.2} s (CPU's part {:.0} %), rss {} MB",
                 all.len(),
                 t0.elapsed().as_secs_f64(),
-                cpu_part[round % 2].unwrap_or(0.0) * 100.0
+                cpu_part[round % 2].unwrap_or(0.0) * 100.0,
+                rss_mb()
             );
         }
         for ((i, _), h) in all.iter().zip(res) {
@@ -2052,7 +2076,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         }
     }
     if timing {
-        eprintln!("  reflections: {round} rounds, shading {t_steps:.2} s");
+        eprintln!("  reflections: {round} rounds, shading {t_steps:.2} s, rss {} MB", rss_mb());
     }
     // the colours
     for (i, q) in px.iter().enumerate() {

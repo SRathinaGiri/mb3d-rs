@@ -3095,7 +3095,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         .map(|b| wgpu::BindGroupLayoutEntry {
             binding: b,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: b < 2 }, has_dynamic_offset: false, min_binding_size: None },
+            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: b < 2 }, has_dynamic_offset: b == 0, min_binding_size: None },
             count: None,
         })
         .collect();
@@ -3114,6 +3114,13 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     let hlo = (h as f32 * p.border_mirror).round_ties_even() as i32;
     let hhi = h as i32 - 1 - hlo;
     let passes = if p.random > 0 { p.random as usize } else { 1 };
+    let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    let mem = |what: &str| {
+        if timing {
+            eprintln!("    ssao24 card: {what}, rss {} MB", crate::reflect::rss_mb());
+        }
+    };
+    mem("start");
     let first: Vec<u32> = gbuf.iter().map(|s| if s.zpos() < 32768 { (s.zpos_fine & 0xFFFF_FF00) >> 1 } else { 0 }).collect();
     let z0: Vec<u32> = gbuf.iter().zip(&first).map(|(s, z)| z | (s.zpos() < 32768) as u32).collect();
     // the angles of a block of rows: 64 bytes per pixel, at most 64 MB
@@ -3124,20 +3131,116 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     let make = |label: &'static str, size: usize, usage: wgpu::BufferUsages| {
         g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (size.max(1) * 4) as u64, usage, mapped_at_creation: false })
     };
-    let par = make("ssao params", 32, storage);
+    // the blocks of rows (y0, y1)
+    let block_list: Vec<(usize, usize)> = (0..blocks).map(|b| (b * rows, ((b + 1) * rows).min(h))).filter(|(a, b)| a < b).collect();
+    // the parameters of every (pass, block, level), two sets each (the
+    // sampling, and the blur that makes the next level), in one buffer
+    // bound with a dynamic offset: one upload for the whole stage (an
+    // upload and two submissions per level, 4500 of them for a 12000 x
+    // 6000 picture, left the driver holding 7 GB; 2026-10-28)
+    let align = (g.device.limits().min_storage_buffer_offset_alignment as usize).max(128);
+    let stride = align / 4;
+    let params_of = |pass: usize, y0: usize, y1: usize, level: usize| -> Vec<u32> {
+        // the constants of the level (ssao::ssao24)
+        let mut sit = (z_scale / 22000.0 * 4096.0) as f32;
+        let mut szrt = thr * if p.t0 { 1.0 } else { 0.7 } * 4096.0 / sit * ((levels as f32 / level as f32).sqrt().sqrt());
+        if p.t0 {
+            szrt *= szrt;
+        }
+        let rnd = p.random > 0;
+        let at = if rnd {
+            (thr * if p.t0 { 0.64 } else { 0.65 } * (levels as f32).sqrt().sqrt()).atan()
+        } else {
+            (thr * 0.6 * (levels as f32).sqrt().sqrt()).atan()
+        };
+        let smul = 1.5 * 32767.0 / (std::f32::consts::PI * 32.0 * if p.t0 { at } else { at.powf(0.9) }) / passes as f32;
+        let imin = 16383 / passes as i32;
+        let iand = (1i64 << (level - 1)) - 1;
+        let ssub = iand as f32 * 0.5;
+        let istep = 1i64 << (level - 1);
+        let smin_rad = if istep < 2 { 1.0f32 } else { 3.25 * istep as f32 };
+        let step_count = if istep < 2 { 5 } else { 3 };
+        sit *= szrt;
+        let mut v: Vec<u32> = Vec::with_capacity(32);
+        let i = |v: &mut Vec<u32>, x: i32| v.push(x as u32);
+        let f = |v: &mut Vec<u32>, x: f32| v.push(x.to_bits());
+        i(&mut v, w as i32);
+        i(&mut v, h as i32);
+        i(&mut v, y0 as i32);
+        i(&mut v, (y1 - y0) as i32);
+        i(&mut v, (level == levels) as i32);
+        f(&mut v, sit);
+        f(&mut v, szrt);
+        f(&mut v, smul);
+        i(&mut v, imin);
+        i(&mut v, iand as i32);
+        f(&mut v, ssub);
+        i(&mut v, istep as i32);
+        f(&mut v, smin_rad);
+        i(&mut v, step_count);
+        for k in 0..5 {
+            f(&mut v, 1.0 / (smin_rad + (k as i64 * istep) as f32 + 0.1));
+        }
+        i(&mut v, rnd as i32);
+        i(&mut v, p.t0 as i32);
+        i(&mut v, wlo);
+        i(&mut v, whi);
+        i(&mut v, hlo);
+        i(&mut v, hhi);
+        i(&mut v, 2 * (w as i32 - 1));
+        i(&mut v, 2 * (h as i32 - 1));
+        i(&mut v, pass as i32);
+        // the blur that made this level (0: the first level) and the one
+        // that makes the next
+        i(&mut v, if level == 1 { 0 } else { 1 << (level - 1) });
+        i(&mut v, p.wrap_x as i32);
+        v.resize(32, 0);
+        v
+    };
+    let mut all: Vec<u32> = Vec::with_capacity(passes * block_list.len() * levels * 2 * stride);
+    for pass in 0..passes {
+        for &(y0, y1) in &block_list {
+            for level in 1..=levels {
+                let v = params_of(pass, y0, y1, level);
+                // NextATlevelHiQ(..., 1 shl level): the step is in the
+                // parameters of the next level
+                let mut v2 = v.clone();
+                v2[28] = 1 << level;
+                for set in [v, v2] {
+                    let start = all.len();
+                    all.extend_from_slice(&set);
+                    all.resize(start + stride, 0);
+                }
+            }
+        }
+    }
+    let par = make("ssao params", all.len(), storage);
+    g.queue.write_buffer(&par, 0, &bytes(&all));
+    drop(all);
     let bz0 = make("ssao z0", w * h, storage);
+    // the first level, uploaded once: every block of rows starts its
+    // pyramid from a copy on the card (an upload per block queued 60 GB
+    // of staging copies for a 12000 x 6000 picture, issue of 2026-10-28)
+    let bfirst = make("ssao level 0", w * h, storage | wgpu::BufferUsages::COPY_SRC);
     let pa = make("ssao level a", w * h, storage);
     let pb = make("ssao level b", w * h, storage);
     let ang = make("ssao angles", w * rows * 16, storage);
     let acc = make("ssao sum", w * h, storage | wgpu::BufferUsages::COPY_SRC);
     let read = make("ssao read", w * h, wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
     g.queue.write_buffer(&bz0, 0, &bytes(&z0));
-    g.queue.write_buffer(&acc, 0, &vec![0u8; w * h * 4]);
+    g.queue.write_buffer(&bfirst, 0, &bytes(&first));
+    drop((first, z0));
+    {
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        enc.clear_buffer(&acc, 0, None);
+        g.queue.submit([enc.finish()]);
+    }
+    mem("buffers made and written");
     let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: None,
         layout: &bgl,
         entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding { buffer: &par, offset: 0, size: std::num::NonZeroU64::new(128) }) },
             wgpu::BindGroupEntry { binding: 1, resource: bz0.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 2, resource: pa.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 3, resource: pb.as_entire_binding() },
@@ -3146,93 +3249,38 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         ],
     });
     let (gx, gy) = (w.div_ceil(8) as u32, h.div_ceil(8) as u32);
+    // a block of rows: its levels in one submission (the passes of an
+    // encoder run in order)
+    let mut set = 0u32;
     for pass in 0..passes {
-        let mut y0 = 0;
-        while y0 < h {
-            let y1 = (y0 + rows).min(h);
-            g.queue.write_buffer(&pa, 0, &bytes(&first));
+        // (a pass in one submission: every submission costs memory the
+        // driver keeps)
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        for &(y0, y1) in &block_list {
+            enc.copy_buffer_to_buffer(&bfirst, 0, &pa, 0, (w * h * 4) as u64);
             for level in 1..=levels {
-                // the constants of the level (ssao::ssao24)
-                let mut sit = (z_scale / 22000.0 * 4096.0) as f32;
-                let mut szrt = thr * if p.t0 { 1.0 } else { 0.7 } * 4096.0 / sit * ((levels as f32 / level as f32).sqrt().sqrt());
-                if p.t0 {
-                    szrt *= szrt;
-                }
-                let rnd = p.random > 0;
-                let at = if rnd {
-                    (thr * if p.t0 { 0.64 } else { 0.65 } * (levels as f32).sqrt().sqrt()).atan()
-                } else {
-                    (thr * 0.6 * (levels as f32).sqrt().sqrt()).atan()
-                };
-                let smul = 1.5 * 32767.0 / (std::f32::consts::PI * 32.0 * if p.t0 { at } else { at.powf(0.9) }) / passes as f32;
-                let imin = 16383 / passes as i32;
-                let iand = (1i64 << (level - 1)) - 1;
-                let ssub = iand as f32 * 0.5;
-                let istep = 1i64 << (level - 1);
-                let smin_rad = if istep < 2 { 1.0f32 } else { 3.25 * istep as f32 };
-                let step_count = if istep < 2 { 5 } else { 3 };
-                sit *= szrt;
-                let mut v: Vec<u32> = Vec::with_capacity(32);
-                let i = |v: &mut Vec<u32>, x: i32| v.push(x as u32);
-                let f = |v: &mut Vec<u32>, x: f32| v.push(x.to_bits());
-                i(&mut v, w as i32);
-                i(&mut v, h as i32);
-                i(&mut v, y0 as i32);
-                i(&mut v, (y1 - y0) as i32);
-                i(&mut v, (level == levels) as i32);
-                f(&mut v, sit);
-                f(&mut v, szrt);
-                f(&mut v, smul);
-                i(&mut v, imin);
-                i(&mut v, iand as i32);
-                f(&mut v, ssub);
-                i(&mut v, istep as i32);
-                f(&mut v, smin_rad);
-                i(&mut v, step_count);
-                for k in 0..5 {
-                    f(&mut v, 1.0 / (smin_rad + (k as i64 * istep) as f32 + 0.1));
-                }
-                i(&mut v, rnd as i32);
-                i(&mut v, p.t0 as i32);
-                i(&mut v, wlo);
-                i(&mut v, whi);
-                i(&mut v, hlo);
-                i(&mut v, hhi);
-                i(&mut v, 2 * (w as i32 - 1));
-                i(&mut v, 2 * (h as i32 - 1));
-                i(&mut v, pass as i32);
-                // the blur that made this level (0: the first level) and
-                // the one that makes the next
-                i(&mut v, if level == 1 { 0 } else { 1 << (level - 1) });
-                i(&mut v, p.wrap_x as i32);
-                v.resize(32, 0);
-                g.queue.write_buffer(&par, 0, &bytes(&v));
-                let mut enc = g.device.create_command_encoder(&Default::default());
+                let off = |k: u32| (set + k) * align as u32;
                 {
                     let mut ps = enc.begin_compute_pass(&Default::default());
                     ps.set_pipeline(&pl_s);
-                    ps.set_bind_group(0, &bind, &[]);
+                    ps.set_bind_group(0, &bind, &[off(0)]);
                     ps.dispatch_workgroups(gx, (y1 - y0).div_ceil(8) as u32, 1);
                 }
                 if level < levels {
-                    // NextATlevelHiQ(..., 1 shl level): the step is in the
-                    // parameters of the next level, so it is sent now
-                    let mut v2 = v.clone();
-                    v2[28] = 1 << level;
-                    g.queue.submit([enc.finish()]);
-                    g.queue.write_buffer(&par, 0, &bytes(&v2));
-                    enc = g.device.create_command_encoder(&Default::default());
                     for pl in [&pl_h, &pl_v] {
                         let mut ps = enc.begin_compute_pass(&Default::default());
                         ps.set_pipeline(pl);
-                        ps.set_bind_group(0, &bind, &[]);
+                        ps.set_bind_group(0, &bind, &[off(1)]);
                         ps.dispatch_workgroups(gx, gy, 1);
                     }
                 }
-                g.queue.submit([enc.finish()]);
+                set += 2;
             }
-            y0 = y1;
         }
+        g.queue.submit([enc.finish()]);
+        // (the finished submissions' memory is given back)
+        let _ = g.device.poll(wgpu::PollType::Poll);
+        mem(&format!("pass {} done", pass + 1));
     }
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&acc, 0, &read, 0, (w * h * 4) as u64);
@@ -3247,6 +3295,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         return Err(e);
     }
     rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    mem("waited for the card");
     {
         let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
         for (s, c) in gbuf.iter_mut().zip(data.chunks_exact(4)) {
@@ -3256,6 +3305,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         }
     }
     read.unmap();
+    mem("read back");
     Ok(())
 }
 

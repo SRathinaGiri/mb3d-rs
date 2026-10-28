@@ -744,9 +744,16 @@ pixel give the 256 asked for with `--rays 256`.
   in `[global]`, and `oplocks = no` and `level2 oplocks = no` in the
   share's section, then `sudo systemctl restart smb` and mount the share
   again on the other computers.
-* **Memory:** Calculate 3D does not start a picture that does not fit into
-  the free memory (on Linux) and points to Big render; a computer leaves a
-  tile too big for its memory to the others.
+* **Memory:** a picture takes about 48 bytes per pixel plus 1.5 GB in
+  this program, whatever its size (the stages after the main calculation
+  work in bands: the reflections hold one band of 2M pixels, 1.1 GB, the
+  ambient occlusion on the card uploads its depth buffer once). When a
+  picture needs more than the free memory of the computer (asked of Linux,
+  Windows and macOS), Calculate 3D says how much it needs and how much is
+  free, and asks before it starts: the calculation would swap and the
+  program could stop responding for minutes at a time. Big render and the
+  swarm are the way out; a computer of the swarm leaves a tile too big for
+  its memory to the others.
 * **Safety:** a computer renders only what a job asks for and writes only
   into the job's folder; formula code from a job runs in the formula
   emulator like every formula.

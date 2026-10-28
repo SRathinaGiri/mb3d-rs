@@ -1422,6 +1422,21 @@ pub fn write_m3i(sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> Vec<u8> {
     d
 }
 
+/// Writes the `.m3i` of `sc` with the pixels `gbuf` to `path` row block by
+/// row block (`write_m3i` builds the whole file in memory first: 1.3 GB for
+/// a 12000 x 6000 picture, as much again as the picture itself).
+pub fn write_m3i_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> std::io::Result<()> {
+    use std::io::Write;
+    let (head, tail) = m3i_parts(sc);
+    let mut f = std::io::BufWriter::with_capacity(1 << 20, std::fs::File::create(path)?);
+    f.write_all(&head)?;
+    for part in gbuf.chunks(1 << 16) {
+        f.write_all(&crate::gbuffer::pack(part))?;
+    }
+    f.write_all(&tail)?;
+    f.flush()
+}
+
 /// The parts of a `.m3i` around its pixels: the header before them and
 /// the rest of the parameters after them (a checkpoint keeps its rows
 /// between the two, see `checkpoint::Image`).

@@ -620,6 +620,11 @@ fn render_single(
 ) -> Result<(), String> {
     let cr = if std::io::IsTerminal::is_terminal(&std::io::stderr()) { "\r" } else { "" };
     let t0 = Instant::now();
+    if !quiet {
+        if let Some((need, free)) = mb3d::render::memory_shortfall(scene.width.max(0) as usize, scene.height.max(0) as usize) {
+            eprintln!("  note: a {} x {} picture needs about {} of memory, this computer has {} free: the calculation may swap (--tiles renders it in tiles)", scene.width, scene.height, mb3d::render::gigabytes(need), mb3d::render::gigabytes(free));
+        }
+    }
     let ck = mb3d::render::open_checkpoint(scene, &ck_name(output), resume_policy());
     resumed_note(ck.as_ref(), "rows", quiet);
     mb3d::render::stage_mark("march");

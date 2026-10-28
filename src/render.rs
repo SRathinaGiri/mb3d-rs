@@ -374,6 +374,7 @@ pub fn stage_mark(name: &str) {
     match g.as_mut() {
         Some((t, n, v)) => {
             if n != name {
+                eprintln!("  stage {name:?} begins at {:.1} s, rss {} MB", now.duration_since(*t).as_secs_f64(), crate::reflect::rss_mb());
                 v.push((std::mem::take(n), now.duration_since(*t).as_secs_f64()));
                 *t = now;
                 *n = name.to_string();
@@ -2133,6 +2134,9 @@ fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ss
         // (but not while the card compiles a shader: the pass would wait
         // behind the compile)
         let r = if ao.bits15 { crate::gpu::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao) } else { crate::gpu::ssao24(gbuf, w, h, p.zc_mul, p.zcorr, ao) };
+        if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+            eprintln!("    ssao on the card returned, rss {} MB", crate::reflect::rss_mb());
+        }
         match r {
             Ok(()) => {
                 let s = crate::gpu::last_status();
@@ -2550,18 +2554,113 @@ pub fn auto_color_range(sc: &mut Scene, gbuf: &[SiLight]) {
     sc.lighting.color_end = tb(hi) as f32;
 }
 
-/// The memory a whole picture of `w` x `h` takes while it is calculated
-/// (measured: the buffers, the card's copies, the picture; on the safe side).
+/// The memory a picture of `w` x `h` takes in this program, roughly: the
+/// G-buffer (20 bytes per pixel), the painted picture and the window's
+/// copies of it (10), the ambient occlusion's buffers (16), and the fixed
+/// part: the program with its shaders (about 0.4 GB) and one band of the
+/// reflection pass (1.1 GB, see `reflect.rs`; since 2026-10-28 no stage
+/// grows with the picture beyond these bytes per pixel).
 pub fn memory_needed(w: usize, h: usize) -> u64 {
-    (w as u64).saturating_mul(h as u64).saturating_mul(80).saturating_add(300 << 20)
+    (w as u64).saturating_mul(h as u64).saturating_mul(48).saturating_add(1536 << 20)
 }
 
-/// The memory the system can give without swapping (`MemAvailable`); None
-/// where it cannot be told (other systems than Linux).
+/// The memory the system can give without swapping: Linux `MemAvailable`,
+/// Windows `GlobalMemoryStatusEx`, macOS the free and inactive pages; None
+/// where it cannot be told.
+#[cfg(target_os = "linux")]
 pub fn memory_available() -> Option<u64> {
     let text = std::fs::read_to_string("/proc/meminfo").ok()?;
     let kb: u64 = text.lines().find_map(|l| l.strip_prefix("MemAvailable:"))?.trim().trim_end_matches("kB").trim().parse().ok()?;
     Some(kb * 1024)
+}
+
+#[cfg(windows)]
+pub fn memory_available() -> Option<u64> {
+    #[repr(C)]
+    struct MemoryStatusEx {
+        length: u32,
+        load: u32,
+        total_phys: u64,
+        avail_phys: u64,
+        total_page: u64,
+        avail_page: u64,
+        total_virtual: u64,
+        avail_virtual: u64,
+        avail_extended: u64,
+    }
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn GlobalMemoryStatusEx(buffer: *mut MemoryStatusEx) -> i32;
+    }
+    let mut m = MemoryStatusEx { length: std::mem::size_of::<MemoryStatusEx>() as u32, load: 0, total_phys: 0, avail_phys: 0, total_page: 0, avail_page: 0, total_virtual: 0, avail_virtual: 0, avail_extended: 0 };
+    // (a struct of plain integers, its size filled in as the call wants)
+    (unsafe { GlobalMemoryStatusEx(&mut m) } != 0).then_some(m.avail_phys)
+}
+
+#[cfg(target_os = "macos")]
+pub fn memory_available() -> Option<u64> {
+    // vm_statistics64 (mach/vm_statistics.h), HOST_VM_INFO64 = 4
+    #[repr(C)]
+    #[derive(Default)]
+    struct VmStatistics64 {
+        free: u32,
+        active: u32,
+        inactive: u32,
+        wire: u32,
+        zero_fill: u64,
+        reactivations: u64,
+        pageins: u64,
+        pageouts: u64,
+        faults: u64,
+        cow_faults: u64,
+        lookups: u64,
+        hits: u64,
+        purges: u64,
+        purgeable: u32,
+        speculative: u32,
+        decompressions: u64,
+        compressions: u64,
+        swapins: u64,
+        swapouts: u64,
+        compressor_pages: u32,
+        throttled: u32,
+        external: u32,
+        internal: u32,
+        total_uncompressed: u64,
+    }
+    extern "C" {
+        fn mach_host_self() -> u32;
+        fn host_statistics64(host: u32, flavor: i32, info: *mut VmStatistics64, count: *mut u32) -> i32;
+        fn sysctlbyname(name: *const std::ffi::c_char, oldp: *mut std::ffi::c_void, oldlenp: *mut usize, newp: *const std::ffi::c_void, newlen: usize) -> i32;
+    }
+    let mut st = VmStatistics64::default();
+    let mut count = (std::mem::size_of::<VmStatistics64>() / 4) as u32;
+    let mut page: u64 = 0;
+    let mut len = std::mem::size_of::<u64>();
+    // (plain integers in and out; the page size comes as a 4 or 8 byte
+    // integer into the zeroed 8 bytes)
+    unsafe {
+        if sysctlbyname(c"hw.pagesize".as_ptr(), (&mut page as *mut u64).cast(), &mut len, std::ptr::null(), 0) != 0 || page == 0 {
+            return None;
+        }
+        if host_statistics64(mach_host_self(), 4, &mut st, &mut count) != 0 {
+            return None;
+        }
+    }
+    Some((st.free as u64 + st.inactive as u64 + st.speculative as u64) * page)
+}
+
+#[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
+pub fn memory_available() -> Option<u64> {
+    None
+}
+
+/// The memory a picture of `w` x `h` needs and the free memory, when the
+/// first is more than the second (the calculation would swap); None when
+/// it fits or the free memory cannot be told.
+pub fn memory_shortfall(w: usize, h: usize) -> Option<(u64, u64)> {
+    let need = memory_needed(w, h);
+    memory_available().filter(|&free| need > free).map(|free| (need, free))
 }
 
 /// Err when a picture of `w` x `h` does not fit into the free memory: the

@@ -129,6 +129,23 @@ probe needs the card's single precision shader: with *Auto* it runs once
 that is compiled (from the next calculation of the scene on), with
 *Graphics card* the calculation waits for it.
 
+Memory: the stages after the main calculation never grow with the
+picture beyond the G-buffer. The reflections take bands of 2M pixels
+(`REFLECT_BAND_PIXELS`): a band's state is about 550 bytes per pixel
+(the per pixel record with its stack of bounces, the tasks, the hits),
+1.1 GB, and the lists are dropped as soon as they are used; until
+2026-10-28 a picture of up to 8M pixels was one band of up to 4.5 GB. The
+ambient occlusion on the card uploads its depth buffer and the parameters
+of all its levels once and copies them on the card for every block of
+rows, in one submission per pass: an upload and two submissions per level
+and block queued 60 GB of staging copies for a 12000 x 6000 picture and
+left the driver holding 7 GB afterwards (the "freeze" of big pictures on
+Windows). `MB3D_STAGE_TIMES=1` prints the process memory at every stage,
+`MB3D_GPU_TIMING=1` at the steps of the reflections and the occlusion.
+Before Calculate 3D the window compares the estimate of
+`render::memory_needed` with the free memory (`render::memory_available`:
+`MemAvailable`, `GlobalMemoryStatusEx`, `host_statistics64`) and asks.
+
 In such scenes single precision mostly finds the same surfaces; what it
 gets wrong are the values measured at them. So the card marches them in
 single precision all the same and the CPU threads finish its pixels in

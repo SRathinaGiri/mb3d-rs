@@ -166,6 +166,9 @@ pub struct State {
     /// the calculation that waits for the answer whether to continue its
     /// unfinished one: its scene and 2D slice
     pub resume_ask: Option<(Scene, u8)>,
+    /// the question whether to calculate a picture that does not fit into
+    /// the free memory is open
+    pub memory_ask: bool,
     /// the next Calculate 3D continues the unfinished calculation of this
     /// key without asking (the Unfinished renders window's Continue)
     pub resume_key: Option<String>,
@@ -245,6 +248,7 @@ impl Default for State {
             sticky: [1, 1, 1],
             stick_it: 0,
             resume_ask: None,
+            memory_ask: false,
             resume_key: None,
         }
     }
@@ -900,14 +904,26 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         return;
     }
     // the whole picture is held here (with the swarm too): one that does
-    // not fit would only swap until the system stops the program
+    // not fit into the free memory swaps, and the program may then stop
+    // responding for minutes: asked first (the memory check of the swarm's
+    // tiles is in swarm.rs)
     if calc3d {
-        if let Err(e) = crate::render::check_memory(app.scene.width as usize, app.scene.height as usize) {
-            app.main.auto_m3i = None;
-            app.message(ui, &trf("Not calculated: {}.\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture (with the swarm too).", &[&e]));
+        if let Some((need, free)) = crate::render::memory_shortfall(app.scene.width as usize, app.scene.height as usize) {
+            app.main.memory_ask = true;
+            ui.message_box(
+                "main:memory",
+                &tr("Memory"),
+                &trf("A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.", &[&app.scene.width, &app.scene.height, &crate::render::gigabytes(need), &crate::render::gigabytes(free)]),
+                &[MR_YES, MR_NO],
+            );
             return;
         }
     }
+    calc_mand_go(app, ui, calc3d);
+}
+
+/// [`calc_mand`] after its checks: the calculation of `app.scene` starts.
+fn calc_mand_go(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     app.main.calc3d = calc3d;
     app.main.stage_shown = "main rendering".into();
     let later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
@@ -2880,8 +2896,7 @@ fn save_zbuf(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 
 pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else { return };
-    let data = crate::m3p::write_m3i(&b.scene, &b.post);
-    match std::fs::write(path, data) {
+    match crate::m3p::write_m3i_to(path, &b.scene, &b.post) {
         Ok(()) => app.message(ui, &trf("Saved {}", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
@@ -2889,6 +2904,16 @@ pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 
 pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
+        ("memory", DialogResult::Button(b)) => {
+            if !std::mem::take(&mut app.main.memory_ask) {
+                return;
+            }
+            if *b == MR_YES {
+                calc_mand_go(app, ui, true);
+            } else {
+                app.main.auto_m3i = None;
+            }
+        }
         ("resume", DialogResult::Button(b)) => {
             let Some((sc, slice)) = app.main.resume_ask.take() else { return };
             match *b {

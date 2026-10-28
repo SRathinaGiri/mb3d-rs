@@ -778,7 +778,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                             ts.width = zw as i32;
                             ts.height = zh as i32;
                             ts.tiling = None;
-                            let _ = std::fs::write(base.with_extension("m3i"), crate::m3p::write_m3i(&ts, &g));
+                            let _ = crate::m3p::write_m3i_to(&base.with_extension("m3i"), &ts, &g);
                         }
                     }
                     saved.fetch_add(1, Ordering::SeqCst);
@@ -827,7 +827,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                     ts.width = res.width as i32;
                     ts.height = res.height as i32;
                     ts.tiling = None;
-                    let _ = std::fs::write(base.with_extension("m3i"), crate::m3p::write_m3i(&ts, g));
+                    let _ = crate::m3p::write_m3i_to(&base.with_extension("m3i"), &ts, g);
                 }
             }
             Ok((x, y))
