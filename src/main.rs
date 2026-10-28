@@ -503,6 +503,13 @@ fn run() -> Result<(), String> {
                     eprintln!("  {st}");
                 }
             };
+            // (the tiles' buffers are put together here, and the whole
+            // picture painted: its memory, less the main calculation's)
+            if !quiet {
+                if let Some((need, free)) = mb3d::render::memory_shortfall(mb3d::render::MemoryUse { march: false, ..mb3d::render::MemoryUse::of(&scene) }) {
+                    eprintln!("  note: the {} x {} picture put together from the swarm's tiles needs about {} of memory, this computer has {} free: the painting may swap (--tiles without --swarm holds only the painted picture)", scene.width, scene.height, mb3d::render::gigabytes(need), mb3d::render::gigabytes(free));
+                }
+            }
             let full = mb3d::swarm::run_tiles(std::path::Path::new(dir), &scene, tl.cols, tl.rows, &ropts, &report, None)?;
             let mut fs = scene.clone();
             fs.tiling = None;
@@ -621,7 +628,7 @@ fn render_single(
     let cr = if std::io::IsTerminal::is_terminal(&std::io::stderr()) { "\r" } else { "" };
     let t0 = Instant::now();
     if !quiet {
-        if let Some((need, free)) = mb3d::render::memory_shortfall(scene.width.max(0) as usize, scene.height.max(0) as usize) {
+        if let Some((need, free)) = mb3d::render::memory_shortfall(mb3d::render::MemoryUse::of(scene)) {
             eprintln!("  note: a {} x {} picture needs about {} of memory, this computer has {} free: the calculation may swap (--tiles renders it in tiles)", scene.width, scene.height, mb3d::render::gigabytes(need), mb3d::render::gigabytes(free));
         }
     }

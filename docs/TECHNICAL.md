@@ -130,14 +130,24 @@ that is compiled (from the next calculation of the scene on), with
 *Graphics card* the calculation waits for it.
 
 Memory: the stages after the main calculation never grow with the
-picture beyond the G-buffer. The reflections take bands of 2M pixels
-(`REFLECT_BAND_PIXELS`): a band's state is about 550 bytes per pixel
-(the per pixel record with its stack of bounces, the tasks, the hits),
-1.1 GB, and the lists are dropped as soon as they are used; until
-2026-10-28 a picture of up to 8M pixels was one band of up to 4.5 GB. The
-ambient occlusion on the card uploads its depth buffer and the parameters
-of all its levels once and copies them on the card for every block of
-rows, in one submission per pass: an upload and two submissions per level
+picture beyond the G-buffer. The reflections take bands of rows of at most
+2M pixels (`reflect::band_pixels`), fewer when the free memory is short:
+the band is sized to half of the memory free when the pass starts, at
+`REFLECT_BAND_BYTES` (1792) per pixel, its peak during a round of rays
+(the per pixel record with its stack of bounces, the round's requests,
+tasks, hits and results, the card's buffers; 0.8 to 1 KB per pixel between
+rounds), so a 2M band peaks at 3.5 GB and a PC with 4 GB left gets bands of
+1.2M pixels (1M bands take 9 % longer than one band at 4.5M pixels); the
+lists are dropped as soon as they are used; until 2026-10-28 a picture of
+up to 8M pixels was one band of up to 4.5 GB. `render::memory_needed`
+models it all (`MemoryUse`: the G-buffer, 20 bytes per pixel; the window's
+copies, 10; the main calculation's stage, 16 per pixel and 1.2 GB; the
+paint, 3 per pixel, the reflections' band, the depth of field's 20) for
+the question before Calculate 3D, the command line's note and the swarm's
+check of a tile; the owner of a swarm's tiles has no main calculation
+stage, its tiles' computers do. The ambient occlusion on the card uploads
+its depth buffer and the parameters of all its levels once and copies them
+on the card for every block of rows, in one submission per pass: an upload and two submissions per level
 and block queued 60 GB of staging copies for a 12000 x 6000 picture and
 left the driver holding 7 GB afterwards (the "freeze" of big pictures on
 Windows). `MB3D_STAGE_TIMES=1` prints the process memory at every stage,

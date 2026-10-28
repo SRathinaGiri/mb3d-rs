@@ -2554,14 +2554,55 @@ pub fn auto_color_range(sc: &mut Scene, gbuf: &[SiLight]) {
     sc.lighting.color_end = tb(hi) as f32;
 }
 
-/// The memory a picture of `w` x `h` takes in this program, roughly: the
-/// G-buffer (20 bytes per pixel), the painted picture and the window's
-/// copies of it (10), the ambient occlusion's buffers (16), and the fixed
-/// part: the program with its shaders (about 0.4 GB) and one band of the
-/// reflection pass (1.1 GB, see `reflect.rs`; since 2026-10-28 no stage
-/// grows with the picture beyond these bytes per pixel).
-pub fn memory_needed(w: usize, h: usize) -> u64 {
-    (w as u64).saturating_mul(h as u64).saturating_mul(48).saturating_add(1536 << 20)
+/// What a calculation holds, for [`memory_needed`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct MemoryUse {
+    pub w: usize,
+    pub h: usize,
+    /// the reflections (`mc.reflections`): one band of the pass
+    pub reflections: bool,
+    /// the depth of field: its copies of the picture
+    pub dof: bool,
+    /// the main calculation with the shadows and the occlusion runs here
+    /// (false for the owner of a swarm's tiles: the tiles' computers do
+    /// it, each with its tile's memory): the card's occlusion buffers
+    pub march: bool,
+    /// the main window keeps the picture: its copies of the painting
+    pub window: bool,
+}
+
+impl MemoryUse {
+    /// The calculation of `sc` as `mb3d` renders it (no window).
+    pub fn of(sc: &Scene) -> Self {
+        MemoryUse { w: sc.width.max(0) as usize, h: sc.height.max(0) as usize, reflections: sc.mc.reflections, dof: sc.dof.is_some(), march: true, window: false }
+    }
+
+    /// A picture of `w` x `h` with everything on: the most it can take.
+    pub fn most(w: usize, h: usize) -> Self {
+        MemoryUse { w, h, reflections: true, dof: true, march: true, window: true }
+    }
+}
+
+/// The memory a calculation takes in this program, roughly, with `free`
+/// bytes there (the reflections' band follows it): the G-buffer (20 bytes
+/// per pixel) all along, the program with its shaders (0.6 GB), the
+/// window's copies of the painted picture (10 per pixel); then the larger
+/// of the two stages: the main calculation with the shadows and the
+/// ambient occlusion (the card's buffers, 16 per pixel, and 1.2 GB the
+/// driver holds), or the paint (the picture, 3 per pixel; one band of the
+/// reflection pass, `reflect::band_bytes`, 3.5 GB at most; the depth of
+/// field's copies, 20 per pixel).  From the 12000 x 6000 test picture of
+/// 2026-10-28 (`MB3D_STAGE_TIMES=1` and `MB3D_GPU_TIMING=1` print the
+/// process memory): 6.0 GB measured, 5.8 estimated; since that day no
+/// stage grows with the picture beyond these bytes per pixel.
+pub fn memory_needed(u: MemoryUse, free: Option<u64>) -> u64 {
+    let px = (u.w as u64).saturating_mul(u.h as u64);
+    let per = |bytes: u64| px.saturating_mul(bytes);
+    let base = per(20).saturating_add(if u.window { per(10) } else { 0 }).saturating_add(600 << 20);
+    let march = if u.march { per(16).saturating_add(1200 << 20) } else { 0 };
+    let band = if u.reflections && cfg!(feature = "gpu") { crate::reflect::band_bytes(free) } else { 0 };
+    let paint = per(3).saturating_add(band).saturating_add(if u.dof { per(20) } else { 0 });
+    base.saturating_add(march.max(paint))
 }
 
 /// The memory the system can give without swapping: Linux `MemAvailable`,
@@ -2655,21 +2696,21 @@ pub fn memory_available() -> Option<u64> {
     None
 }
 
-/// The memory a picture of `w` x `h` needs and the free memory, when the
+/// The memory the calculation `u` needs and the free memory, when the
 /// first is more than the second (the calculation would swap); None when
 /// it fits or the free memory cannot be told.
-pub fn memory_shortfall(w: usize, h: usize) -> Option<(u64, u64)> {
-    let need = memory_needed(w, h);
-    memory_available().filter(|&free| need > free).map(|free| (need, free))
+pub fn memory_shortfall(u: MemoryUse) -> Option<(u64, u64)> {
+    let free = memory_available()?;
+    let need = memory_needed(u, Some(free));
+    (need > free).then_some((need, free))
 }
 
-/// Err when a picture of `w` x `h` does not fit into the free memory: the
-/// calculation would only swap until the system stops it.
-pub fn check_memory(w: usize, h: usize) -> Result<(), String> {
-    let need = memory_needed(w, h);
-    match memory_available() {
-        Some(free) if need > free => Err(format!("a {w} x {h} picture needs about {} of memory, this computer has {} free", gigabytes(need), gigabytes(free))),
-        _ => Ok(()),
+/// Err when the calculation `u` does not fit into the free memory: it
+/// would only swap until the system stops it.
+pub fn check_memory(u: MemoryUse) -> Result<(), String> {
+    match memory_shortfall(u) {
+        Some((need, free)) => Err(format!("a {} x {} picture needs about {} of memory, this computer has {} free", u.w, u.h, gigabytes(need), gigabytes(free))),
+        None => Ok(()),
     }
 }
 
@@ -3056,6 +3097,25 @@ pub fn compose_stereo(left: &[u8], right: &[u8], w: usize, h: usize, layout: Ste
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn memory_model() {
+        use super::*;
+        let g = |b: u64| b as f64 / (1u64 << 30) as f64;
+        // the 12000 x 6000 test picture with reflections, as mb3d renders
+        // it: 6.0 GB measured
+        let u = MemoryUse { w: 12000, h: 6000, reflections: true, dof: false, march: true, window: false };
+        let need = g(memory_needed(u, None));
+        assert!((5.0..7.0).contains(&need), "{need}");
+        // the owner of a swarm's tiles: no main calculation here
+        let owner = MemoryUse { march: false, window: true, ..u };
+        assert!(memory_needed(owner, None) <= memory_needed(MemoryUse { window: true, ..u }, None));
+        // short memory: the reflections' band shrinks
+        assert!(memory_needed(u, Some(4 << 30)) < memory_needed(u, None));
+        // more pixels, more memory
+        assert!(memory_needed(MemoryUse::most(1000, 1000), None) < memory_needed(MemoryUse::most(2000, 2000), None));
+        assert!(g(memory_needed(MemoryUse::most(100_000, 100_000), None)) > 400.0);
+    }
+
     use super::*;
 
     /// A probe G-buffer of `pw` x `ph`: the top `sky` rows background, the

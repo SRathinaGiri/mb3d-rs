@@ -1369,19 +1369,46 @@ fn s3d(v: S3) -> Vec3 {
     [v[0] as f64, v[1] as f64, v[2] as f64]
 }
 
-/// The pixels of one [`reflections_gpu`] call: its state (surfaces, ray
-/// stacks, the card's task buffers) is about 1.2 KB per pixel, so big
-/// pictures go through in bands of rows of 2M pixels: a band's state is
-/// about 550 bytes per pixel (1.1 GB), whatever the picture's size, so
-/// that a PC with 8 GB keeps up (before 2026-10-28 a picture of up to 8M
-/// pixels was one band of up to 4.5 GB; each band costs the card about
-/// 1.5 s of ramp-up, 5 % of the pass at 4.5M pixels; 15000x20000 at once
-/// peaked at 80 GB; 15360x15360 in 8M bands ran out of memory with 32 GB,
-/// issue #7).  `MB3D_REFLECT_BAND_PIXELS` changes it (tests).
-#[cfg(feature = "gpu")]
-const REFLECT_BAND_PIXELS: usize = 1 << 21;
-#[cfg(feature = "gpu")]
-const REFLECT_BAND_PIXELS_BIG: usize = 1 << 21;
+/// The pixels of one [`reflections_gpu`] call: big pictures go through in
+/// bands of rows of at most 2M pixels, fewer when the free memory is short
+/// ([`band_pixels`]), so a band's state does not grow with the picture
+/// (before 2026-10-28 a picture of up to 8M pixels was one band of up to
+/// 4.5 GB; 15000x20000 at once peaked at 80 GB; 15360x15360 in 8M bands
+/// ran out of memory with 32 GB, issue #7).  Each band costs the card
+/// about 1.5 s of ramp-up: 2M bands take 5 % longer than one band at 4.5M
+/// pixels, 1M bands 9 %.  `MB3D_REFLECT_BAND_PIXELS` sets the band (tests).
+pub const REFLECT_BAND_PIXELS: usize = 1 << 21;
+/// The smallest band: below it the ramp-up costs more than the memory
+/// is worth, and a computer with so little memory left swaps anyway.
+pub const REFLECT_BAND_PIXELS_MIN: usize = 1 << 18;
+/// What a band takes per pixel at its peak, during a round of rays: the
+/// per pixel record with its stack of bounces (RPix 264 bytes, Frame 240),
+/// the round's requests, tasks, hits and results (about 300 bytes per
+/// ray), the card's buffers and the threads' tracers.  Measured 2026-10-28
+/// on the 12000 x 6000 test picture (`MB3D_GPU_TIMING` prints the process
+/// memory): 3.5 GB over the paint's baseline for a 2M band at full and
+/// half size, 2.0 GB at a quarter; after the round 0.8 to 1.0 KB per pixel.
+pub const REFLECT_BAND_BYTES: u64 = 1792;
+
+/// The pixels of a band when `free` bytes of memory are there (None: not
+/// known): 2M, or what half of the free memory holds at
+/// [`REFLECT_BAND_BYTES`] per pixel, at least [`REFLECT_BAND_PIXELS_MIN`].
+/// A PC with 8 GB has 3 or 4 GB left when a big picture's reflections
+/// start: a 2M band's 3.5 GB would swap there, a band of 1M pixels
+/// (1.8 GB) takes 4 % longer and does not.
+pub fn band_pixels(free: Option<u64>) -> usize {
+    match free {
+        Some(f) => ((f / 2) / REFLECT_BAND_BYTES).clamp(REFLECT_BAND_PIXELS_MIN as u64, REFLECT_BAND_PIXELS as u64) as usize,
+        None => REFLECT_BAND_PIXELS,
+    }
+}
+
+/// The memory one band of the reflection pass takes at its peak with
+/// `free` bytes there (see [`band_pixels`]): the stage's cost beyond the
+/// picture in `render::memory_needed`.
+pub fn band_bytes(free: Option<u64>) -> u64 {
+    band_pixels(free) as u64 * REFLECT_BAND_BYTES
+}
 
 /// `CalcSRT`: the reflection pass over the painted image `rgb` of the
 /// G-buffer `gbuf` (both covering `p.rect`).
@@ -1404,15 +1431,15 @@ pub fn reflections<S: Sample>(
     if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
         let [x0, y0, w, h] = p.rect;
         let (wu, hu) = (w.max(1) as usize, h.max(0) as usize);
-        let band_px = std::env::var("MB3D_REFLECT_BAND_PIXELS")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(if wu * hu <= REFLECT_BAND_PIXELS { REFLECT_BAND_PIXELS } else { REFLECT_BAND_PIXELS_BIG });
+        // (the band from the memory free now: the picture and the stages
+        // before are allocated, what is left is the band's)
+        let free = crate::render::memory_available();
+        let band_px = std::env::var("MB3D_REFLECT_BAND_PIXELS").ok().and_then(|v| v.parse().ok()).unwrap_or_else(|| band_pixels(free));
         let rows = (band_px / wu).max(1);
         // (the bands come in order; weighed by their surface pixels)
         let sw = crate::render::RowWeights::surface(gbuf, wu, hu);
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-            eprintln!("  reflections: {wu}x{hu} in bands of {rows} rows, rss {} MB", rss_mb());
+            eprintln!("  reflections: {wu}x{hu} in bands of {rows} rows ({band_px} pixels; {} free), rss {} MB", free.map_or("memory not known".to_string(), |f| crate::render::gigabytes(f)), rss_mb());
         }
         let mut q = p.clone();
         let mut y = 0;
@@ -2097,6 +2124,19 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn band_from_free_memory() {
+        use super::*;
+        assert_eq!(band_pixels(None), REFLECT_BAND_PIXELS);
+        assert_eq!(band_pixels(Some(100 << 30)), REFLECT_BAND_PIXELS);
+        assert_eq!(band_pixels(Some(0)), REFLECT_BAND_PIXELS_MIN);
+        // 4 GB free: a band of 2 GB, 1.2M pixels
+        let b = band_pixels(Some(4 << 30));
+        assert!((1_100_000..1_300_000).contains(&b), "{b}");
+        assert_eq!(band_bytes(Some(4 << 30)), b as u64 * REFLECT_BAND_BYTES);
+        assert!(band_bytes(Some(4 << 30)) <= 2 << 30);
+    }
+
     use crate::scene::Scene;
 
     #[test]

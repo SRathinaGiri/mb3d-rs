@@ -628,16 +628,23 @@ fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, row
     let p = CalcParams::new(&sc)?;
     let (w, h) = (sc.width as usize, sc.height as usize);
     let raw = Arc::new(full);
-    // (the reflections and the depth of field of the whole picture: they
-    // can take as long as a tile)
-    report(match (sc.mc.reflections, sc.dof.is_some()) {
-        (true, true) => "all tiles done, painting the picture: reflections and depth of field",
-        (true, false) => "all tiles done, painting the picture: reflections",
-        (false, true) => "all tiles done, painting the picture: depth of field",
-        (false, false) => "all tiles done, painting the picture",
-    });
-    let rgb = crate::render::paint(&sc, &p, &raw);
-    let stats = stats_of(&raw, &p, t0.elapsed().as_secs_f64(), 0.0);
+    // the reflections and the depth of field of the whole picture (they
+    // can take as long as a tile): their stages with their progress and
+    // the Stop button, as the calculation here has them
+    report("all tiles done, painting the picture");
+    let stage = |name: &str| {
+        let mut o = e.out.lock().unwrap();
+        o.stage = name.to_string();
+        o.stage_base = 0.0;
+        e.progress.store(0, Ordering::Relaxed);
+    };
+    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    let (rgb, refl_s) = crate::render::paint_reporting(&sc, &p, &raw, &progress, &stage, cancel);
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let mut stats = stats_of(&raw, &p, t0.elapsed().as_secs_f64(), 0.0);
+    stats.stages.reflections = refl_s;
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw: raw.clone(), post: raw, post_sig: post_sig(&sc), w, h }));
     e.publish(rgb, w, h, "done (swarm)", Some(stats));
     Ok(())

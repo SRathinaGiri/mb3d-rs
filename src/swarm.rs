@@ -1122,7 +1122,8 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 // left to the others (the owner notes it and waits for them)
                 let t = crate::scene::Tiling { cols, rows, pos: None, downscale }.tile_rect(scene.width, scene.height, k as u32 % cols, k as u32 / cols);
                 let b = 2 * crate::render::TILE_BORDER;
-                if let Err(e) = crate::render::check_memory((t[2] + b).max(0) as usize, (t[3] + b).max(0) as usize) {
+                let use_ = crate::render::MemoryUse { w: (t[2] + b).max(0) as usize, h: (t[3] + b).max(0) as usize, reflections: full_paint && scene.mc.reflections, dof: full_paint && scene.dof.is_some(), march: true, window: false };
+                if let Err(e) = crate::render::check_memory(use_) {
                     let msg = format!("tile {} left to the others: {e}", k + 1);
                     if job.owner_id != heart.id() {
                         return Err(msg);
@@ -2542,8 +2543,8 @@ mod tests {
         if crate::render::memory_available().is_none() {
             return;
         }
-        assert!(crate::render::check_memory(1000, 1000).is_ok());
-        assert!(crate::render::check_memory(10_000_000, 10_000_000).unwrap_err().contains("needs about"));
+        assert!(crate::render::check_memory(crate::render::MemoryUse::most(1000, 1000)).is_ok());
+        assert!(crate::render::check_memory(crate::render::MemoryUse::most(10_000_000, 10_000_000)).unwrap_err().contains("needs about"));
         let d = temp("toobig");
         let swarm = d.join("swarm");
         let owner = Heart::new(&swarm, "owner");

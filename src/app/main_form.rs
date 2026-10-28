@@ -903,12 +903,14 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
         app.main.auto_m3i = None;
         return;
     }
-    // the whole picture is held here (with the swarm too): one that does
-    // not fit into the free memory swaps, and the program may then stop
-    // responding for minutes: asked first (the memory check of the swarm's
-    // tiles is in swarm.rs)
+    // the whole picture is held here (with the swarm too, whose tiles'
+    // computers do the main calculation: the memory check of a tile is in
+    // swarm.rs): one that does not fit into the free memory swaps, and the
+    // program may then stop responding for minutes: asked first
     if calc3d {
-        if let Some((need, free)) = crate::render::memory_shortfall(app.scene.width as usize, app.scene.height as usize) {
+        let swarm = super::swarm_form::calc_folder(app).is_some();
+        let use_ = crate::render::MemoryUse { march: !swarm, window: true, ..crate::render::MemoryUse::of(&app.scene) };
+        if let Some((need, free)) = crate::render::memory_shortfall(use_) {
             app.main.memory_ask = true;
             ui.message_box(
                 "main:memory",

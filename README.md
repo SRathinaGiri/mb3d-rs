@@ -698,7 +698,8 @@ whenever another computer is in it:
 
 * **Calculate 3D** (and the Batch window) — the picture in N x M tiles
   (set in the Swarm window), put together here with everything the usual
-  calculation gives: lighting changes, post processing, saving as m3i.
+  calculation gives: lighting changes, post processing, saving as m3i (and
+  its memory, see below).
 * **Big render** — the tiles are saved one by one as they arrive; the
   whole picture is never held in memory, so this is the way for pictures
   of 100000 x 100000 pixels and more.
@@ -744,16 +745,23 @@ pixel give the 256 asked for with `--rays 256`.
   in `[global]`, and `oplocks = no` and `level2 oplocks = no` in the
   share's section, then `sudo systemctl restart smb` and mount the share
   again on the other computers.
-* **Memory:** a picture takes about 48 bytes per pixel plus 1.5 GB in
-  this program, whatever its size (the stages after the main calculation
-  work in bands: the reflections hold one band of 2M pixels, 1.1 GB, the
-  ambient occlusion on the card uploads its depth buffer once). When a
+* **Memory:** a picture takes about 20 bytes per pixel in this program
+  (its image buffer), 10 more in the main window, and then the larger of
+  two stages: the main calculation with its shadows and occlusion (16 per
+  pixel and 1.2 GB for the card), or the painting (3 per pixel, 20 more
+  with depth of field, and one band of the reflections: 3.5 GB at most,
+  less when little memory is free, since the band is sized to half of what
+  is free when the pass starts). A 12000 x 6000 picture: 6 GB. When a
   picture needs more than the free memory of the computer (asked of Linux,
   Windows and macOS), Calculate 3D says how much it needs and how much is
   free, and asks before it starts: the calculation would swap and the
-  program could stop responding for minutes at a time. Big render and the
-  swarm are the way out; a computer of the swarm leaves a tile too big for
-  its memory to the others.
+  program could stop responding for minutes at a time. Big render, alone
+  or with the swarm, is the way out: its tiles are saved one by one, the
+  whole picture is never held. Calculate 3D with the swarm holds the
+  picture here as the usual calculation does (without the main
+  calculation's stage, which the tiles' computers do with each tile's
+  memory); a computer of the swarm leaves a tile too big for its memory to
+  the others.
 * **Safety:** a computer renders only what a job asks for and writes only
   into the job's folder; formula code from a job runs in the formula
   emulator like every formula.
