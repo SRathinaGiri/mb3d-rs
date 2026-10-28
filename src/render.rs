@@ -2087,6 +2087,40 @@ pub fn post_process_reporting(
             }
         }
     }
+    // the passes still to run on the card and the CPU together, as after
+    // the main calculation (a repaint after a calculation on the card: its
+    // pipelines are compiled; a light switched on took 33 s on the CPU at
+    // 4000 x 2000, with the card idle); not after a march in double
+    // precision, nor while the card compiles (the pass would wait behind
+    // it): then the CPU alone, as below, and the compile started here
+    // serves the next repaint
+    #[cfg(feature = "gpu")]
+    {
+        let pending = PostJob { shadows: job.shadows.clone().filter(|_| sc.shadows.is_some() && !shadows_done), deao: job.deao.filter(|_| !deao_done) };
+        if !pending.is_empty() && p.slice_2d == 0 && !p.gpu_double && crate::gpu::enabled() && !crate::gpu::compiling() {
+            if let Ok(flags) = crate::gpu::march_prepare(p, &pending) {
+                if flags.iter().all(|f| f.load(Ordering::SeqCst)) {
+                    let (hs, ao) = (pending.shadows.is_some(), pending.deao.is_some());
+                    stage(&post_stage_name(hs, ao, "graphics card and CPU"));
+                    let t = Instant::now();
+                    let card_rows = post_shared(sc, p, gbuf, &pending, threads, progress, cancel)?;
+                    let secs = t.elapsed().as_secs_f64();
+                    if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+                        eprintln!("  shadows and DE occlusion shared: {secs:.2} s, {card_rows} of {} rows on the card", p.rect[3]);
+                    }
+                    if hs {
+                        times.shadows = Some(Some(secs));
+                        shadows_done = true;
+                    }
+                    if ao {
+                        times.ao_with_shadows = hs;
+                        times.ao = Some(if hs { None } else { Some(secs) });
+                        deao_done = true;
+                    }
+                }
+            }
+        }
+    }
     if sc.shadows.is_some() && !shadows_done {
         stage(&post_stage_name(true, false, ""));
         let t = Instant::now();

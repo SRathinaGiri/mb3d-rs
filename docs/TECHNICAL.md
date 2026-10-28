@@ -761,7 +761,16 @@ position, a positional light's reach), so colour, intensity and shading
 never calculate them again. When the lighting has not changed for 1.5 s,
 a full repaint adds the reflections, the DoF and the shadows of a moved
 light (the line says "reflections next" / "shadows next", then "adding
-reflections" / "redoing shadows"); the next change stops it.
+reflections" / "redoing shadows"). It runs as a processing of the post
+processing window does: "Calculate 3D" turns into "Stop", the LED blinks,
+the line and the bar show the stage and its time left, and the message
+list gets its time when it is done; the next lighting change stops it
+(`stop_own_repaint`) and paints at once, as does a "Calculate now" of the
+post processing window. The hard shadows and the DE ambient occlusion of
+a repaint share the card and the CPU as after the main calculation
+(`post_process_reporting` → `post_shared`) when the card's pipelines are
+compiled, which they are after a calculation on the card; after a march
+in double precision, or while the card compiles, the CPU runs them alone.
 
 ## Reflections and transparency, normals on the z-buffer
 

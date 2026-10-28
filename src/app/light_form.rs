@@ -716,7 +716,9 @@ const SETTLE: std::time::Duration = std::time::Duration::from_millis(1500);
 /// depth of field. Those (and the shadows of moved lights) follow when the
 /// lighting has settled ([`idle`]); a change meanwhile stops them.
 pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
-    if app.main.calculating {
+    // (the lighting's own full repaint stops: the change paints at once,
+    // and the full repaint follows when the lighting has settled again)
+    if app.main.calculating && !stop_own_repaint(app, ui) {
         return;
     }
     app.light.undo_relight = false;
@@ -743,8 +745,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     // (a calculation or a post processing started meanwhile makes its own
     // complete picture)
     if app.main.calculating {
-        app.light.repaint_pending = false;
-        app.light.status_shown = false;
+        if !app.light.full_running {
+            app.light.repaint_pending = false;
+            app.light.status_shown = false;
+        }
         return;
     }
     let st = &app.light;
@@ -752,11 +756,35 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         return;
     }
     app.light.repaint_pending = false;
-    app.light.full_running = true;
     let shadows = app.eng.base().is_some_and(|b| super::engine::post_sig(&app.scene) != b.post_sig);
-    ui.set_caption(MAIN, "Label6", &if shadows { tr("redoing shadows") } else { tr("adding reflections") });
+    // a processing as the post processing window's: "Calculate 3D" turns
+    // into "Stop", the LED blinks, the bar and the line show the stage and
+    // its time left (the hard shadows of a big picture take a while; the
+    // reporter of a 4000 x 2000 one saw a green LED and no way to stop)
+    super::postpro_form::started(app, ui, &if shadows { tr("redoing shadows") } else { tr("adding reflections") });
+    // (after `started`: its `disable_buttons` clears the mark)
+    app.light.full_running = true;
     app.light.status_shown = true;
     app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
+}
+
+/// Stops the full repaint [`idle`] started when it is the running
+/// calculation: true when it was (the lighting may change on, or a post
+/// processing start instead).
+pub fn stop_own_repaint(app: &mut Mb3d, ui: &mut Ui) -> bool {
+    if !(app.main.calculating && app.light.full_running) {
+        return false;
+    }
+    app.eng.stop();
+    super::main_form::enable_buttons(app, ui);
+    if app.main.led_running {
+        app.main.led_running = false;
+        super::main_form::show_led(ui, app.main.led, false);
+    }
+    app.post.running = None;
+    app.light.full_running = false;
+    app.light.status_shown = false;
+    true
 }
 
 fn store_undo_light(app: &mut Mb3d) {
