@@ -1353,7 +1353,16 @@ This section is for developers; the release downloads above need none of
 it. The renderer has **no external dependencies** (std only, including its
 own PNG and JPEG encoders); the windows use five crates (winit, softbuffer,
 fontdue, rustybuzz for scripts with joined letters, arboard) and the graphics card two (wgpu, pollster). Everything
-builds with any recent stable Rust:
+builds with any recent stable Rust. **Safe Rust:** the crate is
+`#![deny(unsafe_code)]`; `unsafe` is allowed only where Rust has no safe
+way, each place marked `#[allow(unsafe_code)]` with its reason: `oidn.rs`
+(calls into Intel's C library) and the formulas compiled at run time
+(`x86/clif_jit.rs`, `lift_clif.rs`, `clif_builtin.rs` and the two functions
+of `iteration.rs` that call the compiled loops). Anything else is safe
+Rust, even for speed: the hybrid loop's four separate loads of the iterated
+vector go through `std::hint::black_box` (the same speed as volatile loads,
+measured over the 80 example parameter files with `examples/formbench`),
+and the free memory of Windows and macOS comes from the sysinfo crate.
 
 ```sh
 git clone https://github.com/thr32423/mb3d-rs

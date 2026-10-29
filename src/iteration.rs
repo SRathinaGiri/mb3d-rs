@@ -87,12 +87,13 @@ pub struct Iteration {
 /// compiler would read two of them with one 16 byte load, which the
 /// processor cannot forward from the formula's two 8 byte stores (it waits
 /// for them to reach the cache, and the hybrid loop is a chain of such
-/// waits).
+/// waits).  Each reference goes through `black_box`, so the compiler no
+/// longer sees the four as neighbours and keeps the four loads (measured
+/// 2026-10-29 against volatile loads: the same speed, examples/formbench).
 #[inline(always)]
 fn scalar_loads(v: &[f64; 4]) -> [f64; 4] {
-    // volatile: kept as four loads (never merged); plain loads otherwise
-    // SAFETY: the references are valid and aligned
-    unsafe { [std::ptr::read_volatile(&v[0]), std::ptr::read_volatile(&v[1]), std::ptr::read_volatile(&v[2]), std::ptr::read_volatile(&v[3])] }
+    use std::hint::black_box;
+    [*black_box(&v[0]), *black_box(&v[1]), *black_box(&v[2]), *black_box(&v[3])]
 }
 
 /// Most slots of a hybrid for [`DirectSlots`].
@@ -205,6 +206,8 @@ impl Iteration {
     /// is the one of these parameters.
     #[cfg(jit)]
     #[inline]
+    // (calls the loop Cranelift compiled: unsafe by Rust's definition)
+    #[allow(unsafe_code)]
     fn run_jit(&mut self, slots: &[HybridSlot], four_d: bool) -> Option<usize> {
         let h = self.emu.as_deref()?.jit.as_deref()?;
         if h.four_d != four_d || h.start != self.start_from || h.end != self.end_to || h.repeat != self.repeat_from || h.slots != slots.len() || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
@@ -521,6 +524,8 @@ impl Iteration {
     /// `rstopd` is the absolute DE stop (`RStopD`).
     /// `vec_ini = false` is `doHybridIFS3DnoVecIni`: the iterated vector of a
     /// preceding hybrid part is used as the start.
+    // (calls the dIFS loop Cranelift compiled: unsafe by Rust's definition)
+    #[allow(unsafe_code)]
     pub fn hybrid_difs(&mut self, slots: &[HybridSlot], rstopd: f64, inside: bool, vec_ini: bool) -> f64 {
         let c = self.c;
         if vec_ini {

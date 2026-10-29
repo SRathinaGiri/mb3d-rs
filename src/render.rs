@@ -2640,8 +2640,7 @@ pub fn memory_needed(u: MemoryUse, free: Option<u64>) -> u64 {
 }
 
 /// The memory the system can give without swapping: Linux `MemAvailable`,
-/// Windows `GlobalMemoryStatusEx`, macOS the free and inactive pages; None
-/// where it cannot be told.
+/// Windows and macOS through sysinfo; None where it cannot be told.
 #[cfg(target_os = "linux")]
 pub fn memory_available() -> Option<u64> {
     let text = std::fs::read_to_string("/proc/meminfo").ok()?;
@@ -2649,80 +2648,13 @@ pub fn memory_available() -> Option<u64> {
     Some(kb * 1024)
 }
 
-#[cfg(windows)]
+/// Windows (`GlobalMemoryStatusEx`) and macOS (the free, inactive and
+/// speculative pages) through the sysinfo crate.
+#[cfg(any(windows, target_os = "macos"))]
 pub fn memory_available() -> Option<u64> {
-    #[repr(C)]
-    struct MemoryStatusEx {
-        length: u32,
-        load: u32,
-        total_phys: u64,
-        avail_phys: u64,
-        total_page: u64,
-        avail_page: u64,
-        total_virtual: u64,
-        avail_virtual: u64,
-        avail_extended: u64,
-    }
-    #[link(name = "kernel32")]
-    extern "system" {
-        fn GlobalMemoryStatusEx(buffer: *mut MemoryStatusEx) -> i32;
-    }
-    let mut m = MemoryStatusEx { length: std::mem::size_of::<MemoryStatusEx>() as u32, load: 0, total_phys: 0, avail_phys: 0, total_page: 0, avail_page: 0, total_virtual: 0, avail_virtual: 0, avail_extended: 0 };
-    // (a struct of plain integers, its size filled in as the call wants)
-    (unsafe { GlobalMemoryStatusEx(&mut m) } != 0).then_some(m.avail_phys)
-}
-
-#[cfg(target_os = "macos")]
-pub fn memory_available() -> Option<u64> {
-    // vm_statistics64 (mach/vm_statistics.h), HOST_VM_INFO64 = 4
-    #[repr(C)]
-    #[derive(Default)]
-    struct VmStatistics64 {
-        free: u32,
-        active: u32,
-        inactive: u32,
-        wire: u32,
-        zero_fill: u64,
-        reactivations: u64,
-        pageins: u64,
-        pageouts: u64,
-        faults: u64,
-        cow_faults: u64,
-        lookups: u64,
-        hits: u64,
-        purges: u64,
-        purgeable: u32,
-        speculative: u32,
-        decompressions: u64,
-        compressions: u64,
-        swapins: u64,
-        swapouts: u64,
-        compressor_pages: u32,
-        throttled: u32,
-        external: u32,
-        internal: u32,
-        total_uncompressed: u64,
-    }
-    extern "C" {
-        fn mach_host_self() -> u32;
-        fn host_statistics64(host: u32, flavor: i32, info: *mut VmStatistics64, count: *mut u32) -> i32;
-        fn sysctlbyname(name: *const std::ffi::c_char, oldp: *mut std::ffi::c_void, oldlenp: *mut usize, newp: *const std::ffi::c_void, newlen: usize) -> i32;
-    }
-    let mut st = VmStatistics64::default();
-    let mut count = (std::mem::size_of::<VmStatistics64>() / 4) as u32;
-    let mut page: u64 = 0;
-    let mut len = std::mem::size_of::<u64>();
-    // (plain integers in and out; the page size comes as a 4 or 8 byte
-    // integer into the zeroed 8 bytes)
-    unsafe {
-        if sysctlbyname(c"hw.pagesize".as_ptr(), (&mut page as *mut u64).cast(), &mut len, std::ptr::null(), 0) != 0 || page == 0 {
-            return None;
-        }
-        if host_statistics64(mach_host_self(), 4, &mut st, &mut count) != 0 {
-            return None;
-        }
-    }
-    Some((st.free as u64 + st.inactive as u64 + st.speculative as u64) * page)
+    let mut s = sysinfo::System::new();
+    s.refresh_memory();
+    Some(s.available_memory()).filter(|&b| b > 0)
 }
 
 #[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]

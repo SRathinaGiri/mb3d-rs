@@ -3237,11 +3237,16 @@ pub mod lift;
 mod lift_emit;
 
 pub mod lift_wgsl;
+// the formulas compiled at run time: calling the code Cranelift made is
+// unsafe by Rust's definition (a function pointer from a byte pointer)
 #[cfg(jit)]
+#[allow(unsafe_code)]
 mod lift_clif;
 #[cfg(jit)]
+#[allow(unsafe_code)]
 pub mod clif_jit;
 #[cfg(jit)]
+#[allow(unsafe_code)]
 pub mod clif_builtin;
 
 /// The compiled programs of a machine while they are out of it (see

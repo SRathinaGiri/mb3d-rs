@@ -38,6 +38,10 @@ cranelift-jit = { version = "0.130", optional = true }
 cranelift-module = { version = "0.130", optional = true }
 cranelift-native = { version = "0.130", optional = true }
 
+# the free memory of Windows and macOS (render::memory_available; Linux reads /proc/meminfo)
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+sysinfo = { version = "0.38", default-features = false, features = ["system"] }
+
 [build-dependencies]
 winres = "0.1"
 

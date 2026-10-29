@@ -1,5 +1,10 @@
 //! # mb3d – a Rust port of Mandelbulb3D
 //!
+//! The code is safe Rust: `unsafe` is allowed only where Rust has no safe
+//! way (calling a C library: `oidn`; calling code compiled at run time:
+//! `x86::clif_jit` and its callers), each place marked `#[allow(unsafe_code)]`
+//! with the reason.  Anything else needs a discussion first.
+//!
 //! A port of [Mandelbulb3D](https://github.com/thargor6/mb3d)
 //! (Delphi, by Jesse/"MB3D" and contributors): the core distance-estimation
 //! renderer with the built-in formulas, alternating hybrids, MB3D's camera
@@ -26,6 +31,8 @@
 //! | `batch`     | BatchForm.pas: batch rendering of parameter files |
 //! | `frames`    | Animation.pas (`Timer2Timer`), Mand.pas (`DoSaveAniImage`): frame rendering, output files |
 
+#![deny(unsafe_code)]
+
 pub mod anim;
 #[cfg(feature = "gui")]
 pub mod app;
@@ -39,6 +46,8 @@ pub mod custom;
 pub mod deao;
 pub mod denoise;
 #[cfg(feature = "oidn")]
+// Intel Open Image Denoise is a C library: its calls are unsafe by Rust's definition
+#[allow(unsafe_code)]
 pub mod oidn;
 pub mod dof;
 pub mod formulas;
