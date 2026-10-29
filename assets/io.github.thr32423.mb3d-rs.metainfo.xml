@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.83" date="2026-10-29">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83</url>
+      <description>
+        <p>Safe Rust throughout except the C library and the JIT, a card listed twice in a Flatpak sandbox counted once, the files of the Flatpak.</p>
+      </description>
+    </release>
     <release version="0.2.82" date="2026-10-29">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82</url>
     </release>
