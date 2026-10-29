@@ -1133,7 +1133,7 @@ dependencies = [
 
 [[package]]
 name = "mb3d"
-version = "0.2.81"
+version = "0.2.82"
 dependencies = [
  "arboard",
  "cranelift-codegen",
