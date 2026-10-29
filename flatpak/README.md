@@ -1,6 +1,6 @@
 # The Flatpak
 
-`io.github.thr32423.mb3d_rs.yml` is the manifest of the Flatpak, as
+`io.github.thr32423.mb3d-rs.yml` is the manifest of the Flatpak, as
 submitted to Flathub; `cargo-sources.json` lists the crates of Cargo.lock
 for its build without network. The Flatpak is built entirely from source,
 as Flathub asks: the program, MB3D's data folders from the original
@@ -19,13 +19,13 @@ point the `mb3d-rs` module's source at this folder (`tools/flatpak_local.sh`
 writes such a copy of the manifest to the build folder):
 
     tools/flatpak_local.sh            # builds and installs it for the user, --user
-    flatpak run io.github.thr32423.mb3d_rs
-    flatpak run --command=mb3d io.github.thr32423.mb3d_rs --help
+    flatpak run io.github.thr32423.mb3d-rs
+    flatpak run --command=mb3d io.github.thr32423.mb3d-rs --help
 
 The checks Flathub runs:
 
-    flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest flatpak/io.github.thr32423.mb3d_rs.yml
-    flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream assets/io.github.thr32423.mb3d_rs.metainfo.xml
+    flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest flatpak/io.github.thr32423.mb3d-rs.yml
+    flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream assets/io.github.thr32423.mb3d-rs.metainfo.xml
     flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo build/flatpak/repo
 
 ## A new release on Flathub
@@ -36,7 +36,7 @@ The checks Flathub runs:
    release; add the release to `assets/...metainfo.xml` (`<releases>`) in
    the commit before the tag, so the Flatpak's description names it.
 4. Copy the manifest and `cargo-sources.json` to the Flathub repository
-   `flathub/io.github.thr32423.mb3d_rs` and open a pull request there; its
+   `flathub/io.github.thr32423.mb3d-rs` and open a pull request there; its
    build bot builds it, a merge publishes it.
 
 ## The first submission
@@ -48,10 +48,10 @@ https://github.com/flathub/flathub, with the manifest and
     gh repo fork flathub/flathub --clone=false
     git clone --branch new-pr --single-branch https://github.com/YOUR_USER/flathub.git flathub-submission
     cd flathub-submission
-    git checkout -b io.github.thr32423.mb3d_rs
-    cp ../mb3d-rs/flatpak/io.github.thr32423.mb3d_rs.yml ../mb3d-rs/flatpak/cargo-sources.json .
-    git add . && git commit -m "Add io.github.thr32423.mb3d_rs" && git push -u origin io.github.thr32423.mb3d_rs
-    gh pr create --repo flathub/flathub --base new-pr --title "Add io.github.thr32423.mb3d_rs"
+    git checkout -b io.github.thr32423.mb3d-rs
+    cp ../mb3d-rs/flatpak/io.github.thr32423.mb3d-rs.yml ../mb3d-rs/flatpak/cargo-sources.json .
+    git add . && git commit -m "Add io.github.thr32423.mb3d-rs" && git push -u origin io.github.thr32423.mb3d-rs
+    gh pr create --repo flathub/flathub --base new-pr --title "Add io.github.thr32423.mb3d-rs"
 
 The pull request's text should say: that you are the developer, what the
 app is, why `--filesystem=home` (the program's own file dialogs, MB3D's
@@ -59,5 +59,5 @@ parameter and map folders the user keeps anywhere, the swarm's shared
 folder), and that ISPC is a build tool only, as in ParaView's package.
 The bot builds the app on x86_64 and aarch64 and leaves a link to try it;
 a reviewer then asks for changes or merges, after which Flathub creates
-the repository `flathub/io.github.thr32423.mb3d_rs` with you as its
+the repository `flathub/io.github.thr32423.mb3d-rs` with you as its
 maintainer.

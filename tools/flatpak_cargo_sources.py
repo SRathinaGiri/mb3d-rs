@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The crates of Cargo.lock as Flatpak sources, for the build without
-network of the Flatpak (flatpak/io.github.thr32423.mb3d_rs.yml):
+network of the Flatpak (flatpak/io.github.thr32423.mb3d-rs.yml):
     python3 tools/flatpak_cargo_sources.py [Cargo.lock] [-o flatpak/cargo-sources.json]
 Every crate from crates.io becomes an archive source (its .crate file,
 checked against the SHA-256 of Cargo.lock) unpacked into cargo/vendor, with

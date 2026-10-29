@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the Flatpak (flatpak/io.github.thr32423.mb3d_rs.yml) from the
+# Builds the Flatpak (flatpak/io.github.thr32423.mb3d-rs.yml) from the
 # commits of this repository's current branch instead of the tagged release,
 # and installs it for the user:
 #   tools/flatpak_local.sh [BRANCH]      (default: the current branch)
@@ -9,13 +9,13 @@
 set -e
 cd "$(dirname "$0")/.."
 branch=${1:-$(git rev-parse --abbrev-ref HEAD)}
-id=io.github.thr32423.mb3d_rs
+id=io.github.thr32423.mb3d-rs
 mkdir -p build/flatpak
 # the manifest with the program's source pointed at this repository
 python3 - "$PWD" "$branch" > build/flatpak/$id.yml <<'EOF'
 import re, sys
 repo, branch = sys.argv[1], sys.argv[2]
-m = open("flatpak/io.github.thr32423.mb3d_rs.yml").read()
+m = open("flatpak/io.github.thr32423.mb3d-rs.yml").read()
 m = re.sub(r"      - type: git\n        url: https://github.com/thr32423/mb3d-rs.git\n        tag: .*\n        commit: .*\n",
            f"      - type: git\n        path: {repo}\n        branch: {branch}\n", m)
 m = m.replace("      - cargo-sources.json", f"      - {repo}/flatpak/cargo-sources.json")

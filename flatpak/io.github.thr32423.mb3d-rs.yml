@@ -10,7 +10,7 @@
 # with them).  ISPC, the compiler Open Image Denoise's CPU kernels need, is
 # Intel's release binary used only while building, as ParaView's Flathub
 # package does; it is not in the Flatpak.
-app-id: io.github.thr32423.mb3d_rs
+app-id: io.github.thr32423.mb3d-rs
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
@@ -118,14 +118,14 @@ modules:
       - cp examples/*.m3s /app/share/mb3d-rs/examples/
       - cp README.md GETTING_STARTED.md LICENSE /app/share/doc/mb3d-rs/
       # the menu entry, the icon and the description, named after the app ID
-      - sed 's/^Icon=.*/Icon=io.github.thr32423.mb3d_rs/' assets/mb3d-rs.desktop > io.github.thr32423.mb3d_rs.desktop
-      - install -Dm644 io.github.thr32423.mb3d_rs.desktop -t /app/share/applications
-      - install -Dm644 assets/mb3d-rs.png /app/share/icons/hicolor/256x256/apps/io.github.thr32423.mb3d_rs.png
-      - for s in 16 22 24 32 48 64 128; do install -Dm644 assets/mb3d-rs-$s.png /app/share/icons/hicolor/${s}x${s}/apps/io.github.thr32423.mb3d_rs.png; done
-      - install -Dm644 assets/io.github.thr32423.mb3d_rs.metainfo.xml -t /app/share/metainfo
+      - sed 's/^Icon=.*/Icon=io.github.thr32423.mb3d-rs/' assets/mb3d-rs.desktop > io.github.thr32423.mb3d-rs.desktop
+      - install -Dm644 io.github.thr32423.mb3d-rs.desktop -t /app/share/applications
+      - install -Dm644 assets/mb3d-rs.png /app/share/icons/hicolor/256x256/apps/io.github.thr32423.mb3d-rs.png
+      - for s in 16 22 24 32 48 64 128; do install -Dm644 assets/mb3d-rs-$s.png /app/share/icons/hicolor/${s}x${s}/apps/io.github.thr32423.mb3d-rs.png; done
+      - install -Dm644 assets/io.github.thr32423.mb3d-rs.metainfo.xml -t /app/share/metainfo
     sources:
       - type: git
         url: https://github.com/thr32423/mb3d-rs.git
         tag: v0.2.83
-        commit: 0000000000000000000000000000000000000000
+        commit: "0000000000000000000000000000000000000000"
       - cargo-sources.json

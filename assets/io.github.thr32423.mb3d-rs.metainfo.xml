@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- The application's description for software centres and Flathub
-     (AppStream MetaInfo).  Check it with: appstreamcli validate assets/io.github.thr32423.mb3d_rs.metainfo.xml -->
+     (AppStream MetaInfo).  Check it with: appstreamcli validate assets/io.github.thr32423.mb3d-rs.metainfo.xml -->
 <component type="desktop-application">
-  <id>io.github.thr32423.mb3d_rs</id>
+  <id>io.github.thr32423.mb3d-rs</id>
   <name>mb3d-rs</name>
   <summary>Mandelbulb3D on the graphics card</summary>
   <developer id="io.github.thr32423">
@@ -31,11 +31,11 @@
       <li>MB3D's formulas, including the hundreds written in machine code, run on the card and on the processor</li>
       <li>Monte Carlo path tracing with a neural noise filter (Intel Open Image Denoise, on the processor in this package)</li>
       <li>Animations, big tiled renders, voxel and mesh export, a swarm of computers sharing one picture</li>
-      <li>Interfaces in several languages, themes, and the mb3d command line renderer for scripts (flatpak run --command=mb3d io.github.thr32423.mb3d_rs)</li>
+      <li>Interfaces in several languages, themes, and the mb3d command line renderer for scripts (flatpak run --command=mb3d io.github.thr32423.mb3d-rs)</li>
     </ul>
   </description>
 
-  <launchable type="desktop-id">io.github.thr32423.mb3d_rs.desktop</launchable>
+  <launchable type="desktop-id">io.github.thr32423.mb3d-rs.desktop</launchable>
   <provides>
     <binary>Mandelbulb3D</binary>
     <binary>mb3d</binary>
