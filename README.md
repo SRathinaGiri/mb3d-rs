@@ -3,7 +3,7 @@
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
 <!-- latest:start -->
-**Latest release: [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81)** (28 Oct 2026, 06:45 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.82](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82)** (29 Oct 2026, 08:28 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1047,6 +1047,15 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.82](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82) · 29 Oct 2026, 08:28 UTC
+
+| Commit | What it does |
+|---|---|
+| [`8b221e1`](https://github.com/thr32423/mb3d-rs/commit/8b221e13614b9e52522ce14859a447d6ee29c800) | Version number and release notes of this release |
+| [`51d9893`](https://github.com/thr32423/mb3d-rs/commit/51d98939c84ea8eb78e213fb8857170f7eb02a15) | Lighting: the full repaint after a lighting change (shadows of a switched or moved light, reflections, depth of field) runs as a processing of the post processing window: Calculate 3D turns into Stop, the LED blinks, the line and the bar show the stage and its time left, the message list gets its time (a reporter saw a green LED, no way to stop and a 33 s shadow pass on the CPU at 4000 x 2000); a further lighting change or a Calculate now of the post processing window stops it instead of waiting; a repaint's hard shadows and DE occlusion share the card and the CPU as after the main calculation (post_shared), when the card's pipelines are compiled |
+| [`62098cf`](https://github.com/thr32423/mb3d-rs/commit/62098cf606e334f63d554d36f62134e5ae443618) | Memory: the reflections' band is sized to half of the free memory (a 2M band peaks at 3.5 GB, measured; 1792 bytes per pixel, at least 256k pixels), the memory estimate models the stages (MemoryUse: G-buffer, window, main calculation's card buffers, paint with the reflections' band and the depth of field) so the question before Calculate 3D and the command line's note follow the scene and the swarm's owner, whose tiles' computers do the main calculation; the swarm's whole-picture reflections and depth of field report their progress and obey Stop; --swarm prints the memory note |
+| [`995466a`](https://github.com/thr32423/mb3d-rs/commit/995466a4d3258ac51598566e044aba6cbeeeb9da) | README: Updates for v0.2.81 |
+
 ### [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81) · 28 Oct 2026, 06:45 UTC
 
 | Commit | What it does |
@@ -1083,16 +1092,7 @@ of a release are on its page. Times are in UTC.
 | [`ebb7c9b`](https://github.com/thr32423/mb3d-rs/commit/ebb7c9ba846df288df1f9aa27e35ce79c370f07d) | Plan: several graphics cards (parked) |
 | [`d4e151d`](https://github.com/thr32423/mb3d-rs/commit/d4e151df8083fa440c04342337d8ab5fca8663c3) | README: Updates for v0.2.79 |
 
-### [v0.2.79](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.79) · 27 Oct 2026, 03:50 UTC
-
-| Commit | What it does |
-|---|---|
-| [`af5c449`](https://github.com/thr32423/mb3d-rs/commit/af5c44969caa4c6df3c3d5a8eae9f366ed08bd40) | Version number and release notes of this release |
-| [`86b0997`](https://github.com/thr32423/mb3d-rs/commit/86b09973f3551f83f559563c1e841bb8d1fd4bf1) | macOS: the formulas compiled at run time on by default, for testing there |
-| [`988fc03`](https://github.com/thr32423/mb3d-rs/commit/988fc03b4f663c3518e3e2d7a84a72f14d87348e) | Hotkeys: a key combination per window brings it to the front, one closes the current window; set under Prefs > Hotkeys |
-| [`1e821fa`](https://github.com/thr32423/mb3d-rs/commit/1e821fabaea88d376615e6363acf7cfd5f21d8eb) | README: Updates for v0.2.78 |
-
-All 92 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 93 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers

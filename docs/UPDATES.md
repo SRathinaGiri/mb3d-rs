@@ -5,6 +5,15 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.82](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82) · 29 Oct 2026, 08:28 UTC
+
+| Commit | What it does |
+|---|---|
+| [`8b221e1`](https://github.com/thr32423/mb3d-rs/commit/8b221e13614b9e52522ce14859a447d6ee29c800) | Version number and release notes of this release |
+| [`51d9893`](https://github.com/thr32423/mb3d-rs/commit/51d98939c84ea8eb78e213fb8857170f7eb02a15) | Lighting: the full repaint after a lighting change (shadows of a switched or moved light, reflections, depth of field) runs as a processing of the post processing window: Calculate 3D turns into Stop, the LED blinks, the line and the bar show the stage and its time left, the message list gets its time (a reporter saw a green LED, no way to stop and a 33 s shadow pass on the CPU at 4000 x 2000); a further lighting change or a Calculate now of the post processing window stops it instead of waiting; a repaint's hard shadows and DE occlusion share the card and the CPU as after the main calculation (post_shared), when the card's pipelines are compiled |
+| [`62098cf`](https://github.com/thr32423/mb3d-rs/commit/62098cf606e334f63d554d36f62134e5ae443618) | Memory: the reflections' band is sized to half of the free memory (a 2M band peaks at 3.5 GB, measured; 1792 bytes per pixel, at least 256k pixels), the memory estimate models the stages (MemoryUse: G-buffer, window, main calculation's card buffers, paint with the reflections' band and the depth of field) so the question before Calculate 3D and the command line's note follow the scene and the swarm's owner, whose tiles' computers do the main calculation; the swarm's whole-picture reflections and depth of field report their progress and obey Stop; --swarm prints the memory note |
+| [`995466a`](https://github.com/thr32423/mb3d-rs/commit/995466a4d3258ac51598566e044aba6cbeeeb9da) | README: Updates for v0.2.81 |
+
 ## [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81) · 28 Oct 2026, 06:45 UTC
 
 | Commit | What it does |
