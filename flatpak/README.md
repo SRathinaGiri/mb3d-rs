@@ -12,7 +12,7 @@ Intel's binaries with them, see the release workflow).
 
 Once: the SDK, the Rust extension and the builder, for the user
 
-    flatpak install --user flathub org.flatpak.Builder org.freedesktop.Sdk//26.08 org.freedesktop.Sdk.Extension.rust-stable//26.08
+    flatpak install --user flathub org.flatpak.Builder org.freedesktop.Platform//26.08 org.freedesktop.Sdk//26.08 org.freedesktop.Sdk.Extension.rust-stable//26.08
 
 To build what is committed on a local branch instead of the tagged release,
 point the `mb3d-rs` module's source at this folder (`tools/flatpak_local.sh`
