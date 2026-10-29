@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.84" date="2026-10-29">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.84</url>
+      <description>
+        <p>The History window behind the title bar's clock icon: every picture calculated with its thumbnail and every file opened or saved, as a list, rows or tiles; a lighting change only repaints, as in Mandelbulb3D; a formula that never returns no longer slows a render to a crawl.</p>
+      </description>
+    </release>
     <release version="0.2.83" date="2026-10-29">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83</url>
       <description>
