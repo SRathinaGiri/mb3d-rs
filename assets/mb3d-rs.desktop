@@ -1,10 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=Mandelbulb3D
+Name=mb3d-rs
 GenericName=Fractal renderer
-Comment=Mandelbulb3D (mb3d-rs): 3D fractals
-Exec=Mandelbulb3D
+Comment=Mandelbulb3D for today's computers: 3D fractals on the graphics card
+Exec=Mandelbulb3D %f
 Icon=mb3d-rs
 Terminal=false
 Categories=Graphics;3DGraphics;
+Keywords=fractal;Mandelbulb;Mandelbulb3D;MB3D;3D;
 StartupWMClass=mb3d-rs

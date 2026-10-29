@@ -446,9 +446,11 @@ impl<A: App> Runner<A> {
             use winit::platform::x11::WindowAttributesExtX11;
             // the app ID (Wayland) and WM_CLASS (X11) name the menu entry,
             // mb3d-rs.desktop: the desktop takes the window's icon from it
-            // (Wayland ignores the icon the program sets)
-            attrs = WindowAttributesExtWayland::with_name(attrs, "mb3d-rs", "Mandelbulb3D");
-            attrs = WindowAttributesExtX11::with_name(attrs, "mb3d-rs", "Mandelbulb3D");
+            // (Wayland ignores the icon the program sets); in a Flatpak the
+            // menu entry is named after the Flatpak's ID
+            let app_id = std::env::var("FLATPAK_ID").unwrap_or_else(|_| "mb3d-rs".into());
+            attrs = WindowAttributesExtWayland::with_name(attrs, &app_id, "Mandelbulb3D");
+            attrs = WindowAttributesExtX11::with_name(attrs, &app_id, "Mandelbulb3D");
         }
         let window = match el.create_window(attrs) {
             Ok(w) => Rc::new(w),

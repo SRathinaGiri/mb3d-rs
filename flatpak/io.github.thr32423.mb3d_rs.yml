@@ -1,0 +1,131 @@
+# The Flatpak of mb3d-rs, as submitted to Flathub (flatpak/README.md tells
+# how to build and test it here, and how a new release gets to Flathub).
+#
+# Everything is built from source, as Flathub asks: the program from its
+# tagged release with the crates of Cargo.lock (cargo-sources.json, made by
+# tools/flatpak_cargo_sources.py), MB3D's data folders from the original
+# repository at a fixed commit, and Intel Open Image Denoise with its CPU
+# device (the card's devices need the vendors' proprietary toolkits, which
+# the Flatpak SDK does not have; the other packages ship Intel's binaries
+# with them).  ISPC, the compiler Open Image Denoise's CPU kernels need, is
+# Intel's release binary used only while building, as ParaView's Flathub
+# package does; it is not in the Flatpak.
+app-id: io.github.thr32423.mb3d_rs
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: Mandelbulb3D
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  # the graphics card (Vulkan)
+  - --device=dri
+  # the program's own file dialogs (MB3D's) open parameter files, maps and
+  # formulas the user keeps anywhere, write pictures, animations and
+  # exported meshes there, and the swarm shares a folder between computers
+  - --filesystem=home
+
+cleanup:
+  - /include
+  - /lib/cmake
+  - /lib/pkgconfig
+  - /share/doc/OpenImageDenoise
+  - '*.a'
+  - '*.la'
+
+modules:
+  - name: onetbb
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DTBB_TEST=OFF
+      - -DTBB_EXAMPLES=OFF
+      - -DTBB_STRICT=OFF
+    sources:
+      - type: archive
+        url: https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2022.2.0.tar.gz
+        sha256: f0f78001c8c8edb4bddc3d4c5ee7428d56ae313254158ad1eec49eced57f6a5b
+
+  # Intel's ISPC compiler: a build tool only (cleaned out of the Flatpak)
+  - name: ispc
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 bin/ispc /app/bin/ispc
+    cleanup:
+      - '*'
+    sources:
+      - type: archive
+        only-arches: [x86_64]
+        url: https://github.com/ispc/ispc/releases/download/v1.30.0/ispc-v1.30.0-linux.tar.gz
+        sha256: 63e7d61037849fa1ed644f0398d21740ee9f880b9bf81f017c65eebe1d42c02b
+      - type: archive
+        only-arches: [aarch64]
+        url: https://github.com/ispc/ispc/releases/download/v1.30.0/ispc-v1.30.0-linux.aarch64.tar.gz
+        sha256: 509399c399ec162d746889458a10cc13797a1aed1c0164b2bd3faddf7d023f13
+
+  - name: oidn
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DOIDN_DEVICE_CPU=ON
+      - -DOIDN_DEVICE_SYCL=OFF
+      - -DOIDN_DEVICE_CUDA=OFF
+      - -DOIDN_DEVICE_HIP=OFF
+      - -DOIDN_APPS=OFF
+      - -DOIDN_INSTALL_DEPENDENCIES=OFF
+      - -DISPC_EXECUTABLE=/app/bin/ispc
+    sources:
+      - type: archive
+        url: https://github.com/RenderKit/oidn/releases/download/v2.5.1/oidn-2.5.1.src.tar.gz
+        sha256: e71fd043a70f1cc80e301d1b90df6c1f536098c4dd94baa612742f6db3369c36
+
+  # the original Mandelbulb3D's formulas, maps, parameters and documents,
+  # as the other packages ship them (the programs find them in
+  # /app/share/mb3d-rs through XDG_DATA_DIRS)
+  - name: mb3d-original
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/share/mb3d-rs /app/share/doc/mb3d-rs
+      - cp -r M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas /app/share/mb3d-rs/
+      - cp License.txt CHANGELOG.txt /app/share/doc/mb3d-rs/
+      - cp README.md /app/share/doc/mb3d-rs/README-MB3D.md
+      - echo "https://github.com/thargor6/mb3d commit 26de069672c385e4c75e20b8a6cdfb21b3e86c82" > /app/share/doc/mb3d-rs/MB3D-SOURCE.txt
+    sources:
+      - type: git
+        url: https://github.com/thargor6/mb3d.git
+        commit: 26de069672c385e4c75e20b8a6cdfb21b3e86c82
+
+  - name: mb3d-rs
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
+      env:
+        CARGO_HOME: /run/build/mb3d-rs/cargo
+        CARGO_NET_OFFLINE: 'true'
+    build-commands:
+      - cargo --offline build --release --locked
+      - install -Dm755 target/release/Mandelbulb3D target/release/mb3d -t /app/bin
+      # the formulas new in mb3d-rs, the themes, the languages, the examples
+      - cp M3Formulas-rs/*.m3f /app/share/mb3d-rs/M3Formulas/
+      - cp -r Themes Languages /app/share/mb3d-rs/
+      - mkdir -p /app/share/mb3d-rs/examples
+      - cp examples/*.m3s /app/share/mb3d-rs/examples/
+      - cp README.md GETTING_STARTED.md LICENSE /app/share/doc/mb3d-rs/
+      # the menu entry, the icon and the description, named after the app ID
+      - sed 's/^Icon=.*/Icon=io.github.thr32423.mb3d_rs/' assets/mb3d-rs.desktop > io.github.thr32423.mb3d_rs.desktop
+      - install -Dm644 io.github.thr32423.mb3d_rs.desktop -t /app/share/applications
+      - install -Dm644 assets/mb3d-rs.png /app/share/icons/hicolor/256x256/apps/io.github.thr32423.mb3d_rs.png
+      - for s in 16 22 24 32 48 64 128; do install -Dm644 assets/mb3d-rs-$s.png /app/share/icons/hicolor/${s}x${s}/apps/io.github.thr32423.mb3d_rs.png; done
+      - install -Dm644 assets/io.github.thr32423.mb3d_rs.metainfo.xml -t /app/share/metainfo
+    sources:
+      - type: git
+        url: https://github.com/thr32423/mb3d-rs.git
+        tag: v0.2.83
+        commit: 0000000000000000000000000000000000000000
+      - cargo-sources.json

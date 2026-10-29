@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The application's description for software centres and Flathub
+     (AppStream MetaInfo).  Check it with: appstreamcli validate assets/io.github.thr32423.mb3d_rs.metainfo.xml -->
+<component type="desktop-application">
+  <id>io.github.thr32423.mb3d_rs</id>
+  <name>mb3d-rs</name>
+  <summary>Mandelbulb3D on the graphics card</summary>
+  <developer id="io.github.thr32423">
+    <name>thr32423</name>
+  </developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LGPL-2.1-only</project_license>
+
+  <description>
+    <p>
+      mb3d-rs is Mandelbulb3D (MB3D), the 3D fractal program, rewritten so
+      that it runs on today's computers: on Linux, Windows and macOS, and
+      with the picture calculated on the graphics card where MB3D could
+      only use the processor. It opens MB3D's parameter files (.m3p, .m3i,
+      text parameters from forums), uses MB3D's formulas and maps, and
+      makes the same pictures.
+    </p>
+    <p>
+      The windows are MB3D's own: the main window, Formulas, Lighting,
+      Post processing, Navigator, Animation, Batch, Big renders, Monte
+      Carlo, Voxel export, Bulb Tracer 2, MutaGen and the rest. If you
+      know MB3D, you know this program, and MB3D's tutorials apply.
+    </p>
+    <ul>
+      <li>Ray marching, shadows, ambient occlusion and reflections on the graphics card (Vulkan), with the processor's cores sharing the work</li>
+      <li>MB3D's formulas, including the hundreds written in machine code, run on the card and on the processor</li>
+      <li>Monte Carlo path tracing with a neural noise filter (Intel Open Image Denoise, on the processor in this package)</li>
+      <li>Animations, big tiled renders, voxel and mesh export, a swarm of computers sharing one picture</li>
+      <li>Interfaces in several languages, themes, and the mb3d command line renderer for scripts (flatpak run --command=mb3d io.github.thr32423.mb3d_rs)</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.thr32423.mb3d_rs.desktop</launchable>
+  <provides>
+    <binary>Mandelbulb3D</binary>
+    <binary>mb3d</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/thr32423/mb3d-rs</url>
+  <url type="bugtracker">https://github.com/thr32423/mb3d-rs/issues</url>
+  <url type="help">https://github.com/thr32423/mb3d-rs/blob/master/GETTING_STARTED.md</url>
+  <url type="vcs-browser">https://github.com/thr32423/mb3d-rs</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>The main window with a picture calculated on the graphics card</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/main_window.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Lighting window: a light moved, the picture repainted as you drag</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/lighting_live.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Navigator window</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/navigator_values.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A swarm of computers sharing one picture</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/swarm_window.png</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>Graphics</category>
+    <category>3DGraphics</category>
+  </categories>
+  <keywords>
+    <keyword>fractal</keyword>
+    <keyword>Mandelbulb</keyword>
+    <keyword>Mandelbulb3D</keyword>
+    <keyword>MB3D</keyword>
+    <keyword>ray marching</keyword>
+    <keyword>3D</keyword>
+  </keywords>
+
+  <content_rating type="oars-1.1"/>
+
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <display_length compare="ge">1024</display_length>
+    <internet>offline-only</internet>
+  </recommends>
+
+  <releases>
+    <release version="0.2.82" date="2026-10-29">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82</url>
+    </release>
+  </releases>
+</component>
