@@ -605,6 +605,9 @@ fn run() -> Result<(), String> {
     if errs > 0 {
         eprintln!("  warning: {errs} custom formula calls failed in the interpreter");
     }
+    if mb3d::iteration::CUSTOM_LOOPS.load(std::sync::atomic::Ordering::Relaxed) > 0 {
+        eprintln!("  warning: a custom formula never returned with these options (a loop of its does not end; MB3D hangs there): its later calls were skipped");
+    }
     if !quiet {
         eprintln!("  wrote {}", if output == "-" { "to the standard output" } else { &output });
     }

@@ -20,6 +20,12 @@ pub const IT_BASE: u32 = BASE + 0x1000;
 pub const IT_C1: u32 = IT_BASE + 56;
 pub const STACK_TOP: u32 = BASE + 0x7F00;
 pub const MAX_STEPS: u64 = 2_000_000;
+/// The machine's cap once a formula exceeded [`MAX_STEPS`]: a loop of its
+/// that never ends with these options (MB3D hangs in it; e.g. an integer
+/// power of 0 in TrifoxComplexAngles), so the later calls of this render
+/// fail at their first step instead of each running the whole cap
+/// (a 40 x 32 probe of such a scene took minutes).
+pub const STEPS_AFTER_LOOP: u64 = 0;
 
 pub fn var_buf_addr(slot: usize) -> u32 {
     BASE + 0x2000 + slot as u32 * 0x400

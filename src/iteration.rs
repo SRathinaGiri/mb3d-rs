@@ -9,6 +9,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Number of custom formula calls that failed in the interpreter.
 pub static CUSTOM_ERRORS: AtomicU64 = AtomicU64::new(0);
+/// Formula calls that exceeded the instruction cap (a loop that never
+/// ends with the formula's options): the machine's later calls were
+/// skipped, see [`crate::x86::Machine::formula_looped`].
+pub static CUSTOM_LOOPS: AtomicU64 = AtomicU64::new(0);
 use crate::math::{rotate_4dex, Mat4, Vec3};
 
 /// One slot of the alternating hybrid (`nHybrid[n]`, `fHybrid[n]`).
@@ -81,6 +85,10 @@ pub struct Iteration {
     /// The translated programs of the custom slots, for the direct calls of
     /// the alternating hybrid loop (found once per slot list).
     pub direct: DirectSlots,
+    /// A compiled loop (hybrid, dIFS) reported a failed formula call: the
+    /// loops run the plain way from then on, which sees the error's kind
+    /// (a call over the instruction cap collapses the machine's cap).
+    pub jit_off: bool,
 }
 
 /// The vector a formula just stored, read as four separate loads: the
@@ -189,7 +197,11 @@ impl Iteration {
         }
         let r = self.run_with(slots, four_d, |it, n| match direct[n] {
             Some((f, p)) => {
-                if f(&mut m, p, it, custom::pconst_addr(n), custom::MAX_STEPS).is_err() {
+                let cap = m.step_cap;
+                if let Err(e) = f(&mut m, p, it, custom::pconst_addr(n), cap) {
+                    if e == crate::x86::EmuError::StepLimit {
+                        m.formula_looped();
+                    }
                     CUSTOM_ERRORS.fetch_add(1, Ordering::Relaxed);
                     it.v = [f64::INFINITY; 4];
                     it.rout = f64::INFINITY;
@@ -209,6 +221,9 @@ impl Iteration {
     // (calls the loop Cranelift compiled: unsafe by Rust's definition)
     #[allow(unsafe_code)]
     fn run_jit(&mut self, slots: &[HybridSlot], four_d: bool) -> Option<usize> {
+        if self.jit_off {
+            return None;
+        }
         let h = self.emu.as_deref()?.jit.as_deref()?;
         if h.four_d != four_d || h.start != self.start_from || h.end != self.end_to || h.repeat != self.repeat_from || h.slots != slots.len() || !crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) {
             return None;
@@ -216,14 +231,16 @@ impl Iteration {
         let f = h.f;
         let mut m = self.emu.take()?;
         let mut errs = 0u64;
+        let cap = m.step_cap;
         let mp: *mut crate::x86::Machine = &mut *m;
         // SAFETY: the compiled loop reads and writes the iteration's fields
         // (not `emu`, which is taken out), the machine's memory image, and
         // the slots it was compiled for
-        let n = unsafe { f(self, (*mp).mem.as_mut_ptr(), mp, custom::MAX_STEPS, slots.as_ptr(), &mut errs) };
+        let n = unsafe { f(self, (*mp).mem.as_mut_ptr(), mp, cap, slots.as_ptr(), &mut errs) };
         self.emu = Some(m);
         if errs > 0 {
             CUSTOM_ERRORS.fetch_add(errs, Ordering::Relaxed);
+            self.jit_off = true;
         }
         Some(n as usize)
     }
@@ -576,18 +593,22 @@ impl Iteration {
         // compiled code does not go
         #[cfg(jit)]
         let done = match m.difs_jit.as_deref() {
-            Some(h) if h.start == self.start_from && h.end == self.end_to && h.repeat == self.repeat_from && h.slots == slots.len() && crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) => {
+            Some(h) if !self.jit_off && h.start == self.start_from && h.end == self.end_to && h.repeat == self.repeat_from && h.slots == slots.len() && crate::x86::NATIVE_ENABLED.load(Ordering::Relaxed) => {
                 let f = h.f;
                 let mut out = crate::x86::clif_jit::DifsOut::default();
+                let cap = m.step_cap;
                 let mp: *mut crate::x86::Machine = m;
                 // SAFETY: the compiled loop reads and writes the machine's
                 // memory image and SSE registers
-                let r = unsafe { f((*mp).mem.as_mut_ptr(), mp, custom::MAX_STEPS, inside as i32, rstopd, self.max_it, &mut out) };
+                let r = unsafe { f((*mp).mem.as_mut_ptr(), mp, cap, inside as i32, rstopd, self.max_it, &mut out) };
                 if r != 2 {
                     it_min = out.it_min;
                     dfree2 = out.dfree2;
                     min_de = out.min_de;
                     failed = r == 1;
+                    if failed {
+                        self.jit_off = true;
+                    }
                 }
                 r != 2
             }
@@ -621,14 +642,22 @@ impl Iteration {
             }
             let regs = if let Some((f, p)) = direct.get(n).copied().flatten() {
                 let mut regs = m.difs_regs(esi, edi, n as u32, cnt as u32, custom::STACK_TOP);
-                if f(m, p, &mut regs, custom::MAX_STEPS).is_err() {
+                let cap = m.step_cap;
+                if let Err(e) = f(m, p, &mut regs, cap) {
+                    if e == crate::x86::EmuError::StepLimit {
+                        m.formula_looped();
+                    }
                     failed = true;
                     break;
                 }
                 regs
             } else {
                 let entry = custom::code_addr(n);
-                if m.call_difs_taken(&progs, entry, esi, edi, n as u32, cnt as u32, custom::STACK_TOP, custom::MAX_STEPS).is_err() {
+                let cap = m.step_cap;
+                if let Err(e) = m.call_difs_taken(&progs, entry, esi, edi, n as u32, cnt as u32, custom::STACK_TOP, cap) {
+                    if e == crate::x86::EmuError::StepLimit {
+                        m.formula_looped();
+                    }
                     failed = true;
                     break;
                 }
@@ -703,7 +732,11 @@ impl Iteration {
         // a translated formula with a direct version works on the fields
         // themselves (the machine is taken out of `self` for the call)
         if let Some(mut m) = self.emu.take() {
-            let r = m.call_direct(custom::code_addr(n), self, custom::pconst_addr(n), custom::MAX_STEPS);
+            let cap = m.step_cap;
+            let r = m.call_direct(custom::code_addr(n), self, custom::pconst_addr(n), cap);
+            if let Some(Err(crate::x86::EmuError::StepLimit)) = &r {
+                m.formula_looped();
+            }
             self.emu = Some(m);
             match r {
                 Some(Ok(())) => return,
@@ -745,7 +778,11 @@ impl Iteration {
         m.put_f64(b + off::DERIV1 + 16, self.deriv3);
         m.put_f64(b + off::DFREE1, self.dfree[0]);
         m.put_f64(b + off::DFREE2, self.dfree[1]);
-        let res = m.call_formula(custom::code_addr(n), custom::IT_C1, custom::STACK_TOP, custom::MAX_STEPS);
+        let cap = m.step_cap;
+        let res = m.call_formula(custom::code_addr(n), custom::IT_C1, custom::STACK_TOP, cap);
+        if res == Err(crate::x86::EmuError::StepLimit) {
+            m.formula_looped();
+        }
         if res.is_ok() {
             for k in 0..4 {
                 self.v[k] = m.get_f64(b + off::X + 8 * k as u32);
@@ -780,5 +817,34 @@ impl Iteration {
             HybridMode::Ipol3D => self.ipol_3d(slots),
             HybridMode::Ipol4D => self.ipol_4d(slots),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A formula whose loop never ends runs the whole instruction cap once;
+    /// the machine's later calls fail at their first step.
+    #[test]
+    fn a_formula_that_never_returns_fails_fast_after_its_first_call() {
+        let mut m = crate::x86::Machine::new();
+        let entry = custom::code_addr(0);
+        m.write_bytes(entry, &[0xEB, 0xFE]).unwrap(); // L: jmp L
+        m.predecode(&[entry]);
+        let mut it = Iteration { emu: Some(Box::new(m)), ..Default::default() };
+        it.run_custom(0);
+        let m = it.emu.as_deref().unwrap();
+        assert_eq!(it.rout, f64::INFINITY);
+        assert_eq!(m.step_cap, custom::STEPS_AFTER_LOOP);
+        let steps = m.steps;
+        assert!(steps > custom::MAX_STEPS);
+        it.v = [0.5; 4];
+        it.rout = 1.0;
+        it.run_custom(0);
+        let m = it.emu.as_deref().unwrap();
+        assert_eq!(it.rout, f64::INFINITY);
+        assert!(m.steps - steps <= 1, "{} steps", m.steps - steps);
+        assert!(CUSTOM_LOOPS.load(Ordering::Relaxed) >= 1);
     }
 }

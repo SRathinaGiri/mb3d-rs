@@ -1137,6 +1137,9 @@ pub struct Machine {
     progs: Option<std::sync::Arc<Vec<(u32, Prog)>>>,
     pub host: Vec<(u32, HostFn)>,
     pub steps: u64,
+    /// the instruction cap of a formula call ([`crate::custom::MAX_STEPS`];
+    /// [`crate::custom::STEPS_AFTER_LOOP`] once a call exceeded it)
+    pub step_cap: u64,
     /// the alternating hybrid of the scene compiled at run time (set on the
     /// prototype machine of a scene, see `clif_jit::compile_hybrid`)
     #[cfg(jit)]
@@ -1194,6 +1197,15 @@ const ESI: usize = 6;
 const EDI: usize = 7;
 
 impl Machine {
+    /// A formula call exceeded the cap: its loop never ends with these
+    /// options, and the later calls on this machine fail at once.
+    pub fn formula_looped(&mut self) {
+        if self.step_cap != crate::custom::STEPS_AFTER_LOOP {
+            self.step_cap = crate::custom::STEPS_AFTER_LOOP;
+            crate::iteration::CUSTOM_LOOPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
     pub fn new() -> Machine {
         Machine {
             mem: vec![0u8; MEM_ALLOC].into_boxed_slice().try_into().expect("memory size"),
@@ -1209,6 +1221,7 @@ impl Machine {
             progs: Some(std::sync::Arc::new(Vec::new())),
             host: Vec::new(),
             steps: 0,
+            step_cap: crate::custom::MAX_STEPS,
             #[cfg(jit)]
             jit: None,
             #[cfg(jit)]
