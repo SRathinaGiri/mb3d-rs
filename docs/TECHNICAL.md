@@ -753,21 +753,18 @@ The volumetric light map is calculated before the image, with a ray march
 per map pixel, so it adds noticeable time.
 
 **Changing the lighting after a calculation** (the Lighting window,
-`light_form.rs`: `trigger_repaint`, `idle`; `engine.rs`: `Job::Relight`)
+`light_form.rs`: `trigger_repaint`; `engine.rs`: `Job::Relight`)
 repaints at once from the kept G-buffer, as MB3D does: the hard shadows as
-they were calculated, without reflections and depth of field. Only what
-casts the shadows counts for them (`post_sig`: on, shadowing, direction or
-position, a positional light's reach), so colour, intensity and shading
-never calculate them again. When the lighting has not changed for 1.5 s,
-a full repaint adds the reflections, the DoF and the shadows of a moved
-light (the line says "reflections next" / "shadows next", then "adding
-reflections" / "redoing shadows"). It runs as a processing of the post
-processing window does: "Calculate 3D" turns into "Stop", the LED blinks,
-the line and the bar show the stage and its time left, and the message
-list gets its time when it is done; the next lighting change stops it
-(`stop_own_repaint`) and paints at once, as does a "Calculate now" of the
-post processing window. The hard shadows and the DE ambient occlusion of
-a repaint share the card and the CPU as after the main calculation
+they were calculated, without reflections and depth of field. Nothing
+follows by itself, as in MB3D: the post processing window's buttons
+calculate the shadows of a moved light, the reflections and the depth of
+field again (until v0.2.83 a full repaint did that 1.5 s after the last
+change; on a big picture those passes take as long as the calculation,
+so it was taken out). A repaint of the post processing window runs as a
+processing: "Calculate 3D" turns into "Stop", the LED blinks, the line
+and the bar show the stage and its time left, and the message list gets
+its time when it is done. Its hard shadows and DE ambient occlusion share
+the card and the CPU as after the main calculation
 (`post_process_reporting` → `post_shared`) when the card's pipelines are
 compiled, which they are after a calculation on the card; after a march
 in double precision, or while the card compiles, the CPU runs them alone.

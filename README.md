@@ -570,8 +570,7 @@ you check further on your own:
 
   </details>
 * **Lighting stays live** after hard shadows and reflections: move a light
-  or change its colour and the picture changes at once; reflections and the
-  shadows of a moved light follow by themselves a moment later.
+  or change its colour and the picture changes at once, as in Mandelbulb3D.
 
   <a href="docs/img/lighting_live.png"><img src="docs/img/lighting_live_small.png" width="300" alt="The main window and the Lighting window right after a lighting change"></a>
 
@@ -580,17 +579,16 @@ you check further on your own:
   Render plainly, then try out light positions and colours: each change in
   the Lighting window repaints at once with the shadows as they were
   calculated, as in Mandelbulb3D. Changing a light's colour or intensity
-  never calculates the shadows again. When you leave the lighting alone for
-  a second and a half, the reflections and the depth of field are added
-  back, and the shadows of a light you moved are calculated again; the line
-  beside the bar says what follows. A new change stops it.
+  never calculates the shadows again. The shadows of a light you moved,
+  the reflections and the depth of field come back with the buttons of
+  the Post processing window, as in Mandelbulb3D.
   
   A calculation you stopped can also still be continued after you changed
   the lighting. A way of working with it: [Lighting workflow](https://github.com/thr32423/mb3d-rs/wiki/Lighting-workflow)
   in the wiki. Details in
   [TECHNICAL.md](docs/TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
   
-  <a href="docs/img/lighting_live.png"><img src="docs/img/lighting_live.png" width="760" alt="The main window and the Lighting window right after a lighting change: the picture already brighter, the reflections following"></a>
+  <a href="docs/img/lighting_live.png"><img src="docs/img/lighting_live.png" width="760" alt="The main window and the Lighting window right after a lighting change: the picture already brighter"></a>
 
   </details>
 

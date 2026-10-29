@@ -767,9 +767,6 @@ pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     app.main.stopped_status = None;
     app.main.left_shown = None;
     app.main.calculating = true;
-    // (what starts here is not the lighting window's own repaint, which
-    // marks itself after this; a stopped one's mark must not outlive it)
-    app.light.full_running = false;
 }
 
 pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {

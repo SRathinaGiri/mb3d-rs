@@ -885,11 +885,6 @@ fn relight(e: &Inner, sc: &Scene) -> Result<(), String> {
     Ok(())
 }
 
-/// Whether a picture painted by `Relight` lacks something a `Repaint`
-/// adds: reflections, depth of field, or hard shadows of lights that moved.
-pub fn relight_incomplete(sc: &Scene, b: &Base) -> bool {
-    b.params.slice_2d == 0 && (sc.mc.reflections || sc.dof.is_some() || post_sig(sc) != b.post_sig)
-}
 
 /// MB3D's `CalcPartT`: the selection is marched again (the raystep
 /// divided by `div`; with `nearer` only nearer surfaces replace the old

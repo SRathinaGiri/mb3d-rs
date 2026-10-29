@@ -5,11 +5,10 @@
 
 use crate::vcl::lang::{tr, trf};
 use super::util::{argb, fts_single, parse_float, pti, rgb_of};
-use super::{Mb3d, MAIN};
+use super::Mb3d;
 use crate::lighting::{Light, Lighting, PaletteColor};
 use crate::vcl::bitmap::Bitmap;
 use crate::vcl::{DialogResult, Ev, Event, MouseButton, Ui};
-use std::time::Instant;
 
 const F: &str = "LightAdjustForm";
 const PID180: f64 = std::f64::consts::PI / 180.0;
@@ -23,14 +22,6 @@ pub struct State {
     pub old_tb: [i64; 3],
     pub custom: Vec<Option<Lighting>>,
     pub custom_tb: Vec<[i64; 3]>,
-    /// a lighting change was painted without what takes long (reflections,
-    /// depth of field, hard shadows of moved lights): they follow when the
-    /// lighting has not changed for `SETTLE` (a full repaint running, and
-    /// whether the main window's line says so)
-    pub repaint_pending: bool,
-    pub last_change: Instant,
-    pub full_running: bool,
-    pub status_shown: bool,
     pub undo: Vec<Lighting>,
     pub undo_pos: usize,
     /// the running relight shows an undo/redo step: it stores no undo entry
@@ -50,10 +41,6 @@ impl Default for State {
             old_tb: [0; 3],
             custom: vec![None; 10],
             custom_tb: vec![[50, 50, 90]; 10],
-            repaint_pending: false,
-            last_change: Instant::now(),
-            full_running: false,
-            status_shown: false,
             undo: Vec::new(),
             undo_pos: 0,
             undo_relight: false,
@@ -708,83 +695,22 @@ pub fn put_light_in_header(app: &mut Mb3d, ui: &mut Ui) {
     l.gamma = pos(ui, "TrackBar18") as f32;
 }
 
-/// How long the lighting stays unchanged before what takes long is added.
-const SETTLE: std::time::Duration = std::time::Duration::from_millis(1500);
-
 /// `TriggerRepaint`: repaints the kept image with the new lighting at once,
-/// as MB3D does: the hard shadows as calculated, without reflections and
-/// depth of field. Those (and the shadows of moved lights) follow when the
-/// lighting has settled ([`idle`]); a change meanwhile stops them.
+/// as MB3D does: the hard shadows as they were calculated, without
+/// reflections and depth of field.  As in MB3D, the post processing
+/// window's buttons calculate the shadows of a moved light, the
+/// reflections and the depth of field again (nothing follows by itself:
+/// on a big picture those passes take as long as the calculation).
 pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
-    // (the lighting's own full repaint stops: the change paints at once,
-    // and the full repaint follows when the lighting has settled again)
-    if app.main.calculating && !stop_own_repaint(app, ui) {
+    if app.main.calculating {
         return;
     }
     app.light.undo_relight = false;
     app.make_scene(ui);
-    if let Some(b) = app.eng.base() {
+    if app.eng.base().is_some() {
         app.eng.start(super::engine::Job::Relight { scene: app.scene.clone() });
-        let st = &mut app.light;
-        st.last_change = Instant::now();
-        st.full_running = false;
-        st.repaint_pending = super::engine::relight_incomplete(&app.scene, &b);
-        if st.repaint_pending {
-            // (short: the line has little room beside the Frame field)
-            let shadows = super::engine::post_sig(&app.scene) != b.post_sig;
-            ui.set_caption(MAIN, "Label6", &if shadows { tr("shadows next") } else { tr("reflections next") });
-            st.status_shown = true;
-        }
     }
     ui.cm(F, "ComboBox3").font = Some(crate::vcl::font::Font { color: ui.theme.text_disabled(), custom_color: true, ..Default::default() });
-}
-
-/// The lighting settled after a change painted without reflections, depth
-/// of field or moved shadows: the full repaint adds them.
-pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
-    // (a calculation or a post processing started meanwhile makes its own
-    // complete picture)
-    if app.main.calculating {
-        if !app.light.full_running {
-            app.light.repaint_pending = false;
-            app.light.status_shown = false;
-        }
-        return;
-    }
-    let st = &app.light;
-    if !st.repaint_pending || st.last_change.elapsed() < SETTLE || app.eng.running() {
-        return;
-    }
-    app.light.repaint_pending = false;
-    let shadows = app.eng.base().is_some_and(|b| super::engine::post_sig(&app.scene) != b.post_sig);
-    // a processing as the post processing window's: "Calculate 3D" turns
-    // into "Stop", the LED blinks, the bar and the line show the stage and
-    // its time left (the hard shadows of a big picture take a while; the
-    // reporter of a 4000 x 2000 one saw a green LED and no way to stop)
-    super::postpro_form::started(app, ui, &if shadows { tr("redoing shadows") } else { tr("adding reflections") });
-    // (after `started`: its `disable_buttons` clears the mark)
-    app.light.full_running = true;
-    app.light.status_shown = true;
-    app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
-}
-
-/// Stops the full repaint [`idle`] started when it is the running
-/// calculation: true when it was (the lighting may change on, or a post
-/// processing start instead).
-pub fn stop_own_repaint(app: &mut Mb3d, ui: &mut Ui) -> bool {
-    if !(app.main.calculating && app.light.full_running) {
-        return false;
-    }
-    app.eng.stop();
-    super::main_form::enable_buttons(app, ui);
-    if app.main.led_running {
-        app.main.led_running = false;
-        super::main_form::show_led(ui, app.main.led, false);
-    }
-    app.post.running = None;
-    app.light.full_running = false;
-    app.light.status_shown = false;
-    true
 }
 
 fn store_undo_light(app: &mut Mb3d) {
@@ -804,12 +730,6 @@ fn store_undo_light(app: &mut Mb3d) {
 
 /// The engine finished: the colour histogram of the new image.
 pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
-    // (the line about the following passes, once they are done)
-    if app.light.status_shown && !app.light.repaint_pending && !app.main.calculating {
-        app.light.full_running = false;
-        app.light.status_shown = false;
-        ui.set_caption(MAIN, "Label6", "");
-    }
     if let Some(b) = app.eng.base() {
         let mut h = vec![0u32; 32768];
         let mut ho = vec![0u32; 32768];

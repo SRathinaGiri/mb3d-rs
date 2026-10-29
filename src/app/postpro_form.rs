@@ -276,8 +276,7 @@ fn toggle(ui: &mut Ui, btn: &str, pnl: &str) {
 /// The image is repainted with the post processing of the parameters;
 /// `stage` is shown in the main window while it runs.
 pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
-    // (the lighting window's own full repaint gives way)
-    if app.main.calculating && !super::light_form::stop_own_repaint(app, ui) {
+    if app.main.calculating {
         app.message(ui, &tr("Wait for the running calculation, or stop it first."));
         return;
     }
@@ -389,7 +388,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if ui.checked(F, "CheckBox25") {
                 // "Calculate only a selection in the image": the reflections
                 // of the selection only (MB3D's CalcSRT with the selection)
-                if app.main.calculating && !super::light_form::stop_own_repaint(app, ui) {
+                if app.main.calculating {
                     app.message(ui, &tr("Wait for the running calculation, or stop it first."));
                     return;
                 }
