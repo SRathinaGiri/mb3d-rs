@@ -39,44 +39,20 @@ The checks Flathub runs:
    `flathub/io.github.thr32423.mb3d-rs` and open a pull request there; its
    build bot builds it, a merge publishes it.
 
-## The first submission
+## Flathub's rules on AI, read 2026-10-29
 
-Flathub takes new apps as a pull request against the `new-pr` branch of
-https://github.com/flathub/flathub, with the manifest and
-`cargo-sources.json` at the top of the branch (nothing else):
+Flathub's requirements (https://docs.flathub.org/docs/for-app-authors/requirements,
+"Generative AI policy") and the AGENTS.md of flathub/flathub say:
 
-    gh repo fork flathub/flathub --clone=false
-    git clone --branch new-pr --single-branch https://github.com/YOUR_USER/flathub.git flathub-submission
-    cd flathub-submission
-    git checkout -b io.github.thr32423.mb3d-rs
-    cp ../mb3d-rs/flatpak/io.github.thr32423.mb3d-rs.yml ../mb3d-rs/flatpak/cargo-sources.json .
-    git add . && git commit -m "Add io.github.thr32423.mb3d-rs" && git push -u origin io.github.thr32423.mb3d-rs
-    gh pr create --repo flathub/flathub --base new-pr --title "Add io.github.thr32423.mb3d-rs"
+- AI tools or agents must not open or automate submission pull requests,
+  nor write their commit messages, descriptions, review comments or replies.
+- Flathub manifests must not contain AI-generated or AI-assisted content;
+  disclosure does not exempt them.
+- AI-generated code in the application itself must be disclosed, with
+  the affected parts and their extent; reviewers may reject on that
+  ground alone.
 
-A text for the pull request (Flathub's template asks these questions):
-
-    I am the developer of mb3d-rs (https://github.com/thr32423/mb3d-rs),
-    a port of Mandelbulb3D, the 3D fractal program, to Linux, Windows and
-    macOS with the picture calculated on the graphics card. LGPL-2.1.
-
-    Everything is built from source: the program from its tagged release
-    (Rust, the crates of Cargo.lock in cargo-sources.json), the original
-    Mandelbulb3D's formulas, maps and parameters from its repository at a
-    fixed commit (same licence), and Intel Open Image Denoise 2.5.1 with
-    its CPU device, with oneTBB. Open Image Denoise's CPU kernels need
-    Intel's ISPC compiler, which is taken as Intel's release binary and
-    used only while building, as org.paraview.ParaView does; it is cleaned
-    out of the Flatpak.
-
-    Permissions: dri for the card (Vulkan); wayland and fallback-x11;
-    filesystem=home because the program has Mandelbulb3D's own file
-    dialogs (no portal), opens parameter files, maps and formulas the user
-    keeps in folders of their choice, writes pictures, animations and
-    meshes there, and its "swarm" shares a folder between computers.
-    No network access.
-
-    The app ID follows the repository (io.github.thr32423.mb3d-rs).
-The bot builds the app on x86_64 and aarch64 and leaves a link to try it;
-a reviewer then asks for changes or merges, after which Flathub creates
-the repository `flathub/io.github.thr32423.mb3d-rs` with you as its
-maintainer.
+The manifest and the files in this folder were written with an AI
+assistant, so they cannot be submitted as they are. A submission has to be
+the maintainer's own work, done by hand, with the application's
+AI-written parts disclosed in the pull request's checklist.
