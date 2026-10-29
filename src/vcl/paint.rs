@@ -304,6 +304,14 @@ impl Form {
                 draw_led(cv, r, c, self.led_on);
                 self.led_rect.set(r);
             }
+            if self.history_hint.is_empty() {
+                self.history_rect.set(Rect::default());
+            } else {
+                let x = if self.caption_led.is_some() { bx + 18 + 9 } else { bx };
+                let r = Rect::new(x, b + (ch - 16) / 2, 16, 16);
+                draw_history_icon(cv, r, th.caption_text(active), self.nc_hot == NC_HISTORY);
+                self.history_rect.set(r);
+            }
             cv.set_clip(old);
             for (k, r) in buttons {
                 th.caption_button(cv, r, k as u8, self.nc_hot == k, self.nc_pressed == k);
@@ -1325,4 +1333,34 @@ fn muted_flag(b: &super::bitmap::Bitmap, bg: u32) -> super::bitmap::Bitmap {
         *p = (*p & 0xFF00_0000) | r << 16 | g << 8 | bl;
     }
     m
+}
+
+
+/// The title bar's history icon: a clock with a counter-clockwise arrow
+/// (the browsers' history), in the title's text colour; a lighter box
+/// behind it while the mouse is on it.
+fn draw_history_icon(cv: &mut Canvas, r: Rect, col: u32, hot: bool) {
+    if hot {
+        cv.round_rect(r.inset(-3), 3.0, (col & 0xFF_FFFF) | 0x3000_0000, (col & 0xFF_FFFF) | 0x3000_0000, None);
+    }
+    let c = col | 0xFF00_0000;
+    let (cx, cy, rad) = (r.x as f32 + 8.0, r.y as f32 + 8.5, 6.0);
+    let pi = std::f32::consts::PI;
+    let (a0, a1) = (-pi * 0.95, pi * 0.78);
+    let n = 24;
+    let mut prev = None;
+    for i in 0..=n {
+        let a = a0 + (a1 - a0) * i as f32 / n as f32;
+        let (px, py) = (cx + rad * a.cos(), cy + rad * a.sin());
+        if let Some((qx, qy)) = prev {
+            cv.line_aa(qx, qy, px, py, 1.5, c);
+        }
+        prev = Some((px, py));
+    }
+    // the arrowhead at the arc's start (left, pointing down)
+    let (ax, ay) = (cx + rad * a0.cos(), cy + rad * a0.sin());
+    cv.polygon(&[(ax - 3.0, ay - 1.5), (ax + 2.5, ay - 1.5), (ax - 0.5, ay + 3.0)], c);
+    // the hands
+    cv.line_aa(cx, cy, cx, cy - 4.0, 1.5, c);
+    cv.line_aa(cx, cy, cx + 3.0, cy + 1.5, 1.5, c);
 }

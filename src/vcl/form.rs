@@ -128,6 +128,8 @@ pub const PART_HEADER: i32 = -18;
 
 /// `Form::nc_hot` while the mouse is on the title bar's language badge.
 pub const NC_LANG: i32 = 3;
+/// `Form::nc_hot` while the mouse is on the title bar's history icon.
+pub const NC_HISTORY: i32 = 4;
 
 pub struct Form {
     pub name: String,
@@ -181,6 +183,11 @@ pub struct Form {
     pub led_hint: String,
     pub led_rect: std::cell::Cell<super::canvas::Rect>,
     pub led_hint_shown: bool,
+    /// the history icon (a clock with an arrow) right of the LED: its
+    /// hint (empty: no icon) and where it was painted; a click posts the
+    /// form a `HistoryIconClick` event
+    pub history_hint: String,
+    pub history_rect: std::cell::Cell<super::canvas::Rect>,
     /// the language badge at the right end of the title bar (left of the
     /// window buttons, the version left of it): the language's
     /// code (`EN`; empty: none), its hint and where it was painted; a
@@ -284,6 +291,8 @@ impl Form {
             led_hint: String::new(),
             led_rect: Default::default(),
             led_hint_shown: false,
+            history_hint: String::new(),
+            history_rect: Default::default(),
             caption_lang: String::new(),
             lang_hint: String::new(),
             lang_rect: Default::default(),

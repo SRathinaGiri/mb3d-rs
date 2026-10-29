@@ -1230,6 +1230,29 @@ update `info.txt`); `--clear [KEY]` deletes them.
 
 `MB3D_PORTABLE=1` or `0` chooses a way regardless of the folder.
 
+**History** (`src/history.rs`, the window `src/app/history_form.rs`, the
+clock icon right of the title bar's LED). `History/<date>/<time> <title>.m3p`
+is the parameter file of every Calculate 3D, as MB3D keeps it
+(`appdirs::store_history`); since v0.2.84 a thumbnail of the finished
+picture is written beside it as `.png` (240 x 180 at most, scaled down
+on a thread of its own when the calculation ends), and
+`History/<date>/log.txt` records the files opened and saved through the
+file dialogs or dropped on the window, a line
+`<seconds since 1970>\t<open|save>\t<path>` each (a chosen folder is
+not logged). The window lists all of it newest first, as a list, as rows
+with their pictures or as tiles whose size a slider sets; a column
+header sorts, the search box filters by name, folder, kind and action,
+the kind box by file type, "Show unique" keeps one of several entries
+whose files have the same bytes (`history::content_key`: the whole file
+up to 256 kB, else its size with its first and last 64 kB). The
+pictures of entries without a thumbnail come from `file_preview.rs`
+(parameters rendered small on the CPU, an image file read and scaled
+down), queued and calculated one at a time, the most wanted first, and
+kept for the session. "Remove" deletes a calculation's parameter file
+and thumbnail (the history's own) and takes a logged file's line out
+without touching the file. Load opens parameters or an .m3i in the main
+window, any other file with the system's program for it.
+
 **Crashes.** A panic of either program (any thread), or the error the
 desktop program ends with, is appended to `mb3d_crash.txt` with the
 program, version, time, system and backtrace (`src/crash.rs`): next to

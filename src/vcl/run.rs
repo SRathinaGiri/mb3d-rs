@@ -48,6 +48,8 @@ enum Nc {
     Caption,
     /// the language badge of the title bar
     Lang,
+    /// the history icon of the title bar
+    History,
     Button(i32),
     Border(ResizeDirection),
 }
@@ -550,6 +552,9 @@ impl<A: App> Runner<A> {
             if f.lang_rect.get().contains(x, y) {
                 return Nc::Lang;
             }
+            if !f.history_hint.is_empty() && f.history_rect.get().inset(-3).contains(x, y) {
+                return Nc::History;
+            }
             return Nc::Caption;
         }
         Nc::Client
@@ -570,7 +575,7 @@ impl<A: App> Runner<A> {
         let Some(w) = self.wins.get(&id) else { return };
         let f = &self.ui.forms[w.form];
         let icon = match w.nc {
-            Nc::Lang => CursorIcon::Pointer,
+            Nc::Lang | Nc::History => CursorIcon::Pointer,
             Nc::Border(d) => match d {
                 ResizeDirection::East | ResizeDirection::West => CursorIcon::EwResize,
                 ResizeDirection::North | ResizeDirection::South => CursorIcon::NsResize,
@@ -633,6 +638,7 @@ impl<A: App> Runner<A> {
         let nh = match nc {
             Nc::Button(k) => k,
             Nc::Lang => NC_LANG,
+            Nc::History => NC_HISTORY,
             _ => -1,
         };
         if nh != f.nc_hot {
@@ -651,6 +657,8 @@ impl<A: App> Runner<A> {
             let on_led = nc == Nc::Caption && f.caption_led.is_some() && !f.led_hint.is_empty() && xi >= r.x - 3 && xi < r.x + r.w + 3 && yi >= r.y - 4 && yi < r.y + r.h + 4;
             let text = if nc == Nc::Lang && !f.lang_hint.is_empty() {
                 Some(&f.lang_hint)
+            } else if nc == Nc::History && !f.history_hint.is_empty() {
+                Some(&f.history_hint)
             } else if on_led {
                 Some(&f.led_hint)
             } else {
@@ -741,6 +749,14 @@ impl<A: App> Runner<A> {
                     // the program opens its language window
                     let name = self.ui.forms[fi].name.clone();
                     self.ui.post(&name, &name, "LanguageBadgeClick", Ev::Click);
+                    self.process();
+                    self.redraw_dirty();
+                    return;
+                }
+                Nc::History if button == MouseButton::Left => {
+                    // the program opens its History window
+                    let name = self.ui.forms[fi].name.clone();
+                    self.ui.post(&name, &name, "HistoryIconClick", Ev::Click);
                     self.process();
                     self.redraw_dirty();
                     return;

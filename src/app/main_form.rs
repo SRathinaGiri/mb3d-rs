@@ -157,6 +157,9 @@ pub struct State {
     pub image_text: bool,
     /// full size image (for saving)
     pub rgb: Option<(std::sync::Arc<Vec<u8>>, usize, usize)>,
+    /// the parameter file History keeps of the running calculation: its
+    /// thumbnail is written beside it when the calculation ends
+    pub history_file: Option<std::path::PathBuf>,
     pub last_history: Instant,
     /// `FormsSticky`: the Formulas, Lighting and Post processing windows
     /// beside the main window: 0 free, 1 right, 2 left side
@@ -244,6 +247,7 @@ impl Default for State {
             waker_set: false,
             image_text: false,
             rgb: None,
+            history_file: None,
             last_history: Instant::now(),
             sticky: [1, 1, 1],
             stick_it: 0,
@@ -284,6 +288,7 @@ pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
 /// FormCreate, SetM3Dini, FirstShowUpdate and LoadStartupParas.
 pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     set_language_badge(ui);
+    ui.fm(F).history_hint = tr("History: the pictures calculated, the files opened and saved (click to browse)");
     app.message(ui, &tr("Welcome to Mandelbulb 3D!"));
     app.message(ui, &tr("Visit the official web site for news and updates: https://mb3d.overwhale.com"));
     app.message(ui, "");
@@ -1759,6 +1764,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 set_led_hint(ui, &trf("Calculated on: {}", &[&crate::gpu::last_status()]));
                 #[cfg(not(feature = "gpu"))]
                 set_led_hint(ui, &tr("Calculated on the CPU"));
+                // the history's thumbnail of the picture (scaled down on
+                // a thread of its own: a big picture takes a moment)
+                if let (Some(p), Some((rgb, w, h))) = (app.main.history_file.take(), app.main.rgb.clone()) {
+                    std::thread::spawn(move || {
+                        let _ = crate::history::write_thumb(&p, &rgb, w, h);
+                    });
+                }
                 // the stages after the main calculation: "-" when the scene
                 // has none, "incl. in main" when the card ran it with the
                 // march, "with HS" when it ran with the hard shadows
@@ -2244,6 +2256,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "VisualThemesBtnClick" => ui.show("VisualThemesFrm"),
         "HotkeysBtnClick" => ui.show("HotkeysFrm"),
         "LanguageBadgeClick" => ui.show("LanguageFrm"),
+        "HistoryIconClick" => super::history_form::open(app, ui),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files
@@ -2434,7 +2447,7 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     app.scene.stereo_mode = 0;
     app.make_scene(ui);
     let title = stem(&app.title);
-    crate::appdirs::store_history(&app.scene, &title);
+    app.main.history_file = crate::appdirs::store_history(&app.scene, &title);
     calc_mand(app, ui, true);
 }
 
@@ -2904,6 +2917,26 @@ pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     }
 }
 
+/// Opens a parameter file, an .m3i or text parameters (the Open dialogs,
+/// a dropped file, the History window).
+pub fn open_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
+    let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+    if let Some(d) = p.parent() {
+        let k = if ext == "m3i" { super::ini::DIR_M3I } else { super::ini::DIR_M3P };
+        app.ini.dirs[k] = d.to_path_buf();
+    }
+    match app.load_params(ui, p) {
+        Ok(()) => {
+            all_presets_up(ui);
+            if app.eng.base().is_none() {
+                app.message(ui, &tr("Parameters loaded, press \"Calculate 3D\" to render."));
+            }
+            show_image(app, ui);
+        }
+        Err(e) => app.message(ui, &e),
+    }
+}
+
 pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
         ("memory", DialogResult::Button(b)) => {
@@ -2927,23 +2960,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 _ => not_started(app, ui),
             }
         }
-        (_, DialogResult::File(Some(p))) if what.starts_with("open") || what == "" => {
-            let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
-            if let Some(d) = p.parent() {
-                let k = if ext == "m3i" { super::ini::DIR_M3I } else { super::ini::DIR_M3P };
-                app.ini.dirs[k] = d.to_path_buf();
-            }
-            match app.load_params(ui, p) {
-                Ok(()) => {
-                    all_presets_up(ui);
-                    if app.eng.base().is_none() {
-                        app.message(ui, &tr("Parameters loaded, press \"Calculate 3D\" to render."));
-                    }
-                    show_image(app, ui);
-                }
-                Err(e) => app.message(ui, &e),
-            }
-        }
+        (_, DialogResult::File(Some(p))) if what.starts_with("open") || what == "" => open_file(app, ui, p),
         ("savem3p", DialogResult::File(Some(p))) => {
             app.make_scene(ui);
             let p = p.with_extension("m3p");

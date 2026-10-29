@@ -77,6 +77,8 @@ pub struct Ui {
     /// the file clicked in a file dialog with a preview column (taken by
     /// the application, which shows its preview there)
     pub file_preview: Option<std::path::PathBuf>,
+    /// whether the file dialog that gave the last `DialogResult::File` was a save dialog
+    pub file_dialog_save: bool,
     pub busy: bool,
     /// The user's interface scale (1 = the size of the .dfm files), on top
     /// of the screen's scale factor: windows, controls and text all grow
@@ -109,6 +111,7 @@ impl Ui {
             file_sort: 0,
             file_sort_desc: false,
             file_preview: None,
+            file_dialog_save: false,
             busy: false,
             ui_scale: 1.0,
         }

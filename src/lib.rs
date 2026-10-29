@@ -54,6 +54,7 @@ pub mod formulas;
 pub mod frames;
 pub mod gbuffer;
 pub mod gif;
+pub mod history;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod image;

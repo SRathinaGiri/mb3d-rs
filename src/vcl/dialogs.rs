@@ -574,6 +574,7 @@ impl Ui {
         }
         let tag = d.tag.clone();
         let multi = d.multi;
+        self.file_dialog_save = d.save;
         self.filter_index = self.forms[i].c("TypeCombo").item_index.max(0) as usize + 1;
         self.forms[i].modal_result = MR_OK;
         let res = if multi { DialogResult::Files(vec![p]) } else { DialogResult::File(Some(p)) };

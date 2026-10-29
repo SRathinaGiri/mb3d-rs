@@ -29,6 +29,7 @@ pub mod small_forms;
 pub mod swarm_form;
 pub mod tools_forms;
 pub mod unfinished_form;
+pub mod history_form;
 pub mod util;
 pub mod voxel_form;
 
@@ -40,7 +41,7 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "uMapCalcWindow", "VisualThemesGUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "uMapCalcWindow", "VisualThemesGUI",
     "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
@@ -66,6 +67,7 @@ pub struct Mb3d {
     pub mc: mc_form::State,
     pub swarm: swarm_form::State,
     pub unfinished: unfinished_form::State,
+    pub history: history_form::State,
     pub voxel: voxel_form::State,
     pub btracer: bulbtracer_form::State,
     pub mutagen: mutagen_form::State,
@@ -182,6 +184,7 @@ impl App for Mb3d {
             "HotkeysFrm" => hotkeys::event(self, ui, e),
             "SwarmFrm" => swarm_form::event(self, ui, e),
             "UnfinishedFrm" => unfinished_form::event(self, ui, e),
+            "HistoryFrm" => history_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
             "MapSequencesFrm" => small_forms::mapseq_event(self, ui, e),
             "FTextBox" => small_forms::textbox_event(self, ui, e),
@@ -223,11 +226,20 @@ impl App for Mb3d {
         mutagen_form::idle(self, ui);
         meshview::idle(self, ui);
         file_preview::idle(self, ui);
+        history_form::idle(self, ui);
     }
 }
 
 impl Mb3d {
     fn dialog_result(&mut self, ui: &mut Ui, tag: &str, r: &DialogResult) {
+        // the history: every file opened or saved through a file dialog
+        // (or dropped on the window); a chosen folder is none
+        if let DialogResult::File(Some(p)) = r {
+            if !p.is_dir() {
+                let save = tag != "@drop" && ui.file_dialog_save;
+                crate::history::log(if save { crate::history::Action::Save } else { crate::history::Action::Open }, p);
+            }
+        }
         if tag == "@drop" {
             return main_form::dialog(self, ui, "open", r);
         }
@@ -252,6 +264,7 @@ impl Mb3d {
             "jit" => jit_form::dialog(self, ui, what, r),
             "swarm" => swarm_form::dialog(self, ui, what, r),
             "unfinished" => unfinished_form::dialog(self, ui, what, r),
+            "history" => history_form::dialog(self, ui, what, r),
             _ => {}
         }
     }
@@ -324,6 +337,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         mc: mc_form::State::default(),
         swarm,
         unfinished: Default::default(),
+        history: Default::default(),
         voxel: voxel_form::State::default(),
         btracer: bulbtracer_form::State::default(),
         mutagen: mutagen_form::State::default(),
