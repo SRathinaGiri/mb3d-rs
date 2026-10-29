@@ -51,11 +51,14 @@ modules:
         url: https://github.com/uxlfoundation/oneTBB/archive/refs/tags/v2022.2.0.tar.gz
         sha256: f0f78001c8c8edb4bddc3d4c5ee7428d56ae313254158ad1eec49eced57f6a5b
 
-  # Intel's ISPC compiler: a build tool only (cleaned out of the Flatpak)
+  # Intel's ISPC compiler: a build tool only (cleaned out of the Flatpak);
+  # its standard library headers (include/stdlib) next to it, where it
+  # looks for them
   - name: ispc
     buildsystem: simple
     build-commands:
-      - install -Dm755 bin/ispc /app/bin/ispc
+      - mkdir -p /app/lib/ispc
+      - cp -r bin include /app/lib/ispc/
     cleanup:
       - '*'
     sources:
@@ -79,7 +82,7 @@ modules:
       - -DOIDN_DEVICE_HIP=OFF
       - -DOIDN_APPS=OFF
       - -DOIDN_INSTALL_DEPENDENCIES=OFF
-      - -DISPC_EXECUTABLE=/app/bin/ispc
+      - -DISPC_EXECUTABLE=/app/lib/ispc/bin/ispc
     sources:
       - type: archive
         url: https://github.com/RenderKit/oidn/releases/download/v2.5.1/oidn-2.5.1.src.tar.gz
