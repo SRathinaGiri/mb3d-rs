@@ -692,8 +692,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "ListBoxEx1MouseMove" => {
-            if let Ev::MouseMove { y, .. } = e.ev {
+            if let Ev::MouseMove { x, y, .. } = e.ev {
                 let c = ui.c(F, &e.sender);
+                // The scrollbar belongs to the list box but is not a formula
+                // row.  Do not change the highlighted formula while its
+                // thumb or arrow buttons are being used.
+                if x >= c.width - 16 {
+                    return;
+                }
                 let i = (y - 2) / c.item_height.max(8) + c.top_index;
                 if i >= 0 && (i as usize) < c.items.len() {
                     ui.cm(F, &e.sender).item_index = i;
@@ -738,7 +744,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let sb = format!("SpeedButtonEx{}", if n == 12 { 11 } else { n });
             let in_lb = mouse_in(ui, &lb);
             let in_sb = ui.f(F).has(&sb) && mouse_in(ui, &sb);
-            if !in_lb && !in_sb {
+            // Keep an open formula list alive while its own scrollbar is
+            // captured.  A scrollbar drag is navigation, never a request to
+            // dismiss the popup or choose the highlighted formula.
+            let list_scroll_drag = {
+                let f = ui.f(F);
+                f.id(&lb).is_some_and(|id| f.capture == Some(id) && f.cap_part != crate::vcl::form::PART_NONE)
+            };
+            if !in_lb && !in_sb && !list_scroll_drag {
                 app.formula.hide_ticks -= 1;
                 if app.formula.hide_ticks <= 0 {
                     ui.set_visible(F, &lb, false);

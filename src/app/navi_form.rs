@@ -310,7 +310,12 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 /// drawn into the preview here rather than in a separate transparent image,
 /// so it remains centred when the navigator size changes.
 fn paint_coords(ui: &Ui, sc: &Scene, b: &mut Bitmap) {
-    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() {
+    // Navigator publishes 1/8, 1/4 and 1/2 size previews before the final
+    // bitmap.  Image1 stretches those previews to the same screen rectangle;
+    // drawing a fixed-pixel overlay into them made the triad grow and shrink
+    // between preview passes.  Draw it only at native preview resolution, as
+    // a fixed-size screen overlay in the original Navigator does.
+    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() || b.w != sc.width.max(1) as usize {
         return;
     }
     let m = normalise_matrix_to(1.0, &sc.vgrads);

@@ -259,7 +259,12 @@ impl Form {
             self.set_focus(Some(id), &mut out);
         }
         let (lx, ly) = self.local(id, x, y);
-        out.push(raw(id, "OnMouseDown", Ev::MouseDown { x: lx, y: ly, button, shift }));
+        // A ListBox scrollbar is part of the control, but it is not an item.
+        // Do not forward its press to application-level list handlers: those
+        // commonly select (or drag) the current row on OnMouseDown.
+        if kind != Kind::ListBox || self.cap_part == PART_NONE {
+            out.push(raw(id, "OnMouseDown", Ev::MouseDown { x: lx, y: ly, button, shift }));
+        }
         // a double click on a list view's column headers is two column
         // clicks, not a double click on its selected row
         let on_header = kind == Kind::ListView && ly <= self.listview_rows(id).0 + 2;
@@ -493,7 +498,19 @@ impl Form {
         if let Some(cap) = self.capture {
             let inside = self.abs_rect(cap).contains(x, y);
             let hot = if inside { Some(cap) } else { None };
-            let part = if inside { self.part_at(cap, x, y) } else { PART_NONE };
+            // A list-box scrollbar keeps the part captured on mouse-down.
+            // In particular, the pointer naturally leaves the moving thumb
+            // while it is dragged.  Re-testing it here used to turn that
+            // drag into a list-row drag/selection, which application popup
+            // lists may interpret as an accepted choice.
+            let keep_list_scroll_part = self.ctl[cap].kind == Kind::ListBox && self.cap_part != PART_NONE;
+            let part = if keep_list_scroll_part {
+                self.cap_part
+            } else if inside {
+                self.part_at(cap, x, y)
+            } else {
+                PART_NONE
+            };
             if hot != self.hot || part != self.hot_part {
                 self.hot = hot;
                 self.hot_part = part;
@@ -766,6 +783,21 @@ impl Form {
         }
         if self.popup.is_some() {
             return out;
+        }
+        // A closed drop-down list follows the normal desktop convention:
+        // wheeling over its text area changes the selected item.  Handle it
+        // before the form-wide wheel handler so an unrelated focused edit
+        // does not consume the wheel while the pointer is over the combo.
+        if let Some(id) = self.hit(x, y) {
+            if self.enabled(id) && self.ctl[id].kind == Kind::ComboBox && !self.ctl[id].items.is_empty() {
+                let n = self.ctl[id].items.len() as i32;
+                let i = (self.ctl[id].item_index - steps).clamp(0, n - 1);
+                if i != self.ctl[id].item_index {
+                    self.combo_select(id, i, &mut out);
+                    self.dirty = true;
+                }
+                return out;
+            }
         }
         out.push(raw(0, "OnMouseWheel", Ev::Wheel { delta, x, y, shift }));
         out.push(raw(0, if delta > 0 { "OnMouseWheelUp" } else { "OnMouseWheelDown" }, Ev::Wheel { delta, x, y, shift }));
