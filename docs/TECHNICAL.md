@@ -1246,7 +1246,8 @@ when it is opened with a click, the newest day open at the start) or
 in one run; a column header sorts (within a day when grouped), the
 search box filters by name, folder, kind and action (a day without a
 hit is hidden), the kind box by file type, "Show unique" keeps one of
-several listed entries whose files have the same bytes
+several entries whose files have the same bytes (the closed days'
+counts tell what opening them would list)
 (`history::content_key`: the whole file up to 256 kB, else its size
 with its first and last 64 kB). The pictures of entries without a
 thumbnail come from `file_preview.rs` (parameters rendered small on the

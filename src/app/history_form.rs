@@ -248,7 +248,8 @@ fn day_text(app: &Mb3d, gi: usize) -> String {
     format!("{} {}", if app.history.open.contains(&g.day.date) { "▼" } else { "►" }, g.day.date)
 }
 
-/// How many entries a day has, of them listed.
+/// How many entries a day has, of them listed (or to be listed when
+/// it is opened).
 fn count_text(app: &Mb3d, gi: usize) -> String {
     let g = &app.history.groups[gi];
     if !g.scanned {
@@ -356,8 +357,11 @@ fn apply(app: &mut Mb3d, ui: &mut Ui) {
             }
         };
         if grouped {
+            // (the closed days go through "Show unique" too: their counts
+            // tell what opening them would list, and a file seen on a
+            // newer day hides its copies on the older ones)
             for (gi, g) in app.history.groups.iter().enumerate() {
-                let idx: Vec<usize> = (g.first..g.first + g.n).filter(|&i| passes(i)).collect();
+                let idx: Vec<usize> = (g.first..g.first + g.n).filter(|&i| passes(i) && unique_ok(i, &mut missing)).collect();
                 matches.push(idx.len());
                 // (a search hides the days without a hit)
                 if !words.is_empty() && idx.is_empty() && g.scanned {
@@ -365,7 +369,6 @@ fn apply(app: &mut Mb3d, ui: &mut Ui) {
                 }
                 shown.push(Item::Day(gi));
                 if app.history.open.contains(&g.day.date) {
-                    let idx: Vec<usize> = idx.into_iter().filter(|&i| unique_ok(i, &mut missing)).collect();
                     n_entries += idx.len();
                     shown.extend(sorted(app, idx).into_iter().map(Item::Entry));
                 }
