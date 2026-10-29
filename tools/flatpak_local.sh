@@ -5,7 +5,7 @@
 #   tools/flatpak_local.sh [BRANCH]      (default: the current branch)
 # The build folder is build/flatpak (its repo for flatpak-builder-lint's
 # "repo" check: build/flatpak/repo).  Needs org.flatpak.Builder, the
-# freedesktop SDK 25.08 and its rust-stable extension (flatpak/README.md).
+# freedesktop SDK 26.08 and its rust-stable extension (flatpak/README.md).
 set -e
 cd "$(dirname "$0")/.."
 branch=${1:-$(git rev-parse --abbrev-ref HEAD)}
