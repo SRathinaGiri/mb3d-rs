@@ -693,13 +693,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "ListBoxEx1MouseMove" => {
             if let Ev::MouseMove { x, y, .. } = e.ev {
-                let c = ui.c(F, &e.sender);
-                // The scrollbar belongs to the list box but is not a formula
-                // row.  Do not change the highlighted formula while its
-                // thumb or arrow buttons are being used.
-                if x >= c.width - 16 {
-                    return;
+                let f = ui.f(F);
+                // (the list's scroll bar is no formula row: the highlighted
+                // formula stays while the mouse is on it)
+                if let Some(id) = f.id(&e.sender) {
+                    let r = f.abs_rect(id);
+                    if f.part_at(id, r.x + x, r.y + y) != crate::vcl::form::PART_NONE {
+                        return;
+                    }
                 }
+                let c = ui.c(F, &e.sender);
                 let i = (y - 2) / c.item_height.max(8) + c.top_index;
                 if i >= 0 && (i as usize) < c.items.len() {
                     ui.cm(F, &e.sender).item_index = i;

@@ -498,19 +498,7 @@ impl Form {
         if let Some(cap) = self.capture {
             let inside = self.abs_rect(cap).contains(x, y);
             let hot = if inside { Some(cap) } else { None };
-            // A list-box scrollbar keeps the part captured on mouse-down.
-            // In particular, the pointer naturally leaves the moving thumb
-            // while it is dragged.  Re-testing it here used to turn that
-            // drag into a list-row drag/selection, which application popup
-            // lists may interpret as an accepted choice.
-            let keep_list_scroll_part = self.ctl[cap].kind == Kind::ListBox && self.cap_part != PART_NONE;
-            let part = if keep_list_scroll_part {
-                self.cap_part
-            } else if inside {
-                self.part_at(cap, x, y)
-            } else {
-                PART_NONE
-            };
+            let part = if inside { self.part_at(cap, x, y) } else { PART_NONE };
             if hot != self.hot || part != self.hot_part {
                 self.hot = hot;
                 self.hot_part = part;
@@ -784,12 +772,12 @@ impl Form {
         if self.popup.is_some() {
             return out;
         }
-        // A closed drop-down list follows the normal desktop convention:
-        // wheeling over its text area changes the selected item.  Handle it
-        // before the form-wide wheel handler so an unrelated focused edit
-        // does not consume the wheel while the pointer is over the combo.
+        // the wheel over a closed drop-down list that has the focus selects
+        // the item before or after (as on Windows, where the wheel goes to
+        // the focused control); over any other control the form's own
+        // wheel handler keeps it (the Navigator's zoom, the main window's)
         if let Some(id) = self.hit(x, y) {
-            if self.enabled(id) && self.ctl[id].kind == Kind::ComboBox && !self.ctl[id].items.is_empty() {
+            if self.focus == Some(id) && self.enabled(id) && self.ctl[id].kind == Kind::ComboBox && !self.ctl[id].items.is_empty() {
                 let n = self.ctl[id].items.len() as i32;
                 let i = (self.ctl[id].item_index - steps).clamp(0, n - 1);
                 if i != self.ctl[id].item_index {

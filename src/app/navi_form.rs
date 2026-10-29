@@ -310,14 +310,17 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 /// drawn into the preview here rather than in a separate transparent image,
 /// so it remains centred when the navigator size changes.
 fn paint_coords(ui: &Ui, sc: &Scene, b: &mut Bitmap) {
-    // Navigator publishes 1/8, 1/4 and 1/2 size previews before the final
-    // bitmap.  Image1 stretches those previews to the same screen rectangle;
-    // drawing a fixed-pixel overlay into them made the triad grow and shrink
-    // between preview passes.  Draw it only at native preview resolution, as
-    // a fixed-size screen overlay in the original Navigator does.
-    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() || b.w != sc.width.max(1) as usize {
+    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() {
         return;
     }
+    // The preview comes in passes of 1/8, 1/4 and 1/2 of the size before
+    // the full one, and Image1 stretches each to the same rectangle: the
+    // triad is drawn at the pass's scale, so it keeps its size on the
+    // screen (coarse in the early passes, as the picture is), instead of
+    // growing and shrinking from pass to pass.
+    let k = (b.w as f64 / sc.width.max(1) as f64).min(1.0);
+    let px = |v: f64| v * k;
+    let width = (2.0 * k).round().max(1.0) as i32;
     let m = normalise_matrix_to(1.0, &sc.vgrads);
     let mut axes = [0usize, 1, 2];
     // Draw the far axes first, preserving the helpful depth cue from MB3D.
@@ -326,15 +329,15 @@ fn paint_coords(ui: &Ui, sc: &Scene, b: &mut Bitmap) {
     let (cx, cy) = (b.w as f64 * 0.5, b.h as f64 * 0.5);
     for axis in axes {
         let (x, y, z) = (m[0][axis], m[1][axis], m[2][axis]);
-        let (ex, ey) = (cx + x * 38.0, cy + y * 38.0);
-        let tip = (2.0 - z) * 2.0 / (x.hypot(y)).max(0.1);
+        let (ex, ey) = (cx + x * px(38.0), cy + y * px(38.0));
+        let tip = px((2.0 - z) * 2.0) / (x.hypot(y)).max(0.1);
         let c = colors[axis];
-        line(b, cx, cy, ex, ey, c, 2);
-        line(b, ex, ey, ex - x * 8.0 - y * tip, ey - y * 8.0 + x * tip, c, 2);
-        line(b, ex, ey, ex - x * 8.0 + y * tip, ey - y * 8.0 - x * tip, c, 2);
-        let text_size = (3.0 - z) * 4.0;
+        line(b, cx, cy, ex, ey, c, width);
+        line(b, ex, ey, ex - x * px(8.0) - y * tip, ey - y * px(8.0) + x * tip, c, width);
+        line(b, ex, ey, ex - x * px(8.0) + y * tip, ey - y * px(8.0) - x * tip, c, width);
+        let text_size = px((3.0 - z) * 4.0);
         let (tx, ty) = (ex + x * text_size * 0.8, ey + y * text_size * 0.8);
-        axis_letter(b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c);
+        axis_letter(b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c, width);
     }
 }
 
@@ -369,8 +372,9 @@ fn line(b: &mut Bitmap, x0: f64, y0: f64, x1: f64, y1: f64, c: u32, width: i32) 
     }
 }
 
-/// A small, legible X/Y/Z label for the navigator overlay.
-fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32) {
+/// A small, legible X/Y/Z label for the navigator overlay, of `block`
+/// pixels per dot of its 5 x 7 glyph.
+fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32, block: i32) {
     let glyph: [u8; 7] = match axis {
         0 => [0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001], // X
         1 => [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100], // Y
@@ -382,9 +386,9 @@ fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32) {
             if bits & (1 << (4 - col)) == 0 {
                 continue;
             }
-            for oy in 0..2 {
-                for ox in 0..2 {
-                    let (px, py) = (x0 + col * 2 + ox, y0 + row as i32 * 2 + oy);
+            for oy in 0..block {
+                for ox in 0..block {
+                    let (px, py) = (x0 + col * block + ox, y0 + row as i32 * block + oy);
                     if px >= 0 && py >= 0 && (px as usize) < b.w && (py as usize) < b.h {
                         b.px[py as usize * b.w + px as usize] = c;
                     }
