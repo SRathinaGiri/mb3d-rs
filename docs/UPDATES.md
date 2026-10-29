@@ -5,6 +5,27 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## Not released yet
+
+| Commit | What it does |
+|---|---|
+| [`e1b66f9`](https://github.com/thr32423/mb3d-rs/commit/e1b66f9b564f70547be72a19b3320238eb685105) | Flatpak: the manifest at v0.2.83; the pull request's text |
+
+## [v0.2.83](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83) · 29 Oct 2026, 11:15 UTC
+
+| Commit | What it does |
+|---|---|
+| [`97ea986`](https://github.com/thr32423/mb3d-rs/commit/97ea986904de3fba68ce4fdf3e452e71db3ece79) | Version number and release notes of this release |
+| [`ac684ce`](https://github.com/thr32423/mb3d-rs/commit/ac684ceff12ce4288a7909efdd7fd382de43fc5e) | Flatpak README: the Platform in the user installation too |
+| [`d03000d`](https://github.com/thr32423/mb3d-rs/commit/d03000dce36b2033ea2eae3ee10a4bc7aa7af2aa) | Flatpak: freedesktop runtime 26.08 |
+| [`76d39b4`](https://github.com/thr32423/mb3d-rs/commit/76d39b468d1c9c2c4ca6c5cdfbae6edec8b34706) | Flatpak: the local build mirrors the screenshots as Flathub does (flatpak-builder commits them itself) |
+| [`dfa6219`](https://github.com/thr32423/mb3d-rs/commit/dfa62197dd5c4405d4c935e6d36925e44c048a84) | Graphics cards: a card listed again under the first card's PCI bus id is the first card (a Flatpak's Vulkan loader finds the NVIDIA manifest through two paths and listed the RTX 2060 twice) |
+| [`7c453f8`](https://github.com/thr32423/mb3d-rs/commit/7c453f8abdc43eef7493a039654810030dd27c78) | Flatpak: ISPC's headers installed next to it (Open Image Denoise's AMX kernel includes amx.isph) |
+| [`1e3ef8d`](https://github.com/thr32423/mb3d-rs/commit/1e3ef8d64342cadd9c540cf8d05ec7635f124736) | Flatpak: the app ID is io.github.thr32423.mb3d-rs (the repository's name as it is, as Flathub derives it); the placeholder commit quoted |
+| [`faa3d0f`](https://github.com/thr32423/mb3d-rs/commit/faa3d0fc894790102026342b29da63d701179cc0) | Safe Rust: the crate denies unsafe code except in oidn.rs (Intel's C library) and the formulas compiled at run time; the hybrid loop's separate loads go through black_box instead of volatile reads (same speed over the 80 example files, examples/formbench), the free memory of Windows and macOS comes from the sysinfo crate |
+| [`ca4b3b5`](https://github.com/thr32423/mb3d-rs/commit/ca4b3b5977ff4baee2620b9c706e15bf28f01af5) | Flatpak: the manifest for Flathub (flatpak/, built from source: the crates of Cargo.lock, MB3D's folders, Open Image Denoise with its CPU device), the AppStream description, the menu entry named mb3d-rs, the window named after the Flatpak ID in a Flatpak; tools/flatpak_cargo_sources.py and tools/flatpak_local.sh |
+| [`7752e3a`](https://github.com/thr32423/mb3d-rs/commit/7752e3a46de2af89900dbf3733b28b236a1da6e3) | README: Updates for v0.2.82 |
+
 ## [v0.2.82](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82) · 29 Oct 2026, 08:28 UTC
 
 | Commit | What it does |
