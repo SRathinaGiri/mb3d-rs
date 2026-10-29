@@ -1049,10 +1049,16 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
-### Not released yet
+### v0.2.84 · 29 Oct 2026, 16:04 UTC (tag only, no GitHub release)
 
 | Commit | What it does |
 |---|---|
+| [`c4b169d`](https://github.com/thr32423/mb3d-rs/commit/c4b169d340ea6728fd0123ddeefbabdf47de0df0) | Version number and release notes of this release |
+| [`d92029e`](https://github.com/thr32423/mb3d-rs/commit/d92029ee5aa3e2b6f449d61460ab1e91ee3d491a) | History: a clock icon right of the title bar's LED opens the History window (this program's own): every Calculate 3D's parameter file of History (as MB3D keeps it) now with a thumbnail of the finished picture beside it, and a log of every file opened or saved through the file dialogs or dropped on the window (History/<date>/log.txt); listed newest first as a list sorted by a column header's click, as rows with their pictures or as tiles whose size a slider sets, searched by name, folder, kind and action, filtered by file type, "Show unique" keeping one of several entries whose files have the same bytes; a preview of the selected entry (a thumbnail, parameters rendered small, an image scaled down), Load/Open, Show in folder, Remove; the previews of the open dialogs now queue up for a view of many and preview image files too |
+| [`24b9039`](https://github.com/thr32423/mb3d-rs/commit/24b90398c2830c2c82e30784c4cdf9f895071bb3) | Lighting: a lighting change only repaints, as MB3D does; the full repaint that followed 1.5 s after the last change (the hard shadows of a switched or moved light, the reflections, the depth of field) is taken out at the user's wish: on a big picture those passes take as long as the calculation, and MB3D leaves them to the post processing window's buttons; with it go the "shadows next" / "reflections next" line, the lighting window's idle work and the stop of its own repaint by the post processing window |
+| [`efc288c`](https://github.com/thr32423/mb3d-rs/commit/efc288c501a35dffee335d71a3e04c25a9737897) | Formulas: a custom formula whose loop never ends with its options (an integer power of 0 in TrifoxComplexAngles, which the MutaGen can set; MB3D hangs there) cost the whole 2,000,000-step cap on every call, so a render of the scene crawled (nightly issue 24: a 40 x 32 MutaGen probe took 186 s on 24 cores, the generation 7 minutes); the machine's cap collapses to 0 after the first call over it, so the later calls on that thread fail at once (281 s -> 0.1 s), the compiled hybrid and dIFS loops hand over to the plain loop after a failed call (which sees the error's kind), the command line names the case in its warning |
+| [`ed637c7`](https://github.com/thr32423/mb3d-rs/commit/ed637c7a0f3f50d073a960f99f01ce171f3c684b) | Flatpak: Flathub's rules on AI (no AI-written manifests, no AI-opened submissions); the drafted pull request text removed |
+| [`91c0c7b`](https://github.com/thr32423/mb3d-rs/commit/91c0c7bf5cbd9274c68f865b2297ab6d16ca46da) | README: Updates for v0.2.83 |
 | [`e1b66f9`](https://github.com/thr32423/mb3d-rs/commit/e1b66f9b564f70547be72a19b3320238eb685105) | Flatpak: the manifest at v0.2.83; the pull request's text |
 
 ### [v0.2.83](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83) · 29 Oct 2026, 11:15 UTC
@@ -1079,16 +1085,7 @@ of a release are on its page. Times are in UTC.
 | [`62098cf`](https://github.com/thr32423/mb3d-rs/commit/62098cf606e334f63d554d36f62134e5ae443618) | Memory: the reflections' band is sized to half of the free memory (a 2M band peaks at 3.5 GB, measured; 1792 bytes per pixel, at least 256k pixels), the memory estimate models the stages (MemoryUse: G-buffer, window, main calculation's card buffers, paint with the reflections' band and the depth of field) so the question before Calculate 3D and the command line's note follow the scene and the swarm's owner, whose tiles' computers do the main calculation; the swarm's whole-picture reflections and depth of field report their progress and obey Stop; --swarm prints the memory note |
 | [`995466a`](https://github.com/thr32423/mb3d-rs/commit/995466a4d3258ac51598566e044aba6cbeeeb9da) | README: Updates for v0.2.81 |
 
-### [v0.2.81](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.81) · 28 Oct 2026, 06:45 UTC
-
-| Commit | What it does |
-|---|---|
-| [`30158e3`](https://github.com/thr32423/mb3d-rs/commit/30158e3840ba84159e24f8bd94b62a7e7c944c8c) | Version number and release notes of this release |
-| [`028b520`](https://github.com/thr32423/mb3d-rs/commit/028b5207fd27babd11002d03f876bb37b0f85b1b) | Memory: the card's ambient occlusion uploads its depth buffer and the parameters of all its levels once (an upload per block and level queued 60 GB and left 7 GB behind at 12000 x 6000: the Windows "freeze" of big pictures), the reflections in bands of 2M pixels at every size with their lists dropped as used (1.1 GB instead of up to 4.5 GB), a question before Calculate 3D when the picture needs more than the free memory (Windows and macOS too, no longer a Linux-only refusal), .m3i files written row by row; MB3D_STAGE_TIMES and MB3D_GPU_TIMING print the process memory |
-| [`7948665`](https://github.com/thr32423/mb3d-rs/commit/79486652c981b41eb703e194149ad6bf54dbc88d) | Languages: a one character text of another script (Japanese 中, 幅:) is translated back when the language changes |
-| [`f7c79d5`](https://github.com/thr32423/mb3d-rs/commit/f7c79d5b6ac78ff9f69f63f3abca5c49ced9e5ab) | README: Updates for v0.2.80 |
-
-All 94 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 95 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers

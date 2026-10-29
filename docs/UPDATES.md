@@ -5,10 +5,16 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
-## Not released yet
+## v0.2.84 · 29 Oct 2026, 16:04 UTC (tag only, no GitHub release)
 
 | Commit | What it does |
 |---|---|
+| [`c4b169d`](https://github.com/thr32423/mb3d-rs/commit/c4b169d340ea6728fd0123ddeefbabdf47de0df0) | Version number and release notes of this release |
+| [`d92029e`](https://github.com/thr32423/mb3d-rs/commit/d92029ee5aa3e2b6f449d61460ab1e91ee3d491a) | History: a clock icon right of the title bar's LED opens the History window (this program's own): every Calculate 3D's parameter file of History (as MB3D keeps it) now with a thumbnail of the finished picture beside it, and a log of every file opened or saved through the file dialogs or dropped on the window (History/<date>/log.txt); listed newest first as a list sorted by a column header's click, as rows with their pictures or as tiles whose size a slider sets, searched by name, folder, kind and action, filtered by file type, "Show unique" keeping one of several entries whose files have the same bytes; a preview of the selected entry (a thumbnail, parameters rendered small, an image scaled down), Load/Open, Show in folder, Remove; the previews of the open dialogs now queue up for a view of many and preview image files too |
+| [`24b9039`](https://github.com/thr32423/mb3d-rs/commit/24b90398c2830c2c82e30784c4cdf9f895071bb3) | Lighting: a lighting change only repaints, as MB3D does; the full repaint that followed 1.5 s after the last change (the hard shadows of a switched or moved light, the reflections, the depth of field) is taken out at the user's wish: on a big picture those passes take as long as the calculation, and MB3D leaves them to the post processing window's buttons; with it go the "shadows next" / "reflections next" line, the lighting window's idle work and the stop of its own repaint by the post processing window |
+| [`efc288c`](https://github.com/thr32423/mb3d-rs/commit/efc288c501a35dffee335d71a3e04c25a9737897) | Formulas: a custom formula whose loop never ends with its options (an integer power of 0 in TrifoxComplexAngles, which the MutaGen can set; MB3D hangs there) cost the whole 2,000,000-step cap on every call, so a render of the scene crawled (nightly issue 24: a 40 x 32 MutaGen probe took 186 s on 24 cores, the generation 7 minutes); the machine's cap collapses to 0 after the first call over it, so the later calls on that thread fail at once (281 s -> 0.1 s), the compiled hybrid and dIFS loops hand over to the plain loop after a failed call (which sees the error's kind), the command line names the case in its warning |
+| [`ed637c7`](https://github.com/thr32423/mb3d-rs/commit/ed637c7a0f3f50d073a960f99f01ce171f3c684b) | Flatpak: Flathub's rules on AI (no AI-written manifests, no AI-opened submissions); the drafted pull request text removed |
+| [`91c0c7b`](https://github.com/thr32423/mb3d-rs/commit/91c0c7bf5cbd9274c68f865b2297ab6d16ca46da) | README: Updates for v0.2.83 |
 | [`e1b66f9`](https://github.com/thr32423/mb3d-rs/commit/e1b66f9b564f70547be72a19b3320238eb685105) | Flatpak: the manifest at v0.2.83; the pull request's text |
 
 ## [v0.2.83](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83) · 29 Oct 2026, 11:15 UTC
