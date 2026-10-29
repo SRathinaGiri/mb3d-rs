@@ -157,8 +157,8 @@ impl Jit {
             let xmm = xmm_vars(&mut b, p[2], sse);
             let env = Env { mem: p[1], mach: p[2], pvar, var_bytes: &m.mem[..], helpers: &helpers, steps, max_steps: p[3], err, xmm };
             let mut rec = DirectRecord { it: p[0], mem: p[1], pvar };
-            let cont = prog.clif_emit(&mut b, &env, &mut rec)?;
-            b.switch_to_block(cont);
+            // (the emitter leaves the builder in the block it returns)
+            prog.clif_emit(&mut b, &env, &mut rec)?;
             if sse {
                 xmm_store(&mut b, p[2], &xmm);
             }
@@ -576,8 +576,7 @@ pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usiz
                     b.def_var(steps, zero64);
                     st.pvar = crate::custom::pconst_addr(n);
                     let env = Env { mem: memp, mach: machp, pvar: st.pvar, var_bytes: &m.mem[..], helpers: &helpers, steps, max_steps, err, xmm };
-                    let cont = prog.clif_emit(&mut b, &env, &mut st)?;
-                    b.switch_to_block(cont);
+                    prog.clif_emit(&mut b, &env, &mut st)?;
                     b.ins().jump(after, &[]);
                     // an error: counted; v and rout infinite (run_custom)
                     b.switch_to_block(err);
@@ -824,8 +823,7 @@ impl Jit {
             let xmm = xmm_vars(&mut b, p[2], sse);
             let env = Env { mem: p[1], mach: p[2], pvar, var_bytes: &m.mem[..], helpers: &helpers, steps, max_steps: p[3], err, xmm };
             let mut rec = MemRecord { mem: p[1] };
-            let (cont, out) = prog.clif_emit_mode(&mut b, &env, &mut rec, Some(regs))?;
-            b.switch_to_block(cont);
+            let (_, out) = prog.clif_emit_mode(&mut b, &env, &mut rec, Some(regs))?;
             for (r, v) in out.iter().enumerate() {
                 b.ins().store(fl, *v, p[0], 4 * r as i32);
             }
@@ -1096,8 +1094,7 @@ pub fn compile_difs(m: &Machine, slots: &[HybridSlot], start: usize, end: usize,
                 e,
             ];
             let env = Env { mem: memp, mach: machp, pvar: pconst_addr(k), var_bytes: &m.mem[..], helpers: &helpers, steps, max_steps, err, xmm };
-            let (cont, out) = prog.clif_emit_mode(&mut b, &env, &mut rec, Some(regs))?;
-            b.switch_to_block(cont);
+            let (_, out) = prog.clif_emit_mode(&mut b, &env, &mut rec, Some(regs))?;
             // cnt = ecx - 1; n = ebx (when a slot); edi
             let c = b.ins().iadd_imm(out[1], -1);
             b.def_var(cnt, c);

@@ -304,7 +304,10 @@ impl Prog {
     }
 
     /// Emits the formula into `b` (positioned in an open block): the code of
-    /// one call, which continues in the block it returns (open).  None if
+    /// one call, which continues in the block it returns (open, and the
+    /// builder's current block: it may hold instructions already, so the
+    /// caller must not switch to it, which Cranelift's debug build refuses
+    /// for a block begun and not ended).  None if
     /// the formula cannot be compiled (see [`Prog::clif_unsupported`]); the
     /// function being built is then unusable.
     pub fn clif_emit(&self, b: &mut FunctionBuilder, env: &Env, rec: &mut dyn Record) -> Option<Block> {
