@@ -53,10 +53,29 @@ https://github.com/flathub/flathub, with the manifest and
     git add . && git commit -m "Add io.github.thr32423.mb3d-rs" && git push -u origin io.github.thr32423.mb3d-rs
     gh pr create --repo flathub/flathub --base new-pr --title "Add io.github.thr32423.mb3d-rs"
 
-The pull request's text should say: that you are the developer, what the
-app is, why `--filesystem=home` (the program's own file dialogs, MB3D's
-parameter and map folders the user keeps anywhere, the swarm's shared
-folder), and that ISPC is a build tool only, as in ParaView's package.
+A text for the pull request (Flathub's template asks these questions):
+
+    I am the developer of mb3d-rs (https://github.com/thr32423/mb3d-rs),
+    a port of Mandelbulb3D, the 3D fractal program, to Linux, Windows and
+    macOS with the picture calculated on the graphics card. LGPL-2.1.
+
+    Everything is built from source: the program from its tagged release
+    (Rust, the crates of Cargo.lock in cargo-sources.json), the original
+    Mandelbulb3D's formulas, maps and parameters from its repository at a
+    fixed commit (same licence), and Intel Open Image Denoise 2.5.1 with
+    its CPU device, with oneTBB. Open Image Denoise's CPU kernels need
+    Intel's ISPC compiler, which is taken as Intel's release binary and
+    used only while building, as org.paraview.ParaView does; it is cleaned
+    out of the Flatpak.
+
+    Permissions: dri for the card (Vulkan); wayland and fallback-x11;
+    filesystem=home because the program has Mandelbulb3D's own file
+    dialogs (no portal), opens parameter files, maps and formulas the user
+    keeps in folders of their choice, writes pictures, animations and
+    meshes there, and its "swarm" shares a folder between computers.
+    No network access.
+
+    The app ID follows the repository (io.github.thr32423.mb3d-rs).
 The bot builds the app on x86_64 and aarch64 and leaves a link to try it;
 a reviewer then asks for changes or merges, after which Flathub creates
 the repository `flathub/io.github.thr32423.mb3d-rs` with you as its

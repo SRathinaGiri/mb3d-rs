@@ -130,5 +130,5 @@ modules:
       - type: git
         url: https://github.com/thr32423/mb3d-rs.git
         tag: v0.2.83
-        commit: "0000000000000000000000000000000000000000"
+        commit: 97ea986904de3fba68ce4fdf3e452e71db3ece79
       - cargo-sources.json
