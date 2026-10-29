@@ -22,9 +22,9 @@ m = m.replace("      - cargo-sources.json", f"      - {repo}/flatpak/cargo-sourc
 sys.stdout.write(m)
 EOF
 grep -q "path: $PWD" build/flatpak/$id.yml || { echo "the manifest's mb3d-rs source was not found" >&2; exit 1; }
+# (the screenshots mirrored and committed as Flathub's build does, for
+# flatpak-builder-lint's "repo" check)
 flatpak run org.flatpak.Builder --user --install --force-clean --ccache \
   --mirror-screenshots-url=https://dl.flathub.org/media/ \
   --repo=build/flatpak/repo --state-dir=build/flatpak/state build/flatpak/build "build/flatpak/$id.yml"
-# the screenshots as Flathub's build keeps them (flatpak-builder-lint's "repo" check wants them)
-ostree commit --repo=build/flatpak/repo --canonical-permissions --branch=screenshots/$(uname -m) build/flatpak/build/files/share/app-info/media
 echo "installed: flatpak run $id"
