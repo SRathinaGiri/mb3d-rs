@@ -7,7 +7,7 @@
 //! window's image) with the file's size and formulas.  The History
 //! window's rows and tiles ask for many pictures at once ([`thumb`]):
 //! they queue up and are calculated one at a time, the most wanted first.
-//! The pictures are kept for the session (read again when the file
+//! The last [`KEEP`] pictures are kept (read again when the file
 //! changed).
 
 use super::Mb3d;
@@ -30,9 +30,25 @@ type Done = (PathBuf, Result<(Vec<u8>, usize, usize), String>, String);
 /// The form, image and label a preview goes to.
 type Target = (String, String, String);
 
+/// How many pictures are kept (a history's picture is 240 x 180 x 4
+/// bytes: 170 kB each, 70 MB in all).
+pub const KEEP: usize = 400;
+
+/// A preview kept: the picture (None: none could be made), its text,
+/// the file's time, and when it was last wanted.
+struct Cached {
+    picture: Option<Bitmap>,
+    text: String,
+    modified: Option<SystemTime>,
+    used: u64,
+}
+
 #[derive(Default)]
 pub struct State {
-    cache: HashMap<PathBuf, (Option<Bitmap>, String, Option<SystemTime>)>,
+    cache: HashMap<PathBuf, Cached>,
+    /// counts the uses of the cache: the picture wanted longest ago goes
+    /// first
+    tick: u64,
     /// the file shown, and where
     shown: Option<(PathBuf, Target)>,
     /// the files wanted and not calculated yet, the first next
@@ -117,8 +133,25 @@ pub fn possible(p: &Path) -> bool {
 
 /// Forgets a cached preview whose file changed since.
 fn freshen(app: &mut Mb3d, path: &Path) {
-    if app.preview.cache.get(path).is_some_and(|(_, _, m)| *m != modified(path)) {
+    if app.preview.cache.get(path).is_some_and(|c| c.modified != modified(path)) {
         app.preview.cache.remove(path);
+    }
+}
+
+/// The cached preview of `path`, noted as wanted now.
+fn cached(app: &mut Mb3d, path: &Path) -> Option<(Option<Bitmap>, String)> {
+    app.preview.tick += 1;
+    let tick = app.preview.tick;
+    let c = app.preview.cache.get_mut(path)?;
+    c.used = tick;
+    Some((c.picture.clone(), c.text.clone()))
+}
+
+/// Keeps the cache at [`KEEP`] pictures: the ones wanted longest ago go.
+fn trim(app: &mut Mb3d) {
+    while app.preview.cache.len() > KEEP {
+        let Some(oldest) = app.preview.cache.iter().min_by_key(|(_, c)| c.used).map(|(p, _)| p.clone()) else { break };
+        app.preview.cache.remove(&oldest);
     }
 }
 
@@ -145,8 +178,8 @@ pub fn clear_queue(app: &mut Mb3d) {
 /// be made.
 pub fn thumb(app: &mut Mb3d, path: &Path) -> Option<Bitmap> {
     freshen(app, path);
-    match app.preview.cache.get(path) {
-        Some((b, _, _)) => b.clone(),
+    match cached(app, path) {
+        Some((b, _)) => b,
         None => {
             if possible(path) {
                 want(app, path.to_path_buf(), false);
@@ -167,8 +200,8 @@ pub fn request(app: &mut Mb3d, ui: &mut Ui, path: PathBuf, form: &str, image: &s
     }
     freshen(app, &path);
     app.preview.shown = Some((path.clone(), t.clone()));
-    match app.preview.cache.get(&path) {
-        Some((b, text, _)) => show(ui, &t, b.clone(), text),
+    match cached(app, &path) {
+        Some((b, text)) => show(ui, &t, b, &text),
         None => {
             show(ui, &t, None, &tr("Calculating the preview..."));
             want(app, path, true);
@@ -201,7 +234,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             }
         }
         let m = modified(&p);
-        app.preview.cache.insert(p, (entry.0, entry.1, m));
+        app.preview.tick += 1;
+        let used = app.preview.tick;
+        app.preview.cache.insert(p, Cached { picture: entry.0, text: entry.1, modified: m, used });
+        trim(app);
         app.preview.version += 1;
     }
     if !app.preview.busy {

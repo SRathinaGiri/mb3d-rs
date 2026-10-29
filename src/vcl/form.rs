@@ -183,7 +183,7 @@ pub struct Form {
     pub led_hint: String,
     pub led_rect: std::cell::Cell<super::canvas::Rect>,
     pub led_hint_shown: bool,
-    /// the history icon (a clock with an arrow) right of the LED: its
+    /// the history icon (a clock with an arrow) left of the version: its
     /// hint (empty: no icon) and where it was painted; a click posts the
     /// form a `HistoryIconClick` event
     pub history_hint: String,

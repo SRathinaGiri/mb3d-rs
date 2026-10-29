@@ -264,6 +264,26 @@ impl Ui {
     pub fn item_index(&self, form: &str, ctl: &str) -> i32 {
         self.c(form, ctl).item_index
     }
+    /// A list view's rows in sight: the first and how many.
+    pub fn listview_window(&self, form: &str, ctl: &str) -> (usize, usize) {
+        let f = self.f(form);
+        match f.id(ctl) {
+            Some(id) => {
+                let (_, _, vis, _, top) = f.listview_rows(id);
+                (top as usize, vis as usize)
+            }
+            None => (0, 0),
+        }
+    }
+    /// Scrolls a list view so that its selected row is in sight.
+    pub fn listview_show_selection(&mut self, form: &str, ctl: &str) {
+        let (top, vis) = self.listview_window(form, ctl);
+        let c = self.cm(form, ctl);
+        let i = c.item_index;
+        if i >= 0 && ((i as usize) < top || i as usize >= top + vis) {
+            c.scroll_y = (i - vis as i32 / 2).max(0);
+        }
+    }
     pub fn set_item_index(&mut self, form: &str, ctl: &str, i: i32) {
         self.cm(form, ctl).set_item_index(i);
     }

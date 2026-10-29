@@ -121,7 +121,7 @@ impl Form {
             Kind::ListView => {
                 let (hh, _, vis, max, top) = self.listview_rows(id);
                 let inner = r.inset(2);
-                if c.cells.len() as i32 > vis && x >= inner.right() - SB && y >= inner.y + hh {
+                if c.row_count() as i32 > vis && x >= inner.right() - SB && y >= inner.y + hh {
                     let sr = Rect::new(inner.right() - SB, inner.y + hh, SB, inner.h - hh);
                     return sb_part(sr, true, 0, max as i64, vis as i64, top as i64, x, y);
                 }
@@ -431,9 +431,9 @@ impl Form {
                 } else {
                     let i = (ly - hh - 2) / rh + top;
                     let c = &mut self.ctl[id];
-                    if (i as usize) < c.cells.len() {
+                    if (i as usize) < c.row_count() {
                         if c.multi_select {
-                            let n = c.cells.len();
+                            let n = c.row_count();
                             c.selected.resize(n, false);
                             if shift & SS_CTRL != 0 {
                                 c.selected[i as usize] ^= true;
@@ -454,8 +454,8 @@ impl Form {
                             out.push(raw(id, "OnChange", Ev::Change));
                         }
                     }
-                    if c.checkboxes && lx < 22 && (i as usize) < c.cells.len() {
-                        let n = c.cells.len();
+                    if c.checkboxes && lx < 22 && (i as usize) < c.row_count() {
+                        let n = c.row_count();
                         c.checks.resize(n, false);
                         c.checks[i as usize] ^= true;
                         out.push(raw(id, "OnChange", Ev::Change));
@@ -1684,8 +1684,8 @@ impl Form {
                 let c = &mut self.ctl[id];
                 let d = if key == vk::UP { -1 } else { 1 };
                 if kind == Kind::ListView {
-                    let i = (c.item_index + d).clamp(0, (c.cells.len() as i32 - 1).max(0));
-                    if !c.cells.is_empty() && i != c.item_index {
+                    let i = (c.item_index + d).clamp(0, (c.row_count() as i32 - 1).max(0));
+                    if c.row_count() > 0 && i != c.item_index {
                         c.item_index = i;
                         out.push(raw(id, "OnChange", Ev::Change));
                     }

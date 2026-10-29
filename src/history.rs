@@ -4,9 +4,16 @@
 //! with a thumbnail of the finished picture beside them (the same name
 //! as `.png`, written when the calculation ends), and a log of the files
 //! opened and saved through the file dialogs (`History/<date>/log.txt`,
-//! a line `<seconds since 1970>\t<open|save>\t<path>` each).
+//! a line `<seconds since 1970>\t<open|save>\t<path>` each).  The
+//! window reads it day by day on a thread ([`Scan`]), the newest first,
+//! and compares files ("Show unique") on another, with the keys of their
+//! contents kept between sessions ([`Keys`]): a history of a million
+//! entries lists while it is read and never holds the window.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc, Mutex};
 
 /// What an entry records.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -72,6 +79,10 @@ pub struct Entry {
     /// the parameter file's name without its time, or the file's name
     pub title: String,
     pub kind: Kind,
+    /// the file's size when it was listed (None: not there)
+    pub bytes: Option<u64>,
+    /// when the file was last written, seconds since 1970 (0: unknown)
+    pub modified: i64,
 }
 
 impl Entry {
@@ -86,10 +97,27 @@ impl Entry {
         (self.action == Action::Calc).then(|| self.path.with_extension("png")).filter(|p| p.is_file())
     }
 
-    /// The file's size, if it is still there.
-    pub fn bytes(&self) -> Option<u64> {
-        std::fs::metadata(&self.path).ok().filter(|m| m.is_file()).map(|m| m.len())
+}
+
+/// The size and the time of a file, as [`Entry`] keeps them.
+fn size_and_time(m: Option<std::fs::Metadata>) -> (Option<u64>, i64) {
+    match m.filter(|m| m.is_file()) {
+        Some(m) => {
+            let t = m.modified().ok().and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map_or(0, |d| d.as_secs() as i64);
+            (Some(m.len()), t)
+        }
+        None => (None, 0),
     }
+}
+
+/// A day's folder of History.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Day {
+    /// `yyyy-mm-dd`, the folder's name
+    pub date: String,
+    /// seconds since 1970 of the day's start
+    pub secs: i64,
+    pub path: PathBuf,
 }
 
 /// The History folder.
@@ -119,42 +147,228 @@ fn now() -> i64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0)
 }
 
-/// All entries, newest first.
+/// The days of the history, newest first (their folders' names alone:
+/// instant, however big the history).
+pub fn days() -> Vec<Day> {
+    days_in(&root())
+}
+
+fn days_in(root: &Path) -> Vec<Day> {
+    let mut out = Vec::new();
+    let Ok(dirs) = std::fs::read_dir(root) else { return out };
+    for d in dirs.flatten() {
+        let date = d.file_name().to_string_lossy().into_owned();
+        let Some(secs) = day_secs(&date) else { continue };
+        if d.file_type().is_ok_and(|t| t.is_dir()) {
+            out.push(Day { date, secs, path: d.path() });
+        }
+    }
+    out.sort_by(|a, b| b.secs.cmp(&a.secs));
+    out
+}
+
+/// A day's entries, newest first.
+pub fn list_day(day: &Day) -> Vec<Entry> {
+    let mut out = Vec::new();
+    let Ok(files) = std::fs::read_dir(&day.path) else { return out };
+    for f in files.flatten() {
+        let p = f.path();
+        let name = f.file_name().to_string_lossy().into_owned();
+        if name == "log.txt" {
+            for line in std::fs::read_to_string(&p).unwrap_or_default().lines() {
+                let mut it = line.splitn(3, '\t');
+                let (Some(s), Some(a), Some(path)) = (it.next(), it.next(), it.next()) else { continue };
+                let (Ok(secs), Some(action)) = (s.parse::<i64>(), Action::parse(a)) else { continue };
+                let path = PathBuf::from(path);
+                let title = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                let (bytes, modified) = size_and_time(std::fs::metadata(&path).ok());
+                out.push(Entry { secs, action, kind: Kind::of(&path), path, title, bytes, modified });
+            }
+        } else if name.to_ascii_lowercase().ends_with(".m3p") {
+            let stem = &name[..name.len() - 4];
+            let (secs, title) = match time_of(stem) {
+                Some(t) => (day.secs + t, stem[9..].trim().to_string()),
+                None => (day.secs, stem.to_string()),
+            };
+            let (bytes, modified) = size_and_time(f.metadata().ok());
+            out.push(Entry { secs, action: Action::Calc, kind: Kind::Params, path: p, title, bytes, modified });
+        }
+    }
+    out.sort_by(|a, b| b.secs.cmp(&a.secs).then_with(|| a.title.cmp(&b.title)));
+    out
+}
+
+/// All entries, newest first (the whole history at once; the window
+/// uses [`Scan`]).
 pub fn list() -> Vec<Entry> {
     list_in(&root())
 }
 
 fn list_in(root: &Path) -> Vec<Entry> {
-    let mut out = Vec::new();
-    let Ok(days) = std::fs::read_dir(root) else { return out };
-    for day in days.flatten() {
-        let dir = day.path();
-        let Some(day_secs) = day_secs(&day.file_name().to_string_lossy()) else { continue };
-        let Ok(files) = std::fs::read_dir(&dir) else { continue };
-        for f in files.flatten() {
-            let p = f.path();
-            let name = f.file_name().to_string_lossy().into_owned();
-            if name == "log.txt" {
-                for line in std::fs::read_to_string(&p).unwrap_or_default().lines() {
-                    let mut it = line.splitn(3, '\t');
-                    let (Some(s), Some(a), Some(path)) = (it.next(), it.next(), it.next()) else { continue };
-                    let (Ok(secs), Some(action)) = (s.parse::<i64>(), Action::parse(a)) else { continue };
-                    let path = PathBuf::from(path);
-                    let title = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-                    out.push(Entry { secs, action, kind: Kind::of(&path), path, title });
-                }
-            } else if name.to_ascii_lowercase().ends_with(".m3p") {
-                let stem = &name[..name.len() - 4];
-                let (secs, title) = match time_of(stem) {
-                    Some(t) => (day_secs + t, stem[9..].trim().to_string()),
-                    None => (day_secs, stem.to_string()),
-                };
-                out.push(Entry { secs, action: Action::Calc, kind: Kind::Params, path: p, title });
+    days_in(root).iter().flat_map(list_day).collect()
+}
+
+/// What a [`Scan`] found: the days first, then each day's entries in
+/// the days' order (the newest day first), then the end.
+pub enum Found {
+    Days(Vec<Day>),
+    /// the index of the day in `Days`, its entries
+    Day(usize, Vec<Entry>),
+    Done,
+}
+
+/// The history read on a thread of its own, day by day; dropping the
+/// scan stops it.
+pub struct Scan {
+    rx: mpsc::Receiver<Found>,
+    stop: Arc<AtomicBool>,
+}
+
+impl Scan {
+    /// Starts reading; `wake` is called whenever something was found.
+    pub fn start(wake: Box<dyn Fn() + Send>) -> Scan {
+        Scan::start_in(root(), wake)
+    }
+
+    fn start_in(root: PathBuf, wake: Box<dyn Fn() + Send>) -> Scan {
+        let (tx, rx) = mpsc::channel();
+        let stop = Arc::new(AtomicBool::new(false));
+        let stopped = stop.clone();
+        std::thread::spawn(move || {
+            let days = days_in(&root);
+            if tx.send(Found::Days(days.clone())).is_err() {
+                return;
             }
+            wake();
+            for (i, d) in days.iter().enumerate() {
+                if stopped.load(Ordering::Relaxed) || tx.send(Found::Day(i, list_day(d))).is_err() {
+                    return;
+                }
+                wake();
+            }
+            let _ = tx.send(Found::Done);
+            wake();
+        });
+        Scan { rx, stop }
+    }
+
+    /// The next thing found, if any yet.
+    pub fn next(&self) -> Option<Found> {
+        self.rx.try_recv().ok()
+    }
+}
+
+impl Drop for Scan {
+    fn drop(&mut self) {
+        self.stop.store(true, Ordering::Relaxed);
+    }
+}
+
+/// The keys of the files' contents known so far ("Show unique"), kept
+/// between sessions in the cache folder (`History/keys.txt`, a line
+/// `<key or ->\t<size>\t<modified>\t<path>` each); a key is used again
+/// while the file's size and time are the same.
+#[derive(Default)]
+pub struct Keys {
+    /// path -> (size, modified, key; None: the file could not be read)
+    map: HashMap<PathBuf, (u64, i64, Option<u64>)>,
+    dirty: bool,
+    /// the file the keys are kept in (None: not kept)
+    file: Option<PathBuf>,
+}
+
+fn keys_file() -> PathBuf {
+    crate::appdirs::cache_folder("History").join("keys.txt")
+}
+
+impl Keys {
+    /// The keys kept from earlier sessions.
+    pub fn load() -> Keys {
+        let mut k = Keys::load_from(&keys_file());
+        k.file = Some(keys_file());
+        k
+    }
+
+    fn load_from(p: &Path) -> Keys {
+        let mut k = Keys::default();
+        for line in std::fs::read_to_string(p).unwrap_or_default().lines() {
+            let mut it = line.splitn(4, '\t');
+            let (Some(key), Some(size), Some(time), Some(path)) = (it.next(), it.next(), it.next(), it.next()) else { continue };
+            let (Ok(size), Ok(time)) = (size.parse::<u64>(), time.parse::<i64>()) else { continue };
+            let key = match key {
+                "-" => None,
+                k => match k.parse::<u64>() {
+                    Ok(k) => Some(k),
+                    Err(_) => continue,
+                },
+            };
+            k.map.insert(PathBuf::from(path), (size, time, key));
+        }
+        k
+    }
+
+    /// The key of a file as it is now: None while it is not known yet,
+    /// Some(None) for a file that could not be read.
+    pub fn get(&self, path: &Path, bytes: u64, modified: i64) -> Option<Option<u64>> {
+        self.map.get(path).filter(|(b, m, _)| *b == bytes && *m == modified).map(|t| t.2)
+    }
+
+    pub fn put(&mut self, path: PathBuf, bytes: u64, modified: i64, key: Option<u64>) {
+        self.map.insert(path, (bytes, modified, key));
+        self.dirty = true;
+    }
+
+    /// How many keys are known.
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
+
+    /// Writes the keys for the next session, when they changed (and
+    /// they came from [`Keys::load`]).
+    pub fn save(&mut self) {
+        if let Some(f) = self.file.clone() {
+            self.save_to(&f);
         }
     }
-    out.sort_by(|a, b| b.secs.cmp(&a.secs).then_with(|| a.title.cmp(&b.title)));
-    out
+
+    fn save_to(&mut self, p: &Path) {
+        if !self.dirty {
+            return;
+        }
+        let mut out = String::new();
+        for (path, (b, m, k)) in &self.map {
+            let k = k.map_or("-".to_string(), |k| k.to_string());
+            out.push_str(&format!("{k}\t{b}\t{m}\t{}\n", path.display()));
+        }
+        if std::fs::write(p, out).is_ok() {
+            self.dirty = false;
+        }
+    }
+}
+
+/// Computes the keys of `jobs` (path, size, modified) on a thread into
+/// `keys`, which is saved at the end; `wake` is called as they come in.
+/// The flag returned is set while the thread works.
+pub fn hash_keys(keys: Arc<Mutex<Keys>>, jobs: Vec<(PathBuf, u64, i64)>, wake: Box<dyn Fn() + Send>) -> Arc<AtomicBool> {
+    let busy = Arc::new(AtomicBool::new(true));
+    let flag = busy.clone();
+    std::thread::spawn(move || {
+        for (i, (path, bytes, modified)) in jobs.into_iter().enumerate() {
+            let key = content_key(&path);
+            keys.lock().unwrap().put(path, bytes, modified, key);
+            if i % 32 == 31 {
+                wake();
+            }
+        }
+        keys.lock().unwrap().save();
+        flag.store(false, Ordering::Relaxed);
+        wake();
+    });
+    busy
 }
 
 /// Seconds since 1970 of the start of a day `yyyy-mm-dd`.
@@ -350,9 +564,31 @@ mod tests {
         assert_eq!(titles, ["b.png", "", "a.m3i", "my picture"]);
         assert_eq!(l[0].action, Action::Save);
         assert_eq!(l[0].kind, Kind::Image);
+        assert_eq!(l[0].bytes, None, "a logged file that is not there");
         assert_eq!(l[2].kind, Kind::M3i);
         assert_eq!(l[3].when(), "2026-10-29 07:09:22");
         assert!(l[3].thumb().is_none());
+        assert_eq!(l[3].bytes, Some(1));
+        assert!(l[3].modified > 1_700_000_000);
+        // the days, and a scan finds the same
+        let days = days_in(&root);
+        assert_eq!(days.len(), 1);
+        assert_eq!(days[0].date, "2026-10-29");
+        assert_eq!(list_day(&days[0]), l);
+        let scan = Scan::start_in(root.clone(), Box::new(|| {}));
+        let mut found = Vec::new();
+        for _ in 0..200 {
+            while let Some(f) = scan.next() {
+                found.push(f);
+            }
+            if matches!(found.last(), Some(Found::Done)) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert_eq!(found.len(), 3);
+        assert!(matches!(&found[0], Found::Days(d) if d.len() == 1));
+        assert!(matches!(&found[1], Found::Day(0, e) if *e == l));
         // a removed logged file: its line goes, the other stays
         assert!(remove_in(&root, &l[2]));
         assert!(!remove_in(&root, &l[2]));
@@ -403,8 +639,40 @@ mod tests {
         let root = temp_root("thumb");
         let m3p = root.join("08h00m00s a.m3p");
         write_thumb(&m3p, &rgb, w, h).unwrap();
-        let e = Entry { secs: 0, action: Action::Calc, path: m3p, title: "a".into(), kind: Kind::Params };
+        let e = Entry { secs: 0, action: Action::Calc, path: m3p, title: "a".into(), kind: Kind::Params, bytes: None, modified: 0 };
         assert!(e.thumb().is_some());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn keys_are_kept_between_sessions_and_computed_on_a_thread() {
+        let root = temp_root("keyfile");
+        let a = root.join("a.m3p");
+        std::fs::write(&a, b"same bytes").unwrap();
+        let file = root.join("keys.txt");
+        let mut k = Keys::default();
+        assert_eq!(k.get(&a, 10, 5), None);
+        k.put(a.clone(), 10, 5, Some(77));
+        k.put(root.join("gone.m3p"), 3, 4, None);
+        k.save_to(&file);
+        let k2 = Keys::load_from(&file);
+        assert_eq!(k2.len(), 2);
+        assert_eq!(k2.get(&a, 10, 5), Some(Some(77)));
+        assert_eq!(k2.get(&a, 11, 5), None, "a changed file is keyed again");
+        assert_eq!(k2.get(&root.join("gone.m3p"), 3, 4), Some(None));
+        // the thread computes what is missing and saves
+        let shared = Arc::new(Mutex::new(Keys::default()));
+        let busy = hash_keys(shared.clone(), vec![(a.clone(), 10, 5), (root.join("none.m3p"), 1, 1)], Box::new(|| {}));
+        for _ in 0..500 {
+            if !busy.load(Ordering::Relaxed) {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert!(!busy.load(Ordering::Relaxed));
+        let k3 = shared.lock().unwrap();
+        assert_eq!(k3.get(&a, 10, 5), Some(content_key(&a)));
+        assert_eq!(k3.get(&root.join("none.m3p"), 1, 1), Some(None));
         let _ = std::fs::remove_dir_all(&root);
     }
 }

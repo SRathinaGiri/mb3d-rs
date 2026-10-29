@@ -296,6 +296,16 @@ impl Form {
                     right = rx - 12;
                 }
             }
+            // the history icon left of the version
+            self.history_rect.set(Rect::default());
+            if !self.history_hint.is_empty() {
+                let r = Rect::new(right - 16, b + (ch - 16) / 2, 16, 16);
+                if r.x > tx + 60 {
+                    draw_history_icon(cv, r, th.caption_text(active), self.nc_hot == NC_HISTORY);
+                    self.history_rect.set(r);
+                    right = r.x - 10;
+                }
+            }
             let old = cv.clip_to(Rect::new(tx, b, right - tx - 4, ch));
             cv.text(tx, b + (ch - lh) / 2, self.caption(), &tf, th.caption_text(active));
             let bx = tx + cv.text_width(&tf, self.caption()) + 10;
@@ -303,14 +313,6 @@ impl Form {
                 let r = Rect::new(bx, b + (ch - 9) / 2, 18, 9);
                 draw_led(cv, r, c, self.led_on);
                 self.led_rect.set(r);
-            }
-            if self.history_hint.is_empty() {
-                self.history_rect.set(Rect::default());
-            } else {
-                let x = if self.caption_led.is_some() { bx + 18 + 9 } else { bx };
-                let r = Rect::new(x, b + (ch - 16) / 2, 16, 16);
-                draw_history_icon(cv, r, th.caption_text(active), self.nc_hot == NC_HISTORY);
-                self.history_rect.set(r);
             }
             cv.set_clip(old);
             for (k, r) in buttons {
@@ -1040,7 +1042,7 @@ impl Form {
         let r = self.abs_rect(id);
         let vis = ((r.h - 4 - hh) / rh).max(1);
         let c = &self.ctl[id];
-        let max = (c.cells.len() as i32 - vis).max(0);
+        let max = (c.row_count() as i32 - vis).max(0);
         (hh, rh, vis, max, c.scroll_y.clamp(0, max))
     }
 
@@ -1048,7 +1050,7 @@ impl Form {
         let c = &self.ctl[id];
         let inner = th.edit_frame(cv, r, en, focused, c.color);
         let (hh, rh, vis, max, top) = self.listview_rows(id);
-        let need_sb = c.cells.len() as i32 > vis;
+        let need_sb = c.row_count() as i32 > vis;
         let lw = inner.w - if need_sb { SB } else { 0 };
         let old = cv.clip_to(inner);
         let mut x = inner.x;
@@ -1065,7 +1067,9 @@ impl Form {
             th.button(cv, Rect::new(inner.x + lw, inner.y, SB, hh), BtnState { enabled: true, ..Default::default() });
         }
         let mut y = inner.y + hh;
-        for (ri, row) in c.cells.iter().enumerate().skip(top as usize) {
+        for ri in top as usize..c.row_count() {
+            // (a row its owner has not filled is blank)
+            let row = c.cell_row(ri);
             let rr = Rect::new(inner.x, y, lw, rh);
             let sel = c.item_index == ri as i32
                 || (c.multi_select && c.selected.get(ri).copied().unwrap_or(false));
@@ -1076,7 +1080,7 @@ impl Form {
             let mut x = inner.x;
             for (ci, _) in c.cols.iter().enumerate() {
                 let w = widths[ci];
-                let txt = row.get(ci).map(String::as_str).unwrap_or("");
+                let txt = row.and_then(|r| r.get(ci)).map(String::as_str).unwrap_or("");
                 let o3 = cv.clip_to(Rect::new(x, y, w - 2, rh));
                 let mut tx = x + 5;
                 if ci == 0 && c.checkboxes {

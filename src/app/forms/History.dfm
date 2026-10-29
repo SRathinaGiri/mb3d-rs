@@ -85,9 +85,9 @@ object HistoryFrm: THistoryFrm
       'Tiles')
   end
   object CheckBox1: TCheckBox
-    Left = 316
+    Left = 212
     Top = 504
-    Width = 100
+    Width = 92
     Height = 17
     Hint = 'Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest'
     Anchors = [akLeft, akBottom]
@@ -96,6 +96,21 @@ object HistoryFrm: THistoryFrm
     ShowHint = True
     TabOrder = 9
     OnClick = CheckBox1Click
+  end
+  object CheckBox2: TCheckBox
+    Left = 308
+    Top = 504
+    Width = 110
+    Height = 17
+    Hint = 'The entries under their days; a day'#39's entries and pictures show when it is opened (a click on it)'
+    Anchors = [akLeft, akBottom]
+    Caption = 'Group by day'
+    Checked = True
+    State = cbChecked
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 11
+    OnClick = CheckBox2Click
   end
   object TrackBar1: TTrackBar
     Left = 430
@@ -186,6 +201,7 @@ object HistoryFrm: THistoryFrm
     TabOrder = 2
     ViewStyle = vsReport
     OnChange = ListView1Change
+    OnClick = ListView1Click
     OnColumnClick = ListView1ColumnClick
     OnDblClick = ListView1DblClick
   end
@@ -271,7 +287,7 @@ object HistoryFrm: THistoryFrm
   object Label5: TLabel
     Left = 8
     Top = 506
-    Width = 300
+    Width = 200
     Height = 13
     AutoSize = False
     Anchors = [akLeft, akBottom]

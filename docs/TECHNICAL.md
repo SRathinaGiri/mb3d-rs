@@ -1231,7 +1231,7 @@ update `info.txt`); `--clear [KEY]` deletes them.
 `MB3D_PORTABLE=1` or `0` chooses a way regardless of the folder.
 
 **History** (`src/history.rs`, the window `src/app/history_form.rs`, the
-clock icon right of the title bar's LED). `History/<date>/<time> <title>.m3p`
+clock icon left of the version in the title bar). `History/<date>/<time> <title>.m3p`
 is the parameter file of every Calculate 3D, as MB3D keeps it
 (`appdirs::store_history`); since v0.2.84 a thumbnail of the finished
 picture is written beside it as `.png` (240 x 180 at most, scaled down
@@ -1240,18 +1240,39 @@ on a thread of its own when the calculation ends), and
 file dialogs or dropped on the window, a line
 `<seconds since 1970>\t<open|save>\t<path>` each (a chosen folder is
 not logged). The window lists all of it newest first, as a list, as rows
-with their pictures or as tiles whose size a slider sets; a column
-header sorts, the search box filters by name, folder, kind and action,
-the kind box by file type, "Show unique" keeps one of several entries
-whose files have the same bytes (`history::content_key`: the whole file
-up to 256 kB, else its size with its first and last 64 kB). The
-pictures of entries without a thumbnail come from `file_preview.rs`
-(parameters rendered small on the CPU, an image file read and scaled
-down), queued and calculated one at a time, the most wanted first, and
-kept for the session. "Remove" deletes a calculation's parameter file
-and thumbnail (the history's own) and takes a logged file's line out
-without touching the file. Load opens parameters or an .m3i in the main
-window, any other file with the system's program for it.
+with their pictures or as tiles whose size a slider sets, grouped by
+day ("Group by day", on by default: a day's entries and pictures show
+when it is opened with a click, the newest day open at the start) or
+in one run; a column header sorts (within a day when grouped), the
+search box filters by name, folder, kind and action (a day without a
+hit is hidden), the kind box by file type, "Show unique" keeps one of
+several listed entries whose files have the same bytes
+(`history::content_key`: the whole file up to 256 kB, else its size
+with its first and last 64 kB). The pictures of entries without a
+thumbnail come from `file_preview.rs` (parameters rendered small on the
+CPU, an image file read and scaled down), queued and calculated one at
+a time, the most wanted first; the last 400 pictures are kept.
+"Remove" deletes a calculation's parameter file and thumbnail (the
+history's own) and takes a logged file's line out without touching the
+file. Load opens parameters or an .m3i in the main window, any other
+file with the system's program for it.
+
+The window is made for a history of any size (thousands of days of
+thousands of entries): the day folders are listed at once and read one
+by one on a thread (`history::Scan`), the newest first, the list
+filling as they come, and a closed window stops the reading; the list
+view holds a window of its rows only (`Control::virtual_rows`,
+`cells_from`: the rows in sight and 200 beyond, filled again as it
+scrolls); the sort keys are made once per entry
+(`sort_by_cached_key`) and the search text of an entry once when it is
+read; the files are compared for "Show unique" on a thread
+(`history::hash_keys`, 2000 at a time, only the files that are listed),
+and their keys are kept between sessions in the cache folder
+(`History/keys.txt`, `history::Keys`: a key is used again while the
+file's size and time are the same). A removed entry leaves the list
+without a reading again. A synthetic history of 200 days with 200,000
+entries lists within a second of opening, and no step of the window
+blocks it longer than 60 ms.
 
 **Crashes.** A panic of either program (any thread), or the error the
 desktop program ends with, is appended to `mb3d_crash.txt` with the

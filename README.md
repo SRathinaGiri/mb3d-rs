@@ -571,8 +571,10 @@ you check further on your own:
   </details>
 * **History** behind the clock icon of the title bar: every picture you
   calculated with its thumbnail, every file you opened or saved, as a list,
-  as rows or as tiles of any size; search it, sort it, show only the
-  pictures that differ, and load any entry with a double click.
+  as rows or as tiles of any size, grouped by day or in one run; search
+  it, sort it, show only the pictures that differ, and load any entry
+  with a double click. A history of hundreds of thousands of entries
+  opens at once.
 * **Lighting stays live** after hard shadows and reflections: move a light
   or change its colour and the picture changes at once, as in Mandelbulb3D.
 
