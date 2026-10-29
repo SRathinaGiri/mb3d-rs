@@ -1493,9 +1493,14 @@ async fn init() -> Result<Vec<Gpu>, String> {
         return Err(format!("only a software renderer ({})", info.name));
     }
     // the other cards: the same interface as the first (a card can show up
-    // under Vulkan and DirectX 12 both), each physical card once
+    // under Vulkan and DirectX 12 both), each physical card once: a card
+    // listed again with the first card's PCI bus id is the first card (a
+    // Flatpak's Vulkan loader finds the NVIDIA driver's manifest through two
+    // paths and lists the card twice); without bus ids two identical cards
+    // cannot be told apart, so only the first match is the first card
+    let bus_ids = |a: &wgpu::AdapterInfo| !a.device_pci_bus_id.is_empty() && !info.device_pci_bus_id.is_empty();
     let same = |a: &wgpu::AdapterInfo| {
-        if !a.device_pci_bus_id.is_empty() || !info.device_pci_bus_id.is_empty() {
+        if bus_ids(a) {
             a.device_pci_bus_id == info.device_pci_bus_id
         } else {
             (a.vendor, a.device, &a.name) == (info.vendor, info.device, &info.name)
@@ -1508,8 +1513,7 @@ async fn init() -> Result<Vec<Gpu>, String> {
         if i.backend != info.backend || i.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
             continue;
         }
-        // (two identical cards without a bus id: only the first match is the first card)
-        if same(&i) && !first_skipped {
+        if same(&i) && (bus_ids(&i) || !first_skipped) {
             first_skipped = true;
             continue;
         }
