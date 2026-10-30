@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.86" date="2026-10-30">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86</url>
+      <description>
+        <p>AI assistants can use the program: connect Claude's desktop app or Claude Code with the new AI button on the Prefs tab, then ask in plain words, or by voice through the assistant, to describe, change and render your pictures, make variations, preview a folder or render what you worked on last; the assistant sees the pictures and can adjust them. The program stays offline, writes only into its AI folder, never deletes anything and asks before pictures larger than 4K.</p>
+      </description>
+    </release>
     <release version="0.2.85" date="2026-10-30">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.85</url>
       <description>
