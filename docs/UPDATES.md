@@ -5,10 +5,16 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
-## Not released yet
+## [v0.2.86](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86) · 30 Oct 2026, 08:45 UTC
 
 | Commit | What it does |
 |---|---|
+| [`b126daf`](https://github.com/thr32423/mb3d-rs/commit/b126daf760bdcdc28a38ec293c7841eb54a4b1ad) | Version number and release notes of this release |
+| [`7ee8b6b`](https://github.com/thr32423/mb3d-rs/commit/7ee8b6b777d64d61e7635074f46e639806a969a8) | AI assistants: a scene guide (which keys do what: light colours and strength, fog and background, camera, detail, effects, formulas; and how to change lights and formulas), change_scene also with the whole edited scene text (a [light] section of a change switched off the lights it did not list, a [formula] section added a formula), the view as rotation angles in the description so that an assistant turns it by some degrees, formula_help (the names, or a formula's values) and preview_folder (a folder's parameter files on one numbered sheet); tried with Claude Code: a warmer light, a turned view, a formula's iterations, a folder sheet |
+| [`2015786`](https://github.com/thr32423/mb3d-rs/commit/2015786dec77e1490bdd02145a389816eac64499) | Technical notes: the Connect to an AI assistant window |
+| [`265a0c7`](https://github.com/thr32423/mb3d-rs/commit/265a0c7d2b4035ab0840e7cb767c90c44fd3f9c1) | AI assistants: the "Connect to an AI assistant" window behind the Prefs tab's new AI button (the tab's buttons a little narrower to make room): whether Claude's desktop app and Claude Code are on this computer and connected, Connect / Disconnect for the desktop app (its settings merged, the old file kept), Claude Code's command to copy, things to ask, the output folder and the limits; the connection names the mb3d next to the desktop program; Claude Code's command with the name before its options |
+| [`3b1807f`](https://github.com/thr32423/mb3d-rs/commit/3b1807fbc98f330cda8df9d675b67c6a6c39c5ee) | AI assistants: mb3d mcp, the Model Context Protocol over the standard input and output (no network: the assistant's app starts it), with the tools describe_scene, change_scene, render (the picture shown to the assistant, a quick preview or full size), variations (MutaGen, the sheet shown), recent_pictures (the History) and recent_log; files written only into the AI folder, nothing deleted, pictures above 4K only with the user's agreement, 10 minutes at most a calculation, every call logged; mb3d mcp --setup connects Claude's desktop app and prints the command for Claude Code; a small JSON reader and writer of our own (src/json.rs), as the command line program has no dependencies |
+| [`ed3f2dd`](https://github.com/thr32423/mb3d-rs/commit/ed3f2dd253c2d9024c2531077a6423e0ee42abbd) | README: Updates for v0.2.85 |
 | [`2da6ec0`](https://github.com/thr32423/mb3d-rs/commit/2da6ec048fc0ec91b6c1940edfb45bc22ea34e2f) | README in every language: the scanrepo.dev result of 0.2.85 (safe, 5 of 100, scanned 30 October 2026) |
 | [`225a273`](https://github.com/thr32423/mb3d-rs/commit/225a273f9b740854a1ff2593ef5274a682e732c5) | README: the scanrepo.dev result of 0.2.85 (safe, 5 of 100, scanned 30 October 2026) |
 
