@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.83](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83)** (29 Oct 2026, 11:15 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.85](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.85)** (30 Oct 2026, 06:58 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1067,7 +1067,30 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
-### v0.2.84 · 29 Oct 2026, 16:04 UTC (tag only, no GitHub release)
+### Not released yet
+
+| Commit | What it does |
+|---|---|
+| [`2da6ec0`](https://github.com/thr32423/mb3d-rs/commit/2da6ec048fc0ec91b6c1940edfb45bc22ea34e2f) | README in every language: the scanrepo.dev result of 0.2.85 (safe, 5 of 100, scanned 30 October 2026) |
+| [`225a273`](https://github.com/thr32423/mb3d-rs/commit/225a273f9b740854a1ff2593ef5274a682e732c5) | README: the scanrepo.dev result of 0.2.85 (safe, 5 of 100, scanned 30 October 2026) |
+
+### [v0.2.85](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.85) · 30 Oct 2026, 06:58 UTC
+
+| Commit | What it does |
+|---|---|
+| [`29a1190`](https://github.com/thr32423/mb3d-rs/commit/29a1190ded95a8bbf3e809b6dd1985a03696e7aa) | Version number and release notes of this release |
+| [`97b1503`](https://github.com/thr32423/mb3d-rs/commit/97b1503a44bf7a365006687be3d7afcce29e275d) | Status line while the graphics card's shaders compile: a clock that ticks every second since the compile began ("shaders compiling 0:23", "longer than usual, still working" after a minute) beside the time left, and the text's colour fading to the highlight colour and back every 1.2 s, so that a long compile is seen to be working and not hanging; the label's own font comes back when the compile is done |
+| [`e6e3089`](https://github.com/thr32423/mb3d-rs/commit/e6e3089fa9f061157aea021191e4a5f2475f57a9) | Log: a check box, list or field whose window has no handler for it (read only when calculating) is logged too, in the order it was used: the toolkit keeps such clicks, changes and selections for the log, which writes them before the next handled event; a line held back while its control kept changing carries the time of its last change. i18n_docs.py: a language bar under the title of every wiki page |
+| [`2c93de0`](https://github.com/thr32423/mb3d-rs/commit/2c93de0345d52374f14fbaae6edeb48664a38c5a) | Log: every event of a session in logs/mb3d-<date>.log of the data folder (a file a day, kept 30 days) and in the Log window (the page icon left of the History clock in the title bar): what the user did in every window (the control, its caption and its new value; typing, dragging and wheel turning one line each), windows opened and closed, calculations with their stages, times, where they ran and their statistics, stops and errors, the message list, files opened and saved, everything the programs print, crashes; the command line's runs too; a desktop session that froze, was killed or crashed found at the next start through its lock file and named in the message list; a crash note carries the log's last 50 lines; the window follows the session live or shows an earlier day, filtered by level, kind and words, the selected line in full, Copy and Open log folder |
+| [`905be78`](https://github.com/thr32423/mb3d-rs/commit/905be78f20d2b77f43f398b707056367cd492507) | README in every language of the program: docs/i18n/README.<code>.md in German, French, Italian, Dutch, Polish, Kashubian, Hindi, Japanese, Korean, Simplified and Traditional Chinese, translated from the English README of 0.2.84 (all of it but the release list and the credits, which point to the English ones), with the interface labels of each language's .lng; a language bar under the title of every README; each section's English anchor kept as an <a id> line, so links work in every language; tools/i18n_docs.py writes the bars and the wiki's language list and reports a translation that lacks a section of the English README |
+| [`0eed2e9`](https://github.com/thr32423/mb3d-rs/commit/0eed2e923eb1f4395a85cf9f0997c2222cd038b8) | History: "Show unique" goes through the closed days too, so a day's count tells what opening it would list (it kept the count before the comparison), and a file seen on a newer day hides its copies on the older ones |
+| [`a8fd74a`](https://github.com/thr32423/mb3d-rs/commit/a8fd74a457684dc168fb6a6fd2b4c21950c6d52a) | JIT: the loops switched to the custom formula's return block a second time after the emitter had already left the builder in it; harmless in a release build, but Cranelift's debug build refuses a switch to a block begun and not ended, so a debug `cargo test` failed in mutagen::tests::a_generation for every formula that writes a variable (the stores stand in that block). The second switch is taken out of the single-formula, hybrid and both dIFS compilers |
+| [`cd50029`](https://github.com/thr32423/mb3d-rs/commit/cd500290c0f9a11dcc301d83e0ad8d43c4b1ae08) | History: made for a history of any size, and grouped by day: the days are read one by one on a thread, the newest first, and listed as they come (a closed window stops the reading); "Group by day" (on by default) lists the entries under their days, a day's entries and pictures showing when it is opened with a click (the newest day open at the start; a search hides the days without a hit; the sort within a day); the list view holds a window of its rows only (Control::virtual_rows, the rows in sight and 200 beyond, filled as it scrolls); the sort keys made once per entry and the search text once when it is read; the files compared for "Show unique" on a thread, 2000 at a time and only the listed ones, their keys kept between sessions in the cache folder (History/keys.txt, used again while a file's size and time are the same); the last 400 preview pictures kept; a removed entry leaves the list without a reading again; a synthetic history of 200 days with 200,000 entries lists within a second and nothing blocks the window longer than 60 ms. The title bar's history icon moved to the left of the program version |
+| [`468f290`](https://github.com/thr32423/mb3d-rs/commit/468f29089ef0e95066d5bcaf91b7f10c3b22c1be) | Navigator and drop-down lists, on pull request 28: the orientation triad is drawn at each preview pass's scale, so it keeps its size on the screen through the 1/8, 1/4 and 1/2 passes and the full one (the pull request left it out of the coarse passes); the mouse wheel changes a closed drop-down list only while it has the focus and the mouse is on it (as on Windows, where the wheel goes to the focused control), so the wheel over any other place still reaches the form's own handler (the Navigator's zoom, the main window's); the formula list's highlight ignores its scroll bar by the widget's own part test (the fixed 16 pixels were off by the border and applied without a scroll bar); the mouse-move hunk that kept the captured scroll bar part is taken out again, the drag and the row selection key on the captured part already, which is never tested again |
+| [`e7dba49`](https://github.com/thr32423/mb3d-rs/commit/e7dba49a3c43373d43e92e85bf0a3ffec5f1ec91) | Polish navigator and drop-down interaction |
+| [`ca4ca66`](https://github.com/thr32423/mb3d-rs/commit/ca4ca66ec9659808b3d49e0cf097eb35c449bf2e) | README: Updates for v0.2.84 |
+
+### [v0.2.84](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.84) · 29 Oct 2026, 16:28 UTC
 
 | Commit | What it does |
 |---|---|
@@ -1094,16 +1117,7 @@ of a release are on its page. Times are in UTC.
 | [`ca4b3b5`](https://github.com/thr32423/mb3d-rs/commit/ca4b3b5977ff4baee2620b9c706e15bf28f01af5) | Flatpak: the manifest for Flathub (flatpak/, built from source: the crates of Cargo.lock, MB3D's folders, Open Image Denoise with its CPU device), the AppStream description, the menu entry named mb3d-rs, the window named after the Flatpak ID in a Flatpak; tools/flatpak_cargo_sources.py and tools/flatpak_local.sh |
 | [`7752e3a`](https://github.com/thr32423/mb3d-rs/commit/7752e3a46de2af89900dbf3733b28b236a1da6e3) | README: Updates for v0.2.82 |
 
-### [v0.2.82](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82) · 29 Oct 2026, 08:28 UTC
-
-| Commit | What it does |
-|---|---|
-| [`8b221e1`](https://github.com/thr32423/mb3d-rs/commit/8b221e13614b9e52522ce14859a447d6ee29c800) | Version number and release notes of this release |
-| [`51d9893`](https://github.com/thr32423/mb3d-rs/commit/51d98939c84ea8eb78e213fb8857170f7eb02a15) | Lighting: the full repaint after a lighting change (shadows of a switched or moved light, reflections, depth of field) runs as a processing of the post processing window: Calculate 3D turns into Stop, the LED blinks, the line and the bar show the stage and its time left, the message list gets its time (a reporter saw a green LED, no way to stop and a 33 s shadow pass on the CPU at 4000 x 2000); a further lighting change or a Calculate now of the post processing window stops it instead of waiting; a repaint's hard shadows and DE occlusion share the card and the CPU as after the main calculation (post_shared), when the card's pipelines are compiled |
-| [`62098cf`](https://github.com/thr32423/mb3d-rs/commit/62098cf606e334f63d554d36f62134e5ae443618) | Memory: the reflections' band is sized to half of the free memory (a 2M band peaks at 3.5 GB, measured; 1792 bytes per pixel, at least 256k pixels), the memory estimate models the stages (MemoryUse: G-buffer, window, main calculation's card buffers, paint with the reflections' band and the depth of field) so the question before Calculate 3D and the command line's note follow the scene and the swarm's owner, whose tiles' computers do the main calculation; the swarm's whole-picture reflections and depth of field report their progress and obey Stop; --swarm prints the memory note |
-| [`995466a`](https://github.com/thr32423/mb3d-rs/commit/995466a4d3258ac51598566e044aba6cbeeeb9da) | README: Updates for v0.2.81 |
-
-All 95 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 96 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
