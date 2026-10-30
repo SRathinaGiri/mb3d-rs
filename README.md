@@ -2,6 +2,10 @@
 
 # mb3d-rs — Mandelbulb3D for Linux, Windows and macOS
 
+<!-- languages:start -->
+**English** · [Deutsch](docs/i18n/README.de.md) · [Français](docs/i18n/README.fr.md) · [Italiano](docs/i18n/README.it.md) · [Nederlands](docs/i18n/README.nl.md) · [Polski](docs/i18n/README.pl.md) · [Kaszëbsczi](docs/i18n/README.csb.md) · [हिन्दी](docs/i18n/README.hi.md) · [日本語](docs/i18n/README.ja.md) · [한국어](docs/i18n/README.ko.md) · [简体中文](docs/i18n/README.zh-CN.md) · [繁體中文](docs/i18n/README.zh-TW.md)
+<!-- languages:end -->
+
 <!-- latest:start -->
 **Latest release: [v0.2.83](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83)** (29 Oct 2026, 11:15 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->

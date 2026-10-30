@@ -1275,6 +1275,22 @@ without a reading again. A synthetic history of 200 days with 200,000
 entries lists within a second of opening, and no step of the window
 blocks it longer than 60 ms.
 
+**Translations of the README and the wiki.** One per language of the
+program (`Languages/*.lng`): `docs/i18n/README.<code>.md` (de, fr, it, nl,
+pl, csb, hi, ja, ko, zh-CN, zh-TW) and the wiki's `<Page>-<code>.md`. They
+translate the whole README except the release list (a pointer to
+`docs/UPDATES.md`) and the credits (a pointer to the English README); the
+interface labels in them are the language's own from its `.lng`. Every
+`##` and `###` section carries the English README's anchor as an `<a id>`
+line, so `#download` and the like work in every language and a section
+added in English shows up as missing. `python3 tools/i18n_docs.py --wiki
+../mb3d-rs.wiki` writes the language bars (README.md and each
+translation, between `<!-- languages:start -->` and `<!-- languages:end
+-->`) and the wiki sidebar's language list, and exits with 1 when a
+translation lacks a section of the English README or a wiki page lacks a
+translation. The English texts are the reference; each translation says so
+under its title, with the version it was made from (0.2.84).
+
 **Crashes.** A panic of either program (any thread), or the error the
 desktop program ends with, is appended to `mb3d_crash.txt` with the
 program, version, time, system and backtrace (`src/crash.rs`): next to
