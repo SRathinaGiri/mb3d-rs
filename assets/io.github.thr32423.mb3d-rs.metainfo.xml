@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.87" date="2026-10-30">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.87</url>
+      <description>
+        <p>Five new interface languages: Spanish, Portuguese, Indonesian, Arabic and Urdu, seventeen in all. Arabic and Urdu are written right to left, with their letters joined and Latin words and numbers in the right order. The README and the wiki are translated into the new languages too.</p>
+      </description>
+    </release>
     <release version="0.2.86" date="2026-10-30">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86</url>
       <description>
