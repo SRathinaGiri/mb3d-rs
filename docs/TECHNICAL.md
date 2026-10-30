@@ -1318,6 +1318,28 @@ lines, the newest followed) or an earlier day's file, filtered by level,
 kind and words, the selected line in full below; "Copy" copies the
 selected line or all listed ones.
 
+**AI assistants** (`src/mcp.rs`, `mb3d mcp`; JSON in `src/json.rs`, our
+own, as the command line program has no dependencies). The Model Context
+Protocol over the standard input and output (JSON-RPC 2.0, a message a
+line; versions 2025-06-18, 2025-03-26, 2024-11-05): an assistant's app on
+this computer starts `mb3d mcp`; nothing listens on the network. Tools:
+`describe_scene` (a parameter file as `key = value` lines, `Scene::to_text`),
+`change_scene` (`Scene::apply` of such lines, saved as a new .m3p),
+`render` (the full calculation with its post passes, `render::calculate_with`
++ `paint`, saved as PNG, returned as an image of at most 512 pixels;
+`preview` renders 640 wide), `variations` (a MutaGen generation, 15
+members saved as .m3p, their contact sheet returned), `recent_pictures`
+(the History, newest first) and `recent_log` (the log's newest lines,
+optionally of one kind). Files are written only into the output folder
+(`AI` in the data folder, `--output`), nothing is deleted; a picture above
+`--max-pixels` (3840 x 2160) needs `confirm_large: true`, which the
+instructions tell the assistant to ask the user for; a calculation stops
+after `--max-minutes` (10). Every call is logged (kind `mcp`). `mb3d mcp
+--setup` adds mb3d to Claude's desktop app's `claude_desktop_config.json`
+(merged, the old file kept as `.json.before-mb3d`) and prints the command
+for Claude Code (`claude mcp add --scope user mb3d -- <mb3d> mcp`): the
+program starts no other programs; `--remove` undoes both.
+
 **Crashes.** A panic of either program (any thread), or the error the
 desktop program ends with, is appended to `mb3d_crash.txt` with the
 program, version, time, system and backtrace (`src/crash.rs`): next to

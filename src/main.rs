@@ -232,6 +232,7 @@ fn run() -> Result<(), String> {
         Some("montecarlo") | Some("mc") => return mc_cmd(&all[1..]),
         Some("swarm") => return swarm_cmd(&all[1..]),
         Some("resume") => return resume_cmd(&all[1..]),
+        Some("mcp") => return mcp_cmd(&all[1..]),
         _ => {}
     }
     let mut args = std::env::args().skip(1);
@@ -716,6 +717,71 @@ fn render_single(
         ck.finish();
     }
     Ok(())
+}
+
+const MCP_USAGE: &str = "\
+mb3d mcp - the program's tools for AI assistants (Model Context Protocol)
+
+USAGE:
+    mb3d mcp [OPTIONS]               serve the tools (an assistant starts this)
+    mb3d mcp --setup                 connect mb3d to Claude's desktop app, and show
+                                     the command for Claude Code
+    mb3d mcp --remove                take mb3d out of them again
+
+An assistant on this computer starts `mb3d mcp` and talks to it through its
+standard input and output: no network. Its tools describe and change
+parameter files, render pictures (and show them to the assistant), breed
+variations, and tell what the user calculated and did lately in the
+desktop program. Files are written only into the output folder (AI in the
+data folder); nothing is deleted.
+
+OPTIONS:
+        --output <DIR>       Folder for the pictures and files made (default: AI
+                             in the data folder)
+        --max-pixels <N>     Pictures above N pixels only with the user's agreement
+                             (default 8294400 = 3840 x 2160)
+        --max-minutes <N>    Stop a calculation after N minutes (default 10)
+        --formulas <DIR>     Directory with .m3f formula files
+        --maps <DIR>         Directory with maps
+";
+
+/// `mb3d mcp`: the tools for AI assistants (see mcp.rs).
+fn mcp_cmd(argv: &[String]) -> Result<(), String> {
+    let mut opt = mb3d::mcp::Options::default();
+    let mut it = argv.iter();
+    while let Some(a) = it.next() {
+        let mut val = || it.next().cloned().ok_or_else(|| format!("{a} needs a value"));
+        match a.as_str() {
+            "-h" | "--help" => {
+                println!("{MCP_USAGE}");
+                return Ok(());
+            }
+            "--setup" | "--remove" => {
+                let remove = a == "--remove";
+                // (this program starts no other programs: Claude Code's
+                // command is for the user to run)
+                match mb3d::mcp::claude_desktop(remove) {
+                    Ok(t) => println!("Claude (desktop app): {t}"),
+                    Err(e) => println!("Claude (desktop app): {e}"),
+                }
+                println!();
+                println!("Claude Code: run this command once in a terminal{}:", if remove { " to take mb3d out" } else { "" });
+                println!("    {}", mb3d::mcp::claude_code_command(remove)?);
+                if !remove {
+                    println!("then start a new Claude Code session and ask, for example: \"Show me a preview of the last picture I rendered in mb3d.\"");
+                }
+                return Ok(());
+            }
+            "--output" => opt.output = val()?.into(),
+            "--max-pixels" => opt.max_pixels = val()?.parse().map_err(|_| "bad --max-pixels value".to_string())?,
+            "--max-minutes" => opt.max_secs = val()?.parse::<u64>().map_err(|_| "bad --max-minutes value".to_string())? * 60,
+            "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
+            "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s => return Err(format!("unknown option {s}\n\n{MCP_USAGE}")),
+        }
+    }
+    args_read();
+    mb3d::mcp::serve(opt)
 }
 
 /// `mb3d resume`: the unfinished renders kept for continuing.

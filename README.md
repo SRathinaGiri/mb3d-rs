@@ -585,6 +585,14 @@ you check further on your own:
   it, sort it, show only the pictures that differ, and load any entry
   with a double click. A history of hundreds of thousands of entries
   opens at once.
+* **AI assistants can use mb3d** (`mb3d mcp`, the Model Context
+  Protocol): ask Claude's desktop app or Claude Code in plain words, or by
+  voice through the assistant, to describe, change and render your
+  parameter files, breed variations or render what you worked on last;
+  the assistant sees the pictures and can adjust them. `mb3d mcp --setup`
+  connects it. mb3d stays offline (the assistant's app starts it on your
+  computer), writes only into the `AI` folder and never deletes anything;
+  pictures above 4K need your agreement.
 * **A log of everything** behind the page icon of the title bar: every
   click, setting and typed value, every calculation with its stages and
   times, files opened and saved, windows, messages, warnings and errors,

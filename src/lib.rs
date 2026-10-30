@@ -55,7 +55,9 @@ pub mod frames;
 pub mod gbuffer;
 pub mod gif;
 pub mod history;
+pub mod json;
 pub mod log;
+pub mod mcp;
 #[cfg(feature = "gpu")]
 pub mod gpu;
 pub mod image;
