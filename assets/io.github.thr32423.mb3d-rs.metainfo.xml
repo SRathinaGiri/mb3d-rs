@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.85" date="2026-10-30">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.85</url>
+      <description>
+        <p>A log of everything the program does, with a Log window behind the title bar's page icon: every click and setting, calculations with their stages and times, files, messages, warnings and errors, and a session that froze or was killed reported at the next start; while the graphics card's shaders compile, the status line shows a ticking clock and gently pulses; the History window handles histories of any size and groups them by day; the README and the wiki in all twelve languages of the program; smoother Navigator and drop-down lists.</p>
+      </description>
+    </release>
     <release version="0.2.84" date="2026-10-29">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.84</url>
       <description>
