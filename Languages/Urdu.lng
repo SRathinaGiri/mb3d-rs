@@ -1,0 +1,3623 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = اردو
+code = UR
+font = Urdu.ttf
+
+[Labels]
+ACalculationIsRunningStopIt=ایک حساب جاری ہے: پہلے اسے روکیں۔
+;A calculation is running: stop it first.
+AFasterMethodThanBinsearchBut=بائنری سرچ سے تیز طریقہ، لیکن DE خراب ہوں تو ناکامی ہو سکتی ہے
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=چند سیکنڈ باقی
+;a few seconds left
+AFolderEveryComputerOfThe=ایسا فولڈر جسے سوارم کا ہر کمپیوٹر دیکھ سکے: NAS شیئر، Windows یا Samba شیئر، یا سنک فولڈر
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AHigherValueMeansABetter=زیادہ قدر کا مطلب بہتر معیار ہے، 100% بھی نقصان دہ (lossy) ہے۔
+;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=زبان کی فائل میں ہر سطر پر ایک لیبل ہوتا ہے: "=" کے بائیں اس کی ID، دائیں آپ کا متن۔ لیبلز کے بعد ونڈو کا سیکشن کسی ایک کنٹرول کو اپنا الگ متن دیتا ہے۔
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=ایک ضرب کار جو سخت سائے کے حساب کی زیادہ سے زیادہ لمبائی طے کرتا ہے،\nتصویر کے سائز کے کچھ پیرامیٹرز کے لحاظ سے (طے شدہ = 1)۔\nاگر دور کی اشیاء کے سائے غائب ہوں تو قدر بڑھائیں۔
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=AO حساب کا وقت:
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=روکا گیا یا منقطع رینڈر اپنا حساب کیا ہوا حصہ رکھتا ہے؛ انہی پیرامیٹرز پر "3D حساب کریں" اسے جاری رکھتا ہے۔
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=شفاف پس منظر کے لیے PNG فریم درکار ہیں: آؤٹ پٹ فارمیٹ PNG منتخب کریں۔
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=ویڈیو کے لیے تصاویر درکار ہیں: آؤٹ پٹ فارمیٹ BMP، PNG یا JPG منتخب کریں۔
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=اسٹیریو اینیمیشن کی ویڈیو نہیں بنتی: 'اسٹیریو اینیمیشن رینڈر کریں' بند کریں۔
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf={} x {} تصویر کو تقریباً {} میموری درکار ہے، اس کمپیوٹر پر {} خالی ہے: حساب سواپ کرے گا، اور پروگرام کئی منٹ تک جواب دینا بند کر سکتا ہے۔\n\nپھر بھی حساب کریں؟\n\nبڑا رینڈر (اوزار ٹیب) اسے ٹائلز میں ایک ایک کر کے محفوظ کرتے ہوئے حساب کرتا ہے، پوری تصویر میموری میں رکھے بغیر؛ سوارم (سوارم ونڈو) ٹائلز دوسرے کمپیوٹرز کے ساتھ بانٹتا ہے۔
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=ایک z-buffer png تصویر بھی محفوظ کی جائے گی۔
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=AZERTY کی بورڈ
+;AZERTY keyboard
+Abort=منسوخ کریں
+;Abort
+AboutHLeft=تقریباً {} گھنٹے باقی
+;about {} h left
+AboutHMinLeft=تقریباً {} گھنٹے {} منٹ باقی
+;about {} h {} min left
+AboutMinLeft=تقریباً {} منٹ باقی
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=مادے کے اندر جذب کی مطلق مقدار (زیادہ زوم کے لیے بڑی قدریں درکار ہیں)۔ شے کا ڈفیوز رنگ اندر کے لیے بھی ہے۔
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=ہموار ملاپ کے فنکشنز کا مطلق فاصلہ،\nچھوٹی قدروں کے لیے سائنسی نوٹیشن جیسے 3e-5 استعمال کر سکتے ہیں۔\nکارآمد قدر کے قریب پہنچنے کے لیے 1/zoom آزمائیں۔
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=جذب:
+;Absorption:
+Action=عمل
+;Action
+ActualAmbientShadowPar=موجودہ ایمبیئنٹ سایہ پیرا.
+;Actual ambient shadow par.
+ActualCameraSettings=موجودہ کیمرا ترتیبات
+;Actual camera settings
+ActualColoringTabOptions=موجودہ 'رنگ کاری' ٹیب کے اختیارات
+;Actual 'Coloring' tab  options
+ActualDOFParameters=موجودہ DOF پیرامیٹرز
+;Actual DOF parameters
+ActualHardShadowSetting=موجودہ سخت سائے کی ترتیب
+;Actual hard shadow setting
+ActualReflectionsSettings=موجودہ عکس کی ترتیبات
+;Actual reflections settings
+ActualStereoParameters=موجودہ اسٹیریو پیرامیٹرز
+;Actual stereo parameters
+Add=شامل کریں
+;Add
+AddANewKeyframeInBetween=درمیان میں نیا کی فریم شامل کریں
+;Add a new keyframe in between
+AddNamedConstantValue=نام والی مستقل قدر شامل کریں
+;Add named constant value
+AddNamedParam=نام والا پیرامیٹر شامل کریں
+;Add named param
+AddNewConstantValue=نئی مستقل قدر شامل کریں
+;Add new constant value
+AddNewImageSequence=نیا تصویری سلسلہ شامل کریں
+;Add new image sequence
+AddNewNamedParameter=نیا نام والا پیرامیٹر شامل کریں
+;Add new named parameter
+AddNewOption=نیا اختیار شامل کریں
+;Add new option
+AddOptionValue=اختیار کی قدر شامل کریں
+;Add option value
+AddToBackgroundDepthNotBlend=پس منظر کی گہرائی میں شامل کریں (ملائیں نہیں)
+;Add to background depth (not blend)
+AddonFormula=اضافی فارمولا
+;Addon formula
+AdjustRoughlyThenClickForFine=پہلے موٹا موٹا سیٹ کریں، پھر باریک ترتیب کے لیے کلک کریں۔
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=سلائیڈرز کو ہسٹوگرام کے سروں کے مطابق کریں
+;Adjust sliders to fit the histograms endpoints
+Adjustments=ترتیبات:
+;Adjustments:
+AdjustsTheDEForRenderPreview=رینڈر پیش منظر کے لیے DE کو ترتیب دیتا ہے
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=جدید ZBuffer جنریٹر
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=حساب کے بعد صارف کی روشنی کی تمام تبدیلیاں منسوخ ہو جاتی ہیں کیونکہ روشنی کے زاویے مختلف ہیں۔\nعام موڈ میں حساب کرنے سے یہ دوبارہ فعال ہو جاتی ہیں۔
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=رینڈر کے بعد فریمز کو آؤٹ پٹ فولڈر میں ایک ویڈیو میں جوڑیں\n(<project name>.avi، Motion JPEG: VLC اور mpv میں چلتی ہے، ویڈیو ایڈیٹرز میں کھلتی ہے)۔\nفریمز رکھے جاتے ہیں۔
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=تمام رنگ ٹھیک ہیں۔
+;All colors are ok.
+AllFiles=تمام فائلیں
+;All files
+AllFilesParen=تمام فائلیں (*.*)
+;All files (*.*)
+AllKinds=تمام اقسام
+;All kinds
+AllRealworldUnitsInMeter=حقیقی دنیا کی تمام اکائیاں میٹر میں۔
+;All realworld units in meter.
+AllTheLightColorSettings=روشنی + رنگ کی تمام ترتیبات
+;All the light + color settings
+AlreadyExists={} <{}> پہلے سے موجود ہے
+;{} <{}> already exists
+AlsoMakeAVideoAVI=ویڈیو بھی بنائیں (AVI)
+;Also make a video (AVI)
+Alternate=متبادل
+;Alternate
+Amb=Amb
+;Amb
+Ambient=ایمبیئنٹ
+;Ambient
+AmbientBottomColorClickToChange=ایمبیئنٹ نچلا رنگ، بدلنے کے لیے کلک کریں۔
+;Ambient bottom color, click to change.
+AmbientLight=ایمبیئنٹ روشنی
+;Ambient light
+AmbientLower=ایمبیئنٹ
+;ambient
+AmbientOcclusion=ایمبیئنٹ آکلوژن
+;ambient occlusion
+AmbientRaysDepth=ایمبیئنٹ شعاعوں کی گہرائی:
+;Ambient rays depth:
+AmbientShadow=ایمبیئنٹ سایہ
+;Ambient shadow
+AmbientShadowCalculation=ایمبیئنٹ سائے کا حساب
+;ambient shadow calculation
+AmbientShadows=\sایمبیئنٹ سائے
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=ایمبیئنٹ اوپری رنگ، رنگ بدلنے کے لیے بائیں کلک،\nگہرائی کے رنگ ڈالنے کے لیے دائیں کلک۔
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=مقدار:
+;Amount:
+AnAIAssistantOnThisComputer=اس کمپیوٹر پر AI اسسٹنٹ Mandelbulb 3D استعمال کر سکتا ہے: سادہ الفاظ میں یا آواز سے کہیں کہ وہ آپ کی تصاویر بیان کرے، بدلے اور رینڈر کرے، مختلف شکلیں بنائے یا جس پر آپ نے آخری بار کام کیا اسے رینڈر کرے۔ Mandelbulb 3D آف لائن رہتا ہے: اسسٹنٹ کی ایپ اسے اسی کمپیوٹر پر شروع کرتی ہے۔
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=اس تصویر کا ایک نامکمل حساب محفوظ رکھا گیا تھا ({})۔\n\nاسے جاری رکھیں؟  "نہیں" اسے شروع سے دوبارہ حساب کرتا ہے۔
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=ان پیرامیٹرز کا ایک نامکمل Monte Carlo رینڈر محفوظ رکھا گیا تھا ({})۔\n\nاسے جاری رکھیں؟  "نہیں" اسے شروع سے دوبارہ رینڈر کرتا ہے۔
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} اور {}
+;{} and {}
+AndRemove=اور ہٹائیں
+;and remove
+AngleUnitConversionRoutines={ زاویے کی اکائی کی تبدیلی کے روٹینز }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=اینی کی فریم (f)
+;Ani keyfr. (f)
+AniKeyframe=اینی کی فریم
+;Ani keyframe
+AnimatedGif=متحرک Gif
+;Animated Gif
+Animation=اینیمیشن:
+;Animation:
+Animation2=اینیمیشن: {}
+;Animation: {}
+AnimationLower=اینیمیشن
+;animation
+AnimationMaker=اینیمیشن ساز
+;Animation maker
+AnimationMakerParen=اینیمیشن ساز   ({})
+;Animation maker   ({})
+AnimationPicsOutput=اینیمیشن تصاویر آؤٹ پٹ:
+;Animation pics output:
+AnimationPreview=اینیمیشن پیش منظر
+;Animation preview
+AnimationProcessing=اینیمیشن پروسیسنگ
+;Animation processing
+AnimationRenderingStopped=اینیمیشن رینڈرنگ روک دی گئی۔
+;Animation rendering stopped.
+AnimationSize=اینیمیشن سائز:
+;Animation size:
+AnimationTheFfmpegCommandIsOn=اینیمیشن: ffmpeg کمانڈ کلپ بورڈ پر ہے (فریمز مکمل ہونے پر اسے ٹرمینل میں چلائیں):
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=اینیمیشن: ویڈیو لکھی گئی: {}
+;Animation: video written: {}
+Animations=اینیمیشنز
+;Animations
+AntiAliasing=اینٹی ایلیاسنگ:
+;Anti aliasing:
+Antialiasing=اینٹی ایلیاسنگ:
+;Antialiasing:
+Aperture=اپرچر:
+;Aperture:
+Appearance=ظاہری شکل
+;Appearance
+ApplyToImage=تصویر پر لاگو کریں
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=اپنی بدلی ہوئی قدریں لاگو کریں، کیونکہ خانے صرف آؤٹ پٹ ہیں
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=تخمینی ورٹیکس رنگ۔ رنگ کی معلومات میش میں uv-کوآرڈینیٹس کے طور پر محفوظ ہوں گی اور میش کا سائز بڑھائیں گی
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2، ArcTan(Y/X) کا حساب کرتا ہے اور درست ربع میں زاویہ لوٹاتا ہے۔
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AsFullBackgroundSphere=مکمل پس منظر کرّے کے طور پر:
+;As full background sphere:
+Aspect=تناسب:
+;Aspect:
+AssignActualFormulaSettings=موجودہ فارمولا ترتیبات لاگو کریں
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=مرکزی پروگرام کی موجودہ روشنی کی ترتیبات لاگو کریں۔\nنیویگیٹر میں سادہ فنکشنز کی وجہ سے روشنیاں اور رنگ\nمرکزی رینڈرنگ سے مختلف ہوتے ہیں۔
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=کس ذیلی فریم پر:
+;At which subframe:
+Author=مصنف:
+;Author:
+Author2=مصنف
+;Author
+Auto=خودکار
+;Auto
+AutoRenderAllFollowingTiles=اگلی تمام ٹائلز خودکار رینڈر کریں
+;Auto render all following tiles
+AutoSavingTheM3cFile=m3c فائل خودکار محفوظ کرنا:
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=خودکار: CPU اور گرافکس کارڈ تصویر بانٹتے ہیں (CPU\nفوراً شروع کرتا ہے، کارڈ اپنا شیڈر کمپائل ہوتے ہی\nشامل ہو جاتا ہے)، پھر کارڈ سائے اور ایمبیئنٹ\nآکلوژن چلاتا ہے۔\nCPU: گرافکس کارڈ کبھی نہیں۔\nگرافکس کارڈ: پہلے کی طرح شیڈر کا انتظار کریں۔
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=تصویر خودکار اپ ڈیٹ
+;Auto update image
+AutoUpdatePreview=پیش منظر خودکار اپ ڈیٹ
+;Auto update preview
+AutoclipSpecDiff=خودکار کلپ spec+diff :
+;Autoclip spec+diff :
+AutodetectOnStart=شروع پر خودکار پہچان
+;Autodetect on start
+AverageNoise=اوسط شور:
+;Average noise:
+AverageRaycount=اوسط شعاع تعداد:
+;Average raycount:
+AvgIterations=اوسط تکرار:
+;Avg. iterations:
+AvgRaysteps=اوسط شعاع قدم:
+;Avg. raysteps:
+AxisX=محور X
+;Axis X
+AxisY=محور Y
+;Axis Y
+AxisZ=محور Z
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=BMP,JPG,PNG محفوظ کرنا:
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=BTracer2 کیش (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=پس تصویر
+;Back pic
+BackToTheViewTakenFrom=مرکزی ونڈو سے لیے گئے منظر پر واپس۔
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=پس منظر کا نچلا رنگ، بدلنے کے لیے کلک کریں۔
+;Background bottom color, click to change.
+BackgroundImage=پس منظر تصویر:
+;Background image:
+BackgroundImage2=پس منظر تصویر
+;Background image
+BackgroundPictures=پس منظر تصاویر:
+;Background pictures:
+BackgroundTopColorLeftclickToChange=پس منظر کا اوپری رنگ، بدلنے کے لیے بائیں کلک، پاپ اپ مینو کے لیے دائیں کلک۔
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=بنیادی رنگ(&B):
+;&Basic colors:
+BatchProcessing=بیچ پروسیسنگ
+;Batch processing
+BatchProcessingPictureOf=بیچ پروسیسنگ: تصویر {} از {}
+;Batch processing: picture {} of {}
+Between=درمیان:
+;between:
+Big=بڑا
+;big
+BigRender=بڑا رینڈر
+;Big render
+BigRender2=بڑا رینڈر: {}
+;Big render: {}
+BigRenderProjects=بڑے رینڈر پروجیکٹس:
+;Big render projects:
+BigRenderStopped=بڑا رینڈر روک دیا گیا۔
+;Big render stopped.
+BigRenders=بڑے رینڈرز
+;Big renders
+BigSizeIncludingAntiAliasing=بڑا سائز (اینٹی ایلیاسنگ سمیت):
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=بڑی یا چھوٹی ونڈوز اور متن (ترتیب وہی رہتی ہے)
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=بڑے رداس کا مطلب نرم سائے ہیں
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=موجودہ (افقی) سطروں سے بڑی قدریں آخری سطر تک کاٹ دی جائیں گی۔\nاس میں کوئی مسئلہ نہیں۔
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=Bitmap (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=dFog ملائیں
+;Blend dFog
+BlendTheDynamicFogInsteadOf=روشنی جمع کرنے کے بجائے متحرک دھند کو ملائیں،\nاس سے پس منظر غائب ہو جاتا ہے۔
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=بلاکس
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=بوکے:
+;Bokeh:
+BorderSize=کنارے کا سائز:
+;Border size:
+Box=Box
+;Box
+BoxSharpGoodAAGaussBit=Box: تیز، اچھا AA\nGauss: کچھ دھندلا، بہت اچھا AA
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=کسی بھی ونڈو سے اس ونڈو کو سامنے لاتا ہے، یا موجودہ ونڈو بند کرتا ہے۔ کسی خانے پر کلک کریں اور کیز دبائیں؛ Backspace ہاٹ کی ہٹا دیتا ہے۔
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=براؤز کریں...
+;Browse...
+BuiltIn=اندرونی
+;built in
+BuiltWithoutIntelOpenImageDenoise=Intel Open Image Denoise کے بغیر بنایا گیا
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=BulbTracer2 ترتیبات (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=بذریعہ
+;By
+ByOfDone={} ({}، بذریعہ {}): {} از {} {} مکمل
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=حساب-
+;Calc-
+CalcColon=حساب:
+;Calc:
+CalcRAutomatic=R. خودکار حساب
+;Calc. R. automatic.
+Calculate=حساب کریں
+;Calculate
+Calculate3D=3D حساب کریں
+;Calculate 3D
+Calculate3DAndTheBatchWindow=3D حساب اور بیچ ونڈو سوارم کے ساتھ، اس میں
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=درست روشنی کے بغیر ایک تیز 8x8 بلاک دار تصویر کا حساب کریں
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=A.S. خودکار حساب کریں
+;Calculate A.S. automatically
+CalculateColors=رنگوں کا حساب کریں
+;Calculate Colors
+CalculateDoF=DoF کا حساب کریں:
+;Calculate DoF:
+CalculateDoFAutomatically=DoF خودکار حساب کریں
+;Calculate DoF automatically
+CalculateHSAutomatically=H.S. خودکار حساب کریں
+;Calculate H.S. automatically
+CalculateJulia=جولیا کا حساب کریں
+;Calculate Julia
+CalculateLeftEyeImage=بائیں آنکھ کی تصویر کا حساب کریں
+;Calculate left eye image
+CalculateNTimesToReduceNoise=اوسط لے کر شور کم کرنے کے لیے n بار حساب کریں
+;Calculate n times to reduce noise by averaging
+CalculateNow=ابھی حساب کریں
+;Calculate now
+CalculateOn=حساب بذریعہ
+;Calculate on
+CalculateOnlyASelectionInThe=تصویر میں صرف منتخب حصے کا حساب کریں
+;Calculate only a selection in the image
+CalculatePreview=پیش منظر کا حساب کریں
+;Calculate preview
+CalculateRTAutomatically=R. (+ T.) خودکار حساب کریں
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=بے ترتیب روشنی کی لکیریں خودکار حساب کریں
+;Calculate random light strokes automatically
+CalculateReflections=عکس کا حساب کریں:
+;Calculate reflections:
+CalculateRightEyeImage=دائیں آنکھ کی تصویر کا حساب کریں
+;Calculate right eye image
+CalculateTheImageFirst=پہلے تصویر کا حساب کریں۔
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=پہلے تصویر کا حساب کریں (3D حساب کریں)
+;calculate the image first (Calculate 3D)
+CalculateTransparency=شفافیت کا حساب کریں:
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=شفافیت کا حساب صرف dIFS فارمولوں پر کریں (escapetime کے ساتھ DE امتزاج کے لیے)
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=حساب شدہ
+;calculated
+CalculatedOn=حساب ہوا بذریعہ: {}
+;Calculated on: {}
+CalculatedOnTheCPU=CPU پر حساب ہوا
+;Calculated on the CPU
+CalculatedPictures=حساب شدہ تصاویر
+;Calculated pictures
+CalculatingThePreview=پیش منظر کا حساب ہو رہا ہے...
+;Calculating the preview...
+CalculatingVolumetricLightMap=حجمی روشنی کا نقشہ حساب ہو رہا ہے
+;Calculating volumetric light map
+Calculation=حساب
+;Calculation
+CalculationCount=حساب کی تعداد:
+;Calculation count:
+CalculationOptions=حساب کے اختیارات
+;Calculation options
+CalculationStopped=حساب روک دیا گیا۔
+;Calculation stopped.
+Calculations=حسابات
+;Calculations
+Camera=کیمرا
+;Camera
+CameraColon=کیمرا:
+;Camera:
+CameraLense=کیمرا لینز:
+;Camera lense:
+Cancel=منسوخ
+;Cancel
+CancelAndShowResult=منسوخ کریں اور نتیجہ دکھائیں
+;Cancel and show result
+CancelExit=منسوخ + باہر نکلیں
+;Cancel + exit
+CancelImmediately=فوراً منسوخ کریں
+;Cancel immediately
+CancelType=منسوخی کی قسم:
+;Cancel type:
+CannotRead={}: پڑھا نہیں جا سکتا
+;{}: cannot read
+CannotTakePartAnotherVersionOf=; {} حصہ نہیں لے سکتا (پروگرام کا دوسرا ورژن)
+;; {} cannot take part (another version of the program)
+CannotWrite={} لکھا نہیں جا سکتا: {}
+;Cannot write {}: {}
+CaseYAngleIsAt90=اگر Y زاویہ 90 یا -90 درجے پر ہو تو euler زاویوں کا حساب نہیں ہو سکتا!
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CautionTheProcessingsBelowMustBe=احتیاط:  نیچے دی گئی پروسیسنگ اوپر سے نیچے\nترتیب سے حساب کی جانی چاہیے اور روشنی کی تبدیلیاں\nان حسابات کو ری سیٹ کر دیں گی!
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil: سب سے چھوٹا عدد صحیح >= X, |X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=تبدیل
+;Change
+ChangeParams=پیرامیٹرز بدلیں
+;Change Params
+ChangeTheJuliaValuesWithRadius=جولیا قدریں رداس، طول بلد اور عرض بلد سے بدلیں
+;Change the julia values with radius, longitude and latitude
+CheckColors=رنگ جانچیں
+;Check colors
+CheckThisIfYouWantTo=لوپ اینیمیشن بنانا ہو تو اسے منتخب کریں۔\nانٹرپولیشن ایسے چلتی ہے جیسے آخری کی فریم کے بعد\nپہلا کی فریم دوبارہ آتا ہے اور اس کے برعکس۔
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=تصویر میں رنگوں کی کم تبدیلیوں کے لیے یہ اختیار منتخب کریں۔\nمنتخب ہونے پر بھی زیادہ تفصیل کے لیے، اصل پیرامیٹرز پر رنگ کاری\nکم DEstop قدر کے ساتھ کریں، جسے 'سائز فیکٹر' سے تقسیم کیا گیا ہو۔
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=سب سے سست تھریڈ کو زیادہ ترجیح دینا بند کرنے کے لیے اسے منتخب کریں۔
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=قدر بدلنے کے لیے نشان لگائیں [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=فائل کا نام منتخب کریں، پھر دونوں آنکھوں کی تصاویر رینڈر کریں اور مکمل اسٹیریو جوڑا خودکار محفوظ کریں۔
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=ایک نقشہ منتخب کریں
+;Choose a map
+ChooseASharedFolderFirstOne=پہلے ایک مشترکہ فولڈر منتخب کریں (جسے سوارم کا ہر کمپیوٹر دیکھ سکے)
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=اختیار منتخب کریں:
+;Choose Option:
+ChoseTheme=تھیم منتخب کریں:
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (ٹرمینل میں)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (ڈیسک ٹاپ ایپ)
+;Claude (desktop app)
+Clear=صاف کریں
+;Clear
+ClearAllGenerationsBeforeTheSelected=منتخب نسل سے پہلے کی تمام نسلیں صاف کریں
+;Clear all generations before the selected one
+ClearAllPrevious=تمام پچھلی صاف کریں
+;Clear all previous
+ClearTheWholeList=پوری فہرست صاف کریں
+;Clear the whole list
+ClickAButtonToChangeA=(ڈائریکٹری بدلنے کے لیے بٹن پر کلک کریں)
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=ترتیب دینے کے لیے کالم کے عنوان پر کلک کریں۔
+;Click a column header to sort.
+ClickALanguageToSwitchThe=ونڈوز کو کسی زبان میں بدلنے کے لیے اس پر کلک کریں
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=پیش منظر کے لیے پیرامیٹر فائل پر کلک کریں۔
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=کلک کریں اور ہاٹ کی کی کیز دبائیں
+;Click and press the keys of the hotkey
+ClickImage=تصویر پر کلک کریں
+;click image
+ClickOnButtonAndAfterwardsOn=بٹن پر کلک کریں اور پھر تصویر میں شے پر\nتاکہ روشنی کا درمیانی نقطہ طے ہو۔
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=تصویر پر کلک کریں
+;Click on image
+ClickOnMToSaveThese=یہ ترتیبات تصویر کی چوڑائی اور پیمانے سمیت پری سیٹ کے طور پر\nمحفوظ کرنے کے لیے "M" پر کلک کریں۔ پھر "پیش منظر"، "درمیان" یا "اعلیٰ" پر\nکلک کریں، یا منسوخ کرنے کے لیے دوبارہ "M" پر۔
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=بٹن پر کلک کریں اور پھر تصویر میں شے پر تاکہ\nوہاں سے قدریں حاصل ہوں۔
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=بٹن پر کلک کریں اور پھر تصویر میں شے پر تاکہ\nوہاں سے جولیا قدریں حاصل ہوں۔\n4d موڈ میں ویکٹر 4d گردش کی قدروں کے مطابق گھمایا جاتا ہے۔\n\nاشارہ: قدریں غیر جولیا حساب شدہ شے سے لیں، ورنہ نتیجے کا\nاس نقطے سے کوئی حقیقی تعلق نہیں ہوتا۔
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=بٹن پر کلک کریں اور پھر تصویر میں شے پر تاکہ\nشے کا غیر منتقل شدہ فاصلہ حاصل ہو۔\nشے کا وہ حصہ اسکرین کے حقیقی فاصلے پر نظر آئے گا۔
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=تصویر میں جس شے کو مرکز میں لانا ہو اس پر کلک کریں۔\nکیمرے کی سمت نہیں بدلے گی، درمیانی نقطے کے گرد گھمانے\nکے لیے گردش کے اختیارات استعمال کریں۔
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=Dynfog on its اور Color on its کے درمیان بدلنے کے لیے کلک کریں
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=آؤٹ پٹ فائل منتخب کرنے کے لیے کلک کریں
+;Click to choose the output file
+ClickToChooseTheOutputFolder=آؤٹ پٹ فولڈر منتخب کرنے کے لیے کلک کریں
+;Click to choose the output folder
+ClickToChooseYourNameFor=پیرامیٹرز میں خودکار محفوظ کرنے کے لیے اپنا نام منتخب کرنے کو کلک کریں
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=چھپانے/دکھانے کے لیے کلک کریں
+;Click to hide/show
+ClickToInsertYourNameBelow=نیچے اپنا نام درج کرنے کے لیے کلک کریں
+;Click to insert your name below
+ClickToLoadABackgroundPicture=پس منظر تصویر لوڈ کرنے کے لیے کلک کریں۔
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=ایکسپلورر کھولنے کے لیے کلک کریں اور M3P فائلیں فہرست پر drag&&drop کریں۔
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=درمیانی نقطے پر 2d سطح رینڈر کرنے کے لیے کلک کریں۔
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=2d ابتدائی سطح رینڈر کرنے کے لیے کلک کریں۔
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=Z اختتامی سطح رینڈر کرنے کے لیے کلک کریں۔
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=موجودہ روشنی اور زیادہ تر رنگ ترتیبات کو\nکسی حسب ضرورت پری سیٹ بٹن پر محفوظ کرنے کے لیے کلک کریں۔\nمحفوظ کرنا منسوخ کرنے کے لیے یہ بٹن دوبارہ دبائیں۔
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=فہرست میں ڈالنے کے لیے ایک یا زیادہ M3P فائلیں منتخب کرنے کو کلک کریں۔
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=متحرک دھند کے تمام سلائیڈرز صفر کرنے کے لیے کلک کریں۔
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=تصویر کی اونچائی اس تناسب کے مطابق کرنے کے لیے کلک کریں۔
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=نیویگیٹر کی روشنی ان میں سے کسی پری سیٹ پر کرنے کے لیے کلک کریں۔
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=زوم ٹائپ کرنے کے لیے کلک کریں (یہ برقرار رہتا ہے: مقررہ زوم)۔
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=ClippingR:
+;ClippingR:
+Close=بند کریں
+;Close
+CloseMesh=میش بند کریں
+;Close Mesh
+CloseTheCurrentWindow=موجودہ ونڈو بند کریں:
+;Close the current window:
+CloseTheMeshAtTheBorders=کناروں پر میش بند کریں
+;Close the mesh at the borders
+CloseWindow=ونڈو بند کریں
+;Close window
+Co=Co:
+;Co:
+Code=کوڈ
+;Code
+CodeFile=کوڈ: {}\nفائل: {}
+;Code: {}\nFile: {}
+ColCycling=رنگ گردش
+;Col cycling
+ColVarOnZ=Z پر رنگ تغیر
+;Col. var. on Z
+Color=رنگ
+;Color
+ColorAdjustment=رنگ کی ترتیب
+;Color adjustment
+ColorEnd=رنگ اختتام
+;Color end
+ColorOnIterat=تکرار پر رنگ:
+;Color on Iterat.:
+ColorOnIts=its پر رنگ:
+;Color on its:
+ColorOption0AverageOfBoth=رنگ کا اختیار:\n0:  دونوں فارمولوں کا اوسط۔\n1:  پہلے فارمولے کا رنگ۔\n2:  دوسرے فارمولے کا رنگ۔
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=رنگ پیمانہ اختیارات
+;Color scaling options
+ColorStart=رنگ آغاز
+;Color start
+Coloring=رنگ کاری
+;Coloring
+ColumnsOfTiles=ٹائلز کے کالم
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=امتزاج کے طریقے:\nMin: دونوں فریکٹل نظر آتے ہیں، DE کا کم از کم امتزاج\nMax: صرف مشترک حصے، DE کا زیادہ سے زیادہ امتزاج\nInv max: دوسرے ہائبرڈ کا DE الٹ کر 'Max' سے ملائیں\nMin lin: خطی اوورلیپ فنکشن کے ساتھ کم از کم امتزاج\nMin nlin: S1 کی طرح، غیر خطی فنکشن، زیادہ ہموار اوورلیپ\nMix: پہلے F1..FendHybrid1 پھر بدلے ہوئے ویکٹر کے ساتھ FstartHybrid2..F6 (dIFS)۔
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=نقشہ Y کو ڈفیوز رنگوں سے ملائیں
+;Combine map Y with diffuse colors
+Common=عام
+;Common
+ComparingFiles=فائلوں کا موازنہ
+;comparing files
+Compile=کمپائل
+;Compile
+CompileTheCodeF9=کوڈ کمپائل کریں <F9>
+;Compile the code <F9>
+CompilingSucceeded=کمپائلنگ کامیاب
+;Compiling succeeded
+Computer=کمپیوٹر
+;Computer
+Confirm=تصدیق
+;Confirm
+Connect=جوڑیں
+;Connect
+ConnectToAnAIAssistant=AI اسسٹنٹ سے جوڑیں
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=AI اسسٹنٹ سے جوڑیں: وہ آپ کی تصاویر بیان کرے، بدلے اور رینڈر کرے
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=جڑ گیا۔ نئی گفتگو میں اس سے پوچھیں؛ اگر mb3d اس کے ٹولز میں نظر نہ آئے تو ایپ دوبارہ شروع کریں۔
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=جڑ گیا۔ اسے استعمال کرنے کے لیے Claude Code کا نیا سیشن شروع کریں۔ اسے دوبارہ ہٹانے کے لیے نیچے دی گئی کمانڈ چلائیں۔
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=مستقل کمی
+;Const Attenuation
+Constant=مستقل
+;Constant
+Constants=مستقلات:
+;Constants:
+Continue=جاری رکھیں
+;Continue
+ConvertManyM3PFilesToM3I=کئی M3P فائلوں کو M3I میں تبدیل کریں
+;Convert many M3P files to M3I
+CopiedToTheClipboard=کلپ بورڈ پر کاپی ہو گیا۔
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=فریمز سے ایک چھوٹی MP4 ویڈیو کے لیے ffmpeg کمانڈ کلپ بورڈ پر کاپی کرتا ہے۔\nاسے خود ٹرمینل میں چلائیں (یہ پروگرام کوئی دوسرا پروگرام شروع نہیں کرتا)۔
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=کاپی
+;Copy
+CopyCommand=کمانڈ کاپی کریں
+;Copy command
+CopyParamsToClipboard=پیرامیٹرز کلپ بورڈ پر کاپی کریں
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=کمانڈ کاپی کریں تاکہ اسے ٹرمینل میں پیسٹ کیا جا سکے
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=منتخب سطر کاپی کریں، یا کچھ منتخب نہ ہو تو دکھائی گئی تمام سطریں
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=قدریں کاپی کریں
+;Copy the values
+CopyTheValuesTo=قدریں کاپی کریں بطرف..
+;Copy the values to..
+CopyThisFormulaToFormula1=یہ فارمولا فارمولا 1 میں کاپی کریں
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=یہ فارمولا فارمولا 2 میں کاپی کریں
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=یہ فارمولا فارمولا 3 میں کاپی کریں
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=یہ فارمولا فارمولا 4 میں کاپی کریں
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=یہ فارمولا فارمولا 5 میں کاپی کریں
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=یہ فارمولا فارمولا 6 میں کاپی کریں
+;Copy this formula to formula 6
+CopyThisLightToLight1=یہ روشنی Light1 میں کاپی کریں
+;Copy this light to Light1
+CopyThisLightToLight2=یہ روشنی Light2 میں کاپی کریں
+;Copy this light to Light2
+CopyThisLightToLight3=یہ روشنی Light3 میں کاپی کریں
+;Copy this light to Light3
+CopyThisLightToLight4=یہ روشنی Light4 میں کاپی کریں
+;Copy this light to Light4
+CopyThisLightToLight5=یہ روشنی Light5 میں کاپی کریں
+;Copy this light to Light5
+CopyThisLightToLight6=یہ روشنی Light6 میں کاپی کریں
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=فوکس پوائنٹ کے لیے Z1 کو Z2 میں کاپی کریں
+;Copy Z1 to Z2 to get a focus point
+Cores=کورز
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=فارمولا <{}> لوڈ نہیں ہو سکا: {}
+;Could not load formula <{}>: {}
+CouldNotWrite={} لکھا نہیں جا سکا: {}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=تصاویر (شے کے ٹکڑوں) کی تعداد جن کا حساب کیا جائے گا۔
+;Count of images (object slices) that will be calculated.
+CreateEditAJITCompiledFormula=JIT کمپائل شدہ فارمولا بنائیں/ترمیم کریں
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=زبان کی فائل بنائیں
+;Create language file
+CreateMeshes=میش بنائیں
+;Create Meshes
+CrossEyedPreview=کراس آئیڈ پیش منظر
+;Cross-eyed preview
+Ctrl1ToCtrl7In=فہرست کی ترتیب میں Ctrl+1 سے Ctrl+7، بند کرنے کے لیے Ctrl+W
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+CustomPreset1=حسب ضرورت پری سیٹ 1
+;custom preset 1
+CustomPreset10=حسب ضرورت پری سیٹ 10
+;custom preset 10
+CustomPreset2=حسب ضرورت پری سیٹ 2
+;custom preset 2
+CustomPreset3=حسب ضرورت پری سیٹ 3
+;custom preset 3
+CustomPreset4=حسب ضرورت پری سیٹ 4
+;custom preset 4
+CustomPreset5=حسب ضرورت پری سیٹ 5
+;custom preset 5
+CustomPreset6=حسب ضرورت پری سیٹ 6
+;custom preset 6
+CustomPreset7=حسب ضرورت پری سیٹ 7
+;custom preset 7
+CustomPreset8=حسب ضرورت پری سیٹ 8
+;custom preset 8
+CustomPreset9=حسب ضرورت پری سیٹ 9
+;custom preset 9
+Cuts=کٹ
+;Cuts
+Cutting=کٹائی
+;Cutting
+Cutting2=کٹائی*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=DCT ڈی نوائزنگ (GIMP)
+;DCT denoising (GIMP)
+DE=DE:
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=DE امتزاج:
+;DE comb.:
+DEStop=DE stop:
+;DE stop:
+DEcombinate=DE امتزاج
+;DEcombinate
+DEstop=DEstop:
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=d.دھند
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=dIFS اشکال
+;dIFS shapes
+DIFSTransformations=dIFS تبدیلیاں
+;dIFS transformations
+DOUBLEIMAGESIZE=دگنا تصویری سائز
+;DOUBLE IMAGESIZE
+DateModified=تاریخ ترمیم
+;Date modified
+Day=دن
+;Day
+DblClickHideRightPanel=ڈبل کلک: دایاں پینل چھپائیں
+;DblClick: hide right panel
+Debug=ڈیبگ
+;debug
+DecreaseScale=پیمانہ کم کریں
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=نیویگیٹر ونڈو کا سائز کم کریں
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=قریبی حصوں میں دھند کم کرتا ہے
+;Decreases the fog in near parts
+DefaultTheme=طے شدہ تھیم
+;Default Theme
+Defaults=طے شدہ
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=لوڈ اور محفوظ کرنے کے لیے طے شدہ ڈائریکٹریز متعین کریں
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=اونچائی اور رنگ کے نقشوں کو متحرک کرنے کے لیے تصویری سلسلے متعین کریں
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=طے کرتا ہے کہ سطح سے متعین فاصلے والی جگہ کا حساب کتنی درستی سے ہو گا۔\nزیادہ قدریں زیادہ درستی دیتی ہیں جس سے نارملز کا حساب بھی بہتر ہوتا ہے۔\n12 سے بہت زیادہ کی شاذ ہی ضرورت پڑتی ہے۔
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=طے کرتا ہے کہ Zstart سطح آپ کے سامنے کتنی قریب (میٹر میں) ہے۔\nیہ وہ کم از کم فاصلہ بھی ہے جس پر کوئی (مجازی) شے نظر آ سکتی ہے۔
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=شے کی سطح سے وہ فاصلہ طے کرتا ہے جہاں رے مارچنگ رکتی ہے۔\nکم قدریں شے کی زیادہ تفصیل دیتی ہیں، لیکن انڈر سیمپلنگ بھی ہو سکتی ہے۔\nیہ قدر ایک پکسل کی چوڑائی سے متعلق ہے۔
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=دیکھنے کی اسکرین تک حقیقی دنیا کا فاصلہ میٹر میں طے کرتا ہے۔
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=اسکرین پر تصویر کی حقیقی دنیا کی چوڑائی میٹر میں طے کرتا ہے۔
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=Zstart منظری سطح کا سائز طے کرتا ہے۔\nنیویگیٹر استعمال کرنے پر یہ خودکار طے ہوتا ہے،\nصرف اسی وقت بدلیں جب اشیاء تصویر کے کناروں\nپر کٹ رہی ہوں۔
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=طے کرتا ہے کہ کس زاویے تک سایہ کاری کا حساب ہو گا۔\nکم قدریں: دور کی ساختیں قریبی ساختوں سے کم متاثر ہوتی ہیں،\nیہ اس وقت فائدہ مند ہے جب ساختوں میں بہت سے سوراخ ہوں۔
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=طے کرتا ہے کہ تکرار دوبارہ کہاں سے شروع ہو،\nجب آخری فارمولا مکمل ہو چکا ہو اور تب تک\nرکنے کی کوئی شرط پوری نہ ہوئی ہو۔
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=گردش کا درجہ
+;Degree of rotation
+Degrees=درجے
+;Degrees
+Del=حذف
+;Del
+DelEntry=اندراج حذف
+;Del Entry
+Delete=حذف کریں
+;Delete
+DeleteAll=سب حذف کریں
+;Delete all
+DeleteAllKeyframesToBeginA=نیا پروجیکٹ شروع کرنے کے لیے تمام کی فریمز حذف کریں۔
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=نمایاں فائلیں فہرست سے حذف کریں
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=منتخب مستقل قدر حذف کریں
+;Delete selected constant value
+DeleteSelectedNamedParameter=منتخب نام والا پیرامیٹر حذف کریں
+;Delete selected named parameter
+DeleteSelectedOption=منتخب اختیار حذف کریں
+;Delete selected option
+DeleteSequence=سلسلہ حذف کریں
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail="{}" کے پیرامیٹرز اور تھمب نیل تاریخچے سے حذف کریں؟
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=یہ کی فریم حذف کریں
+;Delete this keyframe
+DeleteThisTilesFiles=اس ٹائل کی فائلیں حذف کریں
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=تمام نامکمل رینڈرز کا محفوظ شدہ مواد حذف کریں
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=تمام نامکمل رینڈرز کا محفوظ شدہ مواد حذف کریں؟
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=منتخب رینڈر کا محفوظ شدہ مواد حذف کریں
+;Delete what the selected render kept
+Depth=گہرائی
+;Depth
+DepthColon=گہرائی:
+;Depth:
+DepthGradientFunctionWorksOnlyIf=گہرائی گریڈینٹ فنکشن، صرف اس وقت کام کرتا ہے جب 'شے کے لحاظ سے' نہ ہو۔
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\sڈیپتھ آف فیلڈ
+;\sDepth of Field
+DepthOfField2=ڈیپتھ آف فیلڈ
+;Depth of Field
+DepthOfFieldLower=ڈیپتھ آف فیلڈ
+;depth of field
+DepthOfReflections1ToSee=عکس کی گہرائی: 1 سے صرف ایک عکس نظر آتا ہے،\n2 سے آپ منعکس شے میں عکس دیکھ سکتے ہیں، ... وغیرہ۔
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=تفصیل
+;Description
+DetectsTheAmountOfProcessorCores=شروع ہوتے وقت پروسیسر کورز کی تعداد معلوم کرتا ہے۔\nآپ خود تعداد منتخب کر سکتے ہیں اور مختلف ترتیبات سے\nشروع کرنے کے لیے یہ اختیار بند کر سکتے ہیں۔
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=طے کرتا ہے کہ اگلی کتنی اشیاء کے ڈفیوز عکس کا حساب ہو گا
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=طے کرتا ہے کہ اگلے کتنے سیدھے عکسوں کا حساب ہو گا
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=طے کرتا ہے کہ بیچ موڈ میں رینڈرنگ کب رکے
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=طے کرتا ہے کہ روشنی نظر آئے یا نہیں اور اس کی شکل کیا ہو۔
+;Determines whether the light should be visible and its shape.
+Diff=Diff:
+;Diff:
+Diff2=Diff
+;Diff
+DifferentCalculationOfLightCombining=روشنی ملانے کا مختلف حساب
+;Different calculation of light combining
+Diffuse=ڈفیوز:
+;Diffuse:
+Diffuse2=ڈفیوز
+;Diffuse
+DiffuseFunctionChooseCosOrCos=ڈفیوز فنکشن، اگر اس روشنی پر سخت سایہ استعمال کریں تو Cos یا Cos^2 منتخب کریں۔
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=شے کے ڈفیوز رنگ، بدلنے کے لیے کلک کریں۔
+;Diffuse object colors, click to change them.
+DiffuseShadow=ڈفیوز سایہ
+;Diffuse shadow
+DirectionTowardsZero000=صفر (0,0,0) کی طرف سمت
+;Direction towards zero (0,0,0)
+DisableAll=سب بند کریں
+;Disable all
+DisableAnalyticalDE=تجزیاتی DE بند کریں
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=حرکت کرتے وقت خودکار زوم ترتیب بند کریں۔\nاس سے شے کے اندر سے گزرنا بھی ہو جاتا ہے۔
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=اینی کے لیے (f) کی بند کریں
+;Disable the (f) key for ani
+DisableThemes=تھیمز بند کریں
+;Disable Themes
+DisableThisIfYouDoNot=اگر فائل کے نمبروں میں شروع کے صفر نہیں چاہیے تو اسے بند کریں۔\nمثال:  name000010.png  بن جائے گا  name10.png
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=تھریڈ بوسٹ بند کریں
+;Disable threadboost
+Disc=ڈسک
+;Disc
+Disconnect=منقطع کریں
+;Disconnect
+DisplayStyle=نمائش کا انداز
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=اگر دستیاب ہوں تو فارمولوں کی کچھ تفصیلات دکھاتا ہے۔
+;Displays some formula descriptions, if available.
+DistanceEstimation=فاصلے کا تخمینہ
+;Distance estimation
+DitheringForScale=پیمانے کے لیے ڈیتھرنگ:
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=موجودہ "Raystep multiplier" کو اس قدر سے تقسیم کرتا ہے،\nحد سے آگے بڑھنے کو کم کرنے کے لیے قدر بڑھائیں۔
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=DoF حساب
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=DoF حساب بند کر دیا گیا، ٹائلنگ موڈ میں ممکن نہیں۔
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=اس ونڈو کو چپکنے والی نہ بنائیں
+;Do not make this window sticky
+DoThisFunctionAutomatically=یہ فنکشن خودکار کریں
+;Do this function automatically
+DoYouReallyWantToClear=کیا آپ واقعی تمام پچھلی نسلیں صاف کرنا چاہتے ہیں؟
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=کیا آپ واقعی بیچ فہرست صاف کرنا چاہتے ہیں؟
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=کیا آپ واقعی سب کچھ حذف کرنا چاہتے ہیں؟
+;Do you really want to delete everything?
+DoYouReallyWantToStop=کیا آپ واقعی حسابات روکنا چاہتے ہیں؟
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=رنگ کاری bailout سے نہیں بلکہ تکرار کی اس تعداد کے بعد کرتا ہے (-1، بند)
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=جاری
+;Doing
+DonTChangeAmbShDFog=AmbSh+dFog نہ بدلیں:
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=محفوظ نہ کریں، صرف پیش منظر
+;Don't save, only preview
+Done=مکمل
+;Done
+Done2={} مکمل ({})۔
+;{} done ({}).
+DoneOf=مکمل: {} از {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=نیویگیٹر موڈ بدلنے کے لیے ڈبل کلک کریں
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=تصویر کا سائز خودکار دگنا کریں
+;Double the imagesize automatically
+DownScaling=چھوٹا\nکرنا:
+;Down-\nscaling:
+DownscaleBoth=دونوں چھوٹے کریں
+;Downscale both
+DownscaleDiffuseKeepReflections=ڈفیوز چھوٹا کریں، عکس رکھیں
+;Downscale diffuse, keep reflections
+DownscaleSpecular=اسپیکولر چھوٹا کریں
+;Downscale specular
+Ds=Ds:
+;Ds:
+DunnoDoNothing=پتا نہیں، کچھ نہ کریں
+;Dunno, do nothing
+DynFog=متحرک دھند
+;Dyn.fog
+DynFogOnIt=متحرک دھند It. پر:
+;Dyn. fog on It.:
+DynFogOnIts=متحرک دھند its پر:
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=متحرک دھند، رنگ بدلنے کے لیے کلک کریں۔  حجمی روشنی کا رنگ ڈالنے کے لیے دائیں کلک کریں۔
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=متحرک دھند کا گہرا رنگ، بدلنے کے لیے کلک کریں۔
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=متحرک دھند یا حجمی روشنی کے پیرامیٹرز۔ اختیارات کے لیے 'رنگ کاری' ٹیب دیکھیں!
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=متحرک دھند:\nعدد جتنا کم ہو، دھند شے سے اتنی ہی دور نظر آتی ہے۔\ndIFS کے ساتھ، دھند شے کے اس حصے کے گرد ہوتی ہے جس کا حساب اس تکرار پر ہوا۔\nیہ خصوصیت بند کرنے اور متحرک دھند معمول کے مطابق شعاع قدموں کی تعداد پر کرنے کے لیے صفر۔\nاشارہ: قدموں کے نشان سے بچنے کے لیے 'پہلا قدم بے ترتیب' منتخب کریں۔\nحجمی روشنی:\nوہ روشنی نمبر منتخب کریں جس سے روشنی کے بکھراؤ کا حساب ہو گا۔
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=کناروں کا رنگ
+;Edges color
+Edit=ترمیم
+;Edit
+EditJITCompiledFormula=JIT کمپائل شدہ فارمولا میں ترمیم
+;Edit JIT-compiled Formula
+EditMapSequences=نقشہ سلسلوں میں ترمیم
+;Edit Map Sequences
+EditMode=ترمیمی موڈ:
+;Edit mode:
+EditNamedConstantValue=نام والی مستقل قدر میں ترمیم
+;Edit named constant value
+EditNamedParam=نام والے پیرامیٹر میں ترمیم
+;Edit named param
+EditOptionValue=اختیار کی قدر میں ترمیم
+;Edit option value
+EditSelectedConstantValue=منتخب مستقل قدر میں ترمیم کریں
+;Edit selected constant value
+EditSelectedNamedParameter=منتخب نام والے پیرامیٹر میں ترمیم کریں
+;Edit selected named parameter
+EditSelectedOption=منتخب اختیار میں ترمیم کریں
+;Edit selected option
+Elapsed=گزرا وقت
+;Elapsed
+ElapsedTimeS=گزرا وقت: {} s
+;Elapsed time: {} s
+Enable=فعال
+;Enable
+EnableGeneratingZBufferThisMode=z-buffer بنانا فعال کریں۔ اس موڈ کو اضافی ڈیٹا درکار ہے جو اسے پچھلے ورژنز سے غیر مطابق بناتا ہے، اس لیے اس ترتیب والی MC فائلیں محفوظ/بحال نہیں ہو سکتیں۔ z-buffer محفوظ کرنے کے لیے بس عام تصویر محفوظ کریں، z-buffer پھر خودکار طور پر ساتھ محفوظ ہو جاتا ہے۔
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=روشنی کے حساب کے لیے اندرونی gamma 2 فعال کریں۔\nیہ Gamma سلائیڈر سے آزاد ہے۔
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=روشنی فعال کریں
+;Enable Lighting
+Enabled=فعال
+;Enabled
+EnablesTheHardShadowIfCalculated=اگر حساب ہوا ہو تو سخت سایہ فعال کرتا ہے۔\nاگر HS کا حساب نہیں ہوا تو فعال ہونے پر ambshadow روشنی کم کرتا ہے۔
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=اختتام:
+;End:
+EnterNamedParameter=نام والا پیرامیٹر درج کریں
+;Enter named parameter
+Entries={} اندراجات
+;{} entries
+Error=خرابی
+;error
+ErrorAt=، {} پر خرابی: {}
+;, error at {}: {}
+Errors=خرابیاں
+;Errors
+Escapetime3DFormulas=escapetime 3D فارمولے
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=تجزیاتی (تیز) DE حساب والے escapetime 3D فارمولے
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=escapetime 4D فارمولے
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=تجزیاتی (تیز) DE حساب والے escapetime 4D فارمولے
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=صرف escapetime تبدیلیاں،\nescapetime فارمولوں کے ساتھ ملا کر استعمال کریں
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=Euler زاویے:
+;Euler angles:
+EveryNewPictureOfTheMain=مرکزی ونڈو کی ہر نئی تصویر فلٹر ہوتی ہے (محفوظ شدہ بھی)۔
+;Every new picture of the main window is filtered (the saved one too).
+Everything=سب کچھ
+;Everything
+ExchangeAdd=تبادلہ، اضافہ
+;Exchange, add
+ExchangeThisFormulaWithTheNext=اس فارمولے کا اگلے سے تبادلہ کریں
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=اس فارمولے کا پچھلے سے تبادلہ کریں
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=اس فریم کا اگلے سے تبادلہ کریں
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=اس فریم کا پچھلے سے تبادلہ کریں
+;Exchange this frame with the previous one
+Exit=باہر نکلیں
+;Exit
+ExpandThePanel=پینل پھیلائیں
+;Expand the panel
+ExponentialFunctions={ قوت نمائی فنکشنز }
+;{ Exponential functions }
+ExportACubeAsAStack=ایک مکعب کو PNG فائلوں کے ڈھیر کے طور پر برآمد کریں
+;Export a cube as a stack of PNG files
+Exposure025=ایکسپوژر:  0.25
+;Exposure:  0.25
+ExtractingAmbientInformationFromTheOriginal=اصل M3I فائل سے ایمبیئنٹ معلومات نکالی جا رہی ہیں، براہ کرم انتظار کریں:
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ انتہائی جانچ }
+;{ Extreme testing }
+FFmpegCommand=FFmpeg کمانڈ
+;FFmpeg command
+FNr=F.nr:
+;F.nr:
+FOVy=FOVy:
+;FOVy:
+FailedToImportFractalParametersAll=فریکٹل پیرامیٹرز درآمد نہیں ہو سکے۔ کیا باقی تمام ترتیبات درآمد ہو گئیں؟
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=دور گہرائی دھند
+;Far depth fog
+FarOffset=دور آفسیٹ
+;Far offset
+FarPlane=دور سطح:
+;Far plane:
+FastInaccurate=تیز+غیر درست
+;Fast+inaccurate
+File=فائل
+;File
+FileIndex=فائل نمبر:
+;File index:
+FileLower=فائل
+;file
+FileName=فائل کا نام(&N):
+;File &name:
+FileTooShort=فائل بہت چھوٹی ہے
+;file too short
+Filename=فائل کا نام
+;Filename
+Files=فائلیں
+;Files
+FilesOfType=فائلوں کی قسم(&T):
+;Files of &type:
+FilterNewPicturesAutomatically=نئی تصاویر خودکار فلٹر کریں
+;Filter new pictures automatically
+FilterNow=ابھی فلٹر کریں
+;Filter now
+Fine=باریک
+;fine
+FineTuneThePositionsWithThe=تیر والے بٹنوں سے مقامات باریکی سے ترتیب دیں
+;fine tune the positions with the arrow buttons
+FinishedRenderingSlices=ٹکڑوں کی رینڈرنگ مکمل۔
+;Finished rendering slices.
+FinishedTracingObject=شے کی ٹریسنگ مکمل۔
+;Finished tracing object.
+First4RaysNoisy=پہلی 4 شعاعیں (شور والی)
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=اس فارمولا امتزاج کا پہلا حساب: گرافکس کارڈ کے شیڈرز کمپائل ہو رہے ہیں (10-30 s، صرف ایک بار - ڈرائیور انہیں رکھ لیتا ہے)۔ اس دوران CPU حساب کرتا ہے، تیار ہونے پر کارڈ شامل ہو جاتا ہے۔
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=پہلا قدم بے ترتیب:
+;First step random:
+FirstStepRandomColon=پہلا قدم بے ترتیب:
+;First Step Random:
+FirstStepRandomToAvoidSpotty=پہلا قدم بے ترتیب:\nخراب DE والے فارمولوں پر داغ دار نقائص سے بچنے کے لیے۔\nکم شور کے لیے اسے تصویر چھوٹی کرنے اور/یا زیادہ شعاع تعداد کے ساتھ استعمال کریں۔\nڈیتھرنگ کے ساتھ بھی استعمال ہو سکتا ہے۔
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+FitLeftRightBorders=بائیں+دائیں کناروں میں فٹ کریں
+;Fit left+right borders
+FixedZoomAndSteps=مقررہ زوم اور قدم
+;Fixed zoom and steps
+FlatSolid=ہموار ٹھوس
+;Flat Solid
+FlatSolidWithEdges=کناروں کے ساتھ ہموار ٹھوس
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor: سب سے بڑا عدد صحیح <= X,  |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fo.{}
+;Fo.{}
+FogOffset=دھند آفسیٹ
+;Fog offset
+Folder=فولڈر
+;Folder
+FolderOfTheLanguageFiles=زبان کی فائلوں کا فولڈر:
+;Folder of the language files:
+FollowTheNewest=تازہ ترین کے ساتھ چلیں
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\sکسری قوت نما، یا |قوت نما| > MaxInt کے لیے، اساس > 0 ہونی چاہیے۔ }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=کروی استعمال کے لیے، ایمبیئنٹ رنگوں کو چھوٹی کی گئی پس منظر تصویر سے بدل دیتا ہے
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=فارمولا
+;Formula
+Formula1=فارمولا1 •
+;Formula1 •
+Formula12=فارمولا1
+;Formula1
+FormulaEditor=فارمولا ایڈیٹر
+;Formula editor
+FormulaLower=فارمولا
+;formula
+FormulaM3f=فارمولا (*.m3f)
+;Formula (*.m3f)
+FormulaName=فارمولے کا نام:
+;Formula name:
+FormulaNotFound=فارمولا '{}' نہیں ملا۔
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=فارمولا نمبر جہاں سے ہائبرڈ کا دوسرا حصہ شروع ہوتا ہے
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=فارمولا قدریں:
+;Formula values:
+Formulas=فارمولے
+;Formulas
+FormulasColon=فارمولے:
+;Formulas:
+Forward=آگے
+;Forward
+FoundOnThisComputerNotConnected=اس کمپیوٹر پر ملا، ابھی جڑا نہیں۔
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=اس کمپیوٹر پر ملا۔ یہ کمانڈ ایک بار ٹرمینل میں چلائیں، پھر Claude Code کا نیا سیشن شروع کریں:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=fp نام:
+;fp name:
+Fpow=Fpow:
+;Fpow:
+Frame=فریم:
+;Frame:
+FrameNumberToUseForAnimated=مرکزی ایڈیٹر میں متحرک نقشوں کے لیے استعمال ہونے والا فریم نمبر
+;Frame number to use for animated maps in the main editor
+Frames=فریمز
+;frames
+FramesPerSecond=فریمز فی سیکنڈ:
+;Frames per second:
+FramesSec=فریمز/سیکنڈ:
+;Frames/sec:
+FromClipboard=کلپ بورڈ سے
+;From Clipboard
+FullM3IImageFiles=مکمل M3I تصویری فائلیں:
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=فنکشنز:
+;Functions:
+FunctionsFromSystem={ ----------------------- System کے فنکشنز  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- System.Math کے فنکشنز  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=Gamma:  0.5
+;Gamma:  0.5
+Gauss=Gauss
+;Gauss
+GenerateAnAnimationKeyframeFromThe=موجودہ منظر سے اینیمیشن کی فریم بنائیں
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=ٹائلنگ کے ذریعے بڑی تصاویر بنائیں
+;Generate big images by tiling
+GenerateMesh=میش بنائیں
+;Generate mesh
+GenerateMesh2=میش بنائیں
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=شے کے 2d ٹکڑوں کی PNG تصاویر بنائیں۔
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=بے ترتیب ڈفیوز رنگ بنائیں
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=ڈفیوز رنگوں کے مطابق بے ترتیب اسپیکولر رنگ بنائیں
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=بنائی گئی میش
+;Generated Mesh
+GenerationOf=نسل {} از {}
+;Generation {} of {}
+Generations=نسلیں
+;Generations
+GetASmoothImageWraparoundFor=کروی استعمال کے لیے تصویر کا ہموار لپیٹ حاصل کریں
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=درمیانی نقطہ لیں
+;get midpoint
+GetMinDistFromImage=تصویر سے کم از کم فاصلہ لیں
+;Get min.dist. from image
+GetValuesFromImage=تصویر سے قدریں لیں
+;Get values from image
+GetZ1=Z1 لیں
+;Get Z1
+GetZ2=Z2 لیں
+;Get Z2
+GlobalLight=عمومی روشنی
+;Global light
+GlueSliders=سلائیڈرز جوڑیں
+;Glue sliders
+GoToNext=اگلے پر جائیں
+;Go to next
+GoneLastSeenSAgo=غائب (آخری بار {} s پہلے دیکھا گیا)
+;gone (last seen {} s ago)
+GraphicsCard=گرافکس کارڈ
+;Graphics card
+GroupByDay=دن کے لحاظ سے گروپ کریں
+;Group by day
+GuessParams=پیرامیٹرز کا اندازہ
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=HS حساب کا وقت:
+;HS calc time:
+HardShadowCalculation=سخت سائے کا حساب
+;hard shadow calculation
+HardShadowRadius=سخت سائے کا رداس:
+;Hard shadow radius:
+HardShadows=\sسخت سائے
+;\sHard Shadows
+HardShadowsLower=سخت سائے
+;hard shadows
+Height=اونچائی:
+;Height:
+HeightMapGenerator=HeightMap جنریٹر
+;HeightMap Generator
+HeightMapGeneratorPreview=HeightMap جنریٹر پیش منظر
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=مثلاً کسی ناپسندیدہ ڈرائنگ کو دوبارہ کرنا ہو تو مددگار۔
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=HiQual
+;HiQual
+HiQual1=HiQual 1
+;HiQual 1
+HiQual2=HiQual {}
+;HiQual {}
+Hidden=پوشیدہ
+;hidden
+HideThisFormula=یہ فارمولا چھپائیں
+;Hide this formula
+High=اعلیٰ
+;high
+History=تاریخچہ
+;History
+HistoryThePicturesCalculatedTheFiles=تاریخچہ: حساب شدہ تصاویر، کھولی اور محفوظ کی گئی فائلیں (دیکھنے کے لیے کلک کریں)
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=(باریک قدموں کے لیے Shift دبائے رکھیں)
+;(Hold Shift key for finer steps)
+Hotkeys=ہاٹ کیز
+;Hotkeys
+HowStrongTheNoiseIsThat=ہٹائے جانے والے شور کی شدت (1 سے 30، GIMP کے "Denoise DCT" کی طرح)۔\nزیادہ قدر زیادہ شور ہٹاتی ہے، اور زیادہ باریک تفصیل بھی۔
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThisComputerIsListedIn=سوارم میں یہ کمپیوٹر کس نام سے درج ہے
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ ہائپربولک فنکشنز اور ان کے معکوس }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ IN: |X| <= 1  OUT: [0..PI] ریڈین }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ IN: |X| <= 1  OUT: [-PI/2..PI/2] ریڈین }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] ریڈین }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=بیکار
+;Idle
+IfEnabledTheAmbientShadowsWill=فعال ہو تو مرکزی رینڈرنگ کے بعد ایمبیئنٹ سائے\nخودکار حساب ہوں گے۔\nاختیارات پہلے منتخب کریں۔
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=فعال ہو تو مرکزی رینڈرنگ کے بعد منتخب سخت سائے\nخودکار حساب ہوں گے۔\nاختیارات پہلے منتخب کریں۔
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=فعال ہو تو پچھلے حسابات کے بعد DoF اثر\nخودکار حساب ہو گا۔\nاختیارات پہلے منتخب کریں۔
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=فعال ہو تو تصویر پورے کرّے کو ڈھانپتی ہے۔\nاینیمیشنز میں مفید۔
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=فعال ہو تو زیادہ 'گہرائی' قدر پر تصویر غائب نہیں ہوتی۔
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=فعال ہو تو پری سیٹس یا روشنی کے پیرامیٹرز لوڈ ہونے پر روشنیاں نہیں بدلتیں۔\nمثلاً اگر آپ سخت سائے دوبارہ حساب نہیں کرنا چاہتے تو مفید۔
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=فعال ہو تو پچھلے حسابات کے بعد عکس\nخودکار حساب ہوں گے۔\nیاد رکھیں کہ بعد میں روشنی کی تبدیلیاں یہ حساب ری سیٹ کر دیں گی!
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=فعال ہو تو اسپیکولر مقدار اندر جانے والی شعاع اور عکس میں بٹ جاتی ہے۔
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=جڑے ہونے پر سلائیڈرز ایسے چلتے ہیں جیسے ربڑ بینڈ سے بندھے ہوں۔
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=منتخب ہو تو اس سلائیڈر کو طے شدہ جگہ پر لانے کے لیے '1' دبائیں۔
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=منتخب ہو تو M3I فائلیں طے شدہ M3I فولڈر میں محفوظ ہوں گی،\n  جو 'INI DIRS' اختیار میں درج ہے۔\nمنتخب نہ ہو تو وہ M3P فائلوں والے فولڈر میں محفوظ ہوتی ہیں۔
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=0 سے زیادہ قدر پر سطح کے نارملز تقسیم شدہ نقاط کے اوسط سے حساب ہوں گے\nاور کھردرے پن کا عنصر بھی حساب ہو گا، جس سے ایلیاسنگ کم ہوتی ہے۔\n8 کی قدر ایک حجم پر اوسط لیتی ہے، جو بہت سست ہے لیکن بہت\nنازک حالات میں استعمال ہو سکتی ہے۔  آپ پوسٹ پروسیسنگ میں Normals on ZBuf بھی استعمال کر سکتے ہیں۔
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=اگر حجمی روشنی منتخب ہو:  حجمی روشنی کا رنگ ڈالنے کے لیے 'متحرک دھند' بٹن پر دائیں کلک کریں۔
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=اگر پہلے سے شروع رینڈرنگ کسی خاص مقام سے جاری رکھنی ہو،\nتو یہاں اگلی رینڈر ہونے والی تصویر کا ابتدائی نمبر درج کریں۔\n"فائل نمبر" کی قدریں نہ بدلیں۔
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=نظر انداز کریں
+;Ignore
+Image=تصویر
+;Image
+ImageDownscalingForViewingPurposeAnd=دیکھنے اور jpeg، png یا bmp کے طور پر محفوظ کرنے کے لیے تصویر چھوٹی کرنا۔\nصرف 1:2 اور 1:3 پیمانے پر محفوظ کرتے وقت اینٹی ایلیاسنگ فلٹر لگتا ہے۔\nانتخابی مینو کے لیے کلک کریں۔
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=تصویر موجود ہے
+;Image exists
+ImageLower=تصویر
+;image
+ImageParameters=تصویر + پیرامیٹرز
+;image + parameters
+ImageRotation=تصویر کی گردش:
+;Image rotation:
+ImageSize=-> تصویر کا سائز:
+;-> Image size:
+ImageWidth=تصویر کی چوڑائی:
+;Image width:
+Images=تصاویر
+;Images
+ImagesForMaps=نقشوں کے لیے تصاویر:
+;Images for maps:
+Img=Img
+;Img
+ImportActualParas=موجودہ پیرامیٹرز درآمد کریں
+;Import actual paras
+ImportParameter=پیرامیٹر درآمد کریں
+;Import parameter
+ImportParameterFromMain=مرکزی سے پیرامیٹر درآمد کریں:
+;Import parameter from main:
+ImportParameterFromMain2=مرکزی سے پیرامیٹر درآمد کریں
+;Import parameter from main
+ImportParametersFromAFileTo=فائل سے پیرامیٹرز درآمد کریں تاکہ ان سے بڑا رینڈر بنایا جائے
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=مرکزی پروگرام سے موجودہ پیرامیٹرز درآمد کریں
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=mc رینڈرنگ کے لیے مرکزی پروگرام کے پیرامیٹرز درآمد کریں
+;Import the main programs parameter for mc rendering
+ImportedFromMain=مرکزی سے درآمد شدہ
+;Imported from Main
+InAndOutside=اندر اور باہر
+;In and outside
+InOut=اندر+باہر
+;In+Out
+InOutOption=اندر/باہر اختیار:
+;In/out option:
+InTheSwarm=سوارم میں:
+;In the swarm:
+InThisModeRightAndLeft=اس موڈ میں ہر ذیلی فریم کے لیے دائیں اور بائیں آنکھ کی تصاویر رینڈر ہوتی ہیں۔
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· کل {}
+;\s· {} in total
+InTotal2=کل {}
+;{} in total
+InclInMain=مرکزی میں شامل
+;incl. in main
+IncludingDFogOnItsOrVol=dFog on its یا حجمی روشنی کے اختیارات سمیت
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=فریم نمبر بڑھائیں/گھٹائیں
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=معیار کی سطح بڑھائیں/گھٹائیں (Raystep multiplier)
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=پیمانہ بڑھائیں
+;Increase scale
+IncreaseTheSizeOfTheNavigator=نیویگیٹر ونڈو کا سائز بڑھائیں
+;Increase the size of the Navigator window
+Increment=اضافہ:
+;Increment:
+Increment2=اضافہ
+;Increment
+IncrementIfTheSequenceIncreaseThe=سلسلے کا اضافہ، تصاویر چھوڑنے کے لیے قدر بڑھائیں
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=شروع میں 0 کے ساتھ نمبر
+;Index with leading 0
+InfinityValuesHaveAFractionField=// لامتناہی قدروں کا کسری حصہ 0 ہوتا ہے۔ لامتناہی قدریں مثبت ہو سکتی ہیں
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=معلومات
+;info
+Infos=معلومات
+;Infos
+IniDirs=Ini Dirs
+;Ini Dirs
+Input=ان پٹ
+;Input
+InputTheHeightDivisor=اونچائی کا مقسوم علیہ درج کریں:
+;Input the height divisor:
+InputTheOriginalValueFromThe=مرکزی پروگرام کے پیرامیٹرز سے اصل قدر درج کریں۔
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=مرکزی پروگرام کے پیرامیٹرز سے اصل قدریں درج کریں۔
+;Input the original values from the main program parameters.
+InputTheWidthFactor=چوڑائی کا عنصر درج کریں:
+;Input the width factor:
+Inputs=ان پٹس:
+;Inputs:
+Insert=درج کریں
+;insert
+InsertActualParameterInThisKeyframe=اس کی فریم میں موجودہ پیرامیٹر ڈالیں
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=مرکزی پروگرام سے مکمل پیرامیٹر ڈالیں
+;Insert complete parameter from main program
+InsertMidValues=درمیانی قدریں ڈالیں
+;Insert mid values
+InsertVolumetricLightColor=حجمی روشنی کا رنگ ڈالیں
+;Insert volumetric light color
+Inserting=ڈالنا:
+;Inserting:
+InsertsTheCurrentMidPosition=موجودہ درمیانی مقام ڈالتا ہے۔
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=موجودہ مقام کو جولیا قدروں کے طور پر ڈالتا ہے۔\n4d موڈ میں ویکٹر 4d گردش کی قدروں کے مطابق گھمایا جاتا ہے۔
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=اندر
+;Inside
+InsideColor=اندرونی رنگ
+;Inside color
+InsideRender=اندرونی رینڈر
+;Inside render
+Int=شدت:
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower: اساس کو عدد صحیح قوت تک بڑھائیں۔  تیز۔ }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=شدت:
+;Intensity:
+IntensityOfImage=تصویر کی شدت
+;Intensity of image
+InterfaceLanguage=انٹرفیس کی زبان
+;Interface language
+InterfaceLanguageClickToChange=انٹرفیس کی زبان: {} (بدلنے کے لیے کلک کریں)
+;Interface language: {} (click to change)
+InterfaceLanguageColon=انٹرفیس کی زبان:
+;Interface language:
+InterfaceSize=انٹرفیس کا سائز:
+;Interface size:
+Internal=اندرونی
+;Internal
+Interpolate=انٹرپولیٹ
+;Interpolate
+InterpolateANewKeyframeInBetween=درمیان میں نیا کی فریم انٹرپولیٹ کریں۔
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=ZBuffer الٹیں
+;Invert ZBuffer
+IsNotAValidFloatingPoint='{}' درست اعشاری قدر نہیں ہے
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue='{}' درست عدد صحیح قدر نہیں ہے
+;'{}' is not a valid integer value
+Iteration=تکرار
+;Iteration
+IterationCount=تکرار کی تعداد
+;Iteration Count
+Iterationcount=تکرار کی تعداد
+;Iterationcount
+Iterations=تکرارات:
+;Iterations:
+ItsForFree=یہ مفت ہے!
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=JIT کمپائل شدہ فارمولا
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=JPEG معیار یا سائز
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=JPG وہ موجودہ معیار کی ترتیبات استعمال کرتا ہے جو\nپروگرام کی مرکزی ونڈو کے اوپری حصے میں دکھائی گئی ہیں۔
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=کام
+;Job
+Jobs=کام:
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=Jpeg معیار:
+;Jpeg quality:
+JpgQ=jpg معیار:
+;jpg q.:
+JuliaMode=جولیا موڈ
+;Julia mode
+JuliaMode2=جولیا موڈ
+;Julia Mode
+JuliaOff=جولیا بند
+;Julia Off
+JuliaOn=جولیا چالو
+;Julia On
+JuliaValuesXYZ=جولیا قدریں (x,y,z):
+;Julia values (x,y,z):
+KeepAspect=تناسب برقرار
+;keep aspect
+KeepLights=روشنیاں برقرار
+;Keep lights
+KeepOnlyNearerParts=صرف قریبی حصے رکھیں:
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=چوڑائی یا اونچائی دستی بدلتے وقت تناسب برقرار رکھیں۔\nتناسب والا بٹن دبانے پر نشان ہٹانے کی ضرورت نہیں۔
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=نئی سطریں آنے پر تازہ ترین سطر نظر میں رکھیں
+;Keep the newest line in sight as new ones come
+KeepThisPriority=یہ ترجیح برقرار رکھیں
+;Keep this priority
+KeepsTheChosenLanguageForThe=منتخب زبان اگلی بار شروع کرنے کے لیے رکھتا ہے
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=ہاٹ کیز اگلی بار شروع کرنے کے لیے رکھتا ہے
+;Keeps the hotkeys for the next start
+Keyframe=کی فریم:
+;keyframe:
+KeyframeListM3k=کی فریم فہرست (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\sکی فریم\nآغاز:    اختتام:
+;\s\sKeyframe\nstart:    stop:
+KeysThatBringAWindowTo=وہ کیز جو کسی بھی ونڈو سے ایک ونڈو کو سامنے لاتی ہیں
+;Keys that bring a window to the front from any window
+Kind=قسم
+;Kind
+LGamma05=L-Gamma:  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=روشنی کی لکیریں
+;LIGHT STROKES
+LMBMoveRMBRotate=بایاں بٹن: حرکت           دایاں بٹن: گھمائیں
+;LMB: move           RMB: rotate
+LastLengthIncrease=آخری لمبائی اضافہ
+;Last length increase
+LastPass=\s· آخری مرحلہ {}
+;\s· last pass {}
+LeftclickGoIntoMouseModeView=بائیں کلک:  ماؤس موڈ میں جائیں.. ماؤس سے دیکھیں، + دایاں ماؤس بٹن.. لڑھکانا\n(ماؤس موڈ سے نکلنے کے لیے دوبارہ بائیں کلک یا ESC)
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=بائیں کلک:   بلب کو دیکھنے والے کے X محور کے گرد Ymid+Zmid قدروں پر گھمائیں\nدائیں کلک: بلب کو شے کے X محور کے گرد 0 پر گھمائیں
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=بائیں کلک:   بلب کو دیکھنے والے کے Y محور کے گرد Xmid+Zmid قدروں پر گھمائیں\nدائیں کلک: بلب کو شے کے Y محور کے گرد 0 پر گھمائیں
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=بائیں کلک:   بلب کو دیکھنے والے کے Z محور کے گرد Xmid+Ymid قدروں پر گھمائیں\nدائیں کلک: بلب کو شے کے Z محور کے گرد 0 پر گھمائیں
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=بائیں کلک:   واپس کریں -> روشنی کا پیرامیٹر آخری پینٹنگ سے پہلے کی حالت پر لاتا ہے\nدائیں کلک: دوبارہ کریں
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=بائیں کلک:   واپس کریں -> پیرامیٹر آخری حساب سے پہلے کی حالت پر لاتا ہے\nدائیں کلک: دوبارہ کریں
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=حد کو ایمبیئنٹ سایہ 0 تک کم کرنے دیں۔\nدور کی ساختیں قریبی ساختوں سے کم متاثر ہوتی ہیں۔
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=سطح
+;Level
+Light=روشنی
+;Light
+Light1=روشنی 1
+;Light 1
+Light12=روشنی1
+;Light1
+Light2=روشنی 2
+;Light 2
+Light22=روشنی2
+;Light2
+Light3=روشنی 3
+;Light 3
+Light32=روشنی3
+;Light3
+Light4=روشنی 4
+;Light 4
+Light42=روشنی4
+;Light4
+Light5=روشنی 5
+;Light 5
+Light52=روشنی5
+;Light5
+Light6=روشنی 6
+;Light 6
+Light62=روشنی6
+;Light6
+LightAmplitudeUseExponentStyleLike=روشنی کا حیطہ، قوت نما انداز استعمال کریں جیسے:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=روشنی کا رنگ، نیا منتخب کرنے کے لیے دبائیں۔
+;Light color, press to select a new one.
+LightScattering=روشنی کا بکھراؤ:
+;Light scattering:
+LightScatteringInsideTheMaterial=مادے کے اندر روشنی کا بکھراؤ
+;Light scattering inside the material
+LightXangle=روشنی X زاویہ
+;Light Xangle
+LightYangle=روشنی Y زاویہ
+;Light Yangle
+Lighting=روشنی کاری
+;Lighting
+LightingColon=روشنی کاری:
+;Lighting:
+Lightmap=روشنی نقشہ
+;Lightmap
+Lightness=روشن پن
+;Lightness
+LikeANaNAnInfinityDouble=// NaN کی طرح، لامتناہی double قدر کا exponent بھی 7FF ہوتا ہے، لیکن
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// لامتناہی کی طرح، NaN double قدر کا exponent بھی 7FF ہوتا ہے، لیکن NaN
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=خطی
+;Linear
+LinearAttenuation=خطی کمی
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=درمیان میں کی فریم خطی انٹرپولیٹ کریں
+;Linear interpolate a keyframe inbetween
+Lines={} سطریں
+;{} lines
+List=فہرست
+;List
+LliMultiplier=Lli ضرب کار:
+;Lli multiplier:
+Load=لوڈ کریں
+;Load
+LoadANewFormulaFile=نئی فارمولا فائل لوڈ کریں
+;Load a new formula file
+LoadBtrace2=btrace2 لوڈ کریں...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=دوسرے فارمولے سے کوڈ لوڈ کریں، مثلاً ایسا فارمولا جو کمپائل نہ ہو سکا
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=m3p لوڈ کریں...
+;Load m3p...
+LoadMesh=میش لوڈ کریں
+;Load mesh
+LoadParameters=پیرامیٹرز لوڈ کریں
+;Load parameters
+LoadSettingsFromBtrace2File=*.btrace2 فائل سے ترتیبات لوڈ کریں
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=پیرامیٹرز مرکزی ونڈو میں لوڈ کریں، یا فائل کھولیں
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=منتخب رینڈر کے پیرامیٹرز لوڈ کریں اور اس کا حساب جاری رکھیں
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=صرف منتخب رینڈر کے پیرامیٹرز لوڈ کریں
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=ابتدائی ڈائریکٹریز لوڈ اور محفوظ کرنا
+;Loading and saving initial directories
+Log=لاگ
+;Log
+LogEverythingTheProgramDidIts=لاگ: پروگرام نے جو کچھ کیا، اس کی تنبیہات اور خرابیاں (دیکھنے کے لیے کلک کریں)
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ لوگارتھمی فنکشنز }
+;{ Logarithmic functions }
+LongerThanUsualStillWorking=معمول سے زیادہ وقت، ابھی کام جاری ہے
+;longer than usual, still working
+LookIn=تلاش کی جگہ(&I):
+;Look &in:
+Looking=دیکھنا
+;Looking
+LookingRollingAngle=دیکھنے+لڑھکنے کا زاویہ:
+;Looking+Rolling angle:
+Loop=لوپ
+;Loop
+LoopAnimation=لوپ اینیمیشن
+;Loop animation
+Lower=کم
+;Lower
+Lowest=کم ترین
+;Lowest
+M3AAnimationFiles=M3A اینیمیشن فائلیں:
+;M3A animation files:
+M3CPathtracerFiles=M3C پاتھ ٹریسر فائلیں:
+;M3C pathtracer files:
+M3DAnimationM3a=M3D اینیمیشن (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=M3D بڑا رینڈر پروجیکٹ (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=M3D فارمولا (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=M3D تصویر + پیرامیٹر (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=M3D روشنی پیرامیٹر (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=M3D monte carlo فائل (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=M3D پیرامیٹر (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=M3D ووکسل پروجیکٹ (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=M3F فارمولا فائلیں لوڈ:
+;M3F formula files load:
+M3IDone=M3I مکمل
+;M3I done
+M3ILightParameter=M3I روشنی پیرامیٹر:
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=M3P فائلیں جنہیں M3I میں رینڈر کرنا ہے
+;M3P files that should be rendered to M3I
+M3PParameterFiles=M3P پیرامیٹر فائلیں:
+;M3P parameter files:
+M3VPNGVoxelSlices=M3V، PNG ووکسل ٹکڑے:
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=MB3D تصویر (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=M.C. بیچ رینڈر
+;M.C. batch render
+MMBWheelZoom=درمیانی بٹن/وہیل: زوم
+;MMB/Wheel: zoom
+MRelObj=M.rel.obj.
+;M.rel.obj.
+MainCalcTime=مرکزی حساب کا وقت:
+;Main calc time:
+MainParas=مرکزی پیرامیٹرز
+;main paras
+MainRendering=مرکزی رینڈرنگ
+;main rendering
+MainRenderingOfTheImage=تصویر کی مرکزی رینڈرنگ
+;Main rendering of the image
+MainWindow=مرکزی ونڈو:
+;Main window:
+MakeAnImageSelectionWithThe=ماؤس سے تصویر کا حصہ منتخب کریں پھر اس انتخاب کو\nموجودہ پیرامیٹرز سے دوبارہ حساب کریں۔\nمنتخب ہوں تو سخت سائے اور DEAO کا بھی حساب ہو گا، لیکن\nدوسرے ایمبیئنٹ سائے پوری تصویر کے لیے دوبارہ حساب کرنے ہوں گے۔\nاگر پہلے حساب ہوا ہو تو "normals on Zbuffer" بھی دوبارہ حساب کرنا ہو گا۔
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=یقینی بنائیں کہ غیر ملاوٹ موڈ میں کوئی روشنی منفی نہ ہو
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=اگر سخت اور ایمبیئنٹ سائے شامل کرنے ہوں تو یقینی بنائیں کہ ان کے\n'خودکار حساب' اختیارات منتخب ہیں۔
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=اس تصویر کی روشنی گرم کریں اور اسے دوبارہ رینڈر کریں۔
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=ایمبیئنٹ اور پس منظر رنگوں کا اوپر-نیچے گریڈینٹ\nشے کے کوآرڈینیٹ نظام کے لحاظ سے بنائیں۔\nاینیمیشنز میں روشنیوں کو منظر کے ساتھ جمانے کے لیے استعمال کریں۔
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=اس کی تین مختلف شکلیں بنائیں اور بتائیں کہ آپ کو کون سی سب سے اچھی لگی۔
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=عکس کو کچھ ڈفیوز بناتا ہے، قدر کی حد 0 سے 2.5
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=ویڈیو بن رہی ہے...
+;Making the video...
+MapNotFound=نقشہ نہیں\nملا
+;Map not\nfound
+MapNumber=نقشہ نمبر
+;Map number
+MapNumber2=نقشہ نمبر:
+;Map Number:
+MapNumberColon=نقشہ نمبر:
+;Map number:
+MapOnOutputVector=آؤٹ پٹ ویکٹر پر نقشہ
+;Map on output vector
+MapSequences=نقشہ سلسلے
+;Map Sequences
+MapType=نقشے کی قسم:
+;Map Type:
+Material=مادہ
+;Material
+Max=Max
+;Max
+MaxIterat=زیادہ سے زیادہ تکرار:
+;Max. Iterat.:
+MaxIterations=زیادہ سے زیادہ تکرار:
+;Max. iterations:
+MaxIterationsColon=زیادہ سے زیادہ تکرار:
+;Max iterations:
+MaxIts=زیادہ its:
+;Max its.:
+MaxL=MaxL:
+;MaxL:
+MaxLengthCalc=زیادہ سے زیادہ لمبائی حساب:
+;Max. length calc.:
+MaxNoise=زیادہ سے زیادہ شور:
+;Max noise:
+MaxRayCount=زیادہ سے زیادہ شعاع تعداد:
+;Max ray count:
+MaxRaycount=زیادہ سے زیادہ شعاع تعداد:
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue: ڈیٹا ارے میں سب سے بڑی علامتی قدر لوٹاتا ہے (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=زیادہ سے زیادہ ورٹیکس:
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=ہائبرڈ کے دوسرے حصے کے لیے زیادہ سے زیادہ تکرار، اس ونڈو کے اوپر درج فارمولا نمبر سے شروع۔
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=زیادہ سے زیادہ تکرار تعداد
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=ورٹیکس کی زیادہ سے زیادہ تعداد جو پیش منظر میں دکھائی جاتی ہے
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=زیادہ تکرار ہائبرڈ حصہ1:
+;Maxits hybrid part1:
+MaxitsHybridPart2=زیادہ تکرار ہائبرڈ حصہ2:
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=شے کی سطح کی تیزی/ہمواری کا پیمانہ۔ 0.15 .. 1.5 کی حد میں قدریں آزمائیں، شاذ صورتوں میں -0.1 جیسے چھوٹے منفی عدد بھی دلچسپ نتائج دیتے ہیں
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=درکار میموری:
+;Mem needed:
+Memory=میموری
+;Memory
+Mesh=میش
+;mesh
+MeshObj=میش (*.obj)
+;Mesh (*.obj)
+MeshPly=میش (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=میش پیش منظر
+;MeshPreviewFrm
+MeshProperties=میش کی خصوصیات
+;Mesh properties
+MeshSavedVerticesFaces=میش محفوظ ہوئی: {} ({} ورٹیکس، {} سطحیں)
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=uv-کوآرڈینیٹس والی میش (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=ورٹیکس رنگوں والی میش (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=میشیں:
+;Meshes:
+Meshes2=میشیں
+;Meshes
+Messages=پیغامات
+;Messages
+Mid=درمیان
+;mid
+Min=Min
+;Min
+MinDE=MinDE:
+;MinDE:
+MinDistance=کم از کم فاصلہ:
+;Min distance:
+MinIterat=کم از کم تکرار:
+;Min. Iterat.:
+MinIterations=کم از کم تکرار:
+;Min. iterations:
+MinIts=کم its:
+;Min its.:
+MinLeft={} منٹ باقی
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=کم
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft={} منٹ {} s باقی
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue: ڈیٹا ارے میں سب سے چھوٹی علامتی قدر لوٹاتا ہے (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=کم از کم فاصلہ:
+;Minimal distance:
+Misc=متفرق:
+;Misc:
+MiscellaneousRoutines={ متفرق روٹینز }
+;{ Miscellaneous Routines }
+Missing=غائب
+;missing
+MissingBTR123Header=<BTR1/2/3> ہیڈر غائب ہے
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=Mod:
+;Mod:
+Mode=موڈ:
+;Mode:
+Mode2=موڈ 2
+;Mode 2
+ModeFor2ColorChoice=دوسرے رنگ انتخاب کا موڈ:
+;Mode for 2. color choice:
+MonteCarlo=Monte Carlo:
+;Monte Carlo:
+MonteCarlo2=Monte Carlo
+;Monte Carlo
+MonteCarlo3=Monte Carlo: {}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=Monte Carlo حساب ہوا بذریعہ: {}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=Monte Carlo رینڈرنگ
+;Monte Carlo rendering
+MonteCarloRendering2=Monte Carlo رینڈرنگ\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=مزید اختیارات: پیرامیٹرز مرکزی کو بھیجیں، ترتیب دیں اور درآمد کریں۔
+;More options: send paras to main, adjust and import.
+Mousewheel=ماؤس وہیل
+;Mousewheel
+Move=حرکت
+;Move
+MoveBackwards=پیچھے لے جائیں
+;Move backwards
+MoveDown=نیچے لے جائیں
+;Move down
+MoveForward=آگے لے جائیں
+;Move forward
+MoveLeft=بائیں لے جائیں
+;Move left
+MoveRight=دائیں لے جائیں
+;Move right
+MoveUp=اوپر لے جائیں
+;Move up
+MultiplierForTheLastLengthIncrease='آخری لمبائی اضافہ' اختیار کا ضرب کار۔\nزیادہ قوتوں پر قدر کم کریں، چھوٹے پیمانے والے فارمولوں پر بڑھائیں۔
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=پہلے قدم کی چوڑائی کو ایک بے ترتیب عدد سے ضرب دیتا ہے\nتاکہ حد سے آگے بڑھنے کے نقائص شور جیسے لگیں۔  \nمتحرک دھند میں پٹیاں بھی کم کرتا ہے۔\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen: {}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [تبدیل کرنے کے لیے تصویر پر ڈبل کلک یا "تبدیل کریں!" بٹن پر کلک کریں، مینو کے لیے دائیں کلک]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=تبدیلی
+;Mutate
+MutateExclamation=تبدیل کریں!
+;Mutate!
+Mutation=تبدیلی {}
+;Mutation {}
+MutationType=تبدیلی کی قسم
+;Mutation type
+N0No255FullTransparency=0: نہیں، 255: مکمل شفافیت
+;0: no, 255: Full transparency
+N1100JPEGQuality100Maximal=1..100: JPEG معیار\n> 100: فائل کا زیادہ سے زیادہ سائز کلو بائٹس میں
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=16 Bit PGM
+;16 Bit PGM
+N16BitZBufferGenerator=16Bit ZBuffer جنریٹر
+;16Bit ZBuffer Generator
+N1FullSizeNoAntiAliasing=1:  پورا سائز، اینٹی ایلیاسنگ نہیں\n2:  2x2 اینٹی ایلیاسنگ\n3:  3x3 اینٹی ایلیاسنگ
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  کوئی نہیں\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=دوسرا انتخاب
+;2. choice
+N2Or3PassesGivesA=2 یا 3 مراحل فوکس پوائنٹ کے سامنے بہتر گہرا دھندلاپن دیتے ہیں۔\n1 مرحلہ ڈسک نما بوکے دیتا ہے، زیادہ مراحل gaussian جیسا بوکے دیتے ہیں۔
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=دوسرا عکس
+;2nd reflection
+N360Panorama=360 پینوراما
+;360 Panorama
+N3DAnalyticFormula=3D تجزیاتی فارمولا
+;3D analytic formula
+N3DFormula=3D فارمولا
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=4D تجزیاتی فارمولا
+;4D analytic formula
+N4DFormula=4D فارمولا
+;4D formula
+N4DRotationOfTheWholeBulb=پورے بلب کی 4D گردش:
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=4d گردش (xw,yw,zw):\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=8 Bit PNG
+;8 Bit PNG
+Name=نام:
+;Name:
+Name2=نام
+;Name
+NamedParams=نام والے پیرامیٹرز:
+;Named Params:
+Navigator=نیویگیٹر
+;Navigator
+Navigator2=نیویگیٹر: {}
+;Navigator: {}
+NavigatorColon=نیویگیٹر:
+;Navigator:
+NavigatorSize=نیویگیٹر سائز
+;Navigator Size
+NavigatorViewSentToTheMain=نیویگیٹر کا منظر مرکزی ونڈو کو بھیج دیا گیا، "3D حساب کریں" دبائیں۔
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=نیورل شور فلٹر: {}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=نیورل شور فلٹر: مکمل
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=دکھائی گئی تصویر پر نیورل شور فلٹر (Intel Open Image Denoise)۔\nرینڈرنگ خود نہیں بدلتی؛ اگلی اپ ڈیٹ اسے دوبارہ بغیر فلٹر کے دکھاتی ہے۔
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=نیا
+;new
+NewJITCompiledFormula=نیا JIT کمپائل شدہ فارمولا
+;New JIT-compiled Formula
+NewSequence=نیا سلسلہ
+;New Sequence
+NewValue=نئی قدر:
+;New value:
+NewZoom=نیا زوم:
+;New zoom:
+No=نہیں
+;no
+No2=نہیں
+;No
+NoDoFOnTiles=ٹائلز پر DoF نہیں۔
+;No DoF on tiles.
+NoFacesInTheFile=فائل میں کوئی سطح نہیں
+;no faces in the file
+NoFileAdded=کوئی فائل شامل نہیں کی گئی
+;No file added
+NoFramesToRenderInThis=اس حد میں رینڈر کرنے کے لیے کوئی فریم نہیں۔
+;No frames to render in this range.
+NoImageCalculatedYet=ابھی تک کسی تصویر کا حساب نہیں ہوا۔
+;No image calculated yet.
+NoIpol=انٹرپولیشن نہیں
+;No ipol
+NoLightParameters={}: روشنی کے پیرامیٹرز نہیں
+;{}: no light parameters
+NoObjectAtThisPoint=اس نقطے پر کوئی شے نہیں۔
+;No object at this point.
+NoParameters=پیرامیٹرز نہیں
+;no parameters
+NoParamsToSendToMain=مرکزی ایڈیٹر کو بھیجنے کے لیے کوئی پیرامیٹر نہیں
+;No params to send to main editor
+NoPreview=پیش منظر نہیں: {}
+;No preview: {}
+NoPreviewForThisFile=اس فائل کا پیش منظر نہیں۔
+;No preview for this file.
+NoSOURCESectionThisIsNot={}: [SOURCE] سیکشن نہیں، یہ JIT فارمولا نہیں ہے
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=کوئی مشترکہ فولڈر منتخب نہیں
+;no shared folder chosen
+NoTextParametersFoundInThe=کلپ بورڈ میں کوئی متنی پیرامیٹرز نہیں ملے۔
+;No text parameters found in the clipboard.
+NoTilesToRender=رینڈر کرنے کے لیے کوئی ٹائل نہیں۔
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\sکوئی درست متن نہیں ملا، براہ کرم نیچے متن درج کریں:
+;\sNo valid text found, please enter the text below:
+Noise=-شور
+;-noise
+NoiseAI=-شور AI
+;-noise AI
+NoiseFilter=\sشور فلٹر
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=دکھائی گئی تصویر پر شور فلٹر (DCT ڈی نوائزنگ، GIMP کے "Denoise DCT" کی طرح)،\nاس کی شدت شعاعوں سے اندازہ کی جاتی ہے۔ رینڈرنگ خود نہیں بدلتی؛\nاگلی اپ ڈیٹ اسے دوبارہ بغیر فلٹر کے دکھاتی ہے۔
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=شور فلٹر: شدت {}
+;Noise filter: strength {}
+None=کوئی نہیں
+;none
+Normal=عام
+;Normal
+NormalStatusForThisFormula=اس فارمولے کی عام حیثیت
+;Normal status for this formula
+NormalsOnDE=DE پر نارملز:
+;Normals on DE:
+NormalsOnZBuf=ZBuf پر نارملز
+;Normals on ZBuf
+NormalsOnZBuffer=\sZ-buffer پر نارملز
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=ZBuffer پر نارملز:
+;Normals on ZBuffer:
+Norms=نارملز
+;norms
+NotABigRenderProject=بڑا رینڈر پروجیکٹ نہیں
+;not a big render project
+NotAvailableForLinuxUseClaude=Linux کے لیے دستیاب نہیں: نیچے Claude Code استعمال کریں۔
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=نہیں ملا۔ اگر آپ اسے استعمال کرتے ہیں تو یہ کمانڈ ایک بار ٹرمینل میں چلائیں:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=انسٹال نہیں۔ اسے claude.ai/download سے حاصل کریں، ایک بار شروع کریں، پھر یہاں واپس آئیں۔
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=منتخب نہیں
+;Not selected
+NotSharingTickShareThisComputer=اشتراک نہیں: دوسرے کمپیوٹرز کے ساتھ مل کر رینڈر کرنے کے لیے "یہ کمپیوٹر شیئر کریں" پر نشان لگائیں
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=اشتراک نہیں: {} کے ساتھ مل کر رینڈر کرنے کے لیے "یہ کمپیوٹر شیئر کریں" پر نشان لگائیں
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=نوٹ: ورٹیکس رنگوں کا پیش منظر دیکھنے کے لیے پیش منظر ونڈو میں point-mode منتخب کریں
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}: ابھی کچھ رینڈر نہیں ہوا
+;{}: nothing rendered yet
+NothingToSave=محفوظ کرنے کو کچھ نہیں
+;nothing to save
+NumberOfFramesToNextKeyframe=اگلے کی فریم تک فریمز کی تعداد
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=شعاعوں کی تعداد جن کا حساب ہو گا۔\nجتنی زیادہ اتنا بہتر، لیکن ظاہر ہے سست۔
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=ٹھیک ہے
+;OK
+Object=شے
+;Object
+ObjectColors=شے کے رنگ
+;Object colors
+ObjectDetermination=شے کا تعین:
+;Object determination:
+Of={} از {}
+;{} of {}
+OfEntries={} از {} اندراجات
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=جن اندراجات کی فائلیں ایک ہی ہیں (وہی پیرامیٹرز دوبارہ حساب ہوئے، ایک تصویر دو بار محفوظ ہوئی) ان میں سے صرف تازہ ترین
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=فارمولوں کی
+;of Formulas
+OfLines={} از {} سطریں
+;{} of {} lines
+OfUnitsDone={} از {} اکائیاں مکمل
+;{} of {} units done
+OffLeftImageIsOnThe=بند: متوازی دیکھنے کے لیے بائیں تصویر بائیں طرف ہے۔ چالو: کراس آئیڈ دیکھنے کے لیے دائیں تصویر بائیں طرف ہے۔
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffsetAndScale=آفسیٹ اور پیمانہ
+;Offset and scale
+OffsetX=آفسیٹ X:
+;Offset X:
+OffsetY=آفسیٹ Y:
+;Offset Y:
+OjectColorsOnCutsAnd2d=کٹ اور 2d اندرونی حصوں پر شے کے رنگ، بدلنے کے لیے کلک کریں۔
+;Oject colors on cuts and 2d inside, click to change them.
+On=چالو
+;On
+OnInsertingANewKeyframe=نیا کی فریم ڈالنے پر:
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=صرف 1 فوکس پوائنٹ، Zsharp1+2 کے اوسط سے بنا!
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=صرف تصویر کو تصویر کے طور پر رکھا جاتا ہے (Monte Carlo رینڈر، ووکسل یا میش برآمد نہیں)۔
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=صرف روشنی شامل کریں
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=ٹائلنگ موڈ میں صرف DEAO ایمبیئنٹ سائے دستیاب ہیں۔\nاب یہ منتخب ہے اور 33 شعاعوں پر سیٹ ہے، براہ کرم اپنی ضرورت کے مطابق بدلیں۔
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=صرف dIFS
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=(صرف اگر سخت سائے حساب ہوئے ہوں)
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=صرف ایک قسم کا واقعہ
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=صرف وہ اندراجات جن کے نام، فولڈر یا قسم میں یہ متن ہو
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=صرف وہ سطریں جن میں یہ الفاظ ہوں
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=صرف موجودہ کی فریم پر
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=صرف اس وقت کام کرتا ہے جب حساب کے وقت 'Smooth normals' صفر سے زیادہ رکھا گیا ہو۔
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=کھولیں
+;Open
+Open2=کھولیں(&O)
+;&Open
+OpenAM3cFile=m3c فائل کھولیں
+;Open a m3c file
+OpenAVoxelProject=ووکسل پروجیکٹ کھولیں
+;Open a voxel project
+OpenAnAnimationParameterFile=اینیمیشن پیرامیٹر فائل کھولیں
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=ترتیبات پینل کھولیں/بند کریں
+;open/close adjustment panel
+OpenCloseBatchPanel=بیچ پینل کھولیں/بند کریں
+;open/close batch panel
+OpenCloseParameterPanel=پیرامیٹر پینل کھولیں/بند کریں
+;open/close parameter panel
+OpenExplorer=ایکسپلورر کھولیں
+;Open explorer
+OpenFiles=فائلیں کھولیں
+;Open files
+OpenFolder=فولڈر کھولیں
+;Open folder
+OpenFullLightAndColorParameter=مکمل روشنی اور رنگ پیرامیٹر کھولیں
+;Open full light and color parameter
+OpenFullM3I=مکمل M3I کھولیں
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=حتمی میش کا OpenGL پیش منظر
+;OpenGL preview of final mesh
+OpenLogFolder=لاگ فولڈر کھولیں
+;Open log folder
+OpenM3i=m3i کھولیں
+;Open m3i
+OpenM3p=m3p کھولیں
+;Open m3p
+OpenM3pSequence=*.m3p سلسلہ کھولیں
+;Open *.m3p-sequence
+OpenParameter=پیرامیٹر کھولیں
+;Open parameter
+OpenParameterFromClipboardTextSelect=کلپ بورڈ متن سے پیرامیٹر کھولیں:\n'Mandel...{..}' سمیت پیرامیٹر متن منتخب کریں،\nctrl+c دبائیں اور پھر open-txt بٹن۔
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=پروجیکٹ کھولیں
+;Open project
+OpenTextParameters=متنی پیرامیٹرز کھولیں
+;Open text parameters
+OpenTheAnimationMaker=اینیمیشن ساز کھولیں
+;Open the animation maker
+OpenTheFolderOfTheFile=فائل کا فولڈر کھولیں
+;Open the folder of the file
+OpenTheFolderOfTheLog=لاگ فائلوں کا فولڈر کھولیں (روزانہ ایک، 30 دن رکھی جاتی ہیں)
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=MutaGen کھولیں
+;Open the MutaGen
+OpenTheNavigator=نیویگیٹر کھولیں
+;Open the Navigator
+Opened=کھولا گیا
+;opened
+OpensTheFolderOfTheLanguage=زبان کی فائلوں کا فولڈر کھولتا ہے
+;Opens the folder of the language files
+OperationCancelled=عمل منسوخ ہو گیا
+;Operation cancelled
+Option=اختیار
+;Option
+OptionToCalculateOnlyAPart=تیز پیش منظر کے لیے تصویر کے صرف ایک حصے کا حساب کرنے کا اختیار۔\nحساب سے پہلے ماؤس سے تصویر میں حصہ منتخب کریں۔
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=1:2 یا 1:3 تصویری پیمانے کے لیے شعاعوں کے زاویے کو ڈیتھر کرنے کا اختیار۔\nاس سے زیادہ درستی اور کم داغ دار نقائص ملتے ہیں۔\nاحتیاط: صرف اسی تصویری پیمانے پر استعمال کریں، ورنہ ڈیتھر نقائص آئیں گے۔
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=اختیارات
+;Options
+OptionsColon=اختیارات:
+;Options:
+OrMousewheel=(یا ماؤس وہیل)
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// یا منفی، جو سب سے اونچے sign bit میں بتایا جاتا ہے۔
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=Orbit trap (0 سے کم از کم فاصلہ)
+;Orbit trap (mindist. to 0)
+Orig=اصل:
+;Orig:
+OriginalParameterSizeWidthHeight=اصل پیرامیٹر سائز (چوڑائی، اونچائی):
+;Original parameter size (width, height):
+OtherFiles=دوسری فائلیں
+;Other files
+OutputFile=آؤٹ پٹ فائل:
+;Output file:
+OutputFolder=آؤٹ پٹ فولڈر:
+;Output folder:
+OutputFolder2=آؤٹ پٹ فولڈر
+;Output folder
+OutputFormat=آؤٹ پٹ فارمیٹ:
+;Output format:
+OutputImageType=آؤٹ پٹ تصویر کی قسم:
+;Output image type:
+Outside=باہر
+;Outside
+OutsideRender=بیرونی رینڈر
+;Outside render
+OutsideRenderDefaultModeInsideRender=بیرونی رینڈر:  طے شدہ موڈ\nاندرونی رینڈر:    زیادہ سے زیادہ its کے ساتھ اندر سست رے مارچنگ\nاندر اور باہر:   دونوں اطراف رینڈر کریں
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=مجموعی پیمانہ:
+;Overall scale:
+OverwriteExistingImages=موجودہ تصاویر پر لکھیں
+;Overwrite existing images
+OverwriteExistingM3IFiles=موجودہ M3I فائلوں پر لکھیں
+;Overwrite existing M3I files
+PGM16BitPgm=PGM 16 bit (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG 16 bit رنگین (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG 16 bit (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=شفاف پس منظر والے PNG فریمز۔
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG شفاف پس منظر (*.png)
+;PNG transparent background (*.png)
+PaintOnImage=تصویر پر پینٹ کریں
+;Paint on image
+PaintingAPreview=پیش منظر پینٹ ہو رہا ہے
+;painting a preview
+Pano=پینو.
+;pano.
+PanoramaModeTheFOVIsChoosen=پینوراما موڈ:\n- FOV خودکار منتخب ہوتا ہے\n- ایمبیئنٹ سایوں کے لیے 24bit SSAO یا DEAO استعمال کریں\n- 2:1 تناسب تجویز کیا جاتا ہے، لیکن ضروری نہیں۔
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=پیرامیٹر
+;Param
+ParamNameMustNotBeEmpty=پیرامیٹر کا نام خالی نہیں ہونا چاہیے
+;Param name must not be empty
+Parameter=پیرامیٹر
+;Parameter
+Parameters=پیرامیٹرز
+;Parameters
+ParametersCopiedToTheClipboard=پیرامیٹرز کلپ بورڈ پر کاپی ہو گئے۔
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=پیرامیٹرز لوڈ ہو گئے، رینڈر کرنے کے لیے "3D حساب کریں" دبائیں۔
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=پیرامیٹرز لوڈ ہو گئے: یہ رینڈر وہیں جاری رہتا ہے جہاں یہ بنایا گیا تھا (کمانڈ لائن یا اس کی ونڈو)۔
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=پیرامیٹرز
+;parameters
+ParametersMandId=پیرامیٹرز: MandId {}
+;Parameters: MandId {}
+Pass=مرحلہ {}
+;pass {}
+Passes=مراحل
+;Passes
+PauseRendering=رینڈرنگ روکیں
+;Pause rendering
+PausedPressToContinue=رکا ہوا، جاری رکھنے کے لیے دبائیں
+;Paused, press to continue
+PercentOfLocalDE=مقامی DE کا فیصد
+;Percent of local DE
+Picture=تصویر
+;picture
+Pictures=تصاویر
+;pictures
+PicturesAndFilesTheAssistantMakes=اسسٹنٹ کی بنائی ہوئی تصاویر اور فائلیں {} میں جاتی ہیں؛ کچھ حذف نہیں ہوتا۔ 4K سے بڑی تصاویر صرف آپ کی رضامندی کے بعد بنتی ہیں، اور حساب 10 منٹ بعد رک جاتا ہے۔ اس کا ہر کام لاگ میں درج ہے۔
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PleaseChooseAnOutputFile=براہ کرم آؤٹ پٹ فائل منتخب کریں۔
+;Please choose an output file.
+PleaseMakeASelectionInThe=براہ کرم پہلے تصویر میں ایک حصہ منتخب کریں۔
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=براہ کرم پہلے پروجیکٹ محفوظ کریں۔
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=براہ کرم پہلے روشنیاں منتخب کریں۔  روشنی نقشوں کے لیے HS نہیں۔
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=png پیرا:
+;png par:
+Points=نقاط
+;Points
+PointsColor=نقاط کا رنگ
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=مقام
+;Position
+PositionX=مقام X
+;Position X
+PositionY=مقام Y
+;Position Y
+PositionZ=مقام Z
+;Position Z
+PositionalLight=مقامی روشنی
+;Positional light
+PostCalculations=بعد کے حسابات
+;post calculations
+PostProcessing=پوسٹ پروسیسنگ
+;Post processing
+PostProcessingColon=پوسٹ پروسیسنگ:
+;Post processing:
+PostProcessingLower=پوسٹ پروسیسنگ
+;post processing
+Postprocess=پوسٹ پروسیس
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power: اساس کو کسی بھی قوت تک بڑھائیں۔
+;{ Power: Raise base to any power.
+Prefs=ترجیحات
+;Prefs
+PreprocessedCode=پری پروسیس شدہ کوڈ
+;Preprocessed code
+PresetFlower=پری سیٹ <پھول>
+;preset <flower>
+PresetMetallic=پری سیٹ <دھاتی>
+;preset <metallic>
+PresetNeutral=پری سیٹ <غیر جانبدار>
+;preset <neutral>
+PresetSand=پری سیٹ <ریت>
+;preset <sand>
+PresetSlime=پری سیٹ <کیچڑ>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=بٹن دبائیں اور پھر تصویر میں شے کا وہ حصہ\nجو واضح ہونا چاہیے۔
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=رینڈر کرنے کے لیے '3D حساب کریں' دبائیں
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=تصویر کا حساب کرنے کے لیے 'رینڈرنگ شروع کریں' دبائیں
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=موجودہ نیویگیٹر روشنی محفوظ کرنے کے لیے یہ بٹن اور پری سیٹ 1 سے 3 دبائیں۔\nمحفوظ کرنا واپس لینے کے لیے دو بار کلک کریں۔
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=فارمولا ونڈو کھولنے کے لیے دبائیں\nچپکنے کے اختیارات کے لیے دائیں کلک۔
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=روشنی+رنگ ترتیب ونڈو کھولنے کے لیے دبائیں۔\nچپکنے کے اختیارات کے لیے دائیں کلک۔
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=پوسٹ پروسیسنگ ونڈو کھولنے کے لیے دبائیں۔\nچپکنے کے اختیارات کے لیے دائیں کلک۔
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=تکرار پر متحرک دھند اور روشنی نمبر پر حجمی روشنی کے درمیان بدلنے کے لیے دبائیں
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=چلنے کے لیے موجودہ فاصلے کو شے سے کم از کم فاصلے کے طور پر لینے کے لیے دبائیں۔
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar="0" (صفر) دبانے سے ٹریک بار صفر مقام پر آ جاتا ہے۔
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=وقتاً فوقتاً ماؤس کرسر کو تھوڑا ہلا کر\nکمپیوٹر کو بند ہونے سے روکیں۔
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=پیش منظر
+;preview
+Preview2=پیش منظر
+;Preview
+PreviewMaxSize=پیش منظر زیادہ سے زیادہ سائز:
+;Preview max size:
+PreviewSize=پیش منظر سائز:
+;Preview size:
+Probability=امکان
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=پروسیسنگ
+;Processings
+Processor=پروسیسر
+;processor
+Program=پروگرام
+;Program
+ProgramOutput=پروگرام کا آؤٹ پٹ
+;Program output
+Progress=پیش رفت
+;Progress
+Project=پروجیکٹ:  {}
+;Project:  {}
+Project2=پروجیکٹ: {}
+;Project: {}
+ProjectNew=پروجیکٹ:  (نیا)
+;Project:  (new)
+PushDownTo2DZoomIn=تصویر پر بائیں (دائیں) کلک سے 2D زوم اِن (آؤٹ) کے لیے دبائیں،\nیا زوم اِن کا علاقہ نشان زد کر کے۔
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=ماؤس سے شے کو Z سمت میں حرکت دینے کے لیے دبائیں۔
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=ماؤس سے شے کو X,Y سمت میں سرکانے کے لیے دبائیں۔
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=منتخب روشنیوں سے سخت سائے حساب کرنے کے لیے بٹن دبائیں۔\nایک بار حساب ہونے کے بعد سخت سایہ دوبارہ حساب کرنے کی ضرورت نہیں،\nجب تک روشنی کا زاویہ یا مقام نہ بدلا جائے۔
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=3d ویکٹر کی لمبائی 1 پر معمول کرنے کے لیے دبائیں۔\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=ترتیب دی گئی جولیا قدریں مرکزی پروگرام کے پیرامیٹرز میں ڈالیں۔
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=ترتیب دی گئی قدریں مرکزی پروگرام کے پیرامیٹرز میں ڈالیں۔
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=قدریں تمام کی فریمز میں ڈالیں
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=یہ ترتیب دی گئی قدر مرکزی پروگرام کے پیرامیٹر میں ڈالیں۔
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=مربعی کمی
+;Quadratic Attenuation
+QuadraticBezier=مربعی bezier
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=روشنی پیرامیٹر فائلوں کی فوری لوڈنگ جو\nمخصوص ini ڈائریکٹری میں محفوظ ہیں۔
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=فوری معیار کی ترتیبات
+;Quick quality settings
+RBailout=R bailout:
+;R bailout:
+Radius=رداس:
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG اوسط کے گرد Gaussian تقسیم والے بے ترتیب اعداد بناتا ہے۔
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=بے ترتیب
+;Random
+RandomMultiplier=بے ترتیب ضرب کار
+;Random multiplier
+Range=حد
+;Range
+RawValuesMappedValuesClampedValues=خام قدریں:\n  {}..\n  {}\nنقشہ شدہ قدریں:\n  {}..\n  {}\nمحدود قدریں:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=شعاعیں:
+;Rays:
+RaystepDivisor=شعاع قدم مقسوم علیہ:
+;Raystep divisor:
+RaystepMultiplier=شعاع قدم ضرب کار:
+;Raystep multiplier:
+RaystepSubDEstop=شعاع قدم sub DEstop:
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=تاریخچہ پڑھا جا رہا ہے... {} اندراجات
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=زبان کی فائلیں دوبارہ پڑھتا ہے، کسی ایک میں ترمیم کے بعد
+;Reads the language files again, after you edited one
+RecalculateASelection=\sمنتخب حصہ دوبارہ حساب کریں
+;\sRecalculate a Selection
+RecalculatingTheSelection=منتخب حصے کا دوبارہ حساب
+;recalculating the selection
+Rect=مستطیل
+;Rect
+RectLower=مستطیل
+;rect.
+Rectilinear=سیدھی لکیری
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=بلاک دار نقائص کم کرتا ہے، spline انٹرپولیشن کی وجہ سے اب اتنا اہم نہیں۔
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=حد سے آگے بڑھنے سے بچنے کے لیے شعاع قدم ضرب کار کم کرتا ہے۔\nرینڈرنگ سست ہو جاتی ہے۔
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=ڈفیوز رنگوں کا حوالہ
+;Reference for diffuse colors
+ReferenceForSpecularColors=اسپیکولر رنگوں کا حوالہ
+;Reference for specular colors
+ReflectionDiffusity=عکس کا پھیلاؤ:
+;Reflection diffusity:
+ReflectionRaysDepth=عکس شعاعوں کی گہرائی:
+;Reflection rays depth:
+Reflections=عکس
+;Reflections
+ReflectionsLower=عکس
+;reflections
+ReflectionsMustBeCalculatedTooElse=عکس کا بھی حساب ہونا چاہیے، ورنہ اس کا کوئی اثر نہیں
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=منتخب حصے کے عکس
+;reflections of the selection
+ReflectionsTransparency=\sعکس + شفافیت
+;\sReflections + Transparency
+ReflectionsTransparency2=عکس + شفافیت
+;Reflections + Transparency
+ReflectsTime=عکس کا وقت:
+;Reflects time:
+RefractiveIndex=انعطافی اشاریہ:
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=مادے کا انعطافی اشاریہ، ہوا~1 پانی~1.33 شیشہ~1.5 ہیرا~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=تازہ کریں
+;Refresh
+RelToObject=شے کے لحاظ سے:
+;Rel. to object:
+RelativeToObject=شے کے لحاظ سے
+;Relative to object
+Reload=دوبارہ لوڈ
+;Reload
+RemainingFaces10NoReduction=باقی سطحیں (1.0 = کوئی کمی نہیں، 0.0 = زیادہ سے زیادہ کمی = کوئی سطح باقی نہیں )
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=ہٹائیں
+;Remove
+RemoveThisFormulaFromTheLocal=یہ فارمولا مقامی appdata فولڈر سے ہٹائیں
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=ان سطروں میں شامل تمام ٹائلز رینڈر کریں:
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=دونوں آنکھوں کی تصاویر رینڈر کریں اور محفوظ کیے بغیر ساتھ ساتھ اسٹیریو پیش منظر دکھائیں۔
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=ہر\n   n واں فریم رینڈر کریں:
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=میری آخری تصویر 4K میں رینڈر کریں اور بتائیں کہ کتنا وقت لگا۔
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=اگلی ٹائل رینڈر کریں
+;Render next tile
+RenderOnlyTheLeftEyeImages=صرف 'بائیں آنکھ' کی تصاویر رینڈر کریں۔\nپہلے رینڈر شدہ اینیمیشن کو اسٹیریو تک بڑھانے کے لیے استعمال ہو سکتا ہے۔
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=صرف اس فائل نمبر تک رینڈر کریں۔
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=صرف 'انتہائی بائیں آنکھ' کی تصاویر رینڈر کریں
+;Render only 'very left-eye' images
+RenderPreview=پیش منظر رینڈر کریں
+;Render preview
+RenderSMB={} رینڈر، {} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=اسٹیریو جوڑا رینڈر && محفوظ کریں
+;Render && save stereo pair
+RenderStereoAnimation=اسٹیریو اینیمیشن رینڈر کریں
+;Render stereo animation
+RenderStereoPair=اسٹیریو جوڑا رینڈر کریں
+;Render stereo pair
+RenderTheJobsOtherComputersPut=دوسرے کمپیوٹرز کے فولڈر میں ڈالے گئے کام رینڈر کریں، اور جب کوئی دوسرا کمپیوٹر سوارم میں ہو تو اس کمپیوٹر کے رینڈرز (3D حساب کریں، بڑے رینڈرز، Monte Carlo، اینیمیشنز) سوارم کو دیں
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=یہ ٹائل رینڈر کریں
+;Render this tile
+RenderThisTileAgain=یہ ٹائل دوبارہ رینڈر کریں
+;Render this tile again
+RenderingNow=ابھی رینڈر ہو رہا ہے
+;rendering now
+RenderingSliceOf=ٹکڑا رینڈر ہو رہا ہے: {} از {}
+;Rendering slice: {} of {}
+RepeatFromHere=یہاں سے دہرائیں
+;Repeat from here
+RerenderAllKeyframePreviewImages=تمام کی فریم پیش منظر تصاویر دوبارہ رینڈر کریں
+;Rerender all keyframe preview images
+Reset=ری سیٹ
+;reset
+Reset0=ری سیٹ 0
+;Reset 0
+Reset2=ری سیٹ
+;Reset
+ResetNow=ابھی ری سیٹ کریں
+;Reset now
+ResetOffsetScale=آفسیٹ+پیمانہ ری سیٹ
+;Reset offset+scale
+ResetOffsetScaleRotation=آفسیٹ+پیمانہ+گردش ری سیٹ
+;Reset offset+scale+rotation
+ResetPosition=مقام ری سیٹ
+;Reset position
+ResetThePositionAndTheRotation=مقام اور گردش کو ابتدائی قدروں پر ری سیٹ کریں۔\nbox فارمولوں پر خودکار طور پر زیادہ زوم آؤٹ ہو گا۔
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=قدر ری سیٹ
+;Reset value
+ResetValues=قدریں ری سیٹ
+;Reset values
+ResetView=منظر ری سیٹ
+;Reset view
+ResetsAPreviousCalculationOfThis=اس روشنی کے سخت سائے کا پچھلا حساب ری سیٹ کرتا ہے۔
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=DoF اثر اور عکس ری سیٹ کرتا ہے۔
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=فارمولوں کو طے شدہ P8 بلب پر ری سیٹ کرتا ہے۔
+;Resets the formulas to the default P8 bulb.
+Resume=دوبارہ شروع
+;Resume
+Retry=دوبارہ کوشش
+;Retry
+ReverseTheOrderOfAllKeyframes=تمام کی فریمز کی ترتیب الٹ دیں
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=اختیارات کے لیے ٹائل پر دائیں کلک کریں
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=(رنگ بدلنے کے لیے سلائیڈرز پر دائیں کلک کریں۔ جب کرسر سلائیڈر پر ہو تو کی بورڈ: (c) رنگ کاپی، (v) رنگ پیسٹ، (b) 1 رنگ پیسٹ)
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=لڑھکنا
+;Rolling
+Root=جڑ
+;Root
+Rotate=گھمائیں
+;Rotate
+Rotation=گردش
+;Rotation
+RotationAngleAroundXAxisIn=x محور کے گرد گردش کا زاویہ درجوں میں
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=y محور کے گرد گردش کا زاویہ درجوں میں
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=z محور کے گرد گردش کا زاویہ درجوں میں
+;Rotation angle around z-axis in degrees
+RotationColon=گردش:
+;Rotation:
+RotationX=گردش X:
+;Rotation X:
+RotationY=گردش Y:
+;Rotation Y:
+RotationZ=گردش Z:
+;Rotation Z:
+RoughImage=کچی تصویر
+;rough image
+Roughness=کھردرا پن
+;Roughness
+RoutAngleOfXY=X, Y کا گردشی زاویہ
+;Rout angle of X, Y
+RoutAngleOfXZ=X, Z کا گردشی زاویہ
+;Rout angle of X, Z
+RoutAngleOfYZ=Y, Z کا گردشی زاویہ
+;Rout angle of Y, Z
+Rows=قطاریں
+;Rows
+RowsOfTiles=ٹائلز کی قطاریں
+;Rows of tiles
+SLeft={} s باقی
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15:    ZBuffer پر مبنی ایمبیئنٹ سایہ۔\nSSAO24:    ZBuffer کے 24 bits استعمال کرتا ہے۔\nSSAO24r:   کم نقائص کے لیے بے ترتیب تقسیم استعمال کرتا ہے۔\nDEAO:        فاصلے کے تخمینوں پر مبنی ایمبیئنٹ سایہ\n(اینیمیشنز میں بہتر)
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=تصویر کی مرکزی رینڈرنگ شروع کریں۔
+;Sart the main rendering of the image.
+Saturation0=سیچوریشن:   0\s\s
+;Saturation:   0\s\s
+Save=محفوظ کریں
+;Save
+Save2=محفوظ کریں(&S)
+;&Save
+SaveAM3cFile=m3c فائل محفوظ کریں
+;Save a m3c file
+SaveAZBufferImageAs=Z buffer تصویر BMP یا PNG فائل کے طور پر محفوظ کریں، موجودہ منظر کے پیمانے پر۔
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=تمام موجودہ ترتیبات *.btrace2 فائل کے طور پر محفوظ کریں
+;Save all current settings as *.btrace2-file
+SaveAs=بطور محفوظ کریں
+;Save As
+SaveAsHeightMap=HeightMap کے طور پر محفوظ کریں
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=MB3D-maps فولڈر میں heightmap کے طور پر محفوظ کریں
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=تصویر کے طور پر محفوظ کریں
+;Save As Image
+SaveAsImageAtTheLocation=آپ کی بتائی گئی جگہ پر تصویر کے طور پر محفوظ کریں
+;Save as image at the location you specify
+SaveBtrace2=btrace2 محفوظ کریں...
+;Save btrace2...
+SaveCompleteM3I=مکمل M3I محفوظ کریں
+;Save complete M3I
+SaveExit=محفوظ + باہر نکلیں
+;Save + exit
+SaveFullLightAndColorParameter=مکمل روشنی اور رنگ پیرامیٹر محفوظ کریں
+;Save full light and color parameter
+SaveImageParameters=تصویر + پیرامیٹرز محفوظ کریں
+;Save image + parameters
+SaveM3i=m3i محفوظ کریں
+;Save m3i
+SaveM3iFiles=m3i فائلیں محفوظ کریں
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=اندرونی تصویری بفر سمیت m3i فائلیں محفوظ کریں، عکس وغیرہ محفوظ کرتے ہوئے۔
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=صرف پیرامیٹرز محفوظ کریں
+;Save parameters only
+SaveParametersToClipboardAsText=پیرامیٹرز کلپ بورڈ پر متن کے طور پر محفوظ کریں،\nپھر ctrl+v دبا کر متن کہیں اور ڈال سکتے ہیں۔
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=تصویر محفوظ
+;Save pic
+SaveProject=پروجیکٹ محفوظ کریں
+;Save project
+SaveTextParametersInThePNG=منتخب ہو تو متنی پیرامیٹرز PNG فائل میں محفوظ کریں۔\nآپ انہیں مثلاً gimp میں\n'Image Properties' -> Comment کے تحت دیکھ سکتے ہیں۔
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=اینیمیشن پیرامیٹرز محفوظ کریں
+;Save the animation parameters
+SaveTheCodeF5=کوڈ محفوظ کریں <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=تصویر BMP یا PNG فائل کے طور پر محفوظ کریں، موجودہ منظر کے پیمانے پر۔
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=تصویر BMP یا PNG فائل کے طور پر محفوظ کریں۔ 'With ZBuffer' اختیار فعال ہو تو z-buffer بھی محفوظ ہوتا ہے۔
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=تصویر JPEG فائل کے طور پر محفوظ کریں، موجودہ منظر کے پیمانے پر۔
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=ہر اپ ڈیٹ پر اور 5 منٹ گزرنے پر M3C فائل محفوظ کریں
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=یہ ووکسل پروجیکٹ محفوظ کریں
+;Save this voxel project
+SaveType=محفوظ کرنے کی قسم:
+;Save type:
+SaveZBufferPng=Z buffer محفوظ کریں (png)
+;Save Z buffer (png)
+SaveZBufferToo=Z buffer بھی محفوظ کریں
+;Save Z buffer too
+Saved=محفوظ شدہ
+;Saved
+Saved16BitColour={} محفوظ ہوا (16 bit رنگ)
+;Saved {} (16 bit colour)
+Saved2={} محفوظ ہوا
+;Saved {}
+SavedLower=محفوظ ہوا
+;saved
+SavedTransparentBackground={} محفوظ ہوا (شفاف پس منظر)
+;Saved {} (transparent background)
+Saving=محفوظ کرنا:
+;Saving:
+SavingSucceeded=محفوظ کرنا کامیاب
+;Saving succeeded
+Scale=پیمانہ:
+;Scale:
+ScaleClipRadiusDoFAndTheDE=تفصیل کی سطح اور رنگ برقرار رکھنے کے لیے ClipRadius (DoF)\nاور DE stop قدر کا پیمانہ بدلیں۔
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=رنگ && تفصیل کی سطح برقرار رکھنے کے لیے DEstop کا پیمانہ بدلیں
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=قطاروں کو جغرافیائی پروجیکشن کے مطابق کریں
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=تصویر کا سائز 2 گنا بڑا یا چھوٹا کریں۔
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=قدروں کو منتخب فیصد سے بدلیں۔
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=ابتدائی فارمولے کی scale قدر، DE کی درستی پر اثر ڈالتی ہے
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=حساب ہونے والی ایمبیئنٹ شعاعوں کی زیادہ سے زیادہ لمبائی کا پیمانہ بدلتا ہے۔\nسایوں کو زیادہ گہرائی دینے کے لیے 1 سے بڑی قدر استعمال کریں،\n1 سے کم قدریں زیادہ مقامی سائے دیتی ہیں۔
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=اسکین پیش منظر
+;Scan Preview
+ScreenDistance=اسکرین کا فاصلہ:
+;Screen distance:
+ScriptEditor=اسکرپٹ ایڈیٹر
+;Script Editor
+ScrollBy1=1 سے اسکرول کریں
+;Scroll by 1
+Search=تلاش
+;Search
+SecantSearchmode=Secant تلاش موڈ:
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=دوسرا فوکس پوائنٹ، اگر پہلے سے مختلف ہو تو\nفوکس پوائنٹ کے بجائے فوکس لکیر ملتی ہے۔\n(طبعی طور پر زیادہ حقیقی نہیں، لیکن کام کا ہے)\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=مرکزی ونڈو کے 'رنگ کاری' ٹیب میں نقشہ رنگ کاری کے اختیارات بھی دیکھیں۔
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=منتخب کریں(&S)
+;&Select
+SelectThisIfYouWantTo=اگر ایک ہی نام کی موجودہ M3I فائلوں پر لکھنا ہو تو اسے منتخب کریں۔\nمنتخب نہ ہو تو نام بدل دیا جائے گا تاکہ کوئی فائل اوور رائٹ نہ ہو۔
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=منتخب
+;Selected
+SelectionRecalculation=منتخب حصے کا دوبارہ حساب
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=ترتیب دی گئی تمام فارمولا قدریں مرکزی پروگرام کے پیرامیٹرز کو بھیجیں۔
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=تمام فارمولا قدریں بھیجیں
+;Send all formula values
+SendOnlyThisViewToThe=صرف یہ منظر مرکزی پروگرام کو بھیجیں
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=اصل پیرامیٹر مرکزی ونڈو کو بھیجیں
+;Send original parameter to main window
+SendParameterToMain=پیرامیٹر مرکزی کو بھیجیں
+;Send parameter to main
+SendParameterToProgramsMainRender=پیرامیٹر پروگرام کی مرکزی رینڈر ونڈو کو بھیجیں
+;send parameter to programs main render window
+SendThisParameterToTheMain=یہ پیرامیٹر مرکزی پروگرام کو بھیجیں
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=اس پروجیکٹ کا اصل پیرامیٹر مرکزی پروگرام کو بھیجیں۔\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=یہ منظر جولیا اور فارمولے کی تمام تبدیلیوں سمیت مرکزی پروگرام کو بھیجیں۔
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=مرکزی ایڈیٹر کو بھیجیں
+;Send to Main Editor
+SendValue=قدر بھیجیں
+;Send value
+SendValues=قدریں بھیجیں
+;Send values
+SendingOut=بھیجنا:
+;Sending out:
+SessionsAndCrashes=سیشن اور کریش
+;Sessions and crashes
+SetLightfuncToCosine=روشنی فنکشن کو cosine پر رکھیں
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=نقشوں کا رخ شے کے لحاظ سے طے کریں۔\nاینیمیشنز میں روشنیوں کو منظر کے ساتھ جمانے کے لیے استعمال کریں۔
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=ایپلیکیشن کی بصری تھیم طے کریں
+;Set the visual theme of the application
+SetTo0=0 کریں
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=سایہ حساب ہونے پر متعلقہ روشنی فنکشن کو\nخودکار طور پر cosine پر رکھتا ہے۔\ncosine اور مربعی cosine فنکشن سائے کے ساتھ اچھا کام کرتے ہیں۔
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=بصری تھیم کی ترتیب
+;Setting the Visual Theme
+ShadersCompiling=شیڈرز کمپائل ہو رہے ہیں
+;shaders compiling
+ShadowsAndAO=سائے اور AO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=مشترکہ فولڈر کے ذریعے اپنے کمپیوٹرز کے درمیان رینڈرنگ بانٹیں
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=یہ کمپیوٹر شیئر کریں: فولڈر کے کام رینڈر کریں، اور میرے کام سوارم کو دیں
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=مشترکہ فولڈر:
+;Shared folder:
+SharingButNoOtherComputerIs=اشتراک جاری، لیکن ابھی سوارم میں کوئی دوسرا کمپیوٹر نہیں: رینڈرز صرف اسی کمپیوٹر پر چلتے ہیں
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=اشتراک رک گیا: {}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween={} کے ساتھ اشتراک: رینڈرز {} کمپیوٹرز میں بٹے ہوئے ہیں
+;Sharing with {}: renders are split between the {} computers
+Sharp=واضح:
+;sharp:
+SharpenFactorOfTheSavedOutput=محفوظ آؤٹ پٹ تصویر کا تیزی کا عنصر،\nصرف 1:2 اور 1:3 چھوٹا کرنے پر کام کرتا ہے!\n0: کوئی تیزی نہیں ... 3: زیادہ سے زیادہ تیزی
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=فارمولے {} سے 5 تک ایک جگہ دائیں سرکائیں
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=فارمولے {} سے 6 تک ایک جگہ بائیں سرکائیں
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=بائیں سرکائیں
+;Shift to the left
+ShiftToTheRight=دائیں سرکائیں
+;Shift to the right
+Shininess=چمک
+;Shininess
+ShortdistanceCheckDE=قریبی فاصلہ DE جانچ:
+;Shortdistance check DE:
+ShouldIStopCalculations=کیا میں حسابات روک دوں؟
+;Should i stop calculations?
+Show=دکھائیں
+;Show
+ShowCoords=کوآرڈینیٹس دکھائیں
+;Show coords
+ShowFrameNr=فریم نمبر دکھائیں
+;Show frame nr
+ShowGuides=رہنما لکیریں دکھائیں
+;Show guides
+ShowInFolder=فولڈر میں دکھائیں
+;Show in folder
+ShowMeAPreviewOfThe=mb3d میں میری رینڈر کی ہوئی آخری تصویر کا پیش منظر دکھائیں۔
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=منفرد دکھائیں
+;Show unique
+ShowsHiddenFormulasRightclickOnA=پوشیدہ فارمولے دکھاتا ہے۔\nکسی فارمولے کی حیثیت بدلنے کے لیے اس پر دائیں کلک کریں۔
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=پیغامات دکھاتا ہے
+;Shows messages
+ShrinkThePanel=پینل سکیڑیں
+;Shrink the panel
+SinCosIs2xFasterThanCalling={ SinCos ایک ہی زاویے کے لیے Sin اور Cos الگ الگ بلانے سے 2 گنا تیز ہے }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=نیویگیٹر موڈ بدلنے کے لیے ایک کلک کریں
+;Single click to change the navi mode
+SingleFilenumbering=واحد فائل نمبرنگ
+;Single filenumbering
+Size=سائز
+;Size
+SizeFactor=سائز فیکٹر:
+;Size factor:
+Sliding=سرکنا
+;Sliding
+SlidingWalkingStep=سرکنے+چلنے کا قدم:
+;Sliding+Walking step:
+SmoothDEcomb=ہموار DE امتزاج:
+;Smooth DEcomb:
+SmoothImageOnLoad=لوڈ پر تصویر ہموار کریں
+;Smooth image on load
+SmoothNormals=ہموار  نارملز:
+;Smooth  normals:
+SmoothNormalsColon=ہموار نارملز:
+;Smooth Normals:
+SmoothSolid=ہموار ٹھوس
+;Smooth Solid
+SmoothSolidWithEdges=کناروں کے ساتھ ہموار ٹھوس
+;Smooth Solid with Edges
+SoftClipping=نرم کلپنگ:
+;Soft clipping:
+SoftensTheHardShadowsTheValue=سخت سایوں کو نرم کرتا ہے۔ قدر روشنی کے منبع کے سائز کے لحاظ سے ہے، بڑی قدر سے سایہ نرم ہوتا ہے۔
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=نرم H.S.
+;Softer H.S.
+Sorted=ترتیب وار
+;Sorted
+SortedCalculationGivesBetterResultsForward=ترتیب وار حساب بہتر نتائج دیتا ہے۔\nاگر میموری کے مسائل وغیرہ کی وجہ سے ترتیب وار ناکام ہو تو 'آگے' ایک اختیار ہو سکتا ہے۔
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=Spec:
+;Spec:
+Spec2=Spec
+;Spec
+SpecifiesTheEndOfRaymarchingAs=رے مارچنگ کا اختتام مقامی DE کے عنصر کے طور پر بتاتا ہے۔\nبڑی قدریں = زیادہ دور کی اشیاء نظر آتی ہیں۔\n\nشارٹ کٹ کیز:  F1: دور سطح کم کریں،  F2: دور سطح بڑھائیں
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=اسپیکولر
+;Specular
+SpecularObjectColorsClickToChange=شے کے اسپیکولر رنگ، بدلنے کے لیے کلک کریں۔
+;Specular object colors, click to change them.
+SpecularPowerFunction=اسپیکولر قوت فنکشن
+;Specular power function
+SphericalCoords=کروی کوآرڈینیٹس
+;Spherical coords
+Stan=معیاری
+;stan.
+StandardRectilinearPanorama=معیاری  سیدھی لکیری  پینوراما
+;standard  rectilinear  panorama
+Start=آغاز:
+;Start:
+StartBatchRendering=بیچ رینڈرنگ شروع کریں
+;Start batch rendering
+StartIndex=ابتدائی نمبر:
+;Start index:
+StartRendering=رینڈرنگ شروع کریں
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=رینڈرنگ شروع کریں اور بعد میں M3I فائل خودکار محفوظ کریں!
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=اینیمیشن رینڈرنگ شروع کریں
+;Start rendering animation
+StartRenderingAnimationImages=اینیمیشن تصاویر کی رینڈرنگ شروع کریں
+;Start rendering animation images
+StartRenderingSlices=ٹکڑوں کی رینڈرنگ شروع کریں
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=تمام منتخب M3P فائلوں کی رینڈرنگ شروع کرتا ہے
+;Starts rendering all selected M3P files
+Statistics=اعداد و شمار
+;Statistics
+Status=حیثیت
+;Status
+StepcountForBinarySearch=بائنری سرچ کے لیے \nقدموں کی تعداد:
+;Stepcount for \nbinary search:
+StepwidthLimiter=قدم چوڑائی حد:
+;Stepwidth limiter:
+Stereo=اسٹیریو
+;Stereo
+StereoComposingPreview=اسٹیریو: پیش منظر بن رہا ہے
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=اسٹیریو جوڑے ٹائلز کے ساتھ رینڈر نہیں ہو سکتے۔ پہلے ٹائلنگ بند کریں۔
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=اسٹیریو: بائیں آنکھ رینڈر ہو رہی ہے
+;stereo: rendering left eye
+StereoRenderingRightEye=اسٹیریو: دائیں آنکھ رینڈر ہو رہی ہے
+;stereo: rendering right eye
+StickThisWindowToTheLeft=اس ونڈو کو بائیں طرف چپکائیں
+;Stick this window to the left side
+StickThisWindowToTheRight=اس ونڈو کو دائیں طرف چپکائیں
+;Stick this window to the right side
+Stop=روکیں
+;Stop
+StopBatchRendering=بیچ رینڈرنگ روکیں
+;Stop batch rendering
+StopRendering=رینڈرنگ روکیں
+;Stop rendering
+StopRenderingTheAnimation=اینیمیشن کی رینڈرنگ روکیں۔
+;Stop rendering the animation.
+StopTheCurrentCalculation=موجودہ حساب روکیں۔
+;Stop the current calculation.
+Stopping=روکا جا رہا ہے...
+;Stopping...
+StoppingThisComputerFinishesThePart=روکا جا رہا ہے: یہ کمپیوٹر وہ حصہ مکمل کرتا ہے جو رینڈر کر رہا ہے
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=شے سے اس فاصلے پر چلنا رک جاتا ہے۔\nبند کرنے کے لیے 0 رکھیں۔
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=تصویر کے آسان پیش منظر کے لیے ایک اضافی متعلقہ *.PNG فائل محفوظ کریں
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=M3I فائل طے شدہ فولڈر میں محفوظ کریں
+;Store M3I file in default folder
+StorePNGPreview=PNG پیش منظر محفوظ کریں
+;Store PNG-preview
+Strength=شدت:
+;Strength:
+Strength2=شدت
+;Strength
+StrengthOfDynamicFog=متحرک دھند کی شدت۔
+;Strength of dynamic fog.
+StretchesUpperAndLowerPartsMaybe=اوپری اور نچلے حصوں کو کھینچتا ہے، مکمل کرّہ اختیار میں عام تصویر کے لیے شاید مفید۔
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=ذیلی فریم تعداد\nضرب کار:
+;Subframe count\nmultiplicator:
+SubframeInterpolation=ذیلی فریم انٹرپولیشن:
+;Subframe interpolation:
+SubframesToRender=رینڈر کرنے کے ذیلی فریمز
+;Subframes to render
+SubframesToRenderBetween=درمیان رینڈر کرنے  \nکے ذیلی فریمز:
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=اگلے شعاع قدم سے DEstop کی کچھ مقدار منفی کریں، زیادہ DEstop قدروں پر تجویز کردہ۔
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=نیٹ ورک رینڈرنگ کی معاونت
+;Support network rendering
+SupportedMathematicalFunctions=معاون ریاضیاتی فنکشنز
+;Supported mathematical functions
+SurfaceColor=سطح کا رنگ
+;Surface color
+SurfaceDetail=سطح کی تفصیل:
+;Surface detail:
+Swarm=سوارم
+;Swarm
+SwarmABlockOnEveryComputer=سوارم: ہر کمپیوٹر پر ایک بلاک، روکنے تک
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=سوارم: {} بلاکس، {} شعاعیں/پکسل
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=سوارم: {} کمپیوٹر
+;swarm: {} computer
+SwarmComputers=سوارم: {} کمپیوٹرز
+;swarm: {} computers
+SwarmCreatingTheJob=سوارم: کام بنایا جا رہا ہے
+;swarm: creating the job
+SwarmJob=سوارم کام
+;swarm job
+SwarmLower=سوارم: {}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=سوارم: آپ کے کمپیوٹرز کے درمیان مشترکہ رینڈرنگ
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=طے شدہ تھیم پر واپس جائیں
+;Switch back to the default theme
+TakeTheEntryOutOfThe=اندراج تاریخچے سے نکالیں (حساب شدہ تصویر کے پیرامیٹرز اور تھمب نیل حذف ہو جاتے ہیں؛ دوسری فائلیں اپنی جگہ رہتی ہیں)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=ہدف نقشہ خانہ
+;Target Map Slot
+TargetMapSlotUseThisNumber=ہدف نقشہ خانہ۔ متحرک نقشے کے لیے یہ نمبر اپنے فریکٹل میں نقشے کے طور پر استعمال کریں، مثلاً heightmap کے طور پر
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=شامل کیے گئے ڈفیوز اور اسپیکولر رنگوں کی مقدار 1 سے زیادہ ہے،\nکیا زیادہ حقیقی رنگ کاری کے لیے انہیں کم کر دوں؟
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=اینیمیشن کے لیے کم از کم دو کی فریمز درکار ہیں۔
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=Zsharp نقطے پر اپرچر، یہ کیمرے کا اپرچر نہیں ہے!\nکیمرے کا اپرچر حاصل کرنے کے لیے اس قدر کو Zsharp نقطے سے کیمرے تک کے\n(آزادانہ منتخب) فاصلے سے ضرب دیں اور کیمرے کے لینز کی فوکل لمبائی سے\nتقسیم کریں۔\nاس لیے اگر کیمرا اتنا بڑا نہیں چاہیے تو یہ قدر کم کریں۔\nبڑی قدروں کا مطلب زیادہ دھندلاپن ہے۔
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheBTracer2CacheFormatIsNot=BTracer2 کیش فارمیٹ اس پروگرام میں معاون نہیں۔\nبراہ کرم میش فارمیٹ منتخب کریں (*.ply یا *.obj)۔
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=BTracer2 کیش فارمیٹ معاون نہیں، میش محفوظ نہیں ہوئی۔
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=پس منظر تصویر لوڈ نہیں ہو سکی۔
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=escapetime فارمولوں کے لیے bailout قدر۔\nاگر تکرار کے دوران 3d قدر اس سے بڑھ جائے،\nتو موجودہ نقطہ شے کا حصہ نہیں ہے۔
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=دھندلاپن کا رداس اس قدر تک محدود ہو گا۔\nجب تصویر کے کچھ حصوں میں رداس بہت بڑا ہو جائے تو رینڈرنگ تیز کر سکتا ہے۔
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=حساب ناکام ہو گیا: {}
+;The calculation failed: {}
+TheCalculationFailedLower=حساب ناکام ہو گیا
+;the calculation failed
+TheCalculationWillBeExtendedTowards=حساب منعکس اشیاء کے ساتھ تصویر سے باہر کی طرف بڑھایا جائے گا۔\nاس سے اینیمیشنز میں کم نقائص ہو سکتے ہیں، لیکن ساکن تصاویر کو بھی فائدہ ہو سکتا ہے۔\nقدر 0 سے 0.5 (زیادہ سے زیادہ 0.9) کی حد میں ہونی چاہیے، یہ تصویر کی چوڑائی\nاور اونچائی کے لحاظ سے وہ سائز ہے جو باہر زیادہ سے زیادہ حساب ہوتا ہے۔
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=کمانڈ لائن پروگرام mb3d اس پروگرام کے ساتھ نہیں ملا: پروگرام دوبارہ انسٹال کریں۔
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=طے شدہ نمبرنگ میں 2 نمبر ہوتے ہیں، X اور Y میں الگ۔\nیہ اختیار منتخب کرنے پر نمبرنگ صرف ایک نمبر ہوتی ہے،\nجو ہر کالم میں بڑھتی ہے اور اگلی قطار میں جاری رہتی ہے۔
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=طے شدہ آؤٹ پٹ شے کے لیے سفید اور باہر کے حصے کے لیے سیاہ ہے۔\nرنگ الٹنے کے لیے یہ اختیار منتخب کریں۔
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=حد سے آگے بڑھنے سے بچنے کے لیے فاصلے کے تخمینے اس عنصر سے کم کیے جاتے ہیں۔\nاگر حد سے آگے بڑھنا ہو (سیاہ پکسلز، شور والی تصویر) تو قدر کم کریں۔\nبہت کم قدریں رینڈرنگ سست کرتی ہیں۔
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=حد سے آگے بڑھنے سے بچنے کے لیے فاصلے کے تخمینے اس عنصر سے کم کیے جاتے ہیں۔\nاگر حد سے آگے بڑھنا ہو (سیاہ پکسلز، شور والی تصویر) تو قدر کم کریں۔\nبہت کم قدریں رینڈرنگ سست کرتی ہیں ۔
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=شے کی سطح سے وہ فاصلہ جہاں رے مارچنگ رکتی ہے، دیکھنے والے سے فاصلے کے ساتھ بڑھتا ہے۔\nاس سے شے یکساں نظر آتی ہے، اس لیے عموماً یہی منتخب ہوتا ہے۔
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=اثر جمع ہوتا ہے، نئے حساب کے لیے ری سیٹ کریں۔
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=اندراجات اپنے دنوں کے تحت؛ کسی دن کے اندراجات اور تصاویر اسے کھولنے (اس پر کلک) پر نظر آتی ہیں
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=اندراج ہٹایا نہیں جا سکا۔
+;The entry could not be removed.
+TheFileIsNotThereAny=فائل اب موجود نہیں ہے۔
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=فائل <{}.m3f> پہلے سے موجود ہے۔ کیا آپ اس پر لکھنا چاہتے ہیں؟
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=فائل (یہاں سے منتخب کر کے کاپی کریں)
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=(پہلا) فوکس پوائنٹ۔\nقدر دیکھنے والے کی Zstart قدر کے لحاظ سے ہے،\nتصویر کی چوڑائی پر معمول شدہ۔
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=فولڈر موجود نہیں (یا قابل رسائی نہیں)
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=فارمولے کا نام "JIT" سے شروع ہونا چاہیے تاکہ ان فارمولوں کو ASM پر مبنی فارمولوں سے الگ پہچانا جا سکے
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFramesPerSecondMustBe=فریمز فی سیکنڈ 0 سے بڑا عدد ہونا چاہیے (مثلاً 25)۔
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=تصویری بفر کا سائز غلط ہے
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=تصویر کا سائز بدل گیا: تصویر کا دوبارہ حساب کریں
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=its.trap موڈ "رنگ کاری" ٹیب میں حساب شدہ اختیار پر منحصر ہے۔
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=پچھلا سیشن درست طریقے سے ختم نہیں ہوا (رک گیا، بند کیا گیا یا کریش ہوا): {}۔ اس نے آخری بار کیا کیا، یہ لاگ میں ہے (لاگ ونڈو، ٹائٹل بار میں آئیکن)۔
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=مرکزی ایڈیٹر ابھی رینڈر کر رہا ہے۔ براہ کرم پہلے اسے روکیں یا مکمل ہونے تک انتظار کریں۔
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=نقشہ اختیارات کروی نقشوں کے لیے مخصوص ویکٹر سے x,y کوآرڈینیٹس\nحساب کرتے ہیں، اس سے پہلا رنگ انتخاب بھی بدلتا ہے\nجو عموماً ہموار تکرار پر مبنی ہوتا ہے۔\nان اختیارات کی تبدیلی کا نتیجہ دیکھنے کے لیے تصویر کا\nدوبارہ حساب کرنا ہو گا۔
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=Monte Carlo ونڈو رینڈر کر رہی ہے: پہلے اسے روکیں۔
+;The Monte Carlo window is rendering: stop it first.
+TheNameOfTheNewLanguage=نئی زبان کا نام، اسی زبان میں (Deutsch، Polski، ...)
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=اب تک کا تازہ ترین کام: رینڈر شدہ حصے، جاری حصے (ان کی پیش رفت کے ساتھ)، باقی حصے
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=پیرامیٹرز اب نامکمل حساب سے میل نہیں کھاتے: ان کا حساب کرنے کے لیے "3D حساب کریں" دبائیں۔
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=تصویر اپنے حساب سے میل نہیں کھاتی: اس کا دوبارہ حساب کریں۔
+;The picture does not match its calculation: calculate it again.
+TheRotationIsPerformedAroundThe=گردش درمیانی نقطے (Xmid, Ymid, Zmid) کے گرد ہوتی ہے
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=گردشیں ترتیب سے ہوتی ہیں، پہلے XW، آخر میں ZW سطح۔
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSelectionMustBeBiggerThan=منتخب حصہ چوڑائی اور اونچائی میں 2 پکسلز سے بڑا ہونا چاہیے۔
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=منتخب حصہ چوڑائی اور اونچائی میں 2 پکسلز سے بڑا ہونا چاہیے
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=سوارم کا مشترکہ فولڈر
+;The shared folder of the swarm
+TheSizeOfTheTiles=ٹائلز کا سائز
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=اسٹیریو آنکھوں کی تصاویر کے سائز مختلف ہیں۔
+;The stereo eye images have different sizes.
+TheTileHasNoImageBuffer=ٹائل کا کوئی تصویری بفر نہیں
+;the tile has no image buffer
+Themes=تھیمز
+;Themes
+ThereIsAFileAlready=فائل {} پہلے سے موجود ہے۔
+;There is a file {} already.
+ThingsToAskTheAssistant=اسسٹنٹ سے پوچھنے کی باتیں
+;Things to ask the assistant
+ThisComputer=یہ کمپیوٹر:
+;This computer:
+ThisEffectIsAccumulatedOnEach=یہ اثر ہر بار بٹن دبانے پر جمع ہوتا ہے، آپ 'ری سیٹ' بٹن دبا کر\nری سیٹ کر سکتے ہیں - لیکن عکس بھی واپس ہو جائیں گے!
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=یہ فائل پہلے سے موجود ہے۔ کیا آپ واقعی اس پر لکھنا چاہتے ہیں؟
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=یہ گھمائے گئے بلب کا x سمت میں مطلق آفسیٹ ہے۔
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=یہ رینڈر ابھی چل رہا ہے۔
+;This render is running right now.
+ThisRenderKeepsNoImage=یہ رینڈر کوئی تصویر نہیں رکھتا۔
+;This render keeps no image.
+ThisRenderKeptNoParameters=اس رینڈر نے کوئی پیرامیٹرز نہیں رکھے۔
+;This render kept no parameters.
+ThisSessionLive=یہ سیشن (براہ راست)
+;This session (live)
+ThreadPriority=تھریڈ\nترجیح
+;Thread\nPriority
+ThreadcountInCalculations=حسابات میں  \nتھریڈز کی تعداد
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=کاموں کے لیے تھریڈز (0 = تمام کورز):
+;Threads for jobs (0 = all cores):
+ThresholdTo0=حد 0 تک:
+;Threshold to 0:
+TilNextUpdate=..اگلی اپ ڈیٹ تک
+;..til next update
+TileCountHorizontal=ٹائلز کی تعداد،  افقی:
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=ٹائل چھوٹا کرنا، اینٹی ایلیاسنگ:
+;Tile downscale, anti aliasing:
+TileSaved={} ٹائل محفوظ ہوئی؛ {}
+;{} tile saved; {}
+TileXY=ٹائل: X= Y=
+;Tile: X= Y=
+TileXY2=ٹائل: X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  ٹائل X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=ٹائل X={} Y={}
+;tile X={} Y={}
+TileXYSaved=ٹائل X={} Y={} محفوظ ہوئی۔
+;Tile X={} Y={} saved.
+Tiles=ٹائلز
+;tiles
+Tiles2=ٹائلز
+;Tiles
+TilesSaved={} ٹائلز محفوظ ہوئیں؛ {}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  {} ٹائلز سوارم کے ساتھ
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=ٹائل سائز (aa سمیت):
+;Tilesize (including aa):
+Tiling=ٹائلنگ:
+;Tiling:
+TimeNeeded=درکار وقت:
+;Time needed:
+ToCalculateABetterHardShadow=بہتر سخت سائے کے حساب کے لیے، صرف اگر 1 HS منتخب ہو!
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=کلپ بورڈ پر
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=ایمبیئنٹ آکلوژن سے براہ راست روشنی بھی کم کرنے کے لیے
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=فارمولا نمبر تک:
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=خراب فاصلہ تخمینوں والے ہائبرڈز میں اشیاء کے گرد شور کم کرنے کے لیے،\nتصویر کی اوسط تکرار تعداد سے کچھ کم تکرار استعمال کریں۔
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=حد سے آگے بڑھنا کم کرنے کے لیے
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=اس کی فریم اور اس سے پہلے کے تمام پر
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=اس کی فریم اور اس کے بعد والوں پر
+;To this keyframe and the following
+Togo=باقی: ...
+;togo: ...
+Tools=اوزار
+;Tools
+TotalAmountOfReflectivityTransparencyIt=انعکاس + شفافیت کی کل مقدار، اسے شے کے مقامی اسپیکولر رنگ + شفافیت کی مقدار سے ضرب دیا جائے گا۔
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=کل حساب کا وقت:
+;Total calculation time:
+TotalFramesUpToHereNote=یہاں تک کل فریمز۔\nنوٹ کریں کہ صرف لوپ موڈ میں آخری کی فریمز کے\nذیلی فریمز رینڈر ہوں گے۔
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=ٹریس حد X:
+;Trace range X:
+TraceRangeY=ٹریس حد Y:
+;Trace range Y:
+TraceRangeZ=ٹریس حد Z:
+;Trace range Z:
+TracingObject=شے ٹریس ہو رہی ہے...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=فائل سسٹم میں رینڈرنگ کی حیثیت پر نظر رکھیں تاکہ کئی نسخے فائلوں کا ایک ہی سلسلہ دوسرے نوڈز کا کام اوور رائٹ کیے بغیر رینڈر کر سکیں
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=شفافیت
+;Transparency
+TransparencyIntensity=شفافیت کی شدت
+;Transparency intensity
+TransparencySpecular=شفافیت + اسپیکولر
+;Transparency + Specular
+TransparentBackground=شفاف پس منظر
+;Transparent background
+TrigonometricFunctions={ مثلثیاتی فنکشنز }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=حجمی نقشے کا سائز 20% قدموں میں ترتیب دیں
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=جولیا موڈ چالو/بند کریں
+;Turn on/off the julia mode
+Type=قسم:
+;Type:
+Type2=قسم
+;Type
+TypeInTheQuality0100=معیار (0..100) یا آؤٹ پٹ فائل کا زیادہ سے زیادہ سائز KB میں (>100) ٹائپ کریں:
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=قسم خالی نہیں ہونی چاہیے
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\sہائبرڈ کی قسم:\nمتبادل:  فارمولے 1 سے 6 باری باری۔\nانٹرپولیٹ:  ہر تکرار میں فارمولا 1 کو فارمولا 2 کے ساتھ انٹرپولیٹ کیا جاتا ہے۔\nDE امتزاج:  فارمولا 1 کا فارمولے 2 سے 6 کے متبادل ہائبرڈ کے ساتھ DE امتزاج۔
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=شے کے تعین کی قسم، زیادہ سے زیادہ its کم کرنے یا DE بڑھانے سے\n(منتخب اختیار کے مطابق) شے موٹی ہو جائے گی۔\nنوٹ:  DE امتزاج فارمولے اور اندر+باہر رینڈرنگ\n           صرف فاصلے کے تخمینے والے موڈ میں کام کرتے ہیں!
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\sشے کے تعین کی قسم، زیادہ سے زیادہ its کم کرنے یا DE بڑھانے سے\n(منتخب اختیار کے مطابق) شے موٹی ہو جائے گی۔\nنوٹ:  DE امتزاج فارمولے صرف فاصلے کے تخمینے والے موڈ میں کام کرتے ہیں!
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=پہلے نئی زبان کا نام ٹائپ کریں؛ یہی اس کی فائل کا نام ہے۔
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=اگر تصویر سپاٹ اور شور والی لگے تو اس کا نشان ہٹا دیں۔
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=پہلے سے حساب شدہ تصاویر پر نہ لکھنے کے لیے نشان ہٹائیں۔\nفائل کا نام ایک جیسا ہونا چاہیے (وہی آؤٹ پٹ فارمیٹ، نمبر اور اسٹیریو موڈ میں\n'left' یا 'right' لاحقہ)۔
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=، {} جاری
+;, {} under way
+UnfinishedCalculation=نامکمل حساب
+;Unfinished calculation
+UnfinishedRender=نامکمل رینڈر
+;Unfinished render
+UnfinishedRenders=نامکمل رینڈرز
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=نامکمل رینڈرز: انہیں جاری رکھیں یا حذف کریں
+;Unfinished renders: continue or delete them
+Untitled=بے نام
+;untitled
+UpOneLevel=ایک درجہ اوپر
+;Up one level
+UpTo=تک:
+;up to:
+UpdateImage=تصویر اپ ڈیٹ کریں
+;Update Image
+UseAMapForTheDiffuse=ڈفیوز رنگ کے لیے نقشہ استعمال کریں
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=ایمبیئنٹ رنگ کے طور پر چھوٹی تصویر استعمال کریں
+;Use a small image as ambient color
+UseAlsoNavi=(نیویگیٹر بھی استعمال کریں)
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=اصل M3I فائل سے ایمبیئنٹ سائے استعمال کریں
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=طے شدہ رخ استعمال کریں
+;Use default orientation
+UseItInAnimationsToFix=اینیمیشنز میں روشنیوں کو منظر کے ساتھ جمانے کے لیے استعمال کریں۔
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=صرف دوسرے اختیار کے طور پر استعمال کریں اگر نارملز (روشنی کے لیے سطح کی سمت) خراب لگیں۔
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=OpenGL استعمال کریں >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=تھیم کے بغیر طے شدہ بصری ترتیبات استعمال کریں
+;Use the default visual settings without a theme
+UseTheMapIntensitiesAndDiffuse=نقشے کی شدتیں اور ڈفیوز رنگ استعمال کریں۔
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=حد سے آگے بڑھنا کم کرنے کے لیے 1 سے کم قدریں استعمال کریں۔
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\sنمونہ بندی کی غلطیوں والے ڈیٹا کی نقل کے لیے مفید۔ }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=ڈھلوان heightmaps کے لیے مفید
+;Useful for steep heightmaps
+User=صارف
+;user
+UserDefinedApectRatioRightclickTo=صارف کا طے کردہ تناسب۔\nتناسب طے کرنے کے لیے دائیں کلک کریں۔
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=صارف کا طے کردہ تناسب
+;User defined aspect ratio
+Value=قدر:
+;Value:
+ValueNotGuilty=قدر درست نہیں
+;Value not guilty
+ValuesHaveAFractionFieldThat=// قدروں کا کسری حصہ 0 نہیں ہوتا۔
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=FOV پر DEstop بدلیں:
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=جانچیں کہ منتخب اختیارات کے مطابق ڈفیوز اور اسپیکولر رنگوں کا مجموعہ 1 سے نہ بڑھے
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=حساب کے دوران جانچیں کہ اسپیکولر+ڈفیوز مقدار 1 سے تو نہیں بڑھتی۔  diffmaps استعمال کرتے وقت مفید۔
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=ورژن
+;Version
+Version2=، ورژن {}
+;, version {}
+Vertical=عمودی:
+;vertical:
+VerticalFieldOfViewInDegrees=عمودی منظری میدان درجوں میں
+;Vertical field of view in degrees
+VerticesFaces={} [{} ورٹیکس، {} سطحیں]
+;{} [{} Vertices, {} Faces]
+Video=ویڈیو
+;video
+VideoLower=ویڈیو: {}
+;video: {}
+View=منظر
+;View
+ViewToMain=منظر مرکزی کو
+;View to main
+Viewing=نظارہ
+;Viewing
+Visible=نظر آنے والا:
+;Visible:
+VisitTheOfficialWebSiteFor=خبروں اور اپ ڈیٹس کے لیے سرکاری ویب سائٹ دیکھیں: https://mb3d.overwhale.com
+;Visit the official web site for news and updates: https://mb3d.overwhale.com
+VolumeLightNr=حجمی روشنی نمبر:
+;Volume light nr:
+VolumetricResolution=حجمی ریزولوشن:
+;Volumetric resolution:
+VoteFormula=+ فارمولے کو ووٹ
+;+ vote formula
+VoteFormula2=- فارمولے کو ووٹ
+;- vote formula
+VoxelExport=ووکسل برآمد
+;Voxel export
+Voxelstack=ووکسل ڈھیر
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=جاری حساب کا انتظار کریں، یا پہلے اسے روکیں۔
+;Wait for the running calculation, or stop it first.
+Walking=چلنا
+;Walking
+Warning=تنبیہ
+;Warning
+WarningLower=تنبیہ
+;warning
+WarningMustRecalculateTheWholeImage=تنبیہ: اسے واپس لینے کے لیے پوری تصویر دوبارہ حساب کرنی ہو گی!
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=تنبیہات اور خرابیاں
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Weight=وزن
+;Weight
+WeightColon=وزن:
+;Weight:
+WelcomeToMandelbulb3D=Mandelbulb 3D میں خوش آمدید!
+;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=آج میں نے mb3d میں کیا کیا؟ کیا کوئی خرابیاں تھیں؟
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=کیا ہوا
+;What happened
+WhatYouDid=آپ نے کیا کیا
+;What you did
+When=کب
+;When
+WhenAngleNotBetween180And={ جب زاویہ -180 اور 180 کے درمیان نہ ہو تو بایاں ہٹائیں }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=کب (UTC)
+;When (UTC)
+WhenUsingAMapForThe=ڈفیوز رنگ کے لیے نقشہ استعمال کرتے وقت،\nرنگوں کی خودکار کلپنگ کے لیے 'Autoclip Spec+Diff'\nمنتخب کرنا ہو گا۔
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=سفید
+;white
+WhiteOutside=باہر سفید
+;White outside
+Width=چوڑائی:
+;Width:
+Windows=ونڈوز
+;Windows
+Wireframe=وائر فریم
+;Wireframe
+WireframeColor=وائر فریم کا رنگ
+;Wireframe color
+WithHS=HS کے ساتھ
+;with HS
+WithZBuffer=ZBuffer کے ساتھ
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=انگریزی متن اس نام کی نئی زبان فائل کے طور پر لکھتا ہے؛ انہیں ٹیکسٹ ایڈیٹر سے ترجمہ کریں، پھر "دوبارہ لوڈ" دبائیں
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=تصویر کو جیسی ابھی ہے (نامکمل قطاریں پس منظر کے طور پر) .m3i فائل کے طور پر لکھتا ہے
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=لکھا گیا: {}\n"=" کے دائیں متن کو ٹیکسٹ ایڈیٹر سے ترجمہ کریں، پھر "دوبارہ لوڈ" دبائیں۔
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=X زاویہ:
+;X angle:
+XMid=X mid:
+;X mid:
+XOffset=X آفسیٹ:
+;X offset:
+XScale=X پیمانہ:
+;X scale:
+XW=XW:
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=Xpos
+;Xpos
+Xrot=Xrot
+;Xrot
+YAngle=Y زاویہ:
+;Y angle:
+YMid=Y mid:
+;Y mid:
+YOffset=Y آفسیٹ:
+;Y offset:
+YScale=Y پیمانہ:
+;Y scale:
+YW=YW:
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=ہاں
+;Yes
+YouCanAlsoClickOnA=آپ کسی قدر کو بدلنے کے لیے اس پر کلک بھی کر سکتے ہیں
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=آپ فارمولا براہ راست ٹائپ بھی کر سکتے ہیں
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=آپ کسی بھی وقت حساب شروع/جاری کر سکتے ہیں یا روک سکتے ہیں
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=زیادہ تر ٹریک بارز منتخب ہونے پر آپ بائیں یا دائیں تیر کیز سے\nباریک ترتیب کر سکتے ہیں۔\n"0" (صفر) دبانے سے ٹریک بار صفر مقام پر آ جاتا ہے۔
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=آپ ہر ٹائل کے لیے m3i فائلیں بھی محفوظ کر سکتے ہیں، یاد رکھیں کہ ڈسک پر کافی\nجگہ ہو اور عکس m3i فائل میں محفوظ نہیں ہوتے۔\n\nنوٹ کریں کہ یہ m3i ٹائلز پروگرام کے 1.7.9 سے پرانے ورژنز میں نہیں کھل سکتیں!
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=آپ کو پہلے اصل پیرامیٹرز رینڈر کر کے M3I فائل کے طور پر محفوظ کرنے ہوں گے۔\nوہ رینڈر بہت چھوٹا نہ ہو۔
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=آپ کا مصنف نام (پیرامیٹرز میں محفوظ):
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=آپ کی اپنی زبان (اس کا نام):
+;Your own language (its name):
+Ypos=Ypos
+;Ypos
+Yrot=Yrot
+;Yrot
+Z1Sharp=Z1 واضح:
+;Z1 sharp:
+Z2Sharp=Z2 واضح:
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=Z-buffer: {}
+;Z-buffer: {}
+ZEnd=Z اختتام
+;Z end
+ZMid=Z mid
+;Z mid
+ZOffset=Z آفسیٹ:
+;Z offset:
+ZRThreshold=Z/R حد:
+;Z/R Threshold:
+ZScale=Z پیمانہ:
+;Z scale:
+ZSlices=Z ٹکڑے:
+;Z slices:
+ZStart=Z آغاز
+;Z start
+ZW=ZW:
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=زوم:
+;Zoom:
+Zoom2=زوم
+;Zoom
+Zpos=Zpos
+;Zpos
+Zrot=Zrot
+;Zrot

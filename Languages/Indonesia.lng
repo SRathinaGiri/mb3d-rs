@@ -1,0 +1,3622 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = Bahasa Indonesia
+code = ID
+
+[Labels]
+ACalculationIsRunningStopIt=Perhitungan sedang berjalan: hentikan dulu.
+;A calculation is running: stop it first.
+AFasterMethodThanBinsearchBut=Metode yang lebih cepat daripada binsearch, tetapi dapat gagal jika DE-nya buruk
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=tersisa beberapa detik
+;a few seconds left
+AFolderEveryComputerOfThe=Folder yang dapat dilihat oleh setiap komputer swarm: share NAS, share Windows atau Samba, folder sinkronisasi
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AHigherValueMeansABetter=Nilai yang lebih tinggi berarti kualitas lebih baik, bahkan 100% tetap lossy.
+;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=File bahasa berisi satu label per baris: di kiri "=" ID-nya, di kanan teks Anda. Bagian jendela setelah label memberi satu kontrol teksnya sendiri.
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=Pengali yang menentukan panjang maksimal perhitungan bayangan keras,\nrelatif terhadap beberapa parameter ukuran gambar (bawaan = 1).\nNaikkan nilainya jika bayangan objek yang jauh hilang.
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=Waktu hitung AO:
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=Render yang dihentikan atau terputus menyimpan apa yang sudah dihitung; Hitung 3D dengan parameter yang sama akan melanjutkannya.
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=Latar belakang transparan memerlukan frame PNG: pilih PNG sebagai format keluaran.
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=Video memerlukan gambar: pilih BMP, PNG, atau JPG sebagai format keluaran.
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=Video animasi stereo tidak dibuat: matikan 'Render animasi stereo'.
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf=Gambar {} x {} memerlukan sekitar {} memori, komputer ini memiliki {} yang kosong: perhitungan akan menggunakan swap, dan program bisa tidak merespons selama beberapa menit.\n\nTetap hitung?\n\nRender besar (tab Alat) menghitungnya dalam tile yang disimpan satu per satu, tanpa menyimpan seluruh gambar; swarm (jendela Swarm) membagi tile dengan komputer lain.
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=Gambar png z-buffer juga akan disimpan.
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=Keyboard AZERTY
+;AZERTY keyboard
+Abort=Batalkan
+;Abort
+AboutHLeft=sekitar {} jam lagi
+;about {} h left
+AboutHMinLeft=sekitar {} jam {} mnt lagi
+;about {} h {} min left
+AboutMinLeft=sekitar {} mnt lagi
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=Jumlah absorpsi absolut di dalam material (zoom tinggi memerlukan nilai besar). Warna difus objek juga berlaku untuk bagian dalam.
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=Jarak absolut fungsi gabungan halus,\nAnda dapat memakai notasi ilmiah seperti 3e-5 untuk nilai kecil.\nCoba 1/zoom untuk mendekati nilai yang berfungsi.
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=Absorpsi:
+;Absorption:
+Action=Tindakan
+;Action
+ActualAmbientShadowPar=Par. bayangan ambien saat ini
+;Actual ambient shadow par.
+ActualCameraSettings=Pengaturan kamera saat ini
+;Actual camera settings
+ActualColoringTabOptions=Opsi tab 'Pewarnaan' saat ini
+;Actual 'Coloring' tab  options
+ActualDOFParameters=Parameter DOF saat ini
+;Actual DOF parameters
+ActualHardShadowSetting=Pengaturan bayangan keras saat ini
+;Actual hard shadow setting
+ActualReflectionsSettings=Pengaturan refleksi saat ini
+;Actual reflections settings
+ActualStereoParameters=Parameter stereo saat ini
+;Actual stereo parameters
+Add=Tambah
+;Add
+AddANewKeyframeInBetween=Tambahkan keyframe baru di antaranya
+;Add a new keyframe in between
+AddNamedConstantValue=Tambah nilai konstanta bernama
+;Add named constant value
+AddNamedParam=Tambah param bernama
+;Add named param
+AddNewConstantValue=Tambah nilai konstanta baru
+;Add new constant value
+AddNewImageSequence=Tambah urutan gambar baru
+;Add new image sequence
+AddNewNamedParameter=Tambah parameter bernama baru
+;Add new named parameter
+AddNewOption=Tambah opsi baru
+;Add new option
+AddOptionValue=Tambah nilai opsi
+;Add option value
+AddToBackgroundDepthNotBlend=Tambah ke kedalaman latar (bukan campur)
+;Add to background depth (not blend)
+AddonFormula=Formula tambahan
+;Addon formula
+AdjustRoughlyThenClickForFine=Atur secara kasar lalu klik untuk penyesuaian halus.
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=Atur slider agar sesuai dengan ujung histogram
+;Adjust sliders to fit the histograms endpoints
+Adjustments=Penyesuaian:
+;Adjustments:
+AdjustsTheDEForRenderPreview=Menyesuaikan DE untuk pratinjau render
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=Generator ZBuffer lanjutan
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=Setelah perhitungan, semua perubahan cahaya oleh pengguna dibatalkan karena sudut cahaya berbeda.\nMenghitung dalam mode normal akan mengaktifkannya lagi.
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=Setelah render, gabungkan frame menjadi video di folder keluaran\n(<nama proyek>.avi, Motion JPEG: dapat diputar di VLC dan mpv, dapat dibuka di editor video).\nFrame tetap disimpan.
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=Semua warna sudah benar.
+;All colors are ok.
+AllFiles=Semua file
+;All files
+AllFilesParen=Semua file (*.*)
+;All files (*.*)
+AllKinds=Semua jenis
+;All kinds
+AllRealworldUnitsInMeter=Semua satuan dunia nyata dalam meter.
+;All realworld units in meter.
+AllTheLightColorSettings=Semua pengaturan cahaya + warna
+;All the light + color settings
+AlreadyExists={} <{}> sudah ada
+;{} <{}> already exists
+AlsoMakeAVideoAVI=Buat juga video (AVI)
+;Also make a video (AVI)
+Alternate=Alternatif
+;Alternate
+Amb=Amb
+;Amb
+Ambient=Ambien
+;Ambient
+AmbientBottomColorClickToChange=Warna ambien bawah, klik untuk mengubah.
+;Ambient bottom color, click to change.
+AmbientLight=Cahaya ambien
+;Ambient light
+AmbientLower=ambien
+;ambient
+AmbientOcclusion=ambient occlusion
+;ambient occlusion
+AmbientRaysDepth=Kedalaman sinar ambien:
+;Ambient rays depth:
+AmbientShadow=Bayangan ambien
+;Ambient shadow
+AmbientShadowCalculation=perhitungan bayangan ambien
+;ambient shadow calculation
+AmbientShadows=\sBayangan Ambien
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=Warna ambien atas, klik kiri untuk mengubah warna,\nklik kanan untuk menyisipkan warna kedalaman.
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=Jumlah:
+;Amount:
+AnAIAssistantOnThisComputer=Asisten AI di komputer ini dapat menggunakan Mandelbulb 3D: mintalah dengan kata-kata biasa, atau dengan suara, untuk mendeskripsikan, mengubah, dan merender gambar Anda, membuat variasi, atau merender apa yang terakhir Anda kerjakan. Mandelbulb 3D tetap offline: aplikasi asisten menjalankannya di komputer ini.
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=Perhitungan gambar ini yang belum selesai telah disimpan ({}).\n\nLanjutkan?  "Tidak" menghitungnya lagi dari awal.
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=Render Monte Carlo yang belum selesai dengan parameter ini telah disimpan ({}).\n\nLanjutkan?  "Tidak" merendernya lagi dari awal.
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} dan {}
+;{} and {}
+AndRemove=dan hapus
+;and remove
+AngleUnitConversionRoutines={ Rutin konversi satuan sudut }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=Keyfr. ani (f)
+;Ani keyfr. (f)
+AniKeyframe=Keyframe ani
+;Ani keyframe
+AnimatedGif=Gif animasi
+;Animated Gif
+Animation=Animasi:
+;Animation:
+Animation2=Animasi: {}
+;Animation: {}
+AnimationLower=animasi
+;animation
+AnimationMaker=Pembuat animasi
+;Animation maker
+AnimationMakerParen=Pembuat animasi   ({})
+;Animation maker   ({})
+AnimationPicsOutput=Keluaran gambar animasi:
+;Animation pics output:
+AnimationPreview=Pratinjau animasi
+;Animation preview
+AnimationProcessing=Pemrosesan animasi
+;Animation processing
+AnimationRenderingStopped=Render animasi dihentikan.
+;Animation rendering stopped.
+AnimationSize=Ukuran animasi:
+;Animation size:
+AnimationTheFfmpegCommandIsOn=Animasi: perintah ffmpeg ada di clipboard (jalankan di terminal setelah frame selesai):
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=Animasi: video ditulis: {}
+;Animation: video written: {}
+Animations=Animasi
+;Animations
+AntiAliasing=Anti aliasing:
+;Anti aliasing:
+Antialiasing=Antialiasing:
+;Antialiasing:
+Aperture=Apertur:
+;Aperture:
+Appearance=Tampilan
+;Appearance
+ApplyToImage=Terapkan ke gambar
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=Terapkan nilai yang Anda ubah, karena kolom edit hanya keluaran
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=Perkiraan warna vertex. Informasi warna akan disimpan sebagai koordinat uv di mesh dan akan menambah ukuran mesh
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2 menghitung ArcTan(Y/X), dan mengembalikan sudut di kuadran yang benar.
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AsFullBackgroundSphere=Sebagai bola latar penuh:
+;As full background sphere:
+Aspect=Aspek:
+;Aspect:
+AssignActualFormulaSettings=Terapkan pengaturan formula saat ini
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=Terapkan pengaturan cahaya saat ini dari program utama.\nCahaya dan warna berbeda dari render utama\nkarena fungsi yang lebih sederhana di navigator.
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=Pada subframe mana:
+;At which subframe:
+Author=Pembuat:
+;Author:
+Author2=Pembuat
+;Author
+Auto=Otomatis
+;Auto
+AutoRenderAllFollowingTiles=Render otomatis semua tile berikutnya
+;Auto render all following tiles
+AutoSavingTheM3cFile=Simpan otomatis file m3c:
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=Otomatis: CPU dan kartu grafis berbagi gambar (CPU\nlangsung mulai, kartu bergabung segera setelah shader-nya\ndikompilasi), lalu kartu menjalankan bayangan dan ambient\nocclusion.\nCPU: tidak pernah memakai kartu grafis.\nKartu grafis: menunggu shader, seperti sebelumnya.
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=Perbarui gambar otomatis
+;Auto update image
+AutoUpdatePreview=Perbarui pratinjau otomatis
+;Auto update preview
+AutoclipSpecDiff=Autoclip spek+difus :
+;Autoclip spec+diff :
+AutodetectOnStart=Deteksi otomatis saat mulai
+;Autodetect on start
+AverageNoise=Rata-rata derau:
+;Average noise:
+AverageRaycount=Rata-rata jumlah sinar:
+;Average raycount:
+AvgIterations=Rata-rata iterasi:
+;Avg. iterations:
+AvgRaysteps=Rata-rata langkah sinar:
+;Avg. raysteps:
+AxisX=Sumbu X
+;Axis X
+AxisY=Sumbu Y
+;Axis Y
+AxisZ=Sumbu Z
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=Penyimpanan BMP,JPG,PNG:
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=Cache BTracer2 (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=Gbr latar
+;Back pic
+BackToTheViewTakenFrom=Kembali ke tampilan yang diambil dari jendela utama.
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=Warna latar bawah, klik untuk mengubah.
+;Background bottom color, click to change.
+BackgroundImage=Gambar latar:
+;Background image:
+BackgroundImage2=Gambar latar
+;Background image
+BackgroundPictures=Gambar latar:
+;Background pictures:
+BackgroundTopColorLeftclickToChange=Warna latar atas, klik kiri untuk mengubah, klik kanan untuk menu popup.
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=Warna &dasar:
+;&Basic colors:
+BatchProcessing=Pemrosesan batch
+;Batch processing
+BatchProcessingPictureOf=Pemrosesan batch: gambar {} dari {}
+;Batch processing: picture {} of {}
+Between=antara:
+;between:
+Big=besar
+;big
+BigRender=Render besar
+;Big render
+BigRender2=Render besar: {}
+;Big render: {}
+BigRenderProjects=Proyek render besar:
+;Big render projects:
+BigRenderStopped=Render besar dihentikan.
+;Big render stopped.
+BigRenders=Render besar
+;Big renders
+BigSizeIncludingAntiAliasing=Ukuran besar (termasuk anti aliasing):
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=Jendela dan teks lebih besar atau lebih kecil (tata letak tetap sama)
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=Radius lebih besar berarti bayangan lebih lembut
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=Nilai yang lebih besar dari jumlah baris (horizontal) yang ada akan dipotong ke baris terakhir.\nTidak masalah.
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=Bitmap (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=Campur dFog
+;Blend dFog
+BlendTheDynamicFogInsteadOf=Campurkan kabut dinamis alih-alih menambahkan cahaya,\nmembuat latar belakang menghilang.
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=blok
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=Bokeh:
+;Bokeh:
+BorderSize=Ukuran tepi:
+;Border size:
+Box=Box
+;Box
+BoxSharpGoodAAGaussBit=Box: tajam, AA bagus\nGauss: agak buram, AA sangat bagus
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=Membawa jendela ke depan dari jendela mana pun, atau menutup jendela saat ini. Klik kolom dan tekan tombolnya; Backspace menghapus tombol pintas.
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=Telusuri...
+;Browse...
+BuiltIn=bawaan
+;built in
+BuiltWithoutIntelOpenImageDenoise=dibuat tanpa Intel Open Image Denoise
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=Pengaturan BulbTracer2 (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=Oleh
+;By
+ByOfDone={} ({}, oleh {}): {} dari {} {} selesai
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=Hitung-
+;Calc-
+CalcColon=Hitung:
+;Calc:
+CalcRAutomatic=Hitung R. otomatis.
+;Calc. R. automatic.
+Calculate=Hitung
+;Calculate
+Calculate3D=Hitung 3D
+;Calculate 3D
+Calculate3DAndTheBatchWindow=Hitung 3D dan jendela Batch dengan swarm, di
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=Hitung gambar kotak-kotak 8x8 yang cepat tanpa pencahayaan yang tepat
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=Hitung A.S. otomatis
+;Calculate A.S. automatically
+CalculateColors=Hitung Warna
+;Calculate Colors
+CalculateDoF=Hitung DoF:
+;Calculate DoF:
+CalculateDoFAutomatically=Hitung DoF otomatis
+;Calculate DoF automatically
+CalculateHSAutomatically=Hitung H.S. otomatis
+;Calculate H.S. automatically
+CalculateJulia=Hitung Julia
+;Calculate Julia
+CalculateLeftEyeImage=Hitung gambar mata kiri
+;Calculate left eye image
+CalculateNTimesToReduceNoise=Hitung n kali untuk mengurangi derau dengan merata-ratakan
+;Calculate n times to reduce noise by averaging
+CalculateNow=Hitung sekarang
+;Calculate now
+CalculateOn=Hitung di
+;Calculate on
+CalculateOnlyASelectionInThe=Hitung hanya bagian terpilih dari gambar
+;Calculate only a selection in the image
+CalculatePreview=Hitung pratinjau
+;Calculate preview
+CalculateRTAutomatically=Hitung R. (+ T.) otomatis
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=Hitung goresan cahaya acak otomatis
+;Calculate random light strokes automatically
+CalculateReflections=Hitung refleksi:
+;Calculate reflections:
+CalculateRightEyeImage=Hitung gambar mata kanan
+;Calculate right eye image
+CalculateTheImageFirst=Hitung gambarnya terlebih dahulu.
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=hitung gambarnya terlebih dahulu (Hitung 3D)
+;calculate the image first (Calculate 3D)
+CalculateTransparency=Hitung transparansi:
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=Hitung transparansi hanya pada formula dIFS (untuk kombinasi DE dengan escapetime)
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=dihitung
+;calculated
+CalculatedOn=Dihitung di: {}
+;Calculated on: {}
+CalculatedOnTheCPU=Dihitung di CPU
+;Calculated on the CPU
+CalculatedPictures=Gambar yang dihitung
+;Calculated pictures
+CalculatingThePreview=Menghitung pratinjau...
+;Calculating the preview...
+CalculatingVolumetricLightMap=Menghitung peta cahaya volumetrik
+;Calculating volumetric light map
+Calculation=Perhitungan
+;Calculation
+CalculationCount=Jumlah perhitungan:
+;Calculation count:
+CalculationOptions=Opsi perhitungan
+;Calculation options
+CalculationStopped=Perhitungan dihentikan.
+;Calculation stopped.
+Calculations=Perhitungan
+;Calculations
+Camera=Kamera
+;Camera
+CameraColon=Kamera:
+;Camera:
+CameraLense=Lensa kamera:
+;Camera lense:
+Cancel=Batal
+;Cancel
+CancelAndShowResult=Batal dan tampilkan hasil
+;Cancel and show result
+CancelExit=Batal + keluar
+;Cancel + exit
+CancelImmediately=Batal segera
+;Cancel immediately
+CancelType=Jenis batal:
+;Cancel type:
+CannotRead={}: tidak dapat dibaca
+;{}: cannot read
+CannotTakePartAnotherVersionOf=; {} tidak dapat ikut (versi program yang lain)
+;; {} cannot take part (another version of the program)
+CannotWrite=Tidak dapat menulis {}: {}
+;Cannot write {}: {}
+CaseYAngleIsAt90=Jika sudut Y bernilai 90 atau -90 derajat, sudut euler tidak dapat dihitung!
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CautionTheProcessingsBelowMustBe=Perhatian:  Pemrosesan di bawah harus dihitung\ndari atas ke bawah dan perubahan cahaya akan mengatur ulang\nperhitungan ini!
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil: Bilangan bulat terkecil >= X, |X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=Ubah
+;Change
+ChangeParams=Ubah Param
+;Change Params
+ChangeTheJuliaValuesWithRadius=Ubah nilai julia dengan radius, bujur, dan lintang
+;Change the julia values with radius, longitude and latitude
+CheckColors=Periksa warna
+;Check colors
+CheckThisIfYouWantTo=Centang ini jika Anda ingin membuat animasi berulang.\nInterpolasi berlaku seolah-olah setelah keyframe terakhir\ndatang keyframe pertama lagi dan sebaliknya.
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=Centang opsi ini untuk mendapatkan lebih sedikit perubahan warna pada gambar.\nUntuk mendapatkan lebih banyak detail meskipun dicentang, lakukan pewarnaan pada parameter\nasli dengan nilai DEstop yang diturunkan, dibagi dengan 'Faktor ukuran'.
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=Centang ini agar thread paling lambat tidak lagi diberi prioritas lebih tinggi.
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=Centang untuk mengubah nilai [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=Pilih nama file, lalu render kedua gambar mata dan simpan pasangan stereo yang selesai secara otomatis.
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=Pilih peta
+;Choose a map
+ChooseASharedFolderFirstOne=pilih folder bersama terlebih dahulu (yang dapat dilihat oleh setiap komputer swarm)
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=Pilih Opsi:
+;Choose Option:
+ChoseTheme=Pilih Tema:
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (di terminal)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (aplikasi desktop)
+;Claude (desktop app)
+Clear=Bersihkan
+;Clear
+ClearAllGenerationsBeforeTheSelected=Hapus semua generasi sebelum yang dipilih
+;Clear all generations before the selected one
+ClearAllPrevious=Hapus semua sebelumnya
+;Clear all previous
+ClearTheWholeList=Kosongkan seluruh daftar
+;Clear the whole list
+ClickAButtonToChangeA=(Klik tombol untuk mengubah direktori)
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=Klik judul kolom untuk mengurutkan.
+;Click a column header to sort.
+ClickALanguageToSwitchThe=Klik bahasa untuk mengganti bahasa jendela
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=Klik file parameter untuk melihat pratinjaunya.
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=Klik dan tekan tombol-tombol pintasan
+;Click and press the keys of the hotkey
+ClickImage=klik gambar
+;click image
+ClickOnButtonAndAfterwardsOn=Klik tombol lalu klik objek di gambar\nuntuk mengatur titik tengah cahaya.
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=Klik pada gambar
+;Click on image
+ClickOnMToSaveThese=Klik "M" untuk menyimpan pengaturan ini beserta lebar gambar dan skala\nsebagai preset. Lalu klik "pratinjau", "tengah" atau "tinggi"\natau klik "M" lagi untuk membatalkan.
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=Klik tombol lalu klik objek di gambar untuk mengambil\nnilai dari sana.
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=Klik tombol lalu klik objek di gambar untuk mengambil\nnilai julia dari sana.\nDalam mode 4d, vektor diputar sesuai nilai rotasi 4d.\n\nTips: Ambil nilai dari objek yang dihitung tanpa julia, jika tidak hasilnya\ntidak benar-benar berhubungan dengan titik itu.
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=Klik tombol lalu klik objek di gambar untuk mengambil\njarak objek yang tidak digeser.\nBagian objek itu akan tampak pada jarak sebenarnya dari layar.
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=Klik objek di gambar untuk dijadikan pusat.\nArah kamera tidak diubah, gunakan opsi rotasi\nuntuk berputar di sekitar titik tengah.
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=Klik untuk beralih antara Dynfog pada its dan Warna pada its
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=Klik untuk memilih file keluaran
+;Click to choose the output file
+ClickToChooseTheOutputFolder=Klik untuk memilih folder keluaran
+;Click to choose the output folder
+ClickToChooseYourNameFor=Klik untuk memilih nama Anda untuk disimpan otomatis di parameter
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=Klik untuk sembunyikan/tampilkan
+;Click to hide/show
+ClickToInsertYourNameBelow=Klik untuk menyisipkan nama Anda di bawah
+;Click to insert your name below
+ClickToLoadABackgroundPicture=Klik untuk memuat gambar latar.
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=Klik untuk membuka explorer dan seret&&lepas file M3P ke daftar.
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=Klik untuk merender bidang 2d di titik tengah.
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=Klik untuk merender bidang awal 2d.
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=Klik untuk merender bidang akhir Z.
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=Klik untuk menyimpan cahaya saat ini dan sebagian besar pengaturan warna\npada tombol preset kustom.\nKlik tombol ini lagi untuk membatalkan penyimpanan.
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=Klik untuk memilih satu atau lebih file M3P untuk dimasukkan ke daftar.
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=Klik untuk mengatur semua slider kabut dinamis ke nol.
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=Klik untuk mengatur tinggi gambar agar sesuai dengan rasio aspek ini.
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=Klik untuk mengatur cahaya navi ke salah satu preset ini.
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=Klik untuk mengetik zoom (tetap: zoom tetap).
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=ClippingR:
+;ClippingR:
+Close=Tutup
+;Close
+CloseMesh=Tutup Mesh
+;Close Mesh
+CloseTheCurrentWindow=Tutup jendela saat ini:
+;Close the current window:
+CloseTheMeshAtTheBorders=Tutup mesh di tepinya
+;Close the mesh at the borders
+CloseWindow=Tutup jendela
+;Close window
+Co=Co:
+;Co:
+Code=Kode
+;Code
+CodeFile=Kode: {}\nFile: {}
+;Code: {}\nFile: {}
+ColCycling=Siklus warna
+;Col cycling
+ColVarOnZ=Var. warna pd Z
+;Col. var. on Z
+Color=Warna
+;Color
+ColorAdjustment=Penyesuaian warna
+;Color adjustment
+ColorEnd=Warna akhir
+;Color end
+ColorOnIterat=Warna pd Iterasi:
+;Color on Iterat.:
+ColorOnIts=Warna pada its:
+;Color on its:
+ColorOption0AverageOfBoth=Opsi Warna:\n0:  Rata-rata kedua formula.\n1:  Warna formula pertama.\n2:  Warna formula kedua.
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=Opsi skala warna
+;Color scaling options
+ColorStart=Warna awal
+;Color start
+Coloring=Pewarnaan
+;Coloring
+ColumnsOfTiles=Kolom tile
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=Metode Kombinasi:\nMin: Kedua fraktal terlihat, kombinasi minimum DE\nMax: Hanya bagian yang tumpang tindih, kombinasi maksimum DE\nInv max: Balikkan DE Hybrid kedua dan kombinasikan 'Max'\nMin lin: Kombinasi minimum dengan fungsi tumpang tindih linear\nMin nlin: Seperti S1, fungsi nonlinear, tumpang tindih lebih halus\nMix: Pertama F1..FendHybrid1 lalu gunakan FstartHybrid2..F6 (dIFS) dengan vektor yang dimodifikasi.
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=Gabungkan peta Y dengan warna difus
+;Combine map Y with diffuse colors
+Common=Umum
+;Common
+ComparingFiles=membandingkan file
+;comparing files
+Compile=Kompilasi
+;Compile
+CompileTheCodeF9=Kompilasi kode <F9>
+;Compile the code <F9>
+CompilingSucceeded=Kompilasi berhasil
+;Compiling succeeded
+Computer=Komputer
+;Computer
+Confirm=Konfirmasi
+;Confirm
+Connect=Hubungkan
+;Connect
+ConnectToAnAIAssistant=Hubungkan ke asisten AI
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=Hubungkan ke asisten AI: biarkan ia mendeskripsikan, mengubah, dan merender gambar Anda
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=Terhubung. Tanyakan dalam percakapan baru; mulai ulang aplikasi jika mb3d tidak muncul di antara alatnya.
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=Terhubung. Mulai sesi Claude Code baru untuk menggunakannya. Untuk melepasnya lagi, jalankan perintah di bawah.
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=Atenuasi Konst.
+;Const Attenuation
+Constant=Konstanta
+;Constant
+Constants=Konstanta:
+;Constants:
+Continue=Lanjutkan
+;Continue
+ConvertManyM3PFilesToM3I=Konversi banyak file M3P ke M3I
+;Convert many M3P files to M3I
+CopiedToTheClipboard=Disalin ke clipboard.
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=Menyalin perintah ffmpeg untuk video MP4 kecil dari frame ke clipboard.\nJalankan sendiri di terminal (program ini tidak menjalankan program lain).
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=Salin
+;Copy
+CopyCommand=Salin perintah
+;Copy command
+CopyParamsToClipboard=Salin Param ke Clipboard
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=Salin perintah untuk ditempel di terminal
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=Salin baris yang dipilih, atau semua baris yang ditampilkan jika tidak ada yang dipilih
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=Salin nilai
+;Copy the values
+CopyTheValuesTo=Salin nilai ke..
+;Copy the values to..
+CopyThisFormulaToFormula1=Salin formula ini ke formula 1
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=Salin formula ini ke formula 2
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=Salin formula ini ke formula 3
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=Salin formula ini ke formula 4
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=Salin formula ini ke formula 5
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=Salin formula ini ke formula 6
+;Copy this formula to formula 6
+CopyThisLightToLight1=Salin cahaya ini ke Cahaya1
+;Copy this light to Light1
+CopyThisLightToLight2=Salin cahaya ini ke Cahaya2
+;Copy this light to Light2
+CopyThisLightToLight3=Salin cahaya ini ke Cahaya3
+;Copy this light to Light3
+CopyThisLightToLight4=Salin cahaya ini ke Cahaya4
+;Copy this light to Light4
+CopyThisLightToLight5=Salin cahaya ini ke Cahaya5
+;Copy this light to Light5
+CopyThisLightToLight6=Salin cahaya ini ke Cahaya6
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=Salin Z1 ke Z2 untuk mendapatkan titik fokus
+;Copy Z1 to Z2 to get a focus point
+Cores=Core
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=Tidak dapat memuat formula <{}>: {}
+;Could not load formula <{}>: {}
+CouldNotWrite=Tidak dapat menulis {}: {}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=Jumlah gambar (irisan objek) yang akan dihitung.
+;Count of images (object slices) that will be calculated.
+CreateEditAJITCompiledFormula=Buat/edit formula yang dikompilasi JIT
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=Buat file bahasa
+;Create language file
+CreateMeshes=Buat Mesh
+;Create Meshes
+CrossEyedPreview=Pratinjau cross-eyed
+;Cross-eyed preview
+Ctrl1ToCtrl7In=Ctrl+1 sampai Ctrl+7 sesuai urutan daftar, Ctrl+W untuk menutup
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+CustomPreset1=preset kustom 1
+;custom preset 1
+CustomPreset10=preset kustom 10
+;custom preset 10
+CustomPreset2=preset kustom 2
+;custom preset 2
+CustomPreset3=preset kustom 3
+;custom preset 3
+CustomPreset4=preset kustom 4
+;custom preset 4
+CustomPreset5=preset kustom 5
+;custom preset 5
+CustomPreset6=preset kustom 6
+;custom preset 6
+CustomPreset7=preset kustom 7
+;custom preset 7
+CustomPreset8=preset kustom 8
+;custom preset 8
+CustomPreset9=preset kustom 9
+;custom preset 9
+Cuts=Potong
+;Cuts
+Cutting=Pemotongan
+;Cutting
+Cutting2=Pemotongan*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=Denoising DCT (GIMP)
+;DCT denoising (GIMP)
+DE=DE:
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=Komb. DE:
+;DE comb.:
+DEStop=DE stop:
+;DE stop:
+DEcombinate=DEcombinate
+;DEcombinate
+DEstop=DEstop:
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=k.Kabut
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=Bentuk dIFS
+;dIFS shapes
+DIFSTransformations=Transformasi dIFS
+;dIFS transformations
+DOUBLEIMAGESIZE=GANDAKAN UKURAN GAMBAR
+;DOUBLE IMAGESIZE
+DateModified=Tanggal diubah
+;Date modified
+Day=Hari
+;Day
+DblClickHideRightPanel=Klik ganda: sembunyikan panel kanan
+;DblClick: hide right panel
+Debug=debug
+;debug
+DecreaseScale=Perkecil skala
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=Perkecil ukuran jendela Navigator
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=Mengurangi kabut di bagian dekat
+;Decreases the fog in near parts
+DefaultTheme=Tema Bawaan
+;Default Theme
+Defaults=Bawaan
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=Tentukan direktori bawaan untuk memuat+menyimpan
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=Tentukan urutan gambar untuk menganimasikan peta ketinggian dan warna
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=Menentukan seberapa akurat posisi dengan jarak yang ditentukan ke permukaan akan dihitung.\nNilai lebih tinggi menghasilkan akurasi lebih baik, yang juga menghasilkan perhitungan normal lebih baik.\nJarang diperlukan lebih dari 12.
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=Menentukan seberapa dekat (dalam meter) bidang Zstart berada di depan Anda.\nIni juga jarak minimum sebuah objek (virtual) dapat muncul.
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=Menentukan jarak ke permukaan objek tempat raymarching berhenti.\nNilai lebih rendah memberi detail objek lebih banyak, tetapi juga dapat menyebabkan undersampling.\nNilai ini relatif terhadap lebar satu piksel.
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=Menentukan jarak dunia nyata ke layar tampilan dalam meter.
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=Menentukan lebar gambar dunia nyata di layar dalam meter.
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=Menentukan ukuran bidang pandang Zstart.\nDiatur otomatis saat menggunakan navigator,\nubah hanya jika objek terpotong di tepi\ngambar.
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=Menentukan hingga sudut berapa bayangan akan dihitung.\nNilai lebih rendah: Struktur jauh kurang terpengaruh oleh struktur dekat,\nini menguntungkan bila strukturnya memiliki banyak lubang.
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=Menentukan di mana iterasi dimulai lagi,\nsetelah formula terakhir selesai dan belum\nada kondisi henti yang terjadi.
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=Derajat rotasi
+;Degree of rotation
+Degrees=Derajat
+;Degrees
+Del=Hapus
+;Del
+DelEntry=Hapus Entri
+;Del Entry
+Delete=Hapus
+;Delete
+DeleteAll=Hapus semua
+;Delete all
+DeleteAllKeyframesToBeginA=Hapus semua keyframe untuk memulai proyek baru.
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=Hapus file yang disorot dari daftar
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=Hapus nilai konstanta yang dipilih
+;Delete selected constant value
+DeleteSelectedNamedParameter=Hapus parameter bernama yang dipilih
+;Delete selected named parameter
+DeleteSelectedOption=Hapus opsi yang dipilih
+;Delete selected option
+DeleteSequence=Hapus Urutan
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail=Hapus parameter dan thumbnail "{}" dari riwayat?
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=Hapus keyframe ini
+;Delete this keyframe
+DeleteThisTilesFiles=Hapus file tile ini
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=Hapus semua yang disimpan oleh render yang belum selesai
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=Hapus semua yang disimpan oleh render yang belum selesai?
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=Hapus yang disimpan oleh render yang dipilih
+;Delete what the selected render kept
+Depth=Kedalaman
+;Depth
+DepthColon=Kedalaman:
+;Depth:
+DepthGradientFunctionWorksOnlyIf=Fungsi gradien kedalaman, hanya berfungsi jika bukan 'Relatif terhadap objek'.
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\sDepth of Field
+;\sDepth of Field
+DepthOfField2=Depth of Field
+;Depth of Field
+DepthOfFieldLower=depth of field
+;depth of field
+DepthOfReflections1ToSee=Kedalaman refleksi: 1 untuk melihat hanya satu refleksi,\ndengan 2 Anda dapat melihat refleksi pada objek yang dipantulkan, ... dan seterusnya.
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=Deskripsi
+;Description
+DetectsTheAmountOfProcessorCores=Mendeteksi jumlah core prosesor saat mulai.\nAnda dapat memilih jumlahnya sendiri dan menonaktifkan\nopsi ini untuk memulai dengan pengaturan berbeda.
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=menentukan untuk berapa objek berikutnya refleksi difus akan dihitung
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=menentukan berapa refleksi lurus berikutnya yang akan dihitung
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=Menentukan kapan render berhenti dalam mode batch
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=Menentukan apakah cahaya harus terlihat dan bentuknya.
+;Determines whether the light should be visible and its shape.
+Diff=Difus:
+;Diff:
+Diff2=Difus
+;Diff
+DifferentCalculationOfLightCombining=Perhitungan penggabungan cahaya yang berbeda
+;Different calculation of light combining
+Diffuse=Difus:
+;Diffuse:
+Diffuse2=Difus
+;Diffuse
+DiffuseFunctionChooseCosOrCos=Fungsi difus, pilih Cos atau Cos^2 jika Anda memakai bayangan keras pada cahaya ini.
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=Warna difus objek, klik untuk mengubahnya.
+;Diffuse object colors, click to change them.
+DiffuseShadow=Bayangan difus
+;Diffuse shadow
+DirectionTowardsZero000=Arah menuju nol (0,0,0)
+;Direction towards zero (0,0,0)
+DisableAll=Nonaktifkan semua
+;Disable all
+DisableAnalyticalDE=Nonaktifkan DE analitis
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=Nonaktifkan penyesuaian zoom otomatis saat bergerak.\nIni juga menyebabkan menembus objek.
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=Nonaktifkan tombol (f) untuk ani
+;Disable the (f) key for ani
+DisableThemes=Nonaktifkan Tema
+;Disable Themes
+DisableThisIfYouDoNot=Nonaktifkan ini jika Anda tidak ingin angka nol di depan pada indeks file.\nContoh:  name000010.png  menjadi  name10.png
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=Nonaktifkan threadboost
+;Disable threadboost
+Disc=Cakram
+;Disc
+Disconnect=Putuskan
+;Disconnect
+DisplayStyle=Gaya Tampilan
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=Menampilkan beberapa deskripsi formula, jika tersedia.
+;Displays some formula descriptions, if available.
+DistanceEstimation=Estimasi jarak
+;Distance estimation
+DitheringForScale=Dithering untuk skala:
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=Membagi "Pengali langkah sinar" saat ini dengan nilai ini,\nnaikkan nilainya untuk mengurangi overstepping.
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=Perhitungan DoF
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=Perhitungan DoF dimatikan, tidak dapat dilakukan dalam mode tiling.
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=Jangan buat jendela ini lengket
+;Do not make this window sticky
+DoThisFunctionAutomatically=Lakukan fungsi ini otomatis
+;Do this function automatically
+DoYouReallyWantToClear=Yakin ingin menghapus semua generasi sebelumnya?
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=Yakin ingin mengosongkan daftar batch?
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=Yakin ingin menghapus semuanya?
+;Do you really want to delete everything?
+DoYouReallyWantToStop=Yakin ingin menghentikan perhitungan?
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=Melakukan pewarnaan setelah jumlah iterasi ini dan bukan dari bailout (-1, nonaktif)
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=Mengerjakan
+;Doing
+DonTChangeAmbShDFog=Jangan ubah AmbSh+dFog:
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=Jangan simpan, hanya pratinjau
+;Don't save, only preview
+Done=Selesai
+;Done
+Done2={} selesai ({}).
+;{} done ({}).
+DoneOf=Selesai: {} dari {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=Klik ganda untuk mengubah mode navi
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=Gandakan ukuran gambar otomatis
+;Double the imagesize automatically
+DownScaling=Perkecil-\nan:
+;Down-\nscaling:
+DownscaleBoth=Perkecil keduanya
+;Downscale both
+DownscaleDiffuseKeepReflections=Perkecil difus, pertahankan refleksi
+;Downscale diffuse, keep reflections
+DownscaleSpecular=Perkecil spekular
+;Downscale specular
+Ds=Ds:
+;Ds:
+DunnoDoNothing=Entahlah, jangan lakukan apa-apa
+;Dunno, do nothing
+DynFog=Kabut din.
+;Dyn.fog
+DynFogOnIt=Kabut din. pd It.:
+;Dyn. fog on It.:
+DynFogOnIts=Kabut Din pd its:
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=Kabut dinamis, klik untuk mengubah warna.  Klik kanan untuk menyisipkan warna cahaya volumetrik.
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=Warna intens kabut dinamis, klik untuk mengubah.
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=Param kabut dinamis atau cahaya volumetrik. Lihat tab 'Pewarnaan' untuk opsi!
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=Kabut dinamis:\nSemakin kecil angkanya, semakin jauh dari objek kabut muncul.\nDengan dIFS, kabut berada di sekitar bagian objek yang dihitung pada iterasi ini.\nNol untuk menonaktifkan fitur ini dan membuat kabut dinamis dari jumlah langkah sinar seperti biasa.\nTips: Centang opsi 'Langkah pertama acak' untuk mencegah tangga.\nCahaya volumetrik:\nPilih nomor cahaya yang hamburan cahayanya akan dihitung.
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=Warna tepi
+;Edges color
+Edit=Edit
+;Edit
+EditJITCompiledFormula=Edit Formula yang dikompilasi JIT
+;Edit JIT-compiled Formula
+EditMapSequences=Edit Urutan Peta
+;Edit Map Sequences
+EditMode=Mode edit:
+;Edit mode:
+EditNamedConstantValue=Edit nilai konstanta bernama
+;Edit named constant value
+EditNamedParam=Edit param bernama
+;Edit named param
+EditOptionValue=Edit nilai opsi
+;Edit option value
+EditSelectedConstantValue=Edit nilai konstanta yang dipilih
+;Edit selected constant value
+EditSelectedNamedParameter=Edit parameter bernama yang dipilih
+;Edit selected named parameter
+EditSelectedOption=Edit opsi yang dipilih
+;Edit selected option
+Elapsed=Berlalu
+;Elapsed
+ElapsedTimeS=Waktu berlalu: {} d
+;Elapsed time: {} s
+Enable=Aktifkan
+;Enable
+EnableGeneratingZBufferThisMode=Aktifkan pembuatan z-buffer. Mode ini memerlukan data tambahan sehingga tidak kompatibel dengan versi sebelumnya, jadi file MC dengan pengaturan ini tidak dapat disimpan/dipulihkan. Untuk menyimpan z-buffer cukup simpan gambar normal, z-buffer akan otomatis ikut disimpan.
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=Aktifkan gamma internal 2 untuk perhitungan cahaya.\nIni tidak bergantung pada slider Gamma.
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=Aktifkan Pencahayaan
+;Enable Lighting
+Enabled=Aktif
+;Enabled
+EnablesTheHardShadowIfCalculated=Mengaktifkan bayangan keras, jika sudah dihitung.\nJika HS belum dihitung, bayangan ambien mengurangi cahaya jika diaktifkan.
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=Akhir:
+;End:
+EnterNamedParameter=Masukkan parameter bernama
+;Enter named parameter
+Entries={} entri
+;{} entries
+Error=galat
+;error
+ErrorAt=, galat di {}: {}
+;, error at {}: {}
+Errors=Galat
+;Errors
+Escapetime3DFormulas=formula 3D escapetime
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=formula 3D escapetime dengan perhitungan DE analitis (lebih cepat)
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=formula 4D escapetime
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=formula 4D escapetime dengan perhitungan DE analitis (lebih cepat)
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=hanya transformasi escapetime,\ngunakan bersama formula escapetime
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=Sudut Euler:
+;Euler angles:
+EveryNewPictureOfTheMain=Setiap gambar baru di jendela utama difilter (yang disimpan juga).
+;Every new picture of the main window is filtered (the saved one too).
+Everything=Semuanya
+;Everything
+ExchangeAdd=Tukar, tambah
+;Exchange, add
+ExchangeThisFormulaWithTheNext=Tukar formula ini dengan yang berikutnya
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=Tukar formula ini dengan yang sebelumnya
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=Tukar frame ini dengan yang berikutnya
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=Tukar frame ini dengan yang sebelumnya
+;Exchange this frame with the previous one
+Exit=Keluar
+;Exit
+ExpandThePanel=Bentangkan panel
+;Expand the panel
+ExponentialFunctions={ Fungsi eksponensial }
+;{ Exponential functions }
+ExportACubeAsAStack=Ekspor kubus sebagai tumpukan file PNG
+;Export a cube as a stack of PNG files
+Exposure025=Eksposur:  0.25
+;Exposure:  0.25
+ExtractingAmbientInformationFromTheOriginal=Mengekstrak informasi ambien dari file M3I asli, harap tunggu:
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ Pengujian ekstrem }
+;{ Extreme testing }
+FFmpegCommand=Perintah FFmpeg
+;FFmpeg command
+FNr=No.F:
+;F.nr:
+FOVy=FOVy:
+;FOVy:
+FailedToImportFractalParametersAll=Gagal mengimpor parameter fraktal. Semua pengaturan lain sudah diimpor?
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=Kabut kedalaman jauh
+;Far depth fog
+FarOffset=Offset jauh
+;Far offset
+FarPlane=Bidang jauh:
+;Far plane:
+FastInaccurate=Cepat+tidak akurat
+;Fast+inaccurate
+File=File
+;File
+FileIndex=Indeks file:
+;File index:
+FileLower=file
+;file
+FileName=&Nama file:
+;File &name:
+FileTooShort=file terlalu pendek
+;file too short
+Filename=Nama file
+;Filename
+Files=File
+;Files
+FilesOfType=&Jenis file:
+;Files of &type:
+FilterNewPicturesAutomatically=Filter gambar baru otomatis
+;Filter new pictures automatically
+FilterNow=Filter sekarang
+;Filter now
+Fine=halus
+;fine
+FineTuneThePositionsWithThe=atur posisi secara halus dengan tombol panah
+;fine tune the positions with the arrow buttons
+FinishedRenderingSlices=Render irisan selesai.
+;Finished rendering slices.
+FinishedTracingObject=Penelusuran objek selesai.
+;Finished tracing object.
+First4RaysNoisy=4 sinar pertama (berderau)
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=Perhitungan pertama kombinasi formula ini: shader kartu grafis sedang dikompilasi (10-30 d, hanya sekali - driver menyimpannya). Sementara itu CPU menghitung, kartu bergabung setelah siap.
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=Langkah pertama acak:
+;First step random:
+FirstStepRandomColon=Langkah Pertama Acak:
+;First Step Random:
+FirstStepRandomToAvoidSpotty=Langkah pertama acak:\nUntuk menghindari artefak berbintik pada formula dengan DE buruk.\nUntuk derau lebih rendah, gunakan dengan pengecilan gambar dan/atau jumlah sinar lebih tinggi.\nDapat juga digunakan bersama dithering.
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+FitLeftRightBorders=Sesuaikan tepi kiri+kanan
+;Fit left+right borders
+FixedZoomAndSteps=Zoom dan langkah tetap
+;Fixed zoom and steps
+FlatSolid=Padat Datar
+;Flat Solid
+FlatSolidWithEdges=Padat Datar dengan Tepi
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor: Bilangan bulat terbesar <= X,  |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fo.{}
+;Fo.{}
+FogOffset=Offset kabut
+;Fog offset
+Folder=Folder
+;Folder
+FolderOfTheLanguageFiles=Folder file bahasa:
+;Folder of the language files:
+FollowTheNewest=Ikuti yang terbaru
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\sUntuk eksponen pecahan, atau |eksponen| > MaxInt, basis harus > 0. }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=Untuk penggunaan sferis, mengganti warna ambien dengan gambar latar yang diperkecil
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=Formula
+;Formula
+Formula1=Formula1 •
+;Formula1 •
+Formula12=Formula1
+;Formula1
+FormulaEditor=Editor formula
+;Formula editor
+FormulaLower=formula
+;formula
+FormulaM3f=Formula (*.m3f)
+;Formula (*.m3f)
+FormulaName=Nama formula:
+;Formula name:
+FormulaNotFound=Formula '{}' tidak ditemukan.
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=Nomor formula tempat bagian ke-2 hybrid dimulai
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=Nilai formula:
+;Formula values:
+Formulas=Formula
+;Formulas
+FormulasColon=Formula:
+;Formulas:
+Forward=Maju
+;Forward
+FoundOnThisComputerNotConnected=Ditemukan di komputer ini, belum terhubung.
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=Ditemukan di komputer ini. Jalankan perintah ini sekali di terminal, lalu mulai sesi Claude Code baru:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=nama fp:
+;fp name:
+Fpow=Fpow:
+;Fpow:
+Frame=Frame:
+;Frame:
+FrameNumberToUseForAnimated=Nomor frame yang digunakan untuk peta animasi di editor utama
+;Frame number to use for animated maps in the main editor
+Frames=frame
+;frames
+FramesPerSecond=Frame per detik:
+;Frames per second:
+FramesSec=Frame/dtk:
+;Frames/sec:
+FromClipboard=Dari Clipboard
+;From Clipboard
+FullM3IImageFiles=File gambar M3I lengkap:
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=Fungsi:
+;Functions:
+FunctionsFromSystem={ ----------------------- Fungsi dari System  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- Fungsi dari System.Math  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=Gamma:  0.5
+;Gamma:  0.5
+Gauss=Gauss
+;Gauss
+GenerateAnAnimationKeyframeFromThe=Buat keyframe animasi dari tampilan saat ini
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=Buat gambar besar dengan tiling
+;Generate big images by tiling
+GenerateMesh=Buat mesh
+;Generate mesh
+GenerateMesh2=Buat Mesh
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=Buat irisan 2d objek berupa gambar PNG.
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=buat warna difus acak
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=buat warna spekular acak sesuai warna difus
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=Mesh yang Dibuat
+;Generated Mesh
+GenerationOf=Generasi {} dari {}
+;Generation {} of {}
+Generations=Generasi
+;Generations
+GetASmoothImageWraparoundFor=Dapatkan sambungan gambar yang mulus untuk penggunaan sferis
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=ambil titik tengah
+;get midpoint
+GetMinDistFromImage=Ambil jarak min. dari gambar
+;Get min.dist. from image
+GetValuesFromImage=Ambil nilai dari gambar
+;Get values from image
+GetZ1=Ambil Z1
+;Get Z1
+GetZ2=Ambil Z2
+;Get Z2
+GlobalLight=Cahaya global
+;Global light
+GlueSliders=Rekatkan slider
+;Glue sliders
+GoToNext=Ke berikutnya
+;Go to next
+GoneLastSeenSAgo=hilang (terakhir terlihat {} d lalu)
+;gone (last seen {} s ago)
+GraphicsCard=Kartu grafis
+;Graphics card
+GroupByDay=Kelompokkan per hari
+;Group by day
+GuessParams=Tebak param
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=Waktu hitung HS:
+;HS calc time:
+HardShadowCalculation=perhitungan bayangan keras
+;hard shadow calculation
+HardShadowRadius=Radius bayangan keras:
+;Hard shadow radius:
+HardShadows=\sBayangan Keras
+;\sHard Shadows
+HardShadowsLower=bayangan keras
+;hard shadows
+Height=Tinggi:
+;Height:
+HeightMapGenerator=Generator HeightMap
+;HeightMap Generator
+HeightMapGeneratorPreview=Pratinjau Generator HeightMap
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=Berguna jika Anda ingin mengulang gambar yang tidak diinginkan, misalnya.
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=HiQual
+;HiQual
+HiQual1=HiQual 1
+;HiQual 1
+HiQual2=HiQual {}
+;HiQual {}
+Hidden=tersembunyi
+;hidden
+HideThisFormula=Sembunyikan formula ini
+;Hide this formula
+High=tinggi
+;high
+History=Riwayat
+;History
+HistoryThePicturesCalculatedTheFiles=Riwayat: gambar yang dihitung, file yang dibuka dan disimpan (klik untuk menelusuri)
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=(Tahan tombol Shift untuk langkah lebih halus)
+;(Hold Shift key for finer steps)
+Hotkeys=Tombol pintas
+;Hotkeys
+HowStrongTheNoiseIsThat=Seberapa kuat derau yang dihapus (1 sampai 30, seperti "Denoise DCT" GIMP).\nNilai lebih tinggi menghapus lebih banyak derau, dan lebih banyak detail halus.
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThisComputerIsListedIn=Nama komputer ini di daftar swarm
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ Fungsi hiperbolik dan inversnya }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ IN: |X| <= 1  OUT: [0..PI] radian }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ IN: |X| <= 1  OUT: [-PI/2..PI/2] radian }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radian }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=Idle
+;Idle
+IfEnabledTheAmbientShadowsWill=Jika diaktifkan, bayangan ambien akan dihitung\notomatis setelah render utama.\nPilih opsinya terlebih dahulu.
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=Jika diaktifkan, bayangan keras yang dipilih akan dihitung\notomatis setelah render utama.\nPilih opsinya terlebih dahulu.
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=Jika diaktifkan, efek DoF akan dihitung\notomatis setelah perhitungan sebelumnya.\nPilih opsinya terlebih dahulu.
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=Jika diaktifkan, gambar menutupi seluruh bola.\nBerguna dalam animasi.
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=Jika diaktifkan, gambar tidak menghilang pada nilai 'Kedalaman' yang tinggi.
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=Jika diaktifkan, cahaya tidak diubah saat preset atau parameter cahaya dimuat.\nBerguna jika Anda tidak ingin menghitung ulang bayangan keras, misalnya.
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=Jika diaktifkan, refleksi akan dihitung otomatis setelah\nperhitungan sebelumnya.\nIngat bahwa perubahan cahaya setelahnya akan mengatur ulang perhitungan ini!
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=Jika diaktifkan, jumlah spekular dibagi menjadi sinar yang masuk ke dalam dan refleksi.
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=Jika direkatkan, slider berperilaku seolah diikat bersama dengan karet gelang.
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=Jika dipilih, tekan '1' untuk mengatur slider ini ke posisi bawaan.
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=Jika dipilih, file M3I akan disimpan di folder M3I bawaan,\n  yang ditentukan oleh opsi 'INI DIRS'.\nJika tidak dipilih, file disimpan di folder yang sama dengan file M3P.
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=Jika diatur ke nilai lebih dari 0, normal permukaan akan dihitung dengan rata-rata\ntitik-titik yang tersebar dan faktor kekasaran juga dihitung, menghasilkan aliasing lebih rendah.\nNilai 8 akan merata-ratakan atas suatu volume, yang sangat lambat tetapi dapat dipakai dalam situasi\nyang sangat kritis.  Anda juga dapat memakai Normal pada ZBuf di pascaproses.
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=Jika cahaya volumetrik dipilih:  Klik kanan tombol 'Kabut din.' untuk menyisipkan warna cahaya volumetrik.
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=Jika Anda ingin melanjutkan render yang sudah dimulai pada posisi\ntertentu, masukkan di sini indeks awal gambar yang akan dirender berikutnya.\nBiarkan nilai "Indeks file" tidak berubah.
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=Abaikan
+;Ignore
+Image=Gambar
+;Image
+ImageDownscalingForViewingPurposeAnd=Pengecilan gambar untuk keperluan tampilan dan untuk menyimpan sebagai jpeg, png, atau bmp.\nHanya pada skala 1:2 dan 1:3 filter anti aliasing diterapkan saat menyimpan.\nKlik untuk menu pilihan.
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=Gambar sudah ada
+;Image exists
+ImageLower=gambar
+;image
+ImageParameters=gambar + parameter
+;image + parameters
+ImageRotation=Rotasi gambar:
+;Image rotation:
+ImageSize=-> Ukuran gambar:
+;-> Image size:
+ImageWidth=Lebar gambar:
+;Image width:
+Images=Gambar
+;Images
+ImagesForMaps=Gambar untuk peta:
+;Images for maps:
+Img=Gbr
+;Img
+ImportActualParas=Impor param saat ini
+;Import actual paras
+ImportParameter=Impor parameter
+;Import parameter
+ImportParameterFromMain=Impor parameter dari utama:
+;Import parameter from main:
+ImportParameterFromMain2=Impor parameter dari utama
+;Import parameter from main
+ImportParametersFromAFileTo=Impor parameter dari file untuk dijadikan render besar
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=Impor parameter saat ini dari program utama
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=Impor parameter program utama untuk render mc
+;Import the main programs parameter for mc rendering
+ImportedFromMain=Diimpor dari Utama
+;Imported from Main
+InAndOutside=Di dalam dan luar
+;In and outside
+InOut=Dlm+Luar
+;In+Out
+InOutOption=Opsi dalam/luar:
+;In/out option:
+InTheSwarm=Dalam swarm:
+;In the swarm:
+InThisModeRightAndLeft=Dalam mode ini gambar mata kanan dan kiri dirender untuk setiap subframe.
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· total {}
+;\s· {} in total
+InTotal2=total {}
+;{} in total
+InclInMain=term. di utama
+;incl. in main
+IncludingDFogOnItsOrVol=termasuk opsi dFog pada its atau Cahaya vol.
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=Naikkan/turunkan nomor frame
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=Naikkan/Turunkan tingkat kualitas (Pengali langkah sinar)
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=Perbesar skala
+;Increase scale
+IncreaseTheSizeOfTheNavigator=Perbesar ukuran jendela Navigator
+;Increase the size of the Navigator window
+Increment=Kenaikan:
+;Increment:
+Increment2=Kenaikan
+;Increment
+IncrementIfTheSequenceIncreaseThe=Kenaikan urutan, naikkan nilainya untuk melewati gambar
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=Indeks dengan 0 di depan
+;Index with leading 0
+InfinityValuesHaveAFractionField=// nilai tak hingga memiliki bidang pecahan 0. Nilai tak hingga dapat positif
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=info
+;info
+Infos=Info
+;Infos
+IniDirs=Ini Dirs
+;Ini Dirs
+Input=Masukan
+;Input
+InputTheHeightDivisor=Masukkan pembagi tinggi:
+;Input the height divisor:
+InputTheOriginalValueFromThe=Masukkan nilai asli dari parameter program utama.
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=Masukkan nilai-nilai asli dari parameter program utama.
+;Input the original values from the main program parameters.
+InputTheWidthFactor=Masukkan faktor lebar:
+;Input the width factor:
+Inputs=Masukan:
+;Inputs:
+Insert=sisipkan
+;insert
+InsertActualParameterInThisKeyframe=Sisipkan parameter saat ini ke keyframe ini
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=Sisipkan parameter lengkap dari program utama
+;Insert complete parameter from main program
+InsertMidValues=Sisipkan nilai tengah
+;Insert mid values
+InsertVolumetricLightColor=Sisipkan warna cahaya volumetrik
+;Insert volumetric light color
+Inserting=Menyisipkan:
+;Inserting:
+InsertsTheCurrentMidPosition=Menyisipkan posisi tengah saat ini.
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=Menyisipkan posisi saat ini sebagai nilai julia.\nDalam mode 4d, vektor diputar sesuai nilai rotasi 4d.
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=Dalam
+;Inside
+InsideColor=Warna dalam
+;Inside color
+InsideRender=Render dalam
+;Inside render
+Int=Int.:
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower: Pangkatkan basis dengan bilangan bulat.  Cepat. }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=Intensitas:
+;Intensity:
+IntensityOfImage=Intensitas gambar
+;Intensity of image
+InterfaceLanguage=Bahasa antarmuka
+;Interface language
+InterfaceLanguageClickToChange=Bahasa antarmuka: {} (klik untuk mengubah)
+;Interface language: {} (click to change)
+InterfaceLanguageColon=Bahasa antarmuka:
+;Interface language:
+InterfaceSize=Ukuran antarmuka:
+;Interface size:
+Internal=Internal
+;Internal
+Interpolate=Interpolasi
+;Interpolate
+InterpolateANewKeyframeInBetween=Interpolasikan keyframe baru di antaranya.
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=Balikkan ZBuffer
+;Invert ZBuffer
+IsNotAValidFloatingPoint='{}' bukan nilai floating point yang valid
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue='{}' bukan nilai integer yang valid
+;'{}' is not a valid integer value
+Iteration=Iterasi
+;Iteration
+IterationCount=Jumlah Iterasi
+;Iteration Count
+Iterationcount=Jumlah iterasi
+;Iterationcount
+Iterations=Iterasi:
+;Iterations:
+ItsForFree=gratis!
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=Formula yang dikompilasi JIT
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=Kualitas atau ukuran JPEG
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=JPG memakai pengaturan kualitas saat ini yang ditampilkan di\nbagian atas jendela utama program.
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=Tugas
+;Job
+Jobs=Tugas:
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=Kualitas jpeg:
+;Jpeg quality:
+JpgQ=kual. jpg:
+;jpg q.:
+JuliaMode=Mode Julia
+;Julia mode
+JuliaMode2=Mode Julia
+;Julia Mode
+JuliaOff=Julia Mati
+;Julia Off
+JuliaOn=Julia Aktif
+;Julia On
+JuliaValuesXYZ=Nilai Julia (x,y,z):
+;Julia values (x,y,z):
+KeepAspect=jaga aspek
+;keep aspect
+KeepLights=Pertahankan cahaya
+;Keep lights
+KeepOnlyNearerParts=Hanya bagian yang lebih dekat:
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=Pertahankan rasio aspek saat mengubah lebar atau tinggi secara manual.\nTidak perlu dihapus centangnya jika menekan tombol aspek.
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=Biarkan baris terbaru tetap terlihat saat baris baru datang
+;Keep the newest line in sight as new ones come
+KeepThisPriority=Pertahankan prioritas ini
+;Keep this priority
+KeepsTheChosenLanguageForThe=Menyimpan bahasa yang dipilih untuk saat mulai berikutnya
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=Menyimpan tombol pintas untuk saat mulai berikutnya
+;Keeps the hotkeys for the next start
+Keyframe=keyframe:
+;keyframe:
+KeyframeListM3k=Daftar keyframe (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\sKeyframe\nmulai:    henti:
+;\s\sKeyframe\nstart:    stop:
+KeysThatBringAWindowTo=Tombol yang membawa jendela ke depan dari jendela mana pun
+;Keys that bring a window to the front from any window
+Kind=Jenis
+;Kind
+LGamma05=L-Gamma:  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=GORESAN CAHAYA
+;LIGHT STROKES
+LMBMoveRMBRotate=TMK: geser           TMKa: putar
+;LMB: move           RMB: rotate
+LastLengthIncrease=Kenaikan panjang terakhir
+;Last length increase
+LastPass=\s· lintasan terakhir {}
+;\s· last pass {}
+LeftclickGoIntoMouseModeView=Klik kiri:  masuk ke mode mouse.. lihat dengan mouse, +tombol kanan mouse.. berguling\n(Klik kiri lagi atau ESC untuk keluar dari mode mouse)
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=Klik kiri:   Putar bulb di sekitar sumbu X pengamat @ nilai Ymid+Zmid\nKlik kanan: Putar bulb di sekitar sumbu X objek @ 0
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=Klik kiri:   Putar bulb di sekitar sumbu Y pengamat @ nilai Xmid+Zmid\nKlik kanan: Putar bulb di sekitar sumbu Y objek @ 0
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=Klik kiri:   Putar bulb di sekitar sumbu Z pengamat @ nilai Xmid+Ymid\nKlik kanan: Putar bulb di sekitar sumbu Z objek @ 0
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=Klik kiri:   Urungkan -> Mengembalikan parameter cahaya ke keadaan sebelum pewarnaan terakhir\nKlik kanan: Ulangi
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=Klik kiri:   Urungkan -> Mengembalikan parameter ke keadaan sebelum perhitungan terakhir\nKlik kanan: Ulangi
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=Biarkan ambang menurunkan bayangan ambien hingga 0.\nStruktur jauh kurang terpengaruh oleh struktur yang lebih dekat.
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=Tingkat
+;Level
+Light=Cahaya
+;Light
+Light1=Cahaya 1
+;Light 1
+Light12=Cahaya1
+;Light1
+Light2=Cahaya 2
+;Light 2
+Light22=Cahaya2
+;Light2
+Light3=Cahaya 3
+;Light 3
+Light32=Cahaya3
+;Light3
+Light4=Cahaya 4
+;Light 4
+Light42=Cahaya4
+;Light4
+Light5=Cahaya 5
+;Light 5
+Light52=Cahaya5
+;Light5
+Light6=Cahaya 6
+;Light 6
+Light62=Cahaya6
+;Light6
+LightAmplitudeUseExponentStyleLike=Amplitudo cahaya, gunakan gaya eksponen seperti:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=Warna cahaya, tekan untuk memilih yang baru.
+;Light color, press to select a new one.
+LightScattering=Hamburan cahaya:
+;Light scattering:
+LightScatteringInsideTheMaterial=Hamburan cahaya di dalam material
+;Light scattering inside the material
+LightXangle=Sudut X cahaya
+;Light Xangle
+LightYangle=Sudut Y cahaya
+;Light Yangle
+Lighting=Pencahayaan
+;Lighting
+LightingColon=Pencahayaan:
+;Lighting:
+Lightmap=Lightmap
+;Lightmap
+Lightness=Kecerahan
+;Lightness
+LikeANaNAnInfinityDouble=// Seperti NaN, nilai double tak hingga memiliki eksponen 7FF, tetapi
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// Seperti tak hingga, nilai double NaN memiliki eksponen 7FF, tetapi NaN
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=Linear
+;Linear
+LinearAttenuation=Atenuasi Linear
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=Interpolasi linear keyframe di antaranya
+;Linear interpolate a keyframe inbetween
+Lines={} baris
+;{} lines
+List=Daftar
+;List
+LliMultiplier=Pengali Lli:
+;Lli multiplier:
+Load=Muat
+;Load
+LoadANewFormulaFile=Muat file formula baru
+;Load a new formula file
+LoadBtrace2=Muat btrace2...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=Muat kode dari formula lain, misalnya formula yang tidak dapat dikompilasi
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=Muat m3p...
+;Load m3p...
+LoadMesh=Muat mesh
+;Load mesh
+LoadParameters=Muat parameter
+;Load parameters
+LoadSettingsFromBtrace2File=Muat pengaturan dari file *.btrace2
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=Muat parameter ke jendela utama, atau buka file
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=Muat parameter render yang dipilih dan lanjutkan perhitungannya
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=Muat parameter render yang dipilih saja
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=Direktori awal untuk memuat dan menyimpan
+;Loading and saving initial directories
+Log=Log
+;Log
+LogEverythingTheProgramDidIts=Log: semua yang dilakukan program, peringatan dan galatnya (klik untuk melihat)
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ Fungsi logaritmik }
+;{ Logarithmic functions }
+LongerThanUsualStillWorking=lebih lama dari biasanya, masih bekerja
+;longer than usual, still working
+LookIn=&Cari di:
+;Look &in:
+Looking=Melihat
+;Looking
+LookingRollingAngle=Sudut lihat+guling:
+;Looking+Rolling angle:
+Loop=Ulang
+;Loop
+LoopAnimation=Animasi berulang
+;Loop animation
+Lower=Rendah
+;Lower
+Lowest=Terendah
+;Lowest
+M3AAnimationFiles=File animasi M3A:
+;M3A animation files:
+M3CPathtracerFiles=File pathtracer M3C:
+;M3C pathtracer files:
+M3DAnimationM3a=Animasi M3D (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=Proyek Render besar M3D (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=Formula M3D (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=Gambar + Parameter M3D (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=Parameter cahaya M3D (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=File monte carlo M3D (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=Parameter M3D (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=Proyek voxel M3D (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=Muat file formula M3F:
+;M3F formula files load:
+M3IDone=M3I selesai
+;M3I done
+M3ILightParameter=Parameter cahaya M3I:
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=File M3P yang akan dirender ke M3I
+;M3P files that should be rendered to M3I
+M3PParameterFiles=File parameter M3P:
+;M3P parameter files:
+M3VPNGVoxelSlices=M3V, irisan Voxel PNG:
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=Gambar MB3D (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=Render batch M.C.
+;M.C. batch render
+MMBWheelZoom=TMT/Roda: zoom
+;MMB/Wheel: zoom
+MRelObj=M.rel.obj.
+;M.rel.obj.
+MainCalcTime=Waktu hitung utama:
+;Main calc time:
+MainParas=param utama
+;main paras
+MainRendering=render utama
+;main rendering
+MainRenderingOfTheImage=Render utama gambar
+;Main rendering of the image
+MainWindow=Jendela utama:
+;Main window:
+MakeAnImageSelectionWithThe=Buat pilihan gambar dengan mouse lalu hitung ulang pilihan ini\ndengan parameter saat ini.\nBayangan keras dan DEAO juga akan dihitung jika dipilih, tetapi\nbayangan ambien lainnya harus dihitung ulang untuk seluruh gambar.\n"Normal pada Zbuffer" juga harus dihitung ulang, jika sudah dihitung sebelumnya.
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=Pastikan tidak ada cahaya yang dikurangi dalam mode tanpa campur
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=Pastikan opsi 'Hitung... otomatis.' untuk bayangan keras\ndan ambien sudah diatur, jika Anda ingin memperhitungkannya.
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=Buat cahaya gambar itu lebih hangat dan render lagi.
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=Buat gradien atas-bawah warna ambien dan latar\nrelatif terhadap sistem koordinat objek.\nGunakan dalam animasi untuk menambatkan cahaya pada pemandangan.
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=Buat tiga variasinya dan beri tahu saya mana yang paling Anda sukai.
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=Membuat refleksi sedikit difus, rentang nilai 0 sampai 2.5
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=Membuat video...
+;Making the video...
+MapNotFound=Peta tidak\nditemukan
+;Map not\nfound
+MapNumber=Nomor peta
+;Map number
+MapNumber2=Nomor Peta:
+;Map Number:
+MapNumberColon=Nomor peta:
+;Map number:
+MapOnOutputVector=Peta pada vektor keluaran
+;Map on output vector
+MapSequences=Urutan Peta
+;Map Sequences
+MapType=Jenis Peta:
+;Map Type:
+Material=Material
+;Material
+Max=Max
+;Max
+MaxIterat=Iterasi Maks.:
+;Max. Iterat.:
+MaxIterations=Iterasi maks.:
+;Max. iterations:
+MaxIterationsColon=Iterasi maks:
+;Max iterations:
+MaxIts=Its maks.:
+;Max its.:
+MaxL=MaxL:
+;MaxL:
+MaxLengthCalc=Panjang hitung maks.:
+;Max. length calc.:
+MaxNoise=Derau maks:
+;Max noise:
+MaxRayCount=Jumlah sinar maks:
+;Max ray count:
+MaxRaycount=Jumlah sinar maks:
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue: Mengembalikan nilai bertanda terbesar dalam array data (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=Vertex Maks:
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=Iterasi maksimal untuk bagian hybrid kedua, dimulai dengan nomor formula yang ditentukan di bagian atas jendela ini.
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=Jumlah iterasi maksimum
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=Jumlah maksimum vertex yang ditampilkan di pratinjau
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=Its maks hybrid bag.1:
+;Maxits hybrid part1:
+MaxitsHybridPart2=Its maks hybrid bag.2:
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=Ukuran ketajaman/kehalusan permukaan objek. Coba nilai dalam rentang 0.15 .. 1.5, dalam kasus langka angka negatif kecil seperti -0.1 juga memberi hasil menarik
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=Memori perlu:
+;Mem needed:
+Memory=Memori
+;Memory
+Mesh=mesh
+;mesh
+MeshObj=Mesh (*.obj)
+;Mesh (*.obj)
+MeshPly=Mesh (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=MeshPreviewFrm
+;MeshPreviewFrm
+MeshProperties=Properti mesh
+;Mesh properties
+MeshSavedVerticesFaces=Mesh disimpan: {} ({} vertex, {} face)
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=Mesh dengan koordinat uv (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=Mesh dengan warna vertex (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=Mesh:
+;Meshes:
+Meshes2=Mesh
+;Meshes
+Messages=Pesan
+;Messages
+Mid=tengah
+;mid
+Min=Min
+;Min
+MinDE=MinDE:
+;MinDE:
+MinDistance=Jarak min:
+;Min distance:
+MinIterat=Iterasi Min.:
+;Min. Iterat.:
+MinIterations=Iterasi min.:
+;Min. iterations:
+MinIts=Its min.:
+;Min its.:
+MinLeft={} mnt lagi
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=min
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft={} mnt {} d lagi
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue: Mengembalikan nilai bertanda terkecil dalam array data (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=Jarak minimal:
+;Minimal distance:
+Misc=Lain-lain:
+;Misc:
+MiscellaneousRoutines={ Rutin Lain-lain }
+;{ Miscellaneous Routines }
+Missing=hilang
+;missing
+MissingBTR123Header=Header <BTR1/2/3> tidak ada
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=Mod:
+;Mod:
+Mode=Mode:
+;Mode:
+Mode2=Mode 2
+;Mode 2
+ModeFor2ColorChoice=Mode untuk pilihan warna ke-2:
+;Mode for 2. color choice:
+MonteCarlo=Monte Carlo:
+;Monte Carlo:
+MonteCarlo2=Monte Carlo
+;Monte Carlo
+MonteCarlo3=Monte Carlo: {}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=Monte Carlo dihitung di: {}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=Render Monte Carlo
+;Monte Carlo rendering
+MonteCarloRendering2=Render Monte Carlo\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=Opsi lainnya: kirim param ke utama, sesuaikan dan impor.
+;More options: send paras to main, adjust and import.
+Mousewheel=Roda mouse
+;Mousewheel
+Move=Geser
+;Move
+MoveBackwards=Geser mundur
+;Move backwards
+MoveDown=Geser ke bawah
+;Move down
+MoveForward=Geser maju
+;Move forward
+MoveLeft=Geser ke kiri
+;Move left
+MoveRight=Geser ke kanan
+;Move right
+MoveUp=Geser ke atas
+;Move up
+MultiplierForTheLastLengthIncrease=Pengali untuk opsi 'Kenaikan panjang terakhir'.\nTurunkan nilainya pada pangkat tinggi, naikkan pada formula dengan skala rendah.
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=Mengalikan lebar langkah pertama dengan angka acak\nagar artefak overstepping tampak seperti derau.  \nJuga mengurangi banding pada kabut dinamis.\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen: {}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [Klik ganda pada Gambar atau klik tombol "Mutasi!" untuk Mutasi, Klik kanan untuk Menu]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=Mutasi
+;Mutate
+MutateExclamation=Mutasi!
+;Mutate!
+Mutation=Mutasi {}
+;Mutation {}
+MutationType=Jenis mutasi
+;Mutation type
+N0No255FullTransparency=0: tidak, 255: Transparansi penuh
+;0: no, 255: Full transparency
+N1100JPEGQuality100Maximal=1..100: kualitas JPEG\n> 100: ukuran file maksimal dalam kilobyte
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=PGM 16 Bit
+;16 Bit PGM
+N16BitZBufferGenerator=Generator ZBuffer 16Bit
+;16Bit ZBuffer Generator
+N1FullSizeNoAntiAliasing=1:  Ukuran penuh, tanpa anti aliasing\n2:  anti aliasing 2x2\n3:  anti aliasing 3x3
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  tidak ada\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=Pilihan ke-2
+;2. choice
+N2Or3PassesGivesA=2 atau 3 lintasan memberi blur kuat yang lebih baik di depan titik fokus.\n1 lintasan menghasilkan bokeh cakram, lebih banyak lintasan menghasilkan bokeh mirip gaussian.
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=Refleksi ke-2
+;2nd reflection
+N360Panorama=Panorama 360
+;360 Panorama
+N3DAnalyticFormula=Formula 3D analitis
+;3D analytic formula
+N3DFormula=Formula 3D
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=Formula 4D analitis
+;4D analytic formula
+N4DFormula=Formula 4D
+;4D formula
+N4DRotationOfTheWholeBulb=Rotasi 4D seluruh bulb:
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=Rotasi 4d (xw,yw,zw):\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=PNG 8 Bit
+;8 Bit PNG
+Name=Nama:
+;Name:
+Name2=Nama
+;Name
+NamedParams=Param Bernama:
+;Named Params:
+Navigator=Navigator
+;Navigator
+Navigator2=Navigator: {}
+;Navigator: {}
+NavigatorColon=Navigator:
+;Navigator:
+NavigatorSize=Ukuran Navigator
+;Navigator Size
+NavigatorViewSentToTheMain=Tampilan navigator dikirim ke jendela utama, tekan "Hitung 3D".
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=Filter derau neural: {}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=Filter derau neural: selesai
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=Filter derau neural pada gambar yang ditampilkan (Intel Open Image Denoise).\nRender itu sendiri tidak diubah; pembaruan berikutnya menampilkannya lagi tanpa filter.
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=baru
+;new
+NewJITCompiledFormula=Formula Baru yang dikompilasi JIT
+;New JIT-compiled Formula
+NewSequence=Urutan Baru
+;New Sequence
+NewValue=Nilai baru:
+;New value:
+NewZoom=Zoom baru:
+;New zoom:
+No=tidak
+;no
+No2=Tidak
+;No
+NoDoFOnTiles=Tidak ada DoF pada tile.
+;No DoF on tiles.
+NoFacesInTheFile=tidak ada face dalam file
+;no faces in the file
+NoFileAdded=Tidak ada file yang ditambahkan
+;No file added
+NoFramesToRenderInThis=Tidak ada frame untuk dirender dalam rentang ini.
+;No frames to render in this range.
+NoImageCalculatedYet=Belum ada gambar yang dihitung.
+;No image calculated yet.
+NoIpol=Tanpa ipol
+;No ipol
+NoLightParameters={}: tidak ada parameter cahaya
+;{}: no light parameters
+NoObjectAtThisPoint=Tidak ada objek di titik ini.
+;No object at this point.
+NoParameters=tidak ada parameter
+;no parameters
+NoParamsToSendToMain=Tidak ada param untuk dikirim ke editor utama
+;No params to send to main editor
+NoPreview=Tidak ada pratinjau: {}
+;No preview: {}
+NoPreviewForThisFile=Tidak ada pratinjau untuk file ini.
+;No preview for this file.
+NoSOURCESectionThisIsNot={}: tidak ada bagian [SOURCE], ini bukan formula JIT
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=belum ada folder bersama yang dipilih
+;no shared folder chosen
+NoTextParametersFoundInThe=Tidak ditemukan parameter teks di clipboard.
+;No text parameters found in the clipboard.
+NoTilesToRender=Tidak ada tile untuk dirender.
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\sTidak ditemukan teks yang valid, masukkan teks di bawah:
+;\sNo valid text found, please enter the text below:
+Noise=-derau
+;-noise
+NoiseAI=-derau AI
+;-noise AI
+NoiseFilter=\sFilter Derau
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=Filter derau pada gambar yang ditampilkan (denoising DCT seperti "Denoise DCT" GIMP),\nkekuatannya diperkirakan dari sinar. Render itu sendiri tidak diubah;\npembaruan berikutnya menampilkannya lagi tanpa filter.
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=Filter derau: kekuatan {}
+;Noise filter: strength {}
+None=tidak ada
+;none
+Normal=Normal
+;Normal
+NormalStatusForThisFormula=Status normal untuk formula ini
+;Normal status for this formula
+NormalsOnDE=Normal pada DE:
+;Normals on DE:
+NormalsOnZBuf=Normal pada ZBuf
+;Normals on ZBuf
+NormalsOnZBuffer=\sNormal pada Z-buffer
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=Normal pada ZBuffer:
+;Normals on ZBuffer:
+Norms=norm.
+;norms
+NotABigRenderProject=bukan proyek render besar
+;not a big render project
+NotAvailableForLinuxUseClaude=Tidak tersedia untuk Linux: gunakan Claude Code di bawah.
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=Tidak ditemukan. Jika Anda memakainya, jalankan perintah ini sekali di terminal:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=Belum terpasang. Unduh dari claude.ai/download, jalankan sekali, lalu kembali ke sini.
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=Tidak dipilih
+;Not selected
+NotSharingTickShareThisComputer=Tidak berbagi: centang "Bagikan komputer ini" untuk merender bersama komputer lain
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=Tidak berbagi: centang "Bagikan komputer ini" untuk merender bersama {}
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=Catatan: untuk melihat pratinjau warna vertex, pilih mode titik di jendela pratinjau
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}: belum ada yang dirender
+;{}: nothing rendered yet
+NothingToSave=tidak ada yang disimpan
+;nothing to save
+NumberOfFramesToNextKeyframe=Jumlah frame ke keyframe berikutnya
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=Jumlah sinar yang akan dihitung.\nSemakin banyak semakin baik, tetapi tentu lebih lambat.
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=OK
+;OK
+Object=Objek
+;Object
+ObjectColors=Warna objek
+;Object colors
+ObjectDetermination=Penentuan objek:
+;Object determination:
+Of={} dari {}
+;{} of {}
+OfEntries={} dari {} entri
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=Dari entri yang file-nya sama (parameter yang sama dihitung lagi, gambar disimpan dua kali) hanya yang terbaru
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=Formula
+;of Formulas
+OfLines={} dari {} baris
+;{} of {} lines
+OfUnitsDone={} dari {} unit selesai
+;{} of {} units done
+OffLeftImageIsOnThe=Mati: gambar kiri di sebelah kiri untuk tampilan paralel. Aktif: gambar kanan di sebelah kiri untuk tampilan cross-eyed.
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffsetAndScale=Offset dan skala
+;Offset and scale
+OffsetX=Offset X:
+;Offset X:
+OffsetY=Offset Y:
+;Offset Y:
+OjectColorsOnCutsAnd2d=Warna objek pada potongan dan bagian dalam 2d, klik untuk mengubahnya.
+;Oject colors on cuts and 2d inside, click to change them.
+On=Aktif
+;On
+OnInsertingANewKeyframe=Saat menyisipkan keyframe baru:
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=Hanya 1 titik fokus, dari rata-rata Zsharp1+2!
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=Hanya gambar yang disimpan sebagai gambar (bukan render Monte Carlo, ekspor voxel atau mesh).
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=Hanya tambah cahaya
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=Hanya bayangan ambien DEAO yang tersedia dalam mode tiling.\nSekarang dipilih dan diatur ke 33 sinar, silakan ubah sesuai kebutuhan Anda.
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=Hanya dIFS
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=(hanya jika bayangan keras sudah dihitung)
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=Hanya satu jenis peristiwa
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=Hanya entri yang nama, folder, atau jenisnya mengandung teks ini
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=Hanya baris yang mengandung kata-kata ini
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=Hanya ke keyframe saat ini
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=Hanya berfungsi jika 'Normal halus' diatur lebih dari nol saat perhitungan.
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=Buka
+;Open
+Open2=&Buka
+;&Open
+OpenAM3cFile=Buka file m3c
+;Open a m3c file
+OpenAVoxelProject=Buka proyek voxel
+;Open a voxel project
+OpenAnAnimationParameterFile=Buka file parameter animasi
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=buka/tutup panel penyesuaian
+;open/close adjustment panel
+OpenCloseBatchPanel=buka/tutup panel batch
+;open/close batch panel
+OpenCloseParameterPanel=buka/tutup panel parameter
+;open/close parameter panel
+OpenExplorer=Buka explorer
+;Open explorer
+OpenFiles=Buka file
+;Open files
+OpenFolder=Buka folder
+;Open folder
+OpenFullLightAndColorParameter=Buka parameter cahaya dan warna lengkap
+;Open full light and color parameter
+OpenFullM3I=Buka M3I lengkap
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=Pratinjau OpenGL mesh akhir
+;OpenGL preview of final mesh
+OpenLogFolder=Buka folder log
+;Open log folder
+OpenM3i=Buka m3i
+;Open m3i
+OpenM3p=Buka m3p
+;Open m3p
+OpenM3pSequence=Buka urutan *.m3p
+;Open *.m3p-sequence
+OpenParameter=Buka parameter
+;Open parameter
+OpenParameterFromClipboardTextSelect=Buka parameter dari teks Clipboard:\nPilih teks parameter termasuk 'Mandel...{..}',\ntekan ctrl+c lalu tombol buka-txt.
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=Buka proyek
+;Open project
+OpenTextParameters=Buka parameter teks
+;Open text parameters
+OpenTheAnimationMaker=Buka pembuat animasi
+;Open the animation maker
+OpenTheFolderOfTheFile=Buka folder file
+;Open the folder of the file
+OpenTheFolderOfTheLog=Buka folder file log (satu per hari, disimpan 30 hari)
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=Buka MutaGen
+;Open the MutaGen
+OpenTheNavigator=Buka Navigator
+;Open the Navigator
+Opened=dibuka
+;opened
+OpensTheFolderOfTheLanguage=Membuka folder file bahasa
+;Opens the folder of the language files
+OperationCancelled=Operasi dibatalkan
+;Operation cancelled
+Option=Opsi
+;Option
+OptionToCalculateOnlyAPart=Opsi untuk menghitung hanya sebagian gambar agar pratinjau lebih cepat.\nBuat pilihan di gambar dengan mouse sebelum menghitung.
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=Opsi untuk melakukan dither pada sudut sinar untuk skala gambar 1:2 atau 1:3.\nIni menghasilkan presisi lebih tinggi dan artefak bintik lebih sedikit.\nPerhatian: gunakan hanya pada skala gambar yang sama, jika tidak akan muncul artefak dither.
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=Opsi
+;Options
+OptionsColon=Opsi:
+;Options:
+OrMousewheel=(atau roda mouse)
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// atau negatif, yang ditentukan oleh bit tanda tingkat tinggi.
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=Orbit trap (jarak min. ke 0)
+;Orbit trap (mindist. to 0)
+Orig=Asli:
+;Orig:
+OriginalParameterSizeWidthHeight=Ukuran parameter asli (lebar, tinggi):
+;Original parameter size (width, height):
+OtherFiles=File lain
+;Other files
+OutputFile=File keluaran:
+;Output file:
+OutputFolder=Folder keluaran:
+;Output folder:
+OutputFolder2=Folder keluaran
+;Output folder
+OutputFormat=Format keluaran:
+;Output format:
+OutputImageType=Jenis gambar keluaran:
+;Output image type:
+Outside=Luar
+;Outside
+OutsideRender=Render luar
+;Outside render
+OutsideRenderDefaultModeInsideRender=Render luar:  mode bawaan\nRender dalam:    raymarching lambat di bagian dalam dengan its maks.\nDi dalam dan luar:   render kedua sisi
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=Skala keseluruhan:
+;Overall scale:
+OverwriteExistingImages=Timpa gambar yang ada
+;Overwrite existing images
+OverwriteExistingM3IFiles=Timpa file M3I yang ada
+;Overwrite existing M3I files
+PGM16BitPgm=PGM 16 bit (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG 16 bit warna (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG 16 bit (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=Frame PNG dengan latar belakang transparan.
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG latar transparan (*.png)
+;PNG transparent background (*.png)
+PaintOnImage=Lukis pada gambar
+;Paint on image
+PaintingAPreview=melukis pratinjau
+;painting a preview
+Pano=pano.
+;pano.
+PanoramaModeTheFOVIsChoosen=Mode panorama:\n- FOV dipilih otomatis\n- Gunakan SSAO 24bit atau DEAO untuk bayangan ambien\n- Rasio aspek 2:1 disarankan, tetapi tidak wajib.
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=Param
+;Param
+ParamNameMustNotBeEmpty=Nama param tidak boleh kosong
+;Param name must not be empty
+Parameter=Parameter
+;Parameter
+Parameters=Parameter
+;Parameters
+ParametersCopiedToTheClipboard=Parameter disalin ke clipboard.
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=Parameter dimuat, tekan "Hitung 3D" untuk merender.
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=Parameter dimuat: render ini dilanjutkan di tempat ia dibuat (baris perintah atau jendelanya).
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=parameter
+;parameters
+ParametersMandId=Parameter: MandId {}
+;Parameters: MandId {}
+Pass=lintasan {}
+;pass {}
+Passes=Lintasan
+;Passes
+PauseRendering=Jeda render
+;Pause rendering
+PausedPressToContinue=Dijeda, tekan untuk melanjutkan
+;Paused, press to continue
+PercentOfLocalDE=Persen dari DE lokal
+;Percent of local DE
+Picture=gambar
+;picture
+Pictures=gambar
+;pictures
+PicturesAndFilesTheAssistantMakes=Gambar dan file yang dibuat asisten masuk ke {}; tidak ada yang dihapus. Gambar lebih besar dari 4K hanya dibuat setelah Anda setuju, dan perhitungan berhenti setelah 10 menit. Semua yang dilakukannya ada di log.
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PleaseChooseAnOutputFile=Pilih file keluaran.
+;Please choose an output file.
+PleaseMakeASelectionInThe=Buat pilihan di gambar terlebih dahulu.
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=Simpan proyek terlebih dahulu.
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=Pilih cahaya terlebih dahulu.  Tidak ada HS untuk lightmap.
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=par png:
+;png par:
+Points=Titik
+;Points
+PointsColor=Warna titik
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=Posisi
+;Position
+PositionX=Posisi X
+;Position X
+PositionY=Posisi Y
+;Position Y
+PositionZ=Posisi Z
+;Position Z
+PositionalLight=Cahaya posisional
+;Positional light
+PostCalculations=perhitungan pasca
+;post calculations
+PostProcessing=Pascaproses
+;Post processing
+PostProcessingColon=Pascaproses:
+;Post processing:
+PostProcessingLower=pascaproses
+;post processing
+Postprocess=Pascaproses
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power: Pangkatkan basis dengan pangkat apa pun.
+;{ Power: Raise base to any power.
+Prefs=Prefs
+;Prefs
+PreprocessedCode=Kode praproses
+;Preprocessed code
+PresetFlower=preset <bunga>
+;preset <flower>
+PresetMetallic=preset <metalik>
+;preset <metallic>
+PresetNeutral=preset <netral>
+;preset <neutral>
+PresetSand=preset <pasir>
+;preset <sand>
+PresetSlime=preset <lendir>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=Tekan tombol lalu bagian objek\ndi gambar yang harus tajam.
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=Tekan 'Hitung 3D' untuk merender
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=Tekan 'Mulai render' untuk menghitung gambar
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=Tekan tombol ini dan preset 1 sampai 3 untuk menyimpan cahaya navi saat ini.\nKlik dua kali untuk membatalkan penyimpanan.
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=Tekan untuk menampilkan jendela formula\nKlik kanan untuk opsi lengket.
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=Tekan untuk menampilkan jendela pengaturan cahaya+warna.\nKlik kanan untuk opsi lengket.
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=Tekan untuk menampilkan jendela pascaproses.\nKlik kanan untuk opsi lengket.
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=Tekan untuk beralih antara kabut dinamis pada iterasi dan cahaya volumetrik pada nomor cahaya
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=Tekan untuk memakai jarak saat ini sebagai jarak minimum ke objek saat berjalan.
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar=Menekan "0" (nol) mengatur trackbar ke posisi nolnya.
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=Cegah komputer mati dengan menggerakkan\nkursor mouse sedikit dari waktu ke waktu.
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=pratinjau
+;preview
+Preview2=Pratinjau
+;Preview
+PreviewMaxSize=Ukuran maks pratinjau:
+;Preview max size:
+PreviewSize=Ukuran pratinjau:
+;Preview size:
+Probability=Probabilitas
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=Pemrosesan
+;Processings
+Processor=prosesor
+;processor
+Program=Program
+;Program
+ProgramOutput=Keluaran program
+;Program output
+Progress=Kemajuan
+;Progress
+Project=Proyek:  {}
+;Project:  {}
+Project2=Proyek: {}
+;Project: {}
+ProjectNew=Proyek:  (baru)
+;Project:  (new)
+PushDownTo2DZoomIn=Tekan untuk zoom 2D masuk (keluar) dengan klik kiri (kanan) pada gambar,\natau dengan menandai area zoom.
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=Tekan untuk menggerakkan objek ke arah Z dengan mouse.
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=Tekan untuk menggeser objek ke arah X,Y dengan mouse.
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=Tekan tombol untuk menghitung bayangan keras dari cahaya yang dipilih.\nSetelah dihitung, bayangan keras tidak perlu dihitung lagi,\nkecuali sudut atau posisi cahaya diubah.
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=Tekan untuk menormalkan panjang vektor 3d menjadi 1.\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=Masukkan nilai julia yang disesuaikan ke parameter program utama.
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=Masukkan nilai yang disesuaikan ke parameter program utama.
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=Terapkan nilai ke semua keyframe
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=Masukkan nilai yang disesuaikan ini ke parameter program utama.
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=Atenuasi Kuadratik
+;Quadratic Attenuation
+QuadraticBezier=Bezier kuadratik
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=Muat cepat file parameter cahaya yang\ndisimpan di direktori ini yang ditentukan.
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=Pengaturan kualitas cepat
+;Quick quality settings
+RBailout=R bailout:
+;R bailout:
+Radius=Radius:
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG menghasilkan angka acak dengan distribusi Gaussian di sekitar rata-rata.
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=Acak
+;Random
+RandomMultiplier=Pengali acak
+;Random multiplier
+Range=Rentang
+;Range
+RawValuesMappedValuesClampedValues=Nilai Mentah:\n  {}..\n  {}\nNilai Terpetakan:\n  {}..\n  {}\nNilai Terbatas:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=Sinar:
+;Rays:
+RaystepDivisor=Pembagi langkah sinar:
+;Raystep divisor:
+RaystepMultiplier=Pengali langkah sinar:
+;Raystep multiplier:
+RaystepSubDEstop=Langkah sinar sub DEstop:
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=Membaca riwayat... {} entri
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=Membaca ulang file bahasa, setelah Anda mengedit salah satunya
+;Reads the language files again, after you edited one
+RecalculateASelection=\sHitung Ulang Pilihan
+;\sRecalculate a Selection
+RecalculatingTheSelection=menghitung ulang pilihan
+;recalculating the selection
+Rect=Persegi
+;Rect
+RectLower=persegi
+;rect.
+Rectilinear=Rectilinear
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=Mengurangi artefak kotak-kotak, tidak terlalu penting lagi karena interpolasi spline.
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=Menurunkan pengali langkah sinar untuk menghindari overstepping.\nMembuat render lebih lambat.
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=Referensi untuk warna difus
+;Reference for diffuse colors
+ReferenceForSpecularColors=Referensi untuk warna spekular
+;Reference for specular colors
+ReflectionDiffusity=Difusitas refleksi:
+;Reflection diffusity:
+ReflectionRaysDepth=Kedalaman sinar refleksi:
+;Reflection rays depth:
+Reflections=Refleksi
+;Reflections
+ReflectionsLower=refleksi
+;reflections
+ReflectionsMustBeCalculatedTooElse=Refleksi juga harus dihitung, jika tidak ini tidak berpengaruh
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=refleksi pilihan
+;reflections of the selection
+ReflectionsTransparency=\sRefleksi + Transparansi
+;\sReflections + Transparency
+ReflectionsTransparency2=Refleksi + Transparansi
+;Reflections + Transparency
+ReflectsTime=Waktu refleksi:
+;Reflects time:
+RefractiveIndex=Indeks bias:
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=Indeks bias material, udara~1 air~1.33 kaca~1.5 berlian~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=Segarkan
+;Refresh
+RelToObject=Rel. thd objek:
+;Rel. to object:
+RelativeToObject=Relatif terhadap objek
+;Relative to object
+Reload=Muat ulang
+;Reload
+RemainingFaces10NoReduction=Face tersisa (1.0 = tanpa reduksi, 0.0 = reduksi maks = tidak ada face tersisa )
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=Hapus
+;Remove
+RemoveThisFormulaFromTheLocal=Hapus formula ini dari folder appdata lokal
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=Render semua tile dalam baris:
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=Render kedua gambar mata dan tampilkan pratinjau stereo berdampingan tanpa menyimpannya.
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=Render setiap\n   frame ke-n:
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=Render gambar terakhir saya dalam 4K dan beri tahu berapa lama waktunya.
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=Render tile berikutnya
+;Render next tile
+RenderOnlyTheLeftEyeImages=Render hanya gambar 'mata kiri'.\nDapat dipakai untuk memperluas animasi yang sudah dirender menjadi stereo.
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=Render hanya sampai indeks file ini.
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=Render hanya gambar 'mata paling kiri'
+;Render only 'very left-eye' images
+RenderPreview=Render pratinjau
+;Render preview
+RenderSMB={} render, {} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=Render && simpan pasangan stereo
+;Render && save stereo pair
+RenderStereoAnimation=Render animasi stereo
+;Render stereo animation
+RenderStereoPair=Render pasangan stereo
+;Render stereo pair
+RenderTheJobsOtherComputersPut=Render tugas yang dimasukkan komputer lain ke folder, dan berikan render komputer ini (Hitung 3D, Render besar, Monte Carlo, animasi) ke swarm saat ada komputer lain di dalamnya
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=Render tile ini
+;Render this tile
+RenderThisTileAgain=Render tile ini lagi
+;Render this tile again
+RenderingNow=sedang dirender
+;rendering now
+RenderingSliceOf=Merender irisan: {} dari {}
+;Rendering slice: {} of {}
+RepeatFromHere=Ulangi dari sini
+;Repeat from here
+RerenderAllKeyframePreviewImages=Render ulang semua gambar pratinjau keyframe
+;Rerender all keyframe preview images
+Reset=reset
+;reset
+Reset0=Reset 0
+;Reset 0
+Reset2=Reset
+;Reset
+ResetNow=Reset sekarang
+;Reset now
+ResetOffsetScale=Reset offset+skala
+;Reset offset+scale
+ResetOffsetScaleRotation=Reset offset+skala+rotasi
+;Reset offset+scale+rotation
+ResetPosition=Reset posisi
+;Reset position
+ResetThePositionAndTheRotation=Reset posisi dan rotasi ke nilai awal.\nPada formula box akan otomatis di-zoom keluar lebih jauh.
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=Reset nilai
+;Reset value
+ResetValues=Reset nilai
+;Reset values
+ResetView=Reset tampilan
+;Reset view
+ResetsAPreviousCalculationOfThis=Mereset perhitungan bayangan keras cahaya ini sebelumnya.
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=Mereset efek DoF dan refleksi.
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=Mereset formula ke bulb P8 bawaan.
+;Resets the formulas to the default P8 bulb.
+Resume=Lanjutkan
+;Resume
+Retry=Coba lagi
+;Retry
+ReverseTheOrderOfAllKeyframes=Balik urutan semua keyframe
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=Klik kanan pada tile untuk opsi
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=(Klik kanan pada slider untuk mengubah warna. Penggunaan keyboard saat kursor di atas slider: (c) salin warna, (v) tempel warna, (b) tempel 1 warna)
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=Berguling
+;Rolling
+Root=Root
+;Root
+Rotate=Putar
+;Rotate
+Rotation=Rotasi
+;Rotation
+RotationAngleAroundXAxisIn=Sudut rotasi di sekitar sumbu x dalam derajat
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=Sudut rotasi di sekitar sumbu y dalam derajat
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=Sudut rotasi di sekitar sumbu z dalam derajat
+;Rotation angle around z-axis in degrees
+RotationColon=Rotasi:
+;Rotation:
+RotationX=Rotasi X:
+;Rotation X:
+RotationY=Rotasi Y:
+;Rotation Y:
+RotationZ=Rotasi Z:
+;Rotation Z:
+RoughImage=gambar kasar
+;rough image
+Roughness=Kekasaran
+;Roughness
+RoutAngleOfXY=Sudut rout X, Y
+;Rout angle of X, Y
+RoutAngleOfXZ=Sudut rout X, Z
+;Rout angle of X, Z
+RoutAngleOfYZ=Sudut rout Y, Z
+;Rout angle of Y, Z
+Rows=Baris
+;Rows
+RowsOfTiles=Baris tile
+;Rows of tiles
+SLeft={} d lagi
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15:    Bayangan ambien berdasarkan ZBuffer.\nSSAO24:    Memakai 24 bit ZBuffer.\nSSAO24r:   Memakai distribusi acak agar artefak lebih sedikit.\nDEAO:        Bayangan ambien berdasarkan estimasi jarak\n(unggul dalam animasi)
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=Mulai render utama gambar.
+;Sart the main rendering of the image.
+Saturation0=Saturasi:   0\s\s
+;Saturation:   0\s\s
+Save=Simpan
+;Save
+Save2=&Simpan
+;&Save
+SaveAM3cFile=Simpan file m3c
+;Save a m3c file
+SaveAZBufferImageAs=Simpan gambar Z buffer sebagai file BMP atau PNG, diskalakan seperti tampilan saat ini.
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=Simpan semua pengaturan saat ini sebagai file *.btrace2
+;Save all current settings as *.btrace2-file
+SaveAs=Simpan Sebagai
+;Save As
+SaveAsHeightMap=Simpan Sbg HeightMap
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=Simpan sebagai heightmap di folder peta MB3D
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=Simpan Sbg Gambar
+;Save As Image
+SaveAsImageAtTheLocation=Simpan sebagai gambar di lokasi yang Anda tentukan
+;Save as image at the location you specify
+SaveBtrace2=Simpan btrace2...
+;Save btrace2...
+SaveCompleteM3I=Simpan M3I lengkap
+;Save complete M3I
+SaveExit=Simpan + keluar
+;Save + exit
+SaveFullLightAndColorParameter=Simpan parameter cahaya dan warna lengkap
+;Save full light and color parameter
+SaveImageParameters=Simpan gambar + parameter
+;Save image + parameters
+SaveM3i=Simpan m3i
+;Save m3i
+SaveM3iFiles=Simpan file m3i
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=Simpan file m3i termasuk buffer gambar internal, menyimpan refleksi dll.
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=Simpan parameter saja
+;Save parameters only
+SaveParametersToClipboardAsText=Simpan parameter ke Clipboard sebagai teks,\nlalu Anda dapat menekan ctrl+v untuk menyisipkan teks di tempat lain.
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=Simpan gbr
+;Save pic
+SaveProject=Simpan proyek
+;Save project
+SaveTextParametersInThePNG=Simpan parameter teks dalam file PNG, jika dipilih.\nAnda dapat melihatnya misalnya di gimp pada\n'Image Properties' -> Comment.
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=Simpan parameter animasi
+;Save the animation parameters
+SaveTheCodeF5=Simpan kode <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=Simpan gambar sebagai file BMP atau PNG, diskalakan seperti tampilan saat ini.
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=Simpan gambar sebagai file BMP atau PNG. Jika opsi 'Dengan ZBuffer' aktif, z-buffer juga disimpan.
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=Simpan gambar sebagai file JPEG, diskalakan seperti tampilan saat ini.
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=Simpan file M3C setiap pembaruan setelah 5 menit berlalu
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=Simpan proyek voxel ini
+;Save this voxel project
+SaveType=Jenis simpan:
+;Save type:
+SaveZBufferPng=Simpan Z buffer (png)
+;Save Z buffer (png)
+SaveZBufferToo=Simpan juga Z buffer
+;Save Z buffer too
+Saved=Disimpan
+;Saved
+Saved16BitColour=Disimpan {} (16 bit warna)
+;Saved {} (16 bit colour)
+Saved2=Disimpan {}
+;Saved {}
+SavedLower=disimpan
+;saved
+SavedTransparentBackground=Disimpan {} (latar transparan)
+;Saved {} (transparent background)
+Saving=Menyimpan:
+;Saving:
+SavingSucceeded=Berhasil disimpan
+;Saving succeeded
+Scale=Skala:
+;Scale:
+ScaleClipRadiusDoFAndTheDE=Skalakan ClipRadius (DoF) dan nilai DE stop\nuntuk mempertahankan tingkat detail dan warna.
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=Skalakan DEstop agar warna && tingkat detail tetap
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=Skalakan baris ke proyeksi geografis
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=Skalakan ukuran gambar dengan faktor 2, naik atau turun.
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=Skalakan nilai dengan persentase yang dipilih.
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=Nilai skala formula awal, memengaruhi akurasi DE
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=Menskalakan panjang maksimum sinar ambien yang dihitung.\nGunakan nilai lebih dari 1 untuk memberi kedalaman lebih pada bayangan,\nnilai di bawah 1 memberi bayangan yang lebih lokal.
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=Pratinjau Pindai
+;Scan Preview
+ScreenDistance=Jarak layar:
+;Screen distance:
+ScriptEditor=Editor Skrip
+;Script Editor
+ScrollBy1=Gulir sebanyak 1
+;Scroll by 1
+Search=Cari
+;Search
+SecantSearchmode=Mode cari secant:
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=Titik fokus kedua, jika berbeda dari yang pertama\nAnda mendapatkan garis fokus alih-alih titik fokus.\n(secara fisik tidak terlalu realistis, tetapi berguna)\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=Lihat juga opsi pewarnaan peta di tab 'Pewarnaan' jendela utama.
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=&Pilih
+;&Select
+SelectThisIfYouWantTo=Pilih ini jika Anda ingin menimpa file M3I yang ada dengan nama yang sama.\nJika tidak dipilih, nama akan diubah agar tidak ada file yang tertimpa.
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=Dipilih
+;Selected
+SelectionRecalculation=penghitungan ulang pilihan
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=Kirim semua nilai formula yang disesuaikan ke parameter program utama.
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=Kirim semua nilai formula
+;Send all formula values
+SendOnlyThisViewToThe=Kirim hanya tampilan ini ke program utama
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=Kirim parameter asli ke jendela utama
+;Send original parameter to main window
+SendParameterToMain=Kirim parameter ke utama
+;Send parameter to main
+SendParameterToProgramsMainRender=kirim parameter ke jendela render utama program
+;send parameter to programs main render window
+SendThisParameterToTheMain=Kirim parameter ini ke program utama
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=Kirim parameter asli proyek ini ke program utama.\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=Kirim tampilan ini dengan semua modifikasi julia dan formula ke program utama.
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=Kirim ke Editor Utama
+;Send to Main Editor
+SendValue=Kirim nilai
+;Send value
+SendValues=Kirim nilai
+;Send values
+SendingOut=Mengirim:
+;Sending out:
+SessionsAndCrashes=Sesi dan crash
+;Sessions and crashes
+SetLightfuncToCosine=Atur fungsi cahaya ke kosinus
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=Atur orientasi peta relatif terhadap objek.\nGunakan dalam animasi untuk menambatkan cahaya pada pemandangan.
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=Atur tema visual aplikasi
+;Set the visual theme of the application
+SetTo0=atur ke 0
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=Mengatur fungsi cahaya yang bersangkutan ke kosinus secara otomatis,\nsaat bayangan dihitung.\nFungsi kosinus dan kosinus kuadrat bekerja baik dengan bayangan.
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=Pengaturan Tema Visual
+;Setting the Visual Theme
+ShadersCompiling=shader dikompilasi
+;shaders compiling
+ShadowsAndAO=bayangan dan AO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=Bagi render di antara komputer Anda melalui folder bersama
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=Bagikan komputer ini: render tugas di folder, dan berikan tugas saya ke swarm
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=Folder bersama:
+;Shared folder:
+SharingButNoOtherComputerIs=Berbagi, tetapi belum ada komputer lain di swarm: render berjalan hanya di komputer ini
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=berbagi dihentikan: {}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween=Berbagi dengan {}: render dibagi di antara {} komputer
+;Sharing with {}: renders are split between the {} computers
+Sharp=tajam:
+;sharp:
+SharpenFactorOfTheSavedOutput=Faktor penajaman gambar keluaran yang disimpan,\nhanya berfungsi dengan pengecilan 1:2 dan 1:3 !\n0: tanpa penajaman ... 3: penajaman maksimum
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=Geser formula {} sampai 5 satu posisi ke kanan
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=Geser formula {} sampai 6 satu posisi ke kiri
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=Geser ke kiri
+;Shift to the left
+ShiftToTheRight=Geser ke kanan
+;Shift to the right
+Shininess=Kilap
+;Shininess
+ShortdistanceCheckDE=Cek DE jarak pendek:
+;Shortdistance check DE:
+ShouldIStopCalculations=Hentikan perhitungan?
+;Should i stop calculations?
+Show=Tampilkan
+;Show
+ShowCoords=Tampilkan koord.
+;Show coords
+ShowFrameNr=Tampilkan no. frame
+;Show frame nr
+ShowGuides=Tampilkan panduan
+;Show guides
+ShowInFolder=Tampilkan di folder
+;Show in folder
+ShowMeAPreviewOfThe=Tunjukkan pratinjau gambar terakhir yang saya render di mb3d.
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=Tampilkan unik
+;Show unique
+ShowsHiddenFormulasRightclickOnA=Menampilkan formula tersembunyi.\nKlik kanan pada formula untuk mengubah statusnya.
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=Menampilkan pesan
+;Shows messages
+ShrinkThePanel=Ciutkan panel
+;Shrink the panel
+SinCosIs2xFasterThanCalling={ SinCos 2x lebih cepat daripada memanggil Sin dan Cos secara terpisah untuk sudut yang sama }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=Klik sekali untuk mengubah mode navi
+;Single click to change the navi mode
+SingleFilenumbering=Penomoran file tunggal
+;Single filenumbering
+Size=Ukuran
+;Size
+SizeFactor=Faktor ukuran:
+;Size factor:
+Sliding=Meluncur
+;Sliding
+SlidingWalkingStep=Langkah luncur+jalan:
+;Sliding+Walking step:
+SmoothDEcomb=DEcomb halus:
+;Smooth DEcomb:
+SmoothImageOnLoad=Haluskan gambar saat dimuat
+;Smooth image on load
+SmoothNormals=Normal  halus:
+;Smooth  normals:
+SmoothNormalsColon=Normal Halus:
+;Smooth Normals:
+SmoothSolid=Padat Halus
+;Smooth Solid
+SmoothSolidWithEdges=Padat Halus dengan Tepi
+;Smooth Solid with Edges
+SoftClipping=Soft clipping:
+;Soft clipping:
+SoftensTheHardShadowsTheValue=Melembutkan bayangan keras. Nilainya relatif terhadap ukuran sumber cahaya, nilai lebih besar menghasilkan bayangan lebih lembut.
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=H.S. lebih lembut
+;Softer H.S.
+Sorted=Terurut
+;Sorted
+SortedCalculationGivesBetterResultsForward=Perhitungan terurut memberi hasil lebih baik.\nMaju dapat menjadi pilihan jika Terurut gagal karena masalah memori atau semacamnya.
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=Spek:
+;Spec:
+Spec2=Spek
+;Spec
+SpecifiesTheEndOfRaymarchingAs=Menentukan akhir raymarching sebagai faktor dari DE lokal.\nNilai lebih besar = objek lebih jauh terlihat.\n\nTombol pintas:  F1: kurangi bidang jauh,  F2: tambah bidang jauh
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=Spekular
+;Specular
+SpecularObjectColorsClickToChange=Warna spekular objek, klik untuk mengubahnya.
+;Specular object colors, click to change them.
+SpecularPowerFunction=Fungsi pangkat spekular
+;Specular power function
+SphericalCoords=Koord. sferis
+;Spherical coords
+Stan=stan.
+;stan.
+StandardRectilinearPanorama=standar  rectilinear  panorama
+;standard  rectilinear  panorama
+Start=Mulai:
+;Start:
+StartBatchRendering=Mulai render batch
+;Start batch rendering
+StartIndex=Indeks awal:
+;Start index:
+StartRendering=Mulai render
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=Mulai render lalu simpan file M3I secara otomatis!
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=Mulai render animasi
+;Start rendering animation
+StartRenderingAnimationImages=Mulai render gambar animasi
+;Start rendering animation images
+StartRenderingSlices=Mulai render irisan
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=Mulai merender semua file M3P yang dipilih
+;Starts rendering all selected M3P files
+Statistics=Statistik
+;Statistics
+Status=Status
+;Status
+StepcountForBinarySearch=Jumlah langkah \npencarian biner:
+;Stepcount for \nbinary search:
+StepwidthLimiter=Pembatas lebar langkah:
+;Stepwidth limiter:
+Stereo=Stereo
+;Stereo
+StereoComposingPreview=stereo: menyusun pratinjau
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=Pasangan stereo tidak dapat dirender dengan tile. Matikan tiling terlebih dahulu.
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=stereo: merender mata kiri
+;stereo: rendering left eye
+StereoRenderingRightEye=stereo: merender mata kanan
+;stereo: rendering right eye
+StickThisWindowToTheLeft=Tempelkan jendela ini ke sisi kiri
+;Stick this window to the left side
+StickThisWindowToTheRight=Tempelkan jendela ini ke sisi kanan
+;Stick this window to the right side
+Stop=Hentikan
+;Stop
+StopBatchRendering=Hentikan render batch
+;Stop batch rendering
+StopRendering=Hentikan render
+;Stop rendering
+StopRenderingTheAnimation=Hentikan render animasi.
+;Stop rendering the animation.
+StopTheCurrentCalculation=Hentikan perhitungan saat ini.
+;Stop the current calculation.
+Stopping=Menghentikan...
+;Stopping...
+StoppingThisComputerFinishesThePart=Menghentikan: komputer ini menyelesaikan bagian yang sedang direndernya
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=Berhenti berjalan pada jarak ini ke objek.\nAtur ke 0 untuk menonaktifkan.
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=Simpan juga file *.PNG yang sesuai untuk pratinjau gambar yang lebih mudah
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=Simpan file M3I di folder bawaan
+;Store M3I file in default folder
+StorePNGPreview=Simpan pratinjau PNG
+;Store PNG-preview
+Strength=Kekuatan:
+;Strength:
+Strength2=Kekuatan
+;Strength
+StrengthOfDynamicFog=Kekuatan kabut dinamis.
+;Strength of dynamic fog.
+StretchesUpperAndLowerPartsMaybe=Meregangkan bagian atas dan bawah, mungkin berguna untuk gambar biasa dalam opsi bola penuh.
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=Pengali jumlah\nsubframe:
+;Subframe count\nmultiplicator:
+SubframeInterpolation=Interpolasi subframe:
+;Subframe interpolation:
+SubframesToRender=Subframe untuk dirender
+;Subframes to render
+SubframesToRenderBetween=Subframe yang  \ndirender di antara:
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=Kurangi sejumlah DEstop dari langkah sinar berikutnya, disarankan pada nilai DEstop tinggi.
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=Dukung render jaringan
+;Support network rendering
+SupportedMathematicalFunctions=Fungsi matematika yang didukung
+;Supported mathematical functions
+SurfaceColor=Warna permukaan
+;Surface color
+SurfaceDetail=Detail permukaan:
+;Surface detail:
+Swarm=Swarm
+;Swarm
+SwarmABlockOnEveryComputer=swarm: satu blok di setiap komputer, sampai Hentikan
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=swarm: {} blok dari {} sinar/piksel
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=swarm: {} komputer
+;swarm: {} computer
+SwarmComputers=swarm: {} komputer
+;swarm: {} computers
+SwarmCreatingTheJob=swarm: membuat tugas
+;swarm: creating the job
+SwarmJob=tugas swarm
+;swarm job
+SwarmLower=swarm: {}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=Swarm: render dibagi di antara komputer Anda
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=Kembali ke tema bawaan
+;Switch back to the default theme
+TakeTheEntryOutOfThe=Keluarkan entri dari riwayat (parameter dan thumbnail gambar yang dihitung dihapus; file lain tetap di tempatnya)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=Slot Peta Tujuan
+;Target Map Slot
+TargetMapSlotUseThisNumber=Slot Peta Tujuan. Gunakan nomor ini sebagai peta di fraktal Anda, mis. sebagai heightmap, agar petanya beranimasi
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=Jumlah warna difus dan spekular yang dijumlahkan lebih dari 1,\nperlukah saya mengecilkannya agar pewarnaan lebih realistis?
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=Animasi memerlukan setidaknya dua keyframe.
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=Apertur pada titik Zsharp, ini bukan apertur kamera!\nKalikan nilai ini dengan jarak (bebas dipilih) dari titik Zsharp\nke kamera dan bagi dengan panjang fokus lensa kamera untuk mendapatkan\napertur kamera.\nJadi kecilkan nilai ini jika Anda tidak mengharapkan ukuran kamera sebesar itu.\nNilai lebih besar berarti blur lebih banyak.
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheBTracer2CacheFormatIsNot=Format cache BTracer2 tidak didukung oleh program ini.\nPilih format mesh (*.ply atau *.obj).
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=Format cache BTracer2 tidak didukung, mesh tidak disimpan.
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=Gambar latar tidak dapat dimuat.
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=Nilai bailout untuk formula escapetime.\nJika nilai 3d melebihi nilai ini selama iterasi,\ntitik saat ini bukan bagian dari objek.
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=Radius blur akan dibatasi pada nilai ini.\nDapat mempercepat render saat radius menjadi sangat besar di beberapa bagian gambar.
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=Perhitungan gagal: {}
+;The calculation failed: {}
+TheCalculationFailedLower=perhitungan gagal
+;the calculation failed
+TheCalculationWillBeExtendedTowards=Perhitungan akan diperluas ke luar gambar dengan objek yang dipantulkan.\nIni dapat mengurangi artefak dalam animasi, tetapi gambar diam juga bisa mendapat manfaat.\nNilainya sebaiknya dalam rentang 0 sampai 0.5 (maks 0.9), yaitu ukuran relatif terhadap lebar\ndan tinggi gambar yang dihitung maksimal di luar gambar.
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=Program baris perintah mb3d tidak ditemukan di samping program ini: pasang ulang program.
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=Penomoran bawaan terdiri dari 2 angka, terpisah untuk X dan Y.\nJika Anda memilih opsi ini, penomoran hanya satu angka,\nbertambah di setiap kolom dan berlanjut ke baris berikutnya.
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=Keluaran bawaan putih untuk objek dan hitam untuk area luar.\nPilih opsi ini untuk membalik warna.
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=Estimasi jarak diperkecil dengan faktor ini untuk menghindari overstepping.\nKurangi nilainya jika terjadi overstepping (piksel hitam, gambar berderau).\nNilai yang terlalu rendah memperlambat render.
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=Estimasi jarak diperkecil dengan faktor ini untuk menghindari overstepping.\nKurangi nilainya jika terjadi overstepping (piksel hitam, gambar berderau).\nNilai yang terlalu rendah memperlambat render .
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=Jarak ke permukaan objek tempat raymarching berhenti akan membesar seiring jarak ke pengamat.\nIni menghasilkan tampilan objek yang homogen, jadi biasanya dipilih.
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=Efeknya terakumulasi, reset untuk perhitungan baru.
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=Entri dikelompokkan per hari; entri dan gambar suatu hari tampil saat hari itu dibuka (diklik)
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=Entri tidak dapat dihapus.
+;The entry could not be removed.
+TheFileIsNotThereAny=File sudah tidak ada.
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=File <{}.m3f> sudah ada. Apakah Anda ingin menimpanya?
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=File (pilih dan salin dari sini)
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=Titik fokus (pertama).\nNilainya relatif terhadap nilai Zstart pengamat,\ndinormalkan terhadap lebar gambar.
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=folder tidak ada (atau tidak dapat dijangkau)
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=Nama formula sebaiknya diawali "JIT" untuk membedakan formula tersebut dari formula berbasis ASM
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFramesPerSecondMustBe=Frame per detik harus berupa angka di atas 0 (mis. 25).
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=buffer gambar memiliki ukuran yang salah
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=ukuran gambar berubah: hitung gambar lagi
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=Mode its.trap bergantung pada opsi yang dihitung di tab "Pewarnaan".
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=Sesi terakhir tidak berakhir dengan benar (macet, dimatikan, atau crash): {}. Apa yang terakhir dilakukannya ada di log (jendela Log, ikon di bilah judul).
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=Editor utama masih merender. Hentikan dulu atau tunggu hingga selesai.
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=Opsi peta menghitung koordinat x,y dari vektor\ntertentu untuk peta sferis, ini juga mengubah pilihan warna pertama\nyang biasanya berdasarkan iterasi halus.\nAnda harus menghitung ulang gambar untuk melihat hasil perubahan\nopsi ini.
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=Jendela Monte Carlo sedang merender: hentikan terlebih dahulu.
+;The Monte Carlo window is rendering: stop it first.
+TheNameOfTheNewLanguage=Nama bahasa baru, dalam bahasa itu sendiri (Deutsch, Polski, ...)
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=Tugas terbaru sejauh ini: bagian yang sudah dirender, bagian yang sedang dikerjakan (dengan kemajuannya), bagian yang belum
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=Parameter tidak lagi cocok dengan perhitungan yang belum selesai: tekan "Hitung 3D" untuk menghitungnya.
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=Gambar tidak cocok dengan perhitungannya: hitung lagi.
+;The picture does not match its calculation: calculate it again.
+TheRotationIsPerformedAroundThe=Rotasi dilakukan di sekitar Titik tengah (Xmid, Ymid, Zmid)
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=Rotasi dilakukan berurutan, pertama bidang XW, terakhir bidang ZW.
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSelectionMustBeBiggerThan=Pilihan harus lebih besar dari 2 piksel dalam lebar dan tinggi.
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=pilihan harus lebih besar dari 2 piksel dalam lebar dan tinggi
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=Folder bersama swarm
+;The shared folder of the swarm
+TheSizeOfTheTiles=Ukuran tile
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=Gambar mata stereo memiliki ukuran berbeda.
+;The stereo eye images have different sizes.
+TheTileHasNoImageBuffer=tile tidak memiliki buffer gambar
+;the tile has no image buffer
+Themes=Tema
+;Themes
+ThereIsAFileAlready=Sudah ada file {}.
+;There is a file {} already.
+ThingsToAskTheAssistant=Hal yang dapat ditanyakan ke asisten
+;Things to ask the assistant
+ThisComputer=Komputer ini:
+;This computer:
+ThisEffectIsAccumulatedOnEach=Efek ini terakumulasi setiap kali tombol ditekan, Anda dapat mereset dengan menekan\ntombol 'Reset' - tetapi refleksi juga akan dibatalkan!
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=File ini sudah ada. Yakin ingin menimpanya?
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=Ini adalah offset absolut ke arah x dari bulb yang diputar.
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=Render ini sedang berjalan saat ini.
+;This render is running right now.
+ThisRenderKeepsNoImage=Render ini tidak menyimpan gambar.
+;This render keeps no image.
+ThisRenderKeptNoParameters=Render ini tidak menyimpan parameter.
+;This render kept no parameters.
+ThisSessionLive=Sesi ini (langsung)
+;This session (live)
+ThreadPriority=Prioritas\nThread
+;Thread\nPriority
+ThreadcountInCalculations=Jumlah thread  \ndalam Perhitungan
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=Thread untuk tugas (0 = semua core):
+;Threads for jobs (0 = all cores):
+ThresholdTo0=Ambang ke 0:
+;Threshold to 0:
+TilNextUpdate=..hingga pembaruan berikutnya
+;..til next update
+TileCountHorizontal=Jumlah tile,  horizontal:
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=Pengecilan tile, anti aliasing:
+;Tile downscale, anti aliasing:
+TileSaved={} tile disimpan; {}
+;{} tile saved; {}
+TileXY=Tile: X= Y=
+;Tile: X= Y=
+TileXY2=Tile: X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  Tile X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=tile X={} Y={}
+;tile X={} Y={}
+TileXYSaved=Tile X={} Y={} disimpan.
+;Tile X={} Y={} saved.
+Tiles=tile
+;tiles
+Tiles2=Tile
+;Tiles
+TilesSaved={} tile disimpan; {}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  {} tile dengan swarm
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=Ukuran tile (termasuk aa):
+;Tilesize (including aa):
+Tiling=Tiling:
+;Tiling:
+TimeNeeded=Waktu diperlukan:
+;Time needed:
+ToCalculateABetterHardShadow=Untuk menghitung bayangan keras yang lebih baik, hanya jika 1 HS dipilih!
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=Ke Clipboard
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=Untuk juga mengurangi cahaya langsung dengan ambient occlusion
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=ke formula no.:
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=Untuk mengurangi derau di sekitar objek pada hybrid dengan estimasi jarak buruk,\ngunakan beberapa iterasi di bawah rata-rata jumlah iterasi pada gambar.
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=Untuk mengurangi overstepping
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=Ke keyframe ini dan semua sebelumnya
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=Ke keyframe ini dan berikutnya
+;To this keyframe and the following
+Togo=sisa: ...
+;togo: ...
+Tools=Alat
+;Tools
+TotalAmountOfReflectivityTransparencyIt=Jumlah total reflektivitas + transparansi, akan dikalikan dengan warna spekular objek lokal + jumlah transparansi.
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=Total waktu perhitungan:
+;Total calculation time:
+TotalFramesUpToHereNote=Total frame sampai di sini.\nPerhatikan bahwa hanya dalam mode berulang subframe\ndari keyframe terakhir akan dirender.
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=Rentang trace X:
+;Trace range X:
+TraceRangeY=Rentang trace Y:
+;Trace range Y:
+TraceRangeZ=Rentang trace Z:
+;Trace range Z:
+TracingObject=Menelusuri objek...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=Lacak status render melalui sistem file agar beberapa instans dapat merender urutan file yang sama tanpa menimpa pekerjaan node lain
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=Transparansi
+;Transparency
+TransparencyIntensity=Intensitas transparansi
+;Transparency intensity
+TransparencySpecular=Transparansi + Spekular
+;Transparency + Specular
+TransparentBackground=Latar belakang transparan
+;Transparent background
+TrigonometricFunctions={ Fungsi trigonometri }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=Sesuaikan ukuran peta volumetrik dalam langkah 20%
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=Aktifkan/nonaktifkan mode julia
+;Turn on/off the julia mode
+Type=Jenis:
+;Type:
+Type2=Jenis
+;Type
+TypeInTheQuality0100=Ketik kualitas (0..100) atau ukuran file keluaran maksimal dalam KB (>100):
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=Jenis tidak boleh kosong
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\sJenis hybrid:\nAlternatif:  formula 1 sampai 6 bergantian.\nInterpolasi:  formula 1 diinterpolasi di setiap iterasi dengan formula 2.\nDEcombinate:  formula 1 dikombinasikan secara DE dengan hybrid bergantian formula 2 sampai 6.
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=Jenis penentuan objek, menurunkan Its maks atau menaikkan DE\n(tergantung opsi yang dipilih) akan membuat objek lebih tebal.\nCatatan:  formula DEcombinate dan render Dalam+Luar\n           hanya berfungsi dalam mode Estimasi jarak!
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\sJenis penentuan objek, menurunkan Its maks atau menaikkan DE\n(tergantung opsi yang dipilih) akan membuat objek lebih tebal.\nCatatan:  formula DEcombinate hanya berfungsi dalam mode Estimasi jarak!
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=Ketik dulu nama bahasa baru; itulah nama file-nya.
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=Hapus centang ini jika gambar tampak datar dan berderau.
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=Hapus centang agar gambar yang sudah dihitung tidak ditimpa.\nNama file harus sama (format keluaran, indeks, dan akhiran 'left' atau 'right'\nyang sama dalam mode stereo).
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=, {} sedang dikerjakan
+;, {} under way
+UnfinishedCalculation=Perhitungan belum selesai
+;Unfinished calculation
+UnfinishedRender=Render belum selesai
+;Unfinished render
+UnfinishedRenders=Render belum selesai
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=Render belum selesai: lanjutkan atau hapus
+;Unfinished renders: continue or delete them
+Untitled=tanpa judul
+;untitled
+UpOneLevel=Naik satu tingkat
+;Up one level
+UpTo=sampai:
+;up to:
+UpdateImage=Perbarui Gambar
+;Update Image
+UseAMapForTheDiffuse=Gunakan peta untuk warna difus
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=Gunakan gambar kecil sebagai warna ambien
+;Use a small image as ambient color
+UseAlsoNavi=(juga untuk navi)
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=Gunakan bayangan ambien dari file M3I asli
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=Gunakan orientasi bawaan
+;Use default orientation
+UseItInAnimationsToFix=Gunakan dalam animasi untuk menambatkan cahaya pada pemandangan.
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=Gunakan hanya sebagai pilihan kedua jika normal (arah permukaan untuk pencahayaan) tampak buruk.
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=Gunakan OpenGL >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=Gunakan pengaturan visual bawaan tanpa tema
+;Use the default visual settings without a theme
+UseTheMapIntensitiesAndDiffuse=Gunakan intensitas peta dan warna difus.
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=Gunakan nilai di bawah 1 untuk mengurangi overstepping.
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\sBerguna untuk mensimulasikan data dengan galat sampling. }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=Berguna untuk heightmap yang curam
+;Useful for steep heightmaps
+User=pengguna
+;user
+UserDefinedApectRatioRightclickTo=Rasio aspek buatan pengguna.\nKlik kanan untuk menentukan rasionya.
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=Rasio aspek buatan pengguna
+;User defined aspect ratio
+Value=Nilai:
+;Value:
+ValueNotGuilty=Nilai tidak valid
+;Value not guilty
+ValuesHaveAFractionFieldThat=// nilai memiliki bidang pecahan yang bukan 0.
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=Variasikan DEstop pd FOV:
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=Pastikan jumlah warna difus dan spekular tidak melebihi 1, tergantung opsi yang dipilih
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=Periksa saat menghitung apakah jumlah spekular+difus melebihi 1.  Berguna saat memakai diffmap.
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=Versi
+;Version
+Version2=, versi {}
+;, version {}
+Vertical=vertikal:
+;vertical:
+VerticalFieldOfViewInDegrees=Bidang pandang vertikal dalam derajat
+;Vertical field of view in degrees
+VerticesFaces={} [{} Vertex, {} Face]
+;{} [{} Vertices, {} Faces]
+Video=video
+;video
+VideoLower=video: {}
+;video: {}
+View=Tampilan
+;View
+ViewToMain=Tampilan ke utama
+;View to main
+Viewing=Tampilan
+;Viewing
+Visible=Terlihat:
+;Visible:
+VisitTheOfficialWebSiteFor=Kunjungi situs web resmi untuk berita dan pembaruan: https://mb3d.overwhale.com
+;Visit the official web site for news and updates: https://mb3d.overwhale.com
+VolumeLightNr=No. cahaya volume:
+;Volume light nr:
+VolumetricResolution=Resolusi volumetrik:
+;Volumetric resolution:
+VoteFormula=+ suka formula
+;+ vote formula
+VoteFormula2=- tidak suka formula
+;- vote formula
+VoxelExport=Ekspor voxel
+;Voxel export
+Voxelstack=Voxelstack
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=Tunggu perhitungan yang sedang berjalan, atau hentikan terlebih dahulu.
+;Wait for the running calculation, or stop it first.
+Walking=Berjalan
+;Walking
+Warning=Peringatan
+;Warning
+WarningLower=peringatan
+;warning
+WarningMustRecalculateTheWholeImage=Peringatan: Harus menghitung ulang seluruh gambar untuk membatalkannya!
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=Peringatan dan galat
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Weight=Bobot
+;Weight
+WeightColon=Bobot:
+;Weight:
+WelcomeToMandelbulb3D=Selamat datang di Mandelbulb 3D!
+;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=Apa yang saya lakukan di mb3d hari ini? Apakah ada galat?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=Apa yang terjadi
+;What happened
+WhatYouDid=Yang Anda lakukan
+;What you did
+When=Kapan
+;When
+WhenAngleNotBetween180And={ Jika sudut tidak di antara -180 dan 180 hapus yang kiri }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=Kapan (UTC)
+;When (UTC)
+WhenUsingAMapForThe=Saat memakai peta untuk warna difus,\nAnda harus mencentang 'Autoclip Spek+Difus'\nuntuk pemotongan warna otomatis.
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=putih
+;white
+WhiteOutside=Luar putih
+;White outside
+Width=Lebar:
+;Width:
+Windows=Jendela
+;Windows
+Wireframe=Wireframe
+;Wireframe
+WireframeColor=Warna wireframe
+;Wireframe color
+WithHS=dengan HS
+;with HS
+WithZBuffer=Dengan ZBuffer
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=Menulis teks bahasa Inggris sebagai file bahasa baru dengan nama ini; terjemahkan dengan editor teks, lalu tekan Muat ulang
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=Menulis gambar seperti saat ini (baris yang belum selesai sebagai latar) sebagai file .m3i
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=Ditulis: {}\nTerjemahkan teks di kanan "=" dengan editor teks, lalu tekan Muat ulang.
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=Sudut X:
+;X angle:
+XMid=X tengah:
+;X mid:
+XOffset=Offset X:
+;X offset:
+XScale=Skala X:
+;X scale:
+XW=XW:
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=Xpos
+;Xpos
+Xrot=Xrot
+;Xrot
+YAngle=Sudut Y:
+;Y angle:
+YMid=Y tengah:
+;Y mid:
+YOffset=Offset Y:
+;Y offset:
+YScale=Skala Y:
+;Y scale:
+YW=YW:
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=Ya
+;Yes
+YouCanAlsoClickOnA=Anda juga dapat mengklik nilai untuk mengubahnya
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=Anda juga dapat mengetik formula secara langsung
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=Anda selalu dapat memulai/melanjutkan atau menghentikan perhitungan
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=Anda dapat melakukan penyesuaian lebih halus dengan tombol panah kiri atau kanan\npada sebagian besar trackbar, saat trackbar dipilih.\nMenekan "0" (nol) mengatur trackbar ke posisi nolnya.
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=Anda juga dapat menyimpan file m3i untuk setiap tile, pastikan ruang disk\ncukup dan bahwa refleksi tidak disimpan dalam file m3i.\n\nPerhatikan bahwa tile m3i ini tidak dapat dibuka di versi program sebelum 1.7.9!
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=Anda harus merender parameter asli terlebih dahulu dan menyimpannya sebagai file M3I.\nJangan buat render itu terlalu kecil.
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=Nama pembuat Anda (disimpan di parameter):
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=Bahasa Anda sendiri (namanya):
+;Your own language (its name):
+Ypos=Ypos
+;Ypos
+Yrot=Yrot
+;Yrot
+Z1Sharp=Z1 tajam:
+;Z1 sharp:
+Z2Sharp=Z2 tajam:
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=Z-buffer: {}
+;Z-buffer: {}
+ZEnd=Z akhir
+;Z end
+ZMid=Z tengah
+;Z mid
+ZOffset=Offset Z:
+;Z offset:
+ZRThreshold=Ambang Z/R:
+;Z/R Threshold:
+ZScale=Skala Z:
+;Z scale:
+ZSlices=Irisan Z:
+;Z slices:
+ZStart=Z awal
+;Z start
+ZW=ZW:
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=Zoom:
+;Zoom:
+Zoom2=Zoom
+;Zoom
+Zpos=Zpos
+;Zpos
+Zrot=Zrot
+;Zrot

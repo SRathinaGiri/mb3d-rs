@@ -9,7 +9,7 @@ license = "LGPL-2.1-only"
 # the desktop application (Mandelbulb3D window and forms); without it only
 # the command line renderer is built, which has no dependencies
 default = ["gui", "gpu", "jit", "oidn"]
-gui = ["dep:winit", "dep:softbuffer", "dep:fontdue", "dep:rustybuzz", "dep:arboard", "dep:open"]
+gui = ["dep:winit", "dep:softbuffer", "dep:fontdue", "dep:rustybuzz", "dep:unicode-bidi", "dep:arboard", "dep:open"]
 # ray marching on the graphics card (wgpu: Vulkan, Metal, DirectX 12),
 # see src/gpu.rs
 gpu = ["dep:wgpu", "dep:pollster"]
@@ -26,6 +26,7 @@ winit = { version = "0.30", optional = true }
 softbuffer = { version = "0.4", optional = true }
 fontdue = { version = "0.9", optional = true }
 rustybuzz = { version = "0.20", optional = true }
+unicode-bidi = { version = "0.3", optional = true }
 arboard = { version = "3", optional = true, default-features = false, features = ["wayland-data-control"] }
 wgpu = { version = "30.0.1", optional = true }
 pollster = { version = "1.0.1", optional = true }

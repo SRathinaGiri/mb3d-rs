@@ -1,0 +1,3623 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = العربية
+code = AR
+font = Arabic.ttf
+
+[Labels]
+ACalculationIsRunningStopIt=يجري حساب الآن: أوقفه أولًا.
+;A calculation is running: stop it first.
+AFasterMethodThanBinsearchBut=طريقة أسرع من البحث الثنائي، لكنها قد تخفق إذا كانت قيم DE سيئة
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=بقيت ثوانٍ قليلة
+;a few seconds left
+AFolderEveryComputerOfThe=مجلد يراه كل حاسوب في السرب: مشاركة NAS، أو مشاركة Windows أو Samba، أو مجلد مزامنة
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AHigherValueMeansABetter=القيمة الأعلى تعني جودة أفضل، وحتى 100% تفقد شيئًا من الجودة.
+;A higher value means a better quality, even 100% is lossy.
+AI=الذكاء الاصطناعي
+;AI
+ALanguageFileHasOneLabel=في ملف اللغة تسمية واحدة في كل سطر: يسار "=" معرّفها، ويمينها نصك. وقسم النافذة بعد التسميات يعطي عنصر تحكم واحدًا نصًّا خاصًّا به.
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=مُعامل ضرب يحدد الطول الأقصى لحساب الظل الحاد،\nنسبةً إلى بعض معاملات حجم الصورة (الافتراضي = 1).\nزِد القيمة إذا غابت ظلال الأجسام البعيدة.
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=زمن حساب AO:
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=التصيير الموقوف أو المنقطع يحتفظ بما حسبه؛ و«احسب ثلاثي الأبعاد» للمعاملات نفسها يتابعه.
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=الخلفية الشفافة تحتاج إلى إطارات PNG: اختر PNG صيغةً للإخراج.
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=الفيديو يحتاج إلى صور: اختر BMP أو PNG أو JPG صيغةً للإخراج.
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=لا يُصنع فيديو لتحريك مجسم: أطفئ «تصيير تحريك مجسم».
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf=صورة بحجم {} x {} تحتاج إلى نحو {} من الذاكرة، وفي هذا الحاسوب {} متاحة: سيلجأ الحساب إلى ملف التبديل، وقد يتوقف البرنامج عن الاستجابة دقائق متتالية.\n\nأتريد الحساب على أي حال؟\n\nالتصيير الكبير (تبويب الأدوات) يحسبها في بلاطات تُحفظ واحدةً تلو الأخرى، دون الاحتفاظ بالصورة كلها؛ والسرب (نافذة السرب) يوزع البلاطات على حواسيب أخرى.
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=ستُحفظ أيضًا صورة png لمخزن Z.
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=لوحة مفاتيح AZERTY
+;AZERTY keyboard
+Abort=إجهاض
+;Abort
+AboutHLeft=بقي نحو {} س
+;about {} h left
+AboutHMinLeft=بقي نحو {} س {} د
+;about {} h {} min left
+AboutMinLeft=بقي نحو {} د
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=مقدار الامتصاص المطلق داخل المادة (التكبيرات العالية تحتاج إلى قيم كبيرة). لون الجسم الانتشاري يُستخدم للداخل أيضًا.
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=المسافة المطلقة لدوال الدمج الناعم،\nيمكنك استخدام الصيغة العلمية مثل 3e-5 للقيم الصغيرة.\nجرّب 1/zoom لتقترب من قيمة صالحة.
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=الامتصاص:
+;Absorption:
+Action=الإجراء
+;Action
+ActualAmbientShadowPar=معاملات الظل المحيطي الحالية
+;Actual ambient shadow par.
+ActualCameraSettings=إعدادات الكاميرا الحالية
+;Actual camera settings
+ActualColoringTabOptions=خيارات تبويب «التلوين» الحالية
+;Actual 'Coloring' tab  options
+ActualDOFParameters=معاملات DOF الحالية
+;Actual DOF parameters
+ActualHardShadowSetting=إعداد الظل الحاد الحالي
+;Actual hard shadow setting
+ActualReflectionsSettings=إعدادات الانعكاسات الحالية
+;Actual reflections settings
+ActualStereoParameters=المعاملات المجسمة الحالية
+;Actual stereo parameters
+Add=إضافة
+;Add
+AddANewKeyframeInBetween=إضافة إطار مفتاحي جديد بينهما
+;Add a new keyframe in between
+AddNamedConstantValue=إضافة قيمة ثابتة مسماة
+;Add named constant value
+AddNamedParam=إضافة معامل مسمى
+;Add named param
+AddNewConstantValue=إضافة قيمة ثابتة جديدة
+;Add new constant value
+AddNewImageSequence=إضافة تسلسل صور جديد
+;Add new image sequence
+AddNewNamedParameter=إضافة معامل مسمى جديد
+;Add new named parameter
+AddNewOption=إضافة خيار جديد
+;Add new option
+AddOptionValue=إضافة قيمة خيار
+;Add option value
+AddToBackgroundDepthNotBlend=إضافة إلى عمق الخلفية (لا مزج)
+;Add to background depth (not blend)
+AddonFormula=صيغة إضافية
+;Addon formula
+AdjustRoughlyThenClickForFine=اضبط تقريبيًا ثم انقر للضبط الدقيق.
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=ضبط المنزلقات لتطابق طرفي المدرجات التكرارية
+;Adjust sliders to fit the histograms endpoints
+Adjustments=الضبط:
+;Adjustments:
+AdjustsTheDEForRenderPreview=يضبط DE لمعاينة التصيير
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=مولّد متقدم لمخزن Z
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=بعد الحساب تُلغى كل تغييرات الإضاءة التي أجراها المستخدم لاختلاف زوايا الضوء.\nالحساب في الوضع العادي يعيد تمكينها.
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=بعد التصيير، تُضم الإطارات في فيديو داخل مجلد الإخراج\n(<project name>.avi، بصيغة Motion JPEG: يعمل في VLC وmpv، ويُفتح في برامج تحرير الفيديو).\nتبقى الإطارات محفوظة.
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=كل الألوان سليمة.
+;All colors are ok.
+AllFiles=كل الملفات
+;All files
+AllFilesParen=كل الملفات (*.*)
+;All files (*.*)
+AllKinds=كل الأنواع
+;All kinds
+AllRealworldUnitsInMeter=كل وحدات العالم الحقيقي بالمتر.
+;All realworld units in meter.
+AllTheLightColorSettings=كل إعدادات الإضاءة والألوان
+;All the light + color settings
+AlreadyExists={} <{}> موجود مسبقًا
+;{} <{}> already exists
+AlsoMakeAVideoAVI=صنع فيديو أيضًا (AVI)
+;Also make a video (AVI)
+Alternate=بديل
+;Alternate
+Amb=محيط
+;Amb
+Ambient=المحيط
+;Ambient
+AmbientBottomColorClickToChange=لون المحيط السفلي، انقر للتغيير.
+;Ambient bottom color, click to change.
+AmbientLight=الضوء المحيطي
+;Ambient light
+AmbientLower=المحيط
+;ambient
+AmbientOcclusion=الانسداد المحيطي
+;ambient occlusion
+AmbientRaysDepth=عمق الأشعة المحيطية:
+;Ambient rays depth:
+AmbientShadow=الظل المحيطي
+;Ambient shadow
+AmbientShadowCalculation=حساب الظل المحيطي
+;ambient shadow calculation
+AmbientShadows=\sالظلال المحيطية
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=لون المحيط العلوي، انقر بالزر الأيسر لتغيير اللون،\nوبالأيمن لإدراج ألوان العمق.
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=المقدار:
+;Amount:
+AnAIAssistantOnThisComputer=يستطيع مساعد ذكاء اصطناعي على هذا الحاسوب استخدام Mandelbulb 3D: اطلب منه بكلمات بسيطة، أو بالصوت، أن يصف صورك ويغيّرها ويصيّرها، أو أن يصنع تنويعات منها، أو أن يصيّر آخر ما عملت عليه. يبقى Mandelbulb 3D دون اتصال بالإنترنت: تطبيق المساعد يشغّله على هذا الحاسوب.
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=احتُفظ بحساب غير مكتمل لهذه الصورة ({}).\n\nأتريد متابعته؟  «لا» يحسبها من جديد من البداية.
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=احتُفظ بتصيير Monte Carlo غير مكتمل لهذه المعاملات ({}).\n\nأتريد متابعته؟  «لا» يصيّرها من جديد من البداية.
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} و{}
+;{} and {}
+AndRemove=وإزالة
+;and remove
+AngleUnitConversionRoutines={ إجراءات تحويل وحدات الزوايا }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=إطار مفتاحي (f)
+;Ani keyfr. (f)
+AniKeyframe=إطار مفتاحي للتحريك
+;Ani keyframe
+AnimatedGif=Gif متحرك
+;Animated Gif
+Animation=التحريك:
+;Animation:
+Animation2=التحريك: {}
+;Animation: {}
+AnimationLower=التحريك
+;animation
+AnimationMaker=صانع التحريك
+;Animation maker
+AnimationMakerParen=صانع التحريك   ({})
+;Animation maker   ({})
+AnimationPicsOutput=إخراج صور التحريك:
+;Animation pics output:
+AnimationPreview=معاينة التحريك
+;Animation preview
+AnimationProcessing=معالجة التحريك
+;Animation processing
+AnimationRenderingStopped=توقف تصيير التحريك.
+;Animation rendering stopped.
+AnimationSize=حجم التحريك:
+;Animation size:
+AnimationTheFfmpegCommandIsOn=التحريك: أمر ffmpeg في الحافظة (شغّله في الطرفية عند اكتمال الإطارات):
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=التحريك: كُتب الفيديو: {}
+;Animation: video written: {}
+Animations=التحريكات
+;Animations
+AntiAliasing=تنعيم الحواف:
+;Anti aliasing:
+Antialiasing=تنعيم الحواف:
+;Antialiasing:
+Aperture=فتحة العدسة:
+;Aperture:
+Appearance=المظهر
+;Appearance
+ApplyToImage=تطبيق على الصورة
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=طبّق القيم التي غيّرتها، فحقول التحرير للإخراج فقط
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=ألوان الرؤوس التقريبية. تُحفظ معلومات اللون إحداثياتِ uv في الشبكة وتزيد حجمها
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2 تحسب ArcTan(Y/X) وتعيد زاوية في الربع الصحيح.
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AsFullBackgroundSphere=كرةً خلفية كاملة:
+;As full background sphere:
+Aspect=نسبة الأبعاد:
+;Aspect:
+AssignActualFormulaSettings=تعيين إعدادات الصيغة الحالية
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=تعيين إعدادات الإضاءة الحالية للبرنامج الرئيسي.\nتختلف الأضواء والألوان عن التصيير الرئيسي\nبسبب الدوال الأبسط في المستكشف.
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=عند أي إطار فرعي:
+;At which subframe:
+Author=المؤلف:
+;Author:
+Author2=المؤلف
+;Author
+Auto=تلقائي
+;Auto
+AutoRenderAllFollowingTiles=تصيير كل البلاطات التالية تلقائيًا
+;Auto render all following tiles
+AutoSavingTheM3cFile=حفظ ملف m3c تلقائيًا:
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=تلقائي: يتقاسم CPU وبطاقة الرسوميات الصورة (يبدأ CPU\nفورًا، وتنضم البطاقة حالما يُترجَم\nمظلّلها)، ثم تحسب البطاقة الظلال والانسداد\nالمحيطي.\nCPU: لا بطاقة رسوميات أبدًا.\nبطاقة الرسوميات: انتظار المظلّل، كما في السابق.
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=تحديث الصورة تلقائيًا
+;Auto update image
+AutoUpdatePreview=تحديث المعاينة تلقائيًا
+;Auto update preview
+AutoclipSpecDiff=قص تلقائي للمعان+الانتشار :
+;Autoclip spec+diff :
+AutodetectOnStart=اكتشاف تلقائي عند البدء
+;Autodetect on start
+AverageNoise=متوسط التشويش:
+;Average noise:
+AverageRaycount=متوسط عدد الأشعة:
+;Average raycount:
+AvgIterations=متوسط التكرارات:
+;Avg. iterations:
+AvgRaysteps=متوسط خطوات الشعاع:
+;Avg. raysteps:
+AxisX=المحور X
+;Axis X
+AxisY=المحور Y
+;Axis Y
+AxisZ=المحور Z
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=حفظ BMP وJPG وPNG:
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=ذاكرة BTracer2 المؤقتة (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=صورة الخلفية
+;Back pic
+BackToTheViewTakenFrom=العودة إلى المنظر المأخوذ من النافذة الرئيسية.
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=لون الخلفية السفلي، انقر للتغيير.
+;Background bottom color, click to change.
+BackgroundImage=صورة الخلفية:
+;Background image:
+BackgroundImage2=صورة الخلفية
+;Background image
+BackgroundPictures=صور الخلفية:
+;Background pictures:
+BackgroundTopColorLeftclickToChange=لون الخلفية العلوي، انقر بالزر الأيسر للتغيير، وبالأيمن للقائمة المنبثقة.
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=الألوان الأساسية:
+;&Basic colors:
+BatchProcessing=المعالجة الدفعية
+;Batch processing
+BatchProcessingPictureOf=المعالجة الدفعية: الصورة {} من {}
+;Batch processing: picture {} of {}
+Between=بين:
+;between:
+Big=كبير
+;big
+BigRender=تصيير كبير
+;Big render
+BigRender2=تصيير كبير: {}
+;Big render: {}
+BigRenderProjects=مشاريع التصيير الكبير:
+;Big render projects:
+BigRenderStopped=توقف التصيير الكبير.
+;Big render stopped.
+BigRenders=التصييرات الكبيرة
+;Big renders
+BigSizeIncludingAntiAliasing=الحجم الكبير (مع تنعيم الحواف):
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=نوافذ ونص أكبر أو أصغر (يبقى التخطيط كما هو)
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=نصف القطر الأكبر يعني ظلالًا أنعم
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=القيم الأكبر من الأسطر (الأفقية) الموجودة تُقص إلى السطر الأخير.\nلا مشكلة في ذلك.
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=صورة نقطية (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=مزج dFog
+;Blend dFog
+BlendTheDynamicFogInsteadOf=مزج الضباب الديناميكي بدلًا من إضافة الضوء،\nفتتلاشى الخلفية.
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=كتل
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=Bokeh:
+;Bokeh:
+BorderSize=حجم الحد:
+;Border size:
+Box=Box
+;Box
+BoxSharpGoodAAGaussBit=Box: حاد، AA جيد\nGauss: ضبابي قليلًا، AA جيد جدًّا
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=يُحضر النافذة إلى الأمام من أي نافذة، أو يغلق النافذة الحالية. انقر حقلًا واضغط المفاتيح؛ ومفتاح Backspace يزيل مفتاح الاختصار.
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=استعراض...
+;Browse...
+BuiltIn=مدمج
+;built in
+BuiltWithoutIntelOpenImageDenoise=مبني دون Intel Open Image Denoise
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=إعدادات BulbTracer2 (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=بواسطة
+;By
+ByOfDone={} ({}، بواسطة {}): اكتمل {} من {} {}
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=حساب-
+;Calc-
+CalcColon=الحساب:
+;Calc:
+CalcRAutomatic=حساب R. تلقائيًا.
+;Calc. R. automatic.
+Calculate=احسب
+;Calculate
+Calculate3D=احسب ثلاثي الأبعاد
+;Calculate 3D
+Calculate3DAndTheBatchWindow=«احسب ثلاثي الأبعاد» ونافذة الدفعات مع السرب، في
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=حساب صورة سريعة بكتل 8x8 دون إضاءة صحيحة
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=حساب A.S. تلقائيًا
+;Calculate A.S. automatically
+CalculateColors=حساب الألوان
+;Calculate Colors
+CalculateDoF=حساب DoF:
+;Calculate DoF:
+CalculateDoFAutomatically=حساب DoF تلقائيًا
+;Calculate DoF automatically
+CalculateHSAutomatically=حساب H.S. تلقائيًا
+;Calculate H.S. automatically
+CalculateJulia=حساب جوليا
+;Calculate Julia
+CalculateLeftEyeImage=حساب صورة العين اليسرى
+;Calculate left eye image
+CalculateNTimesToReduceNoise=الحساب n مرة لتقليل التشويش بأخذ المتوسط
+;Calculate n times to reduce noise by averaging
+CalculateNow=احسب الآن
+;Calculate now
+CalculateOn=الحساب على
+;Calculate on
+CalculateOnlyASelectionInThe=حساب جزء محدد من الصورة فقط
+;Calculate only a selection in the image
+CalculatePreview=حساب المعاينة
+;Calculate preview
+CalculateRTAutomatically=حساب R. (+ T.) تلقائيًا
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=حساب ضربات الضوء العشوائية تلقائيًا
+;Calculate random light strokes automatically
+CalculateReflections=حساب الانعكاسات:
+;Calculate reflections:
+CalculateRightEyeImage=حساب صورة العين اليمنى
+;Calculate right eye image
+CalculateTheImageFirst=احسب الصورة أولًا.
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=احسب الصورة أولًا («احسب ثلاثي الأبعاد»)
+;calculate the image first (Calculate 3D)
+CalculateTransparency=حساب الشفافية:
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=حساب الشفافية على صيغ dIFS فقط (لتركيبات DE مع أزمنة الهروب)
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=محسوب
+;calculated
+CalculatedOn=حُسب على: {}
+;Calculated on: {}
+CalculatedOnTheCPU=حُسب على CPU
+;Calculated on the CPU
+CalculatedPictures=الصور المحسوبة
+;Calculated pictures
+CalculatingThePreview=جارٍ حساب المعاينة...
+;Calculating the preview...
+CalculatingVolumetricLightMap=جارٍ حساب خريطة الضوء الحجمي
+;Calculating volumetric light map
+Calculation=الحساب
+;Calculation
+CalculationCount=عدد مرات الحساب:
+;Calculation count:
+CalculationOptions=خيارات الحساب
+;Calculation options
+CalculationStopped=توقف الحساب.
+;Calculation stopped.
+Calculations=الحسابات
+;Calculations
+Camera=الكاميرا
+;Camera
+CameraColon=الكاميرا:
+;Camera:
+CameraLense=عدسة الكاميرا:
+;Camera lense:
+Cancel=إلغاء
+;Cancel
+CancelAndShowResult=إلغاء وعرض النتيجة
+;Cancel and show result
+CancelExit=إلغاء + خروج
+;Cancel + exit
+CancelImmediately=إلغاء فوري
+;Cancel immediately
+CancelType=نوع الإلغاء:
+;Cancel type:
+CannotRead={}: تتعذر القراءة
+;{}: cannot read
+CannotTakePartAnotherVersionOf=؛ لا يمكن لـ {} المشاركة (إصدار آخر من البرنامج)
+;; {} cannot take part (another version of the program)
+CannotWrite=تتعذر كتابة {}: {}
+;Cannot write {}: {}
+CaseYAngleIsAt90=إذا كانت زاوية Y عند 90 أو -90 درجة فلا يمكن حساب زوايا أويلر!
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CautionTheProcessingsBelowMustBe=تنبيه:  المعالجات أدناه يجب أن تُحسب\nمن الأعلى إلى الأسفل، وتغييرات الإضاءة تعيد تعيين\nهذه الحسابات!
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil: أصغر عدد صحيح >= X، |X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=تغيير
+;Change
+ChangeParams=تغيير المعاملات
+;Change Params
+ChangeTheJuliaValuesWithRadius=تغيير قيم جوليا بنصف القطر وخط الطول وخط العرض
+;Change the julia values with radius, longitude and latitude
+CheckColors=فحص الألوان
+;Check colors
+CheckThisIfYouWantTo=فعّل هذا إذا أردت صنع تحريك حلقي.\nيتصرف الاستيفاء كأن الإطار المفتاحي الأول يأتي من جديد\nبعد الإطار المفتاحي الأخير والعكس بالعكس.
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=فعّل هذا الخيار لتقليل تغيرات الألوان في الصورة.\nللحصول على تفاصيل أكثر حتى مع تفعيله، طبّق التلوين على المعاملات\nالأصلية بقيمة DEstop مخفّضة، مقسومة على «معامل الحجم».
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=فعّل هذا لإيقاف رفع أولوية أبطأ خيط.
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=فعّل لتغيير القيمة [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=اختر اسم ملف، ثم صيّر صورتي العينين واحفظ الزوج المجسم المكتمل تلقائيًا.
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=اختر خريطة
+;Choose a map
+ChooseASharedFolderFirstOne=اختر مجلدًا مشتركًا أولًا (يراه كل حاسوب في السرب)
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=اختر خيارًا:
+;Choose Option:
+ChoseTheme=اختر السمة:
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (في الطرفية)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (تطبيق سطح المكتب)
+;Claude (desktop app)
+Clear=مسح
+;Clear
+ClearAllGenerationsBeforeTheSelected=مسح كل الأجيال قبل الجيل المحدد
+;Clear all generations before the selected one
+ClearAllPrevious=مسح كل ما سبق
+;Clear all previous
+ClearTheWholeList=مسح القائمة كلها
+;Clear the whole list
+ClickAButtonToChangeA=(انقر زرًّا لتغيير مجلد)
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=انقر رأس عمود للفرز.
+;Click a column header to sort.
+ClickALanguageToSwitchThe=انقر لغة لتبديل النوافذ إليها
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=انقر ملف معاملات لمعاينته.
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=انقر واضغط مفاتيح الاختصار
+;Click and press the keys of the hotkey
+ClickImage=انقر الصورة
+;click image
+ClickOnButtonAndAfterwardsOn=انقر الزر ثم انقر الجسم في الصورة\nلتعيين نقطة المنتصف للضوء.
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=انقر على الصورة
+;Click on image
+ClickOnMToSaveThese=انقر "M" لحفظ هذه الإعدادات مع عرض الصورة ومقياسها\nإعدادًا مسبقًا. ثم انقر "preview" أو "mid" أو "high"\nأو انقر "M" مرة أخرى للإلغاء.
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=انقر الزر ثم انقر الجسم في الصورة لأخذ\nالقيم من هناك.
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=انقر الزر ثم انقر الجسم في الصورة لأخذ\nقيم جوليا من هناك.\nفي الوضع رباعي الأبعاد يُدار المتجه وفق قيم الدوران رباعي الأبعاد.\n\nتلميح: خذ القيم من الجسم المحسوب دون جوليا، وإلا فلن تكون للنتيجة\nصلة حقيقية بتلك النقطة.
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=انقر الزر ثم انقر الجسم في الصورة لأخذ\nمسافة الجسم غير المزاحة.\nسيظهر ذلك الجزء من الجسم على المسافة الحقيقية للشاشة.
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=انقر الجسم في الصورة لجعله في المركز.\nلن يتغير اتجاه الكاميرا، استخدم خيارات\nالدوران للدوران حول نقطة المنتصف.
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=انقر للتبديل بين Dynfog حسب التكرارات واللون حسب التكرارات
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=انقر لاختيار ملف الإخراج
+;Click to choose the output file
+ClickToChooseTheOutputFolder=انقر لاختيار مجلد الإخراج
+;Click to choose the output folder
+ClickToChooseYourNameFor=انقر لاختيار اسمك للحفظ التلقائي في المعاملات
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=انقر للإخفاء/الإظهار
+;Click to hide/show
+ClickToInsertYourNameBelow=انقر لإدراج اسمك أدناه
+;Click to insert your name below
+ClickToLoadABackgroundPicture=انقر لتحميل صورة خلفية.
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=انقر لفتح مستكشف الملفات واسحب ملفات M3P وأفلتها على القائمة.
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=انقر لتصيير المستوى ثنائي الأبعاد عند نقطة المنتصف.
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=انقر لتصيير مستوى البداية ثنائي الأبعاد.
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=انقر لتصيير مستوى النهاية Z.
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=انقر لحفظ الإضاءة الحالية ومعظم إعدادات الألوان\nفي زر إعداد مسبق مخصص.\nانقر هذا الزر مرة أخرى لإلغاء الحفظ.
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=انقر لتحديد ملف M3P أو أكثر ووضعها في القائمة.
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=انقر لتصفير كل منزلقات الضباب الديناميكي.
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=انقر لضبط ارتفاع الصورة ليوافق نسبة الأبعاد هذه.
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=انقر لضبط إضاءة المستكشف على أحد هذه الإعدادات المسبقة.
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=انقر لكتابة التكبير (يبقى ثابتًا: تكبير ثابت).
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=القص R:
+;ClippingR:
+Close=إغلاق
+;Close
+CloseMesh=إغلاق الشبكة
+;Close Mesh
+CloseTheCurrentWindow=إغلاق النافذة الحالية:
+;Close the current window:
+CloseTheMeshAtTheBorders=إغلاق الشبكة عند الحدود
+;Close the mesh at the borders
+CloseWindow=إغلاق النافذة
+;Close window
+Co=Co:
+;Co:
+Code=الشيفرة
+;Code
+CodeFile=الشيفرة: {}\nالملف: {}
+;Code: {}\nFile: {}
+ColCycling=تدوير الألوان
+;Col cycling
+ColVarOnZ=تغير اللون على Z
+;Col. var. on Z
+Color=اللون
+;Color
+ColorAdjustment=ضبط الألوان
+;Color adjustment
+ColorEnd=نهاية اللون
+;Color end
+ColorOnIterat=اللون حسب التكرار:
+;Color on Iterat.:
+ColorOnIts=اللون حسب التكرارات:
+;Color on its:
+ColorOption0AverageOfBoth=خيار اللون:\n0:  متوسط الصيغتين.\n1:  لون الصيغة الأولى.\n2:  لون الصيغة الثانية.
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=خيارات قياس الألوان
+;Color scaling options
+ColorStart=بداية اللون
+;Color start
+Coloring=التلوين
+;Coloring
+ColumnsOfTiles=أعمدة البلاطات
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=طرق الدمج:\nMin: الكسوريّان كلاهما ظاهران، دمج قيم DE بالحد الأدنى\nMax: الأجزاء المتداخلة فقط، دمج قيم DE بالحد الأقصى\nInv max: عكس DE للهجين الثاني والدمج بـ'Max'\nMin lin: دمج بالحد الأدنى مع دالة تداخل خطية\nMin nlin: مثل S1، دالة غير خطية، تداخل أنعم\nMix: أولًا F1..FendHybrid1 ثم FstartHybrid2..F6 (dIFS) بمتجه معدّل.
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=دمج الخريطة Y مع الألوان الانتشارية
+;Combine map Y with diffuse colors
+Common=عادية
+;Common
+ComparingFiles=جارٍ مقارنة الملفات
+;comparing files
+Compile=ترجمة
+;Compile
+CompileTheCodeF9=ترجمة الشيفرة <F9>
+;Compile the code <F9>
+CompilingSucceeded=نجحت الترجمة
+;Compiling succeeded
+Computer=الحاسوب
+;Computer
+Confirm=تأكيد
+;Confirm
+Connect=اتصال
+;Connect
+ConnectToAnAIAssistant=الاتصال بمساعد ذكاء اصطناعي
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=الاتصال بمساعد ذكاء اصطناعي: دعه يصف صورك ويغيّرها ويصيّرها
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=تم الاتصال. اسأله في محادثة جديدة؛ أعد تشغيل التطبيق إن لم يظهر mb3d بين أدواته.
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=تم الاتصال. ابدأ جلسة Claude Code جديدة لاستخدامه. لإزالته مرة أخرى، شغّل الأمر أدناه.
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=التخميد الثابت
+;Const Attenuation
+Constant=ثابت
+;Constant
+Constants=الثوابت:
+;Constants:
+Continue=متابعة
+;Continue
+ConvertManyM3PFilesToM3I=تحويل ملفات M3P كثيرة إلى M3I
+;Convert many M3P files to M3I
+CopiedToTheClipboard=نُسخ إلى الحافظة.
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=ينسخ إلى الحافظة أمر ffmpeg لصنع فيديو MP4 صغير من الإطارات.\nشغّله بنفسك في الطرفية (هذا البرنامج لا يشغّل برامج أخرى).
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=نسخ
+;Copy
+CopyCommand=نسخ الأمر
+;Copy command
+CopyParamsToClipboard=نسخ المعاملات إلى الحافظة
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=انسخ الأمر لتلصقه في الطرفية
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=نسخ السطر المحدد، أو كل الأسطر المعروضة إن لم يُحدَّد شيء
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=نسخ القيم
+;Copy the values
+CopyTheValuesTo=نسخ القيم إلى..
+;Copy the values to..
+CopyThisFormulaToFormula1=نسخ هذه الصيغة إلى الصيغة 1
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=نسخ هذه الصيغة إلى الصيغة 2
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=نسخ هذه الصيغة إلى الصيغة 3
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=نسخ هذه الصيغة إلى الصيغة 4
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=نسخ هذه الصيغة إلى الصيغة 5
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=نسخ هذه الصيغة إلى الصيغة 6
+;Copy this formula to formula 6
+CopyThisLightToLight1=نسخ هذا الضوء إلى الضوء 1
+;Copy this light to Light1
+CopyThisLightToLight2=نسخ هذا الضوء إلى الضوء 2
+;Copy this light to Light2
+CopyThisLightToLight3=نسخ هذا الضوء إلى الضوء 3
+;Copy this light to Light3
+CopyThisLightToLight4=نسخ هذا الضوء إلى الضوء 4
+;Copy this light to Light4
+CopyThisLightToLight5=نسخ هذا الضوء إلى الضوء 5
+;Copy this light to Light5
+CopyThisLightToLight6=نسخ هذا الضوء إلى الضوء 6
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=نسخ Z1 إلى Z2 للحصول على نقطة تركيز
+;Copy Z1 to Z2 to get a focus point
+Cores=الأنوية
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=تعذر تحميل الصيغة <{}>: {}
+;Could not load formula <{}>: {}
+CouldNotWrite=تعذرت كتابة {}: {}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=عدد الصور (شرائح الجسم) التي ستُحسب.
+;Count of images (object slices) that will be calculated.
+CreateEditAJITCompiledFormula=إنشاء/تحرير صيغة مترجمة بـ JIT
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=إنشاء ملف لغة
+;Create language file
+CreateMeshes=إنشاء شبكات
+;Create Meshes
+CrossEyedPreview=معاينة بالعينين المتقاطعتين
+;Cross-eyed preview
+Ctrl1ToCtrl7In=من Ctrl+1 إلى Ctrl+7 بترتيب القائمة، وCtrl+W للإغلاق
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+CustomPreset1=إعداد مسبق مخصص 1
+;custom preset 1
+CustomPreset10=إعداد مسبق مخصص 10
+;custom preset 10
+CustomPreset2=إعداد مسبق مخصص 2
+;custom preset 2
+CustomPreset3=إعداد مسبق مخصص 3
+;custom preset 3
+CustomPreset4=إعداد مسبق مخصص 4
+;custom preset 4
+CustomPreset5=إعداد مسبق مخصص 5
+;custom preset 5
+CustomPreset6=إعداد مسبق مخصص 6
+;custom preset 6
+CustomPreset7=إعداد مسبق مخصص 7
+;custom preset 7
+CustomPreset8=إعداد مسبق مخصص 8
+;custom preset 8
+CustomPreset9=إعداد مسبق مخصص 9
+;custom preset 9
+Cuts=القطع
+;Cuts
+Cutting=القطع
+;Cutting
+Cutting2=القطع*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=إزالة التشويش DCT (GIMP)
+;DCT denoising (GIMP)
+DE=DE:
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=دمج DE:
+;DE comb.:
+DEStop=توقف DE:
+;DE stop:
+DEcombinate=دمج DE
+;DEcombinate
+DEstop=DEstop:
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=ضباب d.
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=أشكال dIFS
+;dIFS shapes
+DIFSTransformations=تحويلات dIFS
+;dIFS transformations
+DOUBLEIMAGESIZE=مضاعفة حجم الصورة
+;DOUBLE IMAGESIZE
+DateModified=تاريخ التعديل
+;Date modified
+Day=اليوم
+;Day
+DblClickHideRightPanel=نقر مزدوج: إخفاء اللوحة اليمنى
+;DblClick: hide right panel
+Debug=تصحيح
+;debug
+DecreaseScale=تصغير المقياس
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=تصغير حجم نافذة المستكشف
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=يقلل الضباب في الأجزاء القريبة
+;Decreases the fog in near parts
+DefaultTheme=السمة الافتراضية
+;Default Theme
+Defaults=الافتراضيات
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=تحديد المجلدات الافتراضية للتحميل والحفظ
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=تحديد تسلسلات صور لتحريك خرائط الارتفاع والألوان
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=يحدد مدى دقة حساب الموضع على المسافة المحددة من السطح.\nالقيم الأعلى تعطي دقة أكبر، ومن ثم حسابًا أفضل للعموديات.\nنادرًا ما يُحتاج إلى أكثر من 12 بكثير.
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=يحدد مدى قرب مستوى Zstart أمامك (بالأمتار).\nوهو أيضًا أدنى مسافة يمكن أن يظهر عليها جسم (افتراضي).
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=يحدد المسافة من سطح الجسم التي يتوقف عندها تقدم الشعاع (ray marching).\nالقيم الأدنى تعطي تفاصيل أكثر للجسم، لكنها قد تؤدي أيضًا إلى نقص في أخذ العينات.\nالقيمة مرتبطة بعرض البكسل.
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=يحدد المسافة الحقيقية إلى شاشة العرض بالأمتار.
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=يحدد العرض الحقيقي للصورة على الشاشة بالأمتار.
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=يحدد حجم مستوى العرض Zstart.\nيُضبط تلقائيًا عند استخدام المستكشف،\nغيّره فقط إذا قُصت الأجسام عند حواف\nالصورة.
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=يحدد الزاوية التي يُحسب التظليل حتى بلوغها.\nالقيم الأدنى: تتأثر البنى البعيدة أقل بالبنى القريبة،\nوهذا أفضل حين تكثر الثقوب في البنى.
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=يحدد أين يبدأ التكرار من جديد\nبعد تنفيذ الصيغة الأخيرة\nدون أن يتحقق شرط توقف حتى ذلك الحين.
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=درجة الدوران
+;Degree of rotation
+Degrees=درجات
+;Degrees
+Del=حذف
+;Del
+DelEntry=حذف المدخل
+;Del Entry
+Delete=حذف
+;Delete
+DeleteAll=حذف الكل
+;Delete all
+DeleteAllKeyframesToBeginA=حذف كل الإطارات المفتاحية لبدء مشروع جديد.
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=حذف الملفات المظللة من القائمة
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=حذف القيمة الثابتة المحددة
+;Delete selected constant value
+DeleteSelectedNamedParameter=حذف المعامل المسمى المحدد
+;Delete selected named parameter
+DeleteSelectedOption=حذف الخيار المحدد
+;Delete selected option
+DeleteSequence=حذف التسلسل
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail=أتريد حذف معاملات "{}" وصورتها المصغرة من السجل؟
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=حذف هذا الإطار المفتاحي
+;Delete this keyframe
+DeleteThisTilesFiles=حذف ملفات هذه البلاطات
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=حذف ما احتفظت به كل التصييرات غير المكتملة
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=أتريد حذف ما احتفظت به كل التصييرات غير المكتملة؟
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=حذف ما احتفظ به التصيير المحدد
+;Delete what the selected render kept
+Depth=العمق
+;Depth
+DepthColon=العمق:
+;Depth:
+DepthGradientFunctionWorksOnlyIf=دالة تدرج العمق، تعمل فقط إن لم يكن «نسبةً إلى الجسم» مفعّلًا.
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\sعمق الميدان
+;\sDepth of Field
+DepthOfField2=عمق الميدان
+;Depth of Field
+DepthOfFieldLower=عمق الميدان
+;depth of field
+DepthOfReflections1ToSee=عمق الانعكاسات: 1 لرؤية انعكاس واحد فقط،\nومع 2 يمكنك رؤية الانعكاسات في الجسم المنعكس، ... وهكذا.
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=الوصف
+;Description
+DetectsTheAmountOfProcessorCores=يكتشف عدد أنوية المعالج عند البدء.\nيمكنك اختيار العدد بنفسك وتعطيل\nهذا الخيار للبدء بإعدادات مختلفة.
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=يحدد عدد الأجسام التالية التي تُحسب لها الانعكاسات الانتشارية
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=يحدد عدد الانعكاسات المستقيمة التالية التي تُحسب
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=يحدد متى يتوقف التصيير في وضع الدفعات
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=يحدد ما إذا كان الضوء ظاهرًا، وشكله.
+;Determines whether the light should be visible and its shape.
+Diff=الانتشار:
+;Diff:
+Diff2=انتشار
+;Diff
+DifferentCalculationOfLightCombining=حساب مختلف لدمج الأضواء
+;Different calculation of light combining
+Diffuse=الانتشاري:
+;Diffuse:
+Diffuse2=الانتشاري
+;Diffuse
+DiffuseFunctionChooseCosOrCos=دالة الانتشار، اختر Cos أو Cos^2 إذا استخدمت ظلًّا حادًّا لهذا الضوء.
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=ألوان الجسم الانتشارية، انقر لتغييرها.
+;Diffuse object colors, click to change them.
+DiffuseShadow=الظل الانتشاري
+;Diffuse shadow
+DirectionTowardsZero000=الاتجاه نحو الصفر (0,0,0)
+;Direction towards zero (0,0,0)
+DisableAll=تعطيل الكل
+;Disable all
+DisableAnalyticalDE=تعطيل DE التحليلي
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=تعطيل الضبط التلقائي للتكبير عند الحركة.\nيؤدي هذا أيضًا إلى العبور خلال الجسم.
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=تعطيل المفتاح (f) للتحريك
+;Disable the (f) key for ani
+DisableThemes=تعطيل السمات
+;Disable Themes
+DisableThisIfYouDoNot=عطّل هذا إن لم ترد أصفارًا بادئة في أرقام الملفات.\nمثلًا:  name000010.png  يصبح  name10.png
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=تعطيل تعزيز الخيوط
+;Disable threadboost
+Disc=قرص
+;Disc
+Disconnect=قطع الاتصال
+;Disconnect
+DisplayStyle=نمط العرض
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=يعرض بعض أوصاف الصيغ، إن توفرت.
+;Displays some formula descriptions, if available.
+DistanceEstimation=تقدير المسافة
+;Distance estimation
+DitheringForScale=التنقيط للتحجيم:
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=يقسم «مضاعف خطوة الشعاع» الحالي على هذه القيمة،\nزِد القيمة لتقليل تجاوز الخطوات.
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=حساب DoF
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=أُطفئ حساب DoF، فهو غير ممكن في وضع البلاطات.
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=عدم جعل هذه النافذة لاصقة
+;Do not make this window sticky
+DoThisFunctionAutomatically=تنفيذ هذه الوظيفة تلقائيًا
+;Do this function automatically
+DoYouReallyWantToClear=أتريد حقًّا مسح كل الأجيال السابقة؟
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=أتريد حقًّا مسح قائمة الدفعات؟
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=أتريد حقًّا حذف كل شيء؟
+;Do you really want to delete everything?
+DoYouReallyWantToStop=أتريد حقًّا إيقاف الحسابات؟
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=يجري التلوين بعد هذا العدد من التكرارات لا من حد الهروب (-1، معطّل)
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=قيد التنفيذ
+;Doing
+DonTChangeAmbShDFog=عدم تغيير AmbSh+dFog:
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=دون حفظ، معاينة فقط
+;Don't save, only preview
+Done=تم
+;Done
+Done2=تم {} ({}).
+;{} done ({}).
+DoneOf=تم: {} من {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=نقر مزدوج لتغيير وضع المستكشف
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=مضاعفة حجم الصورة تلقائيًا
+;Double the imagesize automatically
+DownScaling=تصغير\nالحجم:
+;Down-\nscaling:
+DownscaleBoth=تصغير الاثنين
+;Downscale both
+DownscaleDiffuseKeepReflections=تصغير الانتشاري، والإبقاء على الانعكاسات
+;Downscale diffuse, keep reflections
+DownscaleSpecular=تصغير اللمعان
+;Downscale specular
+Ds=Ds:
+;Ds:
+DunnoDoNothing=لا أدري، لا تفعل شيئًا
+;Dunno, do nothing
+DynFog=ضباب ديناميكي
+;Dyn.fog
+DynFogOnIt=ضباب ديناميكي حسب التكرار:
+;Dyn. fog on It.:
+DynFogOnIts=ضباب ديناميكي حسب التكرارات:
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=الضباب الديناميكي، انقر لتغيير اللون.  انقر بالزر الأيمن لإدراج لون الضوء الحجمي.
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=اللون الكثيف للضباب الديناميكي، انقر للتغيير.
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=معاملات الضباب الديناميكي أو الضوء الحجمي. راجع تبويب «التلوين» للخيارات!
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=الضباب الديناميكي:\nكلما قل العدد ظهر الضباب أبعد عن الجسم.\nمع dIFS، يحيط الضباب بجزء الجسم المحسوب في هذا التكرار.\nالصفر يعطل هذه الميزة ويحسب الضباب الديناميكي على عدد خطوات الشعاع كالمعتاد.\nتلميح: فعّل خيار «الخطوة الأولى عشوائية» لتجنب التدرجات.\nالضوء الحجمي:\nاختر رقم الضوء الذي يُحسب منه تشتت الضوء.
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=لون الحواف
+;Edges color
+Edit=تحرير
+;Edit
+EditJITCompiledFormula=تحرير صيغة مترجمة بـ JIT
+;Edit JIT-compiled Formula
+EditMapSequences=تحرير تسلسلات الخرائط
+;Edit Map Sequences
+EditMode=وضع التحرير:
+;Edit mode:
+EditNamedConstantValue=تحرير قيمة ثابتة مسماة
+;Edit named constant value
+EditNamedParam=تحرير معامل مسمى
+;Edit named param
+EditOptionValue=تحرير قيمة خيار
+;Edit option value
+EditSelectedConstantValue=تحرير القيمة الثابتة المحددة
+;Edit selected constant value
+EditSelectedNamedParameter=تحرير المعامل المسمى المحدد
+;Edit selected named parameter
+EditSelectedOption=تحرير الخيار المحدد
+;Edit selected option
+Elapsed=المنقضي
+;Elapsed
+ElapsedTimeS=الوقت المنقضي: {} ث
+;Elapsed time: {} s
+Enable=تمكين
+;Enable
+EnableGeneratingZBufferThisMode=تمكين توليد مخزن Z. يحتاج هذا الوضع إلى بيانات إضافية تجعله غير متوافق مع الإصدارات السابقة، لذا لا يمكن حفظ ملفات MC بهذا الإعداد أو استعادتها. لحفظ مخزن Z احفظ الصورة العادية فحسب، فيُحفظ مخزن Z تلقائيًا معها.
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=تمكين غاما داخلية بقيمة 2 لحسابات الإضاءة.\nهذا مستقل عن منزلق غاما.
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=تمكين الإضاءة
+;Enable Lighting
+Enabled=مُمكَّن
+;Enabled
+EnablesTheHardShadowIfCalculated=يمكّن الظل الحاد، إن كان محسوبًا.\nإن لم يُحسب HS، فإن الظل المحيطي يخفض الضوء إن كان مُمكَّنًا.
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=النهاية:
+;End:
+EnterNamedParameter=إدخال معامل مسمى
+;Enter named parameter
+Entries={} مدخلات
+;{} entries
+Error=خطأ
+;error
+ErrorAt=، خطأ عند {}: {}
+;, error at {}: {}
+Errors=الأخطاء
+;Errors
+Escapetime3DFormulas=صيغ زمن الهروب ثلاثية الأبعاد
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=صيغ زمن الهروب ثلاثية الأبعاد بحساب DE تحليلي (أسرع)
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=صيغ زمن الهروب رباعية الأبعاد
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=صيغ زمن الهروب رباعية الأبعاد بحساب DE تحليلي (أسرع)
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=تحويلات زمن الهروب فقط،\nتُستخدم مع صيغ زمن الهروب
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=زوايا أويلر:
+;Euler angles:
+EveryNewPictureOfTheMain=كل صورة جديدة في النافذة الرئيسية تُرشَّح (والمحفوظة أيضًا).
+;Every new picture of the main window is filtered (the saved one too).
+Everything=كل شيء
+;Everything
+ExchangeAdd=تبديل، إضافة
+;Exchange, add
+ExchangeThisFormulaWithTheNext=تبديل هذه الصيغة مع التالية
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=تبديل هذه الصيغة مع السابقة
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=تبديل هذا الإطار مع التالي
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=تبديل هذا الإطار مع السابق
+;Exchange this frame with the previous one
+Exit=خروج
+;Exit
+ExpandThePanel=توسيع اللوحة
+;Expand the panel
+ExponentialFunctions={ الدوال الأسية }
+;{ Exponential functions }
+ExportACubeAsAStack=تصدير مكعب في صورة رزمة من ملفات PNG
+;Export a cube as a stack of PNG files
+Exposure025=التعريض:  0.25
+;Exposure:  0.25
+ExtractingAmbientInformationFromTheOriginal=جارٍ استخراج معلومات المحيط من ملف M3I الأصلي، يرجى الانتظار:
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ اختبار القيم القصوى }
+;{ Extreme testing }
+FFmpegCommand=أمر FFmpeg
+;FFmpeg command
+FNr=رقم F:
+;F.nr:
+FOVy=FOVy:
+;FOVy:
+FailedToImportFractalParametersAll=أخفق استيراد معاملات الكسوري. هل استُوردت كل الإعدادات الأخرى؟
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=ضباب العمق البعيد
+;Far depth fog
+FarOffset=الإزاحة البعيدة
+;Far offset
+FarPlane=المستوى البعيد:
+;Far plane:
+FastInaccurate=سريع+غير دقيق
+;Fast+inaccurate
+File=الملف
+;File
+FileIndex=رقم الملف:
+;File index:
+FileLower=ملف
+;file
+FileName=اسم الملف:
+;File &name:
+FileTooShort=الملف قصير جدًّا
+;file too short
+Filename=اسم الملف
+;Filename
+Files=الملفات
+;Files
+FilesOfType=نوع الملفات:
+;Files of &type:
+FilterNewPicturesAutomatically=ترشيح الصور الجديدة تلقائيًا
+;Filter new pictures automatically
+FilterNow=ترشيح الآن
+;Filter now
+Fine=دقيق
+;fine
+FineTuneThePositionsWithThe=اضبط المواضع بدقة بأزرار الأسهم
+;fine tune the positions with the arrow buttons
+FinishedRenderingSlices=اكتمل تصيير الشرائح.
+;Finished rendering slices.
+FinishedTracingObject=اكتمل تتبع الجسم.
+;Finished tracing object.
+First4RaysNoisy=أول 4 أشعة (مشوشة)
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=أول حساب لتركيبة الصيغ هذه: تجري ترجمة مظلّلات بطاقة الرسوميات (10-30 ث، مرة واحدة فقط - يحتفظ بها برنامج التشغيل). يحسب CPU في الأثناء، وتنضم البطاقة حين تجهز.
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=الخطوة الأولى عشوائية:
+;First step random:
+FirstStepRandomColon=الخطوة الأولى عشوائية:
+;First Step Random:
+FirstStepRandomToAvoidSpotty=الخطوة الأولى عشوائية:\nلتجنب العيوب المبقعة في الصيغ ذات قيم DE السيئة.\nلتشويش أقل، استخدمها مع تصغير الصورة و/أو عدد أشعة أعلى.\nيمكن استخدامها أيضًا مع التنقيط.
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+FitLeftRightBorders=ملاءمة الحدين الأيسر والأيمن
+;Fit left+right borders
+FixedZoomAndSteps=تكبير وخطوات ثابتة
+;Fixed zoom and steps
+FlatSolid=مصمت مسطح
+;Flat Solid
+FlatSolidWithEdges=مصمت مسطح مع الحواف
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor: أكبر عدد صحيح <= X،  |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fo.{}
+;Fo.{}
+FogOffset=إزاحة الضباب
+;Fog offset
+Folder=المجلد
+;Folder
+FolderOfTheLanguageFiles=مجلد ملفات اللغة:
+;Folder of the language files:
+FollowTheNewest=متابعة الأحدث
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\sللأسس الكسرية، أو |الأسس| > MaxInt، يجب أن يكون الأساس > 0. }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=للاستخدام الكروي، يستبدل ألوان المحيط بصورة الخلفية المصغرة
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=الصيغة
+;Formula
+Formula1=الصيغة1 •
+;Formula1 •
+Formula12=الصيغة1
+;Formula1
+FormulaEditor=محرر الصيغ
+;Formula editor
+FormulaLower=صيغة
+;formula
+FormulaM3f=صيغة (*.m3f)
+;Formula (*.m3f)
+FormulaName=اسم الصيغة:
+;Formula name:
+FormulaNotFound=لم يُعثر على الصيغة '{}'.
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=رقم الصيغة التي يبدأ عندها الجزء الثاني من الهجين
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=قيم الصيغة:
+;Formula values:
+Formulas=الصيغ
+;Formulas
+FormulasColon=الصيغ:
+;Formulas:
+Forward=أمامي
+;Forward
+FoundOnThisComputerNotConnected=موجود على هذا الحاسوب، لم يُوصل بعد.
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=موجود على هذا الحاسوب. شغّل هذا الأمر مرة واحدة في الطرفية، ثم ابدأ جلسة Claude Code جديدة:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=اسم fp:
+;fp name:
+Fpow=Fpow:
+;Fpow:
+Frame=الإطار:
+;Frame:
+FrameNumberToUseForAnimated=رقم الإطار المستخدم للخرائط المتحركة في المحرر الرئيسي
+;Frame number to use for animated maps in the main editor
+Frames=إطارات
+;frames
+FramesPerSecond=الإطارات في الثانية:
+;Frames per second:
+FramesSec=إطار/ث:
+;Frames/sec:
+FromClipboard=من الحافظة
+;From Clipboard
+FullM3IImageFiles=ملفات صور M3I الكاملة:
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=الدوال:
+;Functions:
+FunctionsFromSystem={ ----------------------- دوال من System  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- دوال من System.Math  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=غاما:  0.5
+;Gamma:  0.5
+Gauss=Gauss
+;Gauss
+GenerateAnAnimationKeyframeFromThe=توليد إطار مفتاحي للتحريك من المنظر الحالي
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=توليد صور كبيرة بالبلاطات
+;Generate big images by tiling
+GenerateMesh=توليد شبكة
+;Generate mesh
+GenerateMesh2=توليد الشبكة
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=توليد شرائح ثنائية الأبعاد للجسم بصور PNG.
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=توليد ألوان انتشارية عشوائية
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=توليد ألوان لمعان عشوائية وفق الألوان الانتشارية
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=الشبكة المولّدة
+;Generated Mesh
+GenerationOf=الجيل {} من {}
+;Generation {} of {}
+Generations=الأجيال
+;Generations
+GetASmoothImageWraparoundFor=الحصول على التفاف ناعم للصورة للاستخدام الكروي
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=أخذ نقطة المنتصف
+;get midpoint
+GetMinDistFromImage=أخذ أدنى مسافة من الصورة
+;Get min.dist. from image
+GetValuesFromImage=أخذ القيم من الصورة
+;Get values from image
+GetZ1=أخذ Z1
+;Get Z1
+GetZ2=أخذ Z2
+;Get Z2
+GlobalLight=الإضاءة العامة
+;Global light
+GlueSliders=ربط المنزلقات
+;Glue sliders
+GoToNext=الانتقال إلى التالي
+;Go to next
+GoneLastSeenSAgo=غائب (شوهد آخر مرة قبل {} ث)
+;gone (last seen {} s ago)
+GraphicsCard=بطاقة الرسوميات
+;Graphics card
+GroupByDay=التجميع حسب اليوم
+;Group by day
+GuessParams=تخمين المعاملات
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=زمن حساب HS:
+;HS calc time:
+HardShadowCalculation=حساب الظل الحاد
+;hard shadow calculation
+HardShadowRadius=نصف قطر الظل الحاد:
+;Hard shadow radius:
+HardShadows=\sالظلال الحادة
+;\sHard Shadows
+HardShadowsLower=الظلال الحادة
+;hard shadows
+Height=الارتفاع:
+;Height:
+HeightMapGenerator=مولّد خرائط الارتفاع
+;HeightMap Generator
+HeightMapGeneratorPreview=معاينة مولّد خرائط الارتفاع
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=مفيد إذا أردت مثلًا إعادة رسم غير مرغوب فيه.
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=جودة عالية
+;HiQual
+HiQual1=جودة عالية 1
+;HiQual 1
+HiQual2=جودة عالية {}
+;HiQual {}
+Hidden=مخفي
+;hidden
+HideThisFormula=إخفاء هذه الصيغة
+;Hide this formula
+High=عالٍ
+;high
+History=السجل
+;History
+HistoryThePicturesCalculatedTheFiles=السجل: الصور المحسوبة، والملفات المفتوحة والمحفوظة (انقر للتصفح)
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=(اضغط مفتاح Shift لخطوات أدق)
+;(Hold Shift key for finer steps)
+Hotkeys=مفاتيح الاختصار
+;Hotkeys
+HowStrongTheNoiseIsThat=مدى قوة التشويش الذي يُزال (من 1 إلى 30، كما في "Denoise DCT" في GIMP).\nالأعلى يزيل تشويشًا أكثر، وتفاصيل دقيقة أكثر.
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThisComputerIsListedIn=كيف يظهر هذا الحاسوب في السرب
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ الدوال الزائدية ومعكوساتها }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ المدخل: |X| <= 1  المخرج: [0..PI] راديان }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ المدخل: |X| <= 1  المخرج: [-PI/2..PI/2] راديان }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\sالمدخل: |Y| < 2^64، |X| < 2^64، X <> 0   المخرج: [-PI..PI] راديان }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=خامل
+;Idle
+IfEnabledTheAmbientShadowsWill=إن مُكّن، تُحسب الظلال المحيطية\nتلقائيًا بعد التصيير الرئيسي.\nاختر الخيارات قبل ذلك.
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=إن مُكّن، تُحسب الظلال الحادة المختارة\nتلقائيًا بعد التصيير الرئيسي.\nاختر الخيارات قبل ذلك.
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=إن مُكّن، يُحسب تأثير DoF\nتلقائيًا بعد الحسابات السابقة.\nاختر الخيارات قبل ذلك.
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=إن مُكّن، تغطي الصورة الكرة كلها.\nمفيد في التحريكات.
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=إن مُكّن، لا تتلاشى الصورة عند قيمة «عمق» عالية.
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=إن مُكّن، لا تتغير الأضواء عند تحميل إعدادات مسبقة أو معاملات إضاءة.\nقد يفيد مثلًا إن لم ترد إعادة حساب الظلال الحادة.
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=إن مُكّن، تُحسب الانعكاسات تلقائيًا بعد\nالحسابات السابقة.\nتذكّر أن تغييرات الإضاءة اللاحقة تعيد تعيين هذا الحساب!
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=إن مُكّن، يُقسم مقدار اللمعان بين شعاع نافذ إلى الداخل وانعكاس.
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=عند الربط، تتصرف المنزلقات كأنها مشدودة معًا بشريط مطاطي.
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=عند التحديد، اضغط '1' لإعادة هذا المنزلق إلى الموضع الافتراضي.
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=عند التحديد، تُخزن ملفات M3I في مجلد M3I الافتراضي\n  المحدد بخيار 'INI DIRS'.\nوإلا فتُخزن في المجلد نفسه الذي فيه ملفات M3P.
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=إن ضُبط على قيمة أعلى من 0، تُحسب عموديات السطح بمتوسط\nنقاط موزعة ويُحسب أيضًا معامل خشونة، فيقل التعرج.\nالقيمة 8 تأخذ المتوسط على حجم كامل، وهذا بطيء جدًّا لكنه يفيد في الحالات\nالحرجة جدًّا.  ويمكنك أيضًا استخدام «العموديات على ZBuf» في المعالجة اللاحقة.
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=إن اختير الضوء الحجمي:  انقر بالزر الأيمن على زر «ضباب ديناميكي» لإدراج لون الضوء الحجمي.
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=إن أردت متابعة تصيير بدأ من قبل عند موضع\nمعيّن، أدخل هنا رقم بداية الصورة التالية المراد تصييرها.\nاترك قيم «رقم الملف» دون تغيير.
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=تجاهل
+;Ignore
+Image=الصورة
+;Image
+ImageDownscalingForViewingPurposeAnd=تصغير الصورة لغرض العرض وللحفظ بصيغة jpeg أو png أو bmp.\nلا يُطبق مرشح تنعيم الحواف عند الحفظ إلا بالمقياسين 1:2 و1:3.\nانقر لقائمة اختيار.
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=الصورة موجودة
+;Image exists
+ImageLower=صورة
+;image
+ImageParameters=صورة + معاملات
+;image + parameters
+ImageRotation=تدوير الصورة:
+;Image rotation:
+ImageSize=-> حجم الصورة:
+;-> Image size:
+ImageWidth=عرض الصورة:
+;Image width:
+Images=الصور
+;Images
+ImagesForMaps=صور الخرائط:
+;Images for maps:
+Img=صورة
+;Img
+ImportActualParas=استيراد المعاملات الحالية
+;Import actual paras
+ImportParameter=استيراد المعاملات
+;Import parameter
+ImportParameterFromMain=استيراد المعاملات من الرئيسي:
+;Import parameter from main:
+ImportParameterFromMain2=استيراد المعاملات من الرئيسي
+;Import parameter from main
+ImportParametersFromAFileTo=استيراد معاملات من ملف لصنع تصيير كبير منها
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=استيراد المعاملات الحالية من البرنامج الرئيسي
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=استيراد معاملات البرنامج الرئيسي لتصيير mc
+;Import the main programs parameter for mc rendering
+ImportedFromMain=مستورد من الرئيسي
+;Imported from Main
+InAndOutside=داخل وخارج
+;In and outside
+InOut=داخل+خارج
+;In+Out
+InOutOption=خيار الداخل/الخارج:
+;In/out option:
+InTheSwarm=في السرب:
+;In the swarm:
+InThisModeRightAndLeft=في هذا الوضع تُصيّر صورتا العين اليمنى واليسرى لكل إطار فرعي.
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· {} إجمالًا
+;\s· {} in total
+InTotal2={} إجمالًا
+;{} in total
+InclInMain=مضمَّن في الرئيسي
+;incl. in main
+IncludingDFogOnItsOrVol=بما في ذلك خيارات dFog حسب التكرارات أو الضوء الحجمي
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=زيادة/إنقاص رقم الإطار
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=زيادة/إنقاص مستوى الجودة (مضاعف خطوة الشعاع)
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=تكبير المقياس
+;Increase scale
+IncreaseTheSizeOfTheNavigator=تكبير حجم نافذة المستكشف
+;Increase the size of the Navigator window
+Increment=الزيادة:
+;Increment:
+Increment2=الزيادة
+;Increment
+IncrementIfTheSequenceIncreaseThe=زيادة التسلسل، زِد القيمة لتخطي صور
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=رقم بأصفار بادئة
+;Index with leading 0
+InfinityValuesHaveAFractionField=// القيم اللانهائية لها حقل كسري يساوي 0. ويمكن أن تكون القيم اللانهائية موجبة
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=معلومات
+;info
+Infos=معلومات
+;Infos
+IniDirs=مجلدات Ini
+;Ini Dirs
+Input=الإدخال
+;Input
+InputTheHeightDivisor=أدخل قاسم الارتفاع:
+;Input the height divisor:
+InputTheOriginalValueFromThe=إدخال القيمة الأصلية من معاملات البرنامج الرئيسي.
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=إدخال القيم الأصلية من معاملات البرنامج الرئيسي.
+;Input the original values from the main program parameters.
+InputTheWidthFactor=أدخل معامل العرض:
+;Input the width factor:
+Inputs=المدخلات:
+;Inputs:
+Insert=إدراج
+;insert
+InsertActualParameterInThisKeyframe=إدراج المعاملات الحالية في هذا الإطار المفتاحي
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=إدراج المعاملات كاملة من البرنامج الرئيسي
+;Insert complete parameter from main program
+InsertMidValues=إدراج قيم المنتصف
+;Insert mid values
+InsertVolumetricLightColor=إدراج لون الضوء الحجمي
+;Insert volumetric light color
+Inserting=الإدراج:
+;Inserting:
+InsertsTheCurrentMidPosition=يدرج موضع المنتصف الحالي.
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=يدرج الموضع الحالي قيمًا لجوليا.\nفي الوضع رباعي الأبعاد يُدار المتجه وفق قيم الدوران رباعي الأبعاد.
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=الداخل
+;Inside
+InsideColor=لون الداخل
+;Inside color
+InsideRender=تصيير الداخل
+;Inside render
+Int=الشدة:
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower: رفع الأساس إلى قوة صحيحة.  سريعة. }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=الشدة:
+;Intensity:
+IntensityOfImage=شدة الصورة
+;Intensity of image
+InterfaceLanguage=لغة الواجهة
+;Interface language
+InterfaceLanguageClickToChange=لغة الواجهة: {} (انقر للتغيير)
+;Interface language: {} (click to change)
+InterfaceLanguageColon=لغة الواجهة:
+;Interface language:
+InterfaceSize=حجم الواجهة:
+;Interface size:
+Internal=داخلي
+;Internal
+Interpolate=استيفاء
+;Interpolate
+InterpolateANewKeyframeInBetween=استيفاء إطار مفتاحي جديد بينهما.
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=عكس مخزن Z
+;Invert ZBuffer
+IsNotAValidFloatingPoint='{}' ليست قيمة عشرية صالحة
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue='{}' ليست قيمة صحيحة صالحة
+;'{}' is not a valid integer value
+Iteration=التكرار
+;Iteration
+IterationCount=عدد التكرارات
+;Iteration Count
+Iterationcount=عدد التكرارات
+;Iterationcount
+Iterations=التكرارات:
+;Iterations:
+ItsForFree=إنه مجاني!
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=صيغة مترجمة بـ JIT
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=جودة JPEG أو حجمه
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=تستخدم JPG إعدادات الجودة الحالية المعروضة في\nالجزء العلوي من النافذة الرئيسية للبرنامج.
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=المهمة
+;Job
+Jobs=المهام:
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=جودة Jpeg:
+;Jpeg quality:
+JpgQ=جودة jpg:
+;jpg q.:
+JuliaMode=وضع جوليا
+;Julia mode
+JuliaMode2=وضع جوليا
+;Julia Mode
+JuliaOff=جوليا معطّل
+;Julia Off
+JuliaOn=جوليا مفعّل
+;Julia On
+JuliaValuesXYZ=قيم جوليا (x,y,z):
+;Julia values (x,y,z):
+KeepAspect=حفظ النسبة
+;keep aspect
+KeepLights=إبقاء الأضواء
+;Keep lights
+KeepOnlyNearerParts=إبقاء الأجزاء الأقرب فقط:
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=الحفاظ على نسبة الأبعاد عند تغيير العرض أو الارتفاع يدويًا.\nلا داعي لإلغاء التحديد عند الضغط على زر نسبة أبعاد.
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=إبقاء أحدث سطر ظاهرًا مع ورود أسطر جديدة
+;Keep the newest line in sight as new ones come
+KeepThisPriority=الإبقاء على هذه الأولوية
+;Keep this priority
+KeepsTheChosenLanguageForThe=يحتفظ باللغة المختارة للتشغيل التالي
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=يحتفظ بمفاتيح الاختصار للتشغيل التالي
+;Keeps the hotkeys for the next start
+Keyframe=الإطار المفتاحي:
+;keyframe:
+KeyframeListM3k=قائمة الإطارات المفتاحية (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\sالإطار المفتاحي\nالبداية:    النهاية:
+;\s\sKeyframe\nstart:    stop:
+KeysThatBringAWindowTo=مفاتيح تُحضر نافذة إلى الأمام من أي نافذة
+;Keys that bring a window to the front from any window
+Kind=النوع
+;Kind
+LGamma05=L-Gamma:  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=ضربات الضوء
+;LIGHT STROKES
+LMBMoveRMBRotate=الزر الأيسر: تحريك           الزر الأيمن: تدوير
+;LMB: move           RMB: rotate
+LastLengthIncrease=آخر زيادة في الطول
+;Last length increase
+LastPass=\s· آخر تمريرة {}
+;\s· last pass {}
+LeftclickGoIntoMouseModeView=النقر الأيسر:  الدخول في وضع الفأرة.. النظر بالفأرة، + الزر الأيمن.. اللف\n(انقر بالأيسر مرة أخرى أو ESC للخروج من وضع الفأرة)
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=النقر الأيسر:   تدوير الجسم حول محور X للمشاهد @ قيم Ymid+Zmid\nالنقر الأيمن: تدوير الجسم حول محور X للجسم @ 0
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=النقر الأيسر:   تدوير الجسم حول محور Y للمشاهد @ قيم Xmid+Zmid\nالنقر الأيمن: تدوير الجسم حول محور Y للجسم @ 0
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=النقر الأيسر:   تدوير الجسم حول محور Z للمشاهد @ قيم Xmid+Ymid\nالنقر الأيمن: تدوير الجسم حول محور Z للجسم @ 0
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=النقر الأيسر:   تراجع -> يعيد معاملات الإضاءة إلى حالتها قبل آخر رسم\nالنقر الأيمن: إعادة
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=النقر الأيسر:   تراجع -> يعيد المعاملات إلى حالتها قبل آخر حساب\nالنقر الأيمن: إعادة
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=دع العتبة تخفض الظل المحيطي حتى 0.\nتتأثر البنى البعيدة أقل بالبنى الأقرب.
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=المستوى
+;Level
+Light=الضوء
+;Light
+Light1=الضوء 1
+;Light 1
+Light12=الضوء1
+;Light1
+Light2=الضوء 2
+;Light 2
+Light22=الضوء2
+;Light2
+Light3=الضوء 3
+;Light 3
+Light32=الضوء3
+;Light3
+Light4=الضوء 4
+;Light 4
+Light42=الضوء4
+;Light4
+Light5=الضوء 5
+;Light 5
+Light52=الضوء5
+;Light5
+Light6=الضوء 6
+;Light 6
+Light62=الضوء6
+;Light6
+LightAmplitudeUseExponentStyleLike=سعة الضوء، استخدم الصيغة الأسية مثل:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=لون الضوء، اضغط لاختيار لون جديد.
+;Light color, press to select a new one.
+LightScattering=تشتت الضوء:
+;Light scattering:
+LightScatteringInsideTheMaterial=تشتت الضوء داخل المادة
+;Light scattering inside the material
+LightXangle=زاوية X للضوء
+;Light Xangle
+LightYangle=زاوية Y للضوء
+;Light Yangle
+Lighting=الإضاءة
+;Lighting
+LightingColon=الإضاءة:
+;Lighting:
+Lightmap=خريطة الضوء
+;Lightmap
+Lightness=الإشراق
+;Lightness
+LikeANaNAnInfinityDouble=// مثل NaN، لقيمة double اللانهائية أس 7FF، لكن
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// مثل اللانهاية، لقيمة double من نوع NaN أس 7FF، لكن قيم NaN
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=خطي
+;Linear
+LinearAttenuation=التخميد الخطي
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=استيفاء خطي لإطار مفتاحي بينهما
+;Linear interpolate a keyframe inbetween
+Lines={} أسطر
+;{} lines
+List=قائمة
+;List
+LliMultiplier=مضاعف Lli:
+;Lli multiplier:
+Load=تحميل
+;Load
+LoadANewFormulaFile=تحميل ملف صيغة جديد
+;Load a new formula file
+LoadBtrace2=تحميل btrace2...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=تحميل الشيفرة من صيغة أخرى، مثلًا صيغة تعذرت ترجمتها
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=تحميل m3p...
+;Load m3p...
+LoadMesh=تحميل شبكة
+;Load mesh
+LoadParameters=تحميل المعاملات
+;Load parameters
+LoadSettingsFromBtrace2File=تحميل الإعدادات من ملف *.btrace2
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=تحميل المعاملات في النافذة الرئيسية، أو فتح الملف
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=تحميل معاملات التصيير المحدد ومتابعة حسابه
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=تحميل معاملات التصيير المحدد فقط
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=مجلدات التحميل والحفظ الأولية
+;Loading and saving initial directories
+Log=سجل الأحداث
+;Log
+LogEverythingTheProgramDidIts=سجل الأحداث: كل ما فعله البرنامج، وتحذيراته وأخطاؤه (انقر للعرض)
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ الدوال اللوغاريتمية }
+;{ Logarithmic functions }
+LongerThanUsualStillWorking=أطول من المعتاد، لا يزال يعمل
+;longer than usual, still working
+LookIn=البحث في:
+;Look &in:
+Looking=النظر
+;Looking
+LookingRollingAngle=زاوية النظر+اللف:
+;Looking+Rolling angle:
+Loop=حلقة
+;Loop
+LoopAnimation=تحريك حلقي
+;Loop animation
+Lower=منخفضة
+;Lower
+Lowest=الأدنى
+;Lowest
+M3AAnimationFiles=ملفات تحريك M3A:
+;M3A animation files:
+M3CPathtracerFiles=ملفات متتبع المسارات M3C:
+;M3C pathtracer files:
+M3DAnimationM3a=تحريك M3D (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=مشروع تصيير كبير M3D (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=صيغة M3D (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=صورة + معاملات M3D (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=معاملات إضاءة M3D (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=ملف monte carlo لـ M3D (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=معاملات M3D (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=مشروع فوكسل M3D (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=تحميل ملفات صيغ M3F:
+;M3F formula files load:
+M3IDone=اكتمل M3I
+;M3I done
+M3ILightParameter=معاملات إضاءة M3I:
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=ملفات M3P المراد تصييرها إلى M3I
+;M3P files that should be rendered to M3I
+M3PParameterFiles=ملفات معاملات M3P:
+;M3P parameter files:
+M3VPNGVoxelSlices=M3V، شرائح فوكسل PNG:
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=صورة MB3D (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=تصيير دفعي M.C.
+;M.C. batch render
+MMBWheelZoom=الزر الأوسط/العجلة: تكبير
+;MMB/Wheel: zoom
+MRelObj=M.نسبي للجسم
+;M.rel.obj.
+MainCalcTime=زمن الحساب الرئيسي:
+;Main calc time:
+MainParas=المعاملات الرئيسية
+;main paras
+MainRendering=التصيير الرئيسي
+;main rendering
+MainRenderingOfTheImage=التصيير الرئيسي للصورة
+;Main rendering of the image
+MainWindow=النافذة الرئيسية:
+;Main window:
+MakeAnImageSelectionWithThe=حدّد جزءًا من الصورة بالفأرة ثم أعد حساب هذا الجزء\nبالمعاملات الحالية.\nتُحسب الظلال الحادة وDEAO أيضًا إن كانت محددة، لكن\nالظلال المحيطية الأخرى يجب إعادة حسابها للصورة كلها.\nوكذلك «العموديات على مخزن Z» يجب إعادة حسابها إن حُسبت من قبل.
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=التأكد من عدم طرح أي ضوء في وضع عدم المزج
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=تأكد من ضبط خيارات «حساب... تلقائيًا» للظلال الحادة\nوالمحيطية، إن أردت أخذها في الحسبان.
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=اجعل إضاءة تلك الصورة أدفأ وصيّرها من جديد.
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=جعل التدرج من الأعلى إلى الأسفل لألوان المحيط والخلفية\nنسبةً إلى نظام إحداثيات الجسم.\nاستخدمه في التحريكات لتثبيت الأضواء على المشهد.
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=اصنع منها ثلاثة تنويعات وأخبرني أيها أفضل.
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=يجعل الانعكاسات منتشرة قليلًا، مدى القيمة من 0 إلى 2.5
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=جارٍ صنع الفيديو...
+;Making the video...
+MapNotFound=الخريطة غير\nموجودة
+;Map not\nfound
+MapNumber=رقم الخريطة
+;Map number
+MapNumber2=رقم الخريطة:
+;Map Number:
+MapNumberColon=رقم الخريطة:
+;Map number:
+MapOnOutputVector=الخريطة على متجه الإخراج
+;Map on output vector
+MapSequences=تسلسلات الخرائط
+;Map Sequences
+MapType=نوع الخريطة:
+;Map Type:
+Material=المادة
+;Material
+Max=Max
+;Max
+MaxIterat=أقصى تكرار:
+;Max. Iterat.:
+MaxIterations=أقصى تكرارات:
+;Max. iterations:
+MaxIterationsColon=أقصى تكرارات:
+;Max iterations:
+MaxIts=أقصى تكرارات:
+;Max its.:
+MaxL=MaxL:
+;MaxL:
+MaxLengthCalc=أقصى طول للحساب:
+;Max. length calc.:
+MaxNoise=أقصى تشويش:
+;Max noise:
+MaxRayCount=أقصى عدد أشعة:
+;Max ray count:
+MaxRaycount=أقصى عدد أشعة:
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue: تعيد أكبر قيمة بإشارة في مصفوفة البيانات (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=أقصى عدد رؤوس:
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=أقصى تكرارات للجزء الثاني من الهجين، بدءًا من رقم الصيغة المحدد أعلى هذه النافذة.
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=أقصى عدد تكرارات
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=أقصى عدد من الرؤوس يُعرض في المعاينة
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=أقصى تكرارات الجزء 1 من الهجين:
+;Maxits hybrid part1:
+MaxitsHybridPart2=أقصى تكرارات الجزء 2 من الهجين:
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=مقياس حدة/نعومة سطح الجسم. جرّب قيمًا في المدى 0.15 .. 1.5، وفي حالات نادرة تعطي أعداد سالبة صغيرة مثل -0.1 نتائج مثيرة أيضًا
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=الذاكرة المطلوبة:
+;Mem needed:
+Memory=الذاكرة
+;Memory
+Mesh=شبكة
+;mesh
+MeshObj=شبكة (*.obj)
+;Mesh (*.obj)
+MeshPly=شبكة (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=معاينة الشبكة
+;MeshPreviewFrm
+MeshProperties=خصائص الشبكة
+;Mesh properties
+MeshSavedVerticesFaces=حُفظت الشبكة: {} ({} رأس، {} وجه)
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=شبكة بإحداثيات uv (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=شبكة بألوان الرؤوس (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=الشبكات:
+;Meshes:
+Meshes2=الشبكات
+;Meshes
+Messages=الرسائل
+;Messages
+Mid=متوسط
+;mid
+Min=Min
+;Min
+MinDE=MinDE:
+;MinDE:
+MinDistance=أدنى مسافة:
+;Min distance:
+MinIterat=أدنى تكرار:
+;Min. Iterat.:
+MinIterations=أدنى تكرارات:
+;Min. iterations:
+MinIts=أدنى تكرارات:
+;Min its.:
+MinLeft=بقيت {} د
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=أدنى
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft=بقيت {} د {} ث
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue: تعيد أصغر قيمة بإشارة في مصفوفة البيانات (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=أدنى مسافة:
+;Minimal distance:
+Misc=متفرقات:
+;Misc:
+MiscellaneousRoutines={ إجراءات متفرقة }
+;{ Miscellaneous Routines }
+Missing=مفقود
+;missing
+MissingBTR123Header=الترويسة <BTR1/2/3> مفقودة
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=Mod:
+;Mod:
+Mode=الوضع:
+;Mode:
+Mode2=الوضع 2
+;Mode 2
+ModeFor2ColorChoice=وضع الاختيار الثاني للون:
+;Mode for 2. color choice:
+MonteCarlo=Monte Carlo:
+;Monte Carlo:
+MonteCarlo2=Monte Carlo
+;Monte Carlo
+MonteCarlo3=Monte Carlo: {}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=حُسب Monte Carlo على: {}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=تصيير Monte Carlo
+;Monte Carlo rendering
+MonteCarloRendering2=تصيير Monte Carlo\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=خيارات أكثر: إرسال المعاملات إلى الرئيسي، والضبط والاستيراد.
+;More options: send paras to main, adjust and import.
+Mousewheel=عجلة الفأرة
+;Mousewheel
+Move=تحريك
+;Move
+MoveBackwards=تحريك للخلف
+;Move backwards
+MoveDown=تحريك للأسفل
+;Move down
+MoveForward=تحريك للأمام
+;Move forward
+MoveLeft=تحريك لليسار
+;Move left
+MoveRight=تحريك لليمين
+;Move right
+MoveUp=تحريك للأعلى
+;Move up
+MultiplierForTheLastLengthIncrease=مضاعف لخيار «آخر زيادة في الطول».\nأنقص القيمة مع القوى العالية، وزِدها مع الصيغ ذات المقاييس الصغيرة.
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=يضرب عرض الخطوة الأولى في عدد عشوائي\nليعطي عيوب تجاوز الخطوات مظهرًا مشوشًا.  \nويقلل أيضًا التدرجات الشريطية في الضباب الديناميكي.\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen: {}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [نقر مزدوج على الصورة أو انقر زر "Mutate!" للتطفير، ونقر أيمن للقائمة]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=تطفير
+;Mutate
+MutateExclamation=طفِّر!
+;Mutate!
+Mutation=الطفرة {}
+;Mutation {}
+MutationType=نوع الطفرة
+;Mutation type
+N0No255FullTransparency=0: لا، 255: شفافية كاملة
+;0: no, 255: Full transparency
+N1100JPEGQuality100Maximal=1..100: جودة JPEG\n> 100: أقصى حجم للملف بالكيلوبايت
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=PGM بـ 16 بت
+;16 Bit PGM
+N16BitZBufferGenerator=مولّد مخزن Z بـ 16 بت
+;16Bit ZBuffer Generator
+N1FullSizeNoAntiAliasing=1:  الحجم الكامل، دون تنعيم الحواف\n2:  تنعيم الحواف 2x2\n3:  تنعيم الحواف 3x3
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  بلا\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=الاختيار 2
+;2. choice
+N2Or3PassesGivesA=تمريرتان أو 3 تعطي تمويهًا قويًا أفضل أمام نقطة التركيز.\nتمريرة واحدة تعطي bokeh قرصيًّا، والتمريرات الأكثر تعطي bokeh شبه غاوسي.
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=الانعكاس الثاني
+;2nd reflection
+N360Panorama=بانوراما 360
+;360 Panorama
+N3DAnalyticFormula=صيغة تحليلية ثلاثية الأبعاد
+;3D analytic formula
+N3DFormula=صيغة ثلاثية الأبعاد
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=صيغة تحليلية رباعية الأبعاد
+;4D analytic formula
+N4DFormula=صيغة رباعية الأبعاد
+;4D formula
+N4DRotationOfTheWholeBulb=دوران رباعي الأبعاد للجسم كله:
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=دوران رباعي الأبعاد (xw,yw,zw):\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=PNG بـ 8 بت
+;8 Bit PNG
+Name=الاسم:
+;Name:
+Name2=الاسم
+;Name
+NamedParams=المعاملات المسماة:
+;Named Params:
+Navigator=المستكشف
+;Navigator
+Navigator2=المستكشف: {}
+;Navigator: {}
+NavigatorColon=المستكشف:
+;Navigator:
+NavigatorSize=حجم المستكشف
+;Navigator Size
+NavigatorViewSentToTheMain=أُرسل منظر المستكشف إلى النافذة الرئيسية، اضغط «احسب ثلاثي الأبعاد».
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=مرشح التشويش العصبي: {}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=مرشح التشويش العصبي: تم
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=مرشح التشويش العصبي على الصورة المعروضة (Intel Open Image Denoise).\nلا يتغير التصيير نفسه؛ والتحديث التالي يعرضه دون ترشيح من جديد.
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=جديد
+;new
+NewJITCompiledFormula=صيغة جديدة مترجمة بـ JIT
+;New JIT-compiled Formula
+NewSequence=تسلسل جديد
+;New Sequence
+NewValue=القيمة الجديدة:
+;New value:
+NewZoom=التكبير الجديد:
+;New zoom:
+No=لا
+;no
+No2=لا
+;No
+NoDoFOnTiles=لا DoF على البلاطات.
+;No DoF on tiles.
+NoFacesInTheFile=لا وجوه في الملف
+;no faces in the file
+NoFileAdded=لم يُضف أي ملف
+;No file added
+NoFramesToRenderInThis=لا إطارات للتصيير في هذا المدى.
+;No frames to render in this range.
+NoImageCalculatedYet=لم تُحسب أي صورة بعد.
+;No image calculated yet.
+NoIpol=دون استيفاء
+;No ipol
+NoLightParameters={}: لا معاملات إضاءة
+;{}: no light parameters
+NoObjectAtThisPoint=لا جسم عند هذه النقطة.
+;No object at this point.
+NoParameters=لا معاملات
+;no parameters
+NoParamsToSendToMain=لا معاملات لإرسالها إلى المحرر الرئيسي
+;No params to send to main editor
+NoPreview=لا معاينة: {}
+;No preview: {}
+NoPreviewForThisFile=لا معاينة لهذا الملف.
+;No preview for this file.
+NoSOURCESectionThisIsNot={}: لا قسم [SOURCE]، هذه ليست صيغة JIT
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=لم يُختر مجلد مشترك
+;no shared folder chosen
+NoTextParametersFoundInThe=لم يُعثر على معاملات نصية في الحافظة.
+;No text parameters found in the clipboard.
+NoTilesToRender=لا بلاطات للتصيير.
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\sلم يُعثر على نص صالح، يرجى إدخال النص أدناه:
+;\sNo valid text found, please enter the text below:
+Noise=-تشويش
+;-noise
+NoiseAI=-تشويش AI
+;-noise AI
+NoiseFilter=\sمرشح التشويش
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=مرشح التشويش على الصورة المعروضة (إزالة التشويش DCT مثل "Denoise DCT" في GIMP)،\nوتُقدَّر شدته من الأشعة. لا يتغير التصيير نفسه؛\nوالتحديث التالي يعرضه دون ترشيح من جديد.
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=مرشح التشويش: الشدة {}
+;Noise filter: strength {}
+None=بلا
+;none
+Normal=عادية
+;Normal
+NormalStatusForThisFormula=حالة عادية لهذه الصيغة
+;Normal status for this formula
+NormalsOnDE=العموديات على DE:
+;Normals on DE:
+NormalsOnZBuf=العموديات على ZBuf
+;Normals on ZBuf
+NormalsOnZBuffer=\sالعموديات على مخزن Z
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=العموديات على مخزن Z:
+;Normals on ZBuffer:
+Norms=عموديات
+;norms
+NotABigRenderProject=ليس مشروع تصيير كبير
+;not a big render project
+NotAvailableForLinuxUseClaude=غير متوفر لـ Linux: استخدم Claude Code أدناه.
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=غير موجود. إن كنت تستخدمه، شغّل هذا الأمر مرة واحدة في الطرفية:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=غير مثبت. احصل عليه من claude.ai/download، وشغّله مرة واحدة، ثم عد إلى هنا.
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=غير محدد
+;Not selected
+NotSharingTickShareThisComputer=لا مشاركة: فعّل «مشاركة هذا الحاسوب» للتصيير مع حواسيب أخرى
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=لا مشاركة: فعّل «مشاركة هذا الحاسوب» للتصيير مع {}
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=ملاحظة: لمعاينة ألوان الرؤوس، اختر وضع النقاط في نافذة المعاينة
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}: لم يُصيَّر شيء بعد
+;{}: nothing rendered yet
+NothingToSave=لا شيء للحفظ
+;nothing to save
+NumberOfFramesToNextKeyframe=عدد الإطارات حتى الإطار المفتاحي التالي
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=عدد الأشعة التي ستُحسب.\nكلما زاد كان أفضل لكن أبطأ بالطبع.
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=موافق
+;OK
+Object=الجسم
+;Object
+ObjectColors=ألوان الجسم
+;Object colors
+ObjectDetermination=تحديد الجسم:
+;Object determination:
+Of={} من {}
+;{} of {}
+OfEntries={} من {} مدخلات
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=من المدخلات التي ملفاتها متطابقة (المعاملات نفسها محسوبة مرة أخرى، أو صورة محفوظة مرتين) يبقى الأحدث فقط
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=من الصيغ
+;of Formulas
+OfLines={} من {} أسطر
+;{} of {} lines
+OfUnitsDone=اكتملت {} من {} وحدات
+;{} of {} units done
+OffLeftImageIsOnThe=مطفأ: الصورة اليسرى على اليسار للمشاهدة المتوازية. مفعّل: الصورة اليمنى على اليسار للمشاهدة بالعينين المتقاطعتين.
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffsetAndScale=الإزاحة والمقياس
+;Offset and scale
+OffsetX=الإزاحة X:
+;Offset X:
+OffsetY=الإزاحة Y:
+;Offset Y:
+OjectColorsOnCutsAnd2d=ألوان الجسم على القطوع والداخل ثنائي الأبعاد، انقر لتغييرها.
+;Oject colors on cuts and 2d inside, click to change them.
+On=تشغيل
+;On
+OnInsertingANewKeyframe=عند إدراج إطار مفتاحي جديد:
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=نقطة تركيز واحدة فقط، من متوسط Zsharp1+2!
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=لا يُحتفظ إلا بصورة في هيئة صورة (لا تصيير Monte Carlo، ولا تصدير فوكسل أو شبكة).
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=إضافة الضوء فقط
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=لا يتوفر في وضع البلاطات إلا الظلال المحيطية DEAO.\nحُددت الآن وضُبطت على 33 شعاعًا، يرجى تغييرها حسب حاجتك.
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=dIFS فقط
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=(فقط إذا حُسبت الظلال الحادة)
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=نوع واحد فقط من الأحداث
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=المدخلات التي يحتوي اسمها أو مجلدها أو نوعها على هذا النص فقط
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=الأسطر التي تحتوي على هذه الكلمات فقط
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=إلى الإطار المفتاحي الحالي فقط
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=يعمل فقط إذا ضُبط «تنعيم العموديات» على أكبر من صفر عند الحساب.
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=فتح
+;Open
+Open2=فتح
+;&Open
+OpenAM3cFile=فتح ملف m3c
+;Open a m3c file
+OpenAVoxelProject=فتح مشروع فوكسل
+;Open a voxel project
+OpenAnAnimationParameterFile=فتح ملف معاملات تحريك
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=فتح/إغلاق لوحة الضبط
+;open/close adjustment panel
+OpenCloseBatchPanel=فتح/إغلاق لوحة الدفعات
+;open/close batch panel
+OpenCloseParameterPanel=فتح/إغلاق لوحة المعاملات
+;open/close parameter panel
+OpenExplorer=فتح المستكشف
+;Open explorer
+OpenFiles=فتح ملفات
+;Open files
+OpenFolder=فتح المجلد
+;Open folder
+OpenFullLightAndColorParameter=فتح معاملات الإضاءة والألوان الكاملة
+;Open full light and color parameter
+OpenFullM3I=فتح M3I كامل
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=معاينة OpenGL للشبكة النهائية
+;OpenGL preview of final mesh
+OpenLogFolder=فتح مجلد السجل
+;Open log folder
+OpenM3i=فتح m3i
+;Open m3i
+OpenM3p=فتح m3p
+;Open m3p
+OpenM3pSequence=فتح تسلسل *.m3p
+;Open *.m3p-sequence
+OpenParameter=فتح المعاملات
+;Open parameter
+OpenParameterFromClipboardTextSelect=فتح المعاملات من نص الحافظة:\nحدّد نص المعاملات بما فيه 'Mandel...{..}'،\nواضغط ctrl+c ثم زر فتح النص.
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=فتح مشروع
+;Open project
+OpenTextParameters=فتح معاملات نصية
+;Open text parameters
+OpenTheAnimationMaker=فتح صانع التحريك
+;Open the animation maker
+OpenTheFolderOfTheFile=فتح مجلد الملف
+;Open the folder of the file
+OpenTheFolderOfTheLog=فتح مجلد ملفات السجل (ملف لكل يوم، تُحفظ 30 يومًا)
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=فتح MutaGen
+;Open the MutaGen
+OpenTheNavigator=فتح المستكشف
+;Open the Navigator
+Opened=فُتح
+;opened
+OpensTheFolderOfTheLanguage=يفتح مجلد ملفات اللغة
+;Opens the folder of the language files
+OperationCancelled=أُلغيت العملية
+;Operation cancelled
+Option=الخيار
+;Option
+OptionToCalculateOnlyAPart=خيار لحساب جزء فقط من الصورة لمعاينة أسرع.\nحدّد جزءًا من الصورة بالفأرة قبل الحساب.
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=خيار لتنقيط زاوية الأشعة عند تحجيم الصورة 1:2 أو 1:3.\nيعطي هذا دقة أكبر وعيوبًا مبقعة أقل.\nتنبيه: استخدمه فقط مع تحجيم الصورة نفسه، وإلا ظهرت عيوب التنقيط.
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=الخيارات
+;Options
+OptionsColon=الخيارات:
+;Options:
+OrMousewheel=(أو عجلة الفأرة)
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// أو سالبة، ويحدد ذلك بت الإشارة ذو الرتبة العليا.
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=مصيدة المدار (أدنى مسافة إلى 0)
+;Orbit trap (mindist. to 0)
+Orig=الأصل:
+;Orig:
+OriginalParameterSizeWidthHeight=حجم المعاملات الأصلي (العرض، الارتفاع):
+;Original parameter size (width, height):
+OtherFiles=ملفات أخرى
+;Other files
+OutputFile=ملف الإخراج:
+;Output file:
+OutputFolder=مجلد الإخراج:
+;Output folder:
+OutputFolder2=مجلد الإخراج
+;Output folder
+OutputFormat=صيغة الإخراج:
+;Output format:
+OutputImageType=نوع صورة الإخراج:
+;Output image type:
+Outside=الخارج
+;Outside
+OutsideRender=تصيير الخارج
+;Outside render
+OutsideRenderDefaultModeInsideRender=تصيير الخارج:  الوضع الافتراضي\nتصيير الداخل:    تقدم بطيء للشعاع في الداخل بأقصى تكرارات.\nداخل وخارج:   تصيير الجانبين
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=المقياس الكلي:
+;Overall scale:
+OverwriteExistingImages=الكتابة فوق الصور الموجودة
+;Overwrite existing images
+OverwriteExistingM3IFiles=الكتابة فوق ملفات M3I الموجودة
+;Overwrite existing M3I files
+PGM16BitPgm=PGM بـ 16 بت (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG ملون بـ 16 بت (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG بـ 16 بت (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=إطارات PNG بخلفية شفافة.
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG بخلفية شفافة (*.png)
+;PNG transparent background (*.png)
+PaintOnImage=الرسم على الصورة
+;Paint on image
+PaintingAPreview=جارٍ رسم معاينة
+;painting a preview
+Pano=بانوراما
+;pano.
+PanoramaModeTheFOVIsChoosen=وضع البانوراما:\n- يُختار FOV تلقائيًا\n- استخدم SSAO بـ 24 بت أو DEAO للظلال المحيطية\n- يُنصح بنسبة أبعاد 2:1، لكنها ليست ضرورية.
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=المعامل
+;Param
+ParamNameMustNotBeEmpty=يجب ألا يكون اسم المعامل فارغًا
+;Param name must not be empty
+Parameter=المعاملات
+;Parameter
+Parameters=المعاملات
+;Parameters
+ParametersCopiedToTheClipboard=نُسخت المعاملات إلى الحافظة.
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=حُمّلت المعاملات، اضغط «احسب ثلاثي الأبعاد» للتصيير.
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=حُمّلت المعاملات: يتابع هذا التصيير حيث صُنع (سطر الأوامر أو نافذته).
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=معاملات
+;parameters
+ParametersMandId=المعاملات: MandId {}
+;Parameters: MandId {}
+Pass=التمريرة {}
+;pass {}
+Passes=التمريرات
+;Passes
+PauseRendering=إيقاف التصيير مؤقتًا
+;Pause rendering
+PausedPressToContinue=متوقف مؤقتًا، اضغط للمتابعة
+;Paused, press to continue
+PercentOfLocalDE=نسبة مئوية من DE المحلي
+;Percent of local DE
+Picture=صورة
+;picture
+Pictures=صور
+;pictures
+PicturesAndFilesTheAssistantMakes=الصور والملفات التي يصنعها المساعد توضع في {}؛ ولا يُحذف شيء. الصور الأكبر من 4K لا تُصنع إلا بعد موافقتك، ويتوقف الحساب بعد 10 دقائق. وكل ما يفعله مدوّن في السجل.
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PleaseChooseAnOutputFile=يرجى اختيار ملف إخراج.
+;Please choose an output file.
+PleaseMakeASelectionInThe=يرجى تحديد جزء من الصورة أولًا.
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=يرجى حفظ المشروع أولًا.
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=يرجى تحديد الأضواء أولًا.  لا HS لخرائط الضوء.
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=معاملات png:
+;png par:
+Points=نقاط
+;Points
+PointsColor=لون النقاط
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=الموضع
+;Position
+PositionX=الموضع X
+;Position X
+PositionY=الموضع Y
+;Position Y
+PositionZ=الموضع Z
+;Position Z
+PositionalLight=الضوء الموضعي
+;Positional light
+PostCalculations=الحسابات اللاحقة
+;post calculations
+PostProcessing=المعالجة اللاحقة
+;Post processing
+PostProcessingColon=المعالجة اللاحقة:
+;Post processing:
+PostProcessingLower=المعالجة اللاحقة
+;post processing
+Postprocess=معالجة لاحقة
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power: رفع الأساس إلى أي قوة.
+;{ Power: Raise base to any power.
+Prefs=التفضيلات
+;Prefs
+PreprocessedCode=الشيفرة بعد المعالجة المسبقة
+;Preprocessed code
+PresetFlower=إعداد مسبق <زهرة>
+;preset <flower>
+PresetMetallic=إعداد مسبق <معدني>
+;preset <metallic>
+PresetNeutral=إعداد مسبق <محايد>
+;preset <neutral>
+PresetSand=إعداد مسبق <رمل>
+;preset <sand>
+PresetSlime=إعداد مسبق <هلام>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=اضغط الزر ثم جزء الجسم\nفي الصورة الذي يجب أن يكون حادًّا.
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=اضغط «احسب ثلاثي الأبعاد» للتصيير
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=اضغط «بدء التصيير» لحساب الصورة
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=اضغط هذا الزر ثم إعدادًا مسبقًا من 1 إلى 3 لتخزين إضاءة المستكشف الحالية.\nانقر مرتين للتراجع عن التخزين.
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=اضغط لإظهار نافذة الصيغ\nوانقر بالزر الأيمن لخيارات الالتصاق.
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=اضغط لإظهار نافذة ضبط الإضاءة والألوان.\nوانقر بالزر الأيمن لخيارات الالتصاق.
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=اضغط لإظهار نافذة المعالجة اللاحقة.\nوانقر بالزر الأيمن لخيارات الالتصاق.
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=اضغط للتبديل بين الضباب الديناميكي حسب التكرارات والضوء الحجمي حسب رقم الضوء
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=اضغط لأخذ المسافة الحالية أدنى مسافة إلى الجسم أثناء المشي.
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar=الضغط على "0" (صفر) يعيد المنزلق إلى موضع الصفر.
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=منع الحاسوب من الإيقاف بتحريك\nمؤشر الفأرة قليلًا من حين لآخر.
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=معاينة
+;preview
+Preview2=المعاينة
+;Preview
+PreviewMaxSize=أقصى حجم للمعاينة:
+;Preview max size:
+PreviewSize=حجم المعاينة:
+;Preview size:
+Probability=الاحتمال
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=المعالجات
+;Processings
+Processor=معالج
+;processor
+Program=البرنامج
+;Program
+ProgramOutput=مخرجات البرنامج
+;Program output
+Progress=التقدم
+;Progress
+Project=المشروع:  {}
+;Project:  {}
+Project2=المشروع: {}
+;Project: {}
+ProjectNew=المشروع:  (جديد)
+;Project:  (new)
+PushDownTo2DZoomIn=اضغطه للتكبير (التصغير) ثنائي الأبعاد بالنقر الأيسر (الأيمن) على الصورة،\nأو بتحديد منطقة للتكبير.
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=اضغطه لتحريك الجسم في اتجاه Z بالفأرة.
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=اضغطه لإزاحة الجسم في اتجاهي X وY بالفأرة.
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=اضغط الزر لحساب الظلال الحادة من الأضواء المحددة.\nبعد حسابها لا داعي لحساب الظل الحاد من جديد،\nما لم تتغير زاوية الضوء أو موضعه.
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=اضغط لتسوية طول المتجه ثلاثي الأبعاد إلى 1.\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=وضع قيم جوليا المضبوطة في معاملات البرنامج الرئيسي.
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=وضع القيم المضبوطة في معاملات البرنامج الرئيسي.
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=وضع القيم في كل الإطارات المفتاحية
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=وضع هذه القيمة المضبوطة في معاملات البرنامج الرئيسي.
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=التخميد التربيعي
+;Quadratic Attenuation
+QuadraticBezier=بيزييه تربيعي
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=تحميل سريع لملفات معاملات الإضاءة\nالمخزنة في مجلد ini المخصص.
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=إعدادات الجودة السريعة
+;Quick quality settings
+RBailout=حد الهروب R:
+;R bailout:
+Radius=نصف القطر:
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG تنتج أعدادًا عشوائية بتوزيع غاوسي حول المتوسط.
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=عشوائي
+;Random
+RandomMultiplier=مضاعف عشوائي
+;Random multiplier
+Range=المدى
+;Range
+RawValuesMappedValuesClampedValues=القيم الخام:\n  {}..\n  {}\nالقيم المحوّلة:\n  {}..\n  {}\nالقيم المحصورة:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=الأشعة:
+;Rays:
+RaystepDivisor=قاسم خطوة الشعاع:
+;Raystep divisor:
+RaystepMultiplier=مضاعف خطوة الشعاع:
+;Raystep multiplier:
+RaystepSubDEstop=خطوة الشعاع تحت DEstop:
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=جارٍ قراءة السجل... {} مدخلات
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=يعيد قراءة ملفات اللغة بعد أن تحرر أحدها
+;Reads the language files again, after you edited one
+RecalculateASelection=\sإعادة حساب جزء محدد
+;\sRecalculate a Selection
+RecalculatingTheSelection=جارٍ إعادة حساب الجزء المحدد
+;recalculating the selection
+Rect=مستطيل
+;Rect
+RectLower=مستطيل
+;rect.
+Rectilinear=مستقيمة
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=يقلل العيوب الكتلية، ولم يعد ذلك مهمًّا بفضل استيفاء الشرائح (spline).
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=يخفض مضاعف خطوة الشعاع لتجنب تجاوز الخطوات.\nيجعل التصيير أبطأ.
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=مرجع الألوان الانتشارية
+;Reference for diffuse colors
+ReferenceForSpecularColors=مرجع ألوان اللمعان
+;Reference for specular colors
+ReflectionDiffusity=انتشار الانعكاس:
+;Reflection diffusity:
+ReflectionRaysDepth=عمق أشعة الانعكاس:
+;Reflection rays depth:
+Reflections=الانعكاسات
+;Reflections
+ReflectionsLower=الانعكاسات
+;reflections
+ReflectionsMustBeCalculatedTooElse=يجب حساب الانعكاسات أيضًا، وإلا فلا أثر لهذا
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=انعكاسات الجزء المحدد
+;reflections of the selection
+ReflectionsTransparency=\sالانعكاسات + الشفافية
+;\sReflections + Transparency
+ReflectionsTransparency2=الانعكاسات + الشفافية
+;Reflections + Transparency
+ReflectsTime=زمن الانعكاسات:
+;Reflects time:
+RefractiveIndex=معامل الانكسار:
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=معامل انكسار المادة، الهواء~1 الماء~1.33 الزجاج~1.5 الماس~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=تحديث
+;Refresh
+RelToObject=نسبةً إلى الجسم:
+;Rel. to object:
+RelativeToObject=نسبةً إلى الجسم
+;Relative to object
+Reload=إعادة التحميل
+;Reload
+RemainingFaces10NoReduction=الوجوه المتبقية (1.0 = دون تقليل، 0.0 = أقصى تقليل = لا وجوه متبقية )
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=إزالة
+;Remove
+RemoveThisFormulaFromTheLocal=إزالة هذه الصيغة من مجلد appdata المحلي
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=تصيير كل البلاطات المضمنة في الأسطر:
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=تصيير صورتي العينين وعرض معاينة مجسمة متجاورة دون حفظها.
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=تصيير كل\n   إطار رقم n:
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=صيّر آخر صورة لي بدقة 4K وأخبرني كم استغرقت.
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=تصيير البلاطة التالية
+;Render next tile
+RenderOnlyTheLeftEyeImages=تصيير صور «العين اليسرى» فقط.\nيمكن استخدامه لتوسيع تحريك مُصيَّر سابقًا إلى مجسم.
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=التصيير حتى رقم الملف هذا فقط.
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=تصيير صور «العين اليسرى القصوى» فقط
+;Render only 'very left-eye' images
+RenderPreview=تصيير معاينة
+;Render preview
+RenderSMB={} تصيير، {} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=تصيير وحفظ الزوج المجسم
+;Render && save stereo pair
+RenderStereoAnimation=تصيير تحريك مجسم
+;Render stereo animation
+RenderStereoPair=تصيير زوج مجسم
+;Render stereo pair
+RenderTheJobsOtherComputersPut=تصيير المهام التي تضعها الحواسيب الأخرى في المجلد، وإعطاء تصييرات هذا الحاسوب («احسب ثلاثي الأبعاد»، والتصييرات الكبيرة، وMonte Carlo، والتحريكات) للسرب حين يكون فيه حاسوب آخر
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=تصيير هذه البلاطة
+;Render this tile
+RenderThisTileAgain=تصيير هذه البلاطة مرة أخرى
+;Render this tile again
+RenderingNow=يجري التصيير الآن
+;rendering now
+RenderingSliceOf=جارٍ تصيير الشريحة: {} من {}
+;Rendering slice: {} of {}
+RepeatFromHere=التكرار من هنا
+;Repeat from here
+RerenderAllKeyframePreviewImages=إعادة تصيير كل صور معاينة الإطارات المفتاحية
+;Rerender all keyframe preview images
+Reset=إعادة تعيين
+;reset
+Reset0=إعادة إلى 0
+;Reset 0
+Reset2=إعادة تعيين
+;Reset
+ResetNow=إعادة التعيين الآن
+;Reset now
+ResetOffsetScale=إعادة تعيين الإزاحة+المقياس
+;Reset offset+scale
+ResetOffsetScaleRotation=إعادة تعيين الإزاحة+المقياس+الدوران
+;Reset offset+scale+rotation
+ResetPosition=إعادة تعيين الموضع
+;Reset position
+ResetThePositionAndTheRotation=إعادة الموضع والدوران إلى قيم البداية.\nمع صيغ Box يجري التصغير تلقائيًا أكثر.
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=إعادة القيمة
+;Reset value
+ResetValues=إعادة القيم
+;Reset values
+ResetView=إعادة تعيين المنظر
+;Reset view
+ResetsAPreviousCalculationOfThis=يعيد تعيين حساب سابق للظل الحاد لهذا الضوء.
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=يعيد تعيين تأثير DoF والانعكاسات.
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=يعيد الصيغ إلى الجسم الافتراضي P8 bulb.
+;Resets the formulas to the default P8 bulb.
+Resume=استئناف
+;Resume
+Retry=إعادة المحاولة
+;Retry
+ReverseTheOrderOfAllKeyframes=عكس ترتيب كل الإطارات المفتاحية
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=انقر بالزر الأيمن على بلاطة للخيارات
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=(انقر بالزر الأيمن على المنزلقات لتغيير الألوان. استخدام لوحة المفاتيح والمؤشر فوق منزلق: (c) نسخ الألوان، (v) لصق الألوان، (b) لصق لون واحد)
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=اللف
+;Rolling
+Root=الجذر
+;Root
+Rotate=تدوير
+;Rotate
+Rotation=الدوران
+;Rotation
+RotationAngleAroundXAxisIn=زاوية الدوران حول المحور x بالدرجات
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=زاوية الدوران حول المحور y بالدرجات
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=زاوية الدوران حول المحور z بالدرجات
+;Rotation angle around z-axis in degrees
+RotationColon=الدوران:
+;Rotation:
+RotationX=الدوران X:
+;Rotation X:
+RotationY=الدوران Y:
+;Rotation Y:
+RotationZ=الدوران Z:
+;Rotation Z:
+RoughImage=صورة تقريبية
+;rough image
+Roughness=الخشونة
+;Roughness
+RoutAngleOfXY=زاوية دوران X، Y
+;Rout angle of X, Y
+RoutAngleOfXZ=زاوية دوران X، Z
+;Rout angle of X, Z
+RoutAngleOfYZ=زاوية دوران Y، Z
+;Rout angle of Y, Z
+Rows=صفوف
+;Rows
+RowsOfTiles=صفوف البلاطات
+;Rows of tiles
+SLeft=بقيت {} ث
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15:    ظل محيطي مبني على مخزن Z.\nSSAO24:    يستخدم 24 بت من مخزن Z.\nSSAO24r:   يستخدم توزيعات عشوائية لعيوب أقل.\nDEAO:        ظل محيطي مبني على تقديرات المسافة\n(أفضل في التحريكات)
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=بدء التصيير الرئيسي للصورة.
+;Sart the main rendering of the image.
+Saturation0=التشبع:   0\s\s
+;Saturation:   0\s\s
+Save=حفظ
+;Save
+Save2=حفظ
+;&Save
+SaveAM3cFile=حفظ ملف m3c
+;Save a m3c file
+SaveAZBufferImageAs=حفظ صورة مخزن Z بصيغة BMP أو PNG، بمقياس المنظر الحالي.
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=حفظ كل الإعدادات الحالية في ملف *.btrace2
+;Save all current settings as *.btrace2-file
+SaveAs=حفظ باسم
+;Save As
+SaveAsHeightMap=حفظ كخريطة ارتفاع
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=حفظ كخريطة ارتفاع داخل مجلد خرائط MB3D
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=حفظ كصورة
+;Save As Image
+SaveAsImageAtTheLocation=حفظ كصورة في الموقع الذي تحدده
+;Save as image at the location you specify
+SaveBtrace2=حفظ btrace2...
+;Save btrace2...
+SaveCompleteM3I=حفظ M3I كامل
+;Save complete M3I
+SaveExit=حفظ + خروج
+;Save + exit
+SaveFullLightAndColorParameter=حفظ معاملات الإضاءة والألوان الكاملة
+;Save full light and color parameter
+SaveImageParameters=حفظ الصورة + المعاملات
+;Save image + parameters
+SaveM3i=حفظ m3i
+;Save m3i
+SaveM3iFiles=حفظ ملفات m3i
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=حفظ ملفات m3i بما فيها مخزن الصورة الداخلي، لحفظ الانعكاسات وغيرها.
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=حفظ المعاملات فقط
+;Save parameters only
+SaveParametersToClipboardAsText=حفظ المعاملات في الحافظة نصًّا،\nثم يمكنك ضغط ctrl+v لإدراج النص في مكان آخر.
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=حفظ الصورة
+;Save pic
+SaveProject=حفظ المشروع
+;Save project
+SaveTextParametersInThePNG=حفظ المعاملات النصية في ملف PNG، إن حُدد.\nيمكنك رؤيتها مثلًا في gimp تحت\n'Image Properties' -> Comment.
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=حفظ معاملات التحريك
+;Save the animation parameters
+SaveTheCodeF5=حفظ الشيفرة <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=حفظ الصورة بصيغة BMP أو PNG، بمقياس المنظر الحالي.
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=حفظ الصورة بصيغة BMP أو PNG. عند تمكين خيار «مع مخزن Z» يُحفظ مخزن Z أيضًا.
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=حفظ الصورة بصيغة JPEG، بمقياس المنظر الحالي.
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=حفظ ملف M3C عند كل تحديث بعد مرور 5 دقائق
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=حفظ مشروع الفوكسل هذا
+;Save this voxel project
+SaveType=نوع الحفظ:
+;Save type:
+SaveZBufferPng=حفظ مخزن Z (png)
+;Save Z buffer (png)
+SaveZBufferToo=حفظ مخزن Z أيضًا
+;Save Z buffer too
+Saved=المحفوظ
+;Saved
+Saved16BitColour=حُفظ {} (لون 16 بت)
+;Saved {} (16 bit colour)
+Saved2=حُفظ {}
+;Saved {}
+SavedLower=محفوظ
+;saved
+SavedTransparentBackground=حُفظ {} (خلفية شفافة)
+;Saved {} (transparent background)
+Saving=الحفظ:
+;Saving:
+SavingSucceeded=نجح الحفظ
+;Saving succeeded
+Scale=المقياس:
+;Scale:
+ScaleClipRadiusDoFAndTheDE=تحجيم ClipRadius (DoF) وقيمة توقف DE\nللحفاظ على مستوى التفاصيل والألوان.
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=تحجيم DEstop للحفاظ على مستوى الألوان والتفاصيل
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=تحجيم الصفوف إلى الإسقاط الجغرافي
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=تحجيم حجم الصورة بمعامل 2، تكبيرًا أو تصغيرًا.
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=تحجيم القيم بالنسبة المئوية المحددة.
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=قيمة المقياس للصيغة الأولى، تؤثر في دقة DE
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=يحجّم الطول الأقصى للأشعة المحيطية المراد حسابها.\nاستخدم قيمة أكبر من 1 لإعطاء الظلال عمقًا أكبر،\nوالقيم الأقل من 1 تعطي ظلالًا أكثر محلية.
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=معاينة المسح
+;Scan Preview
+ScreenDistance=مسافة الشاشة:
+;Screen distance:
+ScriptEditor=محرر السكربت
+;Script Editor
+ScrollBy1=التمرير بمقدار 1
+;Scroll by 1
+Search=بحث
+;Search
+SecantSearchmode=وضع البحث بالقاطع:
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=نقطة تركيز ثانية، إن اختلفت عن الأولى\nتحصل على خط تركيز بدلًا من نقطة تركيز.\n(غير واقعي فيزيائيًا كثيرًا، لكن من الجيد وجوده)\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=راجع أيضًا خيارات تلوين الخرائط في تبويب «التلوين» في النافذة الرئيسية.
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=تحديد
+;&Select
+SelectThisIfYouWantTo=حدّد هذا إن أردت الكتابة فوق ملفات M3I الموجودة بالاسم نفسه.\nوإن لم يُحدد، يُعدَّل الاسم فلا يُكتب فوق أي ملف.
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=المحدد
+;Selected
+SelectionRecalculation=إعادة حساب الجزء المحدد
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=إرسال كل قيم الصيغ المضبوطة إلى معاملات البرنامج الرئيسي.
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=إرسال كل قيم الصيغ
+;Send all formula values
+SendOnlyThisViewToThe=إرسال هذا المنظر فقط إلى البرنامج الرئيسي
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=إرسال المعاملات الأصلية إلى النافذة الرئيسية
+;Send original parameter to main window
+SendParameterToMain=إرسال المعاملات إلى الرئيسي
+;Send parameter to main
+SendParameterToProgramsMainRender=إرسال المعاملات إلى نافذة التصيير الرئيسية للبرنامج
+;send parameter to programs main render window
+SendThisParameterToTheMain=إرسال هذه المعاملات إلى البرنامج الرئيسي
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=إرسال المعاملات الأصلية لهذا المشروع إلى البرنامج الرئيسي.\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=إرسال هذا المنظر مع كل تعديلات جوليا والصيغ إلى البرنامج الرئيسي.
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=إرسال إلى المحرر الرئيسي
+;Send to Main Editor
+SendValue=إرسال القيمة
+;Send value
+SendValues=إرسال القيم
+;Send values
+SendingOut=الإرسال:
+;Sending out:
+SessionsAndCrashes=الجلسات والأعطال
+;Sessions and crashes
+SetLightfuncToCosine=ضبط دالة الضوء على جيب التمام
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=ضبط اتجاه الخرائط نسبةً إلى الجسم.\nاستخدمه في التحريكات لتثبيت الأضواء على المشهد.
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=ضبط السمة المرئية للتطبيق
+;Set the visual theme of the application
+SetTo0=ضبط على 0
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=يضبط تلقائيًا دالة الضوء المقابلة على جيب التمام\nعند حساب الظل.\nدالتا جيب التمام وجيب التمام التربيعي تعملان جيدًا مع الظل.
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=ضبط السمة المرئية
+;Setting the Visual Theme
+ShadersCompiling=جارٍ ترجمة المظلّلات
+;shaders compiling
+ShadowsAndAO=الظلال وAO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=مشاركة التصيير بين حواسيبك عبر مجلد مشترك
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=مشاركة هذا الحاسوب: تصيير مهام المجلد، وإعطاء مهامي للسرب
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=المجلد المشترك:
+;Shared folder:
+SharingButNoOtherComputerIs=المشاركة مفعّلة، لكن لا حاسوب آخر في السرب بعد: تجري التصييرات على هذا الحاسوب وحده
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=توقفت المشاركة: {}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween=المشاركة مع {}: تُقسم التصييرات بين الحواسيب الـ {}
+;Sharing with {}: renders are split between the {} computers
+Sharp=الحدة:
+;sharp:
+SharpenFactorOfTheSavedOutput=معامل زيادة حدة صورة الإخراج المحفوظة،\nيعمل فقط مع التصغير 1:2 و1:3 !\n0: دون زيادة حدة ... 3: أقصى زيادة حدة
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=إزاحة الصيغ {} إلى 5 موضعًا واحدًا إلى اليمين
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=إزاحة الصيغ {} إلى 6 موضعًا واحدًا إلى اليسار
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=إزاحة إلى اليسار
+;Shift to the left
+ShiftToTheRight=إزاحة إلى اليمين
+;Shift to the right
+Shininess=اللمعان
+;Shininess
+ShortdistanceCheckDE=فحص DE للمسافة القصيرة:
+;Shortdistance check DE:
+ShouldIStopCalculations=هل أوقف الحسابات؟
+;Should i stop calculations?
+Show=عرض
+;Show
+ShowCoords=عرض الإحداثيات
+;Show coords
+ShowFrameNr=عرض رقم الإطار
+;Show frame nr
+ShowGuides=عرض الأدلة
+;Show guides
+ShowInFolder=عرض في المجلد
+;Show in folder
+ShowMeAPreviewOfThe=اعرض لي معاينة لآخر صورة صيّرتها في mb3d.
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=عرض الفريد
+;Show unique
+ShowsHiddenFormulasRightclickOnA=يعرض الصيغ المخفية.\nانقر بالزر الأيمن على صيغة لتغيير حالتها.
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=يعرض الرسائل
+;Shows messages
+ShrinkThePanel=تقليص اللوحة
+;Shrink the panel
+SinCosIs2xFasterThanCalling={ SinCos أسرع مرتين من استدعاء Sin وCos منفصلتين للزاوية نفسها }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=نقر مفرد لتغيير وضع المستكشف
+;Single click to change the navi mode
+SingleFilenumbering=ترقيم ملفات واحد
+;Single filenumbering
+Size=الحجم
+;Size
+SizeFactor=معامل الحجم:
+;Size factor:
+Sliding=الانزلاق
+;Sliding
+SlidingWalkingStep=خطوة الانزلاق+المشي:
+;Sliding+Walking step:
+SmoothDEcomb=دمج DE ناعم:
+;Smooth DEcomb:
+SmoothImageOnLoad=تنعيم الصورة عند التحميل
+;Smooth image on load
+SmoothNormals=تنعيم  العموديات:
+;Smooth  normals:
+SmoothNormalsColon=تنعيم العموديات:
+;Smooth Normals:
+SmoothSolid=مصمت ناعم
+;Smooth Solid
+SmoothSolidWithEdges=مصمت ناعم مع الحواف
+;Smooth Solid with Edges
+SoftClipping=قص ناعم:
+;Soft clipping:
+SoftensTheHardShadowsTheValue=ينعّم الظلال الحادة. القيمة نسبية إلى حجم مصدر الضوء، والقيمة الأكبر تعطي ظلًّا أنعم.
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=H.S. أنعم
+;Softer H.S.
+Sorted=مرتب
+;Sorted
+SortedCalculationGivesBetterResultsForward=الحساب المرتب يعطي نتائج أفضل.\nقد يكون «أمامي» خيارًا إن أخفق «مرتب» بسبب مشكلات الذاكرة أو نحوها.
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=اللمعان:
+;Spec:
+Spec2=لمعان
+;Spec
+SpecifiesTheEndOfRaymarchingAs=يحدد نهاية تقدم الشعاع بمعامل من DE المحلي.\nالقيم الأكبر = أجسام أبعد ظاهرة.\n\nالاختصارات:  F1: تقريب المستوى البعيد،  F2: إبعاد المستوى البعيد
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=اللمعان
+;Specular
+SpecularObjectColorsClickToChange=ألوان لمعان الجسم، انقر لتغييرها.
+;Specular object colors, click to change them.
+SpecularPowerFunction=دالة قوة اللمعان
+;Specular power function
+SphericalCoords=إحداثيات كروية
+;Spherical coords
+Stan=قياسي
+;stan.
+StandardRectilinearPanorama=قياسي  مستقيم  بانوراما
+;standard  rectilinear  panorama
+Start=البداية:
+;Start:
+StartBatchRendering=بدء التصيير الدفعي
+;Start batch rendering
+StartIndex=رقم البداية:
+;Start index:
+StartRendering=بدء التصيير
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=بدء التصيير ثم حفظ ملف M3I تلقائيًا!
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=بدء تصيير التحريك
+;Start rendering animation
+StartRenderingAnimationImages=بدء تصيير صور التحريك
+;Start rendering animation images
+StartRenderingSlices=بدء تصيير الشرائح
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=يبدأ تصيير كل ملفات M3P المحددة
+;Starts rendering all selected M3P files
+Statistics=الإحصاءات
+;Statistics
+Status=الحالة
+;Status
+StepcountForBinarySearch=عدد خطوات \nالبحث الثنائي:
+;Stepcount for \nbinary search:
+StepwidthLimiter=محدد عرض الخطوة:
+;Stepwidth limiter:
+Stereo=مجسم
+;Stereo
+StereoComposingPreview=مجسم: جارٍ تركيب المعاينة
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=لا يمكن تصيير الأزواج المجسمة بالبلاطات. أطفئ البلاطات أولًا.
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=مجسم: جارٍ تصيير العين اليسرى
+;stereo: rendering left eye
+StereoRenderingRightEye=مجسم: جارٍ تصيير العين اليمنى
+;stereo: rendering right eye
+StickThisWindowToTheLeft=لصق هذه النافذة بالجانب الأيسر
+;Stick this window to the left side
+StickThisWindowToTheRight=لصق هذه النافذة بالجانب الأيمن
+;Stick this window to the right side
+Stop=إيقاف
+;Stop
+StopBatchRendering=إيقاف التصيير الدفعي
+;Stop batch rendering
+StopRendering=إيقاف التصيير
+;Stop rendering
+StopRenderingTheAnimation=إيقاف تصيير التحريك.
+;Stop rendering the animation.
+StopTheCurrentCalculation=إيقاف الحساب الحالي.
+;Stop the current calculation.
+Stopping=جارٍ الإيقاف...
+;Stopping...
+StoppingThisComputerFinishesThePart=جارٍ الإيقاف: يُنهي هذا الحاسوب الجزء الذي يصيّره
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=يتوقف المشي عند هذه المسافة من الجسم.\nاضبطه على 0 للتعطيل.
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=تخزين ملف *.PNG مقابل إضافي لمعاينة أسهل للصورة
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=تخزين ملف M3I في المجلد الافتراضي
+;Store M3I file in default folder
+StorePNGPreview=تخزين معاينة PNG
+;Store PNG-preview
+Strength=الشدة:
+;Strength:
+Strength2=الشدة
+;Strength
+StrengthOfDynamicFog=شدة الضباب الديناميكي.
+;Strength of dynamic fog.
+StretchesUpperAndLowerPartsMaybe=يمطّ الجزأين العلوي والسفلي، قد يفيد لصورة عادية في خيار الكرة الكاملة.
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=مضاعف عدد\nالإطارات الفرعية:
+;Subframe count\nmultiplicator:
+SubframeInterpolation=استيفاء الإطارات الفرعية:
+;Subframe interpolation:
+SubframesToRender=الإطارات الفرعية للتصيير
+;Subframes to render
+SubframesToRenderBetween=الإطارات الفرعية  \nللتصيير بينها:
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=طرح مقدار من DEstop من خطوة الشعاع التالية، يُنصح به مع قيم DEstop العالية.
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=دعم التصيير الشبكي
+;Support network rendering
+SupportedMathematicalFunctions=الدوال الرياضية المدعومة
+;Supported mathematical functions
+SurfaceColor=لون السطح
+;Surface color
+SurfaceDetail=تفاصيل السطح:
+;Surface detail:
+Swarm=السرب
+;Swarm
+SwarmABlockOnEveryComputer=السرب: كتلة على كل حاسوب، حتى الإيقاف
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=السرب: {} كتل من {} شعاع/بكسل
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=السرب: {} حاسوب
+;swarm: {} computer
+SwarmComputers=السرب: {} حواسيب
+;swarm: {} computers
+SwarmCreatingTheJob=السرب: جارٍ إنشاء المهمة
+;swarm: creating the job
+SwarmJob=مهمة السرب
+;swarm job
+SwarmLower=السرب: {}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=السرب: تصيير مشترك بين حواسيبك
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=العودة إلى السمة الافتراضية
+;Switch back to the default theme
+TakeTheEntryOutOfThe=إخراج المدخل من السجل (تُحذف معاملات الصورة المحسوبة وصورتها المصغرة؛ وتبقى الملفات الأخرى حيث هي)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=خانة الخريطة الهدف
+;Target Map Slot
+TargetMapSlotUseThisNumber=خانة الخريطة الهدف. استخدم هذا الرقم خريطةً في كسوريّك، مثلًا خريطة ارتفاع، لتحصل على خريطة متحركة
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=مجموع الألوان الانتشارية وألوان اللمعان المضافة أكبر من 1،\nهل أصغّرها لتلوين أكثر واقعية؟
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=يحتاج التحريك إلى إطارين مفتاحيين على الأقل.
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=فتحة العدسة عند نقطة Zsharp، وليست فتحة عدسة الكاميرا!\nاضرب هذه القيمة في المسافة (المختارة بحرية) من نقطة Zsharp\nإلى الكاميرا واقسمها على البعد البؤري لعدسة الكاميرا لتحصل على\nفتحة عدسة الكاميرا.\nلذا صغّر هذه القيمة إن لم تتوقع أن تكون الكاميرا بهذا الحجم.\nالقيم الأكبر تعني تمويهًا أكثر.
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheBTracer2CacheFormatIsNot=صيغة ذاكرة BTracer2 المؤقتة غير مدعومة في هذا البرنامج.\nيرجى اختيار صيغة شبكة (*.ply أو *.obj).
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=صيغة ذاكرة BTracer2 المؤقتة غير مدعومة، ولم تُحفظ الشبكة.
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=تعذر تحميل صورة الخلفية.
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=قيمة حد الهروب لصيغ زمن الهروب.\nإذا تجاوزت القيمة ثلاثية الأبعاد هذه القيمة أثناء التكرار،\nفالنقطة الحالية لا تنتمي إلى الجسم.
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=يُحد نصف قطر التمويه بهذه القيمة.\nقد يسرّع التصيير حين يصبح نصف القطر ضخمًا جدًّا في بعض أجزاء الصورة.
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=أخفق الحساب: {}
+;The calculation failed: {}
+TheCalculationFailedLower=أخفق الحساب
+;the calculation failed
+TheCalculationWillBeExtendedTowards=يمتد الحساب إلى خارج الصورة مع الأجسام المنعكسة.\nقد يقلل هذا العيوب في التحريكات، لكن الصور الثابتة قد تستفيد منه أيضًا.\nيجب أن تكون القيمة بين 0 و0.5 (بحد أقصى 0.9)، وهي الحجم نسبةً إلى عرض الصورة\nوارتفاعها الذي يُحسب كحد أقصى خارجها.
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=لم يُعثر على برنامج سطر الأوامر mb3d بجوار هذا البرنامج: ثبّت البرنامج من جديد.
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=الترقيم الافتراضي يتضمن رقمين، منفصلين في X وY.\nإن اخترت هذا الخيار، يصبح الترقيم رقمًا واحدًا\nيزداد في كل عمود ويستمر في الصف التالي.
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=الإخراج الافتراضي أبيض للجسم وأسود للمنطقة الخارجية.\nاختر هذا الخيار لعكس الألوان.
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=تُصغَّر تقديرات المسافة بهذا المعامل لتجنب تجاوز الخطوات.\nأنقص القيمة إن حدث تجاوز للخطوات (بكسلات سوداء، صورة مشوشة).\nالقيم المنخفضة جدًّا تبطئ التصيير.
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=تُصغَّر تقديرات المسافة بهذا المعامل لتجنب تجاوز الخطوات.\nأنقص القيمة إن حدث تجاوز للخطوات (بكسلات سوداء، صورة مشوشة).\nالقيم المنخفضة جدًّا تبطئ التصيير .
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=المسافة إلى سطح الجسم التي يتوقف عندها تقدم الشعاع تكبر مع البعد عن المشاهد.\nيعطي هذا مظهرًا متجانسًا للجسم، لذا يُختار عادةً.
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=يتراكم التأثير، أعد التعيين لحساب جديد.
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=المدخلات تحت أيامها؛ تظهر مدخلات اليوم وصوره عند فتحه (بالنقر عليه)
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=تعذرت إزالة المدخل.
+;The entry could not be removed.
+TheFileIsNotThereAny=لم يعد الملف موجودًا.
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=الملف <{}.m3f> موجود مسبقًا. أتريد الكتابة فوقه؟
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=الملف (حدّده وانسخه من هنا)
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=نقطة التركيز (الأولى).\nالقيمة نسبية إلى قيمة Zstart للمشاهد،\nمسوّاة على عرض الصورة.
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=المجلد غير موجود (أو يتعذر الوصول إليه)
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=يجب أن يبدأ اسم الصيغة بـ "JIT" لتمييز هذه الصيغ من الصيغ المبنية على ASM
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFramesPerSecondMustBe=يجب أن يكون عدد الإطارات في الثانية عددًا أكبر من 0 (مثلًا 25).
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=مخزن الصورة بحجم خاطئ
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=تغير حجم الصورة: احسب الصورة من جديد
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=يعتمد وضع its.trap على الخيار المحسوب في تبويب «التلوين».
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=لم تنتهِ الجلسة الأخيرة كما يجب (تجمدت أو أُنهيت قسرًا أو تعطلت): {}. آخر ما فعلته مدوّن في سجل الأحداث (نافذة سجل الأحداث، الأيقونة في شريط العنوان).
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=لا يزال المحرر الرئيسي يصيّر. يرجى إيقافه أولًا أو الانتظار حتى ينتهي.
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=خيارات الخريطة تحسب إحداثيات x,y من المتجه\nالمحدد للخرائط الكروية، وهذا يغير أيضًا الاختيار الأول للون\nالذي يعتمد عادةً على التكرارات الناعمة.\nعليك إعادة حساب الصورة لترى نتيجة تغيير\nهذه الخيارات.
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=نافذة Monte Carlo تصيّر: أوقفها أولًا.
+;The Monte Carlo window is rendering: stop it first.
+TheNameOfTheNewLanguage=اسم اللغة الجديدة، بتلك اللغة (Deutsch، Polski، ...)
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=أحدث مهمة حتى الآن: الأجزاء المُصيَّرة، والأجزاء قيد التنفيذ (مع تقدمها)، والأجزاء الناقصة
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=لم تعد المعاملات تطابق الحساب غير المكتمل: اضغط «احسب ثلاثي الأبعاد» لحسابها.
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=الصورة لا تطابق حسابها: احسبها من جديد.
+;The picture does not match its calculation: calculate it again.
+TheRotationIsPerformedAroundThe=يجري الدوران حول نقطة المنتصف (Xmid، Ymid، Zmid)
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=تجري الدورانات بالتتابع، أولًا المستوى XW، وأخيرًا المستوى ZW.
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSelectionMustBeBiggerThan=يجب أن يكون الجزء المحدد أكبر من 2 بكسل عرضًا وارتفاعًا.
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=يجب أن يكون الجزء المحدد أكبر من 2 بكسل عرضًا وارتفاعًا
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=المجلد المشترك للسرب
+;The shared folder of the swarm
+TheSizeOfTheTiles=حجم المربعات
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=صورتا العينين المجسمتان بحجمين مختلفين.
+;The stereo eye images have different sizes.
+TheTileHasNoImageBuffer=البلاطة بلا مخزن صورة
+;the tile has no image buffer
+Themes=السمات
+;Themes
+ThereIsAFileAlready=يوجد ملف {} مسبقًا.
+;There is a file {} already.
+ThingsToAskTheAssistant=أشياء تطلبها من المساعد
+;Things to ask the assistant
+ThisComputer=هذا الحاسوب:
+;This computer:
+ThisEffectIsAccumulatedOnEach=يتراكم هذا التأثير مع كل ضغطة زر، ويمكنك إعادة تعيينه بالضغط على\nزر «إعادة تعيين» - لكن الانعكاسات ستُلغى أيضًا!
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=هذا الملف موجود مسبقًا. أتريد حقًّا الكتابة فوقه؟
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=هذه إزاحة مطلقة في اتجاه x للجسم المُدار.
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=هذا التصيير يجري الآن.
+;This render is running right now.
+ThisRenderKeepsNoImage=هذا التصيير لا يحتفظ بصورة.
+;This render keeps no image.
+ThisRenderKeptNoParameters=لم يحتفظ هذا التصيير بمعاملات.
+;This render kept no parameters.
+ThisSessionLive=هذه الجلسة (مباشر)
+;This session (live)
+ThreadPriority=أولوية\nالخيوط
+;Thread\nPriority
+ThreadcountInCalculations=عدد الخيوط  \nفي الحسابات
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=خيوط المهام (0 = كل الأنوية):
+;Threads for jobs (0 = all cores):
+ThresholdTo0=العتبة إلى 0:
+;Threshold to 0:
+TilNextUpdate=..حتى التحديث التالي
+;..til next update
+TileCountHorizontal=عدد البلاطات،  أفقيًا:
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=تصغير البلاطة، تنعيم الحواف:
+;Tile downscale, anti aliasing:
+TileSaved=حُفظت {} بلاطة؛ {}
+;{} tile saved; {}
+TileXY=البلاطة: X= Y=
+;Tile: X= Y=
+TileXY2=البلاطة: X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  البلاطة X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=البلاطة X={} Y={}
+;tile X={} Y={}
+TileXYSaved=حُفظت البلاطة X={} Y={}.
+;Tile X={} Y={} saved.
+Tiles=بلاطات
+;tiles
+Tiles2=مربعات
+;Tiles
+TilesSaved=حُفظت {} بلاطات؛ {}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  {} بلاطات مع السرب
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=حجم البلاطة (مع aa):
+;Tilesize (including aa):
+Tiling=البلاطات:
+;Tiling:
+TimeNeeded=الوقت اللازم:
+;Time needed:
+ToCalculateABetterHardShadow=لحساب ظل حاد أفضل، فقط إذا حُدد HS واحد!
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=إلى الحافظة
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=لخفض الضوء المباشر أيضًا بالانسداد المحيطي
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=إلى الصيغة رقم:
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=لتقليل التشويش حول الأجسام في الهجائن ذات تقديرات المسافة السيئة،\nاستخدم عددًا من التكرارات أقل من متوسط عدد التكرارات في الصورة.
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=لتقليل تجاوز الخطوات
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=إلى هذا الإطار المفتاحي وكل ما قبله
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=إلى هذا الإطار المفتاحي وما يليه
+;To this keyframe and the following
+Togo=المتبقي: ...
+;togo: ...
+Tools=الأدوات
+;Tools
+TotalAmountOfReflectivityTransparencyIt=المقدار الكلي للانعكاسية + الشفافية، ويُضرب في لون لمعان الجسم المحلي + مقدار الشفافية.
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=إجمالي وقت الحساب:
+;Total calculation time:
+TotalFramesUpToHereNote=إجمالي الإطارات حتى هنا.\nلاحظ أن الإطارات الفرعية من الإطارات المفتاحية الأخيرة\nلا تُصيَّر إلا في الوضع الحلقي.
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=مدى التتبع X:
+;Trace range X:
+TraceRangeY=مدى التتبع Y:
+;Trace range Y:
+TraceRangeZ=مدى التتبع Z:
+;Trace range Z:
+TracingObject=جارٍ تتبع الجسم...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=تتبع حالة التصيير عبر نظام الملفات لتتمكن نسخ متعددة من تصيير تسلسل الملفات نفسه دون الكتابة فوق عمل العُقد الأخرى
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=الشفافية
+;Transparency
+TransparencyIntensity=شدة الشفافية
+;Transparency intensity
+TransparencySpecular=الشفافية + اللمعان
+;Transparency + Specular
+TransparentBackground=خلفية شفافة
+;Transparent background
+TrigonometricFunctions={ الدوال المثلثية }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=ضبط حجم الخريطة الحجمية بخطوات 20%
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=تشغيل/إيقاف وضع جوليا
+;Turn on/off the julia mode
+Type=النوع:
+;Type:
+Type2=النوع
+;Type
+TypeInTheQuality0100=اكتب الجودة (0..100) أو أقصى حجم لملف الإخراج بالكيلوبايت (>100):
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=يجب ألا يكون النوع فارغًا
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\sنوع الهجين:\nبديل:  تتناوب الصيغ من 1 إلى 6.\nاستيفاء:  تُستوفى الصيغة 1 في كل تكرار مع الصيغة 2.\nدمج DE:  تُدمج الصيغة 1 بـ DE مع الهجين المتناوب للصيغ من 2 إلى 6.
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=نوع تحديد الجسم، خفض أقصى التكرارات أو زيادة DE\n(حسب الخيار المختار) يجعل الجسم أسمك.\nملاحظة:  صيغ دمج DE وتصيير الداخل+الخارج\n           تعمل فقط في وضع تقدير المسافة!
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\sنوع تحديد الجسم، خفض أقصى التكرارات أو زيادة DE\n(حسب الخيار المختار) يجعل الجسم أسمك.\nملاحظة:  صيغ دمج DE تعمل فقط في وضع تقدير المسافة!
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=اكتب اسم اللغة الجديدة أولًا؛ فهو اسم ملفها.
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=ألغِ تحديد هذا إن بدت الصورة مسطحة ومشوشة.
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=ألغِ التحديد لعدم الكتابة فوق الصور المحسوبة من قبل.\nيجب أن يتطابق اسم الملف (صيغة الإخراج نفسها والرقم واللاحقة 'left' أو 'right'\nفي الوضع المجسم).
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=، {} قيد التنفيذ
+;, {} under way
+UnfinishedCalculation=حساب غير مكتمل
+;Unfinished calculation
+UnfinishedRender=تصيير غير مكتمل
+;Unfinished render
+UnfinishedRenders=التصييرات غير المكتملة
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=التصييرات غير المكتملة: تابعها أو احذفها
+;Unfinished renders: continue or delete them
+Untitled=بلا عنوان
+;untitled
+UpOneLevel=مستوى واحد لأعلى
+;Up one level
+UpTo=حتى:
+;up to:
+UpdateImage=تحديث الصورة
+;Update Image
+UseAMapForTheDiffuse=استخدام خريطة للون الانتشاري
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=استخدام صورة صغيرة لونًا للمحيط
+;Use a small image as ambient color
+UseAlsoNavi=(يُستخدم أيضًا في المستكشف)
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=استخدام الظلال المحيطية من ملف M3I الأصلي
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=استخدام الاتجاه الافتراضي
+;Use default orientation
+UseItInAnimationsToFix=استخدمه في التحريكات لتثبيت الأضواء على المشهد.
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=استخدمه خيارًا ثانيًا فقط إن بدت العموديات (اتجاه السطح للإضاءة) رديئة.
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=استخدام OpenGL >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=استخدام الإعدادات المرئية الافتراضية دون سمة
+;Use the default visual settings without a theme
+UseTheMapIntensitiesAndDiffuse=استخدام شدات الخريطة والألوان الانتشارية.
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=استخدم قيمًا أقل من 1 لتقليل تجاوز الخطوات.
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\sمفيدة لمحاكاة بيانات فيها أخطاء أخذ عينات. }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=مفيد لخرائط الارتفاع شديدة الانحدار
+;Useful for steep heightmaps
+User=مستخدم
+;user
+UserDefinedApectRatioRightclickTo=نسبة أبعاد يحددها المستخدم.\nانقر بالزر الأيمن لتحديد النسبة.
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=نسبة أبعاد يحددها المستخدم
+;User defined aspect ratio
+Value=القيمة:
+;Value:
+ValueNotGuilty=القيمة غير صالحة
+;Value not guilty
+ValuesHaveAFractionFieldThat=// لها حقل كسري لا يساوي 0.
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=تغيير DEstop حسب FOV:
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=التحقق من أن مجموع الألوان الانتشارية وألوان اللمعان لا يتجاوز 1، حسب الخيارات المختارة
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=التحقق أثناء الحساب من تجاوز مقدار اللمعان+الانتشار 1.  مفيد عند استخدام diffmaps.
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=الإصدار
+;Version
+Version2=، الإصدار {}
+;, version {}
+Vertical=رأسيًا:
+;vertical:
+VerticalFieldOfViewInDegrees=مجال الرؤية الرأسي بالدرجات
+;Vertical field of view in degrees
+VerticesFaces={} [{} رأس، {} وجه]
+;{} [{} Vertices, {} Faces]
+Video=فيديو
+;video
+VideoLower=فيديو: {}
+;video: {}
+View=العرض
+;View
+ViewToMain=المنظر إلى الرئيسي
+;View to main
+Viewing=المشاهدة
+;Viewing
+Visible=مرئي:
+;Visible:
+VisitTheOfficialWebSiteFor=زر الموقع الرسمي للأخبار والتحديثات: https://mb3d.overwhale.com
+;Visit the official web site for news and updates: https://mb3d.overwhale.com
+VolumeLightNr=رقم الضوء الحجمي:
+;Volume light nr:
+VolumetricResolution=الدقة الحجمية:
+;Volumetric resolution:
+VoteFormula=+ التصويت للصيغة
+;+ vote formula
+VoteFormula2=- التصويت ضد الصيغة
+;- vote formula
+VoxelExport=تصدير فوكسل
+;Voxel export
+Voxelstack=رزمة فوكسل
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=انتظر الحساب الجاري، أو أوقفه أولًا.
+;Wait for the running calculation, or stop it first.
+Walking=المشي
+;Walking
+Warning=تحذير
+;Warning
+WarningLower=تحذير
+;warning
+WarningMustRecalculateTheWholeImage=تحذير: يجب إعادة حساب الصورة كلها للتراجع عنه!
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=التحذيرات والأخطاء
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Weight=الوزن
+;Weight
+WeightColon=الوزن:
+;Weight:
+WelcomeToMandelbulb3D=مرحبًا بك في Mandelbulb 3D!
+;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=ماذا فعلت في mb3d اليوم؟ هل كانت هناك أخطاء؟
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=ما حدث
+;What happened
+WhatYouDid=ما فعلته
+;What you did
+When=الوقت
+;When
+WhenAngleNotBetween180And={ عندما لا تكون الزاوية بين -180 و180 أزل اليسار }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=الوقت (UTC)
+;When (UTC)
+WhenUsingAMapForThe=عند استخدام خريطة للون الانتشاري،\nعليك تحديد 'Autoclip Spec+Diff'\nللقص التلقائي للألوان.
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=أبيض
+;white
+WhiteOutside=أبيض في الخارج
+;White outside
+Width=العرض:
+;Width:
+Windows=النوافذ
+;Windows
+Wireframe=إطار سلكي
+;Wireframe
+WireframeColor=لون الإطار السلكي
+;Wireframe color
+WithHS=مع HS
+;with HS
+WithZBuffer=مع مخزن Z
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=يكتب النصوص الإنجليزية في ملف لغة جديد بهذا الاسم؛ ترجمها بمحرر نصوص، ثم اضغط «إعادة التحميل»
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=يكتب الصورة كما هي الآن (الصفوف غير المكتملة كخلفية) في ملف .m3i
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=كُتب: {}\nترجم النصوص يمين "=" بمحرر نصوص، ثم اضغط «إعادة التحميل».
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=زاوية X:
+;X angle:
+XMid=منتصف X:
+;X mid:
+XOffset=إزاحة X:
+;X offset:
+XScale=مقياس X:
+;X scale:
+XW=XW:
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=موضع X
+;Xpos
+Xrot=دوران X
+;Xrot
+YAngle=زاوية Y:
+;Y angle:
+YMid=منتصف Y:
+;Y mid:
+YOffset=إزاحة Y:
+;Y offset:
+YScale=مقياس Y:
+;Y scale:
+YW=YW:
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=نعم
+;Yes
+YouCanAlsoClickOnA=يمكنك أيضًا النقر على قيمة لتغييرها
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=يمكنك أيضًا كتابة الصيغة مباشرة
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=يمكنك دائمًا بدء الحساب/متابعته أو إيقافه
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=يمكنك إجراء ضبط أدق بمفتاحي السهم الأيسر والأيمن\nفي معظم المنزلقات، حين تكون محددة.\nالضغط على "0" (صفر) يعيد المنزلق إلى موضع الصفر.
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=يمكنك أيضًا حفظ ملفات m3i لكل بلاطة، وتذكّر أن تكون لديك مساحة\nكافية على القرص وأن الانعكاسات لا تُخزن في ملف m3i.\n\nلاحظ أنه لا يمكنك فتح بلاطات m3i هذه في إصدارات البرنامج الأقدم من 1.7.9!
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=عليك أولًا تصيير المعاملات الأصلية وتخزينها في ملف M3I.\nولا تجعل ذلك التصيير صغيرًا جدًّا.
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=اسمك مؤلفًا (يُخزن في المعاملات):
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=لغتك الخاصة (اسمها):
+;Your own language (its name):
+Ypos=موضع Y
+;Ypos
+Yrot=دوران Y
+;Yrot
+Z1Sharp=Z1 حاد:
+;Z1 sharp:
+Z2Sharp=Z2 حاد:
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=مخزن Z: {}
+;Z-buffer: {}
+ZEnd=نهاية Z
+;Z end
+ZMid=منتصف Z
+;Z mid
+ZOffset=إزاحة Z:
+;Z offset:
+ZRThreshold=عتبة Z/R:
+;Z/R Threshold:
+ZScale=مقياس Z:
+;Z scale:
+ZSlices=شرائح Z:
+;Z slices:
+ZStart=بداية Z
+;Z start
+ZW=ZW:
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=التكبير:
+;Zoom:
+Zoom2=التكبير
+;Zoom
+Zpos=موضع Z
+;Zpos
+Zrot=دوران Z
+;Zrot

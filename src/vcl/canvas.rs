@@ -531,6 +531,9 @@ impl<'a> Canvas<'a> {
             VAlign::Center => r.y + (r.h - total) / 2,
             VAlign::Bottom => r.bottom() - total,
         };
+        // (a paragraph of several lines written right to left starts at the
+        // right edge: its lines are right-aligned)
+        let ha = if ha == HAlign::Left && lines.len() > 1 && font::has_rtl(s) { HAlign::Right } else { ha };
         for l in &lines {
             let w = self.text_width(f, l);
             let x = match ha {
