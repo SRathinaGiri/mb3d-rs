@@ -1338,7 +1338,15 @@ after `--max-minutes` (10). Every call is logged (kind `mcp`). `mb3d mcp
 --setup` adds mb3d to Claude's desktop app's `claude_desktop_config.json`
 (merged, the old file kept as `.json.before-mb3d`) and prints the command
 for Claude Code (`claude mcp add mb3d --scope user -- <mb3d> mcp`): the
-program starts no other programs; `--remove` undoes both.
+program starts no other programs; `--remove` undoes both. The desktop
+program's "Connect to an AI assistant" window (the Prefs tab's AI button,
+`src/app/ai_form.rs`) does the same: it tells whether each app is installed
+and connected (`claude_desktop_status`, `claude_code_status`: the settings
+folder and file, `claude` on the PATH, `mcpServers.mb3d` in
+`~/.claude.json`), connects or disconnects the desktop app with a click and
+shows Claude Code's command to copy, with things to ask, the output folder
+and the limits; it connects the `mb3d` next to the desktop program
+(`mcp::cli_program`).
 
 **Crashes.** A panic of either program (any thread), or the error the
 desktop program ends with, is appended to `mb3d_crash.txt` with the
