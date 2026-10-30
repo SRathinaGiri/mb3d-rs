@@ -54,6 +54,10 @@ pub struct Ui {
     pub forms: Vec<Form>,
     by_name: HashMap<String, usize>,
     pub(crate) events: VecDeque<Event>,
+    /// the clicks, changes and selections of controls whose window has no
+    /// handler for them (a check box read only when calculating): no
+    /// program event, but the log is to see them ([`Ui::take_unhandled`])
+    unhandled: VecDeque<Event>,
     timers: HashMap<(usize, Id), Instant>,
     pub(crate) quit: bool,
     pub(crate) requests: Vec<Request>,
@@ -99,6 +103,7 @@ impl Ui {
             forms: Vec::new(),
             by_name: HashMap::new(),
             events: VecDeque::new(),
+            unhandled: VecDeque::new(),
             timers: HashMap::new(),
             quit: false,
             requests: Vec::new(),
@@ -561,8 +566,16 @@ impl Ui {
             let handler = c.events.get(r.name).cloned();
             if let Some(h) = handler {
                 self.events.push_back(Event { form: f.name.clone(), sender: c.name.clone(), handler: h, ev: r.ev });
+            } else if matches!(r.name, "OnClick" | "OnChange" | "OnSelect") && self.unhandled.len() < 1000 {
+                self.unhandled.push_back(Event { form: f.name.clone(), sender: c.name.clone(), handler: String::new(), ev: r.ev });
             }
         }
+    }
+
+    /// The clicks, changes and selections no handler took since the last
+    /// call (for the log).
+    pub fn take_unhandled(&mut self) -> Vec<Event> {
+        self.unhandled.drain(..).collect()
     }
 
     /// Delivers dialog results for internal tags (colour buttons).

@@ -100,7 +100,7 @@ fn parse_when(s: &str) -> Option<i64> {
     Some((day + h * 3600 + m * 60 + sec) * 1000 + ms)
 }
 
-fn now_ms() -> i64 {
+pub fn now_ms() -> i64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0)
 }
 
@@ -250,8 +250,14 @@ pub fn active() -> bool {
 
 /// Logs an event.
 pub fn log(level: Level, kind: &str, text: &str) {
+    log_at(now_ms(), level, kind, text);
+}
+
+/// Logs an event that happened at `ms` (milliseconds since 1970), a little
+/// before now (a line held back while its control kept changing).
+pub fn log_at(ms: i64, level: Level, kind: &str, text: &str) {
     let Some(l) = LOGGER.get() else { return };
-    let e = Entry { ms: now_ms(), level, program: l.program.clone(), kind: kind.into(), text: text.into() };
+    let e = Entry { ms, level, program: l.program.clone(), kind: kind.into(), text: text.into() };
     // (a panic elsewhere while the lock was held does not stop the log)
     let mut st = l.state.lock().unwrap_or_else(|p| p.into_inner());
     write_line(l, &mut st, &e);

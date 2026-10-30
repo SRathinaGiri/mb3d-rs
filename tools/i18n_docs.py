@@ -7,8 +7,10 @@ wiki's <Page>-<code>.md), one per language of the program (Languages/*.lng).
 <!-- languages --> line) into README.md and every translation, and checks
 that each translation still has the English README's sections: the
 fixed anchors `<a id="...">` of README.md's `##` and `###` headings, in the
-same order. `--wiki DIR` also writes the language list into the wiki's
-_Sidebar.md and checks that every page has its translations. It exits
+same order. `--wiki DIR` also writes the language bar under the title of
+every wiki page (the same page in each language) and the language list
+into the wiki's _Sidebar.md, and checks that every page has its
+translations. It exits
 with 1 when a translation is missing or behind; the English files are the
 reference, and a section added there is to be translated into each file.
 """
@@ -119,6 +121,18 @@ def main():
                 if not os.path.exists(os.path.join(wiki, f"{page}-{code}.md")):
                     print(f"wiki {page}-{code}.md: missing")
                     bad += 1
+        # a language bar under every page's title: the same page in each
+        # language
+        for page in WIKI_PAGES:
+            for code, _ in LANGS:
+                path = os.path.join(wiki, f"{page}.md" if code == "en" else f"{page}-{code}.md")
+                if not os.path.exists(path):
+                    continue
+                links = []
+                for c, _ in LANGS:
+                    target = page if c == "en" else f"{page}-{c}"
+                    links.append(f"**{names[c]}**" if c == code else f"[[{names[c]}|{target}]]")
+                put_bar(path, " · ".join(links))
         side = os.path.join(wiki, "_Sidebar.md")
         langs = "**Languages**\n\n" + "\n".join(
             f"- [[{names[c]}|{'Home' if c == 'en' else 'Home-' + c}]]" for c, _ in LANGS)

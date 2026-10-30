@@ -180,7 +180,11 @@ impl App for Mb3d {
         if let Ev::Move = e.ev {
             return;
         }
-        // the log: what the user did
+        // the log: what the user did (first what no handler took before
+        // this event, so the lines keep the order things happened in)
+        for u in ui.take_unhandled() {
+            event_log::event(ui, &u);
+        }
         event_log::event(ui, e);
         match e.form.as_str() {
             MAIN => main_form::event(self, ui, e),
@@ -227,6 +231,10 @@ impl App for Mb3d {
     }
 
     fn idle(&mut self, ui: &mut Ui) {
+        // the controls the windows have no handler for: the log sees them too
+        for e in ui.take_unhandled() {
+            event_log::event(ui, &e);
+        }
         event_log::idle();
         main_form::idle(self, ui);
         if ui.showing("FNavigator") {

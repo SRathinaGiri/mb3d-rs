@@ -13,12 +13,18 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 /// A line held back while its control keeps changing: (control, line,
-/// the wheel's notches, when it last changed).
+/// the wheel's notches, when it last changed, and that time for the log).
 struct Pending {
     key: String,
     line: String,
     notches: i32,
     at: Instant,
+    ms: i64,
+}
+
+fn write(p: Pending) {
+    let line = if p.notches != 0 { format!("{} ({} notches)", p.line, p.notches) } else { p.line };
+    log::log_at(p.ms, log::Level::Info, "ui", &line);
 }
 
 static PENDING: Mutex<Option<Pending>> = Mutex::new(None);
@@ -82,8 +88,7 @@ fn value(c: &Control) -> Option<String> {
 pub fn flush() {
     let p = PENDING.lock().unwrap_or_else(|e| e.into_inner()).take();
     if let Some(p) = p {
-        let line = if p.notches != 0 { format!("{} ({} notches)", p.line, p.notches) } else { p.line };
-        log::info("ui", &line);
+        write(p);
     }
 }
 
@@ -102,13 +107,13 @@ fn hold(key: String, line: String, notches: i32) {
             p.line = line;
             p.notches += notches;
             p.at = Instant::now();
+            p.ms = log::now_ms();
         }
         _ => {
-            let old = g.replace(Pending { key, line, notches, at: Instant::now() });
+            let old = g.replace(Pending { key, line, notches, at: Instant::now(), ms: log::now_ms() });
             drop(g);
             if let Some(p) = old {
-                let line = if p.notches != 0 { format!("{} ({} notches)", p.line, p.notches) } else { p.line };
-                log::info("ui", &line);
+                write(p);
             }
         }
     }
