@@ -547,7 +547,7 @@ mod card {
             br0 = br1;
         }
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-            eprintln!("  depth of field on the card: {:.2} s (lists {t_lists:.2} s, card {t_card:.2} s), {:.1e} pixel pairs", t0.elapsed().as_secs_f64(), work);
+            crate::elog!("  depth of field on the card: {:.2} s (lists {t_lists:.2} s, card {t_card:.2} s), {:.1e} pixel pairs", t0.elapsed().as_secs_f64(), work);
         }
         Some(out)
     }

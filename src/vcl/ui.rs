@@ -237,7 +237,7 @@ impl Ui {
     pub fn set_checked(&mut self, form: &str, ctl: &str, v: bool) {
         let f = self.fm(form);
         let Some(id) = f.id(ctl) else {
-            eprintln!("{form}: no control '{ctl}'");
+            crate::elog!("{form}: no control '{ctl}'");
             return;
         };
         match f.ctl[id].kind {
@@ -407,6 +407,7 @@ impl Ui {
         f.visible = true;
         f.dirty = true;
         f.minimized = false;
+        crate::log::info("window", &format!("opened {} [{}]", crate::vcl::canvas::strip_amp(f.caption()), f.name));
         if let Some(h) = f.ctl[0].events.get("OnShow").cloned() {
             self.events.push_back(Event { form: f.name.clone(), sender: f.name.clone(), handler: h, ev: Ev::Show });
         }
@@ -432,6 +433,7 @@ impl Ui {
         if !f.visible {
             return;
         }
+        crate::log::info("window", &format!("closed {} [{}]", crate::vcl::canvas::strip_amp(f.caption()), f.name));
         f.visible = false;
         f.modal = false;
         f.popup = None;

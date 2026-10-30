@@ -184,7 +184,7 @@ fn row_weights(sc: &Scene, p: &CalcParams, cancel: &(dyn Fn() -> bool + Sync)) -
         pixels: g.len(),
     };
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-        eprintln!("  work probe: {pw}x{ph} in {:.0} ms, {:.0} % surface, {:.0} DE steps per pixel", probe.seconds * 1000.0, probe.surface * 100.0, probe.mean_steps);
+        crate::elog!("  work probe: {pw}x{ph} in {:.0} ms, {:.0} % surface, {:.0} DE steps per pixel", probe.seconds * 1000.0, probe.surface * 100.0, probe.mean_steps);
     }
     *WORK_PROBE.lock().unwrap() = Some(probe);
     RowWeights::from_probe(&g, pw, ph, h)
@@ -374,7 +374,7 @@ pub fn stage_mark(name: &str) {
     match g.as_mut() {
         Some((t, n, v)) => {
             if n != name {
-                eprintln!("  stage {name:?} begins at {:.1} s, rss {} MB", now.duration_since(*t).as_secs_f64(), crate::reflect::rss_mb());
+                crate::elog!("  stage {name:?} begins at {:.1} s, rss {} MB", now.duration_since(*t).as_secs_f64(), crate::reflect::rss_mb());
                 v.push((std::mem::take(n), now.duration_since(*t).as_secs_f64()));
                 *t = now;
                 *n = name.to_string();
@@ -401,7 +401,7 @@ pub fn stage_times_print() {
         }
     }
     let parts: Vec<String> = sums.iter().filter(|(n, _)| !n.is_empty()).map(|(n, t)| format!("{n} {t:.3}")).collect();
-    eprintln!("stage times: {}", parts.join(" | "));
+    crate::elog!("stage times: {}", parts.join(" | "));
 }
 
 /// The name of the post passes `shadows` / `occlusion`, run `where_`
@@ -510,7 +510,7 @@ fn calculate_rows(
             let t = Instant::now();
             let map = crate::vollight::build(&p, sc.stereo_mid(), ln, positional, l.lights[vp.light].amplitude, vp, hs_len, threads);
             if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-                eprintln!("  volumetric light map: {} side(s) of {}x{} in {:.2} s", map.sides.len(), map.cube_size, map.cube_size, t.elapsed().as_secs_f64());
+                crate::elog!("  volumetric light map: {} side(s) of {}x{} in {:.2} s", map.sides.len(), map.cube_size, map.cube_size, t.elapsed().as_secs_f64());
             }
             p.vol = Some(std::sync::Arc::new(map));
         }
@@ -602,7 +602,7 @@ fn calculate_rows(
                     && !finish.load(Ordering::SeqCst)
                     && (n_card > 0 && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs) || unmeasured && n_card == 0);
                 if timing {
-                    eprintln!(
+                    crate::elog!(
                         "  march (card and CPU): {march_secs:.2} s, {n_card} of {h} rows on the card in {card_secs:.2} s; rows/s card {:.1}, CPU {:.1}",
                         rate(n_card, card_secs),
                         rate(h - n_card, march_secs)
@@ -619,7 +619,7 @@ fn calculate_rows(
                     let sp = surface_progress(&gbuf, w, h, progress);
                     let r = crate::gpu::post_on_card(&p, &mut gbuf, &job, &sp, cancel);
                     if timing {
-                        eprintln!("  shadows and DE occlusion on the card: {:.2} s", t_post.elapsed().as_secs_f64());
+                        crate::elog!("  shadows and DE occlusion on the card: {:.2} s", t_post.elapsed().as_secs_f64());
                     }
                     match r {
                         Ok(()) => {
@@ -655,7 +655,7 @@ fn calculate_rows(
                     let t_post = Instant::now();
                     let card_rows = post_shared(sc, &p, &mut gbuf, &job, threads, progress, cancel)?;
                     if timing {
-                        eprintln!("  shadows and DE occlusion shared: {:.2} s, {card_rows} of {h} rows on the card", t_post.elapsed().as_secs_f64());
+                        crate::elog!("  shadows and DE occlusion shared: {:.2} s, {card_rows} of {h} rows on the card", t_post.elapsed().as_secs_f64());
                     }
                     if card_rows > 0 {
                         let what = match (job.shadows.is_some(), job.deao.is_some()) {
@@ -1059,7 +1059,7 @@ fn post_shared(
     }
     // the rows the card took and did not deliver (it failed): here
     if let Some(e) = &card_err {
-        eprintln!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
+        crate::elog!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
     }
     let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !board.delivered[y].load(Ordering::Relaxed)).collect();
     if !redo.is_empty() {
@@ -1145,7 +1145,7 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
     let mixed = d && f.is_some_and(|f| f.mixed <= limit);
     if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
         match f {
-            Some(f) => eprintln!(
+            Some(f) => crate::elog!(
                 "  probe: {} pixels, colours differ by {:.2} % in single precision, {:.2} % finished in double ({:.0} ms): {}",
                 f.pixels,
                 f.single * 100.0,
@@ -1153,7 +1153,7 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
                 t.elapsed().as_secs_f64() * 1000.0,
                 if mixed { "single, finished in double" } else if d { "double" } else { "single" }
             ),
-            None => eprintln!("  probe: no result ({:.0} ms)", t.elapsed().as_secs_f64() * 1000.0),
+            None => crate::elog!("  probe: no result ({:.0} ms)", t.elapsed().as_secs_f64() * 1000.0),
         }
     }
     let mut list = PROBED.lock().unwrap();
@@ -1287,7 +1287,7 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe>
     }
     if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
         let pc = |k: usize| n[k] as f64 * 100.0 / total.max(1) as f64;
-        eprintln!("  probe: any {:.2} %, object {:.2} %, depth {:.2} %, normal {:.2} %, gradient {:.2} %, roughness {:.2} %", pc(0), pc(1), pc(2), pc(3), pc(4), pc(5));
+        crate::elog!("  probe: any {:.2} %, object {:.2} %, depth {:.2} %, normal {:.2} %, gradient {:.2} %, roughness {:.2} %", pc(0), pc(1), pc(2), pc(3), pc(4), pc(5));
     }
     if total < 100 {
         return None;
@@ -1657,7 +1657,7 @@ fn march_mixed(
                     let r = stopped_as_done(r, cancel);
                     // (MB3D_CARDS_DEBUG: what each of the other cards did)
                     if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
-                        eprintln!("card {}: {} rows marched ({r:?})", k + 1, mine.load(Ordering::Relaxed));
+                        crate::elog!("card {}: {} rows marched ({r:?})", k + 1, mine.load(Ordering::Relaxed));
                     }
                     // failed (or its rows overflowed single precision):
                     // what it took, on the CPU here
@@ -1873,7 +1873,7 @@ fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(
                     });
                     let rk = stopped_as_done(rk, cancel);
                     if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
-                        eprintln!("card {}: {} rows marched ({rk:?})", k + 1, mine.load(Ordering::Relaxed));
+                        crate::elog!("card {}: {} rows marched ({rk:?})", k + 1, mine.load(Ordering::Relaxed));
                     }
                     if rk.as_ref().is_err_and(|e| e != "cancelled") || crate::gpu::rows_overflowed() {
                         failed.lock().unwrap().extend(claimed.into_inner().unwrap());
@@ -2106,7 +2106,7 @@ pub fn post_process_reporting(
                     let card_rows = post_shared(sc, p, gbuf, &pending, threads, progress, cancel)?;
                     let secs = t.elapsed().as_secs_f64();
                     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-                        eprintln!("  shadows and DE occlusion shared: {secs:.2} s, {card_rows} of {} rows on the card", p.rect[3]);
+                        crate::elog!("  shadows and DE occlusion shared: {secs:.2} s, {card_rows} of {} rows on the card", p.rect[3]);
                     }
                     if hs {
                         times.shadows = Some(Some(secs));
@@ -2127,7 +2127,7 @@ pub fn post_process_reporting(
         hard_shadows_reporting(sc, p, gbuf, threads, progress, cancel);
         stopped()?;
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-            eprintln!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
+            crate::elog!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
         }
         times.shadows = Some(Some(t.elapsed().as_secs_f64()));
         // (the card's occlusion keeps the time of its pass, which it no
@@ -2169,7 +2169,7 @@ fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ss
         // behind the compile)
         let r = if ao.bits15 { crate::gpu::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao) } else { crate::gpu::ssao24(gbuf, w, h, p.zc_mul, p.zcorr, ao) };
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-            eprintln!("    ssao on the card returned, rss {} MB", crate::reflect::rss_mb());
+            crate::elog!("    ssao on the card returned, rss {} MB", crate::reflect::rss_mb());
         }
         match r {
             Ok(()) => {
@@ -2180,7 +2180,7 @@ fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ss
                 progress(1, 1);
                 return;
             }
-            Err(e) => eprintln!("SSAO on the GPU failed, calculated on the CPU: {e}"),
+            Err(e) => crate::elog!("SSAO on the GPU failed, calculated on the CPU: {e}"),
         }
     }
     if ao.bits15 {

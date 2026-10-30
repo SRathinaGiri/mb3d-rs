@@ -12,6 +12,7 @@ use std::io::Write;
 pub fn install(name: &'static str) {
     let default = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
+        crate::log::error("crash", &format!("{info}"));
         note(name, &format!("{info}\n{}", std::backtrace::Backtrace::force_capture()));
         default(info);
     }));
@@ -29,5 +30,10 @@ pub fn note(name: &str, s: &str) {
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(file()) {
         let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
         let _ = writeln!(f, "--- {name} {} (unix time {secs}, {})\n{s}", env!("CARGO_PKG_VERSION"), std::env::consts::OS);
+        // what happened before it (the log's newest lines)
+        let tail = crate::log::tail(50);
+        if !tail.is_empty() {
+            let _ = writeln!(f, "the log's last lines (logs/ in the data folder):\n{}", tail.join("\n"));
+        }
     }
 }

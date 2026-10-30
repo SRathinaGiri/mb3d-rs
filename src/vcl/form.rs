@@ -130,6 +130,8 @@ pub const PART_HEADER: i32 = -18;
 pub const NC_LANG: i32 = 3;
 /// `Form::nc_hot` while the mouse is on the title bar's history icon.
 pub const NC_HISTORY: i32 = 4;
+/// `Form::nc_hot` while the mouse is on the title bar's log icon.
+pub const NC_LOG: i32 = 5;
 
 pub struct Form {
     pub name: String,
@@ -188,6 +190,11 @@ pub struct Form {
     /// form a `HistoryIconClick` event
     pub history_hint: String,
     pub history_rect: std::cell::Cell<super::canvas::Rect>,
+    /// the log icon (a page with lines) left of the history icon: its hint
+    /// (empty: no icon) and where it was painted; a click posts the form a
+    /// `LogIconClick` event
+    pub log_hint: String,
+    pub log_rect: std::cell::Cell<super::canvas::Rect>,
     /// the language badge at the right end of the title bar (left of the
     /// window buttons, the version left of it): the language's
     /// code (`EN`; empty: none), its hint and where it was painted; a
@@ -293,6 +300,8 @@ impl Form {
             led_hint_shown: false,
             history_hint: String::new(),
             history_rect: Default::default(),
+            log_hint: String::new(),
+            log_rect: Default::default(),
             caption_lang: String::new(),
             lang_hint: String::new(),
             lang_rect: Default::default(),
@@ -339,7 +348,7 @@ impl Form {
         match self.id(name) {
             Some(i) => &self.ctl[i],
             None => {
-                eprintln!("{}: no control '{name}'", self.name);
+                crate::elog!("{}: no control '{name}'", self.name);
                 &self.dummy
             }
         }
@@ -350,7 +359,7 @@ impl Form {
         match self.id(name) {
             Some(i) => &mut self.ctl[i],
             None => {
-                eprintln!("{}: no control '{name}'", self.name);
+                crate::elog!("{}: no control '{name}'", self.name);
                 self.dummy = Control::new("", "TUnknown");
                 &mut self.dummy
             }

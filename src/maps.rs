@@ -391,7 +391,7 @@ fn load_cached(key: String, find: impl FnOnce() -> Option<PathBuf>) -> Option<Ar
         Ok(img) if img.width > 3 && img.height > 3 => Some(Arc::new(LightMap::from_image(&img))),
         Ok(_) => None,
         Err(e) => {
-            eprintln!("  warning: map {}: {e}", p.display());
+            crate::elog!("  warning: map {}: {e}", p.display());
             None
         }
     });

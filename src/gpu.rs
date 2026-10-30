@@ -250,7 +250,7 @@ impl Resumer {
             started = next;
             let dt = t.elapsed().as_secs_f64();
             if self.timing {
-                eprintln!("  submission (budget {}): {:.1} ms, {next} of {lim} started, {left} suspended", self.budget, dt * 1000.0);
+                crate::elog!("  submission (budget {}): {:.1} ms, {next} of {lim} started, {left} suspended", self.budget, dt * 1000.0);
             }
             // the first suspended item or the next to start: all before it
             // are finished
@@ -333,7 +333,7 @@ fn guard<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
         // another card: only that one is left out
         i => {
             FAILED.fetch_or(1 << i.min(63), Ordering::SeqCst);
-            eprintln!("graphics card {} failed ({e}): left out until the program is restarted", i + 1);
+            crate::elog!("graphics card {} failed ({e}): left out until the program is restarted", i + 1);
         }
     };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
@@ -1031,7 +1031,7 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         return Err(format!("the shader does not compile: {e}"));
     }
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-        eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
+        crate::elog!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
     }
     COMPILE_MS.fetch_add((t.elapsed().as_secs_f64() * 1000.0) as u64, Ordering::Relaxed);
     // MB3D_COMPILE_LOG=FILE: a line per compile (the window's estimate of
@@ -1135,7 +1135,7 @@ pub fn wait_compiles(max: std::time::Duration) {
     let mut said = false;
     while compiling_any() && t.elapsed() < max {
         if !said {
-            eprintln!("  (waiting for the graphics card's shader compile, kept for the next time)");
+            crate::elog!("  (waiting for the graphics card's shader compile, kept for the next time)");
             said = true;
         }
         std::thread::sleep(std::time::Duration::from_millis(50));
@@ -1167,7 +1167,7 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
                 set_status("CPU: the graphics card failed (compiling a shader); calculating on the CPU until the program is restarted".into());
             } else {
                 FAILED.fetch_or(1 << g.index.min(63), Ordering::SeqCst);
-                eprintln!("graphics card {} failed (compiling a shader): left out until the program is restarted", g.index + 1);
+                crate::elog!("graphics card {} failed (compiling a shader): left out until the program is restarted", g.index + 1);
             }
         }
         f.store(true, Ordering::SeqCst);
@@ -1526,7 +1526,7 @@ async fn init() -> Result<Vec<Gpu>, String> {
             Ok(g) => list.push(g),
             // (the first card must open: the others may fail)
             Err(e) if list.is_empty() => return Err(e),
-            Err(e) => eprintln!("graphics card {} not used: {e}", a.get_info().name),
+            Err(e) => crate::elog!("graphics card {} not used: {e}", a.get_info().name),
         }
     }
     // MB3D_GPU_TWICE (tests): the first card opened a second time, as a
@@ -1966,7 +1966,7 @@ fn march_card(
         }
     };
     if timing {
-        eprintln!("  GPU device: {:.2} s", t.elapsed().as_secs_f64());
+        crate::elog!("  GPU device: {:.2} s", t.elapsed().as_secs_f64());
     }
     RETRY_DOUBLE.with(|c| c.set(false));
     let mut r: Result<Vec<SiLight>, String> = Err(String::new());
@@ -1980,7 +1980,7 @@ fn march_card(
             }
         };
         if timing {
-            eprintln!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
+            crate::elog!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
         }
         // the passes' pipelines compile in parallel
         for m in modes(post) {
@@ -1989,7 +1989,7 @@ fn march_card(
         let t = std::time::Instant::now();
         r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None, None, true).map(|(v, _)| v);
         if timing {
-            eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
+            crate::elog!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
         }
         // (its rows went to `sink`: stopped or not, they are not usable)
         if overflowed(p) {
@@ -2003,7 +2003,7 @@ fn march_card(
             Ok(v) => {
                 let n = OVERFLOW.with(|c| c.get());
                 if timing {
-                    eprintln!("  DE overflow in {n} of {} pixels", v.len());
+                    crate::elog!("  DE overflow in {n} of {} pixels", v.len());
                 }
                 n * 500 > v.len() && !needs_double(p)
             }
@@ -2304,7 +2304,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
         }
         if timing {
             let what = if pls.len() == 1 { "march, shadows, occlusion" } else if pi == 0 { "march" } else { "shadows, occlusion" };
-            eprintln!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
+            crate::elog!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
         }
     }
     keep_resumer(&REFLECT_RESUMER, key, res);
@@ -2489,7 +2489,7 @@ fn on_cards<T: Clone + Default + Send>(
                     }
                 }
                 if debug {
-                    eprintln!("card {}: slow, the first card took {} of its {len} rays (and did its {s0} started ones too: {})", k + 1, len - s0, taken[i].2.is_some());
+                    crate::elog!("card {}: slow, the first card took {} of its {len} rays (and did its {s0} started ones too: {})", k + 1, len - s0, taken[i].2.is_some());
                 }
             }
         }
@@ -2515,7 +2515,7 @@ fn on_cards<T: Clone + Default + Send>(
         let (s0, rest, again) = std::mem::replace(&mut taken[i], (0, None, None));
         let s0 = if rest.is_some() || again.is_some() { s0 } else { len };
         if debug {
-            eprintln!("card {}: {len} of {n} rays in {:.0} ms ({})", k + 1, secs * 1000.0, if r.is_ok() { "ok" } else { "stopped or failed" });
+            crate::elog!("card {}: {len} of {n} rays in {:.0} ms ({})", k + 1, secs * 1000.0, if r.is_ok() { "ok" } else { "stopped or failed" });
         }
         match again {
             Some(again) => place(a, s0, again, &mut out, &mut left),
@@ -2525,7 +2525,7 @@ fn on_cards<T: Clone + Default + Send>(
                 }
                 if let Err(e) = &r {
                     if e != "cancelled" {
-                        eprintln!("graphics card {}: a batch of rays failed, done on the CPU: {e}", k + 1);
+                        crate::elog!("graphics card {}: a batch of rays failed, done on the CPU: {e}", k + 1);
                     }
                 }
                 place(a, s0, r, &mut out, &mut left);
@@ -3121,7 +3121,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
     let mem = |what: &str| {
         if timing {
-            eprintln!("    ssao24 card: {what}, rss {} MB", crate::reflect::rss_mb());
+            crate::elog!("    ssao24 card: {what}, rss {} MB", crate::reflect::rss_mb());
         }
     };
     mem("start");
@@ -3591,7 +3591,7 @@ mod tests {
         let p = CalcParams::new(&sc).unwrap();
         assert_eq!(unsupported(&p), None);
         if let Err(e) = gpu() {
-            eprintln!("no GPU, test skipped: {e}");
+            crate::elog!("no GPU, test skipped: {e}");
             return;
         }
         let t = std::time::Instant::now();
@@ -3637,7 +3637,7 @@ mod tests {
         let zd = zdiff / both.max(1) as f64;
         let nd = ndot / both.max(1) as f64;
         let bad = bad_n as f64 / both.max(1) as f64;
-        eprintln!(
+        crate::elog!(
             "{}: GPU {gpu_s:.3}s (one thread on the CPU {cpu_s:.3}s); same background/object {:.2}%, \
              mean |zpos difference| {zd:.1} of 32768, mean normal cosine {nd:.4}, normals off by more than 25 degrees {:.2}%",
             last_status(),
@@ -3646,7 +3646,7 @@ mod tests {
         );
         let col = col_off as f64 / both.max(1) as f64;
         let flag = flag_off as f64 / both.max(1) as f64;
-        eprintln!("  colour values off {:.2}%, flags differ {:.2}%, outside-flagged {flagged}", col * 100.0, flag * 100.0);
+        crate::elog!("  colour values off {:.2}%, flags differ {:.2}%, outside-flagged {flagged}", col * 100.0, flag * 100.0);
         assert!(same > 0.99, "background/object differ in {:.2}% of the pixels", (1.0 - same) * 100.0);
         assert!(col < 0.03 && flag < 0.01, "colour values differ in {:.2}%, flags in {:.2}% of the pixels", col * 100.0, flag * 100.0);
         assert!(zd < 20.0, "depth differs by {zd:.1} on average");

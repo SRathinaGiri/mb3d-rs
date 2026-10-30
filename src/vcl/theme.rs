@@ -94,7 +94,7 @@ fn registry() -> std::sync::RwLockReadGuard<'static, Vec<&'static ThemeData>> {
         if w.is_empty() {
             let (themes, errors) = load_dirs(&theme_dirs());
             for e in errors {
-                eprintln!("theme {e}");
+                crate::elog!("theme {e}");
             }
             *w = themes;
         }

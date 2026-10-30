@@ -289,9 +289,14 @@ pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
 pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     set_language_badge(ui);
     ui.fm(F).history_hint = tr("History: the pictures calculated, the files opened and saved (click to browse)");
+    ui.fm(F).log_hint = tr("Log: everything the program did, its warnings and errors (click to see)");
     app.message(ui, &tr("Welcome to Mandelbulb 3D!"));
     app.message(ui, &tr("Visit the official web site for news and updates: https://mb3d.overwhale.com"));
     app.message(ui, "");
+    // a session before this one that never ended (see log.rs)
+    if let Some(u) = crate::log::take_unclean() {
+        app.message(ui, &trf("The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).", &[&u]));
+    }
     ui.set_caption(F, "Label3", &version_str());
     let cpus = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(64) as i64;
     ui.set_position(F, "UpDown3", cpus);
@@ -1046,6 +1051,30 @@ pub fn scene_loaded(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn run_calc(app: &mut Mb3d, sc: Scene, slice: u8, resume: crate::checkpoint::Policy) {
+    if crate::log::active() {
+        let names: Vec<String> = sc.formulas.iter().filter(|f| f.iterations > 0).map(|f| format!("{} x{}", f.formula.name(), f.iterations)).collect();
+        let later: Vec<&str> = later_stages(&sc)
+            .iter()
+            .map(|l| match l {
+                Later::Post => "shadows/AO",
+                Later::Reflections => "reflections",
+                Later::Dof => "depth of field",
+            })
+            .collect();
+        crate::log::info(
+            "calc",
+            &format!(
+                "{}{}: {} x {}, {}{}{}",
+                if slice != 0 { "2D slice" } else { "Calculate 3D" },
+                if app.title.is_empty() { String::new() } else { format!(" \"{}\"", stem(&app.title)) },
+                sc.width,
+                sc.height,
+                names.join(" + "),
+                if later.is_empty() { String::new() } else { format!(", then {}", later.join(", ")) },
+                if app.main.image_scale > 1 { format!(", shown 1:{}", app.main.image_scale) } else { String::new() }
+            ),
+        );
+    }
     app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
     app.eng.start(Job::Calc { scene: sc, slice, resume, name: stem(&app.title) });
 }
@@ -1416,7 +1445,7 @@ fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
     let total = left.zip(rest).map(|(l, r)| l + r);
     // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
     if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
-        eprintln!(
+        crate::elog!(
             "eta {stage}: secs {secs:.1} f {f:.3} base {base:.3} before {:.1} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} rest {rest:?} slow {:?} ratio {:?} main_full {:?}",
             m.before_secs,
             m.rate.rate(),
@@ -1509,6 +1538,9 @@ fn compile_secs() -> f64 {
 /// whether shaders compiled meanwhile), and how much slower than its prior
 /// it ran, for the stages to come.
 fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&str>) {
+    if !stage.is_empty() {
+        crate::log::info("calc", &format!("stage \"{stage}\" took {secs:.1} s"));
+    }
     let m = &mut app.main;
     let kind = kind_of(stage);
     let compiled = compile_secs() - m.stage_compile;
@@ -1718,7 +1750,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             }
             if cancelled {
                 // (new parameters were loaded during it: nothing of it is kept)
+                crate::log::info("calc", &format!("stopped after {:.1} s", app.main.calc_start.elapsed().as_secs_f64()));
             } else if !err.is_empty() {
+                crate::log::error("calc", &err);
                 app.message(ui, &err);
             } else if app.main.calc3d {
                 let secs = app.main.calc_start.elapsed().as_secs_f64();
@@ -1726,6 +1760,21 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 // run (with the main rendering on the card): none next time
                 let last = std::mem::take(&mut app.main.stage_shown);
                 stage_ended(app, &last, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base, None);
+                crate::log::info(
+                    "calc",
+                    &format!(
+                        "finished in {secs:.1} s on {}: average {:.1} ray steps, {:.1} iterations, at most {}",
+                        match app.main.led {
+                            Led::Gpu => "the graphics card",
+                            Led::Mixed => "the graphics card and the CPU",
+                            Led::Cpu => "the CPU",
+                            Led::Idle => "?",
+                        },
+                        stats.avg_steps,
+                        stats.avg_its,
+                        stats.max_its
+                    ),
+                );
                 if app.main.main_full.is_some() {
                     for l in app.main.later.clone() {
                         if !app.main.passed.contains(&l) {
@@ -2257,6 +2306,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "HotkeysBtnClick" => ui.show("HotkeysFrm"),
         "LanguageBadgeClick" => ui.show("LanguageFrm"),
         "HistoryIconClick" => super::history_form::open(app, ui),
+        "LogIconClick" => super::log_form::open(app, ui),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files

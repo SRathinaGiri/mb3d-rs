@@ -337,7 +337,7 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize, root_only: bool) {
             match crate::mutagen::preview(&m.scene, bw, bh, false, threads) {
                 Ok((rgb, w, h)) => to_bitmap(&rgb, w, h, bw, bh),
                 Err(e) => {
-                    eprintln!("MutaGen preview: {e}");
+                    crate::elog!("MutaGen preview: {e}");
                     Bitmap::new(bw, bh, 0xFF00_0000)
                 }
             }

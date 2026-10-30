@@ -1303,7 +1303,7 @@ impl Machine {
                     Ok(p) => progs.push((e, p)),
                     Err(r) => {
                         if std::env::var_os("MB3D_DEBUG_COMPILE").is_some() {
-                            eprintln!("not compiled ({e:#x}): {r}");
+                            crate::elog!("not compiled ({e:#x}): {r}");
                         }
                     }
                 }

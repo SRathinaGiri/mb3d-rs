@@ -527,7 +527,7 @@ pub fn render_frames(
                     continue;
                 }
                 if debug {
-                    eprintln!("frame {}: card {} slow, the copy of card {} written", fl.frame, fl.card + 1, k + 1);
+                    crate::elog!("frame {}: card {} slow, the copy of card {} written", fl.frame, fl.card + 1, k + 1);
                 }
                 let r = write_frame_files(a, fl.frame, run, files).map(|path| FrameResult::Written { path, seconds, continued: None });
                 let failed = r.is_err();

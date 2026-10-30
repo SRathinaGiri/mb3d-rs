@@ -172,7 +172,7 @@ impl Jit {
         }
         let id = self.module.declare_anonymous_function(&ctx.func.signature).ok()?;
         if let Err(e) = self.module.define_function(id, &mut ctx) {
-            eprintln!("cranelift: {e:?}");
+            crate::elog!("cranelift: {e:?}");
             return None;
         }
         self.module.clear_context(&mut ctx);
@@ -695,18 +695,18 @@ pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usiz
         b.finalize();
     }
     if std::env::var_os("MB3D_JIT_DUMP").is_some() {
-        eprintln!("{}", ctx.func.display());
+        crate::elog!("{}", ctx.func.display());
     }
     let asm = std::env::var_os("MB3D_JIT_ASM").is_some();
     ctx.set_disasm(asm);
     let id = jit.module.declare_anonymous_function(&ctx.func.signature).ok()?;
     if let Err(e) = jit.module.define_function(id, &mut ctx) {
-        eprintln!("cranelift: {e:?}");
+        crate::elog!("cranelift: {e:?}");
         return None;
     }
     if asm {
         if let Some(cc) = ctx.compiled_code() {
-            eprintln!("{}", cc.vcode.as_deref().unwrap_or(""));
+            crate::elog!("{}", cc.vcode.as_deref().unwrap_or(""));
         }
     }
     jit.module.clear_context(&mut ctx);
@@ -840,7 +840,7 @@ impl Jit {
         }
         let id = self.module.declare_anonymous_function(&ctx.func.signature).ok()?;
         if let Err(e) = self.module.define_function(id, &mut ctx) {
-            eprintln!("cranelift: {e:?}");
+            crate::elog!("cranelift: {e:?}");
             return None;
         }
         self.module.clear_context(&mut ctx);
@@ -1182,7 +1182,7 @@ pub fn compile_difs(m: &Machine, slots: &[HybridSlot], start: usize, end: usize,
     }
     let id = jit.module.declare_anonymous_function(&ctx.func.signature).ok()?;
     if let Err(e) = jit.module.define_function(id, &mut ctx) {
-        eprintln!("cranelift: {e:?}");
+        crate::elog!("cranelift: {e:?}");
         return None;
     }
     jit.module.clear_context(&mut ctx);

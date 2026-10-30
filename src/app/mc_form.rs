@@ -793,7 +793,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         let total = passes_after(target, m.rays0, m.rays, m.passes).and_then(|n| m.pace.left(&m.items, f, secs, n));
         // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
         if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
-            eprintln!("eta pass {}: secs {secs:.1} f {f:.4} ({pr}/{tot}) pace {:?} per {:?} left {left:?} total {total:?}", m.passes, m.pace, m.items.per_item());
+            crate::elog!("eta pass {}: secs {secs:.1} f {f:.4} ({pr}/{tot}) pace {:?} per {:?} left {left:?} total {total:?}", m.passes, m.pace, m.items.per_item());
         }
         m.pass_shown = left.map(|l| smooth_shown(m.pass_shown, l, now)).or(m.pass_shown);
         m.total_shown = total.map(|t| smooth_shown(m.total_shown, t, now)).or(m.total_shown);

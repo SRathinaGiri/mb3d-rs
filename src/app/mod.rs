@@ -8,6 +8,7 @@
 pub mod anim_form;
 pub mod bulbtracer_form;
 pub mod engine;
+pub mod event_log;
 pub mod eta;
 mod eta_model;
 pub mod file_preview;
@@ -30,6 +31,7 @@ pub mod swarm_form;
 pub mod tools_forms;
 pub mod unfinished_form;
 pub mod history_form;
+pub mod log_form;
 pub mod util;
 pub mod voxel_form;
 
@@ -41,7 +43,7 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "uMapCalcWindow", "VisualThemesGUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "uMapCalcWindow", "VisualThemesGUI",
     "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
@@ -68,6 +70,7 @@ pub struct Mb3d {
     pub swarm: swarm_form::State,
     pub unfinished: unfinished_form::State,
     pub history: history_form::State,
+    pub logview: log_form::State,
     pub voxel: voxel_form::State,
     pub btracer: bulbtracer_form::State,
     pub mutagen: mutagen_form::State,
@@ -83,6 +86,9 @@ pub struct Mb3d {
 impl Mb3d {
     /// MB3D's `OutMessage`: a line in the message memo of the main window.
     pub fn message(&self, ui: &mut Ui, s: &str) {
+        if !s.trim().is_empty() {
+            crate::log::info("message", s);
+        }
         let c = ui.cm(MAIN, "Memo1");
         let old = c.text.clone();
         let mut lines: Vec<&str> = if old.is_empty() { Vec::new() } else { old.split('\n').collect() };
@@ -174,6 +180,8 @@ impl App for Mb3d {
         if let Ev::Move = e.ev {
             return;
         }
+        // the log: what the user did
+        event_log::event(ui, e);
         match e.form.as_str() {
             MAIN => main_form::event(self, ui, e),
             "FormulaGUIForm" => formula_form::event(self, ui, e),
@@ -185,6 +193,7 @@ impl App for Mb3d {
             "SwarmFrm" => swarm_form::event(self, ui, e),
             "UnfinishedFrm" => unfinished_form::event(self, ui, e),
             "HistoryFrm" => history_form::event(self, ui, e),
+            "LogFrm" => log_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
             "MapSequencesFrm" => small_forms::mapseq_event(self, ui, e),
             "FTextBox" => small_forms::textbox_event(self, ui, e),
@@ -210,10 +219,15 @@ impl App for Mb3d {
     }
 
     fn hotkey(&mut self, ui: &mut Ui, form: usize, key: u16, shift: u8) -> bool {
-        hotkeys::hotkey(self, ui, form, key, shift)
+        let done = hotkeys::hotkey(self, ui, form, key, shift);
+        if done {
+            event_log::hotkey(ui, form, key, shift);
+        }
+        done
     }
 
     fn idle(&mut self, ui: &mut Ui) {
+        event_log::idle();
         main_form::idle(self, ui);
         if ui.showing("FNavigator") {
             navi_form::idle(self, ui);
@@ -227,6 +241,7 @@ impl App for Mb3d {
         meshview::idle(self, ui);
         file_preview::idle(self, ui);
         history_form::idle(self, ui);
+        log_form::idle(self, ui);
     }
 }
 
@@ -307,14 +322,14 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
     // the interface language (`Language` in the ini): the forms are built in it
     if let Some(l) = ini.get_extra("Language") {
         if !crate::vcl::lang::select(l) {
-            eprintln!("no language file for '{l}': English");
+            crate::elog!("no language file for '{l}': English");
         }
     }
     let mut ui = Ui::new(style);
     ui.set_ui_scale(scale_pct.clamp(50, 400) as f64 / 100.0);
     for f in FORMS {
         if let Err(e) = ui.add_form(forms::get(f)) {
-            eprintln!("{f}: {e}");
+            crate::elog!("{f}: {e}");
         }
     }
     ui.main_form = ui.form_index(MAIN).ok_or("no main form")?;
@@ -338,6 +353,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         swarm,
         unfinished: Default::default(),
         history: Default::default(),
+        logview: Default::default(),
         voxel: voxel_form::State::default(),
         btracer: bulbtracer_form::State::default(),
         mutagen: mutagen_form::State::default(),

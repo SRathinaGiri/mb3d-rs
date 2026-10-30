@@ -679,7 +679,7 @@ fn fload_expr(c: &mut Cells, r: (char, u32), kind: FKind) -> Option<String> {
 /// `LIFT_DEBUG`: says why a formula is not lifted.
 pub(super) fn lift_debug(why: &str) {
     if std::env::var_os("LIFT_DEBUG").is_some() {
-        eprintln!("    not lifted: {why}");
+        crate::elog!("    not lifted: {why}");
     }
 }
 
@@ -1221,7 +1221,7 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 if std::env::var_os("GPU_REPORT_OPS").is_some() {
                     for (i, e) in cells.log.iter().enumerate() {
                         if e.0 == cell && !(e.3 == 'd' && e.1 == 0 && e.2 == 8) {
-                            eprintln!("    {}{}: op {} {:?}", cell.0, cell.1, cells.log_ops[i], self.ops[cells.log_ops[i]]);
+                            crate::elog!("    {}{}: op {} {:?}", cell.0, cell.1, cells.log_ops[i], self.ops[cells.log_ops[i]]);
                         }
                     }
                 }

@@ -127,6 +127,7 @@ pub fn root() -> PathBuf {
 
 /// Records an opened or saved file.
 pub fn log(action: Action, path: &Path) {
+    crate::log::info("file", &format!("{} {}", if action == Action::Save { "saved" } else { "opened" }, path.display()));
     log_in(&root(), action, path, now());
 }
 
@@ -369,6 +370,12 @@ pub fn hash_keys(keys: Arc<Mutex<Keys>>, jobs: Vec<(PathBuf, u64, i64)>, wake: B
         wake();
     });
     busy
+}
+
+/// Seconds since 1970 of the start of a day `yyyy-mm-dd` (None for
+/// another name).
+pub fn day_secs_of(name: &str) -> Option<i64> {
+    day_secs(name)
 }
 
 /// Seconds since 1970 of the start of a day `yyyy-mm-dd`.

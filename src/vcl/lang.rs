@@ -357,7 +357,7 @@ fn registry() -> Vec<Arc<Language>> {
 pub fn reload() {
     let (mut langs, errors) = load_dirs(&language_dirs());
     for e in errors {
-        eprintln!("language {e}");
+        crate::elog!("language {e}");
     }
     if !langs.iter().any(|l| l.name.eq_ignore_ascii_case("English")) {
         langs.insert(0, Arc::new(Language::english()));
@@ -385,7 +385,7 @@ fn apply_fonts() {
         let f = loaded.entry(p.clone()).or_insert_with(|| {
             let f = std::fs::read(p).ok().and_then(super::font::load_font);
             if f.is_none() {
-                eprintln!("language {}: cannot read the font {}", l.name, p.display());
+                crate::elog!("language {}: cannot read the font {}", l.name, p.display());
             }
             f
         });

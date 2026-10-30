@@ -579,6 +579,12 @@ you check further on your own:
   it, sort it, show only the pictures that differ, and load any entry
   with a double click. A history of hundreds of thousands of entries
   opens at once.
+* **A log of everything** behind the page icon of the title bar: every
+  click, setting and typed value, every calculation with its stages and
+  times, files opened and saved, windows, messages, warnings and errors,
+  in a window that follows them live and in a file a day. A session that
+  froze or was killed is reported at the next start, and a crash report
+  carries the log's last lines.
 * **Lighting stays live** after hard shadows and reflections: move a light
   or change its colour and the picture changes at once, as in Mandelbulb3D.
 

@@ -959,7 +959,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                     self.plv.cam_pos = s3(&sub(add(f.origin, scale(new_vec, step0)), c.mid));
                     self.set_ray_paint(new_vec, h.zz2_paint);
                     if self.dbg {
-                        eprintln!("bounce {rit}: new_vec {new_vec:?} open_air {} zz {:.4} zz2 {:.4} steps {}", !h.hit, h.zz, h.zz2, h.si.shadow & 0x3FF);
+                        crate::elog!("bounce {rit}: new_vec {new_vec:?} open_air {} zz {:.4} zz2 {:.4} steps {}", !h.hit, h.zz, h.zz2, h.si.shadow & 0x3FF);
                     }
                     f.at = At::Returned;
                     let mut si = h.si;
@@ -985,7 +985,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                         }
                         let sh = self.shade(&si, inside);
                         if self.dbg {
-                            eprintln!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {t_absorb:?}", h.pos, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+                            crate::elog!("  hit: pos {:?} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?} t_absorb {t_absorb:?}", h.pos, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
                         }
                         let tmp_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
                         f.sd = (sh.spe, sh.spe_a, sh.dif);
@@ -1005,7 +1005,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                         self.calc_open_air(&mut si, &mut sd, &mut t_absorb, calc_t, h.zz2.min(max_l) as f32);
                         (f.sd, f.t_absorb) = (sd, t_absorb);
                         if self.dbg {
-                            eprintln!("  open air: t_absorb {t_absorb:?} t_amb {:?} plv {:?}", self.t_amb, self.plv);
+                            crate::elog!("  open air: t_absorb {t_absorb:?} t_amb {:?} plv {:?}", self.t_amb, self.plv);
                         }
                     }
                 }
@@ -1325,7 +1325,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         let sv = sc3(sh.result, c.sr_light_amount);
         let mzz = self.m.mzz;
         if self.dbg {
-            eprintln!("CPU surface: pos {:?} zz {mzz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+            crate::elog!("CPU surface: pos {:?} zz {mzz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
         }
         Some((mzz, vf, sv, (sh.spe, sh.spe_a, sh.dif)))
     }
@@ -1439,7 +1439,7 @@ pub fn reflections<S: Sample>(
         // (the bands come in order; weighed by their surface pixels)
         let sw = crate::render::RowWeights::surface(gbuf, wu, hu);
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-            eprintln!("  reflections: {wu}x{hu} in bands of {rows} rows ({band_px} pixels; {} free), rss {} MB", free.map_or("memory not known".to_string(), |f| crate::render::gigabytes(f)), rss_mb());
+            crate::elog!("  reflections: {wu}x{hu} in bands of {rows} rows ({band_px} pixels; {} free), rss {} MB", free.map_or("memory not known".to_string(), |f| crate::render::gigabytes(f)), rss_mb());
         }
         let mut q = p.clone();
         let mut y = 0;
@@ -1463,7 +1463,7 @@ pub fn reflections<S: Sample>(
                 Err(e) if e == "cancelled" => return,
                 // (a failed band is unchanged: it and the rest on the CPU)
                 Err(e) => {
-                    eprintln!("reflections on the GPU failed, calculated on the CPU: {e}");
+                    crate::elog!("reflections on the GPU failed, calculated on the CPU: {e}");
                     q.rect = [x0, y0 + y as i32, w, (hu - y) as i32];
                     // (the rows go on counting from where the card stopped:
                     // the rest's weights are the whole's minus the bands')
@@ -1727,12 +1727,12 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     }
     let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
     if timing {
-        eprintln!("  reflections: band of {wu}x{hu}, {} surfaces, rss {} MB (RPix {} B, Frame {} B, RayHit {} B, ReflectHit {} B, ReflectTask {} B)", tasks.len(), rss_mb(), std::mem::size_of::<RPix>(), std::mem::size_of::<Frame>(), std::mem::size_of::<RayHit>(), std::mem::size_of::<crate::gpu::ReflectHit>(), std::mem::size_of::<ReflectTask>());
+        crate::elog!("  reflections: band of {wu}x{hu}, {} surfaces, rss {} MB (RPix {} B, Frame {} B, RayHit {} B, ReflectHit {} B, ReflectTask {} B)", tasks.len(), rss_mb(), std::mem::size_of::<RPix>(), std::mem::size_of::<Frame>(), std::mem::size_of::<RayHit>(), std::mem::size_of::<crate::gpu::ReflectHit>(), std::mem::size_of::<ReflectTask>());
     }
     let t0 = std::time::Instant::now();
     let (hits, _, _) = crate::gpu::reflect_batch(p, &tasks, &ReflectOpts { surface: true, hs_mul, ..Default::default() }, None, cancel)?;
     if timing {
-        eprintln!("  reflections: {} surfaces in {:.2} s, rss {} MB", tasks.len(), t0.elapsed().as_secs_f64(), rss_mb());
+        crate::elog!("  reflections: {} surfaces in {:.2} s, rss {} MB", tasks.len(), t0.elapsed().as_secs_f64(), rss_mb());
     }
     let chunk = |n: usize| n.div_ceil(threads).max(1);
     let pairs: Vec<(usize, crate::gpu::ReflectHit)> = tasks.iter().zip(&hits).map(|(t, h)| (t.pixel as usize, *h)).collect();
@@ -1782,7 +1782,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                     t.sr_si = si;
                     let sh = t.shade(&si, None);
                     if dbg_i == Some(i) {
-                        eprintln!("GPU surface: pos {pos:?} zz {zz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", t.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
+                        crate::elog!("GPU surface: pos {pos:?} zz {zz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", t.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
                     }
                     let sd = (sh.spe, sh.spe_a, sh.dif);
                     part[i - lo] = Some(RPix {
@@ -1831,7 +1831,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     });
     drop(pairs);
     if timing {
-        eprintln!("  reflections: pixel states built, rss {} MB", rss_mb());
+        crate::elog!("  reflections: pixel states built, rss {} MB", rss_mb());
     }
     // the rays: every round runs each pixel to its next ray, the rays are
     // marched in a batch per bounce (the AO quality depends on it)
@@ -2088,7 +2088,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         }
         let n_cpu_done = all.len() - n_gpu;
         if timing {
-            eprintln!(
+            crate::elog!(
                 "  reflections: round {round}: {} rays, {n_gpu} on the card, {n_cpu_done} on the CPU, in {:.2} s (CPU's part {:.0} %), rss {} MB",
                 all.len(),
                 t0.elapsed().as_secs_f64(),
@@ -2103,7 +2103,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         }
     }
     if timing {
-        eprintln!("  reflections: {round} rounds, shading {t_steps:.2} s, rss {} MB", rss_mb());
+        crate::elog!("  reflections: {round} rounds, shading {t_steps:.2} s, rss {} MB", rss_mb());
     }
     // the colours
     for (i, q) in px.iter().enumerate() {

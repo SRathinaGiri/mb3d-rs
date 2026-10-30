@@ -1212,7 +1212,7 @@ impl LightVals {
         }
         if std::env::var_os("MB3D_DEBUG_LIGHTS").is_some() {
             for lv in &self.lights {
-                eprintln!(
+                crate::elog!(
                     "light {}: pos {} ln {:?} col {:?} lmax {} vis {} pos_z {} pos_lp {}",
                     lv.idx + 1, lv.positional, lv.ln, lv.col, lv.lmax_l, lv.visible, lv.pos_z, lv.pos_lp
                 );

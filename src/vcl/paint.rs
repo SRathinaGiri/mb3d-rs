@@ -306,6 +306,16 @@ impl Form {
                     right = r.x - 10;
                 }
             }
+            // the log icon left of it
+            self.log_rect.set(Rect::default());
+            if !self.log_hint.is_empty() {
+                let r = Rect::new(right - 16, b + (ch - 16) / 2, 16, 16);
+                if r.x > tx + 60 {
+                    draw_log_icon(cv, r, th.caption_text(active), self.nc_hot == NC_LOG);
+                    self.log_rect.set(r);
+                    right = r.x - 10;
+                }
+            }
             let old = cv.clip_to(Rect::new(tx, b, right - tx - 4, ch));
             cv.text(tx, b + (ch - lh) / 2, self.caption(), &tf, th.caption_text(active));
             let bx = tx + cv.text_width(&tf, self.caption()) + 10;
@@ -1343,6 +1353,27 @@ fn muted_flag(b: &super::bitmap::Bitmap, bg: u32) -> super::bitmap::Bitmap {
 /// The title bar's history icon: a clock with a counter-clockwise arrow
 /// (the browsers' history), in the title's text colour; a lighter box
 /// behind it while the mouse is on it.
+/// The title bar's log icon: a page with lines of text, in the title's
+/// text colour; a lighter box behind it while the mouse is on it.
+fn draw_log_icon(cv: &mut Canvas, r: Rect, col: u32, hot: bool) {
+    if hot {
+        cv.round_rect(r.inset(-3), 3.0, (col & 0xFF_FFFF) | 0x3000_0000, (col & 0xFF_FFFF) | 0x3000_0000, None);
+    }
+    let c = col | 0xFF00_0000;
+    let (x0, y0, x1, y1) = (r.x as f32 + 3.0, r.y as f32 + 1.5, r.x as f32 + 13.0, r.y as f32 + 14.5);
+    // the page, its top right corner folded
+    cv.line_aa(x0, y0, x1 - 3.0, y0, 1.3, c);
+    cv.line_aa(x1 - 3.0, y0, x1, y0 + 3.0, 1.3, c);
+    cv.line_aa(x1, y0 + 3.0, x1, y1, 1.3, c);
+    cv.line_aa(x1, y1, x0, y1, 1.3, c);
+    cv.line_aa(x0, y1, x0, y0, 1.3, c);
+    // the lines
+    for (k, w) in [(0, 5.5), (1, 6.5), (2, 4.5), (3, 6.0)] {
+        let y = y0 + 4.0 + k as f32 * 2.5;
+        cv.line_aa(x0 + 2.0, y, x0 + 2.0 + w, y, 1.1, c);
+    }
+}
+
 fn draw_history_icon(cv: &mut Canvas, r: Rect, col: u32, hot: bool) {
     if hot {
         cv.round_rect(r.inset(-3), 3.0, (col & 0xFF_FFFF) | 0x3000_0000, (col & 0xFF_FFFF) | 0x3000_0000, None);

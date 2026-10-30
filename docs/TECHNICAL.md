@@ -1291,6 +1291,33 @@ translation lacks a section of the English README or a wiki page lacks a
 translation. The English texts are the reference; each translation says so
 under its title, with the version it was made from (0.2.84).
 
+**The log** (`src/log.rs`, the window `src/app/log_form.rs`, the page
+icon left of the History clock in the title bar). Both programs write
+every event of a session to `logs/mb3d-<date>.log` in the data folder (a
+file a day, UTC, kept 30 days), one line each:
+`<date> <time>\t<level>\t<gui|cli>\t<kind>\t<text>`. The kinds:
+`session` (start with version, system, memory, threads and data folder;
+end; a session that never ended), `ui` (every event a window handles,
+`app/event_log.rs`: the window, the control's caption or hint and its
+name, the new value; the many events of one typing, dragging or wheel
+turning make one line, written when another control is used or a second
+later; mouse moves and timers are left out), `window` (opened, closed),
+`calc` (a calculation's start with size, formulas and later stages, each
+stage's time, the finish with time, where it ran and its statistics, a
+stop, an error), `message` (every line of the main window's message
+list), `file` (opened, saved), `console` (every line the programs print,
+`elog!`, its level guessed from its words), `crash` (a panic). Lines are
+written at once under a lock (nothing per pixel or row), so a line logged
+is on disk if the process dies the moment after. The desktop program holds
+`logs/session-<pid>.lock` locked while it runs and deletes it at the end;
+a lock file a later start can lock belongs to a session that froze, was
+killed, crashed or lost its power, and that start says so in the message
+list and the log. A crash note in `mb3d_crash.txt` gets the log's last 50
+lines. The Log window lists the running session live (the newest 20,000
+lines, the newest followed) or an earlier day's file, filtered by level,
+kind and words, the selected line in full below; "Copy" copies the
+selected line or all listed ones.
+
 **Crashes.** A panic of either program (any thread), or the error the
 desktop program ends with, is appended to `mb3d_crash.txt` with the
 program, version, time, system and backtrace (`src/crash.rs`): next to

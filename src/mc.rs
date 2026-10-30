@@ -2831,7 +2831,7 @@ fn pass_inner(
             }
             Err(e) if e == "cancelled" => return Err(e),
             // nothing of the pass is kept: it runs on the CPU again
-            Err(e) => eprintln!("Monte Carlo on the GPU failed, calculated on the CPU: {e}"),
+            Err(e) => crate::elog!("Monte Carlo on the GPU failed, calculated on the CPU: {e}"),
         }
     }
     *MC_STATUS.lock().unwrap() = "CPU".into();
@@ -3116,7 +3116,7 @@ fn pass_gpu(
                                             Ok(m) => m,
                                             Err(mpsc::RecvTimeoutError::Timeout) => {
                                                 if std::env::var_os("MB3D_MC_DEBUG").is_some() {
-                                                    eprintln!(
+                                                    crate::elog!(
                                                         "  worker {wi} waits for group {g}: done {:?}, waiting {:?}, active {:?}, next {:?} of {total}, stash {}, cancel {}",
                                                         [groups[0].done, groups[1].done],
                                                         [groups[0].waiting.is_some(), groups[1].waiting.is_some()],
@@ -3351,7 +3351,7 @@ fn pass_gpu(
                                         v.sort_unstable();
                                         v
                                     };
-                                    eprintln!(
+                                    crate::elog!(
                                         "  pass waits: live {live:?}, pending {:?} / {:?}, batches {:?}, on_card {on_card}, ready {}",
                                         ids(0),
                                         ids(1),
@@ -3395,7 +3395,7 @@ fn pass_gpu(
                     if e == "cancelled" {
                         *failed.lock().unwrap() = Some(e);
                     } else {
-                        eprintln!("Monte Carlo on the GPU failed, calculated on the CPU: {e}");
+                        crate::elog!("Monte Carlo on the GPU failed, calculated on the CPU: {e}");
                     }
                     on_card = false;
                     (Vec::new(), 0, Vec::new())
@@ -3437,7 +3437,7 @@ fn pass_gpu(
                 }
             }
             if timing {
-                eprintln!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all, CPU's part now {:.0} %", card_s * 1000.0, b.t0.elapsed().as_secs_f64() * 1000.0, cpu_part * 100.0);
+                crate::elog!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all, CPU's part now {:.0} %", card_s * 1000.0, b.t0.elapsed().as_secs_f64() * 1000.0, cpu_part * 100.0);
             }
             batches += 1;
             n_cpu += n_cpu_b;
@@ -3449,7 +3449,7 @@ fn pass_gpu(
         }
         drop(to_card);
         if timing {
-            eprintln!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
+            crate::elog!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
         }
         let pc = (n_card * 100 + (n_card + n_cpu) / 2) / (n_card + n_cpu).max(1);
         status = if n_card == 0 {

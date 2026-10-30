@@ -50,6 +50,8 @@ enum Nc {
     Lang,
     /// the history icon of the title bar
     History,
+    /// the log icon of the title bar
+    Log,
     Button(i32),
     Border(ResizeDirection),
 }
@@ -457,7 +459,7 @@ impl<A: App> Runner<A> {
         let window = match el.create_window(attrs) {
             Ok(w) => Rc::new(w),
             Err(e) => {
-                eprintln!("cannot create a window: {e}");
+                crate::elog!("cannot create a window: {e}");
                 self.ui.forms[fi].visible = false;
                 return;
             }
@@ -466,7 +468,7 @@ impl<A: App> Runner<A> {
         let surface = match softbuffer::Surface::new(ctx, window.clone()) {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("cannot draw into the window: {e}");
+                crate::elog!("cannot draw into the window: {e}");
                 return;
             }
         };
@@ -555,6 +557,9 @@ impl<A: App> Runner<A> {
             if !f.history_hint.is_empty() && f.history_rect.get().inset(-3).contains(x, y) {
                 return Nc::History;
             }
+            if !f.log_hint.is_empty() && f.log_rect.get().inset(-3).contains(x, y) {
+                return Nc::Log;
+            }
             return Nc::Caption;
         }
         Nc::Client
@@ -575,7 +580,7 @@ impl<A: App> Runner<A> {
         let Some(w) = self.wins.get(&id) else { return };
         let f = &self.ui.forms[w.form];
         let icon = match w.nc {
-            Nc::Lang | Nc::History => CursorIcon::Pointer,
+            Nc::Lang | Nc::History | Nc::Log => CursorIcon::Pointer,
             Nc::Border(d) => match d {
                 ResizeDirection::East | ResizeDirection::West => CursorIcon::EwResize,
                 ResizeDirection::North | ResizeDirection::South => CursorIcon::NsResize,
@@ -639,6 +644,7 @@ impl<A: App> Runner<A> {
             Nc::Button(k) => k,
             Nc::Lang => NC_LANG,
             Nc::History => NC_HISTORY,
+            Nc::Log => NC_LOG,
             _ => -1,
         };
         if nh != f.nc_hot {
@@ -659,6 +665,8 @@ impl<A: App> Runner<A> {
                 Some(&f.lang_hint)
             } else if nc == Nc::History && !f.history_hint.is_empty() {
                 Some(&f.history_hint)
+            } else if nc == Nc::Log && !f.log_hint.is_empty() {
+                Some(&f.log_hint)
             } else if on_led {
                 Some(&f.led_hint)
             } else {
@@ -757,6 +765,14 @@ impl<A: App> Runner<A> {
                     // the program opens its History window
                     let name = self.ui.forms[fi].name.clone();
                     self.ui.post(&name, &name, "HistoryIconClick", Ev::Click);
+                    self.process();
+                    self.redraw_dirty();
+                    return;
+                }
+                Nc::Log if button == MouseButton::Left => {
+                    // the program opens its Log window
+                    let name = self.ui.forms[fi].name.clone();
+                    self.ui.post(&name, &name, "LogIconClick", Ev::Click);
                     self.process();
                     self.redraw_dirty();
                     return;

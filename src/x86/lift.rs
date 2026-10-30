@@ -748,7 +748,7 @@ impl Prog {
             let mut s = states[key].clone();
             if trace {
                 let st: Vec<String> = s.stack.iter().map(|(a, v)| format!("{:+}={v:?}", *a as i64 - STACK_TOP as i64)).collect();
-                eprintln!("{k:4} {cs:?} {:?} regs {:?} stack [{}]", self.ops[*k], s.regs, st.join(" "));
+                crate::elog!("{k:4} {cs:?} {:?} regs {:?} stack [{}]", self.ops[*k], s.regs, st.join(" "));
             }
             succ_of(&mut ctx, *k, cs, &mut s);
         }

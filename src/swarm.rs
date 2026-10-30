@@ -931,7 +931,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     FrameResult::Written { seconds, .. } => {
                         n += 1;
                         if !quiet {
-                            eprintln!("  {} done ({seconds:.1} s)", label(&unit));
+                            crate::elog!("  {} done ({seconds:.1} s)", label(&unit));
                         }
                     }
                     FrameResult::Skipped { .. } => {}
@@ -974,7 +974,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     ItemResult::Done { seconds, .. } => {
                         n += 1;
                         if !quiet {
-                            eprintln!("  {} done ({seconds:.1} s)", label(&unit));
+                            crate::elog!("  {} done ({seconds:.1} s)", label(&unit));
                         }
                     }
                     ItemResult::Skipped { .. } => {}
@@ -1087,7 +1087,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 let _ = std::fs::remove_file(out.with_extension("snap"));
                 n += 1;
                 if !quiet {
-                    eprintln!("  {} done ({} passes, {:.1} s)", label(&unit), done_passes, t0.elapsed().as_secs_f64());
+                    crate::elog!("  {} done ({} passes, {:.1} s)", label(&unit), done_passes, t0.elapsed().as_secs_f64());
                 }
             }
         }
@@ -1170,7 +1170,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 }
                 n += 1;
                 if !quiet {
-                    eprintln!("  {} done ({:.1} s)", label(&unit), t0.elapsed().as_secs_f64());
+                    crate::elog!("  {} done ({:.1} s)", label(&unit), t0.elapsed().as_secs_f64());
                 }
             }
         }
@@ -2342,7 +2342,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
     let heart = Heart::new(swarm, name);
     heart.beat_now("idle")?;
     if !quiet {
-        eprintln!("swarm worker {} in {}: {} cores{}", heart.name(), swarm.display(), std::thread::available_parallelism().map_or(1, |n| n.get()), if heart.presence.peer.card.is_empty() { String::new() } else { format!(", {}", heart.presence.peer.card) });
+        crate::elog!("swarm worker {} in {}: {} cores{}", heart.name(), swarm.display(), std::thread::available_parallelism().map_or(1, |n| n.get()), if heart.presence.peer.card.is_empty() { String::new() } else { format!(", {}", heart.presence.peer.card) });
     }
     let mut seen = HashSet::new();
     let mut sweep = Instant::now();
@@ -2362,7 +2362,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
                 let _ = std::fs::remove_dir_all(&job.dir);
                 let msg = format!("removed the abandoned job {} of {} (no sign of its owner for {} minutes)", job.name, job.owner, ORPHAN_SECS / 60);
                 if !quiet {
-                    eprintln!("  {msg}");
+                    crate::elog!("  {msg}");
                 }
                 control.set_note(msg);
                 continue;
@@ -2371,7 +2371,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
                 if noted.insert(job.id.clone()) {
                     let msg = format!("job {} of {} needs version {} (this is {})", job.name, job.owner, job.version, env!("CARGO_PKG_VERSION"));
                     if !quiet {
-                        eprintln!("  {msg}");
+                        crate::elog!("  {msg}");
                     }
                     control.set_note(msg);
                 }
@@ -2384,7 +2384,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
                 Err(e) => {
                     let msg = format!("job {} of {}: {e}", job.name, job.owner);
                     if !quiet {
-                        eprintln!("  {msg}");
+                        crate::elog!("  {msg}");
                     }
                     job.note_error(&heart, &e);
                     control.set_note(msg);

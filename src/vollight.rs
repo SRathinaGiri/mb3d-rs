@@ -316,7 +316,7 @@ pub fn build(
         Some(Ok(v)) => data[..n_card].copy_from_slice(&v[..n_card]),
         Some(Err(e)) => {
             // the card's part here
-            eprintln!("volumetric light map on the GPU: {e} (on the CPU)");
+            crate::elog!("volumetric light map on the GPU: {e} (on the CPU)");
             let mut mr = Marcher::new(p, 1);
             for i in 0..n_card {
                 data[i] = texel(&mut mr, i);
@@ -325,7 +325,7 @@ pub fn build(
         None => {}
     }
     if std::env::var_os("MB3D_GPU_TIMING").is_some() && n_card > 0 {
-        eprintln!("  volumetric light map: {} % of the texels on the card", n_card * 100 / n.max(1));
+        crate::elog!("  volumetric light map: {} % of the texels on the card", n_card * 100 / n.max(1));
     }
     map.sides = data.chunks(cs * cs).map(|c| c.to_vec()).collect();
     map

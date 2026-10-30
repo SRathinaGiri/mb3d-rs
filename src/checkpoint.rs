@@ -384,7 +384,7 @@ impl Store {
         if let Err(e) = ok {
             // (a full disk: the render goes on without its checkpoint)
             if !self.failed.swap(true, Ordering::Relaxed) {
-                eprintln!("  checkpoint not written any more: {e}");
+                crate::elog!("  checkpoint not written any more: {e}");
             }
             return;
         }
@@ -413,7 +413,7 @@ impl Store {
     /// so that it is never seen half written.
     pub fn put_extra(&self, name: &str, data: &[u8]) {
         if write_atomic(&self.dir.join(format!("extra-{name}")), data).is_err() && !self.failed.swap(true, Ordering::Relaxed) {
-            eprintln!("  checkpoint not written any more");
+            crate::elog!("  checkpoint not written any more");
         }
         self.autosave();
     }

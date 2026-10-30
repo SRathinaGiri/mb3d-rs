@@ -24,6 +24,9 @@ fn main() {
     let all: Vec<String> = std::env::args().skip(1).collect();
     let split = all.iter().position(|a| a == "--").unwrap_or(all.len());
     let (app_args, steps) = (&all[..split], all.get(split + 1..).unwrap_or(&[]));
+    // the log as the desktop program keeps it (the Log window shows it)
+    mb3d::log::init("gui", true);
+    mb3d::log::session_start("snapform");
     let (mut ui, mut app) = mb3d::app::build(app_args).unwrap().unwrap();
     for s in steps {
         let p: Vec<&str> = s.split(':').collect();
