@@ -74,8 +74,14 @@ moment :
 **[▶ Analyser mb3d-rs sur scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (cliquez sur *Rescan* pour obtenir un résultat à jour du code actuel)
 
-La version 0.2.66 a été jugée **sûre : 0 sur 100, aucun signalement**
-(auparavant : [le résultat de la 0.2.44](../img/scan_0.2.44.png)). Une version
+La version 0.2.85 a été jugée **sûre : 5 sur 100** (analysée le 30 octobre 2026,
+règles du moteur 10 de l'analyseur). Son unique avertissement porte sur la ligne qui
+lance les formules que le programme compile à l'exécution pour gagner en vitesse :
+exécuter du code machine fraîchement produit ne peut pas s'écrire sous la forme
+vérifiée de Rust, et cette ligne ainsi que la passerelle vers le filtre anti-bruit
+d'Intel sont les seuls endroits où le programme le permet ; le reste est une simple
+note d'information. (Auparavant : la 0.2.66 avait obtenu 0 sur 100 avec un moteur
+plus ancien, voir aussi [le résultat de la 0.2.44](../img/scan_0.2.44.png).) Une version
 antérieure avait été signalée, et nous avons modifié le code en conséquence
 ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4)) ; il est désormais
 écrit pour le rester. Les programmes ne contiennent aucun code qui se connecte

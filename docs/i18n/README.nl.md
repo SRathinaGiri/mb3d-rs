@@ -71,8 +71,14 @@ programmeertaal omzeilt. Iedereen kan de scan op elk moment op deze repository u
 **[▶ mb3d-rs scannen op scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klik op *Rescan* voor een nieuw resultaat van de huidige code)
 
-Versie 0.2.66 kreeg de beoordeling **veilig: 0 van 100, geen bevindingen** (eerder:
-[het resultaat van 0.2.44](../img/scan_0.2.44.png)). Een eerdere versie werd gemarkeerd,
+Versie 0.2.85 kreeg de beoordeling **veilig: 5 van 100** (gescand op 30 oktober 2026,
+regels van engine 10 van de scanner). De enige waarschuwing betreft de regel die de
+formules start die het programma tijdens het draaien compileert voor snelheid: vers
+gemaakte machinecode uitvoeren kan niet in de gecontroleerde vorm van Rust worden
+geschreven, en die regel en de brug naar het ruisfilter van Intel zijn de enige plekken
+waar het programma dat toestaat; de rest is een informatieve opmerking. (Eerder: 0.2.66
+kreeg 0 van 100 van een oudere engine, zie ook
+[het resultaat van 0.2.44](../img/scan_0.2.44.png).) Een eerdere versie werd gemarkeerd,
 en daarop hebben we de code aangepast ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
 ze is nu zo geschreven dat dit zo blijft. De programma's bevatten geen code die
 verbinding maakt met internet; het enige andere programma dat ze uw systeem laten

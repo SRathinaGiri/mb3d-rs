@@ -73,8 +73,14 @@ anwenden:
 **[▶ mb3d-rs auf scanrepo.dev prüfen](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klicken Sie auf *Rescan*, um ein frisches Ergebnis für den aktuellen Code zu bekommen)
 
-Version 0.2.66 wurde als **sicher: 0 von 100, keine Befunde** bewertet (früher:
-[das Ergebnis von 0.2.44](../img/scan_0.2.44.png)). Eine frühere Version wurde
+Version 0.2.85 wurde als **sicher: 5 von 100** bewertet (gescannt am 30. Oktober 2026,
+Regeln der Engine 10 des Scanners). Ihre einzige Warnung betrifft die Zeile, die die
+Formeln startet, die das Programm zur Laufzeit für mehr Geschwindigkeit kompiliert:
+frisch erzeugten Maschinencode auszuführen lässt sich nicht in der geprüften Form von
+Rust schreiben, und diese Zeile und die Brücke zu Intels Rauschfilter sind die
+einzigen Stellen, an denen das Programm es erlaubt; der Rest ist ein informativer
+Hinweis. (Früher: 0.2.66 wurde von einer älteren Engine mit 0 von 100 bewertet, siehe auch
+[das Ergebnis von 0.2.44](../img/scan_0.2.44.png).) Eine frühere Version wurde
 beanstandet, und wir haben den Code daraufhin geändert ([Issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
 er ist nun so geschrieben, dass es so bleibt. Die Programme enthalten keinen
 Code, der sich mit dem Internet verbindet; das einzige andere Programm, das

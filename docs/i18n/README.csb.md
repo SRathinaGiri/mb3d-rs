@@ -71,8 +71,14 @@ programòwaniô. Kòżdi mòże ją w kòżdi chwili pùscëc na tim repòzytori
 **[▶ Przeskanuj mb3d-rs na scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klikni *Rescan*, żebë dostac swiéżi rezultat dlô terôczasnégò kòdu)
 
-Wersjô 0.2.66 dostała òcenã **bezpieczné: 0 z 100, bez nalézënków**
-(rëchli: [rezultat 0.2.44](../img/scan_0.2.44.png)). Jedna rëchlészô
+Wersjô 0.2.85 dostała òcenã **bezpieczné: 5 z 100** (skanowanié 30 rujana
+2026, prawidła mòtora 10 skanera). Jedurné warnowanié tikô sã réżczi, jakô
+zrëszô fòrmùłë, jaczé program kòmpilëje przë robòce dlô chùtkòscë: zrëszaniô
+swiéżo zrobionégò kòdu maszinowégò nie dô sã napisac w sprawdzoni fòrmie Rusta,
+a ta réżka ë mòst do filtra szëmù firmë Intel to są jedurné place, dze program
+na to pòzwôlô; reszta to je informacjowô ùwôga. (Rëchli: 0.2.66 dostała
+0 z 100 òd starszégò mòtora, òbôczë téż
+[rezultat 0.2.44](../img/scan_0.2.44.png).) Jedna rëchlészô
 wersjô bëła òznaczonô, a më zmienilë kòd w òdpòwiedzë
 ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4)); terô je
 napisónô tak, żebë tak òstało. Programë ni mają kòdu, jaczi bë sã łącził

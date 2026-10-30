@@ -71,8 +71,14 @@ repozytorium:
 **[▶ Przeskanuj mb3d-rs na scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (kliknij *Rescan*, aby dostać świeży wynik dla bieżącego kodu)
 
-Wersja 0.2.66 otrzymała ocenę **bezpieczna: 0 na 100, brak zastrzeżeń**
-(wcześniej: [wynik dla 0.2.44](../img/scan_0.2.44.png)). Jedna z
+Wersja 0.2.85 otrzymała ocenę **bezpieczna: 5 na 100** (skan z 30 października
+2026, reguły silnika skanera w wersji 10). Jej jedyne ostrzeżenie dotyczy wiersza,
+który uruchamia formuły kompilowane przez program w czasie działania dla
+szybkości: uruchamiania świeżo wygenerowanego kodu maszynowego nie da się zapisać
+w sprawdzanej formie Rusta, a ten wiersz i most do filtra odszumiającego Intela to
+jedyne miejsca, w których program na to pozwala; reszta to uwaga informacyjna.
+(Wcześniej: 0.2.66 otrzymała 0 na 100 od starszego silnika, zob. też
+[wynik dla 0.2.44](../img/scan_0.2.44.png).) Jedna z
 wcześniejszych wersji została oznaczona i w odpowiedzi zmieniliśmy kod
 ([zgłoszenie #4](https://github.com/thr32423/mb3d-rs/issues/4)); teraz
 jest pisany tak, by tak zostało. Programy nie zawierają kodu, który łączy
