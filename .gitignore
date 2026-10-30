@@ -8,3 +8,4 @@ scenes/
 !assets/*.png
 !Languages/*.png
 /build/
+__pycache__/
