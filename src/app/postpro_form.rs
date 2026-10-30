@@ -277,11 +277,11 @@ fn toggle(ui: &mut Ui, btn: &str, pnl: &str) {
 /// `stage` is shown in the main window while it runs.
 pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
     if app.main.calculating {
-        app.message(ui, &tr("Wait for the running calculation, or stop it first."));
+        app.message(ui, &tr("@MB:WaitForTheRunningCalculationOr"));
         return;
     }
     if app.eng.base().is_none() {
-        app.message(ui, &tr("Calculate the image first."));
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     }
     app.make_scene(ui);
@@ -293,7 +293,7 @@ pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
 /// in pixels of the image; None (and the message) without one.
 fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
     if !ui.visible(MAIN, "Shape1") {
-        ui.show_message(&tr("Please make a selection in the image first."));
+        ui.show_message(&tr("@MB:PleaseMakeASelectionInThe"));
         return None;
     }
     let sh = ui.c(MAIN, "Shape1").rect();
@@ -301,7 +301,7 @@ fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
     let s = app.main.image_scale;
     let rect = [(sh.x - img.x) * s, (sh.y - img.y) * s, sh.w * s, sh.h * s];
     if rect[2] <= 2 || rect[3] <= 2 {
-        ui.show_message(&tr("The selection must be bigger than 2 pixels in width and height."));
+        ui.show_message(&tr("@MB:TheSelectionMustBeBiggerThan"));
         return None;
     }
     Some(rect)
@@ -328,7 +328,7 @@ pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
         let tenths = (t.elapsed().as_secs_f64() * 10.0).round().max(1.0) as i64;
         let mut c = stage.chars();
         let s: String = c.next().map(|f| f.to_uppercase().chain(c).collect()).unwrap_or_default();
-        app.message(ui, &trf("{} done ({}).", &[&s, &super::util::time_str(tenths)]));
+        app.message(ui, &trf("@MB:Done2", &[&s, &super::util::time_str(tenths)]));
     }
 }
 
@@ -345,8 +345,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "NoiseAutoCbxClick" => update_captions(ui),
         "FormShow" => {
             super::main_form::place_sticky(app, ui, Some(F), true);
-            ui.cm(F, "Edit11").hint = tr("Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.");
-            ui.cm(F, "Edit12").hint = tr("Divides the actual \"Raystep multiplier\" by this value,\nincrease the value to reduce overstepping.");
+            ui.cm(F, "Edit11").hint = tr("@MB:DepthOfReflections1ToSee");
+            ui.cm(F, "Edit12").hint = tr("@MB:DividesTheActualRaystepMultiplierBy");
             align_panels(ui);
             update_captions(ui);
         }
@@ -361,15 +361,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "UpDown1ChangingEx" => radio_group3_click(ui),
         "Button14Click" => {
             app.post.normals_now = true;
-            repaint(app, ui, &tr("Normals on ZBuf"));
+            repaint(app, ui, &tr("@MB:NormalsOnZBuf"));
         }
         "Button3Click" => {
             if shadow_params(ui).lights == 0 {
-                ui.show_message(&tr("Please select the lights first.  No HS for lightmaps."));
+                ui.show_message(&tr("@MB:PleaseSelectTheLightsFirstNo"));
                 return;
             }
             app.post.hs_now = true;
-            repaint(app, ui, &tr("hard shadow calculation"));
+            repaint(app, ui, &tr("@MB:HardShadowCalculation"));
         }
         "Button4Click" => {
             // reset the hard shadow of a light
@@ -378,50 +378,50 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if shadow_params(ui).lights == 0 {
                 app.post.hs_now = false;
             }
-            repaint(app, ui, &tr("hard shadow calculation"));
+            repaint(app, ui, &tr("@MB:HardShadowCalculation"));
         }
         "Button10Click" => {
             app.post.ao_now = true;
-            repaint(app, ui, &tr("ambient shadow calculation"));
+            repaint(app, ui, &tr("@MB:AmbientShadowCalculation"));
         }
         "Button11Click" => {
             if ui.checked(F, "CheckBox25") {
                 // "Calculate only a selection in the image": the reflections
                 // of the selection only (MB3D's CalcSRT with the selection)
                 if app.main.calculating {
-                    app.message(ui, &tr("Wait for the running calculation, or stop it first."));
+                    app.message(ui, &tr("@MB:WaitForTheRunningCalculationOr"));
                     return;
                 }
                 if app.eng.base().is_none() {
-                    app.message(ui, &tr("Calculate the image first."));
+                    app.message(ui, &tr("@MB:CalculateTheImageFirst"));
                     return;
                 }
                 let Some(rect) = selection_rect(app, ui) else { return };
                 app.make_scene(ui);
-                started(app, ui, &tr("reflections of the selection"));
+                started(app, ui, &tr("@MB:ReflectionsOfTheSelection"));
                 app.eng.start(super::engine::Job::ReflectSel { scene: app.scene.clone(), rect });
                 return;
             }
             app.post.refl_now = true;
-            repaint(app, ui, &tr("Reflections"));
+            repaint(app, ui, &tr("@MB:Reflections"));
         }
         "Button1Click" => {
             if app.scene.tiling.is_some() {
-                ui.show_message(&tr("No DoF on tiles."));
+                ui.show_message(&tr("@MB:NoDoFOnTiles"));
                 return;
             }
             app.post.dof_now = true;
-            repaint(app, ui, &tr("DoF calculation"));
+            repaint(app, ui, &tr("@MB:DoFCalculation"));
         }
         "Button2Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
-            if ui.caption(F, &e.sender) == tr("Click on image") {
-                ui.set_caption(F, &e.sender, &if tg == 1 { tr("Get Z1") } else { tr("Get Z2") });
+            if ui.caption(F, &e.sender) == tr("@MB:ClickOnImage") {
+                ui.set_caption(F, &e.sender, &if tg == 1 { tr("@MB:GetZ1") } else { tr("@MB:GetZ2") });
                 app.main.get_pos = 0;
                 ui.cm(MAIN, "Image1").cursor = "crDefault".into();
             } else {
                 app.main.get_pos = tg;
-                ui.set_caption(F, &e.sender, &tr("Click on image"));
+                ui.set_caption(F, &e.sender, &tr("@MB:ClickOnImage"));
                 ui.cm(MAIN, "Image1").cursor = "crCross".into();
             }
         }
@@ -432,7 +432,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button16Click" => {
             // "Reset now": the processings applied by hand are dropped
             app.post = State::default();
-            repaint(app, ui, &tr("post processing"));
+            repaint(app, ui, &tr("@MB:PostProcessingLower"));
         }
         "CheckBox21Click" | "CheckBox25Click" => {
             update_captions(ui);
@@ -458,7 +458,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let hs = ui.checked(F, "CheckBox9");
             let deao = ui.checked(F, "CheckBox11") && ui.c(F, "TabControl1").tab_index == 3;
             let keep_as = ui.checked(F, "CheckBox30");
-            started(app, ui, &tr("selection recalculation"));
+            started(app, ui, &tr("@MB:SelectionRecalculation"));
             app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer, hs, deao, keep_as });
         }
         "Button12Click" => {
@@ -466,7 +466,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if app.main.calculating {
                 return;
             }
-            let Some(b) = app.eng.base() else { return ui.show_message(&tr("No image calculated yet.")) };
+            let Some(b) = app.eng.base() else { return ui.show_message(&tr("@MB:NoImageCalculatedYet")) };
             let g = crate::gbuffer::double_size(&b.post, b.w, b.h);
             let mut sc = b.scene.clone();
             sc.width *= 2;

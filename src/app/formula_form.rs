@@ -306,7 +306,7 @@ fn set_tab_names(app: &mut Mb3d, ui: &mut Ui) {
     let tabs: Vec<String> = (0..n)
         .map(|t| {
             let used = if st.hybrid == 1 { st.slots[t].is_some() } else { st.its[t] > 0 && st.slots[t].is_some() };
-            let base = if t == 0 { tr("Formula1") } else { trf("Fo.{}", &[&(t + 1)]) };
+            let base = if t == 0 { tr("@MB:Formula12") } else { trf("@MB:Fo", &[&(t + 1)]) };
             if used {
                 format!("{base} \u{00BB}")
             } else {
@@ -317,7 +317,7 @@ fn set_tab_names(app: &mut Mb3d, ui: &mut Ui) {
     let c = ui.cm(F, "TabControl1");
     c.tabs = tabs;
     c.tab_index = c.tab_index.clamp(0, n as i32 - 1);
-    ui.set_caption(F, "LabelItCount", &if n == 6 { tr("Iterationcount") } else { tr("Weight") });
+    ui.set_caption(F, "LabelItCount", &if n == 6 { tr("@MB:Iterationcount") } else { tr("@MB:Weight") });
     ui.set_visible(F, "CheckBox1", n == 6);
 }
 
@@ -394,7 +394,7 @@ fn adjust_tc1_height(ui: &mut Ui) {
 /// `TabControl2Change` without a user change (header -> controls).
 fn tab_control2_update(app: &mut Mb3d, ui: &mut Ui) {
     let h = app.formula.hybrid;
-    ui.set_caption(F, "Label20", &if h == 2 { tr("Maxits hybrid part1:") } else { tr("Max. iterations:") });
+    ui.set_caption(F, "Label20", &if h == 2 { tr("@MB:MaxitsHybridPart1") } else { tr("@MB:MaxIterations") });
     ui.set_visible(F, "Label28", h == 2);
     ui.set_visible(F, "UpDown1", h == 2);
     let p = app.formula.start2.max(1) as i64 + 1;
@@ -418,12 +418,12 @@ fn radio_group1_click(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "Edit25", k > 4);
     ui.set_visible(F, "Label27", k > 4);
     if l18 && k <= 4 {
-        ui.set_caption(F, "Label18", &tr("Ds:"));
+        ui.set_caption(F, "Label18", &tr("@MB:Ds"));
         ui.set_text(F, "Edit23", &fts_single(app.formula.decomb_smooth.clamp(0.0, 100.0) as f64));
-        ui.cm(F, "Edit23").hint = tr("Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.");
+        ui.cm(F, "Edit23").hint = tr("@MB:AbsoluteDistanceOfTheSmoothCombine");
     } else if l18 {
-        ui.set_caption(F, "Label18", &tr("Co:"));
-        ui.cm(F, "Edit23").hint = tr("Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.");
+        ui.set_caption(F, "Label18", &tr("@MB:Co"));
+        ui.cm(F, "Edit23").hint = tr("@MB:ColorOption0AverageOfBoth");
         ui.set_text(F, "Edit23", &app.formula.mix_color.to_string());
         ui.set_text(F, "Edit25", &fts_single(app.formula.mix_pow as f64));
     }
@@ -456,7 +456,7 @@ pub fn select_formula(app: &mut Mb3d, ui: &mut Ui, name: &str) {
             app.formula.slots[t] = None;
             app.formula.its[t] = 0;
             if !s.is_empty() {
-                app.message(ui, &trf("Formula '{}' not found.", &[&s]));
+                app.message(ui, &trf("@MB:FormulaNotFound", &[&s]));
             }
             tab_control1_change(app, ui);
         }
@@ -541,7 +541,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             tab_control1_change(app, ui);
         }
         "FormCreate" => {
-            ui.cm(F, "DECombineCmb").hint = tr("Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.");
+            ui.cm(F, "DECombineCmb").hint = tr("@MB:CombinationMethodsMinBothFractalsAre");
         }
         "FormHide" => {
             let f = ui.f(F);
@@ -556,9 +556,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 for (i, it) in items.iter().enumerate() {
                     ui.set_enabled(F, it, i != t);
                 }
-                ui.set_caption(F, "Shiftallformulasonetotheright1", &trf("Shift formulas {} to 5 a position to the right", &[&(t + 1)]));
+                ui.set_caption(F, "Shiftallformulasonetotheright1", &trf("@MB:ShiftFormulasTo5APosition", &[&(t + 1)]));
                 ui.set_visible(F, "Shiftallformulasonetotheright1", t < 5);
-                ui.set_caption(F, "Shifttotheleft1", &trf("Shift formulas {} to 6 a position to the left", &[&(t + 1)]));
+                ui.set_caption(F, "Shifttotheleft1", &trf("@MB:ShiftFormulasTo6APosition", &[&(t + 1)]));
                 ui.popup_menu(F, "PopupMenu2", "TabControl1", x, y);
             }
         }
@@ -827,7 +827,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: format!("{}|*.m3f", tr("M3D formula (*.m3f)")),
+                filter: format!("{}|*.m3f", tr("@MB:M3DFormulaM3f")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_FORMULAS)),
                 ..Default::default()
             };
@@ -942,7 +942,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Copythevaluesto1Click" => {
             let src = tab(ui);
             let d = if src == 0 { 2 } else { 1 };
-            ui.input_query("formula:copyvalues", &tr("Copy the values"), &tr("to formula nr:"), &d.to_string());
+            ui.input_query("formula:copyvalues", &tr("@MB:CopyTheValues"), &tr("@MB:ToFormulaNr"), &d.to_string());
         }
         "ExchangeFormulaLeftBtnClick" | "ExchangeFormulaRightBtnClick" => {
             let t = tab(ui);

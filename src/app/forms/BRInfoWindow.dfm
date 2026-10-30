@@ -2,7 +2,7 @@ object BRInfoForm: TBRInfoForm
   Left = 192
   Top = 127
   BorderStyle = bsDialog
-  Caption = 'Big render'
+  Caption = '@MB:BigRender'
   ClientHeight = 82
   ClientWidth = 412
   Color = clBtnFace
@@ -21,9 +21,7 @@ object BRInfoForm: TBRInfoForm
     Top = 16
     Width = 395
     Height = 16
-    Caption = 
-      'Extracting ambient information from the original M3I file, pleas' +
-      'e wait:'
+    Caption = '@MB:ExtractingAmbientInformationFromTheOriginal'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13

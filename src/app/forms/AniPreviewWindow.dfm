@@ -3,7 +3,7 @@ object AniPreviewForm: TAniPreviewForm
   Top = 155
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
-  Caption = 'Animation preview'
+  Caption = '@MB:AnimationPreview'
   ClientHeight = 338
   ClientWidth = 371
   Color = clBtnFace
@@ -33,7 +33,7 @@ object AniPreviewForm: TAniPreviewForm
       Top = 24
       Width = 73
       Height = 25
-      Caption = 'AniGif'
+      Caption = '@MB:AniGif'
       Glyph.Data = {
         F6000000424DF600000000000000760000002800000010000000100000000100
         04000000000080000000C30E0000C30E0000100000001000000000000000FF00
@@ -51,7 +51,7 @@ object AniPreviewForm: TAniPreviewForm
       Top = 24
       Width = 75
       Height = 25
-      Caption = 'Exit'
+      Caption = '@MB:Exit'
       TabOrder = 0
       OnClick = Button1Click
     end
@@ -69,7 +69,7 @@ object AniPreviewForm: TAniPreviewForm
       Top = 2
       Width = 91
       Height = 17
-      Caption = 'Show frame nr'
+      Caption = '@MB:ShowFrameNr'
       TabOrder = 2
     end
     object CheckBox2: TCheckBox
@@ -77,7 +77,7 @@ object AniPreviewForm: TAniPreviewForm
       Top = 2
       Width = 48
       Height = 17
-      Caption = 'white'
+      Caption = '@MB:White'
       TabOrder = 3
     end
     object UpDown1: TUpDown
@@ -113,7 +113,7 @@ object AniPreviewForm: TAniPreviewForm
       Top = 4
       Width = 85
       Height = 17
-      Caption = 'Frames/sec:'
+      Caption = '@MB:FramesSec'
       Checked = True
       State = cbChecked
       TabOrder = 7

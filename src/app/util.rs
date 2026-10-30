@@ -150,16 +150,16 @@ pub fn shown_step(shown: f64, est: f64, dt: f64) -> f64 {
 pub fn left_str(secs: f64) -> String {
     let s = secs.round().max(0.0) as i64;
     match s {
-        ..=3 => tr("a few seconds left"),
-        4..=59 => trf("{} s left", &[&s]),
-        60..=239 if s % 60 == 0 => trf("{} min left", &[&(s / 60)]),
-        60..=239 => trf("{} min {} s left", &[&(s / 60), &(s % 60)]),
-        240..=3599 => trf("about {} min left", &[&((s + 30) / 60)]),
+        ..=3 => tr("@MB:AFewSecondsLeft"),
+        4..=59 => trf("@MB:SLeft", &[&s]),
+        60..=239 if s % 60 == 0 => trf("@MB:MinLeft", &[&(s / 60)]),
+        60..=239 => trf("@MB:MinSLeft", &[&(s / 60), &(s % 60)]),
+        240..=3599 => trf("@MB:AboutMinLeft", &[&((s + 30) / 60)]),
         _ => {
             let m = (s + 30) / 60;
             match m % 60 {
-                0 => trf("about {} h left", &[&(m / 60)]),
-                r => trf("about {} h {} min left", &[&(m / 60), &r]),
+                0 => trf("@MB:AboutHLeft", &[&(m / 60)]),
+                r => trf("@MB:AboutHMinLeft", &[&(m / 60), &r]),
             }
         }
     }

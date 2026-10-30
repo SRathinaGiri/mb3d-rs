@@ -72,9 +72,9 @@ fn entry_cmp(a: &FileEntry, b: &FileEntry, column: usize, desc: bool) -> Orderin
 
 fn entry_type(e: &FileEntry) -> String {
     if e.is_dir {
-        tr("Folder")
+        tr("@MB:Folder")
     } else {
-        Path::new(&e.name).extension().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| tr("File"))
+        Path::new(&e.name).extension().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| tr("@MB:File"))
     }
 }
 
@@ -111,7 +111,7 @@ fn entry_modified(e: &FileEntry) -> String {
 }
 
 fn file_columns(c: &mut super::control::Control, sort_column: usize, sort_desc: bool) {
-    let labels = [tr("Name"), tr("Date modified"), tr("Type"), tr("Size")];
+    let labels = [tr("@MB:Name2"), tr("@MB:DateModified"), tr("@MB:Type2"), tr("@MB:Size")];
     c.cols = labels.iter().enumerate().map(|(i, label)| Column {
         caption: if i == sort_column { format!("{label} {}", if sort_desc { "▼" } else { "▲" }) } else { label.clone() },
         width: [50, 145, 90, 85][i],
@@ -164,13 +164,13 @@ const FORM_HEAD: &str = "  BorderStyle = bsDialog\n  Color = clBtnFace\n  Font.C
 
 fn mr_caption(mr: i32) -> String {
     match mr {
-        MR_CANCEL => tr("Cancel"),
-        MR_ABORT => tr("Abort"),
-        MR_RETRY => tr("Retry"),
-        MR_IGNORE => tr("Ignore"),
-        MR_YES => tr("Yes"),
-        MR_NO => tr("No"),
-        _ => tr("OK"),
+        MR_CANCEL => tr("@MB:Cancel"),
+        MR_ABORT => tr("@MB:Abort"),
+        MR_RETRY => tr("@MB:Retry"),
+        MR_IGNORE => tr("@MB:Ignore"),
+        MR_YES => tr("@MB:Yes"),
+        MR_NO => tr("@MB:No2"),
+        _ => tr("@MB:OK"),
     }
 }
 
@@ -184,7 +184,7 @@ fn parse_filter(f: &str) -> Vec<(String, Vec<String>)> {
         }
     }
     if out.is_empty() {
-        out.push((tr("All files (*.*)"), vec!["*.*".into()]));
+        out.push((tr("@MB:AllFilesParen"), vec!["*.*".into()]));
     }
     out
 }
@@ -284,7 +284,7 @@ impl Ui {
 
     /// Asks yes / no; the result comes as `DialogResult::Button(MR_YES / MR_NO)`.
     pub fn confirm(&mut self, tag: &str, text: &str) {
-        self.message_box(tag, &tr("Confirm"), text, &[MR_YES, MR_NO]);
+        self.message_box(tag, &tr("@MB:Confirm"), text, &[MR_YES, MR_NO]);
     }
 
     /// `InputQuery`: the result comes as `DialogResult::Text`.
@@ -294,8 +294,8 @@ impl Ui {
             esc(caption),
             esc(prompt),
             esc(value),
-            button("OkBtn", &tr("OK"), 132, 68, 75, MR_OK, true, false),
-            button("CancelBtn", &tr("Cancel"), 213, 68, 75, MR_CANCEL, false, true)
+            button("OkBtn", &tr("@MB:OK"), 132, 68, 75, MR_OK, true, false),
+            button("CancelBtn", &tr("@MB:Cancel"), 213, 68, 75, MR_CANCEL, false, true)
         );
         let i = self.dialog_form("InputQueryDlg", &d);
         self.dialogs.insert(i, DialogState::Input { tag: tag.to_string() });
@@ -314,8 +314,8 @@ impl Ui {
 
     /// TColorDialog: the result comes as `DialogResult::Color`.
     pub fn pick_color(&mut self, tag: &str, color: u32) {
-        let mut d = format!("object ColorDlg: TForm\n  Caption = {}\n  ClientWidth = 300\n  ClientHeight = 290\n{FORM_HEAD}", esc(&tr("Color")));
-        d.push_str(&format!("  object BasicLabel: TLabel\n    Left = 8\n    Top = 6\n    Width = 70\n    Height = 13\n    Caption = {}\n  end\n", esc(&tr("&Basic colors:"))));
+        let mut d = format!("object ColorDlg: TForm\n  Caption = {}\n  ClientWidth = 300\n  ClientHeight = 290\n{FORM_HEAD}", esc(&tr("@MB:Color")));
+        d.push_str(&format!("  object BasicLabel: TLabel\n    Left = 8\n    Top = 6\n    Width = 70\n    Height = 13\n    Caption = {}\n  end\n", esc(&tr("@MB:BasicColors"))));
         for (k, c) in BASIC.iter().enumerate() {
             let (x, y) = (8 + (k % 8) as i32 * 36, 24 + (k / 8) as i32 * 24);
             d.push_str(&format!(
@@ -333,8 +333,8 @@ impl Ui {
             ));
         }
         d.push_str("  object Preview: TShape\n    Left = 264\n    Top = 178\n    Width = 28\n    Height = 72\n    Pen.Color = clGray\n  end\n");
-        d.push_str(&button("OkBtn", &tr("OK"), 136, 258, 75, MR_OK, true, false));
-        d.push_str(&button("CancelBtn", &tr("Cancel"), 217, 258, 75, MR_CANCEL, false, true));
+        d.push_str(&button("OkBtn", &tr("@MB:OK"), 136, 258, 75, MR_OK, true, false));
+        d.push_str(&button("CancelBtn", &tr("@MB:Cancel"), 217, 258, 75, MR_CANCEL, false, true));
         d.push_str("end\n");
         let i = self.dialog_form("ColorDlg", &d);
         self.dialogs.insert(i, DialogState::Color { tag: tag.to_string() });
@@ -374,7 +374,7 @@ impl Ui {
     }
 
     fn file_dialog(&mut self, tag: &str, o: &FileOptions, save: bool) {
-        let title = if o.title.is_empty() { if save { tr("Save As") } else { tr("Open") } } else { o.title.clone() };
+        let title = if o.title.is_empty() { if save { tr("@MB:SaveAs") } else { tr("@MB:Open") } } else { o.title.clone() };
         let filters = parse_filter(&o.filter);
         let cw = if o.preview { 812 } else { 560 };
         let mut d = format!("object FileDlg: TForm\n  Caption = {}\n  ClientWidth = {cw}\n  ClientHeight = 390\n{FORM_HEAD}", esc(&title));
@@ -388,18 +388,18 @@ impl Ui {
              \x20 object NameEdit: TEdit\n    Left = 96\n    Top = 316\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    TabOrder = 3\n  end\n\
              \x20 object TypeLabel: TLabel\n    Left = 8\n    Top = 352\n    Width = 70\n    Height = 13\n    Anchors = [akLeft, akBottom]\n    Caption = {}\n  end\n\
              \x20 object TypeCombo: TComboBox\n    Left = 96\n    Top = 348\n    Width = 370\n    Height = 21\n    Anchors = [akLeft, akRight, akBottom]\n    Style = csDropDownList\n    TabOrder = 4\n  end\n",
-            esc(&tr("Look &in:")),
-            esc(&tr("Up one level")),
-            esc(&tr("File &name:")),
-            esc(&tr("Files of &type:"))
+            esc(&tr("@MB:LookIn")),
+            esc(&tr("@MB:UpOneLevel")),
+            esc(&tr("@MB:FileName")),
+            esc(&tr("@MB:FilesOfType"))
         ));
-        d.push_str(&button("OkBtn", &if o.folder { tr("&Select") } else if save { tr("&Save") } else { tr("&Open") }, 477, 314, 75, 0, true, false).replace("TabOrder = 0", "TabOrder = 5\n    Anchors = [akRight, akBottom]"));
-        d.push_str(&button("CancelBtn", &tr("Cancel"), 477, 346, 75, MR_CANCEL, false, true).replace("TabOrder = 0", "TabOrder = 6\n    Anchors = [akRight, akBottom]"));
+        d.push_str(&button("OkBtn", &if o.folder { tr("@MB:Select") } else if save { tr("@MB:Save2") } else { tr("@MB:Open2") }, 477, 314, 75, 0, true, false).replace("TabOrder = 0", "TabOrder = 5\n    Anchors = [akRight, akBottom]"));
+        d.push_str(&button("CancelBtn", &tr("@MB:Cancel"), 477, 346, 75, MR_CANCEL, false, true).replace("TabOrder = 0", "TabOrder = 6\n    Anchors = [akRight, akBottom]"));
         if o.preview {
             d.push_str(&format!(
                 "  object PreviewImage: TImage\n    Left = 564\n    Top = 36\n    Width = 240\n    Height = 180\n    Anchors = [akTop, akRight]\n    Center = True\n  end\n\
                  \x20 object PreviewLabel: TLabel\n    Left = 564\n    Top = 224\n    Width = 240\n    Height = 80\n    Anchors = [akTop, akRight]\n    AutoSize = False\n    WordWrap = True\n    Caption = {}\n  end\n",
-                esc(&tr("Click a parameter file for its preview."))
+                esc(&tr("@MB:ClickAParameterFileForIts"))
             ));
         }
         d.push_str("end\n");

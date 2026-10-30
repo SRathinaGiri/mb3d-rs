@@ -1,7 +1,7 @@
 object HistoryFrm: THistoryFrm
   Left = 180
   Top = 140
-  Caption = 'History'
+  Caption = '@MB:History'
   ClientHeight = 540
   ClientWidth = 900
   Color = clBtnFace
@@ -21,14 +21,14 @@ object HistoryFrm: THistoryFrm
     Top = 12
     Width = 36
     Height = 13
-    Caption = 'Search'
+    Caption = '@MB:Search'
   end
   object Edit1: TEdit
     Left = 50
     Top = 8
     Width = 230
     Height = 21
-    Hint = 'Only the entries whose name, folder or kind contain this text'
+    Hint = '@MB:OnlyTheEntriesWhoseNameFolder'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 0
@@ -39,7 +39,7 @@ object HistoryFrm: THistoryFrm
     Top = 12
     Width = 28
     Height = 13
-    Caption = 'Show'
+    Caption = '@MB:Show'
   end
   object ComboBox1: TComboBox
     Left = 330
@@ -53,20 +53,20 @@ object HistoryFrm: THistoryFrm
     Text = 'Everything'
     OnChange = ComboBox1Change
     Items.Strings = (
-      'Everything'
-      'Calculated pictures'
-      'Parameters'
-      'Images'
-      'Animations'
-      'Meshes'
-      'Other files')
+      '@MB:Everything'
+      '@MB:CalculatedPictures'
+      '@MB:Parameters'
+      '@MB:Images'
+      '@MB:Animations'
+      '@MB:Meshes2'
+      '@MB:OtherFiles')
   end
   object Label7: TLabel
     Left = 496
     Top = 12
     Width = 24
     Height = 13
-    Caption = 'View'
+    Caption = '@MB:View'
   end
   object ComboBox2: TComboBox
     Left = 526
@@ -80,18 +80,18 @@ object HistoryFrm: THistoryFrm
     Text = 'List'
     OnChange = ComboBox2Change
     Items.Strings = (
-      'List'
-      'Rows'
-      'Tiles')
+      '@MB:List'
+      '@MB:Rows'
+      '@MB:Tiles2')
   end
   object CheckBox1: TCheckBox
     Left = 212
     Top = 504
     Width = 92
     Height = 17
-    Hint = 'Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest'
+    Hint = '@MB:OfEntriesWhoseFilesAreThe'
     Anchors = [akLeft, akBottom]
-    Caption = 'Show unique'
+    Caption = '@MB:ShowUnique'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 9
@@ -102,9 +102,9 @@ object HistoryFrm: THistoryFrm
     Top = 504
     Width = 110
     Height = 17
-    Hint = 'The entries under their days; a day'#39's entries and pictures show when it is opened (a click on it)'
+    Hint = '@MB:TheEntriesUnderTheirDaysA'
     Anchors = [akLeft, akBottom]
-    Caption = 'Group by day'
+    Caption = '@MB:GroupByDay'
     Checked = True
     State = cbChecked
     ParentShowHint = False
@@ -117,7 +117,7 @@ object HistoryFrm: THistoryFrm
     Top = 500
     Width = 208
     Height = 24
-    Hint = 'The size of the tiles'
+    Hint = '@MB:TheSizeOfTheTiles'
     Anchors = [akLeft, akRight, akBottom]
     Max = 4
     Position = 2
@@ -135,7 +135,7 @@ object HistoryFrm: THistoryFrm
     AutoSize = False
     Alignment = taRightJustify
     Anchors = [akLeft, akRight, akBottom]
-    Caption = 'Click a column header to sort.'
+    Caption = '@MB:ClickAColumnHeaderToSort'
   end
   object Image2: TImage
     Left = 8
@@ -170,27 +170,27 @@ object HistoryFrm: THistoryFrm
     Anchors = [akLeft, akTop, akRight, akBottom]
     Columns = <
       item
-        Caption = 'When'
+        Caption = '@MB:When'
         Width = 124
       end
       item
-        Caption = 'Action'
+        Caption = '@MB:Action'
         Width = 66
       end
       item
-        Caption = 'Kind'
+        Caption = '@MB:Kind'
         Width = 76
       end
       item
-        Caption = 'Name'
+        Caption = '@MB:Name2'
         Width = 190
       end
       item
-        Caption = 'Size'
+        Caption = '@MB:Size'
         Width = 62
       end
       item
-        Caption = 'Folder'
+        Caption = '@MB:Folder'
         Width = 200
       end>
     ColumnClick = True
@@ -228,7 +228,7 @@ object HistoryFrm: THistoryFrm
     Top = 268
     Width = 240
     Height = 21
-    Hint = 'The file (select and copy it from here)'
+    Hint = '@MB:TheFileSelectAndCopyIt'
     Anchors = [akTop, akRight]
     ParentShowHint = False
     ReadOnly = True
@@ -250,9 +250,9 @@ object HistoryFrm: THistoryFrm
     Top = 440
     Width = 240
     Height = 25
-    Hint = 'Load the parameters into the main window, or open the file'
+    Hint = '@MB:LoadTheParametersIntoTheMain'
     Anchors = [akRight, akBottom]
-    Caption = 'Load'
+    Caption = '@MB:Load'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3
@@ -263,9 +263,9 @@ object HistoryFrm: THistoryFrm
     Top = 471
     Width = 117
     Height = 25
-    Hint = 'Open the folder of the file'
+    Hint = '@MB:OpenTheFolderOfTheFile'
     Anchors = [akRight, akBottom]
-    Caption = 'Show in folder'
+    Caption = '@MB:ShowInFolder'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 4
@@ -276,9 +276,9 @@ object HistoryFrm: THistoryFrm
     Top = 471
     Width = 117
     Height = 25
-    Hint = 'Take the entry out of the history (a calculated picture'#39's parameters and thumbnail are deleted; other files stay where they are)'
+    Hint = '@MB:TakeTheEntryOutOfThe'
     Anchors = [akRight, akBottom]
-    Caption = 'Remove'
+    Caption = '@MB:Remove'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 5
@@ -297,15 +297,15 @@ object HistoryFrm: THistoryFrm
     Left = 560
     Top = 480
     object Load1: TMenuItem
-      Caption = 'Load'
+      Caption = '@MB:Load'
       OnClick = Button1Click
     end
     object Showinfolder1: TMenuItem
-      Caption = 'Show in folder'
+      Caption = '@MB:ShowInFolder'
       OnClick = Button2Click
     end
     object Remove1: TMenuItem
-      Caption = 'Remove'
+      Caption = '@MB:Remove'
       OnClick = Button3Click
     end
   end

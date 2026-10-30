@@ -1275,6 +1275,34 @@ without a reading again. A synthetic history of 200 days with 200,000
 entries lists within a second of opening, and no step of the window
 blocks it longer than 60 ms.
 
+**Interface languages: labels** (`src/vcl/lang.rs`, `Languages/*.lng`,
+`tools/labels.py`), in the way of Microsoft Dynamics 365's label files.
+Every text of the program is a label with an ID: the form files carry
+`Caption = '@MB:CalculateNow'`, the code `tr("@MB:CalculationStopped")`
+(`trf` with `{}` values the same way), and each language file's
+`[Labels]` section gives the texts, `Id=text`, with a note under each
+(`;` and the English text; in English.lng where the label is used). One
+label serves every place that shows its text, so a text is translated
+once (until v0.2.86 every control had its own line: 2,042 lines for 1,793
+texts, 7 to 25 of them translated differently per language, and a new
+window got no translation even of "Close"). A label a language lacks
+shows the English text, which is built into the program
+(`include_str!` of English.lng), so a window never shows an ID; a form
+section (`[Form]`, `Control.Property = text`) gives one control a text of
+its own where it needs other words (the conversion kept the 7 to 29
+translations per language that differed from their label's most common
+one there). Old language files keep working: their form lines are such
+control texts, their `[Strings]` translate a label's English text. An
+English text the code passes around (a stage name) finds its label by
+its text. Changing the language while the program runs finds the texts
+the program set by their labels again. `tools/labels.py find TEXT` lists
+labels to reuse, `add "Text"` makes a new one (an ID from its first six
+words), `check` tells missing references and the labels each language
+has not translated yet, `sync` puts the files in order (labels by ID, the
+notes, the untranslated labels listed at the end of each file as notes);
+the tests check that every reference of the forms and the code has an
+English text and every language's labels and control texts exist.
+
 **Translations of the README and the wiki.** One per language of the
 program (`Languages/*.lng`): `docs/i18n/README.<code>.md` (de, fr, it, nl,
 pl, csb, hi, ja, ko, zh-CN, zh-TW) and the wiki's `<Page>-<code>.md`. They

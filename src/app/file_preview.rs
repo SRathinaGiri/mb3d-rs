@@ -114,7 +114,7 @@ fn start(app: &mut Mb3d, ui: &Ui, path: PathBuf) {
     let waker = ui.waker();
     std::thread::spawn(move || {
         // (a panic must not leave `busy` set: no more previews then)
-        let (r, text) = std::panic::catch_unwind(|| calculate(&path)).unwrap_or_else(|_| (Err(tr("the calculation failed")), String::new()));
+        let (r, text) = std::panic::catch_unwind(|| calculate(&path)).unwrap_or_else(|_| (Err(tr("@MB:TheCalculationFailedLower")), String::new()));
         *slot.lock().unwrap() = Some((path, r, text));
         if let Some(w) = &waker {
             w.wake();
@@ -195,7 +195,7 @@ pub fn request(app: &mut Mb3d, ui: &mut Ui, path: PathBuf, form: &str, image: &s
     let t: Target = (form.into(), image.into(), label.into());
     if !possible(&path) {
         app.preview.shown = None;
-        show(ui, &t, None, &tr("No preview for this file."));
+        show(ui, &t, None, &tr("@MB:NoPreviewForThisFile"));
         return;
     }
     freshen(app, &path);
@@ -203,7 +203,7 @@ pub fn request(app: &mut Mb3d, ui: &mut Ui, path: PathBuf, form: &str, image: &s
     match cached(app, &path) {
         Some((b, text)) => show(ui, &t, b, &text),
         None => {
-            show(ui, &t, None, &tr("Calculating the preview..."));
+            show(ui, &t, None, &tr("@MB:CalculatingThePreview"));
             want(app, path, true);
         }
     }
@@ -218,7 +218,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             request(app, ui, p, &t.0, &t.1, &t.2);
         } else {
             app.preview.shown = None;
-            show(ui, &t, None, &tr("No preview for this file."));
+            show(ui, &t, None, &tr("@MB:NoPreviewForThisFile"));
         }
     }
     let done = app.preview.result.lock().unwrap().take();
@@ -226,7 +226,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         app.preview.busy = false;
         let entry = match r {
             Ok((rgb, w, h)) => (Some(Bitmap::from_rgb(w, h, &rgb)), text),
-            Err(e) => (None, trf("No preview: {}", &[&e])),
+            Err(e) => (None, trf("@MB:NoPreview", &[&e])),
         };
         if let Some((shown, t)) = &app.preview.shown {
             if *shown == p {

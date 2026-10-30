@@ -1,28 +1,34 @@
-//! The interface language.  The texts of the controls (captions, hints,
-//! list items, tabs) come from the form files in English; a language file
-//! of the `Languages` folder (`English.lng`, `Deutsch.lng`, ...) gives them
-//! in another language, one text per line:
+//! The interface language, as labels in the way of Microsoft Dynamics 365:
+//! every text of the program has a label ID, and the form files and the
+//! code refer to it as `@MB:Id` (a button's `Caption = '@MB:CalculateNow'`,
+//! `tr("@MB:CalculationStopped")`), so one translation serves every place
+//! the text is shown.  A language file of the `Languages` folder
+//! (`English.lng`, `Deutsch.lng`, ...) gives the labels' texts:
 //!
 //! ```text
 //! language = Deutsch
 //! code = DE
 //!
-//! [Mand3DForm]
-//! Button2.Caption = 3D berechnen
-//! Button2.Hint = Startet die Berechnung des Bildes.
+//! [Labels]
+//! CalculateNow=Jetzt berechnen
+//! ;Calculate now
 //!
-//! [Strings]
-//! Stop = Anhalten
+//! [MutaGenFrm]
+//! Label4.Caption = toevoegen
 //! ```
 //!
-//! A section is a form (its object name), a line is a control's property
-//! (`Items.1` is the first list item); `[Strings]` holds the texts the
-//! program sets while it runs, with the English text on the left (see
-//! [`tr`]).  A text that is missing stays English.  `\n` is a line break,
-//! `\\` a backslash, `\s` a space at the start or end, `\=` an equals sign
-//! in a `[Strings]` key.  The English file is the complete list, generated
-//! from the form files and the program (`cargo run --example langfile`); a
-//! new language starts as a copy of it.
+//! A line under a label starting with `;` is a note (the English text, or
+//! in English.lng where the label is used).  A form section (its object
+//! name; `Control.Property`, `Items.1` the first list item) gives one
+//! control a text of its own instead of its label's, where a place needs
+//! other words.  A label a language lacks shows the English text, which is
+//! built into the program (English.lng), so a form never shows an ID.  Old
+//! language files keep working: their form sections are such
+//! control-specific texts, and their `[Strings]` (English text = text)
+//! translate the texts the program passes around as English.  `\n` is a
+//! line break, `\\` a backslash, `\s` a space at the start or end, `\=` an
+//! equals sign in a key.  `tools/labels.py` finds labels to reuse, adds new
+//! ones, checks the references and puts the files in order.
 
 use super::control::{Control, Kind};
 use std::collections::HashMap;
@@ -49,12 +55,29 @@ pub struct Language {
     strings: HashMap<String, String>,
     /// `[Strings]` the other way round
     reverse: HashMap<String, String>,
+    /// `[Labels]`: label ID -> text
+    labels: HashMap<String, String>,
+    /// `[Labels]` the other way round: text -> label ID
+    label_ids: HashMap<String, String>,
+}
+
+/// The prefix of a label reference.
+pub const LABEL: &str = "@MB:";
+
+/// The English labels, built into the program (English.lng as it was
+/// built), the fallback of every language.
+pub fn builtin_english() -> &'static Language {
+    static EN: std::sync::OnceLock<Language> = std::sync::OnceLock::new();
+    EN.get_or_init(|| Language::parse(include_str!("../../Languages/English.lng"), None).unwrap_or_default())
 }
 
 impl Language {
-    /// The built-in English: no file, every text as the program has it.
+    /// The built-in English (English.lng as the program was built with it).
     pub fn english() -> Language {
-        Language { name: "English".into(), code: "EN".into(), ..Default::default() }
+        let mut l = Language::parse(include_str!("../../Languages/English.lng"), None).unwrap_or_default();
+        l.name = "English".into();
+        l.code = "EN".into();
+        l
     }
 
     /// Reads a language file's text.
@@ -90,6 +113,9 @@ impl Language {
             } else if section.eq_ignore_ascii_case("Strings") {
                 l.reverse.insert(val.clone(), key.clone());
                 l.strings.insert(key, val);
+            } else if section.eq_ignore_ascii_case("Labels") {
+                l.label_ids.entry(val.clone()).or_insert_with(|| key.clone());
+                l.labels.insert(key, val);
             } else {
                 l.texts.insert(format!("{section}.{key}"), val);
             }
@@ -111,9 +137,46 @@ impl Language {
         self.texts.get(key).map(String::as_str)
     }
 
-    /// A text the program sets while it runs, if the file has it.
-    pub fn tr<'a>(&'a self, english: &'a str) -> &'a str {
-        self.strings.get(english).map(String::as_str).unwrap_or(english)
+    /// The text of a label of this language (not the English fallback).
+    pub fn label(&self, id: &str) -> Option<&str> {
+        self.labels.get(id).map(String::as_str)
+    }
+
+    /// The label whose text this language shows as `text`.
+    pub fn label_of(&self, text: &str) -> Option<&str> {
+        self.label_ids.get(text).map(String::as_str)
+    }
+
+    /// The label IDs the file has.
+    pub fn labels(&self) -> Vec<&str> {
+        self.labels.keys().map(String::as_str).collect()
+    }
+
+    /// A text in this language: `@MB:Id` is the label's text (the English
+    /// one when this language lacks it); an English text (one the program
+    /// passes around) is its label's text, or an old file's `[Strings]`
+    /// translation; anything else stays as it is.
+    pub fn tr(&self, s: &str) -> String {
+        let en = builtin_english();
+        if let Some(id) = s.strip_prefix(LABEL) {
+            if let Some(t) = self.label(id) {
+                return t.to_string();
+            }
+            // (an old file translates the label's English text in [Strings])
+            return match en.label(id) {
+                Some(e) => self.strings.get(e).cloned().unwrap_or_else(|| e.to_string()),
+                None => s.to_string(),
+            };
+        }
+        if let Some(t) = self.strings.get(s) {
+            return t.clone();
+        }
+        if let Some(id) = en.label_of(s) {
+            if let Some(t) = self.label(id) {
+                return t.to_string();
+            }
+        }
+        s.to_string()
     }
 
     /// The English of a text of `[Strings]` (for changing the language
@@ -423,7 +486,8 @@ pub fn select(name: &str) -> bool {
 /// the language has no text for `key`.
 pub fn text(key: &str, english: &str) -> String {
     ORIGINALS.write().unwrap().get_or_insert_with(HashMap::new).entry(key.to_string()).or_insert_with(|| english.to_string());
-    current().get(key).map(str::to_string).unwrap_or_else(|| english.to_string())
+    let l = current();
+    l.get(key).map(str::to_string).unwrap_or_else(|| l.tr(english))
 }
 
 /// The form file's text of a control property built with [`text`].
@@ -431,14 +495,15 @@ pub fn original(key: &str) -> Option<String> {
     ORIGINALS.read().unwrap().as_ref().and_then(|m| m.get(key).cloned())
 }
 
-/// A text the program shows, in the current language: `tr("Stop")`.  The
-/// English is the key of the `[Strings]` section of the language files.
-pub fn tr(english: &str) -> String {
-    current().tr(english).to_string()
+/// A text the program shows, in the current language: `tr("@MB:Stop")`,
+/// a label (see the module's notes); an English text the program passes
+/// around finds its label by its text.
+pub fn tr(text: &str) -> String {
+    current().tr(text)
 }
 
 /// [`tr`] with values filled in for `{}` (in order) or `{0}`, `{1}` ...
-/// (a translation may change their order): `trf("{} of {}", &[&a, &b])`.
+/// (a translation may change their order): `trf("@MB:Of", &[&a, &b])`.
 pub fn trf(english: &str, args: &[&dyn std::fmt::Display]) -> String {
     let t = tr(english);
     let mut out = String::with_capacity(t.len() + 16);
@@ -476,14 +541,18 @@ pub fn translate_new(form: &str, root: bool, c: &mut Control) {
 pub fn retranslate(form: &str, root: bool, c: &mut Control, old: &Language, new: &Language) {
     visit_texts(form, root, c, |key, t| {
         if let Some(orig) = original(key) {
-            let was = old.get(key).unwrap_or(&orig);
+            let was = old.get(key).map(str::to_string).unwrap_or_else(|| old.tr(&orig));
             if *t == was {
-                *t = new.get(key).unwrap_or(&orig).to_string();
+                *t = new.get(key).map(str::to_string).unwrap_or_else(|| new.tr(&orig));
                 return;
             }
         }
-        if let Some(en) = old.english_of(t) {
-            *t = new.tr(en).to_string();
+        // a text the program set: found again by its label
+        let id = old.label_of(t).or_else(|| builtin_english().label_of(t)).map(str::to_string);
+        if let Some(id) = id {
+            *t = new.tr(&format!("{LABEL}{id}"));
+        } else if let Some(en) = old.english_of(t) {
+            *t = new.tr(en);
         }
     });
 }
@@ -559,5 +628,20 @@ mod tests {
         assert_eq!(c.caption, "Anhalten");
         retranslate("TestForm", false, &mut c, &de, &en2);
         assert_eq!(c.caption, "Stop");
+        // labels: a form's @MB:Id, a language with and without the label
+        let mut b = Control::new("Button9", "TButton");
+        b.caption = "@MB:Cancel".into();
+        translate_new("TestForm2", false, &mut b);
+        assert_eq!(b.caption, "Cancel");
+        let fr = Language::parse("language = Francais\n[Labels]\nCancel=Annuler\n", None).unwrap();
+        retranslate("TestForm2", false, &mut b, &en, &fr);
+        assert_eq!(b.caption, "Annuler");
+        let xx = Language::parse("language = X\n[Labels]\nOther=Y\n", None).unwrap();
+        retranslate("TestForm2", false, &mut b, &fr, &xx);
+        assert_eq!(b.caption, "Cancel", "a missing label shows the English text");
+        // a runtime text set from a label follows the language too
+        b.caption = fr.tr("@MB:Cancel");
+        retranslate("TestForm2", false, &mut b, &fr, &en);
+        assert_eq!(b.caption, "Cancel");
     }
 }

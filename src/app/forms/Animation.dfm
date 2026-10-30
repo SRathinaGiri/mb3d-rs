@@ -2,7 +2,7 @@ object AnimationForm: TAnimationForm
   Left = 145
   Top = 458
   BorderStyle = bsDialog
-  Caption = 'Animation maker'
+  Caption = '@MB:AnimationMaker'
   ClientHeight = 407
   ClientWidth = 767
   Color = clBtnFace
@@ -117,7 +117,7 @@ object AnimationForm: TAnimationForm
     Top = 52
     Width = 23
     Height = 22
-    Hint = 'Exchange this frame with the previous one'
+    Hint = '@MB:ExchangeThisFrameWithThePrevious'
     Flat = True
     Glyph.Data = {
       F6000000424DF600000000000000760000002800000010000000100000000100
@@ -137,7 +137,7 @@ object AnimationForm: TAnimationForm
     Top = 52
     Width = 23
     Height = 22
-    Hint = 'Exchange this frame with the next one'
+    Hint = '@MB:ExchangeThisFrameWithTheNext'
     Flat = True
     Glyph.Data = {
       F6000000424DF600000000000000760000002800000010000000100000000100
@@ -157,7 +157,7 @@ object AnimationForm: TAnimationForm
     Top = 3
     Width = 33
     Height = 18
-    Hint = 'Delete this keyframe'
+    Hint = '@MB:DeleteThisKeyframe'
     Glyph.Data = {
       DE000000424DDE0000000000000076000000280000000F0000000D0000000100
       04000000000068000000120B0000120B00001000000010000000000000000000
@@ -176,7 +176,7 @@ object AnimationForm: TAnimationForm
     Top = 3
     Width = 33
     Height = 18
-    Hint = 'Send this parameter to the main program'
+    Hint = '@MB:SendThisParameterToTheMain'
     Glyph.Data = {
       3E020000424D3E0200000000000036000000280000000D0000000D0000000100
       18000000000008020000110B0000110B0000000000000000000084C4C384C4C3
@@ -262,9 +262,7 @@ object AnimationForm: TAnimationForm
     Top = 107
     Width = 48
     Height = 13
-    Hint = 
-      'Total frames up to here.'#13#10'Note that only in loop mode the subfra' +
-      'mes'#13#10'from the last keyframes will be rendered.'
+    Hint = '@MB:TotalFramesUpToHereNote'
     Alignment = taCenter
     AutoSize = False
     Font.Charset = DEFAULT_CHARSET
@@ -281,7 +279,7 @@ object AnimationForm: TAnimationForm
     Top = 3
     Width = 33
     Height = 18
-    Hint = 'Send only this view to the main program'
+    Hint = '@MB:SendOnlyThisViewToThe'
     Glyph.Data = {
       42030000424D42030000000000003600000028000000140000000D0000000100
       1800000000000C030000110B0000110B0000000000000000000084C4C384C4C3
@@ -327,7 +325,7 @@ object AnimationForm: TAnimationForm
       Top = 0
       Width = 39
       Height = 38
-      Hint = 'Insert actual parameter in this keyframe'
+      Hint = '@MB:InsertActualParameterInThisKeyframe'
       Glyph.Data = {
         460A0000424D460A00000000000036000000280000001E0000001C0000000100
         180000000000100A0000110B0000110B0000000000000000000084C4C384C4C3
@@ -421,7 +419,7 @@ object AnimationForm: TAnimationForm
       Top = 201
       Width = 27
       Height = 25
-      Hint = 'Open an animation parameter file'
+      Hint = '@MB:OpenAnAnimationParameterFile'
       Glyph.Data = {
         E6000000424DE6000000000000007600000028000000100000000E0000000100
         04000000000070000000C30E0000C30E00001000000010000000000000008484
@@ -440,7 +438,7 @@ object AnimationForm: TAnimationForm
       Top = 0
       Width = 39
       Height = 38
-      Hint = 'Add a new keyframe in between'
+      Hint = '@MB:AddANewKeyframeInBetween'
       Glyph.Data = {
         460A0000424D460A00000000000036000000280000001E0000001C0000000100
         180000000000100A0000110B0000110B0000000000000000000084C4C384C4C3
@@ -540,7 +538,7 @@ object AnimationForm: TAnimationForm
       Top = 201
       Width = 50
       Height = 25
-      Hint = 'Save the animation parameters'
+      Hint = '@MB:SaveTheAnimationParameters'
       Caption = 'm3a'
       Glyph.Data = {
         F6000000424DF600000000000000760000002800000010000000100000000100
@@ -567,14 +565,14 @@ object AnimationForm: TAnimationForm
       Width = 53
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Start index:'
+      Caption = '@MB:StartIndex'
     end
     object SpeedButton10: TSpeedButton
       Left = 9
       Top = 13
       Width = 69
       Height = 41
-      Caption = 'Processings'
+      Caption = '@MB:Processings'
       ParentShowHint = False
       ShowHint = False
       OnClick = SpeedButton10Click
@@ -585,14 +583,14 @@ object AnimationForm: TAnimationForm
       Width = 22
       Height = 13
       Alignment = taRightJustify
-      Caption = 'End:'
+      Caption = '@MB:End'
     end
     object SpeedButton12: TSpeedButton
       Left = 468
       Top = 0
       Width = 39
       Height = 38
-      Hint = 'Interpolate a new keyframe in between.'
+      Hint = '@MB:InterpolateANewKeyframeInBetween'
       Glyph.Data = {
         460A0000424D460A00000000000036000000280000001E0000001C0000000100
         180000000000100A0000110B0000110B0000000000000000000084C4C384C4C3
@@ -686,7 +684,7 @@ object AnimationForm: TAnimationForm
       Top = 170
       Width = 27
       Height = 25
-      Hint = 'Delete all keyframes to begin a new project.'
+      Hint = '@MB:DeleteAllKeyframesToBeginA'
       Glyph.Data = {
         F6000000424DF600000000000000760000002800000010000000100000000100
         04000000000080000000C30E0000C30E0000100000001000000000000000C6C6
@@ -705,7 +703,7 @@ object AnimationForm: TAnimationForm
       Top = 200
       Width = 91
       Height = 25
-      Caption = 'Close window'
+      Caption = '@MB:CloseWindow'
       TabOrder = 0
       OnClick = Button1Click
     end
@@ -714,7 +712,7 @@ object AnimationForm: TAnimationForm
       Top = 200
       Width = 169
       Height = 25
-      Caption = 'Start rendering animation'
+      Caption = '@MB:StartRenderingAnimation'
       Enabled = False
       TabOrder = 1
       OnClick = Button2Click
@@ -738,8 +736,8 @@ object AnimationForm: TAnimationForm
       Top = 168
       Width = 82
       Height = 25
-      Hint = 'Click to choose the output folder'
-      Caption = 'Output folder:'
+      Hint = '@MB:ClickToChooseTheOutputFolder'
+      Caption = '@MB:OutputFolder'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -750,28 +748,28 @@ object AnimationForm: TAnimationForm
       Top = 8
       Width = 239
       Height = 129
-      Caption = 'Preview'
+      Caption = '@MB:Preview2'
       TabOrder = 4
       object Label9: TLabel
         Left = 106
         Top = 15
         Width = 64
         Height = 26
-        Caption = 'Render every'#13#10'   n'#39'th frame:'
+        Caption = '@MB:RenderEveryNThFrame'
       end
       object Label11: TLabel
         Left = 187
         Top = 15
         Width = 36
         Height = 26
-        Caption = 'Down-'#13#10'scaling:'
+        Caption = '@MB:DownScaling'
       end
       object Label12: TLabel
         Left = 10
         Top = 100
         Width = 65
         Height = 13
-        Caption = 'Time needed:'
+        Caption = '@MB:TimeNeeded'
       end
       object Label13: TLabel
         Left = 81
@@ -794,21 +792,21 @@ object AnimationForm: TAnimationForm
         Top = 15
         Width = 58
         Height = 26
-        Caption = '  Keyframe'#13#10'start:    stop:'
+        Caption = '@MB:KeyframeStartStop'
       end
       object Label16: TLabel
         Left = 10
         Top = 80
         Width = 65
         Height = 13
-        Caption = 'Mem needed:'
+        Caption = '@MB:MemNeeded'
       end
       object Label25: TLabel
         Left = 82
         Top = 80
         Width = 25
         Height = 13
-        Caption = '   MB'
+        Caption = '@MB:MB'
         Color = clWhite
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clBlack
@@ -823,7 +821,7 @@ object AnimationForm: TAnimationForm
         Top = 95
         Width = 91
         Height = 25
-        Caption = 'Render preview'
+        Caption = '@MB:RenderPreview'
         Enabled = False
         TabOrder = 0
         OnClick = Button4Click
@@ -851,7 +849,7 @@ object AnimationForm: TAnimationForm
         Top = 73
         Width = 98
         Height = 17
-        Caption = 'Fast+inaccurate'
+        Caption = '@MB:FastInaccurate'
         TabOrder = 3
       end
       object Edit12: TEdit
@@ -906,7 +904,7 @@ object AnimationForm: TAnimationForm
       Top = 64
       Width = 111
       Height = 73
-      Caption = 'File index:'
+      Caption = '@MB:FileIndex'
       TabOrder = 5
       object Label7: TLabel
         Left = 34
@@ -914,14 +912,14 @@ object AnimationForm: TAnimationForm
         Width = 25
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Start:'
+        Caption = '@MB:Start'
       end
       object Label8: TLabel
         Left = 9
         Top = 47
         Width = 50
         Height = 13
-        Caption = 'Increment:'
+        Caption = '@MB:Increment'
       end
       object Edit3: TEdit
         Left = 66
@@ -947,7 +945,7 @@ object AnimationForm: TAnimationForm
       Top = 64
       Width = 181
       Height = 73
-      Caption = 'Animation size:'
+      Caption = '@MB:AnimationSize'
       TabOrder = 6
       object Label17: TLabel
         Left = 9
@@ -955,21 +953,21 @@ object AnimationForm: TAnimationForm
         Width = 31
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Width:'
+        Caption = '@MB:Width'
       end
       object Label18: TLabel
         Left = 6
         Top = 47
         Width = 34
         Height = 13
-        Caption = 'Height:'
+        Caption = '@MB:Height'
       end
       object Label24: TLabel
         Left = 116
         Top = 25
         Width = 56
         Height = 13
-        Caption = 'Antialiasing:'
+        Caption = '@MB:Antialiasing'
       end
       object Edit6: TEdit
         Left = 50
@@ -1017,10 +1015,7 @@ object AnimationForm: TAnimationForm
       Top = 202
       Width = 49
       Height = 21
-      Hint = 
-        'If you want to continue an already started rendering at acertain' +
-        #13#10'position, insert here the startindex of the image to be render' +
-        'ed next.'#13#10'Let the "File index" values unchanged.'
+      Hint = '@MB:IfYouWantToContinueAn'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 7
@@ -1032,12 +1027,12 @@ object AnimationForm: TAnimationForm
       Top = 64
       Width = 122
       Height = 73
-      Caption = 'Subframe interpolation:'
+      Caption = '@MB:SubframeInterpolation'
       Ctl3D = True
       ItemIndex = 1
       Items.Strings = (
-        'Linear'
-        'Quadratic bezier')
+        '@MB:Linear'
+        '@MB:QuadraticBezier')
       ParentCtl3D = False
       TabOrder = 8
     end
@@ -1046,11 +1041,8 @@ object AnimationForm: TAnimationForm
       Top = 144
       Width = 97
       Height = 17
-      Hint = 
-        'Check this if you want to make a loop animation.'#13#10'The interpolat' +
-        'ion behaves like behind the last keyframe'#13#10'comes the first keyfr' +
-        'ame again and vice versa.'
-      Caption = 'Loop animation'
+      Hint = '@MB:CheckThisIfYouWantTo'
+      Caption = '@MB:LoopAnimation'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 9
@@ -1061,15 +1053,13 @@ object AnimationForm: TAnimationForm
       Top = 44
       Width = 84
       Height = 93
-      Hint = 
-        'JPG uses the actual qualtity settings displayed in the'#13#10'upper pa' +
-        'rt of the programs main window.'
-      Caption = 'Output format:'
+      Hint = '@MB:JPGUsesTheActualQualtitySettings'
+      Caption = '@MB:OutputFormat'
       ItemIndex = 0
       Items.Strings = (
-        'BMP'
-        'PNG'
-        'JPG'
+        '@MB:BMP'
+        '@MB:PNG'
+        '@MB:JPG'
         'M3P')
       ParentShowHint = False
       ShowHint = True
@@ -1080,28 +1070,28 @@ object AnimationForm: TAnimationForm
       Top = 3
       Width = 269
       Height = 59
-      Caption = 'On inserting a new keyframe:'
+      Caption = '@MB:OnInsertingANewKeyframe'
       TabOrder = 11
       object Label20: TLabel
         Left = 138
         Top = 19
         Width = 49
         Height = 13
-        Caption = 'Go to next'
+        Caption = '@MB:GoToNext'
       end
       object Label15: TLabel
         Left = 14
         Top = 19
         Width = 95
         Height = 13
-        Caption = 'Subframes to render'
+        Caption = '@MB:SubframesToRender'
       end
       object Label21: TLabel
         Left = 14
         Top = 37
         Width = 44
         Height = 13
-        Caption = 'between:'
+        Caption = '@MB:Between'
       end
       object Edit5: TEdit
         Left = 64
@@ -1118,7 +1108,7 @@ object AnimationForm: TAnimationForm
         Width = 65
         Height = 17
         Alignment = taLeftJustify
-        Caption = 'keyframe:'
+        Caption = '@MB:Keyframe'
         Checked = True
         State = cbChecked
         TabOrder = 1
@@ -1128,7 +1118,7 @@ object AnimationForm: TAnimationForm
         Top = 8
         Width = 47
         Height = 49
-        Caption = 'Calc:'
+        Caption = '@MB:CalcColon'
         ItemIndex = 0
         Items.Strings = (
           '3D'
@@ -1141,10 +1131,8 @@ object AnimationForm: TAnimationForm
       Top = 144
       Width = 137
       Height = 17
-      Hint = 
-        'In this mode right and left-eye images are rendered for each sub' +
-        'frame.'
-      Caption = 'Render stereo animation'
+      Hint = '@MB:InThisModeRightAndLeft'
+      Caption = '@MB:RenderStereoAnimation'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 12
@@ -1155,10 +1143,8 @@ object AnimationForm: TAnimationForm
       Top = 144
       Width = 178
       Height = 17
-      Hint = 
-        'Render only the '#39'left-eye'#39' images.'#13#10'Can be used to extend a prev' +
-        'ious rendered animation to stereo.'
-      Caption = 'Render only '#39'very left-eye'#39' images'
+      Hint = '@MB:RenderOnlyTheLeftEyeImages'
+      Caption = '@MB:RenderOnlyVeryLeftEyeImages'
       Enabled = False
       ParentShowHint = False
       ShowHint = True
@@ -1169,11 +1155,8 @@ object AnimationForm: TAnimationForm
       Top = 144
       Width = 141
       Height = 17
-      Hint = 
-        'Uncheck to not overwrite images that has already been calculated' +
-        '.'#13#10'The filename must be equal (same output format, index and '#39'le' +
-        'ft'#39' or '#39'right'#39#13#10'suffix in stereo mode).'
-      Caption = 'Overwrite existing images'
+      Hint = '@MB:UncheckToNotOverwriteImagesThat'
+      Caption = '@MB:OverwriteExistingImages'
       Checked = True
       ParentShowHint = False
       ShowHint = True
@@ -1185,8 +1168,8 @@ object AnimationForm: TAnimationForm
       Top = 144
       Width = 105
       Height = 17
-      Hint = 'A z-buffer png image will be saved too.'
-      Caption = 'Save Z buffer too'
+      Hint = '@MB:AZBufferPngImageWill'
+      Caption = '@MB:SaveZBufferToo'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 15
@@ -1197,7 +1180,7 @@ object AnimationForm: TAnimationForm
       Top = 202
       Width = 49
       Height = 21
-      Hint = 'Render only up to this file index.'
+      Hint = '@MB:RenderOnlyUpToThisFile'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 16
@@ -1209,11 +1192,8 @@ object AnimationForm: TAnimationForm
       Top = 236
       Width = 150
       Height = 17
-      Hint = 
-        'After rendering, join the frames into a video in the output fol' +
-        'der'#13#10'(<project name>.avi, Motion JPEG: plays in VLC and mpv, ' +
-        'opens in video editors).'#13#10'The frames are kept.'
-      Caption = 'Also make a video (AVI)'
+      Hint = '@MB:AfterRenderingJoinTheFramesInto'
+      Caption = '@MB:AlsoMakeAVideoAVI'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 17
@@ -1223,7 +1203,7 @@ object AnimationForm: TAnimationForm
       Top = 237
       Width = 94
       Height = 13
-      Caption = 'Frames per second:'
+      Caption = '@MB:FramesPerSecond'
     end
     object VideoFpsEdit: TEdit
       Left = 280
@@ -1238,11 +1218,8 @@ object AnimationForm: TAnimationForm
       Top = 232
       Width = 110
       Height = 25
-      Hint = 
-        'Copies an ffmpeg command for a small MP4 video of the frames to ' +
-        'the clipboard.'#13#10'Run it yourself in a terminal (this program st' +
-        'arts no other programs).'
-      Caption = 'FFmpeg command'
+      Hint = '@MB:CopiesAnFfmpegCommandForA'
+      Caption = '@MB:FFmpegCommand'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 19
@@ -1253,8 +1230,8 @@ object AnimationForm: TAnimationForm
       Top = 236
       Width = 160
       Height = 17
-      Hint = 'PNG frames with a transparent background.'
-      Caption = 'Transparent background'
+      Hint = '@MB:PNGFramesWithATransparentBackground'
+      Caption = '@MB:TransparentBackground'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 20
@@ -1285,7 +1262,7 @@ object AnimationForm: TAnimationForm
       Top = 0
       Width = 17
       Height = 22
-      Hint = 'Scroll by 1'
+      Hint = '@MB:ScrollBy1'
       Flat = True
       Glyph.Data = {
         3E020000424D3E0200000000000036000000280000000D0000000D0000000100
@@ -1316,7 +1293,7 @@ object AnimationForm: TAnimationForm
       Top = 0
       Width = 17
       Height = 22
-      Hint = 'Scroll by 1'
+      Hint = '@MB:ScrollBy1'
       Flat = True
       Glyph.Data = {
         3E020000424D3E0200000000000036000000280000000D0000000D0000000100
@@ -1348,7 +1325,7 @@ object AnimationForm: TAnimationForm
     Top = 105
     Width = 40
     Height = 17
-    Hint = 'Number of frames to next keyframe'
+    Hint = '@MB:NumberOfFramesToNextKeyframe'
     AutoSize = False
     Color = clBtnFace
     Ctl3D = False

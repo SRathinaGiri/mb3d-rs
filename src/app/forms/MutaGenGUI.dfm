@@ -1,9 +1,7 @@
 object MutaGenFrm: TMutaGenFrm
   Left = 0
   Top = 0
-  Caption = 
-    'MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutat' +
-    'e, RightClick for Menu]'
+  Caption = '@MB:MutaGenDblClickOnImageOrClick'
   ClientHeight = 663
   ClientWidth = 1081
   Color = clBtnFace
@@ -34,7 +32,7 @@ object MutaGenFrm: TMutaGenFrm
       Width = 233
       Height = 100
       Align = alBottom
-      Caption = 'Generations'
+      Caption = '@MB:Generations'
       TabOrder = 0
       PropagateEnable = True
       object Panel9: TPanel
@@ -65,9 +63,9 @@ object MutaGenFrm: TMutaGenFrm
           Top = 39
           Width = 129
           Height = 33
-          Hint = 'Clear all generations before the selected one'
+          Hint = '@MB:ClearAllGenerationsBeforeTheSelected'
           Anchors = []
-          Caption = 'Clear all previous'
+          Caption = '@MB:ClearAllPrevious'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
@@ -94,7 +92,7 @@ object MutaGenFrm: TMutaGenFrm
       Width = 233
       Height = 129
       Align = alBottom
-      Caption = 'Mutate'
+      Caption = '@MB:Mutate'
       TabOrder = 1
       PropagateEnable = True
       object Panel8: TPanel
@@ -125,7 +123,7 @@ object MutaGenFrm: TMutaGenFrm
           Width = 221
           Height = 38
           Align = alTop
-          Caption = 'Mutate!'
+          Caption = '@MB:MutateExclamation'
           TabOrder = 1
           OnClick = MutateBtnClick
         end
@@ -137,7 +135,7 @@ object MutaGenFrm: TMutaGenFrm
       Width = 233
       Height = 434
       Align = alClient
-      Caption = 'Options'
+      Caption = '@MB:Options'
       TabOrder = 2
       PropagateEnable = True
       object Panel7: TPanel
@@ -166,7 +164,7 @@ object MutaGenFrm: TMutaGenFrm
             Width = 129
             Height = 33
             Anchors = []
-            Caption = 'Disable all'
+            Caption = '@MB:DisableAll'
             TabOrder = 0
             OnClick = DisableAllBtnClick
           end
@@ -295,7 +293,7 @@ object MutaGenFrm: TMutaGenFrm
             Height = 13
             Alignment = taRightJustify
             Anchors = []
-            Caption = 'Mutation type'
+            Caption = '@MB:MutationType'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -11
@@ -326,7 +324,7 @@ object MutaGenFrm: TMutaGenFrm
             Height = 13
             Alignment = taRightJustify
             Anchors = []
-            Caption = 'Probability'
+            Caption = '@MB:Probability'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -11
@@ -343,7 +341,7 @@ object MutaGenFrm: TMutaGenFrm
             Height = 13
             Alignment = taRightJustify
             Anchors = []
-            Caption = 'Strength'
+            Caption = '@MB:Strength2'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -11
@@ -370,7 +368,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 72
               Height = 13
               Anchors = []
-              Caption = 'Exchange, add'
+              Caption = '@MB:ExchangeAdd'
             end
             object Label4: TLabel
               Left = 4
@@ -378,7 +376,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 43
               Height = 13
               Anchors = []
-              Caption = 'Formulas'
+              Caption = '@MB:Formulas'
             end
             object Label5: TLabel
               Left = 4
@@ -386,7 +384,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 57
               Height = 13
               Anchors = []
-              Caption = 'and remove'
+              Caption = '@MB:AndRemove'
             end
           end
           object Panel3: TPanel
@@ -406,7 +404,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 75
               Height = 13
               Anchors = []
-              Caption = 'Change Params'
+              Caption = '@MB:ChangeParams'
             end
             object Label8: TLabel
               Left = 4
@@ -414,7 +412,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 56
               Height = 13
               Anchors = []
-              Caption = 'of Formulas'
+              Caption = '@MB:OfFormulas'
             end
           end
           object ModifyParamsWeightTBar: TTrackBarEx
@@ -475,7 +473,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 37
               Height = 13
               Anchors = []
-              Caption = 'Change'
+              Caption = '@MB:Change'
             end
             object Label10: TLabel
               Left = 4
@@ -483,7 +481,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 50
               Height = 13
               Anchors = []
-              Caption = 'Julia Mode'
+              Caption = '@MB:JuliaMode2'
             end
           end
           object ModifyJuliaModeWeightTBar: TTrackBarEx
@@ -533,7 +531,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 37
               Height = 13
               Anchors = []
-              Caption = 'Change'
+              Caption = '@MB:Change'
             end
             object Label12: TLabel
               Left = 4
@@ -541,7 +539,7 @@ object MutaGenFrm: TMutaGenFrm
               Width = 74
               Height = 13
               Anchors = []
-              Caption = 'Iteration Count'
+              Caption = '@MB:IterationCount'
             end
           end
           object ModifyIterationCountWeightTBar: TTrackBarEx
@@ -1145,11 +1143,11 @@ object MutaGenFrm: TMutaGenFrm
     Left = 496
     Top = 144
     object SendtoMainItm: TMenuItem
-      Caption = 'Send to Main Editor'
+      Caption = '@MB:SendToMainEditor'
       OnClick = SendtoMainItmClick
     end
     object ToClipboardItm: TMenuItem
-      Caption = 'Copy Params to Clipboard'
+      Caption = '@MB:CopyParamsToClipboard'
       OnClick = ToClipboardItmClick
     end
   end

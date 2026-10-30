@@ -3,7 +3,7 @@ object FColorOptions: TFColorOptions
   Top = 0
   BorderIcons = []
   BorderStyle = bsDialog
-  Caption = 'Color scaling options'
+  Caption = '@MB:ColorScalingOptions'
   ClientHeight = 169
   ClientWidth = 317
   Color = clBtnFace
@@ -60,7 +60,7 @@ object FColorOptions: TFColorOptions
     Top = 15
     Width = 212
     Height = 25
-    Caption = 'Downscale diffuse, keep reflections'
+    Caption = '@MB:DownscaleDiffuseKeepReflections'
     TabOrder = 0
     OnClick = Button1Click
   end
@@ -70,7 +70,7 @@ object FColorOptions: TFColorOptions
     Top = 51
     Width = 212
     Height = 25
-    Caption = 'Downscale both'
+    Caption = '@MB:DownscaleBoth'
     TabOrder = 1
     OnClick = Button1Click
   end
@@ -80,7 +80,7 @@ object FColorOptions: TFColorOptions
     Top = 87
     Width = 212
     Height = 25
-    Caption = 'Downscale specular'
+    Caption = '@MB:DownscaleSpecular'
     TabOrder = 2
     OnClick = Button1Click
   end
@@ -90,7 +90,7 @@ object FColorOptions: TFColorOptions
     Top = 134
     Width = 136
     Height = 25
-    Caption = 'Dunno, do nothing'
+    Caption = '@MB:DunnoDoNothing'
     TabOrder = 3
     OnClick = Button1Click
   end

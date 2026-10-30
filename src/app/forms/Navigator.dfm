@@ -3,7 +3,7 @@ object FNavigator: TFNavigator
   Top = 151
   ActiveControl = Panel1
   BorderStyle = bsDialog
-  Caption = 'Navigator'
+  Caption = '@MB:Navigator'
   ClientHeight = 542
   ClientWidth = 640
   Color = clBtnFace
@@ -30,9 +30,7 @@ object FNavigator: TFNavigator
     Top = -2
     Width = 640
     Height = 400
-    Hint = 
-      'Leftclick:  go into mouse-mode.. view by mouse, +right mousebutt' +
-      'on.. rolling'#13#10'(Leftclick again or ESC to exit the mouse-mode)'
+    Hint = '@MB:LeftclickGoIntoMouseModeView'
     ParentShowHint = False
     ShowHint = False
     OnClick = Image1Click
@@ -107,10 +105,10 @@ object FNavigator: TFNavigator
       Top = 8
       Width = 152
       Height = 21
-      Hint = 'Click to hide/show'
+      Hint = '@MB:ClickToHideShow'
       AllowAllUp = True
       GroupIndex = 1
-      Caption = 'Julia values (x,y,z):'
+      Caption = '@MB:JuliaValuesXYZ'
       ParentShowHint = False
       ShowHint = True
       OnClick = Button2Click
@@ -120,11 +118,11 @@ object FNavigator: TFNavigator
       Top = 16
       Width = 152
       Height = 21
-      Hint = 'Click to hide/show'
+      Hint = '@MB:ClickToHideShow'
       AllowAllUp = True
       GroupIndex = 2
       Down = True
-      Caption = 'Formula values:'
+      Caption = '@MB:FormulaValues'
       ParentShowHint = False
       ShowHint = True
       OnClick = Button3Click
@@ -134,10 +132,10 @@ object FNavigator: TFNavigator
       Top = 24
       Width = 152
       Height = 21
-      Hint = 'Click to hide/show'
+      Hint = '@MB:ClickToHideShow'
       AllowAllUp = True
       GroupIndex = 3
-      Caption = '4d rotation (xw,yw,zw): '
+      Caption = '@MB:N4dRotationXwYwZw'
       ParentShowHint = False
       ShowHint = True
       OnClick = Button4Click
@@ -147,10 +145,10 @@ object FNavigator: TFNavigator
       Top = 32
       Width = 152
       Height = 21
-      Hint = 'Click to hide/show'
+      Hint = '@MB:ClickToHideShow'
       AllowAllUp = True
       GroupIndex = 4
-      Caption = 'Misc:'
+      Caption = '@MB:Misc'
       ParentShowHint = False
       ShowHint = True
       OnClick = Button5Click
@@ -160,15 +158,15 @@ object FNavigator: TFNavigator
       Top = 0
       Width = 152
       Height = 37
-      Caption = 'Adjustments:'
+      Caption = '@MB:Adjustments'
       Color = clActiveBorder
       Columns = 4
       ItemIndex = 2
       Items.Strings = (
-        'min'
-        'fine'
-        'mid'
-        'big')
+        '@MB:MinLower'
+        '@MB:Fine'
+        '@MB:Mid'
+        '@MB:Big')
       ParentColor = False
       TabOrder = 0
     end
@@ -239,8 +237,8 @@ object FNavigator: TFNavigator
         Top = 117
         Width = 71
         Height = 20
-        Hint = 'Input the original values from the main program parameters.'
-        Caption = 'Reset values'
+        Hint = '@MB:InputTheOriginalValuesFromThe'
+        Caption = '@MB:ResetValues'
         Flat = True
         ParentShowHint = False
         ShowHint = True
@@ -251,8 +249,8 @@ object FNavigator: TFNavigator
         Top = 117
         Width = 71
         Height = 20
-        Hint = 'Put the adjusted julia values into the main program parameters.'
-        Caption = 'Send values'
+        Hint = '@MB:PutTheAdjustedJuliaValuesInto'
+        Caption = '@MB:SendValues'
         Flat = True
         ParentShowHint = False
         ShowHint = True
@@ -278,8 +276,8 @@ object FNavigator: TFNavigator
         Top = 21
         Width = 100
         Height = 17
-        Hint = 'Change the julia values with radius, longitude and latitude'
-        Caption = 'Spherical coords'
+        Hint = '@MB:ChangeTheJuliaValuesWithRadius'
+        Caption = '@MB:SphericalCoords'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -295,8 +293,8 @@ object FNavigator: TFNavigator
         Top = 2
         Width = 73
         Height = 17
-        Hint = 'Turn on/off the julia mode'
-        Caption = 'Julia mode'
+        Hint = '@MB:TurnOnOffTheJuliaMode'
+        Caption = '@MB:JuliaMode'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -371,7 +369,7 @@ object FNavigator: TFNavigator
         Top = 7
         Width = 21
         Height = 13
-        Caption = 'F.nr:'
+        Caption = '@MB:FNr'
       end
       object LabelV0: TLabel
         Tag = 3
@@ -379,7 +377,7 @@ object FNavigator: TFNavigator
         Top = 65
         Width = 51
         Height = 16
-        Hint = 'You can also click on a value to change it'
+        Hint = '@MB:YouCanAlsoClickOnA'
         Alignment = taCenter
         AutoSize = False
         Caption = '0.0'
@@ -399,15 +397,15 @@ object FNavigator: TFNavigator
         Top = 49
         Width = 41
         Height = 13
-        Caption = 'fp name:'
+        Caption = '@MB:FpName'
       end
       object SpeedButton26: TSpeedButton
         Left = 2
         Top = 169
         Width = 71
         Height = 20
-        Hint = 'Input the original value from the main program parameters.'
-        Caption = 'Reset value'
+        Hint = '@MB:InputTheOriginalValueFromThe'
+        Caption = '@MB:ResetValue'
         Enabled = False
         Flat = True
         ParentShowHint = False
@@ -419,8 +417,8 @@ object FNavigator: TFNavigator
         Top = 169
         Width = 71
         Height = 20
-        Hint = 'Put this adjusted value into the main program parameter.'
-        Caption = 'Send value'
+        Hint = '@MB:PutThisAdjustedValueIntoThe'
+        Caption = '@MB:SendValue'
         Enabled = False
         Flat = True
         ParentShowHint = False
@@ -432,8 +430,8 @@ object FNavigator: TFNavigator
         Top = 190
         Width = 120
         Height = 20
-        Hint = 'Send all adjusted formula values to the main program parameters.'
-        Caption = 'Send all formula values'
+        Hint = '@MB:SendAllAdjustedFormulaValuesTo'
+        Caption = '@MB:SendAllFormulaValues'
         Flat = True
         ParentShowHint = False
         ShowHint = True
@@ -485,7 +483,7 @@ object FNavigator: TFNavigator
         Top = 87
         Width = 41
         Height = 13
-        Caption = 'fp name:'
+        Caption = '@MB:FpName'
       end
       object LabelV2: TLabel
         Tag = 5
@@ -510,7 +508,7 @@ object FNavigator: TFNavigator
         Top = 125
         Width = 41
         Height = 13
-        Caption = 'fp name:'
+        Caption = '@MB:FpName'
       end
       object Image4: TImage
         Left = 138
@@ -569,7 +567,7 @@ object FNavigator: TFNavigator
         Top = 27
         Width = 46
         Height = 13
-        Caption = 'Iterations:'
+        Caption = '@MB:Iterations'
       end
       object Label47: TLabel
         Left = 92
@@ -707,8 +705,8 @@ object FNavigator: TFNavigator
         Top = 198
         Width = 71
         Height = 20
-        Hint = 'Input the original value from the main program parameters.'
-        Caption = 'Reset value'
+        Hint = '@MB:InputTheOriginalValueFromThe'
+        Caption = '@MB:ResetValue'
         Enabled = False
         Flat = True
         ParentShowHint = False
@@ -720,8 +718,8 @@ object FNavigator: TFNavigator
         Top = 198
         Width = 71
         Height = 20
-        Hint = 'Put this adjusted value into the main program parameter.'
-        Caption = 'Send value'
+        Hint = '@MB:PutThisAdjustedValueIntoThe'
+        Caption = '@MB:SendValue'
         Enabled = False
         Flat = True
         ParentShowHint = False
@@ -757,7 +755,7 @@ object FNavigator: TFNavigator
         Top = 45
         Width = 45
         Height = 13
-        Caption = 'R bailout:'
+        Caption = '@MB:RBailout'
       end
       object LabelV5: TLabel
         Tag = 11
@@ -781,7 +779,7 @@ object FNavigator: TFNavigator
         Top = 83
         Width = 83
         Height = 13
-        Caption = 'Smooth DEcomb:'
+        Caption = '@MB:SmoothDEcomb'
       end
       object Label38: TLabel
         Left = 130
@@ -821,7 +819,7 @@ object FNavigator: TFNavigator
         Top = 121
         Width = 38
         Height = 13
-        Caption = 'DEstop:'
+        Caption = '@MB:DEstop'
       end
       object LabelV7: TLabel
         Tag = 13
@@ -845,15 +843,15 @@ object FNavigator: TFNavigator
         Top = 159
         Width = 68
         Height = 13
-        Caption = 'Max iterations:'
+        Caption = '@MB:MaxIterationsColon'
       end
       object SpeedButton33: TSpeedButton
         Left = 8
         Top = 0
         Width = 85
         Height = 21
-        Hint = 'Click to change between Dynfog on its and Color on its'
-        Caption = 'Dyn Fog on its:'
+        Hint = '@MB:ClickToChangeBetweenDynfogOn'
+        Caption = '@MB:DynFogOnIts'
         ParentShowHint = False
         ShowHint = True
         OnClick = SpeedButton33Click
@@ -863,7 +861,7 @@ object FNavigator: TFNavigator
         Top = 19
         Width = 19
         Height = 25
-        Hint = 'Strength of dynamic fog.'
+        Hint = '@MB:StrengthOfDynamicFog'
         Max = 153
         ParentShowHint = False
         Position = 53
@@ -1020,8 +1018,8 @@ object FNavigator: TFNavigator
         Top = 83
         Width = 71
         Height = 20
-        Hint = 'Input the original values from the main program parameters.'
-        Caption = 'Reset values'
+        Hint = '@MB:InputTheOriginalValuesFromThe'
+        Caption = '@MB:ResetValues'
         Flat = True
         ParentShowHint = False
         ShowHint = True
@@ -1032,8 +1030,8 @@ object FNavigator: TFNavigator
         Top = 83
         Width = 71
         Height = 20
-        Hint = 'Put the adjusted values into the main program parameters.'
-        Caption = 'Send values'
+        Hint = '@MB:PutTheAdjustedValuesIntoThe'
+        Caption = '@MB:SendValues'
         Flat = True
         ParentShowHint = False
         ShowHint = True
@@ -1096,7 +1094,7 @@ object FNavigator: TFNavigator
       Top = 30
       Width = 152
       Height = 38
-      Caption = 'Navigator Size'
+      Caption = '@MB:NavigatorSize'
       TabOrder = 5
       object DecreaseNaviSizeBtn: TSpeedButton
         Tag = 9
@@ -1104,7 +1102,7 @@ object FNavigator: TFNavigator
         Top = 14
         Width = 25
         Height = 21
-        Hint = 'Decrease the size of the Navigator window'
+        Hint = '@MB:DecreaseTheSizeOfTheNavigator'
         Glyph.Data = {
           3E020000424D3E0200000000000036000000280000000D0000000D0000000100
           18000000000008020000110B0000110B0000000000000000000084C4C384C4C3
@@ -1135,7 +1133,7 @@ object FNavigator: TFNavigator
         Top = 13
         Width = 25
         Height = 21
-        Hint = 'Increase the size of the Navigator window'
+        Hint = '@MB:IncreaseTheSizeOfTheNavigator'
         Glyph.Data = {
           3E020000424D3E0200000000000036000000280000000D0000000D0000000100
           18000000000008020000110B0000110B0000000000000000000084C4C384C4C3
@@ -1485,21 +1483,21 @@ object FNavigator: TFNavigator
       Top = 97
       Width = 31
       Height = 13
-      Caption = 'Sliding'
+      Caption = '@MB:Sliding'
     end
     object Label2: TLabel
       Left = 334
       Top = 97
       Width = 38
       Height = 13
-      Caption = 'Looking'
+      Caption = '@MB:Looking'
     end
     object Label3: TLabel
       Left = 250
       Top = 97
       Width = 39
       Height = 13
-      Caption = 'Walking'
+      Caption = '@MB:Walking'
     end
     object Label4: TLabel
       Left = 143
@@ -1548,15 +1546,15 @@ object FNavigator: TFNavigator
       Top = 96
       Width = 138
       Height = 13
-      Caption = '(Hold Shift key for finer steps)'
+      Caption = '@MB:HoldShiftKeyForFinerSteps'
     end
     object SpeedButton11: TSpeedButton
       Left = 575
       Top = 19
       Width = 63
       Height = 22
-      Hint = 'Insert complete parameter from main program'
-      Caption = 'Parameter'
+      Hint = '@MB:InsertCompleteParameterFromMainProgram'
+      Caption = '@MB:Parameter'
       Layout = blGlyphTop
       ParentShowHint = False
       ShowHint = True
@@ -1630,7 +1628,7 @@ object FNavigator: TFNavigator
       Top = 97
       Width = 32
       Height = 13
-      Caption = 'Rolling'
+      Caption = '@MB:Rolling'
     end
     object Label16: TLabel
       Left = 431
@@ -1679,10 +1677,8 @@ object FNavigator: TFNavigator
       Top = 31
       Width = 75
       Height = 25
-      Hint = 
-        'Send this view with all julia and formula modifications to the m' +
-        'ain program.'
-      Caption = 'View to main'
+      Hint = '@MB:SendThisViewWithAllJulia'
+      Caption = '@MB:ViewToMain'
       ParentShowHint = False
       ShowHint = True
       OnClick = SpeedButton14Click
@@ -1692,11 +1688,8 @@ object FNavigator: TFNavigator
       Top = 67
       Width = 44
       Height = 22
-      Hint = 
-        'Assign the actual light settings of the main program.'#13#10'The light' +
-        's and colors differs from main rendering'#13#10'because of simpler fun' +
-        'ctions in the navi.'
-      Caption = 'Light'
+      Hint = '@MB:AssignTheActualLightSettingsOf'
+      Caption = '@MB:Light'
       ParentShowHint = False
       ShowHint = True
       OnClick = SpeedButton15Click
@@ -1706,8 +1699,8 @@ object FNavigator: TFNavigator
       Top = 43
       Width = 57
       Height = 22
-      Hint = 'Assign actual formula settings'
-      Caption = 'Formula'
+      Hint = '@MB:AssignActualFormulaSettings'
+      Caption = '@MB:Formula'
       ParentShowHint = False
       ShowHint = True
       OnClick = SpeedButton16Click
@@ -1717,7 +1710,7 @@ object FNavigator: TFNavigator
       Top = 4
       Width = 30
       Height = 13
-      Caption = 'Zoom:'
+      Caption = '@MB:Zoom'
     end
     object Label24: TLabel
       Left = 130
@@ -1725,7 +1718,7 @@ object FNavigator: TFNavigator
       Width = 3
       Height = 13
       Cursor = crHandPoint
-      Hint = 'Click to type the zoom (it stays: fixed zoom).'
+      Hint = '@MB:ClickToTypeTheZoomIt'
       ParentShowHint = False
       ShowHint = True
       Transparent = True
@@ -1736,8 +1729,8 @@ object FNavigator: TFNavigator
       Top = 1
       Width = 66
       Height = 18
-      Hint = 'Back to the view taken from the main window.'
-      Caption = 'Reset view'
+      Hint = '@MB:BackToTheViewTakenFrom'
+      Caption = '@MB:ResetView'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 20
@@ -1748,7 +1741,7 @@ object FNavigator: TFNavigator
       Top = 96
       Width = 32
       Height = 18
-      Hint = 'open/close parameter panel'
+      Hint = '@MB:OpenCloseParameterPanel'
       Glyph.Data = {
         C2010000424DC20100000000000036000000280000000C0000000B0000000100
         1800000000008C010000110B0000110B0000000000000000000084C4C384C4C3
@@ -1774,8 +1767,8 @@ object FNavigator: TFNavigator
       Top = 62
       Width = 75
       Height = 25
-      Hint = 'Generate an animation keyframe from the actual view'
-      Caption = 'Ani keyfr. (f)'
+      Hint = '@MB:GenerateAnAnimationKeyframeFromThe'
+      Caption = '@MB:AniKeyfrF'
       ParentShowHint = False
       ShowHint = True
       OnClick = SpeedButton18Click
@@ -1785,14 +1778,14 @@ object FNavigator: TFNavigator
       Top = 97
       Width = 45
       Height = 13
-      Caption = 'Lightness'
+      Caption = '@MB:Lightness'
     end
     object Label31: TLabel
       Left = 235
       Top = 79
       Width = 69
       Height = 12
-      Caption = '(or mousewheel)'
+      Caption = '@MB:OrMousewheel'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -9
@@ -1805,7 +1798,7 @@ object FNavigator: TFNavigator
       Top = 0
       Width = 40
       Height = 38
-      Hint = 'Direction towards zero (0,0,0)'
+      Hint = '@MB:DirectionTowardsZero000'
       ParentShowHint = False
       ShowHint = True
     end
@@ -1814,14 +1807,14 @@ object FNavigator: TFNavigator
       Top = 12
       Width = 60
       Height = 13
-      Caption = 'Sending out:'
+      Caption = '@MB:SendingOut'
     end
     object Label33: TLabel
       Left = 576
       Top = 4
       Width = 43
       Height = 13
-      Caption = 'Inserting:'
+      Caption = '@MB:Inserting'
     end
     object Image3: TImage
       Left = 623
@@ -1857,7 +1850,7 @@ object FNavigator: TFNavigator
       Top = 72
       Width = 17
       Height = 17
-      Hint = 'Click to set the navi light to one of these presets.'
+      Hint = '@MB:ClickToSetTheNaviLight'
       Caption = '1'
       ParentShowHint = False
       ShowHint = True
@@ -1869,7 +1862,7 @@ object FNavigator: TFNavigator
       Top = 72
       Width = 17
       Height = 17
-      Hint = 'Click to set the navi light to one of these presets.'
+      Hint = '@MB:ClickToSetTheNaviLight'
       Caption = '2'
       ParentShowHint = False
       ShowHint = True
@@ -1881,7 +1874,7 @@ object FNavigator: TFNavigator
       Top = 72
       Width = 17
       Height = 17
-      Hint = 'Click to set the navi light to one of these presets.'
+      Hint = '@MB:ClickToSetTheNaviLight'
       Caption = '3'
       ParentShowHint = False
       ShowHint = True
@@ -1892,9 +1885,7 @@ object FNavigator: TFNavigator
       Top = 47
       Width = 17
       Height = 17
-      Hint = 
-        'Press this button and a preset 1 to 3 to store the actual navi l' +
-        'ight.'#13#10'Click twice to undo storing.'
+      Hint = '@MB:PressThisButtonAndAPreset'
       Caption = 'M'
       Flat = True
       ParentShowHint = False
@@ -1906,7 +1897,7 @@ object FNavigator: TFNavigator
       Top = 4
       Width = 60
       Height = 13
-      Caption = 'Mousewheel'
+      Caption = '@MB:Mousewheel'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clMaroon
       Font.Height = -11
@@ -1920,7 +1911,7 @@ object FNavigator: TFNavigator
       Top = 92
       Width = 26
       Height = 22
-      Hint = 'open/close adjustment panel'
+      Hint = '@MB:OpenCloseAdjustmentPanel'
       Glyph.Data = {
         C2010000424DC20100000000000036000000280000000C0000000B0000000100
         1800000000008C010000110B0000110B0000000000000000000084C4C384C4C3
@@ -1961,10 +1952,8 @@ object FNavigator: TFNavigator
       Top = 4
       Width = 63
       Height = 15
-      Hint = 
-        'Reduces the raystep multiplier to avoid overstepping.'#13#10'Makes the' +
-        ' rendering slower.'
-      Caption = 'HiQual'
+      Hint = '@MB:ReducesTheRaystepMultiplierToAvoid'
+      Caption = '@MB:HiQual'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -1976,7 +1965,7 @@ object FNavigator: TFNavigator
       Width = 80
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'Show coords'
+      Caption = '@MB:ShowCoords'
       TabOrder = 2
       OnClick = ShowCoordsCBxClick
     end
@@ -1997,7 +1986,7 @@ object FNavigator: TFNavigator
       Width = 80
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'Show guides'
+      Caption = '@MB:ShowGuides'
       TabOrder = 4
       OnClick = ShowGuidesCBxClick
     end
@@ -2006,7 +1995,7 @@ object FNavigator: TFNavigator
       Top = 3
       Width = 21
       Height = 18
-      Hint = 'Increase/Decrease quality level (Raystep multiplier)'
+      Hint = '@MB:IncreaseDecreaseQualityLevelRaystepMultiplier'
       Min = 1
       Max = 7
       ParentShowHint = False
@@ -2029,7 +2018,7 @@ object FNavigator: TFNavigator
       Width = 102
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Sliding+Walking step:'
+      Caption = '@MB:SlidingWalkingStep'
     end
     object Label9: TLabel
       Left = 349
@@ -2037,7 +2026,7 @@ object FNavigator: TFNavigator
       Width = 108
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Looking+Rolling angle:'
+      Caption = '@MB:LookingRollingAngle'
     end
     object Label8: TLabel
       Left = 107
@@ -2045,7 +2034,7 @@ object FNavigator: TFNavigator
       Width = 29
       Height = 13
       Alignment = taRightJustify
-      Caption = 'FOVy:'
+      Caption = '@MB:FOVy'
     end
     object Label22: TLabel
       Left = 6
@@ -2053,7 +2042,7 @@ object FNavigator: TFNavigator
       Width = 47
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Far plane:'
+      Caption = '@MB:FarPlane'
     end
     object Bevel1: TBevel
       Left = 6
@@ -2119,7 +2108,7 @@ object FNavigator: TFNavigator
       Top = 4
       Width = 41
       Height = 21
-      Hint = 'Percent of local DE'
+      Hint = '@MB:PercentOfLocalDE'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -2131,7 +2120,7 @@ object FNavigator: TFNavigator
       Top = 4
       Width = 41
       Height = 21
-      Hint = 'Degrees'
+      Hint = '@MB:Degrees'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -2156,10 +2145,7 @@ object FNavigator: TFNavigator
       Top = 35
       Width = 41
       Height = 21
-      Hint = 
-        'Specifies the end of raymarching as a factor of the local DE.'#13#10'B' +
-        'igger values = more distant objects visible.'#13#10#13#10'Key shortcuts:  ' +
-        'F1: decrease far-plane,  F2: increase far-plane'
+      Hint = '@MB:SpecifiesTheEndOfRaymarchingAs'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -2171,11 +2157,9 @@ object FNavigator: TFNavigator
       Top = 38
       Width = 121
       Height = 17
-      Hint = 
-        'Disable the automatic zoom adjust when moving.'#13#10'This leads also ' +
-        'to stepping through the object.'
+      Hint = '@MB:DisableTheAutomaticZoomAdjustWhen'
       Alignment = taLeftJustify
-      Caption = 'Fixed zoom and steps'
+      Caption = '@MB:FixedZoomAndSteps'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 4
@@ -2187,7 +2171,7 @@ object FNavigator: TFNavigator
       Width = 113
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'AZERTY keyboard'
+      Caption = '@MB:AZERTYKeyboard'
       TabOrder = 5
       OnClick = CheckBox2Click
     end
@@ -2197,9 +2181,7 @@ object FNavigator: TFNavigator
       Top = 35
       Width = 65
       Height = 21
-      Hint = 
-        'Stops walking at this distance to the object.'#13#10'Set to 0 to disab' +
-        'le.'
+      Hint = '@MB:StopsWalkingAtThisDistanceTo'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
@@ -2210,10 +2192,8 @@ object FNavigator: TFNavigator
       Top = 35
       Width = 73
       Height = 22
-      Hint = 
-        'Press to take the actual distance as minimum distance to object ' +
-        'for walking.'
-      Caption = 'Min distance:'
+      Hint = '@MB:PressToTakeTheActualDistance'
+      Caption = '@MB:MinDistance'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 7
@@ -2225,7 +2205,7 @@ object FNavigator: TFNavigator
       Width = 140
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'Disable the (f) key for ani'
+      Caption = '@MB:DisableTheFKeyForAni'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 8
@@ -2236,14 +2216,14 @@ object FNavigator: TFNavigator
       Top = 30
       Width = 147
       Height = 30
-      Hint = 'standard  rectilinear  panorama'
-      Caption = 'Camera:'
+      Hint = '@MB:StandardRectilinearPanorama'
+      Caption = '@MB:CameraColon'
       Columns = 3
       ItemIndex = 0
       Items.Strings = (
-        'stan.'
-        'rect.'
-        'pano.')
+        '@MB:Stan'
+        '@MB:RectLower'
+        '@MB:Pano')
       ParentShowHint = False
       ShowHint = True
       TabOrder = 9
@@ -2412,18 +2392,18 @@ object FNavigator: TFNavigator
     Left = 88
     Top = 32
     object ChooseOption1: TMenuItem
-      Caption = 'Choose Option:'
+      Caption = '@MB:ChooseOption'
       Enabled = False
     end
     object N1: TMenuItem
       Caption = '-'
     end
     object Doubleclicktochangethenavimode1: TMenuItem
-      Caption = 'Double click to change the navi mode'
+      Caption = '@MB:DoubleClickToChangeTheNavi'
       OnClick = Doubleclicktochangethenavimode1Click
     end
     object Singleclicktochangethenavimode1: TMenuItem
-      Caption = 'Single click to change the navi mode'
+      Caption = '@MB:SingleClickToChangeTheNavi'
       Checked = True
       OnClick = Singleclicktochangethenavimode1Click
     end

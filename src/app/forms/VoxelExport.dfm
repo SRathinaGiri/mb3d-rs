@@ -3,7 +3,7 @@ object FVoxelExport: TFVoxelExport
   Top = 121
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'Voxel export'
+  Caption = '@MB:VoxelExport'
   ClientHeight = 465
   ClientWidth = 738
   Color = clBtnFace
@@ -32,7 +32,7 @@ object FVoxelExport: TFVoxelExport
       Top = 44
       Width = 33
       Height = 25
-      Hint = 'Open a voxel project'
+      Hint = '@MB:OpenAVoxelProject'
       Glyph.Data = {
         E6000000424DE6000000000000007600000028000000100000000E0000000100
         04000000000070000000C30E0000C30E00001000000010000000000000008484
@@ -51,7 +51,7 @@ object FVoxelExport: TFVoxelExport
       Top = 44
       Width = 51
       Height = 25
-      Hint = 'Save this voxel project'
+      Hint = '@MB:SaveThisVoxelProject'
       Caption = 'm3v'
       Enabled = False
       Glyph.Data = {
@@ -97,8 +97,8 @@ object FVoxelExport: TFVoxelExport
       Top = 8
       Width = 83
       Height = 25
-      Hint = 'Click to choose the output folder'
-      Caption = 'Output folder:'
+      Hint = '@MB:ClickToChooseTheOutputFolder'
+      Caption = '@MB:OutputFolder'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -109,7 +109,7 @@ object FVoxelExport: TFVoxelExport
       Top = 44
       Width = 115
       Height = 25
-      Caption = 'Start rendering slices'
+      Caption = '@MB:StartRenderingSlices'
       Enabled = False
       TabOrder = 2
       OnClick = Button2Click
@@ -119,7 +119,7 @@ object FVoxelExport: TFVoxelExport
       Top = 44
       Width = 75
       Height = 25
-      Caption = 'Close'
+      Caption = '@MB:Close'
       TabOrder = 3
       OnClick = Button1Click
     end
@@ -128,11 +128,9 @@ object FVoxelExport: TFVoxelExport
       Top = 38
       Width = 89
       Height = 17
-      Hint = 
-        'The default output is white for the object and black for the out' +
-        'side area.'#13#10'Choose this option to invert the colors.'
+      Hint = '@MB:TheDefaultOutputIsWhiteFor'
       Alignment = taLeftJustify
-      Caption = 'White outside'
+      Caption = '@MB:WhiteOutside'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 4
@@ -142,11 +140,9 @@ object FVoxelExport: TFVoxelExport
       Top = 57
       Width = 118
       Height = 17
-      Hint = 
-        'Disable this if you do not want leading zeros in the file indize' +
-        's.'#13#10'For example:  name000010.png  will become  name10.png'
+      Hint = '@MB:DisableThisIfYouDoNot'
       Alignment = taLeftJustify
-      Caption = 'Index with leading 0'
+      Caption = '@MB:IndexWithLeading0'
       Checked = True
       ParentShowHint = False
       ShowHint = True
@@ -169,7 +165,7 @@ object FVoxelExport: TFVoxelExport
       Width = 39
       Height = 13
       Alignment = taRightJustify
-      Caption = 'X offset:'
+      Caption = '@MB:XOffset'
     end
     object Label2: TLabel
       Left = 34
@@ -177,7 +173,7 @@ object FVoxelExport: TFVoxelExport
       Width = 39
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Y offset:'
+      Caption = '@MB:YOffset'
     end
     object Label3: TLabel
       Left = 34
@@ -185,7 +181,7 @@ object FVoxelExport: TFVoxelExport
       Width = 39
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z offset:'
+      Caption = '@MB:ZOffset'
     end
     object Label4: TLabel
       Left = 227
@@ -193,7 +189,7 @@ object FVoxelExport: TFVoxelExport
       Width = 38
       Height = 13
       Alignment = taRightJustify
-      Caption = 'X scale:'
+      Caption = '@MB:XScale'
     end
     object Label5: TLabel
       Left = 227
@@ -201,7 +197,7 @@ object FVoxelExport: TFVoxelExport
       Width = 38
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Y scale:'
+      Caption = '@MB:YScale'
     end
     object Label6: TLabel
       Left = 227
@@ -209,7 +205,7 @@ object FVoxelExport: TFVoxelExport
       Width = 38
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z scale:'
+      Caption = '@MB:ZScale'
     end
     object Label7: TLabel
       Left = 2
@@ -218,7 +214,7 @@ object FVoxelExport: TFVoxelExport
       Height = 16
       Alignment = taCenter
       AutoSize = False
-      Caption = 'Generate PNG-image 2d slices of the object.'
+      Caption = '@MB:GeneratePNGImage2dSlicesOf'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
@@ -232,7 +228,7 @@ object FVoxelExport: TFVoxelExport
       Width = 39
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Max its.:'
+      Caption = '@MB:MaxIts'
     end
     object Label9: TLabel
       Left = 245
@@ -240,7 +236,7 @@ object FVoxelExport: TFVoxelExport
       Width = 18
       Height = 13
       Alignment = taRightJustify
-      Caption = 'DE:'
+      Caption = '@MB:DE'
     end
     object Label10: TLabel
       Left = 25
@@ -248,14 +244,14 @@ object FVoxelExport: TFVoxelExport
       Width = 39
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z slices:'
+      Caption = '@MB:ZSlices'
     end
     object Label11: TLabel
       Left = 129
       Top = 358
       Width = 65
       Height = 13
-      Caption = '-> Image size:'
+      Caption = '@MB:ImageSize'
     end
     object Label12: TLabel
       Left = 201
@@ -269,7 +265,7 @@ object FVoxelExport: TFVoxelExport
       Width = 64
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Overall scale:'
+      Caption = '@MB:OverallScale'
     end
     object Label15: TLabel
       Left = 227
@@ -277,7 +273,7 @@ object FVoxelExport: TFVoxelExport
       Width = 36
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Min its.:'
+      Caption = '@MB:MinIts'
       Visible = False
     end
     object Label16: TLabel
@@ -286,7 +282,7 @@ object FVoxelExport: TFVoxelExport
       Width = 35
       Height = 13
       Alignment = taRightJustify
-      Caption = 'MinDE:'
+      Caption = '@MB:MinDE'
       Visible = False
     end
     object Edit1: TEdit
@@ -294,7 +290,7 @@ object FVoxelExport: TFVoxelExport
       Top = 96
       Width = 88
       Height = 21
-      Hint = 'This is a absolute offset in x direction of the rotated bulb.'
+      Hint = '@MB:ThisIsAAbsoluteOffsetIn'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -312,7 +308,7 @@ object FVoxelExport: TFVoxelExport
       Top = 123
       Width = 88
       Height = 21
-      Hint = 'This is a absolute offset in x direction of the rotated bulb.'
+      Hint = '@MB:ThisIsAAbsoluteOffsetIn'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -330,7 +326,7 @@ object FVoxelExport: TFVoxelExport
       Top = 150
       Width = 88
       Height = 21
-      Hint = 'This is a absolute offset in x direction of the rotated bulb.'
+      Hint = '@MB:ThisIsAAbsoluteOffsetIn'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -375,7 +371,7 @@ object FVoxelExport: TFVoxelExport
       Top = 40
       Width = 153
       Height = 25
-      Caption = 'Import parameter from main:'
+      Caption = '@MB:ImportParameterFromMain'
       TabOrder = 6
       OnClick = Button4Click
     end
@@ -384,11 +380,11 @@ object FVoxelExport: TFVoxelExport
       Top = 217
       Width = 192
       Height = 66
-      Caption = 'Object determination:'
+      Caption = '@MB:ObjectDetermination'
       ItemIndex = 1
       Items.Strings = (
-        'Maximum iteration count'
-        'Distance estimation')
+        '@MB:MaximumIterationCount'
+        '@MB:DistanceEstimation')
       ParentShowHint = False
       ShowHint = True
       TabOrder = 7
@@ -417,7 +413,7 @@ object FVoxelExport: TFVoxelExport
       Top = 355
       Width = 49
       Height = 21
-      Hint = 'Count of images (object slices) that will be calculated.'
+      Hint = '@MB:CountOfImagesObjectSlicesThat'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 10
@@ -430,7 +426,7 @@ object FVoxelExport: TFVoxelExport
       Width = 129
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'Use default orientation'
+      Caption = '@MB:UseDefaultOrientation'
       TabOrder = 11
       OnClick = Edit1Change
     end
@@ -532,7 +528,7 @@ object FVoxelExport: TFVoxelExport
       Top = 172
       Width = 57
       Height = 49
-      Hint = 'Scale the values by the selected percentage.'
+      Hint = '@MB:ScaleTheValuesByTheSelected'
       ItemIndex = 0
       Items.Strings = (
         '10%'
@@ -546,7 +542,7 @@ object FVoxelExport: TFVoxelExport
       Top = 64
       Width = 105
       Height = 21
-      Caption = 'Reset offset+scale'
+      Caption = '@MB:ResetOffsetScale'
       TabOrder = 22
       OnClick = Button6Click
     end
@@ -576,18 +572,14 @@ object FVoxelExport: TFVoxelExport
       Top = 289
       Width = 192
       Height = 49
-      Hint = 
-        'Type of object determination, lowering Max its or increasing DE'#13 +
-        #10'(dependend on the choosen option), will make the object thicker' +
-        '.'#13#10'Note:  DEcombinate formulas and In+Outside rendering'#13#10'       ' +
-        '    works only in the Distance estimation mode!'
-      Caption = 'In/out option:'
+      Hint = '@MB:TypeOfObjectDeterminationLoweringMax'
+      Caption = '@MB:InOutOption'
       Columns = 3
       ItemIndex = 0
       Items.Strings = (
-        'Outside'
-        'Inside'
-        'In+Out')
+        '@MB:Outside'
+        '@MB:Inside'
+        '@MB:InOut')
       ParentShowHint = False
       ShowHint = True
       TabOrder = 25
@@ -635,7 +627,7 @@ object FVoxelExport: TFVoxelExport
       Top = 8
       Width = 105
       Height = 25
-      Caption = 'Calculate preview'
+      Caption = '@MB:CalculatePreview'
       Enabled = False
       TabOrder = 0
       OnClick = Button5Click
@@ -645,7 +637,7 @@ object FVoxelExport: TFVoxelExport
       Top = 2
       Width = 145
       Height = 37
-      Caption = 'Preview max size:'
+      Caption = '@MB:PreviewMaxSize'
       Columns = 3
       ItemIndex = 0
       Items.Strings = (
@@ -659,7 +651,7 @@ object FVoxelExport: TFVoxelExport
       Top = 370
       Width = 119
       Height = 17
-      Caption = 'Auto update preview'
+      Caption = '@MB:AutoUpdatePreview'
       Checked = True
       State = cbChecked
       TabOrder = 2

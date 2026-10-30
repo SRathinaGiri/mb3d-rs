@@ -2,7 +2,7 @@ object MapCalcWindow: TMapCalcWindow
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  Caption = 'Calculating volumetric light map'
+  Caption = '@MB:CalculatingVolumetricLightMap'
   ClientHeight = 63
   ClientWidth = 421
   Color = clBtnFace
@@ -23,7 +23,7 @@ object MapCalcWindow: TMapCalcWindow
     Top = 36
     Width = 46
     Height = 16
-    Caption = 'togo: ...'
+    Caption = '@MB:Togo'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -36,7 +36,7 @@ object MapCalcWindow: TMapCalcWindow
     Top = 32
     Width = 75
     Height = 25
-    Caption = 'Cancel'
+    Caption = '@MB:Cancel'
     TabOrder = 0
     OnClick = Button1Click
   end

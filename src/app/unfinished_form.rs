@@ -25,10 +25,10 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
         .iter()
         .map(|e| {
             let kind = match g(e, "kind").as_str() {
-                "calc" => tr("picture"),
-                "mc" => tr("Monte Carlo"),
-                "swarm" => tr("swarm job"),
-                "mesh" => tr("mesh"),
+                "calc" => tr("@MB:Picture"),
+                "mc" => tr("@MB:MonteCarlo2"),
+                "swarm" => tr("@MB:SwarmJob"),
+                "mesh" => tr("@MB:Mesh"),
                 k => k.to_string(),
             };
             vec![
@@ -36,7 +36,7 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
                 kind,
                 e.size_text(),
                 e.done_text(),
-                if e.busy { tr("rendering now") } else { crate::checkpoint::ago(e.age()) },
+                if e.busy { tr("@MB:RenderingNow") } else { crate::checkpoint::ago(e.age()) },
                 format!("{:.1}", e.bytes as f64 / 1e6),
             ]
         })
@@ -48,7 +48,7 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
     if c.item_index >= c.cells.len() as i32 || c.item_index < 0 {
         c.item_index = if c.cells.is_empty() { -1 } else { 0 };
     }
-    ui.set_caption(F, "Label2", &trf("{} render(s), {} MB", &[&app.unfinished.entries.len(), &format!("{:.1}", total as f64 / 1e6)]));
+    ui.set_caption(F, "Label2", &trf("@MB:RenderSMB", &[&app.unfinished.entries.len(), &format!("{:.1}", total as f64 / 1e6)]));
 }
 
 /// The selected render.
@@ -59,7 +59,7 @@ fn selected(app: &Mb3d, ui: &Ui) -> Option<crate::checkpoint::Entry> {
 
 /// Loads the parameters of `e` into the main window.
 fn load(app: &mut Mb3d, ui: &mut Ui, e: &crate::checkpoint::Entry) -> Result<(), String> {
-    let text = e.scene_text().ok_or_else(|| tr("This render kept no parameters."))?;
+    let text = e.scene_text().ok_or_else(|| tr("@MB:ThisRenderKeptNoParameters"))?;
     app.scene = crate::scene::Scene::parse(&text)?;
     app.title = e.info.get("name").cloned().unwrap_or_default();
     app.eng.clear();
@@ -73,7 +73,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button1Click" | "Button2Click" => {
             let Some(en) = selected(app, ui) else { return };
             if en.busy {
-                app.message(ui, &tr("This render is running right now."));
+                app.message(ui, &tr("@MB:ThisRenderIsRunningRightNow"));
                 return;
             }
             if let Err(m) = load(app, ui, &en) {
@@ -90,31 +90,31 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                         ui.hide(F);
                         super::mc_form::continue_render(app, ui);
                     }
-                    _ => app.message(ui, &tr("Parameters loaded: this render continues where it was made (the command line or its window).")),
+                    _ => app.message(ui, &tr("@MB:ParametersLoadedThisRenderContinuesWhere")),
                 }
             }
         }
         "Button3Click" => {
             if let Some(en) = selected(app, ui) {
                 if !crate::checkpoint::remove(&en) {
-                    app.message(ui, &tr("This render is running right now."));
+                    app.message(ui, &tr("@MB:ThisRenderIsRunningRightNow"));
                 }
                 refresh(app, ui);
             }
         }
         "Button4Click" => {
             if !app.unfinished.entries.is_empty() {
-                ui.confirm("unfinished:clear", &tr("Delete what all unfinished renders kept?"));
+                ui.confirm("unfinished:clear", &tr("@MB:DeleteWhatAllUnfinishedRendersKeptQuestion"));
             }
         }
         "Button5Click" => {
             let Some(en) = selected(app, ui) else { return };
             if !matches!(en.info.get("kind").map(String::as_str), Some("calc") | Some("tiles")) {
-                app.message(ui, &tr("Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export)."));
+                app.message(ui, &tr("@MB:OnlyAPictureIsKeptAs"));
                 return;
             }
             let o = crate::vcl::dialogs::FileOptions {
-                filter: tr("MB3D image (*.m3i)|*.m3i"),
+                filter: tr("@MB:MB3DImageM3iM3i"),
                 default_ext: "m3i".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 file_name: super::main_form::stem(&en.info.get("name").cloned().unwrap_or_default()).to_string(),
@@ -139,7 +139,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let Some(key) = app.unfinished.saving.take() else { return };
             let r = match crate::checkpoint::list().into_iter().find(|e| e.key() == key) {
                 Some(e) => crate::checkpoint::export_m3i(&e, p),
-                None => Err(tr("This render keeps no image.")),
+                None => Err(tr("@MB:ThisRenderKeepsNoImage")),
             };
             if let Err(m) = r {
                 app.message(ui, &m);

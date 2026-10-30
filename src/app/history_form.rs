@@ -199,27 +199,27 @@ fn hay(e: &Entry) -> String {
 
 fn action_text(a: Action) -> String {
     match a {
-        Action::Calc => tr("calculated"),
-        Action::Open => tr("opened"),
-        Action::Save => tr("saved"),
+        Action::Calc => tr("@MB:Calculated"),
+        Action::Open => tr("@MB:Opened"),
+        Action::Save => tr("@MB:SavedLower"),
     }
 }
 
 fn kind_text(k: Kind) -> String {
     match k {
-        Kind::Params => tr("parameters"),
-        Kind::M3i => tr("image + parameters"),
-        Kind::Image => tr("image"),
-        Kind::Animation => tr("animation"),
-        Kind::Mesh => tr("mesh"),
-        Kind::Formula => tr("formula"),
-        Kind::Other => tr("file"),
+        Kind::Params => tr("@MB:ParametersLower"),
+        Kind::M3i => tr("@MB:ImageParameters"),
+        Kind::Image => tr("@MB:ImageLower"),
+        Kind::Animation => tr("@MB:AnimationLower"),
+        Kind::Mesh => tr("@MB:Mesh"),
+        Kind::Formula => tr("@MB:FormulaLower"),
+        Kind::Other => tr("@MB:FileLower"),
     }
 }
 
 fn size_text(bytes: Option<u64>) -> String {
     match bytes {
-        None => tr("missing"),
+        None => tr("@MB:Missing"),
         Some(b) if b >= 10_000_000 => format!("{:.0} MB", b as f64 / 1e6),
         Some(b) if b >= 1_000_000 => format!("{:.1} MB", b as f64 / 1e6),
         Some(b) if b >= 1_000 => format!("{:.0} kB", b as f64 / 1e3),
@@ -229,14 +229,14 @@ fn size_text(bytes: Option<u64>) -> String {
 
 fn folder_text(e: &Entry) -> String {
     if e.action == Action::Calc {
-        return tr("History");
+        return tr("@MB:History");
     }
     e.path.parent().map(|p| p.display().to_string()).unwrap_or_default()
 }
 
 fn name_text(e: &Entry) -> String {
     if e.title.is_empty() {
-        tr("untitled")
+        tr("@MB:Untitled")
     } else {
         e.title.clone()
     }
@@ -255,9 +255,9 @@ fn count_text(app: &Mb3d, gi: usize) -> String {
     if !g.scanned {
         "...".into()
     } else if g.matches == g.n {
-        trf("{} entries", &[&g.n])
+        trf("@MB:Entries", &[&g.n])
     } else {
-        trf("{} of {} entries", &[&g.matches, &g.n])
+        trf("@MB:OfEntries", &[&g.matches, &g.n])
     }
 }
 
@@ -414,14 +414,14 @@ fn apply(app: &mut Mb3d, ui: &mut Ui) {
     let n = app.history.shown_entries;
     let total = app.history.all.len();
     let mut text = if app.history.scan.is_some() {
-        trf("Reading the history... {} entries", &[&total])
+        trf("@MB:ReadingTheHistoryEntries", &[&total])
     } else if n == total {
-        trf("{} entries", &[&n])
+        trf("@MB:Entries", &[&n])
     } else {
-        trf("{} of {} entries", &[&n, &total])
+        trf("@MB:OfEntries", &[&n, &total])
     };
     if app.history.hashing.is_some() {
-        text = format!("{text} · {}", tr("comparing files"));
+        text = format!("{text} · {}", tr("@MB:ComparingFiles"));
     }
     ui.set_caption(F, "Label5", &text);
     scroll_to_selection(app, ui);
@@ -482,7 +482,7 @@ fn selection_changed(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_caption(F, "Label6", "");
         ui.set_text(F, "Edit2", "");
         ui.set_caption(F, "Label2", "");
-        ui.set_caption(F, "Button1", &tr("Load"));
+        ui.set_caption(F, "Button1", &tr("@MB:Load"));
         ui.set_enabled(F, "Button1", false);
         ui.set_enabled(F, "Button2", false);
         ui.set_enabled(F, "Button3", false);
@@ -498,7 +498,7 @@ fn selection_changed(app: &mut Mb3d, ui: &mut Ui) {
             ui.set_caption(F, "Label6", "");
             ui.set_text(F, "Edit2", &dir);
             ui.set_caption(F, "Label2", &lines.join("\n"));
-            ui.set_caption(F, "Button1", &tr("Load"));
+            ui.set_caption(F, "Button1", &tr("@MB:Load"));
             ui.set_enabled(F, "Button1", false);
             ui.set_enabled(F, "Button2", Path::new(&dir).is_dir());
             ui.set_enabled(F, "Button3", false);
@@ -508,7 +508,7 @@ fn selection_changed(app: &mut Mb3d, ui: &mut Ui) {
     };
     let there = e.bytes.is_some();
     let loads = matches!(e.kind, Kind::Params | Kind::M3i);
-    ui.set_caption(F, "Button1", &if loads { tr("Load") } else { tr("Open") });
+    ui.set_caption(F, "Button1", &if loads { tr("@MB:Load") } else { tr("@MB:Open") });
     ui.set_enabled(F, "Button1", there);
     ui.set_enabled(F, "Button2", e.path.parent().is_some_and(|d| d.is_dir()));
     ui.set_enabled(F, "Button3", true);
@@ -517,14 +517,14 @@ fn selection_changed(app: &mut Mb3d, ui: &mut Ui) {
     if there {
         lines.push(size_text(e.bytes));
     } else {
-        lines.push(tr("The file is not there any more."));
+        lines.push(tr("@MB:TheFileIsNotThereAny"));
     }
     ui.set_caption(F, "Label2", &lines.join("\n"));
     match preview_file(&e) {
         Some(p) => super::file_preview::request(app, ui, p, F, "Image1", "Label6"),
         None => {
             ui.set_picture(F, "Image1", None);
-            ui.set_caption(F, "Label6", &tr("No preview for this file."));
+            ui.set_caption(F, "Label6", &tr("@MB:NoPreviewForThisFile"));
         }
     }
 }
@@ -905,7 +905,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 /// Load (parameters, an image with them) or Open (any other file).
 fn load(app: &mut Mb3d, ui: &mut Ui, e: &Entry) {
     if !e.path.is_file() {
-        app.message(ui, &tr("The file is not there any more."));
+        app.message(ui, &tr("@MB:TheFileIsNotThereAny"));
         return;
     }
     if matches!(e.kind, Kind::Params | Kind::M3i) {
@@ -924,7 +924,7 @@ fn show_in_folder(p: &Path) {
 /// Takes an entry out of the history and the list (no reading again).
 fn remove(app: &mut Mb3d, ui: &mut Ui, e: &Entry) {
     if !crate::history::remove(e) {
-        app.message(ui, &tr("The entry could not be removed."));
+        app.message(ui, &tr("@MB:TheEntryCouldNotBeRemoved"));
         return;
     }
     if let Some(i) = app.history.all.iter().position(|r| r.e.secs == e.secs && r.e.path == e.path) {
@@ -1019,7 +1019,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let Some(en) = selected(app) else { return };
             if en.action == Action::Calc {
                 app.history.removing = Some(en.clone());
-                ui.confirm("history:remove", &trf("Delete the parameters and the thumbnail of \"{}\" from the history?", &[&name_text(&en)]));
+                ui.confirm("history:remove", &trf("@MB:DeleteTheParametersAndTheThumbnail", &[&name_text(&en)]));
             } else {
                 remove(app, ui, &en);
             }

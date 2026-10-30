@@ -135,8 +135,8 @@ fn show_size(app: &Mb3d, ui: &mut Ui) {
 fn set_project_name(app: &mut Mb3d, ui: &mut Ui, name: &str) {
     app.voxel.project = name.to_string();
     // ("new": no project file yet, the word shown in the language)
-    let shown = if name == "new" { tr("new") } else { name.to_string() };
-    ui.set_caption(F, "Label7", &trf("Project: {}", &[&shown]));
+    let shown = if name == "new" { tr("@MB:New") } else { name.to_string() };
+    ui.set_caption(F, "Label7", &trf("@MB:Project2", &[&shown]));
 }
 
 fn enable(ui: &mut Ui) {
@@ -207,7 +207,7 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let shared = app.voxel.shared.clone();
     let stop = app.voxel.stop.clone();
     app.voxel.running = 2;
-    ui.set_caption(F, "Button5", &tr("Stop"));
+    ui.set_caption(F, "Button5", &tr("@MB:Stop"));
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
     let waker = ui.waker();
     std::thread::spawn(move || {
@@ -394,10 +394,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             super::main_form::enable_buttons(app, ui);
             ui.set_caption(F, "Label13", "");
             if err.is_empty() && !app.voxel.stop.load(Ordering::SeqCst) {
-                app.message(ui, &tr("Finished rendering slices."));
+                app.message(ui, &tr("@MB:FinishedRenderingSlices"));
             }
         } else {
-            ui.set_caption(F, "Button5", &tr("Calculate preview"));
+            ui.set_caption(F, "Button5", &tr("@MB:CalculatePreview"));
             if app.voxel.restart_preview {
                 app.voxel.restart_preview = false;
                 start_preview(app, ui);
@@ -409,7 +409,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 /// "Rendering slice: 4 of 120 · about 7 min left": the slice under way
 /// after `nr` (0-based) finished, of `n`, and the time left.
 fn slice_caption(nr: u32, n: u32, left: Option<f64>) -> String {
-    let mut t = trf("Rendering slice: {} of {}", &[&(nr + 2).min(n), &n]);
+    let mut t = trf("@MB:RenderingSliceOf", &[&(nr + 2).min(n), &n]);
     if let Some(l) = left.filter(|_| nr + 1 < n) {
         t += &format!(" · {}", left_str(l));
     }
@@ -451,7 +451,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.voxel.user_change = true;
             if app.voxel.first_show {
                 app.voxel.first_show = false;
-                ui.cm(F, "RadioGroup1").hint = tr(" Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!");
+                ui.cm(F, "RadioGroup1").hint = tr("@MB:TypeOfObjectDeterminationLoweringMaxExclamation");
                 let d = app.ini.dir(super::ini::DIR_VOXEL);
                 let mut s = d.display().to_string();
                 if !s.ends_with(std::path::MAIN_SEPARATOR) {
@@ -465,7 +465,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button1Click" => ui.hide(F),
         "Button3Click" => {
             let start = ui.text(F, "Edit2");
-            ui.folder_dialog("voxel:folder", &tr("Output folder"), Some(PathBuf::from(start)));
+            ui.folder_dialog("voxel:folder", &tr("@MB:OutputFolder2"), Some(PathBuf::from(start)));
         }
         "Button4Click" => {
             // import the parameters of the main window
@@ -486,7 +486,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: format!("{}|*.m3v", tr("M3D voxel project (*.m3v)")),
+                filter: format!("{}|*.m3v", tr("@MB:M3DVoxelProjectM3v")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_VOXEL)),
                 ..Default::default()
             };
@@ -495,7 +495,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton9Click" => {
             make_m3v(app, ui);
             let o = crate::vcl::dialogs::FileOptions {
-                filter: format!("{}|*.m3v", tr("M3D voxel project (*.m3v)")),
+                filter: format!("{}|*.m3v", tr("@MB:M3DVoxelProjectM3v")),
                 default_ext: "m3v".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_VOXEL)),
                 file_name: if app.voxel.project == "new" { String::new() } else { app.voxel.project.clone() },
@@ -520,7 +520,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if app.voxel.running == 2 {
                 app.voxel.stop.store(true, Ordering::SeqCst);
                 app.voxel.restart_preview = false;
-                ui.set_caption(F, "Button5", &tr("Calculate preview"));
+                ui.set_caption(F, "Button5", &tr("@MB:CalculatePreview"));
             }
             if app.voxel.running != 1 {
                 start_slices(app, ui);

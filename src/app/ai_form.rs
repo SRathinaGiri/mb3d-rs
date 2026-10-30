@@ -23,31 +23,31 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
     // Claude's desktop app
     let (d_inst, d_conn) = crate::mcp::claude_desktop_status();
     let d_text = match (d_inst, d_conn) {
-        (true, true) => tr("Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools."),
-        (true, false) => tr("Found on this computer, not connected yet."),
-        (false, _) if cfg!(target_os = "linux") => tr("Not available for Linux: use Claude Code below."),
-        (false, _) => tr("Not installed. Get it from claude.ai/download, start it once, then come back here."),
+        (true, true) => tr("@MB:ConnectedAskItInANew"),
+        (true, false) => tr("@MB:FoundOnThisComputerNotConnected"),
+        (false, _) if cfg!(target_os = "linux") => tr("@MB:NotAvailableForLinuxUseClaude"),
+        (false, _) => tr("@MB:NotInstalledGetItFromClaude"),
     };
     ui.set_caption(F, "Label2", &d_text);
-    ui.set_caption(F, "Button1", &if d_conn { tr("Disconnect") } else { tr("Connect") });
+    ui.set_caption(F, "Button1", &if d_conn { tr("@MB:Disconnect") } else { tr("@MB:Connect") });
     ui.set_enabled(F, "Button1", d_inst && exe.is_ok());
     // Claude Code
     let (c_inst, c_conn) = crate::mcp::claude_code_status();
     let c_text = match (c_inst, c_conn) {
-        (_, true) => tr("Connected. Start a new Claude Code session to use it. To take it out again, run the command below."),
-        (true, false) => tr("Found on this computer. Run this command once in a terminal, then start a new Claude Code session:"),
-        (false, false) => tr("Not found. If you use it, run this command once in a terminal:"),
+        (_, true) => tr("@MB:ConnectedStartANewClaudeCode"),
+        (true, false) => tr("@MB:FoundOnThisComputerRunThis"),
+        (false, false) => tr("@MB:NotFoundIfYouUseIt"),
     };
     ui.set_caption(F, "Label3", &c_text);
     let cmd = exe.as_ref().map_err(|e| e.clone()).and_then(|p| crate::mcp::claude_code_command(c_conn, p)).unwrap_or_else(|e| e);
     ui.set_text(F, "Edit1", &cmd);
     // things to try, where it writes, the limits
     let tries = [
-        tr("Show me a preview of the last picture I rendered in mb3d."),
-        tr("Make the light of that picture warmer and render it again."),
-        tr("Make three variations of it and tell me which one you like best."),
-        tr("Render my last picture at 4K and tell me how long it took."),
-        tr("What did I do in mb3d today? Were there any errors?"),
+        tr("@MB:ShowMeAPreviewOfThe"),
+        tr("@MB:MakeTheLightOfThatPicture"),
+        tr("@MB:MakeThreeVariationsOfItAnd"),
+        tr("@MB:RenderMyLastPictureAt4K"),
+        tr("@MB:WhatDidIDoInMb3d"),
     ];
     ui.set_text(F, "Memo1", &tries.iter().map(|t| format!("•  {t}")).collect::<Vec<_>>().join("\n"));
     let o = crate::mcp::Options::default();
@@ -77,7 +77,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button2Click" => {
             crate::vcl::clipboard::set(&ui.text(F, "Edit1"));
-            app.message(ui, &tr("Copied to the clipboard."));
+            app.message(ui, &tr("@MB:CopiedToTheClipboard"));
         }
         "Button3Click" => ui.hide(F),
         _ => {}

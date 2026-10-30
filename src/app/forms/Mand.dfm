@@ -40,11 +40,11 @@ object Mand3DForm: TMand3DForm
       Top = 1
       Width = 151
       Height = 21
-      Hint = 'Click to hide/show'
+      Hint = '@MB:ClickToHideShow'
       Align = alTop
       AllowAllUp = True
       GroupIndex = 1
-      Caption = 'Position'
+      Caption = '@MB:Position'
       ParentShowHint = False
       ShowHint = True
       OnClick = PositionBtnClick
@@ -57,11 +57,11 @@ object Mand3DForm: TMand3DForm
       Top = 172
       Width = 151
       Height = 21
-      Hint = 'Click to hide/show'
+      Hint = '@MB:ClickToHideShow'
       Align = alTop
       AllowAllUp = True
       GroupIndex = 2
-      Caption = 'Rotation'
+      Caption = '@MB:Rotation'
       ParentShowHint = False
       ShowHint = True
       OnClick = RotationBtnClick
@@ -84,7 +84,7 @@ object Mand3DForm: TMand3DForm
         Width = 29
         Height = 13
         Alignment = taRightJustify
-        Caption = 'X mid:'
+        Caption = '@MB:XMid'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -98,7 +98,7 @@ object Mand3DForm: TMand3DForm
         Width = 29
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Y mid:'
+        Caption = '@MB:YMid'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -112,8 +112,8 @@ object Mand3DForm: TMand3DForm
         Top = 45
         Width = 40
         Height = 19
-        Hint = 'Click to render the 2d plane at the midpoint.'
-        Caption = 'Z mid'
+        Hint = '@MB:ClickToRenderThe2dPlane'
+        Caption = '@MB:ZMid'
         ParentShowHint = False
         ShowHint = True
         OnClick = Button1Click
@@ -124,8 +124,8 @@ object Mand3DForm: TMand3DForm
         Top = 67
         Width = 40
         Height = 19
-        Hint = 'Click to render the 2d startplane.'
-        Caption = 'Z start'
+        Hint = '@MB:ClickToRenderThe2dStartplane'
+        Caption = '@MB:ZStart'
         ParentShowHint = False
         ShowHint = True
         OnClick = Button1Click
@@ -136,8 +136,8 @@ object Mand3DForm: TMand3DForm
         Top = 89
         Width = 40
         Height = 18
-        Hint = 'Click to render the Z endplane.'
-        Caption = 'Z end'
+        Hint = '@MB:ClickToRenderTheZEndplane'
+        Caption = '@MB:ZEnd'
         ParentShowHint = False
         ShowHint = True
         OnClick = Button1Click
@@ -147,11 +147,8 @@ object Mand3DForm: TMand3DForm
         Top = 109
         Width = 70
         Height = 19
-        Hint = 
-          'Click on the object in the image to be centered.'#13#10'The camera dir' +
-          'ection will not be changed, use the rotation'#13#10'options to rotate ' +
-          'around the midpoint.'
-        Caption = 'get midpoint'
+        Hint = '@MB:ClickOnTheObjectInThe'
+        Caption = '@MB:GetMidpoint'
         ParentShowHint = False
         ShowHint = True
         OnClick = SpeedButton30Click
@@ -161,10 +158,8 @@ object Mand3DForm: TMand3DForm
         Top = 109
         Width = 35
         Height = 19
-        Hint = 
-          'Reset the position and the rotation to the start values.'#13#10'On box' +
-          ' formulas it will be automatically zoomed out more.'
-        Caption = 'reset'
+        Hint = '@MB:ResetThePositionAndTheRotation'
+        Caption = '@MB:Reset'
         ParentShowHint = False
         ShowHint = True
         OnClick = Button14Click
@@ -175,7 +170,7 @@ object Mand3DForm: TMand3DForm
         Width = 30
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Zoom:'
+        Caption = '@MB:Zoom'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -258,10 +253,7 @@ object Mand3DForm: TMand3DForm
         Top = 128
         Width = 109
         Height = 21
-        Hint = 
-          'Defines the size of the Zstart viewplane.'#13#10'It is set automatical' +
-          'ly when using the navigator,'#13#10'change only if objects are cutted ' +
-          'at the image'#13#10'borders.'
+        Hint = '@MB:DefinesTheSizeOfTheZstart'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -290,7 +282,7 @@ object Mand3DForm: TMand3DForm
         Width = 61
         Height = 13
         Alignment = taCenter
-        Caption = 'Euler angles:'
+        Caption = '@MB:EulerAngles'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -346,7 +338,7 @@ object Mand3DForm: TMand3DForm
         Width = 139
         Height = 26
         Alignment = taCenter
-        Caption = 'Apply your changed values, because edits are only output'
+        Caption = '@MB:ApplyYourChangedValuesBecauseEdits'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -360,8 +352,8 @@ object Mand3DForm: TMand3DForm
         Top = 94
         Width = 88
         Height = 22
-        Hint = 'The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)'
-        Caption = 'Apply to image'
+        Hint = '@MB:TheRotationIsPerformedAroundThe'
+        Caption = '@MB:ApplyToImage'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
@@ -372,7 +364,7 @@ object Mand3DForm: TMand3DForm
         Top = 94
         Width = 49
         Height = 22
-        Caption = 'Reset 0'
+        Caption = '@MB:Reset0'
         TabOrder = 1
         OnClick = ButtonR0Click
       end
@@ -390,9 +382,7 @@ object Mand3DForm: TMand3DForm
         Top = 45
         Width = 120
         Height = 21
-        Hint = 
-          'Case Y angle is at 90 or -90 degrees, euler angles can'#39't be calc' +
-          'ulated!'
+        Hint = '@MB:CaseYAngleIsAt90'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 3
@@ -414,7 +404,7 @@ object Mand3DForm: TMand3DForm
       Top = 710
       Width = 151
       Height = 80
-      Hint = 'Shows messages'
+      Hint = '@MB:ShowsMessages'
       Align = alTop
       BorderStyle = bsNone
       Color = clSilver
@@ -455,7 +445,7 @@ object Mand3DForm: TMand3DForm
       Touch.TabletOptions = []
       OnChange = PageControl1Change
       object TabSheet2: TTabSheet
-        Caption = 'Calculation'
+        Caption = '@MB:Calculation'
         Highlighted = True
         ImageIndex = 1
         ExplicitLeft = 0
@@ -468,7 +458,7 @@ object Mand3DForm: TMand3DForm
           Width = 81
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Smooth  normals:'
+          Caption = '@MB:SmoothNormals'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -482,7 +472,7 @@ object Mand3DForm: TMand3DForm
           Width = 41
           Height = 13
           Alignment = taRightJustify
-          Caption = 'DE stop:'
+          Caption = '@MB:DEStop'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -496,7 +486,7 @@ object Mand3DForm: TMand3DForm
           Width = 85
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Raystep multiplier:'
+          Caption = '@MB:RaystepMultiplier'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -510,7 +500,7 @@ object Mand3DForm: TMand3DForm
           Width = 67
           Height = 26
           Alignment = taRightJustify
-          Caption = 'Stepcount for '#13#10'binary search:'
+          Caption = '@MB:StepcountForBinarySearch'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -523,10 +513,7 @@ object Mand3DForm: TMand3DForm
           Top = 0
           Width = 23
           Height = 22
-          Hint = 
-            'Click on "M" to save these settings plus image width and scale'#13#10 +
-            'as a preset. Click afterwards on "preview",  "mid" or "high"'#13#10'or' +
-            ' again on "M" to cancel.'
+          Hint = '@MB:ClickOnMToSaveThese'
           AllowAllUp = True
           GroupIndex = 5
           Caption = 'M'
@@ -541,7 +528,7 @@ object Mand3DForm: TMand3DForm
           Width = 79
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Stepwidth limiter:'
+          Caption = '@MB:StepwidthLimiter'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -554,10 +541,7 @@ object Mand3DForm: TMand3DForm
           Top = 3
           Width = 49
           Height = 21
-          Hint = 
-            'Defines the distance to the objects surface where raymarching st' +
-            'ops.'#13#10'Lower values gives more object details, but can also lead ' +
-            'to undersampling.'#13#10'The value is related to the width of a pixel.'
+          Hint = '@MB:DefinesTheDistanceToTheObjects'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
@@ -569,12 +553,9 @@ object Mand3DForm: TMand3DForm
           Top = 27
           Width = 125
           Height = 17
-          Hint = 
-            'The distance to the objects surface, the raymarching stops, will' +
-            ' get bigger with the distance to the viewer.'#13#10'This leads to a ho' +
-            'mogen object appearence, so it is normally choosen.'
+          Hint = '@MB:TheDistanceToTheObjectsSurface'
           Alignment = taLeftJustify
-          Caption = 'Vary DEstop on FOV:'
+          Caption = '@MB:VaryDEstopOnFOV'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -586,9 +567,9 @@ object Mand3DForm: TMand3DForm
           Top = 147
           Width = 98
           Height = 17
-          Hint = 'Uncheck this, if the image looks flat and noisy.'
+          Hint = '@MB:UncheckThisIfTheImageLooks'
           Alignment = taLeftJustify
-          Caption = 'Normals on DE:'
+          Caption = '@MB:NormalsOnDE'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -600,10 +581,7 @@ object Mand3DForm: TMand3DForm
           Top = 48
           Width = 49
           Height = 21
-          Hint = 
-            'The distance estimates are downscaled by this factor to avoid ov' +
-            'erstepping.'#13#10'Reduce the value if overstepping occurs (black pixe' +
-            'ls, noisy image).'#13#10'Too low values slows the rendering down.'
+          Hint = '@MB:TheDistanceEstimatesAreDownscaledBy'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
@@ -615,12 +593,9 @@ object Mand3DForm: TMand3DForm
           Top = 164
           Width = 107
           Height = 17
-          Hint = 
-            'Multiplies the first stepwidth with a random number'#13#10'to give ove' +
-            'rstepping artifacts a noisy look.  '#13#10'Also reduces banding in the' +
-            ' dynamic fog. '
+          Hint = '@MB:MultipliesTheFirstStepwidthWithA'
           Alignment = taLeftJustify
-          Caption = 'First step random:'
+          Caption = '@MB:FirstStepRandom'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -632,9 +607,9 @@ object Mand3DForm: TMand3DForm
           Top = 198
           Width = 136
           Height = 17
-          Hint = 'Useful for steep heightmaps'
+          Hint = '@MB:UsefulForSteepHeightmaps'
           Alignment = taLeftJustify
-          Caption = 'Shortdistance check DE:'
+          Caption = '@MB:ShortdistanceCheckDE'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 9
@@ -645,7 +620,7 @@ object Mand3DForm: TMand3DForm
           Top = 71
           Width = 49
           Height = 21
-          Hint = 'Use values lower than 1 to reduce overstepping.'
+          Hint = '@MB:UseValuesLowerThan1To'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
@@ -700,18 +675,16 @@ object Mand3DForm: TMand3DForm
           Top = 181
           Width = 124
           Height = 17
-          Hint = 
-            'Subtract an amount of DEstop from next raystep, recommended on h' +
-            'igh DEstop values.'
+          Hint = '@MB:SubtractAnAmountOfDEstopFrom'
           Alignment = taLeftJustify
-          Caption = 'Raystep sub DEstop:'
+          Caption = '@MB:RaystepSubDEstop'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 8
         end
       end
       object TabSheet4: TTabSheet
-        Caption = 'Internal'
+        Caption = '@MB:Internal'
         ImageIndex = 3
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -723,7 +696,7 @@ object Mand3DForm: TMand3DForm
           Width = 68
           Height = 26
           Alignment = taRightJustify
-          Caption = 'Threadcount  '#13#10'in Calculations'
+          Caption = '@MB:ThreadcountInCalculations'
           Color = clBtnFace
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -744,26 +717,21 @@ object Mand3DForm: TMand3DForm
           Top = 181
           Width = 49
           Height = 13
-          Caption = 'its for free!'
+          Caption = '@MB:ItsForFree'
         end
         object CalcOnLabel: TLabel
           Left = 8
           Top = 145
           Width = 50
           Height = 13
-          Caption = 'Calculate on'
+          Caption = '@MB:CalculateOn'
         end
         object CalcOnCombo: TComboBox
           Left = 66
           Top = 141
           Width = 75
           Height = 21
-          Hint = 
-            'Auto: the CPU and the graphics card share the image (the CPU' +
-            #13#10'starts at once, the card joins as soon as its shader is' +
-            #13#10'compiled), the card then runs the shadows and the ambient' +
-            #13#10'occlusion.'#13#10'CPU: never the graphics card.'#13#10 +
-            'Graphics card: wait for the shader, as before.'
+          Hint = '@MB:AutoTheCPUAndTheGraphics'
           Style = csDropDownList
           ItemIndex = 0
           ParentShowHint = False
@@ -772,9 +740,9 @@ object Mand3DForm: TMand3DForm
           Text = 'Auto'
           OnChange = CalcOnComboChange
           Items.Strings = (
-            'Auto'
-            'CPU'
-            'Graphics card')
+            '@MB:Auto'
+            '@MB:CPU'
+            '@MB:GraphicsCard')
         end
         object Label33: TLabel
           Left = 13
@@ -782,7 +750,7 @@ object Mand3DForm: TMand3DForm
           Width = 34
           Height = 26
           Alignment = taRightJustify
-          Caption = 'Thread'#13#10'Priority'
+          Caption = '@MB:ThreadPriority'
           Color = clBtnFace
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -803,22 +771,19 @@ object Mand3DForm: TMand3DForm
           Text = 'Lower'
           OnChange = CheckBox14Click
           Items.Strings = (
-            'Idle'
-            'Lowest'
-            'Lower'
-            'Normal')
+            '@MB:Idle'
+            '@MB:Lowest'
+            '@MB:Lower'
+            '@MB:Normal')
         end
         object CheckBox12: TCheckBox
           Left = 10
           Top = 43
           Width = 111
           Height = 17
-          Hint = 
-            'Detects the amount of processor cores on startup.'#13#10'You can choos' +
-            'e the amount yourself and disable'#13#10'this option to start with dif' +
-            'ferent settings.'
+          Hint = '@MB:DetectsTheAmountOfProcessorCores'
           Alignment = taLeftJustify
-          Caption = 'Autodetect on start'
+          Caption = '@MB:AutodetectOnStart'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -830,11 +795,9 @@ object Mand3DForm: TMand3DForm
           Top = 122
           Width = 113
           Height = 17
-          Hint = 
-            'Check this to stop setting the slowest thread to a higher priori' +
-            'ty.'
+          Hint = '@MB:CheckThisToStopSettingThe'
           Alignment = taLeftJustify
-          Caption = 'Disable threadboost'
+          Caption = '@MB:DisableThreadboost'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -847,11 +810,9 @@ object Mand3DForm: TMand3DForm
           Top = 104
           Width = 97
           Height = 17
-          Hint = 
-            'Prevent the computer from shutdown by moving'#13#10'the mouse cursor f' +
-            'rom time to time a bit.'
+          Hint = '@MB:PreventTheComputerFromShutdownBy'
           Alignment = taLeftJustify
-          Caption = 'Keep this priority'
+          Caption = '@MB:KeepThisPriority'
           TabOrder = 3
         end
         object Edit21: TEdit
@@ -879,7 +840,7 @@ object Mand3DForm: TMand3DForm
         end
       end
       object TabSheet5: TTabSheet
-        Caption = 'Infos'
+        Caption = '@MB:Infos'
         ImageIndex = 4
         object Label29: TLabel
           Left = 9
@@ -887,14 +848,14 @@ object Mand3DForm: TMand3DForm
           Width = 67
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Avg. raysteps:'
+          Caption = '@MB:AvgRaysteps'
         end
         object Label30: TLabel
           Left = 6
           Top = 88
           Width = 70
           Height = 13
-          Caption = 'Avg. iterations:'
+          Caption = '@MB:AvgIterations'
         end
         object Label31: TLabel
           Left = 86
@@ -914,7 +875,7 @@ object Mand3DForm: TMand3DForm
           Width = 71
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Main calc time:'
+          Caption = '@MB:MainCalcTime'
         end
         object Label52: TLabel
           Left = 86
@@ -928,7 +889,7 @@ object Mand3DForm: TMand3DForm
           Width = 63
           Height = 13
           Alignment = taRightJustify
-          Caption = 'HS calc time:'
+          Caption = '@MB:HSCalcTime'
         end
         object Label8: TLabel
           Left = 86
@@ -942,7 +903,7 @@ object Mand3DForm: TMand3DForm
           Width = 71
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Max. iterations:'
+          Caption = '@MB:MaxIterations'
         end
         object Label40: TLabel
           Left = 86
@@ -956,7 +917,7 @@ object Mand3DForm: TMand3DForm
           Width = 63
           Height = 13
           Alignment = taRightJustify
-          Caption = 'AO calc time:'
+          Caption = '@MB:AOCalcTime'
         end
         object Label48: TLabel
           Left = 86
@@ -970,7 +931,7 @@ object Mand3DForm: TMand3DForm
           Width = 64
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Reflects time:'
+          Caption = '@MB:ReflectsTime'
         end
         object Label50: TLabel
           Left = 86
@@ -984,7 +945,7 @@ object Mand3DForm: TMand3DForm
           Width = 22
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Orig:'
+          Caption = '@MB:Orig'
         end
         object Label59: TLabel
           Left = 2
@@ -992,7 +953,7 @@ object Mand3DForm: TMand3DForm
           Width = 24
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Mod:'
+          Caption = '@MB:Mod'
         end
         object Edit33: TEdit
           Left = 32
@@ -1021,8 +982,8 @@ object Mand3DForm: TMand3DForm
           Top = 0
           Width = 57
           Height = 22
-          Hint = 'Click to choose your name for automatic saving in parameters'
-          Caption = 'Author:'
+          Hint = '@MB:ClickToChooseYourNameFor'
+          Caption = '@MB:Author'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
@@ -1033,8 +994,8 @@ object Mand3DForm: TMand3DForm
           Top = 0
           Width = 46
           Height = 22
-          Hint = 'Click to insert your name below'
-          Caption = 'insert'
+          Hint = '@MB:ClickToInsertYourNameBelow'
+          Caption = '@MB:Insert'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
@@ -1042,7 +1003,7 @@ object Mand3DForm: TMand3DForm
         end
       end
       object TabSheet8: TTabSheet
-        Caption = 'Cutting'
+        Caption = '@MB:Cutting'
         ImageIndex = 7
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -1161,8 +1122,8 @@ object Mand3DForm: TMand3DForm
           Top = 96
           Width = 109
           Height = 21
-          Hint = 'Inserts the current mid position.'
-          Caption = 'Insert mid values'
+          Hint = '@MB:InsertsTheCurrentMidPosition'
+          Caption = '@MB:InsertMidValues'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 6
@@ -1174,10 +1135,8 @@ object Mand3DForm: TMand3DForm
           Top = 124
           Width = 121
           Height = 21
-          Hint = 
-            'Click on the button and afterwards on the object in the image to' +
-            ' get'#13#10'the values from there.'
-          Caption = 'Get values from image'
+          Hint = '@MB:ClickOnTheButtonAndAfterwards'
+          Caption = '@MB:GetValuesFromImage'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 7
@@ -1185,7 +1144,7 @@ object Mand3DForm: TMand3DForm
         end
       end
       object TabSheet9: TTabSheet
-        Caption = 'Julia Off'
+        Caption = '@MB:JuliaOff'
         ImageIndex = 8
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -1253,7 +1212,7 @@ object Mand3DForm: TMand3DForm
           Width = 113
           Height = 17
           Alignment = taLeftJustify
-          Caption = 'Calculate Julia'
+          Caption = '@MB:CalculateJulia'
           TabOrder = 0
           OnClick = CheckBox7Click
         end
@@ -1304,10 +1263,8 @@ object Mand3DForm: TMand3DForm
           Top = 128
           Width = 109
           Height = 21
-          Hint = 
-            'Inserts the current position as julia values.'#13#10'If in 4d mode, th' +
-            'e vector is rotated according to the 4d rotation values.'
-          Caption = 'Insert mid values'
+          Hint = '@MB:InsertsTheCurrentPositionAsJulia'
+          Caption = '@MB:InsertMidValues'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
@@ -1333,13 +1290,8 @@ object Mand3DForm: TMand3DForm
           Top = 156
           Width = 121
           Height = 21
-          Hint = 
-            'Click on the button and afterwards on the object in the image to' +
-            ' get'#13#10'the julia values from there.'#13#10'If in 4d mode, the vector is' +
-            ' rotated according to the 4d rotation values.'#13#10#13#10'Hint: Get the v' +
-            'alues from the non julia calculated object, else the result'#13#10'has' +
-            ' no real relation to that point.'
-          Caption = 'Get values from image'
+          Hint = '@MB:ClickOnTheButtonAndAfterwards2'
+          Caption = '@MB:GetValuesFromImage'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 6
@@ -1347,7 +1299,7 @@ object Mand3DForm: TMand3DForm
         end
       end
       object TabSheet1: TTabSheet
-        Caption = 'Camera'
+        Caption = '@MB:Camera'
         ImageIndex = 5
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -1359,7 +1311,7 @@ object Mand3DForm: TMand3DForm
           Width = 29
           Height = 13
           Alignment = taRightJustify
-          Caption = 'FOVy:'
+          Caption = '@MB:FOVy'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1372,7 +1324,7 @@ object Mand3DForm: TMand3DForm
           Top = 7
           Width = 73
           Height = 21
-          Hint = 'Vertical field of view in degrees'
+          Hint = '@MB:VerticalFieldOfViewInDegrees'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
@@ -1383,12 +1335,12 @@ object Mand3DForm: TMand3DForm
           Top = 41
           Width = 110
           Height = 96
-          Caption = 'Camera lense:'
+          Caption = '@MB:CameraLense'
           ItemIndex = 0
           Items.Strings = (
-            'Common'
-            'Rectilinear'
-            '360 Panorama')
+            '@MB:Common'
+            '@MB:Rectilinear'
+            '@MB:N360Panorama')
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
@@ -1396,7 +1348,7 @@ object Mand3DForm: TMand3DForm
         end
       end
       object TabSheet3: TTabSheet
-        Caption = 'Coloring'
+        Caption = '@MB:Coloring'
         ImageIndex = 6
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -1408,7 +1360,7 @@ object Mand3DForm: TMand3DForm
           Width = 56
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Lli multiplier:'
+          Caption = '@MB:LliMultiplier'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1422,7 +1374,7 @@ object Mand3DForm: TMand3DForm
           Width = 72
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Color on Iterat.:'
+          Caption = '@MB:ColorOnIterat'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1445,20 +1397,16 @@ object Mand3DForm: TMand3DForm
           Top = 2
           Width = 140
           Height = 123
-          Hint = 
-            'The map options calculates x,y coordinates from the specific'#13#10've' +
-            'ctor for spherical maps, this changes also the first color choic' +
-            'e'#13#10'that is usually based on smooth iterations.'#13#10'You have to reca' +
-            'lculate the image to see the result of this'#13#10'options changes.'
-          Caption = 'Mode for 2. color choice:'
+          Hint = '@MB:TheMapOptionsCalculatesXY'
+          Caption = '@MB:ModeFor2ColorChoice'
           ItemIndex = 0
           Items.Strings = (
-            'Orbit trap (mindist. to 0)'
-            'Last length increase'
-            'Rout angle of X, Y'
-            'Rout angle of X, Z'
-            'Rout angle of Y, Z'
-            'Map on output vector')
+            '@MB:OrbitTrapMindistTo0'
+            '@MB:LastLengthIncrease'
+            '@MB:RoutAngleOfXY'
+            '@MB:RoutAngleOfXZ'
+            '@MB:RoutAngleOfYZ'
+            '@MB:MapOnOutputVector')
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
@@ -1468,9 +1416,7 @@ object Mand3DForm: TMand3DForm
           Top = 129
           Width = 65
           Height = 21
-          Hint = 
-            'Multiplier for the '#39'Last length increase'#39' option.'#13#10'Decrease the ' +
-            'value on high powers, increase on formulas with low scales.'
+          Hint = '@MB:MultiplierForTheLastLengthIncrease'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
@@ -1491,9 +1437,7 @@ object Mand3DForm: TMand3DForm
           Top = 153
           Width = 49
           Height = 21
-          Hint = 
-            'Does the coloring after this number of iterations and not from b' +
-            'ailout (-1,  disabled)'
+          Hint = '@MB:DoesTheColoringAfterThisNumber'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
@@ -1504,10 +1448,8 @@ object Mand3DForm: TMand3DForm
           Top = 175
           Width = 83
           Height = 25
-          Hint = 
-            'Press to switch between dynamic fog on iterations and volumetric' +
-            ' light on light nr'
-          Caption = 'Dyn. fog on It.:'
+          Hint = '@MB:PressToSwitchBetweenDynamicFog'
+          Caption = '@MB:DynFogOnIt'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
@@ -1518,7 +1460,7 @@ object Mand3DForm: TMand3DForm
           Top = 176
           Width = 19
           Height = 22
-          Hint = 'Tune the size of the volumetric map in 20% steps'
+          Hint = '@MB:TuneTheSizeOfTheVolumetric'
           Min = -2
           Max = 9
           ParentShowHint = False
@@ -1529,7 +1471,7 @@ object Mand3DForm: TMand3DForm
         end
       end
       object TabSheet6: TTabSheet
-        Caption = 'Stereo'
+        Caption = '@MB:Stereo'
         ImageIndex = 7
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -1541,7 +1483,7 @@ object Mand3DForm: TMand3DForm
           Width = 60
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Image width:'
+          Caption = '@MB:ImageWidth'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1555,7 +1497,7 @@ object Mand3DForm: TMand3DForm
           Width = 80
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Screen distance:'
+          Caption = '@MB:ScreenDistance'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1569,7 +1511,7 @@ object Mand3DForm: TMand3DForm
           Width = 81
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Minimal distance:'
+          Caption = '@MB:MinimalDistance'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1582,7 +1524,7 @@ object Mand3DForm: TMand3DForm
           Top = 12
           Width = 124
           Height = 13
-          Caption = 'All realworld units in meter.'
+          Caption = '@MB:AllRealworldUnitsInMeter'
           Visible = False
         end
         object Edit15: TEdit
@@ -1590,7 +1532,7 @@ object Mand3DForm: TMand3DForm
           Top = 59
           Width = 49
           Height = 21
-          Hint = 'Defines the realworld image width on the screen in meters.'
+          Hint = '@MB:DefinesTheRealworldImageWidthOn'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
@@ -1602,7 +1544,7 @@ object Mand3DForm: TMand3DForm
           Top = 35
           Width = 49
           Height = 21
-          Hint = 'Defines the realworld distance to the viewing screen in meters.'
+          Hint = '@MB:DefinesTheRealworldDistanceToThe'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 1
@@ -1614,10 +1556,7 @@ object Mand3DForm: TMand3DForm
           Top = 83
           Width = 49
           Height = 21
-          Hint = 
-            'Defines how near (in meters) the Zstart plane lies in front of y' +
-            'ou.'#13#10'It is also the minimum distance that a (virtual) object can' +
-            ' appear.'
+          Hint = '@MB:DefinesHowNearInMetersThe'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
@@ -1630,8 +1569,8 @@ object Mand3DForm: TMand3DForm
           Top = 170
           Width = 131
           Height = 22
-          Hint = 'Render both eye images and show a side-by-side stereo preview without saving it.'
-          Caption = 'Render stereo pair'
+          Hint = '@MB:RenderBothEyeImagesAndShow'
+          Caption = '@MB:RenderStereoPair'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 6
@@ -1642,8 +1581,8 @@ object Mand3DForm: TMand3DForm
           Top = 198
           Width = 131
           Height = 22
-          Hint = 'Choose a filename, then render both eye images and save the completed stereo pair automatically.'
-          Caption = 'Render && save stereo pair'
+          Hint = '@MB:ChooseAFilenameThenRenderBoth'
+          Caption = '@MB:RenderSaveStereoPair'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 7
@@ -1654,8 +1593,8 @@ object Mand3DForm: TMand3DForm
           Top = 8
           Width = 135
           Height = 17
-          Hint = 'Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.'
-          Caption = 'Cross-eyed preview'
+          Hint = '@MB:OffLeftImageIsOnThe'
+          Caption = '@MB:CrossEyedPreview'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
@@ -1666,11 +1605,8 @@ object Mand3DForm: TMand3DForm
           Top = 8
           Width = 131
           Height = 21
-          Hint = 
-            'Click on the button and afterwards on the object in the image to' +
-            ' get'#13#10'the non shifted object distance.'#13#10'The object part would ap' +
-            'pear in the real distance of the screen.'
-          Caption = 'Get min.dist. from image'
+          Hint = '@MB:ClickOnTheButtonAndAfterwards3'
+          Caption = '@MB:GetMinDistFromImage'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 8
@@ -1683,11 +1619,8 @@ object Mand3DForm: TMand3DForm
           Top = 114
           Width = 131
           Height = 22
-          Hint = 
-            'After calculation all user light changes are cancelled because o' +
-            'f different lightangles.'#13#10'Calculating in normal mode will enable' +
-            ' it again.'
-          Caption = 'Calculate left eye image'
+          Hint = '@MB:AfterCalculationAllUserLightChanges'
+          Caption = '@MB:CalculateLeftEyeImage'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
@@ -1699,11 +1632,8 @@ object Mand3DForm: TMand3DForm
           Top = 142
           Width = 131
           Height = 22
-          Hint = 
-            'After calculation all user light changes are cancelled because o' +
-            'f different lightangles.'#13#10'Calculating in normal mode will enable' +
-            ' it again.'
-          Caption = 'Calculate right eye image'
+          Hint = '@MB:AfterCalculationAllUserLightChanges'
+          Caption = '@MB:CalculateRightEyeImage'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 5
@@ -1823,11 +1753,11 @@ object Mand3DForm: TMand3DForm
         Top = 71
         Width = 47
         Height = 21
-        Hint = 'Quick quality settings'
+        Hint = '@MB:QuickQualitySettings'
         AllowAllUp = True
         GroupIndex = 3
         Down = True
-        Caption = 'preview'
+        Caption = '@MB:Preview'
         Flat = True
         ParentShowHint = False
         ShowHint = True
@@ -1841,7 +1771,7 @@ object Mand3DForm: TMand3DForm
         Height = 21
         AllowAllUp = True
         GroupIndex = 3
-        Caption = 'mid'
+        Caption = '@MB:Mid'
         Flat = True
         OnClick = SpeedButton3Click
       end
@@ -1853,7 +1783,7 @@ object Mand3DForm: TMand3DForm
         Height = 21
         AllowAllUp = True
         GroupIndex = 3
-        Caption = 'high'
+        Caption = '@MB:High'
         Flat = True
         OnClick = SpeedButton3Click
       end
@@ -1865,7 +1795,7 @@ object Mand3DForm: TMand3DForm
         Height = 21
         AllowAllUp = True
         GroupIndex = 3
-        Caption = 'video'
+        Caption = '@MB:Video'
         Flat = True
         OnClick = SpeedButton3Click
       end
@@ -1874,9 +1804,7 @@ object Mand3DForm: TMand3DForm
         Top = 3
         Width = 27
         Height = 21
-        Hint = 
-          'Leftclick:   Undo -> Sets the parameter to the state before the ' +
-          'last calculation'#13#10'Rightclick: Redo'
+        Hint = '@MB:LeftclickUndoSetsTheParameterTo'
         Enabled = False
         Flat = True
         Glyph.Data = {
@@ -1897,8 +1825,8 @@ object Mand3DForm: TMand3DForm
         Top = 25
         Width = 81
         Height = 43
-        Hint = 'Main rendering of the image'
-        Caption = 'Calculate 3D'
+        Hint = '@MB:MainRenderingOfTheImage'
+        Caption = '@MB:Calculate3D'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
@@ -1910,10 +1838,8 @@ object Mand3DForm: TMand3DForm
         Top = 6
         Width = 63
         Height = 20
-        Hint = 
-          'Press to bring up the formula window'#13#10'Rightclick for sticky opti' +
-          'ons.'
-        Caption = 'Formulas'
+        Hint = '@MB:PressToBringUpTheFormula'
+        Caption = '@MB:Formulas'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 1
@@ -1926,10 +1852,8 @@ object Mand3DForm: TMand3DForm
         Top = 48
         Width = 63
         Height = 20
-        Hint = 
-          'Press to bring up the postprocessing window.'#13#10'Rightclick for sti' +
-          'cky options.'
-        Caption = 'Postprocess'
+        Hint = '@MB:PressToBringUpThePostprocessing'
+        Caption = '@MB:Postprocess'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 2
@@ -1942,8 +1866,8 @@ object Mand3DForm: TMand3DForm
         Top = 6
         Width = 37
         Height = 19
-        Hint = 'Calculate a fast 8x8 blocky image without proper lighting'
-        Caption = 'Calc-'
+        Hint = '@MB:CalculateAFast8x8BlockyImage'
+        Caption = '@MB:Calc'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 3
@@ -1955,10 +1879,8 @@ object Mand3DForm: TMand3DForm
         Top = 27
         Width = 63
         Height = 20
-        Hint = 
-          'Press to bring up the light+color adjust window.'#13#10'Rightclick for' +
-          ' sticky options.'
-        Caption = 'Lighting'
+        Hint = '@MB:PressToBringUpTheLight'
+        Caption = '@MB:Lighting'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 4
@@ -1988,9 +1910,7 @@ object Mand3DForm: TMand3DForm
         Top = 3
         Width = 48
         Height = 29
-        Hint = 
-          'Push down to 2D zoom in (out) with left (right) click on the ima' +
-          'ge,'#13#10'or by marking a zoom-in area.'
+        Hint = '@MB:PushDownTo2DZoomIn'
         AllowAllUp = True
         GroupIndex = 1
         Down = True
@@ -2097,7 +2017,7 @@ object Mand3DForm: TMand3DForm
         Top = 3
         Width = 41
         Height = 29
-        Hint = 'Push down to shift the object in X,Y direction with the mouse.'
+        Hint = '@MB:PushDownToShiftTheObject'
         AllowAllUp = True
         GroupIndex = 1
         Flat = True
@@ -2203,7 +2123,7 @@ object Mand3DForm: TMand3DForm
         Top = 3
         Width = 41
         Height = 29
-        Hint = 'Push down to move the object in the Z direction with the mouse.'
+        Hint = '@MB:PushDownToMoveTheObject'
         AllowAllUp = True
         GroupIndex = 1
         Flat = True
@@ -2316,10 +2236,7 @@ object Mand3DForm: TMand3DForm
         Top = 0
         Width = 18
         Height = 17
-        Hint = 
-          'Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zm' +
-          'id values'#13#10'Rightclick: Rotate the bulb around the objects X axis' +
-          ' @ 0'
+        Hint = '@MB:LeftclickRotateTheBulbAroundThe'
         AllowAllUp = True
         Flat = True
         Glyph.Data = {
@@ -2354,10 +2271,7 @@ object Mand3DForm: TMand3DForm
         Top = 17
         Width = 18
         Height = 17
-        Hint = 
-          'Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zm' +
-          'id values'#13#10'Rightclick: Rotate the bulb around the objects X axis' +
-          ' @ 0'
+        Hint = '@MB:LeftclickRotateTheBulbAroundThe'
         AllowAllUp = True
         Flat = True
         Glyph.Data = {
@@ -2392,10 +2306,7 @@ object Mand3DForm: TMand3DForm
         Top = 8
         Width = 17
         Height = 19
-        Hint = 
-          'Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zm' +
-          'id values'#13#10'Rightclick: Rotate the bulb around the objects Y axis' +
-          ' @ 0'
+        Hint = '@MB:LeftclickRotateTheBulbAroundThe2'
         AllowAllUp = True
         Flat = True
         Glyph.Data = {
@@ -2428,10 +2339,7 @@ object Mand3DForm: TMand3DForm
         Top = 8
         Width = 16
         Height = 19
-        Hint = 
-          'Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zm' +
-          'id values'#13#10'Rightclick: Rotate the bulb around the objects Y axis' +
-          ' @ 0'
+        Hint = '@MB:LeftclickRotateTheBulbAroundThe2'
         AllowAllUp = True
         Flat = True
         Glyph.Data = {
@@ -2470,10 +2378,7 @@ object Mand3DForm: TMand3DForm
         Top = 0
         Width = 20
         Height = 17
-        Hint = 
-          'Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ym' +
-          'id values'#13#10'Rightclick: Rotate the bulb around the objects Z axis' +
-          ' @ 0'
+        Hint = '@MB:LeftclickRotateTheBulbAroundThe3'
         AllowAllUp = True
         Flat = True
         Glyph.Data = {
@@ -2509,10 +2414,7 @@ object Mand3DForm: TMand3DForm
         Top = 17
         Width = 20
         Height = 17
-        Hint = 
-          'Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ym' +
-          'id values'#13#10'Rightclick: Rotate the bulb around the objects Z axis' +
-          ' @ 0'
+        Hint = '@MB:LeftclickRotateTheBulbAroundThe3'
         AllowAllUp = True
         Flat = True
         Glyph.Data = {
@@ -2556,7 +2458,7 @@ object Mand3DForm: TMand3DForm
         Top = 7
         Width = 30
         Height = 21
-        Hint = 'Degree of rotation'
+        Hint = '@MB:DegreeOfRotation'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 1
@@ -2575,7 +2477,7 @@ object Mand3DForm: TMand3DForm
           Top = 9
           Width = 32
           Height = 13
-          Caption = 'Frame:'
+          Caption = '@MB:Frame'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -2589,7 +2491,7 @@ object Mand3DForm: TMand3DForm
           Top = 7
           Width = 49
           Height = 21
-          Hint = 'Frame number to use for animated maps in the main editor'
+          Hint = '@MB:FrameNumberToUseForAnimated'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 0
@@ -2601,7 +2503,7 @@ object Mand3DForm: TMand3DForm
           Top = 7
           Width = 18
           Height = 21
-          Hint = 'Increase/decrease frame number'
+          Hint = '@MB:IncreaseDecreaseFrameNumber'
           Min = -30000
           Max = 30000
           ParentShowHint = False
@@ -2671,8 +2573,8 @@ object Mand3DForm: TMand3DForm
         Top = 5
         Width = 52
         Height = 30
-        Hint = 'Open the animation maker'
-        Caption = 'Animations'
+        Hint = '@MB:OpenTheAnimationMaker'
+        Caption = '@MB:Animations'
         ParentShowHint = False
         ShowHint = True
         OnClick = SpeedButton12Click
@@ -2682,8 +2584,8 @@ object Mand3DForm: TMand3DForm
         Top = 38
         Width = 52
         Height = 31
-        Hint = 'Open the Navigator'
-        Caption = 'Navigator'
+        Hint = '@MB:OpenTheNavigator'
+        Caption = '@MB:Navigator'
         ParentShowHint = False
         ShowHint = True
         Spacing = 0
@@ -2694,8 +2596,8 @@ object Mand3DForm: TMand3DForm
         Top = 5
         Width = 52
         Height = 30
-        Hint = 'Create Meshes'
-        Caption = 'BTracer2'
+        Hint = '@MB:CreateMeshes'
+        Caption = '@MB:BTracer2'
         ParentShowHint = False
         ShowHint = True
         OnClick = MeshExportBtnClick
@@ -2705,8 +2607,8 @@ object Mand3DForm: TMand3DForm
         Top = 38
         Width = 52
         Height = 31
-        Hint = 'Open the MutaGen'
-        Caption = 'MutaGen'
+        Hint = '@MB:OpenTheMutaGen'
+        Caption = '@MB:MutaGen'
         ParentShowHint = False
         ShowHint = True
         Spacing = 0
@@ -2717,8 +2619,8 @@ object Mand3DForm: TMand3DForm
         Top = 38
         Width = 52
         Height = 30
-        Hint = 'Advanced ZBuffer generator'
-        Caption = 'ZBuf16Bit'
+        Hint = '@MB:AdvancedZBufferGenerator'
+        Caption = '@MB:ZBuf16Bit'
         ParentShowHint = False
         ShowHint = True
         OnClick = ZBufferGenBtnClick
@@ -2728,8 +2630,8 @@ object Mand3DForm: TMand3DForm
         Top = 5
         Width = 52
         Height = 30
-        Hint = 'Script Editor'
-        Caption = 'HMapGen'
+        Hint = '@MB:ScriptEditor'
+        Caption = '@MB:HMapGen'
         ParentShowHint = False
         ShowHint = True
         OnClick = HeightMapGenBtnClick
@@ -2739,14 +2641,14 @@ object Mand3DForm: TMand3DForm
         Top = 1
         Width = 205
         Height = 69
-        Caption = 'Image'
+        Caption = '@MB:Image'
         TabOrder = 0
         object Label11: TLabel
           Left = 8
           Top = 14
           Width = 31
           Height = 13
-          Caption = 'Width:'
+          Caption = '@MB:Width'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -2760,7 +2662,7 @@ object Mand3DForm: TMand3DForm
           Top = 23
           Width = 34
           Height = 14
-          Hint = 'Click to set the image height to fit this aspect ratio.'
+          Hint = '@MB:ClickToSetTheImageHeight'
           AllowAllUp = True
           Caption = '4:3'
           Flat = True
@@ -2774,7 +2676,7 @@ object Mand3DForm: TMand3DForm
           Top = 37
           Width = 34
           Height = 14
-          Hint = 'Click to set the image height to fit this aspect ratio.'
+          Hint = '@MB:ClickToSetTheImageHeight'
           AllowAllUp = True
           Caption = '5:3'
           Flat = True
@@ -2788,9 +2690,9 @@ object Mand3DForm: TMand3DForm
           Top = 51
           Width = 34
           Height = 14
-          Hint = 'User defined apect ratio.'#13#10'Rightclick to define the ratio.'
+          Hint = '@MB:UserDefinedApectRatioRightclickTo'
           AllowAllUp = True
-          Caption = 'user'
+          Caption = '@MB:User'
           Flat = True
           ParentShowHint = False
           ShowHint = True
@@ -2802,7 +2704,7 @@ object Mand3DForm: TMand3DForm
           Top = 8
           Width = 36
           Height = 13
-          Caption = 'Aspect:'
+          Caption = '@MB:Aspect'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -2815,14 +2717,14 @@ object Mand3DForm: TMand3DForm
           Top = 14
           Width = 34
           Height = 13
-          Caption = 'Height:'
+          Caption = '@MB:Height'
         end
         object Label12: TLabel
           Left = 115
           Top = 14
           Width = 30
           Height = 13
-          Caption = 'Scale:'
+          Caption = '@MB:Scale'
         end
         object Edit11: TEdit
           Tag = 1
@@ -2849,10 +2751,8 @@ object Mand3DForm: TMand3DForm
           Top = 51
           Width = 82
           Height = 15
-          Hint = 
-            'Keep the aspect ratio when manually changing the width or height' +
-            '.'#13#10'No need to uncheck if pressing an aspect button.'
-          Caption = 'keep aspect'
+          Hint = '@MB:KeepTheAspectRatioWhenManually'
+          Caption = '@MB:KeepAspect'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -2865,10 +2765,8 @@ object Mand3DForm: TMand3DForm
           Top = 51
           Width = 68
           Height = 15
-          Hint = 
-            'Scale ClipRadius (DoF) and the DE stop value'#13#10'to keep the detail' +
-            ' level and colors.'
-          Caption = 'DEstop+C'
+          Hint = '@MB:ScaleClipRadiusDoFAndTheDE'
+          Caption = '@MB:DEstopC'
           Checked = True
           ParentShowHint = False
           ShowHint = True
@@ -2880,7 +2778,7 @@ object Mand3DForm: TMand3DForm
           Top = 29
           Width = 30
           Height = 21
-          Hint = 'Scale the image size by 2, up or down.'
+          Hint = '@MB:ScaleTheImageSizeBy2'
           Min = -30000
           Max = 30000
           ParentShowHint = False
@@ -2897,7 +2795,7 @@ object Mand3DForm: TMand3DForm
         ActivePage = TabSheet12
         TabOrder = 1
         object TabSheet7: TTabSheet
-          Caption = 'Open'
+          Caption = '@MB:Open'
           ExplicitLeft = 0
           ExplicitTop = 0
           ExplicitWidth = 0
@@ -2907,8 +2805,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 60
             Height = 31
-            Hint = 'Open full M3I'
-            Caption = 'Open m3i'
+            Hint = '@MB:OpenFullM3I'
+            Caption = '@MB:OpenM3i'
             ParentShowHint = False
             ShowHint = True
             OnClick = Button9Click
@@ -2918,8 +2816,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 60
             Height = 30
-            Hint = 'Open parameter'
-            Caption = 'Open m3p'
+            Hint = '@MB:OpenParameter'
+            Caption = '@MB:OpenM3p'
             ParentShowHint = False
             ShowHint = True
             OnClick = Button5Click
@@ -2929,8 +2827,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 40
             Height = 30
-            Hint = 'Unfinished renders: continue or delete them'
-            Caption = 'Resume'
+            Hint = '@MB:UnfinishedRendersContinueOrDeleteThem'
+            Caption = '@MB:Resume'
             ParentShowHint = False
             ShowHint = True
             OnClick = ResumeBtnClick
@@ -2940,18 +2838,15 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 83
             Height = 30
-            Hint = 
-              'Open parameter from Clipboard text:'#13#10'Select parameter text inclu' +
-              'ding '#39'Mandel...{..}'#39','#13#10'press ctrl+c and afterwards the open-txt ' +
-              'button.'
-            Caption = 'From Clipboard'
+            Hint = '@MB:OpenParameterFromClipboardTextSelect'
+            Caption = '@MB:FromClipboard'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton8Click
           end
         end
         object TabSheet10: TTabSheet
-          Caption = 'Save'
+          Caption = '@MB:Save'
           ImageIndex = 1
           ExplicitLeft = 0
           ExplicitTop = 0
@@ -2962,7 +2857,7 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 40
             Height = 31
-            Hint = 'Save complete M3I'
+            Hint = '@MB:SaveCompleteM3I'
             Caption = 'm3i'
             ParentShowHint = False
             ShowHint = True
@@ -2973,7 +2868,7 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 40
             Height = 30
-            Hint = 'Save parameters only'
+            Hint = '@MB:SaveParametersOnly'
             Caption = 'm3p'
             ParentShowHint = False
             ShowHint = True
@@ -2984,10 +2879,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 69
             Height = 30
-            Hint = 
-              'Save parameters to Clipboard as text,'#13#10'afterwards you can press ' +
-              'ctrl+v to insert the text somewhere else.'
-            Caption = 'To Clipboard'
+            Hint = '@MB:SaveParametersToClipboardAsText'
+            Caption = '@MB:ToClipboard'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton7Click
@@ -2997,8 +2890,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 49
             Height = 30
-            Hint = 'Save image + parameters'
-            Caption = 'JPEG+P'
+            Hint = '@MB:SaveImageParameters'
+            Caption = '@MB:JPEGP'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton29Click
@@ -3008,10 +2901,8 @@ object Mand3DForm: TMand3DForm
             Top = 9
             Width = 36
             Height = 20
-            Hint = 
-              'Save m3i files including the internal image buffer, saving refle' +
-              'ctions etc.'
-            Caption = 'Img'
+            Hint = '@MB:SaveM3iFilesIncludingTheInternal'
+            Caption = '@MB:Img'
             Checked = True
             ParentShowHint = False
             ShowHint = True
@@ -3020,15 +2911,15 @@ object Mand3DForm: TMand3DForm
           end
         end
         object TabSheet12: TTabSheet
-          Caption = 'Save pic'
+          Caption = '@MB:SavePic'
           ImageIndex = 2
           object Button3: TSpeedButton
             Left = 2
             Top = 4
             Width = 40
             Height = 30
-            Hint = 'Save the image as BMP or PNG file, scaled like the current view.'
-            Caption = 'PNG'
+            Hint = '@MB:SaveTheImageAsBMPOr'
+            Caption = '@MB:PNG'
             ParentShowHint = False
             ShowHint = True
             OnClick = Button3Click
@@ -3038,8 +2929,8 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 40
             Height = 30
-            Hint = 'Save the image as JPEG file, scaled like the current view.'
-            Caption = 'JPEG'
+            Hint = '@MB:SaveTheImageAsJPEGFile'
+            Caption = '@MB:JPEG'
             ParentShowHint = False
             ShowHint = True
             OnClick = SBsaveJPEGClick
@@ -3049,10 +2940,8 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 40
             Height = 30
-            Hint = 
-              'Save a Z buffer image as BMP or PNG file, scaled like the curren' +
-              't view.'
-            Caption = 'ZBUF'
+            Hint = '@MB:SaveAZBufferImageAs'
+            Caption = '@MB:ZBUF'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton26Click
@@ -3062,7 +2951,7 @@ object Mand3DForm: TMand3DForm
             Top = 0
             Width = 29
             Height = 13
-            Caption = 'sharp:'
+            Caption = '@MB:Sharp'
           end
           object Label23: TLabel
             Left = 169
@@ -3077,21 +2966,21 @@ object Mand3DForm: TMand3DForm
             Top = 0
             Width = 29
             Height = 13
-            Caption = 'jpg q.:'
+            Caption = '@MB:JpgQ'
           end
           object Label42: TLabel
             Left = 212
             Top = 0
             Width = 39
             Height = 13
-            Caption = 'png par:'
+            Caption = '@MB:PngPar'
           end
           object Edit26: TEdit
             Left = 131
             Top = 14
             Width = 29
             Height = 21
-            Hint = '1..100: JPEG quality'#13#10'> 100: maximal filesize in kilobytes'
+            Hint = '@MB:N1100JPEGQuality100Maximal'
             ParentShowHint = False
             ShowHint = True
             TabOrder = 0
@@ -3102,9 +2991,7 @@ object Mand3DForm: TMand3DForm
             Top = 16
             Width = 17
             Height = 17
-            Hint = 
-              'Save text parameters in the PNG file, if selected.'#13#10'You can see ' +
-              'these for example in gimp under'#13#10#39'Image Properties'#39' -> Comment.'
+            Hint = '@MB:SaveTextParametersInThePNG'
             ParentShowHint = False
             ShowHint = True
             TabOrder = 1
@@ -3123,7 +3010,7 @@ object Mand3DForm: TMand3DForm
           end
         end
         object TabSheet11: TTabSheet
-          Caption = 'Tools'
+          Caption = '@MB:Tools'
           ImageIndex = 3
           ExplicitLeft = 0
           ExplicitTop = 0
@@ -3134,7 +3021,7 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 50
             Height = 30
-            Hint = 'Convert many M3P files to M3I'
+            Hint = '@MB:ConvertManyM3PFilesToM3I'
             Caption = 'm3p->m3i'
             ParentShowHint = False
             ShowHint = True
@@ -3146,8 +3033,8 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 60
             Height = 30
-            Hint = 'Export a cube as a stack of PNG files'
-            Caption = 'Voxelstack'
+            Hint = '@MB:ExportACubeAsAStack'
+            Caption = '@MB:Voxelstack'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton24Click
@@ -3157,8 +3044,8 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 58
             Height = 30
-            Hint = 'Generate big images by tiling'
-            Caption = 'Big render'
+            Hint = '@MB:GenerateBigImagesByTiling'
+            Caption = '@MB:BigRender'
             ParentShowHint = False
             ShowHint = True
             OnClick = SpeedButton27Click
@@ -3168,7 +3055,7 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 34
             Height = 30
-            Hint = 'Monte Carlo rendering'
+            Hint = '@MB:MonteCarloRendering'
             Caption = 'M.C.'
             ParentShowHint = False
             ShowHint = True
@@ -3179,15 +3066,15 @@ object Mand3DForm: TMand3DForm
             Top = 4
             Width = 40
             Height = 30
-            Hint = 'Share rendering between your computers through a shared folder'
-            Caption = 'Swarm'
+            Hint = '@MB:ShareRenderingBetweenYourComputersThrough'
+            Caption = '@MB:Swarm'
             ParentShowHint = False
             ShowHint = True
             OnClick = SwarmBtnClick
           end
         end
         object TabSheet13: TTabSheet
-          Caption = 'Prefs'
+          Caption = '@MB:Prefs'
           ImageIndex = 4
           ExplicitLeft = 0
           ExplicitTop = 0
@@ -3198,8 +3085,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 48
             Height = 30
-            Hint = 'Define default directories for loading+saving'
-            Caption = 'Ini Dirs'
+            Hint = '@MB:DefineDefaultDirectoriesForLoadingSaving'
+            Caption = '@MB:IniDirs'
             ParentShowHint = False
             ShowHint = True
             OnClick = IniDirsBtnClick
@@ -3209,8 +3096,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 72
             Height = 30
-            Hint = 'Define image sequences to animate height- and color maps'
-            Caption = 'Map Sequences'
+            Hint = '@MB:DefineImageSequencesToAnimateHeight'
+            Caption = '@MB:MapSequences'
             ParentShowHint = False
             ShowHint = True
             OnClick = MapSequencesBtnClick
@@ -3220,8 +3107,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 48
             Height = 30
-            Hint = 'Set the visual theme of the application'
-            Caption = 'Themes'
+            Hint = '@MB:SetTheVisualThemeOfThe'
+            Caption = '@MB:Themes'
             ParentShowHint = False
             ShowHint = True
             OnClick = VisualThemesBtnClick
@@ -3231,8 +3118,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 50
             Height = 30
-            Hint = 'Keys that bring a window to the front from any window'
-            Caption = 'Hotkeys'
+            Hint = '@MB:KeysThatBringAWindowTo'
+            Caption = '@MB:Hotkeys'
             ParentShowHint = False
             ShowHint = True
             OnClick = HotkeysBtnClick
@@ -3242,8 +3129,8 @@ object Mand3DForm: TMand3DForm
             Top = 3
             Width = 24
             Height = 30
-            Hint = 'Connect to an AI assistant: let it describe, change and render your pictures'
-            Caption = 'AI'
+            Hint = '@MB:ConnectToAnAIAssistantLet'
+            Caption = '@MB:AI'
             ParentShowHint = False
             ShowHint = True
             OnClick = AiBtnClick
@@ -3255,7 +3142,7 @@ object Mand3DForm: TMand3DForm
         Top = 1
         Width = 49
         Height = 69
-        Caption = 'Viewing'
+        Caption = '@MB:Viewing'
         TabOrder = 2
         object SpeedButton35: TSpeedButton
           Tag = 1
@@ -3263,10 +3150,7 @@ object Mand3DForm: TMand3DForm
           Top = 17
           Width = 31
           Height = 19
-          Hint = 
-            'Image downscaling for viewing purpose and for saving as jpeg, pn' +
-            'g or bmp.'#13#10'Only at scales 1:2 and 1:3 an anti aliasing filter is' +
-            ' performed on saving.'#13#10'Click for a selection menu.'
+          Hint = '@MB:ImageDownscalingForViewingPurposeAnd'
           AllowAllUp = True
           Caption = '1:1'
           Flat = True
@@ -3361,12 +3245,12 @@ object Mand3DForm: TMand3DForm
     end
     object N12aa1: TMenuItem
       Tag = 2
-      Caption = '1:2  aa'
+      Caption = '@MB:N12Aa'
       OnClick = N111Click
     end
     object N13aa1: TMenuItem
       Tag = 3
-      Caption = '1:3  aa'
+      Caption = '@MB:N13Aa'
       OnClick = N111Click
     end
     object N141: TMenuItem
@@ -3418,17 +3302,17 @@ object Mand3DForm: TMand3DForm
     Top = 160
     object Stickthiswindowtotherightside1: TMenuItem
       Tag = 1
-      Caption = 'Stick this window to the right side'
+      Caption = '@MB:StickThisWindowToTheRight'
       Checked = True
       OnClick = Stickthiswindowtotherightside1Click
     end
     object Stickthiswindowtotheleftside1: TMenuItem
       Tag = 2
-      Caption = 'Stick this window to the left side'
+      Caption = '@MB:StickThisWindowToTheLeft'
       OnClick = Stickthiswindowtotherightside1Click
     end
     object Donotmakethiswindowsticky1: TMenuItem
-      Caption = 'Do not make this window sticky'
+      Caption = '@MB:DoNotMakeThisWindowSticky'
       OnClick = Stickthiswindowtotherightside1Click
     end
   end
@@ -3436,7 +3320,7 @@ object Mand3DForm: TMand3DForm
     Left = 576
     Top = 200
     object StartrenderingandsaveafterwardstheM3Ifile1: TMenuItem
-      Caption = 'Start rendering and save afterwards the M3I file automatically!'
+      Caption = '@MB:StartRenderingAndSaveAfterwardsThe'
       OnClick = StartrenderingandsaveafterwardstheM3Ifile1Click
     end
   end
@@ -3456,11 +3340,11 @@ object Mand3DForm: TMand3DForm
     Left = 192
     Top = 168
     object ShapeDisc1: TMenuItem
-      Caption = 'Disc'
+      Caption = '@MB:Disc'
       OnClick = ShapeDisc1Click
     end
     object ShapeBox1: TMenuItem
-      Caption = 'Rect'
+      Caption = '@MB:Rect'
       OnClick = ShapeBox1Click
     end
   end

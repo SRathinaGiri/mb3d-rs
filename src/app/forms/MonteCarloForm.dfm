@@ -1,7 +1,7 @@
 object MCForm: TMCForm
   Left = 363
   Top = 197
-  Caption = 'Monte carlo rendering '
+  Caption = '@MB:MonteCarloRendering2'
   ClientHeight = 562
   ClientWidth = 801
   Color = clBtnFace
@@ -32,7 +32,7 @@ object MCForm: TMCForm
       Top = 9
       Width = 30
       Height = 30
-      Hint = 'Open a m3c file'
+      Hint = '@MB:OpenAM3cFile'
       Glyph.Data = {
         16060000424D1606000000000000360400002800000012000000180000000100
         080000000000E0010000C30E0000C30E00000001000000010000000000000000
@@ -92,7 +92,7 @@ object MCForm: TMCForm
       Top = 8
       Width = 30
       Height = 30
-      Hint = 'Save a m3c file'
+      Hint = '@MB:SaveAM3cFile'
       Enabled = False
       Glyph.Data = {
         16060000424D1606000000000000360400002800000012000000180000000100
@@ -153,9 +153,7 @@ object MCForm: TMCForm
       Top = 10
       Width = 33
       Height = 30
-      Hint = 
-        'Save the image as BMP or PNG file. When the option '#39'With ZBuffer' +
-        #39' is enabled then the z-buffer is saved as well.'
+      Hint = '@MB:SaveTheImageAsBMPOr2'
       Enabled = False
       Glyph.Data = {
         F6010000424DF601000000000000760000002800000019000000180000000100
@@ -183,8 +181,8 @@ object MCForm: TMCForm
       Top = 8
       Width = 154
       Height = 31
-      Hint = 'open/close batch panel'
-      Caption = 'M.C. batch render'
+      Hint = '@MB:OpenCloseBatchPanel'
+      Caption = '@MB:MCBatchRender'
       Glyph.Data = {
         46020000424D460200000000000036000000280000000C0000000B0000000100
         200000000000100200000000000000000000000000000000000084C4C30084C4
@@ -214,8 +212,8 @@ object MCForm: TMCForm
       Top = 12
       Width = 105
       Height = 25
-      Hint = 'Import the main programs parameter for mc rendering'
-      Caption = 'Import parameter'
+      Hint = '@MB:ImportTheMainProgramsParameterFor'
+      Caption = '@MB:ImportParameter'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -226,8 +224,8 @@ object MCForm: TMCForm
       Top = 12
       Width = 127
       Height = 25
-      Hint = 'send parameter to programs main render window'
-      Caption = 'Send parameter to main'
+      Hint = '@MB:SendParameterToProgramsMainRender'
+      Caption = '@MB:SendParameterToMain'
       Enabled = False
       ParentShowHint = False
       ShowHint = True
@@ -239,12 +237,8 @@ object MCForm: TMCForm
       Top = 12
       Width = 48
       Height = 25
-      Hint = 
-        'Noise filter on the shown picture (DCT denoising as GIMP'#39's "Denois' +
-        'e DCT"),'#13#10'its strength estimated from the rays. The rendering ' +
-        'itself is not changed;'#13#10'the next update shows it unfiltered again' +
-        '.'
-      Caption = '-noise'
+      Hint = '@MB:NoiseFilterOnTheShownPicture'
+      Caption = '@MB:Noise'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -255,11 +249,8 @@ object MCForm: TMCForm
       Top = 12
       Width = 44
       Height = 25
-      Hint = 
-        'Neural noise filter on the shown picture (Intel Open Image Denoi' +
-        'se).'#13#10'The rendering itself is not changed; the next update sho' +
-        'ws it unfiltered again.'
-      Caption = '-noise AI'
+      Hint = '@MB:NeuralNoiseFilterOnTheShown'
+      Caption = '@MB:NoiseAI'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
@@ -270,14 +261,9 @@ object MCForm: TMCForm
       Top = 15
       Width = 88
       Height = 17
-      Hint = 
-        'Enable generating z-buffer. This mode requires additional data w' +
-        'hich makes it incompatible with previous versions, so MC-files w' +
-        'ith this setting can not be saved/restored. To save the z-buffer' +
-        ' just save the normal image, the z-buffer is then automatically ' +
-        'saved as well.'
+      Hint = '@MB:EnableGeneratingZBufferThisMode'
       Alignment = taLeftJustify
-      Caption = 'With ZBuffer'
+      Caption = '@MB:WithZBuffer'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -296,7 +282,7 @@ object MCForm: TMCForm
       Top = 8
       Width = 72
       Height = 13
-      Caption = '..til next update'
+      Caption = '@MB:TilNextUpdate'
       Visible = False
     end
     object Label14: TLabel
@@ -316,7 +302,7 @@ object MCForm: TMCForm
       Top = 8
       Width = 75
       Height = 25
-      Caption = 'Close'
+      Caption = '@MB:Close'
       TabOrder = 0
       OnClick = Button1Click
     end
@@ -325,8 +311,8 @@ object MCForm: TMCForm
       Top = 8
       Width = 144
       Height = 25
-      Hint = 'You can always start/continue or stop the calculation'
-      Caption = 'Start rendering'
+      Hint = '@MB:YouCanAlwaysStartContinueOr'
+      Caption = '@MB:StartRendering'
       Enabled = False
       ParentShowHint = False
       ShowHint = True
@@ -346,9 +332,9 @@ object MCForm: TMCForm
       Top = 39
       Width = 134
       Height = 17
-      Hint = 'Save the M3C file every update and 5 minutes passed'
+      Hint = '@MB:SaveTheM3CFileEveryUpdate'
       Alignment = taLeftJustify
-      Caption = 'Auto-saving the m3c file:'
+      Caption = '@MB:AutoSavingTheM3cFile'
       Enabled = False
       ParentShowHint = False
       ShowHint = True
@@ -402,7 +388,7 @@ object MCForm: TMCForm
         object CategoryPanel2: TCategoryPanel
           Top = 200
           Height = 28
-          Caption = 'Statistics'
+          Caption = '@MB:Statistics'
           Collapsed = True
           CollapsedHotImageIndex = 4
           CollapsedImageIndex = 0
@@ -420,7 +406,7 @@ object MCForm: TMCForm
             Width = 71
             Height = 13
             Alignment = taRightJustify
-            Caption = 'Average noise:'
+            Caption = '@MB:AverageNoise'
           end
           object Label5: TLabel
             Left = 35
@@ -428,7 +414,7 @@ object MCForm: TMCForm
             Width = 87
             Height = 13
             Alignment = taRightJustify
-            Caption = 'Average raycount:'
+            Caption = '@MB:AverageRaycount'
           end
           object Label2avrgnoise: TLabel
             Left = 138
@@ -450,7 +436,7 @@ object MCForm: TMCForm
             Width = 51
             Height = 13
             Alignment = taRightJustify
-            Caption = 'Max noise:'
+            Caption = '@MB:MaxNoise'
           end
           object Label11: TLabel
             Left = 55
@@ -458,7 +444,7 @@ object MCForm: TMCForm
             Width = 67
             Height = 13
             Alignment = taRightJustify
-            Caption = 'Max raycount:'
+            Caption = '@MB:MaxRaycount'
           end
           object Label12: TLabel
             Left = 138
@@ -480,7 +466,7 @@ object MCForm: TMCForm
             Width = 103
             Height = 13
             Alignment = taRightJustify
-            Caption = 'Total calculation time:'
+            Caption = '@MB:TotalCalculationTime'
           end
           object Label19: TLabel
             Left = 138
@@ -494,7 +480,7 @@ object MCForm: TMCForm
           Tag = 1
           Top = 172
           Height = 28
-          Caption = 'Depth of Field'
+          Caption = '@MB:DepthOfField2'
           Collapsed = True
           CollapsedHotImageIndex = 4
           CollapsedImageIndex = 0
@@ -519,7 +505,7 @@ object MCForm: TMCForm
             Width = 45
             Height = 13
             AutoSize = False
-            Caption = 'Bokeh:'
+            Caption = '@MB:Bokeh'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -547,14 +533,14 @@ object MCForm: TMCForm
             Top = 99
             Width = 245
             Height = 13
-            Caption = 'More options: send paras to main, adjust and import.'
+            Caption = '@MB:MoreOptionsSendParasToMain'
           end
           object Label26: TLabel
             Left = 4
             Top = 77
             Width = 248
             Height = 13
-            Caption = 'Only 1 focuspoint, made from average of Zsharp1+2!'
+            Caption = '@MB:Only1FocuspointMadeFromAverage'
           end
           object CheckBox4: TCheckBox
             Left = 55
@@ -562,7 +548,7 @@ object MCForm: TMCForm
             Width = 110
             Height = 17
             Alignment = taLeftJustify
-            Caption = 'Calculate DoF:'
+            Caption = '@MB:CalculateDoF'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -589,7 +575,7 @@ object MCForm: TMCForm
           Tag = 15
           Top = 144
           Height = 28
-          Caption = 'Reflections + Transparency'
+          Caption = '@MB:ReflectionsTransparency2'
           Collapsed = True
           CollapsedHotImageIndex = 4
           CollapsedImageIndex = 0
@@ -607,7 +593,7 @@ object MCForm: TMCForm
             Width = 129
             Height = 16
             Alignment = taRightJustify
-            Caption = 'Reflection rays depth:'
+            Caption = '@MB:ReflectionRaysDepth'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -621,7 +607,7 @@ object MCForm: TMCForm
             Width = 110
             Height = 16
             Alignment = taRightJustify
-            Caption = 'Reflection diffusity:'
+            Caption = '@MB:ReflectionDiffusity'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -634,7 +620,7 @@ object MCForm: TMCForm
             Top = 141
             Width = 245
             Height = 13
-            Caption = 'More options: send paras to main, adjust and import.'
+            Caption = '@MB:MoreOptionsSendParasToMain'
           end
           object CheckBox2: TCheckBox
             Left = 30
@@ -642,7 +628,7 @@ object MCForm: TMCForm
             Width = 145
             Height = 17
             Alignment = taLeftJustify
-            Caption = 'Calculate reflections:'
+            Caption = '@MB:CalculateReflections'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -657,9 +643,7 @@ object MCForm: TMCForm
             Top = 34
             Width = 30
             Height = 21
-            Hint = 
-              'determines how many following straight reflections will be calcu' +
-              'lated'
+            Hint = '@MB:DeterminesHowManyFollowingStraightReflections'
             Enabled = False
             ParentShowHint = False
             ReadOnly = True
@@ -684,7 +668,7 @@ object MCForm: TMCForm
             Top = 62
             Width = 48
             Height = 21
-            Hint = 'Makes reflections a little diffuse, value range from 0 to 2.5'
+            Hint = '@MB:MakesReflectionsALittleDiffuseValue'
             Enabled = False
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
@@ -702,9 +686,9 @@ object MCForm: TMCForm
             Top = 91
             Width = 162
             Height = 17
-            Hint = 'Reflections must be calculated too, else this has no effect'
+            Hint = '@MB:ReflectionsMustBeCalculatedTooElse'
             Alignment = taLeftJustify
-            Caption = 'Calculate transparency:'
+            Caption = '@MB:CalculateTransparency'
             Enabled = False
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
@@ -721,10 +705,8 @@ object MCForm: TMCForm
             Top = 91
             Width = 54
             Height = 39
-            Hint = 
-              'Verify that sum of diffuse and specular colors dont exceed 1, de' +
-              'pending on the choosen options'
-            Caption = 'Check colors'
+            Hint = '@MB:VerifyThatSumOfDiffuseAnd'
+            Caption = '@MB:CheckColors'
             Enabled = False
             ParentShowHint = False
             ShowHint = True
@@ -737,11 +719,9 @@ object MCForm: TMCForm
             Top = 113
             Width = 133
             Height = 17
-            Hint = 
-              'Verify while calculating if specular+diffuse amount exceeds 1.  ' +
-              'Useful when using diffmaps.'
+            Hint = '@MB:VerifyWhileCalculatingIfSpecularDiffuse'
             Alignment = taLeftJustify
-            Caption = 'Autoclip spec+diff :'
+            Caption = '@MB:AutoclipSpecDiff'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -756,7 +736,7 @@ object MCForm: TMCForm
         object CategoryPanel1: TCategoryPanel
           Top = 0
           Height = 144
-          Caption = 'Calculation options'
+          Caption = '@MB:CalculationOptions'
           CollapsedHotImageIndex = 4
           CollapsedImageIndex = 0
           CollapsedPressedImageIndex = 4
@@ -773,7 +753,7 @@ object MCForm: TMCForm
             Width = 118
             Height = 16
             Alignment = taRightJustify
-            Caption = 'Ambient rays depth:'
+            Caption = '@MB:AmbientRaysDepth'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -787,7 +767,7 @@ object MCForm: TMCForm
             Width = 123
             Height = 16
             Alignment = taRightJustify
-            Caption = 'Hard shadow radius:'
+            Caption = '@MB:HardShadowRadius'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -801,7 +781,7 @@ object MCForm: TMCForm
             Width = 75
             Height = 16
             Alignment = taRightJustify
-            Caption = 'Anti aliasing:'
+            Caption = '@MB:AntiAliasing'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -13
@@ -814,9 +794,7 @@ object MCForm: TMCForm
             Top = 9
             Width = 30
             Height = 21
-            Hint = 
-              'determines how many following objects diffuse reflections will b' +
-              'e calculated'
+            Hint = '@MB:DeterminesHowManyFollowingObjectsDiffuse'
             ParentShowHint = False
             ReadOnly = True
             ShowHint = True
@@ -839,11 +817,9 @@ object MCForm: TMCForm
             Top = 37
             Width = 146
             Height = 17
-            Hint = 
-              'A faster method than binsearch, but can lead to failures if DE'#39's' +
-              ' are bad'
+            Hint = '@MB:AFasterMethodThanBinsearchBut'
             Alignment = taLeftJustify
-            Caption = 'Secant searchmode:'
+            Caption = '@MB:SecantSearchmode'
             Checked = True
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
@@ -861,9 +837,7 @@ object MCForm: TMCForm
             Top = 62
             Width = 48
             Height = 21
-            Hint = 
-              'Softens the hard shadows. The value is relative to the size of t' +
-              'he lightsource, a bigger value leads to a softer shadow.'
+            Hint = '@MB:SoftensTheHardShadowsTheValue'
             Font.Charset = DEFAULT_CHARSET
             Font.Color = clWindowText
             Font.Height = -11
@@ -887,8 +861,8 @@ object MCForm: TMCForm
             TabOrder = 4
             Text = 'Box'
             Items.Strings = (
-              'Box'
-              'Gauss')
+              '@MB:Box'
+              '@MB:Gauss')
           end
         end
       end
@@ -905,7 +879,7 @@ object MCForm: TMCForm
         Top = 3
         Width = 49
         Height = 16
-        Caption = 'Lighting:'
+        Caption = '@MB:LightingColon'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -13
@@ -919,7 +893,7 @@ object MCForm: TMCForm
         Width = 74
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Exposure:  0.25'
+        Caption = '@MB:Exposure025'
       end
       object Label7: TLabel
         Left = 232
@@ -934,7 +908,7 @@ object MCForm: TMCForm
         Width = 69
         Height = 13
         Alignment = taRightJustify
-        Caption = 'L-Gamma:  0.5'
+        Caption = '@MB:LGamma05'
       end
       object Label30: TLabel
         Left = 232
@@ -949,7 +923,7 @@ object MCForm: TMCForm
         Width = 72
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Saturation:   0  '
+        Caption = '@MB:Saturation0'
       end
       object Label32: TLabel
         Left = 232
@@ -963,9 +937,7 @@ object MCForm: TMCForm
         Top = 33
         Width = 145
         Height = 25
-        Hint = 
-          'If selected, press '#39'1'#39' to set this slider to the default positio' +
-          'n.'
+        Hint = '@MB:IfSelectedPress1ToSet'
         Max = 255
         ParentShowHint = False
         Frequency = 128
@@ -999,7 +971,7 @@ object MCForm: TMCForm
         Width = 84
         Height = 17
         Alignment = taLeftJustify
-        Caption = 'Soft clipping:'
+        Caption = '@MB:SoftClipping'
         TabOrder = 2
         OnClick = TrackBar1Change
       end
@@ -1055,7 +1027,7 @@ object MCForm: TMCForm
       Width = 85
       Height = 16
       Alignment = taRightJustify
-      Caption = 'Max ray count:'
+      Caption = '@MB:MaxRayCount'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
@@ -1068,8 +1040,8 @@ object MCForm: TMCForm
       Top = 6
       Width = 178
       Height = 25
-      Hint = 'Import the main programs parameter for mc rendering'
-      Caption = 'Open *.m3p-sequence'
+      Hint = '@MB:ImportTheMainProgramsParameterFor'
+      Caption = '@MB:OpenM3pSequence'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -1089,7 +1061,7 @@ object MCForm: TMCForm
       Top = 426
       Width = 178
       Height = 25
-      Caption = 'Start batch rendering'
+      Caption = '@MB:StartBatchRendering'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -1100,7 +1072,7 @@ object MCForm: TMCForm
       Top = 362
       Width = 30
       Height = 21
-      Hint = 'Determines when to stop rendering in batch-mode'
+      Hint = '@MB:DeterminesWhenToStopRenderingIn'
       ParentShowHint = False
       ReadOnly = True
       ShowHint = True
@@ -1139,7 +1111,7 @@ object MCForm: TMCForm
       Top = 331
       Width = 64
       Height = 25
-      Caption = 'Clear'
+      Caption = '@MB:Clear'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
@@ -1150,7 +1122,7 @@ object MCForm: TMCForm
       Top = 331
       Width = 64
       Height = 25
-      Caption = 'Del Entry'
+      Caption = '@MB:DelEntry'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 7
@@ -1161,12 +1133,9 @@ object MCForm: TMCForm
       Top = 384
       Width = 198
       Height = 17
-      Hint = 
-        'Track rendering status across the file system so that multiple i' +
-        'nstances can render the same sequence of files without overwriti' +
-        'ng the work of the other nodes'
+      Hint = '@MB:TrackRenderingStatusAcrossTheFile'
       Alignment = taLeftJustify
-      Caption = 'Support network rendering'
+      Caption = '@MB:SupportNetworkRendering'
       Checked = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText

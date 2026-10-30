@@ -3,7 +3,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
   Top = 121
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'Bulb Tracer2'
+  Caption = '@MB:BulbTracer2'
   ClientHeight = 710
   ClientWidth = 896
   Color = clBtnFace
@@ -34,7 +34,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 8
       Width = 184
       Height = 40
-      Caption = 'Import parameter from main'
+      Caption = '@MB:ImportParameterFromMain2'
       TabOrder = 0
       OnClick = ImportParamsFromMainBtnClick
     end
@@ -43,7 +43,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 54
       Width = 184
       Height = 40
-      Caption = 'Load m3p...'
+      Caption = '@MB:LoadM3p'
       TabOrder = 1
       OnClick = Button2Click
     end
@@ -52,7 +52,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 164
       Width = 181
       Height = 293
-      Caption = 'Offset and scale'
+      Caption = '@MB:OffsetAndScale'
       TabOrder = 2
       object Label1: TLabel
         Left = 17
@@ -60,7 +60,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 39
         Height = 13
         Alignment = taRightJustify
-        Caption = 'X offset:'
+        Caption = '@MB:XOffset'
       end
       object Label2: TLabel
         Left = 17
@@ -68,7 +68,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 39
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Y offset:'
+        Caption = '@MB:YOffset'
       end
       object Label3: TLabel
         Left = 16
@@ -76,7 +76,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 39
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Z offset:'
+        Caption = '@MB:ZOffset'
       end
       object Label4: TLabel
         Left = 26
@@ -84,7 +84,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 30
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Scale:'
+        Caption = '@MB:Scale'
       end
       object Label7: TLabel
         Left = 15
@@ -92,7 +92,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 39
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Z offset:'
+        Caption = '@MB:ZOffset'
       end
       object Label8: TLabel
         Left = 16
@@ -100,7 +100,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 39
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Y angle:'
+        Caption = '@MB:YAngle'
       end
       object Label9: TLabel
         Left = 16
@@ -108,14 +108,14 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 39
         Height = 13
         Alignment = taRightJustify
-        Caption = 'X angle:'
+        Caption = '@MB:XAngle'
       end
       object XOffsetEdit: TEdit
         Left = 62
         Top = 25
         Width = 88
         Height = 21
-        Hint = 'This is a absolute offset in x direction of the rotated bulb.'
+        Hint = '@MB:ThisIsAAbsoluteOffsetIn'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -133,7 +133,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 52
         Width = 88
         Height = 21
-        Hint = 'This is a absolute offset in x direction of the rotated bulb.'
+        Hint = '@MB:ThisIsAAbsoluteOffsetIn'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -151,7 +151,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 79
         Width = 88
         Height = 21
-        Hint = 'This is a absolute offset in x direction of the rotated bulb.'
+        Hint = '@MB:ThisIsAAbsoluteOffsetIn'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -169,7 +169,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 237
         Width = 156
         Height = 40
-        Caption = 'Reset offset+scale+rotation'
+        Caption = '@MB:ResetOffsetScaleRotation'
         TabOrder = 7
         OnClick = ResetOffsetAndScaleBtnClick
       end
@@ -187,7 +187,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 156
         Width = 88
         Height = 21
-        Hint = 'Rotation angle around x-axis in degrees'
+        Hint = '@MB:RotationAngleAroundXAxisIn'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -205,7 +205,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 183
         Width = 88
         Height = 21
-        Hint = 'Rotation angle around y-axis in degrees'
+        Hint = '@MB:RotationAngleAroundYAxisIn'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -223,7 +223,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 210
         Width = 88
         Height = 21
-        Hint = 'Rotation angle around z-axis in degrees'
+        Hint = '@MB:RotationAngleAroundZAxisIn'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -312,7 +312,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 463
       Width = 607
       Height = 140
-      Caption = 'Mesh properties'
+      Caption = '@MB:MeshProperties'
       TabOrder = 4
       object Label18: TLabel
         Left = 8
@@ -320,7 +320,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 100
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Volumetric resolution:'
+        Caption = '@MB:VolumetricResolution'
       end
       object MeshVResolutionLbl: TLabel
         Left = 226
@@ -335,12 +335,9 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 58
         Width = 68
         Height = 13
-        Hint = 
-          'Measure of the sharpness/smoothness of the object'#39's surface. Try' +
-          ' values  in the range of 0.15 .. 1.5, in rare cases small negati' +
-          've numbers like -0.1 also produce interesting results'
+        Hint = '@MB:MeasureOfTheSharpnessSmoothnessOf'
         Alignment = taRightJustify
-        Caption = 'Surface detail:'
+        Caption = '@MB:SurfaceDetail'
         ParentShowHint = False
         ShowHint = True
       end
@@ -350,18 +347,16 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 54
         Height = 13
         AutoSize = False
-        Caption = 'Save type:'
+        Caption = '@MB:SaveType'
       end
       object Label14: TLabel
         Left = 378
         Top = 39
         Width = 71
         Height = 13
-        Hint = 
-          'Remaining faces (1.0 = no reduction, 0.0 = max reduction = no re' +
-          'mainig faces )'
+        Hint = '@MB:RemainingFaces10NoReduction'
         Alignment = taRightJustify
-        Caption = 'Trace range Y:'
+        Caption = '@MB:TraceRangeY'
         ParentShowHint = False
         ShowHint = True
       end
@@ -371,7 +366,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 71
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Trace range X:'
+        Caption = '@MB:TraceRangeX'
         ParentShowHint = False
         ShowHint = True
       end
@@ -380,11 +375,9 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 62
         Width = 71
         Height = 13
-        Hint = 
-          'Remaining faces (1.0 = no reduction, 0.0 = max reduction = no re' +
-          'mainig faces )'
+        Hint = '@MB:RemainingFaces10NoReduction'
         Alignment = taRightJustify
-        Caption = 'Trace range Z:'
+        Caption = '@MB:TraceRangeZ'
         ParentShowHint = False
         ShowHint = True
       end
@@ -393,8 +386,8 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 107
         Width = 83
         Height = 25
-        Hint = 'Click to choose the output file'
-        Caption = 'Output file:'
+        Hint = '@MB:ClickToChooseTheOutputFile'
+        Caption = '@MB:OutputFile'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 13
@@ -438,10 +431,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 53
         Width = 17
         Height = 21
-        Hint = 
-          'Measure of the sharpness/smoothness of the object'#39's surface. Try' +
-          ' values  in the range of 0.15 .. 1.5, in rare cases small negati' +
-          've numbers like -0.1 also produce interesting results'
+        Hint = '@MB:MeasureOfTheSharpnessSmoothnessOf'
         Min = -32000
         Max = 32000
         ParentShowHint = False
@@ -465,10 +455,8 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 84
         Width = 106
         Height = 19
-        Hint = 
-          'Approximate vertex colors. The color-information will be saved a' +
-          's uv-coordinates in  the mesh and will increase mesh-size'
-        Caption = 'Calculate Colors'
+        Hint = '@MB:ApproximateVertexColorsTheColorInformation'
+        Caption = '@MB:CalculateColors'
         Checked = True
         ParentShowHint = False
         ShowHint = True
@@ -486,10 +474,10 @@ object BulbTracer2Frm: TBulbTracer2Frm
         TabOrder = 12
         OnChange = SaveTypeCmbChange
         Items.Strings = (
-          'Mesh with vertex colors (*.ply)'
-          'Mesh with uv-coordinates (*.obj)'
-          'BTracer2 cache (*.btr2cache)'
-          'Don'#39't save, only preview')
+          '@MB:MeshWithVertexColorsPly'
+          '@MB:MeshWithUvCoordinatesObj'
+          '@MB:BTracer2CacheBtr2cache'
+          '@MB:DonTSaveOnlyPreview')
       end
       object TraceXMaxEdit: TEdit
         Left = 529
@@ -550,8 +538,8 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 84
         Width = 106
         Height = 19
-        Hint = 'Close the mesh at the borders'
-        Caption = 'Close Mesh'
+        Hint = '@MB:CloseTheMeshAtTheBorders'
+        Caption = '@MB:CloseMesh'
         Checked = True
         ParentShowHint = False
         ShowHint = True
@@ -614,7 +602,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 8
       Width = 683
       Height = 449
-      Caption = 'Scan Preview'
+      Caption = '@MB:ScanPreview'
       TabOrder = 3
       object Panel3: TPanel
         Left = 2
@@ -635,7 +623,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 185
           Width = 40
           Height = 40
-          Hint = 'Move right'
+          Hint = '@MB:MoveRight'
           Glyph.Data = {
             360C0000424D360C000000000000360000002800000020000000200000000100
             180000000000000C0000F00A0000F00A00000000000000000000000000000000
@@ -744,7 +732,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 185
           Width = 40
           Height = 40
-          Hint = 'Move left'
+          Hint = '@MB:MoveLeft'
           Glyph.Data = {
             360C0000424D360C000000000000360000002800000020000000200000000100
             180000000000000C0000F00A0000F00A00000000000000000000000000000000
@@ -851,7 +839,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 376
           Width = 40
           Height = 40
-          Hint = 'Move down'
+          Hint = '@MB:MoveDown'
           Glyph.Data = {
             360C0000424D360C000000000000360000002800000020000000200000000100
             180000000000000C0000F00A0000F00A00000000000000000000000000000000
@@ -960,7 +948,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 2
           Width = 40
           Height = 40
-          Hint = 'Move up'
+          Hint = '@MB:MoveUp'
           Glyph.Data = {
             360C0000424D360C000000000000360000002800000020000000200000000100
             180000000000000C0000F00A0000F00A00000000000000000000000000000000
@@ -1069,7 +1057,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 4
           Width = 40
           Height = 38
-          Hint = 'Move backwards'
+          Hint = '@MB:MoveBackwards'
           Glyph.Data = {
             36080000424D3608000000000000360400002800000020000000200000000100
             08000000000000040000F00A0000F00A00000001000000010000000000000005
@@ -1146,7 +1134,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 376
           Width = 40
           Height = 40
-          Hint = 'Move forward'
+          Hint = '@MB:MoveForward'
           Glyph.Data = {
             36080000424D3608000000000000360400002800000020000000200000000100
             08000000000000040000F00A0000F00A00000001000000010000000000000005
@@ -1223,7 +1211,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 100
           Width = 40
           Height = 40
-          Hint = 'Decrease scale'
+          Hint = '@MB:DecreaseScale'
           Glyph.Data = {
             36080000424D3608000000000000360400002800000020000000200000000100
             080000000000000400008C0A00008C0A00000001000000010000000000000101
@@ -1300,7 +1288,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 279
           Width = 40
           Height = 40
-          Hint = 'Increase scale'
+          Hint = '@MB:IncreaseScale'
           Glyph.Data = {
             36080000424D3608000000000000360400002800000020000000200000000100
             080000000000000400008C0A00008C0A00000001000000010000000000000101
@@ -1378,16 +1366,16 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Width = 54
           Height = 13
           AutoSize = False
-          Caption = 'Edit mode:'
+          Caption = '@MB:EditMode'
         end
         object Label12: TLabel
           Left = 536
           Top = 220
           Width = 41
           Height = 13
-          Hint = 'Adjusts the DE for render preview'
+          Hint = '@MB:AdjustsTheDEForRenderPreview'
           Alignment = taRightJustify
-          Caption = 'DE stop:'
+          Caption = '@MB:DEStop'
           ParentShowHint = False
           ShowHint = True
         end
@@ -1408,7 +1396,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 48
           Width = 101
           Height = 152
-          Caption = 'Preview size:'
+          Caption = '@MB:PreviewSize'
           ItemIndex = 2
           Items.Strings = (
             '16 '#179
@@ -1424,7 +1412,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 259
           Width = 100
           Height = 39
-          Caption = 'Auto update preview'
+          Caption = '@MB:AutoUpdatePreview'
           Checked = True
           State = cbChecked
           TabOrder = 2
@@ -1435,7 +1423,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 376
           Width = 141
           Height = 40
-          Caption = 'Calculate preview'
+          Caption = '@MB:CalculatePreview'
           Enabled = False
           TabOrder = 3
           WordWrap = True
@@ -1452,8 +1440,8 @@ object BulbTracer2Frm: TBulbTracer2Frm
           TabOrder = 4
           Text = 'Move'
           Items.Strings = (
-            'Move'
-            'Rotate')
+            '@MB:Move'
+            '@MB:Rotate')
         end
         object PreviewDEAdjust: TEdit
           Left = 583
@@ -1478,7 +1466,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 304
           Width = 100
           Height = 39
-          Caption = 'Use OpenGL >>'
+          Caption = '@MB:UseOpenGL'
           Enabled = False
           TabOrder = 7
           WordWrap = True
@@ -1489,7 +1477,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 0
           Width = 101
           Height = 211
-          Caption = 'Preview size:'
+          Caption = '@MB:PreviewSize'
           ItemIndex = 4
           Items.Strings = (
             '24 '#179
@@ -1513,7 +1501,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 463
       Width = 264
       Height = 140
-      Caption = 'OpenGL preview of final mesh'
+      Caption = '@MB:OpenGLPreviewOfFinalMesh'
       TabOrder = 5
       object Label5: TLabel
         Left = 10
@@ -1521,16 +1509,14 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Width = 64
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Max Vertices:'
+        Caption = '@MB:MaxVertices'
       end
       object Label6: TLabel
         Left = 66
         Top = 60
         Width = 185
         Height = 26
-        Caption = 
-          'Note: to preview vertex colors, choose point-mode in the preview' +
-          '-window'
+        Caption = '@MB:NoteToPreviewVertexColorsChoose'
         WordWrap = True
       end
       object OpenGLPreviewCBx: TCheckBox
@@ -1538,7 +1524,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 25
         Width = 85
         Height = 19
-        Caption = 'Enabled'
+        Caption = '@MB:Enabled'
         Checked = True
         State = cbChecked
         TabOrder = 0
@@ -1550,7 +1536,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 14
         Width = 75
         Height = 40
-        Caption = 'OpenGL >>'
+        Caption = '@MB:OpenGL'
         TabOrder = 1
         OnClick = MeshPreviewBtnClick
       end
@@ -1559,7 +1545,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
         Top = 103
         Width = 88
         Height = 21
-        Hint = 'Maximum number of vertices which is shown in the preview'
+        Hint = '@MB:MaximumNumberOfVerticesWhichIs'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -11
@@ -1577,7 +1563,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 604
       Width = 879
       Height = 98
-      Caption = 'Generate mesh'
+      Caption = '@MB:GenerateMesh'
       TabOrder = 6
       object Panel2: TPanel
         Left = 2
@@ -1608,7 +1594,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Width = 60
           Height = 13
           AutoSize = False
-          Caption = 'Cancel type:'
+          Caption = '@MB:CancelType'
         end
         object ProgressBar: TProgressBar
           Left = 8
@@ -1627,7 +1613,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 31
           Width = 65
           Height = 40
-          Caption = 'Close'
+          Caption = '@MB:Close'
           TabOrder = 1
           OnClick = CloseButtonClick
         end
@@ -1636,7 +1622,7 @@ object BulbTracer2Frm: TBulbTracer2Frm
           Top = 31
           Width = 291
           Height = 40
-          Caption = 'Generate Mesh'
+          Caption = '@MB:GenerateMesh2'
           Default = True
           TabOrder = 2
           OnClick = CalculateBtnClick
@@ -1651,15 +1637,15 @@ object BulbTracer2Frm: TBulbTracer2Frm
           TabOrder = 3
           OnChange = CancelTypeCmbChange
           Items.Strings = (
-            'Cancel and show result'
-            'Cancel immediately')
+            '@MB:CancelAndShowResult'
+            '@MB:CancelImmediately')
         end
         object CancelBtn: TButton
           Left = 801
           Top = 31
           Width = 65
           Height = 40
-          Caption = 'Cancel'
+          Caption = '@MB:Cancel'
           TabOrder = 4
           OnClick = CancelBtnClick
         end
@@ -1670,8 +1656,8 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 100
       Width = 87
       Height = 40
-      Hint = 'Load settings from *.btrace2-file'
-      Caption = 'Load btrace2...'
+      Hint = '@MB:LoadSettingsFromBtrace2File'
+      Caption = '@MB:LoadBtrace2'
       TabOrder = 7
       OnClick = LoadBTracer2FileBtnClick
     end
@@ -1680,8 +1666,8 @@ object BulbTracer2Frm: TBulbTracer2Frm
       Top = 100
       Width = 87
       Height = 40
-      Hint = 'Save all current settings as *.btrace2-file'
-      Caption = 'Save btrace2...'
+      Hint = '@MB:SaveAllCurrentSettingsAsBtrace2'
+      Caption = '@MB:SaveBtrace2'
       TabOrder = 8
       OnClick = SaveBTracer2FileBtnClick
     end

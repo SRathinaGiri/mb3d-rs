@@ -2,7 +2,7 @@ object ParamValueEditFrm: TParamValueEditFrm
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  Caption = 'Enter named parameter'
+  Caption = '@MB:EnterNamedParameter'
   ClientHeight = 144
   ClientWidth = 356
   Color = clBtnFace
@@ -33,7 +33,7 @@ object ParamValueEditFrm: TParamValueEditFrm
       Width = 81
       Height = 25
       Align = alLeft
-      Caption = 'Cancel'
+      Caption = '@MB:Cancel'
       TabOrder = 0
       OnClick = CancelAndExitBtnClick
     end
@@ -43,7 +43,7 @@ object ParamValueEditFrm: TParamValueEditFrm
       Width = 81
       Height = 25
       Align = alRight
-      Caption = 'OK'
+      Caption = '@MB:OK'
       Default = True
       TabOrder = 1
       OnClick = SaveAndExitBtnClick
@@ -63,7 +63,7 @@ object ParamValueEditFrm: TParamValueEditFrm
       Width = 30
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Value:'
+      Caption = '@MB:Value'
     end
     object Label1: TLabel
       Left = 54
@@ -71,7 +71,7 @@ object ParamValueEditFrm: TParamValueEditFrm
       Width = 28
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Type:'
+      Caption = '@MB:Type'
     end
     object Label2: TLabel
       Left = 51
@@ -79,7 +79,7 @@ object ParamValueEditFrm: TParamValueEditFrm
       Width = 31
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Name:'
+      Caption = '@MB:Name'
     end
     object ValueEdit: TEdit
       Left = 88
@@ -99,10 +99,10 @@ object ParamValueEditFrm: TParamValueEditFrm
       DropDownCount = 32
       TabOrder = 1
       Items.Strings = (
-        'Double'
-        'Single'
-        'Integer'
-        'Int64')
+        '@MB:Double'
+        '@MB:Single'
+        '@MB:Integer'
+        '@MB:Int64')
     end
     object ParamnameEdit: TEdit
       Left = 88

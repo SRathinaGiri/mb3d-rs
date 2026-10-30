@@ -2,7 +2,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
   Left = 0
   Top = 0
   BorderStyle = bsSizeToolWin
-  Caption = 'JIT-compiled formula'
+  Caption = '@MB:JITCompiledFormula'
   ClientHeight = 592
   ClientWidth = 975
   Color = clBtnFace
@@ -35,7 +35,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
       Width = 195
       Height = 25
       Align = alLeft
-      Caption = 'Cancel + exit'
+      Caption = '@MB:CancelExit'
       TabOrder = 0
       OnClick = CancelAndExitBtnClick
     end
@@ -45,7 +45,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
       Width = 195
       Height = 25
       Align = alRight
-      Caption = 'Save + exit'
+      Caption = '@MB:SaveExit'
       TabOrder = 1
       OnClick = SaveAndExitBtnClick
     end
@@ -80,7 +80,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
           Width = 73
           Height = 13
           AutoSize = False
-          Caption = 'Formula name:'
+          Caption = '@MB:FormulaName'
         end
         object FormulanameEdit: TEdit
           Left = 8
@@ -122,7 +122,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
             Width = 73
             Height = 13
             AutoSize = False
-            Caption = 'Options:'
+            Caption = '@MB:OptionsColon'
           end
         end
         object Panel10: TPanel
@@ -147,9 +147,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 48
               Width = 25
               Height = 20
-              Hint = 'Delete selected option'
+              Hint = '@MB:DeleteSelectedOption'
               Align = alTop
-              Caption = 'Del'
+              Caption = '@MB:Del'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -162,9 +162,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 8
               Width = 25
               Height = 20
-              Hint = 'Add new option'
+              Hint = '@MB:AddNewOption'
               Align = alTop
-              Caption = 'Add'
+              Caption = '@MB:Add'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -178,9 +178,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 28
               Width = 25
               Height = 20
-              Hint = 'Edit selected option'
+              Hint = '@MB:EditSelectedOption'
               Align = alTop
-              Caption = 'Edit'
+              Caption = '@MB:Edit'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -239,7 +239,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
             Width = 73
             Height = 13
             AutoSize = False
-            Caption = 'Constants:'
+            Caption = '@MB:Constants'
           end
         end
         object Panel14: TPanel
@@ -264,9 +264,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 48
               Width = 25
               Height = 20
-              Hint = 'Delete selected constant value'
+              Hint = '@MB:DeleteSelectedConstantValue'
               Align = alTop
-              Caption = 'Del'
+              Caption = '@MB:Del'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -279,9 +279,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 8
               Width = 25
               Height = 20
-              Hint = 'Add new constant value'
+              Hint = '@MB:AddNewConstantValue'
               Align = alTop
-              Caption = 'Add'
+              Caption = '@MB:Add'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -295,9 +295,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 28
               Width = 25
               Height = 20
-              Hint = 'Edit selected constant value'
+              Hint = '@MB:EditSelectedConstantValue'
               Align = alTop
-              Caption = 'Edit'
+              Caption = '@MB:Edit'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -356,7 +356,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
             Width = 73
             Height = 13
             AutoSize = False
-            Caption = 'Named Params:'
+            Caption = '@MB:NamedParams'
           end
         end
         object Panel18: TPanel
@@ -381,9 +381,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 48
               Width = 25
               Height = 20
-              Hint = 'Delete selected named parameter'
+              Hint = '@MB:DeleteSelectedNamedParameter'
               Align = alTop
-              Caption = 'Del'
+              Caption = '@MB:Del'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -396,9 +396,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 8
               Width = 25
               Height = 20
-              Hint = 'Add new named parameter'
+              Hint = '@MB:AddNewNamedParameter'
               Align = alTop
-              Caption = 'Add'
+              Caption = '@MB:Add'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -411,9 +411,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
               Top = 28
               Width = 25
               Height = 20
-              Hint = 'Edit selected named parameter'
+              Hint = '@MB:EditSelectedNamedParameter'
               Align = alTop
-              Caption = 'Edit'
+              Caption = '@MB:Edit'
               Flat = True
               ParentShowHint = False
               ShowHint = True
@@ -473,9 +473,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
           Top = 0
           Width = 55
           Height = 20
-          Hint = 'Compile the code <F9>'
+          Hint = '@MB:CompileTheCodeF9'
           Align = alTop
-          Caption = 'Compile'
+          Caption = '@MB:Compile'
           Flat = True
           ParentShowHint = False
           ShowHint = True
@@ -488,9 +488,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
           Top = 44
           Width = 55
           Height = 20
-          Hint = 'Save the code <F5>'
+          Hint = '@MB:SaveTheCodeF5'
           Align = alBottom
-          Caption = 'Save'
+          Caption = '@MB:Save'
           Flat = True
           ParentShowHint = False
           ShowHint = True
@@ -511,11 +511,9 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
           Top = 0
           Width = 55
           Height = 20
-          Hint = 
-            'Load code from another formula, for example a formula which coul' +
-            'd not be compiled'
+          Hint = '@MB:LoadCodeFromAnotherFormulaFor'
           Align = alTop
-          Caption = 'Load'
+          Caption = '@MB:Load'
           Flat = True
           ParentShowHint = False
           ShowHint = True
@@ -528,7 +526,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
         Top = 347
         Width = 55
         Height = 188
-        Hint = 'Shows messages'
+        Hint = '@MB:ShowsMessages'
         Align = alBottom
         BorderStyle = bsNone
         Color = clSilver
@@ -555,7 +553,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
       Align = alClient
       TabOrder = 0
       object CodeSheet: TTabSheet
-        Caption = 'Code'
+        Caption = '@MB:Code'
         object CodePnl: TPanel
           Left = 0
           Top = 0
@@ -585,7 +583,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
         end
       end
       object DescriptionSheet: TTabSheet
-        Caption = 'Description'
+        Caption = '@MB:Description'
         ImageIndex = 1
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -620,7 +618,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
         end
       end
       object PreprocessedCodeSheet: TTabSheet
-        Caption = 'Preprocessed code'
+        Caption = '@MB:PreprocessedCode'
         ImageIndex = 2
         OnShow = PreprocessedCodeSheetShow
         ExplicitLeft = 0
@@ -657,7 +655,7 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
         end
       end
       object SupportedFunctionsSheet: TTabSheet
-        Caption = 'Supported mathematical functions'
+        Caption = '@MB:SupportedMathematicalFunctions'
         ImageIndex = 3
         ExplicitLeft = 0
         ExplicitTop = 0
@@ -684,126 +682,102 @@ object JITFormulaEditorForm: TJITFormulaEditorForm
             Font.Name = 'Courier New'
             Font.Style = []
             Lines.Strings = (
-              
-                '{ ----------------------- Functions from System  ---------------' +
-                '-------------- }'
-              'function Int(const X: Double): Double;'
-              'function Frac(const X: Double): Double;'
-              'function Exp(const X: Double): Double;'
-              'function Cos(const X: Double): Double;'
-              'function Sin(const X: Double): Double;'
-              'function Ln(const X: Double): Double;'
-              'function ArcTan(const X: Double): Double;'
-              'function Sqrt(const X: Double): Double;'
-              
-                '{ --------------------- Functions from System.Math  ------------' +
-                '-------------- }'
-              '{ Trigonometric functions }'
-              '{ IN: |X| <= 1  OUT: [0..PI] radians }'
-              'function ArcCos(const X : Double) : Double;'
-              '{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }'
-              'function ArcSin(const X : Double) : Double;'
+                '@MB:FunctionsFromSystem'
+              '@MB:FunctionIntConstXDoubleDouble'
+              '@MB:FunctionFracConstXDoubleDouble'
+              '@MB:FunctionExpConstXDoubleDouble'
+              '@MB:FunctionCosConstXDoubleDouble'
+              '@MB:FunctionSinConstXDoubleDouble'
+              '@MB:FunctionLnConstXDoubleDouble'
+              '@MB:FunctionArcTanConstXDoubleDouble'
+              '@MB:FunctionSqrtConstXDoubleDouble'
+                '@MB:FunctionsFromSystemMath'
+              '@MB:TrigonometricFunctions'
+              '@MB:INX1OUT0PI'
+              '@MB:FunctionArcCosConstXDoubleDouble'
+              '@MB:INX1OUTPI2'
+              '@MB:FunctionArcSinConstXDoubleDouble'
               ''
-              
-                '{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the co' +
-                'rrect quadrant.'
-              '  IN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }'
-              'function ArcTan2(const Y, X: Double): Double;'
+                '@MB:ArcTan2CalculatesArcTanYXAnd'
+              '@MB:INY264X2'
+              '@MB:FunctionArcTan2ConstYXDouble'
               ''
-              
-                '{ SinCos is 2x faster than calling Sin and Cos separately for th' +
-                'e same angle }'
-              'procedure SinCos(const Theta: Double; var Sin, Cos: Double);'
-              'function Tan(const X: Double): Double;'
-              'function Cotan(const X: Double): Double;'
-              'function Secant(const X: Double): Double;'
-              'function Cosecant(const X: Double): Double;'
-              'function Hypot(const X, Y: Double): Double;'
+                '@MB:SinCosIs2xFasterThanCalling'
+              '@MB:ProcedureSinCosConstThetaDoubleVar'
+              '@MB:FunctionTanConstXDoubleDouble'
+              '@MB:FunctionCotanConstXDoubleDouble'
+              '@MB:FunctionSecantConstXDoubleDouble'
+              '@MB:FunctionCosecantConstXDoubleDouble'
+              '@MB:FunctionHypotConstXYDouble'
               ''
-              '{ Angle unit conversion routines }'
-              'function RadToDeg(const Radians: Double): Double;'
-              'function DegToRad(const Degrees: Double): Double;'
+              '@MB:AngleUnitConversionRoutines'
+              '@MB:FunctionRadToDegConstRadiansDoubleDouble'
+              '@MB:FunctionDegToRadConstDegreesDoubleDouble'
               ''
-              '{ When angle not between -180 and 180 remove left }'
-              'function DegNormalize(const Degrees: Double): Double;'
+              '@MB:WhenAngleNotBetween180And'
+              '@MB:FunctionDegNormalizeConstDegreesDoubleDouble'
               ''
-              '{ Hyperbolic functions and inverses }'
-              'function Cot(const X: Double): Double;'
-              'function Sec(const X: Double): Double;'
-              'function Csc(const X: Double): Double;'
-              'function Cosh(const X: Double): Double;'
-              'function Sinh(const X: Double): Double;'
-              'function Tanh(const X: Double): Double;'
-              'function CotH(const X: Double): Double;'
-              'function SecH(const X: Double): Double;'
-              'function CscH(const X: Double): Double;'
-              'function ArcCot(const X: Double): Double;'
-              'function ArcSec(const X: Double): Double;'
-              'function ArcCsc(const X: Double): Double;'
-              'function ArcCosh(const X: Double): Double;'
-              'function ArcSinh(const X: Double): Double;'
-              'function ArcTanh(const X: Double): Double;'
-              'function ArcCotH(const X: Double): Double;'
-              'function ArcSecH(const X: Double): Double;'
-              'function ArcCscH(const X: Double): Double;'
+              '@MB:HyperbolicFunctionsAndInverses'
+              '@MB:FunctionCotConstXDoubleDouble'
+              '@MB:FunctionSecConstXDoubleDouble'
+              '@MB:FunctionCscConstXDoubleDouble'
+              '@MB:FunctionCoshConstXDoubleDouble'
+              '@MB:FunctionSinhConstXDoubleDouble'
+              '@MB:FunctionTanhConstXDoubleDouble'
+              '@MB:FunctionCotHConstXDoubleDouble'
+              '@MB:FunctionSecHConstXDoubleDouble'
+              '@MB:FunctionCscHConstXDoubleDouble'
+              '@MB:FunctionArcCotConstXDoubleDouble'
+              '@MB:FunctionArcSecConstXDoubleDouble'
+              '@MB:FunctionArcCscConstXDoubleDouble'
+              '@MB:FunctionArcCoshConstXDoubleDouble'
+              '@MB:FunctionArcSinhConstXDoubleDouble'
+              '@MB:FunctionArcTanhConstXDoubleDouble'
+              '@MB:FunctionArcCotHConstXDoubleDouble'
+              '@MB:FunctionArcSecHConstXDoubleDouble'
+              '@MB:FunctionArcCscHConstXDoubleDouble'
               ''
-              '{ Logarithmic functions }'
-              'function LnXP1(const X: Double): Double;'
-              'function Log10(const X: Double): Double;'
-              'function Log2(const X: Double): Double;'
-              'function LogN(const Base, X: Double): Double;'
+              '@MB:LogarithmicFunctions'
+              '@MB:FunctionLnXP1ConstXDoubleDouble'
+              '@MB:FunctionLog10ConstXDoubleDouble'
+              '@MB:FunctionLog2ConstXDoubleDouble'
+              '@MB:FunctionLogNConstBaseXDouble'
               ''
-              '{ Exponential functions }'
+              '@MB:ExponentialFunctions'
               ''
-              '{ IntPower: Raise base to an integral power.  Fast. }'
-              
-                'function IntPower(const Base: Double; const Exponent: Integer): ' +
-                'Double;'
+              '@MB:IntPowerRaiseBaseToAnIntegral'
+                '@MB:FunctionIntPowerConstBaseDoubleConst'
               ''
-              '{ Power: Raise base to any power.'
-              
-                '  For fractional exponents, or |exponents| > MaxInt, base must b' +
-                'e > 0. }'
-              'function Power(const Base, Exponent: Double): Double;'
+              '@MB:PowerRaiseBaseToAnyPower'
+                '@MB:ForFractionalExponentsOrExponentsMaxInt'
+              '@MB:FunctionPowerConstBaseExponentDouble'
               ''
-              '{ Miscellaneous Routines }'
-              '{ Ceil: Smallest integer >= X, |X| < MaxInt }'
-              'function Ceil(const X: Double): Integer;'
+              '@MB:MiscellaneousRoutines'
+              '@MB:CeilSmallestIntegerXXMaxInt'
+              '@MB:FunctionCeilConstXDoubleInteger'
               ''
-              '{ Floor: Largest integer <= X,  |X| < MaxInt }'
-              'function Floor(const X: Double): Integer;'
+              '@MB:FloorLargestIntegerXXMaxInt'
+              '@MB:FunctionFloorConstXDoubleInteger'
               ''
-              
-                '{ MinValue: Returns the smallest signed value in the data array ' +
-                '(MIN) }'
-              'function Min(const A, B: Double): Double;'
+                '@MB:MinValueReturnsTheSmallestSignedValue'
+              '@MB:FunctionMinConstABDouble'
               ''
-              
-                '{ MaxValue: Returns the largest signed value in the data array (' +
-                'MAX) }'
-              'function Max(const A, B: Double): Double;'
+                '@MB:MaxValueReturnsTheLargestSignedValue'
+              '@MB:FunctionMaxConstABDouble'
               ''
-              
-                '{ RandG produces random numbers with Gaussian distribution about' +
-                ' the mean.'
-              '  Useful for simulating data with sampling errors. }'
-              'function RandG(Mean, StdDev: Double): Double;'
+                '@MB:RandGProducesRandomNumbersWithGaussian'
+              '@MB:UsefulForSimulatingDataWithSampling'
+              '@MB:FunctionRandGMeanStdDevDoubleDouble'
               ''
-              '{ Extreme testing }'
-              
-                '// Like an infinity, a NaN double value has an exponent of 7FF, ' +
-                'but the NaN'
-              '// values have a fraction field that is not 0.'
-              'function IsNan(const AValue: Double): Boolean;'
+              '@MB:ExtremeTesting'
+                '@MB:LikeAnInfinityANaNDouble'
+              '@MB:ValuesHaveAFractionFieldThat'
+              '@MB:FunctionIsNanConstAValueDoubleBoolean'
               ''
-              
-                '// Like a NaN, an infinity double value has an exponent of 7FF, ' +
-                'but the'
-              
-                '// infinity values have a fraction field of 0. Infinity values c' +
-                'an be positive'
-              '// or negative, which is specified in the high-order, sign bit.'
-              'function IsInfinite(const AValue: Double): Boolean;'
+                '@MB:LikeANaNAnInfinityDouble'
+                '@MB:InfinityValuesHaveAFractionField'
+              '@MB:OrNegativeWhichIsSpecifiedIn'
+              '@MB:FunctionIsInfiniteConstAValueDoubleBoolean'
               '')
             ParentFont = False
             ReadOnly = True

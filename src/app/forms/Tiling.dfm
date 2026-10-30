@@ -3,7 +3,7 @@ object TilingForm: TTilingForm
   Top = 138
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'Big renders'
+  Caption = '@MB:BigRenders'
   ClientHeight = 529
   ClientWidth = 557
   Color = clBtnFace
@@ -30,7 +30,7 @@ object TilingForm: TTilingForm
       Top = 8
       Width = 99
       Height = 25
-      Caption = 'Open project'
+      Caption = '@MB:OpenProject'
       Glyph.Data = {
         E6000000424DE6000000000000007600000028000000100000000E0000000100
         04000000000070000000C30E0000C30E00001000000010000000000000008484
@@ -49,7 +49,7 @@ object TilingForm: TTilingForm
       Top = 8
       Width = 102
       Height = 25
-      Caption = 'Save project'
+      Caption = '@MB:SaveProject'
       Enabled = False
       Glyph.Data = {
         F6000000424DF600000000000000760000002800000010000000100000000100
@@ -69,8 +69,8 @@ object TilingForm: TTilingForm
       Top = 5
       Width = 123
       Height = 25
-      Hint = 'Import parameters from a file to make a big render out of them'
-      Caption = 'Import parameter'
+      Hint = '@MB:ImportParametersFromAFileTo'
+      Caption = '@MB:ImportParameter'
       Glyph.Data = {
         E6000000424DE6000000000000007600000028000000100000000E0000000100
         04000000000070000000C30E0000C30E00001000000010000000000000008484
@@ -89,8 +89,8 @@ object TilingForm: TTilingForm
       Top = 5
       Width = 113
       Height = 25
-      Hint = 'Import the current parameters from main program'
-      Caption = 'Import actual paras'
+      Hint = '@MB:ImportTheCurrentParametersFromMain'
+      Caption = '@MB:ImportActualParas'
       ParentShowHint = False
       ShowHint = True
       OnClick = SpeedButton2Click
@@ -100,10 +100,8 @@ object TilingForm: TTilingForm
       Top = 37
       Width = 233
       Height = 17
-      Hint = 
-        'You have to render the original parameters first and store them ' +
-        'as M3I file.'#13#10'Make that render not to small.'
-      Caption = 'Use ambient shadows from original M3I file'
+      Hint = '@MB:YouHaveToRenderTheOriginal'
+      Caption = '@MB:UseAmbientShadowsFromOriginalM3I'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -123,7 +121,7 @@ object TilingForm: TTilingForm
       Top = 136
       Width = 324
       Height = 280
-      Hint = 'Rightclick on a tile for options'
+      Hint = '@MB:RightclickOnATileForOptions'
       AutoSize = True
       ParentShowHint = False
       ShowHint = True
@@ -135,14 +133,14 @@ object TilingForm: TTilingForm
       Width = 178
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Original parameter size (width, height):'
+      Caption = '@MB:OriginalParameterSizeWidthHeight'
     end
     object Label3: TLabel
       Left = 16
       Top = 136
       Width = 28
       Height = 13
-      Caption = 'Tiling:'
+      Caption = '@MB:Tiling'
     end
     object Label4: TLabel
       Left = 138
@@ -150,21 +148,21 @@ object TilingForm: TTilingForm
       Width = 53
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Size factor:'
+      Caption = '@MB:SizeFactor'
     end
     object Label5: TLabel
       Left = 16
       Top = 248
       Width = 36
       Height = 13
-      Caption = 'Saving:'
+      Caption = '@MB:Saving'
     end
     object Label6: TLabel
       Left = 34
       Top = 272
       Width = 135
       Height = 13
-      Caption = 'Tile downscale, anti aliasing:'
+      Caption = '@MB:TileDownscaleAntiAliasing'
     end
     object Label7: TLabel
       Left = 63
@@ -172,7 +170,7 @@ object TilingForm: TTilingForm
       Width = 104
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Tile count,  horizontal:'
+      Caption = '@MB:TileCountHorizontal'
     end
     object Label8: TLabel
       Left = 130
@@ -180,7 +178,7 @@ object TilingForm: TTilingForm
       Width = 37
       Height = 13
       Alignment = taRightJustify
-      Caption = 'vertical:'
+      Caption = '@MB:Vertical'
     end
     object Label9: TLabel
       Left = 39
@@ -188,7 +186,7 @@ object TilingForm: TTilingForm
       Width = 104
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Tilesize (including aa):'
+      Caption = '@MB:TilesizeIncludingAa'
     end
     object Label10: TLabel
       Left = 200
@@ -210,7 +208,7 @@ object TilingForm: TTilingForm
       Width = 148
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Big size (including anti aliasing):'
+      Caption = '@MB:BigSizeIncludingAntiAliasing'
     end
     object Label12: TLabel
       Left = 200
@@ -224,7 +222,7 @@ object TilingForm: TTilingForm
       Top = 12
       Width = 84
       Height = 13
-      Caption = 'Project:  (new)'
+      Caption = '@MB:ProjectNew'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -238,14 +236,14 @@ object TilingForm: TTilingForm
       Width = 59
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Jpeg quality:'
+      Caption = '@MB:JpegQuality'
     end
     object Label24: TLabel
       Left = 141
       Top = 302
       Width = 29
       Height = 13
-      Caption = 'sharp:'
+      Caption = '@MB:Sharp'
     end
     object Edit1: TEdit
       Left = 200
@@ -261,12 +259,8 @@ object TilingForm: TTilingForm
       Top = 93
       Width = 214
       Height = 17
-      Hint = 
-        'Check this option to get less color changes in the image.'#13#10'To ge' +
-        't more details even when checked, do the coloring on the origina' +
-        'l'#13#10'parameters with a lowered DEstop value, divided by the '#39'Size ' +
-        'factor'#39'.'
-      Caption = 'Scale DEstop to keep color && detail level'
+      Hint = '@MB:CheckThisOptionToGetLess'
+      Caption = '@MB:ScaleDEstopToKeepColorDetail'
       Checked = True
       ParentShowHint = False
       ShowHint = True
@@ -279,13 +273,13 @@ object TilingForm: TTilingForm
       Top = 320
       Width = 185
       Height = 41
-      Caption = 'Output image type:'
+      Caption = '@MB:OutputImageType'
       Columns = 3
       ItemIndex = 0
       Items.Strings = (
-        'Png'
-        'Jpeg'
-        'Bmp')
+        '@MB:Png'
+        '@MB:Jpeg'
+        '@MB:Bmp')
       TabOrder = 2
     end
     object CheckBox2: TCheckBox
@@ -293,7 +287,7 @@ object TilingForm: TTilingForm
       Top = 392
       Width = 121
       Height = 17
-      Caption = 'Save Z buffer (png)'
+      Caption = '@MB:SaveZBufferPng'
       Checked = True
       State = cbChecked
       TabOrder = 3
@@ -303,12 +297,8 @@ object TilingForm: TTilingForm
       Top = 412
       Width = 113
       Height = 17
-      Hint = 
-        'You can save also m3i files for each tile, keep in mind that you' +
-        ' got enough'#13#10'memory on the disc and that reflections are not sto' +
-        'red in the m3i file.'#13#10#13#10'Note that you cannot open these m3i tile' +
-        's in earlier program versions than 1.7.9!'
-      Caption = 'Save m3i files'
+      Hint = '@MB:YouCanSaveAlsoM3iFiles'
+      Caption = '@MB:SaveM3iFiles'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 4
@@ -318,8 +308,8 @@ object TilingForm: TTilingForm
       Top = 32
       Width = 201
       Height = 25
-      Hint = 'Send this projects original parameter to the main program. '
-      Caption = 'Send original parameter to main window'
+      Hint = '@MB:SendThisProjectsOriginalParameterTo'
+      Caption = '@MB:SendOriginalParameterToMainWindow'
       Enabled = False
       ParentShowHint = False
       ShowHint = True
@@ -425,7 +415,7 @@ object TilingForm: TTilingForm
       Top = 368
       Width = 24
       Height = 21
-      Hint = 'A higher value means a better quality, even 100% is lossy.'
+      Hint = '@MB:AHigherValueMeansABetter'
       ParentShowHint = False
       ReadOnly = True
       ShowHint = True
@@ -457,14 +447,14 @@ object TilingForm: TTilingForm
       Top = 31
       Width = 27
       Height = 13
-      Caption = 'up to:'
+      Caption = '@MB:UpTo'
     end
     object Button1: TButton
       Left = 472
       Top = 14
       Width = 75
       Height = 25
-      Caption = 'Close'
+      Caption = '@MB:Close'
       TabOrder = 0
       OnClick = Button1Click
     end
@@ -473,7 +463,7 @@ object TilingForm: TTilingForm
       Top = 14
       Width = 97
       Height = 25
-      Caption = 'Render next tile'
+      Caption = '@MB:RenderNextTile'
       Enabled = False
       TabOrder = 1
       OnClick = Button2Click
@@ -483,7 +473,7 @@ object TilingForm: TTilingForm
       Top = 12
       Width = 155
       Height = 17
-      Caption = 'Auto render all following tiles'
+      Caption = '@MB:AutoRenderAllFollowingTiles'
       TabOrder = 2
       OnClick = CheckBox4Click
     end
@@ -500,7 +490,7 @@ object TilingForm: TTilingForm
       Top = 30
       Width = 188
       Height = 17
-      Caption = 'Render all tiles included in the lines:'
+      Caption = '@MB:RenderAllTilesIncludedInThe'
       TabOrder = 4
       OnClick = CheckBox6Click
     end
@@ -509,9 +499,7 @@ object TilingForm: TTilingForm
       Top = 27
       Width = 32
       Height = 21
-      Hint = 
-        'Bigger values than existing (horizontal) lines will be cropped t' +
-        'o the last line.'#13#10'No problem with that.'
+      Hint = '@MB:BiggerValuesThanExistingHorizontalLines'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 5
@@ -522,11 +510,8 @@ object TilingForm: TTilingForm
       Top = 4
       Width = 119
       Height = 17
-      Hint = 
-        'The default numbering includes 2 numbers, seperated in X and Y.'#13 +
-        #10'If you choose this option, the numbering is only one number,'#13#10'i' +
-        'ncreasing in each column and follows on the next row.'
-      Caption = 'Single filenumbering'
+      Hint = '@MB:TheDefaultNumberingIncludes2Numbers'
+      Caption = '@MB:SingleFilenumbering'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
@@ -555,18 +540,18 @@ object TilingForm: TTilingForm
     Left = 352
     Top = 184
     object ileXY1: TMenuItem
-      Caption = 'Tile: X= Y='
+      Caption = '@MB:TileXY'
       Enabled = False
     end
     object Renderthistile1: TMenuItem
-      Caption = 'Render this tile'
+      Caption = '@MB:RenderThisTile'
       OnClick = Renderthistile1Click
     end
     object N1: TMenuItem
       Caption = '-'
     end
     object Deletethistilesfiles1: TMenuItem
-      Caption = 'Delete this tiles files'
+      Caption = '@MB:DeleteThisTilesFiles'
       OnClick = Deletethistilesfiles1Click
     end
   end

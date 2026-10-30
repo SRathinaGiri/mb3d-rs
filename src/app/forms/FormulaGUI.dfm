@@ -2,7 +2,7 @@ object FormulaGUIForm: TFormulaGUIForm
   Left = 844
   Top = 100
   BorderStyle = bsDialog
-  Caption = 'Formulas'
+  Caption = '@MB:Formulas'
   ClientHeight = 564
   ClientWidth = 319
   Color = clBtnFace
@@ -34,37 +34,35 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 1
       Width = 139
       Height = 13
-      Caption = '4D rotation of the whole bulb:'
+      Caption = '@MB:N4DRotationOfTheWholeBulb'
     end
     object Label23: TLabel
       Left = 8
       Top = 19
       Width = 21
       Height = 13
-      Caption = 'XW:'
+      Caption = '@MB:XW'
     end
     object Label24: TLabel
       Left = 104
       Top = 19
       Width = 21
       Height = 13
-      Caption = 'YW:'
+      Caption = '@MB:YW'
     end
     object Label26: TLabel
       Left = 200
       Top = 19
       Width = 21
       Height = 13
-      Caption = 'ZW:'
+      Caption = '@MB:ZW'
     end
     object XWEdit: TEdit
       Left = 40
       Top = 16
       Width = 49
       Height = 21
-      Hint = 
-        'The rotations are performed in a row, first the XW, last the ZW-' +
-        'plane.'
+      Hint = '@MB:TheRotationsArePerformedInA'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -75,9 +73,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 16
       Width = 49
       Height = 21
-      Hint = 
-        'The rotations are performed in a row, first the XW, last the ZW-' +
-        'plane.'
+      Hint = '@MB:TheRotationsArePerformedInA'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -88,9 +84,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 16
       Width = 49
       Height = 21
-      Hint = 
-        'The rotations are performed in a row, first the XW, last the ZW-' +
-        'plane.'
+      Hint = '@MB:TheRotationsArePerformedInA'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -111,7 +105,7 @@ object FormulaGUIForm: TFormulaGUIForm
     ParentFont = False
     TabOrder = 0
     Tabs.Strings = (
-      'Formula1 '#8226
+      '@MB:Formula1'
       'F2 '#8226
       'F3'
       'F4'
@@ -261,14 +255,14 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 65
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Iterationcount'
+      Caption = '@MB:Iterationcount'
     end
     object SpeedButton11: TSpeedButton
       Left = 246
       Top = 48
       Width = 28
       Height = 20
-      Hint = 'Load a new formula file'
+      Hint = '@MB:LoadANewFormulaFile'
       Flat = True
       Glyph.Data = {
         E6000000424DE6000000000000007600000028000000100000000E0000000100
@@ -288,7 +282,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 51
       Width = 22
       Height = 20
-      Hint = 'Displays some formula descriptions, if available.'
+      Hint = '@MB:DisplaysSomeFormulaDescriptionsIfAvailable'
       Caption = 'i'
       Flat = True
       Font.Charset = DEFAULT_CHARSET
@@ -312,10 +306,8 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 48
       Width = 40
       Height = 20
-      Hint = 
-        'Shows hidden formulas.'#13#10'Rightclick on a formula to change its st' +
-        'atus.'
-      Caption = 'hidden'
+      Hint = '@MB:ShowsHiddenFormulasRightclickOnA'
+      Caption = '@MB:Hidden'
       Flat = True
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -333,7 +325,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'escapetime 3D formulas'
+      Hint = '@MB:Escapetime3DFormulas'
       AllowAllUp = True
       GroupIndex = 5
       Caption = '3D'
@@ -349,7 +341,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'escapetime 3D formulas'
+      Hint = '@MB:Escapetime3DFormulas'
       AllowAllUp = True
       GroupIndex = 5
       Caption = '3D'
@@ -365,10 +357,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'escapetime 3D formulas with analytic (faster) DE calculation'
+      Hint = '@MB:Escapetime3DFormulasWithAnalyticFaster'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = '3Da'
+      Caption = '@MB:N3Da'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -381,7 +373,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'escapetime 4D formulas'
+      Hint = '@MB:Escapetime4DFormulas'
       AllowAllUp = True
       GroupIndex = 5
       Caption = '4D'
@@ -397,10 +389,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'escapetime 4D formulas with analytic (faster) DE calculation'
+      Hint = '@MB:Escapetime4DFormulasWithAnalyticFaster'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = '4Da'
+      Caption = '@MB:N4Da'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -413,12 +405,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 
-        'escapetime transformations only,'#13#10'use in combination with escape' +
-        'time formulas'
+      Hint = '@MB:EscapetimeTransformationsOnlyUseInCombination'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = 'Ads'
+      Caption = '@MB:Ads'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -431,12 +421,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 
-        'escapetime transformations only,'#13#10'use in combination with escape' +
-        'time formulas'
+      Hint = '@MB:EscapetimeTransformationsOnlyUseInCombination'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = 'Ads'
+      Caption = '@MB:Ads'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -449,12 +437,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 
-        'escapetime transformations only,'#13#10'use in combination with escape' +
-        'time formulas'
+      Hint = '@MB:EscapetimeTransformationsOnlyUseInCombination'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = 'Ads'
+      Caption = '@MB:Ads'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -467,10 +453,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'dIFS shapes'
+      Hint = '@MB:DIFSShapes'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = 'dIFS'
+      Caption = '@MB:DIFS'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -484,10 +470,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'dIFS shapes'
+      Hint = '@MB:DIFSShapes'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = 'dIFS'
+      Caption = '@MB:DIFS'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -501,10 +487,10 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 22
       Width = 28
       Height = 21
-      Hint = 'dIFS transformations'
+      Hint = '@MB:DIFSTransformations'
       AllowAllUp = True
       GroupIndex = 5
-      Caption = 'dIFS'
+      Caption = '@MB:DIFS'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -517,7 +503,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 446
       Width = 34
       Height = 22
-      Hint = 'Exchange this formula with the next one'
+      Hint = '@MB:ExchangeThisFormulaWithTheNext'
       Glyph.Data = {
         76010000424D7601000000000000760000002800000020000000100000000100
         04000000000000010000120B0000120B00001000000000000000000000000000
@@ -541,7 +527,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 446
       Width = 34
       Height = 22
-      Hint = 'Exchange this formula with the previous one'
+      Hint = '@MB:ExchangeThisFormulaWithThePrevious'
       Glyph.Data = {
         76010000424D7601000000000000760000002800000020000000100000000100
         04000000000000010000120B0000120B00001000000000000000000000000000
@@ -565,8 +551,8 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 48
       Width = 28
       Height = 20
-      Hint = 'Create/edit a JIT-compiled formula'
-      Caption = 'JIT'
+      Hint = '@MB:CreateEditAJITCompiledFormula'
+      Caption = '@MB:JIT'
       Flat = True
       ParentShowHint = False
       PopupMenu = JITPopupMenu
@@ -595,7 +581,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 51
       Width = 164
       Height = 21
-      Hint = 'You can also type in the formula directly'
+      Hint = '@MB:YouCanAlsoTypeInThe'
       Alignment = taCenter
       AutoSize = False
       Font.Charset = DEFAULT_CHARSET
@@ -616,7 +602,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 123
       Width = 25
       Height = 25
-      Hint = 'Push to normalise the 3d vector length to 1. '
+      Hint = '@MB:PushToNormaliseThe3dVector'
       Caption = 'N'
       ParentShowHint = False
       ShowHint = True
@@ -938,11 +924,9 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 450
       Width = 103
       Height = 17
-      Hint = 
-        'Defines where the iteration starts again,'#13#10'when the last formula' +
-        ' was done and no'#13#10'stop condition occured by then.'
+      Hint = '@MB:DefinesWhereTheIterationStartsAgain'
       Alignment = taLeftJustify
-      Caption = 'Repeat from here'
+      Caption = '@MB:RepeatFromHere'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 17
@@ -953,7 +937,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 420
       Width = 57
       Height = 20
-      Caption = 'Close'
+      Caption = '@MB:Close'
       TabOrder = 19
       Visible = False
       OnClick = Button3Click
@@ -1301,7 +1285,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 45
       Height = 13
       Alignment = taRightJustify
-      Caption = 'R bailout:'
+      Caption = '@MB:RBailout'
     end
     object Label20: TLabel
       Left = 26
@@ -1309,7 +1293,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 71
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Max. iterations:'
+      Caption = '@MB:MaxIterations'
     end
     object Label21: TLabel
       Left = 29
@@ -1317,7 +1301,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 68
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Min. iterations:'
+      Caption = '@MB:MinIterations'
     end
     object Label19: TLabel
       Left = 6
@@ -1325,7 +1309,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 91
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Maxits hybrid part2:'
+      Caption = '@MB:MaxitsHybridPart2'
       Visible = False
     end
     object RBailoutEdit: TEdit
@@ -1333,10 +1317,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 1
       Width = 49
       Height = 21
-      Hint = 
-        'The bailout value for escapetime formulas.'#13#10'If the 3d value exce' +
-        'eds this value while iterating,'#13#10'the current point does not belo' +
-        'ng to the object.'
+      Hint = '@MB:TheBailoutValueForEscapetimeFormulas'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -1361,10 +1342,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 1
       Width = 49
       Height = 21
-      Hint = 
-        'To reduce noise around objects in hybrids with bad distance esti' +
-        'mates,'#13#10'use some iterations below the average iteration count in' +
-        ' the image.'
+      Hint = '@MB:ToReduceNoiseAroundObjectsIn'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -1376,7 +1354,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 121
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'Disable analytical DE'
+      Caption = '@MB:DisableAnalyticalDE'
       TabOrder = 3
     end
     object ComboBox1: TComboBox
@@ -1384,10 +1362,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 47
       Width = 109
       Height = 21
-      Hint = 
-        'Outside render:  default mode'#13#10'Inside render:    slow raymarchin' +
-        'g on the inside with max. its.'#13#10'In and outside:   render both si' +
-        'des'
+      Hint = '@MB:OutsideRenderDefaultModeInsideRender'
       Style = csDropDownList
       Ctl3D = False
       ItemIndex = 0
@@ -1397,18 +1372,16 @@ object FormulaGUIForm: TFormulaGUIForm
       TabOrder = 4
       Text = 'Outside render'
       Items.Strings = (
-        'Outside render'
-        'Inside render'
-        'In and outside')
+        '@MB:OutsideRender'
+        '@MB:InsideRender'
+        '@MB:InAndOutside')
     end
     object MaxIterHybridPart2Edit: TEdit
       Left = 105
       Top = 47
       Width = 49
       Height = 21
-      Hint = 
-        'Maximal iterations for the second hybrid part, beginning with fo' +
-        'rmula nr specified on top of this window.'
+      Hint = '@MB:MaximalIterationsForTheSecondHybrid'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 5
@@ -1421,11 +1394,7 @@ object FormulaGUIForm: TFormulaGUIForm
     Top = 0
     Width = 319
     Height = 19
-    Hint = 
-      ' Type of hybrid:'#13#10'Alternate:  formulas 1 to 6 alternated.'#13#10'Inter' +
-      'polate:  formula 1 interpolated in each iteration with formula 2' +
-      '.'#13#10'DE combinate:  formula 1 is DE combinated with alternated hyb' +
-      'rid of formulas 2 to 6.'
+    Hint = '@MB:TypeOfHybridAlternateFormulas1'
     Align = alTop
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -1438,9 +1407,9 @@ object FormulaGUIForm: TFormulaGUIForm
     Style = tsButtons
     TabOrder = 2
     Tabs.Strings = (
-      'Alternate'
-      'Interpolate'
-      'DEcombinate')
+      '@MB:Alternate'
+      '@MB:Interpolate'
+      '@MB:DEcombinate')
     TabIndex = 0
     OnChange = TabControl2Change
     OnChanging = TabControl2Changing
@@ -1449,8 +1418,8 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 0
       Width = 38
       Height = 18
-      Hint = 'Resets the formulas to the default P8 bulb.'
-      Caption = 'Reset'
+      Hint = '@MB:ResetsTheFormulasToTheDefault'
+      Caption = '@MB:Reset2'
       ParentShowHint = False
       ShowHint = True
       OnClick = SpeedButton3Click
@@ -1482,7 +1451,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 1
       Width = 23
       Height = 18
-      Hint = 'Formula nr where the 2nd part of the hybrid starts'
+      Hint = '@MB:FormulaNrWhereThe2ndPart'
       Min = 2
       Max = 6
       Position = 2
@@ -1506,7 +1475,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 16
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Ds:'
+      Caption = '@MB:Ds'
       Visible = False
     end
     object Label25: TLabel
@@ -1515,7 +1484,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 50
       Height = 13
       Alignment = taRightJustify
-      Caption = 'DE comb.:'
+      Caption = '@MB:DEComb'
     end
     object Label27: TLabel
       Left = 228
@@ -1523,7 +1492,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Width = 29
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Fpow:'
+      Caption = '@MB:Fpow'
       Visible = False
     end
     object Edit23: TEdit
@@ -1531,10 +1500,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Top = 4
       Width = 41
       Height = 21
-      Hint = 
-        'Absolute distance of the smooth combine functions,'#13#10'you can use ' +
-        'scientific notation like 3e-5 for small values.'#13#10'Try 1/zoom to g' +
-        'et close to a working value.'
+      Hint = '@MB:AbsoluteDistanceOfTheSmoothCombine'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -1554,19 +1520,19 @@ object FormulaGUIForm: TFormulaGUIForm
       Text = 'Min'
       OnChange = RadioGroup1Click
       Items.Strings = (
-        'Min'
-        'Max'
-        'Inv max'
-        'Min lin'
-        'Min nlin'
-        'Mix')
+        '@MB:Min'
+        '@MB:Max'
+        '@MB:InvMax'
+        '@MB:MinLin'
+        '@MB:MinNlin'
+        '@MB:Mix')
     end
     object Edit25: TEdit
       Left = 261
       Top = 4
       Width = 41
       Height = 21
-      Hint = 'Scale value of the beginning formula, affects the DE accuracy'
+      Hint = '@MB:ScaleValueOfTheBeginningFormula'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -1599,21 +1565,21 @@ object FormulaGUIForm: TFormulaGUIForm
     Top = 176
     object Ratethisformulaasnormal1: TMenuItem
       Tag = 1
-      Caption = 'Normal status for this formula'
+      Caption = '@MB:NormalStatusForThisFormula'
       OnClick = Hidethisformula1Click
     end
     object Ilikethisformula1: TMenuItem
-      Caption = '+ vote formula'
+      Caption = '@MB:VoteFormula'
       OnClick = Hidethisformula1Click
     end
     object voteformula1: TMenuItem
       Tag = 2
-      Caption = '- vote formula'
+      Caption = '@MB:VoteFormula2'
       OnClick = Hidethisformula1Click
     end
     object Hidethisformula1: TMenuItem
       Tag = -2
-      Caption = 'Hide this formula'
+      Caption = '@MB:HideThisFormula'
       OnClick = Hidethisformula1Click
     end
     object N1: TMenuItem
@@ -1621,7 +1587,7 @@ object FormulaGUIForm: TFormulaGUIForm
       Visible = False
     end
     object Deletethisformulapermanently1: TMenuItem
-      Caption = 'Remove this formula from the local appdata folder'
+      Caption = '@MB:RemoveThisFormulaFromTheLocal'
       Visible = False
     end
   end
@@ -1629,50 +1595,50 @@ object FormulaGUIForm: TFormulaGUIForm
     Left = 88
     Top = 72
     object Copythisformulatoformulanr11: TMenuItem
-      Caption = 'Copy this formula to formula 1'
+      Caption = '@MB:CopyThisFormulaToFormula1'
       OnClick = Copythisformulatoformulanr11Click
     end
     object Copythisformulatoformula21: TMenuItem
       Tag = 1
-      Caption = 'Copy this formula to formula 2'
+      Caption = '@MB:CopyThisFormulaToFormula2'
       OnClick = Copythisformulatoformulanr11Click
     end
     object Copythisformulatoformula31: TMenuItem
       Tag = 2
-      Caption = 'Copy this formula to formula 3'
+      Caption = '@MB:CopyThisFormulaToFormula3'
       OnClick = Copythisformulatoformulanr11Click
     end
     object Copythisformulatoformula41: TMenuItem
       Tag = 3
-      Caption = 'Copy this formula to formula 4'
+      Caption = '@MB:CopyThisFormulaToFormula4'
       OnClick = Copythisformulatoformulanr11Click
     end
     object Copythisformulatoformula51: TMenuItem
       Tag = 4
-      Caption = 'Copy this formula to formula 5'
+      Caption = '@MB:CopyThisFormulaToFormula5'
       OnClick = Copythisformulatoformulanr11Click
     end
     object Copythisformulatoformula61: TMenuItem
       Tag = 5
-      Caption = 'Copy this formula to formula 6'
+      Caption = '@MB:CopyThisFormulaToFormula6'
       OnClick = Copythisformulatoformulanr11Click
     end
     object N2: TMenuItem
       Caption = '-'
     end
     object Shiftallformulasonetotheright1: TMenuItem
-      Caption = 'Shift to the right'
+      Caption = '@MB:ShiftToTheRight'
       OnClick = Shiftallformulasonetotheright1Click
     end
     object Shifttotheleft1: TMenuItem
-      Caption = 'Shift to the left'
+      Caption = '@MB:ShiftToTheLeft'
       OnClick = Shifttotheleft1Click
     end
     object N3: TMenuItem
       Caption = '-'
     end
     object Copythevaluesto1: TMenuItem
-      Caption = 'Copy the values to..'
+      Caption = '@MB:CopyTheValuesTo'
       OnClick = Copythevaluesto1Click
     end
   end
@@ -1688,12 +1654,12 @@ object FormulaGUIForm: TFormulaGUIForm
     Left = 240
     Top = 187
     object EditJITFormulaItm: TMenuItem
-      Caption = 'Edit JIT-compiled Formula'
+      Caption = '@MB:EditJITCompiledFormula'
       Enabled = False
       OnClick = EditJITFormulaItmClick
     end
     object NewJITFormulaItm: TMenuItem
-      Caption = 'New JIT-compiled Formula'
+      Caption = '@MB:NewJITCompiledFormula'
       OnClick = NewJITFormulaItmClick
     end
   end

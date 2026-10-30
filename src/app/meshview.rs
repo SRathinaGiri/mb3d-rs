@@ -433,7 +433,7 @@ pub fn read_obj(text: &str) -> Result<Mesh, String> {
         }
     }
     if m.faces.is_empty() {
-        return Err(tr("no faces in the file"));
+        return Err(tr("@MB:NoFacesInTheFile"));
     }
     Ok(m)
 }
@@ -545,11 +545,11 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
         ui.set_picture(form, "GLView", Some(fr.img));
         let (mesh, title) = if k == 0 {
-            (&st.preview_mesh, if st.preview_title.is_empty() { tr("Generated Mesh") } else { st.preview_title.clone() })
+            (&st.preview_mesh, if st.preview_title.is_empty() { tr("@MB:GeneratedMesh") } else { st.preview_title.clone() })
         } else {
-            (&st.hm_mesh, tr("HeightMap Generator Preview"))
+            (&st.hm_mesh, tr("@MB:HeightMapGeneratorPreview"))
         };
-        let cap = trf("{} [{} Vertices, {} Faces]", &[&title, &mesh.verts.len(), &mesh.faces.len()]);
+        let cap = trf("@MB:VerticesFaces", &[&title, &mesh.verts.len(), &mesh.faces.len()]);
         ui.fm(form).set_caption(&cap);
     }
 }
@@ -777,7 +777,7 @@ fn save_height_map(app: &Mb3d, path: &Path) -> Result<(), String> {
     let st = &app.meshview;
     let (w, h) = st.hm_size;
     if st.hm_depth.len() != w * h || w == 0 {
-        return Err(tr("nothing to save"));
+        return Err(tr("@MB:NothingToSave"));
     }
     let (zn, zf) = (NEAR, FAR);
     let lin: Vec<f64> = st.hm_depth.iter().map(|&d| (2.0 * zn) / (zf + zn - d as f64 * (zf - zn))).collect();
@@ -822,7 +822,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "FormCreate" => {
-            ui.set_items(HM, "MapTypeCmb", vec![tr("8 Bit PNG"), tr("16 Bit PGM")]);
+            ui.set_items(HM, "MapTypeCmb", vec![tr("@MB:N8BitPNG"), tr("@MB:N16BitPGM")]);
             ui.set_item_index(HM, "MapTypeCmb", 1);
             let dir = app.ini.dir(super::ini::DIR_MAPS);
             let mut i = 1;
@@ -861,7 +861,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "LoadMeshBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: format!("{}|*.obj", tr("Wavefront OBJ (*.obj)")),
+                filter: format!("{}|*.obj", tr("@MB:WavefrontOBJObj")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_MESHES)),
                 ..Default::default()
             };
@@ -870,7 +870,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SaveImgBtnClick" => {
             let ext = hm_ext(ui);
             let o = crate::vcl::dialogs::FileOptions {
-                filter: if ext == "png" { format!("{}|*.png", tr("Portable Network Graphic")) } else { format!("{}|*.pgm", tr("Portable Gray Map")) },
+                filter: if ext == "png" { format!("{}|*.png", tr("@MB:PortableNetworkGraphic")) } else { format!("{}|*.pgm", tr("@MB:PortableGrayMap")) },
                 default_ext: ext.into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
                 ..Default::default()
@@ -883,7 +883,7 @@ pub fn heightmap_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let p = dir.join(format!("{nr}.{}", hm_ext(ui)));
             if p.exists() || find_height_map(&dir, nr).is_some() {
                 app.meshview.pending_save = Some(p);
-                ui.confirm("heightmap:overwrite", &tr("This file already exists. Do you really want to overwrite it?"));
+                ui.confirm("heightmap:overwrite", &tr("@MB:ThisFileAlreadyExistsDoYou"));
             } else if let Err(e) = save_height_map(app, &p) {
                 ui.show_message(&e);
             }

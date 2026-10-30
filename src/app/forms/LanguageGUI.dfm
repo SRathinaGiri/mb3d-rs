@@ -2,7 +2,7 @@ object LanguageFrm: TLanguageFrm
   Left = 148
   Top = 170
   BorderStyle = bsToolWindow
-  Caption = 'Interface language'
+  Caption = '@MB:InterfaceLanguage'
   ClientHeight = 290
   ClientWidth = 460
   Color = clBtnFace
@@ -23,14 +23,14 @@ object LanguageFrm: TLanguageFrm
     Width = 200
     Height = 13
     AutoSize = False
-    Caption = 'Interface language:'
+    Caption = '@MB:InterfaceLanguageColon'
   end
   object LanguagesList: TListBox
     Left = 8
     Top = 26
     Width = 200
     Height = 190
-    Hint = 'Click a language to switch the windows to it'
+    Hint = '@MB:ClickALanguageToSwitchThe'
     ItemHeight = 16
     ParentShowHint = False
     ShowHint = True
@@ -42,8 +42,8 @@ object LanguageFrm: TLanguageFrm
     Top = 259
     Width = 200
     Height = 25
-    Hint = 'Keeps the chosen language for the next start'
-    Caption = 'Save + exit'
+    Hint = '@MB:KeepsTheChosenLanguageForThe'
+    Caption = '@MB:SaveExit'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
@@ -64,7 +64,7 @@ object LanguageFrm: TLanguageFrm
     Width = 236
     Height = 13
     AutoSize = False
-    Caption = 'Folder of the language files:'
+    Caption = '@MB:FolderOfTheLanguageFiles'
   end
   object FolderEdit: TEdit
     Left = 216
@@ -80,14 +80,14 @@ object LanguageFrm: TLanguageFrm
     Width = 236
     Height = 13
     AutoSize = False
-    Caption = 'Your own language (its name):'
+    Caption = '@MB:YourOwnLanguageItsName'
   end
   object NameEdit: TEdit
     Left = 216
     Top = 134
     Width = 236
     Height = 21
-    Hint = 'The name of the new language, in that language (Deutsch, Polski, ...)'
+    Hint = '@MB:TheNameOfTheNewLanguage'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3
@@ -97,8 +97,8 @@ object LanguageFrm: TLanguageFrm
     Top = 161
     Width = 236
     Height = 25
-    Hint = 'Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload'
-    Caption = 'Create language file'
+    Hint = '@MB:WritesTheEnglishTextsAsA'
+    Caption = '@MB:CreateLanguageFile'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 4
@@ -109,8 +109,8 @@ object LanguageFrm: TLanguageFrm
     Top = 192
     Width = 115
     Height = 25
-    Hint = 'Opens the folder of the language files'
-    Caption = 'Open folder'
+    Hint = '@MB:OpensTheFolderOfTheLanguage'
+    Caption = '@MB:OpenFolder'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 5
@@ -121,8 +121,8 @@ object LanguageFrm: TLanguageFrm
     Top = 192
     Width = 115
     Height = 25
-    Hint = 'Reads the language files again, after you edited one'
-    Caption = 'Reload'
+    Hint = '@MB:ReadsTheLanguageFilesAgainAfter'
+    Caption = '@MB:Reload'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 6
@@ -135,6 +135,6 @@ object LanguageFrm: TLanguageFrm
     Height = 40
     AutoSize = False
     WordWrap = True
-    Caption = 'A language file has one text per line: left of the "=" its place or the English text, right of it your text.'
+    Caption = '@MB:ALanguageFileHasOneLabel'
   end
 end

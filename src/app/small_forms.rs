@@ -197,7 +197,7 @@ pub fn mapseq_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "MapSequencesListClick" => ms_detail(app, ui),
         "NewBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp|{}|*.*", tr("Images"), tr("All files (*.*)")),
+                filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 ..Default::default()
             };
@@ -277,7 +277,7 @@ pub fn textbox_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                         app.eng.clear();
                         app.scene_to_forms(ui);
                         super::main_form::set_caption(app, ui);
-                        app.message(ui, &tr("Parameters loaded, press \"Calculate 3D\" to render."));
+                        app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
                         super::main_form::show_image(app, ui);
                         ui.hide(TB);
                     }
@@ -331,7 +331,7 @@ fn zb_values(ui: &Ui) -> (f64, f64, bool) {
 fn zb_refresh(app: &mut Mb3d, ui: &mut Ui) {
     let (o, s, inv) = zb_values(ui);
     let Some((w, h, z, info)) = zbuf16(app, o, s, inv) else {
-        ui.set_text(ZB, "InfoMemo", &tr("Calculate the image first."));
+        ui.set_text(ZB, "InfoMemo", &tr("@MB:CalculateTheImageFirst"));
         return;
     };
     let mut b = Bitmap::new(w, h, 0);
@@ -380,7 +380,7 @@ pub fn zbuf_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SaveImgBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: format!("{}|*.png|{}|*.pgm", tr("PNG 16 bit (*.png)"), tr("PGM 16 bit (*.pgm)")),
+                filter: format!("{}|*.png|{}|*.pgm", tr("@MB:PNG16BitPng"), tr("@MB:PGM16BitPgm")),
                 default_ext: "png".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 ..Default::default()
@@ -405,7 +405,7 @@ pub fn zbuf_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             crate::png::write_gray16(&p.to_string_lossy(), w, h, &z).map_err(|e| e.to_string())
         };
         match res {
-            Ok(()) => app.message(ui, &trf("Saved {}", &[&p.display()])),
+            Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&p.display()])),
             Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
         }
     }

@@ -1,7 +1,7 @@
 object LogFrm: TLogFrm
   Left = 200
   Top = 150
-  Caption = 'Log'
+  Caption = '@MB:Log'
   ClientHeight = 560
   ClientWidth = 940
   Color = clBtnFace
@@ -20,14 +20,14 @@ object LogFrm: TLogFrm
     Top = 12
     Width = 36
     Height = 13
-    Caption = 'Search'
+    Caption = '@MB:Search'
   end
   object Edit1: TEdit
     Left = 50
     Top = 8
     Width = 220
     Height = 21
-    Hint = 'Only the lines that contain these words'
+    Hint = '@MB:OnlyTheLinesThatContainThese'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 0
@@ -38,7 +38,7 @@ object LogFrm: TLogFrm
     Top = 12
     Width = 28
     Height = 13
-    Caption = 'Show'
+    Caption = '@MB:Show'
   end
   object ComboBox1: TComboBox
     Left = 318
@@ -52,16 +52,16 @@ object LogFrm: TLogFrm
     Text = 'Everything'
     OnChange = ComboBox1Change
     Items.Strings = (
-      'Everything'
-      'Warnings and errors'
-      'Errors')
+      '@MB:Everything'
+      '@MB:WarningsAndErrors'
+      '@MB:Errors')
   end
   object ComboBox3: TComboBox
     Left = 476
     Top = 8
     Width = 160
     Height = 21
-    Hint = 'Only one kind of event'
+    Hint = '@MB:OnlyOneKindOfEvent'
     Style = csDropDownList
     ItemHeight = 13
     ItemIndex = 0
@@ -71,21 +71,21 @@ object LogFrm: TLogFrm
     Text = 'All kinds'
     OnChange = ComboBox3Change
     Items.Strings = (
-      'All kinds'
-      'What you did'
-      'Calculations'
-      'Messages'
-      'Files'
-      'Windows'
-      'Program output'
-      'Sessions and crashes')
+      '@MB:AllKinds'
+      '@MB:WhatYouDid'
+      '@MB:Calculations'
+      '@MB:Messages'
+      '@MB:Files'
+      '@MB:Windows'
+      '@MB:ProgramOutput'
+      '@MB:SessionsAndCrashes')
   end
   object Label7: TLabel
     Left = 650
     Top = 12
     Width = 20
     Height = 13
-    Caption = 'Day'
+    Caption = '@MB:Day'
   end
   object ComboBox2: TComboBox
     Left = 676
@@ -100,7 +100,7 @@ object LogFrm: TLogFrm
     Text = 'This session (live)'
     OnChange = ComboBox2Change
     Items.Strings = (
-      'This session (live)')
+      '@MB:ThisSessionLive')
   end
   object ListView1: TListView
     Left = 8
@@ -110,23 +110,23 @@ object LogFrm: TLogFrm
     Anchors = [akLeft, akTop, akRight, akBottom]
     Columns = <
       item
-        Caption = 'When (UTC)'
+        Caption = '@MB:WhenUTC'
         Width = 150
       end
       item
-        Caption = 'Level'
+        Caption = '@MB:Level'
         Width = 56
       end
       item
-        Caption = 'Program'
+        Caption = '@MB:Program'
         Width = 64
       end
       item
-        Caption = 'Kind'
+        Caption = '@MB:Kind'
         Width = 72
       end
       item
-        Caption = 'What happened'
+        Caption = '@MB:WhatHappened'
         Width = 560
       end>
     GridLines = True
@@ -160,9 +160,9 @@ object LogFrm: TLogFrm
     Top = 526
     Width = 150
     Height = 17
-    Hint = 'Keep the newest line in sight as new ones come'
+    Hint = '@MB:KeepTheNewestLineInSight'
     Anchors = [akLeft, akBottom]
-    Caption = 'Follow the newest'
+    Caption = '@MB:FollowTheNewest'
     Checked = True
     State = cbChecked
     ParentShowHint = False
@@ -175,9 +175,9 @@ object LogFrm: TLogFrm
     Top = 520
     Width = 110
     Height = 28
-    Hint = 'Copy the selected line, or all the lines shown when none is selected'
+    Hint = '@MB:CopyTheSelectedLineOrAll'
     Anchors = [akRight, akBottom]
-    Caption = 'Copy'
+    Caption = '@MB:Copy'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 7
@@ -188,9 +188,9 @@ object LogFrm: TLogFrm
     Top = 520
     Width = 140
     Height = 28
-    Hint = 'Open the folder of the log files (one a day, kept 30 days)'
+    Hint = '@MB:OpenTheFolderOfTheLog'
     Anchors = [akRight, akBottom]
-    Caption = 'Open log folder'
+    Caption = '@MB:OpenLogFolder'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 8
@@ -202,7 +202,7 @@ object LogFrm: TLogFrm
     Width = 110
     Height = 28
     Anchors = [akRight, akBottom]
-    Caption = 'Close'
+    Caption = '@MB:Close'
     TabOrder = 9
     OnClick = Button3Click
   end

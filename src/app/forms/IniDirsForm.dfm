@@ -2,7 +2,7 @@ object IniDirForm: TIniDirForm
   Left = 148
   Top = 170
   BorderStyle = bsDialog
-  Caption = 'Loading and saving initial directories'
+  Caption = '@MB:LoadingAndSavingInitialDirectories'
   ClientHeight = 457
   ClientWidth = 678
   Color = clBtnFace
@@ -22,7 +22,7 @@ object IniDirForm: TIniDirForm
     Top = 435
     Width = 174
     Height = 13
-    Caption = '(Click a button to change a directory)'
+    Caption = '@MB:ClickAButtonToChangeA'
   end
   object Edit1: TEdit
     Left = 133
@@ -36,7 +36,7 @@ object IniDirForm: TIniDirForm
     Top = 427
     Width = 91
     Height = 25
-    Caption = 'Save + exit'
+    Caption = '@MB:SaveExit'
     TabOrder = 26
     OnClick = Button1Click
   end
@@ -46,7 +46,7 @@ object IniDirForm: TIniDirForm
     Top = 168
     Width = 121
     Height = 25
-    Caption = 'M3A animation files:'
+    Caption = '@MB:M3AAnimationFiles'
     TabOrder = 10
     OnClick = Button3Click
   end
@@ -62,7 +62,7 @@ object IniDirForm: TIniDirForm
     Top = 8
     Width = 121
     Height = 25
-    Caption = 'Full M3I image files:'
+    Caption = '@MB:FullM3IImageFiles'
     TabOrder = 0
     OnClick = Button3Click
   end
@@ -79,7 +79,7 @@ object IniDirForm: TIniDirForm
     Top = 40
     Width = 121
     Height = 25
-    Caption = 'M3P parameter files:'
+    Caption = '@MB:M3PParameterFiles'
     TabOrder = 2
     OnClick = Button3Click
   end
@@ -96,7 +96,7 @@ object IniDirForm: TIniDirForm
     Top = 72
     Width = 121
     Height = 25
-    Caption = 'BMP,JPG,PNG saving:'
+    Caption = '@MB:BMPJPGPNGSaving'
     TabOrder = 4
     OnClick = Button3Click
   end
@@ -113,7 +113,7 @@ object IniDirForm: TIniDirForm
     Top = 104
     Width = 121
     Height = 25
-    Caption = 'M3F formula files load:'
+    Caption = '@MB:M3FFormulaFilesLoad'
     TabOrder = 6
     OnClick = Button3Click
   end
@@ -123,7 +123,7 @@ object IniDirForm: TIniDirForm
     Top = 200
     Width = 121
     Height = 25
-    Caption = 'Animation pics output:'
+    Caption = '@MB:AnimationPicsOutput'
     TabOrder = 12
     OnClick = Button3Click
   end
@@ -140,7 +140,7 @@ object IniDirForm: TIniDirForm
     Top = 232
     Width = 121
     Height = 25
-    Caption = 'Background pictures:'
+    Caption = '@MB:BackgroundPictures'
     TabOrder = 14
     OnClick = Button3Click
   end
@@ -164,7 +164,7 @@ object IniDirForm: TIniDirForm
     Top = 136
     Width = 121
     Height = 25
-    Caption = 'M3I light parameter:'
+    Caption = '@MB:M3ILightParameter'
     TabOrder = 8
     OnClick = Button3Click
   end
@@ -174,7 +174,7 @@ object IniDirForm: TIniDirForm
     Top = 264
     Width = 121
     Height = 25
-    Caption = 'Big render projects:'
+    Caption = '@MB:BigRenderProjects'
     TabOrder = 16
     OnClick = Button3Click
   end
@@ -191,7 +191,7 @@ object IniDirForm: TIniDirForm
     Top = 296
     Width = 121
     Height = 25
-    Caption = 'Images for maps:'
+    Caption = '@MB:ImagesForMaps'
     TabOrder = 18
     OnClick = Button3Click
   end
@@ -208,7 +208,7 @@ object IniDirForm: TIniDirForm
     Top = 328
     Width = 121
     Height = 25
-    Caption = 'M3V, PNG Voxel slices:'
+    Caption = '@MB:M3VPNGVoxelSlices'
     TabOrder = 20
     OnClick = Button3Click
   end
@@ -225,7 +225,7 @@ object IniDirForm: TIniDirForm
     Top = 360
     Width = 121
     Height = 25
-    Caption = 'M3C pathtracer files:'
+    Caption = '@MB:M3CPathtracerFiles'
     TabOrder = 22
     OnClick = Button3Click
   end
@@ -242,7 +242,7 @@ object IniDirForm: TIniDirForm
     Top = 392
     Width = 121
     Height = 25
-    Caption = 'Meshes:'
+    Caption = '@MB:Meshes'
     TabOrder = 24
     OnClick = Button3Click
   end

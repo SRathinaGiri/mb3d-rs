@@ -2,7 +2,7 @@ object UnfinishedFrm: TUnfinishedFrm
   Left = 200
   Top = 160
   BorderStyle = bsToolWindow
-  Caption = 'Unfinished renders'
+  Caption = '@MB:UnfinishedRenders'
   ClientHeight = 268
   ClientWidth = 640
   Color = clBtnFace
@@ -23,9 +23,7 @@ object UnfinishedFrm: TUnfinishedFrm
     Height = 26
     AutoSize = False
     WordWrap = True
-    Caption =
-      'A stopped or interrupted render keeps what it calculated; Calcul' +
-      'ate 3D of the same parameters continues it.'
+    Caption = '@MB:AStoppedOrInterruptedRenderKeeps'
   end
   object ListView1: TListView
     Left = 8
@@ -34,27 +32,27 @@ object UnfinishedFrm: TUnfinishedFrm
     Height = 186
     Columns = <
       item
-        Caption = 'Name'
+        Caption = '@MB:Name2'
         Width = 190
       end
       item
-        Caption = 'Kind'
+        Caption = '@MB:Kind'
         Width = 60
       end
       item
-        Caption = 'Size'
+        Caption = '@MB:Size'
         Width = 90
       end
       item
-        Caption = 'Done'
+        Caption = '@MB:Done'
         Width = 54
       end
       item
-        Caption = 'Saved'
+        Caption = '@MB:Saved'
         Width = 150
       end
       item
-        Caption = 'MB'
+        Caption = '@MB:MB2'
         Width = 60
       end>
     ColumnClick = False
@@ -69,8 +67,8 @@ object UnfinishedFrm: TUnfinishedFrm
     Top = 234
     Width = 90
     Height = 25
-    Hint = 'Load the parameters of the selected render and continue its calculation'
-    Caption = 'Continue'
+    Hint = '@MB:LoadTheParametersOfTheSelected'
+    Caption = '@MB:Continue'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
@@ -81,8 +79,8 @@ object UnfinishedFrm: TUnfinishedFrm
     Top = 234
     Width = 90
     Height = 25
-    Hint = 'Load the parameters of the selected render only'
-    Caption = 'Load parameters'
+    Hint = '@MB:LoadTheParametersOfTheSelected2'
+    Caption = '@MB:LoadParameters'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
@@ -93,8 +91,8 @@ object UnfinishedFrm: TUnfinishedFrm
     Top = 234
     Width = 90
     Height = 25
-    Hint = 'Delete what the selected render kept'
-    Caption = 'Delete'
+    Hint = '@MB:DeleteWhatTheSelectedRenderKept'
+    Caption = '@MB:Delete'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3
@@ -105,8 +103,8 @@ object UnfinishedFrm: TUnfinishedFrm
     Top = 234
     Width = 90
     Height = 25
-    Hint = 'Delete what all unfinished renders kept'
-    Caption = 'Delete all'
+    Hint = '@MB:DeleteWhatAllUnfinishedRendersKept'
+    Caption = '@MB:DeleteAll'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 4
@@ -117,8 +115,8 @@ object UnfinishedFrm: TUnfinishedFrm
     Top = 234
     Width = 90
     Height = 25
-    Hint = 'Writes the picture as it is now (the rows not done as background) as a .m3i file'
-    Caption = 'Save m3i'
+    Hint = '@MB:WritesThePictureAsItIs'
+    Caption = '@MB:SaveM3i'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 5

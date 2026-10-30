@@ -50,7 +50,7 @@ fn live(ui: &Ui) -> bool {
 fn fill_days(app: &mut Mb3d, ui: &mut Ui) {
     app.logview.days = crate::log::days();
     let keep = ui.item_index(F, "ComboBox2").max(0);
-    let mut items = vec![tr("This session (live)")];
+    let mut items = vec![tr("@MB:ThisSessionLive")];
     items.extend(app.logview.days.iter().map(|(d, _)| d.clone()));
     let c = ui.cm(F, "ComboBox2");
     c.items = items;
@@ -121,17 +121,17 @@ fn apply(app: &mut Mb3d, ui: &mut Ui) {
     ui.listview_show_selection(F, "ListView1");
     fill_cells(app, ui, true);
     let total = app.logview.entries.len();
-    let text = if n == total { trf("{} lines", &[&n]) } else { trf("{} of {} lines", &[&n, &total]) };
+    let text = if n == total { trf("@MB:Lines", &[&n]) } else { trf("@MB:OfLines", &[&n, &total]) };
     ui.set_caption(F, "Label5", &text);
     show_selected(app, ui);
 }
 
 fn level_text(l: Level) -> String {
     match l {
-        Level::Debug => tr("debug"),
-        Level::Info => tr("info"),
-        Level::Warn => tr("warning"),
-        Level::Error => tr("error"),
+        Level::Debug => tr("@MB:Debug"),
+        Level::Info => tr("@MB:Info"),
+        Level::Warn => tr("@MB:WarningLower"),
+        Level::Error => tr("@MB:Error"),
     }
 }
 
@@ -213,7 +213,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 None => app.logview.shown.iter().map(|&i| app.logview.entries[i].line()).collect::<Vec<_>>().join("\n"),
             };
             crate::vcl::clipboard::set(&text);
-            app.message(ui, &tr("Copied to the clipboard."));
+            app.message(ui, &tr("@MB:CopiedToTheClipboard"));
         }
         "Button2Click" => {
             let _ = open::that_detached(crate::log::folder());

@@ -166,7 +166,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
 /// The edits show the combinations ("none" where there is none).
 fn refresh(app: &Mb3d, ui: &mut Ui) {
     for (i, c) in combos(app).into_iter().enumerate() {
-        let t = c.map(|c| c.text()).unwrap_or_else(|| tr("none"));
+        let t = c.map(|c| c.text()).unwrap_or_else(|| tr("@MB:None"));
         ui.set_text(HK, &format!("Edit{}", i + 1), &t);
     }
 }

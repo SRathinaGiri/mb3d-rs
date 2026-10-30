@@ -2,7 +2,7 @@ object HotkeysFrm: THotkeysFrm
   Left = 148
   Top = 170
   BorderStyle = bsToolWindow
-  Caption = 'Hotkeys'
+  Caption = '@MB:Hotkeys'
   ClientHeight = 318
   ClientWidth = 300
   Color = clBtnFace
@@ -24,7 +24,7 @@ object HotkeysFrm: THotkeysFrm
     Height = 42
     AutoSize = False
     WordWrap = True
-    Caption = 'Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.'
+    Caption = '@MB:BringsTheWindowToTheFront'
   end
   object Label1: TLabel
     Left = 8
@@ -32,7 +32,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Main window:'
+    Caption = '@MB:MainWindow'
   end
   object Edit1: TEdit
     Tag = 0
@@ -40,7 +40,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 54
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -53,7 +53,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Navigator:'
+    Caption = '@MB:NavigatorColon'
   end
   object Edit2: TEdit
     Tag = 1
@@ -61,7 +61,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 82
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -74,7 +74,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Animation:'
+    Caption = '@MB:Animation'
   end
   object Edit3: TEdit
     Tag = 2
@@ -82,7 +82,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 110
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -95,7 +95,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Formulas:'
+    Caption = '@MB:FormulasColon'
   end
   object Edit4: TEdit
     Tag = 3
@@ -103,7 +103,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 138
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -116,7 +116,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Lighting:'
+    Caption = '@MB:LightingColon'
   end
   object Edit5: TEdit
     Tag = 4
@@ -124,7 +124,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 166
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -137,7 +137,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Post processing:'
+    Caption = '@MB:PostProcessingColon'
   end
   object Edit6: TEdit
     Tag = 5
@@ -145,7 +145,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 194
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -158,7 +158,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Monte Carlo:'
+    Caption = '@MB:MonteCarlo'
   end
   object Edit7: TEdit
     Tag = 6
@@ -166,7 +166,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 222
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -179,7 +179,7 @@ object HotkeysFrm: THotkeysFrm
     Width = 130
     Height = 13
     AutoSize = False
-    Caption = 'Close the current window:'
+    Caption = '@MB:CloseTheCurrentWindow'
   end
   object Edit8: TEdit
     Tag = 7
@@ -187,7 +187,7 @@ object HotkeysFrm: THotkeysFrm
     Top = 250
     Width = 148
     Height = 21
-    Hint = 'Click and press the keys of the hotkey'
+    Hint = '@MB:ClickAndPressTheKeysOf'
     ParentShowHint = False
     ReadOnly = True
     ShowHint = True
@@ -199,8 +199,8 @@ object HotkeysFrm: THotkeysFrm
     Top = 287
     Width = 137
     Height = 25
-    Hint = 'Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close'
-    Caption = 'Defaults'
+    Hint = '@MB:Ctrl1ToCtrl7In'
+    Caption = '@MB:Defaults'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 8
@@ -211,8 +211,8 @@ object HotkeysFrm: THotkeysFrm
     Top = 287
     Width = 137
     Height = 25
-    Hint = 'Keeps the hotkeys for the next start'
-    Caption = 'Save + exit'
+    Hint = '@MB:KeepsTheHotkeysForTheNext'
+    Caption = '@MB:SaveExit'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 9

@@ -2,7 +2,7 @@ object AiConnectFrm: TAiConnectFrm
   Left = 220
   Top = 160
   BorderStyle = bsDialog
-  Caption = 'Connect to an AI assistant'
+  Caption = '@MB:ConnectToAnAIAssistant'
   ClientHeight = 470
   ClientWidth = 640
   Color = clBtnFace
@@ -22,12 +22,7 @@ object AiConnectFrm: TAiConnectFrm
     Width = 616
     Height = 52
     AutoSize = False
-    Caption = 
-      'An AI assistant on this computer can use Mandelbulb 3D: ask it in' +
-      ' plain words, or by voice, to describe, change and render your p' +
-      'ictures, to make variations or to render what you worked on last' +
-      '. Mandelbulb 3D stays offline: the assistant'#39's app starts it on' +
-      ' this computer.'
+    Caption = '@MB:AnAIAssistantOnThisComputer'
     WordWrap = True
   end
   object Label7: TLabel
@@ -35,7 +30,7 @@ object AiConnectFrm: TAiConnectFrm
     Top = 74
     Width = 200
     Height = 13
-    Caption = 'Claude (desktop app)'
+    Caption = '@MB:ClaudeDesktopApp'
     Font.Style = [fsBold]
     ParentFont = False
   end
@@ -53,7 +48,7 @@ object AiConnectFrm: TAiConnectFrm
     Top = 80
     Width = 140
     Height = 30
-    Caption = 'Connect'
+    Caption = '@MB:Connect'
     TabOrder = 0
     OnClick = Button1Click
   end
@@ -62,7 +57,7 @@ object AiConnectFrm: TAiConnectFrm
     Top = 140
     Width = 200
     Height = 13
-    Caption = 'Claude Code (in a terminal)'
+    Caption = '@MB:ClaudeCodeInATerminal'
     Font.Style = [fsBold]
     ParentFont = False
   end
@@ -88,8 +83,8 @@ object AiConnectFrm: TAiConnectFrm
     Top = 190
     Width = 140
     Height = 28
-    Hint = 'Copy the command, to paste it into a terminal'
-    Caption = 'Copy command'
+    Hint = '@MB:CopyTheCommandToPasteIt'
+    Caption = '@MB:CopyCommand'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
@@ -100,7 +95,7 @@ object AiConnectFrm: TAiConnectFrm
     Top = 234
     Width = 300
     Height = 13
-    Caption = 'Things to ask the assistant'
+    Caption = '@MB:ThingsToAskTheAssistant'
     Font.Style = [fsBold]
     ParentFont = False
   end
@@ -127,7 +122,7 @@ object AiConnectFrm: TAiConnectFrm
     Top = 432
     Width = 100
     Height = 28
-    Caption = 'Close'
+    Caption = '@MB:Close'
     TabOrder = 4
     OnClick = Button3Click
   end
