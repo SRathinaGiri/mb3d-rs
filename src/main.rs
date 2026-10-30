@@ -760,13 +760,14 @@ fn mcp_cmd(argv: &[String]) -> Result<(), String> {
                 let remove = a == "--remove";
                 // (this program starts no other programs: Claude Code's
                 // command is for the user to run)
-                match mb3d::mcp::claude_desktop(remove) {
+                let exe = mb3d::mcp::cli_program()?;
+                match mb3d::mcp::claude_desktop(remove, &exe) {
                     Ok(t) => println!("Claude (desktop app): {t}"),
                     Err(e) => println!("Claude (desktop app): {e}"),
                 }
                 println!();
                 println!("Claude Code: run this command once in a terminal{}:", if remove { " to take mb3d out" } else { "" });
-                println!("    {}", mb3d::mcp::claude_code_command(remove)?);
+                println!("    {}", mb3d::mcp::claude_code_command(remove, &exe)?);
                 if !remove {
                     println!("then start a new Claude Code session and ask, for example: \"Show me a preview of the last picture I rendered in mb3d.\"");
                 }

@@ -1337,7 +1337,7 @@ instructions tell the assistant to ask the user for; a calculation stops
 after `--max-minutes` (10). Every call is logged (kind `mcp`). `mb3d mcp
 --setup` adds mb3d to Claude's desktop app's `claude_desktop_config.json`
 (merged, the old file kept as `.json.before-mb3d`) and prints the command
-for Claude Code (`claude mcp add --scope user mb3d -- <mb3d> mcp`): the
+for Claude Code (`claude mcp add mb3d --scope user -- <mb3d> mcp`): the
 program starts no other programs; `--remove` undoes both.
 
 **Crashes.** A panic of either program (any thread), or the error the

@@ -589,8 +589,8 @@ you check further on your own:
   Protocol): ask Claude's desktop app or Claude Code in plain words, or by
   voice through the assistant, to describe, change and render your
   parameter files, breed variations or render what you worked on last;
-  the assistant sees the pictures and can adjust them. `mb3d mcp --setup`
-  connects it. mb3d stays offline (the assistant's app starts it on your
+  the assistant sees the pictures and can adjust them. The **AI** button
+  on the Prefs tab connects it with a click (or `mb3d mcp --setup`). mb3d stays offline (the assistant's app starts it on your
   computer), writes only into the `AI` folder and never deletes anything;
   pictures above 4K need your agreement.
 * **A log of everything** behind the page icon of the title bar: every

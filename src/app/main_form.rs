@@ -2370,6 +2370,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "LanguageBadgeClick" => ui.show("LanguageFrm"),
         "HistoryIconClick" => super::history_form::open(app, ui),
         "LogIconClick" => super::log_form::open(app, ui),
+        "AiBtnClick" => super::ai_form::open(app, ui),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files

@@ -429,9 +429,45 @@ fn claude_desktop_config() -> Option<PathBuf> {
     }
 }
 
-fn this_program() -> Result<PathBuf, String> {
+/// The command line program `mb3d` (the one assistants start): this
+/// program, or the `mb3d` next to it (from the desktop program).
+pub fn cli_program() -> Result<PathBuf, String> {
     let p = std::env::current_exe().map_err(|e| format!("cannot tell where this program is: {e}"))?;
-    Ok(std::fs::canonicalize(&p).unwrap_or(p))
+    let p = std::fs::canonicalize(&p).unwrap_or(p);
+    let is_cli = p.file_stem().is_some_and(|s| s == "mb3d");
+    if is_cli {
+        return Ok(p);
+    }
+    let sibling = p.with_file_name(if cfg!(windows) { "mb3d.exe" } else { "mb3d" });
+    if sibling.is_file() {
+        Ok(sibling)
+    } else {
+        Err(format!("the command line program {} is missing next to this one", sibling.display()))
+    }
+}
+
+/// Whether Claude's desktop app is installed (its settings folder is
+/// there) and whether mb3d is in its settings.
+pub fn claude_desktop_status() -> (bool, bool) {
+    let Some(cfg) = claude_desktop_config() else { return (false, false) };
+    let installed = cfg.parent().is_some_and(Path::is_dir);
+    let connected = std::fs::read_to_string(&cfg).ok().and_then(|t| json::parse(&t).ok()).is_some_and(|v| v.get("mcpServers").and_then(|m| m.get("mb3d")).is_some());
+    (installed, connected)
+}
+
+/// Whether Claude Code is installed (`claude` on the PATH, or its folder in
+/// the home folder) and whether mb3d is among its servers for the user.
+pub fn claude_code_status() -> (bool, bool) {
+    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).map(PathBuf::from);
+    let on_path = std::env::var_os("PATH").is_some_and(|p| {
+        std::env::split_paths(&p).any(|d| d.join("claude").is_file() || d.join("claude.exe").is_file() || d.join("claude.cmd").is_file())
+    });
+    let installed = on_path || home.as_ref().is_some_and(|h| h.join(".claude").is_dir());
+    let connected = home
+        .and_then(|h| std::fs::read_to_string(h.join(".claude.json")).ok())
+        .and_then(|t| json::parse(&t).ok())
+        .is_some_and(|v| v.get("mcpServers").and_then(|m| m.get("mb3d")).is_some());
+    (installed, connected)
 }
 
 /// The `mcpServers` entry for this program.
@@ -442,7 +478,7 @@ fn entry(exe: &Path) -> Value {
 /// Adds (or with `remove` takes out) mb3d in Claude's desktop app's
 /// settings, keeping everything else; a copy of the old file is kept next
 /// to it.
-pub fn claude_desktop(remove: bool) -> Result<String, String> {
+pub fn claude_desktop(remove: bool, exe: &Path) -> Result<String, String> {
     let cfg = claude_desktop_config().ok_or("cannot find the settings folder of Claude's desktop app")?;
     let dir = cfg.parent().ok_or("bad settings path")?;
     if !dir.is_dir() {
@@ -458,7 +494,7 @@ pub fn claude_desktop(remove: bool) -> Result<String, String> {
     let Value::Obj(list) = servers else { return Err("mcpServers is not an object; the file was left as it is".into()) };
     list.retain(|(k, _)| k != "mb3d");
     if !remove {
-        list.push(("mb3d".into(), entry(&this_program()?)));
+        list.push(("mb3d".into(), entry(exe)));
     }
     if !old.is_empty() {
         let backup = cfg.with_extension("json.before-mb3d");
@@ -475,13 +511,12 @@ pub fn claude_desktop(remove: bool) -> Result<String, String> {
 
 /// The command that adds mb3d to Claude Code (for the user to run: this
 /// program starts no other programs).
-pub fn claude_code_command(remove: bool) -> Result<String, String> {
-    let exe = this_program()?;
+pub fn claude_code_command(remove: bool, exe: &Path) -> Result<String, String> {
     let quoted = |p: &Path| {
         let t = p.to_string_lossy();
         if t.contains(' ') { format!("\"{t}\"") } else { t.into_owned() }
     };
-    Ok(if remove { "claude mcp remove --scope user mb3d".to_string() } else { format!("claude mcp add --scope user mb3d -- {} mcp", quoted(&exe)) })
+    Ok(if remove { "claude mcp remove mb3d --scope user".to_string() } else { format!("claude mcp add mb3d --scope user -- {} mcp", quoted(exe)) })
 }
 
 #[cfg(test)]

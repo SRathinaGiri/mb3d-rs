@@ -3196,7 +3196,7 @@ object Mand3DForm: TMand3DForm
           object IniDirsBtn: TSpeedButton
             Left = 2
             Top = 3
-            Width = 54
+            Width = 48
             Height = 30
             Hint = 'Define default directories for loading+saving'
             Caption = 'Ini Dirs'
@@ -3205,9 +3205,9 @@ object Mand3DForm: TMand3DForm
             OnClick = IniDirsBtnClick
           end
           object MapSequencesBtn: TSpeedButton
-            Left = 58
+            Left = 52
             Top = 3
-            Width = 80
+            Width = 72
             Height = 30
             Hint = 'Define image sequences to animate height- and color maps'
             Caption = 'Map Sequences'
@@ -3216,9 +3216,9 @@ object Mand3DForm: TMand3DForm
             OnClick = MapSequencesBtnClick
           end
           object VisualThemesBtn: TSpeedButton
-            Left = 140
+            Left = 126
             Top = 3
-            Width = 54
+            Width = 48
             Height = 30
             Hint = 'Set the visual theme of the application'
             Caption = 'Themes'
@@ -3227,15 +3227,26 @@ object Mand3DForm: TMand3DForm
             OnClick = VisualThemesBtnClick
           end
           object HotkeysBtn: TSpeedButton
-            Left = 196
+            Left = 176
             Top = 3
-            Width = 56
+            Width = 50
             Height = 30
             Hint = 'Keys that bring a window to the front from any window'
             Caption = 'Hotkeys'
             ParentShowHint = False
             ShowHint = True
             OnClick = HotkeysBtnClick
+          end
+          object AiBtn: TSpeedButton
+            Left = 228
+            Top = 3
+            Width = 24
+            Height = 30
+            Hint = 'Connect to an AI assistant: let it describe, change and render your pictures'
+            Caption = 'AI'
+            ParentShowHint = False
+            ShowHint = True
+            OnClick = AiBtnClick
           end
         end
       end
