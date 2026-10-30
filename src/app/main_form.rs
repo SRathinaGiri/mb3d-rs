@@ -134,6 +134,10 @@ pub struct State {
     pub led_running: bool,
     /// the note on the card's shaders compiling was shown for this calculation
     pub compile_note: bool,
+    /// the card's shaders compiling: since when (the status line's clock),
+    /// and the status label's own font while its colour pulses
+    pub compile_since: Option<Instant>,
+    pub status_font: Option<Option<crate::vcl::font::Font>>,
     pub user_aspect: (i32, i32),
     pub intern_aspect: f64,
     pub user_change: bool,
@@ -231,6 +235,8 @@ impl Default for State {
             led: Led::Idle,
             led_running: false,
             compile_note: false,
+            compile_since: None,
+            status_font: None,
             user_aspect: (0, 0),
             intern_aspect: 4.0 / 3.0,
             user_change: true,
@@ -1517,6 +1523,55 @@ fn rough_progress(m: &State, stage: &str, f: f64) -> Option<f64> {
 }
 
 /// Whether the graphics card's shaders are being compiled.
+/// "shaders compiling 0:23" since the compile began (the earliest running
+/// compile's start), with a note after a minute.
+fn compile_clock(app: &mut Mb3d) -> String {
+    let s = compile_start(app).elapsed().as_secs();
+    let mut t = format!("{} {}:{:02}", tr("shaders compiling"), s / 60, s % 60);
+    if s >= 60 {
+        t = format!("{t} ({})", tr("longer than usual, still working"));
+    }
+    t
+}
+
+/// When the compile shown began: the earliest running compile's start
+/// (kept until the compiling ends).
+fn compile_start(app: &mut Mb3d) -> Instant {
+    if let Some(t) = app.main.compile_since {
+        return t;
+    }
+    #[cfg(feature = "gpu")]
+    let began = crate::gpu::compile_jobs(Instant::now()).iter().filter(|j| j.secs.is_none()).map(|j| j.start).min();
+    #[cfg(not(feature = "gpu"))]
+    let began: Option<Instant> = None;
+    *app.main.compile_since.insert(began.unwrap_or_else(Instant::now))
+}
+
+/// The status line's colour pulses (a slow fade to the highlight colour and
+/// back, 1.2 s) while the card's shaders compile, and comes back after.
+fn status_pulse(app: &mut Mb3d, ui: &mut Ui, compiling: bool) {
+    if compiling {
+        let since = compile_start(app);
+        if app.main.status_font.is_none() {
+            app.main.status_font = Some(ui.c(F, "Label6").font.clone());
+        }
+        let phase = since.elapsed().as_secs_f32() / 1.2 * std::f32::consts::TAU;
+        let t = 0.5 - 0.5 * phase.cos();
+        let color = crate::vcl::canvas::mix(ui.theme.text(), ui.theme.highlight(), t);
+        // (the label's own font as it is drawn, the parent's when it has none)
+        let base = app.main.status_font.clone().flatten().unwrap_or_else(|| {
+            let f = ui.f(F);
+            f.id("Label6").map(|id| f.font(id)).unwrap_or_default()
+        });
+        ui.cm(F, "Label6").font = Some(crate::vcl::font::Font { color, custom_color: true, ..base });
+    } else {
+        app.main.compile_since = None;
+        if let Some(f) = app.main.status_font.take() {
+            ui.cm(F, "Label6").font = f;
+        }
+    }
+}
+
 fn shaders_compiling() -> bool {
     // (prepared in the background, or compiled by a stage that waits for it)
     #[cfg(feature = "gpu")]
@@ -1619,6 +1674,11 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         let o = app.eng.0.out.lock().unwrap();
         (o.ver, o.finished, o.running, o.stage.clone(), o.stage_base, o.kept_secs, o.error.clone(), o.stats, o.cancelled)
     };
+    // the status line pulses while the card's shaders compile
+    let compiling_now = app.main.calculating && shaders_compiling();
+    if compiling_now || app.main.status_font.is_some() {
+        status_pulse(app, ui, compiling_now);
+    }
     if app.main.calculating && app.main.led_running {
         let led = running_led(app).unwrap_or(app.main.led);
         app.main.led = led;
@@ -1678,9 +1738,12 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             // the card's shaders compiling: the time left with them, once
             // the CPU threads' pace is known
             let compiling = shaders_compiling();
-            let caption = match (compiling, total.or(left)) {
-                (true, Some(tl)) => format!("{} · {}", tr("shaders compiling"), left_str(tl)),
-                (true, None) => format!("{} · {}", short_stage(&stage), tr("shaders compiling")),
+            // (a ticking clock while they compile: the line changes every
+            // second, so the program is seen to work, not to hang)
+            let clock = compiling.then(|| compile_clock(app));
+            let caption = match (clock, total.or(left)) {
+                (Some(c), Some(tl)) => format!("{c} · {}", left_str(tl)),
+                (Some(c), None) => format!("{} · {c}", short_stage(&stage)),
                 _ => stage_caption(&stage, f as f64, left, total),
             };
             ui.set_caption(F, "Label6", &caption);
