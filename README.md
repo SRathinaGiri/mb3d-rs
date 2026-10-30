@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.86](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86)** (30 Oct 2026, 08:45 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.87](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.87)** (30 Oct 2026, 10:40 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1075,6 +1075,18 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.87](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.87) · 30 Oct 2026, 10:40 UTC
+
+| Commit | What it does |
+|---|---|
+| [`89f0cb2`](https://github.com/thr32423/mb3d-rs/commit/89f0cb2885697d417c2148525830416cef0c5d05) | Version number and release notes of this release |
+| [`7023cb4`](https://github.com/thr32423/mb3d-rs/commit/7023cb43b2c373a19e3c9821a088ec87c2574305) | README in Spanish, Portuguese, Indonesian, Arabic and Urdu, translated from the README of 0.2.86 with each language's interface labels; the language bars of every README name the seventeen languages |
+| [`660b0f1`](https://github.com/thr32423/mb3d-rs/commit/660b0f11a015def8d5803914abf80f4aa376b334) | Languages: Spanish, Portuguese, Indonesian, Arabic and Urdu, all 1,796 labels each, with the flags of Spain, Portugal and Indonesia (Arabic and Urdu without a flag, the badge shows the globe); text written right to left: the Arabic script shaped with rustybuzz right to left (its joined letter forms), a line with right-to-left letters laid out as a right-to-left paragraph in display order by the Unicode bidirectional algorithm (unicode-bidi; Latin words and numbers in it left to right, brackets mirrored), a wrapped right-to-left paragraph right-aligned; a shaped run in the first language font that has all its letters; Arabic.ttf and Urdu.ttf subsets of Noto Sans Arabic UI (tools/font_subsets.py, OFL-NotoSansArabic.txt); the windows themselves keep their left-to-right layout |
+| [`e770a36`](https://github.com/thr32423/mb3d-rs/commit/e770a36bb5e2ba9fd6c5ef87adb01f3972b7c5d9) | .gitignore: Python's __pycache__ of the tools |
+| [`8148548`](https://github.com/thr32423/mb3d-rs/commit/814854849561aad54a2659c1071bd7fdf2809c56) | Languages: the 109 labels the translations lacked (the History, Log and AI assistant windows, the shader clock, the language window's note) in all eleven, so every language now has all its labels; two texts the old generator and the conversion had missed (a call with its text on the next line: the AI window's note, the Z buffer window's values) as labels, the scanner and its test now see such calls; the AI window's message of a missing mb3d as a label; the Japanese, Korean and Chinese font subsets with the new characters, tools/font_subsets.py to make them (never drops a character); labels.py writes the untranslated labels under [Labels], so a line translated there is a label |
+| [`ec16516`](https://github.com/thr32423/mb3d-rs/commit/ec165168a97b2abdeb4d8748c1af0f6ce3935bec) | Interface texts as labels, in the way of Microsoft Dynamics 365: every text has a label ID, the form files and the code refer to it as @MB:Id (Caption = '@MB:CalculateNow', tr("@MB:CalculationStopped")), each language file's [Labels] gives the texts once (Id=text, a note with the English text or where it is used under each); 2,042 control and program lines became 1,793 labels, a new window gets the translations a language already has (the German History window: Art, Größe, Ordner, Laden); a label a language lacks shows the English text, built into the program; a form section still gives one control a text of its own (the conversion kept the 7 to 29 translations per language that differed from their label's), old language files keep working; tools/labels.py finds labels to reuse, adds new ones, checks the references and the translations and puts the files in order; the tests check every reference; every window pixel for pixel as before in English, German and Japanese but for the gained translations |
+| [`22263e0`](https://github.com/thr32423/mb3d-rs/commit/22263e041909ec5af4a3a9a542e2b8c75134f1c8) | README: Updates for v0.2.86 |
+
 ### [v0.2.86](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86) · 30 Oct 2026, 08:45 UTC
 
 | Commit | What it does |
@@ -1104,19 +1116,7 @@ of a release are on its page. Times are in UTC.
 | [`e7dba49`](https://github.com/thr32423/mb3d-rs/commit/e7dba49a3c43373d43e92e85bf0a3ffec5f1ec91) | Polish navigator and drop-down interaction |
 | [`ca4ca66`](https://github.com/thr32423/mb3d-rs/commit/ca4ca66ec9659808b3d49e0cf097eb35c449bf2e) | README: Updates for v0.2.84 |
 
-### [v0.2.84](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.84) · 29 Oct 2026, 16:28 UTC
-
-| Commit | What it does |
-|---|---|
-| [`c4b169d`](https://github.com/thr32423/mb3d-rs/commit/c4b169d340ea6728fd0123ddeefbabdf47de0df0) | Version number and release notes of this release |
-| [`d92029e`](https://github.com/thr32423/mb3d-rs/commit/d92029ee5aa3e2b6f449d61460ab1e91ee3d491a) | History: a clock icon right of the title bar's LED opens the History window (this program's own): every Calculate 3D's parameter file of History (as MB3D keeps it) now with a thumbnail of the finished picture beside it, and a log of every file opened or saved through the file dialogs or dropped on the window (History/<date>/log.txt); listed newest first as a list sorted by a column header's click, as rows with their pictures or as tiles whose size a slider sets, searched by name, folder, kind and action, filtered by file type, "Show unique" keeping one of several entries whose files have the same bytes; a preview of the selected entry (a thumbnail, parameters rendered small, an image scaled down), Load/Open, Show in folder, Remove; the previews of the open dialogs now queue up for a view of many and preview image files too |
-| [`24b9039`](https://github.com/thr32423/mb3d-rs/commit/24b90398c2830c2c82e30784c4cdf9f895071bb3) | Lighting: a lighting change only repaints, as MB3D does; the full repaint that followed 1.5 s after the last change (the hard shadows of a switched or moved light, the reflections, the depth of field) is taken out at the user's wish: on a big picture those passes take as long as the calculation, and MB3D leaves them to the post processing window's buttons; with it go the "shadows next" / "reflections next" line, the lighting window's idle work and the stop of its own repaint by the post processing window |
-| [`efc288c`](https://github.com/thr32423/mb3d-rs/commit/efc288c501a35dffee335d71a3e04c25a9737897) | Formulas: a custom formula whose loop never ends with its options (an integer power of 0 in TrifoxComplexAngles, which the MutaGen can set; MB3D hangs there) cost the whole 2,000,000-step cap on every call, so a render of the scene crawled (nightly issue 24: a 40 x 32 MutaGen probe took 186 s on 24 cores, the generation 7 minutes); the machine's cap collapses to 0 after the first call over it, so the later calls on that thread fail at once (281 s -> 0.1 s), the compiled hybrid and dIFS loops hand over to the plain loop after a failed call (which sees the error's kind), the command line names the case in its warning |
-| [`ed637c7`](https://github.com/thr32423/mb3d-rs/commit/ed637c7a0f3f50d073a960f99f01ce171f3c684b) | Flatpak: Flathub's rules on AI (no AI-written manifests, no AI-opened submissions); the drafted pull request text removed |
-| [`91c0c7b`](https://github.com/thr32423/mb3d-rs/commit/91c0c7bf5cbd9274c68f865b2297ab6d16ca46da) | README: Updates for v0.2.83 |
-| [`e1b66f9`](https://github.com/thr32423/mb3d-rs/commit/e1b66f9b564f70547be72a19b3320238eb685105) | Flatpak: the manifest at v0.2.83; the pull request's text |
-
-All 97 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 98 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
