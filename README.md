@@ -70,8 +70,14 @@ programming language. Anyone can run it on this repository at any time:
 **[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (click *Rescan* for a fresh result of the current code)
 
-Version 0.2.66 was rated **safe: 0 out of 100, no findings** (earlier:
-[the 0.2.44 result](docs/img/scan_0.2.44.png)). An earlier version was flagged,
+Version 0.2.85 was rated **safe: 5 out of 100** (scanned 30 October 2026,
+rules of the scanner's engine 10). Its one warning is the line that starts
+the formulas the program compiles at run time for speed: running freshly
+made machine code cannot be written in Rust's checked form, and that line
+and the bridge to Intel's noise filter are the only places the program
+allows it; the rest is an informational note. (Earlier: 0.2.66 was rated
+0 out of 100 by an older engine, see also
+[the 0.2.44 result](docs/img/scan_0.2.44.png).) An earlier version was flagged,
 and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
 it is now written to stay this way. The programs contain no code that
 connects to the internet; the only other program they ask your system to
