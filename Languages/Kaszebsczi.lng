@@ -38,6 +38,10 @@ AFolderEveryComputerOfThe=Katalog, chtëren widzy kòżdi kòmpùtr roju: ùdzé
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AHigherValueMeansABetter=Wikszô wôrtnota òznôczô lepszą jakòsc, nawetka 100% je stratné.
 ;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=Lopk jãzëka mô jedną etiketã w régù: lewò òd "=" ji ID, prawò twój tekst. Dzél òkna za etiketama dôwô jednémù elementowi swój włôsny tekst.
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
 AMultiplierThatDefinesTheMiximal=Mnożnik, chtëren òkresliwô maksymalną długòsc rechòwaniô cwiardégò cénia,\nwzglãdno niechtërnëch parametrów wiôlgòscë òbrôzka (domëslno = 1).\nZwikszë wôrtnosc, jeżlë felëją cénie daleczich òbiektów.
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=Czas rechòwaniô AO:
@@ -70,6 +74,8 @@ AbsoluteDistanceOfTheSmoothCombine=Absolutnô òdległosc głôdczich fùnkcjów
 ;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
 Absorption=Absorpcja:
 ;Absorption:
+Action=Dzejanié
+;Action
 ActualAmbientShadowPar=Akt. par. cenia òtoczeniô
 ;Actual ambient shadow par.
 ActualCameraSettings=Aktualné nastawë kamerë
@@ -128,6 +134,8 @@ AllFiles=Wszëtczé lopczi
 ;All files
 AllFilesParen=Wszëtczé lopczi (*.*)
 ;All files (*.*)
+AllKinds=Wszëtczé ôrtë
+;All kinds
 AllRealworldUnitsInMeter=Wszëtczé realné jednostczi w métrach.
 ;All realworld units in meter.
 AllTheLightColorSettings=Wszëtczé nastawë swiatła + farwów
@@ -162,6 +170,8 @@ AmbientTopColorLeftclickToChange=Górnô farwa òkòlégò widu, lewé kliknieni
 ;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
 Amount=Wielosc:
 ;Amount:
+AnAIAssistantOnThisComputer=Asystent AI na tim kòmpùtrze mòże brëkòwac Mandelbulb 3D: pòprosë gò prostima słowama abò głosã, żebë òpisôł, zmienił i wërenderowôł twòje òbrôzczi, zrobił warianté abò wërenderowôł to, nad czim të òstatno robił. Mandelbulb 3D òstôwô offline: aplikacjô asystenta zrëszô gò na tim kòmpùtrze.
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
 AnUnfinishedCalculationOfThisPicture=Nieskùńczoné rechòwanié tegò òbrôzka òstało zachòwóné ({}).\n\nCzë jic z nim dali?  "Nié" rechùje gò znowa òd zôczątkù.
 ;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
 AnUnfinishedMonteCarloRenderOf=Nieskùńczony render Monte Carlo z tëch parametrów òstôł zachòwóny ({}).\n\nCzë jic z nim dali?  "Nié" renderëje gò znowa òd zôczątkù.
@@ -184,6 +194,8 @@ Animation=Animacje:
 ;Animation:
 Animation2=Animacjô: {}
 ;Animation: {}
+AnimationLower=animacjô
+;animation
 AnimationMaker=Twòrzenié animacje
 ;Animation maker
 AnimationMakerParen=Twòrzenié animacje   ({})
@@ -406,10 +418,14 @@ CalculateTransparency=Rechùj przezérnosc:
 ;Calculate transparency:
 CalculateTransparencyOnlyOnDIFSFormulas=Rechùj przezérnosc leno na fòrmùłach dIFS (dlô kòmbinacjów DE z escapetime)
 ;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=wërechòwóné
+;calculated
 CalculatedOn=Wërechòwóné na: {}
 ;Calculated on: {}
 CalculatedOnTheCPU=Wërechòwóné na CPU
 ;Calculated on the CPU
+CalculatedPictures=Wërechòwóné òbrôzczi
+;Calculated pictures
 CalculatingThePreview=Rechòwanié pòdzérkù...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=Rechòwanié wòlumetriczny mapë widu
@@ -422,6 +438,8 @@ CalculationOptions=Òptacje rechòwaniô
 ;Calculation options
 CalculationStopped=Rechòwanié zatrzëmóné.
 ;Calculation stopped.
+Calculations=Rechòwania
+;Calculations
 Camera=Kamera
 ;Camera
 CameraColon=Kamera:
@@ -476,6 +494,10 @@ ChooseOption=Wëbierzë òpcjã:
 ;Choose Option:
 ChoseTheme=Wëbierzë témã:
 ;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (w terminalu)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (aplikacjô na kòmpùtr)
+;Claude (desktop app)
 Clear=Wëczëszczë
 ;Clear
 ClearAllGenerationsBeforeTheSelected=Rëmô wszëtczé generacje przed wëbróną
@@ -486,6 +508,8 @@ ClearTheWholeList=Wëczëszczë całą lëstã
 ;Clear the whole list
 ClickAButtonToChangeA=(Klikni knąp, żebë zmienic katalog)
 ;(Click a button to change a directory)
+ClickAColumnHeaderToSort=Klikni nagłówk kòlumnë, żebë sortowac.
+;Click a column header to sort.
 ClickALanguageToSwitchThe=Klikni jãzëk, bë przełączëc na niegò òkna
 ;Click a language to switch the windows to it
 ClickAParameterFileForIts=Klikni lopk parametrów, bë òbaczëc jegò pòdzérk.
@@ -590,6 +614,8 @@ CombineMapYWithDiffuseColors=Łączë Y mapë z difuzyjnyma farwama
 ;Combine map Y with diffuse colors
 Common=Zwëczajny
 ;Common
+ComparingFiles=pòrównywanié lopków
+;comparing files
 Compile=Kòmpilëj
 ;Compile
 CompileTheCodeF9=Kòmpiluje kòd <F9>
@@ -600,6 +626,16 @@ Computer=Kòmpùtr
 ;Computer
 Confirm=Pòcwierdzë
 ;Confirm
+Connect=Pòłączë
+;Connect
+ConnectToAnAIAssistant=Pòłączë z asystentã AI
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=Pòłączë z asystentã AI: niech òpisywô, zmieniwô i renderëje twòje òbrôzczi
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=Pòłączoné. Spëtôj gò w nowi rozmòwie; zrëszë aplikacjã znowa, jeżlë mb3d nie je widzec midzë jegò nôrzãdłama.
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=Pòłączoné. Zrëszë nową sesjã Claude Code, żebë gò brëkòwac. Żebë gò zôs rëmnąc, zrëszë kòmandã niżi.
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
 ConstAttenuation=Stałé tłëmienié
 ;Const Attenuation
 Constant=Kònstanta
@@ -610,10 +646,20 @@ Continue=Kòntinuëj
 ;Continue
 ConvertManyM3PFilesToM3I=Kònwertuje wiele lopków M3P na M3I
 ;Convert many M3P files to M3I
+CopiedToTheClipboard=Skòpérowóné do schówkù.
+;Copied to the clipboard.
 CopiesAnFfmpegCommandForA=Kòpiuje do schòwka kòmandã ffmpeg dlô môłégò wideò MP4 z klatków.\nZrëszë jã sóm w terminalu (ten programa nie zrëszô jinëch programów).
 ;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=Kòpérëj
+;Copy
+CopyCommand=Kòpérëj kòmandã
+;Copy command
 CopyParamsToClipboard=Kòpérëj parametrë do schówkù
 ;Copy Params to Clipboard
+CopyTheCommandToPasteIt=Kòpérëj kòmandã, żebë jã wkleic w terminalu
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=Kòpérëj zaznaczoną régã abò wszëtczé pòkazóné régi, czej niżódnô nie je zaznaczonô
+;Copy the selected line, or all the lines shown when none is selected
 CopyTheValues=Kòpérëj wôrtnotë
 ;Copy the values
 CopyTheValuesTo=Skòpiuj wôrtnotë do..
@@ -732,8 +778,12 @@ DOUBLEIMAGESIZE=PÒDWÒJENIÉ WIÔLGÒSCË ÒBRÔZKA
 ;DOUBLE IMAGESIZE
 DateModified=Datum zmianë
 ;Date modified
+Day=Dzéń
+;Day
 DblClickHideRightPanel=Dwaklik: schòwôj prawi panel
 ;DblClick: hide right panel
+Debug=debug
+;debug
 DecreaseScale=Zmniészë skalã
 ;Decrease scale
 DecreaseTheSizeOfTheNavigator=Zmniészô òkno Nawigatora
@@ -788,6 +838,8 @@ DeleteSelectedOption=Rëmô wëbróną òpcjã
 ;Delete selected option
 DeleteSequence=Rëmnij sekwencjã
 ;Delete Sequence
+DeleteTheParametersAndTheThumbnail=Rëmnąc parametrë i miniaturã "{}" z historii?
+;Delete the parameters and the thumbnail of "{}" from the history?
 DeleteThisKeyframe=Rëmnij tã kluczową klatkã
 ;Delete this keyframe
 DeleteThisTilesFiles=Rëmôj lopczi tegò kachla
@@ -862,6 +914,8 @@ DisableThreadboost=Wëłączë threadboost
 ;Disable threadboost
 Disc=Krąg
 ;Disc
+Disconnect=Rozłączë
+;Disconnect
 DisplayStyle=Sztél wëskrzëniwaniô
 ;Display Style
 DisplaysSomeFormulaDescriptionsIfAvailable=Pòkazywô òpisë fòrmùłów, jeżlë są przistãpné.
@@ -976,8 +1030,14 @@ End=Kùńc:
 ;End:
 EnterNamedParameter=Wpiszë nazwóny parameter
 ;Enter named parameter
+Entries={} wpisów
+;{} entries
+Error=fela
+;error
 ErrorAt=, fela przë {}: {}
 ;, error at {}: {}
+Errors=Felë
+;Errors
 Escapetime3DFormulas=fòrmùłë 3D escapetime
 ;escapetime 3D formulas
 Escapetime3DFormulasWithAnalyticFaster=fòrmùłë 3D escapetime z analiticznym (chùtszim) rechòwanim DE
@@ -992,6 +1052,8 @@ EulerAngles=Nórtë Eulera:
 ;Euler angles:
 EveryNewPictureOfTheMain=Kòżdi nowi òbrôzk głównégò òkna je filtrowóny (zapisóny téż).
 ;Every new picture of the main window is filtered (the saved one too).
+Everything=Wszëtkò
+;Everything
 ExchangeAdd=Wëmieni, dodôj
 ;Exchange, add
 ExchangeThisFormulaWithTheNext=Zamieni tã fòrmùłã z nastãpną
@@ -1036,12 +1098,16 @@ File=Lopk
 ;File
 FileIndex=Indeks lopka:
 ;File index:
+FileLower=lopk
+;file
 FileName=&Miono lopka:
 ;File &name:
 FileTooShort=lopk je za krótczi
 ;file too short
 Filename=Miono lopka
 ;Filename
+Files=Lopczi
+;Files
 FilesOfType=Lopczi ôr&tu:
 ;Files of &type:
 FilterNewPicturesAutomatically=Filtrëj nowé òbrôzczi aùtomatno
@@ -1084,6 +1150,8 @@ Folder=Katalog
 ;Folder
 FolderOfTheLanguageFiles=Katalog lopków jãzëka:
 ;Folder of the language files:
+FollowTheNewest=Sledzë nônowszé
+;Follow the newest
 ForFractionalExponentsOrExponentsMaxInt=\s\sDlô ùłómkòwëch wëkładników abò |wëkładnik| > MaxInt spòdlé mùszi bëc > 0. }
 ;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
 ForSphericalUsageReplacesTheAmbient=Dlô kùlowégò brëkòwaniô, zastãpiwô farwë òkòlégò widu zmniészonym òbrôzkã spòdla
@@ -1096,6 +1164,8 @@ Formula12=Fòrmùła1
 ;Formula1
 FormulaEditor=Editora fòrmùłów
 ;Formula editor
+FormulaLower=fòrmùła
+;formula
 FormulaM3f=Fòrmùła (*.m3f)
 ;Formula (*.m3f)
 FormulaName=Miono fòrmùłë:
@@ -1112,6 +1182,10 @@ FormulasColon=Fòrmùłë:
 ;Formulas:
 Forward=W przódk
 ;Forward
+FoundOnThisComputerNotConnected=Nalazłé na tim kòmpùtrze, jesz nie pòłączoné.
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=Nalazłé na tim kòmpùtrze. Zrëszë rôz tã kòmandã w terminalu, a pòtemù zrëszë nową sesjã Claude Code:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
 FpName=miono fp:
 ;fp name:
 Fpow=Fpow:
@@ -1282,6 +1356,8 @@ GoneLastSeenSAgo=felëje (slédno widzóny {} s temù)
 ;gone (last seen {} s ago)
 GraphicsCard=Graficznô karta
 ;Graphics card
+GroupByDay=Grëpùjë pò dniach
+;Group by day
 GuessParams=Zgadnij parametrë
 ;Guess params
 HMapGen=HMapGen
@@ -1318,6 +1394,10 @@ HideThisFormula=Zatacë tã fòrmùłã
 ;Hide this formula
 High=wësoczi
 ;high
+History=Historiô
+;History
+HistoryThePicturesCalculatedTheFiles=Historiô: wërechòwóné òbrôzczi, òtemkłé i zapisóné lopczi (klikni, żebë przezérac)
+;History: the pictures calculated, the files opened and saved (click to browse)
 HoldShiftKeyForFinerSteps=(Trzëmôj Shift dlô drobniészich kroków)
 ;(Hold Shift key for finer steps)
 Hotkeys=Skrótë
@@ -1374,6 +1454,8 @@ ImageExists=Òbrôzk ju je
 ;Image exists
 ImageLower=òbrôzk
 ;image
+ImageParameters=òbrôzk + parametrë
+;image + parameters
 ImageRotation=Òbrót òbrôzka:
 ;Image rotation:
 ImageSize=-> Wiôlgòsc òbrôzka:
@@ -1438,6 +1520,8 @@ IndexWithLeading0=Indeks z zérama na przódkù
 ;Index with leading 0
 InfinityValuesHaveAFractionField=// wôrtnotë nieskùńczonoscë mają pòle ùłómka równé 0. Nieskùńczonosc mòże bëc dodatnô
 ;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=infò
+;info
 Infos=Infòrmacje
 ;Infos
 IniDirs=Katalodżi
@@ -1566,6 +1650,8 @@ KeepOnlyNearerParts=Zachòwôj leno blëższé partie:
 ;Keep only nearer parts:
 KeepTheAspectRatioWhenManually=Trzimie propòrcje przë rãcznym zmienianim szérzë abò wiżë.\nNie nót òdznaczac przë wcyskanim knąpë propòrcjów.
 ;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=Trzëmôj nônowszą régã na widokù, czej przëchòdzą nowé
+;Keep the newest line in sight as new ones come
 KeepThisPriority=Trzëmôj nen priorytet
 ;Keep this priority
 KeepsTheChosenLanguageForThe=Zachòwiwô wëbróny jãzëk na nôslédny sztart
@@ -1606,6 +1692,8 @@ LeftclickUndoSetsTheParameterTo=Lewé klikniãcé:   Copni -> Nastôwiô paramet
 ;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
 LetTheThresholdDecreaseTheAmbient=Pòzwôlô progòwi zmniészëc òkòlny céń do 0.\nDaleczé strukturë są mni pòd cëskã blëższich strukturów.
 ;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=Równiô
+;Level
 Light=Swiatło
 ;Light
 Light1=Wid 1
@@ -1662,6 +1750,10 @@ LinearAttenuation=Liniowé tłëmienié
 ;Linear Attenuation
 LinearInterpolateAKeyframeInbetween=Liniowò interpòlëjë kluczową klatkã westrzód
 ;Linear interpolate a keyframe inbetween
+Lines={} régów
+;{} lines
+List=Lësta
+;List
 LliMultiplier=Mnożnik Lli:
 ;Lli multiplier:
 Load=Wczëtôj
@@ -1680,14 +1772,22 @@ LoadParameters=Wczëtôj parametrë
 ;Load parameters
 LoadSettingsFromBtrace2File=Wczëtiwô nastawë z lopka *.btrace2
 ;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=Wczëtôj parametrë do przédnégò òkna abò òtemkni lopk
+;Load the parameters into the main window, or open the file
 LoadTheParametersOfTheSelected=Wczëtiwô parametrë wëbrónégò rendera ë kòntinuëje jegò rechòwanié
 ;Load the parameters of the selected render and continue its calculation
 LoadTheParametersOfTheSelected2=Wczëtiwô le parametrë wëbrónégò rendera
 ;Load the parameters of the selected render only
 LoadingAndSavingInitialDirectories=Wczëtiwanié i zapisëwanié pòczątkòwëch katalogów
 ;Loading and saving initial directories
+Log=Dzénnik
+;Log
+LogEverythingTheProgramDidIts=Dzénnik: wszëtkò, co programa zrobiła, ji bôczënczi i felë (klikni, żebë òbaczëc)
+;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ Logaritmiczné fùnkcje }
 ;{ Logarithmic functions }
+LongerThanUsualStillWorking=dłëżi jak zwëczajno, jesz robi
+;longer than usual, still working
 LookIn=Szëkôj &w:
 ;Look &in:
 Looking=Zdrzenié
@@ -1740,6 +1840,8 @@ MB2=MB
 ;MB
 MB3=\s\sMB
 ;\s\sMB
+MB3DImageM3iM3i=Òbrôzk MB3D (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
 MCBatchRender=Rzeszowé renderowanié M.C.
 ;M.C. batch render
 MMBWheelZoom=MMB/Kółkò: zblëżenié
@@ -1762,8 +1864,12 @@ MakeSureThatNoLightWill=Zagwësniwô, że w tribie bez mieszaniô żóden wid ni
 ;Make sure that no light will be subtracted in non-blend mode
 MakeSureThatTheCalcAutomatic=Zagwësni sã, że òptacje 'Rechùj... aùtomatno' dlô cwiardëch\në òkòlnëch céniów są nastawioné, jeżlë chcesz je ùwzglãdnic.
 ;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=Zrobi wid tegò òbrôzka cepłészim i wërenderëj gò znowa.
+;Make the light of that picture warmer and render it again.
 MakeTheTopBottomGradientOf=Robi gradient góra-dół farwów òkòlégò widu ë spòdla\nwzglãdnym do ùkładu kòòrdinatów òbiektu.\nBrëkùj tegò w animacjach, żebë przëwiązac widë do scenerii.
 ;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=Zrobi z niegò trzë warianté i pòwiédz mie, chtëren ce sã nôbarżi widzy.
+;Make three variations of it and tell me which one you like best.
 MakesReflectionsALittleDiffuseValue=Robi òdbicô përznã rozpròszoné, wôrtnotë òd 0 do 2.5
 ;Makes reflections a little diffuse, value range from 0 to 2.5
 MakingTheVideo=Ùsôdzanié wideò...
@@ -1842,6 +1948,10 @@ MeshWithVertexColorsPly=Séc z farwama wiérzków (*.ply)
 ;Mesh with vertex colors (*.ply)
 Meshes=Sécë:
 ;Meshes:
+Meshes2=Sécë
+;Meshes
+Messages=Kòmùnikatë
+;Messages
 Mid=strzódk
 ;mid
 Min=Min
@@ -1874,6 +1984,8 @@ Misc=Jiné:
 ;Misc:
 MiscellaneousRoutines={ Rozmajité procedurë }
 ;{ Miscellaneous Routines }
+Missing=felëje
+;missing
 MissingBTR123Header=Felëje nagłówk <BTR1/2/3>
 ;Missing <BTR1/2/3>-header
 Mix=Mix
@@ -2074,6 +2186,12 @@ Norms=norms
 ;norms
 NotABigRenderProject=to nie je projekt wiôldżégò renderu
 ;not a big render project
+NotAvailableForLinuxUseClaude=Nie je przistãpné dlô Linuksa: brëkùjë Claude Code niżi.
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=Nie nalazłé. Jeżlë gò brëkùjesz, zrëszë rôz tã kòmandã w terminalu:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=Nie je zainstalowóné. Scygni gò z claude.ai/download, zrëszë gò rôz, a pòtemù wrócë tuwò.
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=Nie wëbróné
 ;Not selected
 NotSharingTickShareThisComputer=Bez dzeleniô: zaznaczë "Dzelë nen kòmpùtr", bë renderowac wespół z jinyma kòmpùtrama
@@ -2100,8 +2218,14 @@ ObjectDetermination=Òkreslenié òbiektu:
 ;Object determination:
 Of={} z {}
 ;{} of {}
+OfEntries={} z {} wpisów
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=Z wpisów z tima samima lopkama (te same parametrë wërechòwóné znowa, òbrôzk zapisóny dwa razë) leno nônowszi
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
 OfFormulas=fòrmùłów
 ;of Formulas
+OfLines={} z {} régów
+;{} of {} lines
 OfUnitsDone={} z {} jednostków gòtowé
 ;{} of {} units done
 OffLeftImageIsOnThe=Wëł.: lewi òbrôzk je z lewi starnë dlô równoległégò zdrzeniô. Wł.: prawi òbrôzk je z lewi starnë dlô zdrzeniô na krziż.
@@ -2120,6 +2244,8 @@ OnInsertingANewKeyframe=Przë wstôwianim nowi kluczowi klatczi:
 ;On inserting a new keyframe:
 Only1FocuspointMadeFromAverage=Le 1 pónkt òstrotë, zrobiony ze strzédny Zsharp1+2!
 ;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=Leno òbrôzk je zachòwiwóny jakno lopk òbrôzka (nie render Monte Carlo ani ekspòrt wòkselów abò sécë).
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
 OnlyAddLight=Leno dodôwôj wid
 ;Only add light
 OnlyDEAOAmbientShadowsAvailableIn=W tribie kachlów są przëstãpné le òkòlné cénie DEAO.\nSą terô wëbróné ë nastawioné na 33 parmienie, zmieni to wedle swòjich pòtrzebów.
@@ -2128,6 +2254,12 @@ OnlyDIFS=Leno dIFS
 ;Only dIFS
 OnlyIfHardShadowsWereCalculated=(leno jeżlë cwiardé cénie bëłë wërechòwóné)
 ;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=Leno jeden ôrt zdarzeniô
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=Leno wpisë, chtërnëch miono, katalog abò ôrt zawiérô nen tekst
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=Leno régi, chtërne zawiérają te słowa
+;Only the lines that contain these words
 OnlyToTheActualKeyframe=Le do aktualny kluczowi klatczi
 ;Only to the actual keyframe
 OnlyWorkingIfSmoothNormalsWas=Dzejô leno, jeżlë 'Gładczé normalné' bëło przë rechòwanim nastawioné wikszé òd zera.
@@ -2162,6 +2294,8 @@ OpenGL=OpenGL >>
 ;OpenGL >>
 OpenGLPreviewOfFinalMesh=Pòdzérk OpenGL kùńcowi sécë
 ;OpenGL preview of final mesh
+OpenLogFolder=Òtemkni katalog dzénnika
+;Open log folder
 OpenM3i=Òtemkni m3i
 ;Open m3i
 OpenM3p=Òtemkni m3p
@@ -2178,10 +2312,16 @@ OpenTextParameters=Òtemkni parametrë jakno tekst
 ;Open text parameters
 OpenTheAnimationMaker=Òtemkni twòrzëdło animacjów
 ;Open the animation maker
+OpenTheFolderOfTheFile=Òtemkni katalog lopka
+;Open the folder of the file
+OpenTheFolderOfTheLog=Òtemkni katalog lopków dzénnika (jeden na dzéń, trzëmóné 30 dni)
+;Open the folder of the log files (one a day, kept 30 days)
 OpenTheMutaGen=Òtemkni MutaGen
 ;Open the MutaGen
 OpenTheNavigator=Òtemkni Nawigatór
 ;Open the Navigator
+Opened=òtemkłé
+;opened
 OpensTheFolderOfTheLanguage=Òtmikô katalog lopków jãzëka
 ;Opens the folder of the language files
 OperationCancelled=Òperacjô òprzestónô
@@ -2206,6 +2346,8 @@ Orig=Òrig:
 ;Orig:
 OriginalParameterSizeWidthHeight=Òriginalnô wiôlgòsc parametrów (szérzawa, wësokòsc):
 ;Original parameter size (width, height):
+OtherFiles=Jiné lopczi
+;Other files
 OutputFile=Lopk wińdzeniô:
 ;Output file:
 OutputFolder=Katalog docelowi:
@@ -2256,12 +2398,16 @@ ParamNameMustNotBeEmpty=Miono parametra nie mòże bëc pùsté
 ;Param name must not be empty
 Parameter=Parametr
 ;Parameter
+Parameters=Parametrë
+;Parameters
 ParametersCopiedToTheClipboard=Parametrë skòpérowóné do schówkù.
 ;Parameters copied to the clipboard.
 ParametersLoadedPressCalculate3DTo=Parametrë wczëtóné, wcësni "Rechùj 3D", bë renderowac.
 ;Parameters loaded, press "Calculate 3D" to render.
 ParametersLoadedThisRenderContinuesWhere=Parametrë wczëtóné: nen render jidze dali tam, dze béł zrobiony (pòlétowô régã abò jegò òkno).
 ;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=parametrë
+;parameters
 ParametersMandId=Parametrë: MandId {}
 ;Parameters: MandId {}
 Pass=przeńdzënk {}
@@ -2278,6 +2424,8 @@ Picture=òbrôzk
 ;picture
 Pictures=òbrôzków
 ;pictures
+PicturesAndFilesTheAssistantMakes=Òbrôzczi ë lopczi, jaczé robi asystent, trôfiają do {}; nic nie je rëmóné. Òbrôzczi wikszé jak 4K są robioné le pò Twòjim przëzwòlenim, a rechòwanié sã zatrzimùje pò 10 minutach. Wszëtkò, co òn robi, je w dzénnikù.
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
 PleaseChooseAnOutputFile=Wëbierzë lopk wińdzeniô.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=Nôprzód zaznaczë wëbiérk na òbrôzkù.
@@ -2372,6 +2520,10 @@ Processings=Przerôbianié
 ;Processings
 Processor=procesor
 ;processor
+Program=Programa
+;Program
+ProgramOutput=Wińdzenié programë
+;Program output
 Progress=Pòstãp
 ;Progress
 Project=Projekt:  {}
@@ -2418,6 +2570,8 @@ RandomMultiplier=Mnożnik losowòscë
 ;Random multiplier
 Range=Zasyg
 ;Range
+RawValuesMappedValuesClampedValues=Surowé wôrtnotë:\n  {}..\n  {}\nPrzeniosłé wôrtnotë:\n  {}..\n  {}\nÒbgrańczoné wôrtnotë:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
 Rays=Parmienie:
 ;Rays:
 RaystepDivisor=Dzelnik krokù parmienia:
@@ -2426,6 +2580,8 @@ RaystepMultiplier=Mnożnik krokù parminia:
 ;Raystep multiplier:
 RaystepSubDEstop=Krok parminia minus DEstop:
 ;Raystep sub DEstop:
+ReadingTheHistoryEntries=Czëtanié historii... {} wpisów
+;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=Czëtô lopczi jãzëka znowa, pò zmianie jednégò z nich
 ;Reads the language files again, after you edited one
 RecalculateASelection=\sWërechùj wëbiér na nowò
@@ -2478,6 +2634,8 @@ Reload=Wczëtôj znowa
 ;Reload
 RemainingFaces10NoReduction=Òstałé scanë (1.0 = bez redukcji, 0.0 = maks. redukcjô = bez òstałëch scanów )
 ;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=Rëmôj
+;Remove
 RemoveThisFormulaFromTheLocal=Rëmôj tã fòrmùłã z lokalnégò katalogù appdata
 ;Remove this formula from the local appdata folder
 RenderAllTilesIncludedInThe=Renderëj wszëtczé kachle w régach:
@@ -2486,6 +2644,8 @@ RenderBothEyeImagesAndShow=Renderuje òbrôzczi òbù òczów i pòkazywô pòdz
 ;Render both eye images and show a side-by-side stereo preview without saving it.
 RenderEveryNThFrame=Renderuj kòżdą\n   n-tą klatkã:
 ;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=Wërenderëj mój òstatny òbrôzk w 4K i pòwiédz mie, jak dłëgò to trwało.
+;Render my last picture at 4K and tell me how long it took.
 RenderNextTile=Renderëj pòsobny kachel
 ;Render next tile
 RenderOnlyTheLeftEyeImages=Renderuje le òbrôzczi 'lewégò òka'.\nMòże to ùżëc, żebë rozszerzëc rëchli renderowóną animacjã do stereo.
@@ -2588,6 +2748,8 @@ RoutAngleOfXZ=Nórt Rout X, Z
 ;Rout angle of X, Z
 RoutAngleOfYZ=Nórt Rout Y, Z
 ;Rout angle of Y, Z
+Rows=Rédżi
+;Rows
 RowsOfTiles=Rédżi kachlów
 ;Rows of tiles
 SLeft=òstało {} s
@@ -2634,6 +2796,8 @@ SaveFullLightAndColorParameter=Zapiszë fùl parametrë widu ë farwów
 ;Save full light and color parameter
 SaveImageParameters=Zapiszë òbrôzk + parametrë
 ;Save image + parameters
+SaveM3i=Zapiszë m3i
+;Save m3i
 SaveM3iFiles=Zapiszë lopczi m3i
 ;Save m3i files
 SaveM3iFilesIncludingTheInternal=Zapisywô lopczi m3i razã z bënowim bùforã òbrôzka, co zachòwùje òdbicô itd.
@@ -2674,6 +2838,8 @@ Saved16BitColour=Zapisóné {} (16 bit farwa)
 ;Saved {} (16 bit colour)
 Saved2=Zapisóné {}
 ;Saved {}
+SavedLower=zapisóné
+;saved
 SavedTransparentBackground=Zapisóné {} (przezérné tło)
 ;Saved {} (transparent background)
 Saving=Zapisywanié:
@@ -2704,6 +2870,8 @@ ScriptEditor=Editora skriptów
 ;Script Editor
 ScrollBy1=Przewiń ò 1
 ;Scroll by 1
+Search=Szëkôj
+;Search
 SecantSearchmode=Trib szëkaniô secznym:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=Drëdżi pùnkt òstroscë, jeżlë jinszi òd pierszégò,\ndostóniesz linią òstroscë w môl pùnktu òstroscë.\n(fizyczno nie baro realistyczné, ale przëdatné)\s
@@ -2744,6 +2912,8 @@ SendValues=Wëslij wôrtnotë
 ;Send values
 SendingOut=Wësélanié:
 ;Sending out:
+SessionsAndCrashes=Sesje i awarie
+;Sessions and crashes
 SetLightfuncToCosine=Nastôw fùnkcjã widu na kòsinus
 ;Set lightfunc to cosine
 SetTheMapsOrientationRelativeTo=Nastôw òrientacjã mapë wzglãdno òbiektu.\nBrëkùj tegò w animacjach, żebë przëwiązac widë do scenerii.
@@ -2790,12 +2960,20 @@ ShortdistanceCheckDE=Sprôwdzanié krótczi òdległoscë DE:
 ;Shortdistance check DE:
 ShouldIStopCalculations=Czë zatrzëmac rechòwania?
 ;Should i stop calculations?
+Show=Pòkażë
+;Show
 ShowCoords=Pòkażë kòòrd.
 ;Show coords
 ShowFrameNr=Pòkażë nr klatczi
 ;Show frame nr
 ShowGuides=Pòkażë prowadnice
 ;Show guides
+ShowInFolder=Pòkażë w katalogù
+;Show in folder
+ShowMeAPreviewOfThe=Pòkażë mie pòdzérk òstatnégò òbrôzka, jaczi jem wërenderowôł w mb3d.
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=Pòkażë bez pòwtórków
+;Show unique
 ShowsHiddenFormulasRightclickOnA=Pòkazywô zataconé fòrmùłë.\nKlikni prawim knąpã na fòrmùłã, żebë zmienic ji sztatus.
 ;Shows hidden formulas.\nRightclick on a formula to change its status.
 ShowsMessages=Pòkazywô wiadła
@@ -2966,6 +3144,8 @@ SwarmRenderingSharedBetweenYourComputers=Rój: renderowanié dzeloné midzë Was
 ;Swarm: rendering shared between your computers
 SwitchBackToTheDefaultTheme=Wrôcô nazôd do domëslny témë
 ;Switch back to the default theme
+TakeTheEntryOutOfThe=Rëmôj wpis z historii (parametrë i miniatura wërechòwónégò òbrôzka są rëmniãté; jiné lopczi òstôwają tam, dze są)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
 TargetMapSlot=Docelowi slot mapë
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Docelowi slot mapë. Ùżij ti lëczbë jakno mapë w swòjim fraktalu, np. jakno mapë wësokòscë, żebë miec animòwóną mapã
@@ -2992,6 +3172,8 @@ TheCalculationFailedLower=rechòwanié sã nie ùdało
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Rechòwanié bãdze rozszérzoné bùten òbrôzka ò òdbité òbiektë.\nTo mòże dac mni artefaktów w animacjach, ale téż stojącé òbrôzczi mògą na tim zwëskac.\nWôrtnosc mô bëc w òbrëmienim òd 0 do 0.5 (maks 0.9), to je wiôlgòsc wzglãdno szérzë\në wësokòscë òbrôzka, jakô je maksymalno rechòwónô bùten.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=Programa réżczi pòleceniów mb3d nie je kòle ti programë: zainstalëjë programã znowa.
+;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=Domëslné numrowanié mô 2 lëczbë, òddzelno dlô X ë Y.\nCzej wëbierze sã tã òptacjã, numrowanié mô le jedną lëczbã,\nrosnącą w kòżdi kòlumnie ë jidącą dali w pòsobny rédze.
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=Domëslno òbiekt je biôłi, a òbéńda bùten czôrnô.\nTa òptacjô òdwrôcô farwë.
@@ -3004,8 +3186,16 @@ TheDistanceToTheObjectsSurface=Òdległosc òd pòwiérzchni òbiektu, przë jac
 ;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
 TheEffectAccumulatesResetForA=Efekt sã zbiérô, wëzerëj dlô nowégò rechòwaniô.
 ;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=Wpisë pòd swòjima dniama; wpisë i òbrôzczi dnia pòkazywają sã, czej òn je òtemkłi (klikniãcém na niegò)
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=Nie dało sã rëmnąc wpisu.
+;The entry could not be removed.
+TheFileIsNotThereAny=Lopka ju tam ni ma.
+;The file is not there any more.
 TheFileM3fAlreadyExistsDo=Lopk <{}.m3f> ju je. Czë chcesz gò nadpisac?
 ;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=Lopk (zaznaczë gò i skòpérëj stąd)
+;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(Pierszi) pùnkt òstroscë.\nWôrtnosc je wzglãdno wôrtnoscë Zstart òbzérôcza,\nznormalizowónô do szérzë òbrôzka.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 TheFolderDoesNotExistOr=katalog nie je (abò nie je przëstãpny)
@@ -3020,6 +3210,8 @@ TheImageSizeChangedCalculateThe=wiôlgòsc òbrôzka sã zmieniła: wërechùj �
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=Trib its.trap zanôlégô òd wërechòwóny òptacji w karce "Farwienié".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=Òstatnô sesjô nie skùńczëła sã pòprawno (zamarzła, òsta zabitô abò miała awariã): {}. Co òna robiła na òstatkù, je w dzénniku (òkno Dzénnik, ikòna na pasku titla).
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=Przédny editor wcyg renderëje. Nôprzód gò zatrzëmôj abò żdżë, jaż skùńczi.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=Òpcje mapë rechùją kòòrdinatë x,y z òsoblëwégò\nwektora dlô sfericznëch mapów, to zmieniwô téż pierszi wëbiér farwë,\njaczi zwëczajno òpiérô sã na głôdczich iteracjach.\nŻebë widzec wënik zmianów tëch òpcjów,\nnót je òbrôzk wërechòwac znowa.
@@ -3044,6 +3236,8 @@ TheSelectionMustBeBiggerThanLower=wëbiérk mùszi bëc wikszi jak 2 piksle w sz
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=Dzelony katalog roju
 ;The shared folder of the swarm
+TheSizeOfTheTiles=Wiôlgòsc kachlów
+;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Òbrôzczi òczów stereo mają różné wiôlgòscë.
 ;The stereo eye images have different sizes.
 TheTileHasNoImageBuffer=kachel ni mô bùfra òbrôzka
@@ -3052,6 +3246,8 @@ Themes=Témë
 ;Themes
 ThereIsAFileAlready=Lopk {} ju je.
 ;There is a file {} already.
+ThingsToAskTheAssistant=Ò co mòżesz pòprosëc asystenta
+;Things to ask the assistant
 ThisComputer=Nen kòmpùtr:
 ;This computer:
 ThisEffectIsAccumulatedOnEach=Ten efekt zbiérô sã z kòżdim nacësniãcym knąpë, mòżesz gò wëzerowac knąpą\n'Wëzerëj' - ale òdbicô bãdą téż copniãté!
@@ -3062,8 +3258,12 @@ ThisIsAAbsoluteOffsetIn=To je absolutné przesëniãcé w czerënkù x òbrócon
 ;This is a absolute offset in x direction of the rotated bulb.
 ThisRenderIsRunningRightNow=Nen render jidze prawie terô.
 ;This render is running right now.
+ThisRenderKeepsNoImage=Nen render nie zachòwiwô òbrôzka.
+;This render keeps no image.
 ThisRenderKeptNoParameters=Nen render nie zachòwôł parametrów.
 ;This render kept no parameters.
+ThisSessionLive=Na sesjô (na żëwò)
+;This session (live)
 ThreadPriority=Priorytet\nwątkù
 ;Thread\nPriority
 ThreadcountInCalculations=Lëczba wątków  \nw rechòwaniach
@@ -3092,6 +3292,8 @@ TileXYSaved=Kachel X={} Y={} zapisóny.
 ;Tile X={} Y={} saved.
 Tiles=kachlach
 ;tiles
+Tiles2=Kachle
+;Tiles
 TilesSaved={} kachlów zapisónëch; {}
 ;{} tiles saved; {}
 TilesWithTheSwarm={}  {} kachlów z rojã
@@ -3182,6 +3384,8 @@ UnfinishedRenders=Nieskùńczoné renderë
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=Nieskùńczoné renderingë: kòntinuùj abò rëmôj je
 ;Unfinished renders: continue or delete them
+Untitled=bez titla
+;untitled
 UpOneLevel=Katalog wëżi
 ;Up one level
 UpTo=do:
@@ -3246,6 +3450,8 @@ Video=wideò
 ;video
 VideoLower=wideò: {}
 ;video: {}
+View=Wëzdrzatk
+;View
 ViewToMain=Pòzdrzatk do przédnégò
 ;View to main
 Viewing=Òbzéranié
@@ -3274,8 +3480,12 @@ Walking=Chòdzenié
 ;Walking
 Warning=Bôczënk
 ;Warning
+WarningLower=bôczënk
+;warning
 WarningMustRecalculateTheWholeImage=Bôczënk: Żebë to copnąc, trzeba wërechòwac na nowò całi òbrôzk!
 ;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=Bôczënczi i felë
+;Warnings and errors
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Weight=Wôga
@@ -3284,8 +3494,18 @@ WeightColon=Wôga:
 ;Weight:
 WelcomeToMandelbulb3D=Witôjtaż w Mandelbulb 3D!
 ;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=Co jem dzysô robił w mb3d? Bëłë jaczés felë?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=Co sã stało
+;What happened
+WhatYouDid=Co të zrobił
+;What you did
+When=Czedë
+;When
 WhenAngleNotBetween180And={ Czej nórt nie je midzë -180 a 180, sprowôdzô gò do tegò zasygù }
 ;{ When angle not between -180 and 180 remove left }
+WhenUTC=Czedë (UTC)
+;When (UTC)
 WhenUsingAMapForThe=Czej brëkùjesz mapë dlô rozproszony farwë,\nmùszisz zaznaczëc 'Aùtomaticzné òbcynanié òdbł.+rozpr.'\ndlô aùtomaticznégò òbcynaniô farwów.
 ;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
 White=biôłé
@@ -3294,6 +3514,8 @@ WhiteOutside=Biôłé bùten
 ;White outside
 Width=Szérzô:
 ;Width:
+Windows=Òkna
+;Windows
 Wireframe=Drótowô séc
 ;Wireframe
 WireframeColor=Farwa drótowi sécë
@@ -3308,6 +3530,8 @@ Wrap2=wrap2
 ;wrap2
 WritesTheEnglishTextsAsA=Zapisywô anielsczé tekstë jakno nowi lopk jãzëka ò tim mionie; przełożë je edytorã tekstu, a tej wcësni Wczëtôj znowa
 ;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=Zapisywô òbrôzk taczi, jaczi je terô (nieskùńczoné rédżi jakno tło), jakno lopk .m3i
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
 WrittenTranslateTheTextsRightOf=Zapisóné: {}\nPrzełożë tekstë z prawa òd "=" edytorã tekstu, a tej wcësni Wczëtôj znowa.
 ;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
 XAngle=Nórt X:
@@ -3453,114 +3677,3 @@ ListView1.Columns.4 = Grafikòwô kôrta
 
 [TilingForm]
 Label24.Caption = òstri:
-
-; Not translated yet (shown in English): remove the ";" and translate
-;AI=AI
-;ALanguageFileHasOneLabel=A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
-;Action=Action
-;AllKinds=All kinds
-;AnAIAssistantOnThisComputer=An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
-;AnimationLower=animation
-;Calculated=calculated
-;CalculatedPictures=Calculated pictures
-;Calculations=Calculations
-;ClaudeCodeInATerminal=Claude Code (in a terminal)
-;ClaudeDesktopApp=Claude (desktop app)
-;ClickAColumnHeaderToSort=Click a column header to sort.
-;ComparingFiles=comparing files
-;Connect=Connect
-;ConnectToAnAIAssistant=Connect to an AI assistant
-;ConnectToAnAIAssistantLet=Connect to an AI assistant: let it describe, change and render your pictures
-;ConnectedAskItInANew=Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
-;ConnectedStartANewClaudeCode=Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
-;CopiedToTheClipboard=Copied to the clipboard.
-;Copy=Copy
-;CopyCommand=Copy command
-;CopyTheCommandToPasteIt=Copy the command, to paste it into a terminal
-;CopyTheSelectedLineOrAll=Copy the selected line, or all the lines shown when none is selected
-;Day=Day
-;Debug=debug
-;DeleteTheParametersAndTheThumbnail=Delete the parameters and the thumbnail of "{}" from the history?
-;Disconnect=Disconnect
-;Entries={} entries
-;Error=error
-;Errors=Errors
-;Everything=Everything
-;FileLower=file
-;Files=Files
-;FollowTheNewest=Follow the newest
-;FormulaLower=formula
-;FoundOnThisComputerNotConnected=Found on this computer, not connected yet.
-;FoundOnThisComputerRunThis=Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
-;GroupByDay=Group by day
-;History=History
-;HistoryThePicturesCalculatedTheFiles=History: the pictures calculated, the files opened and saved (click to browse)
-;ImageParameters=image + parameters
-;Info=info
-;KeepTheNewestLineInSight=Keep the newest line in sight as new ones come
-;Level=Level
-;Lines={} lines
-;List=List
-;LoadTheParametersIntoTheMain=Load the parameters into the main window, or open the file
-;Log=Log
-;LogEverythingTheProgramDidIts=Log: everything the program did, its warnings and errors (click to see)
-;LongerThanUsualStillWorking=longer than usual, still working
-;MB3DImageM3iM3i=MB3D image (*.m3i)|*.m3i
-;MakeTheLightOfThatPicture=Make the light of that picture warmer and render it again.
-;MakeThreeVariationsOfItAnd=Make three variations of it and tell me which one you like best.
-;Meshes2=Meshes
-;Messages=Messages
-;Missing=missing
-;NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
-;NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
-;NotInstalledGetItFromClaude=Not installed. Get it from claude.ai/download, start it once, then come back here.
-;OfEntries={} of {} entries
-;OfEntriesWhoseFilesAreThe=Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
-;OfLines={} of {} lines
-;OnlyAPictureIsKeptAs=Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
-;OnlyOneKindOfEvent=Only one kind of event
-;OnlyTheEntriesWhoseNameFolder=Only the entries whose name, folder or kind contain this text
-;OnlyTheLinesThatContainThese=Only the lines that contain these words
-;OpenLogFolder=Open log folder
-;OpenTheFolderOfTheFile=Open the folder of the file
-;OpenTheFolderOfTheLog=Open the folder of the log files (one a day, kept 30 days)
-;Opened=opened
-;OtherFiles=Other files
-;Parameters=Parameters
-;ParametersLower=parameters
-;Program=Program
-;ProgramOutput=Program output
-;ReadingTheHistoryEntries=Reading the history... {} entries
-;Remove=Remove
-;RenderMyLastPictureAt4K=Render my last picture at 4K and tell me how long it took.
-;Rows=Rows
-;SaveM3i=Save m3i
-;SavedLower=saved
-;Search=Search
-;SessionsAndCrashes=Sessions and crashes
-;Show=Show
-;ShowInFolder=Show in folder
-;ShowMeAPreviewOfThe=Show me a preview of the last picture I rendered in mb3d.
-;ShowUnique=Show unique
-;TakeTheEntryOutOfThe=Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
-;TheEntriesUnderTheirDaysA=The entries under their days; a day's entries and pictures show when it is opened (a click on it)
-;TheEntryCouldNotBeRemoved=The entry could not be removed.
-;TheFileIsNotThereAny=The file is not there any more.
-;TheFileSelectAndCopyIt=The file (select and copy it from here)
-;TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
-;TheSizeOfTheTiles=The size of the tiles
-;ThingsToAskTheAssistant=Things to ask the assistant
-;ThisRenderKeepsNoImage=This render keeps no image.
-;ThisSessionLive=This session (live)
-;Tiles2=Tiles
-;Untitled=untitled
-;View=View
-;WarningLower=warning
-;WarningsAndErrors=Warnings and errors
-;WhatDidIDoInMb3d=What did I do in mb3d today? Were there any errors?
-;WhatHappened=What happened
-;WhatYouDid=What you did
-;When=When
-;WhenUTC=When (UTC)
-;Windows=Windows
-;WritesThePictureAsItIs=Writes the picture as it is now (the rows not done as background) as a .m3i file

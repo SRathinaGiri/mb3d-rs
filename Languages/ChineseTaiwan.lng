@@ -39,6 +39,10 @@ AFolderEveryComputerOfThe=Swarm 中每台電腦都能看到的資料夾：NAS �
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AHigherValueMeansABetter=值越高品質越好，但即使 100% 也是有損的。
 ;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=語言檔案每行一個標籤：「=」左邊是其 ID，右邊是您的文字。標籤之後的視窗區段可為單一控制項指定專屬文字。
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
 AMultiplierThatDefinesTheMiximal=定義硬陰影計算最大長度的乘數，\n相對於某些影像尺寸參數（預設 = 1）。\n若遠處物件的陰影缺失，請提高此值。
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO 計算時間：
@@ -71,6 +75,8 @@ AbsoluteDistanceOfTheSmoothCombine=平滑組合函數的絕對距離，\n小數�
 ;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
 Absorption=吸收：
 ;Absorption:
+Action=動作
+;Action
 ActualAmbientShadowPar=目前的環境陰影參數
 ;Actual ambient shadow par.
 ActualCameraSettings=目前的相機設定
@@ -129,6 +135,8 @@ AllFiles=所有檔案
 ;All files
 AllFilesParen=所有檔案 (*.*)
 ;All files (*.*)
+AllKinds=所有種類
+;All kinds
 AllRealworldUnitsInMeter=所有真實世界單位均為公尺。
 ;All realworld units in meter.
 AllTheLightColorSettings=所有光照 + 顏色設定
@@ -163,6 +171,8 @@ AmbientTopColorLeftclickToChange=環境頂部色彩，左鍵更改色彩，\n右
 ;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
 Amount=強度：
 ;Amount:
+AnAIAssistantOnThisComputer=這台電腦上的 AI 助理可以使用 Mandelbulb 3D：用一般的話或語音請它描述、修改及渲染您的圖片、製作變化版本，或渲染您上次處理的內容。Mandelbulb 3D 保持離線：由助理的應用程式在這台電腦上啟動它。
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
 AnUnfinishedCalculationOfThisPicture=已保留這張圖片未完成的計算（{}）。\n\n要繼續嗎？選「否」會從頭重新計算。
 ;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
 AnUnfinishedMonteCarloRenderOf=已保留這些參數未完成的蒙地卡羅渲染（{}）。\n\n要繼續嗎？選「否」會從頭重新渲染。
@@ -185,6 +195,8 @@ Animation=動畫:
 ;Animation:
 Animation2=動畫：{}
 ;Animation: {}
+AnimationLower=動畫
+;animation
 AnimationMaker=動畫製作器
 ;Animation maker
 AnimationMakerParen=動畫製作器   ({})
@@ -407,10 +419,14 @@ CalculateTransparency=計算透明：
 ;Calculate transparency:
 CalculateTransparencyOnlyOnDIFSFormulas=只對 dIFS 公式計算透明（用於與逸出時間公式的 DE 組合）
 ;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=已計算
+;calculated
 CalculatedOn=計算於：{}
 ;Calculated on: {}
 CalculatedOnTheCPU=在 CPU 上計算
 ;Calculated on the CPU
+CalculatedPictures=已計算的圖片
+;Calculated pictures
 CalculatingThePreview=正在計算預覽...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=正在計算體積光貼圖
@@ -423,6 +439,8 @@ CalculationOptions=計算選項
 ;Calculation options
 CalculationStopped=計算已停止。
 ;Calculation stopped.
+Calculations=計算
+;Calculations
 Camera=相機
 ;Camera
 CameraColon=相機：
@@ -477,6 +495,10 @@ ChooseOption=選擇選項：
 ;Choose Option:
 ChoseTheme=選擇主題：
 ;Chose Theme:
+ClaudeCodeInATerminal=Claude Code（在終端機中）
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude（桌面應用程式）
+;Claude (desktop app)
 Clear=清除
 ;Clear
 ClearAllGenerationsBeforeTheSelected=清除所選世代之前的所有世代
@@ -487,6 +509,8 @@ ClearTheWholeList=清除整個清單
 ;Clear the whole list
 ClickAButtonToChangeA=（點擊按鈕以變更目錄）
 ;(Click a button to change a directory)
+ClickAColumnHeaderToSort=按一下欄標題即可排序。
+;Click a column header to sort.
 ClickALanguageToSwitchThe=按一下某個語言，即可將視窗切換為該語言
 ;Click a language to switch the windows to it
 ClickAParameterFileForIts=按一下參數檔案即可預覽。
@@ -591,6 +615,8 @@ CombineMapYWithDiffuseColors=將貼圖 Y 與漫射色彩結合
 ;Combine map Y with diffuse colors
 Common=一般
 ;Common
+ComparingFiles=正在比對檔案
+;comparing files
 Compile=編譯
 ;Compile
 CompileTheCodeF9=編譯程式碼 <F9>
@@ -601,6 +627,16 @@ Computer=電腦
 ;Computer
 Confirm=確認
 ;Confirm
+Connect=連線
+;Connect
+ConnectToAnAIAssistant=連線到 AI 助理
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=連線到 AI 助理：讓它描述、修改及渲染您的圖片
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=已連線。請在新的對話中詢問它；若 mb3d 未出現在它的工具中，請重新啟動應用程式。
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=已連線。請開始新的 Claude Code 工作階段來使用它。若要再移除，請執行下方的指令。
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
 ConstAttenuation=常數衰減
 ;Const Attenuation
 Constant=常數
@@ -611,10 +647,20 @@ Continue=繼續
 ;Continue
 ConvertManyM3PFilesToM3I=將多個 M3P 檔案轉換為 M3I
 ;Convert many M3P files to M3I
+CopiedToTheClipboard=已複製到剪貼簿。
+;Copied to the clipboard.
 CopiesAnFfmpegCommandForA=將可把各影格製成小型 MP4 影片的 ffmpeg 指令複製到剪貼簿。\n請自行在終端機中執行（本程式不會啟動其他程式）。
 ;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=複製
+;Copy
+CopyCommand=複製指令
+;Copy command
 CopyParamsToClipboard=複製參數至剪貼簿
 ;Copy Params to Clipboard
+CopyTheCommandToPasteIt=複製指令，以便貼到終端機中
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=複製選取的那一行；未選取時複製所有顯示的行
+;Copy the selected line, or all the lines shown when none is selected
 CopyTheValues=複製數值
 ;Copy the values
 CopyTheValuesTo=複製數值到..
@@ -733,8 +779,12 @@ DOUBLEIMAGESIZE=影像尺寸加倍
 ;DOUBLE IMAGESIZE
 DateModified=修改日期
 ;Date modified
+Day=日期
+;Day
 DblClickHideRightPanel=按兩下：隱藏右側面板
 ;DblClick: hide right panel
+Debug=除錯
+;debug
 DecreaseScale=縮小比例
 ;Decrease scale
 DecreaseTheSizeOfTheNavigator=縮小導覽器視窗
@@ -789,6 +839,8 @@ DeleteSelectedOption=刪除選取的選項
 ;Delete selected option
 DeleteSequence=刪除序列
 ;Delete Sequence
+DeleteTheParametersAndTheThumbnail=要從歷程記錄中刪除「{}」的參數與縮圖嗎？
+;Delete the parameters and the thumbnail of "{}" from the history?
 DeleteThisKeyframe=刪除此關鍵影格
 ;Delete this keyframe
 DeleteThisTilesFiles=刪除此圖塊的檔案
@@ -863,6 +915,8 @@ DisableThreadboost=停用執行緒加速
 ;Disable threadboost
 Disc=圓形
 ;Disc
+Disconnect=中斷連線
+;Disconnect
 DisplayStyle=顯示樣式
 ;Display Style
 DisplaysSomeFormulaDescriptionsIfAvailable=顯示公式說明（若有）。
@@ -977,8 +1031,14 @@ End=結束：
 ;End:
 EnterNamedParameter=輸入具名參數
 ;Enter named parameter
+Entries={} 筆項目
+;{} entries
+Error=錯誤
+;error
 ErrorAt=, 錯誤位於 {}：{}
 ;, error at {}: {}
+Errors=錯誤
+;Errors
 Escapetime3DFormulas=逃逸時間 3D 公式
 ;escapetime 3D formulas
 Escapetime3DFormulasWithAnalyticFaster=具有解析（較快）DE 計算的逃逸時間 3D 公式
@@ -993,6 +1053,8 @@ EulerAngles=歐拉角：
 ;Euler angles:
 EveryNewPictureOfTheMain=主視窗的每張新圖片都會經過濾波（儲存的圖片也是）。
 ;Every new picture of the main window is filtered (the saved one too).
+Everything=全部
+;Everything
 ExchangeAdd=交換、新增
 ;Exchange, add
 ExchangeThisFormulaWithTheNext=將此公式與下一個交換
@@ -1037,12 +1099,16 @@ File=檔案
 ;File
 FileIndex=檔案索引：
 ;File index:
+FileLower=檔案
+;file
 FileName=檔案名稱(&N)：
 ;File &name:
 FileTooShort=檔案太短
 ;file too short
 Filename=檔名
 ;Filename
+Files=檔案
+;Files
 FilesOfType=檔案類型(&T)：
 ;Files of &type:
 FilterNewPicturesAutomatically=自動濾波新圖片
@@ -1085,6 +1151,8 @@ Folder=資料夾
 ;Folder
 FolderOfTheLanguageFiles=語言檔案的資料夾：
 ;Folder of the language files:
+FollowTheNewest=跟隨最新
+;Follow the newest
 ForFractionalExponentsOrExponentsMaxInt=\s\s若指數為分數，或 |指數| > MaxInt，底數必須 > 0。 }
 ;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
 ForSphericalUsageReplacesTheAmbient=球面使用時，以縮小的背景影像取代環境色彩
@@ -1097,6 +1165,8 @@ Formula12=公式1
 ;Formula1
 FormulaEditor=公式編輯器
 ;Formula editor
+FormulaLower=公式
+;formula
 FormulaM3f=公式 (*.m3f)
 ;Formula (*.m3f)
 FormulaName=公式名稱：
@@ -1113,6 +1183,10 @@ FormulasColon=公式:
 ;Formulas:
 Forward=順向
 ;Forward
+FoundOnThisComputerNotConnected=已在這台電腦上找到，尚未連線。
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=已在這台電腦上找到。請在終端機中執行一次此指令，然後開始新的 Claude Code 工作階段：
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
 FpName=參數名稱：
 ;fp name:
 Fpow=Fpow：
@@ -1283,6 +1357,8 @@ GoneLastSeenSAgo=已離開（最後出現於 {} 秒前）
 ;gone (last seen {} s ago)
 GraphicsCard=顯示卡
 ;Graphics card
+GroupByDay=依日期分組
+;Group by day
 GuessParams=推測參數
 ;Guess params
 HMapGen=HMapGen
@@ -1319,6 +1395,10 @@ HideThisFormula=隱藏此公式
 ;Hide this formula
 High=高
 ;high
+History=歷程記錄
+;History
+HistoryThePicturesCalculatedTheFiles=歷程記錄：已計算的圖片、開啟及儲存的檔案（按一下即可瀏覽）
+;History: the pictures calculated, the files opened and saved (click to browse)
 HoldShiftKeyForFinerSteps=（按住 Shift 鍵可做更細的步進）
 ;(Hold Shift key for finer steps)
 Hotkeys=快速鍵
@@ -1375,6 +1455,8 @@ ImageExists=影像已存在
 ;Image exists
 ImageLower=影像
 ;image
+ImageParameters=影像 + 參數
+;image + parameters
 ImageRotation=影像旋轉：
 ;Image rotation:
 ImageSize=-> 影像尺寸：
@@ -1439,6 +1521,8 @@ IndexWithLeading0=索引前補 0
 ;Index with leading 0
 InfinityValuesHaveAFractionField=// 無限大值的小數部分欄位為 0。無限大值可為正
 ;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=資訊
+;info
 Infos=資訊
 ;Infos
 IniDirs=Ini 目錄
@@ -1567,6 +1651,8 @@ KeepOnlyNearerParts=只保留較近的部分：
 ;Keep only nearer parts:
 KeepTheAspectRatioWhenManually=手動更改寬度或高度時保持長寬比。\n按下長寬比按鈕時不需取消勾選。
 ;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=有新的行出現時，讓最新的一行保持在畫面中
+;Keep the newest line in sight as new ones come
 KeepThisPriority=保持此優先權
 ;Keep this priority
 KeepsTheChosenLanguageForThe=保留所選語言，供下次啟動時使用
@@ -1607,6 +1693,8 @@ LeftclickUndoSetsTheParameterTo=左鍵：   復原 -> 將參數設回上次計�
 ;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
 LetTheThresholdDecreaseTheAmbient=讓臨界值將環境陰影一路衰減至 0。\n遠處的結構較不受近處結構影響。
 ;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=等級
+;Level
 Light=光照
 ;Light
 Light1=光源 1
@@ -1663,6 +1751,10 @@ LinearAttenuation=線性衰減
 ;Linear Attenuation
 LinearInterpolateAKeyframeInbetween=在中間線性插補一個關鍵影格
 ;Linear interpolate a keyframe inbetween
+Lines={} 行
+;{} lines
+List=清單
+;List
 LliMultiplier=Lli 倍率：
 ;Lli multiplier:
 Load=載入
@@ -1681,14 +1773,22 @@ LoadParameters=載入參數
 ;Load parameters
 LoadSettingsFromBtrace2File=從 *.btrace2 檔案載入設定
 ;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=將參數載入主視窗，或開啟檔案
+;Load the parameters into the main window, or open the file
 LoadTheParametersOfTheSelected=載入所選渲染的參數並繼續其計算
 ;Load the parameters of the selected render and continue its calculation
 LoadTheParametersOfTheSelected2=僅載入所選渲染的參數
 ;Load the parameters of the selected render only
 LoadingAndSavingInitialDirectories=載入與儲存的初始目錄
 ;Loading and saving initial directories
+Log=記錄
+;Log
+LogEverythingTheProgramDidIts=記錄：程式所做的一切，以及其警告與錯誤（按一下即可查看）
+;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ 對數函式 }
 ;{ Logarithmic functions }
+LongerThanUsualStillWorking=比平常久，仍在進行中
+;longer than usual, still working
 LookIn=查看位置(&I)：
 ;Look &in:
 Looking=環視
@@ -1741,6 +1841,8 @@ MB2=MB
 ;MB
 MB3=\s\sMB
 ;\s\sMB
+MB3DImageM3iM3i=MB3D 影像 (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
 MCBatchRender=M.C. 批次渲染
 ;M.C. batch render
 MMBWheelZoom=中鍵／滾輪：縮放
@@ -1763,8 +1865,12 @@ MakeSureThatNoLightWill=確保在非混合模式下不會減去任何光線
 ;Make sure that no light will be subtracted in non-blend mode
 MakeSureThatTheCalcAutomatic=若希望納入硬陰影與環境陰影，請確認已設定\n其「自動計算」選項。
 ;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=把那張圖片的光線調暖一些，然後重新渲染。
+;Make the light of that picture warmer and render it again.
 MakeTheTopBottomGradientOf=使環境與背景色彩的上下漸層\n相對於物件的座標系。\n在動畫中使用，將燈光固定於場景。
 ;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=製作三個變化版本，並告訴我你最喜歡哪一個。
+;Make three variations of it and tell me which one you like best.
 MakesReflectionsALittleDiffuseValue=使反射略帶漫射，數值範圍 0 到 2.5
 ;Makes reflections a little diffuse, value range from 0 to 2.5
 MakingTheVideo=正在製作影片...
@@ -1843,6 +1949,10 @@ MeshWithVertexColorsPly=含頂點顏色的網格 (*.ply)
 ;Mesh with vertex colors (*.ply)
 Meshes=網格：
 ;Meshes:
+Meshes2=網格
+;Meshes
+Messages=訊息
+;Messages
 Mid=中
 ;mid
 Min=Min
@@ -1875,6 +1985,8 @@ Misc=其他：
 ;Misc:
 MiscellaneousRoutines={ 其他函式 }
 ;{ Miscellaneous Routines }
+Missing=遺失
+;missing
 MissingBTR123Header=缺少 <BTR1/2/3> 標頭
 ;Missing <BTR1/2/3>-header
 Mix=Mix
@@ -2075,6 +2187,12 @@ Norms=norms
 ;norms
 NotABigRenderProject=不是大型渲染專案
 ;not a big render project
+NotAvailableForLinuxUseClaude=不適用於 Linux：請使用下方的 Claude Code。
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=找不到。若您有使用，請在終端機中執行一次此指令：
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=未安裝。請從 claude.ai/download 取得，啟動一次後再回到這裡。
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=未選取
 ;Not selected
 NotSharingTickShareThisComputer=未共享：勾選「共享這台電腦」即可與其他電腦一起渲染
@@ -2101,8 +2219,14 @@ ObjectDetermination=物體判定：
 ;Object determination:
 Of={} / {}
 ;{} of {}
+OfEntries={} / {} 筆項目
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=檔案相同的項目（相同參數再次計算、同一張圖片儲存兩次）只顯示最新的一筆
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
 OfFormulas=的參數
 ;of Formulas
+OfLines={} / {} 行
+;{} of {} lines
 OfUnitsDone=已完成 {} / {} 個單位
 ;{} of {} units done
 OffLeftImageIsOnThe=關：左影像在左側，供平行觀看。開：右影像在左側，供交叉眼觀看。
@@ -2121,6 +2245,8 @@ OnInsertingANewKeyframe=插入新關鍵影格時：
 ;On inserting a new keyframe:
 Only1FocuspointMadeFromAverage=只有 1 個焦點，取 Zsharp1+2 的平均值！
 ;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=只有圖片會保留為影像（蒙地卡羅渲染、體素或網格匯出則不會）。
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
 OnlyAddLight=僅加入光線
 ;Only add light
 OnlyDEAOAmbientShadowsAvailableIn=圖塊模式下只能使用 DEAO 環境陰影。\n現已選取並設為 33 條光線，請依需求自行調整。
@@ -2129,6 +2255,12 @@ OnlyDIFS=僅 dIFS
 ;Only dIFS
 OnlyIfHardShadowsWereCalculated=（僅在已計算硬陰影時）
 ;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=只顯示一種事件
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=只顯示名稱、資料夾或種類包含此文字的項目
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=只顯示包含這些字詞的行
+;Only the lines that contain these words
 OnlyToTheActualKeyframe=只套用到目前的關鍵影格
 ;Only to the actual keyframe
 OnlyWorkingIfSmoothNormalsWas=僅在計算時「平滑法向量」設為大於零才有效。
@@ -2163,6 +2295,8 @@ OpenGL=OpenGL >>
 ;OpenGL >>
 OpenGLPreviewOfFinalMesh=最終網格的 OpenGL 預覽
 ;OpenGL preview of final mesh
+OpenLogFolder=開啟記錄資料夾
+;Open log folder
 OpenM3i=開啟 m3i
 ;Open m3i
 OpenM3p=開啟 m3p
@@ -2179,10 +2313,16 @@ OpenTextParameters=開啟文字參數
 ;Open text parameters
 OpenTheAnimationMaker=開啟動畫製作器
 ;Open the animation maker
+OpenTheFolderOfTheFile=開啟檔案所在的資料夾
+;Open the folder of the file
+OpenTheFolderOfTheLog=開啟記錄檔所在的資料夾（每天一個，保留 30 天）
+;Open the folder of the log files (one a day, kept 30 days)
 OpenTheMutaGen=開啟 MutaGen
 ;Open the MutaGen
 OpenTheNavigator=開啟導航器
 ;Open the Navigator
+Opened=已開啟
+;opened
 OpensTheFolderOfTheLanguage=開啟語言檔案所在的資料夾
 ;Opens the folder of the language files
 OperationCancelled=操作已取消
@@ -2207,6 +2347,8 @@ Orig=原作：
 ;Orig:
 OriginalParameterSizeWidthHeight=原始參數尺寸（寬、高）：
 ;Original parameter size (width, height):
+OtherFiles=其他檔案
+;Other files
 OutputFile=輸出檔案：
 ;Output file:
 OutputFolder=輸出資料夾：
@@ -2257,12 +2399,16 @@ ParamNameMustNotBeEmpty=參數名稱不可為空
 ;Param name must not be empty
 Parameter=參數
 ;Parameter
+Parameters=參數
+;Parameters
 ParametersCopiedToTheClipboard=參數已複製到剪貼簿。
 ;Parameters copied to the clipboard.
 ParametersLoadedPressCalculate3DTo=參數已載入，請按「計算 3D」開始渲染。
 ;Parameters loaded, press "Calculate 3D" to render.
 ParametersLoadedThisRenderContinuesWhere=參數已載入：此渲染會在原本建立的地方繼續（命令列或其視窗）。
 ;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=參數
+;parameters
 ParametersMandId=參數：MandId {}
 ;Parameters: MandId {}
 Pass=第 {} 輪
@@ -2279,6 +2425,8 @@ Picture=張圖片
 ;picture
 Pictures=張圖片
 ;pictures
+PicturesAndFilesTheAssistantMakes=助理產生的圖片與檔案會存到 {}；不會刪除任何內容。大於 4K 的圖片只有在您同意後才會產生，計算會在 10 分鐘後停止。助理所做的一切都會寫入記錄。
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
 PleaseChooseAnOutputFile=請選擇輸出檔案。
 ;Please choose an output file.
 PleaseMakeASelectionInThe=請先在影像中選取範圍。
@@ -2373,6 +2521,10 @@ Processings=處理
 ;Processings
 Processor=處理器
 ;processor
+Program=程式
+;Program
+ProgramOutput=程式輸出
+;Program output
 Progress=進度
 ;Progress
 Project=專案：  {}
@@ -2419,6 +2571,8 @@ RandomMultiplier=隨機乘數
 ;Random multiplier
 Range=範圍
 ;Range
+RawValuesMappedValuesClampedValues=原始值：\n  {}..\n  {}\n對應值：\n  {}..\n  {}\n限制值：\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
 Rays=光線數：
 ;Rays:
 RaystepDivisor=光線步長除數：
@@ -2427,6 +2581,8 @@ RaystepMultiplier=光線步進倍率：
 ;Raystep multiplier:
 RaystepSubDEstop=步進減去 DEstop：
 ;Raystep sub DEstop:
+ReadingTheHistoryEntries=正在讀取歷程記錄... {} 筆項目
+;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=在您編輯過某個語言檔案後，重新讀取語言檔案
 ;Reads the language files again, after you edited one
 RecalculateASelection=\s重新計算選取範圍
@@ -2479,6 +2635,8 @@ Reload=重新載入
 ;Reload
 RemainingFaces10NoReduction=保留的面數（1.0 = 不縮減，0.0 = 最大縮減 = 不保留任何面）
 ;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=移除
+;Remove
 RemoveThisFormulaFromTheLocal=從本機 appdata 資料夾移除此公式
 ;Remove this formula from the local appdata folder
 RenderAllTilesIncludedInThe=渲染這些列中的所有圖塊：
@@ -2487,6 +2645,8 @@ RenderBothEyeImagesAndShow=渲染雙眼影像並顯示並排的立體預覽，�
 ;Render both eye images and show a side-by-side stereo preview without saving it.
 RenderEveryNThFrame=每隔\n   n 個影格算一張：
 ;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=以 4K 渲染我上一張圖片，並告訴我花了多久時間。
+;Render my last picture at 4K and tell me how long it took.
 RenderNextTile=渲染下一個圖塊
 ;Render next tile
 RenderOnlyTheLeftEyeImages=只算出「左眼」影像。\n可用來將先前算出的動畫擴充為立體。
@@ -2589,6 +2749,8 @@ RoutAngleOfXZ=X, Z 的 Rout 角
 ;Rout angle of X, Z
 RoutAngleOfYZ=Y, Z 的 Rout 角
 ;Rout angle of Y, Z
+Rows=列
+;Rows
 RowsOfTiles=圖塊的列數
 ;Rows of tiles
 SLeft=剩 {} 秒
@@ -2635,6 +2797,8 @@ SaveFullLightAndColorParameter=儲存完整的光照與色彩參數
 ;Save full light and color parameter
 SaveImageParameters=儲存影像 + 參數
 ;Save image + parameters
+SaveM3i=儲存 m3i
+;Save m3i
 SaveM3iFiles=儲存 m3i 檔案
 ;Save m3i files
 SaveM3iFilesIncludingTheInternal=儲存 m3i 檔案時包含內部影像緩衝區，可保存反射等資料。
@@ -2675,6 +2839,8 @@ Saved16BitColour=已儲存 {}（16 位元色彩）
 ;Saved {} (16 bit colour)
 Saved2=已儲存 {}
 ;Saved {}
+SavedLower=已儲存
+;saved
 SavedTransparentBackground=已儲存 {}（透明背景）
 ;Saved {} (transparent background)
 Saving=儲存：
@@ -2705,6 +2871,8 @@ ScriptEditor=指令碼編輯器
 ;Script Editor
 ScrollBy1=捲動 1 格
 ;Scroll by 1
+Search=搜尋
+;Search
 SecantSearchmode=正割搜尋模式：
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=第二個焦點，若與第一個不同，\n會得到一條焦線而非單一焦點。\n（物理上不太真實，但很實用）\s
@@ -2745,6 +2913,8 @@ SendValues=送出數值
 ;Send values
 SendingOut=送出：
 ;Sending out:
+SessionsAndCrashes=工作階段與當機
+;Sessions and crashes
 SetLightfuncToCosine=將光照函數設為 cosine
 ;Set lightfunc to cosine
 SetTheMapsOrientationRelativeTo=將貼圖方向設為相對於物件。\n在動畫中使用，將燈光固定於場景。
@@ -2791,12 +2961,20 @@ ShortdistanceCheckDE=短距離 DE 檢查：
 ;Shortdistance check DE:
 ShouldIStopCalculations=要停止計算嗎？
 ;Should i stop calculations?
+Show=顯示
+;Show
 ShowCoords=顯示座標
 ;Show coords
 ShowFrameNr=顯示影格編號
 ;Show frame nr
 ShowGuides=顯示輔助線
 ;Show guides
+ShowInFolder=在資料夾中顯示
+;Show in folder
+ShowMeAPreviewOfThe=讓我看看我在 mb3d 中最後渲染的那張圖片的預覽。
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=不顯示重複
+;Show unique
 ShowsHiddenFormulasRightclickOnA=顯示已隱藏的公式。\n在公式上按右鍵可更改其狀態。
 ;Shows hidden formulas.\nRightclick on a formula to change its status.
 ShowsMessages=顯示訊息
@@ -2967,6 +3145,8 @@ SwarmRenderingSharedBetweenYourComputers=Swarm：在您的多台電腦之間分�
 ;Swarm: rendering shared between your computers
 SwitchBackToTheDefaultTheme=切換回預設主題
 ;Switch back to the default theme
+TakeTheEntryOutOfThe=從歷程記錄中移除此項目（已計算圖片的參數與縮圖會被刪除；其他檔案則留在原處）
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
 TargetMapSlot=目標貼圖插槽
 ;Target Map Slot
 TargetMapSlotUseThisNumber=目標貼圖插槽。在碎形中以此編號作為貼圖使用（例如作為高度圖），即可得到動態貼圖
@@ -2993,6 +3173,8 @@ TheCalculationFailedLower=計算失敗
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=計算會向影像外側延伸，以納入被反射的物件。\n這可減少動畫中的瑕疵，靜態圖也能受益。\n值應在 0 到 0.5 之間（最大 0.9），即相對於影像寬高\n在外側最多計算的尺寸。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=在本程式所在位置找不到命令列程式 mb3d：請重新安裝本程式。
+;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=預設編號包含 2 個數字，分別代表 X 與 Y。\n若選擇此選項，則只用一個數字編號，\n在每一欄中遞增，並接續到下一列。
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=預設輸出為物體白色、外部區域黑色。\n選擇此選項可反轉顏色。
@@ -3005,8 +3187,16 @@ TheDistanceToTheObjectsSurface=光線步進停止時與物件表面的距離，�
 ;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
 TheEffectAccumulatesResetForA=效果會累積，新的計算請先重設。
 ;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=項目依日期分組；開啟某一天（按一下）時才會顯示該天的項目與圖片
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=無法移除此項目。
+;The entry could not be removed.
+TheFileIsNotThereAny=檔案已不在原處。
+;The file is not there any more.
 TheFileM3fAlreadyExistsDo=檔案 <{}.m3f> 已存在。要覆寫嗎？
 ;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=檔案（可從這裡選取並複製）
+;The file (select and copy it from here)
 TheFirstFocusPointTheValue=（第一個）焦點。\n此值相對於視角的 Zstart 值，\n並以影像寬度正規化。
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 TheFolderDoesNotExistOr=資料夾不存在（或無法存取）
@@ -3021,6 +3211,8 @@ TheImageSizeChangedCalculateThe=影像大小已變更：請重新計算影像
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap 模式取決於「著色」分頁中所計算的選項。
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=上一個工作階段未正常結束（凍結、被終止或當機）：{}。它最後做了什麼記載於記錄中（「記錄」視窗，標題列中的圖示）。
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=主編輯器仍在渲染。請先停止，或等待完成。
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=貼圖選項會從特定向量計算球面貼圖的 x,y 座標，\n這也會改變通常以平滑迭代為基礎的\n第一色彩選擇。\n您必須重新計算影像才能看到\n這些選項更改的結果。
@@ -3045,6 +3237,8 @@ TheSelectionMustBeBiggerThanLower=選取範圍的寬度與高度必須大於 2 �
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=swarm 的共用資料夾
 ;The shared folder of the swarm
+TheSizeOfTheTiles=圖塊的大小
+;The size of the tiles
 TheStereoEyeImagesHaveDifferent=立體雙眼影像的大小不同。
 ;The stereo eye images have different sizes.
 TheTileHasNoImageBuffer=此圖塊沒有影像緩衝區
@@ -3053,6 +3247,8 @@ Themes=主題
 ;Themes
 ThereIsAFileAlready=檔案 {} 已存在。
 ;There is a file {} already.
+ThingsToAskTheAssistant=可以詢問助理的事
+;Things to ask the assistant
 ThisComputer=這台電腦：
 ;This computer:
 ThisEffectIsAccumulatedOnEach=每次按下按鈕都會累積此效果，可按「重設」按鈕\n重設——但反射也會一併被復原！
@@ -3063,8 +3259,12 @@ ThisIsAAbsoluteOffsetIn=這是旋轉後的 bulb 在 x 方向的絕對偏移。
 ;This is a absolute offset in x direction of the rotated bulb.
 ThisRenderIsRunningRightNow=此渲染正在執行中。
 ;This render is running right now.
+ThisRenderKeepsNoImage=此渲染不保留影像。
+;This render keeps no image.
 ThisRenderKeptNoParameters=此渲染未保留參數。
 ;This render kept no parameters.
+ThisSessionLive=此工作階段（即時）
+;This session (live)
 ThreadPriority=執行緒\n優先權
 ;Thread\nPriority
 ThreadcountInCalculations=計算使用的  \n執行緒數
@@ -3093,6 +3293,8 @@ TileXYSaved=圖塊 X={} Y={} 已儲存。
 ;Tile X={} Y={} saved.
 Tiles=個圖塊
 ;tiles
+Tiles2=圖塊
+;Tiles
 TilesSaved=已儲存 {} 個圖塊；{}
 ;{} tiles saved; {}
 TilesWithTheSwarm={}  與 swarm 一起渲染 {} 個圖塊
@@ -3183,6 +3385,8 @@ UnfinishedRenders=未完成的渲染
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=未完成的渲染：繼續或刪除
 ;Unfinished renders: continue or delete them
+Untitled=未命名
+;untitled
 UpOneLevel=上一層
 ;Up one level
 UpTo=至：
@@ -3247,6 +3451,8 @@ Video=視訊
 ;video
 VideoLower=影片：{}
 ;video: {}
+View=檢視
+;View
 ViewToMain=視角送至主程式
 ;View to main
 Viewing=檢視
@@ -3275,8 +3481,12 @@ Walking=行走
 ;Walking
 Warning=警告
 ;Warning
+WarningLower=警告
+;warning
 WarningMustRecalculateTheWholeImage=警告：若要復原，必須重新計算整張影像！
 ;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=警告與錯誤
+;Warnings and errors
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Weight=權重
@@ -3285,8 +3495,18 @@ WeightColon=權重：
 ;Weight:
 WelcomeToMandelbulb3D=歡迎使用 Mandelbulb 3D！
 ;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=我今天在 mb3d 中做了什麼？有沒有發生任何錯誤？
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=發生的事
+;What happened
+WhatYouDid=您做的事
+;What you did
+When=時間
+;When
 WhenAngleNotBetween180And={ 當角度不在 -180 到 180 之間時，去除超出的部分 }
 ;{ When angle not between -180 and 180 remove left }
+WhenUTC=時間 (UTC)
+;When (UTC)
 WhenUsingAMapForThe=使用貼圖作為漫射顏色時，\n必須勾選「自動裁切高光+漫射」\n才能自動裁切顏色。
 ;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
 White=白色
@@ -3295,6 +3515,8 @@ WhiteOutside=外部為白色
 ;White outside
 Width=寬度：
 ;Width:
+Windows=視窗
+;Windows
 Wireframe=線框
 ;Wireframe
 WireframeColor=線框顏色
@@ -3309,6 +3531,8 @@ Wrap2=wrap2
 ;wrap2
 WritesTheEnglishTextsAsA=以此名稱將英文文字寫成新的語言檔案；請用文字編輯器翻譯，然後按「重新載入」
 ;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=將圖片依目前狀態寫入 .m3i 檔案（尚未完成的列以背景填入）
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
 WrittenTranslateTheTextsRightOf=已寫入：{}\n請用文字編輯器翻譯「=」右側的文字，然後按「重新載入」。
 ;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
 XAngle=X 角度：
@@ -3454,114 +3678,3 @@ LightSheet.Caption = 光源
 
 [PostProForm]
 RadioGroup2.Caption = 計算方式
-
-; Not translated yet (shown in English): remove the ";" and translate
-;AI=AI
-;ALanguageFileHasOneLabel=A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
-;Action=Action
-;AllKinds=All kinds
-;AnAIAssistantOnThisComputer=An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
-;AnimationLower=animation
-;Calculated=calculated
-;CalculatedPictures=Calculated pictures
-;Calculations=Calculations
-;ClaudeCodeInATerminal=Claude Code (in a terminal)
-;ClaudeDesktopApp=Claude (desktop app)
-;ClickAColumnHeaderToSort=Click a column header to sort.
-;ComparingFiles=comparing files
-;Connect=Connect
-;ConnectToAnAIAssistant=Connect to an AI assistant
-;ConnectToAnAIAssistantLet=Connect to an AI assistant: let it describe, change and render your pictures
-;ConnectedAskItInANew=Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
-;ConnectedStartANewClaudeCode=Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
-;CopiedToTheClipboard=Copied to the clipboard.
-;Copy=Copy
-;CopyCommand=Copy command
-;CopyTheCommandToPasteIt=Copy the command, to paste it into a terminal
-;CopyTheSelectedLineOrAll=Copy the selected line, or all the lines shown when none is selected
-;Day=Day
-;Debug=debug
-;DeleteTheParametersAndTheThumbnail=Delete the parameters and the thumbnail of "{}" from the history?
-;Disconnect=Disconnect
-;Entries={} entries
-;Error=error
-;Errors=Errors
-;Everything=Everything
-;FileLower=file
-;Files=Files
-;FollowTheNewest=Follow the newest
-;FormulaLower=formula
-;FoundOnThisComputerNotConnected=Found on this computer, not connected yet.
-;FoundOnThisComputerRunThis=Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
-;GroupByDay=Group by day
-;History=History
-;HistoryThePicturesCalculatedTheFiles=History: the pictures calculated, the files opened and saved (click to browse)
-;ImageParameters=image + parameters
-;Info=info
-;KeepTheNewestLineInSight=Keep the newest line in sight as new ones come
-;Level=Level
-;Lines={} lines
-;List=List
-;LoadTheParametersIntoTheMain=Load the parameters into the main window, or open the file
-;Log=Log
-;LogEverythingTheProgramDidIts=Log: everything the program did, its warnings and errors (click to see)
-;LongerThanUsualStillWorking=longer than usual, still working
-;MB3DImageM3iM3i=MB3D image (*.m3i)|*.m3i
-;MakeTheLightOfThatPicture=Make the light of that picture warmer and render it again.
-;MakeThreeVariationsOfItAnd=Make three variations of it and tell me which one you like best.
-;Meshes2=Meshes
-;Messages=Messages
-;Missing=missing
-;NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
-;NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
-;NotInstalledGetItFromClaude=Not installed. Get it from claude.ai/download, start it once, then come back here.
-;OfEntries={} of {} entries
-;OfEntriesWhoseFilesAreThe=Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
-;OfLines={} of {} lines
-;OnlyAPictureIsKeptAs=Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
-;OnlyOneKindOfEvent=Only one kind of event
-;OnlyTheEntriesWhoseNameFolder=Only the entries whose name, folder or kind contain this text
-;OnlyTheLinesThatContainThese=Only the lines that contain these words
-;OpenLogFolder=Open log folder
-;OpenTheFolderOfTheFile=Open the folder of the file
-;OpenTheFolderOfTheLog=Open the folder of the log files (one a day, kept 30 days)
-;Opened=opened
-;OtherFiles=Other files
-;Parameters=Parameters
-;ParametersLower=parameters
-;Program=Program
-;ProgramOutput=Program output
-;ReadingTheHistoryEntries=Reading the history... {} entries
-;Remove=Remove
-;RenderMyLastPictureAt4K=Render my last picture at 4K and tell me how long it took.
-;Rows=Rows
-;SaveM3i=Save m3i
-;SavedLower=saved
-;Search=Search
-;SessionsAndCrashes=Sessions and crashes
-;Show=Show
-;ShowInFolder=Show in folder
-;ShowMeAPreviewOfThe=Show me a preview of the last picture I rendered in mb3d.
-;ShowUnique=Show unique
-;TakeTheEntryOutOfThe=Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
-;TheEntriesUnderTheirDaysA=The entries under their days; a day's entries and pictures show when it is opened (a click on it)
-;TheEntryCouldNotBeRemoved=The entry could not be removed.
-;TheFileIsNotThereAny=The file is not there any more.
-;TheFileSelectAndCopyIt=The file (select and copy it from here)
-;TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
-;TheSizeOfTheTiles=The size of the tiles
-;ThingsToAskTheAssistant=Things to ask the assistant
-;ThisRenderKeepsNoImage=This render keeps no image.
-;ThisSessionLive=This session (live)
-;Tiles2=Tiles
-;Untitled=untitled
-;View=View
-;WarningLower=warning
-;WarningsAndErrors=Warnings and errors
-;WhatDidIDoInMb3d=What did I do in mb3d today? Were there any errors?
-;WhatHappened=What happened
-;WhatYouDid=What you did
-;When=When
-;WhenUTC=When (UTC)
-;Windows=Windows
-;WritesThePictureAsItIs=Writes the picture as it is now (the rows not done as background) as a .m3i file

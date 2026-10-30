@@ -347,7 +347,7 @@ fn zb_refresh(app: &mut Mb3d, ui: &mut Ui) {
         ZB,
         "InfoMemo",
         &trf(
-            "Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n",
+            "@MB:RawValuesMappedValuesClampedValues",
             &[&fts(info[0]), &fts(info[1]), &(info[2] as i64), &(info[3] as i64), &(info[4] as i64), &(info[5] as i64)],
         ),
     );

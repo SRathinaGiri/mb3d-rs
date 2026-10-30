@@ -135,14 +135,19 @@ pub fn scan_sources(dir: &Path) -> Vec<String> {
 }
 
 fn scan_text(t: &str, out: &mut Vec<String>) {
-    for pat in ["tr(\"", "trf(\""] {
+    // (spelled apart: this line itself is no call)
+    for pat in [concat!("tr", "("), concat!("trf", "(")] {
         for (i, _) in t.match_indices(pat) {
             // not `o.str("Caption")`, not a method `l.tr("x")`
             if t[..i].chars().next_back().map_or(false, |c| c.is_alphanumeric() || c == '_' || c == '.') {
                 continue;
             }
-            if let Some(s) = string_literal(&t[i + pat.len()..]) {
-                out.push(s);
+            // (the text may start on the next line: `trf(\n    "...",`)
+            let rest = t[i + pat.len()..].trim_start();
+            if let Some(r) = rest.strip_prefix('"') {
+                if let Some(s) = string_literal(r) {
+                    out.push(s);
+                }
             }
         }
     }
@@ -252,8 +257,8 @@ mod tests {
     #[test]
     fn literals() {
         let mut out = Vec::new();
-        let src = "x = tr(\"A b\\nc\"); o.str(\"Caption\"); l.tr(\"no\"); &trf(\"{} of {}\", &[&a]); tr(\"q\\\"uote\")";
+        let src = "x = tr(\"A b\\nc\"); o.str(\"Caption\"); l.tr(\"no\"); &trf(\"{} of {}\", &[&a]); tr(\"q\\\"uote\"); trf(\n    \"next line\", &[]); tr(x)";
         scan_text(src, &mut out);
-        assert_eq!(out, ["A b\nc", "q\"uote", "{} of {}"]);
+        assert_eq!(out, ["A b\nc", "q\"uote", "{} of {}", "next line"]);
     }
 }

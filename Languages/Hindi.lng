@@ -39,6 +39,10 @@ AFolderEveryComputerOfThe=एक फ़ोल्डर जिसे स्वा
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AHigherValueMeansABetter=अधिक मान का अर्थ है बेहतर गुणवत्ता, 100% भी हानिपूर्ण है।
 ;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=भाषा फ़ाइल में हर पंक्ति में एक लेबल होता है: "=" के बाईं ओर उसकी ID, दाईं ओर आपका टेक्स्ट। लेबलों के बाद आने वाला विंडो खंड किसी एक कंट्रोल को उसका अपना टेक्स्ट देता है।
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
 AMultiplierThatDefinesTheMiximal=एक गुणक जो कठोर छाया गणना की अधिकतम लंबाई तय करता है,\nकुछ छवि आकार पैरामीटरों के सापेक्ष (डिफ़ॉल्ट = 1)।\nयदि दूर की वस्तुओं की छायाएँ गायब हों तो मान बढ़ाएँ।
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO गणना समय:
@@ -71,6 +75,8 @@ AbsoluteDistanceOfTheSmoothCombine=स्मूद संयोजन फ़ं�
 ;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
 Absorption=अवशोषण:
 ;Absorption:
+Action=क्रिया
+;Action
 ActualAmbientShadowPar=वर्तमान परिवेश छाया पैरा.
 ;Actual ambient shadow par.
 ActualCameraSettings=वर्तमान कैमरा सेटिंग्स
@@ -129,6 +135,8 @@ AllFiles=सभी फ़ाइलें
 ;All files
 AllFilesParen=सभी फ़ाइलें (*.*)
 ;All files (*.*)
+AllKinds=सभी प्रकार
+;All kinds
 AllRealworldUnitsInMeter=सभी वास्तविक इकाइयाँ मीटर में।
 ;All realworld units in meter.
 AllTheLightColorSettings=सभी प्रकाश + रंग सेटिंग्स
@@ -163,6 +171,8 @@ AmbientTopColorLeftclickToChange=परिवेश का ऊपरी रं�
 ;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
 Amount=मात्रा:
 ;Amount:
+AnAIAssistantOnThisComputer=इस कंप्यूटर पर एक AI सहायक Mandelbulb 3D का उपयोग कर सकता है: उससे सरल शब्दों में या बोलकर कहें कि वह आपके चित्रों का वर्णन करे, उन्हें बदले और रेंडर करे, विविधताएँ बनाए या आपका पिछला काम रेंडर करे। Mandelbulb 3D ऑफ़लाइन रहता है: सहायक का ऐप इसे इसी कंप्यूटर पर शुरू करता है।
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
 AnUnfinishedCalculationOfThisPicture=इस चित्र की एक अधूरी गणना रखी गई थी ({})।\n\nइसे जारी रखें?  "नहीं" इसकी शुरू से फिर गणना करता है।
 ;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
 AnUnfinishedMonteCarloRenderOf=इन पैरामीटरों का एक अधूरा Monte Carlo रेंडर रखा गया था ({})।\n\nइसे जारी रखें?  "नहीं" इसे शुरू से फिर रेंडर करता है।
@@ -185,6 +195,8 @@ Animation=एनिमेशन:
 ;Animation:
 Animation2=एनिमेशन: {}
 ;Animation: {}
+AnimationLower=एनिमेशन
+;animation
 AnimationMaker=एनिमेशन मेकर
 ;Animation maker
 AnimationMakerParen=एनिमेशन मेकर   ({})
@@ -407,10 +419,14 @@ CalculateTransparency=पारदर्शिता की गणना कर�
 ;Calculate transparency:
 CalculateTransparencyOnlyOnDIFSFormulas=पारदर्शिता की गणना केवल dIFS फ़ॉर्मूलों पर करें (escapetime के साथ DE संयोजनों के लिए)
 ;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=गणना की गई
+;calculated
 CalculatedOn=गणना की गई: {}
 ;Calculated on: {}
 CalculatedOnTheCPU=CPU पर गणना की गई
 ;Calculated on the CPU
+CalculatedPictures=गणना किए गए चित्र
+;Calculated pictures
 CalculatingThePreview=पूर्वावलोकन की गणना हो रही है...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=वॉल्यूमेट्रिक प्रकाश मैप की गणना
@@ -423,6 +439,8 @@ CalculationOptions=गणना विकल्प
 ;Calculation options
 CalculationStopped=गणना रोकी गई।
 ;Calculation stopped.
+Calculations=गणनाएँ
+;Calculations
 Camera=कैमरा
 ;Camera
 CameraColon=कैमरा:
@@ -477,6 +495,10 @@ ChooseOption=विकल्प चुनें:
 ;Choose Option:
 ChoseTheme=थीम चुनें:
 ;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (टर्मिनल में)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (डेस्कटॉप ऐप)
+;Claude (desktop app)
 Clear=साफ़ करें
 ;Clear
 ClearAllGenerationsBeforeTheSelected=चुनी गई पीढ़ी से पहले की सभी पीढ़ियाँ हटाएँ
@@ -487,6 +509,8 @@ ClearTheWholeList=पूरी सूची साफ़ करें
 ;Clear the whole list
 ClickAButtonToChangeA=(फ़ोल्डर बदलने के लिए किसी बटन पर क्लिक करें)
 ;(Click a button to change a directory)
+ClickAColumnHeaderToSort=क्रमबद्ध करने के लिए किसी कॉलम शीर्षक पर क्लिक करें।
+;Click a column header to sort.
 ClickALanguageToSwitchThe=विंडो को किसी भाषा में बदलने के लिए उस भाषा पर क्लिक करें
 ;Click a language to switch the windows to it
 ClickAParameterFileForIts=पूर्वावलोकन के लिए किसी पैरामीटर फ़ाइल पर क्लिक करें।
@@ -591,6 +615,8 @@ CombineMapYWithDiffuseColors=मैप Y को डिफ़्यूज़ र�
 ;Combine map Y with diffuse colors
 Common=सामान्य
 ;Common
+ComparingFiles=फ़ाइलों की तुलना हो रही है
+;comparing files
 Compile=कंपाइल करें
 ;Compile
 CompileTheCodeF9=कोड कंपाइल करें <F9>
@@ -601,6 +627,16 @@ Computer=कंप्यूटर
 ;Computer
 Confirm=पुष्टि करें
 ;Confirm
+Connect=कनेक्ट करें
+;Connect
+ConnectToAnAIAssistant=AI सहायक से कनेक्ट करें
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=AI सहायक से कनेक्ट करें: उसे अपने चित्रों का वर्णन करने, उन्हें बदलने और रेंडर करने दें
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=कनेक्ट हो गया। उससे नई बातचीत में पूछें; यदि mb3d उसके टूल में न दिखे तो ऐप फिर से शुरू करें।
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=कनेक्ट हो गया। इसका उपयोग करने के लिए नया Claude Code सत्र शुरू करें। इसे फिर से हटाने के लिए नीचे दी गई कमांड चलाएँ।
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
 ConstAttenuation=स्थिर क्षीणन
 ;Const Attenuation
 Constant=स्थिरांक
@@ -611,10 +647,20 @@ Continue=जारी रखें
 ;Continue
 ConvertManyM3PFilesToM3I=कई M3P फ़ाइलों को M3I में बदलें
 ;Convert many M3P files to M3I
+CopiedToTheClipboard=क्लिपबोर्ड पर कॉपी किया गया।
+;Copied to the clipboard.
 CopiesAnFfmpegCommandForA=फ़्रेमों से छोटा MP4 वीडियो बनाने की ffmpeg कमांड क्लिपबोर्ड पर कॉपी करता है।\nइसे स्वयं टर्मिनल में चलाएँ (यह प्रोग्राम कोई अन्य प्रोग्राम शुरू नहीं करता)।
 ;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=कॉपी करें
+;Copy
+CopyCommand=कमांड कॉपी करें
+;Copy command
 CopyParamsToClipboard=पैरामीटर क्लिपबोर्ड पर कॉपी करें
 ;Copy Params to Clipboard
+CopyTheCommandToPasteIt=कमांड कॉपी करें, ताकि उसे टर्मिनल में पेस्ट किया जा सके
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=चुनी गई पंक्ति कॉपी करें, या कोई न चुनी हो तो दिखाई गई सभी पंक्तियाँ
+;Copy the selected line, or all the lines shown when none is selected
 CopyTheValues=मान कॉपी करें
 ;Copy the values
 CopyTheValuesTo=मानों को यहाँ कॉपी करें..
@@ -733,8 +779,12 @@ DOUBLEIMAGESIZE=छवि आकार दोगुना
 ;DOUBLE IMAGESIZE
 DateModified=संशोधन तिथि
 ;Date modified
+Day=दिन
+;Day
 DblClickHideRightPanel=डबल-क्लिक: दायाँ पैनल छिपाएँ
 ;DblClick: hide right panel
+Debug=डीबग
+;debug
 DecreaseScale=स्केल घटाएँ
 ;Decrease scale
 DecreaseTheSizeOfTheNavigator=नेविगेटर विंडो का आकार घटाएँ
@@ -789,6 +839,8 @@ DeleteSelectedOption=चुना गया विकल्प हटाएँ
 ;Delete selected option
 DeleteSequence=अनुक्रम हटाएँ
 ;Delete Sequence
+DeleteTheParametersAndTheThumbnail="{}" के पैरामीटर और थंबनेल इतिहास से हटाएँ?
+;Delete the parameters and the thumbnail of "{}" from the history?
 DeleteThisKeyframe=यह कीफ़्रेम हटाएँ
 ;Delete this keyframe
 DeleteThisTilesFiles=इस टाइल की फ़ाइलें हटाएँ
@@ -863,6 +915,8 @@ DisableThreadboost=थ्रेडबूस्ट बंद करें
 ;Disable threadboost
 Disc=डिस्क
 ;Disc
+Disconnect=डिस्कनेक्ट करें
+;Disconnect
 DisplayStyle=प्रदर्शन शैली
 ;Display Style
 DisplaysSomeFormulaDescriptionsIfAvailable=उपलब्ध होने पर कुछ फ़ॉर्मूला विवरण दिखाता है।
@@ -977,8 +1031,14 @@ End=अंत:
 ;End:
 EnterNamedParameter=नामित पैरामीटर दर्ज करें
 ;Enter named parameter
+Entries={} प्रविष्टियाँ
+;{} entries
+Error=त्रुटि
+;error
 ErrorAt=, {} पर त्रुटि: {}
 ;, error at {}: {}
+Errors=त्रुटियाँ
+;Errors
 Escapetime3DFormulas=एस्केपटाइम 3D फ़ॉर्मूले
 ;escapetime 3D formulas
 Escapetime3DFormulasWithAnalyticFaster=विश्लेषणात्मक (तेज़) DE गणना वाले एस्केपटाइम 3D फ़ॉर्मूले
@@ -993,6 +1053,8 @@ EulerAngles=यूलर कोण:
 ;Euler angles:
 EveryNewPictureOfTheMain=मुख्य विंडो का हर नया चित्र फ़िल्टर होता है (सहेजा गया भी)।
 ;Every new picture of the main window is filtered (the saved one too).
+Everything=सब कुछ
+;Everything
 ExchangeAdd=बदलें, जोड़ें
 ;Exchange, add
 ExchangeThisFormulaWithTheNext=इस फ़ॉर्मूले को अगले फ़ॉर्मूले से बदलें
@@ -1037,12 +1099,16 @@ File=फ़ाइल
 ;File
 FileIndex=फ़ाइल सूचकांक:
 ;File index:
+FileLower=फ़ाइल
+;file
 FileName=फ़ाइल नाम(&N):
 ;File &name:
 FileTooShort=फ़ाइल बहुत छोटी है
 ;file too short
 Filename=फ़ाइल नाम
 ;Filename
+Files=फ़ाइलें
+;Files
 FilesOfType=फ़ाइल प्रकार(&T):
 ;Files of &type:
 FilterNewPicturesAutomatically=नए चित्र स्वतः फ़िल्टर करें
@@ -1085,6 +1151,8 @@ Folder=फ़ोल्डर
 ;Folder
 FolderOfTheLanguageFiles=भाषा फ़ाइलों का फ़ोल्डर:
 ;Folder of the language files:
+FollowTheNewest=नवीनतम का अनुसरण करें
+;Follow the newest
 ForFractionalExponentsOrExponentsMaxInt=\s\sभिन्नात्मक घातांक या |घातांक| > MaxInt के लिए आधार > 0 होना चाहिए। }
 ;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
 ForSphericalUsageReplacesTheAmbient=गोलाकार उपयोग के लिए, परिवेश रंगों को छोटी की गई पृष्ठभूमि छवि से बदलता है
@@ -1097,6 +1165,8 @@ Formula12=फ़ॉर्मूला1
 ;Formula1
 FormulaEditor=फ़ॉर्मूला संपादक
 ;Formula editor
+FormulaLower=फ़ॉर्मूला
+;formula
 FormulaM3f=फ़ॉर्मूला (*.m3f)
 ;Formula (*.m3f)
 FormulaName=फ़ॉर्मूला नाम:
@@ -1113,6 +1183,10 @@ FormulasColon=फ़ॉर्मूले:
 ;Formulas:
 Forward=आगे-की-ओर
 ;Forward
+FoundOnThisComputerNotConnected=इस कंप्यूटर पर मिला, अभी कनेक्ट नहीं है।
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=इस कंप्यूटर पर मिला। यह कमांड टर्मिनल में एक बार चलाएँ, फिर नया Claude Code सत्र शुरू करें:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
 FpName=fp नाम:
 ;fp name:
 Fpow=Fpow:
@@ -1283,6 +1357,8 @@ GoneLastSeenSAgo=चला गया (अंतिम बार {} से. प�
 ;gone (last seen {} s ago)
 GraphicsCard=ग्राफ़िक्स कार्ड
 ;Graphics card
+GroupByDay=दिन के अनुसार समूहित करें
+;Group by day
 GuessParams=पैरामीटर अनुमानित करें
 ;Guess params
 HMapGen=HMapGen
@@ -1319,6 +1395,10 @@ HideThisFormula=यह फ़ॉर्मूला छिपाएँ
 ;Hide this formula
 High=उच्च
 ;high
+History=इतिहास
+;History
+HistoryThePicturesCalculatedTheFiles=इतिहास: गणना किए गए चित्र, खोली और सहेजी गई फ़ाइलें (ब्राउज़ करने के लिए क्लिक करें)
+;History: the pictures calculated, the files opened and saved (click to browse)
 HoldShiftKeyForFinerSteps=(बारीक कदमों के लिए Shift दबाए रखें)
 ;(Hold Shift key for finer steps)
 Hotkeys=हॉटकी
@@ -1375,6 +1455,8 @@ ImageExists=छवि मौजूद है
 ;Image exists
 ImageLower=छवि
 ;image
+ImageParameters=छवि + पैरामीटर
+;image + parameters
 ImageRotation=छवि घुमाव:
 ;Image rotation:
 ImageSize=-> छवि आकार:
@@ -1439,6 +1521,8 @@ IndexWithLeading0=आगे 0 वाला इंडेक्स
 ;Index with leading 0
 InfinityValuesHaveAFractionField=// अनंत मानों का भिन्न क्षेत्र 0 होता है। अनंत मान धनात्मक
 ;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=जानकारी
+;info
 Infos=जानकारी
 ;Infos
 IniDirs=Ini फ़ोल्डर
@@ -1567,6 +1651,8 @@ KeepOnlyNearerParts=केवल पास के भाग रखें:
 ;Keep only nearer parts:
 KeepTheAspectRatioWhenManually=चौड़ाई या ऊँचाई हाथ से बदलने पर पक्षानुपात बनाए रखें।\nअनुपात बटन दबाने पर इसे अचयनित करने की ज़रूरत नहीं।
 ;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=नई पंक्तियाँ आने पर नवीनतम पंक्ति दिखाई देती रहे
+;Keep the newest line in sight as new ones come
 KeepThisPriority=यह प्राथमिकता रखें
 ;Keep this priority
 KeepsTheChosenLanguageForThe=चुनी गई भाषा अगली बार शुरू करने के लिए रखता है
@@ -1607,6 +1693,8 @@ LeftclickUndoSetsTheParameterTo=बायाँ क्लिक:   पूर्�
 ;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
 LetTheThresholdDecreaseTheAmbient=सीमा-मान को परिवेश छाया 0 तक कम करने दें।\nदूर की संरचनाएँ पास की संरचनाओं से कम प्रभावित होती हैं।
 ;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=स्तर
+;Level
 Light=प्रकाश
 ;Light
 Light1=प्रकाश 1
@@ -1663,6 +1751,10 @@ LinearAttenuation=रैखिक क्षीणन
 ;Linear Attenuation
 LinearInterpolateAKeyframeInbetween=बीच में एक कीफ़्रेम रैखिक इंटरपोलेट करें
 ;Linear interpolate a keyframe inbetween
+Lines={} पंक्तियाँ
+;{} lines
+List=सूची
+;List
 LliMultiplier=Lli गुणक:
 ;Lli multiplier:
 Load=लोड करें
@@ -1681,14 +1773,22 @@ LoadParameters=पैरामीटर लोड करें
 ;Load parameters
 LoadSettingsFromBtrace2File=*.btrace2-फ़ाइल से सेटिंग्स लोड करें
 ;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=पैरामीटर मुख्य विंडो में लोड करें, या फ़ाइल खोलें
+;Load the parameters into the main window, or open the file
 LoadTheParametersOfTheSelected=चुने गए रेंडर के पैरामीटर लोड करें और उसकी गणना जारी रखें
 ;Load the parameters of the selected render and continue its calculation
 LoadTheParametersOfTheSelected2=केवल चुने गए रेंडर के पैरामीटर लोड करें
 ;Load the parameters of the selected render only
 LoadingAndSavingInitialDirectories=प्रारंभिक फ़ोल्डर लोड करना और सहेजना
 ;Loading and saving initial directories
+Log=लॉग
+;Log
+LogEverythingTheProgramDidIts=लॉग: प्रोग्राम ने जो कुछ किया, उसकी चेतावनियाँ और त्रुटियाँ (देखने के लिए क्लिक करें)
+;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ लघुगणकीय फ़ंक्शन }
 ;{ Logarithmic functions }
+LongerThanUsualStillWorking=सामान्य से अधिक समय, अभी भी काम जारी है
+;longer than usual, still working
 LookIn=यहाँ देखें(&I):
 ;Look &in:
 Looking=देखना
@@ -1741,6 +1841,8 @@ MB2=MB
 ;MB
 MB3=\s\sMB
 ;\s\sMB
+MB3DImageM3iM3i=MB3D छवि (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
 MCBatchRender=M.C. बैच रेंडर
 ;M.C. batch render
 MMBWheelZoom=MMB/व्हील: ज़ूम
@@ -1763,8 +1865,12 @@ MakeSureThatNoLightWill=सुनिश्चित करें कि नॉ�
 ;Make sure that no light will be subtracted in non-blend mode
 MakeSureThatTheCalcAutomatic=यदि आप कठोर और परिवेश छायाओं को शामिल करना चाहते हैं, तो सुनिश्चित करें कि\nउनके 'स्वतः गणना' विकल्प सेट हों।
 ;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=उस चित्र का प्रकाश गर्म करो और उसे फिर से रेंडर करो।
+;Make the light of that picture warmer and render it again.
 MakeTheTopBottomGradientOf=परिवेश और पृष्ठभूमि रंगों के ऊपर-नीचे ग्रेडिएंट को\nवस्तु की निर्देशांक प्रणाली के सापेक्ष बनाएँ।\nएनिमेशन में प्रकाशों को दृश्य से जोड़े रखने के लिए इसका उपयोग करें।
 ;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=इसकी तीन विविधताएँ बनाओ और बताओ कि तुम्हें कौन-सी सबसे अच्छी लगी।
+;Make three variations of it and tell me which one you like best.
 MakesReflectionsALittleDiffuseValue=परावर्तनों को थोड़ा विसरित बनाता है, मान सीमा 0 से 2.5
 ;Makes reflections a little diffuse, value range from 0 to 2.5
 MakingTheVideo=वीडियो बन रहा है...
@@ -1843,6 +1949,10 @@ MeshWithVertexColorsPly=वर्टेक्स रंगों सहित �
 ;Mesh with vertex colors (*.ply)
 Meshes=मेश:
 ;Meshes:
+Meshes2=मेश
+;Meshes
+Messages=संदेश
+;Messages
 Mid=मध्यम
 ;mid
 Min=Min
@@ -1875,6 +1985,8 @@ Misc=विविध:
 ;Misc:
 MiscellaneousRoutines={ विविध रूटीन }
 ;{ Miscellaneous Routines }
+Missing=गायब
+;missing
 MissingBTR123Header=<BTR1/2/3>-हेडर नहीं है
 ;Missing <BTR1/2/3>-header
 Mix=Mix
@@ -2075,6 +2187,12 @@ Norms=norms
 ;norms
 NotABigRenderProject=बड़ा रेंडर प्रोजेक्ट नहीं है
 ;not a big render project
+NotAvailableForLinuxUseClaude=Linux के लिए उपलब्ध नहीं: नीचे Claude Code का उपयोग करें।
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=नहीं मिला। यदि आप इसका उपयोग करते हैं, तो यह कमांड टर्मिनल में एक बार चलाएँ:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=इंस्टॉल नहीं है। इसे claude.ai/download से लें, एक बार शुरू करें, फिर यहाँ वापस आएँ।
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=चयनित नहीं
 ;Not selected
 NotSharingTickShareThisComputer=साझा नहीं: दूसरे कंप्यूटरों के साथ मिलकर रेंडर करने के लिए "Share this computer" चुनें
@@ -2101,8 +2219,14 @@ ObjectDetermination=वस्तु निर्धारण:
 ;Object determination:
 Of={} / {}
 ;{} of {}
+OfEntries={} में से {} प्रविष्टियाँ
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=जिन प्रविष्टियों की फ़ाइलें एक जैसी हैं (वही पैरामीटर फिर से गणना किए गए, एक चित्र दो बार सहेजा गया) उनमें से केवल नवीनतम
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
 OfFormulas=फ़ॉर्मूलों के
 ;of Formulas
+OfLines={} में से {} पंक्तियाँ
+;{} of {} lines
 OfUnitsDone={} / {} इकाइयाँ पूर्ण
 ;{} of {} units done
 OffLeftImageIsOnThe=बंद: समानांतर देखने के लिए बाईं छवि बाईं ओर। चालू: क्रॉस-आई देखने के लिए दाईं छवि बाईं ओर।
@@ -2121,6 +2245,8 @@ OnInsertingANewKeyframe=नया कीफ़्रेम डालने प�
 ;On inserting a new keyframe:
 Only1FocuspointMadeFromAverage=केवल 1 फ़ोकस बिंदु, Zsharp1+2 के औसत से बना!
 ;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=केवल चित्र को ही छवि के रूप में रखा जाता है (Monte Carlo रेंडर, वॉक्सेल या मेश निर्यात नहीं)।
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
 OnlyAddLight=केवल प्रकाश जोड़ें
 ;Only add light
 OnlyDEAOAmbientShadowsAvailableIn=टाइलिंग मोड में केवल DEAO परिवेश छाया उपलब्ध है।\nअब यह चुनी गई है और 33 किरणों पर सेट है, कृपया इसे अपनी ज़रूरत के अनुसार बदलें।
@@ -2129,6 +2255,12 @@ OnlyDIFS=केवल dIFS
 ;Only dIFS
 OnlyIfHardShadowsWereCalculated=(केवल यदि कठोर छायाओं की गणना हुई हो)
 ;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=केवल एक प्रकार की घटना
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=केवल वे प्रविष्टियाँ जिनके नाम, फ़ोल्डर या प्रकार में यह टेक्स्ट हो
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=केवल वे पंक्तियाँ जिनमें ये शब्द हों
+;Only the lines that contain these words
 OnlyToTheActualKeyframe=केवल वर्तमान कीफ़्रेम में
 ;Only to the actual keyframe
 OnlyWorkingIfSmoothNormalsWas=केवल तभी काम करता है जब गणना के समय 'Smooth normals' शून्य से बड़ा सेट था।
@@ -2163,6 +2295,8 @@ OpenGL=OpenGL >>
 ;OpenGL >>
 OpenGLPreviewOfFinalMesh=अंतिम मेश का OpenGL पूर्वावलोकन
 ;OpenGL preview of final mesh
+OpenLogFolder=लॉग फ़ोल्डर खोलें
+;Open log folder
 OpenM3i=m3i खोलें
 ;Open m3i
 OpenM3p=m3p खोलें
@@ -2179,10 +2313,16 @@ OpenTextParameters=टेक्स्ट पैरामीटर खोले�
 ;Open text parameters
 OpenTheAnimationMaker=एनिमेशन मेकर खोलें
 ;Open the animation maker
+OpenTheFolderOfTheFile=फ़ाइल का फ़ोल्डर खोलें
+;Open the folder of the file
+OpenTheFolderOfTheLog=लॉग फ़ाइलों का फ़ोल्डर खोलें (हर दिन एक, 30 दिन तक रखी जाती हैं)
+;Open the folder of the log files (one a day, kept 30 days)
 OpenTheMutaGen=MutaGen खोलें
 ;Open the MutaGen
 OpenTheNavigator=नेविगेटर खोलें
 ;Open the Navigator
+Opened=खोली गई
+;opened
 OpensTheFolderOfTheLanguage=भाषा फ़ाइलों का फ़ोल्डर खोलता है
 ;Opens the folder of the language files
 OperationCancelled=कार्रवाई रद्द की गई
@@ -2207,6 +2347,8 @@ Orig=मूल:
 ;Orig:
 OriginalParameterSizeWidthHeight=मूल पैरामीटर आकार (चौड़ाई, ऊँचाई):
 ;Original parameter size (width, height):
+OtherFiles=अन्य फ़ाइलें
+;Other files
 OutputFile=आउटपुट फ़ाइल:
 ;Output file:
 OutputFolder=आउटपुट फ़ोल्डर:
@@ -2257,12 +2399,16 @@ ParamNameMustNotBeEmpty=पैरामीटर का नाम खाली �
 ;Param name must not be empty
 Parameter=पैरामीटर
 ;Parameter
+Parameters=पैरामीटर
+;Parameters
 ParametersCopiedToTheClipboard=पैरामीटर क्लिपबोर्ड पर कॉपी किए गए।
 ;Parameters copied to the clipboard.
 ParametersLoadedPressCalculate3DTo=पैरामीटर लोड हो गए, रेंडर करने के लिए "Calculate 3D" दबाएँ।
 ;Parameters loaded, press "Calculate 3D" to render.
 ParametersLoadedThisRenderContinuesWhere=पैरामीटर लोड हो गए: यह रेंडर वहीं जारी रहता है जहाँ इसे बनाया गया था (कमांड लाइन या उसकी विंडो)।
 ;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=पैरामीटर
+;parameters
 ParametersMandId=पैरामीटर: MandId {}
 ;Parameters: MandId {}
 Pass=पास {}
@@ -2279,6 +2425,8 @@ Picture=चित्र
 ;picture
 Pictures=चित्र
 ;pictures
+PicturesAndFilesTheAssistantMakes=सहायक जो चित्र और फ़ाइलें बनाता है, वे {} में जाती हैं; कुछ भी हटाया नहीं जाता। 4K से बड़े चित्र आपकी सहमति के बाद ही बनते हैं, और कोई गणना 10 मिनट बाद रुक जाती है। वह जो कुछ करता है, सब लॉग में है।
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
 PleaseChooseAnOutputFile=कृपया एक आउटपुट फ़ाइल चुनें।
 ;Please choose an output file.
 PleaseMakeASelectionInThe=कृपया पहले छवि में एक चयन करें।
@@ -2373,6 +2521,10 @@ Processings=प्रोसेसिंग
 ;Processings
 Processor=प्रोसेसर
 ;processor
+Program=प्रोग्राम
+;Program
+ProgramOutput=प्रोग्राम आउटपुट
+;Program output
 Progress=प्रगति
 ;Progress
 Project=प्रोजेक्ट:  {}
@@ -2419,6 +2571,8 @@ RandomMultiplier=यादृच्छिक गुणक
 ;Random multiplier
 Range=सीमा
 ;Range
+RawValuesMappedValuesClampedValues=कच्चे मान:\n  {}..\n  {}\nमैप किए गए मान:\n  {}..\n  {}\nसीमित मान:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
 Rays=किरणें:
 ;Rays:
 RaystepDivisor=रे-स्टेप भाजक:
@@ -2427,6 +2581,8 @@ RaystepMultiplier=रे-स्टेप गुणक:
 ;Raystep multiplier:
 RaystepSubDEstop=रे-स्टेप से DEstop घटाएँ:
 ;Raystep sub DEstop:
+ReadingTheHistoryEntries=इतिहास पढ़ा जा रहा है... {} प्रविष्टियाँ
+;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=किसी फ़ाइल को संपादित करने के बाद भाषा फ़ाइलें फिर से पढ़ता है
 ;Reads the language files again, after you edited one
 RecalculateASelection=\sचयन की पुनर्गणना
@@ -2479,6 +2635,8 @@ Reload=फिर से लोड करें
 ;Reload
 RemainingFaces10NoReduction=शेष फ़ेस (1.0 = कोई कमी नहीं, 0.0 = अधिकतम कमी = कोई फ़ेस शेष नहीं)
 ;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=हटाएँ
+;Remove
 RemoveThisFormulaFromTheLocal=इस फ़ॉर्मूले को स्थानीय appdata फ़ोल्डर से हटाएँ
 ;Remove this formula from the local appdata folder
 RenderAllTilesIncludedInThe=इन पंक्तियों की सभी टाइलें रेंडर करें:
@@ -2487,6 +2645,8 @@ RenderBothEyeImagesAndShow=दोनों आँखों की छविय�
 ;Render both eye images and show a side-by-side stereo preview without saving it.
 RenderEveryNThFrame=हर n-वाँ फ़्रेम\n   रेंडर करें:
 ;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=मेरा पिछला चित्र 4K में रेंडर करो और बताओ कि इसमें कितना समय लगा।
+;Render my last picture at 4K and tell me how long it took.
 RenderNextTile=अगली टाइल रेंडर करें
 ;Render next tile
 RenderOnlyTheLeftEyeImages=केवल 'बाईं आँख' की छवियाँ रेंडर करें।\nपहले से रेंडर किए गए एनिमेशन को स्टीरियो में बढ़ाने के लिए उपयोगी।
@@ -2589,6 +2749,8 @@ RoutAngleOfXZ=X, Z का Rout कोण
 ;Rout angle of X, Z
 RoutAngleOfYZ=Y, Z का Rout कोण
 ;Rout angle of Y, Z
+Rows=पंक्तियाँ
+;Rows
 RowsOfTiles=टाइल की पंक्तियाँ
 ;Rows of tiles
 SLeft={} से. शेष
@@ -2635,6 +2797,8 @@ SaveFullLightAndColorParameter=पूरे प्रकाश और रंग 
 ;Save full light and color parameter
 SaveImageParameters=छवि + पैरामीटर सहेजें
 ;Save image + parameters
+SaveM3i=m3i सहेजें
+;Save m3i
 SaveM3iFiles=m3i फ़ाइलें सहेजें
 ;Save m3i files
 SaveM3iFilesIncludingTheInternal=आंतरिक छवि बफ़र सहित m3i फ़ाइलें सहेजें, जिससे परावर्तन आदि सहेजे जाते हैं।
@@ -2675,6 +2839,8 @@ Saved16BitColour={} सहेजा गया (16 बिट रंग)
 ;Saved {} (16 bit colour)
 Saved2={} सहेजा गया
 ;Saved {}
+SavedLower=सहेजी गई
+;saved
 SavedTransparentBackground={} सहेजा गया (पारदर्शी पृष्ठभूमि)
 ;Saved {} (transparent background)
 Saving=सहेजना:
@@ -2705,6 +2871,8 @@ ScriptEditor=स्क्रिप्ट एडिटर
 ;Script Editor
 ScrollBy1=1 से स्क्रॉल करें
 ;Scroll by 1
+Search=खोजें
+;Search
 SecantSearchmode=सीकेंट खोज मोड:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=दूसरा फ़ोकस बिंदु, यदि पहले से अलग हो तो\nफ़ोकस बिंदु के बजाय फ़ोकस रेखा मिलती है।\n(भौतिक रूप से बहुत यथार्थवादी नहीं, पर होना अच्छा है)\s
@@ -2745,6 +2913,8 @@ SendValues=मान भेजें
 ;Send values
 SendingOut=बाहर भेजना:
 ;Sending out:
+SessionsAndCrashes=सत्र और क्रैश
+;Sessions and crashes
 SetLightfuncToCosine=प्रकाश फ़ंक्शन कोसाइन करें
 ;Set lightfunc to cosine
 SetTheMapsOrientationRelativeTo=मैप की दिशा को वस्तु के सापेक्ष सेट करें।\nएनिमेशन में प्रकाशों को दृश्य से जोड़े रखने के लिए इसका उपयोग करें।
@@ -2791,12 +2961,20 @@ ShortdistanceCheckDE=कम दूरी DE जाँच:
 ;Shortdistance check DE:
 ShouldIStopCalculations=क्या गणना रोक दूँ?
 ;Should i stop calculations?
+Show=दिखाएँ
+;Show
 ShowCoords=निर्देशांक दिखाएँ
 ;Show coords
 ShowFrameNr=फ़्रेम सं. दिखाएँ
 ;Show frame nr
 ShowGuides=गाइड दिखाएँ
 ;Show guides
+ShowInFolder=फ़ोल्डर में दिखाएँ
+;Show in folder
+ShowMeAPreviewOfThe=mb3d में मेरे द्वारा रेंडर किए गए पिछले चित्र का पूर्वावलोकन दिखाओ।
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=केवल अद्वितीय दिखाएँ
+;Show unique
 ShowsHiddenFormulasRightclickOnA=छिपे हुए फ़ॉर्मूले दिखाता है।\nकिसी फ़ॉर्मूले की स्थिति बदलने के लिए उस पर दायाँ क्लिक करें।
 ;Shows hidden formulas.\nRightclick on a formula to change its status.
 ShowsMessages=संदेश दिखाता है
@@ -2967,6 +3145,8 @@ SwarmRenderingSharedBetweenYourComputers=स्वार्म: आपके क
 ;Swarm: rendering shared between your computers
 SwitchBackToTheDefaultTheme=डिफ़ॉल्ट थीम पर वापस जाएँ
 ;Switch back to the default theme
+TakeTheEntryOutOfThe=प्रविष्टि को इतिहास से हटाएँ (गणना किए गए चित्र के पैरामीटर और थंबनेल मिटा दिए जाते हैं; अन्य फ़ाइलें अपनी जगह रहती हैं)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
 TargetMapSlot=लक्ष्य मैप स्लॉट
 ;Target Map Slot
 TargetMapSlotUseThisNumber=लक्ष्य मैप स्लॉट। एनिमेटेड मैप पाने के लिए इस संख्या को अपने फ़्रैक्टल में मैप के रूप में उपयोग करें, जैसे हाइटमैप के रूप में।
@@ -2993,6 +3173,8 @@ TheCalculationFailedLower=गणना विफल रही
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=गणना को परावर्तित वस्तुओं के साथ छवि के बाहर तक बढ़ाया जाएगा।\nइससे एनिमेशन में कम विकृतियाँ हो सकती हैं, पर स्थिर चित्रों को भी लाभ मिल सकता है।\nमान 0 से 0.5 (अधिकतम 0.9) के बीच होना चाहिए, यह छवि की चौड़ाई और ऊँचाई के\nसापेक्ष वह आकार है जिसकी बाहर अधिकतम गणना होती है।
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=कमांड लाइन प्रोग्राम mb3d इस प्रोग्राम के पास नहीं मिला: प्रोग्राम को फिर से इंस्टॉल करें।
+;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=डिफ़ॉल्ट क्रमांकन में 2 संख्याएँ होती हैं, X और Y के लिए अलग।\nयह विकल्प चुनने पर क्रमांकन केवल एक संख्या होगी,\nजो हर कॉलम में बढ़ती है और अगली पंक्ति में जारी रहती है।
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=डिफ़ॉल्ट आउटपुट में वस्तु सफ़ेद और बाहरी क्षेत्र काला होता है।\nरंग उलटने के लिए यह विकल्प चुनें।
@@ -3005,8 +3187,16 @@ TheDistanceToTheObjectsSurface=वस्तु की सतह से वह �
 ;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
 TheEffectAccumulatesResetForA=प्रभाव जमा होता है, नई गणना के लिए रीसेट करें।
 ;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=प्रविष्टियाँ अपने दिनों के अंतर्गत; किसी दिन की प्रविष्टियाँ और चित्र उसे खोलने पर (उस पर क्लिक करके) दिखते हैं
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=प्रविष्टि हटाई नहीं जा सकी।
+;The entry could not be removed.
+TheFileIsNotThereAny=फ़ाइल अब वहाँ नहीं है।
+;The file is not there any more.
 TheFileM3fAlreadyExistsDo=फ़ाइल <{}.m3f> पहले से मौजूद है। क्या आप इसे अधिलेखित करना चाहते हैं?
 ;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=फ़ाइल (इसे यहाँ से चुनें और कॉपी करें)
+;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(पहला) फ़ोकस बिंदु।\nमान दर्शक के Zstart मान के सापेक्ष है,\nछवि की चौड़ाई पर सामान्यीकृत।
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 TheFolderDoesNotExistOr=फ़ोल्डर मौजूद नहीं है (या पहुँच योग्य नहीं है)
@@ -3021,6 +3211,8 @@ TheImageSizeChangedCalculateThe=छवि का आकार बदल गय�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap मोड "रंगाई" टैब में गणना किए गए विकल्प पर निर्भर करता है।
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=पिछला सत्र ठीक से समाप्त नहीं हुआ (वह अटक गया, बंद कर दिया गया या क्रैश हो गया): {}। उसने अंत में क्या किया, यह लॉग में है (लॉग विंडो, शीर्षक पट्टी में आइकन)।
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=मुख्य संपादक अभी भी रेंडर कर रहा है। कृपया पहले उसे रोकें या उसके पूरा होने तक प्रतीक्षा करें।
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=मैप विकल्प गोलाकार मैप के लिए विशिष्ट वेक्टर से x,y निर्देशांक\nगणना करते हैं, इससे पहला रंग चयन भी बदलता है\nजो सामान्यतः स्मूद पुनरावृत्तियों पर आधारित होता है।\nइन विकल्पों के बदलाव का परिणाम देखने के लिए\nछवि की फिर से गणना करनी होगी।
@@ -3045,6 +3237,8 @@ TheSelectionMustBeBiggerThanLower=चयन की चौड़ाई और ऊ
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=स्वार्म का साझा फ़ोल्डर
 ;The shared folder of the swarm
+TheSizeOfTheTiles=टाइलों का आकार
+;The size of the tiles
 TheStereoEyeImagesHaveDifferent=स्टीरियो आँख छवियों के आकार अलग-अलग हैं।
 ;The stereo eye images have different sizes.
 TheTileHasNoImageBuffer=टाइल में कोई छवि बफ़र नहीं है
@@ -3053,6 +3247,8 @@ Themes=थीम
 ;Themes
 ThereIsAFileAlready=फ़ाइल {} पहले से मौजूद है।
 ;There is a file {} already.
+ThingsToAskTheAssistant=सहायक से पूछने योग्य बातें
+;Things to ask the assistant
 ThisComputer=यह कंप्यूटर:
 ;This computer:
 ThisEffectIsAccumulatedOnEach=यह प्रभाव हर बार बटन दबाने पर जमा होता है, आप 'रीसेट' बटन दबाकर\nरीसेट कर सकते हैं - लेकिन परावर्तन भी पूर्ववत हो जाएँगे!
@@ -3063,8 +3259,12 @@ ThisIsAAbsoluteOffsetIn=यह घुमाए गए बल्ब की x द�
 ;This is a absolute offset in x direction of the rotated bulb.
 ThisRenderIsRunningRightNow=यह रेंडर अभी चल रहा है।
 ;This render is running right now.
+ThisRenderKeepsNoImage=यह रेंडर कोई छवि नहीं रखता।
+;This render keeps no image.
 ThisRenderKeptNoParameters=इस रेंडर ने कोई पैरामीटर नहीं रखे।
 ;This render kept no parameters.
+ThisSessionLive=यह सत्र (लाइव)
+;This session (live)
 ThreadPriority=थ्रेड\nप्राथमिकता
 ;Thread\nPriority
 ThreadcountInCalculations=गणना में  \nथ्रेड संख्या
@@ -3093,6 +3293,8 @@ TileXYSaved=टाइल X={} Y={} सहेजी गई।
 ;Tile X={} Y={} saved.
 Tiles=टाइल में
 ;tiles
+Tiles2=टाइलें
+;Tiles
 TilesSaved={} टाइलें सहेजी गईं; {}
 ;{} tiles saved; {}
 TilesWithTheSwarm={}  {} टाइलें स्वार्म के साथ
@@ -3183,6 +3385,8 @@ UnfinishedRenders=अधूरे रेंडर
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=अधूरे रेंडर: उन्हें जारी रखें या हटाएँ
 ;Unfinished renders: continue or delete them
+Untitled=शीर्षकहीन
+;untitled
 UpOneLevel=एक स्तर ऊपर
 ;Up one level
 UpTo=तक:
@@ -3247,6 +3451,8 @@ Video=वीडियो
 ;video
 VideoLower=वीडियो: {}
 ;video: {}
+View=दृश्य
+;View
 ViewToMain=दृश्य मुख्य में
 ;View to main
 Viewing=दृश्य
@@ -3275,8 +3481,12 @@ Walking=चलना
 ;Walking
 Warning=चेतावनी
 ;Warning
+WarningLower=चेतावनी
+;warning
 WarningMustRecalculateTheWholeImage=चेतावनी: इसे पूर्ववत करने के लिए पूरी छवि की पुनर्गणना करनी होगी!
 ;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=चेतावनियाँ और त्रुटियाँ
+;Warnings and errors
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Weight=भार
@@ -3285,8 +3495,18 @@ WeightColon=भार:
 ;Weight:
 WelcomeToMandelbulb3D=Mandelbulb 3D में आपका स्वागत है!
 ;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=आज मैंने mb3d में क्या किया? क्या कोई त्रुटियाँ थीं?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=क्या हुआ
+;What happened
+WhatYouDid=आपने क्या किया
+;What you did
+When=कब
+;When
 WhenAngleNotBetween180And={ जब कोण -180 और 180 के बीच न हो तो शेष हटाएँ }
 ;{ When angle not between -180 and 180 remove left }
+WhenUTC=कब (UTC)
+;When (UTC)
 WhenUsingAMapForThe=डिफ़्यूज़ रंग के लिए मैप का उपयोग करते समय,\nरंगों की स्वचालित क्लिपिंग के लिए\n'Autoclip Spec+Diff' चुनना आवश्यक है।
 ;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
 White=सफ़ेद
@@ -3295,6 +3515,8 @@ WhiteOutside=बाहर सफ़ेद
 ;White outside
 Width=चौड़ाई:
 ;Width:
+Windows=विंडो
+;Windows
 Wireframe=वायरफ़्रेम
 ;Wireframe
 WireframeColor=वायरफ़्रेम रंग
@@ -3309,6 +3531,8 @@ Wrap2=wrap2
 ;wrap2
 WritesTheEnglishTextsAsA=अंग्रेज़ी टेक्स्ट को इस नाम की नई भाषा फ़ाइल के रूप में लिखता है; उन्हें टेक्स्ट एडिटर में अनुवाद करें, फिर "फिर से लोड करें" दबाएँ
 ;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=चित्र को जैसा वह अभी है (अधूरी पंक्तियाँ पृष्ठभूमि के रूप में) .m3i फ़ाइल के रूप में लिखता है
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
 WrittenTranslateTheTextsRightOf=लिखा गया: {}\n"=" के दाईं ओर के पाठों का किसी टेक्स्ट एडिटर में अनुवाद करें, फिर Reload दबाएँ।
 ;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
 XAngle=X कोण:
@@ -3414,114 +3638,3 @@ TrackBar1.Hint = चुने जाने पर, इस स्लाइडर 
 
 [TilingForm]
 Label24.Caption = शार्प:
-
-; Not translated yet (shown in English): remove the ";" and translate
-;AI=AI
-;ALanguageFileHasOneLabel=A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
-;Action=Action
-;AllKinds=All kinds
-;AnAIAssistantOnThisComputer=An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
-;AnimationLower=animation
-;Calculated=calculated
-;CalculatedPictures=Calculated pictures
-;Calculations=Calculations
-;ClaudeCodeInATerminal=Claude Code (in a terminal)
-;ClaudeDesktopApp=Claude (desktop app)
-;ClickAColumnHeaderToSort=Click a column header to sort.
-;ComparingFiles=comparing files
-;Connect=Connect
-;ConnectToAnAIAssistant=Connect to an AI assistant
-;ConnectToAnAIAssistantLet=Connect to an AI assistant: let it describe, change and render your pictures
-;ConnectedAskItInANew=Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
-;ConnectedStartANewClaudeCode=Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
-;CopiedToTheClipboard=Copied to the clipboard.
-;Copy=Copy
-;CopyCommand=Copy command
-;CopyTheCommandToPasteIt=Copy the command, to paste it into a terminal
-;CopyTheSelectedLineOrAll=Copy the selected line, or all the lines shown when none is selected
-;Day=Day
-;Debug=debug
-;DeleteTheParametersAndTheThumbnail=Delete the parameters and the thumbnail of "{}" from the history?
-;Disconnect=Disconnect
-;Entries={} entries
-;Error=error
-;Errors=Errors
-;Everything=Everything
-;FileLower=file
-;Files=Files
-;FollowTheNewest=Follow the newest
-;FormulaLower=formula
-;FoundOnThisComputerNotConnected=Found on this computer, not connected yet.
-;FoundOnThisComputerRunThis=Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
-;GroupByDay=Group by day
-;History=History
-;HistoryThePicturesCalculatedTheFiles=History: the pictures calculated, the files opened and saved (click to browse)
-;ImageParameters=image + parameters
-;Info=info
-;KeepTheNewestLineInSight=Keep the newest line in sight as new ones come
-;Level=Level
-;Lines={} lines
-;List=List
-;LoadTheParametersIntoTheMain=Load the parameters into the main window, or open the file
-;Log=Log
-;LogEverythingTheProgramDidIts=Log: everything the program did, its warnings and errors (click to see)
-;LongerThanUsualStillWorking=longer than usual, still working
-;MB3DImageM3iM3i=MB3D image (*.m3i)|*.m3i
-;MakeTheLightOfThatPicture=Make the light of that picture warmer and render it again.
-;MakeThreeVariationsOfItAnd=Make three variations of it and tell me which one you like best.
-;Meshes2=Meshes
-;Messages=Messages
-;Missing=missing
-;NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
-;NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
-;NotInstalledGetItFromClaude=Not installed. Get it from claude.ai/download, start it once, then come back here.
-;OfEntries={} of {} entries
-;OfEntriesWhoseFilesAreThe=Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
-;OfLines={} of {} lines
-;OnlyAPictureIsKeptAs=Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
-;OnlyOneKindOfEvent=Only one kind of event
-;OnlyTheEntriesWhoseNameFolder=Only the entries whose name, folder or kind contain this text
-;OnlyTheLinesThatContainThese=Only the lines that contain these words
-;OpenLogFolder=Open log folder
-;OpenTheFolderOfTheFile=Open the folder of the file
-;OpenTheFolderOfTheLog=Open the folder of the log files (one a day, kept 30 days)
-;Opened=opened
-;OtherFiles=Other files
-;Parameters=Parameters
-;ParametersLower=parameters
-;Program=Program
-;ProgramOutput=Program output
-;ReadingTheHistoryEntries=Reading the history... {} entries
-;Remove=Remove
-;RenderMyLastPictureAt4K=Render my last picture at 4K and tell me how long it took.
-;Rows=Rows
-;SaveM3i=Save m3i
-;SavedLower=saved
-;Search=Search
-;SessionsAndCrashes=Sessions and crashes
-;Show=Show
-;ShowInFolder=Show in folder
-;ShowMeAPreviewOfThe=Show me a preview of the last picture I rendered in mb3d.
-;ShowUnique=Show unique
-;TakeTheEntryOutOfThe=Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
-;TheEntriesUnderTheirDaysA=The entries under their days; a day's entries and pictures show when it is opened (a click on it)
-;TheEntryCouldNotBeRemoved=The entry could not be removed.
-;TheFileIsNotThereAny=The file is not there any more.
-;TheFileSelectAndCopyIt=The file (select and copy it from here)
-;TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
-;TheSizeOfTheTiles=The size of the tiles
-;ThingsToAskTheAssistant=Things to ask the assistant
-;ThisRenderKeepsNoImage=This render keeps no image.
-;ThisSessionLive=This session (live)
-;Tiles2=Tiles
-;Untitled=untitled
-;View=View
-;WarningLower=warning
-;WarningsAndErrors=Warnings and errors
-;WhatDidIDoInMb3d=What did I do in mb3d today? Were there any errors?
-;WhatHappened=What happened
-;WhatYouDid=What you did
-;When=When
-;WhenUTC=When (UTC)
-;Windows=Windows
-;WritesThePictureAsItIs=Writes the picture as it is now (the rows not done as background) as a .m3i file

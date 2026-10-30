@@ -186,7 +186,8 @@ def write(path, head, labels, sections, notes, missing=None):
             out.append(f"\n[{name}]\n")
             out += [f"{encode(k, True)} = {encode(v)}\n" for k, v in items]
     if missing:
-        out.append("\n; Not translated yet (shown in English): remove the \";\" and translate\n")
+        # (under [Labels] again: a line translated here is a label)
+        out.append("\n[Labels]\n; Not translated yet (shown in English): remove the \";\" and translate\n")
         out += [f";{i}={encode(t)}\n" for i, t in missing]
     open(path, "w", encoding="utf-8").write("".join(out))
 
@@ -242,6 +243,12 @@ def cmd_sync():
         if fn.endswith(".lng") and fn != "English.lng":
             p = os.path.join(LANG, fn)
             _, h, labels, secs = read(p)
+            # (a label line written under a form section by hand: a label)
+            for _, items in secs:
+                for k, v in list(items):
+                    if "." not in k and k != "Caption" and k in en:
+                        labels.setdefault(k, v)
+                        items.remove((k, v))
             labels = {i: t for i, t in labels.items() if i in en}
             missing = [(i, en[i]) for i in sorted(en) if i not in labels]
             write(p, h, labels, secs, lambda i: encode(en[i]), missing)

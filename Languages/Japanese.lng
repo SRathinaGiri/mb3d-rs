@@ -39,6 +39,10 @@ AFolderEveryComputerOfThe=スウォームのすべてのコンピュータから
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AHigherValueMeansABetter=値が高いほど品質が良くなります。100%でも非可逆です。
 ;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=言語ファイルには 1 行に 1 つのラベルがあります: 「=」の左がその ID、右があなたの訳文です。ラベルの後のウィンドウセクションでは、1 つのコントロールに独自の文字列を指定できます。
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
 AMultiplierThatDefinesTheMiximal=ハードシャドウ計算の最大長を、いくつかの画像サイズパラメータに対する\n相対値で定義する乗数です (既定 = 1)。\n遠くのオブジェクトの影が欠ける場合は値を増やしてください。
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO 計算時間:
@@ -71,6 +75,8 @@ AbsoluteDistanceOfTheSmoothCombine=スムーズ結合関数の絶対距離です
 ;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
 Absorption=吸収:
 ;Absorption:
+Action=操作
+;Action
 ActualAmbientShadowPar=現在の環境シャドウパラメータ
 ;Actual ambient shadow par.
 ActualCameraSettings=現在のカメラ設定
@@ -129,6 +135,8 @@ AllFiles=すべてのファイル
 ;All files
 AllFilesParen=すべてのファイル (*.*)
 ;All files (*.*)
+AllKinds=すべての種類
+;All kinds
 AllRealworldUnitsInMeter=実世界の単位はすべてメートルです。
 ;All realworld units in meter.
 AllTheLightColorSettings=ライト+色の設定すべて
@@ -163,6 +171,8 @@ AmbientTopColorLeftclickToChange=アンビエントの上部の色です。左�
 ;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
 Amount=量:
 ;Amount:
+AnAIAssistantOnThisComputer=このコンピュータ上の AI アシスタントが Mandelbulb 3D を使えます: 普段の言葉や音声で頼むと、画像の説明、変更、レンダリング、バリエーションの作成、最後に作業したもののレンダリングを行います。Mandelbulb 3D はオフラインのままです: アシスタントのアプリがこのコンピュータ上で起動します。
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
 AnUnfinishedCalculationOfThisPicture=この画像の未完了の計算が保存されています ({})。\n\n続行しますか?  「いいえ」を選ぶと最初から計算し直します。
 ;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
 AnUnfinishedMonteCarloRenderOf=このパラメータの未完了のモンテカルロレンダリングが保存されています ({})。\n\n続行しますか?  「いいえ」を選ぶと最初からレンダリングし直します。
@@ -185,6 +195,8 @@ Animation=アニメーション:
 ;Animation:
 Animation2=アニメーション: {}
 ;Animation: {}
+AnimationLower=アニメーション
+;animation
 AnimationMaker=アニメーションメーカー
 ;Animation maker
 AnimationMakerParen=アニメーションメーカー   ({})
@@ -407,10 +419,14 @@ CalculateTransparency=透明を計算:
 ;Calculate transparency:
 CalculateTransparencyOnlyOnDIFSFormulas=dIFS 数式のみ透明を計算します (エスケープタイムとの DE 組み合わせ用)。
 ;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=計算済み
+;calculated
 CalculatedOn=計算環境: {}
 ;Calculated on: {}
 CalculatedOnTheCPU=CPUで計算
 ;Calculated on the CPU
+CalculatedPictures=計算した画像
+;Calculated pictures
 CalculatingThePreview=プレビューを計算しています...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=ボリュメトリックライトマップを計算中
@@ -423,6 +439,8 @@ CalculationOptions=計算オプション
 ;Calculation options
 CalculationStopped=計算を停止しました。
 ;Calculation stopped.
+Calculations=計算
+;Calculations
 Camera=カメラ
 ;Camera
 CameraColon=カメラ:
@@ -477,6 +495,10 @@ ChooseOption=オプションを選択:
 ;Choose Option:
 ChoseTheme=テーマを選択:
 ;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (ターミナル)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (デスクトップアプリ)
+;Claude (desktop app)
 Clear=クリア
 ;Clear
 ClearAllGenerationsBeforeTheSelected=選択した世代より前の世代をすべて消去します
@@ -487,6 +509,8 @@ ClearTheWholeList=リストをすべて消去
 ;Clear the whole list
 ClickAButtonToChangeA=(ボタンをクリックしてフォルダを変更)
 ;(Click a button to change a directory)
+ClickAColumnHeaderToSort=列見出しをクリックすると並べ替えます。
+;Click a column header to sort.
 ClickALanguageToSwitchThe=言語をクリックすると、ウィンドウがその言語に切り替わります。
 ;Click a language to switch the windows to it
 ClickAParameterFileForIts=パラメータファイルをクリックするとプレビューが表示されます。
@@ -591,6 +615,8 @@ CombineMapYWithDiffuseColors=マップ Y を拡散色と合成
 ;Combine map Y with diffuse colors
 Common=標準
 ;Common
+ComparingFiles=ファイルを比較中
+;comparing files
 Compile=コンパイル
 ;Compile
 CompileTheCodeF9=コードをコンパイルします <F9>
@@ -601,6 +627,16 @@ Computer=コンピュータ
 ;Computer
 Confirm=確認
 ;Confirm
+Connect=接続
+;Connect
+ConnectToAnAIAssistant=AI アシスタントに接続
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=AI アシスタントに接続: 画像の説明、変更、レンダリングを任せます
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=接続しました。新しい会話で頼んでください。ツールに mb3d が表示されない場合はアプリを再起動してください。
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=接続しました。使うには Claude Code の新しいセッションを開始してください。接続を解除するには、下のコマンドを実行します。
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
 ConstAttenuation=定数減衰
 ;Const Attenuation
 Constant=定数
@@ -611,10 +647,20 @@ Continue=続ける
 ;Continue
 ConvertManyM3PFilesToM3I=多数の M3P ファイルを M3I に変換します
 ;Convert many M3P files to M3I
+CopiedToTheClipboard=クリップボードにコピーしました。
+;Copied to the clipboard.
 CopiesAnFfmpegCommandForA=フレームから小さい MP4 動画を作る ffmpeg コマンドをクリップボードにコピーします。\nターミナルでご自身で実行してください (このプログラムは他のプログラムを起動しません)。
 ;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=コピー
+;Copy
+CopyCommand=コマンドをコピー
+;Copy command
 CopyParamsToClipboard=パラメータをクリップボードにコピー
 ;Copy Params to Clipboard
+CopyTheCommandToPasteIt=コマンドをコピーして、ターミナルに貼り付けます
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=選択した行をコピーします。選択がない場合は表示中のすべての行をコピーします
+;Copy the selected line, or all the lines shown when none is selected
 CopyTheValues=値をコピー
 ;Copy the values
 CopyTheValuesTo=値をコピー..
@@ -733,8 +779,12 @@ DOUBLEIMAGESIZE=画像サイズ2倍
 ;DOUBLE IMAGESIZE
 DateModified=更新日時
 ;Date modified
+Day=日
+;Day
 DblClickHideRightPanel=ダブルクリック: 右パネルを隠す
 ;DblClick: hide right panel
+Debug=デバッグ
+;debug
 DecreaseScale=スケールを縮小します。
 ;Decrease scale
 DecreaseTheSizeOfTheNavigator=ナビゲーターウィンドウを小さくします。
@@ -789,6 +839,8 @@ DeleteSelectedOption=選択したオプションを削除します。
 ;Delete selected option
 DeleteSequence=シーケンスを削除
 ;Delete Sequence
+DeleteTheParametersAndTheThumbnail=「{}」のパラメータとサムネイルを履歴から削除しますか?
+;Delete the parameters and the thumbnail of "{}" from the history?
 DeleteThisKeyframe=このキーフレームを削除します。
 ;Delete this keyframe
 DeleteThisTilesFiles=このタイルのファイルを削除
@@ -863,6 +915,8 @@ DisableThreadboost=スレッドブーストを無効化
 ;Disable threadboost
 Disc=円
 ;Disc
+Disconnect=切断
+;Disconnect
 DisplayStyle=表示スタイル
 ;Display Style
 DisplaysSomeFormulaDescriptionsIfAvailable=数式の説明がある場合に表示します。
@@ -977,8 +1031,14 @@ End=終了:
 ;End:
 EnterNamedParameter=名前付きパラメータの入力
 ;Enter named parameter
+Entries={} 件
+;{} entries
+Error=エラー
+;error
 ErrorAt=, {} でエラー: {}
 ;, error at {}: {}
+Errors=エラー
+;Errors
 Escapetime3DFormulas=エスケープタイム 3D 数式
 ;escapetime 3D formulas
 Escapetime3DFormulasWithAnalyticFaster=解析的 (高速な) DE 計算を持つエスケープタイム 3D 数式
@@ -993,6 +1053,8 @@ EulerAngles=オイラー角:
 ;Euler angles:
 EveryNewPictureOfTheMain=メインウィンドウの新しい画像がすべてフィルタされます (保存される画像も同様)。
 ;Every new picture of the main window is filtered (the saved one too).
+Everything=すべて
+;Everything
 ExchangeAdd=フォーミュラの
 ;Exchange, add
 ExchangeThisFormulaWithTheNext=この数式を次の数式と入れ替えます
@@ -1037,12 +1099,16 @@ File=ファイル
 ;File
 FileIndex=ファイルインデックス:
 ;File index:
+FileLower=ファイル
+;file
 FileName=ファイル名(&N):
 ;File &name:
 FileTooShort=ファイルが短すぎます
 ;file too short
 Filename=ファイル名
 ;Filename
+Files=ファイル
+;Files
 FilesOfType=ファイルの種類(&T):
 ;Files of &type:
 FilterNewPicturesAutomatically=新しい画像を自動的にフィルタ
@@ -1085,6 +1151,8 @@ Folder=フォルダー
 ;Folder
 FolderOfTheLanguageFiles=言語ファイルのフォルダ:
 ;Folder of the language files:
+FollowTheNewest=最新を追う
+;Follow the newest
 ForFractionalExponentsOrExponentsMaxInt=\s\s小数の指数、または |指数| > MaxInt の場合、底は > 0 でなければなりません。 }
 ;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
 ForSphericalUsageReplacesTheAmbient=球面で使うときに、アンビエントの色を縮小した背景画像で置き換えます。
@@ -1097,6 +1165,8 @@ Formula12=数式1
 ;Formula1
 FormulaEditor=数式エディター
 ;Formula editor
+FormulaLower=数式
+;formula
 FormulaM3f=数式 (*.m3f)
 ;Formula (*.m3f)
 FormulaName=式の名前:
@@ -1113,6 +1183,10 @@ FormulasColon=数式:
 ;Formulas:
 Forward=前方
 ;Forward
+FoundOnThisComputerNotConnected=このコンピュータで見つかりました。まだ接続されていません。
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=このコンピュータで見つかりました。ターミナルでこのコマンドを一度実行してから、Claude Code の新しいセッションを開始してください:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
 FpName=fp名:
 ;fp name:
 Fpow=Fpow:
@@ -1283,6 +1357,8 @@ GoneLastSeenSAgo=離脱 (最終確認 {} 秒前)
 ;gone (last seen {} s ago)
 GraphicsCard=グラフィックカード
 ;Graphics card
+GroupByDay=日ごとにまとめる
+;Group by day
 GuessParams=パラメータを推定
 ;Guess params
 HMapGen=HMapGen
@@ -1319,6 +1395,10 @@ HideThisFormula=この数式を非表示にする
 ;Hide this formula
 High=高
 ;high
+History=履歴
+;History
+HistoryThePicturesCalculatedTheFiles=履歴: 計算した画像、開いたファイルと保存したファイル (クリックで閲覧)
+;History: the pictures calculated, the files opened and saved (click to browse)
 HoldShiftKeyForFinerSteps=(Shiftキーを押すと細かく動きます)
 ;(Hold Shift key for finer steps)
 Hotkeys=ホットキー
@@ -1375,6 +1455,8 @@ ImageExists=画像が存在します
 ;Image exists
 ImageLower=画像
 ;image
+ImageParameters=画像 + パラメータ
+;image + parameters
 ImageRotation=画像の回転:
 ;Image rotation:
 ImageSize=-> 画像サイズ:
@@ -1439,6 +1521,8 @@ IndexWithLeading0=先頭に0を付けた番号
 ;Index with leading 0
 InfinityValuesHaveAFractionField=// 無限大の値は仮数部が 0 です。無限大は正にも負にもなり、
 ;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=情報
+;info
 Infos=情報
 ;Infos
 IniDirs=Ini フォルダー
@@ -1567,6 +1651,8 @@ KeepOnlyNearerParts=近い部分のみ保持:
 ;Keep only nearer parts:
 KeepTheAspectRatioWhenManually=幅または高さを手動で変更するときに縦横比を維持します。\n縦横比ボタンを押す場合はオフにする必要はありません。
 ;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=新しい行が来ても最新の行を表示し続けます
+;Keep the newest line in sight as new ones come
 KeepThisPriority=この優先度を維持
 ;Keep this priority
 KeepsTheChosenLanguageForThe=選んだ言語を次回の起動時にも保持します。
@@ -1607,6 +1693,8 @@ LeftclickUndoSetsTheParameterTo=左クリック:   元に戻す -> パラメー�
 ;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
 LetTheThresholdDecreaseTheAmbient=しきい値によりアンビエントシャドウを 0 まで減衰させます。\n遠くの構造が近くの構造から受ける影響が少なくなります。
 ;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=レベル
+;Level
 Light=ライト
 ;Light
 Light1=ライト 1
@@ -1663,6 +1751,10 @@ LinearAttenuation=線形減衰
 ;Linear Attenuation
 LinearInterpolateAKeyframeInbetween=間にキーフレームを線形補間
 ;Linear interpolate a keyframe inbetween
+Lines={} 行
+;{} lines
+List=リスト
+;List
 LliMultiplier=Lli 倍率:
 ;Lli multiplier:
 Load=読み込み
@@ -1681,14 +1773,22 @@ LoadParameters=パラメータを読み込む
 ;Load parameters
 LoadSettingsFromBtrace2File=*.btrace2ファイルから設定を読み込みます。
 ;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=パラメータをメインウィンドウに読み込むか、ファイルを開きます
+;Load the parameters into the main window, or open the file
 LoadTheParametersOfTheSelected=選択したレンダリングのパラメータを読み込み、計算を続けます
 ;Load the parameters of the selected render and continue its calculation
 LoadTheParametersOfTheSelected2=選択したレンダリングのパラメータだけを読み込みます
 ;Load the parameters of the selected render only
 LoadingAndSavingInitialDirectories=読み込み/保存の初期フォルダ
 ;Loading and saving initial directories
+Log=ログ
+;Log
+LogEverythingTheProgramDidIts=ログ: プログラムが行ったすべてのこと、警告とエラー (クリックで表示)
+;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ 対数関数 }
 ;{ Logarithmic functions }
+LongerThanUsualStillWorking=いつもより時間がかかっています。処理を続けています
+;longer than usual, still working
 LookIn=場所(&I):
 ;Look &in:
 Looking=視線
@@ -1741,6 +1841,8 @@ MB2=MB
 ;MB
 MB3=\s\sMB
 ;\s\sMB
+MB3DImageM3iM3i=MB3D 画像 (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
 MCBatchRender=M.C.バッチレンダリング
 ;M.C. batch render
 MMBWheelZoom=中ボタン/ホイール: ズーム
@@ -1763,8 +1865,12 @@ MakeSureThatNoLightWill=非ブレンドモードでライトが減算されな�
 ;Make sure that no light will be subtracted in non-blend mode
 MakeSureThatTheCalcAutomatic=ハードシャドウとアンビエントシャドウを考慮したい場合は、\nそれらの「自動的に計算」オプションが設定されていることを確認してください。
 ;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=その画像のライトを暖かくして、もう一度レンダリングして。
+;Make the light of that picture warmer and render it again.
 MakeTheTopBottomGradientOf=アンビエントと背景の色の上下グラデーションを\nオブジェクトの座標系基準にします。\nアニメーションでライトをシーンに固定するために使います。
 ;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=そのバリエーションを 3 つ作って、どれが一番いいか教えて。
+;Make three variations of it and tell me which one you like best.
 MakesReflectionsALittleDiffuseValue=反射を少し拡散させます。値の範囲は0から2.5です
 ;Makes reflections a little diffuse, value range from 0 to 2.5
 MakingTheVideo=動画を作成しています...
@@ -1843,6 +1949,10 @@ MeshWithVertexColorsPly=頂点カラー付きメッシュ (*.ply)
 ;Mesh with vertex colors (*.ply)
 Meshes=メッシュ:
 ;Meshes:
+Meshes2=メッシュ
+;Meshes
+Messages=メッセージ
+;Messages
 Mid=中
 ;mid
 Min=Min
@@ -1875,6 +1985,8 @@ Misc=その他:
 ;Misc:
 MiscellaneousRoutines={ その他のルーチン }
 ;{ Miscellaneous Routines }
+Missing=見つかりません
+;missing
 MissingBTR123Header=<BTR1/2/3> ヘッダーがありません
 ;Missing <BTR1/2/3>-header
 Mix=Mix
@@ -2075,6 +2187,12 @@ Norms=norms
 ;norms
 NotABigRenderProject=大判レンダリングのプロジェクトではありません
 ;not a big render project
+NotAvailableForLinuxUseClaude=Linux 版はありません: 下の Claude Code を使ってください。
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=見つかりません。使う場合は、ターミナルでこのコマンドを一度実行してください:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=インストールされていません。claude.ai/download から入手し、一度起動してから、ここに戻ってください。
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=未選択
 ;Not selected
 NotSharingTickShareThisComputer=共有していません: 他のコンピュータと一緒にレンダリングするには「このコンピュータを共有」をオンにしてください
@@ -2101,8 +2219,14 @@ ObjectDetermination=オブジェクトの判定:
 ;Object determination:
 Of={} / {}
 ;{} of {}
+OfEntries={} / {} 件
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=ファイルが同じ項目 (同じパラメータを再計算、同じ画像を 2 回保存) は最新のものだけ
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
 OfFormulas=パラメータ変更
 ;of Formulas
+OfLines={} / {} 行
+;{} of {} lines
 OfUnitsDone={} / {} ユニット完了
 ;{} of {} units done
 OffLeftImageIsOnThe=オフ: 平行法用に左の画像が左側。オン: 交差法用に右の画像が左側。
@@ -2121,6 +2245,8 @@ OnInsertingANewKeyframe=新しいキーフレームの挿入時:
 ;On inserting a new keyframe:
 Only1FocuspointMadeFromAverage=焦点は1つのみ。Zsharp1+2の平均から作られます!
 ;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=画像として保持されるのは通常の画像だけです (モンテカルロレンダリング、ボクセルやメッシュの書き出しは対象外)。
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
 OnlyAddLight=ライトを加算のみ
 ;Only add light
 OnlyDEAOAmbientShadowsAvailableIn=タイリングモードでは DEAO アンビエントシャドウのみ使用できます。\nDEAO を選択し 33 レイに設定しました。必要に応じて変更してください。
@@ -2129,6 +2255,12 @@ OnlyDIFS=dIFSのみ
 ;Only dIFS
 OnlyIfHardShadowsWereCalculated=(ハードシャドウが計算済みの場合のみ)
 ;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=1 種類のイベントだけ
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=名前、フォルダ、種類にこの文字列を含む項目だけ
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=これらの語を含む行だけ
+;Only the lines that contain these words
 OnlyToTheActualKeyframe=現在のキーフレームのみに適用
 ;Only to the actual keyframe
 OnlyWorkingIfSmoothNormalsWas=計算時に「スムーズ法線」が 0 より大きく設定されていた場合のみ機能します。
@@ -2163,6 +2295,8 @@ OpenGL=OpenGL >>
 ;OpenGL >>
 OpenGLPreviewOfFinalMesh=最終メッシュのOpenGLプレビュー
 ;OpenGL preview of final mesh
+OpenLogFolder=ログフォルダを開く
+;Open log folder
 OpenM3i=m3i を開く
 ;Open m3i
 OpenM3p=m3p を開く
@@ -2179,10 +2313,16 @@ OpenTextParameters=テキストパラメータを開く
 ;Open text parameters
 OpenTheAnimationMaker=アニメーションメーカーを開きます
 ;Open the animation maker
+OpenTheFolderOfTheFile=ファイルのフォルダを開きます
+;Open the folder of the file
+OpenTheFolderOfTheLog=ログファイルのフォルダを開きます (1 日 1 ファイル、30 日間保持)
+;Open the folder of the log files (one a day, kept 30 days)
 OpenTheMutaGen=MutaGen を開きます
 ;Open the MutaGen
 OpenTheNavigator=ナビゲーターを開きます
 ;Open the Navigator
+Opened=開いた
+;opened
 OpensTheFolderOfTheLanguage=言語ファイルのフォルダを開きます。
 ;Opens the folder of the language files
 OperationCancelled=操作をキャンセルしました
@@ -2207,6 +2347,8 @@ Orig=原作:
 ;Orig:
 OriginalParameterSizeWidthHeight=元のパラメータのサイズ(幅、高さ):
 ;Original parameter size (width, height):
+OtherFiles=その他のファイル
+;Other files
 OutputFile=出力ファイル:
 ;Output file:
 OutputFolder=出力フォルダ:
@@ -2257,12 +2399,16 @@ ParamNameMustNotBeEmpty=パラメータ名を空にすることはできませ�
 ;Param name must not be empty
 Parameter=パラメータ
 ;Parameter
+Parameters=パラメータ
+;Parameters
 ParametersCopiedToTheClipboard=パラメータをクリップボードにコピーしました。
 ;Parameters copied to the clipboard.
 ParametersLoadedPressCalculate3DTo=パラメータを読み込みました。「3D計算」を押すとレンダリングします。
 ;Parameters loaded, press "Calculate 3D" to render.
 ParametersLoadedThisRenderContinuesWhere=パラメータを読み込みました: このレンダリングは作成された場所 (コマンドラインまたはそのウィンドウ) で続行されます。
 ;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=パラメータ
+;parameters
 ParametersMandId=パラメータ: MandId {}
 ;Parameters: MandId {}
 Pass=パス {}
@@ -2279,6 +2425,8 @@ Picture=画像
 ;picture
 Pictures=画像
 ;pictures
+PicturesAndFilesTheAssistantMakes=アシスタントが作った画像とファイルは {} に保存され、何も削除されません。4K より大きい画像はあなたの同意があったときだけ作られ、計算は 10 分で止まります。アシスタントの操作はすべてログに残ります。
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
 PleaseChooseAnOutputFile=出力ファイルを選んでください。
 ;Please choose an output file.
 PleaseMakeASelectionInThe=先に画像内で範囲を選択してください。
@@ -2373,6 +2521,10 @@ Processings=一括処理
 ;Processings
 Processor=プロセッサ
 ;processor
+Program=プログラム
+;Program
+ProgramOutput=プログラムの出力
+;Program output
 Progress=進行状況
 ;Progress
 Project=プロジェクト:  {}
@@ -2419,6 +2571,8 @@ RandomMultiplier=ランダムの倍率です。
 ;Random multiplier
 Range=範囲
 ;Range
+RawValuesMappedValuesClampedValues=生の値:\n  {}..\n  {}\n対応付けた値:\n  {}..\n  {}\n制限した値:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
 Rays=レイ数:
 ;Rays:
 RaystepDivisor=レイステップ除数:
@@ -2427,6 +2581,8 @@ RaystepMultiplier=レイステップ倍率:
 ;Raystep multiplier:
 RaystepSubDEstop=レイステップから DEstop を減算:
 ;Raystep sub DEstop:
+ReadingTheHistoryEntries=履歴を読み込んでいます... {} 件
+;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=言語ファイルを編集した後に、もう一度読み込みます。
 ;Reads the language files again, after you edited one
 RecalculateASelection=\s選択範囲の再計算
@@ -2479,6 +2635,8 @@ Reload=再読み込み
 ;Reload
 RemainingFaces10NoReduction=残す面の割合です (1.0 = 削減なし、0.0 = 最大削減 = 面が残らない)。
 ;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=削除
+;Remove
 RemoveThisFormulaFromTheLocal=この数式をローカルの appdata フォルダーから削除
 ;Remove this formula from the local appdata folder
 RenderAllTilesIncludedInThe=次の行に含まれるタイルをすべてレンダリング:
@@ -2487,6 +2645,8 @@ RenderBothEyeImagesAndShow=両眼の画像を描画し、保存せずに並列�
 ;Render both eye images and show a side-by-side stereo preview without saving it.
 RenderEveryNThFrame=レンダリング間隔\n   (nフレームごと):
 ;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=最後の画像を 4K でレンダリングして、かかった時間を教えて。
+;Render my last picture at 4K and tell me how long it took.
 RenderNextTile=次のタイルをレンダリング
 ;Render next tile
 RenderOnlyTheLeftEyeImages=「左目」画像のみをレンダリングします。\n以前レンダリングしたアニメーションをステレオに拡張するのに使えます。
@@ -2589,6 +2749,8 @@ RoutAngleOfXZ=X, Z の Rout 角
 ;Rout angle of X, Z
 RoutAngleOfYZ=Y, Z の Rout 角
 ;Rout angle of Y, Z
+Rows=行
+;Rows
 RowsOfTiles=タイルの行数
 ;Rows of tiles
 SLeft=残り {} 秒
@@ -2635,6 +2797,8 @@ SaveFullLightAndColorParameter=ライトと色の全パラメータを保存し�
 ;Save full light and color parameter
 SaveImageParameters=画像 + パラメーターを保存します
 ;Save image + parameters
+SaveM3i=m3i を保存
+;Save m3i
 SaveM3iFiles=m3iファイルを保存
 ;Save m3i files
 SaveM3iFilesIncludingTheInternal=内部画像バッファを含めて m3i ファイルを保存し、反射などを保持します。
@@ -2675,6 +2839,8 @@ Saved16BitColour={} を保存しました (16 ビットカラー)
 ;Saved {} (16 bit colour)
 Saved2={} を保存しました
 ;Saved {}
+SavedLower=保存した
+;saved
 SavedTransparentBackground={} を保存しました (透明背景)
 ;Saved {} (transparent background)
 Saving=保存:
@@ -2705,6 +2871,8 @@ ScriptEditor=スクリプトエディター
 ;Script Editor
 ScrollBy1=1つスクロールします。
 ;Scroll by 1
+Search=検索
+;Search
 SecantSearchmode=セカント探索モード:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=第2の焦点です。第1の焦点と異なる値にすると\n焦点が一点ではなく線になります。\n(物理的にはあまり現実的ではありませんが、あると便利です)\s
@@ -2745,6 +2913,8 @@ SendValues=値を送る
 ;Send values
 SendingOut=送信:
 ;Sending out:
+SessionsAndCrashes=セッションとクラッシュ
+;Sessions and crashes
 SetLightfuncToCosine=ライト関数をコサインに
 ;Set lightfunc to cosine
 SetTheMapsOrientationRelativeTo=マップの向きをオブジェクト基準にします。\nアニメーションでライトをシーンに固定するために使います。
@@ -2791,12 +2961,20 @@ ShortdistanceCheckDE=近距離 DE チェック:
 ;Shortdistance check DE:
 ShouldIStopCalculations=計算を停止しますか?
 ;Should i stop calculations?
+Show=表示
+;Show
 ShowCoords=座標を表示
 ;Show coords
 ShowFrameNr=フレーム番号を表示
 ;Show frame nr
 ShowGuides=ガイドを表示
 ;Show guides
+ShowInFolder=フォルダで表示
+;Show in folder
+ShowMeAPreviewOfThe=mb3d で最後にレンダリングした画像のプレビューを見せて。
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=重複を除く
+;Show unique
 ShowsHiddenFormulasRightclickOnA=非表示の数式を表示します。\n数式を右クリックすると状態を変更できます。
 ;Shows hidden formulas.\nRightclick on a formula to change its status.
 ShowsMessages=メッセージを表示します
@@ -2967,6 +3145,8 @@ SwarmRenderingSharedBetweenYourComputers=Swarm: 複数のコンピュータで�
 ;Swarm: rendering shared between your computers
 SwitchBackToTheDefaultTheme=既定のテーマに戻します
 ;Switch back to the default theme
+TakeTheEntryOutOfThe=項目を履歴から取り除きます (計算した画像のパラメータとサムネイルは削除されます。その他のファイルはそのまま残ります)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
 TargetMapSlot=対象マップスロット
 ;Target Map Slot
 TargetMapSlotUseThisNumber=対象のマップスロットです。マップをアニメーションさせるには、この番号をフラクタル内でマップとして (例: ハイトマップとして) 使います。
@@ -2993,6 +3173,8 @@ TheCalculationFailedLower=計算に失敗しました
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=計算を画像の外側まで拡張し、そこにあるオブジェクトの反射も含めます。\nアニメーションでアーティファクトが減りますが、静止画にも有効です。\n値は 0 から 0.5 の範囲 (最大 0.9) にしてください。これは外側で最大限に計算される\n画像の幅と高さに対する相対サイズです。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCommandLineProgramMb3dWas=コマンドラインプログラム mb3d がこのプログラムと同じ場所に見つかりません。プログラムを再インストールしてください。
+;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=既定の番号付けはXとYに分かれた2つの数字です。\nこのオプションを選ぶと番号は1つだけになり、\n各列で増えていき次の行へ続きます。
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=既定の出力はオブジェクトが白、外側の領域が黒です。\n色を反転するにはこのオプションを選んでください。
@@ -3005,8 +3187,16 @@ TheDistanceToTheObjectsSurface=レイマーチングを停止するオブジェ�
 ;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
 TheEffectAccumulatesResetForA=効果は累積します。新しい計算にはリセットしてください。
 ;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=項目を日ごとに表示します。日を開く (クリックする) と、その日の項目と画像が表示されます
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=項目を削除できませんでした。
+;The entry could not be removed.
+TheFileIsNotThereAny=ファイルはもうありません。
+;The file is not there any more.
 TheFileM3fAlreadyExistsDo=ファイル <{}.m3f> は既に存在します。上書きしますか?
 ;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=ファイル (ここから選択してコピーできます)
+;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(第1の) 焦点です。\n値はビューアの Zstart 値に対する相対値で、\n画像の幅で正規化されています。
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 TheFolderDoesNotExistOr=フォルダが存在しません (またはアクセスできません)
@@ -3021,6 +3211,8 @@ TheImageSizeChangedCalculateThe=画像サイズが変わりました: 画像を�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap モードは「カラーリング」タブで計算に選んだオプションに依存します。
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionDidNotEnd=前回のセッションは正常に終了しませんでした (フリーズ、強制終了、またはクラッシュ): {}。最後に行ったことはログ (ログウィンドウ、タイトルバーのアイコン) にあります。
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=メインエディターはまだレンダリング中です。先に停止するか、完了するまでお待ちください。
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=マップオプションは球面マップ用に特定のベクトルから\nx,y 座標を計算します。これにより、通常はスムーズ反復回数に\n基づく 1 番目の色選択も変わります。\nこのオプションの変更結果を確認するには、画像を\n再計算する必要があります。
@@ -3045,6 +3237,8 @@ TheSelectionMustBeBiggerThanLower=選択範囲は幅と高さが 2 ピクセル�
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=スウォームの共有フォルダ
 ;The shared folder of the swarm
+TheSizeOfTheTiles=タイルのサイズ
+;The size of the tiles
 TheStereoEyeImagesHaveDifferent=ステレオの左右の画像のサイズが異なります。
 ;The stereo eye images have different sizes.
 TheTileHasNoImageBuffer=タイルに画像バッファがありません
@@ -3053,6 +3247,8 @@ Themes=テーマ
 ;Themes
 ThereIsAFileAlready=ファイル {} は既に存在します。
 ;There is a file {} already.
+ThingsToAskTheAssistant=アシスタントへの頼み方の例
+;Things to ask the assistant
 ThisComputer=このコンピュータ:
 ;This computer:
 ThisEffectIsAccumulatedOnEach=この効果はボタンを押すたびに累積します。「リセット」ボタンで\nリセットできますが、反射も取り消されます!
@@ -3063,8 +3259,12 @@ ThisIsAAbsoluteOffsetIn=回転後のバルブのx方向の絶対オフセット�
 ;This is a absolute offset in x direction of the rotated bulb.
 ThisRenderIsRunningRightNow=このレンダリングは現在実行中です。
 ;This render is running right now.
+ThisRenderKeepsNoImage=このレンダリングは画像を保持しません。
+;This render keeps no image.
 ThisRenderKeptNoParameters=このレンダリングにはパラメータが保存されていません。
 ;This render kept no parameters.
+ThisSessionLive=このセッション (ライブ)
+;This session (live)
 ThreadPriority=スレッド\n優先度
 ;Thread\nPriority
 ThreadcountInCalculations=計算に使う  \nスレッド数
@@ -3093,6 +3293,8 @@ TileXYSaved=タイル X={} Y={} を保存しました。
 ;Tile X={} Y={} saved.
 Tiles=タイル
 ;tiles
+Tiles2=タイル
+;Tiles
 TilesSaved={} タイルを保存しました。{}
 ;{} tiles saved; {}
 TilesWithTheSwarm={}  スウォームで {} タイル
@@ -3183,6 +3385,8 @@ UnfinishedRenders=未完了のレンダリング
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=未完了のレンダリング: 続行または削除します
 ;Unfinished renders: continue or delete them
+Untitled=無題
+;untitled
 UpOneLevel=1つ上へ
 ;Up one level
 UpTo=まで:
@@ -3247,6 +3451,8 @@ Video=ビデオ
 ;video
 VideoLower=動画: {}
 ;video: {}
+View=表示
+;View
 ViewToMain=視点をメインへ
 ;View to main
 Viewing=表示
@@ -3275,8 +3481,12 @@ Walking=前後移動
 ;Walking
 Warning=警告
 ;Warning
+WarningLower=警告
+;warning
 WarningMustRecalculateTheWholeImage=警告: 取り消すには画像全体を再計算する必要があります!
 ;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=警告とエラー
+;Warnings and errors
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Weight=重み
@@ -3285,8 +3495,18 @@ WeightColon=重み:
 ;Weight:
 WelcomeToMandelbulb3D=Mandelbulb 3D へようこそ!
 ;Welcome to Mandelbulb 3D!
+WhatDidIDoInMb3d=今日 mb3d で何をした? エラーはあった?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=出来事
+;What happened
+WhatYouDid=行ったこと
+;What you did
+When=日時
+;When
 WhenAngleNotBetween180And={ 角度が -180 から 180 の範囲外のとき、はみ出た分を取り除きます }
 ;{ When angle not between -180 and 180 remove left }
+WhenUTC=日時 (UTC)
+;When (UTC)
 WhenUsingAMapForThe=拡散色にマップを使う場合、\n色を自動的にクリップするには\n「鏡面+拡散を自動クリップ」をオンにする必要があります。
 ;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
 White=白
@@ -3295,6 +3515,8 @@ WhiteOutside=外側を白に
 ;White outside
 Width=幅:
 ;Width:
+Windows=ウィンドウ
+;Windows
 Wireframe=ワイヤーフレーム
 ;Wireframe
 WireframeColor=ワイヤーフレームの色
@@ -3309,6 +3531,8 @@ Wrap2=wrap2
 ;wrap2
 WritesTheEnglishTextsAsA=英語のテキストをこの名前の新しい言語ファイルとして書き出します。テキストエディタで翻訳してから「再読み込み」を押してください。
 ;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=現在の画像 (未完了の行は背景として) を .m3i ファイルに書き出します
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
 WrittenTranslateTheTextsRightOf=書き出しました: {}\n「=」の右のテキストをテキストエディタで翻訳してから「再読み込み」を押してください。
 ;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
 XAngle=X角度:
@@ -3443,114 +3667,3 @@ Label11.Caption = 反復回数の
 
 [PostProForm]
 RadioGroup2.Caption = 計算方法
-
-; Not translated yet (shown in English): remove the ";" and translate
-;AI=AI
-;ALanguageFileHasOneLabel=A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
-;Action=Action
-;AllKinds=All kinds
-;AnAIAssistantOnThisComputer=An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
-;AnimationLower=animation
-;Calculated=calculated
-;CalculatedPictures=Calculated pictures
-;Calculations=Calculations
-;ClaudeCodeInATerminal=Claude Code (in a terminal)
-;ClaudeDesktopApp=Claude (desktop app)
-;ClickAColumnHeaderToSort=Click a column header to sort.
-;ComparingFiles=comparing files
-;Connect=Connect
-;ConnectToAnAIAssistant=Connect to an AI assistant
-;ConnectToAnAIAssistantLet=Connect to an AI assistant: let it describe, change and render your pictures
-;ConnectedAskItInANew=Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
-;ConnectedStartANewClaudeCode=Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
-;CopiedToTheClipboard=Copied to the clipboard.
-;Copy=Copy
-;CopyCommand=Copy command
-;CopyTheCommandToPasteIt=Copy the command, to paste it into a terminal
-;CopyTheSelectedLineOrAll=Copy the selected line, or all the lines shown when none is selected
-;Day=Day
-;Debug=debug
-;DeleteTheParametersAndTheThumbnail=Delete the parameters and the thumbnail of "{}" from the history?
-;Disconnect=Disconnect
-;Entries={} entries
-;Error=error
-;Errors=Errors
-;Everything=Everything
-;FileLower=file
-;Files=Files
-;FollowTheNewest=Follow the newest
-;FormulaLower=formula
-;FoundOnThisComputerNotConnected=Found on this computer, not connected yet.
-;FoundOnThisComputerRunThis=Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
-;GroupByDay=Group by day
-;History=History
-;HistoryThePicturesCalculatedTheFiles=History: the pictures calculated, the files opened and saved (click to browse)
-;ImageParameters=image + parameters
-;Info=info
-;KeepTheNewestLineInSight=Keep the newest line in sight as new ones come
-;Level=Level
-;Lines={} lines
-;List=List
-;LoadTheParametersIntoTheMain=Load the parameters into the main window, or open the file
-;Log=Log
-;LogEverythingTheProgramDidIts=Log: everything the program did, its warnings and errors (click to see)
-;LongerThanUsualStillWorking=longer than usual, still working
-;MB3DImageM3iM3i=MB3D image (*.m3i)|*.m3i
-;MakeTheLightOfThatPicture=Make the light of that picture warmer and render it again.
-;MakeThreeVariationsOfItAnd=Make three variations of it and tell me which one you like best.
-;Meshes2=Meshes
-;Messages=Messages
-;Missing=missing
-;NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
-;NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
-;NotInstalledGetItFromClaude=Not installed. Get it from claude.ai/download, start it once, then come back here.
-;OfEntries={} of {} entries
-;OfEntriesWhoseFilesAreThe=Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
-;OfLines={} of {} lines
-;OnlyAPictureIsKeptAs=Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
-;OnlyOneKindOfEvent=Only one kind of event
-;OnlyTheEntriesWhoseNameFolder=Only the entries whose name, folder or kind contain this text
-;OnlyTheLinesThatContainThese=Only the lines that contain these words
-;OpenLogFolder=Open log folder
-;OpenTheFolderOfTheFile=Open the folder of the file
-;OpenTheFolderOfTheLog=Open the folder of the log files (one a day, kept 30 days)
-;Opened=opened
-;OtherFiles=Other files
-;Parameters=Parameters
-;ParametersLower=parameters
-;Program=Program
-;ProgramOutput=Program output
-;ReadingTheHistoryEntries=Reading the history... {} entries
-;Remove=Remove
-;RenderMyLastPictureAt4K=Render my last picture at 4K and tell me how long it took.
-;Rows=Rows
-;SaveM3i=Save m3i
-;SavedLower=saved
-;Search=Search
-;SessionsAndCrashes=Sessions and crashes
-;Show=Show
-;ShowInFolder=Show in folder
-;ShowMeAPreviewOfThe=Show me a preview of the last picture I rendered in mb3d.
-;ShowUnique=Show unique
-;TakeTheEntryOutOfThe=Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
-;TheEntriesUnderTheirDaysA=The entries under their days; a day's entries and pictures show when it is opened (a click on it)
-;TheEntryCouldNotBeRemoved=The entry could not be removed.
-;TheFileIsNotThereAny=The file is not there any more.
-;TheFileSelectAndCopyIt=The file (select and copy it from here)
-;TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
-;TheSizeOfTheTiles=The size of the tiles
-;ThingsToAskTheAssistant=Things to ask the assistant
-;ThisRenderKeepsNoImage=This render keeps no image.
-;ThisSessionLive=This session (live)
-;Tiles2=Tiles
-;Untitled=untitled
-;View=View
-;WarningLower=warning
-;WarningsAndErrors=Warnings and errors
-;WhatDidIDoInMb3d=What did I do in mb3d today? Were there any errors?
-;WhatHappened=What happened
-;WhatYouDid=What you did
-;When=When
-;WhenUTC=When (UTC)
-;Windows=Windows
-;WritesThePictureAsItIs=Writes the picture as it is now (the rows not done as background) as a .m3i file

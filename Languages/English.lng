@@ -2424,6 +2424,8 @@ Picture=picture
 ;the program
 Pictures=pictures
 ;the program
+PicturesAndFilesTheAssistantMakes=Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+;the program
 PleaseChooseAnOutputFile=Please choose an output file.
 ;the program
 PleaseMakeASelectionInThe=Please make a selection in the image first.
@@ -2568,6 +2570,8 @@ RandomMultiplier=Random multiplier
 ;ColorForm.Edit1.Hint, ColorForm.Edit2.Hint
 Range=Range
 ;MapSequencesFrm.Label2.Caption
+RawValuesMappedValuesClampedValues=Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+;the program
 Rays=Rays:
 ;PostProForm.Label16.Caption
 RaystepDivisor=Raystep divisor:
@@ -3168,6 +3172,8 @@ TheCalculationFailedLower=the calculation failed
 ;the program
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
+TheCommandLineProgramMb3dWas=The command line program mb3d was not found next to this program: install the program again.
+;the program
 TheDefaultNumberingIncludes2Numbers=The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 ;TilingForm.CheckBox7.Hint
 TheDefaultOutputIsWhiteFor=The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.

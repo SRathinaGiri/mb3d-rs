@@ -39,7 +39,9 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
         (false, false) => tr("@MB:NotFoundIfYouUseIt"),
     };
     ui.set_caption(F, "Label3", &c_text);
-    let cmd = exe.as_ref().map_err(|e| e.clone()).and_then(|p| crate::mcp::claude_code_command(c_conn, p)).unwrap_or_else(|e| e);
+    // (the error of a missing mb3d in the window's language)
+    let missing = tr("@MB:TheCommandLineProgramMb3dWas");
+    let cmd = exe.as_ref().ok().and_then(|p| crate::mcp::claude_code_command(c_conn, p).ok()).unwrap_or_else(|| missing.clone());
     ui.set_text(F, "Edit1", &cmd);
     // things to try, where it writes, the limits
     let tries = [
@@ -52,12 +54,12 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_text(F, "Memo1", &tries.iter().map(|t| format!("•  {t}")).collect::<Vec<_>>().join("\n"));
     let o = crate::mcp::Options::default();
     let note = trf(
-        "Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.",
+        "@MB:PicturesAndFilesTheAssistantMakes",
         &[&o.output.display()],
     );
     let note = match &exe {
         Ok(_) => note,
-        Err(e) => format!("{note}\n{e}"),
+        Err(_) => format!("{note}\n{missing}"),
     };
     ui.set_caption(F, "Label5", &note);
     let _ = app;
@@ -68,7 +70,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormShow" => refresh(app, ui),
         "Button1Click" => {
             let (_, connected) = crate::mcp::claude_desktop_status();
-            let r = crate::mcp::cli_program().and_then(|exe| crate::mcp::claude_desktop(connected, &exe));
+            let r = crate::mcp::cli_program().map_err(|_| tr("@MB:TheCommandLineProgramMb3dWas")).and_then(|exe| crate::mcp::claude_desktop(connected, &exe));
             match r {
                 Ok(t) => app.message(ui, &t),
                 Err(e) => app.message(ui, &e),
