@@ -1323,8 +1323,16 @@ own, as the command line program has no dependencies). The Model Context
 Protocol over the standard input and output (JSON-RPC 2.0, a message a
 line; versions 2025-06-18, 2025-03-26, 2024-11-05): an assistant's app on
 this computer starts `mb3d mcp`; nothing listens on the network. Tools:
-`describe_scene` (a parameter file as `key = value` lines, `Scene::to_text`),
-`change_scene` (`Scene::apply` of such lines, saved as a new .m3p),
+`describe_scene` (a parameter file as `key = value` lines, `Scene::to_text`,
+with the view as the angles of the `rotation` key when they rebuild the same
+view, the inverse of `math::vgrads_from_angles`), `change_scene`
+(`Scene::apply` of global `key = value` lines, or `Scene::parse` of the whole
+edited scene text: in `apply` a `[light]` section switches off the lights it
+does not list and a `[formula]` section adds a formula; saved as a new .m3p),
+`scene_guide` (which keys do what, from wishes like warmer light, fog,
+detail or turning the view to settings), `formula_help` (the formula names, or
+one formula's values and defaults), `preview_folder` (up to 24 parameter
+files of a folder, newest first, on one numbered sheet),
 `render` (the full calculation with its post passes, `render::calculate_with`
 + `paint`, saved as PNG, returned as an image of at most 512 pixels;
 `preview` renders 640 wide), `variations` (a MutaGen generation, 15

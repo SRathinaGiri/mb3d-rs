@@ -35,12 +35,62 @@ impl Default for Options {
 
 const INSTRUCTIONS: &str = "mb3d renders 3D fractals (Mandelbulb3D). Work with parameter files \
 (.m3p, .m3i, text parameters): describe_scene shows a file's settings as `key = value` lines; \
-change_scene writes a copy with changed keys (the same `key = value` lines, e.g. light colours, \
-zoom, iterations, formula values); render calculates a picture (preview: true for a quick small \
-one) and shows it to you, so you can judge it and adjust. recent_pictures lists what the user \
-calculated or opened lately in the desktop program, recent_log what happened there. \
-Pictures and files are written only into the output folder named in the answers. Renders above \
-the size limit need the user's agreement: ask, then pass confirm_large: true.";
+change_scene writes a copy with changes; render calculates a picture (preview: true for a quick \
+small one) and shows it to you, so you can judge it and adjust. Read scene_guide once before \
+changing settings: it says which keys do what (light colours, brightness, fog, detail, camera) \
+and how to change lights and formulas. recent_pictures lists what the user calculated or opened \
+lately in the desktop program, recent_log what happened there; preview_folder shows the files \
+of a folder; formula_help lists formulas and their settings. Pictures and files are written \
+only into the output folder named in the answers. Renders above the size limit need the user's \
+agreement: ask, then pass confirm_large: true.";
+
+/// What the keys of a scene do, for an assistant turning wishes into
+/// settings (the `scene_guide` tool).
+const GUIDE: &str = "\
+How to change a scene (mb3d scene text, as describe_scene shows it)
+
+Two ways with change_scene:
+- `changes`: `key = value` lines of GLOBAL keys only (the lines before the first [formula] or
+  [light] section). Everything else stays.
+- `scene`: the WHOLE scene text from describe_scene with your edits. Use this for anything in
+  [formula] or [light] sections: in `changes` a [light] section switches off every light not
+  listed, and a [formula] section adds a formula instead of changing one.
+
+Lights ([light] sections, up to 6; `slot` keeps MB3D's numbering)
+- color = #RRGGBB: warmer = toward orange (#FFB868), cooler = toward blue (#A8C8FF).
+- amplitude: the light's strength (brighter / darker).
+- x_angle, y_angle: the direction the light comes from, in degrees.
+- spec_power: highlight size (high = small sharp highlights); diffuse_func 0..3: shading style.
+Overall light and colour (global keys)
+- diffuse, specular, ambient: amounts of shaded light, highlights and ambient light (slider units,
+  50 is about 1.0). ambient_top / ambient_bottom = #RRGGBB: colour of the ambient light from above
+  and below. ambient_shadow: strength of ambient occlusion shading.
+- gamma: overall brightness curve. roughness: surface roughness.
+- color_start, color_end: the range of the colour palette over the surface; changing them
+  shifts the colours. color_cycling, color_mul: how fast colours repeat.
+Fog and background
+- depth_fog: fog with distance (0 = none); depth_color, depth_color2 = #RRGGBB: fog / background
+  colours; far_fog = true/false. dyn_fog: glowing fog in the object's gaps (53 = off);
+  dynfog_color, dynfog_color2.
+Camera
+- zoom: larger = closer. fov: field of view in degrees (wider = more perspective).
+- mid = x, y, z: the point looked at. rotation = x, y, z degrees (MB3D's view angles) turns the
+  view; vgrads is the exact view matrix: do not edit it by hand, use rotation instead.
+- width / height: picture size; better set through render (it keeps the look when scaling).
+Detail and quality (each makes rendering slower)
+- iterations: more = finer fractal detail. de_stop: smaller = more surface detail (0.5..2 usual).
+- raystep: smaller = fewer gaps/errors (0.2..1). bin_search: surface accuracy steps.
+- smooth_normals: 0..8, smoother shading.
+Effects (calculated after the picture)
+- shadows = off | all | 1,3 (hard shadows of lights); shadow_soft = true for soft ones.
+- ao = off | ssao24 | ssao15 | deao: ambient occlusion type.
+- dof = off | sorted (depth of field); dof_focus (fraction of the width), dof_aperture.
+- mc_reflections = true/false, mc_reflection_amount 0..1: reflections.
+Formulas ([formula] sections, up to 6, an alternating hybrid)
+- name, iterations, and the formula's own values (formula_help NAME lists them). Small changes
+  of a formula value can change the shape a lot; preview after each.
+
+Work in small steps: change, preview, look, adjust.";
 
 /// Serves requests until the input ends.
 pub fn serve(opt: Options) -> Result<(), String> {
@@ -153,14 +203,15 @@ fn tools() -> Value {
         tool(
             "change_scene",
             "Change settings and save a copy",
-            "Writes a copy of a parameter file with some settings changed (the file itself stays as it is). `changes` are `key = value` lines as describe_scene shows them, one per line. The copy goes into the output folder; its path is in the answer.",
+            "Writes a copy of a parameter file with changes (the file itself stays as it is): `changes` are `key = value` lines of global keys; or `scene` is the whole scene text from describe_scene, edited (needed for lights and formulas; see scene_guide). The copy goes into the output folder; its path and the changed lines are in the answer.",
             schema(
                 &[
                     ("file", "string", "the parameter file to start from"),
-                    ("changes", "string", "`key = value` lines"),
+                    ("changes", "string", "`key = value` lines of global keys"),
+                    ("scene", "string", "the whole edited scene text (instead of changes)"),
                     ("name", "string", "a name for the copy (without extension); optional"),
                 ],
-                &["file", "changes"],
+                &["file"],
             ),
         ),
         tool(
@@ -184,6 +235,24 @@ fn tools() -> Value {
             "Make random variations",
             "Breeds 15 random variations of a parameter file (Mandelbulb3D's MutaGen: other formulas, values, iterations) and shows them on one sheet. Each is saved as a parameter file in a folder in the output folder; render one of them to see it large.",
             schema(&[("file", "string", "the parameter file"), ("seed", "number", "a number for repeatable variations; optional")], &["file"]),
+        ),
+        tool(
+            "scene_guide",
+            "How to change scene settings",
+            "Which scene keys do what (light colours and strength, fog, background, camera, detail, effects, formulas) and how to change lights and formulas safely. Read it once before using change_scene.",
+            schema(&[], &[]),
+        ),
+        tool(
+            "formula_help",
+            "Formulas and their settings",
+            "Without a name: the names of all formulas (built-in and from the formula folder). With a name: that formula's settings and their default values.",
+            schema(&[("name", "string", "a formula name; optional")], &[]),
+        ),
+        tool(
+            "preview_folder",
+            "Preview the files of a folder",
+            "Small previews of the parameter files in a folder (up to 24, newest first) on one numbered sheet, with the list of files.",
+            schema(&[("folder", "string", "the folder (a full path)"), ("count", "number", "how many (default 12, at most 24)")], &["folder"]),
         ),
         tool(
             "recent_pictures",
@@ -251,15 +320,21 @@ fn call(opt: &Options, name: &str, a: &Value) -> Result<Vec<Value>, String> {
             for n in notes {
                 t.push_str(&format!("note: {n}\n"));
             }
+            if let Some([x, y, z]) = view_angles(&sc) {
+                t.push_str(&format!("view angles: rotation = {x:.2}, {y:.2}, {z:.2} (degrees; change them with `rotation` to turn the view)\n"));
+            }
             t.push_str(&sc.to_text());
             Ok(vec![text(&t)])
         }
         "change_scene" => {
             let file = arg_str(a, "file").ok_or("file is missing")?;
-            let changes = a.get("changes").and_then(Value::as_str).ok_or("changes are missing")?;
             let (sc, _) = load(file)?;
             let before = sc.to_text();
-            let changed = sc.apply(changes)?;
+            let changed = match (a.get("scene").and_then(Value::as_str), a.get("changes").and_then(Value::as_str)) {
+                (Some(text), _) if !text.trim().is_empty() => Scene::parse(text)?,
+                (_, Some(changes)) => sc.apply(changes)?,
+                _ => return Err("give `changes` (key = value lines) or `scene` (the whole edited scene text)".into()),
+            };
             let after = changed.to_text();
             let diff: Vec<&str> = after.lines().filter(|l| !before.lines().any(|b| b == *l)).collect();
             std::fs::create_dir_all(&opt.output).map_err(|e| format!("{}: {e}", opt.output.display()))?;
@@ -274,6 +349,9 @@ fn call(opt: &Options, name: &str, a: &Value) -> Result<Vec<Value>, String> {
             Ok(vec![text(&t)])
         }
         "render" => render(opt, a),
+        "scene_guide" => Ok(vec![text(GUIDE)]),
+        "formula_help" => formula_help(a),
+        "preview_folder" => preview_folder(opt, a),
         "variations" => variations(opt, a),
         "recent_pictures" => {
             let n = arg_num(a, "count").unwrap_or(10.0).clamp(1.0, 100.0) as usize;
@@ -305,6 +383,105 @@ fn call(opt: &Options, name: &str, a: &Value) -> Result<Vec<Value>, String> {
         }
         _ => Err(format!("unknown tool {name}")),
     }
+}
+
+/// The scene's view as the angles of the `rotation` key, when they give
+/// back the same view (checked).
+fn view_angles(sc: &Scene) -> Option<[f64; 3]> {
+    // (the inverse of math::vgrads_from_angles: its rows are
+    // [c3 c2, -s3 c2, -s2], [.., .., -c2 s1], [.., .., c2 c1])
+    let m = crate::math::normalise_matrix_to(1.0, &sc.vgrads);
+    let ay = (-m[0][2]).clamp(-1.0, 1.0).asin();
+    if ay.cos().abs() < 1e-9 {
+        return None;
+    }
+    let ax = (-m[1][2]).atan2(m[2][2]);
+    let az = (-m[0][1]).atan2(m[0][0]);
+    let a = [ax, ay, az];
+    let deg = a.map(f64::to_degrees);
+    let back = crate::math::vgrads_from_angles(a[0], a[1], a[2]);
+    let n1 = crate::math::normalise_matrix_to(1.0, &sc.vgrads);
+    let n2 = crate::math::normalise_matrix_to(1.0, &back);
+    let same = (0..3).all(|i| (0..3).all(|j| (n1[i][j] - n2[i][j]).abs() < 1e-6));
+    same.then_some(deg)
+}
+
+fn formula_help(a: &Value) -> Result<Vec<Value>, String> {
+    match arg_str(a, "name") {
+        None => {
+            let built: Vec<&str> = crate::formulas::Formula::all_names().to_vec();
+            let custom = crate::formulas::list_custom();
+            Ok(vec![text(&format!(
+                "Built-in formulas: {}\n\nFormulas from the formula folder ({}):\n{}",
+                built.join(", "),
+                custom.len(),
+                custom.join(", ")
+            ))])
+        }
+        Some(name) => {
+            let f = crate::formulas::lookup(name)?;
+            let opts = f.options();
+            let lines: Vec<String> = opts.iter().map(|(k, v)| format!("{k} = {v}")).collect();
+            Ok(vec![text(&format!(
+                "{}: {}\nIn a [formula] section: name = {}, iterations = N, and these values:\n{}",
+                f.name(),
+                if lines.is_empty() { "no values to set".to_string() } else { format!("{} values", lines.len()) },
+                f.name(),
+                lines.join("\n")
+            ))])
+        }
+    }
+}
+
+fn preview_folder(opt: &Options, a: &Value) -> Result<Vec<Value>, String> {
+    let folder = arg_str(a, "folder").ok_or("folder is missing")?;
+    let n = arg_num(a, "count").unwrap_or(12.0).clamp(1.0, 24.0) as usize;
+    let mut files: Vec<(std::time::SystemTime, PathBuf)> = std::fs::read_dir(folder)
+        .map_err(|e| format!("{folder}: {e}"))?
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.is_file() && matches!(p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).as_deref(), Some("m3p" | "m3i" | "m3s" | "txt")))
+        .map(|p| (std::fs::metadata(&p).and_then(|m| m.modified()).unwrap_or(std::time::UNIX_EPOCH), p))
+        .collect();
+    if files.is_empty() {
+        return Err(format!("no parameter files (.m3p, .m3i, .m3s, .txt) in {folder}"));
+    }
+    files.sort_by(|x, y| y.0.cmp(&x.0));
+    files.truncate(n);
+    let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
+    let (tw, th) = (200usize, 150usize);
+    let cols = 4usize.min(files.len());
+    let rows = files.len().div_ceil(cols);
+    let (sw, sh) = (cols * (tw + 6) + 6, rows * (th + 6) + 6);
+    let mut sheet = vec![32u8; sw * sh * 3];
+    let mut lines = Vec::new();
+    let t0 = Instant::now();
+    for (i, (_, p)) in files.iter().enumerate() {
+        if t0.elapsed() > Duration::from_secs(opt.max_secs) {
+            lines.push(format!("{:2}. (not previewed: the time limit was reached)", i + 1));
+            continue;
+        }
+        let shown = load(&p.to_string_lossy()).and_then(|(sc, _)| {
+            let f = (tw as f64 / sc.width.max(1) as f64).min(th as f64 / sc.height.max(1) as f64);
+            let (w, h) = (((sc.width as f64 * f).round() as usize).max(2), ((sc.height as f64 * f).round() as usize).max(2));
+            crate::mutagen::preview(&sc, w, h, false, threads)
+        });
+        let (x0, y0) = (6 + (i % cols) * (tw + 6), 6 + (i / cols) * (th + 6));
+        match shown {
+            Ok((rgb, w, h)) => {
+                let (ox, oy) = (x0 + (tw - w.min(tw)) / 2, y0 + (th - h.min(th)) / 2);
+                for y in 0..h.min(th) {
+                    let d = ((oy + y) * sw + ox) * 3;
+                    let s = y * w * 3;
+                    sheet[d..d + w.min(tw) * 3].copy_from_slice(&rgb[s..s + w.min(tw) * 3]);
+                }
+                lines.push(format!("{:2}. {}", i + 1, p.display()));
+            }
+            Err(e) => lines.push(format!("{:2}. {} (no preview: {e})", i + 1, p.display())),
+        }
+    }
+    let t = format!("{} files, numbered left to right, top to bottom:\n{}", files.len(), lines.join("\n"));
+    Ok(vec![text(&t), image(&sheet, sw, sh)])
 }
 
 fn formulas(sc: &Scene) -> String {
@@ -536,11 +713,37 @@ mod tests {
         assert!(handle(&opt, &json::parse(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#).unwrap()).is_none());
         let list = ask(&opt, r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#);
         let Some(Value::Arr(tools)) = list.get("result").and_then(|r| r.get("tools")) else { panic!() };
-        assert_eq!(tools.len(), 6);
+        assert_eq!(tools.len(), 9);
         let bad = ask(&opt, r#"{"jsonrpc":"2.0","id":3,"method":"nope"}"#);
         assert_eq!(bad.get("error").and_then(|e| e.get("code")).and_then(Value::as_f64), Some(-32601.0));
         let missing = ask(&opt, r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"render","arguments":{"file":"/nonexistent.m3p"}}}"#);
         assert_eq!(missing.get("result").and_then(|r| r.get("isError")).and_then(Value::as_bool), Some(true));
+    }
+
+    #[test]
+    fn view_angles_give_back_the_view_and_whole_scenes_change() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc = sc.apply("rotation = -40, 30, 10").unwrap();
+        let a = view_angles(&sc).expect("angles that rebuild the view");
+        let again = sc.clone().apply(&format!("rotation = {}, {}, {}", a[0], a[1], a[2])).unwrap();
+        let (n1, n2) = (crate::math::normalise_matrix_to(1.0, &sc.vgrads), crate::math::normalise_matrix_to(1.0, &again.vgrads));
+        assert!((0..3).all(|i| (0..3).all(|j| (n1[i][j] - n2[i][j]).abs() < 1e-6)));
+        // a whole edited scene keeps its two lights
+        let dir = std::env::temp_dir().join(format!("mb3d-mcp-scene-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let f = dir.join("t.m3s");
+        let mut base = Scene::preset("Integer Power").unwrap().to_text();
+        base.push_str("\n[light]\ncolor = #123456\n[light]\ncolor = #4060A0\n");
+        std::fs::write(&f, &base).unwrap();
+        let edited = base.replacen("color = #123456", "color = #FFB868", 1);
+        let opt = Options { output: dir.join("AI"), ..Options::default() };
+        let args = obj([("file", s(f.to_string_lossy())), ("scene", s(edited)), ("name", s("warm"))]);
+        call(&opt, "change_scene", &args).unwrap();
+        let (warm, _) = load(&dir.join("AI/warm.m3p").to_string_lossy()).unwrap();
+        let on: Vec<_> = warm.lighting.lights.iter().filter(|l| l.on).collect();
+        assert_eq!(on.len(), base.matches("[light]").count(), "every light stays on");
+        assert!(on.iter().any(|l| l.color == [0xFF, 0xB8, 0x68]), "the edited colour: {:?}", on.iter().map(|l| l.color).collect::<Vec<_>>());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
