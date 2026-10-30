@@ -2,7 +2,7 @@
 
 # mb3d-rs — Mandelbulb3D dlô Linuksa, Windowsa ë macOS
 <!-- languages:start -->
-[English](../../README.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · **Kaszëbsczi** · [हिन्दी](README.hi.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](../../README.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md) · [Bahasa Indonesia](README.id.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Português](README.pt.md) · **Kaszëbsczi** · [العربية](README.ar.md) · [اردو](README.ur.md) · [हिन्दी](README.hi.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 <!-- languages:end -->
 *Przełożoné z anielsczégò README (wersjô 0.2.84). Dze ne dwa sã różnią, prawdã mô [anielsczé README](../../README.md).*
 

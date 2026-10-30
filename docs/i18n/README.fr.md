@@ -2,7 +2,7 @@
 
 # mb3d-rs — Mandelbulb3D pour Linux, Windows et macOS
 <!-- languages:start -->
-[English](../../README.md) · [Deutsch](README.de.md) · **Français** · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Kaszëbsczi](README.csb.md) · [हिन्दी](README.hi.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](../../README.md) · [Deutsch](README.de.md) · [Español](README.es.md) · **Français** · [Bahasa Indonesia](README.id.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Português](README.pt.md) · [Kaszëbsczi](README.csb.md) · [العربية](README.ar.md) · [اردو](README.ur.md) · [हिन्दी](README.hi.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 <!-- languages:end -->
 *Traduit du README anglais (version 0.2.84). Là où les deux diffèrent, c'est le [README anglais](../../README.md) qui fait foi.*
 

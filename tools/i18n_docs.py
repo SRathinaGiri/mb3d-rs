@@ -20,9 +20,11 @@ import sys
 
 # file code, interface file, the name in the language (as the .lng says)
 LANGS = [
-    ("en", "English.lng"), ("de", "Deutsch.lng"), ("fr", "Francais.lng"),
-    ("it", "Italiano.lng"), ("nl", "Nederlands.lng"), ("pl", "Polski.lng"),
-    ("csb", "Kaszebsczi.lng"), ("hi", "Hindi.lng"), ("ja", "Japanese.lng"),
+    ("en", "English.lng"), ("de", "Deutsch.lng"), ("es", "Espanol.lng"),
+    ("fr", "Francais.lng"), ("id", "Indonesia.lng"), ("it", "Italiano.lng"),
+    ("nl", "Nederlands.lng"), ("pl", "Polski.lng"), ("pt", "Portugues.lng"),
+    ("csb", "Kaszebsczi.lng"), ("ar", "Arabic.lng"), ("ur", "Urdu.lng"),
+    ("hi", "Hindi.lng"), ("ja", "Japanese.lng"),
     ("ko", "Korean.lng"), ("zh-CN", "ChineseSimplified.lng"), ("zh-TW", "ChineseTaiwan.lng"),
 ]
 WIKI_PAGES = ["Home", "Installing", "Lighting-workflow", "Swarm-setup", "Troubleshooting-and-FAQ"]

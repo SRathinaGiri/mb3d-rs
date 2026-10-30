@@ -2,7 +2,7 @@
 
 # mb3d-rs — Linux, Windows और macOS के लिए Mandelbulb3D
 <!-- languages:start -->
-[English](../../README.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Kaszëbsczi](README.csb.md) · **हिन्दी** · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
+[English](../../README.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Français](README.fr.md) · [Bahasa Indonesia](README.id.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Português](README.pt.md) · [Kaszëbsczi](README.csb.md) · [العربية](README.ar.md) · [اردو](README.ur.md) · **हिन्दी** · [日本語](README.ja.md) · [한국어](README.ko.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 <!-- languages:end -->
 
 *अंग्रेज़ी README (संस्करण 0.2.84) से अनूदित। जहाँ दोनों में अंतर हो, वहाँ [अंग्रेज़ी README](../../README.md) सही है।*
