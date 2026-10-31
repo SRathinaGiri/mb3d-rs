@@ -34,6 +34,8 @@ AFasterMethodThanBinsearchBut=Metode yang lebih cepat daripada binsearch, tetapi
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=tersisa beberapa detik
 ;a few seconds left
+AFineReliefOnTheSurface=Relief halus pada permukaan, melekat pada fraktal: kasar, batu (punggung dan retakan) atau butiran
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=Folder yang dapat dilihat oleh setiap komputer swarm: share NAS, share Windows atau Samba, folder sinkronisasi
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=Permukaan tanah atau air yang melintang sumbu X, Y, atau Z fraktal, dihitung bersama fraktal: bayangan, oklusi, pantulan, dan cahaya Monte Carlo-nya (tidak ada di MB3D: disimpan setelah bagian parameter MB3D, yang diabaikan MB3D)
@@ -622,6 +624,12 @@ ColorStart=Warna awal
 ;Color start
 Coloring=Pewarnaan
 ;Coloring
+Colour0Grey1AsIt=Warna: 0 abu-abu, 1 apa adanya, 2 dua kali lebih berwarna
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=Pinggiran warna
+;Colour fringes
+ColourVariation=Variasi warna
+;Colour variation
 ColumnsOfTiles=Kolom tile
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Metode Kombinasi:\nMin: Kedua fraktal terlihat, kombinasi minimum DE\nMax: Hanya bagian yang tumpang tindih, kombinasi maksimum DE\nInv max: Balikkan DE Hybrid kedua dan kombinasikan 'Max'\nMin lin: Kombinasi minimum dengan fungsi tumpang tindih linear\nMin nlin: Seperti S1, fungsi nonlinear, tumpang tindih lebih halus\nMix: Pertama F1..FendHybrid1 lalu gunakan FstartHybrid2..F6 (dIFS) dengan vektor yang dimodifikasi.
@@ -660,6 +668,8 @@ Constants=Konstanta:
 ;Constants:
 Continue=Lanjutkan
 ;Continue
+Contrast=Kontras
+;Contrast
 ConvertManyM3PFilesToM3I=Konversi banyak file M3P ke M3I
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=Disalin ke clipboard.
@@ -1094,8 +1104,12 @@ ExponentialFunctions={ Fungsi eksponensial }
 ;{ Exponential functions }
 ExportACubeAsAStack=Ekspor kubus sebagai tumpukan file PNG
 ;Export a cube as a stack of PNG files
+Exposure=Eksposur
+;Exposure
 Exposure025=Eksposur:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=Eksposur dalam stop: +1 dua kali lebih terang, -1 setengah terangnya
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=Mengekstrak informasi ambien dari file M3I asli, harap tunggu:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ Pengujian ekstrem }
@@ -1132,6 +1146,10 @@ Files=File
 ;Files
 FilesOfType=&Jenis file:
 ;Files of &type:
+Filmic=Filmik
+;Filmic
+FilmicToneMappingBrightLightRolls=Tone mapping filmik: cahaya terang meredup lembut alih-alih menjadi putih datar
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=Filter gambar baru otomatis
 ;Filter new pictures automatically
 FilterNow=Filter sekarang
@@ -1140,10 +1158,14 @@ Fine=halus
 ;fine
 FineTuneThePositionsWithThe=atur posisi secara halus dengan tombol panah
 ;fine tune the positions with the arrow buttons
+FinishThePicture=Selesaikan gambar
+;Finish the picture
 FinishedRenderingSlices=Render irisan selesai.
 ;Finished rendering slices.
 FinishedTracingObject=Penelusuran objek selesai.
 ;Finished tracing object.
+Finishing=Penyelesaian
+;Finishing
 First4RaysNoisy=4 sinar pertama (berderau)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=Perhitungan pertama kombinasi formula ini: shader kartu grafis sedang dikompilasi (10-30 d, hanya sekali - driver menyimpannya). Sementara itu CPU menghitung, kartu bergabung setelah siap.
@@ -1382,12 +1404,18 @@ Glow=Pendar:
 ;Glow:
 Glow0AndUpTheSurface=Pendar (0 ke atas): permukaan bersinar dengan warnanya sendiri, tanpa cahaya
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=Pendar
+;Glow
+GlowAroundBrightLightStrengthReach=Pendar di sekitar cahaya terang: kekuatan, jangkauan (bagian dari diagonal gambar), dan dari kecerahan berapa ia berpendar (0 sampai 1 dari putih)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=Rekatkan slider
 ;Glue sliders
 GoToNext=Ke berikutnya
 ;Go to next
 GoneLastSeenSAgo=hilang (terakhir terlihat {} d lalu)
 ;gone (last seen {} s ago)
+Grain=Butiran
+;Grain
 GraphicsCard=Kartu grafis
 ;Graphics card
 GroundPlane=Bidang tanah
@@ -1442,6 +1470,8 @@ Hotkeys=Tombol pintas
 ;Hotkeys
 HowMuchThePlaneReflects0=Seberapa kuat bidang memantul (0 sampai 1): kilaunya, dan cerminnya bila pantulan dihitung (Pasca-proses)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=Seberapa besar warna permukaan berubah mengikuti relief: 0 tidak, 1 kuat
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=Seberapa kuat derau yang dihapus (1 sampai 30, seperti "Denoise DCT" GIMP).\nNilai lebih tinggi menghapus lebih banyak derau, dan lebih banyak detail halus.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Seberapa tebal awannya (1: lapisan penuh meloloskan sekitar 2 % cahaya) dan seberapa banyak langit yang tertutup (0 sampai 1)
@@ -1712,6 +1742,8 @@ KeyframeListM3k=Daftar keyframe (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nmulai:    henti:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=Keyframe untuk satu putaran penuh mengelilingi tengah tampilan, dari tampilan jendela utama: 8 keyframe dalam putaran mulus (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=Tombol yang membawa jendela ke depan dari jendela mana pun
 ;Keys that bring a window to the front from any window
 Kind=Jenis
@@ -2064,6 +2096,10 @@ MonteCarloRendering2=Render Monte Carlo\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=Opsi lainnya: kirim param ke utama, sesuaikan dan impor.
 ;More options: send paras to main, adjust and import.
+MotionBlur=Motion blur:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=Motion blur: jumlah gambar yang dirata-ratakan untuk setiap frame, sehingga yang bergerak menjadi kabur (1 = mati); render memakan waktu sebanyak itu kali lipat
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=Roda mouse
 ;Mousewheel
 Move=Geser
@@ -2100,6 +2136,10 @@ MutationType=Jenis mutasi
 ;Mutation type
 N0No255FullTransparency=0: tidak, 255: Transparansi penuh
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 sampai 1: sudut lebih gelap
+;0 to 1: darker corners
+N0To1RedAndBlue=0 sampai 1: pinggiran merah dan biru ke arah sudut, seperti yang ditunjukkan lensa
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: kualitas JPEG\n> 100: ukuran file maksimal dalam kilobyte
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2110,6 +2150,10 @@ N16BitPGM=PGM 16 Bit
 ;16 Bit PGM
 N16BitZBufferGenerator=Generator ZBuffer 16Bit
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 lebih dingin (lebih biru) sampai 1 lebih hangat (lebih jingga)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 lebih datar sampai 1 kontras lebih kuat
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  Ukuran penuh, tanpa anti aliasing\n2:  anti aliasing 2x2\n3:  anti aliasing 3x3
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  tidak ada\n2:  2x2\n3:  3x3
@@ -2294,6 +2338,8 @@ OfLines={} dari {} baris
 ;{} of {} lines
 OfUnitsDone={} dari {} unit selesai
 ;{} of {} units done
+Off=Mati
+;Off
 OffLeftImageIsOnThe=Mati: gambar kiri di sebelah kiri untuk tampilan paralel. Aktif: gambar kanan di sebelah kiri untuk tampilan cross-eyed.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=Offset dan skala
@@ -2658,10 +2704,16 @@ ReadingTheHistoryEntries=Membaca riwayat... {} entri
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=Membaca ulang file bahasa, setelah Anda mengedit salah satunya
 ;Reads the language files again, after you edited one
+Rec=Rek
+;Rec
 RecalculateASelection=\sHitung Ulang Pilihan
 ;\sRecalculate a Selection
 RecalculatingTheSelection=menghitung ulang pilihan
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight={} keyframe penerbangan direkam
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=Merekam penerbangan: selama tombol ditekan, setiap tampilan baru dari navigator (paling banyak dua per detik) menjadi keyframe berikutnya dari animasi
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=Persegi
 ;Rect
 RectLower=persegi
@@ -2704,6 +2756,8 @@ RelToObject=Rel. thd objek:
 ;Rel. to object:
 RelativeToObject=Relatif terhadap objek
 ;Relative to object
+Relief=Relief
+;Relief
 Reload=Muat ulang
 ;Reload
 RemainingFaces10NoReduction=Face tersisa (1.0 = tanpa reduksi, 0.0 = reduksi maks = tidak ada face tersisa )
@@ -2812,6 +2866,8 @@ RotationY=Rotasi Y:
 ;Rotation Y:
 RotationZ=Rotasi Z:
 ;Rotation Z:
+Rough=Kasar
+;Rough
 RoughImage=gambar kasar
 ;rough image
 Roughness=Kekasaran
@@ -2838,6 +2894,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=Mulai render utama gambar.
 ;Sart the main rendering of the image.
+Saturation=Saturasi
+;Saturation
 Saturation0=Saturasi:   0\s\s
 ;Saturation:   0\s\s
 Save=Simpan
@@ -3058,6 +3116,8 @@ ShowsMessages=Menampilkan pesan
 ;Shows messages
 ShrinkThePanel=Ciutkan panel
 ;Shrink the panel
+Shutter=Rana:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos 2x lebih cepat daripada memanggil Sin dan Cos secara terpisah untuk sudut yang sama }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3156,6 +3216,8 @@ StickThisWindowToTheLeft=Tempelkan jendela ini ke sisi kiri
 ;Stick this window to the left side
 StickThisWindowToTheRight=Tempelkan jendela ini ke sisi kanan
 ;Stick this window to the right side
+Stone=Batu
+;Stone
 Stop=Hentikan
 ;Stop
 StopBatchRendering=Hentikan render batch
@@ -3184,6 +3246,8 @@ Strength2=Kekuatan
 ;Strength
 StrengthOfDynamicFog=Kekuatan kabut dinamis.
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=Kekuatan, ukuran (satuan fraktal) dan kehalusan (0.2 halus sampai 0.8 kasar) relief
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=Meregangkan bagian atas dan bawah, mungkin berguna untuk gambar biasa dalam opsi bola penuh.
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=Pengali jumlah\nsubframe:
@@ -3310,6 +3374,8 @@ TheMapOptionsCalculatesXY=Opsi peta menghitung koordinat x,y dari vektor\nterten
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=Jendela Monte Carlo sedang merender: hentikan terlebih dahulu.
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=Waktu rana motion blur: bagian dari waktu sampai frame berikutnya (0 sampai 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=Nama bahasa baru, dalam bahasa itu sendiri (Deutsch, Polski, ...)
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=Tugas terbaru sejauh ini: bagian yang sudah dirender, bagian yang sedang dikerjakan (dengan kemajuannya), bagian yang belum
@@ -3318,6 +3384,8 @@ TheParametersDoNotMatchThe=Parameter tidak lagi cocok dengan perhitungan yang be
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=Gambar tidak cocok dengan perhitungannya: hitung lagi.
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=Penyelesaian gambar setelah semua tahap lain: eksposur, pendar di sekitar cahaya terang, tone mapping filmik, gradasi warna, vinyet dan pinggiran warna
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=Warna bidang (klik untuk mengubah)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=Rotasi dilakukan di sekitar Titik tengah (Xmid, Ymid, Zmid)
@@ -3456,6 +3524,8 @@ TurnOnOffTheJuliaMode=Aktifkan/nonaktifkan mode julia
 ;Turn on/off the julia mode
 Turned=Diputar:
 ;Turned:
+Turntable=Putaran
+;Turntable
 Type=Jenis:
 ;Type:
 Type2=Jenis
@@ -3558,6 +3628,8 @@ ViewToMain=Tampilan ke utama
 ;View to main
 Viewing=Tampilan
 ;Viewing
+Vignette=Vinyet
+;Vignette
 Visible=Terlihat:
 ;Visible:
 VolumeLightNr=No. cahaya volume:
@@ -3578,6 +3650,8 @@ WaitForTheRunningCalculationOr=Tunggu perhitungan yang sedang berjalan, atau hen
 ;Wait for the running calculation, or stop it first.
 Walking=Berjalan
 ;Walking
+Warmth=Kehangatan
+;Warmth
 Warning=Peringatan
 ;Warning
 WarningLower=peringatan

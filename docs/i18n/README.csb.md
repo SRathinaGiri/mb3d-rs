@@ -750,6 +750,61 @@ sprawdzëc sóm:
   krzëwô pòkazywô to, nim cos òstanie wërenderowóné. Trzecô interpòlacjô, *Catmull-Rom* (nie je w MB3D), je gładkô ë przechôdô przez kòżdé kluczné ùjęcé (`mb3d animate --catmull-rom`).
 
   </details>
+* **Wëkùńczenié òbrôzka**: ekspòzycjô, blask wkół jasnégò swiatła, filmòwé
+  mapòwanié tónów, kòntrast, nasycenié, cepło, winieta ë farwné òbrzeżi
+  òbiektiwù, jakno slédné przéńdzenié pò całim òbrôzkù.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Swiątnica ò zarankù, jak wërechòwónô, ë wëkùńczonô: blask wkół jasnëch kòlumnów, miękczészé pòłësczi, ceplészé swiatło, cemniészé rogi"></a>
+
+  <details><summary>Czëtôj wicy</summary>
+
+  Òkno *Pòstprodukcja*, dzél *Wëkùńczenié*: zaznaczë *Wëkùńczë òbrôzk*,
+  ùstawi ekspòzycjã w stopniach EV, *Filmòwé* (jasné swiatło miękkò gasnie, a
+  nié stôwô sã płaską bielą), blask (mòc, zasãg jakno dzél
+  przekątny òbrôzka ë òd jaczi jasnotë swiécy), kòntrast, nasycenié, cepło,
+  winietã ë farwné òbrzeżi, pòtemù *Malëjë terô*. Malowanié jidze tedë na
+  lëczbach zmiennoprzecynkòwëch, tak że swiatło nad białim je trzëmóné do
+  mapòwaniô tónów. Dzejô na kòżdi òbrôzk, klatkã animacji ë render Monte
+  Carlo (pò filtrze szëmù); wëłączoné dôwô òbrôzczi akùratno taczé jak
+  przódë. Klucze sceny `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. We
+  wiôldżim renderze z òsóbnëch òbrôzków kafelków kòżdi kafel swiécy sóm.
+
+  </details>
+* **Drobnô rzezba na pòwierzchni**: chropawô, kamień (grzbietë ë pãkniãcô)
+  abò zôrno, drobniészô jak detal rechòwaniô, ze zmianą farwë.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Gładczi dzél Mandelbulba ë ten sóm z kamianą rzezbą ë zmianą farwë"></a>
+
+  <details><summary>Czëtôj wicy</summary>
+
+  Òkno *Pòstprodukcja*, dzél *Materiał*: *Rzezba* z ji mòcą, wiôlgòscą
+  ksztôłtów (w jednotkach fraktala, tak że òstôwô na pòwierzchni, czej kamera
+  sã rësza) ë drobnotą, a téż *Zmiana farwë*. Nachilô pòwierzchniã tam, dze
+  je rechòwóné swiatło, tak że cenie, pòłësczi, òdbicô ë Monte Carlo jã
+  widzą; sóm ksztôłt sã nie zmieniô (òbrës òstôwô gładczi). Nie na zemi.
+  Klucze sceny `detail = stone, 1.5, 0.12, 0.5` (zort, mòc, wiôlgòsc,
+  drobnota) ë `detail_color`.
+
+  </details>
+* **Òbrotnice, nagróné lotë ë rozmëcé rëchù** w animacjach.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Klatka chùtczi òbrotnicë, bez rozmëcô rëchù ë z nim"></a>
+
+  <details><summary>Czëtôj wicy</summary>
+
+  *Twòrzenié animacje* > *Òbrotnica*: òsmë klucznëch ùjãców jednégò całégò
+  òbrotu wkół westrzódka widoku przédnégò òkna, gładkô pãtla
+  (`mb3d animate scene.m3p --orbit 8 --frames 25`). *Nawigatór* > *Nagr*:
+  pòczi knąpa je wcësniãtô, kòżdi nowi widok lotu (nôwicy dwa na sekùndã)
+  stôwô sã nôslédnym klucznym ùjęcym; z Catmull-Rom animacjô przechôdô przez
+  wszëtczé. *Rozmëcé rëchù* w Twòrzenim animacje: kòżdô klatka je strzédną
+  z tëli òbrôzków w czasu *Migawczi* (dzélu czasu do nôslédny klatczi), tak
+  że to, co sã rësza, sã rozmazywô; trwô to tëli razy dłëżi
+  (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

@@ -35,6 +35,8 @@ AFasterMethodThanBinsearchBut=二分探索より速い方法ですが、DEが悪
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=残り数秒
 ;a few seconds left
+AFineReliefOnTheSurface=表面の細かな起伏 (フラクタルに固定): 粗い、石 (稜線と割れ目) または粒
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=スウォームのすべてのコンピュータから見えるフォルダ: NAS共有、WindowsまたはSamba共有、同期フォルダなど
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=フラクタルの X、Y、Z 軸に垂直な地面または水面。フラクタルと一緒に計算されます: 影、オクルージョン、反射、モンテカルロの光 (MB3D にはありません: パラメーターの MB3D の部分の後に保存され、MB3D は無視します)
@@ -623,6 +625,12 @@ ColorStart=色の開始
 ;Color start
 Coloring=カラーリング
 ;Coloring
+Colour0Grey1AsIt=色: 0 灰色、1 そのまま、2 2倍鮮やか
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=色収差
+;Colour fringes
+ColourVariation=色の変化
+;Colour variation
 ColumnsOfTiles=タイルの列数
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=結合方法:\nMin: 両方のフラクタルが見え、DEを最小値で結合\nMax: 重なる部分のみ、DEを最大値で結合\nInv max: 2番目のハイブリッドのDEを反転して 'Max' で結合\nMin lin: 線形の重なり関数で最小値結合\nMin nlin: S1 と同様だが非線形関数で、より滑らかな重なり\nMix: まず F1..FendHybrid1、次に変更したベクトルで FstartHybrid2..F6 (dIFS) を使用。
@@ -661,6 +669,8 @@ Constants=定数:
 ;Constants:
 Continue=続ける
 ;Continue
+Contrast=コントラスト
+;Contrast
 ConvertManyM3PFilesToM3I=多数の M3P ファイルを M3I に変換します
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=クリップボードにコピーしました。
@@ -1095,8 +1105,12 @@ ExponentialFunctions={ 指数関数 }
 ;{ Exponential functions }
 ExportACubeAsAStack=立方体を PNG ファイルのスタックとしてエクスポートします
 ;Export a cube as a stack of PNG files
+Exposure=露出
+;Exposure
 Exposure025=露出:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=露出 (段): +1 で2倍の明るさ、-1 で半分の明るさ
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=元の M3I ファイルから環境光情報を抽出しています。お待ちください:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ 極値の判定 }
@@ -1133,6 +1147,10 @@ Files=ファイル
 ;Files
 FilesOfType=ファイルの種類(&T):
 ;Files of &type:
+Filmic=フィルミック
+;Filmic
+FilmicToneMappingBrightLightRolls=フィルミックトーンマッピング: 明るい光が真っ白に飛ばず、柔らかく収まります
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=新しい画像を自動的にフィルタ
 ;Filter new pictures automatically
 FilterNow=今フィルタ
@@ -1141,10 +1159,14 @@ Fine=微調整
 ;fine
 FineTuneThePositionsWithThe=矢印ボタンで位置を微調整します。
 ;fine tune the positions with the arrow buttons
+FinishThePicture=画像の仕上げ
+;Finish the picture
 FinishedRenderingSlices=スライスのレンダリングが完了しました。
 ;Finished rendering slices.
 FinishedTracingObject=オブジェクトのトレースが完了しました。
 ;Finished tracing object.
+Finishing=仕上げ
+;Finishing
 First4RaysNoisy=最初の 4 レイ (ノイズあり)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=この数式の組み合わせの初回計算です。グラフィックカードのシェーダーをコンパイルしています (10-30 秒、初回のみ - ドライバーが保持します)。その間は CPU が計算し、準備ができるとカードも加わります。
@@ -1383,12 +1405,18 @@ Glow=発光:
 ;Glow:
 Glow0AndUpTheSurface=発光 (0 以上): 表面が光なしで自分の色に光ります
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=グロー
+;Glow
+GlowAroundBrightLightStrengthReach=明るい光の周りのグロー: 強さ、広がり (画像の対角線に対する割合)、光り始める明るさ (白に対して 0 から 1)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=スライダーを連結
 ;Glue sliders
 GoToNext=次へ移動
 ;Go to next
 GoneLastSeenSAgo=離脱 (最終確認 {} 秒前)
 ;gone (last seen {} s ago)
+Grain=粒
+;Grain
 GraphicsCard=グラフィックカード
 ;Graphics card
 GroundPlane=地面
@@ -1443,6 +1471,8 @@ Hotkeys=ホットキー
 ;Hotkeys
 HowMuchThePlaneReflects0=平面の反射の強さ (0 から 1): ハイライトと、反射を計算するときの鏡面 (ポストプロセス)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=起伏による表面の色の変化の度合い: 0 なし、1 強い
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=除去するノイズの強さです (1 ~ 30、GIMP の「Denoise DCT」と同じ)。\n高いほど多くのノイズを除去しますが、細部も失われます。
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=雲の濃さ (1: 層全体で光の約 2 % を通す) と空を覆う割合 (0 から 1)
@@ -1713,6 +1743,8 @@ KeyframeListM3k=キーフレームリスト (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sキーフレーム\n開始:    終了:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=メインウィンドウの視点から、画面中央の周りを一周するキーフレーム: 滑らかなループの 8 キーフレーム (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=どのウィンドウからでもウィンドウを前面に出すキー
 ;Keys that bring a window to the front from any window
 Kind=種類
@@ -2065,6 +2097,10 @@ MonteCarloRendering2=モンテカルロレンダリング\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=その他の設定: パラメータをメインへ送り、調整して取り込みます。
 ;More options: send paras to main, adjust and import.
+MotionBlur=ブラー:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=モーションブラー: 各フレームで平均する画像の数。動くものがぶれます (1 = オフ)。レンダリングにはその倍数の時間がかかります
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=マウスホイール
 ;Mousewheel
 Move=移動
@@ -2101,6 +2137,10 @@ MutationType=変異の種類
 ;Mutation type
 N0No255FullTransparency=0: なし、255: 完全に透明
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 から 1: 四隅を暗く
+;0 to 1: darker corners
+N0To1RedAndBlue=0 から 1: レンズのように四隅に向かって赤と青の色ずれ
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: JPEG 品質\n> 100: 最大ファイルサイズ (キロバイト)
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2111,6 +2151,10 @@ N16BitPGM=16 ビット PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=16ビットZバッファ生成
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 寒色 (青寄り) から 1 暖色 (オレンジ寄り)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 平坦から 1 強いコントラスト
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  フルサイズ、アンチエイリアスなし\n2:  2x2 アンチエイリアス\n3:  3x3 アンチエイリアス
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  なし\n2:  2x2\n3:  3x3
@@ -2295,6 +2339,8 @@ OfLines={} / {} 行
 ;{} of {} lines
 OfUnitsDone={} / {} ユニット完了
 ;{} of {} units done
+Off=オフ
+;Off
 OffLeftImageIsOnThe=オフ: 平行法用に左の画像が左側。オン: 交差法用に右の画像が左側。
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=オフセットとスケール
@@ -2659,10 +2705,16 @@ ReadingTheHistoryEntries=履歴を読み込んでいます... {} 件
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=言語ファイルを編集した後に、もう一度読み込みます。
 ;Reads the language files again, after you edited one
+Rec=録画
+;Rec
 RecalculateASelection=\s選択範囲の再計算
 ;\sRecalculate a Selection
 RecalculatingTheSelection=選択範囲を再計算中
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight=飛行のキーフレームを {} 個記録しました
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=飛行を記録: ボタンが押されている間、ナビゲーターの新しい視点 (最大で毎秒 2 回) がアニメーションの次のキーフレームになります
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=矩形
 ;Rect
 RectLower=直線
@@ -2705,6 +2757,8 @@ RelToObject=オブジェクト基準:
 ;Rel. to object:
 RelativeToObject=オブジェクト基準
 ;Relative to object
+Relief=起伏
+;Relief
 Reload=再読み込み
 ;Reload
 RemainingFaces10NoReduction=残す面の割合です (1.0 = 削減なし、0.0 = 最大削減 = 面が残らない)。
@@ -2813,6 +2867,8 @@ RotationY=回転 Y:
 ;Rotation Y:
 RotationZ=回転 Z:
 ;Rotation Z:
+Rough=粗い
+;Rough
 RoughImage=粗い画像
 ;rough image
 Roughness=粗さ
@@ -2839,6 +2895,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=画像のメインレンダリングを開始します。
 ;Sart the main rendering of the image.
+Saturation=彩度
+;Saturation
 Saturation0=彩度:   0\s\s
 ;Saturation:   0\s\s
 Save=保存
@@ -3059,6 +3117,8 @@ ShowsMessages=メッセージを表示します
 ;Shows messages
 ShrinkThePanel=パネルを縮小します。
 ;Shrink the panel
+Shutter=シャッター:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos は、同じ角度に対して Sin と Cos を別々に呼ぶより2倍速いです }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3157,6 +3217,8 @@ StickThisWindowToTheLeft=このウィンドウを左側に固定
 ;Stick this window to the left side
 StickThisWindowToTheRight=このウィンドウを右側に固定
 ;Stick this window to the right side
+Stone=石
+;Stone
 Stop=停止
 ;Stop
 StopBatchRendering=バッチレンダリングを停止
@@ -3185,6 +3247,8 @@ Strength2=強さ
 ;Strength
 StrengthOfDynamicFog=動的フォグの強さです。
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=起伏の強さ、大きさ (フラクタル単位)、細かさ (0.2 滑らか から 0.8 ざらざら)
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=上部と下部を引き伸ばします。全天球オプションで通常の画像を使う場合に便利なことがあります。
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=サブフレーム数の\n倍率:
@@ -3311,6 +3375,8 @@ TheMapOptionsCalculatesXY=マップオプションは球面マップ用に特定
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=モンテカルロウィンドウがレンダリング中です。先に停止してください。
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=モーションブラーのシャッター時間: 次のフレームまでの時間に対する割合 (0 から 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=新しい言語の名前を、その言語自身で書きます (Deutsch, Polski, ...)。
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=現時点で最新のジョブ: レンダリング済みの部分、進行中の部分(進行状況付き)、未着手の部分
@@ -3319,6 +3385,8 @@ TheParametersDoNotMatchThe=パラメータが未完了の計算と一致しな�
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=画像が計算内容と一致しません。もう一度計算してください。
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=他のすべてのパスの後に行う画像の仕上げ: 露出、明るい光の周りのグロー、フィルミックトーンマッピング、カラーグレーディング、周辺減光、色収差
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=平面の色 (クリックで変更)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=回転は中心点 (X 中心、Y 中心、Z 中心) の周りで行われます
@@ -3457,6 +3525,8 @@ TurnOnOffTheJuliaMode=Juliaモードをオン/オフします。
 ;Turn on/off the julia mode
 Turned=回転:
 ;Turned:
+Turntable=ターンテーブル
+;Turntable
 Type=型:
 ;Type:
 Type2=種類
@@ -3559,6 +3629,8 @@ ViewToMain=視点をメインへ
 ;View to main
 Viewing=表示
 ;Viewing
+Vignette=周辺減光
+;Vignette
 Visible=表示:
 ;Visible:
 VolumeLightNr=ボリュームライト番号:
@@ -3579,6 +3651,8 @@ WaitForTheRunningCalculationOr=実行中の計算が終わるのを待つか、�
 ;Wait for the running calculation, or stop it first.
 Walking=前後移動
 ;Walking
+Warmth=色温度
+;Warmth
 Warning=警告
 ;Warning
 WarningLower=警告

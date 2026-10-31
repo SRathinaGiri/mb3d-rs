@@ -34,6 +34,8 @@ AFasterMethodThanBinsearchBut=Eine schnellere Methode als die Binärsuche, kann 
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=noch wenige Sekunden
 ;a few seconds left
+AFineReliefOnTheSurface=Ein feines Relief auf der Oberfläche, fest mit dem Fraktal verbunden: rau, Stein (Grate und Risse) oder Körnung
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=Ein Ordner, den jeder Computer des Schwarms sieht: eine NAS-Freigabe, eine Windows- oder Samba-Freigabe, ein Sync-Ordner
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=Eine Boden- oder Wasserfläche quer zur X-, Y- oder Z-Achse des Fraktals, zusammen mit dem Fraktal berechnet: ihre Schatten, Verdeckung, Spiegelungen und Monte-Carlo-Licht (nicht in MB3D: hinter MB3Ds Teil der Parameter gespeichert, den MB3D nicht beachtet)
@@ -622,6 +624,12 @@ ColorStart=Farbe Anfang
 ;Color start
 Coloring=Färbung
 ;Coloring
+Colour0Grey1AsIt=Farbe: 0 grau, 1 unverändert, 2 doppelt so farbig
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=Farbsäume
+;Colour fringes
+ColourVariation=Farbvariation
+;Colour variation
 ColumnsOfTiles=Spalten von Kacheln
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Kombinationsmethoden:\nMin: Beide Fraktale sichtbar, Minimum der DEs\nMax: Nur überlappende Teile, Maximum der DEs\nInv max: DE des zweiten Hybrids invertieren und mit 'Max' kombinieren\nMin lin: Minimum-Kombination mit linearer Überlappungsfunktion\nMin nlin: Wie S1, nichtlineare Funktion, weichere Überlappung\nMix: Erst F1..FendHybrid1, dann FstartHybrid2..F6 (dIFS) mit verändertem Vektor.
@@ -660,6 +668,8 @@ Constants=Konstanten:
 ;Constants:
 Continue=Fortsetzen
 ;Continue
+Contrast=Kontrast
+;Contrast
 ConvertManyM3PFilesToM3I=Viele M3P-Dateien in M3I umwandeln
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=In die Zwischenablage kopiert.
@@ -1094,8 +1104,12 @@ ExponentialFunctions={ Exponentialfunktionen }
 ;{ Exponential functions }
 ExportACubeAsAStack=Exportiert einen Würfel als Stapel von PNG-Dateien
 ;Export a cube as a stack of PNG files
+Exposure=Belichtung
+;Exposure
 Exposure025=Belichtung:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=Belichtung in Blendenstufen: +1 doppelt so hell, -1 halb so hell
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=Umgebungsinformationen werden aus der ursprünglichen M3I-Datei gelesen, bitte warten:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ Extremwertprüfung }
@@ -1132,6 +1146,10 @@ Files=Dateien
 ;Files
 FilesOfType=Datei&typ:
 ;Files of &type:
+Filmic=Filmisch
+;Filmic
+FilmicToneMappingBrightLightRolls=Filmisches Tone-Mapping: helles Licht läuft weich aus, statt flach weiß zu werden
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=Neue Bilder automatisch filtern
 ;Filter new pictures automatically
 FilterNow=Jetzt filtern
@@ -1140,10 +1158,14 @@ Fine=fein
 ;fine
 FineTuneThePositionsWithThe=Positionen mit den Pfeilschaltflächen fein abstimmen
 ;fine tune the positions with the arrow buttons
+FinishThePicture=Bild veredeln
+;Finish the picture
 FinishedRenderingSlices=Rendern der Schichten abgeschlossen.
 ;Finished rendering slices.
 FinishedTracingObject=Tracing des Objekts abgeschlossen.
 ;Finished tracing object.
+Finishing=Veredelung
+;Finishing
 First4RaysNoisy=erste 4 Strahlen (verrauscht)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=Erste Berechnung dieser Formelkombination: Die Shader der Grafikkarte werden kompiliert (10-30 s, nur einmal – der Treiber behält sie). Die CPU rechnet in der Zwischenzeit, die Karte steigt ein, sobald sie fertig sind.
@@ -1382,12 +1404,18 @@ Glow=Leuchten:
 ;Glow:
 Glow0AndUpTheSurface=Leuchten (0 und mehr): die Oberfläche leuchtet in ihrer eigenen Farbe, ohne Licht
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=Glühen
+;Glow
+GlowAroundBrightLightStrengthReach=Glühen um helles Licht: Stärke, Reichweite (ein Teil der Bilddiagonale) und ab welcher Helligkeit es glüht (0 bis 1 von Weiß)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=Regler verbinden
 ;Glue sliders
 GoToNext=Weiter zum nächsten
 ;Go to next
 GoneLastSeenSAgo=weg (zuletzt vor {} s gesehen)
 ;gone (last seen {} s ago)
+Grain=Körnung
+;Grain
 GraphicsCard=Grafikkarte
 ;Graphics card
 GroundPlane=Bodenebene
@@ -1442,6 +1470,8 @@ Hotkeys=Hotkeys
 ;Hotkeys
 HowMuchThePlaneReflects0=Wie stark die Ebene spiegelt (0 bis 1): ihre Glanzlichter und ihr Spiegelbild, wenn die Spiegelungen berechnet werden (Nachbearbeitung)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=Wie stark die Farbe der Oberfläche mit dem Relief variiert: 0 gar nicht, 1 stark
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=Wie stark das Rauschen ist, das entfernt wird (1 bis 30, wie „Denoise DCT“ in GIMP).\nHöhere Werte entfernen mehr Rauschen und mehr feine Details.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Wie dicht die Wolken sind (1: eine volle Schicht lässt etwa 2 % des Lichts durch) und wie viel des Himmels sie bedecken (0 bis 1)
@@ -1712,6 +1742,8 @@ KeyframeListM3k=Keyframe-Liste (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nStart:    Stopp:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=Keyframes für eine ganze Drehung um die Mitte der Ansicht, ausgehend von der Ansicht des Hauptfensters: 8 Keyframes in einer weichen Schleife (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=Tasten, die ein Fenster aus jedem Fenster nach vorne holen
 ;Keys that bring a window to the front from any window
 Kind=Art
@@ -2064,6 +2096,10 @@ MonteCarloRendering2=Monte-Carlo-Rendering\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=Mehr Optionen: Parameter ans Hauptfenster senden, anpassen und importieren.
 ;More options: send paras to main, adjust and import.
+MotionBlur=Motion Blur:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=Bewegungsunschärfe: die je Frame gemittelten Bilder, sodass Bewegtes verwischt (1 = aus); das Rendern dauert entsprechend viel länger
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=Mausrad
 ;Mousewheel
 Move=Verschieben
@@ -2100,6 +2136,10 @@ MutationType=Mutationstyp
 ;Mutation type
 N0No255FullTransparency=0: keine, 255: volle Transparenz
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 bis 1: dunklere Ecken
+;0 to 1: darker corners
+N0To1RedAndBlue=0 bis 1: rote und blaue Säume zu den Ecken hin, wie ein Objektiv sie zeigt
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: JPEG-Qualität\n> 100: maximale Dateigröße in Kilobyte
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2110,6 +2150,10 @@ N16BitPGM=16-Bit-PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=16-Bit-Z-Buffer-Generator
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 kühler (blauer) bis 1 wärmer (oranger)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 flacher bis 1 stärkerer Kontrast
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  Volle Größe, kein Anti-Aliasing\n2:  2x2 Anti-Aliasing\n3:  3x3 Anti-Aliasing
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  keins\n2:  2x2\n3:  3x3
@@ -2294,6 +2338,8 @@ OfLines={} von {} Zeilen
 ;{} of {} lines
 OfUnitsDone={} von {} Einheiten fertig
 ;{} of {} units done
+Off=Aus
+;Off
 OffLeftImageIsOnThe=Aus: linkes Bild links für Parallelblick. An: rechtes Bild links für Kreuzblick.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=Versatz und Skalierung
@@ -2658,10 +2704,16 @@ ReadingTheHistoryEntries=Verlauf wird gelesen... {} Einträge
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=Liest die Sprachdateien erneut, nachdem Sie eine bearbeitet haben
 ;Reads the language files again, after you edited one
+Rec=Aufn
+;Rec
 RecalculateASelection=\sAuswahl neu berechnen
 ;\sRecalculate a Selection
 RecalculatingTheSelection=Auswahl wird neu berechnet
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight={} Keyframes des Flugs aufgezeichnet
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=Zeichnet einen Flug auf: Solange die Schaltfläche gedrückt ist, wird jede neue Ansicht des Navigators (höchstens zwei pro Sekunde) zum nächsten Keyframe der Animation
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=Rechteck
 ;Rect
 RectLower=gerad.
@@ -2704,6 +2756,8 @@ RelToObject=Rel. zum Objekt:
 ;Rel. to object:
 RelativeToObject=Relativ zum Objekt
 ;Relative to object
+Relief=Relief
+;Relief
 Reload=Neu laden
 ;Reload
 RemainingFaces10NoReduction=Verbleibende Flächen (1.0 = keine Reduktion, 0.0 = maximale Reduktion = keine verbleibenden Flächen)
@@ -2812,6 +2866,8 @@ RotationY=Drehung Y:
 ;Rotation Y:
 RotationZ=Drehung Z:
 ;Rotation Z:
+Rough=Rau
+;Rough
 RoughImage=grobes Bild
 ;rough image
 Roughness=Rauheit
@@ -2838,6 +2894,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=Startet das Hauptrendering des Bildes.
 ;Sart the main rendering of the image.
+Saturation=Sättigung
+;Saturation
 Saturation0=Sättigung:   0\s\s
 ;Saturation:   0\s\s
 Save=Speichern
@@ -3058,6 +3116,8 @@ ShowsMessages=Zeigt Meldungen an
 ;Shows messages
 ShrinkThePanel=Panel verkleinern
 ;Shrink the panel
+Shutter=Verschluss:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos ist 2x schneller, als Sin und Cos für denselben Winkel getrennt aufzurufen }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3156,6 +3216,8 @@ StickThisWindowToTheLeft=Dieses Fenster links anheften
 ;Stick this window to the left side
 StickThisWindowToTheRight=Dieses Fenster rechts anheften
 ;Stick this window to the right side
+Stone=Stein
+;Stone
 Stop=Stopp
 ;Stop
 StopBatchRendering=Stapelrendern stoppen
@@ -3184,6 +3246,8 @@ Strength2=Stärke
 ;Strength
 StrengthOfDynamicFog=Stärke des dynamischen Nebels.
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=Stärke, Größe (Fraktaleinheiten) und Feinheit (0.2 glatt bis 0.8 körnig) des Reliefs
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=Streckt obere und untere Bereiche; evtl. nützlich für ein normales Bild in der Vollkugel-Option.
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=Zwischenbild-\nMultiplikator:
@@ -3310,6 +3374,8 @@ TheMapOptionsCalculatesXY=Die Map-Optionen berechnen x,y-Koordinaten aus dem jew
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=Das Monte-Carlo-Fenster rendert: Stoppen Sie es zuerst.
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=Die Verschlusszeit der Bewegungsunschärfe: ein Teil der Zeit bis zum nächsten Frame (0 bis 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=Der Name der neuen Sprache, in dieser Sprache (Deutsch, Polski, ...)
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=Der bisher neueste Auftrag: gerenderte Teile, Teile in Arbeit (mit ihrem Fortschritt), fehlende Teile
@@ -3318,6 +3384,8 @@ TheParametersDoNotMatchThe=Die Parameter passen nicht mehr zur unfertigen Berech
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=Das Bild passt nicht zu seiner Berechnung: Berechnen Sie es neu.
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=Die Veredelung des Bildes nach allen anderen Durchgängen: Belichtung, Glühen um helles Licht, filmisches Tone-Mapping, Farbkorrektur, eine Vignette und Farbsäume
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=Die Farbe der Ebene (zum Ändern klicken)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=Die Rotation erfolgt um den Mittelpunkt (Xmid, Ymid, Zmid)
@@ -3456,6 +3524,8 @@ TurnOnOffTheJuliaMode=Julia-Modus ein-/ausschalten
 ;Turn on/off the julia mode
 Turned=Gedreht:
 ;Turned:
+Turntable=Drehteller
+;Turntable
 Type=Typ:
 ;Type:
 Type2=Typ
@@ -3558,6 +3628,8 @@ ViewToMain=Ansicht zum Haupt.
 ;View to main
 Viewing=Ansicht
 ;Viewing
+Vignette=Vignette
+;Vignette
 Visible=Sichtbar:
 ;Visible:
 VolumeLightNr=Volumenlicht Nr.:
@@ -3578,6 +3650,8 @@ WaitForTheRunningCalculationOr=Warten Sie die laufende Berechnung ab oder stoppe
 ;Wait for the running calculation, or stop it first.
 Walking=Gehen
 ;Walking
+Warmth=Wärme
+;Warmth
 Warning=Warnung
 ;Warning
 WarningLower=Warnung

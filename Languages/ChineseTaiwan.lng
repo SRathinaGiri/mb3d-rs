@@ -35,6 +35,8 @@ AFasterMethodThanBinsearchBut=比二分搜尋更快的方法，但若 DE 不佳�
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=剩幾秒
 ;a few seconds left
+AFineReliefOnTheSurface=表面上固定於碎形的細微起伏：粗糙、石頭（稜脊與裂紋）或顆粒
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=Swarm 中每台電腦都能看到的資料夾：NAS 共享、Windows 或 Samba 共享、同步資料夾
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=垂直於碎形 X、Y 或 Z 軸的地面或水面，與碎形一起計算：它的陰影、遮蔽、反射和蒙地卡羅光照（MB3D 中沒有：儲存在參數的 MB3D 部分之後，MB3D 會忽略它）
@@ -623,6 +625,12 @@ ColorStart=色彩起點
 ;Color start
 Coloring=著色
 ;Coloring
+Colour0Grey1AsIt=顏色：0 灰色，1 原樣，2 兩倍鮮豔
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=色差
+;Colour fringes
+ColourVariation=顏色變化
+;Colour variation
 ColumnsOfTiles=圖塊的欄數
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=合併方法：\nMin：兩個分形皆可見，以 DE 的最小值合併\nMax：僅顯示重疊部分，以 DE 的最大值合併\nInv max：反轉第二個 Hybrid 的 DE 後以「Max」合併\nMin lin：以線性重疊函數取最小值合併\nMin nlin：類似 S1，使用非線性函數，重疊更平滑\nMix：先用 F1..FendHybrid1，再以修改後的向量使用 FstartHybrid2..F6 (dIFS)。
@@ -661,6 +669,8 @@ Constants=常數：
 ;Constants:
 Continue=繼續
 ;Continue
+Contrast=對比
+;Contrast
 ConvertManyM3PFilesToM3I=將多個 M3P 檔案轉換為 M3I
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=已複製到剪貼簿。
@@ -1095,8 +1105,12 @@ ExponentialFunctions={ 指數函式 }
 ;{ Exponential functions }
 ExportACubeAsAStack=將立方體匯出為一疊 PNG 檔案
 ;Export a cube as a stack of PNG files
+Exposure=曝光
+;Exposure
 Exposure025=曝光：  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=曝光（格）：+1 亮一倍，-1 暗一半
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=正在從原始 M3I 檔案擷取環境資訊，請稍候：
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ 極值檢測 }
@@ -1133,6 +1147,10 @@ Files=檔案
 ;Files
 FilesOfType=檔案類型(&T)：
 ;Files of &type:
+Filmic=電影感
+;Filmic
+FilmicToneMappingBrightLightRolls=電影感色調映射：強光柔和過渡，而不是變成一片純白
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=自動濾波新圖片
 ;Filter new pictures automatically
 FilterNow=立即濾波
@@ -1141,10 +1159,14 @@ Fine=微調
 ;fine
 FineTuneThePositionsWithThe=用方向按鈕微調位置
 ;fine tune the positions with the arrow buttons
+FinishThePicture=圖片修飾
+;Finish the picture
 FinishedRenderingSlices=切片渲染完成。
 ;Finished rendering slices.
 FinishedTracingObject=物件追蹤完成。
 ;Finished tracing object.
+Finishing=修飾
+;Finishing
 First4RaysNoisy=前 4 條光線（有雜訊）
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=首次計算此公式組合：正在編譯顯示卡的著色器（10-30 秒，僅需一次，驅動程式會保留）。期間由 CPU 計算，著色器就緒後顯示卡便會加入。
@@ -1383,12 +1405,18 @@ Glow=發光：
 ;Glow:
 Glow0AndUpTheSurface=發光（0 及以上）：表面不靠光照，以自身顏色發光
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=光暈
+;Glow
+GlowAroundBrightLightStrengthReach=強光周圍的光暈：強度、範圍（圖片對角線的比例），以及從多亮開始發光（白色的 0 到 1）
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=黏合滑桿
 ;Glue sliders
 GoToNext=前往下一個
 ;Go to next
 GoneLastSeenSAgo=已離開（最後出現於 {} 秒前）
 ;gone (last seen {} s ago)
+Grain=顆粒
+;Grain
 GraphicsCard=顯示卡
 ;Graphics card
 GroundPlane=地平面
@@ -1443,6 +1471,8 @@ Hotkeys=快速鍵
 ;Hotkeys
 HowMuchThePlaneReflects0=平面的反射程度（0 到 1）：它的高光，以及計算反射時的鏡面（後製處理）
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=表面顏色隨起伏變化的程度：0 不變，1 強烈
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=要移除的雜訊強度（1 到 30，同 GIMP 的「Denoise DCT」）。\n越高移除的雜訊越多，但也會移除更多細節。
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=雲的濃度（1：整層約透過 2% 的光）以及覆蓋天空的比例（0 到 1）
@@ -1713,6 +1743,8 @@ KeyframeListM3k=關鍵影格清單 (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\s關鍵影格\n起始：    結束：
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=從主視窗的視角出發，繞畫面中心轉一整圈的關鍵影格：平滑循環中的 8 個關鍵影格（Catmull-Rom）
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=從任何視窗將某個視窗帶到前面的按鍵
 ;Keys that bring a window to the front from any window
 Kind=種類
@@ -2065,6 +2097,10 @@ MonteCarloRendering2=蒙地卡羅渲染\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=更多選項：將參數傳送至主視窗，調整後再匯入。
 ;More options: send paras to main, adjust and import.
+MotionBlur=動態模糊：
+;Motion blur:
+MotionBlurThePicturesAveragedFor=動態模糊：每個影格平均的圖片數，讓移動的物體產生拖影（1 = 關）；渲染時間相應成倍增加
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=滑鼠滾輪
 ;Mousewheel
 Move=移動
@@ -2101,6 +2137,10 @@ MutationType=突變類型
 ;Mutation type
 N0No255FullTransparency=0：不透明，255：完全透明
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 到 1：角落變暗
+;0 to 1: darker corners
+N0To1RedAndBlue=0 到 1：像鏡頭那樣朝角落出現紅藍色邊
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100：JPEG 品質\n> 100：最大檔案大小（KB）
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2111,6 +2151,10 @@ N16BitPGM=16 位元 PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=16 位元 Z-buffer 產生器
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 較冷（偏藍）到 1 較暖（偏橘）
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 較平淡到 1 對比較強
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  原尺寸，無反鋸齒\n2:  2x2 反鋸齒\n3:  3x3 反鋸齒
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  無\n2:  2x2\n3:  3x3
@@ -2295,6 +2339,8 @@ OfLines={} / {} 行
 ;{} of {} lines
 OfUnitsDone=已完成 {} / {} 個單位
 ;{} of {} units done
+Off=關
+;Off
 OffLeftImageIsOnThe=關：左影像在左側，供平行觀看。開：右影像在左側，供交叉眼觀看。
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=偏移與縮放
@@ -2659,10 +2705,16 @@ ReadingTheHistoryEntries=正在讀取歷程記錄... {} 筆項目
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=在您編輯過某個語言檔案後，重新讀取語言檔案
 ;Reads the language files again, after you edited one
+Rec=錄
+;Rec
 RecalculateASelection=\s重新計算選取範圍
 ;\sRecalculate a Selection
 RecalculatingTheSelection=正在重新計算選取範圍
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight=已記錄飛行的 {} 個關鍵影格
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=錄製飛行：按鈕按下期間，導航器的每個新視角（每秒最多兩次）都會成為動畫的下一個關鍵影格
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=矩形
 ;Rect
 RectLower=直線
@@ -2705,6 +2757,8 @@ RelToObject=相對於物件：
 ;Rel. to object:
 RelativeToObject=相對於物件
 ;Relative to object
+Relief=起伏
+;Relief
 Reload=重新載入
 ;Reload
 RemainingFaces10NoReduction=保留的面數（1.0 = 不縮減，0.0 = 最大縮減 = 不保留任何面）
@@ -2813,6 +2867,8 @@ RotationY=旋轉 Y：
 ;Rotation Y:
 RotationZ=旋轉 Z：
 ;Rotation Z:
+Rough=粗糙
+;Rough
 RoughImage=粗略影像
 ;rough image
 Roughness=粗糙度
@@ -2839,6 +2895,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=開始影像的主渲染。
 ;Sart the main rendering of the image.
+Saturation=飽和度
+;Saturation
 Saturation0=飽和度：   0\s\s
 ;Saturation:   0\s\s
 Save=儲存
@@ -3059,6 +3117,8 @@ ShowsMessages=顯示訊息
 ;Shows messages
 ShrinkThePanel=縮小面板
 ;Shrink the panel
+Shutter=快門：
+;Shutter:
 SinCosIs2xFasterThanCalling={ 對同一角度而言，SinCos 比分別呼叫 Sin 與 Cos 快 2 倍 }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3157,6 +3217,8 @@ StickThisWindowToTheLeft=將此視窗釘在左側
 ;Stick this window to the left side
 StickThisWindowToTheRight=將此視窗釘在右側
 ;Stick this window to the right side
+Stone=石頭
+;Stone
 Stop=停止
 ;Stop
 StopBatchRendering=停止批次渲染
@@ -3185,6 +3247,8 @@ Strength2=強度
 ;Strength
 StrengthOfDynamicFog=動態霧的強度。
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=起伏的強度、大小（碎形單位）和精細度（0.2 平滑到 0.8 粗糙）
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=拉伸上下部分，對在完整球面選項中使用一般影像可能有用。
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=子影格數\n乘數：
@@ -3311,6 +3375,8 @@ TheMapOptionsCalculatesXY=貼圖選項會從特定向量計算球面貼圖的 x,
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=蒙地卡羅視窗正在渲染：請先停止。
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=動態模糊的快門時間：到下一影格時間的比例（0 到 1）
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=新語言的名稱，以該語言本身書寫（Deutsch、Polski、...）
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=目前最新的工作：已渲染的部分、進行中的部分（含進度）、缺少的部分
@@ -3319,6 +3385,8 @@ TheParametersDoNotMatchThe=參數已與未完成的計算不符：請按「計�
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=圖片與其計算不符：請重新計算。
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=在所有其他處理之後對圖片的修飾：曝光、強光周圍的光暈、電影感色調映射、調色、暗角和色邊
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=平面的顏色（點擊變更）
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=旋轉以中點 (Xmid, Ymid, Zmid) 為中心進行
@@ -3457,6 +3525,8 @@ TurnOnOffTheJuliaMode=開啟／關閉 Julia 模式
 ;Turn on/off the julia mode
 Turned=旋轉：
 ;Turned:
+Turntable=轉盤
+;Turntable
 Type=類型：
 ;Type:
 Type2=類型
@@ -3559,6 +3629,8 @@ ViewToMain=視角送至主程式
 ;View to main
 Viewing=檢視
 ;Viewing
+Vignette=暗角
+;Vignette
 Visible=可見：
 ;Visible:
 VolumeLightNr=體積光編號：
@@ -3579,6 +3651,8 @@ WaitForTheRunningCalculationOr=請等待目前的計算完成，或先停止它�
 ;Wait for the running calculation, or stop it first.
 Walking=行走
 ;Walking
+Warmth=色溫
+;Warmth
 Warning=警告
 ;Warning
 WarningLower=警告

@@ -745,6 +745,63 @@ kunt u zelf verder controleren:
   langs de keyframes, en de curve laat dat zien voordat er iets gerenderd is. Een derde interpolatie, *Catmull-Rom* (niet in MB3D), is vloeiend en gaat door elk keyframe (`mb3d animate --catmull-rom`).
 
   </details>
+* **Het beeld afwerken**: belichting, een gloed rond fel licht, filmische
+  tone mapping, contrast, verzadiging, warmte, een vignet en de kleurranden
+  van een lens, als laatste stap over de hele afbeelding.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Een tempel bij dageraad zoals berekend, en afgewerkt: gloed rond de lichte zuilen, zachtere hooglichten, warmer licht, donkerder hoeken"></a>
+
+  <details><summary>Meer lezen</summary>
+
+  Venster *Nabewerking*, sectie *Afwerking*: vink *Beeld afwerken* aan, stel
+  de belichting in stops in, *Filmisch* (fel licht loopt zacht af in plaats
+  van vlak wit te worden), de gloed (sterkte, reikwijdte als deel van de
+  diagonaal van de afbeelding, en vanaf welke helderheid hij gloeit),
+  contrast, verzadiging, warmte, vignet en kleurranden, dan *Nu schilderen*.
+  Het schilderen gebeurt dan in drijvende komma, zodat het licht boven wit
+  bewaard blijft tot de tone mapping. Het geldt voor elke afbeelding, elk
+  animatieframe en elke Monte Carlo-render (na het ruisfilter); uit zijn de
+  afbeeldingen precies als voorheen. Scènesleutels `finish_exposure`,
+  `finish_tonemap = filmic`, `glow = strength, radius, threshold`,
+  `finish_contrast`, `finish_saturation`, `finish_warmth`, `vignette`,
+  `chromatic`. Bij een grote render uit losse tegelafbeeldingen gloeit elke
+  tegel op zichzelf.
+
+  </details>
+* **Een fijn reliëf op het oppervlak**: ruw, steen (ribbels en barsten) of
+  korrel, fijner dan het detail van de berekening, met een kleurvariatie.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Een glad stuk van een Mandelbulb, en hetzelfde met het steenreliëf en kleurvariatie"></a>
+
+  <details><summary>Meer lezen</summary>
+
+  Venster *Nabewerking*, sectie *Materiaal*: *Reliëf* met zijn sterkte, de
+  grootte van zijn vormen (in fractaleenheden, zodat het op het oppervlak
+  blijft als de camera beweegt) en zijn fijnheid, en *Kleurvariatie*. Het
+  kantelt het oppervlak waar het licht berekend wordt, dus de schaduwing, de
+  glanzen, de reflecties en Monte Carlo zien het allemaal; de vorm zelf
+  verandert niet (de omtrek blijft glad). Niet op het grondvlak.
+  Scènesleutels `detail = stone, 1.5, 0.12, 0.5` (soort, sterkte, grootte,
+  fijnheid) en `detail_color`.
+
+  </details>
+* **Draaitafels, opgenomen vluchten en motion blur** voor animaties.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Een frame van een snelle draaitafel, zonder en met motion blur"></a>
+
+  <details><summary>Meer lezen</summary>
+
+  *Animatiemaker* > *Draaitafel*: acht keyframes van één hele draai rond het
+  midden van het beeld in het hoofdvenster, een vloeiende lus
+  (`mb3d animate scene.m3p --orbit 8 --frames 25`). *Navigator* > *Rec*:
+  zolang de knop ingedrukt is, wordt elk nieuw beeld van de vlucht (hooguit
+  twee per seconde) het volgende keyframe; met Catmull-Rom gaat de animatie
+  door alle. *Motion blur* in de Animatiemaker: elk frame is het gemiddelde
+  van zoveel afbeeldingen binnen de *Sluiter*-tijd (een deel van de tijd tot
+  het volgende frame), zodat wat beweegt uitsmeert; het duurt zoveel keer zo
+  lang (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

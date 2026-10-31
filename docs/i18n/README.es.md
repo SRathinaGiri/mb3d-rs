@@ -801,6 +801,66 @@ esto puede comprobar más por su cuenta:
   y la curva lo muestra antes de renderizar nada. Una tercera interpolación, *Catmull-Rom* (no está en MB3D), es suave y pasa por cada fotograma clave (`mb3d animate --catmull-rom`).
 
   </details>
+* **Acabar la imagen**: exposición, un resplandor alrededor de la luz intensa,
+  mapeo de tonos fílmico, contraste, saturación, calidez, una viñeta y los
+  bordes de color de un objetivo, como última pasada sobre toda la imagen.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Un templo al amanecer tal como se calculó, y acabado: resplandor alrededor de los pilares claros, luces más suaves, luz más cálida, esquinas más oscuras"></a>
+
+  <details><summary>Más información</summary>
+
+  Ventana *Posprocesado*, sección *Acabado*: marque *Acabar la imagen*, ajuste
+  la exposición en pasos, *Fílmico* (la luz intensa se suaviza en vez de
+  volverse un blanco plano), el resplandor (intensidad, alcance como parte de
+  la diagonal de la imagen y a partir de qué brillo resplandece), contraste,
+  saturación, calidez, viñeta y bordes de color, y luego *Pintar ahora*. La
+  pintura se hace entonces en coma flotante, así que la luz por encima del
+  blanco se conserva hasta el mapeo de tonos. Se aplica a cada imagen, cada
+  fotograma de animación y cada render Monte Carlo (después del filtro de
+  ruido); desactivado, las imágenes son exactamente como antes. Claves de
+  escena `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. En un Render
+  grande hecho de imágenes de teselas separadas, cada tesela resplandece por
+  su cuenta.
+
+  </details>
+* **Un relieve fino en la superficie**: rugoso, piedra (crestas y grietas) o
+  grano, más fino que el detalle del cálculo, con una variación de color.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Una parte lisa de un Mandelbulb, y la misma con el relieve de piedra y la variación de color"></a>
+
+  <details><summary>Más información</summary>
+
+  Ventana *Posprocesado*, sección *Material*: *Relieve* con su intensidad, el
+  tamaño de sus formas (en las unidades del fractal, así que se queda en la
+  superficie cuando la cámara se mueve) y su finura, y *Variación color*.
+  Inclina la superficie donde se calcula la luz, así que el sombreado, los
+  brillos, los reflejos y Monte Carlo lo ven; la forma en sí no cambia (el
+  contorno sigue liso). No en el plano del suelo. Claves de escena
+  `detail = stone, 1.5, 0.12, 0.5` (tipo, intensidad, tamaño, finura) y
+  `detail_color`.
+
+  </details>
+* **Platos giratorios, vuelos grabados y desenfoque de movimiento** para las
+  animaciones.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Un fotograma de un plato giratorio rápido, sin y con desenfoque de movimiento"></a>
+
+  <details><summary>Más información</summary>
+
+  *Creador de animaciones* > *Plato giratorio*: ocho fotogramas clave de una
+  vuelta entera alrededor del centro de la vista de la ventana principal, un
+  bucle suave (`mb3d animate scene.m3p --orbit 8 --frames 25`). *Navegador* >
+  *Grab*: mientras el botón está pulsado, cada nueva vista del vuelo (como
+  mucho dos por segundo) se convierte en el siguiente fotograma clave; con
+  Catmull-Rom la animación pasa por todos ellos. *Desenfoque mov.* en el
+  Creador de animaciones: cada fotograma es la media de esa cantidad de
+  imágenes dentro del tiempo de *Obturador* (una parte del tiempo hasta el
+  siguiente fotograma), así que lo que se mueve se difumina; tarda esa
+  cantidad de veces más (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

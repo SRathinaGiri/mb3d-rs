@@ -101,6 +101,14 @@ Clouds (not in MB3D; painted over the picture, cheap to change)
 Surface material (not in MB3D; on top of the palette)
 - material_fresnel 0..1 (edges reflect more; with mc_reflections), material_iridescence =
   amount, shift (0..1 each: a thin film's rainbow sheen), material_glow (0..: self-lit).
+Finishing (not in MB3D; a last pass over the picture, cheap to change)
+- finish_exposure (stops), finish_tonemap = filmic | off (bright light rolls off softly),
+  glow = strength, radius, threshold (e.g. 0.6, 0.02, 0.8: glow around bright light),
+  finish_contrast -1..1, finish_saturation (1 = as is), finish_warmth -1..1 (orange / blue),
+  vignette 0..1 (darker corners), chromatic 0..1 (a lens's colour fringes).
+Surface detail (not in MB3D): detail = rough | stone | grain, strength, size, fineness
+  (e.g. stone, 1.5, 0.05, 0.5; size in fractal units, about 1/20 of what the view shows) or off;
+  detail_color 0..1: the colour varies with it.
 Two objects (not in MB3D): with de_combination (min = union, max = intersection, ...), the
   second hybrid part placed apart: part2_position = x, y, z; part2_rotation = degrees x, y, z;
   part2_scale (1 = as is).

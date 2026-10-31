@@ -748,6 +748,13 @@ itself per light.
 | `material_fresnel` | 0..1 | the fractal's specular colour (and its reflections) towards white where the surface turns from the view (Schlick's term with a third power) |
 | `material_iridescence` | amount, shift | a thin film's colours on the specular colour (and half on the diffuse one), changing with the angle of view |
 | `material_glow` | 0.. | the surface's own light in its diffuse colour (in Monte Carlo emitted at the hits) |
+| `finish_exposure` | stops | finishing (not in MB3D, `src/finish.rs`): the last pass after the depth of field, on the whole picture in linear light (the painting runs in floating point while finishing is on); +1 twice as bright |
+| `finish_tonemap` | `filmic` / `off` | filmic tone mapping (an approximation of the ACES film curve): highlights roll off towards white instead of clipping |
+| `glow` | strength, radius, threshold | light brighter than the threshold (0..1 of white) blurred on a copy reduced to about six pixels per radius (a wide and a near Gaussian), added; the radius is a part of the picture's diagonal |
+| `finish_contrast`, `finish_saturation`, `finish_warmth` | -1..1, 0..3, -1..1 | an S curve, the colours away from their luminance, red up and blue down (or the reverse) |
+| `vignette`, `chromatic` | 0..1 | darker corners, red and blue sampled a little outwards and inwards from the middle; both by the whole picture's middle (a tile gets its part); Monte Carlo pictures are finished after the noise filter |
+| `detail` | kind, strength, size, roughness (`stone, 1.5, 0.12, 0.5`) or `off` | surface detail (not in MB3D, `src/detail.rs`): 3D gradient noise in the fractal's coordinates (rough: sum of octaves; stone: folded `1 - 2|n|`; grain: three fine octaves); its gradient tilts the normal where the light is calculated (painting, the reflections' mirror and Monte Carlo), not the distance estimate; not on the ground plane |
+| `detail_color` | 0..1 | the diffuse colour times `1 + 0.6 * amount * noise` (patches three times the relief's size) |
 | `part2_position`, `part2_rotation`, `part2_scale` | x, y, z; degrees; size | with a DE combination (not the mix): the second hybrid part as an object of its own, its point `m (p - position)` (the rotation divided by the size), its distance times the size |
 | `dof` | `off`, `sorted`, `forward` | depth of field |
 | `dof_focus`, `dof_focus2` | distance as fraction of the image width | sharp range (`--stats` prints the value for the image centre) |

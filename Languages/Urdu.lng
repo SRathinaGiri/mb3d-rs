@@ -35,6 +35,8 @@ AFasterMethodThanBinsearchBut=بائنری سرچ سے تیز طریقہ، لی�
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=چند سیکنڈ باقی
 ;a few seconds left
+AFineReliefOnTheSurface=سطح پر باریک ابھار، فریکٹل سے جڑا ہوا: کھردرا، پتھر (دھاریاں اور دراڑیں) یا دانے دار
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=ایسا فولڈر جسے سوارم کا ہر کمپیوٹر دیکھ سکے: NAS شیئر، Windows یا Samba شیئر، یا سنک فولڈر
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=فریکٹل کے X، Y یا Z محور کے آر پار زمین یا پانی کی سطح، جو فریکٹل کے ساتھ حساب ہوتی ہے: اس کے سائے، اوکلوژن، عکس اور مونٹی کارلو روشنی (MB3D میں نہیں: پیرامیٹرز میں MB3D کے حصے کے بعد محفوظ، جسے MB3D نظرانداز کرتا ہے)
@@ -623,6 +625,12 @@ ColorStart=رنگ آغاز
 ;Color start
 Coloring=رنگ کاری
 ;Coloring
+Colour0Grey1AsIt=رنگ: 0 سرمئی، 1 جیسا ہے، 2 دگنا رنگین
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=رنگین کنارے
+;Colour fringes
+ColourVariation=رنگ کا فرق
+;Colour variation
 ColumnsOfTiles=ٹائلز کے کالم
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=امتزاج کے طریقے:\nMin: دونوں فریکٹل نظر آتے ہیں، DE کا کم از کم امتزاج\nMax: صرف مشترک حصے، DE کا زیادہ سے زیادہ امتزاج\nInv max: دوسرے ہائبرڈ کا DE الٹ کر 'Max' سے ملائیں\nMin lin: خطی اوورلیپ فنکشن کے ساتھ کم از کم امتزاج\nMin nlin: S1 کی طرح، غیر خطی فنکشن، زیادہ ہموار اوورلیپ\nMix: پہلے F1..FendHybrid1 پھر بدلے ہوئے ویکٹر کے ساتھ FstartHybrid2..F6 (dIFS)۔
@@ -661,6 +669,8 @@ Constants=مستقلات:
 ;Constants:
 Continue=جاری رکھیں
 ;Continue
+Contrast=کنٹراسٹ
+;Contrast
 ConvertManyM3PFilesToM3I=کئی M3P فائلوں کو M3I میں تبدیل کریں
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=کلپ بورڈ پر کاپی ہو گیا۔
@@ -1095,8 +1105,12 @@ ExponentialFunctions={ قوت نمائی فنکشنز }
 ;{ Exponential functions }
 ExportACubeAsAStack=ایک مکعب کو PNG فائلوں کے ڈھیر کے طور پر برآمد کریں
 ;Export a cube as a stack of PNG files
+Exposure=ایکسپوژر
+;Exposure
 Exposure025=ایکسپوژر:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=ایکسپوژر اسٹاپس میں: +1 دگنا روشن، -1 آدھا روشن
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=اصل M3I فائل سے ایمبیئنٹ معلومات نکالی جا رہی ہیں، براہ کرم انتظار کریں:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ انتہائی جانچ }
@@ -1133,6 +1147,10 @@ Files=فائلیں
 ;Files
 FilesOfType=فائلوں کی قسم(&T):
 ;Files of &type:
+Filmic=فلمی
+;Filmic
+FilmicToneMappingBrightLightRolls=فلمی ٹون میپنگ: تیز روشنی سپاٹ سفید ہونے کے بجائے نرمی سے ڈھلتی ہے
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=نئی تصاویر خودکار فلٹر کریں
 ;Filter new pictures automatically
 FilterNow=ابھی فلٹر کریں
@@ -1141,10 +1159,14 @@ Fine=باریک
 ;fine
 FineTuneThePositionsWithThe=تیر والے بٹنوں سے مقامات باریکی سے ترتیب دیں
 ;fine tune the positions with the arrow buttons
+FinishThePicture=تصویر مکمل کریں
+;Finish the picture
 FinishedRenderingSlices=ٹکڑوں کی رینڈرنگ مکمل۔
 ;Finished rendering slices.
 FinishedTracingObject=شے کی ٹریسنگ مکمل۔
 ;Finished tracing object.
+Finishing=تکمیل
+;Finishing
 First4RaysNoisy=پہلی 4 شعاعیں (شور والی)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=اس فارمولا امتزاج کا پہلا حساب: گرافکس کارڈ کے شیڈرز کمپائل ہو رہے ہیں (10-30 s، صرف ایک بار - ڈرائیور انہیں رکھ لیتا ہے)۔ اس دوران CPU حساب کرتا ہے، تیار ہونے پر کارڈ شامل ہو جاتا ہے۔
@@ -1383,12 +1405,18 @@ Glow=دمک:
 ;Glow:
 Glow0AndUpTheSurface=دمک (0 اور اوپر): سطح روشنی کے بغیر اپنے رنگ میں چمکتی ہے
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=دمک
+;Glow
+GlowAroundBrightLightStrengthReach=تیز روشنی کے گرد دمک: شدت، پھیلاؤ (تصویر کے وتر کا حصہ)، اور کس چمک سے دمکتی ہے (سفید کا 0 سے 1)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=سلائیڈرز جوڑیں
 ;Glue sliders
 GoToNext=اگلے پر جائیں
 ;Go to next
 GoneLastSeenSAgo=غائب (آخری بار {} s پہلے دیکھا گیا)
 ;gone (last seen {} s ago)
+Grain=دانے دار
+;Grain
 GraphicsCard=گرافکس کارڈ
 ;Graphics card
 GroundPlane=زمینی سطح
@@ -1443,6 +1471,8 @@ Hotkeys=ہاٹ کیز
 ;Hotkeys
 HowMuchThePlaneReflects0=سطح کتنا منعکس کرتی ہے (0 سے 1): اس کی چمک، اور عکس جب انعکاسات کا حساب ہو (پوسٹ پروسیسنگ)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=سطح کا رنگ ابھار کے ساتھ کتنا بدلتا ہے: 0 بالکل نہیں، 1 بہت زیادہ
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=ہٹائے جانے والے شور کی شدت (1 سے 30، GIMP کے "Denoise DCT" کی طرح)۔\nزیادہ قدر زیادہ شور ہٹاتی ہے، اور زیادہ باریک تفصیل بھی۔
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=بادل کتنے گھنے ہیں (1: پوری تہ تقریباً 2 % روشنی گزارتی ہے) اور آسمان کا کتنا حصہ ڈھانپتے ہیں (0 سے 1)
@@ -1713,6 +1743,8 @@ KeyframeListM3k=کی فریم فہرست (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sکی فریم\nآغاز:    اختتام:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=منظر کے وسط کے گرد ایک پورے چکر کے کی فریم، مرکزی ونڈو کے منظر سے: ہموار لوپ میں 8 کی فریم (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=وہ کیز جو کسی بھی ونڈو سے ایک ونڈو کو سامنے لاتی ہیں
 ;Keys that bring a window to the front from any window
 Kind=قسم
@@ -2065,6 +2097,10 @@ MonteCarloRendering2=Monte Carlo رینڈرنگ\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=مزید اختیارات: پیرامیٹرز مرکزی کو بھیجیں، ترتیب دیں اور درآمد کریں۔
 ;More options: send paras to main, adjust and import.
+MotionBlur=موشن بلر:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=موشن بلر: ہر فریم کے لیے اوسط کی گئی تصاویر، تاکہ حرکت کرنے والی چیزیں دھندلی ہوں (1 = بند)؛ رینڈرنگ میں اتنے ہی گنا زیادہ وقت لگتا ہے
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=ماؤس وہیل
 ;Mousewheel
 Move=حرکت
@@ -2101,6 +2137,10 @@ MutationType=تبدیلی کی قسم
 ;Mutation type
 N0No255FullTransparency=0: نہیں، 255: مکمل شفافیت
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 سے 1: گہرے کونے
+;0 to 1: darker corners
+N0To1RedAndBlue=0 سے 1: کونوں کی طرف سرخ اور نیلے کنارے، جیسے لینس دکھاتا ہے
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: JPEG معیار\n> 100: فائل کا زیادہ سے زیادہ سائز کلو بائٹس میں
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2111,6 +2151,10 @@ N16BitPGM=16 Bit PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=16Bit ZBuffer جنریٹر
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 ٹھنڈا (نیلا) سے 1 گرم (نارنجی)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 سپاٹ سے 1 زیادہ کنٹراسٹ
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  پورا سائز، اینٹی ایلیاسنگ نہیں\n2:  2x2 اینٹی ایلیاسنگ\n3:  3x3 اینٹی ایلیاسنگ
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  کوئی نہیں\n2:  2x2\n3:  3x3
@@ -2295,6 +2339,8 @@ OfLines={} از {} سطریں
 ;{} of {} lines
 OfUnitsDone={} از {} اکائیاں مکمل
 ;{} of {} units done
+Off=بند
+;Off
 OffLeftImageIsOnThe=بند: متوازی دیکھنے کے لیے بائیں تصویر بائیں طرف ہے۔ چالو: کراس آئیڈ دیکھنے کے لیے دائیں تصویر بائیں طرف ہے۔
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=آفسیٹ اور پیمانہ
@@ -2659,10 +2705,16 @@ ReadingTheHistoryEntries=تاریخچہ پڑھا جا رہا ہے... {} اندر
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=زبان کی فائلیں دوبارہ پڑھتا ہے، کسی ایک میں ترمیم کے بعد
 ;Reads the language files again, after you edited one
+Rec=REC
+;Rec
 RecalculateASelection=\sمنتخب حصہ دوبارہ حساب کریں
 ;\sRecalculate a Selection
 RecalculatingTheSelection=منتخب حصے کا دوبارہ حساب
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight=پرواز کے {} کی فریم ریکارڈ ہوئے
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=پرواز ریکارڈ کرتا ہے: جب تک بٹن دبا ہوا ہے، نیویگیٹر کا ہر نیا منظر (زیادہ سے زیادہ دو فی سیکنڈ) اینیمیشن کا اگلا کی فریم بنتا ہے
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=مستطیل
 ;Rect
 RectLower=مستطیل
@@ -2705,6 +2757,8 @@ RelToObject=شے کے لحاظ سے:
 ;Rel. to object:
 RelativeToObject=شے کے لحاظ سے
 ;Relative to object
+Relief=ابھار
+;Relief
 Reload=دوبارہ لوڈ
 ;Reload
 RemainingFaces10NoReduction=باقی سطحیں (1.0 = کوئی کمی نہیں، 0.0 = زیادہ سے زیادہ کمی = کوئی سطح باقی نہیں )
@@ -2813,6 +2867,8 @@ RotationY=گردش Y:
 ;Rotation Y:
 RotationZ=گردش Z:
 ;Rotation Z:
+Rough=کھردرا
+;Rough
 RoughImage=کچی تصویر
 ;rough image
 Roughness=کھردرا پن
@@ -2839,6 +2895,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=تصویر کی مرکزی رینڈرنگ شروع کریں۔
 ;Sart the main rendering of the image.
+Saturation=سیچوریشن
+;Saturation
 Saturation0=سیچوریشن:   0\s\s
 ;Saturation:   0\s\s
 Save=محفوظ کریں
@@ -3059,6 +3117,8 @@ ShowsMessages=پیغامات دکھاتا ہے
 ;Shows messages
 ShrinkThePanel=پینل سکیڑیں
 ;Shrink the panel
+Shutter=شٹر:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos ایک ہی زاویے کے لیے Sin اور Cos الگ الگ بلانے سے 2 گنا تیز ہے }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3157,6 +3217,8 @@ StickThisWindowToTheLeft=اس ونڈو کو بائیں طرف چپکائیں
 ;Stick this window to the left side
 StickThisWindowToTheRight=اس ونڈو کو دائیں طرف چپکائیں
 ;Stick this window to the right side
+Stone=پتھر
+;Stone
 Stop=روکیں
 ;Stop
 StopBatchRendering=بیچ رینڈرنگ روکیں
@@ -3185,6 +3247,8 @@ Strength2=شدت
 ;Strength
 StrengthOfDynamicFog=متحرک دھند کی شدت۔
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=ابھار کی شدت، سائز (فریکٹل اکائیوں میں) اور باریکی (0.2 ہموار سے 0.8 دانے دار)
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=اوپری اور نچلے حصوں کو کھینچتا ہے، مکمل کرّہ اختیار میں عام تصویر کے لیے شاید مفید۔
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=ذیلی فریم تعداد\nضرب کار:
@@ -3311,6 +3375,8 @@ TheMapOptionsCalculatesXY=نقشہ اختیارات کروی نقشوں کے ل�
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=Monte Carlo ونڈو رینڈر کر رہی ہے: پہلے اسے روکیں۔
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=موشن بلر کا شٹر وقت: اگلے فریم تک کے وقت کا حصہ (0 سے 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=نئی زبان کا نام، اسی زبان میں (Deutsch، Polski، ...)
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=اب تک کا تازہ ترین کام: رینڈر شدہ حصے، جاری حصے (ان کی پیش رفت کے ساتھ)، باقی حصے
@@ -3319,6 +3385,8 @@ TheParametersDoNotMatchThe=پیرامیٹرز اب نامکمل حساب سے م
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=تصویر اپنے حساب سے میل نہیں کھاتی: اس کا دوبارہ حساب کریں۔
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=باقی تمام مراحل کے بعد تصویر کی تکمیل: ایکسپوژر، تیز روشنی کے گرد دمک، فلمی ٹون میپنگ، رنگ کی درجہ بندی، وگنیٹ اور رنگین کنارے
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=سطح کا رنگ (بدلنے کے لیے کلک کریں)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=گردش درمیانی نقطے (Xmid, Ymid, Zmid) کے گرد ہوتی ہے
@@ -3457,6 +3525,8 @@ TurnOnOffTheJuliaMode=جولیا موڈ چالو/بند کریں
 ;Turn on/off the julia mode
 Turned=گھمایا:
 ;Turned:
+Turntable=پورا چکر
+;Turntable
 Type=قسم:
 ;Type:
 Type2=قسم
@@ -3559,6 +3629,8 @@ ViewToMain=منظر مرکزی کو
 ;View to main
 Viewing=نظارہ
 ;Viewing
+Vignette=وگنیٹ
+;Vignette
 Visible=نظر آنے والا:
 ;Visible:
 VolumeLightNr=حجمی روشنی نمبر:
@@ -3579,6 +3651,8 @@ WaitForTheRunningCalculationOr=جاری حساب کا انتظار کریں، ی
 ;Wait for the running calculation, or stop it first.
 Walking=چلنا
 ;Walking
+Warmth=گرمی
+;Warmth
 Warning=تنبیہ
 ;Warning
 WarningLower=تنبیہ

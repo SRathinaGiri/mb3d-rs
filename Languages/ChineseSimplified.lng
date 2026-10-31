@@ -35,6 +35,8 @@ AFasterMethodThanBinsearchBut=比二分搜索更快的方法，但 DE 不佳时�
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=剩余几秒
 ;a few seconds left
+AFineReliefOnTheSurface=表面上固定于分形的细微起伏：粗糙、石头（棱脊与裂纹）或颗粒
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=集群中每台计算机都能访问的文件夹：NAS 共享、Windows 或 Samba 共享、同步文件夹
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=垂直于分形 X、Y 或 Z 轴的地面或水面，与分形一起计算：它的阴影、遮蔽、反射和蒙特卡罗光照（MB3D 中没有：保存在参数的 MB3D 部分之后，MB3D 会忽略它）
@@ -623,6 +625,12 @@ ColorStart=颜色起点
 ;Color start
 Coloring=着色
 ;Coloring
+Colour0Grey1AsIt=颜色：0 灰色，1 原样，2 两倍鲜艳
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=色差
+;Colour fringes
+ColourVariation=颜色变化
+;Colour variation
 ColumnsOfTiles=分块列数
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=组合方法：\nMin：两个分形都可见，取 DE 的最小值组合\nMax：仅保留重叠部分，取 DE 的最大值组合\nInv max：反转第二个 Hybrid 的 DE 并按 'Max' 组合\nMin lin：用线性重叠函数取最小值组合\nMin nlin：类似 S1，非线性函数，重叠更平滑\nMix：先用 F1..FendHybrid1，再以修改后的向量使用 FstartHybrid2..F6 (dIFS)。
@@ -661,6 +669,8 @@ Constants=常量：
 ;Constants:
 Continue=继续
 ;Continue
+Contrast=对比度
+;Contrast
 ConvertManyM3PFilesToM3I=将多个 M3P 文件转换为 M3I
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=已复制到剪贴板。
@@ -1095,8 +1105,12 @@ ExponentialFunctions={ 指数函数 }
 ;{ Exponential functions }
 ExportACubeAsAStack=将一个立方体导出为一组 PNG 文件
 ;Export a cube as a stack of PNG files
+Exposure=曝光
+;Exposure
 Exposure025=曝光：  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=曝光（档）：+1 亮一倍，-1 暗一半
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=正在从原始 M3I 文件提取环境光信息，请稍候：
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ 极值检测 }
@@ -1133,6 +1147,10 @@ Files=文件
 ;Files
 FilesOfType=文件类型(&T)：
 ;Files of &type:
+Filmic=胶片
+;Filmic
+FilmicToneMappingBrightLightRolls=胶片色调映射：强光柔和过渡，而不是变成一片纯白
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=自动过滤新图像
 ;Filter new pictures automatically
 FilterNow=立即过滤
@@ -1141,10 +1159,14 @@ Fine=精细
 ;fine
 FineTuneThePositionsWithThe=用箭头按钮微调位置
 ;fine tune the positions with the arrow buttons
+FinishThePicture=图片修饰
+;Finish the picture
 FinishedRenderingSlices=切片渲染完成。
 ;Finished rendering slices.
 FinishedTracingObject=对象跟踪完成。
 ;Finished tracing object.
+Finishing=修饰
+;Finishing
 First4RaysNoisy=前 4 条光线（有噪点）
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=首次计算此公式组合：正在编译显卡的着色器（10-30 秒，仅此一次——驱动程序会保留它们）。其间由 CPU 计算，着色器就绪后显卡加入。
@@ -1383,12 +1405,18 @@ Glow=发光：
 ;Glow:
 Glow0AndUpTheSurface=发光（0 及以上）：表面不靠光照，以自身颜色发光
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=辉光
+;Glow
+GlowAroundBrightLightStrengthReach=强光周围的辉光：强度、范围（图片对角线的比例），以及从多亮开始发光（白色的 0 到 1）
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=联动滑块
 ;Glue sliders
 GoToNext=转到下一个
 ;Go to next
 GoneLastSeenSAgo=已离开（最后出现于 {} 秒前）
 ;gone (last seen {} s ago)
+Grain=颗粒
+;Grain
 GraphicsCard=显卡
 ;Graphics card
 GroundPlane=地平面
@@ -1443,6 +1471,8 @@ Hotkeys=快捷键
 ;Hotkeys
 HowMuchThePlaneReflects0=平面的反射程度（0 到 1）：它的高光，以及计算反射时的镜面（后期处理）
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=表面颜色随起伏变化的程度：0 不变，1 强烈
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=要去除的噪点强度（1 到 30，同 GIMP 的“Denoise DCT”）。\n值越高去除的噪点越多，细节也损失越多。
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=云的浓度（1：整层约透过 2% 的光）以及覆盖天空的比例（0 到 1）
@@ -1713,6 +1743,8 @@ KeyframeListM3k=关键帧列表 (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\s关键帧\n起始：    结束：
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=从主窗口的视角出发，围绕画面中心转一整圈的关键帧：平滑循环中的 8 个关键帧（Catmull-Rom）
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=从任意窗口将某个窗口调到前面的按键
 ;Keys that bring a window to the front from any window
 Kind=类型
@@ -2065,6 +2097,10 @@ MonteCarloRendering2=蒙特卡洛渲染\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=更多选项：发送参数到主窗口，调整后再导入。
 ;More options: send paras to main, adjust and import.
+MotionBlur=运动模糊：
+;Motion blur:
+MotionBlurThePicturesAveragedFor=运动模糊：每帧平均的图片数，使移动的物体产生拖影（1 = 关）；渲染时间相应成倍增加
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=鼠标滚轮
 ;Mousewheel
 Move=移动
@@ -2101,6 +2137,10 @@ MutationType=变异类型
 ;Mutation type
 N0No255FullTransparency=0：不透明，255：完全透明
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 到 1：角落变暗
+;0 to 1: darker corners
+N0To1RedAndBlue=0 到 1：像镜头那样朝角落出现红蓝色边
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100：JPEG 质量\n> 100：最大文件大小（KB）
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2111,6 +2151,10 @@ N16BitPGM=16 位 PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=16 位 Z 缓冲生成器
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 更冷（偏蓝）到 1 更暖（偏橙）
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 更平淡到 1 对比更强
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  全尺寸，无抗锯齿\n2:  2x2 抗锯齿\n3:  3x3 抗锯齿
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  无\n2:  2x2\n3:  3x3
@@ -2295,6 +2339,8 @@ OfLines={} / {} 行
 ;{} of {} lines
 OfUnitsDone=已完成 {}/{} 个单元
 ;{} of {} units done
+Off=关
+;Off
 OffLeftImageIsOnThe=关：左图在左侧，用于平行观看。开：右图在左侧，用于交叉眼观看。
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=偏移与缩放
@@ -2659,10 +2705,16 @@ ReadingTheHistoryEntries=正在读取历史记录…… {} 条记录
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=在您编辑了某个语言文件之后，重新读取语言文件
 ;Reads the language files again, after you edited one
+Rec=录
+;Rec
 RecalculateASelection=\s重新计算选区
 ;\sRecalculate a Selection
 RecalculatingTheSelection=正在重新计算选区
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight=已记录飞行的 {} 个关键帧
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=录制飞行：按钮按下期间，导航器的每个新视角（每秒最多两次）都成为动画的下一个关键帧
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=矩形
 ;Rect
 RectLower=直线
@@ -2705,6 +2757,8 @@ RelToObject=相对于物体：
 ;Rel. to object:
 RelativeToObject=相对于物体
 ;Relative to object
+Relief=起伏
+;Relief
 Reload=重新加载
 ;Reload
 RemainingFaces10NoReduction=保留的面数（1.0 = 不缩减，0.0 = 最大缩减 = 不保留任何面）
@@ -2813,6 +2867,8 @@ RotationY=Y 旋转：
 ;Rotation Y:
 RotationZ=Z 旋转：
 ;Rotation Z:
+Rough=粗糙
+;Rough
 RoughImage=粗略图像
 ;rough image
 Roughness=粗糙度
@@ -2839,6 +2895,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=开始图像的主渲染。
 ;Sart the main rendering of the image.
+Saturation=饱和度
+;Saturation
 Saturation0=饱和度：   0\s\s
 ;Saturation:   0\s\s
 Save=保存
@@ -3059,6 +3117,8 @@ ShowsMessages=显示消息
 ;Shows messages
 ShrinkThePanel=收起面板
 ;Shrink the panel
+Shutter=快门：
+;Shutter:
 SinCosIs2xFasterThanCalling={ 对同一角度，SinCos 比分别调用 Sin 和 Cos 快 2 倍 }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3157,6 +3217,8 @@ StickThisWindowToTheLeft=将此窗口吸附到左侧
 ;Stick this window to the left side
 StickThisWindowToTheRight=将此窗口吸附到右侧
 ;Stick this window to the right side
+Stone=石头
+;Stone
 Stop=停止
 ;Stop
 StopBatchRendering=停止批量渲染
@@ -3185,6 +3247,8 @@ Strength2=强度
 ;Strength
 StrengthOfDynamicFog=动态雾的强度。
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=起伏的强度、大小（分形单位）和精细度（0.2 平滑到 0.8 粗糙）
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=拉伸上下部分，对在完整球面选项中使用普通图像可能有用。
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=子帧数\n乘数：
@@ -3311,6 +3375,8 @@ TheMapOptionsCalculatesXY=映射选项根据特定向量计算球面映射的 x,
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=蒙特卡洛窗口正在渲染：请先停止它。
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=运动模糊的快门时间：到下一帧时间的比例（0 到 1）
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=新语言的名称，用该语言本身书写（Deutsch、Polski、...）
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=目前最新的任务：已渲染的部分、进行中的部分（及其进度）、缺失的部分
@@ -3319,6 +3385,8 @@ TheParametersDoNotMatchThe=参数已与未完成的计算不再匹配：请按�
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=图像与其计算不匹配：请重新计算。
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=在所有其他处理之后对图片的修饰：曝光、强光周围的辉光、胶片色调映射、调色、暗角和色边
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=平面的颜色（点击更改）
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=旋转围绕中点 (Xmid, Ymid, Zmid) 进行
@@ -3457,6 +3525,8 @@ TurnOnOffTheJuliaMode=打开/关闭 Julia 模式
 ;Turn on/off the julia mode
 Turned=旋转：
 ;Turned:
+Turntable=转盘
+;Turntable
 Type=类型：
 ;Type:
 Type2=类型
@@ -3559,6 +3629,8 @@ ViewToMain=视图到主窗口
 ;View to main
 Viewing=查看
 ;Viewing
+Vignette=暗角
+;Vignette
 Visible=可见：
 ;Visible:
 VolumeLightNr=体积光编号：
@@ -3579,6 +3651,8 @@ WaitForTheRunningCalculationOr=请等待正在进行的计算，或先停止它�
 ;Wait for the running calculation, or stop it first.
 Walking=行走
 ;Walking
+Warmth=色温
+;Warmth
 Warning=警告
 ;Warning
 WarningLower=警告

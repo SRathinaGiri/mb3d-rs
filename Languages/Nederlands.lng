@@ -34,6 +34,8 @@ AFasterMethodThanBinsearchBut=Een snellere methode dan binair zoeken, maar kan m
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=nog enkele seconden
 ;a few seconds left
+AFineReliefOnTheSurface=Een fijn reliëf op het oppervlak, vast aan de fractal: ruw, steen (ribbels en barsten) of korrel
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=Een map die elke computer van de zwerm kan zien: een NAS-share, een Windows- of Samba-share, een synchronisatiemap
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=Een grond- of wateroppervlak dwars op de X-, Y- of Z-as van de fractal, samen met de fractal berekend: de schaduwen, occlusie, reflecties en het Monte Carlo-licht (niet in MB3D: bewaard na het MB3D-deel van de parameters, dat MB3D negeert)
@@ -622,6 +624,12 @@ ColorStart=Kleur begin
 ;Color start
 Coloring=Kleuring
 ;Coloring
+Colour0Grey1AsIt=Kleur: 0 grijs, 1 zoals het is, 2 twee keer zo kleurrijk
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=Kleurranden
+;Colour fringes
+ColourVariation=Kleurvariatie
+;Colour variation
 ColumnsOfTiles=Kolommen tegels
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Combinatiemethoden:\nMin: Beide fractals zijn zichtbaar, de DE's worden via het minimum gecombineerd\nMax: Alleen overlappende delen, de DE's worden via het maximum gecombineerd\nInv max: DE van de tweede hybride omkeren en combineren als 'Max'\nMin lin: Minimum-combinatie met een lineaire overlapfunctie\nMin nlin: Zoals S1, niet-lineaire functie, vloeiendere overlap\nMix: Eerst F1..FendHybrid1, dan FstartHybrid2..F6 (dIFS) met gewijzigde vector.
@@ -660,6 +668,8 @@ Constants=Constanten:
 ;Constants:
 Continue=Voortzetten
 ;Continue
+Contrast=Contrast
+;Contrast
 ConvertManyM3PFilesToM3I=Veel M3P-bestanden naar M3I converteren
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=Naar het klembord gekopieerd.
@@ -1094,8 +1104,12 @@ ExponentialFunctions={ Exponentiële functies }
 ;{ Exponential functions }
 ExportACubeAsAStack=Een kubus exporteren als een stapel PNG-bestanden
 ;Export a cube as a stack of PNG files
+Exposure=Belichting
+;Exposure
 Exposure025=Belichting:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=Belichting in stops: +1 twee keer zo helder, -1 half zo helder
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=Omgevingsinformatie uit het oorspronkelijke M3I-bestand wordt uitgelezen, even wachten:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ Testen op extreme waarden }
@@ -1132,6 +1146,10 @@ Files=Bestanden
 ;Files
 FilesOfType=Bestands&type:
 ;Files of &type:
+Filmic=Filmisch
+;Filmic
+FilmicToneMappingBrightLightRolls=Filmische tone mapping: fel licht loopt zacht af in plaats van vlak wit te worden
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=Nieuwe afbeeldingen automatisch filteren
 ;Filter new pictures automatically
 FilterNow=Nu filteren
@@ -1140,10 +1158,14 @@ Fine=fijn
 ;fine
 FineTuneThePositionsWithThe=de posities fijn afstellen met de pijlknoppen
 ;fine tune the positions with the arrow buttons
+FinishThePicture=Beeld afwerken
+;Finish the picture
 FinishedRenderingSlices=Renderen van de plakken voltooid.
 ;Finished rendering slices.
 FinishedTracingObject=Traceren van het object voltooid.
 ;Finished tracing object.
+Finishing=Afwerking
+;Finishing
 First4RaysNoisy=eerste 4 stralen (ruis)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=Eerste berekening van deze formulecombinatie: de shaders van de grafische kaart worden gecompileerd (10-30 s, slechts eenmaal - het stuurprogramma bewaart ze). De CPU rekent intussen, de kaart doet mee zodra ze klaar zijn.
@@ -1382,12 +1404,18 @@ Glow=Gloed:
 ;Glow:
 Glow0AndUpTheSurface=Gloed (0 en meer): het oppervlak gloeit in zijn eigen kleur, zonder licht
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=Gloed
+;Glow
+GlowAroundBrightLightStrengthReach=Gloed rond fel licht: sterkte, reikwijdte (een deel van de diagonaal van het beeld) en vanaf welke helderheid het gloeit (0 tot 1 van wit)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=Schuifregelaars koppelen
 ;Glue sliders
 GoToNext=Ga naar volgend
 ;Go to next
 GoneLastSeenSAgo=weg (laatst gezien {} s geleden)
 ;gone (last seen {} s ago)
+Grain=Korrel
+;Grain
 GraphicsCard=Grafische kaart
 ;Graphics card
 GroundPlane=Grondvlak
@@ -1442,6 +1470,8 @@ Hotkeys=Sneltoetsen
 ;Hotkeys
 HowMuchThePlaneReflects0=Hoeveel het vlak reflecteert (0 tot 1): de glanzen, en de spiegeling als de reflecties berekend worden (Nabewerking)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=Hoeveel de kleur van het oppervlak met het reliëf varieert: 0 niet, 1 sterk
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=Hoe sterk de ruis is die wordt verwijderd (1 tot 30, zoals "Denoise DCT" van GIMP).\nHoger verwijdert meer ruis, en meer fijne details.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Hoe dicht de wolken zijn (1: een volle laag laat ongeveer 2 % van het licht door) en hoeveel van de lucht ze bedekken (0 tot 1)
@@ -1712,6 +1742,8 @@ KeyframeListM3k=Keyframelijst (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=Keyframes voor een hele draai rond het midden van het beeld, vanuit het beeld van het hoofdvenster: 8 keyframes in een vloeiende lus (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=Toetsen die een venster vanuit elk venster naar voren halen
 ;Keys that bring a window to the front from any window
 Kind=Soort
@@ -2064,6 +2096,10 @@ MonteCarloRendering2=Monte Carlo-rendering\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=Meer opties: parameters naar hoofdvenster sturen, aanpassen en importeren.
 ;More options: send paras to main, adjust and import.
+MotionBlur=Motion blur:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=Motion blur: het aantal beelden dat per frame gemiddeld wordt, zodat wat beweegt uitsmeert (1 = uit); renderen duurt zoveel keer zo lang
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=Muiswiel
 ;Mousewheel
 Move=Verplaatsen
@@ -2100,6 +2136,10 @@ MutationType=Mutatietype
 ;Mutation type
 N0No255FullTransparency=0: geen, 255: volledige transparantie
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 tot 1: donkerdere hoeken
+;0 to 1: darker corners
+N0To1RedAndBlue=0 tot 1: rode en blauwe randen naar de hoeken toe, zoals een lens ze toont
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: JPEG-kwaliteit\n> 100: maximale bestandsgrootte in kilobytes
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2110,6 +2150,10 @@ N16BitPGM=16-bits PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=16-bits Z-buffer-generator
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 koeler (blauwer) tot 1 warmer (oranjer)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 vlakker tot 1 sterker contrast
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  Volledige grootte, geen anti-aliasing\n2:  2x2 anti-aliasing\n3:  3x3 anti-aliasing
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  geen\n2:  2x2\n3:  3x3
@@ -2294,6 +2338,8 @@ OfLines={} van {} regels
 ;{} of {} lines
 OfUnitsDone={} van {} eenheden klaar
 ;{} of {} units done
+Off=Uit
+;Off
 OffLeftImageIsOnThe=Uit: linker beeld links voor parallel kijken. Aan: rechter beeld links voor kruislings kijken.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=Verschuiving en schaal
@@ -2658,10 +2704,16 @@ ReadingTheHistoryEntries=Geschiedenis lezen... {} items
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=Leest de taalbestanden opnieuw in, nadat u er een hebt bewerkt
 ;Reads the language files again, after you edited one
+Rec=Rec
+;Rec
 RecalculateASelection=\sEen selectie herberekenen
 ;\sRecalculate a Selection
 RecalculatingTheSelection=selectie herberekenen
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight={} keyframes van de vlucht opgenomen
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=Neemt een vlucht op: zolang de knop ingedrukt is, wordt elk nieuw beeld van de navigator (hoogstens twee per seconde) het volgende keyframe van de animatie
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=Rechthoek
 ;Rect
 RectLower=recht.
@@ -2704,6 +2756,8 @@ RelToObject=Rel. t.o.v. object:
 ;Rel. to object:
 RelativeToObject=Relatief t.o.v. object
 ;Relative to object
+Relief=Reliëf
+;Relief
 Reload=Opnieuw laden
 ;Reload
 RemainingFaces10NoReduction=Resterende vlakken (1.0 = geen reductie, 0.0 = maximale reductie = geen resterende vlakken)
@@ -2812,6 +2866,8 @@ RotationY=Rotatie Y:
 ;Rotation Y:
 RotationZ=Rotatie Z:
 ;Rotation Z:
+Rough=Ruw
+;Rough
 RoughImage=ruwe afbeelding
 ;rough image
 Roughness=Ruwheid
@@ -2838,6 +2894,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=Start de hoofdrendering van de afbeelding.
 ;Sart the main rendering of the image.
+Saturation=Verzadiging
+;Saturation
 Saturation0=Verzadiging:   0\s\s
 ;Saturation:   0\s\s
 Save=Opslaan
@@ -3058,6 +3116,8 @@ ShowsMessages=Toont meldingen
 ;Shows messages
 ShrinkThePanel=Het paneel verkleinen
 ;Shrink the panel
+Shutter=Sluiter:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos is 2x sneller dan Sin en Cos apart aanroepen voor dezelfde hoek }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3156,6 +3216,8 @@ StickThisWindowToTheLeft=Dit venster links vastzetten
 ;Stick this window to the left side
 StickThisWindowToTheRight=Dit venster rechts vastzetten
 ;Stick this window to the right side
+Stone=Steen
+;Stone
 Stop=Stop
 ;Stop
 StopBatchRendering=Batchrendering stoppen
@@ -3184,6 +3246,8 @@ Strength2=Sterkte
 ;Strength
 StrengthOfDynamicFog=Sterkte van de dynamische mist.
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=Sterkte, grootte (fractaleenheden) en fijnheid (0.2 glad tot 0.8 korrelig) van het reliëf
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=Rekt de bovenste en onderste delen uit; kan nuttig zijn voor een gewone afbeelding in de optie volledige bol.
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=Subframe-aantal\nvermenigvuldiger:
@@ -3310,6 +3374,8 @@ TheMapOptionsCalculatesXY=De map-opties berekenen x,y-coördinaten uit de betref
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=Het Monte Carlo-venster is aan het renderen: stop het eerst.
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=De sluitertijd van de motion blur: een deel van de tijd tot het volgende frame (0 tot 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=De naam van de nieuwe taal, in die taal (Deutsch, Polski, ...)
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=De nieuwste taak tot nu toe: gerenderde delen, delen in bewerking (met hun voortgang), ontbrekende delen
@@ -3318,6 +3384,8 @@ TheParametersDoNotMatchThe=De parameters passen niet meer bij de onvoltooide ber
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=De afbeelding past niet bij haar berekening: bereken haar opnieuw.
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=De afwerking van het beeld na alle andere passes: belichting, gloed rond fel licht, filmische tone mapping, kleurcorrectie, een vignet en kleurranden
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=De kleur van het vlak (klik om te wijzigen)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=De rotatie wordt uitgevoerd rond het middelpunt (Xmid, Ymid, Zmid)
@@ -3456,6 +3524,8 @@ TurnOnOffTheJuliaMode=Julia-modus in-/uitschakelen
 ;Turn on/off the julia mode
 Turned=Gedraaid:
 ;Turned:
+Turntable=Draaitafel
+;Turntable
 Type=Type:
 ;Type:
 Type2=Type
@@ -3558,6 +3628,8 @@ ViewToMain=Beeld naar hoofd
 ;View to main
 Viewing=Weergave
 ;Viewing
+Vignette=Vignet
+;Vignette
 Visible=Zichtbaar:
 ;Visible:
 VolumeLightNr=Volumelicht nr:
@@ -3578,6 +3650,8 @@ WaitForTheRunningCalculationOr=Wacht op de lopende berekening of stop die eerst.
 ;Wait for the running calculation, or stop it first.
 Walking=Lopen
 ;Walking
+Warmth=Warmte
+;Warmth
 Warning=Waarschuwing
 ;Warning
 WarningLower=waarschuwing

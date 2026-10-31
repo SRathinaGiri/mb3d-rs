@@ -35,6 +35,8 @@ AFasterMethodThanBinsearchBut=طريقة أسرع من البحث الثنائي
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=بقيت ثوانٍ قليلة
 ;a few seconds left
+AFineReliefOnTheSurface=نتوء دقيق على السطح، مثبّت على الكسورية: خشن، حجري (حواف وشقوق) أو حبيبي
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=مجلد يراه كل حاسوب في السرب: مشاركة NAS، أو مشاركة Windows أو Samba، أو مجلد مزامنة
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=سطح أرض أو ماء عمودي على المحور X أو Y أو Z للكسورية، يُحسب مع الكسورية: ظلاله وانسداده وانعكاساته وضوء مونت كارلو (ليس في MB3D: يُحفظ بعد جزء MB3D من المعاملات، الذي يتجاهله MB3D)
@@ -623,6 +625,12 @@ ColorStart=بداية اللون
 ;Color start
 Coloring=التلوين
 ;Coloring
+Colour0Grey1AsIt=اللون: 0 رمادي، 1 كما هو، 2 ضعف الألوان
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=حواف ملونة
+;Colour fringes
+ColourVariation=تنوّع اللون
+;Colour variation
 ColumnsOfTiles=أعمدة البلاطات
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=طرق الدمج:\nMin: الكسوريّان كلاهما ظاهران، دمج قيم DE بالحد الأدنى\nMax: الأجزاء المتداخلة فقط، دمج قيم DE بالحد الأقصى\nInv max: عكس DE للهجين الثاني والدمج بـ'Max'\nMin lin: دمج بالحد الأدنى مع دالة تداخل خطية\nMin nlin: مثل S1، دالة غير خطية، تداخل أنعم\nMix: أولًا F1..FendHybrid1 ثم FstartHybrid2..F6 (dIFS) بمتجه معدّل.
@@ -661,6 +669,8 @@ Constants=الثوابت:
 ;Constants:
 Continue=متابعة
 ;Continue
+Contrast=التباين
+;Contrast
 ConvertManyM3PFilesToM3I=تحويل ملفات M3P كثيرة إلى M3I
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=نُسخ إلى الحافظة.
@@ -1095,8 +1105,12 @@ ExponentialFunctions={ الدوال الأسية }
 ;{ Exponential functions }
 ExportACubeAsAStack=تصدير مكعب في صورة رزمة من ملفات PNG
 ;Export a cube as a stack of PNG files
+Exposure=التعريض
+;Exposure
 Exposure025=التعريض:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=التعريض بالدرجات: +1 ضعف السطوع، -1 نصف السطوع
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=جارٍ استخراج معلومات المحيط من ملف M3I الأصلي، يرجى الانتظار:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ اختبار القيم القصوى }
@@ -1133,6 +1147,10 @@ Files=الملفات
 ;Files
 FilesOfType=نوع الملفات:
 ;Files of &type:
+Filmic=سينمائي
+;Filmic
+FilmicToneMappingBrightLightRolls=تعيين درجات سينمائي: يخفت الضوء الساطع بلطف بدلاً من أن يصير أبيض مسطحاً
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=ترشيح الصور الجديدة تلقائيًا
 ;Filter new pictures automatically
 FilterNow=ترشيح الآن
@@ -1141,10 +1159,14 @@ Fine=دقيق
 ;fine
 FineTuneThePositionsWithThe=اضبط المواضع بدقة بأزرار الأسهم
 ;fine tune the positions with the arrow buttons
+FinishThePicture=إنهاء الصورة
+;Finish the picture
 FinishedRenderingSlices=اكتمل تصيير الشرائح.
 ;Finished rendering slices.
 FinishedTracingObject=اكتمل تتبع الجسم.
 ;Finished tracing object.
+Finishing=الإنهاء
+;Finishing
 First4RaysNoisy=أول 4 أشعة (مشوشة)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=أول حساب لتركيبة الصيغ هذه: تجري ترجمة مظلّلات بطاقة الرسوميات (10-30 ث، مرة واحدة فقط - يحتفظ بها برنامج التشغيل). يحسب CPU في الأثناء، وتنضم البطاقة حين تجهز.
@@ -1383,12 +1405,18 @@ Glow=التوهج:
 ;Glow:
 Glow0AndUpTheSurface=التوهج (0 فأكثر): يتوهج السطح بلونه الخاص، دون ضوء
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=التوهج
+;Glow
+GlowAroundBrightLightStrengthReach=توهج حول الضوء الساطع: القوة، والمدى (جزء من قطر الصورة)، ومن أي سطوع يبدأ التوهج (0 إلى 1 من الأبيض)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=ربط المنزلقات
 ;Glue sliders
 GoToNext=الانتقال إلى التالي
 ;Go to next
 GoneLastSeenSAgo=غائب (شوهد آخر مرة قبل {} ث)
 ;gone (last seen {} s ago)
+Grain=حبيبي
+;Grain
 GraphicsCard=بطاقة الرسوميات
 ;Graphics card
 GroundPlane=مستوى الأرض
@@ -1443,6 +1471,8 @@ Hotkeys=مفاتيح الاختصار
 ;Hotkeys
 HowMuchThePlaneReflects0=مقدار انعكاس المستوى (من 0 إلى 1): لمعانه، ومرآته عند حساب الانعكاسات (المعالجة اللاحقة)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=مقدار تغيّر لون السطح مع النتوء: 0 لا يتغير، 1 بقوة
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=مدى قوة التشويش الذي يُزال (من 1 إلى 30، كما في "Denoise DCT" في GIMP).\nالأعلى يزيل تشويشًا أكثر، وتفاصيل دقيقة أكثر.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=مدى كثافة السحب (1: الطبقة الكاملة تمرر نحو 2 % من الضوء) وكم تغطي من السماء (من 0 إلى 1)
@@ -1713,6 +1743,8 @@ KeyframeListM3k=قائمة الإطارات المفتاحية (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sالإطار المفتاحي\nالبداية:    النهاية:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=إطارات مفتاحية لدورة كاملة حول منتصف المنظر، من منظر النافذة الرئيسية: 8 إطارات مفتاحية في حلقة ناعمة (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=مفاتيح تُحضر نافذة إلى الأمام من أي نافذة
 ;Keys that bring a window to the front from any window
 Kind=النوع
@@ -2065,6 +2097,10 @@ MonteCarloRendering2=تصيير Monte Carlo\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=خيارات أكثر: إرسال المعاملات إلى الرئيسي، والضبط والاستيراد.
 ;More options: send paras to main, adjust and import.
+MotionBlur=ضبابية الحركة:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=ضبابية الحركة: عدد الصور التي يُؤخذ متوسطها لكل إطار، فيتلطخ ما يتحرك (1 = إيقاف)؛ يستغرق الحساب أطول بالعدد نفسه من المرات
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=عجلة الفأرة
 ;Mousewheel
 Move=تحريك
@@ -2101,6 +2137,10 @@ MutationType=نوع الطفرة
 ;Mutation type
 N0No255FullTransparency=0: لا، 255: شفافية كاملة
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 إلى 1: زوايا أغمق
+;0 to 1: darker corners
+N0To1RedAndBlue=0 إلى 1: حواف حمراء وزرقاء نحو الزوايا، كما تظهرها العدسة
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: جودة JPEG\n> 100: أقصى حجم للملف بالكيلوبايت
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2111,6 +2151,10 @@ N16BitPGM=PGM بـ 16 بت
 ;16 Bit PGM
 N16BitZBufferGenerator=مولّد مخزن Z بـ 16 بت
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 أبرد (أزرق) إلى 1 أدفأ (برتقالي)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 أكثر تسطحاً إلى 1 تباين أقوى
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  الحجم الكامل، دون تنعيم الحواف\n2:  تنعيم الحواف 2x2\n3:  تنعيم الحواف 3x3
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  بلا\n2:  2x2\n3:  3x3
@@ -2295,6 +2339,8 @@ OfLines={} من {} أسطر
 ;{} of {} lines
 OfUnitsDone=اكتملت {} من {} وحدات
 ;{} of {} units done
+Off=إيقاف
+;Off
 OffLeftImageIsOnThe=مطفأ: الصورة اليسرى على اليسار للمشاهدة المتوازية. مفعّل: الصورة اليمنى على اليسار للمشاهدة بالعينين المتقاطعتين.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=الإزاحة والمقياس
@@ -2659,10 +2705,16 @@ ReadingTheHistoryEntries=جارٍ قراءة السجل... {} مدخلات
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=يعيد قراءة ملفات اللغة بعد أن تحرر أحدها
 ;Reads the language files again, after you edited one
+Rec=سجّل
+;Rec
 RecalculateASelection=\sإعادة حساب جزء محدد
 ;\sRecalculate a Selection
 RecalculatingTheSelection=جارٍ إعادة حساب الجزء المحدد
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight=سُجّل {} إطاراً مفتاحياً من الرحلة
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=يسجل رحلة: ما دام الزر مضغوطاً، يصبح كل منظر جديد في المستكشف (مرتين في الثانية على الأكثر) الإطار المفتاحي التالي للحركة
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=مستطيل
 ;Rect
 RectLower=مستطيل
@@ -2705,6 +2757,8 @@ RelToObject=نسبةً إلى الجسم:
 ;Rel. to object:
 RelativeToObject=نسبةً إلى الجسم
 ;Relative to object
+Relief=النتوء
+;Relief
 Reload=إعادة التحميل
 ;Reload
 RemainingFaces10NoReduction=الوجوه المتبقية (1.0 = دون تقليل، 0.0 = أقصى تقليل = لا وجوه متبقية )
@@ -2813,6 +2867,8 @@ RotationY=الدوران Y:
 ;Rotation Y:
 RotationZ=الدوران Z:
 ;Rotation Z:
+Rough=خشن
+;Rough
 RoughImage=صورة تقريبية
 ;rough image
 Roughness=الخشونة
@@ -2839,6 +2895,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=بدء التصيير الرئيسي للصورة.
 ;Sart the main rendering of the image.
+Saturation=التشبع
+;Saturation
 Saturation0=التشبع:   0\s\s
 ;Saturation:   0\s\s
 Save=حفظ
@@ -3059,6 +3117,8 @@ ShowsMessages=يعرض الرسائل
 ;Shows messages
 ShrinkThePanel=تقليص اللوحة
 ;Shrink the panel
+Shutter=الغالق:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos أسرع مرتين من استدعاء Sin وCos منفصلتين للزاوية نفسها }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3157,6 +3217,8 @@ StickThisWindowToTheLeft=لصق هذه النافذة بالجانب الأيس�
 ;Stick this window to the left side
 StickThisWindowToTheRight=لصق هذه النافذة بالجانب الأيمن
 ;Stick this window to the right side
+Stone=حجري
+;Stone
 Stop=إيقاف
 ;Stop
 StopBatchRendering=إيقاف التصيير الدفعي
@@ -3185,6 +3247,8 @@ Strength2=الشدة
 ;Strength
 StrengthOfDynamicFog=شدة الضباب الديناميكي.
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=قوة النتوء وحجمه (بوحدات الكسورية) ودقته (0.2 ناعم إلى 0.8 محبب)
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=يمطّ الجزأين العلوي والسفلي، قد يفيد لصورة عادية في خيار الكرة الكاملة.
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=مضاعف عدد\nالإطارات الفرعية:
@@ -3311,6 +3375,8 @@ TheMapOptionsCalculatesXY=خيارات الخريطة تحسب إحداثيات 
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=نافذة Monte Carlo تصيّر: أوقفها أولًا.
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=زمن غالق ضبابية الحركة: جزء من الزمن حتى الإطار التالي (0 إلى 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=اسم اللغة الجديدة، بتلك اللغة (Deutsch، Polski، ...)
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=أحدث مهمة حتى الآن: الأجزاء المُصيَّرة، والأجزاء قيد التنفيذ (مع تقدمها)، والأجزاء الناقصة
@@ -3319,6 +3385,8 @@ TheParametersDoNotMatchThe=لم تعد المعاملات تطابق الحسا�
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=الصورة لا تطابق حسابها: احسبها من جديد.
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=إنهاء الصورة بعد كل المراحل الأخرى: التعريض، التوهج حول الضوء الساطع، تعيين الدرجات السينمائي، تدريج الألوان، تظليل الحواف والحواف الملونة
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=لون المستوى (انقر للتغيير)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=يجري الدوران حول نقطة المنتصف (Xmid، Ymid، Zmid)
@@ -3457,6 +3525,8 @@ TurnOnOffTheJuliaMode=تشغيل/إيقاف وضع جوليا
 ;Turn on/off the julia mode
 Turned=مُدار:
 ;Turned:
+Turntable=دوران كامل
+;Turntable
 Type=النوع:
 ;Type:
 Type2=النوع
@@ -3559,6 +3629,8 @@ ViewToMain=المنظر إلى الرئيسي
 ;View to main
 Viewing=المشاهدة
 ;Viewing
+Vignette=تظليل الحواف
+;Vignette
 Visible=مرئي:
 ;Visible:
 VolumeLightNr=رقم الضوء الحجمي:
@@ -3579,6 +3651,8 @@ WaitForTheRunningCalculationOr=انتظر الحساب الجاري، أو أو�
 ;Wait for the running calculation, or stop it first.
 Walking=المشي
 ;Walking
+Warmth=الدفء
+;Warmth
 Warning=تحذير
 ;Warning
 WarningLower=تحذير

@@ -777,6 +777,62 @@ können Sie selbst weiter prüfen:
   bevor etwas gerendert wird. Eine dritte Interpolation, *Catmull-Rom* (nicht in MB3D), ist weich und läuft durch jeden Keyframe (`mb3d animate --catmull-rom`).
 
   </details>
+* **Das Bild veredeln**: Belichtung, ein Glühen um helles Licht, filmisches
+  Tone Mapping, Kontrast, Sättigung, Wärme, eine Vignette und die Farbsäume
+  eines Objektivs, als letzter Durchgang über das ganze Bild.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Ein Tempel im Morgengrauen, wie berechnet und veredelt: Glühen um die hellen Säulen, weichere Lichter, wärmeres Licht, dunklere Ecken"></a>
+
+  <details><summary>Mehr lesen</summary>
+
+  Fenster *Nachbearbeitung*, Abschnitt *Veredelung*: *Bild veredeln* ankreuzen,
+  die Belichtung in Blendenstufen einstellen, *Filmisch* (helles Licht läuft
+  weich aus, statt flach weiß zu werden), das Glühen (Stärke, Reichweite als
+  Teil der Bilddiagonale und ab welcher Helligkeit es glüht), Kontrast,
+  Sättigung, Wärme, Vignette und Farbsäume, dann *Jetzt malen*. Das Malen läuft
+  dann in Gleitkomma, das Licht über Weiß bleibt also bis zum Tone Mapping
+  erhalten. Es gilt für jedes Bild, jedes Animationsbild und jedes
+  Monte-Carlo-Rendering (nach dem Rauschfilter); ausgeschaltet sind die Bilder
+  genau wie vorher. Szenenschlüssel `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. In einem
+  großen Rendering aus einzelnen Kachelbildern glüht jede Kachel für sich.
+
+  </details>
+* **Ein feines Relief auf der Oberfläche**: rau, Stein (Grate und Risse) oder
+  Körnung, feiner als die Details der Berechnung, mit einer Farbvariation.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Ein glatter Teil eines Mandelbulb, und derselbe mit Steinrelief und Farbvariation"></a>
+
+  <details><summary>Mehr lesen</summary>
+
+  Fenster *Nachbearbeitung*, Abschnitt *Material*: *Relief* mit seiner Stärke,
+  der Größe seiner Formen (in den Einheiten des Fraktals, es bleibt also auf
+  der Oberfläche, wenn sich die Kamera bewegt) und seiner Feinheit, und
+  *Farbvariation*. Es neigt die Oberfläche dort, wo das Licht berechnet wird,
+  Schattierung, Glanzlichter, Spiegelungen und Monte Carlo sehen es also; die
+  Form selbst ändert sich nicht (der Umriss bleibt glatt). Nicht auf der
+  Bodenebene. Szenenschlüssel `detail = stone, 1.5, 0.12, 0.5` (Art, Stärke,
+  Größe, Feinheit) und `detail_color`.
+
+  </details>
+* **Drehteller, aufgezeichnete Flüge und Motion Blur** für Animationen.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Ein Bild eines schnellen Drehtellers, ohne und mit Motion Blur"></a>
+
+  <details><summary>Mehr lesen</summary>
+
+  *Animationseditor* > *Drehteller*: acht Keyframes einer ganzen Drehung um die
+  Mitte der Ansicht des Hauptfensters, eine weiche Schleife (`mb3d animate
+  scene.m3p --orbit 8 --frames 25`). *Navigator* > *Aufn*: solange die
+  Schaltfläche gedrückt ist, wird jede neue Ansicht des Flugs (höchstens zwei
+  pro Sekunde) zum nächsten Keyframe; mit Catmull-Rom läuft die Animation
+  durch alle. *Motion Blur* im Animationseditor: jedes Bild ist der
+  Durchschnitt so vieler Bilder innerhalb der *Verschluss*-Zeit (ein Teil der
+  Zeit bis zum nächsten Bild), was sich bewegt, verwischt also; es dauert
+  entsprechend so viel länger (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

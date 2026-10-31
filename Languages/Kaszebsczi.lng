@@ -34,6 +34,8 @@ AFasterMethodThanBinsearchBut=Chùtszô metoda jak binarné szëkanié, le mòż
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=òstało pôrã sekùnd
 ;a few seconds left
+AFineReliefOnTheSurface=Drobnô rzezba na pòwiérzchni, przëczepionô do fraktala: szorstkô, kamiń (grzbietë ë pãkniãca) abò zôrno
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 AFolderEveryComputerOfThe=Katalog, chtëren widzy kòżdi kòmpùtr roju: ùdzél NAS, ùdzél Windows abò Samba, synchronizowóny katalog
 ;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 AGroundOrWaterSurfaceAcross=Pòwierzchniô zemi abò wòdë na sztót òsë X, Y abò Z fraktala, rechòwónô razã z fraktalã: ji cenie, òklùzjô, òdbicé ë swiatło Monte Carlo (nie je w MB3D: zapisóné za dzélã parametrów MB3D, chtërnégò MB3D nie czëtô)
@@ -622,6 +624,12 @@ ColorStart=Zôczątk farwë
 ;Color start
 Coloring=Farwienié
 ;Coloring
+Colour0Grey1AsIt=Farwa: 0 szarô, 1 tak jak je, 2 dwa razë barżi farwny
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=Farwné òbrąbczi
+;Colour fringes
+ColourVariation=Zmiana farwë
+;Colour variation
 ColumnsOfTiles=Kòlumnë kachlów
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Metodë łączeniô:\nMin: Òba fraktale są widzałé, minimalné łączenié DE\nMax: Le nakłôdającé sã dzéle, maksymalné łączenié DE\nInv max: Òdwrôcô DE drëdżégò hibridu i łączi 'Max'\nMin lin: Minimalné łączenié z liniową fùnkcją nakłôdaniô\nMin nlin: Jak S1, nieliniowô fùnkcjô, gładszé nakłôdanié\nMix: Nôprzód F1..FendHybrid1, tej FstartHybrid2..F6 (dIFS) ze zmienionym wektorã.
@@ -660,6 +668,8 @@ Constants=Stałé:
 ;Constants:
 Continue=Kòntinuëj
 ;Continue
+Contrast=Kòntrast
+;Contrast
 ConvertManyM3PFilesToM3I=Kònwertuje wiele lopków M3P na M3I
 ;Convert many M3P files to M3I
 CopiedToTheClipboard=Skòpérowóné do schówkù.
@@ -1094,8 +1104,12 @@ ExponentialFunctions={ Ekspònencjalné fùnkcje }
 ;{ Exponential functions }
 ExportACubeAsAStack=Ekspòrtuje kòstkã jakò stos lopków PNG
 ;Export a cube as a stack of PNG files
+Exposure=Ekspozycjô
+;Exposure
 Exposure025=Ekspòzycjô:  0.25
 ;Exposure:  0.25
+ExposureInStops1TwiceAs=Ekspozycjô w stopniach: +1 dwa razë jasniészi, -1 pòł tak jasny
+;Exposure in stops: +1 twice as bright, -1 half as bright
 ExtractingAmbientInformationFromTheOriginal=Wëdobiwanié wëdowiédzë ò òtoczenim z òriginalnégò lopka M3I, proszã żdac:
 ;Extracting ambient information from the original M3I file, please wait:
 ExtremeTesting={ Testowanié ekstremalnëch wôrtnotów }
@@ -1132,6 +1146,10 @@ Files=Lopczi
 ;Files
 FilesOfType=Lopczi ôr&tu:
 ;Files of &type:
+Filmic=Filmòwé
+;Filmic
+FilmicToneMappingBrightLightRolls=Filmòwé mapòwanié tónów: jasné swiatło miãkkò gasnie, a nie stôwô sã płaską bielą
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
 FilterNewPicturesAutomatically=Filtrëj nowé òbrôzczi aùtomatno
 ;Filter new pictures automatically
 FilterNow=Filtrëj terô
@@ -1140,10 +1158,14 @@ Fine=dokł.
 ;fine
 FineTuneThePositionsWithThe=dokładno nastôw pòzycje knąpama ze strzélkama
 ;fine tune the positions with the arrow buttons
+FinishThePicture=Wëkùńczë òbrôzk
+;Finish the picture
 FinishedRenderingSlices=Renderowanié skrôwków skùńczoné.
 ;Finished rendering slices.
 FinishedTracingObject=Sledzenié òbiektu skùńczoné.
 ;Finished tracing object.
+Finishing=Wëkùńczenié
+;Finishing
 First4RaysNoisy=pierszé 4 parmienie (z szumã)
 ;first 4 rays (noisy)
 FirstCalculationOfThisFormulaCombination=Pierszé rechòwanié ti kòmbinacji fòrmùłów: shadere graficzny kôrtë są kòmpilowóné (10-30 s, leno rôz - drajwer je trzëmô). Westrzód tegò rechùje CPU, kôrta dołącziwô, czej òne bãdą gòtowé.
@@ -1382,12 +1404,18 @@ Glow=Pòswiata:
 ;Glow:
 Glow0AndUpTheSurface=Pòswiata (0 ë wicy): pòwierzchniô swiecy swòją farwą, bez swiatła
 ;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=Pòswiata
+;Glow
+GlowAroundBrightLightStrengthReach=Pòswiata wkół jasnégò swiatła: mòc, zasãg (dzél przekątny òbrôzka) ë òd chtërny jasnotë swiécy (0 do 1 bieli)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 GlueSliders=Sklej suwaczi
 ;Glue sliders
 GoToNext=Biéj do nastãpny
 ;Go to next
 GoneLastSeenSAgo=felëje (slédno widzóny {} s temù)
 ;gone (last seen {} s ago)
+Grain=Zôrno
+;Grain
 GraphicsCard=Graficznô karta
 ;Graphics card
 GroundPlane=Zemia
@@ -1442,6 +1470,8 @@ Hotkeys=Skrótë
 ;Hotkeys
 HowMuchThePlaneReflects0=Jak mòckò płaszczëzna òdbijô (òd 0 do 1): ji pòłësczi ë zdrzadło, czej są rechòwóné òdbicé (Kùńcowô òbróbka)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=Jak wiele farwa pòwiérzchni zmieniô sã z rzezbą: 0 wcale, 1 mòcno
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
 HowStrongTheNoiseIsThat=Jak mòcny je szëm, chtëren je ùsëwóny (1 do 30, jak "Denoise DCT" w GIMP).\nWëższé ùsëwô wicy szëmù, a téż wicy drobnëch detalów.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Jak gãsté są chmùrë (1: pełnô warstwa przepùszczô kòl 2 % swiatła) ë jak wiele nieba pòkriwają (òd 0 do 1)
@@ -1712,6 +1742,8 @@ KeyframeListM3k=Lësta kluczowëch klatków (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKluczowô klatka\npòczątk:  kùńc:
 ;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=Kluczowé klatczi dlô całégò òbrotu wkół westrzódka pòzdrzatkù, òd pòzdrzatkù głównégò òkna: 8 kluczowëch klatków w gładczi pãtlë (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 KeysThatBringAWindowTo=Klawisze, co wëcygają òkno na wiéch z kòżdégò òkna
 ;Keys that bring a window to the front from any window
 Kind=Ôrt
@@ -2064,6 +2096,10 @@ MonteCarloRendering2=Renderowanié Monte Carlo\s
 ;Monte carlo rendering\s
 MoreOptionsSendParasToMain=Wicy òptacjów: sélôj parametrë do głównégò òkna, nastawi ë impòrtëj.
 ;More options: send paras to main, adjust and import.
+MotionBlur=Rozmëcé rëchù:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=Rozmëcé rëchù: wielëna òbrôzków ùsrzédnionëch na klatkã, żebë to, co sã rëszô, sã rozmazywało (1 = wëł.); renderowanié trwô tëli razë dłëżi
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
 Mousewheel=Kółkò mëszë
 ;Mousewheel
 Move=Przesuwanié
@@ -2100,6 +2136,10 @@ MutationType=Ôrt mùtacji
 ;Mutation type
 N0No255FullTransparency=0: bez, 255: Całô przezérnosc
 ;0: no, 255: Full transparency
+N0To1DarkerCorners=0 do 1: cemniészé nórtë
+;0 to 1: darker corners
+N0To1RedAndBlue=0 do 1: czerwòné ë mòdré òbrąbczi kù nórtóm, jak je pòkazywô òbiektiw
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
 N1100JPEGQuality100Maximal=1..100: jakòsc JPEG\n> 100: maksymalnô wiôlgòsc lopka w kilobajtach
 ;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 N12Aa=1:2  aa
@@ -2110,6 +2150,10 @@ N16BitPGM=16 Bit PGM
 ;16 Bit PGM
 N16BitZBufferGenerator=Generator 16-bitowégò Z-bufora
 ;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 chłodniészé (barżi mòdré) do 1 cepłészé (barżi òranżowé)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 płaszczészé do 1 mòcniészi kòntrast
+;-1 flatter to 1 stronger contrast
 N1FullSizeNoAntiAliasing=1:  Całô wiôlgòsc, bez anti-aliasingù\n2:  anti-aliasing 2x2\n3:  anti-aliasing 3x3
 ;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 N1None22x233x3=1:  nick\n2:  2x2\n3:  3x3
@@ -2294,6 +2338,8 @@ OfLines={} z {} régów
 ;{} of {} lines
 OfUnitsDone={} z {} jednostków gòtowé
 ;{} of {} units done
+Off=Wëł.
+;Off
 OffLeftImageIsOnThe=Wëł.: lewi òbrôzk je z lewi starnë dlô równoległégò zdrzeniô. Wł.: prawi òbrôzk je z lewi starnë dlô zdrzeniô na krziż.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 OffsetAndScale=Przesëniãcé i skala
@@ -2658,10 +2704,16 @@ ReadingTheHistoryEntries=Czëtanié historii... {} wpisów
 ;Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=Czëtô lopczi jãzëka znowa, pò zmianie jednégò z nich
 ;Reads the language files again, after you edited one
+Rec=Nagr
+;Rec
 RecalculateASelection=\sWërechùj wëbiér na nowò
 ;\sRecalculate a Selection
 RecalculatingTheSelection=pònowné rechòwanié wëbiérkù
 ;recalculating the selection
+RecordedSKeyframesOfTheFlight=Nagróné {} kluczowëch klatków lotu
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=Nagrôwô lot: pòczi knąpa je wcësniãtô, kòżdi nowi pòzdrzatk Nawigatora (nôwiãcy dwa na sekùndã) stôwô sã nastãpną kluczową klatką animacje
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
 Rect=Prostokąt
 ;Rect
 RectLower=rekt.
@@ -2704,6 +2756,8 @@ RelToObject=Wzgl. òbiektu:
 ;Rel. to object:
 RelativeToObject=Wzglãdno òbiektu
 ;Relative to object
+Relief=Rzezba
+;Relief
 Reload=Wczëtôj znowa
 ;Reload
 RemainingFaces10NoReduction=Òstałé scanë (1.0 = bez redukcji, 0.0 = maks. redukcjô = bez òstałëch scanów )
@@ -2812,6 +2866,8 @@ RotationY=Òbrót Y:
 ;Rotation Y:
 RotationZ=Òbrót Z:
 ;Rotation Z:
+Rough=Szorstkô
+;Rough
 RoughImage=zgrëbny òbrôzk
 ;rough image
 Roughness=Chropòwatosc
@@ -2838,6 +2894,8 @@ SSAO24r=SSAO24r
 ;SSAO24r
 SartTheMainRenderingOfThe=Zacznij przédné renderowanié òbrôzka.
 ;Sart the main rendering of the image.
+Saturation=Nasëcenié
+;Saturation
 Saturation0=Nasëcenié:   0\s\s
 ;Saturation:   0\s\s
 Save=Zapiszë
@@ -3058,6 +3116,8 @@ ShowsMessages=Pòkazywô wiadła
 ;Shows messages
 ShrinkThePanel=Zmniészë panel
 ;Shrink the panel
+Shutter=Migawka:
+;Shutter:
 SinCosIs2xFasterThanCalling={ SinCos je 2x chùtszi jak òsóbné wòłanié Sin i Cos dlô tegò samégò nórta }
 ;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 Single=Single
@@ -3156,6 +3216,8 @@ StickThisWindowToTheLeft=Przëlepi to òkno do lewi starnë
 ;Stick this window to the left side
 StickThisWindowToTheRight=Przëlepi to òkno do prawi starnë
 ;Stick this window to the right side
+Stone=Kamiń
+;Stone
 Stop=Stop
 ;Stop
 StopBatchRendering=Zatrzëmôj serijné renderowanié
@@ -3184,6 +3246,8 @@ Strength2=Mòc
 ;Strength
 StrengthOfDynamicFog=Mòc dinamiczny dôczi.
 ;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=Mòc, wiôlgòsc (jednotczi fraktala) ë drobnosc (0.2 gładkò do 0.8 zôrnisto) rzezbë
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
 StretchesUpperAndLowerPartsMaybe=Rozcygô górné ë dólné partie, mòże przëdatné dlô zwëczajnégò òbrôzka w òptacji fùl kùlë.
 ;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 SubframeCountMultiplicator=Mnożnik lëczbë\npòdklatków:
@@ -3310,6 +3374,8 @@ TheMapOptionsCalculatesXY=Òpcje mapë rechùją kòòrdinatë x,y z òsoblëwé
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMonteCarloWindowIsRendering=Òkno Monte Carlo renderëje: nôprzód je zatrzëmôj.
 ;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=Czas migawczi rozmëcô rëchù: dzél czasu do nastãpny klatczi (0 do 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
 TheNameOfTheNewLanguage=Miono nowégò jãzëka, w tim jãzëkù (Deutsch, Polski, ...)
 ;The name of the new language, in that language (Deutsch, Polski, ...)
 TheNewestJobSoFarRendered=Nônowszô robòta donëchczôs: wërenderowóné dzélë, dzélë w robòce (z jich pòstãpã), felëjącé dzélë
@@ -3318,6 +3384,8 @@ TheParametersDoNotMatchThe=Parametrë ju nie pasëją do nieskùńczonégò rech
 ;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
 ThePictureDoesNotMatchIts=Òbrôzk nie pasëje do swòjégò rechòwaniô: wërechùj gò znowa.
 ;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=Wëkùńczenié òbrôzka pò wszëtczich jinszich przebiegach: ekspozycjô, pòswiata wkół jasnégò swiatła, filmòwé mapòwanié tónów, kòrekcjô farwów, winieta ë farwné òbrąbczi
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
 ThePlaneSColourClickTo=Farwa płaszczëznë (klëknij, żebë zmienic)
 ;The plane's colour (click to change)
 TheRotationIsPerformedAroundThe=Òbrôcanié je wëkònywóné wkół strzódka (Xmid, Ymid, Zmid)
@@ -3456,6 +3524,8 @@ TurnOnOffTheJuliaMode=Włączô/wëłączô trib Julia
 ;Turn on/off the julia mode
 Turned=Òbrócony:
 ;Turned:
+Turntable=Òbrotnica
+;Turntable
 Type=Ôrt:
 ;Type:
 Type2=Ôrt
@@ -3558,6 +3628,8 @@ ViewToMain=Pòzdrzatk do przédnégò
 ;View to main
 Viewing=Òbzéranié
 ;Viewing
+Vignette=Winieta
+;Vignette
 Visible=Widzawny:
 ;Visible:
 VolumeLightNr=Nr wòlumetricznégò widu:
@@ -3578,6 +3650,8 @@ WaitForTheRunningCalculationOr=Żdżë na biéżné rechòwanié abò je nôprz�
 ;Wait for the running calculation, or stop it first.
 Walking=Chòdzenié
 ;Walking
+Warmth=Cepło
+;Warmth
 Warning=Bôczënk
 ;Warning
 WarningLower=bôczënk

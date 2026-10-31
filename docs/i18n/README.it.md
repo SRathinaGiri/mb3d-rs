@@ -784,6 +784,65 @@ permettono di verificare ulteriormente da solo:
   chiave, e la curva lo mostra prima di qualsiasi render. Una terza interpolazione, *Catmull-Rom* (non in MB3D), è morbida e passa per ogni fotogramma chiave (`mb3d animate --catmull-rom`).
 
   </details>
+* **Rifinire l'immagine**: esposizione, un bagliore attorno alla luce intensa,
+  tone mapping filmico, contrasto, saturazione, calore, una vignettatura e le
+  frange di colore di un obiettivo, come ultimo passaggio su tutta l'immagine.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Un tempio all'alba come calcolato, e rifinito: bagliore attorno ai pilastri chiari, luci più morbide, luce più calda, angoli più scuri"></a>
+
+  <details><summary>Per saperne di più</summary>
+
+  Finestra *Postproduzione*, sezione *Rifinitura*: spuntate *Rifinisci
+  l'immagine*, impostate l'esposizione in stop, *Filmico* (la luce intensa si
+  attenua dolcemente invece di diventare un bianco piatto), il bagliore
+  (intensità, portata come parte della diagonale dell'immagine e da quale
+  luminosità brilla), contrasto, saturazione, calore, vignettatura e frange di
+  colore, poi *Dipingi ora*. La pittura avviene allora in virgola mobile, così
+  la luce sopra il bianco è conservata fino al tone mapping. Vale per ogni
+  immagine, ogni fotogramma di animazione e ogni render Monte Carlo (dopo il
+  filtro antirumore); disattivato, le immagini sono esattamente come prima.
+  Chiavi di scena `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. In un Render
+  grande fatto di immagini di riquadri separate ogni riquadro brilla per conto
+  suo.
+
+  </details>
+* **Un rilievo fine sulla superficie**: ruvido, pietra (creste e crepe) o
+  grana, più fine del dettaglio del calcolo, con una variazione di colore.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Una parte liscia di un Mandelbulb, e la stessa con il rilievo pietra e la variazione di colore"></a>
+
+  <details><summary>Per saperne di più</summary>
+
+  Finestra *Postproduzione*, sezione *Materiale*: *Rilievo* con la sua
+  intensità, la dimensione delle sue forme (nelle unità del frattale, così
+  resta sulla superficie quando la camera si muove) e la sua finezza, e
+  *Variaz. colore*. Inclina la superficie dove si calcola la luce, così
+  l'ombreggiatura, le luci speculari, i riflessi e Monte Carlo lo vedono; la
+  forma stessa non cambia (il contorno resta liscio). Non sul piano del suolo.
+  Chiavi di scena `detail = stone, 1.5, 0.12, 0.5` (tipo, intensità,
+  dimensione, finezza) e `detail_color`.
+
+  </details>
+* **Piatti girevoli, voli registrati e mosso** per le animazioni.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Un fotogramma di un piatto girevole veloce, senza e con il mosso"></a>
+
+  <details><summary>Per saperne di più</summary>
+
+  *Creazione animazioni* > *Piatto girevole*: otto fotogrammi chiave di un
+  giro intero attorno al centro della vista della finestra principale, un
+  ciclo morbido (`mb3d animate scene.m3p --orbit 8 --frames 25`).
+  *Navigatore* > *Reg*: finché il pulsante è premuto, ogni nuova vista del
+  volo (al massimo due al secondo) diventa il fotogramma chiave successivo;
+  con Catmull-Rom l'animazione passa per tutti. *Mosso* in Creazione
+  animazioni: ogni fotogramma è la media di altrettante immagini entro il
+  tempo dell'*Otturatore* (una parte del tempo fino al fotogramma successivo),
+  così ciò che si muove si sfuma; richiede altrettante volte più tempo
+  (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

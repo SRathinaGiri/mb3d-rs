@@ -1743,7 +1743,7 @@ KeyframeListM3k=Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;AnimationForm.Label10.Caption
 KeyframesForOneWholeTurnAround=Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
-;not used
+;AnimationForm.OrbitBtn.Hint
 KeysThatBringAWindowTo=Keys that bring a window to the front from any window
 ;Mand3DForm.HotkeysBtn.Hint
 Kind=Kind
@@ -2097,9 +2097,9 @@ MonteCarloRendering2=Monte carlo rendering\s
 MoreOptionsSendParasToMain=More options: send paras to main, adjust and import.
 ;MCForm.Label3.Caption, MCForm.Label25.Caption
 MotionBlur=Motion blur:
-;not used
+;AnimationForm.BlurLbl.Caption
 MotionBlurThePicturesAveragedFor=Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
-;not used
+;AnimationForm.BlurEdit.Hint
 Mousewheel=Mousewheel
 ;FNavigator.Label18.Caption
 Move=Move
@@ -2705,15 +2705,15 @@ ReadingTheHistoryEntries=Reading the history... {} entries
 ReadsTheLanguageFilesAgainAfter=Reads the language files again, after you edited one
 ;LanguageFrm.ReloadBtn.Hint
 Rec=Rec
-;not used
+;FNavigator.RecordBtn.Caption
 RecalculateASelection=\sRecalculate a Selection
 ;PostProForm.RecalcSectionBtn.Caption
 RecalculatingTheSelection=recalculating the selection
 ;the program
 RecordedSKeyframesOfTheFlight=Recorded {} keyframes of the flight
-;not used
+;the program
 RecordsAFlightWhileTheButton=Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
-;not used
+;FNavigator.RecordBtn.Hint
 Rect=Rect
 ;Mand3DForm.ShapeBox1.Caption
 RectLower=rect.
@@ -3117,7 +3117,7 @@ ShowsMessages=Shows messages
 ShrinkThePanel=Shrink the panel
 ;LightAdjustForm.SpeedButton31.Hint
 Shutter=Shutter:
-;not used
+;AnimationForm.ShutterLbl.Caption
 SinCosIs2xFasterThanCalling={ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 Single=Single
@@ -3375,7 +3375,7 @@ TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the sp
 TheMonteCarloWindowIsRendering=The Monte Carlo window is rendering: stop it first.
 ;the program
 TheMotionBlurSShutterTime=The motion blur's shutter time: a part of the time to the next frame (0 to 1)
-;not used
+;AnimationForm.ShutterEdit.Hint
 TheNameOfTheNewLanguage=The name of the new language, in that language (Deutsch, Polski, ...)
 ;LanguageFrm.NameEdit.Hint
 TheNewestJobSoFarRendered=The newest job so far: rendered parts, parts under way (with their progress), missing parts
@@ -3525,7 +3525,7 @@ TurnOnOffTheJuliaMode=Turn on/off the julia mode
 Turned=Turned:
 ;FormulaGUIForm.Part2TurnLbl.Caption
 Turntable=Turntable
-;not used
+;AnimationForm.OrbitBtn.Caption
 Type=Type:
 ;ParamValueEditFrm.Label1.Caption
 Type2=Type

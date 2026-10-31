@@ -482,6 +482,52 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
   曲线在渲染之前就显示出这一点。 第三种插值 *Catmull-Rom* (MB3D 中没有) 平滑且经过每个关键帧 (`mb3d animate --catmull-rom`)。
 
   </details>
+* **图片修饰**：曝光、明亮光线周围的发光、胶片色调映射、对比度、饱和度、冷暖、
+  暗角和镜头的色边，作为整张图片的最后一道处理。
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="黎明时的神殿，计算出的原样和修饰后的样子：明亮柱子周围的发光、更柔和的高光、更暖的光、更暗的角落"></a>
+
+  <details><summary>了解更多</summary>
+
+  *后期处理* 窗口的 *修饰* 部分：勾选 *图片修饰*，设置曝光 (以档为单位)、*胶片*
+  (明亮的光柔和地过渡，而不是变成一片平白)、发光 (强度、以图片对角线的比例表示
+  的范围，以及从哪个亮度开始发光)、对比度、饱和度、冷暖、暗角和色边，然后
+  *立即绘制*。此时绘制以浮点数进行，所以超过白色的光一直保留到色调映射。它适用于
+  每张图片、动画帧和蒙特卡罗渲染 (在降噪滤镜之后)；关闭时图片与以前完全相同。
+  场景键 `finish_exposure`、`finish_tonemap = filmic`、
+  `glow = strength, radius, threshold`、`finish_contrast`、
+  `finish_saturation`、`finish_warmth`、`vignette`、`chromatic`。在由单独的
+  分块图片组成的大型渲染中，每个分块各自发光。
+
+  </details>
+* **表面的细微起伏**：粗糙、石头 (棱脊和裂缝) 或颗粒，比计算的细节更细，并带有
+  颜色变化。
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Mandelbulb 的一处光滑部分，以及加上石头起伏和颜色变化的同一部分"></a>
+
+  <details><summary>了解更多</summary>
+
+  *后期处理* 窗口的 *材质* 部分：*起伏* 及其强度、纹理的大小 (以分形的单位计，
+  所以相机移动时它仍附着在表面上) 和精细度，以及 *颜色变化*。它在计算光照的地方
+  倾斜表面，因此明暗、高光、反射和蒙特卡罗都能看到它；形状本身不变 (轮廓保持
+  光滑)。不作用于地平面。场景键 `detail = stone, 1.5, 0.12, 0.5` (种类、强度、
+  大小、精细度) 和 `detail_color`。
+
+  </details>
+* **转盘、录制的飞行和运动模糊**，用于动画。
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="快速转盘动画的一帧，无运动模糊和有运动模糊"></a>
+
+  <details><summary>了解更多</summary>
+
+  *动画制作器* > *转盘*：围绕主窗口视图中心整整一圈的八个关键帧，平滑循环
+  (`mb3d animate scene.m3p --orbit 8 --frames 25`)。*导航器* > *录*：按钮按下
+  期间，飞行中的每个新视图 (每秒最多两次) 都成为下一个关键帧；使用 Catmull-Rom
+  时动画会经过所有这些关键帧。动画制作器中的 *运动模糊*：每一帧是 *快门* 时间
+  (到下一帧的时间的一部分) 内这么多张图片的平均值，所以移动的东西会被拖影；
+  耗时也是这么多倍 (`mb3d animate --motion-blur 8,0.5`)。
+
+  </details>
 
 <a id="download"></a>
 

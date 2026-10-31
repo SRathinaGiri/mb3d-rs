@@ -802,6 +802,66 @@ Voici de quoi vérifier plus loin par vous-même :
   et la courbe le montre avant tout rendu. Une troisième interpolation, *Catmull-Rom* (pas dans MB3D), est douce et passe par chaque image clé (`mb3d animate --catmull-rom`).
 
   </details>
+* **Finaliser l'image** : exposition, une lueur autour de la lumière vive, un
+  tone mapping filmique, contraste, saturation, chaleur, un vignetage et les
+  franges colorées d'un objectif, comme dernière passe sur toute l'image.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Un temple à l'aube tel que calculé, et finalisé : lueur autour des piliers clairs, hautes lumières plus douces, lumière plus chaude, coins plus sombres"></a>
+
+  <details><summary>En savoir plus</summary>
+
+  Fenêtre *Post-traitement*, section *Finition* : cochez *Finaliser l'image*,
+  réglez l'exposition en diaphragmes, *Filmique* (la lumière vive s'atténue
+  doucement au lieu de devenir d'un blanc plat), la lueur (intensité, portée
+  en part de la diagonale de l'image, et à partir de quelle luminosité elle
+  brille), le contraste, la saturation, la chaleur, le vignetage et les franges
+  colorées, puis *Peindre*. La peinture se fait alors en virgule flottante, la
+  lumière au-dessus du blanc est donc gardée jusqu'au tone mapping. Cela
+  s'applique à chaque image, chaque image d'animation et chaque rendu
+  Monte-Carlo (après le filtre de bruit) ; désactivé, les images sont
+  exactement comme avant. Clés de scène `finish_exposure`,
+  `finish_tonemap = filmic`, `glow = strength, radius, threshold`,
+  `finish_contrast`, `finish_saturation`, `finish_warmth`, `vignette`,
+  `chromatic`. Dans un Grand rendu fait d'images de tuiles séparées, chaque
+  tuile brille pour elle-même.
+
+  </details>
+* **Un relief fin sur la surface** : rugueux, pierre (arêtes et fissures) ou
+  grain, plus fin que le détail du calcul, avec une variation de couleur.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Une partie lisse d'un Mandelbulb, et la même avec le relief pierre et la variation de couleur"></a>
+
+  <details><summary>En savoir plus</summary>
+
+  Fenêtre *Post-traitement*, section *Matériau* : *Relief* avec son intensité,
+  la taille de ses formes (dans les unités de la fractale, il reste donc sur la
+  surface quand la caméra bouge) et sa finesse, et *Var. couleur*. Il incline
+  la surface là où la lumière est calculée, si bien que l'ombrage, les
+  reflets spéculaires, les reflets et Monte-Carlo le voient tous ; la forme
+  elle-même ne change pas (le contour reste lisse). Pas sur le sol. Clés de
+  scène `detail = stone, 1.5, 0.12, 0.5` (type, intensité, taille, finesse) et
+  `detail_color`.
+
+  </details>
+* **Plateaux tournants, vols enregistrés et flou de bougé** pour les
+  animations.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Une image d'un plateau tournant rapide, sans et avec flou de bougé"></a>
+
+  <details><summary>En savoir plus</summary>
+
+  *Créateur d'animation* > *Plateau tournant* : huit images clés d'un tour
+  complet autour du centre de la vue de la fenêtre principale, une boucle
+  douce (`mb3d animate scene.m3p --orbit 8 --frames 25`). *Navigateur* >
+  *Enr* : tant que le bouton est enfoncé, chaque nouvelle vue du vol (au plus
+  deux par seconde) devient l'image clé suivante ; avec Catmull-Rom,
+  l'animation passe par toutes. *Flou de bougé* dans le Créateur d'animation :
+  chaque image est la moyenne d'autant d'images prises pendant le temps
+  d'*Obturateur* (une part du temps jusqu'à l'image suivante), ce qui bouge
+  est donc étalé ; cela prend autant de fois plus de temps
+  (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

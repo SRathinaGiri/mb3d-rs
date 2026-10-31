@@ -786,6 +786,62 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   menunjukkannya sebelum apa pun dirender. Interpolasi ketiga, *Catmull-Rom* (tidak ada di MB3D), halus dan melewati setiap keyframe (`mb3d animate --catmull-rom`).
 
   </details>
+* **Penyelesaian gambar**: eksposur, pendar di sekitar cahaya terang, tone
+  mapping filmik, kontras, saturasi, kehangatan, vignette, dan pinggiran warna
+  sebuah lensa, sebagai langkah terakhir atas seluruh gambar.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Sebuah kuil saat fajar seperti dihitung, dan setelah diselesaikan: pendar di sekitar pilar yang terang, sorotan lebih lembut, cahaya lebih hangat, sudut lebih gelap"></a>
+
+  <details><summary>Selengkapnya</summary>
+
+  Jendela *Pascaproses*, bagian *Penyelesaian*: centang *Selesaikan gambar*,
+  atur eksposur dalam stop, *Filmik* (cahaya terang memudar lembut alih-alih
+  menjadi putih datar), pendar (kekuatannya, jangkauannya sebagai bagian dari
+  diagonal gambar, dan dari kecerahan berapa ia berpendar), kontras, saturasi,
+  kehangatan, vignette, dan pinggiran warna, lalu *Lukis sekarang*. Pelukisan
+  lalu berjalan dalam floating point, sehingga cahaya di atas putih tetap ada
+  sampai tone mapping. Ini berlaku untuk setiap gambar, frame animasi, dan render
+  Monte Carlo (setelah filter derau); bila mati, gambarnya persis seperti
+  sebelumnya. Kunci adegan `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. Dalam render
+  besar yang terdiri dari gambar tile terpisah, setiap tile berpendar sendiri.
+
+  </details>
+* **Relief halus di permukaan**: kasar, batu (punggungan dan retakan), atau
+  butiran, lebih halus dari detail perhitungan, dengan variasi warna.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Bagian halus sebuah Mandelbulb, dan yang sama dengan relief batu dan variasi warna"></a>
+
+  <details><summary>Selengkapnya</summary>
+
+  Jendela *Pascaproses*, bagian *Material*: *Relief* dengan kekuatannya, ukuran
+  bentuknya (dalam satuan fraktal, sehingga tetap di permukaan saat kamera
+  bergerak) dan kehalusannya, serta *Variasi warna*. Relief memiringkan
+  permukaan di tempat cahaya dihitung, sehingga bayangan, sorotan, pantulan, dan
+  Monte Carlo semuanya melihatnya; bentuknya sendiri tidak berubah (garis
+  luarnya tetap halus). Tidak pada bidang tanah. Kunci adegan
+  `detail = stone, 1.5, 0.12, 0.5` (jenis, kekuatan, ukuran, kehalusan) dan
+  `detail_color`.
+
+  </details>
+* **Putaran, penerbangan yang direkam, dan motion blur** untuk animasi.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Satu frame putaran cepat, tanpa dan dengan motion blur"></a>
+
+  <details><summary>Selengkapnya</summary>
+
+  *Pembuat animasi* > *Putaran*: delapan keyframe untuk satu putaran penuh di
+  sekitar tengah pandangan jendela utama, sebuah loop yang mulus (`mb3d animate
+  scene.m3p --orbit 8 --frames 25`). *Navigator* > *Rek*: selama tombolnya
+  tertekan, setiap pandangan baru dari penerbangan (paling banyak dua kali
+  sedetik) menjadi keyframe berikutnya; dengan Catmull-Rom animasi melewati
+  semuanya. *Motion blur* di Pembuat animasi: setiap frame adalah rata-rata dari
+  sejumlah itu gambar dalam waktu *Rana* (bagian dari waktu sampai frame
+  berikutnya), sehingga yang bergerak menjadi kabur; waktunya pun sekian kali
+  lebih lama (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

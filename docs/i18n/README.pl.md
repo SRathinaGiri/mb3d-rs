@@ -754,6 +754,61 @@ możesz sprawdzić sam:
   kluczowe, a krzywa pokazuje to, zanim cokolwiek zostanie wyrenderowane. Trzecia interpolacja, *Catmull-Rom* (nie ma w MB3D), jest gładka i przechodzi przez każdą klatkę kluczową (`mb3d animate --catmull-rom`).
 
   </details>
+* **Wykończenie obrazu**: ekspozycja, blask wokół jasnego światła, filmowe
+  mapowanie tonów, kontrast, nasycenie, ciepło, winieta i barwne obwódki
+  obiektywu, jako ostatnie przejście po całym obrazie.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Świątynia o świcie, jak policzona, i wykończona: blask wokół jasnych kolumn, łagodniejsze światła, cieplejsze światło, ciemniejsze rogi"></a>
+
+  <details><summary>Więcej</summary>
+
+  Okno *Postprocessing*, sekcja *Wykończenie*: zaznacz *Wykończ obraz*, ustaw
+  ekspozycję w działkach EV, *Filmowe* (jasne światło łagodnie wygasa,
+  zamiast stać się płaską bielą), blask (siła, zasięg jako część przekątnej
+  obrazu i od jakiej jasności świeci), kontrast, nasycenie, ciepło, winietę
+  i barwne obwódki, potem *Maluj teraz*. Malowanie odbywa się wtedy na
+  liczbach zmiennoprzecinkowych, więc światło ponad bielą jest zachowane aż
+  do mapowania tonów. Działa na każdy obraz, klatkę animacji i render Monte
+  Carlo (po filtrze szumu); wyłączone zostawia obrazy dokładnie takie jak
+  wcześniej. Klucze sceny `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. W dużym
+  renderze złożonym z osobnych obrazów kafelków każdy kafelek świeci osobno.
+
+  </details>
+* **Drobna rzeźba na powierzchni**: szorstka, kamień (grzbiety i pęknięcia)
+  albo ziarno, drobniejsza niż szczegół obliczeń, ze zmiennością koloru.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Gładki fragment Mandelbulba i ten sam z kamienną rzeźbą i zmiennością koloru"></a>
+
+  <details><summary>Więcej</summary>
+
+  Okno *Postprocessing*, sekcja *Materiał*: *Rzeźba* z jej siłą, rozmiarem
+  kształtów (w jednostkach fraktala, więc zostaje na powierzchni, gdy kamera
+  się porusza) i drobnością, oraz *Zmienność koloru*. Pochyla powierzchnię
+  tam, gdzie liczone jest światło, więc cieniowanie, połyski, odbicia i Monte
+  Carlo ją widzą; sam kształt się nie zmienia (obrys pozostaje gładki). Nie
+  na podłożu. Klucze sceny `detail = stone, 1.5, 0.12, 0.5` (rodzaj, siła,
+  rozmiar, drobność) i `detail_color`.
+
+  </details>
+* **Obrotnice, nagrane przeloty i rozmycie ruchu** w animacjach.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Klatka szybkiej obrotnicy, bez rozmycia ruchu i z nim"></a>
+
+  <details><summary>Więcej</summary>
+
+  *Kreator animacji* > *Obrotnica*: osiem klatek kluczowych jednego pełnego
+  obrotu wokół środka widoku okna głównego, gładka pętla
+  (`mb3d animate scene.m3p --orbit 8 --frames 25`). *Nawigator* > *Nagr*:
+  póki przycisk jest wciśnięty, każdy nowy widok przelotu (najwyżej dwa na
+  sekundę) staje się następną klatką kluczową; z Catmull-Rom animacja
+  przechodzi przez wszystkie. *Rozmycie ruchu* w Kreatorze animacji: każda
+  klatka to średnia tylu obrazów w czasie *Migawki* (części czasu do
+  następnej klatki), więc to, co się rusza, rozmazuje się; trwa to tyle razy
+  dłużej (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 

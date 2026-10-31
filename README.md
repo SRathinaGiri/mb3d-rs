@@ -761,6 +761,62 @@ you check further on your own:
   rendered. A third interpolation, *Catmull-Rom* (not in MB3D), is smooth and passes through every keyframe (`mb3d animate --catmull-rom`).
 
   </details>
+* **Finishing the picture**: exposure, a glow around bright light, filmic
+  tone mapping, contrast, saturation, warmth, a vignette and the colour
+  fringes of a lens, as a last pass over the whole picture.
+
+  <a href="docs/img/finishing.jpg"><img src="docs/img/finishing.jpg" width="760" alt="A temple at dawn as calculated, and finished: glow around the bright pillars, softer highlights, warmer light, darker corners"></a>
+
+  <details><summary>Read more</summary>
+
+  Post processing window, section *Finishing*: tick *Finish the picture*,
+  set the exposure in stops, *Filmic* (bright light rolls off softly instead
+  of turning flat white), the glow (strength, reach as a part of the
+  picture's diagonal, and from which brightness it glows), contrast,
+  saturation, warmth, vignette and colour fringes, then *Paint now*. The
+  painting then runs in floating point, so the light above white is kept
+  until the tone mapping. It applies to every picture, animation frame and
+  Monte Carlo render (after the noise filter); off, the pictures are exactly
+  as before. Scene keys `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. In a big
+  render made of separate tile pictures each tile glows on its own.
+
+  </details>
+* **A fine relief on the surface**: rough, stone (ridges and cracks) or
+  grain, finer than the calculation's detail, with a colour variation.
+
+  <a href="docs/img/relief.jpg"><img src="docs/img/relief.jpg" width="760" alt="A smooth part of a Mandelbulb, and the same with the stone relief and colour variation"></a>
+
+  <details><summary>Read more</summary>
+
+  Post processing window, section *Material*: *Relief* with its strength, the
+  size of its features (in the fractal's units, so it stays on the surface
+  when the camera moves) and its fineness, and *Colour variation*. It tilts
+  the surface where the light is calculated, so shading, highlights,
+  reflections and Monte Carlo all see it; the shape itself is not changed
+  (the outline stays smooth). Not on the ground plane. Scene keys
+  `detail = stone, 1.5, 0.12, 0.5` (kind, strength, size, fineness) and
+  `detail_color`.
+
+  </details>
+* **Turntables, recorded flights and motion blur** for animations.
+
+  <a href="docs/img/motion_blur.jpg"><img src="docs/img/motion_blur.jpg" width="640" alt="A frame of a fast turntable, without and with motion blur"></a>
+
+  <details><summary>Read more</summary>
+
+  *Animation maker* > *Turntable*: eight keyframes of one whole turn around
+  the middle of the main window's view, a smooth loop (`mb3d animate
+  scene.m3p --orbit 8 --frames 25`). *Navigator* > *Rec*: while the button is
+  down, every new view of the flight (at most two a second) becomes the next
+  keyframe; with Catmull-Rom the animation passes through all of them.
+  *Motion blur* in the Animation maker: each frame is the average of that
+  many pictures within the *Shutter* time (a part of the time to the next
+  frame), so what moves smears; it takes that many times as long
+  (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 ## Download
 

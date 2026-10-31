@@ -213,7 +213,13 @@ pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     }
     // the relief: without one a size that suits the view (a small part of
     // what the zoom shows)
-    let det = sc.detail.unwrap_or(crate::detail::Detail { size: 0.1 / sc.zoom.max(1e-30), ..Default::default() });
+    let suggest = {
+        let v = 0.1 / sc.zoom.max(1e-30);
+        // (two significant digits)
+        let p = 10f64.powf(v.log10().floor() - 1.0);
+        (v / p).round() * p
+    };
+    let det = sc.detail.unwrap_or(crate::detail::Detail { size: suggest, ..Default::default() });
     ui.set_item_index(F, "DetailKindCB", sc.detail.map_or(0, |d| d.kind as i32 + 1));
     ui.set_text(F, "DetailStrEdit", &fts_single(det.strength as f64));
     ui.set_text(F, "DetailSizeEdit", &super::util::fts(det.size));

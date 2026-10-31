@@ -483,6 +483,52 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
   經過，曲線在算圖之前就顯示出這一點。 第三種內插 *Catmull-Rom* (MB3D 中沒有) 平滑且經過每個關鍵影格 (`mb3d animate --catmull-rom`)。
 
   </details>
+* **圖片修飾**：曝光、明亮光線周圍的發光、電影感色調映射、對比、飽和度、冷暖、
+  暗角和鏡頭的色邊，作為整張圖片的最後一道處理。
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="黎明時的神殿，計算出的原樣和修飾後的樣子：明亮柱子周圍的發光、更柔和的高光、更暖的光、更暗的角落"></a>
+
+  <details><summary>詳細說明</summary>
+
+  *後製處理* 視窗的 *修飾* 區段：勾選 *圖片修飾*，設定曝光 (以格為單位)、
+  *電影感* (明亮的光柔和地過渡，而不是變成一片平白)、發光 (強度、以圖片對角線的
+  比例表示的範圍，以及從哪個亮度開始發光)、對比、飽和度、冷暖、暗角和色邊，然後
+  *立即繪製*。此時繪製以浮點數進行，所以超過白色的光會一直保留到色調映射。它
+  適用於每張圖片、動畫影格和蒙地卡羅算圖 (在雜訊濾波器之後)；關閉時圖片與以前
+  完全相同。場景鍵 `finish_exposure`、`finish_tonemap = filmic`、
+  `glow = strength, radius, threshold`、`finish_contrast`、
+  `finish_saturation`、`finish_warmth`、`vignette`、`chromatic`。在由個別的
+  圖塊圖片組成的大型算圖中，每個圖塊各自發光。
+
+  </details>
+* **表面的細微起伏**：粗糙、石頭 (稜脊和裂縫) 或顆粒，比計算的細節更細，並帶有
+  顏色變化。
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Mandelbulb 的一處光滑部分，以及加上石頭起伏和顏色變化的同一部分"></a>
+
+  <details><summary>詳細說明</summary>
+
+  *後製處理* 視窗的 *材質* 區段：*起伏* 及其強度、紋理的大小 (以碎形的單位計，
+  所以相機移動時它仍附著在表面上) 和精細度，以及 *顏色變化*。它在計算光照的地方
+  傾斜表面，因此明暗、高光、反射和蒙地卡羅都能看到它；形狀本身不變 (輪廓保持
+  光滑)。不作用於地平面。場景鍵 `detail = stone, 1.5, 0.12, 0.5` (種類、強度、
+  大小、精細度) 和 `detail_color`。
+
+  </details>
+* **轉盤、錄製的飛行和動態模糊**，用於動畫。
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="快速轉盤動畫的一個影格，無動態模糊和有動態模糊"></a>
+
+  <details><summary>詳細說明</summary>
+
+  *動畫製作器* > *轉盤*：圍繞主視窗視圖中心整整一圈的八個關鍵影格，平滑循環
+  (`mb3d animate scene.m3p --orbit 8 --frames 25`)。*導航器* > *錄*：按鈕按下
+  期間，飛行中的每個新視圖 (每秒最多兩次) 都成為下一個關鍵影格；使用 Catmull-Rom
+  時動畫會經過所有這些關鍵影格。動畫製作器中的 *動態模糊*：每一影格是 *快門*
+  時間 (到下一影格的時間的一部分) 內這麼多張圖片的平均值，所以移動的東西會
+  產生拖影；耗時也是這麼多倍 (`mb3d animate --motion-blur 8,0.5`)。
+
+  </details>
 
 <a id="download"></a>
 

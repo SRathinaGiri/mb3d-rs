@@ -786,6 +786,63 @@ pontos permitem que você confira mais por conta própria:
   renderização. Uma terceira interpolação, *Catmull-Rom* (não existe no MB3D), é suave e passa por cada quadro-chave (`mb3d animate --catmull-rom`).
 
   </details>
+* **Finalização da imagem**: exposição, um brilho em torno da luz forte,
+  mapeamento de tons fílmico, contraste, saturação, calor, uma vinheta e as
+  franjas de cor de uma lente, como última passagem sobre a imagem inteira.
+
+  <a href="../img/finishing.jpg"><img src="../img/finishing.jpg" width="760" alt="Um templo ao amanhecer como calculado, e finalizado: brilho em torno dos pilares claros, realces mais suaves, luz mais quente, cantos mais escuros"></a>
+
+  <details><summary>Saiba mais</summary>
+
+  Janela *Pós-processamento*, seção *Finalização*: marque *Finalizar a
+  imagem*, ajuste a exposição em stops, *Fílmico* (a luz forte se atenua
+  suavemente em vez de virar um branco chapado), o brilho (intensidade,
+  alcance como parte da diagonal da imagem, e a partir de qual claridade
+  brilha), contraste, saturação, calor, vinheta e franjas de cor, depois
+  *Pintar agora*. A pintura passa então a ser feita em ponto flutuante, de
+  modo que a luz acima do branco é mantida até o mapeamento de tons. Vale para
+  toda imagem, quadro de animação e render Monte Carlo (depois do filtro de
+  ruído); desligada, as imagens ficam exatamente como antes. Chaves de cena
+  `finish_exposure`, `finish_tonemap = filmic`,
+  `glow = strength, radius, threshold`, `finish_contrast`,
+  `finish_saturation`, `finish_warmth`, `vignette`, `chromatic`. Num render
+  grande feito de imagens separadas em blocos, cada bloco brilha por si.
+
+  </details>
+* **Um relevo fino na superfície**: áspero, pedra (cristas e rachaduras) ou
+  grão, mais fino que o detalhe do cálculo, com uma variação de cor.
+
+  <a href="../img/relief.jpg"><img src="../img/relief.jpg" width="760" alt="Uma parte lisa de um Mandelbulb, e a mesma com o relevo de pedra e a variação de cor"></a>
+
+  <details><summary>Saiba mais</summary>
+
+  Janela *Pós-processamento*, seção *Material*: *Relevo* com a sua
+  intensidade, o tamanho das suas formas (em unidades do fractal, de modo que
+  fica na superfície quando a câmera se move) e a sua finura, e *Variação de
+  cor*. Ele inclina a superfície onde a luz é calculada, então o sombreado, os
+  brilhos, os reflexos e o Monte Carlo o veem; a forma em si não muda (o
+  contorno continua liso). Não vale para o chão. Chaves de cena
+  `detail = stone, 1.5, 0.12, 0.5` (tipo, intensidade, tamanho, finura) e
+  `detail_color`.
+
+  </details>
+* **Giratórios, voos gravados e desfoque de movimento** para animações.
+
+  <a href="../img/motion_blur.jpg"><img src="../img/motion_blur.jpg" width="640" alt="Um quadro de um giratório rápido, sem e com desfoque de movimento"></a>
+
+  <details><summary>Saiba mais</summary>
+
+  *Criador de animações* > *Giratório*: oito quadros-chave de uma volta
+  inteira em torno do meio da vista da janela principal, um laço suave
+  (`mb3d animate scene.m3p --orbit 8 --frames 25`). *Navegador* > *Grav*:
+  enquanto o botão está pressionado, cada nova vista do voo (no máximo duas
+  por segundo) vira o próximo quadro-chave; com Catmull-Rom a animação passa
+  por todos eles. *Desfoque* no Criador de animações: cada quadro é a média de
+  tantas imagens dentro do tempo do *Obturador* (uma parte do tempo até o
+  próximo quadro), de modo que o que se move fica borrado; leva tantas vezes
+  mais tempo (`mb3d animate --motion-blur 8,0.5`).
+
+  </details>
 
 <a id="download"></a>
 
