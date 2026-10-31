@@ -322,7 +322,12 @@ impl FrameRun {
 
 /// The scene of a frame as it is calculated (preview factor, threads).
 pub fn frame_render_scene(a: &Animation, frame: usize, run: &FrameRun) -> Result<Scene, String> {
-    let mut s = a.frame_scene(frame)?;
+    frame_render_scene_at(a, frame, run, 0.0)
+}
+
+/// [`frame_render_scene`] `offset` frames later (a motion blur sample).
+pub fn frame_render_scene_at(a: &Animation, frame: usize, run: &FrameRun, offset: f64) -> Result<Scene, String> {
+    let mut s = if offset > 0.0 { a.frame_scene_at(frame, offset)? } else { a.frame_scene(frame)? };
     if run.preview > 0.0 && (run.preview - 1.0).abs() > 1e-9 {
         s.scale_image(run.preview);
     }
@@ -391,7 +396,35 @@ pub fn render_frame_to_file(
             let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
             let ck = open_frame_checkpoint(&s, &name, run.resume);
             continued = continued.or_else(|| continued_note(ck.as_ref()));
-            let img = render_scaled_with(&s, a.scale.max(1) as usize, a.save_depth, a.transparent && a.format == OutputFormat::Png, progress, cancel, ck.as_ref(), run.resume)?;
+            let transparent = a.transparent && a.format == OutputFormat::Png;
+            let mut img = render_scaled_with(&s, a.scale.max(1) as usize, a.save_depth, transparent, progress, cancel, ck.as_ref(), run.resume)?;
+            if a.motion_blur > 1 {
+                // motion blur: the average of the pictures within the
+                // shutter time (the first is the frame's own)
+                let n = a.motion_blur as usize;
+                let mut sum: Vec<u32> = img.rgb.iter().map(|&v| v as u32).collect();
+                let mut sum_a: Option<Vec<u32>> = img.rgba.as_ref().map(|p| p.iter().map(|&v| v as u32).collect());
+                for k in 1..n {
+                    if cancel() {
+                        return Err("cancelled".into());
+                    }
+                    let mut sk = frame_render_scene_at(a, frame, run, a.shutter as f64 * k as f64 / n as f64)?;
+                    sk.stereo_mode = mode;
+                    let ik = render_scaled_with(&sk, a.scale.max(1) as usize, false, transparent, progress, cancel, None, run.resume)?;
+                    for (s, v) in sum.iter_mut().zip(&ik.rgb) {
+                        *s += *v as u32;
+                    }
+                    if let (Some(sa), Some(pa)) = (sum_a.as_mut(), ik.rgba.as_ref()) {
+                        for (s, v) in sa.iter_mut().zip(pa) {
+                            *s += *v as u32;
+                        }
+                    }
+                    img.seconds += ik.seconds;
+                }
+                let avg = |v: u32| ((v + n as u32 / 2) / n as u32) as u8;
+                img.rgb = sum.into_iter().map(avg).collect();
+                img.rgba = sum_a.map(|v| v.into_iter().map(avg).collect());
+            }
             // (the depth first: a frame is done once its file is written)
             if let Some(z) = &img.depth {
                 let p = a.depth_file_eye(frame, eye);

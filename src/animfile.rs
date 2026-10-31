@@ -31,6 +31,10 @@ pub struct Preview {
 /// The bit of the binary animation's options that marks mb3d-rs's
 /// Catmull-Rom interpolation (MB3D does not use it and reads Bezier).
 const CATMULL_ROM_BIT: i32 = 1 << 20;
+/// mb3d-rs's motion blur in the options word (MB3D ignores these bits):
+/// the samples in bits 21-25, the shutter in 16ths in bits 26-29
+const BLUR_SHIFT: i32 = 21;
+const SHUTTER_SHIFT: i32 = 26;
 
 pub fn preview_size(width: i32, height: i32) -> (usize, usize) {
     let (w, h) = (width.max(1) as f64, height.max(1) as f64);
@@ -153,6 +157,10 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
         a.stereo_bits = (opt as u32) & 0xC0;
         a.overwrite = opt & 256 == 0;
         a.save_depth = opt & 512 != 0;
+        a.motion_blur = ((opt >> BLUR_SHIFT) & 31) as u32;
+        if a.motion_blur > 1 {
+            a.shutter = ((opt >> SHUTTER_SHIFT) & 15) as f32 / 15.0;
+        }
     } else {
         // older files: no loop, BMP images, no stereo, overwrite, no z-buffer
         if version > 1 {
@@ -256,7 +264,9 @@ pub fn write_m3a(a: &Animation, previews: &[Option<Preview>]) -> Vec<u8> {
         | (a.format as i32) << 3
         | (a.stereo_bits & 0xC0) as i32
         | (!a.overwrite as i32) << 8
-        | (a.save_depth as i32) << 9;
+        | (a.save_depth as i32) << 9
+        | (a.motion_blur.min(31) as i32) << BLUR_SHIFT
+        | ((a.shutter.clamp(0.0, 1.0) * 15.0).round() as i32) << SHUTTER_SHIFT;
     i32w(&mut d, opt);
     i32w(&mut d, a.keyframes.len() as i32);
     for k in &a.keyframes {
@@ -437,6 +447,8 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                 }
             }
             "loop" => a.looped = boolean(v)?,
+            "motion_blur" => a.motion_blur = num(v)?.clamp(0, 31) as u32,
+            "shutter" => a.shutter = plain(v).parse::<f32>().map_err(|_| err(format!("shutter: '{v}' (0 to 1)")))?.clamp(0.0, 1.0),
             "output" | "output_folder" => {
                 let o = plain(v);
                 a.output_folder = if o.is_empty() || Path::new(&o).is_absolute() {
@@ -525,6 +537,9 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
         "pair"
     };
     let _ = writeln!(t, "transparent = {}\nstereo = {stereo}", a.transparent);
+    if a.motion_blur > 1 {
+        let _ = writeln!(t, "motion_blur = {}\nshutter = {}", a.motion_blur, a.shutter);
+    }
     for (i, k) in a.keyframes.iter().enumerate() {
         let _ = writeln!(t, "\n[keyframe]  # {}", i + 1);
         let _ = writeln!(t, "frames = {}", k.frames);
@@ -638,6 +653,25 @@ mod tests {
         // Bezier stays plain Bezier
         a.interpolation = Interpolation::Bezier;
         assert_eq!(read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap().anim.interpolation, Interpolation::Bezier);
+    }
+
+    #[test]
+    fn motion_blur_in_both_formats() {
+        let mut a = sample();
+        a.motion_blur = 8;
+        a.shutter = 0.6;
+        let f = read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap();
+        // the shutter in 15ths
+        assert_eq!(f.anim.motion_blur, 8);
+        assert!((f.anim.shutter - 0.6).abs() < 1.0 / 30.0);
+        let text = write_m3k(&a, None);
+        assert!(text.contains("motion_blur = 8"));
+        let b = parse_m3k(&text, Path::new("."), "x").unwrap().anim;
+        assert_eq!((b.motion_blur, b.shutter), (8, 0.6));
+        // none: nothing written, MB3D's options as before
+        a.motion_blur = 0;
+        assert!(!write_m3k(&a, None).contains("motion_blur"));
+        assert_eq!(read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap().anim.motion_blur, 0);
     }
 
     #[test]

@@ -1004,6 +1004,13 @@ OPTIONS:
                              (not in MB3D; its animation files read it as bezier)
         --loop               Loop: after the last keyframe the first follows again
         --no-loop
+        --orbit <STEPS>      A turntable from one keyframe file: the camera goes once around
+                             the middle of the view in STEPS keyframes (8 is smooth), with
+                             --frames between them, as a Catmull-Rom loop
+        --motion-blur <N>[,<SHUTTER>]
+                             Motion blur: each frame the average of N pictures within the
+                             shutter time (a part of the time to the next frame, default
+                             0.5); N times the rendering time
         --start-index <N>    File index of the first frame (default 1)
         --index-step <N>     Increment of the file index (default 1)
         --from <INDEX>       Render only frames from this file index ...
@@ -1060,6 +1067,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let mut transparent = false;
     let mut swarm: Option<String> = None;
     let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, 25.0);
+    let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
         v.ok_or_else(|| format!("{a} needs a value"))?.trim().parse::<i64>().map_err(|_| format!("bad value for {a}"))
@@ -1089,6 +1097,15 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--bezier" => ipol = Some(Interpolation::Bezier),
             "--catmull-rom" => ipol = Some(Interpolation::CatmullRom),
             "--loop" => looped = Some(true),
+            "--orbit" => orbit = Some(num(a, args.next())?.clamp(3, 360) as usize),
+            "--motion-blur" => {
+                let v = args.next().ok_or("--motion-blur needs a value (samples[,shutter], e.g. 8,0.5)")?;
+                let (n, sh) = match v.split_once(',') {
+                    Some((n, s)) => (n, Some(s.trim().parse::<f32>().map_err(|_| "bad shutter of --motion-blur (0 to 1)")?.clamp(0.0, 1.0))),
+                    None => (v.as_str(), None),
+                };
+                blur = Some((n.trim().parse::<u32>().map_err(|_| "bad samples of --motion-blur")?.clamp(1, 31), sh));
+            }
             "--no-loop" => looped = Some(false),
             "--start-index" => start_index = Some(num(a, args.next())?),
             "--index-step" => index_step = Some(num(a, args.next())?.max(1)),
@@ -1195,6 +1212,22 @@ fn animate(argv: &[String]) -> Result<(), String> {
         previews = vec![None; a.keyframes.len()];
         a
     };
+    if let Some(steps) = orbit {
+        if from_file || anim.keyframes.len() != 1 {
+            return Err("--orbit makes a turntable from one keyframe file".into());
+        }
+        let k = anim.keyframes.remove(0);
+        anim.keyframes = mb3d::anim::orbit_keyframes(&k.scene, steps, frames.unwrap_or(25));
+        previews = vec![None; anim.keyframes.len()];
+        looped = looped.or(Some(true));
+        ipol = ipol.or(Some(Interpolation::CatmullRom));
+    }
+    if let Some((n, sh)) = blur {
+        anim.motion_blur = n;
+        if let Some(s) = sh {
+            anim.shutter = s;
+        }
+    }
     if !overrides.is_empty() {
         let text = overrides.join("\n");
         for (i, k) in anim.keyframes.iter_mut().enumerate() {

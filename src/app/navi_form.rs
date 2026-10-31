@@ -48,6 +48,9 @@ pub struct State {
     /// the view taken from the main window and "Fixed zoom" then ("Reset view")
     pub start: Option<Scene>,
     pub start_fixed: bool,
+    /// a flight being recorded ("Rec"): when the last keyframe was made,
+    /// its view (middle, rotation, zoom) and how many
+    pub rec: Option<(std::time::Instant, ([f64; 3], [[f64; 3]; 3], f64), usize)>,
 }
 
 impl Default for State {
@@ -80,8 +83,35 @@ impl Default for State {
             waker_set: false,
             start: None,
             start_fixed: false,
+            rec: None,
         }
     }
+}
+
+/// The navigator's view as the main window's keyframe would be.
+fn keyframe_scene(app: &Mb3d) -> Scene {
+    let mut s = app.navi.scene.clone();
+    mod_rot_point(&mut s);
+    s.width = app.scene.width;
+    s.height = app.scene.height;
+    s
+}
+
+/// A recorded flight: the navigator's view as the next keyframe when it
+/// changed and half a second has passed (`force`: now).
+fn record_view(app: &mut Mb3d, ui: &mut Ui, force: bool) {
+    let Some((last, cam, n)) = app.navi.rec else { return };
+    let s = &app.navi.scene;
+    let now = (s.mid, s.vgrads, s.zoom);
+    if !force && (now == cam || last.elapsed().as_secs_f64() < 0.5) {
+        return;
+    }
+    let k = keyframe_scene(app);
+    app.anim.current = app.anim.anim.keyframes.len() + 1;
+    super::anim_form::insert_keyframe(app, ui, k);
+    app.navi.rec = Some((std::time::Instant::now(), now, n + 1));
+    // (the navigator stays in front)
+    ui.show(F);
 }
 
 fn is_int_type(t: i32) -> bool {
@@ -347,6 +377,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         app.message(ui, &trf("@MB:Navigator2", &[&err]));
     }
     let Some(rgb) = rgb else { return };
+    record_view(app, ui, false);
     // experimental "true brightness": the picture as calculated
     let l = if ui.checked(F, "ExpBrightCBx") { 1.0 } else { app.navi.lightness };
     let px: Vec<u8> = if (l - 1.0).abs() > 1e-3 { rgb.iter().map(|&v| (v as f64 * l).min(255.0) as u8).collect() } else { (*rgb).clone() };
@@ -1105,11 +1136,18 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton18Click" => {
             // a keyframe for the animation
-            let mut s = app.navi.scene.clone();
-            mod_rot_point(&mut s);
-            s.width = app.scene.width;
-            s.height = app.scene.height;
+            let s = keyframe_scene(app);
             super::anim_form::insert_keyframe(app, ui, s);
+        }
+        "RecordBtnClick" => {
+            if ui.c(F, "RecordBtn").down {
+                // the flight starts with the view as it is
+                let s = &app.navi.scene;
+                app.navi.rec = Some((std::time::Instant::now(), (s.mid, s.vgrads, s.zoom), 0));
+                record_view(app, ui, true);
+            } else if let Some((_, _, n)) = app.navi.rec.take() {
+                app.message(ui, &trf("@MB:RecordedSKeyframesOfTheFlight", &[&n.to_string()]));
+            }
         }
         "SpeedButton23Click" => toggle_adjust_panel(app, ui),
         "FormKeyDown" => {

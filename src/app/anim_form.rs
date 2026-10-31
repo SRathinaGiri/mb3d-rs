@@ -201,6 +201,9 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     a.save_depth = ui.checked(F, "CheckBox7");
     a.transparent = ui.checked(F, "TransparentCheck") && a.format == OutputFormat::Png;
     a.stereo_bits = if ui.checked(F, "CheckBox4") { 0x40 | if ui.checked(F, "CheckBox5") { 0x80 } else { 0 } } else { 0 };
+    let blur = pti(&ui.text(F, "BlurEdit")).clamp(1, 31) as u32;
+    a.motion_blur = if blur > 1 { blur } else { 0 };
+    a.shutter = (super::util::ptf(&ui.text(F, "ShutterEdit")) as f32).clamp(0.0, 1.0);
 }
 
 fn write_settings(app: &Mb3d, ui: &mut Ui) {
@@ -217,6 +220,8 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_text(F, "Edit4", &a.index_step.to_string());
     ui.set_checked(F, "CheckBox6", a.overwrite);
     ui.set_checked(F, "CheckBox7", a.save_depth);
+    ui.set_text(F, "BlurEdit", &a.motion_blur.max(1).to_string());
+    ui.set_text(F, "ShutterEdit", &super::util::fts(a.shutter as f64));
     ui.set_checked(F, "CheckBox4", a.stereo_bits & 0x40 != 0);
     ui.set_checked(F, "CheckBox5", a.stereo_bits & 0x80 != 0);
     ui.set_enabled(F, "CheckBox5", a.stereo_bits & 0x40 != 0);
@@ -1024,6 +1029,25 @@ fn event_inner(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let n = count(app);
     match h {
         "CurvesBtnClick" => super::curves_form::open(app, ui),
+        "OrbitBtnClick" => {
+            // a turntable of the main window's view after the keyframes
+            // (a new animation: a smooth loop)
+            let empty = count(app) == 0;
+            let sc = main_scene(app, ui);
+            let frames = pti(&ui.text(F, "Edit5")).max(1) as u32;
+            if empty {
+                ui.set_item_index(F, "RadioGroup2", 2);
+                ui.set_checked(F, "CheckBox2", true);
+            }
+            for k in crate::anim::orbit_keyframes(&sc, 8, frames) {
+                app.anim.current = count(app) + 1;
+                insert_keyframe(app, ui, k.scene);
+            }
+            read_settings(app, ui);
+            app.anim.current = count(app);
+            paint_box(app, ui);
+            calc_time(app, ui);
+        }
         "FormShow" => {
             if app.anim.first_show {
                 app.anim.first_show = false;

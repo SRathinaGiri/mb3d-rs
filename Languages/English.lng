@@ -35,7 +35,7 @@ AFasterMethodThanBinsearchBut=A faster method than binsearch, but can lead to fa
 AFewSecondsLeft=a few seconds left
 ;the program
 AFineReliefOnTheSurface=A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
-;not used
+;PostProForm.DetailKindCB.Hint
 AFolderEveryComputerOfThe=A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 ;SwarmFrm.Edit1.Hint
 AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
@@ -629,7 +629,7 @@ Colour0Grey1AsIt=Colour: 0 grey, 1 as it is, 2 twice as colourful
 ColourFringes=Colour fringes
 ;PostProForm.FinChromLbl.Caption
 ColourVariation=Colour variation
-;not used
+;PostProForm.DetailColLbl.Caption
 ColumnsOfTiles=Columns of tiles
 ;SwarmFrm.Edit5.Hint
 CombinationMethodsMinBothFractalsAre=Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
@@ -1415,7 +1415,7 @@ GoToNext=Go to next
 GoneLastSeenSAgo=gone (last seen {} s ago)
 ;the program
 Grain=Grain
-;not used
+;PostProForm.DetailKindCB.Items
 GraphicsCard=Graphics card
 ;Mand3DForm.CalcOnCombo.Items, SwarmFrm.Caption
 GroundPlane=Ground plane
@@ -1471,7 +1471,7 @@ Hotkeys=Hotkeys
 HowMuchThePlaneReflects0=How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 ;Mand3DForm.GroundReflEdit.Hint
 HowMuchTheSurfaceSColour=How much the surface's colour varies with the relief: 0 not, 1 strongly
-;not used
+;PostProForm.DetailColEdit.Hint
 HowStrongTheNoiseIsThat=How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 ;PostProForm.NoiseSigmaEdit.Hint
 HowThickTheCloudsAre1=How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
@@ -1742,6 +1742,8 @@ KeyframeListM3k=Keyframe list (*.m3k)
 ;the program
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;AnimationForm.Label10.Caption
+KeyframesForOneWholeTurnAround=Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+;not used
 KeysThatBringAWindowTo=Keys that bring a window to the front from any window
 ;Mand3DForm.HotkeysBtn.Hint
 Kind=Kind
@@ -2094,6 +2096,10 @@ MonteCarloRendering2=Monte carlo rendering\s
 ;MCForm.Caption
 MoreOptionsSendParasToMain=More options: send paras to main, adjust and import.
 ;MCForm.Label3.Caption, MCForm.Label25.Caption
+MotionBlur=Motion blur:
+;not used
+MotionBlurThePicturesAveragedFor=Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
+;not used
 Mousewheel=Mousewheel
 ;FNavigator.Label18.Caption
 Move=Move
@@ -2333,7 +2339,7 @@ OfLines={} of {} lines
 OfUnitsDone={} of {} units done
 ;the program
 Off=Off
-;not used
+;PostProForm.DetailKindCB.Items
 OffLeftImageIsOnThe=Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 ;Mand3DForm.StereoCrossCheck.Hint
 OffsetAndScale=Offset and scale
@@ -2698,10 +2704,16 @@ ReadingTheHistoryEntries=Reading the history... {} entries
 ;the program
 ReadsTheLanguageFilesAgainAfter=Reads the language files again, after you edited one
 ;LanguageFrm.ReloadBtn.Hint
+Rec=Rec
+;not used
 RecalculateASelection=\sRecalculate a Selection
 ;PostProForm.RecalcSectionBtn.Caption
 RecalculatingTheSelection=recalculating the selection
 ;the program
+RecordedSKeyframesOfTheFlight=Recorded {} keyframes of the flight
+;not used
+RecordsAFlightWhileTheButton=Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
+;not used
 Rect=Rect
 ;Mand3DForm.ShapeBox1.Caption
 RectLower=rect.
@@ -2745,7 +2757,7 @@ RelToObject=Rel. to object:
 RelativeToObject=Relative to object
 ;LightAdjustForm.CheckBox9.Caption
 Relief=Relief
-;not used
+;PostProForm.ReliefLbl.Caption
 Reload=Reload
 ;LanguageFrm.ReloadBtn.Caption
 RemainingFaces10NoReduction=Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
@@ -2855,7 +2867,7 @@ RotationY=Rotation Y:
 RotationZ=Rotation Z:
 ;the program
 Rough=Rough
-;not used
+;PostProForm.DetailKindCB.Items
 RoughImage=rough image
 ;the program
 Roughness=Roughness
@@ -3104,6 +3116,8 @@ ShowsMessages=Shows messages
 ;JITFormulaEditorForm.InfoMemo.Hint, Mand3DForm.Memo1.Hint, ZBuf16BitGenFrm.InfoMemo.Hint
 ShrinkThePanel=Shrink the panel
 ;LightAdjustForm.SpeedButton31.Hint
+Shutter=Shutter:
+;not used
 SinCosIs2xFasterThanCalling={ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 Single=Single
@@ -3203,7 +3217,7 @@ StickThisWindowToTheLeft=Stick this window to the left side
 StickThisWindowToTheRight=Stick this window to the right side
 ;Mand3DForm.Stickthiswindowtotherightside1.Caption
 Stone=Stone
-;not used
+;PostProForm.DetailKindCB.Items
 Stop=Stop
 ;the program
 StopBatchRendering=Stop batch rendering
@@ -3233,7 +3247,7 @@ Strength2=Strength
 StrengthOfDynamicFog=Strength of dynamic fog.
 ;FNavigator.UpDown1.Hint
 StrengthSizeFractalUnitsAndFineness=Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
-;not used
+;PostProForm.DetailStrEdit.Hint, PostProForm.DetailSizeEdit.Hint, PostProForm.DetailRoughEdit.Hint
 StretchesUpperAndLowerPartsMaybe=Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 ;LightAdjustForm.CheckBox5.Hint
 SubframeCountMultiplicator=Subframe count\nmultiplicator:
@@ -3360,6 +3374,8 @@ TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the sp
 ;Mand3DForm.RadioGroup1.Hint
 TheMonteCarloWindowIsRendering=The Monte Carlo window is rendering: stop it first.
 ;the program
+TheMotionBlurSShutterTime=The motion blur's shutter time: a part of the time to the next frame (0 to 1)
+;not used
 TheNameOfTheNewLanguage=The name of the new language, in that language (Deutsch, Polski, ...)
 ;LanguageFrm.NameEdit.Hint
 TheNewestJobSoFarRendered=The newest job so far: rendered parts, parts under way (with their progress), missing parts
@@ -3508,6 +3524,8 @@ TurnOnOffTheJuliaMode=Turn on/off the julia mode
 ;FNavigator.CheckBox7.Hint
 Turned=Turned:
 ;FormulaGUIForm.Part2TurnLbl.Caption
+Turntable=Turntable
+;not used
 Type=Type:
 ;ParamValueEditFrm.Label1.Caption
 Type2=Type

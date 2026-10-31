@@ -3,7 +3,7 @@ object AnimationForm: TAnimationForm
   Top = 458
   BorderStyle = bsDialog
   Caption = '@MB:AnimationMaker'
-  ClientHeight = 407
+  ClientHeight = 437
   ClientWidth = 767
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -316,7 +316,7 @@ object AnimationForm: TAnimationForm
     Left = 0
     Top = 147
     Width = 767
-    Height = 260
+    Height = 290
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 0
@@ -1251,6 +1251,54 @@ object AnimationForm: TAnimationForm
       ParentShowHint = False
       ShowHint = True
       TabOrder = 20
+    end
+    object BlurLbl: TLabel
+      Left = 24
+      Top = 267
+      Width = 80
+      Height = 13
+      Caption = '@MB:MotionBlur'
+    end
+    object BlurEdit: TEdit
+      Left = 112
+      Top = 264
+      Width = 32
+      Height = 21
+      Hint = '@MB:MotionBlurThePicturesAveragedFor'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 21
+      Text = '1'
+    end
+    object ShutterLbl: TLabel
+      Left = 160
+      Top = 267
+      Width = 60
+      Height = 13
+      Caption = '@MB:Shutter'
+    end
+    object ShutterEdit: TEdit
+      Left = 230
+      Top = 264
+      Width = 40
+      Height = 21
+      Hint = '@MB:TheMotionBlurSShutterTime'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 22
+      Text = '0.5'
+    end
+    object OrbitBtn: TButton
+      Left = 332
+      Top = 262
+      Width = 110
+      Height = 25
+      Hint = '@MB:KeyframesForOneWholeTurnAround'
+      Caption = '@MB:Turntable'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 23
+      OnClick = OrbitBtnClick
     end
   end
   object Panel3: TPanel

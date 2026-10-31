@@ -1773,6 +1773,19 @@ object FNavigator: TFNavigator
       ShowHint = True
       OnClick = SpeedButton18Click
     end
+    object RecordBtn: TSpeedButton
+      Left = 80
+      Top = 62
+      Width = 36
+      Height = 25
+      Hint = '@MB:RecordsAFlightWhileTheButton'
+      AllowAllUp = True
+      GroupIndex = 31
+      Caption = '@MB:Rec'
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = RecordBtnClick
+    end
     object Label26: TLabel
       Left = 500
       Top = 97
