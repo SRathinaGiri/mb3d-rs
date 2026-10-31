@@ -2539,6 +2539,31 @@ fn paint_with<S: crate::lighting::Sample>(
     stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> (Vec<S>, Option<f64>) {
+    let Some(f) = sc.finish.filter(|f| !f.is_neutral() && p.slice_2d == 0) else {
+        return paint_core::<S>(sc, p, gbuf, full, progress, stage, cancel);
+    };
+    // the finishing: painted in floating point (the light above white
+    // kept for the tone mapping), then on the whole picture
+    let (mut v, refl_s) = paint_core::<f32>(sc, p, gbuf, full, progress, stage, cancel);
+    if !cancel() {
+        stage("finishing");
+        let [x0, y0, w, h] = p.rect;
+        let cam = paint_camera(sc, p);
+        let threads = thread_count(sc).min(h.max(1) as usize).max(1);
+        crate::finish::apply(&mut v, w as usize, h as usize, [x0, y0], [cam.width as usize, cam.height as usize], &f, threads);
+    }
+    (v.into_iter().map(|x| S::from_dof(x * 255.0)).collect(), refl_s)
+}
+
+fn paint_core<S: crate::lighting::Sample>(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &[SiLight],
+    full: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> (Vec<S>, Option<f64>) {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);

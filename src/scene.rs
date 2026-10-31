@@ -263,6 +263,9 @@ pub struct Scene {
     pub ground: Option<Ground>,
     /// A layer of volumetric clouds (not in MB3D): None = none
     pub clouds: Option<crate::clouds::Clouds>,
+    /// the finishing of the picture: exposure, glow, tone mapping, colour
+    /// grading, vignette, colour fringes (not in MB3D)
+    pub finish: Option<crate::finish::Finish>,
     /// The surface material (not in MB3D): None = MB3D's
     pub material: Option<Material>,
     /// The place of the DE combination's second part (not in MB3D)
@@ -447,6 +450,7 @@ impl Default for Scene {
             cut_pos: [0.0; 3],
             ground: None,
             clouds: None,
+            finish: None,
             material: None,
             part2_place: None,
             deao: None,
@@ -913,6 +917,9 @@ impl Scene {
                 let _ = writeln!(t, "cloud_offset = {}, {}, {}", c.offset[0], c.offset[1], c.offset[2]);
             }
         }
+        if let Some(f) = self.finish.filter(|f| !f.is_neutral()) {
+            t.push_str(&f.to_text());
+        }
         if let Some(g) = &self.ground {
             let c = g.color;
             let _ = writeln!(t, "ground = {}, {}", ["x", "y", "z"][g.axis as usize % 3], g.pos);
@@ -1370,6 +1377,38 @@ impl Scene {
                     "cloud_color" => {
                         let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
                         s.clouds.get_or_insert_with(Default::default).color = c;
+                    }
+                    "finish" if matches!(val.trim().to_ascii_lowercase().as_str(), "off" | "none" | "no") => s.finish = None,
+                    "finish_exposure" | "finish_tonemap" | "glow" | "finish_contrast" | "finish_saturation" | "finish_warmth" | "vignette" | "chromatic" => {
+                        let f = s.finish.get_or_insert_with(Default::default);
+                        match key.as_str() {
+                            "finish_exposure" => f.exposure = (num()? as f32).clamp(-10.0, 10.0),
+                            "finish_tonemap" => {
+                                f.tonemap = match val.trim().to_ascii_lowercase().as_str() {
+                                    "filmic" | "on" | "true" | "yes" | "1" => true,
+                                    "off" | "none" | "false" | "no" | "0" => false,
+                                    _ => return Err(err(format!("bad finish_tonemap '{val}' (filmic or off)"))),
+                                }
+                            }
+                            "glow" => {
+                                let p: Vec<f64> = val.split(',').map(|v| v.trim().parse::<f64>()).collect::<Result<_, _>>().map_err(|_| err(format!("bad glow '{val}' (strength, radius, threshold: 0.5, 0.02, 0.8)")))?;
+                                if p.is_empty() || p.len() > 3 {
+                                    return Err(err(format!("bad glow '{val}' (strength, radius, threshold: 0.5, 0.02, 0.8)")));
+                                }
+                                f.glow = (p[0] as f32).max(0.0);
+                                if let Some(r) = p.get(1) {
+                                    f.glow_radius = (*r as f32).clamp(0.001, 0.5);
+                                }
+                                if let Some(t) = p.get(2) {
+                                    f.glow_threshold = (*t as f32).max(0.0);
+                                }
+                            }
+                            "finish_contrast" => f.contrast = (num()? as f32).clamp(-1.0, 1.0),
+                            "finish_saturation" => f.saturation = (num()? as f32).clamp(0.0, 3.0),
+                            "finish_warmth" => f.warmth = (num()? as f32).clamp(-1.0, 1.0),
+                            "vignette" => f.vignette = (num()? as f32).clamp(0.0, 1.0),
+                            _ => f.chromatic = (num()? as f32).clamp(0.0, 1.0),
+                        }
                     }
                     "cloud_offset" => {
                         let p = vec_n(3)?;

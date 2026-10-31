@@ -302,7 +302,7 @@ fn set_form_size(app: &Mb3d, ui: &mut Ui) {
 fn repaint(app: &mut Mb3d, ui: &mut Ui) {
     let Some(p) = &app.mc.paras else { return };
     let Some(img) = &app.mc.img else { return };
-    let rgb = crate::mc::paint(img, &p.mc, p.lighting.gamma);
+    let rgb = crate::mc::paint_finished(img, p);
     set_image(ui, img.width, img.height, &rgb);
     app.mc.picture_changed = false;
 }
@@ -367,7 +367,9 @@ fn ai_noise_filter(app: &mut Mb3d, ui: &mut Ui) {
         Err(tr("@MB:BuiltWithoutIntelOpenImageDenoise"))
     };
     match r {
-        Ok(out) => {
+        Ok(mut out) => {
+            // (the finishing after the filter, as on the command line)
+            crate::finish::apply_rgb8(&mut out, w, h, p.finish.as_ref());
             set_image(ui, w, h, &out);
             app.mc.picture_changed = true;
             app.message(ui, &tr("@MB:NeuralNoiseFilterDone"));
@@ -381,7 +383,7 @@ fn ai_noise_filter(app: &mut Mb3d, ui: &mut Ui) {
 fn shown_rgb(ui: &Ui, img: &crate::mc::McImage, p: &crate::scene::Scene) -> Vec<u8> {
     match &ui.c(F, "Image1").picture {
         Some(b) if b.w == img.width && b.h == img.height => b.px.iter().flat_map(|c| [(c >> 16) as u8, (c >> 8) as u8, *c as u8]).collect(),
-        _ => crate::mc::paint(img, &p.mc, p.lighting.gamma),
+        _ => crate::mc::paint_finished(img, p),
     }
 }
 
@@ -517,7 +519,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     if let (Some(c), Some(p)) = (&ck, &app.mc.paras) {
         if c.partial_rows() > 0 {
             let shown = c.with_partial(&img);
-            set_image(ui, shown.width, shown.height, &crate::mc::paint(&shown, &p.mc, p.lighting.gamma));
+            set_image(ui, shown.width, shown.height, &crate::mc::paint_finished(&shown, p));
             app.mc.picture_changed = false;
         }
     }
@@ -801,7 +803,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_caption(F, "Label15", &caption);
     }
     if let (Some(l), Some(p)) = (&live, &app.mc.paras) {
-        let rgb = crate::mc::paint(l, &p.mc, p.lighting.gamma);
+        let rgb = crate::mc::paint_finished(l, p);
         set_image(ui, l.width, l.height, &rgb);
         app.mc.live_painted = Instant::now();
     }

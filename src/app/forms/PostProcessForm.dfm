@@ -1034,6 +1034,20 @@ object PostProForm: TPostProForm
     ShowHint = True
     OnClick = MaterialBtnClick
   end
+  object FinishBtn: TSpeedButton
+    Left = 0
+    Top = 1487
+    Width = 255
+    Height = 21
+    Hint = '@MB:ClickToHideShow'
+    Align = alTop
+    AllowAllUp = True
+    GroupIndex = 10
+    Caption = '@MB:Finishing'
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = FinishBtnClick
+  end
   object DepthOfFieldPnl: TPanel
     Left = 0
     Top = 912
@@ -1899,6 +1913,199 @@ object PostProForm: TPostProForm
       ShowHint = True
       TabOrder = 5
       OnClick = MaterialNowBtnClick
+    end
+  end
+  object FinishPnl: TPanel
+    Left = 0
+    Top = 1508
+    Width = 255
+    Height = 218
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 13
+    Visible = False
+    object FinishCbx: TCheckBox
+      Left = 27
+      Top = 9
+      Width = 212
+      Height = 17
+      Hint = '@MB:ThePictureSFinishingAfterAll'
+      Caption = '@MB:FinishThePicture'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      OnClick = FinishCbxClick
+    end
+    object FinExpLbl: TLabel
+      Left = 11
+      Top = 37
+      Width = 75
+      Height = 13
+      Caption = '@MB:Exposure'
+    end
+    object FinExpEdit: TEdit
+      Left = 90
+      Top = 34
+      Width = 44
+      Height = 21
+      Hint = '@MB:ExposureInStops1TwiceAs'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      Text = '0'
+    end
+    object FinFilmicCbx: TCheckBox
+      Left = 142
+      Top = 36
+      Width = 100
+      Height = 17
+      Hint = '@MB:FilmicToneMappingBrightLightRolls'
+      Caption = '@MB:Filmic'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+    end
+    object FinGlowLbl: TLabel
+      Left = 11
+      Top = 63
+      Width = 75
+      Height = 13
+      Caption = '@MB:Glow2'
+    end
+    object FinGlowEdit: TEdit
+      Left = 90
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:GlowAroundBrightLightStrengthReach'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      Text = '0'
+    end
+    object FinGlowRadEdit: TEdit
+      Left = 140
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:GlowAroundBrightLightStrengthReach'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 4
+      Text = '0.02'
+    end
+    object FinGlowThrEdit: TEdit
+      Left = 190
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:GlowAroundBrightLightStrengthReach'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 5
+      Text = '0.8'
+    end
+    object FinContrastLbl: TLabel
+      Left = 11
+      Top = 89
+      Width = 75
+      Height = 13
+      Caption = '@MB:Contrast'
+    end
+    object FinContrastEdit: TEdit
+      Left = 90
+      Top = 86
+      Width = 44
+      Height = 21
+      Hint = '@MB:N1FlatterTo1StrongerContrast'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 6
+      Text = '0'
+    end
+    object FinSatLbl: TLabel
+      Left = 11
+      Top = 115
+      Width = 75
+      Height = 13
+      Caption = '@MB:Saturation'
+    end
+    object FinSatEdit: TEdit
+      Left = 90
+      Top = 112
+      Width = 44
+      Height = 21
+      Hint = '@MB:Colour0Grey1AsIt'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 7
+      Text = '1'
+    end
+    object FinWarmLbl: TLabel
+      Left = 11
+      Top = 141
+      Width = 75
+      Height = 13
+      Caption = '@MB:Warmth'
+    end
+    object FinWarmEdit: TEdit
+      Left = 90
+      Top = 138
+      Width = 44
+      Height = 21
+      Hint = '@MB:N1CoolerBluerTo1Warmer'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 8
+      Text = '0'
+    end
+    object FinVigLbl: TLabel
+      Left = 11
+      Top = 167
+      Width = 75
+      Height = 13
+      Caption = '@MB:Vignette'
+    end
+    object FinVigEdit: TEdit
+      Left = 90
+      Top = 164
+      Width = 44
+      Height = 21
+      Hint = '@MB:N0To1DarkerCorners'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 9
+      Text = '0'
+    end
+    object FinChromLbl: TLabel
+      Left = 11
+      Top = 193
+      Width = 75
+      Height = 13
+      Caption = '@MB:ColourFringes'
+    end
+    object FinChromEdit: TEdit
+      Left = 90
+      Top = 190
+      Width = 44
+      Height = 21
+      Hint = '@MB:N0To1RedAndBlue'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 10
+      Text = '0'
+    end
+    object FinishNowBtn: TButton
+      Left = 140
+      Top = 190
+      Width = 98
+      Height = 21
+      Hint = '@MB:PaintsThePictureAgainWithThe'
+      Caption = '@MB:PaintNow'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 11
+      OnClick = FinishNowBtnClick
     end
   end
 end

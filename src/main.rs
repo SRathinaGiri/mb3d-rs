@@ -2343,6 +2343,7 @@ fn mc_cmd(argv: &[String]) -> Result<(), String> {
             let n = if threads > 0 { threads } else { std::thread::available_parallelism().map_or(4, |n| n.get()) };
             rgb = mb3d::denoise::dct_denoise(&rgb, img.width, img.height, sigma, n);
         }
+        mb3d::finish::apply_rgb8(&mut rgb, img.width, img.height, scene.finish.as_ref());
         write_png(&out, img.width, img.height, &rgb)
     };
     if let Some(dir) = &swarm {

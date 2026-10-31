@@ -547,7 +547,7 @@ ClickToChooseTheOutputFolder=Click to choose the output folder
 ClickToChooseYourNameFor=Click to choose your name for automatic saving in parameters
 ;Mand3DForm.ButtonAuthor.Hint
 ClickToHideShow=Click to hide/show
-;Mand3DForm.PositionBtn.Hint, Mand3DForm.RotationBtn.Hint, FNavigator.Button2.Hint and 12 more
+;Mand3DForm.PositionBtn.Hint, Mand3DForm.RotationBtn.Hint, FNavigator.Button2.Hint and 13 more
 ClickToInsertYourNameBelow=Click to insert your name below
 ;Mand3DForm.ButtonInsertAuthor.Hint
 ClickToLoadABackgroundPicture=Click to load a background picture.
@@ -622,6 +622,10 @@ ColorStart=Color start
 ;LightAdjustForm.Label5.Caption, LightAdjustForm.Label10.Caption
 Coloring=Coloring
 ;Mand3DForm.TabSheet3.Caption
+Colour0Grey1AsIt=Colour: 0 grey, 1 as it is, 2 twice as colourful
+;PostProForm.FinSatEdit.Hint
+ColourFringes=Colour fringes
+;PostProForm.FinChromLbl.Caption
 ColumnsOfTiles=Columns of tiles
 ;SwarmFrm.Edit5.Hint
 CombinationMethodsMinBothFractalsAre=Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
@@ -660,6 +664,8 @@ Constants=Constants:
 ;JITFormulaEditorForm.Label3.Caption
 Continue=Continue
 ;UnfinishedFrm.Button1.Caption
+Contrast=Contrast
+;PostProForm.FinContrastLbl.Caption
 ConvertManyM3PFilesToM3I=Convert many M3P files to M3I
 ;Mand3DForm.SpeedButton25.Hint
 CopiedToTheClipboard=Copied to the clipboard.
@@ -1094,8 +1100,12 @@ ExponentialFunctions={ Exponential functions }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 ExportACubeAsAStack=Export a cube as a stack of PNG files
 ;Mand3DForm.SpeedButton24.Hint
+Exposure=Exposure
+;PostProForm.FinExpLbl.Caption
 Exposure025=Exposure:  0.25
 ;MCForm.Label2.Caption
+ExposureInStops1TwiceAs=Exposure in stops: +1 twice as bright, -1 half as bright
+;PostProForm.FinExpEdit.Hint
 ExtractingAmbientInformationFromTheOriginal=Extracting ambient information from the original M3I file, please wait:
 ;BRInfoForm.Label1.Caption
 ExtremeTesting={ Extreme testing }
@@ -1132,6 +1142,10 @@ Files=Files
 ;LogFrm.ComboBox3.Items
 FilesOfType=Files of &type:
 ;the program
+Filmic=Filmic
+;PostProForm.FinFilmicCbx.Caption
+FilmicToneMappingBrightLightRolls=Filmic tone mapping: bright light rolls off softly instead of turning flat white
+;PostProForm.FinFilmicCbx.Hint
 FilterNewPicturesAutomatically=Filter new pictures automatically
 ;PostProForm.NoiseAutoCbx.Caption
 FilterNow=Filter now
@@ -1140,10 +1154,14 @@ Fine=fine
 ;LightAdjustForm.SBFineAdj.Caption, FNavigator.RadioGroup1.Items
 FineTuneThePositionsWithThe=fine tune the positions with the arrow buttons
 ;LightAdjustForm.UpDown1.Hint, LightAdjustForm.UpDown2.Hint, LightAdjustForm.UpDown3.Hint
+FinishThePicture=Finish the picture
+;PostProForm.FinishCbx.Caption
 FinishedRenderingSlices=Finished rendering slices.
 ;the program
 FinishedTracingObject=Finished tracing object.
 ;the program
+Finishing=Finishing
+;PostProForm.FinishBtn.Caption
 First4RaysNoisy=first 4 rays (noisy)
 ;the program
 FirstCalculationOfThisFormulaCombination=First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
@@ -1379,9 +1397,13 @@ GetZ2=Get Z2
 GlobalLight=Global light
 ;LightAdjustForm.TabSheet1.Caption
 Glow=Glow:
-;PostProForm.GlowLbl.Caption
+;PostProForm.GlowLbl.Caption, PostProForm.FinGlowLbl.Caption
 Glow0AndUpTheSurface=Glow (0 and up): the surface shines in its own colour, without light
 ;PostProForm.GlowEdit.Hint
+Glow2=Glow
+;not used
+GlowAroundBrightLightStrengthReach=Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
+;PostProForm.FinGlowEdit.Hint, PostProForm.FinGlowRadEdit.Hint, PostProForm.FinGlowThrEdit.Hint
 GlueSliders=Glue sliders
 ;ColorForm.CheckBox1.Caption
 GoToNext=Go to next
@@ -1801,7 +1823,7 @@ LinearAttenuation=Linear Attenuation
 LinearInterpolateAKeyframeInbetween=Linear interpolate a keyframe inbetween
 ;the program
 LinearStraightFromKeyframeToKeyframe=Linear: straight from keyframe to keyframe. Quadratic Bezier (MB3D): smooth, passing beside the keyframes. Catmull-Rom (not in MB3D): smooth and through every keyframe. The Curves button shows the difference
-;not used
+;AnimationForm.RadioGroup2.Hint
 Lines={} lines
 ;the program
 List=List
@@ -2100,6 +2122,10 @@ MutationType=Mutation type
 ;MutaGenFrm.MinIterLabel.Caption
 N0No255FullTransparency=0: no, 255: Full transparency
 ;the program
+N0To1DarkerCorners=0 to 1: darker corners
+;PostProForm.FinVigEdit.Hint
+N0To1RedAndBlue=0 to 1: red and blue fringes towards the corners, as a lens shows them
+;PostProForm.FinChromEdit.Hint
 N1100JPEGQuality100Maximal=1..100: JPEG quality\n> 100: maximal filesize in kilobytes
 ;Mand3DForm.Edit26.Hint
 N12Aa=1:2  aa
@@ -2110,6 +2136,10 @@ N16BitPGM=16 Bit PGM
 ;the program
 N16BitZBufferGenerator=16Bit ZBuffer Generator
 ;ZBuf16BitGenFrm.Caption
+N1CoolerBluerTo1Warmer=-1 cooler (bluer) to 1 warmer (more orange)
+;PostProForm.FinWarmEdit.Hint
+N1FlatterTo1StrongerContrast=-1 flatter to 1 stronger contrast
+;PostProForm.FinContrastEdit.Hint
 N1FullSizeNoAntiAliasing=1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
 ;the program
 N1None22x233x3=1:  none\n2:  2x2\n3:  3x3
@@ -2453,13 +2483,13 @@ PNGTransparentBackgroundPng=PNG transparent background (*.png)
 PaintClouds=Paint clouds
 ;PostProForm.CloudsCbx.Caption
 PaintNow=Paint now
-;PostProForm.CloudsNowBtn.Caption, PostProForm.MaterialNowBtn.Caption
+;PostProForm.CloudsNowBtn.Caption, PostProForm.MaterialNowBtn.Caption, PostProForm.FinishNowBtn.Caption
 PaintOnImage=Paint on image
 ;ColorForm.CheckBox3.Caption
 PaintingAPreview=painting a preview
 ;the program
 PaintsThePictureAgainWithThe=Paints the picture again with the clouds as set here
-;PostProForm.CloudsNowBtn.Hint, PostProForm.MaterialNowBtn.Hint
+;PostProForm.CloudsNowBtn.Hint, PostProForm.MaterialNowBtn.Hint, PostProForm.FinishNowBtn.Hint
 Pano=pano.
 ;FNavigator.RadioGroup2.Items
 PanoramaModeTheFOVIsChoosen=Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
@@ -2838,6 +2868,8 @@ SSAO24r=SSAO24r
 ;PostProForm.TabControl1.Tabs
 SartTheMainRenderingOfThe=Sart the main rendering of the image.
 ;the program
+Saturation=Saturation
+;PostProForm.FinSatLbl.Caption
 Saturation0=Saturation:   0\s\s
 ;MCForm.Label31.Caption
 Save=Save
@@ -3318,6 +3350,8 @@ TheParametersDoNotMatchThe=The parameters do not match the unfinished calculatio
 ;the program
 ThePictureDoesNotMatchIts=The picture does not match its calculation: calculate it again.
 ;the program
+ThePictureSFinishingAfterAll=The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
+;PostProForm.FinishCbx.Hint
 ThePlaneSColourClickTo=The plane's colour (click to change)
 ;Mand3DForm.GroundColBtn.Hint
 TheRotationIsPerformedAroundThe=The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
@@ -3558,6 +3592,8 @@ ViewToMain=View to main
 ;FNavigator.SpeedButton14.Caption
 Viewing=Viewing
 ;Mand3DForm.GroupBox2.Caption
+Vignette=Vignette
+;PostProForm.FinVigLbl.Caption
 Visible=Visible:
 ;LightAdjustForm.Label25.Caption, LightAdjustForm.Label32.Caption
 VolumeLightNr=Volume light nr:
@@ -3578,6 +3614,8 @@ WaitForTheRunningCalculationOr=Wait for the running calculation, or stop it firs
 ;the program
 Walking=Walking
 ;FNavigator.Label3.Caption
+Warmth=Warmth
+;PostProForm.FinWarmLbl.Caption
 Warning=Warning
 ;the program
 WarningLower=warning

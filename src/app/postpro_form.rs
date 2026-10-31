@@ -69,7 +69,7 @@ impl Pace {
     }
 }
 
-const PANELS: [(&str, &str, &str); 9] = [
+const PANELS: [(&str, &str, &str); 10] = [
     ("RecalcSectionBtn", "RecalcSectionPnl", "CheckBox21"),
     ("NormalsOnZBufferBtn", "NormalsOnZBufferPnl", "CheckBox23"),
     ("HardShadowsBtn", "HardShadowsPnl", "CheckBox9"),
@@ -79,6 +79,7 @@ const PANELS: [(&str, &str, &str); 9] = [
     ("NoiseFilterBtn", "NoiseFilterPnl", "NoiseAutoCbx"),
     ("CloudsBtn", "CloudsPnl", "CloudsCbx"),
     ("MaterialBtn", "MaterialPnl", "MaterialCbx"),
+    ("FinishBtn", "FinishPnl", "FinishCbx"),
 ];
 
 /// The strength of the noise filter (Noise Filter section), 0 when off.
@@ -142,6 +143,18 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         irid_shift: num("IridShiftEdit") as f32,
         glow: (num("GlowEdit") as f32).max(0.0),
     });
+    sc.finish = ui.checked(F, "FinishCbx").then(|| crate::finish::Finish {
+        exposure: (num("FinExpEdit") as f32).clamp(-10.0, 10.0),
+        tonemap: ui.checked(F, "FinFilmicCbx"),
+        glow: (num("FinGlowEdit") as f32).max(0.0),
+        glow_radius: (num("FinGlowRadEdit") as f32).clamp(0.001, 0.5),
+        glow_threshold: (num("FinGlowThrEdit") as f32).max(0.0),
+        contrast: (num("FinContrastEdit") as f32).clamp(-1.0, 1.0),
+        saturation: (num("FinSatEdit") as f32).clamp(0.0, 3.0),
+        warmth: (num("FinWarmEdit") as f32).clamp(-1.0, 1.0),
+        vignette: (num("FinVigEdit") as f32).clamp(0.0, 1.0),
+        chromatic: (num("FinChromEdit") as f32).clamp(0.0, 1.0),
+    });
     sc.shadows = (ui.checked(F, "CheckBox9") || st.hs_now).then(|| shadow_params(ui));
     let tab = ui.c(F, "TabControl1").tab_index;
     let ao_on = ui.checked(F, "CheckBox11") || st.ao_now;
@@ -189,6 +202,22 @@ pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "MaterialCbx", sc.material.is_some());
     for (e, v) in [("FresnelEdit", m.fresnel), ("IridEdit", m.iridescence), ("IridShiftEdit", m.irid_shift), ("GlowEdit", m.glow)] {
         ui.set_text(F, e, &super::util::fts(v as f64));
+    }
+    let fin = sc.finish.unwrap_or_default();
+    ui.set_checked(F, "FinishCbx", sc.finish.is_some());
+    ui.set_checked(F, "FinFilmicCbx", fin.tonemap);
+    for (e, v) in [
+        ("FinExpEdit", fin.exposure),
+        ("FinGlowEdit", fin.glow),
+        ("FinGlowRadEdit", fin.glow_radius),
+        ("FinGlowThrEdit", fin.glow_threshold),
+        ("FinContrastEdit", fin.contrast),
+        ("FinSatEdit", fin.saturation),
+        ("FinWarmEdit", fin.warmth),
+        ("FinVigEdit", fin.vignette),
+        ("FinChromEdit", fin.chromatic),
+    ] {
+        ui.set_text(F, e, &fts_single(v as f64));
     }
     ui.set_checked(F, "CheckBox1", sc.dof.is_some());
     let d = sc.dof.unwrap_or_default();
@@ -393,7 +422,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     }
     match h {
         "NoiseFilterNowBtnClick" => super::main_form::denoise_picture(app, ui, noise_sigma(ui)),
-        "NoiseAutoCbxClick" | "CloudsCbxClick" | "MaterialCbxClick" => update_captions(ui),
+        "NoiseAutoCbxClick" | "CloudsCbxClick" | "MaterialCbxClick" | "FinishCbxClick" => update_captions(ui),
+        "FinishNowBtnClick" => {
+            app.make_scene(ui);
+            repaint(app, ui, "finishing");
+        }
         "MaterialNowBtnClick" => {
             app.make_scene(ui);
             repaint(app, ui, "material");

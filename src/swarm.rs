@@ -2126,7 +2126,7 @@ impl BlockMerge {
     /// The merged image painted (the job's own Monte Carlo settings).
     pub fn painted(&self) -> Option<(Vec<u8>, usize, usize)> {
         let (m, sc) = (self.all.as_ref()?, self.scene.as_ref()?);
-        Some((crate::mc::paint(m, &sc.mc, sc.lighting.gamma), m.width, m.height))
+        Some((crate::mc::paint_finished(m, sc), m.width, m.height))
     }
     /// Changes whenever [`BlockMerge::update`] read something new.
     pub fn version(&self) -> u64 {
@@ -2240,7 +2240,7 @@ pub fn job_preview_merged(job: &Job, max_w: usize, merge: Option<&mut BlockMerge
                     let newest = files.iter().filter(|f| is_done_file(f)).max_by_key(|f| std::fs::metadata(f).and_then(|m| m.modified()).ok())?;
                     let data = std::fs::read(newest).ok()?;
                     let (f, img) = crate::mc::read_m3c(&data).ok()?;
-                    (crate::mc::paint(&img, &f.scene.mc, f.scene.lighting.gamma), img.width, img.height)
+                    (crate::mc::paint_finished(&img, &f.scene), img.width, img.height)
                 }
             };
             let (rgb, w, h) = fit_rgb(&rgb, w, h, max_w);

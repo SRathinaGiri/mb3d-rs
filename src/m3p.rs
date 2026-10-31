@@ -1368,6 +1368,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn finishing_in_the_mb3d_rs_block() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.finish = Some(crate::finish::Finish { exposure: 0.5, tonemap: true, glow: 0.75, glow_radius: 0.03, glow_threshold: 0.6, contrast: 0.25, saturation: 1.25, warmth: -0.5, vignette: 0.375, chromatic: 0.125 });
+        let raw = write(&sc);
+        assert_eq!(parse(&raw).unwrap().scene.finish, sc.finish);
+        let text = raw_to_text(&raw, "t");
+        assert!(text.contains("finish_tonemap = filmic"), "{text}");
+        assert_eq!(parse(&raw_from_text(&text).unwrap().0).unwrap().scene.finish, sc.finish);
+        // neutral settings write nothing
+        sc.finish = Some(Default::default());
+        assert!(!raw_to_text(&write(&sc), "t").contains("mb3d-rs"));
+        assert!(Scene::preset("Integer Power").unwrap().apply("finish_tonemap = maybe").is_err());
+    }
+
+    #[test]
     fn ground_plane_in_the_mb3d_rs_block() {
         let plain = Scene::preset("Integer Power").unwrap();
         // without a ground the parameters are MB3D's alone

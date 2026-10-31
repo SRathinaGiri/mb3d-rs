@@ -3623,6 +3623,14 @@ pub fn paint(img: &McImage, mc: &McSettings, gamma: f32) -> Vec<u8> {
     paint_recs(&img.recs, mc, gamma)
 }
 
+/// [`paint`] with the scene's finishing (`Scene::finish`) of the whole
+/// picture.
+pub fn paint_finished(img: &McImage, sc: &Scene) -> Vec<u8> {
+    let mut rgb = paint(img, &sc.mc, sc.lighting.gamma);
+    crate::finish::apply_rgb8(&mut rgb, img.width, img.height, sc.finish.as_ref());
+    rgb
+}
+
 /// [`paint`] of some of the records (e.g. a row), RGB for each.
 pub fn paint_recs(recs: &[McRecord], mc: &McSettings, gamma: f32) -> Vec<u8> {
     let mut contrast = (mc.contrast as f32 / 256.0 + 0.5).powi(2);

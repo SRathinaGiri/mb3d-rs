@@ -52,6 +52,7 @@ pub mod denoise;
 pub mod oidn;
 pub mod dof;
 pub mod exr;
+pub mod finish;
 pub mod formulas;
 pub mod frames;
 pub mod gbuffer;
