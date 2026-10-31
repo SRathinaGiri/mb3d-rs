@@ -1275,6 +1275,9 @@ impl<'a, 'c> Tracer<'a, 'c> {
         } else {
             lv.calc_colors_alpha(si, idif0)
         };
+        if let Some(d) = lv.detail.as_ref().filter(|_| !si.is_ground()) {
+            dif = sc3(dif, d.tint(self.pos));
+        }
         if let Some(d) = &lv.diff_map {
             let st = dif;
             let lns = self.c.cam.to_view(s3(&self.normals));
@@ -1853,6 +1856,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
             self.hit = true;
             self.mzz = zz.abs();
             self.normals = h.normals;
+            if let Some(d) = lv.detail.as_ref().filter(|_| h.otrap != crate::gbuffer::GROUND) {
+                // the surface detail's relief (as the painting's)
+                let l = len(&self.normals);
+                if l > 1e-30 {
+                    self.normals = scale(d.bump(scale(self.normals, 1.0 / l), self.pos), l);
+                }
+            }
             cr.si_gradient = h.si_grad;
             cr.otrap = h.otrap;
             cc = self.pos;

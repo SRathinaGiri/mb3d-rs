@@ -266,6 +266,8 @@ pub struct Scene {
     /// the finishing of the picture: exposure, glow, tone mapping, colour
     /// grading, vignette, colour fringes (not in MB3D)
     pub finish: Option<crate::finish::Finish>,
+    /// a fine relief and colour variation on the surface (not in MB3D)
+    pub detail: Option<crate::detail::Detail>,
     /// The surface material (not in MB3D): None = MB3D's
     pub material: Option<Material>,
     /// The place of the DE combination's second part (not in MB3D)
@@ -451,6 +453,7 @@ impl Default for Scene {
             ground: None,
             clouds: None,
             finish: None,
+            detail: None,
             material: None,
             part2_place: None,
             deao: None,
@@ -920,6 +923,9 @@ impl Scene {
         if let Some(f) = self.finish.filter(|f| !f.is_neutral()) {
             t.push_str(&f.to_text());
         }
+        if let Some(d) = &self.detail {
+            t.push_str(&d.to_text());
+        }
         if let Some(g) = &self.ground {
             let c = g.color;
             let _ = writeln!(t, "ground = {}, {}", ["x", "y", "z"][g.axis as usize % 3], g.pos);
@@ -1378,6 +1384,29 @@ impl Scene {
                         let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
                         s.clouds.get_or_insert_with(Default::default).color = c;
                     }
+                    "detail" => {
+                        let v = val.trim().to_ascii_lowercase();
+                        if matches!(v.as_str(), "off" | "none" | "no") {
+                            s.detail = None;
+                        } else {
+                            let bad = || err(format!("bad detail '{val}' (kind, strength, size, roughness: stone, 0.5, 0.02, 0.5; kinds {})", crate::detail::KINDS.join(", ")));
+                            let p: Vec<&str> = v.split(',').map(str::trim).collect();
+                            let kind = crate::detail::KINDS.iter().position(|k| *k == p[0]).ok_or_else(bad)?;
+                            let f = |i: usize| p.get(i).map(|x| x.parse::<f64>().map_err(|_| bad())).transpose();
+                            let d = s.detail.get_or_insert_with(Default::default);
+                            d.kind = kind as u8;
+                            if let Some(x) = f(1)? {
+                                d.strength = (x as f32).clamp(0.0, 4.0);
+                            }
+                            if let Some(x) = f(2)? {
+                                d.size = x.max(1e-30);
+                            }
+                            if let Some(x) = f(3)? {
+                                d.roughness = (x as f32).clamp(0.05, 0.95);
+                            }
+                        }
+                    }
+                    "detail_color" => s.detail.get_or_insert_with(Default::default).color = (num()? as f32).clamp(0.0, 1.0),
                     "finish" if matches!(val.trim().to_ascii_lowercase().as_str(), "off" | "none" | "no") => s.finish = None,
                     "finish_exposure" | "finish_tonemap" | "glow" | "finish_contrast" | "finish_saturation" | "finish_warmth" | "vignette" | "chromatic" => {
                         let f = s.finish.get_or_insert_with(Default::default);

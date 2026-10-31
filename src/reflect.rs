@@ -904,6 +904,15 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                         continue;
                     }
                     self.normal = rotate_vector_reverse(&self.normal, &p.vgrads);
+                    if let Some(d) = &c.lv.detail {
+                        // the surface detail tilts the mirror too (not on the
+                        // ground plane)
+                        let on_ground = p.ground.as_ref().is_some_and(|g| g.distance(&self.m.it.c).abs() < p.de_stop as f64 * sw * 8.0);
+                        let l = len(&self.normal);
+                        if !on_ground && l > 1e-30 {
+                            self.normal = scale(d.bump(scale(self.normal, 1.0 / l), self.m.it.c), l);
+                        }
+                    }
                     self.calc_trans_r = if !c.calc_trans {
                         false
                     } else if !c.only_difs {

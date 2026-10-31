@@ -624,6 +624,8 @@ pub struct LightVals {
     pub(crate) ground: Option<(SVec, SVec)>,
     /// the fractal's surface material (Fresnel, iridescence, glow)
     pub(crate) material: Option<crate::scene::Material>,
+    /// the surface detail (relief and colour variation)
+    pub(crate) detail: Option<crate::detail::Detail>,
     pub(crate) bg_direct: bool,
     pub(crate) bg_add_light: bool,
     /// light map lights
@@ -1155,6 +1157,7 @@ impl LightVals {
             vol_light: false,
             ground: None,
             material: None,
+            detail: None,
             bg: if l.bg_image.is_empty() {
                 None
             } else {
@@ -1716,11 +1719,22 @@ impl LightVals {
             if sqr {
                 d_amb_sh = if o.svec { d_amb_sh * d_amb_sh } else { (d_amb_sh * d_amb_sh + d_amb_sh) * 0.5 };
             }
-            let lns: SVec = [
+            let mut lns: SVec = [
                 si.normal[0] as f32 * 3.0518509476e-5,
                 si.normal[1] as f32 * 3.0518509476e-5,
                 si.normal[2] as f32 * 3.0518509476e-5,
             ];
+            // the surface detail: the normal tilted by the relief at the
+            // point (fractal coordinates: fixed to the fractal)
+            let detail = self.detail.as_ref().filter(|_| !si.is_ground()).map(|d| (d, [0, 1, 2].map(|k| obj_pos[k] as f64 + self.mid[k])));
+            if let Some((d, p)) = detail {
+                let n = cam.to_abs(lns).map(|v| v as f64);
+                let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt();
+                if l > 1e-9 {
+                    let b = d.bump(n.map(|v| v / l), p);
+                    lns = cam.to_view(b.map(|v| (v * l) as f32));
+                }
+            }
             let mut li_dif = [0f32; 3]; // LiLSDAI[1]
             let mut li_spe = [0f32; 3];
             let mut li_amb = [0f32; 3]; // LiLSDAI[3]
@@ -1786,6 +1800,9 @@ impl LightVals {
                 if self.yc_comb {
                     idif = sv_scale(pal, luma(idif) / (0.01 + luma(pal)));
                 }
+            }
+            if let Some((d, p)) = detail {
+                idif = sv_scale(idif, d.tint(p));
             }
             let mut ispe = ispe;
             if let Some(m) = self.material.as_ref().filter(|_| !si.is_ground()) {

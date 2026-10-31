@@ -34,6 +34,8 @@ AFasterMethodThanBinsearchBut=A faster method than binsearch, but can lead to fa
 ;MCForm.CheckBox6.Hint
 AFewSecondsLeft=a few seconds left
 ;the program
+AFineReliefOnTheSurface=A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
+;not used
 AFolderEveryComputerOfThe=A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 ;SwarmFrm.Edit1.Hint
 AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
@@ -626,6 +628,8 @@ Colour0Grey1AsIt=Colour: 0 grey, 1 as it is, 2 twice as colourful
 ;PostProForm.FinSatEdit.Hint
 ColourFringes=Colour fringes
 ;PostProForm.FinChromLbl.Caption
+ColourVariation=Colour variation
+;not used
 ColumnsOfTiles=Columns of tiles
 ;SwarmFrm.Edit5.Hint
 CombinationMethodsMinBothFractalsAre=Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
@@ -1397,11 +1401,11 @@ GetZ2=Get Z2
 GlobalLight=Global light
 ;LightAdjustForm.TabSheet1.Caption
 Glow=Glow:
-;PostProForm.GlowLbl.Caption, PostProForm.FinGlowLbl.Caption
+;PostProForm.GlowLbl.Caption
 Glow0AndUpTheSurface=Glow (0 and up): the surface shines in its own colour, without light
 ;PostProForm.GlowEdit.Hint
 Glow2=Glow
-;not used
+;PostProForm.FinGlowLbl.Caption
 GlowAroundBrightLightStrengthReach=Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
 ;PostProForm.FinGlowEdit.Hint, PostProForm.FinGlowRadEdit.Hint, PostProForm.FinGlowThrEdit.Hint
 GlueSliders=Glue sliders
@@ -1410,6 +1414,8 @@ GoToNext=Go to next
 ;AnimationForm.Label20.Caption
 GoneLastSeenSAgo=gone (last seen {} s ago)
 ;the program
+Grain=Grain
+;not used
 GraphicsCard=Graphics card
 ;Mand3DForm.CalcOnCombo.Items, SwarmFrm.Caption
 GroundPlane=Ground plane
@@ -1464,6 +1470,8 @@ Hotkeys=Hotkeys
 ;HotkeysFrm.Caption, Mand3DForm.HotkeysBtn.Caption
 HowMuchThePlaneReflects0=How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 ;Mand3DForm.GroundReflEdit.Hint
+HowMuchTheSurfaceSColour=How much the surface's colour varies with the relief: 0 not, 1 strongly
+;not used
 HowStrongTheNoiseIsThat=How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 ;PostProForm.NoiseSigmaEdit.Hint
 HowThickTheCloudsAre1=How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
@@ -2324,6 +2332,8 @@ OfLines={} of {} lines
 ;the program
 OfUnitsDone={} of {} units done
 ;the program
+Off=Off
+;not used
 OffLeftImageIsOnThe=Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 ;Mand3DForm.StereoCrossCheck.Hint
 OffsetAndScale=Offset and scale
@@ -2734,6 +2744,8 @@ RelToObject=Rel. to object:
 ;LightAdjustForm.CheckBox6.Caption
 RelativeToObject=Relative to object
 ;LightAdjustForm.CheckBox9.Caption
+Relief=Relief
+;not used
 Reload=Reload
 ;LanguageFrm.ReloadBtn.Caption
 RemainingFaces10NoReduction=Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
@@ -2842,6 +2854,8 @@ RotationY=Rotation Y:
 ;the program
 RotationZ=Rotation Z:
 ;the program
+Rough=Rough
+;not used
 RoughImage=rough image
 ;the program
 Roughness=Roughness
@@ -3188,6 +3202,8 @@ StickThisWindowToTheLeft=Stick this window to the left side
 ;Mand3DForm.Stickthiswindowtotheleftside1.Caption
 StickThisWindowToTheRight=Stick this window to the right side
 ;Mand3DForm.Stickthiswindowtotherightside1.Caption
+Stone=Stone
+;not used
 Stop=Stop
 ;the program
 StopBatchRendering=Stop batch rendering
@@ -3216,6 +3232,8 @@ Strength2=Strength
 ;MutaGenFrm.Label3.Caption
 StrengthOfDynamicFog=Strength of dynamic fog.
 ;FNavigator.UpDown1.Hint
+StrengthSizeFractalUnitsAndFineness=Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
+;not used
 StretchesUpperAndLowerPartsMaybe=Stretches upper and lower parts, maybe useful for a common image in full sphere option.
 ;LightAdjustForm.CheckBox5.Hint
 SubframeCountMultiplicator=Subframe count\nmultiplicator:

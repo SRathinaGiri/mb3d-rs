@@ -1376,6 +1376,13 @@ mod tests {
         let text = raw_to_text(&raw, "t");
         assert!(text.contains("finish_tonemap = filmic"), "{text}");
         assert_eq!(parse(&raw_from_text(&text).unwrap().0).unwrap().scene.finish, sc.finish);
+        // the surface detail
+        sc.detail = Some(crate::detail::Detail { kind: 1, strength: 1.5, size: 0.125, roughness: 0.625, color: 0.25 });
+        let raw = write(&sc);
+        assert_eq!(parse(&raw).unwrap().scene.detail, sc.detail);
+        assert_eq!(parse(&raw_from_text(&raw_to_text(&raw, "t")).unwrap().0).unwrap().scene.detail, sc.detail);
+        sc.detail = None;
+        assert!(Scene::preset("Integer Power").unwrap().apply("detail = marble, 1").is_err());
         // neutral settings write nothing
         sc.finish = Some(Default::default());
         assert!(!raw_to_text(&write(&sc), "t").contains("mb3d-rs"));

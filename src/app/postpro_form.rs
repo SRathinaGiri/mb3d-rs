@@ -155,6 +155,14 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         vignette: (num("FinVigEdit") as f32).clamp(0.0, 1.0),
         chromatic: (num("FinChromEdit") as f32).clamp(0.0, 1.0),
     });
+    let kind = ui.item_index(F, "DetailKindCB");
+    sc.detail = (1..=3).contains(&kind).then(|| crate::detail::Detail {
+        kind: (kind - 1) as u8,
+        strength: (num("DetailStrEdit") as f32).clamp(0.0, 4.0),
+        size: Some(num("DetailSizeEdit")).filter(|v| *v > 0.0).unwrap_or(0.02),
+        roughness: (num("DetailRoughEdit") as f32).clamp(0.05, 0.95),
+        color: (num("DetailColEdit") as f32).clamp(0.0, 1.0),
+    });
     sc.shadows = (ui.checked(F, "CheckBox9") || st.hs_now).then(|| shadow_params(ui));
     let tab = ui.c(F, "TabControl1").tab_index;
     let ao_on = ui.checked(F, "CheckBox11") || st.ao_now;
@@ -203,6 +211,14 @@ pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     for (e, v) in [("FresnelEdit", m.fresnel), ("IridEdit", m.iridescence), ("IridShiftEdit", m.irid_shift), ("GlowEdit", m.glow)] {
         ui.set_text(F, e, &super::util::fts(v as f64));
     }
+    // the relief: without one a size that suits the view (a small part of
+    // what the zoom shows)
+    let det = sc.detail.unwrap_or(crate::detail::Detail { size: 0.1 / sc.zoom.max(1e-30), ..Default::default() });
+    ui.set_item_index(F, "DetailKindCB", sc.detail.map_or(0, |d| d.kind as i32 + 1));
+    ui.set_text(F, "DetailStrEdit", &fts_single(det.strength as f64));
+    ui.set_text(F, "DetailSizeEdit", &super::util::fts(det.size));
+    ui.set_text(F, "DetailRoughEdit", &fts_single(det.roughness as f64));
+    ui.set_text(F, "DetailColEdit", &fts_single(det.color as f64));
     let fin = sc.finish.unwrap_or_default();
     ui.set_checked(F, "FinishCbx", sc.finish.is_some());
     ui.set_checked(F, "FinFilmicCbx", fin.tonemap);
