@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.88](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.88)** (31 Oct 2026, 11:01 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.89](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89)** (1 Nov 2026, 05:45 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1271,6 +1271,17 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.89](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89) · 1 Nov 2026, 05:45 UTC
+
+| Commit | What it does |
+|---|---|
+| [`028adca`](https://github.com/thr32423/mb3d-rs/commit/028adcaf697ee35feddbe6009e098c856aca6a08) | Version number and release notes of this release |
+| [`7b09cd4`](https://github.com/thr32423/mb3d-rs/commit/7b09cd45099f2558c886c3fe4eb42621f2588f24) | Finishing, surface relief, turntable, flights and motion blur in the documentation and in all seventeen languages: the labels translated (the Japanese, Korean and Chinese font subsets with their new characters; the relief's suggested size rounded to two digits), the READMEs with pictures, TECHNICAL.md's keys, the AI assistants' guide |
+| [`d388096`](https://github.com/thr32423/mb3d-rs/commit/d388096434f4242f1f825b3cd2611492a00c8993) | Camera and animation (not in MB3D): a turntable, keyframes for one whole turn of the camera around the middle of the view (Animation window: Turntable, 8 keyframes in a Catmull-Rom loop; mb3d animate SCENE --orbit STEPS); a recorded flight (Navigator: Rec, every new view at most twice a second becomes the next keyframe); motion blur, each frame the average of several pictures within the shutter time (Animation window: Motion blur and Shutter; mb3d animate --motion-blur N[,SHUTTER]; in the text animation files motion_blur and shutter, in MB3D's .m3a bits 21-29 of the options MB3D ignores); the animation's scene between two frames (Animation::frame_scene_at); tests: the turntable, scenes between frames and across keyframes, both file formats |
+| [`ae0431e`](https://github.com/thr32423/mb3d-rs/commit/ae0431e74b061de8b9b0401cdb32fa26c17cd88c) | Surface detail (not in MB3D): a fine relief on the fractal's surface from 3D gradient noise fixed to the fractal, rough, stone (ridges and cracks) or grain, with its strength, size and fineness, and a colour variation; it tilts the surface's normal where the light is calculated (the painting, the reflections' mirror on the processor and with the card's marches, Monte Carlo) and varies the colour, not on the ground plane; Post processing window, Material section: Relief and Colour variation; scene keys detail = kind, strength, size, roughness and detail_color (also in the MB3D-RS block); tests: the noise, the tilted normals, the files |
+| [`b3c9061`](https://github.com/thr32423/mb3d-rs/commit/b3c9061999ec9164fd62922ba3efee9d40779050) | Finishing of the picture (not in MB3D): exposure in stops, glow around bright light (the light above a threshold blurred on a smaller copy, a wide and a near part), filmic tone mapping (highlights roll off instead of clipping: the painting runs in floating point when finishing is on), contrast, saturation, warmth, a vignette and colour fringes by the whole picture's middle (also on tiles); the last pass after the depth of field, also on Monte Carlo pictures (after the noise filters); Post processing window: a Finishing section; scene keys finish_exposure, finish_tonemap, glow, finish_contrast, finish_saturation, finish_warmth, vignette, chromatic (also in the MB3D-RS block of .m3p/.m3i); a scene without finishing paints as before; tests: neutral changes nothing, the filmic curve, glow and vignette, the files |
+| [`2e43553`](https://github.com/thr32423/mb3d-rs/commit/2e435533f721601a32c72252d12b9b42b53581db) | README: Updates for v0.2.88 |
+
 ### [v0.2.88](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.88) · 31 Oct 2026, 11:01 UTC
 
 | Commit | What it does |
@@ -1320,20 +1331,7 @@ of a release are on its page. Times are in UTC.
 | [`ec16516`](https://github.com/thr32423/mb3d-rs/commit/ec165168a97b2abdeb4d8748c1af0f6ce3935bec) | Interface texts as labels, in the way of Microsoft Dynamics 365: every text has a label ID, the form files and the code refer to it as @MB:Id (Caption = '@MB:CalculateNow', tr("@MB:CalculationStopped")), each language file's [Labels] gives the texts once (Id=text, a note with the English text or where it is used under each); 2,042 control and program lines became 1,793 labels, a new window gets the translations a language already has (the German History window: Art, Größe, Ordner, Laden); a label a language lacks shows the English text, built into the program; a form section still gives one control a text of its own (the conversion kept the 7 to 29 translations per language that differed from their label's), old language files keep working; tools/labels.py finds labels to reuse, adds new ones, checks the references and the translations and puts the files in order; the tests check every reference; every window pixel for pixel as before in English, German and Japanese but for the gained translations |
 | [`22263e0`](https://github.com/thr32423/mb3d-rs/commit/22263e041909ec5af4a3a9a542e2b8c75134f1c8) | README: Updates for v0.2.86 |
 
-### [v0.2.86](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86) · 30 Oct 2026, 08:45 UTC
-
-| Commit | What it does |
-|---|---|
-| [`b126daf`](https://github.com/thr32423/mb3d-rs/commit/b126daf760bdcdc28a38ec293c7841eb54a4b1ad) | Version number and release notes of this release |
-| [`7ee8b6b`](https://github.com/thr32423/mb3d-rs/commit/7ee8b6b777d64d61e7635074f46e639806a969a8) | AI assistants: a scene guide (which keys do what: light colours and strength, fog and background, camera, detail, effects, formulas; and how to change lights and formulas), change_scene also with the whole edited scene text (a [light] section of a change switched off the lights it did not list, a [formula] section added a formula), the view as rotation angles in the description so that an assistant turns it by some degrees, formula_help (the names, or a formula's values) and preview_folder (a folder's parameter files on one numbered sheet); tried with Claude Code: a warmer light, a turned view, a formula's iterations, a folder sheet |
-| [`2015786`](https://github.com/thr32423/mb3d-rs/commit/2015786dec77e1490bdd02145a389816eac64499) | Technical notes: the Connect to an AI assistant window |
-| [`265a0c7`](https://github.com/thr32423/mb3d-rs/commit/265a0c7d2b4035ab0840e7cb767c90c44fd3f9c1) | AI assistants: the "Connect to an AI assistant" window behind the Prefs tab's new AI button (the tab's buttons a little narrower to make room): whether Claude's desktop app and Claude Code are on this computer and connected, Connect / Disconnect for the desktop app (its settings merged, the old file kept), Claude Code's command to copy, things to ask, the output folder and the limits; the connection names the mb3d next to the desktop program; Claude Code's command with the name before its options |
-| [`3b1807f`](https://github.com/thr32423/mb3d-rs/commit/3b1807fbc98f330cda8df9d675b67c6a6c39c5ee) | AI assistants: mb3d mcp, the Model Context Protocol over the standard input and output (no network: the assistant's app starts it), with the tools describe_scene, change_scene, render (the picture shown to the assistant, a quick preview or full size), variations (MutaGen, the sheet shown), recent_pictures (the History) and recent_log; files written only into the AI folder, nothing deleted, pictures above 4K only with the user's agreement, 10 minutes at most a calculation, every call logged; mb3d mcp --setup connects Claude's desktop app and prints the command for Claude Code; a small JSON reader and writer of our own (src/json.rs), as the command line program has no dependencies |
-| [`ed3f2dd`](https://github.com/thr32423/mb3d-rs/commit/ed3f2dd253c2d9024c2531077a6423e0ee42abbd) | README: Updates for v0.2.85 |
-| [`2da6ec0`](https://github.com/thr32423/mb3d-rs/commit/2da6ec048fc0ec91b6c1940edfb45bc22ea34e2f) | README in every language: the scanrepo.dev result of 0.2.85 (safe, 5 of 100, scanned 30 October 2026) |
-| [`225a273`](https://github.com/thr32423/mb3d-rs/commit/225a273f9b740854a1ff2593ef5274a682e732c5) | README: the scanrepo.dev result of 0.2.85 (safe, 5 of 100, scanned 30 October 2026) |
-
-All 99 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 100 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
