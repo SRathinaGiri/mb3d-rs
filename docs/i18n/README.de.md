@@ -57,7 +57,7 @@ Es besteht aus zwei Programmen:
   </details>
 * **mb3d** — ein Kommandozeilen-Renderer für Skripte und Stapelaufträge:
   Bilder, Animationen, Stapellisten, Monte-Carlo-Renderings, Voxel- und
-  Mesh-Exporte, alles ohne Fenster.
+  Mesh-Exporte, Gauß-Splats, alles ohne Fenster.
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -833,6 +833,44 @@ können Sie selbst weiter prüfen:
   entsprechend so viel länger (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* **Gauß-Splats** des Fraktals, von allen Seiten anzusehen in Blender (ab
+  5.3), SuperSplat und anderen Splat-Betrachtern: *Bulb
+  Tracer2* > *Gauß-Splats...*, oder `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="Das Bild des Programms von dIFS heart shrub und seine Gauß-Splats in Blender von links und von hinten"></a>
+
+  <details><summary>Mehr lesen</summary>
+
+  Das Fenster exportiert die Szene des Hauptfensters; seine Einstellungen
+  sind die der Kommandozeile. Das Fraktal wird aus 16 Richtungen berechnet
+  (*Richtungen*, `--views`), jede ein Bild von 640 x 640 Pixeln (*Größe
+  jeder Ansicht*, `--size`), mit seinen Lichtern, Schatten, Verdeckung und
+  Reflexionen. Jedes Pixel des Objekts wird zu einer flachen Gauß-Funktion,
+  die auf der Oberfläche liegt, mit der Farbe, die es im Bild hat. Wo sich
+  die Bilder überlappen, stammt jedes Stück der Oberfläche aus dem Bild, das
+  es am geradesten von vorn sah. Die Farben ändern sich mit der Richtung,
+  aus der man schaut (Kugelflächenfunktionen, *Farben nach Richtung*,
+  `--sh`), so wandern Glanzlichter wie in den Bildern.
+
+  Ein Objekt, das von außen gesehen wird, wird rundherum um die Mitte der
+  Szene berechnet. Eine Szene, die von innen gesehen wird (eine Halle, eine
+  Höhle, wo das Fraktal das ganze Bild füllt), wird von der Kamera der Szene
+  aus berechnet, mit Blick in alle Richtungen (*Berechnen von*,
+  `--around camera`; *Auto*, die Voreinstellung, wählt selbst). Dort behält
+  eine größere `--size` mehr Details, da jede Ansicht 110 Grad breit ist.
+
+  Die Lichter, die sich mit der Kamera drehen, und die obere und untere
+  Farbe des Umgebungslichts werden am Objekt festgehalten, so wie sie die
+  eigene Ansicht der Szene beleuchten; so sind alle Seiten gleich
+  beleuchtet. Tiefenschärfe, Wolken, Leuchten, Vignette und die Bodenebene
+  bleiben weg. Die Datei liegt in der Ansicht der Szene (x nach rechts, y
+  ins Bild hinein, z nach oben: Blenders Vorderansicht sieht aus wie die
+  Szene), die Mitte oder die Kamera bei 0 und das Fraktal auf einen Radius
+  von 1 skaliert. Sie braucht etwa 160 Bytes pro Splat, meist 100 bis 300
+  MB; `--sh 0` macht sie auf ein Drittel kleiner, ohne die wandernden
+  Glanzlichter.
+
+  </details>
 
 <a id="download"></a>
 
@@ -1276,6 +1314,7 @@ Alles andere hat einen Unterbefehl mit eigenem `--help`:
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

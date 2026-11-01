@@ -239,6 +239,8 @@ ApproximateVertexColorsTheColorInformation=近似计算顶点颜色。颜色信�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 计算 ArcTan(Y/X)，并返回位于正确象限的角度。
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=围绕中心（物体）
+;Around the middle (an object)
 AsFullBackgroundSphere=作为完整背景球：
 ;As full background sphere:
 Aspect=宽高比：
@@ -393,6 +395,8 @@ CalculateDoF=计算景深：
 ;Calculate DoF:
 CalculateDoFAutomatically=自动计算景深
 ;Calculate DoF automatically
+CalculateFrom=计算位置：
+;Calculate from:
 CalculateHSAutomatically=自动计算硬阴影
 ;Calculate H.S. automatically
 CalculateJulia=计算 Julia
@@ -633,6 +637,8 @@ ColourFringes=色差
 ;Colour fringes
 ColourVariation=颜色变化
 ;Colour variation
+ColoursByDirection=按方向变化的颜色：
+;Colours by direction:
 ColumnsOfTiles=分块列数
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=组合方法：\nMin：两个分形都可见，取 DE 的最小值组合\nMax：仅保留重叠部分，取 DE 的最大值组合\nInv max：反转第二个 Hybrid 的 DE 并按 'Max' 组合\nMin lin：用线性重叠函数取最小值组合\nMin nlin：类似 S1，非线性函数，重叠更平滑\nMix：先用 F1..FendHybrid1，再以修改后的向量使用 FstartHybrid2..F6 (dIFS)。
@@ -933,8 +939,12 @@ DiffuseObjectColorsClickToChange=物体漫反射颜色，点击更改。
 ;Diffuse object colors, click to change them.
 DiffuseShadow=漫反射阴影
 ;Diffuse shadow
+DirectionOf=方向 {} / {}
+;Direction {} of {}
 DirectionTowardsZero000=指向原点 (0,0,0) 的方向
 ;Direction towards zero (0,0,0)
+Directions=方向数：
+;Directions:
 DisableAll=全部禁用
 ;Disable all
 DisableAnalyticalDE=禁用解析 DE
@@ -1113,6 +1123,8 @@ ExponentialFunctions={ 指数函数 }
 ;{ Exponential functions }
 ExportACubeAsAStack=将一个立方体导出为一组 PNG 文件
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=将分形导出为高斯泼溅，以便在 Blender 和其他泼溅查看器中从各个方向观看
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=曝光
 ;Exposure
 Exposure025=曝光：  0.25
@@ -1269,6 +1281,8 @@ Fresnel0To1MoreReflection=菲涅耳（0 到 1）：表面越偏离视线，反�
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=从剪贴板
 ;From Clipboard
+FromTheCameraAllAroundA=从相机向四周（从内部看的场景）
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=完整 M3I 图像文件：
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1381,6 +1395,12 @@ Gamma05=Gamma：  0.5
 ;Gamma:  0.5
 Gauss=高斯
 ;Gauss
+GaussianSplats=高斯泼溅
+;Gaussian splats
+GaussianSplats2=高斯泼溅...
+;Gaussian splats...
+GaussianSplatsPLY=高斯泼溅 (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=由当前视图生成一个动画关键帧
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=通过分块生成大图像
@@ -1475,6 +1495,8 @@ HideThisFormula=隐藏此公式
 ;Hide this formula
 High=高
 ;high
+HighlightsMoveAsInThePictures=高光会像图片中一样移动。每个泼溅点在 2 时约占 160 字节，关闭时 68 字节。
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=历史记录
 ;History
 HistoryThePicturesCalculatedTheFiles=历史记录：已计算的图像、打开和保存的文件（点击浏览）
@@ -2363,6 +2385,8 @@ Off=关
 ;Off
 OffLeftImageIsOnThe=关：左图在左侧，用于平行观看。开：右图在左侧，用于交叉眼观看。
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=关闭（文件最小）
+;Off (smallest file)
 OffsetAndScale=偏移与缩放
 ;Offset and scale
 OffsetX=偏移 X：
@@ -2567,6 +2591,8 @@ Pictures=张图像
 ;pictures
 PicturesAndFilesTheAssistantMakes=助手生成的图像和文件会保存到 {}；不会删除任何内容。大于 4K 的图像只有在您同意后才会生成，计算在 10 分钟后停止。助手所做的一切都记录在日志中。
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=像素；越大保留的细节越多，文件也越大
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=请选择输出文件。
 ;Please choose an output file.
 PleaseMakeASelectionInThe=请先在图像中选取区域。
@@ -3155,6 +3181,8 @@ Size2=大小：
 ;Size:
 SizeFactor=尺寸倍数：
 ;Size factor:
+SizeOfEachView=每个视图的大小：
+;Size of each view:
 Sliding=平移
 ;Sliding
 SlidingWalkingStep=平移+行走步长：
@@ -3195,6 +3223,8 @@ SpecularPowerFunction=高光幂函数
 ;Specular power function
 SphericalCoords=球坐标
 ;Spherical coords
+SplatsInWrittenTo={} 个泼溅点，用时 {}，已保存到 {}
+;{} splats in {}, written to {}
 Stan=标准
 ;stan.
 StandardRectilinearPanorama=标准  直线  全景
@@ -3379,6 +3409,10 @@ TheFolderDoesNotExistOr=文件夹不存在（或无法访问）
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=公式名称应以“JIT”开头，以便与基于 ASM 的公式区分
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=分形不在任何一个视图中。
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=把主窗口的分形导出为高斯泼溅，以便在 Blender（5.3 及以上）和其他泼溅查看器中从各个方向观看。它从多个方向计算，每个像素都成为一个带有自身颜色的泼溅点。
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=叠加在调色板上的分形表面材质（MB3D 中没有：保存在参数的 MB3D 部分之后）
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=每秒帧数必须是大于 0 的数字（例如 25）。

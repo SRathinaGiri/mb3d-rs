@@ -239,6 +239,8 @@ ApproximateVertexColorsTheColorInformation=ألوان الرؤوس التقري�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 تحسب ArcTan(Y/X) وتعيد زاوية في الربع الصحيح.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=حول المركز (جسم)
+;Around the middle (an object)
 AsFullBackgroundSphere=كرةً خلفية كاملة:
 ;As full background sphere:
 Aspect=نسبة الأبعاد:
@@ -393,6 +395,8 @@ CalculateDoF=حساب DoF:
 ;Calculate DoF:
 CalculateDoFAutomatically=حساب DoF تلقائيًا
 ;Calculate DoF automatically
+CalculateFrom=الحساب من:
+;Calculate from:
 CalculateHSAutomatically=حساب H.S. تلقائيًا
 ;Calculate H.S. automatically
 CalculateJulia=حساب جوليا
@@ -633,6 +637,8 @@ ColourFringes=حواف ملونة
 ;Colour fringes
 ColourVariation=تنوّع اللون
 ;Colour variation
+ColoursByDirection=الألوان حسب الاتجاه:
+;Colours by direction:
 ColumnsOfTiles=أعمدة البلاطات
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=طرق الدمج:\nMin: الكسوريّان كلاهما ظاهران، دمج قيم DE بالحد الأدنى\nMax: الأجزاء المتداخلة فقط، دمج قيم DE بالحد الأقصى\nInv max: عكس DE للهجين الثاني والدمج بـ'Max'\nMin lin: دمج بالحد الأدنى مع دالة تداخل خطية\nMin nlin: مثل S1، دالة غير خطية، تداخل أنعم\nMix: أولًا F1..FendHybrid1 ثم FstartHybrid2..F6 (dIFS) بمتجه معدّل.
@@ -933,8 +939,12 @@ DiffuseObjectColorsClickToChange=ألوان الجسم الانتشارية، ا
 ;Diffuse object colors, click to change them.
 DiffuseShadow=الظل الانتشاري
 ;Diffuse shadow
+DirectionOf=الاتجاه {} من {}
+;Direction {} of {}
 DirectionTowardsZero000=الاتجاه نحو الصفر (0,0,0)
 ;Direction towards zero (0,0,0)
+Directions=الاتجاهات:
+;Directions:
 DisableAll=تعطيل الكل
 ;Disable all
 DisableAnalyticalDE=تعطيل DE التحليلي
@@ -1113,6 +1123,8 @@ ExponentialFunctions={ الدوال الأسية }
 ;{ Exponential functions }
 ExportACubeAsAStack=تصدير مكعب في صورة رزمة من ملفات PNG
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=يصدّر الكسيريّة بقعًا غاوسية لمشاهدتها من كل الجهات في Blender وعارضات البقع الأخرى
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=التعريض
 ;Exposure
 Exposure025=التعريض:  0.25
@@ -1269,6 +1281,8 @@ Fresnel0To1MoreReflection=فرينل (من 0 إلى 1): انعكاس أكثر ح
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=من الحافظة
 ;From Clipboard
+FromTheCameraAllAroundA=من الكاميرا في كل الاتجاهات (مشهد يُرى من الداخل)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=ملفات صور M3I الكاملة:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1381,6 +1395,12 @@ Gamma05=غاما:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=بقع غاوسية
+;Gaussian splats
+GaussianSplats2=بقع غاوسية...
+;Gaussian splats...
+GaussianSplatsPLY=بقع غاوسية (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=توليد إطار مفتاحي للتحريك من المنظر الحالي
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=توليد صور كبيرة بالبلاطات
@@ -1475,6 +1495,8 @@ HideThisFormula=إخفاء هذه الصيغة
 ;Hide this formula
 High=عالٍ
 ;high
+HighlightsMoveAsInThePictures=تتحرك اللمعات كما في الصور. تأخذ البقعة نحو 160 بايت عند 2، و68 عند الإيقاف.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=السجل
 ;History
 HistoryThePicturesCalculatedTheFiles=السجل: الصور المحسوبة، والملفات المفتوحة والمحفوظة (انقر للتصفح)
@@ -2363,6 +2385,8 @@ Off=إيقاف
 ;Off
 OffLeftImageIsOnThe=مطفأ: الصورة اليسرى على اليسار للمشاهدة المتوازية. مفعّل: الصورة اليمنى على اليسار للمشاهدة بالعينين المتقاطعتين.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=إيقاف (أصغر ملف)
+;Off (smallest file)
 OffsetAndScale=الإزاحة والمقياس
 ;Offset and scale
 OffsetX=الإزاحة X:
@@ -2567,6 +2591,8 @@ Pictures=صور
 ;pictures
 PicturesAndFilesTheAssistantMakes=الصور والملفات التي يصنعها المساعد توضع في {}؛ ولا يُحذف شيء. الصور الأكبر من 4K لا تُصنع إلا بعد موافقتك، ويتوقف الحساب بعد 10 دقائق. وكل ما يفعله مدوّن في السجل.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=بكسل؛ الأكبر يحفظ تفاصيل أكثر ويُنتج ملفًا أكبر
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=يرجى اختيار ملف إخراج.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=يرجى تحديد جزء من الصورة أولًا.
@@ -3155,6 +3181,8 @@ Size2=الحجم:
 ;Size:
 SizeFactor=معامل الحجم:
 ;Size factor:
+SizeOfEachView=حجم كل منظر:
+;Size of each view:
 Sliding=الانزلاق
 ;Sliding
 SlidingWalkingStep=خطوة الانزلاق+المشي:
@@ -3195,6 +3223,8 @@ SpecularPowerFunction=دالة قوة اللمعان
 ;Specular power function
 SphericalCoords=إحداثيات كروية
 ;Spherical coords
+SplatsInWrittenTo={} بقعة في {}، حُفظت في {}
+;{} splats in {}, written to {}
 Stan=قياسي
 ;stan.
 StandardRectilinearPanorama=قياسي  مستقيم  بانوراما
@@ -3379,6 +3409,10 @@ TheFolderDoesNotExistOr=المجلد غير موجود (أو يتعذر الوص
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=يجب أن يبدأ اسم الصيغة بـ "JIT" لتمييز هذه الصيغ من الصيغ المبنية على ASM
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=الكسيريّة ليست في أيٍّ من المناظر.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=كسيريّة النافذة الرئيسية بقعًا غاوسية لمشاهدتها من كل الجهات في Blender (الإصدار 5.3 وما بعده) وعارضات البقع الأخرى. تُحسب من عدة اتجاهات، ويصبح كل بكسل بقعة بلونه.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=مادة سطح الكسورية فوق لوحة الألوان (ليست في MB3D: تُحفظ بعد جزء MB3D من المعاملات)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=يجب أن يكون عدد الإطارات في الثانية عددًا أكبر من 0 (مثلًا 25).

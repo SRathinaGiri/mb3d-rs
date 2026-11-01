@@ -1012,7 +1012,10 @@ programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
 
 ## Gaussian splat export
 
-`src/splat.rs`, `mb3d splat`. Checked with `examples/splatcheck.rs`, which
+`src/splat.rs`, `mb3d splat`; the window `SplatFrm` (`app/splat_form.rs`,
+`Splat.dfm`), opened by the Bulb Tracer window's *Gaussian splats...*,
+exports the main window's scene in a thread (Stop ends it between views,
+nothing is written). Checked with `examples/splatcheck.rs`, which
 exports a scene, renders the program's picture from a direction that is not
 one of the views and prints that camera in the file's frame, for a splat
 renderer (Blender 5.3 headless) to render the file from the same place.

@@ -57,7 +57,7 @@ Isinya dua program:
   </details>
 * **mb3d** — renderer baris perintah untuk skrip dan pekerjaan batch: gambar,
   animasi, daftar batch, render Monte Carlo, ekspor voxel dan mesh,
-  semuanya tanpa jendela.
+  splat Gaussian, semuanya tanpa jendela.
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -842,6 +842,42 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   lebih lama (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* **Splat Gaussian** dari fraktal, untuk dilihat dari segala sisi di
+  Blender (5.3 dan yang lebih baru), SuperSplat, dan penampil splat lain: *Bulb
+  Tracer2* > *Splat Gaussian...*, atau `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="Gambar program dari dIFS heart shrub, dan splat Gaussian-nya di Blender dari kiri dan dari belakang"></a>
+
+  <details><summary>Selengkapnya</summary>
+
+  Jendela ini mengekspor adegan jendela utama; pengaturannya sama dengan
+  baris perintah. Fraktal dihitung dari 16 arah
+  (*Arah*, `--views`), masing-masing gambar 640 x 640 piksel (*Ukuran
+  tiap tampilan*, `--size`), dengan cahaya, bayangan,
+  oklusi, dan pantulannya. Setiap piksel objek menjadi Gaussian datar
+  yang terletak di permukaan, dengan warna yang dimilikinya di gambar.
+  Di tempat gambar-gambar saling tumpang tindih, setiap bagian permukaan diambil dari
+  gambar yang melihatnya paling lurus. Warnanya berubah menurut arah Anda
+  melihat (harmonik sferis, *Warna menurut arah*, `--sh`), sehingga
+  kilau bergerak seperti di gambar.
+
+  Objek yang dilihat dari luar dihitung dari sekeliling tengah
+  adegan. Adegan yang dilihat dari dalam (aula, gua, tempat fraktal memenuhi
+  seluruh gambar) dihitung dari kamera adegan, melihat ke
+  segala arah (*Hitung dari*, `--around camera`; *Otomatis*, bawaannya,
+  memilih sendiri). Di sana,
+  `--size` yang lebih besar menyimpan lebih banyak detail, karena tiap tampilan selebar 110 derajat.
+
+  Cahaya yang berputar bersama kamera, serta warna atas dan bawah cahaya
+  ambien, dipasang tetap pada objek sebagaimana mereka menerangi tampilan
+  adegan itu sendiri, sehingga semua sisi diterangi sama. Kedalaman bidang, awan, pendar, vinyet,
+  dan bidang tanah tidak disertakan. File berada dalam tampilan adegan (x ke
+  kanan, y ke dalam gambar, z ke atas: tampilan depan Blender terlihat seperti
+  adegannya), dengan tengah atau kamera di 0 dan fraktal diskalakan ke
+  jari-jari 1. Ukurannya sekitar 160 byte per splat, biasanya 100 sampai 300 MB;
+  `--sh 0` membuatnya sepertiga dari itu, tanpa kilau yang bergerak.
+
+  </details>
 
 <a id="download"></a>
 
@@ -1215,6 +1251,8 @@ selisih pembulatan, dan gambar Otomatis berbeda dari gambar prosesor rata-rata
 sepersekian persen dari rentang warna (detail halus bisa berkilau di piksel
 yang berbeda; [catatan teknis](../TECHNICAL.md) memuat pengukurannya).
 
+<a id="experimental-speed-ups"></a>
+
 ### Percepatan eksperimental
 
 Beberapa cara menghitung yang lebih cepat sedikit mengubah gambar, jadi
@@ -1274,6 +1312,7 @@ Semua hal lain punya sub-perintah dengan `--help`-nya sendiri:
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

@@ -56,7 +56,8 @@ Przëchôdô jakno dwie programë:
   </details>
 * **mb3d** — renderownik z rédczi pòlétów dlô skriptów ë serijnëch
   robòtów: òbrôzczi, animacje, lëstë serijné, renderë Monte Carlo,
-  ekspòrt wòkselów ë siatków, wszëtkò bez òkna.
+  ekspòrt wòkselów ë siatków, gaussowsczé splatë, wszëtkò bez
+  òkna.
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -805,6 +806,40 @@ sprawdzëc sóm:
   (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* **Gaussowsczé splatë** fraktala, do òbzéraniô z kòżdi stronë w
+  Blenderze (5.3 ë nowszim), SuperSplat ë jinszich programach do splatów: *Bulb
+  Tracer2* > *Gaussowsczé splatë...*, abò `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="Òbrôzk programë z dIFS heart shrub ë jegò gaussowsczé splatë w Blenderze z lewi ë òd zadu"></a>
+
+  <details><summary>Czëtôj wicy</summary>
+
+  Òkno ekspòrtëje scenã przédnégò òkna; jegò ùstawë są taczé jak w rédce
+  pòlétów. Fraktal je rechòwóny z 16 kerënków (*Kerënczi*, `--views`), kòżdi
+  to òbrôzk 640 x 640 pikselów (*Wiôlgòsc kòżdégò widoku*, `--size`), z jegò
+  swiatłama, céniama, òkòlnyma céniama ë òdbiciama. Kòżdi piksel òbiektu
+  stôwô sã płaską gaussowską plamą leżącą na pòwierzchni, z farwą, jaką mô na
+  òbrôzkù. Tam, dze òbrôzczi na se zachôdają, kòżdi kawel pòwierzchni
+  pòchôdô z tegò, chtëren gò widzôł nôbarżi na prosto. Farwë zmieniają sã
+  z kerënkã, z jaczégò zdrzisz (sfericzné harmòniczi, *Farwë wedle kerënkù*,
+  `--sh`), tak że pòłësczi rëszają sã jak na òbrôzkach.
+
+  Òbiekt widzóny z bùtnowi stronë je rechòwóny wkół westrzódka scenë. Scena
+  widzónô z nótrzë (zala, jama, dze fraktal wëpełniô całi òbrôzk) je
+  rechòwónô z kamerë scenë, zdrzącë w kòżdim kerënkù (*Rechùjë z*,
+  `--around camera`; *Aùto*, domëszlné, wëbiérô samò). Tam wikszi `--size`
+  trzëmô wicy detalów, bò kòżdi widok je szeroczi na 110 gradów.
+
+  Swiatła, co sã òbracają z kamerą, ë farwë górë ë dołu òkòlnégò swiatła są
+  przëmòcowóné do òbiektu tak, jak òswiecywają widok scenë, tak że wszëtczé
+  stronë są òswiecone równo. Głãbiô òstroscë, chmùrë, blask, winieta ë zemia
+  są pòminãté. Lopk je w widokù scenë (x w prawò, y w òbrôzk, z w górã: przédny
+  widok Blendera wëzdrzi tak jak scena), westrzódk abò kamera w 0, a fraktal
+  przeskalowóny do prawidła 1. Biere kòl 160 bajtów na splat, zwëczajno 100
+  do 300 MB; `--sh 0` zmniészô to do trzecégò dzélu, bez rëszającëch sã
+  pòłësków.
+
+  </details>
 
 <a id="download"></a>
 
@@ -1238,6 +1273,7 @@ Wszëtkò jinszé mô pòdkòmandã z gwôsnym `--help`:
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

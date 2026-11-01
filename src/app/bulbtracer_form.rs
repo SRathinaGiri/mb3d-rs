@@ -680,6 +680,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             enable_controls(app, ui, !app.btracer.calculating);
         }
         "CloseButtonClick" => ui.hide(F),
+        "SplatBtnClick" => super::splat_form::open(app, ui),
         "ImportParamsFromMainBtnClick" => import(app, ui, &tr("@MB:ImportedFromMain")),
         "Button2Click" => {
             let o = crate::vcl::dialogs::FileOptions {

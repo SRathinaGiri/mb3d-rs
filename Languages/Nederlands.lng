@@ -238,6 +238,8 @@ ApproximateVertexColorsTheColorInformation=Benadert de vertexkleuren. De kleurin
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 berekent ArcTan(Y/X) en geeft een hoek in het juiste kwadrant terug.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Rond het midden (een object)
+;Around the middle (an object)
 AsFullBackgroundSphere=Als volledige achtergrondbol:
 ;As full background sphere:
 Aspect=Verhouding:
@@ -392,6 +394,8 @@ CalculateDoF=Scherptediepte berekenen:
 ;Calculate DoF:
 CalculateDoFAutomatically=Scherptediepte automatisch berekenen
 ;Calculate DoF automatically
+CalculateFrom=Berekenen vanuit:
+;Calculate from:
 CalculateHSAutomatically=H.S. automatisch berekenen
 ;Calculate H.S. automatically
 CalculateJulia=Julia berekenen
@@ -632,6 +636,8 @@ ColourFringes=Kleurranden
 ;Colour fringes
 ColourVariation=Kleurvariatie
 ;Colour variation
+ColoursByDirection=Kleuren per richting:
+;Colours by direction:
 ColumnsOfTiles=Kolommen tegels
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Combinatiemethoden:\nMin: Beide fractals zijn zichtbaar, de DE's worden via het minimum gecombineerd\nMax: Alleen overlappende delen, de DE's worden via het maximum gecombineerd\nInv max: DE van de tweede hybride omkeren en combineren als 'Max'\nMin lin: Minimum-combinatie met een lineaire overlapfunctie\nMin nlin: Zoals S1, niet-lineaire functie, vloeiendere overlap\nMix: Eerst F1..FendHybrid1, dan FstartHybrid2..F6 (dIFS) met gewijzigde vector.
@@ -932,8 +938,12 @@ DiffuseObjectColorsClickToChange=Diffuse objectkleuren, klik om ze te wijzigen.
 ;Diffuse object colors, click to change them.
 DiffuseShadow=Diffuse schaduw
 ;Diffuse shadow
+DirectionOf=Richting {} van {}
+;Direction {} of {}
 DirectionTowardsZero000=Richting naar nul (0,0,0)
 ;Direction towards zero (0,0,0)
+Directions=Richtingen:
+;Directions:
 DisableAll=Alles uitschakelen
 ;Disable all
 DisableAnalyticalDE=Analytische DE uitschakelen
@@ -1112,6 +1122,8 @@ ExponentialFunctions={ Exponentiële functies }
 ;{ Exponential functions }
 ExportACubeAsAStack=Een kubus exporteren als een stapel PNG-bestanden
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Exporteert de fractal als Gaussische splats, om van alle kanten te bekijken in Blender en andere splat-viewers
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=Belichting
 ;Exposure
 Exposure025=Belichting:  0.25
@@ -1268,6 +1280,8 @@ Fresnel0To1MoreReflection=Fresnel (0 tot 1): meer reflectie waar het oppervlak v
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=Van klembord
 ;From Clipboard
+FromTheCameraAllAroundA=Vanuit de camera, rondom (een scène van binnenuit)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=Volledige M3I-afbeeldingsbestanden:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1380,6 +1394,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=Gaussische splats
+;Gaussian splats
+GaussianSplats2=Gaussische splats...
+;Gaussian splats...
+GaussianSplatsPLY=Gaussische splats (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=Maak een animatie-keyframe van het huidige beeld
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=Grote afbeeldingen genereren door tegelen
@@ -1474,6 +1494,8 @@ HideThisFormula=Deze formule verbergen
 ;Hide this formula
 High=hoog
 ;high
+HighlightsMoveAsInThePictures=Glanslichten bewegen zoals in de afbeeldingen. Een splat neemt ongeveer 160 bytes bij 2, 68 als het uit staat.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=Geschiedenis
 ;History
 HistoryThePicturesCalculatedTheFiles=Geschiedenis: de berekende afbeeldingen, de geopende en opgeslagen bestanden (klik om te bladeren)
@@ -2362,6 +2384,8 @@ Off=Uit
 ;Off
 OffLeftImageIsOnThe=Uit: linker beeld links voor parallel kijken. Aan: rechter beeld links voor kruislings kijken.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Uit (kleinste bestand)
+;Off (smallest file)
 OffsetAndScale=Verschuiving en schaal
 ;Offset and scale
 OffsetX=Offset X:
@@ -2566,6 +2590,8 @@ Pictures=afbeeldingen
 ;pictures
 PicturesAndFilesTheAssistantMakes=Afbeeldingen en bestanden die de assistent maakt, komen in {}; er wordt niets verwijderd. Afbeeldingen groter dan 4K worden alleen gemaakt als u akkoord gaat, en een berekening stopt na 10 minuten. Alles wat hij doet, staat in het logboek.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=pixels; groter houdt meer detail en geeft een groter bestand
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=Kies een uitvoerbestand.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=Maak eerst een selectie in de afbeelding.
@@ -3154,6 +3180,8 @@ Size2=Grootte:
 ;Size:
 SizeFactor=Groottefactor:
 ;Size factor:
+SizeOfEachView=Grootte van elk aanzicht:
+;Size of each view:
 Sliding=Schuiven
 ;Sliding
 SlidingWalkingStep=Schuif+loopstap:
@@ -3194,6 +3222,8 @@ SpecularPowerFunction=Speculaire machtsfunctie
 ;Specular power function
 SphericalCoords=Sferische coörd.
 ;Spherical coords
+SplatsInWrittenTo={} splats in {}, opgeslagen in {}
+;{} splats in {}, written to {}
 Stan=stan.
 ;stan.
 StandardRectilinearPanorama=standaard  rechtlijnig  panorama
@@ -3378,6 +3408,10 @@ TheFolderDoesNotExistOr=de map bestaat niet (of is niet bereikbaar)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=De formulenaam moet met "JIT" beginnen om deze formules te onderscheiden van de op ASM gebaseerde formules
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=De fractal is in geen van de aanzichten.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=De fractal van het hoofdvenster als Gaussische splats, om van alle kanten te bekijken in Blender (5.3 en later) en andere splat-viewers. Hij wordt vanuit meerdere richtingen berekend, en elke pixel wordt een splat met zijn kleur.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Het oppervlaktemateriaal van de fractal bovenop het palet (niet in MB3D: bewaard na het MB3D-deel van de parameters)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=Het aantal frames per seconde moet een getal boven 0 zijn (bijv. 25).

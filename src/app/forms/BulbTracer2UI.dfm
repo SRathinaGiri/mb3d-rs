@@ -1671,6 +1671,18 @@ object BulbTracer2Frm: TBulbTracer2Frm
       TabOrder = 8
       OnClick = SaveBTracer2FileBtnClick
     end
+    object SplatBtn: TButton
+      Left = 10
+      Top = 143
+      Width = 184
+      Height = 20
+      Hint = '@MB:ExportTheFractalAsGaussianSplats'
+      Caption = '@MB:GaussianSplats2'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 9
+      OnClick = SplatBtnClick
+    end
   end
   object SaveDialog: TSaveDialog
     Options = [ofOverwritePrompt, ofHideReadOnly, ofEnableSizing]

@@ -56,7 +56,7 @@ Het bestaat uit twee programma's:
   </details>
 * **mb3d** — een renderer voor de opdrachtregel, voor scripts en batchtaken: afbeeldingen,
   animaties, batchlijsten, Monte Carlo-renders, voxel- en mesh-exports,
-  allemaal zonder venster.
+  Gaussische splats, allemaal zonder venster.
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -802,6 +802,42 @@ kunt u zelf verder controleren:
   lang (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* **Gaussische splats** van de fractal, om van alle kanten te bekijken in
+  Blender (5.3 en later), SuperSplat en andere splatviewers: *Bulb
+  Tracer2* > *Gaussische splats...*, of `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="De afbeelding van dIFS heart shrub in het programma, en de Gaussische splats ervan in Blender van links en van achteren"></a>
+
+  <details><summary>Meer lezen</summary>
+
+  Het venster exporteert de scène van het hoofdvenster; de instellingen zijn
+  die van de opdrachtregel. De fractal wordt berekend vanuit 16 richtingen
+  (*Richtingen*, `--views`), elk een afbeelding van 640 x 640 pixels (*Grootte
+  van elk aanzicht*, `--size`), met de lichten, schaduwen,
+  occlusie en reflecties. Elke pixel van het object wordt een platte
+  Gaussian die op het oppervlak ligt, met de kleur die hij in de afbeelding heeft.
+  Waar de afbeeldingen overlappen, komt elk stukje oppervlak uit de
+  afbeelding die het het meest recht van voren zag. De kleuren veranderen met de richting
+  waaruit u kijkt (sferische harmonischen, *Kleuren per richting*, `--sh`), zodat
+  glanslichten bewegen zoals in de afbeeldingen.
+
+  Een object dat van buiten wordt gezien, wordt van rondom het midden van de
+  scène berekend. Een scène die van binnen wordt gezien (een hal, een grot, waar de fractal
+  de hele afbeelding vult) wordt berekend vanuit de camera van de scène, kijkend in
+  alle richtingen (*Berekenen vanuit*, `--around camera`; *Auto*, de
+  standaard, kiest zelf). Daar
+  houdt een grotere `--size` meer detail, omdat elk aanzicht 110 graden breed is.
+
+  De lichten die met de camera meedraaien, en de boven- en onderkleur van het
+  omgevingslicht, worden aan het object vastgezet zoals ze het eigen beeld van de
+  scène belichten, zodat alle kanten gelijk belicht zijn. Scherptediepte, wolken, gloed, vignet
+  en het grondvlak worden weggelaten. Het bestand staat in het beeld van de scène (x naar
+  rechts, y de afbeelding in, z omhoog: het vooraanzicht van Blender ziet eruit zoals de
+  scène), het midden of de camera op 0 en de fractal geschaald naar een
+  straal van 1. Het neemt ongeveer 160 bytes per splat, meestal 100 tot 300 MB;
+  `--sh 0` maakt het een derde daarvan, zonder de bewegende glanslichten.
+
+  </details>
 
 <a id="download"></a>
 
@@ -1234,6 +1270,7 @@ Al het andere heeft een subopdracht met een eigen `--help`:
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

@@ -239,6 +239,8 @@ ApproximateVertexColorsTheColorInformation=वर्टेक्स रंगो
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2, ArcTan(Y/X) की गणना करता है और सही चतुर्थांश में कोण लौटाता है।
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=केंद्र के चारों ओर (एक वस्तु)
+;Around the middle (an object)
 AsFullBackgroundSphere=पूर्ण पृष्ठभूमि गोले के रूप में:
 ;As full background sphere:
 Aspect=अनुपात:
@@ -393,6 +395,8 @@ CalculateDoF=DoF की गणना करें:
 ;Calculate DoF:
 CalculateDoFAutomatically=DoF की स्वतः गणना करें
 ;Calculate DoF automatically
+CalculateFrom=कहाँ से गणना करें:
+;Calculate from:
 CalculateHSAutomatically=क.छा. की स्वतः गणना करें
 ;Calculate H.S. automatically
 CalculateJulia=Julia की गणना करें
@@ -633,6 +637,8 @@ ColourFringes=रंगीन किनारे
 ;Colour fringes
 ColourVariation=रंग भिन्नता
 ;Colour variation
+ColoursByDirection=दिशा के अनुसार रंग:
+;Colours by direction:
 ColumnsOfTiles=टाइल के कॉलम
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=संयोजन विधियाँ:\nMin: दोनों फ़्रैक्टल दिखते हैं, DE का न्यूनतम संयोजन\nMax: केवल ओवरलैप वाले भाग, DE का अधिकतम संयोजन\nInv max: दूसरे हाइब्रिड का DE उलटें और 'Max' से संयोजित करें\nMin lin: रैखिक ओवरलैप फ़ंक्शन के साथ न्यूनतम संयोजन\nMin nlin: S1 जैसा, अरैखिक फ़ंक्शन, अधिक स्मूद ओवरलैप\nMix: पहले F1..FendHybrid1 फिर संशोधित वेक्टर के साथ FstartHybrid2..F6 (dIFS)।
@@ -933,8 +939,12 @@ DiffuseObjectColorsClickToChange=वस्तु के डिफ़्यूज
 ;Diffuse object colors, click to change them.
 DiffuseShadow=डिफ़्यूज़ छाया
 ;Diffuse shadow
+DirectionOf=दिशा {} / {}
+;Direction {} of {}
 DirectionTowardsZero000=शून्य (0,0,0) की ओर दिशा
 ;Direction towards zero (0,0,0)
+Directions=दिशाएँ:
+;Directions:
 DisableAll=सभी बंद करें
 ;Disable all
 DisableAnalyticalDE=विश्लेषणात्मक DE बंद करें
@@ -1113,6 +1123,8 @@ ExponentialFunctions={ घातांकीय फ़ंक्शन }
 ;{ Exponential functions }
 ExportACubeAsAStack=एक घन को PNG फ़ाइलों के स्टैक के रूप में निर्यात करें
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=फ्रैक्टल को गॉसियन स्प्लैट के रूप में निर्यात करता है, ताकि उसे Blender और दूसरे स्प्लैट व्यूअर में हर तरफ़ से देखा जा सके
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=एक्सपोज़र
 ;Exposure
 Exposure025=एक्सपोज़र:  0.25
@@ -1269,6 +1281,8 @@ Fresnel0To1MoreReflection=फ़्रेनेल (0 से 1): जहाँ �
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=क्लिपबोर्ड से
 ;From Clipboard
+FromTheCameraAllAroundA=कैमरे से, हर दिशा में (भीतर से देखा गया दृश्य)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=पूर्ण M3I छवि फ़ाइलें:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1381,6 +1395,12 @@ Gamma05=गामा:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=गॉसियन स्प्लैट
+;Gaussian splats
+GaussianSplats2=गॉसियन स्प्लैट...
+;Gaussian splats...
+GaussianSplatsPLY=गॉसियन स्प्लैट (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=वर्तमान दृश्य से एक एनिमेशन कीफ़्रेम बनाएँ
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=टाइलिंग द्वारा बड़ी छवियाँ बनाएँ
@@ -1475,6 +1495,8 @@ HideThisFormula=यह फ़ॉर्मूला छिपाएँ
 ;Hide this formula
 High=उच्च
 ;high
+HighlightsMoveAsInThePictures=चमक चित्रों की तरह खिसकती है। एक स्प्लैट 2 पर लगभग 160 बाइट लेता है, बंद होने पर 68।
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=इतिहास
 ;History
 HistoryThePicturesCalculatedTheFiles=इतिहास: गणना किए गए चित्र, खोली और सहेजी गई फ़ाइलें (ब्राउज़ करने के लिए क्लिक करें)
@@ -2363,6 +2385,8 @@ Off=बंद
 ;Off
 OffLeftImageIsOnThe=बंद: समानांतर देखने के लिए बाईं छवि बाईं ओर। चालू: क्रॉस-आई देखने के लिए दाईं छवि बाईं ओर।
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=बंद (सबसे छोटी फ़ाइल)
+;Off (smallest file)
 OffsetAndScale=ऑफ़सेट और स्केल
 ;Offset and scale
 OffsetX=ऑफ़सेट X:
@@ -2567,6 +2591,8 @@ Pictures=चित्र
 ;pictures
 PicturesAndFilesTheAssistantMakes=सहायक जो चित्र और फ़ाइलें बनाता है, वे {} में जाती हैं; कुछ भी हटाया नहीं जाता। 4K से बड़े चित्र आपकी सहमति के बाद ही बनते हैं, और कोई गणना 10 मिनट बाद रुक जाती है। वह जो कुछ करता है, सब लॉग में है।
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=पिक्सेल; बड़ा होने पर ज़्यादा विवरण रहता है और फ़ाइल बड़ी होती है
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=कृपया एक आउटपुट फ़ाइल चुनें।
 ;Please choose an output file.
 PleaseMakeASelectionInThe=कृपया पहले छवि में एक चयन करें।
@@ -3155,6 +3181,8 @@ Size2=आकार:
 ;Size:
 SizeFactor=आकार गुणक:
 ;Size factor:
+SizeOfEachView=हर दृश्य का आकार:
+;Size of each view:
 Sliding=खिसकना
 ;Sliding
 SlidingWalkingStep=खिसकने+चलने का कदम:
@@ -3195,6 +3223,8 @@ SpecularPowerFunction=स्पेक्युलर पावर फ़ंक�
 ;Specular power function
 SphericalCoords=गोलीय निर्देशांक
 ;Spherical coords
+SplatsInWrittenTo={} स्प्लैट, {} में, {} में सहेजे गए
+;{} splats in {}, written to {}
 Stan=मानक
 ;stan.
 StandardRectilinearPanorama=मानक  रेक्टिलिनियर  पैनोरमा
@@ -3379,6 +3409,10 @@ TheFolderDoesNotExistOr=फ़ोल्डर मौजूद नहीं ह�
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=फ़ॉर्मूले का नाम "JIT" से शुरू होना चाहिए, ताकि इन फ़ॉर्मूलों को ASM-आधारित फ़ॉर्मूलों से अलग पहचाना जा सके
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=फ्रैक्टल किसी भी दृश्य में नहीं है।
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=मुख्य विंडो का फ्रैक्टल गॉसियन स्प्लैट के रूप में, ताकि उसे Blender (5.3 और बाद के) और दूसरे स्प्लैट व्यूअर में हर तरफ़ से देखा जा सके। इसकी गणना कई दिशाओं से होती है, और हर पिक्सेल अपने रंग का एक स्प्लैट बन जाता है।
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=पैलेट के ऊपर फ़्रैक्टल की सतह सामग्री (MB3D में नहीं: पैरामीटरों में MB3D के भाग के बाद सहेजी जाती है)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=फ़्रेम प्रति सेकंड 0 से बड़ी संख्या होनी चाहिए (जैसे 25)।

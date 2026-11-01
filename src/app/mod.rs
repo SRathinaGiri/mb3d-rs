@@ -27,6 +27,7 @@ pub mod mc_form;
 pub mod meshview;
 pub mod mutagen_form;
 pub mod navi_form;
+pub mod splat_form;
 pub mod palette_form;
 pub mod postpro_form;
 pub mod small_forms;
@@ -46,7 +47,7 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "uMapCalcWindow", "VisualThemesGUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "Splat", "uMapCalcWindow", "VisualThemesGUI",
     "VoxelExport", "ZBuf16BitGenUI", "Curves", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
@@ -77,6 +78,7 @@ pub struct Mb3d {
     pub logview: log_form::State,
     pub voxel: voxel_form::State,
     pub btracer: bulbtracer_form::State,
+    pub splat: splat_form::State,
     pub mutagen: mutagen_form::State,
     pub meshview: meshview::State,
     pub jit: jit_form::State,
@@ -219,6 +221,7 @@ impl App for Mb3d {
             "MCForm" => mc_form::event(self, ui, e),
             "FVoxelExport" => voxel_form::event(self, ui, e),
             "BulbTracer2Frm" => bulbtracer_form::event(self, ui, e),
+            "SplatFrm" => splat_form::event(self, ui, e),
             "MutaGenFrm" => mutagen_form::event(self, ui, e),
             "MeshPreviewFrm" => meshview::preview_event(self, ui, e),
             "HeightMapGenFrm" => meshview::heightmap_event(self, ui, e),
@@ -252,6 +255,7 @@ impl App for Mb3d {
         mc_form::idle(self, ui);
         voxel_form::idle(self, ui);
         bulbtracer_form::idle(self, ui);
+        splat_form::idle(self, ui);
         mutagen_form::idle(self, ui);
         meshview::idle(self, ui);
         file_preview::idle(self, ui);
@@ -290,6 +294,7 @@ impl Mb3d {
             "navi" => navi_form::dialog(self, ui, what, r),
             "voxel" => voxel_form::dialog(self, ui, what, r),
             "btracer" => bulbtracer_form::dialog(self, ui, what, r),
+            "splat" => splat_form::dialog(self, ui, what, r),
             "mutagen" => mutagen_form::dialog(self, ui, what, r),
             "heightmap" => meshview::heightmap_dialog(self, ui, what, r),
             "jit" => jit_form::dialog(self, ui, what, r),
@@ -373,6 +378,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         logview: Default::default(),
         voxel: voxel_form::State::default(),
         btracer: bulbtracer_form::State::default(),
+        splat: splat_form::State::default(),
         mutagen: mutagen_form::State::default(),
         meshview: meshview::State::default(),
         jit: jit_form::State::default(),

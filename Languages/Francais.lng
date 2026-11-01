@@ -238,6 +238,8 @@ ApproximateVertexColorsTheColorInformation=Couleurs de sommets approximatives. L
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calcule ArcTan(Y/X) et renvoie un angle dans le bon quadrant.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Autour du centre (un objet)
+;Around the middle (an object)
 AsFullBackgroundSphere=En sphère de fond complète:
 ;As full background sphere:
 Aspect=Aspect:
@@ -392,6 +394,8 @@ CalculateDoF=Calculer la PdC :
 ;Calculate DoF:
 CalculateDoFAutomatically=Calculer la PdC automatiquement
 ;Calculate DoF automatically
+CalculateFrom=Calculer depuis :
+;Calculate from:
 CalculateHSAutomatically=Calculer les O.F. automatiquement
 ;Calculate H.S. automatically
 CalculateJulia=Calculer Julia
@@ -632,6 +636,8 @@ ColourFringes=Franges
 ;Colour fringes
 ColourVariation=Var. couleur
 ;Colour variation
+ColoursByDirection=Couleurs selon la direction :
+;Colours by direction:
 ColumnsOfTiles=Colonnes de tuiles
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Méthodes de combinaison :\nMin : les deux fractales sont visibles, combinaison des DE par le minimum\nMax : seules les parties qui se recouvrent, combinaison des DE par le maximum\nInv max : inverse le DE du second hybride et combine en « Max »\nMin lin : combinaison par le minimum avec une fonction de recouvrement linéaire\nMin nlin : comme S1, fonction non linéaire, recouvrement plus doux\nMix : d'abord F1..FendHybrid1, puis FstartHybrid2..F6 (dIFS) avec le vecteur modifié.
@@ -932,8 +938,12 @@ DiffuseObjectColorsClickToChange=Couleurs diffuses de l'objet, cliquez pour les 
 ;Diffuse object colors, click to change them.
 DiffuseShadow=Ombre diffuse
 ;Diffuse shadow
+DirectionOf=Direction {} sur {}
+;Direction {} of {}
 DirectionTowardsZero000=Direction vers l'origine (0,0,0)
 ;Direction towards zero (0,0,0)
+Directions=Directions :
+;Directions:
 DisableAll=Tout désactiver
 ;Disable all
 DisableAnalyticalDE=Désactiver la DE analytique
@@ -1112,6 +1122,8 @@ ExponentialFunctions={ Fonctions exponentielles }
 ;{ Exponential functions }
 ExportACubeAsAStack=Exporte un cube sous forme de pile de fichiers PNG
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Exporte la fractale en splats gaussiens, pour la regarder de tous les côtés dans Blender et d'autres visionneuses de splats
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=Exposition
 ;Exposure
 Exposure025=Exposition :  0.25
@@ -1268,6 +1280,8 @@ Fresnel0To1MoreReflection=Fresnel (0 à 1) : plus de reflet là où la surface s
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=Du presse-papiers
 ;From Clipboard
+FromTheCameraAllAroundA=Depuis la caméra, tout autour (une scène vue de l'intérieur)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=Fichiers image complets M3I :
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1380,6 +1394,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=Splats gaussiens
+;Gaussian splats
+GaussianSplats2=Splats gaussiens...
+;Gaussian splats...
+GaussianSplatsPLY=Splats gaussiens (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=Générer une image-clé d'animation à partir de la vue actuelle
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=Génère de grandes images par tuilage
@@ -1474,6 +1494,8 @@ HideThisFormula=Cacher cette formule
 ;Hide this formula
 High=haute
 ;high
+HighlightsMoveAsInThePictures=Les reflets se déplacent comme dans les images. Un splat prend environ 160 octets à 2, 68 sans.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=Historique
 ;History
 HistoryThePicturesCalculatedTheFiles=Historique : les images calculées, les fichiers ouverts et enregistrés (cliquez pour parcourir)
@@ -2362,6 +2384,8 @@ Off=Désactivé
 ;Off
 OffLeftImageIsOnThe=Désactivé : l'image gauche est à gauche pour la vision parallèle. Activé : l'image droite est à gauche pour la vision croisée.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Désactivé (fichier le plus petit)
+;Off (smallest file)
 OffsetAndScale=Décalage et échelle
 ;Offset and scale
 OffsetX=Décalage X:
@@ -2566,6 +2590,8 @@ Pictures=images
 ;pictures
 PicturesAndFilesTheAssistantMakes=Les images et fichiers créés par l'assistant vont dans {} ; rien n'est supprimé. Les images de plus de 4K ne sont créées qu'avec votre accord, et un calcul s'arrête après 10 minutes. Tout ce qu'il fait figure dans le journal.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=pixels ; plus grand garde plus de détails et donne un fichier plus gros
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=Veuillez choisir un fichier de sortie.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=Veuillez d'abord faire une sélection dans l'image.
@@ -3154,6 +3180,8 @@ Size2=Taille :
 ;Size:
 SizeFactor=Facteur de taille :
 ;Size factor:
+SizeOfEachView=Taille de chaque vue :
+;Size of each view:
 Sliding=Glisser
 ;Sliding
 SlidingWalkingStep=Pas glisser+marcher :
@@ -3194,6 +3222,8 @@ SpecularPowerFunction=Fonction de puissance spéculaire
 ;Specular power function
 SphericalCoords=Coord. sphériques
 ;Spherical coords
+SplatsInWrittenTo={} splats en {}, enregistrés dans {}
+;{} splats in {}, written to {}
 Stan=stan.
 ;stan.
 StandardRectilinearPanorama=standard  rectilinéaire  panorama
@@ -3378,6 +3408,10 @@ TheFolderDoesNotExistOr=le dossier n'existe pas (ou n'est pas accessible)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Le nom de la formule devrait commencer par « JIT » afin de distinguer ces formules des formules basées sur l'ASM
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=La fractale n'est dans aucune des vues.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=La fractale de la fenêtre principale en splats gaussiens, pour la regarder de tous les côtés dans Blender (5.3 et ultérieur) et d'autres visionneuses de splats. Elle est calculée depuis plusieurs directions, et chaque pixel devient un splat de sa couleur.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Le matériau de surface de la fractale par-dessus la palette (pas dans MB3D : gardé après la partie MB3D des paramètres)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=Le nombre d'images par seconde doit être supérieur à 0 (par ex. 25).

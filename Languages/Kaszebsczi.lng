@@ -238,6 +238,8 @@ ApproximateVertexColorsTheColorInformation=Przëbliżoné farwë wiérzków. Inf
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 rechùje ArcTan(Y/X) i zwrôcô nórt w pasownym kwadrance.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Wkół westrzódka (òbiekt)
+;Around the middle (an object)
 AsFullBackgroundSphere=Jakno fùl kùla spòdla:
 ;As full background sphere:
 Aspect=Propòrcje:
@@ -392,6 +394,8 @@ CalculateDoF=Rechùj DoF:
 ;Calculate DoF:
 CalculateDoFAutomatically=Rechùj DoF aùtomatno
 ;Calculate DoF automatically
+CalculateFrom=Rechùjë z:
+;Calculate from:
 CalculateHSAutomatically=Rechùj H.S. aùtomatno
 ;Calculate H.S. automatically
 CalculateJulia=Rechùj Julia
@@ -632,6 +636,8 @@ ColourFringes=Farwné òbrąbczi
 ;Colour fringes
 ColourVariation=Zmiana farwë
 ;Colour variation
+ColoursByDirection=Farwë wedle kerënkù:
+;Colours by direction:
 ColumnsOfTiles=Kòlumnë kachlów
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Metodë łączeniô:\nMin: Òba fraktale są widzałé, minimalné łączenié DE\nMax: Le nakłôdającé sã dzéle, maksymalné łączenié DE\nInv max: Òdwrôcô DE drëdżégò hibridu i łączi 'Max'\nMin lin: Minimalné łączenié z liniową fùnkcją nakłôdaniô\nMin nlin: Jak S1, nieliniowô fùnkcjô, gładszé nakłôdanié\nMix: Nôprzód F1..FendHybrid1, tej FstartHybrid2..F6 (dIFS) ze zmienionym wektorã.
@@ -932,8 +938,12 @@ DiffuseObjectColorsClickToChange=Difuzyjné farwë òbiektu, klikni, żebë je z
 ;Diffuse object colors, click to change them.
 DiffuseShadow=Difuzyjny céń
 ;Diffuse shadow
+DirectionOf=Kerënk {} z {}
+;Direction {} of {}
 DirectionTowardsZero000=Czerënk do zera (0,0,0)
 ;Direction towards zero (0,0,0)
+Directions=Kerënczi:
+;Directions:
 DisableAll=Wëłączë wszëtkò
 ;Disable all
 DisableAnalyticalDE=Wëłączë analiticzné DE
@@ -1112,6 +1122,8 @@ ExponentialFunctions={ Ekspònencjalné fùnkcje }
 ;{ Exponential functions }
 ExportACubeAsAStack=Ekspòrtuje kòstkã jakò stos lopków PNG
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Eksportëje fraktal jakno gaussowsczé splatë, żebë òbzerac gò ze wszëtczich stronów w Blenderze ë jinëch przezérnikach splatów
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=Ekspozycjô
 ;Exposure
 Exposure025=Ekspòzycjô:  0.25
@@ -1268,6 +1280,8 @@ Fresnel0To1MoreReflection=Fresnel (òd 0 do 1): wicy òdbicô tam, dze pòwierzc
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=Ze schówkù
 ;From Clipboard
+FromTheCameraAllAroundA=Z kamerë, dokòła (scena widzónô òd westrzódka)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=Fùl lopczi òbrôzków M3I:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1380,6 +1394,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=Gaussowsczé splatë
+;Gaussian splats
+GaussianSplats2=Gaussowsczé splatë...
+;Gaussian splats...
+GaussianSplatsPLY=Gaussowsczé splatë (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=Twòrzi kluczową klatkã animacje z aktualnégò pòzdrzatkù
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=Generëje wiôldżé òbrôzczi przez kafelkòwanié
@@ -1474,6 +1494,8 @@ HideThisFormula=Zatacë tã fòrmùłã
 ;Hide this formula
 High=wësoczi
 ;high
+HighlightsMoveAsInThePictures=Blëszczi sã przesuwają jak na òbrôzkach. Splat bierze kòl 160 bajtów przë 2, 68 pò wëłączeniu.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=Historiô
 ;History
 HistoryThePicturesCalculatedTheFiles=Historiô: wërechòwóné òbrôzczi, òtemkłé i zapisóné lopczi (klikni, żebë przezérac)
@@ -2362,6 +2384,8 @@ Off=Wëł.
 ;Off
 OffLeftImageIsOnThe=Wëł.: lewi òbrôzk je z lewi starnë dlô równoległégò zdrzeniô. Wł.: prawi òbrôzk je z lewi starnë dlô zdrzeniô na krziż.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Wëłączoné (nômniészi lopk)
+;Off (smallest file)
 OffsetAndScale=Przesëniãcé i skala
 ;Offset and scale
 OffsetX=Przesënienié X:
@@ -2566,6 +2590,8 @@ Pictures=òbrôzków
 ;pictures
 PicturesAndFilesTheAssistantMakes=Òbrôzczi ë lopczi, jaczé robi asystent, trôfiają do {}; nic nie je rëmóné. Òbrôzczi wikszé jak 4K są robioné le pò Twòjim przëzwòlenim, a rechòwanié sã zatrzimùje pò 10 minutach. Wszëtkò, co òn robi, je w dzénnikù.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=pikselów; wikszi trzimô wicy detalów ë dôwô wikszi lopk
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=Wëbierzë lopk wińdzeniô.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=Nôprzód zaznaczë wëbiérk na òbrôzkù.
@@ -3154,6 +3180,8 @@ Size2=Wiôlgòsc:
 ;Size:
 SizeFactor=Faktor wiôlgòscë:
 ;Size factor:
+SizeOfEachView=Wiôlgòsc kòżdégò widoku:
+;Size of each view:
 Sliding=Przesëwanié
 ;Sliding
 SlidingWalkingStep=Krok przesëwaniô+chòdzeniô:
@@ -3194,6 +3222,8 @@ SpecularPowerFunction=Fùnkcja spekùlarny mòcë
 ;Specular power function
 SphericalCoords=Kùlowé kòòrdinatë
 ;Spherical coords
+SplatsInWrittenTo={} splatów w {}, zapisóné w {}
+;{} splats in {}, written to {}
 Stan=stan.
 ;stan.
 StandardRectilinearPanorama=standardowô  rektilinearnô  panorama
@@ -3378,6 +3408,10 @@ TheFolderDoesNotExistOr=katalog nie je (abò nie je przëstãpny)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Miono fòrmùłë pòwinno sã zaczënac òd "JIT", bë òdrozniwac te fòrmùłë òd fòrmùłów na spòdlim ASM
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=Fraktala nie je w żódnym z widoków.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=Fraktal z przédnégò òkna jakno gaussowsczé splatë, żebë òbzerac gò ze wszëtczich stronów w Blenderze (òd 5.3) ë jinëch przezérnikach splatów. Je rechòwóny z wielu kerënków, a kòżdi piksel stôwô sã splatã w swòji farwie.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Materiał pòwierzchni fraktala na paletce (nie je w MB3D: zapisóny za dzélã parametrów MB3D)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=Klatczi na sekùndã mùszą bëc lëczbą wikszą jak 0 (np. 25).

@@ -238,6 +238,8 @@ ApproximateVertexColorsTheColorInformation=Approssima i colori dei vertici. Le i
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calcola ArcTan(Y/X) e restituisce un angolo nel quadrante corretto.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Attorno al centro (un oggetto)
+;Around the middle (an object)
 AsFullBackgroundSphere=Come sfera di sfondo completa:
 ;As full background sphere:
 Aspect=Proporz.:
@@ -392,6 +394,8 @@ CalculateDoF=Calcola DoF:
 ;Calculate DoF:
 CalculateDoFAutomatically=Calcola DoF automaticamente
 ;Calculate DoF automatically
+CalculateFrom=Calcola da:
+;Calculate from:
 CalculateHSAutomatically=Calcola O.N. automaticamente
 ;Calculate H.S. automatically
 CalculateJulia=Calcola Julia
@@ -632,6 +636,8 @@ ColourFringes=Frange colore
 ;Colour fringes
 ColourVariation=Variaz. colore
 ;Colour variation
+ColoursByDirection=Colori secondo la direzione:
+;Colours by direction:
 ColumnsOfTiles=Colonne di riquadri
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Metodi di combinazione:\nMin: entrambi i frattali sono visibili, combina i DE con il minimo\nMax: solo le parti sovrapposte, combina i DE con il massimo\nInv max: inverte il DE del secondo ibrido e combina con 'Max'\nMin lin: combinazione con il minimo e una funzione di sovrapposizione lineare\nMin nlin: come S1, funzione non lineare, sovrapposizione più morbida\nMix: prima F1..FendHybrid1, poi FstartHybrid2..F6 (dIFS) con vettore modificato.
@@ -932,8 +938,12 @@ DiffuseObjectColorsClickToChange=Colori diffusi dell'oggetto, clicca per cambiar
 ;Diffuse object colors, click to change them.
 DiffuseShadow=Ombra diffusa
 ;Diffuse shadow
+DirectionOf=Direzione {} di {}
+;Direction {} of {}
 DirectionTowardsZero000=Direzione verso lo zero (0,0,0)
 ;Direction towards zero (0,0,0)
+Directions=Direzioni:
+;Directions:
 DisableAll=Disattiva tutto
 ;Disable all
 DisableAnalyticalDE=Disattiva DE analitico
@@ -1112,6 +1122,8 @@ ExponentialFunctions={ Funzioni esponenziali }
 ;{ Exponential functions }
 ExportACubeAsAStack=Esporta un cubo come pila di file PNG
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Esporta il frattale come splat gaussiani, da guardare da ogni lato in Blender e in altri visualizzatori di splat
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=Esposizione
 ;Exposure
 Exposure025=Esposizione:  0.25
@@ -1268,6 +1280,8 @@ Fresnel0To1MoreReflection=Fresnel (da 0 a 1): più riflesso dove la superficie s
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=Dagli appunti
 ;From Clipboard
+FromTheCameraAllAroundA=Dalla fotocamera, tutto intorno (una scena vista dall'interno)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=File immagine completi M3I:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1380,6 +1394,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=Splat gaussiani
+;Gaussian splats
+GaussianSplats2=Splat gaussiani...
+;Gaussian splats...
+GaussianSplatsPLY=Splat gaussiani (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=Genera un keyframe di animazione dalla vista attuale
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=Genera immagini grandi a riquadri
@@ -1474,6 +1494,8 @@ HideThisFormula=Nascondi questa formula
 ;Hide this formula
 High=alta
 ;high
+HighlightsMoveAsInThePictures=I riflessi si spostano come nelle immagini. Uno splat occupa circa 160 byte con 2, 68 disattivato.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=Cronologia
 ;History
 HistoryThePicturesCalculatedTheFiles=Cronologia: le immagini calcolate, i file aperti e salvati (clicca per sfogliare)
@@ -2362,6 +2384,8 @@ Off=Disattivato
 ;Off
 OffLeftImageIsOnThe=Off: l'immagine sinistra è a sinistra per la visione parallela. On: l'immagine destra è a sinistra per la visione a occhi incrociati.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Disattivato (file più piccolo)
+;Off (smallest file)
 OffsetAndScale=Offset e scala
 ;Offset and scale
 OffsetX=Offset X:
@@ -2566,6 +2590,8 @@ Pictures=immagini
 ;pictures
 PicturesAndFilesTheAssistantMakes=Le immagini e i file creati dall'assistente finiscono in {}; nulla viene eliminato. Le immagini più grandi di 4K vengono create solo con il tuo consenso, e un calcolo si ferma dopo 10 minuti. Tutto ciò che fa è nel registro.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=pixel; più grande conserva più dettagli e crea un file più grande
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=Scegliere un file di uscita.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=Fare prima una selezione nell'immagine.
@@ -3154,6 +3180,8 @@ Size2=Dimens.:
 ;Size:
 SizeFactor=Fattore di scala:
 ;Size factor:
+SizeOfEachView=Dimensione di ogni vista:
+;Size of each view:
 Sliding=Scorrimento
 ;Sliding
 SlidingWalkingStep=Passo scorrimento+camminata:
@@ -3194,6 +3222,8 @@ SpecularPowerFunction=Funzione di potenza speculare
 ;Specular power function
 SphericalCoords=Coord. sferiche
 ;Spherical coords
+SplatsInWrittenTo={} splat in {}, salvati in {}
+;{} splats in {}, written to {}
 Stan=stan.
 ;stan.
 StandardRectilinearPanorama=standard  rettilineare  panorama
@@ -3378,6 +3408,10 @@ TheFolderDoesNotExistOr=la cartella non esiste (o non è raggiungibile)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Il nome della formula dovrebbe iniziare con "JIT" per distinguere queste formule da quelle basate su ASM
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=Il frattale non è in nessuna delle viste.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=Il frattale della finestra principale come splat gaussiani, da guardare da ogni lato in Blender (5.3 e successivi) e in altri visualizzatori di splat. Viene calcolato da più direzioni e ogni pixel diventa uno splat del suo colore.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Il materiale della superficie del frattale sopra la tavolozza (non in MB3D: salvato dopo la parte MB3D dei parametri)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=I fotogrammi al secondo devono essere un numero maggiore di 0 (ad es. 25).

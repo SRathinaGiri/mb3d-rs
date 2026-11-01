@@ -818,26 +818,29 @@ you check further on your own:
 
   </details>
 * **Gaussian splats** of the fractal, to look at from every side in
-  Blender (5.3 and later), SuperSplat and other splat viewers:
-  `mb3d splat scene.m3p -o fractal.ply`.
+  Blender (5.3 and later), SuperSplat and other splat viewers: *Bulb
+  Tracer2* > *Gaussian splats...*, or `mb3d splat scene.m3p -o fractal.ply`.
 
   <a href="docs/img/splats.jpg"><img src="docs/img/splats.jpg" width="760" alt="The program's picture of dIFS heart shrub, and its Gaussian splats in Blender from the left and from behind"></a>
 
   <details><summary>Read more</summary>
 
-  The fractal is calculated from 16 directions (`--views`), each a
-  picture of 640 x 640 pixels (`--size`), with its lights, shadows,
+  The window exports the main window's scene; its settings are those of
+  the command line. The fractal is calculated from 16 directions
+  (*Directions*, `--views`), each a picture of 640 x 640 pixels (*Size of
+  each view*, `--size`), with its lights, shadows,
   occlusion and reflections. Every pixel of the object becomes a flat
   Gaussian lying on the surface, with the colour it has in the picture.
   Where the pictures overlap, each patch of the surface comes from the
   one that saw it most squarely. The colours change with the direction you
-  look from (spherical harmonics, `--sh`), so highlights move as they do in
-  the pictures.
+  look from (spherical harmonics, *Colours by direction*, `--sh`), so
+  highlights move as they do in the pictures.
 
   An object seen from outside is calculated from all around the scene's
   middle. A scene seen from inside (a hall, a cave, where the fractal fills
   the whole picture) is calculated from the scene's camera, looking in
-  every direction (`--around camera`; `auto`, the default, chooses). There,
+  every direction (*Calculate from*, `--around camera`; *Auto*, the
+  default, chooses). There,
   a larger `--size` keeps more detail, as each view is 110 degrees wide.
 
   The lights that turn with the camera, and the ambient light's top and

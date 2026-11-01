@@ -57,7 +57,8 @@ Ele vem em dois programas:
   </details>
 * **mb3d** — um renderizador de linha de comando para scripts e trabalhos
   em lote: imagens, animações, listas de lote, renders Monte Carlo,
-  exportações de voxels e de malhas, tudo sem janela.
+  exportações de voxels e de malhas, splats gaussianos,
+  tudo sem janela.
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -843,6 +844,42 @@ pontos permitem que você confira mais por conta própria:
   mais tempo (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* **Splats gaussianos** do fractal, para ver de todos os lados no
+  Blender (5.3 ou mais novo), no SuperSplat e em outros visualizadores de splats: *Bulb
+  Tracer2* > *Splats gaussianos...*, ou `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="A imagem do programa de dIFS heart shrub, e seus splats gaussianos no Blender vistos da esquerda e de trás"></a>
+
+  <details><summary>Saiba mais</summary>
+
+  A janela exporta a cena da janela principal; suas configurações são as da
+  linha de comando. O fractal é calculado a partir de 16 direções
+  (*Direções*, `--views`), cada uma uma imagem de 640 x 640 pixels (*Tamanho
+  de cada vista*, `--size`), com suas luzes, sombras,
+  oclusão e reflexos. Cada pixel do objeto vira uma gaussiana plana
+  deitada na superfície, com a cor que tem na imagem.
+  Onde as imagens se sobrepõem, cada pedaço da superfície vem daquela
+  que o viu mais de frente. As cores mudam com a direção de onde você
+  olha (harmônicos esféricos, *Cores pela direção*, `--sh`), então os
+  brilhos se movem como nas imagens.
+
+  Um objeto visto de fora é calculado de todo o redor do meio da
+  cena. Uma cena vista de dentro (um salão, uma caverna, onde o fractal preenche
+  a imagem inteira) é calculada a partir da câmera da cena, olhando em
+  todas as direções (*Calcular a partir de*, `--around camera`; *Auto*, o
+  padrão, escolhe). Ali,
+  um `--size` maior guarda mais detalhes, já que cada vista tem 110 graus de largura.
+
+  As luzes que giram com a câmera, e as cores de cima e de baixo da luz
+  ambiente, ficam presas ao objeto como iluminam a própria vista da
+  cena, de modo que todos os lados ficam iluminados igualmente. Profundidade de campo, nuvens, brilho, vinheta
+  e o plano do chão ficam de fora. O arquivo fica na vista da cena (x para a
+  direita, y para dentro da imagem, z para cima: a vista frontal do Blender fica como a
+  cena), com o meio ou a câmera em 0 e o fractal escalado para um
+  raio de 1. Ocupa cerca de 160 bytes por splat, normalmente 100 a 300 MB;
+  `--sh 0` o deixa com um terço disso, sem os brilhos que se movem.
+
+  </details>
 
 <a id="download"></a>
 
@@ -1282,6 +1319,7 @@ Todo o resto tem um subcomando com o seu próprio `--help`:
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

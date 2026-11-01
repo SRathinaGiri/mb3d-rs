@@ -35,7 +35,7 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
   * **群集**（新功能，位於工具分頁）：讓您的多台電腦一起渲染，請參閱[在多台電腦上渲染](#rendering-on-several-computers-the-swarm)。
 
   </details>
-* **mb3d** — 供指令碼與批次工作使用的命令列渲染器：圖片、動畫、批次清單、蒙地卡羅渲染、體素與網格匯出，全都不需要視窗。
+* **mb3d** — 供指令碼與批次工作使用的命令列渲染器：圖片、動畫、批次清單、蒙地卡羅渲染、體素與網格匯出、高斯潑濺，全都不需要視窗。
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -529,6 +529,32 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
   產生拖影；耗時也是這麼多倍 (`mb3d animate --motion-blur 8,0.5`)。
 
   </details>
+* 碎形的 **高斯潑濺**，可在 Blender (5.3 及以上)、SuperSplat 和其他潑濺檢視器中
+  從各個方向觀看：*Bulb Tracer2* > *高斯潑濺...*，或
+  `mb3d splat scene.m3p -o fractal.ply`。
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="程式中 dIFS heart shrub 的圖片，以及它的高斯潑濺在 Blender 中從左邊和後面看"></a>
+
+  <details><summary>詳細說明</summary>
+
+  此視窗匯出主視窗的場景，其設定與命令列相同。碎形從 16 個方向
+  (*方向數*，`--views`) 計算，每個方向一張 640 x 640 像素的圖片
+  (*每個視圖的大小*，`--size`)，帶有光照、陰影、遮蔽和反射。物體的每個像素都
+  成為一個貼在表面上的扁平高斯，帶有它在圖片中的顏色。在圖片重疊的地方，表面的
+  每一塊取自最正面看到它的那張圖片。顏色隨觀看方向而變化 (球諧函數，
+  *依方向變化的顏色*，`--sh`)，所以高光會像在圖片中一樣移動。
+
+  從外面看的物體從場景中心的四周計算。從裡面看的場景 (大廳、洞穴，碎形填滿整張
+  圖片) 從場景的相機向各個方向看來計算 (*計算位置*，`--around camera`；預設的
+  *自動* 會自行選擇)。這時每個視圖寬 110 度，所以更大的 `--size` 能保留更多細節。
+
+  隨相機轉動的光源，以及環境光的頂部和底部顏色，按照它們照亮場景自身視圖的樣子
+  固定在物體上，所以各個面受到同樣的照明。景深、雲、光暈、暗角和地面不包括在內。
+  檔案採用場景的視圖方向 (x 向右，y 向圖片裡面，z 向上：Blender 的前視圖看起來
+  與場景相同)，中心或相機位於 0，碎形縮放到半徑 1。每個潑濺約 160 位元組，通常為
+  100 到 300 MB；`--sh 0` 會使其變為三分之一，但高光不再移動。
+
+  </details>
 
 <a id="download"></a>
 
@@ -796,6 +822,8 @@ MB3D 無法計算其中一個檔案（*Test8*：它會因「Division by zero」�
 圖片是相同的：mb3d-rs 在處理器上算出的圖片與 MB3D 的圖片只有捨入誤差的差別，而自動模式的圖片與處理器的圖片平均只差色彩範圍的百分之一以下（細微的細節可能會在不同的像素上閃爍；[技術說明](../TECHNICAL.md)
 中有量測數據）。
 
+<a id="experimental-speed-ups"></a>
+
 ### 實驗性加速
 
 有幾種更快的計算方式會讓圖片稍有改變，所以除非您開啟它們，否則都是關閉的：
@@ -851,6 +879,7 @@ MB3D 無法計算其中一個檔案（*Test8*：它會因「Division by zero」�
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

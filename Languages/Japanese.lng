@@ -239,6 +239,8 @@ ApproximateVertexColorsTheColorInformation=頂点カラーを近似計算しま�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 は ArcTan(Y/X) を計算し、正しい象限の角度を返します。
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=中心の周り（物体）
+;Around the middle (an object)
 AsFullBackgroundSphere=全天球の背景として:
 ;As full background sphere:
 Aspect=縦横比:
@@ -393,6 +395,8 @@ CalculateDoF=DoFを計算:
 ;Calculate DoF:
 CalculateDoFAutomatically=DoFを自動的に計算
 ;Calculate DoF automatically
+CalculateFrom=計算する位置：
+;Calculate from:
 CalculateHSAutomatically=H.S.を自動的に計算
 ;Calculate H.S. automatically
 CalculateJulia=Julia を計算
@@ -633,6 +637,8 @@ ColourFringes=色収差
 ;Colour fringes
 ColourVariation=色の変化
 ;Colour variation
+ColoursByDirection=方向による色：
+;Colours by direction:
 ColumnsOfTiles=タイルの列数
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=結合方法:\nMin: 両方のフラクタルが見え、DEを最小値で結合\nMax: 重なる部分のみ、DEを最大値で結合\nInv max: 2番目のハイブリッドのDEを反転して 'Max' で結合\nMin lin: 線形の重なり関数で最小値結合\nMin nlin: S1 と同様だが非線形関数で、より滑らかな重なり\nMix: まず F1..FendHybrid1、次に変更したベクトルで FstartHybrid2..F6 (dIFS) を使用。
@@ -933,8 +939,12 @@ DiffuseObjectColorsClickToChange=オブジェクトの拡散色です。クリ�
 ;Diffuse object colors, click to change them.
 DiffuseShadow=拡散シャドウ
 ;Diffuse shadow
+DirectionOf=方向 {} / {}
+;Direction {} of {}
 DirectionTowardsZero000=原点 (0,0,0) の方向です。
 ;Direction towards zero (0,0,0)
+Directions=方向の数：
+;Directions:
 DisableAll=すべて無効
 ;Disable all
 DisableAnalyticalDE=解析的 DE を無効化
@@ -1113,6 +1123,8 @@ ExponentialFunctions={ 指数関数 }
 ;{ Exponential functions }
 ExportACubeAsAStack=立方体を PNG ファイルのスタックとしてエクスポートします
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=フラクタルをガウシアンスプラットとして書き出し、Blender やほかのスプラットビューアであらゆる方向から見られるようにします
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=露出
 ;Exposure
 Exposure025=露出:  0.25
@@ -1269,6 +1281,8 @@ Fresnel0To1MoreReflection=フレネル (0 から 1): 表面が視線からそれ
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=クリップボードから
 ;From Clipboard
+FromTheCameraAllAroundA=カメラから全方向（内側から見たシーン）
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=M3I フル画像ファイル:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1381,6 +1395,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=ガウシアンスプラット
+;Gaussian splats
+GaussianSplats2=ガウシアンスプラット...
+;Gaussian splats...
+GaussianSplatsPLY=ガウシアンスプラット (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=現在の視点からアニメーションのキーフレームを作成します。
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=タイリングで大きな画像を生成します
@@ -1475,6 +1495,8 @@ HideThisFormula=この数式を非表示にする
 ;Hide this formula
 High=高
 ;high
+HighlightsMoveAsInThePictures=ハイライトが画像と同じように動きます。1 スプラットは 2 で約 160 バイト、オフで 68 バイトです。
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=履歴
 ;History
 HistoryThePicturesCalculatedTheFiles=履歴: 計算した画像、開いたファイルと保存したファイル (クリックで閲覧)
@@ -2363,6 +2385,8 @@ Off=オフ
 ;Off
 OffLeftImageIsOnThe=オフ: 平行法用に左の画像が左側。オン: 交差法用に右の画像が左側。
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=オフ（最小のファイル）
+;Off (smallest file)
 OffsetAndScale=オフセットとスケール
 ;Offset and scale
 OffsetX=オフセット X:
@@ -2567,6 +2591,8 @@ Pictures=画像
 ;pictures
 PicturesAndFilesTheAssistantMakes=アシスタントが作った画像とファイルは {} に保存され、何も削除されません。4K より大きい画像はあなたの同意があったときだけ作られ、計算は 10 分で止まります。アシスタントの操作はすべてログに残ります。
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=ピクセル。大きいほど細部が残り、ファイルも大きくなります
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=出力ファイルを選んでください。
 ;Please choose an output file.
 PleaseMakeASelectionInThe=先に画像内で範囲を選択してください。
@@ -3155,6 +3181,8 @@ Size2=大きさ:
 ;Size:
 SizeFactor=サイズ倍率:
 ;Size factor:
+SizeOfEachView=各ビューのサイズ：
+;Size of each view:
 Sliding=スライド
 ;Sliding
 SlidingWalkingStep=スライド+移動の歩幅:
@@ -3195,6 +3223,8 @@ SpecularPowerFunction=鏡面反射の指数関数です。
 ;Specular power function
 SphericalCoords=球面座標
 ;Spherical coords
+SplatsInWrittenTo={} 個のスプラット（{}）を {} に保存しました
+;{} splats in {}, written to {}
 Stan=標準
 ;stan.
 StandardRectilinearPanorama=標準  直線的  パノラマ
@@ -3379,6 +3409,10 @@ TheFolderDoesNotExistOr=フォルダが存在しません (またはアクセス
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=ASM ベースの数式と区別するため、数式名は「JIT」で始めてください
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=フラクタルがどのビューにも写っていません。
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=メインウィンドウのフラクタルをガウシアンスプラットにして、Blender（5.3 以降）やほかのスプラットビューアであらゆる方向から見られるようにします。いくつもの方向から計算し、各ピクセルがその色のスプラットになります。
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=パレットに重ねるフラクタル表面の素材 (MB3D にはありません: パラメーターの MB3D の部分の後に保存)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=1 秒あたりのフレーム数は 0 より大きい数にしてください (例: 25)。

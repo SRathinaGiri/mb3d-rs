@@ -238,6 +238,8 @@ ApproximateVertexColorsTheColorInformation=Perkiraan warna vertex. Informasi war
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 menghitung ArcTan(Y/X), dan mengembalikan sudut di kuadran yang benar.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Mengelilingi titik tengah (sebuah objek)
+;Around the middle (an object)
 AsFullBackgroundSphere=Sebagai bola latar penuh:
 ;As full background sphere:
 Aspect=Aspek:
@@ -392,6 +394,8 @@ CalculateDoF=Hitung DoF:
 ;Calculate DoF:
 CalculateDoFAutomatically=Hitung DoF otomatis
 ;Calculate DoF automatically
+CalculateFrom=Hitung dari:
+;Calculate from:
 CalculateHSAutomatically=Hitung H.S. otomatis
 ;Calculate H.S. automatically
 CalculateJulia=Hitung Julia
@@ -632,6 +636,8 @@ ColourFringes=Pinggiran warna
 ;Colour fringes
 ColourVariation=Variasi warna
 ;Colour variation
+ColoursByDirection=Warna menurut arah:
+;Colours by direction:
 ColumnsOfTiles=Kolom tile
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=Metode Kombinasi:\nMin: Kedua fraktal terlihat, kombinasi minimum DE\nMax: Hanya bagian yang tumpang tindih, kombinasi maksimum DE\nInv max: Balikkan DE Hybrid kedua dan kombinasikan 'Max'\nMin lin: Kombinasi minimum dengan fungsi tumpang tindih linear\nMin nlin: Seperti S1, fungsi nonlinear, tumpang tindih lebih halus\nMix: Pertama F1..FendHybrid1 lalu gunakan FstartHybrid2..F6 (dIFS) dengan vektor yang dimodifikasi.
@@ -932,8 +938,12 @@ DiffuseObjectColorsClickToChange=Warna difus objek, klik untuk mengubahnya.
 ;Diffuse object colors, click to change them.
 DiffuseShadow=Bayangan difus
 ;Diffuse shadow
+DirectionOf=Arah {} dari {}
+;Direction {} of {}
 DirectionTowardsZero000=Arah menuju nol (0,0,0)
 ;Direction towards zero (0,0,0)
+Directions=Arah:
+;Directions:
 DisableAll=Nonaktifkan semua
 ;Disable all
 DisableAnalyticalDE=Nonaktifkan DE analitis
@@ -1112,6 +1122,8 @@ ExponentialFunctions={ Fungsi eksponensial }
 ;{ Exponential functions }
 ExportACubeAsAStack=Ekspor kubus sebagai tumpukan file PNG
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Mengekspor fraktal sebagai splat Gaussian, untuk dilihat dari segala sisi di Blender dan penampil splat lainnya
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=Eksposur
 ;Exposure
 Exposure025=Eksposur:  0.25
@@ -1268,6 +1280,8 @@ Fresnel0To1MoreReflection=Fresnel (0 sampai 1): pantulan lebih kuat di tempat pe
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=Dari Clipboard
 ;From Clipboard
+FromTheCameraAllAroundA=Dari kamera, ke segala arah (adegan yang dilihat dari dalam)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=File gambar M3I lengkap:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1380,6 +1394,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=Gauss
 ;Gauss
+GaussianSplats=Splat Gaussian
+;Gaussian splats
+GaussianSplats2=Splat Gaussian...
+;Gaussian splats...
+GaussianSplatsPLY=Splat Gaussian (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=Buat keyframe animasi dari tampilan saat ini
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=Buat gambar besar dengan tiling
@@ -1474,6 +1494,8 @@ HideThisFormula=Sembunyikan formula ini
 ;Hide this formula
 High=tinggi
 ;high
+HighlightsMoveAsInThePictures=Kilauan bergerak seperti pada gambar. Satu splat memakan sekitar 160 byte pada 2, 68 bila mati.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=Riwayat
 ;History
 HistoryThePicturesCalculatedTheFiles=Riwayat: gambar yang dihitung, file yang dibuka dan disimpan (klik untuk menelusuri)
@@ -2362,6 +2384,8 @@ Off=Mati
 ;Off
 OffLeftImageIsOnThe=Mati: gambar kiri di sebelah kiri untuk tampilan paralel. Aktif: gambar kanan di sebelah kiri untuk tampilan cross-eyed.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Mati (file terkecil)
+;Off (smallest file)
 OffsetAndScale=Offset dan skala
 ;Offset and scale
 OffsetX=Offset X:
@@ -2566,6 +2590,8 @@ Pictures=gambar
 ;pictures
 PicturesAndFilesTheAssistantMakes=Gambar dan file yang dibuat asisten masuk ke {}; tidak ada yang dihapus. Gambar lebih besar dari 4K hanya dibuat setelah Anda setuju, dan perhitungan berhenti setelah 10 menit. Semua yang dilakukannya ada di log.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=piksel; lebih besar menyimpan lebih banyak detail dan membuat file lebih besar
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=Pilih file keluaran.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=Buat pilihan di gambar terlebih dahulu.
@@ -3154,6 +3180,8 @@ Size2=Ukuran:
 ;Size:
 SizeFactor=Faktor ukuran:
 ;Size factor:
+SizeOfEachView=Ukuran tiap tampilan:
+;Size of each view:
 Sliding=Meluncur
 ;Sliding
 SlidingWalkingStep=Langkah luncur+jalan:
@@ -3194,6 +3222,8 @@ SpecularPowerFunction=Fungsi pangkat spekular
 ;Specular power function
 SphericalCoords=Koord. sferis
 ;Spherical coords
+SplatsInWrittenTo={} splat dalam {}, disimpan ke {}
+;{} splats in {}, written to {}
 Stan=stan.
 ;stan.
 StandardRectilinearPanorama=standar  rectilinear  panorama
@@ -3378,6 +3408,10 @@ TheFolderDoesNotExistOr=folder tidak ada (atau tidak dapat dijangkau)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Nama formula sebaiknya diawali "JIT" untuk membedakan formula tersebut dari formula berbasis ASM
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=Fraktal tidak ada di tampilan mana pun.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=Fraktal jendela utama sebagai splat Gaussian, untuk dilihat dari segala sisi di Blender (5.3 dan yang lebih baru) dan penampil splat lainnya. Fraktal dihitung dari beberapa arah, dan setiap piksel menjadi splat dengan warnanya.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Material permukaan fraktal di atas palet (tidak ada di MB3D: disimpan setelah bagian parameter MB3D)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=Frame per detik harus berupa angka di atas 0 (mis. 25).

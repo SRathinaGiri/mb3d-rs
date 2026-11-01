@@ -48,7 +48,8 @@ macOS**에서 실행되며, MB3D는 프로세서만 사용할 수 있었지만 �
 
   </details>
 * **mb3d** — 스크립트와 일괄 작업을 위한 명령줄 렌더러입니다. 그림, 애니메이션,
-  일괄 목록, 몬테카를로 렌더링, 복셀 및 메시 내보내기를 모두 창 없이 수행합니다.
+  일괄 목록, 몬테카를로 렌더링, 복셀 및 메시 내보내기, 가우시안 스플랫을 모두 창
+  없이 수행합니다.
 
 <a id="is-it-safe-to-run-check-it-yourself"></a>
 
@@ -733,6 +734,37 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   번집니다. 시간도 그 수의 배만큼 걸립니다 (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* 프랙탈의 **가우시안 스플랫** 으로, Blender (5.3 이상), SuperSplat 및 다른 스플랫
+  뷰어에서 모든 방향으로 볼 수 있습니다: *Bulb Tracer2* > *가우시안 스플랫...*,
+  또는 `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="../img/splats.jpg"><img src="../img/splats.jpg" width="760" alt="dIFS heart shrub 의 프로그램 그림과, Blender 에서 왼쪽과 뒤에서 본 그 가우시안 스플랫"></a>
+
+  <details><summary>자세히 보기</summary>
+
+  이 창은 메인 창의 장면을 내보내며, 설정은 명령줄과 같습니다. 프랙탈은 16개의
+  방향 (*방향 수*, `--views`) 에서 계산되며, 각각 640 x 640 픽셀 (*각 뷰의 크기*,
+  `--size`) 의 그림으로 빛, 그림자, 차폐, 반사를 포함합니다. 물체의 픽셀 하나하나가
+  표면 위에 놓인 납작한 가우시안이 되어, 그림에서의 색을 가집니다. 그림이 겹치는
+  곳에서는 표면의 각 부분을 가장 정면으로 본 그림에서 가져옵니다. 색은 보는
+  방향에 따라 바뀌므로 (구면 조화 함수, *방향에 따른 색*, `--sh`) 하이라이트가
+  그림에서처럼 움직입니다.
+
+  밖에서 보는 물체는 장면 가운데의 둘레 전체에서 계산됩니다. 안에서 보는 장면
+  (홀이나 동굴처럼 프랙탈이 그림 전체를 채우는 것) 은 장면의 카메라에서 모든
+  방향을 보며 계산됩니다 (*계산 위치*, `--around camera`; 기본값인 *자동* 이
+  고릅니다). 이때 각 뷰의 폭이 110도이므로 `--size` 를 크게 하면 더 많은 세부가
+  남습니다.
+
+  카메라와 함께 도는 빛과 주변광의 위쪽과 아래쪽 색은 장면 자신의 시야를 비추는
+  대로 물체에 고정되므로, 모든 면이 똑같이 비춰집니다. 피사계 심도, 구름, 글로,
+  비네트, 지면은 빠집니다. 파일은 장면의 시야 방향입니다 (x 는 오른쪽, y 는 그림
+  안쪽, z 는 위: Blender 의 앞 시점이 장면과 같아 보입니다). 가운데 또는 카메라가
+  0 에 있고 프랙탈은 반지름 1 로 크기가 맞춰집니다. 스플랫 하나에 약 160바이트,
+  보통 100 ~ 300 MB 입니다. `--sh 0` 이면 그 3분의 1 이 되지만 하이라이트가
+  움직이지 않습니다.
+
+  </details>
 
 <a id="download"></a>
 
@@ -1078,6 +1110,8 @@ MB3D는 파일 하나(*Test8*: "Division by zero" 오류로 멈춤)를 계산하
 못 미치는 만큼 다릅니다(미세한 디테일의 반짝임이 다른 픽셀에 나타날 수 있습니다.
 측정 결과는 [기술 노트](../TECHNICAL.md)에 있습니다).
 
+<a id="experimental-speed-ups"></a>
+
 ### 실험적 속도 향상
 
 계산을 더 빠르게 하는 몇 가지 방법은 그림을 조금 바꾸므로, 직접 켜지 않으면
@@ -1135,6 +1169,7 @@ macOS에서 한 줄 설치를 했다면 `mb3d`는 어느 폴더에서나 동작�
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

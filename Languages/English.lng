@@ -238,6 +238,8 @@ ApproximateVertexColorsTheColorInformation=Approximate vertex colors. The color-
 ;BulbTracer2Frm.CalculateColorsCBx.Hint
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
+AroundTheMiddleAnObject=Around the middle (an object)
+;SplatFrm.AroundCmb.Items
 AsFullBackgroundSphere=As full background sphere:
 ;LightAdjustForm.CheckBox12.Caption
 Aspect=Aspect:
@@ -253,7 +255,7 @@ Author=Author:
 Author2=Author
 ;the program
 Auto=Auto
-;Mand3DForm.CalcOnCombo.Items
+;Mand3DForm.CalcOnCombo.Items, SplatFrm.AroundCmb.Items
 AutoRenderAllFollowingTiles=Auto render all following tiles
 ;TilingForm.CheckBox4.Caption
 AutoSavingTheM3cFile=Auto-saving the m3c file:
@@ -377,7 +379,7 @@ CalcColon=Calc:
 CalcRAutomatic=Calc. R. automatic.
 ;PostProForm.CheckBox26.Caption
 Calculate=Calculate
-;PostProForm.Button13.Caption
+;PostProForm.Button13.Caption, SplatFrm.CalcBtn.Caption
 Calculate3D=Calculate 3D
 ;Mand3DForm.Button2.Caption; the program
 Calculate3DAndTheBatchWindow=Calculate 3D and the Batch window with the swarm, in
@@ -392,6 +394,8 @@ CalculateDoF=Calculate DoF:
 ;MCForm.CheckBox4.Caption
 CalculateDoFAutomatically=Calculate DoF automatically
 ;PostProForm.CheckBox1.Caption
+CalculateFrom=Calculate from:
+;SplatFrm.AroundLabel.Caption
 CalculateHSAutomatically=Calculate H.S. automatically
 ;PostProForm.CheckBox9.Caption
 CalculateJulia=Calculate Julia
@@ -545,7 +549,7 @@ ClickOnTheObjectInThe=Click on the object in the image to be centered.\nThe came
 ClickToChangeBetweenDynfogOn=Click to change between Dynfog on its and Color on its
 ;FNavigator.SpeedButton33.Hint
 ClickToChooseTheOutputFile=Click to choose the output file
-;BulbTracer2Frm.SelectOutputFilenameBtn.Hint
+;BulbTracer2Frm.SelectOutputFilenameBtn.Hint, SplatFrm.FileBtn.Hint
 ClickToChooseTheOutputFolder=Click to choose the output folder
 ;AnimationForm.Button3.Hint, FVoxelExport.Button3.Hint
 ClickToChooseYourNameFor=Click to choose your name for automatic saving in parameters
@@ -579,7 +583,7 @@ ClickToTypeTheZoomIt=Click to type the zoom (it stays: fixed zoom).
 ClippingR=ClippingR:
 ;PostProForm.Label2.Caption
 Close=Close
-;AiConnectFrm.Button3.Caption, BulbTracer2Frm.CloseButton.Caption, ExperimentalFrm.CloseBtn.Caption and 5 more
+;AiConnectFrm.Button3.Caption, BulbTracer2Frm.CloseButton.Caption, ExperimentalFrm.CloseBtn.Caption and 6 more
 CloseMesh=Close Mesh
 ;BulbTracer2Frm.CloseMeshCheckbox.Caption
 CloseTheCurrentWindow=Close the current window:
@@ -632,6 +636,8 @@ ColourFringes=Colour fringes
 ;PostProForm.FinChromLbl.Caption
 ColourVariation=Colour variation
 ;PostProForm.DetailColLbl.Caption
+ColoursByDirection=Colours by direction:
+;SplatFrm.ShLabel.Caption
 ColumnsOfTiles=Columns of tiles
 ;SwarmFrm.Edit5.Hint
 CombinationMethodsMinBothFractalsAre=Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
@@ -932,8 +938,12 @@ DiffuseObjectColorsClickToChange=Diffuse object colors, click to change them.
 ;LightAdjustForm.SpeedButton1.Hint
 DiffuseShadow=Diffuse shadow
 ;LightAdjustForm.Label42.Caption
+DirectionOf=Direction {} of {}
+;the program
 DirectionTowardsZero000=Direction towards zero (0,0,0)
 ;FNavigator.Image2.Hint
+Directions=Directions:
+;SplatFrm.ViewsLabel.Caption
 DisableAll=Disable all
 ;MutaGenFrm.DisableAllBtn.Caption
 DisableAnalyticalDE=Disable analytical DE
@@ -1112,6 +1122,8 @@ ExponentialFunctions={ Exponential functions }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 ExportACubeAsAStack=Export a cube as a stack of PNG files
 ;Mand3DForm.SpeedButton24.Hint
+ExportTheFractalAsGaussianSplats=Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
+;BulbTracer2Frm.SplatBtn.Hint
 Exposure=Exposure
 ;PostProForm.FinExpLbl.Caption
 Exposure025=Exposure:  0.25
@@ -1268,6 +1280,8 @@ Fresnel0To1MoreReflection=Fresnel (0 to 1): more reflection where the surface tu
 ;PostProForm.FresnelEdit.Hint
 FromClipboard=From Clipboard
 ;Mand3DForm.SpeedButton8.Caption
+FromTheCameraAllAroundA=From the camera, all around (a scene seen from inside)
+;SplatFrm.AroundCmb.Items
 FullM3IImageFiles=Full M3I image files:
 ;IniDirForm.Button3.Caption
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1380,6 +1394,12 @@ Gamma05=Gamma:  0.5
 ;LightAdjustForm.Label16.Caption
 Gauss=Gauss
 ;MCForm.ComboBox1.Items
+GaussianSplats=Gaussian splats
+;SplatFrm.Caption
+GaussianSplats2=Gaussian splats...
+;BulbTracer2Frm.SplatBtn.Caption
+GaussianSplatsPLY=Gaussian splats (PLY)
+;the program
 GenerateAnAnimationKeyframeFromThe=Generate an animation keyframe from the actual view
 ;FNavigator.SpeedButton18.Hint
 GenerateBigImagesByTiling=Generate big images by tiling
@@ -1474,6 +1494,8 @@ HideThisFormula=Hide this formula
 ;FormulaGUIForm.Hidethisformula1.Caption
 High=high
 ;Mand3DForm.SpeedButton6.Caption
+HighlightsMoveAsInThePictures=Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
+;SplatFrm.ShNote.Caption
 History=History
 ;HistoryFrm.Caption; the program
 HistoryThePicturesCalculatedTheFiles=History: the pictures calculated, the files opened and saved (click to browse)
@@ -2362,6 +2384,8 @@ Off=Off
 ;PostProForm.DetailKindCB.Items
 OffLeftImageIsOnThe=Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
 ;Mand3DForm.StereoCrossCheck.Hint
+OffSmallestFile=Off (smallest file)
+;SplatFrm.ShCmb.Items
 OffsetAndScale=Offset and scale
 ;BulbTracer2Frm.GroupBox1.Caption
 OffsetX=Offset X:
@@ -2481,7 +2505,7 @@ OriginalParameterSizeWidthHeight=Original parameter size (width, height):
 OtherFiles=Other files
 ;HistoryFrm.ComboBox1.Items
 OutputFile=Output file:
-;BulbTracer2Frm.SelectOutputFilenameBtn.Caption
+;BulbTracer2Frm.SelectOutputFilenameBtn.Caption, SplatFrm.FileLabel.Caption
 OutputFolder=Output folder:
 ;AnimationForm.Button3.Caption, FVoxelExport.Button3.Caption
 OutputFolder2=Output folder
@@ -2566,6 +2590,8 @@ Pictures=pictures
 ;the program
 PicturesAndFilesTheAssistantMakes=Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
 ;the program
+PixelsLargerKeepsMoreDetailAnd=pixels; larger keeps more detail and makes a larger file
+;SplatFrm.SizeNote.Caption
 PleaseChooseAnOutputFile=Please choose an output file.
 ;the program
 PleaseMakeASelectionInThe=Please make a selection in the image first.
@@ -3154,6 +3180,8 @@ Size2=Size:
 ;FormulaGUIForm.Part2SizeLbl.Caption, PostProForm.CloudSizeLbl.Caption
 SizeFactor=Size factor:
 ;TilingForm.Label4.Caption
+SizeOfEachView=Size of each view:
+;SplatFrm.SizeLabel.Caption
 Sliding=Sliding
 ;FNavigator.Label1.Caption
 SlidingWalkingStep=Sliding+Walking step:
@@ -3194,6 +3222,8 @@ SpecularPowerFunction=Specular power function
 ;LightAdjustForm.ComboBox2.Hint
 SphericalCoords=Spherical coords
 ;FNavigator.CheckBox8.Caption
+SplatsInWrittenTo={} splats in {}, written to {}
+;the program
 Stan=stan.
 ;FNavigator.RadioGroup2.Items
 StandardRectilinearPanorama=standard  rectilinear  panorama
@@ -3243,7 +3273,7 @@ StickThisWindowToTheRight=Stick this window to the right side
 Stone=Stone
 ;PostProForm.DetailKindCB.Items
 Stop=Stop
-;the program
+;SplatFrm.StopBtn.Caption; the program
 StopBatchRendering=Stop batch rendering
 ;the program
 StopRendering=Stop rendering
@@ -3378,6 +3408,10 @@ TheFolderDoesNotExistOr=the folder does not exist (or is not reachable)
 ;the program
 TheFormulaNameShouldStartWith=The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
 ;the program
+TheFractalIsInNoneOf=The fractal is in none of the views.
+;the program
+TheFractalOfTheMainWindow=The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
+;SplatFrm.IntroLabel.Caption
 TheFractalSSurfaceMaterialOn=The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 ;PostProForm.MaterialCbx.Hint
 TheFramesPerSecondMustBe=The frames per second must be a number above 0 (e.g. 25).

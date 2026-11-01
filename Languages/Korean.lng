@@ -239,6 +239,8 @@ ApproximateVertexColorsTheColorInformation=정점 색상을 근사 계산합니�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2는 ArcTan(Y/X)를 계산하여 올바른 사분면의 각도를 반환합니다.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=중심 주위(물체)
+;Around the middle (an object)
 AsFullBackgroundSphere=전체 배경 구로:
 ;As full background sphere:
 Aspect=비율:
@@ -393,6 +395,8 @@ CalculateDoF=DoF 계산:
 ;Calculate DoF:
 CalculateDoFAutomatically=DoF 자동 계산
 ;Calculate DoF automatically
+CalculateFrom=계산 위치:
+;Calculate from:
 CalculateHSAutomatically=H.S. 자동 계산
 ;Calculate H.S. automatically
 CalculateJulia=Julia 계산
@@ -633,6 +637,8 @@ ColourFringes=색수차
 ;Colour fringes
 ColourVariation=색 변화
 ;Colour variation
+ColoursByDirection=방향에 따른 색:
+;Colours by direction:
 ColumnsOfTiles=타일 열 수
 ;Columns of tiles
 CombinationMethodsMinBothFractalsAre=결합 방식:\nMin: 두 프랙탈이 모두 보임, DE를 최소값으로 결합\nMax: 겹치는 부분만 보임, DE를 최대값으로 결합\nInv max: 두 번째 하이브리드의 DE를 반전하여 'Max'로 결합\nMin lin: 선형 중첩 함수로 최소값 결합\nMin nlin: S1과 비슷하나 비선형 함수, 더 부드러운 중첩\nMix: 먼저 F1..FendHybrid1을, 그다음 수정된 벡터로 FstartHybrid2..F6 (dIFS)을 사용.
@@ -933,8 +939,12 @@ DiffuseObjectColorsClickToChange=물체의 확산 색상입니다. 클릭하여 
 ;Diffuse object colors, click to change them.
 DiffuseShadow=확산 섀도
 ;Diffuse shadow
+DirectionOf=방향 {} / {}
+;Direction {} of {}
 DirectionTowardsZero000=원점 (0,0,0) 방향
 ;Direction towards zero (0,0,0)
+Directions=방향 수:
+;Directions:
 DisableAll=모두 끄기
 ;Disable all
 DisableAnalyticalDE=해석적 DE 사용 안 함
@@ -1113,6 +1123,8 @@ ExponentialFunctions={ 지수 함수 }
 ;{ Exponential functions }
 ExportACubeAsAStack=정육면체를 PNG 파일 스택으로 내보냅니다
 ;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=프랙탈을 가우시안 스플랫으로 내보내 Blender와 다른 스플랫 뷰어에서 모든 방향으로 볼 수 있게 합니다
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
 Exposure=노출
 ;Exposure
 Exposure025=노출:  0.25
@@ -1269,6 +1281,8 @@ Fresnel0To1MoreReflection=프레넬 (0에서 1): 표면이 시선에서 비켜�
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 FromClipboard=클립보드에서
 ;From Clipboard
+FromTheCameraAllAroundA=카메라에서 모든 방향(안에서 본 장면)
+;From the camera, all around (a scene seen from inside)
 FullM3IImageFiles=전체 M3I 이미지 파일:
 ;Full M3I image files:
 FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
@@ -1381,6 +1395,12 @@ Gamma05=Gamma:  0.5
 ;Gamma:  0.5
 Gauss=가우스
 ;Gauss
+GaussianSplats=가우시안 스플랫
+;Gaussian splats
+GaussianSplats2=가우시안 스플랫...
+;Gaussian splats...
+GaussianSplatsPLY=가우시안 스플랫 (PLY)
+;Gaussian splats (PLY)
 GenerateAnAnimationKeyframeFromThe=현재 시점으로 애니메이션 키프레임을 생성합니다
 ;Generate an animation keyframe from the actual view
 GenerateBigImagesByTiling=타일 방식으로 큰 이미지를 만듭니다
@@ -1475,6 +1495,8 @@ HideThisFormula=이 공식 숨기기
 ;Hide this formula
 High=높음
 ;high
+HighlightsMoveAsInThePictures=하이라이트가 그림에서처럼 움직입니다. 스플랫 하나는 2에서 약 160바이트, 끄면 68바이트입니다.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
 History=기록
 ;History
 HistoryThePicturesCalculatedTheFiles=기록: 계산한 이미지, 열고 저장한 파일 (클릭하여 살펴보기)
@@ -2363,6 +2385,8 @@ Off=끔
 ;Off
 OffLeftImageIsOnThe=꺼짐: 평행시용으로 왼쪽 이미지가 왼쪽에 놓입니다. 켜짐: 교차시용으로 오른쪽 이미지가 왼쪽에 놓입니다.
 ;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=끄기(가장 작은 파일)
+;Off (smallest file)
 OffsetAndScale=오프셋과 배율
 ;Offset and scale
 OffsetX=X 오프셋:
@@ -2567,6 +2591,8 @@ Pictures=이미지
 ;pictures
 PicturesAndFilesTheAssistantMakes=어시스턴트가 만든 이미지와 파일은 {}에 저장되며, 아무것도 삭제되지 않습니다. 4K보다 큰 이미지는 동의한 경우에만 만들어지고, 계산은 10분 후에 멈춥니다. 어시스턴트가 하는 모든 작업은 로그에 남습니다.
 ;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=픽셀. 클수록 세부가 더 남고 파일이 커집니다
+;pixels; larger keeps more detail and makes a larger file
 PleaseChooseAnOutputFile=출력 파일을 선택하십시오.
 ;Please choose an output file.
 PleaseMakeASelectionInThe=먼저 이미지에서 영역을 선택하십시오.
@@ -3155,6 +3181,8 @@ Size2=크기:
 ;Size:
 SizeFactor=크기 배율:
 ;Size factor:
+SizeOfEachView=각 뷰의 크기:
+;Size of each view:
 Sliding=슬라이딩
 ;Sliding
 SlidingWalkingStep=슬라이딩+걷기 단계:
@@ -3195,6 +3223,8 @@ SpecularPowerFunction=반사 광택(specular) 지수 함수
 ;Specular power function
 SphericalCoords=구면 좌표
 ;Spherical coords
+SplatsInWrittenTo=스플랫 {}개, {} 걸림, {}에 저장했습니다
+;{} splats in {}, written to {}
 Stan=표준
 ;stan.
 StandardRectilinearPanorama=표준  직선  파노라마
@@ -3379,6 +3409,10 @@ TheFolderDoesNotExistOr=폴더가 없거나 접근할 수 없습니다
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=JIT 공식을 ASM 기반 공식과 구별하기 위해 공식 이름은 "JIT"로 시작해야 합니다
 ;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=프랙탈이 어떤 뷰에도 없습니다.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=메인 창의 프랙탈을 가우시안 스플랫으로 만들어 Blender(5.3 이상)와 다른 스플랫 뷰어에서 모든 방향으로 볼 수 있게 합니다. 여러 방향에서 계산하며, 모든 픽셀이 자신의 색을 가진 스플랫이 됩니다.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=팔레트 위에 더하는 프랙탈 표면의 재질 (MB3D에는 없음: 매개변수의 MB3D 부분 뒤에 저장)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 TheFramesPerSecondMustBe=초당 프레임 수는 0보다 큰 숫자여야 합니다(예: 25).
