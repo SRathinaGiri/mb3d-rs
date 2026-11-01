@@ -88,6 +88,13 @@
   </recommends>
 
   <releases>
+    <release version="0.2.91" date="2026-11-01">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91</url>
+      <description>
+        <p>Gaussian splats: the fractal exported as a splat file, to look at from every side in Blender 5.3 and other splat viewers. The Bulb Tracer window has a Gaussian splats button, and the command line has mb3d splat.</p>
+        <p>The experimental speed-ups are kept from one start of the program to the next.</p>
+      </description>
+    </release>
     <release version="0.2.90" date="2026-11-01">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.90</url>
       <description>
