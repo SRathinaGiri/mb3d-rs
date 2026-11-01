@@ -88,6 +88,13 @@
   </recommends>
 
   <releases>
+    <release version="0.2.90" date="2026-11-01">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.90</url>
+      <description>
+        <p>Experimental speed-ups that can be switched on one by one: longer march steps, a secant search for the surface, no step limit without dynamic fog, and DE ambient occlusion at half resolution. They change the picture a little and are off by default.</p>
+        <p>Scenes that need double precision are calculated on the graphics card again, and long texts in Japanese and Chinese wrap properly.</p>
+      </description>
+    </release>
     <release version="0.2.89" date="2026-11-01">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89</url>
       <description>
