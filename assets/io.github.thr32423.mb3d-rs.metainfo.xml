@@ -88,6 +88,13 @@
   </recommends>
 
   <releases>
+    <release version="0.2.89" date="2026-11-01">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89</url>
+      <description>
+        <p>Finishing for every picture: exposure, glow around bright light, filmic tone mapping, contrast, saturation, warmth, a vignette and colour fringes.</p>
+        <p>A fine surface relief (rough, stone or grain) with colour variation, fixed to the fractal. A turntable animation in one click, recording a flight in the Navigator, and motion blur for animations.</p>
+      </description>
+    </release>
     <release version="0.2.88" date="2026-10-31">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.88</url>
       <description>
