@@ -104,6 +104,39 @@ pub fn strip_amp(s: &str) -> String {
 /// (see [`Canvas::fit`]).
 pub const SLACK: i32 = 2;
 
+/// Whether `c` is written without spaces between words (Chinese and
+/// Japanese characters, their punctuation and full-width forms): a line
+/// may break next to it.
+fn is_cjk(c: char) -> bool {
+    matches!(c as u32, 0x3000..=0x30FF | 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
+}
+
+/// The pieces of a paragraph a line may break between, and whether a space
+/// stands before each: the words between spaces, and inside them each
+/// Chinese or Japanese character on its own (not before closing marks and
+/// small kana, not after opening brackets: the usual kinsoku rules).
+fn break_units(para: &str) -> Vec<(String, bool)> {
+    const NO_START: &str = "〜～、。，．・：；？！）」』】〉》〕］｝ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ々…‥%％)]}.,:;!?";
+    const NO_END: &str = "（「『【〈《〔［｛([{";
+    let mut out: Vec<(String, bool)> = Vec::new();
+    for (wi, word) in para.split(' ').enumerate() {
+        let mut first = true;
+        let mut cur = String::new();
+        let mut prev: Option<char> = None;
+        for c in word.chars() {
+            let can_break = prev.is_some_and(|p| (is_cjk(p) || is_cjk(c)) && !NO_START.contains(c) && !NO_END.contains(p));
+            if can_break && !cur.is_empty() {
+                out.push((std::mem::take(&mut cur), first && wi > 0));
+                first = false;
+            }
+            cur.push(c);
+            prev = Some(c);
+        }
+        out.push((cur, first && wi > 0));
+    }
+    out
+}
+
 pub fn line_height(f: &Font) -> i32 {
     f.line_height()
 }
@@ -506,8 +539,14 @@ impl<'a> Canvas<'a> {
                 continue;
             }
             let mut line = String::new();
-            for word in para.split(' ') {
-                let cand = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
+            for (word, spaced) in break_units(para) {
+                let cand = if line.is_empty() {
+                    word.to_string()
+                } else if spaced {
+                    format!("{line} {word}")
+                } else {
+                    format!("{line}{word}")
+                };
                 if self.text_width(f, &cand) <= width || line.is_empty() {
                     line = cand;
                 } else {
@@ -672,5 +711,24 @@ impl<'a> Canvas<'a> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::break_units;
+
+    #[test]
+    fn lines_break_at_spaces_and_between_chinese_and_japanese_characters() {
+        let join = |u: &[(String, bool)]| u.iter().map(|(w, s)| if *s { format!(" {w}") } else { w.clone() }).collect::<String>();
+        // words between spaces as before (also empty ones)
+        let u = break_units("a bc  d");
+        assert_eq!(u.iter().map(|x| x.0.as_str()).collect::<Vec<_>>(), ["a", "bc", "", "d"]);
+        assert_eq!(join(&u), "a bc  d");
+        // each character, not before 。 and small kana, not after 「
+        let u = break_units("表面を「探索」します。DE 4 倍");
+        let w: Vec<&str> = u.iter().map(|x| x.0.as_str()).collect();
+        assert_eq!(w, ["表", "面", "を", "「探", "索」", "し", "ま", "す。", "DE", "4", "倍"]);
+        assert_eq!(join(&u), "表面を「探索」します。DE 4 倍");
     }
 }
