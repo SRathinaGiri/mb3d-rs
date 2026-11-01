@@ -1565,7 +1565,7 @@ fn ground_steps(q: vec3<R>) -> R {
     if (h != 0.0) {
         let a = q[(k + 1u) % 3u] / pf(GROUND_WLEN);
         let b = q[(k + 2u) % 3u] / pf(GROUND_WLEN);
-        let t = 6.283185307179586;
+        let t = R(6.283185307179586);
         let wave = h * (0.5 * r_sin(t * (0.8 * a + 0.6 * b))
             + 0.3 * r_sin(t * 1.7 * (-0.45 * a + 0.9 * b) + 1.3)
             + 0.2 * r_sin(t * 2.9 * (0.2 * a - 0.98 * b) + 2.1));
