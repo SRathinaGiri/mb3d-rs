@@ -1491,6 +1491,8 @@ impl<'a, 'c> Tracer<'a, 'c> {
             let mut t = *vec;
             if !lv.amb_rel_obj {
                 t = rotate_vector(&t, &p.vgrads);
+            } else {
+                t = lv.amb_abs64(t);
             }
             let t = normalize(t);
             if use_amb {

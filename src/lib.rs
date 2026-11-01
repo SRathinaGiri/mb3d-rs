@@ -83,6 +83,7 @@ pub mod png;
 pub mod reflect;
 pub mod render;
 pub mod scene;
+pub mod splat;
 pub mod ssao;
 pub mod ssao15;
 pub mod swarm;

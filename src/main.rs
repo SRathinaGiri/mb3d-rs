@@ -16,6 +16,7 @@ USAGE:
     mb3d batch FILES... | --list LISTFILE [OPTIONS]                render many files
     mb3d voxel FILE [OPTIONS]                                      voxel slices (PNG stack)
     mb3d mesh FILE -o mesh.obj|.ply|.stl [OPTIONS]                 triangle mesh
+    mb3d splat FILE -o splats.ply [OPTIONS]                        Gaussian splats (Blender, splat viewers)
     mb3d mutagen FILE [-o DIR] [OPTIONS]                           random variations
     mb3d montecarlo FILE [-o image.png] [OPTIONS]                  path traced image
     mb3d swarm worker DIR | list DIR                               share rendering through a shared folder
@@ -233,6 +234,7 @@ fn run() -> Result<(), String> {
         Some("batch") => return batch(&all[1..]),
         Some("voxel") | Some("voxels") => return voxel_cmd(&all[1..]),
         Some("mesh") => return mesh_cmd(&all[1..]),
+        Some("splat") | Some("splats") => return splat_cmd(&all[1..]),
         Some("mutagen") => return mutagen_cmd(&all[1..]),
         Some("montecarlo") | Some("mc") => return mc_cmd(&all[1..]),
         Some("swarm") => return swarm_cmd(&all[1..]),
@@ -2063,6 +2065,120 @@ fn mesh_cmd(argv: &[String]) -> Result<(), String> {
             if open == 0 { ", closed".to_string() } else { format!(", {open} of {e} edges open") },
             fmt_dur(t0.elapsed().as_secs_f64())
         );
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// mb3d splat
+
+const SPLAT_USAGE: &str = "\
+mb3d splat - export the object as 3D Gaussian splats (not in MB3D)
+
+USAGE:
+    mb3d splat FILE -o OUTPUT.ply [OPTIONS]
+
+The object is calculated from several directions around the scene middle (the
+scene's own view first), or from the camera in every direction when the scene
+is seen from inside (--around), and every pixel of the object becomes a flat Gaussian
+on the surface with the colour it has in the picture: lights, shadows,
+occlusion and reflections included, the lights fixed to the object as they
+light the scene's view. OUTPUT is the PLY file of 3D Gaussian splatting, which
+Blender (5.3 on), SuperSplat and other splat viewers open. It is in the
+scene's view: x right, y into the picture, z up, the middle at 0 and the
+object scaled to a radius of 1. The depth of field, clouds, glow, vignette and
+the ground plane are left out. A splat takes about 160 bytes (--sh 0: 68).
+
+OPTIONS:
+    -o, --output <FILE>      Output file (.ply)
+        --around <WHERE>     middle: the camera goes around the scene middle (an object
+                             seen from outside); camera: the camera stays and looks
+                             in every direction (a scene seen from inside, 110 degree
+                             views, the eye at 0 in the file); auto (default): camera
+                             when the object fills the scene's whole picture
+        --views <N>          Directions to calculate from (default 16)
+        --size <N>           Width and height of each view in pixels (default 640;
+                             the number of splats grows with N^2; around the camera
+                             the views are wide, a larger size keeps more detail)
+        --sigma <F>          Splat width as a part of a pixel (default 0.5)
+        --sh <0..3>          Colours that change with the viewing direction, so that
+                             highlights move as in the pictures: the degree of the
+                             spherical harmonics (default 2; 0 = one colour per
+                             splat, the smallest file)
+    -s, --set <KEY=VALUE>    Change a scene key (may be repeated)
+    -t, --threads <N>        Number of threads (default: all cores)
+    -q, --quiet              No progress output
+        --formulas <DIR>     Directory with .m3f formula files
+        --maps <DIR>         Directory with maps
+";
+
+fn splat_cmd(argv: &[String]) -> Result<(), String> {
+    let mut sp = mb3d::splat::SplatParams::default();
+    let mut file: Option<String> = None;
+    let mut out: Option<String> = None;
+    let mut overrides: Vec<String> = Vec::new();
+    let mut quiet = false;
+    let mut args = argv.iter();
+    while let Some(a) = args.next() {
+        let mut val = || args.next().cloned().ok_or_else(|| format!("{a} needs a value"));
+        let num = |v: String, what: &str| v.trim().parse::<f64>().map_err(|_| format!("bad {what} value"));
+        match a.as_str() {
+            "-h" | "--help" => {
+                print!("{SPLAT_USAGE}");
+                return Ok(());
+            }
+            "-o" | "--output" => out = Some(val()?),
+            "--views" => sp.views = num(val()?, "--views")?.clamp(1.0, 1000.0) as usize,
+            "--size" => sp.size = num(val()?, "--size")?.clamp(16.0, 8192.0) as i32,
+            "--sigma" => sp.sigma = num(val()?, "--sigma")?.clamp(0.05, 5.0),
+            "--sh" => sp.degree = num(val()?, "--sh")?.clamp(0.0, 3.0) as u8,
+            "--around" => {
+                let v = val()?;
+                sp.around = mb3d::splat::Around::parse(&v).ok_or_else(|| format!("--around: {v}? (middle, camera or auto)"))?;
+            }
+            "-s" | "--set" => overrides.push(val()?),
+            "-t" | "--threads" => overrides.push(format!("threads = {}", val()?)),
+            "-q" | "--quiet" => quiet = true,
+            "--formulas" => mb3d::formulas::add_formula_dir(val()?.into()),
+            "--maps" => mb3d::maps::add_map_dir(val()?.into()),
+            s if s.starts_with('-') => return Err(format!("unknown option {s}\n\n{SPLAT_USAGE}")),
+            s => file = Some(s.to_string()),
+        }
+    }
+    let file = file.ok_or_else(|| format!("no parameter file given\n\n{SPLAT_USAGE}"))?;
+    args_read();
+    let out = out.ok_or("no output file given (-o splats.ply)")?;
+    if !out.to_ascii_lowercase().ends_with(".ply") {
+        return Err(format!("{out}: use .ply"));
+    }
+    let scene = load_for_export(&file, &overrides, quiet)?;
+    if !quiet {
+        mb3d::elog!("splat export: {} views of {}x{} pixels", sp.views, sp.size, sp.size);
+    }
+    let t0 = Instant::now();
+    let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
+    let progress = |i: usize, n: usize| {
+        if !quiet && tty {
+            eprint!("\r  view {}/{n}", (i + 1).min(n));
+            let _ = std::io::stderr().flush();
+        }
+    };
+    let r = mb3d::splat::export(&scene, &sp, &progress, &|| false)?;
+    if r.splats.is_empty() {
+        return Err("the object is in none of the views".into());
+    }
+    mb3d::splat::write_ply(std::path::Path::new(&out), &r, sp.degree)?;
+    if !quiet {
+        mb3d::elog!(
+            "\r  {} splats ({} before the overlaps were removed), views around the {}, in {}, wrote {out}",
+            r.splats.len(),
+            r.raw,
+            r.around.name(),
+            fmt_dur(t0.elapsed().as_secs_f64())
+        );
+        if r.cut_views > 0 {
+            mb3d::elog!("  note: the object reaches the edge of {} of the {} views and may be cut off there (zoom out a little)", r.cut_views, sp.views);
+        }
     }
     Ok(())
 }

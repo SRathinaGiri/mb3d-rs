@@ -238,6 +238,14 @@ pub struct Lighting {
     pub no_col_ipol: bool,
     /// Ambient light and depth colours relative to the object (`TBoptions` bit 29)
     pub amb_rel_obj: bool,
+    /// The object's frame for [`Lighting::amb_rel_obj`] (rows: unit
+    /// vectors in scene space; None: the scene's axes, as MB3D) and a
+    /// field of view in radians: the depth colours change over it from the
+    /// top to the bottom, as across a picture (0: over half a turn, as
+    /// MB3D).  Not saved: the splat export (`crate::splat`) fixes the
+    /// ambient light and the depth colours of its views to the scene's view
+    /// with it.
+    pub amb_frame: Option<([[f64; 3]; 3], f64)>,
     /// Dynamic fog options (`Lights[0].FreeByte`): bit 0 blend, bit 1 positive only
     pub dfog_options: u8,
     /// `iExModes` (`Lights[2].FreeByte`): non-zero = second total light mode
@@ -353,6 +361,7 @@ impl Default for Lighting {
             internal_gamma2: false,
             no_col_ipol: false,
             amb_rel_obj: false,
+            amb_frame: None,
             dfog_options: 0,
             ex_mode: 0,
             diff_map: 0,
@@ -638,6 +647,9 @@ pub struct LightVals {
     pub(crate) sqr: bool,
     pub(crate) no_col_ipol: bool,
     pub(crate) amb_rel_obj: bool,
+    /// `Lighting::amb_frame`
+    pub(crate) amb_frame: Option<[SVec; 3]>,
+    pub(crate) amb_fov: f32,
     pub(crate) dfog_options: u8,
     pub(crate) ex_mode: bool,
     pub(crate) yc_comb: bool,
@@ -1194,6 +1206,8 @@ impl LightVals {
             sqr,
             no_col_ipol: l.no_col_ipol,
             amb_rel_obj: l.amb_rel_obj,
+            amb_frame: l.amb_frame.map(|(m, _)| m.map(|r| r.map(|v| v as f32))),
+            amb_fov: l.amb_frame.map_or(0.0, |(_, f)| f as f32),
             dfog_options: if l.dfog_options & 3 == 3 { 1 } else { l.dfog_options & 3 },
             ex_mode: l.ex_mode != 0,
             yc_comb: l.yc_comb,
@@ -1283,6 +1297,24 @@ impl LightVals {
     }
 
     /// View space directions towards the lights by header light index.
+    /// A scene direction in the object's frame of the ambient light
+    /// (`Lighting::amb_frame`; without one, as it is).
+    #[inline]
+    pub(crate) fn amb_abs(&self, v: SVec) -> SVec {
+        match &self.amb_frame {
+            Some(m) => [sv_dot(m[0], v), sv_dot(m[1], v), sv_dot(m[2], v)],
+            None => v,
+        }
+    }
+
+    /// [`LightVals::amb_abs`] in double precision.
+    pub(crate) fn amb_abs64(&self, v: [f64; 3]) -> [f64; 3] {
+        match &self.amb_frame {
+            Some(m) => m.map(|r| r[0] as f64 * v[0] + r[1] as f64 * v[1] + r[2] as f64 * v[2]),
+            None => v,
+        }
+    }
+
     pub fn light_dirs(&self) -> Vec<(usize, [f32; 3])> {
         self.lights.iter().filter(|l| !l.positional).map(|l| (l.idx, l.ln)).collect()
     }
@@ -1693,7 +1725,18 @@ impl LightVals {
         let zpos_word = si.zpos();
         let plv_zpos = plv.z_pos;
         if self.amb_rel_obj {
-            let w = abs_view[1].clamp(-1.0, 1.0).asin() * std::f32::consts::FRAC_1_PI + 0.5;
+            let a = self.amb_abs(abs_view)[1].clamp(-1.0, 1.0).asin();
+            let w = if self.amb_fov > 0.0 {
+                // as across the picture of that field of view
+                let y = (a / self.amb_fov + 0.5).clamp(0.0, 1.0);
+                match self.depth_func {
+                    1 => y * y,
+                    0 => y,
+                    _ => y.sqrt(),
+                }
+            } else {
+                a * std::f32::consts::FRAC_1_PI + 0.5
+            };
             dep_c = lerp(self.depth_col2, self.depth_col, w);
         }
         let sqr = self.sqr;
@@ -1836,7 +1879,7 @@ impl LightVals {
                 sv_scale(a, d_amb_sh)
             } else {
                 // ambient light top / bottom
-                let ny = if self.amb_rel_obj { cam.to_abs(lns)[1] } else { lns[1] };
+                let ny = if self.amb_rel_obj { self.amb_abs(cam.to_abs(lns))[1] } else { lns[1] };
                 let t2 = (ny * 0.5 + 0.5) * d_amb_sh;
                 let t1 = d_amb_sh - t2;
                 sv_add(sv_scale(self.amb_col, t1), sv_scale(self.amb_col2, t2))

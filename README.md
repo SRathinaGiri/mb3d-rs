@@ -57,7 +57,7 @@ It comes as two programs:
   </details>
 * **mb3d** — a command line renderer for scripts and batch jobs: pictures,
   animations, batch lists, Monte Carlo renders, voxel and mesh exports,
-  all without a window.
+  Gaussian splats, all without a window.
 
 ## Is it safe to run? Check it yourself
 
@@ -817,6 +817,39 @@ you check further on your own:
   (`mb3d animate --motion-blur 8,0.5`).
 
   </details>
+* **Gaussian splats** of the fractal, to look at from every side in
+  Blender (5.3 and later), SuperSplat and other splat viewers:
+  `mb3d splat scene.m3p -o fractal.ply`.
+
+  <a href="docs/img/splats.jpg"><img src="docs/img/splats.jpg" width="760" alt="The program's picture of dIFS heart shrub, and its Gaussian splats in Blender from the left and from behind"></a>
+
+  <details><summary>Read more</summary>
+
+  The fractal is calculated from 16 directions (`--views`), each a
+  picture of 640 x 640 pixels (`--size`), with its lights, shadows,
+  occlusion and reflections. Every pixel of the object becomes a flat
+  Gaussian lying on the surface, with the colour it has in the picture.
+  Where the pictures overlap, each patch of the surface comes from the
+  one that saw it most squarely. The colours change with the direction you
+  look from (spherical harmonics, `--sh`), so highlights move as they do in
+  the pictures.
+
+  An object seen from outside is calculated from all around the scene's
+  middle. A scene seen from inside (a hall, a cave, where the fractal fills
+  the whole picture) is calculated from the scene's camera, looking in
+  every direction (`--around camera`; `auto`, the default, chooses). There,
+  a larger `--size` keeps more detail, as each view is 110 degrees wide.
+
+  The lights that turn with the camera, and the ambient light's top and
+  bottom colours, are fixed to the object as they light the scene's own
+  view, so all sides are lit alike. Depth of field, clouds, glow, vignette
+  and the ground plane are left out. The file is in the scene's view (x to
+  the right, y into the picture, z up: Blender's front view looks as the
+  scene does), the middle or the camera at 0 and the fractal scaled to a
+  radius of 1. It takes about 160 bytes per splat, typically 100 to 300 MB;
+  `--sh 0` makes it a third of that, without the moving highlights.
+
+  </details>
 
 ## Download
 
@@ -1224,6 +1257,7 @@ Everything else has a sub-command with its own `--help`:
 ./mb3d montecarlo scene.m3p --rays 8 --denoise -o mc.png # ... with the noise filter
 ./mb3d voxel scene.m3p -o voxels --slices 256            # for 3D printing
 ./mb3d mesh scene.m3p -o object.stl                      # Bulb Tracer 2
+./mb3d splat scene.m3p -o fractal.ply                    # Gaussian splats
 ./mb3d mutagen scene.m3p -o muta                         # 15 variations
 ```
 

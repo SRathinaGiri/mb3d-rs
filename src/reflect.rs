@@ -835,7 +835,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         self.calc_light_z_pos();
         let lv = c.lv;
         self.plv.zpos_dyn_fog = (zz2 * sw + p.zz_stmit_dif) as f32;
-        let t = if lv.amb_rel_obj { self.plv.abs_view } else { self.plv.view };
+        let t = if lv.amb_rel_obj { lv.amb_abs(self.plv.abs_view) } else { self.plv.view };
         let fov_y = p.fov_y as f32;
         let mut ypos = t[1].clamp(-1.0, 1.0).asin() / fov_y + 0.5;
         if lv.bg.is_some() {

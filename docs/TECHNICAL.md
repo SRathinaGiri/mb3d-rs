@@ -419,6 +419,7 @@ and kept in the original evaluation order.
 | `batch.rs` | BatchForm.pas | batch lists |
 | `voxel.rs` | VoxelExport.pas | voxel slice stacks (`TVoxelExportCalcThread`, object test, in-and-outside limits), `.m3v` projects incl. older versions, stack preview |
 | `mesh.rs`, `mclut.rs` | BulbTracer2.pas, ObjectScanner2.pas, VertexList.pas, MeshWriter.pas | the DE grid (`TObjectScanner2`), marching cubes with BulbTracer2's tables, vertex merging, centring, OBJ and PLY writers; STL and Taubin smoothing (new) |
+| `splat.rs` | (new) | Gaussian splat export: views around the middle or the camera, a splat per object pixel, the merge by patches, spherical harmonics by a ridge fit, the 3DGS PLY writer |
 | `formulas.rs` (Aexion C) | formulas.pas | the internal formula Aexion C (`HybridAexionC`, translated from x87 assembler) with all its modes |
 | `mutagen.rs` | mutagen/MutaGen.pas, MutaGenGUI.pas, PreviewRenderer.pas, FormulaNames.pas | mutation operators, probing (Sobel and difference coverage), the 15-member tree and its layout, formula categories |
 | `jit.rs` | paxCompiler (JIT formulas), formulas/JIT*.m3f | a compiler for the Delphi subset of `[SOURCE]` formulas: preprocessor (options and constants), Delphi typing, `Math`/`System` functions, compiled to closures over the iteration state |
@@ -1008,6 +1009,64 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 `mb3d animate` prints it at the end; the Animation maker's *FFmpeg
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
+
+## Gaussian splat export
+
+`src/splat.rs`, `mb3d splat`. Checked with `examples/splatcheck.rs`, which
+exports a scene, renders the program's picture from a direction that is not
+one of the views and prints that camera in the file's frame, for a splat
+renderer (Blender 5.3 headless) to render the file from the same place.
+
+* **The scene for the views** (`prepare`): square, the field of view the
+  scene's widest, no depth of field, clouds, ground plane, glow, vignette
+  or colour fringes. Lights given relative to the viewer become relative to
+  the object with the direction they have in the scene's view
+  (`fix_lights`: the angles of the object light whose vector, turned back
+  by the view, is the viewer light's). The ambient light's top and bottom
+  and the depth colours (`amb_rel_obj`) get the scene's view as their frame
+  (`Lighting::amb_frame`, not saved; the depth colours spread over the
+  scene's field of view, as across its picture), so all views paint a
+  surface alike. Without the frame nothing changes.
+* **The views** (`view_dirs`): a Fibonacci lattice on the sphere turned so
+  that the first point is the scene's view direction. Around the middle,
+  the camera turns about the scene middle as the turntable does. Around the
+  camera (`Around::Camera`; `auto` when the first picture is more than
+  97 % object), MB3D's camera is a pinhole at an eye behind the start
+  plane, whose rays start on that plane: the views are 110 degrees wide
+  (16 directions are all within 46 degrees of one), the zoom is changed so
+  that the start plane keeps its distance from the eye, and each view's
+  middle is moved so that its eye is the scene's. The start plane lies at
+  `z_start - mid z`, so `z_start` and `z_end` move with the middle.
+* **A splat per object pixel** (`splats_of_view`): the position from the
+  depth (`PaintCamera::object_pos`), the normal turned to face the camera,
+  the footprint `step_width + z * fov / height` (checked against the
+  distance of neighbouring splats: 1.0), standard deviations 0.5 footprint
+  across, 0.5 / cos (at most 4 times) along the slope, 0.05 along the
+  normal; opacity 0.99. Pixels that meet the object at the start of their
+  ray are cuts by that view's start plane: only the scene's own view keeps
+  them, and around the middle everything in front of the scene's start
+  plane is dropped (its picture cuts that away too).
+* **The merge** (`merge`): cells of twice the median splat width; patches
+  of 6 x 6 x 6 cells. In a patch the view with the largest sum of facing
+  (cos) keeps its splats; another view's splat stays only where that view
+  has none in the 27 cells around it. Per cell instead of per patch, the
+  views' slightly different pictures (highlights on normals estimated along
+  each camera's axes) mix into speckles.
+* **Colours by direction** (`fit_view_colours`): per cell of 3 merge cells,
+  each view's mean colour and mean direction; a ridge fit of the constant
+  and the spherical harmonics up to `--sh` (penalty 0.05 l (l + 1)); each
+  splat keeps the harmonics and its own colour in its own view's direction.
+* **The file**: binary little-endian PLY, `x y z nx ny nz f_dc_0..2
+  f_rest_* opacity scale_0..2 rot_0..3` (the INRIA layout; `f_rest` by
+  channel, 3, 8 or 15 per channel), in the scene's view frame (x right,
+  y into the picture, z up), the origin at the middle or the eye, scaled so
+  that 99.9 % of the splats are within 1. Blender 5.3 reads all degrees
+  (`radiance:sh_*`).
+
+Measured against the program's pictures from a direction between the views
+(Aexion 10bulbs, 512 x 512): at a view's own direction a single view's
+splats differ by 18 of 255 on average (1-pixel crust cannot be matched by
+Gaussians), 16 views by 24 to 27; between the views about 32.
 
 ## Experimental speed-ups
 
