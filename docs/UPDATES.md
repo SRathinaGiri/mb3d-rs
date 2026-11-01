@@ -5,6 +5,16 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.90](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.90) · 1 Nov 2026, 09:15 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1d56285`](https://github.com/thr32423/mb3d-rs/commit/1d56285eeaf3acf23f8af626ea8285ac0be8005f) | Version number and release notes of this release |
+| [`02c7d3d`](https://github.com/thr32423/mb3d-rs/commit/02c7d3de88dbf73faaf6bd1518378cd438854c83) | Experimental speed-ups (not in MB3D), off unless switched on, each on its own: step relax (longer march steps, an overstep taken again at its safe length; the dynamic fog keeps its count), secant search for the surface (a probe on the other side interpolated between the two), no step limit without dynamic fog and volumetric light (not with disable analytic DE), the DE occlusion at half resolution (every second pixel of every second row, the others filled from the four around them by depth and normal; on the card an even row's calculated pixels first, so its groups run together); on the processor and the card alike (card vs CPU as without them); the window Experimental speed-ups from the Internal tab's Experimental... button; scene keys experimental, step_relax, secant_search, free_steps, occlusion_half (also in the MB3D-RS block); measured on the 80 example files in Auto mode: step relax 1.3 median -5 %, secant -2 %, free steps -1 % (up to -30 %), half occlusion -18 % over the 10 files with DE occlusion; README (all seventeen languages), TECHNICAL.md, the AI guide; the labels in all languages and the font subsets; tests: the switch, the files, the fill |
+| [`2d8ef91`](https://github.com/thr32423/mb3d-rs/commit/2d8ef91fd5dfcbd3c2fadbc113acbc824ded3aeb) | Wrapped texts in Chinese and Japanese break between characters (they have no spaces between words, so a long label was drawn in a smaller font on one line and cut off); not before closing marks, small kana and the wave dash, not after opening brackets; texts without these characters break at their spaces as before |
+| [`a215f42`](https://github.com/thr32423/mb3d-rs/commit/a215f42d9fae6aaf2cd4075ca72497ab8198caa3) | Ground plane in double precision on the card: the waves' 2 pi a value of the shader's precision (in double the shader did not compile and every scene in double precision was calculated on the CPU) |
+| [`94471ec`](https://github.com/thr32423/mb3d-rs/commit/94471ec8431713e2d3cb90c16b9b29784a2f1544) | README: Updates for v0.2.89 |
+
 ## [v0.2.89](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89) · 1 Nov 2026, 05:45 UTC
 
 | Commit | What it does |

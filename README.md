@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.89](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89)** (1 Nov 2026, 05:45 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.90](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.90)** (1 Nov 2026, 09:15 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1292,6 +1292,16 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.90](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.90) · 1 Nov 2026, 09:15 UTC
+
+| Commit | What it does |
+|---|---|
+| [`1d56285`](https://github.com/thr32423/mb3d-rs/commit/1d56285eeaf3acf23f8af626ea8285ac0be8005f) | Version number and release notes of this release |
+| [`02c7d3d`](https://github.com/thr32423/mb3d-rs/commit/02c7d3de88dbf73faaf6bd1518378cd438854c83) | Experimental speed-ups (not in MB3D), off unless switched on, each on its own: step relax (longer march steps, an overstep taken again at its safe length; the dynamic fog keeps its count), secant search for the surface (a probe on the other side interpolated between the two), no step limit without dynamic fog and volumetric light (not with disable analytic DE), the DE occlusion at half resolution (every second pixel of every second row, the others filled from the four around them by depth and normal; on the card an even row's calculated pixels first, so its groups run together); on the processor and the card alike (card vs CPU as without them); the window Experimental speed-ups from the Internal tab's Experimental... button; scene keys experimental, step_relax, secant_search, free_steps, occlusion_half (also in the MB3D-RS block); measured on the 80 example files in Auto mode: step relax 1.3 median -5 %, secant -2 %, free steps -1 % (up to -30 %), half occlusion -18 % over the 10 files with DE occlusion; README (all seventeen languages), TECHNICAL.md, the AI guide; the labels in all languages and the font subsets; tests: the switch, the files, the fill |
+| [`2d8ef91`](https://github.com/thr32423/mb3d-rs/commit/2d8ef91fd5dfcbd3c2fadbc113acbc824ded3aeb) | Wrapped texts in Chinese and Japanese break between characters (they have no spaces between words, so a long label was drawn in a smaller font on one line and cut off); not before closing marks, small kana and the wave dash, not after opening brackets; texts without these characters break at their spaces as before |
+| [`a215f42`](https://github.com/thr32423/mb3d-rs/commit/a215f42d9fae6aaf2cd4075ca72497ab8198caa3) | Ground plane in double precision on the card: the waves' 2 pi a value of the shader's precision (in double the shader did not compile and every scene in double precision was calculated on the CPU) |
+| [`94471ec`](https://github.com/thr32423/mb3d-rs/commit/94471ec8431713e2d3cb90c16b9b29784a2f1544) | README: Updates for v0.2.89 |
+
 ### [v0.2.89](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89) · 1 Nov 2026, 05:45 UTC
 
 | Commit | What it does |
@@ -1340,19 +1350,7 @@ of a release are on its page. Times are in UTC.
 | [`b7307f7`](https://github.com/thr32423/mb3d-rs/commit/b7307f7f41769659a0d1e2dc404925c6c92a1ccf) | Event log on Windows: the stale session's program, process and start time are read through the handle that holds its lock (Windows locks are mandatory, a second handle could not read the file, the note said "? (process ?) started ? UTC"); fixes the Windows CI test a_session_left_locked_is_found_and_old_files_go |
 | [`86dd4fe`](https://github.com/thr32423/mb3d-rs/commit/86dd4fefd53b20d89a87784a8b0dd96b679de525) | README: Updates for v0.2.87 |
 
-### [v0.2.87](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.87) · 30 Oct 2026, 10:40 UTC
-
-| Commit | What it does |
-|---|---|
-| [`89f0cb2`](https://github.com/thr32423/mb3d-rs/commit/89f0cb2885697d417c2148525830416cef0c5d05) | Version number and release notes of this release |
-| [`7023cb4`](https://github.com/thr32423/mb3d-rs/commit/7023cb43b2c373a19e3c9821a088ec87c2574305) | README in Spanish, Portuguese, Indonesian, Arabic and Urdu, translated from the README of 0.2.86 with each language's interface labels; the language bars of every README name the seventeen languages |
-| [`660b0f1`](https://github.com/thr32423/mb3d-rs/commit/660b0f11a015def8d5803914abf80f4aa376b334) | Languages: Spanish, Portuguese, Indonesian, Arabic and Urdu, all 1,796 labels each, with the flags of Spain, Portugal and Indonesia (Arabic and Urdu without a flag, the badge shows the globe); text written right to left: the Arabic script shaped with rustybuzz right to left (its joined letter forms), a line with right-to-left letters laid out as a right-to-left paragraph in display order by the Unicode bidirectional algorithm (unicode-bidi; Latin words and numbers in it left to right, brackets mirrored), a wrapped right-to-left paragraph right-aligned; a shaped run in the first language font that has all its letters; Arabic.ttf and Urdu.ttf subsets of Noto Sans Arabic UI (tools/font_subsets.py, OFL-NotoSansArabic.txt); the windows themselves keep their left-to-right layout |
-| [`e770a36`](https://github.com/thr32423/mb3d-rs/commit/e770a36bb5e2ba9fd6c5ef87adb01f3972b7c5d9) | .gitignore: Python's __pycache__ of the tools |
-| [`8148548`](https://github.com/thr32423/mb3d-rs/commit/814854849561aad54a2659c1071bd7fdf2809c56) | Languages: the 109 labels the translations lacked (the History, Log and AI assistant windows, the shader clock, the language window's note) in all eleven, so every language now has all its labels; two texts the old generator and the conversion had missed (a call with its text on the next line: the AI window's note, the Z buffer window's values) as labels, the scanner and its test now see such calls; the AI window's message of a missing mb3d as a label; the Japanese, Korean and Chinese font subsets with the new characters, tools/font_subsets.py to make them (never drops a character); labels.py writes the untranslated labels under [Labels], so a line translated there is a label |
-| [`ec16516`](https://github.com/thr32423/mb3d-rs/commit/ec165168a97b2abdeb4d8748c1af0f6ce3935bec) | Interface texts as labels, in the way of Microsoft Dynamics 365: every text has a label ID, the form files and the code refer to it as @MB:Id (Caption = '@MB:CalculateNow', tr("@MB:CalculationStopped")), each language file's [Labels] gives the texts once (Id=text, a note with the English text or where it is used under each); 2,042 control and program lines became 1,793 labels, a new window gets the translations a language already has (the German History window: Art, Größe, Ordner, Laden); a label a language lacks shows the English text, built into the program; a form section still gives one control a text of its own (the conversion kept the 7 to 29 translations per language that differed from their label's), old language files keep working; tools/labels.py finds labels to reuse, adds new ones, checks the references and the translations and puts the files in order; the tests check every reference; every window pixel for pixel as before in English, German and Japanese but for the gained translations |
-| [`22263e0`](https://github.com/thr32423/mb3d-rs/commit/22263e041909ec5af4a3a9a542e2b8c75134f1c8) | README: Updates for v0.2.86 |
-
-All 100 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 101 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
