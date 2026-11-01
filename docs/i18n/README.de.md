@@ -1262,6 +1262,7 @@ dann die gewünschten. Sie werden mit der Szene gespeichert (so nutzen sie
 auch die Kommandozeile, der Schwarm und der KI-Assistent); auf der
 Kommandozeile `-s experimental=on` mit `-s step_relax=1.3`,
 `-s secant_search=on`, `-s free_steps=on` oder `-s occlusion_half=on`.
+Das Programm behält deine Wahl von einem Start zum nächsten, auch für die Dateien, die du öffnest.
 
 Gemessen an den 80 Beispieldateien im Auto-Modus (etwa 0,4 Megapixel, jeweils
 der schnellere von zwei Durchläufen), verglichen mit denselben Dateien ohne

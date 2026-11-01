@@ -1223,6 +1223,7 @@ a pòtemù te, chtërne chcesz. Òne są zapisywóné razã ze sceną (tak brëk
 téż rédka pòlétów, rój ë asystent AI); w rédce pòlétów `-s experimental=on`
 z `-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` abò
 `-s occlusion_half=on`.
+Programa trzimô twój wëbiér òd jednegò zrëszeniô do drëgòwò, téż dlô lopków, jaczé òtmëkôsz.
 
 Zmierzoné na 80 przëkładowëch lopkach w tribie Aùto (kòl 0,4 megapikselów,
 chùtszi z dwóch renderów kòżdégò), w zestôwkù z timi samima lopkama bez nich:

@@ -1212,6 +1212,7 @@ off unless you switch them on: **Internal** tab → **Experimental...**, tick
 with the scene (so the command line, the swarm and the AI assistant use
 them too); on the command line `-s experimental=on` with `-s step_relax=1.3`,
 `-s secant_search=on`, `-s free_steps=on` or `-s occlusion_half=on`.
+The program keeps your choice from one start to the next, also for the files you open.
 
 Measured on the 80 example files in Auto mode (about 0.4 megapixels,
 the faster of two runs each), against the same files without them:

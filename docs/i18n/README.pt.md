@@ -1268,6 +1268,7 @@ salvas com a cena (assim a linha de comando, o enxame e o assistente de IA
 também as usam); na linha de comando `-s experimental=on` com
 `-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` ou
 `-s occlusion_half=on`.
+O programa mantém sua escolha de uma inicialização para a próxima, também para os arquivos que você abrir.
 
 Medido nos 80 arquivos de exemplo no modo Auto (cerca de 0,4 megapixel, o
 mais rápido de duas renderizações de cada um), em comparação com os mesmos

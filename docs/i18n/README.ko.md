@@ -1120,6 +1120,7 @@ MB3D는 파일 하나(*Test8*: "Division by zero" 오류로 멈춤)를 계산하
 AI 어시스턴트도 이를 사용합니다). 명령줄에서는 `-s experimental=on`과 함께
 `-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` 또는
 `-s occlusion_half=on`을 씁니다.
+이 선택은 프로그램을 다시 시작해도 유지되며, 여는 파일에도 적용됩니다.
 
 80개의 예제 파일을 자동 모드(약 0.4메가픽셀, 각각 두 번 실행한 것 중 빠른 쪽)로,
 이 기능을 쓰지 않은 같은 파일과 비교해 측정했습니다.

@@ -1076,7 +1076,10 @@ Gaussians), 16 views by 24 to 27; between the views about 32.
 `src/experimental.rs`; the window `ExperimentalFrm` (Internal tab,
 "Experimental..."); the scene keys `experimental`, `step_relax`,
 `secant_search`, `free_steps`, `occlusion_half`, also in the MB3D-RS block of
-`.m3p`/`.m3i` files. Each is on the processor and the card alike (with each
+`.m3p`/`.m3i` files. The window keeps the user's choice in Mandelbulb3D.ini
+(`Experimental  1 1.3 0 1 1`: the switch, step relax, secant, free steps,
+half occlusion; `Experimental::to_ini`), and every scene the window takes
+(at the start, an opened file) gets it. Each is on the processor and the card alike (with each
 of them the card's and the processor's pictures differ in 0.005 % of the
 pixels by more than 8 of 255, as without them). Measured 2026-11-01 on the
 80 example files in Auto mode at about 0.4 megapixels, the faster of two

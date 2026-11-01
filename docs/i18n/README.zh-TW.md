@@ -831,6 +831,7 @@ MB3D 無法計算其中一個檔案（*Test8*：它會因「Division by zero」�
 它們會隨場景一起儲存（因此命令列、群集和 AI 助理也會使用它們）；在命令列上用
 `-s experimental=on` 加上 `-s step_relax=1.3`、`-s secant_search=on`、
 `-s free_steps=on` 或 `-s occlusion_half=on`。
+程式會在下次啟動時保留你的選擇，開啟的檔案也同樣使用。
 
 在自動模式下對 80 個範例檔量測（約 0.4 百萬像素，每個檔案取兩次執行中較快的一次），
 與不使用它們的同一批檔案相比：

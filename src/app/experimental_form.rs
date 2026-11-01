@@ -17,6 +17,25 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     ui.show(F);
 }
 
+/// The settings kept in Mandelbulb3D.ini into the scene (at the start and
+/// when a scene is opened); nothing kept, the scene's own.
+pub fn apply_saved(app: &mut Mb3d) {
+    if let Some(e) = app.ini.get_extra(INI_ITEM).and_then(crate::experimental::Experimental::from_ini) {
+        app.scene.experimental = e;
+    }
+}
+
+/// The scene's settings kept in Mandelbulb3D.ini.
+fn save(app: &mut Mb3d) {
+    let v = app.scene.experimental.to_ini();
+    if app.ini.get_extra(INI_ITEM) != Some(v.as_str()) {
+        app.ini.set_extra(INI_ITEM, &v);
+        let _ = app.ini.save();
+    }
+}
+
+const INI_ITEM: &str = "Experimental";
+
 /// The scene's settings into the window's controls.
 pub fn show_values(app: &Mb3d, ui: &mut Ui) {
     let e = app.scene.experimental;
@@ -53,9 +72,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "OnBoxClick" | "RelaxEditChange" => {
             enable(ui);
             read_values(app, ui);
+            save(app);
         }
         "CloseBtnClick" => {
             read_values(app, ui);
+            save(app);
             ui.hide(F);
         }
         _ => {}

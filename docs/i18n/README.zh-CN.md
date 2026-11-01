@@ -832,6 +832,7 @@ MB3D 无法计算其中一个文件（*Test8*：它会因"Division by zero"错�
 它们随场景一起保存（因此命令行、集群和 AI 助手也会使用它们）；在命令行上用
 `-s experimental=on` 加上 `-s step_relax=1.3`、`-s secant_search=on`、
 `-s free_steps=on` 或 `-s occlusion_half=on`。
+程序会在下次启动时保留你的选择，打开的文件也同样使用。
 
 在自动模式下对 80 个示例文件测量（约 0.4 百万像素，每个文件取两次运行中较快的一次），
 与不使用它们的同一批文件相比：

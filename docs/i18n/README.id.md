@@ -1261,6 +1261,7 @@ centang *Gunakan percepatan eksperimental*, lalu pilih yang Anda inginkan. Semua
 disimpan bersama adegan (sehingga baris perintah, swarm, dan asisten AI juga
 memakainya); di baris perintah `-s experimental=on` dengan `-s step_relax=1.3`,
 `-s secant_search=on`, `-s free_steps=on`, atau `-s occlusion_half=on`.
+Program menyimpan pilihan Anda dari satu kali dijalankan ke berikutnya, juga untuk file yang Anda buka.
 
 Diukur pada 80 file contoh dalam mode Otomatis (sekitar 0.4 megapiksel,
 yang lebih cepat dari dua kali jalan masing-masing), dibandingkan dengan file

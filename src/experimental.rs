@@ -66,6 +66,27 @@ impl Experimental {
         self.relax() > 1.0 || self.secant() || self.free_steps() || self.ao_half()
     }
 
+    /// The settings as the program keeps them between its starts (the
+    /// `Experimental` item of Mandelbulb3D.ini): the switch, the step relax
+    /// and the three others, as `1 1.3 0 1 1`.
+    pub fn to_ini(&self) -> String {
+        let b = |v: bool| if v { "1" } else { "0" };
+        format!("{} {} {} {} {}", b(self.on), self.step_relax, b(self.secant), b(self.free_steps), b(self.ao_half))
+    }
+
+    /// [`Experimental::to_ini`] read back (None for anything else).
+    pub fn from_ini(s: &str) -> Option<Experimental> {
+        let v: Vec<&str> = s.split_whitespace().collect();
+        let [on, relax, secant, free, half] = v.as_slice() else { return None };
+        let b = |x: &str| match x {
+            "1" => Some(true),
+            "0" => Some(false),
+            _ => None,
+        };
+        let r: f64 = relax.parse().ok().filter(|r: &f64| r.is_finite())?;
+        Some(Experimental { on: b(on)?, step_relax: r.clamp(1.0, 2.0), secant: b(secant)?, free_steps: b(free)?, ao_half: b(half)? })
+    }
+
     /// The scene keys ("" for the defaults).
     pub fn to_text(&self) -> String {
         if *self == Self::default() {
@@ -86,6 +107,17 @@ impl Experimental {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_settings_kept_between_starts_read_back() {
+        let e = Experimental { on: true, step_relax: 1.3, secant: false, free_steps: true, ao_half: true };
+        assert_eq!(e.to_ini(), "1 1.3 0 1 1");
+        assert_eq!(Experimental::from_ini(&e.to_ini()), Some(e));
+        assert_eq!(Experimental::from_ini(&Experimental::default().to_ini()), Some(Experimental::default()));
+        assert_eq!(Experimental::from_ini(""), None);
+        assert_eq!(Experimental::from_ini("1 x 0 1 1"), None);
+        assert_eq!(Experimental::from_ini("1 9 0 1 1").map(|e| e.step_relax), Some(2.0));
+    }
 
     #[test]
     fn nothing_is_used_while_switched_off() {

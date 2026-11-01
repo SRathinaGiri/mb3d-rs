@@ -1267,6 +1267,7 @@ spenti finché non li accendi: scheda **Interno** → **Sperimentale...**, spunt
 la scena (così le usano anche la riga di comando, lo sciame e l'assistente
 IA); dalla riga di comando `-s experimental=on` con `-s step_relax=1.3`,
 `-s secant_search=on`, `-s free_steps=on` o `-s occlusion_half=on`.
+Il programma mantiene la tua scelta da un avvio al successivo, anche per i file che apri.
 
 Misurate sugli 80 file di esempio in modalità Auto (circa 0,4 megapixel, il
 più veloce di due rendering per ciascuno), rispetto agli stessi file senza di

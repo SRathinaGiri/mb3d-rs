@@ -1295,6 +1295,7 @@ expérimentales*, puis celles que vous voulez. Elles sont enregistrées avec la
 scène (la ligne de commande, l'essaim et l'assistant IA les utilisent donc
 aussi) ; en ligne de commande `-s experimental=on` avec `-s step_relax=1.3`,
 `-s secant_search=on`, `-s free_steps=on` ou `-s occlusion_half=on`.
+Le programme garde ton choix d'un démarrage à l'autre, aussi pour les fichiers que tu ouvres.
 
 Mesuré sur les 80 fichiers d'exemple en mode Auto (environ 0,4 mégapixel, le
 plus rapide de deux rendus pour chacun), par rapport aux mêmes fichiers sans

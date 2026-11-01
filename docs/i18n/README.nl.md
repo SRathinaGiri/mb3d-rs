@@ -1219,6 +1219,7 @@ Ze worden met de scène opgeslagen (zodat ook de opdrachtregel, de zwerm en de
 AI-assistent ze gebruiken); op de opdrachtregel `-s experimental=on` met
 `-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` of
 `-s occlusion_half=on`.
+Het programma onthoudt je keuze van de ene start tot de volgende, ook voor de bestanden die je opent.
 
 Gemeten op de 80 voorbeeldbestanden in de modus Auto (ongeveer 0,4 megapixel,
 telkens de snelste van twee renders), tegenover dezelfde bestanden zonder:

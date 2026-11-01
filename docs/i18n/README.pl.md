@@ -1227,6 +1227,7 @@ zaznacz *Użyj eksperymentalnych przyspieszeń*, a potem te, które chcesz. Są
 zapisywane razem ze sceną (więc używają ich też wiersz poleceń, rój i asystent
 AI); w wierszu poleceń `-s experimental=on` z `-s step_relax=1.3`,
 `-s secant_search=on`, `-s free_steps=on` albo `-s occlusion_half=on`.
+Program zachowuje twój wybór od jednego uruchomienia do następnego, także dla otwieranych plików.
 
 Zmierzone na 80 przykładowych plikach w trybie Auto (około 0,4 megapiksela,
 szybszy z dwóch przebiegów każdego), w porównaniu z tymi samymi plikami bez

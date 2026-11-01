@@ -1286,6 +1286,7 @@ las que quiera. Se guardan con la escena (así también las usan la línea de
 comandos, el enjambre y el asistente de IA); en la línea de comandos
 `-s experimental=on` con `-s step_relax=1.3`, `-s secant_search=on`,
 `-s free_steps=on` o `-s occlusion_half=on`.
+El programa conserva tu elección de un inicio al siguiente, también para los archivos que abras.
 
 Medido con los 80 archivos de ejemplo en modo Auto (unos 0,4 megapíxeles, el
 más rápido de dos renderizados de cada uno), frente a los mismos archivos sin

@@ -619,6 +619,7 @@ fn tenths(v: i32) -> String {
 }
 
 pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
+    super::experimental_form::apply_saved(app);
     let sc = app.scene.clone();
     super::experimental_form::show_values(app, ui);
     // the statistics of the calculation the parameters come from (none
