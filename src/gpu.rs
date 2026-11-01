@@ -1855,6 +1855,9 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
+    // experimental (RELAX, EXP_FLAGS)
+    v[432] = p.relax.to_bits();
+    v[433] = p.secant as u32 | (p.ao_half as u32) << 1;
     // the ground plane (GROUND_OPT ..)
     if let Some(g) = &p.ground {
         let slope = std::f64::consts::TAU * 1.59 * g.wave_height / g.wave_len.max(1e-30);
@@ -1917,7 +1920,7 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 432;
+const PARAM_WORDS: usize = 440;
 
 /// The parameter word of the coordinates as doubles (`DP` in the shader).
 const DOUBLE_WORD: usize = 296;

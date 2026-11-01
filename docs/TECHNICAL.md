@@ -755,6 +755,11 @@ itself per light.
 | `vignette`, `chromatic` | 0..1 | darker corners, red and blue sampled a little outwards and inwards from the middle; both by the whole picture's middle (a tile gets its part); Monte Carlo pictures are finished after the noise filter |
 | `detail` | kind, strength, size, roughness (`stone, 1.5, 0.12, 0.5`) or `off` | surface detail (not in MB3D, `src/detail.rs`): 3D gradient noise in the fractal's coordinates (rough: sum of octaves; stone: folded `1 - 2|n|`; grain: three fine octaves); its gradient tilts the normal where the light is calculated (painting, the reflections' mirror and Monte Carlo), not the distance estimate; not on the ground plane |
 | `detail_color` | 0..1 | the diffuse colour times `1 + 0.6 * amount * noise` (patches three times the relief's size) |
+| `experimental` | `on` / `off` | the switch of the experimental speed-ups (not in MB3D, `src/experimental.rs`, see "Experimental speed-ups"): while off, the four keys below are kept but not used |
+| `step_relax` | 1..2 (1 = off) | the march's steps enlarged by this (over-relaxation); a step whose DE no longer overlaps the last one is taken again at the safe length; the dynamic fog counts a relaxed step as the safe steps it stands for |
+| `secant_search` | `on` / `off` | the binary search after the march (and at the shadows' and reflections' starts): a probe on the other side of the surface than the one before goes to where the line through both meets the DE stop (kept within 5..95 % of the step), else 0.55 of the step as before |
+| `free_steps` | `on` / `off` | without dynamic fog (53) and volumetric light, and not with `disable_analytic_de`: no step limit (`mh04zsd`), which only serves the fog's step count |
+| `occlusion_half` | `on` / `off` | the DE occlusion on the pixels with even x and y of the whole picture, the others filled from the four around them (bilinear, weighed by depth and normal) |
 | `part2_position`, `part2_rotation`, `part2_scale` | x, y, z; degrees; size | with a DE combination (not the mix): the second hybrid part as an object of its own, its point `m (p - position)` (the rotation divided by the size), its distance times the size |
 | `dof` | `off`, `sorted`, `forward` | depth of field |
 | `dof_focus`, `dof_focus2` | distance as fraction of the image width | sharp range (`--stats` prints the value for the image centre) |
@@ -1003,6 +1008,37 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 `mb3d animate` prints it at the end; the Animation maker's *FFmpeg
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
+
+## Experimental speed-ups
+
+`src/experimental.rs`; the window `ExperimentalFrm` (Internal tab,
+"Experimental..."); the scene keys `experimental`, `step_relax`,
+`secant_search`, `free_steps`, `occlusion_half`, also in the MB3D-RS block of
+`.m3p`/`.m3i` files. Each is on the processor and the card alike (with each
+of them the card's and the processor's pictures differ in 0.005 % of the
+pixels by more than 8 of 255, as without them). Measured 2026-11-01 on the
+80 example files in Auto mode at about 0.4 megapixels, the faster of two
+runs (run to run the pictures differ in a median 0.001 % of the pixels):
+
+| | whole render | changed pixels (> 8 of 255) |
+|---|---|---|
+| `step_relax = 1.3` | total −5.1 %, median −5.0 %, best −20 % (Chrystal), worst +8 %; 62 faster, 2 slower | median 2.6 %, more than 5 % in 26 files; holes in thin shells (BatJorge – Pong 703 – Swirls 58 %), speckle in noisy scenes (spineJulia 48 %, the MutaGen canary 41 %) |
+| `secant_search` | total −1.5 %, median −2.3 %, best −18 % | median 0.7 %, more than 5 % in 12 files (spineJulia 15 %) |
+| `free_steps` | total −1.7 %, median −0.6 %, best −30 % (LightBulbMoon – No, Never) | median 0.03 %, more than 5 % in 5 files |
+| `occlusion_half` | the 10 files with DE occlusion: total −17.6 % (DEcomb1 −24 %); the stage 3.8 times faster on the processor, 2–3 times in Auto mode | 0.01–27 % (JuliaSetSample), softer occlusion in fine detail |
+
+Earlier, on the processor alone at 400 px, `step_relax = 1.3` gave −11.6 %
+over the 80 files; in Auto mode the card does most of the march, so less
+of the time is in it.
+
+On the card the half-resolution occlusion orders the items of an even row
+of the picture with its calculated pixels first (`main` in
+`gpu_march.wgsl`): the card runs 32 pixels in step, and with every second
+pixel skipped in place its groups took as long as before (1.7 times faster
+instead of 4). The rows stay whole, so the card's rows are handed over as
+before. The skipped pixels are marked (`amb_shadow = 0xFFFF`) and filled by
+`deao::fill_half` after the pass, on the processor, for the card's and the
+processor's rows alike.
 
 ## Time left and the progress bar
 

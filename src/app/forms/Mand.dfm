@@ -838,6 +838,18 @@ object Mand3DForm: TMand3DForm
           TabOrder = 5
           OnChangingEx = SpinEdit2ChangingEx
         end
+        object ExpBtn: TButton
+          Left = 8
+          Top = 92
+          Width = 130
+          Height = 22
+          Hint = '@MB:FasterWaysOfCalculatingThatChange2'
+          Caption = '@MB:Experimental'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 12
+          OnClick = ExpBtnClick
+        end
       end
       object TabSheet5: TTabSheet
         Caption = '@MB:Infos'

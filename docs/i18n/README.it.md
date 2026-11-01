@@ -1218,6 +1218,31 @@ del processore in media di una frazione di punto percentuale della gamma
 dei colori (il dettaglio fine può scintillare in pixel diversi; le [note
 tecniche](../TECHNICAL.md) riportano le misure).
 
+<a id="experimental-speed-ups"></a>
+
+### Accelerazioni sperimentali
+
+Alcuni modi più veloci di calcolare cambiano un po' l'immagine, quindi sono
+spenti finché non li accendi: scheda **Interno** → **Sperimentale...**, spunta
+*Usa le accelerazioni sperimentali*, poi quelle che vuoi. Vengono salvate con
+la scena (così le usano anche la riga di comando, lo sciame e l'assistente
+IA); dalla riga di comando `-s experimental=on` con `-s step_relax=1.3`,
+`-s secant_search=on`, `-s free_steps=on` o `-s occlusion_half=on`.
+
+Misurate sugli 80 file di esempio in modalità Auto (circa 0,4 megapixel, il
+più veloce di due rendering per ciascuno), rispetto agli stessi file senza di
+esse:
+
+| Accelerazione | Rendering intero | Immagini (pixel che differiscono di più di 8 su 255) |
+|---|---|---|
+| **Passo allungato 1,3**: passi di marcia più lunghi, un passo oltre la superficie viene ripetuto | −5 % (mediana), fino a −20 %; 62 su 80 più veloci | mediana 2,6 %; ombreggiatura fine. *I gusci sottili possono mostrare buchi* (BatJorge – Pong 703 – Swirls) |
+| **Ricerca della superficie per secante** | −2 % (mediana), fino a −18 % | mediana 0,7 %; il dettaglio fine si sposta leggermente |
+| **Nessun limite di passi senza nebbia dinamica** | −1 % (mediana), fino a −30 % nelle scene aperte | per lo più la stessa immagine (mediana 0,03 %) |
+| **Occlusione DE a metà risoluzione** | −18 % sui 10 file con occlusione DE (DEcomb1 −24 %); quella fase fino a 4 volte più veloce | 0–27 % dei pixel, occlusione più morbida nel dettaglio fine; l'aspetto è lo stesso |
+
+Confronta con un rendering senza di esse prima di affidarti a una per
+un'immagine.
+
 <a id="the-command-line"></a>
 
 ## La riga di comando

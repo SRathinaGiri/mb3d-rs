@@ -1177,6 +1177,30 @@ strzédno ò ùłómk procentu zakresu farwów (drobné detale mògą sã
 skrzëc w jinëch pikselach; [techniczné notë](../TECHNICAL.md)
 mają miarë).
 
+<a id="experimental-speed-ups"></a>
+
+### Eksperimentalné przëspieszenia
+
+Czile chùtszich spòsobów rechòwaniô krzynã zmieniwô òbrôzk, tej są
+wëłączoné, jaż të je nie włączësz: karta **Bënowé** →
+**Eksperimentalno...**, zaznaczë *Brëkùj eksperimentalnëch przëspieszeniów*,
+a pòtemù te, chtërne chcesz. Òne są zapisywóné razã ze sceną (tak brëkùją je
+téż rédka pòlétów, rój ë asystent AI); w rédce pòlétów `-s experimental=on`
+z `-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` abò
+`-s occlusion_half=on`.
+
+Zmierzoné na 80 przëkładowëch lopkach w tribie Aùto (kòl 0,4 megapikselów,
+chùtszi z dwóch renderów kòżdégò), w zestôwkù z timi samima lopkama bez nich:
+
+| Przëspieszenié | Całi render | Òbrôzczi (piksele, co sã różnią ò wicy jak 8 z 255) |
+|---|---|---|
+| **Wëdłużenié krokù 1,3**: dłëgszé kroczi marszu, za dalek zrobiony krok je pòwtôrzóny | −5 % (mediana), do −20 %; 62 z 80 chùtszé | mediana 2,6 %; drobné cenienié. *Cenczé skòrëpë mògą miec dzurë* (BatJorge – Pong 703 – Swirls) |
+| **Szukanié pòwierzchni metodą secznëch** | −2 % (mediana), do −18 % | mediana 0,7 %; drobné detale krzynã sã przesuwają |
+| **Bez lëmitu krokòw bez dinamiczny mgłë** | −1 % (mediana), do −30 % w òtemkłëch scenach | nôczãscy ten sam òbrôzk (mediana 0,03 %) |
+| **DE occlusion przë pòłowie rozdzélnoscë** | −18 % w 10 lopkach z DE occlusion (DEcomb1 −24 %); ten etap do 4 razy chùtszi | 0–27 % pikselów, miãkszô òkluzjô w drobnëch detalach; wëzdrzi tak samò |
+
+Nim zaùfôsz jednémù z nich przë òbrôzkù, pòrównôj z renderã bez nich.
+
 <a id="the-command-line"></a>
 
 ## Rédka pòlétów

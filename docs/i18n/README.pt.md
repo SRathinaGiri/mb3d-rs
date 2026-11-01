@@ -1220,6 +1220,31 @@ média por uma fração de um por cento da faixa de cores (detalhes finos
 podem cintilar em pixels diferentes; as [notas técnicas](../TECHNICAL.md)
 (em inglês) trazem as medições).
 
+<a id="experimental-speed-ups"></a>
+
+### Acelerações experimentais
+
+Algumas formas mais rápidas de calcular mudam um pouco a imagem, por isso
+ficam desligadas até você ligá-las: aba **Interno** → **Experimental...**,
+marque *Usar as acelerações experimentais* e depois as que quiser. Elas são
+salvas com a cena (assim a linha de comando, o enxame e o assistente de IA
+também as usam); na linha de comando `-s experimental=on` com
+`-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` ou
+`-s occlusion_half=on`.
+
+Medido nos 80 arquivos de exemplo no modo Auto (cerca de 0,4 megapixel, o
+mais rápido de duas renderizações de cada um), em comparação com os mesmos
+arquivos sem elas:
+
+| Aceleração | Renderização inteira | Imagens (pixels que diferem em mais de 8 de 255) |
+|---|---|---|
+| **Passo alongado 1,3**: passos de avanço mais longos, um passo que passa do ponto é refeito | −5 % (mediana), até −20 %; 62 de 80 mais rápidos | mediana 2,6 %; sombreamento fino. *Cascas finas podem mostrar buracos* (BatJorge – Pong 703 – Swirls) |
+| **Busca da superfície por secante** | −2 % (mediana), até −18 % | mediana 0,7 %; o detalhe fino se desloca levemente |
+| **Sem limite de passos sem neblina dinâmica** | −1 % (mediana), até −30 % em cenas abertas | quase sempre a mesma imagem (mediana 0,03 %) |
+| **Oclusão DE em meia resolução** | −18 % nos 10 arquivos com oclusão DE (DEcomb1 −24 %); essa etapa até 4 vezes mais rápida | 0–27 % dos pixels, oclusão mais suave no detalhe fino; parece igual |
+
+Compare com uma renderização sem elas antes de confiar em uma para uma imagem.
+
 <a id="the-command-line"></a>
 
 ## A linha de comando

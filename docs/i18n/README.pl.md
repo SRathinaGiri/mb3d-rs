@@ -1181,6 +1181,30 @@ procesora średnio o ułamek procenta zakresu kolorów (drobne szczegóły
 mogą błyszczeć w innych pikselach; [notatki techniczne](../TECHNICAL.md)
 zawierają pomiary).
 
+<a id="experimental-speed-ups"></a>
+
+### Eksperymentalne przyspieszenia
+
+Kilka szybszych sposobów liczenia nieco zmienia obraz, więc są wyłączone,
+dopóki ich nie włączysz: zakładka **Wewnętrzne** → **Eksperymentalne...**,
+zaznacz *Użyj eksperymentalnych przyspieszeń*, a potem te, które chcesz. Są
+zapisywane razem ze sceną (więc używają ich też wiersz poleceń, rój i asystent
+AI); w wierszu poleceń `-s experimental=on` z `-s step_relax=1.3`,
+`-s secant_search=on`, `-s free_steps=on` albo `-s occlusion_half=on`.
+
+Zmierzone na 80 przykładowych plikach w trybie Auto (około 0,4 megapiksela,
+szybszy z dwóch przebiegów każdego), w porównaniu z tymi samymi plikami bez
+nich:
+
+| Przyspieszenie | Cały render | Obrazy (piksele różniące się o więcej niż 8 z 255) |
+|---|---|---|
+| **Wydłużenie kroku 1,3**: dłuższe kroki marszu, krok za daleko jest powtarzany | −5 % (mediana), do −20 %; 62 z 80 szybciej | mediana 2,6 %; drobne cieniowanie. *Cienkie powłoki mogą mieć dziury* (BatJorge – Pong 703 – Swirls) |
+| **Szukanie powierzchni metodą siecznych** | −2 % (mediana), do −18 % | mediana 0,7 %; drobne szczegóły lekko się przesuwają |
+| **Bez limitu kroków bez mgły dynamicznej** | −1 % (mediana), do −30 % w otwartych scenach | przeważnie ten sam obraz (mediana 0,03 %) |
+| **Okluzja DE w połowie rozdzielczości** | −18 % w 10 plikach z okluzją DE (DEcomb1 −24 %); ten etap do 4 razy szybszy | 0–27 % pikseli, łagodniejsza okluzja w drobnych szczegółach; wygląda tak samo |
+
+Zanim zaufasz któremuś z nich przy obrazie, porównaj z renderem bez nich.
+
 <a id="the-command-line"></a>
 
 ## Wiersz poleceń

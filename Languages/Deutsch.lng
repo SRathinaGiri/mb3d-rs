@@ -432,6 +432,8 @@ CalculatedOnTheCPU=Auf der CPU berechnet
 ;Calculated on the CPU
 CalculatedPictures=Berechnete Bilder
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=Berechnet die DE-Ambient-Occlusion auf einem Viertel der Pixel und füllt die übrigen auf. In diesem Schritt bis zu 4-mal schneller; weicher in feinen Details.
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=Vorschau wird berechnet...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=Volumetrische Lichtkarte wird berechnet
@@ -788,6 +790,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=DE-Komb.:
 ;DE comb.:
+DEOcclusionAtHalfResolution=DE-Occlusion in halber Auflösung
+;DE occlusion at half resolution
 DEStop=DE stop:
 ;DE stop:
 DEcombinate=DEcombinate
@@ -1100,6 +1104,10 @@ Exit=Beenden
 ;Exit
 ExpandThePanel=Panel erweitern
 ;Expand the panel
+Experimental=Experimentell...
+;Experimental...
+ExperimentalSpeedUps=Experimentelle Beschleunigungen
+;Experimental speed-ups
 ExponentialFunctions={ Exponentialfunktionen }
 ;{ Exponential functions }
 ExportACubeAsAStack=Exportiert einen Würfel als Stapel von PNG-Dateien
@@ -1130,6 +1138,10 @@ FarPlane=Fernebene:
 ;Far plane:
 FastInaccurate=Schnell+ungenau
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=Schnellere Rechenwege, die das Bild ein wenig verändern. Sie werden mit der Szene gespeichert und nur verwendet, solange das erste Kästchen angehakt ist. Vergleichen Sie mit einem Rendering ohne sie, bevor Sie sich darauf verlassen.
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=Schnellere Rechenwege, die das Bild ein wenig verändern
+;Faster ways of calculating that change the picture a little
 File=Datei
 ;File
 FileIndex=Dateiindex:
@@ -1154,6 +1166,8 @@ FilterNewPicturesAutomatically=Neue Bilder automatisch filtern
 ;Filter new pictures automatically
 FilterNow=Jetzt filtern
 ;Filter now
+FindsTheSurfaceWithFewerDistance=Findet die Oberfläche mit weniger Distanzschätzungen. Einige Prozent schneller; feine Details können sich leicht verschieben.
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=fein
 ;fine
 FineTuneThePositionsWithThe=Positionen mit den Pfeilschaltflächen fein abstimmen
@@ -1870,6 +1884,10 @@ LogEverythingTheProgramDidIts=Protokoll: alles, was das Programm getan hat, sein
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ Logarithmusfunktionen }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=Längere Raysteps: 1 = aus, 1,2 bis 1,5. Bei 1,3 um 5 bis 10 % schneller; dünne Schalen können Löcher zeigen.
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=Längere Schritte durch freien Raum, wenn die Szene keinen dynamischen Nebel und kein volumetrisches Licht hat (nicht mit „Analytische DE deaktivieren“).
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=länger als üblich, arbeitet noch
 ;longer than usual, still working
 LookIn=Suchen &in:
@@ -2262,6 +2280,8 @@ NoSOURCESectionThisIsNot={}: kein Abschnitt [SOURCE], dies ist keine JIT-Formel
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=kein gemeinsamer Ordner gewählt
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=Keine Schrittbegrenzung ohne dynamischen Nebel
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=Keine Textparameter in der Zwischenablage gefunden.
 ;No text parameters found in the clipboard.
 NoTilesToRender=Keine Kacheln zu rendern.
@@ -3006,6 +3026,8 @@ ScrollBy1=Um 1 blättern
 ;Scroll by 1
 Search=Suchen
 ;Search
+SecantSearchForTheSurface=Sekantensuche nach der Oberfläche
+;Secant search for the surface
 SecantSearchmode=Sekanten-Suchmodus:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=Zweiter Fokuspunkt; unterscheidet er sich vom ersten,\nerhalten Sie eine Fokuslinie statt eines Fokuspunkts.\n(physikalisch nicht sehr realistisch, aber gut zu haben)\s
@@ -3198,6 +3220,8 @@ Statistics=Statistik
 ;Statistics
 Status=Status
 ;Status
+StepRelax=Schrittlockerung:
+;Step relax:
 StepcountForBinarySearch=Schrittzahl für \nbinäre Suche:
 ;Stepcount for \nbinary search:
 StepwidthLimiter=Schrittweitenbegrenzer:
@@ -3582,6 +3606,8 @@ UseOpenGL=OpenGL verwenden >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=Die Standarddarstellung ohne Design verwenden
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=Experimentelle Beschleunigungen verwenden
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=Verwendet die Map-Intensitäten und die Diffusfarben.
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=Werte unter 1 verringern das Überschreiten.

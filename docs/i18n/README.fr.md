@@ -1242,6 +1242,32 @@ fraction de pour cent de la plage de couleurs en moyenne (les détails fins
 peuvent scintiller sur d'autres pixels ; les [notes techniques](../TECHNICAL.md)
 donnent les mesures).
 
+<a id="experimental-speed-ups"></a>
+
+### Accélérations expérimentales
+
+Quelques façons plus rapides de calculer modifient un peu l'image ; elles
+restent donc désactivées tant que vous ne les activez pas : onglet
+**Interne** → **Expérimental...**, cochez *Utiliser les accélérations
+expérimentales*, puis celles que vous voulez. Elles sont enregistrées avec la
+scène (la ligne de commande, l'essaim et l'assistant IA les utilisent donc
+aussi) ; en ligne de commande `-s experimental=on` avec `-s step_relax=1.3`,
+`-s secant_search=on`, `-s free_steps=on` ou `-s occlusion_half=on`.
+
+Mesuré sur les 80 fichiers d'exemple en mode Auto (environ 0,4 mégapixel, le
+plus rapide de deux rendus pour chacun), par rapport aux mêmes fichiers sans
+elles :
+
+| Accélération | Rendu complet | Images (pixels écartés de plus de 8 sur 255) |
+|---|---|---|
+| **Allongement du pas 1,3** : pas de marche plus longs, un pas trop long est repris | −5 % (médiane), jusqu'à −20 % ; 62 sur 80 plus rapides | médiane 2,6 % ; ombrage fin. *Les coques minces peuvent montrer des trous* (BatJorge – Pong 703 – Swirls) |
+| **Recherche de la surface par sécante** | −2 % (médiane), jusqu'à −18 % | médiane 0,7 % ; le détail fin se déplace légèrement |
+| **Pas de limite de pas sans brouillard dynamique** | −1 % (médiane), jusqu'à −30 % dans les scènes ouvertes | le plus souvent la même image (médiane 0,03 %) |
+| **Occlusion DE en demi-résolution** | −18 % sur les 10 fichiers avec occlusion DE (DEcomb1 −24 %) ; cette étape jusqu'à 4 fois plus rapide | 0–27 % des pixels, occlusion plus douce dans le détail fin ; l'aspect est le même |
+
+Comparez avec un rendu sans elles avant de vous fier à l'une d'elles pour une
+image.
+
 <a id="the-command-line"></a>
 
 ## La ligne de commande

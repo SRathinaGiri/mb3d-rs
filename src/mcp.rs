@@ -109,6 +109,10 @@ Finishing (not in MB3D; a last pass over the picture, cheap to change)
 Surface detail (not in MB3D): detail = rough | stone | grain, strength, size, fineness
   (e.g. stone, 1.5, 0.05, 0.5; size in fractal units, about 1/20 of what the view shows) or off;
   detail_color 0..1: the colour varies with it.
+Experimental speed-ups (not in MB3D, change the picture a little, off by default):
+  experimental = on enables them, then step_relax = 1.3 (longer march steps, ~5 % faster,
+  thin shells can show holes), secant_search = on, free_steps = on (no step limit without
+  dynamic fog), occlusion_half = on (DE occlusion at half resolution, that stage up to 4x faster).
 Two objects (not in MB3D): with de_combination (min = union, max = intersection, ...), the
   second hybrid part placed apart: part2_position = x, y, z; part2_rotation = degrees x, y, z;
   part2_scale (1 = as is).

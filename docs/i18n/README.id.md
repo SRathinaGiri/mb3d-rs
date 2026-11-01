@@ -1215,6 +1215,28 @@ selisih pembulatan, dan gambar Otomatis berbeda dari gambar prosesor rata-rata
 sepersekian persen dari rentang warna (detail halus bisa berkilau di piksel
 yang berbeda; [catatan teknis](../TECHNICAL.md) memuat pengukurannya).
 
+### Percepatan eksperimental
+
+Beberapa cara menghitung yang lebih cepat sedikit mengubah gambar, jadi
+semuanya mati kecuali Anda menyalakannya: tab **Internal** → **Eksperimental...**,
+centang *Gunakan percepatan eksperimental*, lalu pilih yang Anda inginkan. Semuanya
+disimpan bersama adegan (sehingga baris perintah, swarm, dan asisten AI juga
+memakainya); di baris perintah `-s experimental=on` dengan `-s step_relax=1.3`,
+`-s secant_search=on`, `-s free_steps=on`, atau `-s occlusion_half=on`.
+
+Diukur pada 80 file contoh dalam mode Otomatis (sekitar 0.4 megapiksel,
+yang lebih cepat dari dua kali jalan masing-masing), dibandingkan dengan file
+yang sama tanpa percepatan itu:
+
+| Percepatan | Seluruh render | Gambar (piksel yang bergeser lebih dari 8 dari 255) |
+|---|---|---|
+| **Step relax 1.3**: langkah march lebih panjang, langkah yang kebablasan diulang | −5 % (median), hingga −20 %; 62 dari 80 lebih cepat | median 2.6 %; bayangan halus. *Cangkang tipis bisa berlubang* (BatJorge – Pong 703 – Swirls) |
+| **Pencarian sekan** untuk permukaan | −2 % (median), hingga −18 % | median 0.7 %; detail halus sedikit bergeser |
+| **Tanpa batas langkah bila tanpa kabut dinamis** | −1 % (median), hingga −30 % di adegan terbuka | sebagian besar gambar yang sama (median 0.03 %) |
+| **DE occlusion pada setengah resolusi** | −18 % pada 10 file dengan DE occlusion (DEcomb1 −24 %); tahap itu hingga 4 kali lebih cepat | 0–27 % piksel, occlusion lebih lembut di detail halus; tampak serupa |
+
+Bandingkan dengan render tanpa percepatan itu sebelum mengandalkan salah satunya untuk sebuah gambar.
+
 <a id="the-command-line"></a>
 
 ## Baris perintah

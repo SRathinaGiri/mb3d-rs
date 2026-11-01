@@ -1213,6 +1213,32 @@ Prozessors im Mittel um einen Bruchteil eines Prozents des Farbbereichs ab
 (feine Details können in anderen Pixeln funkeln; die
 [technischen Hinweise](../TECHNICAL.md) enthalten die Messungen).
 
+<a id="experimental-speed-ups"></a>
+
+### Experimentelle Beschleunigungen
+
+Einige schnellere Rechenwege verändern das Bild ein wenig, daher sind sie
+aus, solange Sie sie nicht einschalten: Registerkarte **Intern** →
+**Experimentell...**, *Experimentelle Beschleunigungen verwenden* ankreuzen,
+dann die gewünschten. Sie werden mit der Szene gespeichert (so nutzen sie
+auch die Kommandozeile, der Schwarm und der KI-Assistent); auf der
+Kommandozeile `-s experimental=on` mit `-s step_relax=1.3`,
+`-s secant_search=on`, `-s free_steps=on` oder `-s occlusion_half=on`.
+
+Gemessen an den 80 Beispieldateien im Auto-Modus (etwa 0,4 Megapixel, jeweils
+der schnellere von zwei Durchläufen), verglichen mit denselben Dateien ohne
+sie:
+
+| Beschleunigung | Ganzes Rendering | Bilder (Pixel, die um mehr als 8 von 255 abweichen) |
+|---|---|---|
+| **Schrittlockerung 1,3**: längere Schritte beim Abtasten, ein zu weiter Schritt wird wiederholt | −5 % (Median), bis −20 %; 62 von 80 schneller | Median 2,6 %; feine Schattierung. *Dünne Schalen können Löcher zeigen* (BatJorge – Pong 703 – Swirls) |
+| **Sekantensuche nach der Oberfläche** | −2 % (Median), bis −18 % | Median 0,7 %; feine Details verschieben sich leicht |
+| **Keine Schrittbegrenzung ohne dynamischen Nebel** | −1 % (Median), bis −30 % in offenen Szenen | meist dasselbe Bild (Median 0,03 %) |
+| **DE-Occlusion in halber Auflösung** | −18 % über die 10 Dateien mit DE-Occlusion (DEcomb1 −24 %); diese Stufe bis zu 4-mal schneller | 0–27 % der Pixel, weichere Verdeckung in feinen Details; es sieht gleich aus |
+
+Vergleichen Sie mit einem Rendering ohne sie, bevor Sie sich für ein Bild auf
+eine davon verlassen.
+
 <a id="the-command-line"></a>
 
 ## Die Kommandozeile

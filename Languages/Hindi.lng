@@ -433,6 +433,8 @@ CalculatedOnTheCPU=CPU पर गणना की गई
 ;Calculated on the CPU
 CalculatedPictures=गणना किए गए चित्र
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=DE एम्बिएंट ऑक्लूज़न की गणना एक चौथाई पिक्सेल पर करता है और बाकी भर देता है। उस चरण पर 4 गुना तक तेज़; बारीक विवरण में नरम।
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=पूर्वावलोकन की गणना हो रही है...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=वॉल्यूमेट्रिक प्रकाश मैप की गणना
@@ -789,6 +791,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=DE संयो.:
 ;DE comb.:
+DEOcclusionAtHalfResolution=आधे रिज़ॉल्यूशन पर DE ऑक्लूज़न
+;DE occlusion at half resolution
 DEStop=DE stop:
 ;DE stop:
 DEcombinate=DE संयोजन
@@ -1101,6 +1105,10 @@ Exit=बाहर निकलें
 ;Exit
 ExpandThePanel=पैनल बड़ा करें
 ;Expand the panel
+Experimental=प्रायोगिक...
+;Experimental...
+ExperimentalSpeedUps=प्रायोगिक गति-सुधार
+;Experimental speed-ups
 ExponentialFunctions={ घातांकीय फ़ंक्शन }
 ;{ Exponential functions }
 ExportACubeAsAStack=एक घन को PNG फ़ाइलों के स्टैक के रूप में निर्यात करें
@@ -1131,6 +1139,10 @@ FarPlane=दूर तल:
 ;Far plane:
 FastInaccurate=तेज़+अशुद्ध
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=गणना के तेज़ तरीके जो छवि को थोड़ा बदल देते हैं। ये दृश्य के साथ सहेजे जाते हैं और केवल तभी उपयोग होते हैं जब पहला बॉक्स चुना हो। इन पर भरोसा करने से पहले इनके बिना बने रेंडर से तुलना करें।
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=गणना के तेज़ तरीके जो छवि को थोड़ा बदल देते हैं
+;Faster ways of calculating that change the picture a little
 File=फ़ाइल
 ;File
 FileIndex=फ़ाइल सूचकांक:
@@ -1155,6 +1167,8 @@ FilterNewPicturesAutomatically=नए चित्र स्वतः फ़ि�
 ;Filter new pictures automatically
 FilterNow=अभी फ़िल्टर करें
 ;Filter now
+FindsTheSurfaceWithFewerDistance=कम दूरी अनुमानों से सतह ढूँढता है। कुछ प्रतिशत तेज़; बारीक विवरण थोड़ा खिसक सकता है।
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=बारीक
 ;fine
 FineTuneThePositionsWithThe=तीर बटनों से स्थितियों को बारीकी से समायोजित करें
@@ -1871,6 +1885,10 @@ LogEverythingTheProgramDidIts=लॉग: प्रोग्राम ने ज�
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ लघुगणकीय फ़ंक्शन }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=लंबे मार्च स्टेप: 1 = बंद, 1.2 से 1.5। 1.3 पर 5 से 10 % तेज़; पतले खोलों में छेद दिख सकते हैं।
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=जब दृश्य में न डायनामिक कोहरा हो न वॉल्यूमेट्रिक प्रकाश, तब खाली जगह में लंबे स्टेप ('विश्लेषणात्मक DE बंद करें' के साथ नहीं)।
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=सामान्य से अधिक समय, अभी भी काम जारी है
 ;longer than usual, still working
 LookIn=यहाँ देखें(&I):
@@ -2263,6 +2281,8 @@ NoSOURCESectionThisIsNot={}: कोई [SOURCE] खंड नहीं, यह J
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=कोई साझा फ़ोल्डर नहीं चुना गया
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=डायनामिक कोहरे के बिना स्टेप सीमा नहीं
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=क्लिपबोर्ड में कोई टेक्स्ट पैरामीटर नहीं मिले।
 ;No text parameters found in the clipboard.
 NoTilesToRender=रेंडर करने के लिए कोई टाइल नहीं।
@@ -3007,6 +3027,8 @@ ScrollBy1=1 से स्क्रॉल करें
 ;Scroll by 1
 Search=खोजें
 ;Search
+SecantSearchForTheSurface=सतह की सीकेंट खोज
+;Secant search for the surface
 SecantSearchmode=सीकेंट खोज मोड:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=दूसरा फ़ोकस बिंदु, यदि पहले से अलग हो तो\nफ़ोकस बिंदु के बजाय फ़ोकस रेखा मिलती है।\n(भौतिक रूप से बहुत यथार्थवादी नहीं, पर होना अच्छा है)\s
@@ -3199,6 +3221,8 @@ Statistics=आँकड़े
 ;Statistics
 Status=स्थिति
 ;Status
+StepRelax=स्टेप ढील:
+;Step relax:
 StepcountForBinarySearch=बाइनरी खोज के \nचरणों की संख्या:
 ;Stepcount for \nbinary search:
 StepwidthLimiter=चरण-चौड़ाई सीमक:
@@ -3583,6 +3607,8 @@ UseOpenGL=OpenGL उपयोग करें >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=बिना थीम के डिफ़ॉल्ट विज़ुअल सेटिंग्स उपयोग करें
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=प्रायोगिक गति-सुधार का उपयोग करें
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=मैप की तीव्रताओं और डिफ़्यूज़ रंगों का उपयोग करें।
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=ओवरस्टेपिंग कम करने के लिए 1 से कम मान का उपयोग करें।

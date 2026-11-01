@@ -1390,6 +1390,24 @@ mod tests {
     }
 
     #[test]
+    fn experimental_settings_in_the_mb3d_rs_block() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.experimental = crate::experimental::Experimental { on: true, step_relax: 1.25, secant: true, free_steps: false, ao_half: true };
+        let raw = write(&sc);
+        assert_eq!(parse(&raw).unwrap().scene.experimental, sc.experimental);
+        assert_eq!(parse(&raw_from_text(&raw_to_text(&raw, "t")).unwrap().0).unwrap().scene.experimental, sc.experimental);
+        // switched off, the settings are kept
+        sc.experimental.on = false;
+        assert_eq!(parse(&write(&sc)).unwrap().scene.experimental, sc.experimental);
+        // the keys of the scene text
+        let t = Scene::preset("Integer Power").unwrap().apply("experimental = on\nstep_relax = 3\nocclusion_half = on").unwrap();
+        assert!(t.experimental.on && t.experimental.ao_half && !t.experimental.secant);
+        assert_eq!(t.experimental.step_relax, 2.0);
+        // the defaults write nothing
+        assert!(!raw_to_text(&write(&Scene::preset("Integer Power").unwrap()), "t").contains("mb3d-rs"));
+    }
+
+    #[test]
     fn ground_plane_in_the_mb3d_rs_block() {
         let plain = Scene::preset("Integer Power").unwrap();
         // without a ground the parameters are MB3D's alone

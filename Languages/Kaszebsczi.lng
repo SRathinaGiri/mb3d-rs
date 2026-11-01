@@ -432,6 +432,8 @@ CalculatedOnTheCPU=Wërechòwóné na CPU
 ;Calculated on the CPU
 CalculatedPictures=Wërechòwóné òbrôzczi
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=Rechùje DE ambient occlusion na jedny czwiôrti piksli i dopełniô jinszé. Do 4 razy chùtszé na tim etapie; miãkszé w drobnëch detalach.
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=Rechòwanié pòdzérkù...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=Rechòwanié wòlumetriczny mapë widu
@@ -788,6 +790,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=DE comb.:
 ;DE comb.:
+DEOcclusionAtHalfResolution=DE occlusion przë pòłowie rozdzélnoscë
+;DE occlusion at half resolution
 DEStop=DE stop:
 ;DE stop:
 DEcombinate=DEcombinate
@@ -1100,6 +1104,10 @@ Exit=Wińdzë
 ;Exit
 ExpandThePanel=Rozszérzë panel
 ;Expand the panel
+Experimental=Eksperimentalno...
+;Experimental...
+ExperimentalSpeedUps=Eksperimentalné przëspieszenia
+;Experimental speed-ups
 ExponentialFunctions={ Ekspònencjalné fùnkcje }
 ;{ Exponential functions }
 ExportACubeAsAStack=Ekspòrtuje kòstkã jakò stos lopków PNG
@@ -1130,6 +1138,10 @@ FarPlane=Dalekô płaszczëzna:
 ;Far plane:
 FastInaccurate=Chùtkò+niedokładno
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=Chùtszé spòsobë rechòwaniô, chtërne trochã zmieniają òbrôzk. Są zapisywóné ze sceną i brëkòwóné leno wtenczas, czej pierszé pòle je zaznaczoné. Nim zaczniesz na nich pòlegac, pòrównôj z renderowanim bez nich.
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=Chùtszé spòsobë rechòwaniô, chtërne trochã zmieniają òbrôzk
+;Faster ways of calculating that change the picture a little
 File=Lopk
 ;File
 FileIndex=Indeks lopka:
@@ -1154,6 +1166,8 @@ FilterNewPicturesAutomatically=Filtrëj nowé òbrôzczi aùtomatno
 ;Filter new pictures automatically
 FilterNow=Filtrëj terô
 ;Filter now
+FindsTheSurfaceWithFewerDistance=Nalazywô pòwierzchniã z mni szacënkama òdległoscë. Pôrã procent chùtszé; drobné detale mògą sã lekkò przesënąc.
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=dokł.
 ;fine
 FineTuneThePositionsWithThe=dokładno nastôw pòzycje knąpama ze strzélkama
@@ -1870,6 +1884,10 @@ LogEverythingTheProgramDidIts=Dzénnik: wszëtkò, co programa zrobiła, ji bôc
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ Logaritmiczné fùnkcje }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=Dłëgszé kroczi parmienia: 1 = wëłączoné, òd 1,2 do 1,5. Przë 1,3 chùtszé ò 5 do 10 %; w cenczich skòrëpach mògą sã pòkazac dzurë.
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=Dłëgszé kroczi przez pùsti rum, czej scena ni mô dinamiczny mgłë ani wòlumetricznégò widu (nie z 'Wëłączë analiticzné DE').
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=dłëżi jak zwëczajno, jesz robi
 ;longer than usual, still working
 LookIn=Szëkôj &w:
@@ -2262,6 +2280,8 @@ NoSOURCESectionThisIsNot={}: felëje sekcjô [SOURCE], to nie je fòrmùła JIT
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=nie wëbróny dzelony katalog
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=Bez lëmitu krokòw bez dinamiczny mgłë
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=W schówkù nie nalazłé tekstowëch parametrów.
 ;No text parameters found in the clipboard.
 NoTilesToRender=Nie ma kachlów do renderowaniô.
@@ -3006,6 +3026,8 @@ ScrollBy1=Przewiń ò 1
 ;Scroll by 1
 Search=Szëkôj
 ;Search
+SecantSearchForTheSurface=Szukanié pòwierzchni metodą secznëch
+;Secant search for the surface
 SecantSearchmode=Trib szëkaniô secznym:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=Drëdżi pùnkt òstroscë, jeżlë jinszi òd pierszégò,\ndostóniesz linią òstroscë w môl pùnktu òstroscë.\n(fizyczno nie baro realistyczné, ale przëdatné)\s
@@ -3198,6 +3220,8 @@ Statistics=Statistika
 ;Statistics
 Status=Sztatus
 ;Status
+StepRelax=Wëdłużenié krokù:
+;Step relax:
 StepcountForBinarySearch=Lëczba kroków dlô \nbinarnégò szukaniô:
 ;Stepcount for \nbinary search:
 StepwidthLimiter=Ògrańczenié szérzë krokù:
@@ -3582,6 +3606,8 @@ UseOpenGL=Brëkùj OpenGL >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=Brëkùje domëslné wizualné nastawë bez témë
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=Brëkùj eksperimentalnëch przëspieszeniów
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=Brëkùj intensywnoscë mapë ë difuzyjnëch farwów.
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=Brëkùj wôrtnotów niższich jak 1, żebë zmniészëc przekroczenié.

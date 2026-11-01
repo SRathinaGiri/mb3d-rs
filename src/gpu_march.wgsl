@@ -119,7 +119,7 @@ const SAMPLE_Y: u32 = 221u;      // SAMPLE_X-th column of every SAMPLE_Y-th row 
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 591u;
+const STATE_FIXED: u32 = 595u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -203,6 +203,11 @@ const P2_PLACE: u32 = 417u;
 const P2_OFFSET: u32 = 418u;
 const P2_M: u32 = 421u;
 const P2_SCALE: u32 = 430u;
+// experimental (calc.rs CalcParams relax, secant, ao_half): the march
+// steps enlarged by RELAX (1: not); EXP_FLAGS bit 0 the secant search,
+// bit 1 the DE occlusion on every second pixel of every second row
+const RELAX: u32 = 432u;
+const EXP_FLAGS: u32 = 433u;
 
 const PI: R = 3.14159265358979;
 
@@ -1869,6 +1874,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var after_bs = P_N_INIT;
     var bs_thr = R(0.001);
     var bs_it_check = mode != M_DEAO;
+    // the secant search (EXP_FLAGS bit 0) in this binary search, the last
+    // probe's DE minus the DE stop and whether it is of use
+    var bs_sec = false;
+    var bs_pok = false;
+    var bs_fprev = R(0.0);
+    // a relaxed step (RELAX) is under way: its DE must overlap the last
+    var relaxed = false;
     var zf = R(0.0);
     // shadows
     let soft = pf(HS_SOFT_RADIUS) > 0.0;
@@ -2149,6 +2161,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
         mc_sec_main = (STATE[so + 586u * ns] != 0u);
         mc_guard = bitcast<i32>(STATE[so + 587u * ns]);
         guard = bitcast<i32>(STATE[so + 588u * ns]);
+        relaxed = (STATE[so + 591u * ns] != 0u);
+        bs_sec = (STATE[so + 592u * ns] & 1u) != 0u;
+        bs_pok = (STATE[so + 592u * ns] & 2u) != 0u;
+        bs_fprev = rget(so + 593u * ns, ns);
         load_record(so + (1u + STATE_FIXED) * ns, ns);
     }
     for (var turns = 0u; guard < 2000000; guard++) {
@@ -2344,6 +2360,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
             STATE[so + 586u * ns] = select(0u, 1u, mc_sec_main);
             STATE[so + 587u * ns] = bitcast<u32>(mc_guard);
             STATE[so + 588u * ns] = bitcast<u32>(guard);
+            STATE[so + 591u * ns] = select(0u, 1u, relaxed);
+            STATE[so + 592u * ns] = select(0u, 1u, bs_sec) | select(0u, 2u, bs_pok);
+            rput(so + 593u * ns, ns, bs_fprev);
             save_record(so + (1u + STATE_FIXED) * ns, ns);
             STATE[so] = cur_item + 1u;
             atomicAdd(&QUEUE[0], 1u);
@@ -2536,7 +2555,26 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             seed = seed * 214013 + 2531011;
                             d *= R(u32(seed) & 0x7FFFFFFFu) * (1.0 / 2147483647.0);
                         }
+                        // experimental: the step relaxed (its DE must still
+                        // overlap the last one, see P_STEP); the dynamic fog
+                        // counts it as the safe steps
+                        let relax = pf(RELAX);
+                        relaxed = false;
+                        if (relax > 1.0 && rsf_mul >= 1.0 && d < st1) {
+                            d *= relax;
+                            relaxed = true;
+                            if (count && pi(VOL_ON) == 0) {
+                                step_count += relax - 1.0;
+                            }
+                        }
                         mzz += d;
+                        if (relaxed && mzz > pf(ZEND)) {
+                            // (the background only at the safe step)
+                            mzz -= d;
+                            d /= relax;
+                            mzz += d;
+                            relaxed = false;
+                        }
                         if (mzz > pf(ZEND)) {
                             // background (`break` here would only leave the switch)
                             if (pi(VOL_ON) != 0) {
@@ -2560,6 +2598,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             itmp = pi(DE_ADD_STEPS);
                             if (de_limited) {
                                 dt1 = last_step * -0.5;
+                                bs_sec = (P[EXP_FLAGS] & 1u) != 0u;
+                                bs_fprev = dtmp - ms_de_stop;
+                                bs_pok = it_result < max_its_result;
                                 pc = P_BS;
                             } else {
                                 yp = R(max_it) - 0.99;
@@ -2582,6 +2623,21 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_STEP: {
                 if (MODE_KIND == 0u) {
                     dtmp = r;
+                    if (relaxed && (dtmp < 0.0 || dtmp + last_de < last_step) && it_result < max_its_result) {
+                        // the relaxed step overshot (the DE spheres do not
+                        // overlap): back to the safe step, its DE next
+                        relaxed = false;
+                        let back = last_step - last_de;
+                        mzz -= back;
+                        setc();
+                        update_de_stop();
+                        last_step = last_de;
+                        need = true;
+                        want_de = true;
+                        pc = P_STEP;
+                        break;
+                    }
+                    relaxed = false;
                     if (dtmp > last_de + last_step) {
                         dtmp = last_de + last_step;
                     }
@@ -2617,10 +2673,20 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 dtmp = r;
                 if (bs_it_check && it_result >= max_its_result) {
                     dt1 = -abs(dt1);
-                } else if (dtmp < ms_de_stop) {
-                    dt1 = abs(dt1) * -0.55;
+                    bs_pok = false;
                 } else {
-                    dt1 = abs(dt1) * 0.55;
+                    // (experimental: the secant between probes on both
+                    // sides of the surface, calc.rs bin_search)
+                    let f = dtmp - ms_de_stop;
+                    if (bs_sec && bs_pok && (f < 0.0) != (bs_fprev < 0.0)) {
+                        dt1 = -dt1 * clamp(f / (f - bs_fprev), 0.05, 0.95);
+                    } else if (dtmp < ms_de_stop) {
+                        dt1 = abs(dt1) * -0.55;
+                    } else {
+                        dt1 = abs(dt1) * 0.55;
+                    }
+                    bs_fprev = f;
+                    bs_pok = true;
                 }
                 pc = P_BS;
             }
@@ -2964,6 +3030,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             dt1 = q;
                             bs_thr = 0.004;
                         }
+                        bs_sec = (P[EXP_FLAGS] & 1u) != 0u && mode == M_SHADOW;
+                        bs_fprev = dtmp - ms_de_stop;
+                        bs_pok = it_result < max_its_result;
                         pc = P_BS;
                     } else {
                         yp = R(max_it) - 0.99;
@@ -3611,6 +3680,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             itmp = 10;
                             dt1 = rlast_sw * -0.5;
                             bs_it_check = false;
+                            bs_sec = false;
                             pc = P_BS;
                         }
                     } else {
@@ -3924,6 +3994,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             let a1 = (8388351.5 - (zf - 1.0)) / pf(ZC_MUL);
                             dt1 = (mzz - a1 * (a1 + 2.0) / pf(ZCORR)) * -0.5;
                             bs_thr = 0.001;
+                            bs_sec = (P[EXP_FLAGS] & 1u) != 0u;
+                            bs_fprev = dtmp - ms_de_stop;
+                            bs_pok = it_result < max_its_result;
                             pc = P_BS;
                         } else {
                             yp = R(max_it) - 0.99;
@@ -4039,6 +4112,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             dt1 = rlast_sw * -0.5;
                             bs_thr = 0.001;
                             bs_it_check = false;
+                            bs_sec = false;
                             pc = P_BS;
                         } else {
                             yp = R(max_it) - 0.99;
@@ -4311,6 +4385,21 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         cx = cx * sx + (ry * 5) % sx;
         y = pi(RECT_Y0) + ry * sy + sy / 2;
     }
+    // experimental, the occlusion at half resolution: in a row of the
+    // calculated pixels (an even row of the picture) these come first, the
+    // others after them, so that the card's groups of pixels run together
+    // (the rows stay whole: a row of items is the row of pixels)
+    var o = cur_item * 5u;
+    if (P[MODE] == M_DEAO && (P[EXP_FLAGS] & 2u) != 0u && pi(SAMPLE_X) == 0 && (y & 1) == 0) {
+        let cx0 = pi(RECT_X0) & 1;
+        let m = (w - cx0 + 1) / 2;
+        if (cx < m) {
+            cx = cx0 + 2 * cx;
+        } else {
+            cx = (1 - cx0) + 2 * (cx - m);
+        }
+        o = (u32(ly) * u32(w) + u32(cx)) * 5u;
+    }
     let x = pi(RECT_X0) + cx;
     // MB3D seeds per row and draws once per pixel along it: the row's seed
     // advanced by the column in the whole picture (calc::pixel_seed; the
@@ -4349,7 +4438,6 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         }
         return;
     }
-    let o = cur_item * 5u;
     // one call of pixel() only: the driver inlines it at every call site
     var run = true;
     de_overflow = false;
@@ -4382,6 +4470,12 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
             si_amb = 0u;
         }
         run = (si_zpos >> 16u) < 32768u && si_grad < 32768u;
+        if (run && mode == M_DEAO && (P[EXP_FLAGS] & 2u) != 0u && ((x | y) & 1) != 0) {
+            // experimental: the occlusion on every second pixel of every
+            // second row, the others marked to be filled (deao::fill_half)
+            si_amb = 0xFFFFu;
+            run = false;
+        }
     }
     if (run) {
         pixel(x, y, mode);

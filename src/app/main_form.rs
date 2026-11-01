@@ -620,6 +620,7 @@ fn tenths(v: i32) -> String {
 
 pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     let sc = app.scene.clone();
+    super::experimental_form::show_values(app, ui);
     // the statistics of the calculation the parameters come from (none
     // known: the labels stay empty, as at MB3D's start)
     let st = sc.stats;
@@ -692,6 +693,7 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
 
 /// `MakeHeader` (the main window's part).
 pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
+    super::experimental_form::read_values(app, ui);
     let sc = &mut app.scene;
     let w = pti(&t(ui, "Edit11"));
     let h = pti(&t(ui, "Edit12"));
@@ -2408,6 +2410,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "HistoryIconClick" => super::history_form::open(app, ui),
         "LogIconClick" => super::log_form::open(app, ui),
         "AiBtnClick" => super::ai_form::open(app, ui),
+        "ExpBtnClick" => super::experimental_form::open(app, ui),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files

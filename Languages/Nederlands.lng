@@ -432,6 +432,8 @@ CalculatedOnTheCPU=Berekend op de CPU
 ;Calculated on the CPU
 CalculatedPictures=Berekende afbeeldingen
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=Berekent de DE-ambient occlusion op een kwart van de pixels en vult de rest aan. Tot 4 keer sneller in die stap; zachter in fijne details.
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=Voorbeeld wordt berekend...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=Volumetrische lichtmap berekenen
@@ -788,6 +790,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=DE comb.:
 ;DE comb.:
+DEOcclusionAtHalfResolution=DE-occlusion op halve resolutie
+;DE occlusion at half resolution
 DEStop=DE stop:
 ;DE stop:
 DEcombinate=DEcombinate
@@ -1100,6 +1104,10 @@ Exit=Afsluiten
 ;Exit
 ExpandThePanel=Het paneel uitvouwen
 ;Expand the panel
+Experimental=Experimenteel...
+;Experimental...
+ExperimentalSpeedUps=Experimentele versnellingen
+;Experimental speed-ups
 ExponentialFunctions={ Exponentiële functies }
 ;{ Exponential functions }
 ExportACubeAsAStack=Een kubus exporteren als een stapel PNG-bestanden
@@ -1130,6 +1138,10 @@ FarPlane=Verre vlak:
 ;Far plane:
 FastInaccurate=Snel+onnauwkeurig
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=Snellere rekenmethoden die het beeld een beetje veranderen. Ze worden met de scène opgeslagen en alleen gebruikt zolang het eerste vakje is aangevinkt. Vergelijk met een render zonder deze methoden voordat u erop vertrouwt.
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=Snellere rekenmethoden die het beeld een beetje veranderen
+;Faster ways of calculating that change the picture a little
 File=Bestand
 ;File
 FileIndex=Bestandsindex:
@@ -1154,6 +1166,8 @@ FilterNewPicturesAutomatically=Nieuwe afbeeldingen automatisch filteren
 ;Filter new pictures automatically
 FilterNow=Nu filteren
 ;Filter now
+FindsTheSurfaceWithFewerDistance=Vindt het oppervlak met minder afstandsschattingen. Enkele procenten sneller; fijne details kunnen iets verschuiven.
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=fijn
 ;fine
 FineTuneThePositionsWithThe=de posities fijn afstellen met de pijlknoppen
@@ -1870,6 +1884,10 @@ LogEverythingTheProgramDidIts=Logboek: alles wat het programma deed, zijn waarsc
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ Logaritmische functies }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=Langere straalstappen: 1 = uit, 1,2 tot 1,5. 5 tot 10 % sneller bij 1,3; dunne schillen kunnen gaten vertonen.
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=Langere stappen door lege ruimte als de scène geen dynamische mist en geen volumetrisch licht heeft (niet met 'Analytische DE uitschakelen').
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=langer dan gewoonlijk, nog bezig
 ;longer than usual, still working
 LookIn=Zoeken &in:
@@ -2262,6 +2280,8 @@ NoSOURCESectionThisIsNot={}: geen [SOURCE]-sectie, dit is geen JIT-formule
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=geen gedeelde map gekozen
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=Geen staplimiet zonder dynamische mist
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=Geen tekstparameters op het klembord gevonden.
 ;No text parameters found in the clipboard.
 NoTilesToRender=Geen tegels om te renderen.
@@ -3006,6 +3026,8 @@ ScrollBy1=Scrol met 1
 ;Scroll by 1
 Search=Zoeken
 ;Search
+SecantSearchForTheSurface=Oppervlak zoeken met de secantmethode
+;Secant search for the surface
 SecantSearchmode=Secans-zoekmodus:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=Tweede focuspunt; als dit afwijkt van het eerste\nkrijgt u een focuslijn in plaats van een focuspunt.\n(fysisch niet erg realistisch, maar handig)\s
@@ -3198,6 +3220,8 @@ Statistics=Statistieken
 ;Statistics
 Status=Status
 ;Status
+StepRelax=Stapverlenging:
+;Step relax:
 StepcountForBinarySearch=Aantal stappen voor \nbinair zoeken:
 ;Stepcount for \nbinary search:
 StepwidthLimiter=Stapbreedtebegrenzer:
@@ -3582,6 +3606,8 @@ UseOpenGL=OpenGL gebruiken >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=De standaard visuele instellingen zonder thema gebruiken
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=De experimentele versnellingen gebruiken
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=Gebruikt de map-intensiteiten en de diffuse kleuren.
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=Gebruik waarden lager dan 1 om overstepping te verminderen.

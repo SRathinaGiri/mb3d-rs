@@ -268,6 +268,9 @@ pub struct Scene {
     pub finish: Option<crate::finish::Finish>,
     /// a fine relief and colour variation on the surface (not in MB3D)
     pub detail: Option<crate::detail::Detail>,
+    /// experimental speed-ups that change the picture a little (not in
+    /// MB3D), see `crate::experimental`
+    pub experimental: crate::experimental::Experimental,
     /// The surface material (not in MB3D): None = MB3D's
     pub material: Option<Material>,
     /// The place of the DE combination's second part (not in MB3D)
@@ -454,6 +457,7 @@ impl Default for Scene {
             clouds: None,
             finish: None,
             detail: None,
+            experimental: Default::default(),
             material: None,
             part2_place: None,
             deao: None,
@@ -926,6 +930,7 @@ impl Scene {
         if let Some(d) = &self.detail {
             t.push_str(&d.to_text());
         }
+        t.push_str(&self.experimental.to_text());
         if let Some(g) = &self.ground {
             let c = g.color;
             let _ = writeln!(t, "ground = {}, {}", ["x", "y", "z"][g.axis as usize % 3], g.pos);
@@ -1406,6 +1411,11 @@ impl Scene {
                             }
                         }
                     }
+                    "experimental" => s.experimental.on = boolean()?,
+                    "step_relax" | "relax" => s.experimental.step_relax = num()?.clamp(1.0, 2.0),
+                    "secant_search" => s.experimental.secant = boolean()?,
+                    "free_steps" => s.experimental.free_steps = boolean()?,
+                    "occlusion_half" => s.experimental.ao_half = boolean()?,
                     "detail_color" => s.detail.get_or_insert_with(Default::default).color = (num()? as f32).clamp(0.0, 1.0),
                     "finish" if matches!(val.trim().to_ascii_lowercase().as_str(), "off" | "none" | "no") => s.finish = None,
                     "finish_exposure" | "finish_tonemap" | "glow" | "finish_contrast" | "finish_saturation" | "finish_warmth" | "vignette" | "chromatic" => {

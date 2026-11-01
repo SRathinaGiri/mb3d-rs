@@ -433,6 +433,8 @@ CalculatedOnTheCPU=CPU پر حساب ہوا
 ;Calculated on the CPU
 CalculatedPictures=حساب شدہ تصاویر
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=DE ایمبیئنٹ آکلوژن کا حساب چوتھائی پکسلز پر کرتا ہے اور باقی بھر دیتا ہے۔ اس مرحلے پر 4 گنا تک تیز؛ باریک تفصیل میں نرم۔
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=پیش منظر کا حساب ہو رہا ہے...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=حجمی روشنی کا نقشہ حساب ہو رہا ہے
@@ -789,6 +791,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=DE امتزاج:
 ;DE comb.:
+DEOcclusionAtHalfResolution=آدھی ریزولوشن پر DE آکلوژن
+;DE occlusion at half resolution
 DEStop=DE stop:
 ;DE stop:
 DEcombinate=DE امتزاج
@@ -1101,6 +1105,10 @@ Exit=باہر نکلیں
 ;Exit
 ExpandThePanel=پینل پھیلائیں
 ;Expand the panel
+Experimental=تجرباتی...
+;Experimental...
+ExperimentalSpeedUps=تجرباتی رفتار افزائی
+;Experimental speed-ups
 ExponentialFunctions={ قوت نمائی فنکشنز }
 ;{ Exponential functions }
 ExportACubeAsAStack=ایک مکعب کو PNG فائلوں کے ڈھیر کے طور پر برآمد کریں
@@ -1131,6 +1139,10 @@ FarPlane=دور سطح:
 ;Far plane:
 FastInaccurate=تیز+غیر درست
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=حساب کے تیز طریقے جو تصویر کو تھوڑا بدل دیتے ہیں۔ یہ منظر کے ساتھ محفوظ ہوتے ہیں اور صرف تب استعمال ہوتے ہیں جب پہلا خانہ نشان زد ہو۔ ان پر بھروسا کرنے سے پہلے ان کے بغیر بنے رینڈر سے موازنہ کریں۔
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=حساب کے تیز طریقے جو تصویر کو تھوڑا بدل دیتے ہیں
+;Faster ways of calculating that change the picture a little
 File=فائل
 ;File
 FileIndex=فائل نمبر:
@@ -1155,6 +1167,8 @@ FilterNewPicturesAutomatically=نئی تصاویر خودکار فلٹر کری�
 ;Filter new pictures automatically
 FilterNow=ابھی فلٹر کریں
 ;Filter now
+FindsTheSurfaceWithFewerDistance=کم فاصلے کے تخمینوں سے سطح ڈھونڈتا ہے۔ چند فیصد تیز؛ باریک تفصیل تھوڑی سرک سکتی ہے۔
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=باریک
 ;fine
 FineTuneThePositionsWithThe=تیر والے بٹنوں سے مقامات باریکی سے ترتیب دیں
@@ -1871,6 +1885,10 @@ LogEverythingTheProgramDidIts=لاگ: پروگرام نے جو کچھ کیا، �
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ لوگارتھمی فنکشنز }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=لمبے مارچ قدم: 1 = بند، 1.2 سے 1.5۔ 1.3 پر 5 سے 10 % تیز؛ پتلے خولوں میں سوراخ نظر آ سکتے ہیں۔
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=جب منظر میں نہ متحرک دھند ہو نہ حجمی روشنی تو خالی جگہ میں لمبے قدم ('تجزیاتی DE بند کریں' کے ساتھ نہیں)۔
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=معمول سے زیادہ وقت، ابھی کام جاری ہے
 ;longer than usual, still working
 LookIn=تلاش کی جگہ(&I):
@@ -2263,6 +2281,8 @@ NoSOURCESectionThisIsNot={}: [SOURCE] سیکشن نہیں، یہ JIT فارمو�
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=کوئی مشترکہ فولڈر منتخب نہیں
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=متحرک دھند کے بغیر قدموں کی کوئی حد نہیں
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=کلپ بورڈ میں کوئی متنی پیرامیٹرز نہیں ملے۔
 ;No text parameters found in the clipboard.
 NoTilesToRender=رینڈر کرنے کے لیے کوئی ٹائل نہیں۔
@@ -3007,6 +3027,8 @@ ScrollBy1=1 سے اسکرول کریں
 ;Scroll by 1
 Search=تلاش
 ;Search
+SecantSearchForTheSurface=سطح کی Secant تلاش
+;Secant search for the surface
 SecantSearchmode=Secant تلاش موڈ:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=دوسرا فوکس پوائنٹ، اگر پہلے سے مختلف ہو تو\nفوکس پوائنٹ کے بجائے فوکس لکیر ملتی ہے۔\n(طبعی طور پر زیادہ حقیقی نہیں، لیکن کام کا ہے)\s
@@ -3199,6 +3221,8 @@ Statistics=اعداد و شمار
 ;Statistics
 Status=حیثیت
 ;Status
+StepRelax=قدم نرمی:
+;Step relax:
 StepcountForBinarySearch=بائنری سرچ کے لیے \nقدموں کی تعداد:
 ;Stepcount for \nbinary search:
 StepwidthLimiter=قدم چوڑائی حد:
@@ -3583,6 +3607,8 @@ UseOpenGL=OpenGL استعمال کریں >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=تھیم کے بغیر طے شدہ بصری ترتیبات استعمال کریں
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=تجرباتی رفتار افزائی استعمال کریں
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=نقشے کی شدتیں اور ڈفیوز رنگ استعمال کریں۔
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=حد سے آگے بڑھنا کم کرنے کے لیے 1 سے کم قدریں استعمال کریں۔

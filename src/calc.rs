@@ -64,6 +64,16 @@ pub struct CalcParams {
     pub col_var_de_stop_mul: f32,
     pub first_step_random: bool,
     pub mh04zsd: f32,
+    /// the march steps enlarged by this (over-relaxation, 1: not): the
+    /// DE after a relaxed step must still overlap the last one, else the
+    /// step is taken again at its safe length (experimental: step_relax)
+    pub relax: f32,
+    /// the binary search after the march interpolates between probes on
+    /// both sides of the surface (experimental: secant_search)
+    pub secant: bool,
+    /// the DE occlusion on every second pixel of every second row, the
+    /// others filled (experimental: occlusion_half, `deao::fill_half`)
+    pub ao_half: bool,
     pub de_stop_factor: f32,
     pub ln_rstop: f32,
     pub normals_on_de: bool,
@@ -745,6 +755,13 @@ impl CalcParams {
             mh04zsd = width.max(height) as f32;
             col_var = 0.0;
         }
+        // experimental: the step limit only serves the dynamic fog's count
+        // (not with "disable analytic DE": its DE is no bound, the object
+        // could be stepped over)
+        let ex = &sc.experimental;
+        if ex.free_steps() && (sc.lighting.dyn_fog - 53.0).abs() < 0.5 && sc.vol_light.is_none() && !sc.disable_analytic_de {
+            mh04zsd = 1e30;
+        }
         let ln_rstop = rstop.ln().ln() as f32;
         let d_rstop = (rstop * rstop) as f32 as f64;
         let rstop3d = ((d_rstop * d_rstop) * 64.0) as f32 as f64;
@@ -798,6 +815,9 @@ impl CalcParams {
             col_var_de_stop_mul: col_var,
             first_step_random: sc.first_step_random,
             mh04zsd,
+            relax: ex.relax() as f32,
+            secant: ex.secant(),
+            ao_half: ex.ao_half(),
             de_stop_factor,
             ln_rstop,
             normals_on_de: sc.normals_on_de || is_custom_de || dc.is_some(),
@@ -1432,10 +1452,16 @@ impl<'a> Marcher<'a> {
             (self.p.de_stop as f64 * (1.0 + self.mzz * self.p.de_stop_factor as f64)) as f32;
     }
 
-    /// `RMdoBinSearch`
+    /// `RMdoBinSearch`; with `CalcParams::secant` (experimental) a probe
+    /// on the other side of the surface than the one before goes to where
+    /// the line through both meets the DE stop, not 0.55 of the way.
     pub(crate) fn bin_search(&mut self, de: &mut f64, last_step_width: f64) {
         let mut itmp = self.p.de_add_steps;
         let mut dt1 = last_step_width * -0.5;
+        let secant = self.p.secant;
+        // the last probe's DE minus the DE stop (None: no use, over the
+        // iteration limit)
+        let mut prev = (self.it.it_result < self.max_its_result).then(|| *de - self.ms_de_stop as f64);
         while (*de - self.ms_de_stop as f64).abs() > 0.001 {
             self.mzz += dt1;
             self.step(dt1);
@@ -1447,11 +1473,15 @@ impl<'a> Marcher<'a> {
             *de = self.calc_de();
             if self.it.it_result >= self.max_its_result {
                 dt1 = -dt1.abs();
-            } else if *de < self.ms_de_stop as f64 {
-                dt1 = dt1.abs() * -0.55;
-            } else {
-                dt1 = dt1.abs() * 0.55;
+                prev = None;
+                continue;
             }
+            let f = *de - self.ms_de_stop as f64;
+            match prev {
+                Some(f0) if secant && (f < 0.0) != (f0 < 0.0) => dt1 = -dt1 * secant_part(f, f0),
+                _ => dt1 = if f < 0.0 { dt1.abs() * -0.55 } else { dt1.abs() * 0.55 },
+            }
+            prev = Some(f);
         }
     }
 
@@ -2123,7 +2153,26 @@ impl<'a> Marcher<'a> {
                     self.seed = self.seed.wrapping_mul(214013).wrapping_add(2531011);
                     d *= (self.seed & 0x7FFF_FFFF) as f64 * (1.0 / 0x7FFF_FFFF as f64);
                 }
+                // experimental: the step relaxed (its DE must still overlap
+                // the last one, see below); the dynamic fog counts it as
+                // the safe steps it stands for
+                let relax = p.relax as f64;
+                let mut relaxed = false;
+                if relax > 1.0 && rsf_mul >= 1.0 && d < s1 {
+                    d *= relax;
+                    relaxed = true;
+                    if count && p.vol.is_none() {
+                        step_count += (relax - 1.0) as f32;
+                    }
+                }
                 self.mzz += d;
+                if relaxed && self.mzz > p.zend {
+                    // (the background only at the safe step)
+                    self.mzz -= d;
+                    d /= relax;
+                    self.mzz += d;
+                    relaxed = false;
+                }
                 if self.mzz > p.zend {
                     // background
                     if let Some(vl) = &p.vol {
@@ -2137,6 +2186,16 @@ impl<'a> Marcher<'a> {
                 self.step(d);
                 self.update_de_stop();
                 dtmp = self.calc_de();
+                if relaxed && (dtmp < 0.0 || dtmp + last_de < last_step) && self.it.it_result < self.max_its_result {
+                    // the relaxed step overshot (the DE spheres do not
+                    // overlap): back to the safe step
+                    let back = last_step - last_de;
+                    self.mzz -= back;
+                    self.step(-back);
+                    self.update_de_stop();
+                    last_step = last_de;
+                    dtmp = self.calc_de();
+                }
                 if dtmp > last_de + last_step {
                     dtmp = last_de + last_step;
                 }
@@ -2166,6 +2225,14 @@ impl<'a> Marcher<'a> {
         };
         si
     }
+}
+
+/// The secant search's step back towards the probe before (DE minus DE
+/// stop `f0`) from the probe with `f` on the other side of the surface:
+/// the part of the step, kept away from both ends.
+#[inline]
+pub(crate) fn secant_part(f: f64, f0: f64) -> f64 {
+    (f / (f - f0)).clamp(0.05, 0.95)
 }
 
 /// The ray of a pixel: its start position and its direction per step

@@ -1172,6 +1172,31 @@ fractie van een procent van het kleurbereik van die van de processor (fijn detai
 in andere pixels fonkelen; de [technische notities](../TECHNICAL.md)
 bevatten de metingen).
 
+<a id="experimental-speed-ups"></a>
+
+### Experimentele versnellingen
+
+Een paar snellere manieren van rekenen veranderen de afbeelding een beetje,
+dus staan ze uit tot u ze aanzet: tabblad **Intern** → **Experimenteel...**,
+vink *De experimentele versnellingen gebruiken* aan en daarna de gewenste.
+Ze worden met de scène opgeslagen (zodat ook de opdrachtregel, de zwerm en de
+AI-assistent ze gebruiken); op de opdrachtregel `-s experimental=on` met
+`-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` of
+`-s occlusion_half=on`.
+
+Gemeten op de 80 voorbeeldbestanden in de modus Auto (ongeveer 0,4 megapixel,
+telkens de snelste van twee renders), tegenover dezelfde bestanden zonder:
+
+| Versnelling | Hele render | Afbeeldingen (pixels die meer dan 8 van 255 afwijken) |
+|---|---|---|
+| **Stapverlenging 1,3**: langere marsstappen, een te ver gezette stap wordt overgedaan | −5 % (mediaan), tot −20 %; 62 van 80 sneller | mediaan 2,6 %; fijne schaduwwerking. *Dunne schillen kunnen gaten tonen* (BatJorge – Pong 703 – Swirls) |
+| **Oppervlak zoeken met de secantmethode** | −2 % (mediaan), tot −18 % | mediaan 0,7 %; fijn detail verschuift een beetje |
+| **Geen staplimiet zonder dynamische mist** | −1 % (mediaan), tot −30 % in open scènes | meestal dezelfde afbeelding (mediaan 0,03 %) |
+| **DE-occlusion op halve resolutie** | −18 % over de 10 bestanden met DE-occlusion (DEcomb1 −24 %); die stap tot 4 keer sneller | 0–27 % van de pixels, zachtere occlusie in fijn detail; het ziet er hetzelfde uit |
+
+Vergelijk met een render zonder, voordat u voor een afbeelding op een ervan
+vertrouwt.
+
 <a id="the-command-line"></a>
 
 ## De opdrachtregel

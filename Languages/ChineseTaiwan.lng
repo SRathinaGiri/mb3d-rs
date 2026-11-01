@@ -433,6 +433,8 @@ CalculatedOnTheCPU=在 CPU 上計算
 ;Calculated on the CPU
 CalculatedPictures=已計算的圖片
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=只在四分之一的像素上計算 DE 環境光遮蔽，其餘像素據此補上。此階段最多快 4 倍；細節會較柔和。
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=正在計算預覽...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=正在計算體積光貼圖
@@ -789,6 +791,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=DE 組合：
 ;DE comb.:
+DEOcclusionAtHalfResolution=半解析度 DE 遮蔽
+;DE occlusion at half resolution
 DEStop=DE stop：
 ;DE stop:
 DEcombinate=DEcombinate
@@ -1101,6 +1105,10 @@ Exit=離開
 ;Exit
 ExpandThePanel=展開面板
 ;Expand the panel
+Experimental=實驗性...
+;Experimental...
+ExperimentalSpeedUps=實驗性加速
+;Experimental speed-ups
 ExponentialFunctions={ 指數函式 }
 ;{ Exponential functions }
 ExportACubeAsAStack=將立方體匯出為一疊 PNG 檔案
@@ -1131,6 +1139,10 @@ FarPlane=遠平面：
 ;Far plane:
 FastInaccurate=快速+不精確
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=更快的計算方法，但會稍微改變影像。它們隨場景一起儲存，僅在勾選第一個核取方塊時使用。依賴它們之前，請與不使用它們的算圖結果比較。
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=更快的計算方法，但會稍微改變影像
+;Faster ways of calculating that change the picture a little
 File=檔案
 ;File
 FileIndex=檔案索引：
@@ -1155,6 +1167,8 @@ FilterNewPicturesAutomatically=自動濾波新圖片
 ;Filter new pictures automatically
 FilterNow=立即濾波
 ;Filter now
+FindsTheSurfaceWithFewerDistance=以更少的距離估計找到表面。快百分之幾；細節可能略有移動。
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=微調
 ;fine
 FineTuneThePositionsWithThe=用方向按鈕微調位置
@@ -1871,6 +1885,10 @@ LogEverythingTheProgramDidIts=記錄：程式所做的一切，以及其警告�
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ 對數函式 }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=更長的步進步長：1 = 關閉，1.2 到 1.5。1.3 時快 5% 到 10%；薄殼可能出現破洞。
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=場景既沒有動態霧也沒有體積光時，在空曠空間中以更長的步長前進（不與「停用解析 DE」同時使用）。
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=比平常久，仍在進行中
 ;longer than usual, still working
 LookIn=查看位置(&I)：
@@ -2263,6 +2281,8 @@ NoSOURCESectionThisIsNot={}：沒有 [SOURCE] 區段，這不是 JIT 公式
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=未選擇共用資料夾
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=無動態霧時不限步數
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=剪貼簿中找不到文字參數。
 ;No text parameters found in the clipboard.
 NoTilesToRender=沒有要渲染的圖塊。
@@ -3007,6 +3027,8 @@ ScrollBy1=捲動 1 格
 ;Scroll by 1
 Search=搜尋
 ;Search
+SecantSearchForTheSurface=以正割法搜尋表面
+;Secant search for the surface
 SecantSearchmode=正割搜尋模式：
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=第二個焦點，若與第一個不同，\n會得到一條焦線而非單一焦點。\n（物理上不太真實，但很實用）\s
@@ -3199,6 +3221,8 @@ Statistics=統計
 ;Statistics
 Status=狀態
 ;Status
+StepRelax=步長放寬：
+;Step relax:
 StepcountForBinarySearch=二分搜尋\n步數：
 ;Stepcount for \nbinary search:
 StepwidthLimiter=步寬限制器：
@@ -3583,6 +3607,8 @@ UseOpenGL=使用 OpenGL >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=使用不含主題的預設視覺設定
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=使用實驗性加速
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=使用貼圖強度與漫射色彩。
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=使用小於 1 的值以減少過步。

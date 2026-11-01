@@ -1168,6 +1168,27 @@ fraction of a percent of the colour range on average (fine detail may
 sparkle in different pixels; the [technical notes](docs/TECHNICAL.md)
 have the measurements).
 
+### Experimental speed-ups
+
+A few faster ways of calculating change the picture a little, so they are
+off unless you switch them on: **Internal** tab → **Experimental...**, tick
+*Use the experimental speed-ups*, then the ones you want. They are saved
+with the scene (so the command line, the swarm and the AI assistant use
+them too); on the command line `-s experimental=on` with `-s step_relax=1.3`,
+`-s secant_search=on`, `-s free_steps=on` or `-s occlusion_half=on`.
+
+Measured on the 80 example files in Auto mode (about 0.4 megapixels,
+the faster of two runs each), against the same files without them:
+
+| Speed-up | Whole render | Pictures (pixels off by more than 8 of 255) |
+|---|---|---|
+| **Step relax 1.3**: longer march steps, an overstep taken again | −5 % (median), up to −20 %; 62 of 80 faster | median 2.6 %; fine shading. *Thin shells can show holes* (BatJorge – Pong 703 – Swirls) |
+| **Secant search** for the surface | −2 % (median), up to −18 % | median 0.7 %; fine detail moves slightly |
+| **No step limit without dynamic fog** | −1 % (median), up to −30 % in open scenes | mostly the same picture (median 0.03 %) |
+| **DE occlusion at half resolution** | −18 % over the 10 files with DE occlusion (DEcomb1 −24 %); that stage up to 4 times faster | 0–27 % of pixels, softer occlusion in fine detail; it looks alike |
+
+Compare with a render without them before relying on one for a picture.
+
 ## The command line
 
 `mb3d` renders without a window. Open a terminal in the program's folder

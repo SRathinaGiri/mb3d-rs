@@ -433,6 +433,8 @@ CalculatedOnTheCPU=حُسب على CPU
 ;Calculated on the CPU
 CalculatedPictures=الصور المحسوبة
 ;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=يحسب الانسداد المحيطي DE على ربع البكسلات ويملأ البقية. أسرع حتى 4 مرات في هذه المرحلة؛ أنعم في التفاصيل الدقيقة.
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
 CalculatingThePreview=جارٍ حساب المعاينة...
 ;Calculating the preview...
 CalculatingVolumetricLightMap=جارٍ حساب خريطة الضوء الحجمي
@@ -789,6 +791,8 @@ DEAO=DEAO
 ;DEAO
 DEComb=دمج DE:
 ;DE comb.:
+DEOcclusionAtHalfResolution=انسداد DE بنصف الدقة
+;DE occlusion at half resolution
 DEStop=توقف DE:
 ;DE stop:
 DEcombinate=دمج DE
@@ -1101,6 +1105,10 @@ Exit=خروج
 ;Exit
 ExpandThePanel=توسيع اللوحة
 ;Expand the panel
+Experimental=تجريبي...
+;Experimental...
+ExperimentalSpeedUps=تسريعات تجريبية
+;Experimental speed-ups
 ExponentialFunctions={ الدوال الأسية }
 ;{ Exponential functions }
 ExportACubeAsAStack=تصدير مكعب في صورة رزمة من ملفات PNG
@@ -1131,6 +1139,10 @@ FarPlane=المستوى البعيد:
 ;Far plane:
 FastInaccurate=سريع+غير دقيق
 ;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=طرق أسرع للحساب تغيّر الصورة قليلًا. تُحفظ مع المشهد ولا تُستخدم إلا عند تحديد المربع الأول. قارن بتصيير من دونها قبل الاعتماد عليها.
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=طرق أسرع للحساب تغيّر الصورة قليلًا
+;Faster ways of calculating that change the picture a little
 File=الملف
 ;File
 FileIndex=رقم الملف:
@@ -1155,6 +1167,8 @@ FilterNewPicturesAutomatically=ترشيح الصور الجديدة تلقائي
 ;Filter new pictures automatically
 FilterNow=ترشيح الآن
 ;Filter now
+FindsTheSurfaceWithFewerDistance=يجد السطح بعدد أقل من تقديرات المسافة. أسرع ببضعة بالمئة؛ قد تتحرك التفاصيل الدقيقة قليلًا.
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
 Fine=دقيق
 ;fine
 FineTuneThePositionsWithThe=اضبط المواضع بدقة بأزرار الأسهم
@@ -1871,6 +1885,10 @@ LogEverythingTheProgramDidIts=سجل الأحداث: كل ما فعله البر
 ;Log: everything the program did, its warnings and errors (click to see)
 LogarithmicFunctions={ الدوال اللوغاريتمية }
 ;{ Logarithmic functions }
+LongerMarchSteps1Off1=خطوات تقدّم أطول: 1 = إيقاف، من 1.2 إلى 1.5. أسرع بنسبة 5 إلى 10 % عند 1.3؛ قد تظهر ثقوب في القشور الرقيقة.
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=خطوات أطول عبر الفضاء الخالي عندما لا يحتوي المشهد على ضباب ديناميكي ولا ضوء حجمي (لا يعمل مع «تعطيل DE التحليلي»).
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
 LongerThanUsualStillWorking=أطول من المعتاد، لا يزال يعمل
 ;longer than usual, still working
 LookIn=البحث في:
@@ -2263,6 +2281,8 @@ NoSOURCESectionThisIsNot={}: لا قسم [SOURCE]، هذه ليست صيغة JIT
 ;{}: no [SOURCE] section, this is not a JIT formula
 NoSharedFolderChosen=لم يُختر مجلد مشترك
 ;no shared folder chosen
+NoStepLimitWithoutDynamicFog=بلا حد للخطوات دون ضباب ديناميكي
+;No step limit without dynamic fog
 NoTextParametersFoundInThe=لم يُعثر على معاملات نصية في الحافظة.
 ;No text parameters found in the clipboard.
 NoTilesToRender=لا بلاطات للتصيير.
@@ -3007,6 +3027,8 @@ ScrollBy1=التمرير بمقدار 1
 ;Scroll by 1
 Search=بحث
 ;Search
+SecantSearchForTheSurface=البحث عن السطح بطريقة القاطع
+;Secant search for the surface
 SecantSearchmode=وضع البحث بالقاطع:
 ;Secant searchmode:
 SecondFocusPointIfDifferentFrom=نقطة تركيز ثانية، إن اختلفت عن الأولى\nتحصل على خط تركيز بدلًا من نقطة تركيز.\n(غير واقعي فيزيائيًا كثيرًا، لكن من الجيد وجوده)\s
@@ -3199,6 +3221,8 @@ Statistics=الإحصاءات
 ;Statistics
 Status=الحالة
 ;Status
+StepRelax=تخفيف الخطوة:
+;Step relax:
 StepcountForBinarySearch=عدد خطوات \nالبحث الثنائي:
 ;Stepcount for \nbinary search:
 StepwidthLimiter=محدد عرض الخطوة:
@@ -3583,6 +3607,8 @@ UseOpenGL=استخدام OpenGL >>
 ;Use OpenGL >>
 UseTheDefaultVisualSettingsWithout=استخدام الإعدادات المرئية الافتراضية دون سمة
 ;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=استخدام التسريعات التجريبية
+;Use the experimental speed-ups
 UseTheMapIntensitiesAndDiffuse=استخدام شدات الخريطة والألوان الانتشارية.
 ;Use the map intensities and diffuse colors.
 UseValuesLowerThan1To=استخدم قيمًا أقل من 1 لتقليل تجاوز الخطوات.

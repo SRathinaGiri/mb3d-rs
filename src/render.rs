@@ -2150,6 +2150,10 @@ pub fn post_process_reporting(
                 times.ao = Some(Some(t.elapsed().as_secs_f64()));
                 times.ao_with_shadows = false;
             }
+            if p.ao_half {
+                // (the card's pixels, or the card's and the CPU's)
+                crate::deao::fill_half(gbuf, p.rect[2] as usize, p.rect[3] as usize, p.rect[0], p.rect[1]);
+            }
         } else {
             stage(&post_stage_name(false, true, ""));
             ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads, progress);
