@@ -5,6 +5,14 @@ Every release of mb3d-rs, newest first, with the time it was published
 description and code; the downloads of a release are on its page. Back to
 the [README](../README.md).
 
+## [v0.2.92](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.92) · 2 Nov 2026, 07:27 UTC
+
+| Commit | What it does |
+|---|---|
+| [`9235f9b`](https://github.com/thr32423/mb3d-rs/commit/9235f9b872de2b4057a2432a7f98df977fe04e66) | Version number and release notes of this release |
+| [`0830c84`](https://github.com/thr32423/mb3d-rs/commit/0830c8424db50aacaad9b4f80dfba0a87c612d5b) | Cone march (experimental speed-up, not in MB3D): a coarse ray per block of 16 by 16, then 4 by 4 pixels marches from the block's middle with the block's spread (the pixels' starts and directions, computed from every pixel of the block) and the DE stop taken off the distance estimate, three times over the step factor because the estimate is no true bound between rays (at a margin of 1 the thin fins of Abominog-Ua were lost, at 2 still in small pictures), and every pixel's march starts where the coarse ray stopped, in one step; a pixel whose jump lands in the surface all the same is marched from the start; a block whose ray passes the end of the view is background; the dynamic fog's step count estimated along the coarse ray (the march's steps per length); not with the volumetric light, disable analytic DE, inside and outside, 2D slices, nor in the sample marches (the precision probe's CPU pixels without it too); the blocks calculated when a pixel of them is first marched (an atomic per block, another thread waits) per calculation rectangle; on the card the mode M_CONE of the march shader (states P_JUMPED, P_CONE, the CONE buffer at binding 7, the words CONE_ON .. CONE_P_OFF, the state word no_cone), two cone passes per band before its march; scene key cone_march, the window's Cone march box (Mandelbulb3D.ini Experimental with six values, five read as before), labels in all seventeen languages and the CJK font subsets, README (all seventeen languages), TECHNICAL.md, the AI guide; apptest renders the Experimental window; measured on the 80 example files (the march on the processor, 0.2 megapixels, 70 usable): total -18 %, median -18 %, best -64 % (Dainbramage - Nothing left but bones), worst +2 %, no holes, every picture within the march's own noise (the base against itself with the random first step toggled); on the card whole renders of open scenes up to -63 %; tests: the ray of a pixel, the blocks' depths before the surfaces and background blocks, the fog's count, when it is not used, the ini values |
+| [`e4cab8e`](https://github.com/thr32423/mb3d-rs/commit/e4cab8e5012dd2e0cadbece012f3e333a6ed776d) | README: Updates for v0.2.91 |
+
 ## [v0.2.91](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91) · 1 Nov 2026, 20:07 UTC
 
 | Commit | What it does |

@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.91](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91)** (1 Nov 2026, 20:07 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.92](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.92)** (2 Nov 2026, 07:27 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1331,6 +1331,14 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.2.92](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.92) · 2 Nov 2026, 07:27 UTC
+
+| Commit | What it does |
+|---|---|
+| [`9235f9b`](https://github.com/thr32423/mb3d-rs/commit/9235f9b872de2b4057a2432a7f98df977fe04e66) | Version number and release notes of this release |
+| [`0830c84`](https://github.com/thr32423/mb3d-rs/commit/0830c8424db50aacaad9b4f80dfba0a87c612d5b) | Cone march (experimental speed-up, not in MB3D): a coarse ray per block of 16 by 16, then 4 by 4 pixels marches from the block's middle with the block's spread (the pixels' starts and directions, computed from every pixel of the block) and the DE stop taken off the distance estimate, three times over the step factor because the estimate is no true bound between rays (at a margin of 1 the thin fins of Abominog-Ua were lost, at 2 still in small pictures), and every pixel's march starts where the coarse ray stopped, in one step; a pixel whose jump lands in the surface all the same is marched from the start; a block whose ray passes the end of the view is background; the dynamic fog's step count estimated along the coarse ray (the march's steps per length); not with the volumetric light, disable analytic DE, inside and outside, 2D slices, nor in the sample marches (the precision probe's CPU pixels without it too); the blocks calculated when a pixel of them is first marched (an atomic per block, another thread waits) per calculation rectangle; on the card the mode M_CONE of the march shader (states P_JUMPED, P_CONE, the CONE buffer at binding 7, the words CONE_ON .. CONE_P_OFF, the state word no_cone), two cone passes per band before its march; scene key cone_march, the window's Cone march box (Mandelbulb3D.ini Experimental with six values, five read as before), labels in all seventeen languages and the CJK font subsets, README (all seventeen languages), TECHNICAL.md, the AI guide; apptest renders the Experimental window; measured on the 80 example files (the march on the processor, 0.2 megapixels, 70 usable): total -18 %, median -18 %, best -64 % (Dainbramage - Nothing left but bones), worst +2 %, no holes, every picture within the march's own noise (the base against itself with the random first step toggled); on the card whole renders of open scenes up to -63 %; tests: the ray of a pixel, the blocks' depths before the surfaces and background blocks, the fog's count, when it is not used, the ini values |
+| [`e4cab8e`](https://github.com/thr32423/mb3d-rs/commit/e4cab8e5012dd2e0cadbece012f3e333a6ed776d) | README: Updates for v0.2.91 |
+
 ### [v0.2.91](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91) · 1 Nov 2026, 20:07 UTC
 
 | Commit | What it does |
@@ -1351,18 +1359,7 @@ of a release are on its page. Times are in UTC.
 | [`a215f42`](https://github.com/thr32423/mb3d-rs/commit/a215f42d9fae6aaf2cd4075ca72497ab8198caa3) | Ground plane in double precision on the card: the waves' 2 pi a value of the shader's precision (in double the shader did not compile and every scene in double precision was calculated on the CPU) |
 | [`94471ec`](https://github.com/thr32423/mb3d-rs/commit/94471ec8431713e2d3cb90c16b9b29784a2f1544) | README: Updates for v0.2.89 |
 
-### [v0.2.89](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89) · 1 Nov 2026, 05:45 UTC
-
-| Commit | What it does |
-|---|---|
-| [`028adca`](https://github.com/thr32423/mb3d-rs/commit/028adcaf697ee35feddbe6009e098c856aca6a08) | Version number and release notes of this release |
-| [`7b09cd4`](https://github.com/thr32423/mb3d-rs/commit/7b09cd45099f2558c886c3fe4eb42621f2588f24) | Finishing, surface relief, turntable, flights and motion blur in the documentation and in all seventeen languages: the labels translated (the Japanese, Korean and Chinese font subsets with their new characters; the relief's suggested size rounded to two digits), the READMEs with pictures, TECHNICAL.md's keys, the AI assistants' guide |
-| [`d388096`](https://github.com/thr32423/mb3d-rs/commit/d388096434f4242f1f825b3cd2611492a00c8993) | Camera and animation (not in MB3D): a turntable, keyframes for one whole turn of the camera around the middle of the view (Animation window: Turntable, 8 keyframes in a Catmull-Rom loop; mb3d animate SCENE --orbit STEPS); a recorded flight (Navigator: Rec, every new view at most twice a second becomes the next keyframe); motion blur, each frame the average of several pictures within the shutter time (Animation window: Motion blur and Shutter; mb3d animate --motion-blur N[,SHUTTER]; in the text animation files motion_blur and shutter, in MB3D's .m3a bits 21-29 of the options MB3D ignores); the animation's scene between two frames (Animation::frame_scene_at); tests: the turntable, scenes between frames and across keyframes, both file formats |
-| [`ae0431e`](https://github.com/thr32423/mb3d-rs/commit/ae0431e74b061de8b9b0401cdb32fa26c17cd88c) | Surface detail (not in MB3D): a fine relief on the fractal's surface from 3D gradient noise fixed to the fractal, rough, stone (ridges and cracks) or grain, with its strength, size and fineness, and a colour variation; it tilts the surface's normal where the light is calculated (the painting, the reflections' mirror on the processor and with the card's marches, Monte Carlo) and varies the colour, not on the ground plane; Post processing window, Material section: Relief and Colour variation; scene keys detail = kind, strength, size, roughness and detail_color (also in the MB3D-RS block); tests: the noise, the tilted normals, the files |
-| [`b3c9061`](https://github.com/thr32423/mb3d-rs/commit/b3c9061999ec9164fd62922ba3efee9d40779050) | Finishing of the picture (not in MB3D): exposure in stops, glow around bright light (the light above a threshold blurred on a smaller copy, a wide and a near part), filmic tone mapping (highlights roll off instead of clipping: the painting runs in floating point when finishing is on), contrast, saturation, warmth, a vignette and colour fringes by the whole picture's middle (also on tiles); the last pass after the depth of field, also on Monte Carlo pictures (after the noise filters); Post processing window: a Finishing section; scene keys finish_exposure, finish_tonemap, glow, finish_contrast, finish_saturation, finish_warmth, vignette, chromatic (also in the MB3D-RS block of .m3p/.m3i); a scene without finishing paints as before; tests: neutral changes nothing, the filmic curve, glow and vignette, the files |
-| [`2e43553`](https://github.com/thr32423/mb3d-rs/commit/2e435533f721601a32c72252d12b9b42b53581db) | README: Updates for v0.2.88 |
-
-All 102 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 103 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
