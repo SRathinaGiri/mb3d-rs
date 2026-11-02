@@ -760,6 +760,7 @@ itself per light.
 | `step_relax` | 1..2 (1 = off) | the march's steps enlarged by this (over-relaxation); a step whose DE no longer overlaps the last one is taken again at the safe length; the dynamic fog counts a relaxed step as the safe steps it stands for |
 | `secant_search` | `on` / `off` | the binary search after the march (and at the shadows' and reflections' starts): a probe on the other side of the surface than the one before goes to where the line through both meets the DE stop (kept within 5..95 % of the step), else 0.55 of the step as before |
 | `free_steps` | `on` / `off` | without dynamic fog (53) and volumetric light, and not with `disable_analytic_de`: no step limit (`mh04zsd`), which only serves the fog's step count |
+| `cone_march` | `on` / `off` | a coarse ray per block of 16, then 4 pixels, marched with the block's spread taken off the distance estimate; every pixel's march starts where it stopped (see "Cone march") |
 | `occlusion_half` | `on` / `off` | the DE occlusion on the pixels with even x and y of the whole picture, the others filled from the four around them (bilinear, weighed by depth and normal) |
 | `part2_position`, `part2_rotation`, `part2_scale` | x, y, z; degrees; size | with a DE combination (not the mix): the second hybrid part as an object of its own, its point `m (p - position)` (the rotation divided by the size), its distance times the size |
 | `dof` | `off`, `sorted`, `forward` | depth of field |
@@ -1075,10 +1076,11 @@ Gaussians), 16 views by 24 to 27; between the views about 32.
 
 `src/experimental.rs`; the window `ExperimentalFrm` (Internal tab,
 "Experimental..."); the scene keys `experimental`, `step_relax`,
-`secant_search`, `free_steps`, `occlusion_half`, also in the MB3D-RS block of
-`.m3p`/`.m3i` files. The window keeps the user's choice in Mandelbulb3D.ini
-(`Experimental  1 1.3 0 1 1`: the switch, step relax, secant, free steps,
-half occlusion; `Experimental::to_ini`), and every scene the window takes
+`secant_search`, `free_steps`, `occlusion_half`, `cone_march`, also in the
+MB3D-RS block of `.m3p`/`.m3i` files. The window keeps the user's choice in
+Mandelbulb3D.ini (`Experimental  1 1.3 0 1 1 0`: the switch, step relax,
+secant, free steps, half occlusion, cone march; `Experimental::to_ini`; the
+five values of v0.2.91 are read too), and every scene the window takes
 (at the start, an opened file) gets it. Each is on the processor and the card alike (with each
 of them the card's and the processor's pictures differ in 0.005 % of the
 pixels by more than 8 of 255, as without them). Measured 2026-11-01 on the
@@ -1090,6 +1092,44 @@ runs (run to run the pictures differ in a median 0.001 % of the pixels):
 | `step_relax = 1.3` | total −5.1 %, median −5.0 %, best −20 % (Chrystal), worst +8 %; 62 faster, 2 slower | median 2.6 %, more than 5 % in 26 files; holes in thin shells (BatJorge – Pong 703 – Swirls 58 %), speckle in noisy scenes (spineJulia 48 %, the MutaGen canary 41 %) |
 | `secant_search` | total −1.5 %, median −2.3 %, best −18 % | median 0.7 %, more than 5 % in 12 files (spineJulia 15 %) |
 | `free_steps` | total −1.7 %, median −0.6 %, best −30 % (LightBulbMoon – No, Never) | median 0.03 %, more than 5 % in 5 files |
+| `cone_march` (2026-11-02, the march stage on the processor, 0.2 megapixels) | total −18 %, median −18 %, best −64 % (Dainbramage – Nothing left but bones), worst +2 %; 69 of 70 faster (off in 9: inside and outside, disable analytic DE, volumetric light) | median 0.4 %: in every file as much as the random first step changes (the base against itself with the random first step toggled), no holes |
+
+### Cone march
+
+`src/cone.rs`, `Marcher::cone_march` and the jump in `Marcher::march_pixel`
+(`calc.rs`); on the card the mode `M_CONE` of the march shader and the
+`CONE` buffer (binding 7), `gpu::run` runs the cone passes of a band before
+its march. A coarse ray per block of 16 by 16 pixels, then of 4 by 4 (the
+finer block's ray starts where the coarser block's stopped), from the
+block's middle: at depth `t` every pixel's ray of the block lies within
+`a + slope * t` of it (`a` the widest gap of the pixels' starts, `slope` of
+their directions, in step widths; computed from every pixel of the block,
+`Marcher::ray`). The march takes the distance estimate for a bound within
+its step factor, and some formulas' estimates are far off between rays, so
+the coarse ray keeps `CONE_MARGIN` (3) times that spread over the step
+factor and the DE stop at its depth in reach: it steps by `(de - reach -
+ms_de_sub * stop) * z_step_div * rsf / (1 + slope * lip + de_stop *
+de_stop_factor)` (the divisor: the reach grows over the step) with the
+march's Lipschitz clamp and its slowing down (`rsf`), and ends when the step
+falls under `CONE_MIN_STEP` (0.05) of the DE stop, or past the end of the
+view (+inf: the block is background). Up to that depth every pixel's ray
+has an estimate above the DE stop (within the assumption), so the pixel's
+march goes there in one step; a pixel whose jump lands in the surface all
+the same is marched from the start (counted in the stage times). The
+dynamic fog's step count: the coarse ray sums the march's steps per length
+along its way (`min(s, zend - t) / d` with `d` the march's step there), the
+pixel starts with that. The blocks are calculated when a pixel of them is
+first marched, by that thread (`cone::Grid`, an atomic per block: EMPTY,
+BUSY, or the depth's bits; another thread wanting the block waits), per
+level for the calculation's rectangle; on the card per band, blocks on a
+band's edge in both bands. Not with the volumetric light (it integrates
+along every ray), "disable analytic DE", inside and outside together (the
+start decides the side per pixel), 2D slices, and not in the sample
+marches (the row weights, the precision probe: its CPU pixels march without
+the cone too). The margin: at 1 the thin fins of Abominog-Ua were lost (22 %
+of the pixels), at 2 still at 0.2 megapixels (7 %), at 3 the picture is at
+its noise level (2.4 % against 2.3 %); on LightBulbMoon – No, Never the gain
+goes from −66 % at 2 to −63 % at 3.
 | `occlusion_half` | the 10 files with DE occlusion: total −17.6 % (DEcomb1 −24 %); the stage 3.8 times faster on the processor, 2–3 times in Auto mode | 0.01–27 % (JuliaSetSample), softer occlusion in fine detail |
 
 Earlier, on the processor alone at 400 px, `step_relax = 1.3` gave −11.6 %

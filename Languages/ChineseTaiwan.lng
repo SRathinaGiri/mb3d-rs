@@ -3916,3 +3916,8 @@ LightSheet.Caption = 光源
 
 [PostProForm]
 RadioGroup2.Caption = 計算方式
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=每 16 像素、再每 4 像素的區塊各發一條粗光線，按減去區塊的擴展量後的距離估計步進，每個像素的步進從它的深度開始。在開闊空間中最多快 60 %；在估計偏差大的地方可能遺失細薄的部分。
+ConeMarchThePixelsOfA=錐形步進：區塊內像素從其粗光線停下的位置開始

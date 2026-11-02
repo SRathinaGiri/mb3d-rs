@@ -1260,7 +1260,7 @@ semuanya mati kecuali Anda menyalakannya: tab **Internal** → **Eksperimental..
 centang *Gunakan percepatan eksperimental*, lalu pilih yang Anda inginkan. Semuanya
 disimpan bersama adegan (sehingga baris perintah, swarm, dan asisten AI juga
 memakainya); di baris perintah `-s experimental=on` dengan `-s step_relax=1.3`,
-`-s secant_search=on`, `-s free_steps=on`, atau `-s occlusion_half=on`.
+`-s secant_search=on`, `-s free_steps=on`, `-s occlusion_half=on`, atau `-s cone_march=on`.
 Program menyimpan pilihan Anda dari satu kali dijalankan ke berikutnya, juga untuk file yang Anda buka.
 
 Diukur pada 80 file contoh dalam mode Otomatis (sekitar 0.4 megapiksel,
@@ -1273,6 +1273,7 @@ yang sama tanpa percepatan itu:
 | **Pencarian sekan** untuk permukaan | −2 % (median), hingga −18 % | median 0.7 %; detail halus sedikit bergeser |
 | **Tanpa batas langkah bila tanpa kabut dinamis** | −1 % (median), hingga −30 % di adegan terbuka | sebagian besar gambar yang sama (median 0.03 %) |
 | **DE occlusion pada setengah resolusi** | −18 % pada 10 file dengan DE occlusion (DEcomb1 −24 %); tahap itu hingga 4 kali lebih cepat | 0–27 % piksel, occlusion lebih lembut di detail halus; tampak serupa |
+| **March kerucut**: satu sinar kasar per blok piksel, march setiap piksel mulai di tempat sinar itu berhenti | march −18 % (median) pada prosesor, hingga −64 % di adegan terbuka (69 dari 70 lebih cepat); pada kartu, seluruh render adegan terbuka hingga −63 % | median 0.4 %, sebesar perubahan langkah pertama acak march itu sendiri; *bagian tipis bisa hilang di tempat estimasi jarak jauh meleset* |
 
 Bandingkan dengan render tanpa percepatan itu sebelum mengandalkan salah satunya untuk sebuah gambar.
 

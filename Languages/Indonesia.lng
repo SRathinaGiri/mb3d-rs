@@ -3858,3 +3858,8 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Satu sinar kasar per blok 16, lalu 4 piksel melakukan march dengan sebaran blok dikurangkan dari estimasi jarak, dan march setiap piksel mulai dari kedalamannya. Hingga 60 % lebih cepat melewati ruang terbuka; bagian tipis bisa hilang di tempat estimasinya jauh meleset.
+ConeMarchThePixelsOfA=March kerucut: piksel sebuah blok mulai di tempat sinar kasarnya berhenti

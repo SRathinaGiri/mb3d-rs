@@ -30,6 +30,8 @@ code = EN
 [Labels]
 ACalculationIsRunningStopIt=A calculation is running: stop it first.
 ;the program
+ACoarseRayPerBlockOf=A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
+;ExperimentalFrm.ConeNote.Caption
 AFasterMethodThanBinsearchBut=A faster method than binsearch, but can lead to failures if DE's are bad
 ;MCForm.CheckBox6.Hint
 AFewSecondsLeft=a few seconds left
@@ -656,6 +658,8 @@ CompilingSucceeded=Compiling succeeded
 ;the program
 Computer=Computer
 ;SwarmFrm.ListView1.Caption
+ConeMarchThePixelsOfA=Cone march: the pixels of a block start where its coarse ray stopped
+;ExperimentalFrm.ConeBox.Caption
 Confirm=Confirm
 ;the program
 Connect=Connect

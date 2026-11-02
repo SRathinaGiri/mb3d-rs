@@ -3905,3 +3905,8 @@ Label6.Caption = 반사광
 [MutaGenFrm]
 Label4.Caption = 교환, 추가
 Label11.Caption = 반복 횟수
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=16픽셀, 그다음 4픽셀 블록마다 거친 광선 하나가 거리 추정에서 블록의 퍼짐을 뺀 만큼 전진하고, 각 픽셀의 마치는 그 깊이에서 시작합니다. 트인 공간에서는 최대 60 % 빨라지며, 추정이 크게 빗나간 곳에서는 얇은 부분이 사라질 수 있습니다.
+ConeMarchThePixelsOfA=원뿔 마치: 블록의 픽셀은 그 거친 광선이 멈춘 곳에서 시작

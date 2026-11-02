@@ -1266,7 +1266,7 @@ spenti finché non li accendi: scheda **Interno** → **Sperimentale...**, spunt
 *Usa le accelerazioni sperimentali*, poi quelle che vuoi. Vengono salvate con
 la scena (così le usano anche la riga di comando, lo sciame e l'assistente
 IA); dalla riga di comando `-s experimental=on` con `-s step_relax=1.3`,
-`-s secant_search=on`, `-s free_steps=on` o `-s occlusion_half=on`.
+`-s secant_search=on`, `-s free_steps=on`, `-s occlusion_half=on` o `-s cone_march=on`.
 Il programma mantiene la tua scelta da un avvio al successivo, anche per i file che apri.
 
 Misurate sugli 80 file di esempio in modalità Auto (circa 0,4 megapixel, il
@@ -1279,6 +1279,7 @@ esse:
 | **Ricerca della superficie per secante** | −2 % (mediana), fino a −18 % | mediana 0,7 %; il dettaglio fine si sposta leggermente |
 | **Nessun limite di passi senza nebbia dinamica** | −1 % (mediana), fino a −30 % nelle scene aperte | per lo più la stessa immagine (mediana 0,03 %) |
 | **Occlusione DE a metà risoluzione** | −18 % sui 10 file con occlusione DE (DEcomb1 −24 %); quella fase fino a 4 volte più veloce | 0–27 % dei pixel, occlusione più morbida nel dettaglio fine; l'aspetto è lo stesso |
+| **Marcia a cono**: un raggio grossolano per blocco di pixel, la marcia di ogni pixel parte da dove si è fermato | la marcia −18 % (mediana) sul processore, fino a −64 % nelle scene aperte (69 su 70 più veloci); sulla scheda rendering interi di scene aperte fino a −63 % | mediana 0,4 %, quanto cambia da solo il primo passo casuale della marcia; *le parti sottili possono perdersi dove la stima della distanza è molto imprecisa* |
 
 Confronta con un rendering senza di esse prima di affidarti a una per
 un'immagine.

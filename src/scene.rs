@@ -1416,6 +1416,7 @@ impl Scene {
                     "secant_search" => s.experimental.secant = boolean()?,
                     "free_steps" => s.experimental.free_steps = boolean()?,
                     "occlusion_half" => s.experimental.ao_half = boolean()?,
+                    "cone_march" => s.experimental.cone = boolean()?,
                     "detail_color" => s.detail.get_or_insert_with(Default::default).color = (num()? as f32).clamp(0.0, 1.0),
                     "finish" if matches!(val.trim().to_ascii_lowercase().as_str(), "off" | "none" | "no") => s.finish = None,
                     "finish_exposure" | "finish_tonemap" | "glow" | "finish_contrast" | "finish_saturation" | "finish_warmth" | "vignette" | "chromatic" => {

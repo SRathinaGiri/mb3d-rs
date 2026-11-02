@@ -3858,3 +3858,8 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Un rayo grueso por bloque de 16, luego de 4 píxeles avanza con la extensión del bloque restada de la estimación de distancia, y la marcha de cada píxel empieza a su profundidad. Hasta un 60 % más rápido por el espacio abierto; las partes finas pueden perderse donde la estimación se aleja mucho.
+ConeMarchThePixelsOfA=Marcha en cono: los píxeles de un bloque empiezan donde se detuvo su rayo grueso

@@ -1266,8 +1266,8 @@ ficam desligadas até você ligá-las: aba **Interno** → **Experimental...**,
 marque *Usar as acelerações experimentais* e depois as que quiser. Elas são
 salvas com a cena (assim a linha de comando, o enxame e o assistente de IA
 também as usam); na linha de comando `-s experimental=on` com
-`-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` ou
-`-s occlusion_half=on`.
+`-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on`,
+`-s occlusion_half=on` ou `-s cone_march=on`.
 O programa mantém sua escolha de uma inicialização para a próxima, também para os arquivos que você abrir.
 
 Medido nos 80 arquivos de exemplo no modo Auto (cerca de 0,4 megapixel, o
@@ -1280,6 +1280,7 @@ arquivos sem elas:
 | **Busca da superfície por secante** | −2 % (mediana), até −18 % | mediana 0,7 %; o detalhe fino se desloca levemente |
 | **Sem limite de passos sem neblina dinâmica** | −1 % (mediana), até −30 % em cenas abertas | quase sempre a mesma imagem (mediana 0,03 %) |
 | **Oclusão DE em meia resolução** | −18 % nos 10 arquivos com oclusão DE (DEcomb1 −24 %); essa etapa até 4 vezes mais rápida | 0–27 % dos pixels, oclusão mais suave no detalhe fino; parece igual |
+| **Avanço em cone**: um raio grosseiro por bloco de pixels, o avanço de cada pixel começa onde ele parou | o avanço −18 % (mediana) no processador, até −64 % em cenas abertas (69 de 70 mais rápidos); na placa renderizações inteiras de cenas abertas até −63 % | mediana 0,4 %, tanto quanto muda o próprio primeiro passo aleatório do avanço; *partes finas podem se perder onde a estimativa de distância erra por muito* |
 
 Compare com uma renderização sem elas antes de confiar em uma para uma imagem.
 

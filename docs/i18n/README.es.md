@@ -1285,7 +1285,7 @@ están desactivadas mientras no las active: pestaña **Interno** →
 las que quiera. Se guardan con la escena (así también las usan la línea de
 comandos, el enjambre y el asistente de IA); en la línea de comandos
 `-s experimental=on` con `-s step_relax=1.3`, `-s secant_search=on`,
-`-s free_steps=on` o `-s occlusion_half=on`.
+`-s free_steps=on`, `-s occlusion_half=on` o `-s cone_march=on`.
 El programa conserva tu elección de un inicio al siguiente, también para los archivos que abras.
 
 Medido con los 80 archivos de ejemplo en modo Auto (unos 0,4 megapíxeles, el
@@ -1298,6 +1298,7 @@ ellas:
 | **Búsqueda de la superficie por secante** | −2 % (mediana), hasta −18 % | mediana 0,7 %; el detalle fino se desplaza ligeramente |
 | **Sin límite de pasos sin niebla dinámica** | −1 % (mediana), hasta −30 % en escenas abiertas | casi siempre la misma imagen (mediana 0,03 %) |
 | **Oclusión DE a media resolución** | −18 % en los 10 archivos con oclusión DE (DEcomb1 −24 %); esa etapa hasta 4 veces más rápida | 0–27 % de los píxeles, oclusión más suave en el detalle fino; se ve igual |
+| **Marcha en cono**: un rayo grueso por bloque de píxeles, la marcha de cada píxel empieza donde se detuvo | la marcha −18 % (mediana) en el procesador, hasta −64 % en escenas abiertas (69 de 70 más rápidos); en la tarjeta renderizados completos de escenas abiertas hasta −63 % | mediana 0,4 %, tanto como cambia por sí solo el primer paso aleatorio de la marcha; *las partes finas pueden perderse donde la estimación de distancia se aleja mucho* |
 
 Compare con un renderizado sin ellas antes de confiar en una para una imagen.
 

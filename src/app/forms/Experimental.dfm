@@ -3,7 +3,7 @@ object ExperimentalFrm: TExperimentalFrm
   Top = 180
   BorderStyle = bsDialog
   Caption = '@MB:ExperimentalSpeedUps'
-  ClientHeight = 398
+  ClientHeight = 478
   ClientWidth = 520
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -115,13 +115,31 @@ object ExperimentalFrm: TExperimentalFrm
     Caption = '@MB:CalculatesTheDEAmbientOcclusionOn'
     WordWrap = True
   end
+  object ConeBox: TCheckBox
+    Left = 30
+    Top = 358
+    Width = 478
+    Height = 17
+    Caption = '@MB:ConeMarchThePixelsOfA'
+    TabOrder = 5
+    OnClick = OnBoxClick
+  end
+  object ConeNote: TLabel
+    Left = 48
+    Top = 378
+    Width = 460
+    Height = 52
+    AutoSize = False
+    Caption = '@MB:ACoarseRayPerBlockOf'
+    WordWrap = True
+  end
   object CloseBtn: TButton
     Left = 418
-    Top = 360
+    Top = 440
     Width = 90
     Height = 26
     Caption = '@MB:Close'
-    TabOrder = 5
+    TabOrder = 6
     OnClick = CloseBtnClick
   end
 end

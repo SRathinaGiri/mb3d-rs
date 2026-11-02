@@ -74,6 +74,9 @@ pub struct CalcParams {
     /// the DE occlusion on every second pixel of every second row, the
     /// others filled (experimental: occlusion_half, `deao::fill_half`)
     pub ao_half: bool,
+    /// the coarse rays of the blocks of pixels, each pixel's march started
+    /// where its block's stopped (experimental: cone_march, `crate::cone`)
+    pub cone: Option<std::sync::Arc<crate::cone::Grid>>,
     pub de_stop_factor: f32,
     pub ln_rstop: f32,
     pub normals_on_de: bool,
@@ -818,6 +821,7 @@ impl CalcParams {
             relax: ex.relax() as f32,
             secant: ex.secant(),
             ao_half: ex.ao_half(),
+            cone: None,
             de_stop_factor,
             ln_rstop,
             normals_on_de: sc.normals_on_de || is_custom_de || dc.is_some(),
@@ -860,6 +864,7 @@ impl CalcParams {
         };
         #[cfg(jit)]
         p.attach_jit();
+        p.cone = crate::cone::grid_for(sc, &p);
         Ok(p)
     }
 
@@ -1947,6 +1952,30 @@ impl<'a> Marcher<'a> {
 
     /// One pixel of `TMandCalcThread.Execute`.
     pub fn march_pixel(&mut self, x: i32, y: i32) -> SiLight {
+        // experimental, the cone march: the depth the block's coarse ray
+        // reached (before the pixel's own setting up: the coarse ray may be
+        // marched here); a pixel whose jump there lands in the surface (the
+        // estimate was no bound) is marched from the start as without it
+        let (safe, count) = match &self.p.cone {
+            Some(g) => g.safe_depth(self, x, y),
+            None => (0.0, 0.0),
+        };
+        if safe > 0.0 {
+            if let Some(si) = self.march_pixel_from(x, y, safe, count) {
+                return si;
+            }
+            crate::cone::note_jump(true);
+        } else if self.p.cone.is_some() {
+            crate::cone::note_jump(false);
+        }
+        self.march_pixel_from(x, y, 0.0, 0.0).unwrap_or_default()
+    }
+
+    /// [`Marcher::march_pixel`] with the march started at depth `safe`
+    /// (the dynamic fog's step count `count` up to there) when the ray is
+    /// still free there; None when it is not (the surface is there
+    /// already).
+    fn march_pixel_from(&mut self, x: i32, y: i32, safe: f64, count: f32) -> Option<SiLight> {
         let p = self.p;
         let mut si = SiLight::default();
         si.amb_shadow = 5000; // MB3D's value when no ambient shadow is calculated
@@ -1954,7 +1983,7 @@ impl<'a> Marcher<'a> {
         self.calc_vgrads_fov(x + 1);
         self.calc_start_pos(x, y);
         self.it.calc_sit = false;
-        let step_count = 0f32;
+        let mut step_count = 0f32;
         self.mzz = 0.0;
         self.ms_de_stop = p.de_stop;
         let first_step = p.first_step_random;
@@ -1966,7 +1995,7 @@ impl<'a> Marcher<'a> {
             let (dt1, cp) = self.max_length_to_cut_plane();
             cut_plane = cp;
             if dt1 > p.zend - self.mzz {
-                return si; // background
+                return Some(si); // background
             }
             self.mzz = dt1;
             let v = self.vfov;
@@ -1992,7 +2021,7 @@ impl<'a> Marcher<'a> {
             si.si_gradient = 32768;
             si.otrap = crate::gbuffer::GROUND;
             self.calc_zpos_and_rough(&mut si);
-            return si;
+            return Some(si);
         }
         if self.it.it_result >= self.max_its_result || dtmp < self.ms_de_stop as f64 {
             // already inside the set at the start plane (or the cutting plane)
@@ -2012,9 +2041,132 @@ impl<'a> Marcher<'a> {
                 let t = (self.it.rout / p.d_rstop).clamp(0.0, 1.0);
                 si.si_gradient = 32768 + (32767.0 * t).round_ties_even() as u16;
             }
-            return si;
+            return Some(si);
         }
-        self.march_from(si, dtmp, first_step, step_count)
+        if safe > self.mzz {
+            // the cone march: nothing up to the coarse ray's depth, the
+            // march starts there (past the end: background, with the
+            // dynamic fog's count of the whole way)
+            if safe > p.zend {
+                si.shadow = count.clamp(0.0, 1023.0).round_ties_even() as u16;
+                return Some(si);
+            }
+            let d = safe - self.mzz;
+            self.mzz = safe;
+            self.step(d);
+            self.update_de_stop();
+            dtmp = self.calc_de();
+            step_count = count;
+            if dtmp < self.ms_de_stop as f64 || self.it.it_result >= self.max_its_result {
+                return None;
+            }
+        }
+        Some(self.march_from(si, dtmp, first_step, step_count))
+    }
+
+    /// The ray of the picture's point (`fx`, `fy`) (pixel units, fractions
+    /// allowed): its start and its direction per step, as
+    /// [`Marcher::march_pixel`] has them for a pixel (the direction one
+    /// pixel on, as MB3D).
+    pub(crate) fn ray(&self, fx: f64, fy: f64) -> (Vec3, Vec3) {
+        let p = self.p;
+        let cafy = (fy / p.height as f64 - 0.5) * p.fov_y;
+        let cafx = ((p.fovx_off - (fx + 1.0) as f32) * p.fovx_mul) as f64;
+        let v = match p.optic {
+            CameraOptic::Planar => normalize([-cafx, cafy, p.pl_optic_z as f64]),
+            CameraOptic::Panorama => build_view_vector_dsphere_fov(cafy, cafx),
+            CameraOptic::Common => build_view_vector_dfov(cafy, cafx),
+            CameraOptic::Fisheye => build_view_vector_fisheye(cafy, cafx),
+        };
+        let v = rotate_vector_reverse(&v, &p.vgrads);
+        let mut c = p.ystart;
+        if p.optic == CameraOptic::Panorama {
+            if p.ods != 0.0 {
+                let e = rotate_vector_reverse(&[cafx.cos(), 0.0, cafx.sin()], &p.vgrads);
+                add_weight(&mut c, &e, p.ods);
+            }
+        } else {
+            for k in 0..3 {
+                c[k] += p.vgrads[0][k] * fx + p.vgrads[1][k] * fy;
+            }
+        }
+        (c, v)
+    }
+
+    /// Experimental, the cone march (`crate::cone`): the coarse ray of the
+    /// block of `b` by `b` pixels at (`bx` * `b`, `by` * `b`) marched from
+    /// depth `t0` (with the dynamic fog's step count `count0` up to there)
+    /// until a pixel of the block could meet the surface: that depth (step
+    /// widths; +inf when the ray passed the end of the view) and the step
+    /// count a pixel's march would have had up to there (the steps of the
+    /// march, which are longer than the coarse ray's, per length).  (The
+    /// marcher's state is left for the next pixel to set up.)
+    pub fn cone_march(&mut self, bx: usize, by: usize, b: usize, t0: f64, count0: f32) -> (f64, f32) {
+        let p = self.p;
+        let (x0, y0) = ((bx * b) as f64, (by * b) as f64);
+        let (c0, v0) = self.ray(x0 + (b as f64 - 1.0) * 0.5, y0 + (b as f64 - 1.0) * 0.5);
+        // the block's spread from the coarse ray: at the start and per
+        // step width of depth (step widths)
+        let (mut a, mut slope) = (0.0f64, 0.0f64);
+        for j in 0..b {
+            for i in 0..b {
+                let (c, v) = self.ray(x0 + i as f64, y0 + j as f64);
+                a = a.max(len(&sub(c, c0)));
+                slope = slope.max(len(&sub(v, v0)));
+            }
+        }
+        a /= p.step_width;
+        slope /= p.step_width;
+        self.it.c = c0;
+        self.vfov = v0;
+        self.mzz = t0;
+        self.step(t0);
+        self.inside = p.inside_rendering;
+        self.calc_inside = p.inside_rendering;
+        self.it.calc_sit = false;
+        self.max_its_result = p.max_it;
+        // the march takes the estimate for a bound within its step factor
+        // (a step of `z_step_div` times the estimate is safe when the
+        // estimate is at most 1 / `z_step_div` times too large): the
+        // block's spread counts that much more
+        let lip = CONE_MARGIN / p.z_step_div.clamp(0.05, 1.0) as f64;
+        // a step of the spread's growth and the DE stop's covers both
+        let div = 1.0 + slope * lip + p.de_stop as f64 * p.de_stop_factor as f64;
+        let (mut last_de, mut last_step) = (f64::INFINITY, 0.0f64);
+        let mut t = t0;
+        let mut count = count0;
+        for _ in 0..2_000_000 {
+            self.update_de_stop();
+            let mut de = self.calc_de();
+            if self.it.it_result >= self.max_its_result {
+                return (t, count);
+            }
+            if de > last_de + last_step {
+                de = last_de + last_step;
+            }
+            let rsf = if last_step > 0.0 && last_de > de + 1e-30 { (last_step / (last_de - de)).clamp(0.5, 1.0) } else { 1.0 };
+            let stop = self.ms_de_stop as f64;
+            let reach = (a + slope * t) * lip + stop;
+            let s = (de - reach - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf / div;
+            if s < CONE_MIN_STEP * stop {
+                return (t, count);
+            }
+            // the dynamic fog: the march's step here (as in march_from) and
+            // the count of the way to the end or the next point
+            if p.dfog_on_it == 0 || self.it.it_result == p.dfog_on_it as i32 {
+                let d = f64::max(0.11, (de - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf);
+                count += (s.min(p.zend - t) / d) as f32;
+            }
+            if t + s > p.zend {
+                return (f64::INFINITY, count);
+            }
+            t += s;
+            self.mzz = t;
+            self.step(s);
+            last_de = de;
+            last_step = s;
+        }
+        (t, count)
     }
 
     /// The pixel from the card's single precision march (`card`, its
@@ -2226,6 +2378,17 @@ impl<'a> Marcher<'a> {
         si
     }
 }
+
+/// The cone march ends when its step falls under this share of the DE stop.
+const CONE_MIN_STEP: f64 = 0.05;
+
+/// The cone march takes the distance estimate for up to this many times
+/// (over the step factor) a true bound: a block's spread counts that much
+/// (measured on 80 example scenes: at 1 the thin fins of a folding
+/// formula were lost, at 2 still in small pictures; at 3 the pictures
+/// differ as much as the march's own random first step makes them, and
+/// the gain is a tenth less than at 2).
+const CONE_MARGIN: f64 = 3.0;
 
 /// The secant search's step back towards the probe before (DE minus DE
 /// stop `f0`) from the probe with `f` on the other side of the surface:

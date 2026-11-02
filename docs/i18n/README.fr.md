@@ -1294,7 +1294,7 @@ restent donc désactivées tant que vous ne les activez pas : onglet
 expérimentales*, puis celles que vous voulez. Elles sont enregistrées avec la
 scène (la ligne de commande, l'essaim et l'assistant IA les utilisent donc
 aussi) ; en ligne de commande `-s experimental=on` avec `-s step_relax=1.3`,
-`-s secant_search=on`, `-s free_steps=on` ou `-s occlusion_half=on`.
+`-s secant_search=on`, `-s free_steps=on`, `-s occlusion_half=on` ou `-s cone_march=on`.
 Le programme garde ton choix d'un démarrage à l'autre, aussi pour les fichiers que tu ouvres.
 
 Mesuré sur les 80 fichiers d'exemple en mode Auto (environ 0,4 mégapixel, le
@@ -1307,6 +1307,7 @@ elles :
 | **Recherche de la surface par sécante** | −2 % (médiane), jusqu'à −18 % | médiane 0,7 % ; le détail fin se déplace légèrement |
 | **Pas de limite de pas sans brouillard dynamique** | −1 % (médiane), jusqu'à −30 % dans les scènes ouvertes | le plus souvent la même image (médiane 0,03 %) |
 | **Occlusion DE en demi-résolution** | −18 % sur les 10 fichiers avec occlusion DE (DEcomb1 −24 %) ; cette étape jusqu'à 4 fois plus rapide | 0–27 % des pixels, occlusion plus douce dans le détail fin ; l'aspect est le même |
+| **Marche en cône** : un rayon grossier par bloc de pixels, la marche de chaque pixel part de là où il s'est arrêté | la marche −18 % (médiane) sur le processeur, jusqu'à −64 % dans les scènes ouvertes (69 sur 70 plus rapides) ; sur la carte, rendus complets de scènes ouvertes jusqu'à −63 % | médiane 0,4 %, autant que le premier pas aléatoire de la marche change à lui seul ; *des parties fines peuvent être perdues là où l'estimation de distance est très fausse* |
 
 Comparez avec un rendu sans elles avant de vous fier à l'une d'elles pour une
 image.

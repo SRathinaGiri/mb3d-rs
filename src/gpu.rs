@@ -1920,7 +1920,7 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 440;
+const PARAM_WORDS: usize = 452;
 
 /// The parameter word of the coordinates as doubles (`DP` in the shader).
 const DOUBLE_WORD: usize = 296;
@@ -2246,6 +2246,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
     let maps = make("maps", &vol_maps(p, &sh));
+    let cone = make("cone", &[0, 0]);
     // the tasks in rows of R_W, resumable (a bounce marches a ray and
     // casts the shadow and occlusion rays of its hit)
     // the pacing from the last batch (its buffers and turn budget): the
@@ -2278,6 +2279,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
                 wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
             ],
         });
         // the march shares the tasks with the CPU (`RaySharing`), the
@@ -2617,6 +2619,7 @@ fn vol_map_card(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f6
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
     let maps = make("maps", &sh.maps);
+    let cone = make("cone", &[0, 0]);
     let mut res = Resumer::new(g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     // the map's values (without its sides) as the march's volumetric light
@@ -2636,6 +2639,7 @@ fn vol_map_card(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f6
             wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
         ],
     });
     res.run(
@@ -2741,6 +2745,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, seca
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
     let maps = make("maps", &vol_maps(p, &sh));
+    let cone = make("cone", &[0, 0]);
     let key = {
         use std::hash::{Hash, Hasher};
         let mut h = std::collections::hash_map::DefaultHasher::new();
@@ -2762,6 +2767,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, seca
             wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
         ],
     });
     use std::sync::atomic::Ordering;
@@ -2966,6 +2972,47 @@ fn run(
     let cst = words("constants", &sh.cst);
     let rtpl = words("record", &sh.rtpl);
     let maps = words("maps", &vol_maps(p, sh));
+    // the cone march (experimental): the blocks' depths of a band, a
+    // level's entries after the coarser level's
+    let sampling = SAMPLE.with(|c| c.get()) != (0, 0);
+    let cone_on = p.cone.is_some() && upload.is_none() && !sampling && modes.contains(&0);
+    let cone_entries = |b: usize, row0: usize, rows: usize| -> (usize, usize, usize, usize) {
+        let (x0, y0) = (p.rect[0].max(0) as usize, p.rect[1].max(0) as usize);
+        let (bx0, by0) = (x0 / b, (y0 + row0) / b);
+        ((x0 + w).div_ceil(b) - bx0, (y0 + row0 + rows).div_ceil(b) - by0, bx0, by0)
+    };
+    let cone_max16 = cone_entries(16, 0, band).0 * (band.div_ceil(16) + 1);
+    let cone_max4 = cone_entries(4, 0, band).0 * (band.div_ceil(4) + 1);
+    let cone = words("cone", &vec![0u32; if cone_on { 2 * (cone_max16 + cone_max4) } else { 2 }]);
+    let cone_pars: Vec<wgpu::Buffer> = (0..2)
+        .map(|_| {
+            g.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("cone params"),
+                size: (PARAM_WORDS * 4) as u64,
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            })
+        })
+        .collect();
+    let cone_binds: Vec<wgpu::BindGroup> = cone_pars
+        .iter()
+        .map(|par| {
+            g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: &pls[0].get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 1, resource: out.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
+                ],
+            })
+        })
+        .collect();
     let binds: Vec<wgpu::BindGroup> = pars
         .iter()
         .zip(&pls)
@@ -2981,6 +3028,7 @@ fn run(
                     wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
                 ],
             })
         })
@@ -3022,15 +3070,51 @@ fn run(
                 .collect();
             g.queue.write_buffer(&out, 0, &bytes(&words));
         }
+        // the cone march: the band's blocks of 16, then of 4 pixels (the
+        // words CONE_B .. CONE_P_OFF of the shader; the march reads the
+        // blocks of 4)
+        let mut cone_words = [0u32; 11];
+        if cone_on {
+            let (cols16, rows16, bx16, by16) = cone_entries(16, row0, rows);
+            let (cols4, rows4, bx4, by4) = cone_entries(4, row0, rows);
+            let levels = [(16, cols16, rows16, bx16, by16, 0usize, 0, 0, 0, 0, 0), (4, cols4, rows4, bx4, by4, cone_max16, 16, cols16, bx16, by16, 0)];
+            for (l, &(b, cols, brows, bx0, by0, off, pb, pcols, pbx0, pby0, poff)) in levels.iter().enumerate() {
+                let mut v = params(p, row0, rows, sh, 0, post, None);
+                v[112] = 7; // M_CONE
+                v[441..452].copy_from_slice(&[0, b, cols as u32, bx0 as u32, by0 as u32, off as u32, pb, pcols as u32, pbx0 as u32, pby0 as u32, poff as u32]);
+                let blocks = cols * brows;
+                res.run(
+                    g,
+                    &cone_pars[l],
+                    v,
+                    blocks,
+                    &|_, _| blocks,
+                    &|_| false,
+                    cancel,
+                    |enc, groups| {
+                        let mut pass = enc.begin_compute_pass(&Default::default());
+                        pass.set_pipeline(&pls[0]);
+                        pass.set_bind_group(0, &cone_binds[l], &[]);
+                        pass.dispatch_workgroups(groups, 1, 1);
+                    },
+                    |_| Ok(()),
+                )?;
+            }
+            cone_words = [1, 0, 0, 0, 0, 0, 4, cols4 as u32, bx4 as u32, by4 as u32, cone_max16 as u32];
+        }
         // each pass on the band until its pixels are done; the rows the
         // last one has finished go to the sink as they come
         let mut sunk = 0;
         for (k, &mode) in modes.iter().enumerate() {
             let last = k + 1 == modes.len();
+            let mut v = params(p, row0, rows, sh, mode, post, None);
+            if mode == 0 {
+                v[441..452].copy_from_slice(&cone_words);
+            }
             res.run(
                 g,
                 &pars[k],
-                params(p, row0, rows, sh, mode, post, None),
+                v,
                 w * rows,
                 &|_, _| w * rows,
                 &|_| false,
@@ -3563,8 +3647,10 @@ mod tests {
     #[test]
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
-        // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf"];
+        // set before every pixel or submission, or the debug outputs; the
+        // cone march's block values are computed from the block at every
+        // entry (also when resuming)
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf", "cone_a", "cone_slope", "cone_t0", "cone_c0", "cone_i"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();

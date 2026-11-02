@@ -388,6 +388,12 @@ pub fn stage_mark(name: &str) {
 /// `stage times: march 1.23 | hard shadows (graphics card) 4.56 | ...`
 /// (seconds; a stage reported twice is summed).
 pub fn stage_times_print() {
+    if std::env::var_os("MB3D_STAGE_TIMES").is_some() {
+        let (n, b) = crate::cone::counts();
+        if n > 0 {
+            crate::elog!("  cone march: {n} pixels on the CPU, {b} of them from the start (the estimate was no bound there)");
+        }
+    }
     if !stage_times_on() {
         return;
     }
@@ -1216,6 +1222,10 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe>
     let (nx, ny) = (w / sxy, h / sxy);
     let samples: Vec<(usize, usize)> = (0..ny).flat_map(|r| (0..nx).map(move |c| (r * sxy + sxy / 2, c * sxy + (r * 5) % sxy))).collect();
     let ns = samples.len();
+    // (the card's sample marches without the cone march, so the CPU's
+    // pixels do too: the probe compares the precisions, not the jumps)
+    let no_cone = p.cone.as_ref().map(|_| CalcParams { cone: None, ..p.clone() });
+    let p_cpu = no_cone.as_ref().unwrap_or(p);
     if ns == 0 {
         return None;
     }
@@ -1242,7 +1252,7 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe>
                     let yy = y + y0;
                     // the card's seed: the row's, advanced by the column
                     let seed = crate::calc::pixel_seed(yy as i64, (x + x0) as i64);
-                    let _ = cpu[j].set(Marcher::new(p, seed).march_pixel((x + x0) as i32, yy as i32));
+                    let _ = cpu[j].set(Marcher::new(p_cpu, seed).march_pixel((x + x0) as i32, yy as i32));
                 }
             });
         }

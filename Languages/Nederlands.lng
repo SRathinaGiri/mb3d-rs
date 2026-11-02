@@ -3893,3 +3893,8 @@ Label4.Caption = toevoegen
 
 [VisualThemesFrm]
 SaveAndExitBtn.Caption = Opslaan + sluiten
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Een grove straal per blok van 16, dan van 4 pixels marcheert met de spreiding van het blok van de afstandsschatting afgetrokken, en de mars van elke pixel begint op zijn diepte. Tot 60 % sneller door open ruimte; dunne delen kunnen verloren gaan waar de schatting er ver naast zit.
+ConeMarchThePixelsOfA=Kegelmars: de pixels van een blok beginnen waar zijn grove straal stopte

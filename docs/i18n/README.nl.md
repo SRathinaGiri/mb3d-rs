@@ -1217,8 +1217,8 @@ dus staan ze uit tot u ze aanzet: tabblad **Intern** → **Experimenteel...**,
 vink *De experimentele versnellingen gebruiken* aan en daarna de gewenste.
 Ze worden met de scène opgeslagen (zodat ook de opdrachtregel, de zwerm en de
 AI-assistent ze gebruiken); op de opdrachtregel `-s experimental=on` met
-`-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on` of
-`-s occlusion_half=on`.
+`-s step_relax=1.3`, `-s secant_search=on`, `-s free_steps=on`,
+`-s occlusion_half=on` of `-s cone_march=on`.
 Het programma onthoudt je keuze van de ene start tot de volgende, ook voor de bestanden die je opent.
 
 Gemeten op de 80 voorbeeldbestanden in de modus Auto (ongeveer 0,4 megapixel,
@@ -1230,6 +1230,7 @@ telkens de snelste van twee renders), tegenover dezelfde bestanden zonder:
 | **Oppervlak zoeken met de secantmethode** | −2 % (mediaan), tot −18 % | mediaan 0,7 %; fijn detail verschuift een beetje |
 | **Geen staplimiet zonder dynamische mist** | −1 % (mediaan), tot −30 % in open scènes | meestal dezelfde afbeelding (mediaan 0,03 %) |
 | **DE-occlusion op halve resolutie** | −18 % over de 10 bestanden met DE-occlusion (DEcomb1 −24 %); die stap tot 4 keer sneller | 0–27 % van de pixels, zachtere occlusie in fijn detail; het ziet er hetzelfde uit |
+| **Kegelmars**: een grove straal per blok pixels, de mars van elke pixel begint waar die stopte | de mars −18 % (mediaan) op de processor, tot −64 % in open scènes (69 van 70 sneller); op de kaart hele renders van open scènes tot −63 % | mediaan 0,4 %, zoveel als de eigen willekeurige eerste stap van de mars verandert; *dunne delen kunnen verloren gaan waar de afstandsschatting er ver naast zit* |
 
 Vergelijk met een render zonder, voordat u voor een afbeelding op een ervan
 vertrouwt.

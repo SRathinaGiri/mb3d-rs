@@ -3905,3 +3905,8 @@ Label11.Caption = 反復回数の
 
 [PostProForm]
 RadioGroup2.Caption = 計算方法
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=16 ピクセル、次に 4 ピクセルのブロックごとに 1 本の粗い光線が、距離推定からブロックの広がりを差し引いてマーチし、各ピクセルのマーチはその深さから始まります。開けた空間では最大 60 % 速くなります。推定が大きく外れている所では薄い部分が失われることがあります。
+ConeMarchThePixelsOfA=コーンマーチ: ブロックのピクセルはその粗い光線が止まった所から始める

@@ -1261,7 +1261,7 @@ aus, solange Sie sie nicht einschalten: Registerkarte **Intern** →
 dann die gewünschten. Sie werden mit der Szene gespeichert (so nutzen sie
 auch die Kommandozeile, der Schwarm und der KI-Assistent); auf der
 Kommandozeile `-s experimental=on` mit `-s step_relax=1.3`,
-`-s secant_search=on`, `-s free_steps=on` oder `-s occlusion_half=on`.
+`-s secant_search=on`, `-s free_steps=on`, `-s occlusion_half=on` oder `-s cone_march=on`.
 Das Programm behält deine Wahl von einem Start zum nächsten, auch für die Dateien, die du öffnest.
 
 Gemessen an den 80 Beispieldateien im Auto-Modus (etwa 0,4 Megapixel, jeweils
@@ -1274,6 +1274,7 @@ sie:
 | **Sekantensuche nach der Oberfläche** | −2 % (Median), bis −18 % | Median 0,7 %; feine Details verschieben sich leicht |
 | **Keine Schrittbegrenzung ohne dynamischen Nebel** | −1 % (Median), bis −30 % in offenen Szenen | meist dasselbe Bild (Median 0,03 %) |
 | **DE-Occlusion in halber Auflösung** | −18 % über die 10 Dateien mit DE-Occlusion (DEcomb1 −24 %); diese Stufe bis zu 4-mal schneller | 0–27 % der Pixel, weichere Verdeckung in feinen Details; es sieht gleich aus |
+| **Kegelmarsch**: ein grober Strahl je Pixelblock, der Marsch jedes Pixels beginnt, wo er anhielt | das Abtasten −18 % (Median) auf dem Prozessor, bis −64 % in offenen Szenen (69 von 70 schneller); auf der Karte ganze Renderings offener Szenen bis −63 % | Median 0,4 %, so viel, wie der eigene zufällige erste Schritt des Abtastens ändert; *dünne Teile können verloren gehen, wo die Distanzschätzung weit danebenliegt* |
 
 Vergleichen Sie mit einem Rendering ohne sie, bevor Sie sich für ein Bild auf
 eine davon verlassen.

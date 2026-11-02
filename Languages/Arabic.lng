@@ -3859,3 +3859,8 @@ Zpos=موضع Z
 ;Zpos
 Zrot=دوران Z
 ;Zrot
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=شعاع خشن لكل كتلة من 16 بكسلًا ثم من 4 يتقدّم مع طرح اتساع الكتلة من تقدير المسافة، ويبدأ تقدّم كل بكسل من عمقه. أسرع حتى 60 % عبر الفضاء المفتوح؛ قد تُفقد الأجزاء الرقيقة حيث يكون التقدير بعيدًا عن الصواب.
+ConeMarchThePixelsOfA=التقدّم المخروطي: بكسلات الكتلة تبدأ حيث توقف شعاعها الخشن

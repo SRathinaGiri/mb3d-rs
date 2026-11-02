@@ -1211,7 +1211,7 @@ off unless you switch them on: **Internal** tab → **Experimental...**, tick
 *Use the experimental speed-ups*, then the ones you want. They are saved
 with the scene (so the command line, the swarm and the AI assistant use
 them too); on the command line `-s experimental=on` with `-s step_relax=1.3`,
-`-s secant_search=on`, `-s free_steps=on` or `-s occlusion_half=on`.
+`-s secant_search=on`, `-s free_steps=on`, `-s occlusion_half=on` or `-s cone_march=on`.
 The program keeps your choice from one start to the next, also for the files you open.
 
 Measured on the 80 example files in Auto mode (about 0.4 megapixels,
@@ -1223,6 +1223,7 @@ the faster of two runs each), against the same files without them:
 | **Secant search** for the surface | −2 % (median), up to −18 % | median 0.7 %; fine detail moves slightly |
 | **No step limit without dynamic fog** | −1 % (median), up to −30 % in open scenes | mostly the same picture (median 0.03 %) |
 | **DE occlusion at half resolution** | −18 % over the 10 files with DE occlusion (DEcomb1 −24 %); that stage up to 4 times faster | 0–27 % of pixels, softer occlusion in fine detail; it looks alike |
+| **Cone march**: a coarse ray per block of pixels, every pixel's march starts where it stopped | the march −18 % (median) on the processor, up to −64 % in open scenes (69 of 70 faster); on the card whole renders of open scenes up to −63 % | median 0.4 %, as much as the march's own random first step changes; *thin parts can be lost where the distance estimate is far off* |
 
 Compare with a render without them before relying on one for a picture.
 

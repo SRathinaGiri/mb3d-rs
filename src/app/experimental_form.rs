@@ -44,6 +44,7 @@ pub fn show_values(app: &Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "SecantBox", e.secant);
     ui.set_checked(F, "FreeBox", e.free_steps);
     ui.set_checked(F, "HalfBox", e.ao_half);
+    ui.set_checked(F, "ConeBox", e.cone);
     enable(ui);
 }
 
@@ -56,12 +57,13 @@ pub fn read_values(app: &mut Mb3d, ui: &Ui) {
     e.secant = ui.checked(F, "SecantBox");
     e.free_steps = ui.checked(F, "FreeBox");
     e.ao_half = ui.checked(F, "HalfBox");
+    e.cone = ui.checked(F, "ConeBox");
 }
 
 /// The single speed-ups only with the switch on.
 fn enable(ui: &mut Ui) {
     let on = ui.checked(F, "OnBox");
-    for c in ["RelaxLabel", "RelaxEdit", "RelaxNote", "SecantBox", "SecantNote", "FreeBox", "FreeNote", "HalfBox", "HalfNote"] {
+    for c in ["RelaxLabel", "RelaxEdit", "RelaxNote", "SecantBox", "SecantNote", "FreeBox", "FreeNote", "HalfBox", "HalfNote", "ConeBox", "ConeNote"] {
         ui.set_enabled(F, c, on);
     }
 }

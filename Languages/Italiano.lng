@@ -3906,3 +3906,8 @@ Label24.Caption = nitidezza:
 
 [VisualThemesFrm]
 SaveAndExitBtn.Caption = Salva ed esci
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Un raggio grossolano per blocco di 16, poi di 4 pixel avanza con l'apertura del blocco sottratta alla stima della distanza, e la marcia di ogni pixel parte dalla sua profondità. Fino al 60 % più veloce nello spazio aperto; le parti sottili possono perdersi dove la stima è molto imprecisa.
+ConeMarchThePixelsOfA=Marcia a cono: i pixel di un blocco partono da dove si è fermato il suo raggio grossolano

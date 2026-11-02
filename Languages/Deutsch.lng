@@ -3889,3 +3889,8 @@ Label6.Caption = Spiegelnd
 [MutaGenFrm]
 Label4.Caption = von Formeln
 Label11.Caption = Ändern der
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Ein grober Strahl je Block von 16, dann von 4 Pixeln marschiert mit der Streuung des Blocks von der Distanzschätzung abgezogen, und der Marsch jedes Pixels beginnt in dessen Tiefe. Bis zu 60 % schneller durch offenen Raum; dünne Teile können verloren gehen, wo die Schätzung weit danebenliegt.
+ConeMarchThePixelsOfA=Kegelmarsch: die Pixel eines Blocks beginnen, wo sein grober Strahl anhielt

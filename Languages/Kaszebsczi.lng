@@ -3915,3 +3915,8 @@ ListView1.Columns.4 = Grafikòwô kôrta
 
 [TilingForm]
 Label24.Caption = òstri:
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Jeden grëbi parmiéń na blok 16, pòtemù 4 piksli maszerëje z rozrzutã blokù òdjãtim òd szacënkù òdległoscë, a marsz kòżdégò piksla zaczinô sã na jegò głãbòkòscë. Do 60 % chùtszi przez òtemkłą przestrzéń; cenczé dzéle mògą sã zgùbic tam, gdze szacënk je dalek òd prôwdë.
+ConeMarchThePixelsOfA=Stożkòwi marsz: piksle blokù zaczinają tam, gdze sã zatrzimôł jegò grëbi parmiéń

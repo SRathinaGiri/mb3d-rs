@@ -3904,3 +3904,8 @@ Label4.Caption = des formules
 
 [TilingForm]
 Label24.Caption = net :
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Un rayon grossier par bloc de 16, puis de 4 pixels avance avec l'étalement du bloc retranché de l'estimation de distance, et la marche de chaque pixel part de sa profondeur. Jusqu'à 60 % plus rapide dans l'espace ouvert ; des parties fines peuvent être perdues là où l'estimation est très fausse.
+ConeMarchThePixelsOfA=Marche en cône : les pixels d'un bloc partent de là où son rayon grossier s'est arrêté

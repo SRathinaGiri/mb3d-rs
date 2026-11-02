@@ -3907,3 +3907,8 @@ Label4.Caption = formuł
 
 [PostProForm]
 RadioGroup2.Caption = Obliczanie
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Jeden zgrubny promień na blok 16, potem 4 pikseli maszeruje z rozrzutem bloku odjętym od oszacowania odległości, a marsz każdego piksela zaczyna się na jego głębokości. Do 60 % szybciej przez otwartą przestrzeń; cienkie części mogą zginąć tam, gdzie oszacowanie jest daleko od prawdy.
+ConeMarchThePixelsOfA=Marsz stożkowy: piksele bloku zaczynają tam, gdzie zatrzymał się jego zgrubny promień

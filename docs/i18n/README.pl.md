@@ -1226,7 +1226,8 @@ dopóki ich nie włączysz: zakładka **Wewnętrzne** → **Eksperymentalne...**
 zaznacz *Użyj eksperymentalnych przyspieszeń*, a potem te, które chcesz. Są
 zapisywane razem ze sceną (więc używają ich też wiersz poleceń, rój i asystent
 AI); w wierszu poleceń `-s experimental=on` z `-s step_relax=1.3`,
-`-s secant_search=on`, `-s free_steps=on` albo `-s occlusion_half=on`.
+`-s secant_search=on`, `-s free_steps=on`, `-s occlusion_half=on` albo
+`-s cone_march=on`.
 Program zachowuje twój wybór od jednego uruchomienia do następnego, także dla otwieranych plików.
 
 Zmierzone na 80 przykładowych plikach w trybie Auto (około 0,4 megapiksela,
@@ -1239,6 +1240,7 @@ nich:
 | **Szukanie powierzchni metodą siecznych** | −2 % (mediana), do −18 % | mediana 0,7 %; drobne szczegóły lekko się przesuwają |
 | **Bez limitu kroków bez mgły dynamicznej** | −1 % (mediana), do −30 % w otwartych scenach | przeważnie ten sam obraz (mediana 0,03 %) |
 | **Okluzja DE w połowie rozdzielczości** | −18 % w 10 plikach z okluzją DE (DEcomb1 −24 %); ten etap do 4 razy szybszy | 0–27 % pikseli, łagodniejsza okluzja w drobnych szczegółach; wygląda tak samo |
+| **Marsz stożkowy**: zgrubny promień na blok pikseli, marsz każdego piksela zaczyna się tam, gdzie się zatrzymał | marsz −18 % (mediana) na procesorze, do −64 % w otwartych scenach (69 z 70 szybciej); na karcie całe rendery otwartych scen do −63 % | mediana 0,4 %, tyle, ile zmienia własny losowy pierwszy krok marszu; *cienkie części mogą zginąć tam, gdzie oszacowanie odległości jest daleko od prawdy* |
 
 Zanim zaufasz któremuś z nich przy obrazie, porównaj z renderem bez nich.
 

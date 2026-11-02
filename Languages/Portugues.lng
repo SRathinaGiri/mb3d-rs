@@ -3858,3 +3858,8 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+ACoarseRayPerBlockOf=Um raio grosseiro por bloco de 16, depois de 4 pixels avança com a abertura do bloco descontada da estimativa de distância, e o avanço de cada pixel começa na profundidade dele. Até 60 % mais rápido pelo espaço aberto; partes finas podem se perder onde a estimativa erra por muito.
+ConeMarchThePixelsOfA=Avanço em cone: os pixels de um bloco começam onde seu raio grosseiro parou

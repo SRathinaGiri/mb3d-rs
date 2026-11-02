@@ -43,6 +43,7 @@ pub mod batch;
 pub mod calc;
 pub mod checkpoint;
 pub mod clouds;
+pub mod cone;
 pub mod custom;
 pub mod deao;
 pub mod denoise;

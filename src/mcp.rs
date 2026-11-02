@@ -112,7 +112,9 @@ Surface detail (not in MB3D): detail = rough | stone | grain, strength, size, fi
 Experimental speed-ups (not in MB3D, change the picture a little, off by default):
   experimental = on enables them, then step_relax = 1.3 (longer march steps, ~5 % faster,
   thin shells can show holes), secant_search = on, free_steps = on (no step limit without
-  dynamic fog), occlusion_half = on (DE occlusion at half resolution, that stage up to 4x faster).
+  dynamic fog), occlusion_half = on (DE occlusion at half resolution, that stage up to 4x faster),
+  cone_march = on (a coarse ray per block of pixels starts every pixel's march, the march up to
+  60 % faster in open scenes; thin parts can be lost where the distance estimate is far off).
 Two objects (not in MB3D): with de_combination (min = union, max = intersection, ...), the
   second hybrid part placed apart: part2_position = x, y, z; part2_rotation = degrees x, y, z;
   part2_scale (1 = as is).

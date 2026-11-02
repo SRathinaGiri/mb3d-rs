@@ -140,6 +140,16 @@ fn main() {
         }
         ui.save_form_png("MutaGenFrm", &out.join("MutaGenFrm.png"), 1.0).unwrap();
     }
+    // the experimental speed-ups window, switched on
+    if want("experimental") {
+        ui.show("ExperimentalFrm");
+        app.process(&mut ui);
+        if !ui.checked("ExperimentalFrm", "OnBox") {
+            ui.click("ExperimentalFrm", "OnBox");
+            app.process(&mut ui);
+        }
+        ui.save_form_png("ExperimentalFrm", &out.join("ExperimentalFrm.png"), 1.0).unwrap();
+    }
     // Voxel export: import and preview
     if want("voxel") {
     ui.show("FVoxelExport");
