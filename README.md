@@ -1223,7 +1223,7 @@ the faster of two runs each), against the same files without them:
 | **Secant search** for the surface | −2 % (median), up to −18 % | median 0.7 %; fine detail moves slightly |
 | **No step limit without dynamic fog** | −1 % (median), up to −30 % in open scenes | mostly the same picture (median 0.03 %) |
 | **DE occlusion at half resolution** | −18 % over the 10 files with DE occlusion (DEcomb1 −24 %); that stage up to 4 times faster | 0–27 % of pixels, softer occlusion in fine detail; it looks alike |
-| **Cone march**: a coarse ray per block of pixels, every pixel's march starts where it stopped | the march −18 % (median) on the processor, up to −64 % in open scenes (69 of 70 faster); on the card whole renders of open scenes up to −63 % | median 0.4 %, as much as the march's own random first step changes; *thin parts can be lost where the distance estimate is far off* |
+| **Cone march**: a coarse ray per block of pixels, every pixel's march starts where it stopped | the march −18 % (median −21 %) on the processor, up to −66 % in open scenes (68 of 70 faster); on the card whole renders of open scenes up to −47 % | median 1.0 %, as much as the march's own random first step changes; *0.2.92 could lose thin parts where the distance estimate is far too large; fixed in 0.2.93* |
 
 Compare with a render without them before relying on one for a picture.
 A page with pictures, the gains of all five together and how they affect

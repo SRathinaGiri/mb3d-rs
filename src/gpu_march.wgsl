@@ -233,7 +233,7 @@ const CONE_P_OFF: u32 = 451u;
 // the cone march takes the estimate for up to this many times (over the
 // step factor) a bound (calc::CONE_MARGIN); it ends when its step falls
 // under this share of the DE stop (calc::CONE_MIN_STEP)
-const CONE_MARGIN: R = 3.0;
+const CONE_MARGIN: R = 1.5;
 const CONE_MIN_STEP: R = 0.05;
 
 const PI: R = 3.14159265358979;
@@ -2585,7 +2585,8 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         let stop = ms_de_stop;
                         let reach = (cone_a + cone_slope * mzz) * lip + stop;
                         let div = 1.0 + cone_slope * lip + pf(DE_STOP) * pf(DE_STOP_FACTOR);
-                        let st = (de - reach - pf(MS_DE_SUB) * stop) * zsd * rsf / div;
+                        // (within the march's step limit)
+                        let st = min((de - reach - pf(MS_DE_SUB) * stop) * zsd * rsf / div, max(stop, 0.4) * pf(MH04ZSD));
                         if (st < CONE_MIN_STEP * stop) {
                             ended = true;
                         } else {

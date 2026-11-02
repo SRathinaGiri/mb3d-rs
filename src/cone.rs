@@ -219,6 +219,43 @@ mod tests {
         assert!(si.zpos() >= 32768 && si.shadow > 0, "{} {}", si.zpos(), si.shadow);
     }
 
+    /// LightBulbMoon - No, Never (Amazing Surf, 1000 iterations), 192 by 192:
+    /// its estimate is far too large off the surface, only the march's
+    /// step limit finds the thin parts; without that limit the coarse rays
+    /// passed them (at margin 3 a 55th of the surface became background,
+    /// with the limit a 200th, the march's edge pixels).
+    #[test]
+    fn the_coarse_rays_keep_the_marchs_step_limit() {
+        let sc = Scene::parse(
+            "width = 192\nheight = 192\niterations = 1000\nmin_iterations = 1\nrstop = 1024\n\
+             zoom = 39.7619219387428\nmid = 0.590668486717442, -4.80312498339983, 0.552945843153886\n\
+             z_start = 0.439069097449697\nz_end = 128.821828929992\n\
+             vgrads = -0.00002291690465552792, -0.000005663780594645785, 0.000012774063303579667, 0.0000019315813555699398, 0.000023017705602866107, 0.000013670912374282298, -0.000013839223149258143, 0.00001259152258681232, -0.00001924497556427487\n\
+             fov = 60\nde_stop = 0.384\nrepeat_from = 1\nraystep = 0.3\nraystep_limiter = 0.3\nbin_search = 11\n\
+             step_sub_de_stop = true\nvary_de_stop = true\nfirst_step_random = false\n\
+             julia = true\njulia_c = 2.38125, 0.0109375, 0.0498046875, 0\n\
+             experimental = on\ncone_march = on\n\
+             [formula]\nname = _Rotate\niterations = 1\nrotation1 x = 25.1484375\nrotation1 y = -2.3671875\nrotation1 z = 64.21875\n\
+             [formula]\nname = Amazing Surf\niterations = 1\nscale = 1.0444335937499998\nmin r = -2.05625\nfold = 1.0703125\n\
+             rotation1 x = 5.1640625\nrotation1 y = 5\nrotation1 z = 2.609375\nscale vary = 0\nsphere or cylinder = 0\n",
+        )
+        .unwrap();
+        let p = CalcParams::new(&sc).unwrap();
+        assert!(p.cone.is_some());
+        let plain = CalcParams { cone: None, ..p.clone() };
+        let (mut m, mut mp) = (Marcher::new(&p, 0), Marcher::new(&plain, 0));
+        let (mut surface, mut lost) = (0, 0);
+        for y in 0..sc.height {
+            for x in 0..sc.width {
+                let hit = mp.march_pixel(x, y).zpos() < 32768;
+                surface += hit as usize;
+                lost += (hit && m.march_pixel(x, y).zpos() >= 32768) as usize;
+            }
+        }
+        assert!(surface > 10000, "{surface} pixels on the surface");
+        assert!(lost * 100 < surface, "{lost} of {surface} surface pixels background with the cone march");
+    }
+
     #[test]
     fn when_the_cone_march_is_not_used() {
         assert_eq!(not_wanted(&scene("")), None);

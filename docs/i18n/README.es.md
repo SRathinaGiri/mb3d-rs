@@ -1298,7 +1298,7 @@ ellas:
 | **Búsqueda de la superficie por secante** | −2 % (mediana), hasta −18 % | mediana 0,7 %; el detalle fino se desplaza ligeramente |
 | **Sin límite de pasos sin niebla dinámica** | −1 % (mediana), hasta −30 % en escenas abiertas | casi siempre la misma imagen (mediana 0,03 %) |
 | **Oclusión DE a media resolución** | −18 % en los 10 archivos con oclusión DE (DEcomb1 −24 %); esa etapa hasta 4 veces más rápida | 0–27 % de los píxeles, oclusión más suave en el detalle fino; se ve igual |
-| **Marcha en cono**: un rayo grueso por bloque de píxeles, la marcha de cada píxel empieza donde se detuvo | la marcha −18 % (mediana) en el procesador, hasta −64 % en escenas abiertas (69 de 70 más rápidos); en la tarjeta renderizados completos de escenas abiertas hasta −63 % | mediana 0,4 %, tanto como cambia por sí solo el primer paso aleatorio de la marcha; *las partes finas pueden perderse donde la estimación de distancia se aleja mucho* |
+| **Marcha en cono**: un rayo grueso por bloque de píxeles, la marcha de cada píxel empieza donde se detuvo | la marcha −18 % (mediana −21 %) en el procesador, hasta −66 % en escenas abiertas (68 de 70 más rápidos); en la tarjeta renderizados completos de escenas abiertas hasta −47 % | mediana 1,0 %, tanto como cambia por sí solo el primer paso aleatorio de la marcha; *0.2.92 podía perder partes finas donde la estimación de distancia es demasiado grande; corregido en 0.2.93* |
 
 Compare con un renderizado sin ellas antes de confiar en una para una imagen.
 

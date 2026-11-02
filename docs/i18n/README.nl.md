@@ -1230,7 +1230,7 @@ telkens de snelste van twee renders), tegenover dezelfde bestanden zonder:
 | **Oppervlak zoeken met de secantmethode** | −2 % (mediaan), tot −18 % | mediaan 0,7 %; fijn detail verschuift een beetje |
 | **Geen staplimiet zonder dynamische mist** | −1 % (mediaan), tot −30 % in open scènes | meestal dezelfde afbeelding (mediaan 0,03 %) |
 | **DE-occlusion op halve resolutie** | −18 % over de 10 bestanden met DE-occlusion (DEcomb1 −24 %); die stap tot 4 keer sneller | 0–27 % van de pixels, zachtere occlusie in fijn detail; het ziet er hetzelfde uit |
-| **Kegelmars**: een grove straal per blok pixels, de mars van elke pixel begint waar die stopte | de mars −18 % (mediaan) op de processor, tot −64 % in open scènes (69 van 70 sneller); op de kaart hele renders van open scènes tot −63 % | mediaan 0,4 %, zoveel als de eigen willekeurige eerste stap van de mars verandert; *dunne delen kunnen verloren gaan waar de afstandsschatting er ver naast zit* |
+| **Kegelmars**: een grove straal per blok pixels, de mars van elke pixel begint waar die stopte | de mars −18 % (mediaan −21 %) op de processor, tot −66 % in open scènes (68 van 70 sneller); op de kaart hele renders van open scènes tot −47 % | mediaan 1,0 %, zoveel als de eigen willekeurige eerste stap van de mars verandert; *0.2.92 kon dunne delen verliezen waar de afstandsschatting veel te groot is; opgelost in 0.2.93* |
 
 Vergelijk met een render zonder, voordat u voor een afbeelding op een ervan
 vertrouwt.

@@ -1,11 +1,13 @@
 # The experimental speed-ups
 
-mb3d-rs 0.2.92 has five experimental speed-ups that change the picture a
-little, so they are off until you switch them on. Measured on the 80 example
-files that ship with the program (2 November 2026, about 0.4 megapixels, one
-PC: an RTX 2060 and a Ryzen 9 3900X), all five together make a render a tenth
-faster on average and a third faster in open scenes; on the processor alone the
-cone march cuts the march by 18 %, up to 64 %.
+mb3d-rs has five experimental speed-ups that change the picture a little, so
+they are off until you switch them on. Measured on the 80 example files that
+ship with the program (2 November 2026, about 0.4 megapixels, one PC: an RTX
+2060 and a Ryzen 9 3900X), all five together make a render 11 % faster on
+average and a third faster in open scenes; on the processor alone the cone
+march cuts the march by 18 %, up to 66 %. (The figures for the cone march are
+those of its fixed version in 0.2.93: in 0.2.92 it could lose thin parts where
+the distance estimate is far too large, see [below](#the-cone-march-in-0292).)
 
 ## Where they are
 
@@ -31,18 +33,18 @@ All five work on the processor and on the graphics card.
 
 ## Each one on its own
 
-On its own, each speed-up shaves 0.4–1.8 % off a whole render on this PC,
+On its own, each speed-up shaves 0.4–2.3 % off a whole render on this PC,
 because the graphics card already does most of the marching and the shadows,
 occlusion and reflections take their own time. Look at the stage each one
 works on and the picture is clearer: step relax cuts the march by 9 %, the
-cone march by 5 %, and the half-resolution occlusion cuts the occlusion stage
+cone march by 7 %, and the half-resolution occlusion cuts the occlusion stage
 by 44 %.
 
 ![Time saved per speed-up: the whole render and the stage it works on](img/experimental_gains.png)
 
 On the processor alone the cone march matters most: measured on the same
-scenes without the card, it cuts the march by 18 % (median), up to 64 % in
-open scenes.
+scenes without the card, it cuts the march by 18 % (median 21 %), up to 66 %
+in open scenes, and 68 of the 70 scenes it works in get faster.
 
 | Speed-up | Where it shines | Pixels changed (median) | Watch out for |
 |---|---|---|---|
@@ -50,7 +52,7 @@ open scenes.
 | Secant search | Scenes with many surface hits: up to −8 % | 0.7 % | Fine detail moves slightly |
 | No step limit | Open scenes without dynamic fog: up to −30 % | 0.03 % | Nothing visible |
 | Occlusion at half resolution | Scenes with DE occlusion: up to −20 % of the whole render | 0.0 % (up to 23 % in fine detail) | Softer occlusion in fine detail |
-| Cone march | Open scenes: up to −43 % of the whole render (−64 % of the march on the processor) | 0.9 % | Thin parts of folding formulas at small sizes; off by itself for inside+outside, disable analytic DE and volumetric light |
+| Cone march | Open scenes: up to −47 % of the whole render (−66 % of the march on the processor) | 0.9 % | On the card, scenes with dynamic fog can get slower (6 AM – Torii temple); off by itself for inside+outside, disable analytic DE and volumetric light |
 
 "Pixels changed" is the share of pixels that differ by more than 8 of 255
 from the plain render; the march's own random first step already moves about
@@ -58,15 +60,15 @@ from the plain render; the march's own random first step already moves about
 
 ## All five together
 
-All five switched on cut the 79 renders from 161 s to 145 s, a tenth less,
-and 68 of the 79 scenes got faster (the slowest of the rest lost 7 %). The
-best scenes: Nothing left but bones −45 %, LightBulbMoon – No, Never −39 %,
-DEcomb1 −35 %, Mandalex −33 %. The march stage alone shrinks by 16 %, the
-occlusion stage by 46 %.
+All five switched on cut the 78 renders from 155 s to 138 s, 11 % less, and 71
+of the 78 scenes got faster (the slowest of the rest, Wada basin, a one-second
+render, lost a fifth). The best scenes: Nothing left but bones −48 %, Mandalex
+−42 %, LightBulbMoon – No, Never −41 %, DEcomb1 −36 %. The march stage alone
+shrinks by 18 %, the occlusion stage by 46 %.
 
-That is more than the five single gains add up to (they sum to 6 %), so they
-help each other more than they get in each other's way. The price: a median
-3.2 % of the pixels differ from the plain render, mostly in fine shading; in
+That is about what the five single gains add up to (12 %), so they rarely get
+in each other's way. The price: a median 3.4 % of the pixels differ from the
+plain render, mostly in fine shading; in
 noisy scenes (spineJulia, the Julia examples) it is far more, but those differ
 as much between two plain renders with a different first step.
 
@@ -77,14 +79,14 @@ do not.
 
 | Pair | Effect | Why |
 |---|---|---|
-| Cone march + step relax | **Helps**: together −5 % (median) where each alone gives −1 % and −2 %; better than the better one alone in 22 scenes, worse in 5 | The cone march skips the open space in front of the surface, step relax then lengthens the steps that are left near it: each shortens the part the other cannot |
-| Cone march + no step limit | **Overlaps**: together −1.8 % (median), hardly more than the cone march alone; worse than the better one alone in 13 scenes | Both remove the cost of open space; once the cone march has jumped over it, there are few long steps left to free |
+| Cone march + step relax | **Helps**: together −5.5 % (median) where each alone gives −2.6 % and −4 %; better than the better one alone in 15 scenes, worse in 9 | The cone march skips the open space in front of the surface, step relax then lengthens the steps that are left near it: each shortens the part the other cannot |
+| Cone march + no step limit | **Overlaps**: together −2.9 % (median), hardly more than the cone march alone (−2.6 %); worse than the better one alone in 9 scenes, better in 3 | Both remove the cost of open space; once the cone march has jumped over it, there are few long steps left to free |
 | Step relax + secant search | Independent | One changes the steps, the other only the last search for the surface |
 | Occlusion at half resolution + anything | Independent | It works on the occlusion stage after the march; its gain comes on top of the others' |
 | Secant search + cone march | Independent | The cone march ends before the surface search begins |
 
 None of the pairs makes a picture worse than the single switches do: the pixel
-changes of "all five" (3.2 % median) are about those of step relax (2.6 %)
+changes of "all five" (3.4 % median) are about those of step relax (2.8 %)
 plus the half-resolution occlusion, and the holes step relax can make in thin
 shells appear with or without the others.
 
@@ -96,11 +98,25 @@ shells appear with or without the others.
   the half-resolution occlusion are safe in practice; add step relax only
   after comparing with a plain render, since thin shells can show holes.
 - On the processor alone (no graphics card, a laptop, the swarm), the cone
-  march is the one that counts: −18 % of the march on average, up to −64 %.
+  march is the one that counts: −18 % of the march on average, up to −66 %.
 - The switches are saved with the scene, so a parameter file you share carries
   them; tell people when you post one.
 
 Every number here is from the 80 example files at about 0.4 megapixels on one
-PC (one scene, Fishbowl, left out of the totals: its run hit a shader compile);
-your own scenes and card will differ, but the ordering of the gains should
-hold. How each speed-up works: [TECHNICAL.md](TECHNICAL.md#experimental-speed-ups).
+PC (two scenes left out of the totals: Fishbowl, whose run hit a shader
+compile, and 6 AM – Torii temple, whose renders doubled in every variant of the
+run, also in those that leave the march alone); your own scenes and card will
+differ, but the ordering of the gains should hold. How each speed-up works: [TECHNICAL.md](TECHNICAL.md#experimental-speed-ups).
+
+## The cone march in 0.2.92
+
+In 0.2.92 the cone march's coarse rays ignored the march's step limit
+(MB3D's raystep limiter), which is what finds the thin parts of formulas whose
+distance estimate is far too large. In LightBulbMoon – No, Never (Amazing
+Surf) 1.8 % of the pixels became background, whole bits of the moon and a
+branch; a check for such holes had looked for the wrong background value in
+the depth maps and missed them. 0.2.93 keeps the coarse rays within that
+limit, and with it a smaller margin around them is as safe in every example
+file (1.5 instead of 3), so the cone march also got faster: −18 % of the
+march on the processor instead of −12 %. If you rendered with the cone march
+in 0.2.92, compare thin, far-off parts with a plain render.

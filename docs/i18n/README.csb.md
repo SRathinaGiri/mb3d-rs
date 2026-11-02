@@ -1234,7 +1234,7 @@ chùtszi z dwóch renderów kòżdégò), w zestôwkù z timi samima lopkama bez
 | **Szukanié pòwierzchni metodą secznëch** | −2 % (mediana), do −18 % | mediana 0,7 %; drobné detale krzynã sã przesuwają |
 | **Bez lëmitu krokòw bez dinamiczny mgłë** | −1 % (mediana), do −30 % w òtemkłëch scenach | nôczãscy ten sam òbrôzk (mediana 0,03 %) |
 | **DE occlusion przë pòłowie rozdzélnoscë** | −18 % w 10 lopkach z DE occlusion (DEcomb1 −24 %); ten etap do 4 razy chùtszi | 0–27 % pikselów, miãkszô òkluzjô w drobnëch detalach; wëzdrzi tak samò |
-| **Stożkòwi marsz**: grëbi parmiéń na blok piksli, marsz kòżdégò piksla zaczinô sã tam, gdze sã zatrzimôł | marsz −18 % (mediana) na procesorze, do −64 % w òtemkłëch scenach (69 z 70 chùtszé); na karce całé renderë òtemkłëch scen do −63 % | mediana 0,4 %, tëli, jak zmieniwô gwôsny przëpôdkòwi pierszi krok marszu; *cenczé dzéle mògą sã zgùbic tam, gdze szacënk òdległoscë je dalek òd prôwdë* |
+| **Stożkòwi marsz**: grëbi parmiéń na blok piksli, marsz kòżdégò piksla zaczinô sã tam, gdze sã zatrzimôł | marsz −18 % (mediana −21 %) na procesorze, do −66 % w òtemkłëch scenach (68 z 70 chùtszé); na karce całé renderë òtemkłëch scen do −47 % | mediana 1,0 %, tëli, jak zmieniwô gwôsny przëpôdkòwi pierszi krok marszu; *0.2.92 mògł gùbic cenczé dzéle tam, gdze szacënk òdległoscë je za wiôldżi; pòprôwioné w 0.2.93* |
 
 Nim zaùfôsz jednémù z nich przë òbrôzkù, pòrównôj z renderã bez nich.
 

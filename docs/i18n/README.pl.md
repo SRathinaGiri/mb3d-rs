@@ -1240,7 +1240,7 @@ nich:
 | **Szukanie powierzchni metodą siecznych** | −2 % (mediana), do −18 % | mediana 0,7 %; drobne szczegóły lekko się przesuwają |
 | **Bez limitu kroków bez mgły dynamicznej** | −1 % (mediana), do −30 % w otwartych scenach | przeważnie ten sam obraz (mediana 0,03 %) |
 | **Okluzja DE w połowie rozdzielczości** | −18 % w 10 plikach z okluzją DE (DEcomb1 −24 %); ten etap do 4 razy szybszy | 0–27 % pikseli, łagodniejsza okluzja w drobnych szczegółach; wygląda tak samo |
-| **Marsz stożkowy**: zgrubny promień na blok pikseli, marsz każdego piksela zaczyna się tam, gdzie się zatrzymał | marsz −18 % (mediana) na procesorze, do −64 % w otwartych scenach (69 z 70 szybciej); na karcie całe rendery otwartych scen do −63 % | mediana 0,4 %, tyle, ile zmienia własny losowy pierwszy krok marszu; *cienkie części mogą zginąć tam, gdzie oszacowanie odległości jest daleko od prawdy* |
+| **Marsz stożkowy**: zgrubny promień na blok pikseli, marsz każdego piksela zaczyna się tam, gdzie się zatrzymał | marsz −18 % (mediana −21 %) na procesorze, do −66 % w otwartych scenach (68 z 70 szybciej); na karcie całe rendery otwartych scen do −47 % | mediana 1,0 %, tyle, ile zmienia własny losowy pierwszy krok marszu; *0.2.92 mógł gubić cienkie części tam, gdzie oszacowanie odległości jest za duże; poprawione w 0.2.93* |
 
 Zanim zaufasz któremuś z nich przy obrazie, porównaj z renderem bez nich.
 

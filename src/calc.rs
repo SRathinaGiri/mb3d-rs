@@ -2147,7 +2147,9 @@ impl<'a> Marcher<'a> {
             let rsf = if last_step > 0.0 && last_de > de + 1e-30 { (last_step / (last_de - de)).clamp(0.5, 1.0) } else { 1.0 };
             let stop = self.ms_de_stop as f64;
             let reach = (a + slope * t) * lip + stop;
-            let s = (de - reach - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf / div;
+            // (no longer than the march's step limit: where the estimate is
+            // far too large the limit alone finds the thin parts)
+            let s = ((de - reach - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf / div).min((self.ms_de_stop.max(0.4) * p.mh04zsd) as f64);
             if s < CONE_MIN_STEP * stop {
                 return (t, count);
             }
@@ -2384,11 +2386,13 @@ const CONE_MIN_STEP: f64 = 0.05;
 
 /// The cone march takes the distance estimate for up to this many times
 /// (over the step factor) a true bound: a block's spread counts that much
-/// (measured on 80 example scenes: at 1 the thin fins of a folding
-/// formula were lost, at 2 still in small pictures; at 3 the pictures
-/// differ as much as the march's own random first step makes them, and
-/// the gain is a tenth less than at 2).
-const CONE_MARGIN: f64 = 3.0;
+/// (measured on the 80 example scenes, the coarse ray's steps within the
+/// march's step limit: at 1.5 the pictures and their holes differ as much
+/// as the march's own random first step makes them; at 1 the fog of
+/// KentPress and the sphere of "cutted sphere over carpet" changed; 3, the
+/// first value, without the step limit, lost 1.8 % of LightBulbMoon -
+/// No, Never and had a third less gain).
+const CONE_MARGIN: f64 = 1.5;
 
 /// The secant search's step back towards the probe before (DE minus DE
 /// stop `f0`) from the probe with `f` on the other side of the surface:
