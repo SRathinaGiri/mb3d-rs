@@ -290,6 +290,11 @@ fn set_window_size(app: &mut Mb3d, ui: &mut Ui, panel2: bool) {
     c.set_bounds(x, y, w, h);
     c.stretch = true;
     c.anchored = false;
+    // PaintCoord in the original Navigator is a 120 x 120 transparent
+    // image over the preview, rather than part of the rendered bitmap.  It
+    // therefore keeps one screen size while the preview arrives in coarse
+    // and full-resolution passes.
+    ui.cm(F, "Image6").set_bounds(x + w / 2 - 60, y + h / 2 - 60, 120, 120);
 }
 
 fn new_calc(app: &mut Mb3d, ui: &mut Ui) {
@@ -382,44 +387,40 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     let l = if ui.checked(F, "ExpBrightCBx") { 1.0 } else { app.navi.lightness };
     let px: Vec<u8> = if (l - 1.0).abs() > 1e-3 { rgb.iter().map(|&v| (v as f64 * l).min(255.0) as u8).collect() } else { (*rgb).clone() };
     let mut b = Bitmap::from_rgb(w, h, &px);
-    paint_coords(ui, &app.navi.scene, &mut b);
     paint_guides(ui, &mut b);
     ui.set_picture(F, "Image1", Some(b));
+    paint_coords(ui, &app.navi.scene);
 }
 
 /// `PaintCoord`: the original Navigator's coloured world-axis triad.  It is
-/// drawn into the preview here rather than in a separate transparent image,
-/// so it remains centred when the navigator size changes.
-fn paint_coords(ui: &Ui, sc: &Scene, b: &mut Bitmap) {
-    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() {
+/// a separate transparent image over the preview, so progressive preview
+/// resolutions cannot scale it.
+fn paint_coords(ui: &mut Ui, sc: &Scene) {
+    if !ui.checked(F, "ShowCoordsCBx") {
+        ui.set_visible(F, "Image6", false);
         return;
     }
-    // The preview comes in passes of 1/8, 1/4 and 1/2 of the size before
-    // the full one, and Image1 stretches each to the same rectangle: the
-    // triad is drawn at the pass's scale, so it keeps its size on the
-    // screen (coarse in the early passes, as the picture is), instead of
-    // growing and shrinking from pass to pass.
-    let k = (b.w as f64 / sc.width.max(1) as f64).min(1.0);
-    let px = |v: f64| v * k;
-    let width = (2.0 * k).round().max(1.0) as i32;
+    let mut b = Bitmap::new(120, 120, 0);
     let m = normalise_matrix_to(1.0, &sc.vgrads);
     let mut axes = [0usize, 1, 2];
     // Draw the far axes first, preserving the helpful depth cue from MB3D.
     axes.sort_by(|&a, &z| m[2][z].partial_cmp(&m[2][a]).unwrap_or(std::cmp::Ordering::Equal));
     let colors = [0xFFFF_5000, 0xFF30_F040, 0xFF00_B0FF];
-    let (cx, cy) = (b.w as f64 * 0.5, b.h as f64 * 0.5);
+    let (cx, cy) = (60.0, 60.0);
     for axis in axes {
         let (x, y, z) = (m[0][axis], m[1][axis], m[2][axis]);
-        let (ex, ey) = (cx + x * px(38.0), cy + y * px(38.0));
-        let tip = px((2.0 - z) * 2.0) / (x.hypot(y)).max(0.1);
+        let (ex, ey) = (cx + x * 38.0, cy + y * 38.0);
+        let tip = (2.0 - z) * 2.0 / (x.hypot(y)).max(0.1);
         let c = colors[axis];
-        line(b, cx, cy, ex, ey, c, width);
-        line(b, ex, ey, ex - x * px(8.0) - y * tip, ey - y * px(8.0) + x * tip, c, width);
-        line(b, ex, ey, ex - x * px(8.0) + y * tip, ey - y * px(8.0) - x * tip, c, width);
-        let text_size = px((3.0 - z) * 4.0);
+        line(&mut b, cx, cy, ex, ey, c, 2);
+        line(&mut b, ex, ey, ex - x * 8.0 - y * tip, ey - y * 8.0 + x * tip, c, 2);
+        line(&mut b, ex, ey, ex - x * 8.0 + y * tip, ey - y * 8.0 - x * tip, c, 2);
+        let text_size = (3.0 - z) * 4.0;
         let (tx, ty) = (ex + x * text_size * 0.8, ey + y * text_size * 0.8);
-        axis_letter(b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c, width);
+        axis_letter(&mut b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c);
     }
+    ui.set_picture(F, "Image6", Some(b));
+    ui.set_visible(F, "Image6", true);
 }
 
 /// A clipped, two-pixel-wide line on a preview bitmap.
@@ -453,9 +454,8 @@ fn line(b: &mut Bitmap, x0: f64, y0: f64, x1: f64, y1: f64, c: u32, width: i32) 
     }
 }
 
-/// A small, legible X/Y/Z label for the navigator overlay, of `block`
-/// pixels per dot of its 5 x 7 glyph.
-fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32, block: i32) {
+/// A small, legible X/Y/Z label for the navigator overlay.
+fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32) {
     let glyph: [u8; 7] = match axis {
         0 => [0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001], // X
         1 => [0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100, 0b00100], // Y
@@ -467,9 +467,9 @@ fn axis_letter(b: &mut Bitmap, x: f64, y: f64, axis: usize, c: u32, block: i32) 
             if bits & (1 << (4 - col)) == 0 {
                 continue;
             }
-            for oy in 0..block {
-                for ox in 0..block {
-                    let (px, py) = (x0 + col * block + ox, y0 + row as i32 * block + oy);
+            for oy in 0..2 {
+                for ox in 0..2 {
+                    let (px, py) = (x0 + col * 2 + ox, y0 + row as i32 * 2 + oy);
                     if px >= 0 && py >= 0 && (px as usize) < b.w && (py as usize) < b.h {
                         b.px[py as usize * b.w + px as usize] = c;
                     }
@@ -530,7 +530,11 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_caption(F, "Label38", &(df - 53).to_string());
     let cap = if app.title.is_empty() { tr("@MB:MainParas") } else { app.title.clone() };
     ui.fm(F).set_caption(&cap);
-    set_zoom(app, ui);
+    // Keep the imported camera zoom exactly as it was in the main window.
+    // The original Navigator intentionally does not call SetZoom here:
+    // recomputing it for the Navigator preview's different width changes
+    // the view before the user has navigated, and View to main would then
+    // overwrite the original camera position.
     set_window_size(app, ui, ui.visible(F, "Panel2"));
     new_calc(app, ui);
 }
@@ -1252,7 +1256,12 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_visible(F, "UpDown3", v);
         }
         "CheckBox3Click" | "RadioGroup2Click" => new_calc(app, ui),
-        "ShowCoordsCBxClick" | "ShowGuidesCBxClick" => {
+        "ShowCoordsCBxClick" => {
+            paint_coords(ui, &app.navi.scene);
+            app.navi.ver = 0;
+            idle(app, ui);
+        }
+        "ShowGuidesCBxClick" => {
             app.navi.ver = 0;
             idle(app, ui);
         }
