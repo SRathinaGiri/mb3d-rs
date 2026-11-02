@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.92" date="2026-11-02">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.92</url>
+      <description>
+        <p>Cone march, a new experimental speed-up: a coarse ray per block of pixels starts every pixel's march, which makes the march up to 60 % faster in open scenes, on the processor and the graphics card. Internal tab, Experimental..., or cone_march = on.</p>
+      </description>
+    </release>
     <release version="0.2.91" date="2026-11-01">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91</url>
       <description>
