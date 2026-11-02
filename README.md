@@ -1226,6 +1226,8 @@ the faster of two runs each), against the same files without them:
 | **Cone march**: a coarse ray per block of pixels, every pixel's march starts where it stopped | the march −18 % (median) on the processor, up to −64 % in open scenes (69 of 70 faster); on the card whole renders of open scenes up to −63 % | median 0.4 %, as much as the march's own random first step changes; *thin parts can be lost where the distance estimate is far off* |
 
 Compare with a render without them before relying on one for a picture.
+A page with pictures, the gains of all five together and how they affect
+each other: [docs/EXPERIMENTAL.md](docs/EXPERIMENTAL.md).
 
 ## The command line
 
