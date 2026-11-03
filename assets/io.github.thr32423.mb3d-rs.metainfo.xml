@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.95" date="2026-11-03">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.95</url>
+      <description>
+        <p>Batches no longer use more and more memory with every file, and when the graphics card meets many new formula combinations at once, its shader compiles wait while memory is short instead of filling it; a batch says first how many combinations are new. Parameters pasted with lines cut off in copying are refused with a message instead of calculating the wrong scene. 360 degree panoramas leave out the vignette and the colour fringes, which darkened the view behind the viewer. The experimental speed-ups' combined gains were measured again. The release no longer carries the examples folder.</p>
+      </description>
+    </release>
     <release version="0.2.94" date="2026-11-03">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.94</url>
       <description>
