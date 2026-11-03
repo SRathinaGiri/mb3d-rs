@@ -221,7 +221,7 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "CheckBox6", a.overwrite);
     ui.set_checked(F, "CheckBox7", a.save_depth);
     ui.set_text(F, "BlurEdit", &a.motion_blur.max(1).to_string());
-    ui.set_text(F, "ShutterEdit", &super::util::fts(a.shutter as f64));
+    ui.set_text(F, "ShutterEdit", &super::util::fts_single(a.shutter as f64));
     ui.set_checked(F, "CheckBox4", a.stereo_bits & 0x40 != 0);
     ui.set_checked(F, "CheckBox5", a.stereo_bits & 0x80 != 0);
     ui.set_enabled(F, "CheckBox5", a.stereo_bits & 0x40 != 0);

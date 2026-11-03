@@ -201,15 +201,19 @@ pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     let c = sc.clouds.unwrap_or_default();
     ui.set_checked(F, "CloudsCbx", sc.clouds.is_some());
     ui.set_item_index(F, "CloudAxisCB", c.axis as i32);
-    for (e, v) in [("CloudFromEdit", c.from), ("CloudToEdit", c.to), ("CloudDensityEdit", c.density as f64), ("CloudCoverEdit", c.coverage as f64), ("CloudSizeEdit", c.size)] {
+    for (e, v) in [("CloudFromEdit", c.from), ("CloudToEdit", c.to), ("CloudSizeEdit", c.size)] {
         ui.set_text(F, e, &super::util::fts(v));
+    }
+    // (single precision: 0.7, not 0.699999988079071)
+    for (e, v) in [("CloudDensityEdit", c.density), ("CloudCoverEdit", c.coverage)] {
+        ui.set_text(F, e, &super::util::fts_single(v as f64));
     }
     app.post.cloud_color = c.color;
     cloud_swatch(app, ui);
     let m = sc.material.unwrap_or_default();
     ui.set_checked(F, "MaterialCbx", sc.material.is_some());
     for (e, v) in [("FresnelEdit", m.fresnel), ("IridEdit", m.iridescence), ("IridShiftEdit", m.irid_shift), ("GlowEdit", m.glow)] {
-        ui.set_text(F, e, &super::util::fts(v as f64));
+        ui.set_text(F, e, &super::util::fts_single(v as f64));
     }
     // the relief: without one a size that suits the view (a small part of
     // what the zoom shows)
