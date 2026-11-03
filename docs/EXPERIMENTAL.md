@@ -61,17 +61,18 @@ from the plain render; the march's own random first step already moves about
 
 ## All five together
 
-All five switched on cut the 78 renders from 155 s to 138 s, 11 % less, and 71
-of the 78 scenes got faster (the slowest of the rest, Wada basin, a one-second
-render, lost a fifth). The best scenes: Nothing left but bones −48 %, Mandalex
-−42 %, LightBulbMoon – No, Never −41 %, DEcomb1 −36 %. The march stage alone
-shrinks by 18 %, the occlusion stage by 46 %.
+All five switched on cut the 78 renders from 173 s to 150 s, 13 % less, and 75
+of the 78 scenes got faster (the slowest of the rest, Rama – Elysium, took 4 %
+longer). The best scenes: ABoxScale2Start −51 %, Nothing left but bones −50 %,
+LightBulbMoon – No, Never −42 %, Mandalex −41 %, DEcomb1 −38 %. The march
+stage alone shrinks by 21 % (median 17 %, up to 54 %).
 
-That is about what the five single gains add up to (12 %), so they rarely get
-in each other's way. The price: a median 3.4 % of the pixels differ from the
-plain render, mostly in fine shading; in
-noisy scenes (spineJulia, the Julia examples) it is far more, but those differ
-as much between two plain renders with a different first step.
+That is a little more than the three march speed-ups give one by one (step
+relax 4.9 %, the cone march 4.5 %, no step limit 2.6 %: 12 % together), so they
+rarely get in each other's way. The price: a median 3.1 % of the pixels differ
+from the plain render, mostly in fine shading; the plain render's own random
+first step already moves 1.4 %, and in noisy scenes (spineJulia, the Julia
+examples) far more.
 
 ## How they affect each other
 
@@ -80,14 +81,14 @@ do not.
 
 | Pair | Effect | Why |
 |---|---|---|
-| Cone march + step relax | **Helps**: together −5.5 % (median) where each alone gives −2.6 % and −4 %; better than the better one alone in 15 scenes, worse in 9 | The cone march skips the open space in front of the surface, step relax then lengthens the steps that are left near it: each shortens the part the other cannot |
-| Cone march + no step limit | **Overlaps**: together −2.9 % (median), hardly more than the cone march alone (−2.6 %); worse than the better one alone in 9 scenes, better in 3 | Both remove the cost of open space; once the cone march has jumped over it, there are few long steps left to free |
+| Cone march + step relax | **Helps**: together −8.9 % (median) where each alone gives −5.1 % and −5.8 %; better than the better one alone in 37 scenes, worse in 10 | The cone march skips the open space in front of the surface, step relax then lengthens the steps that are left near it: each shortens the part the other cannot |
+| Cone march + no step limit | **Overlaps**: together −6.0 % (median), hardly more than the cone march alone (−5.1 %); worse than the better one alone in 18 scenes, better in 16 | Both remove the cost of open space; once the cone march has jumped over it, there are few long steps left to free |
 | Step relax + secant search | Independent | One changes the steps, the other only the last search for the surface |
 | Occlusion at half resolution + anything | Independent | It works on the occlusion stage after the march; its gain comes on top of the others' |
 | Secant search + cone march | Independent | The cone march ends before the surface search begins |
 
 None of the pairs makes a picture worse than the single switches do: the pixel
-changes of "all five" (3.4 % median) are about those of step relax (2.8 %)
+changes of "all five" (3.1 % median) are about those of step relax (2.3 %)
 plus the half-resolution occlusion, and the holes step relax can make in thin
 shells appear with or without the others.
 
@@ -103,11 +104,14 @@ shells appear with or without the others.
 - The switches are saved with the scene, so a parameter file you share carries
   them; tell people when you post one.
 
-Every number here is from the 80 example files at about 0.4 megapixels on one
-PC (two scenes left out of the totals: Fishbowl, whose run hit a shader
-compile, and 6 AM – Torii temple, whose renders doubled in every variant of the
-run, also in those that leave the march alone); your own scenes and card will
-differ, but the ordering of the gains should hold. How each speed-up works: [TECHNICAL.md](TECHNICAL.md#experimental-speed-ups).
+Every number here is from the example files at about 0.4 megapixels on one
+PC, the times the smaller of two runs. "All five together" and the pairs were
+measured again for 0.2.95, after the cone march's fix in 0.2.93, with
+`tools/bench.py` (78 scenes: Fishbowl left out, whose run hits a shader
+compile, and Test8, which reports no march time); "Each one on its own" is
+from the round of 0.2.92, without 6 AM – Torii temple. Your own scenes and
+card will differ, but the ordering of the gains should hold. How each
+speed-up works: [TECHNICAL.md](TECHNICAL.md#experimental-speed-ups).
 
 ## The cone march in 0.2.92
 
