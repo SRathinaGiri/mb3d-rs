@@ -1200,7 +1200,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     let dc = app.navi.double_click;
                     ui.set_checked(F, "Singleclicktochangethenavimode1", !dc);
                     ui.set_checked(F, "Doubleclicktochangethenavimode1", dc);
-                    ui.popup_menu(F, "PopupMenu1", "Image1", x, y);
+                    // at the control clicked: the preview or the axes'
+                    // overlay over its middle (Image6, which passes its
+                    // mouse to Image1's handlers with its own coordinates)
+                    let at = if e.sender == "Image6" { "Image6" } else { "Image1" };
+                    ui.popup_menu(F, "PopupMenu1", at, x, y);
                 }
             }
         }
@@ -1620,10 +1624,10 @@ fn reset_view(app: &mut Mb3d, ui: &mut Ui) {
     sc.z_start = s0.z_start;
     sc.z_end = s0.z_end;
     sc.zoom = s0.zoom;
-    // the zoom as when the view was taken: fixed, or from the distance
+    // the zoom mode as when the view was taken; the zoom and far plane as
+    // taken, not recomputed (as insert_main leaves them)
     ui.set_checked(F, "CheckBox1", app.navi.start_fixed);
     app.navi.de_mul = 1.0;
-    set_zoom(app, ui);
     new_calc(app, ui);
 }
 
