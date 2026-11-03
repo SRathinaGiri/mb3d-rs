@@ -226,6 +226,15 @@ mod tests {
     /// with the limit a 200th, the march's edge pixels).
     #[test]
     fn the_coarse_rays_keep_the_marchs_step_limit() {
+        // _Rotate and Amazing Surf are .m3f files: from the MB3D repository
+        // (MB3D_REPO, as in CI) or the usual formula folders, else skipped
+        if let Ok(repo) = std::env::var("MB3D_REPO") {
+            crate::formulas::add_formula_dir(std::path::PathBuf::from(repo).join("M3Formulas"));
+        }
+        if let Err(e) = crate::formulas::load_custom("_Rotate").and(crate::formulas::load_custom("Amazing Surf")) {
+            eprintln!("skipped: {e}");
+            return;
+        }
         let sc = Scene::parse(
             "width = 192\nheight = 192\niterations = 1000\nmin_iterations = 1\nrstop = 1024\n\
              zoom = 39.7619219387428\nmid = 0.590668486717442, -4.80312498339983, 0.552945843153886\n\
