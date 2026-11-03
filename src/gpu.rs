@@ -963,8 +963,9 @@ const MIN_STEP_PRECISION: f64 = 64.0;
 struct Gpu {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    /// compiled scene shaders by a hash of their code
-    pipelines: Mutex<std::collections::HashMap<u64, std::sync::Arc<wgpu::ComputePipeline>>>,
+    /// compiled scene shaders by a hash of their code, with the tick of
+    /// their last use (at most [`PIPELINES_KEPT`]: see [`keep_pipeline`])
+    pipelines: Mutex<std::collections::HashMap<u64, (std::sync::Arc<wgpu::ComputePipeline>, u64)>>,
     name: String,
     /// the shaders can calculate in doubles (SHADER_F64, SHADER_INT64)
     f64: bool,
@@ -997,7 +998,8 @@ fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipeli
 
 /// [`pipeline_entry`] without the wait (the background compile itself).
 fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)], key: u64) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
-    if let Some(pl) = g.pipelines.lock().map_err(|e| e.to_string())?.get(&key) {
+    if let Some((pl, used)) = g.pipelines.lock().map_err(|e| e.to_string())?.get_mut(&key) {
+        *used = PIPELINE_TICK.fetch_add(1, Ordering::Relaxed);
         return Ok(pl.clone());
     }
     let scope = g.device.push_error_scope(wgpu::ErrorFilter::Validation);
@@ -1051,8 +1053,29 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         }
     }
     let pl = std::sync::Arc::new(pl);
-    g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
+    keep_pipeline(&mut *g.pipelines.lock().map_err(|e| e.to_string())?, key, pl.clone());
     Ok(pl)
+}
+
+/// How many compiled pipelines a card keeps.  Every formula combination
+/// brings its own (the march, shadows, occlusion, Monte Carlo, the cone
+/// passes); a batch or a long session never needs most of them again, and
+/// each holds the driver's compiled code: kept for ever, a batch of 30
+/// example files grew by 13 MB a file.  A pipeline dropped from here and
+/// needed again is compiled again, out of the driver's own cache (fast).
+const PIPELINES_KEPT: usize = 24;
+
+static PIPELINE_TICK: AtomicU64 = AtomicU64::new(0);
+
+/// Puts `pl` into `map`, dropping the least recently used pipelines over
+/// [`PIPELINES_KEPT`] (a calculation still running with one holds its own
+/// reference).
+fn keep_pipeline<T>(map: &mut std::collections::HashMap<u64, (T, u64)>, key: u64, pl: T) {
+    map.insert(key, (pl, PIPELINE_TICK.fetch_add(1, Ordering::Relaxed)));
+    while map.len() > PIPELINES_KEPT {
+        let Some(oldest) = map.iter().min_by_key(|(_, (_, used))| *used).map(|(k, _)| *k) else { break };
+        map.remove(&oldest);
+    }
 }
 
 /// The time spent compiling shaders so far, in milliseconds.
@@ -3764,5 +3787,24 @@ mod tests {
         assert!(col < 0.03 && flag < 0.01, "colour values differ in {:.2}%, flags in {:.2}% of the pixels", col * 100.0, flag * 100.0);
         assert!(zd < 20.0, "depth differs by {zd:.1} on average");
         assert!(nd > 0.97 && bad < 0.03, "normals differ: mean cosine {nd:.4}, {:.2}% off", bad * 100.0);
+    }
+
+    /// The pipeline cache keeps the most recently used ones: a batch of
+    /// ever new scenes no longer grows without end, and a pipeline used
+    /// again stays.
+    #[test]
+    fn the_pipeline_cache_drops_the_least_recently_used() {
+        let mut m = std::collections::HashMap::new();
+        for k in 0..PIPELINES_KEPT as u64 {
+            keep_pipeline(&mut m, k, k);
+        }
+        // key 0 used again: the oldest is now 1
+        m.get_mut(&0).unwrap().1 = PIPELINE_TICK.fetch_add(1, Ordering::Relaxed);
+        for k in 100..110 {
+            keep_pipeline(&mut m, k, k);
+        }
+        assert_eq!(m.len(), PIPELINES_KEPT);
+        assert!(m.contains_key(&0) && m.contains_key(&109));
+        assert!((1..=10).all(|k| !m.contains_key(&k)) && m.contains_key(&11));
     }
 }
