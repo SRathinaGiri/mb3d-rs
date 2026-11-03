@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.94" date="2026-11-03">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.94</url>
+      <description>
+        <p>Clouds in the program are no longer painted black: every calculation set their colour back to black, which made them dark and a dense cloud layer turned the sky black. The cloud density and coverage boxes show their values plainly (0.7, not 0.69999). A new page shows clouds, water and reflections in three pictures with their parameters to paste in.</p>
+      </description>
+    </release>
     <release version="0.2.93" date="2026-11-03">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.93</url>
       <description>
