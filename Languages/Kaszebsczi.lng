@@ -1240,6 +1240,8 @@ Formula1=Fòrmùła1 •
 ;Formula1 •
 Formula12=Fòrmùła1
 ;Formula1
+FormulaCombinationsInThisBatchThat=Kòmbinacje fòrmùłów w ti partii nowé dlô grawicznégò kartë (jich shaderë są nôprzód kòmpilowóné, pò 10 do 30 s; w tim czasu rechùje procesor, a kòmpilacjô żdaje, czej felëje pamiãcë):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=Editora fòrmùłów
 ;Formula editor
 FormulaLower=fòrmùła

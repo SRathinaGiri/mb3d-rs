@@ -971,6 +971,9 @@ struct Gpu {
     f64: bool,
     /// its place in [`cards`]
     index: usize,
+    /// the card and its driver (a driver update empties the driver's
+    /// shader cache: see [`seen`])
+    driver: String,
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
@@ -1051,6 +1054,9 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
             let _ = f.write_all(line.as_bytes());
         }
+    }
+    if std::env::var_os("MB3D_GPU_NOCACHE").is_none() {
+        seen::note(&g.driver, key);
     }
     let pl = std::sync::Arc::new(pl);
     keep_pipeline(&mut *g.pipelines.lock().map_err(|e| e.to_string())?, key, pl.clone());
@@ -1165,6 +1171,141 @@ pub fn wait_compiles(max: std::time::Duration) {
     }
 }
 
+/// The memory a compile may take in the driver: up to 1.9 GB measured for
+/// the example scenes' shaders (about 5700 lines; 0.6 GB for small ones).
+const COMPILE_MEMORY: u64 = 2 << 30;
+
+/// The background compiles running.
+static COMPILES_RUNNING: (Mutex<usize>, std::sync::Condvar) = (Mutex::new(0), std::sync::Condvar::new());
+
+/// The background compiles waiting for memory (see [`CompileRoom`]).
+static COMPILES_WAITING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// A batch is rendering (the command line's `mb3d batch`, the program's
+/// batch window): see [`compiles_waiting`].
+static BATCH: AtomicBool = AtomicBool::new(false);
+
+pub fn set_batch(on: bool) {
+    BATCH.store(on, Ordering::SeqCst);
+}
+
+/// A batch renders and compiles are waiting for memory: a pass whose
+/// shaders are not compiled yet goes to the CPU instead of waiting for
+/// them (they may come late).  Only in a batch: its pictures are many and
+/// mostly small, and the next file's compiles queue behind; a single big
+/// picture (when memory runs short the most) is far quicker on the card
+/// after the wait.
+pub fn compiles_waiting() -> bool {
+    BATCH.load(Ordering::SeqCst) && COMPILES_WAITING.load(Ordering::SeqCst) > 0
+}
+
+/// A background compile's turn: it starts when the free memory has room
+/// for it besides those running (counted at half, as they may have taken
+/// part of theirs already), the first one always.  A batch renders a file
+/// on the CPU while its shaders compile and goes on to the next, whose
+/// compiles came on top: 30 example files new to the driver took 11 GB,
+/// more than many computers have.  Where memory is plentiful nothing
+/// waits; where it is short, a compile waits for one to end instead of
+/// pushing the computer into swapping.
+struct CompileRoom;
+
+impl CompileRoom {
+    fn take() -> CompileRoom {
+        let (m, cv) = &COMPILES_RUNNING;
+        let mut n = m.lock().unwrap_or_else(|e| e.into_inner());
+        let mut waiting = false;
+        loop {
+            if compile_room(*n, crate::render::memory_available()) {
+                break;
+            }
+            if !waiting {
+                waiting = true;
+                COMPILES_WAITING.fetch_add(1, Ordering::SeqCst);
+            }
+            // a compile ending frees its memory; other programs may too
+            n = cv.wait_timeout(n, std::time::Duration::from_millis(500)).unwrap_or_else(|e| e.into_inner()).0;
+        }
+        if waiting {
+            COMPILES_WAITING.fetch_sub(1, Ordering::SeqCst);
+        }
+        *n += 1;
+        CompileRoom
+    }
+}
+
+/// A compile may start beside `running` others with `free` bytes of memory
+/// free (None: cannot be told).
+fn compile_room(running: usize, free: Option<u64>) -> bool {
+    running == 0 || free.is_none_or(|free| free >= COMPILE_MEMORY + running as u64 * COMPILE_MEMORY / 2)
+}
+
+impl Drop for CompileRoom {
+    fn drop(&mut self) {
+        let (m, cv) = &COMPILES_RUNNING;
+        *m.lock().unwrap_or_else(|e| e.into_inner()) -= 1;
+        cv.notify_all();
+    }
+}
+
+/// The shaders this computer's cards compiled before (their driver keeps
+/// them): `compiled_shaders.txt` in the data folder, a line per pipeline
+/// with the card and driver it was compiled for.  A batch tells from it
+/// how many of its files bring formula combinations new to the card.
+mod seen {
+    use std::collections::HashSet;
+    use std::sync::Mutex;
+
+    static SEEN: Mutex<Option<HashSet<(String, u64)>>> = Mutex::new(None);
+
+    fn path() -> std::path::PathBuf {
+        crate::appdirs::data_folder().join("compiled_shaders.txt")
+    }
+
+    fn with<R>(f: impl FnOnce(&mut HashSet<(String, u64)>) -> R) -> R {
+        let mut g = SEEN.lock().unwrap_or_else(|e| e.into_inner());
+        let set = g.get_or_insert_with(|| {
+            std::fs::read_to_string(path())
+                .unwrap_or_default()
+                .lines()
+                .filter_map(|l| {
+                    let (d, k) = l.rsplit_once(' ')?;
+                    Some((d.to_string(), u64::from_str_radix(k, 16).ok()?))
+                })
+                .collect()
+        });
+        f(set)
+    }
+
+    pub(super) fn note(driver: &str, key: u64) {
+        let new = with(|s| s.insert((driver.to_string(), key)));
+        if new {
+            use std::io::Write;
+            let p = path();
+            let _ = p.parent().map(std::fs::create_dir_all);
+            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {
+                let _ = writeln!(f, "{driver} {key:016x}");
+            }
+        }
+    }
+
+    pub(super) fn contains(driver: &str, key: u64) -> bool {
+        with(|s| s.contains(&(driver.to_string(), key)))
+    }
+}
+
+/// The key of the march of `p` when it brings shaders the card has not
+/// compiled before (the first calculation of its formula combination on
+/// this card and driver); None when they are known or it calculates on
+/// the CPU anyway.
+pub fn new_to_card(p: &CalcParams) -> Option<u64> {
+    if !enabled() || unsupported(p).is_some() {
+        return None;
+    }
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return None };
+    let key = pipeline_key(&sh.code, "main", &march_constants(p, 0));
+    (!g.pipelines.lock().is_ok_and(|m| m.contains_key(&key)) && !seen::contains(&g.driver, key)).then_some(key)
+}
+
 /// A flag that turns true once the pipeline of `code` is compiled (at once
 /// when it is): a thread of its own compiles it meanwhile.  A shader that
 /// does not compile sets it too (its calculation then finds the error).
@@ -1181,6 +1322,7 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
     list.push((g.index, key, flag.clone()));
     let f = flag.clone();
     std::thread::spawn(move || {
+        let _room = CompileRoom::take();
         // a panic (the device lost) switches the card off, as in `guard`
         // (a further card: only that one), so that the waiters find it off
         // instead of waiting forever
@@ -1594,7 +1736,8 @@ async fn open(adapter: &wgpu::Adapter, index: usize) -> Result<Gpu, String> {
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
     device.on_uncaptured_error(std::sync::Arc::new(move |e: wgpu::Error| set_error(index, e.to_string())));
-    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64, index })
+    let driver = format!("{} {:?} {} {}", info.name, info.backend, info.driver, info.driver_info).split_whitespace().collect::<Vec<_>>().join("_");
+    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64, index, driver })
 }
 
 /// The parameters in the order of the indices in `gpu_march.wgsl`.
@@ -2181,6 +2324,13 @@ pub struct RaySharing {
     /// the card starts no rays beyond this one while it is busy (the CPU's
     /// share at the end; usize::MAX: none)
     pub cap: usize,
+}
+
+/// The reflection pass's first pipeline (the surfaces) is compiled; when
+/// not, its compile is started in the background.
+pub fn reflect_compiled(p: &CalcParams) -> bool {
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return false };
+    prepare(g, sh.code, "main", reflect_constants(p, true, false, false)).load(Ordering::SeqCst)
 }
 
 /// Whether this thread's card has the pipelines of a reflection batch with
@@ -3806,5 +3956,16 @@ mod tests {
         assert_eq!(m.len(), PIPELINES_KEPT);
         assert!(m.contains_key(&0) && m.contains_key(&109));
         assert!((1..=10).all(|k| !m.contains_key(&k)) && m.contains_key(&11));
+    }
+
+    /// A compile waits while memory is short, never the first one.
+    #[test]
+    fn a_compile_waits_while_memory_is_short() {
+        let gb = 1u64 << 30;
+        assert!(compile_room(0, Some(0)));
+        assert!(compile_room(3, None));
+        assert!(compile_room(1, Some(3 * gb)) && !compile_room(1, Some(3 * gb - 1)));
+        assert!(!compile_room(4, Some(5 * gb)) && compile_room(4, Some(6 * gb)));
+        assert!(compile_room(20, Some(100 * gb)));
     }
 }

@@ -2697,8 +2697,18 @@ pub fn memory_needed(u: MemoryUse, free: Option<u64>) -> u64 {
 
 /// The memory the system can give without swapping: Linux `MemAvailable`,
 /// Windows and macOS through sysinfo; None where it cannot be told.
-#[cfg(target_os = "linux")]
+/// MB3D_FREE_MEMORY_MB pretends a size (to try what the program does on a
+/// computer with less memory: the big pictures' checks, the compiles'
+/// turns in a batch).
 pub fn memory_available() -> Option<u64> {
+    if let Some(mb) = std::env::var("MB3D_FREE_MEMORY_MB").ok().and_then(|v| v.trim().parse::<u64>().ok()) {
+        return Some(mb << 20);
+    }
+    os_memory_available()
+}
+
+#[cfg(target_os = "linux")]
+fn os_memory_available() -> Option<u64> {
     let text = std::fs::read_to_string("/proc/meminfo").ok()?;
     let kb: u64 = text.lines().find_map(|l| l.strip_prefix("MemAvailable:"))?.trim().trim_end_matches("kB").trim().parse().ok()?;
     Some(kb * 1024)
@@ -2707,14 +2717,14 @@ pub fn memory_available() -> Option<u64> {
 /// Windows (`GlobalMemoryStatusEx`) and macOS (the free, inactive and
 /// speculative pages) through the sysinfo crate.
 #[cfg(any(windows, target_os = "macos"))]
-pub fn memory_available() -> Option<u64> {
+fn os_memory_available() -> Option<u64> {
     let mut s = sysinfo::System::new();
     s.refresh_memory();
     Some(s.available_memory()).filter(|&b| b > 0)
 }
 
 #[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
-pub fn memory_available() -> Option<u64> {
+fn os_memory_available() -> Option<u64> {
     None
 }
 

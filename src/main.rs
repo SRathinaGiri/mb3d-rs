@@ -1674,6 +1674,18 @@ fn batch(argv: &[String]) -> Result<(), String> {
         return Ok(());
     }
     let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
+    #[cfg(feature = "gpu")]
+    mb3d::gpu::set_batch(true);
+    if !quiet {
+        let n = mb3d::batch::new_to_card(&items, &opts);
+        if n > 0 {
+            mb3d::elog!(
+                "  {n} formula combination{} new to the graphics card: {} shaders compile first (10-30 s each, the CPU calculates meanwhile; a compile takes up to 2 GB of memory and waits while memory is short)",
+                if n == 1 { " is" } else { "s are" },
+                if n == 1 { "its" } else { "their" }
+            );
+        }
+    }
     let t0 = Instant::now();
     let (mut done, mut skipped) = (0usize, 0usize);
     let mut failed: Vec<(String, String)> = Vec::new();

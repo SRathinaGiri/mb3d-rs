@@ -1476,8 +1476,10 @@ pub fn reflections<S: Sample>(
     progress: &(dyn Fn(usize, usize) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) {
+    // (memory short: compiles wait their turn, and the card's reflections
+    // would wait for theirs; the CPU's need none)
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() {
+    if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() && (!crate::gpu::compiles_waiting() || crate::gpu::reflect_compiled(p)) {
         let [x0, y0, w, h] = p.rect;
         let (wu, hu) = (w.max(1) as usize, h.max(0) as usize);
         // (the band from the memory free now: the picture and the stages

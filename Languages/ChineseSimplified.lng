@@ -1241,6 +1241,8 @@ Formula1=公式1 •
 ;Formula1 •
 Formula12=公式1
 ;Formula1
+FormulaCombinationsInThisBatchThat=此批处理中对显卡而言新的公式组合（先编译其着色器，每个 10 到 30 秒；期间由 CPU 计算，内存不足时编译会等待）：
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=公式编辑器
 ;Formula editor
 FormulaLower=公式

@@ -98,6 +98,8 @@ pub fn batch_next(app: &mut Mb3d, ui: &mut Ui) {
     } else {
         app.batch.status = 0;
         app.batch.index = usize::MAX;
+        #[cfg(feature = "gpu")]
+        crate::gpu::set_batch(false);
         ui.set_enabled(BF, "Button1", true);
         ui.set_caption(BF, "Button1", &tr("@MB:StartBatchRendering"));
         ui.fm(BF).set_caption(&tr("@MB:BatchProcessing"));
@@ -165,6 +167,8 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if app.batch.status != 0 {
                 app.batch.status = 0;
                 app.batch.index = usize::MAX;
+                #[cfg(feature = "gpu")]
+                crate::gpu::set_batch(false);
                 app.eng.stop();
                 super::main_form::enable_buttons(app, ui);
                 ui.set_caption(BF, "Button1", &tr("@MB:StartBatchRendering"));
@@ -175,6 +179,20 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.batch.index = usize::MAX;
                 app.batch.nr = 0;
                 app.batch.total = ui.c(BF, "ListView1").checks.iter().filter(|c| **c).count();
+                // the formula combinations whose shaders the card compiles first
+                let checks = ui.c(BF, "ListView1").checks.clone();
+                let items: Vec<crate::batch::BatchItem> = batch_rows(ui)
+                    .iter()
+                    .zip(checks.iter().chain(std::iter::repeat(&false)))
+                    .filter(|(_, c)| **c)
+                    .map(|(r, _)| crate::batch::BatchItem { input: r[0].clone().into(), overrides: Vec::new() })
+                    .collect();
+                #[cfg(feature = "gpu")]
+                crate::gpu::set_batch(true);
+                let new = crate::batch::new_to_card(&items, &Default::default());
+                if new > 0 {
+                    app.message(ui, &format!("{} {new}", tr("@MB:FormulaCombinationsInThisBatchThat")));
+                }
                 batch_next(app, ui);
             }
         }

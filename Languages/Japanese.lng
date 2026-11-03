@@ -1241,6 +1241,8 @@ Formula1=数式1 •
 ;Formula1 •
 Formula12=数式1
 ;Formula1
+FormulaCombinationsInThisBatchThat=このバッチでグラフィックカードにとって新しい数式の組み合わせ（そのシェーダーを先にコンパイルします。各10〜30秒。その間はCPUが計算し、メモリが足りない間はコンパイルが待機します）：
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=数式エディター
 ;Formula editor
 FormulaLower=数式

@@ -1241,6 +1241,8 @@ Formula1=공식1 •
 ;Formula1 •
 Formula12=공식1
 ;Formula1
+FormulaCombinationsInThisBatchThat=이 일괄 작업에서 그래픽 카드에 새로운 수식 조합 (셰이더를 먼저 컴파일합니다. 각각 10~30초, 그동안 CPU가 계산하며 메모리가 부족하면 컴파일이 기다립니다):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=포뮬러 편집기
 ;Formula editor
 FormulaLower=포뮬러

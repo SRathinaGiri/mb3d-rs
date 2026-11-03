@@ -1241,6 +1241,8 @@ Formula1=فارمولا1 •
 ;Formula1 •
 Formula12=فارمولا1
 ;Formula1
+FormulaCombinationsInThisBatchThat=اس بیچ میں گرافکس کارڈ کے لیے نئے فارمولا امتزاج (پہلے ان کے شیڈر کمپائل ہوتے ہیں، ہر ایک 10 سے 30 سیکنڈ؛ اس دوران CPU حساب کرتا ہے، اور میموری کم ہونے تک کمپائل انتظار کرتا ہے):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=فارمولا ایڈیٹر
 ;Formula editor
 FormulaLower=فارمولا

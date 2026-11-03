@@ -1240,6 +1240,8 @@ Formula1=Fórmula1 •
 ;Formula1 •
 Formula12=Fórmula1
 ;Formula1
+FormulaCombinationsInThisBatchThat=Combinações de fórmulas deste lote novas para a placa gráfica (os seus shaders são compilados primeiro, 10 a 30 s cada; a CPU calcula entretanto, e uma compilação espera enquanto faltar memória):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=Editor de fórmulas
 ;Formula editor
 FormulaLower=fórmula

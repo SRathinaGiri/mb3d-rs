@@ -171,6 +171,30 @@ pub fn item_scene(item: &BatchItem, opts: &BatchOptions) -> Result<(crate::scene
     Ok((s, aa, notes))
 }
 
+/// How many of `items` bring formula combinations the graphics card has
+/// not compiled before (each counted once): their shaders compile in the
+/// driver first, 10 to 30 s each and up to 2 GB of memory while they do
+/// (see `gpu::CompileRoom`).  0 without a card.
+pub fn new_to_card(items: &[BatchItem], opts: &BatchOptions) -> usize {
+    #[cfg(feature = "gpu")]
+    {
+        let mut keys = std::collections::HashSet::new();
+        for it in items {
+            let Ok((s, ..)) = item_scene(it, opts) else { continue };
+            let Ok(p) = crate::calc::CalcParams::new(&s) else { continue };
+            if let Some(k) = crate::gpu::new_to_card(&p) {
+                keys.insert(k);
+            }
+        }
+        keys.len()
+    }
+    #[cfg(not(feature = "gpu"))]
+    {
+        let _ = (items, opts);
+        0
+    }
+}
+
 /// Result of one item.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ItemResult {

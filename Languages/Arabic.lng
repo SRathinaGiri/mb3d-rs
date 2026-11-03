@@ -1241,6 +1241,8 @@ Formula1=الصيغة1 •
 ;Formula1 •
 Formula12=الصيغة1
 ;Formula1
+FormulaCombinationsInThisBatchThat=تركيبات الصيغ في هذه الدفعة الجديدة على بطاقة الرسوميات (تُترجم مظلّلاتها أولًا، من 10 إلى 30 ثانية لكل منها؛ يحسب المعالج في أثناء ذلك، وتنتظر الترجمة ما دامت الذاكرة غير كافية):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
 FormulaEditor=محرر الصيغ
 ;Formula editor
 FormulaLower=صيغة
