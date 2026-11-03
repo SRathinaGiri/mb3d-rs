@@ -74,6 +74,18 @@ struct Runner<A: App> {
     buttons: u8,
     /// wheel delta short of a notch (120), for the next event
     wheel_rest: i32,
+    /// the forms in the order they were last activated (the last on top)
+    #[cfg(target_os = "windows")]
+    activated: Vec<usize>,
+    /// the auxiliary windows hidden while the main window is minimized, in
+    /// the order they were activated: shown again with it
+    #[cfg(target_os = "windows")]
+    hidden_with_main: Option<Vec<usize>>,
+    /// after the main window came back: the form that was active before,
+    /// to get the focus back from a shown window that takes it (Wine shows
+    /// them after the focus was given), until then
+    #[cfg(target_os = "windows")]
+    refocus: Option<(usize, Instant)>,
 }
 
 /// The event loop. On Linux X11 is preferred, also on a Wayland desktop
@@ -120,6 +132,12 @@ pub fn run<A: App + 'static>(mut ui: Ui, app: A) -> Result<(), String> {
         look: None,
         buttons: 0,
         wheel_rest: 0,
+        #[cfg(target_os = "windows")]
+        activated: Vec::new(),
+        #[cfg(target_os = "windows")]
+        hidden_with_main: None,
+        #[cfg(target_os = "windows")]
+        refocus: None,
     };
     el.run_app(&mut r).map_err(|e| e.to_string())
 }
@@ -372,6 +390,51 @@ impl<A: App> Runner<A> {
         }
         if self.ui.quit {
             el.exit();
+        }
+    }
+
+    /// The auxiliary windows follow the main window's minimizing (Windows,
+    /// where they are not owned by it, so that it can cover them: an owned
+    /// window always stays above its owner): hidden with it, by our title
+    /// bar's button, the taskbar or Win+D alike, and shown again in the
+    /// order they were activated when it comes back, as Delphi's
+    /// Application.Minimize and Restore did in MB3D.  A window the user
+    /// minimized on its own stays minimized.  (Hidden, not minimized: a
+    /// minimized window without a taskbar entry becomes a small title bar
+    /// at the bottom of the screen.)
+    #[cfg(target_os = "windows")]
+    fn follow_main(&mut self, minimized: bool) {
+        match (minimized, self.hidden_with_main.is_some()) {
+            (true, false) => {
+                let mut hidden = Vec::new();
+                let mut order: Vec<usize> = self.by_form.keys().copied().filter(|&fi| fi != self.ui.main_form).collect();
+                order.sort_by_key(|fi| self.activated.iter().position(|a| a == fi));
+                for fi in order {
+                    let Some(w) = self.by_form.get(&fi).and_then(|id| self.wins.get(id)) else { continue };
+                    if w.window.is_minimized() != Some(true) {
+                        w.window.set_visible(false);
+                        hidden.push(fi);
+                    }
+                }
+                self.hidden_with_main = Some(hidden);
+            }
+            (false, true) => {
+                // (a form closed meanwhile has no window any more)
+                for fi in self.hidden_with_main.take().unwrap_or_default() {
+                    if let Some(w) = self.by_form.get(&fi).and_then(|id| self.wins.get(id)) {
+                        w.window.set_visible(true);
+                    }
+                }
+                // the window that was active before gets the focus back
+                // (the main window, unless a shown one was activated after it)
+                let main = self.ui.main_form;
+                let top = self.activated.iter().rev().copied().find(|fi| *fi == main || self.by_form.contains_key(fi)).unwrap_or(main);
+                if let Some(w) = self.by_form.get(&top).and_then(|id| self.wins.get(id)) {
+                    w.window.focus_window();
+                }
+                self.refocus = Some((top, Instant::now() + Duration::from_secs(1)));
+            }
+            _ => {}
         }
     }
 
@@ -998,6 +1061,10 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
             WindowEvent::Resized(size) => {
                 let theme = self.ui.theme;
                 let window = self.wins[&id].window.clone();
+                #[cfg(target_os = "windows")]
+                if fi == self.ui.main_form {
+                    self.follow_main(window.is_minimized() == Some(true));
+                }
                 let s = window.scale_factor() * self.ui.ui_scale;
                 let l: LogicalSize<f64> = size.to_logical(s);
                 // a move and a resize in one step (X11) brings no Moved event
@@ -1035,6 +1102,21 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                 self.moved(fi, l);
             }
             WindowEvent::Focused(on) => {
+                #[cfg(target_os = "windows")]
+                if let Some((top, until)) = self.refocus {
+                    if Instant::now() > until {
+                        self.refocus = None;
+                    } else if on && fi != top {
+                        if let Some(w) = self.by_form.get(&top).and_then(|id| self.wins.get(id)) {
+                            w.window.focus_window();
+                        }
+                    }
+                }
+                #[cfg(target_os = "windows")]
+                if on {
+                    self.activated.retain(|&i| i != fi);
+                    self.activated.push(fi);
+                }
                 let f = &mut self.ui.forms[fi];
                 f.active = on;
                 f.dirty = true;
