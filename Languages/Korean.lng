@@ -31,6 +31,8 @@ font = Korean.ttf
 [Labels]
 ACalculationIsRunningStopIt=계산이 실행 중입니다. 먼저 중지하십시오.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=16픽셀, 그다음 4픽셀 블록마다 거친 광선 하나가 거리 추정에서 블록의 퍼짐을 뺀 만큼 전진하고, 각 픽셀의 마치는 그 깊이에서 시작합니다. 트인 공간에서는 최대 60 % 빨라지며, 추정이 크게 빗나간 곳에서는 얇은 부분이 사라질 수 있습니다.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=이진 탐색보다 빠른 방법이지만, DE가 나쁘면 실패할 수 있습니다
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=몇 초 남음
@@ -657,6 +659,8 @@ CompilingSucceeded=컴파일 성공
 ;Compiling succeeded
 Computer=컴퓨터
 ;Computer
+ConeMarchThePixelsOfA=원뿔 마치: 블록의 픽셀은 그 거친 광선이 멈춘 곳에서 시작
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=확인
 ;Confirm
 Connect=연결
@@ -3465,6 +3469,8 @@ TheSizeOfTheTiles=타일 크기
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=스테레오 양쪽 눈 이미지의 크기가 다릅니다.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=클립보드의 텍스트 매개변수가 손상되었습니다. 복사할 때 일부 줄이 잘렸습니다. 원래 위치에서 다시 복사하세요.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=타일에 이미지 버퍼가 없습니다
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=고른 키프레임의 값
@@ -3905,8 +3911,3 @@ Label6.Caption = 반사광
 [MutaGenFrm]
 Label4.Caption = 교환, 추가
 Label11.Caption = 반복 횟수
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=16픽셀, 그다음 4픽셀 블록마다 거친 광선 하나가 거리 추정에서 블록의 퍼짐을 뺀 만큼 전진하고, 각 픽셀의 마치는 그 깊이에서 시작합니다. 트인 공간에서는 최대 60 % 빨라지며, 추정이 크게 빗나간 곳에서는 얇은 부분이 사라질 수 있습니다.
-ConeMarchThePixelsOfA=원뿔 마치: 블록의 픽셀은 그 거친 광선이 멈춘 곳에서 시작

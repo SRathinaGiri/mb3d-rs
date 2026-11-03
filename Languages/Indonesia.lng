@@ -30,6 +30,8 @@ code = ID
 [Labels]
 ACalculationIsRunningStopIt=Perhitungan sedang berjalan: hentikan dulu.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Satu sinar kasar per blok 16, lalu 4 piksel melakukan march dengan sebaran blok dikurangkan dari estimasi jarak, dan march setiap piksel mulai dari kedalamannya. Hingga 60 % lebih cepat melewati ruang terbuka; bagian tipis bisa hilang di tempat estimasinya jauh meleset.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Metode yang lebih cepat daripada binsearch, tetapi dapat gagal jika DE-nya buruk
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=tersisa beberapa detik
@@ -656,6 +658,8 @@ CompilingSucceeded=Kompilasi berhasil
 ;Compiling succeeded
 Computer=Komputer
 ;Computer
+ConeMarchThePixelsOfA=March kerucut: piksel sebuah blok mulai di tempat sinar kasarnya berhenti
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Konfirmasi
 ;Confirm
 Connect=Hubungkan
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=Ukuran tile
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Gambar mata stereo memiliki ukuran berbeda.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Parameter teks di papan klip rusak: beberapa barisnya terpotong saat disalin. Salin lagi dari sumbernya.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=tile tidak memiliki buffer gambar
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=Nilai keyframe yang dipilih
@@ -3858,8 +3864,3 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Satu sinar kasar per blok 16, lalu 4 piksel melakukan march dengan sebaran blok dikurangkan dari estimasi jarak, dan march setiap piksel mulai dari kedalamannya. Hingga 60 % lebih cepat melewati ruang terbuka; bagian tipis bisa hilang di tempat estimasinya jauh meleset.
-ConeMarchThePixelsOfA=March kerucut: piksel sebuah blok mulai di tempat sinar kasarnya berhenti

@@ -30,6 +30,8 @@ code = DE
 [Labels]
 ACalculationIsRunningStopIt=Eine Berechnung läuft: Stoppen Sie sie zuerst.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Ein grober Strahl je Block von 16, dann von 4 Pixeln marschiert mit der Streuung des Blocks von der Distanzschätzung abgezogen, und der Marsch jedes Pixels beginnt in dessen Tiefe. Bis zu 60 % schneller durch offenen Raum; dünne Teile können verloren gehen, wo die Schätzung weit danebenliegt.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Eine schnellere Methode als die Binärsuche, kann aber bei schlechten DEs zu Fehlern führen
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=noch wenige Sekunden
@@ -656,6 +658,8 @@ CompilingSucceeded=Kompilieren erfolgreich
 ;Compiling succeeded
 Computer=Computer
 ;Computer
+ConeMarchThePixelsOfA=Kegelmarsch: die Pixel eines Blocks beginnen, wo sein grober Strahl anhielt
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Bestätigen
 ;Confirm
 Connect=Verbinden
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=Die Größe der Kacheln
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Die Stereo-Augenbilder haben unterschiedliche Größen.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Die Textparameter in der Zwischenablage sind beschädigt: Beim Kopieren wurden einige ihrer Zeilen abgeschnitten. Kopieren Sie sie erneut von dort, wo sie herkommen.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=die Kachel hat keinen Bildpuffer
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=Der Wert des gewählten Keyframes
@@ -3889,8 +3895,3 @@ Label6.Caption = Spiegelnd
 [MutaGenFrm]
 Label4.Caption = von Formeln
 Label11.Caption = Ändern der
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Ein grober Strahl je Block von 16, dann von 4 Pixeln marschiert mit der Streuung des Blocks von der Distanzschätzung abgezogen, und der Marsch jedes Pixels beginnt in dessen Tiefe. Bis zu 60 % schneller durch offenen Raum; dünne Teile können verloren gehen, wo die Schätzung weit danebenliegt.
-ConeMarchThePixelsOfA=Kegelmarsch: die Pixel eines Blocks beginnen, wo sein grober Strahl anhielt

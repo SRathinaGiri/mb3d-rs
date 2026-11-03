@@ -31,6 +31,8 @@ font = ChineseSimplified.ttf
 [Labels]
 ACalculationIsRunningStopIt=正在进行计算：请先停止它。
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=每 16 像素、再每 4 像素的块各发一条粗光线，按减去块的扩展量后的距离估计步进，每个像素的步进从它的深度开始。在开阔空间中最多快 60 %；在估计偏差大的地方可能丢失细薄的部分。
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=比二分搜索更快的方法，但 DE 不佳时可能出错
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=剩余几秒
@@ -657,6 +659,8 @@ CompilingSucceeded=编译成功
 ;Compiling succeeded
 Computer=计算机
 ;Computer
+ConeMarchThePixelsOfA=锥形步进：块内像素从其粗光线停下的位置开始
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=确认
 ;Confirm
 Connect=连接
@@ -3465,6 +3469,8 @@ TheSizeOfTheTiles=图块的大小
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=立体左右眼图像的尺寸不同。
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=剪贴板中的文本参数已损坏：复制时部分行被截断。请从原处重新复制。
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=该图块没有图像缓冲区
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=所选关键帧的数值
@@ -3894,8 +3900,3 @@ LightSheet.Caption = 光源
 
 [PostProForm]
 RadioGroup2.Caption = 计算方式
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=每 16 像素、再每 4 像素的块各发一条粗光线，按减去块的扩展量后的距离估计步进，每个像素的步进从它的深度开始。在开阔空间中最多快 60 %；在估计偏差大的地方可能丢失细薄的部分。
-ConeMarchThePixelsOfA=锥形步进：块内像素从其粗光线停下的位置开始

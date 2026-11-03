@@ -30,6 +30,8 @@ code = NL
 [Labels]
 ACalculationIsRunningStopIt=Er loopt een berekening: stop die eerst.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Een grove straal per blok van 16, dan van 4 pixels marcheert met de spreiding van het blok van de afstandsschatting afgetrokken, en de mars van elke pixel begint op zijn diepte. Tot 60 % sneller door open ruimte; dunne delen kunnen verloren gaan waar de schatting er ver naast zit.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Een snellere methode dan binair zoeken, maar kan mislukken als de DE's slecht zijn
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=nog enkele seconden
@@ -656,6 +658,8 @@ CompilingSucceeded=Compileren geslaagd
 ;Compiling succeeded
 Computer=Computer
 ;Computer
+ConeMarchThePixelsOfA=Kegelmars: de pixels van een blok beginnen waar zijn grove straal stopte
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Bevestigen
 ;Confirm
 Connect=Verbinden
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=De grootte van de tegels
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=De stereo-oogafbeeldingen hebben verschillende afmetingen.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=De tekstparameters op het klembord zijn beschadigd: sommige regels zijn bij het kopiëren afgekapt. Kopieer ze opnieuw van de bron.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=de tegel heeft geen beeldbuffer
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=De waarde van het gekozen keyframe
@@ -3893,8 +3899,3 @@ Label4.Caption = toevoegen
 
 [VisualThemesFrm]
 SaveAndExitBtn.Caption = Opslaan + sluiten
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Een grove straal per blok van 16, dan van 4 pixels marcheert met de spreiding van het blok van de afstandsschatting afgetrokken, en de mars van elke pixel begint op zijn diepte. Tot 60 % sneller door open ruimte; dunne delen kunnen verloren gaan waar de schatting er ver naast zit.
-ConeMarchThePixelsOfA=Kegelmars: de pixels van een blok beginnen waar zijn grove straal stopte

@@ -30,6 +30,8 @@ code = PT
 [Labels]
 ACalculationIsRunningStopIt=Um cálculo está em andamento: pare-o primeiro.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Um raio grosseiro por bloco de 16, depois de 4 pixels avança com a abertura do bloco descontada da estimativa de distância, e o avanço de cada pixel começa na profundidade dele. Até 60 % mais rápido pelo espaço aberto; partes finas podem se perder onde a estimativa erra por muito.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Um método mais rápido que a busca binária, mas pode falhar se os DE forem ruins
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=faltam alguns segundos
@@ -656,6 +658,8 @@ CompilingSucceeded=Compilação concluída
 ;Compiling succeeded
 Computer=Computador
 ;Computer
+ConeMarchThePixelsOfA=Avanço em cone: os pixels de um bloco começam onde seu raio grosseiro parou
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Confirmar
 ;Confirm
 Connect=Conectar
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=O tamanho dos blocos
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=As imagens estéreo dos olhos têm tamanhos diferentes.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Os parâmetros de texto na área de transferência estão danificados: algumas das linhas foram cortadas ao copiar. Copie-os novamente da origem.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=o bloco não tem buffer de imagem
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=O valor do quadro-chave escolhido
@@ -3858,8 +3864,3 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Um raio grosseiro por bloco de 16, depois de 4 pixels avança com a abertura do bloco descontada da estimativa de distância, e o avanço de cada pixel começa na profundidade dele. Até 60 % mais rápido pelo espaço aberto; partes finas podem se perder onde a estimativa erra por muito.
-ConeMarchThePixelsOfA=Avanço em cone: os pixels de um bloco começam onde seu raio grosseiro parou

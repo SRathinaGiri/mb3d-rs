@@ -2476,6 +2476,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                         app.message(ui, &n);
                     }
                 }
+                Err(e) if e.starts_with(crate::m3p::TEXT_DAMAGED) => {
+                    app.message(ui, &tr("@MB:TheTextParametersOnTheClipboard"));
+                }
                 Err(_) => {
                     if ui.has_form("FTextBox") {
                         ui.show("FTextBox");

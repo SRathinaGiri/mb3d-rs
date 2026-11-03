@@ -156,6 +156,33 @@ fn four_chars_to_3_bytes(s: &[u8]) -> Option<[u8; 3]> {
     Some([i as u8, (i >> 8) as u8, (i >> 16) as u8])
 }
 
+/// The start of [`raw_from_text`]'s error for a block whose lines were cut.
+pub const TEXT_DAMAGED: &str = "text parameters damaged";
+
+/// MB3D writes its text parameters in lines of one width (80 characters),
+/// the last one shorter. A line shorter than the first, before the last,
+/// was cut off when the text was copied (a narrow window, a chat that wraps
+/// lines): the characters after it would be read in the wrong places, a
+/// scene with the default formula and nonsense values.
+fn check_line_widths(inner: &str) -> Result<(), String> {
+    let lines: Vec<usize> = inner
+        .lines()
+        .map(|l| l.bytes().filter(|&c| c > 32 && c != 0x85).count())
+        .filter(|&n| n > 0)
+        .collect();
+    let Some((&width, rest)) = lines.split_first() else { return Ok(()) };
+    let last = rest.len();
+    for (i, &n) in rest.iter().enumerate() {
+        if n > width || (n < width && i + 1 < last) {
+            return Err(format!(
+                "{TEXT_DAMAGED}: line {} has {n} characters, the first {width}; part of it was lost in copying, copy the parameters again",
+                i + 2
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// `GetHeaderFromText`: decodes `Mandelbulb3Dv18{...}{Titel: ...}` text
 /// parameters (versions before 16 hold a `TMandHeader8`, see
 /// [`crate::m3p_old::raw_from_old_text`]).
@@ -174,8 +201,9 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
     let ver: f32 = if num.is_empty() { 14.0 } else { num.parse().unwrap_or(13.0) };
     let close = t[open..].find('}').ok_or("text parameters: missing '}'")? + open;
     // the "..." character (cp1252 133) stands for three dots
-    let body: Vec<u8> = t[open + 1..close]
-        .replace('\u{2026}', "...")
+    let inner = t[open + 1..close].replace('\u{2026}', "...");
+    check_line_widths(&inner)?;
+    let body: Vec<u8> = inner
         .bytes()
         .filter(|&c| c > 32 && c != 0x85)
         .collect();
@@ -1522,6 +1550,35 @@ mod tests {
         let (back, _) = raw_from_text(&raw_to_text(&raw, "Test scene")).unwrap();
         assert_eq!(back[a + 4], 4);
         assert_eq!(back[a + 8..a + 8 + 4 * 188], raw[a + 8..a + 8 + 4 * 188]);
+    }
+
+    /// Text whose lines were cut in copying (here 12 characters off every
+    /// other line, as a pasted Storm scene came) is refused, not read as
+    /// the default formula with nonsense values; whole text, also on one
+    /// line or with the first line after the brace, still loads.
+    #[test]
+    fn text_parameters_with_cut_lines_are_refused() {
+        let mut raw = vec![0u8; HEADER_SIZE + ADDON_SIZE];
+        for (i, b) in raw.iter_mut().enumerate() {
+            *b = (i * 5 + 1) as u8;
+        }
+        raw[4..8].copy_from_slice(&640i32.to_le_bytes());
+        raw[8..12].copy_from_slice(&480i32.to_le_bytes());
+        raw[HEADER_SIZE + 8..HEADER_SIZE + 12].copy_from_slice(&1i32.to_le_bytes());
+        let text = raw_to_text(&raw, "t");
+        assert!(raw_from_text(&text).is_ok());
+        assert!(raw_from_text(&text.replace("\r\n", "")).is_ok());
+        assert!(raw_from_text(&text.replacen("{\r\n", "{", 1)).is_ok());
+        let cut: Vec<String> = text.lines().enumerate().map(|(i, l)| if i % 2 == 0 && l.len() == 80 { l[..68].to_string() } else { l.to_string() }).collect();
+        let e = raw_from_text(&cut.join("\n")).unwrap_err();
+        assert!(e.starts_with(TEXT_DAMAGED), "{e}");
+        // a single cut line, and a longer one, too
+        let mut one: Vec<String> = text.lines().map(str::to_string).collect();
+        one[5].truncate(76);
+        assert!(raw_from_text(&one.join("\n")).unwrap_err().starts_with(TEXT_DAMAGED));
+        let mut long: Vec<String> = text.lines().map(str::to_string).collect();
+        long[5].push_str("....");
+        assert!(raw_from_text(&long.join("\n")).unwrap_err().starts_with(TEXT_DAMAGED));
     }
 
     #[test]

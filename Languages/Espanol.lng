@@ -30,6 +30,8 @@ code = ES
 [Labels]
 ACalculationIsRunningStopIt=Hay un cálculo en curso: deténgalo primero.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Un rayo grueso por bloque de 16, luego de 4 píxeles avanza con la extensión del bloque restada de la estimación de distancia, y la marcha de cada píxel empieza a su profundidad. Hasta un 60 % más rápido por el espacio abierto; las partes finas pueden perderse donde la estimación se aleja mucho.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Un método más rápido que la búsqueda binaria, pero puede fallar si los DE son malos
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=quedan unos segundos
@@ -656,6 +658,8 @@ CompilingSucceeded=Compilación correcta
 ;Compiling succeeded
 Computer=Equipo
 ;Computer
+ConeMarchThePixelsOfA=Marcha en cono: los píxeles de un bloque empiezan donde se detuvo su rayo grueso
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Confirmar
 ;Confirm
 Connect=Conectar
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=El tamaño de las miniaturas
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Las imágenes estéreo de los ojos tienen tamaños distintos.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Los parámetros de texto del portapapeles están dañados: algunas de sus líneas se cortaron al copiarlos. Vuelva a copiarlos desde su origen.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=la tesela no tiene búfer de imagen
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=El valor del fotograma clave elegido
@@ -3858,8 +3864,3 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Un rayo grueso por bloque de 16, luego de 4 píxeles avanza con la extensión del bloque restada de la estimación de distancia, y la marcha de cada píxel empieza a su profundidad. Hasta un 60 % más rápido por el espacio abierto; las partes finas pueden perderse donde la estimación se aleja mucho.
-ConeMarchThePixelsOfA=Marcha en cono: los píxeles de un bloque empiezan donde se detuvo su rayo grueso

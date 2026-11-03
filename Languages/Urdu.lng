@@ -31,6 +31,8 @@ font = Urdu.ttf
 [Labels]
 ACalculationIsRunningStopIt=ایک حساب جاری ہے: پہلے اسے روکیں۔
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=16، پھر 4 پکسلز کے ہر بلاک کے لیے ایک موٹی شعاع مارچ کرتی ہے، جس میں بلاک کا پھیلاؤ فاصلے کے تخمینے سے گھٹا دیا جاتا ہے، اور ہر پکسل کا مارچ اس کی گہرائی سے شروع ہوتا ہے۔ کھلی جگہ میں 60 % تک تیز؛ جہاں تخمینہ بہت غلط ہو وہاں پتلے حصے کھو سکتے ہیں۔
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=بائنری سرچ سے تیز طریقہ، لیکن DE خراب ہوں تو ناکامی ہو سکتی ہے
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=چند سیکنڈ باقی
@@ -657,6 +659,8 @@ CompilingSucceeded=کمپائلنگ کامیاب
 ;Compiling succeeded
 Computer=کمپیوٹر
 ;Computer
+ConeMarchThePixelsOfA=مخروطی مارچ: بلاک کے پکسل وہاں سے شروع ہوتے ہیں جہاں اس کی موٹی شعاع رکی
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=تصدیق
 ;Confirm
 Connect=جوڑیں
@@ -3465,6 +3469,8 @@ TheSizeOfTheTiles=ٹائلز کا سائز
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=اسٹیریو آنکھوں کی تصاویر کے سائز مختلف ہیں۔
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=کلپ بورڈ کے متنی پیرامیٹر خراب ہیں: کاپی کرتے وقت ان کی کچھ سطریں کٹ گئیں۔ انہیں ان کی اصل جگہ سے دوبارہ کاپی کریں۔
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=ٹائل کا کوئی تصویری بفر نہیں
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=چنے گئے کی فریم کی قدر
@@ -3859,8 +3865,3 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=16، پھر 4 پکسلز کے ہر بلاک کے لیے ایک موٹی شعاع مارچ کرتی ہے، جس میں بلاک کا پھیلاؤ فاصلے کے تخمینے سے گھٹا دیا جاتا ہے، اور ہر پکسل کا مارچ اس کی گہرائی سے شروع ہوتا ہے۔ کھلی جگہ میں 60 % تک تیز؛ جہاں تخمینہ بہت غلط ہو وہاں پتلے حصے کھو سکتے ہیں۔
-ConeMarchThePixelsOfA=مخروطی مارچ: بلاک کے پکسل وہاں سے شروع ہوتے ہیں جہاں اس کی موٹی شعاع رکی

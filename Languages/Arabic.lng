@@ -31,6 +31,8 @@ font = Arabic.ttf
 [Labels]
 ACalculationIsRunningStopIt=يجري حساب الآن: أوقفه أولًا.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=شعاع خشن لكل كتلة من 16 بكسلًا ثم من 4 يتقدّم مع طرح اتساع الكتلة من تقدير المسافة، ويبدأ تقدّم كل بكسل من عمقه. أسرع حتى 60 % عبر الفضاء المفتوح؛ قد تُفقد الأجزاء الرقيقة حيث يكون التقدير بعيدًا عن الصواب.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=طريقة أسرع من البحث الثنائي، لكنها قد تخفق إذا كانت قيم DE سيئة
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=بقيت ثوانٍ قليلة
@@ -657,6 +659,8 @@ CompilingSucceeded=نجحت الترجمة
 ;Compiling succeeded
 Computer=الحاسوب
 ;Computer
+ConeMarchThePixelsOfA=التقدّم المخروطي: بكسلات الكتلة تبدأ حيث توقف شعاعها الخشن
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=تأكيد
 ;Confirm
 Connect=اتصال
@@ -3465,6 +3469,8 @@ TheSizeOfTheTiles=حجم المربعات
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=صورتا العينين المجسمتان بحجمين مختلفين.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=معاملات النص في الحافظة تالفة: قُطعت بعض أسطرها عند النسخ. انسخها مرة أخرى من مصدرها.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=البلاطة بلا مخزن صورة
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=قيمة الإطار المفتاحي المختار
@@ -3859,8 +3865,3 @@ Zpos=موضع Z
 ;Zpos
 Zrot=دوران Z
 ;Zrot
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=شعاع خشن لكل كتلة من 16 بكسلًا ثم من 4 يتقدّم مع طرح اتساع الكتلة من تقدير المسافة، ويبدأ تقدّم كل بكسل من عمقه. أسرع حتى 60 % عبر الفضاء المفتوح؛ قد تُفقد الأجزاء الرقيقة حيث يكون التقدير بعيدًا عن الصواب.
-ConeMarchThePixelsOfA=التقدّم المخروطي: بكسلات الكتلة تبدأ حيث توقف شعاعها الخشن

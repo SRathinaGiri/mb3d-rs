@@ -30,6 +30,8 @@ code = PL
 [Labels]
 ACalculationIsRunningStopIt=Trwają obliczenia: najpierw je zatrzymaj.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Jeden zgrubny promień na blok 16, potem 4 pikseli maszeruje z rozrzutem bloku odjętym od oszacowania odległości, a marsz każdego piksela zaczyna się na jego głębokości. Do 60 % szybciej przez otwartą przestrzeń; cienkie części mogą zginąć tam, gdzie oszacowanie jest daleko od prawdy.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Metoda szybsza niż szukanie binarne, ale może zawodzić przy złych DE
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=zostało kilka sekund
@@ -656,6 +658,8 @@ CompilingSucceeded=Kompilacja udana
 ;Compiling succeeded
 Computer=Komputer
 ;Computer
+ConeMarchThePixelsOfA=Marsz stożkowy: piksele bloku zaczynają tam, gdzie zatrzymał się jego zgrubny promień
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Potwierdź
 ;Confirm
 Connect=Połącz
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=Rozmiar kafelków
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Obrazy stereo dla obu oczu mają różne rozmiary.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Parametry tekstowe w schowku są uszkodzone: część wierszy została obcięta podczas kopiowania. Skopiuj je ponownie ze źródła.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=kafelek nie ma bufora obrazu
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=Wartość wybranej klatki kluczowej
@@ -3907,8 +3913,3 @@ Label4.Caption = formuł
 
 [PostProForm]
 RadioGroup2.Caption = Obliczanie
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Jeden zgrubny promień na blok 16, potem 4 pikseli maszeruje z rozrzutem bloku odjętym od oszacowania odległości, a marsz każdego piksela zaczyna się na jego głębokości. Do 60 % szybciej przez otwartą przestrzeń; cienkie części mogą zginąć tam, gdzie oszacowanie jest daleko od prawdy.
-ConeMarchThePixelsOfA=Marsz stożkowy: piksele bloku zaczynają tam, gdzie zatrzymał się jego zgrubny promień

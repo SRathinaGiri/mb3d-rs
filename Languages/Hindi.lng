@@ -31,6 +31,8 @@ font = Hindi.ttf
 [Labels]
 ACalculationIsRunningStopIt=एक गणना चल रही है: पहले उसे रोकें।
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=16, फिर 4 पिक्सेल के हर ब्लॉक के लिए एक मोटी किरण मार्च करती है, जिसमें ब्लॉक का फैलाव दूरी अनुमान से घटा दिया जाता है, और हर पिक्सेल का मार्च उसकी गहराई से शुरू होता है। खुली जगह में 60 % तक तेज़; जहाँ अनुमान बहुत गलत हो वहाँ पतले हिस्से खो सकते हैं।
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=बाइनरी खोज से तेज़ तरीका, लेकिन DE खराब होने पर विफलता हो सकती है
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=कुछ सेकंड शेष
@@ -657,6 +659,8 @@ CompilingSucceeded=कंपाइल सफल रहा
 ;Compiling succeeded
 Computer=कंप्यूटर
 ;Computer
+ConeMarchThePixelsOfA=शंकु मार्च: ब्लॉक के पिक्सेल वहाँ से शुरू होते हैं जहाँ उसकी मोटी किरण रुकी
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=पुष्टि करें
 ;Confirm
 Connect=कनेक्ट करें
@@ -3465,6 +3469,8 @@ TheSizeOfTheTiles=टाइलों का आकार
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=स्टीरियो आँख छवियों के आकार अलग-अलग हैं।
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=क्लिपबोर्ड के टेक्स्ट पैरामीटर खराब हैं: कॉपी करते समय उनकी कुछ पंक्तियाँ कट गईं। उन्हें उनके मूल स्थान से फिर से कॉपी करें।
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=टाइल में कोई छवि बफ़र नहीं है
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=चुने गए की-फ़्रेम का मान
@@ -3876,8 +3882,3 @@ TrackBar1.Hint = चुने जाने पर, इस स्लाइडर 
 
 [TilingForm]
 Label24.Caption = शार्प:
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=16, फिर 4 पिक्सेल के हर ब्लॉक के लिए एक मोटी किरण मार्च करती है, जिसमें ब्लॉक का फैलाव दूरी अनुमान से घटा दिया जाता है, और हर पिक्सेल का मार्च उसकी गहराई से शुरू होता है। खुली जगह में 60 % तक तेज़; जहाँ अनुमान बहुत गलत हो वहाँ पतले हिस्से खो सकते हैं।
-ConeMarchThePixelsOfA=शंकु मार्च: ब्लॉक के पिक्सेल वहाँ से शुरू होते हैं जहाँ उसकी मोटी किरण रुकी

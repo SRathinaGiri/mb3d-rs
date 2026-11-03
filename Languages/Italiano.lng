@@ -30,6 +30,8 @@ code = IT
 [Labels]
 ACalculationIsRunningStopIt=È in corso un calcolo: fermarlo prima.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Un raggio grossolano per blocco di 16, poi di 4 pixel avanza con l'apertura del blocco sottratta alla stima della distanza, e la marcia di ogni pixel parte dalla sua profondità. Fino al 60 % più veloce nello spazio aperto; le parti sottili possono perdersi dove la stima è molto imprecisa.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Un metodo più veloce della ricerca binaria, ma può dare errori se le DE sono imprecise
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=mancano pochi secondi
@@ -656,6 +658,8 @@ CompilingSucceeded=Compilazione riuscita
 ;Compiling succeeded
 Computer=Computer
 ;Computer
+ConeMarchThePixelsOfA=Marcia a cono: i pixel di un blocco partono da dove si è fermato il suo raggio grossolano
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Conferma
 ;Confirm
 Connect=Connetti
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=La dimensione dei riquadri
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Le immagini stereo dei due occhi hanno dimensioni diverse.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=I parametri di testo negli appunti sono danneggiati: alcune righe sono state tagliate durante la copia. Copiali di nuovo dalla loro origine.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=il riquadro non ha un buffer immagine
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=Il valore del fotogramma chiave scelto
@@ -3906,8 +3912,3 @@ Label24.Caption = nitidezza:
 
 [VisualThemesFrm]
 SaveAndExitBtn.Caption = Salva ed esci
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Un raggio grossolano per blocco di 16, poi di 4 pixel avanza con l'apertura del blocco sottratta alla stima della distanza, e la marcia di ogni pixel parte dalla sua profondità. Fino al 60 % più veloce nello spazio aperto; le parti sottili possono perdersi dove la stima è molto imprecisa.
-ConeMarchThePixelsOfA=Marcia a cono: i pixel di un blocco partono da dove si è fermato il suo raggio grossolano

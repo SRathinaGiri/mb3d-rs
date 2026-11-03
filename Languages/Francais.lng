@@ -30,6 +30,8 @@ code = FR
 [Labels]
 ACalculationIsRunningStopIt=Un calcul est en cours : arrêtez-le d'abord.
 ;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Un rayon grossier par bloc de 16, puis de 4 pixels avance avec l'étalement du bloc retranché de l'estimation de distance, et la marche de chaque pixel part de sa profondeur. Jusqu'à 60 % plus rapide dans l'espace ouvert ; des parties fines peuvent être perdues là où l'estimation est très fausse.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
 AFasterMethodThanBinsearchBut=Méthode plus rapide que la recherche binaire, mais pouvant échouer si les DE sont mauvais
 ;A faster method than binsearch, but can lead to failures if DE's are bad
 AFewSecondsLeft=quelques secondes restantes
@@ -656,6 +658,8 @@ CompilingSucceeded=Compilation réussie
 ;Compiling succeeded
 Computer=Ordinateur
 ;Computer
+ConeMarchThePixelsOfA=Marche en cône : les pixels d'un bloc partent de là où son rayon grossier s'est arrêté
+;Cone march: the pixels of a block start where its coarse ray stopped
 Confirm=Confirmer
 ;Confirm
 Connect=Connecter
@@ -3464,6 +3468,8 @@ TheSizeOfTheTiles=La taille des vignettes
 ;The size of the tiles
 TheStereoEyeImagesHaveDifferent=Les images stéréo des deux yeux ont des tailles différentes.
 ;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Les paramètres texte du presse-papiers sont endommagés : certaines de leurs lignes ont été coupées lors de la copie. Copiez-les à nouveau depuis leur source.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=la tuile n'a pas de tampon d'image
 ;the tile has no image buffer
 TheValueOfTheChosenKeyframe=La valeur de l'image clé choisie
@@ -3904,8 +3910,3 @@ Label4.Caption = des formules
 
 [TilingForm]
 Label24.Caption = net :
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-ACoarseRayPerBlockOf=Un rayon grossier par bloc de 16, puis de 4 pixels avance avec l'étalement du bloc retranché de l'estimation de distance, et la marche de chaque pixel part de sa profondeur. Jusqu'à 60 % plus rapide dans l'espace ouvert ; des parties fines peuvent être perdues là où l'estimation est très fausse.
-ConeMarchThePixelsOfA=Marche en cône : les pixels d'un bloc partent de là où son rayon grossier s'est arrêté
