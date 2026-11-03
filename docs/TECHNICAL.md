@@ -1166,6 +1166,35 @@ before. The skipped pixels are marked (`amb_shadow = 0xFFFF`) and filled by
 `deao::fill_half` after the pass, on the processor, for the card's and the
 processor's rows alike.
 
+### Measuring a speed-up
+
+`tools/bench.py run SWEEP.json OUT_DIR` times and compares variants of
+the example scenes, and `tools/bench.py report OUT_DIR` sums them up (the
+settings are described at the top of the script). Sweeps run by hand were
+skewed again and again, so the driver rules the known causes out:
+
+- a frozen copy of the program (its checksum and commit in the sweep's
+  header), and a quiet machine: before every run it waits while a build
+  runs or the processor is busy;
+- every scene and variant twice, the second round in reverse order; the
+  smaller time counts, a pair more than 15 % apart is run a third time.
+  The first render of a new shader on the card includes its compile
+  (~30 s for a large scene; a small warm-up render does not help, small
+  pictures are calculated on the processor), and while it compiles the
+  processor fills in part of the picture: the pictures are round 2's;
+- the variants as argument lists, never through a shell, checked before
+  anything runs (unknown keys, two variants alike, a variant that is the
+  plain render, arguments the driver sets itself such as `--card`);
+- every run checked: the device it was calculated on (`MB3D_GPU=0` does
+  not stop `--card`), the strings a variant expects (`cone march: on`; a
+  scene where it is off counts as not in use), a variant marked `same`
+  against the plain render (byte for byte on the processor, within the
+  card's own run-to-run variation, about 0.001 % of the pixels, on the card);
+- the noise: the plain render with the scene's random first step flipped.
+  A variant changes a scene where its pixels (more than 8 of 255 apart) or
+  holes (surface in the plain render, background in the variant: the depth
+  picture's background is 0) exceed 1.5 times that noise.
+
 ## Time left and the progress bar
 
 The main window's bar shows the whole 3D calculation, and the line beside
