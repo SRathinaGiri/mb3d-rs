@@ -181,8 +181,6 @@ jobs:
           # the themes and the languages (the program reads them from here)
           cp -r Themes "$name"/
           cp -r Languages "$name"/
-          mkdir -p "$name/examples"
-          cp examples/*.m3s "$name/examples"/
           # the neural noise filter loads from the package (not on the Intel
           # Macs' build, which cannot run here)
           if [ "${{ matrix.target }}" != "x86_64-apple-darwin" ]; then

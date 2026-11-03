@@ -23,7 +23,7 @@ USAGE:
     mb3d resume [--clear [KEY]] [--m3i KEY FILE]                   unfinished renders kept for continuing
     (mb3d animate --help, mb3d batch --help, ...)
 
-SCENE_FILE is an INI-style scene description (see examples/*.m3s), a
+SCENE_FILE is an INI-style scene description (.m3s; --save-scene writes one), a
 Mandelbulb3D parameter file (.m3p), image file (.m3i, parameters only) or a
 text file containing MB3D text parameters (Mandelbulb3Dv18{...}).
 Without a scene file the preset for --formula is rendered (run without any
