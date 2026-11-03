@@ -36,7 +36,7 @@ Use:
 
 SWEEP.json:
     {
-      "device": "cpu",                  # cpu | card | auto
+      "device": "cpu",                  # cpu | card | auto: mb3d --cpu, --card, neither
       "megapixels": 0.2,                # each scene scaled to about this size
       "scenes": "~/mb3d-rs/M3Parameter/*.m3p",
       "formulas": "~/mb3d-rs/M3Formulas",
@@ -143,7 +143,7 @@ def scene_info(binary, scene, formulas, tmp):
 CONFIG_KEYS = {"device", "megapixels", "scenes", "formulas", "binary", "exclude", "variants"}
 VARIANT_KEYS = {"args", "env", "expect", "same"}
 # set by the driver: a variant must not repeat or contradict them
-OWN_ARGS = {"--card", "--scale", "-o", "--output", "--depth", "--fresh", "--no-resume", "--formulas", "--save-scene", "--render"}
+OWN_ARGS = {"--card", "--cpu", "--scale", "-o", "--output", "--depth", "--fresh", "--no-resume", "--formulas", "--save-scene", "--render"}
 OWN_ENV = {"MB3D_GPU", "MB3D_STAGE_TIMES"}
 
 
@@ -239,10 +239,11 @@ def run(cfg_path, out_dir):
     formulas = os.path.expanduser(cfg["formulas"])
     scenes = sorted(glob.glob(os.path.expanduser(cfg["scenes"])))
     scenes = [s for s in scenes if not any(os.path.basename(s).startswith(x) for x in cfg["exclude"])]
+    # the device by mb3d's options alone (--cpu, --card; neither: Auto):
+    # no MB3D_ variable of the caller's environment comes along (MB3D_GPU=0
+    # would make "auto" the processor)
     base_env = {k: v for k, v in os.environ.items() if not k.startswith("MB3D_")}
     base_env["MB3D_STAGE_TIMES"] = "1"
-    if cfg["device"] == "cpu":
-        base_env["MB3D_GPU"] = "0"
     for si, scene in enumerate(scenes):
         name = os.path.splitext(os.path.basename(scene))[0]
         info = scene_info(binary, scene, formulas, os.path.join(out_dir, "scene.m3s"))
@@ -262,8 +263,8 @@ def run(cfg_path, out_dir):
             if v == "noise":
                 spec = {"args": ["-s", f"first_step_random={'false' if first else 'true'}"]}
             cmd = [binary, scene, "--formulas", formulas, "--fresh", "--no-resume", "--scale", f"{scale:.6f}"]
-            if cfg["device"] == "card":
-                cmd.append("--card")
+            if cfg["device"] != "auto":
+                cmd.append("--" + cfg["device"])
             cmd += spec.get("args", [])
             img = f"{out_dir}/img/{v}-{name}"
             # the pictures from round 2: in round 1 the first variant of a
