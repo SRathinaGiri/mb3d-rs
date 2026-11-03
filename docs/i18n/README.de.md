@@ -523,6 +523,7 @@ können Sie selbst weiter prüfen:
   gemeinsamen Ordner sehen, rendern zusammen ein Bild, ein großes Rendering,
   ein Monte-Carlo-Bild oder eine Animation. Siehe
   [Rendern auf mehreren Computern](#rendering-on-several-computers-the-swarm).
+* **Formeln und Maps der Community**: 129 Formeln und 154 Maps, die dem offiziellen Repository fehlen, aus dem Mandelbulb3D-1.99.37-Paket, das Machina Infinitum kostenlos zum Herunterladen anbietet. Die Formeln stammen von Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero und weiteren, deren Dateien keinen Autor nennen; `M3Formulas/CREDITS-community.md` nennt den Autor jeder Formel (`teapot.m3f` von DarkBeam steht unter CC BY-SA 3.0). Die Maps stammen aus DarkBeams Sammlung, unter seinen Bedingungen (frei nutzbar, nicht unverändert zu verkaufen), mit Bildern, die CmdrChaos, Fractales75, Nic022 und UndeadAcademy auf DeviantArt geteilt haben; die Maps 3046–3048 sind von Kronpano (`M3Maps/CREDITS-community.md`).
 * **Eine neue Formel, PseudoKleinian:** die „Kleinsche Architektur“ aus Hallen,
   Bögen und Kugeln als eine Formel mit eigenem exaktem Abstand.
 

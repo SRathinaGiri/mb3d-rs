@@ -458,6 +458,14 @@ code. This port runs that code in three tiers:
 3. **Interpreter** (`x86.rs`): an IA-32 emulator (integer, x87, SSE/SSE2
    subset) for code that does not fit the static model (a handful of formula files).
 
+Formulas and maps of the MB3D community that the original repository
+lacks (`M3Formulas-community/`, 129 formulas, and `M3Maps-community/`, 154
+maps, from the Mandelbulb3D 1.99.37 package that Machina Infinitum offers
+as a free download) are copied into `M3Formulas` and `M3Maps` by the release
+workflow too, with their `CREDITS.md` as `CREDITS-community.md`; they run as
+any `.m3f` does. `tests/jit.rs` checks that every one loads and every JIT one
+compiles.
+
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
 **UlamSpiral**, Ulam's prime spiral in 3D, **PseudoKleinian**,

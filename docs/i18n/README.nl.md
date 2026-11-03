@@ -499,6 +499,7 @@ kunt u zelf verder controleren:
   één gedeelde map zien, renderen samen een afbeelding, een Grote render, een Monte Carlo-afbeelding
   of een animatie. Zie
   [Renderen op meerdere computers](#rendering-on-several-computers-the-swarm).
+* **Formules en maps van de community**: 129 formules en 154 maps die de officiële repository niet heeft, uit het Mandelbulb3D 1.99.37-pakket dat Machina Infinitum gratis aanbiedt om te downloaden. De formules zijn van Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero en anderen wier bestanden geen auteur noemen; `M3Formulas/CREDITS-community.md` noemt de auteur van elke formule (`teapot.m3f` van DarkBeam valt onder CC BY-SA 3.0). De maps komen uit de verzameling van DarkBeam, onder zijn voorwaarden (vrij te gebruiken, niet ongewijzigd te verkopen), met afbeeldingen die CmdrChaos, Fractales75, Nic022 en UndeadAcademy op DeviantArt deelden; de maps 3046–3048 zijn van Kronpano (`M3Maps/CREDITS-community.md`).
 * **Een nieuwe formule, PseudoKleinian:** de "Kleiniaanse architectuur" van
   zalen, bogen en bollen als één formule met een eigen exacte afstand.
 

@@ -496,6 +496,18 @@ you check further on your own:
   see one shared folder render a picture, a Big render, a Monte Carlo
   picture or an animation together. See
   [Rendering on several computers](#rendering-on-several-computers-the-swarm).
+* **Community formulas and maps**: 129 formulas and 154 maps that the
+  official repository lacks, from the Mandelbulb3D 1.99.37 package that
+  Machina Infinitum offers as a free download. The formulas are by Edgar
+  Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko,
+  Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez,
+  Yannis Picart, Jotero and others whose files name no author;
+  `M3Formulas/CREDITS-community.md` names the author of each (`teapot.m3f`
+  by DarkBeam is under CC BY-SA 3.0). The maps are from DarkBeam's
+  collection, under his terms (free to use, not to be sold unchanged), with
+  pictures shared on DeviantArt by CmdrChaos, Fractales75, Nic022 and
+  UndeadAcademy; maps 3046–3048 are by Kronpano
+  (`M3Maps/CREDITS-community.md`).
 * **A new formula, PseudoKleinian:** the "Kleinian architecture" of
   halls, arches and spheres as one formula with its own exact distance.
 

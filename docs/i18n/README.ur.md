@@ -496,6 +496,7 @@ mb3d-rs دراصل [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D) ہے�
   فولڈر دیکھتے ہیں، مل کر ایک تصویر، بڑا رینڈر، Monte Carlo تصویر یا
   اینیمیشن رینڈر کرتے ہیں۔ دیکھیں
   [کئی کمپیوٹرز پر رینڈرنگ](#rendering-on-several-computers-the-swarm)۔
+* **کمیونٹی کے فارمولے اور نقشے**: 129 فارمولے اور 154 نقشے جو سرکاری ریپوزٹری میں نہیں ہیں، Mandelbulb3D 1.99.37 کے اس پیکیج سے جو Machina Infinitum مفت ڈاؤن لوڈ کے طور پر پیش کرتا ہے۔ فارمولے Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero اور دوسروں کے ہیں جن کی فائلوں میں مصنف کا نام نہیں؛ `M3Formulas/CREDITS-community.md` ہر فارمولے کے مصنف کا نام دیتا ہے (DarkBeam کا `teapot.m3f` لائسنس CC BY-SA 3.0 کے تحت ہے)۔ نقشے DarkBeam کے مجموعے سے ہیں، اس کی شرائط کے تحت (استعمال آزاد، بغیر تبدیلی کے فروخت نہیں)، اور ان میں وہ تصاویر ہیں جو CmdrChaos، Fractales75، Nic022 اور UndeadAcademy نے DeviantArt پر شیئر کیں؛ نقشے 3046–3048 Kronpano کے ہیں (`M3Maps/CREDITS-community.md`)۔
 * **ایک نیا فارمولا، PseudoKleinian:** ہالز، محرابوں اور کُرّوں کا "Kleinian
   فنِ تعمیر" ایک فارمولے کی صورت میں، اپنے درست فاصلے کے ساتھ۔
 

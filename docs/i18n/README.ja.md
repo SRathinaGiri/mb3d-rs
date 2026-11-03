@@ -324,6 +324,7 @@ MB3D の数式とマップを使い、同じ画像を作ります。
   resume` で一覧を表示します。続きから再開したレンダリングは、一度に計算したものと同じ結果になります。
 * **複数のコンピュータでレンダリングを分担**する「スウォーム」：1 つの共有フォルダが見えるコンピュータどうしで、画像、大判レンダリング、モンテカルロ画像、アニメーションを一緒にレンダリングします。
   [複数のコンピュータでのレンダリング](#rendering-on-several-computers-the-swarm)を参照してください。
+* **コミュニティのフォーミュラとマップ**：公式リポジトリにない 129 個のフォーミュラと 154 枚のマップ。Machina Infinitum が無料で配布している Mandelbulb3D 1.99.37 パッケージから収録しました。フォーミュラの作者は Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero、およびファイルに作者名のないものです。各フォーミュラの作者は `M3Formulas/CREDITS-community.md` にあります（DarkBeam の `teapot.m3f` は CC BY-SA 3.0）。マップは DarkBeam のコレクションで、その条件（自由に使用可、無加工での販売は不可）に従い、CmdrChaos、Fractales75、Nic022、UndeadAcademy が DeviantArt で共有した画像を含みます。マップ 3046–3048 は Kronpano の作品です（`M3Maps/CREDITS-community.md`）。
 * **新しい数式 PseudoKleinian：** ホール、アーチ、球でできた「クライン建築」を、独自の正確な距離を持つ 1 つの数式にしたもの。
 
   <a href="../img/kleinian_hall.jpg"><img src="../img/kleinian_hall.jpg" width="300" alt="新しい数式：PseudoKleinian"></a>

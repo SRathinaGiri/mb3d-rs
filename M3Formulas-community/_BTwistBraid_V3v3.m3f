@@ -1,0 +1,606 @@
+[OPTIONS]
+.Version = 2
+.DEoption = -1
+.Double blank = 0.0
+.Double blank = 0.0
+.Double PolySides = 4.0
+.Double Smooth = 0.0
+.Double AccordionStart= -0.4
+.Double CycleLength= .6
+.Double AccordionEnd= 32.0
+.Double Twist= 0.3
+.Double OscillationStrenth1= 0.0
+.Double OscillationLength2 = 0.66
+.Double OscillationStrenth2 = 0.0
+.Double OscillationLength2 = 1.32
+.Double NumberOfSplits = 5.0
+.Double splitRadius = 2.66
+.Double ThickTwist = 0.0
+[CONSTANTS]
+Double = 1.57079632679
+Double = 2.0
+Double = 0.5
+Double = 4.0
+Double = 3.1415926535898
+[CODE]
+558BEC81EC700000005356578B75088B7E308BD8D9D0
+dd03dd5d98
+dd4780d9e0d9e8dec1dd5dd8   
+dd47b8d9e4dfe09b9e743a
+ddd8dd03dc4fb8dc07
+d9fbdd5df8dd55f0dd01dec9dd02dc4df8dec1dd02dc4df0dd01dc4df8d9e0dec1
+dd45d8DEC9dd1aDD45d8DEC9dd19eb10ddd8dd45d8dc0add1add45d8dc09dd19
+dd47c8d9e4dfe09b9e7507ddd8e91d010000ddd8
+dd47c0dc67d0d9e1dd47c8d9e1dd5dc8dc55c8dfe09b9e7305dd5dc8eb02ddd8
+dd47c0dc67d0D9E4DFE09b9eddd8dd45c8d9e10f83e8000000
+d9e0dd5dc8dd03d9d0dc57d0dfe09b9e7607ddd8e9c9000000
+dc57c0dfe09b9e730Ddc67c0dc47d0dd1be9b3000000
+dd47c0dc67d0dc55c8dfe09b9ed9d0
+7307dc65c8ebf0d9d0
+dd5dc0d9d0dd47c0dc65c0dd5db8dc55b8dfe09b9e7336
+d9d0
+dc65b8dd45c0dc4f10dd5dc8dc55c8dfe09b9e760Adc47d0dd1be963000000
+ddd8dd47c0dd03d9e0dec1dc47d0dd1be94e000000
+dd47d0dd47c8d9e1d9e0dec1dd5dc0dc55c0dfe09b9e7309
+dd47c8d9e1dec1ebee
+dc67d0dd45c8dc4f10dd5dc0dc55c0dfe09b9e7607dc47d0dd1beb0c
+d9e0dd45c8dec1dc47d0dd1b
+e9d6000000e9d100000090
+DD5DC890dd03dc57d0dfe09b9e7307ddd8e9ba000000
+dc57c0dfe09b9e760Ddc67c0dc47d0dd1be9a4000000
+dd47c0dc67d0dc55c8dfe09b9ed9d0
+7605dc65c8ebf0
+dd5dc0d9d0dd47c0dc65c0dd5db8dc55b8dfe09b9e762e
+dc65b8dd45c0dc4f10dd5dc8dc55c8dfe09b9e7307
+dc47d0dd1beb5b
+ddd8dd47c0dd03d9e0dec1dc47d0dd1beb49
+dd47d0dd47c8d9e1dec1dd5dc0dc55c0dfe09b9e760b
+dd47c8d9e1d9e0dec1ebec
+dc67d0dd45c8dc4f10dd5dc0dc55c0dfe09b9e7307dc47d0dd1beb0c
+d9e0dd45c8dec1dc47d0dd1b
+dd07dc4f10dd4790dc6718dc7790dec9dd5dd8
+dd07dc4f08dc7790dd55e8dc4f08dd4790d9e8d9e0dec1dec9dd5dd0
+dd07dc4f08dc4f08dd55f8dc7790dd5df0  
+dd01dd02d9f3d9e4dfe09b9e7303dc45f8
+dc55f0dfe09b9e7617dd45e8dc45f0dd5de8
+dd45d8dc45d0dd5dd8
+dc65f0ebe0
+ddd8dd45e8d9fb
+dd4598dc4fa8d9ffdc4f88dc4fb0dc4788dd55a8dec9
+d9e0dc02dd1a
+dd45a8dec9
+d9e0dc01dd19
+dd02d8c8dd01d8c8dec1d9fa
+dd4598dc4f98d9ffdc4f88dc4fa0dec1dd5df8
+dd01dd02d9f3dc45d8d9fbdc4df8dd1adc4df8dd19
+dd47d8d9e4dfe09b9e745dd9e0dd5dd8
+dd4720dc77e0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd45d8d9e1dec9d9e8dec1
+dd45d8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19eb02ddd8
+dd4598dd5ec8
+D9D08BC35F5E5B89EC5DC20800
+[END]
+
+dd07dc4f10dd4790dc6718dec1dc7790dec9dd5dd8
+
+
+  1) finish smooth growth of original split.
+  2) to smooth circle power...  		  done   
+  3) implement additional splits with smooth growth
+      	a)  additional split start.. or start at end of cycle for space??  probably not.
+	b)  growth period (how long "x length" to grow from 0 to full splitradius)
+	c)  length before next split
+	d)  loop where???  
+
+Last line copies original x to esi-38, which is the "w" coordinate!  Can use in other formulas to keep track of original x.  
+
+.Double blank = 0.0			edi-10	f0
+.Double blank = 0.0			edi-18	e8
+.Double PolySides = 0.0			edi-20	e0
+.Double Smooth = 0.0			edi-28	d8
+.Double AccordionStart= -0.4		edi-30	d0
+.Double CycleLength= .9			edi-38	c8
+.Double AccordionEnd= 22.0		edi-40	c0
+.Double Twist= 0.0			edi-48	b8
+.Double Oscillation11= 0.0		edi-50	b0
+.Double Oscillation22 = 0.0		edi-58	a8
+.Double OscillationStrength = 0.0	edi-60	a0
+.Double OscillationLength = 1.0		edi-68	98
+.Double NumberOfSplits = 6.0		edi-70	90
+.Double splitRadius = 2.0		edi-78	88
+.Double ThickTwist = 2.0		edi-70  80
+
+dd07dc4f10dd4790dc7790dec9dd5dd8
+
+//implement smoothing function:
+
+square to circle  (dc7708 is 2.... basically can set sides, but... with it at 4 it works 
+well for the mehh... I might do the sides thing).    
+
+polysides in this... change start part:
+dd4718dc77e0 to dd07dc7708 to make it just squares...
+
+dd47d8d9e4dfe09b9e745dd9e0dd5dd8
+dd4720dc77e0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd45d8d9e1dec9d9e8dec1
+dd45d8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19eb02ddd8
+
+0043CDEC   DD07                 FLD QWORD PTR DS:[EDI]
+0043CDEE   DC77 18              FDIV QWORD PTR DS:[EDI+18]
+
+
+0043CDF1   DD55 F8              FST QWORD PTR SS:[EBP-8]
+0043CDF4   D8C0                 FADD ST,ST
+0043CDF6   DD5D F0              FSTP QWORD PTR SS:[EBP-10]
+0043CDF9   DD01                 FLD QWORD PTR DS:[ECX]
+0043CDFB   DD02                 FLD QWORD PTR DS:[EDX]
+0043CDFD   D9F3                 FPATAN
+0043CDFF   D9E1                 FABS
+0043CE01   DC55 F8              FCOM QWORD PTR SS:[EBP-8]
+0043CE04   DFE0                 FSTSW AX
+0043CE06   9B                   WAIT
+0043CE07   9E                   SAHF
+0043CE08   76 05                JBE SHORT accessch.0043CE0F
+0043CE0A   DC65 F0              FSUB QWORD PTR SS:[EBP-10]
+0043CE0D  ^EB F2                JMP SHORT accessch.0043CE01
+0043CE0F   D9FF                 FCOS
+0043CE11   D9E8                 FLD1
+0043CE13   DEE9                 FSUBP ST(1),ST
+0043CE15   DD47 E8              FLD QWORD PTR DS:[EDI-18]
+0043CE18   D9E1                 FABS
+0043CE1A   DEC9                 FMULP ST(1),ST
+0043CE1C   D9E8                 FLD1
+0043CE1E   DEC1                 FADDP ST(1),ST
+0043CE20   DD47 E8              FLD QWORD PTR DS:[EDI-18]
+0043CE23   D9E4                 FTST
+0043CE25   DFE0                 FSTSW AX
+0043CE27   9B                   WAIT
+0043CE28   9E                   SAHF
+0043CE29   73 08                JNB SHORT accessch.0043CE33
+0043CE2B   DDD8                 FSTP ST
+0043CE2D   D9E8                 FLD1
+0043CE2F   DEF1                 FDIVRP ST(1),ST
+0043CE31   EB 02                JMP SHORT accessch.0043CE35
+0043CE33   DDD8                 FSTP ST
+0043CE35   D9C0                 FLD ST
+0043CE37   DC0A                 FMUL QWORD PTR DS:[EDX]
+0043CE39   DD1A                 FSTP QWORD PTR DS:[EDX]
+0043CE3B   D9D0                 FNOP
+0043CE3D   DC09                 FMUL QWORD PTR DS:[ECX]
+0043CE3F   DD19                 FSTP QWORD PTR DS:[ECX]
+
+
+
+
+//////////////
+
+
+
+//  not used:  ///////////////////////////////////////////
+r= cos(Q *x + RAIDIUS) * mult
+y= r cos (P *x) +Y
+z= r sin (P *x) +Z
+x = x+sin(qx) *multx
+
+R=F8
+
+
+DD03DC4FF0DD55E0DC47E8D9FEDC4FE0DD55F8
+DD03DC4FD8DD55F0D9FEDEC9DC02DD1A
+DD45F8Dc4FF0D9FFDEC9DC01DD19
+DD45E0D9FFDC4F78DC03DD1B
+//////////////////////////////////////////////////////////
+
+
+0043C462   DD03             FLD QWORD PTR DS:[EBX]
+0043C464   DD5D 98          FSTP QWORD PTR SS:[EBP-68]  x saved to ebp-68 for end!!!
+
+0043C471   DD47 b8          FLD QWORD PTR DS:[EDI-20]   twist
+0043C474   D9E4             FTST
+0043C476   DFE0             FSTSW AX
+0043C478   9B               WAIT
+0043C479   9E               SAHF
+0043C47A   74 46            JE SHORT accessch.0043C4C2  if twist = 0 skip
+0043C47C   DDD8             FSTP ST
+
+// take out all fatness ???
+0043C47E   DD47 e0          FLD QWORD PTR DS:[EDI-48]    ONLY !!!fatness
+0043C481   D9E0             FCHS			
+0043C483   D9E8             FLD1
+0043C485   DEC1             FADDP ST(1),ST			
+0043C487   DD5D D8          FSTP QWORD PTR SS:[EBP-28]		1-fatness  ?? necessary?
+
+dd03dd5d98
+dd4780d9e0d9e8dec1dd5dd8   
+dd47b8d9e4dfe09b9e7448
+
+JUMP  MINUS     HERE!@$!$   -12  Minus 12----- 12  !!!!   
+NOW +2!@!##!$!$   to 7448
+
+dd03dd5d98
+dd4780d9e0d9e8dec1dd5dd8   
+dd47b8d9e4dfe09b9e7448
+ddd8dd03dc4fb8dc07
+d9fbdd5df8dd55f0dd01dec9dd02dc4df8dec1dd02dc4df0dd01dc4df8d9e0dec1
+dd45d8DEC9dd1aDD45d8DEC9dd19eb02ddd8
+dd47c8d9e4dfe09b9e7507ddd8e91d010000ddd8
+dd47c0dc67d0d9e1dd47c8d9e1dd5dc8dc55c8dfe09b9e7305dd5dc8eb02ddd8
+dd47c0dc67d0D9E4DFE09b9eddd8dd45c8d9e10f83e8000000
+d9e0dd5dc8dd03d9d0dc57d0dfe09b9e7607ddd8e9c9000000
+dc57c0dfe09b9e730Ddc67c0dc47d0dd1be9b3000000
+dd47c0dc67d0dc55c8dfe09b9ed9d0
+7307dc65c8ebf0d9d0
+dd5dc0d9d0dd47c0dc65c0dd5db8dc55b8dfe09b9e7336
+
+
+
+0043C48A   DD03             FLD QWORD PTR DS:[EBX]
+0043C48C   DC4F b8          FMUL QWORD PTR DS:[EDI-20]
+0043C48F   DC07             FADD QWORD PTR DS:[EDI]
+0043C491   D9FB             FSINCOS
+0043C493   DD5D F8          FSTP QWORD PTR SS:[EBP-8]
+0043C496   DD55 F0          FST QWORD PTR SS:[EBP-10]
+0043C499   DD01             FLD QWORD PTR DS:[ECX]
+0043C49B   DEC9             FMULP ST(1),ST
+0043C49D   DD02             FLD QWORD PTR DS:[EDX]
+0043C49F   DC4D F8          FMUL QWORD PTR SS:[EBP-8]
+0043C4A2   DEC1             FADDP ST(1),ST
+0043C4A4   DD02             FLD QWORD PTR DS:[EDX]
+0043C4A6   DC4D F0          FMUL QWORD PTR SS:[EBP-10]
+0043C4A9   DD01             FLD QWORD PTR DS:[ECX]
+0043C4AB   DC4D F8          FMUL QWORD PTR SS:[EBP-8]
+0043C4AE   D9E0             FCHS
+0043C4B0   DEC1             FADDP ST(1),ST
+0043C4B2   DD45 D8          FLD QWORD PTR SS:[EBP-28]   Fatness
+0043C4B5   DEC9             FMULP ST(1),ST
+0043C4B7   DD1A             FSTP QWORD PTR DS:[EDX]
+0043C4B9   DD45 D8          FLD QWORD PTR SS:[EBP-28]	Fatness
+0043C4BC   DEC9             FMULP ST(1),ST
+0043C4BE   DD19             FSTP QWORD PTR DS:[ECX]
+
+change to eb10 !!!
+
+0043C4C0   EB 02            JMP SHORT accessch.0043C4C4
+
+dd45d8
+dc0a
+dd1a
+dd45d8
+dc09
+dd19
+0043C4C2   DDD8             FSTP ST
+
+
+dd03dd5d98
+dd4780d9e0d9e8dec1dd5dd8   
+dd47b8d9e4dfe09b9e743a
+ddd8dd03dc4fb8dc07
+d9fbdd5df8dd55f0dd01dec9dd02dc4df8dec1dd02dc4df0dd01dc4df8d9e0dec1
+dd45d8DEC9dd1aDD45d8DEC9dd19eb10ddd8dd45d8dc0add1add45d8dc09dd19
+dd47c8d9e4dfe09b9e7507ddd8e91d010000ddd8
+dd47c0dc67d0d9e1dd47c8d9e1dd5dc8dc55c8dfe09b9e7305dd5dc8eb02ddd8
+dd47c0dc67d0D9E4DFE09b9eddd8dd45c8d9e10f83e8000000
+d9e0dd5dc8dd03d9d0dc57d0dfe09b9e7607ddd8e9c9000000
+dc57c0dfe09b9e730Ddc67c0dc47d0dd1be9b3000000
+dd47c0dc67d0dc55c8dfe09b9ed9d0
+7307dc65c8ebf0d9d0
+dd5dc0d9d0dd47c0dc65c0dd5db8dc55b8dfe09b9e7336
+
+
+0043C4C4   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043C4C7   D9E4             FTST
+0043C4C9   DFE0             FSTSW AX
+0043C4CB   9B               WAIT
+0043C4CC   9E               SAHF
+0043C4CD   75 07            JNZ SHORT accessch.0043C4D6
+0043C4CF   DDD8             FSTP ST
+0043C4D1   E9 1D010000      JMP accessch.0043C5F3
+0043C4D6   DDD8             FSTP ST
+0043C4D8   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C4DB   DC67 D0          FSUB QWORD PTR DS:[EDI-30]
+0043C4DE   D9E1             FABS
+0043C4E0   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043C4E3   D9E1             FABS
+0043C4E5   DD5D C8          FSTP QWORD PTR SS:[EBP-38]
+0043C4E8   DC55 C8          FCOM QWORD PTR SS:[EBP-38]
+0043C4EB   DFE0             FSTSW AX
+0043C4ED   9B               WAIT
+0043C4EE   9E               SAHF
+0043C4EF   73 05            JNB SHORT accessch.0043C4F6
+0043C4F1   DD5D C8          FSTP QWORD PTR SS:[EBP-38]
+0043C4F4   EB 02            JMP SHORT accessch.0043C4F8
+0043C4F6   DDD8             FSTP ST
+0043C4F8   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C4FB   DC67 D0          FSUB QWORD PTR DS:[EDI-30]
+0043C4FE   D9E4             FTST
+0043C500   DFE0             FSTSW AX
+0043C502   9B               WAIT
+0043C503   9E               SAHF
+0043C504   DDD8             FSTP ST
+0043C506   DD45 C8          FLD QWORD PTR SS:[EBP-38]
+0043C509   D9E1             FABS
+0043C50B   0F83 E8000000    JNB accessch.0043C5F9
+0043C511   D9E0             FCHS
+0043C513   DD5D C8          FSTP QWORD PTR SS:[EBP-38]
+0043C516   DD03             FLD QWORD PTR DS:[EBX]
+0043C518   D9D0             FNOP
+0043C51A   DC57 D0          FCOM QWORD PTR DS:[EDI-30]
+0043C51D   DFE0             FSTSW AX
+0043C51F   9B               WAIT
+0043C520   9E               SAHF
+0043C521   76 07            JBE SHORT accessch.0043C52A
+0043C523   DDD8             FSTP ST
+0043C525   E9 C9000000      JMP accessch.0043C5F3
+0043C52A   DC57 C0          FCOM QWORD PTR DS:[EDI-40]
+0043C52D   DFE0             FSTSW AX
+0043C52F   9B               WAIT
+0043C530   9E               SAHF
+0043C531   73 0D            JNB SHORT accessch.0043C540
+0043C533   DC67 C0          FSUB QWORD PTR DS:[EDI-40]
+0043C536   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C539   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C53B   E9 B3000000      JMP accessch.0043C5F3
+0043C540   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C543   DC67 D0          FSUB QWORD PTR DS:[EDI-30]
+0043C546   DC55 C8          FCOM QWORD PTR SS:[EBP-38]
+0043C549   DFE0             FSTSW AX
+0043C54B   9B               WAIT
+0043C54C   9E               SAHF
+0043C54D   D9D0             FNOP
+0043C54F   73 07            JNB SHORT accessch.0043C558
+0043C551   DC65 C8          FSUB QWORD PTR SS:[EBP-38]
+0043C554  ^EB F0            JMP SHORT accessch.0043C546
+0043C556   D9D0             FNOP
+0043C558   DD5D C0          FSTP QWORD PTR SS:[EBP-40]
+0043C55B   D9D0             FNOP
+0043C55D   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C560   DC65 C0          FSUB QWORD PTR SS:[EBP-40]
+0043C563   DD5D B8          FSTP QWORD PTR SS:[EBP-48]
+0043C566   DC55 B8          FCOM QWORD PTR SS:[EBP-48]
+0043C569   DFE0             FSTSW AX
+0043C56B   9B               WAIT
+0043C56C   9E               SAHF
+0043C56D   73 36            JNB SHORT accessch.0043C5A5
+0043C56F   D9D0             FNOP
+0043C571   DC65 B8          FSUB QWORD PTR SS:[EBP-48]
+0043C574   DD45 C0          FLD QWORD PTR SS:[EBP-40]
+0043C577   DC4F 10          FMUL QWORD PTR DS:[EDI+10]
+0043C57A   DD5D C8          FSTP QWORD PTR SS:[EBP-38]
+0043C57D   DC55 C8          FCOM QWORD PTR SS:[EBP-38]
+0043C580   DFE0             FSTSW AX
+0043C582   9B               WAIT
+0043C583   9E               SAHF
+0043C584   76 0A            JBE SHORT accessch.0043C590
+0043C586   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C589   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C58B   E9 63000000      JMP accessch.0043C5F3
+0043C590   DDD8             FSTP ST
+0043C592   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C595   DD03             FLD QWORD PTR DS:[EBX]
+0043C597   D9E0             FCHS
+0043C599   DEC1             FADDP ST(1),ST
+0043C59B   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C59E   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C5A0   E9 4E000000      JMP accessch.0043C5F3
+0043C5A5   DD47 D0          FLD QWORD PTR DS:[EDI-30]
+0043C5A8   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043C5AB   D9E1             FABS
+0043C5AD   D9E0             FCHS
+0043C5AF   DEC1             FADDP ST(1),ST
+0043C5B1   DD5D C0          FSTP QWORD PTR SS:[EBP-40]
+0043C5B4   DC55 C0          FCOM QWORD PTR SS:[EBP-40]
+0043C5B7   DFE0             FSTSW AX
+0043C5B9   9B               WAIT
+0043C5BA   9E               SAHF
+0043C5BB   73 09            JNB SHORT accessch.0043C5C6
+0043C5BD   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043C5C0   D9E1             FABS
+0043C5C2   DEC1             FADDP ST(1),ST
+0043C5C4  ^EB EE            JMP SHORT accessch.0043C5B4
+0043C5C6   DC67 D0          FSUB QWORD PTR DS:[EDI-30]
+0043C5C9   DD45 C8          FLD QWORD PTR SS:[EBP-38]
+0043C5CC   DC4F 10          FMUL QWORD PTR DS:[EDI+10]
+0043C5CF   DD5D C0          FSTP QWORD PTR SS:[EBP-40]
+0043C5D2   DC55 C0          FCOM QWORD PTR SS:[EBP-40]
+0043C5D5   DFE0             FSTSW AX
+0043C5D7   9B               WAIT
+0043C5D8   9E               SAHF
+0043C5D9   76 07            JBE SHORT accessch.0043C5E2
+0043C5DB   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C5DE   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C5E0   EB 0C            JMP SHORT accessch.0043C5EE
+0043C5E2   D9E0             FCHS
+0043C5E4   DD45 C8          FLD QWORD PTR SS:[EBP-38]
+0043C5E7   DEC1             FADDP ST(1),ST
+0043C5E9   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C5EC   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C5EE   E9 D6000000      JMP accessch.0043C6C9
+0043C5F3   E9 D1000000      JMP accessch.0043C6C9
+0043C5F8   90               NOP
+0043C5F9   DD5D C8          FSTP QWORD PTR SS:[EBP-38]
+0043C5FC   90               NOP
+0043C5FD   DD03             FLD QWORD PTR DS:[EBX]
+0043C5FF   DC57 D0          FCOM QWORD PTR DS:[EDI-30]
+0043C602   DFE0             FSTSW AX
+0043C604   9B               WAIT
+0043C605   9E               SAHF
+0043C606   73 07            JNB SHORT accessch.0043C60F
+0043C608   DDD8             FSTP ST
+0043C60A   E9 BA000000      JMP accessch.0043C6C9
+0043C60F   DC57 C0          FCOM QWORD PTR DS:[EDI-40]
+0043C612   DFE0             FSTSW AX
+0043C614   9B               WAIT
+0043C615   9E               SAHF
+0043C616   76 0D            JBE SHORT accessch.0043C625
+0043C618   DC67 C0          FSUB QWORD PTR DS:[EDI-40]
+0043C61B   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C61E   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C620   E9 A4000000      JMP accessch.0043C6C9
+0043C625   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C628   DC67 D0          FSUB QWORD PTR DS:[EDI-30]
+0043C62B   DC55 C8          FCOM QWORD PTR SS:[EBP-38]
+0043C62E   DFE0             FSTSW AX
+0043C630   9B               WAIT
+0043C631   9E               SAHF
+0043C632   D9D0             FNOP
+0043C634   76 05            JBE SHORT accessch.0043C63B
+0043C636   DC65 C8          FSUB QWORD PTR SS:[EBP-38]
+0043C639  ^EB F0            JMP SHORT accessch.0043C62B
+0043C63B   DD5D C0          FSTP QWORD PTR SS:[EBP-40]
+0043C63E   D9D0             FNOP
+0043C640   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C643   DC65 C0          FSUB QWORD PTR SS:[EBP-40]
+0043C646   DD5D B8          FSTP QWORD PTR SS:[EBP-48]
+0043C649   DC55 B8          FCOM QWORD PTR SS:[EBP-48]
+0043C64C   DFE0             FSTSW AX
+0043C64E   9B               WAIT
+0043C64F   9E               SAHF
+0043C650   76 2E            JBE SHORT accessch.0043C680
+0043C652   DC65 B8          FSUB QWORD PTR SS:[EBP-48]
+0043C655   DD45 C0          FLD QWORD PTR SS:[EBP-40]
+0043C658   DC4F 10          FMUL QWORD PTR DS:[EDI+10]
+0043C65B   DD5D C8          FSTP QWORD PTR SS:[EBP-38]
+0043C65E   DC55 C8          FCOM QWORD PTR SS:[EBP-38]
+0043C661   DFE0             FSTSW AX
+0043C663   9B               WAIT
+0043C664   9E               SAHF
+0043C665   73 07            JNB SHORT accessch.0043C66E
+0043C667   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C66A   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C66C   EB 5B            JMP SHORT accessch.0043C6C9
+0043C66E   DDD8             FSTP ST
+0043C670   DD47 C0          FLD QWORD PTR DS:[EDI-40]
+0043C673   DD03             FLD QWORD PTR DS:[EBX]
+0043C675   D9E0             FCHS
+0043C677   DEC1             FADDP ST(1),ST
+0043C679   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C67C   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C67E   EB 49            JMP SHORT accessch.0043C6C9
+0043C680   DD47 D0          FLD QWORD PTR DS:[EDI-30]
+0043C683   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043C686   D9E1             FABS
+0043C688   DEC1             FADDP ST(1),ST
+0043C68A   DD5D C0          FSTP QWORD PTR SS:[EBP-40]
+0043C68D   DC55 C0          FCOM QWORD PTR SS:[EBP-40]
+0043C690   DFE0             FSTSW AX
+0043C692   9B               WAIT
+0043C693   9E               SAHF
+0043C694   76 0B            JBE SHORT accessch.0043C6A1
+0043C696   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043C699   D9E1             FABS
+0043C69B   D9E0             FCHS
+0043C69D   DEC1             FADDP ST(1),ST
+0043C69F  ^EB EC            JMP SHORT accessch.0043C68D
+0043C6A1   DC67 D0          FSUB QWORD PTR DS:[EDI-30]
+0043C6A4   DD45 C8          FLD QWORD PTR SS:[EBP-38]
+0043C6A7   DC4F 10          FMUL QWORD PTR DS:[EDI+10]
+0043C6AA   DD5D C0          FSTP QWORD PTR SS:[EBP-40]
+0043C6AD   DC55 C0          FCOM QWORD PTR SS:[EBP-40]
+0043C6B0   DFE0             FSTSW AX
+0043C6B2   9B               WAIT
+0043C6B3   9E               SAHF
+0043C6B4   73 07            JNB SHORT accessch.0043C6BD
+0043C6B6   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C6B9   DD1B             FSTP QWORD PTR DS:[EBX]
+0043C6BB   EB 0C            JMP SHORT accessch.0043C6C9
+0043C6BD   D9E0             FCHS
+0043C6BF   DD45 C8          FLD QWORD PTR SS:[EBP-38]
+0043C6C2   DEC1             FADDP ST(1),ST
+0043C6C4   DC47 D0          FADD QWORD PTR DS:[EDI-30]
+0043C6C7   DD1B             FSTP QWORD PTR DS:[EBX]
+
+
+
+0043C6C9   DD07             FLD QWORD PTR DS:[EDI]
+0043C6CB   DC4F 10          FMUL QWORD PTR DS:[EDI+10]
+0043C6CE   DD47 90          FLD QWORD PTR DS:[EDI-70]
+0043C6D1   DC77 90          FDIV QWORD PTR DS:[EDI-70]
+0043C6D4   DEC9             FMULP ST(1),ST
+0043C6D6   DD5D D8          FSTP QWORD PTR SS:[EBP-28]
+0043C6D9   DD07             FLD QWORD PTR DS:[EDI]
+0043C6DB   DC4F 08          FMUL QWORD PTR DS:[EDI+8]
+0043C6DE   DC77 90          FDIV QWORD PTR DS:[EDI-70]
+0043C6E1   DD55 E8          FST QWORD PTR SS:[EBP-18]
+0043C6E4   DC4F 08          FMUL QWORD PTR DS:[EDI+8]
+0043C6E7   DD47 90          FLD QWORD PTR DS:[EDI-70]
+0043C6EA   D9E8             FLD1
+0043C6EC   D9E0             FCHS
+0043C6EE   DEC1             FADDP ST(1),ST
+0043C6F0   DEC9             FMULP ST(1),ST
+0043C6F2   DD5D D0          FSTP QWORD PTR SS:[EBP-30]
+0043C6F5   DD07             FLD QWORD PTR DS:[EDI]
+0043C6F7   DC4F 08          FMUL QWORD PTR DS:[EDI+8]
+0043C6FA   DC4F 08          FMUL QWORD PTR DS:[EDI+8]
+0043C6FD   DD55 F8          FST QWORD PTR SS:[EBP-8]
+0043C700   DC77 90          FDIV QWORD PTR DS:[EDI-70]
+0043C703   DD5D F0          FSTP QWORD PTR SS:[EBP-10]
+0043C706   DD01             FLD QWORD PTR DS:[ECX]
+0043C708   DD02             FLD QWORD PTR DS:[EDX]
+0043C70A   D9F3             FPATAN
+0043C70C   D9E4             FTST
+0043C70E   DFE0             FSTSW AX
+0043C710   9B               WAIT
+0043C711   9E               SAHF
+0043C712   73 03            JNB SHORT accessch.0043C717
+0043C714   DC45 F8          FADD QWORD PTR SS:[EBP-8]
+0043C717   DC55 F0          FCOM QWORD PTR SS:[EBP-10]
+0043C71A   DFE0             FSTSW AX
+0043C71C   9B               WAIT
+0043C71D   9E               SAHF
+0043C71E   76 17            JBE SHORT accessch.0043C737
+0043C720   DD45 E8          FLD QWORD PTR SS:[EBP-18]
+0043C723   DC45 F0          FADD QWORD PTR SS:[EBP-10]
+0043C726   DD5D E8          FSTP QWORD PTR SS:[EBP-18]
+0043C729   DD45 D8          FLD QWORD PTR SS:[EBP-28]
+0043C72C   DC45 D0          FADD QWORD PTR SS:[EBP-30]
+0043C72F   DD5D D8          FSTP QWORD PTR SS:[EBP-28]
+0043C732   DC65 F0          FSUB QWORD PTR SS:[EBP-10]
+0043C735  ^EB E0            JMP SHORT accessch.0043C717
+0043C737   DDD8             FSTP ST
+0043C739   DD45 E8          FLD QWORD PTR SS:[EBP-18]
+0043C73C   D9FB             FSINCOS
+0043C73E   DD45 98          FLD QWORD PTR SS:[EBP-68]
+0043C741   DC4F A8          FMUL QWORD PTR DS:[EDI-58]
+0043C744   D9FF             FCOS
+0043C746   DC4F 88          FMUL QWORD PTR DS:[EDI-78]
+0043C749   DC4F B0          FMUL QWORD PTR DS:[EDI-50]
+0043C74C   DC47 88          FADD QWORD PTR DS:[EDI-78]
+0043C74F   DD55 A8          FST QWORD PTR SS:[EBP-58]
+0043C752   DEC9             FMULP ST(1),ST
+0043C754   D9E0             FCHS
+0043C756   DC02             FADD QWORD PTR DS:[EDX]
+0043C758   DD1A             FSTP QWORD PTR DS:[EDX]
+0043C75A   DD45 A8          FLD QWORD PTR SS:[EBP-58]
+0043C75D   DEC9             FMULP ST(1),ST
+0043C75F   D9E0             FCHS
+0043C761   DC01             FADD QWORD PTR DS:[ECX]
+0043C763   DD19             FSTP QWORD PTR DS:[ECX]
+0043C765   DD02             FLD QWORD PTR DS:[EDX]
+0043C767   D8C8             FMUL ST,ST
+0043C769   DD01             FLD QWORD PTR DS:[ECX]
+0043C76B   D8C8             FMUL ST,ST
+0043C76D   DEC1             FADDP ST(1),ST
+0043C76F   D9FA             FSQRT
+0043C771   DD45 98          FLD QWORD PTR SS:[EBP-68]
+0043C774   DC4F 98          FMUL QWORD PTR DS:[EDI-68]
+0043C777   D9FF             FCOS
+0043C779   DC4F 88          FMUL QWORD PTR DS:[EDI-78]
+0043C77C   DC4F A0          FMUL QWORD PTR DS:[EDI-60]
+0043C77F   DEC1             FADDP ST(1),ST
+0043C781   DD5D F8          FSTP QWORD PTR SS:[EBP-8]
+0043C784   DD01             FLD QWORD PTR DS:[ECX]
+0043C786   DD02             FLD QWORD PTR DS:[EDX]
+0043C788   D9F3             FPATAN
+0043C78A   DC45 D8          FADD QWORD PTR SS:[EBP-28]
+0043C78D   D9FB             FSINCOS
+0043C78F   DC4D F8          FMUL QWORD PTR SS:[EBP-8]
+0043C792   DD1A             FSTP QWORD PTR DS:[EDX]
+0043C794   DC4D F8          FMUL QWORD PTR SS:[EBP-8]
+0043C797   DD19             FSTP QWORD PTR DS:[ECX]
+0043C799   DD45 98          FLD QWORD PTR SS:[EBP-68]
+0043C79C   DD5E C8          FSTP QWORD PTR DS:[ESI-38]
+

@@ -1,0 +1,62 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.SSE2
+.Double Radius = 1
+.2Doubles Scale = 2
+.2Doubles Z add = 0
+.Double Y add = 0
+.Double X add = 0
+.Integer Apply Scale+add = 0
+.DReci2 Resolution = 50
+[CONSTANTS]
+Double = 16
+Double = 1
+Double = .5
+Double = .33333333333333
+Double = 1.5
+Double = 1.732050807568877
+Double = 0.6
+[CODE]
+83C4BA660F104688F20F104E98660F5947E0F20F594FE0660F5847C0F20F584F
+D08B57BC83E2017419F20F106E70F20F596FE0660F114688F20F114E98F20F11
+6E70660F110424F20F114C2410DD0424D8C8DD442408D8C8DD442410D8C8DEC1
+DEC1D9FADC67F0D9E8D8D99BDFE080E4410F851A010000DDD8DD442408DC4FB4
+DB542418DA642418D9C0D8C8D8C8DEC9DC0FDA442418DC4FACDD5C2408DD0424
+DC4F30DC4FB4DD1C24DD442410DC4FB4DD5C2410DD0424DC442410DB542418DA
+642418D9C0D8C8D8C8DEC9DC0FDA442418DD5C2420DD442410DC2424DB542418
+DA642418D9C0D8C8D8C8DEC9DC0FDA442418DC442420DC4F18DB542418DA6424
+18D9C0D8C8D8C8DEC9DC0FDA442418DD542428D9E0DD0424D8C0D9E8DEC1DB54
+2418DA642418D9C0D8C8D8C8DEC9DC0FDA442418DC442420DC4F18DB542418DA
+642418D9C0D8C8D8C8DEC9DC0FDA442418DEC1DD542430DD442428DC4F20DC4F
+ACDD1C24DD442428DC4F10DEC1DC4F28DC4FACDD5C2410DD0424D8C8DD442408
+D8C8DD442410D8C8DEC1DEC1D9FADC67F08B57BC83E2017503DC77E0DD5EE083
+C446C3
+[END]
+
+Lo-res sphere using "hexagonal pixels". Based on an idea by Aexion,
+but smoothed out to get a perfect DE.
+
+The original post by Aexion was;
+
+x*=0.6;//scaling.. don't ask.. 
+x*=Resolution;
+y*=Resolution;
+z*=Resolution;
+y=floor(y);
+//converts (x,z) to (r,q)
+const double temp = floor(x + z);
+const double r = floor((floor(z - x) + temp) / 3.0);  
+const double q = floor((floor(2 * x + 1) + temp) / 3.0) - r;
+x = 3.0/2.0 * r;  //turns back, r q to x z 
+z = sqrt(3.0) * (q + r/2.0);
+x/=Resolution;
+y/=Resolution;
+z/=Resolution;
+
+Instead of normal floor(), use the function described in LoResIFS,
+to have a smoothed pixel look and a continuous DE.
+The formula is complex and approximated but looks nice if resolution
+is reasonably high.
+
+Luca GN 2016

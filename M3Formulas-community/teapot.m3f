@@ -1,0 +1,132 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.SSE2
+.Double OTrapOffset = 0 
+.2Doubles Scale = 2
+.2Doubles Z add = 0
+.Double Y add = 0
+.2Doubles X add = 0
+.Integer Apply scale+add = 0
+.Double OTrapOnIts = 0.25
+.3SingleAngles Rotate = 0 
+[CONSTANTS]
+Double = -.6145898
+Double = -.782623792
+Double = -.3354102
+Double = .015
+Double = .1
+Double = .45
+Double = .5
+Double = .8
+Double = .95
+Double = 1.8
+Double = 1.21
+Double = 1.6
+Double = 0.7
+Double = 0.94
+Double = -0.7
+Double = 0.70710678118654752440084436210485 
+Double = 1.6
+Double = .30
+Double = .311
+Double = 1.21
+Double = .9454102
+Double = .6
+Double = -.12
+[CODE]
+83C4AE660F104688F20F104E98660F5947E0F20F594FE0660F5847C0F20F584F
+D0837FBC007419F20F106E70F20F596FE0660F114688F20F114E98F20F116E70
+660F110424F20F114C2410DD442410DD442408DD0424D9C0D84F90D9C2D84F8C
+DEC1D9C3D84F88DEC1D9C1D84FA8D9C3D84FA4DEC1D9C4D84FA0DEC1D9CAD84F
+9CD9CBD84F98DEC3D9CBD84F94DEC2DD1C24DD5C2408D9E0DD5C2410DD442408
+D8C8DD0424D8C8DEC1D9FADD5C2418DD442410DC6748DD542428D9EED8D99BDF
+E0D0EC7316D8C8DD442418DC07D8C8DEC1D9FADC6718E988000000DDD8DD4424
+18D8C0DC642410DC6720DD4738DC642410DD542420D8D19BDFE0D0EC7304DDD8
+EB02DDD9D9EEDED99BDFE0D0EC7323DD4728DC642418D9C0D9E1D9E0DEC1DC4F
+30D8C8DD442420D8C8DEC1D9FADC4708EB18DD442418DC6740D8C8DD442428D8
+C8DEC1D9FADC4710D9E0DD542428D9E1DC6718DD4748D8D99BDFE0D0EC0F8226
+010000DD0424DC6768D9C0DD442410DC4770D9C0DEC2D9C9DC4F78DD5C2430DE
+E1DC4F78D8C8DD442408D8C8DC8F80000000DEC1D9FADCA788000000DD442430
+DC8F90000000DEC1DD442430D8C8DC8FB0000000DEC1DD442430DC6760D9E1DC
+6760D8D19BDFE0D0EC7304DDD8EB02DDD9DD542430DC6718D9E1DC6718DD4424
+10DC6758D8D19BDFE0D0EC7304DDD8EB02DDD9DD442410DC6750D9EED8D99BDF
+E0D0EC7316D8C8DD0424DC8798000000D8C8DEC1D9FADC4710EB17D8C8DD0424
+DC87A8000000D8C8DEC1D9FADCA7A0000000D8C8DD442408D8C8DEC1D9FADC67
+20D8D19BDFE0D0EC7604DDD8EB02DDD9DD442428D9E0D8D19BDFE0D0EC7304DD
+D8EB02DDD9D8D19BDFE0D0EC7604DDD8EB02DDD9DD442430D9E0D8D19BDFE0D0
+EC7304DDD8EB02DDD9837FBC007503DC77E0DD5EE0DD47F0DB46E8DC4FB4DEC1
+D9E1DD9E8000000083C452C3
+[END]
+
+An isosurface that rensembles to a teapot.
+You can obtain it using this code;
+
+// Teapot lame isosurface code is released under CC BY-SA 3.0
+// Original release 13-11-2016 by DarkBeam at Fractalforums
+// all variables must be declared, and set to 0 
+// (except x,y,z) at the beginning and must be public
+// but I suggest to merge everything in an unique routine
+
+DE {
+  DEt = teabody();
+  if (DEt >1.8) return DEt; // speedup
+  DEx = min(spout,handle);
+  DEx = max(DEx,-teahole);
+  DEt = min(DEx,DEt); // you might use a smooth min() here
+  return max(DEt,-spouthole);
+}
+
+
+teabody {
+   // Just some circles stitched together (more or less :P )
+   r = x*x+y*y; r = sqrt(r);
+   cut0=z-1.8;
+   if (cut0>0.0) {
+     xtp=r-.6145898;
+     return sqrt(cut0*cut0+r*r)-.015;
+   } else {
+     cut2=2*r-z-0.1;
+     cut2=max(cut2,-z+.8);
+     if (cut2>0) {
+       xtp=-r+.45;
+       xtp=0.5*(xtp-abs(xtp));
+       ztp=cut0+1.;
+       xtp=xtp*xtp; ztp=ztp*ztp;
+       w=sqrt(xtp+ztp)-.782623792;
+     }else {
+       xtp=r-0.95;ztp=cut0;
+       xtp=xtp*xtp; ztp=ztp*ztp;
+       w=sqrt(xtp+ztp)-.3354102;
+     }
+     teahole=w;
+     return abs(w)-.015;
+     }   
+}
+
+spout {
+  xtp = x-.94; ztp=z-.7;
+  v = .707106 (xtp+ztp);  u = .707106 (xtp-ztp);
+  // v*v causes DE trouble but not in this small interval
+  // else modify the v multipliers
+  t = sqrt(u*u+y*y*1.6)-.3+.311*v-.12*(v*v);
+  t = max (t,abs(v-.7)-.7 );
+  spouthole = t;
+  t = abs(t-.015)-.015);
+  t = max (t,z-1.5 );
+  return t;
+}
+
+handle {
+   cut0=z-1.21;
+   if (cut0>0.0) {
+     xtp=x+1.11; xtp=xtp*xtp;
+     ztp=cut1*cut1;
+     w=sqrt(xtp+ztp)-.3354102;
+   } else {
+     xtp=x+0.6; xtp=xtp*xtp;
+     ztp=cut1*cut1;
+     w=sqrt(xtp+ztp)-.9454102;
+   }
+   return sqrt(w*w+y*y)-.1; 
+}

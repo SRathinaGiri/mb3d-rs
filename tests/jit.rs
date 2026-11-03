@@ -102,3 +102,27 @@ fn all_mb3d_jit_formulas_compile() {
 fn has_source(p: &Path) -> bool {
     std::fs::read(p).map(|b| b.windows(8).any(|w| w.eq_ignore_ascii_case(b"[SOURCE]"))).unwrap_or(false)
 }
+
+/// The community formulas shipped with the program (M3Formulas-community,
+/// see its CREDITS.md) all load, and those with a `[SOURCE]` compile; one
+/// step from a few points does not panic.
+#[test]
+fn the_community_formulas_load() {
+    let dir = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/M3Formulas-community"));
+    let mut n = 0;
+    for e in std::fs::read_dir(&dir).unwrap().flatten() {
+        let p = e.path();
+        if p.extension().is_none_or(|x| x != "m3f") {
+            continue;
+        }
+        let f = M3f::load(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
+        if has_source(&p) {
+            assert!(f.jit.is_some(), "{}: the JIT source did not compile", p.display());
+            for v in [[0.5, -0.25, 0.75, 1.0], [0.0, 0.0, 0.0, 1.0]] {
+                step(&f, v, [0.1, 0.2, 0.3]);
+            }
+        }
+        n += 1;
+    }
+    assert_eq!(n, 129);
+}

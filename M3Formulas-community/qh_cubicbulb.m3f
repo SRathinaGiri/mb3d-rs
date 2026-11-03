@@ -1,0 +1,24 @@
+[OPTIONS]
+.Version = 5
+.DEscale = .5
+.SIpower = 2
+.RStop = 100
+.Double YMul = 3.
+.Double ZMul = 3.
+.Double Aux = 1.
+[CODE]
+8B4424048B5030DD40E0DD42F0DD40E8DD42E8DD40F0DD42E0D9C5D8CED8CED9
+C6D8CED8CDD8CDDEE9D9C6D8CCD8CBD8CBDEE9DC4018DD58E0D9C3D9E0D8CCD8
+CCD9CDD8CCD8CED8CEDEC5D9C3D8C9D8CAD8CADEEDD9CCDC4020DD58E8D9C0D8
+C9D8C9D9CAD8C9D8CDDECDD9CCDEE9D9CADECBDCCADECADEC1DC4028DD58F0C2
+0800
+[END]
+
+Description:
+
+Formula ported from an original JIT formula by Quasihedron @ Deviantart.
+Use scalingplus and translate to replicate original sliders.
+
+   xn := x*x*x - ymul*x*y*y - zmul*x*z*z + Cx;
+   yn := -y*y*y + ymul*y*x*x - amul*y*z*z + Cy;
+   zn := z*z*z - zmul*z*x*x + amul*z*y*y + Cz;

@@ -1,0 +1,30 @@
+[OPTIONS]
+.DEScale = 1
+.SIPow = 2
+.Version = 9
+.Double Power_ = 2
+[SOURCE]
+procedure MyFormula(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+var
+   zo0, zi0, zr, zo, zi: double;
+   cx, cy, cz: double;
+   r, dr: double;
+
+begin
+   cx := PIteration3D^.J1;
+   cy := PIteration3D^.J2;
+   cz := PIteration3D^.J3;
+   r := sqrt(x*x + y*y + z*z);
+   zo0 := ArcSin(z/r);
+   zi0 := ArcTan2(y,x);
+   zr := Power(r, Power_-1.0);
+   zo := zo0 * Power_;
+   zi := zi0 * Power_;
+   dr := zr*dr*Power_ + 1.0;
+   zr := zr * r;
+   x := zr * cos(zi) + cx;
+   y := zr * cos(zo) * sin(zi) + cy;
+   z := zr * sin(zo) + cz;
+end;
+[END]
+
