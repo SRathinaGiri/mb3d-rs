@@ -32,6 +32,16 @@ pub struct State {
     pub cloud_color: [u8; 3],
 }
 
+impl State {
+    /// A new calculation, or "Reset now": the processings applied by hand
+    /// are dropped; the settings kept here (the clouds' colour) stay. (The
+    /// whole state was reset, and every calculation painted the clouds
+    /// black: dark clouds, a black sky with dense ones.)
+    pub fn new_calc(&mut self) {
+        *self = State { cloud_color: self.cloud_color, ..State::default() };
+    }
+}
+
 /// The pace of a post processing's running stage (the engine names it
 /// and counts its rows from zero): its time left from the progress made
 /// since the stage began, smoothed as the main rendering's is.
@@ -550,7 +560,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button16Click" => {
             // "Reset now": the processings applied by hand are dropped
-            app.post = State::default();
+            app.post.new_calc();
             repaint(app, ui, &tr("@MB:PostProcessingLower"));
         }
         "CheckBox21Click" | "CheckBox25Click" => {
@@ -646,5 +656,13 @@ mod tests {
         assert!((l - 6.0).abs() < 0.5, "{l}");
         // past it: the last shown stays (counting down to zero)
         assert!(p.left("reflections", 0.0, Some(10.0), at(12.0)).is_some());
+    }
+
+    #[test]
+    fn a_new_calculation_keeps_the_cloud_colour() {
+        let mut st = super::State { refl_now: true, hs_now: true, cloud_color: [255, 230, 204], ..Default::default() };
+        st.new_calc();
+        assert_eq!(st.cloud_color, [255, 230, 204]);
+        assert!(!st.refl_now && !st.hs_now);
     }
 }

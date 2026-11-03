@@ -946,7 +946,7 @@ fn store_undo(app: &mut Mb3d) {
 /// `CalcMand`: starts the calculation (3D or the 2D slice of `slice_calc`).
 pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     // a new calculation: only the automatic post processings
-    app.post = super::postpro_form::State::default();
+    app.post.new_calc();
     app.make_scene(ui);
     if calc3d {
         store_undo(app);
@@ -2078,7 +2078,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button11Click" => {
             // "Calc-": a fast rough image of 8x8 blocks
-            app.post = super::postpro_form::State::default();
+            app.post.new_calc();
             app.make_scene(ui);
             if app.scene.width < 1 || app.scene.height < 1 {
                 return;
