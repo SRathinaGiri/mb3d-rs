@@ -3842,21 +3842,21 @@ mod tests {
     /// when the computer has no usable graphics card).
     #[test]
     fn mandelbulb_matches_cpu() {
-        gbuffer_matches_cpu(include_str!("../examples/mandelbulb.m3s"), 0.5);
+        gbuffer_matches_cpu(include_str!("../tests/data/mandelbulb.m3s"), 0.5);
     }
 
     /// The 4D hybrid loop (doHybrid4DPas) with the 4D rotation.
     #[test]
     fn quaternion_julia_matches_cpu() {
-        gbuffer_matches_cpu(include_str!("../examples/quaternion_julia.m3s"), 0.5);
+        gbuffer_matches_cpu(include_str!("../tests/data/quaternion_julia.m3s"), 0.5);
     }
 
     /// The interpolation hybrid (doInterpolHybridPasDE), 3D and, with two
     /// quaternions, 4D (doInterpolHybridPas4D).
     #[test]
     fn interpolation_matches_cpu() {
-        gbuffer_matches_cpu(include_str!("../examples/interpolation_boxes.m3s"), 0.5);
-        let quat = format!("{}\n[formula]\nname = Quaternion\nyw_multiplier = -1\nw_add = 0.3\n", include_str!("../examples/quaternion_julia.m3s").replace("iterations = 12\n", "iterations = 12\ninterpolation = 0.5, 0.5\n"));
+        gbuffer_matches_cpu(include_str!("../tests/data/interpolation_boxes.m3s"), 0.5);
+        let quat = format!("{}\n[formula]\nname = Quaternion\nyw_multiplier = -1\nw_add = 0.3\n", include_str!("../tests/data/quaternion_julia.m3s").replace("iterations = 12\n", "iterations = 12\ninterpolation = 0.5, 0.5\n"));
         gbuffer_matches_cpu(&quat, 0.5);
     }
 
@@ -3865,7 +3865,7 @@ mod tests {
     /// set where it is cut).
     #[test]
     fn cut_inside_matches_cpu() {
-        let bulb = include_str!("../examples/mandelbulb.m3s");
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
         gbuffer_matches_cpu(&format!("cut_y = -0.3\ncolor_on_iteration = 2\n{bulb}"), 0.5);
         gbuffer_matches_cpu(&format!("cut_z = 0.1\ninside = both\n{bulb}"), 0.5);
         gbuffer_matches_cpu(&format!("cut_x = 0.2\ninside = inside\n{bulb}"), 0.5);

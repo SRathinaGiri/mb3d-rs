@@ -694,8 +694,9 @@ up): the window's switch uses `stop`, closing the program `abort`.
 ## Scene files (`.m3s`)
 
 The INI-style format holds global keys, then optional `[formula]` sections (up
-to 6, forming an alternating hybrid) and `[light]` sections (up to 6). See
-`examples/`. Any key can be overridden on the command line with
+to 6, forming an alternating hybrid) and `[light]` sections (up to 6);
+`mb3d --save-scene` writes one from any parameter file, and
+`tests/data/*.m3s` are short ones (the tests' scenes). Any key can be overridden on the command line with
 `-s key=value`. `Scene::to_text()` writes the format, and `.m3p` → `.m3s` →
 `.m3p` keeps every setting the port uses (checked over the parameter
 collection). In `[light]` sections, `slot = N` keeps MB3D's light numbering,
@@ -729,7 +730,7 @@ Like MB3D, both run on the G-buffer after the main calculation (as with the
 | `shadow_set_cos` | `true`/`false` | set the diffuse function of shadowed lights to cos |
 
 ```sh
-./mb3d examples/mandelbulb.m3s -s shadows=1 -s shadow_soft=true -o soft.png
+./mb3d tests/data/mandelbulb.m3s -s shadows=1 -s shadow_soft=true -o soft.png
 ```
 
 `.m3p` files bring their own settings. Shadows are only calculated when the
@@ -778,9 +779,9 @@ itself per light.
 | `dof_passes` | 1..4 | passes |
 
 ```sh
-./mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
-./mb3d examples/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
-./mb3d examples/mandelbulb.m3s -s "ground=y, 1.15" -s ground_color=#203848 -s ground_reflect=0.8 -s "ground_waves=0.03, 0.4" -s mc_reflections=1 -o water.png
+./mb3d tests/data/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
+./mb3d tests/data/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
+./mb3d tests/data/mandelbulb.m3s -s "ground=y, 1.15" -s ground_color=#203848 -s ground_reflect=0.8 -s "ground_waves=0.03, 0.4" -s mc_reflections=1 -o water.png
 ```
 
 The volumetric light map is calculated before the image, with a ray march
@@ -817,7 +818,7 @@ in double precision, or while the card compiles, the CPU runs them alone.
 
 ```sh
 ./mb3d "material colors.m3p" -o glass.png
-./mb3d examples/mandelbulb.m3s -s cut_y=-0.6 -s mc_reflections=true -s mc_reflection_amount=0.8 -o mirror.png
+./mb3d tests/data/mandelbulb.m3s -s cut_y=-0.6 -s mc_reflections=true -s mc_reflection_amount=0.8 -o mirror.png
 ```
 
 Like in MB3D these run after the calculation: the normals on the z-buffer
@@ -1678,7 +1679,7 @@ another release folder (`file://` works, for tests).
 and `tar` where it is missing) and installs it on the runner as a test.
 It lays the files out as a system program: `/usr/bin/mb3d`,
 `/usr/bin/Mandelbulb3D`, MB3D's folders (`M3Formulas`, `M3Maps`,
-`M3Parameter`, `EM_JIT_M3Formulas`, `Themes`, `examples`) in
+`M3Parameter`, `EM_JIT_M3Formulas`, `Themes`, `Languages`) in
 `/usr/share/mb3d-rs`, the menu entry `mb3d-rs.desktop` and its icon, the
 man page and the completions in Debian's folders (zsh:
 `vendor-completions`). `mb3d-rs-linux-x64.rpm` (`tools/build_rpm.sh`,
