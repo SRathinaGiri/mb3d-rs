@@ -1279,7 +1279,7 @@ esse:
 | **Ricerca della superficie per secante** | −2 % (mediana), fino a −18 % | mediana 0,7 %; il dettaglio fine si sposta leggermente |
 | **Nessun limite di passi senza nebbia dinamica** | −1 % (mediana), fino a −30 % nelle scene aperte | per lo più la stessa immagine (mediana 0,03 %) |
 | **Occlusione DE a metà risoluzione** | −18 % sui 10 file con occlusione DE (DEcomb1 −24 %); quella fase fino a 4 volte più veloce | 0–27 % dei pixel, occlusione più morbida nel dettaglio fine; l'aspetto è lo stesso |
-| **Marcia a cono**: un raggio grossolano per blocco di pixel, la marcia di ogni pixel parte da dove si è fermato | la marcia −18 % (mediana −21 %) sul processore, fino a −66 % nelle scene aperte (68 su 70 più veloci); sulla scheda rendering interi di scene aperte fino a −47 % | mediana 1,0 %, quanto cambia da solo il primo passo casuale della marcia; *la 0.2.92 poteva perdere parti sottili dove la stima della distanza è troppo grande; corretto nella 0.2.93* |
+| **Marcia a cono**: un raggio grossolano per blocco di pixel, la marcia di ogni pixel parte da dove si è fermato | la marcia −20 % (mediana −22 %) sul processore, fino a −66 % nelle scene aperte (68 su 69 più veloci); sulla scheda rendering interi di scene aperte fino a −47 % | mediana 1,0 %, quanto cambia da solo il primo passo casuale della marcia; *la 0.2.92 poteva perdere parti sottili dove la stima della distanza è troppo grande; corretto nella 0.2.93* |
 
 Confronta con un rendering senza di esse prima di affidarti a una per
 un'immagine.

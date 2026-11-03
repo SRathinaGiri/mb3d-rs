@@ -1273,7 +1273,7 @@ yang sama tanpa percepatan itu:
 | **Pencarian sekan** untuk permukaan | −2 % (median), hingga −18 % | median 0.7 %; detail halus sedikit bergeser |
 | **Tanpa batas langkah bila tanpa kabut dinamis** | −1 % (median), hingga −30 % di adegan terbuka | sebagian besar gambar yang sama (median 0.03 %) |
 | **DE occlusion pada setengah resolusi** | −18 % pada 10 file dengan DE occlusion (DEcomb1 −24 %); tahap itu hingga 4 kali lebih cepat | 0–27 % piksel, occlusion lebih lembut di detail halus; tampak serupa |
-| **March kerucut**: satu sinar kasar per blok piksel, march setiap piksel mulai di tempat sinar itu berhenti | march −18 % (median −21 %) pada prosesor, hingga −66 % di adegan terbuka (68 dari 70 lebih cepat); pada kartu, seluruh render adegan terbuka hingga −47 % | median 1.0 %, sebesar perubahan langkah pertama acak march itu sendiri; *0.2.92 bisa kehilangan bagian tipis di tempat estimasi jarak terlalu besar; diperbaiki di 0.2.93* |
+| **March kerucut**: satu sinar kasar per blok piksel, march setiap piksel mulai di tempat sinar itu berhenti | march −20 % (median −22 %) pada prosesor, hingga −66 % di adegan terbuka (68 dari 69 lebih cepat); pada kartu, seluruh render adegan terbuka hingga −47 % | median 1.0 %, sebesar perubahan langkah pertama acak march itu sendiri; *0.2.92 bisa kehilangan bagian tipis di tempat estimasi jarak terlalu besar; diperbaiki di 0.2.93* |
 
 Bandingkan dengan render tanpa percepatan itu sebelum mengandalkan salah satunya untuk sebuah gambar.
 

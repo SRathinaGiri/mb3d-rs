@@ -1274,7 +1274,7 @@ sie:
 | **Sekantensuche nach der Oberfläche** | −2 % (Median), bis −18 % | Median 0,7 %; feine Details verschieben sich leicht |
 | **Keine Schrittbegrenzung ohne dynamischen Nebel** | −1 % (Median), bis −30 % in offenen Szenen | meist dasselbe Bild (Median 0,03 %) |
 | **DE-Occlusion in halber Auflösung** | −18 % über die 10 Dateien mit DE-Occlusion (DEcomb1 −24 %); diese Stufe bis zu 4-mal schneller | 0–27 % der Pixel, weichere Verdeckung in feinen Details; es sieht gleich aus |
-| **Kegelmarsch**: ein grober Strahl je Pixelblock, der Marsch jedes Pixels beginnt, wo er anhielt | das Abtasten −18 % (Median −21 %) auf dem Prozessor, bis −66 % in offenen Szenen (68 von 70 schneller); auf der Karte ganze Renderings offener Szenen bis −47 % | Median 1,0 %, so viel, wie der eigene zufällige erste Schritt des Abtastens ändert; *0.2.92 konnte dünne Teile verlieren, wo die Distanzschätzung viel zu groß ist; in 0.2.93 behoben* |
+| **Kegelmarsch**: ein grober Strahl je Pixelblock, der Marsch jedes Pixels beginnt, wo er anhielt | das Abtasten −20 % (Median −22 %) auf dem Prozessor, bis −66 % in offenen Szenen (68 von 69 schneller); auf der Karte ganze Renderings offener Szenen bis −47 % | Median 1,0 %, so viel, wie der eigene zufällige erste Schritt des Abtastens ändert; *0.2.92 konnte dünne Teile verlieren, wo die Distanzschätzung viel zu groß ist; in 0.2.93 behoben* |
 
 Vergleichen Sie mit einem Rendering ohne sie, bevor Sie sich für ein Bild auf
 eine davon verlassen.

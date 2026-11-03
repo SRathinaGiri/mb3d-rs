@@ -5,7 +5,7 @@ they are off until you switch them on. Measured on the 80 example files that
 ship with the program (2 November 2026, about 0.4 megapixels, one PC: an RTX
 2060 and a Ryzen 9 3900X), all five together make a render 11 % faster on
 average and a third faster in open scenes; on the processor alone the cone
-march cuts the march by 18 %, up to 66 %. (The figures for the cone march are
+march cuts the march by 20 %, up to 66 %. (The figures for the cone march are
 those of its fixed version in 0.2.93: in 0.2.92 it could lose thin parts where
 the distance estimate is far too large, see [below](#the-cone-march-in-0292).)
 
@@ -43,8 +43,9 @@ by 44 %.
 ![Time saved per speed-up: the whole render and the stage it works on](img/experimental_gains.png)
 
 On the processor alone the cone march matters most: measured on the same
-scenes without the card, it cuts the march by 18 % (median 21 %), up to 66 %
-in open scenes, and 68 of the 70 scenes it works in get faster.
+scenes without the card, it cuts the march by 20 % (median 22 %), up to 66 %
+in open scenes, and 68 of the 69 scenes it works in get faster. On the card
+it cuts the march by 10 % (median 3 %), up to 47 %.
 
 | Speed-up | Where it shines | Pixels changed (median) | Watch out for |
 |---|---|---|---|
@@ -52,7 +53,7 @@ in open scenes, and 68 of the 70 scenes it works in get faster.
 | Secant search | Scenes with many surface hits: up to −8 % | 0.7 % | Fine detail moves slightly |
 | No step limit | Open scenes without dynamic fog: up to −30 % | 0.03 % | Nothing visible |
 | Occlusion at half resolution | Scenes with DE occlusion: up to −20 % of the whole render | 0.0 % (up to 23 % in fine detail) | Softer occlusion in fine detail |
-| Cone march | Open scenes: up to −47 % of the whole render (−66 % of the march on the processor) | 0.9 % | On the card, scenes with dynamic fog can get slower (6 AM – Torii temple); off by itself for inside+outside, disable analytic DE and volumetric light |
+| Cone march | Open scenes: up to −47 % of the whole render (−66 % of the march on the processor) | 0.9 % | Off by itself for inside+outside, disable analytic DE and volumetric light |
 
 "Pixels changed" is the share of pixels that differ by more than 8 of 255
 from the plain render; the march's own random first step already moves about
@@ -98,7 +99,7 @@ shells appear with or without the others.
   the half-resolution occlusion are safe in practice; add step relax only
   after comparing with a plain render, since thin shells can show holes.
 - On the processor alone (no graphics card, a laptop, the swarm), the cone
-  march is the one that counts: −18 % of the march on average, up to −66 %.
+  march is the one that counts: −20 % of the march on average, up to −66 %.
 - The switches are saved with the scene, so a parameter file you share carries
   them; tell people when you post one.
 
@@ -117,6 +118,11 @@ Surf) 1.8 % of the pixels became background, whole bits of the moon and a
 branch; a check for such holes had looked for the wrong background value in
 the depth maps and missed them. 0.2.93 keeps the coarse rays within that
 limit, and with it a smaller margin around them is as safe in every example
-file (1.5 instead of 3), so the cone march also got faster: −18 % of the
-march on the processor instead of −12 %. If you rendered with the cone march
-in 0.2.92, compare thin, far-off parts with a plain render.
+file (1.5 instead of 3), so the cone march also got faster. A coarse ray
+also ends now where its steps fall far behind those the pixels would take:
+far off its margin grows with the distance and could leave it crawling
+along a surface, and on the card a few such rays held up everything else
+(6 AM – Torii temple marched 70 % longer with the cone march; now 10 %).
+Together: −20 % of the march on the processor instead of −12 %, −10 % on
+the card instead of −4 %. If you rendered with the cone march in 0.2.92,
+compare thin, far-off parts with a plain render.

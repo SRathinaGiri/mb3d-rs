@@ -2150,13 +2150,17 @@ impl<'a> Marcher<'a> {
             // (no longer than the march's step limit: where the estimate is
             // far too large the limit alone finds the thin parts)
             let s = ((de - reach - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf / div).min((self.ms_de_stop.max(0.4) * p.mh04zsd) as f64);
-            if s < CONE_MIN_STEP * stop {
+            // the march's own step here (as in march_from): the coarse ray
+            // ends where its steps fall far behind it (far off, its reach
+            // grows with the depth, and along a surface it would crawl on,
+            // on the card holding up the whole band)
+            let d = f64::max(0.11, (de - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf);
+            if s < CONE_MIN_STEP * stop || s < CONE_MIN_SHARE * d.min((self.ms_de_stop.max(0.4) * p.mh04zsd) as f64) {
                 return (t, count);
             }
-            // the dynamic fog: the march's step here (as in march_from) and
-            // the count of the way to the end or the next point
+            // the dynamic fog: the count of the way to the end or the next
+            // point
             if p.dfog_on_it == 0 || self.it.it_result == p.dfog_on_it as i32 {
-                let d = f64::max(0.11, (de - p.ms_de_sub as f64 * stop) * p.z_step_div as f64 * rsf);
                 count += (s.min(p.zend - t) / d) as f32;
             }
             if t + s > p.zend {
@@ -2383,6 +2387,11 @@ impl<'a> Marcher<'a> {
 
 /// The cone march ends when its step falls under this share of the DE stop.
 const CONE_MIN_STEP: f64 = 0.05;
+/// ... or under this share of the step the march would take there (far
+/// off its reach, which grows with the depth, can leave it crawling along a
+/// surface at a fraction of the march's steps: on the card a few such rays
+/// held up a whole band, 6 AM - Torii temple took 70 % longer)
+const CONE_MIN_SHARE: f64 = 0.1;
 
 /// The cone march takes the distance estimate for up to this many times
 /// (over the step factor) a true bound: a block's spread counts that much

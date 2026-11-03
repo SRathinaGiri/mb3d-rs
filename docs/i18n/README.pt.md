@@ -1280,7 +1280,7 @@ arquivos sem elas:
 | **Busca da superfície por secante** | −2 % (mediana), até −18 % | mediana 0,7 %; o detalhe fino se desloca levemente |
 | **Sem limite de passos sem neblina dinâmica** | −1 % (mediana), até −30 % em cenas abertas | quase sempre a mesma imagem (mediana 0,03 %) |
 | **Oclusão DE em meia resolução** | −18 % nos 10 arquivos com oclusão DE (DEcomb1 −24 %); essa etapa até 4 vezes mais rápida | 0–27 % dos pixels, oclusão mais suave no detalhe fino; parece igual |
-| **Avanço em cone**: um raio grosseiro por bloco de pixels, o avanço de cada pixel começa onde ele parou | o avanço −18 % (mediana −21 %) no processador, até −66 % em cenas abertas (68 de 70 mais rápidos); na placa renderizações inteiras de cenas abertas até −47 % | mediana 1,0 %, tanto quanto muda o próprio primeiro passo aleatório do avanço; *a 0.2.92 podia perder partes finas onde a estimativa de distância é grande demais; corrigido na 0.2.93* |
+| **Avanço em cone**: um raio grosseiro por bloco de pixels, o avanço de cada pixel começa onde ele parou | o avanço −20 % (mediana −22 %) no processador, até −66 % em cenas abertas (68 de 69 mais rápidos); na placa renderizações inteiras de cenas abertas até −47 % | mediana 1,0 %, tanto quanto muda o próprio primeiro passo aleatório do avanço; *a 0.2.92 podia perder partes finas onde a estimativa de distância é grande demais; corrigido na 0.2.93* |
 
 Compare com uma renderização sem elas antes de confiar em uma para uma imagem.
 

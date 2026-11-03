@@ -1092,7 +1092,7 @@ runs (run to run the pictures differ in a median 0.001 % of the pixels):
 | `step_relax = 1.3` | total −5.1 %, median −5.0 %, best −20 % (Chrystal), worst +8 %; 62 faster, 2 slower | median 2.6 %, more than 5 % in 26 files; holes in thin shells (BatJorge – Pong 703 – Swirls 58 %), speckle in noisy scenes (spineJulia 48 %, the MutaGen canary 41 %) |
 | `secant_search` | total −1.5 %, median −2.3 %, best −18 % | median 0.7 %, more than 5 % in 12 files (spineJulia 15 %) |
 | `free_steps` | total −1.7 %, median −0.6 %, best −30 % (LightBulbMoon – No, Never) | median 0.03 %, more than 5 % in 5 files |
-| `cone_march` (2026-11-02, the march stage on the processor, 0.2 megapixels; v0.2.93: the coarse rays within the step limit, margin 1.5) | total −17.9 %, median −21.1 %, best −66 % (Dainbramage – Nothing left but bones), worst +1 %; 68 of 70 faster (off in 9: inside and outside, disable analytic DE, volumetric light) | median 1.0 %: in every file, pictures and holes, as much as the random first step changes (the base against itself with the random first step toggled both ways); v0.2.92 lost 1.8 % of LightBulbMoon – No, Never |
+| `cone_march` (2026-11-02, the march stage on the processor, 0.2 megapixels; v0.2.93: the coarse rays within the step limit, margin 1.5, ending at a tenth of the march's step) | total −19.5 %, median −22.5 %, best −66 % (Dainbramage – Nothing left but bones), worst +1 %; 68 of 69 faster; on the card (1 megapixel) total −10.0 %, median −3.1 %, best −47 % (off in 9: inside and outside, disable analytic DE, volumetric light) | median 1.0 %: in every file, pictures and holes, as much as the random first step changes (the base against itself with the random first step toggled both ways); v0.2.92 lost 1.8 % of LightBulbMoon – No, Never |
 
 ### Cone march
 
@@ -1140,9 +1140,17 @@ is at the noise level in every file, pictures and holes, and gains a third
 more than 3 (march −17.8 % against −11.9 %); at 1 the fog of KentPress and
 the sphere of "cutted sphere over carpet" changed. The card at 1 megapixel:
 every file at its noise level, LightBulbMoon's holes 0.1 % (v0.2.92: 2.3 %).
-On the card the cone passes of a band are few, long rays; in 6 AM – Torii
-temple (dynamic fog, where the step limit holds every step short) they
-make the march slower (+73 %, v0.2.92 +44 %).
+A coarse ray also ends where its step falls under a tenth of the march's
+own step there (`CONE_MIN_SHARE`; at most the step limit): far off, its
+reach grows with the depth and can leave it crawling along a surface at a
+small fraction of the pixels' steps. On the card the cone passes of a band
+are few rays, and a handful of such crawling rays held up the band: 6 AM –
+Torii temple marched 70 % longer with the cone march, now 10 %. Measured
+(0.1 against none, 0.25 and 0.5; the march, warm shader caches): on the
+processor total −19.5 % against −16.7 % without it, pictures as close to
+the plain render or closer; on the card −10.0 % against −6.6 % (0.25 the
+same on the card, a little further from the plain render on the
+processor; 0.5 slower).
 | `occlusion_half` | the 10 files with DE occlusion: total −17.6 % (DEcomb1 −24 %); the stage 3.8 times faster on the processor, 2–3 times in Auto mode | 0.01–27 % (JuliaSetSample), softer occlusion in fine detail |
 
 Earlier, on the processor alone at 400 px, `step_relax = 1.3` gave −11.6 %

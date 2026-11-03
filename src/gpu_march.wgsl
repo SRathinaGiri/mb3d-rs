@@ -232,9 +232,11 @@ const CONE_P_BY0: u32 = 450u;
 const CONE_P_OFF: u32 = 451u;
 // the cone march takes the estimate for up to this many times (over the
 // step factor) a bound (calc::CONE_MARGIN); it ends when its step falls
-// under this share of the DE stop (calc::CONE_MIN_STEP)
+// under this share of the DE stop (calc::CONE_MIN_STEP) or of the march's
+// own step there (calc::CONE_MIN_SHARE)
 const CONE_MARGIN: R = 1.5;
 const CONE_MIN_STEP: R = 0.05;
+const CONE_MIN_SHARE: R = 0.1;
 
 const PI: R = 3.14159265358979;
 
@@ -2587,11 +2589,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         let div = 1.0 + cone_slope * lip + pf(DE_STOP) * pf(DE_STOP_FACTOR);
                         // (within the march's step limit)
                         let st = min((de - reach - pf(MS_DE_SUB) * stop) * zsd * rsf / div, max(stop, 0.4) * pf(MH04ZSD));
-                        if (st < CONE_MIN_STEP * stop) {
+                        // (the march's own step here: the coarse ray ends
+                        // where its steps fall far behind it)
+                        let d = max(0.11, (de - pf(MS_DE_SUB) * stop) * zsd * rsf);
+                        if (st < CONE_MIN_STEP * stop || st < CONE_MIN_SHARE * min(d, max(stop, 0.4) * pf(MH04ZSD))) {
                             ended = true;
                         } else {
                             if (dfog_on_it == 0 || it_result == dfog_on_it) {
-                                let d = max(0.11, (de - pf(MS_DE_SUB) * stop) * zsd * rsf);
                                 step_count += min(st, pf(ZEND) - mzz) / d;
                             }
                             if (mzz + st > pf(ZEND)) {
