@@ -701,6 +701,10 @@ you check further on your own:
 
   <a href="docs/img/clouds.jpg"><img src="docs/img/clouds.jpg" width="480" alt="A fractal over the sea under a sky of clouds"></a>
 
+  Three examples with clouds, water and reflections, with their parameters
+  to paste in and where each setting is:
+  [docs/CLOUDS_WATER.md](docs/CLOUDS_WATER.md).
+
   <details><summary>Read more</summary>
 
   Post processing window, section *Clouds*: tick *Paint clouds*, set the
