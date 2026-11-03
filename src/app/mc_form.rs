@@ -369,7 +369,7 @@ fn ai_noise_filter(app: &mut Mb3d, ui: &mut Ui) {
     match r {
         Ok(mut out) => {
             // (the finishing after the filter, as on the command line)
-            crate::finish::apply_rgb8(&mut out, w, h, p.finish.as_ref());
+            crate::finish::apply_rgb8(&mut out, w, h, p.finish_for_camera().as_ref());
             set_image(ui, w, h, &out);
             app.mc.picture_changed = true;
             app.message(ui, &tr("@MB:NeuralNoiseFilterDone"));

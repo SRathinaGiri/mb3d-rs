@@ -506,6 +506,19 @@ impl Scene {
         [self.mid[0] + r[0] * s, self.mid[1] + r[1] * s, self.mid[2] + r[2] * s]
     }
 
+    /// The finishing as the camera takes it: a 360 degree panorama has no
+    /// lens and no corners, its picture's edges meet behind the viewer, so
+    /// the vignette (a dark band behind the viewer and dark poles) and the
+    /// colour fringes (a seam where the edges meet) are left out.
+    pub fn finish_for_camera(&self) -> Option<crate::finish::Finish> {
+        let mut f = self.finish?;
+        if self.optic == CameraOptic::Panorama {
+            f.vignette = 0.0;
+            f.chromatic = 0.0;
+        }
+        Some(f)
+    }
+
     /// The eye's shift from the middle to the right in steps (0 without
     /// stereo); a panorama's eyes turn with each ray around the middle
     /// (omni-directional stereo, the 360 degree pictures of VR headsets).
@@ -1736,6 +1749,21 @@ pub fn parse_color(s: &str) -> Option<[u8; 3]> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A 360 degree panorama leaves out the lens effects (the vignette
+    /// darkened the view behind the viewer), keeps the rest; the scene
+    /// itself keeps them for other cameras.
+    #[test]
+    fn a_panorama_has_no_vignette_or_fringes() {
+        let mut s = Scene::parse("vignette = 0.5\nchromatic = 0.3\nfinish_contrast = 0.25\n").unwrap();
+        assert_eq!(s.finish_for_camera().unwrap().vignette, 0.5);
+        s.optic = CameraOptic::Panorama;
+        let f = s.finish_for_camera().unwrap();
+        assert_eq!((f.vignette, f.chromatic, f.contrast), (0.0, 0.0, 0.25));
+        assert_eq!(s.finish.unwrap().vignette, 0.5);
+        s.optic = CameraOptic::Fisheye;
+        assert_eq!(s.finish_for_camera().unwrap().vignette, 0.5);
+    }
 
     #[test]
     fn parse_basic_scene() {

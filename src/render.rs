@@ -2554,7 +2554,7 @@ fn paint_with<S: crate::lighting::Sample>(
     stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> (Vec<S>, Option<f64>) {
-    let Some(f) = sc.finish.filter(|f| !f.is_neutral() && p.slice_2d == 0) else {
+    let Some(f) = sc.finish_for_camera().filter(|f| !f.is_neutral() && p.slice_2d == 0) else {
         return paint_core::<S>(sc, p, gbuf, full, progress, stage, cancel);
     };
     // the finishing: painted in floating point (the light above white

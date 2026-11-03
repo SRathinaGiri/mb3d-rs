@@ -131,6 +131,23 @@ E....2..F3E.....0....6....EIp34RZ7bPdxaP........................................
 {mb3d-rs: clouds = y, -1.4, -3.4; cloud_density = 1; cloud_coverage = 0.64; cloud_size = 1; cloud_color = #A0ACBA; finish_exposure = 0.4; finish_tonemap = filmic; glow = 0.7, 0.04, 0.75; finish_contrast = 0.25; finish_saturation = 0.85; finish_warmth = 0; vignette = 0.5; chromatic = 0; ground = y, 0.9; ground_color = #2A3846; ground_reflect = 0.5}
 ```
 
+## As a 360° panorama
+
+![Golden hour as a 360 degree panorama: the clouds all around the sky, the sea and its reflections all around the horizon](img/clouds_panorama.jpg)
+
+The clouds, the ground and the reflections go all the way round, so each of
+the three scenes also works as a panorama for 360° viewers and VR headsets.
+On the main window's *Camera* tab, choose *360 Panorama* under *Camera
+lense*, and make the picture twice as wide as it is high (for example 4096
+by 2048). The field of view sets itself: 360° across, 180° up and down.
+
+- The vignette and the colour fringes are left out in a panorama: its left
+  and right edges meet behind the viewer, where a lens's dark corners would
+  show as a dark band.
+- Leave the depth of field off (none of the three scenes uses it): in a
+  panorama it blurs the sky and the water all round.
+- Keep the camera level, or the horizon bends into a wave.
+
 ## Where the settings are
 
 The screens show the settings of picture 1, Golden hour, as they look after

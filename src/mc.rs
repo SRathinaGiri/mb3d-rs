@@ -3639,7 +3639,7 @@ pub fn paint(img: &McImage, mc: &McSettings, gamma: f32) -> Vec<u8> {
 /// picture.
 pub fn paint_finished(img: &McImage, sc: &Scene) -> Vec<u8> {
     let mut rgb = paint(img, &sc.mc, sc.lighting.gamma);
-    crate::finish::apply_rgb8(&mut rgb, img.width, img.height, sc.finish.as_ref());
+    crate::finish::apply_rgb8(&mut rgb, img.width, img.height, sc.finish_for_camera().as_ref());
     rgb
 }
 
