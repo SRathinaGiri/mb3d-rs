@@ -28,6 +28,10 @@ language = Bahasa Indonesia
 code = ID
 
 [Labels]
+A4dQuaternionFormulaOneIteration=Formula quaternion 4d, satu iterasi:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Formula bulb seperti yang disarankan oleh Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nDitambahkan dua opsi untuk memutar konstanta dengan pangkat menurut jarak vektor Z dan C saat ini (Cond Phi=1),\ndan opsi Mode berikut:\n(Bit dari nilai Mode)\nBit1: Balik komponen atan theta\nBit2: Balik komponen atan phi\nBit3: Balik theta dan phi\nBit4: Balik CyCz untuk perhitungan sudut\nBit5: Kalikan powerC dengan jarak vektor Z dan C
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=Perhitungan sedang berjalan: hentikan dulu.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=Satu sinar kasar per blok 16, lalu 4 piksel melakukan march dengan sebaran blok dikurangkan dari estimasi jarak, dan march setiap piksel mulai dari kedalamannya. Hingga 60 % lebih cepat melewati ruang terbuka; bagian tipis bisa hilang di tempat estimasinya jauh meleset.
@@ -44,6 +48,8 @@ AGroundOrWaterSurfaceAcross=Permukaan tanah atau air yang melintang sumbu X, Y, 
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=Nilai yang lebih tinggi berarti kualitas lebih baik, bahkan 100% tetap lossy.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=Hibrida dari bulb sinus pangkat 2 dan amazing box, panjang vektor 3d menentukan formula yang dipakai:\nJika lebih besar dari 'Box/Bulb R threshold' amazing box dipakai, jika lebih kecil dari '..threshold 2' bulb sinus dipakai,\ndi antara keduanya kedua formula diinterpolasi. Buat ambang kedua sedikit lebih kecil dari yang pertama agar lebih halus.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=File bahasa berisi satu label per baris: di kiri "=" ID-nya, di kanan teks Anda. Bagian jendela setelah label memberi satu kontrol teksnya sendiri.
@@ -52,6 +58,8 @@ AMultiplierThatDefinesTheMiximal=Pengali yang menentukan panjang maksimal perhit
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=Waktu hitung AO:
 ;AO calc time:
+ASineIntegerPowerBulbWith=Bulb sinus pangkat bilangan bulat dengan pelipatan sebelumnya, seperti pada amazing box.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=Render yang dihentikan atau terputus menyimpan apa yang sudah dihitung; Hitung 3D dengan parameter yang sama akan melanjutkannya.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=Latar belakang transparan memerlukan frame PNG: pilih PNG sebagai format keluaran.
@@ -738,6 +746,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete=Tidak dapat menghapus {}
+;Could not delete {}
 CouldNotLoadFormula=Tidak dapat memuat formula <{}>: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=Tidak dapat menulis {}: {}
@@ -2346,6 +2356,8 @@ NotABigRenderProject=bukan proyek render besar
 ;not a big render project
 NotAvailableForLinuxUseClaude=Tidak tersedia untuk Linux: gunakan Claude Code di bawah.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=Memori yang tersedia tidak cukup
+;Not enough memory available
 NotFoundIfYouUseIt=Tidak ditemukan. Jika Anda memakainya, jalankan perintah ini sekali di terminal:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=Belum terpasang. Unduh dari claude.ai/download, jalankan sekali, lalu kembali ke sini.
@@ -2540,6 +2552,8 @@ PNG16BitColourPng=PNG 16 bit warna (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 bit (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 bit (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=Frame PNG dengan latar belakang transparan.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2588,6 +2602,8 @@ PauseRendering=Jeda render
 ;Pause rendering
 PausedPressToContinue=Dijeda, tekan untuk melanjutkan
 ;Paused, press to continue
+PausingOnNextFrame=Berhenti sejenak pada frame berikutnya...
+;Pausing on next frame...
 PercentOfLocalDE=Persen dari DE lokal
 ;Percent of local DE
 Picture=gambar
@@ -3356,6 +3372,8 @@ TargetMapSlot=Slot Peta Tujuan
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Slot Peta Tujuan. Gunakan nomor ini sebagai peta di fraktal Anda, mis. sebagai heightmap, agar petanya beranimasi
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula=Formula 'Amazing Box' alias Mandbox, ditemukan oleh TGlad di fractalforums.com.\n\nFormula untuk satu iterasi terlihat seperti ini:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=Jumlah warna difus dan spekular yang dijumlahkan lebih dari 1,\nperlukah saya mengecilkannya agar pewarnaan lebih realistis?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=Animasi memerlukan setidaknya dua keyframe.
@@ -3464,6 +3482,8 @@ TheSelectionMustBeBiggerThanLower=pilihan harus lebih besar dari 2 piksel dalam 
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=Folder bersama swarm
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=Bulb sinus yang dapat memakai nilai pangkat sembarang, perhitungannya lebih lambat daripada pangkat bilangan bulat.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=Ukuran bentuk awan dalam satuan fraktal, dan warnanya (klik)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=Ukuran tile
@@ -3474,6 +3494,8 @@ TheTextParametersOnTheClipboard=Parameter teks di papan klip rusak: beberapa bar
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=tile tidak memiliki buffer gambar
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=Bulb sinus matematika triplex, seperti yang disarankan oleh Daniel White dan Paul Nylander. Ini adalah implementasi cepat untuk pangkat 2,3,4,5,6,7 dan 8.\n\nJika Anda ingin membuat animasi dengan perubahan pangkat yang mulus, gunakan formula 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Nilai keyframe yang dipilih
 ;The value of the chosen keyframe
 Themes=Tema
@@ -3738,6 +3760,8 @@ Weight=Bobot
 ;Weight
 WeightColon=Bobot:
 ;Weight:
+WelcomeTo=Selamat datang di {}!
+;Welcome to {}!
 WhatDidIDoInMb3d=Apa yang saya lakukan di mb3d hari ini? Apakah ada galat?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=Apa yang terjadi
@@ -3822,6 +3846,8 @@ YouCanSaveAlsoM3iFiles=Anda juga dapat menyimpan file m3i untuk setiap tile, pas
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=Anda harus merender parameter asli terlebih dahulu dan menyimpannya sebagai file M3I.\nJangan buat render itu terlalu kecil.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=Anda ingin menghapus:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=Nama pembuat Anda (disimpan di parameter):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=Bahasa Anda sendiri (namanya):

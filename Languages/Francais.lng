@@ -28,6 +28,10 @@ language = Français
 code = FR
 
 [Labels]
+A4dQuaternionFormulaOneIteration=Une formule de quaternion 4D, une itération:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Une formule de bulbe suggérée par Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAjout de deux options pour faire pivoter la constante par puissance selon la distance entre les vecteurs courants de Z et de C (Cond Phi=1),\net des options de Mode suivantes :\n(Bits de la valeur de Mode)\nBit1 : inverser les composantes atan de theta\nBit2 : inverser les composantes atan de phi\nBit3 : inverser theta et phi\nBit4 : inverser CyCz pour le calcul de l'angle\nBit5 : multiplier powerC par la distance entre les vecteurs Z et C
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=Un calcul est en cours : arrêtez-le d'abord.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=Un rayon grossier par bloc de 16, puis de 4 pixels avance avec l'étalement du bloc retranché de l'estimation de distance, et la marche de chaque pixel part de sa profondeur. Jusqu'à 60 % plus rapide dans l'espace ouvert ; des parties fines peuvent être perdues là où l'estimation est très fausse.
@@ -44,6 +48,8 @@ AGroundOrWaterSurfaceAcross=Une surface de sol ou d'eau perpendiculaire à l'axe
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=Une valeur plus élevée donne une meilleure qualité ; même 100 % reste avec pertes.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=Un hybride d'un bulbe sinus de puissance 2 et de l'Amazing Box ; la longueur du vecteur 3D décide de la formule utilisée :\nSi elle est supérieure à 'Box/Bulb R threshold', l'Amazing Box est utilisée ; si elle est inférieure à '..threshold 2', le bulbe sinus ;\nentre les deux, les formules sont interpolées.  Choisissez le second seuil un peu plus petit que le premier pour plus de douceur.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=IA
 ;AI
 ALanguageFileHasOneLabel=Un fichier de langue a une étiquette par ligne : à gauche du « = » son identifiant, à droite votre texte. Une section de fenêtre après les étiquettes donne à un contrôle un texte qui lui est propre.
@@ -52,6 +58,8 @@ AMultiplierThatDefinesTheMiximal=Multiplicateur définissant la longueur maximal
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=Temps calcul AO:
 ;AO calc time:
+ASineIntegerPowerBulbWith=Un bulbe sinus à puissance entière avec des pliages préalables, comme dans l'Amazing Box.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=Un rendu arrêté ou interrompu conserve ce qu'il a calculé ; Calculer 3D des mêmes paramètres le continue.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=Un arrière-plan transparent nécessite des images PNG : choisissez PNG comme format de sortie.
@@ -738,6 +746,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete=Impossible de supprimer {}
+;Could not delete {}
 CouldNotLoadFormula=Impossible de charger la formule <{}> : {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=Impossible d'écrire {} : {}
@@ -2346,6 +2356,8 @@ NotABigRenderProject=pas un projet de grand rendu
 ;not a big render project
 NotAvailableForLinuxUseClaude=Non disponible pour Linux : utilisez Claude Code ci-dessous.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=Mémoire disponible insuffisante
+;Not enough memory available
 NotFoundIfYouUseIt=Introuvable. Si vous l'utilisez, lancez une fois cette commande dans un terminal :
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=Non installé. Téléchargez-le sur claude.ai/download, démarrez-le une fois, puis revenez ici.
@@ -2540,6 +2552,8 @@ PNG16BitColourPng=PNG couleur 16 bits (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 bits (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 bits (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=Images PNG avec un fond transparent.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2588,6 +2602,8 @@ PauseRendering=Mettre le rendu en pause
 ;Pause rendering
 PausedPressToContinue=En pause, cliquez pour continuer
 ;Paused, press to continue
+PausingOnNextFrame=Pause à l'image suivante...
+;Pausing on next frame...
 PercentOfLocalDE=Pourcentage du DE local
 ;Percent of local DE
 Picture=image
@@ -3356,6 +3372,8 @@ TargetMapSlot=Emplacement de carte cible
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Emplacement de carte cible. Utilisez ce numéro comme carte dans votre fractale, p. ex. comme carte de hauteur, pour obtenir une carte animée
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula=La formule 'Amazing Box' alias Mandbox, inventée par TGlad sur fractalforums.com.\n\nLa formule d'une itération se présente ainsi :\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=La somme des couleurs diffuse et spéculaire dépasse 1,\ndois-je les réduire pour une coloration plus réaliste ?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=L'animation nécessite au moins deux images-clés.
@@ -3464,6 +3482,8 @@ TheSelectionMustBeBiggerThanLower=la sélection doit dépasser 2 pixels en large
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=Le dossier partagé de l'essaim
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=Le bulbe sinus où des valeurs de puissance quelconques sont possibles ; le calcul est plus lent qu'avec des puissances entières.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=La taille des formes des nuages en unités de la fractale, et leur couleur (cliquer)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=La taille des vignettes
@@ -3474,6 +3494,8 @@ TheTextParametersOnTheClipboard=Les paramètres texte du presse-papiers sont end
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=la tuile n'a pas de tampon d'image
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=Le bulbe sinus en mathématique triplex, suggéré par Daniel White et Paul Nylander.  Ce sont des implémentations rapides des puissances 2, 3, 4, 5, 6, 7 et 8.\n\nPour réaliser une animation avec des changements de puissance progressifs, utilisez la formule 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=La valeur de l'image clé choisie
 ;The value of the chosen keyframe
 Themes=Thèmes
@@ -3738,6 +3760,8 @@ Weight=Poids
 ;Weight
 WeightColon=Poids :
 ;Weight:
+WelcomeTo=Bienvenue dans {} !
+;Welcome to {}!
 WhatDidIDoInMb3d=Qu'ai-je fait dans mb3d aujourd'hui ? Y a-t-il eu des erreurs ?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=Ce qui s'est passé
@@ -3822,6 +3846,8 @@ YouCanSaveAlsoM3iFiles=Vous pouvez aussi enregistrer un fichier m3i pour chaque 
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=Vous devez d'abord rendre les paramètres d'origine et les enregistrer en fichier M3I.\nNe faites pas ce rendu trop petit.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=Vous voulez supprimer:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=Votre nom d'auteur (enregistré dans les paramètres) :
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=Votre propre langue (son nom) :

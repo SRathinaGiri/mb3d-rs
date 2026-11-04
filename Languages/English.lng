@@ -747,7 +747,7 @@ Cos22=Cos/2+\s
 Cos23=(Cos/2+)²
 ;LightAdjustForm.ComboBox1.Items
 CouldNotDelete=Could not delete {}
-;not used
+;the program
 CouldNotLoadFormula=Could not load formula <{}>: {}
 ;the program
 CouldNotWrite=Could not write {}: {}
@@ -3847,7 +3847,7 @@ YouCanSaveAlsoM3iFiles=You can save also m3i files for each tile, keep in mind t
 YouHaveToRenderTheOriginal=You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
 ;TilingForm.CheckBox5.Hint
 YouWantToDelete=You want to delete:\n{}
-;not used
+;the program
 YourAuthorNameStoredInThe=Your author name (stored in the parameters):
 ;the program
 YourOwnLanguageItsName=Your own language (its name):

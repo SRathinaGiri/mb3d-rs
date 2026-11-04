@@ -29,6 +29,10 @@ code = AR
 font = Arabic.ttf
 
 [Labels]
+A4dQuaternionFormulaOneIteration=صيغة كواترنيون رباعية الأبعاد (4d)، تكرار واحد:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=صيغة بصلة (bulb) اقترحها Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nتمت إضافة خيارين لتدوير الثابت بالقوة حسب المسافة بين المتجهين الحاليين Z وC (Cond Phi=1)،\nوخيارات الوضع (Mode) التالية:\n(بتات قيمة الوضع)\nBit1: عكس مركّبات atan لـ theta\nBit2: عكس مركّبات atan لـ phi\nBit3: عكس theta وphi\nBit4: عكس CyCz عند حساب الزاوية\nBit5: ضرب powerC في المسافة بين المتجهين Z وC
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=يجري حساب الآن: أوقفه أولًا.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=شعاع خشن لكل كتلة من 16 بكسلًا ثم من 4 يتقدّم مع طرح اتساع الكتلة من تقدير المسافة، ويبدأ تقدّم كل بكسل من عمقه. أسرع حتى 60 % عبر الفضاء المفتوح؛ قد تُفقد الأجزاء الرقيقة حيث يكون التقدير بعيدًا عن الصواب.
@@ -45,6 +49,8 @@ AGroundOrWaterSurfaceAcross=سطح أرض أو ماء عمودي على المح
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=القيمة الأعلى تعني جودة أفضل، وحتى 100% تفقد شيئًا من الجودة.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=صيغة هجينة من بصلة جيبية من القوة 2 والصندوق المذهل (amazing box)، ويحدد طول المتجه ثلاثي الأبعاد الصيغة المستخدمة:\nإذا كان أكبر من 'Box/Bulb R threshold' يُستخدم الصندوق المذهل، وإذا كان أصغر من '..threshold 2' تُستخدم البصلة الجيبية،\nوبينهما يتم الاستيفاء بين الصيغتين. اجعل العتبة الثانية أصغر قليلًا من الأولى لمزيد من النعومة.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=الذكاء الاصطناعي
 ;AI
 ALanguageFileHasOneLabel=في ملف اللغة تسمية واحدة في كل سطر: يسار "=" معرّفها، ويمينها نصك. وقسم النافذة بعد التسميات يعطي عنصر تحكم واحدًا نصًّا خاصًّا به.
@@ -53,6 +59,8 @@ AMultiplierThatDefinesTheMiximal=مُعامل ضرب يحدد الطول الأ�
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=زمن حساب AO:
 ;AO calc time:
+ASineIntegerPowerBulbWith=بصلة جيبية بقوة صحيحة مع طيّات قبلها، كما في الصندوق المذهل.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=التصيير الموقوف أو المنقطع يحتفظ بما حسبه؛ و«احسب ثلاثي الأبعاد» للمعاملات نفسها يتابعه.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=الخلفية الشفافة تحتاج إلى إطارات PNG: اختر PNG صيغةً للإخراج.
@@ -739,6 +747,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete=تعذّر حذف {}
+;Could not delete {}
 CouldNotLoadFormula=تعذر تحميل الصيغة <{}>: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=تعذرت كتابة {}: {}
@@ -2347,6 +2357,8 @@ NotABigRenderProject=ليس مشروع تصيير كبير
 ;not a big render project
 NotAvailableForLinuxUseClaude=غير متوفر لـ Linux: استخدم Claude Code أدناه.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=لا توجد ذاكرة كافية
+;Not enough memory available
 NotFoundIfYouUseIt=غير موجود. إن كنت تستخدمه، شغّل هذا الأمر مرة واحدة في الطرفية:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=غير مثبت. احصل عليه من claude.ai/download، وشغّله مرة واحدة، ثم عد إلى هنا.
@@ -2541,6 +2553,8 @@ PNG16BitColourPng=PNG ملون بـ 16 بت (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG بـ 16 بت (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG بـ 8 بت (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=إطارات PNG بخلفية شفافة.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2589,6 +2603,8 @@ PauseRendering=إيقاف التصيير مؤقتًا
 ;Pause rendering
 PausedPressToContinue=متوقف مؤقتًا، اضغط للمتابعة
 ;Paused, press to continue
+PausingOnNextFrame=سيتوقف مؤقتًا عند الإطار التالي...
+;Pausing on next frame...
 PercentOfLocalDE=نسبة مئوية من DE المحلي
 ;Percent of local DE
 Picture=صورة
@@ -3357,6 +3373,8 @@ TargetMapSlot=خانة الخريطة الهدف
 ;Target Map Slot
 TargetMapSlotUseThisNumber=خانة الخريطة الهدف. استخدم هذا الرقم خريطةً في كسوريّك، مثلًا خريطة ارتفاع، لتحصل على خريطة متحركة
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula=صيغة 'Amazing Box' المعروفة أيضًا بصيغة Mandbox، ابتكرها TGlad في fractalforums.com.\n\nتبدو صيغة التكرار الواحد هكذا:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=مجموع الألوان الانتشارية وألوان اللمعان المضافة أكبر من 1،\nهل أصغّرها لتلوين أكثر واقعية؟
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=يحتاج التحريك إلى إطارين مفتاحيين على الأقل.
@@ -3465,6 +3483,8 @@ TheSelectionMustBeBiggerThanLower=يجب أن يكون الجزء المحدد �
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=المجلد المشترك للسرب
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=البصلة الجيبية التي يمكن فيها استخدام قيم قوة اعتباطية، والحساب فيها أبطأ منه مع القوى الصحيحة.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=حجم أشكال السحب بوحدات الكسورية، ولونها (انقر)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=حجم المربعات
@@ -3475,6 +3495,8 @@ TheTextParametersOnTheClipboard=معاملات النص في الحافظة تا
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=البلاطة بلا مخزن صورة
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=البصلة الجيبية بالرياضيات الثلاثية (triplex)، كما اقترحها Daniel White وPaul Nylander. هذه تطبيقات سريعة للقوى 2 و3 و4 و5 و6 و7 و8.\n\nإذا أردت إنشاء رسم متحرك بتغيّر سلس في القوة، فاستخدم صيغة 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=قيمة الإطار المفتاحي المختار
 ;The value of the chosen keyframe
 Themes=السمات
@@ -3739,6 +3761,8 @@ Weight=الوزن
 ;Weight
 WeightColon=الوزن:
 ;Weight:
+WelcomeTo=مرحبًا بك في {}!
+;Welcome to {}!
 WhatDidIDoInMb3d=ماذا فعلت في mb3d اليوم؟ هل كانت هناك أخطاء؟
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=ما حدث
@@ -3823,6 +3847,8 @@ YouCanSaveAlsoM3iFiles=يمكنك أيضًا حفظ ملفات m3i لكل بلا
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=عليك أولًا تصيير المعاملات الأصلية وتخزينها في ملف M3I.\nولا تجعل ذلك التصيير صغيرًا جدًّا.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=تريد حذف:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=اسمك مؤلفًا (يُخزن في المعاملات):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=لغتك الخاصة (اسمها):

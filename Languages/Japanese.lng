@@ -29,6 +29,10 @@ code = JA
 font = Japanese.ttf
 
 [Labels]
+A4dQuaternionFormulaOneIteration=4次元クォータニオン数式、1回の反復:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Aexion が提案したバルブ数式:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nZ と C の現在のベクトル間の距離で定数をべき乗回転させる2つのオプション (Cond Phi=1) と、\n次のモードオプションを追加しました:\n(モード値のビット)\nBit1: atan theta 成分を反転\nBit2: atan phi 成分を反転\nBit3: theta と phi を反転\nBit4: 角度計算で CyCz を反転\nBit5: powerC にベクトル Z と C の距離を掛ける
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=計算を実行中です。先に停止してください。
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=16 ピクセル、次に 4 ピクセルのブロックごとに 1 本の粗い光線が、距離推定からブロックの広がりを差し引いてマーチし、各ピクセルのマーチはその深さから始まります。開けた空間では最大 60 % 速くなります。推定が大きく外れている所では薄い部分が失われることがあります。
@@ -45,6 +49,8 @@ AGroundOrWaterSurfaceAcross=フラクタルの X、Y、Z 軸に垂直な地面�
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=値が高いほど品質が良くなります。100%でも非可逆です。
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=べき乗2のサインバルブとアメイジングボックスのハイブリッドで、3次元ベクトルの長さでどちらの数式を使うかが決まります:\n'Box/Bulb R threshold' より大きければアメイジングボックス、'..threshold 2' より小さければサインバルブを使い、\nその間は両方の数式を補間します。より滑らかにするには、2番目のしきい値を1番目より少し小さくしてください。
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=言語ファイルには 1 行に 1 つのラベルがあります: 「=」の左がその ID、右があなたの訳文です。ラベルの後のウィンドウセクションでは、1 つのコントロールに独自の文字列を指定できます。
@@ -53,6 +59,8 @@ AMultiplierThatDefinesTheMiximal=ハードシャドウ計算の最大長を、�
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO 計算時間:
 ;AO calc time:
+ASineIntegerPowerBulbWith=アメイジングボックスのように、先に折りたたみを行うサイン整数べき乗バルブ。
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=停止または中断されたレンダリングは計算済みの部分を保持します。同じパラメータで3D計算を行うと続きから再開されます。
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=透明な背景には PNG フレームが必要です。出力形式に PNG を選んでください。
@@ -739,6 +747,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete={} を削除できませんでした
+;Could not delete {}
 CouldNotLoadFormula=数式 <{}> を読み込めませんでした: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite={} を書き込めませんでした: {}
@@ -2347,6 +2357,8 @@ NotABigRenderProject=大判レンダリングのプロジェクトではあり�
 ;not a big render project
 NotAvailableForLinuxUseClaude=Linux 版はありません: 下の Claude Code を使ってください。
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=使用可能なメモリが足りません
+;Not enough memory available
 NotFoundIfYouUseIt=見つかりません。使う場合は、ターミナルでこのコマンドを一度実行してください:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=インストールされていません。claude.ai/download から入手し、一度起動してから、ここに戻ってください。
@@ -2541,6 +2553,8 @@ PNG16BitColourPng=PNG 16 ビットカラー (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 ビット (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 ビット (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=背景が透明な PNG フレームにします。
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2589,6 +2603,8 @@ PauseRendering=レンダリングを一時停止
 ;Pause rendering
 PausedPressToContinue=一時停止中。押すと再開します
 ;Paused, press to continue
+PausingOnNextFrame=次のフレームで一時停止します...
+;Pausing on next frame...
 PercentOfLocalDE=局所DEに対する割合 (%) です。
 ;Percent of local DE
 Picture=画像
@@ -3357,6 +3373,8 @@ TargetMapSlot=対象マップスロット
 ;Target Map Slot
 TargetMapSlotUseThisNumber=対象のマップスロットです。マップをアニメーションさせるには、この番号をフラクタル内でマップとして (例: ハイトマップとして) 使います。
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula='Amazing Box'、別名 Mandbox 数式。fractalforums.com の TGlad が考案しました。\n\n1回の反復の数式は次のとおりです:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=加算した拡散色と鏡面色の合計が 1 を超えています。\nよりリアルな色にするために縮小しますか?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=アニメーションには少なくとも 2 つのキーフレームが必要です。
@@ -3465,6 +3483,8 @@ TheSelectionMustBeBiggerThanLower=選択範囲は幅と高さが 2 ピクセル�
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=スウォームの共有フォルダ
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=任意のべき乗値を使えるサインバルブ。整数べき乗より計算が遅くなります。\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=雲の形の大きさ (フラクタル単位) と色 (クリック)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=タイルのサイズ
@@ -3475,6 +3495,8 @@ TheTextParametersOnTheClipboard=クリップボードのテキストパラメー
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=タイルに画像バッファがありません
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=トリプレックス数学のサインバルブ。Daniel White と Paul Nylander の提案によるものです。べき乗2、3、4、5、6、7、8の高速な実装です。\n\nべき乗を滑らかに変化させるアニメーションを作る場合は、'Real Power' 数式を使ってください。
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=選んだキーフレームの値
 ;The value of the chosen keyframe
 Themes=テーマ
@@ -3739,6 +3761,8 @@ Weight=重み
 ;Weight
 WeightColon=重み:
 ;Weight:
+WelcomeTo={} へようこそ!
+;Welcome to {}!
 WhatDidIDoInMb3d=今日 mb3d で何をした? エラーはあった?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=出来事
@@ -3823,6 +3847,8 @@ YouCanSaveAlsoM3iFiles=各タイルのm3iファイルも保存できます。デ
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=まず元のパラメータをレンダリングし、M3Iファイルとして保存しておく必要があります。\nそのレンダリングは小さすぎないようにしてください。
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=次を削除しますか:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=作者名 (パラメータに保存されます):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=自分の言語(その名前):

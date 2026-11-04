@@ -28,6 +28,10 @@ language = Nederlands
 code = NL
 
 [Labels]
+A4dQuaternionFormulaOneIteration=Een 4D-quaternionformule, één iteratie:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Een bulbformule, voorgesteld door Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nTwee opties toegevoegd om de constante machtsgewijs te roteren met de afstand tussen de huidige vectoren van Z en C (Cond Phi=1),\nen de volgende Mode-opties:\n(Bits van de Mode-waarde)\nBit1: atan-theta-componenten omkeren\nBit2: atan-phi-componenten omkeren\nBit3: theta en phi omkeren\nBit4: CyCz omkeren voor de hoekberekening\nBit5: powerC vermenigvuldigen met de afstand tussen de vectoren Z en C
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=Er loopt een berekening: stop die eerst.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=Een grove straal per blok van 16, dan van 4 pixels marcheert met de spreiding van het blok van de afstandsschatting afgetrokken, en de mars van elke pixel begint op zijn diepte. Tot 60 % sneller door open ruimte; dunne delen kunnen verloren gaan waar de schatting er ver naast zit.
@@ -44,6 +48,8 @@ AGroundOrWaterSurfaceAcross=Een grond- of wateroppervlak dwars op de X-, Y- of Z
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=Een hogere waarde betekent een betere kwaliteit; zelfs 100% is niet verliesvrij.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=Een hybride van een sinusbulb met macht 2 en de Amazing Box; de lengte van de 3D-vector bepaalt welke formule wordt gebruikt:\nIs die groter dan 'Box/Bulb R threshold', dan wordt de Amazing Box gebruikt, is die kleiner dan '..threshold 2', dan de sinusbulb,\ntussen beide in wordt geïnterpoleerd.  Kies de tweede drempel iets kleiner dan de eerste voor een vloeiender resultaat.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=Een taalbestand heeft één label per regel: links van de "=" de ID, rechts ervan uw tekst. Een venstersectie na de labels geeft één element een eigen tekst.
@@ -52,6 +58,8 @@ AMultiplierThatDefinesTheMiximal=Een vermenigvuldiger die de maximale lengte van
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO-rekentijd:
 ;AO calc time:
+ASineIntegerPowerBulbWith=Een sinusbulb met gehele macht en voorafgaande vouwingen, zoals in de Amazing Box.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=Een gestopte of onderbroken render bewaart wat hij heeft berekend; 3D berekenen met dezelfde parameters zet hem voort.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=Een transparante achtergrond vereist PNG-frames: kies PNG als uitvoerformaat.
@@ -738,6 +746,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete={} kon niet worden verwijderd
+;Could not delete {}
 CouldNotLoadFormula=Kan formule <{}> niet laden: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=Kan {} niet schrijven: {}
@@ -2346,6 +2356,8 @@ NotABigRenderProject=geen project voor grote render
 ;not a big render project
 NotAvailableForLinuxUseClaude=Niet beschikbaar voor Linux: gebruik Claude Code hieronder.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=Onvoldoende geheugen beschikbaar
+;Not enough memory available
 NotFoundIfYouUseIt=Niet gevonden. Als u het gebruikt, voer deze opdracht dan één keer uit in een terminal:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=Niet geïnstalleerd. Haal het op via claude.ai/download, start het één keer en kom dan hier terug.
@@ -2540,6 +2552,8 @@ PNG16BitColourPng=PNG 16-bits kleur (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16-bits (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8-bits (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=PNG-frames met een transparante achtergrond.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2588,6 +2602,8 @@ PauseRendering=Renderen pauzeren
 ;Pause rendering
 PausedPressToContinue=Gepauzeerd, druk om verder te gaan
 ;Paused, press to continue
+PausingOnNextFrame=Pauzeren bij het volgende beeld...
+;Pausing on next frame...
 PercentOfLocalDE=Procent van de lokale DE
 ;Percent of local DE
 Picture=afbeelding
@@ -3356,6 +3372,8 @@ TargetMapSlot=Doel-mapslot
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Doel-mapslot. Gebruik dit nummer als map in uw fractal, bijv. als hoogtemap, om een geanimeerde map te krijgen
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula=De formule 'Amazing Box', ook wel Mandbox, bedacht door TGlad op fractalforums.com.\n\nDe formule voor één iteratie ziet er zo uit:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=De som van de diffuse en speculaire kleuren is groter dan 1,\nzal ik ze verkleinen voor een realistischere kleuring?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=De animatie heeft minstens twee keyframes nodig.
@@ -3464,6 +3482,8 @@ TheSelectionMustBeBiggerThanLower=de selectie moet in breedte en hoogte groter z
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=De gedeelde map van de zwerm
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=De sinusbulb waarbij willekeurige machtswaarden kunnen worden gebruikt; de berekening is langzamer dan bij gehele machten.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=De grootte van de vormen van de wolken in fractaleenheden, en hun kleur (klikken)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=De grootte van de tegels
@@ -3474,6 +3494,8 @@ TheTextParametersOnTheClipboard=De tekstparameters op het klembord zijn beschadi
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=de tegel heeft geen beeldbuffer
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=De triplex-wiskunde-sinusbulb, voorgesteld door Daniel White en Paul Nylander.  Dit zijn snelle implementaties van de machten 2, 3, 4, 5, 6, 7 en 8.\n\nWil je een animatie met vloeiende machtsveranderingen maken, gebruik dan de formule 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=De waarde van het gekozen keyframe
 ;The value of the chosen keyframe
 Themes=Thema's
@@ -3738,6 +3760,8 @@ Weight=Gewicht
 ;Weight
 WeightColon=Gewicht:
 ;Weight:
+WelcomeTo=Welkom bij {}!
+;Welcome to {}!
 WhatDidIDoInMb3d=Wat heb ik vandaag in mb3d gedaan? Waren er fouten?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=Wat er gebeurde
@@ -3822,6 +3846,8 @@ YouCanSaveAlsoM3iFiles=U kunt ook voor elke tegel m3i-bestanden opslaan; houd er
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=U moet eerst de originele parameters renderen en als M3I-bestand opslaan.\nMaak die render niet te klein.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=Je wilt verwijderen:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=Uw auteursnaam (opgeslagen in de parameters):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=Uw eigen taal (de naam ervan):

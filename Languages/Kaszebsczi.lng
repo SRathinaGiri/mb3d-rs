@@ -28,6 +28,10 @@ language = Kaszëbsczi
 code = CSB
 
 [Labels]
+A4dQuaternionFormulaOneIteration=Cztërowymiarowô kwaternionowô fòrmùła, jedna iteracëjô:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Fòrmùła bulba zaproponowónô przez Aexiona:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nDodóné dwie òpcëje òbracaniô stałi pòtãżno ò òdlegòscë midzë terôźnyma wektorama Z ë C (Cond Phi=1)\në nôslédné òpcëje Mode:\n(Bitë wôrtnotë Mode)\nBit1: òdwrócë skłôdniczi atan theta\nBit2: òdwrócë skłôdniczi atan phi\nBit3: òdwrócë theta ë phi\nBit4: òdwrócë CyCz przë rechòwanim kąta\nBit5: pòmnóż powerC przez òdlegòscã midzë wektorama Z ë C
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=Jidze rechòwanié: nôprzód je zatrzëmôj.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=Jeden grëbi parmiéń na blok 16, pòtemù 4 piksli maszerëje z rozrzutã blokù òdjãtim òd szacënkù òdległoscë, a marsz kòżdégò piksla zaczinô sã na jegò głãbòkòscë. Do 60 % chùtszi przez òtemkłą przestrzéń; cenczé dzéle mògą sã zgùbic tam, gdze szacënk je dalek òd prôwdë.
@@ -44,6 +48,8 @@ AGroundOrWaterSurfaceAcross=Pòwierzchniô zemi abò wòdë na sztót òsë X, Y
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=Wikszô wôrtnota òznôczô lepszą jakòsc, nawetka 100% je stratné.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=Hybrida sinusowégò bulba z pòtãdżą 2 ë Amazing Box; dłëgòsc wektora 3D decydérëje, chtërna fòrmùła je ùżëtô:\nGdë je wikszô wiãcy jak 'Box/Bulb R threshold', ùżëwóny je Amazing Box, gdë mniészô jak '..threshold 2' - sinusowi bulb,\nmidzë nima òbiedwie fòrmùłë są interpolowóné.  Dlô lepszi gładczëznë ùstawi drëgi próg trochã mniészi jak pierszi.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=Lopk jãzëka mô jedną etiketã w régù: lewò òd "=" ji ID, prawò twój tekst. Dzél òkna za etiketama dôwô jednémù elementowi swój włôsny tekst.
@@ -52,6 +58,8 @@ AMultiplierThatDefinesTheMiximal=Mnożnik, chtëren òkresliwô maksymalną dłu
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=Czas rechòwaniô AO:
 ;AO calc time:
+ASineIntegerPowerBulbWith=Sinusowi bulb z całkòwitą pòtãdżą ë ze wczasnyma skłôdanyma, jak w Amazing Box.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=Zatrzëmóny abò przerwóny render trzimô to, co wërechòwôł; Rechùj 3D z tima samima parametrama gò kòntinuëje.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=Przezérné tło pòtrzebùje klatków PNG: wëbierzë PNG jakno fòrmat wińdzeniô.
@@ -738,6 +746,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete=Nie mòże rëgnąc {}
+;Could not delete {}
 CouldNotLoadFormula=Nie dało sã wczëtac fòrmùłë <{}>: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=Nie dało sã zapisac {}: {}
@@ -2346,6 +2356,8 @@ NotABigRenderProject=to nie je projekt wiôldżégò renderu
 ;not a big render project
 NotAvailableForLinuxUseClaude=Nie je przistãpné dlô Linuksa: brëkùjë Claude Code niżi.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=Za mało dostãpny pamiãtë
+;Not enough memory available
 NotFoundIfYouUseIt=Nie nalazłé. Jeżlë gò brëkùjesz, zrëszë rôz tã kòmandã w terminalu:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=Nie je zainstalowóné. Scygni gò z claude.ai/download, zrëszë gò rôz, a pòtemù wrócë tuwò.
@@ -2540,6 +2552,8 @@ PNG16BitColourPng=PNG 16 bit farwa (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 bit (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 bit (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=Klatczi PNG z przezérnym tłã.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2588,6 +2602,8 @@ PauseRendering=Wstrzëmôj renderowanié
 ;Pause rendering
 PausedPressToContinue=Wstrzëmóné, wcësni, bë jic dali
 ;Paused, press to continue
+PausingOnNextFrame=Zatrzimanié przë nôslédnym òbrôzkù...
+;Pausing on next frame...
 PercentOfLocalDE=Procent lokalnégò DE
 ;Percent of local DE
 Picture=òbrôzk
@@ -3356,6 +3372,8 @@ TargetMapSlot=Docelowi slot mapë
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Docelowi slot mapë. Ùżij ti lëczbë jakno mapë w swòjim fraktalu, np. jakno mapë wësokòscë, żebë miec animòwóną mapã
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula=Fòrmùła 'Amazing Box', téż zwónô Mandbox, wëmëslonô przez TGlada na fractalforums.com.\n\nFòrmùła jednégò iteracëji wëzdrzy tak:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=Wielosc dodónëch rozproszonëch ë spekùlarnëch farwów je wikszô jak 1,\nczë je zmniészëc dlô realisticzniészégò farwieniô?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=Animacjô pòtrzebùje nômni dwùch kluczowëch klatków.
@@ -3464,6 +3482,8 @@ TheSelectionMustBeBiggerThanLower=wëbiérk mùszi bëc wikszi jak 2 piksle w sz
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=Dzelony katalog roju
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=Sinusowi bulb, w chtërnym mòże bëc ùżëwóné lëbòwné wôrtnotë pòtãdżi; rechòwanié je pòwòlniészé jak przë całkòwitëch pòtãdżach.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=Wiôlgòsc ksztôłtów chmùrów w jednotkach fraktala ë jich farwa (klëknij)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=Wiôlgòsc kachlów
@@ -3474,6 +3494,8 @@ TheTextParametersOnTheClipboard=Tekstowé parametrë w schòwkù są zniszczoné
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=kachel ni mô bùfra òbrôzka
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=Sinusowi bulb w triplex-matematice, zaproponowóny przez Daniela White'a ë Paula Nylandera.  To są chùtczé implementacëje pòtãdżi 2, 3, 4, 5, 6, 7 ë 8.\n\nGdë chcesz zrobic animacëjã z gładczima zmianama pòtãdżi, ùżëjë fòrmùłë 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Wôrtnota wëbrónégò klucznégò ùjęcô
 ;The value of the chosen keyframe
 Themes=Témë
@@ -3738,6 +3760,8 @@ Weight=Wôga
 ;Weight
 WeightColon=Wôga:
 ;Weight:
+WelcomeTo=Witôj w {}!
+;Welcome to {}!
 WhatDidIDoInMb3d=Co jem dzysô robił w mb3d? Bëłë jaczés felë?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=Co sã stało
@@ -3822,6 +3846,8 @@ YouCanSaveAlsoM3iFiles=Dlô kòżdégò kachla mòże téż zapisac lopczi m3i; 
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=Nôprzód je nót wërenderowac òriginalné parametrë ë zapisac je jakno lopk M3I.\nNen render nie mòże bëc za môłi.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=Chcesz rëgnąc:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=Twòje miono ùsôdzcë (trzëmóné w parametrach):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=Twój gwôsny jãzëk (jegò miono):

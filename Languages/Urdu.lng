@@ -29,6 +29,10 @@ code = UR
 font = Urdu.ttf
 
 [Labels]
+A4dQuaternionFormulaOneIteration=4d کواٹرنین فارمولا، ایک تکرار:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Aexion کی تجویز کردہ بلب (bulb) فارمولا:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nمستقل کو Z اور C کے موجودہ ویکٹرز کے فاصلے کے مطابق طاقت سے گھمانے کے دو اختیارات شامل کیے گئے ہیں (Cond Phi=1)،\nاور درج ذیل موڈ کے اختیارات:\n(موڈ قدر کے بٹس)\nBit1: atan theta کے اجزا الٹیں\nBit2: atan phi کے اجزا الٹیں\nBit3: theta اور phi الٹیں\nBit4: زاویہ کے حساب کے لیے CyCz الٹیں\nBit5: powerC کو ویکٹر Z اور C کے فاصلے سے ضرب دیں
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=ایک حساب جاری ہے: پہلے اسے روکیں۔
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=16، پھر 4 پکسلز کے ہر بلاک کے لیے ایک موٹی شعاع مارچ کرتی ہے، جس میں بلاک کا پھیلاؤ فاصلے کے تخمینے سے گھٹا دیا جاتا ہے، اور ہر پکسل کا مارچ اس کی گہرائی سے شروع ہوتا ہے۔ کھلی جگہ میں 60 % تک تیز؛ جہاں تخمینہ بہت غلط ہو وہاں پتلے حصے کھو سکتے ہیں۔
@@ -45,6 +49,8 @@ AGroundOrWaterSurfaceAcross=فریکٹل کے X، Y یا Z محور کے آر پ
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=زیادہ قدر کا مطلب بہتر معیار ہے، 100% بھی نقصان دہ (lossy) ہے۔
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=سائن پاور 2 بلب اور امیزنگ باکس کا ہائبرڈ، تھری ڈی ویکٹر کی لمبائی طے کرتی ہے کہ کون سا فارمولا استعمال ہو:\nاگر یہ 'Box/Bulb R threshold' سے بڑی ہو تو امیزنگ باکس استعمال ہوتا ہے، اگر '..threshold 2' سے چھوٹی ہو تو سائن بلب،\nدونوں کے درمیان دونوں فارمولوں کا انٹرپولیشن ہوتا ہے۔ زیادہ ہمواری کے لیے دوسری تھریشولڈ کو پہلی سے ذرا چھوٹا رکھیں۔
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=زبان کی فائل میں ہر سطر پر ایک لیبل ہوتا ہے: "=" کے بائیں اس کی ID، دائیں آپ کا متن۔ لیبلز کے بعد ونڈو کا سیکشن کسی ایک کنٹرول کو اپنا الگ متن دیتا ہے۔
@@ -53,6 +59,8 @@ AMultiplierThatDefinesTheMiximal=ایک ضرب کار جو سخت سائے کے 
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO حساب کا وقت:
 ;AO calc time:
+ASineIntegerPowerBulbWith=پہلے فولڈنگ کے ساتھ سائن انٹیجر پاور بلب، جیسا امیزنگ باکس میں ہے۔
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=روکا گیا یا منقطع رینڈر اپنا حساب کیا ہوا حصہ رکھتا ہے؛ انہی پیرامیٹرز پر "3D حساب کریں" اسے جاری رکھتا ہے۔
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=شفاف پس منظر کے لیے PNG فریم درکار ہیں: آؤٹ پٹ فارمیٹ PNG منتخب کریں۔
@@ -739,6 +747,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete={} حذف نہیں ہو سکا
+;Could not delete {}
 CouldNotLoadFormula=فارمولا <{}> لوڈ نہیں ہو سکا: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite={} لکھا نہیں جا سکا: {}
@@ -2347,6 +2357,8 @@ NotABigRenderProject=بڑا رینڈر پروجیکٹ نہیں
 ;not a big render project
 NotAvailableForLinuxUseClaude=Linux کے لیے دستیاب نہیں: نیچے Claude Code استعمال کریں۔
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=کافی میموری دستیاب نہیں ہے
+;Not enough memory available
 NotFoundIfYouUseIt=نہیں ملا۔ اگر آپ اسے استعمال کرتے ہیں تو یہ کمانڈ ایک بار ٹرمینل میں چلائیں:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=انسٹال نہیں۔ اسے claude.ai/download سے حاصل کریں، ایک بار شروع کریں، پھر یہاں واپس آئیں۔
@@ -2541,6 +2553,8 @@ PNG16BitColourPng=PNG 16 bit رنگین (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 bit (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 bit (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=شفاف پس منظر والے PNG فریمز۔
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2589,6 +2603,8 @@ PauseRendering=رینڈرنگ روکیں
 ;Pause rendering
 PausedPressToContinue=رکا ہوا، جاری رکھنے کے لیے دبائیں
 ;Paused, press to continue
+PausingOnNextFrame=اگلے فریم پر رک جائے گا...
+;Pausing on next frame...
 PercentOfLocalDE=مقامی DE کا فیصد
 ;Percent of local DE
 Picture=تصویر
@@ -3357,6 +3373,8 @@ TargetMapSlot=ہدف نقشہ خانہ
 ;Target Map Slot
 TargetMapSlotUseThisNumber=ہدف نقشہ خانہ۔ متحرک نقشے کے لیے یہ نمبر اپنے فریکٹل میں نقشے کے طور پر استعمال کریں، مثلاً heightmap کے طور پر
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula='Amazing Box' فارمولا، جسے Mandbox فارمولا بھی کہتے ہیں، fractalforums.com پر TGlad نے ایجاد کیا۔\n\nایک تکرار کا فارمولا کچھ اس طرح ہے:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=شامل کیے گئے ڈفیوز اور اسپیکولر رنگوں کی مقدار 1 سے زیادہ ہے،\nکیا زیادہ حقیقی رنگ کاری کے لیے انہیں کم کر دوں؟
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=اینیمیشن کے لیے کم از کم دو کی فریمز درکار ہیں۔
@@ -3465,6 +3483,8 @@ TheSelectionMustBeBiggerThanLower=منتخب حصہ چوڑائی اور اونچ
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=سوارم کا مشترکہ فولڈر
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=سائن بلب جس میں من مانی پاور قدریں استعمال ہو سکتی ہیں، حساب انٹیجر پاورز کے مقابلے میں سست ہے۔\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=بادلوں کی شکلوں کا سائز فریکٹل اکائیوں میں، اور ان کا رنگ (کلک کریں)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=ٹائلز کا سائز
@@ -3475,6 +3495,8 @@ TheTextParametersOnTheClipboard=کلپ بورڈ کے متنی پیرامیٹر �
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=ٹائل کا کوئی تصویری بفر نہیں
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=ٹرپلیکس میتھ سائن بلب، جیسا Daniel White اور Paul Nylander نے تجویز کیا۔ یہ 2،3،4،5،6،7 اور 8 کی پاورز کے تیز نفاذ ہیں۔\n\nاگر آپ پاور کی ہموار تبدیلی کے ساتھ اینیمیشن بنانا چاہتے ہیں تو براہ کرم 'Real Power' فارمولا استعمال کریں۔
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=چنے گئے کی فریم کی قدر
 ;The value of the chosen keyframe
 Themes=تھیمز
@@ -3739,6 +3761,8 @@ Weight=وزن
 ;Weight
 WeightColon=وزن:
 ;Weight:
+WelcomeTo={} میں خوش آمدید!
+;Welcome to {}!
 WhatDidIDoInMb3d=آج میں نے mb3d میں کیا کیا؟ کیا کوئی خرابیاں تھیں؟
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=کیا ہوا
@@ -3823,6 +3847,8 @@ YouCanSaveAlsoM3iFiles=آپ ہر ٹائل کے لیے m3i فائلیں بھی م
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=آپ کو پہلے اصل پیرامیٹرز رینڈر کر کے M3I فائل کے طور پر محفوظ کرنے ہوں گے۔\nوہ رینڈر بہت چھوٹا نہ ہو۔
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=آپ حذف کرنا چاہتے ہیں:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=آپ کا مصنف نام (پیرامیٹرز میں محفوظ):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=آپ کی اپنی زبان (اس کا نام):

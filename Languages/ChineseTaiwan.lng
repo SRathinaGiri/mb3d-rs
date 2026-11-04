@@ -29,6 +29,10 @@ code = TW
 font = ChineseTaiwan.ttf
 
 [Labels]
+A4dQuaternionFormulaOneIteration=四維四元數公式，一次迭代：\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Aexion 建議的球莖（bulb）公式：\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\n新增兩個選項，依 Z 與 C 目前向量之間的距離對常數做冪旋轉 (Cond Phi=1)，\n以及以下模式選項：\n（模式值的各位元）\nBit1：翻轉 atan theta 分量\nBit2：翻轉 atan phi 分量\nBit3：翻轉 theta 和 phi\nBit4：計算角度時翻轉 CyCz\nBit5：將 powerC 乘以向量 Z 與 C 的距離
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=正在計算中：請先停止。
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=每 16 像素、再每 4 像素的區塊各發一條粗光線，按減去區塊的擴展量後的距離估計步進，每個像素的步進從它的深度開始。在開闊空間中最多快 60 %；在估計偏差大的地方可能遺失細薄的部分。
@@ -45,6 +49,8 @@ AGroundOrWaterSurfaceAcross=垂直於碎形 X、Y 或 Z 軸的地面或水面，
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=值越高品質越好，但即使 100% 也是有損的。
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=2 次冪正弦球莖與神奇盒子（amazing box）的混合體，由三維向量的長度決定使用哪個公式：\n如果大於 'Box/Bulb R threshold'，使用神奇盒子；如果小於 '..threshold 2'，使用正弦球莖；\n兩者之間則對兩個公式進行內插。讓第二個閾值比第一個略小，可使過渡更平滑。
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=語言檔案每行一個標籤：「=」左邊是其 ID，右邊是您的文字。標籤之後的視窗區段可為單一控制項指定專屬文字。
@@ -53,6 +59,8 @@ AMultiplierThatDefinesTheMiximal=定義硬陰影計算最大長度的乘數，\n
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO 計算時間：
 ;AO calc time:
+ASineIntegerPowerBulbWith=帶有前置摺疊的正弦整數冪球莖，與神奇盒子中的相同。
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=停止或中斷的渲染會保留已計算的部分；對相同參數執行「計算 3D」即可繼續。
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=透明背景需要 PNG 影格：請選擇 PNG 作為輸出格式。
@@ -739,6 +747,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete=無法刪除 {}
+;Could not delete {}
 CouldNotLoadFormula=無法載入公式 <{}>：{}
 ;Could not load formula <{}>: {}
 CouldNotWrite=無法寫入 {}：{}
@@ -2347,6 +2357,8 @@ NotABigRenderProject=不是大型渲染專案
 ;not a big render project
 NotAvailableForLinuxUseClaude=不適用於 Linux：請使用下方的 Claude Code。
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=可用記憶體不足
+;Not enough memory available
 NotFoundIfYouUseIt=找不到。若您有使用，請在終端機中執行一次此指令：
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=未安裝。請從 claude.ai/download 取得，啟動一次後再回到這裡。
@@ -2541,6 +2553,8 @@ PNG16BitColourPng=PNG 16 位元色彩 (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 位元 (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 位元 (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=具透明背景的 PNG 影格。
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2589,6 +2603,8 @@ PauseRendering=暫停渲染
 ;Pause rendering
 PausedPressToContinue=已暫停，按下以繼續
 ;Paused, press to continue
+PausingOnNextFrame=將在下一個影格暫停...
+;Pausing on next frame...
 PercentOfLocalDE=局部 DE 的百分比
 ;Percent of local DE
 Picture=張圖片
@@ -3357,6 +3373,8 @@ TargetMapSlot=目標貼圖插槽
 ;Target Map Slot
 TargetMapSlotUseThisNumber=目標貼圖插槽。在碎形中以此編號作為貼圖使用（例如作為高度圖），即可得到動態貼圖
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmazingBoxAkaMandboxFormula='Amazing Box'，又稱 Mandbox 公式，由 TGlad 在 fractalforums.com 發明。\n\n一次迭代的公式如下：\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=漫射與高光顏色相加的總量大於 1，\n要將其縮小以獲得更真實的著色嗎？
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=動畫至少需要兩個關鍵影格。
@@ -3465,6 +3483,8 @@ TheSelectionMustBeBiggerThanLower=選取範圍的寬度與高度必須大於 2 �
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=swarm 的共用資料夾
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=可使用任意冪值的正弦球莖，計算比整數冪慢。\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=雲形狀的大小（碎形單位）及其顏色（點擊）
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=圖塊的大小
@@ -3475,6 +3495,8 @@ TheTextParametersOnTheClipboard=剪貼簿中的文字參數已損壞：複製時
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=此圖塊沒有影像緩衝區
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=三元數（triplex）數學正弦球莖，由 Daniel White 和 Paul Nylander 建議。這是 2、3、4、5、6、7 和 8 次冪的快速實作。\n\n如果要製作冪平滑變化的動畫，請使用 'Real Power' 公式。
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=所選關鍵影格的數值
 ;The value of the chosen keyframe
 Themes=主題
@@ -3739,6 +3761,8 @@ Weight=權重
 ;Weight
 WeightColon=權重：
 ;Weight:
+WelcomeTo=歡迎使用 {}！
+;Welcome to {}!
 WhatDidIDoInMb3d=我今天在 mb3d 中做了什麼？有沒有發生任何錯誤？
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=發生的事
@@ -3823,6 +3847,8 @@ YouCanSaveAlsoM3iFiles=您也可以為每個圖塊儲存 m3i 檔案，但請注�
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=您必須先渲染原始參數並儲存為 M3I 檔案。\n該渲染不要太小。
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=您要刪除：\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=您的作者名稱（儲存在參數中）：
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=您自己的語言（其名稱）：
