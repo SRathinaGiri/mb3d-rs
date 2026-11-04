@@ -824,9 +824,18 @@ you check further on your own:
 
   <details><summary>Read more</summary>
 
-  *Animation maker* > *Turntable*: eight keyframes of one whole turn around
-  the middle of the main window's view, a smooth loop (`mb3d animate
-  scene.m3p --orbit 8 --frames 25`). *Navigator* > *Rec*: while the button is
+  *Animation maker* > *Turntable* asks only for the duration of one whole
+  turn (seconds, at the window's frames per second): eight keyframes around
+  the main window's view, a smooth loop. It turns around the middle of the
+  view, or around the surface the middle of the picture shows when the
+  middle lies in the empty space before it (`mb3d animate scene.m3p --orbit 8
+  --duration 10`). *Animation maker* > *Fly-through* also asks only for the
+  duration: the camera flies on from the main window's view into the
+  fractal, the zoom following the distance to it (the Navigator's walk), and
+  steers through its gaps, away from walls and from the empty space around
+  it; a keyframe every half second, Catmull-Rom. It ends early at a dead end
+  or at the limit of double precision, and says so (`mb3d animate scene.m3p
+  --fly --duration 20`). *Navigator* > *Rec*: while the button is
   down, every new view of the flight (at most two a second) becomes the next
   keyframe; with Catmull-Rom the animation passes through all of them.
   *Motion blur* in the Animation maker: each frame is the average of that

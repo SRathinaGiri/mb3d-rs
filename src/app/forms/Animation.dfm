@@ -1300,6 +1300,18 @@ object AnimationForm: TAnimationForm
       TabOrder = 23
       OnClick = OrbitBtnClick
     end
+    object FlyBtn: TButton
+      Left = 456
+      Top = 262
+      Width = 110
+      Height = 25
+      Hint = '@MB:AFlightFromTheMainWindow'
+      Caption = '@MB:FlyThrough'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 24
+      OnClick = FlyBtnClick
+    end
   end
   object Panel3: TPanel
     Left = 0

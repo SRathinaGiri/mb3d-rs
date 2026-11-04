@@ -38,6 +38,8 @@ AFewSecondsLeft=a few seconds left
 ;the program
 AFineReliefOnTheSurface=A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 ;PostProForm.DetailKindCB.Hint
+AFlightFromTheMainWindow=A flight from the main window's view on into the fractal, steering through its gaps, for the time you give: a keyframe every half second (Catmull-Rom)
+;not used
 AFolderEveryComputerOfThe=A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 ;SwarmFrm.Edit1.Hint
 AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
@@ -1024,6 +1026,10 @@ Ds=Ds:
 ;FormulaGUIForm.Label18.Caption; the program
 DunnoDoNothing=Dunno, do nothing
 ;FColorOptions.Button4.Caption
+DurationOfOneWholeTurnIn=Duration of one whole turn, in seconds:
+;not used
+DurationOfTheFlightInSeconds=Duration of the flight, in seconds:
+;not used
 DynFog=Dyn.fog
 ;LightAdjustForm.SpeedButton4.Caption
 DynFogOnIt=Dyn. fog on It.:
@@ -1220,6 +1226,10 @@ FlatSolidWithEdges=Flat Solid with Edges
 ;MeshPreviewFrm.DisplayStyleGrp.Items
 FloorLargestIntegerXXMaxInt={ Floor: Largest integer <= X,  |X| < MaxInt }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
+FlyThrough=Fly-through
+;not used
+FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
+;not used
 Fo=Fo.{}
 ;the program
 FogOffset=Fog offset
@@ -2316,6 +2326,8 @@ NoTilesToRender=No tiles to render.
 ;the program
 NoValidTextFoundPleaseEnter=\sNo valid text found, please enter the text below:
 ;FTextBox.Panel1.Caption
+NoWayAheadWasLeft=no way ahead was left
+;not used
 Noise=-noise
 ;MCForm.Button6.Caption
 NoiseAI=-noise AI
@@ -3382,6 +3394,8 @@ TheCalculationFailedLower=the calculation failed
 ;the program
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
+TheCameraLeftTheFractal=the camera left the fractal
+;not used
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 ;AnimationForm.CurvesBtn.Hint, CurvesFrm.Image1.Hint
 TheCommandLineProgramMb3dWas=The command line program mb3d was not found next to this program: install the program again.
@@ -3410,6 +3424,8 @@ TheFileSelectAndCopyIt=The file (select and copy it from here)
 ;HistoryFrm.Edit2.Hint
 TheFirstFocusPointTheValue=The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 ;PostProForm.Edit1.Hint
+TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
+;not used
 TheFolderDoesNotExistOr=the folder does not exist (or is not reachable)
 ;the program
 TheFormulaNameShouldStartWith=The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
@@ -3468,6 +3484,8 @@ TheSizeOfTheCloudsFeatures=The size of the clouds' features in fractal units, an
 ;PostProForm.CloudSizeEdit.Hint, PostProForm.CloudColBtn.Hint
 TheSizeOfTheTiles=The size of the tiles
 ;HistoryFrm.TrackBar1.Hint
+TheStepsCameToTheLimit=the steps came to the limit of double precision
+;not used
 TheStereoEyeImagesHaveDifferent=The stereo eye images have different sizes.
 ;the program
 TheTextParametersOnTheClipboard=The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.

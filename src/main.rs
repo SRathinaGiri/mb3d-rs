@@ -1008,7 +1008,16 @@ OPTIONS:
         --no-loop
         --orbit <STEPS>      A turntable from one keyframe file: the camera goes once around
                              the middle of the view in STEPS keyframes (8 is smooth), with
-                             --frames between them, as a Catmull-Rom loop
+                             --frames between them, as a Catmull-Rom loop; it turns
+                             around the middle, or around the surface the view's middle
+                             shows when the middle lies in the empty space before it
+        --fly                A fly-through from one keyframe file: the camera flies on
+                             into the fractal, steering through its gaps, the zoom
+                             following the distance to it, until --duration is flown
+                             or no way ahead is left (keyframes every half second, a
+                             Catmull-Rom animation)
+        --duration <SECONDS> The length of --orbit (one whole turn) or --fly at --fps
+                             frames a second (default 25), instead of --frames
         --motion-blur <N>[,<SHUTTER>]
                              Motion blur: each frame the average of N pictures within the
                              shutter time (a part of the time to the next frame, default
@@ -1070,6 +1079,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let mut swarm: Option<String> = None;
     let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, 25.0);
     let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
+    let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
         v.ok_or_else(|| format!("{a} needs a value"))?.trim().parse::<i64>().map_err(|_| format!("bad value for {a}"))
@@ -1100,6 +1110,19 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--catmull-rom" => ipol = Some(Interpolation::CatmullRom),
             "--loop" => looped = Some(true),
             "--orbit" => orbit = Some(num(a, args.next())?.clamp(3, 360) as usize),
+            "--fly" => fly = true,
+            "--duration" => {
+                duration = Some(
+                    args.next()
+                        .ok_or("--duration needs a value")?
+                        .trim()
+                        .replace(',', ".")
+                        .parse::<f64>()
+                        .ok()
+                        .filter(|d| *d > 0.0 && *d <= 36_000.0)
+                        .ok_or("--duration needs seconds above 0 (e.g. 10)")?,
+                )
+            }
             "--motion-blur" => {
                 let v = args.next().ok_or("--motion-blur needs a value (samples[,shutter], e.g. 8,0.5)")?;
                 let (n, sh) = match v.split_once(',') {
@@ -1219,10 +1242,39 @@ fn animate(argv: &[String]) -> Result<(), String> {
             return Err("--orbit makes a turntable from one keyframe file".into());
         }
         let k = anim.keyframes.remove(0);
-        anim.keyframes = mb3d::anim::orbit_keyframes(&k.scene, steps, frames.unwrap_or(25));
+        anim.keyframes = match duration {
+            Some(d) => mb3d::autopilot::turntable(&k.scene, steps, d, fps),
+            None => {
+                let pivot = mb3d::autopilot::turntable_pivot(&k.scene);
+                mb3d::autopilot::orbit_keyframes_around(&k.scene, steps, frames.unwrap_or(25), pivot)
+            }
+        };
         previews = vec![None; anim.keyframes.len()];
         looped = looped.or(Some(true));
         ipol = ipol.or(Some(Interpolation::CatmullRom));
+    } else if fly {
+        if from_file || anim.keyframes.len() != 1 {
+            return Err("--fly makes a fly-through from one keyframe file".into());
+        }
+        let k = anim.keyframes.remove(0);
+        let fp = mb3d::autopilot::FlightParams {
+            frames: match duration {
+                Some(d) => (d * fps).round().max(2.0) as usize,
+                None => frames.map_or(250, |f| f.max(2) as usize),
+            },
+            keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+            ..Default::default()
+        };
+        let fl = mb3d::autopilot::fly_through(&k.scene, &fp, &|_, _| {}, &|| false).map_err(input_err)?;
+        if fl.end != mb3d::autopilot::FlightEnd::Done && !quiet {
+            note(&format!("the flight ended after {} of {} frames: {}", fl.frames, fp.frames, mb3d::autopilot::flight_end_text(fl.end)));
+        }
+        anim.keyframes = fl.keyframes;
+        previews = vec![None; anim.keyframes.len()];
+        looped = Some(false);
+        ipol = ipol.or(Some(Interpolation::CatmullRom));
+    } else if duration.is_some() {
+        return Err("--duration goes with --orbit or --fly".into());
     }
     if let Some((n, sh)) = blur {
         anim.motion_blur = n;

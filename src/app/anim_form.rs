@@ -394,6 +394,37 @@ pub fn insert_keyframe(app: &mut Mb3d, ui: &mut Ui, sc: Scene) {
     calc_time(app, ui);
 }
 
+/// Seconds typed in (a comma as the decimal point too), above 0.
+fn seconds(t: &str) -> Option<f64> {
+    t.trim().replace(',', ".").parse::<f64>().ok().filter(|d| d.is_finite() && *d > 0.0 && *d <= 36_000.0)
+}
+
+/// The keyframes of an animation template after the keyframes there are,
+/// each with its own frames; an animation that was empty gets the
+/// template's kind: Catmull-Rom, a loop for a turntable, else not.
+fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, looped: bool) {
+    if count(app) == 0 {
+        ui.set_item_index(F, "RadioGroup2", 2);
+        ui.set_checked(F, "CheckBox2", looped);
+    }
+    for k in keys {
+        app.anim.current = count(app) + 1;
+        let frames = k.frames;
+        insert_keyframe(app, ui, k.scene);
+        // (insert_keyframe gives it the frames of the window's box)
+        if let Some(last) = app.anim.anim.keyframes.last_mut() {
+            last.frames = frames;
+        }
+    }
+    if let Some(k) = app.anim.anim.keyframes.last() {
+        ui.set_text(F, "Edit1", &k.frames.to_string());
+    }
+    read_settings(app, ui);
+    app.anim.current = count(app);
+    paint_box(app, ui);
+    calc_time(app, ui);
+}
+
 /// The main window's parameters as a keyframe.
 fn main_scene(app: &mut Mb3d, ui: &mut Ui) -> Scene {
     app.make_scene(ui);
@@ -1030,23 +1061,14 @@ fn event_inner(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match h {
         "CurvesBtnClick" => super::curves_form::open(app, ui),
         "OrbitBtnClick" => {
-            // a turntable of the main window's view after the keyframes
-            // (a new animation: a smooth loop)
-            let empty = count(app) == 0;
-            let sc = main_scene(app, ui);
-            let frames = pti(&ui.text(F, "Edit5")).max(1) as u32;
-            if empty {
-                ui.set_item_index(F, "RadioGroup2", 2);
-                ui.set_checked(F, "CheckBox2", true);
-            }
-            for k in crate::anim::orbit_keyframes(&sc, 8, frames) {
-                app.anim.current = count(app) + 1;
-                insert_keyframe(app, ui, k.scene);
-            }
-            read_settings(app, ui);
-            app.anim.current = count(app);
-            paint_box(app, ui);
-            calc_time(app, ui);
+            // a turntable of the main window's view after the keyframes,
+            // as long as the user says (a new animation: a smooth loop)
+            let d = app.ini.get_extra("AniTurntableSecs").filter(|v| !v.is_empty()).unwrap_or("10").to_string();
+            ui.input_query("anim:turntable", &tr("@MB:Turntable"), &tr("@MB:DurationOfOneWholeTurnIn"), &d);
+        }
+        "FlyBtnClick" => {
+            let d = app.ini.get_extra("AniFlySecs").filter(|v| !v.is_empty()).unwrap_or("20").to_string();
+            ui.input_query("anim:fly", &tr("@MB:FlyThrough"), &tr("@MB:DurationOfTheFlightInSeconds"), &d);
         }
         "FormShow" => {
             if app.anim.first_show {
@@ -1380,6 +1402,45 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             app.anim.current += 1;
             paint_box(app, ui);
             calc_time(app, ui);
+        }
+        ("turntable", DialogResult::Text(Some(t))) => {
+            let (Some(secs), Ok(fps)) = (seconds(t), video_fps(ui)) else {
+                ui.show_message(&tr("@MB:ValueNotGuilty"));
+                return;
+            };
+            app.ini.set_extra("AniTurntableSecs", t.trim());
+            let sc = main_scene(app, ui);
+            let keys = crate::autopilot::turntable(&sc, 8, secs, fps);
+            add_template(app, ui, keys, true);
+        }
+        ("fly", DialogResult::Text(Some(t))) => {
+            let (Some(secs), Ok(fps)) = (seconds(t), video_fps(ui)) else {
+                ui.show_message(&tr("@MB:ValueNotGuilty"));
+                return;
+            };
+            app.ini.set_extra("AniFlySecs", t.trim());
+            let sc = main_scene(app, ui);
+            let fp = crate::autopilot::FlightParams {
+                frames: (secs * fps).round().max(2.0) as usize,
+                keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+                ..Default::default()
+            };
+            match crate::autopilot::fly_through(&sc, &fp, &|_, _| {}, &|| false) {
+                Ok(fl) => {
+                    use crate::autopilot::FlightEnd;
+                    let why = match fl.end {
+                        FlightEnd::Done => None,
+                        FlightEnd::DeadEnd => Some(tr("@MB:NoWayAheadWasLeft")),
+                        FlightEnd::Precision => Some(tr("@MB:TheStepsCameToTheLimit")),
+                        FlightEnd::LeftFractal => Some(tr("@MB:TheCameraLeftTheFractal")),
+                    };
+                    add_template(app, ui, fl.keyframes, false);
+                    if let Some(w) = why {
+                        app.message(ui, &trf("@MB:FlyThroughTheFlightEndedAfter", &[&fl.frames, &fp.frames, &w]));
+                    }
+                }
+                Err(e) => ui.show_message(&trf("@MB:TheFlyThroughCannotStartHere", &[&e])),
+            }
         }
         _ => {}
     }

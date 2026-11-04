@@ -9,7 +9,8 @@ use super::engine::{Engine, Job};
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
 use crate::lighting::Lighting;
-use crate::math::{build_rot_matrix, len, mat_mul, normalise_matrix_to, normalize, Vec3};
+use crate::math::{build_rot_matrix, len, mat_mul, normalise_matrix_to, normalize};
+use crate::autopilot::{length_of_size, local_de, mod_rot_point, unit_rows};
 use crate::scene::Scene;
 use crate::vcl::bitmap::Bitmap;
 use crate::vcl::{Ev, Event, MouseButton, Ui};
@@ -120,61 +121,6 @@ fn is_int_type(t: i32) -> bool {
 
 fn is_angle_type(t: i32) -> bool {
     matches!(t, 3..=6 | 12)
-}
-
-fn length_of_size(sc: &Scene) -> f64 {
-    ((sc.width as f64).powi(2) + (sc.height as f64).powi(2)).sqrt()
-}
-
-fn unit_rows(sc: &Scene) -> [Vec3; 3] {
-    [normalize(sc.vgrads[0]), normalize(sc.vgrads[1]), normalize(sc.vgrads[2])]
-}
-
-fn cam_pos(sc: &Scene) -> Vec3 {
-    let vz = normalize(sc.vgrads[2]);
-    let d = sc.z_start - sc.mid[2];
-    [sc.mid[0] + vz[0] * d, sc.mid[1] + vz[1] * d, sc.mid[2] + vz[2] * d]
-}
-
-/// `GetLocalAbsoluteDE`: the median of the distance estimates around the
-/// camera (absolute units); None when it cannot be estimated.
-fn local_de(sc: &Scene) -> Option<f64> {
-    let mut s = sc.clone();
-    s.slice_2d = 0;
-    let p = crate::calc::CalcParams::new(&s).ok()?;
-    let sw = s.step_width();
-    let u = unit_rows(&s);
-    let ct = cam_pos(&s);
-    let mut list = Vec::new();
-    let mut dmul = 1.0;
-    while list.len() <= 3 && dmul <= 40.0 {
-        for i in 0..9 {
-            let pos = if i == 8 {
-                ct
-            } else {
-                let o = [((i & 1) * 32) as f64 - 16.0, ((i & 2) * 16) as f64 - 16.0, ((i & 4) * 8) as f64 - 16.0];
-                let mut q = ct;
-                for k in 0..3 {
-                    for a in 0..3 {
-                        q[a] += u[k][a] * o[k] * dmul * sw;
-                    }
-                }
-                q
-            };
-            let (d, _) = crate::calc::de_at(&p, pos);
-            if d.is_finite() && d > 0.0 && d < 1e15 * sw && list.len() < 11 {
-                list.push(d / sw);
-            }
-        }
-        dmul *= 2.0;
-    }
-    if list.is_empty() {
-        return None;
-    }
-    list.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    let m = list[((list.len() - 1) as f64 * 0.6).round() as usize];
-    let r = m.clamp(3.0, 20000.0) * sw;
-    Some(r.min(len(&ct).max(2.0)))
 }
 
 // ---------------------------------------------------------------------------
@@ -537,21 +483,6 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
     // overwrite the original camera position.
     set_window_size(app, ui, ui.visible(F, "Panel2"));
     new_calc(app, ui);
-}
-
-/// `ModRotPoint`: the middle in front of the camera (for the main window's
-/// rotations).
-fn mod_rot_point(sc: &mut Scene) {
-    let sw = sc.step_width();
-    let ds = sc.z_start - sc.mid[2];
-    let de = sc.z_end - sc.mid[2];
-    let l = ((sc.z_end - sc.mid[2]) / sw).min(length_of_size(sc) * 1.5);
-    let vz = normalize(sc.vgrads[2]);
-    for k in 0..3 {
-        sc.mid[k] += vz[k] * sw * l;
-    }
-    sc.z_start = sc.mid[2] + ds - sw * l;
-    sc.z_end = sc.mid[2] + de - sw * l;
 }
 
 /// `SpeedButton14Click`: the view to the main window.

@@ -34,6 +34,7 @@
 #![deny(unsafe_code)]
 
 pub mod anim;
+pub mod autopilot;
 #[cfg(feature = "gui")]
 pub mod app;
 pub mod appdirs;
