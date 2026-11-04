@@ -463,8 +463,10 @@ lacks (`M3Formulas-community/`, 129 formulas, and `M3Maps-community/`, 154
 maps, from the Mandelbulb3D 1.99.37 package that Machina Infinitum offers
 as a free download) are copied into `M3Formulas` and `M3Maps` by the release
 workflow too, with their `CREDITS.md` as `CREDITS-community.md`; they run as
-any `.m3f` does. `tests/jit.rs` checks that every one loads and every JIT one
-compiles.
+any `.m3f` does. The package's 608 light presets (`M3Lights-community/`) go
+into `M3Lights`, the default folder of the Lighting window's quick load list.
+`tests/jit.rs` checks that every formula loads, every JIT one compiles and
+every preset is a light record.
 
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and

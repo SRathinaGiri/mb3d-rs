@@ -154,6 +154,9 @@ jobs:
           cp M3Formulas-community/CREDITS.md "$name/M3Formulas/CREDITS-community.md"
           cp M3Maps-community/*.jpg "$name/M3Maps/"
           cp M3Maps-community/CREDITS.md "$name/M3Maps/CREDITS-community.md"
+          mkdir -p "$name/M3Lights"
+          cp M3Lights-community/*.m3l "$name/M3Lights/"
+          cp M3Lights-community/CREDITS.md "$name/M3Lights/CREDITS-community.md"
           for d in History Meshes BigRenders; do mkdir -p "$name/$d"; done
           echo "Parameters of every image calculated with \"Calculate 3D\" (one folder per day), as in MB3D." > "$name/History/README.txt"
           echo "Meshes exported with BTracer2 are saved here, as in MB3D." > "$name/Meshes/README.txt"

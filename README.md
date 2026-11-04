@@ -507,7 +507,8 @@ you check further on your own:
   collection, under his terms (free to use, not to be sold unchanged), with
   pictures shared on DeviantArt by CmdrChaos, Fractales75, Nic022 and
   UndeadAcademy; maps 3046–3048 are by Kronpano
-  (`M3Maps/CREDITS-community.md`).
+  (`M3Maps/CREDITS-community.md`). The 608 light presets in `M3Lights` come from the same package; their
+  files name no maker (`M3Lights/CREDITS-community.md`).
 * **A new formula, PseudoKleinian:** the "Kleinian architecture" of
   halls, arches and spheres as one formula with its own exact distance.
 

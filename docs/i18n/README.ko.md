@@ -463,7 +463,7 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   컴퓨터들이 그림, 큰 렌더링, 몬테카를로 그림, 애니메이션을 함께 렌더링합니다.
   [여러 컴퓨터에서 렌더링하기](#rendering-on-several-computers-the-swarm)를
   참고하십시오.
-* **커뮤니티 수식과 맵**: 공식 저장소에 없는 수식 129개와 맵 154개로, Machina Infinitum가 무료로 배포하는 Mandelbulb3D 1.99.37 패키지에서 가져왔습니다. 수식의 작성자는 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero 및 파일에 작성자 이름이 없는 다른 사람들입니다. 각 수식의 작성자는 `M3Formulas/CREDITS-community.md`에 있습니다(DarkBeam의 `teapot.m3f`는 CC BY-SA 3.0). 맵은 DarkBeam의 모음으로, 그의 조건(자유롭게 사용 가능, 변경 없이 판매 불가)을 따르며 CmdrChaos, Fractales75, Nic022, UndeadAcademy가 DeviantArt에 공유한 그림을 포함합니다. 맵 3046–3048은 Kronpano의 작품입니다(`M3Maps/CREDITS-community.md`).
+* **커뮤니티 수식과 맵**: 공식 저장소에 없는 수식 129개와 맵 154개로, Machina Infinitum가 무료로 배포하는 Mandelbulb3D 1.99.37 패키지에서 가져왔습니다. 수식의 작성자는 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero 및 파일에 작성자 이름이 없는 다른 사람들입니다. 각 수식의 작성자는 `M3Formulas/CREDITS-community.md`에 있습니다(DarkBeam의 `teapot.m3f`는 CC BY-SA 3.0). 맵은 DarkBeam의 모음으로, 그의 조건(자유롭게 사용 가능, 변경 없이 판매 불가)을 따르며 CmdrChaos, Fractales75, Nic022, UndeadAcademy가 DeviantArt에 공유한 그림을 포함합니다. 맵 3046–3048은 Kronpano의 작품입니다(`M3Maps/CREDITS-community.md`). `M3Lights`의 조명 프리셋 608개도 같은 패키지에서 왔으며, 파일에 만든 사람이 적혀 있지 않습니다(`M3Lights/CREDITS-community.md`).
 * **새 공식 PseudoKleinian:** 홀, 아치, 구로 이루어진 "Kleinian architecture"를
   고유의 정확한 거리를 가진 하나의 공식으로 만든 것입니다.
 

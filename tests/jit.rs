@@ -126,3 +126,20 @@ fn the_community_formulas_load() {
     }
     assert_eq!(n, 129);
 }
+
+/// Every community light preset is a light record the program reads.
+#[test]
+fn the_community_light_presets_load() {
+    let dir = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/M3Lights-community"));
+    let mut n = 0;
+    for e in std::fs::read_dir(&dir).unwrap().flatten() {
+        let p = e.path();
+        if p.extension().is_none_or(|x| x != "m3l") {
+            continue;
+        }
+        let d = std::fs::read(&p).unwrap();
+        assert!(mb3d::m3p::light_from_record(&d).is_some(), "{}: not a light record", p.display());
+        n += 1;
+    }
+    assert_eq!(n, 608);
+}

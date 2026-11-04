@@ -41,7 +41,7 @@ if [ -d "$src/oidn" ]; then
   mkdir -p "$root/usr/lib/mb3d-rs"
   cp -a "$src/oidn" "$root/usr/lib/mb3d-rs/"
 fi
-for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes Languages; do
+for d in M3Formulas M3Maps M3Lights M3Parameter EM_JIT_M3Formulas Themes Languages; do
   [ -d "$src/$d" ] && cp -r "$src/$d" "$share/mb3d-rs/"
 done
 # the icon in the sizes of the hicolor theme (Debian's icon triggers refresh

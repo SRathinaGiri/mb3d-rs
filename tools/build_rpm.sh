@@ -59,7 +59,7 @@ if [ -d "\$s/oidn" ]; then
   mkdir -p "\$r/usr/lib/mb3d-rs"
   cp -a "\$s/oidn" "\$r/usr/lib/mb3d-rs/"
 fi
-for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas Themes Languages; do
+for d in M3Formulas M3Maps M3Lights M3Parameter EM_JIT_M3Formulas Themes Languages; do
   [ -d "\$s/\$d" ] && cp -r "\$s/\$d" "\$r/usr/share/mb3d-rs/"
 done
 install -Dm644 "\$s/mb3d-rs.png" "\$r/usr/share/icons/hicolor/256x256/apps/mb3d-rs.png"

@@ -312,7 +312,7 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
   resume` 會列出它們。繼續完成的渲染與一次算完的結果相同。
 * **在您的多台電腦之間分擔渲染**，也就是「群集」：能看到同一個共用資料夾的電腦一起渲染圖片、大型渲染、蒙地卡羅圖片或動畫。請參閱
   [在多台電腦上渲染](#rendering-on-several-computers-the-swarm)。
-* **社群公式與貼圖**：官方儲存庫中沒有的 129 個公式和 154 張貼圖，來自 Machina Infinitum 免費提供下載的 Mandelbulb3D 1.99.37 套件。公式作者為 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero，以及檔案中未署名的其他作者；每個公式的作者見 `M3Formulas/CREDITS-community.md`（DarkBeam 的 `teapot.m3f` 採用 CC BY-SA 3.0 授權）。貼圖來自 DarkBeam 的收藏，遵循其條款（可自由使用，不得原樣出售），其中包含 CmdrChaos、Fractales75、Nic022 和 UndeadAcademy 在 DeviantArt 上分享的圖片；貼圖 3046–3048 為 Kronpano 所作（`M3Maps/CREDITS-community.md`）。
+* **社群公式與貼圖**：官方儲存庫中沒有的 129 個公式和 154 張貼圖，來自 Machina Infinitum 免費提供下載的 Mandelbulb3D 1.99.37 套件。公式作者為 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero，以及檔案中未署名的其他作者；每個公式的作者見 `M3Formulas/CREDITS-community.md`（DarkBeam 的 `teapot.m3f` 採用 CC BY-SA 3.0 授權）。貼圖來自 DarkBeam 的收藏，遵循其條款（可自由使用，不得原樣出售），其中包含 CmdrChaos、Fractales75、Nic022 和 UndeadAcademy 在 DeviantArt 上分享的圖片；貼圖 3046–3048 為 Kronpano 所作（`M3Maps/CREDITS-community.md`）。`M3Lights` 中的 608 個燈光預設也來自同一套件，檔案中未註明作者（`M3Lights/CREDITS-community.md`）。
 * **新公式 PseudoKleinian：**由大廳、拱門與球體構成的「Kleinian 建築」，以單一公式實現，並有自己的精確距離。
 
   <a href="../img/kleinian_hall.jpg"><img src="../img/kleinian_hall.jpg" width="300" alt="新公式：PseudoKleinian"></a>
