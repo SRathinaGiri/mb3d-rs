@@ -200,7 +200,7 @@ mod tests {
         let (f, t) = split(&g, &[0.0; 3], &v);
         assert!(f > 0.02 && f < 0.04, "{f}");
         let sin_t = t[0] / len(&t);
-        assert!((sin_t - (0.5f64.sqrt() / 1.33)).abs() < 1e-9, "{t:?}");
+        assert!((sin_t - (0.5f64.sqrt() / g.ior as f64)).abs() < 1e-12, "{t:?}");
         assert!(t[1] > 0.0);
     }
 
