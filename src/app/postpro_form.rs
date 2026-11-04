@@ -538,16 +538,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "NoiseAutoCbxClick" | "CloudsCbxClick" | "MaterialCbxClick" | "FinishCbxClick" => update_captions(ui),
         "FinishNowBtnClick" => {
             app.make_scene(ui);
-            repaint(app, ui, "finishing");
+            repaint(app, ui, &tr("@MB:Finishing"));
         }
         "MaterialNowBtnClick" => {
             app.make_scene(ui);
-            repaint(app, ui, "material");
+            repaint(app, ui, &tr("@MB:Material"));
         }
         "CloudColBtnClick" => ui.pick_color("post:cloudcolor", super::util::argb(app.post.cloud_color)),
         "CloudsNowBtnClick" => {
             app.make_scene(ui);
-            repaint(app, ui, "clouds");
+            repaint(app, ui, &tr("@MB:Clouds"));
         }
         "FormShow" => {
             super::main_form::place_sticky(app, ui, Some(F), true);

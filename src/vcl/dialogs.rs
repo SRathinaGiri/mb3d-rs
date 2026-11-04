@@ -571,11 +571,19 @@ impl Ui {
             self.file_refresh(i);
             return false;
         }
-        if d.save && p.extension().is_none() {
-            // the chosen file type's extension (MB3D's DefaultExt per type)
+        if d.save {
+            // the chosen file type's extension (MB3D's DefaultExt per type);
+            // a name with another ending keeps it and gets the type's
+            // extension added ("my.scene" -> "my.scene.m3p"), so the file
+            // asked about below is the one written (the callers set the
+            // extension, which used to replace that ending unasked)
             let ext = type_ext.unwrap_or_else(|| d.default_ext.trim_start_matches('.').to_string());
-            if !ext.is_empty() {
-                p.set_extension(ext);
+            let has = p.extension().is_some_and(|e| e.to_string_lossy().eq_ignore_ascii_case(&ext));
+            if !ext.is_empty() && !has {
+                let mut s = p.into_os_string();
+                s.push(".");
+                s.push(&ext);
+                p = PathBuf::from(s);
             }
         }
         if !d.save && !p.exists() {
@@ -849,6 +857,14 @@ mod tests {
         ui.forms[i].c_mut("NameEdit").set_text("new");
         assert!(ui.file_accept(i));
         assert_eq!(result(&ui), Some(dir.join("new.m3p")));
+        // another ending is kept and the type's extension added, so the
+        // file asked about is the file written
+        ui.events.clear();
+        ui.save_dialog("t", &o);
+        let i = ui.form_index("FileDlg").unwrap();
+        ui.forms[i].c_mut("NameEdit").set_text("my.scene");
+        assert!(ui.file_accept(i));
+        assert_eq!(result(&ui), Some(dir.join("my.scene.m3p")));
         // Yes replaces
         ui.events.clear();
         ui.save_dialog("t", &o);

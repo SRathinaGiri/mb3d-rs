@@ -911,8 +911,11 @@ fn grey_other_windows(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn ungrey_other_windows(app: &mut Mb3d, ui: &mut Ui) {
+    // (a control that its window enabled meanwhile, e.g. Big renders
+    // opening a project during the calculation, stays enabled)
     for (form, ctl, was) in std::mem::take(&mut app.main.greyed) {
-        ui.set_enabled(form, ctl, was);
+        let now = ui.enabled(form, ctl);
+        ui.set_enabled(form, ctl, was || now);
     }
     if ui.has_form("PostProForm") {
         for c in ["CheckBox21", "CheckBox25"] {
@@ -3440,7 +3443,8 @@ pub fn set_save_names(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
 fn saved_png_type(app: &Mb3d) -> usize {
     match app.ini.get_extra("SaveImageType").and_then(|v| v.parse::<usize>().ok()) {
         Some(k @ 1..=5) => k,
-        _ if app.ini.get("SaveImagePNG") == "0" && app.ini.get_extra("SaveImageType").is_some() => 4,
+        // (an ini of MB3D: its SaveImagePNG, 0 for a bitmap)
+        _ if app.ini.get("SaveImagePNG") == "0" && app.ini.get_extra("SaveImageType").is_none() => 4,
         _ => 1,
     }
 }

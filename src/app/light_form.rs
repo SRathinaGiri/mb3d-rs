@@ -719,13 +719,9 @@ pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
     // (a repaint: the depth of field applied by hand is gone)
     app.post.repainted();
     if app.eng.base().is_some() {
-        let mut scene = app.scene.clone();
         // (the lights whose shadows were reset in the post processing:
         // painted without, as MB3D's bHScalculated)
-        if let Some(h) = &mut scene.shadows {
-            h.lights &= !app.post.hs_reset;
-        }
-        app.eng.start(super::engine::Job::Relight { scene });
+        app.eng.start(super::engine::Job::Relight { scene: app.scene.clone(), hs_off: app.post.hs_reset });
     }
     super::navi_form::main_lighting_changed(app, ui);
     ui.cm(F, "ComboBox3").font = Some(crate::vcl::font::Font { color: ui.theme.text_disabled(), custom_color: true, ..Default::default() });

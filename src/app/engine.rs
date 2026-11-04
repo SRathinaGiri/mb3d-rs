@@ -42,7 +42,8 @@ pub enum Job {
     /// the lighting changed (the Lighting window): repaint at once with the
     /// kept shadows, without reflections and depth of field (MB3D's
     /// repaint)
-    Relight { scene: Scene },
+    /// `hs_off`: the lights whose shadows were reset (painted without them)
+    Relight { scene: Scene, hs_off: u8 },
     /// "Recalculate a selection" (MB3D's `CalcPartT`): rectangle (left,
     /// top, width, height) of the image with the raystep divided,
     /// optionally only nearer parts, its hard shadows (`hs`) and DEAO
@@ -578,7 +579,7 @@ fn worker(e: Arc<Inner>) {
             Job::Calc { scene, slice, resume, name } => calc(&e, &scene, slice, resume, &name, &cancel),
             Job::Repaint { scene, reflections, step, hs_off } => repaint(&e, &scene, (reflections, step, hs_off), &cancel),
             Job::Dof { dof } => depth_of_field(&e, &dof, &cancel),
-            Job::Relight { scene } => relight(&e, &scene),
+            Job::Relight { scene, hs_off } => relight(&e, &scene, hs_off),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Stereo { scene, layout } => stereo(&e, &scene, layout, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
@@ -880,7 +881,10 @@ fn repaint(e: &Inner, sc: &Scene, opts: (bool, Option<PostStep>, u8), cancel: &(
     target.slice_2d = b.scene.slice_2d;
     target.calc_rect = None;
     let psig = post_sig(&target);
-    let reuse = b.params.slice_2d != 0 || (psig == b.post_sig && step.is_none());
+    // without a "Calculate now" a repaint only paints what was calculated
+    // (MB3D's TriggerRepaint: "Reset now", the lighting, a light moved: the
+    // shadows stay as they were until they are calculated again)
+    let reuse = b.params.slice_2d != 0 || step.is_none();
     let (progress, stage) = (stage_progress(e), stage_namer(e));
     let post = if reuse {
         b.post.clone()
@@ -943,7 +947,9 @@ fn repaint(e: &Inner, sc: &Scene, opts: (bool, Option<PostStep>, u8), cancel: &(
         Some(cur) if reuse => (cur.raw.clone(), cur.post.clone()),
         _ => (b.raw.clone(), post),
     };
-    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig: psig, w: b.w, h: b.h }));
+    // (painted only: the kept result is still the one of its old settings)
+    let post_sig = if reuse { g.as_ref().map(|cur| cur.post_sig.clone()).unwrap_or(psig) } else { psig };
+    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig, w: b.w, h: b.h }));
     Ok(())
 }
 
@@ -999,14 +1005,20 @@ fn depth_of_field(e: &Inner, d: &crate::dof::DofParams, cancel: &(dyn Fn() -> bo
 /// as in MB3D), no reflections or depth of field (both take about as long
 /// as the calculation). The kept buffers and their signature stay, so a
 /// following `Repaint` knows what to calculate again.
-fn relight(e: &Inner, sc: &Scene) -> Result<(), String> {
+fn relight(e: &Inner, sc: &Scene, hs_off: u8) -> Result<(), String> {
     let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
     let mut target = sc.clone();
     target.width = b.scene.width;
     target.height = b.scene.height;
     target.slice_2d = b.scene.slice_2d;
     target.calc_rect = None;
-    let rgb = crate::render::paint_preview(&target, &b.params, &b.post);
+    // (the kept scene keeps its shadow ticks, as MB3D's bCalculateHardShadow;
+    // only the picture is painted without the reset lights' shadows)
+    let mut paint = target.clone();
+    if let Some(h) = &mut paint.shadows {
+        h.lights &= !hs_off;
+    }
+    let rgb = crate::render::paint_preview(&paint, &b.params, &b.post);
     e.publish(rgb, b.w, b.h, "", None);
     let mut g = e.base.lock().unwrap();
     let (raw, post, post_sig) = match g.as_ref() {

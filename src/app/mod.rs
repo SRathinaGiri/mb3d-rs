@@ -295,8 +295,10 @@ impl Mb3d {
         // the history: every file opened or saved through a file dialog
         // (or dropped on the window); a chosen folder is none
         if let DialogResult::File(Some(p)) = r {
-            // (not a drop refused while a calculation runs)
-            if !p.is_dir() && !(tag == "@drop" && self.main.calculating) {
+            // (not a drop or an Open of the main window refused while a
+            // calculation runs: main_form::open_file)
+            let refused = self.main.calculating && (tag == "@drop" || tag.starts_with("main:open"));
+            if !p.is_dir() && !refused {
                 let save = tag != "@drop" && ui.file_dialog_save;
                 crate::history::log(if save { crate::history::Action::Save } else { crate::history::Action::Open }, p);
             }
