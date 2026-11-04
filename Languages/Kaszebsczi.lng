@@ -1520,8 +1520,8 @@ HoldShiftKeyForFinerSteps=(Trzëmôj Shift dlô drobniészich kroków)
 ;(Hold Shift key for finer steps)
 Hotkeys=Skrótë
 ;Hotkeys
-HowFastLightFadesInThe=Jak chùtkò swiatło słabnie w wòdze, na jednotã fraktala drogi (1: westrzédnô szaroscë trzimô trzecy dzél swiatła pò 1 jednoce)
-;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowFarYouCanSeeInto=Jak daleko je widzec w wòdze, w jednotach fraktala: ji nôczëstszô farwa trzimô trzecy dzél swiatła pò ti dalëznie, czerwienô zanikô wiele wczasni w mòdrozelony wòdze (wnetka wiôlgòsc fraktala: 1)
+;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Wiele swiatła wòda przepùszczô (òd 0 do 1, 0: nieprzezérnô): z òdbicama (Kùńcowô òbróbka) abò w Monte Carlo fraktal je widzec pòd wiéchrzëzną, przesëniãti przez załómanié ë zanikający z głãbòkòscą
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Jak mòckò płaszczëzna òdbijô (òd 0 do 1): ji pòłësczi ë zdrzadło, czej są rechòwóné òdbicé (Kùńcowô òbróbka)
@@ -3410,8 +3410,8 @@ TheCalculationWillBeExtendedTowards=Rechòwanié bãdze rozszérzoné bùten òb
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=Wëbróné wôrtnota we wszëtczich klatkach animacji: przecygni kwadrat klucznégò ùjęcô w górã abò w dół, abò klëknij gò ë wpiszë wôrtnotã
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
-TheColourTheWaterFadesTo=Farwa, w jaką wòda przechòdzy z głãbòkòscą (klëkni, żebë zmienic)
-;The colour the water fades to with depth (click to change)
+TheColourOfDeepWaterThe=Farwa głãbòczi wòdë: swòje swiatło wòdë ë farwa, jaką z głãbòkòscą bierze to, co je pòd nią (klëkni, żebë zmienic)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=Programa réżczi pòleceniów mb3d nie je kòle ti programë: zainstalëjë programã znowa.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=Domëslné numrowanié mô 2 lëczbë, òddzelno dlô X ë Y.\nCzej wëbierze sã tã òptacjã, numrowanié mô le jedną lëczbã,\nrosnącą w kòżdi kòlumnie ë jidącą dali w pòsobny rédze.

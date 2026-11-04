@@ -1520,8 +1520,8 @@ HoldShiftKeyForFinerSteps=(Segure Shift para passos mais finos)
 ;(Hold Shift key for finer steps)
 Hotkeys=Atalhos
 ;Hotkeys
-HowFastLightFadesInThe=Quão rápido a luz se apaga na água, por unidade fractal percorrida (1: um cinza médio guarda um terço da sua luz após 1 unidade)
-;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowFarYouCanSeeInto=Até onde se vê dentro da água, em unidades fractais: sua cor mais clara guarda um terço da luz após essa distância, o vermelho some bem antes numa água verde-azulada (mais ou menos o tamanho do fractal: 1)
+;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Quanta luz a água deixa passar (0 a 1, 0: opaca): com os reflexos (Pós-processamento) ou no Monte Carlo o fractal aparece sob a superfície, desviado pela refração e sumindo com a profundidade
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Quanto o plano reflete (0 a 1): seus brilhos, e seu espelho quando os reflexos são calculados (Pós-processamento)
@@ -3410,8 +3410,8 @@ TheCalculationWillBeExtendedTowards=O cálculo será estendido para fora da imag
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=O valor escolhido em todos os quadros da animação: arraste o quadrado de um quadro-chave para cima ou para baixo, ou clique nele e digite o valor
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
-TheColourTheWaterFadesTo=A cor para a qual a água tende com a profundidade (clique para mudar)
-;The colour the water fades to with depth (click to change)
+TheColourOfDeepWaterThe=A cor da água funda: a luz própria da água e a cor que o que está embaixo toma com a profundidade (clique para mudar)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=O programa de linha de comando mb3d não foi encontrado ao lado deste programa: instale o programa de novo.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=A numeração padrão inclui 2 números, separados em X e Y.\nCom esta opção, a numeração é um único número,\nque aumenta em cada coluna e continua na linha seguinte.

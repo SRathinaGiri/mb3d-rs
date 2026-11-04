@@ -1520,8 +1520,8 @@ HoldShiftKeyForFinerSteps=(Tahan tombol Shift untuk langkah lebih halus)
 ;(Hold Shift key for finer steps)
 Hotkeys=Tombol pintas
 ;Hotkeys
-HowFastLightFadesInThe=Seberapa cepat cahaya memudar di dalam air, per satuan fraktal yang ditempuh (1: abu-abu sedang menyisakan sepertiga cahayanya setelah 1 satuan)
-;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowFarYouCanSeeInto=Seberapa jauh terlihat ke dalam air, dalam satuan fraktal: warnanya yang paling jernih menyisakan sepertiga cahayanya setelah jarak ini, merah memudar jauh lebih cepat di air biru-hijau (kira-kira ukuran fraktal: 1)
+;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Seberapa banyak cahaya yang diloloskan air (0 sampai 1, 0: buram): dengan pantulan (Pasca-proses) atau di Monte Carlo fraktal terlihat di bawah permukaan, dibelokkan oleh pembiasan dan memudar seiring kedalaman
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Seberapa kuat bidang memantul (0 sampai 1): kilaunya, dan cerminnya bila pantulan dihitung (Pasca-proses)
@@ -3410,8 +3410,8 @@ TheCalculationWillBeExtendedTowards=Perhitungan akan diperluas ke luar gambar de
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=Nilai yang dipilih di semua frame animasi: seret kotak keyframe ke atas atau ke bawah, atau klik lalu ketik nilainya
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
-TheColourTheWaterFadesTo=Warna yang dituju air seiring kedalaman (klik untuk mengubah)
-;The colour the water fades to with depth (click to change)
+TheColourOfDeepWaterThe=Warna air dalam: cahaya air itu sendiri, dan warna yang diambil benda di bawahnya seiring kedalaman (klik untuk mengubah)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=Program baris perintah mb3d tidak ditemukan di samping program ini: pasang ulang program.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=Penomoran bawaan terdiri dari 2 angka, terpisah untuk X dan Y.\nJika Anda memilih opsi ini, penomoran hanya satu angka,\nbertambah di setiap kolom dan berlanjut ke baris berikutnya.

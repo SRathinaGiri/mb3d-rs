@@ -1521,8 +1521,8 @@ HoldShiftKeyForFinerSteps=(اضغط مفتاح Shift لخطوات أدق)
 ;(Hold Shift key for finer steps)
 Hotkeys=مفاتيح الاختصار
 ;Hotkeys
-HowFastLightFadesInThe=مدى سرعة خفوت الضوء في الماء، لكل وحدة كسيرية يقطعها (1: الرمادي المتوسط يحتفظ بثلث ضوئه بعد وحدة واحدة)
-;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowFarYouCanSeeInto=إلى أي مدى يُرى داخل الماء، بوحدات الكسيري: يحتفظ أصفى ألوانه بثلث ضوئه بعد هذه المسافة، ويختفي الأحمر أبكر بكثير في الماء الأزرق المخضر (نحو حجم الكسيري: 1)
+;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=مقدار الضوء الذي يمرره الماء (من 0 إلى 1، 0: معتم): مع الانعكاسات (المعالجة اللاحقة) أو في مونت كارلو يظهر الكسيري تحت السطح، منحرفًا بالانكسار ويتلاشى مع العمق
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=مقدار انعكاس المستوى (من 0 إلى 1): لمعانه، ومرآته عند حساب الانعكاسات (المعالجة اللاحقة)
@@ -3411,8 +3411,8 @@ TheCalculationWillBeExtendedTowards=يمتد الحساب إلى خارج الص
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=القيمة المختارة عبر كل إطارات الحركة: اسحب مربع إطار مفتاحي لأعلى أو لأسفل، أو انقره واكتب قيمته
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
-TheColourTheWaterFadesTo=اللون الذي يتجه إليه الماء مع العمق (انقر للتغيير)
-;The colour the water fades to with depth (click to change)
+TheColourOfDeepWaterThe=لون الماء العميق: ضوء الماء نفسه، واللون الذي يكتسبه ما تحته مع العمق (انقر للتغيير)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=لم يُعثر على برنامج سطر الأوامر mb3d بجوار هذا البرنامج: ثبّت البرنامج من جديد.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=الترقيم الافتراضي يتضمن رقمين، منفصلين في X وY.\nإن اخترت هذا الخيار، يصبح الترقيم رقمًا واحدًا\nيزداد في كل عمود ويستمر في الصف التالي.

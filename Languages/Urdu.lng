@@ -1521,8 +1521,8 @@ HoldShiftKeyForFinerSteps=(باریک قدموں کے لیے Shift دبائے ر
 ;(Hold Shift key for finer steps)
 Hotkeys=ہاٹ کیز
 ;Hotkeys
-HowFastLightFadesInThe=پانی میں روشنی کتنی تیزی سے مدھم ہوتی ہے، طے کی گئی ہر فریکٹل اکائی پر (1: درمیانہ سرمئی 1 اکائی کے بعد اپنی روشنی کا ایک تہائی رکھتا ہے)
-;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowFarYouCanSeeInto=پانی میں کتنی دور تک دکھائی دیتا ہے، فریکٹل اکائیوں میں: اس کا سب سے صاف رنگ اس فاصلے کے بعد اپنی روشنی کا ایک تہائی رکھتا ہے، نیلے سبز پانی میں سرخ بہت پہلے مٹ جاتا ہے (تقریباً فریکٹل کا سائز: 1)
+;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=پانی کتنی روشنی گزرنے دیتا ہے (0 سے 1، 0: غیر شفاف): انعکاسات (پوسٹ پروسیسنگ) یا مونٹے کارلو میں سطح کے نیچے فریکٹل دکھائی دیتا ہے، انعطاف سے مڑا ہوا اور گہرائی کے ساتھ مدھم ہوتا
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=سطح کتنا منعکس کرتی ہے (0 سے 1): اس کی چمک، اور عکس جب انعکاسات کا حساب ہو (پوسٹ پروسیسنگ)
@@ -3411,8 +3411,8 @@ TheCalculationWillBeExtendedTowards=حساب منعکس اشیاء کے ساتھ
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=اینیمیشن کے تمام فریموں پر چنی گئی قدر: کسی کی فریم کا مربع اوپر یا نیچے گھسیٹیں، یا اس پر کلک کر کے قدر لکھیں
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
-TheColourTheWaterFadesTo=وہ رنگ جس کی طرف پانی گہرائی کے ساتھ ڈھلتا ہے (بدلنے کے لیے کلک کریں)
-;The colour the water fades to with depth (click to change)
+TheColourOfDeepWaterThe=گہرے پانی کا رنگ: پانی کی اپنی روشنی، اور وہ رنگ جو نیچے کی چیزیں گہرائی کے ساتھ اختیار کرتی ہیں (بدلنے کے لیے کلک کریں)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=کمانڈ لائن پروگرام mb3d اس پروگرام کے ساتھ نہیں ملا: پروگرام دوبارہ انسٹال کریں۔
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=طے شدہ نمبرنگ میں 2 نمبر ہوتے ہیں، X اور Y میں الگ۔\nیہ اختیار منتخب کرنے پر نمبرنگ صرف ایک نمبر ہوتی ہے،\nجو ہر کالم میں بڑھتی ہے اور اگلی قطار میں جاری رہتی ہے۔
