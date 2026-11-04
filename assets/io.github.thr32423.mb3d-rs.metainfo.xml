@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.97" date="2026-11-04">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.97</url>
+      <description>
+        <p>The program behaves more like the original Mandelbulb3D. Saving over an existing file asks first; a file dropped during a render no longer stops it; Stop asks after 15 minutes of rendering; "Save image in m3i" stores the finished picture. Post processing: "Reset now" keeps hand-calculated shadows, depth of field strengthens with each press, each "Calculate now" runs only its own step. Formula lists are sorted by vote and open when the mouse rests on a button; built-in formulas have descriptions; the animation preview shows frames as they render. Dialogs no longer change the folders of the settings. Five places now follow MB3D's rules: a negative Min R in Amazing Box and Bulbox, the dynamic fog's far offset, ambient shadows seen from inside, inside and outside scenes, and formula combinations. Every graphics card shader is checked in the tests without a card.</p>
+      </description>
+    </release>
     <release version="0.2.96" date="2026-11-04">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.96</url>
       <description>
