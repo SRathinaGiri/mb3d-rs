@@ -835,7 +835,16 @@ you check further on your own:
   steers through its gaps, away from walls and from the empty space around
   it; a keyframe every half second, Catmull-Rom. It ends early at a dead end
   or at the limit of double precision, and says so (`mb3d animate scene.m3p
-  --fly --duration 20`). *Navigator* > *Rec*: while the button is
+  --fly --duration 20`); a duration of 0 flies until the view shows only sky
+  or only fractal (`--duration 0`, at most two minutes). *360° VR* in the
+  Animation maker (`--vr`) renders every frame as a spherical panorama
+  (2:1); with *Render stereo animation* the video has the eyes one above the
+  other (left on top), named `_360_TB` for VR players, and the ffmpeg command
+  ends with `mb3d vr360 video.mp4 --stereo tb`, which writes the Spherical
+  Video V2 metadata that YouTube and the Meta Quest read. A spherical
+  panorama saved as JPEG (main window) carries the Photo Sphere XMP, so
+  Facebook shows it as a 360 photo; `mb3d vr360 photo.jpg` marks any other.
+  *Navigator* > *Rec*: while the button is
   down, every new view of the flight (at most two a second) becomes the next
   keyframe; with Catmull-Rom the animation passes through all of them.
   *Motion blur* in the Animation maker: each frame is the average of that
