@@ -697,6 +697,16 @@ Voici de quoi vérifier plus loin par vous-même :
   `ground_absorption`, `ground_water_color`, `ground_ior` ; un exemple
   dans [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Diffusion** (la ligne sous *Réfraction*) : l'eau diffuse la lumière
+  comme une vraie eau. Elle luit turquoise vers le soleil, les crêtes
+  des vagues sont translucides, la lumière du soleil y tombe en rayons
+  coupés par les ombres de la fractale et ce qui est sous l'eau luit
+  doucement de sa couleur ; Monte Carlo suit la lumière qui se diffuse
+  dans l'eau. Le second champ est sa direction (0,8 : surtout vers
+  l'avant). 0 est l'aspect sans elle. Clés de scène `ground_scattering`,
+  `ground_scatter_dir` ; voir
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **La lumière d'une image HDR** : une image Radiance à 360° (`.hdr`) en fond
   éclaire un rendu Monte Carlo avec toute sa luminosité, et son soleil devient

@@ -673,6 +673,16 @@ können Sie selbst weiter prüfen:
   `ground_ior`; ein Beispiel in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Streuung** (die Zeile unter *Brechung*): das Wasser streut Licht wie
+  echtes Wasser. Zur Sonne hin leuchtet es türkis, die Wellenkämme
+  scheinen durch, das Sonnenlicht fällt in Strahlen hinein, die die
+  Schatten des Fraktals durchschneiden, und was unter Wasser liegt,
+  leuchtet sanft in seiner Farbe; Monte Carlo verfolgt das Licht, wie es
+  im Wasser gestreut wird. Das zweite Feld ist ihre Richtung (0,8: vor
+  allem nach vorn). 0 ist das Bild ohne sie. Szenenschlüssel
+  `ground_scattering`, `ground_scatter_dir`; siehe
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Licht aus einem HDR-Bild**: ein 360°-Radiance-Bild (`.hdr`) als Hintergrund
   beleuchtet ein Monte-Carlo-Bild mit seiner vollen Helligkeit, und seine

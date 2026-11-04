@@ -390,6 +390,8 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
 
   **透明的水**：*水* 大于 0（水透过多少光）时，半浸在水中的分形在水面下可见，被折射弯曲（*折射*：水为 1.33），并随深度变成深水的颜色（颜色按钮）：*吸收* 决定水有多浑浊（0 清澈，3 浑浊），在蓝绿色的水中红色先消失，所以水下部分变成青绿色。灯光在波浪上的闪光留在水面上。普通渲染在开启反射（后期处理）时显示，蒙特卡洛始终显示；不开反射时水保持不透明。场景键 `ground_transparency`, `ground_absorption`, `ground_water_color`, `ground_ior`；示例见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
 
+  **散射**（*折射* 下面一行）：水像真实的水一样散射光。朝太阳看时水发出青绿色的光，浪尖透光，阳光以被分形阴影切开的光束射入水中，水下物体柔和地泛出水的颜色；蒙特卡洛追踪光在水中的散射。第二个字段是散射方向（0.8：主要向前）。0 为不散射的样子。场景键 `ground_scattering`, `ground_scatter_dir`；见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+
   </details>
 * **来自 HDR 图片的光照**：以 360° Radiance 图片 (`.hdr`) 作为背景，以其
   全部亮度照亮蒙特卡罗渲染，图中的太阳成为带柔和阴影的光源 (来自

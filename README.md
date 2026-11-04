@@ -672,6 +672,16 @@ you check further on your own:
   `ground_water_color`, `ground_ior`; an example in
   [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
 
+  **Scattering** (the row below *Refraction*): the water scatters light
+  as real water does. It glows turquoise looking towards the sun, the
+  wave crests shine through, the sun's light falls into it as shafts cut
+  by the fractal's shadows, and what lies under the water glows softly
+  in its colour; Monte Carlo traces the light through the water as it
+  scatters. The second field is its direction (0.8: mostly forward). 0
+  is the look without it. Scene keys `ground_scattering`,
+  `ground_scatter_dir`; see
+  [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Light from an HDR picture**: a 360° Radiance `.hdr` picture as the
   background lights a Monte Carlo render, with its full brightness, and

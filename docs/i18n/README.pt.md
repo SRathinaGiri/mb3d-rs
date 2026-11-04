@@ -684,6 +684,16 @@ pontos permitem que você confira mais por conta própria:
   `ground_ior`; um exemplo em
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Dispersão** (a linha abaixo de *Refração*): a água dispersa a luz
+  como a água de verdade. Ela brilha turquesa olhando em direção ao sol,
+  as cristas das ondas ficam translúcidas, a luz do sol cai nela em
+  raios cortados pelas sombras do fractal e o que está sob a água brilha
+  suavemente na sua cor; o Monte Carlo segue a luz enquanto ela se
+  dispersa na água. O segundo campo é a direção (0,8: sobretudo para a
+  frente). 0 é o aspecto sem ela. Chaves de cena `ground_scattering`,
+  `ground_scatter_dir`; veja
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Luz de uma imagem HDR**: uma imagem Radiance de 360° (`.hdr`) como fundo
   ilumina um render Monte Carlo com todo o seu brilho, e o seu sol vira uma

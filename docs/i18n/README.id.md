@@ -683,6 +683,16 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   `ground_water_color`, `ground_ior`; contoh di
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Hamburan** (baris di bawah *Pembiasan*): air menghamburkan cahaya
+  seperti air sungguhan. Air bercahaya pirus saat memandang ke arah
+  matahari, puncak ombak tembus cahaya, cahaya matahari jatuh ke
+  dalamnya sebagai berkas yang dipotong bayangan fraktal, dan yang ada
+  di bawah air bercahaya lembut dengan warnanya; Monte Carlo menelusuri
+  cahaya saat terhambur di air. Kolom kedua adalah arahnya (0,8:
+  terutama ke depan). 0 adalah tampilan tanpanya. Kunci adegan
+  `ground_scattering`, `ground_scatter_dir`; lihat
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Cahaya dari gambar HDR**: gambar Radiance 360° (`.hdr`) sebagai latar
   menerangi render Monte Carlo dengan kecerahan penuhnya, dan mataharinya

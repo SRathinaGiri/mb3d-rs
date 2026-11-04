@@ -678,6 +678,16 @@ permettono di verificare ulteriormente da solo:
   `ground_absorption`, `ground_water_color`, `ground_ior`; un esempio in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Diffusione** (la riga sotto *Rifrazione*): l'acqua diffonde la luce
+  come l'acqua vera. Brilla turchese guardando verso il sole, le creste
+  delle onde sono traslucide, la luce del sole vi cade in raggi tagliati
+  dalle ombre del frattale e ciò che sta sott'acqua brilla piano del suo
+  colore; Monte Carlo segue la luce mentre si diffonde nell'acqua. Il
+  secondo campo è la sua direzione (0,8: soprattutto in avanti). 0 è
+  l'aspetto senza. Chiavi di scena `ground_scattering`,
+  `ground_scatter_dir`; vedi
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Luce da un'immagine HDR**: un'immagine Radiance a 360° (`.hdr`) come
   sfondo illumina un render Monte Carlo con tutta la sua luminosità, e il suo

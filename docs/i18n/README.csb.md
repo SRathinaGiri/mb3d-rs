@@ -653,6 +653,15 @@ sprawdzëc sóm:
   `ground_ior`; przikłôd w
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Rozpraszanié** (rząd pòd *Załómanié*): wòda rozpraszô swiatło jak
+  prôwdzëwô wòda. W stronã słuńca swiécy turkùsowò, wiérzchë fal
+  przeswiécają, swiatło słuńca wpôdô w nią smùgama przecãtima cénią
+  fraktala, a to, co pòd wòdą, swiécy łagòdno ji farwą; Monte Carlo
+  sledzy swiatło rozpraszóné w wòdze. Drëdżé pòle to jegò czerënk (0,8:
+  przédno do przódkù). 0 to wëzdrzatk bez niegò. Klucze scenë
+  `ground_scattering`, `ground_scatter_dir`; zdrzë
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Swiatło z òbrazu HDR**: òbrôz Radiance 360° (`.hdr`) jakno spódk òswiecywô
   render Monte Carlo pełną jasnotą, a jegò słuńce stôwô sã swiatłã z miękczima

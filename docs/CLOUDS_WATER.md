@@ -185,6 +185,28 @@ next to the waves on the *Cutting* page:
   of you.
 - **Refraction** (`ground_ior`): the refraction index, 1.33 for water; 1
   does not bend the light.
+- **Scattering** (`ground_scattering`, 0 to 1, the row below
+  *Refraction*): how much the water scatters light, as real water does
+  with its particles. 0 is the look without scattering (and what scenes
+  saved before have); a water switched on in the program starts at 0.5.
+  The water then glows turquoise when you look towards the sun and is
+  darker looking away; the wave crests between you and a low sun shine
+  through; the sun's light falls into the water as shafts, broken into
+  bands by the waves and cut by the fractal's shadows (the lights with
+  hard or soft shadows on cast them); and what lies under the water glows
+  softly in its colour, less in its hollows. Clearer water (a lower
+  absorption, e.g. 0.3) shows the shafts deeper. The second field
+  (`ground_scatter_dir`, 0 to 0.95, 0.8) is the direction: water scatters
+  mostly forward, towards where the light goes; 0 scatters alike in every
+  direction.
+
+  The normal render follows the light once along each ray under the water
+  (eight steps, each with a shadow ray towards the lamps) and adds the
+  light scattered many times as a glow of the water colour that depends
+  on the angle to the lamps; Monte Carlo traces the light through the
+  water as it is (it scatters, is absorbed and scatters again). A
+  scattering water takes the normal render's reflection pass about a
+  fifth to a half longer.
 
 The normal render shows the transparency with the reflections on
 (*Postprocess*, *Reflections + Transparency*, *Calculate R. (+ T.)

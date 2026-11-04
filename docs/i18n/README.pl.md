@@ -655,6 +655,15 @@ możesz sprawdzić sam:
   `ground_absorption`, `ground_water_color`, `ground_ior`; przykład w
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Rozpraszanie** (wiersz pod *Załamanie*): woda rozprasza światło jak
+  prawdziwa woda. Patrząc w stronę słońca świeci turkusowo, grzbiety fal
+  prześwitują, światło słońca wpada w nią smugami przeciętymi cieniami
+  fraktala, a to, co pod wodą, świeci łagodnie jej kolorem; Monte Carlo
+  śledzi światło rozpraszane w wodzie. Drugie pole to jego kierunek
+  (0,8: głównie do przodu). 0 to wygląd bez niego. Klucze sceny
+  `ground_scattering`, `ground_scatter_dir`; zob.
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Światło z obrazu HDR**: obraz Radiance 360° (`.hdr`) jako tło oświetla
   render Monte Carlo pełną jasnością, a jego słońce staje się światłem z

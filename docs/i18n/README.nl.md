@@ -643,6 +643,16 @@ kunt u zelf verder controleren:
   `ground_water_color`, `ground_ior`; een voorbeeld in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Verstrooiing** (de rij onder *Breking*): het water verstrooit licht
+  zoals echt water. Naar de zon toe gloeit het turkoois, de golftoppen
+  schijnen door, het zonlicht valt erin als stralen die door de
+  schaduwen van de fractal worden onderbroken, en wat onder water ligt
+  gloeit zacht in zijn kleur; Monte Carlo volgt het licht terwijl het in
+  het water verstrooid wordt. Het tweede veld is de richting (0,8:
+  vooral naar voren). 0 is het beeld zonder. Scènesleutels
+  `ground_scattering`, `ground_scatter_dir`; zie
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Licht uit een HDR-afbeelding**: een 360°-Radiance-afbeelding (`.hdr`) als
   achtergrond belicht een Monte Carlo-render met zijn volle helderheid, en de
