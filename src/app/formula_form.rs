@@ -39,6 +39,15 @@ pub struct State {
     pub hide_ticks: i32,
     pub highlighted: String,
     pub names_loaded: bool,
+    /// the formula button the mouse entered (its tag), the mouse's y there
+    /// and the time (`Timer5.Tag`)
+    pub hover: Option<(usize, i32, std::time::Instant)>,
+}
+
+/// `Timer5Timer`'s test: the mouse moved less than 1 pixel up or down per
+/// 16 ms since it entered the button (`abs(MPYdif * 16) div Zeitdif < 1`).
+pub(crate) fn hover_settled(dy: i32, ms: i64) -> bool {
+    (dy as i64).abs() * 16 < ms.max(1)
 }
 
 fn slots_init(st: &mut State) {
@@ -189,19 +198,30 @@ fn formula_de(name: &str) -> i32 {
     crate::formulas::Formula::default_for(name).map(|f| f.de_option()).unwrap_or(0)
 }
 
-/// FavouriteList.txt in the formula folder: "status name" lines.
-fn favourites(app: &Mb3d) -> std::collections::HashMap<String, i32> {
+/// FavouriteList.txt in the formula folder: its "status name" lines, the
+/// names as written there.
+fn favourite_lines(app: &Mb3d) -> Vec<(String, i32)> {
     let p = app.ini.dir(super::ini::DIR_FORMULAS).join("FavouriteList.txt");
-    let mut m = std::collections::HashMap::new();
+    let mut v = Vec::new();
     if let Ok(t) = std::fs::read_to_string(p) {
         for l in t.lines() {
             let mut it = l.splitn(2, ' ');
             if let (Some(a), Some(b)) = (it.next(), it.next()) {
-                if let Ok(v) = a.trim().parse::<i32>() {
-                    m.insert(b.trim().to_ascii_lowercase(), v);
+                if let Ok(s) = a.trim().parse::<i32>() {
+                    v.push((b.trim().to_string(), s));
                 }
             }
         }
+    }
+    v
+}
+
+/// The favourite status by lower-case name (`GetFavouriteStatus`: the
+/// first line with the name counts).
+fn favourites(app: &Mb3d) -> std::collections::HashMap<String, i32> {
+    let mut m = std::collections::HashMap::new();
+    for (n, s) in favourite_lines(app) {
+        m.entry(n.to_ascii_lowercase()).or_insert(s);
     }
     m
 }
@@ -238,8 +258,10 @@ pub fn load_formula_names(app: &mut Mb3d, ui: &mut Ui) {
     lists[4].push((" ".into(), 1));
     let mut names: Vec<(String, i32)> = Formula::all_names().iter().map(|n| (n.to_string(), formula_de(n))).collect();
     let builtin: Vec<String> = names.iter().map(|n| n.0.to_ascii_lowercase()).collect();
-    for (n, de) in crate::formulas::list_custom_with_de() {
-        if !builtin.contains(&n.to_ascii_lowercase()) {
+    let custom = crate::formulas::list_custom_with_de();
+    let files: std::collections::HashSet<String> = custom.iter().map(|(n, _)| n.to_ascii_lowercase()).collect();
+    for (n, de) in custom {
+        if !builtin.contains(&n.to_ascii_lowercase()) && !excluded_formula(&n, &files) {
             names.push((n, de));
         }
     }
@@ -279,7 +301,8 @@ pub fn load_formula_names(app: &mut Mb3d, ui: &mut Ui) {
         };
         lists[k].push((n, stat));
     }
-    for (k, list) in lists.iter().enumerate().skip(1) {
+    for (k, list) in lists.iter_mut().enumerate().skip(1) {
+        sort_list(list);
         let name = format!("ListBoxEx{k}");
         if !ui.f(F).has(&name) || k == 11 {
             continue;
@@ -297,15 +320,34 @@ pub fn load_formula_names(app: &mut Mb3d, ui: &mut Ui) {
     app.formula.names_loaded = true;
 }
 
-/// `SetListBoxWidth`: the items with the favourite colours.
+/// The formulas MB3D leaves out of its lists (`LoadFormulaNames`): older
+/// versions of formulas whose newer file is there, and a few broken ones.
+/// `files` holds the lower-case names of the formula files.
+pub(crate) fn excluded_formula(name: &str, files: &std::collections::HashSet<String>) -> bool {
+    let has = |n: &str| files.contains(n);
+    match name.to_ascii_uppercase().as_str() {
+        "TRAFASSELQUAT" => has("commquat"),
+        "_FLIPXY" => has("_flipxyc"),
+        "_FLIPXZ" => has("_flipxzc"),
+        "_FLIPYZ" => has("_flipyzc"),
+        "ABOXMODKALIFIXED" => has("aboxmodkali"),
+        "SQKOCH" | "DJD-QUAT" | "_IFS-TESS" => true,
+        _ => false,
+    }
+}
+
+/// The order of a formula list: MB3D's lists are sorted (`Sorted = True`)
+/// with the items "status name" (`AddFormulaName`), so the +voted (status
+/// 0) come first, the -voted (2) last, built-in and custom formulas mixed
+/// by name; the blank first line of the 4Da list (" ") stays first.
+pub(crate) fn sort_list(list: &mut [(String, i32)]) {
+    list.sort_by_cached_key(|(n, s)| (!n.trim().is_empty(), *s, n.to_lowercase()));
+}
+
+/// `SetListBoxWidth`. (MB3D's `ListBoxEx9DrawItem` paints no favourite
+/// colours: that code is commented out.)
 fn set_list(ui: &mut Ui, name: &str, list: &[(String, i32)], max_h: i32) {
-    let fav_col = |s: i32| match s {
-        s if s > 1 => Some(0xFF60D060u32),
-        s if s < 1 => Some(0xFFD07070u32),
-        _ => None,
-    };
     let items: Vec<String> = list.iter().map(|(n, _)| format!("    {n}")).collect();
-    let colors: Vec<Option<u32>> = list.iter().map(|(_, s)| fav_col(*s)).collect();
     let font = crate::vcl::font::Font { height: -9, ..Default::default() };
     let w = items.iter().map(|s| crate::vcl::font::text_width(font.face(), font.em(), s).ceil() as i32).max().unwrap_or(40) + 28;
     let c = ui.cm(F, name);
@@ -313,7 +355,7 @@ fn set_list(ui: &mut Ui, name: &str, list: &[(String, i32)], max_h: i32) {
     c.item_height = 12;
     c.height = (items.len() as i32 * c.item_height + 4).min(max_h.max(40));
     c.width = w;
-    c.item_colors = colors;
+    c.item_colors = Vec::new();
     c.selected = vec![false; items.len()];
     c.items = items;
     c.item_index = -1;
@@ -389,7 +431,9 @@ pub fn tab_control1_change(app: &mut Mb3d, ui: &mut Ui) {
 /// `Check4DandInfo`: the 4D rotation panel for 4D formulas, the
 /// "normalise" button.
 fn check_4d_and_info(app: &mut Mb3d, ui: &mut Ui) {
-    let is4d = app.formula.slots.iter().flatten().any(|f| matches!(f.de_option(), 4 | 5 | 6));
+    let st = &app.formula;
+    let de: Vec<Option<i32>> = st.slots.iter().map(|f| f.as_ref().map(|f| f.de_option())).collect();
+    let is4d = is_4d_type(&de, &st.its, st.hybrid, st.start2);
     ui.set_visible(F, "Panel2", is4d);
     adjust_tc1_height(ui);
     let t = tab(ui);
@@ -402,8 +446,122 @@ fn check_4d_and_info(app: &mut Mb3d, ui: &mut Ui) {
         }
         _ => ui.set_visible(F, "Button4", false),
     }
-    let has_descr = app.formula.slots[t].as_ref().map(|f| matches!(f, Formula::Custom(_))).unwrap_or(false);
+    let has_descr = app.formula.slots[t].as_ref().is_some_and(|f| !description(f).is_empty());
     ui.set_enabled(F, "SpeedButton2", has_descr);
+}
+
+/// `DescrOfFName`: a custom formula's description, for the built-in ones
+/// `CFdescriptionIntern` (CustomFormulas.pas; Tricorn has none).
+fn description(f: &Formula) -> String {
+    let id = match f {
+        Formula::Custom(c) => return c.def.description.clone(),
+        Formula::IntPow { .. } => "@MB:TheTriplexMathSineBulbAs",
+        Formula::RealPower { .. } => "@MB:TheSineBulbWhereArbitraryPower",
+        Formula::Quaternion { .. } => "@MB:A4dQuaternionFormulaOneIteration",
+        Formula::AmazingBox { .. } => "@MB:TheAmazingBoxAkaMandboxFormula",
+        Formula::Bulbox { .. } => "@MB:AHybridOfASinePower",
+        Formula::FoldingIntPow { .. } => "@MB:ASineIntegerPowerBulbWith",
+        Formula::AexionC { .. } => "@MB:ABulbFormulaAsSuggestedBy",
+        Formula::Tricorn { .. } => return String::new(),
+    };
+    tr(id)
+}
+
+/// `CheckDEoption` (HeaderTrafos.pas): the DE type of the slots
+/// `start..=end` with iterations, -1 when they do not go together.
+fn check_de_option(de: &[Option<i32>], its: &[i32; 6], start: usize, end: usize) -> i32 {
+    let mut o = -1;
+    for i in start..=end.min(5) {
+        if its[i] <= 0 {
+            continue;
+        }
+        let d = de.get(i).copied().flatten().unwrap_or(0);
+        if !(0..=20).contains(&d) || o == d {
+            continue;
+        }
+        if ((0..=19).contains(&o) && d > 19) || (o > 19 && (0..=19).contains(&d)) {
+            return -1;
+        }
+        o = match o {
+            -1 => d,
+            2 if ![2, 5, 6, 11].contains(&d) => 0,
+            4 if ![5, 6].contains(&d) => 0,
+            5 if d == 4 => 4,
+            5 if d == 2 || d == 11 => 2,
+            5 if d != 6 => 0,
+            6 if [2, 4, 5, 11].contains(&d) => d,
+            6 => 0,
+            11 if d == 2 || d == 5 => 2,
+            11 if d != 6 => 0,
+            o => o,
+        };
+    }
+    // (MB3D's dIFS shape count is not set before it is counted; a 4D
+    // check does not depend on it)
+    o
+}
+
+/// `Is4Dtype` (CustomFormulas.pas): the 4D rotation is shown when the
+/// whole hybrid is 4D: both formulas of an interpolation hybrid, else the
+/// DE type of the (first) part, or of either part of a DE combination.
+/// `de` holds the slots' DE options (None for an empty slot).
+pub(crate) fn is_4d_type(de: &[Option<i32>], its: &[i32; 6], hybrid: i32, start2: usize) -> bool {
+    let d4 = |o: i32| (4..=6).contains(&o);
+    let slot = |i: usize| de.get(i).copied().flatten().unwrap_or(0);
+    if hybrid == 1 {
+        return d4(slot(0)) && d4(slot(1));
+    }
+    // isSingleF: no formula with iterations, or a DE combination of one
+    let used = its.iter().filter(|&&n| n > 0).count();
+    if used == 0 || (used < 2 && hybrid == 2) {
+        return false;
+    }
+    // CheckHybridOptions' end1, start2, end2
+    let mut x = 5;
+    while x > 0 && its[x] == 0 {
+        x -= 1;
+    }
+    let s2 = start2.min(x).max(1);
+    let end1 = if hybrid == 0 { x } else { s2 - 1 };
+    let mut r = d4(check_de_option(de, its, 0, end1));
+    if hybrid == 2 {
+        r = r || d4(check_de_option(de, its, s2, s2.max(x)));
+    }
+    r
+}
+
+/// `CheckHybridOptions` (CustomFormulas.pas): the repeat slots and the
+/// start of the second part within the used slots.
+fn check_hybrid_options(st: &mut State) {
+    if st.hybrid == 1 {
+        st.repeat1 = 0;
+        st.start2 = 1;
+        st.repeat2 = 1;
+        return;
+    }
+    let its = st.its;
+    let mut x = 5;
+    while x > 0 && its[x] == 0 {
+        x -= 1;
+    }
+    let start2 = st.start2.min(x).max(1);
+    let end1 = if st.hybrid == 0 { x } else { start2 - 1 };
+    let end2 = start2.max(x);
+    let mut repeat2 = st.repeat2.min(end2).max(start2);
+    let mut x1 = end1;
+    while x1 > 0 && its[x1] <= 0 {
+        x1 -= 1;
+    }
+    st.repeat1 = st.repeat1.min(x1);
+    if st.hybrid == 2 {
+        let mut x2 = 5;
+        while x2 > start2 && its[x2] <= 0 {
+            x2 -= 1;
+        }
+        repeat2 = repeat2.min(x2);
+    }
+    st.start2 = start2;
+    st.repeat2 = repeat2;
 }
 
 fn adjust_tc1_height(ui: &mut Ui) {
@@ -685,18 +843,51 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             tab_control2_update(app, ui);
         }
         "SpeedButtonEx1MouseEnter" => {
-            let sb = e.sender.clone();
-            let tg = ui.tag(F, &sb) as usize;
+            // the list opens from Timer5 once the mouse rests on the
+            // button or moves on sideways (to the next button), not
+            // while it passes over it up or down
+            let tg = ui.tag(F, &e.sender) as usize;
+            app.formula.hover = Some((tg, ui.f(F).mouse.1, std::time::Instant::now()));
+            ui.cm(F, "Timer5").interval = 20;
+            ui.set_timer(F, "Timer5", true);
+        }
+        "Timer5Timer" => {
+            ui.cm(F, "Timer5").interval = 100;
+            ui.reset_timer(F, "Timer5");
+            let Some((tg, y0, t0)) = app.formula.hover else {
+                ui.set_timer(F, "Timer5", false);
+                return;
+            };
+            let ms = t0.elapsed().as_millis() as i64 + 1;
+            let (_, y) = ui.f(F).mouse;
+            if !hover_settled(y0 - y, ms) {
+                return;
+            }
+            ui.set_timer(F, "Timer5", false);
+            app.formula.hover = None;
             let lb_n = if tg == 12 { 12 } else { tg };
+            let Some(sb) = list_button(lb_n) else { return };
+            if !ui.f(F).has(&sb) || !ui.enabled(F, &sb) {
+                return;
+            }
             let lb = format!("ListBoxEx{lb_n}");
-            if ui.f(F).has(&lb) && ui.enabled(F, &sb) {
-                hide_lists_but(app, ui, lb_n);
-                let s = ui.c(F, &sb).rect();
-                popup_list(app, ui, &lb, s.x - 2, s.bottom());
+            if mouse_in(ui, &sb) {
+                ui.set_timer(F, "Timer4", false);
+                if ui.f(F).has(&lb) {
+                    hide_lists_but(app, ui, lb_n);
+                    let s = ui.c(F, &sb).rect();
+                    if !ui.visible(F, &lb) {
+                        popup_list(app, ui, &lb, s.x - 2, s.bottom());
+                    }
+                }
                 ui.cm(F, &sb).down = true;
+            } else if ui.f(F).has(&lb) && !ui.visible(F, &lb) {
+                ui.cm(F, &sb).down = false;
             }
         }
         "SpeedButtonEx1MouseLeave" => {
+            ui.set_timer(F, "Timer5", false);
+            app.formula.hover = None;
             let tg = ui.tag(F, &e.sender) as usize;
             let lb = format!("ListBoxEx{}", if tg == 12 { 12 } else { tg });
             ui.cm(F, &e.sender).down = false;
@@ -865,10 +1056,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.set_visible(F, "RichEdit1", false);
             } else {
                 let t = tab(ui);
-                let d = match &app.formula.slots[t] {
-                    Some(Formula::Custom(c)) => c.def.description.clone(),
-                    _ => String::new(),
-                };
+                let d = app.formula.slots[t].as_ref().map(description).unwrap_or_default();
                 ui.set_text(F, "RichEdit1", &d);
                 ui.set_visible(F, "Button3", true);
                 ui.set_visible(F, "RichEdit1", true);
@@ -902,8 +1090,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.set_visible(F, "ListBoxEx15", false);
                 ui.set_visible(F, "Button3", false);
             } else {
-                let mut hidden: Vec<String> = favourites(app).into_iter().filter(|(_, s)| *s <= -2).map(|(n, _)| n).collect();
-                hidden.sort();
+                // (the names as FavouriteList.txt spells them, sorted as
+                // the list box: `Sorted = True`)
+                let mut hidden: Vec<String> = favourite_lines(app).into_iter().filter(|(_, s)| *s <= -2).map(|(n, _)| n).collect();
+                hidden.sort_by_cached_key(|n| n.to_lowercase());
                 ui.set_items(F, "ListBoxEx15", hidden);
                 ui.set_visible(F, "ListBoxEx15", true);
                 ui.set_enabled(F, "ListBoxEx15", true);
@@ -946,9 +1136,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
             app.formula.slots[s] = None;
             app.formula.its[s] = 0;
-            if app.formula.repeat1 >= s {
-                app.formula.repeat1 = (app.formula.repeat1 + 1).min(5);
+            // the repeat slots of both parts move along (bHybOpt1 shr 4,
+            // bHybOpt2 shr 8), then CheckHybridOptions
+            let st = &mut app.formula;
+            if st.repeat1 >= s {
+                st.repeat1 = (st.repeat1 + 1).min(7);
             }
+            if st.repeat2 >= s {
+                st.repeat2 = (st.repeat2 + 1).min(7);
+            }
+            check_hybrid_options(st);
             tab_control1_change(app, ui);
         }
         "Shifttotheleft1Click" => {
@@ -959,9 +1156,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
             app.formula.slots[5] = None;
             app.formula.its[5] = 0;
-            if app.formula.repeat1 >= s.max(1) {
-                app.formula.repeat1 -= 1;
+            let st = &mut app.formula;
+            if st.repeat1 >= s.max(1) {
+                st.repeat1 -= 1;
             }
+            if st.repeat2 >= s.max(1) {
+                st.repeat2 -= 1;
+            }
+            check_hybrid_options(st);
             tab_control1_change(app, ui);
         }
         "Copythevaluesto1Click" => {
@@ -1026,5 +1228,76 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lists_sorted_by_vote_then_name() {
+        let mut l: Vec<(String, i32)> =
+            [("Integer Power", 1), ("amazing Box", 1), ("_Zeta", 0), ("Bulbox", 2), ("Aexion C", 1), ("abs", 0)]
+                .iter()
+                .map(|(n, s)| (n.to_string(), *s))
+                .collect();
+        sort_list(&mut l);
+        let n: Vec<&str> = l.iter().map(|(n, _)| n.as_str()).collect();
+        assert_eq!(n, ["_Zeta", "abs", "Aexion C", "amazing Box", "Integer Power", "Bulbox"]);
+        let mut l = vec![("Quaternion".to_string(), 1), (" ".to_string(), 1), ("A".to_string(), 0)];
+        sort_list(&mut l);
+        assert_eq!(l[0].0, " ");
+    }
+
+    #[test]
+    fn excluded_formulas() {
+        let files: std::collections::HashSet<String> = ["commquat", "_flipxyc", "aboxmodkali"].iter().map(|s| s.to_string()).collect();
+        assert!(excluded_formula("TrafasselQuat", &files));
+        assert!(excluded_formula("_FlipXY", &files));
+        assert!(!excluded_formula("_FlipXZ", &files));
+        assert!(excluded_formula("ABoxModKaliFixed", &files));
+        assert!(excluded_formula("SqKoch", &files));
+        assert!(excluded_formula("DJD-Quat", &files));
+        assert!(excluded_formula("_IFS-Tess", &files));
+        assert!(!excluded_formula("_FlipXYc", &files));
+        assert!(!excluded_formula("TrafasselQuat", &std::collections::HashSet::new()));
+    }
+
+    #[test]
+    fn four_d_type_needs_the_whole_hybrid() {
+        let q = Some(4);
+        let b = Some(0);
+        // one 4D formula alone, or with an empty slot
+        assert!(is_4d_type(&[q, None, None, None, None, None], &[1, 0, 0, 0, 0, 0], 0, 1));
+        // a 4D and a 3D formula: not 4D
+        assert!(!is_4d_type(&[q, b, None, None, None, None], &[1, 1, 0, 0, 0, 0], 0, 1));
+        // 4D and 4Da go together
+        assert!(is_4d_type(&[q, Some(5), None, None, None, None], &[1, 2, 0, 0, 0, 0], 0, 1));
+        // a 3D formula without iterations does not count
+        assert!(is_4d_type(&[q, b, None, None, None, None], &[1, 0, 0, 0, 0, 0], 0, 1));
+        // interpolation: both
+        assert!(!is_4d_type(&[q, b, None, None, None, None], &[1, 1, 0, 0, 0, 0], 1, 1));
+        assert!(is_4d_type(&[q, q, None, None, None, None], &[1, 1, 0, 0, 0, 0], 1, 1));
+        // DE combination: either part
+        assert!(is_4d_type(&[b, q, None, None, None, None], &[1, 1, 0, 0, 0, 0], 2, 1));
+        assert!(!is_4d_type(&[b, b, None, None, None, None], &[1, 1, 0, 0, 0, 0], 2, 1));
+        // nothing iterated
+        assert!(!is_4d_type(&[q, None, None, None, None, None], &[0; 6], 0, 1));
+    }
+
+    #[test]
+    fn hybrid_options_follow_the_used_slots() {
+        let mut st = State { its: [1, 1, 1, 0, 0, 0], hybrid: 2, start2: 4, repeat1: 3, repeat2: 5, ..Default::default() };
+        check_hybrid_options(&mut st);
+        assert_eq!((st.start2, st.repeat2, st.repeat1), (2, 2, 1));
+    }
+
+    #[test]
+    fn hover_test() {
+        assert!(hover_settled(0, 20));
+        assert!(hover_settled(1, 20));
+        assert!(!hover_settled(5, 20));
+        assert!(hover_settled(5, 120));
     }
 }

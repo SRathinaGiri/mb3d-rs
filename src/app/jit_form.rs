@@ -338,6 +338,12 @@ fn write_formula(app: &mut Mb3d, ui: &mut Ui) {
             if std::mem::take(&mut app.jit.saving_and_exit) {
                 ui.hide(F);
                 super::formula_form::load_formula_names(app, ui);
+                // an edited formula is selected again, so that the slot
+                // takes the saved code (FormulaGUI.pas EditJITFormulaItmClick:
+                // LoadFormulaNames; SelectFormula(Formulaname))
+                if let Some(n) = app.jit.edit_name.clone() {
+                    super::formula_form::select_formula(app, ui, &n);
+                }
             }
         }
         Err(e) => {

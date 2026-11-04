@@ -28,6 +28,10 @@ language = English
 code = EN
 
 [Labels]
+A4dQuaternionFormulaOneIteration=A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;the program
+ABulbFormulaAsSuggestedBy=A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
+;the program
 ACalculationIsRunningStopIt=A calculation is running: stop it first.
 ;the program
 ACoarseRayPerBlockOf=A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
@@ -44,6 +48,8 @@ AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y 
 ;Mand3DForm.GroundCBx.Hint
 AHigherValueMeansABetter=A higher value means a better quality, even 100% is lossy.
 ;TilingForm.Edit7.Hint
+AHybridOfASinePower=A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
+;the program
 AI=AI
 ;Mand3DForm.AiBtn.Caption
 ALanguageFileHasOneLabel=A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
@@ -52,6 +58,8 @@ AMultiplierThatDefinesTheMiximal=A multiplier that defines the miximal length of
 ;PostProForm.Edit5.Hint
 AOCalcTime=AO calc time:
 ;Mand3DForm.Label47.Caption
+ASineIntegerPowerBulbWith=A sine integer power bulb with foldings before, like in the amazing box.
+;the program
 AStoppedOrInterruptedRenderKeeps=A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ;UnfinishedFrm.Label1.Caption
 ATransparentBackgroundNeedsPNGFrames=A transparent background needs PNG frames: choose PNG as the output format.
@@ -2346,6 +2354,8 @@ NotABigRenderProject=not a big render project
 ;the program
 NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
 ;the program
+NotEnoughMemoryAvailable=Not enough memory available
+;not used
 NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
 ;the program
 NotInstalledGetItFromClaude=Not installed. Get it from claude.ai/download, start it once, then come back here.
@@ -2588,6 +2598,8 @@ PauseRendering=Pause rendering
 ;the program
 PausedPressToContinue=Paused, press to continue
 ;the program
+PausingOnNextFrame=Pausing on next frame...
+;not used
 PercentOfLocalDE=Percent of local DE
 ;FNavigator.Edit1.Hint
 Picture=picture
@@ -3356,6 +3368,8 @@ TargetMapSlot=Target Map Slot
 ;MapSequencesFrm.Label3.Caption
 TargetMapSlotUseThisNumber=Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
 ;MapSequencesFrm.DestChannelEdit.Hint
+TheAmazingBoxAkaMandboxFormula=The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;the program
 TheAmountOfAddedDiffuseAnd=The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 ;the program
 TheAnimationNeedsAtLeastTwo=The animation needs at least two keyframes.
@@ -3464,6 +3478,8 @@ TheSelectionMustBeBiggerThanLower=the selection must be bigger than 2 pixels in 
 ;the program
 TheSharedFolderOfTheSwarm=The shared folder of the swarm
 ;the program
+TheSineBulbWhereArbitraryPower=The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;the program
 TheSizeOfTheCloudsFeatures=The size of the clouds' features in fractal units, and their colour (click)
 ;PostProForm.CloudSizeEdit.Hint, PostProForm.CloudColBtn.Hint
 TheSizeOfTheTiles=The size of the tiles
@@ -3473,6 +3489,8 @@ TheStereoEyeImagesHaveDifferent=The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 ;the program
 TheTileHasNoImageBuffer=the tile has no image buffer
+;the program
+TheTriplexMathSineBulbAs=The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 ;the program
 TheValueOfTheChosenKeyframe=The value of the chosen keyframe
 ;CurvesFrm.KeyValEdit.Hint
