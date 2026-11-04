@@ -626,6 +626,21 @@ fn convert_light8_to9(l8: &[u8], l9: &mut [u8]) {
     pi32(l9, tb(4), gi32(l9, tb(4)).wrapping_mul(2));
 }
 
+/// `GetLightParaFile` of a file smaller than `TLightingParas9` (408
+/// bytes): read as `TLightingParas8` (272 bytes, the rest zero), then
+/// `ConvertFromOldLightParas` with the file's size, `UpdateLightVersion8`
+/// once more (as MB3D calls it) and `ConvertLight8to9` into an empty record.
+pub(crate) fn light9_from_old_record(rec: &[u8]) -> Vec<u8> {
+    let mut l8 = vec![0u8; 272];
+    let n = rec.len().min(l8.len());
+    l8[..n].copy_from_slice(&rec[..n]);
+    convert_from_old_light_paras(&mut l8, rec.len());
+    update_light_version8(&mut l8);
+    let mut l9 = vec![0u8; HEADER_SIZE - L8];
+    convert_light8_to9(&l8, &mut l9);
+    l9
+}
+
 /// The converted `TMandHeader8` as `TMandHeader10` with an empty formula
 /// block: `FastMove` of the header, then `ConvertLight8to9`.  With
 /// `whole_record` (`LoadParameter`, `GetHeaderFromText`) the 704 bytes are

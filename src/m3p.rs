@@ -1047,13 +1047,19 @@ fn parse_light(r: &Rd, w: &mut Vec<String>) -> Lighting {
 }
 
 /// The lighting of a light record (`TLightingParas9`, .m3l files and the
-/// header from byte 432).
+/// header from byte 432).  A shorter record is an older one
+/// (`TLightingParas8` or before), converted as MB3D's `GetLightParaFile`
+/// does; an empty one is none.
 pub fn light_from_record(rec: &[u8]) -> Option<Lighting> {
-    if rec.len() < 408 {
+    if rec.is_empty() {
         return None;
     }
     let mut h = vec![0u8; HEADER_SIZE];
-    h[432..840].copy_from_slice(&rec[..408]);
+    if rec.len() < 408 {
+        h[432..840].copy_from_slice(&crate::m3p_old::light9_from_old_record(rec));
+    } else {
+        h[432..840].copy_from_slice(&rec[..408]);
+    }
     let mut w = Vec::new();
     Some(parse_light(&Rd(&h), &mut w))
 }
@@ -1395,6 +1401,42 @@ pub fn write(sc: &Scene) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn old_light_record_is_converted() {
+        // a TLightingParas record (92 bytes, before the lights were
+        // stored): ConvertFromOldLightParas makes light 1 of TBpos[1..2]
+        // and the light function of TBoptions, lights 2..4 off
+        let mut rec = vec![0u8; 92];
+        rec[0..4].copy_from_slice(&90i32.to_le_bytes()); // TBpos[1]
+        rec[4..8].copy_from_slice(&45i32.to_le_bytes()); // TBpos[2]
+        rec[44] = 3; // TBoptions: LFunction 3
+        for k in [3usize, 6, 9] {
+            // the ambient colours Cols[3, 6, 9]: AmbCol
+            rec[56 + (k - 1) * 4..60 + (k - 1) * 4].copy_from_slice(&0x0010_2030u32.to_le_bytes());
+        }
+        let l = light_from_record(&rec).expect("an old record converts");
+        assert!(l.lights[0].on && l.lights[1..].iter().all(|x| !x.on));
+        assert_eq!(l.lights[0].spec_func, 3);
+        // LXangle = Round(90 * -32768 / 360), LYangle = Round(45 * 32768 / 360), in radians
+        assert!((l.lights[0].x_angle.abs() - std::f64::consts::FRAC_PI_2).abs() < 1e-6, "{}", l.lights[0].x_angle);
+        assert!((l.lights[0].y_angle.abs() - std::f64::consts::FRAC_PI_4).abs() < 1e-6, "{}", l.lights[0].y_angle);
+        // the same lighting as the converted TLightingParas9 written out
+        let mut h = vec![0u8; HEADER_SIZE];
+        h[432..840].copy_from_slice(&crate::m3p_old::light9_from_old_record(&rec));
+        // (InterpolateColorB weighs by 0.33333: 0x10 of the third byte becomes 0x0F)
+        assert_eq!(&h[432 + 52..432 + 55], &[0x30, 0x20, 0x0F]);
+        assert_eq!(l.amb_top, parse_light(&Rd(&h), &mut Vec::new()).amb_top);
+        // a TLightingParas8 (272 bytes) keeps its lights
+        let mut r8 = vec![0u8; 272];
+        r8[92] = 0; // Lights[0].Loption: on
+        r8[93] = 2;
+        r8[106] = 1; // Lights[1].Loption: off
+        let l8 = light_from_record(&r8).unwrap();
+        assert!(l8.lights[0].on && !l8.lights[1].on);
+        assert_eq!(l8.lights[0].spec_func, 2);
+        assert!(light_from_record(&[]).is_none());
+    }
 
     #[test]
     fn finishing_in_the_mb3d_rs_block() {
