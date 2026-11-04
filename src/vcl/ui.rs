@@ -47,6 +47,9 @@ pub enum Request {
     /// hide and lock the mouse in the window and report its relative
     /// motion as `@MouseDelta` events (the Navigator's mouse look)
     MouseLook(usize, bool),
+    /// the window manager resizes the window from its bottom right corner
+    /// while the left button is held (a size grip, MB3D's `Image2MouseMove`)
+    DragResize(usize),
 }
 
 pub struct Ui {
@@ -506,6 +509,13 @@ impl Ui {
 
     pub fn request(&mut self, r: Request) {
         self.requests.push(r);
+    }
+
+    /// A size grip was pressed: the window follows the mouse with its
+    /// bottom right corner until the button is released.
+    pub fn drag_resize(&mut self, form: &str) {
+        let i = self.fi(form);
+        self.requests.push(Request::DragResize(i));
     }
 
     pub fn move_form(&mut self, form: &str, x: i32, y: i32) {
