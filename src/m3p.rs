@@ -1522,6 +1522,10 @@ mod tests {
             reflect: 0.75,
             wave_height: 0.02,
             wave_len: 0.5,
+            transparency: 0.8,
+            absorption: 2.5,
+            absorb_color: [10, 60, 70],
+            ior: 1.4,
         });
         let raw = write(&sc);
         // MB3D's part is the same as without

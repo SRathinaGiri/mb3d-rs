@@ -91,6 +91,7 @@ pub mod swarm;
 pub mod video;
 pub mod vollight;
 pub mod voxel;
+pub mod water;
 pub mod x86;
 #[cfg(feature = "gui")]
 pub mod vcl;

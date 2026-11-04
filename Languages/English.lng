@@ -609,7 +609,7 @@ CloudDriftY=Cloud drift Y
 CloudDriftZ=Cloud drift Z
 ;the program
 Clouds=Clouds
-;PostProForm.CloudsBtn.Caption
+;PostProForm.CloudsBtn.Caption; the program
 CloudsOverThePictureALayer=Clouds over the picture: a layer between two heights along the fractal's X, Y or Z axis, lit by the first light, in front of and behind the fractal (not in MB3D: kept after MB3D's part of the parameters; in Monte Carlo along the view rays; not in reflections)
 ;PostProForm.CloudsCbx.Hint
 Co=Co:
@@ -1205,7 +1205,7 @@ FinishedRenderingSlices=Finished rendering slices.
 FinishedTracingObject=Finished tracing object.
 ;the program
 Finishing=Finishing
-;PostProForm.FinishBtn.Caption
+;PostProForm.FinishBtn.Caption; the program
 First4RaysNoisy=first 4 rays (noisy)
 ;the program
 FirstCalculationOfThisFormulaCombination=First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
@@ -1520,6 +1520,10 @@ HoldShiftKeyForFinerSteps=(Hold Shift key for finer steps)
 ;FNavigator.Label14.Caption
 Hotkeys=Hotkeys
 ;HotkeysFrm.Caption, Mand3DForm.HotkeysBtn.Caption
+HowFastLightFadesInThe=How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+;Mand3DForm.GroundAbsorbEdit.Hint
+HowMuchLightTheWaterLets=How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
+;Mand3DForm.GroundTranspEdit.Hint
 HowMuchThePlaneReflects0=How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 ;Mand3DForm.GroundReflEdit.Hint
 HowMuchTheSurfaceSColour=How much the surface's colour varies with the relief: 0 not, 1 strongly
@@ -2029,7 +2033,7 @@ MapSequences=Map Sequences
 MapType=Map Type:
 ;HeightMapGenFrm.Label19.Caption
 Material=Material
-;MeshPreviewFrm.MaterialSheet.Caption, PostProForm.MaterialBtn.Caption
+;MeshPreviewFrm.MaterialSheet.Caption, PostProForm.MaterialBtn.Caption; the program
 Max=Max
 ;FormulaGUIForm.DECombineCmb.Items
 MaxIterat=Max. Iterat.:
@@ -2814,6 +2818,10 @@ ReflectionsTransparency2=Reflections + Transparency
 ;MCForm.CategoryPanel5.Caption
 ReflectsTime=Reflects time:
 ;Mand3DForm.Label49.Caption
+Refraction=Refraction:
+;Mand3DForm.Label93.Caption
+RefractionIndexOfTheWaterWater=Refraction index of the water (water 1.33; 1: no bending)
+;Mand3DForm.GroundIorEdit.Hint
 RefractiveIndex=Refractive index:
 ;PostProForm.Label22.Caption
 RefractiveIndexOfTheMaterialAir=Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
@@ -3402,6 +3410,8 @@ TheCalculationWillBeExtendedTowards=The calculation will be extended towards the
 ;PostProForm.Edit9.Hint
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 ;AnimationForm.CurvesBtn.Hint, CurvesFrm.Image1.Hint
+TheColourTheWaterFadesTo=The colour the water fades to with depth (click to change)
+;Mand3DForm.GroundAbsorbColBtn.Hint
 TheCommandLineProgramMb3dWas=The command line program mb3d was not found next to this program: install the program again.
 ;the program
 TheDefaultNumberingIncludes2Numbers=The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
@@ -3750,6 +3760,8 @@ WarningMustRecalculateTheWholeImage=Warning: Must recalculate the whole image to
 ;PostProForm.Label7.Caption
 WarningsAndErrors=Warnings and errors
 ;LogFrm.ComboBox1.Items
+Water=Water:
+;Mand3DForm.Label92.Caption
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;the program
 Waves=Waves:

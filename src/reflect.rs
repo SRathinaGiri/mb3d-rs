@@ -236,6 +236,27 @@ struct SrCtx<'a> {
     gpu: bool,
     /// the clouds and their light (the reflected rays go through them)
     clouds: Option<(crate::clouds::Clouds, crate::clouds::CloudLight)>,
+    /// transparent water (the ground with a transparency; on the CPU only)
+    water: Option<WaterCtx>,
+}
+
+/// The transparent water of the reflection pass (`crate::water`).
+struct WaterCtx {
+    g: crate::scene::Ground,
+    /// the ground's colours (diffuse, specular) for its surface: its
+    /// diffuse colour times 1 - transparency
+    surface: (S3, S3),
+    /// the colours of the water's own light: the absorb colour, diffuse
+    body: (S3, S3),
+}
+
+impl WaterCtx {
+    fn new(p: &CalcParams, lv: &LightVals) -> Option<WaterCtx> {
+        let g = p.ground.filter(|g| g.transparent())?;
+        let (dif, spe) = lv.ground?;
+        let t = g.transparency.clamp(0.0, 1.0);
+        Some(WaterCtx { g, surface: (sc3(dif, 1.0 - t), spe), body: (lv.surface_colour(g.absorb_color), [0.0; 3]) })
+    }
 }
 
 struct SrTracer<'a, 'c> {
@@ -456,13 +477,111 @@ impl<'a, 'c> SrTracer<'a, 'c> {
     }
 
     fn shade(&self, si: &SiLight, inside: Option<(S3, f32)>) -> crate::lighting::Shaded {
+        self.shade_with(si, inside, self.c.water.as_ref().map(|w| w.surface))
+    }
+
+    /// [`SrTracer::shade`] with the ground's colours `ground`.
+    fn shade_with(&self, si: &SiLight, inside: Option<(S3, f32)>, ground: Option<(S3, S3)>) -> crate::lighting::Shaded {
         let o = ShadeOpts {
             scale_amb_diff_down: if self.scale_amb_diff_down { Some(self.c.sr_light_amount) } else { None },
             inside_trans: inside,
             light_z: Some(&self.light_z),
             svec: true,
+            ground,
         };
         self.c.lv.shade(si, &self.plv, self.c.cam, &o)
+    }
+
+    /// Transparent water hit at the current position by a ray along
+    /// `view` (depth `zz`, bounce `rit`; `si` the hit, shaded with the
+    /// share `result` of its light passing the fogs): None if it is not
+    /// water, else (the share F of the reflection, the light from under
+    /// the surface).  The refracted ray is marched to the fractal (the
+    /// plane left out), the light of its hit fades with the way through
+    /// the water to it and from the surface down to it, and the water's
+    /// own light (the absorb colour lit as the surface is) fills what
+    /// fades (`crate::water`).  Runs on the CPU (the card's reflections
+    /// are not used with transparent water).
+    fn water_hit(&mut self, si: &SiLight, view: Vec3, zz: f64, rit: i32, result: S3) -> Option<(f32, S3)> {
+        let w = self.c.water.as_ref().filter(|_| si.is_ground())?;
+        let (c, p) = (self.c, self.c.p);
+        let g = w.g;
+        let pos = self.m.it.c;
+        let (f, tdir) = crate::water::split(&g, &pos, &view);
+        // the water's own light: a surface of its colour where the ray meets
+        // it, facing up (the light scattered in the water does not see the
+        // waves; their shading would draw their pattern into the deep)
+        let mut flat = *si;
+        let n = normal_of(si);
+        let up = rotate_vector(&g.up(), &normalise_matrix_to(1.0, &p.vgrads));
+        let up = if dot(&up, &n) < 0.0 { scale(up, -1.0) } else { up };
+        flat.normal = up.map(|v| (v * 32767.0).round().clamp(-32767.0, 32767.0) as i16);
+        let body = self.shade_with(&flat, None, Some(w.body)).light.map(|v| (v / 255.0).clamp(0.0, 8.0));
+        let saved = (self.normal, self.plv, self.scale_amb_diff_down, self.m.mzz, self.m.ms_de_stop, self.m.on_ground);
+        let saved_lz = self.light_z.clone();
+        let dir = scale(tdir, len(&view));
+        let mut max_l = p.zend;
+        if p.cut_options != 0 {
+            let mut cp = 0usize;
+            self.min_length_to_cut_plane(&mut max_l, &mut cp, 1.0, &pos, &dir);
+        }
+        self.m.no_ground = true;
+        let h = self.march(&RayReq { origin: pos, dir, zz, inside: self.m.calc_inside, rit: rit + 1, max_l });
+        let light = if h.hit {
+            let step0 = (p.de_stop as f64 * 0.25).min(1.0);
+            self.plv.cam_pos = s3(&sub(add(pos, scale(dir, step0)), c.mid));
+            self.set_ray_paint(dir, h.zz2_paint);
+            self.m.it.c = h.pos;
+            self.plv.z_pos = (h.zz.abs() * p.step_width + p.zz_stmit_dif) as f32;
+            self.plv.obj_pos = s3(&sub(h.pos, c.mid));
+            self.scale_amb_diff_down = false;
+            let sh = self.shade(&h.si, None);
+            let lit = mul3(sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0)), self.light_in_water(&g, &h.pos));
+            let tr = crate::water::transmittance(&g, h.zz2 * len(&dir));
+            add3(mul3(mul3(lit, result), tr), mul3(body, tr.map(|t| 1.0 - t)))
+        } else {
+            body
+        };
+        self.m.no_ground = false;
+        self.m.it.c = pos;
+        (self.normal, self.plv, self.scale_amb_diff_down, self.m.mzz, self.m.ms_de_stop, self.m.on_ground) = saved;
+        self.light_z = saved_lz;
+        if self.dbg {
+            crate::elog!("  water: fresnel {f:.4} refracted {tdir:?} hit {} light {light:?}", h.hit);
+        }
+        Some((f as f32, light))
+    }
+
+    /// The share of the lights that reaches `c` under the water: each
+    /// light's way down through it (`water::light_path`), weighed by its
+    /// brightness.
+    fn light_in_water(&self, g: &crate::scene::Ground, c: &Vec3) -> S3 {
+        let lv = self.c.lv;
+        let (mut acc, mut wsum) = ([0f32; 3], 0f32);
+        for (i, l) in lv.lights.iter().enumerate() {
+            let hv = self.c.hs_vecs[i];
+            let toward = if l.positional { normalize(sub(hv, *c)) } else { normalize(scale(hv, -1.0)) };
+            let wl = luma(l.col);
+            acc = add3(acc, sc3(crate::water::transmittance(g, crate::water::light_path(g, c, &toward)), wl));
+            wsum += wl;
+        }
+        if wsum > 1e-12 {
+            sc3(acc, 1.0 / wsum)
+        } else {
+            crate::water::transmittance(g, g.depth(c).max(0.0))
+        }
+    }
+
+    /// The water's colours at a hit of the ground: the reflection's
+    /// colour `spe` for the transparency `t` and Fresnel's share `f`.
+    fn water_mirror(&self, spe: S3, f: f32) -> S3 {
+        let t = self.water_t();
+        spe.map(|v| v * (1.0 - t) + f * t)
+    }
+
+    /// The transparency of the water (0 without).
+    fn water_t(&self) -> f32 {
+        self.c.water.as_ref().map_or(0.0, |w| w.g.transparency.clamp(0.0, 1.0))
     }
 
     /// `CalcHS` / `CalcHSsoft` at the current position for the G-buffer
@@ -1036,6 +1155,14 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                         }
                         f.sd = (sh.spe, sh.spe_a, sh.dif);
                         self.t_amb = add3(self.t_amb, mul3(t_absorb, tmp_amb));
+                        if inside.is_none() {
+                            if let Some((fr, under)) = self.water_hit(&si, new_vec, h.zz, rit, sh.result) {
+                                // a reflected ray meets transparent water
+                                let t = self.water_t();
+                                self.t_amb = add3(self.t_amb, mul3(t_absorb, sc3(under, t * (1.0 - fr))));
+                                f.sd.0 = self.water_mirror(f.sd.0, fr);
+                            }
+                        }
                         if !calc_t || !(self.trans_flip_inside ^ self.m.inside) {
                             t_absorb = mul3(t_absorb, sh.result);
                         }
@@ -1241,7 +1368,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             // gpu_march.wgsl; before 2026-11-04 the CPU's took the fractal's
             // colouring there, seen where a wave's reflection meets the
             // water again)
-            let ground = p.ground.as_ref().is_some_and(|g| g.distance(&self.m.it.c) / sw < self.m.ms_de_stop as f64 * 2.0);
+            let ground = !self.m.no_ground && p.ground.as_ref().is_some_and(|g| g.distance(&self.m.it.c) / sw < self.m.ms_de_stop as f64 * 2.0);
             if ground {
                 self.m.calculate_normals(&mut si);
                 si.si_gradient = 0;
@@ -1385,10 +1512,18 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         self.t_amb = sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0));
         let sv = sc3(sh.result, c.sr_light_amount);
         let mzz = self.m.mzz;
+        let mut spe = sh.spe;
+        if let Some((fr, under)) = self.water_hit(si, vf, mzz, 1, sh.result) {
+            // transparent water: its surface, the light from under it, and
+            // its mirror by Fresnel's share
+            let t = self.water_t();
+            self.t_amb = add3(self.t_amb, sc3(under, t * (1.0 - fr)));
+            spe = self.water_mirror(spe, fr);
+        }
         if self.dbg {
             crate::elog!("CPU surface: pos {:?} zz {mzz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);
         }
-        Some((mzz, vf, sv, (sh.spe, sh.spe_a, sh.dif)))
+        Some((mzz, vf, sv, (spe, sh.spe_a, sh.dif)))
     }
 
     /// The marcher's view of pixel x, y (its view vector, gradients and
@@ -1491,7 +1626,7 @@ pub fn reflections<S: Sample>(
     // (memory short: compiles wait their turn, and the card's reflections
     // would wait for theirs; the CPU's need none)
     #[cfg(feature = "gpu")]
-    if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() && (!crate::gpu::compiles_waiting() || crate::gpu::reflect_compiled(p)) {
+    if crate::gpu::enabled() && crate::gpu::unsupported(p).is_none() && !water_on_cpu(p) && (!crate::gpu::compiles_waiting() || crate::gpu::reflect_compiled(p)) {
         let [x0, y0, w, h] = p.rect;
         let (wu, hu) = (w.max(1) as usize, h.max(0) as usize);
         // (the band from the memory free now: the picture and the stages
@@ -1542,6 +1677,13 @@ pub fn reflections<S: Sample>(
         return;
     }
     reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads, progress, cancel)
+}
+
+/// Transparent water (a ground with a transparency): the reflection pass
+/// and Monte Carlo run on the CPU, which marches the rays under the
+/// surface without the plane (the card's shader knows no such rays yet).
+pub fn water_on_cpu(p: &CalcParams) -> bool {
+    p.ground.is_some_and(|g| g.transparent())
 }
 
 /// [`reflections`] on the CPU.
@@ -1601,6 +1743,7 @@ fn reflections_cpu<S: Sample>(
         vol: p.vol.is_some(),
         gpu: false,
         clouds: sc.clouds.filter(|_| p.slice_2d == 0).map(|c| (c, c.light(&crate::render::effective_lighting(sc), lv, cam))),
+        water: WaterCtx::new(p, lv),
     };
     let [x0, y0, w, h] = p.rect;
     let (wu, hu) = (w as usize, h as usize);
@@ -1741,6 +1884,8 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         vol: p.vol.is_some(),
         gpu: true,
         clouds: sc.clouds.filter(|_| p.slice_2d == 0).map(|c| (c, c.light(&crate::render::effective_lighting(sc), lv, cam))),
+        // (transparent water is calculated on the CPU: `reflections`)
+        water: None,
     };
     // the lights of the shadow rays (calc_hs): soft shadows use the last one
     let mut lights: Vec<ReflectLight> = Vec::new();

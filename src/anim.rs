@@ -454,8 +454,12 @@ fn interpolate_header(base: &Scene, h: &[&Scene], w: &[f64], rot: Quat, bezier: 
             ng.reflect = lin(&|x| g(x).reflect as f64).clamp(0.0, 1.0) as f32;
             ng.wave_height = lin(&|x| g(x).wave_height).max(0.0);
             ng.wave_len = lin(&|x| g(x).wave_len).max(1e-9);
+            ng.transparency = lin(&|x| g(x).transparency as f64).clamp(0.0, 1.0) as f32;
+            ng.absorption = lin(&|x| g(x).absorption as f64).max(0.0) as f32;
+            ng.ior = lin(&|x| g(x).ior as f64).clamp(1.0, 3.0) as f32;
             for k in 0..3 {
                 ng.color[k] = lin(&|x| g(x).color[k] as f64).round().clamp(0.0, 255.0) as u8;
+                ng.absorb_color[k] = lin(&|x| g(x).absorb_color[k] as f64).round().clamp(0.0, 255.0) as u8;
             }
             s.ground = Some(ng);
         }

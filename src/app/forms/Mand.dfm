@@ -425,7 +425,7 @@ object Mand3DForm: TMand3DForm
       Left = 1
       Top = 446
       Width = 151
-      Height = 292
+      Height = 340
       ActivePage = TabSheet5
       Align = alTop
       BiDiMode = bdLeftToRight
@@ -1269,6 +1269,82 @@ object Mand3DForm: TMand3DForm
           ShowHint = True
           TabOrder = 13
           Text = '1'
+        end
+        object Label92: TLabel
+          Left = 9
+          Top = 224
+          Width = 30
+          Height = 13
+          Caption = '@MB:Water'
+        end
+        object GroundTranspEdit: TEdit
+          Left = 50
+          Top = 221
+          Width = 42
+          Height = 21
+          Hint = '@MB:HowMuchLightTheWaterLets'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 14
+          Text = '0'
+        end
+        object GroundAbsorbEdit: TEdit
+          Left = 95
+          Top = 221
+          Width = 42
+          Height = 21
+          Hint = '@MB:HowFastLightFadesInThe'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 15
+          Text = '1'
+        end
+        object GroundAbsorbColBtn: TSpeedButton
+          Left = 9
+          Top = 244
+          Width = 23
+          Height = 23
+          Hint = '@MB:TheColourTheWaterFadesTo'
+          Flat = True
+          ParentShowHint = False
+          ShowHint = True
+          OnClick = GroundAbsorbColBtnClick
+        end
+        object Label93: TLabel
+          Left = 36
+          Top = 248
+          Width = 56
+          Height = 13
+          Caption = '@MB:Refraction'
+        end
+        object GroundIorEdit: TEdit
+          Left = 95
+          Top = 245
+          Width = 42
+          Height = 21
+          Hint = '@MB:RefractionIndexOfTheWaterWater'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 16
+          Text = '1.33'
         end
       end
       object TabSheet9: TTabSheet

@@ -1088,6 +1088,9 @@ pub struct Marcher<'a> {
     pub(crate) last_difs: bool,
     /// the last DE was the ground plane's
     pub(crate) on_ground: bool,
+    /// the ground plane is left out of the DE (rays under transparent
+    /// water, `water`)
+    pub(crate) no_ground: bool,
 }
 
 thread_local! {
@@ -1131,6 +1134,7 @@ impl<'a> Marcher<'a> {
             calc_inside: p.inside_rendering,
             last_difs: false,
             on_ground: false,
+            no_ground: false,
         }
     }
 
@@ -1193,7 +1197,10 @@ impl<'a> Marcher<'a> {
     /// smaller of their distances (in steps).
     pub fn calc_de(&mut self) -> f64 {
         let r = self.calc_de_fractal();
-        let Some(g) = &self.p.ground else { return r };
+        let Some(g) = self.p.ground.as_ref().filter(|_| !self.no_ground) else {
+            self.on_ground = false;
+            return r;
+        };
         let d = g.distance(&self.it.c) / self.p.step_width;
         if d >= r {
             self.on_ground = false;

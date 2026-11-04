@@ -1232,17 +1232,20 @@ impl LightVals {
     /// The ground plane's colours: its colour as diffuse, its reflection
     /// amount as a grey specular colour (the reflections' mirror).
     pub fn set_ground(&mut self, g: Option<&crate::scene::Ground>) {
-        let col = |c: [u8; 3]| -> SVec {
-            if self.sqr {
-                c.map(|v| v as f32 * v as f32 * 0.0000153787)
-            } else {
-                c.map(|v| v as f32 / 255.0)
-            }
-        };
         self.ground = g.map(|g| {
             let r = (g.reflect.clamp(0.0, 1.0) * 255.0).round() as u8;
-            (col(g.color), col([r; 3]))
+            (self.surface_colour(g.color), self.surface_colour([r; 3]))
         });
+    }
+
+    /// A colour of a surface (the ground's) as the shading takes it: 0..1,
+    /// squared with the internal gamma 2.
+    pub(crate) fn surface_colour(&self, c: [u8; 3]) -> SVec {
+        if self.sqr {
+            c.map(|v| v as f32 * v as f32 * 0.0000153787)
+        } else {
+            c.map(|v| v as f32 / 255.0)
+        }
     }
 
     /// Volumetric light: the shadow word holds the light amount
@@ -1835,7 +1838,9 @@ impl LightVals {
                 sv_add_w(&mut li_dif, c, d_amb_sh);
             }
             let idif0 = self.s_col_zmul * plv_zpos;
-            let (mut idif, ispe, ia) = if si.si_gradient > 32767 && !si.is_ground() {
+            let (mut idif, ispe, ia) = if let Some((d, s)) = o.ground.filter(|_| si.is_ground()) {
+                (d, s, 0.0)
+            } else if si.si_gradient > 32767 && !si.is_ground() {
                 let (d, s) = self.calc_colors_inside(si, idif0);
                 (d, s, s[0])
             } else {
@@ -2087,6 +2092,9 @@ pub(crate) struct ShadeOpts<'a> {
     /// `CalcPixelColor2` / `CalcPixelColorSqr`: with internal gamma 2 the
     /// ambient shadow is squared (not the mean of it and its square)
     pub(crate) svec: bool,
+    /// the ground plane's diffuse and specular colours in place of
+    /// [`LightVals::ground`]'s (transparent water, `reflect`)
+    pub(crate) ground: Option<(SVec, SVec)>,
 }
 
 /// Result of [`LightVals::shade`].

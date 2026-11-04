@@ -139,11 +139,35 @@ pub struct Ground {
     pub wave_height: f64,
     /// the length of the waves (fractal units)
     pub wave_len: f64,
+    /// how much of the light the water lets through (0..1; 0 = opaque,
+    /// as before): the reflection pass and Monte Carlo see the fractal
+    /// under the surface, refracted and fading with depth (`water`)
+    pub transparency: f32,
+    /// how fast light fades in the water, per fractal unit it travels:
+    /// a channel keeps exp(-absorption * d * (1.5 - its absorb_color
+    /// share)), so a mid grey fades to 1/e after 1 / absorption units
+    pub absorption: f32,
+    /// the colour the water fades to with depth (its own, scattered light)
+    pub absorb_color: [u8; 3],
+    /// the refraction index of the water (1.33)
+    pub ior: f32,
 }
 
 impl Default for Ground {
     fn default() -> Self {
-        Ground { axis: 1, pos: 0.0, above: false, color: [128, 128, 128], reflect: 0.0, wave_height: 0.0, wave_len: 1.0 }
+        Ground {
+            axis: 1,
+            pos: 0.0,
+            above: false,
+            color: [128, 128, 128],
+            reflect: 0.0,
+            wave_height: 0.0,
+            wave_len: 1.0,
+            transparency: 0.0,
+            absorption: 1.0,
+            absorb_color: [10, 50, 60],
+            ior: 1.33,
+        }
     }
 }
 
@@ -174,6 +198,50 @@ impl Ground {
         // the steepest slope: 2 pi height / length (0.5 + 0.3 * 1.7 + 0.2 * 2.9)
         let g = std::f64::consts::TAU * 1.59 * self.wave_height / self.wave_len.max(1e-30);
         (s - self.wave(u, v)) / (1.0 + g * g).sqrt()
+    }
+
+    /// The depth of `c` under the surface with its waves (fractal units
+    /// along the axis; negative above it).
+    #[inline]
+    pub fn depth(&self, c: &[f64; 3]) -> f64 {
+        let k = self.axis as usize % 3;
+        let s = if self.above { self.pos - c[k] } else { c[k] - self.pos };
+        let w = if self.wave_height == 0.0 { 0.0 } else { self.wave(c[(k + 1) % 3], c[(k + 2) % 3]) };
+        w - s
+    }
+
+    /// The plane's normal without the waves, out of the solid side (towards
+    /// the camera's side).
+    #[inline]
+    pub fn up(&self) -> [f64; 3] {
+        let mut n = [0.0; 3];
+        n[self.axis as usize % 3] = if self.above { -1.0 } else { 1.0 };
+        n
+    }
+
+    /// The surface's normal at `c` with the waves (unit length, out of
+    /// the solid side).
+    pub fn normal(&self, c: &[f64; 3]) -> [f64; 3] {
+        let k = self.axis as usize % 3;
+        let mut n = self.up();
+        if self.wave_height != 0.0 {
+            let (u, v) = (c[(k + 1) % 3], c[(k + 2) % 3]);
+            let e = self.wave_len.max(1e-30) * 1e-4;
+            // the surface s = wave(u, v): its gradient tilts the normal
+            let du = (self.wave(u + e, v) - self.wave(u - e, v)) / (2.0 * e);
+            let dv = (self.wave(u, v + e) - self.wave(u, v - e)) / (2.0 * e);
+            n[(k + 1) % 3] = -du;
+            n[(k + 2) % 3] = -dv;
+            let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt();
+            n = n.map(|x| x / l);
+        }
+        n
+    }
+
+    /// The water is see-through (transparency above 0).
+    #[inline]
+    pub fn transparent(&self) -> bool {
+        self.transparency > 0.0
     }
 }
 
@@ -954,6 +1022,12 @@ impl Scene {
             if g.wave_height != 0.0 {
                 let _ = writeln!(t, "ground_waves = {}, {}", g.wave_height, g.wave_len);
             }
+            let d = Ground::default();
+            if (g.transparency, g.absorption, g.absorb_color, g.ior) != (d.transparency, d.absorption, d.absorb_color, d.ior) {
+                let a = g.absorb_color;
+                let _ = writeln!(t, "ground_transparency = {}\nground_absorption = {}", g.transparency, g.absorption);
+                let _ = writeln!(t, "ground_absorb_color = #{:02X}{:02X}{:02X}\nground_ior = {}", a[0], a[1], a[2], g.ior);
+            }
         }
         t
     }
@@ -1475,6 +1549,13 @@ impl Scene {
                         s.ground.get_or_insert_with(Ground::default).color = c;
                     }
                     "ground_reflect" => s.ground.get_or_insert_with(Ground::default).reflect = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_transparency" => s.ground.get_or_insert_with(Ground::default).transparency = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_absorption" => s.ground.get_or_insert_with(Ground::default).absorption = num()?.max(0.0) as f32,
+                    "ground_absorb_color" => {
+                        let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
+                        s.ground.get_or_insert_with(Ground::default).absorb_color = c;
+                    }
+                    "ground_ior" => s.ground.get_or_insert_with(Ground::default).ior = num()?.clamp(1.0, 3.0) as f32,
                     "ground_waves" => {
                         let p = vec_n(2)?;
                         let g = s.ground.get_or_insert_with(Ground::default);
