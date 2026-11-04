@@ -1300,20 +1300,20 @@ object AnimationForm: TAnimationForm
       TabOrder = 23
       OnClick = OrbitBtnClick
     end
-    object FlyBtn: TButton
+    object TemplatesBtn: TButton
       Left = 456
       Top = 262
-      Width = 110
+      Width = 118
       Height = 25
-      Hint = '@MB:AFlightFromTheMainWindow'
-      Caption = '@MB:FlyThrough'
+      Hint = '@MB:KeyframesMadeForYouFromThe'
+      Caption = '@MB:AnimationTemplates'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 24
-      OnClick = FlyBtnClick
+      OnClick = TemplatesBtnClick
     end
     object Vr360Check: TCheckBox
-      Left = 580
+      Left = 586
       Top = 266
       Width = 170
       Height = 17

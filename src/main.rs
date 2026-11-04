@@ -1059,9 +1059,10 @@ OPTIONS:
         --no-loop
         --orbit <STEPS>      A turntable from one keyframe file: the camera goes once around
                              the middle of the view in STEPS keyframes (8 is smooth), with
-                             --frames between them, as a Catmull-Rom loop; it turns
-                             around the middle, or around the surface the view's middle
-                             shows when the middle lies in the empty space before it
+                             --frames between them, as a Catmull-Rom loop; with
+                             --duration (a 360 degree orbit) it turns around the middle,
+                             or around the surface the view's middle shows when the
+                             middle lies in the empty space before it
         --fly                A fly-through from one keyframe file: the camera flies on
                              into the fractal, steering through its gaps, the zoom
                              following the distance to it, until --duration is flown
@@ -1305,10 +1306,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
         anim.keyframes = match duration {
             Some(d) if d > 0.0 => mb3d::autopilot::turntable(&k.scene, steps, d, fps),
             Some(_) => return Err(usage_err("--duration 0 goes with --fly only")),
-            None => {
-                let pivot = mb3d::autopilot::turntable_pivot(&k.scene);
-                mb3d::autopilot::orbit_keyframes_around(&k.scene, steps, frames.unwrap_or(25), pivot)
-            }
+            None => mb3d::anim::orbit_keyframes(&k.scene, steps, frames.unwrap_or(25)),
         };
         previews = vec![None; anim.keyframes.len()];
         looped = looped.or(Some(true));
@@ -1477,7 +1475,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             return Err(usage_err("--video needs images (--format png, bmp or jpg), not parameter files"));
         }
         if !movie {
-            return Err(usage_err("--video makes no stereo videos (render the eyes separately), except of a 360 VR animation (--vr)"));
+            return Err(usage_err("--video makes no stereo videos (render the eyes separately)"));
         }
         if !v.extension().is_some_and(|e| e.eq_ignore_ascii_case("avi")) {
             return Err(usage_err("--video writes an AVI file: give a name ending in .avi (for an MP4, run the ffmpeg command shown at the end)"));

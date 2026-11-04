@@ -29,7 +29,7 @@ code = EN
 
 [Labels]
 A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
-;not used
+;AnimationForm.Vr360Check.Hint
 ACalculationIsRunningStopIt=A calculation is running: stop it first.
 ;the program
 ACoarseRayPerBlockOf=A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
@@ -40,8 +40,6 @@ AFewSecondsLeft=a few seconds left
 ;the program
 AFineReliefOnTheSurface=A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 ;PostProForm.DetailKindCB.Hint
-AFlightFromTheMainWindow=A flight from the main window's view on into the fractal, steering through its gaps, for the time you give: a keyframe every half second (Catmull-Rom)
-;AnimationForm.FlyBtn.Hint
 AFolderEveryComputerOfThe=A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 ;SwarmFrm.Edit1.Hint
 AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
@@ -63,8 +61,8 @@ ATransparentBackgroundNeedsPNGFrames=A transparent background needs PNG frames: 
 AVideoNeedsImagesChooseBMP=A video needs images: choose BMP, PNG or JPG as the output format.
 ;the program
 AVideoOfAStereoAnimation=A video of a stereo animation is not made: switch off 'Render stereo animation'.
-;the program
-AVideoOfAStereoAnimation2=A video of a stereo animation is made only as a 360° VR one (the eyes one above the other): switch on '360° VR' or switch off 'Render stereo animation'.
+;not used
+AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 ;not used
 AXPictureNeedsAboutOf=A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 ;the program
@@ -120,6 +118,8 @@ AddNewOption=Add new option
 ;JITFormulaEditorForm.OptionAddBtn.Hint
 AddOptionValue=Add option value
 ;the program
+AddTheKeyframes=Add the keyframes
+;not used
 AddToBackgroundDepthNotBlend=Add to background depth (not blend)
 ;LightAdjustForm.CheckBox17.Caption
 AddonFormula=Addon formula
@@ -224,6 +224,10 @@ AnimationRenderingStopped=Animation rendering stopped.
 ;the program
 AnimationSize=Animation size:
 ;AnimationForm.GroupBox3.Caption
+AnimationTemplates=Animation templates...
+;not used
+AnimationTemplates2=Animation templates
+;not used
 AnimationTheFfmpegCommandIsOn=Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 ;the program
 AnimationVideoWritten=Animation: video written: {}
@@ -246,6 +250,8 @@ ApproximateVertexColorsTheColorInformation=Approximate vertex colors. The color-
 ;BulbTracer2Frm.CalculateColorsCBx.Hint
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
+Around=Around:
+;not used
 AroundTheMiddleAnObject=Around the middle (an object)
 ;SplatFrm.AroundCmb.Items
 AsFullBackgroundSphere=As full background sphere:
@@ -270,6 +276,8 @@ AutoSavingTheM3cFile=Auto-saving the m3c file:
 ;MCForm.CheckBox5.Caption
 AutoTheCPUAndTheGraphics=Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
 ;Mand3DForm.CalcOnCombo.Hint
+AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
+;not used
 AutoUpdateImage=Auto update image
 ;ColorForm.CheckBox2.Caption
 AutoUpdatePreview=Auto update preview
@@ -1030,9 +1038,7 @@ Ds=Ds:
 ;FormulaGUIForm.Label18.Caption; the program
 DunnoDoNothing=Dunno, do nothing
 ;FColorOptions.Button4.Caption
-DurationOfOneWholeTurnIn=Duration of one whole turn, in seconds:
-;the program
-DurationOfTheFlightInSeconds2=Duration of the flight, in seconds (0: until the view shows only sky or only fractal, at most 2 minutes):
+DurationSeconds=Duration (seconds):
 ;not used
 DynFog=Dyn.fog
 ;LightAdjustForm.SpeedButton4.Caption
@@ -1290,6 +1296,8 @@ FrameNumberToUseForAnimated=Frame number to use for animated maps in the main ed
 ;Mand3DForm.FrameEdit.Hint
 Frames=frames
 ;the program
+FramesAtFramesASecond={} frames at {} frames a second
+;not used
 FramesPerSecond=Frames per second:
 ;AnimationForm.VideoFpsLbl.Caption
 FramesSec=Frames/sec:
@@ -1798,8 +1806,12 @@ KeyframeListM3k=Keyframe list (*.m3k)
 ;the program
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;AnimationForm.Label10.Caption
+Keyframes=Keyframes:
+;not used
 KeyframesForOneWholeTurnAround=Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 ;AnimationForm.OrbitBtn.Hint
+KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
+;not used
 KeysThatBringAWindowTo=Keys that bring a window to the front from any window
 ;Mand3DForm.HotkeysBtn.Hint
 Kind=Kind
@@ -1810,6 +1822,8 @@ LIGHTSTROKES=LIGHT STROKES
 ;PostProForm.GroupBox4.Caption
 LMBMoveRMBRotate=LMB: move           RMB: rotate
 ;HeightMapGenFrm.Label15.Caption, MeshPreviewFrm.Label15.Caption
+LargestTurnDegreesAFrame=Largest turn (degrees a frame):
+;not used
 LastLengthIncrease=Last length increase
 ;Mand3DForm.RadioGroup1.Items
 LastPass=\s· last pass {}
@@ -2224,10 +2238,12 @@ N2Or3PassesGivesA=2 or 3 passes gives a better strong bluring in front of the fo
 ;PostProForm.RadioGroup1.Hint
 N2ndReflection=2nd reflection
 ;LightAdjustForm.Label23.Caption
+N360Orbit=360° orbit
+;not used
 N360Panorama=360 Panorama
 ;Mand3DForm.RadioGroup2.Items
 N360VR=360° VR
-;not used
+;AnimationForm.Vr360Check.Caption
 N3DAnalyticFormula=3D analytic formula
 ;FormulaEditor.TabControl1.Tabs
 N3DFormula=3D formula
@@ -3244,6 +3260,8 @@ SpecularObjectColorsClickToChange=Specular object colors, click to change them.
 ;LightAdjustForm.SpeedButton2.Hint
 SpecularPowerFunction=Specular power function
 ;LightAdjustForm.ComboBox2.Hint
+SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
+;not used
 SphericalCoords=Spherical coords
 ;FNavigator.CheckBox8.Caption
 SplatsInWrittenTo={} splats in {}, written to {}
@@ -3374,6 +3392,8 @@ TargetMapSlot=Target Map Slot
 ;MapSequencesFrm.Label3.Caption
 TargetMapSlotUseThisNumber=Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
 ;MapSequencesFrm.DestChannelEdit.Hint
+Template=Template:
+;not used
 TheAmountOfAddedDiffuseAnd=The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 ;the program
 TheAnimationNeedsAtLeastTwo=The animation needs at least two keyframes.
@@ -3400,6 +3420,8 @@ TheCalculationFailedLower=the calculation failed
 ;the program
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
+TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+;not used
 TheCameraLeftTheFractal=the camera left the fractal
 ;the program
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
@@ -3458,6 +3480,8 @@ TheMainEditorIsStillRendering=The main editor is still rendering. Please stop it
 ;the program
 TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 ;Mand3DForm.RadioGroup1.Hint
+TheMiddleOfTheView=The middle of the view
+;not used
 TheMonteCarloWindowIsRendering=The Monte Carlo window is rendering: stop it first.
 ;the program
 TheMotionBlurSShutterTime=The motion blur's shutter time: a part of the time to the next frame (0 to 1)
@@ -3501,9 +3525,9 @@ TheTileHasNoImageBuffer=the tile has no image buffer
 TheValueOfTheChosenKeyframe=The value of the chosen keyframe
 ;CurvesFrm.KeyValEdit.Hint
 TheViewIsFilledWithThe=the view is filled with the fractal
-;not used
+;the program
 TheViewShowsOnlySky=the view shows only sky
-;not used
+;the program
 Themes=Themes
 ;Mand3DForm.VisualThemesBtn.Caption
 ThereIsAFileAlready=There is a file {} already.
@@ -3650,6 +3674,8 @@ UnfinishedRenders=Unfinished renders
 ;UnfinishedFrm.Caption
 UnfinishedRendersContinueOrDeleteThem=Unfinished renders: continue or delete them
 ;Mand3DForm.ResumeBtn.Hint
+UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)
+;not used
 Untitled=untitled
 ;the program
 UpOneLevel=Up one level
