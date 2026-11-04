@@ -153,6 +153,13 @@ pub struct Ground {
     pub water_color: [u8; 3],
     /// the refraction index of the water (1.33)
     pub ior: f32,
+    /// how much the water scatters light (0 = none, as before; 0..1):
+    /// its glow towards the lights, translucent wave crests, light shafts
+    /// under the surface, the glow on what lies under it (`water`)
+    pub scattering: f32,
+    /// the direction of the scattering (Henyey-Greenstein's g, 0..0.95;
+    /// water scatters mostly forward: 0.8)
+    pub scatter_dir: f32,
 }
 
 impl Default for Ground {
@@ -169,6 +176,8 @@ impl Default for Ground {
             visibility: 1.0,
             water_color: [10, 60, 70],
             ior: 1.33,
+            scattering: 0.0,
+            scatter_dir: 0.8,
         }
     }
 }
@@ -1030,6 +1039,12 @@ impl Scene {
                 let _ = writeln!(t, "ground_transparency = {}\nground_absorption = {}", g.transparency, ((1.0 / g.visibility.max(1e-6) as f64) * 1e6).round() / 1e6);
                 let _ = writeln!(t, "ground_water_color = #{:02X}{:02X}{:02X}\nground_ior = {}", a[0], a[1], a[2], g.ior);
             }
+            if g.scattering != d.scattering {
+                let _ = writeln!(t, "ground_scattering = {}", g.scattering);
+            }
+            if g.scatter_dir != d.scatter_dir {
+                let _ = writeln!(t, "ground_scatter_dir = {}", g.scatter_dir);
+            }
         }
         t
     }
@@ -1560,6 +1575,8 @@ impl Scene {
                         s.ground.get_or_insert_with(Ground::default).water_color = c;
                     }
                     "ground_ior" => s.ground.get_or_insert_with(Ground::default).ior = num()?.clamp(1.0, 3.0) as f32,
+                    "ground_scattering" => s.ground.get_or_insert_with(Ground::default).scattering = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_scatter_dir" => s.ground.get_or_insert_with(Ground::default).scatter_dir = num()?.clamp(0.0, 0.95) as f32,
                     "ground_waves" => {
                         let p = vec_n(2)?;
                         let g = s.ground.get_or_insert_with(Ground::default);

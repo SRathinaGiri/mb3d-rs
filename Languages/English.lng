@@ -1526,6 +1526,8 @@ HowMuchThePlaneReflects0=How much the plane reflects (0 to 1): its highlights, a
 ;Mand3DForm.GroundReflEdit.Hint
 HowMuchTheSurfaceSColour=How much the surface's colour varies with the relief: 0 not, 1 strongly
 ;PostProForm.DetailColEdit.Hint
+HowMuchTheWaterScattersLight=How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
+;Mand3DForm.GroundScatEdit.Hint
 HowMurkyTheWaterIsHow=How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 ;Mand3DForm.GroundVisEdit.Hint
 HowStrongTheNoiseIsThat=How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
@@ -3074,6 +3076,8 @@ ScalesTheMaximumLengthOfThe=Scales the maximum length of the ambient rays to be 
 ;PostProForm.Edit8.Hint
 ScanPreview=Scan Preview
 ;BulbTracer2Frm.GroupBox4.Caption
+Scattering=Scattering:
+;Mand3DForm.Label95.Caption
 ScreenDistance=Screen distance:
 ;Mand3DForm.Label35.Caption
 ScriptEditor=Script Editor
@@ -3418,6 +3422,8 @@ TheDefaultNumberingIncludes2Numbers=The default numbering includes 2 numbers, se
 ;TilingForm.CheckBox7.Hint
 TheDefaultOutputIsWhiteFor=The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
 ;FVoxelExport.CheckBox1.Hint
+TheDirectionOfTheScattering0=The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
+;Mand3DForm.GroundScatDirEdit.Hint
 TheDistanceEstimatesAreDownscaledBy=The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 ;Mand3DForm.Edit6.Hint
 TheDistanceEstimatesAreDownscaledBy2=The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .

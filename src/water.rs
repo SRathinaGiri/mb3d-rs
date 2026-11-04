@@ -122,6 +122,144 @@ pub fn split(g: &Ground, c: &Vec3, view: &Vec3) -> (f64, Vec3) {
     (f, refract(d, n, 1.0 / ior, cos_i, cos_t))
 }
 
+// ---------------------------------------------------------------------------
+// scattering (`Ground::scattering`): the water's light seen along a ray
+
+/// Henyey-Greenstein's phase function times 4 pi (1 = the same in every
+/// direction) for the cosine between the light's direction of travel and
+/// the direction towards the eye, with the anisotropy `g` (forward > 0).
+pub fn hg(cos: f64, g: f64) -> f64 {
+    let g2 = g * g;
+    (1.0 - g2) / (1.0 + g2 - 2.0 * g * cos.clamp(-1.0, 1.0)).max(1e-9).powf(1.5)
+}
+
+/// The strength of the light scattered once (the light shafts) over its
+/// physical amount: an artistic gain, the same in both renderers.
+pub const SHAFTS: f64 = 2.0;
+
+/// The phase of the light scattered once and seen through more water:
+/// half Henyey-Greenstein's with `g`, half with a third of it (the light
+/// scattered on the way blurs the forward peak), times 4 pi.
+pub fn phase_seen(cos: f64, g: f64) -> f64 {
+    0.5 * hg(cos, g) + 0.5 * hg(cos, g / 3.0)
+}
+
+/// A direction around the unit direction `w` drawn from Henyey-Greenstein
+/// (`u1`, `u2` uniform 0..1): the new direction of a scattered ray.
+pub fn sample_hg(w: Vec3, g: f64, u1: f64, u2: f64) -> Vec3 {
+    let cos = if g.abs() < 1e-3 {
+        1.0 - 2.0 * u1
+    } else {
+        let s = (1.0 - g * g) / (1.0 - g + 2.0 * g * u1);
+        ((1.0 + g * g - s * s) / (2.0 * g)).clamp(-1.0, 1.0)
+    };
+    let sin = (1.0 - cos * cos).max(0.0).sqrt();
+    let phi = std::f64::consts::TAU * u2;
+    let a = if w[0].abs() > 0.9 { [0.0, 1.0, 0.0] } else { [1.0, 0.0, 0.0] };
+    let t = normalize([w[1] * a[2] - w[2] * a[1], w[2] * a[0] - w[0] * a[2], w[0] * a[1] - w[1] * a[0]]);
+    let b = [w[1] * t[2] - w[2] * t[1], w[2] * t[0] - w[0] * t[2], w[0] * t[1] - w[1] * t[0]];
+    normalize(add(add(scale(t, sin * phi.cos()), scale(b, sin * phi.sin())), scale(w, cos)))
+}
+
+/// How much light the water scatters per fractal unit (grey): the
+/// scattering amount over the visibility.
+pub fn sigma_s(g: &Ground) -> f64 {
+    g.scattering.max(0.0) as f64 / g.visibility.max(1e-6) as f64
+}
+
+/// [`transmittance`] with the scattering's loss too: what goes straight
+/// on (the scattered part comes back as the water's light).
+pub fn transmittance_s(g: &Ground, dist: f64) -> [f32; 3] {
+    let s = (-sigma_s(g) * dist.max(0.0)).exp() as f32;
+    transmittance(g, dist).map(|t| if s.is_finite() { t * s } else { 0.0 })
+}
+
+/// The direction of travel under the surface of the light coming from
+/// the unit direction `l` (towards the light), bent by the refraction.
+pub fn light_under(g: &Ground, l: &Vec3) -> Vec3 {
+    let up = g.up();
+    let cos_i = dot(l, &up).clamp(1e-3, 1.0);
+    let ior = g.ior.max(1.0) as f64;
+    let (_, cos_t) = fresnel(cos_i, ior);
+    refract(scale(*l, -1.0), up, 1.0 / ior, cos_i, cos_t)
+}
+
+/// The waves' focusing of the light that reaches `c` from the unit
+/// direction `l` (towards the light): where it entered the surface the
+/// wave's curvature bends the light together (under a crest: brighter)
+/// or apart, more so the deeper `c` lies: 0.3..2.5, 1 for flat water.
+/// The bright and dark bands it makes are the caustics and the light
+/// shafts' stripes.
+pub fn focus(g: &Ground, c: &Vec3, l: &Vec3) -> f64 {
+    if g.wave_height == 0.0 {
+        return 1.0;
+    }
+    let depth = g.depth(c);
+    if depth <= 0.0 {
+        return 1.0;
+    }
+    let k = g.axis as usize % 3;
+    let cos_up = dot(l, &g.up()).max(0.05);
+    // where the light came through the surface
+    let e = add(*c, scale(*l, depth / cos_up));
+    let (u, v) = (e[(k + 1) % 3], e[(k + 2) % 3]);
+    let h = g.wave_len.max(1e-30) * 0.05;
+    let lap = (g.wave(u + h, v) + g.wave(u - h, v) + g.wave(u, v + h) + g.wave(u, v - h) - 4.0 * g.wave(u, v)) / (h * h);
+    // a crest (curved down, lap < 0) is a converging lens
+    (1.0 - 1.5 * lap * depth / g.ior.max(1.0) as f64).clamp(0.3, 2.5)
+}
+
+/// The strength of the light through the wave crests.
+const CREST: f64 = 1.0;
+
+/// Translucent wave crests: the light of a lamp from the unit direction
+/// `l` (towards it) that goes through the thin water of a crest and comes
+/// out towards the eye (looking along the unit direction `view`), per
+/// channel and per unit of the lamp's light: strongest looking towards
+/// the light (forward scattering) at the top of a crest, tinted by the
+/// way through the crest (about a fifth of the wave length there).
+pub fn crest(g: &Ground, c: &Vec3, view: &Vec3, l: &Vec3) -> [f32; 3] {
+    if g.wave_height == 0.0 || g.scattering <= 0.0 {
+        return [0.0; 3];
+    }
+    let k = g.axis as usize % 3;
+    let w = g.wave(c[(k + 1) % 3], c[(k + 2) % 3]) / g.wave_height;
+    let top = ((w + 1.0) * 0.5).clamp(0.0, 1.0).powi(2);
+    // the lamp low over the water shines through the crests
+    let low = 1.0 - dot(l, &g.up()).clamp(0.0, 1.0);
+    let ph = hg(dot(l, view), g.scatter_dir as f64);
+    let path = g.wave_len * 0.2 * (1.0 - 0.5 * top);
+    let a = (g.scattering as f64 * top * low * ph * CREST) as f32;
+    transmittance(g, path).map(|t| t * a)
+}
+
+/// How much brighter the water's own light is seen along the ray `view`
+/// (unit, under the water) than without scattering: [`glow_dir`] around
+/// 1, by half for the scattering amount (0.3..3).
+pub fn glow_mod(g: &Ground, view: &Vec3, lamps: &[(Vec3, f64)]) -> f64 {
+    let s = g.scattering.clamp(0.0, 1.0) as f64;
+    (1.0 + s * 0.5 * (glow_dir(g, view, lamps) - 1.0)).clamp(0.3, 3.0)
+}
+
+/// The view-dependent strength of the water's own (many times scattered)
+/// light: the lamps' light under the surface scattered towards the eye
+/// (`view`, the unit direction of the ray under the water) with half of
+/// the anisotropy (scattering many times makes it rounder), weighed by
+/// the lamps' `(towards, weight)`; 1 without lamps.
+pub fn glow_dir(g: &Ground, view: &Vec3, lamps: &[(Vec3, f64)]) -> f64 {
+    let (mut a, mut w) = (0.0, 0.0);
+    for (l, k) in lamps {
+        let d = light_under(g, l);
+        a += k * hg(-dot(&d, view), g.scatter_dir as f64 * 0.5);
+        w += k;
+    }
+    if w > 1e-12 {
+        a / w
+    } else {
+        1.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -211,6 +349,64 @@ mod tests {
         let sin_t = t[0] / len(&t);
         assert!((sin_t - (0.5f64.sqrt() / g.ior as f64)).abs() < 1e-12, "{t:?}");
         assert!(t[1] > 0.0);
+    }
+
+    /// Henyey-Greenstein: 1 everywhere without anisotropy, its mean over
+    /// the sphere 1, forward much stronger than backward; drawn directions
+    /// have the mean cosine g.
+    #[test]
+    fn forward_scattering() {
+        assert!((hg(0.3, 0.0) - 1.0).abs() < 1e-12);
+        let n = 20000;
+        let mean: f64 = (0..n).map(|i| hg(-1.0 + 2.0 * (i as f64 + 0.5) / n as f64, 0.8)).sum::<f64>() / n as f64;
+        assert!((mean - 1.0).abs() < 0.01, "{mean}");
+        assert!(hg(1.0, 0.8) > 100.0 * hg(-1.0, 0.8));
+        let w = normalize([0.3, -0.5, 0.8]);
+        let mut c = 0.0;
+        for i in 0..64 {
+            for j in 0..64 {
+                let d = sample_hg(w, 0.8, (i as f64 + 0.5) / 64.0, (j as f64 + 0.5) / 64.0);
+                assert!((len(&d) - 1.0).abs() < 1e-9);
+                c += dot(&d, &w);
+            }
+        }
+        assert!((c / 4096.0 - 0.8).abs() < 0.01, "{}", c / 4096.0);
+        // the sun's light under the surface goes down, bent towards the normal
+        let g = water();
+        let l = normalize([1.0, -1.0, 0.0]);
+        let d = light_under(&g, &l);
+        assert!(d[1] > 0.0 && d[0] < 0.0 && d[0].abs() < 0.71, "{d:?}");
+        // looking down away from the sun the water glows less than towards it
+        let lamps = [(l, 1.0)];
+        let towards = normalize([1.0, 1.0, 0.0]);
+        let away = normalize([-1.0, 1.0, 0.0]);
+        assert!(glow_dir(&g, &towards, &lamps) > glow_dir(&g, &away, &lamps));
+    }
+
+    /// Crests glow only with waves and scattering, most at their tops and
+    /// looking towards the light; the waves focus the light under crests.
+    #[test]
+    fn crests_and_caustics() {
+        let mut g = water();
+        let l = normalize([1.0, -0.4, 0.0]);
+        assert_eq!(crest(&g, &[0.0; 3], &[1.0, 0.0, 0.0], &l), [0.0; 3]);
+        assert_eq!(focus(&g, &[0.0, 0.3, 0.0], &l), 1.0);
+        g.wave_height = 0.01;
+        g.wave_len = 0.5;
+        g.scattering = 0.5;
+        let k = |x: f64| g.wave(x, 0.0);
+        let top = (0..1000).map(|i| i as f64 * 0.001).fold(0.0, |b: f64, x| if k(x) > k(b) { x } else { b });
+        let dip = (0..1000).map(|i| i as f64 * 0.001).fold(0.0, |b: f64, x| if k(x) < k(b) { x } else { b });
+        let view = normalize([1.0, 0.2, 0.0]);
+        let ct = crest(&g, &[0.0, 0.0, top], &view, &l);
+        assert!(ct[2] > crest(&g, &[0.0, 0.0, dip], &view, &l)[2]);
+        assert!(ct[2] > crest(&g, &[0.0, 0.0, top], &scale(view, -1.0), &l)[2]);
+        assert!(ct[2] > ct[0], "turquoise: {ct:?}");
+        let f: Vec<f64> = (0..200).map(|i| focus(&g, &[0.0, 0.4, i as f64 * 0.005], &[0.0, -1.0, 0.0])).collect();
+        assert!(f.iter().cloned().fold(0.0, f64::max) > 1.05 && f.iter().cloned().fold(9.0, f64::min) < 0.95, "{f:?}");
+        // scattering takes light off the straight way
+        assert!(transmittance_s(&g, 0.3)[2] < transmittance(&g, 0.3)[2]);
+        assert_eq!(sigma_s(&g), 1.0);
     }
 
     /// The waves tilt the normal; flat water's normal is the plane's.

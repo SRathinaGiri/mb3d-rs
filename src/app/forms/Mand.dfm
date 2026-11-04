@@ -425,7 +425,7 @@ object Mand3DForm: TMand3DForm
       Left = 1
       Top = 446
       Width = 151
-      Height = 364
+      Height = 388
       ActivePage = TabSheet5
       Align = alTop
       BiDiMode = bdLeftToRight
@@ -1352,6 +1352,47 @@ object Mand3DForm: TMand3DForm
           ShowHint = True
           TabOrder = 16
           Text = '1.33'
+        end
+        object Label95: TLabel
+          Left = 9
+          Top = 296
+          Width = 56
+          Height = 13
+          Caption = '@MB:Scattering'
+        end
+        object GroundScatEdit: TEdit
+          Left = 66
+          Top = 293
+          Width = 34
+          Height = 21
+          Hint = '@MB:HowMuchTheWaterScattersLight'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 17
+          Text = '0'
+        end
+        object GroundScatDirEdit: TEdit
+          Left = 103
+          Top = 293
+          Width = 34
+          Height = 21
+          Hint = '@MB:TheDirectionOfTheScattering0'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 18
+          Text = '0.8'
         end
       end
       object TabSheet9: TTabSheet

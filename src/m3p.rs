@@ -1526,6 +1526,8 @@ mod tests {
             visibility: 0.4,
             water_color: [10, 60, 70],
             ior: 1.4,
+            scattering: 0.6,
+            scatter_dir: 0.7,
         });
         let raw = write(&sc);
         // MB3D's part is the same as without

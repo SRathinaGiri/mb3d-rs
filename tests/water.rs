@@ -121,3 +121,37 @@ fn water_keys_round_trip() {
     let old = none.apply("ground_absorption = 4\nground_absorb_color = #102030").unwrap().ground.unwrap();
     assert_eq!((old.visibility, old.water_color), (0.25, [16, 32, 48]));
 }
+
+/// Scattering: its keys only when set, it changes only the water pixels
+/// of the reflection pass (and nothing without it), and Monte Carlo
+/// renders it.
+#[test]
+fn scattering_water() {
+    let s = half_submerged(1.0);
+    assert!(!s.to_text().contains("ground_scatter"));
+    let mut w = s.clone();
+    let g = w.ground.as_mut().unwrap();
+    (g.scattering, g.scatter_dir) = (0.6, 0.7);
+    let t = w.to_text();
+    assert!(t.contains("ground_scattering = 0.6") && t.contains("ground_scatter_dir = 0.7"), "{t}");
+    assert_eq!(Scene::parse(&t).unwrap().ground, w.ground);
+    let (a, ga) = picture(&s);
+    let (b, gb) = picture(&w);
+    assert_eq!(ga, gb);
+    let changed = a.chunks(3).zip(b.chunks(3)).zip(&ga).filter(|((x, y), g)| g.is_ground() && x != y).count();
+    assert!(changed > 500, "{changed}");
+    for ((x, y), g) in a.chunks(3).zip(b.chunks(3)).zip(&ga) {
+        if g.is_background() {
+            assert_eq!(x, y);
+        }
+    }
+    let (mut a0, mut b0) = (s.clone(), w.clone());
+    a0.mc.reflections = false;
+    b0.mc.reflections = false;
+    assert_eq!(picture(&a0).0, picture(&b0).0);
+    let mut img = mb3d::mc::McImage::new(0, 0);
+    let mut m = w.clone();
+    (m.width, m.height) = (40, 30);
+    mb3d::mc::pass(&m, &mut img, 2, &|_, _| {}, &|| false).unwrap();
+    assert!(img.recs.iter().all(|r| r.col.iter().all(|c| c.is_finite())));
+}

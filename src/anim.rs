@@ -457,6 +457,8 @@ fn interpolate_header(base: &Scene, h: &[&Scene], w: &[f64], rot: Quat, bezier: 
             ng.transparency = lin(&|x| g(x).transparency as f64).clamp(0.0, 1.0) as f32;
             ng.visibility = lin(&|x| g(x).visibility as f64).max(1e-6) as f32;
             ng.ior = lin(&|x| g(x).ior as f64).clamp(1.0, 3.0) as f32;
+            ng.scattering = lin(&|x| g(x).scattering as f64).clamp(0.0, 1.0) as f32;
+            ng.scatter_dir = lin(&|x| g(x).scatter_dir as f64).clamp(0.0, 0.95) as f32;
             for k in 0..3 {
                 ng.color[k] = lin(&|x| g(x).color[k] as f64).round().clamp(0.0, 255.0) as u8;
                 ng.water_color[k] = lin(&|x| g(x).water_color[k] as f64).round().clamp(0.0, 255.0) as u8;

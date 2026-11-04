@@ -504,9 +504,12 @@ impl<'a, 'c> SrTracer<'a, 'c> {
     /// plane left out), the light of its hit fades with the way through
     /// the water to it and from the surface down to it, and the water's
     /// own light (the absorb colour lit as the surface is) fills what
-    /// fades (`crate::water`).  Runs on the CPU (the card's reflections
-    /// are not used with transparent water).
-    fn water_hit(&mut self, si: &SiLight, view: Vec3, zz: f64, rit: i32, result: S3) -> Option<(f32, S3)> {
+    /// fades (`crate::water`).  With scattering also the light the water
+    /// scatters towards the eye along the ray (light shafts), the glow on
+    /// what lies under it, and the third value: the light through the wave
+    /// crests (for the transparency, not 1 - F).  Runs on the CPU (the
+    /// card's reflections are not used with transparent water).
+    fn water_hit(&mut self, si: &SiLight, view: Vec3, zz: f64, rit: i32, result: S3) -> Option<(f32, S3, S3)> {
         let w = self.c.water.as_ref().filter(|_| si.is_ground())?;
         let (c, p) = (self.c, self.c.p);
         let g = w.g;
@@ -520,7 +523,27 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         let up = rotate_vector(&g.up(), &normalise_matrix_to(1.0, &p.vgrads));
         let up = if dot(&up, &n) < 0.0 { scale(up, -1.0) } else { up };
         flat.normal = up.map(|v| (v * 32767.0).round().clamp(-32767.0, 32767.0) as i16);
+        let scattering = g.scattering > 0.0;
+        if scattering {
+            // (the fractal's shadows in the water are the light shafts'; the
+            // light scattered many times is not shadowed at one point)
+            let soft = self.c.hs.as_ref().is_some_and(|h| h.1);
+            flat.shadow = if soft { flat.shadow | 0xFC00 } else { flat.shadow & 0x3FF };
+        }
         let body = self.shade_with(&flat, None, Some(w.body)).light.map(|v| (v / 255.0).clamp(0.0, 8.0));
+        // (the lamps: towards them, their light, their weight for the glow)
+        let lamps = if scattering { self.water_lamps(&g, &pos) } else { Vec::new() };
+        let crest = if scattering {
+            let vis = self.lamp_shadows(pos, zz, flat.normal);
+            let vu = normalize(view);
+            let mut a = [0f32; 3];
+            for (k, (l, col, _)) in lamps.iter().enumerate() {
+                a = add3(a, mul3(sc3(*col, vis[k]), crate::water::crest(&g, &pos, &vu, l)));
+            }
+            a
+        } else {
+            [0.0; 3]
+        };
         let saved = (self.normal, self.plv, self.scale_amb_diff_down, self.m.mzz, self.m.ms_de_stop, self.m.on_ground);
         let saved_lz = self.light_z.clone();
         let dir = scale(tdir, len(&view));
@@ -531,6 +554,9 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         }
         self.m.no_ground = true;
         let h = self.march(&RayReq { origin: pos, dir, zz, inside: self.m.calc_inside, rit: rit + 1, max_l });
+        if scattering {
+            return Some(self.water_scattered(&g, &h, (f, tdir, dir, pos, zz), body, result, crest, &lamps, flat.normal, saved, saved_lz));
+        }
         let light = if h.hit {
             let step0 = (p.de_stop as f64 * 0.25).min(1.0);
             self.plv.cam_pos = s3(&sub(add(pos, scale(dir, step0)), c.mid));
@@ -553,7 +579,151 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         if self.dbg {
             crate::elog!("  water: fresnel {f:.4} refracted {tdir:?} hit {} light {light:?}", h.hit);
         }
-        Some((f as f32, light))
+        Some((f as f32, light, [0.0; 3]))
+    }
+
+    /// The rest of [`SrTracer::water_hit`] with scattering: the hit seen
+    /// through the water, the water's own light (brighter towards the
+    /// lamps), the light scattered along the ray (light shafts: a few
+    /// steps, each lit by the lamps through the water above it, in the
+    /// fractal's shadows and the waves' focus) and the glow of the water's
+    /// light on the hit; puts the tracer back (`saved`).
+    #[allow(clippy::too_many_arguments, clippy::type_complexity)]
+    fn water_scattered(
+        &mut self,
+        g: &crate::scene::Ground,
+        h: &RayHit,
+        (f, tdir, dir, pos, zz): (f64, Vec3, Vec3, Vec3, f64),
+        body: S3,
+        result: S3,
+        crest: S3,
+        lamps: &[(Vec3, S3, f64)],
+        up_normal: [i16; 3],
+        saved: (Vec3, Plv, bool, f64, f32, bool),
+        saved_lz: Vec<(f32, f32)>,
+    ) -> (f32, S3, S3) {
+        let (c, p) = (self.c, self.c.p);
+        let s = g.scattering.clamp(0.0, 1.0);
+        let dist = if h.hit { h.zz2 * len(&dir) } else { f64::INFINITY };
+        let tr = crate::water::transmittance_s(g, dist);
+        // the water's own light, seen with the lamps' direction
+        let ld: Vec<(Vec3, f64)> = lamps.iter().map(|(l, _, k)| (*l, *k)).collect();
+        let glow = crate::water::glow_mod(g, &tdir, &ld) as f32;
+        let own = sc3(body, glow);
+        let mut light = mul3(own, tr.map(|t| 1.0 - t));
+        if h.hit {
+            let step0 = (p.de_stop as f64 * 0.25).min(1.0);
+            self.plv.cam_pos = s3(&sub(add(pos, scale(dir, step0)), c.mid));
+            self.set_ray_paint(dir, h.zz2_paint);
+            self.m.it.c = h.pos;
+            self.plv.z_pos = (h.zz.abs() * p.step_width + p.zz_stmit_dif) as f32;
+            self.plv.obj_pos = s3(&sub(h.pos, c.mid));
+            self.scale_amb_diff_down = false;
+            let sh = self.shade(&h.si, None);
+            let mut lit = mul3(sh.light.map(|v| (v / 255.0).clamp(0.0, 8.0)), self.light_in_water(g, &h.pos));
+            // the water's light around it falls on it too (less in its
+            // occlusion, less the deeper it lies)
+            let open = 1.0 - (h.si.amb_shadow as f32 / 16383.0).clamp(0.0, 1.0);
+            let around = mul3(mul3(sh.dif, own), crate::water::transmittance(g, g.depth(&h.pos).max(0.0)));
+            lit = add3(lit, sc3(around, s * WATER_AROUND * open));
+            light = add3(light, mul3(mul3(lit, result), tr));
+        }
+        // single scattering along the ray: the light shafts
+        let lmax = dist.min(SHAFT_REACH * g.visibility.max(1e-6) as f64);
+        let mut shafts = [0f32; 3];
+        if lmax > 0.0 && lmax.is_finite() {
+            let n = SHAFT_STEPS;
+            let j = self.rand();
+            let sig = crate::water::sigma_s(g);
+            // the steps where the light seen through the water is: spaced
+            // by the clearest channel's fading (e^-a t over 0..lmax)
+            let a = 1.0 / g.visibility.max(1e-6) as f64 + sig;
+            let span = 1.0 - (-a * lmax).exp();
+            let mut acc = [0f32; 3];
+            for i in 0..n {
+                let u = (i as f64 + j) / n as f64;
+                let t = -(1.0 - u * span).ln() / a;
+                // (1 / the density of the steps there)
+                let wgt = span / (a * (-a * t).exp());
+                let x = add(pos, scale(tdir, t));
+                let tv = crate::water::transmittance_s(g, t);
+                let vis = self.lamp_shadows(x, zz, up_normal);
+                for (k, (l, col, _)) in lamps.iter().enumerate() {
+                    if vis[k] <= 0.0 {
+                        continue;
+                    }
+                    let d = crate::water::light_under(g, l);
+                    let ph = crate::water::phase_seen(-dot(&d, &tdir), g.scatter_dir as f64);
+                    let td = crate::water::transmittance(g, crate::water::light_path(g, &x, l));
+                    let k = (vis[k] as f64 * ph * crate::water::focus(g, &x, l) * wgt) as f32;
+                    acc = add3(acc, sc3(mul3(mul3(*col, td), tv), k));
+                }
+            }
+            shafts = sc3(acc, (sig * crate::water::SHAFTS / n as f64) as f32);
+            light = add3(light, shafts);
+        }
+        self.m.no_ground = false;
+        self.m.it.c = pos;
+        (self.normal, self.plv, self.scale_amb_diff_down, self.m.mzz, self.m.ms_de_stop, self.m.on_ground) = saved;
+        self.light_z = saved_lz;
+        if self.dbg {
+            crate::elog!("  water (scattering): fresnel {f:.4} hit {} light {light:?} own {own:?} shafts {shafts:?} crest {crest:?} glow {glow}", h.hit);
+        }
+        (f as f32, light, crest)
+    }
+
+    /// The lamps for the water's scattering: (towards it from `c`, its
+    /// light as the diffuse light counts it, the weight of its glow: its
+    /// brightness times how high it stands over the water).
+    fn water_lamps(&self, g: &crate::scene::Ground, c: &Vec3) -> Vec<(Vec3, S3, f64)> {
+        let lv = self.c.lv;
+        let k = lv.s_diff / 255.0;
+        lv.lights
+            .iter()
+            .enumerate()
+            .map(|(i, l)| {
+                let hv = self.c.hs_vecs[i];
+                let (toward, col) = if l.positional {
+                    let v = sub(hv, *c);
+                    (normalize(v), sc3(l.col, (1.0 / (sqr_len(&v) + 1e-26)) as f32 * k))
+                } else {
+                    (normalize(scale(hv, -1.0)), sc3(l.col, k))
+                };
+                let w = luma(col) as f64 * dot(&toward, &g.up()).max(0.0);
+                (toward, col, w)
+            })
+            .collect()
+    }
+
+    /// The share of each lamp's light (per entry of the lights) that the
+    /// fractal does not shadow at `x` (depth `zz`; `up` the view-space
+    /// normal facing up): the hard or soft shadows of the lights chosen
+    /// for them, 1 for the others.  The ground is left out (the marcher's
+    /// `no_ground` is set by the caller under the water).
+    fn lamp_shadows(&mut self, x: Vec3, zz: f64, up: [i16; 3]) -> Vec<f32> {
+        let lv = self.c.lv;
+        let mut vis = vec![1f32; lv.lights.len()];
+        let Some((lights, soft, _, _)) = &self.c.hs else { return vis };
+        let (lights, soft) = (lights.clone(), *soft);
+        let (ic, mzz, nog) = (self.m.it.c, self.m.mzz, self.m.no_ground);
+        self.m.no_ground = true;
+        self.m.it.c = x;
+        self.m.mzz = zz.abs();
+        let mut si = SiLight { normal: up, ..Default::default() };
+        self.calc_hs(&mut si);
+        if soft {
+            if let Some(&(li, _)) = lights.last() {
+                vis[li] = ((si.shadow >> 10) & 63) as f32 / 63.0;
+            }
+        } else {
+            for &(li, idx) in &lights {
+                if si.shadow & (0x400 << idx) != 0 {
+                    vis[li] = 0.0;
+                }
+            }
+        }
+        (self.m.it.c, self.m.mzz, self.m.no_ground) = (ic, mzz, nog);
+        vis
     }
 
     /// The share of the lights that reaches `c` under the water: each
@@ -1161,10 +1331,10 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                         f.sd = (sh.spe, sh.spe_a, sh.dif);
                         self.t_amb = add3(self.t_amb, mul3(t_absorb, tmp_amb));
                         if inside.is_none() {
-                            if let Some((fr, under)) = self.water_hit(&si, new_vec, h.zz, rit, sh.result) {
+                            if let Some((fr, under, crest)) = self.water_hit(&si, new_vec, h.zz, rit, sh.result) {
                                 // a reflected ray meets transparent water
                                 let t = self.water_t();
-                                self.t_amb = add3(self.t_amb, mul3(t_absorb, sc3(under, t * (1.0 - fr))));
+                                self.t_amb = add3(self.t_amb, mul3(t_absorb, add3(sc3(under, t * (1.0 - fr)), sc3(crest, t))));
                                 f.sd.0 = self.water_mirror(fr);
                             }
                         }
@@ -1518,11 +1688,11 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         let sv = sc3(sh.result, c.sr_light_amount);
         let mzz = self.m.mzz;
         let mut spe = sh.spe;
-        if let Some((fr, under)) = self.water_hit(si, vf, mzz, 1, sh.result) {
+        if let Some((fr, under, crest)) = self.water_hit(si, vf, mzz, 1, sh.result) {
             // transparent water: its surface, the light from under it, and
             // its mirror by Fresnel's share
             let t = self.water_t();
-            self.t_amb = add3(self.t_amb, sc3(under, t * (1.0 - fr)));
+            self.t_amb = add3(self.t_amb, add3(sc3(under, t * (1.0 - fr)), sc3(crest, t)));
             spe = self.water_mirror(fr);
         }
         if self.dbg {
@@ -1683,6 +1853,14 @@ pub fn reflections<S: Sample>(
     }
     reflections_cpu(sc, p, gbuf, rgb, cam, lv, threads, progress, cancel)
 }
+
+/// Steps of the light shafts along a ray under scattering water.
+const SHAFT_STEPS: usize = 8;
+/// How far the light shafts are followed under the water, in visibilities
+/// (the clearest channel keeps e^-4 there).
+const SHAFT_REACH: f64 = 4.0;
+/// The strength of the scattering water's light on what lies under it.
+const WATER_AROUND: f32 = 1.0;
 
 /// Transparent water (a ground with a transparency): the reflection pass
 /// and Monte Carlo run on the CPU, which marches the rays under the

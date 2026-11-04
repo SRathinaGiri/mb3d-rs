@@ -727,6 +727,10 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     // (shown as the absorption, 1 / the visibility)
     set(ui, "GroundVisEdit", &fts_single(1.0 / g.visibility.max(1e-6) as f64));
     set(ui, "GroundIorEdit", &fts_single(g.ior as f64));
+    // (a fresh water scatters: the scenes without the key do not)
+    let scat = if sc.ground.is_some() { g.scattering } else { FRESH_SCATTERING };
+    set(ui, "GroundScatEdit", &fts_single(scat as f64));
+    set(ui, "GroundScatDirEdit", &fts_single(g.scatter_dir as f64));
     app.main.ground_color = g.color;
     app.main.ground_water_color = g.water_color;
     ground_swatch(app, ui);
@@ -787,6 +791,8 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         visibility: (1.0 / ptf(&t(ui, "GroundVisEdit")).max(1e-6)) as f32,
         water_color: app.main.ground_water_color,
         ior: Some(ptf(&t(ui, "GroundIorEdit")) as f32).filter(|v| *v >= 1.0).unwrap_or(1.33).min(3.0),
+        scattering: (ptf(&t(ui, "GroundScatEdit")) as f32).clamp(0.0, 1.0),
+        scatter_dir: (ptf(&t(ui, "GroundScatDirEdit")) as f32).clamp(0.0, 0.95),
     });
     sc.de_stop = ptf(&t(ui, "Edit25")).max(0.001);
     sc.julia = ui.checked(F, "CheckBox7");
@@ -809,6 +815,10 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     let n = ui.position(F, "UpDown3").clamp(1, 64) as usize;
     sc.threads = if n == std::thread::available_parallelism().map(|n| n.get()).unwrap_or(0) { 0 } else { n };
 }
+
+/// The scattering a ground plane gets when it is switched on in a scene
+/// without one (scenes saved without the key keep 0).
+const FRESH_SCATTERING: f32 = 0.5;
 
 /// The ground plane's colour on its button.
 fn ground_swatch(app: &Mb3d, ui: &mut Ui) {

@@ -1725,6 +1725,53 @@ impl<'a, 'c> Tracer<'a, 'c> {
         res
     }
 
+    /// The lamps' light scattered towards the eye at `x` in the water
+    /// (the ray along the unit direction `du`, depth `zz`; weighted by
+    /// `t_absorb`): each lamp through the water above `x`, in the
+    /// fractal's shadows and the waves' focus, by the phase function.
+    async fn water_scatter_light(&mut self, g: &crate::scene::Ground, x: Vec3, du: Vec3, zz: f64, t_absorb: S3) {
+        let lv = self.c.lv;
+        let saved = (self.pos, self.normals, self.mzz);
+        self.pos = x;
+        self.normals = g.up();
+        self.mzz = zz;
+        self.calc_hs_mc().await;
+        let k = lv.s_diff / 255.0;
+        for (i, l) in lv.lights.iter().enumerate() {
+            let vis = first3(self.hs6[i]);
+            if vis == [0.0; 3] {
+                continue;
+            }
+            let (toward, col) = if l.positional {
+                let v = sub(self.hs_vecs[i], x);
+                (normalize(v), sc3(l.col, (1.0 / (sqr_len(&v) + 1e-26)) as f32 * k))
+            } else {
+                (normalize(scale(self.hs_vecs[i], -1.0)), sc3(l.col, k))
+            };
+            let d = crate::water::light_under(g, &toward);
+            let ph = crate::water::hg(-dot(&d, &du), g.scatter_dir as f64) * crate::water::focus(g, &x, &toward) * crate::water::SHAFTS;
+            let td = crate::water::transmittance(g, crate::water::light_path(g, &x, &toward));
+            self.total_light = add3(self.total_light, mul3(mul3(mul3(col, vis), td), sc3(t_absorb, ph as f32)));
+        }
+        (self.pos, self.normals, self.mzz) = saved;
+    }
+
+    /// How much brighter the water's own light is seen along `du` (unit)
+    /// with scattering (`water::glow_mod`).
+    fn water_glow(&self, g: &crate::scene::Ground, du: &Vec3) -> f32 {
+        let lv = self.c.lv;
+        let lamps: Vec<(Vec3, f64)> = lv
+            .lights
+            .iter()
+            .enumerate()
+            .map(|(i, l)| {
+                let toward = if l.positional { normalize(sub(self.hs_vecs[i], self.pos)) } else { normalize(scale(self.hs_vecs[i], -1.0)) };
+                (toward, luma(l.col) as f64 * dot(&toward, &g.up()).max(0.0))
+            })
+            .collect();
+        crate::water::glow_mod(g, du, &lamps) as f32
+    }
+
     /// The ground plane as transparent water (None: no ground, or opaque).
     fn water(&self) -> Option<crate::scene::Ground> {
         self.c.p.ground.filter(|g| g.transparent())
@@ -1874,11 +1921,44 @@ impl<'a, 'c> Tracer<'a, 'c> {
             // the way through the water: its light fades, the water's own
             // fills what fades
             let dl = len(&dir).max(1e-300);
+            let du = scale(dir, 1.0 / dl);
             let l = if h.kind == 0 { f64::INFINITY } else { len(&sub(h.pos, seg_start)) };
-            let wl = crate::water::length_in_water(&g, &seg_start, &scale(dir, 1.0 / dl), l);
-            if wl > 0.0 {
+            let wl = crate::water::length_in_water(&g, &seg_start, &du, l);
+            let sig = crate::water::sigma_s(&g);
+            if sig > 0.0 && wl > 0.0 && g.depth(&seg_start) > -1e-9 {
+                // a scattering water: volumetric path tracing (free flight
+                // to the next scattering, the lamps seen from there, on in a
+                // direction drawn from the phase function)
+                let t = -(1.0 - self.rand()).ln() / sig;
+                if t < wl {
+                    let ta = crate::water::transmittance(&g, t);
+                    let own = sc3(self.water_light, self.water_glow(&g, &du));
+                    self.total_light = add3(self.total_light, mul3(mul3(own, ta.map(|t| 1.0 - t)), t_absorb));
+                    t_absorb = mul3(t_absorb, ta);
+                    let x = add(seg_start, scale(du, t));
+                    self.water_scatter_light(&g, x, du, zz, t_absorb).await;
+                    if rit > 32 {
+                        return None;
+                    }
+                    let q = luma(t_absorb).clamp(0.02, 1.0);
+                    if self.rand() > q as f64 {
+                        return None;
+                    }
+                    t_absorb = sc3(t_absorb, 1.0 / q);
+                    let (u1, u2) = (self.rand(), self.rand());
+                    let nd = scale(crate::water::sample_hg(du, g.scatter_dir as f64, u1, u2), dl);
+                    self.pos = x;
+                    self.calc_ray(zz, nd, t_absorb, rit, false).await;
+                    return None;
+                }
                 let tr = crate::water::transmittance(&g, wl);
-                self.total_light = add3(self.total_light, mul3(mul3(self.water_light, tr.map(|t| 1.0 - t)), t_absorb));
+                let own = sc3(self.water_light, self.water_glow(&g, &du));
+                self.total_light = add3(self.total_light, mul3(mul3(own, tr.map(|t| 1.0 - t)), t_absorb));
+                t_absorb = mul3(t_absorb, tr);
+            } else if wl > 0.0 {
+                let tr = crate::water::transmittance(&g, wl);
+                let own = if sig > 0.0 { sc3(self.water_light, self.water_glow(&g, &du)) } else { self.water_light };
+                self.total_light = add3(self.total_light, mul3(mul3(own, tr.map(|t| 1.0 - t)), t_absorb));
                 t_absorb = mul3(t_absorb, tr);
             }
         }
@@ -2069,6 +2149,20 @@ impl<'a, 'c> Tracer<'a, 'c> {
                 }
                 let body = mul3(lv.surface_colour(g.water_color), lit);
                 let t = g.transparency.clamp(0.0, 1.0);
+                if g.scattering > 0.0 {
+                    // the lamps' light through the wave crests
+                    let vu = normalize(dir);
+                    for (i, l) in lv.lights.iter().enumerate() {
+                        let (toward, col) = if l.positional {
+                            let v = sub(self.hs_vecs[i], cc);
+                            (normalize(v), sc3(l.col, (1.0 / (sqr_len(&v) + 1e-26)) as f32 * lv.s_diff / 255.0))
+                        } else {
+                            (normalize(scale(self.hs_vecs[i], -1.0)), sc3(l.col, lv.s_diff / 255.0))
+                        };
+                        let cr = mul3(mul3(col, first3(self.hs6[i])), crate::water::crest(&g, &cc, &vu, &toward));
+                        self.total_light = add3(self.total_light, mul3(sc3(cr, t), t_absorb));
+                    }
+                }
                 d2 *= 1.0 - t;
                 Some((t, f as f32, scale(tdir, len(&dir)), body))
             }
