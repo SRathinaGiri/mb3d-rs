@@ -1294,12 +1294,12 @@ object Mand3DForm: TMand3DForm
           TabOrder = 14
           Text = '0'
         end
-        object GroundAbsorbEdit: TEdit
+        object GroundVisEdit: TEdit
           Left = 95
           Top = 221
           Width = 42
           Height = 21
-          Hint = '@MB:HowFastLightFadesInThe'
+          Hint = '@MB:HowFarYouCanSeeInto'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1311,16 +1311,16 @@ object Mand3DForm: TMand3DForm
           TabOrder = 15
           Text = '1'
         end
-        object GroundAbsorbColBtn: TSpeedButton
+        object GroundWaterColBtn: TSpeedButton
           Left = 9
           Top = 244
           Width = 23
           Height = 23
-          Hint = '@MB:TheColourTheWaterFadesTo'
+          Hint = '@MB:TheColourOfDeepWaterThe'
           Flat = True
           ParentShowHint = False
           ShowHint = True
-          OnClick = GroundAbsorbColBtnClick
+          OnClick = GroundWaterColBtnClick
         end
         object Label93: TLabel
           Left = 36

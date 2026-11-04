@@ -1520,8 +1520,8 @@ HoldShiftKeyForFinerSteps=(Hold Shift key for finer steps)
 ;FNavigator.Label14.Caption
 Hotkeys=Hotkeys
 ;HotkeysFrm.Caption, Mand3DForm.HotkeysBtn.Caption
-HowFastLightFadesInThe=How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
-;Mand3DForm.GroundAbsorbEdit.Hint
+HowFarYouCanSeeInto=How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
+;Mand3DForm.GroundVisEdit.Hint
 HowMuchLightTheWaterLets=How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 ;Mand3DForm.GroundTranspEdit.Hint
 HowMuchThePlaneReflects0=How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
@@ -3410,8 +3410,8 @@ TheCalculationWillBeExtendedTowards=The calculation will be extended towards the
 ;PostProForm.Edit9.Hint
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 ;AnimationForm.CurvesBtn.Hint, CurvesFrm.Image1.Hint
-TheColourTheWaterFadesTo=The colour the water fades to with depth (click to change)
-;Mand3DForm.GroundAbsorbColBtn.Hint
+TheColourOfDeepWaterThe=The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
+;Mand3DForm.GroundWaterColBtn.Hint
 TheCommandLineProgramMb3dWas=The command line program mb3d was not found next to this program: install the program again.
 ;the program
 TheDefaultNumberingIncludes2Numbers=The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.

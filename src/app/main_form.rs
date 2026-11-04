@@ -185,7 +185,7 @@ pub struct State {
     /// is off)
     pub ground_color: [u8; 3],
     /// the colour transparent water fades to (Cutting page)
-    pub ground_absorb_color: [u8; 3],
+    pub ground_water_color: [u8; 3],
     /// the folder each file dialog of this window showed last, for this
     /// session (MB3D's dialogs keep their own `InitialDir`, `ChangeFName`;
     /// the folders of the Ini-dirs window stay as they are)
@@ -284,7 +284,7 @@ impl Default for State {
             memory_ask: false,
             resume_key: None,
             ground_color: crate::scene::Ground::default().color,
-            ground_absorb_color: crate::scene::Ground::default().absorb_color,
+            ground_water_color: crate::scene::Ground::default().water_color,
             last_dirs: Default::default(),
             history_light: String::new(),
             history_tick: Instant::now(),
@@ -724,10 +724,10 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     set(ui, "GroundWaveEdit", &fts(g.wave_height));
     set(ui, "GroundWaveLenEdit", &fts(g.wave_len));
     set(ui, "GroundTranspEdit", &fts_single(g.transparency as f64));
-    set(ui, "GroundAbsorbEdit", &fts_single(g.absorption as f64));
+    set(ui, "GroundVisEdit", &fts_single(g.visibility as f64));
     set(ui, "GroundIorEdit", &fts_single(g.ior as f64));
     app.main.ground_color = g.color;
-    app.main.ground_absorb_color = g.absorb_color;
+    app.main.ground_water_color = g.water_color;
     ground_swatch(app, ui);
     ui.set_checked(F, "CheckBox9", sc.vary_de_stop_on_fov);
     ui.set_checked(F, "CheckBox7", sc.julia);
@@ -782,8 +782,8 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         wave_height: ptf(&t(ui, "GroundWaveEdit")).max(0.0),
         wave_len: Some(ptf(&t(ui, "GroundWaveLenEdit"))).filter(|v| *v > 0.0).unwrap_or(1.0),
         transparency: (ptf(&t(ui, "GroundTranspEdit")) as f32).clamp(0.0, 1.0),
-        absorption: (ptf(&t(ui, "GroundAbsorbEdit")) as f32).max(0.0),
-        absorb_color: app.main.ground_absorb_color,
+        visibility: Some(ptf(&t(ui, "GroundVisEdit")) as f32).filter(|v| *v > 0.0).unwrap_or(1.0),
+        water_color: app.main.ground_water_color,
         ior: Some(ptf(&t(ui, "GroundIorEdit")) as f32).filter(|v| *v >= 1.0).unwrap_or(1.33).min(3.0),
     });
     sc.de_stop = ptf(&t(ui, "Edit25")).max(0.001);
@@ -813,8 +813,8 @@ fn ground_swatch(app: &Mb3d, ui: &mut Ui) {
     let b = ui.cm(F, "GroundColBtn");
     b.glyph = Some(super::light_form::swatch(app.main.ground_color));
     b.num_glyphs = 1;
-    let b = ui.cm(F, "GroundAbsorbColBtn");
-    b.glyph = Some(super::light_form::swatch(app.main.ground_absorb_color));
+    let b = ui.cm(F, "GroundWaterColBtn");
+    b.glyph = Some(super::light_form::swatch(app.main.ground_water_color));
     b.num_glyphs = 1;
 }
 
@@ -2575,7 +2575,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "CheckBox7Click" | "PageControl1Change" | "GroundChange" => page_control1_change(app, ui),
         "GroundColBtnClick" => ui.pick_color("main:groundcolor", super::util::argb(app.main.ground_color)),
-        "GroundAbsorbColBtnClick" => ui.pick_color("main:groundabsorbcolor", super::util::argb(app.main.ground_absorb_color)),
+        "GroundWaterColBtnClick" => ui.pick_color("main:groundwatercolor", super::util::argb(app.main.ground_water_color)),
         "ButtonVolLightClick" => {
             if ui.caption(F, "ButtonVolLight") != tr("@MB:VolumeLightNr") {
                 app.scene.vol_light = Some(crate::vollight::VolLightParams { light: 0, map_size: 0 });
@@ -3556,8 +3556,8 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             app.main.ground_color = super::util::rgb_of(*c);
             ground_swatch(app, ui);
         }
-        ("groundabsorbcolor", DialogResult::Color(Some(c))) => {
-            app.main.ground_absorb_color = super::util::rgb_of(*c);
+        ("groundwatercolor", DialogResult::Color(Some(c))) => {
+            app.main.ground_water_color = super::util::rgb_of(*c);
             ground_swatch(app, ui);
         }
         ("savem3p", DialogResult::File(Some(p))) => {

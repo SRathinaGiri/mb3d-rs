@@ -1523,8 +1523,8 @@ mod tests {
             wave_height: 0.02,
             wave_len: 0.5,
             transparency: 0.8,
-            absorption: 2.5,
-            absorb_color: [10, 60, 70],
+            visibility: 0.4,
+            water_color: [10, 60, 70],
             ior: 1.4,
         });
         let raw = write(&sc);

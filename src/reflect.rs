@@ -244,9 +244,12 @@ struct SrCtx<'a> {
 struct WaterCtx {
     g: crate::scene::Ground,
     /// the ground's colours (diffuse, specular) for its surface: its
-    /// diffuse colour times 1 - transparency
+    /// diffuse colour times 1 - transparency, its specular colour towards
+    /// white with the transparency (the lights' glints on the waves)
     surface: (S3, S3),
-    /// the colours of the water's own light: the absorb colour, diffuse
+    /// the ground's own specular colour (its mirror)
+    mirror: S3,
+    /// the colours of the water's own light: its colour, diffuse
     body: (S3, S3),
 }
 
@@ -255,7 +258,8 @@ impl WaterCtx {
         let g = p.ground.filter(|g| g.transparent())?;
         let (dif, spe) = lv.ground?;
         let t = g.transparency.clamp(0.0, 1.0);
-        Some(WaterCtx { g, surface: (sc3(dif, 1.0 - t), spe), body: (lv.surface_colour(g.absorb_color), [0.0; 3]) })
+        let glint = spe.map(|v| v * (1.0 - t) + t);
+        Some(WaterCtx { g, surface: (sc3(dif, 1.0 - t), glint), mirror: spe, body: (lv.surface_colour(g.water_color), [0.0; 3]) })
     }
 }
 
@@ -572,10 +576,11 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         }
     }
 
-    /// The water's colours at a hit of the ground: the reflection's
-    /// colour `spe` for the transparency `t` and Fresnel's share `f`.
-    fn water_mirror(&self, spe: S3, f: f32) -> S3 {
+    /// The water's mirror at a hit of the ground: the ground's own
+    /// reflection for 1 - the transparency, Fresnel's share `f` for it.
+    fn water_mirror(&self, f: f32) -> S3 {
         let t = self.water_t();
+        let spe = self.c.water.as_ref().map_or([0.0; 3], |w| w.mirror);
         spe.map(|v| v * (1.0 - t) + f * t)
     }
 
@@ -1160,7 +1165,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                                 // a reflected ray meets transparent water
                                 let t = self.water_t();
                                 self.t_amb = add3(self.t_amb, mul3(t_absorb, sc3(under, t * (1.0 - fr))));
-                                f.sd.0 = self.water_mirror(f.sd.0, fr);
+                                f.sd.0 = self.water_mirror(fr);
                             }
                         }
                         if !calc_t || !(self.trans_flip_inside ^ self.m.inside) {
@@ -1518,7 +1523,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             // its mirror by Fresnel's share
             let t = self.water_t();
             self.t_amb = add3(self.t_amb, sc3(under, t * (1.0 - fr)));
-            spe = self.water_mirror(spe, fr);
+            spe = self.water_mirror(fr);
         }
         if self.dbg {
             crate::elog!("CPU surface: pos {:?} zz {mzz:.4} si {si:?}\n  plv {:?}\n  light {:?} result {:?} spe {:?} {} dif {:?}", self.m.it.c, self.plv, sh.light, sh.result, sh.spe, sh.spe_a, sh.dif);

@@ -143,12 +143,14 @@ pub struct Ground {
     /// as before): the reflection pass and Monte Carlo see the fractal
     /// under the surface, refracted and fading with depth (`water`)
     pub transparency: f32,
-    /// how fast light fades in the water, per fractal unit it travels:
-    /// a channel keeps exp(-absorption * d * (1.5 - its absorb_color
-    /// share)), so a mid grey fades to 1/e after 1 / absorption units
-    pub absorption: f32,
-    /// the colour the water fades to with depth (its own, scattered light)
-    pub absorb_color: [u8; 3],
+    /// how far one sees into the water (fractal units): the channel of
+    /// `water_color` that passes best keeps 1/e of its light after this
+    /// distance, the others less (`water::extinction`)
+    pub visibility: f32,
+    /// the colour of deep water: its own, scattered light, and the
+    /// colour the light under water turns to (red goes first in a
+    /// blue-green water)
+    pub water_color: [u8; 3],
     /// the refraction index of the water (1.33)
     pub ior: f32,
 }
@@ -164,8 +166,8 @@ impl Default for Ground {
             wave_height: 0.0,
             wave_len: 1.0,
             transparency: 0.0,
-            absorption: 1.0,
-            absorb_color: [10, 50, 60],
+            visibility: 1.0,
+            water_color: [10, 60, 70],
             ior: 1.33,
         }
     }
@@ -1023,10 +1025,10 @@ impl Scene {
                 let _ = writeln!(t, "ground_waves = {}, {}", g.wave_height, g.wave_len);
             }
             let d = Ground::default();
-            if (g.transparency, g.absorption, g.absorb_color, g.ior) != (d.transparency, d.absorption, d.absorb_color, d.ior) {
-                let a = g.absorb_color;
-                let _ = writeln!(t, "ground_transparency = {}\nground_absorption = {}", g.transparency, g.absorption);
-                let _ = writeln!(t, "ground_absorb_color = #{:02X}{:02X}{:02X}\nground_ior = {}", a[0], a[1], a[2], g.ior);
+            if (g.transparency, g.visibility, g.water_color, g.ior) != (d.transparency, d.visibility, d.water_color, d.ior) {
+                let a = g.water_color;
+                let _ = writeln!(t, "ground_transparency = {}\nground_visibility = {}", g.transparency, g.visibility);
+                let _ = writeln!(t, "ground_water_color = #{:02X}{:02X}{:02X}\nground_ior = {}", a[0], a[1], a[2], g.ior);
             }
         }
         t
@@ -1550,10 +1552,12 @@ impl Scene {
                     }
                     "ground_reflect" => s.ground.get_or_insert_with(Ground::default).reflect = num()?.clamp(0.0, 1.0) as f32,
                     "ground_transparency" => s.ground.get_or_insert_with(Ground::default).transparency = num()?.clamp(0.0, 1.0) as f32,
-                    "ground_absorption" => s.ground.get_or_insert_with(Ground::default).absorption = num()?.max(0.0) as f32,
-                    "ground_absorb_color" => {
+                    "ground_visibility" => s.ground.get_or_insert_with(Ground::default).visibility = num()?.max(1e-6) as f32,
+                    // (the first test builds' keys: an absorption per unit)
+                    "ground_absorption" => s.ground.get_or_insert_with(Ground::default).visibility = (1.0 / num()?.max(1e-6)) as f32,
+                    "ground_water_color" | "ground_absorb_color" => {
                         let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
-                        s.ground.get_or_insert_with(Ground::default).absorb_color = c;
+                        s.ground.get_or_insert_with(Ground::default).water_color = c;
                     }
                     "ground_ior" => s.ground.get_or_insert_with(Ground::default).ior = num()?.clamp(1.0, 3.0) as f32,
                     "ground_waves" => {

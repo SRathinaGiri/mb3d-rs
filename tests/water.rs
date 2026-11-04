@@ -12,7 +12,7 @@ fn half_submerged(transparency: f32) -> Scene {
     s.height = 72;
     s.mc.reflections = true;
     s.mc.reflection_amount = 0.8;
-    s.ground = Some(Ground { axis: 1, pos: 0.0, color: [40, 60, 80], reflect: 0.5, wave_height: 0.004, wave_len: 0.5, transparency, absorption: 1.0, ..Default::default() });
+    s.ground = Some(Ground { axis: 1, pos: 0.0, color: [40, 60, 80], reflect: 0.5, wave_height: 0.004, wave_len: 0.5, transparency, visibility: 1.0, ..Default::default() });
     s
 }
 
@@ -44,14 +44,14 @@ fn water_lets_the_fractal_show_through() {
     assert_eq!(picture(&a).0, picture(&b).0);
 }
 
-/// The light under water fades with the absorption: more absorption, a
+/// The light under water fades with the visibility: less visibility, a
 /// picture nearer to the water's own colour.
 #[test]
 fn absorption_fades_what_lies_under_water() {
     let mut a = half_submerged(1.0);
     let mut b = a.clone();
-    a.ground.as_mut().unwrap().absorption = 0.0;
-    b.ground.as_mut().unwrap().absorption = 50.0;
+    a.ground.as_mut().unwrap().visibility = 1000.0;
+    b.ground.as_mut().unwrap().visibility = 0.02;
     let (pa, g) = picture(&a);
     let (pb, _) = picture(&b);
     // deep water: every water pixel turns into the same few colours (its own
@@ -104,9 +104,9 @@ fn water_keys_round_trip() {
     assert!(!t.contains("ground_transparency"), "{t}");
     let mut w = s.clone();
     let g = w.ground.as_mut().unwrap();
-    (g.transparency, g.absorption, g.absorb_color, g.ior) = (0.75, 2.5, [1, 2, 3], 1.4);
+    (g.transparency, g.visibility, g.water_color, g.ior) = (0.75, 2.5, [1, 2, 3], 1.4);
     let t = w.to_text();
-    for k in ["ground_transparency = 0.75", "ground_absorption = 2.5", "ground_absorb_color = #010203", "ground_ior = 1.4"] {
+    for k in ["ground_transparency = 0.75", "ground_visibility = 2.5", "ground_water_color = #010203", "ground_ior = 1.4"] {
         assert!(t.contains(k), "{k} in {t}");
     }
     let back = Scene::parse(&t).unwrap();
@@ -114,7 +114,10 @@ fn water_keys_round_trip() {
     // the keys alone switch the ground on with its defaults for the rest
     let mut none = s.clone();
     none.ground = None;
-    let a = none.apply("ground_transparency = 2\nground_ior = 0.5").unwrap();
+    let a = none.clone().apply("ground_transparency = 2\nground_ior = 0.5").unwrap();
     let g = a.ground.unwrap();
     assert_eq!((g.transparency, g.ior), (1.0, 1.0));
+    // the first test builds' keys
+    let old = none.apply("ground_absorption = 4\nground_absorb_color = #102030").unwrap().ground.unwrap();
+    assert_eq!((old.visibility, old.water_color), (0.25, [16, 32, 48]));
 }

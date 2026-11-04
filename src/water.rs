@@ -7,9 +7,11 @@
 //! into a reflected part F and a refracted part 1 - F.  The refracted ray
 //! goes on under the surface, bent by Snell's law at the waves' normal,
 //! and sees the fractal only (the plane no longer stops it).  On its way
-//! the light fades (Beer-Lambert: each channel keeps exp(-absorption *
-//! distance * sigma)), and what fades is replaced by the water's own
-//! scattered light, so deep water turns into its absorb colour, not black.
+//! the light fades (Beer-Lambert: each channel keeps exp(-distance *
+//! extinction / visibility), red much faster than blue in a blue-green
+//! water), and what fades is replaced by the water's own scattered light,
+//! so deep water turns into its colour, not black.  The lights' glints on
+//! the waves stay on the surface, so the waterline shows.
 //! The light reaching a surface under water has crossed the water above
 //! it too: its depth over the cosine of the light's (refracted) angle.
 //!
@@ -49,20 +51,23 @@ pub fn refract(d: Vec3, n: Vec3, eta: f64, cos_i: f64, cos_t: f64) -> Vec3 {
     normalize(add(scale(d, eta), scale(n, eta * cos_i - cos_t)))
 }
 
+/// How much faster each channel fades in water of the colour `c` than
+/// its clearest one (1): 1 + 5 ln(clearest / channel), so a blue-green
+/// water (10, 60, 70) fades red, green and blue about 10 : 2 : 1, as pure
+/// water absorbs about 0.45, 0.06 and 0.02 per metre.  A grey water fades
+/// all alike.
+pub fn extinction(c: [u8; 3]) -> [f64; 3] {
+    let m = c.iter().copied().max().unwrap_or(0).max(1) as f64;
+    c.map(|v| 1.0 + 5.0 * -(v as f64 / m).clamp(0.02, 1.0).ln())
+}
+
 /// The fraction of a channel of light that crosses `dist` fractal units
-/// of the water (Beer-Lambert): exp(-absorption * dist * sigma), sigma
-/// from 1.5 for a channel the absorb colour lacks to 0.5 for one it has
-/// in full, so the light turns towards that colour as it fades.
+/// of the water (Beer-Lambert): exp(-dist * extinction / visibility), so
+/// the clearest channel keeps 1/e at the visibility and the light turns
+/// towards the water's colour as it fades.
 pub fn transmittance(g: &Ground, dist: f64) -> [f32; 3] {
-    let d = dist.max(0.0) * g.absorption.max(0.0) as f64;
-    g.absorb_color.map(|c| {
-        let sigma = 1.5 - c as f64 / 255.0;
-        if d.is_infinite() {
-            0.0
-        } else {
-            (-d * sigma).exp() as f32
-        }
-    })
+    let d = dist.max(0.0) / g.visibility.max(1e-6) as f64;
+    extinction(g.water_color).map(|e| if d.is_infinite() { 0.0 } else { (-d * e).exp() as f32 })
 }
 
 /// The length of a straight ray under the water: from `o` along the unit
@@ -122,7 +127,7 @@ mod tests {
     use super::*;
 
     fn water() -> Ground {
-        Ground { axis: 1, pos: 0.0, above: true, transparency: 1.0, absorption: 2.0, absorb_color: [0, 128, 255], ior: 1.33, ..Default::default() }
+        Ground { axis: 1, pos: 0.0, above: true, transparency: 1.0, visibility: 0.5, water_color: [10, 60, 70], ior: 1.33, ..Default::default() }
     }
 
     /// Fresnel: 2 % at normal incidence into water ((n-1)/(n+1))^2, rising
@@ -152,8 +157,9 @@ mod tests {
         }
     }
 
-    /// Beer-Lambert: multiplicative over distances, the absorb colour's
-    /// channels fade slowest, the absorption scales the distance.
+    /// Beer-Lambert: multiplicative over distances; the clearest channel
+    /// keeps 1/e at the visibility; a blue-green water fades red, green
+    /// and blue about 10 : 2 : 1; the visibility scales the distance.
     #[test]
     fn absorption_of_water() {
         let g = water();
@@ -163,12 +169,15 @@ mod tests {
         }
         assert_eq!(transmittance(&g, 0.0), [1.0; 3]);
         assert!(ab[2] > ab[1] && ab[1] > ab[0]);
-        assert!((ab[0] - (-2.0f32 * 0.8 * 1.5).exp()).abs() < 1e-6);
-        assert!((ab[2] - (-2.0f32 * 0.8 * 0.5).exp()).abs() < 1e-6);
+        assert!((transmittance(&g, 0.5)[2] - (-1f32).exp()).abs() < 1e-6);
+        let e = extinction([10, 60, 70]);
+        assert_eq!(e[2], 1.0);
+        assert!((9.0..12.0).contains(&e[0]) && (1.5..2.5).contains(&e[1]), "{e:?}");
+        assert_eq!(extinction([90, 90, 90]), [1.0; 3]);
         assert_eq!(transmittance(&g, f64::INFINITY), [0.0; 3]);
         let mut g2 = g;
-        g2.absorption = 4.0;
-        let h = transmittance(&g2, 0.4);
+        g2.visibility = 1.0;
+        let h = transmittance(&g2, 1.6);
         for k in 0..3 {
             assert!((h[k] - ab[k]).abs() < 1e-6);
         }

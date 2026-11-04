@@ -2048,17 +2048,38 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let water = match self.water().filter(|_| !self.under_water && cr.is_ground()) {
             Some(g) => {
                 let (f, tdir) = crate::water::split(&g, &cc, &dir);
-                let mut v = self.normals;
+                // its own light: its colour lit as a flat surface (the
+                // light scattered in the water does not see the waves),
+                // with the lights' shadows
+                let sw = p.step_width;
+                let up = scale(g.up(), sw);
+                let mut v = g.up();
                 self.vary_vec_sphere(&mut v);
-                let bg = self.calc_bg_light(&v, true, true, false);
-                let body = mul3(lv.surface_colour(g.absorb_color), add3(light_sd[1], sc3(bg, lv.s_diff)));
+                let mut lit = sc3(self.calc_bg_light(&v, true, true, false), lv.s_diff);
+                for (i, l) in lv.lights.iter().enumerate() {
+                    let hs = self.hs6[i];
+                    let (col, t) = if l.positional {
+                        let t = sub(cc, self.hs_vecs[i]);
+                        (sc3(l.col, (1.0 / (sqr_len(&t) + 1e-26)) as f32), norm_to(sw, t))
+                    } else {
+                        (l.col, self.hs_vecs[i])
+                    };
+                    let df = ((dot(&up, &t) / -(sw * sw)).max(0.0) as f32).powi(2) * lv.s_diff / 255.0;
+                    addw3(&mut lit, mul3(col, first3(hs)), df);
+                }
+                let body = mul3(lv.surface_colour(g.water_color), lit);
                 let t = g.transparency.clamp(0.0, 1.0);
                 d2 *= 1.0 - t;
                 Some((t, f as f32, scale(tdir, len(&dir)), body))
             }
             None => None,
         };
-        let spec = mul3(sc3(first3(obj[0]), (0.25 + d3v) * 0.8), light_sd[0]);
+        // (the lights' glints on the waves stay on transparent water)
+        let spe_col = match water {
+            Some((t, ..)) => first3(obj[0]).map(|v| v * (1.0 - t) + t),
+            None => first3(obj[0]),
+        };
+        let spec = mul3(sc3(spe_col, (0.25 + d3v) * 0.8), light_sd[0]);
         let diff = mul3(sc3(first3(obj[1]), d2), light_sd[1]);
         self.total_light = add3(self.total_light, mul3(add3(spec, diff), t_absorb));
         if d1 > 1.0 {

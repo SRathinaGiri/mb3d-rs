@@ -93,8 +93,9 @@ Ground plane / water (not in MB3D; global keys)
 - ground_color = #RRGGBB; ground_reflect 0..1 (a mirror when mc_reflections is on);
   ground_waves = height, length (fractal units, e.g. 0.03, 0.4; height 0 = flat): water.
 - Transparent water (shows with mc_reflections on, and in Monte Carlo): ground_transparency 0..1
-  (0 = opaque); ground_absorption = how fast light fades per fractal unit in the water (1: mid
-  grey keeps 1/3 after 1 unit; 0 = clear); ground_absorb_color = #RRGGBB the deep water's colour;
+  (0 = opaque); ground_visibility = how far one sees into the water in fractal units (1 = about
+  a fractal's size; smaller = murkier); ground_water_color = #RRGGBB the deep water's colour (a
+  blue-green like #0A3C46 turns what is under water turquoise, red fading first);
   ground_ior = refraction index (1.33). Put the plane through the fractal for a half-submerged look.
 Clouds (not in MB3D; painted over the picture, cheap to change)
 - clouds = y, -1.2, -2.2 (axis, the layer's two heights) or off; cloud_density (1 = thick),
