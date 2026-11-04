@@ -416,18 +416,46 @@ fn probe_dirs(r: Vec3, u: Vec3, f: Vec3) -> Vec<Vec3> {
     v
 }
 
-/// The view matrix turned so that its forward row points along `nf`, by
-/// the smallest rotation (the roll is kept).
-fn turn_view_to(sc: &mut Scene, nf: Vec3) {
-    let f = normalize(sc.vgrads[2]);
-    let axis = cross(f, nf);
-    let s = len(&axis);
-    if s < 1e-15 {
-        return;
+/// Frames ahead the camera looks for what it would hit (at its speed):
+/// nearer than that it turns, farther it flies straight on.
+const REACT_FRAMES: f64 = 50.0;
+/// Frames after a turn in which a turn the other way is far less wanted.
+const HOLD_FRAMES: usize = 75;
+/// The approach ends where the distance to the fractal is this part of
+/// the distance at the start.
+const APPROACH: f64 = 0.3;
+/// Frames heading out into the empty space (turning back all the while)
+/// after which the flight has left the fractal.
+const LEAVE_FRAMES: usize = 90;
+/// Frames between two looks at the way under way.
+const RECHECK_FRAMES: usize = 6;
+/// Frames a turn takes to reach its full rate (and to stop again).
+const EASE_FRAMES: f64 = 12.0;
+
+/// The steering of a flight: the way it turns to (kept until the heading
+/// is on it and nothing is in the way), its turn (axis times radians a
+/// frame, eased) and the side of the last turn and the frame it ended.
+#[derive(Default)]
+struct Steering {
+    target: Option<Vec3>,
+    /// the side of the turn under way (across the heading it began from)
+    side: Vec3,
+    /// the frame from which the way under way is looked at again
+    check_at: usize,
+    w: Vec3,
+    last_side: Option<(Vec3, usize)>,
+}
+
+/// The part of `d` across the heading `f`, as a unit vector (zero when
+/// along it).
+fn sideways(d: Vec3, f: Vec3) -> Vec3 {
+    let x = sub(d, scale(f, dot(&d, &f)));
+    let l = len(&x);
+    if l < 1e-9 {
+        [0.0; 3]
+    } else {
+        scale(x, 1.0 / l)
     }
-    let a = s.atan2(dot(&f, &nf));
-    let u = scale(axis, 1.0 / s);
-    sc.vgrads = sc.vgrads.map(|r| turn(r, u, a));
 }
 
 /// The camera at frame `i` as a keyframe (the middle in front of it).
@@ -459,6 +487,7 @@ pub fn fly_through(sc: &Scene, fp: &FlightParams, progress: &dyn Fn(usize, usize
     let start_view = if fp.until_view { pure_view(view_coverage(&keys[0])) } else { None };
     let mut key_frame: Vec<usize> = vec![0];
     let (mut blocked, mut outside) = (0, 0);
+    let mut steer = Steering::default();
     let mut end = FlightEnd::Done;
     let mut flown = 1;
     let mut de = de0;
@@ -484,52 +513,135 @@ pub fn fly_through(sc: &Scene, fp: &FlightParams, progress: &dyn Fn(usize, usize
         } else {
             blocked = 0;
         }
-        // the course: a way free for a few distance estimates (the longer
-        // the better: a gap leading into the fractal), near the heading (a
-        // turn back is the last resort), that does not end at a wall (the
-        // distance estimate where it gets to much smaller than here) nor
-        // lead out into the empty space around the fractal (free on for
-        // many distance estimates beyond)
+        // the course (see `Steering`): straight on while nothing is near
+        // ahead; a turn only when the camera would hit something within
+        // `REACT_FRAMES` frames or head out into the empty space around the
+        // fractal, and then to one chosen way, kept until it is free
         let need = (2.5 * de).min(reach);
         let out = fp.look_ahead * 5.0 * de;
         let is_void = |d: Vec3, l: f64| l >= reach * 0.999 && free_distance(&p, add(cam, scale(d, l)), d, out, stop, 0.9, 64) >= out * 0.999;
         let fwd_void = is_void(f, fwd);
-        // straight on while the way ahead is free and leads into the
-        // fractal (the approach from outside, a gap already taken)
-        let best = if fwd >= reach * 0.999 && !fwd_void {
-            f
-        } else {
-            free
-            .iter()
-            .map(|&(d, l)| {
-                let open = (l / reach).min(1.0).sqrt() * (l / need).min(1.0);
-                let (de_end, _) = de_at(&p, add(cam, scale(d, l.min(need))));
-                let c = (de_end.max(1e-300) / de).ln().min(0.0);
-                let wall = 1.0 / (1.0 + c * c);
-                let void = if is_void(d, l) { 1e-3 } else { 1.0 };
-                (d, open * open * wall * void * (0.5 + 0.5 * dot(&d, &f)))
-            })
-            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
-            .map(|x| x.0)
-            .unwrap()
+        let clear = (REACT_FRAMES * fp.speed * de).max(2.0 * de).min(reach * 0.999);
+        // (the approach: from a view of the object from outside the camera
+        // flies straight at it, zooming in, until it is in among it, at a
+        // part of the distance it started from)
+        let approach = de > de0 * APPROACH;
+        let danger = (fwd < clear && !approach) || fwd_void;
+        // the ways to choose from: free for a few distance estimates (the
+        // longer the better: a gap leading into the fractal), near the
+        // heading, not ending at a wall nor leading out into the empty
+        // space. `near`: a way near this one wanted (the way under way:
+        // no swinging between two), `avoid_side`: a turn to the other side
+        // of this one far less wanted (shortly after a turn)
+        let choose = |near: Option<Vec3>, avoid_side: Option<Vec3>| -> Option<Vec3> {
+            free.iter()
+                .skip(1)
+                .map(|&(d, l)| {
+                    let open = (l / reach).min(1.0).sqrt() * (l / need).min(1.0);
+                    let (de_end, _) = de_at(&p, add(cam, scale(d, l.min(need))));
+                    let c = (de_end.max(1e-300) / de).ln().min(0.0);
+                    let wall = 1.0 / (1.0 + c * c);
+                    let void = if is_void(d, l) { 1e-3 } else { 1.0 };
+                    let keep = near.map_or(1.0, |t| ((1.0 + dot(&d, &t)) * 0.5).powi(4));
+                    let side = match avoid_side {
+                        Some(sd) if dot(&sideways(d, f), &sd) < -0.2 => 0.05,
+                        _ => 1.0,
+                    };
+                    (d, open * open * wall * void * keep * side * (0.5 + 0.5 * dot(&d, &f)))
+                })
+                .filter(|x| x.1 > 0.0)
+                .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+                .map(|x| x.0)
         };
+        // (back from the empty space to the fractal is no swing: allowed
+        // to either side)
+        // heading out into the empty space with no way back in sight: back
+        // towards the nearest surface (against the distance estimate's
+        // gradient) at a slant, keeping on the way it goes, a glide along
+        // the object rather than a turn back
+        let back_in = || -> Option<Vec3> {
+            let h = de * 0.05;
+            let g = [0, 1, 2].map(|k| {
+                let mut a = cam;
+                let mut b = cam;
+                a[k] += h;
+                b[k] -= h;
+                de_at(&p, a).0 - de_at(&p, b).0
+            });
+            let lg = len(&g);
+            if !(lg > 0.0) || !lg.is_finite() {
+                return None;
+            }
+            let toward = scale(g, -1.0 / lg);
+            let along = sideways(f, toward);
+            Some(normalize(add(along, scale(toward, 0.6))))
+        };
+        let choose_in = |near: Option<Vec3>, avoid_side: Option<Vec3>| -> Option<Vec3> {
+            let c = choose(near, avoid_side);
+            match c {
+                Some(d) if fwd_void && is_void(d, free_distance(&p, cam, d, reach, stop, 0.8, 48)) => back_in().or(c),
+                None if fwd_void => back_in(),
+                _ => c,
+            }
+        };
+        let recent_side = steer.last_side.filter(|(_, at)| i < at + HOLD_FRAMES && !fwd_void).map(|x| x.0);
+        match steer.target {
+            None if danger => {
+                steer.target = choose_in(None, recent_side);
+                if let Some(t) = steer.target {
+                    steer.side = sideways(t, f);
+                }
+                steer.check_at = i + RECHECK_FRAMES;
+            }
+            Some(t) if i >= steer.check_at => {
+                let left = dot(&f, &t).clamp(-1.0, 1.0).acos();
+                let t_free = free_distance(&p, cam, t, reach, stop, 0.8, 48);
+                if t_free < 0.5 * need.min(clear) || is_void(t, t_free) || (left < 0.5f64.to_radians() && danger) {
+                    // the way taken closed, or reached and still in the
+                    // way of something: the nearest free one to it
+                    steer.target = choose_in(Some(t), Some(steer.side)).or(Some(t));
+                    steer.check_at = i + RECHECK_FRAMES;
+                } else if left < 0.5f64.to_radians() {
+                    steer.last_side = Some((steer.side, i));
+                    steer.target = None;
+                }
+            }
+            _ => {}
+        }
         // out in the empty space for a while (a second at 25 frames):
         // the flight has left the fractal
         if fwd_void {
             outside += 1;
-            if outside >= 25 {
+            if outside >= LEAVE_FRAMES {
                 end = FlightEnd::LeftFractal;
                 break;
             }
         } else {
             outside = 0;
         }
-        // steering: a turn of at most `max_turn` a frame
-        if dot(&best, &f) < 0.999_999 {
-            let a = dot(&f, &best).clamp(-1.0, 1.0).acos();
-            let t = (max_turn / a).min(1.0);
-            let nf = normalize(add(scale(f, 1.0 - t), scale(best, t)));
-            turn_view_to(&mut s, nf);
+        // the turn: its rate eased in and out (at most `max_turn` a frame,
+        // reached in `EASE_FRAMES`, slowing as the heading nears the way)
+        let wd = match steer.target {
+            Some(t) => {
+                let ax = cross(f, t);
+                let sa = len(&ax);
+                if sa < 1e-12 {
+                    [0.0; 3]
+                } else {
+                    let left = sa.atan2(dot(&f, &t));
+                    scale(ax, (left * 0.12).min(max_turn) / sa)
+                }
+            }
+            None => [0.0; 3],
+        };
+        let dw = sub(wd, steer.w);
+        let acc = max_turn / EASE_FRAMES;
+        let ldw = len(&dw);
+        steer.w = if ldw > acc { add(steer.w, scale(dw, acc / ldw)) } else { wd };
+        let rate = len(&steer.w);
+        if rate > 1e-12 {
+            let ax = scale(steer.w, 1.0 / rate);
+            s.vgrads = s.vgrads.map(|row| turn(row, ax, rate));
         }
         // the step: slower where the way ahead is short, never more than
         // half of it
@@ -771,6 +883,52 @@ mod tests {
                     assert!((x.scene.vgrads[r][k] - y.scene.vgrads[r][k]).abs() < 1e-12);
                 }
             }
+        }
+    }
+}
+#[cfg(test)]
+mod steering_tests {
+    use super::*;
+    /// (turns, reversals): between keyframes the sideways turn (yaw, about
+    /// the view's up) and the up-down one (pitch); a reversal is a turn the
+    /// other way right after one.
+    fn wobble(ks: &[Keyframe]) -> (usize, usize, f64) {
+        let mut turns = 0;
+        let mut rev = 0;
+        let mut last: Option<(f64, f64)> = None;
+        let mut total = 0.0;
+        for w in ks.windows(2) {
+            let [r, u, f0] = unit_rows(&w[0].scene);
+            let f1 = unit_rows(&w[1].scene)[2];
+            let (yaw, pitch) = (dot(&f1, &r), -dot(&f1, &u));
+            let _ = f0;
+            let m = (yaw * yaw + pitch * pitch).sqrt();
+            total += m.asin().to_degrees();
+            if m < 0.3f64.to_radians().sin() {
+                continue;
+            }
+            turns += 1;
+            if let Some((y, p)) = last {
+                if y * yaw + p * pitch < 0.0 {
+                    rev += 1;
+                }
+            }
+            last = Some((yaw, pitch));
+        }
+        (turns, rev, total)
+    }
+    #[test]
+    fn a_flight_keeps_its_course_and_does_not_swing() {
+        // flights that once swung left and right 5 to 18 times in 30 s
+        for name in ["Integer Power", "Amazing Box"] {
+            let sc = Scene::preset(name).unwrap();
+            let fp = FlightParams { frames: 750, keyframe_every: 12, ..Default::default() };
+            let fl = fly_through(&sc, &fp, &|_, _| {}, &|| false).unwrap();
+            assert_eq!(fl.end, FlightEnd::Done, "{name}");
+            let (turns, rev, _) = wobble(&fl.keyframes);
+            // most of the way straight on, and no swinging back and forth
+            assert!(turns * 3 < fl.keyframes.len(), "{name}: turning in {turns} of {}", fl.keyframes.len());
+            assert!(rev <= 2, "{name}: {rev} reversals");
         }
     }
 }
