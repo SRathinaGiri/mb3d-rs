@@ -914,6 +914,44 @@ fn save_m3c(app: &mut Mb3d, ui: &mut Ui) {
     }
 }
 
+/// `Button4Click`: the Monte Carlo parameters prepared for the main
+/// window's renderer, on the header as MB3D: hard shadows of every light
+/// that is on (no light map), with the cosine diffuse function, soft with
+/// one light; automatic DEAO (bCalcAmbShadowAutomatic 253, no dithering);
+/// iOptions 2 shl 6 + 1; no diffuse shadowing (Lights[3].AdditionalByteEx);
+/// ambient shadow 53 and second reflection 27 in TBpos[11]; the second
+/// mode off (Lights[2].FreeByte bit 0); the small background picture as
+/// the ambient light; no tiling, no SSAO border.
+fn paras_for_main(p: &Scene) -> Scene {
+    let mut d = crate::m3p::write(p);
+    const L: usize = 432;
+    let light = |x: usize| L + 68 + x * 32;
+    let mut hs = 3u8;
+    let mut n = 0;
+    for x in 0..6 {
+        if d[light(x)] & 3 == 0 {
+            hs |= 4 << x;
+            d[light(x) + 1] &= 0xCF;
+            n += 1;
+        }
+    }
+    d[139] = (n == 1) as u8; // bCalc1HSsoft
+    d[133] = if n == 0 { 2 } else { hs }; // bCalculateHardShadow
+    d[188] = 0; // AODEdithering
+    d[149] = 253; // bCalcAmbShadowAutomatic
+    d[16..18].copy_from_slice(&((2u16 << 6) + 1).to_le_bytes()); // iOptions
+    d[light(3) + 16] = 0;
+    let tb11 = L + 8 + (11 - 3) * 4;
+    let v = u32::from_le_bytes([d[tb11], d[tb11 + 1], d[tb11 + 2], d[tb11 + 3]]);
+    d[tb11..tb11 + 4].copy_from_slice(&((v & 0xFFFF_0000) | 53 | 27 << 8).to_le_bytes());
+    d[light(2) + 24] &= 0xFE;
+    d[L + 7] |= 32;
+    d[127] = 0; // bSSAO24BorderMirrorSize
+    let mut sc = crate::m3p::parse(&d).map(|m| m.scene).unwrap_or_else(|_| p.clone());
+    sc.tiling = None;
+    sc
+}
+
 fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     app.mc.stop.store(true, Ordering::SeqCst);
     let r = std::fs::read(path).map_err(|e| e.to_string()).and_then(|d| crate::mc::read_m3c(&d).map(|v| (v, crate::mc::McCheckpoint::m3c_start(&d))));
@@ -932,6 +970,10 @@ fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
         info.push_str(&notes.join("\n"));
     }
     ui.set_caption(F, "Label33", &info);
+    // a warning blinks red 8 times (Timer3, as on a version mismatch)
+    ui.cm(F, "Label33").font = None;
+    ui.cm(F, "Timer3").tag = if notes.is_empty() { 0 } else { 8 };
+    ui.set_timer(F, "Timer3", !notes.is_empty());
     app.mc.calc_time = (img.seconds * 10.0) as i64;
     app.mc.paras = Some(f.scene);
     if let Some(d) = app.mc.paras.as_ref().and_then(|p| p.dof) {
@@ -1242,14 +1284,28 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button3Click" => import(app, ui),
         "Button4Click" => {
-            // send the parameters to the main window
+            // send the parameters to the main window, prepared for its
+            // renderer; the main window keeps its picture (ParasChanged)
             update_paras(app, ui);
             if let Some(p) = app.mc.paras.clone() {
-                app.scene = p;
-                app.eng.clear();
+                app.scene = paras_for_main(&p);
                 app.scene_to_forms(ui);
                 app.title = app.mc.name.clone();
                 super::main_form::set_caption(app, ui);
+                app.main.image_text = true;
+                ui.set_caption(MAIN, "Label6", &tr("@MB:PressCalculate3DToRender"));
+            }
+        }
+        "Timer3Timer" => {
+            // the warning blinks red (Timer3Timer)
+            let n = ui.c(F, "Timer3").tag;
+            if n > 0 {
+                ui.cm(F, "Timer3").tag = n - 1;
+                let red = (n - 1) & 1 != 0;
+                ui.cm(F, "Label33").font = red.then(|| crate::vcl::font::Font { color: 0xFFFF_0000, custom_color: true, ..Default::default() });
+            } else {
+                ui.cm(F, "Label33").font = None;
+                ui.set_timer(F, "Timer3", false);
             }
         }
         "Button5Click" => {
@@ -1427,6 +1483,36 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parameters_sent_to_the_main_window() {
+        // Button4Click: HS of the lights that are on, cosine, soft with one
+        let mut p = Scene::preset("Integer Power").unwrap();
+        for (i, l) in p.lighting.lights.iter_mut().enumerate() {
+            l.on = i == 0 || i == 2;
+            l.map = 0;
+            l.diff_func = 2;
+        }
+        p.ao = None;
+        p.tiling = None;
+        let m = paras_for_main(&p);
+        let hs = m.shadows.expect("hard shadows");
+        assert_eq!((hs.lights, hs.soft, hs.set_cos), (0b101, false, true));
+        assert_eq!(m.lighting.lights[0].diff_func, 0);
+        assert_eq!(m.lighting.lights[1].diff_func, 2);
+        // automatic DEAO, 33 rays, first step random, no dithering
+        let d = m.deao.expect("DEAO");
+        assert_eq!((d.quality, d.dither, d.first_step_random), (3, 0, true));
+        assert_eq!(m.ao.unwrap().border_mirror, 0.0);
+        assert_eq!((m.smooth_normals, m.first_step_random, m.step_sub_de_stop), (2, true, false));
+        assert!(m.lighting.bg_ambient);
+        // one light: soft
+        p.lighting.lights[2].on = false;
+        assert!(paras_for_main(&p).shadows.unwrap().soft);
+        // none: no hard shadows
+        p.lighting.lights[0].on = false;
+        assert!(paras_for_main(&p).shadows.is_none());
+    }
 
     #[test]
     fn passes_until_the_target() {
