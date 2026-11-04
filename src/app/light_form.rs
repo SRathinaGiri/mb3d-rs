@@ -573,7 +573,7 @@ pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     app.light.col_stop = l.color_end as i64;
     setp(ui, "TrackBar14", l.var_col_z as i64);
     setp(ui, "TrackBar3", l.fog_offset as i64);
-    setp(ui, "TrackBar19", 128);
+    setp(ui, "TrackBar19", l.fog_far_offset as i64);
     setp(ui, "TrackBar20", l.bg_rot[0] as i64);
     setp(ui, "TrackBar21", l.bg_rot[1] as i64);
     setp(ui, "TrackBar22", l.bg_rot[2] as i64);
@@ -647,6 +647,7 @@ pub fn put_light_in_header(app: &mut Mb3d, ui: &mut Ui) {
     let st = (app.light.col_start, app.light.col_stop);
     let l = &mut app.scene.lighting;
     l.fog_offset = pos(ui, "TrackBar3") as f32;
+    l.fog_far_offset = pos(ui, "TrackBar19") as f32;
     l.depth_fog = pos(ui, "TrackBar4") as f32;
     l.diffuse = pos(ui, "TrackBar5") as f32;
     l.dyn_fog = pos(ui, "TrackBar6") as f32;

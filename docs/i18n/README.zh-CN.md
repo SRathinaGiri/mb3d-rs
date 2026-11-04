@@ -313,6 +313,7 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
 * **在您的多台计算机之间共享渲染**，即"集群"：能访问同一共享文件夹的计算机一起渲染一张图片、一次大图渲染、一张蒙特卡洛图片或一段动画。参见
   [在多台计算机上渲染](#rendering-on-several-computers-the-swarm)。
 * **社区公式与贴图**：官方仓库中没有的 129 个公式和 154 张贴图，来自 Machina Infinitum 免费提供下载的 Mandelbulb3D 1.99.37 软件包。公式作者为 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero，以及文件中未署名的其他作者；每个公式的作者见 `M3Formulas/CREDITS-community.md`（DarkBeam 的 `teapot.m3f` 采用 CC BY-SA 3.0 许可）。贴图来自 DarkBeam 的收藏，遵循其条款（可自由使用，不得原样出售），其中包含 CmdrChaos、Fractales75、Nic022 和 UndeadAcademy 在 DeviantArt 上分享的图片；贴图 3046–3048 为 Kronpano 所作（`M3Maps/CREDITS-community.md`）。`M3Lights` 中的 608 个灯光预设也来自同一软件包，文件中未注明作者（`M3Lights/CREDITS-community.md`）。
+* **来自 Mandelbulb3D SE 的想法**：Glenn Olander 的 Mandelbulb3D SE 是一个基于 mb3d-rs 的 macOS 应用，它提供了两个想法：在测试中无需显卡即可检查每个显卡着色器，以及按下停止时立即结束图片的绘制。
 * **新公式 PseudoKleinian：** 由大厅、拱门和球体构成的"克莱因建筑"，作为一个带有精确距离的独立公式。
 
   <a href="../img/kleinian_hall.jpg"><img src="../img/kleinian_hall.jpg" width="300" alt="新公式：PseudoKleinian"></a>

@@ -511,6 +511,7 @@ możesz sprawdzić sam:
   render, obraz Monte Carlo lub animację. Zob.
   [Renderowanie na kilku komputerach](#rendering-on-several-computers-the-swarm).
 * **Formuły i mapy społeczności**: 129 formuł i 154 mapy, których brakuje w oficjalnym repozytorium, z pakietu Mandelbulb3D 1.99.37, który Machina Infinitum udostępnia do bezpłatnego pobrania. Autorami formuł są Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero oraz inni, których pliki nie podają autora; `M3Formulas/CREDITS-community.md` podaje autora każdej formuły (`teapot.m3f` autorstwa DarkBeama jest na licencji CC BY-SA 3.0). Mapy pochodzą z kolekcji DarkBeama, na jego warunkach (swobodne użycie, bez sprzedaży w niezmienionej postaci), z obrazami udostępnionymi na DeviantArt przez CmdrChaos, Fractales75, Nic022 i UndeadAcademy; mapy 3046–3048 są autorstwa Kronpano (`M3Maps/CREDITS-community.md`). 608 ustawień światła w `M3Lights` pochodzi z tego samego pakietu; ich pliki nie podają autora (`M3Lights/CREDITS-community.md`).
+* **Pomysły z Mandelbulb3D SE**: Mandelbulb3D SE (autor: Glenn Olander), aplikacja na macOS zbudowana na mb3d-rs, dała dwa pomysły: sprawdzanie w testach każdego shadera karty graficznej bez karty graficznej oraz zatrzymanie, które od razu kończy malowanie obrazu.
 * **Nowa formuła, PseudoKleinian:** „architektura kleinowska” z hal, łuków
   i kul jako jedna formuła z własną dokładną odległością.
 

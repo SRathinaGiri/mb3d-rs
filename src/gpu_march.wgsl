@@ -476,7 +476,8 @@ fn abox(scale: R, min_r: R, fold: R, ade: bool) {
     let y = box_fold(v.y, fold);
     let z = box_fold(v.z, fold);
     let r = z * z + y * y + x * x;
-    let sqr_min_r = min_r * min_r;
+    // Sqr(Max(1e-40, MinR)) as MB3D (a negative Min R acts as 0)
+    let sqr_min_r = max(min_r, R(1e-40)) * max(min_r, R(1e-40));
     var mul: R;
     if (r < sqr_min_r) {
         mul = scale / sqr_min_r;
@@ -1094,6 +1095,7 @@ fn evaluate(on_de: bool) -> R {
     var g = R(0.0);
     // the first part's values for the combination
     var r1 = R(0.0);
+    var difs1 = false;
     var wt = R(0.0);
     var dt = R(0.0);
     var buf_it = 0;
@@ -1237,6 +1239,7 @@ fn evaluate(on_de: bool) -> R {
             }
             // PrepareF1DEcomb
             r1 = result;
+            difs1 = difs;
             dbg_r1 = result;
             dbg_it1 = it_result;
             wt = abs(w);
@@ -1279,6 +1282,7 @@ fn evaluate(on_de: bool) -> R {
                 if (!(rst < result)) {
                     it_result = buf_it;
                     max_its_result = buf_mir;
+                    last_difs = difs1;
                 }
                 let sm = pf(DC_SMOOTH);
                 if (kind == 4u) {
@@ -1319,9 +1323,11 @@ fn evaluate(on_de: bool) -> R {
             smooth_it = buf_sit1;
             otrap = buf_otrap;
             max_its_result = buf_mir;
+            last_difs = difs1;
         }
         set_part(1u);
-        return invert_inside(result, difs);
+        // the ruling part's dIFS flag (Marcher::calc_de, MB3D's DEoptionResult)
+        return invert_inside(result, last_difs);
     }
     return ms_de_stop * 0.25;
 }
@@ -3203,6 +3209,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     mzz = a * (a + 2.0) / pf(ZCORR);
                     setc();
                     update_de_stop();
+                    // the side the pixel was hit from in an inside and
+                    // outside scene (otrap bit 0x8000: outside), as MB3D's
+                    // DEAO and hard shadows (Marcher::set_pixel_side)
+                    if ((P[INSIDE_FLAGS] & 2u) != 0u) {
+                        inside = (si_otrap & 0x8000u) == 0u;
+                    } else {
+                        inside = (P[INSIDE_FLAGS] & 1u) != 0u;
+                    }
                     need = true;
                     want_de = true;
                     pc = P_PS_R;
@@ -3528,8 +3542,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     if (ao_in) {
                         d_step_mul *= 0.5;
                     }
+                    // seen from inside (the picture's DEAO, dIFS too as in
+                    // MB3D): rays count until they meet the surface
+                    let ao_in_main = !reflect && inside;
                     if (pf(DE_STOP_FACTOR) != 0.0) {
-                        ms2 = select(msl / (d_step_mul * d_step_mul), msl, ao_in);
+                        ms2 = select(msl / (d_step_mul * d_step_mul), msl, ao_in || ao_in_main);
                     } else {
                         ms2 = pf(DE_STOP) / (d_step_mul * d_step_mul);
                     }
@@ -3570,6 +3587,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     de_mul = sqrt(R(ray_count) * 0.5);
                     abr_c = 1.2 / r_asin(clamp(1.0 / de_mul, -1.0, 1.0));
                     md_d10 = 0.1 / (max_dist * de_mul);
+                    if (ao_in_main) {
+                        de_mul = 1.0;
+                    }
                     rot_w = normal_matrix(normalize(vec3<R>(si_normal)));
                     // normalise_matrix_to(step_width, vgrads)
                     rv0 = vg(0u) * (pf(STEP_WIDTH) / length(vg(0u)));
@@ -3619,11 +3639,23 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_AO_R: {
                 if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     let dt2 = r;
-                    s_tmp = min(s_tmp, (dt2 - ms2 + dt1 * md_d10) / dt1);
-                    var fin = s_tmp < 0.02;
-                    if (!fin) {
-                        dt1 += max(dt2, dt1 * d_step_mul);
-                        fin = b_end;
+                    var fin = false;
+                    if (!reflect && inside) {
+                        if (dt2 < ms2) {
+                            let o4 = dt1 / max_dist;
+                            s_tmp = (o4 * o4) * (o4 * o4);
+                            fin = true;
+                        } else {
+                            dt1 += dt1 * d_step_mul * 0.1 + ms2;
+                            fin = b_end;
+                        }
+                    } else {
+                        s_tmp = min(s_tmp, (dt2 - ms2 + dt1 * md_d10) / dt1);
+                        fin = s_tmp < 0.02;
+                        if (!fin) {
+                            dt1 += max(dt2, dt1 * d_step_mul);
+                            fin = b_end;
+                        }
                     }
                     if (fin) {
                         ao_min[k] = max(s_tmp, 0.0) * de_mul;
@@ -3639,6 +3671,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     // open neighbour rays lighten a closed one
                     var amount = R(0.0);
                     for (var i = 0u; i < ray_count; i++) {
+                        if (!reflect && inside) {
+                            amount += ao_min[i];
+                            continue;
+                        }
                         var s_add = R(0.0);
                         if (ao_min[i] < 1.0) {
                             let max_add = 1.0 - ao_min[i];
@@ -4662,6 +4698,7 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         si_shadow = b >> 16u;
         si_zpos = OUT[o + 2u];
         si_grad = OUT[o + 3u] & 0xFFFFu;
+        si_otrap = OUT[o + 3u] >> 16u;
         si_amb = OUT[o + 4u];
         if (mode == M_SHADOW) {
             if (pf(HS_SOFT_RADIUS) > 0.0) {

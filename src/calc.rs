@@ -1241,11 +1241,15 @@ impl<'a> Marcher<'a> {
             self.it.c = c0;
         }
         let ms = self.ms_de_stop as f64;
+        // the dIFS flag of the result (MB3D's DEoptionResult) is the ruling
+        // part's: part 1's when it wins
+        let difs1 = part1.difs;
         let restore1 = |me: &mut Self| {
             me.it.it_result = buf.0;
             me.it.smooth_it = buf.2;
             me.it.otrap = buf.1;
             me.max_its_result = buf.3;
+            me.last_difs = difs1;
         };
         match dc.kind {
             1 => {
@@ -1268,6 +1272,7 @@ impl<'a> Marcher<'a> {
                 } else {
                     self.it.it_result = buf.0;
                     self.max_its_result = buf.3;
+                    self.last_difs = difs1;
                 }
                 let sm = dc.smooth;
                 if dc.kind == 4 {
@@ -1899,6 +1904,15 @@ impl<'a> Marcher<'a> {
         (0..3).any(|k| (p.cut_options >> k) & 1 != 0 && (self.it.c[k] - p.cut_pos[k]).abs() - plus_d < 0.0)
     }
 
+    /// The side a pixel of an "inside and outside" scene was hit from (its
+    /// otrap bit 0x8000 set: from outside), as MB3D's DEAO and hard shadow
+    /// passes take it for each pixel; else the scene's setting.
+    fn set_pixel_side(&mut self, si: &SiLight) {
+        let p = self.p;
+        self.inside = if p.in_and_outside { si.otrap & 0x8000 == 0 } else { p.inside_rendering };
+        self.calc_inside = self.inside;
+    }
+
     /// Surface position of a calculated pixel as used by the post passes
     /// (DEAO): `steps` binary search steps down to `|DE - DEstop| <= thr`.
     /// Returns false for pixels without a surface.
@@ -1916,6 +1930,7 @@ impl<'a> Marcher<'a> {
         let v = self.vfov;
         add_weight(&mut self.it.c, &v, self.mzz);
         self.update_de_stop();
+        self.set_pixel_side(si);
         let mut d = self.calc_de().min(self.ms_de_stop as f64 * 2.0);
         if self.it.it_result < self.max_its_result || d < self.ms_de_stop as f64 {
             let mut dt1 = (((8388351.9 - zf) / p.zc_mul + 1.0).powi(2) - 1.0) / p.zcorr - self.mzz;
@@ -2481,6 +2496,7 @@ impl<'a> Marcher<'a> {
         let v = self.vfov;
         add_weight(&mut self.it.c, &v, self.mzz);
         self.update_de_stop();
+        self.set_pixel_side(si);
         let mut d = self.calc_de();
         let de_limited = self.it.it_result < self.max_its_result || d < self.ms_de_stop as f64;
         if de_limited {

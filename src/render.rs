@@ -2593,6 +2593,11 @@ fn paint_core<S: crate::lighting::Sample>(
             s.spawn(move || {
                 let y0 = ci * chunk_rows;
                 for (ry, row) in chunk.chunks_mut(w as usize * 3).enumerate() {
+                    // Stop ends the painting of a big picture at once (an
+                    // idea from Mandelbulb3D SE by Glenn Olander)
+                    if cancel() {
+                        return;
+                    }
                     let y = y0 + ry;
                     for x in 0..w as usize {
                         let c = lv.pixel_color_s::<S>(&gbuf[y * w as usize + x], x as i32 + x0, y as i32 + ry0, cam);
@@ -2602,7 +2607,7 @@ fn paint_core<S: crate::lighting::Sample>(
             });
         }
     });
-    if !full {
+    if !full || cancel() {
         return (rgb, None);
     }
     let mut refl_s = None;

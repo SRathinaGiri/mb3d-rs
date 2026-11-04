@@ -3871,6 +3871,130 @@ mod tests {
         gbuffer_matches_cpu(&format!("cut_x = 0.2\ninside = inside\n{bulb}"), 0.5);
     }
 
+    fn validate_wgsl(what: &str, code: &str) {
+        let module = wgpu::naga::front::wgsl::parse_str(code).unwrap_or_else(|e| panic!("{what}: {}", e.emit_to_string(code)));
+        wgpu::naga::valid::Validator::new(wgpu::naga::valid::ValidationFlags::all(), wgpu::naga::valid::Capabilities::all())
+            .validate(&module)
+            .unwrap_or_else(|e| panic!("{what}: {}", e.emit_to_string(code)));
+    }
+
+    /// Every shader is valid WGSL, checked without a graphics card (so CI
+    /// catches a broken shader): the post shaders and the scene shader of
+    /// each built-in formula, the test scenes, the formulas of this program
+    /// and the community's, in single and double precision. (The idea from
+    /// Mandelbulb3D SE by Glenn Olander.)
+    #[test]
+    fn shaders_validate_without_a_card() {
+        for (name, code) in [("gpu_ssao.wgsl", include_str!("gpu_ssao.wgsl")), ("gpu_ssao15.wgsl", include_str!("gpu_ssao15.wgsl")), ("gpu_dof.wgsl", include_str!("gpu_dof.wgsl"))] {
+            validate_wgsl(name, code);
+        }
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        // MB3D's own formulas too where its repository is (MB3D_REPO, as in CI)
+        let mut dirs = vec![root.join("M3Formulas-rs"), root.join("M3Formulas-community")];
+        if let Ok(repo) = std::env::var("MB3D_REPO") {
+            dirs.push(std::path::PathBuf::from(repo).join("M3Formulas"));
+        }
+        for d in &dirs {
+            crate::formulas::add_formula_dir(d.clone());
+        }
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
+        let scenes: Vec<(String, String)> = vec![
+            ("mandelbulb.m3s".into(), bulb.into()),
+            ("quaternion_julia.m3s".into(), include_str!("../tests/data/quaternion_julia.m3s").into()),
+            ("interpolation_boxes.m3s".into(), include_str!("../tests/data/interpolation_boxes.m3s").into()),
+            ("inside and outside".into(), format!("cut_z = 0.1\ninside = both\nao = deao\n{bulb}")),
+        ];
+        let builtin = ["Integer Power", "Real Power", "Quaternion", "Tricorn", "Amazing Box", "Bulbox", "Folding Int Pow", "Aexion C"];
+        let mut files: Vec<String> = Vec::new();
+        for d in &dirs {
+            let Ok(rd) = std::fs::read_dir(d) else { continue };
+            for e in rd.flatten() {
+                let p = e.path();
+                if p.extension().is_some_and(|x| x == "m3f") {
+                    files.push(p.file_stem().unwrap().to_string_lossy().into_owned());
+                }
+            }
+        }
+        files.sort();
+        files.dedup();
+        let mut built: Vec<(String, crate::scene::Scene)> = Vec::new();
+        for (what, text) in &scenes {
+            built.push((what.clone(), crate::scene::Scene::parse(text).unwrap_or_else(|e| panic!("{what}: {e}"))));
+        }
+        for f in builtin.iter().map(|s| s.to_string()).chain(files) {
+            let mut sc = crate::scene::Scene::preset("Integer Power").unwrap();
+            sc.formulas[0].formula = crate::formulas::lookup(&f).unwrap_or_else(|e| panic!("{f}: {e}"));
+            built.push((f, sc));
+        }
+        let (mut checked, mut cpu_only) = (0, Vec::new());
+        for (what, mut sc) in built {
+            let what = &what;
+            sc.scale_image(0.1);
+            let p = match CalcParams::new(&sc) {
+                Ok(p) => p,
+                Err(e) => {
+                    cpu_only.push(format!("{what} (params: {e})"));
+                    continue;
+                }
+            };
+            let sh = match scene_shader(&p) {
+                Ok(sh) => sh,
+                Err(e) => {
+                    // (calculated on the CPU)
+                    cpu_only.push(format!("{what} ({})", e.chars().take(60).collect::<String>()));
+                    continue;
+                }
+            };
+            validate_wgsl(what, &sh.code);
+            if !needs_double(&p) {
+                let mut p2 = p.clone();
+                p2.gpu_double = true;
+                validate_wgsl(&format!("{what} (double precision)"), &scene_shader(&p2).unwrap().code);
+            }
+            checked += 1;
+        }
+        crate::elog!("{checked} scene shaders valid; on the CPU only: {}", cpu_only.join(", "));
+        assert!(checked >= 40, "{checked}");
+    }
+
+    /// The card's ambient shadows (DEAO) match the CPU's on the same
+    /// surfaces, also seen from inside and in inside and outside scenes
+    /// (MB3D's own rules there).
+    #[test]
+    fn deao_inside_matches_cpu() {
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
+        for extra in ["", "cut_x = 0.2\ninside = inside\n", "cut_z = 0.1\ninside = both\n"] {
+            let mut sc = crate::scene::Scene::parse(&format!("{extra}ao = deao\n{bulb}")).unwrap();
+            sc.scale_image(0.4);
+            let p = CalcParams::new(&sc).unwrap();
+            if let Err(e) = gpu() {
+                crate::elog!("no GPU, test skipped: {e}");
+                return;
+            }
+            let dp = crate::deao::DeaoParams::default();
+            let job = PostJob { shadows: None, deao: Some(dp) };
+            let g = march(&p, &job, &|_, _| {}, &|| false, |_, _| {}).expect(&last_status());
+            let mut cpu = g.clone();
+            let [_, _, w, h] = p.rect;
+            crate::deao::deao(&p, &mut cpu, w as usize, h as usize, &dp, 8, &|_, _| {}, &|| false);
+            let (mut n, mut sum, mut far) = (0usize, 0f64, 0usize);
+            for (a, b) in g.iter().zip(&cpu) {
+                if a.is_background() {
+                    continue;
+                }
+                n += 1;
+                let d = (a.amb_shadow as f64 - b.amb_shadow as f64).abs() / 16383.0;
+                sum += d;
+                far += (d > 0.1) as usize;
+            }
+            let mean = sum / n.max(1) as f64;
+            let farf = far as f64 / n.max(1) as f64;
+            crate::elog!("DEAO {extra:?}: {n} pixels, mean difference {:.4}, off by more than 10 % {:.2}%", mean, farf * 100.0);
+            assert!(n > 100);
+            assert!(mean < 0.01 && farf < 0.01, "{extra:?}: mean {mean}, far {farf}");
+        }
+    }
+
     fn gbuffer_matches_cpu(scene: &str, scale: f64) {
         let mut sc = crate::scene::Scene::parse(scene).unwrap();
         sc.scale_image(scale);

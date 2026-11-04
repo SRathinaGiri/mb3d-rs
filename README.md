@@ -509,6 +509,10 @@ you check further on your own:
   UndeadAcademy; maps 3046–3048 are by Kronpano
   (`M3Maps/CREDITS-community.md`). The 608 light presets in `M3Lights` come from the same package; their
   files name no maker (`M3Lights/CREDITS-community.md`).
+* **Ideas from Mandelbulb3D SE**: Glenn Olander's Mandelbulb3D SE, a macOS
+  app built on mb3d-rs, gave two ideas: checking every graphics card shader
+  in the tests without a graphics card, and Stop ending the painting of a
+  picture at once.
 * **A new formula, PseudoKleinian:** the "Kleinian architecture" of
   halls, arches and spheres as one formula with its own exact distance.
 

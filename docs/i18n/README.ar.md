@@ -479,6 +479,7 @@ MB3D وخرائطه، ويصنع الصور نفسها.
   أو تحريكًا. انظر
   [التصيير على عدة حواسيب](#rendering-on-several-computers-the-swarm).
 * **صيغ وخرائط المجتمع**: 129 صيغة و154 خريطة غير موجودة في المستودع الرسمي، من حزمة Mandelbulb3D 1.99.37 التي تقدّمها Machina Infinitum للتنزيل مجانًا. الصيغ من تأليف Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero وآخرين لا تذكر ملفاتهم اسم المؤلف؛ ويذكر الملف `M3Formulas/CREDITS-community.md` مؤلف كل صيغة (الملف `teapot.m3f` من DarkBeam مرخّص بموجب CC BY-SA 3.0). الخرائط من مجموعة DarkBeam وفق شروطه (حرة الاستخدام، ولا تُباع دون تغيير)، مع صور شاركها على DeviantArt كلٌّ من CmdrChaos وFractales75 وNic022 وUndeadAcademy؛ والخرائط 3046–3048 من Kronpano (`M3Maps/CREDITS-community.md`). وإعدادات الإضاءة الـ608 في `M3Lights` من الحزمة نفسها، ولا تذكر ملفاتها صانعها (`M3Lights/CREDITS-community.md`).
+* **أفكار من Mandelbulb3D SE**: قدّم Mandelbulb3D SE من Glenn Olander، وهو تطبيق macOS مبني على mb3d-rs، فكرتين: فحص كل shader لبطاقة الرسوميات في الاختبارات دون بطاقة رسوميات، وأن يُنهي الإيقاف تلوين الصورة فورًا.
 * **صيغة جديدة، PseudoKleinian:** "العمارة الكلاينية" من القاعات والأقواس
   والكرات في صيغة واحدة بمسافتها الدقيقة الخاصة.
 

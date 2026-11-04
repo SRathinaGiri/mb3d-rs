@@ -499,6 +499,7 @@ mb3d-rs [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D) है, वह�
   चित्र या एक एनिमेशन रेंडर करते हैं। देखें
   [कई कंप्यूटरों पर रेंडरिंग](#rendering-on-several-computers-the-swarm)।
 * **समुदाय के फ़ॉर्मूले और मैप**: 129 फ़ॉर्मूले और 154 मैप जो आधिकारिक रिपॉज़िटरी में नहीं हैं, Mandelbulb3D 1.99.37 के उस पैकेज से जिसे Machina Infinitum मुफ़्त डाउनलोड के रूप में देता है। फ़ॉर्मूले Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero और दूसरों के हैं जिनकी फ़ाइलों में लेखक का नाम नहीं है; `M3Formulas/CREDITS-community.md` हर फ़ॉर्मूले के लेखक का नाम बताता है (DarkBeam का `teapot.m3f` CC BY-SA 3.0 के अंतर्गत है)। मैप DarkBeam के संग्रह से हैं, उनकी शर्तों पर (उपयोग मुक्त, बिना बदले बेचे नहीं जा सकते), उन चित्रों के साथ जिन्हें CmdrChaos, Fractales75, Nic022 और UndeadAcademy ने DeviantArt पर साझा किया; मैप 3046–3048 Kronpano के हैं (`M3Maps/CREDITS-community.md`)। `M3Lights` के 608 प्रकाश प्रीसेट भी इसी पैकेज से हैं; उनकी फ़ाइलों में बनाने वाले का नाम नहीं है (`M3Lights/CREDITS-community.md`)।
+* **Mandelbulb3D SE से विचार**: Glenn Olander के Mandelbulb3D SE, mb3d-rs पर बने एक macOS ऐप, ने दो विचार दिए: परीक्षणों में ग्राफ़िक्स कार्ड के बिना हर ग्राफ़िक्स कार्ड shader की जाँच, और स्टॉप से किसी चित्र की पेंटिंग का तुरंत रुक जाना।
 * **एक नया फ़ॉर्मूला, PseudoKleinian:** हॉल, मेहराबों और गोलों का
   "Kleinian वास्तुकला" एक फ़ॉर्मूले के रूप में, अपनी सटीक दूरी के साथ।
 

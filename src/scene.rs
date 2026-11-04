@@ -795,6 +795,9 @@ impl Scene {
         let _ = writeln!(t, "depth_color = {}\ndepth_color2 = {}", hex(l.depth_col), hex(l.depth_col2));
         let _ = writeln!(t, "dynfog_color = {}\ndynfog_color2 = {}", hex(l.dyn_fog_col), hex(l.dyn_fog_col2));
         let _ = writeln!(t, "fog_offset = {}\ndepth_fog = {}\ndyn_fog = {}", l.fog_offset, l.depth_fog, l.dyn_fog);
+        if l.fog_far_offset != 128.0 {
+            let _ = writeln!(t, "fog_far_offset = {}", l.fog_far_offset);
+        }
         let _ = writeln!(t, "diffuse = {}\nspecular = {}\nambient = {}", l.diffuse, l.specular, l.ambient);
         let _ = writeln!(t, "ambient_shadow = {}\nindirect_light = {}", l.amb_shadow, l.ind_light);
         let _ = writeln!(t, "gamma = {}\nroughness = {}", l.gamma, l.roughness);
@@ -1635,6 +1638,7 @@ impl Scene {
                     "ambient_shadow" => s.lighting.amb_shadow = num()? as f32,
                     "indirect_light" => s.lighting.ind_light = num()? as f32,
                     "fog_offset" => s.lighting.fog_offset = num()? as f32,
+                    "fog_far_offset" => s.lighting.fog_far_offset = num()? as f32,
                     "gamma" => s.lighting.gamma = num()? as f32,
                     "color_start" => s.lighting.color_start = num()? as f32,
                     "color_end" => s.lighting.color_end = num()? as f32,

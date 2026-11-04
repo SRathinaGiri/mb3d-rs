@@ -520,6 +520,7 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   besar, gambar Monte Carlo, atau animasi bersama-sama. Lihat
   [Merender di beberapa komputer](#rendering-on-several-computers-the-swarm).
 * **Rumus dan peta komunitas**: 129 rumus dan 154 peta yang tidak ada di repositori resmi, dari paket Mandelbulb3D 1.99.37 yang ditawarkan Machina Infinitum sebagai unduhan gratis. Rumusnya dibuat oleh Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero dan lainnya yang berkasnya tidak menyebut pembuat; `M3Formulas/CREDITS-community.md` menyebut pembuat setiap rumus (`teapot.m3f` karya DarkBeam berlisensi CC BY-SA 3.0). Petanya dari koleksi DarkBeam, dengan ketentuannya (bebas dipakai, tidak boleh dijual tanpa diubah), dengan gambar yang dibagikan di DeviantArt oleh CmdrChaos, Fractales75, Nic022, dan UndeadAcademy; peta 3046–3048 karya Kronpano (`M3Maps/CREDITS-community.md`). 608 preset cahaya di `M3Lights` berasal dari paket yang sama; berkasnya tidak menyebut pembuat (`M3Lights/CREDITS-community.md`).
+* **Ide dari Mandelbulb3D SE**: Mandelbulb3D SE karya Glenn Olander, aplikasi macOS yang dibangun di atas mb3d-rs, memberi dua ide: memeriksa setiap shader kartu grafis dalam pengujian tanpa kartu grafis, dan tombol Berhenti yang langsung menghentikan pewarnaan gambar.
 * **Formula baru, PseudoKleinian:** "arsitektur Kleinian" berupa aula,
   lengkungan, dan bola sebagai satu formula dengan jarak tepatnya sendiri.
 

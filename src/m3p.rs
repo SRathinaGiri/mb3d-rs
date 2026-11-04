@@ -957,6 +957,7 @@ fn parse_light(r: &Rd, w: &mut Vec<String>) -> Lighting {
         w.push(format!("diffuse colour map {} not found (use --maps DIR)", l.diff_map));
     }
     l.fog_offset = (tb(3) & 0xFFFF) as f32;
+    l.fog_far_offset = ((tb(3) as u32) >> 16) as f32;
     l.depth_fog = tb(4) as f32;
     l.diffuse = tb(5) as f32;
     l.dyn_fog = tb(6) as f32;
@@ -1235,7 +1236,7 @@ pub fn write(sc: &Scene) -> Vec<u8> {
     d[b + 7] = (l.bg_add_light as u8) << 3 | l.internal_gamma2 as u8 | (l.yc_comb as u8) << 2 | (l.bg_ambient as u8) << 5;
     d[b + 3] = l.diff_map as u8;
     let tbv = [
-        (l.fog_offset.round() as i32 & 0xFFFF) | (128 << 16),
+        (l.fog_offset.round() as i32 & 0xFFFF) | ((l.fog_far_offset.round() as i32 & 0xFFFF) << 16),
         l.depth_fog.round() as i32,
         l.diffuse.round() as i32,
         l.dyn_fog.round() as i32,
@@ -1498,6 +1499,18 @@ mod tests {
         let mut q = plain.clone();
         q.part2_place = Some(crate::scene::Placement { offset: [2.5, -1.0, 0.25], rotation: [10.0, 20.0, 30.0], scale: 0.4 });
         assert_eq!(parse(&write(&q)).unwrap().scene.part2_place, q.part2_place);
+    }
+
+    /// The dynamic fog's far offset (TBpos[3] high word, slider 19) is
+    /// kept through the header, the scene text and back.
+    #[test]
+    fn the_far_fog_offset_is_kept() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        assert_eq!(sc.lighting.fog_far_offset, 128.0);
+        assert!(!sc.to_text().contains("fog_far_offset"));
+        sc.lighting.fog_far_offset = 201.0;
+        assert_eq!(parse(&write(&sc)).unwrap().scene.lighting.fog_far_offset, 201.0);
+        assert_eq!(Scene::parse(&sc.to_text()).unwrap().lighting.fog_far_offset, 201.0);
     }
 
     #[test]

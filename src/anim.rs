@@ -736,6 +736,7 @@ pub fn bake_light_blend(s: &mut Scene) {
     l.dyn_fog_col = c(&|x| x.dyn_fog_col);
     l.dyn_fog_col2 = c(&|x| x.dyn_fog_col2);
     l.fog_offset = f(&|x| x.fog_offset);
+    l.fog_far_offset = f(&|x| x.fog_far_offset);
     l.depth_fog = f(&|x| x.depth_fog);
     l.diffuse = f(&|x| x.diffuse);
     l.dyn_fog = f(&|x| x.dyn_fog);

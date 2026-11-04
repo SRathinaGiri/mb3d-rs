@@ -508,6 +508,7 @@ sprawdzëc sóm:
   render, òbrôzk Monte Carlo abò animacjã. Òbaczë
   [Renderowanié na wielu kòmpùtrach](#rendering-on-several-computers-the-swarm).
 * **Fòrmùłë ë mapë spòlëznë**: 129 fòrmùłów ë 154 map, chtërnëch felëje w òficjalnym repòzytorium, z paczétu Mandelbulb3D 1.99.37, jaczi Machina Infinitum dôwô do darmòwégò sćągniãcô. Fòrmùłë ùsôdzëlë Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero ë jinszi, chtërnëch lopczi nie mienią ùsôdzcë; `M3Formulas/CREDITS-community.md` mieni ùsôdzcã kòżdi fòrmùłë (`teapot.m3f` òd DarkBeama je pòd licencją CC BY-SA 3.0). Mapë są z kòlekcji DarkBeama, na jegò warënkach (wòlné ùżëcé, bez przedôwaniô bez zmianë), z òbrazama, jaczé na DeviantArt ùdostãpnilë CmdrChaos, Fractales75, Nic022 ë UndeadAcademy; mapë 3046–3048 są òd Kronpano (`M3Maps/CREDITS-community.md`). 608 nastôwów swiatła w `M3Lights` je z tegò samégò paketu; jich lopczi nie miono ùtwórcë (`M3Lights/CREDITS-community.md`).
+* **Ùdbë z Mandelbulb3D SE**: Mandelbulb3D SE (ùtwórca: Glenn Olander), aplikacjô dlô macOS zbùdowónô na mb3d-rs, dało dwie ùdbë: sprôwdzanié w testach kòżdégò shadera grafikòwi kartë bez grafikòwi kartë ë stop, chtëren zarô kùńczi malowanié òbrôzka.
 * **Nowô fòrmùła, PseudoKleinian:** „kleinowskô architektura” halów,
   łãków ë kùl jakno jedna fòrmùła z gwôsną dokładną òdległoscą.
 
