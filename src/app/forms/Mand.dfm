@@ -425,7 +425,7 @@ object Mand3DForm: TMand3DForm
       Left = 1
       Top = 446
       Width = 151
-      Height = 340
+      Height = 364
       ActivePage = TabSheet5
       Align = alTop
       BiDiMode = bdLeftToRight
@@ -1294,12 +1294,19 @@ object Mand3DForm: TMand3DForm
           TabOrder = 14
           Text = '0'
         end
+        object Label94: TLabel
+          Left = 9
+          Top = 248
+          Width = 80
+          Height = 13
+          Caption = '@MB:Absorption'
+        end
         object GroundVisEdit: TEdit
           Left = 95
-          Top = 221
+          Top = 245
           Width = 42
           Height = 21
-          Hint = '@MB:HowFarYouCanSeeInto'
+          Hint = '@MB:HowMurkyTheWaterIsHow'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -12
@@ -1313,7 +1320,7 @@ object Mand3DForm: TMand3DForm
         end
         object GroundWaterColBtn: TSpeedButton
           Left = 9
-          Top = 244
+          Top = 268
           Width = 23
           Height = 23
           Hint = '@MB:TheColourOfDeepWaterThe'
@@ -1324,14 +1331,14 @@ object Mand3DForm: TMand3DForm
         end
         object Label93: TLabel
           Left = 36
-          Top = 248
+          Top = 272
           Width = 56
           Height = 13
           Caption = '@MB:Refraction'
         end
         object GroundIorEdit: TEdit
           Left = 95
-          Top = 245
+          Top = 269
           Width = 42
           Height = 21
           Hint = '@MB:RefractionIndexOfTheWaterWater'

@@ -647,13 +647,12 @@ możesz sprawdzić sam:
   **Przezroczysta woda**: z *Woda* powyżej 0 (ile światła przepuszcza)
   fraktal zanurzony do połowy widać pod powierzchnią, przesunięty przez
   załamanie (*Załamanie*: 1,33 dla wody) i z głębokością przechodzący w
-  kolor głębokiej wody (przycisk koloru): widoczność (pole po *Woda*)
-  mówi, jak daleko widać w głąb, a w niebieskozielonej wodzie czerwień
+  kolor głębokiej wody (przycisk koloru): *Absorpcja* mówi, jak mętna jest (0 czysta, 3 mętna), a w niebieskozielonej wodzie czerwień
   znika pierwsza, więc to, co zanurzone, robi się turkusowe. Połyski
   świateł na falach zostają na powierzchni. Zwykły render pokazuje to z
   włączonymi odbiciami (Obróbka końcowa), Monte Carlo zawsze; bez odbić
   woda pozostaje nieprzezroczysta. Klucze sceny `ground_transparency`,
-  `ground_visibility`, `ground_water_color`, `ground_ior`; przykład w
+  `ground_absorption`, `ground_water_color`, `ground_ior`; przykład w
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>

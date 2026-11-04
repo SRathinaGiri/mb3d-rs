@@ -670,13 +670,12 @@ permettono di verificare ulteriormente da solo:
   passare) un frattale mezzo sommerso si vede sotto la superficie,
   deviato dalla rifrazione (*Rifrazione*: 1,33 per l'acqua) e con la
   profondità prende il colore dell'acqua profonda (il pulsante del
-  colore): la visibilità (il campo dopo *Acqua*) dice fin dove si vede
-  dentro, e in un'acqua blu-verde il rosso si spegne per primo, così ciò
+  colore): l'*Assorbimento* dice quanto è torbida (0 limpida, 3 torbida), e in un'acqua blu-verde il rosso si spegne per primo, così ciò
   che è sommerso diventa turchese. I riflessi delle luci sulle onde
   restano sulla superficie. Il render normale lo mostra con i riflessi
   attivi (Post-elaborazione), Monte Carlo sempre; senza riflessi l'acqua
   resta opaca. Chiavi di scena `ground_transparency`,
-  `ground_visibility`, `ground_water_color`, `ground_ior`; un esempio in
+  `ground_absorption`, `ground_water_color`, `ground_ior`; un esempio in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>

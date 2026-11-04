@@ -724,7 +724,8 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     set(ui, "GroundWaveEdit", &fts(g.wave_height));
     set(ui, "GroundWaveLenEdit", &fts(g.wave_len));
     set(ui, "GroundTranspEdit", &fts_single(g.transparency as f64));
-    set(ui, "GroundVisEdit", &fts_single(g.visibility as f64));
+    // (shown as the absorption, 1 / the visibility)
+    set(ui, "GroundVisEdit", &fts_single(1.0 / g.visibility.max(1e-6) as f64));
     set(ui, "GroundIorEdit", &fts_single(g.ior as f64));
     app.main.ground_color = g.color;
     app.main.ground_water_color = g.water_color;
@@ -782,7 +783,8 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         wave_height: ptf(&t(ui, "GroundWaveEdit")).max(0.0),
         wave_len: Some(ptf(&t(ui, "GroundWaveLenEdit"))).filter(|v| *v > 0.0).unwrap_or(1.0),
         transparency: (ptf(&t(ui, "GroundTranspEdit")) as f32).clamp(0.0, 1.0),
-        visibility: Some(ptf(&t(ui, "GroundVisEdit")) as f32).filter(|v| *v > 0.0).unwrap_or(1.0),
+        // the absorption: 0 is perfectly clear water
+        visibility: (1.0 / ptf(&t(ui, "GroundVisEdit")).max(1e-6)) as f32,
         water_color: app.main.ground_water_color,
         ior: Some(ptf(&t(ui, "GroundIorEdit")) as f32).filter(|v| *v >= 1.0).unwrap_or(1.33).min(3.0),
     });

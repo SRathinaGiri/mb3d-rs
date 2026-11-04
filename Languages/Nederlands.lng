@@ -1520,14 +1520,14 @@ HoldShiftKeyForFinerSteps=(Houd Shift ingedrukt voor fijnere stappen)
 ;(Hold Shift key for finer steps)
 Hotkeys=Sneltoetsen
 ;Hotkeys
-HowFarYouCanSeeInto=Hoe ver je in het water kijkt, in fractaleenheden: de helderste kleur houdt na deze afstand een derde van zijn licht, rood verdwijnt in blauwgroen water veel eerder (ongeveer de grootte van de fractal: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Hoeveel licht het water doorlaat (0 tot 1, 0: ondoorzichtig): met de reflecties (Nabewerking) of in Monte Carlo is de fractal onder het oppervlak te zien, verschoven door de breking en vervagend met de diepte
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Hoeveel het vlak reflecteert (0 tot 1): de glanzen, en de spiegeling als de reflecties berekend worden (Nabewerking)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Hoeveel de kleur van het oppervlak met het reliëf varieert: 0 niet, 1 sterk
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=Hoe troebel het water is: hoe snel het licht erin dooft, per fractaleenheid (0: volkomen helder; 1: je ziet ongeveer één eenheid diep; 3: troebel). In blauwgroen water verdwijnt rood het eerst.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Hoe sterk de ruis is die wordt verwijderd (1 tot 30, zoals "Denoise DCT" van GIMP).\nHoger verwijdert meer ruis, en meer fijne details.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Hoe dicht de wolken zijn (1: een volle laag laat ongeveer 2 % van het licht door) en hoeveel van de lucht ze bedekken (0 tot 1)

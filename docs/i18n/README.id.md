@@ -675,13 +675,11 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   **Air bening**: dengan *Air* di atas 0 (seberapa banyak cahaya yang
   diloloskan) fraktal yang setengah terendam terlihat di bawah
   permukaan, dibelokkan oleh pembiasan (*Pembiasan*: 1,33 untuk air) dan
-  seiring kedalaman berubah ke warna air dalam (tombol warna): jarak
-  pandang (kolom setelah *Air*) menentukan seberapa jauh terlihat ke
-  dalamnya, dan di air biru-hijau merah memudar lebih dulu, sehingga
+  seiring kedalaman berubah ke warna air dalam (tombol warna): *Absorpsi* menentukan seberapa keruh ia (0 jernih, 3 keruh), dan di air biru-hijau merah memudar lebih dulu, sehingga
   yang terendam menjadi pirus. Kilau lampu di atas ombak tetap di
   permukaan. Render biasa menampilkannya bila pantulan aktif
   (Pasca-proses), Monte Carlo selalu; tanpa pantulan air tetap buram.
-  Kunci adegan `ground_transparency`, `ground_visibility`,
+  Kunci adegan `ground_transparency`, `ground_absorption`,
   `ground_water_color`, `ground_ior`; contoh di
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 

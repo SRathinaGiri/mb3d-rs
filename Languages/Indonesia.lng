@@ -1520,14 +1520,14 @@ HoldShiftKeyForFinerSteps=(Tahan tombol Shift untuk langkah lebih halus)
 ;(Hold Shift key for finer steps)
 Hotkeys=Tombol pintas
 ;Hotkeys
-HowFarYouCanSeeInto=Seberapa jauh terlihat ke dalam air, dalam satuan fraktal: warnanya yang paling jernih menyisakan sepertiga cahayanya setelah jarak ini, merah memudar jauh lebih cepat di air biru-hijau (kira-kira ukuran fraktal: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Seberapa banyak cahaya yang diloloskan air (0 sampai 1, 0: buram): dengan pantulan (Pasca-proses) atau di Monte Carlo fraktal terlihat di bawah permukaan, dibelokkan oleh pembiasan dan memudar seiring kedalaman
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Seberapa kuat bidang memantul (0 sampai 1): kilaunya, dan cerminnya bila pantulan dihitung (Pasca-proses)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Seberapa besar warna permukaan berubah mengikuti relief: 0 tidak, 1 kuat
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=Seberapa keruh air: seberapa cepat cahaya meredup di dalamnya, per satuan fraktal (0: jernih sempurna; 1: terlihat sekitar satu satuan ke dalam; 3: keruh). Di air biru-hijau, merah memudar lebih dulu.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Seberapa kuat derau yang dihapus (1 sampai 30, seperti "Denoise DCT" GIMP).\nNilai lebih tinggi menghapus lebih banyak derau, dan lebih banyak detail halus.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Seberapa tebal awannya (1: lapisan penuh meloloskan sekitar 2 % cahaya) dan seberapa banyak langit yang tertutup (0 sampai 1)

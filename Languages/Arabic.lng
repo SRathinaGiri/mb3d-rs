@@ -1521,14 +1521,14 @@ HoldShiftKeyForFinerSteps=(اضغط مفتاح Shift لخطوات أدق)
 ;(Hold Shift key for finer steps)
 Hotkeys=مفاتيح الاختصار
 ;Hotkeys
-HowFarYouCanSeeInto=إلى أي مدى يُرى داخل الماء، بوحدات الكسيري: يحتفظ أصفى ألوانه بثلث ضوئه بعد هذه المسافة، ويختفي الأحمر أبكر بكثير في الماء الأزرق المخضر (نحو حجم الكسيري: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=مقدار الضوء الذي يمرره الماء (من 0 إلى 1، 0: معتم): مع الانعكاسات (المعالجة اللاحقة) أو في مونت كارلو يظهر الكسيري تحت السطح، منحرفًا بالانكسار ويتلاشى مع العمق
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=مقدار انعكاس المستوى (من 0 إلى 1): لمعانه، ومرآته عند حساب الانعكاسات (المعالجة اللاحقة)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=مقدار تغيّر لون السطح مع النتوء: 0 لا يتغير، 1 بقوة
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=مدى عكارة الماء: سرعة خفوت الضوء فيه لكل وحدة من الكسيري (0: صافٍ تمامًا؛ 1: يُرى إلى عمق وحدة تقريبًا؛ 3: عكر). في الماء الأزرق المخضر يخفت الأحمر أولًا.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=مدى قوة التشويش الذي يُزال (من 1 إلى 30، كما في "Denoise DCT" في GIMP).\nالأعلى يزيل تشويشًا أكثر، وتفاصيل دقيقة أكثر.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=مدى كثافة السحب (1: الطبقة الكاملة تمرر نحو 2 % من الضوء) وكم تغطي من السماء (من 0 إلى 1)

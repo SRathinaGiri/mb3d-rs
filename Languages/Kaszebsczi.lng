@@ -1520,14 +1520,14 @@ HoldShiftKeyForFinerSteps=(Trzëmôj Shift dlô drobniészich kroków)
 ;(Hold Shift key for finer steps)
 Hotkeys=Skrótë
 ;Hotkeys
-HowFarYouCanSeeInto=Jak daleko je widzec w wòdze, w jednotach fraktala: ji nôczëstszô farwa trzimô trzecy dzél swiatła pò ti dalëznie, czerwienô zanikô wiele wczasni w mòdrozelony wòdze (wnetka wiôlgòsc fraktala: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Wiele swiatła wòda przepùszczô (òd 0 do 1, 0: nieprzezérnô): z òdbicama (Kùńcowô òbróbka) abò w Monte Carlo fraktal je widzec pòd wiéchrzëzną, przesëniãti przez załómanié ë zanikający z głãbòkòscą
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Jak mòckò płaszczëzna òdbijô (òd 0 do 1): ji pòłësczi ë zdrzadło, czej są rechòwóné òdbicé (Kùńcowô òbróbka)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Jak wiele farwa pòwiérzchni zmieniô sã z rzezbą: 0 wcale, 1 mòcno
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=Jak mãtnô je wòda: jak chùtkò gasnie w ni swiatło, na jednostkã fraktala (0: całô przezérnô; 1: widzec na kòl jedny jednostczi w głãb; 3: mãtnô). W modrozelony wòdze nôprzód zanikô czerwień.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Jak mòcny je szëm, chtëren je ùsëwóny (1 do 30, jak "Denoise DCT" w GIMP).\nWëższé ùsëwô wicy szëmù, a téż wicy drobnëch detalów.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Jak gãsté są chmùrë (1: pełnô warstwa przepùszczô kòl 2 % swiatła) ë jak wiele nieba pòkriwają (òd 0 do 1)

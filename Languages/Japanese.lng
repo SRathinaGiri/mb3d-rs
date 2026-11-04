@@ -1521,14 +1521,14 @@ HoldShiftKeyForFinerSteps=(Shiftキーを押すと細かく動きます)
 ;(Hold Shift key for finer steps)
 Hotkeys=ホットキー
 ;Hotkeys
-HowFarYouCanSeeInto=水の中をどこまで見通せるか (フラクタル単位): 最も澄んだ色はこの距離で光の三分の一が残り、青緑の水では赤がずっと早く消えます (フラクタルの大きさ程度: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=水が通す光の量 (0 から 1、0: 不透明): 反射 (ポストプロセス) またはモンテカルロで、水面下のフラクタルが屈折で曲がり、深さとともに薄れて見えます
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=平面の反射の強さ (0 から 1): ハイライトと、反射を計算するときの鏡面 (ポストプロセス)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=起伏による表面の色の変化の度合い: 0 なし、1 強い
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=水の濁り具合：フラクタル単位あたりで光が弱まる速さ（0：完全に透明、1：約1単位の深さまで見える、3：濁っている）。青緑の水では赤が最初に消えます。
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=除去するノイズの強さです (1 ~ 30、GIMP の「Denoise DCT」と同じ)。\n高いほど多くのノイズを除去しますが、細部も失われます。
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=雲の濃さ (1: 層全体で光の約 2 % を通す) と空を覆う割合 (0 から 1)

@@ -1521,14 +1521,14 @@ HoldShiftKeyForFinerSteps=（按住 Shift 键步进更细）
 ;(Hold Shift key for finer steps)
 Hotkeys=快捷键
 ;Hotkeys
-HowFarYouCanSeeInto=能看进水中多远，以分形单位计：最清澈的颜色在这段距离后保留三分之一的光，在蓝绿色的水中红色消失得早得多（约为分形的大小：1）
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=水透过多少光（0 到 1，0：不透明）：开启反射（后期处理）或在蒙特卡洛中，水面下的分形可见，被折射弯曲并随深度渐隐
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=平面的反射程度（0 到 1）：它的高光，以及计算反射时的镜面（后期处理）
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=表面颜色随起伏变化的程度：0 不变，1 强烈
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=水的浑浊程度：每个分形单位内光线减弱的速度（0：完全清澈；1：约可看到一个单位深；3：浑浊）。在蓝绿色的水中，红色最先消失。
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=要去除的噪点强度（1 到 30，同 GIMP 的“Denoise DCT”）。\n值越高去除的噪点越多，细节也损失越多。
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=云的浓度（1：整层约透过 2% 的光）以及覆盖天空的比例（0 到 1）

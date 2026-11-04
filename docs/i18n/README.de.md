@@ -664,13 +664,12 @@ können Sie selbst weiter prüfen:
   durchlässt) zeigt sich ein halb untergetauchtes Fraktal unter der
   Oberfläche, von der Brechung verschoben (*Brechung*: 1,33 für Wasser)
   und mit der Tiefe in die Farbe tiefen Wassers (der Farbknopf)
-  übergehend: die Sichtweite (das Feld nach *Wasser*) sagt, wie weit man
-  hineinsieht, und in blaugrünem Wasser schwindet Rot zuerst, sodass das
+  übergehend: die *Absorption* sagt, wie trüb es ist (0 klar, 3 trüb), und in blaugrünem Wasser schwindet Rot zuerst, sodass das
   Darunterliegende türkis wird. Die Glanzlichter der Lampen auf den
   Wellen bleiben auf der Oberfläche. Das normale Bild zeigt es mit
   eingeschalteten Spiegelungen (Nachbearbeitung), Monte Carlo immer;
   ohne Spiegelungen bleibt das Wasser undurchsichtig. Szenenschlüssel
-  `ground_transparency`, `ground_visibility`, `ground_water_color`,
+  `ground_transparency`, `ground_absorption`, `ground_water_color`,
   `ground_ior`; ein Beispiel in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 

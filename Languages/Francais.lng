@@ -1520,14 +1520,14 @@ HoldShiftKeyForFinerSteps=(Maintenez Maj pour des pas plus fins)
 ;(Hold Shift key for finer steps)
 Hotkeys=Raccourcis
 ;Hotkeys
-HowFarYouCanSeeInto=Jusqu'où l'on voit dans l'eau, en unités fractales : sa couleur la plus claire garde un tiers de sa lumière après cette distance, le rouge s'éteint bien plus tôt dans une eau bleu-vert (environ la taille de la fractale : 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=Combien de lumière l'eau laisse passer (0 à 1, 0 : opaque) : avec les reflets (Post-traitement) ou en Monte Carlo, la fractale se voit sous la surface, déviée par la réfraction et s'estompant avec la profondeur
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Combien le plan réfléchit (0 à 1) : ses reflets brillants, et son miroir quand les reflets sont calculés (Post-traitement)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=À quel point la couleur de la surface varie avec le relief : 0 pas du tout, 1 fortement
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=Trouble de l'eau : vitesse à laquelle la lumière s'y éteint, par unité de fractale (0 : parfaitement claire ; 1 : on voit à environ une unité de profondeur ; 3 : trouble). Dans une eau bleu-vert, le rouge disparaît en premier.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Intensité du bruit à supprimer (1 à 30, comme le « Denoise DCT » de GIMP).\nPlus la valeur est élevée, plus le bruit est supprimé, ainsi que les détails fins.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=L'épaisseur des nuages (1 : une couche pleine laisse passer environ 2 % de la lumière) et la part du ciel qu'ils couvrent (0 à 1)

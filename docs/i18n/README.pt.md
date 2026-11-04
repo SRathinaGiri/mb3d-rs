@@ -675,13 +675,12 @@ pontos permitem que você confira mais por conta própria:
   **Água transparente**: com *Água* acima de 0 (quanta luz ela deixa
   passar) um fractal meio submerso aparece sob a superfície, desviado
   pela refração (*Refração*: 1,33 para a água) e tomando com a
-  profundidade a cor da água funda (o botão de cor): a visibilidade (o
-  campo após *Água*) diz até onde se vê dentro dela, e numa água
+  profundidade a cor da água funda (o botão de cor): a *Absorção* diz quão turva ela é (0 clara, 3 turva), e numa água
   verde-azulada o vermelho some primeiro, então o que está submerso fica
   turquesa. Os brilhos das luzes nas ondas ficam na superfície. O render
   normal mostra isso com os reflexos ligados (Pós-processamento), o
   Monte Carlo sempre; sem os reflexos a água continua opaca. Chaves de
-  cena `ground_transparency`, `ground_visibility`, `ground_water_color`,
+  cena `ground_transparency`, `ground_absorption`, `ground_water_color`,
   `ground_ior`; um exemplo em
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 

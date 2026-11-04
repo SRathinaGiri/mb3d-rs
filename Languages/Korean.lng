@@ -1521,14 +1521,14 @@ HoldShiftKeyForFinerSteps=(Shift 키를 누르면 더 미세한 단계)
 ;(Hold Shift key for finer steps)
 Hotkeys=단축키
 ;Hotkeys
-HowFarYouCanSeeInto=물속을 얼마나 멀리 볼 수 있는지 (프랙탈 단위): 가장 맑은 색은 이 거리 뒤에 빛의 3분의 1이 남고, 청록색 물에서는 빨강이 훨씬 먼저 사라집니다 (프랙탈 크기 정도: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=물이 통과시키는 빛의 양 (0에서 1, 0: 불투명): 반사 (후처리) 또는 몬테카를로에서 수면 아래의 프랙탈이 굴절로 휘어지고 깊이에 따라 흐려져 보입니다
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=평면의 반사 정도 (0에서 1): 하이라이트, 그리고 반사를 계산할 때의 거울 (후처리)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=기복에 따라 표면 색이 변하는 정도: 0 없음, 1 강하게
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=물이 얼마나 탁한지: 프랙털 단위당 빛이 줄어드는 속도 (0: 완전히 맑음, 1: 약 한 단위 깊이까지 보임, 3: 탁함). 청록색 물에서는 빨강이 먼저 사라집니다.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=제거할 노이즈의 강도입니다(1~30, GIMP의 "Denoise DCT"와 동일).\n높을수록 노이즈를 더 많이 제거하지만 미세한 디테일도 더 사라집니다.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=구름의 짙기 (1: 꽉 찬 층은 빛의 약 2 %를 통과시킴) 와 하늘을 덮는 정도 (0에서 1)

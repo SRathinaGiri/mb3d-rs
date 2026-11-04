@@ -1027,7 +1027,7 @@ impl Scene {
             let d = Ground::default();
             if (g.transparency, g.visibility, g.water_color, g.ior) != (d.transparency, d.visibility, d.water_color, d.ior) {
                 let a = g.water_color;
-                let _ = writeln!(t, "ground_transparency = {}\nground_visibility = {}", g.transparency, g.visibility);
+                let _ = writeln!(t, "ground_transparency = {}\nground_absorption = {}", g.transparency, ((1.0 / g.visibility.max(1e-6) as f64) * 1e6).round() / 1e6);
                 let _ = writeln!(t, "ground_water_color = #{:02X}{:02X}{:02X}\nground_ior = {}", a[0], a[1], a[2], g.ior);
             }
         }

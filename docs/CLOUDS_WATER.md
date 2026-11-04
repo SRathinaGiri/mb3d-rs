@@ -161,12 +161,13 @@ next to the waves on the *Cutting* page:
   is then as strong as Fresnel's equations make it: faint where you look
   down into the water, strong at grazing angles towards the horizon. In
   between, the ground's own colour and its *reflect* value blend in.
-- **Visibility** (`ground_visibility`, the field after *Water*): how far
-  you can see into the water, in fractal units. The water colour's
-  clearest channel keeps a third of its light (1/e) after this distance,
-  the others less. 1 is about the size of a fractal: parts just under the
-  surface stay clear, the bottom half of a bulb turns turquoise and fades.
-  0.3 is murky, 3 clear as a mountain lake. The light that reaches a part
+- **Absorption** (`ground_absorption`, its own row below *Water*): how
+  murky the water is, how fast the light fades in it per fractal unit.
+  0 is perfectly clear water; at 1 the water colour's clearest channel
+  keeps a third of its light (1/e) after one fractal unit, the others
+  less, about the size of a fractal: parts just under the surface stay
+  clear, the bottom half of a bulb turns turquoise and fades. 3 is murky,
+  0.3 clear as a mountain lake. The light that reaches a part
   under water has crossed the water above it too, so deep parts also get
   darker, not only distant ones.
 - **Water colour** (`ground_water_color`, the colour button below
@@ -236,8 +237,8 @@ axis (Y). Below it: the height of the plane (1.15), its colour, and how much
 it reflects (0.9). *Waves* takes their height and length; a height of 0
 gives still water. The two rows below them make the water transparent
 (see [Transparent water](#transparent-water)): *Water* takes its
-transparency and visibility, the colour button its deep colour, and
-*Refraction* its refraction index.
+transparency, *Absorption* how murky it is, the colour button its deep
+colour, and *Refraction* its refraction index.
 
 <img src="img/clouds_ui_cutting.png" width="312" alt="The Cutting page with the Ground plane settings">
 

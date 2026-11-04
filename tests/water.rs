@@ -106,7 +106,7 @@ fn water_keys_round_trip() {
     let g = w.ground.as_mut().unwrap();
     (g.transparency, g.visibility, g.water_color, g.ior) = (0.75, 2.5, [1, 2, 3], 1.4);
     let t = w.to_text();
-    for k in ["ground_transparency = 0.75", "ground_visibility = 2.5", "ground_water_color = #010203", "ground_ior = 1.4"] {
+    for k in ["ground_transparency = 0.75", "ground_absorption = 0.4", "ground_water_color = #010203", "ground_ior = 1.4"] {
         assert!(t.contains(k), "{k} in {t}");
     }
     let back = Scene::parse(&t).unwrap();

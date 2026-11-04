@@ -1521,14 +1521,14 @@ HoldShiftKeyForFinerSteps=(बारीक कदमों के लिए Shif
 ;(Hold Shift key for finer steps)
 Hotkeys=हॉटकी
 ;Hotkeys
-HowFarYouCanSeeInto=पानी में कितनी दूर तक दिखता है, फ्रैक्टल इकाइयों में: इसका सबसे साफ़ रंग इस दूरी के बाद अपने प्रकाश का एक तिहाई रखता है, नीले-हरे पानी में लाल बहुत पहले मिट जाता है (लगभग फ्रैक्टल का आकार: 1)
-;How far you can see into the water, in fractal units: its clearest colour keeps a third of its light after this distance, red fades much sooner in blue-green water (about the fractal's size: 1)
 HowMuchLightTheWaterLets=पानी कितना प्रकाश आर-पार जाने देता है (0 से 1, 0: अपारदर्शी): परावर्तन (पोस्ट प्रोसेसिंग) या मोंटे कार्लो में सतह के नीचे का फ्रैक्टल दिखता है, अपवर्तन से मुड़ा हुआ और गहराई के साथ धुंधला होता
 ;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=तल कितना परावर्तित करता है (0 से 1): इसकी चमक, और परावर्तन गणना होने पर इसका दर्पण (पोस्ट प्रोसेसिंग)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=उभार के साथ सतह का रंग कितना बदलता है: 0 बिल्कुल नहीं, 1 बहुत
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMurkyTheWaterIsHow=पानी कितना धुंधला है: उसमें प्रकाश कितनी जल्दी घटता है, प्रति फ़्रैक्टल इकाई (0: पूरी तरह साफ़; 1: लगभग एक इकाई गहराई तक दिखता है; 3: धुंधला)। नीले-हरे पानी में लाल सबसे पहले मिटता है।
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=हटाया जाने वाला शोर कितना प्रबल है (1 से 30, जैसे GIMP का "Denoise DCT")।\nअधिक मान अधिक शोर हटाता है, और अधिक बारीक विवरण भी।
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=बादल कितने घने हैं (1: पूरी परत लगभग 2 % प्रकाश जाने देती है) और आकाश का कितना भाग ढकते हैं (0 से 1)
