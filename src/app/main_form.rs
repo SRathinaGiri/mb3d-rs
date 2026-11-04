@@ -910,6 +910,23 @@ fn grey_other_windows(app: &mut Mb3d, ui: &mut Ui) {
     }
 }
 
+/// Enables a control of another window, or, while a calculation runs,
+/// lets it come back enabled when the calculation ends (MB3D's
+/// DisableButtons keeps them greyed until then).
+pub fn enable_after_calc(app: &mut Mb3d, ui: &mut Ui, form: &'static str, ctl: &'static str) {
+    if !app.main.calculating {
+        ui.set_enabled(form, ctl, true);
+        return;
+    }
+    match app.main.greyed.iter_mut().find(|(f, c, _)| *f == form && *c == ctl) {
+        Some(g) => g.2 = true,
+        None => {
+            app.main.greyed.push((form, ctl, true));
+            ui.set_enabled(form, ctl, false);
+        }
+    }
+}
+
 fn ungrey_other_windows(app: &mut Mb3d, ui: &mut Ui) {
     // (a control that its window enabled meanwhile, e.g. Big renders
     // opening a project during the calculation, stays enabled)

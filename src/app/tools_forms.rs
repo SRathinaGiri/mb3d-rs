@@ -709,7 +709,7 @@ pub fn load_big(app: &mut Mb3d, ui: &mut Ui, p: &Path) {
             set_data(app, ui);
             set_sizes(app, ui);
             for c in ["Panel2", "Button2", "Button3", "SpeedButton9"] {
-                ui.set_enabled(TF, c, true);
+                super::main_form::enable_after_calc(app, ui, TF, c);
             }
             ui.show(TF);
         }
