@@ -393,6 +393,26 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
 
   **散射**（*折射* 下面一列）：水像真實的水一樣散射光。朝太陽看時水發出青綠色的光，浪尖透光，陽光以被碎形陰影切開的光束射入水中，水下物體柔和地泛出水的顏色；蒙地卡羅追蹤光在水中的散射。第二個欄位是散射方向（0.8：主要向前）。0 為不散射的樣子。場景鍵 `ground_scattering`, `ground_scatter_dir`；見 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
 
+  **試一試**：在 *切割* 頁勾選 *地平面*，讓它的高度穿過碎形，把 *水* 設為 1，*吸收* 設為 1，*散射* 設為 0.5，並開啟反射（*後製處理*、*反射 + 透明*、*自動計算反射（+ 透明）*），然後按 *計算 3D*。
+
+  *水*（透明度）0、0.5 和 1：
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="透明度 0、0.5 和 1：灰色不透明的水，然後水下的半個碎形透出青綠色"></a>
+
+  *吸收* 0.3、1 和 3，從清澈到混濁：
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="吸收 0.3、1 和 3：水下的一半清晰地呈綠色，逐漸變淡，然後隱沒"></a>
+
+  *散射* 0、0.5 和 1，朝太陽看，以及低太陽在前方時的光束：
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="散射 0、0.5 和 1，朝太陽看：暗的水，然後發光的青綠色水"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="低太陽在前方：碎形的陰影體積像藍色光束一樣穿過水"></a>
+
+  **波浪** 是沿同一風向的十六個波組成的不規則海面（0.2.98 之前三個規則的波形成棋盤格；有波浪的場景此後外觀不同）。舊的（每對的左側）和新的，小浪和大浪，太陽在前方和後方：
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="新舊波浪並排：舊的由明亮菱形組成的規則網格，新的不規則海面"></a>
+
   </details>
 * **來自 HDR 圖片的光照**：以 360° Radiance 圖片 (`.hdr`) 作為背景，以其
   全部亮度照亮蒙地卡羅算圖，圖中的太陽成為帶柔和陰影的光源 (來自

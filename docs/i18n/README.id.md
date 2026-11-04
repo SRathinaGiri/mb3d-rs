@@ -693,6 +693,34 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   `ground_scattering`, `ground_scatter_dir`; lihat
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Cobalah**: di halaman *Pemotongan* centang *Bidang tanah* dan letakkan
+  tingginya menembus fraktal, atur *Air* ke 1, *Absorpsi* ke 1 dan
+  *Hamburan* ke 0,5, lalu nyalakan refleksi (*Pascaproses*, *Refleksi +
+  Transparansi*, *Hitung R. (+ T.) otomatis*); kemudian *Hitung 3D*.
+
+  *Air* (transparansi) 0, 0,5 dan 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparansi 0, 0,5 dan 1: air abu-abu buram, lalu separuh fraktal yang terendam tembus pandang berwarna pirus"></a>
+
+  *Absorpsi* 0,3, 1 dan 3, dari jernih hingga keruh:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorpsi 0,3, 1 dan 3: separuh yang terendam jelas hijau, memudar, lalu tersembunyi"></a>
+
+  *Hamburan* 0, 0,5 dan 1 memandang ke arah matahari, dan berkas cahaya
+  dengan matahari rendah di depan:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Hamburan 0, 0,5 dan 1 memandang ke arah matahari: air gelap, lalu air pirus bercahaya"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Matahari rendah di depan: volume bayangan fraktal membentang melalui air sebagai berkas biru"></a>
+
+  **Ombak** adalah laut tak beraturan dari enam belas gelombang searah
+  satu arah angin (sebelum 0.2.98 tiga gelombang teratur membentuk papan
+  catur; adegan dengan ombak tampak berbeda sejak itu). Lama (di kiri tiap
+  pasangan) dan baru, ombak kecil dan besar, matahari di depan dan di
+  belakang:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Ombak lama dan baru berdampingan: kisi teratur lama berupa belah ketupat terang, laut baru yang tak beraturan"></a>
+
   </details>
 * **Cahaya dari gambar HDR**: gambar Radiance 360° (`.hdr`) sebagai latar
   menerangi render Monte Carlo dengan kecerahan penuhnya, dan mataharinya

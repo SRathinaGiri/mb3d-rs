@@ -707,6 +707,35 @@ esto puede comprobar más por su cuenta:
   `ground_scattering`, `ground_scatter_dir`; véase
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Pruébalo**: en la página *Corte* marca *Plano de suelo* y haz que su
+  altura atraviese el fractal, pon *Agua* en 1, *Absorción* en 1 y
+  *Dispersión* en 0,5, y activa los reflejos (*Posprocesar*, *Reflejos +
+  transparencia*, *Calcular R. (+ T.) automáticamente*); después *Calcular
+  3D*.
+
+  *Agua* (transparencia) 0, 0,5 y 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparencia 0, 0,5 y 1: agua gris opaca, luego la mitad sumergida del fractal se ve a través en turquesa"></a>
+
+  *Absorción* 0,3, 1 y 3, de clara a turbia:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorción 0,3, 1 y 3: la mitad sumergida claramente verde, desvaneciéndose, luego oculta"></a>
+
+  *Dispersión* 0, 0,5 y 1 mirando hacia el sol, y los rayos de luz con un
+  sol bajo delante:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Dispersión 0, 0,5 y 1 mirando hacia el sol: agua oscura, luego agua turquesa brillante"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Un sol bajo delante: el volumen de sombra del fractal se extiende por el agua como un rayo azul"></a>
+
+  **Las olas** son un mar irregular de dieciséis olas a lo largo de una
+  dirección del viento (antes de 0.2.98 tres olas regulares formaban un
+  tablero de ajedrez; las escenas con olas se ven distintas desde
+  entonces). Antiguas (a la izquierda de cada par) y nuevas, olas pequeñas
+  y grandes, con el sol delante y detrás:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Olas antiguas y nuevas lado a lado: la antigua cuadrícula regular de rombos brillantes, el nuevo mar irregular"></a>
+
   </details>
 * **Luz de una imagen HDR**: una imagen Radiance de 360° (`.hdr`) como fondo
   ilumina un render Monte Carlo con todo su brillo, y su sol se convierte en

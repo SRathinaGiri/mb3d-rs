@@ -662,6 +662,33 @@ sprawdzëc sóm:
   `ground_scattering`, `ground_scatter_dir`; zdrzë
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Wëpróbùj**: na starnie *Òbcynanié* zaznaczë *Zemia* ë przepòwadzë ji
+  wëższëzna przez fraktal, nastawi *Wòda* na 1, *Absorpcja* na 1 ë
+  *Rozpraszanié* na 0,5, ë włączë òdbicô (*Òbróbka*, *Òdbicô +
+  przezérnosc*, *Rechùj R. (+ T.) aùtomatno*); pózdze *Rechùj 3D*.
+
+  *Wòda* (przezérnosc) 0, 0,5 ë 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Przezérnosc 0, 0,5 ë 1: szôrô nieprzezérnô wòda, pózdze zanùrzonô półkô fraktala przeswiéca turkùsowò"></a>
+
+  *Absorpcja* 0,3, 1 ë 3, òd czësti do mãtny:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorpcja 0,3, 1 ë 3: zanùrzonô półkô wëraznò zelonô, blëdnącô, pózdze skrëtô"></a>
+
+  *Rozpraszanié* 0, 0,5 ë 1 przë patrzenim w stronã słuńca, ë smùgë
+  swiatła przë niskim słuńcu z przódkù:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Rozpraszanié 0, 0,5 ë 1 przë patrzenim w stronã słuńca: ciemnô wòda, pózdze swiécącô turkùsowô wòda"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Niskò słuńce z przódkù: òbjimk cénia fraktala cygnie sã przez wòdã jakno niebieskô smùga"></a>
+
+  **Fale** to nieregùlarné mòrze szesnôstu falów wzdłëż jednégò kierënkù
+  wiatru (przed 0.2.98 trzë regùlarné fale robiłë szachòwnicã; scenë z
+  falama wëzdrzą òd tegò czasu jinaczi). Stôré (z lewi stronë kòżdi parë)
+  ë nowé, môłé ë wiôldżé fale, słuńce z przódkù ë z tëłu:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Stôré ë nowé fale jedne kòl drëgich: stôrô regùlarnô sztélëna jasnëch rómbów, nowé nieregùlarné mòrze"></a>
+
   </details>
 * **Swiatło z òbrazu HDR**: òbrôz Radiance 360° (`.hdr`) jakno spódk òswiecywô
   render Monte Carlo pełną jasnotą, a jegò słuńce stôwô sã swiatłã z miękczima

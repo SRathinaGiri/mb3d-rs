@@ -707,6 +707,35 @@ Voici de quoi vérifier plus loin par vous-même :
   `ground_scatter_dir` ; voir
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Essayez** : sur la page *Coupe*, cochez *Plan de sol* et faites passer
+  sa hauteur à travers la fractale, mettez *Eau* à 1, *Absorption* à 1 et
+  *Diffusion* à 0,5, et activez les réflexions (*Post-traitement*,
+  *Réflexions + Transparence*, *Calculer R. (+ T.) automatiquement*), puis
+  *Calculer 3D*.
+
+  *Eau* (transparence) 0, 0,5 et 1 :
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparence 0, 0,5 et 1 : eau grise opaque, puis la moitié immergée de la fractale apparaît en turquoise"></a>
+
+  *Absorption* 0,3, 1 et 3, de claire à trouble :
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorption 0,3, 1 et 3 : la moitié immergée nettement verte, s'estompant, puis cachée"></a>
+
+  *Diffusion* 0, 0,5 et 1 en regardant vers le soleil, et les rayons de
+  lumière avec un soleil bas devant :
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Diffusion 0, 0,5 et 1 en regardant vers le soleil : eau sombre, puis eau turquoise lumineuse"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Un soleil bas devant : le volume d'ombre de la fractale s'étire dans l'eau comme un rayon bleu"></a>
+
+  **Les vagues** sont une mer irrégulière de seize vagues le long d'une
+  direction du vent (avant 0.2.98, trois vagues régulières faisaient un
+  damier ; les scènes avec des vagues ont un autre aspect depuis).
+  Anciennes (à gauche de chaque paire) et nouvelles, petites et grandes
+  vagues, le soleil devant et derrière :
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Anciennes et nouvelles vagues côte à côte : l'ancienne grille régulière de losanges brillants, la nouvelle mer irrégulière"></a>
+
   </details>
 * **La lumière d'une image HDR** : une image Radiance à 360° (`.hdr`) en fond
   éclaire un rendu Monte Carlo avec toute sa luminosité, et son soleil devient

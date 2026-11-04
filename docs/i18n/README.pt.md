@@ -694,6 +694,35 @@ pontos permitem que você confira mais por conta própria:
   `ground_scatter_dir`; veja
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Experimente**: na página *Corte* marque *Plano de chão* e faça a sua
+  altura atravessar o fractal, defina *Água* como 1, *Absorção* como 1 e
+  *Dispersão* como 0,5, e ligue os reflexos (*Pós-proc.*, *Reflexos +
+  Transparência*, *Calcular R. (+ T.) automaticamente*); depois *Calcular
+  3D*.
+
+  *Água* (transparência) 0, 0,5 e 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparência 0, 0,5 e 1: água cinzenta opaca, depois a metade submersa do fractal aparece em turquesa"></a>
+
+  *Absorção* 0,3, 1 e 3, de clara a turva:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorção 0,3, 1 e 3: a metade submersa claramente verde, esmaecendo, depois oculta"></a>
+
+  *Dispersão* 0, 0,5 e 1 olhando em direção ao sol, e os raios de luz com
+  um sol baixo à frente:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Dispersão 0, 0,5 e 1 olhando em direção ao sol: água escura, depois água turquesa brilhante"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Um sol baixo à frente: o volume de sombra do fractal se estende pela água como um raio azul"></a>
+
+  **As ondas** são um mar irregular de dezesseis ondas ao longo de uma
+  direção do vento (antes de 0.2.98 três ondas regulares faziam um
+  tabuleiro de xadrez; as cenas com ondas têm outro aspecto desde então).
+  Antigas (à esquerda de cada par) e novas, ondas pequenas e grandes, com
+  o sol à frente e atrás:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Ondas antigas e novas lado a lado: a antiga grade regular de losangos brilhantes, o novo mar irregular"></a>
+
   </details>
 * **Luz de uma imagem HDR**: uma imagem Radiance de 360° (`.hdr`) como fundo
   ilumina um render Monte Carlo com todo o seu brilho, e o seu sol vira uma

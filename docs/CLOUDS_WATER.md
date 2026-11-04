@@ -208,6 +208,32 @@ next to the waves on the *Cutting* page:
   scattering water takes the normal render's reflection pass about a
   fifth to a half longer.
 
+What each setting does, on a Mandelbulb standing half in the water
+(`ground = y, -0.45`, reflections on):
+
+**Water (transparency)** 0, 0.5 and 1: the opaque ground of before, then
+the part under the water showing through more and more.
+
+<a href="img/water_transparency.jpg"><img src="img/water_transparency.jpg" width="760" alt="Transparency 0, 0.5 and 1: grey opaque water, then the submerged half of the bulb showing through in turquoise"></a>
+
+**Absorption** 0.3, 1 and 3: clear water shows the whole submerged half,
+turned green; at 1 it fades with depth; murky water hides all but what is
+just below the surface.
+
+<a href="img/water_absorption.jpg"><img src="img/water_absorption.jpg" width="760" alt="Absorption 0.3, 1 and 3: the submerged half clearly green, fading, then hidden"></a>
+
+**Scattering** 0, 0.5 and 1, looking towards the sun: without it the
+water is dark; with it the water glows turquoise and the wave crests
+shine through.
+
+<a href="img/water_scattering.jpg"><img src="img/water_scattering.jpg" width="760" alt="Scattering 0, 0.5 and 1 looking towards the sun: dark water, then glowing turquoise water"></a>
+
+**Light shafts**, scattering 0, 0.5 and 1 with a low sun in front and
+clear water (absorption 0.3): the fractal's shadow reaches through the
+water towards the camera, beside the sunlit bands.
+
+<a href="img/water_shafts.jpg"><img src="img/water_shafts.jpg" width="760" alt="A low sun in front: the fractal's shadow volume stretching through the water as a blue shaft"></a>
+
 The normal render shows the transparency with the reflections on
 (*Postprocess*, *Reflections + Transparency*, *Calculate R. (+ T.)
 automatically*); without them the water stays opaque, as the picture
@@ -261,12 +287,17 @@ gives still water. The waves are an irregular sea: sixteen waves of
 lengths from 1.2 to 0.25 times the given length, mostly along one wind
 direction, the long ones higher, so no grid or repeating pattern shows
 (before November 2026 three regular waves made a checkerboard of blobs;
-scenes with waves look different since). The two rows below them make the water transparent
+scenes with waves look different since). Below, the old waves (left of
+each pair) and the new ones: small waves 0.004, 0.6 on top, large waves
+0.03, 0.4 below, the sun in front and behind.
+
+<a href="img/water_waves.jpg"><img src="img/water_waves.jpg" width="760" alt="Old and new waves side by side: the old regular grid of bright diamonds, the new irregular sea"></a>
+ The two rows below them make the water transparent
 (see [Transparent water](#transparent-water)): *Water* takes its
 transparency, *Absorption* how murky it is, the colour button its deep
 colour, and *Refraction* its refraction index.
 
-<img src="img/clouds_ui_cutting.png" width="312" alt="The Cutting page with the Ground plane settings">
+<img src="img/clouds_ui_cutting.png" width="310" alt="The Cutting page with the Ground plane settings">
 
 **Reflections.** Main window, *Postprocess*, section *Reflections +
 Transparency*: tick *Calculate R. (+ T.) automatically* and set the *Amount*

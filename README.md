@@ -682,6 +682,34 @@ you check further on your own:
   `ground_scatter_dir`; see
   [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
 
+  **Try it**: on the *Cutting* page tick *Ground plane* and put its height
+  through the fractal, set *Water* to 1, *Absorption* to 1 and
+  *Scattering* to 0.5, and switch the reflections on (*Postprocess*,
+  *Reflections + Transparency*, *Calculate R. (+ T.) automatically*),
+  then *Calculate 3D*.
+
+  *Water* (transparency) 0, 0.5 and 1:
+
+  <a href="docs/img/water_transparency.jpg"><img src="docs/img/water_transparency.jpg" width="760" alt="Transparency 0, 0.5 and 1: grey opaque water, then the submerged half of the bulb showing through in turquoise"></a>
+
+  *Absorption* 0.3, 1 and 3, from clear to murky:
+
+  <a href="docs/img/water_absorption.jpg"><img src="docs/img/water_absorption.jpg" width="760" alt="Absorption 0.3, 1 and 3: the submerged half clearly green, fading, then hidden"></a>
+
+  *Scattering* 0, 0.5 and 1 looking towards the sun, and the light shafts
+  with a low sun in front:
+
+  <a href="docs/img/water_scattering.jpg"><img src="docs/img/water_scattering.jpg" width="760" alt="Scattering 0, 0.5 and 1 looking towards the sun: dark water, then glowing turquoise water"></a>
+
+  <a href="docs/img/water_shafts.jpg"><img src="docs/img/water_shafts.jpg" width="760" alt="A low sun in front: the fractal's shadow volume stretching through the water as a blue shaft"></a>
+
+  **The waves** are an irregular sea of sixteen waves along one wind
+  direction (before 0.2.98 three regular waves made a checkerboard;
+  scenes with waves look different since). Old (left of each pair) and
+  new, small and large waves, the sun in front and behind:
+
+  <a href="docs/img/water_waves.jpg"><img src="docs/img/water_waves.jpg" width="760" alt="Old and new waves side by side: the old regular grid of bright diamonds, the new irregular sea"></a>
+
   </details>
 * **Light from an HDR picture**: a 360° Radiance `.hdr` picture as the
   background lights a Monte Carlo render, with its full brightness, and

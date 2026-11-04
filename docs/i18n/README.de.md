@@ -683,6 +683,34 @@ können Sie selbst weiter prüfen:
   `ground_scattering`, `ground_scatter_dir`; siehe
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Ausprobieren**: Auf der Seite *Schnitt* *Bodenebene* ankreuzen und
+  ihre Höhe durch das Fraktal legen, *Wasser* auf 1, *Absorption* auf 1
+  und *Streuung* auf 0,5 stellen und die Reflexionen einschalten
+  (*Nachbearbeitung*, *Reflexionen + Transparenz*, *R. (+ T.) automatisch
+  berechnen*), dann *3D berechnen*.
+
+  *Wasser* (Transparenz) 0, 0,5 und 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparenz 0, 0,5 und 1: graues undurchsichtiges Wasser, dann scheint die untergetauchte Hälfte des Fraktals türkis durch"></a>
+
+  *Absorption* 0,3, 1 und 3, von klar bis trüb:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorption 0,3, 1 und 3: die untergetauchte Hälfte deutlich grün, verblassend, dann verborgen"></a>
+
+  *Streuung* 0, 0,5 und 1 mit Blick zur Sonne, und die Lichtstrahlen bei
+  tiefstehender Sonne vor dem Bild:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Streuung 0, 0,5 und 1 mit Blick zur Sonne: dunkles Wasser, dann leuchtend türkises Wasser"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Tiefstehende Sonne vorn: das Schattenvolumen des Fraktals zieht sich als blauer Strahl durch das Wasser"></a>
+
+  **Die Wellen** sind eine unregelmäßige See aus sechzehn Wellen entlang
+  einer Windrichtung (vor 0.2.98 ergaben drei regelmäßige Wellen ein
+  Schachbrett; Szenen mit Wellen sehen seitdem anders aus). Alt (links in
+  jedem Paar) und neu, kleine und große Wellen, die Sonne vorn und hinten:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Alte und neue Wellen nebeneinander: das alte regelmäßige Gitter heller Rauten, die neue unregelmäßige See"></a>
+
   </details>
 * **Licht aus einem HDR-Bild**: ein 360°-Radiance-Bild (`.hdr`) als Hintergrund
   beleuchtet ein Monte-Carlo-Bild mit seiner vollen Helligkeit, und seine

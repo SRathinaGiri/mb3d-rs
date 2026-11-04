@@ -688,6 +688,34 @@ permettono di verificare ulteriormente da solo:
   `ground_scatter_dir`; vedi
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Provalo**: nella pagina *Taglio* spunta *Suolo* e fai passare la sua
+  altezza attraverso il frattale, imposta *Acqua* a 1, *Assorbimento* a 1
+  e *Diffusione* a 0,5, e attiva i riflessi (*Postelaborazione*,
+  *Riflessi + trasparenza*, *Calcola R. (+ T.) automaticamente*), poi *Calcola 3D*.
+
+  *Acqua* (trasparenza) 0, 0,5 e 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Trasparenza 0, 0,5 e 1: acqua grigia opaca, poi la metà sommersa del frattale traspare in turchese"></a>
+
+  *Assorbimento* 0,3, 1 e 3, da limpida a torbida:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Assorbimento 0,3, 1 e 3: la metà sommersa chiaramente verde, sfumata, poi nascosta"></a>
+
+  *Diffusione* 0, 0,5 e 1 guardando verso il sole, e i raggi di luce con
+  un sole basso davanti:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Diffusione 0, 0,5 e 1 guardando verso il sole: acqua scura, poi acqua turchese luminosa"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Un sole basso davanti: il volume d'ombra del frattale si estende nell'acqua come un raggio blu"></a>
+
+  **Le onde** sono un mare irregolare di sedici onde lungo una direzione
+  del vento (prima di 0.2.98 tre onde regolari formavano una scacchiera;
+  da allora le scene con onde hanno un aspetto diverso). Vecchie (a
+  sinistra di ogni coppia) e nuove, onde piccole e grandi, con il sole
+  davanti e dietro:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Onde vecchie e nuove affiancate: la vecchia griglia regolare di rombi luminosi, il nuovo mare irregolare"></a>
+
   </details>
 * **Luce da un'immagine HDR**: un'immagine Radiance a 360° (`.hdr`) come
   sfondo illumina un render Monte Carlo con tutta la sua luminosità, e il suo

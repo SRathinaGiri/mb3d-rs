@@ -664,6 +664,34 @@ możesz sprawdzić sam:
   `ground_scattering`, `ground_scatter_dir`; zob.
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Wypróbuj**: na stronie *Cięcie* zaznacz *Podłoże* i przeprowadź jego
+  wysokość przez fraktal, ustaw *Woda* na 1, *Absorpcja* na 1 i
+  *Rozpraszanie* na 0,5, i włącz odbicia (*Postprocessing*, *Odbicia +
+  przezroczystość*, *Obliczaj O. (+ P.) automatycznie*); potem *Oblicz
+  3D*.
+
+  *Woda* (przezroczystość) 0, 0,5 i 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Przezroczystość 0, 0,5 i 1: szara nieprzezroczysta woda, potem zanurzona połowa fraktala prześwituje na turkusowo"></a>
+
+  *Absorpcja* 0,3, 1 i 3, od czystej do mętnej:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorpcja 0,3, 1 i 3: zanurzona połowa wyraźnie zielona, blednąca, potem ukryta"></a>
+
+  *Rozpraszanie* 0, 0,5 i 1 przy patrzeniu w stronę słońca, oraz smugi
+  światła przy niskim słońcu z przodu:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Rozpraszanie 0, 0,5 i 1 przy patrzeniu w stronę słońca: ciemna woda, potem jaśniejąca turkusowa woda"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Niskie słońce z przodu: objętość cienia fraktala ciągnie się przez wodę jako niebieska smuga"></a>
+
+  **Fale** to nieregularne morze szesnastu fal wzdłuż jednego kierunku
+  wiatru (przed 0.2.98 trzy regularne fale tworzyły szachownicę; sceny z
+  falami wyglądają od tego czasu inaczej). Stare (po lewej w każdej parze)
+  i nowe, małe i duże fale, słońce z przodu i z tyłu:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Stare i nowe fale obok siebie: stara regularna siatka jasnych rombów, nowe nieregularne morze"></a>
+
   </details>
 * **Światło z obrazu HDR**: obraz Radiance 360° (`.hdr`) jako tło oświetla
   render Monte Carlo pełną jasnością, a jego słońce staje się światłem z

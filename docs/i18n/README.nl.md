@@ -653,6 +653,34 @@ kunt u zelf verder controleren:
   `ground_scattering`, `ground_scatter_dir`; zie
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
+  **Probeer het**: vink op de pagina *Snijden* *Grondvlak* aan en laat de
+  hoogte ervan door de fractal gaan, zet *Water* op 1, *Absorptie* op 1 en
+  *Verstrooiing* op 0,5, en zet de reflecties aan (*Nabewerking*,
+  *Reflecties + transparantie*, *R. (+ T.) automatisch berekenen*); daarna
+  *3D berekenen*.
+
+  *Water* (transparantie) 0, 0,5 en 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparantie 0, 0,5 en 1: grijs ondoorzichtig water, dan schijnt de ondergedompelde helft van de fractal turkoois door"></a>
+
+  *Absorptie* 0,3, 1 en 3, van helder tot troebel:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorptie 0,3, 1 en 3: de ondergedompelde helft duidelijk groen, vervagend, dan verborgen"></a>
+
+  *Verstrooiing* 0, 0,5 en 1 met de blik naar de zon, en de lichtstralen
+  met een lage zon voor:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Verstrooiing 0, 0,5 en 1 met de blik naar de zon: donker water, dan gloeiend turkoois water"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Een lage zon voor: het schaduwvolume van de fractal strekt zich als een blauwe straal door het water uit"></a>
+
+  **De golven** zijn een onregelmatige zee van zestien golven langs één
+  windrichting (vóór 0.2.98 maakten drie regelmatige golven een dambord;
+  scènes met golven zien er sindsdien anders uit). Oud (links in elk paar)
+  en nieuw, kleine en grote golven, de zon voor en achter:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Oude en nieuwe golven naast elkaar: het oude regelmatige raster van heldere ruiten, de nieuwe onregelmatige zee"></a>
+
   </details>
 * **Licht uit een HDR-afbeelding**: een 360°-Radiance-afbeelding (`.hdr`) als
   achtergrond belicht een Monte Carlo-render met zijn volle helderheid, en de

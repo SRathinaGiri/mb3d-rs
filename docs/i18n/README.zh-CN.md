@@ -392,6 +392,26 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
 
   **散射**（*折射* 下面一行）：水像真实的水一样散射光。朝太阳看时水发出青绿色的光，浪尖透光，阳光以被分形阴影切开的光束射入水中，水下物体柔和地泛出水的颜色；蒙特卡洛追踪光在水中的散射。第二个字段是散射方向（0.8：主要向前）。0 为不散射的样子。场景键 `ground_scattering`, `ground_scatter_dir`；见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
 
+  **试一试**：在 *切割* 页勾选 *地平面*，让它的高度穿过分形，把 *水* 设为 1，*吸收* 设为 1，*散射* 设为 0.5，并打开反射（*后期处理*、*反射 + 透明*、*自动计算反射（+ 透明）*），然后点 *计算 3D*。
+
+  *水*（透明度）0、0.5 和 1：
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="透明度 0、0.5 和 1：灰色不透明的水，然后水下的半个分形透出青绿色"></a>
+
+  *吸收* 0.3、1 和 3，从清澈到浑浊：
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="吸收 0.3、1 和 3：水下的一半清晰地呈绿色，逐渐变淡，然后隐没"></a>
+
+  *散射* 0、0.5 和 1，朝太阳看，以及低太阳在前方时的光束：
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="散射 0、0.5 和 1，朝太阳看：暗的水，然后发光的青绿色水"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="低太阳在前方：分形的阴影体积像蓝色光束一样穿过水"></a>
+
+  **波浪** 是沿同一风向的十六个波组成的不规则海面（0.2.98 之前三个规则的波形成棋盘格；有波浪的场景此后外观不同）。旧的（每对的左侧）和新的，小浪和大浪，太阳在前方和后方：
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="新旧波浪并排：旧的由明亮菱形组成的规则网格，新的不规则海面"></a>
+
   </details>
 * **来自 HDR 图片的光照**：以 360° Radiance 图片 (`.hdr`) 作为背景，以其
   全部亮度照亮蒙特卡罗渲染，图中的太阳成为带柔和阴影的光源 (来自
