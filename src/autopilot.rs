@@ -183,22 +183,80 @@ pub fn turntable_pivot(sc: &Scene) -> Vec3 {
     scale(f, hit - mid_depth)
 }
 
+/// The axis a 360 degree orbit turns around (through its pivot).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OrbitAxis {
+    /// the view's vertical axis: around the object from left to right (the
+    /// Turntable's)
+    Yaw,
+    /// the view's horizontal axis: over the top and under the bottom
+    Pitch,
+    /// the line of sight: the picture spins
+    Roll,
+    /// yaw, pitch and roll at once, each a whole turn: a tumble
+    All,
+    /// the fractal's own x, y or z axis
+    WorldX,
+    WorldY,
+    WorldZ,
+}
+
+impl OrbitAxis {
+    pub const ALL: [OrbitAxis; 7] = [OrbitAxis::Yaw, OrbitAxis::Pitch, OrbitAxis::Roll, OrbitAxis::All, OrbitAxis::WorldX, OrbitAxis::WorldY, OrbitAxis::WorldZ];
+
+    pub fn parse(s: &str) -> Result<OrbitAxis, String> {
+        Ok(match s.to_ascii_lowercase().as_str() {
+            "yaw" | "horizontal" | "h" => OrbitAxis::Yaw,
+            "pitch" | "vertical" | "v" => OrbitAxis::Pitch,
+            "roll" => OrbitAxis::Roll,
+            "all" | "tumble" => OrbitAxis::All,
+            "x" => OrbitAxis::WorldX,
+            "y" => OrbitAxis::WorldY,
+            "z" => OrbitAxis::WorldZ,
+            o => return Err(format!("orbit axis '{o}' (yaw, pitch, roll, all, x, y or z)")),
+        })
+    }
+
+    /// The rotation by `a` radians of this orbit, for the view `sc` it
+    /// starts from (the view's axes as they are there).
+    fn turn(self, sc: &Scene, v: Vec3, a: f64) -> Vec3 {
+        let [r, u, f] = unit_rows(sc);
+        match self {
+            OrbitAxis::Yaw => turn(v, u, a),
+            OrbitAxis::Pitch => turn(v, r, a),
+            OrbitAxis::Roll => turn(v, f, a),
+            // (about fixed axes, one after the other: back where it began
+            // after the whole turn)
+            OrbitAxis::All => turn(turn(turn(v, f, a), r, a), u, a),
+            OrbitAxis::WorldX => turn(v, [1.0, 0.0, 0.0], a),
+            OrbitAxis::WorldY => turn(v, [0.0, 1.0, 0.0], a),
+            OrbitAxis::WorldZ => turn(v, [0.0, 0.0, 1.0], a),
+        }
+    }
+}
+
 /// The turntable around `pivot` (an offset from the middle): `steps`
 /// keyframes of `sc` turned around the view's vertical axis through it in
 /// equal steps, a whole turn, `frames` frames from each to the next (as a
 /// loop the last leads back to the first).  With a zero pivot this is
 /// [`crate::anim::orbit_keyframes`].
 pub fn orbit_keyframes_around(sc: &Scene, steps: usize, frames: u32, pivot: Vec3) -> Vec<Keyframe> {
+    orbit_keyframes_axis(sc, steps, frames, pivot, OrbitAxis::Yaw)
+}
+
+/// [`orbit_keyframes_around`] around `axis`: the view and the camera
+/// turned together around the pivot, so the camera keeps its distance and
+/// its look at the pivot.
+pub fn orbit_keyframes_axis(sc: &Scene, steps: usize, frames: u32, pivot: Vec3, axis: OrbitAxis) -> Vec<Keyframe> {
     let steps = steps.max(3);
-    let u = normalize(sc.vgrads[1]);
     let centre = add(sc.mid, pivot);
     (0..steps)
         .map(|i| {
             let a = 2.0 * PI * i as f64 / steps as f64;
             let mut k = sc.clone();
-            k.vgrads = sc.vgrads.map(|r| turn(r, u, a));
+            k.vgrads = sc.vgrads.map(|r| axis.turn(sc, r, a));
             // the middle turned around the pivot as the view
-            let m = add(centre, turn(sub(sc.mid, centre), u, a));
+            let m = add(centre, axis.turn(sc, sub(sc.mid, centre), a));
             move_middle(&mut k, sub(m, sc.mid));
             Keyframe::new(k, frames)
         })
@@ -216,9 +274,14 @@ pub fn spread_frames(total: u32, parts: usize) -> Vec<u32> {
 /// around [`turntable_pivot`], their frames adding up to the duration (a
 /// loop: the last keyframe's frames lead back to the first).
 pub fn turntable(sc: &Scene, steps: usize, seconds: f64, fps: f64) -> Vec<Keyframe> {
+    turntable_axis(sc, steps, seconds, fps, OrbitAxis::Yaw)
+}
+
+/// [`turntable`] around `axis`.
+pub fn turntable_axis(sc: &Scene, steps: usize, seconds: f64, fps: f64, axis: OrbitAxis) -> Vec<Keyframe> {
     let steps = steps.max(3);
     let total = (seconds * fps).round().max(steps as f64) as u32;
-    let mut ks = orbit_keyframes_around(sc, steps, 1, turntable_pivot(sc));
+    let mut ks = orbit_keyframes_axis(sc, steps, 1, turntable_pivot(sc), axis);
     for (k, f) in ks.iter_mut().zip(spread_frames(total, steps)) {
         k.frames = f;
     }
@@ -668,6 +731,46 @@ mod tests {
         if matches!(fl.end, FlightEnd::OnlySky | FlightEnd::OnlyFractal) {
             let c = view_coverage(&fl.keyframes.last().unwrap().scene);
             assert!(pure_view(c).is_some(), "{c}");
+        }
+    }
+
+    #[test]
+    fn every_orbit_axis_circles_the_pivot_and_comes_back() {
+        let sc = Scene::preset("Integer Power").unwrap();
+        let pivot = scale(unit_rows(&sc)[2], 0.3);
+        let centre = add(sc.mid, pivot);
+        let r0 = len(&sub(cam_pos(&sc), centre));
+        for axis in OrbitAxis::ALL {
+            let ks = orbit_keyframes_axis(&sc, 12, 10, pivot, axis);
+            for (i, k) in ks.iter().enumerate() {
+                let e = cam_pos(&k.scene);
+                assert!((len(&sub(e, centre)) - r0).abs() < 1e-9, "{axis:?} {i}");
+                // looking at the pivot as at the start
+                let c0 = dot(&normalize(sub(centre, cam_pos(&sc))), &unit_rows(&sc)[2]);
+                assert!((dot(&normalize(sub(centre, e)), &unit_rows(&k.scene)[2]) - c0).abs() < 1e-9, "{axis:?} {i}");
+            }
+            // a whole turn: the step after the last is the start again
+            let last = axis.turn(&sc, sc.vgrads[2], 2.0 * PI);
+            for k in 0..3 {
+                assert!((last[k] - sc.vgrads[2][k]).abs() < 1e-9, "{axis:?}");
+            }
+        }
+        // pitch: half way the camera is on the other side, upside down
+        let ks = orbit_keyframes_axis(&sc, 12, 10, pivot, OrbitAxis::Pitch);
+        let (u0, u6) = (unit_rows(&sc)[1], unit_rows(&ks[6].scene)[1]);
+        assert!((dot(&u0, &u6) + 1.0).abs() < 1e-9);
+        // roll: the camera stays on the line of sight, the picture turns
+        let ks = orbit_keyframes_axis(&sc, 12, 10, pivot, OrbitAxis::Roll);
+        assert!(len(&sub(cam_pos(&ks[3].scene), cam_pos(&sc))) < 1e-9);
+        // yaw is the turntable's turn
+        let a = orbit_keyframes_axis(&sc, 8, 10, [0.0; 3], OrbitAxis::Yaw);
+        let b = crate::anim::orbit_keyframes(&sc, 8, 10);
+        for (x, y) in a.iter().zip(&b) {
+            for r in 0..3 {
+                for k in 0..3 {
+                    assert!((x.scene.vgrads[r][k] - y.scene.vgrads[r][k]).abs() < 1e-12);
+                }
+            }
         }
     }
 }

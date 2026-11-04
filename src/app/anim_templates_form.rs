@@ -3,8 +3,9 @@
 //! made from the main window's view by [`crate::autopilot`], added after the
 //! Animation window's keyframes:
 //!
-//! * 360° orbit: a whole turn around the object, the frames adding up to
-//!   the duration (the Animation window's own Turntable button stays as it
+//! * 360° orbit: a whole turn around the object (left to right, over the
+//!   top, a spin, all three at once, or around the fractal's X, Y or Z
+//!   axis), the frames adding up to the duration (the Animation window's own Turntable button stays as it
 //!   was);
 //! * Fly-through: a flight on into the fractal for the duration, or until
 //!   the view shows only sky or only fractal.
@@ -24,6 +25,7 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     let get = |k: &str, d: &str| app.ini.get_extra(k).filter(|v| !v.is_empty()).unwrap_or(d).to_string();
     ui.set_item_index(F, "TemplateCmb", get("AniTplKind", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     ui.set_text(F, "DurationEdit", &get("AniTplSecs", "10"));
+    ui.set_item_index(F, "AxisCmb", get("AniTplAxis", "0").parse::<i32>().unwrap_or(0).clamp(0, 6));
     ui.set_text(F, "StepsEdit", &get("AniTplSteps", "8"));
     ui.set_item_index(F, "PivotCmb", get("AniTplPivot", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     ui.set_checked(F, "UntilCheck", get("AniTplUntil", "0") == "1");
@@ -36,12 +38,14 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
 fn save(app: &mut Mb3d, ui: &Ui) {
     let kind = ui.item_index(F, "TemplateCmb").to_string();
     let pivot = ui.item_index(F, "PivotCmb").to_string();
+    let axis = ui.item_index(F, "AxisCmb").to_string();
     let until = if ui.checked(F, "UntilCheck") { "1" } else { "0" };
     for (k, v) in [
         ("AniTplKind", kind.as_str()),
         ("AniTplSecs", ui.text(F, "DurationEdit").trim()),
         ("AniTplSteps", ui.text(F, "StepsEdit").trim()),
         ("AniTplPivot", pivot.as_str()),
+        ("AniTplAxis", axis.as_str()),
         ("AniTplUntil", until),
         ("AniTplSpeed", ui.text(F, "SpeedEdit").trim()),
         ("AniTplTurn", ui.text(F, "TurnEdit").trim()),
@@ -58,7 +62,7 @@ fn is_orbit(ui: &Ui) -> bool {
 fn show_kind(ui: &mut Ui) {
     let orbit = is_orbit(ui);
     ui.set_caption(F, "NoteLabel", &tr(if orbit { "@MB:AWholeTurnOfTheCamera" } else { "@MB:TheCameraFliesOnIntoThe" }));
-    for c in ["StepsLabel", "StepsEdit", "PivotLabel", "PivotCmb"] {
+    for c in ["AxisLabel", "AxisCmb", "StepsLabel", "StepsEdit", "PivotLabel", "PivotCmb"] {
         ui.set_visible(F, c, orbit);
     }
     for c in ["UntilCheck", "SpeedLabel", "SpeedEdit", "TurnLabel", "TurnEdit"] {
@@ -107,7 +111,8 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
         let steps = pti(&ui.text(F, "StepsEdit")).clamp(3, 360) as usize;
         let pivot = if ui.item_index(F, "PivotCmb") == 1 { [0.0; 3] } else { crate::autopilot::turntable_pivot(&sc) };
         let total = (secs * fps).round().max(steps as f64) as u32;
-        let mut keys = crate::autopilot::orbit_keyframes_around(&sc, steps, 1, pivot);
+        let axis = crate::autopilot::OrbitAxis::ALL[ui.item_index(F, "AxisCmb").clamp(0, 6) as usize];
+        let mut keys = crate::autopilot::orbit_keyframes_axis(&sc, steps, 1, pivot, axis);
         for (k, f) in keys.iter_mut().zip(crate::autopilot::spread_frames(total, steps)) {
             k.frames = f;
         }

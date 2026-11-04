@@ -1063,6 +1063,10 @@ OPTIONS:
                              --duration (a 360 degree orbit) it turns around the middle,
                              or around the surface the view's middle shows when the
                              middle lies in the empty space before it
+        --orbit-axis <AXIS>  The axis of --orbit: yaw (left to right, the default),
+                             pitch (over the top), roll (the picture spins), all (the
+                             three at once, a tumble: 12 or more steps), or the
+                             fractal's x, y or z
         --fly                A fly-through from one keyframe file: the camera flies on
                              into the fractal, steering through its gaps, the zoom
                              following the distance to it, until --duration is flown
@@ -1140,6 +1144,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
     let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
     let mut vr = false;
+    let mut orbit_axis: Option<mb3d::autopilot::OrbitAxis> = None;
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
         v.ok_or_else(|| format!("{a} needs a value"))?.trim().parse::<i64>().map_err(|_| format!("bad value for {a}"))
@@ -1172,6 +1177,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--orbit" => orbit = Some(num(a, args.next())?.clamp(3, 360) as usize),
             "--fly" => fly = true,
             "--vr" | "--vr360" => vr = true,
+            "--orbit-axis" => orbit_axis = Some(mb3d::autopilot::OrbitAxis::parse(args.next().ok_or("--orbit-axis needs a value")?)?),
             "--duration" => {
                 duration = Some(
                     args.next()
@@ -1304,9 +1310,12 @@ fn animate(argv: &[String]) -> Result<(), String> {
         }
         let k = anim.keyframes.remove(0);
         anim.keyframes = match duration {
-            Some(d) if d > 0.0 => mb3d::autopilot::turntable(&k.scene, steps, d, fps),
+            Some(d) if d > 0.0 => mb3d::autopilot::turntable_axis(&k.scene, steps, d, fps, orbit_axis.unwrap_or(mb3d::autopilot::OrbitAxis::Yaw)),
             Some(_) => return Err(usage_err("--duration 0 goes with --fly only")),
-            None => mb3d::anim::orbit_keyframes(&k.scene, steps, frames.unwrap_or(25)),
+            None => match orbit_axis {
+                None => mb3d::anim::orbit_keyframes(&k.scene, steps, frames.unwrap_or(25)),
+                Some(ax) => mb3d::autopilot::orbit_keyframes_axis(&k.scene, steps, frames.unwrap_or(25), mb3d::autopilot::turntable_pivot(&k.scene), ax),
+            },
         };
         previews = vec![None; anim.keyframes.len()];
         looped = looped.or(Some(true));
@@ -1334,6 +1343,8 @@ fn animate(argv: &[String]) -> Result<(), String> {
         previews = vec![None; anim.keyframes.len()];
         looped = Some(false);
         ipol = ipol.or(Some(Interpolation::CatmullRom));
+    } else if orbit_axis.is_some() {
+        return Err(usage_err("--orbit-axis goes with --orbit"));
     } else if duration.is_some() {
         return Err("--duration goes with --orbit or --fly".into());
     }

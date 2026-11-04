@@ -75,16 +75,39 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     Height = 13
     AutoSize = False
   end
-  object StepsLabel: TLabel
+  object AxisLabel: TLabel
     Left = 12
     Top = 163
+    Width = 150
+    Height = 13
+    Caption = '@MB:Axis'
+  end
+  object AxisCmb: TComboBox
+    Left = 170
+    Top = 160
+    Width = 288
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 9
+    Items.Strings = (
+      '@MB:LeftToRightAroundItYaw'
+      '@MB:OverTheTopAndUnderPitch'
+      '@MB:SpinningAroundTheLineOfSight'
+      '@MB:AllTogetherYawPitchAndRoll'
+      '@MB:TheFractalSXAxis'
+      '@MB:TheFractalSYAxis'
+      '@MB:TheFractalSZAxis')
+  end
+  object StepsLabel: TLabel
+    Left = 12
+    Top = 195
     Width = 150
     Height = 13
     Caption = '@MB:Keyframes'
   end
   object StepsEdit: TEdit
     Left = 170
-    Top = 160
+    Top = 192
     Width = 60
     Height = 21
     TabOrder = 2
@@ -92,14 +115,14 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   end
   object PivotLabel: TLabel
     Left = 12
-    Top = 195
+    Top = 227
     Width = 150
     Height = 13
     Caption = '@MB:Around'
   end
   object PivotCmb: TComboBox
     Left = 170
-    Top = 192
+    Top = 224
     Width = 288
     Height = 21
     Style = csDropDownList

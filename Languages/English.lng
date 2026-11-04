@@ -61,9 +61,9 @@ ATransparentBackgroundNeedsPNGFrames=A transparent background needs PNG frames: 
 AVideoNeedsImagesChooseBMP=A video needs images: choose BMP, PNG or JPG as the output format.
 ;the program
 AVideoOfAStereoAnimation=A video of a stereo animation is not made: switch off 'Render stereo animation'.
-;not used
+;the program
 AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
-;not used
+;the program
 AXPictureNeedsAboutOf=A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 ;the program
 AZBufferPngImageWill=A z-buffer png image will be saved too.
@@ -119,7 +119,7 @@ AddNewOption=Add new option
 AddOptionValue=Add option value
 ;the program
 AddTheKeyframes=Add the keyframes
-;not used
+;AnimTemplatesFrm.AddBtn.Caption
 AddToBackgroundDepthNotBlend=Add to background depth (not blend)
 ;LightAdjustForm.CheckBox17.Caption
 AddonFormula=Addon formula
@@ -152,6 +152,8 @@ AllRealworldUnitsInMeter=All realworld units in meter.
 ;Mand3DForm.Label36.Caption
 AllTheLightColorSettings=All the light + color settings
 ;AniProcessForm.CheckBox8.Caption
+AllTogetherYawPitchAndRoll=All together: yaw, pitch and roll (tumble)
+;not used
 AlreadyExists={} <{}> already exists
 ;the program
 AlsoMakeAVideoAVI=Also make a video (AVI)
@@ -225,9 +227,9 @@ AnimationRenderingStopped=Animation rendering stopped.
 AnimationSize=Animation size:
 ;AnimationForm.GroupBox3.Caption
 AnimationTemplates=Animation templates...
-;not used
+;AnimationForm.TemplatesBtn.Caption
 AnimationTemplates2=Animation templates
-;not used
+;AnimTemplatesFrm.Caption
 AnimationTheFfmpegCommandIsOn=Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 ;the program
 AnimationVideoWritten=Animation: video written: {}
@@ -251,7 +253,7 @@ ApproximateVertexColorsTheColorInformation=Approximate vertex colors. The color-
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 Around=Around:
-;not used
+;AnimTemplatesFrm.PivotLabel.Caption
 AroundTheMiddleAnObject=Around the middle (an object)
 ;SplatFrm.AroundCmb.Items
 AsFullBackgroundSphere=As full background sphere:
@@ -277,7 +279,7 @@ AutoSavingTheM3cFile=Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
 ;Mand3DForm.CalcOnCombo.Hint
 AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
-;not used
+;AnimTemplatesFrm.PivotCmb.Items
 AutoUpdateImage=Auto update image
 ;ColorForm.CheckBox2.Caption
 AutoUpdatePreview=Auto update preview
@@ -294,6 +296,8 @@ AvgIterations=Avg. iterations:
 ;Mand3DForm.Label30.Caption
 AvgRaysteps=Avg. raysteps:
 ;Mand3DForm.Label29.Caption
+Axis=Axis:
+;not used
 AxisX=Axis X
 ;LightAdjustForm.Label6.Caption
 AxisY=Axis Y
@@ -599,7 +603,7 @@ ClickToTypeTheZoomIt=Click to type the zoom (it stays: fixed zoom).
 ClippingR=ClippingR:
 ;PostProForm.Label2.Caption
 Close=Close
-;AiConnectFrm.Button3.Caption, BulbTracer2Frm.CloseButton.Caption, ExperimentalFrm.CloseBtn.Caption and 6 more
+;AiConnectFrm.Button3.Caption, AnimTemplatesFrm.CloseBtn.Caption, BulbTracer2Frm.CloseButton.Caption and 7 more
 CloseMesh=Close Mesh
 ;BulbTracer2Frm.CloseMeshCheckbox.Caption
 CloseTheCurrentWindow=Close the current window:
@@ -1039,7 +1043,7 @@ Ds=Ds:
 DunnoDoNothing=Dunno, do nothing
 ;FColorOptions.Button4.Caption
 DurationSeconds=Duration (seconds):
-;not used
+;AnimTemplatesFrm.DurationLabel.Caption
 DynFog=Dyn.fog
 ;LightAdjustForm.SpeedButton4.Caption
 DynFogOnIt=Dyn. fog on It.:
@@ -1237,7 +1241,7 @@ FlatSolidWithEdges=Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: Largest integer <= X,  |X| < MaxInt }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 FlyThrough=Fly-through
-;AnimationForm.FlyBtn.Caption; the program
+;AnimTemplatesFrm.TemplateCmb.Items
 FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
 ;the program
 Fo=Fo.{}
@@ -1297,7 +1301,7 @@ FrameNumberToUseForAnimated=Frame number to use for animated maps in the main ed
 Frames=frames
 ;the program
 FramesAtFramesASecond={} frames at {} frames a second
-;not used
+;the program
 FramesPerSecond=Frames per second:
 ;AnimationForm.VideoFpsLbl.Caption
 FramesSec=Frames/sec:
@@ -1807,11 +1811,11 @@ KeyframeListM3k=Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;AnimationForm.Label10.Caption
 Keyframes=Keyframes:
-;not used
+;AnimTemplatesFrm.StepsLabel.Caption
 KeyframesForOneWholeTurnAround=Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 ;AnimationForm.OrbitBtn.Hint
 KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
-;not used
+;AnimTemplatesFrm.IntroLabel.Caption, AnimationForm.TemplatesBtn.Hint
 KeysThatBringAWindowTo=Keys that bring a window to the front from any window
 ;Mand3DForm.HotkeysBtn.Hint
 Kind=Kind
@@ -1823,13 +1827,15 @@ LIGHTSTROKES=LIGHT STROKES
 LMBMoveRMBRotate=LMB: move           RMB: rotate
 ;HeightMapGenFrm.Label15.Caption, MeshPreviewFrm.Label15.Caption
 LargestTurnDegreesAFrame=Largest turn (degrees a frame):
-;not used
+;AnimTemplatesFrm.TurnLabel.Caption
 LastLengthIncrease=Last length increase
 ;Mand3DForm.RadioGroup1.Items
 LastPass=\s· last pass {}
 ;the program
 Layer=Layer:
 ;PostProForm.CloudLayerLbl.Caption
+LeftToRightAroundItYaw=Left to right around it (yaw)
+;not used
 LeftclickGoIntoMouseModeView=Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 ;FNavigator.Image1.Hint
 LeftclickRotateTheBulbAroundThe=Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
@@ -2239,7 +2245,7 @@ N2Or3PassesGivesA=2 or 3 passes gives a better strong bluring in front of the fo
 N2ndReflection=2nd reflection
 ;LightAdjustForm.Label23.Caption
 N360Orbit=360° orbit
-;not used
+;AnimTemplatesFrm.TemplateCmb.Items
 N360Panorama=360 Panorama
 ;Mand3DForm.RadioGroup2.Items
 N360VR=360° VR
@@ -2560,6 +2566,8 @@ OutsideRender=Outside render
 ;FormulaGUIForm.ComboBox1.Items
 OutsideRenderDefaultModeInsideRender=Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
 ;FormulaGUIForm.ComboBox1.Hint
+OverTheTopAndUnderPitch=Over the top and under (pitch)
+;not used
 OverallScale=Overall scale:
 ;FVoxelExport.Label14.Caption
 OverwriteExistingImages=Overwrite existing images
@@ -3261,9 +3269,11 @@ SpecularObjectColorsClickToChange=Specular object colors, click to change them.
 SpecularPowerFunction=Specular power function
 ;LightAdjustForm.ComboBox2.Hint
 SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
-;not used
+;AnimTemplatesFrm.SpeedLabel.Caption
 SphericalCoords=Spherical coords
 ;FNavigator.CheckBox8.Caption
+SpinningAroundTheLineOfSight=Spinning around the line of sight (roll)
+;not used
 SplatsInWrittenTo={} splats in {}, written to {}
 ;the program
 Stan=stan.
@@ -3393,7 +3403,7 @@ TargetMapSlot=Target Map Slot
 TargetMapSlotUseThisNumber=Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
 ;MapSequencesFrm.DestChannelEdit.Hint
 Template=Template:
-;not used
+;AnimTemplatesFrm.TemplateLabel.Caption
 TheAmountOfAddedDiffuseAnd=The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 ;the program
 TheAnimationNeedsAtLeastTwo=The animation needs at least two keyframes.
@@ -3421,7 +3431,7 @@ TheCalculationFailedLower=the calculation failed
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
 TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
-;not used
+;the program
 TheCameraLeftTheFractal=the camera left the fractal
 ;the program
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
@@ -3464,6 +3474,12 @@ TheFractalOfTheMainWindow=The fractal of the main window as Gaussian splats, to 
 ;SplatFrm.IntroLabel.Caption
 TheFractalSSurfaceMaterialOn=The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 ;PostProForm.MaterialCbx.Hint
+TheFractalSXAxis=The fractal's X axis
+;not used
+TheFractalSYAxis=The fractal's Y axis
+;not used
+TheFractalSZAxis=The fractal's Z axis
+;not used
 TheFramesPerSecondMustBe=The frames per second must be a number above 0 (e.g. 25).
 ;the program
 TheImageBufferHasTheWrong=the image buffer has the wrong size
@@ -3481,7 +3497,7 @@ TheMainEditorIsStillRendering=The main editor is still rendering. Please stop it
 TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 ;Mand3DForm.RadioGroup1.Hint
 TheMiddleOfTheView=The middle of the view
-;not used
+;AnimTemplatesFrm.PivotCmb.Items
 TheMonteCarloWindowIsRendering=The Monte Carlo window is rendering: stop it first.
 ;the program
 TheMotionBlurSShutterTime=The motion blur's shutter time: a part of the time to the next frame (0 to 1)
@@ -3643,7 +3659,7 @@ TurnOnOffTheJuliaMode=Turn on/off the julia mode
 Turned=Turned:
 ;FormulaGUIForm.Part2TurnLbl.Caption
 Turntable=Turntable
-;AnimationForm.OrbitBtn.Caption; the program
+;AnimationForm.OrbitBtn.Caption
 Type=Type:
 ;ParamValueEditFrm.Label1.Caption
 Type2=Type
@@ -3675,7 +3691,7 @@ UnfinishedRenders=Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=Unfinished renders: continue or delete them
 ;Mand3DForm.ResumeBtn.Hint
 UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)
-;not used
+;AnimTemplatesFrm.UntilCheck.Caption
 Untitled=untitled
 ;the program
 UpOneLevel=Up one level
