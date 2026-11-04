@@ -330,7 +330,9 @@ pub fn zbuf16(app: &Mb3d, offset: f64, scale: f64, invert: bool) -> Option<(usiz
     Some((b.w, b.h, z, info))
 }
 
-fn zb_values(ui: &Ui) -> (f64, f64, bool) {
+/// The offset, scale and inversion of the window (also the main window's
+/// "Save Z-buffer" as PNG 16 bit, Mand.pas:3714).
+pub fn zb_values(ui: &Ui) -> (f64, f64, bool) {
     (ptf(&ui.text(ZB, "ZOffsetEdit")), ptf(&ui.text(ZB, "ZScaleEdit")), ui.checked(ZB, "InvertZBufferCBx"))
 }
 

@@ -710,7 +710,8 @@ fn rotate_view(app: &mut Mb3d, v: f64, h: f64, roll: f64) {
     app.navi.moving = false;
 }
 
-fn set_look(app: &mut Mb3d, ui: &mut Ui, on: bool) {
+/// The mouse look mode on / off (also Esc in the main window, Mand.pas:3513).
+pub fn set_look(app: &mut Mb3d, ui: &mut Ui, on: bool) {
     app.navi.look = on;
     let fi = ui.form_index(F).unwrap();
     ui.request(crate::vcl::ui::Request::MouseLook(fi, on));

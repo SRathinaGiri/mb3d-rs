@@ -2552,6 +2552,8 @@ PNG16BitColourPng=PNG 16 bit colour (*.png)
 ;the program
 PNG16BitPng=PNG 16 bit (*.png)
 ;the program
+PNG8BitPng=PNG 8 bit (*.png)
+;the program
 PNGFramesWithATransparentBackground=PNG frames with a transparent background.
 ;AnimationForm.TransparentCheck.Hint
 PNGPng=PNG (*.png)
@@ -3757,6 +3759,8 @@ WavesOnThePlaneTheirHeight=Waves on the plane: their height and their length in 
 Weight=Weight
 ;the program
 WeightColon=Weight:
+;the program
+WelcomeTo=Welcome to {}!
 ;the program
 WhatDidIDoInMb3d=What did I do in mb3d today? Were there any errors?
 ;the program
