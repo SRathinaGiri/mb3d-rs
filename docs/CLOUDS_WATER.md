@@ -208,6 +208,8 @@ next to the waves on the *Cutting* page:
   scattering water takes the normal render's reflection pass about a
   fifth to a half longer.
 
+Three finished scenes with all of it, ready to paste: [WATER_EXAMPLES.md](WATER_EXAMPLES.md).
+
 What each setting does, on a Mandelbulb standing half in the water
 (`ground = y, -0.45`, reflections on):
 

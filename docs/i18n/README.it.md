@@ -693,6 +693,8 @@ permettono di verificare ulteriormente da solo:
   e *Diffusione* a 0,5, e attiva i riflessi (*Postelaborazione*,
   *Riflessi + trasparenza*, *Calcola R. (+ T.) automaticamente*), poi *Calcola 3D*.
 
+  Tre scene pronte da incollare, con le loro impostazioni: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Acqua* (trasparenza) 0, 0,5 e 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Trasparenza 0, 0,5 e 1: acqua grigia opaca, poi la metà sommersa del frattale traspare in turchese"></a>

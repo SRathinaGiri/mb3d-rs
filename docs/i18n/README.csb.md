@@ -667,6 +667,8 @@ sprawdzëc sóm:
   *Rozpraszanié* na 0,5, ë włączë òdbicô (*Òbróbka*, *Òdbicô +
   przezérnosc*, *Rechùj R. (+ T.) aùtomatno*); pózdze *Rechùj 3D*.
 
+  Trzë gòtowé scenë do wlepienia, z jich nastôwama: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Wòda* (przezérnosc) 0, 0,5 ë 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Przezérnosc 0, 0,5 ë 1: szôrô nieprzezérnô wòda, pózdze zanùrzonô półkô fraktala przeswiéca turkùsowò"></a>

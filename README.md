@@ -686,7 +686,8 @@ you check further on your own:
   through the fractal, set *Water* to 1, *Absorption* to 1 and
   *Scattering* to 0.5, and switch the reflections on (*Postprocess*,
   *Reflections + Transparency*, *Calculate R. (+ T.) automatically*),
-  then *Calculate 3D*.
+  then *Calculate 3D*. Three finished scenes to paste, with their settings:
+  [WATER_EXAMPLES.md](docs/WATER_EXAMPLES.md).
 
   *Water* (transparency) 0, 0.5 and 1:
 

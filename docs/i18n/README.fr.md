@@ -713,6 +713,8 @@ Voici de quoi vérifier plus loin par vous-même :
   *Réflexions + Transparence*, *Calculer R. (+ T.) automatiquement*), puis
   *Calculer 3D*.
 
+  Trois scènes prêtes à coller, avec leurs réglages : [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Eau* (transparence) 0, 0,5 et 1 :
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparence 0, 0,5 et 1 : eau grise opaque, puis la moitié immergée de la fractale apparaît en turquoise"></a>

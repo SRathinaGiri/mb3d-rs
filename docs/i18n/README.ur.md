@@ -667,6 +667,8 @@ mb3d-rs دراصل [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D) ہے�
   کو 0.5 پر رکھیں، اور عکس آن کریں (*پوسٹ پروسیس*، *عکس + شفافیت*، *R. (+
   T.) خودکار حساب کریں*)؛ پھر *3D حساب کریں*۔
 
+  چسپاں کرنے کے لیے تین تیار مناظر، ان کی ترتیبات کے ساتھ: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *پانی* (شفافیت) 0، 0.5 اور 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="شفافیت 0، 0.5 اور 1: خاکستری غیر شفاف پانی، پھر فریکٹل کا ڈوبا ہوا آدھا حصہ فیروزی رنگ میں جھلکتا ہے"></a>

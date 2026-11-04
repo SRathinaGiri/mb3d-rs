@@ -394,6 +394,8 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
 
   **试一试**：在 *切割* 页勾选 *地平面*，让它的高度穿过分形，把 *水* 设为 1，*吸收* 设为 1，*散射* 设为 0.5，并打开反射（*后期处理*、*反射 + 透明*、*自动计算反射（+ 透明）*），然后点 *计算 3D*。
 
+  三个可直接粘贴的成品场景及其设置： [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *水*（透明度）0、0.5 和 1：
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="透明度 0、0.5 和 1：灰色不透明的水，然后水下的半个分形透出青绿色"></a>

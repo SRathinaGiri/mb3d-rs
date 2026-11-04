@@ -656,6 +656,8 @@ mb3d-rs [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D) है, वह�
   *परावर्तन + पारदर्शिता*, *प. (+ पा.) की स्वतः गणना करें*); फिर *3D गणना
   करें*।
 
+  चिपकाने के लिए तीन तैयार दृश्य, उनकी सेटिंग्स के साथ: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *पानी* (पारदर्शिता) 0, 0.5 और 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="पारदर्शिता 0, 0.5 और 1: धूसर अपारदर्शी पानी, फिर फ्रैक्टल का डूबा आधा हिस्सा फ़िरोज़ी में झलकता है"></a>

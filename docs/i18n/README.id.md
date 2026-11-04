@@ -698,6 +698,8 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   *Hamburan* ke 0,5, lalu nyalakan refleksi (*Pascaproses*, *Refleksi +
   Transparansi*, *Hitung R. (+ T.) otomatis*); kemudian *Hitung 3D*.
 
+  Tiga adegan siap tempel, beserta pengaturannya: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Air* (transparansi) 0, 0,5 dan 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparansi 0, 0,5 dan 1: air abu-abu buram, lalu separuh fraktal yang terendam tembus pandang berwarna pirus"></a>

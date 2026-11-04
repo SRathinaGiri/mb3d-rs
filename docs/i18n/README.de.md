@@ -689,6 +689,8 @@ können Sie selbst weiter prüfen:
   (*Nachbearbeitung*, *Reflexionen + Transparenz*, *R. (+ T.) automatisch
   berechnen*), dann *3D berechnen*.
 
+  Drei fertige Szenen zum Einfügen, mit ihren Einstellungen: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Wasser* (Transparenz) 0, 0,5 und 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparenz 0, 0,5 und 1: graues undurchsichtiges Wasser, dann scheint die untergetauchte Hälfte des Fraktals türkis durch"></a>

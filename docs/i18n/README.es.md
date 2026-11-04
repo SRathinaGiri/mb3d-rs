@@ -713,6 +713,8 @@ esto puede comprobar más por su cuenta:
   transparencia*, *Calcular R. (+ T.) automáticamente*); después *Calcular
   3D*.
 
+  Tres escenas listas para pegar, con sus ajustes: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Agua* (transparencia) 0, 0,5 y 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparencia 0, 0,5 y 1: agua gris opaca, luego la mitad sumergida del fractal se ve a través en turquesa"></a>

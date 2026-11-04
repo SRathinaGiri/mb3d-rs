@@ -700,6 +700,8 @@ pontos permitem que você confira mais por conta própria:
   Transparência*, *Calcular R. (+ T.) automaticamente*); depois *Calcular
   3D*.
 
+  Três cenas prontas a colar, com as suas definições: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Água* (transparência) 0, 0,5 e 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparência 0, 0,5 e 1: água cinzenta opaca, depois a metade submersa do fractal aparece em turquesa"></a>

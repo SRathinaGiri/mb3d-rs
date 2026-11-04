@@ -670,6 +670,8 @@ możesz sprawdzić sam:
   przezroczystość*, *Obliczaj O. (+ P.) automatycznie*); potem *Oblicz
   3D*.
 
+  Trzy gotowe sceny do wklejenia, z ich ustawieniami: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Woda* (przezroczystość) 0, 0,5 i 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Przezroczystość 0, 0,5 i 1: szara nieprzezroczysta woda, potem zanurzona połowa fraktala prześwituje na turkusowo"></a>

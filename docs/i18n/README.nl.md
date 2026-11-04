@@ -659,6 +659,8 @@ kunt u zelf verder controleren:
   *Reflecties + transparantie*, *R. (+ T.) automatisch berekenen*); daarna
   *3D berekenen*.
 
+  Drie kant-en-klare scènes om te plakken, met hun instellingen: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
   *Water* (transparantie) 0, 0,5 en 1:
 
   <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparantie 0, 0,5 en 1: grijs ondoorzichtig water, dan schijnt de ondergedompelde helft van de fractal turkoois door"></a>
