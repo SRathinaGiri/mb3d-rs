@@ -1445,19 +1445,13 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
         ("outdir", DialogResult::File(Some(p))) => {
             ui.set_text(F, "Edit2", &p.display().to_string());
+            // (the folders of the settings change only in their window, as MB3D)
             app.anim.anim.output_folder = p.display().to_string();
-            app.ini.dirs[super::ini::DIR_ANIOUT] = p.clone();
         }
         ("gif", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
-            }
             save_ani_gif(app, ui, &p.with_extension("gif"));
         }
         ("open", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_M3A] = d.to_path_buf();
-            }
             load_animation(app, ui, p);
         }
         ("save", DialogResult::File(Some(p))) => {

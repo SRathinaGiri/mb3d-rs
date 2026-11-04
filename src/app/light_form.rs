@@ -1836,7 +1836,6 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             match r {
                 Some(p) => {
                     if let Some(d) = p.parent() {
-                        app.ini.dirs[super::ini::DIR_BGPIC] = d.to_path_buf();
                         crate::maps::add_map_dir(d.to_path_buf());
                     }
                     app.scene.lighting.bg_image = p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
