@@ -1520,6 +1520,10 @@ HoldShiftKeyForFinerSteps=(Mantenga Mayús para pasos más finos)
 ;(Hold Shift key for finer steps)
 Hotkeys=Atajos
 ;Hotkeys
+HowFastLightFadesInThe=Qué tan rápido se apaga la luz en el agua, por unidad fractal recorrida (1: un gris medio conserva un tercio de su luz tras 1 unidad)
+;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowMuchLightTheWaterLets=Cuánta luz deja pasar el agua (0 a 1, 0: opaca): con los reflejos (Postprocesado) o en Monte Carlo el fractal se ve bajo la superficie, desviado por la refracción y desvaneciéndose con la profundidad
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Cuánto refleja el plano (0 a 1): sus brillos y su espejo cuando se calculan los reflejos (Postprocesado)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Cuánto varía el color de la superficie con el relieve: 0 nada, 1 mucho
@@ -2814,6 +2818,10 @@ ReflectionsTransparency2=Reflejos + transparencia
 ;Reflections + Transparency
 ReflectsTime=Tiempo reflejos:
 ;Reflects time:
+Refraction=Refracción:
+;Refraction:
+RefractionIndexOfTheWaterWater=Índice de refracción del agua (agua 1,33; 1: sin desviación)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=Índice de refracción:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=Índice de refracción del material: aire~1 agua~1.33 vidrio~1.5 diamante~2.4
@@ -3402,6 +3410,8 @@ TheCalculationWillBeExtendedTowards=El cálculo se extiende hacia fuera de la im
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=El valor elegido en todos los fotogramas de la animación: arrastre el cuadrado de un fotograma clave hacia arriba o abajo, o haga clic y escriba su valor
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourTheWaterFadesTo=El color al que tiende el agua con la profundidad (clic para cambiar)
+;The colour the water fades to with depth (click to change)
 TheCommandLineProgramMb3dWas=No se encontró el programa de línea de comandos mb3d junto a este programa: vuelva a instalar el programa.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=La numeración predeterminada incluye 2 números, separados en X e Y.\nSi elige esta opción, la numeración es un solo número\nque aumenta en cada columna y sigue en la fila siguiente.
@@ -3750,6 +3760,8 @@ WarningMustRecalculateTheWholeImage=Aviso: ¡para deshacerlo hay que recalcular 
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=Avisos y errores
 ;Warnings and errors
+Water=Agua:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=Olas:

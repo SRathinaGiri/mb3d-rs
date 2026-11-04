@@ -1521,6 +1521,10 @@ HoldShiftKeyForFinerSteps=(Shiftキーを押すと細かく動きます)
 ;(Hold Shift key for finer steps)
 Hotkeys=ホットキー
 ;Hotkeys
+HowFastLightFadesInThe=水中で光が弱まる速さ、進んだフラクタル単位あたり (1: 中間の灰色は 1 単位で光の三分の一が残る)
+;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowMuchLightTheWaterLets=水が通す光の量 (0 から 1、0: 不透明): 反射 (ポストプロセス) またはモンテカルロで、水面下のフラクタルが屈折で曲がり、深さとともに薄れて見えます
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=平面の反射の強さ (0 から 1): ハイライトと、反射を計算するときの鏡面 (ポストプロセス)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=起伏による表面の色の変化の度合い: 0 なし、1 強い
@@ -2815,6 +2819,10 @@ ReflectionsTransparency2=反射 + 透明
 ;Reflections + Transparency
 ReflectsTime=反射時間:
 ;Reflects time:
+Refraction=屈折:
+;Refraction:
+RefractionIndexOfTheWaterWater=水の屈折率 (水 1.33、1: 曲がらない)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=屈折率:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=素材の屈折率です。空気~1 水~1.33 ガラス~1.5 ダイヤモンド~2.4
@@ -3403,6 +3411,8 @@ TheCalculationWillBeExtendedTowards=計算を画像の外側まで拡張し、�
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=アニメーション全フレームでの選んだ値: キーフレームの四角を上下にドラッグするか、クリックして値を入力します
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourTheWaterFadesTo=深さとともに水が近づく色 (クリックで変更)
+;The colour the water fades to with depth (click to change)
 TheCommandLineProgramMb3dWas=コマンドラインプログラム mb3d がこのプログラムと同じ場所に見つかりません。プログラムを再インストールしてください。
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=既定の番号付けはXとYに分かれた2つの数字です。\nこのオプションを選ぶと番号は1つだけになり、\n各列で増えていき次の行へ続きます。
@@ -3751,6 +3761,8 @@ WarningMustRecalculateTheWholeImage=警告: 取り消すには画像全体を再
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=警告とエラー
 ;Warnings and errors
+Water=水:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=波:

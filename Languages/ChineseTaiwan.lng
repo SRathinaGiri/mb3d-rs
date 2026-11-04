@@ -1521,6 +1521,10 @@ HoldShiftKeyForFinerSteps=（按住 Shift 鍵可做更細的步進）
 ;(Hold Shift key for finer steps)
 Hotkeys=快速鍵
 ;Hotkeys
+HowFastLightFadesInThe=光在水中衰減的快慢，按經過的碎形單位計（1：中灰色經過 1 個單位後保留三分之一的光）
+;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowMuchLightTheWaterLets=水透過多少光（0 到 1，0：不透明）：開啟反射（後製處理）或在蒙地卡羅中，水面下的碎形可見，被折射彎曲並隨深度漸隱
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=平面的反射程度（0 到 1）：它的高光，以及計算反射時的鏡面（後製處理）
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=表面顏色隨起伏變化的程度：0 不變，1 強烈
@@ -2815,6 +2819,10 @@ ReflectionsTransparency2=反射 + 透明
 ;Reflections + Transparency
 ReflectsTime=反射時間：
 ;Reflects time:
+Refraction=折射：
+;Refraction:
+RefractionIndexOfTheWaterWater=水的折射率（水 1.33；1：不彎曲）
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=折射率：
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=材質的折射率，空氣~1 水~1.33 玻璃~1.5 鑽石~2.4
@@ -3403,6 +3411,8 @@ TheCalculationWillBeExtendedTowards=計算會向影像外側延伸，以納入�
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=所選數值在動畫所有影格上的變化：上下拖曳關鍵影格的方塊，或點擊它並輸入數值
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourTheWaterFadesTo=水隨深度漸變成的顏色（點擊更改）
+;The colour the water fades to with depth (click to change)
 TheCommandLineProgramMb3dWas=在本程式所在位置找不到命令列程式 mb3d：請重新安裝本程式。
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=預設編號包含 2 個數字，分別代表 X 與 Y。\n若選擇此選項，則只用一個數字編號，\n在每一欄中遞增，並接續到下一列。
@@ -3751,6 +3761,8 @@ WarningMustRecalculateTheWholeImage=警告：若要復原，必須重新計算�
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=警告與錯誤
 ;Warnings and errors
+Water=水：
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=波浪：

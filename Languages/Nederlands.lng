@@ -1520,6 +1520,10 @@ HoldShiftKeyForFinerSteps=(Houd Shift ingedrukt voor fijnere stappen)
 ;(Hold Shift key for finer steps)
 Hotkeys=Sneltoetsen
 ;Hotkeys
+HowFastLightFadesInThe=Hoe snel licht in het water verzwakt, per fractaleenheid die het aflegt (1: een middengrijs houdt na 1 eenheid een derde van zijn licht)
+;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowMuchLightTheWaterLets=Hoeveel licht het water doorlaat (0 tot 1, 0: ondoorzichtig): met de reflecties (Nabewerking) of in Monte Carlo is de fractal onder het oppervlak te zien, verschoven door de breking en vervagend met de diepte
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Hoeveel het vlak reflecteert (0 tot 1): de glanzen, en de spiegeling als de reflecties berekend worden (Nabewerking)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Hoeveel de kleur van het oppervlak met het reliëf varieert: 0 niet, 1 sterk
@@ -2814,6 +2818,10 @@ ReflectionsTransparency2=Reflecties + transparantie
 ;Reflections + Transparency
 ReflectsTime=Reflectietijd:
 ;Reflects time:
+Refraction=Breking:
+;Refraction:
+RefractionIndexOfTheWaterWater=Brekingsindex van het water (water 1,33; 1: geen breking)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=Brekingsindex:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=Brekingsindex van het materiaal, lucht~1 water~1,33 glas~1,5 diamant~2,4
@@ -3402,6 +3410,8 @@ TheCalculationWillBeExtendedTowards=De berekening wordt uitgebreid tot buiten de
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=De gekozen waarde over alle frames van de animatie: sleep het vierkantje van een keyframe omhoog of omlaag, of klik erop en typ de waarde
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourTheWaterFadesTo=De kleur waarin het water met de diepte overgaat (klik om te wijzigen)
+;The colour the water fades to with depth (click to change)
 TheCommandLineProgramMb3dWas=Het opdrachtregelprogramma mb3d staat niet naast dit programma: installeer het programma opnieuw.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=De standaardnummering bestaat uit 2 getallen, gescheiden in X en Y.\nMet deze optie bestaat de nummering uit één getal,\ndat in elke kolom oploopt en op de volgende rij doorgaat.
@@ -3750,6 +3760,8 @@ WarningMustRecalculateTheWholeImage=Waarschuwing: om dit ongedaan te maken moet 
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=Waarschuwingen en fouten
 ;Warnings and errors
+Water=Water:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=Golven:

@@ -1521,6 +1521,10 @@ HoldShiftKeyForFinerSteps=(बारीक कदमों के लिए Shif
 ;(Hold Shift key for finer steps)
 Hotkeys=हॉटकी
 ;Hotkeys
+HowFastLightFadesInThe=पानी में प्रकाश कितनी तेज़ी से घटता है, तय की गई हर फ्रैक्टल इकाई पर (1: मध्यम धूसर 1 इकाई के बाद अपने प्रकाश का एक तिहाई रखता है)
+;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowMuchLightTheWaterLets=पानी कितना प्रकाश आर-पार जाने देता है (0 से 1, 0: अपारदर्शी): परावर्तन (पोस्ट प्रोसेसिंग) या मोंटे कार्लो में सतह के नीचे का फ्रैक्टल दिखता है, अपवर्तन से मुड़ा हुआ और गहराई के साथ धुंधला होता
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=तल कितना परावर्तित करता है (0 से 1): इसकी चमक, और परावर्तन गणना होने पर इसका दर्पण (पोस्ट प्रोसेसिंग)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=उभार के साथ सतह का रंग कितना बदलता है: 0 बिल्कुल नहीं, 1 बहुत
@@ -2815,6 +2819,10 @@ ReflectionsTransparency2=परावर्तन + पारदर्शित�
 ;Reflections + Transparency
 ReflectsTime=परावर्तन समय:
 ;Reflects time:
+Refraction=अपवर्तन:
+;Refraction:
+RefractionIndexOfTheWaterWater=पानी का अपवर्तनांक (पानी 1.33; 1: कोई मोड़ नहीं)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=अपवर्तनांक:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=सामग्री का अपवर्तनांक, हवा~1 पानी~1.33 कांच~1.5 हीरा~2.4
@@ -3403,6 +3411,8 @@ TheCalculationWillBeExtendedTowards=गणना को परावर्ति
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=एनिमेशन के सभी फ़्रेमों पर चुना गया मान: किसी की-फ़्रेम का वर्ग ऊपर या नीचे खींचें, या उस पर क्लिक करके मान लिखें
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourTheWaterFadesTo=वह रंग जिसकी ओर पानी गहराई के साथ ढलता है (बदलने के लिए क्लिक करें)
+;The colour the water fades to with depth (click to change)
 TheCommandLineProgramMb3dWas=कमांड लाइन प्रोग्राम mb3d इस प्रोग्राम के पास नहीं मिला: प्रोग्राम को फिर से इंस्टॉल करें।
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=डिफ़ॉल्ट क्रमांकन में 2 संख्याएँ होती हैं, X और Y के लिए अलग।\nयह विकल्प चुनने पर क्रमांकन केवल एक संख्या होगी,\nजो हर कॉलम में बढ़ती है और अगली पंक्ति में जारी रहती है।
@@ -3751,6 +3761,8 @@ WarningMustRecalculateTheWholeImage=चेतावनी: इसे पूर�
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=चेतावनियाँ और त्रुटियाँ
 ;Warnings and errors
+Water=पानी:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=लहरें:

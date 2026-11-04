@@ -1520,6 +1520,10 @@ HoldShiftKeyForFinerSteps=(Tahan tombol Shift untuk langkah lebih halus)
 ;(Hold Shift key for finer steps)
 Hotkeys=Tombol pintas
 ;Hotkeys
+HowFastLightFadesInThe=Seberapa cepat cahaya memudar di dalam air, per satuan fraktal yang ditempuh (1: abu-abu sedang menyisakan sepertiga cahayanya setelah 1 satuan)
+;How fast light fades in the water, per fractal unit it travels (1: a mid grey keeps a third of its light after 1 unit)
+HowMuchLightTheWaterLets=Seberapa banyak cahaya yang diloloskan air (0 sampai 1, 0: buram): dengan pantulan (Pasca-proses) atau di Monte Carlo fraktal terlihat di bawah permukaan, dibelokkan oleh pembiasan dan memudar seiring kedalaman
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Seberapa kuat bidang memantul (0 sampai 1): kilaunya, dan cerminnya bila pantulan dihitung (Pasca-proses)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Seberapa besar warna permukaan berubah mengikuti relief: 0 tidak, 1 kuat
@@ -2814,6 +2818,10 @@ ReflectionsTransparency2=Refleksi + Transparansi
 ;Reflections + Transparency
 ReflectsTime=Waktu refleksi:
 ;Reflects time:
+Refraction=Pembiasan:
+;Refraction:
+RefractionIndexOfTheWaterWater=Indeks bias air (air 1,33; 1: tanpa pembelokan)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=Indeks bias:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=Indeks bias material, udara~1 air~1.33 kaca~1.5 berlian~2.4
@@ -3402,6 +3410,8 @@ TheCalculationWillBeExtendedTowards=Perhitungan akan diperluas ke luar gambar de
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 TheChosenValueOverAllFrames=Nilai yang dipilih di semua frame animasi: seret kotak keyframe ke atas atau ke bawah, atau klik lalu ketik nilainya
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourTheWaterFadesTo=Warna yang dituju air seiring kedalaman (klik untuk mengubah)
+;The colour the water fades to with depth (click to change)
 TheCommandLineProgramMb3dWas=Program baris perintah mb3d tidak ditemukan di samping program ini: pasang ulang program.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=Penomoran bawaan terdiri dari 2 angka, terpisah untuk X dan Y.\nJika Anda memilih opsi ini, penomoran hanya satu angka,\nbertambah di setiap kolom dan berlanjut ke baris berikutnya.
@@ -3750,6 +3760,8 @@ WarningMustRecalculateTheWholeImage=Peringatan: Harus menghitung ulang seluruh g
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=Peringatan dan galat
 ;Warnings and errors
+Water=Air:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=Ombak:
