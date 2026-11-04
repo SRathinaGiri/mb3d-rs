@@ -341,10 +341,39 @@ pub fn raw_from_m3i(data: &[u8]) -> Result<Vec<u8>, String> {
         raw.extend_from_slice(&data[off..data.len().min(off + ADDON_SIZE)]);
     }
     raw.resize(HEADER_SIZE + ADDON_SIZE, 0);
-    if let Some(t) = extra_at(data, off + ADDON_SIZE) {
+    // (behind the picture of "Save image in m3i" when the file has one)
+    if let Some(t) = extra_at(data, off + ADDON_SIZE).or_else(|| extra_at(data, off + ADDON_SIZE + px * 4)) {
         raw.extend(extra_block(&t));
     }
     Ok(raw)
+}
+
+/// The finished picture an `.m3i` keeps after its parameters ("Save image
+/// in m3i", MB3D's `SaveM3I` with `bSaveImgBuf`: `fullSizeImage`, 4 bytes a
+/// pixel, blue, green, red and 0, the rows from the top), as RGB; None
+/// when the file has none (or a tiled one).  MB3D shows it instead of
+/// painting the picture again (`LoadFullM3I`, FileHandling.pas:2309).
+pub fn image_from_m3i(data: &[u8]) -> Option<(usize, usize, Vec<u8>)> {
+    if data.len() < HEADER_SIZE {
+        return None;
+    }
+    let r = Rd(data);
+    let (w, h) = (r.i32(4), r.i32(8));
+    if r.i32(0) < 20 || w < 1 || h < 1 || (r.i32(0) >= 35 && r.i32(428) != 0) {
+        return None;
+    }
+    let (w, h) = (w as usize, h as usize);
+    let n = w.checked_mul(h)?;
+    let at = n.checked_mul(18)?.checked_add(HEADER_SIZE + ADDON_SIZE)?;
+    let px = data.get(at..at.checked_add(n.checked_mul(4)?)?)?;
+    if px.starts_with(EXTRA_MAGIC) {
+        return None;
+    }
+    let mut rgb = Vec::with_capacity(n * 3);
+    for p in px.chunks_exact(4) {
+        rgb.extend_from_slice(&[p[2], p[1], p[0]]);
+    }
+    Some((w, h, rgb))
 }
 
 /// The G-buffer of an `.m3i` file (for images without tiling); None when
@@ -1576,6 +1605,44 @@ mod tests {
         big[4..8].copy_from_slice(&i32::MAX.to_le_bytes());
         big[8..12].copy_from_slice(&i32::MAX.to_le_bytes());
         assert!(gbuffer_from_m3i(&big).is_none());
+        assert!(image_from_m3i(&d).is_none());
+    }
+
+    /// "Save image in m3i": the picture after the addon in MB3D's layout
+    /// (blue, green, red, 0), read back; the parameters and this program's
+    /// settings block behind it are still found.
+    #[test]
+    fn m3i_image_round_trip() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.width = 6;
+        sc.height = 4;
+        sc.material = Some(crate::scene::Material { fresnel: 0.5, iridescence: 0.75, irid_shift: 0.25, glow: 1.5 });
+        let g = vec![crate::gbuffer::SiLight::default(); 24];
+        let rgb: Vec<u8> = (0..24 * 3).map(|i| (i * 5) as u8).collect();
+        let p = std::env::temp_dir().join(format!("mb3d-m3i-img-{}.m3i", std::process::id()));
+        write_m3i_image_to(&p, &sc, &g, Some(&rgb)).unwrap();
+        let d = std::fs::read(&p).unwrap();
+        let _ = std::fs::remove_file(&p);
+        let at = HEADER_SIZE + 24 * 18 + ADDON_SIZE;
+        assert_eq!(&d[at..at + 8], &[10, 5, 0, 0, 25, 20, 15, 0]);
+        let (w, h, back) = image_from_m3i(&d).unwrap();
+        assert_eq!((w, h), (6, 4));
+        assert_eq!(back, rgb);
+        let m = parse(&raw_from_m3i(&d).unwrap()).unwrap().scene;
+        assert_eq!(m.material, sc.material);
+        assert_eq!(gbuffer_from_m3i(&d).unwrap().2.len(), 24);
+        // without the picture: none read, the settings still there
+        write_m3i_to(&p, &sc, &g).unwrap();
+        let d = std::fs::read(&p).unwrap();
+        let _ = std::fs::remove_file(&p);
+        assert!(image_from_m3i(&d).is_none());
+        assert_eq!(parse(&raw_from_m3i(&d).unwrap()).unwrap().scene.material, sc.material);
+        // an MB3D file: the picture at the end, no settings block
+        let mut plain = sc.clone();
+        plain.material = None;
+        let mut mb = write_m3i(&plain, &g);
+        mb.extend(rgb.chunks(3).flat_map(|p| [p[2], p[1], p[0], 0]));
+        assert_eq!(image_from_m3i(&mb).unwrap().2, rgb);
     }
 
     #[test]
@@ -1706,6 +1773,14 @@ pub fn write_m3i(sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> Vec<u8> {
 /// row block (`write_m3i` builds the whole file in memory first: 1.3 GB for
 /// a 12000 x 6000 picture, as much again as the picture itself).
 pub fn write_m3i_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> std::io::Result<()> {
+    write_m3i_image_to(path, sc, gbuf, None)
+}
+
+/// [`write_m3i_to`], with the finished picture `rgb` (RGB, the size of the
+/// G-buffer) after the formula addon as MB3D writes it with "Save image in
+/// m3i" (Mand.pas:2866 `SaveM3I`, see [`image_from_m3i`]); this program's
+/// block of further settings follows the picture.
+pub fn write_m3i_image_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::SiLight], rgb: Option<&[u8]>) -> std::io::Result<()> {
     use std::io::Write;
     let (head, tail) = m3i_parts(sc);
     let mut f = std::io::BufWriter::with_capacity(1 << 20, std::fs::File::create(path)?);
@@ -1713,7 +1788,18 @@ pub fn write_m3i_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::
     for part in gbuf.chunks(1 << 16) {
         f.write_all(&crate::gbuffer::pack(part))?;
     }
-    f.write_all(&tail)?;
+    match rgb.filter(|rgb| rgb.len() == gbuf.len() * 3) {
+        Some(rgb) => {
+            let a = ADDON_SIZE.min(tail.len());
+            f.write_all(&tail[..a])?;
+            for part in rgb.chunks(3 << 16) {
+                let bgr0: Vec<u8> = part.chunks_exact(3).flat_map(|p| [p[2], p[1], p[0], 0]).collect();
+                f.write_all(&bgr0)?;
+            }
+            f.write_all(&tail[a..])?;
+        }
+        None => f.write_all(&tail)?,
+    }
     f.flush()
 }
 
