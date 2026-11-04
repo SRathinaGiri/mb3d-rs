@@ -30,6 +30,9 @@ pub struct State {
     pub hist_ot: Vec<u32>,
     pub hist_int: Vec<u32>,
     pub first_show: bool,
+    /// the folder of the last .m3l opened ("Open"), for this session: the
+    /// lights folder of the settings stays (MB3D's OpenDialog1)
+    pub open_dir: Option<std::path::PathBuf>,
 }
 
 impl Default for State {
@@ -48,6 +51,7 @@ impl Default for State {
             hist_ot: Vec::new(),
             hist_int: Vec::new(),
             first_show: true,
+            open_dir: None,
         }
     }
 }
@@ -640,6 +644,10 @@ pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     check_box15(app, ui);
     set_bg_preview(app, ui);
     app.light.user_change = true;
+    // a loaded lighting is an undo step (FileHandling's StoreUndoLight
+    // after loading parameters); without a picture no repaint stores it
+    store_undo_light(app);
+    ui.set_enabled(F, "SpeedButton9", app.light.undo.len() > 1);
 }
 
 /// `PutLightFInHeader`: the sliders into the scene's lighting.
@@ -708,8 +716,16 @@ pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
     }
     app.light.undo_relight = false;
     app.make_scene(ui);
+    // (a repaint: the depth of field applied by hand is gone)
+    app.post.repainted();
     if app.eng.base().is_some() {
-        app.eng.start(super::engine::Job::Relight { scene: app.scene.clone() });
+        let mut scene = app.scene.clone();
+        // (the lights whose shadows were reset in the post processing:
+        // painted without, as MB3D's bHScalculated)
+        if let Some(h) = &mut scene.shadows {
+            h.lights &= !app.post.hs_reset;
+        }
+        app.eng.start(super::engine::Job::Relight { scene });
     }
     super::navi_form::main_lighting_changed(app, ui);
     ui.cm(F, "ComboBox3").font = Some(crate::vcl::font::Font { color: ui.theme.text_disabled(), custom_color: true, ..Default::default() });
@@ -724,7 +740,8 @@ fn store_undo_light(app: &mut Mb3d) {
     }
     st.undo.truncate(st.undo_pos);
     st.undo.push(l);
-    if st.undo.len() > 40 {
+    // (64 steps, Undo.pas's UndoLights)
+    if st.undo.len() > 64 {
         st.undo.remove(0);
     }
     st.undo_pos = st.undo.len();
@@ -1374,9 +1391,30 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.main.get_pos = 0;
                 ui.cm(super::MAIN, "Image1").cursor = "crDefault".into();
             } else {
+                // the post processing's selection modes off (their OnClick
+                // as in Delphi), the main window's navigation buttons up
+                // (MButtonsUp), the relative sliders to 0 (SetPosLightTo0)
+                const PP: &str = "PostProForm";
+                for cb in ["CheckBox21", "CheckBox25"] {
+                    if ui.has_form(PP) && ui.checked(PP, cb) {
+                        ui.set_checked(PP, cb, false);
+                        let ev = Event { form: PP.into(), sender: cb.into(), handler: format!("{cb}Click"), ev: Ev::Click };
+                        super::postpro_form::event(app, ui, &ev);
+                    }
+                }
                 ui.set_caption(F, "ButtonGetPos", &tr("@MB:ImageLower"));
                 app.main.get_pos = 2;
+                for b in ["SpeedButton1", "SpeedButton2", "SpeedButton4"] {
+                    ui.set_checked(super::MAIN, b, false);
+                    ui.cm(super::MAIN, b).down = false;
+                }
                 ui.cm(super::MAIN, "Image1").cursor = "crCross".into();
+                app.light.user_change = false;
+                for t in ["TrackBar15", "TrackBar16", "TrackBar17"] {
+                    setp(ui, t, 0);
+                }
+                app.light.old_tb = [0; 3];
+                app.light.user_change = true;
             }
         }
         "SpeedButton1Click" => {
@@ -1615,7 +1653,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("{}|*.m3l", tr("@MB:M3DLightParameterM3l")),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_LIGHTS)),
+                initial_dir: Some(app.light.open_dir.clone().unwrap_or_else(|| app.ini.dir(super::ini::DIR_LIGHTS))),
                 ..Default::default()
             };
             ui.open_dialog("light:load", &o);
@@ -1630,7 +1668,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.save_dialog("light:save", &o);
         }
         "FormMouseWheel" => {
-            if let Ev::Wheel { delta, .. } = e.ev {
+            if let Ev::Wheel { delta, x, y, .. } = e.ev {
+                // outside the window: the main window's (OverForm)
+                let (w, h) = ui.f(F).client_size();
+                if x < 0 || y < 0 || x >= w || y >= h {
+                    super::postpro_form::forward_wheel(app, ui, F, e);
+                    return;
+                }
                 let focus = ui.focused(F).unwrap_or_default();
                 let up = delta > 0;
                 match focus.as_str() {
@@ -1727,10 +1771,10 @@ fn make_depth_col_list(ui: &mut Ui) {
 }
 
 /// `GetLightParaFile`: a .m3l file (TLightingParas9).
-fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
+fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) -> bool {
     let Ok(d) = std::fs::read(p) else {
         app.message(ui, &trf("@MB:CannotRead", &[&p.display()]));
-        return;
+        return false;
     };
     match crate::m3p::light_from_record(&d) {
         Some(mut l) => {
@@ -1741,8 +1785,12 @@ fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
             set_from_header(app, ui);
             trigger_repaint(app, ui);
             ui.cm(F, "ComboBox3").font = None;
+            true
         }
-        None => app.message(ui, &trf("@MB:NoLightParameters", &[&p.display()])),
+        None => {
+            app.message(ui, &trf("@MB:NoLightParameters", &[&p.display()]));
+            false
+        }
     }
 }
 
@@ -1768,11 +1816,11 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             trigger_repaint(app, ui);
         }
         ("load", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_LIGHTS] = d.to_path_buf();
+            app.light.open_dir = p.parent().map(|d| d.to_path_buf());
+            if load_light_file(app, ui, p) {
+                // (Button1Click: the quick load list shows no file)
+                ui.set_item_index(F, "ComboBox3", -1);
             }
-            load_light_file(app, ui, p);
-            update_quick_load(app, ui);
         }
         ("save", DialogResult::File(Some(p))) => {
             put_light_in_header(app, ui);
