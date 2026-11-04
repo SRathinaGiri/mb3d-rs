@@ -28,6 +28,8 @@ language = English
 code = EN
 
 [Labels]
+A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
+;not used
 ACalculationIsRunningStopIt=A calculation is running: stop it first.
 ;the program
 ACoarseRayPerBlockOf=A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
@@ -39,7 +41,7 @@ AFewSecondsLeft=a few seconds left
 AFineReliefOnTheSurface=A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
 ;PostProForm.DetailKindCB.Hint
 AFlightFromTheMainWindow=A flight from the main window's view on into the fractal, steering through its gaps, for the time you give: a keyframe every half second (Catmull-Rom)
-;not used
+;AnimationForm.FlyBtn.Hint
 AFolderEveryComputerOfThe=A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
 ;SwarmFrm.Edit1.Hint
 AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
@@ -62,6 +64,8 @@ AVideoNeedsImagesChooseBMP=A video needs images: choose BMP, PNG or JPG as the o
 ;the program
 AVideoOfAStereoAnimation=A video of a stereo animation is not made: switch off 'Render stereo animation'.
 ;the program
+AVideoOfAStereoAnimation2=A video of a stereo animation is made only as a 360° VR one (the eyes one above the other): switch on '360° VR' or switch off 'Render stereo animation'.
+;not used
 AXPictureNeedsAboutOf=A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 ;the program
 AZBufferPngImageWill=A z-buffer png image will be saved too.
@@ -1027,8 +1031,8 @@ Ds=Ds:
 DunnoDoNothing=Dunno, do nothing
 ;FColorOptions.Button4.Caption
 DurationOfOneWholeTurnIn=Duration of one whole turn, in seconds:
-;not used
-DurationOfTheFlightInSeconds=Duration of the flight, in seconds:
+;the program
+DurationOfTheFlightInSeconds2=Duration of the flight, in seconds (0: until the view shows only sky or only fractal, at most 2 minutes):
 ;not used
 DynFog=Dyn.fog
 ;LightAdjustForm.SpeedButton4.Caption
@@ -1227,9 +1231,9 @@ FlatSolidWithEdges=Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: Largest integer <= X,  |X| < MaxInt }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 FlyThrough=Fly-through
-;not used
+;AnimationForm.FlyBtn.Caption; the program
 FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
-;not used
+;the program
 Fo=Fo.{}
 ;the program
 FogOffset=Fog offset
@@ -2222,6 +2226,8 @@ N2ndReflection=2nd reflection
 ;LightAdjustForm.Label23.Caption
 N360Panorama=360 Panorama
 ;Mand3DForm.RadioGroup2.Items
+N360VR=360° VR
+;not used
 N3DAnalyticFormula=3D analytic formula
 ;FormulaEditor.TabControl1.Tabs
 N3DFormula=3D formula
@@ -2327,7 +2333,7 @@ NoTilesToRender=No tiles to render.
 NoValidTextFoundPleaseEnter=\sNo valid text found, please enter the text below:
 ;FTextBox.Panel1.Caption
 NoWayAheadWasLeft=no way ahead was left
-;not used
+;the program
 Noise=-noise
 ;MCForm.Button6.Caption
 NoiseAI=-noise AI
@@ -3395,7 +3401,7 @@ TheCalculationFailedLower=the calculation failed
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
 TheCameraLeftTheFractal=the camera left the fractal
-;not used
+;the program
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 ;AnimationForm.CurvesBtn.Hint, CurvesFrm.Image1.Hint
 TheCommandLineProgramMb3dWas=The command line program mb3d was not found next to this program: install the program again.
@@ -3425,7 +3431,7 @@ TheFileSelectAndCopyIt=The file (select and copy it from here)
 TheFirstFocusPointTheValue=The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 ;PostProForm.Edit1.Hint
 TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
-;not used
+;the program
 TheFolderDoesNotExistOr=the folder does not exist (or is not reachable)
 ;the program
 TheFormulaNameShouldStartWith=The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
@@ -3485,7 +3491,7 @@ TheSizeOfTheCloudsFeatures=The size of the clouds' features in fractal units, an
 TheSizeOfTheTiles=The size of the tiles
 ;HistoryFrm.TrackBar1.Hint
 TheStepsCameToTheLimit=the steps came to the limit of double precision
-;not used
+;the program
 TheStereoEyeImagesHaveDifferent=The stereo eye images have different sizes.
 ;the program
 TheTextParametersOnTheClipboard=The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
@@ -3494,6 +3500,10 @@ TheTileHasNoImageBuffer=the tile has no image buffer
 ;the program
 TheValueOfTheChosenKeyframe=The value of the chosen keyframe
 ;CurvesFrm.KeyValEdit.Hint
+TheViewIsFilledWithThe=the view is filled with the fractal
+;not used
+TheViewShowsOnlySky=the view shows only sky
+;not used
 Themes=Themes
 ;Mand3DForm.VisualThemesBtn.Caption
 ThereIsAFileAlready=There is a file {} already.
@@ -3609,7 +3619,7 @@ TurnOnOffTheJuliaMode=Turn on/off the julia mode
 Turned=Turned:
 ;FormulaGUIForm.Part2TurnLbl.Caption
 Turntable=Turntable
-;AnimationForm.OrbitBtn.Caption
+;AnimationForm.OrbitBtn.Caption; the program
 Type=Type:
 ;ParamValueEditFrm.Label1.Caption
 Type2=Type

@@ -129,6 +129,10 @@ pub struct Animation {
     /// the shutter time of the motion blur, a part of the time to the next
     /// frame (0..1)
     pub shutter: f32,
+    /// a 360 degree VR animation (not in MB3D): every frame with the camera
+    /// optic spherical panorama (the frames 2:1; stereo eyes one above the
+    /// other in the video), see [`crate::vr`]
+    pub vr360: bool,
 }
 
 impl Default for Animation {
@@ -151,6 +155,7 @@ impl Default for Animation {
             stereo_bits: 0,
             motion_blur: 0,
             shutter: 0.5,
+            vr360: false,
         }
     }
 }
@@ -335,6 +340,9 @@ impl Animation {
         s.height = self.height.max(1);
         s.tiling = None;
         s.calc_rect = None;
+        if self.vr360 {
+            s.optic = crate::scene::CameraOptic::Panorama;
+        }
         if self.scale > 1 {
             s.scale_image(self.scale as f64);
         }

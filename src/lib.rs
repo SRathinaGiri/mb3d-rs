@@ -90,6 +90,7 @@ pub mod ssao;
 pub mod ssao15;
 pub mod swarm;
 pub mod video;
+pub mod vr;
 pub mod vollight;
 pub mod voxel;
 pub mod x86;

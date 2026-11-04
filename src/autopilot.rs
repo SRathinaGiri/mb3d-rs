@@ -242,11 +242,14 @@ pub struct FlightParams {
     pub max_turn_deg: f64,
     /// How far ahead the way is traced, in distance estimates.
     pub look_ahead: f64,
+    /// End the flight when the view has become only sky or only fractal
+    /// (checked at every keyframe; `frames` stays the longest flight).
+    pub until_view: bool,
 }
 
 impl Default for FlightParams {
     fn default() -> Self {
-        FlightParams { frames: 250, keyframe_every: 12, speed: 0.04, max_turn_deg: 2.0, look_ahead: 8.0 }
+        FlightParams { frames: 250, keyframe_every: 12, speed: 0.04, max_turn_deg: 2.0, look_ahead: 8.0, until_view: false }
     }
 }
 
@@ -261,6 +264,10 @@ pub enum FlightEnd {
     Precision,
     /// The camera left the fractal (the distance to it kept growing).
     LeftFractal,
+    /// The view showed only sky ([`FlightParams::until_view`]).
+    OnlySky,
+    /// The view was filled with the fractal ([`FlightParams::until_view`]).
+    OnlyFractal,
 }
 
 /// Why a flight ended, in English (the command line).
@@ -270,6 +277,8 @@ pub fn flight_end_text(e: FlightEnd) -> &'static str {
         FlightEnd::DeadEnd => "no way ahead was left",
         FlightEnd::Precision => "the steps came to the limit of double precision",
         FlightEnd::LeftFractal => "the camera left the fractal",
+        FlightEnd::OnlySky => "the view shows only sky",
+        FlightEnd::OnlyFractal => "the view is filled with the fractal",
     }
 }
 
@@ -280,6 +289,51 @@ pub struct Flight {
     /// Frames flown (the animation's frame count).
     pub frames: usize,
     pub end: FlightEnd,
+}
+
+/// The part of the view `sc` shows of the fractal: rays of a grid of 24 by
+/// 16 of its pixels traced to the far plane (0: only sky, 1: filled).
+pub fn view_coverage(sc: &Scene) -> f64 {
+    let mut s = sc.clone();
+    s.slice_2d = 0;
+    let Ok(p) = CalcParams::new(&s) else { return 0.5 };
+    let sw = s.step_width();
+    let far = ((s.z_end - s.z_start).abs() * 2.0).max(sw * 10.0);
+    let stop = (s.de_stop.max(0.01) as f64 * sw).max(far * 1e-12);
+    let (gx, gy) = (24, 16);
+    let mut hits = 0;
+    for j in 0..gy {
+        for i in 0..gx {
+            let x = ((i as f64 + 0.5) * s.width as f64 / gx as f64) as i32;
+            let y = ((j as f64 + 0.5) * s.height as f64 / gy as f64) as i32;
+            let (o, d) = crate::calc::pixel_ray(&p, x, y);
+            let d = normalize(d);
+            if free_distance(&p, o, d, far, stop, 0.9, 400) < far * 0.999 {
+                hits += 1;
+            }
+        }
+    }
+    hits as f64 / (gx * gy) as f64
+}
+
+/// Only sky (0) or only fractal (1) in the view, else None.
+fn pure_view(c: f64) -> Option<bool> {
+    if c <= 0.003 {
+        Some(false)
+    } else if c >= 0.997 {
+        Some(true)
+    } else {
+        None
+    }
+}
+
+/// The end of a flight that goes on until the view is pure: a pure view
+/// other than the one it started with.
+fn view_end(c: f64, start: Option<bool>) -> Option<FlightEnd> {
+    match pure_view(c) {
+        Some(v) if start != Some(v) => Some(if v { FlightEnd::OnlyFractal } else { FlightEnd::OnlySky }),
+        _ => None,
+    }
 }
 
 /// The directions traced ahead: the course, then rings around it.
@@ -337,6 +391,9 @@ pub fn fly_through(sc: &Scene, fp: &FlightParams, progress: &dyn Fn(usize, usize
     let every = fp.keyframe_every.max(1);
     let max_turn = fp.max_turn_deg.to_radians().max(1e-4);
     let mut keys: Vec<Scene> = vec![flight_keyframe(&s)];
+    // the view at the start (a view that starts as only sky or only
+    // fractal ends the flight when it becomes the other)
+    let start_view = if fp.until_view { pure_view(view_coverage(&keys[0])) } else { None };
     let mut key_frame: Vec<usize> = vec![0];
     let (mut blocked, mut outside) = (0, 0);
     let mut end = FlightEnd::Done;
@@ -436,7 +493,16 @@ pub fn fly_through(sc: &Scene, fp: &FlightParams, progress: &dyn Fn(usize, usize
         s.z_end = s.z_start + (de * far).min(9999.0);
         flown = i + 1;
         if i % every == 0 {
-            keys.push(flight_keyframe(&s));
+            let k = flight_keyframe(&s);
+            if fp.until_view {
+                if let Some(e) = view_end(view_coverage(&k), start_view) {
+                    keys.push(k);
+                    key_frame.push(i);
+                    end = e;
+                    break;
+                }
+            }
+            keys.push(k);
             key_frame.push(i);
         }
         if de > de0 * 50.0 && fwd >= reach * 0.999 {
@@ -572,6 +638,36 @@ mod tests {
         for k in &fl.keyframes {
             let (d, _) = de_at(&p, cam_pos(&k.scene));
             assert!(d > 0.0);
+        }
+    }
+
+    #[test]
+    fn the_view_of_the_preset_is_part_fractal() {
+        let sc = Scene::preset("Integer Power").unwrap();
+        let c = view_coverage(&sc);
+        assert!(c > 0.05 && c < 0.95, "{c}");
+        // turned away from the bulb: only sky
+        let mut away = sc.clone();
+        away.vgrads = sc.vgrads.map(|r| turn(r, unit_rows(&sc)[1], PI));
+        let m = sub(cam_pos(&sc), sc.mid);
+        // (the middle behind the camera now: moved to keep the camera)
+        let (ds, de) = (sc.z_start - sc.mid[2], sc.z_end - sc.mid[2]);
+        away.mid = add(cam_pos(&sc), m);
+        away.z_start = away.mid[2] + ds;
+        away.z_end = away.mid[2] + de;
+        assert!(len(&sub(cam_pos(&away), cam_pos(&sc))) < 1e-9);
+        assert_eq!(pure_view(view_coverage(&away)), Some(false));
+    }
+
+    #[test]
+    fn a_flight_until_the_view_is_pure_ends_on_it() {
+        let sc = Scene::preset("Integer Power").unwrap();
+        let fp = FlightParams { frames: 3000, keyframe_every: 12, until_view: true, ..Default::default() };
+        let fl = fly_through(&sc, &fp, &|_, _| {}, &|| false).unwrap();
+        assert!(fl.frames > 12);
+        if matches!(fl.end, FlightEnd::OnlySky | FlightEnd::OnlyFractal) {
+            let c = view_coverage(&fl.keyframes.last().unwrap().scene);
+            assert!(pure_view(c).is_some(), "{c}");
         }
     }
 }

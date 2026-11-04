@@ -21,6 +21,7 @@ USAGE:
     mb3d montecarlo FILE [-o image.png] [OPTIONS]                  path traced image
     mb3d swarm worker DIR | list DIR                               share rendering through a shared folder
     mb3d resume [--clear [KEY]] [--m3i KEY FILE]                   unfinished renders kept for continuing
+    mb3d vr360 FILE.mp4|FILE.jpg [-o OUT] [--stereo mono|tb|lr]    mark a 360 video or photo for VR players
     (mb3d animate --help, mb3d batch --help, ...)
 
 SCENE_FILE is an INI-style scene description (.m3s; --save-scene writes one), a
@@ -170,7 +171,56 @@ fn write_out(path: &str, data: &[u8]) -> Result<(), String> {
 
 /// Writes an 8 bit RGB picture as PNG (to the standard output for "-").
 fn write_png(path: &str, w: usize, h: usize, rgb: &[u8]) -> Result<(), String> {
+    let l = path.to_ascii_lowercase();
+    if l.ends_with(".jpg") || l.ends_with(".jpeg") {
+        // (a 360 photo: mb3d vr360 adds the Photo Sphere XMP)
+        return write_out(path, &mb3d::jpeg::encode(w, h, rgb, 95));
+    }
     write_out(path, &mb3d::png::encode_rgb(w, h, rgb))
+}
+
+const VR360_USAGE: &str = "\
+mb3d vr360 - mark a 360 degree video or photo for VR headsets and 360 viewers
+
+USAGE:
+    mb3d vr360 FILE [-o OUTPUT] [--stereo mono|tb|lr]
+
+An MP4 (H.264, H.265, VP9, AV1) gets the Spherical Video V2 metadata of an
+equirectangular video (YouTube, Meta Quest, VLC show it as a sphere): mono, or
+stereo with the eyes top-bottom (tb, the left eye on top: mb3d animate --vr
+with --stereo pair) or side by side (lr). A JPEG of a 360 panorama (2:1) gets
+the Photo Sphere XMP (Facebook, Google Photos and photo viewers show it as a
+360 photo; stereo 360 photos are not a thing they take).
+
+The file is changed in place unless -o names another. The name tag that
+players without metadata go by (_360, _360_TB) is up to you.
+
+OPTIONS:
+    -o, --output <FILE>   Write the result there (default: the file itself)
+        --stereo <S>      mono (default), tb or lr (videos)
+";
+
+fn vr360_cmd(argv: &[String]) -> Result<(), String> {
+    let (mut file, mut out, mut st) = (None::<String>, None::<String>, mb3d::vr::Stereo::Mono);
+    let mut args = argv.iter();
+    while let Some(a) = args.next() {
+        match a.as_str() {
+            "-h" | "--help" => {
+                print!("{VR360_USAGE}");
+                return Ok(());
+            }
+            "-o" | "--output" => out = Some(args.next().ok_or("--output needs a value")?.clone()),
+            "--stereo" => st = mb3d::vr::Stereo::parse(args.next().ok_or("--stereo needs a value")?)?,
+            f if !f.starts_with('-') && file.is_none() => file = Some(f.to_string()),
+            o => return Err(format!("unknown option '{o}' (mb3d vr360 --help)")),
+        }
+    }
+    let file = file.ok_or("give the video or photo file (mb3d vr360 --help)")?;
+    args_read();
+    let out = out.unwrap_or_else(|| file.clone());
+    let what = mb3d::vr::mark_file(std::path::Path::new(&file), std::path::Path::new(&out), st).map_err(input_err)?;
+    mb3d::elog!("{out}: {what}");
+    Ok(())
 }
 
 /// `--gpu` / `--cpu`: the main calculation on the graphics card or not.
@@ -240,6 +290,7 @@ fn run() -> Result<(), String> {
         Some("swarm") => return swarm_cmd(&all[1..]),
         Some("resume") => return resume_cmd(&all[1..]),
         Some("mcp") => return mcp_cmd(&all[1..]),
+        Some("vr360") | Some("vr") => return vr360_cmd(&all[1..]),
         _ => {}
     }
     let mut args = std::env::args().skip(1);
@@ -1017,7 +1068,14 @@ OPTIONS:
                              or no way ahead is left (keyframes every half second, a
                              Catmull-Rom animation)
         --duration <SECONDS> The length of --orbit (one whole turn) or --fly at --fps
-                             frames a second (default 25), instead of --frames
+                             frames a second (default 25), instead of --frames; for
+                             --fly 0 flies until the view shows only sky or only
+                             fractal (at most 2 minutes)
+        --vr                 A 360 degree VR animation: every frame a spherical
+                             panorama (without --height half the width high, 2:1);
+                             with --stereo pair the video gets the eyes one above
+                             the other (<name>VR000001 frames) and the ffmpeg command
+                             marks the MP4 for VR players (mb3d vr360)
         --motion-blur <N>[,<SHUTTER>]
                              Motion blur: each frame the average of N pictures within the
                              shutter time (a part of the time to the next frame, default
@@ -1080,6 +1138,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, 25.0);
     let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
     let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
+    let mut vr = false;
     let mut args = argv.iter();
     let num = |a: &str, v: Option<&String>| -> Result<i64, String> {
         v.ok_or_else(|| format!("{a} needs a value"))?.trim().parse::<i64>().map_err(|_| format!("bad value for {a}"))
@@ -1111,6 +1170,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--loop" => looped = Some(true),
             "--orbit" => orbit = Some(num(a, args.next())?.clamp(3, 360) as usize),
             "--fly" => fly = true,
+            "--vr" | "--vr360" => vr = true,
             "--duration" => {
                 duration = Some(
                     args.next()
@@ -1119,8 +1179,8 @@ fn animate(argv: &[String]) -> Result<(), String> {
                         .replace(',', ".")
                         .parse::<f64>()
                         .ok()
-                        .filter(|d| *d > 0.0 && *d <= 36_000.0)
-                        .ok_or("--duration needs seconds above 0 (e.g. 10)")?,
+                        .filter(|d| *d >= 0.0 && *d <= 36_000.0)
+                        .ok_or("--duration needs seconds (e.g. 10; 0 with --fly: until the view is only sky or fractal)")?,
                 )
             }
             "--motion-blur" => {
@@ -1243,7 +1303,8 @@ fn animate(argv: &[String]) -> Result<(), String> {
         }
         let k = anim.keyframes.remove(0);
         anim.keyframes = match duration {
-            Some(d) => mb3d::autopilot::turntable(&k.scene, steps, d, fps),
+            Some(d) if d > 0.0 => mb3d::autopilot::turntable(&k.scene, steps, d, fps),
+            Some(_) => return Err(usage_err("--duration 0 goes with --fly only")),
             None => {
                 let pivot = mb3d::autopilot::turntable_pivot(&k.scene);
                 mb3d::autopilot::orbit_keyframes_around(&k.scene, steps, frames.unwrap_or(25), pivot)
@@ -1259,10 +1320,12 @@ fn animate(argv: &[String]) -> Result<(), String> {
         let k = anim.keyframes.remove(0);
         let fp = mb3d::autopilot::FlightParams {
             frames: match duration {
-                Some(d) => (d * fps).round().max(2.0) as usize,
+                Some(d) if d > 0.0 => (d * fps).round().max(2.0) as usize,
+                Some(_) => (120.0 * fps).round() as usize,
                 None => frames.map_or(250, |f| f.max(2) as usize),
             },
             keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+            until_view: duration == Some(0.0),
             ..Default::default()
         };
         let fl = mb3d::autopilot::fly_through(&k.scene, &fp, &|_, _| {}, &|| false).map_err(input_err)?;
@@ -1300,6 +1363,13 @@ fn animate(argv: &[String]) -> Result<(), String> {
     }
     if let Some(h) = height {
         anim.height = h;
+    }
+    if vr {
+        anim.vr360 = true;
+    }
+    if anim.vr360 && height.is_none() {
+        // an equirectangular picture: twice as wide as high
+        anim.height = (anim.width / 2).max(1);
     }
     if let Some(n) = aa {
         anim.scale = n;
@@ -1401,13 +1471,13 @@ fn animate(argv: &[String]) -> Result<(), String> {
         anim.transparent = true;
     }
     // a video of the frames: images, one per frame
-    let movie = anim.format != OutputFormat::M3p && anim.stereo_eyes().len() == 1;
+    let movie = anim.format != OutputFormat::M3p && (anim.stereo_eyes().len() == 1 || anim.vr360);
     if let Some(v) = &video {
         if anim.format == OutputFormat::M3p {
             return Err(usage_err("--video needs images (--format png, bmp or jpg), not parameter files"));
         }
         if !movie {
-            return Err(usage_err("--video makes no stereo videos (render the eyes separately)"));
+            return Err(usage_err("--video makes no stereo videos (render the eyes separately), except of a 360 VR animation (--vr)"));
         }
         if !v.extension().is_some_and(|e| e.eq_ignore_ascii_case("avi")) {
             return Err(usage_err("--video writes an AVI file: give a name ending in .avi (for an MP4, run the ffmpeg command shown at the end)"));
@@ -1497,7 +1567,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     }
     if movie {
         // the frames of this run that are there, in order
-        let files: Vec<std::path::PathBuf> = frames_to_do.iter().map(|&f| anim.frame_file(f)).filter(|p| p.is_file()).collect();
+        let files = mb3d::vr::video_frames(&anim, &frames_to_do).map_err(|e| output_err(&anim.output_folder, e))?;
         if let Some(v) = &video {
             let t = Instant::now();
             let tty = std::io::IsTerminal::is_terminal(&std::io::stderr());
@@ -1511,12 +1581,24 @@ fn animate(argv: &[String]) -> Result<(), String> {
             if !quiet {
                 let cr = if tty { "\r" } else { "" };
                 mb3d::elog!("{cr}video: {} ({n} frames at {fps} per second, {})", v.display(), fmt_dur(t.elapsed().as_secs_f64()));
+                let stem = v.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                let tagged = mb3d::vr::vr_name(&stem, mb3d::vr::anim_stereo(&anim));
+                if anim.vr360 && tagged != stem {
+                    mb3d::elog!("  (360 players without metadata know it by its name: {tagged}.avi; AVI files have no place for the metadata, the MP4 of the ffmpeg command has)");
+                }
             }
         }
         if !quiet && !files.is_empty() {
             let step = if frames_to_do.len() > 1 { anim.file_index(frames_to_do[1]) - anim.file_index(frames_to_do[0]) } else { 1 };
             let folder = files[0].parent().unwrap_or(std::path::Path::new(""));
-            let cmd = mb3d::video::ffmpeg_command(folder, &anim.name, anim.format.extension(), anim.file_index(frames_to_do[0]), step, fps, anim.transparent);
+            let cmd = if anim.vr360 {
+                let st = mb3d::vr::anim_stereo(&anim);
+                let frames_name = if st == mb3d::vr::Stereo::Mono { anim.name.clone() } else { format!("{}VR", anim.name) };
+                let me = std::env::current_exe().map(|p| p.display().to_string()).unwrap_or_else(|_| "mb3d".into());
+                mb3d::video::ffmpeg_command_vr(folder, &frames_name, &mb3d::vr::vr_name(&anim.name, st), anim.format.extension(), anim.file_index(frames_to_do[0]), step, fps, st, &me)
+            } else {
+                mb3d::video::ffmpeg_command(folder, &anim.name, anim.format.extension(), anim.file_index(frames_to_do[0]), step, fps, anim.transparent)
+            };
             mb3d::elog!("a small video with ffmpeg (run it yourself):\n  {cmd}");
         }
     }

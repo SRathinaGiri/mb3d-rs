@@ -1312,6 +1312,18 @@ object AnimationForm: TAnimationForm
       TabOrder = 24
       OnClick = FlyBtnClick
     end
+    object Vr360Check: TCheckBox
+      Left = 580
+      Top = 266
+      Width = 170
+      Height = 17
+      Hint = '@MB:A360DegreeAnimationForVR'
+      Caption = '@MB:N360VR'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 25
+      OnClick = Vr360CheckClick
+    end
   end
   object Panel3: TPanel
     Left = 0

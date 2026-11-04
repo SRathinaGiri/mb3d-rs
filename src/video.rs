@@ -200,6 +200,34 @@ pub fn frames_to_avi(files: &[PathBuf], fps: f64, out: &Path, progress: &dyn Fn(
 /// apart, at `fps` frames per second. An MP4 (H.264), or with
 /// `transparent` PNG frames a WebM (VP9 with transparency).
 pub fn ffmpeg_command(folder: &Path, name: &str, ext: &str, first_index: i64, step: i64, fps: f64, transparent: bool) -> String {
+    ffmpeg_command_to(folder, name, ext, first_index, step, fps, transparent, name)
+}
+
+/// The ffmpeg command for the MP4 of a 360 degree VR animation (frames
+/// named `<frames_name><index>`), named `<vr_name>.mp4`, followed by the
+/// command that gives it the Spherical Video V2 metadata (`mb3d` is the
+/// command line program to run for that).
+#[allow(clippy::too_many_arguments)]
+pub fn ffmpeg_command_vr(folder: &Path, frames_name: &str, vr_name: &str, ext: &str, first_index: i64, step: i64, fps: f64, stereo: crate::vr::Stereo, mb3d: &str) -> String {
+    let win = cfg!(windows);
+    let quote = |s: &str| if win { format!("\"{s}\"") } else { format!("'{}'", s.replace('\'', "'\\''")) };
+    let dir = folder.to_string_lossy();
+    let mp4 = if dir.is_empty() { format!("{vr_name}.mp4") } else { format!("{}{}{vr_name}.mp4", dir.trim_end_matches(['/', '\\']), std::path::MAIN_SEPARATOR) };
+    let st = match stereo {
+        crate::vr::Stereo::Mono => "mono",
+        crate::vr::Stereo::TopBottom => "tb",
+        crate::vr::Stereo::LeftRight => "lr",
+    };
+    format!(
+        "{} && {} vr360 {} --stereo {st}",
+        ffmpeg_command_to(folder, frames_name, ext, first_index, step, fps, false, vr_name),
+        quote(mb3d),
+        quote(&mp4)
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn ffmpeg_command_to(folder: &Path, name: &str, ext: &str, first_index: i64, step: i64, fps: f64, transparent: bool, out_name: &str) -> String {
     let win = cfg!(windows);
     let quote = |s: &str| if win { format!("\"{s}\"") } else { format!("'{}'", s.replace('\'', "'\\''")) };
     let dir = folder.to_string_lossy();
@@ -217,9 +245,9 @@ pub fn ffmpeg_command(folder: &Path, name: &str, ext: &str, first_index: i64, st
         (String::new(), format!("-framerate {fps} -pattern_type glob -i {}", quote(&join(&format!("{name}[0-9][0-9][0-9][0-9][0-9][0-9].{ext}")))))
     };
     if transparent && ext == "png" {
-        format!("{pre}ffmpeg {input} -c:v libvpx-vp9 -pix_fmt yuva420p -crf 30 -b:v 0 {}", quote(&join(&format!("{name}.webm"))))
+        format!("{pre}ffmpeg {input} -c:v libvpx-vp9 -pix_fmt yuva420p -crf 30 -b:v 0 {}", quote(&join(&format!("{out_name}.webm"))))
     } else {
-        format!("{pre}ffmpeg {input} -c:v libx264 -crf 18 -pix_fmt yuv420p {}", quote(&join(&format!("{name}.mp4"))))
+        format!("{pre}ffmpeg {input} -c:v libx264 -crf 18 -pix_fmt yuv420p {}", quote(&join(&format!("{out_name}.mp4"))))
     }
 }
 

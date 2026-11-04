@@ -54,8 +54,8 @@ fn video_check(a: &Animation) -> Result<(), String> {
     if a.format == OutputFormat::M3p {
         return Err(tr("@MB:AVideoNeedsImagesChooseBMP"));
     }
-    if a.stereo_eyes().len() != 1 {
-        return Err(tr("@MB:AVideoOfAStereoAnimation"));
+    if a.stereo_eyes().len() != 1 && !a.vr360 {
+        return Err(tr("@MB:AVideoOfAStereoAnimation2"));
     }
     Ok(())
 }
@@ -68,7 +68,10 @@ fn video_settings(ui: &Ui, a: &Animation) -> Result<Option<(std::path::PathBuf, 
     }
     video_check(a)?;
     let fps = video_fps(ui)?;
-    Ok(Some((std::path::Path::new(&a.output_folder).join(format!("{}.avi", a.name)), fps)))
+    // (a 360 video: named so that VR players know it, an AVI has no place
+    // for the metadata)
+    let name = if a.vr360 { crate::vr::vr_name(&a.name, crate::vr::anim_stereo(a)) } else { a.name.clone() };
+    Ok(Some((std::path::Path::new(&a.output_folder).join(format!("{name}.avi")), fps)))
 }
 
 /// The animation to render with this window's settings, its range and
@@ -93,6 +96,17 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     Ok((a, run, frames))
 }
 
+/// The command line program beside this one (it marks MP4s as 360 ones),
+/// else its name.
+fn mb3d_program() -> String {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join(format!("mb3d{}", std::env::consts::EXE_SUFFIX))))
+        .filter(|p| p.is_file())
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|| "mb3d".into())
+}
+
 /// `FfmpegBtnClick`: the ffmpeg command for a small video of the frames,
 /// to the clipboard and the messages (run by the user: this program
 /// starts no other programs).
@@ -110,7 +124,18 @@ fn ffmpeg_command(app: &mut Mb3d, ui: &mut Ui) {
         Err(e) => return ui.show_message(&e),
     };
     let step = if frames.len() > 1 { a.file_index(frames[1]) - a.file_index(frames[0]) } else { 1 };
-    let cmd = crate::video::ffmpeg_command(std::path::Path::new(&a.output_folder), &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent);
+    let folder = std::path::Path::new(&a.output_folder);
+    let cmd = if a.vr360 {
+        // the eyes of a stereo one put together top-bottom first
+        if let Err(e) = crate::vr::video_frames(&a, &frames) {
+            return ui.show_message(&e);
+        }
+        let st = crate::vr::anim_stereo(&a);
+        let frames_name = if st == crate::vr::Stereo::Mono { a.name.clone() } else { format!("{}VR", a.name) };
+        crate::video::ffmpeg_command_vr(folder, &frames_name, &crate::vr::vr_name(&a.name, st), a.format.extension(), a.file_index(frames[0]), step, fps, st, &mb3d_program())
+    } else {
+        crate::video::ffmpeg_command(folder, &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent)
+    };
     crate::vcl::clipboard::set(&cmd);
     app.message(ui, &tr("@MB:AnimationTheFfmpegCommandIsOn"));
     app.message(ui, &cmd);
@@ -204,6 +229,7 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     let blur = pti(&ui.text(F, "BlurEdit")).clamp(1, 31) as u32;
     a.motion_blur = if blur > 1 { blur } else { 0 };
     a.shutter = (super::util::ptf(&ui.text(F, "ShutterEdit")) as f32).clamp(0.0, 1.0);
+    a.vr360 = ui.checked(F, "Vr360Check");
 }
 
 fn write_settings(app: &Mb3d, ui: &mut Ui) {
@@ -225,6 +251,7 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "CheckBox4", a.stereo_bits & 0x40 != 0);
     ui.set_checked(F, "CheckBox5", a.stereo_bits & 0x80 != 0);
     ui.set_enabled(F, "CheckBox5", a.stereo_bits & 0x40 != 0);
+    ui.set_checked(F, "Vr360Check", a.vr360);
 }
 
 fn show_project_name(app: &Mb3d, ui: &mut Ui) {
@@ -696,9 +723,8 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             if let Some(w) = &waker {
                 w.wake();
             }
-            let files: Vec<std::path::PathBuf> = frames.iter().map(|&f| a.frame_file(f)).filter(|p| p.is_file()).collect();
             let progress = |d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
-            let r = crate::video::frames_to_avi(&files, fps, &path, &progress, &cancel);
+            let r = crate::vr::video_frames(&a, &frames).and_then(|files| crate::video::frames_to_avi(&files, fps, &path, &progress, &cancel));
             let mut j = job.lock().unwrap();
             j.making_video = false;
             match r {
@@ -1068,7 +1094,16 @@ fn event_inner(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FlyBtnClick" => {
             let d = app.ini.get_extra("AniFlySecs").filter(|v| !v.is_empty()).unwrap_or("20").to_string();
-            ui.input_query("anim:fly", &tr("@MB:FlyThrough"), &tr("@MB:DurationOfTheFlightInSeconds"), &d);
+            ui.input_query("anim:fly", &tr("@MB:FlyThrough"), &tr("@MB:DurationOfTheFlightInSeconds2"), &d);
+        }
+        "Vr360CheckClick" => {
+            // an equirectangular picture is twice as wide as high
+            if ui.checked(F, "Vr360Check") {
+                let w = pti(&ui.text(F, "Edit6")).max(16);
+                ui.set_text(F, "Edit7", &(w / 2).to_string());
+            }
+            read_settings(app, ui);
+            calc_time(app, ui);
         }
         "FormShow" => {
             if app.anim.first_show {
@@ -1414,7 +1449,10 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             add_template(app, ui, keys, true);
         }
         ("fly", DialogResult::Text(Some(t))) => {
-            let (Some(secs), Ok(fps)) = (seconds(t), video_fps(ui)) else {
+            // 0: until the view shows only sky or only fractal
+            let until = t.trim().parse::<f64>().is_ok_and(|v| v == 0.0);
+            let secs = if until { Some(120.0) } else { seconds(t) };
+            let (Some(secs), Ok(fps)) = (secs, video_fps(ui)) else {
                 ui.show_message(&tr("@MB:ValueNotGuilty"));
                 return;
             };
@@ -1423,6 +1461,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let fp = crate::autopilot::FlightParams {
                 frames: (secs * fps).round().max(2.0) as usize,
                 keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+                until_view: until,
                 ..Default::default()
             };
             match crate::autopilot::fly_through(&sc, &fp, &|_, _| {}, &|| false) {
@@ -1433,6 +1472,8 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                         FlightEnd::DeadEnd => Some(tr("@MB:NoWayAheadWasLeft")),
                         FlightEnd::Precision => Some(tr("@MB:TheStepsCameToTheLimit")),
                         FlightEnd::LeftFractal => Some(tr("@MB:TheCameraLeftTheFractal")),
+                        FlightEnd::OnlySky => Some(tr("@MB:TheViewShowsOnlySky")),
+                        FlightEnd::OnlyFractal => Some(tr("@MB:TheViewIsFilledWithThe")),
                     };
                     add_template(app, ui, fl.keyframes, false);
                     if let Some(w) = why {
