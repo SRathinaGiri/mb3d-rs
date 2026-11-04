@@ -753,7 +753,7 @@ itself per light.
 | `ground` | axis, position (`y, 1.2`) or `off` | ground plane or water (not in MB3D): calculated with the fractal, the side away from the camera solid |
 | `ground_color` | `#RRGGBB` | its colour |
 | `ground_reflect` | 0..1 | its highlights, and its mirror with `mc_reflections` |
-| `ground_waves` | height, length | waves in fractal units (height 0 = flat) |
+| `ground_waves` | height, length | waves in fractal units (height 0 = flat): an irregular sea, `scene::WAVES` (16 sines around a wind direction, lengths 1.2 to 0.25 times the length, amplitude ~ length; the card's shader gets the same table, `gpu::wave_code`); the distance is divided by the steepest possible slope, and from 3 to 6 times the highest crest it blends into the distance to the crests' height |
 | `ground_transparency` | 0..1 | transparent water (`src/water.rs`; 0 = opaque): with `mc_reflections` and in Monte Carlo the refracted ray goes on under the surface through the fractal alone; Fresnel's share reflects; the reflection pass and Monte Carlo then run on the CPU |
 | `ground_absorption` | per fractal unit | Beer-Lambert: a channel keeps exp(-distance · e · absorption), e = 1 + 5 ln(clearest channel / channel) of the water colour (#0A3C46: about 10 : 2 : 1); the water's own light fills the rest; the light down to a surface under water is dimmed the same way (depth / cosine of its refracted angle). `ground_visibility` (test builds) is read as 1 / absorption |
 | `ground_water_color` | `#RRGGBB` | the colour of deep water: its own light (lit from above, without the waves) and the colour the light under water turns to; `ground_absorb_color` is read too |

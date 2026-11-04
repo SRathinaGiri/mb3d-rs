@@ -257,7 +257,11 @@ parameters you copied.
 **Water.** Main window, page *Cutting*: tick *Ground plane* and choose the
 axis (Y). Below it: the height of the plane (1.15), its colour, and how much
 it reflects (0.9). *Waves* takes their height and length; a height of 0
-gives still water. The two rows below them make the water transparent
+gives still water. The waves are an irregular sea: sixteen waves of
+lengths from 1.2 to 0.25 times the given length, mostly along one wind
+direction, the long ones higher, so no grid or repeating pattern shows
+(before November 2026 three regular waves made a checkerboard of blobs;
+scenes with waves look different since). The two rows below them make the water transparent
 (see [Transparent water](#transparent-water)): *Water* takes its
 transparency, *Absorption* how murky it is, the colour button its deep
 colour, and *Refraction* its refraction index.
