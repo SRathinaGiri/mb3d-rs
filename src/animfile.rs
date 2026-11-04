@@ -447,6 +447,7 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                 }
             }
             "loop" => a.looped = boolean(v)?,
+            "vr360" => a.vr360 = boolean(v)?,
             "motion_blur" => a.motion_blur = num(v)?.clamp(0, 31) as u32,
             "shutter" => a.shutter = plain(v).parse::<f32>().map_err(|_| err(format!("shutter: '{v}' (0 to 1)")))?.clamp(0.0, 1.0),
             "output" | "output_folder" => {
@@ -537,6 +538,9 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
         "pair"
     };
     let _ = writeln!(t, "transparent = {}\nstereo = {stereo}", a.transparent);
+    if a.vr360 {
+        let _ = writeln!(t, "vr360 = true");
+    }
     if a.motion_blur > 1 {
         let _ = writeln!(t, "motion_blur = {}\nshutter = {}", a.motion_blur, a.shutter);
     }

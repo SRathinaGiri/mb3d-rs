@@ -3291,7 +3291,9 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) -> bool {
     let res: Result<(), String> = match ext.as_str() {
         "jpg" | "jpeg" => {
             let q = pti(&t(ui, "Edit26")).clamp(1, 100) as u8;
-            std::fs::write(path, crate::jpeg::encode(w, h, &rgb, q)).map_err(|e| e.to_string())
+            // a spherical panorama: a 360 photo (Photo Sphere XMP)
+            let sc = app.eng.base().map(|b| b.scene.clone()).unwrap_or_else(|| app.scene.clone());
+            std::fs::write(path, crate::vr::encode_jpeg_for(&sc, w, h, &rgb, q)).map_err(|e| e.to_string())
         }
         "bmp" => std::fs::write(path, crate::frames::encode_bmp(w, h, &rgb)).map_err(|e| e.to_string()),
         _ => {

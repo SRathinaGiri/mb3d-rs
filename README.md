@@ -881,7 +881,22 @@ you check further on your own:
 
   *Animation maker* > *Turntable*: eight keyframes of one whole turn around
   the middle of the main window's view, a smooth loop (`mb3d animate
-  scene.m3p --orbit 8 --frames 25`). *Navigator* > *Rec*: while the button is
+  scene.m3p --orbit 8 --frames 25`). *Animation maker* > *Animation
+  templates...* makes keyframes from the main window's view for a duration
+  in seconds (at the window's frames per second): a *360° orbit* (keyframes
+  and the point to turn around: the middle, or the surface the view shows
+  when the middle lies in empty space before it; `--orbit 8 --duration 10`)
+  or a *Fly-through*, where the camera flies on into the fractal, the zoom
+  following the distance to it, steering through its gaps (speed and
+  largest turn to set; `--fly --duration 20`), or until the view shows only
+  sky or only fractal (`--duration 0`). *360° VR* in the Animation maker
+  (`--vr`) renders every frame as a spherical panorama (2:1); with *Render
+  stereo animation* the video has the eyes one above the other (left on
+  top), named `_360_TB` for VR players, and the ffmpeg command ends with
+  `mb3d vr360 video.mp4 --stereo tb`, which writes the Spherical Video V2
+  metadata that YouTube and the Meta Quest read. A spherical panorama saved
+  as JPEG (main window) carries the Photo Sphere XMP, so Facebook shows it
+  as a 360 photo; `mb3d vr360 photo.jpg` marks any other. *Navigator* > *Rec*: while the button is
   down, every new view of the flight (at most two a second) becomes the next
   keyframe; with Catmull-Rom the animation passes through all of them.
   *Motion blur* in the Animation maker: each frame is the average of that

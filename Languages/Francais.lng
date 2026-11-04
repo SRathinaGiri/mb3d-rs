@@ -3956,3 +3956,41 @@ Label4.Caption = des formules
 
 [TilingForm]
 Label24.Caption = net :
+
+[Labels]
+; Not translated yet (shown in English): remove the ";" and translate
+;A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
+;AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
+;AddTheKeyframes=Add the keyframes
+;AllTogetherYawPitchAndRoll=All together: yaw, pitch and roll (tumble)
+;AnimationTemplates=Animation templates...
+;AnimationTemplates2=Animation templates
+;Around=Around:
+;AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
+;Axis=Axis:
+;DurationSeconds=Duration (seconds):
+;FlyThrough=Fly-through
+;FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
+;FramesAtFramesASecond={} frames at {} frames a second
+;Keyframes=Keyframes:
+;KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
+;LargestTurnDegreesAFrame=Largest turn (degrees a frame):
+;LeftToRightAroundItYaw=Left to right around it (yaw)
+;N360Orbit=360° orbit
+;N360VR=360° VR
+;NoWayAheadWasLeft=no way ahead was left
+;OverTheTopAndUnderPitch=Over the top and under (pitch)
+;SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
+;SpinningAroundTheLineOfSight=Spinning around the line of sight (roll)
+;Template=Template:
+;TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+;TheCameraLeftTheFractal=the camera left the fractal
+;TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
+;TheFractalSXAxis=The fractal's X axis
+;TheFractalSYAxis=The fractal's Y axis
+;TheFractalSZAxis=The fractal's Z axis
+;TheMiddleOfTheView=The middle of the view
+;TheStepsCameToTheLimit=the steps came to the limit of double precision
+;TheViewIsFilledWithThe=the view is filled with the fractal
+;TheViewShowsOnlySky=the view shows only sky
+;UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)
