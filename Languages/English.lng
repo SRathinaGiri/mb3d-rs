@@ -746,6 +746,8 @@ Cos22=Cos/2+\s
 ;LightAdjustForm.ComboBox1.Items
 Cos23=(Cos/2+)²
 ;LightAdjustForm.ComboBox1.Items
+CouldNotDelete=Could not delete {}
+;not used
 CouldNotLoadFormula=Could not load formula <{}>: {}
 ;the program
 CouldNotWrite=Could not write {}: {}
@@ -2355,7 +2357,7 @@ NotABigRenderProject=not a big render project
 NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
 ;the program
 NotEnoughMemoryAvailable=Not enough memory available
-;not used
+;the program
 NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
 ;the program
 NotInstalledGetItFromClaude=Not installed. Get it from claude.ai/download, start it once, then come back here.
@@ -2599,7 +2601,7 @@ PauseRendering=Pause rendering
 PausedPressToContinue=Paused, press to continue
 ;the program
 PausingOnNextFrame=Pausing on next frame...
-;not used
+;the program
 PercentOfLocalDE=Percent of local DE
 ;FNavigator.Edit1.Hint
 Picture=picture
@@ -3840,6 +3842,8 @@ YouCanSaveAlsoM3iFiles=You can save also m3i files for each tile, keep in mind t
 ;TilingForm.CheckBox3.Hint
 YouHaveToRenderTheOriginal=You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
 ;TilingForm.CheckBox5.Hint
+YouWantToDelete=You want to delete:\n{}
+;not used
 YourAuthorNameStoredInThe=Your author name (stored in the parameters):
 ;the program
 YourOwnLanguageItsName=Your own language (its name):

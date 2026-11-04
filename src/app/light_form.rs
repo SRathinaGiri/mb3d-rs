@@ -1691,7 +1691,7 @@ fn fit_colors_to_histogram(app: &mut Mb3d, ui: &mut Ui) {
     trigger_repaint(app, ui);
 }
 
-fn update_quick_load(app: &Mb3d, ui: &mut Ui) {
+pub(crate) fn update_quick_load(app: &Mb3d, ui: &mut Ui) {
     let dir = app.ini.dir(super::ini::DIR_LIGHTS);
     let mut v: Vec<String> = std::fs::read_dir(dir)
         .map(|rd| {

@@ -83,6 +83,7 @@ pub fn inidirs_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button1Click" => {
             let old_formulas = app.ini.dirs[super::ini::DIR_FORMULAS].clone();
+            let old_lights = app.ini.dirs[super::ini::DIR_LIGHTS].clone();
             for i in 0..13 {
                 app.ini.dirs[i] = ui.text(ID, &format!("Edit{}", i + 1)).trim().into();
             }
@@ -92,6 +93,11 @@ pub fn inidirs_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.hide(ID);
             if old_formulas != app.ini.dirs[super::ini::DIR_FORMULAS] {
                 super::formula_form::load_formula_names(app, ui);
+            }
+            // another lights folder: the Lighting window's quick load list
+            // from it (prefs/IniDirsForm.pas Button3Click: UpdateQuickLoadCB)
+            if old_lights != app.ini.dirs[super::ini::DIR_LIGHTS] {
+                super::light_form::update_quick_load(app, ui);
             }
         }
         _ => {}
