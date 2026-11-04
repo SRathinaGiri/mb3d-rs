@@ -687,13 +687,15 @@ esto puede comprobar más por su cuenta:
 
   **Agua transparente**: con *Agua* por encima de 0 (cuánta luz deja
   pasar) un fractal medio sumergido se ve bajo la superficie, desviado
-  por la refracción (*Refracción*: 1,33 para el agua) y desvaneciéndose
-  con la profundidad en el color del agua (el botón de color) tan rápido
-  como indica la absorción (el campo tras *Agua*). El render normal lo
-  muestra con los reflejos activados (Postprocesado), Monte Carlo
-  siempre; sin reflejos el agua sigue opaca. Claves de escena
-  `ground_transparency`, `ground_absorption`, `ground_absorb_color`,
-  `ground_ior`; un ejemplo en
+  por la refracción (*Refracción*: 1,33 para el agua) y tomando con la
+  profundidad el color del agua profunda (el botón de color): la
+  visibilidad (el campo tras *Agua*) dice hasta dónde se ve dentro, y en
+  agua verdeazulada el rojo se apaga primero, así que lo sumergido se
+  vuelve turquesa. Los brillos de las luces sobre las olas siguen en la
+  superficie. El render normal lo muestra con los reflejos activados
+  (Postprocesado), Monte Carlo siempre; sin reflejos el agua sigue
+  opaca. Claves de escena `ground_transparency`, `ground_visibility`,
+  `ground_water_color`, `ground_ior`; un ejemplo en
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>

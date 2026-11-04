@@ -581,7 +581,7 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   Mandelbulb3D 는 이를 읽지 않습니다. 장면 키 `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; 자세한 내용은 [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
-  **투명한 물**: *물* 을 0보다 크게 하면 (물이 통과시키는 빛의 양) 반쯤 잠긴 프랙탈이 수면 아래에 보이며, 굴절로 휘어지고 (*굴절*: 물은 1.33) 흡수 (*물* 다음 칸) 가 정하는 빠르기로 깊이에 따라 물의 색 (색 버튼) 으로 흐려집니다. 일반 렌더는 반사를 켰을 때 (후처리), 몬테카를로는 항상 보여 줍니다. 반사가 없으면 물은 불투명하게 남습니다. 장면 키 `ground_transparency`, `ground_absorption`, `ground_absorb_color`, `ground_ior`; 예시는 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+  **투명한 물**: *물* 을 0보다 크게 하면 (물이 통과시키는 빛의 양) 반쯤 잠긴 프랙탈이 수면 아래에 보이며, 굴절로 휘어지고 (*굴절*: 물은 1.33) 깊이에 따라 깊은 물의 색 (색 버튼) 으로 변합니다. 가시거리 (*물* 다음 칸) 는 얼마나 멀리 들여다볼 수 있는지 정하며, 청록색 물에서는 빨강이 먼저 사라져 잠긴 부분이 청록빛이 됩니다. 물결 위 조명의 반짝임은 수면에 남습니다. 일반 렌더는 반사를 켰을 때 (후처리), 몬테카를로는 항상 보여 줍니다. 반사가 없으면 물은 불투명하게 남습니다. 장면 키 `ground_transparency`, `ground_visibility`, `ground_water_color`, `ground_ior`; 예시는 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>
 * **HDR 그림의 빛**: 360° Radiance 그림 (`.hdr`) 을 배경으로 쓰면 그 밝기

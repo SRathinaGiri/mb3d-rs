@@ -674,13 +674,16 @@ pontos permitem que você confira mais por conta própria:
 
   **Água transparente**: com *Água* acima de 0 (quanta luz ela deixa
   passar) um fractal meio submerso aparece sob a superfície, desviado
-  pela refração (*Refração*: 1,33 para a água) e sumindo com a
-  profundidade na cor da água (o botão de cor) tão rápido quanto diz a
-  absorção (o campo após *Água*). O render normal mostra isso com os
-  reflexos ligados (Pós-processamento), o Monte Carlo sempre; sem os
-  reflexos a água continua opaca. Chaves de cena `ground_transparency`,
-  `ground_absorption`, `ground_absorb_color`, `ground_ior`; um exemplo
-  em [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+  pela refração (*Refração*: 1,33 para a água) e tomando com a
+  profundidade a cor da água funda (o botão de cor): a visibilidade (o
+  campo após *Água*) diz até onde se vê dentro dela, e numa água
+  verde-azulada o vermelho some primeiro, então o que está submerso fica
+  turquesa. Os brilhos das luzes nas ondas ficam na superfície. O render
+  normal mostra isso com os reflexos ligados (Pós-processamento), o
+  Monte Carlo sempre; sem os reflexos a água continua opaca. Chaves de
+  cena `ground_transparency`, `ground_visibility`, `ground_water_color`,
+  `ground_ior`; um exemplo em
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>
 * **Luz de uma imagem HDR**: uma imagem Radiance de 360° (`.hdr`) como fundo

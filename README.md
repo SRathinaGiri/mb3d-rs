@@ -661,12 +661,15 @@ you check further on your own:
 
   **Transparent water**: with *Water* above 0 (how much light it lets
   through) a fractal half under water shows beneath the surface, bent by
-  the refraction (*Refraction*: 1.33 for water) and fading with depth into
-  the water's colour (the colour button) as fast as the absorption (the
-  field after *Water*) says. The normal render shows it with the
-  reflections on (Post processing), Monte Carlo always; without the
-  reflections the water stays opaque. Scene keys `ground_transparency`,
-  `ground_absorption`, `ground_absorb_color`, `ground_ior`; an example in
+  the refraction (*Refraction*: 1.33 for water) and turning into the
+  colour of deep water (the colour button) with depth: the visibility
+  (the field after *Water*) says how far one sees into it, and in a
+  blue-green water red fades first, so what lies under it turns
+  turquoise. The lights' glints on the waves stay on the surface. The
+  normal render shows it with the reflections on (Post processing),
+  Monte Carlo always; without the reflections the water stays opaque.
+  Scene keys `ground_transparency`, `ground_visibility`,
+  `ground_water_color`, `ground_ior`; an example in
   [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
 
   </details>

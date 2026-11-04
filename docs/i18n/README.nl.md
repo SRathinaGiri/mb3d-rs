@@ -634,12 +634,14 @@ kunt u zelf verder controleren:
   **Doorzichtig water**: met *Water* boven 0 (hoeveel licht het
   doorlaat) is een half ondergedompelde fractal onder het oppervlak te
   zien, verschoven door de breking (*Breking*: 1,33 voor water) en met
-  de diepte vervagend in de kleur van het water (de kleurknop), zo snel
-  als de absorptie (het veld na *Water*) aangeeft. De gewone render
-  toont het met de reflecties aan (Nabewerking), Monte Carlo altijd;
-  zonder reflecties blijft het water ondoorzichtig. Scènesleutels
-  `ground_transparency`, `ground_absorption`, `ground_absorb_color`,
-  `ground_ior`; een voorbeeld in
+  de diepte overgaand in de kleur van diep water (de kleurknop): het
+  zicht (het veld na *Water*) zegt hoe ver je erin kijkt, en in
+  blauwgroen water verdwijnt rood eerst, zodat wat eronder ligt turkoois
+  wordt. De glanzen van de lampen op de golven blijven op het oppervlak.
+  De gewone render toont het met de reflecties aan (Nabewerking), Monte
+  Carlo altijd; zonder reflecties blijft het water ondoorzichtig.
+  Scènesleutels `ground_transparency`, `ground_visibility`,
+  `ground_water_color`, `ground_ior`; een voorbeeld in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>

@@ -151,25 +151,37 @@ by 2048). The field of view sets itself: 360° across, 180° up and down.
 ## Transparent water
 
 The water can also be see-through: a fractal that stands half in it shows
-beneath the surface, bent by the refraction and fading into the colour of
-the water the deeper it goes. Three settings make it, next to the waves on
-the *Cutting* page:
+beneath the surface, bent by the refraction and turning into the colour of
+deep water the deeper it goes: first turquoise, as red light fades long
+before green and blue, then the water's own colour. Four settings make it,
+next to the waves on the *Cutting* page:
 
 - **Water** (`ground_transparency`, 0 to 1): how much light the water lets
   through. 0 is the opaque ground of before; 1 is clear water, whose mirror
   is then as strong as Fresnel's equations make it: faint where you look
   down into the water, strong at grazing angles towards the horizon. In
   between, the ground's own colour and its *reflect* value blend in.
-- **Absorption** (`ground_absorption`, the field after *Water*): how fast
-  light fades in the water, per fractal unit it travels. With 1 a mid grey
-  keeps a third of its light after one unit; 0 is perfectly clear water.
-  The light that reaches a part under water has crossed the water above it
-  too, so deep parts also get darker, not only more distant ones.
-- **Colour** (`ground_absorb_color`, the colour button below *Water*): the
-  colour of deep water. What the water absorbs is replaced by its own
-  scattered light in this colour, so deep water turns into it (lit like
-  the surface, by the lights and the sky), not into black. The colours this
-  colour has little of fade faster: with a blue-green, red goes first.
+- **Visibility** (`ground_visibility`, the field after *Water*): how far
+  you can see into the water, in fractal units. The water colour's
+  clearest channel keeps a third of its light (1/e) after this distance,
+  the others less. 1 is about the size of a fractal: parts just under the
+  surface stay clear, the bottom half of a bulb turns turquoise and fades.
+  0.3 is murky, 3 clear as a mountain lake. The light that reaches a part
+  under water has crossed the water above it too, so deep parts also get
+  darker, not only distant ones.
+- **Water colour** (`ground_water_color`, the colour button below
+  *Water*): the colour of deep water. What the water absorbs is replaced
+  by its own scattered light in this colour (lit by the lights from above
+  and the sky, without the waves' shading), so deep water turns into it,
+  not into black. The colour also decides how fast each colour of the
+  light fades: with the default blue-green #0A3C46, red fades about ten
+  times and green twice as fast as blue (as in pure water, which absorbs
+  0.45, 0.06 and 0.02 of the light per metre); a grey water dims all
+  alike. A greener #0A5A50 makes a shallow sea, a deep blue #08204A an
+  ocean.
+- The lights' glints on the waves stay on the surface however clear the
+  water is, so the waterline and the waves show where the sun is in front
+  of you.
 - **Refraction** (`ground_ior`): the refraction index, 1.33 for water; 1
   does not bend the light.
 
@@ -206,7 +218,7 @@ E....2..F3E..........6....EGiFLNbJaQU.pPrJaQ.........................6..........
 ................................................................................
 ........................}
 {Titel: Half under water}
-{mb3d-rs: clouds = y, -1.4, -3.4; cloud_density = 1; cloud_coverage = 0.64; cloud_size = 1; cloud_color = #A0ACBA; finish_exposure = 0; finish_tonemap = filmic; glow = 0.3, 0.03, 0.85; finish_contrast = 0.25; finish_saturation = 0.85; finish_warmth = 0; vignette = 0.5; chromatic = 0; ground = y, -0.45; ground_color = #2A3846; ground_reflect = 0.5; ground_waves = 0.004, 0.6; ground_transparency = 1; ground_absorption = 1; ground_absorb_color = #0A323C; ground_ior = 1.33}
+{mb3d-rs: clouds = y, -1.4, -3.4; cloud_density = 1; cloud_coverage = 0.64; cloud_size = 1; cloud_color = #A0ACBA; finish_exposure = 0; finish_tonemap = filmic; glow = 0.3, 0.03, 0.85; finish_contrast = 0.25; finish_saturation = 0.85; finish_warmth = 0; vignette = 0.5; chromatic = 0; ground = y, -0.45; ground_color = #2A3846; ground_reflect = 0.5; ground_waves = 0.004, 0.6; ground_transparency = 1; ground_visibility = 1; ground_water_color = #0A3C46; ground_ior = 1.33}
 ```
 
 ## Where the settings are
@@ -224,7 +236,7 @@ axis (Y). Below it: the height of the plane (1.15), its colour, and how much
 it reflects (0.9). *Waves* takes their height and length; a height of 0
 gives still water. The two rows below them make the water transparent
 (see [Transparent water](#transparent-water)): *Water* takes its
-transparency and absorption, the colour button its deep colour, and
+transparency and visibility, the colour button its deep colour, and
 *Refraction* its refraction index.
 
 <img src="img/clouds_ui_cutting.png" width="312" alt="The Cutting page with the Ground plane settings">

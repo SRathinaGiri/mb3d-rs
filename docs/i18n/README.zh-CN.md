@@ -388,7 +388,7 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
   Mandelbulb3D 不会读取。场景键 `ground`、`ground_color`、`ground_reflect`、
   `ground_waves`；详见 [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field)。
 
-  **透明的水**：*水* 大于 0（水透过多少光）时，半浸在水中的分形在水面下可见，被折射弯曲（*折射*：水为 1.33），并按吸收（*水* 后面的字段）的快慢随深度渐隐为水的颜色（颜色按钮）。普通渲染在开启反射（后期处理）时显示，蒙特卡洛始终显示；不开反射时水保持不透明。场景键 `ground_transparency`, `ground_absorption`, `ground_absorb_color`, `ground_ior`；示例见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+  **透明的水**：*水* 大于 0（水透过多少光）时，半浸在水中的分形在水面下可见，被折射弯曲（*折射*：水为 1.33），并随深度变成深水的颜色（颜色按钮）：能见度（*水* 后面的字段）决定能看进水中多远，在蓝绿色的水中红色先消失，所以水下部分变成青绿色。灯光在波浪上的闪光留在水面上。普通渲染在开启反射（后期处理）时显示，蒙特卡洛始终显示；不开反射时水保持不透明。场景键 `ground_transparency`, `ground_visibility`, `ground_water_color`, `ground_ior`；示例见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
 
   </details>
 * **来自 HDR 图片的光照**：以 360° Radiance 图片 (`.hdr`) 作为背景，以其

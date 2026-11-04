@@ -643,12 +643,15 @@ sprawdzëc sóm:
 
   **Przezérnô wòda**: z *Wòda* wëżi 0 (wiele swiatła przepùszczô)
   fraktal zanurzony do pòłowë je widzec pòd wiéchrzëzną, przesëniãti
-  przez załómanié (*Załómanié*: 1,33 dlô wòdë) ë zanikający z głãbòkòscą
-  w farwie wòdë (knąpa farwë) tak chùtkò, jak gôdô pòchłanianié (pòle pò
-  *Wòda*). Zwëczajny render pòkazëje to z włączonyma òdbicama (Kùńcowô
-  òbróbka), Monte Carlo wiedno; bez òdbiców wòda òstôwô nieprzezérnô.
-  Klucze scenë `ground_transparency`, `ground_absorption`,
-  `ground_absorb_color`, `ground_ior`; przikłôd w
+  przez załómanié (*Załómanié*: 1,33 dlô wòdë) ë z głãbòkòscą
+  przechòdzący w farwã głãbòczi wòdë (knąpa farwë): widzawòsc (pòle pò
+  *Wòda*) gôdô, jak daleko je widzec w głąb, a w mòdrozelony wòdze
+  czerwienô zanikô pierszô, tak że to, co zanurzoné, robi sã turkùsowé.
+  Pòłësczi swiatłów na falach òstôwają na wiéchrzëznie. Zwëczajny render
+  pòkazëje to z włączonyma òdbicama (Kùńcowô òbróbka), Monte Carlo
+  wiedno; bez òdbiców wòda òstôwô nieprzezérnô. Klucze scenë
+  `ground_transparency`, `ground_visibility`, `ground_water_color`,
+  `ground_ior`; przikłôd w
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>

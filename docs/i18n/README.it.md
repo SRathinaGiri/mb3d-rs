@@ -668,13 +668,15 @@ permettono di verificare ulteriormente da solo:
 
   **Acqua trasparente**: con *Acqua* sopra 0 (quanta luce lascia
   passare) un frattale mezzo sommerso si vede sotto la superficie,
-  deviato dalla rifrazione (*Rifrazione*: 1,33 per l'acqua) e sbiadito
-  con la profondità nel colore dell'acqua (il pulsante del colore) alla
-  velocità indicata dall'assorbimento (il campo dopo *Acqua*). Il render
-  normale lo mostra con i riflessi attivi (Post-elaborazione), Monte
-  Carlo sempre; senza riflessi l'acqua resta opaca. Chiavi di scena
-  `ground_transparency`, `ground_absorption`, `ground_absorb_color`,
-  `ground_ior`; un esempio in
+  deviato dalla rifrazione (*Rifrazione*: 1,33 per l'acqua) e con la
+  profondità prende il colore dell'acqua profonda (il pulsante del
+  colore): la visibilità (il campo dopo *Acqua*) dice fin dove si vede
+  dentro, e in un'acqua blu-verde il rosso si spegne per primo, così ciò
+  che è sommerso diventa turchese. I riflessi delle luci sulle onde
+  restano sulla superficie. Il render normale lo mostra con i riflessi
+  attivi (Post-elaborazione), Monte Carlo sempre; senza riflessi l'acqua
+  resta opaca. Chiavi di scena `ground_transparency`,
+  `ground_visibility`, `ground_water_color`, `ground_ior`; un esempio in
   [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>

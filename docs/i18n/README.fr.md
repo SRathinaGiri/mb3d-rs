@@ -688,13 +688,15 @@ Voici de quoi vérifier plus loin par vous-même :
   **Eau transparente** : avec *Eau* au-dessus de 0 (combien de lumière
   elle laisse passer), une fractale à moitié immergée se voit sous la
   surface, déviée par la réfraction (*Réfraction* : 1,33 pour l'eau) et
-  s'estompant avec la profondeur dans la couleur de l'eau (le bouton de
-  couleur) aussi vite que le dit l'absorption (le champ après *Eau*). Le
-  rendu normal la montre avec les reflets activés (Post-traitement),
-  Monte Carlo toujours ; sans les reflets l'eau reste opaque. Clés de
-  scène `ground_transparency`, `ground_absorption`,
-  `ground_absorb_color`, `ground_ior` ; un exemple dans
-  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+  prenant avec la profondeur la couleur de l'eau profonde (le bouton de
+  couleur) : la visibilité (le champ après *Eau*) dit jusqu'où l'on voit
+  dedans, et dans une eau bleu-vert le rouge s'éteint d'abord, si bien
+  que ce qui est immergé devient turquoise. Les reflets des lumières sur
+  les vagues restent sur la surface. Le rendu normal la montre avec les
+  reflets activés (Post-traitement), Monte Carlo toujours ; sans les
+  reflets l'eau reste opaque. Clés de scène `ground_transparency`,
+  `ground_visibility`, `ground_water_color`, `ground_ior` ; un exemple
+  dans [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
 
   </details>
 * **La lumière d'une image HDR** : une image Radiance à 360° (`.hdr`) en fond
