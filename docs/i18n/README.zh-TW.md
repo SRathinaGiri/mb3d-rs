@@ -389,6 +389,8 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
   Mandelbulb3D 不會讀取。場景鍵 `ground`、`ground_color`、`ground_reflect`、
   `ground_waves`；詳見 [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field)。
 
+  **透明的水**：*水* 大於 0（水透過多少光）時，半浸在水中的碎形在水面下可見，被折射彎曲（*折射*：水為 1.33），並按吸收（*水* 後面的欄位）的快慢隨深度漸隱為水的顏色（顏色按鈕）。一般算圖在開啟反射（後製處理）時顯示，蒙地卡羅始終顯示；不開反射時水保持不透明。場景鍵 `ground_transparency`, `ground_absorption`, `ground_absorb_color`, `ground_ior`；範例見 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+
   </details>
 * **來自 HDR 圖片的光照**：以 360° Radiance 圖片 (`.hdr`) 作為背景，以其
   全部亮度照亮蒙地卡羅算圖，圖中的太陽成為帶柔和陰影的光源 (來自

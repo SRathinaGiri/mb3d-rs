@@ -672,6 +672,16 @@ pontos permitem que você confira mais por conta própria:
   título dos parâmetros de texto), que o Mandelbulb3D não lê. Chaves de cena
   `ground`, `ground_color`, `ground_reflect`, `ground_waves`; detalhes em [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Água transparente**: com *Água* acima de 0 (quanta luz ela deixa
+  passar) um fractal meio submerso aparece sob a superfície, desviado
+  pela refração (*Refração*: 1,33 para a água) e sumindo com a
+  profundidade na cor da água (o botão de cor) tão rápido quanto diz a
+  absorção (o campo após *Água*). O render normal mostra isso com os
+  reflexos ligados (Pós-processamento), o Monte Carlo sempre; sem os
+  reflexos a água continua opaca. Chaves de cena `ground_transparency`,
+  `ground_absorption`, `ground_absorb_color`, `ground_ior`; um exemplo
+  em [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Luz de uma imagem HDR**: uma imagem Radiance de 360° (`.hdr`) como fundo
   ilumina um render Monte Carlo com todo o seu brilho, e o seu sol vira uma

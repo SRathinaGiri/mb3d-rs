@@ -641,6 +641,16 @@ sprawdzëc sóm:
   czëtô. Klucze sceny `ground`, `ground_color`, `ground_reflect`,
   `ground_waves`; drobnotë w [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Przezérnô wòda**: z *Wòda* wëżi 0 (wiele swiatła przepùszczô)
+  fraktal zanurzony do pòłowë je widzec pòd wiéchrzëzną, przesëniãti
+  przez załómanié (*Załómanié*: 1,33 dlô wòdë) ë zanikający z głãbòkòscą
+  w farwie wòdë (knąpa farwë) tak chùtkò, jak gôdô pòchłanianié (pòle pò
+  *Wòda*). Zwëczajny render pòkazëje to z włączonyma òdbicama (Kùńcowô
+  òbróbka), Monte Carlo wiedno; bez òdbiców wòda òstôwô nieprzezérnô.
+  Klucze scenë `ground_transparency`, `ground_absorption`,
+  `ground_absorb_color`, `ground_ior`; przikłôd w
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Swiatło z òbrazu HDR**: òbrôz Radiance 360° (`.hdr`) jakno spódk òswiecywô
   render Monte Carlo pełną jasnotą, a jegò słuńce stôwô sã swiatłã z miękczima

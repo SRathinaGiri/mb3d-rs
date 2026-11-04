@@ -631,6 +631,17 @@ kunt u zelf verder controleren:
   de titel van tekstparameters), dat Mandelbulb3D niet leest. Scènesleutels
   `ground`, `ground_color`, `ground_reflect`, `ground_waves`; details in [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Doorzichtig water**: met *Water* boven 0 (hoeveel licht het
+  doorlaat) is een half ondergedompelde fractal onder het oppervlak te
+  zien, verschoven door de breking (*Breking*: 1,33 voor water) en met
+  de diepte vervagend in de kleur van het water (de kleurknop), zo snel
+  als de absorptie (het veld na *Water*) aangeeft. De gewone render
+  toont het met de reflecties aan (Nabewerking), Monte Carlo altijd;
+  zonder reflecties blijft het water ondoorzichtig. Scènesleutels
+  `ground_transparency`, `ground_absorption`, `ground_absorb_color`,
+  `ground_ior`; een voorbeeld in
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Licht uit een HDR-afbeelding**: een 360°-Radiance-afbeelding (`.hdr`) als
   achtergrond belicht een Monte Carlo-render met zijn volle helderheid, en de

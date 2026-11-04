@@ -642,6 +642,16 @@ mb3d-rs دراصل [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D) ہے�
   پڑھتا۔ منظر کی کلیدیں `ground`، `ground_color`، `ground_reflect`،
   `ground_waves`؛ تفصیل [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field) میں۔
 
+  **شفاف پانی**: جب *پانی* 0 سے زیادہ ہو (کتنی روشنی گزرنے دیتا ہے) تو
+  آدھا ڈوبا فریکٹل سطح کے نیچے دکھائی دیتا ہے، انعطاف سے مڑا ہوا
+  (*انعطاف*: پانی کے لیے 1.33) اور گہرائی کے ساتھ پانی کے رنگ (رنگ کا
+  بٹن) میں اتنی تیزی سے مدھم ہوتا ہے جتنا جذب (*پانی* کے بعد والا خانہ)
+  بتاتا ہے۔ عام رینڈر اسے انعکاسات آن ہونے پر دکھاتا ہے (پوسٹ پروسیسنگ)،
+  مونٹے کارلو ہمیشہ؛ انعکاسات کے بغیر پانی غیر شفاف رہتا ہے۔ منظر کی
+  کلیدیں `ground_transparency`, `ground_absorption`,
+  `ground_absorb_color`, `ground_ior`؛ ایک مثال
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water) میں۔
+
   </details>
 * **HDR تصویر سے روشنی**: پس منظر کے طور پر 360° کی Radiance تصویر (`.hdr`)
   مونٹی کارلو رینڈر کو اپنی پوری چمک سے روشن کرتی ہے، اور اس کا سورج نرم

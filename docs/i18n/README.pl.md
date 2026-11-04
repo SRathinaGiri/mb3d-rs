@@ -644,6 +644,16 @@ możesz sprawdzić sam:
   czyta. Klucze sceny `ground`, `ground_color`, `ground_reflect`,
   `ground_waves`; szczegóły w [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Przezroczysta woda**: z *Woda* powyżej 0 (ile światła przepuszcza)
+  fraktal zanurzony do połowy widać pod powierzchnią, przesunięty przez
+  załamanie (*Załamanie*: 1,33 dla wody) i znikający z głębokością w
+  kolorze wody (przycisk koloru) tak szybko, jak mówi pochłanianie (pole
+  po *Woda*). Zwykły render pokazuje to z włączonymi odbiciami (Obróbka
+  końcowa), Monte Carlo zawsze; bez odbić woda pozostaje
+  nieprzezroczysta. Klucze sceny `ground_transparency`,
+  `ground_absorption`, `ground_absorb_color`, `ground_ior`; przykład w
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Światło z obrazu HDR**: obraz Radiance 360° (`.hdr`) jako tło oświetla
   render Monte Carlo pełną jasnością, a jego słońce staje się światłem z

@@ -406,6 +406,8 @@ MB3D の数式とマップを使い、同じ画像を作ります。
   読みません。シーンのキーは `ground`、`ground_color`、`ground_reflect`、
   `ground_waves`。詳しくは [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field)。
 
+  **透明な水**: *水* を 0 より大きくすると (水が通す光の量)、半分水に沈んだフラクタルが水面下に見え、屈折で曲がり (*屈折*: 水は 1.33)、深さとともに吸収 (*水* の次の欄) の速さで水の色 (色ボタン) へ薄れていきます。通常のレンダーは反射をオンにしたとき (ポストプロセス)、モンテカルロは常に表示します。反射なしでは水は不透明のままです。シーンキー `ground_transparency`, `ground_absorption`, `ground_absorb_color`, `ground_ior`。例は [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+
   </details>
 * **HDR 画像からの光**: 360° の Radiance 画像 (`.hdr`) を背景にすると、
   その明るさのままモンテカルロ画像を照らし、太陽は柔らかい影を落とす光に

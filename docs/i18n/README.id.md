@@ -672,6 +672,16 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   yang tidak dibaca Mandelbulb3D. Kunci adegan `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; detail di [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Air bening**: dengan *Air* di atas 0 (seberapa banyak cahaya yang
+  diloloskan) fraktal yang setengah terendam terlihat di bawah
+  permukaan, dibelokkan oleh pembiasan (*Pembiasan*: 1,33 untuk air) dan
+  memudar seiring kedalaman ke warna air (tombol warna) secepat yang
+  ditentukan penyerapan (kolom setelah *Air*). Render biasa
+  menampilkannya bila pantulan aktif (Pasca-proses), Monte Carlo selalu;
+  tanpa pantulan air tetap buram. Kunci adegan `ground_transparency`,
+  `ground_absorption`, `ground_absorb_color`, `ground_ior`; contoh di
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Cahaya dari gambar HDR**: gambar Radiance 360° (`.hdr`) sebagai latar
   menerangi render Monte Carlo dengan kecerahan penuhnya, dan mataharinya

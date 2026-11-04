@@ -630,6 +630,16 @@ mb3d-rs [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D) है, वह�
   Mandelbulb3D नहीं पढ़ता। दृश्य कुंजियाँ `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; विवरण [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field) में।
 
+  **पारदर्शी पानी**: *पानी* 0 से अधिक होने पर (वह कितना प्रकाश आर-पार
+  जाने देता है) आधा डूबा फ्रैक्टल सतह के नीचे दिखता है, अपवर्तन से मुड़ा
+  हुआ (*अपवर्तन*: पानी के लिए 1.33) और गहराई के साथ पानी के रंग (रंग का
+  बटन) में उतनी तेज़ी से धुंधला होता है जितना अवशोषण (*पानी* के बाद का
+  खाना) बताता है। सामान्य रेंडर इसे परावर्तन चालू होने पर दिखाता है
+  (पोस्ट प्रोसेसिंग), मोंटे कार्लो हमेशा; परावर्तन के बिना पानी
+  अपारदर्शी रहता है। दृश्य कुंजियाँ `ground_transparency`,
+  `ground_absorption`, `ground_absorb_color`, `ground_ior`; एक उदाहरण
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water) में।
+
   </details>
 * **HDR चित्र से प्रकाश**: पृष्ठभूमि के रूप में 360° Radiance चित्र (`.hdr`)
   मोंटे कार्लो रेंडर को अपनी पूरी चमक से रोशन करता है, और उसका सूरज नरम

@@ -660,6 +660,17 @@ können Sie selbst weiter prüfen:
   liest. Szenenschlüssel `ground`, `ground_color`, `ground_reflect`,
   `ground_waves`; Details in [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Durchsichtiges Wasser**: mit *Wasser* über 0 (wie viel Licht es
+  durchlässt) zeigt sich ein halb untergetauchtes Fraktal unter der
+  Oberfläche, von der Brechung verschoben (*Brechung*: 1,33 für Wasser)
+  und mit der Tiefe in die Farbe des Wassers (der Farbknopf)
+  verblassend, so schnell wie die Absorption (das Feld nach *Wasser*) es
+  sagt. Das normale Bild zeigt es mit eingeschalteten Spiegelungen
+  (Nachbearbeitung), Monte Carlo immer; ohne Spiegelungen bleibt das
+  Wasser undurchsichtig. Szenenschlüssel `ground_transparency`,
+  `ground_absorption`, `ground_absorb_color`, `ground_ior`; ein Beispiel
+  in [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Licht aus einem HDR-Bild**: ein 360°-Radiance-Bild (`.hdr`) als Hintergrund
   beleuchtet ein Monte-Carlo-Bild mit seiner vollen Helligkeit, und seine

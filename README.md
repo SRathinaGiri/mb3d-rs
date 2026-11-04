@@ -659,6 +659,16 @@ you check further on your own:
   `ground_reflect`, `ground_waves`; details in
   [TECHNICAL.md](docs/TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Transparent water**: with *Water* above 0 (how much light it lets
+  through) a fractal half under water shows beneath the surface, bent by
+  the refraction (*Refraction*: 1.33 for water) and fading with depth into
+  the water's colour (the colour button) as fast as the absorption (the
+  field after *Water*) says. The normal render shows it with the
+  reflections on (Post processing), Monte Carlo always; without the
+  reflections the water stays opaque. Scene keys `ground_transparency`,
+  `ground_absorption`, `ground_absorb_color`, `ground_ior`; an example in
+  [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **Light from an HDR picture**: a 360° Radiance `.hdr` picture as the
   background lights a Monte Carlo render, with its full brightness, and

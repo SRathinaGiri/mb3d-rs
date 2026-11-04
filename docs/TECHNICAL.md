@@ -754,6 +754,10 @@ itself per light.
 | `ground_color` | `#RRGGBB` | its colour |
 | `ground_reflect` | 0..1 | its highlights, and its mirror with `mc_reflections` |
 | `ground_waves` | height, length | waves in fractal units (height 0 = flat) |
+| `ground_transparency` | 0..1 | transparent water (`src/water.rs`; 0 = opaque): with `mc_reflections` and in Monte Carlo the refracted ray goes on under the surface through the fractal alone; Fresnel's share reflects; the reflection pass and Monte Carlo then run on the CPU |
+| `ground_absorption` | per fractal unit | Beer-Lambert: a channel keeps exp(-absorption · distance · (1.5 - its absorb colour share)), the water's own light fills the rest; the light down to a surface under water is dimmed the same way (depth / cosine of its refracted angle) |
+| `ground_absorb_color` | `#RRGGBB` | the colour deep water fades to (lit as a diffuse surface) |
+| `ground_ior` | 1..3 | refraction index (1.33) |
 | `clouds` | axis, from, to (`y, -1.2, -2.2`) or `off` | a layer of volumetric clouds (not in MB3D), painted after the lighting and reflections, before the depth of field, and in the reflections (each reflected or refracted ray through the layer up to its hit, the hit in the clouds' shadow); they shade the surfaces under them (the sunlight through them from each surface point; in the painting the ambient third of the light stays, in Monte Carlo the sun's direct light is dimmed at every hit); Monte Carlo composites them along each view ray and each reflected, refracted and diffusely bounced ray in linear light (so they also tint the ambient light) (`src/clouds.rs`: each pixel's ray through the layer up to its surface, 3D value noise, the first global light through the cloud) |
 | `cloud_density`, `cloud_coverage`, `cloud_size` | number, 0..1, fractal units | how thick, how much sky, how big |
 | `cloud_color`, `cloud_offset` | `#RRGGBB`, x, y, z | colour; the noise's shift (keyframes animate it) |

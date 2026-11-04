@@ -685,6 +685,17 @@ Voici de quoi vérifier plus loin par vous-même :
   lit pas. Clés de scène `ground`, `ground_color`, `ground_reflect`,
   `ground_waves` ; détails dans [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
 
+  **Eau transparente** : avec *Eau* au-dessus de 0 (combien de lumière
+  elle laisse passer), une fractale à moitié immergée se voit sous la
+  surface, déviée par la réfraction (*Réfraction* : 1,33 pour l'eau) et
+  s'estompant avec la profondeur dans la couleur de l'eau (le bouton de
+  couleur) aussi vite que le dit l'absorption (le champ après *Eau*). Le
+  rendu normal la montre avec les reflets activés (Post-traitement),
+  Monte Carlo toujours ; sans les reflets l'eau reste opaque. Clés de
+  scène `ground_transparency`, `ground_absorption`,
+  `ground_absorb_color`, `ground_ior` ; un exemple dans
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
   </details>
 * **La lumière d'une image HDR** : une image Radiance à 360° (`.hdr`) en fond
   éclaire un rendu Monte Carlo avec toute sa luminosité, et son soleil devient

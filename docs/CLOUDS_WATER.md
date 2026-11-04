@@ -148,6 +148,67 @@ by 2048). The field of view sets itself: 360° across, 180° up and down.
   panorama it blurs the sky and the water all round.
 - Keep the camera level, or the horizon bends into a wave.
 
+## Transparent water
+
+The water can also be see-through: a fractal that stands half in it shows
+beneath the surface, bent by the refraction and fading into the colour of
+the water the deeper it goes. Three settings make it, next to the waves on
+the *Cutting* page:
+
+- **Water** (`ground_transparency`, 0 to 1): how much light the water lets
+  through. 0 is the opaque ground of before; 1 is clear water, whose mirror
+  is then as strong as Fresnel's equations make it: faint where you look
+  down into the water, strong at grazing angles towards the horizon. In
+  between, the ground's own colour and its *reflect* value blend in.
+- **Absorption** (`ground_absorption`, the field after *Water*): how fast
+  light fades in the water, per fractal unit it travels. With 1 a mid grey
+  keeps a third of its light after one unit; 0 is perfectly clear water.
+  The light that reaches a part under water has crossed the water above it
+  too, so deep parts also get darker, not only more distant ones.
+- **Colour** (`ground_absorb_color`, the colour button below *Water*): the
+  colour of deep water. What the water absorbs is replaced by its own
+  scattered light in this colour, so deep water turns into it (lit like
+  the surface, by the lights and the sky), not into black. The colours this
+  colour has little of fade faster: with a blue-green, red goes first.
+- **Refraction** (`ground_ior`): the refraction index, 1.33 for water; 1
+  does not bend the light.
+
+The normal render shows the transparency with the reflections on
+(*Postprocess*, *Reflections + Transparency*, *Calculate R. (+ T.)
+automatically*); without them the water stays opaque, as the picture
+painted before the reflections are calculated. Monte Carlo always shows it.
+With transparent water the reflections and Monte Carlo are calculated on
+the processor (the graphics card's part of them does not know the rays
+under the water yet), which makes them slower.
+
+Example: a Mandelbulb half under clear water, seen from above at a slant.
+Copy all of the text below, press *From Clipboard* in the main window, then
+*Calculate 3D*:
+
+```text
+Mandelbulb3Dv18{
+g.....m....K0...A....2.............2.1.......E3E................................
+........................................kz1........A./.........E........2/2...wD
+...Uz6........../I.0/.................E/................/......................U
+z.....kD1.....UaNaNaNaNmzCnAnAnAnAyDOaNaNaNa7z1...........U0.....y1...sD...../..
+.w1...sDcO2VlTjtYx1..........IvqGtWoDaojlNoFMO2.sw96fqQH.moMzox6zwIEUCpjLyWEQbRY
+4xXffnBSGL6Jz2e/t4zbo7qDU.....2...............kD/2....sD..G.0...................
+.............oAnAt1.........z................................................k..
+.....0...............wzzz1.U..6......c3...EB....4/...Q1..UE6....c....I1....DS.52
+.....kXFKxjKcVrzSI0Azv4TA0..po..z1Cg...Fbf24LNxj6Eot8VlJaz1...........U.mwDEE/5.
+.AL9s6Jkkz9.2RiGMQZtz0........../EU0.wzzz1...........s/...................E.2c..
+zzzz.................................2./8.kzzzD............8....................
+/EU0.wzzz1...................................2CcN/UvNPcveeWCNq0.yRiibHJJUk1f..XR
+SvBmx3CcN/UvNPcvQsLsUa3.ibhVi1bTV1OK.sSq4uCly3CcN/UvNPcvMwLsUa3.ibhVinqTV1OK.sSq
+4uCkz3CcN/UvNPcv..EsUa3ceeWCNq0cIJ36wk8cwyLsUa3c................................
+E....2..F3E..........6....EGiFLNbJaQU.pPrJaQ.........................6..........
+...................6./........zj................................................
+................................................................................
+........................}
+{Titel: Half under water}
+{mb3d-rs: clouds = y, -1.4, -3.4; cloud_density = 1; cloud_coverage = 0.64; cloud_size = 1; cloud_color = #A0ACBA; finish_exposure = 0; finish_tonemap = filmic; glow = 0.3, 0.03, 0.85; finish_contrast = 0.25; finish_saturation = 0.85; finish_warmth = 0; vignette = 0.5; chromatic = 0; ground = y, -0.45; ground_color = #2A3846; ground_reflect = 0.5; ground_waves = 0.004, 0.6; ground_transparency = 1; ground_absorption = 1; ground_absorb_color = #0A323C; ground_ior = 1.33}
+```
+
 ## Where the settings are
 
 The screens show the settings of picture 1, Golden hour, as they look after
@@ -161,7 +222,10 @@ parameters you copied.
 **Water.** Main window, page *Cutting*: tick *Ground plane* and choose the
 axis (Y). Below it: the height of the plane (1.15), its colour, and how much
 it reflects (0.9). *Waves* takes their height and length; a height of 0
-gives still water.
+gives still water. The two rows below them make the water transparent
+(see [Transparent water](#transparent-water)): *Water* takes its
+transparency and absorption, the colour button its deep colour, and
+*Refraction* its refraction index.
 
 <img src="img/clouds_ui_cutting.png" width="312" alt="The Cutting page with the Ground plane settings">
 
