@@ -244,6 +244,35 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
     Ok((raw, title))
 }
 
+/// mb3d-rs's own settings applied to `s`: a line this version cannot read
+/// (a key of a newer version, a bad value) is left out with a warning and
+/// the others still apply, so newer parameters keep their clouds, ground
+/// and the rest in an older program (a single unknown key dropped them all).
+fn apply_extras(s: Scene, text: &str) -> (Scene, Vec<String>) {
+    let mut lines: Vec<&str> = text.lines().collect();
+    let mut warnings = Vec::new();
+    for _ in 0..=lines.len() {
+        match s.clone().apply(&lines.join("\n")) {
+            Ok(sc) => return (sc, warnings),
+            Err(e) => {
+                // "line N: ..." names the line to leave out
+                let n = e.strip_prefix("line ").and_then(|r| r.split(':').next()).and_then(|n| n.trim().parse::<usize>().ok());
+                match n.filter(|n| (1..=lines.len()).contains(n)) {
+                    Some(n) => {
+                        warnings.push(format!("mb3d-rs settings: left out {} ({e})", lines[n - 1].trim()));
+                        lines.remove(n - 1);
+                    }
+                    None => {
+                        warnings.push(format!("mb3d-rs settings: {e}"));
+                        return (s, warnings);
+                    }
+                }
+            }
+        }
+    }
+    (s, warnings)
+}
+
 /// `MakeTextparas`: the parameters as MB3D text (`Mandelbulb3Dv18{...}`).
 /// Formulas with negative iterations count as used (MB3D looks for > 0
 /// here only, dropping a last one that its own files and renders keep).
@@ -852,10 +881,9 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     }
     // mb3d-rs's own settings
     if let Some(t) = extra_at(data, HEADER_SIZE + ADDON_SIZE) {
-        match s.clone().apply(&t) {
-            Ok(sc) => s = sc,
-            Err(e) => w.push(format!("mb3d-rs settings: {e}")),
-        }
+        let (sc, skipped) = apply_extras(s.clone(), &t);
+        s = sc;
+        w.extend(skipped);
         // the full name of a background picture MB3D's 23 characters cut
         if t.lines().any(|l| l.trim_start().starts_with("background_image")) {
             w.retain(|x| !x.starts_with("background picture '"));
@@ -1588,6 +1616,18 @@ mod tests {
         sc.lighting.fog_far_offset = 201.0;
         assert_eq!(parse(&write(&sc)).unwrap().scene.lighting.fog_far_offset, 201.0);
         assert_eq!(Scene::parse(&sc.to_text()).unwrap().lighting.fog_far_offset, 201.0);
+    }
+
+    /// Parameters of a newer version: its unknown key is left out, the
+    /// clouds and the ground before and after it still apply.
+    #[test]
+    fn an_unknown_mb3d_rs_key_leaves_the_others() {
+        let s = Scene::preset("Integer Power").unwrap();
+        let (sc, w) = super::apply_extras(s, "clouds = y, -1.4, -3.4\nground_from_the_future = 7\nground = y, -0.45\ncloud_density = 0.5");
+        assert!(sc.clouds.is_some());
+        assert_eq!(sc.ground.as_ref().map(|g| g.pos), Some(-0.45));
+        assert_eq!(w.len(), 1, "{w:?}");
+        assert!(w[0].contains("ground_from_the_future"), "{w:?}");
     }
 
     #[test]
