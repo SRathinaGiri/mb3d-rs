@@ -18,6 +18,8 @@ pub(crate) enum DialogState {
     File(FileDlg),
     Color { tag: String },
     Input { tag: String },
+    /// "already exists, replace it?" over the save dialog `file`
+    Overwrite { file: usize },
 }
 
 pub(crate) struct FileDlg {
@@ -39,6 +41,8 @@ pub(crate) struct FileDlg {
     /// Enter in DirEdit was handled there (Delphi's Key := #0): the default
     /// button's click that follows it is dropped
     eat_ok: bool,
+    /// the existing file a save waits to replace (the question is open)
+    pending: Option<PathBuf>,
 }
 
 #[derive(Clone)]
@@ -240,6 +244,11 @@ impl Ui {
     /// `MessageDlg`: a message with buttons (mrOk, mrYes, ...); the result
     /// comes back as `DialogResult::Button` with `tag` as sender.
     pub fn message_box(&mut self, tag: &str, caption: &str, text: &str, buttons: &[i32]) {
+        self.message_box_at(tag, caption, text, buttons);
+    }
+
+    /// [`Ui::message_box`], giving the message's form.
+    fn message_box_at(&mut self, tag: &str, caption: &str, text: &str, buttons: &[i32]) -> usize {
         let font = Font::default();
         let measure = |s: &str| super::font::text_width(font.face(), font.em(), s).ceil() as i32;
         let lines: Vec<&str> = text.lines().collect();
@@ -274,6 +283,7 @@ impl Ui {
         self.forms[i].focus = first;
         self.show_index(i);
         self.forms[i].modal = true;
+        i
     }
 
     /// `ShowMessage`.
@@ -426,6 +436,7 @@ impl Ui {
             sort_column: self.file_sort,
             sort_desc: self.file_sort_desc,
             eat_ok: false,
+            pending: None,
         };
         {
             let f = &mut self.forms[i];
@@ -572,6 +583,23 @@ impl Ui {
             let _ = msg;
             return false;
         }
+        // ofOverwritePrompt (every save dialog of MB3D, Mand.dfm): an
+        // existing file is replaced only when the user says so
+        if d.save && p.is_file() {
+            d.pending = Some(p.clone());
+            let text = format!("{}\n{}", p.display(), tr("@MB:ThisFileAlreadyExistsDoYou"));
+            let caption = self.forms[i].caption().to_string();
+            let m = self.message_box_at("", &caption, &text, &[MR_YES, MR_NO]);
+            self.dialogs.insert(m, DialogState::Overwrite { file: i });
+            return false;
+        }
+        self.file_finish(i, p);
+        true
+    }
+
+    /// The save or open dialog `i` reports `p` and closes.
+    fn file_finish(&mut self, i: usize, p: PathBuf) {
+        let Some(DialogState::File(d)) = self.dialogs.get(&i) else { return };
         let tag = d.tag.clone();
         let multi = d.multi;
         self.file_dialog_save = d.save;
@@ -581,7 +609,6 @@ impl Ui {
         self.events.push_back(Event { form: String::new(), sender: tag, handler: String::new(), ev: Ev::DialogResult(res) });
         self.dialogs.remove(&i);
         self.hide_index(i);
-        true
     }
 
     /// Events of the dialog forms.
@@ -732,6 +759,17 @@ impl Ui {
                 (tag, DialogResult::Color(if mr == MR_OK { Some(c) } else { None }))
             }
             DialogState::File(d) => (d.tag, if d.multi { DialogResult::Files(Vec::new()) } else { DialogResult::File(None) }),
+            DialogState::Overwrite { file } => {
+                let p = match self.dialogs.get_mut(&file) {
+                    Some(DialogState::File(d)) => d.pending.take(),
+                    _ => None,
+                };
+                // Yes: the save goes on; No: the save dialog stays open
+                if let Some(p) = p.filter(|_| mr == MR_YES) {
+                    self.file_finish(file, p);
+                }
+                return;
+            }
         };
         if tag.is_empty() {
             return;
@@ -779,6 +817,49 @@ mod tests {
             _ => None,
         });
         assert_eq!(got, Some(dir.join("noext.png")));
+    }
+
+    /// Saving onto an existing file asks first (ofOverwritePrompt): No
+    /// keeps the save dialog open, Yes reports the file.
+    #[test]
+    fn save_asks_before_replacing() {
+        let dir = std::env::temp_dir().join(format!("mb3d-overwrite-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("there.m3p");
+        std::fs::write(&file, b"x").unwrap();
+        let mut ui = Ui::default();
+        let o = FileOptions { filter: "M3P|*.m3p".into(), default_ext: "m3p".into(), initial_dir: Some(dir.clone()), file_name: "there".into(), ..Default::default() };
+        ui.save_dialog("t", &o);
+        let i = ui.form_index("FileDlg").unwrap();
+        let result = |ui: &Ui| {
+            ui.events.iter().find_map(|e| match &e.ev {
+                Ev::DialogResult(DialogResult::File(Some(p))) if e.sender == "t" => Some(p.clone()),
+                _ => None,
+            })
+        };
+        assert!(!ui.file_accept(i));
+        let m = ui.modal_top().unwrap();
+        assert_ne!(m, i);
+        ui.forms[m].modal_result = MR_NO;
+        ui.close_index(m);
+        assert_eq!(result(&ui), None);
+        assert!(ui.forms[i].visible);
+        assert_eq!(ui.modal_top(), Some(i));
+        // a new name saves at once
+        ui.forms[i].c_mut("NameEdit").set_text("new");
+        assert!(ui.file_accept(i));
+        assert_eq!(result(&ui), Some(dir.join("new.m3p")));
+        // Yes replaces
+        ui.events.clear();
+        ui.save_dialog("t", &o);
+        let i = ui.form_index("FileDlg").unwrap();
+        assert!(!ui.file_accept(i));
+        let m = ui.modal_top().unwrap();
+        ui.forms[m].modal_result = MR_YES;
+        ui.close_index(m);
+        assert_eq!(result(&ui), Some(file.clone()));
+        assert!(!ui.forms[i].visible);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// A message while a confirm is open opens over it; the confirm still
