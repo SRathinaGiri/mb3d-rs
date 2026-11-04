@@ -256,7 +256,7 @@ mod imp {
                 fs.push(Formula::FoldingIntPow { power, z_mul, fold: 0.6 });
             }
         }
-        for (scale, min_r, fold) in [(2.0, 0.5, 1.0), (-1.5, 0.5, 1.0), (-2.4, 0.25, 0.9), (3.0, 0.0, 1.2)] {
+        for (scale, min_r, fold) in [(2.0, 0.5, 1.0), (-1.5, 0.5, 1.0), (-2.4, 0.25, 0.9), (3.0, 0.0, 1.2), (2.0, -0.6, 1.0), (-1.7, -0.3, 0.8)] {
             fs.push(Formula::AmazingBox { scale, min_r, fold });
         }
         fs.push(Formula::Quaternion { yw_mul: -1.0, w_add: 0.0 });
@@ -269,6 +269,8 @@ mod imp {
         for (r_threshold, r_threshold2) in [(1.0, 0.5), (2.0, 1.2), (0.6, 0.6)] {
             fs.push(Formula::Bulbox { scale: 2.0, min_r: 0.5, fold: 1.0, bulb_scale: 1.0, r_threshold, r_threshold2 });
             fs.push(Formula::Bulbox { scale: -1.7, min_r: 0.3, fold: 0.8, bulb_scale: 1.4, r_threshold, r_threshold2 });
+            // a negative Min R acts as 0 (MB3D's Sqr(Max(1e-40, MinR)))
+            fs.push(Formula::Bulbox { scale: 2.0, min_r: -0.4, fold: 1.0, bulb_scale: 1.0, r_threshold, r_threshold2 });
         }
         if let Some(Formula::AexionC { power, z_mul, power_c, cz_mul, .. }) = Formula::default_for("Aexion C") {
             for mode in 0..32 {
