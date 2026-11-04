@@ -26,6 +26,8 @@ pub trait Sample: Copy + Default + Send + Sync + 'static {
     fn from_dof(v: f32) -> Self;
     /// the value on the 8 bit scale (0 to 255)
     fn to_255(self) -> f32;
+    /// keeps the colours above white (`f32`, the OpenEXR pictures)
+    const HDR: bool = false;
 }
 
 impl Sample for u8 {
@@ -63,6 +65,28 @@ impl Sample for u16 {
     #[inline]
     fn to_255(self) -> f32 {
         self as f32 / 257.0
+    }
+}
+
+/// Floating point (1 = white), not clipped above white: the OpenEXR
+/// pictures.
+impl Sample for f32 {
+    const HDR: bool = true;
+    #[inline]
+    fn from_paint(v: f32) -> f32 {
+        v / 255.0
+    }
+    #[inline]
+    fn from_unit(t: f32) -> f32 {
+        t
+    }
+    #[inline]
+    fn from_dof(v: f32) -> f32 {
+        v.max(0.0) / 255.0
+    }
+    #[inline]
+    fn to_255(self) -> f32 {
+        self * 255.0
     }
 }
 
@@ -214,6 +238,14 @@ pub struct Lighting {
     pub no_col_ipol: bool,
     /// Ambient light and depth colours relative to the object (`TBoptions` bit 29)
     pub amb_rel_obj: bool,
+    /// The object's frame for [`Lighting::amb_rel_obj`] (rows: unit
+    /// vectors in scene space; None: the scene's axes, as MB3D) and a
+    /// field of view in radians: the depth colours change over it from the
+    /// top to the bottom, as across a picture (0: over half a turn, as
+    /// MB3D).  Not saved: the splat export (`crate::splat`) fixes the
+    /// ambient light and the depth colours of its views to the scene's view
+    /// with it.
+    pub amb_frame: Option<([[f64; 3]; 3], f64)>,
     /// Dynamic fog options (`Lights[0].FreeByte`): bit 0 blend, bit 1 positive only
     pub dfog_options: u8,
     /// `iExModes` (`Lights[2].FreeByte`): non-zero = second total light mode
@@ -329,6 +361,7 @@ impl Default for Lighting {
             internal_gamma2: false,
             no_col_ipol: false,
             amb_rel_obj: false,
+            amb_frame: None,
             dfog_options: 0,
             ex_mode: 0,
             diff_map: 0,
@@ -595,6 +628,13 @@ pub struct LightVals {
     pub(crate) vol_light: bool,
     /// background picture (`bBackBMP`) and its options
     pub(crate) bg: Option<PaintMap>,
+    /// the ground plane's diffuse and specular colours (`gbuffer::GROUND`
+    /// pixels), set by [`LightVals::set_ground`]
+    pub(crate) ground: Option<(SVec, SVec)>,
+    /// the fractal's surface material (Fresnel, iridescence, glow)
+    pub(crate) material: Option<crate::scene::Material>,
+    /// the surface detail (relief and colour variation)
+    pub(crate) detail: Option<crate::detail::Detail>,
     pub(crate) bg_direct: bool,
     pub(crate) bg_add_light: bool,
     /// light map lights
@@ -607,6 +647,9 @@ pub struct LightVals {
     pub(crate) sqr: bool,
     pub(crate) no_col_ipol: bool,
     pub(crate) amb_rel_obj: bool,
+    /// `Lighting::amb_frame`
+    pub(crate) amb_frame: Option<[SVec; 3]>,
+    pub(crate) amb_fov: f32,
     pub(crate) dfog_options: u8,
     pub(crate) ex_mode: bool,
     pub(crate) yc_comb: bool,
@@ -691,6 +734,10 @@ impl PaintCamera {
                 sv_scale(v, 1.0 / n)
             }
             2 => [-(cx.sin()) * cy.cos(), cy.sin(), cy.cos() * cx.cos()],
+            3 => {
+                let v = crate::math::build_view_vector_fisheye(cy as f64, cx as f64);
+                [v[0] as f32, v[1] as f32, v[2] as f32]
+            }
             _ => {
                 let v = [-(cx.sin()), cy.sin(), cy.cos() * cx.cos()];
                 let n = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
@@ -1120,6 +1167,9 @@ impl LightVals {
             icol_pos,
             s_ic_div,
             vol_light: false,
+            ground: None,
+            material: None,
+            detail: None,
             bg: if l.bg_image.is_empty() {
                 None
             } else {
@@ -1156,6 +1206,8 @@ impl LightVals {
             sqr,
             no_col_ipol: l.no_col_ipol,
             amb_rel_obj: l.amb_rel_obj,
+            amb_frame: l.amb_frame.map(|(m, _)| m.map(|r| r.map(|v| v as f32))),
+            amb_fov: l.amb_frame.map_or(0.0, |(_, f)| f as f32),
             dfog_options: if l.dfog_options & 3 == 3 { 1 } else { l.dfog_options & 3 },
             ex_mode: l.ex_mode != 0,
             yc_comb: l.yc_comb,
@@ -1171,6 +1223,22 @@ impl LightVals {
             },
             mid: [0.0; 3],
         }
+    }
+
+    /// The ground plane's colours: its colour as diffuse, its reflection
+    /// amount as a grey specular colour (the reflections' mirror).
+    pub fn set_ground(&mut self, g: Option<&crate::scene::Ground>) {
+        let col = |c: [u8; 3]| -> SVec {
+            if self.sqr {
+                c.map(|v| v as f32 * v as f32 * 0.0000153787)
+            } else {
+                c.map(|v| v as f32 / 255.0)
+            }
+        };
+        self.ground = g.map(|g| {
+            let r = (g.reflect.clamp(0.0, 1.0) * 255.0).round() as u8;
+            (col(g.color), col([r; 3]))
+        });
     }
 
     /// Volumetric light: the shadow word holds the light amount
@@ -1212,7 +1280,7 @@ impl LightVals {
         }
         if std::env::var_os("MB3D_DEBUG_LIGHTS").is_some() {
             for lv in &self.lights {
-                eprintln!(
+                crate::elog!(
                     "light {}: pos {} ln {:?} col {:?} lmax {} vis {} pos_z {} pos_lp {}",
                     lv.idx + 1, lv.positional, lv.ln, lv.col, lv.lmax_l, lv.visible, lv.pos_z, lv.pos_lp
                 );
@@ -1229,6 +1297,24 @@ impl LightVals {
     }
 
     /// View space directions towards the lights by header light index.
+    /// A scene direction in the object's frame of the ambient light
+    /// (`Lighting::amb_frame`; without one, as it is).
+    #[inline]
+    pub(crate) fn amb_abs(&self, v: SVec) -> SVec {
+        match &self.amb_frame {
+            Some(m) => [sv_dot(m[0], v), sv_dot(m[1], v), sv_dot(m[2], v)],
+            None => v,
+        }
+    }
+
+    /// [`LightVals::amb_abs`] in double precision.
+    pub(crate) fn amb_abs64(&self, v: [f64; 3]) -> [f64; 3] {
+        match &self.amb_frame {
+            Some(m) => m.map(|r| r[0] as f64 * v[0] + r[1] as f64 * v[1] + r[2] as f64 * v[2]),
+            None => v,
+        }
+    }
+
     pub fn light_dirs(&self) -> Vec<(usize, [f32; 3])> {
         self.lights.iter().filter(|l| !l.positional).map(|l| (l.idx, l.ln)).collect()
     }
@@ -1448,6 +1534,11 @@ impl LightVals {
     /// `CalcColors` with the alpha of the specular colour (`iSpe[3]`, the
     /// transparency of the Monte Carlo renderer).
     pub(crate) fn calc_colors_alpha(&self, si: &SiLight, idif0: f32) -> (SVec, SVec, f32) {
+        if si.is_ground() {
+            if let Some((d, s)) = self.ground {
+                return (d, s, 0.0);
+            }
+        }
         let ir = if self.col_on_otrap { (si.otrap & 0x7FFF) as f32 } else { si.si_gradient as f32 };
         let mut ir = (((ir - self.s_c_start) * self.s_c_mul + idif0) * 16384.0).clamp(-1e9, 1e9).round() as i32;
         if self.col_cycling {
@@ -1572,10 +1663,12 @@ impl LightVals {
         let sh = self.shade(si, &plv, cam, &ShadeOpts::default());
         let out = sh.light;
         let sqr = self.sqr;
+        // above white only in floating point
+        let top = if S::HDR { f32::MAX } else { 255.0 };
         let mut c = if sqr {
-            out.map(|v| (v * 255.0).clamp(0.0, 65025.0).sqrt())
+            out.map(|v| (v * 255.0).clamp(0.0, top * top).sqrt())
         } else {
-            [out[0].clamp(0.0, 255.0), out[1].clamp(0.0, 255.0), out[2].clamp(0.0, 255.0)]
+            out.map(|v| v.clamp(0.0, top))
         };
         if self.gamma_h != 0 {
             let g = if self.gamma_h > 0 {
@@ -1632,7 +1725,18 @@ impl LightVals {
         let zpos_word = si.zpos();
         let plv_zpos = plv.z_pos;
         if self.amb_rel_obj {
-            let w = abs_view[1].clamp(-1.0, 1.0).asin() * std::f32::consts::FRAC_1_PI + 0.5;
+            let a = self.amb_abs(abs_view)[1].clamp(-1.0, 1.0).asin();
+            let w = if self.amb_fov > 0.0 {
+                // as across the picture of that field of view
+                let y = (a / self.amb_fov + 0.5).clamp(0.0, 1.0);
+                match self.depth_func {
+                    1 => y * y,
+                    0 => y,
+                    _ => y.sqrt(),
+                }
+            } else {
+                a * std::f32::consts::FRAC_1_PI + 0.5
+            };
             dep_c = lerp(self.depth_col2, self.depth_col, w);
         }
         let sqr = self.sqr;
@@ -1658,11 +1762,22 @@ impl LightVals {
             if sqr {
                 d_amb_sh = if o.svec { d_amb_sh * d_amb_sh } else { (d_amb_sh * d_amb_sh + d_amb_sh) * 0.5 };
             }
-            let lns: SVec = [
+            let mut lns: SVec = [
                 si.normal[0] as f32 * 3.0518509476e-5,
                 si.normal[1] as f32 * 3.0518509476e-5,
                 si.normal[2] as f32 * 3.0518509476e-5,
             ];
+            // the surface detail: the normal tilted by the relief at the
+            // point (fractal coordinates: fixed to the fractal)
+            let detail = self.detail.as_ref().filter(|_| !si.is_ground()).map(|d| (d, [0, 1, 2].map(|k| obj_pos[k] as f64 + self.mid[k])));
+            if let Some((d, p)) = detail {
+                let n = cam.to_abs(lns).map(|v| v as f64);
+                let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt();
+                if l > 1e-9 {
+                    let b = d.bump(n.map(|v| v / l), p);
+                    lns = cam.to_view(b.map(|v| (v * l) as f32));
+                }
+            }
             let mut li_dif = [0f32; 3]; // LiLSDAI[1]
             let mut li_spe = [0f32; 3];
             let mut li_amb = [0f32; 3]; // LiLSDAI[3]
@@ -1716,7 +1831,7 @@ impl LightVals {
                 sv_add_w(&mut li_dif, c, d_amb_sh);
             }
             let idif0 = self.s_col_zmul * plv_zpos;
-            let (mut idif, ispe, ia) = if si.si_gradient > 32767 {
+            let (mut idif, ispe, ia) = if si.si_gradient > 32767 && !si.is_ground() {
                 let (d, s) = self.calc_colors_inside(si, idif0);
                 (d, s, s[0])
             } else {
@@ -1728,6 +1843,16 @@ impl LightVals {
                 if self.yc_comb {
                     idif = sv_scale(pal, luma(idif) / (0.01 + luma(pal)));
                 }
+            }
+            if let Some((d, p)) = detail {
+                idif = sv_scale(idif, d.tint(p));
+            }
+            let mut ispe = ispe;
+            if let Some(m) = self.material.as_ref().filter(|_| !si.is_ground()) {
+                // how much the surface turns away from the view: 0 facing it, 1 grazing
+                let g = (1.0 + lns[0] * plv.view[0] + lns[1] * plv.view[1] + lns[2] * plv.view[2]).clamp(0.0, 1.0);
+                ispe = m.specular(ispe, 1.0 - g);
+                idif = m.diffuse(idif, 1.0 - g);
             }
             spe_out = ispe;
             spe_a = ia;
@@ -1754,7 +1879,7 @@ impl LightVals {
                 sv_scale(a, d_amb_sh)
             } else {
                 // ambient light top / bottom
-                let ny = if self.amb_rel_obj { cam.to_abs(lns)[1] } else { lns[1] };
+                let ny = if self.amb_rel_obj { self.amb_abs(cam.to_abs(lns))[1] } else { lns[1] };
                 let t2 = (ny * 0.5 + 0.5) * d_amb_sh;
                 let t1 = d_amb_sh - t2;
                 sv_add(sv_scale(self.amb_col, t1), sv_scale(self.amb_col2, t2))
@@ -1773,6 +1898,9 @@ impl LightVals {
                     idif[2] * st2 * self.s_ind_light_reflect + (st - st2),
                 ];
                 out = sv_add(total, sv_mul(l3, sv_mul(idif, refl)));
+                if let Some(m) = self.material.as_ref().filter(|m| m.glow > 0.0 && !si.is_ground()) {
+                    sv_add_w(&mut out, idif, m.glow * 255.0);
+                }
             } else {
                 // CalcTotalLight2
                 let st = (1.0 - d_amb_sh).max(0.0);
@@ -1780,6 +1908,9 @@ impl LightVals {
                 let st2 = luma(total) + 4.0;
                 out = sv_add(total, sv_scale(sv_mul(total, idif), st));
                 out = sv_scale(out, (st2 + (st2 + 128.0) * (st + 0.11) * 0.04) / (luma(out).max(0.0) + 3.0));
+                if let Some(m) = self.material.as_ref().filter(|m| m.glow > 0.0 && !si.is_ground()) {
+                    sv_add_w(&mut out, idif, m.glow * 255.0);
+                }
             }
             dtmp = ((zpos_word as f32 - 28000.0) * self.s_depth + 1.0).max(0.0);
         } else {

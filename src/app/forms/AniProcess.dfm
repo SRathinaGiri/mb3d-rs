@@ -2,7 +2,7 @@ object AniProcessForm: TAniProcessForm
   Left = 153
   Top = 256
   BorderStyle = bsDialog
-  Caption = 'Animation processing'
+  Caption = '@MB:AnimationProcessing'
   ClientHeight = 423
   ClientWidth = 385
   Color = clBtnFace
@@ -44,7 +44,7 @@ object AniProcessForm: TAniProcessForm
     Width = 80
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Smooth Normals:'
+    Caption = '@MB:SmoothNormalsColon'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -58,7 +58,7 @@ object AniProcessForm: TAniProcessForm
     Width = 41
     Height = 13
     Alignment = taRightJustify
-    Caption = 'DE stop:'
+    Caption = '@MB:DEStop'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -72,7 +72,7 @@ object AniProcessForm: TAniProcessForm
     Width = 67
     Height = 26
     Alignment = taRightJustify
-    Caption = 'Stepcount for '#13#10'binary search:'
+    Caption = '@MB:StepcountForBinarySearch'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -85,7 +85,7 @@ object AniProcessForm: TAniProcessForm
     Top = 8
     Width = 143
     Height = 13
-    Caption = 'Check to change the value [x]'
+    Caption = '@MB:CheckToChangeTheValueX'
   end
   object Label15: TLabel
     Left = 13
@@ -93,7 +93,7 @@ object AniProcessForm: TAniProcessForm
     Width = 77
     Height = 26
     Alignment = taRightJustify
-    Caption = 'Subframes to  '#13#10'render between:'
+    Caption = '@MB:SubframesToRenderBetween'
   end
   object Bevel3: TBevel
     Left = 200
@@ -108,7 +108,7 @@ object AniProcessForm: TAniProcessForm
     Width = 56
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Max. Iterat.:'
+    Caption = '@MB:MaxIterat'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -122,7 +122,7 @@ object AniProcessForm: TAniProcessForm
     Width = 53
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Min. Iterat.:'
+    Caption = '@MB:MinIterat'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -136,7 +136,7 @@ object AniProcessForm: TAniProcessForm
     Width = 75
     Height = 26
     Alignment = taRightJustify
-    Caption = 'Subframe count'#13#10'multiplicator:'
+    Caption = '@MB:SubframeCountMultiplicator'
   end
   object Label22: TLabel
     Left = 10
@@ -144,7 +144,7 @@ object AniProcessForm: TAniProcessForm
     Width = 85
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Raystep multiplier:'
+    Caption = '@MB:RaystepMultiplier'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -158,7 +158,7 @@ object AniProcessForm: TAniProcessForm
     Width = 79
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Stepwidth limiter:'
+    Caption = '@MB:StepwidthLimiter'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -178,7 +178,7 @@ object AniProcessForm: TAniProcessForm
     Top = 392
     Width = 75
     Height = 25
-    Caption = 'Exit'
+    Caption = '@MB:Exit'
     TabOrder = 0
     OnClick = Button1Click
   end
@@ -188,7 +188,7 @@ object AniProcessForm: TAniProcessForm
     Top = 8
     Width = 177
     Height = 25
-    Caption = 'Put the values to all keyframes'
+    Caption = '@MB:PutTheValuesToAllKeyframes'
     TabOrder = 1
     OnClick = Button2Click
   end
@@ -198,7 +198,7 @@ object AniProcessForm: TAniProcessForm
     Top = 40
     Width = 177
     Height = 25
-    Caption = 'To this keyframe and the following'
+    Caption = '@MB:ToThisKeyframeAndTheFollowing'
     TabOrder = 2
     OnClick = Button2Click
   end
@@ -208,7 +208,7 @@ object AniProcessForm: TAniProcessForm
     Top = 72
     Width = 177
     Height = 25
-    Caption = 'To this keyframe and all before'
+    Caption = '@MB:ToThisKeyframeAndAllBefore'
     TabOrder = 3
     OnClick = Button2Click
   end
@@ -253,7 +253,7 @@ object AniProcessForm: TAniProcessForm
     Top = 392
     Width = 201
     Height = 25
-    Caption = 'Rerender all keyframe preview images'
+    Caption = '@MB:RerenderAllKeyframePreviewImages'
     TabOrder = 9
     OnClick = Button5Click
   end
@@ -278,7 +278,7 @@ object AniProcessForm: TAniProcessForm
     Top = 104
     Width = 177
     Height = 25
-    Caption = 'Only to the actual keyframe'
+    Caption = '@MB:OnlyToTheActualKeyframe'
     TabOrder = 12
     OnClick = Button2Click
   end
@@ -288,7 +288,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'All the light + color settings'
+    Caption = '@MB:AllTheLightColorSettings'
     TabOrder = 13
   end
   object Edit4: TEdit
@@ -341,7 +341,7 @@ object AniProcessForm: TAniProcessForm
     Top = 352
     Width = 177
     Height = 25
-    Caption = 'Reverse the order of all keyframes'
+    Caption = '@MB:ReverseTheOrderOfAllKeyframes'
     TabOrder = 20
     OnClick = Button7Click
   end
@@ -351,7 +351,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Actual hard shadow setting'
+    Caption = '@MB:ActualHardShadowSetting'
     TabOrder = 21
   end
   object CheckBox16: TCheckBox
@@ -360,7 +360,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Actual DOF parameters'
+    Caption = '@MB:ActualDOFParameters'
     TabOrder = 22
   end
   object Edit7: TEdit
@@ -368,10 +368,7 @@ object AniProcessForm: TAniProcessForm
     Top = 140
     Width = 49
     Height = 21
-    Hint = 
-      'The distance estimates are downscaled by this factor to avoid ov' +
-      'erstepping.'#13#10'Reduce the value if overstepping occurs (black pixe' +
-      'ls, noisy image).'#13#10'Too low values slows the rendering down .'
+    Hint = '@MB:TheDistanceEstimatesAreDownscaledBy2'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 23
@@ -383,7 +380,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Actual ambient shadow par.'
+    Caption = '@MB:ActualAmbientShadowPar'
     TabOrder = 24
   end
   object CheckBox15: TCheckBox
@@ -399,7 +396,7 @@ object AniProcessForm: TAniProcessForm
     Width = 117
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'First step random:'
+    Caption = '@MB:FirstStepRandom'
     TabOrder = 26
   end
   object CheckBox18: TCheckBox
@@ -407,9 +404,9 @@ object AniProcessForm: TAniProcessForm
     Top = 269
     Width = 153
     Height = 17
-    Hint = 'including dFog on its or Vol.light options'
+    Hint = '@MB:IncludingDFogOnItsOrVol'
     Alignment = taLeftJustify
-    Caption = 'Actual '#39'Coloring'#39' tab  options'
+    Caption = '@MB:ActualColoringTabOptions'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 27
@@ -420,7 +417,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Actual stereo parameters'
+    Caption = '@MB:ActualStereoParameters'
     TabOrder = 28
   end
   object CheckBox20: TCheckBox
@@ -429,7 +426,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Actual camera settings'
+    Caption = '@MB:ActualCameraSettings'
     TabOrder = 29
   end
   object CheckBox7: TCheckBox
@@ -444,10 +441,7 @@ object AniProcessForm: TAniProcessForm
     Top = 169
     Width = 49
     Height = 21
-    Hint = 
-      'The distance estimates are downscaled by this factor to avoid ov' +
-      'erstepping.'#13#10'Reduce the value if overstepping occurs (black pixe' +
-      'ls, noisy image).'#13#10'Too low values slows the rendering down .'
+    Hint = '@MB:TheDistanceEstimatesAreDownscaledBy2'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 31
@@ -459,7 +453,7 @@ object AniProcessForm: TAniProcessForm
     Width = 153
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Actual reflections settings'
+    Caption = '@MB:ActualReflectionsSettings'
     TabOrder = 32
   end
   object CheckBox10: TCheckBox
@@ -468,7 +462,7 @@ object AniProcessForm: TAniProcessForm
     Width = 117
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Normals on ZBuffer:'
+    Caption = '@MB:NormalsOnZBufferColon'
     TabOrder = 33
   end
   object CheckBox21: TCheckBox

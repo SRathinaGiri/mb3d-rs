@@ -1,0 +1,98 @@
+[OPTIONS]
+.Version = 2
+.DEoption = -1
+.Double Sides = 4.0
+.Double PolyStrength = 1.0
+[CONSTANTS]
+Double = 3.1415926535898
+[CODE]
+558BEC81EC300000005356578B75088B7E308BD8D9D0
+dd07dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd47e8d9e1dec9d9e8dec1
+dd47e8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19D9D0
+8BC35F5E5B89EC5DC20800
+[END]
+
+
+Description:
+
+Circle to polygon transform centered on the x axis (transforms yz plane).  I made it for before Pine Tree Mandelbulb, after transform 1.  Use it sparingly... or a lot.  
+
+  UPDATE V2:  Polystrength <0 transforms from circle to Poly!  
+
+
+ rCyz=abs(atan(z.z,z.y));
+
+	while (rCyz>pi/sides) {rCyz-=2.*pi/sides; }   
+
+z.yz/=cos(rCyz); 
+
+  Polystrength <=   z.yz*=cos(rCyz)
+
+
+:D  
+
+  M Benesi
+dd07dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dc4fe8d9e8dec1
+dd47e8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19D9D0
+
+0043D1F2   DD07             FLD QWORD PTR DS:[EDI]
+0043D1F4   DC77 F0          FDIV QWORD PTR DS:[EDI-10]
+0043D1F7   DD55 F8          FST QWORD PTR SS:[EBP-8]
+0043D1FA   D8C0             FADD ST,ST
+0043D1FC   DD5D F0          FSTP QWORD PTR SS:[EBP-10]
+0043D1FF   DD01             FLD QWORD PTR DS:[ECX]
+0043D201   DD02             FLD QWORD PTR DS:[EDX]
+0043D203   D9F3             FPATAN
+0043D205   D9E1             FABS
+0043D207   DC55 F8          FCOM QWORD PTR SS:[EBP-8]
+0043D20A   DFE0             FSTSW AX
+0043D20C   9B               WAIT
+0043D20D   9E               SAHF
+0043D20E   76 05            J=Be SHORT accessch.0043D215
+0043D210   DC65 F0          FSUB QWORD PTR SS:[EBP-10]
+0043D213  ^EB F2            JMP SHORT accessch.0043D207
+0043D215   D9FF             FCOS
+
+/////move
+0043D217   D9E8             FLD1
+0043D219   DEE9             FSUBP ST(1),ST
+dd47e8d9e1dec9
+
+dd07dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd47e8d9e1dec9d9e8dec1
+dd47e8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19D9D0
+
+//out maybe??
+0043D21B   DC4F E8          FMUL QWORD PTR DS:[EDI-18]
+0043D21E   D9E8             FLD1
+0043D220   DEC1             FADDP ST(1),ST
+//// move
+
+0043D222   DD47 E8          FLD QWORD PTR DS:[EDI-18]
+0043D225   D9E4             FTST
+0043D227   DFE0             FSTSW AX
+0043D229   9B               WAIT
+0043D22A   9E               SAHF
+0043D22B   73 08            Jbe SHORT accessch.0043D235
+
+0043D22D   DDD8             FSTP ST
+0043D22F   D9E8             FLD1
+0043D231   DEF1             FDIVRP ST(1),ST
+0043D233   EB 02            JMP SHORT accessch.0043D237
+0043D235   DDD8             FSTP ST
+0043D237   D9C0             FLD ST
+0043D239   DC0A             FMUL QWORD PTR DS:[EDX]
+0043D23B   DD1A             FSTP QWORD PTR DS:[EDX]
+0043D23D   D9D0             FNOP
+0043D23F   DC09             FMUL QWORD PTR DS:[ECX]
+0043D241   DD19             FSTP QWORD PTR DS:[ECX]
+0043D243   D9D0             FNOP
+

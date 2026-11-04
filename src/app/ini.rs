@@ -4,17 +4,19 @@
 
 use std::path::{Path, PathBuf};
 
-pub const ITEMS: [&str; 38] = [
+pub const ITEMS: [&str; 41] = [
     "StickOption", "MandRotDeg", "NavSlideStep", "NavLookAngle", "NavFarPlane", "NavFOVy", "NavMaxIts", "AniFrameCount",
     "AniPrevFPS", "AniSmoothPar", "NaviAZERTY", "UserAspect", "M3LFolder", "ImageSharp", "NavFkey", "ScaleDEstop",
     "SaveImagePNG", "BigRendersFolder", "LightMapsFolder", "NavHiQ", "NavDoubleClickMode", "ThreadCount", "VoxelFolder",
     "SavePNGtextPars", "m3dPos", "m3dSize", "FormulaPos", "LightPos", "PostpPos", "ThreadPriority", "DisableTBoost",
     "SaveImgInM3I", "M3CFolder", "Author", "NaviPanelShow", "VisualTheme", "NaviSize", "MeshesFolder",
+    "NavExpDetail", "NavExpBright", "NavExpLight",
 ];
 
-const DEFAULTS: [&str; 38] = [
+const DEFAULTS: [&str; 41] = [
     "81", "5", "20", "5", "30", "30", "60", "50", "10", "3", "0", "0:0", "", "0", "1", "1", "0", "", "", "No", "No", "Auto", "",
     "No", "65 100", "779 671", "844 100", "844 100", "844 100", "-1", "No", "Yes", "", "", "0", "Glossy", "100%", "",
+    "No", "No", "No",
 ];
 
 /// Indices of `dirs` (MB3D's `IniDirs`).

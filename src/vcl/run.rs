@@ -4,7 +4,7 @@
 use super::canvas::Canvas;
 use super::control::Kind;
 use super::form::*;
-use super::input::{vk, Raw};
+use super::input::{vk, wheel_steps, Raw};
 use super::paint::caption_buttons;
 use super::ui::{App, Request, Ui, Waker};
 use std::collections::HashMap;
@@ -46,6 +46,12 @@ struct Win {
 enum Nc {
     Client,
     Caption,
+    /// the language badge of the title bar
+    Lang,
+    /// the history icon of the title bar
+    History,
+    /// the log icon of the title bar
+    Log,
     Button(i32),
     Border(ResizeDirection),
 }
@@ -66,6 +72,20 @@ struct Runner<A: App> {
     /// the form in mouse-look mode
     look: Option<usize>,
     buttons: u8,
+    /// wheel delta short of a notch (120), for the next event
+    wheel_rest: i32,
+    /// the forms in the order they were last activated (the last on top)
+    #[cfg(target_os = "windows")]
+    activated: Vec<usize>,
+    /// the auxiliary windows hidden while the main window is minimized, in
+    /// the order they were activated: shown again with it
+    #[cfg(target_os = "windows")]
+    hidden_with_main: Option<Vec<usize>>,
+    /// after the main window came back: the form that was active before,
+    /// to get the focus back from a shown window that takes it (Wine shows
+    /// them after the focus was given), until then
+    #[cfg(target_os = "windows")]
+    refocus: Option<(usize, Instant)>,
 }
 
 /// The event loop. On Linux X11 is preferred, also on a Wayland desktop
@@ -111,6 +131,13 @@ pub fn run<A: App + 'static>(mut ui: Ui, app: A) -> Result<(), String> {
         caption_click: (Instant::now() - Duration::from_secs(10), usize::MAX),
         look: None,
         buttons: 0,
+        wheel_rest: 0,
+        #[cfg(target_os = "windows")]
+        activated: Vec::new(),
+        #[cfg(target_os = "windows")]
+        hidden_with_main: None,
+        #[cfg(target_os = "windows")]
+        refocus: None,
     };
     el.run_app(&mut r).map_err(|e| e.to_string())
 }
@@ -262,6 +289,20 @@ impl<A: App> Runner<A> {
             }
             self.app.event(&mut self.ui, &e);
         }
+        // a modal form opened: the others lose the mouse capture (their
+        // release would never come) and stop auto-repeating
+        if let Some(m) = self.ui.modal_top() {
+            for (i, f) in self.ui.forms.iter_mut().enumerate() {
+                if i != m && (f.capture.is_some() || f.repeat_at.is_some()) {
+                    f.capture = None;
+                    f.cap_button = None;
+                    f.cap_part = PART_NONE;
+                    f.cap_value = 0;
+                    f.repeat_at = None;
+                    f.dirty = true;
+                }
+            }
+        }
     }
 
     fn dispatch(&mut self, fi: usize, raws: Vec<Raw>) {
@@ -352,26 +393,54 @@ impl<A: App> Runner<A> {
         }
     }
 
+    /// The auxiliary windows follow the main window's minimizing (Windows,
+    /// where they are not owned by it, so that it can cover them: an owned
+    /// window always stays above its owner): hidden with it, by our title
+    /// bar's button, the taskbar or Win+D alike, and shown again in the
+    /// order they were activated when it comes back, as Delphi's
+    /// Application.Minimize and Restore did in MB3D.  A window the user
+    /// minimized on its own stays minimized.  (Hidden, not minimized: a
+    /// minimized window without a taskbar entry becomes a small title bar
+    /// at the bottom of the screen.)
+    #[cfg(target_os = "windows")]
+    fn follow_main(&mut self, minimized: bool) {
+        match (minimized, self.hidden_with_main.is_some()) {
+            (true, false) => {
+                let mut hidden = Vec::new();
+                let mut order: Vec<usize> = self.by_form.keys().copied().filter(|&fi| fi != self.ui.main_form).collect();
+                order.sort_by_key(|fi| self.activated.iter().position(|a| a == fi));
+                for fi in order {
+                    let Some(w) = self.by_form.get(&fi).and_then(|id| self.wins.get(id)) else { continue };
+                    if w.window.is_minimized() != Some(true) {
+                        w.window.set_visible(false);
+                        hidden.push(fi);
+                    }
+                }
+                self.hidden_with_main = Some(hidden);
+            }
+            (false, true) => {
+                // (a form closed meanwhile has no window any more)
+                for fi in self.hidden_with_main.take().unwrap_or_default() {
+                    if let Some(w) = self.by_form.get(&fi).and_then(|id| self.wins.get(id)) {
+                        w.window.set_visible(true);
+                    }
+                }
+                // the window that was active before gets the focus back
+                // (the main window, unless a shown one was activated after it)
+                let main = self.ui.main_form;
+                let top = self.activated.iter().rev().copied().find(|fi| *fi == main || self.by_form.contains_key(fi)).unwrap_or(main);
+                if let Some(w) = self.by_form.get(&top).and_then(|id| self.wins.get(id)) {
+                    w.window.focus_window();
+                }
+                self.refocus = Some((top, Instant::now() + Duration::from_secs(1)));
+            }
+            _ => {}
+        }
+    }
+
     fn create_window(&mut self, el: &ActiveEventLoop, fi: usize) {
         let theme = self.ui.theme;
         let us = self.ui.ui_scale;
-        // Auxiliary VCL forms are dialogs owned by the main form.  On
-        // Windows this keeps the application's taskbar representation to one
-        // entry instead of one entry per floating parameter window.
-        #[cfg(target_os = "windows")]
-        let main_owner = if fi == self.ui.main_form {
-            None
-        } else {
-            use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
-            self.by_form
-                .get(&self.ui.main_form)
-                .and_then(|id| self.wins.get(id))
-                .and_then(|w| w.window.window_handle().ok())
-                .and_then(|h| match h.as_raw() {
-                    RawWindowHandle::Win32(h) => Some(h.hwnd.get()),
-                    _ => None,
-                })
-        };
         let f = &mut self.ui.forms[fi];
         f.layout();
         let (w, h) = f.outer_size(&theme);
@@ -381,6 +450,7 @@ impl<A: App> Runner<A> {
         let (mut sw, mut sh) = (w as f64 * us, h as f64 * us);
         if let Some(m) = &mon {
             let ms: LogicalSize<f64> = m.size().to_logical(m.scale_factor());
+            self.ui.screen = Some(((ms.width / us) as i32, (ms.height / us) as i32));
             sw = sw.min(ms.width);
             sh = sh.min(ms.height);
         }
@@ -392,11 +462,12 @@ impl<A: App> Runner<A> {
             .with_window_icon(app_icon());
         #[cfg(target_os = "windows")]
         if fi != self.ui.main_form {
+            // Keep auxiliary forms out of the taskbar without making them
+            // owned by the main window.  Windows always keeps an owned
+            // window above its owner, which made Navigator cover the main
+            // window even after the user clicked the main view.
             use winit::platform::windows::WindowAttributesExtWindows;
             attrs = attrs.with_skip_taskbar(true);
-            if let Some(owner) = main_owner {
-                attrs = attrs.with_owner_window(owner);
-            }
         }
         if f.sizeable() {
             let b = f.frame_w() * 2;
@@ -427,14 +498,16 @@ impl<A: App> Runner<A> {
             use winit::platform::x11::WindowAttributesExtX11;
             // the app ID (Wayland) and WM_CLASS (X11) name the menu entry,
             // mb3d-rs.desktop: the desktop takes the window's icon from it
-            // (Wayland ignores the icon the program sets)
-            attrs = WindowAttributesExtWayland::with_name(attrs, "mb3d-rs", "Mandelbulb3D");
-            attrs = WindowAttributesExtX11::with_name(attrs, "mb3d-rs", "Mandelbulb3D");
+            // (Wayland ignores the icon the program sets); in a Flatpak the
+            // menu entry is named after the Flatpak's ID
+            let app_id = std::env::var("FLATPAK_ID").unwrap_or_else(|_| "mb3d-rs".into());
+            attrs = WindowAttributesExtWayland::with_name(attrs, &app_id, "Mandelbulb3D");
+            attrs = WindowAttributesExtX11::with_name(attrs, &app_id, "Mandelbulb3D");
         }
         let window = match el.create_window(attrs) {
             Ok(w) => Rc::new(w),
             Err(e) => {
-                eprintln!("cannot create a window: {e}");
+                crate::elog!("cannot create a window: {e}");
                 self.ui.forms[fi].visible = false;
                 return;
             }
@@ -443,7 +516,7 @@ impl<A: App> Runner<A> {
         let surface = match softbuffer::Surface::new(ctx, window.clone()) {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("cannot draw into the window: {e}");
+                crate::elog!("cannot draw into the window: {e}");
                 return;
             }
         };
@@ -526,6 +599,15 @@ impl<A: App> Runner<A> {
                     return Nc::Button(k);
                 }
             }
+            if f.lang_rect.get().contains(x, y) {
+                return Nc::Lang;
+            }
+            if !f.history_hint.is_empty() && f.history_rect.get().inset(-3).contains(x, y) {
+                return Nc::History;
+            }
+            if !f.log_hint.is_empty() && f.log_rect.get().inset(-3).contains(x, y) {
+                return Nc::Log;
+            }
             return Nc::Caption;
         }
         Nc::Client
@@ -546,6 +628,7 @@ impl<A: App> Runner<A> {
         let Some(w) = self.wins.get(&id) else { return };
         let f = &self.ui.forms[w.form];
         let icon = match w.nc {
+            Nc::Lang | Nc::History | Nc::Log => CursorIcon::Pointer,
             Nc::Border(d) => match d {
                 ResizeDirection::East | ResizeDirection::West => CursorIcon::EwResize,
                 ResizeDirection::North | ResizeDirection::South => CursorIcon::NsResize,
@@ -605,7 +688,13 @@ impl<A: App> Runner<A> {
             w.nc = nc;
         }
         let f = &mut self.ui.forms[fi];
-        let nh = if let Nc::Button(k) = nc { k } else { -1 };
+        let nh = match nc {
+            Nc::Button(k) => k,
+            Nc::Lang => NC_LANG,
+            Nc::History => NC_HISTORY,
+            Nc::Log => NC_LOG,
+            _ => -1,
+        };
         if nh != f.nc_hot {
             f.nc_hot = nh;
             f.dirty = true;
@@ -615,16 +704,29 @@ impl<A: App> Runner<A> {
         }
         let (cx, cy) = self.client_xy(fi, x, y);
         {
-            // the LED's hint, at once
+            // the hints of the LED and the language badge, at once
             let f = &mut self.ui.forms[fi];
             let r = f.led_rect.get();
             let (xi, yi) = (x as i32, y as i32);
-            let on = nc == Nc::Caption && f.caption_led.is_some() && !f.led_hint.is_empty() && xi >= r.x - 3 && xi < r.x + r.w + 3 && yi >= r.y - 4 && yi < r.y + r.h + 4;
-            if on && !f.led_hint_shown {
-                f.hint = Some((f.led_hint.clone(), cx as i32, 2));
-                f.led_hint_shown = true;
-                f.dirty = true;
-            } else if !on && f.led_hint_shown {
+            let on_led = nc == Nc::Caption && f.caption_led.is_some() && !f.led_hint.is_empty() && xi >= r.x - 3 && xi < r.x + r.w + 3 && yi >= r.y - 4 && yi < r.y + r.h + 4;
+            let text = if nc == Nc::Lang && !f.lang_hint.is_empty() {
+                Some(&f.lang_hint)
+            } else if nc == Nc::History && !f.history_hint.is_empty() {
+                Some(&f.history_hint)
+            } else if nc == Nc::Log && !f.log_hint.is_empty() {
+                Some(&f.log_hint)
+            } else if on_led {
+                Some(&f.led_hint)
+            } else {
+                None
+            };
+            if let Some(t) = text {
+                if !f.led_hint_shown || f.hint.as_ref().map(|h| &h.0) != Some(t) {
+                    f.hint = Some((t.clone(), cx as i32, 2));
+                    f.led_hint_shown = true;
+                    f.dirty = true;
+                }
+            } else if f.led_hint_shown {
                 f.hint = None;
                 f.led_hint_shown = false;
                 f.dirty = true;
@@ -694,7 +796,33 @@ impl<A: App> Runner<A> {
         if pressed {
             match nc {
                 Nc::Border(d) if button == MouseButton::Left => {
+                    // the window manager takes the press and often its release too
+                    self.buttons &= !SS_LEFT;
                     let _ = self.wins[&id].window.drag_resize_window(d);
+                    return;
+                }
+                Nc::Lang if button == MouseButton::Left => {
+                    // the program opens its language window
+                    let name = self.ui.forms[fi].name.clone();
+                    self.ui.post(&name, &name, "LanguageBadgeClick", Ev::Click);
+                    self.process();
+                    self.redraw_dirty();
+                    return;
+                }
+                Nc::History if button == MouseButton::Left => {
+                    // the program opens its History window
+                    let name = self.ui.forms[fi].name.clone();
+                    self.ui.post(&name, &name, "HistoryIconClick", Ev::Click);
+                    self.process();
+                    self.redraw_dirty();
+                    return;
+                }
+                Nc::Log if button == MouseButton::Left => {
+                    // the program opens its Log window
+                    let name = self.ui.forms[fi].name.clone();
+                    self.ui.post(&name, &name, "LogIconClick", Ev::Click);
+                    self.process();
+                    self.redraw_dirty();
                     return;
                 }
                 Nc::Caption if button == MouseButton::Left => {
@@ -705,6 +833,7 @@ impl<A: App> Runner<A> {
                         self.caption_click = (now - Duration::from_secs(10), usize::MAX);
                     } else {
                         self.caption_click = (now, fi);
+                        self.buttons &= !SS_LEFT;
                         let _ = self.wins[&id].window.drag_window();
                     }
                     return;
@@ -769,13 +898,20 @@ impl<A: App> Runner<A> {
         };
         let shift = shift_of(self.mods);
         if ev.state == ElementState::Pressed {
+            if code != 0 && !ev.repeat && self.app.hotkey(&mut self.ui, fi, code, shift) {
+                self.process();
+                self.redraw_dirty();
+                return;
+            }
             let mut raws = Vec::new();
             if code != 0 {
                 raws = self.ui.forms[fi].key_down(code, shift);
             }
             self.dispatch(fi, raws);
             if let Some(t) = &ev.text {
-                if shift & (SS_CTRL | SS_ALT) == 0 || (shift & SS_CTRL != 0 && shift & SS_ALT != 0) {
+                // Ctrl+Alt is AltGr; on macOS Option alone types characters (@, [ ...)
+                let (ctrl, alt) = (shift & SS_CTRL != 0, shift & SS_ALT != 0);
+                if ctrl == alt || alt && cfg!(target_os = "macos") {
                     let raws = self.ui.forms[fi].text_input(t);
                     self.dispatch(fi, raws);
                 }
@@ -925,6 +1061,10 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
             WindowEvent::Resized(size) => {
                 let theme = self.ui.theme;
                 let window = self.wins[&id].window.clone();
+                #[cfg(target_os = "windows")]
+                if fi == self.ui.main_form {
+                    self.follow_main(window.is_minimized() == Some(true));
+                }
                 let s = window.scale_factor() * self.ui.ui_scale;
                 let l: LogicalSize<f64> = size.to_logical(s);
                 // a move and a resize in one step (X11) brings no Moved event
@@ -962,6 +1102,21 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                 self.moved(fi, l);
             }
             WindowEvent::Focused(on) => {
+                #[cfg(target_os = "windows")]
+                if let Some((top, until)) = self.refocus {
+                    if Instant::now() > until {
+                        self.refocus = None;
+                    } else if on && fi != top {
+                        if let Some(w) = self.by_form.get(&top).and_then(|id| self.wins.get(id)) {
+                            w.window.focus_window();
+                        }
+                    }
+                }
+                #[cfg(target_os = "windows")]
+                if on {
+                    self.activated.retain(|&i| i != fi);
+                    self.activated.push(fi);
+                }
                 let f = &mut self.ui.forms[fi];
                 f.active = on;
                 f.dirty = true;
@@ -1009,7 +1164,8 @@ impl<A: App> ApplicationHandler<UserEvent> for Runner<A> {
                 if d != 0 {
                     let (x, y) = self.wins[&id].cursor;
                     let (cx, cy) = self.client_xy(fi, x, y);
-                    let raws = self.ui.forms[fi].wheel(d, cx, cy, shift_of(self.mods));
+                    let steps = wheel_steps(&mut self.wheel_rest, d);
+                    let raws = self.ui.forms[fi].wheel_by(d, steps, cx, cy, shift_of(self.mods));
                     self.dispatch(fi, raws);
                 }
             }

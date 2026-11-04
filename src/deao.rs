@@ -104,7 +104,7 @@ fn build_rays(quality: u8) -> Rays {
 }
 
 /// Calculates `amb_shadow` for all object pixels; `progress` counts the
-/// rows done.
+/// rows done, weighed by their surface pixels.
 #[allow(clippy::too_many_arguments)]
 pub fn deao(
     p: &CalcParams,
@@ -118,13 +118,18 @@ pub fn deao(
 ) {
     let pass = DeaoRows::new(p, dp);
     let threads = threads.min(height).max(1);
+    // (the rows weighed by their surface pixels: the pass works on those)
+    let sw = &crate::render::RowWeights::surface(gbuf, width, height);
     let finished = std::sync::atomic::AtomicUsize::new(0);
     let finished = &finished;
     std::thread::scope(|s| {
         let rows: Vec<(usize, &mut [SiLight])> = gbuf.chunks_mut(width).enumerate().collect();
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
+        // (at half resolution every second row is only marked: the rows in
+        // pairs, so that every thread gets its share of the work)
+        let pair = p.ao_half as usize;
         for (i, r) in rows {
-            per[i % threads].push((i, r));
+            per[(i >> pair) % threads].push((i, r));
         }
         for list in per {
             let pass = &pass;
@@ -135,11 +140,98 @@ pub fn deao(
                         break;
                     }
                     pass.row(y, row);
-                    progress(finished.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1, height);
+                    progress(finished.fetch_add(sw.weight(y), std::sync::atomic::Ordering::Relaxed) + sw.weight(y), sw.total());
                 }
             });
         }
     });
+    if p.ao_half {
+        fill_half(gbuf, width, height, p.rect[0], p.rect[1]);
+    }
+}
+
+/// A pixel left to [`fill_half`] (experimental: the occlusion at half
+/// resolution).
+pub const HALF_MARK: u16 = 0xFFFF;
+
+/// Whether the occlusion of the pixel (`x`, `y` in the whole picture) is
+/// calculated at half resolution: every second pixel of every second row.
+#[inline]
+pub fn half_calculated(x: i32, y: i32) -> bool {
+    (x | y) & 1 == 0
+}
+
+/// Fills the pixels marked [`HALF_MARK`] from the calculated ones around
+/// them (the corners of their 2 x 2 cell, the rectangle of `gbuf` at
+/// `x0`, `y0` of the picture): weighed by their distance, by how close
+/// their depth is and how alike their normals are, so that the occlusion
+/// does not run over edges.
+pub fn fill_half(gbuf: &mut [SiLight], w: usize, h: usize, x0: i32, y0: i32) {
+    let is_object = |s: &SiLight| s.zpos() < 32768 && s.si_gradient < 32768;
+    let src: Vec<SiLight> = gbuf.to_vec();
+    let at = |x: i64, y: i64| -> Option<&SiLight> {
+        if x < 0 || y < 0 || x >= w as i64 || y >= h as i64 {
+            return None;
+        }
+        let s = &src[y as usize * w + x as usize];
+        (is_object(s) && s.amb_shadow != HALF_MARK).then_some(s)
+    };
+    for y in 0..h {
+        for x in 0..w {
+            let i = y * w + x;
+            if gbuf[i].amb_shadow != HALF_MARK {
+                continue;
+            }
+            let me = src[i];
+            if !is_object(&me) {
+                gbuf[i].amb_shadow = 0;
+                continue;
+            }
+            // the picture's coordinates: the calculated pixels are even
+            let (gx, gy) = (x as i64 + x0 as i64, y as i64 + y0 as i64);
+            let (bx, by) = (gx & !1, gy & !1);
+            let z = me.zpos_fine as f64 / 256.0;
+            let n = me.normal.map(|v| v as f64 / 32767.0);
+            let (mut sum, mut wsum, mut plain, mut pw) = (0.0, 0.0, 0.0, 0.0);
+            for (cx, cy) in [(bx, by), (bx + 2, by), (bx, by + 2), (bx + 2, by + 2)] {
+                let Some(s) = at(cx - x0 as i64, cy - y0 as i64) else { continue };
+                let bil = (2.0 - (gx - cx).abs() as f64) * (2.0 - (gy - cy).abs() as f64);
+                if bil <= 0.0 {
+                    continue;
+                }
+                let zn = s.zpos_fine as f64 / 256.0;
+                // (depth in the G-buffer's units: a few hundred apart
+                // across the neighbours of a smooth surface)
+                let dz = (zn - z).abs() / (z.abs() * 2e-4 + 64.0);
+                let nn = s.normal.map(|v| v as f64 / 32767.0);
+                let dot = (n[0] * nn[0] + n[1] * nn[1] + n[2] * nn[2]).max(0.0);
+                let wgt = bil * dot.powi(4) / (1.0 + dz * dz);
+                sum += wgt * s.amb_shadow as f64;
+                wsum += wgt;
+                plain += bil * s.amb_shadow as f64;
+                pw += bil;
+            }
+            gbuf[i].amb_shadow = if wsum > 1e-3 {
+                (sum / wsum).round() as u16
+            } else if pw > 0.0 {
+                (plain / pw).round() as u16
+            } else {
+                // (no calculated neighbour on the object: the nearest one)
+                let mut best: Option<(i64, u16)> = None;
+                for dy in -2..=2i64 {
+                    for dx in -2..=2i64 {
+                        if let Some(s) = at(x as i64 + dx, y as i64 + dy) {
+                            let d = dx * dx + dy * dy;
+                            if best.is_none_or(|(bd, _)| d < bd) {
+                                best = Some((d, s.amb_shadow));
+                            }
+                        }
+                    }
+                }
+                best.map_or(16383, |b| b.1)
+            };
+        }
+    }
 }
 
 /// The pass of [`deao`] row by row: the rows in any order, by any thread,
@@ -184,6 +276,11 @@ fn deao_row(m: &mut Marcher, y: i32, row: &mut [SiLight], dp: &DeaoParams, base:
         let x = x as i32 + p.rect[0];
         si.amb_shadow = 0;
         if si.zpos() >= 32768 || si.si_gradient >= 32768 {
+            continue;
+        }
+        if p.ao_half && !half_calculated(x, y) {
+            // (experimental: filled from the calculated ones, fill_half)
+            si.amb_shadow = HALF_MARK;
             continue;
         }
         if !m.surface_point(x, y, si, 5, 0.004) {
@@ -297,6 +394,38 @@ fn deao_row(m: &mut Marcher, y: i32, row: &mut [SiLight], dp: &DeaoParams, base:
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn half_resolution_fills_from_the_calculated_pixels() {
+        // a flat surface (one depth, one normal) with the occlusion growing
+        // to the right, and a step in depth in the middle of the picture
+        let (w, h) = (9usize, 6usize);
+        let mut g = vec![SiLight::default(); w * h];
+        for y in 0..h {
+            for x in 0..w {
+                let s = &mut g[y * w + x];
+                s.normal = [0, 0, -32767];
+                s.zpos_fine = if x < 5 { 1000 << 8 } else { 900_000 << 8 };
+                s.amb_shadow = if half_calculated(x as i32 + 1, y as i32) { 1000 * x as u16 } else { HALF_MARK };
+            }
+        }
+        // (the rectangle at x 1 of the picture: odd columns are calculated)
+        fill_half(&mut g, w, h, 1, 0);
+        for y in 0..h {
+            for x in 0..w {
+                let a = g[y * w + x].amb_shadow;
+                assert_ne!(a, HALF_MARK);
+                if x < 4 {
+                    // between calculated neighbours on the same surface
+                    assert!((a as i32 - 1000 * x as i32).abs() <= 1000, "{x},{y}: {a}");
+                }
+                if x == 6 {
+                    // across the step only the pixels of its own depth
+                    assert!(a >= 5000, "{x},{y}: {a}");
+                }
+            }
+        }
+    }
 
     #[test]
     fn straight_ray_follows_the_normal() {

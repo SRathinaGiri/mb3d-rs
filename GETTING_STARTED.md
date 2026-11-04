@@ -40,7 +40,6 @@ BigRenders/           big renders
 ShaderCache/          the graphics driver's compiled shaders (Linux; made on the first calculation)
 MB3D-sources/         MB3D's Delphi sources and project files
 README-MB3D.md, README_1.*.txt, CHANGELOG.txt, License.txt   MB3D's documents
-examples/             scenes in this port's .m3s format
 ```
 
 Nothing else is needed: the program finds the formulas and maps next to
@@ -89,6 +88,9 @@ tutorials apply. A short tour:
   presets and the palette are at the top.
 * **Prefs ▸ Visual themes** switches between MB3D's Glossy look and the
   Windows look.
+* **Language:** the badge at the right end of the title bar shows the
+  interface language; click it to choose another or to create the file
+  of your own translation.
 
 Every change marks the image as old; *Calculate 3D* calculates it at full
 size. After that, changes in the Lighting window only repaint it and changes
@@ -104,7 +106,7 @@ Windows, open a command prompt in the unpacked folder and type `mb3d`
 ```sh
 ./mb3d "M3Parameter/6 AM - Torii temple.m3p" -o torii.png            # full size
 ./mb3d "M3Parameter/6 AM - Torii temple.m3p" --scale 0.25 -o small.png
-./mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.6 -o dof.png
+./mb3d -s dof=sorted -s dof_focus=0.6 -o dof.png                       # the built-in Mandelbulb
 ./mb3d batch M3Parameter --scale 0.2 -o previews                       # a folder
 ./mb3d animate flight.m3a                                              # MB3D animation
 ./mb3d montecarlo scene.m3p --rays 64 -o mc.png

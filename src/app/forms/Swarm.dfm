@@ -2,7 +2,7 @@ object SwarmFrm: TSwarmFrm
   Left = 200
   Top = 160
   BorderStyle = bsToolWindow
-  Caption = 'Swarm: rendering shared between your computers'
+  Caption = '@MB:SwarmRenderingSharedBetweenYourComputers'
   ClientHeight = 424
   ClientWidth = 1000
   Color = clBtnFace
@@ -21,14 +21,14 @@ object SwarmFrm: TSwarmFrm
     Top = 12
     Width = 88
     Height = 13
-    Caption = 'Shared folder:'
+    Caption = '@MB:SharedFolder'
   end
   object Edit1: TEdit
     Left = 100
     Top = 8
     Width = 440
     Height = 21
-    Hint = 'A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder'
+    Hint = '@MB:AFolderEveryComputerOfThe'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 0
@@ -39,7 +39,7 @@ object SwarmFrm: TSwarmFrm
     Top = 6
     Width = 84
     Height = 25
-    Caption = 'Browse...'
+    Caption = '@MB:Browse'
     TabOrder = 1
     OnClick = Button1Click
   end
@@ -48,14 +48,14 @@ object SwarmFrm: TSwarmFrm
     Top = 40
     Width = 88
     Height = 13
-    Caption = 'This computer:'
+    Caption = '@MB:ThisComputer'
   end
   object Edit2: TEdit
     Left = 100
     Top = 36
     Width = 160
     Height = 21
-    Hint = 'How this computer is listed in the swarm'
+    Hint = '@MB:HowThisComputerIsListedIn'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
@@ -66,7 +66,7 @@ object SwarmFrm: TSwarmFrm
     Top = 40
     Width = 150
     Height = 13
-    Caption = 'Threads for jobs (0 = all cores):'
+    Caption = '@MB:ThreadsForJobs0AllCores'
   end
   object Edit3: TEdit
     Left = 440
@@ -81,8 +81,8 @@ object SwarmFrm: TSwarmFrm
     Top = 64
     Width = 520
     Height = 17
-    Hint = 'Render the jobs other computers put into the folder, and give this computer''s renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it'
-    Caption = 'Share this computer: render the jobs of the folder, and give mine to the swarm'
+    Hint = '@MB:RenderTheJobsOtherComputersPut'
+    Caption = '@MB:ShareThisComputerRenderTheJobs'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 4
@@ -93,14 +93,14 @@ object SwarmFrm: TSwarmFrm
     Top = 90
     Width = 330
     Height = 13
-    Caption = 'Calculate 3D and the Batch window with the swarm, in'
+    Caption = '@MB:Calculate3DAndTheBatchWindow'
   end
   object Edit5: TEdit
     Left = 432
     Top = 86
     Width = 34
     Height = 21
-    Hint = 'Columns of tiles'
+    Hint = '@MB:ColumnsOfTiles'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 8
@@ -118,7 +118,7 @@ object SwarmFrm: TSwarmFrm
     Top = 86
     Width = 34
     Height = 21
-    Hint = 'Rows of tiles'
+    Hint = '@MB:RowsOfTiles'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 9
@@ -129,14 +129,14 @@ object SwarmFrm: TSwarmFrm
     Top = 90
     Width = 40
     Height = 13
-    Caption = 'tiles'
+    Caption = '@MB:Tiles'
   end
   object Label5: TLabel
     Left = 8
     Top = 120
     Width = 100
     Height = 13
-    Caption = 'In the swarm:'
+    Caption = '@MB:InTheSwarm'
   end
   object ListView1: TListView
     Left = 8
@@ -145,23 +145,23 @@ object SwarmFrm: TSwarmFrm
     Height = 170
     Columns = <
       item
-        Caption = 'Computer'
+        Caption = '@MB:Computer'
         Width = 120
       end
       item
-        Caption = 'Version'
+        Caption = '@MB:Version'
         Width = 56
       end
       item
-        Caption = 'Cores'
+        Caption = '@MB:Cores'
         Width = 44
       end
       item
-        Caption = 'Graphics card'
+        Caption = '@MB:GraphicsCard'
         Width = 160
       end
       item
-        Caption = 'Doing'
+        Caption = '@MB:Doing'
         Width = 236
       end>
     ColumnClick = False
@@ -176,7 +176,7 @@ object SwarmFrm: TSwarmFrm
     Top = 314
     Width = 100
     Height = 13
-    Caption = 'Jobs:'
+    Caption = '@MB:Jobs'
   end
   object ListView2: TListView
     Left = 8
@@ -185,19 +185,19 @@ object SwarmFrm: TSwarmFrm
     Height = 70
     Columns = <
       item
-        Caption = 'Job'
+        Caption = '@MB:Job'
         Width = 220
       end
       item
-        Caption = 'Kind'
+        Caption = '@MB:Kind'
         Width = 80
       end
       item
-        Caption = 'By'
+        Caption = '@MB:By'
         Width = 140
       end
       item
-        Caption = 'Progress'
+        Caption = '@MB:Progress'
         Width = 176
       end>
     ColumnClick = False
@@ -220,7 +220,7 @@ object SwarmFrm: TSwarmFrm
     Top = 8
     Width = 344
     Height = 380
-    Hint = 'The newest job so far: rendered parts, parts under way (with their progress), missing parts'
+    Hint = '@MB:TheNewestJobSoFarRendered'
     ParentShowHint = False
     ShowHint = True
   end

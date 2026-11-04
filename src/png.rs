@@ -164,7 +164,8 @@ fn deflate_fixed(data: &[u8]) -> Vec<u8> {
     b.finish()
 }
 
-fn zlib(data: &[u8]) -> Vec<u8> {
+/// A zlib stream (also the ZIP compression of OpenEXR pictures).
+pub(crate) fn zlib(data: &[u8]) -> Vec<u8> {
     let mut out = vec![0x78, 0x01];
     out.extend(deflate_fixed(data));
     out.extend(adler32(data).to_be_bytes());

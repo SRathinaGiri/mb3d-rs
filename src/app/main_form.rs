@@ -1,7 +1,9 @@
 //! The main window (Mand.pas, `TMand3DForm`).
 
+use crate::vcl::lang::{tr, trf};
 use super::engine::Job;
-use super::util::{fts, fts_single, parse_float, pti, ptf, time_str};
+use super::eta::RateEma;
+use super::util::{fts, fts_single, left_str, parse_float, pti, ptf, smooth_shown, time_str, Shown};
 use super::{Mb3d, MAIN};
 use crate::math::{build_rot_matrix, mat_mul, matrix_to_angles, normalise_matrix_to, rotate_vector_reverse};
 use crate::scene::{CameraOptic, Scene};
@@ -47,11 +49,95 @@ pub struct State {
     /// the stage the window shows and when it began, for the time left
     pub stage_shown: String,
     pub stage_start: Instant,
+    /// the stages after the main rendering this calculation has, the time
+    /// a whole main rendering takes (once known), and the time left in the
+    /// stage and in total as shown (see [`time_left`])
+    later: Vec<Later>,
+    passed: Vec<Later>,
+    stage_base: f64,
+    /// the time the rows of a continued calculation took before this run
+    /// (from its checkpoint; 0 when unknown)
+    kept_secs: f64,
+    main_full: Option<f64>,
+    stage_left_shown: Option<Shown>,
+    total_shown: Option<Shown>,
+    /// the running stage's pace, how much slower than their priors the
+    /// stages ran (one factor per kind of prior, see [`Prior`]), and the
+    /// time of a continued calculation's rows done before it
+    rate: RateEma,
+    slow: [f64; 2],
+    /// the model's expectations as this computer finds them (see eta::Calib)
+    calib: super::eta::Calib,
+    before_secs: f64,
+    /// how long each later stage takes relative to the main rendering (the
+    /// model's, from [`super::eta::later_ratios`]), and the whole
+    /// calculation's progress as the bar shows it: it only grows, and it
+    /// glides to the estimate (`bar_target`) instead of leaping when an
+    /// estimate changes (see [`idle`])
+    later_ratio: [f64; 3],
+    progress_shown: f64,
+    bar_target: f64,
+    bar_at: Instant,
+    /// the caption of a calculation stopped with the Stop button (its stage,
+    /// progress and time left), kept with the bar until it is replaced
+    stopped_status: Option<String>,
+    /// the time left the status line shows (seconds; the batch window
+    /// puts it into its title)
+    pub left_shown: Option<f64>,
+    /// the card's shaders compiled during the main rendering, and it ended
+    /// before its pace without compiling was known (the CPU did it alone:
+    /// the model's `CPU_ALONE` ratios then)
+    main_cold: bool,
+    main_unmeasured: bool,
+    /// (for `MB3D_ETA_LOG`) the main rendering's own time and its progress
+    /// when the shaders had compiled
+    main_secs: f64,
+    f_compiled: Option<f64>,
+    /// the later stages' times in this calculation, and in the last one
+    /// finished with the picture it had (`last_sig`): a picture calculated
+    /// again expects them (the main rendering's own time varies more, e.g.
+    /// with the card's shaders compiled); not those that ran while shaders
+    /// compiled (`later_cold`: the same picture again finds them compiled)
+    later_secs: [Option<f64>; 3],
+    later_cold: [bool; 3],
+    last_secs: [Option<f64>; 3],
+    last_main: Option<f64>,
+    calc_sig: String,
+    last_sig: String,
+    /// a stereo pair's left eye's time: the right one takes the same
+    eye_secs: Option<f64>,
+    /// the shaders' compile time when the stage began (see
+    /// [`compile_secs`]), and whether the main rendering compiled hardly
+    /// any (its time is then a measure for the later stages' ratios)
+    stage_compile: f64,
+    /// the running stage's seconds with the card's shaders compiling (a
+    /// later stage's: not its pace, nor a prior for next time), and since
+    /// when they compile now
+    stage_cold: f64,
+    cold_from: Option<f64>,
+    /// the compile time counted in the stage so far (a compile inside it,
+    /// which no flag shows: its pace starts again after)
+    compiled_seen: f64,
+    /// the running stage's progress over its time, (progress, seconds); the
+    /// stages' of this calculation and of the last one finished (`last_sig`)
+    /// by name: the same picture again progresses alike (its hard rows
+    /// where they were)
+    samples: Vec<(f64, f64)>,
+    /// the calculation's features for the later stages' times (see
+    /// [`super::eta`]) and the shaders' compile time when it began
+    eta_f: [f32; super::eta::FEATURES],
+    calc_compile: f64,
+    curves: Vec<(String, Vec<(f64, f64)>)>,
+    last_curves: Vec<(String, Vec<(f64, f64)>)>,
     /// the title bar LED: its state, blinking during a 3D calculation
     pub led: Led,
     pub led_running: bool,
     /// the note on the card's shaders compiling was shown for this calculation
     pub compile_note: bool,
+    /// the card's shaders compiling: since when (the status line's clock),
+    /// and the status label's own font while its colour pulses
+    pub compile_since: Option<Instant>,
+    pub status_font: Option<Option<crate::vcl::font::Font>>,
     pub user_aspect: (i32, i32),
     pub intern_aspect: f64,
     pub user_change: bool,
@@ -75,6 +161,9 @@ pub struct State {
     pub image_text: bool,
     /// full size image (for saving)
     pub rgb: Option<(std::sync::Arc<Vec<u8>>, usize, usize)>,
+    /// the parameter file History keeps of the running calculation: its
+    /// thumbnail is written beside it when the calculation ends
+    pub history_file: Option<std::path::PathBuf>,
     pub last_history: Instant,
     /// `FormsSticky`: the Formulas, Lighting and Post processing windows
     /// beside the main window: 0 free, 1 right, 2 left side
@@ -84,9 +173,15 @@ pub struct State {
     /// the calculation that waits for the answer whether to continue its
     /// unfinished one: its scene and 2D slice
     pub resume_ask: Option<(Scene, u8)>,
+    /// the question whether to calculate a picture that does not fit into
+    /// the free memory is open
+    pub memory_ask: bool,
     /// the next Calculate 3D continues the unfinished calculation of this
     /// key without asking (the Unfinished renders window's Continue)
     pub resume_key: Option<String>,
+    /// the ground plane's colour on the Cutting page (kept while the plane
+    /// is off)
+    pub ground_color: [u8; 3],
 }
 
 impl Default for State {
@@ -103,9 +198,48 @@ impl Default for State {
             calc_start: Instant::now(),
             stage_shown: String::new(),
             stage_start: Instant::now(),
+            later: Vec::new(),
+            passed: Vec::new(),
+            stage_base: 0.0,
+            kept_secs: 0.0,
+            main_full: None,
+            stage_left_shown: None,
+            total_shown: None,
+            rate: RateEma::default(),
+            slow: [1.0; 2],
+            calib: Default::default(),
+            before_secs: 0.0,
+            later_ratio: [0.0; 3],
+            progress_shown: 0.0,
+            bar_target: 0.0,
+            bar_at: Instant::now(),
+            stopped_status: None,
+            left_shown: None,
+            main_cold: false,
+            main_unmeasured: false,
+            main_secs: 0.0,
+            f_compiled: None,
+            later_secs: [None; 3],
+            later_cold: [false; 3],
+            last_secs: [None; 3],
+            last_main: None,
+            calc_sig: String::new(),
+            last_sig: String::new(),
+            eye_secs: None,
+            stage_compile: 0.0,
+            stage_cold: 0.0,
+            cold_from: None,
+            compiled_seen: 0.0,
+            samples: Vec::new(),
+            eta_f: [0.0; super::eta::FEATURES],
+            calc_compile: 0.0,
+            curves: Vec::new(),
+            last_curves: Vec::new(),
             led: Led::Idle,
             led_running: false,
             compile_note: false,
+            compile_since: None,
+            status_font: None,
             user_aspect: (0, 0),
             intern_aspect: 4.0 / 3.0,
             user_change: true,
@@ -122,11 +256,14 @@ impl Default for State {
             waker_set: false,
             image_text: false,
             rgb: None,
+            history_file: None,
             last_history: Instant::now(),
             sticky: [1, 1, 1],
             stick_it: 0,
             resume_ask: None,
+            memory_ask: false,
             resume_key: None,
+            ground_color: crate::scene::Ground::default().color,
         }
     }
 }
@@ -160,9 +297,16 @@ pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
 
 /// FormCreate, SetM3Dini, FirstShowUpdate and LoadStartupParas.
 pub fn start(app: &mut Mb3d, ui: &mut Ui) {
-    app.message(ui, "Welcome to Mandelbulb 3D!");
-    app.message(ui, "Visit the official web site for news and updates: https://mb3d.overwhale.com");
-    app.message(ui, "");
+    set_language_badge(ui);
+    ui.fm(F).history_hint = tr("@MB:HistoryThePicturesCalculatedTheFiles");
+    ui.fm(F).log_hint = tr("@MB:LogEverythingTheProgramDidIts");
+    // a session before this one that never ended (see log.rs)
+    if let Some(u) = crate::log::take_unclean() {
+        match &u.crash {
+            Some(c) => app.message(ui, &trf("@MB:TheLastSessionCrashed", &[c])),
+            None => app.message(ui, &trf("@MB:TheLastSessionDidNotEnd", &[&u.sessions])),
+        }
+    }
     ui.set_caption(F, "Label3", &version_str());
     let cpus = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(64) as i64;
     ui.set_position(F, "UpDown3", cpus);
@@ -225,11 +369,14 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         f.ctl[0].height = (h - 38).max(300);
     }
     // FirstShowUpdate
-    ui.cm(F, "RadioGroup2").hint = "Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.".into();
-    ui.cm(F, "Edit19").hint = "If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.".into();
-    ui.cm(F, "Edit20").hint = "Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.".into();
-    ui.cm(F, "UpDown4").hint = "Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening".into();
-    ui.cm(F, "Edit16").hint = "Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.".into();
+    for (b, h) in [("Button12", "@MB:RenderBothEyeImagesAndShow"), ("StereoPairSaveButton", "@MB:ChooseAFilenameThenRenderBoth")] {
+        ui.cm(F, b).hint = format!("{}\n{}", tr(h), tr("@MB:WithThe360PanoramaCameraA"));
+    }
+    ui.cm(F, "RadioGroup2").hint = format!("{}\n{}", tr("@MB:PanoramaModeTheFOVIsChoosen"), tr("@MB:FisheyeNotInMB3DTheField"));
+    ui.cm(F, "Edit19").hint = tr("@MB:IfSetToAHigherValue");
+    ui.cm(F, "Edit20").hint = tr("@MB:DefinesHowAccurateThePositionWith");
+    ui.cm(F, "UpDown4").hint = tr("@MB:SharpenFactorOfTheSavedOutput");
+    ui.cm(F, "Edit16").hint = tr("@MB:DynamicFogTheLowerTheNumber");
     for i in 0..4 {
         load_acc_preset(app, i);
     }
@@ -255,7 +402,7 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         match app.load_params(ui, &p) {
             Ok(()) => {
                 if app.startup_file.is_some() {
-                    app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
+                    app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
                     start_timer = false;
                 }
             }
@@ -369,6 +516,21 @@ pub fn show_led(ui: &mut Ui, led: Led, blinking: bool) {
 /// compile.
 pub const COMPILE_NOTE: &str = "First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.";
 
+/// [`COMPILE_NOTE`] in the current language.
+pub fn compile_note() -> String {
+    tr("@MB:FirstCalculationOfThisFormulaCombination")
+}
+
+/// The title bar's language badge: the interface language's code, its
+/// name in the hint; a click opens the language window.
+pub fn set_language_badge(ui: &mut Ui) {
+    let l = crate::vcl::lang::current();
+    let f = ui.fm(F);
+    f.caption_lang = l.code.clone();
+    f.caption_flag = l.flag.as_ref().map(|b| (**b).clone());
+    f.lang_hint = trf("@MB:InterfaceLanguageClickToChange", &[&l.name]);
+}
+
 /// The LED's hint: where the last calculation ran.
 pub fn set_led_hint(ui: &mut Ui, text: &str) {
     let f = ui.fm(F);
@@ -429,14 +591,14 @@ fn set_edit16(app: &Mb3d, ui: &mut Ui) {
     match &app.scene.vol_light {
         None => {
             set(ui, "Edit16", &app.scene.dfog_on_it.to_string());
-            ui.set_caption(F, "ButtonVolLight", "Dyn. fog on It.:");
+            ui.set_caption(F, "ButtonVolLight", &tr("@MB:DynFogOnIt"));
             ui.cm(F, "Edit16").width = w35;
             ui.set_visible(F, "UpDown5", false);
             ui.set_visible(F, "Label61", false);
         }
         Some(v) => {
             set(ui, "Edit16", &(v.light + 1).to_string());
-            ui.set_caption(F, "ButtonVolLight", "Volume light nr:");
+            ui.set_caption(F, "ButtonVolLight", &tr("@MB:VolumeLightNr"));
             let ud = ui.c(F, "UpDown5").left;
             let el = ui.c(F, "Edit16").left;
             ui.cm(F, "Edit16").width = ud - el - 2;
@@ -457,7 +619,9 @@ fn tenths(v: i32) -> String {
 }
 
 pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
+    super::experimental_form::apply_saved(app);
     let sc = app.scene.clone();
+    super::experimental_form::show_values(app, ui);
     // the statistics of the calculation the parameters come from (none
     // known: the labels stay empty, as at MB3D's start)
     let st = sc.stats;
@@ -504,6 +668,15 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "CheckBox4", sc.cut_options & 1 != 0);
     ui.set_checked(F, "CheckBox5", sc.cut_options & 2 != 0);
     ui.set_checked(F, "CheckBox6", sc.cut_options & 4 != 0);
+    let g = sc.ground.unwrap_or_default();
+    ui.set_checked(F, "GroundCBx", sc.ground.is_some());
+    ui.set_item_index(F, "GroundAxisCB", g.axis as i32);
+    set(ui, "GroundPosEdit", &fts(g.pos));
+    set(ui, "GroundReflEdit", &fts_single(g.reflect as f64));
+    set(ui, "GroundWaveEdit", &fts(g.wave_height));
+    set(ui, "GroundWaveLenEdit", &fts(g.wave_len));
+    app.main.ground_color = g.color;
+    ground_swatch(app, ui);
     ui.set_checked(F, "CheckBox9", sc.vary_de_stop_on_fov);
     ui.set_checked(F, "CheckBox7", sc.julia);
     ui.set_item_index(F, "RadioGroup2", sc.optic as i32);
@@ -521,6 +694,7 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
 
 /// `MakeHeader` (the main window's part).
 pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
+    super::experimental_form::read_values(app, ui);
     let sc = &mut app.scene;
     let w = pti(&t(ui, "Edit11"));
     let h = pti(&t(ui, "Edit12"));
@@ -532,6 +706,7 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.optic = match ui.item_index(F, "RadioGroup2") {
         1 => CameraOptic::Planar,
         2 => CameraOptic::Panorama,
+        3 => CameraOptic::Fisheye,
         _ => CameraOptic::Common,
     };
     sc.bin_search_steps = pti(&t(ui, "Edit20")).clamp(0, 50);
@@ -546,6 +721,15 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.fov_y = ptf(&t(ui, "Edit14"));
     sc.cut_pos = [ptf(&t(ui, "Edit23")), ptf(&t(ui, "Edit24")), ptf(&t(ui, "Edit22"))];
     sc.cut_options = ui.checked(F, "CheckBox4") as u8 | (ui.checked(F, "CheckBox5") as u8) << 1 | (ui.checked(F, "CheckBox6") as u8) << 2;
+    sc.ground = ui.checked(F, "GroundCBx").then(|| crate::scene::Ground {
+        axis: ui.item_index(F, "GroundAxisCB").clamp(0, 2) as u8,
+        pos: ptf(&t(ui, "GroundPosEdit")),
+        above: false,
+        color: app.main.ground_color,
+        reflect: (ptf(&t(ui, "GroundReflEdit")) as f32).clamp(0.0, 1.0),
+        wave_height: ptf(&t(ui, "GroundWaveEdit")).max(0.0),
+        wave_len: Some(ptf(&t(ui, "GroundWaveLenEdit"))).filter(|v| *v > 0.0).unwrap_or(1.0),
+    });
     sc.de_stop = ptf(&t(ui, "Edit25")).max(0.001);
     sc.julia = ui.checked(F, "CheckBox7");
     sc.julia_c = [ptf(&t(ui, "Edit28")), ptf(&t(ui, "Edit29")), ptf(&t(ui, "Edit30")), ptf(&t(ui, "Edit7"))];
@@ -555,7 +739,7 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.vary_de_stop_on_fov = ui.checked(F, "CheckBox9");
     sc.color_option = ui.item_index(F, "RadioGroup1").clamp(0, 5) as u8;
     sc.color_on_it = (pti(&t(ui, "Edit35")) + 1).clamp(0, 255) as u8;
-    if ui.caption(F, "ButtonVolLight") == "Dyn. fog on It.:" {
+    if ui.caption(F, "ButtonVolLight") != tr("@MB:VolumeLightNr") {
         sc.vol_light = None;
         sc.dfog_on_it = pti(&t(ui, "Edit16")).clamp(0, 65535) as u16;
     } else {
@@ -568,17 +752,24 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.threads = if n == std::thread::available_parallelism().map(|n| n.get()).unwrap_or(0) { 0 } else { n };
 }
 
+/// The ground plane's colour on its button.
+fn ground_swatch(app: &Mb3d, ui: &mut Ui) {
+    let b = ui.cm(F, "GroundColBtn");
+    b.glyph = Some(super::light_form::swatch(app.main.ground_color));
+    b.num_glyphs = 1;
+}
+
 /// `PageControl1Change`: tab captions show active options.
 pub fn page_control1_change(_app: &Mb3d, ui: &mut Ui) {
     let julia = ui.checked(F, "CheckBox7");
-    ui.cm(F, "TabSheet9").caption = if julia { "Julia On".into() } else { "Julia Off".into() };
-    let cut = ui.checked(F, "CheckBox4") || ui.checked(F, "CheckBox5") || ui.checked(F, "CheckBox6");
-    ui.cm(F, "TabSheet8").caption = if cut { "Cutting*".into() } else { "Cutting".into() };
+    ui.cm(F, "TabSheet9").caption = if julia { tr("@MB:JuliaOn") } else { tr("@MB:JuliaOff") };
+    let cut = ui.checked(F, "CheckBox4") || ui.checked(F, "CheckBox5") || ui.checked(F, "CheckBox6") || ui.checked(F, "GroundCBx");
+    ui.cm(F, "TabSheet8").caption = if cut { tr("@MB:Cutting2") } else { tr("@MB:Cutting") };
 }
 
 fn update_aspect_caption(app: &Mb3d, ui: &mut Ui) {
     let (x, y) = app.main.user_aspect;
-    let c = if x > 0 { format!("{x}:{y}") } else { "user".into() };
+    let c = if x > 0 { format!("{x}:{y}") } else { tr("@MB:User") };
     ui.set_caption(F, "SpeedButton21", &c);
 }
 
@@ -619,24 +810,32 @@ pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_enabled(F, b, false);
     }
     ui.set_enabled(F, "SpeedButton9", false);
-    ui.set_caption(F, "Button2", "Stop");
-    ui.cm(F, "Button2").hint = "Stop the current calculation.".into();
+    ui.set_caption(F, "Button2", &tr("@MB:Stop"));
+    ui.cm(F, "Button2").hint = tr("@MB:StopTheCurrentCalculation");
     ui.cm(F, "Image1").cursor = "crHourGlass".into();
     ui.set_position(F, "ProgressBar1", 0);
+    // (the frame number makes room for the stage and its time left)
+    ui.set_visible(F, "Panel7", false);
+    app.main.stopped_status = None;
+    app.main.left_shown = None;
     app.main.calculating = true;
 }
 
 pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_caption(F, "Label6", "");
-    ui.set_caption(F, "Button2", "Calculate 3D");
-    ui.cm(F, "Button2").hint = "Sart the main rendering of the image.".into();
+    ui.set_caption(F, "Button2", &tr("@MB:Calculate3D"));
+    ui.cm(F, "Button2").hint = tr("@MB:SartTheMainRenderingOfThe");
     for b in CALC_BUTTONS {
         ui.set_enabled(F, b, true);
     }
     let undo_ok = app.main.undo.len() > 1;
     ui.set_enabled(F, "SpeedButton9", undo_ok);
     ui.set_visible(F, "ProgressBar1", false);
+    ui.set_visible(F, "Panel7", true);
     app.main.calculating = false;
+    // a stopped or failed calculation saves nothing later
+    app.main.auto_m3i = None;
+    app.main.auto_stereo = None;
     set_image_cursor(app, ui);
 }
 
@@ -747,41 +946,66 @@ fn store_undo(app: &mut Mb3d) {
 /// `CalcMand`: starts the calculation (3D or the 2D slice of `slice_calc`).
 pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     // a new calculation: only the automatic post processings
-    app.post = super::postpro_form::State::default();
+    app.post.new_calc();
     app.make_scene(ui);
     if calc3d {
         store_undo(app);
     }
     if app.scene.width < 1 || app.scene.height < 1 {
+        app.main.auto_m3i = None;
         return;
     }
-    // the whole picture is held here (with the swarm too): one that does
-    // not fit would only swap until the system stops the program
+    // the whole picture is held here (with the swarm too, whose tiles'
+    // computers do the main calculation: the memory check of a tile is in
+    // swarm.rs): one that does not fit into the free memory swaps, and the
+    // program may then stop responding for minutes: asked first
     if calc3d {
-        if let Err(e) = crate::render::check_memory(app.scene.width as usize, app.scene.height as usize) {
-            app.message(ui, &format!("Not calculated: {e}.\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture (with the swarm too)."));
+        let swarm = super::swarm_form::calc_folder(app).is_some();
+        let use_ = crate::render::MemoryUse { march: !swarm, window: true, ..crate::render::MemoryUse::of(&app.scene) };
+        if let Some((need, free)) = crate::render::memory_shortfall(use_) {
+            app.main.memory_ask = true;
+            ui.message_box(
+                "main:memory",
+                &tr("@MB:Memory"),
+                &trf("@MB:AXPictureNeedsAboutOf", &[&app.scene.width, &app.scene.height, &crate::render::gigabytes(need), &crate::render::gigabytes(free)]),
+                &[MR_YES, MR_NO],
+            );
             return;
         }
     }
+    calc_mand_go(app, ui, calc3d);
+}
+
+/// [`calc_mand`] after its checks: the calculation of `app.scene` starts.
+fn calc_mand_go(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
     app.main.calc3d = calc3d;
-    app.main.calc_start = Instant::now();
     app.main.stage_shown = "main rendering".into();
-    app.main.stage_start = Instant::now();
+    let later = if calc3d { later_stages(&app.scene) } else { Vec::new() };
+    let sig = if calc3d { picture_sig(&app.scene) } else { String::new() };
+    app.main.start_eta(&app.scene, later, sig, super::eta::Calib::parse(app.ini.get_extra("eta_calib")));
+    // the bar of a stopped calculation that may be continued stays where
+    // it was (it goes on from there, or restarts when the calculation does,
+    // see `dialog`); any other calculation's starts from zero
+    let swarm = calc3d && super::swarm_form::calc_folder(app).is_some();
+    if !calc3d || swarm || super::engine::unfinished_calc(&app.scene).is_none() {
+        app.main.bar_restart();
+    }
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
+    ui.set_position(F, "ProgressBar1", (app.main.progress_shown * ui.c(F, "ProgressBar1").max as f64) as i64);
     for l in ["Label8", "Label48", "Label50"] {
         ui.set_caption(F, l, "-");
     }
     ui.set_visible(F, "ProgressBar1", calc3d);
     if calc3d {
-        ui.set_caption(F, "Label6", "main rendering");
+        ui.set_caption(F, "Label6", &tr("@MB:MainRendering"));
         #[cfg(feature = "gpu")]
         crate::gpu::set_status(String::new());
         app.main.led_running = true;
         app.main.compile_note = false;
     }
     let slice = if calc3d { 0 } else { app.main.slice_calc.clamp(1, 3) };
-    if let (true, Some(dir)) = (calc3d, super::swarm_form::calc_folder(app)) {
+    if let (true, Some(dir)) = (swarm, super::swarm_form::calc_folder(app)) {
         let (cols, rows) = app.swarm.tiles;
         app.eng.start(Job::Swarm { scene: app.scene.clone(), dir, cols, rows, name: app.swarm.name.clone() });
         return;
@@ -793,19 +1017,21 @@ pub fn calc_mand(app: &mut Mb3d, ui: &mut Ui, calc3d: bool) {
 fn start_stereo_pair(app: &mut Mb3d, ui: &mut Ui) {
     app.make_scene(ui);
     store_undo(app);
-    let layout = if ui.checked(F, "StereoCrossCheck") {
+    // a panorama: the 360 degree stereo panorama of VR players
+    let layout = if app.scene.optic == CameraOptic::Panorama {
+        crate::render::StereoLayout::TopBottom
+    } else if ui.checked(F, "StereoCrossCheck") {
         crate::render::StereoLayout::Cross
     } else {
         crate::render::StereoLayout::Parallel
     };
     app.main.calc3d = true;
-    app.main.calc_start = Instant::now();
     app.main.stage_shown = "stereo: rendering left eye".into();
-    app.main.stage_start = Instant::now();
+    app.main.start_eta(&app.scene, Vec::new(), String::new(), super::eta::Calib::parse(app.ini.get_extra("eta_calib")));
     ui.set_visible(F, "Shape1", false);
     disable_buttons(app, ui);
     ui.set_visible(F, "ProgressBar1", true);
-    ui.set_caption(F, "Label6", "stereo: rendering left eye");
+    ui.set_caption(F, "Label6", &tr("@MB:StereoRenderingLeftEye"));
     app.main.led_running = true;
     app.main.compile_note = false;
     #[cfg(feature = "gpu")]
@@ -821,7 +1047,7 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui, sc: Scene, slice: u8) {
             run_calc(app, sc, slice, crate::checkpoint::Policy::Continue);
         } else {
             not_started(app, ui);
-            app.message(ui, "The parameters do not match the unfinished calculation any more: press \"Calculate 3D\" to calculate them.");
+            app.message(ui, &tr("@MB:TheParametersDoNotMatchThe"));
         }
         return;
     }
@@ -831,8 +1057,8 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui, sc: Scene, slice: u8) {
             app.main.resume_ask = Some((sc, slice));
             ui.message_box(
                 "main:resume",
-                "Unfinished calculation",
-                &format!("An unfinished calculation of this picture was kept ({}).\n\nContinue it?  \"No\" calculates it again from the start.", e.summary()),
+                &tr("@MB:UnfinishedCalculation"),
+                &trf("@MB:AnUnfinishedCalculationOfThisPicture", &[&e.summary()]),
                 &[MR_YES, MR_NO, MR_CANCEL],
             );
             return;
@@ -855,7 +1081,7 @@ fn not_started(app: &mut Mb3d, ui: &mut Ui) {
 /// calculation of `key` (the Unfinished renders window).
 pub fn continue_calc(app: &mut Mb3d, ui: &mut Ui, key: &str) {
     if app.eng.running() {
-        app.message(ui, "A calculation is running: stop it first.");
+        app.message(ui, &tr("@MB:ACalculationIsRunningStopIt"));
         return;
     }
     app.main.resume_key = Some(key.to_string());
@@ -870,35 +1096,628 @@ pub fn scene_loaded(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn run_calc(app: &mut Mb3d, sc: Scene, slice: u8, resume: crate::checkpoint::Policy) {
+    if crate::log::active() {
+        let names: Vec<String> = sc.formulas.iter().filter(|f| f.iterations > 0).map(|f| format!("{} x{}", f.formula.name(), f.iterations)).collect();
+        let later: Vec<&str> = later_stages(&sc)
+            .iter()
+            .map(|l| match l {
+                Later::Post => "shadows/AO",
+                Later::Reflections => "reflections",
+                Later::Dof => "depth of field",
+            })
+            .collect();
+        crate::log::info(
+            "calc",
+            &format!(
+                "{}{}: {} x {}, {}{}{}",
+                if slice != 0 { "2D slice" } else { "Calculate 3D" },
+                if app.title.is_empty() { String::new() } else { format!(" \"{}\"", stem(&app.title)) },
+                sc.width,
+                sc.height,
+                names.join(" + "),
+                if later.is_empty() { String::new() } else { format!(", then {}", later.join(", ")) },
+                if app.main.image_scale > 1 { format!(", shown 1:{}", app.main.image_scale) } else { String::new() }
+            ),
+        );
+    }
     app.eng.set_preview_step(app.main.image_scale.max(1) as usize);
     app.eng.start(Job::Calc { scene: sc, slice, resume, name: stem(&app.title) });
 }
 
-/// "hard shadows: 40 %, about 2 min left": the stage, its progress and,
-/// once the rate is known, the time left.
-fn stage_caption(stage: &str, f: f64, secs: f64) -> String {
-    if f <= 0.0 {
-        return stage.to_string();
+/// The stages of a 3D calculation after the main rendering, in their
+/// order: hard shadows and ambient occlusion, reflections, depth of field.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Later {
+    Post,
+    Reflections,
+    Dof,
+}
+
+fn later_of(stage: &str) -> Option<Later> {
+    if stage.starts_with("reflections") {
+        Some(Later::Reflections)
+    } else if stage.starts_with("depth of field") {
+        Some(Later::Dof)
+    } else if stage.contains("shadows") || stage.contains("ambient occlusion") {
+        Some(Later::Post)
+    } else {
+        None
     }
-    let pct = format!("{stage}: {} %", (f * 100.0).floor() as i64);
-    if secs < 3.0 || f < 0.02 || f >= 1.0 {
-        return pct;
+}
+
+fn later_stages(sc: &Scene) -> Vec<Later> {
+    let mut v = Vec::new();
+    if sc.shadows.is_some() || sc.ao.is_some() {
+        v.push(Later::Post);
     }
-    let left = (secs * (1.0 - f) / f).round() as i64;
-    let t = match left {
-        0..=59 => format!("{} s", left.max(1)),
-        60..=3599 => format!("{} min", (left + 30) / 60),
-        _ => format!("{} h {} min", left / 3600, left % 3600 / 60),
+    if sc.mc.reflections {
+        v.push(Later::Reflections);
+    }
+    if sc.dof.is_some() {
+        v.push(Later::Dof);
+    }
+    v
+}
+
+/// What makes a picture the same for the stages' times: its parameters
+/// (not the statistics of its last calculation).
+fn picture_sig(sc: &Scene) -> String {
+    let mut s = sc.clone();
+    s.stats = Default::default();
+    s.threads = 0;
+    format!("{s:?}")
+}
+
+/// Which stage of a 3D calculation runs, for the time left: the main
+/// rendering, a stage after it, an eye of a stereo pair (0 left, 1 right)
+/// or one on its own (a 2D calculation, the swarm's).
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Kind {
+    Main,
+    Later(Later),
+    Eye(u8),
+    Other,
+}
+
+fn kind_of(stage: &str) -> Kind {
+    if stage.starts_with("main rendering") {
+        Kind::Main
+    } else if let Some(k) = later_of(stage) {
+        Kind::Later(k)
+    } else if stage.starts_with("stereo: rendering left") {
+        Kind::Eye(0)
+    } else if stage.starts_with("stereo: rendering right") {
+        Kind::Eye(1)
+    } else {
+        Kind::Other
+    }
+}
+
+/// Where a stage's prior comes from: the same stage of the same picture
+/// last time, or the model's ratio to this run's main rendering. Each has
+/// its own slowdown factor: the model's already sees this run's pace.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Prior {
+    Last,
+    Model,
+}
+
+impl State {
+    /// A 3D calculation begins: the time left starts over.
+    fn start_eta(&mut self, sc: &Scene, later: Vec<Later>, sig: String, calib: super::eta::Calib) {
+        self.calib = calib;
+        self.calc_start = Instant::now();
+        self.stage_start = Instant::now();
+        self.stage_compile = compile_secs();
+        self.stage_cold = 0.0;
+        self.cold_from = None;
+        self.compiled_seen = 0.0;
+        self.calc_compile = compile_secs();
+        self.later = later;
+        self.passed.clear();
+        self.samples.clear();
+        self.curves.clear();
+        self.rate = RateEma::default();
+        self.main_cold = false;
+        self.main_unmeasured = false;
+        self.main_secs = 0.0;
+        self.f_compiled = None;
+        self.later_secs = [None; 3];
+        self.later_cold = [false; 3];
+        // (the same picture continued after a stop: its main rendering's
+        // time is known, the continued rendering measures little of it)
+        let same = !sig.is_empty() && sig == self.calc_sig;
+        self.calc_sig = sig;
+        self.eye_secs = None;
+        self.stage_base = 0.0;
+        self.kept_secs = 0.0;
+        self.before_secs = 0.0;
+        // (the same picture continued: the bar goes on where the stopped
+        // one's was, see `calc_mand`)
+        if !same {
+            self.bar_restart();
+            self.main_full = None;
+            self.eta_f = super::eta::scene_features(sc);
+            self.later_ratio = super::eta::later_ratios(&self.eta_f);
+        }
+        self.slow = [1.0; 2];
+        self.stage_left_shown = None;
+        self.total_shown = None;
+    }
+
+    /// The bar starts from zero: a calculation that does not continue a
+    /// stopped one.
+    fn bar_restart(&mut self) {
+        self.progress_shown = 0.0;
+        self.bar_target = 0.0;
+        self.bar_at = Instant::now();
+    }
+
+    /// What a stage is expected to take as a whole, before it runs: the
+    /// same stage's time last time for the same picture, else (a later
+    /// stage) the main rendering's time at the model's ratio; a stereo
+    /// pair's right eye takes what the left one did.
+    fn prior(&self, kind: Kind) -> Option<(f64, Prior)> {
+        let same = !self.calc_sig.is_empty() && self.calc_sig == self.last_sig;
+        match kind {
+            Kind::Main => self.last_main.filter(|_| same).map(|t| (t, Prior::Last)),
+            Kind::Later(k) => match self.last_secs[k as usize].filter(|_| same) {
+                Some(t) => Some((t, Prior::Last)),
+                None => self.main_full.map(|full| (self.later_ratio[k as usize] * full * self.calib.factor(self.on_card(), k as usize), Prior::Model)),
+            },
+            Kind::Eye(1) => self.eye_secs.map(|t| (t, Prior::Last)),
+            _ => None,
+        }
+    }
+
+    /// Whether the card takes part (the model's feature).
+    fn on_card(&self) -> bool {
+        self.eta_f[2] > 0.5
+    }
+
+    /// The prior at this run's pace: slower or faster than last time as
+    /// the stages so far were.
+    fn expected(&self, kind: Kind) -> Option<f64> {
+        self.prior(kind).map(|(t, p)| t * self.slow[p as usize])
+    }
+
+    /// The stages after this one.
+    fn following(&self, kind: Kind) -> Vec<Kind> {
+        match kind {
+            Kind::Main => self.later.iter().map(|k| Kind::Later(*k)).collect(),
+            Kind::Later(k) => self.later.iter().copied().skip_while(|l| *l != k).skip(1).map(Kind::Later).collect(),
+            Kind::Eye(0) => vec![Kind::Eye(1)],
+            _ => Vec::new(),
+        }
+    }
+}
+
+/// The same stage of the same picture last time, as a whole at this run's
+/// pace so far (its curve tells where its hard rows were; None too early
+/// into it): `f` the progress now, `secs` the time it took.
+fn curve_total(c: &[(f64, f64)], f: f64, secs: f64) -> Option<f64> {
+    if c.len() < 4 {
+        return None;
+    }
+    let i = c.partition_point(|s| s.0 < f).clamp(1, c.len() - 1);
+    let ((f0, t0), (f1, t1)) = (c[i - 1], c[i]);
+    let then = t0 + (t1 - t0) * ((f - f0) / (f1 - f0).max(1e-9)).clamp(0.0, 1.0);
+    (then > 1.0).then(|| c[c.len() - 1].1 * (secs / then).clamp(0.33, 3.0))
+}
+
+/// A stage's name as the bar's caption shows it: without where it runs,
+/// in the interface language (the engine's names stay English: the code
+/// tells the stages apart by them).
+fn short_stage(stage: &str) -> String {
+    let name = stage.split(" (").next().unwrap_or(stage);
+    match name {
+        "main rendering" => tr("@MB:MainRendering"),
+        "hard shadows and ambient occlusion" => tr("@MB:ShadowsAndAO"),
+        "hard shadows" => tr("@MB:HardShadowsLower"),
+        "ambient occlusion" => tr("@MB:AmbientOcclusion"),
+        "ambient" => tr("@MB:AmbientLower"),
+        "post calculations" => tr("@MB:PostCalculations"),
+        "post processing" => tr("@MB:PostProcessingLower"),
+        "reflections" => tr("@MB:ReflectionsLower"),
+        "reflections of the selection" => tr("@MB:ReflectionsOfTheSelection"),
+        "depth of field" => tr("@MB:DepthOfFieldLower"),
+        "painting a preview" => tr("@MB:PaintingAPreview"),
+        "rough image" => tr("@MB:RoughImage"),
+        "recalculating the selection" => tr("@MB:RecalculatingTheSelection"),
+        "stereo: rendering left eye" => tr("@MB:StereoRenderingLeftEye"),
+        "stereo: rendering right eye" => tr("@MB:StereoRenderingRightEye"),
+        "stereo: composing preview" => tr("@MB:StereoComposingPreview"),
+        "swarm: creating the job" => tr("@MB:SwarmCreatingTheJob"),
+        _ => match name.strip_prefix("swarm: ") {
+            Some(rest) => trf("@MB:SwarmLower", &[&rest]),
+            None => name.to_string(),
+        },
+    }
+}
+
+/// "hard shadows: 40 % · about 6 min left": the stage, its progress and
+/// the time left in the whole calculation (one figure throughout, not the
+/// stage's: that only when the stages to come are unknown; short: it has
+/// the room beside the bar; the LED shows where it runs).
+fn stage_caption(stage: &str, f: f64, left: Option<f64>, total: Option<f64>) -> String {
+    let name = short_stage(stage);
+    let mut t = if f <= 0.0 { name } else { format!("{name}: {} %", (f * 100.0).floor() as i64) };
+    if let Some(l) = total.or(left) {
+        t += &format!(" · {}", left_str(l));
+    }
+    t
+}
+
+/// What [`time_left`] found: the time left in the stage and in the whole
+/// calculation (None when nothing follows the stage, or the times of the
+/// stages to come are unknown yet), and the whole calculation's progress.
+#[derive(Default)]
+struct Left {
+    stage: Option<f64>,
+    total: Option<f64>,
+    progress: Option<f64>,
+}
+
+/// The time left, one estimate for every stage: the running one's whole
+/// time as measured (its pace, [`RateEma`]) blended with its prior (see
+/// [`State::prior`]) as it progresses, plus the priors of the stages to
+/// come at this run's pace; shown smoothed the way a download's time left
+/// is. `f` the progress, `base` the part done before a continued one began.
+fn time_left(app: &mut Mb3d, stage: &str, f: f64, base: f64) -> Left {
+    let m = &mut app.main;
+    let now = Instant::now();
+    let secs = now.saturating_duration_since(m.stage_start).as_secs_f64();
+    let kind = kind_of(stage);
+    let main = kind == Kind::Main;
+    // (a continued one keeps the features of its first run: the rows read
+    // back from its checkpoint are not marched)
+    if main && base == 0.0 {
+        super::eta::march_features(&mut m.eta_f, &app.eng.0, secs);
+        m.later_ratio = super::eta::later_ratios(&m.eta_f);
+    }
+    // (a continued one after the program was restarted: the time its rows
+    // took, kept with them, says what the whole main rendering takes)
+    if main && m.main_full.is_none() && m.kept_secs > 0.0 && base >= 0.05 {
+        m.main_full = Some(m.kept_secs / base);
+    }
+    // (an eye of a stereo pair has half the bar)
+    let (f, base) = match kind {
+        Kind::Eye(i) => ((f - 0.5 * i as f64) * 2.0, 0.0),
+        _ => (f, base),
     };
-    format!("{pct}, about {t} left")
+    let compiling = shaders_compiling();
+    // a later stage with the card's shaders compiling: its time so far is
+    // not its pace (the main rendering's: `compiling_main`)
+    if compiling {
+        m.cold_from.get_or_insert(secs);
+    } else if let Some(c) = m.cold_from.take() {
+        m.stage_cold += secs - c;
+    }
+    // (a compile inside the stage shows in the compile time counted)
+    let compiled_now = (compile_secs() - m.stage_compile).max(0.0);
+    let cold = (m.stage_cold + m.cold_from.map_or(0.0, |c| secs - c)).max(compiled_now);
+    let work = if main { secs } else { secs - cold };
+    let compiled_more = compiled_now > m.compiled_seen + 0.01;
+    m.compiled_seen = compiled_now;
+    if (compiling || compiled_more) && !main {
+        if let Kind::Later(k) = kind {
+            m.later_cold[k as usize] = true;
+        }
+        m.samples.clear();
+        m.rate = RateEma::default();
+    }
+    // a sample at most every quarter second: the pace, and the curve
+    if f > 0.0 && m.samples.last().is_none_or(|s| secs - s.1 >= 0.25 && f > s.0) {
+        if let Some(&(f0, t0)) = m.samples.last() {
+            m.rate.add(f - f0, secs - t0);
+        } else if work >= 1.0 && f > base && !(main && base > 0.0) {
+            // the first report well into the stage (the reflections' first
+            // round): work done since it began, measured from its start
+            // (rows a stage has nothing to do for show up at once instead;
+            // a continued main rendering's first report, after the probe
+            // weighed its rows, is the rows kept: no work)
+            m.rate.add(f - base, work);
+            m.samples.push((base, secs - work));
+        }
+        m.samples.push((f, secs));
+    }
+    // the progress made under measurement (not the rows a stage has
+    // nothing to do for, which show up at once)
+    let from = m.samples.first().map_or(base, |s| s.0.max(base));
+    let g = ((f - from) / (1.0 - from).max(1e-6)).clamp(0.0, 1.0);
+    // the card's shaders compiling during the main rendering: the CPU
+    // threads alone so far, much slower than with the card once it joins
+    if main && m.main_cold && !compiling && m.f_compiled.is_none() {
+        m.f_compiled = Some(f);
+    }
+    if compiling && main {
+        m.samples.clear();
+        m.rate = RateEma::default();
+        m.main_cold = true;
+    }
+    // the stage's whole time as measured: at its pace, the rest of it (none
+    // once its progress is complete but it goes on, e.g. an eye's shadows)
+    let measured = if compiling && main {
+        compiling_main(m, f, base, secs).map(|l| secs + l)
+    } else if compiling {
+        None
+    } else {
+        m.rate.rate().filter(|_| f < 1.0).map(|r| work + (1.0 - f) / r)
+    };
+    // and as expected before it ran (a continued one: the rows it has
+    // left; the occlusion after the shadows: what is left of their
+    // common prior); without one the measurement, once the pace shows
+    let same = !m.calc_sig.is_empty() && m.calc_sig == m.last_sig && base == 0.0;
+    let spent = match kind {
+        Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0),
+        _ => 0.0,
+    };
+    let curve = m.last_curves.iter().find(|c| same && c.0 == stage).and_then(|c| curve_total(&c.1, f, secs));
+    let prior = curve.or_else(|| m.expected(kind).map(|t| (t - spent).max(0.0))).map(|t| t * (1.0 - base));
+    // (the main rendering with the shaders compiling: its estimate is the
+    // CPU threads' pace with the compile, not the samples, which are cleared)
+    let whole = super::eta::blend(measured, prior, g)
+        .filter(|_| prior.is_some() || (secs >= 3.0 && g >= 0.02) || (compiling && main))
+        // (a stage without progress that runs past its prior: nothing to say;
+        // one whose progress is complete goes on for the stages to come)
+        .filter(|t| measured.is_some() || *t > work + 1.0 || f >= 1.0);
+    // (a later stage's compile: what it still takes, on top)
+    let compile = if compiling && !main { super::eta::compile_left(m.stage_start).unwrap_or(0.0) } else { 0.0 };
+    let left = whole.map(|t| (t - work).max(0.0) + compile);
+    if main && !compiling {
+        // the time a whole main rendering takes, for the model's ratios
+        // (after the card's shaders compiled: at the pace since, from the
+        // first sample after them, once that pace is a couple of seconds
+        // old: the rows the card delivers at once when it joins are not
+        // its pace; until then the compile's estimate stays)
+        if let Some(l) = left {
+            match (m.main_cold, m.samples.first()) {
+                (true, Some(&(f0, t0))) => {
+                    if secs - t0 >= 2.0 {
+                        m.main_full = Some((secs - t0 + l) / (1.0 - f0).max(0.02));
+                    }
+                }
+                (true, None) => {}
+                _ => m.main_full = Some((secs + l) / (1.0 - base).max(0.02)),
+            }
+        }
+    }
+    if main {
+        m.before_secs = if m.kept_secs > 0.0 { m.kept_secs } else { base * m.main_full.unwrap_or(0.0) };
+    }
+    // the stages to come (the right eye as long as the left one looks)
+    let rest = m.following(kind).iter().map(|k| m.expected(*k).or(whole.filter(|_| *k == Kind::Eye(1)))).sum::<Option<f64>>();
+    let total = left.zip(rest).map(|(l, r)| l + r);
+    // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
+    if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
+        crate::elog!(
+            "eta {stage}: secs {secs:.1} f {f:.3} base {base:.3} before {:.1} g {g:.3} rate {:?} measured {measured:?} prior {prior:?} whole {whole:?} rest {rest:?} slow {:?} ratio {:?} main_full {:?}",
+            m.before_secs,
+            m.rate.rate(),
+            m.slow,
+            m.later_ratio,
+            m.main_full
+        );
+    }
+    // (shown smoothed; what was shown stays while there is no estimate,
+    // e.g. the first seconds of a stage without a prior, counting down)
+    let stage_shown = left.map(|l| smooth_shown(m.stage_left_shown, l, now));
+    let total_shown = total.map(|t| smooth_shown(m.total_shown, t, now));
+    m.stage_left_shown = stage_shown.or(m.stage_left_shown);
+    m.total_shown = total_shown.or(m.total_shown);
+    // the whole calculation's progress: its time so far (a continued one's
+    // rows before too) over that and the time left
+    let done = now.saturating_duration_since(m.calc_start).as_secs_f64() + m.before_secs;
+    Left {
+        stage: stage_shown.map(|s| s.0),
+        total: total_shown.map(|s| s.0),
+        progress: total_shown.map(|(t, _)| done / (done + t).max(1e-6)),
+    }
+}
+
+/// The main rendering's time left while the card's shaders compile: the
+/// CPU threads' pace so far finishes it, unless the shaders are predicted
+/// done clearly before (by half again): then the card joins and the rest
+/// runs `SPEEDUP` times faster. The time a main rendering takes without
+/// compiling, and the model's ratios to it, go with it (None before the
+/// CPU threads' pace is known).
+fn compiling_main(m: &mut State, f: f64, base: f64, secs: f64) -> Option<f64> {
+    let g = f - base;
+    if secs <= 0.0 || g <= 0.0 {
+        return None;
+    }
+    let rate = g / secs;
+    let cpu_left = (1.0 - f) / rate;
+    #[cfg(feature = "gpu")]
+    let tc = super::eta::compile_left(m.calc_start);
+    #[cfg(not(feature = "gpu"))]
+    let tc: Option<f64> = None;
+    let (left, full, alone) = match tc {
+        Some(tc) if cpu_left > 1.5 * tc => {
+            let warm = 1.0 / rate / super::eta_model::SPEEDUP;
+            (tc + (1.0 - (f + rate * tc).min(1.0)) * warm, warm, 0.0)
+        }
+        _ => (cpu_left, 1.0 / rate, 1.0),
+    };
+    let mut ef = m.eta_f;
+    ef[super::eta::CPU_ALONE] = alone;
+    m.later_ratio = super::eta::later_ratios(&ef);
+    m.main_full = Some(full);
+    Some(left)
+}
+
+/// The whole calculation's progress before its time left is known: the
+/// main rendering's part of it by the stages' expected ratios (None in a
+/// later stage, `f` in one of its own, e.g. the swarm's).
+fn rough_progress(m: &State, stage: &str, f: f64) -> Option<f64> {
+    match kind_of(stage) {
+        Kind::Main => {
+            let rest: f64 = m.later.iter().map(|k| m.later_ratio[*k as usize]).sum();
+            // (a continued one: the rows kept, before its first report)
+            Some(f.max(m.stage_base) / (1.0 + rest))
+        }
+        Kind::Later(_) => None,
+        _ => Some(f),
+    }
+}
+
+/// Whether the graphics card's shaders are being compiled.
+/// "shaders compiling 0:23" since the compile began (the earliest running
+/// compile's start), with a note after a minute.
+fn compile_clock(app: &mut Mb3d) -> String {
+    let s = compile_start(app).elapsed().as_secs();
+    let mut t = format!("{} {}:{:02}", tr("@MB:ShadersCompiling"), s / 60, s % 60);
+    if s >= 60 {
+        t = format!("{t} ({})", tr("@MB:LongerThanUsualStillWorking"));
+    }
+    t
+}
+
+/// When the compile shown began: the earliest running compile's start
+/// (kept until the compiling ends).
+fn compile_start(app: &mut Mb3d) -> Instant {
+    if let Some(t) = app.main.compile_since {
+        return t;
+    }
+    #[cfg(feature = "gpu")]
+    let began = crate::gpu::compile_jobs(Instant::now()).iter().filter(|j| j.secs.is_none()).map(|j| j.start).min();
+    #[cfg(not(feature = "gpu"))]
+    let began: Option<Instant> = None;
+    *app.main.compile_since.insert(began.unwrap_or_else(Instant::now))
+}
+
+/// The status line's colour pulses (a slow fade to the highlight colour and
+/// back, 1.2 s) while the card's shaders compile, and comes back after.
+fn status_pulse(app: &mut Mb3d, ui: &mut Ui, compiling: bool) {
+    if compiling {
+        let since = compile_start(app);
+        if app.main.status_font.is_none() {
+            app.main.status_font = Some(ui.c(F, "Label6").font.clone());
+        }
+        let phase = since.elapsed().as_secs_f32() / 1.2 * std::f32::consts::TAU;
+        let t = 0.5 - 0.5 * phase.cos();
+        let color = crate::vcl::canvas::mix(ui.theme.text(), ui.theme.highlight(), t);
+        // (the label's own font as it is drawn, the parent's when it has none)
+        let base = app.main.status_font.clone().flatten().unwrap_or_else(|| {
+            let f = ui.f(F);
+            f.id("Label6").map(|id| f.font(id)).unwrap_or_default()
+        });
+        ui.cm(F, "Label6").font = Some(crate::vcl::font::Font { color, custom_color: true, ..base });
+    } else {
+        app.main.compile_since = None;
+        if let Some(f) = app.main.status_font.take() {
+            ui.cm(F, "Label6").font = f;
+        }
+    }
+}
+
+fn shaders_compiling() -> bool {
+    // (prepared in the background, or compiled by a stage that waits for it)
+    #[cfg(feature = "gpu")]
+    return crate::gpu::compiling() || crate::gpu::compile_jobs(Instant::now()).iter().any(|j| j.secs.is_none());
+    #[cfg(not(feature = "gpu"))]
+    false
+}
+
+/// The time the graphics card's shaders took to compile so far.
+fn compile_secs() -> f64 {
+    #[cfg(feature = "gpu")]
+    return crate::gpu::compile_ms() as f64 / 1000.0;
+    #[cfg(not(feature = "gpu"))]
+    0.0
+}
+
+/// A stage ended after `secs`, `next` begins (None: the calculation is
+/// done): the main rendering's whole time, a later stage's time (and
+/// whether shaders compiled meanwhile), and how much slower than its prior
+/// it ran, for the stages to come.
+fn stage_ended(app: &mut Mb3d, stage: &str, secs: f64, base: f64, next: Option<&str>) {
+    if !stage.is_empty() {
+        crate::log::info("calc", &format!("stage \"{stage}\" took {secs:.1} s"));
+    }
+    let m = &mut app.main;
+    let kind = kind_of(stage);
+    let compiled = compile_secs() - m.stage_compile;
+    // (its curve ends where it ended; not one of a continued stage)
+    let mut c = std::mem::take(&mut m.samples);
+    m.rate = RateEma::default();
+    m.stage_left_shown = None;
+    // (its pace since the card's shaders compiled: the samples start there)
+    let after_compile = c.first().filter(|s| m.main_cold && s.0 < 0.9).map(|&(f0, t0)| (secs - t0) / (1.0 - f0));
+    if base == 0.0 && c.len() >= 4 {
+        c.push((1.0, secs));
+        m.curves.push((stage.to_string(), c));
+    }
+    // the stage as a whole (the main rendering's: the whole picture's;
+    // when the card's shaders compiled meanwhile, at the pace it had after:
+    // the later stages' ratios are to a main rendering without compiling)
+    // (a later stage's time with the card's shaders compiling is not its own)
+    let cold_stage = m.stage_cold > 0.0 || m.cold_from.is_some() || compiled > 0.0 || shaders_compiling();
+    let work = secs - (m.stage_cold + m.cold_from.map_or(0.0, |c| secs - c)).max(compiled);
+    let whole = match kind {
+        Kind::Main => after_compile.unwrap_or(secs / (1.0 - base).max(0.02)),
+        Kind::Later(k) => m.later_secs[k as usize].unwrap_or(0.0) + work,
+        _ => secs,
+    };
+    // slower or faster than its prior said: so will the stages to come be
+    // (the shadows and the occlusion share one: once both ran; not from a
+    // stage that waited for its shaders)
+    let mut learned = None;
+    if !(cold_stage && kind != Kind::Main) && next.is_none_or(|n| kind_of(n) != kind) {
+        if let Some((p, src)) = m.prior(kind) {
+            m.slow[src as usize] = super::eta::slowdown(whole, p);
+            // the model's expectation on this computer (kept for next time)
+            if let (Kind::Later(k), Prior::Model) = (kind, src) {
+                let card = m.on_card();
+                m.calib.learn(card, k as usize, whole, p / m.calib.factor(card, k as usize));
+                learned = Some(m.calib.text());
+            }
+        }
+    }
+    match kind {
+        Kind::Main => {
+            // (a continued one with most rows from its checkpoint, or one
+            // over before the window saw it: what it measured, extrapolated,
+            // is noise; the time known stays)
+            if m.main_full.is_none() || (base < 0.5 && secs >= 1.0) {
+                m.main_full = Some(whole);
+            }
+            m.main_unmeasured = m.main_cold && after_compile.is_none();
+            // (the later stages then at the model's ratios to a CPU-only main rendering)
+            if m.main_unmeasured {
+                m.eta_f[super::eta::CPU_ALONE] = 1.0;
+                m.later_ratio = super::eta::later_ratios(&m.eta_f);
+            }
+            m.main_secs = secs;
+        }
+        Kind::Later(k) => {
+            // (the shadows and the occlusion one after the other on the CPU:
+            // together)
+            m.later_secs[k as usize] = Some(whole);
+            m.later_cold[k as usize] |= compiled > 0.0 || shaders_compiling() || cold_stage;
+        }
+        Kind::Eye(0) => m.eye_secs = Some(secs),
+        _ => {}
+    }
+    m.stage_cold = 0.0;
+    m.cold_from = None;
+    if let Some(text) = learned {
+        app.ini.set_extra("eta_calib", &text);
+        let _ = app.ini.save();
+    }
 }
 
 /// Polls the engine (MB3D's Timer4 / WM_ThreadReady).
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
-    let (ver, finished, running, stage, err, stats) = {
+    let (ver, finished, running, stage, base, kept, err, stats, cancelled) = {
         let o = app.eng.0.out.lock().unwrap();
-        (o.ver, o.finished, o.running, o.stage.clone(), o.error.clone(), o.stats)
+        (o.ver, o.finished, o.running, o.stage.clone(), o.stage_base, o.kept_secs, o.error.clone(), o.stats, o.cancelled)
     };
+    // the status line pulses while the card's shaders compile
+    let compiling_now = app.main.calculating && shaders_compiling();
+    if compiling_now || app.main.status_font.is_some() {
+        status_pulse(app, ui, compiling_now);
+    }
     if app.main.calculating && app.main.led_running {
         let led = running_led(app).unwrap_or(app.main.led);
         app.main.led = led;
@@ -908,19 +1727,105 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         #[cfg(feature = "gpu")]
         if !app.main.compile_note && crate::gpu::last_status().contains("shaders are compiling") {
             app.main.compile_note = true;
-            app.message(ui, COMPILE_NOTE);
+            app.message(ui, &compile_note());
         }
+    }
+    // a stopped calculation's caption was replaced (parameters changed, a
+    // picture loaded): its bar goes, the frame number comes back
+    if app.main.stopped_status.as_ref().is_some_and(|s| ui.caption(F, "Label6") != *s) {
+        app.main.stopped_status = None;
+        ui.set_visible(F, "ProgressBar1", false);
+        ui.set_visible(F, "Panel7", true);
     }
     if app.main.calculating {
         let f = app.eng.progress();
-        ui.set_position(F, "ProgressBar1", (f * ui.c(F, "ProgressBar1").max as f32) as i64);
-        if !stage.is_empty() && app.main.calc3d {
-            if stage != app.main.stage_shown {
+        // (a 3D calculation's bar is the whole calculation's, never a
+        // stage's raw progress: before the job runs, the engine still
+        // shows the last one's)
+        let mut bar = if app.main.calc3d { app.main.progress_shown } else { f as f64 };
+        // (not before the job runs: the question whether to continue an
+        // unfinished calculation is asked while the engine still shows the
+        // stopped one's stage and progress)
+        if !stage.is_empty() && app.main.calc3d && running {
+            // (the main rendering named "(continued)" once its checkpoint
+            // is read: the stage it was, not a stage ended)
+            if stage != app.main.stage_shown && kind_of(&stage) == Kind::Main && kind_of(&app.main.stage_shown) == Kind::Main {
                 app.main.stage_shown = stage.clone();
-                app.main.stage_start = Instant::now();
             }
-            ui.set_caption(F, "Label6", &stage_caption(&stage, f as f64, app.main.stage_start.elapsed().as_secs_f64()));
+            if stage != app.main.stage_shown {
+                let was = std::mem::replace(&mut app.main.stage_shown, stage.clone());
+                stage_ended(app, &was, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base, Some(&stage));
+                // the stages it skipped (run with the main rendering on the
+                // card): none next time
+                if let Some(k) = later_of(&stage) {
+                    for l in app.main.later.clone().into_iter().take_while(|l| *l != k) {
+                        if !app.main.passed.contains(&l) {
+                            app.main.later_secs[l as usize] = Some(0.0);
+                        }
+                    }
+                    app.main.passed.push(k);
+                }
+                app.main.stage_start = Instant::now();
+                app.main.stage_compile = compile_secs();
+                app.main.stage_cold = 0.0;
+                app.main.cold_from = None;
+                app.main.compiled_seen = 0.0;
+            }
+            app.main.stage_base = base as f64;
+            app.main.kept_secs = kept as f64;
+            let Left { stage: left, total, progress: p } = time_left(app, &stage, f as f64, base as f64);
+            // the card's shaders compiling: the time left with them, once
+            // the CPU threads' pace is known
+            let compiling = shaders_compiling();
+            // (a ticking clock while they compile: the line changes every
+            // second, so the program is seen to work, not to hang)
+            let clock = compiling.then(|| compile_clock(app));
+            let caption = match (clock, total.or(left)) {
+                (Some(c), Some(tl)) => format!("{c} · {}", left_str(tl)),
+                (Some(c), None) => format!("{} · {c}", short_stage(&stage)),
+                _ => stage_caption(&stage, f as f64, left, total),
+            };
+            ui.set_caption(F, "Label6", &caption);
+            app.main.left_shown = total.or(left);
+            // the bar: the whole calculation's progress, not the stage's.
+            // It does not go back when an estimate grows, and it glides to
+            // an estimate that leapt ahead (70 % of the gap a second) instead
+            // of jumping; without an estimate it holds where it was
+            let p = if compiling { p } else { p.or_else(|| rough_progress(&app.main, &stage, f as f64)) };
+            let now = Instant::now();
+            if let Some(p) = p {
+                let p = p.clamp(0.0, 1.0);
+                // (the first estimate of a bar from zero: at once, not a
+                // glide from nothing, e.g. a calculation continued from the
+                // Unfinished renders window starts at its rows kept)
+                if app.main.bar_target == 0.0 {
+                    app.main.progress_shown = p;
+                }
+                app.main.bar_target = app.main.bar_target.max(p);
+            }
+            let dt = now.saturating_duration_since(app.main.bar_at).as_secs_f64();
+            app.main.bar_at = now;
+            let gap = (app.main.bar_target - app.main.progress_shown).max(0.0);
+            app.main.progress_shown += gap * (1.0 - 0.3f64.powf(dt));
+            bar = app.main.progress_shown;
+        } else if !stage.is_empty() && running && app.post.running.is_some() {
+            // a post processing: its running stage, its progress and time
+            // left (the reflections' and the depth of field's prior: their
+            // time in the last calculation; the shadows' and the
+            // occlusion's is the two together, not this one's)
+            let prior = match kind_of(&stage) {
+                Kind::Later(k @ (Later::Reflections | Later::Dof)) => app.main.last_secs[k as usize],
+                _ => None,
+            };
+            let left = app.post.pace.left(&stage, f as f64, prior, Instant::now());
+            let caption = if shaders_compiling() {
+                format!("{} · {}", short_stage(&stage), tr("@MB:ShadersCompiling"))
+            } else {
+                stage_caption(&stage, f as f64, left, None)
+            };
+            ui.set_caption(F, "Label6", &caption);
         }
+        ui.set_position(F, "ProgressBar1", (bar * ui.c(F, "ProgressBar1").max as f64) as i64);
         // the rows calculated so far (MB3D shows the image while it grows)
         let iv = if app.scene.width * app.scene.height > 2_000_000 { 900 } else { 300 };
         if running && app.main.last_partial.elapsed().as_millis() >= iv {
@@ -938,16 +1843,60 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if finished != app.main.finished_seen && !running {
         app.main.finished_seen = finished;
         if app.main.calculating {
+            // (saved only after a calculation that finished)
+            let (auto_m3i, auto_stereo) = (app.main.auto_m3i.take(), app.main.auto_stereo.take());
             enable_buttons(app, ui);
             if app.main.led_running {
                 app.main.led_running = false;
                 show_led(ui, app.main.led, false);
             }
-            if !err.is_empty() {
-                app.main.auto_stereo = None;
+            if cancelled {
+                // (new parameters were loaded during it: nothing of it is kept)
+                crate::log::info("calc", &format!("stopped after {:.1} s", app.main.calc_start.elapsed().as_secs_f64()));
+            } else if !err.is_empty() {
+                crate::log::error("calc", &err);
                 app.message(ui, &err);
             } else if app.main.calc3d {
                 let secs = app.main.calc_start.elapsed().as_secs_f64();
+                // the last stage's time, and the later stages that did not
+                // run (with the main rendering on the card): none next time
+                let last = std::mem::take(&mut app.main.stage_shown);
+                stage_ended(app, &last, app.main.stage_start.elapsed().as_secs_f64(), app.main.stage_base, None);
+                crate::log::info(
+                    "calc",
+                    &format!(
+                        "finished in {secs:.1} s on {}: average {:.1} ray steps, {:.1} iterations, at most {}",
+                        match app.main.led {
+                            Led::Gpu => "the graphics card",
+                            Led::Mixed => "the graphics card and the CPU",
+                            Led::Cpu => "the CPU",
+                            Led::Idle => "?",
+                        },
+                        stats.avg_steps,
+                        stats.avg_its,
+                        stats.max_its
+                    ),
+                );
+                if app.main.main_full.is_some() {
+                    for l in app.main.later.clone() {
+                        if !app.main.passed.contains(&l) {
+                            app.main.later_secs[l as usize] = Some(0.0);
+                        }
+                    }
+                    {
+                        let m = &app.main;
+                        let has = |k: Later| m.later.contains(&k);
+                        let t = |k: Later| if has(k) { m.later_secs[k as usize].or(Some(0.0)) } else { None };
+                        let cold = compile_secs() - m.calc_compile > 0.2;
+                        let x = super::eta::LogExtra { start: m.calc_start, main_secs: m.main_secs, f_compiled: m.f_compiled };
+                        super::eta::log(&m.eta_f, m.main_full.unwrap_or(0.0), [t(Later::Post), t(Later::Reflections), t(Later::Dof)], cold, &stem(&app.title), &x);
+                    }
+                    let m = &mut app.main;
+                    m.last_secs = std::array::from_fn(|k| m.later_secs[k].filter(|_| !m.later_cold[k]));
+                    m.last_main = m.main_full.filter(|_| !m.main_unmeasured);
+                    app.main.last_curves = std::mem::take(&mut app.main.curves);
+                    app.main.last_sig = std::mem::take(&mut app.main.calc_sig);
+                }
                 // CalcStatistic: kept in the parameters (iAvrgDEsteps,
                 // iAvrgIts, iMaxIts)
                 app.scene.stats = crate::scene::CalcStats {
@@ -963,32 +1912,39 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.main.led = running_led(app).unwrap_or(Led::Cpu);
                 show_led(ui, app.main.led, false);
                 #[cfg(feature = "gpu")]
-                set_led_hint(ui, &format!("Calculated on: {}", crate::gpu::last_status()));
+                set_led_hint(ui, &trf("@MB:CalculatedOn", &[&crate::gpu::last_status()]));
                 #[cfg(not(feature = "gpu"))]
-                set_led_hint(ui, "Calculated on the CPU");
+                set_led_hint(ui, &tr("@MB:CalculatedOnTheCPU"));
+                // the history's thumbnail of the picture (scaled down on
+                // a thread of its own: a big picture takes a moment)
+                if let (Some(p), Some((rgb, w, h))) = (app.main.history_file.take(), app.main.rgb.clone()) {
+                    std::thread::spawn(move || {
+                        let _ = crate::history::write_thumb(&p, &rgb, w, h);
+                    });
+                }
                 // the stages after the main calculation: "-" when the scene
                 // has none, "incl. in main" when the card ran it with the
                 // march, "with HS" when it ran with the hard shadows
                 let stage = |t: Option<Option<f64>>| match t {
                     None => "-".to_string(),
-                    Some(None) => "incl. in main".to_string(),
+                    Some(None) => tr("@MB:InclInMain"),
                     Some(Some(s)) => time_str(((s * 10.0) as i64).max(1)),
                 };
                 ui.set_caption(F, "Label8", &stage(stats.stages.shadows));
-                let ao = if stats.stages.ao_with_shadows { "with HS".to_string() } else { stage(stats.stages.ao) };
+                let ao = if stats.stages.ao_with_shadows { tr("@MB:WithHS") } else { stage(stats.stages.ao) };
                 ui.set_caption(F, "Label48", &ao);
                 ui.set_caption(F, "Label50", &stage(stats.stages.reflections.map(Some)));
                 let _ = secs;
-                if let Some(p) = app.main.auto_m3i.take() {
+                if let Some(p) = auto_m3i {
                     save_m3i(app, ui, &p);
                 }
-                if let Some(p) = app.main.auto_stereo.take() {
+                if let Some(p) = auto_stereo {
                     save_image(app, ui, &p);
                 }
             } else {
                 super::postpro_form::calc_finished(app, ui);
             }
-            if app.batch.status != 0 {
+            if app.batch.status != 0 && !cancelled {
                 super::tools_forms::batch_finished(app, ui);
             }
         }
@@ -1033,12 +1989,12 @@ fn denoised(rgb: &[u8], w: usize, h: usize, sigma: f32) -> Vec<u8> {
 /// ([`crate::denoise`]) on the shown picture, which is also the saved one.
 pub fn denoise_picture(app: &mut Mb3d, ui: &mut Ui, sigma: f32) {
     let Some((rgb, w, h)) = app.main.rgb.clone() else {
-        return app.message(ui, "Calculate the image first.");
+        return app.message(ui, &tr("@MB:CalculateTheImageFirst"));
     };
     let out = std::sync::Arc::new(denoised(&rgb, w, h, sigma));
     app.main.rgb = Some((out.clone(), w, h));
     set_image(app, ui, out, w, h);
-    app.message(ui, &format!("Noise filter: strength {sigma}"));
+    app.message(ui, &trf("@MB:NoiseFilterStrength", &[&sigma]));
 }
 
 /// Shows a picture of another window in the main window (voxel slices).
@@ -1084,7 +2040,7 @@ fn clear_screen(app: &mut Mb3d, ui: &mut Ui) {
 /// `ParasChanged`: the hint on the image.
 fn paras_changed(app: &mut Mb3d, ui: &mut Ui) {
     app.main.image_text = true;
-    ui.set_caption(F, "Label6", "Press 'Calculate 3D' to render");
+    ui.set_caption(F, "Label6", &tr("@MB:PressCalculate3DToRender"));
 }
 
 pub fn update_scale(app: &mut Mb3d, ui: &mut Ui, scale: i32) {
@@ -1122,7 +2078,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button11Click" => {
             // "Calc-": a fast rough image of 8x8 blocks
-            app.post = super::postpro_form::State::default();
+            app.post.new_calc();
             app.make_scene(ui);
             if app.scene.width < 1 || app.scene.height < 1 {
                 return;
@@ -1151,7 +2107,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "StereoPairSaveClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|Bitmap (*.bmp)|*.bmp".into(),
+                filter: format!("PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|{}|*.bmp", tr("@MB:BitmapBmp")),
                 default_ext: "png".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 file_name: format!("{}-stereo", stem(&app.title)),
@@ -1161,14 +2117,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
-                if ui.caption(F, "Button2") == "Calculate 3D" {
+                if ui.caption(F, "Button2") != tr("@MB:Stop") {
                     ui.popup_menu(F, "PopupMenu3", "Button2", x, y);
                 }
             }
         }
         "StartrenderingandsaveafterwardstheM3Ifile1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
+                filter: format!("{}|*.m3i", tr("@MB:M3DImageParameterM3i")),
                 default_ext: "m3i".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
                 ..Default::default()
@@ -1184,12 +2140,12 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_visible(F, "RotationPnl", v);
         }
         "SpeedButton30Click" => {
-            if ui.caption(F, "SpeedButton30") == "click image" {
-                ui.set_caption(F, "SpeedButton30", "get midpoint");
+            if ui.caption(F, "SpeedButton30") == tr("@MB:ClickImage") {
+                ui.set_caption(F, "SpeedButton30", &tr("@MB:GetMidpoint"));
                 app.main.get_pos = 0;
                 set_image_cursor(app, ui);
             } else {
-                ui.set_caption(F, "SpeedButton30", "click image");
+                ui.set_caption(F, "SpeedButton30", &tr("@MB:ClickImage"));
                 app.main.get_pos = 22;
                 ui.cm(F, "Image1").cursor = "crCross".into();
             }
@@ -1317,7 +2273,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton21MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, .. } = e.ev {
-                ui.input_query("main:aspectx", "User defined aspect ratio", "Input the width factor:", "16");
+                ui.input_query("main:aspectx", &tr("@MB:UserDefinedAspectRatio"), &tr("@MB:InputTheWidthFactor"), "16");
             }
         }
         "SpeedButton18MouseUp" => {
@@ -1362,13 +2318,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button16Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
-            if ui.caption(F, &e.sender) == "Click on image" {
-                let c = if tg == 4 { "Get min.dist. from image" } else { "Get values from image" };
-                ui.set_caption(F, &e.sender, c);
+            if ui.caption(F, &e.sender) == tr("@MB:ClickOnImage") {
+                let c = if tg == 4 { tr("@MB:GetMinDistFromImage") } else { tr("@MB:GetValuesFromImage") };
+                ui.set_caption(F, &e.sender, &c);
                 app.main.get_pos = 0;
                 set_image_cursor(app, ui);
             } else {
-                ui.set_caption(F, &e.sender, "Click on image");
+                ui.set_caption(F, &e.sender, &tr("@MB:ClickOnImage"));
                 app.main.get_pos = tg;
                 ui.cm(F, "Image1").cursor = "crCross".into();
             }
@@ -1386,9 +2342,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             set(ui, "Edit24", &b);
             set(ui, "Edit22", &c);
         }
-        "CheckBox7Click" | "PageControl1Change" => page_control1_change(app, ui),
+        "CheckBox7Click" | "PageControl1Change" | "GroundChange" => page_control1_change(app, ui),
+        "GroundColBtnClick" => ui.pick_color("main:groundcolor", super::util::argb(app.main.ground_color)),
         "ButtonVolLightClick" => {
-            if ui.caption(F, "ButtonVolLight") == "Dyn. fog on It.:" {
+            if ui.caption(F, "ButtonVolLight") != tr("@MB:VolumeLightNr") {
                 app.scene.vol_light = Some(crate::vollight::VolLightParams { light: 0, map_size: 0 });
             } else {
                 app.scene.vol_light = None;
@@ -1397,7 +2354,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "ButtonAuthorClick" => {
             let a = app.ini.get("Author").to_string();
-            ui.input_query("main:author", "Author", "Your author name (stored in the parameters):", &a);
+            ui.input_query("main:author", &tr("@MB:Author2"), &tr("@MB:YourAuthorNameStoredInThe"), &a);
         }
         "ButtonInsertAuthorClick" => {
             let a = app.ini.get("Author").to_string();
@@ -1449,12 +2406,18 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "IniDirsBtnClick" => ui.show("IniDirForm"),
         "MapSequencesBtnClick" => ui.show("MapSequencesFrm"),
         "VisualThemesBtnClick" => ui.show("VisualThemesFrm"),
+        "HotkeysBtnClick" => ui.show("HotkeysFrm"),
+        "LanguageBadgeClick" => ui.show("LanguageFrm"),
+        "HistoryIconClick" => super::history_form::open(app, ui),
+        "LogIconClick" => super::log_form::open(app, ui),
+        "AiBtnClick" => super::ai_form::open(app, ui),
+        "ExpBtnClick" => super::experimental_form::open(app, ui),
         "SwarmBtnClick" => ui.show("SwarmFrm"),
         "ResumeBtnClick" => ui.show("UnfinishedFrm"),
         // ---- files
         "Button5Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p|All files (*.*)|*.*".into(),
+                filter: format!("{}|*.m3p|{}|*.*", tr("@MB:M3DParameterM3p"), tr("@MB:AllFilesParen")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 preview: true,
                 ..Default::default()
@@ -1463,7 +2426,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
+                filter: format!("{}|*.m3i", tr("@MB:M3DImageParameterM3i")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
                 preview: true,
                 ..Default::default()
@@ -1472,7 +2435,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button4Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                filter: format!("{}|*.m3p", tr("@MB:M3DParameterM3p")),
                 default_ext: "m3p".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 file_name: stem(&app.title),
@@ -1482,11 +2445,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button8Click" => {
             if app.eng.base().is_none() {
-                app.message(ui, "Calculate the image first.");
+                app.message(ui, &tr("@MB:CalculateTheImageFirst"));
                 return;
             }
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Image + Parameter (*.m3i)|*.m3i".into(),
+                filter: format!("{}|*.m3i", tr("@MB:M3DImageParameterM3i")),
                 default_ext: "m3i".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
                 file_name: stem(&app.title),
@@ -1499,7 +2462,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let raw = crate::m3p::write(&app.scene);
             let name = stem(&app.title);
             crate::vcl::clipboard::set(&crate::m3p::raw_to_text(&raw, if name.is_empty() { "Mandelbulb 3D" } else { &name }));
-            app.message(ui, "Parameters copied to the clipboard.");
+            app.message(ui, &tr("@MB:ParametersCopiedToTheClipboard"));
         }
         "SpeedButton8Click" => {
             let text = crate::vcl::clipboard::get().unwrap_or_default();
@@ -1513,11 +2476,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                         app.message(ui, &n);
                     }
                 }
+                Err(e) if e.starts_with(crate::m3p::TEXT_DAMAGED) => {
+                    app.message(ui, &tr("@MB:TheTextParametersOnTheClipboard"));
+                }
                 Err(_) => {
                     if ui.has_form("FTextBox") {
                         ui.show("FTextBox");
                     } else {
-                        app.message(ui, "No text parameters found in the clipboard.");
+                        app.message(ui, &tr("@MB:NoTextParametersFoundInThe"));
                     }
                 }
             }
@@ -1565,7 +2531,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FormCloseQuery" => {
             if app.eng.running() && app.main.calc_start.elapsed().as_secs() > 900 {
-                ui.message_box("main:closequery", "Warning", "Do you really want to stop the calculations?", &[MR_YES, crate::vcl::form::MR_NO]);
+                ui.message_box("main:closequery", &tr("@MB:Warning"), &tr("@MB:DoYouReallyWantToStop"), &[MR_YES, crate::vcl::form::MR_NO]);
             } else {
                 app.eng.stop();
                 ui.close_ok(F);
@@ -1576,7 +2542,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     }
 }
 
-fn stem(title: &str) -> String {
+pub(crate) fn stem(title: &str) -> String {
     std::path::Path::new(title).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
 }
 
@@ -1607,23 +2573,39 @@ fn form_close(app: &mut Mb3d, ui: &mut Ui) {
 
 fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     crate::maps::set_current_frame(pti(&t(ui, "FrameEdit")).max(1));
-    if ui.caption(F, "Button2") == "Stop" {
+    if ui.caption(F, "Button2") == tr("@MB:Stop") {
+        let anim = app.anim.job.lock().unwrap().running;
+        app.anim.stop.store(true, std::sync::atomic::Ordering::SeqCst);
         app.eng.stop();
         super::voxel_form::stop(app);
         super::tools_forms::stop_tiling(app);
+        let status = ui.caption(F, "Label6");
+        let bar_shown = app.main.calc3d && ui.visible(F, "ProgressBar1") && !status.is_empty();
         enable_buttons(app, ui);
+        // the stopped calculation's stage, progress and time left stay (the
+        // frame number keeps making room) until they are replaced or a
+        // calculation starts
+        if bar_shown {
+            ui.set_caption(F, "Label6", &status);
+            ui.set_visible(F, "ProgressBar1", true);
+            ui.set_visible(F, "Panel7", false);
+            app.main.stopped_status = Some(status);
+        }
         if app.main.led_running {
             app.main.led_running = false;
             show_led(ui, app.main.led, false);
         }
-        app.message(ui, "Calculation stopped.");
+        if anim {
+            ui.set_caption("AnimationForm", "Button2", &tr("@MB:StartRenderingAnimationImages"));
+        }
+        app.message(ui, &if anim { tr("@MB:AnimationRenderingStopped") } else { tr("@MB:CalculationStopped") });
         return;
     }
     app.main.image_text = false;
     app.scene.stereo_mode = 0;
     app.make_scene(ui);
     let title = stem(&app.title);
-    crate::appdirs::store_history(&app.scene, &title);
+    app.main.history_file = crate::appdirs::store_history(&app.scene, &title);
     calc_mand(app, ui, true);
 }
 
@@ -1775,10 +2757,10 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                     if ui.has_form("PostProForm") {
                         if gp == 1 {
                             ui.set_text("PostProForm", "Edit1", &fts_single(z));
-                            ui.set_caption("PostProForm", "Button2", "Get Z1");
+                            ui.set_caption("PostProForm", "Button2", &tr("@MB:GetZ1"));
                         } else {
                             ui.set_text("PostProForm", "Edit10", &fts_single(z));
-                            ui.set_caption("PostProForm", "Button18", "Get Z2");
+                            ui.set_caption("PostProForm", "Button18", &tr("@MB:GetZ2"));
                         }
                     }
                 }
@@ -1798,7 +2780,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                             set(ui, "Edit30", &fts(v[2]));
                             set(ui, "Edit7", &fts(v[3]));
                             ui.set_checked(F, "CheckBox7", true);
-                            ui.set_caption(F, "Button16", "Get values from image");
+                            ui.set_caption(F, "Button16", &tr("@MB:GetValuesFromImage"));
                         }
                         22 => {
                             let (zs, ze) = (app.scene.mid[2] - app.scene.z_start, app.scene.z_end - app.scene.mid[2]);
@@ -1807,7 +2789,7 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                             set(ui, "Edit3", &fts(p[2] + ze));
                             set(ui, "Edit9", &fts(p[0]));
                             set(ui, "Edit10", &fts(p[1]));
-                            ui.set_caption(F, "SpeedButton30", "get midpoint");
+                            ui.set_caption(F, "SpeedButton30", &tr("@MB:GetMidpoint"));
                         }
                         _ => {
                             set(ui, "Edit23", &fts(p[0]));
@@ -1816,17 +2798,17 @@ fn image_mouse_down(app: &mut Mb3d, ui: &mut Ui, ev: &Ev) {
                             ui.set_checked(F, "CheckBox4", true);
                             ui.set_checked(F, "CheckBox5", true);
                             ui.set_checked(F, "CheckBox6", true);
-                            ui.set_caption(F, "Button20", "Get values from image");
+                            ui.set_caption(F, "Button20", &tr("@MB:GetValuesFromImage"));
                         }
                     }
                     page_control1_change(app, ui);
                     paras_changed(app, ui);
                 } else {
-                    app.message(ui, "No object at this point.");
+                    app.message(ui, &tr("@MB:NoObjectAtThisPoint"));
                 }
             }
             _ => {
-                ui.set_caption(F, "Button17", "Get min.dist. from image");
+                ui.set_caption(F, "Button17", &tr("@MB:GetMinDistFromImage"));
             }
         }
         app.main.get_pos = 0;
@@ -1969,24 +2951,24 @@ fn text_pars_load_success(app: &mut Mb3d, ui: &mut Ui) {
     app.main.intern_aspect = app.scene.width as f64 / app.scene.height.max(1) as f64;
     app.scene_to_forms(ui);
     all_presets_up(ui);
-    app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
+    app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
     show_image(app, ui);
     set_caption(app, ui);
 }
 
 fn save_pic_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str) {
     if what != "jpgp" && what != "zbuf" && app.main.rgb.is_none() {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     }
     let (filter, ext) = match what {
-        "png" => ("PNG (*.png)|*.png|PNG 16 bit colour (*.png)|*.png|PNG transparent background (*.png)|*.png|Bitmap (*.bmp)|*.bmp", "png"),
-        "jpg" => ("JPEG (*.jpg)|*.jpg", "jpg"),
-        "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png", "jpg"),
-        _ => ("PNG 16 bit (*.png)|*.png", "png"),
+        "png" => (format!("PNG (*.png)|*.png|{}|*.png|{}|*.png|{}|*.bmp|OpenEXR (*.exr)|*.exr", tr("@MB:PNG16BitColourPng"), tr("@MB:PNGTransparentBackgroundPng"), tr("@MB:BitmapBmp")), "png"),
+        "jpg" => ("JPEG (*.jpg)|*.jpg".to_string(), "jpg"),
+        "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png".to_string(), "jpg"),
+        _ => (format!("{}|*.png", tr("@MB:PNG16BitPng")), "png"),
     };
     let o = crate::vcl::dialogs::FileOptions {
-        filter: filter.into(),
+        filter,
         default_ext: ext.into(),
         initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
         file_name: stem(&app.title),
@@ -2023,7 +3005,7 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         }
     };
     match res {
-        Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+        Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -2033,7 +3015,7 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 /// by the viewing scale as the 8 bit picture.
 fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     };
     let rgb = crate::render::paint16(&b.scene, &b.params, &b.post);
@@ -2045,7 +3027,23 @@ fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         data = crate::png::with_text(data, "Comment", &text);
     }
     match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &format!("Saved {} (16 bit colour)", path.display())),
+        Ok(()) => app.message(ui, &trf("@MB:Saved16BitColour", &[&path.display()])),
+        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
+    }
+}
+
+/// "OpenEXR": the colours in floating point (not clipped above white) with
+/// the opacity, depth and normal layers ([`crate::exr`]), reduced by the
+/// viewing scale.
+fn save_exr(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+    let Some(b) = app.eng.base() else {
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
+        return;
+    };
+    let s = app.main.image_scale.max(1) as usize;
+    let l = crate::exr::layers(&b.scene, &b.params, &b.post, b.w, b.h, s);
+    match std::fs::write(path, crate::exr::encode(&l)) {
+        Ok(()) => app.message(ui, &trf("@MB:SavedOpenEXRFloatingPointColoursAnd", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
@@ -2054,11 +3052,11 @@ fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
 /// transparent ([`crate::frames::rgba_of`]), reduced by the viewing scale.
 fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let (Some((rgb, w, h)), Some(b)) = (app.main.rgb.clone(), app.eng.base()) else {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     };
     if b.post.len() != w * h {
-        return app.message(ui, "The picture does not match its calculation: calculate it again.");
+        return app.message(ui, &tr("@MB:ThePictureDoesNotMatchIts"));
     }
     let s = app.main.image_scale.max(1) as usize;
     let (rgba, ow, oh) = crate::frames::rgba_of(&rgb, &b.post, w, h, s);
@@ -2068,58 +3066,78 @@ fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         data = crate::png::with_text(data, "Comment", &text);
     }
     match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &format!("Saved {} (transparent background)", path.display())),
+        Ok(()) => app.message(ui, &trf("@MB:SavedTransparentBackground", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
 
 fn save_zbuf(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     };
     let z: Vec<u16> = b.post.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
     match crate::png::write_gray16(&path.to_string_lossy(), b.w, b.h, &z) {
-        Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+        Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
 
 pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
     let Some(b) = app.eng.base() else { return };
-    let data = crate::m3p::write_m3i(&b.scene, &b.post);
-    match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &format!("Saved {}", path.display())),
+    match crate::m3p::write_m3i_to(path, &b.scene, &b.post) {
+        Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&path.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
+    }
+}
+
+/// Opens a parameter file, an .m3i or text parameters (the Open dialogs,
+/// a dropped file, the History window).
+pub fn open_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
+    let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
+    if let Some(d) = p.parent() {
+        let k = if ext == "m3i" { super::ini::DIR_M3I } else { super::ini::DIR_M3P };
+        app.ini.dirs[k] = d.to_path_buf();
+    }
+    match app.load_params(ui, p) {
+        Ok(()) => {
+            all_presets_up(ui);
+            if app.eng.base().is_none() {
+                app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
+            }
+            show_image(app, ui);
+        }
+        Err(e) => app.message(ui, &e),
     }
 }
 
 pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
+        ("memory", DialogResult::Button(b)) => {
+            if !std::mem::take(&mut app.main.memory_ask) {
+                return;
+            }
+            if *b == MR_YES {
+                calc_mand_go(app, ui, true);
+            } else {
+                app.main.auto_m3i = None;
+            }
+        }
         ("resume", DialogResult::Button(b)) => {
             let Some((sc, slice)) = app.main.resume_ask.take() else { return };
             match *b {
                 MR_YES => run_calc(app, sc, slice, crate::checkpoint::Policy::Continue),
-                MR_NO => run_calc(app, sc, slice, crate::checkpoint::Policy::Fresh),
+                MR_NO => {
+                    app.main.bar_restart();
+                    run_calc(app, sc, slice, crate::checkpoint::Policy::Fresh)
+                }
                 _ => not_started(app, ui),
             }
         }
-        (_, DialogResult::File(Some(p))) if what.starts_with("open") || what == "" => {
-            let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
-            if let Some(d) = p.parent() {
-                let k = if ext == "m3i" { super::ini::DIR_M3I } else { super::ini::DIR_M3P };
-                app.ini.dirs[k] = d.to_path_buf();
-            }
-            match app.load_params(ui, p) {
-                Ok(()) => {
-                    all_presets_up(ui);
-                    if app.eng.base().is_none() {
-                        app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
-                    }
-                    show_image(app, ui);
-                }
-                Err(e) => app.message(ui, &e),
-            }
+        (_, DialogResult::File(Some(p))) if what.starts_with("open") || what == "" => open_file(app, ui, p),
+        ("groundcolor", DialogResult::Color(Some(c))) => {
+            app.main.ground_color = super::util::rgb_of(*c);
+            ground_swatch(app, ui);
         }
         ("savem3p", DialogResult::File(Some(p))) => {
             app.make_scene(ui);
@@ -2128,7 +3146,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 Ok(()) => {
                     app.title = p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
                     set_caption(app, ui);
-                    app.message(ui, &format!("Saved {}", p.display()));
+                    app.message(ui, &trf("@MB:Saved2", &[&p.display()]));
                 }
                 Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
             }
@@ -2150,7 +3168,9 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
             }
             let png = p.extension().is_some_and(|e| e.eq_ignore_ascii_case("png"));
-            if what == "savepng" && ui.filter_index == 2 && png {
+            if p.extension().is_some_and(|e| e.eq_ignore_ascii_case("exr")) {
+                save_exr(app, ui, p)
+            } else if what == "savepng" && ui.filter_index == 2 && png {
                 save_image16(app, ui, p)
             } else if what == "savepng" && ui.filter_index == 3 && png {
                 save_transparent(app, ui, p)
@@ -2168,7 +3188,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let i = pti(s);
             if i >= 1 {
                 app.main.user_aspect.0 = i;
-                ui.input_query("main:aspecty", "User defined aspect ratio", "Input the height divisor:", "9");
+                ui.input_query("main:aspecty", &tr("@MB:UserDefinedAspectRatio"), &tr("@MB:InputTheHeightDivisor"), "9");
             }
         }
         ("aspecty", DialogResult::Text(v)) => {
@@ -2179,7 +3199,9 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 app.main.user_aspect.1 = i;
             }
             update_aspect_caption(app, ui);
-            app.ini.set("UserAspect", &ui.caption(F, "SpeedButton21"));
+            // (the ini keeps the English "user", not the caption's language)
+            let (x, y) = app.main.user_aspect;
+            app.ini.set("UserAspect", &if x > 0 { format!("{x}:{y}") } else { "user".into() });
         }
         ("author", DialogResult::Text(Some(s))) => {
             app.ini.set("Author", s.trim());

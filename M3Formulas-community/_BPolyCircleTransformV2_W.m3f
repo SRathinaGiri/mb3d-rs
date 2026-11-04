@@ -1,0 +1,297 @@
+[OPTIONS]
+.Version = 2
+.DEoption = -1
+.Double Sides = 4.0
+.Double PolyStrength = -1.0
+.Double wStart = 1.0
+.Double wStartEnd = 1.6
+.Double wEnd = 12.0
+.Double wCycleLength = 30.0
+.Double wCycleStart = 10.0
+[CONSTANTS]
+Double = 3.1415926535898
+Double = 0.5
+[CODE]
+558BEC81EC300000005356578B75088B7E308BD8D9D0
+dd46c8d9e1dc47c0dd47c8d9e1dd5df8dc55f8dfe09b9e7605Dc65f8ebf2
+dc57e0dfe09b9e0F86BE000000dc57d0dfe09b9e0F83B1000000
+dd47e0dd47d8d9e1dec1DD5DF8DC55F8DFE09B9E730E
+DC67E0DC77D8DC4FE8DD5DE8EB36
+D9D0DD47D0DD47D8D9E1D9E0DEC1DD5DF8DC55F8DFE09B9E7610
+D9E0DC47D0DC77D8DC4FE8DD5DE8EB0CDDD8DD47E8DD5DE8EB02DDD8
+dd07dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd45e8d9e1dec9d9e8dec1
+dd47e8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19EB02DDD8
+D9D08BC35F5E5B89EC5DC20800
+[END]
+
+
+Description:
+
+Polygon circle transform centered on the x axis (transforms yz plane).  I made it for before Pine Tree Mandelbulb, after transform 1, before Pine Only without yz components.  Use it sparingly... or a lot.  
+
+  I'm thinking of having both an x-range, and a w-range for this one, so if we store an old iteration value of the x-range somewhere, we'll be able to access it again.  
+
+
+  Starts at x=xStart  Increases strength * polystrength until it reaches xStart+xStartEnd then stays transformed and starts to drop off at xEnd-sStartEnd
+
+
+ rCyz=abs(atan(z.z,z.y));
+
+	while (rCyz>pi/sides) {rCyz-=2.*pi/sides; }   
+
+z.yz/=cos(rCyz); 
+
+  Polystrength <=   z.yz*=cos(rCyz)
+
+
+:D  
+
+  M Benesi
+
+dd46c8d9e1dd47c8d9e1dd5df8dc55f8dfe09b9e7605DD65f8ebf2dc47c0
+
+0043E60B   DD46 C8          FLD QWORD PTR DS:[ESI-38]
+0043E60E   D9E1             FABS
+0043E610   DD47 C8          FLD QWORD PTR DS:[EDI-38]
+0043E613   D9E1             FABS
+0043E615   DD5D F8          FSTP QWORD PTR SS:[EBP-8]
+0043E618   DC55 F8          FCOM QWORD PTR SS:[EBP-8]  old stuff
+0043E61B   DFE0             FSTSW AX
+0043E61D   9B               WAIT
+0043E61E   9E               SAHF
+0043E61F   76 05            JBE SHORT accessch.0043E626  
+0043E621   DD65 f8          FLD QWORD PTR DS:[EDI-38]
+ebf2
+
+
+eb
+
+
+Code stuff....
+
+dd07dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd47e8d9e1dec9d9e8dec1
+dd47e8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19
+
+
+dd03dc57e0dfe09b9e0F86BA000000dc57d0dfe09b9e0F83AD000000
+dd57e0dd57d8d9e1dec1DD5DF8DC55F8DFE09B9E730E
+DC67E0DC77D8DC4FE8DD5DE8EB34
+D9D0DD57D0DD57D8D9E1DEC1DD5DF8DC55F8DFE09B9E7610
+D9E0DC47D0DC77D8DC4FE8DD5DE8EB0CDDD8DD47E8DD5DE8EB02DDD8
+dd07dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+9b9e7605dc65f0ebf2
+d9ffd9e8dee9dd45e8d9e1dec9d9e8dec1
+dd47e8d9e4dfe09b9e7308
+ddd8d9e8def1eb02ddd8d9c0dc0add1ad9d0dc09dd19
+
+
+
+0043D25B   DD03            FLD QWORD PTR DS:[EBX]
+0043D25D   DC57 E0         FCOM QWORD PTR DS:[EDI-20]
+0043D260   DFE0            FSTSW AX
+0043D262   9B              WAIT
+0043D263   9E              SAHF
+0043D264   76 66           JBE SHORT accessch.0043D2CC
+0043D266   DC57 D0         FCOM QWORD PTR DS:[EDI-30]
+0043D269   DFE0            FSTSW AX
+0043D26B   9B              WAIT
+0043D26C   9E              SAHF
+0043D26D   73 66           JNB SHORT accessch.0043D2D5
+0043D26F   DD57 E0         FST QWORD PTR DS:[EDI-20]
+0043D272   DD57 D8         FST QWORD PTR DS:[EDI-28]
+0043D275   D9E1            FABS
+0043D277   DEC1            FADDP ST(1),ST
+0043D279   DD5D F8         FSTP QWORD PTR SS:[EBP-8]
+0043D27C   DC55 F8         FCOM QWORD PTR SS:[EBP-8]
+0043D27F   DFE0            FSTSW AX
+0043D281   9B              WAIT
+0043D282   9E              SAHF
+0043D283   73 0E           JNB SHORT accessch.0043D293
+0043D285   DC67 E0         FSUB QWORD PTR DS:[EDI-20]
+0043D288   DC77 D8         FDIV QWORD PTR DS:[EDI-28]
+0043D28B   DC4F E8         FMUL QWORD PTR DS:[EDI-18]
+0043D28E   DD5D E8         FSTP QWORD PTR SS:[EBP-18]
+0043D291   EB 66           JMP SHORT accessch.0043D2F9
+0043D293   DD57 D0         FST QWORD PTR DS:[EDI-30]
+0043D296   DD57 D8         FST QWORD PTR DS:[EDI-28]
+0043D299   D9E1            FABS
+0043D29B   DEC1            FADDP ST(1),ST
+0043D29D   DD5D F8         FSTP QWORD PTR SS:[EBP-8]
+0043D2A0   DC55 F8         FCOM QWORD PTR SS:[EBP-8]
+0043D2A3   DFE0            FSTSW AX
+0043D2A5   9B              WAIT
+0043D2A6   9E              SAHF
+0043D2A7   76 10           JBE SHORT accessch.0043D2B9
+0043D2A9   D9E0            FCHS
+0043D2AB   DC47 D0         FADD QWORD PTR DS:[EDI-30]
+0043D2AE   DC77 D8         FDIV QWORD PTR DS:[EDI-28]
+0043D2B1   DC4F E8         FMUL QWORD PTR DS:[EDI-18]
+0043D2B4   DD5D E8         FSTP QWORD PTR SS:[EBP-18]
+0043D2B7   EB 08           JMP SHORT accessch.0043D2C1
+0043D2B9   DDD8            FSTP ST
+0043D2BB   DD47 E8         FLD QWORD PTR DS:[EDI-18]
+0043D2BE   DD5D E8         FSTP QWORD PTR SS:[EBP-18]
+0043D2C1   DD07            FLD QWORD PTR DS:[EDI]
+0043D2C3   DC77 F0         FDIV QWORD PTR DS:[EDI-10]
+0043D2C6   DD55 F8         FST QWORD PTR SS:[EBP-8]
+0043D2C9   D8C0            FADD ST,ST
+0043D2CB   DD5D F0         FSTP QWORD PTR SS:[EBP-10]
+0043D2CE   DD01            FLD QWORD PTR DS:[ECX]
+0043D2D0   DD02            FLD QWORD PTR DS:[EDX]
+0043D2D2   D9F3            FPATAN
+0043D2D4   D9E1            FABS
+0043D2D6   DC55 F8         FCOM QWORD PTR SS:[EBP-8]
+0043D2D9   DFE0            FSTSW AX
+0043D2DB   9B              WAIT
+0043D2DC   9E              SAHF
+0043D2DD   76 05           JBE SHORT accessch.0043D2E4
+0043D2DF   DC65 F0         FSUB QWORD PTR SS:[EBP-10]
+0043D2E2  ^EB F2           JMP SHORT accessch.0043D2D6
+0043D2E4   D9FF            FCOS
+0043D2E6   D9E8            FLD1
+0043D2E8   DEE9            FSUBP ST(1),ST
+0043D2EA   DD47 E8         FLD QWORD PTR DS:[EDI-18]
+0043D2ED   D9E1            FABS
+0043D2EF   DEC9            FMULP ST(1),ST
+0043D2F1   D9E8            FLD1
+0043D2F3   DEC1            FADDP ST(1),ST
+0043D2F5   DD47 E8         FLD QWORD PTR DS:[EDI-18]
+0043D2F8   D9E4            FTST
+0043D2FA   DFE0            FSTSW AX
+0043D2FC   9B              WAIT
+0043D2FD   9E              SAHF
+0043D2FE   73 08           JNB SHORT accessch.0043D308
+0043D300   DDD8            FSTP ST
+0043D302   D9E8            FLD1
+0043D304   DEF1            FDIVRP ST(1),ST
+0043D306   EB 02           JMP SHORT accessch.0043D30A
+0043D308   DDD8            FSTP ST
+0043D30A   D9C0            FLD ST
+0043D30C   DC0A            FMUL QWORD PTR DS:[EDX]
+0043D30E   DD1A            FSTP QWORD PTR DS:[EDX]
+0043D310   D9D0            FNOP
+0043D312   DC09            FMUL QWORD PTR DS:[ECX]
+0043D314   DD19            FSTP QWORD PTR DS:[ECX]
+0043D316   0000            ADD BYTE PTR DS:[EAX],AL
+
+
+
+
+//doing positive direction first
+dd03dc57e0dfe09b9e7666dc57d0dfe09b9e7366
+
+dd03
+dc57e0  fcom e0
+dfe09b9e
+76 66  to END!!!  else keep going
+//////   x still on top!!!!
+dc57d0  
+dfe09b9e
+73  66 to end    x>= end go to end...  
+
+
+dd03dc57e0dfe09b9e7666dc57d0dfe09b9e7366
+dd57e0dd57d8d9e1dec1DD5DF8DC55F8DFE09B9E730E
+DC67E0DC77D8DC4FE8DD5DE8EB66
+DD57D0DD57D8D9E1DEC1DD5DF8DC55F8DFE09B9E7610
+
+
+dd57e0  load e0
+dd57d8  load starten
+d9e1  fabs it!!!  positive direction!@
+dec1   add together
+dd5df8  save it and pop
+dc55f8   fcom to x
+dfe09b9e
+730e  JNB    x>= start+ interval skip else gotta do interval ramp up
+dc67e0  x-start  (because x is between start and interval!!!)
+dc77d8    (x-start)/interval!!!   save- this multiplies times total strength
+dc4fe8
+dd5de8
+eb66  jump to calculation!!!  (DD07)
+
+?/////x is still on!!
+dd57d0
+dd57d8
+d9e1
+dec1
+dd5df8
+dc55f8
+dfe09b9e
+7610  JBE  x<= to start + interval skip to assign E8 to edi e8 else
+
+dd03dc57e0dfe09b9e7666dc57d0dfe09b9e7366
+dd57e0dd57d8d9e1dec1DD5DF8DC55F8DFE09B9E730E
+DC67E0DC77D8DC4FE8DD5DE8EB66
+DD57D0DD57D8D9E1DEC1DD5DF8DC55F8DFE09B9E7610
+D9E0DC47D0DC77D8DC4FE8DD5DE8EB08DDD8DD47E8DD5DE8
+
+
+d9e0  -x
+dc47d0  -x  + end
+dc77d8   /interval
+dc4fe8
+dd5de8
+eb08  jump to calc!@#$
+ddd8
+dd47e8
+dd5de8
+
+
+0043D25B   DD07            FLD QWORD PTR DS:[EDI]
+0043D25D   DC77 F0         FDIV QWORD PTR DS:[EDI-10]
+0043D260   DD55 F8         FST QWORD PTR SS:[EBP-8]
+0043D263   D8C0            FADD ST,ST
+0043D265   DD5D F0         FSTP QWORD PTR SS:[EBP-10]
+0043D268   DD01            FLD QWORD PTR DS:[ECX]
+0043D26A   DD02            FLD QWORD PTR DS:[EDX]
+0043D26C   D9F3            FPATAN
+0043D26E   D9E1            FABS
+0043D270   DC55 F8         FCOM QWORD PTR SS:[EBP-8]
+0043D273   DFE0            FSTSW AX
+0043D275   9B              WAIT
+0043D276   9E              SAHF
+0043D277   76 05           JBE SHORT accessch.0043D27E
+0043D279   DC65 F0         FSUB QWORD PTR SS:[EBP-10]
+0043D27C  ^EB F2           JMP SHORT accessch.0043D270
+0043D27E   D9FF            FCOS
+0043D280   D9E8            FLD1
+0043D282   DEE9            FSUBP ST(1),ST
+
+
+//this will be set above instead of being an EDI   
+
+//0043D284   DD47 E8         FLD QWORD PTR DS:[EDI-18]
+
+  MAke     DD45 E8 instead!#!$@$$!@      STILL DOOOO!!!
+
+
+
+0043D287   D9E1            FABS
+0043D289   DEC9            FMULP ST(1),ST
+0043D28B   D9E8            FLD1
+0043D28D   DEC1            FADDP ST(1),ST
+0043D28F   DD47 E8         FLD QWORD PTR DS:[EDI-18]
+0043D292   D9E4            FTST
+0043D294   DFE0            FSTSW AX
+0043D296   9B              WAIT
+0043D297   9E              SAHF
+0043D298   73 08           JNB SHORT accessch.0043D2A2
+0043D29A   DDD8            FSTP ST
+0043D29C   D9E8            FLD1
+0043D29E   DEF1            FDIVRP ST(1),ST
+0043D2A0   EB 02           JMP SHORT accessch.0043D2A4
+0043D2A2   DDD8            FSTP ST
+0043D2A4   D9C0            FLD ST
+0043D2A6   DC0A            FMUL QWORD PTR DS:[EDX]
+0043D2A8   DD1A            FSTP QWORD PTR DS:[EDX]
+0043D2AA   D9D0            FNOP
+0043D2AC   DC09            FMUL QWORD PTR DS:[ECX]
+0043D2AE   DD19            FSTP QWORD PTR DS:[ECX]
+

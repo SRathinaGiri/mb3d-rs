@@ -1,0 +1,3916 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = Italiano
+code = IT
+
+[Labels]
+ACalculationIsRunningStopIt=È in corso un calcolo: fermarlo prima.
+;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Un raggio grossolano per blocco di 16, poi di 4 pixel avanza con l'apertura del blocco sottratta alla stima della distanza, e la marcia di ogni pixel parte dalla sua profondità. Fino al 60 % più veloce nello spazio aperto; le parti sottili possono perdersi dove la stima è molto imprecisa.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
+AFasterMethodThanBinsearchBut=Un metodo più veloce della ricerca binaria, ma può dare errori se le DE sono imprecise
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=mancano pochi secondi
+;a few seconds left
+AFineReliefOnTheSurface=Un rilievo fine sulla superficie, fissato al frattale: ruvido, pietra (creste e crepe) o grana
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
+AFolderEveryComputerOfThe=Una cartella visibile a tutti i computer dello sciame: una condivisione NAS, una condivisione Windows o Samba, una cartella sincronizzata
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AGroundOrWaterSurfaceAcross=Una superficie di suolo o d'acqua perpendicolare all'asse X, Y o Z del frattale, calcolata con il frattale: le sue ombre, l'occlusione, i riflessi e la luce Monte Carlo (non presente in MB3D: salvata dopo la parte MB3D dei parametri, che MB3D ignora)
+;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
+AHigherValueMeansABetter=Un valore più alto significa qualità migliore, ma anche il 100% comporta perdita.
+;A higher value means a better quality, even 100% is lossy.
+AI=IA
+;AI
+ALanguageFileHasOneLabel=Un file di lingua ha un'etichetta per riga: a sinistra del "=" il suo ID, a destra il tuo testo. Una sezione di finestra dopo le etichette assegna a un singolo controllo un testo proprio.
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=Un moltiplicatore che definisce la lunghezza massima del calcolo delle ombre nette,\nrelativa ad alcuni parametri di dimensione dell'immagine (predefinito = 1).\nAumentare il valore se mancano le ombre degli oggetti lontani.
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=Tempo calcolo AO:
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=Un render fermato o interrotto conserva quanto ha calcolato; Calcola 3D con gli stessi parametri lo continua.
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=Uno sfondo trasparente richiede fotogrammi PNG: scegliere PNG come formato di uscita.
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=Un video richiede immagini: scegliere BMP, PNG o JPG come formato di uscita.
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=Non si crea un video di un'animazione stereo: disattivare 'Render stereo animation'.
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf=Un'immagine di {} x {} ha bisogno di circa {} di memoria, questo computer ne ha {} liberi: il calcolo userebbe lo swap e il programma potrebbe non rispondere per minuti.\n\nCalcolare comunque?\n\nIl render grande (scheda Strumenti) la calcola a riquadri salvati uno per uno, senza tenere in memoria l'intera immagine; uno sciame (finestra Sciame) condivide i riquadri con altri computer.
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=Viene salvata anche un'immagine PNG dello Z-buffer.
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=Tastiera AZERTY
+;AZERTY keyboard
+Abort=Interrompi
+;Abort
+AboutHLeft=mancano circa {} h
+;about {} h left
+AboutHMinLeft=mancano circa {} h {} min
+;about {} h {} min left
+AboutMinLeft=mancano circa {} min
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=Quantità assoluta di assorbimento all'interno del materiale (gli zoom forti richiedono valori grandi). Il colore diffuso dell'oggetto vale anche per l'interno.
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=Distanza assoluta delle funzioni di combinazione liscia;\npuoi usare la notazione scientifica come 3e-5 per valori piccoli.\nProva 1/zoom per avvicinarti a un valore funzionante.
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=Assorbimento:
+;Absorption:
+Action=Azione
+;Action
+ActualAmbientShadowPar=Par. ombre ambientali attuali
+;Actual ambient shadow par.
+ActualCameraSettings=Impostazioni fotocamera attuali
+;Actual camera settings
+ActualColoringTabOptions=Opzioni attuali della scheda 'Colorazione'
+;Actual 'Coloring' tab  options
+ActualDOFParameters=Parametri DOF attuali
+;Actual DOF parameters
+ActualHardShadowSetting=Impostazione ombre nette attuale
+;Actual hard shadow setting
+ActualReflectionsSettings=Impostazioni riflessi attuali
+;Actual reflections settings
+ActualStereoParameters=Parametri stereo attuali
+;Actual stereo parameters
+Add=Nuova
+;Add
+AddANewKeyframeInBetween=Aggiunge un nuovo keyframe in mezzo
+;Add a new keyframe in between
+AddNamedConstantValue=Aggiungi valore costante con nome
+;Add named constant value
+AddNamedParam=Aggiungi parametro con nome
+;Add named param
+AddNewConstantValue=Aggiunge un nuovo valore costante
+;Add new constant value
+AddNewImageSequence=Aggiunge una nuova sequenza di immagini
+;Add new image sequence
+AddNewNamedParameter=Aggiunge un nuovo parametro con nome
+;Add new named parameter
+AddNewOption=Aggiunge una nuova opzione
+;Add new option
+AddOptionValue=Aggiungi valore opzione
+;Add option value
+AddToBackgroundDepthNotBlend=Aggiungi alla profondità dello sfondo (non fondere)
+;Add to background depth (not blend)
+AddonFormula=Formula addon
+;Addon formula
+AdjustRoughlyThenClickForFine=Regola grossolanamente, poi clicca per la regolazione fine.
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=Regola i cursori sugli estremi dell'istogramma
+;Adjust sliders to fit the histograms endpoints
+Adjustments=Regolazioni:
+;Adjustments:
+AdjustsTheDEForRenderPreview=Regola il DE per l'anteprima del rendering
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=Generatore avanzato di Z-buffer
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=Dopo il calcolo tutte le modifiche alle luci dell'utente vengono annullate a causa dei diversi angoli di luce.\nUn calcolo in modalità normale le riattiva.
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=Dopo il rendering, unisce i fotogrammi in un video nella cartella di output\n(<nome progetto>.avi, Motion JPEG: si riproduce in VLC e mpv, si apre negli editor video).\nI fotogrammi vengono conservati.
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=Tutti i colori sono a posto.
+;All colors are ok.
+AllFiles=Tutti i file
+;All files
+AllFilesParen=Tutti i file (*.*)
+;All files (*.*)
+AllKinds=Tutti i tipi
+;All kinds
+AllRealworldUnitsInMeter=Tutte le unità reali in metri.
+;All realworld units in meter.
+AllTheLightColorSettings=Tutte le impostazioni di luce + colore
+;All the light + color settings
+AlreadyExists={} <{}> esiste già
+;{} <{}> already exists
+AlsoMakeAVideoAVI=Crea anche un video (AVI)
+;Also make a video (AVI)
+Alternate=Alterna
+;Alternate
+Amb=Amb
+;Amb
+Ambient=Ambiente
+;Ambient
+AmbientBottomColorClickToChange=Colore ambientale inferiore, clicca per cambiare.
+;Ambient bottom color, click to change.
+AmbientLight=Luce ambientale
+;Ambient light
+AmbientLower=ambientale
+;ambient
+AmbientOcclusion=occlusione ambientale
+;ambient occlusion
+AmbientRaysDepth=Profondità raggi ambientali:
+;Ambient rays depth:
+AmbientShadow=Ombra ambientale
+;Ambient shadow
+AmbientShadowCalculation=calcolo delle ombre ambientali
+;ambient shadow calculation
+AmbientShadows=\sOmbre ambientali
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=Colore ambientale superiore, clic sinistro per cambiare colore,\nclic destro per inserire i colori di profondità.
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=Quantità:
+;Amount:
+AnAIAssistantOnThisComputer=Un assistente IA su questo computer può usare Mandelbulb 3D: chiedigli a parole semplici, o a voce, di descrivere, modificare e renderizzare le tue immagini, di creare variazioni o di renderizzare ciò su cui hai lavorato per ultimo. Mandelbulb 3D resta offline: è l'app dell'assistente ad avviarlo su questo computer.
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=È stato conservato un calcolo non terminato di questa immagine ({}).\n\nContinuarlo?  "No" lo ricalcola dall'inizio.
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=È stato conservato un render Monte Carlo non terminato di questi parametri ({}).\n\nContinuarlo?  "No" lo renderizza di nuovo dall'inizio.
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} e {}
+;{} and {}
+AndRemove=e rimuovi
+;and remove
+AngleUnitConversionRoutines={ Routine di conversione delle unità angolari }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=Keyframe anim. (f)
+;Ani keyfr. (f)
+AniKeyframe=Keyframe animazione
+;Ani keyframe
+AnimatedGif=GIF animata
+;Animated Gif
+Animation=Animazioni:
+;Animation:
+Animation2=Animazione: {}
+;Animation: {}
+AnimationCurves=Curve dell'animazione
+;Animation curves
+AnimationLower=animazione
+;animation
+AnimationMaker=Creazione animazioni
+;Animation maker
+AnimationMakerParen=Creazione animazione   ({})
+;Animation maker   ({})
+AnimationPicsOutput=Output immagini animazione:
+;Animation pics output:
+AnimationPreview=Anteprima animazione
+;Animation preview
+AnimationProcessing=Elaborazione animazione
+;Animation processing
+AnimationRenderingStopped=Rendering dell'animazione fermato.
+;Animation rendering stopped.
+AnimationSize=Dimensione animazione:
+;Animation size:
+AnimationTheFfmpegCommandIsOn=Animazione: il comando ffmpeg è negli appunti (eseguirlo in un terminale quando i fotogrammi sono pronti):
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=Animazione: video scritto: {}
+;Animation: video written: {}
+Animations=Animazioni
+;Animations
+AntiAliasing=Antialiasing:
+;Anti aliasing:
+Antialiasing=Antialiasing:
+;Antialiasing:
+Aperture=Apertura:
+;Aperture:
+Appearance=Aspetto
+;Appearance
+ApplyToImage=Applica all'immagine
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=Applica i valori modificati, perché i campi sono solo di output
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=Approssima i colori dei vertici. Le informazioni sul colore vengono salvate come coordinate uv nella mesh e ne aumentano le dimensioni
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calcola ArcTan(Y/X) e restituisce un angolo nel quadrante corretto.
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Attorno al centro (un oggetto)
+;Around the middle (an object)
+AsFullBackgroundSphere=Come sfera di sfondo completa:
+;As full background sphere:
+Aspect=Proporz.:
+;Aspect:
+AssignActualFormulaSettings=Assegna le impostazioni formula attuali
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=Assegna le impostazioni luce attuali del programma principale.\nLuci e colori differiscono dal rendering principale\nper via delle funzioni più semplici del navigatore.
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=A quale sottofotogramma:
+;At which subframe:
+Author=Autore:
+;Author:
+Author2=Autore
+;Author
+Auto=Auto
+;Auto
+AutoRenderAllFollowingTiles=Renderizza automaticamente tutti i riquadri seguenti
+;Auto render all following tiles
+AutoSavingTheM3cFile=Salvataggio automatico del file m3c:
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=Auto: la CPU e la scheda grafica si dividono l'immagine (la CPU\nparte subito, la scheda si aggiunge appena il suo shader è\ncompilato), poi la scheda esegue le ombre e l'occlusione\nambientale.\nCPU: mai la scheda grafica.\nScheda grafica: attende lo shader, come prima.
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=Aggiorna immagine autom.
+;Auto update image
+AutoUpdatePreview=Aggiorna anteprima automaticamente
+;Auto update preview
+AutoclipSpecDiff=Autoclip spec+diff:
+;Autoclip spec+diff :
+AutodetectOnStart=Rileva all'avvio
+;Autodetect on start
+AverageNoise=Rumore medio:
+;Average noise:
+AverageRaycount=Numero medio di raggi:
+;Average raycount:
+AvgIterations=Iterazioni medie:
+;Avg. iterations:
+AvgRaysteps=Passi raggio medi:
+;Avg. raysteps:
+AxisX=Asse X
+;Axis X
+AxisY=Asse Y
+;Axis Y
+AxisZ=Asse Z
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=Salvataggio BMP,JPG,PNG:
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=Cache BTracer2 (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=Imm. sfondo
+;Back pic
+BackToTheViewTakenFrom=Torna alla vista presa dalla finestra principale.
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=Colore inferiore dello sfondo, clicca per cambiare.
+;Background bottom color, click to change.
+BackgroundImage=Immagine di sfondo:
+;Background image:
+BackgroundImage2=Immagine di sfondo
+;Background image
+BackgroundPictures=Immagini di sfondo:
+;Background pictures:
+BackgroundTopColorLeftclickToChange=Colore superiore dello sfondo, clic sinistro per cambiare, clic destro per il menu contestuale.
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=Colori di &base:
+;&Basic colors:
+BatchProcessing=Elaborazione batch
+;Batch processing
+BatchProcessingPictureOf=Elaborazione batch: immagine {} di {}
+;Batch processing: picture {} of {}
+Between=tra:
+;between:
+Big=grandi
+;big
+BigRender=Render grande
+;Big render
+BigRender2=Render grande: {}
+;Big render: {}
+BigRenderProjects=Progetti rendering grande:
+;Big render projects:
+BigRenderStopped=Render grande fermato.
+;Big render stopped.
+BigRenders=Render grandi
+;Big renders
+BigSizeIncludingAntiAliasing=Dimensione grande (con antialiasing):
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=Finestre e testo più grandi o più piccoli (la disposizione resta la stessa)
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=Un raggio maggiore dà ombre più morbide
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=Valori maggiori del numero di righe (orizzontali) esistenti vengono limitati all'ultima riga.\nNessun problema.
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=Bitmap (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=Fondi nebbia d.
+;Blend dFog
+BlendTheDynamicFogInsteadOf=Fonde la nebbia dinamica invece di aggiungere la luce,\nfacendo sparire lo sfondo.
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=blocchi
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=Bokeh:
+;Bokeh:
+BorderSize=Dimensione bordo:
+;Border size:
+Box=Box
+;Box
+BoxSharpGoodAAGaussBit=Box: nitido, buon AA\nGauss: un po' sfocato, AA molto buono
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=Porta la finestra in primo piano da qualsiasi finestra, o chiude quella attuale. Fai clic su un campo e premi i tasti; Backspace rimuove la scorciatoia.
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=Sfoglia...
+;Browse...
+BuiltIn=integrato
+;built in
+BuiltWithoutIntelOpenImageDenoise=compilato senza Intel Open Image Denoise
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=Impostazioni BulbTracer2 (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=Da
+;By
+ByOfDone={} ({}, di {}): {} di {} {} fatti
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=Calc-
+;Calc-
+CalcColon=Calcolo:
+;Calc:
+CalcRAutomatic=Calcola R. automat.
+;Calc. R. automatic.
+Calculate=Calcola
+;Calculate
+Calculate3D=Calcola 3D
+;Calculate 3D
+Calculate3DAndTheBatchWindow=Calcola 3D e la finestra Batch con lo sciame, in
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=Calcola rapidamente un'immagine a blocchi 8x8 senza illuminazione corretta
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=Calcola O.A. automaticamente
+;Calculate A.S. automatically
+CalculateColors=Calcola colori
+;Calculate Colors
+CalculateDoF=Calcola DoF:
+;Calculate DoF:
+CalculateDoFAutomatically=Calcola DoF automaticamente
+;Calculate DoF automatically
+CalculateFrom=Calcola da:
+;Calculate from:
+CalculateHSAutomatically=Calcola O.N. automaticamente
+;Calculate H.S. automatically
+CalculateJulia=Calcola Julia
+;Calculate Julia
+CalculateLeftEyeImage=Calcola immagine occhio sinistro
+;Calculate left eye image
+CalculateNTimesToReduceNoise=Calcola n volte per ridurre il rumore con la media
+;Calculate n times to reduce noise by averaging
+CalculateNow=Calcola ora
+;Calculate now
+CalculateOn=Calcola su
+;Calculate on
+CalculateOnlyASelectionInThe=Calcola solo una selezione dell'immagine
+;Calculate only a selection in the image
+CalculatePreview=Calcola anteprima
+;Calculate preview
+CalculateRTAutomatically=Calcola R. (+ T.) automaticamente
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=Calcola automaticamente tratti di luce casuali
+;Calculate random light strokes automatically
+CalculateReflections=Calcola riflessi:
+;Calculate reflections:
+CalculateRightEyeImage=Calcola immagine occhio destro
+;Calculate right eye image
+CalculateTheImageFirst=Calcolare prima l'immagine.
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=calcolare prima l'immagine (Calcola 3D)
+;calculate the image first (Calculate 3D)
+CalculateTransparency=Calcola trasparenza:
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=Calcola la trasparenza solo sulle formule dIFS (per combinazioni DE con tempi di fuga)
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=calcolato
+;calculated
+CalculatedOn=Calcolato su: {}
+;Calculated on: {}
+CalculatedOnTheCPU=Calcolato sulla CPU
+;Calculated on the CPU
+CalculatedPictures=Immagini calcolate
+;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=Calcola l'occlusione ambientale DE su un quarto dei pixel e riempie gli altri. Fino a 4 volte più veloce in quella fase; più morbida nei dettagli fini.
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
+CalculatingThePreview=Calcolo dell'anteprima...
+;Calculating the preview...
+CalculatingVolumetricLightMap=Calcolo della mappa di luce volumetrica
+;Calculating volumetric light map
+Calculation=Calcolo
+;Calculation
+CalculationCount=Numero di calcoli:
+;Calculation count:
+CalculationOptions=Opzioni di calcolo
+;Calculation options
+CalculationStopped=Calcolo fermato.
+;Calculation stopped.
+Calculations=Calcoli
+;Calculations
+Camera=Camera
+;Camera
+CameraColon=Fotocamera:
+;Camera:
+CameraLense=Obiettivo camera:
+;Camera lense:
+Cancel=Annulla
+;Cancel
+CancelAndShowResult=Annulla e mostra il risultato
+;Cancel and show result
+CancelExit=Annulla + esci
+;Cancel + exit
+CancelImmediately=Annulla subito
+;Cancel immediately
+CancelType=Tipo di annullamento:
+;Cancel type:
+CannotRead={}: impossibile leggere
+;{}: cannot read
+CannotTakePartAnotherVersionOf=; {} non può partecipare (altra versione del programma)
+;; {} cannot take part (another version of the program)
+CannotWrite=Impossibile scrivere {}: {}
+;Cannot write {}: {}
+CaseYAngleIsAt90=Se l'angolo Y è a 90 o -90 gradi, gli angoli di Eulero non possono essere calcolati!
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CatmullRom=Catmull-Rom
+;Catmull-Rom
+CautionTheProcessingsBelowMustBe=Attenzione: le elaborazioni qui sotto vanno calcolate\ndall'alto verso il basso e le modifiche alle luci\nazzerano questi calcoli!
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil: il più piccolo intero >= X, |X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=Cambia
+;Change
+ChangeParams=Cambia parametri
+;Change Params
+ChangeTheJuliaValuesWithRadius=Modifica i valori Julia con raggio, longitudine e latitudine
+;Change the julia values with radius, longitude and latitude
+CheckColors=Verifica colori
+;Check colors
+CheckThisIfYouWantTo=Selezionare per creare un'animazione ciclica.\nL'interpolazione si comporta come se dopo l'ultimo keyframe\nvenisse di nuovo il primo e viceversa.
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=Attivare questa opzione per avere meno variazioni di colore nell'immagine.\nPer avere più dettagli anche con l'opzione attiva, eseguire la colorazione sui parametri\noriginali con un valore di DEstop ridotto, diviso per il 'Fattore di scala'.
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=Seleziona per non assegnare più una priorità maggiore al thread più lento.
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=Selezionare per modificare il valore [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=Scegli un nome file, poi rende le immagini di entrambi gli occhi e salva automaticamente la coppia stereo completata.
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=Scegli una mappa
+;Choose a map
+ChooseASharedFolderFirstOne=scegliere prima una cartella condivisa (una che ogni computer dello sciame possa vedere)
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=Scegli opzione:
+;Choose Option:
+ChoseTheme=Scegli tema:
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (in un terminale)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (app desktop)
+;Claude (desktop app)
+Clear=Svuota
+;Clear
+ClearAllGenerationsBeforeTheSelected=Cancella tutte le generazioni precedenti a quella selezionata
+;Clear all generations before the selected one
+ClearAllPrevious=Cancella le precedenti
+;Clear all previous
+ClearTheWholeList=Svuota tutto l'elenco
+;Clear the whole list
+ClickAButtonToChangeA=(Clic su un pulsante per cambiare una cartella)
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=Clicca sull'intestazione di una colonna per ordinare.
+;Click a column header to sort.
+ClickALanguageToSwitchThe=Fare clic su una lingua per passare le finestre a quella lingua
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=Fare clic su un file di parametri per vederne l'anteprima.
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=Fai clic e premi i tasti della scorciatoia
+;Click and press the keys of the hotkey
+ClickImage=clic sull'immagine
+;click image
+ClickOnButtonAndAfterwardsOn=Clicca sul pulsante e poi sull'oggetto nell'immagine\nper impostare il punto centrale della luce.
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=Clic sull'immagine
+;Click on image
+ClickOnMToSaveThese=Clicca su "M" per salvare queste impostazioni più larghezza e scala dell'immagine\ncome preset. Poi clicca su "anteprima", "media" o "alta"\noppure di nuovo su "M" per annullare.
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=Clicca sul pulsante e poi sull'oggetto nell'immagine per prendere\ni valori da quel punto.
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=Clicca sul pulsante e poi sull'oggetto nell'immagine per prendere\ni valori Julia da quel punto.\nIn modalità 4D il vettore viene ruotato secondo i valori di rotazione 4D.\n\nSuggerimento: prendi i valori dall'oggetto calcolato senza Julia, altrimenti il risultato\nnon ha una relazione reale con quel punto.
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=Clicca sul pulsante e poi sull'oggetto nell'immagine per prendere\nla distanza dell'oggetto non spostato.\nQuella parte dell'oggetto apparirà alla distanza reale dello schermo.
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=Clicca sull'oggetto nell'immagine da centrare.\nLa direzione della camera non cambia; usa le opzioni\ndi rotazione per ruotare attorno al punto centrale.
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=Clic per passare da Nebbia dinamica su iterazioni a Colore su iterazioni
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=Fare clic per scegliere il file di output
+;Click to choose the output file
+ClickToChooseTheOutputFolder=Clic per scegliere la cartella di output
+;Click to choose the output folder
+ClickToChooseYourNameFor=Clicca per scegliere il tuo nome da salvare automaticamente nei parametri
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=Clic per nascondere/mostrare
+;Click to hide/show
+ClickToInsertYourNameBelow=Clicca per inserire il tuo nome qui sotto
+;Click to insert your name below
+ClickToLoadABackgroundPicture=Clicca per caricare un'immagine di sfondo.
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=Clic per aprire il gestore file e trascinare i file M3P sull'elenco.
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=Clicca per rendere il piano 2D nel punto centrale.
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=Clicca per rendere il piano 2D iniziale.
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=Clicca per rendere il piano Z finale.
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=Clicca per salvare le luci attuali e la maggior parte delle impostazioni colore\nsu un pulsante di preset personalizzato.\nClicca di nuovo questo pulsante per annullare il salvataggio.
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=Clic per selezionare uno o più file M3P da inserire nell'elenco.
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=Clicca per azzerare tutti i cursori della nebbia dinamica.
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=Clicca per impostare l'altezza dell'immagine secondo queste proporzioni.
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=Clic per impostare la luce del navigatore su uno di questi preset.
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=Clic per digitare lo zoom (resta: zoom fisso).
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=ClippingR:
+;ClippingR:
+Close=Chiudi
+;Close
+CloseMesh=Chiudi mesh
+;Close Mesh
+CloseTheCurrentWindow=Chiudi la finestra attuale:
+;Close the current window:
+CloseTheMeshAtTheBorders=Chiude la mesh ai bordi
+;Close the mesh at the borders
+CloseWindow=Chiudi finestra
+;Close window
+CloudDriftX=Deriva nuvole X
+;Cloud drift X
+CloudDriftY=Deriva nuvole Y
+;Cloud drift Y
+CloudDriftZ=Deriva nuvole Z
+;Cloud drift Z
+Clouds=Nuvole
+;Clouds
+CloudsOverThePictureALayer=Nuvole sull'immagine: uno strato tra due altezze lungo l'asse X, Y o Z del frattale, illuminato dalla prima luce, davanti e dietro il frattale (non in MB3D: salvato dopo la parte MB3D dei parametri; in Monte Carlo lungo i raggi di vista; non nei riflessi)
+;Clouds over the picture: a layer between two heights along the fractal's X, Y or Z axis, lit by the first light, in front of and behind the fractal (not in MB3D: kept after MB3D's part of the parameters; in Monte Carlo along the view rays; not in reflections)
+Co=Co:
+;Co:
+Code=Codice
+;Code
+CodeFile=Codice: {}\nFile: {}
+;Code: {}\nFile: {}
+ColCycling=Ciclo colori
+;Col cycling
+ColVarOnZ=Var. col. su Z
+;Col. var. on Z
+Color=Colore
+;Color
+ColorAdjustment=Regolazione colori
+;Color adjustment
+ColorEnd=Colore fine
+;Color end
+ColorOnIterat=Colore su iteraz.:
+;Color on Iterat.:
+ColorOnIts=Colore sulle it.:
+;Color on its:
+ColorOption0AverageOfBoth=Opzione colore:\n0:  media di entrambe le formule.\n1:  colore della prima formula.\n2:  colore della seconda formula.
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=Opzioni di scala dei colori
+;Color scaling options
+ColorStart=Colore inizio
+;Color start
+Coloring=Colorazione
+;Coloring
+Colour0Grey1AsIt=Colore: 0 grigio, 1 così com'è, 2 il doppio più colorato
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=Frange colore
+;Colour fringes
+ColourVariation=Variaz. colore
+;Colour variation
+ColoursByDirection=Colori secondo la direzione:
+;Colours by direction:
+ColumnsOfTiles=Colonne di riquadri
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=Metodi di combinazione:\nMin: entrambi i frattali sono visibili, combina i DE con il minimo\nMax: solo le parti sovrapposte, combina i DE con il massimo\nInv max: inverte il DE del secondo ibrido e combina con 'Max'\nMin lin: combinazione con il minimo e una funzione di sovrapposizione lineare\nMin nlin: come S1, funzione non lineare, sovrapposizione più morbida\nMix: prima F1..FendHybrid1, poi FstartHybrid2..F6 (dIFS) con vettore modificato.
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=Combina mappa Y con colori diffusi
+;Combine map Y with diffuse colors
+Common=Comune
+;Common
+ComparingFiles=confronto dei file
+;comparing files
+Compile=Compila
+;Compile
+CompileTheCodeF9=Compila il codice <F9>
+;Compile the code <F9>
+CompilingSucceeded=Compilazione riuscita
+;Compiling succeeded
+Computer=Computer
+;Computer
+ConeMarchThePixelsOfA=Marcia a cono: i pixel di un blocco partono da dove si è fermato il suo raggio grossolano
+;Cone march: the pixels of a block start where its coarse ray stopped
+Confirm=Conferma
+;Confirm
+Connect=Connetti
+;Connect
+ConnectToAnAIAssistant=Connetti a un assistente IA
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=Connetti a un assistente IA: lasciagli descrivere, modificare e renderizzare le tue immagini
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=Connesso. Chiedere in una nuova conversazione; riavviare l'app se mb3d non compare tra i suoi strumenti.
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=Connesso. Avviare una nuova sessione di Claude Code per usarlo. Per rimuoverlo di nuovo, eseguire il comando qui sotto.
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=Attenuazione costante
+;Const Attenuation
+Constant=Costante
+;Constant
+Constants=Costanti:
+;Constants:
+Continue=Continua
+;Continue
+Contrast=Contrasto
+;Contrast
+ConvertManyM3PFilesToM3I=Converte molti file M3P in M3I
+;Convert many M3P files to M3I
+CopiedToTheClipboard=Copiato negli appunti.
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=Copia negli appunti un comando ffmpeg per un piccolo video MP4 dei fotogrammi.\nEseguirlo da sé in un terminale (questo programma non avvia altri programmi).
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=Copia
+;Copy
+CopyCommand=Copia comando
+;Copy command
+CopyParamsToClipboard=Copia parametri negli appunti
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=Copia il comando, da incollare in un terminale
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=Copia la riga selezionata, o tutte le righe mostrate se nessuna è selezionata
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=Copia i valori
+;Copy the values
+CopyTheValuesTo=Copia i valori in..
+;Copy the values to..
+CopyThisFormulaToFormula1=Copia questa formula nella formula 1
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=Copia questa formula nella formula 2
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=Copia questa formula nella formula 3
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=Copia questa formula nella formula 4
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=Copia questa formula nella formula 5
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=Copia questa formula nella formula 6
+;Copy this formula to formula 6
+CopyThisLightToLight1=Copia questa luce nella Luce1
+;Copy this light to Light1
+CopyThisLightToLight2=Copia questa luce nella Luce2
+;Copy this light to Light2
+CopyThisLightToLight3=Copia questa luce nella Luce3
+;Copy this light to Light3
+CopyThisLightToLight4=Copia questa luce nella Luce4
+;Copy this light to Light4
+CopyThisLightToLight5=Copia questa luce nella Luce5
+;Copy this light to Light5
+CopyThisLightToLight6=Copia questa luce nella Luce6
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=Copia Z1 in Z2 per ottenere un punto di fuoco
+;Copy Z1 to Z2 to get a focus point
+Cores=Core
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=Impossibile caricare la formula <{}>: {}
+;Could not load formula <{}>: {}
+CouldNotWrite=Impossibile scrivere {}: {}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=Numero di immagini (sezioni dell'oggetto) che verranno calcolate.
+;Count of images (object slices) that will be calculated.
+Cover=Copert.:
+;Cover:
+CreateEditAJITCompiledFormula=Crea/modifica una formula compilata JIT
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=Crea file di lingua
+;Create language file
+CreateMeshes=Crea mesh
+;Create Meshes
+CrossEyedPreview=Anteprima a occhi incrociati
+;Cross-eyed preview
+Ctrl1ToCtrl7In=Da Ctrl+1 a Ctrl+7 nell'ordine della lista, Ctrl+W per chiudere
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+Curves=Curve
+;Curves
+CustomPreset1=preset personalizzato 1
+;custom preset 1
+CustomPreset10=preset personalizzato 10
+;custom preset 10
+CustomPreset2=preset personalizzato 2
+;custom preset 2
+CustomPreset3=preset personalizzato 3
+;custom preset 3
+CustomPreset4=preset personalizzato 4
+;custom preset 4
+CustomPreset5=preset personalizzato 5
+;custom preset 5
+CustomPreset6=preset personalizzato 6
+;custom preset 6
+CustomPreset7=preset personalizzato 7
+;custom preset 7
+CustomPreset8=preset personalizzato 8
+;custom preset 8
+CustomPreset9=preset personalizzato 9
+;custom preset 9
+Cuts=Tagli
+;Cuts
+Cutting=Taglio
+;Cutting
+Cutting2=Taglio*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=Riduzione rumore DCT (GIMP)
+;DCT denoising (GIMP)
+DE=DE:
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=DE comb.:
+;DE comb.:
+DEOcclusionAtHalfResolution=Occlusione DE a metà risoluzione
+;DE occlusion at half resolution
+DEStop=DE stop:
+;DE stop:
+DEcombinate=DEcombinate
+;DEcombinate
+DEstop=DEstop:
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=Nebbia d.
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=forme dIFS
+;dIFS shapes
+DIFSTransformations=trasformazioni dIFS
+;dIFS transformations
+DOUBLEIMAGESIZE=DIMENSIONE IMMAGINE DOPPIA
+;DOUBLE IMAGESIZE
+DateModified=Data di modifica
+;Date modified
+Day=Giorno
+;Day
+DblClickHideRightPanel=Doppio clic: nasconde il pannello destro
+;DblClick: hide right panel
+Debug=debug
+;debug
+DecreaseScale=Riduci la scala
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=Riduce la dimensione della finestra del Navigatore
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=Riduce la nebbia nelle parti vicine
+;Decreases the fog in near parts
+DefaultTheme=Tema predefinito
+;Default Theme
+Defaults=Predefiniti
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=Definisce le cartelle predefinite per caricare e salvare
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=Definisce sequenze di immagini per animare mappe di altezza e colore
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=Definisce con quanta precisione viene calcolata la posizione alla distanza definita dalla superficie.\nValori più alti danno maggiore precisione, e quindi anche un calcolo migliore delle normali.\nRaramente servono valori molto superiori a 12.
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=Definisce quanto vicino (in metri) si trova davanti a te il piano Zstart.\nÈ anche la distanza minima alla quale può apparire un oggetto (virtuale).
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=Definisce la distanza dalla superficie degli oggetti alla quale il raymarching si ferma.\nValori più bassi danno più dettagli, ma possono anche causare sottocampionamento.\nIl valore è relativo alla larghezza di un pixel.
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=Definisce la distanza reale dallo schermo in metri.
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=Definisce la larghezza reale dell'immagine sullo schermo in metri.
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=Definisce la dimensione del piano di vista Zstart.\nViene impostato automaticamente usando il navigatore;\nmodificalo solo se gli oggetti risultano tagliati ai bordi\ndell'immagine.
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=Definisce fino a quale angolo viene calcolata l'ombreggiatura.\nValori bassi: le strutture lontane sono meno influenzate da quelle vicine,\nvantaggioso quando le strutture hanno molti fori.
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=Definisce da dove ricomincia l'iterazione\nquando l'ultima formula è stata eseguita e non si è\nancora verificata nessuna condizione di arresto.
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=Gradi di rotazione
+;Degree of rotation
+Degrees=Gradi
+;Degrees
+Del=Elim.
+;Del
+DelEntry=Elimina voce
+;Del Entry
+Delete=Elimina
+;Delete
+DeleteAll=Elimina tutto
+;Delete all
+DeleteAllKeyframesToBeginA=Elimina tutti i keyframe per iniziare un nuovo progetto.
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=Elimina i file evidenziati dall'elenco
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=Elimina il valore costante selezionato
+;Delete selected constant value
+DeleteSelectedNamedParameter=Elimina il parametro con nome selezionato
+;Delete selected named parameter
+DeleteSelectedOption=Elimina l'opzione selezionata
+;Delete selected option
+DeleteSequence=Elimina sequenza
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail=Eliminare i parametri e la miniatura di "{}" dalla cronologia?
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=Elimina questo keyframe
+;Delete this keyframe
+DeleteThisTilesFiles=Elimina i file di questo riquadro
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=Elimina quanto conservato da tutti i render non terminati
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=Eliminare tutto ciò che hanno conservato i render non terminati?
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=Elimina quanto conservato dal render selezionato
+;Delete what the selected render kept
+Density=Densità:
+;Density:
+Depth=Profondità
+;Depth
+DepthColon=Profondità:
+;Depth:
+DepthGradientFunctionWorksOnlyIf=Funzione del gradiente di profondità, funziona solo se non 'Relativo all'oggetto'.
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\sProfondità di campo
+;\sDepth of Field
+DepthOfField2=Profondità di campo
+;Depth of Field
+DepthOfFieldLower=profondità di campo
+;depth of field
+DepthOfReflections1ToSee=Profondità dei riflessi: 1 per vedere un solo riflesso,\ncon 2 si vedono i riflessi nell'oggetto riflesso, ... e così via.
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=Descrizione
+;Description
+DetectsTheAmountOfProcessorCores=Rileva il numero di core del processore all'avvio.\nPuoi scegliere tu il numero e disattivare\nquesta opzione per partire con impostazioni diverse.
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=Determina per quanti oggetti successivi vengono calcolati i riflessi diffusi
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=Determina quanti riflessi diretti consecutivi vengono calcolati
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=Determina quando fermare il rendering in modalità batch
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=Determina se la luce deve essere visibile e la sua forma.
+;Determines whether the light should be visible and its shape.
+Diff=Diff:
+;Diff:
+Diff2=Diff
+;Diff
+DifferentCalculationOfLightCombining=Calcolo diverso della combinazione delle luci
+;Different calculation of light combining
+Diffuse=Diffuso:
+;Diffuse:
+Diffuse2=Diffusa
+;Diffuse
+DiffuseFunctionChooseCosOrCos=Funzione diffusa, scegli Cos o Cos^2 se usi un'ombra netta su questa luce.
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=Colori diffusi dell'oggetto, clicca per cambiarli.
+;Diffuse object colors, click to change them.
+DiffuseShadow=Ombra diffusa
+;Diffuse shadow
+DirectionOf=Direzione {} di {}
+;Direction {} of {}
+DirectionTowardsZero000=Direzione verso lo zero (0,0,0)
+;Direction towards zero (0,0,0)
+Directions=Direzioni:
+;Directions:
+DisableAll=Disattiva tutto
+;Disable all
+DisableAnalyticalDE=Disattiva DE analitico
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=Disattiva la regolazione automatica dello zoom durante il movimento.\nPorta anche ad attraversare l'oggetto a passi.
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=Disattiva il tasto (f) per l'anim.
+;Disable the (f) key for ani
+DisableThemes=Disattiva temi
+;Disable Themes
+DisableThisIfYouDoNot=Disattivare se non si vogliono zeri iniziali negli indici dei file.\nPer esempio:  nome000010.png  diventa  nome10.png
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=Disattiva threadboost
+;Disable threadboost
+Disc=Disco
+;Disc
+Disconnect=Disconnetti
+;Disconnect
+DisplayStyle=Stile di visualizzazione
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=Mostra alcune descrizioni delle formule, se disponibili.
+;Displays some formula descriptions, if available.
+DistanceEstimation=Stima della distanza
+;Distance estimation
+DitheringForScale=Dithering per scala:
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=Divide il "Raystep multiplier" effettivo per questo valore;\naumentarlo per ridurre l'overstepping.
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=Calcolo DoF
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=Calcolo DoF disattivato, non possibile in modalità a riquadri.
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=Non ancorare questa finestra
+;Do not make this window sticky
+DoThisFunctionAutomatically=Esegui questa funzione automaticamente
+;Do this function automatically
+DoYouReallyWantToClear=Cancellare davvero tutte le generazioni precedenti?
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=Svuotare davvero l'elenco batch?
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=Eliminare davvero tutto?
+;Do you really want to delete everything?
+DoYouReallyWantToStop=Fermare davvero i calcoli?
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=Esegue la colorazione dopo questo numero di iterazioni e non dal bailout (-1, disattivato)
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=Attività
+;Doing
+DonTChangeAmbShDFog=Non modificare OmbAmb+dFog:
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=Non salvare, solo anteprima
+;Don't save, only preview
+Done=Fatto
+;Done
+Done2={} fatto ({}).
+;{} done ({}).
+DoneOf=Fatto: {} di {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=Doppio clic per cambiare la modalità del navigatore
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=Raddoppia automaticamente la dimensione dell'immagine
+;Double the imagesize automatically
+DownScaling=Riduzione\nscala:
+;Down-\nscaling:
+DownscaleBoth=Riduci entrambi
+;Downscale both
+DownscaleDiffuseKeepReflections=Riduci il diffuso, mantieni i riflessi
+;Downscale diffuse, keep reflections
+DownscaleSpecular=Riduci lo speculare
+;Downscale specular
+Ds=Ds:
+;Ds:
+DunnoDoNothing=Non so, non fare nulla
+;Dunno, do nothing
+DynFog=Nebbia din.
+;Dyn.fog
+DynFogOnIt=Nebbia din. su it.:
+;Dyn. fog on It.:
+DynFogOnIts=Nebbia din. su iter.:
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=Nebbia dinamica, clicca per cambiare il colore.  Clic destro per inserire il colore della luce volumetrica.
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=Colore intenso della nebbia dinamica, clicca per cambiare.
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=Parametri della nebbia dinamica o della luce volumetrica. Vedi la scheda 'Colorazione' per le opzioni!
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=Nebbia dinamica:\nPiù basso è il numero, più lontano dall'oggetto compare la nebbia.\nCon dIFS la nebbia circonda la parte dell'oggetto calcolata a questa iterazione.\nZero per disattivare questa funzione e calcolare la nebbia dinamica sul numero di passi dei raggi, come di consueto.\nSuggerimento: attivare l'opzione 'First step random' per evitare gradini.\nLuce volumetrica:\nScegliere il numero della luce da cui calcolare la diffusione della luce.
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=Colore bordi
+;Edges color
+Edit=Modif.
+;Edit
+EditJITCompiledFormula=Modifica formula compilata JIT
+;Edit JIT-compiled Formula
+EditMapSequences=Modifica sequenze di mappe
+;Edit Map Sequences
+EditMode=Modalità di modifica:
+;Edit mode:
+EditNamedConstantValue=Modifica valore costante con nome
+;Edit named constant value
+EditNamedParam=Modifica parametro con nome
+;Edit named param
+EditOptionValue=Modifica valore opzione
+;Edit option value
+EditSelectedConstantValue=Modifica il valore costante selezionato
+;Edit selected constant value
+EditSelectedNamedParameter=Modifica il parametro con nome selezionato
+;Edit selected named parameter
+EditSelectedOption=Modifica l'opzione selezionata
+;Edit selected option
+Elapsed=Trascorso
+;Elapsed
+ElapsedTimeS=Tempo trascorso: {} s
+;Elapsed time: {} s
+Enable=Attiva
+;Enable
+EnableGeneratingZBufferThisMode=Attiva la generazione dello z-buffer. Questa modalità richiede dati aggiuntivi che la rendono incompatibile con le versioni precedenti, quindi i file MC con questa impostazione non possono essere salvati/ripristinati. Per salvare lo z-buffer basta salvare l'immagine normale: lo z-buffer viene salvato automaticamente insieme ad essa.
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=Attiva un gamma interno di 2 per i calcoli della luce.\nÈ indipendente dal cursore Gamma.
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=Attiva illuminazione
+;Enable Lighting
+Enabled=Attiva
+;Enabled
+EnablesTheHardShadowIfCalculated=Attiva l'ombra netta, se calcolata.\nSe la HS non è stata calcolata, l'ombra ambientale riduce la luce se attiva.
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=Fine:
+;End:
+EnterNamedParameter=Inserisci parametro con nome
+;Enter named parameter
+Entries={} voci
+;{} entries
+Error=errore
+;error
+ErrorAt=, errore in {}: {}
+;, error at {}: {}
+Errors=Errori
+;Errors
+Escapetime3DFormulas=formule 3D escapetime
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=formule 3D escapetime con calcolo DE analitico (più veloce)
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=formule 4D escapetime
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=formule 4D escapetime con calcolo DE analitico (più veloce)
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=solo trasformazioni escapetime,\nda usare in combinazione con formule escapetime
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=Angoli di Eulero:
+;Euler angles:
+EveryNewPictureOfTheMain=Ogni nuova immagine della finestra principale viene filtrata (anche quella salvata).
+;Every new picture of the main window is filtered (the saved one too).
+Everything=Tutto
+;Everything
+ExchangeAdd=Scambia, aggiungi
+;Exchange, add
+ExchangeThisFormulaWithTheNext=Scambia questa formula con la successiva
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=Scambia questa formula con la precedente
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=Scambia questo fotogramma con il successivo
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=Scambia questo fotogramma con il precedente
+;Exchange this frame with the previous one
+Exit=Esci
+;Exit
+ExpandThePanel=Espandi il pannello
+;Expand the panel
+Experimental=Sperimentale...
+;Experimental...
+ExperimentalSpeedUps=Accelerazioni sperimentali
+;Experimental speed-ups
+ExponentialFunctions={ Funzioni esponenziali }
+;{ Exponential functions }
+ExportACubeAsAStack=Esporta un cubo come pila di file PNG
+;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Esporta il frattale come splat gaussiani, da guardare da ogni lato in Blender e in altri visualizzatori di splat
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
+Exposure=Esposizione
+;Exposure
+Exposure025=Esposizione:  0.25
+;Exposure:  0.25
+ExposureInStops1TwiceAs=Esposizione in stop: +1 due volte più luminoso, -1 metà luminosità
+;Exposure in stops: +1 twice as bright, -1 half as bright
+ExtractingAmbientInformationFromTheOriginal=Estrazione delle informazioni ambientali dal file M3I originale, attendere:
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ Test dei valori estremi }
+;{ Extreme testing }
+FFmpegCommand=Comando FFmpeg
+;FFmpeg command
+FNr=N. form.:
+;F.nr:
+FOVy=FOVy:
+;FOVy:
+FailedToImportFractalParametersAll=Importazione dei parametri del frattale non riuscita. Tutte le altre impostazioni sono state importate.
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=Nebbia prof. lontana
+;Far depth fog
+FarOffset=Offset lontano
+;Far offset
+FarPlane=Piano lontano:
+;Far plane:
+FastInaccurate=Veloce+imprecisa
+;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=Metodi di calcolo più veloci che cambiano un po' l'immagine. Vengono salvati con la scena e usati solo finché la prima casella è spuntata. Confronta con un render senza di essi prima di fidarti.
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=Metodi di calcolo più veloci che cambiano un po' l'immagine
+;Faster ways of calculating that change the picture a little
+File=File
+;File
+FileIndex=Indice file:
+;File index:
+FileLower=file
+;file
+FileName=&Nome file:
+;File &name:
+FileTooShort=file troppo corto
+;file too short
+Filename=Nome file
+;Filename
+Files=File
+;Files
+FilesOfType=&Tipo file:
+;Files of &type:
+Filmic=Filmico
+;Filmic
+FilmicToneMappingBrightLightRolls=Tone mapping filmico: la luce intensa si attenua dolcemente invece di diventare un bianco piatto
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
+FilterNewPicturesAutomatically=Filtra automaticamente le nuove immagini
+;Filter new pictures automatically
+FilterNow=Filtra ora
+;Filter now
+FindsTheSurfaceWithFewerDistance=Trova la superficie con meno stime di distanza. Qualche percento più veloce; i dettagli fini possono spostarsi leggermente.
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
+Fine=fine
+;fine
+FineTuneThePositionsWithThe=regola finemente le posizioni con i pulsanti freccia
+;fine tune the positions with the arrow buttons
+FinishThePicture=Rifinisci l'immagine
+;Finish the picture
+FinishedRenderingSlices=Rendering delle sezioni terminato.
+;Finished rendering slices.
+FinishedTracingObject=Tracciamento dell'oggetto terminato.
+;Finished tracing object.
+Finishing=Rifinitura
+;Finishing
+First4RaysNoisy=primi 4 raggi (rumorosi)
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=Primo calcolo di questa combinazione di formule: gli shader della scheda grafica vengono compilati (10-30 s, solo una volta: il driver li conserva). Nel frattempo calcola la CPU, la scheda si aggiunge quando sono pronti.
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=Primo passo casuale:
+;First step random:
+FirstStepRandomColon=Primo passo casuale:
+;First Step Random:
+FirstStepRandomToAvoidSpotty=Primo passo casuale:\nper evitare artefatti a macchie sulle formule con DE scadenti.\nPer meno rumore, usarlo con il ridimensionamento dell'immagine e/o più raggi.\nPuò essere usato anche insieme al dithering.
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+Fisheye=Fisheye
+;Fisheye
+FisheyeNotInMB3DTheField=Fisheye (non in MB3D): il campo visivo, fino a 360 gradi, copre l'altezza dell'immagine; un'immagine quadrata mostra una vista rotonda
+;Fisheye (not in MB3D): the field of view, up to 360 degrees, spans the picture's height; a square picture shows a round view
+FitLeftRightBorders=Raccorda i bordi sinistro e destro
+;Fit left+right borders
+FixedZoomAndSteps=Zoom e passi fissi
+;Fixed zoom and steps
+FlatSolid=Solido piatto
+;Flat Solid
+FlatSolidWithEdges=Solido piatto con bordi
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor: il più grande intero <= X,  |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fo.{}
+;Fo.{}
+FogOffset=Offset nebbia
+;Fog offset
+Folder=Cartella
+;Folder
+FolderOfTheLanguageFiles=Cartella dei file di lingua:
+;Folder of the language files:
+FollowTheNewest=Segui le più recenti
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\sPer esponenti frazionari, o |esponente| > MaxInt, la base deve essere > 0. }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=Per l'uso sferico, sostituisce i colori ambientali con l'immagine di sfondo ridotta
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=Formula
+;Formula
+Formula1=Formula1 •
+;Formula1 •
+Formula12=Formula1
+;Formula1
+FormulaCombinationsInThisBatchThat=Combinazioni di formule di questo lotto nuove per la scheda grafica (i loro shader vengono compilati prima, da 10 a 30 s ciascuno; nel frattempo calcola la CPU, e una compilazione attende finché la memoria scarseggia):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
+FormulaEditor=Editor di formule
+;Formula editor
+FormulaLower=formula
+;formula
+FormulaM3f=Formula (*.m3f)
+;Formula (*.m3f)
+FormulaName=Nome formula:
+;Formula name:
+FormulaNotFound=Formula '{}' non trovata.
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=Formula n. da cui inizia la 2ª parte dell'ibrido
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=Valori formula:
+;Formula values:
+Formulas=Formule
+;Formulas
+FormulasColon=Formule:
+;Formulas:
+Forward=In avanti
+;Forward
+FoundOnThisComputerNotConnected=Trovato su questo computer, non ancora connesso.
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=Trovato su questo computer. Eseguire questo comando una volta in un terminale, poi avviare una nuova sessione di Claude Code:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=nome par.:
+;fp name:
+Fpow=Fpow:
+;Fpow:
+Frame=Fotogramma:
+;Frame:
+FrameNumberToUseForAnimated=Numero del fotogramma da usare per le mappe animate nell'editor principale
+;Frame number to use for animated maps in the main editor
+Frames=fotogrammi
+;frames
+FramesPerSecond=Fotogrammi al secondo:
+;Frames per second:
+FramesSec=Fotogr./sec:
+;Frames/sec:
+Fresnel=Fresnel:
+;Fresnel:
+Fresnel0To1MoreReflection=Fresnel (da 0 a 1): più riflesso dove la superficie si allontana dallo sguardo, come vetro, acqua e lacca (si vede meglio con i riflessi)
+;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromClipboard=Dagli appunti
+;From Clipboard
+FromTheCameraAllAroundA=Dalla fotocamera, tutto intorno (una scena vista dall'interno)
+;From the camera, all around (a scene seen from inside)
+FullM3IImageFiles=File immagine completi M3I:
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=Funzioni:
+;Functions:
+FunctionsFromSystem={ ----------------------- Funzioni di System  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- Funzioni di System.Math  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=Gamma:  0.5
+;Gamma:  0.5
+Gauss=Gauss
+;Gauss
+GaussianSplats=Splat gaussiani
+;Gaussian splats
+GaussianSplats2=Splat gaussiani...
+;Gaussian splats...
+GaussianSplatsPLY=Splat gaussiani (PLY)
+;Gaussian splats (PLY)
+GenerateAnAnimationKeyframeFromThe=Genera un keyframe di animazione dalla vista attuale
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=Genera immagini grandi a riquadri
+;Generate big images by tiling
+GenerateMesh=Genera mesh
+;Generate mesh
+GenerateMesh2=Genera mesh
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=Genera sezioni 2D dell'oggetto come immagini PNG.
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=genera colori diffusi casuali
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=genera colori speculari casuali in base ai colori diffusi
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=Mesh generata
+;Generated Mesh
+GenerationOf=Generazione {} di {}
+;Generation {} of {}
+Generations=Generazioni
+;Generations
+GetASmoothImageWraparoundFor=Ottiene un avvolgimento continuo dell'immagine per l'uso sferico
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=prendi centro
+;get midpoint
+GetMinDistFromImage=Prendi dist. min. dall'immagine
+;Get min.dist. from image
+GetValuesFromImage=Prendi valori dall'immagine
+;Get values from image
+GetZ1=Prendi Z1
+;Get Z1
+GetZ2=Prendi Z2
+;Get Z2
+GlobalLight=Luce globale
+;Global light
+Glow=Bagliore:
+;Glow:
+Glow0AndUpTheSurface=Bagliore (0 e oltre): la superficie brilla del suo colore, senza luce
+;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=Alone
+;Glow
+GlowAroundBrightLightStrengthReach=Alone attorno alla luce intensa: intensità, estensione (una parte della diagonale dell'immagine) e da quale luminosità si forma (da 0 a 1 del bianco)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
+GlueSliders=Incolla cursori
+;Glue sliders
+GoToNext=Vai al prossimo
+;Go to next
+GoneLastSeenSAgo=scomparso (visto l'ultima volta {} s fa)
+;gone (last seen {} s ago)
+Grain=Grana
+;Grain
+GraphicsCard=Scheda grafica
+;Graphics card
+GroundPlane=Suolo
+;Ground plane
+GroundPosition=Posizione del suolo
+;Ground position
+GroupByDay=Raggruppa per giorno
+;Group by day
+GuessParams=Stima parametri
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=Tempo calcolo HS:
+;HS calc time:
+HardShadowCalculation=calcolo delle ombre nette
+;hard shadow calculation
+HardShadowRadius=Raggio ombre nette:
+;Hard shadow radius:
+HardShadows=\sOmbre nette
+;\sHard Shadows
+HardShadowsLower=ombre nette
+;hard shadows
+Height=Altezza:
+;Height:
+HeightMapGenerator=Generatore di HeightMap
+;HeightMap Generator
+HeightMapGeneratorPreview=Anteprima generatore HeightMap
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=Utile ad esempio per rifare un disegno non voluto.
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=Alta qual.
+;HiQual
+HiQual1=HiQual 1
+;HiQual 1
+HiQual2=HiQual {}
+;HiQual {}
+Hidden=nascoste
+;hidden
+HideThisFormula=Nascondi questa formula
+;Hide this formula
+High=alta
+;high
+HighlightsMoveAsInThePictures=I riflessi si spostano come nelle immagini. Uno splat occupa circa 160 byte con 2, 68 disattivato.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
+History=Cronologia
+;History
+HistoryThePicturesCalculatedTheFiles=Cronologia: le immagini calcolate, i file aperti e salvati (clicca per sfogliare)
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=(Tenere premuto Maiusc per passi più fini)
+;(Hold Shift key for finer steps)
+Hotkeys=Scorciatoie
+;Hotkeys
+HowMuchThePlaneReflects0=Quanto riflette il piano (da 0 a 1): i suoi riflessi luminosi e il suo specchio quando i riflessi vengono calcolati (Post-elaborazione)
+;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=Quanto il colore della superficie varia con il rilievo: 0 per niente, 1 molto
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowStrongTheNoiseIsThat=Quanto è forte il rumore da rimuovere (da 1 a 30, come "Denoise DCT" di GIMP).\nValori più alti rimuovono più rumore e più dettagli fini.
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThickTheCloudsAre1=Quanto sono dense le nuvole (1: uno strato pieno lascia passare circa il 2 % della luce) e quanto cielo coprono (da 0 a 1)
+;How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
+HowThisComputerIsListedIn=Il nome con cui questo computer compare nello sciame
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ Funzioni iperboliche e loro inverse }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ IN: |X| <= 1  OUT: [0..PI] radianti }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ IN: |X| <= 1  OUT: [-PI/2..PI/2] radianti }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radianti }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=Inattiva
+;Idle
+IfEnabledTheAmbientShadowsWill=Se attivo, le ombre ambientali vengono calcolate\nautomaticamente dopo il rendering principale.\nScegliere prima le opzioni.
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=Se attivo, le ombre nette scelte vengono calcolate\nautomaticamente dopo il rendering principale.\nScegliere prima le opzioni.
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=Se attivo, l'effetto DoF viene calcolato\nautomaticamente dopo i calcoli precedenti.\nScegliere prima le opzioni.
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=Se attivo, l'immagine copre l'intera sfera.\nUtile nelle animazioni.
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=Se attivo, l'immagine non sparisce con un valore alto di 'Profondità'.
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=Se attivo, le luci non cambiano quando si caricano preset o parametri luce.\nUtile ad esempio se non vuoi ricalcolare le ombre nette.
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=Se attivo, i riflessi vengono calcolati automaticamente dopo i\ncalcoli precedenti.\nTenere presente che le successive modifiche alle luci azzerano questo calcolo!
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=Se attivo, la quantità speculare viene suddivisa tra raggio entrante e riflesso.
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=Se incollati, i cursori si comportano come uniti da un elastico.
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=Se selezionato, premi '1' per riportare questo cursore alla posizione predefinita.
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=Se selezionato, i file M3I vengono salvati nella cartella M3I predefinita,\n  specificata dall'opzione 'INI DIRS'.\nSe non selezionato, vengono salvati nella stessa cartella dei file M3P.
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=Se impostato a un valore maggiore di 0, le normali della superficie vengono calcolate con una media\ndi punti distribuiti e viene calcolato anche un fattore di rugosità, riducendo l'aliasing.\nUn valore di 8 media su un volume: è molto lento, ma utile in situazioni\nmolto critiche.  Si può anche usare Normals on ZBuf nel postprocessing.
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=Se è scelta la luce volumetrica:  clic destro sul pulsante 'Nebbia din.' per inserire il colore della luce volumetrica.
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=Per continuare un rendering già avviato da una certa\nposizione, inserire qui l'indice iniziale della prossima immagine da renderizzare.\nLasciare invariati i valori di "Indice file".
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=Ignora
+;Ignore
+Image=Immagine
+;Image
+ImageDownscalingForViewingPurposeAnd=Riduzione dell'immagine per la visualizzazione e per il salvataggio come jpeg, png o bmp.\nSolo alle scale 1:2 e 1:3 viene applicato un filtro anti-aliasing al salvataggio.\nClicca per un menu di selezione.
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=L'immagine esiste
+;Image exists
+ImageLower=immagine
+;image
+ImageParameters=immagine + parametri
+;image + parameters
+ImageRotation=Rotazione immagine:
+;Image rotation:
+ImageSize=-> Dimensione immagine:
+;-> Image size:
+ImageWidth=Larghezza immagine:
+;Image width:
+Images=Immagini
+;Images
+ImagesForMaps=Immagini per mappe:
+;Images for maps:
+Img=Img
+;Img
+ImportActualParas=Importa parametri attuali
+;Import actual paras
+ImportParameter=Importa parametri
+;Import parameter
+ImportParameterFromMain=Importa parametri dal principale:
+;Import parameter from main:
+ImportParameterFromMain2=Importa parametri dalla finestra principale
+;Import parameter from main
+ImportParametersFromAFileTo=Importa i parametri da un file per farne un render grande
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=Importa i parametri correnti dal programma principale
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=Importa i parametri del programma principale per il rendering MC
+;Import the main programs parameter for mc rendering
+ImportedFromMain=Importato dal principale
+;Imported from Main
+InAndOutside=Interno ed esterno
+;In and outside
+InOut=Int+Est
+;In+Out
+InOutOption=Opzione interno/esterno:
+;In/out option:
+InTheSwarm=Nello sciame:
+;In the swarm:
+InThisModeRightAndLeft=In questa modalità per ogni sottofotogramma vengono renderizzate le immagini per l'occhio destro e sinistro.
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· {} in totale
+;\s· {} in total
+InTotal2={} in totale
+;{} in total
+InclInMain=incl. nel principale
+;incl. in main
+IncludingDFogOnItsOrVol=incluse le opzioni dFog su iterazioni o Luce vol.
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=Aumenta/diminuisci il numero del fotogramma
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=Aumenta/riduce il livello di qualità (moltiplicatore del passo dei raggi)
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=Aumenta la scala
+;Increase scale
+IncreaseTheSizeOfTheNavigator=Aumenta la dimensione della finestra del Navigatore
+;Increase the size of the Navigator window
+Increment=Incremento:
+;Increment:
+Increment2=Incremento
+;Increment
+IncrementIfTheSequenceIncreaseThe=Incremento della sequenza; aumentare il valore per saltare immagini
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=Indice con zeri iniziali
+;Index with leading 0
+InfinityValuesHaveAFractionField=// infiniti hanno campo frazionario uguale a 0. Gli infiniti possono essere positivi
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=info
+;info
+Infos=Info
+;Infos
+IniDirs=Cartelle ini
+;Ini Dirs
+Input=Inserimento
+;Input
+InputTheHeightDivisor=Inserire il divisore dell'altezza:
+;Input the height divisor:
+InputTheOriginalValueFromThe=Inserisce il valore originale dai parametri del programma principale.
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=Inserisce i valori originali dai parametri del programma principale.
+;Input the original values from the main program parameters.
+InputTheWidthFactor=Inserire il fattore della larghezza:
+;Input the width factor:
+Inputs=Ingressi:
+;Inputs:
+Insert=inserisci
+;insert
+InsertActualParameterInThisKeyframe=Inserisce i parametri attuali in questo keyframe
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=Inserisce i parametri completi dal programma principale
+;Insert complete parameter from main program
+InsertMidValues=Inserisci valori centro
+;Insert mid values
+InsertVolumetricLightColor=Inserisci colore luce volumetrica
+;Insert volumetric light color
+Inserting=Inserimento:
+;Inserting:
+InsertsTheCurrentMidPosition=Inserisce la posizione centrale attuale.
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=Inserisce la posizione attuale come valori Julia.\nIn modalità 4D il vettore viene ruotato secondo i valori di rotazione 4D.
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=Interno
+;Inside
+InsideColor=Colore interno
+;Inside color
+InsideRender=Render interno
+;Inside render
+Int=Int.:
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower: eleva la base a una potenza intera.  Veloce. }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=Intensità:
+;Intensity:
+IntensityOfImage=Intensità dell'immagine
+;Intensity of image
+InterfaceLanguage=Lingua dell'interfaccia
+;Interface language
+InterfaceLanguageClickToChange=Lingua dell'interfaccia: {} (clic per cambiare)
+;Interface language: {} (click to change)
+InterfaceLanguageColon=Lingua dell'interfaccia:
+;Interface language:
+InterfaceSize=Dimensione interfaccia:
+;Interface size:
+Internal=Interno
+;Internal
+Interpolate=Interpola
+;Interpolate
+InterpolateANewKeyframeInBetween=Interpola un nuovo keyframe in mezzo.
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=Inverti Z-buffer
+;Invert ZBuffer
+Iridescence=Iridescenza:
+;Iridescence:
+Iridescence0To1TheColours=Iridescenza (da 0 a 1): i colori di una pellicola sottile, che cambiano con l'angolo di vista, e il loro spostamento (da 0 a 1)
+;Iridescence (0 to 1): the colours of a thin film, changing with the angle of view, and their shift (0 to 1)
+IsNotAValidFloatingPoint='{}' non è un valore in virgola mobile valido
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue='{}' non è un valore intero valido
+;'{}' is not a valid integer value
+Iteration=Iterazione
+;Iteration
+IterationCount=numero di iterazioni
+;Iteration Count
+Iterationcount=Numero iterazioni
+;Iterationcount
+Iterations=Iterazioni:
+;Iterations:
+ItsForFree=è gratis!
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=Formula compilata JIT
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=Qualità o dimensione JPEG
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=JPG usa le impostazioni di qualità attuali mostrate nella\nparte superiore della finestra principale del programma.
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=Lavoro
+;Job
+Jobs=Lavori:
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=Qualità Jpeg:
+;Jpeg quality:
+JpgQ=q. jpg:
+;jpg q.:
+JuliaMode=Modalità Julia
+;Julia mode
+JuliaMode2=modalità Julia
+;Julia Mode
+JuliaOff=Julia off
+;Julia Off
+JuliaOn=Julia on
+;Julia On
+JuliaValuesXYZ=Valori Julia (x,y,z):
+;Julia values (x,y,z):
+KeepAspect=mantieni proporz.
+;keep aspect
+KeepLights=Mantieni luci
+;Keep lights
+KeepOnlyNearerParts=Mantieni solo le parti più vicine:
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=Mantiene le proporzioni quando si cambia manualmente larghezza o altezza.\nNon serve disattivarlo se si preme un pulsante di proporzioni.
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=Tiene in vista la riga più recente mentre ne arrivano di nuove
+;Keep the newest line in sight as new ones come
+KeepThisPriority=Mantieni questa priorità
+;Keep this priority
+KeepsTheChosenLanguageForThe=Mantiene la lingua scelta per il prossimo avvio
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=Mantiene le scorciatoie per il prossimo avvio
+;Keeps the hotkeys for the next start
+Keyframe=keyframe:
+;keyframe:
+Keyframe2=Fotogramma chiave {}
+;Keyframe {}
+KeyframeListM3k=Elenco keyframe (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\sKeyframe\ninizio:   fine:
+;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=Fotogrammi chiave per un giro completo attorno al centro della vista, partendo dalla vista della finestra principale: 8 fotogrammi chiave in un ciclo morbido (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeysThatBringAWindowTo=Tasti che portano una finestra in primo piano da qualsiasi finestra
+;Keys that bring a window to the front from any window
+Kind=Tipo
+;Kind
+LGamma05=L-Gamma:  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=TRATTI DI LUCE
+;LIGHT STROKES
+LMBMoveRMBRotate=LMB: sposta           RMB: ruota
+;LMB: move           RMB: rotate
+LastLengthIncrease=Ultimo aumento di lunghezza
+;Last length increase
+LastPass=\s· ultimo passaggio {}
+;\s· last pass {}
+Layer=Strato:
+;Layer:
+LeftclickGoIntoMouseModeView=Clic sinistro: entra in modalità mouse.. vista con il mouse, +tasto destro.. rollio\n(di nuovo clic sinistro o ESC per uscire dalla modalità mouse)
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=Clic sinistro:   Ruota il bulbo attorno all'asse X dell'osservatore ai valori Ymid+Zmid\nClic destro: Ruota il bulbo attorno all'asse X dell'oggetto a 0
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=Clic sinistro:   Ruota il bulbo attorno all'asse Y dell'osservatore ai valori Xmid+Zmid\nClic destro: Ruota il bulbo attorno all'asse Y dell'oggetto a 0
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=Clic sinistro:   Ruota il bulbo attorno all'asse Z dell'osservatore ai valori Xmid+Ymid\nClic destro: Ruota il bulbo attorno all'asse Z dell'oggetto a 0
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=Clic sinistro:   Annulla -> Riporta i parametri luce allo stato precedente all'ultimo disegno\nClic destro: Ripeti
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=Clic sinistro:   Annulla -> Riporta i parametri allo stato precedente all'ultimo calcolo\nClic destro: Ripeti
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=Lascia che la soglia riduca l'ombra ambientale fino a 0.\nLe strutture lontane sono meno influenzate da quelle vicine.
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=Livello
+;Level
+Light=Luce
+;Light
+Light1=Luce 1
+;Light 1
+Light12=Luce1
+;Light1
+Light2=Luce 2
+;Light 2
+Light22=Luce2
+;Light2
+Light3=Luce 3
+;Light 3
+Light32=Luce3
+;Light3
+Light4=Luce 4
+;Light 4
+Light42=Luce4
+;Light4
+Light5=Luce 5
+;Light 5
+Light52=Luce5
+;Light5
+Light6=Luce 6
+;Light 6
+Light62=Luce6
+;Light6
+LightAmplitudeUseExponentStyleLike=Ampiezza della luce, usa la notazione esponenziale come:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=Colore della luce, premi per sceglierne uno nuovo.
+;Light color, press to select a new one.
+LightScattering=Diffusione luce:
+;Light scattering:
+LightScatteringInsideTheMaterial=Diffusione della luce all'interno del materiale
+;Light scattering inside the material
+LightXangle=Angolo X luce
+;Light Xangle
+LightYangle=Angolo Y luce
+;Light Yangle
+Lighting=Illuminazione
+;Lighting
+LightingColon=Illuminazione:
+;Lighting:
+Lightmap=Mappa luce
+;Lightmap
+Lightness=Luminosità
+;Lightness
+LikeANaNAnInfinityDouble=// Come un NaN, un valore double infinito ha esponente 7FF, ma i valori
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// Come un infinito, un valore double NaN ha esponente 7FF, ma i valori NaN
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=Lineare
+;Linear
+LinearAttenuation=Attenuazione lineare
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=Interpola linearmente un keyframe in mezzo
+;Linear interpolate a keyframe inbetween
+LinearStraightFromKeyframeToKeyframe=Lineare: dritta da fotogramma chiave a fotogramma chiave. Bezier quadratica (MB3D): morbida, passa accanto ai fotogrammi chiave. Catmull-Rom (non in MB3D): morbida e attraverso ogni fotogramma chiave. Il pulsante Curve mostra la differenza
+;Linear: straight from keyframe to keyframe. Quadratic Bezier (MB3D): smooth, passing beside the keyframes. Catmull-Rom (not in MB3D): smooth and through every keyframe. The Curves button shows the difference
+Lines={} righe
+;{} lines
+List=Elenco
+;List
+LliMultiplier=Moltiplicatore Lli:
+;Lli multiplier:
+Load=Carica
+;Load
+LoadANewFormulaFile=Carica un nuovo file formula
+;Load a new formula file
+LoadBtrace2=Carica btrace2...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=Carica il codice da un'altra formula, ad esempio una formula che non è stato possibile compilare
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=Carica m3p...
+;Load m3p...
+LoadMesh=Carica mesh
+;Load mesh
+LoadParameters=Carica parametri
+;Load parameters
+LoadSettingsFromBtrace2File=Carica le impostazioni da un file *.btrace2
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=Carica i parametri nella finestra principale, o apre il file
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=Carica i parametri del render selezionato e ne continua il calcolo
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=Carica soltanto i parametri del render selezionato
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=Cartelle iniziali per caricamento e salvataggio
+;Loading and saving initial directories
+Log=Registro
+;Log
+LogEverythingTheProgramDidIts=Registro: tutto ciò che il programma ha fatto, i suoi avvisi e i suoi errori (clicca per vedere)
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ Funzioni logaritmiche }
+;{ Logarithmic functions }
+LongerMarchSteps1Off1=Passi del raggio più lunghi: 1 = disattivato, da 1,2 a 1,5. Dal 5 al 10 % più veloce a 1,3; i gusci sottili possono mostrare buchi.
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=Passi più lunghi nello spazio vuoto quando la scena non ha né nebbia dinamica né luce volumetrica (non con 'Disattiva DE analitico').
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
+LongerThanUsualStillWorking=più a lungo del solito, ancora in corso
+;longer than usual, still working
+LookIn=Cerca &in:
+;Look &in:
+Looking=Sguardo
+;Looking
+LookingRollingAngle=Angolo sguardo+rollio:
+;Looking+Rolling angle:
+Loop=Ciclo
+;Loop
+LoopAnimation=Animazione ciclica
+;Loop animation
+Lower=Bassa
+;Lower
+Lowest=Minima
+;Lowest
+M3AAnimationFiles=File animazione M3A:
+;M3A animation files:
+M3CPathtracerFiles=File pathtracer M3C:
+;M3C pathtracer files:
+M3DAnimationM3a=Animazione M3D (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=Progetto render grande M3D (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=Formula M3D (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=Immagine + parametri M3D (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=Parametri luce M3D (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=File Monte Carlo M3D (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=Parametri M3D (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=Progetto voxel M3D (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=Caricamento file formula M3F:
+;M3F formula files load:
+M3IDone=M3I fatto
+;M3I done
+M3ILightParameter=Parametri luce M3I:
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=File M3P da renderizzare in M3I
+;M3P files that should be rendered to M3I
+M3PParameterFiles=File parametri M3P:
+;M3P parameter files:
+M3VPNGVoxelSlices=Sezioni voxel M3V, PNG:
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=Immagine MB3D (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=Render batch M.C.
+;M.C. batch render
+MMBWheelZoom=MMB/Rotella: zoom
+;MMB/Wheel: zoom
+MRelObj=M.rel.ogg.
+;M.rel.obj.
+MainCalcTime=Tempo calcolo princ.:
+;Main calc time:
+MainParas=param. principali
+;main paras
+MainRendering=rendering principale
+;main rendering
+MainRenderingOfTheImage=Rendering principale dell'immagine
+;Main rendering of the image
+MainWindow=Finestra principale:
+;Main window:
+MakeAnImageSelectionWithThe=Fare una selezione nell'immagine con il mouse, poi ricalcolare questa selezione\ncon i parametri attuali.\nSe selezionate, vengono calcolate anche le ombre nette e la DEAO, ma\nle altre ombre ambientali vanno ricalcolate per l'intera immagine.\nAnche "normali su Z-buffer" va ricalcolato, se era stato calcolato prima.
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=Assicura che nessuna luce venga sottratta in modalità senza fusione
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=Assicurarsi che le opzioni 'Calcola... automaticamente' delle ombre nette\ne ambientali siano impostate, se si desidera tenerne conto.
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=Rendi più calda la luce di quell'immagine e renderizzala di nuovo.
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=Rende il gradiente alto-basso dei colori ambientali e di sfondo\nrelativo al sistema di coordinate dell'oggetto.\nUsalo nelle animazioni per fissare le luci alla scena.
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=Creane tre variazioni e dimmi quale ti piace di più.
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=Rende i riflessi leggermente diffusi, valori da 0 a 2.5
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=Creazione del video...
+;Making the video...
+MapNotFound=Mappa non\ntrovata
+;Map not\nfound
+MapNumber=Numero mappa
+;Map number
+MapNumber2=Numero mappa:
+;Map Number:
+MapNumberColon=Numero mappa:
+;Map number:
+MapOnOutputVector=Mappa sul vettore di uscita
+;Map on output vector
+MapSequences=Sequenze mappe
+;Map Sequences
+MapType=Tipo di mappa:
+;Map Type:
+Material=Materiale
+;Material
+Max=Max
+;Max
+MaxIterat=Iteraz. max.:
+;Max. Iterat.:
+MaxIterations=Iterazioni max.:
+;Max. iterations:
+MaxIterationsColon=Iterazioni max:
+;Max iterations:
+MaxIts=Iter. max:
+;Max its.:
+MaxL=MaxL:
+;MaxL:
+MaxLengthCalc=Lunghezza max. calcolo:
+;Max. length calc.:
+MaxNoise=Rumore massimo:
+;Max noise:
+MaxRayCount=Numero massimo di raggi:
+;Max ray count:
+MaxRaycount=Numero massimo di raggi:
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue: restituisce il più grande valore con segno dell'array di dati (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=Vertici max:
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=Iterazioni massime per la seconda parte dell'ibrido, a partire dalla formula n. indicata in alto in questa finestra.
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=Numero massimo di iterazioni
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=Numero massimo di vertici mostrati nell'anteprima
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=Iter. max ibrido parte 1:
+;Maxits hybrid part1:
+MaxitsHybridPart2=Max it. ibrido parte 2:
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=Misura della nitidezza/levigatezza della superficie dell'oggetto. Provare valori nell'intervallo 0.15 .. 1.5; in rari casi anche piccoli numeri negativi come -0.1 danno risultati interessanti
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=Memoria necess.:
+;Mem needed:
+Memory=Memoria
+;Memory
+Mesh=mesh
+;mesh
+MeshObj=Mesh (*.obj)
+;Mesh (*.obj)
+MeshPly=Mesh (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=MeshPreviewFrm
+;MeshPreviewFrm
+MeshProperties=Proprietà della mesh
+;Mesh properties
+MeshSavedVerticesFaces=Mesh salvata: {} ({} vertici, {} facce)
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=Mesh con coordinate uv (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=Mesh con colori dei vertici (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=Mesh:
+;Meshes:
+Meshes2=Mesh
+;Meshes
+Messages=Messaggi
+;Messages
+Mid=media
+;mid
+Min=Min
+;Min
+MinDE=MinDE:
+;MinDE:
+MinDistance=Distanza min:
+;Min distance:
+MinIterat=Iteraz. min.:
+;Min. Iterat.:
+MinIterations=Iterazioni min.:
+;Min. iterations:
+MinIts=Iter. min:
+;Min its.:
+MinLeft=mancano {} min
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=min
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft=mancano {} min {} s
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue: restituisce il più piccolo valore con segno dell'array di dati (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=Distanza minima:
+;Minimal distance:
+Misc=Varie:
+;Misc:
+MiscellaneousRoutines={ Routine varie }
+;{ Miscellaneous Routines }
+Missing=mancante
+;missing
+MissingBTR123Header=Intestazione <BTR1/2/3> mancante
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=Mod.:
+;Mod:
+Mode=Modo:
+;Mode:
+Mode2=Modo 2
+;Mode 2
+ModeFor2ColorChoice=Modo per la 2ª scelta colore:
+;Mode for 2. color choice:
+MonteCarlo=Monte Carlo:
+;Monte Carlo:
+MonteCarlo2=Monte Carlo
+;Monte Carlo
+MonteCarlo3=Monte Carlo: {}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=Monte Carlo calcolato su: {}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=Rendering Monte Carlo
+;Monte Carlo rendering
+MonteCarloRendering2=Rendering Monte Carlo\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=Altre opzioni: invia i parametri al principale, regola e importa.
+;More options: send paras to main, adjust and import.
+MotionBlur=Mosso:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=Effetto mosso: le immagini mediate per ogni fotogramma, così che ciò che si muove risulti sfocato (1 = disattivato); il rendering richiede altrettante volte più tempo
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
+Mousewheel=Rotellina
+;Mousewheel
+Move=Sposta
+;Move
+MoveBackwards=Sposta indietro
+;Move backwards
+MoveDown=Sposta in basso
+;Move down
+MoveForward=Sposta avanti
+;Move forward
+MoveLeft=Sposta a sinistra
+;Move left
+MoveRight=Sposta a destra
+;Move right
+MoveUp=Sposta in alto
+;Move up
+MultiplierForTheLastLengthIncrease=Moltiplicatore per l'opzione 'Ultimo aumento di lunghezza'.\nRiduci il valore con potenze alte, aumentalo con formule a scala bassa.
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=Moltiplica la prima ampiezza di passo per un numero casuale\nper dare agli artefatti da passi eccessivi un aspetto rumoroso.  \nRiduce anche il banding nella nebbia dinamica.\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen: {}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [doppio clic sull'immagine o clic su "Muta!" per mutare, clic destro per il menu]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=Muta
+;Mutate
+MutateExclamation=Muta!
+;Mutate!
+Mutation=Mutazione {}
+;Mutation {}
+MutationType=Tipo di mutazione
+;Mutation type
+N0No255FullTransparency=0: no, 255: trasparenza totale
+;0: no, 255: Full transparency
+N0To1DarkerCorners=Da 0 a 1: angoli più scuri
+;0 to 1: darker corners
+N0To1RedAndBlue=Da 0 a 1: frange rosse e blu verso gli angoli, come le mostra un obiettivo
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
+N1100JPEGQuality100Maximal=1..100: qualità JPEG\n> 100: dimensione massima del file in kilobyte
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=PGM 16 bit
+;16 Bit PGM
+N16BitZBufferGenerator=Generatore Z-buffer 16 bit
+;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=Da -1 più freddo (più blu) a 1 più caldo (più arancione)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=Da -1 più piatto a 1 contrasto più forte
+;-1 flatter to 1 stronger contrast
+N1FullSizeNoAntiAliasing=1:  Dimensione piena, nessun anti-aliasing\n2:  anti-aliasing 2x2\n3:  anti-aliasing 3x3
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  nessuno\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=2ª scelta
+;2. choice
+N2Or3PassesGivesA=2 o 3 passaggi danno una sfocatura forte migliore davanti al punto di fuoco.\n1 passaggio dà un bokeh a disco, più passaggi un bokeh di tipo gaussiano.
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=2ª riflessione
+;2nd reflection
+N360Panorama=Panorama 360
+;360 Panorama
+N3DAnalyticFormula=Formula 3D analitica
+;3D analytic formula
+N3DFormula=Formula 3D
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=Formula 4D analitica
+;4D analytic formula
+N4DFormula=Formula 4D
+;4D formula
+N4DRotationOfTheWholeBulb=Rotazione 4D dell'intero bulbo:
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=Rotazione 4D (xw,yw,zw):\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=PNG 8 bit
+;8 Bit PNG
+Name=Nome:
+;Name:
+Name2=Nome
+;Name
+NamedParams=Parametri con nome:
+;Named Params:
+NaviExpBright=Luminosità reale
+;True brightness
+NaviExpBrightHint=Mostra l'immagine come calcolata: il cursore della luminosità non viene applicato.
+;Shows the picture as calculated: the brightness slider is not applied.
+NaviExpDetail=Dettaglio della finestra principale
+;Main window's detail
+NaviExpDetailHint=Calcola con il passo del raggio, l'arresto DE e i passi di ricerca binaria della finestra principale invece delle impostazioni più veloci del navigatore.\nPiù lento, ma i dettagli della superficie appaiono come nell'immagine principale.
+;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
+NaviExpLight=Illuminazione della finestra principale
+;Main window's lighting
+NaviExpLightHint=Usa l'illuminazione della finestra principale e ne segue le modifiche nella finestra Illuminazione.\nScegliere qui un preset di luce o la nebbia dinamica la disattiva.
+;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExperimental=Sperimentale: come la finestra principale
+;Experimental: match the main window
+Navigator=Navigatore
+;Navigator
+Navigator2=Navigatore: {}
+;Navigator: {}
+NavigatorColon=Navigatore:
+;Navigator:
+NavigatorSize=Dimensione Navigatore
+;Navigator Size
+NavigatorViewSentToTheMain=Vista del Navigatore inviata alla finestra principale, premere "Calcola 3D".
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=Filtro rumore neurale: {}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=Filtro rumore neurale: fatto
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=Filtro rumore neurale sull'immagine mostrata (Intel Open Image Denoise).\nIl rendering stesso non cambia; il prossimo aggiornamento la mostra di nuovo senza filtro.
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=nuovo
+;new
+NewJITCompiledFormula=Nuova formula compilata JIT
+;New JIT-compiled Formula
+NewSequence=Nuova sequenza
+;New Sequence
+NewValue=Nuovo valore:
+;New value:
+NewZoom=Nuovo zoom:
+;New zoom:
+No=no
+;no
+No2=No
+;No
+NoDoFOnTiles=Nessun DoF sui riquadri.
+;No DoF on tiles.
+NoFacesInTheFile=nessuna faccia nel file
+;no faces in the file
+NoFileAdded=Nessun file aggiunto
+;No file added
+NoFramesToRenderInThis=Nessun fotogramma da renderizzare in questo intervallo.
+;No frames to render in this range.
+NoImageCalculatedYet=Nessuna immagine ancora calcolata.
+;No image calculated yet.
+NoIpol=No interp.
+;No ipol
+NoLightParameters={}: nessun parametro luce
+;{}: no light parameters
+NoObjectAtThisPoint=Nessun oggetto in questo punto.
+;No object at this point.
+NoParameters=nessun parametro
+;no parameters
+NoParamsToSendToMain=Nessun parametro da inviare all'editor principale
+;No params to send to main editor
+NoPreview=Nessuna anteprima: {}
+;No preview: {}
+NoPreviewForThisFile=Nessuna anteprima per questo file.
+;No preview for this file.
+NoSOURCESectionThisIsNot={}: nessuna sezione [SOURCE], questa non è una formula JIT
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=nessuna cartella condivisa scelta
+;no shared folder chosen
+NoStepLimitWithoutDynamicFog=Nessun limite di passi senza nebbia dinamica
+;No step limit without dynamic fog
+NoTextParametersFoundInThe=Nessun parametro di testo trovato negli appunti.
+;No text parameters found in the clipboard.
+NoTilesToRender=Nessun riquadro da renderizzare.
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\sNessun testo valido trovato, inserire il testo qui sotto:
+;\sNo valid text found, please enter the text below:
+Noise=-rumore
+;-noise
+NoiseAI=-rumore IA
+;-noise AI
+NoiseFilter=\sFiltro rumore
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=Filtro antirumore sull'immagine mostrata (riduzione del rumore DCT come "Denoise DCT" di GIMP),\ncon intensità stimata dai raggi. Il rendering stesso non viene modificato;\nil prossimo aggiornamento lo mostra di nuovo senza filtro.
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=Filtro rumore: intensità {}
+;Noise filter: strength {}
+None=nessuna
+;none
+Normal=Normale
+;Normal
+NormalStatusForThisFormula=Stato normale per questa formula
+;Normal status for this formula
+NormalsOnDE=Normali su DE:
+;Normals on DE:
+NormalsOnZBuf=Normali su Z-buffer
+;Normals on ZBuf
+NormalsOnZBuffer=\sNormali su Z-buffer
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=Normali su Z-buffer:
+;Normals on ZBuffer:
+Norms=normali
+;norms
+NotABigRenderProject=non è un progetto di render grande
+;not a big render project
+NotAvailableForLinuxUseClaude=Non disponibile per Linux: usare Claude Code qui sotto.
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=Non trovato. Se lo usi, eseguire questo comando una volta in un terminale:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=Non installata. Scaricarla da claude.ai/download, avviarla una volta, poi tornare qui.
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=Non selezionato
+;Not selected
+NotSharingTickShareThisComputer=Non condiviso: attivare "Condividi questo computer" per renderizzare insieme ad altri computer
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=Non condiviso: attivare "Condividi questo computer" per renderizzare insieme a {}
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=Nota: per vedere i colori dei vertici, scegliere la modalità punti nella finestra di anteprima
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}: ancora niente di renderizzato
+;{}: nothing rendered yet
+NothingToSave=niente da salvare
+;nothing to save
+NumberOfFramesToNextKeyframe=Numero di fotogrammi fino al prossimo keyframe
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=Numero di raggi da calcolare.\nPiù sono, meglio è, ma naturalmente più lento.
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=OK
+;OK
+Object=Oggetto
+;Object
+ObjectColors=Colori oggetto
+;Object colors
+ObjectDetermination=Determinazione dell'oggetto:
+;Object determination:
+Of={} di {}
+;{} of {}
+OfEntries={} di {} voci
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=Delle voci con gli stessi file (gli stessi parametri calcolati di nuovo, un'immagine salvata due volte) solo la più recente
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=delle formule
+;of Formulas
+OfLines={} di {} righe
+;{} of {} lines
+OfUnitsDone={} di {} unità fatte
+;{} of {} units done
+Off=Disattivato
+;Off
+OffLeftImageIsOnThe=Off: l'immagine sinistra è a sinistra per la visione parallela. On: l'immagine destra è a sinistra per la visione a occhi incrociati.
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Disattivato (file più piccolo)
+;Off (smallest file)
+OffsetAndScale=Offset e scala
+;Offset and scale
+OffsetX=Offset X:
+;Offset X:
+OffsetY=Offset Y:
+;Offset Y:
+OjectColorsOnCutsAnd2d=Colori dell'oggetto sui tagli e all'interno 2D, clicca per cambiarli.
+;Oject colors on cuts and 2d inside, click to change them.
+On=On
+;On
+OnInsertingANewKeyframe=All'inserimento di un nuovo keyframe:
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=Un solo punto di fuoco, ricavato dalla media di Zsharp1+2!
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=Solo un'immagine viene conservata come immagine (non un render Monte Carlo, un'esportazione voxel o mesh).
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=Solo aggiungi luce
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=In modalità a riquadri sono disponibili solo le ombre ambientali DEAO.\nOra sono selezionate e impostate a 33 raggi, modificarle secondo le proprie esigenze.
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=Solo dIFS
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=(solo se le ombre nette sono state calcolate)
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=Solo un tipo di evento
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=Solo le voci il cui nome, cartella o tipo contiene questo testo
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=Solo le righe che contengono queste parole
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=Solo al keyframe attuale
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=Funziona solo se 'Normali lisce' era maggiore di zero al calcolo.
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=Apri
+;Open
+Open2=&Apri
+;&Open
+OpenAM3cFile=Apri un file m3c
+;Open a m3c file
+OpenAVoxelProject=Apri un progetto voxel
+;Open a voxel project
+OpenAnAnimationParameterFile=Apre un file di parametri di animazione
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=apre/chiude il pannello delle regolazioni
+;open/close adjustment panel
+OpenCloseBatchPanel=Apre/chiude il pannello batch
+;open/close batch panel
+OpenCloseParameterPanel=apre/chiude il pannello dei parametri
+;open/close parameter panel
+OpenExplorer=Apri gestore file
+;Open explorer
+OpenFiles=Apri file
+;Open files
+OpenFolder=Apri cartella
+;Open folder
+OpenFullLightAndColorParameter=Apri i parametri completi di luce e colore
+;Open full light and color parameter
+OpenFullM3I=Apri M3I completo
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=Anteprima OpenGL della mesh finale
+;OpenGL preview of final mesh
+OpenLogFolder=Apri cartella del registro
+;Open log folder
+OpenM3i=Apri m3i
+;Open m3i
+OpenM3p=Apri m3p
+;Open m3p
+OpenM3pSequence=Apri sequenza *.m3p
+;Open *.m3p-sequence
+OpenParameter=Apri parametri
+;Open parameter
+OpenParameterFromClipboardTextSelect=Apre i parametri dal testo negli appunti:\nseleziona il testo dei parametri incluso 'Mandel...{..}',\npremi ctrl+c e poi il pulsante apri-txt.
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=Apri progetto
+;Open project
+OpenTextParameters=Apri parametri come testo
+;Open text parameters
+OpenTheAnimationMaker=Apri il creatore di animazioni
+;Open the animation maker
+OpenTheFolderOfTheFile=Apre la cartella del file
+;Open the folder of the file
+OpenTheFolderOfTheLog=Apre la cartella dei file di registro (uno al giorno, conservati 30 giorni)
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=Apri MutaGen
+;Open the MutaGen
+OpenTheNavigator=Apri il Navigatore
+;Open the Navigator
+Opened=aperto
+;opened
+OpensTheFolderOfTheLanguage=Apre la cartella dei file di lingua
+;Opens the folder of the language files
+OperationCancelled=Operazione annullata
+;Operation cancelled
+Option=Opzione
+;Option
+OptionToCalculateOnlyAPart=Opzione per calcolare solo una parte dell'immagine per un'anteprima più rapida.\nFare una selezione nell'immagine con il mouse prima di calcolare.
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=Opzione per applicare il dithering all'angolo dei raggi con una scala immagine di 1:2 o 1:3.\nDà più precisione e meno artefatti a macchie.\nAttenzione: usare solo con la stessa scala immagine, altrimenti compaiono artefatti di dithering.
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=Opzioni
+;Options
+OptionsColon=Opzioni:
+;Options:
+OrMousewheel=(o rotellina)
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// o negativi, come indicato dal bit di segno, il più significativo.
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=Orbit trap (dist. min. da 0)
+;Orbit trap (mindist. to 0)
+Orig=Orig.:
+;Orig:
+OriginalParameterSizeWidthHeight=Dimensione dei parametri originali (larghezza, altezza):
+;Original parameter size (width, height):
+OtherFiles=Altri file
+;Other files
+OutputFile=File di output:
+;Output file:
+OutputFolder=Cartella di output:
+;Output folder:
+OutputFolder2=Cartella di uscita
+;Output folder
+OutputFormat=Formato di output:
+;Output format:
+OutputImageType=Tipo di immagine in uscita:
+;Output image type:
+Outside=Esterno
+;Outside
+OutsideRender=Render esterno
+;Outside render
+OutsideRenderDefaultModeInsideRender=Render esterno:  modo predefinito\nRender interno:    raymarching lento all'interno con it. max.\nInterno ed esterno:   rende entrambi i lati
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=Scala globale:
+;Overall scale:
+OverwriteExistingImages=Sovrascrivi immagini esistenti
+;Overwrite existing images
+OverwriteExistingM3IFiles=Sovrascrivi file M3I esistenti
+;Overwrite existing M3I files
+PGM16BitPgm=PGM 16 bit (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG colore 16 bit (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG 16 bit (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=Fotogrammi PNG con sfondo trasparente.
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG sfondo trasparente (*.png)
+;PNG transparent background (*.png)
+PaintClouds=Dipingi nuvole
+;Paint clouds
+PaintNow=Dipingi ora
+;Paint now
+PaintOnImage=Dipingi sull'immagine
+;Paint on image
+PaintingAPreview=disegno di un'anteprima
+;painting a preview
+PaintsThePictureAgainWithThe=Ridipinge l'immagine con le nuvole come impostate qui
+;Paints the picture again with the clouds as set here
+Pano=pano.
+;pano.
+PanoramaModeTheFOVIsChoosen=Modalità panorama:\n- Il FOV viene scelto automaticamente\n- Usare SSAO a 24 bit o DEAO per le ombre ambientali\n- Si consiglia un rapporto 2:1, ma non è necessario.
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=Parametro
+;Param
+ParamNameMustNotBeEmpty=Il nome del parametro non può essere vuoto
+;Param name must not be empty
+Parameter=Parametri
+;Parameter
+Parameters=Parametri
+;Parameters
+ParametersCopiedToTheClipboard=Parametri copiati negli appunti.
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=Parametri caricati, premere "Calcola 3D" per renderizzare.
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=Parametri caricati: questo render prosegue dove è stato avviato (la riga di comando o la sua finestra).
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=parametri
+;parameters
+ParametersMandId=Parametri: MandId {}
+;Parameters: MandId {}
+Part2At=Parte 2 a:
+;Part 2 at:
+Pass=passaggio {}
+;pass {}
+Passes=Passaggi
+;Passes
+PauseRendering=Pausa rendering
+;Pause rendering
+PausedPressToContinue=In pausa, premere per continuare
+;Paused, press to continue
+PercentOfLocalDE=Percentuale della DE locale
+;Percent of local DE
+Picture=immagine
+;picture
+Pictures=immagini
+;pictures
+PicturesAndFilesTheAssistantMakes=Le immagini e i file creati dall'assistente finiscono in {}; nulla viene eliminato. Le immagini più grandi di 4K vengono create solo con il tuo consenso, e un calcolo si ferma dopo 10 minuti. Tutto ciò che fa è nel registro.
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=pixel; più grande conserva più dettagli e crea un file più grande
+;pixels; larger keeps more detail and makes a larger file
+PleaseChooseAnOutputFile=Scegliere un file di uscita.
+;Please choose an output file.
+PleaseMakeASelectionInThe=Fare prima una selezione nell'immagine.
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=Salvare prima il progetto.
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=Selezionare prima le luci.  Nessuna HS per le mappe di luce.
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=par. png:
+;png par:
+Points=Punti
+;Points
+PointsColor=Colore punti
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=Posizione
+;Position
+PositionX=Posizione X
+;Position X
+PositionY=Posizione Y
+;Position Y
+PositionZ=Posizione Z
+;Position Z
+PositionalLight=Luce posizionale
+;Positional light
+PostCalculations=calcoli successivi
+;post calculations
+PostProcessing=Postproduzione
+;Post processing
+PostProcessingColon=Postelaborazione:
+;Post processing:
+PostProcessingLower=postelaborazione
+;post processing
+Postprocess=Postelaborazione
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power: eleva la base a una potenza qualsiasi.
+;{ Power: Raise base to any power.
+Prefs=Prefer.
+;Prefs
+PreprocessedCode=Codice preprocessato
+;Preprocessed code
+PresetFlower=preset <fiore>
+;preset <flower>
+PresetMetallic=preset <metallico>
+;preset <metallic>
+PresetNeutral=preset <neutro>
+;preset <neutral>
+PresetSand=preset <sabbia>
+;preset <sand>
+PresetSlime=preset <melma>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=Premere il pulsante e poi la parte dell'oggetto\nnell'immagine che deve essere nitida.
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=Premere 'Calcola 3D' per il rendering
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=Premere 'Avvia rendering' per calcolare l'immagine
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=Premere questo pulsante e poi un preset da 1 a 3 per salvare la luce attuale del navigatore.\nClic due volte per annullare il salvataggio.
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=Premi per aprire la finestra delle formule.\nClic destro per le opzioni di ancoraggio.
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=Premi per aprire la finestra di regolazione luci e colori.\nClic destro per le opzioni di ancoraggio.
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=Premi per aprire la finestra di postelaborazione.\nClic destro per le opzioni di ancoraggio.
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=Premi per passare tra nebbia dinamica sulle iterazioni e luce volumetrica sulla luce n.
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=Premere per prendere la distanza attuale come distanza minima dall'oggetto per la camminata.
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar=Premendo "0" (zero) il cursore torna alla posizione zero.
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=Impedisce lo spegnimento del computer muovendo\nun po' il cursore del mouse di tanto in tanto.
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=anteprima
+;preview
+Preview2=Anteprima
+;Preview
+PreviewMaxSize=Dimensione max anteprima:
+;Preview max size:
+PreviewSize=Dimensione anteprima:
+;Preview size:
+Probability=Probabilità
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=Elaborazioni
+;Processings
+Processor=processore
+;processor
+Program=Programma
+;Program
+ProgramOutput=Output del programma
+;Program output
+Progress=Avanzamento
+;Progress
+Project=Progetto:  {}
+;Project:  {}
+Project2=Progetto: {}
+;Project: {}
+ProjectNew=Progetto:  (nuovo)
+;Project:  (new)
+PushDownTo2DZoomIn=Premi per fare zoom 2D avanti (indietro) con clic sinistro (destro) sull'immagine,\no selezionando un'area da ingrandire.
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=Premi per muovere l'oggetto in direzione Z con il mouse.
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=Premi per spostare l'oggetto in direzione X,Y con il mouse.
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=Premere il pulsante per calcolare le ombre nette delle luci selezionate.\nUna volta calcolate, le ombre nette non vanno ricalcolate,\na meno che non cambino l'angolo o la posizione della luce.
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=Premi per normalizzare a 1 la lunghezza del vettore 3D.\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=Inserisce i valori Julia regolati nei parametri del programma principale.
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=Inserisce i valori regolati nei parametri del programma principale.
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=Applica i valori a tutti i keyframe
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=Inserisce questo valore regolato nel parametro del programma principale.
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=Attenuazione quadratica
+;Quadratic Attenuation
+QuadraticBezier=Bezier quadratica
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=Caricamento rapido dei file di parametri luce\nsalvati nella cartella ini specifica.
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=Impostazioni rapide di qualità
+;Quick quality settings
+RBailout=Bailout R:
+;R bailout:
+Radius=Raggio:
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG produce numeri casuali con distribuzione gaussiana attorno alla media.
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=Casuale
+;Random
+RandomMultiplier=Moltiplicatore casuale
+;Random multiplier
+Range=Intervallo
+;Range
+RawValuesMappedValuesClampedValues=Valori grezzi:\n  {}..\n  {}\nValori mappati:\n  {}..\n  {}\nValori limitati:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=Raggi:
+;Rays:
+RaystepDivisor=Divisore del passo dei raggi:
+;Raystep divisor:
+RaystepMultiplier=Moltiplicatore passo raggio:
+;Raystep multiplier:
+RaystepSubDEstop=Passo raggio meno DEstop:
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=Lettura della cronologia... {} voci
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=Rilegge i file di lingua, dopo averne modificato uno
+;Reads the language files again, after you edited one
+Rec=Reg
+;Rec
+RecalculateASelection=\sRicalcola una selezione
+;\sRecalculate a Selection
+RecalculatingTheSelection=ricalcolo della selezione
+;recalculating the selection
+RecordedSKeyframesOfTheFlight=Registrati {} fotogrammi chiave del volo
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=Registra un volo: finché il pulsante è premuto, ogni nuova vista del Navigatore (al massimo due al secondo) diventa il fotogramma chiave successivo dell'animazione
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
+Rect=Rett.
+;Rect
+RectLower=rett.
+;rect.
+Rectilinear=Rettilineo
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=Riduce gli artefatti a blocchi, non più così importante grazie all'interpolazione spline.
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=Riduce il moltiplicatore del passo dei raggi per evitare l'overstepping.\nRende il rendering più lento.
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=Riferimento per i colori diffusi
+;Reference for diffuse colors
+ReferenceForSpecularColors=Riferimento per i colori speculari
+;Reference for specular colors
+ReflectionDiffusity=Diffusione dei riflessi:
+;Reflection diffusity:
+ReflectionRaysDepth=Profondità raggi riflessi:
+;Reflection rays depth:
+Reflections=Riflessi
+;Reflections
+ReflectionsLower=riflessi
+;reflections
+ReflectionsMustBeCalculatedTooElse=Devono essere calcolati anche i riflessi, altrimenti non ha effetto
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=riflessi della selezione
+;reflections of the selection
+ReflectionsTransparency=\sRiflessi + trasparenza
+;\sReflections + Transparency
+ReflectionsTransparency2=Riflessi + trasparenza
+;Reflections + Transparency
+ReflectsTime=Tempo riflessi:
+;Reflects time:
+RefractiveIndex=Indice di rifrazione:
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=Indice di rifrazione del materiale: aria~1, acqua~1.33, vetro~1.5, diamante~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=Aggiorna
+;Refresh
+RelToObject=Rel. all'oggetto:
+;Rel. to object:
+RelativeToObject=Relativo all'oggetto
+;Relative to object
+Relief=Rilievo
+;Relief
+Reload=Ricarica
+;Reload
+RemainingFaces10NoReduction=Facce rimanenti (1.0 = nessuna riduzione, 0.0 = riduzione massima = nessuna faccia rimanente)
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=Rimuovi
+;Remove
+RemoveThisFormulaFromTheLocal=Rimuovi questa formula dalla cartella appdata locale
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=Renderizza tutti i riquadri compresi nelle righe:
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=Rende le immagini di entrambi gli occhi e mostra un'anteprima stereo affiancata senza salvarla.
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=Renderizza ogni\n   n-esimo fotogr.:
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=Renderizza la mia ultima immagine in 4K e dimmi quanto tempo ci è voluto.
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=Renderizza prossimo riquadro
+;Render next tile
+RenderOnlyTheLeftEyeImages=Renderizza solo le immagini 'occhio sinistro'.\nUtile per estendere a stereo un'animazione già renderizzata.
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=Renderizza solo fino a questo indice file.
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=Renderizza solo le immagini 'occhio sinistro'
+;Render only 'very left-eye' images
+RenderPreview=Renderizza anteprima
+;Render preview
+RenderSMB={} render, {} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=Rendi && salva coppia stereo
+;Render && save stereo pair
+RenderStereoAnimation=Renderizza animazione stereo
+;Render stereo animation
+RenderStereoPair=Rendi coppia stereo
+;Render stereo pair
+RenderTheJobsOtherComputersPut=Renderizza i lavori che gli altri computer mettono nella cartella e affida i render di questo computer (Calcola 3D, Render grandi, Monte Carlo, animazioni) allo sciame quando ne fa parte un altro computer
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=Renderizza questo riquadro
+;Render this tile
+RenderThisTileAgain=Renderizza di nuovo questo riquadro
+;Render this tile again
+RenderingNow=rendering in corso
+;rendering now
+RenderingSliceOf=Rendering sezione: {} di {}
+;Rendering slice: {} of {}
+RepeatFromHere=Ripeti da qui
+;Repeat from here
+RerenderAllKeyframePreviewImages=Rirenderizza tutte le anteprime dei keyframe
+;Rerender all keyframe preview images
+Reset=azzera
+;reset
+Reset0=Azzera
+;Reset 0
+Reset2=Reimposta
+;Reset
+ResetNow=Azzera ora
+;Reset now
+ResetOffsetScale=Azzera offset+scala
+;Reset offset+scale
+ResetOffsetScaleRotation=Azzera offset+scala+rotazione
+;Reset offset+scale+rotation
+ResetPosition=Reimposta posizione
+;Reset position
+ResetThePositionAndTheRotation=Riporta la posizione e la rotazione ai valori iniziali.\nCon le formule box lo zoom viene ridotto automaticamente di più.
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=Ripristina valore
+;Reset value
+ResetValues=Ripristina valori
+;Reset values
+ResetView=Ripristina vista
+;Reset view
+ResetsAPreviousCalculationOfThis=Azzera un calcolo precedente dell'ombra netta di questa luce.
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=Azzera l'effetto DoF e i riflessi.
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=Riporta le formule al bulbo P8 predefinito.
+;Resets the formulas to the default P8 bulb.
+Resume=Riprendi
+;Resume
+Retry=Riprova
+;Retry
+ReverseTheOrderOfAllKeyframes=Inverti l'ordine di tutti i keyframe
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=Clic destro su un riquadro per le opzioni
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=(Clic destro sui cursori per cambiare i colori. Tastiera con il puntatore su un cursore: (c) copia colori, (v) incolla colori, (b) incolla 1 colore)
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=Rollio
+;Rolling
+Root=Radice
+;Root
+Rotate=Ruota
+;Rotate
+Rotation=Rotazione
+;Rotation
+RotationAngleAroundXAxisIn=Angolo di rotazione attorno all'asse x in gradi
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=Angolo di rotazione attorno all'asse y in gradi
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=Angolo di rotazione attorno all'asse z in gradi
+;Rotation angle around z-axis in degrees
+RotationColon=Rotazione:
+;Rotation:
+RotationX=Rotazione X:
+;Rotation X:
+RotationY=Rotazione Y:
+;Rotation Y:
+RotationZ=Rotazione Z:
+;Rotation Z:
+Rough=Ruvido
+;Rough
+RoughImage=immagine grezza
+;rough image
+Roughness=Rugosità
+;Roughness
+RoutAngleOfXY=Angolo Rout di X, Y
+;Rout angle of X, Y
+RoutAngleOfXZ=Angolo Rout di X, Z
+;Rout angle of X, Z
+RoutAngleOfYZ=Angolo Rout di Y, Z
+;Rout angle of Y, Z
+Rows=Righe
+;Rows
+RowsOfTiles=Righe di riquadri
+;Rows of tiles
+SLeft=mancano {} s
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15:    ombra ambientale basata sullo Z-buffer.\nSSAO24:    usa 24 bit dello Z-buffer.\nSSAO24r:   usa distribuzioni casuali per meno artefatti.\nDEAO:        ombra ambientale basata sulle stime di distanza\n(vantaggiosa nelle animazioni)
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=Avvia il rendering principale dell'immagine.
+;Sart the main rendering of the image.
+Saturation=Saturazione
+;Saturation
+Saturation0=Saturazione:   0\s\s
+;Saturation:   0\s\s
+Save=Salva
+;Save
+Save2=&Salva
+;&Save
+SaveAM3cFile=Salva un file m3c
+;Save a m3c file
+SaveAZBufferImageAs=Salva un'immagine Z-buffer come file BMP o PNG, scalata come la vista attuale.
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=Salva tutte le impostazioni correnti come file *.btrace2
+;Save all current settings as *.btrace2-file
+SaveAs=Salva con nome
+;Save As
+SaveAsHeightMap=Salva come HeightMap
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=Salva come heightmap nella cartella delle mappe di MB3D
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=Salva come immagine
+;Save As Image
+SaveAsImageAtTheLocation=Salva come immagine nella posizione specificata
+;Save as image at the location you specify
+SaveBtrace2=Salva btrace2...
+;Save btrace2...
+SaveCompleteM3I=Salva M3I completo
+;Save complete M3I
+SaveExit=Salva + esci
+;Save + exit
+SaveFullLightAndColorParameter=Salva i parametri completi di luce e colore
+;Save full light and color parameter
+SaveImageParameters=Salva immagine + parametri
+;Save image + parameters
+SaveM3i=Salva m3i
+;Save m3i
+SaveM3iFiles=Salva file m3i
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=Salva i file m3i con il buffer immagine interno, conservando riflessi ecc.
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=Salva solo i parametri
+;Save parameters only
+SaveParametersToClipboardAsText=Salva i parametri negli appunti come testo;\npoi puoi premere ctrl+v per inserire il testo altrove.
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=Salva img
+;Save pic
+SaveProject=Salva progetto
+;Save project
+SaveTextParametersInThePNG=Se selezionato, salva i parametri testuali nel file PNG.\nPuoi vederli ad esempio in GIMP in\n'Proprietà immagine' -> Commento.
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=Salva i parametri dell'animazione
+;Save the animation parameters
+SaveTheCodeF5=Salva il codice <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=Salva l'immagine come file BMP o PNG, scalata come la vista attuale.
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=Salva l'immagine come file BMP o PNG. Se l'opzione 'Con Z-buffer' è attiva, viene salvato anche lo z-buffer.
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=Salva l'immagine come file JPEG, scalata come la vista attuale.
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=Salva il file M3C a ogni aggiornamento, se sono passati almeno 5 minuti
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=Salva questo progetto voxel
+;Save this voxel project
+SaveType=Tipo di salvataggio:
+;Save type:
+SaveZBufferPng=Salva Z-buffer (png)
+;Save Z buffer (png)
+SaveZBufferToo=Salva anche lo Z-buffer
+;Save Z buffer too
+Saved=Salvato
+;Saved
+Saved16BitColour=Salvato {} (colore a 16 bit)
+;Saved {} (16 bit colour)
+Saved2=Salvato {}
+;Saved {}
+SavedLower=salvato
+;saved
+SavedOpenEXRFloatingPointColoursAnd=Salvato {} (OpenEXR, colori in virgola mobile e livelli)
+;Saved {} (OpenEXR, floating point colours and layers)
+SavedTransparentBackground=Salvato {} (sfondo trasparente)
+;Saved {} (transparent background)
+Saving=Salvataggio:
+;Saving:
+SavingSucceeded=Salvataggio riuscito
+;Saving succeeded
+Scale=Scala:
+;Scale:
+ScaleClipRadiusDoFAndTheDE=Scala ClipRadius (DoF) e il valore DE stop\nper mantenere il livello di dettaglio e i colori.
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=Scala DEstop per mantenere colore && dettaglio
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=Scala le righe alla proiezione geografica
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=Scala la dimensione dell'immagine di 2, in su o in giù.
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=Scala i valori della percentuale selezionata.
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=Valore di scala della formula iniziale, influisce sulla precisione del DE
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=Scala la lunghezza massima dei raggi ambientali da calcolare.\nUsare un valore maggiore di 1 per dare più profondità alle ombre,\nvalori sotto 1 danno ombre più locali.
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=Anteprima scansione
+;Scan Preview
+ScreenDistance=Distanza schermo:
+;Screen distance:
+ScriptEditor=Editor di script
+;Script Editor
+ScrollBy1=Scorri di 1
+;Scroll by 1
+Search=Cerca
+;Search
+SecantSearchForTheSurface=Ricerca della superficie per secante
+;Secant search for the surface
+SecantSearchmode=Ricerca con secanti:
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=Secondo punto di fuoco; se diverso dal primo\nsi ottiene una linea di fuoco invece di un punto.\n(fisicamente poco realistico, ma utile)\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=Vedi anche le opzioni di colorazione mappa nella scheda 'Colorazione' della finestra principale.
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=Se&leziona
+;&Select
+SelectThisIfYouWantTo=Selezionare per sovrascrivere i file M3I esistenti con lo stesso nome.\nSe non selezionato, il nome viene modificato in modo da non sovrascrivere alcun file.
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=Selezionato
+;Selected
+SelectionRecalculation=ricalcolo della selezione
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=Invia tutti i valori formula regolati ai parametri del programma principale.
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=Invia tutti i valori formula
+;Send all formula values
+SendOnlyThisViewToThe=Invia solo questa vista al programma principale
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=Invia parametri originali alla finestra principale
+;Send original parameter to main window
+SendParameterToMain=Invia parametri al principale
+;Send parameter to main
+SendParameterToProgramsMainRender=Invia i parametri alla finestra di rendering principale del programma
+;send parameter to programs main render window
+SendThisParameterToTheMain=Invia questi parametri al programma principale
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=Invia i parametri originali di questo progetto al programma principale.\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=Invia questa vista con tutte le modifiche Julia e formula al programma principale.
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=Invia all'editor principale
+;Send to Main Editor
+SendValue=Invia valore
+;Send value
+SendValues=Invia valori
+;Send values
+SendingOut=Invio:
+;Sending out:
+SessionsAndCrashes=Sessioni e arresti anomali
+;Sessions and crashes
+Set=Imposta
+;Set
+SetLightfuncToCosine=Funzione luce su coseno
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=Imposta l'orientamento della mappa relativo all'oggetto.\nUsalo nelle animazioni per fissare le luci alla scena.
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=Imposta il tema visivo dell'applicazione
+;Set the visual theme of the application
+SetTo0=azzera
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=Imposta automaticamente la funzione luce corrispondente su coseno\nquando viene calcolata l'ombra.\nLe funzioni coseno e coseno quadratico funzionano bene con l'ombra.
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=Impostazione del tema visivo
+;Setting the Visual Theme
+ShadersCompiling=compilazione degli shader
+;shaders compiling
+ShadowsAndAO=ombre e AO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=Condividi il rendering tra i tuoi computer tramite una cartella condivisa
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=Condividi questo computer: renderizza i lavori della cartella e affida i miei allo sciame
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=Cartella condivisa:
+;Shared folder:
+SharingButNoOtherComputerIs=Condiviso, ma nello sciame non c'è ancora nessun altro computer: i render vengono eseguiti solo su questo computer
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=condivisione fermata: {}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween=Condiviso con {}: i render sono suddivisi tra i {} computer
+;Sharing with {}: renders are split between the {} computers
+Sharp=nitid.:
+;sharp:
+SharpenFactorOfTheSavedOutput=Fattore di nitidezza dell'immagine di output salvata,\nfunziona solo con riduzioni di 1:2 e 1:3!\n0: nessuna nitidezza ... 3: nitidezza massima
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=Sposta le formule da {} a 5 di una posizione a destra
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=Sposta le formule da {} a 6 di una posizione a sinistra
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=Sposta a sinistra
+;Shift to the left
+ShiftToTheRight=Sposta a destra
+;Shift to the right
+Shininess=Lucentezza
+;Shininess
+ShortdistanceCheckDE=Controllo DE a corta distanza:
+;Shortdistance check DE:
+ShouldIStopCalculations=Fermare i calcoli?
+;Should i stop calculations?
+Show=Mostra
+;Show
+ShowCoords=Mostra coord.
+;Show coords
+ShowFrameNr=Mostra n. fotogramma
+;Show frame nr
+ShowGuides=Mostra guide
+;Show guides
+ShowInFolder=Mostra nella cartella
+;Show in folder
+ShowMeAPreviewOfThe=Mostrami un'anteprima dell'ultima immagine che ho renderizzato in mb3d.
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=Mostra univoche
+;Show unique
+ShowsHiddenFormulasRightclickOnA=Mostra le formule nascoste.\nClic destro su una formula per cambiarne lo stato.
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=Mostra i messaggi
+;Shows messages
+ShrinkThePanel=Riduci il pannello
+;Shrink the panel
+Shutter=Otturatore:
+;Shutter:
+SinCosIs2xFasterThanCalling={ SinCos è 2 volte più veloce che chiamare Sin e Cos separatamente per lo stesso angolo }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=Clic singolo per cambiare la modalità del navigatore
+;Single click to change the navi mode
+SingleFilenumbering=Numerazione singola dei file
+;Single filenumbering
+Size=Dimensione
+;Size
+Size2=Dimens.:
+;Size:
+SizeFactor=Fattore di scala:
+;Size factor:
+SizeOfEachView=Dimensione di ogni vista:
+;Size of each view:
+Sliding=Scorrimento
+;Sliding
+SlidingWalkingStep=Passo scorrimento+camminata:
+;Sliding+Walking step:
+SmoothDEcomb=DEcomb morbido:
+;Smooth DEcomb:
+SmoothImageOnLoad=Leviga immagine al caricamento
+;Smooth image on load
+SmoothNormals=Normali lisce:
+;Smooth  normals:
+SmoothNormalsColon=Normali morbide:
+;Smooth Normals:
+SmoothSolid=Solido liscio
+;Smooth Solid
+SmoothSolidWithEdges=Solido liscio con bordi
+;Smooth Solid with Edges
+SoftClipping=Clipping morbido:
+;Soft clipping:
+SoftensTheHardShadowsTheValue=Ammorbidisce le ombre nette. Il valore è relativo alla dimensione della sorgente luminosa: un valore maggiore produce un'ombra più morbida.
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=O.N. più morbide
+;Softer H.S.
+Sorted=Ordinato
+;Sorted
+SortedCalculationGivesBetterResultsForward=Il calcolo ordinato dà risultati migliori.\nIn avanti può essere un'opzione se Ordinato fallisce per problemi di memoria o simili.
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=Spec:
+;Spec:
+Spec2=Spec
+;Spec
+SpecifiesTheEndOfRaymarchingAs=Specifica la fine del raymarching come fattore della DE locale.\nValori maggiori = oggetti più lontani visibili.\n\nScorciatoie:  F1: riduce il piano lontano,  F2: aumenta il piano lontano
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=Speculare
+;Specular
+SpecularObjectColorsClickToChange=Colori speculari dell'oggetto, clicca per cambiarli.
+;Specular object colors, click to change them.
+SpecularPowerFunction=Funzione di potenza speculare
+;Specular power function
+SphericalCoords=Coord. sferiche
+;Spherical coords
+SplatsInWrittenTo={} splat in {}, salvati in {}
+;{} splats in {}, written to {}
+Stan=stan.
+;stan.
+StandardRectilinearPanorama=standard  rettilineare  panorama
+;standard  rectilinear  panorama
+Start=Inizio:
+;Start:
+StartBatchRendering=Avvia rendering batch
+;Start batch rendering
+StartIndex=Indice iniziale:
+;Start index:
+StartRendering=Avvia rendering
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=Avvia il rendering e salva poi automaticamente il file M3I!
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=Avvia rendering animazione
+;Start rendering animation
+StartRenderingAnimationImages=Avvia il rendering delle immagini dell'animazione
+;Start rendering animation images
+StartRenderingSlices=Avvia rendering sezioni
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=Avvia il rendering di tutti i file M3P selezionati
+;Starts rendering all selected M3P files
+Statistics=Statistiche
+;Statistics
+Status=Stato
+;Status
+StepRelax=Passo allungato:
+;Step relax:
+StepcountForBinarySearch=Numero di passi per \nla ricerca binaria:
+;Stepcount for \nbinary search:
+StepwidthLimiter=Limitatore ampiezza passo:
+;Stepwidth limiter:
+Stereo=Stereo
+;Stereo
+StereoComposingPreview=stereo: composizione dell'anteprima
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=Le coppie stereo non possono essere renderizzate a riquadri. Disattivare prima i riquadri.
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=stereo: rendering occhio sinistro
+;stereo: rendering left eye
+StereoRenderingRightEye=stereo: rendering dell'occhio destro
+;stereo: rendering right eye
+StickThisWindowToTheLeft=Ancora questa finestra a sinistra
+;Stick this window to the left side
+StickThisWindowToTheRight=Ancora questa finestra a destra
+;Stick this window to the right side
+Stone=Pietra
+;Stone
+Stop=Ferma
+;Stop
+StopBatchRendering=Ferma rendering batch
+;Stop batch rendering
+StopRendering=Ferma rendering
+;Stop rendering
+StopRenderingTheAnimation=Ferma il rendering dell'animazione.
+;Stop rendering the animation.
+StopTheCurrentCalculation=Ferma il calcolo in corso.
+;Stop the current calculation.
+Stopping=Arresto in corso...
+;Stopping...
+StoppingThisComputerFinishesThePart=Arresto: questo computer termina la parte che sta renderizzando
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=Ferma la camminata a questa distanza dall'oggetto.\nImpostare a 0 per disattivare.
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=Salva anche un file *.PNG corrispondente per un'anteprima più semplice dell'immagine
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=Salva i file M3I nella cartella predefinita
+;Store M3I file in default folder
+StorePNGPreview=Salva anteprima PNG
+;Store PNG-preview
+Strength=Intensità:
+;Strength:
+Strength2=Intensità
+;Strength
+StrengthOfDynamicFog=Intensità della nebbia dinamica.
+;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=Intensità, dimensione (unità del frattale) e finezza (da 0.2 liscio a 0.8 granuloso) del rilievo
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
+StretchesUpperAndLowerPartsMaybe=Allunga le parti superiore e inferiore, può essere utile per un'immagine comune nell'opzione sfera completa.
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=Moltiplicatore numero\nsottofotogrammi:
+;Subframe count\nmultiplicator:
+SubframeInterpolation=Interpolazione sottofotogrammi:
+;Subframe interpolation:
+SubframesToRender=Sottofotogrammi da renderizzare
+;Subframes to render
+SubframesToRenderBetween=Sottofotogrammi da  \nrenderizzare tra:
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=Sottrae una parte di DEstop dal passo successivo del raggio, consigliato con valori alti di DEstop.
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=Supporto rendering in rete
+;Support network rendering
+SupportedMathematicalFunctions=Funzioni matematiche supportate
+;Supported mathematical functions
+SurfaceColor=Colore superficie
+;Surface color
+SurfaceDetail=Dettaglio superficie:
+;Surface detail:
+SurfaceMaterial=Materiale superficie
+;Surface material
+Swarm=Sciame
+;Swarm
+SwarmABlockOnEveryComputer=sciame: un blocco su ogni computer, fino a Stop
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=sciame: {} blocchi da {} raggi/pixel
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=sciame: {} computer
+;swarm: {} computer
+SwarmComputers=sciame: {} computer
+;swarm: {} computers
+SwarmCreatingTheJob=sciame: creazione del lavoro
+;swarm: creating the job
+SwarmJob=lavoro dello sciame
+;swarm job
+SwarmLower=sciame: {}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=Sciame: rendering condiviso tra i tuoi computer
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=Torna al tema predefinito
+;Switch back to the default theme
+TakeTheEntryOutOfThe=Toglie la voce dalla cronologia (i parametri e la miniatura di un'immagine calcolata vengono eliminati; gli altri file restano dove sono)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=Slot mappa di destinazione
+;Target Map Slot
+TargetMapSlotUseThisNumber=Slot mappa di destinazione. Usare questo numero come mappa nel frattale, ad es. come heightmap, per avere una mappa animata
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=La somma dei colori diffuso e speculare aggiunti è maggiore di 1,\nridurli per una colorazione più realistica?
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=L'animazione richiede almeno due keyframe.
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=L'apertura nel punto Zsharp, non è l'apertura della fotocamera!\nMoltiplicare questo valore per la distanza (scelta liberamente) dal punto Zsharp\nalla fotocamera e dividerlo per la lunghezza focale dell'obiettivo per ottenere\nl'apertura della fotocamera.\nRidurre quindi questo valore se non si immagina una fotocamera così grande.\nValori maggiori danno più sfocatura.
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheAxisTheCloudLayerLies=L'asse a cui lo strato di nuvole è perpendicolare, e le sue due altezze
+;The axis the cloud layer lies across, and its two heights on it
+TheAxisThePlaneLiesAcross=L'asse a cui il piano è perpendicolare e la sua posizione su quell'asse (come per i piani di taglio; il lato pieno è quello lontano dalla fotocamera)
+;The axis the plane lies across, and its position on that axis (as for the cutting planes; its solid side is the one away from the camera)
+TheBTracer2CacheFormatIsNot=Il formato cache BTracer2 non è supportato da questo programma.\nScegliere un formato mesh (*.ply o *.obj).
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=Il formato cache BTracer2 non è supportato, la mesh non è stata salvata.
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=Impossibile caricare l'immagine di sfondo.
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=Il valore di bailout per le formule escapetime.\nSe il valore 3D supera questo valore durante l'iterazione,\nil punto corrente non appartiene all'oggetto.
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=Il raggio di sfocatura viene limitato a questo valore.\nPuò accelerare il rendering quando il raggio diventa enorme in alcune parti dell'immagine.
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=Il calcolo non è riuscito: {}
+;The calculation failed: {}
+TheCalculationFailedLower=il calcolo non è riuscito
+;the calculation failed
+TheCalculationWillBeExtendedTowards=Il calcolo viene esteso oltre il bordo dell'immagine con gli oggetti riflessi.\nQuesto può ridurre gli artefatti nelle animazioni, ma anche le immagini fisse ne traggono vantaggio.\nIl valore dovrebbe stare tra 0 e 0.5 (max 0.9); è la dimensione, relativa a larghezza\ne altezza dell'immagine, calcolata al massimo all'esterno.
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheChosenValueOverAllFrames=Il valore scelto su tutti i fotogrammi dell'animazione: trascinate il quadrato di un fotogramma chiave in su o in giù, oppure cliccatelo e scrivetene il valore
+;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheCommandLineProgramMb3dWas=Il programma a riga di comando mb3d non si trova accanto a questo programma: reinstalla il programma.
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=La numerazione predefinita usa 2 numeri, separati per X e Y.\nCon questa opzione la numerazione è un solo numero,\nche cresce lungo ogni colonna e prosegue nella riga successiva.
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=Per impostazione predefinita l'oggetto è bianco e l'area esterna è nera.\nScegliere questa opzione per invertire i colori.
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=Le stime di distanza vengono ridotte di questo fattore per evitare passi eccessivi.\nRiduci il valore se si verificano passi eccessivi (pixel neri, immagine rumorosa).\nValori troppo bassi rallentano il rendering.
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=Le stime di distanza vengono ridotte di questo fattore per evitare l'overstepping.\nRidurre il valore se si verifica overstepping (pixel neri, immagine rumorosa).\nValori troppo bassi rallentano il rendering.
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=La distanza dalla superficie degli oggetti alla quale il raymarching si ferma aumenta con la distanza dall'osservatore.\nQuesto dà un aspetto omogeneo agli oggetti, quindi è normalmente selezionato.
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=L'effetto si accumula; azzerare per un nuovo calcolo.
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=Le voci sotto i loro giorni; le voci e le immagini di un giorno compaiono quando lo si apre (con un clic)
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=Non è stato possibile rimuovere la voce.
+;The entry could not be removed.
+TheFileIsNotThereAny=Il file non c'è più.
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=Il file <{}.m3f> esiste già. Sovrascriverlo?
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=Il file (selezionarlo e copiarlo da qui)
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=Il (primo) punto di fuoco.\nIl valore è relativo allo Zstart dell'osservatore,\nnormalizzato alla larghezza dell'immagine.
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=la cartella non esiste (o non è raggiungibile)
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=Il nome della formula dovrebbe iniziare con "JIT" per distinguere queste formule da quelle basate su ASM
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=Il frattale non è in nessuna delle viste.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=Il frattale della finestra principale come splat gaussiani, da guardare da ogni lato in Blender (5.3 e successivi) e in altri visualizzatori di splat. Viene calcolato da più direzioni e ogni pixel diventa uno splat del suo colore.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
+TheFractalSSurfaceMaterialOn=Il materiale della superficie del frattale sopra la tavolozza (non in MB3D: salvato dopo la parte MB3D dei parametri)
+;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFramesPerSecondMustBe=I fotogrammi al secondo devono essere un numero maggiore di 0 (ad es. 25).
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=il buffer immagine ha la dimensione sbagliata
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=la dimensione dell'immagine è cambiata: calcolare di nuovo l'immagine
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=Il modo its.trap dipende dall'opzione calcolata nella scheda "Colorazione".
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionCrashed=L'ultima sessione si è arrestata: {}. Altro nella finestra Registro (l'icona nella barra del titolo).
+;The last session crashed: {}. More in the Log window (the icon in the title bar).
+TheLastSessionDidNotEnd=L'ultima sessione non è terminata correttamente (si è bloccata, è stata terminata o si è arrestata): {}. Ciò che ha fatto per ultimo è nel registro (la finestra Registro, l'icona nella barra del titolo).
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=L'editor principale sta ancora renderizzando. Fermarlo prima o attendere che abbia finito.
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=Le opzioni mappa calcolano le coordinate x,y dal vettore\nspecifico per le mappe sferiche; questo cambia anche la prima scelta colore\nche di solito si basa sulle iterazioni lisce.\nDevi ricalcolare l'immagine per vedere il risultato delle\nmodifiche a queste opzioni.
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=La finestra Monte Carlo sta renderizzando: fermarla prima.
+;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=Il tempo di otturazione dell'effetto mosso: una parte del tempo fino al fotogramma successivo (da 0 a 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
+TheNameOfTheNewLanguage=Il nome della nuova lingua, in quella lingua (Deutsch, Polski, ...)
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=Il lavoro più recente: parti renderizzate, parti in corso (con il loro avanzamento), parti mancanti
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=I parametri non corrispondono più al calcolo non terminato: premere "Calcola 3D" per calcolarli.
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=L'immagine non corrisponde al suo calcolo: calcolarla di nuovo.
+;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=La rifinitura dell'immagine dopo tutti gli altri passaggi: esposizione, alone attorno alla luce intensa, tone mapping filmico, correzione colore, una vignettatura e frange di colore
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
+ThePlaneSColourClickTo=Il colore del piano (clic per cambiarlo)
+;The plane's colour (click to change)
+TheRotationIsPerformedAroundThe=La rotazione viene eseguita attorno al punto centrale (Xmid, Ymid, Zmid)
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=Le rotazioni vengono eseguite in sequenza, prima il piano XW, per ultimo lo ZW.
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSecondPartAsAnObject=La seconda parte come oggetto a sé (non in MB3D: salvata dopo la parte MB3D dei parametri): il suo centro (x, y, z), la sua rotazione attorno a x, y, z in gradi e la sua grandezza (1 = come calcolata)
+;The second part as an object of its own (not in MB3D: kept after MB3D's part of the parameters): its middle (x, y, z), its rotation about x, y, z in degrees and its size (1 = as calculated)
+TheSelectionMustBeBiggerThan=La selezione deve superare i 2 pixel in larghezza e altezza.
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=la selezione deve superare i 2 pixel in larghezza e altezza
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=La cartella condivisa dello sciame
+;The shared folder of the swarm
+TheSizeOfTheCloudsFeatures=La grandezza delle forme delle nuvole in unità del frattale, e il loro colore (clic)
+;The size of the clouds' features in fractal units, and their colour (click)
+TheSizeOfTheTiles=La dimensione dei riquadri
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=Le immagini stereo dei due occhi hanno dimensioni diverse.
+;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=I parametri di testo negli appunti sono danneggiati: alcune righe sono state tagliate durante la copia. Copiali di nuovo dalla loro origine.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
+TheTileHasNoImageBuffer=il riquadro non ha un buffer immagine
+;the tile has no image buffer
+TheValueOfTheChosenKeyframe=Il valore del fotogramma chiave scelto
+;The value of the chosen keyframe
+Themes=Temi
+;Themes
+ThereIsAFileAlready=Esiste già un file {}.
+;There is a file {} already.
+ThingsToAskTheAssistant=Cose da chiedere all'assistente
+;Things to ask the assistant
+ThisComputer=Questo computer:
+;This computer:
+ThisEffectIsAccumulatedOnEach=Questo effetto si accumula a ogni pressione del pulsante; si può azzerare premendo\nil pulsante 'Azzera', ma verrebbero annullati anche i riflessi!
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=Questo file esiste già. Sovrascriverlo davvero?
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=Offset assoluto in direzione x del bulbo ruotato.
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=Questo render è in esecuzione proprio ora.
+;This render is running right now.
+ThisRenderKeepsNoImage=Questo render non conserva alcuna immagine.
+;This render keeps no image.
+ThisRenderKeptNoParameters=Questo render non ha conservato parametri.
+;This render kept no parameters.
+ThisSessionLive=Questa sessione (in diretta)
+;This session (live)
+ThreadPriority=Priorità\nthread
+;Thread\nPriority
+ThreadcountInCalculations=Numero di thread  \nnei calcoli
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=Thread per i lavori (0 = tutti i core):
+;Threads for jobs (0 = all cores):
+ThresholdTo0=Soglia fino a 0:
+;Threshold to 0:
+TilNextUpdate=..al prossimo aggiornamento
+;..til next update
+TileCountHorizontal=Numero riquadri,  orizzontale:
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=Riduzione riquadro, antialiasing:
+;Tile downscale, anti aliasing:
+TileSaved={} riquadro salvato; {}
+;{} tile saved; {}
+TileXY=Riquadro: X= Y=
+;Tile: X= Y=
+TileXY2=Riquadro: X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  Riquadro X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=riquadro X={} Y={}
+;tile X={} Y={}
+TileXYSaved=Riquadro X={} Y={} salvato.
+;Tile X={} Y={} saved.
+Tiles=riquadri
+;tiles
+Tiles2=Riquadri
+;Tiles
+TilesSaved={} riquadri salvati; {}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  {} riquadri con lo sciame
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=Dimensione riquadro (con aa):
+;Tilesize (including aa):
+Tiling=Suddivisione:
+;Tiling:
+TimeNeeded=Tempo necessario:
+;Time needed:
+ToCalculateABetterHardShadow=Per calcolare un'ombra netta migliore, solo se è selezionata 1 sola O.N.!
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=Negli appunti
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=Per ridurre anche la luce diretta con l'occlusione ambientale
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=alla formula n.:
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=Per ridurre il rumore attorno agli oggetti negli ibridi con stime di distanza scadenti,\nusa un numero di iterazioni un po' inferiore alla media delle iterazioni nell'immagine.
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=Per ridurre l'overstepping
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=A questo keyframe e a tutti i precedenti
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=A questo keyframe e ai seguenti
+;To this keyframe and the following
+Togo=rimanenti: ...
+;togo: ...
+Tools=Strumenti
+;Tools
+TotalAmountOfReflectivityTransparencyIt=Quantità totale di riflettività + trasparenza; viene moltiplicata per il colore speculare locale dell'oggetto + la quantità di trasparenza.
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=Tempo totale di calcolo:
+;Total calculation time:
+TotalFramesUpToHereNote=Fotogrammi totali fino a qui.\nSi noti che solo in modalità ciclo vengono renderizzati\ni sottofotogrammi dopo l'ultimo keyframe.
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=Intervallo di tracciamento X:
+;Trace range X:
+TraceRangeY=Intervallo di tracciamento Y:
+;Trace range Y:
+TraceRangeZ=Intervallo di tracciamento Z:
+;Trace range Z:
+TracingObject=Tracciamento dell'oggetto...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=Tiene traccia dello stato del rendering nel file system, così più istanze possono renderizzare la stessa sequenza di file senza sovrascrivere il lavoro degli altri nodi
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=Trasparenza
+;Transparency
+TransparencyIntensity=Intensità trasparenza
+;Transparency intensity
+TransparencySpecular=Trasparenza + speculare
+;Transparency + Specular
+TransparentBackground=Sfondo trasparente
+;Transparent background
+TrigonometricFunctions={ Funzioni trigonometriche }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=Regola la dimensione della mappa volumetrica a passi del 20%
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=Attiva/disattiva la modalità Julia
+;Turn on/off the julia mode
+Turned=Ruotata:
+;Turned:
+Turntable=Piatto girevole
+;Turntable
+Type=Tipo:
+;Type:
+Type2=Tipo
+;Type
+TypeInTheQuality0100=Inserire la qualità (0..100) o la dimensione massima del file in KB (>100):
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=Il tipo non può essere vuoto
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\sTipo di ibrido:\nAlterna:  formule da 1 a 6 alternate.\nInterpola:  formula 1 interpolata a ogni iterazione con la formula 2.\nDE combinate:  la formula 1 è combinata via DE con l'ibrido alternato delle formule da 2 a 6.
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=Tipo di determinazione dell'oggetto: ridurre Iter. max o aumentare DE\n(a seconda dell'opzione scelta) rende l'oggetto più spesso.\nNota:  le formule DEcombinate e il rendering interno+esterno\n           funzionano solo nella modalità Stima della distanza!
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\sTipo di determinazione dell'oggetto: abbassare Max its o aumentare DE\n(a seconda dell'opzione scelta) rende l'oggetto più spesso.\nNota:  le formule DEcombinate funzionano solo in modalità Distance estimation!
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=Digitare prima il nome della nuova lingua; è il nome del suo file.
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=Disattiva questa opzione se l'immagine appare piatta e rumorosa.
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=Deselezionare per non sovrascrivere le immagini già calcolate.\nIl nome del file deve essere uguale (stesso formato di output, indice e suffisso\n'left' o 'right' in modalità stereo).
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=, {} in corso
+;, {} under way
+UnfinishedCalculation=Calcolo non terminato
+;Unfinished calculation
+UnfinishedRender=Render non terminato
+;Unfinished render
+UnfinishedRenders=Render non terminati
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=Render non finiti: continuali o eliminali
+;Unfinished renders: continue or delete them
+Untitled=senza titolo
+;untitled
+UpOneLevel=Livello superiore
+;Up one level
+UpTo=fino a:
+;up to:
+UpdateImage=Aggiorna immagine
+;Update Image
+UseAMapForTheDiffuse=Usa una mappa per il colore diffuso
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=Usa un'immagine piccola come colore ambientale
+;Use a small image as ambient color
+UseAlsoNavi=(usa anche il navigatore)
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=Usa ombre ambientali dal file M3I originale
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=Usa orientamento predefinito
+;Use default orientation
+UseItInAnimationsToFix=Usalo nelle animazioni per fissare le luci alla scena.
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=Da usare solo come seconda opzione se le normali (la direzione della superficie per l'illuminazione) sembrano scadenti.
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=Usa OpenGL >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=Usa le impostazioni visive predefinite senza tema
+;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=Usa le accelerazioni sperimentali
+;Use the experimental speed-ups
+UseTheMapIntensitiesAndDiffuse=Usa le intensità della mappa e i colori diffusi.
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=Usa valori inferiori a 1 per ridurre i passi eccessivi.
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\sUtile per simulare dati con errori di campionamento. }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=Utile per mappe di altezza ripide
+;Useful for steep heightmaps
+User=utente
+;user
+UserDefinedApectRatioRightclickTo=Proporzioni definite dall'utente.\nClic destro per definire il rapporto.
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=Proporzioni definite dall'utente
+;User defined aspect ratio
+Value=Valore:
+;Value:
+ValueNotGuilty=Valore non valido
+;Value not guilty
+ValuesHaveAFractionFieldThat=// hanno un campo frazionario diverso da 0.
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=Varia DEstop con FOV:
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=Verifica che la somma dei colori diffuso e speculare non superi 1, in base alle opzioni scelte
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=Verifica durante il calcolo se la somma speculare+diffuso supera 1.  Utile quando si usano mappe diffuse.
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=Versione
+;Version
+Version2=, versione {}
+;, version {}
+Vertical=verticale:
+;vertical:
+VerticalFieldOfViewInDegrees=Campo visivo verticale in gradi
+;Vertical field of view in degrees
+VerticesFaces={} [{} vertici, {} facce]
+;{} [{} Vertices, {} Faces]
+Video=video
+;video
+VideoLower=video: {}
+;video: {}
+View=Vista
+;View
+ViewToMain=Vista al princ.
+;View to main
+Viewing=Visualizzazione
+;Viewing
+Vignette=Vignettatura
+;Vignette
+Visible=Visibile:
+;Visible:
+VolumeLightNr=Luce volumetrica n.:
+;Volume light nr:
+VolumetricResolution=Risoluzione volumetrica:
+;Volumetric resolution:
+VoteFormula=+ voto formula
+;+ vote formula
+VoteFormula2=- voto formula
+;- vote formula
+VoxelExport=Esportazione voxel
+;Voxel export
+Voxelstack=Voxelstack
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=Attendere il calcolo in corso, o fermarlo prima.
+;Wait for the running calculation, or stop it first.
+Walking=Camminata
+;Walking
+Warmth=Calore
+;Warmth
+Warning=Attenzione
+;Warning
+WarningLower=avviso
+;warning
+WarningMustRecalculateTheWholeImage=Attenzione: per annullare occorre ricalcolare l'intera immagine!
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=Avvisi ed errori
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Waves=Onde:
+;Waves:
+WavesOnThePlaneTheirHeight=Onde sul piano: la loro altezza e lunghezza in unità del frattale (altezza 0: un piano liscio)
+;Waves on the plane: their height and their length in fractal units (height 0: a flat plane)
+Weight=Peso
+;Weight
+WeightColon=Peso:
+;Weight:
+WhatDidIDoInMb3d=Che cosa ho fatto oggi in mb3d? Ci sono stati errori?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=Cosa è successo
+;What happened
+WhatYouDid=Cosa hai fatto
+;What you did
+When=Quando
+;When
+WhenAngleNotBetween180And={ Se l'angolo non è compreso tra -180 e 180, lo riporta in tale intervallo }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=Quando (UTC)
+;When (UTC)
+WhenUsingAMapForThe=Usando una mappa per il colore diffuso,\noccorre attivare 'Autoclip Spec+Diff'\nper un ritaglio automatico dei colori.
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=bianco
+;white
+WhiteOutside=Esterno bianco
+;White outside
+Width=Larghezza:
+;Width:
+Windows=Finestre
+;Windows
+Wireframe=Wireframe
+;Wireframe
+WireframeColor=Colore wireframe
+;Wireframe color
+WithHS=con HS
+;with HS
+WithThe360PanoramaCameraA=Con la fotocamera Panorama 360: un panorama stereo per la VR, i due occhi uno sopra l'altro (il sinistro sopra), la profondità giusta in ogni direzione
+;With the 360 Panorama camera: a stereo panorama for VR, both eyes one above the other (left on top), the depth right in every direction
+WithZBuffer=Con Z-buffer
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=Scrive i testi inglesi come nuovo file di lingua con questo nome; tradurli con un editor di testo, poi premere Ricarica
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=Scrive l'immagine com'è ora (le righe non finite come sfondo) come file .m3i
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=Scritto: {}\nTradurre i testi a destra di "=" con un editor di testo, poi premere Ricarica.
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=Angolo X:
+;X angle:
+XMid=X centro:
+;X mid:
+XOffset=Offset X:
+;X offset:
+XScale=Scala X:
+;X scale:
+XW=XW:
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=Xpos
+;Xpos
+Xrot=Xrot
+;Xrot
+YAngle=Angolo Y:
+;Y angle:
+YMid=Y centro:
+;Y mid:
+YOffset=Offset Y:
+;Y offset:
+YScale=Scala Y:
+;Y scale:
+YW=YW:
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=Sì
+;Yes
+YouCanAlsoClickOnA=Si può anche fare clic su un valore per modificarlo
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=Puoi anche digitare direttamente la formula
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=È sempre possibile avviare/continuare o fermare il calcolo
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=Puoi fare una regolazione più fine con i tasti freccia sinistra o destra\nsulla maggior parte dei cursori, quando sono selezionati.\nPremendo "0" (zero) il cursore torna alla posizione zero.
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=È possibile salvare anche un file m3i per ogni riquadro; assicurarsi di avere abbastanza\nspazio sul disco e tenere presente che i riflessi non vengono memorizzati nel file m3i.\n\nNota: questi riquadri m3i non possono essere aperti con versioni del programma precedenti alla 1.7.9!
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=Occorre prima renderizzare i parametri originali e salvarli come file M3I.\nNon fare quel render troppo piccolo.
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=Il tuo nome autore (memorizzato nei parametri):
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=La propria lingua (il suo nome):
+;Your own language (its name):
+Ypos=Ypos
+;Ypos
+Yrot=Yrot
+;Yrot
+Z1Sharp=Z1 nitido:
+;Z1 sharp:
+Z2Sharp=Z2 nitido:
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=Z-buffer: {}
+;Z-buffer: {}
+ZEnd=Z fine
+;Z end
+ZMid=Z centro
+;Z mid
+ZOffset=Offset Z:
+;Z offset:
+ZRThreshold=Soglia Z/R:
+;Z/R Threshold:
+ZScale=Scala Z:
+;Z scale:
+ZSlices=Sezioni Z:
+;Z slices:
+ZStart=Z inizio
+;Z start
+ZW=ZW:
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=Zoom:
+;Zoom:
+Zoom2=Zoom
+;Zoom
+Zpos=Zpos
+;Zpos
+Zrot=Zrot
+;Zrot
+
+[AniProcessForm]
+Label22.Caption = Moltiplicatore passo raggi:
+
+[BRInfoForm]
+Caption = Rendering grande
+
+[BulbTracer2Frm]
+XOffsetEdit.Hint = Offset assoluto in direzione x del bulb ruotato.
+YOffsetEdit.Hint = Offset assoluto in direzione x del bulb ruotato.
+ZOffsetEdit.Hint = Offset assoluto in direzione x del bulb ruotato.
+
+[ColorForm]
+Label2.Caption = Diffuso
+
+[FNavigator]
+RadioGroup1.Items.3 = medie
+Label48.Caption = R bailout:
+
+[FVoxelExport]
+Button3.Caption = Cartella di uscita:
+Button3.Hint = Fare clic per scegliere la cartella di uscita
+
+[HeightMapGenFrm]
+MapNumberEdit.Hint = Numero della mappa
+
+[HotkeysFrm]
+Caption = Scorciatoie da tastiera
+
+[JITFormulaEditorForm]
+ParamAddBtn.Caption = Nuovo
+
+[LightAdjustForm]
+ButtonGetPos.Caption = centro
+
+[MCForm]
+TrackBar1.Hint = Se selezionato, premere '1' per riportare il cursore alla posizione predefinita.
+
+[Mand3DForm]
+PositionBtn.Hint = Clicca per nascondere/mostrare
+RotationBtn.Hint = Clicca per nascondere/mostrare
+SpeedButton31.Caption = reimposta
+
+[TilingForm]
+Label24.Caption = nitidezza:
+
+[VisualThemesFrm]
+SaveAndExitBtn.Caption = Salva ed esci

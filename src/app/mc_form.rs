@@ -1,8 +1,10 @@
 //! The Monte Carlo rendering window (MonteCarloForm.pas) and the colour
 //! scaling question (ColorOptionForm.pas).
 
+use crate::vcl::lang::{tr, trf};
 use super::light_form::short_float_str;
-use super::util::{d2byte, d2byte_str, fts_single, parse_float, time_str};
+use super::eta::{ItemsLeft, Pace};
+use super::util::{d2byte, d2byte_str, fts_single, left_str, parse_float, smooth_shown, time_str, Shown};
 use super::{Mb3d, MAIN};
 use crate::mc::{McImage, McRecord};
 use crate::scene::Scene;
@@ -57,9 +59,15 @@ pub struct State {
     img: Option<Arc<McImage>>,
     name: String,
     save_name: Option<PathBuf>,
+    /// what `img` started from besides the parameters, for its checkpoint's
+    /// key (see `McCheckpoint::open`): "" for an empty image, else the .m3c
+    /// it was loaded from
+    ck_start: String,
     shared: Arc<Mutex<Shared>>,
     stop: Arc<AtomicBool>,
+    /// the running pass's progress: the weight of its rows done, of all
     progress: Arc<AtomicUsize>,
+    total: Arc<AtomicUsize>,
     seen_ver: u64,
     seen_live: u64,
     live_painted: Instant,
@@ -70,6 +78,21 @@ pub struct State {
     /// the note on the card's shaders compiling was shown for this run
     pub compile_note: bool,
     start: Instant,
+    /// the passes finished in this run, when the running one began and how
+    /// long the last one took
+    passes: u32,
+    pass_start: Instant,
+    last_pass: Option<f64>,
+    /// the time left: the running pass's pace, the passes' times, and the
+    /// time left in the pass and in total (a render with a target) as shown
+    pace: Pace,
+    items: ItemsLeft,
+    pass_shown: Option<Shown>,
+    total_shown: Option<Shown>,
+    /// the rays per pixel (the most) when the run began and now: how many
+    /// a pass adds, for the passes a target still needs
+    rays0: u32,
+    rays: u32,
     last_saved: Instant,
     /// total calculation time in tenths of seconds (`iCalcTime`)
     calc_time: i64,
@@ -93,9 +116,11 @@ impl Default for State {
             img: None,
             name: String::new(),
             save_name: None,
+            ck_start: String::new(),
             shared: Arc::new(Mutex::new(Shared::default())),
             stop: Arc::new(AtomicBool::new(false)),
             progress: Arc::new(AtomicUsize::new(0)),
+            total: Arc::new(AtomicUsize::new(0)),
             seen_ver: 0,
             seen_live: 0,
             live_painted: Instant::now(),
@@ -103,6 +128,15 @@ impl Default for State {
             running: false,
             compile_note: false,
             start: Instant::now(),
+            passes: 0,
+            pass_start: Instant::now(),
+            last_pass: None,
+            pace: Pace::default(),
+            items: ItemsLeft::default(),
+            pass_shown: None,
+            total_shown: None,
+            rays0: 0,
+            rays: 0,
             last_saved: Instant::now(),
             calc_time: 0,
             user_change: true,
@@ -223,6 +257,19 @@ fn update_paras(app: &mut Mb3d, ui: &Ui) {
     p.lighting.gamma = ui.position(F, "TrackBar3").clamp(0, 63) as f32;
 }
 
+/// `CategoryPanel2Collapse`: the category group as high as its panels,
+/// Label33 below it.
+fn category_group_height(ui: &mut Ui) {
+    let f = ui.fm(F);
+    f.layout();
+    let Some(g) = f.id("CategoryPanelGroup2") else { return };
+    let h: i32 = ["CategoryPanel1", "CategoryPanel2", "CategoryPanel5", "CategoryPanel6"].iter().filter_map(|c| f.id(c)).map(|k| f.ctl[k].height).sum();
+    // (plus the group's border)
+    let h = h + f.ctl[g].height - f.align_rect(g).h;
+    f.ctl[g].height = h;
+    ui.cm(F, "Label33").top = h + 8;
+}
+
 fn check_box2(ui: &mut Ui) {
     let on = ui.checked(F, "CheckBox2");
     for c in ["Edit1", "Edit2", "UpDown1", "Button5", "CheckBox3"] {
@@ -255,7 +302,7 @@ fn set_form_size(app: &Mb3d, ui: &mut Ui) {
 fn repaint(app: &mut Mb3d, ui: &mut Ui) {
     let Some(p) = &app.mc.paras else { return };
     let Some(img) = &app.mc.img else { return };
-    let rgb = crate::mc::paint(img, &p.mc, p.lighting.gamma);
+    let rgb = crate::mc::paint_finished(img, p);
     set_image(ui, img.width, img.height, &rgb);
     app.mc.picture_changed = false;
 }
@@ -302,7 +349,33 @@ fn noise_filter(app: &mut Mb3d, ui: &mut Ui) {
     let out = crate::denoise::dct_denoise(&rgb, img.width, img.height, sigma, threads);
     set_image(ui, img.width, img.height, &out);
     app.mc.picture_changed = true;
-    app.message(ui, &format!("Noise filter: strength {sigma:.1}"));
+    app.message(ui, &trf("@MB:NoiseFilterStrength", &[&format!("{sigma:.1}")]));
+}
+
+/// "-noise AI": the neural noise filter, Intel Open Image Denoise
+/// ([`crate::oidn`], loaded when it is there), on the rendering's records
+/// (not on a picture the other filter changed).  Like [`noise_filter`],
+/// only the shown picture changes.
+fn ai_noise_filter(app: &mut Mb3d, ui: &mut Ui) {
+    let (Some(p), Some(img)) = (&app.mc.paras, &app.mc.img) else { return };
+    let (w, h) = (img.width, img.height);
+    #[cfg(feature = "oidn")]
+    let r = crate::oidn::denoised_mc_picture(img, &p.mc, p.lighting.gamma);
+    #[cfg(not(feature = "oidn"))]
+    let r: Result<Vec<u8>, String> = {
+        let _ = p;
+        Err(tr("@MB:BuiltWithoutIntelOpenImageDenoise"))
+    };
+    match r {
+        Ok(mut out) => {
+            // (the finishing after the filter, as on the command line)
+            crate::finish::apply_rgb8(&mut out, w, h, p.finish_for_camera().as_ref());
+            set_image(ui, w, h, &out);
+            app.mc.picture_changed = true;
+            app.message(ui, &tr("@MB:NeuralNoiseFilterDone"));
+        }
+        Err(e) => app.message(ui, &trf("@MB:NeuralNoiseFilter", &[&e])),
+    }
 }
 
 /// The shown picture as RGB (MB3D saves `Image1`, so also a picture the
@@ -310,7 +383,7 @@ fn noise_filter(app: &mut Mb3d, ui: &mut Ui) {
 fn shown_rgb(ui: &Ui, img: &crate::mc::McImage, p: &crate::scene::Scene) -> Vec<u8> {
     match &ui.c(F, "Image1").picture {
         Some(b) if b.w == img.width && b.h == img.height => b.px.iter().flat_map(|c| [(c >> 16) as u8, (c >> 8) as u8, *c as u8]).collect(),
-        _ => crate::mc::paint(img, &p.mc, p.lighting.gamma),
+        _ => crate::mc::paint_finished(img, p),
     }
 }
 
@@ -352,6 +425,7 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
     }
     app.mc.calc_time = 0;
     app.mc.img = None;
+    app.mc.ck_start.clear();
     app.mc.paras = Some(p);
     proof_light_amount(app, ui, false);
     set_paras(app, ui);
@@ -365,7 +439,7 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.name = name.clone();
     ui.fm(F).set_caption(&name);
     let (w, h) = (app.scene.width as usize, app.scene.height as usize);
-    message_image(ui, w, h, "Press 'Start rendering' to calculate the image");
+    message_image(ui, w, h, &tr("@MB:PressStartRenderingToCalculateThe"));
     set_form_size(app, ui);
     ui.set_enabled(F, "SpeedButton1", false);
     ui.set_enabled(F, "CheckBox5", false);
@@ -383,7 +457,7 @@ fn start(app: &mut Mb3d, ui: &mut Ui) {
 /// (loaded from the render) imported, and their render continued.
 pub fn continue_render(app: &mut Mb3d, ui: &mut Ui) {
     if app.mc.running {
-        app.message(ui, "The Monte Carlo window is rendering: stop it first.");
+        app.message(ui, &tr("@MB:TheMonteCarloWindowIsRendering"));
         return;
     }
     ui.show(F);
@@ -394,6 +468,10 @@ pub fn continue_render(app: &mut Mb3d, ui: &mut Ui) {
 /// [`start`]; `resume`: what to do with an unfinished render of the
 /// parameters (None: ask when the image is empty and one is kept).
 fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Policy>) {
+    // (the thread of a running render shares `stop` and `shared`)
+    if app.mc.running {
+        return;
+    }
     update_paras(app, ui);
     let Some(p) = app.mc.paras.clone() else { return };
     let mut img = match app.mc.img.take() {
@@ -411,8 +489,8 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
                 app.mc.resume_ask = true;
                 ui.message_box(
                     "mc:resume",
-                    "Unfinished render",
-                    &format!("An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  \"No\" renders it again from the start.", e.summary()),
+                    &tr("@MB:UnfinishedRender"),
+                    &trf("@MB:AnUnfinishedMonteCarloRenderOf", &[&e.summary()]),
                     &[crate::vcl::form::MR_YES, crate::vcl::form::MR_NO, crate::vcl::form::MR_CANCEL],
                 );
                 return;
@@ -422,7 +500,8 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         None => crate::checkpoint::Policy::Continue,
     };
     // the checkpoint (the swarm's blocks are not kept: the job's units are)
-    let ck = if swarm { None } else { crate::mc::McCheckpoint::open(&p, img.seed_salt, "", &app.mc.name, resume) };
+    let ck_start = if empty { "" } else { app.mc.ck_start.as_str() };
+    let ck = if swarm { None } else { crate::mc::McCheckpoint::open(&p, img.seed_salt, ck_start, &app.mc.name, resume) };
     if let Some(c) = &ck {
         if c.store().resumed() > 0 && c.restore(&mut img) {
             app.mc.calc_time = (img.seconds * 10.0) as i64;
@@ -440,26 +519,37 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     if let (Some(c), Some(p)) = (&ck, &app.mc.paras) {
         if c.partial_rows() > 0 {
             let shown = c.with_partial(&img);
-            set_image(ui, shown.width, shown.height, &crate::mc::paint(&shown, &p.mc, p.lighting.gamma));
+            set_image(ui, shown.width, shown.height, &crate::mc::paint_finished(&shown, p));
             app.mc.picture_changed = false;
         }
     }
     app.mc.stop.store(false, Ordering::SeqCst);
     app.mc.progress.store(0, Ordering::SeqCst);
+    app.mc.total.store(0, Ordering::SeqCst);
     *app.mc.shared.lock().unwrap() = Shared::default();
     app.mc.seen_ver = 0;
     app.mc.seen_live = 0;
     app.mc.running = true;
+    enable_batch_controls(app, ui);
     app.mc.compile_note = false;
     app.main.led = super::main_form::Led::Cpu;
     super::main_form::show_led(ui, app.main.led, true);
     app.mc.start = Instant::now();
-    ui.set_caption(F, "Button2", "Stop rendering");
+    app.mc.passes = 0;
+    app.mc.pass_start = app.mc.start;
+    app.mc.last_pass = None;
+    app.mc.pace = Pace::default();
+    app.mc.items = ItemsLeft::default();
+    app.mc.pass_shown = None;
+    app.mc.total_shown = None;
+    app.mc.rays0 = start.stats().max_rays;
+    app.mc.rays = app.mc.rays0;
+    ui.set_caption(F, "Button2", &tr("@MB:StopRendering"));
     for c in ["Button3", "Button8", "Button9"] {
         ui.set_enabled(F, c, false);
     }
     ui.set_caption(F, "Label15", "");
-    ui.set_caption(F, "Label8", if first { "first 4 rays (noisy)" } else { "..til next update" });
+    ui.set_caption(F, "Label8", &if first { tr("@MB:First4RaysNoisy") } else { tr("@MB:TilNextUpdate") });
     ui.set_visible(F, "Label8", true);
     ui.set_visible(F, "ProgressBar1", true);
     {
@@ -470,6 +560,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
     let shared = app.mc.shared.clone();
     let stop = app.mc.stop.clone();
     let progress = app.mc.progress.clone();
+    let total = app.mc.total.clone();
     let waker = ui.waker();
     let max_rays = if app.mc.in_batch { app.mc.batch_max_rays } else { u32::MAX };
     if let Some(dir) = super::swarm_form::mc_folder(app) {
@@ -484,7 +575,7 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
             let c = cancel.clone();
             std::sync::Arc::new(move || c.load(Ordering::Relaxed))
         };
-        ui.set_caption(F, "Label8", &if rays > 0.0 { format!("swarm: {units} blocks of {rays:.0} rays/pixel") } else { "swarm: a block on every computer, until Stop".to_string() });
+        ui.set_caption(F, "Label8", &if rays > 0.0 { trf("@MB:SwarmBlocksOfRaysPixel", &[&units, &format!("{rays:.0}")]) } else { tr("@MB:SwarmABlockOnEveryComputer") });
         std::thread::spawn(move || {
             let report = |st: &str| {
                 shared.lock().unwrap().status = st.to_string();
@@ -529,7 +620,10 @@ fn start_with(app: &mut Mb3d, ui: &mut Ui, resume: Option<crate::checkpoint::Pol
         // image too
         let mut start = start;
         loop {
-            let pr = |d: usize, _t: usize| progress.store(d, Ordering::Relaxed);
+            let pr = |d: usize, t: usize| {
+                total.store(t, Ordering::Relaxed);
+                progress.store(d, Ordering::Relaxed);
+            };
             let cancel = || stop.load(Ordering::Relaxed);
             {
                 let mut s = shared.lock().unwrap();
@@ -628,7 +722,7 @@ pub fn stop_for_exit(app: &mut Mb3d) {
 fn stop(app: &mut Mb3d, ui: &mut Ui) {
     app.mc.stop.store(true, Ordering::SeqCst);
     if app.mc.running {
-        ui.set_caption(F, "Button2", "Stopping...");
+        ui.set_caption(F, "Button2", &tr("@MB:Stopping"));
         ui.set_enabled(F, "Button2", false);
     }
 }
@@ -638,6 +732,7 @@ fn finish(app: &mut Mb3d, ui: &mut Ui) {
         return;
     }
     app.mc.running = false;
+    enable_batch_controls(app, ui);
     ui.set_enabled(F, "Button2", true);
     super::main_form::show_led(ui, app.main.led, false);
     app.mc.calc_time += (app.mc.start.elapsed().as_secs_f64() * 10.0) as i64;
@@ -645,7 +740,7 @@ fn finish(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "Label8", false);
     ui.set_caption(F, "Label14", "");
     ui.set_caption(F, "Label15", "");
-    ui.set_caption(F, "Button2", "Start rendering");
+    ui.set_caption(F, "Button2", &tr("@MB:StartRendering"));
     for c in ["Button3", "Button8", "Button9", "SpeedButton1"] {
         ui.set_enabled(F, c, true);
     }
@@ -660,7 +755,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     let el = app.mc.start.elapsed();
     ui.set_caption(F, "Label14", &time_str((el.as_secs_f64() * 10.0) as i64));
+    // (the rows weighed by their pixels on the object: the bar's range
+    // is their weight)
     let pr = app.mc.progress.load(Ordering::Relaxed) as i64;
+    let tot = app.mc.total.load(Ordering::Relaxed) as i64;
+    if tot > 0 && ui.c(F, "ProgressBar1").max != tot {
+        ui.cm(F, "ProgressBar1").max = tot;
+    }
     if ui.c(F, "ProgressBar1").position != pr {
         ui.cm(F, "ProgressBar1").position = pr;
     }
@@ -681,9 +782,28 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     };
     if !status.is_empty() {
         ui.set_caption(F, "Label15", &status);
+    } else if super::swarm_form::mc_folder(app).is_none() {
+        // the time left in the pass, and in total when the render has a
+        // target (shown smoothed; the rows of the threads end unevenly)
+        let f = pr as f64 / tot.max(1) as f64;
+        let now = Instant::now();
+        let secs = now.saturating_duration_since(app.mc.pass_start).as_secs_f64();
+        let m = &mut app.mc;
+        m.pace.at(f, secs);
+        let target = m.in_batch.then_some(m.batch_max_rays);
+        let left = m.pace.left(&m.items, f, secs, 0);
+        let total = passes_after(target, m.rays0, m.rays, m.passes).and_then(|n| m.pace.left(&m.items, f, secs, n));
+        // (MB3D_ETA_DEBUG=1: the estimator's inputs, to tune it on)
+        if std::env::var_os("MB3D_ETA_DEBUG").is_some() {
+            crate::elog!("eta pass {}: secs {secs:.1} f {f:.4} ({pr}/{tot}) pace {:?} per {:?} left {left:?} total {total:?}", m.passes, m.pace, m.items.per_item());
+        }
+        m.pass_shown = left.map(|l| smooth_shown(m.pass_shown, l, now)).or(m.pass_shown);
+        m.total_shown = total.map(|t| smooth_shown(m.total_shown, t, now)).or(m.total_shown);
+        let caption = pass_caption(m.passes, m.pass_shown.map(|s| s.0), m.total_shown.map(|s| s.0), m.last_pass);
+        ui.set_caption(F, "Label15", &caption);
     }
     if let (Some(l), Some(p)) = (&live, &app.mc.paras) {
-        let rgb = crate::mc::paint(l, &p.mc, p.lighting.gamma);
+        let rgb = crate::mc::paint_finished(l, p);
         set_image(ui, l.width, l.height, &rgb);
         app.mc.live_painted = Instant::now();
     }
@@ -700,6 +820,15 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     if let Some(img) = img {
         app.mc.seen_ver = ver;
+        if !finished {
+            let secs = app.mc.pass_start.elapsed().as_secs_f64();
+            app.mc.passes += 1;
+            app.mc.last_pass = Some(secs);
+            app.mc.items.done(secs);
+            app.mc.pace = Pace::default();
+            app.mc.pass_shown = None;
+            app.mc.pass_start = Instant::now();
+        }
         app.mc.img = Some(img);
         // the LED: the marches of the pass on the graphics card or the CPU
         let led = if crate::mc::last_status().contains("on the card") { super::main_form::Led::Gpu } else { super::main_form::Led::Cpu };
@@ -707,14 +836,15 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             app.main.led = led;
             super::main_form::show_led(ui, led, app.mc.running);
         }
-        super::main_form::set_led_hint(ui, &format!("Monte Carlo calculated on: {}", crate::mc::last_status()));
+        super::main_form::set_led_hint(ui, &trf("@MB:MonteCarloCalculatedOn", &[&crate::mc::last_status()]));
         if !app.mc.compile_note && crate::mc::last_status().contains("still compiling") {
             app.mc.compile_note = true;
-            app.message(ui, super::main_form::COMPILE_NOTE);
+            app.message(ui, &super::main_form::compile_note());
         }
         repaint(app, ui);
         let max_rays = show_stats(app, ui);
-        ui.set_caption(F, "Label8", "..til next update");
+        app.mc.rays = max_rays;
+        ui.set_caption(F, "Label8", &tr("@MB:TilNextUpdate"));
         ui.set_enabled(F, "SpeedButton1", true);
         let total = app.mc.calc_time + (el.as_secs_f64() * 10.0) as i64;
         ui.set_caption(F, "Label19", &time_str(total));
@@ -728,7 +858,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
     }
     if !err.is_empty() {
-        app.message(ui, &format!("Monte Carlo: {err}"));
+        app.message(ui, &trf("@MB:MonteCarlo3", &[&err]));
         ui.show_message(&err);
         app.mc.in_batch = false;
     }
@@ -742,6 +872,40 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
 }
 
+/// The passes after the running one until the most rays a pixel has reach
+/// `target`: from `rays0` when the run began to `rays` now in `passes`
+/// passes (None without a target, or before a finished pass told how many
+/// rays a pass adds).
+fn passes_after(target: Option<u32>, rays0: u32, rays: u32, passes: u32) -> Option<usize> {
+    let target = target?;
+    if rays >= target {
+        return Some(0);
+    }
+    if passes == 0 || rays <= rays0 {
+        return None;
+    }
+    let per = (rays - rays0) as f64 / passes as f64;
+    // (the running pass adds its share too)
+    Some((((target - rays) as f64 / per).ceil() as usize).saturating_sub(1))
+}
+
+/// "pass 3 · 40 s left · last pass 1:12.4", or with a target "pass 3 ·
+/// about 4 min left in total · last pass 1:12.4": the running pass, the
+/// time left in it (or in the whole render) and how long the last pass
+/// took.
+fn pass_caption(passes: u32, left: Option<f64>, total: Option<f64>, last: Option<f64>) -> String {
+    let mut t = trf("@MB:Pass", &[&(passes + 1)]);
+    match (total, left) {
+        (Some(tl), _) => t += &trf("@MB:InTotal", &[&left_str(tl)]),
+        (None, Some(l)) => t += &format!(" · {}", left_str(l)),
+        _ => {}
+    }
+    if let Some(l) = last {
+        t += &trf("@MB:LastPass", &[&time_str((l * 10.0) as i64)]);
+    }
+    t
+}
+
 fn save_m3c(app: &mut Mb3d, ui: &mut Ui) {
     let (Some(p), Some(img), Some(f)) = (&app.mc.paras, &app.mc.img, &app.mc.save_name) else { return };
     let f = f.with_extension("m3c");
@@ -752,15 +916,16 @@ fn save_m3c(app: &mut Mb3d, ui: &mut Ui) {
 
 fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     app.mc.stop.store(true, Ordering::SeqCst);
-    let r = std::fs::read(path).map_err(|e| e.to_string()).and_then(|d| crate::mc::read_m3c(&d));
-    let (f, img) = match r {
+    let r = std::fs::read(path).map_err(|e| e.to_string()).and_then(|d| crate::mc::read_m3c(&d).map(|v| (v, crate::mc::McCheckpoint::m3c_start(&d))));
+    let ((f, img), ck_start) = match r {
         Ok(v) => v,
         Err(e) => return ui.show_message(&format!("{}: {e}", path.display())),
     };
     app.mc.save_name = Some(path.to_path_buf());
+    app.mc.ck_start = ck_start;
     ui.set_enabled(F, "CheckBox5", true);
     ui.set_checked(F, "WithZBufferCbx", false);
-    let mut info = format!("Parameters: MandId {}", f.mand_id);
+    let mut info = trf("@MB:ParametersMandId", &[&f.mand_id]);
     let notes = f.warnings.clone();
     if !notes.is_empty() {
         info.push('\n');
@@ -774,7 +939,7 @@ fn open_m3c(app: &mut Mb3d, ui: &mut Ui, path: &Path) {
     }
     app.mc.img = Some(Arc::new(img));
     set_paras(app, ui);
-    ui.set_caption(F, "Button2", "Start rendering");
+    ui.set_caption(F, "Button2", &tr("@MB:StartRendering"));
     repaint(app, ui);
     show_stats(app, ui);
     ui.set_enabled(F, "SpeedButton1", true);
@@ -811,7 +976,7 @@ fn save_picture(app: &mut Mb3d, ui: &mut Ui, path: &Path, jpeg_q: u8) {
                 let zp = path.with_file_name(name).with_extension("png");
                 let _ = std::fs::write(zp, crate::png::encode_gray16(w, h, &z));
             }
-            Err(e) => app.message(ui, &format!("Z-buffer: {e}")),
+            Err(e) => app.message(ui, &trf("@MB:ZBuffer", &[&e])),
         }
     }
 }
@@ -824,7 +989,7 @@ fn proof_light_amount(app: &mut Mb3d, ui: &mut Ui, verbose: bool) {
     }
     if p.lighting.diff_map != 0 {
         if !ui.checked(F, "CheckBox7") {
-            ui.show_message("When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.");
+            ui.show_message(&tr("@MB:WhenUsingAMapForThe"));
             ui.set_checked(F, "CheckBox7", true);
         }
         return;
@@ -834,9 +999,9 @@ fn proof_light_amount(app: &mut Mb3d, ui: &mut Ui, verbose: bool) {
         (0..3).any(|k| d[k] * sd + s[k] * spec > 1.005)
     });
     if too_much {
-        ui.confirm("mc:colors", "The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?");
+        ui.confirm("mc:colors", &tr("@MB:TheAmountOfAddedDiffuseAnd"));
     } else if verbose {
-        ui.show_message("All colors are ok.");
+        ui.show_message(&tr("@MB:AllColorsAreOk"));
     }
 }
 
@@ -962,13 +1127,13 @@ pub fn color_options_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
 // ---- batch rendering (`BatchPnl`)
 
 fn refresh_batch_grid(app: &Mb3d, ui: &mut Ui) {
-    let mut rows = vec![vec!["Name".to_string(), "Elapsed".into(), "Status".into()]];
+    let mut rows = vec![vec![tr("@MB:Name2"), tr("@MB:Elapsed"), tr("@MB:Status")]];
     for b in &app.mc.batch {
         let name = b.m3p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
         let (el, st) = if b.finished {
             (
                 if b.elapsed > 0.0 { format!("{}s", super::util::fts((b.elapsed * 1000.0).round() / 1000.0)) } else { String::new() },
-                if b.image_exists { "Image exists" } else { "Done" }.to_string(),
+                if b.image_exists { tr("@MB:ImageExists") } else { tr("@MB:Done") },
             )
         } else {
             (String::new(), String::new())
@@ -977,9 +1142,9 @@ fn refresh_batch_grid(app: &Mb3d, ui: &mut Ui) {
     }
     let c = ui.cm(F, "BatchEntriesGrid");
     c.cols = vec![
-        crate::vcl::control::Column { caption: "Name".into(), width: 120, auto: false },
-        crate::vcl::control::Column { caption: "Elapsed".into(), width: 50, auto: false },
-        crate::vcl::control::Column { caption: "Status".into(), width: 100, auto: false },
+        crate::vcl::control::Column { caption: tr("@MB:Name2"), width: 120, auto: false },
+        crate::vcl::control::Column { caption: tr("@MB:Elapsed"), width: 50, auto: false },
+        crate::vcl::control::Column { caption: tr("@MB:Status"), width: 100, auto: false },
     ];
     c.cells = rows;
     if c.row < 1 && !app.mc.batch.is_empty() {
@@ -994,7 +1159,7 @@ fn enable_batch_controls(app: &Mb3d, ui: &mut Ui) {
     let any = !app.mc.batch.is_empty();
     ui.set_enabled(F, "ClearBatchLstBtn", any);
     ui.set_enabled(F, "RemoveBatchLstEntryBtn", any);
-    ui.set_enabled(F, "BatchRenderBtn", !app.mc.in_batch);
+    ui.set_enabled(F, "BatchRenderBtn", !app.mc.in_batch && !app.mc.running);
 }
 
 fn save_batch_image(app: &mut Mb3d, ui: &mut Ui) {
@@ -1051,7 +1216,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "FormCreate" => {
             ui.set_visible(F, "BatchPnl", false);
-            ui.cm(F, "ComboBox1").hint = "Box: sharp, good AA\nGauss: bit blurry, very good AA".into();
+            ui.cm(F, "ComboBox1").hint = tr("@MB:BoxSharpGoodAAGaussBit");
             set_bokeh(app, ui, 0);
             message_image(ui, 250, 30, "");
             refresh_batch_grid(app, ui);
@@ -1059,7 +1224,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormShow" => enable_batch_controls(app, ui),
         "FormHide" => {
             if app.mc.running {
-                ui.confirm("mc:stophide", "Should i stop calculations?");
+                ui.confirm("mc:stophide", &tr("@MB:ShouldIStopCalculations"));
             }
         }
         "Button1Click" => ui.hide(F),
@@ -1092,6 +1257,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             proof_light_amount(app, ui, true);
         }
         "Button6Click" => noise_filter(app, ui),
+        "Button10Click" => ai_noise_filter(app, ui),
         "Button2Click" => {
             if app.mc.running {
                 app.mc.in_batch = false;
@@ -1103,7 +1269,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button8Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D monte carlo file (*.m3c)|*.m3c".into(),
+                filter: format!("{}|*.m3c", tr("@MB:M3DMonteCarloFileM3c")),
                 default_ext: "m3c".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3C)),
                 file_name: app.mc.name.clone(),
@@ -1113,7 +1279,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D monte carlo file (*.m3c)|*.m3c".into(),
+                filter: format!("{}|*.m3c", tr("@MB:M3DMonteCarloFileM3c")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3C)),
                 ..Default::default()
             };
@@ -1122,7 +1288,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton1Click" => {
             let fi = app.ini.get("SaveImageType").parse::<i32>().map(|i| i + 1).unwrap_or(2).clamp(1, 3) as usize;
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Bitmap (*.bmp)|*.bmp|PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg".into(),
+                filter: format!("{}|*.bmp|{}|*.png|{}|*.jpg", tr("@MB:BitmapBmp"), tr("@MB:PNGPng"), tr("@MB:JPEGJpg")),
                 filter_index: fi,
                 default_ext: ["bmp", "png", "jpg"][fi - 1].into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
@@ -1144,7 +1310,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     ui.cm(F, c).collapsed = true;
                 }
             }
+            category_group_height(ui);
         }
+        "CategoryPanel2Collapse" => category_group_height(ui),
         "ToggleBatchPnlBtnClick" => {
             let v = !ui.visible(F, "BatchPnl");
             ui.set_visible(F, "BatchPnl", v);
@@ -1155,7 +1323,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "BatchOpenM3PSequenceBtnClick" => {
             if !app.mc.in_batch {
                 let o = crate::vcl::dialogs::FileOptions {
-                    filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                    filter: format!("{}|*.m3p", tr("@MB:M3DParameterM3p")),
                     initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                     multi: true,
                     ..Default::default()
@@ -1163,7 +1331,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.open_dialog("mc:batchopen", &o);
             }
         }
-        "ClearBatchLstBtnClick" => ui.confirm("mc:batchclear", "Do you really want to clear the batch list?"),
+        "ClearBatchLstBtnClick" => ui.confirm("mc:batchclear", &tr("@MB:DoYouReallyWantToClearQuestion")),
         "RemoveBatchLstEntryBtnClick" => {
             let r = ui.c(F, "BatchEntriesGrid").row;
             if r > 0 && (r as usize) <= app.mc.batch.len() && !app.mc.in_batch {
@@ -1172,7 +1340,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 enable_batch_controls(app, ui);
             }
         }
-        "BatchRenderBtnClick" => {
+        "BatchRenderBtnClick" if !app.mc.in_batch && !app.mc.running => {
             app.mc.batch_max_rays = ui.text(F, "BatchMaxRayCountEdit").trim().parse().unwrap_or(20);
             app.mc.work = (0..app.mc.batch.len()).filter(|&i| !app.mc.batch[i].finished).collect();
             {
@@ -1213,7 +1381,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
             if ext == "jpg" || ext == "jpeg" {
                 app.mc.pending_jpg = Some(p.clone());
-                ui.input_query("mc:jpgq", "JPEG quality or size", "Type in the quality (0..100) or the maximal output filesize in KB (>100):", "95");
+                ui.input_query("mc:jpgq", &tr("@MB:JPEGQualityOrSize"), &tr("@MB:TypeInTheQuality0100"), "95");
             } else {
                 save_picture(app, ui, p, 95);
             }
@@ -1247,11 +1415,38 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
             refresh_batch_grid(app, ui);
             if added == 0 {
-                ui.show_message("No file added");
+                ui.show_message(&tr("@MB:NoFileAdded"));
             }
             enable_batch_controls(app, ui);
         }
         _ => {}
     }
     let _ = MAIN;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn passes_until_the_target() {
+        // no target: nothing to say; the first pass: not yet
+        assert_eq!(passes_after(None, 0, 4, 1), None);
+        assert_eq!(passes_after(Some(20), 0, 0, 0), None);
+        // 4 rays a pass, 20 wanted: after the running one three more
+        assert_eq!(passes_after(Some(20), 0, 4, 1), Some(3));
+        assert_eq!(passes_after(Some(20), 0, 12, 2), Some(1));
+        // the target reached: the running pass is the last
+        assert_eq!(passes_after(Some(20), 0, 20, 4), Some(0));
+        // a continued render: the passes before do not tell
+        assert_eq!(passes_after(Some(20), 8, 8, 0), None);
+        assert_eq!(passes_after(Some(20), 8, 14, 1), Some(0));
+    }
+
+    #[test]
+    fn pass_captions() {
+        assert_eq!(pass_caption(0, None, None, None), "pass 1");
+        assert_eq!(pass_caption(2, Some(40.0), None, Some(72.4)), "pass 3 · 40 s left · last pass 1:12.4");
+        assert_eq!(pass_caption(2, Some(40.0), Some(250.0), Some(72.4)), "pass 3 · about 4 min left in total · last pass 1:12.4");
+    }
 }

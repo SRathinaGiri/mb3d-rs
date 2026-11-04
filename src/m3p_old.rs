@@ -762,7 +762,7 @@ pub(crate) fn gbuffer_from_old_m3i(data: &[u8]) -> Option<(usize, usize, Vec<cra
         18 => 16,
         _ => 18,
     };
-    let px = data.get(start..start + n * size)?;
+    let px = data.get(start..n.checked_mul(size)?.checked_add(start)?)?;
     let u16at = |b: &[u8], o: usize| u16::from_le_bytes([b[o], b[o + 1]]);
     // SinTab (singles)
     let sin_tab: Vec<f32> = (0..32768).map(|i| (i as f64 * std::f64::consts::PI / 16384.0).sin() as f32).collect();

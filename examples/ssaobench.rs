@@ -26,7 +26,7 @@ fn main() {
                         r.unwrap();
                     }
                 } else if ao.bits15 {
-                    mb3d::ssao15::ssao15(&mut g2, w, h, zc, zcorr, &ao, threads);
+                    mb3d::ssao15::ssao15(&mut g2, w, h, zc, zcorr, &ao, threads, &|_, _| {});
                 } else {
                     mb3d::ssao::ssao24(&mut g2, w, h, zc, zcorr, &ao, threads);
                 }

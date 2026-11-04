@@ -11,7 +11,8 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// A loaded map with MB3D's layout: one extra column and row that repeat
-/// the first ones, values in the 0..255 range (16 bit maps keep fractions).
+/// the first ones, values in the 0..255 range (16 bit maps keep fractions;
+/// HDR pictures go above 255, their white is 255).
 #[derive(Debug)]
 pub struct LightMap {
     pub width: usize,
@@ -19,17 +20,39 @@ pub struct LightMap {
     data: Vec<[f32; 3]>,
     /// `LMavrgCol`
     pub avg: [f32; 3],
+    /// linear values (HDR pictures): not squared for the lighting's
+    /// square root mode
+    pub linear: bool,
+}
+
+/// The sun of an HDR picture ([`LightMap::split_sun`]).
+#[derive(Clone, Copy, Debug)]
+pub struct Sun {
+    /// its direction in the picture's sphere (as `sphere_pixel_t` looks up)
+    pub dir: [f32; 3],
+    /// its light: the brightness taken out of the picture times the solid
+    /// angle (picture units, white = 255, times steradians)
+    pub power: [f32; 3],
+    /// its angular radius (radians)
+    pub radius: f32,
 }
 
 impl LightMap {
     pub fn from_image(img: &crate::image::Image) -> LightMap {
-        let (w, h) = (img.width, img.height);
         let div = if img.deep { 1.0 / 256.0 } else { 1.0 };
+        Self::from_pixels(img.width, img.height, false, |x, y| img.pixel(x, y).map(|v| v as f32 * div))
+    }
+
+    /// A Radiance HDR picture: white (1) as 255, the brighter parts above.
+    pub fn from_hdr(img: &crate::image::HdrImage) -> LightMap {
+        Self::from_pixels(img.width, img.height, true, |x, y| img.data[y * img.width + x].map(|v| v * 255.0))
+    }
+
+    fn from_pixels(w: usize, h: usize, linear: bool, px: impl Fn(usize, usize) -> [f32; 3]) -> LightMap {
         let mut data = Vec::with_capacity((w + 1) * (h + 1));
         for y in 0..=h {
             for x in 0..=w {
-                let p = img.pixel(x % w, y % h);
-                data.push([p[0] as f32 * div, p[1] as f32 * div, p[2] as f32 * div]);
+                data.push(px(x % w, y % h));
             }
         }
         let mut avg = [0f64; 3];
@@ -42,7 +65,86 @@ impl LightMap {
             }
         }
         let n = (w * h).max(1) as f64;
-        LightMap { width: w, height: h, data, avg: avg.map(|v| (v / n) as f32) }
+        LightMap { width: w, height: h, data, avg: avg.map(|v| (v / n) as f32), linear }
+    }
+
+    /// The sun of an HDR picture: the pixels around its brightest one
+    /// (within 15 degrees) that are brighter than 8 times the picture's
+    /// mean and twice white, dimmed to that limit, and the light taken
+    /// out of them as a [`Sun`], so the Monte Carlo renderer can light the
+    /// scene with it as a light with shadows instead of finding it by
+    /// chance (which leaves bright speckles).  None for other pictures or
+    /// without such a bright spot.
+    pub fn split_sun(&self) -> Option<(LightMap, Sun)> {
+        if !self.linear {
+            return None;
+        }
+        let (w, h) = (self.width, self.height);
+        let lum = |p: [f32; 3]| 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
+        let lat = |y: usize| (0.5 - (y as f64 + 0.5) / h as f64) * std::f64::consts::PI;
+        let dir = |x: usize, y: usize| {
+            let t = (0.5 - (x as f64 + 0.5) / w as f64) * 2.0 * std::f64::consts::PI;
+            let f = lat(y);
+            [f.cos() * t.sin(), f.sin(), f.cos() * t.cos()]
+        };
+        // the mean over the sphere and the brightest pixel
+        let (mut sum, mut wsum, mut best) = (0f64, 0f64, (0usize, 0usize, 0f32));
+        for y in 0..h {
+            let c = lat(y).cos();
+            for x in 0..w {
+                let l = lum(self.data[y * (w + 1) + x]);
+                sum += l as f64 * c;
+                wsum += c;
+                if l > best.2 {
+                    best = (x, y, l);
+                }
+            }
+        }
+        let cap = ((sum / wsum.max(1e-9)) as f32 * 8.0).max(2.0 * 255.0);
+        if best.2 <= cap {
+            return None;
+        }
+        let bd = dir(best.0, best.1);
+        let near = (15f64).to_radians().cos();
+        let d_omega = (2.0 * std::f64::consts::PI / w as f64) * (std::f64::consts::PI / h as f64);
+        let mut data = self.data.clone();
+        let (mut power, mut sd, mut area) = ([0f64; 3], [0f64; 3], 0f64);
+        for y in 0..h {
+            let dw = d_omega * lat(y).cos();
+            for x in 0..w {
+                let i = y * (w + 1) + x;
+                let l = lum(data[i]);
+                if l <= cap {
+                    continue;
+                }
+                let d = dir(x, y);
+                if d[0] * bd[0] + d[1] * bd[1] + d[2] * bd[2] < near {
+                    continue;
+                }
+                let kept = data[i].map(|v| v * cap / l);
+                for k in 0..3 {
+                    let e = (data[i][k] - kept[k]) as f64 * dw;
+                    power[k] += e;
+                    sd[k] += d[k] * (l - cap) as f64 * dw;
+                }
+                area += dw;
+                data[i] = kept;
+            }
+        }
+        // the wrap column and row repeat the first ones
+        for y in 0..=h {
+            data[y * (w + 1) + w] = data[(y % h) * (w + 1)];
+        }
+        for x in 0..=w {
+            data[h * (w + 1) + x] = data[x % (w + 1)];
+        }
+        let n = (sd[0] * sd[0] + sd[1] * sd[1] + sd[2] * sd[2]).sqrt().max(1e-30);
+        let sun = Sun {
+            dir: sd.map(|v| (v / n) as f32),
+            power: power.map(|v| v as f32),
+            radius: (area / std::f64::consts::PI).sqrt() as f32,
+        };
+        Some((LightMap { width: w, height: h, data, avg: self.avg, linear: true }, sun))
     }
 
     /// `MakeSmallLMimage`: a 16 x 8 box-filtered copy, smoothed
@@ -51,7 +153,8 @@ impl LightMap {
         const W: usize = 16;
         const H: usize = 8;
         let (bw, bh) = (self.width, self.height.max(1));
-        let to_col = |v: [f32; 3]| v.map(|c| c.round_ties_even().clamp(0.0, 255.0));
+        // (an HDR picture's light above white is kept)
+        let to_col = |v: [f32; 3]| v.map(|c| c.round_ties_even().max(0.0));
         // horizontal box filter: bh rows x 16
         let dx = (bw as f64 - 1.0) / W as f64;
         let mut tmp = vec![[0f32; 3]; W * bh];
@@ -121,7 +224,7 @@ impl LightMap {
             }
             data[y * (W + 1) + W] = data[y * (W + 1)];
         }
-        LightMap { width: W, height: H, data, avg: self.avg }
+        LightMap { width: W, height: H, data, avg: self.avg, linear: self.linear }
     }
 
     /// The pixels (0..255) in rows of `width + 1` (the first column
@@ -143,7 +246,7 @@ impl LightMap {
             let mut s = [0f32; 3];
             for (i, &col) in cols.iter().enumerate() {
                 let mut p = self.at(col, row);
-                if sqr {
+                if sqr && !self.linear {
                     p = p.map(|v| v * v * (1.0 / 255.0));
                 }
                 for k in 0..3 {
@@ -245,7 +348,7 @@ impl LightMap {
         let xf = (x.clamp(0.0, 1.0) * self.width as f32).round_ties_even() as usize;
         let yf = (y.clamp(0.0, 1.0) * self.height as f32).round_ties_even() as usize;
         let p = self.at(xf.min(self.width), yf.min(self.height));
-        if sqr {
+        if sqr && !self.linear {
             p.map(|v| v * v * (1.0 / 65025.0))
         } else {
             p.map(|v| v * (1.0 / 255.0))
@@ -351,7 +454,7 @@ fn search_dirs() -> Vec<PathBuf> {
     v
 }
 
-const EXTS: [&str; 5] = ["jpg", "png", "bmp", "jpeg", "pgm"];
+const EXTS: [&str; 6] = ["jpg", "png", "bmp", "jpeg", "pgm", "hdr"];
 
 /// `FindHeightMap`: `<nr>.<ext>`, or a file starting with the number
 /// followed by a non-digit.
@@ -387,16 +490,27 @@ fn load_cached(key: String, find: impl FnOnce() -> Option<PathBuf>) -> Option<Ar
     if let Some(m) = cache().lock().unwrap().get(&key) {
         return m.clone();
     }
-    let m = find().and_then(|p| match crate::image::load(&p) {
-        Ok(img) if img.width > 3 && img.height > 3 => Some(Arc::new(LightMap::from_image(&img))),
+    let m = find().and_then(|p| match load_map(&p) {
+        Ok(m) if m.width > 3 && m.height > 3 => Some(Arc::new(m)),
         Ok(_) => None,
         Err(e) => {
-            eprintln!("  warning: map {}: {e}", p.display());
+            crate::elog!("  warning: map {}: {e}", p.display());
             None
         }
     });
     cache().lock().unwrap().insert(key, m.clone());
     m
+}
+
+/// A map file: a picture, or a Radiance HDR picture.
+fn load_map(p: &std::path::Path) -> Result<LightMap, String> {
+    let b = std::fs::read(p).map_err(|e| format!("{}: {e}", p.display()))?;
+    if crate::image::is_hdr(&b) {
+        crate::image::decode_hdr(&b).map(|i| LightMap::from_hdr(&i))
+    } else {
+        crate::image::decode(&b).map(|i| LightMap::from_image(&i))
+    }
+    .map_err(|e| format!("{}: {e}", p.display()))
 }
 
 /// Map number `nr` (`LoadLightMapNr`), cached.  A map sequence for `nr`

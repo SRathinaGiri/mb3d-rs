@@ -1,0 +1,77 @@
+[OPTIONS]
+.Version = 2
+.DEoption = -1
+.Double Sides = 4.0
+.Double PolyStrength = 1.0
+[CONSTANTS]
+Double = 3.1415926535898
+[CODE]
+558BEC81EC300000005356578B75088B7E308BD8D9D0dd07
+dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+80e4417f05dc65f0ebf1d9ffd9e8dee9dc4fe8d9e8dec1d9c0dc0add1ad9d0dc09dd19D9D0
+8BC35F5E5B89EC5DC20800
+[END]
+
+
+Description:
+
+Circle to polygon transform centered on the x axis (transforms yz plane).  I made it for before Pine Tree Mandelbulb, after transform 1.  Use it sparingly... or a lot.  Beware of negative numbers.. might do something wacky.  Well... for anything below 2.5 sides it will be wacky.  
+
+  UPDATE:  Smooth transition from circle to polygon.  PolyStrength=0 is still a circle, Polystrength=1 is full polygon.  Negative numbers... well, you play with it.  
+
+ rCyz=abs(atan(z.z,z.y));
+
+	while (rCyz>pi/sides) {rCyz-=2.*pi/sides; }   
+
+z.yz*=cos(rCyz); 
+
+
+:D  
+
+  M Benesi
+
+
+notes:  
+
+dd47e8 dd5de8   load mult save to ebp-18
+558BEC81EC300000005356578B75088B7E308BD8D9D0dd07
+dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+80e4417f05dc65f0ebf1d9ffd9c0dc0add1ad9d0dc09dd19D9D0
+8BC35F5E5B89EC5DC20800
+
+0042E99F   DD07             FLD QWORD PTR DS:[EDI]        load pi
+0042E9A1   DC77 F0          FDIV QWORD PTR DS:[EDI-10]   pi/sides
+0042E9A4   DD55 F8          FST QWORD PTR SS:[EBP-8]  save
+0042E9A7   D8C0             FADD ST,ST
+0042E9A9   DD5D F0          FSTP QWORD PTR SS:[EBP-10]
+0042E9AC   DD01             FLD QWORD PTR DS:[ECX]
+0042E9AE   DD02             FLD QWORD PTR DS:[EDX]
+0042E9B0   D9F3             FPATAN
+0042E9B2   D9E1             FABS
+0042E9B4   DC55 F8          FCOM QWORD PTR SS:[EBP-8]
+0042E9B7   DFE0             FSTSW AX
+0042E9B9   80E4 41          AND AH,41
+0042E9BC   7F 05            JG SHORT accessch.0042E9C3
+0042E9BE   DC65 F0          FSUB QWORD PTR SS:[EBP-10]
+0042E9C1  ^EB F1            JMP SHORT accessch.0042E9B4
+0042E9C3   D9FF             FCOS
+558BEC81EC300000005356578B75088B7E308BD8D9D0dd07
+dc77f0dd55f8d8c0dd5df0dd01dd02d9f3d9e1dc55f8dfe0
+80e4417f05dc65f0ebf1d9ffd9e8dee9dc4de8d9e8dec1d9c0dc0add1ad9d0dc09dd19D9D0
+8BC35F5E5B89EC5DC20800
+
+d9e8 fld1  
+dee9 fsubp   cos-1
+DC4D E8   fmul e8
+d9e8
+dec1
+
+d9e8dee9dc4de8d9e8dec1
+
+0042E9C5   D9C0             FLD ST
+0042E9C7   DC0A             FMUL QWORD PTR DS:[EDX]
+0042E9C9   DD1A             FSTP QWORD PTR DS:[EDX]
+0042E9CB   D9D0             FNOP
+0042E9CD   DC09             FMUL QWORD PTR DS:[ECX]
+0042E9CF   DD19             FSTP QWORD PTR DS:[ECX]
+

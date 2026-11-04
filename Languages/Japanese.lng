@@ -1,0 +1,3915 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = 日本語
+code = JA
+font = Japanese.ttf
+
+[Labels]
+ACalculationIsRunningStopIt=計算を実行中です。先に停止してください。
+;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=16 ピクセル、次に 4 ピクセルのブロックごとに 1 本の粗い光線が、距離推定からブロックの広がりを差し引いてマーチし、各ピクセルのマーチはその深さから始まります。開けた空間では最大 60 % 速くなります。推定が大きく外れている所では薄い部分が失われることがあります。
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
+AFasterMethodThanBinsearchBut=二分探索より速い方法ですが、DEが悪いと失敗することがあります
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=残り数秒
+;a few seconds left
+AFineReliefOnTheSurface=表面の細かな起伏 (フラクタルに固定): 粗い、石 (稜線と割れ目) または粒
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
+AFolderEveryComputerOfThe=スウォームのすべてのコンピュータから見えるフォルダ: NAS共有、WindowsまたはSamba共有、同期フォルダなど
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AGroundOrWaterSurfaceAcross=フラクタルの X、Y、Z 軸に垂直な地面または水面。フラクタルと一緒に計算されます: 影、オクルージョン、反射、モンテカルロの光 (MB3D にはありません: パラメーターの MB3D の部分の後に保存され、MB3D は無視します)
+;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
+AHigherValueMeansABetter=値が高いほど品質が良くなります。100%でも非可逆です。
+;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=言語ファイルには 1 行に 1 つのラベルがあります: 「=」の左がその ID、右があなたの訳文です。ラベルの後のウィンドウセクションでは、1 つのコントロールに独自の文字列を指定できます。
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=ハードシャドウ計算の最大長を、いくつかの画像サイズパラメータに対する\n相対値で定義する乗数です (既定 = 1)。\n遠くのオブジェクトの影が欠ける場合は値を増やしてください。
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=AO 計算時間:
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=停止または中断されたレンダリングは計算済みの部分を保持します。同じパラメータで3D計算を行うと続きから再開されます。
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=透明な背景には PNG フレームが必要です。出力形式に PNG を選んでください。
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=動画には画像が必要です。出力形式に BMP、PNG または JPG を選んでください。
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=ステレオアニメーションの動画は作成されません。「ステレオアニメーションをレンダリング」をオフにしてください。
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf={} x {} の画像にはおよそ {} のメモリが必要ですが、このコンピュータの空きは {} です: 計算はスワップを起こし、プログラムが数分間応答しなくなることがあります。\n\nそれでも計算しますか?\n\n大判レンダリング (ツールタブ) なら、画像全体を保持せずにタイルごとに計算して保存します。スウォーム (スウォームウィンドウ) はタイルを他のコンピュータと分担します。
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=Zバッファの PNG 画像も保存します。
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=AZERTYキーボード
+;AZERTY keyboard
+Abort=中止
+;Abort
+AboutHLeft=残り約 {} 時間
+;about {} h left
+AboutHMinLeft=残り約 {} 時間 {} 分
+;about {} h {} min left
+AboutMinLeft=残り約 {} 分
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=素材内部の絶対的な吸収量です (高倍率のズームでは大きな値が必要)。オブジェクトの拡散色は内部にも使われます。
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=スムーズ結合関数の絶対距離です。\n小さい値には 3e-5 のような指数表記も使えます。\n1/ズーム を試すと有効な値に近づきます。
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=吸収:
+;Absorption:
+Action=操作
+;Action
+ActualAmbientShadowPar=現在の環境シャドウパラメータ
+;Actual ambient shadow par.
+ActualCameraSettings=現在のカメラ設定
+;Actual camera settings
+ActualColoringTabOptions=現在の「カラーリング」タブのオプション
+;Actual 'Coloring' tab  options
+ActualDOFParameters=現在のDOFパラメータ
+;Actual DOF parameters
+ActualHardShadowSetting=現在のハードシャドウ設定
+;Actual hard shadow setting
+ActualReflectionsSettings=現在の反射設定
+;Actual reflections settings
+ActualStereoParameters=現在のステレオパラメータ
+;Actual stereo parameters
+Add=追加
+;Add
+AddANewKeyframeInBetween=間に新しいキーフレームを追加します。
+;Add a new keyframe in between
+AddNamedConstantValue=名前付き定数値を追加
+;Add named constant value
+AddNamedParam=名前付きパラメータを追加
+;Add named param
+AddNewConstantValue=新しい定数値を追加します。
+;Add new constant value
+AddNewImageSequence=新しい画像シーケンスを追加します。
+;Add new image sequence
+AddNewNamedParameter=新しい名前付きパラメータを追加します。
+;Add new named parameter
+AddNewOption=新しいオプションを追加します。
+;Add new option
+AddOptionValue=オプション値を追加
+;Add option value
+AddToBackgroundDepthNotBlend=背景の深度に加算 (ブレンドしない)
+;Add to background depth (not blend)
+AddonFormula=アドオン数式
+;Addon formula
+AdjustRoughlyThenClickForFine=大まかに調整した後、クリックして微調整します。
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=ヒストグラムの両端に合わせてスライダーを調整します。
+;Adjust sliders to fit the histograms endpoints
+Adjustments=調整幅:
+;Adjustments:
+AdjustsTheDEForRenderPreview=レンダープレビュー用のDEを調整します。
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=高度な Z バッファ生成ツール
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=ライトの角度が異なるため、計算後はユーザーによるライトの変更がすべて取り消されます。\n通常モードで計算すると再び有効になります。
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=レンダリング後、フレームを結合して出力フォルダに動画を作ります\n(<プロジェクト名>.avi、Motion JPEG: VLC と mpv で再生でき、動画編集ソフトで開けます)。\nフレームは残します。
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=すべての色は問題ありません。
+;All colors are ok.
+AllFiles=すべてのファイル
+;All files
+AllFilesParen=すべてのファイル (*.*)
+;All files (*.*)
+AllKinds=すべての種類
+;All kinds
+AllRealworldUnitsInMeter=実世界の単位はすべてメートルです。
+;All realworld units in meter.
+AllTheLightColorSettings=ライト+色の設定すべて
+;All the light + color settings
+AlreadyExists={} <{}> は既に存在します
+;{} <{}> already exists
+AlsoMakeAVideoAVI=動画 (AVI) も作成
+;Also make a video (AVI)
+Alternate=交互
+;Alternate
+Amb=Amb
+;Amb
+Ambient=環境光
+;Ambient
+AmbientBottomColorClickToChange=アンビエントの下部の色です。クリックして変更します。
+;Ambient bottom color, click to change.
+AmbientLight=アンビエントライト
+;Ambient light
+AmbientLower=アンビエント
+;ambient
+AmbientOcclusion=アンビエントオクルージョン
+;ambient occlusion
+AmbientRaysDepth=環境光レイの深さ:
+;Ambient rays depth:
+AmbientShadow=アンビエントシャドウ
+;Ambient shadow
+AmbientShadowCalculation=アンビエントシャドウ計算
+;ambient shadow calculation
+AmbientShadows=\sアンビエントシャドウ
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=アンビエントの上部の色です。左クリックで色を変更、\n右クリックで深度の色を挿入します。
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=量:
+;Amount:
+AnAIAssistantOnThisComputer=このコンピュータ上の AI アシスタントが Mandelbulb 3D を使えます: 普段の言葉や音声で頼むと、画像の説明、変更、レンダリング、バリエーションの作成、最後に作業したもののレンダリングを行います。Mandelbulb 3D はオフラインのままです: アシスタントのアプリがこのコンピュータ上で起動します。
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=この画像の未完了の計算が保存されています ({})。\n\n続行しますか?  「いいえ」を選ぶと最初から計算し直します。
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=このパラメータの未完了のモンテカルロレンダリングが保存されています ({})。\n\n続行しますか?  「いいえ」を選ぶと最初からレンダリングし直します。
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} と {}
+;{} and {}
+AndRemove=および削除
+;and remove
+AngleUnitConversionRoutines={ 角度の単位変換ルーチン }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=アニメ キーフレーム (f)
+;Ani keyfr. (f)
+AniKeyframe=アニメ キーフレーム
+;Ani keyframe
+AnimatedGif=アニメーション GIF
+;Animated Gif
+Animation=アニメーション:
+;Animation:
+Animation2=アニメーション: {}
+;Animation: {}
+AnimationCurves=アニメーションカーブ
+;Animation curves
+AnimationLower=アニメーション
+;animation
+AnimationMaker=アニメーションメーカー
+;Animation maker
+AnimationMakerParen=アニメーションメーカー   ({})
+;Animation maker   ({})
+AnimationPicsOutput=アニメーション画像の出力:
+;Animation pics output:
+AnimationPreview=アニメーションプレビュー
+;Animation preview
+AnimationProcessing=アニメーション一括処理
+;Animation processing
+AnimationRenderingStopped=アニメーションのレンダリングを停止しました。
+;Animation rendering stopped.
+AnimationSize=アニメーションサイズ:
+;Animation size:
+AnimationTheFfmpegCommandIsOn=アニメーション: ffmpeg コマンドをクリップボードにコピーしました (フレームが完成したら端末で実行してください):
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=アニメーション: 動画を書き出しました: {}
+;Animation: video written: {}
+Animations=アニメーション
+;Animations
+AntiAliasing=アンチエイリアス:
+;Anti aliasing:
+Antialiasing=アンチエイリアス:
+;Antialiasing:
+Aperture=絞り:
+;Aperture:
+Appearance=外観
+;Appearance
+ApplyToImage=画像に適用
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=変更した値は「画像に適用」で反映してください。編集欄は出力のみです
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=頂点カラーを近似計算します。色情報はuv座標としてメッシュに保存され、メッシュのサイズが増えます。
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2 は ArcTan(Y/X) を計算し、正しい象限の角度を返します。
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=中心の周り（物体）
+;Around the middle (an object)
+AsFullBackgroundSphere=全天球の背景として:
+;As full background sphere:
+Aspect=縦横比:
+;Aspect:
+AssignActualFormulaSettings=現在の数式設定を取り込みます。
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=メインプログラムの現在のライト設定を取り込みます。\nナビゲーターは簡略化した関数を使うため、\nライトと色はメインのレンダリングとは異なります。
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=どのサブフレームで:
+;At which subframe:
+Author=作者:
+;Author:
+Author2=作者
+;Author
+Auto=自動
+;Auto
+AutoRenderAllFollowingTiles=以降のタイルをすべて自動レンダリング
+;Auto render all following tiles
+AutoSavingTheM3cFile=m3cファイルを自動保存:
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=自動: CPU とグラフィックカードで画像を分担します (CPU は\nすぐに開始し、シェーダーのコンパイルが終わるとカードが参加)。\nその後、影とアンビエントオクルージョンはカードが\n実行します。\nCPU: グラフィックカードは使用しません。\nグラフィックカード: 従来どおりシェーダーを待ちます。
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=画像を自動更新
+;Auto update image
+AutoUpdatePreview=プレビューを自動更新
+;Auto update preview
+AutoclipSpecDiff=鏡面+拡散を自動クリップ:
+;Autoclip spec+diff :
+AutodetectOnStart=起動時に自動検出
+;Autodetect on start
+AverageNoise=平均ノイズ:
+;Average noise:
+AverageRaycount=平均レイ数:
+;Average raycount:
+AvgIterations=平均反復回数:
+;Avg. iterations:
+AvgRaysteps=平均レイステップ:
+;Avg. raysteps:
+AxisX=X軸
+;Axis X
+AxisY=Y軸
+;Axis Y
+AxisZ=Z軸
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=BMP, JPG, PNG の保存:
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=BTracer2キャッシュ (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=背景画像
+;Back pic
+BackToTheViewTakenFrom=メインウィンドウから取り込んだ視点に戻します。
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=背景の下部の色です。クリックして変更します。
+;Background bottom color, click to change.
+BackgroundImage=背景画像:
+;Background image:
+BackgroundImage2=背景画像
+;Background image
+BackgroundPictures=背景画像:
+;Background pictures:
+BackgroundTopColorLeftclickToChange=背景の上部の色です。左クリックで変更、右クリックでポップアップメニューを開きます。
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=基本色(&B):
+;&Basic colors:
+BatchProcessing=バッチ処理
+;Batch processing
+BatchProcessingPictureOf=バッチ処理: 画像 {} / {}
+;Batch processing: picture {} of {}
+Between=間:
+;between:
+Big=大
+;big
+BigRender=大判レンダー
+;Big render
+BigRender2=大判レンダリング: {}
+;Big render: {}
+BigRenderProjects=大判レンダリングプロジェクト:
+;Big render projects:
+BigRenderStopped=大判レンダリングを停止しました。
+;Big render stopped.
+BigRenders=大判レンダリング
+;Big renders
+BigSizeIncludingAntiAliasing=大判サイズ(アンチエイリアス込み):
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=ウィンドウと文字を大きく、または小さくします(レイアウトは変わりません)
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=半径が大きいほど影が柔らかくなります。
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=既存の(横)行数より大きい値は最後の行に切り詰められます。\n問題はありません。
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=ビットマップ (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=dFogをブレンド
+;Blend dFog
+BlendTheDynamicFogInsteadOf=ライトを加算する代わりに動的フォグをブレンドし、\n背景を消していきます。
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=ブロック
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=ボケ:
+;Bokeh:
+BorderSize=境界サイズ:
+;Border size:
+Box=Box
+;Box
+BoxSharpGoodAAGaussBit=Box: シャープ、良好なAA\nGauss: 少しぼやけるが、非常に良好なAA
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=ウィンドウを前面に出す／閉じるキーです。\n欄をクリックしてキーを押してください。\nBackspace でホットキーを解除します。
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=参照...
+;Browse...
+BuiltIn=内蔵
+;built in
+BuiltWithoutIntelOpenImageDenoise=Intel Open Image Denoise なしでビルドされています
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=BulbTracer2 設定 (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=依頼元
+;By
+ByOfDone={} ({}、担当 {}): {} / {} {} 完了
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=簡易計算
+;Calc-
+CalcColon=計算:
+;Calc:
+CalcRAutomatic=R.を自動計算
+;Calc. R. automatic.
+Calculate=計算
+;Calculate
+Calculate3D=3D計算
+;Calculate 3D
+Calculate3DAndTheBatchWindow=3D計算とバッチウィンドウをスウォームで行う。分割数:
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=適切なライティングなしで、8x8 のブロック状画像を高速に計算します
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=A.S.を自動的に計算
+;Calculate A.S. automatically
+CalculateColors=色を計算
+;Calculate Colors
+CalculateDoF=DoFを計算:
+;Calculate DoF:
+CalculateDoFAutomatically=DoFを自動的に計算
+;Calculate DoF automatically
+CalculateFrom=計算する位置：
+;Calculate from:
+CalculateHSAutomatically=H.S.を自動的に計算
+;Calculate H.S. automatically
+CalculateJulia=Julia を計算
+;Calculate Julia
+CalculateLeftEyeImage=左眼画像を計算
+;Calculate left eye image
+CalculateNTimesToReduceNoise=n 回計算して平均化し、ノイズを減らします。
+;Calculate n times to reduce noise by averaging
+CalculateNow=今計算
+;Calculate now
+CalculateOn=計算デバイス
+;Calculate on
+CalculateOnlyASelectionInThe=画像内の選択範囲のみ計算
+;Calculate only a selection in the image
+CalculatePreview=プレビューを計算
+;Calculate preview
+CalculateRTAutomatically=R. (+ T.) を自動的に計算
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=ランダムなライトストロークを自動的に計算
+;Calculate random light strokes automatically
+CalculateReflections=反射を計算:
+;Calculate reflections:
+CalculateRightEyeImage=右眼画像を計算
+;Calculate right eye image
+CalculateTheImageFirst=まず画像を計算してください。
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=先に画像を計算してください (3D計算)
+;calculate the image first (Calculate 3D)
+CalculateTransparency=透明を計算:
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=dIFS 数式のみ透明を計算します (エスケープタイムとの DE 組み合わせ用)。
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=計算済み
+;calculated
+CalculatedOn=計算環境: {}
+;Calculated on: {}
+CalculatedOnTheCPU=CPUで計算
+;Calculated on the CPU
+CalculatedPictures=計算した画像
+;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=DE アンビエントオクルージョンをピクセルの 4 分の 1 で計算し、残りを補います。この段階が最大 4 倍速くなります。細部はやわらかくなります。
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
+CalculatingThePreview=プレビューを計算しています...
+;Calculating the preview...
+CalculatingVolumetricLightMap=ボリュメトリックライトマップを計算中
+;Calculating volumetric light map
+Calculation=計算
+;Calculation
+CalculationCount=計算回数:
+;Calculation count:
+CalculationOptions=計算オプション
+;Calculation options
+CalculationStopped=計算を停止しました。
+;Calculation stopped.
+Calculations=計算
+;Calculations
+Camera=カメラ
+;Camera
+CameraColon=カメラ:
+;Camera:
+CameraLense=カメラレンズ:
+;Camera lense:
+Cancel=キャンセル
+;Cancel
+CancelAndShowResult=キャンセルして結果を表示
+;Cancel and show result
+CancelExit=キャンセルして終了
+;Cancel + exit
+CancelImmediately=すぐにキャンセル
+;Cancel immediately
+CancelType=キャンセル方法:
+;Cancel type:
+CannotRead={}: 読み込めません
+;{}: cannot read
+CannotTakePartAnotherVersionOf=; {} は参加できません (別のバージョンのプログラムです)
+;; {} cannot take part (another version of the program)
+CannotWrite={} に書き込めません: {}
+;Cannot write {}: {}
+CaseYAngleIsAt90=Y 角が 90 または -90 度の場合、オイラー角は計算できません!
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CatmullRom=Catmull-Rom
+;Catmull-Rom
+CautionTheProcessingsBelowMustBe=注意:  以下の処理は上から下の順に計算する必要があり、\nライトを変更するとこれらの計算は\nリセットされます!
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil: X 以上の最小の整数、|X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=Juliaモードの
+;Change
+ChangeParams=フォーミュラの
+;Change Params
+ChangeTheJuliaValuesWithRadius=Julia値を半径・経度・緯度で変更します。
+;Change the julia values with radius, longitude and latitude
+CheckColors=色をチェック
+;Check colors
+CheckThisIfYouWantTo=ループするアニメーションを作る場合にチェックします。\n最後のキーフレームの後に最初のキーフレームが再び来る\n(逆も同様) ものとして補間します。
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=このオプションを有効にすると画像の色の変化が少なくなります。\n有効にしたままさらに詳細を出すには、DEstop値を「サイズ倍率」で割った値に下げて、\n元のパラメータで着色を行ってください。
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=オンにすると、最も遅いスレッドの優先度を上げなくなります。
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=値を変更するにはチェック [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=ファイル名を選択した後、両眼の画像を描画し、完成したステレオペアを自動的に保存します。
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=マップを選択
+;Choose a map
+ChooseASharedFolderFirstOne=先に共有フォルダを選んでください (スウォームのすべてのコンピュータから見えるもの)
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=オプションを選択:
+;Choose Option:
+ChoseTheme=テーマを選択:
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (ターミナル)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (デスクトップアプリ)
+;Claude (desktop app)
+Clear=クリア
+;Clear
+ClearAllGenerationsBeforeTheSelected=選択した世代より前の世代をすべて消去します
+;Clear all generations before the selected one
+ClearAllPrevious=前の世代をすべて消去
+;Clear all previous
+ClearTheWholeList=リストをすべて消去
+;Clear the whole list
+ClickAButtonToChangeA=(ボタンをクリックしてフォルダを変更)
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=列見出しをクリックすると並べ替えます。
+;Click a column header to sort.
+ClickALanguageToSwitchThe=言語をクリックすると、ウィンドウがその言語に切り替わります。
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=パラメータファイルをクリックするとプレビューが表示されます。
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=クリックしてホットキーのキーを押してください
+;Click and press the keys of the hotkey
+ClickImage=画像をクリック
+;click image
+ClickOnButtonAndAfterwardsOn=ボタンをクリックした後、画像内のオブジェクトをクリックすると\nライトの中心点が設定されます。
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=画像をクリック
+;Click on image
+ClickOnMToSaveThese=「M」をクリックすると、これらの設定と画像の幅・スケールを\nプリセットとして保存します。その後「プレビュー」「中」「高」を\nクリックするか、もう一度「M」をクリックしてキャンセルします。
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=ボタンをクリックした後、画像内のオブジェクトをクリックすると\nその位置の値を取得します。
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=ボタンをクリックした後、画像内のオブジェクトをクリックすると\nその位置から Julia の値を取得します。\n4D モードの場合、ベクトルは 4D 回転の値に従って回転されます。\n\nヒント: Julia 計算をしていないオブジェクトから値を取得してください。\nそうしないと、結果はその点と実質的な関係を持ちません。
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=ボタンをクリックした後、画像内のオブジェクトをクリックすると\nシフトされていないオブジェクトの距離を取得します。\nそのオブジェクト部分は画面と同じ実距離に見えることになります。
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=画像内で中心にしたいオブジェクトをクリックします。\nカメラの向きは変わりません。中心点の周りを回転させるには\n回転オプションを使用してください。
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=クリックで「反復数の動的フォグ」と「反復数の色」を切り替えます。
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=クリックして出力ファイルを選択します。
+;Click to choose the output file
+ClickToChooseTheOutputFolder=クリックして出力フォルダを選択します。
+;Click to choose the output folder
+ClickToChooseYourNameFor=クリックして、パラメーターに自動保存する名前を選択します
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=クリックして表示/非表示を切り替えます。
+;Click to hide/show
+ClickToInsertYourNameBelow=クリックして下に名前を挿入します
+;Click to insert your name below
+ClickToLoadABackgroundPicture=クリックして背景画像を読み込みます。
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=クリックしてエクスプローラーを開き、M3P ファイルをリストにドラッグ&&ドロップします。
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=クリックすると中心点の 2D 平面を描画します。
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=クリックすると 2D 開始平面を描画します。
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=クリックすると Z 終了平面を描画します。
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=クリックすると、現在のライトと主な色の設定を\nカスタムプリセットボタンに保存できます。\nもう一度クリックすると保存を取り消します。
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=クリックして、リストに入れる M3P ファイルを1つ以上選択します。
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=クリックすると、動的フォグのスライダーをすべてゼロにします。
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=クリックすると、この縦横比に合わせて画像の高さを設定します。
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=クリックでナビゲーターのライトをこのプリセットに設定します。
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=クリックしてズーム値を入力します (固定ズームとして保持されます)。
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=クリッピングR:
+;ClippingR:
+Close=閉じる
+;Close
+CloseMesh=メッシュを閉じる
+;Close Mesh
+CloseTheCurrentWindow=現在のウィンドウを閉じる:
+;Close the current window:
+CloseTheMeshAtTheBorders=境界でメッシュを閉じます。
+;Close the mesh at the borders
+CloseWindow=ウィンドウを閉じる
+;Close window
+CloudDriftX=雲の流れ X
+;Cloud drift X
+CloudDriftY=雲の流れ Y
+;Cloud drift Y
+CloudDriftZ=雲の流れ Z
+;Cloud drift Z
+Clouds=雲
+;Clouds
+CloudsOverThePictureALayer=画像の上の雲: フラクタルの X、Y、Z 軸に沿った 2 つの高さの間の層で、最初のライトに照らされ、フラクタルの手前にも奥にも描かれます (MB3D にはありません: パラメーターの MB3D の部分の後に保存。モンテカルロでは視線に沿って入り、反射には入りません)
+;Clouds over the picture: a layer between two heights along the fractal's X, Y or Z axis, lit by the first light, in front of and behind the fractal (not in MB3D: kept after MB3D's part of the parameters; in Monte Carlo along the view rays; not in reflections)
+Co=Co:
+;Co:
+Code=コード
+;Code
+CodeFile=コード: {}\nファイル: {}
+;Code: {}\nFile: {}
+ColCycling=色の循環
+;Col cycling
+ColVarOnZ=Z方向の色変化
+;Col. var. on Z
+Color=色
+;Color
+ColorAdjustment=色の調整
+;Color adjustment
+ColorEnd=色の終了
+;Color end
+ColorOnIterat=反復回数で着色:
+;Color on Iterat.:
+ColorOnIts=反復数で色付け:
+;Color on its:
+ColorOption0AverageOfBoth=色のオプション:\n0:  両方の式の平均。\n1:  1番目の式の色。\n2:  2番目の式の色。
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=色のスケーリングオプション
+;Color scaling options
+ColorStart=色の開始
+;Color start
+Coloring=カラーリング
+;Coloring
+Colour0Grey1AsIt=色: 0 灰色、1 そのまま、2 2倍鮮やか
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=色収差
+;Colour fringes
+ColourVariation=色の変化
+;Colour variation
+ColoursByDirection=方向による色：
+;Colours by direction:
+ColumnsOfTiles=タイルの列数
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=結合方法:\nMin: 両方のフラクタルが見え、DEを最小値で結合\nMax: 重なる部分のみ、DEを最大値で結合\nInv max: 2番目のハイブリッドのDEを反転して 'Max' で結合\nMin lin: 線形の重なり関数で最小値結合\nMin nlin: S1 と同様だが非線形関数で、より滑らかな重なり\nMix: まず F1..FendHybrid1、次に変更したベクトルで FstartHybrid2..F6 (dIFS) を使用。
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=マップ Y を拡散色と合成
+;Combine map Y with diffuse colors
+Common=標準
+;Common
+ComparingFiles=ファイルを比較中
+;comparing files
+Compile=コンパイル
+;Compile
+CompileTheCodeF9=コードをコンパイルします <F9>
+;Compile the code <F9>
+CompilingSucceeded=コンパイルに成功しました
+;Compiling succeeded
+Computer=コンピュータ
+;Computer
+ConeMarchThePixelsOfA=コーンマーチ: ブロックのピクセルはその粗い光線が止まった所から始める
+;Cone march: the pixels of a block start where its coarse ray stopped
+Confirm=確認
+;Confirm
+Connect=接続
+;Connect
+ConnectToAnAIAssistant=AI アシスタントに接続
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=AI アシスタントに接続: 画像の説明、変更、レンダリングを任せます
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=接続しました。新しい会話で頼んでください。ツールに mb3d が表示されない場合はアプリを再起動してください。
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=接続しました。使うには Claude Code の新しいセッションを開始してください。接続を解除するには、下のコマンドを実行します。
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=定数減衰
+;Const Attenuation
+Constant=定数
+;Constant
+Constants=定数:
+;Constants:
+Continue=続ける
+;Continue
+Contrast=コントラスト
+;Contrast
+ConvertManyM3PFilesToM3I=多数の M3P ファイルを M3I に変換します
+;Convert many M3P files to M3I
+CopiedToTheClipboard=クリップボードにコピーしました。
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=フレームから小さい MP4 動画を作る ffmpeg コマンドをクリップボードにコピーします。\nターミナルでご自身で実行してください (このプログラムは他のプログラムを起動しません)。
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=コピー
+;Copy
+CopyCommand=コマンドをコピー
+;Copy command
+CopyParamsToClipboard=パラメータをクリップボードにコピー
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=コマンドをコピーして、ターミナルに貼り付けます
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=選択した行をコピーします。選択がない場合は表示中のすべての行をコピーします
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=値をコピー
+;Copy the values
+CopyTheValuesTo=値をコピー..
+;Copy the values to..
+CopyThisFormulaToFormula1=この数式を数式 1 にコピー
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=この数式を数式 2 にコピー
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=この数式を数式 3 にコピー
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=この数式を数式 4 にコピー
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=この数式を数式 5 にコピー
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=この数式を数式 6 にコピー
+;Copy this formula to formula 6
+CopyThisLightToLight1=このライトをライト1にコピー
+;Copy this light to Light1
+CopyThisLightToLight2=このライトをライト2にコピー
+;Copy this light to Light2
+CopyThisLightToLight3=このライトをライト3にコピー
+;Copy this light to Light3
+CopyThisLightToLight4=このライトをライト4にコピー
+;Copy this light to Light4
+CopyThisLightToLight5=このライトをライト5にコピー
+;Copy this light to Light5
+CopyThisLightToLight6=このライトをライト6にコピー
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=Z1 を Z2 にコピーして焦点を一点にします。
+;Copy Z1 to Z2 to get a focus point
+Cores=コア
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=数式 <{}> を読み込めませんでした: {}
+;Could not load formula <{}>: {}
+CouldNotWrite={} を書き込めませんでした: {}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=計算する画像(オブジェクトのスライス)の枚数です。
+;Count of images (object slices) that will be calculated.
+Cover=被覆:
+;Cover:
+CreateEditAJITCompiledFormula=JIT コンパイル数式を作成/編集します
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=言語ファイルを作成
+;Create language file
+CreateMeshes=メッシュを作成します
+;Create Meshes
+CrossEyedPreview=交差法プレビュー
+;Cross-eyed preview
+Ctrl1ToCtrl7In=Ctrl+1 から Ctrl+7 はリストの順、Ctrl+W で閉じる
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+Curves=カーブ
+;Curves
+CustomPreset1=カスタムプリセット 1
+;custom preset 1
+CustomPreset10=カスタムプリセット 10
+;custom preset 10
+CustomPreset2=カスタムプリセット 2
+;custom preset 2
+CustomPreset3=カスタムプリセット 3
+;custom preset 3
+CustomPreset4=カスタムプリセット 4
+;custom preset 4
+CustomPreset5=カスタムプリセット 5
+;custom preset 5
+CustomPreset6=カスタムプリセット 6
+;custom preset 6
+CustomPreset7=カスタムプリセット 7
+;custom preset 7
+CustomPreset8=カスタムプリセット 8
+;custom preset 8
+CustomPreset9=カスタムプリセット 9
+;custom preset 9
+Cuts=断面
+;Cuts
+Cutting=カット
+;Cutting
+Cutting2=カット*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=DCT ノイズ除去 (GIMP)
+;DCT denoising (GIMP)
+DE=DE:
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=DE 結合:
+;DE comb.:
+DEOcclusionAtHalfResolution=DE オクルージョンを半分の解像度で
+;DE occlusion at half resolution
+DEStop=DE stop:
+;DE stop:
+DEcombinate=DEcombinate
+;DEcombinate
+DEstop=DEstop:
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=d.フォグ
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=dIFS 形状
+;dIFS shapes
+DIFSTransformations=dIFS 変換
+;dIFS transformations
+DOUBLEIMAGESIZE=画像サイズ2倍
+;DOUBLE IMAGESIZE
+DateModified=更新日時
+;Date modified
+Day=日
+;Day
+DblClickHideRightPanel=ダブルクリック: 右パネルを隠す
+;DblClick: hide right panel
+Debug=デバッグ
+;debug
+DecreaseScale=スケールを縮小します。
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=ナビゲーターウィンドウを小さくします。
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=近い部分のフォグを減らします。
+;Decreases the fog in near parts
+DefaultTheme=既定のテーマ
+;Default Theme
+Defaults=既定値
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=読み込みと保存の既定フォルダーを定義します
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=ハイトマップとカラーマップをアニメーションさせる画像シーケンスを定義します
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=表面から指定した距離にある位置をどれだけ正確に計算するかを決めます。\n値を上げると精度が上がり、法線の計算もより良くなります。\n12 を大きく超える値はほとんど必要ありません。
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=Z 開始平面が自分の前方どれだけ近く (メートル) にあるかを定義します。\n(仮想) オブジェクトが現れる最小距離でもあります。
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=レイマーチングを停止するオブジェクト表面までの距離を定義します。\n小さい値ほどオブジェクトの細部が出ますが、アンダーサンプリングの原因にもなります。\n値はピクセル幅を基準にしています。
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=表示画面までの実世界での距離をメートルで定義します。
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=画面上の実世界での画像の幅をメートルで定義します。
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=Z 開始ビュー平面のサイズを定義します。\nナビゲーターを使用すると自動的に設定されます。\nオブジェクトが画像の端で切れている場合のみ\n変更してください。
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=どの角度までシャドウを計算するかを定義します。\n低い値: 遠くの構造が近くの構造から受ける影響が少なくなり、\n構造に多くの穴がある場合に有利です。
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=最後の数式が終わってもまだ停止条件に\n達していないとき、どこから反復を\n再開するかを定義します。
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=回転角度 (度)
+;Degree of rotation
+Degrees=度数です。
+;Degrees
+Del=削除
+;Del
+DelEntry=項目を削除
+;Del Entry
+Delete=削除
+;Delete
+DeleteAll=すべて削除
+;Delete all
+DeleteAllKeyframesToBeginA=すべてのキーフレームを削除して新しいプロジェクトを始めます。
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=選択したファイルをリストから削除
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=選択した定数値を削除します。
+;Delete selected constant value
+DeleteSelectedNamedParameter=選択した名前付きパラメータを削除します。
+;Delete selected named parameter
+DeleteSelectedOption=選択したオプションを削除します。
+;Delete selected option
+DeleteSequence=シーケンスを削除
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail=「{}」のパラメータとサムネイルを履歴から削除しますか?
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=このキーフレームを削除します。
+;Delete this keyframe
+DeleteThisTilesFiles=このタイルのファイルを削除
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=すべての未完了レンダリングが保持しているデータを削除します
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=未完了のレンダリングで保存されたものをすべて削除しますか?
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=選択したレンダリングが保持しているデータを削除します
+;Delete what the selected render kept
+Density=密度:
+;Density:
+Depth=深度
+;Depth
+DepthColon=深度:
+;Depth:
+DepthGradientFunctionWorksOnlyIf=深度グラデーション関数です。「オブジェクト基準」が無効のときのみ機能します。
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\s被写界深度
+;\sDepth of Field
+DepthOfField2=被写界深度
+;Depth of Field
+DepthOfFieldLower=被写界深度
+;depth of field
+DepthOfReflections1ToSee=反射の深さです: 1 では反射が1回だけ見えます。\n2 では反射したオブジェクトの中の反射も見えます... 以下同様です。
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=説明
+;Description
+DetectsTheAmountOfProcessorCores=起動時にプロセッサのコア数を検出します。\n自分で数を選び、このオプションをオフにすると\n別の設定で起動できます。
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=後続のオブジェクトの拡散反射を何段まで計算するかを決めます
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=連続する直接反射を何回まで計算するかを決めます
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=バッチモードでレンダリングを停止する時点を決めます
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=ライトを表示するかどうかと、その形状を指定します。
+;Determines whether the light should be visible and its shape.
+Diff=拡散:
+;Diff:
+Diff2=拡散
+;Diff
+DifferentCalculationOfLightCombining=ライトの合成方法を別の計算にします。
+;Different calculation of light combining
+Diffuse=拡散:
+;Diffuse:
+Diffuse2=拡散
+;Diffuse
+DiffuseFunctionChooseCosOrCos=拡散関数です。このライトでハードシャドウを使う場合は Cos または Cos^2 を選択してください。
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=オブジェクトの拡散色です。クリックして変更します。
+;Diffuse object colors, click to change them.
+DiffuseShadow=拡散シャドウ
+;Diffuse shadow
+DirectionOf=方向 {} / {}
+;Direction {} of {}
+DirectionTowardsZero000=原点 (0,0,0) の方向です。
+;Direction towards zero (0,0,0)
+Directions=方向の数：
+;Directions:
+DisableAll=すべて無効
+;Disable all
+DisableAnalyticalDE=解析的 DE を無効化
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=移動時の自動ズーム調整を無効にします。\nオブジェクトの中を通り抜けて進むこともできます。
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=アニメ用の (f) キーを無効化
+;Disable the (f) key for ani
+DisableThemes=テーマを無効化
+;Disable Themes
+DisableThisIfYouDoNot=ファイル番号の先頭にゼロを付けたくない場合は無効にしてください。\n例:  name000010.png  は  name10.png  になります
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=スレッドブーストを無効化
+;Disable threadboost
+Disc=円
+;Disc
+Disconnect=切断
+;Disconnect
+DisplayStyle=表示スタイル
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=数式の説明がある場合に表示します。
+;Displays some formula descriptions, if available.
+DistanceEstimation=距離推定
+;Distance estimation
+DitheringForScale=拡縮用のディザリング:
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=実際の「Raystep multiplier」をこの値で割ります。\n値を上げるとオーバーステップが減ります。
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=DoF 計算
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=DoF 計算をオフにしました。タイリングモードでは使用できません。
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=このウィンドウを固定しない
+;Do not make this window sticky
+DoThisFunctionAutomatically=この機能を自動的に実行
+;Do this function automatically
+DoYouReallyWantToClear=以前の世代をすべて消去してもよろしいですか?
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=バッチリストを消去してもよろしいですか?
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=すべて削除してもよろしいですか?
+;Do you really want to delete everything?
+DoYouReallyWantToStop=計算を停止してもよろしいですか?
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=バイルアウトではなく、この反復回数の後に着色します (-1 で無効)
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=作業中
+;Doing
+DonTChangeAmbShDFog=AmbSh+dFogを変更しない:
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=保存せずプレビューのみ
+;Don't save, only preview
+Done=完了
+;Done
+Done2={} 完了 ({})。
+;{} done ({}).
+DoneOf=完了: {} / {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=ダブルクリックでナビモードを切り替え
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=画像サイズを自動的に2倍に
+;Double the imagesize automatically
+DownScaling=縮小\n率:
+;Down-\nscaling:
+DownscaleBoth=両方を縮小
+;Downscale both
+DownscaleDiffuseKeepReflections=拡散を縮小し、反射は維持
+;Downscale diffuse, keep reflections
+DownscaleSpecular=スペキュラを縮小
+;Downscale specular
+Ds=Ds:
+;Ds:
+DunnoDoNothing=わからない、何もしない
+;Dunno, do nothing
+DynFog=動的フォグ
+;Dyn.fog
+DynFogOnIt=反復回数でダイナミックフォグ:
+;Dyn. fog on It.:
+DynFogOnIts=反復数の動的フォグ:
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=動的フォグです。クリックして色を変更します。右クリックでボリュメトリックライトの色を挿入します。
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=動的フォグの濃い部分の色です。クリックして変更します。
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=動的フォグまたはボリュメトリックライトのパラメータです。オプションは「カラーリング」タブを参照!
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=動的フォグ:\n数値が小さいほど、物体から遠い所にフォグが現れます。\ndIFS では、この反復で計算される物体の部分のまわりにフォグがかかります。\n0 でこの機能を無効にし、通常どおりレイステップ数による動的フォグを行います。\nヒント: 段差を防ぐには「First step random」オプションをオンにしてください。\nボリュームライト:\n光の散乱を計算するライトの番号を選びます。
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=エッジの色
+;Edges color
+Edit=編集
+;Edit
+EditJITCompiledFormula=JIT コンパイル数式を編集
+;Edit JIT-compiled Formula
+EditMapSequences=マップシーケンスの編集
+;Edit Map Sequences
+EditMode=編集モード:
+;Edit mode:
+EditNamedConstantValue=名前付き定数値を編集
+;Edit named constant value
+EditNamedParam=名前付きパラメータを編集
+;Edit named param
+EditOptionValue=オプション値を編集
+;Edit option value
+EditSelectedConstantValue=選択した定数値を編集します。
+;Edit selected constant value
+EditSelectedNamedParameter=選択した名前付きパラメータを編集します。
+;Edit selected named parameter
+EditSelectedOption=選択したオプションを編集します。
+;Edit selected option
+Elapsed=経過
+;Elapsed
+ElapsedTimeS=経過時間: {} 秒
+;Elapsed time: {} s
+Enable=有効
+;Enable
+EnableGeneratingZBufferThisMode=Z-bufferの生成を有効にします。このモードは追加データを必要とするため旧バージョンと互換性がなく、この設定のMCファイルは保存/復元できません。Z-bufferを保存するには通常の画像を保存してください。Z-bufferも自動的に保存されます。
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=ライト計算に内部 Gamma 2 を使用します。\nGamma スライダーとは独立しています。
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=ライティングを有効化
+;Enable Lighting
+Enabled=有効
+;Enabled
+EnablesTheHardShadowIfCalculated=計算済みであればハードシャドウを有効にします。\nHS が計算されていない場合、有効にするとアンビエントシャドウがライトを減衰させます。
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=終了:
+;End:
+EnterNamedParameter=名前付きパラメータの入力
+;Enter named parameter
+Entries={} 件
+;{} entries
+Error=エラー
+;error
+ErrorAt=, {} でエラー: {}
+;, error at {}: {}
+Errors=エラー
+;Errors
+Escapetime3DFormulas=エスケープタイム 3D 数式
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=解析的 (高速な) DE 計算を持つエスケープタイム 3D 数式
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=エスケープタイム 4D 数式
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=解析的 (高速な) DE 計算を持つエスケープタイム 4D 数式
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=エスケープタイム変換のみ。\nエスケープタイム数式と組み合わせて使用します
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=オイラー角:
+;Euler angles:
+EveryNewPictureOfTheMain=メインウィンドウの新しい画像がすべてフィルタされます (保存される画像も同様)。
+;Every new picture of the main window is filtered (the saved one too).
+Everything=すべて
+;Everything
+ExchangeAdd=フォーミュラの
+;Exchange, add
+ExchangeThisFormulaWithTheNext=この数式を次の数式と入れ替えます
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=この数式を前の数式と入れ替えます
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=このフレームを次のフレームと入れ替えます。
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=このフレームを前のフレームと入れ替えます。
+;Exchange this frame with the previous one
+Exit=終了
+;Exit
+ExpandThePanel=パネルを展開します。
+;Expand the panel
+Experimental=実験的...
+;Experimental...
+ExperimentalSpeedUps=実験的な高速化
+;Experimental speed-ups
+ExponentialFunctions={ 指数関数 }
+;{ Exponential functions }
+ExportACubeAsAStack=立方体を PNG ファイルのスタックとしてエクスポートします
+;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=フラクタルをガウシアンスプラットとして書き出し、Blender やほかのスプラットビューアであらゆる方向から見られるようにします
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
+Exposure=露出
+;Exposure
+Exposure025=露出:  0.25
+;Exposure:  0.25
+ExposureInStops1TwiceAs=露出 (段): +1 で2倍の明るさ、-1 で半分の明るさ
+;Exposure in stops: +1 twice as bright, -1 half as bright
+ExtractingAmbientInformationFromTheOriginal=元の M3I ファイルから環境光情報を抽出しています。お待ちください:
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ 極値の判定 }
+;{ Extreme testing }
+FFmpegCommand=FFmpegコマンド
+;FFmpeg command
+FNr=数式No.:
+;F.nr:
+FOVy=FOVy:
+;FOVy:
+FailedToImportFractalParametersAll=フラクタルパラメータの読み込みに失敗しました。その他の設定は読み込まれました。
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=遠方の深度フォグ
+;Far depth fog
+FarOffset=遠方オフセット
+;Far offset
+FarPlane=遠方面:
+;Far plane:
+FastInaccurate=高速+低精度
+;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=画像をわずかに変えるかわりに、より速く計算する方法です。シーンと一緒に保存され、最初のチェックボックスがオンのときだけ使われます。頼る前に、これらを使わない描画と比べてください。
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=画像をわずかに変えるかわりに、より速く計算する方法
+;Faster ways of calculating that change the picture a little
+File=ファイル
+;File
+FileIndex=ファイルインデックス:
+;File index:
+FileLower=ファイル
+;file
+FileName=ファイル名(&N):
+;File &name:
+FileTooShort=ファイルが短すぎます
+;file too short
+Filename=ファイル名
+;Filename
+Files=ファイル
+;Files
+FilesOfType=ファイルの種類(&T):
+;Files of &type:
+Filmic=フィルミック
+;Filmic
+FilmicToneMappingBrightLightRolls=フィルミックトーンマッピング: 明るい光が真っ白に飛ばず、柔らかく収まります
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
+FilterNewPicturesAutomatically=新しい画像を自動的にフィルタ
+;Filter new pictures automatically
+FilterNow=今フィルタ
+;Filter now
+FindsTheSurfaceWithFewerDistance=より少ない距離推定で表面を見つけます。数パーセント速くなります。細部がわずかにずれることがあります。
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
+Fine=微調整
+;fine
+FineTuneThePositionsWithThe=矢印ボタンで位置を微調整します。
+;fine tune the positions with the arrow buttons
+FinishThePicture=画像の仕上げ
+;Finish the picture
+FinishedRenderingSlices=スライスのレンダリングが完了しました。
+;Finished rendering slices.
+FinishedTracingObject=オブジェクトのトレースが完了しました。
+;Finished tracing object.
+Finishing=仕上げ
+;Finishing
+First4RaysNoisy=最初の 4 レイ (ノイズあり)
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=この数式の組み合わせの初回計算です。グラフィックカードのシェーダーをコンパイルしています (10-30 秒、初回のみ - ドライバーが保持します)。その間は CPU が計算し、準備ができるとカードも加わります。
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=最初のステップをランダム化:
+;First step random:
+FirstStepRandomColon=最初のステップをランダム:
+;First Step Random:
+FirstStepRandomToAvoidSpotty=最初のステップをランダムにします:\nDE の悪い数式で起こる斑点状のアーティファクトを避けます。\nノイズを減らすには、画像の縮小や多めのレイ数と組み合わせてください。\nディザリングとも併用できます。
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+Fisheye=魚眼
+;Fisheye
+FisheyeNotInMB3DTheField=魚眼 (MB3D にはありません): 視野は最大 360 度で、画像の高さ全体に広がります。正方形の画像では円形の眺めになります
+;Fisheye (not in MB3D): the field of view, up to 360 degrees, spans the picture's height; a square picture shows a round view
+FitLeftRightBorders=左右の端を合わせる
+;Fit left+right borders
+FixedZoomAndSteps=ズームと歩幅を固定
+;Fixed zoom and steps
+FlatSolid=フラットソリッド
+;Flat Solid
+FlatSolidWithEdges=フラットソリッド+エッジ
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor: X 以下の最大の整数、 |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fo.{}
+;Fo.{}
+FogOffset=フォグオフセット
+;Fog offset
+Folder=フォルダー
+;Folder
+FolderOfTheLanguageFiles=言語ファイルのフォルダ:
+;Folder of the language files:
+FollowTheNewest=最新を追う
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\s小数の指数、または |指数| > MaxInt の場合、底は > 0 でなければなりません。 }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=球面で使うときに、アンビエントの色を縮小した背景画像で置き換えます。
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=数式
+;Formula
+Formula1=数式1 •
+;Formula1 •
+Formula12=数式1
+;Formula1
+FormulaCombinationsInThisBatchThat=このバッチでグラフィックカードにとって新しい数式の組み合わせ（そのシェーダーを先にコンパイルします。各10〜30秒。その間はCPUが計算し、メモリが足りない間はコンパイルが待機します）：
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
+FormulaEditor=数式エディター
+;Formula editor
+FormulaLower=数式
+;formula
+FormulaM3f=数式 (*.m3f)
+;Formula (*.m3f)
+FormulaName=式の名前:
+;Formula name:
+FormulaNotFound=数式 '{}' が見つかりません。
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=ハイブリッドの第 2 部が始まる数式番号
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=数式の値:
+;Formula values:
+Formulas=数式
+;Formulas
+FormulasColon=数式:
+;Formulas:
+Forward=前方
+;Forward
+FoundOnThisComputerNotConnected=このコンピュータで見つかりました。まだ接続されていません。
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=このコンピュータで見つかりました。ターミナルでこのコマンドを一度実行してから、Claude Code の新しいセッションを開始してください:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=fp名:
+;fp name:
+Fpow=Fpow:
+;Fpow:
+Frame=フレーム:
+;Frame:
+FrameNumberToUseForAnimated=メインエディターでアニメーションマップに使用するフレーム番号
+;Frame number to use for animated maps in the main editor
+Frames=フレーム
+;frames
+FramesPerSecond=フレーム/秒:
+;Frames per second:
+FramesSec=フレーム/秒:
+;Frames/sec:
+Fresnel=フレネル:
+;Fresnel:
+Fresnel0To1MoreReflection=フレネル (0 から 1): 表面が視線からそれる所ほど強く映り込みます。ガラス、水、ラッカーのように (反射と一緒だとよく見えます)
+;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromClipboard=クリップボードから
+;From Clipboard
+FromTheCameraAllAroundA=カメラから全方向（内側から見たシーン）
+;From the camera, all around (a scene seen from inside)
+FullM3IImageFiles=M3I フル画像ファイル:
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=関数:
+;Functions:
+FunctionsFromSystem={ ----------------------- System の関数  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- System.Math の関数  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=Gamma:  0.5
+;Gamma:  0.5
+Gauss=Gauss
+;Gauss
+GaussianSplats=ガウシアンスプラット
+;Gaussian splats
+GaussianSplats2=ガウシアンスプラット...
+;Gaussian splats...
+GaussianSplatsPLY=ガウシアンスプラット (PLY)
+;Gaussian splats (PLY)
+GenerateAnAnimationKeyframeFromThe=現在の視点からアニメーションのキーフレームを作成します。
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=タイリングで大きな画像を生成します
+;Generate big images by tiling
+GenerateMesh=メッシュを生成
+;Generate mesh
+GenerateMesh2=メッシュを生成
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=オブジェクトの2DスライスをPNG画像として生成します。
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=ランダムな拡散色を生成します。
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=拡散色に応じたランダムなスペキュラ色を生成します。
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=生成されたメッシュ
+;Generated Mesh
+GenerationOf=世代 {} / {}
+;Generation {} of {}
+Generations=世代
+;Generations
+GetASmoothImageWraparoundFor=球面で使うときに画像の継ぎ目を滑らかにします。
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=中心点を取得
+;get midpoint
+GetMinDistFromImage=画像から最小距離を取得
+;Get min.dist. from image
+GetValuesFromImage=画像から値を取得
+;Get values from image
+GetZ1=Z1取得
+;Get Z1
+GetZ2=Z2取得
+;Get Z2
+GlobalLight=グローバルライト
+;Global light
+Glow=発光:
+;Glow:
+Glow0AndUpTheSurface=発光 (0 以上): 表面が光なしで自分の色に光ります
+;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=グロー
+;Glow
+GlowAroundBrightLightStrengthReach=明るい光の周りのグロー: 強さ、広がり (画像の対角線に対する割合)、光り始める明るさ (白に対して 0 から 1)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
+GlueSliders=スライダーを連結
+;Glue sliders
+GoToNext=次へ移動
+;Go to next
+GoneLastSeenSAgo=離脱 (最終確認 {} 秒前)
+;gone (last seen {} s ago)
+Grain=粒
+;Grain
+GraphicsCard=グラフィックカード
+;Graphics card
+GroundPlane=地面
+;Ground plane
+GroundPosition=地面の位置
+;Ground position
+GroupByDay=日ごとにまとめる
+;Group by day
+GuessParams=パラメータを推定
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=HS 計算時間:
+;HS calc time:
+HardShadowCalculation=ハードシャドウ計算
+;hard shadow calculation
+HardShadowRadius=ハードシャドウの半径:
+;Hard shadow radius:
+HardShadows=\sハードシャドウ
+;\sHard Shadows
+HardShadowsLower=ハードシャドウ
+;hard shadows
+Height=高さ:
+;Height:
+HeightMapGenerator=ハイトマップ生成
+;HeightMap Generator
+HeightMapGeneratorPreview=ハイトマップ生成プレビュー
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=例えば、不要な描き込みをやり直したい場合に便利です。
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=高品質
+;HiQual
+HiQual1=HiQual 1
+;HiQual 1
+HiQual2=HiQual {}
+;HiQual {}
+Hidden=非表示
+;hidden
+HideThisFormula=この数式を非表示にする
+;Hide this formula
+High=高
+;high
+HighlightsMoveAsInThePictures=ハイライトが画像と同じように動きます。1 スプラットは 2 で約 160 バイト、オフで 68 バイトです。
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
+History=履歴
+;History
+HistoryThePicturesCalculatedTheFiles=履歴: 計算した画像、開いたファイルと保存したファイル (クリックで閲覧)
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=(Shiftキーを押すと細かく動きます)
+;(Hold Shift key for finer steps)
+Hotkeys=ホットキー
+;Hotkeys
+HowMuchThePlaneReflects0=平面の反射の強さ (0 から 1): ハイライトと、反射を計算するときの鏡面 (ポストプロセス)
+;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=起伏による表面の色の変化の度合い: 0 なし、1 強い
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowStrongTheNoiseIsThat=除去するノイズの強さです (1 ~ 30、GIMP の「Denoise DCT」と同じ)。\n高いほど多くのノイズを除去しますが、細部も失われます。
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThickTheCloudsAre1=雲の濃さ (1: 層全体で光の約 2 % を通す) と空を覆う割合 (0 から 1)
+;How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
+HowThisComputerIsListedIn=スウォーム内でのこのコンピュータの表示名です
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ 双曲線関数とその逆関数 }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ 入力: |X| <= 1  出力: [0..PI] ラジアン }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ 入力: |X| <= 1  出力: [-PI/2..PI/2] ラジアン }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\s入力: |Y| < 2^64, |X| < 2^64, X <> 0   出力: [-PI..PI] ラジアン }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=アイドル
+;Idle
+IfEnabledTheAmbientShadowsWill=有効にすると、アンビエントシャドウがメインレンダリングの後に\n自動的に計算されます。\nオプションは事前に選んでください。
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=有効にすると、選択したハードシャドウがメインレンダリングの後に\n自動的に計算されます。\nオプションは事前に選んでください。
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=有効にすると、前の計算の後に DoF 効果が\n自動的に計算されます。\nオプションは事前に選んでください。
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=有効にすると、画像が球面全体を覆います。\nアニメーションで便利です。
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=有効にすると、「深度」の値が高くても画像が消えません。
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=有効にすると、プリセットやライトパラメータを読み込んでもライトは変更されません。\n例えば、ハードシャドウを再計算したくない場合に便利です。
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=有効にすると、前の計算の後に反射が自動的に\n計算されます。\nその後にライトを変更するとこの計算はリセットされることに注意してください!
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=有効にすると、鏡面の量が内部へ進むレイと反射に分割されます。
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=連結すると、スライダーはゴムバンドでつながっているように動きます。
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=選択中に「1」を押すと、このスライダーが既定位置に戻ります。
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=選択すると、M3I ファイルは「INI DIRS」オプションで指定した\n  既定の M3I フォルダに保存されます。\n選択しない場合は、M3P ファイルと同じフォルダに保存されます。
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=0 より大きい値にすると、表面の法線は分散した点の平均で計算され、\n粗さ係数も計算されるため、エイリアシングが減ります。\n8 にすると体積全体で平均しますが、非常に遅く、\nごく厳しい状況で使うものです。  後処理の Normals on ZBuf も利用できます。
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=ボリュメトリックライトを選んだ場合:  「動的フォグ」ボタンを右クリックしてボリュメトリックライトの色を挿入します。
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=すでに始めたレンダリングを特定の位置から続けたい場合は、\n次にレンダリングする画像の開始インデックスをここに入力します。\n「ファイルインデックス」の値は変更しないでください。
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=無視
+;Ignore
+Image=画像
+;Image
+ImageDownscalingForViewingPurposeAnd=表示用、および jpeg、png、bmp 保存用の画像縮小率です。\n1:2 と 1:3 のスケールでのみ、保存時にアンチエイリアスフィルターが適用されます。\nクリックで選択メニューを開きます。
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=画像が存在します
+;Image exists
+ImageLower=画像
+;image
+ImageParameters=画像 + パラメータ
+;image + parameters
+ImageRotation=画像の回転:
+;Image rotation:
+ImageSize=-> 画像サイズ:
+;-> Image size:
+ImageWidth=画像の幅:
+;Image width:
+Images=画像
+;Images
+ImagesForMaps=マップ用画像:
+;Images for maps:
+Img=Img
+;Img
+ImportActualParas=現在のパラメータを取り込む
+;Import actual paras
+ImportParameter=パラメータを取り込む
+;Import parameter
+ImportParameterFromMain=メインからパラメータを取り込む:
+;Import parameter from main:
+ImportParameterFromMain2=メインからパラメータを取り込む
+;Import parameter from main
+ImportParametersFromAFileTo=ファイルからパラメータを取り込み、大判レンダリングを作ります
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=メインプログラムから現在のパラメータを取り込みます
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=メインプログラムのパラメータをMCレンダリング用に取り込みます
+;Import the main programs parameter for mc rendering
+ImportedFromMain=メインから取り込み
+;Imported from Main
+InAndOutside=内側と外側
+;In and outside
+InOut=内+外
+;In+Out
+InOutOption=内/外オプション:
+;In/out option:
+InTheSwarm=スウォーム内:
+;In the swarm:
+InThisModeRightAndLeft=このモードでは、各サブフレームについて右目用と左目用の画像をレンダリングします。
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· 合計 {}
+;\s· {} in total
+InTotal2=合計 {}
+;{} in total
+InclInMain=メインに含む
+;incl. in main
+IncludingDFogOnItsOrVol=反復数の動的フォグやボリュームライトのオプションを含みます。
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=フレーム番号を増減します
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=品質レベル (レイステップ倍率) を上げ下げします。
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=スケールを拡大します。
+;Increase scale
+IncreaseTheSizeOfTheNavigator=ナビゲーターウィンドウを大きくします。
+;Increase the size of the Navigator window
+Increment=増分:
+;Increment:
+Increment2=増分
+;Increment
+IncrementIfTheSequenceIncreaseThe=シーケンスの増分です。値を大きくすると画像をスキップします。
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=先頭に0を付けた番号
+;Index with leading 0
+InfinityValuesHaveAFractionField=// 無限大の値は仮数部が 0 です。無限大は正にも負にもなり、
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=情報
+;info
+Infos=情報
+;Infos
+IniDirs=Ini フォルダー
+;Ini Dirs
+Input=入力
+;Input
+InputTheHeightDivisor=高さの除数を入力してください:
+;Input the height divisor:
+InputTheOriginalValueFromThe=メインプログラムのパラメータから元の値を読み込みます。
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=メインプログラムのパラメータから元の値を読み込みます。
+;Input the original values from the main program parameters.
+InputTheWidthFactor=幅の係数を入力してください:
+;Input the width factor:
+Inputs=入力:
+;Inputs:
+Insert=挿入
+;insert
+InsertActualParameterInThisKeyframe=現在のパラメータをこのキーフレームに取り込みます。
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=メインプログラムからパラメータ全体を取り込みます。
+;Insert complete parameter from main program
+InsertMidValues=中心値を挿入
+;Insert mid values
+InsertVolumetricLightColor=ボリュメトリックライトの色を挿入
+;Insert volumetric light color
+Inserting=取り込み:
+;Inserting:
+InsertsTheCurrentMidPosition=現在の中心位置を挿入します。
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=現在の位置を Julia の値として挿入します。\n4D モードの場合、ベクトルは 4D 回転の値に従って回転されます。
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=内側
+;Inside
+InsideColor=内側の色
+;Inside color
+InsideRender=内側レンダー
+;Inside render
+Int=強度:
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower: 底を整数乗します。高速です。 }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=強度:
+;Intensity:
+IntensityOfImage=画像の強度
+;Intensity of image
+InterfaceLanguage=インターフェース言語
+;Interface language
+InterfaceLanguageClickToChange=インターフェース言語: {} (クリックで変更)
+;Interface language: {} (click to change)
+InterfaceLanguageColon=インターフェース言語:
+;Interface language:
+InterfaceSize=インターフェースのサイズ:
+;Interface size:
+Internal=内部
+;Internal
+Interpolate=補間
+;Interpolate
+InterpolateANewKeyframeInBetween=間に補間した新しいキーフレームを作ります。
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=Zバッファを反転
+;Invert ZBuffer
+Iridescence=虹色:
+;Iridescence:
+Iridescence0To1TheColours=虹色 (0 から 1): 見る角度で変わる薄膜の色と、そのずれ (0 から 1)
+;Iridescence (0 to 1): the colours of a thin film, changing with the angle of view, and their shift (0 to 1)
+IsNotAValidFloatingPoint='{}' は有効な浮動小数点数ではありません
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue='{}' は有効な整数ではありません
+;'{}' is not a valid integer value
+Iteration=反復
+;Iteration
+IterationCount=変更
+;Iteration Count
+Iterationcount=反復回数
+;Iterationcount
+Iterations=反復回数:
+;Iterations:
+ItsForFree=無料です!
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=JITコンパイル式
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=JPEG の品質またはサイズ
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=JPGは、メインウィンドウ上部に表示されている\n現在の品質設定を使います。
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=ジョブ
+;Job
+Jobs=ジョブ:
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=JPEG品質:
+;Jpeg quality:
+JpgQ=jpg 品質:
+;jpg q.:
+JuliaMode=Juliaモード
+;Julia mode
+JuliaMode2=変更
+;Julia Mode
+JuliaOff=Julia オフ
+;Julia Off
+JuliaOn=Julia オン
+;Julia On
+JuliaValuesXYZ=Julia値 (x,y,z):
+;Julia values (x,y,z):
+KeepAspect=縦横比を維持
+;keep aspect
+KeepLights=ライトを維持
+;Keep lights
+KeepOnlyNearerParts=近い部分のみ保持:
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=幅または高さを手動で変更するときに縦横比を維持します。\n縦横比ボタンを押す場合はオフにする必要はありません。
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=新しい行が来ても最新の行を表示し続けます
+;Keep the newest line in sight as new ones come
+KeepThisPriority=この優先度を維持
+;Keep this priority
+KeepsTheChosenLanguageForThe=選んだ言語を次回の起動時にも保持します。
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=次回の起動のためにホットキーを保存します
+;Keeps the hotkeys for the next start
+Keyframe=キーフレーム:
+;keyframe:
+Keyframe2=キーフレーム {}
+;Keyframe {}
+KeyframeListM3k=キーフレームリスト (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\sキーフレーム\n開始:    終了:
+;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=メインウィンドウの視点から、画面中央の周りを一周するキーフレーム: 滑らかなループの 8 キーフレーム (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeysThatBringAWindowTo=どのウィンドウからでもウィンドウを前面に出すキー
+;Keys that bring a window to the front from any window
+Kind=種類
+;Kind
+LGamma05=L-Gamma:  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=ライトストローク
+;LIGHT STROKES
+LMBMoveRMBRotate=左ボタン: 移動           右ボタン: 回転
+;LMB: move           RMB: rotate
+LastLengthIncrease=最後の長さの増加
+;Last length increase
+LastPass=\s· 前回のパス {}
+;\s· last pass {}
+Layer=層:
+;Layer:
+LeftclickGoIntoMouseModeView=左クリック: マウスモードに入ります。マウスで視点を動かし、右ボタンも押すとロールします。\n(もう一度左クリックするか ESC でマウスモードを終了します)
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=左クリック:   視点の X 軸を中心に Y 中心+Z 中心の値でバルブを回転\n右クリック: オブジェクトの X 軸を中心に 0 で回転
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=左クリック:   視点の Y 軸を中心に X 中心+Z 中心の値でバルブを回転\n右クリック: オブジェクトの Y 軸を中心に 0 で回転
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=左クリック:   視点の Z 軸を中心に X 中心+Y 中心の値でバルブを回転\n右クリック: オブジェクトの Z 軸を中心に 0 で回転
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=左クリック:   元に戻す -> ライトパラメータを最後の描画前の状態に戻します。\n右クリック: やり直し
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=左クリック:   元に戻す -> パラメーターを最後の計算前の状態に戻します\n右クリック: やり直し
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=しきい値によりアンビエントシャドウを 0 まで減衰させます。\n遠くの構造が近くの構造から受ける影響が少なくなります。
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=レベル
+;Level
+Light=ライト
+;Light
+Light1=ライト 1
+;Light 1
+Light12=ライト1
+;Light1
+Light2=ライト 2
+;Light 2
+Light22=ライト2
+;Light2
+Light3=ライト 3
+;Light 3
+Light32=ライト3
+;Light3
+Light4=ライト 4
+;Light 4
+Light42=ライト4
+;Light4
+Light5=ライト 5
+;Light 5
+Light52=ライト5
+;Light5
+Light6=ライト 6
+;Light 6
+Light62=ライト6
+;Light6
+LightAmplitudeUseExponentStyleLike=ライトの振幅です。次のような指数表記を使います:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=ライトの色です。クリックして新しい色を選択します。
+;Light color, press to select a new one.
+LightScattering=光の散乱:
+;Light scattering:
+LightScatteringInsideTheMaterial=素材内部の光の散乱です。
+;Light scattering inside the material
+LightXangle=ライト X角
+;Light Xangle
+LightYangle=ライト Y角
+;Light Yangle
+Lighting=ライティング
+;Lighting
+LightingColon=ライティング:
+;Lighting:
+Lightmap=ライトマップ
+;Lightmap
+Lightness=明るさ
+;Lightness
+LikeANaNAnInfinityDouble=// NaN と同様に、無限大の double 値は指数部が 7FF ですが、
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// 無限大と同様に、NaN の double 値は指数部が 7FF ですが、NaN の
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=線形
+;Linear
+LinearAttenuation=線形減衰
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=間にキーフレームを線形補間
+;Linear interpolate a keyframe inbetween
+LinearStraightFromKeyframeToKeyframe=リニア: キーフレームからキーフレームへ直線的に。2 次ベジェ (MB3D): なめらかで、キーフレームの脇を通ります。Catmull-Rom (MB3D にはありません): なめらかで、すべてのキーフレームを通ります。カーブ ボタンで違いが見えます
+;Linear: straight from keyframe to keyframe. Quadratic Bezier (MB3D): smooth, passing beside the keyframes. Catmull-Rom (not in MB3D): smooth and through every keyframe. The Curves button shows the difference
+Lines={} 行
+;{} lines
+List=リスト
+;List
+LliMultiplier=Lli 倍率:
+;Lli multiplier:
+Load=読み込み
+;Load
+LoadANewFormulaFile=新しい数式ファイルを読み込みます
+;Load a new formula file
+LoadBtrace2=btrace2を読み込み...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=別の式(例えばコンパイルできなかった式)からコードを読み込みます。
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=m3pを読み込み...
+;Load m3p...
+LoadMesh=メッシュを読み込み
+;Load mesh
+LoadParameters=パラメータを読み込む
+;Load parameters
+LoadSettingsFromBtrace2File=*.btrace2ファイルから設定を読み込みます。
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=パラメータをメインウィンドウに読み込むか、ファイルを開きます
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=選択したレンダリングのパラメータを読み込み、計算を続けます
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=選択したレンダリングのパラメータだけを読み込みます
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=読み込み/保存の初期フォルダ
+;Loading and saving initial directories
+Log=ログ
+;Log
+LogEverythingTheProgramDidIts=ログ: プログラムが行ったすべてのこと、警告とエラー (クリックで表示)
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ 対数関数 }
+;{ Logarithmic functions }
+LongerMarchSteps1Off1=レイマーチのステップを長くします: 1 = オフ、1.2～1.5。1.3 で 5～10 % 速くなります。薄い殻に穴が見えることがあります。
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=シーンに動的フォグもボリュメトリックライトもないとき、何もない空間を長いステップで進みます (「解析的 DE を無効化」と一緒には使われません)。
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
+LongerThanUsualStillWorking=いつもより時間がかかっています。処理を続けています
+;longer than usual, still working
+LookIn=場所(&I):
+;Look &in:
+Looking=視線
+;Looking
+LookingRollingAngle=視線+ロールの角度:
+;Looking+Rolling angle:
+Loop=ループ
+;Loop
+LoopAnimation=ループアニメーション
+;Loop animation
+Lower=低
+;Lower
+Lowest=最低
+;Lowest
+M3AAnimationFiles=M3A アニメーションファイル:
+;M3A animation files:
+M3CPathtracerFiles=M3C パストレーサーファイル:
+;M3C pathtracer files:
+M3DAnimationM3a=M3D アニメーション (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=M3D 大判レンダリングプロジェクト (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=M3D 数式 (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=M3D 画像 + パラメータ (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=M3D ライトパラメータ (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=M3D モンテカルロファイル (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=M3D パラメータ (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=M3D ボクセルプロジェクト (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=M3F 数式ファイルの読み込み:
+;M3F formula files load:
+M3IDone=M3I 完了
+;M3I done
+M3ILightParameter=M3I ライトパラメータ:
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=M3Iにレンダリングする M3P ファイル
+;M3P files that should be rendered to M3I
+M3PParameterFiles=M3P パラメータファイル:
+;M3P parameter files:
+M3VPNGVoxelSlices=M3V, PNG ボクセルスライス:
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=MB3D 画像 (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=M.C.バッチレンダリング
+;M.C. batch render
+MMBWheelZoom=中ボタン/ホイール: ズーム
+;MMB/Wheel: zoom
+MRelObj=マップをObj基準
+;M.rel.obj.
+MainCalcTime=メイン計算時間:
+;Main calc time:
+MainParas=メインパラメータ
+;main paras
+MainRendering=メインレンダリング
+;main rendering
+MainRenderingOfTheImage=画像のメインレンダリング
+;Main rendering of the image
+MainWindow=メインウィンドウ:
+;Main window:
+MakeAnImageSelectionWithThe=マウスで画像内に選択範囲を作り、その範囲を現在のパラメータで\n再計算します。\n選択されていればハードシャドウと DEAO も計算されますが、\nその他のアンビエントシャドウは画像全体で再計算する必要があります。\n「Z-buffer上の法線」も、以前に計算していた場合は再計算が必要です。
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=非ブレンドモードでライトが減算されないようにします。
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=ハードシャドウとアンビエントシャドウを考慮したい場合は、\nそれらの「自動的に計算」オプションが設定されていることを確認してください。
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=その画像のライトを暖かくして、もう一度レンダリングして。
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=アンビエントと背景の色の上下グラデーションを\nオブジェクトの座標系基準にします。\nアニメーションでライトをシーンに固定するために使います。
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=そのバリエーションを 3 つ作って、どれが一番いいか教えて。
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=反射を少し拡散させます。値の範囲は0から2.5です
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=動画を作成しています...
+;Making the video...
+MapNotFound=マップが\nありません
+;Map not\nfound
+MapNumber=マップ番号です。
+;Map number
+MapNumber2=マップ番号:
+;Map Number:
+MapNumberColon=マップ番号:
+;Map number:
+MapOnOutputVector=出力ベクトルにマップ
+;Map on output vector
+MapSequences=マップシーケンス
+;Map Sequences
+MapType=マップの種類:
+;Map Type:
+Material=マテリアル
+;Material
+Max=Max
+;Max
+MaxIterat=最大反復:
+;Max. Iterat.:
+MaxIterations=最大反復回数:
+;Max. iterations:
+MaxIterationsColon=最大反復回数:
+;Max iterations:
+MaxIts=最大反復:
+;Max its.:
+MaxL=最大長:
+;MaxL:
+MaxLengthCalc=最大計算長:
+;Max. length calc.:
+MaxNoise=最大ノイズ:
+;Max noise:
+MaxRayCount=最大レイ数:
+;Max ray count:
+MaxRaycount=最大レイ数:
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue: データ配列の中で最大の符号付き値を返します (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=最大頂点数:
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=ハイブリッド第 2 部の最大反復回数。このウィンドウ上部で指定した数式番号から始まります。
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=最大反復回数
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=プレビューに表示する頂点の最大数です。
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=ハイブリッド第1部の最大反復:
+;Maxits hybrid part1:
+MaxitsHybridPart2=ハイブリッド第2部の最大反復:
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=オブジェクト表面の鋭さ/滑らかさの度合いです。0.15 .. 1.5 の範囲の値を試してください。まれに -0.1 のような小さな負の値でも興味深い結果が得られます。
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=必要メモリ:
+;Mem needed:
+Memory=メモリ
+;Memory
+Mesh=メッシュ
+;mesh
+MeshObj=メッシュ (*.obj)
+;Mesh (*.obj)
+MeshPly=メッシュ (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=MeshPreviewFrm
+;MeshPreviewFrm
+MeshProperties=メッシュのプロパティ
+;Mesh properties
+MeshSavedVerticesFaces=メッシュを保存しました: {} (頂点 {}、面 {})
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=uv座標付きメッシュ (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=頂点カラー付きメッシュ (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=メッシュ:
+;Meshes:
+Meshes2=メッシュ
+;Meshes
+Messages=メッセージ
+;Messages
+Mid=中
+;mid
+Min=Min
+;Min
+MinDE=MinDE:
+;MinDE:
+MinDistance=最小距離:
+;Min distance:
+MinIterat=最小反復:
+;Min. Iterat.:
+MinIterations=最小反復回数:
+;Min. iterations:
+MinIts=最小反復:
+;Min its.:
+MinLeft=残り {} 分
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=最小
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft=残り {} 分 {} 秒
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue: データ配列の中で最小の符号付き値を返します (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=最小距離:
+;Minimal distance:
+Misc=その他:
+;Misc:
+MiscellaneousRoutines={ その他のルーチン }
+;{ Miscellaneous Routines }
+Missing=見つかりません
+;missing
+MissingBTR123Header=<BTR1/2/3> ヘッダーがありません
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=改変:
+;Mod:
+Mode=モード:
+;Mode:
+Mode2=モード 2
+;Mode 2
+ModeFor2ColorChoice=2 番目の色選択モード:
+;Mode for 2. color choice:
+MonteCarlo=モンテカルロ:
+;Monte Carlo:
+MonteCarlo2=モンテカルロ
+;Monte Carlo
+MonteCarlo3=モンテカルロ: {}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=モンテカルロの計算環境: {}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=モンテカルロレンダリング
+;Monte Carlo rendering
+MonteCarloRendering2=モンテカルロレンダリング\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=その他の設定: パラメータをメインへ送り、調整して取り込みます。
+;More options: send paras to main, adjust and import.
+MotionBlur=ブラー:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=モーションブラー: 各フレームで平均する画像の数。動くものがぶれます (1 = オフ)。レンダリングにはその倍数の時間がかかります
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
+Mousewheel=マウスホイール
+;Mousewheel
+Move=移動
+;Move
+MoveBackwards=後ろへ移動します。
+;Move backwards
+MoveDown=下へ移動します。
+;Move down
+MoveForward=前へ移動します。
+;Move forward
+MoveLeft=左へ移動します。
+;Move left
+MoveRight=右へ移動します。
+;Move right
+MoveUp=上へ移動します。
+;Move up
+MultiplierForTheLastLengthIncrease=「最後の長さの増加」オプションの倍率です。\n高いべき乗では値を下げ、スケールの小さい式では値を上げてください。
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=最初のステップ幅に乱数を掛けて、\nオーバーステップのアーティファクトをノイズ状にします。  \nダイナミックフォグのバンディングも軽減します。\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen: {}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [画像をダブルクリックまたは「変異!」ボタンで変異、右クリックでメニュー]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=変異
+;Mutate
+MutateExclamation=変異!
+;Mutate!
+Mutation=変異 {}
+;Mutation {}
+MutationType=変異の種類
+;Mutation type
+N0No255FullTransparency=0: なし、255: 完全に透明
+;0: no, 255: Full transparency
+N0To1DarkerCorners=0 から 1: 四隅を暗く
+;0 to 1: darker corners
+N0To1RedAndBlue=0 から 1: レンズのように四隅に向かって赤と青の色ずれ
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
+N1100JPEGQuality100Maximal=1..100: JPEG 品質\n> 100: 最大ファイルサイズ (キロバイト)
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=16 ビット PGM
+;16 Bit PGM
+N16BitZBufferGenerator=16ビットZバッファ生成
+;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 寒色 (青寄り) から 1 暖色 (オレンジ寄り)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 平坦から 1 強いコントラスト
+;-1 flatter to 1 stronger contrast
+N1FullSizeNoAntiAliasing=1:  フルサイズ、アンチエイリアスなし\n2:  2x2 アンチエイリアス\n3:  3x3 アンチエイリアス
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  なし\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=第2選択
+;2. choice
+N2Or3PassesGivesA=2 または 3 パスにすると、焦点の手前の強いぼかしがより良くなります。\n1 パスでは円形のボケになり、パスを増やすとガウス状のボケになります。
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=第2反射
+;2nd reflection
+N360Panorama=360 パノラマ
+;360 Panorama
+N3DAnalyticFormula=3D解析的数式
+;3D analytic formula
+N3DFormula=3D数式
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=4D解析的数式
+;4D analytic formula
+N4DFormula=4D数式
+;4D formula
+N4DRotationOfTheWholeBulb=バルブ全体の 4D 回転:
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=4D回転 (xw,yw,zw):\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=8 ビット PNG
+;8 Bit PNG
+Name=名前:
+;Name:
+Name2=名前
+;Name
+NamedParams=名前付きパラメータ:
+;Named Params:
+NaviExpBright=実際の明るさ
+;True brightness
+NaviExpBrightHint=計算されたとおりの画像を表示します：明るさスライダーは適用されません。
+;Shows the picture as calculated: the brightness slider is not applied.
+NaviExpDetail=メインウィンドウの精細度
+;Main window's detail
+NaviExpDetailHint=ナビゲーターの高速設定の代わりに、メインウィンドウのレイステップ、DEストップ、二分探索ステップで計算します。\n遅くなりますが、表面の細部がメイン画像と同じに見えます。
+;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
+NaviExpLight=メインウィンドウのライティング
+;Main window's lighting
+NaviExpLightHint=メインウィンドウのライティングを使い、ライティングウィンドウでの変更に追従します。\nここでライトプリセットや動的フォグを選ぶとオフになります。
+;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExperimental=実験的：メインウィンドウに合わせる
+;Experimental: match the main window
+Navigator=ナビゲーター
+;Navigator
+Navigator2=ナビゲーター: {}
+;Navigator: {}
+NavigatorColon=ナビゲーター:
+;Navigator:
+NavigatorSize=ナビゲーターのサイズ
+;Navigator Size
+NavigatorViewSentToTheMain=ナビゲーターの視点をメインウィンドウに送りました。「3D計算」を押してください。
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=ニューラルノイズフィルター: {}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=ニューラルノイズフィルター: 完了
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=表示中の画像にニューラルノイズフィルターをかけます (Intel Open Image Denoise)。\nレンダリング自体は変わりません。次の更新でフィルターなしの画像に戻ります。
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=新規
+;new
+NewJITCompiledFormula=新しい JIT コンパイル数式
+;New JIT-compiled Formula
+NewSequence=新規シーケンス
+;New Sequence
+NewValue=新しい値:
+;New value:
+NewZoom=新しいズーム:
+;New zoom:
+No=なし
+;no
+No2=いいえ
+;No
+NoDoFOnTiles=タイルでは DoF を使用できません。
+;No DoF on tiles.
+NoFacesInTheFile=ファイルに面がありません
+;no faces in the file
+NoFileAdded=ファイルが追加されていません
+;No file added
+NoFramesToRenderInThis=この範囲にはレンダリングするフレームがありません。
+;No frames to render in this range.
+NoImageCalculatedYet=まだ画像が計算されていません。
+;No image calculated yet.
+NoIpol=補間なし
+;No ipol
+NoLightParameters={}: ライトパラメータがありません
+;{}: no light parameters
+NoObjectAtThisPoint=この位置にはオブジェクトがありません。
+;No object at this point.
+NoParameters=パラメータなし
+;no parameters
+NoParamsToSendToMain=メインエディターに送るパラメータがありません
+;No params to send to main editor
+NoPreview=プレビューなし: {}
+;No preview: {}
+NoPreviewForThisFile=このファイルにはプレビューがありません。
+;No preview for this file.
+NoSOURCESectionThisIsNot={}: [SOURCE] セクションがありません。JIT 数式ではありません
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=共有フォルダが選ばれていません
+;no shared folder chosen
+NoStepLimitWithoutDynamicFog=動的フォグがなければステップ数の上限なし
+;No step limit without dynamic fog
+NoTextParametersFoundInThe=クリップボードにテキストパラメータが見つかりません。
+;No text parameters found in the clipboard.
+NoTilesToRender=レンダリングするタイルがありません。
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\s有効なテキストが見つかりません。下にテキストを入力してください:
+;\sNo valid text found, please enter the text below:
+Noise=-ノイズ
+;-noise
+NoiseAI=-ノイズAI
+;-noise AI
+NoiseFilter=\sノイズフィルタ
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=表示中の画像にノイズフィルタをかけます(GIMPの「DCTノイズ除去」と同じDCTデノイズ)。\n強さはレイ数から推定されます。レンダリング自体は変更されません。\n次の更新では再びフィルタなしで表示されます。
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=ノイズフィルター: 強さ {}
+;Noise filter: strength {}
+None=なし
+;none
+Normal=通常
+;Normal
+NormalStatusForThisFormula=この数式を通常状態にする
+;Normal status for this formula
+NormalsOnDE=DE 上の法線:
+;Normals on DE:
+NormalsOnZBuf=Zバッファ上の法線
+;Normals on ZBuf
+NormalsOnZBuffer=\sZ-buffer上の法線
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=Zバッファ上の法線:
+;Normals on ZBuffer:
+Norms=norms
+;norms
+NotABigRenderProject=大判レンダリングのプロジェクトではありません
+;not a big render project
+NotAvailableForLinuxUseClaude=Linux 版はありません: 下の Claude Code を使ってください。
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=見つかりません。使う場合は、ターミナルでこのコマンドを一度実行してください:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=インストールされていません。claude.ai/download から入手し、一度起動してから、ここに戻ってください。
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=未選択
+;Not selected
+NotSharingTickShareThisComputer=共有していません: 他のコンピュータと一緒にレンダリングするには「このコンピュータを共有」をオンにしてください
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=共有していません: {} と一緒にレンダリングするには「このコンピュータを共有」をオンにしてください
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=注: 頂点カラーをプレビューするには、プレビューウィンドウで点モードを選んでください
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}: まだ何もレンダリングされていません
+;{}: nothing rendered yet
+NothingToSave=保存するものがありません
+;nothing to save
+NumberOfFramesToNextKeyframe=次のキーフレームまでのフレーム数です。
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=計算するレイの数です。\n多いほど良くなりますが、当然遅くなります。
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=OK
+;OK
+Object=オブジェクト
+;Object
+ObjectColors=オブジェクトの色
+;Object colors
+ObjectDetermination=オブジェクトの判定:
+;Object determination:
+Of={} / {}
+;{} of {}
+OfEntries={} / {} 件
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=ファイルが同じ項目 (同じパラメータを再計算、同じ画像を 2 回保存) は最新のものだけ
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=パラメータ変更
+;of Formulas
+OfLines={} / {} 行
+;{} of {} lines
+OfUnitsDone={} / {} ユニット完了
+;{} of {} units done
+Off=オフ
+;Off
+OffLeftImageIsOnThe=オフ: 平行法用に左の画像が左側。オン: 交差法用に右の画像が左側。
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=オフ（最小のファイル）
+;Off (smallest file)
+OffsetAndScale=オフセットとスケール
+;Offset and scale
+OffsetX=オフセット X:
+;Offset X:
+OffsetY=オフセット Y:
+;Offset Y:
+OjectColorsOnCutsAnd2d=断面と 2D 内部のオブジェクト色です。クリックして変更します。
+;Oject colors on cuts and 2d inside, click to change them.
+On=オン
+;On
+OnInsertingANewKeyframe=新しいキーフレームの挿入時:
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=焦点は1つのみ。Zsharp1+2の平均から作られます!
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=画像として保持されるのは通常の画像だけです (モンテカルロレンダリング、ボクセルやメッシュの書き出しは対象外)。
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=ライトを加算のみ
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=タイリングモードでは DEAO アンビエントシャドウのみ使用できます。\nDEAO を選択し 33 レイに設定しました。必要に応じて変更してください。
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=dIFSのみ
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=(ハードシャドウが計算済みの場合のみ)
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=1 種類のイベントだけ
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=名前、フォルダ、種類にこの文字列を含む項目だけ
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=これらの語を含む行だけ
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=現在のキーフレームのみに適用
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=計算時に「スムーズ法線」が 0 より大きく設定されていた場合のみ機能します。
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=開く
+;Open
+Open2=開く(&O)
+;&Open
+OpenAM3cFile=m3cファイルを開きます
+;Open a m3c file
+OpenAVoxelProject=ボクセルプロジェクトを開きます
+;Open a voxel project
+OpenAnAnimationParameterFile=アニメーションパラメータファイルを開きます。
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=調整パネルを開閉します。
+;open/close adjustment panel
+OpenCloseBatchPanel=バッチパネルを開く/閉じる
+;open/close batch panel
+OpenCloseParameterPanel=パラメータパネルを開閉します。
+;open/close parameter panel
+OpenExplorer=エクスプローラーを開く
+;Open explorer
+OpenFiles=ファイルを開く
+;Open files
+OpenFolder=フォルダを開く
+;Open folder
+OpenFullLightAndColorParameter=ライトと色の全パラメータを開きます。
+;Open full light and color parameter
+OpenFullM3I=完全な M3I を開きます
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=最終メッシュのOpenGLプレビュー
+;OpenGL preview of final mesh
+OpenLogFolder=ログフォルダを開く
+;Open log folder
+OpenM3i=m3i を開く
+;Open m3i
+OpenM3p=m3p を開く
+;Open m3p
+OpenM3pSequence=*.m3p連番を開く
+;Open *.m3p-sequence
+OpenParameter=パラメーターを開きます
+;Open parameter
+OpenParameterFromClipboardTextSelect=クリップボードのテキストからパラメーターを開きます:\n'Mandel...{..}' を含むパラメーターテキストを選択し、\nctrl+c を押してからこのボタンを押します。
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=プロジェクトを開く
+;Open project
+OpenTextParameters=テキストパラメータを開く
+;Open text parameters
+OpenTheAnimationMaker=アニメーションメーカーを開きます
+;Open the animation maker
+OpenTheFolderOfTheFile=ファイルのフォルダを開きます
+;Open the folder of the file
+OpenTheFolderOfTheLog=ログファイルのフォルダを開きます (1 日 1 ファイル、30 日間保持)
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=MutaGen を開きます
+;Open the MutaGen
+OpenTheNavigator=ナビゲーターを開きます
+;Open the Navigator
+Opened=開いた
+;opened
+OpensTheFolderOfTheLanguage=言語ファイルのフォルダを開きます。
+;Opens the folder of the language files
+OperationCancelled=操作をキャンセルしました
+;Operation cancelled
+Option=オプション
+;Option
+OptionToCalculateOnlyAPart=高速なプレビューのために画像の一部だけを計算するオプションです。\n計算前にマウスで画像内に選択範囲を作ってください。
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=画像の拡縮率 1:2 または 1:3 に合わせてレイの角度をディザリングするオプションです。\n精度が上がり、斑点状のアーティファクトが減ります。\n注意: 同じ画像拡縮率でのみ使用してください。そうでないとディザアーティファクトが出ます。
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=オプション
+;Options
+OptionsColon=オプション:
+;Options:
+OrMousewheel=(またはマウスホイール)
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// それは最上位の符号ビットで指定されます。
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=オービットトラップ (0 への最小距離)
+;Orbit trap (mindist. to 0)
+Orig=原作:
+;Orig:
+OriginalParameterSizeWidthHeight=元のパラメータのサイズ(幅、高さ):
+;Original parameter size (width, height):
+OtherFiles=その他のファイル
+;Other files
+OutputFile=出力ファイル:
+;Output file:
+OutputFolder=出力フォルダ:
+;Output folder:
+OutputFolder2=出力フォルダ
+;Output folder
+OutputFormat=出力形式:
+;Output format:
+OutputImageType=出力画像の形式:
+;Output image type:
+Outside=外側
+;Outside
+OutsideRender=外側レンダー
+;Outside render
+OutsideRenderDefaultModeInsideRender=外側レンダー:  既定モード\n内側レンダー:    最大反復回数で内側を低速にレイマーチング\n内側と外側:   両側をレンダー
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=全体スケール:
+;Overall scale:
+OverwriteExistingImages=既存の画像を上書き
+;Overwrite existing images
+OverwriteExistingM3IFiles=既存の M3I ファイルを上書き
+;Overwrite existing M3I files
+PGM16BitPgm=PGM 16 ビット (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG 16 ビットカラー (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG 16 ビット (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=背景が透明な PNG フレームにします。
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG 透明背景 (*.png)
+;PNG transparent background (*.png)
+PaintClouds=雲を描く
+;Paint clouds
+PaintNow=今すぐ描く
+;Paint now
+PaintOnImage=画像に描画
+;Paint on image
+PaintingAPreview=プレビューを描画中
+;painting a preview
+PaintsThePictureAgainWithThe=ここで設定した雲で画像を描き直します
+;Paints the picture again with the clouds as set here
+Pano=パノラマ
+;pano.
+PanoramaModeTheFOVIsChoosen=パノラマモード:\n- FOV は自動的に選ばれます\n- 環境シャドウには 24bit SSAO または DEAO を使ってください\n- 2:1 のアスペクト比を推奨しますが、必須ではありません。
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=パラメータ
+;Param
+ParamNameMustNotBeEmpty=パラメータ名を空にすることはできません
+;Param name must not be empty
+Parameter=パラメータ
+;Parameter
+Parameters=パラメータ
+;Parameters
+ParametersCopiedToTheClipboard=パラメータをクリップボードにコピーしました。
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=パラメータを読み込みました。「3D計算」を押すとレンダリングします。
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=パラメータを読み込みました: このレンダリングは作成された場所 (コマンドラインまたはそのウィンドウ) で続行されます。
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=パラメータ
+;parameters
+ParametersMandId=パラメータ: MandId {}
+;Parameters: MandId {}
+Part2At=パート 2 の位置:
+;Part 2 at:
+Pass=パス {}
+;pass {}
+Passes=パス数
+;Passes
+PauseRendering=レンダリングを一時停止
+;Pause rendering
+PausedPressToContinue=一時停止中。押すと再開します
+;Paused, press to continue
+PercentOfLocalDE=局所DEに対する割合 (%) です。
+;Percent of local DE
+Picture=画像
+;picture
+Pictures=画像
+;pictures
+PicturesAndFilesTheAssistantMakes=アシスタントが作った画像とファイルは {} に保存され、何も削除されません。4K より大きい画像はあなたの同意があったときだけ作られ、計算は 10 分で止まります。アシスタントの操作はすべてログに残ります。
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=ピクセル。大きいほど細部が残り、ファイルも大きくなります
+;pixels; larger keeps more detail and makes a larger file
+PleaseChooseAnOutputFile=出力ファイルを選んでください。
+;Please choose an output file.
+PleaseMakeASelectionInThe=先に画像内で範囲を選択してください。
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=先にプロジェクトを保存してください。
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=先にライトを選択してください。  ライトマップには HS を使えません。
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=png パラ:
+;png par:
+Points=点
+;Points
+PointsColor=点の色
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=位置
+;Position
+PositionX=位置 X
+;Position X
+PositionY=位置 Y
+;Position Y
+PositionZ=位置 Z
+;Position Z
+PositionalLight=位置ライト
+;Positional light
+PostCalculations=後処理の計算
+;post calculations
+PostProcessing=ポストプロセス
+;Post processing
+PostProcessingColon=ポストプロセス:
+;Post processing:
+PostProcessingLower=ポストプロセス
+;post processing
+Postprocess=ポストプロセス
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power: 底を任意の数で累乗します。
+;{ Power: Raise base to any power.
+Prefs=環境設定
+;Prefs
+PreprocessedCode=前処理後のコード
+;Preprocessed code
+PresetFlower=プリセット <花>
+;preset <flower>
+PresetMetallic=プリセット <金属>
+;preset <metallic>
+PresetNeutral=プリセット <ニュートラル>
+;preset <neutral>
+PresetSand=プリセット <砂>
+;preset <sand>
+PresetSlime=プリセット <スライム>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=ボタンを押した後、画像内でシャープにしたい\nオブジェクトの部分をクリックします。
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=「3D計算」を押すとレンダリングします
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=「レンダリング開始」を押すと画像を計算します
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=このボタンを押してからプリセット1〜3を押すと、現在のナビゲーターのライトを保存します。\n2回クリックすると保存を取り消します。
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=押すと数式ウィンドウを開きます\n右クリックで固定オプション。
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=押すとライト+色調整ウィンドウを開きます。\n右クリックで固定オプション。
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=押すとポストプロセスウィンドウを開きます。\n右クリックで固定オプション。
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=押すと、反復回数によるダイナミックフォグとライト番号によるボリュームライトを切り替えます
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=押すと現在の距離を、前進時のオブジェクトへの最小距離として設定します。
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar=「0」(ゼロ) を押すとトラックバーがゼロ位置に戻ります。
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=マウスカーソルを時々少し動かして、\nコンピューターのシャットダウンを防ぎます。
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=プレビュー
+;preview
+Preview2=プレビュー
+;Preview
+PreviewMaxSize=プレビュー最大サイズ:
+;Preview max size:
+PreviewSize=プレビューサイズ:
+;Preview size:
+Probability=確率
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=一括処理
+;Processings
+Processor=プロセッサ
+;processor
+Program=プログラム
+;Program
+ProgramOutput=プログラムの出力
+;Program output
+Progress=進行状況
+;Progress
+Project=プロジェクト:  {}
+;Project:  {}
+Project2=プロジェクト: {}
+;Project: {}
+ProjectNew=プロジェクト:  (新規)
+;Project:  (new)
+PushDownTo2DZoomIn=押し込むと、画像の左 (右) クリックで 2D ズームイン (アウト)、\nまたはズームイン領域をドラッグで指定できます。
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=押し込むと、マウスでオブジェクトを Z 方向に移動できます。
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=押し込むと、マウスでオブジェクトを X,Y 方向に移動できます。
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=ボタンを押すと、選択したライトのハードシャドウを計算します。\n一度計算すれば、ライトの角度や位置を変更しない限り\nハードシャドウを再計算する必要はありません。
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=押すと 3D ベクトルの長さを 1 に正規化します。\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=調整したJulia値をメインプログラムのパラメータに入れます。
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=調整した値をメインプログラムのパラメータに入れます。
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=全キーフレームに値を適用
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=調整したこの値をメインプログラムのパラメータに入れます。
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=二次減衰
+;Quadratic Attenuation
+QuadraticBezier=2次ベジェ
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=専用の ini フォルダに保存されている\nライトパラメータファイルをすばやく読み込みます。
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=クイック品質設定
+;Quick quality settings
+RBailout=R バイルアウト:
+;R bailout:
+Radius=半径:
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG は平均値のまわりにガウス分布する乱数を生成します。
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=ランダム
+;Random
+RandomMultiplier=ランダムの倍率です。
+;Random multiplier
+Range=範囲
+;Range
+RawValuesMappedValuesClampedValues=生の値:\n  {}..\n  {}\n対応付けた値:\n  {}..\n  {}\n制限した値:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=レイ数:
+;Rays:
+RaystepDivisor=レイステップ除数:
+;Raystep divisor:
+RaystepMultiplier=レイステップ倍率:
+;Raystep multiplier:
+RaystepSubDEstop=レイステップから DEstop を減算:
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=履歴を読み込んでいます... {} 件
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=言語ファイルを編集した後に、もう一度読み込みます。
+;Reads the language files again, after you edited one
+Rec=録画
+;Rec
+RecalculateASelection=\s選択範囲の再計算
+;\sRecalculate a Selection
+RecalculatingTheSelection=選択範囲を再計算中
+;recalculating the selection
+RecordedSKeyframesOfTheFlight=飛行のキーフレームを {} 個記録しました
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=飛行を記録: ボタンが押されている間、ナビゲーターの新しい視点 (最大で毎秒 2 回) がアニメーションの次のキーフレームになります
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
+Rect=矩形
+;Rect
+RectLower=直線
+;rect.
+Rectilinear=直線的
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=ブロック状のアーティファクトを減らします。スプライン補間のため、現在はあまり重要ではありません。
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=オーバーステップを避けるためレイステップ倍率を下げます。\nレンダリングは遅くなります。
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=拡散色の基準です。
+;Reference for diffuse colors
+ReferenceForSpecularColors=スペキュラ色の基準です。
+;Reference for specular colors
+ReflectionDiffusity=反射の拡散度:
+;Reflection diffusity:
+ReflectionRaysDepth=反射レイの深さ:
+;Reflection rays depth:
+Reflections=反射
+;Reflections
+ReflectionsLower=反射
+;reflections
+ReflectionsMustBeCalculatedTooElse=反射も計算する必要があります。そうでなければ効果はありません
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=選択範囲の反射
+;reflections of the selection
+ReflectionsTransparency=\s反射 + 透明
+;\sReflections + Transparency
+ReflectionsTransparency2=反射 + 透明
+;Reflections + Transparency
+ReflectsTime=反射時間:
+;Reflects time:
+RefractiveIndex=屈折率:
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=素材の屈折率です。空気~1 水~1.33 ガラス~1.5 ダイヤモンド~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=更新
+;Refresh
+RelToObject=オブジェクト基準:
+;Rel. to object:
+RelativeToObject=オブジェクト基準
+;Relative to object
+Relief=起伏
+;Relief
+Reload=再読み込み
+;Reload
+RemainingFaces10NoReduction=残す面の割合です (1.0 = 削減なし、0.0 = 最大削減 = 面が残らない)。
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=削除
+;Remove
+RemoveThisFormulaFromTheLocal=この数式をローカルの appdata フォルダーから削除
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=次の行に含まれるタイルをすべてレンダリング:
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=両眼の画像を描画し、保存せずに並列ステレオプレビューを表示します。
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=レンダリング間隔\n   (nフレームごと):
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=最後の画像を 4K でレンダリングして、かかった時間を教えて。
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=次のタイルをレンダリング
+;Render next tile
+RenderOnlyTheLeftEyeImages=「左目」画像のみをレンダリングします。\n以前レンダリングしたアニメーションをステレオに拡張するのに使えます。
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=このファイルインデックスまでレンダリングします。
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=「最左目」画像のみレンダリング
+;Render only 'very left-eye' images
+RenderPreview=プレビューをレンダリング
+;Render preview
+RenderSMB={} 件のレンダリング、{} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=ステレオペアを描画して保存
+;Render && save stereo pair
+RenderStereoAnimation=ステレオアニメーションをレンダリング
+;Render stereo animation
+RenderStereoPair=ステレオペアを描画
+;Render stereo pair
+RenderTheJobsOtherComputersPut=他のコンピュータがフォルダに入れたジョブをレンダリングし、他のコンピュータが参加しているときは、このコンピュータのレンダリング(3D計算、大判レンダリング、モンテカルロ、アニメーション)をスウォームに渡します
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=このタイルをレンダリング
+;Render this tile
+RenderThisTileAgain=このタイルを再レンダリング
+;Render this tile again
+RenderingNow=レンダリング中
+;rendering now
+RenderingSliceOf=スライスをレンダリング中: {} / {}
+;Rendering slice: {} of {}
+RepeatFromHere=ここから繰り返す
+;Repeat from here
+RerenderAllKeyframePreviewImages=全キーフレームのプレビュー画像を再レンダリング
+;Rerender all keyframe preview images
+Reset=リセット
+;reset
+Reset0=0 にリセット
+;Reset 0
+Reset2=リセット
+;Reset
+ResetNow=今リセット
+;Reset now
+ResetOffsetScale=オフセット+スケールをリセット
+;Reset offset+scale
+ResetOffsetScaleRotation=オフセット・スケール・回転をリセット
+;Reset offset+scale+rotation
+ResetPosition=位置をリセット
+;Reset position
+ResetThePositionAndTheRotation=位置と回転を初期値にリセットします。\nボックス系の式では自動的にさらにズームアウトされます。
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=値をリセット
+;Reset value
+ResetValues=値をリセット
+;Reset values
+ResetView=視点をリセット
+;Reset view
+ResetsAPreviousCalculationOfThis=このライトのハードシャドウの以前の計算をリセットします。
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=DoF 効果と反射をリセットします。
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=数式を既定の P8 バルブにリセットします。
+;Resets the formulas to the default P8 bulb.
+Resume=再開
+;Resume
+Retry=再試行
+;Retry
+ReverseTheOrderOfAllKeyframes=全キーフレームの順序を反転
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=タイルを右クリックするとオプションが表示されます
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=(スライダーを右クリックで色を変更。カーソルがスライダー上にあるときのキー操作: (c) 色をコピー、(v) 色を貼り付け、(b) 1色を貼り付け)
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=ロール
+;Rolling
+Root=ルート
+;Root
+Rotate=回転
+;Rotate
+Rotation=回転
+;Rotation
+RotationAngleAroundXAxisIn=x軸周りの回転角度(度)です。
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=y軸周りの回転角度(度)です。
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=z軸周りの回転角度(度)です。
+;Rotation angle around z-axis in degrees
+RotationColon=回転:
+;Rotation:
+RotationX=回転 X:
+;Rotation X:
+RotationY=回転 Y:
+;Rotation Y:
+RotationZ=回転 Z:
+;Rotation Z:
+Rough=粗い
+;Rough
+RoughImage=粗い画像
+;rough image
+Roughness=粗さ
+;Roughness
+RoutAngleOfXY=X, Y の Rout 角
+;Rout angle of X, Y
+RoutAngleOfXZ=X, Z の Rout 角
+;Rout angle of X, Z
+RoutAngleOfYZ=Y, Z の Rout 角
+;Rout angle of Y, Z
+Rows=行
+;Rows
+RowsOfTiles=タイルの行数
+;Rows of tiles
+SLeft=残り {} 秒
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15:    Z-buffer に基づくアンビエントシャドウ。\nSSAO24:    Z-buffer の 24 ビットを使用。\nSSAO24r:   ランダム分布でアーティファクトを低減。\nDEAO:        距離推定に基づくアンビエントシャドウ\n(アニメーションに有利)
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=画像のメインレンダリングを開始します。
+;Sart the main rendering of the image.
+Saturation=彩度
+;Saturation
+Saturation0=彩度:   0\s\s
+;Saturation:   0\s\s
+Save=保存
+;Save
+Save2=保存(&S)
+;&Save
+SaveAM3cFile=m3cファイルを保存します
+;Save a m3c file
+SaveAZBufferImageAs=現在の表示と同じスケールで、Z バッファ画像を BMP または PNG ファイルとして保存します。
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=現在の設定をすべて*.btrace2ファイルとして保存します。
+;Save all current settings as *.btrace2-file
+SaveAs=名前を付けて保存
+;Save As
+SaveAsHeightMap=ハイトマップとして保存
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=MB3Dのmapsフォルダ内にハイトマップとして保存します。
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=画像として保存
+;Save As Image
+SaveAsImageAtTheLocation=指定した場所に画像として保存します。
+;Save as image at the location you specify
+SaveBtrace2=btrace2を保存...
+;Save btrace2...
+SaveCompleteM3I=完全な M3I を保存します
+;Save complete M3I
+SaveExit=保存して終了
+;Save + exit
+SaveFullLightAndColorParameter=ライトと色の全パラメータを保存します。
+;Save full light and color parameter
+SaveImageParameters=画像 + パラメーターを保存します
+;Save image + parameters
+SaveM3i=m3i を保存
+;Save m3i
+SaveM3iFiles=m3iファイルを保存
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=内部画像バッファを含めて m3i ファイルを保存し、反射などを保持します。
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=パラメーターのみを保存します
+;Save parameters only
+SaveParametersToClipboardAsText=パラメーターをテキストとしてクリップボードに保存します。\nその後 ctrl+v で別の場所にテキストを貼り付けられます。
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=画像保存
+;Save pic
+SaveProject=プロジェクトを保存
+;Save project
+SaveTextParametersInThePNG=選択すると、テキストパラメーターを PNG ファイルに保存します。\n例えば gimp の「画像の情報」-> コメントで\n確認できます。
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=アニメーションパラメータを保存します。
+;Save the animation parameters
+SaveTheCodeF5=コードを保存します <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=現在の表示と同じスケールで、画像を BMP または PNG ファイルとして保存します。
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=画像をBMPまたはPNGファイルとして保存します。「Zバッファ付き」オプションが有効な場合は、Z-bufferも一緒に保存されます。
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=現在の表示と同じスケールで、画像を JPEG ファイルとして保存します。
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=更新ごと、かつ5分経過した時点でM3Cファイルを保存します
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=このボクセルプロジェクトを保存します
+;Save this voxel project
+SaveType=保存形式:
+;Save type:
+SaveZBufferPng=Zバッファを保存(png)
+;Save Z buffer (png)
+SaveZBufferToo=Zバッファも保存
+;Save Z buffer too
+Saved=保存日時
+;Saved
+Saved16BitColour={} を保存しました (16 ビットカラー)
+;Saved {} (16 bit colour)
+Saved2={} を保存しました
+;Saved {}
+SavedLower=保存した
+;saved
+SavedOpenEXRFloatingPointColoursAnd={} を保存しました (OpenEXR、浮動小数点カラーとレイヤー)
+;Saved {} (OpenEXR, floating point colours and layers)
+SavedTransparentBackground={} を保存しました (透明背景)
+;Saved {} (transparent background)
+Saving=保存:
+;Saving:
+SavingSucceeded=保存に成功しました
+;Saving succeeded
+Scale=スケール:
+;Scale:
+ScaleClipRadiusDoFAndTheDE=ClipRadius (DoF) と DE stop の値をスケールして、\n詳細レベルと色を維持します。
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=DEstopをスケールして色と詳細度を保つ
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=行を地理投影に合わせて拡縮
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=画像サイズを 2 倍または 1/2 にします。
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=選択した割合で値をスケールします。
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=先頭の数式のスケール値です。DE の精度に影響します
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=計算するアンビエントレイの最大長を拡縮します。\n1 より大きい値は影に深みを与え、\n1 より小さい値はより局所的な影になります。
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=スキャンプレビュー
+;Scan Preview
+ScreenDistance=画面までの距離:
+;Screen distance:
+ScriptEditor=スクリプトエディター
+;Script Editor
+ScrollBy1=1つスクロールします。
+;Scroll by 1
+Search=検索
+;Search
+SecantSearchForTheSurface=セカント法で表面を探索
+;Secant search for the surface
+SecantSearchmode=セカント探索モード:
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=第2の焦点です。第1の焦点と異なる値にすると\n焦点が一点ではなく線になります。\n(物理的にはあまり現実的ではありませんが、あると便利です)\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=メインウィンドウの「カラーリング」タブにあるマップ着色オプションも参照してください。
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=選択(&S)
+;&Select
+SelectThisIfYouWantTo=同名の既存 M3I ファイルを上書きする場合に選択します。\n選択しない場合は、ファイルが上書きされないように名前が変更されます。
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=選択済み
+;Selected
+SelectionRecalculation=選択範囲の再計算
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=調整した数式の値をすべてメインプログラムのパラメータに送ります。
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=数式の値をすべて送る
+;Send all formula values
+SendOnlyThisViewToThe=この視点のみをメインプログラムに送ります。
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=元のパラメータをメインウィンドウへ送る
+;Send original parameter to main window
+SendParameterToMain=パラメータをメインへ送る
+;Send parameter to main
+SendParameterToProgramsMainRender=パラメータをプログラムのメインレンダリングウィンドウへ送ります
+;send parameter to programs main render window
+SendThisParameterToTheMain=このパラメータをメインプログラムに送ります。
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=このプロジェクトの元のパラメータをメインプログラムへ送ります。\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=この視点を、Juliaと数式の変更すべてとともにメインプログラムへ送ります。
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=メインエディタへ送る
+;Send to Main Editor
+SendValue=値を送る
+;Send value
+SendValues=値を送る
+;Send values
+SendingOut=送信:
+;Sending out:
+SessionsAndCrashes=セッションとクラッシュ
+;Sessions and crashes
+Set=設定
+;Set
+SetLightfuncToCosine=ライト関数をコサインに
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=マップの向きをオブジェクト基準にします。\nアニメーションでライトをシーンに固定するために使います。
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=アプリケーションの表示テーマを設定します
+;Set the visual theme of the application
+SetTo0=0に設定
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=シャドウを計算するときに、対応するライト関数を\n自動的にコサインに設定します。\nコサインと二乗コサイン関数はシャドウとよく合います。
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=ビジュアルテーマの設定
+;Setting the Visual Theme
+ShadersCompiling=シェーダーをコンパイル中
+;shaders compiling
+ShadowsAndAO=シャドウと AO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=共有フォルダーを通じて複数のコンピューターでレンダリングを分担します
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=このコンピュータを共有: フォルダのジョブをレンダリングし、自分のジョブをスウォームに渡す
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=共有フォルダ:
+;Shared folder:
+SharingButNoOtherComputerIs=共有中ですが、スウォームに他のコンピュータがまだいません: レンダリングはこのコンピュータだけで行われます
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=共有を停止しました: {}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween={} と共有中: レンダリングは {} 台のコンピュータで分担されます
+;Sharing with {}: renders are split between the {} computers
+Sharp=シャープ:
+;sharp:
+SharpenFactorOfTheSavedOutput=保存する出力画像のシャープ化係数です。\n1:2 と 1:3 の縮小でのみ働きます!\n0: シャープ化なし ... 3: 最大のシャープ化
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=数式 {}～5 を 1 つ右へずらす
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=数式 {}～6 を 1 つ左へずらす
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=左へシフト
+;Shift to the left
+ShiftToTheRight=右へシフト
+;Shift to the right
+Shininess=光沢
+;Shininess
+ShortdistanceCheckDE=近距離 DE チェック:
+;Shortdistance check DE:
+ShouldIStopCalculations=計算を停止しますか?
+;Should i stop calculations?
+Show=表示
+;Show
+ShowCoords=座標を表示
+;Show coords
+ShowFrameNr=フレーム番号を表示
+;Show frame nr
+ShowGuides=ガイドを表示
+;Show guides
+ShowInFolder=フォルダで表示
+;Show in folder
+ShowMeAPreviewOfThe=mb3d で最後にレンダリングした画像のプレビューを見せて。
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=重複を除く
+;Show unique
+ShowsHiddenFormulasRightclickOnA=非表示の数式を表示します。\n数式を右クリックすると状態を変更できます。
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=メッセージを表示します
+;Shows messages
+ShrinkThePanel=パネルを縮小します。
+;Shrink the panel
+Shutter=シャッター:
+;Shutter:
+SinCosIs2xFasterThanCalling={ SinCos は、同じ角度に対して Sin と Cos を別々に呼ぶより2倍速いです }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=シングルクリックでナビモードを切り替え
+;Single click to change the navi mode
+SingleFilenumbering=単一のファイル番号
+;Single filenumbering
+Size=サイズ
+;Size
+Size2=大きさ:
+;Size:
+SizeFactor=サイズ倍率:
+;Size factor:
+SizeOfEachView=各ビューのサイズ：
+;Size of each view:
+Sliding=スライド
+;Sliding
+SlidingWalkingStep=スライド+移動の歩幅:
+;Sliding+Walking step:
+SmoothDEcomb=Smooth DEcomb:
+;Smooth DEcomb:
+SmoothImageOnLoad=読み込み時に画像を滑らかに
+;Smooth image on load
+SmoothNormals=スムーズ法線:
+;Smooth  normals:
+SmoothNormalsColon=法線のスムージング:
+;Smooth Normals:
+SmoothSolid=スムーズソリッド
+;Smooth Solid
+SmoothSolidWithEdges=スムーズソリッド+エッジ
+;Smooth Solid with Edges
+SoftClipping=ソフトクリッピング:
+;Soft clipping:
+SoftensTheHardShadowsTheValue=ハードシャドウを柔らかくします。値は光源のサイズに対する相対値で、大きいほど影が柔らかくなります。
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=より柔らかいH.S.
+;Softer H.S.
+Sorted=ソート
+;Sorted
+SortedCalculationGivesBetterResultsForward=ソート計算の方が良い結果になります。\nメモリ不足などでソート計算が失敗する場合は、前方計算が選択肢になります。
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=鏡面:
+;Spec:
+Spec2=鏡面
+;Spec
+SpecifiesTheEndOfRaymarchingAs=レイマーチングの終端を局所DEの倍率で指定します。\n大きい値 = より遠くのオブジェクトが見えます。\n\nショートカットキー:  F1: 遠方面を縮小、  F2: 遠方面を拡大
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=スペキュラ
+;Specular
+SpecularObjectColorsClickToChange=オブジェクトの鏡面色です。クリックして変更します。
+;Specular object colors, click to change them.
+SpecularPowerFunction=鏡面反射の指数関数です。
+;Specular power function
+SphericalCoords=球面座標
+;Spherical coords
+SplatsInWrittenTo={} 個のスプラット（{}）を {} に保存しました
+;{} splats in {}, written to {}
+Stan=標準
+;stan.
+StandardRectilinearPanorama=標準  直線的  パノラマ
+;standard  rectilinear  panorama
+Start=開始:
+;Start:
+StartBatchRendering=バッチレンダリング開始
+;Start batch rendering
+StartIndex=開始インデックス:
+;Start index:
+StartRendering=レンダリング開始
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=レンダリングを開始し、終了後に M3I ファイルを自動保存!
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=アニメーションのレンダリング開始
+;Start rendering animation
+StartRenderingAnimationImages=アニメーション画像のレンダリングを開始
+;Start rendering animation images
+StartRenderingSlices=スライスのレンダリング開始
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=選択したすべての M3P ファイルのレンダリングを開始します。
+;Starts rendering all selected M3P files
+Statistics=統計
+;Statistics
+Status=状態
+;Status
+StepRelax=ステップ緩和:
+;Step relax:
+StepcountForBinarySearch=二分探索の\nステップ数:
+;Stepcount for \nbinary search:
+StepwidthLimiter=ステップ幅制限:
+;Stepwidth limiter:
+Stereo=ステレオ
+;Stereo
+StereoComposingPreview=ステレオ: プレビューを合成中
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=ステレオペアはタイルでレンダリングできません。先にタイリングをオフにしてください。
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=ステレオ: 左目をレンダリング中
+;stereo: rendering left eye
+StereoRenderingRightEye=ステレオ: 右目をレンダリング中
+;stereo: rendering right eye
+StickThisWindowToTheLeft=このウィンドウを左側に固定
+;Stick this window to the left side
+StickThisWindowToTheRight=このウィンドウを右側に固定
+;Stick this window to the right side
+Stone=石
+;Stone
+Stop=停止
+;Stop
+StopBatchRendering=バッチレンダリングを停止
+;Stop batch rendering
+StopRendering=レンダリングを停止
+;Stop rendering
+StopRenderingTheAnimation=アニメーションのレンダリングを停止します。
+;Stop rendering the animation.
+StopTheCurrentCalculation=現在の計算を停止します。
+;Stop the current calculation.
+Stopping=停止しています...
+;Stopping...
+StoppingThisComputerFinishesThePart=停止中: このコンピュータはレンダリング中の部分を仕上げます
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=オブジェクトからこの距離で前進を止めます。\n0にすると無効になります。
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=画像を簡単にプレビューできるよう、対応する *.PNG ファイルも保存します。
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=M3I を既定フォルダに保存
+;Store M3I file in default folder
+StorePNGPreview=PNGプレビューを保存
+;Store PNG-preview
+Strength=強さ:
+;Strength:
+Strength2=強さ
+;Strength
+StrengthOfDynamicFog=動的フォグの強さです。
+;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=起伏の強さ、大きさ (フラクタル単位)、細かさ (0.2 滑らか から 0.8 ざらざら)
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
+StretchesUpperAndLowerPartsMaybe=上部と下部を引き伸ばします。全天球オプションで通常の画像を使う場合に便利なことがあります。
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=サブフレーム数の\n倍率:
+;Subframe count\nmultiplicator:
+SubframeInterpolation=サブフレーム補間:
+;Subframe interpolation:
+SubframesToRender=レンダリングするサブフレーム数
+;Subframes to render
+SubframesToRenderBetween=間にレンダリングする\nサブフレーム数:
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=次のレイステップから DEstop の一部を差し引きます。DEstop の値が大きい場合に推奨します。
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=ネットワークレンダリングに対応
+;Support network rendering
+SupportedMathematicalFunctions=対応する数学関数
+;Supported mathematical functions
+SurfaceColor=表面の色
+;Surface color
+SurfaceDetail=表面の細かさ:
+;Surface detail:
+SurfaceMaterial=表面の素材
+;Surface material
+Swarm=Swarm
+;Swarm
+SwarmABlockOnEveryComputer=スウォーム: 停止するまで各コンピュータに 1 ブロックずつ
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=スウォーム: {} ブロック ({} レイ/ピクセル)
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=スウォーム: {} 台のコンピュータ
+;swarm: {} computer
+SwarmComputers=スウォーム: {} 台のコンピュータ
+;swarm: {} computers
+SwarmCreatingTheJob=スウォーム: ジョブを作成中
+;swarm: creating the job
+SwarmJob=スウォームジョブ
+;swarm job
+SwarmLower=スウォーム: {}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=Swarm: 複数のコンピュータで分担するレンダリング
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=既定のテーマに戻します
+;Switch back to the default theme
+TakeTheEntryOutOfThe=項目を履歴から取り除きます (計算した画像のパラメータとサムネイルは削除されます。その他のファイルはそのまま残ります)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=対象マップスロット
+;Target Map Slot
+TargetMapSlotUseThisNumber=対象のマップスロットです。マップをアニメーションさせるには、この番号をフラクタル内でマップとして (例: ハイトマップとして) 使います。
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=加算した拡散色と鏡面色の合計が 1 を超えています。\nよりリアルな色にするために縮小しますか?
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=アニメーションには少なくとも 2 つのキーフレームが必要です。
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=Zsharp 点での絞りであり、カメラの絞りではありません!\nこの値に Zsharp 点からカメラまでの (自由に選んだ) 距離を掛け、\nカメラレンズの焦点距離で割るとカメラの絞りが\n得られます。\nカメラがそれほど大きくないと想定する場合は、この値を小さくしてください。\n値が大きいほどぼかしが強くなります。
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheAxisTheCloudLayerLies=雲の層が垂直に交わる軸と、その上の 2 つの高さ
+;The axis the cloud layer lies across, and its two heights on it
+TheAxisThePlaneLiesAcross=平面が垂直に交わる軸と、その軸上の位置 (切断面と同様。カメラから遠い側が中身のある側です)
+;The axis the plane lies across, and its position on that axis (as for the cutting planes; its solid side is the one away from the camera)
+TheBTracer2CacheFormatIsNot=BTracer2 キャッシュ形式はこのプログラムではサポートされていません。\nメッシュ形式 (*.ply または *.obj) を選んでください。
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=BTracer2 キャッシュ形式はサポートされていないため、メッシュは保存されませんでした。
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=背景画像を読み込めませんでした。
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=エスケープタイム数式のバイルアウト値です。\n反復中に 3D 値がこの値を超えると、\n現在の点はオブジェクトに属しません。
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=ぼかし半径はこの値で制限されます。\n画像の一部で半径が非常に大きくなる場合にレンダリングを高速化できます。
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=計算に失敗しました: {}
+;The calculation failed: {}
+TheCalculationFailedLower=計算に失敗しました
+;the calculation failed
+TheCalculationWillBeExtendedTowards=計算を画像の外側まで拡張し、そこにあるオブジェクトの反射も含めます。\nアニメーションでアーティファクトが減りますが、静止画にも有効です。\n値は 0 から 0.5 の範囲 (最大 0.9) にしてください。これは外側で最大限に計算される\n画像の幅と高さに対する相対サイズです。
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheChosenValueOverAllFrames=アニメーション全フレームでの選んだ値: キーフレームの四角を上下にドラッグするか、クリックして値を入力します
+;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheCommandLineProgramMb3dWas=コマンドラインプログラム mb3d がこのプログラムと同じ場所に見つかりません。プログラムを再インストールしてください。
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=既定の番号付けはXとYに分かれた2つの数字です。\nこのオプションを選ぶと番号は1つだけになり、\n各列で増えていき次の行へ続きます。
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=既定の出力はオブジェクトが白、外側の領域が黒です。\n色を反転するにはこのオプションを選んでください。
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=距離推定値にこの係数を掛けて縮小し、オーバーステップを防ぎます。\nオーバーステップ (黒いピクセル、ノイズの多い画像) が発生する場合は値を下げてください。\n値が小さすぎるとレンダリングが遅くなります。
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=オーバーステップを避けるため、距離推定値をこの倍率で縮小します。\nオーバーステップ (黒い画素、ノイズの多い画像) が出る場合は値を下げてください。\n値が小さすぎるとレンダリングが遅くなります。
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=レイマーチングを停止するオブジェクト表面までの距離が、視点からの距離に応じて大きくなります。\nオブジェクトの見え方が均一になるため、通常はオンにします。
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=効果は累積します。新しい計算にはリセットしてください。
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=項目を日ごとに表示します。日を開く (クリックする) と、その日の項目と画像が表示されます
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=項目を削除できませんでした。
+;The entry could not be removed.
+TheFileIsNotThereAny=ファイルはもうありません。
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=ファイル <{}.m3f> は既に存在します。上書きしますか?
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=ファイル (ここから選択してコピーできます)
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=(第1の) 焦点です。\n値はビューアの Zstart 値に対する相対値で、\n画像の幅で正規化されています。
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=フォルダが存在しません (またはアクセスできません)
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=ASM ベースの数式と区別するため、数式名は「JIT」で始めてください
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=フラクタルがどのビューにも写っていません。
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=メインウィンドウのフラクタルをガウシアンスプラットにして、Blender（5.3 以降）やほかのスプラットビューアであらゆる方向から見られるようにします。いくつもの方向から計算し、各ピクセルがその色のスプラットになります。
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
+TheFractalSSurfaceMaterialOn=パレットに重ねるフラクタル表面の素材 (MB3D にはありません: パラメーターの MB3D の部分の後に保存)
+;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFramesPerSecondMustBe=1 秒あたりのフレーム数は 0 より大きい数にしてください (例: 25)。
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=画像バッファのサイズが正しくありません
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=画像サイズが変わりました: 画像をもう一度計算してください
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=its.trap モードは「カラーリング」タブで計算に選んだオプションに依存します。
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionCrashed=前回のセッションはクラッシュしました: {}。詳細はログウィンドウ (タイトルバーのアイコン) にあります。
+;The last session crashed: {}. More in the Log window (the icon in the title bar).
+TheLastSessionDidNotEnd=前回のセッションは正常に終了しませんでした (フリーズ、強制終了、またはクラッシュ): {}。最後に行ったことはログ (ログウィンドウ、タイトルバーのアイコン) にあります。
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=メインエディターはまだレンダリング中です。先に停止するか、完了するまでお待ちください。
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=マップオプションは球面マップ用に特定のベクトルから\nx,y 座標を計算します。これにより、通常はスムーズ反復回数に\n基づく 1 番目の色選択も変わります。\nこのオプションの変更結果を確認するには、画像を\n再計算する必要があります。
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=モンテカルロウィンドウがレンダリング中です。先に停止してください。
+;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=モーションブラーのシャッター時間: 次のフレームまでの時間に対する割合 (0 から 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
+TheNameOfTheNewLanguage=新しい言語の名前を、その言語自身で書きます (Deutsch, Polski, ...)。
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=現時点で最新のジョブ: レンダリング済みの部分、進行中の部分(進行状況付き)、未着手の部分
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=パラメータが未完了の計算と一致しなくなりました。「3D計算」を押して計算してください。
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=画像が計算内容と一致しません。もう一度計算してください。
+;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=他のすべてのパスの後に行う画像の仕上げ: 露出、明るい光の周りのグロー、フィルミックトーンマッピング、カラーグレーディング、周辺減光、色収差
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
+ThePlaneSColourClickTo=平面の色 (クリックで変更)
+;The plane's colour (click to change)
+TheRotationIsPerformedAroundThe=回転は中心点 (X 中心、Y 中心、Z 中心) の周りで行われます
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=回転は順に行われます。最初が XW、最後が ZW 平面です。
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSecondPartAsAnObject=2 番目のパートを独立した物体として (MB3D にはありません: パラメーターの MB3D の部分の後に保存): その中心 (x, y, z)、x, y, z 軸まわりの回転 (度)、大きさ (1 = 計算どおり)
+;The second part as an object of its own (not in MB3D: kept after MB3D's part of the parameters): its middle (x, y, z), its rotation about x, y, z in degrees and its size (1 = as calculated)
+TheSelectionMustBeBiggerThan=選択範囲は幅と高さが 2 ピクセルより大きくなければなりません。
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=選択範囲は幅と高さが 2 ピクセルより大きくなければなりません
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=スウォームの共有フォルダ
+;The shared folder of the swarm
+TheSizeOfTheCloudsFeatures=雲の形の大きさ (フラクタル単位) と色 (クリック)
+;The size of the clouds' features in fractal units, and their colour (click)
+TheSizeOfTheTiles=タイルのサイズ
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=ステレオの左右の画像のサイズが異なります。
+;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=クリップボードのテキストパラメータが壊れています。コピーの際に一部の行が切れました。元の場所からもう一度コピーしてください。
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
+TheTileHasNoImageBuffer=タイルに画像バッファがありません
+;the tile has no image buffer
+TheValueOfTheChosenKeyframe=選んだキーフレームの値
+;The value of the chosen keyframe
+Themes=テーマ
+;Themes
+ThereIsAFileAlready=ファイル {} は既に存在します。
+;There is a file {} already.
+ThingsToAskTheAssistant=アシスタントへの頼み方の例
+;Things to ask the assistant
+ThisComputer=このコンピュータ:
+;This computer:
+ThisEffectIsAccumulatedOnEach=この効果はボタンを押すたびに累積します。「リセット」ボタンで\nリセットできますが、反射も取り消されます!
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=このファイルは既に存在します。上書きしてもよろしいですか?
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=回転後のバルブのx方向の絶対オフセットです。
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=このレンダリングは現在実行中です。
+;This render is running right now.
+ThisRenderKeepsNoImage=このレンダリングは画像を保持しません。
+;This render keeps no image.
+ThisRenderKeptNoParameters=このレンダリングにはパラメータが保存されていません。
+;This render kept no parameters.
+ThisSessionLive=このセッション (ライブ)
+;This session (live)
+ThreadPriority=スレッド\n優先度
+;Thread\nPriority
+ThreadcountInCalculations=計算に使う  \nスレッド数
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=ジョブ用スレッド数(0 = 全コア):
+;Threads for jobs (0 = all cores):
+ThresholdTo0=しきい値を0まで:
+;Threshold to 0:
+TilNextUpdate=..次の更新まで
+;..til next update
+TileCountHorizontal=タイル数、横:
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=タイル縮小、アンチエイリアス:
+;Tile downscale, anti aliasing:
+TileSaved={} タイルを保存しました。{}
+;{} tile saved; {}
+TileXY=タイル: X= Y=
+;Tile: X= Y=
+TileXY2=タイル: X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  タイル X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=タイル X={} Y={}
+;tile X={} Y={}
+TileXYSaved=タイル X={} Y={} を保存しました。
+;Tile X={} Y={} saved.
+Tiles=タイル
+;tiles
+Tiles2=タイル
+;Tiles
+TilesSaved={} タイルを保存しました。{}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  スウォームで {} タイル
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=タイルサイズ(AA込み):
+;Tilesize (including aa):
+Tiling=タイル分割:
+;Tiling:
+TimeNeeded=所要時間:
+;Time needed:
+ToCalculateABetterHardShadow=より良いハードシャドウを計算します。HS を 1 つだけ選択している場合のみ!
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=クリップボードへ
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=アンビエントオクルージョンで直接光も減衰させます。
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=移動先の数式番号:
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=距離推定の悪いハイブリッドでオブジェクト周辺のノイズを減らすには、\n画像内の平均反復回数より少し小さい反復回数を使用してください。
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=オーバーステップを減らします。
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=このキーフレームと以前に適用
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=このキーフレームと以降に適用
+;To this keyframe and the following
+Togo=残り: ...
+;togo: ...
+Tools=ツール
+;Tools
+TotalAmountOfReflectivityTransparencyIt=反射率 + 透明の合計量です。オブジェクトのローカルな鏡面色 + 透明量に乗算されます。
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=総計算時間:
+;Total calculation time:
+TotalFramesUpToHereNote=ここまでの総フレーム数です。\nループモードのときだけ、最後のキーフレームからの\nサブフレームもレンダリングされます。
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=トレース範囲 X:
+;Trace range X:
+TraceRangeY=トレース範囲 Y:
+;Trace range Y:
+TraceRangeZ=トレース範囲 Z:
+;Trace range Z:
+TracingObject=オブジェクトをトレースしています...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=レンダリング状況をファイルシステム上で管理し、複数のインスタンスが互いの作業を上書きせずに同じファイル列をレンダリングできるようにします
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=透明度
+;Transparency
+TransparencyIntensity=透明の強さ
+;Transparency intensity
+TransparencySpecular=透明 + 鏡面
+;Transparency + Specular
+TransparentBackground=透明な背景
+;Transparent background
+TrigonometricFunctions={ 三角関数 }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=ボリュームマップのサイズを 20% 刻みで調整します
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=Juliaモードをオン/オフします。
+;Turn on/off the julia mode
+Turned=回転:
+;Turned:
+Turntable=ターンテーブル
+;Turntable
+Type=型:
+;Type:
+Type2=種類
+;Type
+TypeInTheQuality0100=品質 (0..100) または最大出力ファイルサイズ (KB、>100) を入力してください:
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=種類を空にすることはできません
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\sハイブリッドの種類:\n交互:  数式 1 から 6 を交互に適用。\n補間:  各反復で数式 1 を数式 2 と補間。\nDE combinate:  数式 1 を数式 2 から 6 の交互ハイブリッドと DE 結合。
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=オブジェクト判定の種類です。最大反復を下げるかDEを上げると\n(選択したオプションによります)オブジェクトが厚くなります。\n注意:  DEcombinateフォーミュラと内+外レンダリングは\n           距離推定モードでのみ動作します!
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\s物体判定の方式です。Max its を下げるか DE を上げると\n(選んだオプションによります)、物体が太くなります。\n注意:  DEcombinate の式は距離推定モードでのみ動作します!
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=まず新しい言語の名前を入力してください。それがファイル名になります。
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=画像が平坦でノイズが多く見える場合はオフにしてください。
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=すでに計算済みの画像を上書きしない場合はチェックを外します。\nファイル名が一致している必要があります (同じ出力形式・インデックス、\nステレオモードでは「left」または「right」の接尾辞)。
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=, {} を実行中
+;, {} under way
+UnfinishedCalculation=未完了の計算
+;Unfinished calculation
+UnfinishedRender=未完了のレンダリング
+;Unfinished render
+UnfinishedRenders=未完了のレンダリング
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=未完了のレンダリング: 続行または削除します
+;Unfinished renders: continue or delete them
+Untitled=無題
+;untitled
+UpOneLevel=1つ上へ
+;Up one level
+UpTo=まで:
+;up to:
+UpdateImage=画像を更新
+;Update Image
+UseAMapForTheDiffuse=拡散色にマップを使用
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=縮小画像をアンビエント色に使用
+;Use a small image as ambient color
+UseAlsoNavi=(ナビも使えます)
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=元のM3Iファイルの環境光シャドウを使う
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=既定の向きを使う
+;Use default orientation
+UseItInAnimationsToFix=アニメーションでライトをシーンに固定するために使います。
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=法線 (ライティング用の表面の向き) がおかしく見える場合のみ、第二の選択肢として使用してください。
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=OpenGLを使用 >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=テーマを使わず既定の外観設定を使います
+;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=実験的な高速化を使う
+;Use the experimental speed-ups
+UseTheMapIntensitiesAndDiffuse=マップの強度と拡散色を組み合わせて使用します。
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=1 より小さい値でオーバーステップを軽減します。
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\s標本誤差のあるデータのシミュレーションに便利です。 }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=急峻なハイトマップに有効です
+;Useful for steep heightmaps
+User=ユーザー
+;user
+UserDefinedApectRatioRightclickTo=ユーザー定義の縦横比。\n右クリックで比率を定義します。
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=ユーザー定義の縦横比
+;User defined aspect ratio
+Value=値:
+;Value:
+ValueNotGuilty=無効な値です
+;Value not guilty
+ValuesHaveAFractionFieldThat=// 値は仮数部が 0 ではありません。
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=FOV で DEstop を変化:
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=選択したオプションに応じて、拡散色と鏡面色の合計が1を超えないことを確認します
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=計算中に鏡面+拡散の量が1を超えないか確認します。拡散マップを使うときに便利です。
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=バージョン
+;Version
+Version2=, バージョン {}
+;, version {}
+Vertical=縦:
+;vertical:
+VerticalFieldOfViewInDegrees=垂直方向の視野角 (度)
+;Vertical field of view in degrees
+VerticesFaces={} [頂点 {}、面 {}]
+;{} [{} Vertices, {} Faces]
+Video=ビデオ
+;video
+VideoLower=動画: {}
+;video: {}
+View=表示
+;View
+ViewToMain=視点をメインへ
+;View to main
+Viewing=表示
+;Viewing
+Vignette=周辺減光
+;Vignette
+Visible=表示:
+;Visible:
+VolumeLightNr=ボリュームライト番号:
+;Volume light nr:
+VolumetricResolution=ボリューム解像度:
+;Volumetric resolution:
+VoteFormula=+ 数式に投票
+;+ vote formula
+VoteFormula2=- 数式に投票
+;- vote formula
+VoxelExport=ボクセル書き出し
+;Voxel export
+Voxelstack=ボクセルスタック
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=実行中の計算が終わるのを待つか、先に停止してください。
+;Wait for the running calculation, or stop it first.
+Walking=前後移動
+;Walking
+Warmth=色温度
+;Warmth
+Warning=警告
+;Warning
+WarningLower=警告
+;warning
+WarningMustRecalculateTheWholeImage=警告: 取り消すには画像全体を再計算する必要があります!
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=警告とエラー
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Waves=波:
+;Waves:
+WavesOnThePlaneTheirHeight=平面の波: フラクタル単位での高さと長さ (高さ 0: 平らな面)
+;Waves on the plane: their height and their length in fractal units (height 0: a flat plane)
+Weight=重み
+;Weight
+WeightColon=重み:
+;Weight:
+WhatDidIDoInMb3d=今日 mb3d で何をした? エラーはあった?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=出来事
+;What happened
+WhatYouDid=行ったこと
+;What you did
+When=日時
+;When
+WhenAngleNotBetween180And={ 角度が -180 から 180 の範囲外のとき、はみ出た分を取り除きます }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=日時 (UTC)
+;When (UTC)
+WhenUsingAMapForThe=拡散色にマップを使う場合、\n色を自動的にクリップするには\n「鏡面+拡散を自動クリップ」をオンにする必要があります。
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=白
+;white
+WhiteOutside=外側を白に
+;White outside
+Width=幅:
+;Width:
+Windows=ウィンドウ
+;Windows
+Wireframe=ワイヤーフレーム
+;Wireframe
+WireframeColor=ワイヤーフレームの色
+;Wireframe color
+WithHS=HS あり
+;with HS
+WithThe360PanoramaCameraA=360 パノラマ カメラでは: VR 用のステレオパノラマ。両目を上下に並べ (左目が上)、どの方向でも奥行きが正しくなります
+;With the 360 Panorama camera: a stereo panorama for VR, both eyes one above the other (left on top), the depth right in every direction
+WithZBuffer=Zバッファ付き
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=英語のテキストをこの名前の新しい言語ファイルとして書き出します。テキストエディタで翻訳してから「再読み込み」を押してください。
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=現在の画像 (未完了の行は背景として) を .m3i ファイルに書き出します
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=書き出しました: {}\n「=」の右のテキストをテキストエディタで翻訳してから「再読み込み」を押してください。
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=X角度:
+;X angle:
+XMid=X 中心:
+;X mid:
+XOffset=Xオフセット:
+;X offset:
+XScale=Xスケール:
+;X scale:
+XW=XW:
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=X位置
+;Xpos
+Xrot=X回転
+;Xrot
+YAngle=Y角度:
+;Y angle:
+YMid=Y 中心:
+;Y mid:
+YOffset=Yオフセット:
+;Y offset:
+YScale=Yスケール:
+;Y scale:
+YW=YW:
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=はい
+;Yes
+YouCanAlsoClickOnA=値をクリックして直接変更することもできます。
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=数式名を直接入力することもできます
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=計算はいつでも開始/再開または停止できます
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=ほとんどのトラックバーは、選択中に左右の矢印キーで\n細かく調整できます。\n「0」(ゼロ) を押すとトラックバーがゼロ位置に戻ります。
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=各タイルのm3iファイルも保存できます。ディスクに十分な空き容量があること、\n反射はm3iファイルに保存されないことに注意してください。\n\nこれらのm3iタイルは1.7.9より前のバージョンでは開けません!
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=まず元のパラメータをレンダリングし、M3Iファイルとして保存しておく必要があります。\nそのレンダリングは小さすぎないようにしてください。
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=作者名 (パラメータに保存されます):
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=自分の言語(その名前):
+;Your own language (its name):
+Ypos=Y位置
+;Ypos
+Yrot=Y回転
+;Yrot
+Z1Sharp=Z1 焦点:
+;Z1 sharp:
+Z2Sharp=Z2 焦点:
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=Zバッファ: {}
+;Z-buffer: {}
+ZEnd=Z 終了
+;Z end
+ZMid=Z 中心
+;Z mid
+ZOffset=Zオフセット:
+;Z offset:
+ZRThreshold=Z/R しきい値:
+;Z/R Threshold:
+ZScale=Zスケール:
+;Z scale:
+ZSlices=Zスライス数:
+;Z slices:
+ZStart=Z 開始
+;Z start
+ZW=ZW:
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=ズーム:
+;Zoom:
+Zoom2=ズーム
+;Zoom
+Zpos=Z位置
+;Zpos
+Zrot=Z回転
+;Zrot
+
+[AniProcessForm]
+Label2.Caption = ステップ幅リミッター:
+CheckBox17.Caption = 初回ステップをランダムに:
+
+[BRInfoForm]
+Caption = 大判レンダリング
+
+[BulbTracer2Frm]
+XOffsetEdit.Hint = 回転したバルブのx方向の絶対オフセットです。
+YOffsetEdit.Hint = 回転したバルブのy方向の絶対オフセットです。
+ZOffsetEdit.Hint = 回転したバルブのz方向の絶対オフセットです。
+
+[FNavigator]
+Button2.Hint = クリックで表示/非表示を切り替えます。
+Button3.Hint = クリックで表示/非表示を切り替えます。
+Button4.Hint = クリックで表示/非表示を切り替えます。
+Button5.Hint = クリックで表示/非表示を切り替えます。
+RadioGroup1.Items.2 = 細
+Label48.Caption = R bailout:
+
+[FVoxelExport]
+Button3.Hint = クリックして出力フォルダを選択します
+
+[JITFormulaEditorForm]
+InfoMemo.Hint = メッセージを表示します。
+
+[LightAdjustForm]
+ButtonGetPos.Caption = 中心
+Edit2.Hint = マップ番号
+Label38.Caption = 拡大率:
+TabSheet4.Caption = アンビエント
+
+[Mand3DForm]
+PositionBtn.Hint = クリックで表示/非表示を切り替えます
+RotationBtn.Hint = クリックで表示/非表示を切り替えます
+
+[MeshPreviewFrm]
+Label6.Caption = 鏡面
+
+[MutaGenFrm]
+Label4.Caption = 交換、追加
+Label11.Caption = 反復回数の
+
+[PostProForm]
+RadioGroup2.Caption = 計算方法

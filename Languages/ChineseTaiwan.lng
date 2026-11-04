@@ -1,0 +1,3926 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = 繁體中文
+code = TW
+font = ChineseTaiwan.ttf
+
+[Labels]
+ACalculationIsRunningStopIt=正在計算中：請先停止。
+;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=每 16 像素、再每 4 像素的區塊各發一條粗光線，按減去區塊的擴展量後的距離估計步進，每個像素的步進從它的深度開始。在開闊空間中最多快 60 %；在估計偏差大的地方可能遺失細薄的部分。
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
+AFasterMethodThanBinsearchBut=比二分搜尋更快的方法，但若 DE 不佳可能導致失敗
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=剩幾秒
+;a few seconds left
+AFineReliefOnTheSurface=表面上固定於碎形的細微起伏：粗糙、石頭（稜脊與裂紋）或顆粒
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
+AFolderEveryComputerOfThe=Swarm 中每台電腦都能看到的資料夾：NAS 共享、Windows 或 Samba 共享、同步資料夾
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AGroundOrWaterSurfaceAcross=垂直於碎形 X、Y 或 Z 軸的地面或水面，與碎形一起計算：它的陰影、遮蔽、反射和蒙地卡羅光照（MB3D 中沒有：儲存在參數的 MB3D 部分之後，MB3D 會忽略它）
+;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
+AHigherValueMeansABetter=值越高品質越好，但即使 100% 也是有損的。
+;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=語言檔案每行一個標籤：「=」左邊是其 ID，右邊是您的文字。標籤之後的視窗區段可為單一控制項指定專屬文字。
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=定義硬陰影計算最大長度的乘數，\n相對於某些影像尺寸參數（預設 = 1）。\n若遠處物件的陰影缺失，請提高此值。
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=AO 計算時間：
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=停止或中斷的渲染會保留已計算的部分；對相同參數執行「計算 3D」即可繼續。
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=透明背景需要 PNG 影格：請選擇 PNG 作為輸出格式。
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=影片需要影像：請選擇 BMP、PNG 或 JPG 作為輸出格式。
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=立體動畫不會製作成影片：請關閉「算出立體動畫」。
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf={} x {} 的圖片大約需要 {} 記憶體，而這台電腦只有 {} 可用：計算會用到交換空間，程式可能一次好幾分鐘沒有回應。\n\n仍要計算嗎？\n\n大型渲染（「工具」分頁）會以圖塊逐一計算並儲存，不必保留整張圖片；swarm（swarm 視窗）會把圖塊分給其他電腦。
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=也會儲存一張 Z-buffer 的 PNG 影像。
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=AZERTY 鍵盤
+;AZERTY keyboard
+Abort=中止
+;Abort
+AboutHLeft=約剩 {} 小時
+;about {} h left
+AboutHMinLeft=約剩 {} 小時 {} 分
+;about {} h {} min left
+AboutMinLeft=約剩 {} 分
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=材質內部的絕對吸收量（高倍縮放需要較大的值）。漫射物件顏色也用於內部。
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=平滑組合函數的絕對距離，\n小數值可使用科學記號，例如 3e-5。\n試試 1/縮放值 以接近可用的值。
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=吸收：
+;Absorption:
+Action=動作
+;Action
+ActualAmbientShadowPar=目前的環境陰影參數
+;Actual ambient shadow par.
+ActualCameraSettings=目前的相機設定
+;Actual camera settings
+ActualColoringTabOptions=目前「著色」分頁的選項
+;Actual 'Coloring' tab  options
+ActualDOFParameters=目前的景深參數
+;Actual DOF parameters
+ActualHardShadowSetting=目前的硬陰影設定
+;Actual hard shadow setting
+ActualReflectionsSettings=目前的反射設定
+;Actual reflections settings
+ActualStereoParameters=目前的立體參數
+;Actual stereo parameters
+Add=新增
+;Add
+AddANewKeyframeInBetween=在中間加入新的關鍵影格
+;Add a new keyframe in between
+AddNamedConstantValue=新增具名常數值
+;Add named constant value
+AddNamedParam=新增具名參數
+;Add named param
+AddNewConstantValue=新增常數值
+;Add new constant value
+AddNewImageSequence=加入新的影像序列
+;Add new image sequence
+AddNewNamedParameter=新增具名參數
+;Add new named parameter
+AddNewOption=新增選項
+;Add new option
+AddOptionValue=新增選項值
+;Add option value
+AddToBackgroundDepthNotBlend=加到背景深度（非混合）
+;Add to background depth (not blend)
+AddonFormula=附加公式
+;Addon formula
+AdjustRoughlyThenClickForFine=先粗略調整，再點擊進行微調。
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=調整滑桿以符合直方圖的端點
+;Adjust sliders to fit the histograms endpoints
+Adjustments=調整幅度：
+;Adjustments:
+AdjustsTheDEForRenderPreview=調整渲染預覽所用的 DE
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=進階 Z-buffer 產生器
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=由於光照角度不同，計算後所有使用者的光照更改都會被取消。\n以一般模式計算會重新啟用。
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=算圖完成後，將各影格合併為輸出資料夾中的影片\n（<專案名稱>.avi，Motion JPEG：可在 VLC 與 mpv 播放，也可在影片編輯軟體中開啟）。\n各影格會保留。
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=所有顏色皆正常。
+;All colors are ok.
+AllFiles=所有檔案
+;All files
+AllFilesParen=所有檔案 (*.*)
+;All files (*.*)
+AllKinds=所有種類
+;All kinds
+AllRealworldUnitsInMeter=所有真實世界單位均為公尺。
+;All realworld units in meter.
+AllTheLightColorSettings=所有光照 + 顏色設定
+;All the light + color settings
+AlreadyExists={} <{}> 已存在
+;{} <{}> already exists
+AlsoMakeAVideoAVI=同時製作影片 (AVI)
+;Also make a video (AVI)
+Alternate=交替
+;Alternate
+Amb=環境
+;Amb
+Ambient=環境光
+;Ambient
+AmbientBottomColorClickToChange=環境底部色彩，點擊以更改。
+;Ambient bottom color, click to change.
+AmbientLight=環境光
+;Ambient light
+AmbientLower=環境
+;ambient
+AmbientOcclusion=環境光遮蔽
+;ambient occlusion
+AmbientRaysDepth=環境光線深度：
+;Ambient rays depth:
+AmbientShadow=環境陰影
+;Ambient shadow
+AmbientShadowCalculation=環境陰影計算
+;ambient shadow calculation
+AmbientShadows=\s環境陰影
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=環境頂部色彩，左鍵更改色彩，\n右鍵插入深度色彩。
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=強度：
+;Amount:
+AnAIAssistantOnThisComputer=這台電腦上的 AI 助理可以使用 Mandelbulb 3D：用一般的話或語音請它描述、修改及渲染您的圖片、製作變化版本，或渲染您上次處理的內容。Mandelbulb 3D 保持離線：由助理的應用程式在這台電腦上啟動它。
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=已保留這張圖片未完成的計算（{}）。\n\n要繼續嗎？選「否」會從頭重新計算。
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=已保留這些參數未完成的蒙地卡羅渲染（{}）。\n\n要繼續嗎？選「否」會從頭重新渲染。
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} 和 {}
+;{} and {}
+AndRemove=及移除
+;and remove
+AngleUnitConversionRoutines={ 角度單位轉換函式 }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=動畫關鍵影格 (f)
+;Ani keyfr. (f)
+AniKeyframe=動畫關鍵影格
+;Ani keyframe
+AnimatedGif=動態 GIF
+;Animated Gif
+Animation=動畫:
+;Animation:
+Animation2=動畫：{}
+;Animation: {}
+AnimationCurves=動畫曲線
+;Animation curves
+AnimationLower=動畫
+;animation
+AnimationMaker=動畫製作器
+;Animation maker
+AnimationMakerParen=動畫製作器   ({})
+;Animation maker   ({})
+AnimationPicsOutput=動畫圖片輸出：
+;Animation pics output:
+AnimationPreview=動畫預覽
+;Animation preview
+AnimationProcessing=動畫處理
+;Animation processing
+AnimationRenderingStopped=動畫渲染已停止。
+;Animation rendering stopped.
+AnimationSize=動畫尺寸：
+;Animation size:
+AnimationTheFfmpegCommandIsOn=動畫：ffmpeg 指令已複製到剪貼簿（影格完成後請在終端機中執行）：
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=動畫：影片已寫入：{}
+;Animation: video written: {}
+Animations=動畫
+;Animations
+AntiAliasing=反鋸齒：
+;Anti aliasing:
+Antialiasing=反鋸齒：
+;Antialiasing:
+Aperture=光圈：
+;Aperture:
+Appearance=外觀
+;Appearance
+ApplyToImage=套用到影像
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=請套用您更改的值，因為編輯框僅供輸出
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=近似計算頂點顏色。顏色資訊將以 uv 座標的形式儲存在網格中，並會增加網格大小
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2 計算 ArcTan(Y/X)，並傳回位於正確象限的角度。
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=環繞中心（物體）
+;Around the middle (an object)
+AsFullBackgroundSphere=作為完整背景球面：
+;As full background sphere:
+Aspect=長寬比：
+;Aspect:
+AssignActualFormulaSettings=套用目前的公式設定
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=套用主程式目前的光照設定。\n由於導覽器使用較簡單的函數，\n光照與顏色會和主要算圖不同。
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=在哪個子影格：
+;At which subframe:
+Author=作者：
+;Author:
+Author2=作者
+;Author
+Auto=自動
+;Auto
+AutoRenderAllFollowingTiles=自動渲染所有後續圖塊
+;Auto render all following tiles
+AutoSavingTheM3cFile=自動儲存 m3c 檔案：
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=自動：CPU 與顯示卡共同處理影像（CPU 立即\n開始，顯示卡在其著色器編譯完成後加入），\n之後由顯示卡執行陰影與環境\n光遮蔽。\nCPU：永不使用顯示卡。\n顯示卡：等待著色器，如同以往。
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=自動更新影像
+;Auto update image
+AutoUpdatePreview=自動更新預覽
+;Auto update preview
+AutoclipSpecDiff=自動裁切高光+漫射：
+;Autoclip spec+diff :
+AutodetectOnStart=啟動時自動偵測
+;Autodetect on start
+AverageNoise=平均雜訊：
+;Average noise:
+AverageRaycount=平均光線數：
+;Average raycount:
+AvgIterations=平均迭代次數：
+;Avg. iterations:
+AvgRaysteps=平均光線步數：
+;Avg. raysteps:
+AxisX=X 軸
+;Axis X
+AxisY=Y 軸
+;Axis Y
+AxisZ=Z 軸
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=BMP、JPG、PNG 儲存：
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=BTracer2 快取 (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=背景圖
+;Back pic
+BackToTheViewTakenFrom=回到從主視窗取得的視角。
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=背景底部色彩，點擊以更改。
+;Background bottom color, click to change.
+BackgroundImage=背景影像：
+;Background image:
+BackgroundImage2=背景影像
+;Background image
+BackgroundPictures=背景圖片：
+;Background pictures:
+BackgroundTopColorLeftclickToChange=背景頂部色彩，左鍵更改，右鍵開啟快顯選單。
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=基本顏色(&B)：
+;&Basic colors:
+BatchProcessing=批次處理
+;Batch processing
+BatchProcessingPictureOf=批次處理：第 {} 張圖片，共 {} 張
+;Batch processing: picture {} of {}
+Between=介於：
+;between:
+Big=大
+;big
+BigRender=大圖渲染
+;Big render
+BigRender2=大型渲染：{}
+;Big render: {}
+BigRenderProjects=大圖算圖專案：
+;Big render projects:
+BigRenderStopped=大型渲染已停止。
+;Big render stopped.
+BigRenders=大型渲染
+;Big renders
+BigSizeIncludingAntiAliasing=大圖尺寸（含反鋸齒）：
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=放大或縮小視窗與文字（版面配置不變）
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=半徑越大，陰影越柔和
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=大於現有（水平）列數的值會被裁到最後一列。\n這沒有問題。
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=點陣圖 (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=混合動態霧
+;Blend dFog
+BlendTheDynamicFogInsteadOf=以混合方式套用動態霧而非加入光線，\n會使背景消失。
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=區塊
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=散景：
+;Bokeh:
+BorderSize=邊界大小：
+;Border size:
+Box=方框
+;Box
+BoxSharpGoodAAGaussBit=Box：銳利，AA 良好\nGauss：略為模糊，AA 極佳
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=從任何視窗將該視窗帶到前面，或關閉目前視窗。\n按一下欄位並按下按鍵；\nBackspace 會移除快速鍵。
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=瀏覽...
+;Browse...
+BuiltIn=內建
+;built in
+BuiltWithoutIntelOpenImageDenoise=建置時未包含 Intel Open Image Denoise
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=BulbTracer2 設定 (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=來自
+;By
+ByOfDone={}（{}，由 {} 執行）：{} / {} {} 已完成
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=粗算
+;Calc-
+CalcColon=計算：
+;Calc:
+CalcRAutomatic=自動計算反射
+;Calc. R. automatic.
+Calculate=計算
+;Calculate
+Calculate3D=計算 3D
+;Calculate 3D
+Calculate3DAndTheBatchWindow=計算 3D 與批次視窗交由 swarm 處理，分成
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=快速計算 8x8 方塊狀影像，不含正確光照
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=自動計算環境陰影
+;Calculate A.S. automatically
+CalculateColors=計算顏色
+;Calculate Colors
+CalculateDoF=計算景深：
+;Calculate DoF:
+CalculateDoFAutomatically=自動計算景深
+;Calculate DoF automatically
+CalculateFrom=計算位置：
+;Calculate from:
+CalculateHSAutomatically=自動計算硬陰影
+;Calculate H.S. automatically
+CalculateJulia=計算 Julia
+;Calculate Julia
+CalculateLeftEyeImage=計算左眼影像
+;Calculate left eye image
+CalculateNTimesToReduceNoise=計算 n 次，以平均值降低雜訊
+;Calculate n times to reduce noise by averaging
+CalculateNow=立即計算
+;Calculate now
+CalculateOn=計算裝置
+;Calculate on
+CalculateOnlyASelectionInThe=只計算影像中的選取範圍
+;Calculate only a selection in the image
+CalculatePreview=計算預覽
+;Calculate preview
+CalculateRTAutomatically=自動計算反射（+ 透明）
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=自動計算隨機光線筆觸
+;Calculate random light strokes automatically
+CalculateReflections=計算反射：
+;Calculate reflections:
+CalculateRightEyeImage=計算右眼影像
+;Calculate right eye image
+CalculateTheImageFirst=請先計算影像。
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=請先計算影像（計算 3D）
+;calculate the image first (Calculate 3D)
+CalculateTransparency=計算透明：
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=只對 dIFS 公式計算透明（用於與逸出時間公式的 DE 組合）
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=已計算
+;calculated
+CalculatedOn=計算於：{}
+;Calculated on: {}
+CalculatedOnTheCPU=在 CPU 上計算
+;Calculated on the CPU
+CalculatedPictures=已計算的圖片
+;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=只在四分之一的像素上計算 DE 環境光遮蔽，其餘像素據此補上。此階段最多快 4 倍；細節會較柔和。
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
+CalculatingThePreview=正在計算預覽...
+;Calculating the preview...
+CalculatingVolumetricLightMap=正在計算體積光貼圖
+;Calculating volumetric light map
+Calculation=計算
+;Calculation
+CalculationCount=計算次數：
+;Calculation count:
+CalculationOptions=計算選項
+;Calculation options
+CalculationStopped=計算已停止。
+;Calculation stopped.
+Calculations=計算
+;Calculations
+Camera=相機
+;Camera
+CameraColon=相機：
+;Camera:
+CameraLense=相機鏡頭：
+;Camera lense:
+Cancel=取消
+;Cancel
+CancelAndShowResult=取消並顯示結果
+;Cancel and show result
+CancelExit=取消 + 離開
+;Cancel + exit
+CancelImmediately=立即取消
+;Cancel immediately
+CancelType=取消方式：
+;Cancel type:
+CannotRead={}：無法讀取
+;{}: cannot read
+CannotTakePartAnotherVersionOf=; {} 無法參與（程式版本不同）
+;; {} cannot take part (another version of the program)
+CannotWrite=無法寫入 {}：{}
+;Cannot write {}: {}
+CaseYAngleIsAt90=當 Y 角為 90 或 -90 度時，無法計算歐拉角！
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CatmullRom=Catmull-Rom
+;Catmull-Rom
+CautionTheProcessingsBelowMustBe=注意：以下的處理必須由上而下依序計算，\n而光照的變更會重設\n這些計算結果！
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil：>= X 的最小整數，|X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=變更
+;Change
+ChangeParams=變更公式
+;Change Params
+ChangeTheJuliaValuesWithRadius=以半徑、經度與緯度變更 Julia 值
+;Change the julia values with radius, longitude and latitude
+CheckColors=檢查顏色
+;Check colors
+CheckThisIfYouWantTo=若要製作循環動畫請勾選此項。\n插補時會視為最後一個關鍵影格之後\n又接回第一個關鍵影格，反之亦然。
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=勾選此選項可減少影像中的顏色變化。\n若勾選後仍想獲得更多細節，請在原始參數上\n以降低的 DEstop 值（除以「尺寸倍數」）進行著色。
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=勾選此項以停止將最慢的執行緒設為較高優先權。
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=勾選以變更該值 [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=選擇檔名，然後渲染雙眼影像並自動儲存完成的立體影像對。
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=選擇貼圖
+;Choose a map
+ChooseASharedFolderFirstOne=請先選擇共用資料夾（swarm 中每台電腦都能看到的資料夾）
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=選擇選項：
+;Choose Option:
+ChoseTheme=選擇主題：
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code（在終端機中）
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude（桌面應用程式）
+;Claude (desktop app)
+Clear=清除
+;Clear
+ClearAllGenerationsBeforeTheSelected=清除所選世代之前的所有世代
+;Clear all generations before the selected one
+ClearAllPrevious=清除所有先前世代
+;Clear all previous
+ClearTheWholeList=清除整個清單
+;Clear the whole list
+ClickAButtonToChangeA=（點擊按鈕以變更目錄）
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=按一下欄標題即可排序。
+;Click a column header to sort.
+ClickALanguageToSwitchThe=按一下某個語言，即可將視窗切換為該語言
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=按一下參數檔案即可預覽。
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=按一下並按下快速鍵的按鍵
+;Click and press the keys of the hotkey
+ClickImage=按一下影像
+;click image
+ClickOnButtonAndAfterwardsOn=點擊此按鈕，然後點擊影像中的物件，\n以設定燈光的中點。
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=按一下影像
+;Click on image
+ClickOnMToSaveThese=點擊「M」可將這些設定加上影像寬度與比例\n儲存為預設組。之後點擊「預覽」、「中」或「高」，\n或再點一次「M」取消。
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=點擊此按鈕，然後點擊影像中的物件，\n從該處取得值。
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=點擊此按鈕，然後點擊影像中的物件，\n從該處取得 Julia 值。\n若在 4D 模式下，向量會依 4D 旋轉值旋轉。\n\n提示：請從未以 Julia 計算的物件取得值，否則結果\n與該點沒有真正的關聯。
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=點擊此按鈕，然後點擊影像中的物件，\n取得未偏移的物件距離。\n該物件部分會呈現在螢幕的真實距離上。
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=點擊影像中要置中的物件。\n相機方向不會改變，請使用旋轉\n選項繞中點旋轉。
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=點擊以在「動態霧依迭代」與「顏色依迭代」之間切換
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=按一下以選擇輸出檔案
+;Click to choose the output file
+ClickToChooseTheOutputFolder=點擊以選擇輸出資料夾
+;Click to choose the output folder
+ClickToChooseYourNameFor=點擊以選擇您的名稱，自動儲存到參數中
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=點擊以隱藏／顯示
+;Click to hide/show
+ClickToInsertYourNameBelow=點擊以在下方插入您的名稱
+;Click to insert your name below
+ClickToLoadABackgroundPicture=點擊以載入背景圖片。
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=點擊以開啟檔案總管，並將 M3P 檔案拖放到清單上。
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=點擊以渲染中點處的 2D 平面。
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=點擊以渲染 2D 起始平面。
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=點擊以渲染 Z 終止平面。
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=點擊以將目前的光照與大部分色彩設定\n儲存到自訂預設組按鈕。\n再點一次此按鈕可取消儲存。
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=點擊以選取一個或多個 M3P 檔案加入清單。
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=點擊以將所有動態霧滑桿設為零。
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=點擊以設定影像高度，符合此長寬比。
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=點擊以將導覽器光照設為此預設。
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=點擊以輸入縮放值（會保持不變：固定縮放）。
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=裁切半徑：
+;ClippingR:
+Close=關閉
+;Close
+CloseMesh=封閉網格
+;Close Mesh
+CloseTheCurrentWindow=關閉目前視窗:
+;Close the current window:
+CloseTheMeshAtTheBorders=在邊界處封閉網格
+;Close the mesh at the borders
+CloseWindow=關閉視窗
+;Close window
+CloudDriftX=雲漂移 X
+;Cloud drift X
+CloudDriftY=雲漂移 Y
+;Cloud drift Y
+CloudDriftZ=雲漂移 Z
+;Cloud drift Z
+Clouds=雲
+;Clouds
+CloudsOverThePictureALayer=圖片上的雲：沿碎形 X、Y 或 Z 軸兩個高度之間的一層，由第一盞燈照亮，位於碎形的前方和後方（MB3D 中沒有：儲存在參數的 MB3D 部分之後；在蒙地卡羅中沿視線出現；不出現在反射中）
+;Clouds over the picture: a layer between two heights along the fractal's X, Y or Z axis, lit by the first light, in front of and behind the fractal (not in MB3D: kept after MB3D's part of the parameters; in Monte Carlo along the view rays; not in reflections)
+Co=Co:
+;Co:
+Code=程式碼
+;Code
+CodeFile=代碼：{}\n檔案：{}
+;Code: {}\nFile: {}
+ColCycling=色彩循環
+;Col cycling
+ColVarOnZ=Z 向色彩變化
+;Col. var. on Z
+Color=顏色
+;Color
+ColorAdjustment=顏色調整
+;Color adjustment
+ColorEnd=色彩終點
+;Color end
+ColorOnIterat=依迭代著色：
+;Color on Iterat.:
+ColorOnIts=依迭代著色：
+;Color on its:
+ColorOption0AverageOfBoth=顏色選項：\n0:  兩個公式的平均。\n1:  第一個公式的顏色。\n2:  第二個公式的顏色。
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=顏色縮放選項
+;Color scaling options
+ColorStart=色彩起點
+;Color start
+Coloring=著色
+;Coloring
+Colour0Grey1AsIt=顏色：0 灰色，1 原樣，2 兩倍鮮豔
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=色差
+;Colour fringes
+ColourVariation=顏色變化
+;Colour variation
+ColoursByDirection=依方向變化的顏色：
+;Colours by direction:
+ColumnsOfTiles=圖塊的欄數
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=合併方法：\nMin：兩個分形皆可見，以 DE 的最小值合併\nMax：僅顯示重疊部分，以 DE 的最大值合併\nInv max：反轉第二個 Hybrid 的 DE 後以「Max」合併\nMin lin：以線性重疊函數取最小值合併\nMin nlin：類似 S1，使用非線性函數，重疊更平滑\nMix：先用 F1..FendHybrid1，再以修改後的向量使用 FstartHybrid2..F6 (dIFS)。
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=將貼圖 Y 與漫射色彩結合
+;Combine map Y with diffuse colors
+Common=一般
+;Common
+ComparingFiles=正在比對檔案
+;comparing files
+Compile=編譯
+;Compile
+CompileTheCodeF9=編譯程式碼 <F9>
+;Compile the code <F9>
+CompilingSucceeded=編譯成功
+;Compiling succeeded
+Computer=電腦
+;Computer
+ConeMarchThePixelsOfA=錐形步進：區塊內像素從其粗光線停下的位置開始
+;Cone march: the pixels of a block start where its coarse ray stopped
+Confirm=確認
+;Confirm
+Connect=連線
+;Connect
+ConnectToAnAIAssistant=連線到 AI 助理
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=連線到 AI 助理：讓它描述、修改及渲染您的圖片
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=已連線。請在新的對話中詢問它；若 mb3d 未出現在它的工具中，請重新啟動應用程式。
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=已連線。請開始新的 Claude Code 工作階段來使用它。若要再移除，請執行下方的指令。
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=常數衰減
+;Const Attenuation
+Constant=常數
+;Constant
+Constants=常數：
+;Constants:
+Continue=繼續
+;Continue
+Contrast=對比
+;Contrast
+ConvertManyM3PFilesToM3I=將多個 M3P 檔案轉換為 M3I
+;Convert many M3P files to M3I
+CopiedToTheClipboard=已複製到剪貼簿。
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=將可把各影格製成小型 MP4 影片的 ffmpeg 指令複製到剪貼簿。\n請自行在終端機中執行（本程式不會啟動其他程式）。
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=複製
+;Copy
+CopyCommand=複製指令
+;Copy command
+CopyParamsToClipboard=複製參數至剪貼簿
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=複製指令，以便貼到終端機中
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=複製選取的那一行；未選取時複製所有顯示的行
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=複製數值
+;Copy the values
+CopyTheValuesTo=複製數值到..
+;Copy the values to..
+CopyThisFormulaToFormula1=將此公式複製到公式 1
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=將此公式複製到公式 2
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=將此公式複製到公式 3
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=將此公式複製到公式 4
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=將此公式複製到公式 5
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=將此公式複製到公式 6
+;Copy this formula to formula 6
+CopyThisLightToLight1=將此燈光複製到燈光 1
+;Copy this light to Light1
+CopyThisLightToLight2=將此燈光複製到燈光 2
+;Copy this light to Light2
+CopyThisLightToLight3=將此燈光複製到燈光 3
+;Copy this light to Light3
+CopyThisLightToLight4=將此燈光複製到燈光 4
+;Copy this light to Light4
+CopyThisLightToLight5=將此燈光複製到燈光 5
+;Copy this light to Light5
+CopyThisLightToLight6=將此燈光複製到燈光 6
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=將 Z1 複製到 Z2，以取得單一焦點
+;Copy Z1 to Z2 to get a focus point
+Cores=核心
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=無法載入公式 <{}>：{}
+;Could not load formula <{}>: {}
+CouldNotWrite=無法寫入 {}：{}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=要計算的影像（物體切片）數量。
+;Count of images (object slices) that will be calculated.
+Cover=覆蓋：
+;Cover:
+CreateEditAJITCompiledFormula=建立/編輯 JIT 編譯的公式
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=建立語言檔案
+;Create language file
+CreateMeshes=建立網格
+;Create Meshes
+CrossEyedPreview=交叉眼預覽
+;Cross-eyed preview
+Ctrl1ToCtrl7In=Ctrl+1 到 Ctrl+7 依清單順序，Ctrl+W 關閉
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+Curves=曲線
+;Curves
+CustomPreset1=自訂預設組 1
+;custom preset 1
+CustomPreset10=自訂預設組 10
+;custom preset 10
+CustomPreset2=自訂預設組 2
+;custom preset 2
+CustomPreset3=自訂預設組 3
+;custom preset 3
+CustomPreset4=自訂預設組 4
+;custom preset 4
+CustomPreset5=自訂預設組 5
+;custom preset 5
+CustomPreset6=自訂預設組 6
+;custom preset 6
+CustomPreset7=自訂預設組 7
+;custom preset 7
+CustomPreset8=自訂預設組 8
+;custom preset 8
+CustomPreset9=自訂預設組 9
+;custom preset 9
+Cuts=切面
+;Cuts
+Cutting=切割
+;Cutting
+Cutting2=切割*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=DCT 降噪（GIMP）
+;DCT denoising (GIMP)
+DE=DE：
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=DE 組合：
+;DE comb.:
+DEOcclusionAtHalfResolution=半解析度 DE 遮蔽
+;DE occlusion at half resolution
+DEStop=DE stop：
+;DE stop:
+DEcombinate=DEcombinate
+;DEcombinate
+DEstop=DEstop：
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=動態霧
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=dIFS 形狀
+;dIFS shapes
+DIFSTransformations=dIFS 變換
+;dIFS transformations
+DOUBLEIMAGESIZE=影像尺寸加倍
+;DOUBLE IMAGESIZE
+DateModified=修改日期
+;Date modified
+Day=日期
+;Day
+DblClickHideRightPanel=按兩下：隱藏右側面板
+;DblClick: hide right panel
+Debug=除錯
+;debug
+DecreaseScale=縮小比例
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=縮小導覽器視窗
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=減少近處的霧
+;Decreases the fog in near parts
+DefaultTheme=預設主題
+;Default Theme
+Defaults=預設值
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=定義載入與儲存的預設目錄
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=定義影像序列，用來讓高度圖與色彩貼圖產生動畫
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=定義計算距表面指定距離之位置時的精確程度。\n數值越高越精確，法線的計算也會更好。\n很少需要遠超過 12 的值。
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=定義 Z 起始平面在您面前多近（公尺）。\n這也是（虛擬）物件可出現的最小距離。
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=定義光線步進停止時與物件表面的距離。\n較低的值能呈現更多物件細節，但也可能導致採樣不足。\n此值與一個像素的寬度相關。
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=定義到觀看螢幕的真實世界距離（公尺）。
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=定義螢幕上影像的真實世界寬度（公尺）。
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=定義 Z 起始視平面的大小。\n使用導航器時會自動設定，\n只有當物件在影像邊緣被切掉時\n才需要更改。
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=定義陰影計算到哪個角度為止。\n較低的值：遠處的結構較不受近處結構影響，\n當結構有許多孔洞時這較有優勢。
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=定義當最後一個公式執行完畢\n且尚未發生停止條件時，\n迭代從何處重新開始。
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=旋轉角度
+;Degree of rotation
+Degrees=度
+;Degrees
+Del=刪除
+;Del
+DelEntry=刪除項目
+;Del Entry
+Delete=刪除
+;Delete
+DeleteAll=全部刪除
+;Delete all
+DeleteAllKeyframesToBeginA=刪除所有關鍵影格以開始新專案。
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=從清單中刪除選取的檔案
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=刪除選取的常數值
+;Delete selected constant value
+DeleteSelectedNamedParameter=刪除選取的具名參數
+;Delete selected named parameter
+DeleteSelectedOption=刪除選取的選項
+;Delete selected option
+DeleteSequence=刪除序列
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail=要從歷程記錄中刪除「{}」的參數與縮圖嗎？
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=刪除此關鍵影格
+;Delete this keyframe
+DeleteThisTilesFiles=刪除此圖塊的檔案
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=刪除所有未完成渲染保留的內容
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=刪除所有未完成渲染所保留的資料？
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=刪除所選渲染保留的內容
+;Delete what the selected render kept
+Density=密度：
+;Density:
+Depth=深度
+;Depth
+DepthColon=深度：
+;Depth:
+DepthGradientFunctionWorksOnlyIf=深度漸層函數，僅在未勾選「相對於物件」時有效。
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\s景深
+;\sDepth of Field
+DepthOfField2=景深
+;Depth of Field
+DepthOfFieldLower=景深
+;depth of field
+DepthOfReflections1ToSee=反射深度：1 只會看到一次反射，\n2 則可在被反射的物件中看到反射，…依此類推。
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=說明
+;Description
+DetectsTheAmountOfProcessorCores=啟動時偵測處理器核心數。\n您可以自行選擇數量並停用\n此選項，以不同的設定啟動。
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=決定要計算多少個後續物體的漫反射
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=決定要計算多少次連續的直接反射
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=決定批次模式下何時停止渲染
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=決定燈光是否可見及其形狀。
+;Determines whether the light should be visible and its shape.
+Diff=漫射：
+;Diff:
+Diff2=漫射
+;Diff
+DifferentCalculationOfLightCombining=不同的光照合成計算方式
+;Different calculation of light combining
+Diffuse=漫射：
+;Diffuse:
+Diffuse2=漫反射
+;Diffuse
+DiffuseFunctionChooseCosOrCos=漫射函數，若此燈光使用硬陰影，請選擇 Cos 或 Cos^2。
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=物件漫射色彩，點擊以更改。
+;Diffuse object colors, click to change them.
+DiffuseShadow=漫射陰影
+;Diffuse shadow
+DirectionOf=方向 {} / {}
+;Direction {} of {}
+DirectionTowardsZero000=朝向原點 (0,0,0) 的方向
+;Direction towards zero (0,0,0)
+Directions=方向數：
+;Directions:
+DisableAll=全部停用
+;Disable all
+DisableAnalyticalDE=停用解析 DE
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=停用移動時的自動縮放調整。\n這也會導致步進時穿過物件。
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=停用動畫的 (f) 鍵
+;Disable the (f) key for ani
+DisableThemes=停用主題
+;Disable Themes
+DisableThisIfYouDoNot=若不希望檔案索引有前置零，請停用此選項。\n例如：  name000010.png  會變成  name10.png
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=停用執行緒加速
+;Disable threadboost
+Disc=圓形
+;Disc
+Disconnect=中斷連線
+;Disconnect
+DisplayStyle=顯示樣式
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=顯示公式說明（若有）。
+;Displays some formula descriptions, if available.
+DistanceEstimation=距離估計
+;Distance estimation
+DitheringForScale=縮放用的抖動：
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=將實際的「Raystep multiplier」除以此值，\n提高此值可減少步進過大的情形。
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=景深計算
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=已關閉景深計算，圖塊模式下無法使用。
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=不要釘住此視窗
+;Do not make this window sticky
+DoThisFunctionAutomatically=自動執行此功能
+;Do this function automatically
+DoYouReallyWantToClear=確定要清除所有先前的世代嗎？
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=確定要清除批次清單嗎？
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=確定要刪除全部嗎？
+;Do you really want to delete everything?
+DoYouReallyWantToStop=確定要停止計算嗎？
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=在此迭代次數之後進行著色，而非從逃逸值開始（-1 為停用）
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=進行中
+;Doing
+DonTChangeAmbShDFog=不變更環境陰影+動態霧：
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=不儲存，僅預覽
+;Don't save, only preview
+Done=完成
+;Done
+Done2={} 已完成（{}）。
+;{} done ({}).
+DoneOf=完成：{} / {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=雙擊以切換導覽模式
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=自動將影像尺寸加倍
+;Double the imagesize automatically
+DownScaling=縮小\n比例：
+;Down-\nscaling:
+DownscaleBoth=兩者都縮小
+;Downscale both
+DownscaleDiffuseKeepReflections=縮小漫射，保留反射
+;Downscale diffuse, keep reflections
+DownscaleSpecular=縮小鏡面反射
+;Downscale specular
+Ds=Ds：
+;Ds:
+DunnoDoNothing=不知道，什麼都不做
+;Dunno, do nothing
+DynFog=動態霧
+;Dyn.fog
+DynFogOnIt=依迭代動態霧：
+;Dyn. fog on It.:
+DynFogOnIts=動態霧依迭代：
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=動態霧，點擊以更改色彩。  右鍵插入體積光色彩。
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=動態霧的濃烈色彩，點擊以更改。
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=動態霧或體積光參數。選項請見「著色」分頁！
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=動態霧：\n數值越低，霧出現的位置離物件越遠。\n使用 dIFS 時，霧圍繞在此迭代所計算的物件部分周圍。\n設為零可停用此功能，並照常依光線步數計算動態霧。\n提示：勾選「First step random」選項可避免階梯狀條紋。\n體積光：\n選擇要計算光散射的光源編號。
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=邊線顏色
+;Edges color
+Edit=編輯
+;Edit
+EditJITCompiledFormula=編輯 JIT 編譯的公式
+;Edit JIT-compiled Formula
+EditMapSequences=編輯貼圖序列
+;Edit Map Sequences
+EditMode=編輯模式：
+;Edit mode:
+EditNamedConstantValue=編輯具名常數值
+;Edit named constant value
+EditNamedParam=編輯具名參數
+;Edit named param
+EditOptionValue=編輯選項值
+;Edit option value
+EditSelectedConstantValue=編輯選取的常數值
+;Edit selected constant value
+EditSelectedNamedParameter=編輯選取的具名參數
+;Edit selected named parameter
+EditSelectedOption=編輯選取的選項
+;Edit selected option
+Elapsed=已用時間
+;Elapsed
+ElapsedTimeS=已用時間：{} 秒
+;Elapsed time: {} s
+Enable=啟用
+;Enable
+EnableGeneratingZBufferThisMode=啟用產生 Z-buffer。此模式需要額外資料，與舊版不相容，因此使用此設定的 MC 檔案無法儲存／還原。要儲存 Z-buffer，只需儲存一般影像，Z-buffer 便會自動一併儲存。
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=為光照計算啟用內部 Gamma 2。\n這與 Gamma 滑桿無關。
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=啟用光照
+;Enable Lighting
+Enabled=啟用
+;Enabled
+EnablesTheHardShadowIfCalculated=啟用硬陰影（若已計算）。\n若未計算 HS，則啟用時由環境陰影減弱燈光。
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=結束：
+;End:
+EnterNamedParameter=輸入具名參數
+;Enter named parameter
+Entries={} 筆項目
+;{} entries
+Error=錯誤
+;error
+ErrorAt=, 錯誤位於 {}：{}
+;, error at {}: {}
+Errors=錯誤
+;Errors
+Escapetime3DFormulas=逃逸時間 3D 公式
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=具有解析（較快）DE 計算的逃逸時間 3D 公式
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=逃逸時間 4D 公式
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=具有解析（較快）DE 計算的逃逸時間 4D 公式
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=僅逃逸時間變換，\n請與逃逸時間公式搭配使用
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=歐拉角：
+;Euler angles:
+EveryNewPictureOfTheMain=主視窗的每張新圖片都會經過濾波（儲存的圖片也是）。
+;Every new picture of the main window is filtered (the saved one too).
+Everything=全部
+;Everything
+ExchangeAdd=交換、新增
+;Exchange, add
+ExchangeThisFormulaWithTheNext=將此公式與下一個交換
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=將此公式與上一個交換
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=將此影格與下一個交換
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=將此影格與前一個交換
+;Exchange this frame with the previous one
+Exit=離開
+;Exit
+ExpandThePanel=展開面板
+;Expand the panel
+Experimental=實驗性...
+;Experimental...
+ExperimentalSpeedUps=實驗性加速
+;Experimental speed-ups
+ExponentialFunctions={ 指數函式 }
+;{ Exponential functions }
+ExportACubeAsAStack=將立方體匯出為一疊 PNG 檔案
+;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=將碎形匯出為高斯潑濺，以便在 Blender 和其他潑濺檢視器中從各個方向觀看
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
+Exposure=曝光
+;Exposure
+Exposure025=曝光：  0.25
+;Exposure:  0.25
+ExposureInStops1TwiceAs=曝光（格）：+1 亮一倍，-1 暗一半
+;Exposure in stops: +1 twice as bright, -1 half as bright
+ExtractingAmbientInformationFromTheOriginal=正在從原始 M3I 檔案擷取環境資訊，請稍候：
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ 極值檢測 }
+;{ Extreme testing }
+FFmpegCommand=FFmpeg 指令
+;FFmpeg command
+FNr=公式編號：
+;F.nr:
+FOVy=FOVy：
+;FOVy:
+FailedToImportFractalParametersAll=匯入分形參數失敗。其他所有設定均已匯入。
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=遠處深度霧
+;Far depth fog
+FarOffset=遠處偏移
+;Far offset
+FarPlane=遠平面：
+;Far plane:
+FastInaccurate=快速+不精確
+;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=更快的計算方法，但會稍微改變影像。它們隨場景一起儲存，僅在勾選第一個核取方塊時使用。依賴它們之前，請與不使用它們的算圖結果比較。
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=更快的計算方法，但會稍微改變影像
+;Faster ways of calculating that change the picture a little
+File=檔案
+;File
+FileIndex=檔案索引：
+;File index:
+FileLower=檔案
+;file
+FileName=檔案名稱(&N)：
+;File &name:
+FileTooShort=檔案太短
+;file too short
+Filename=檔名
+;Filename
+Files=檔案
+;Files
+FilesOfType=檔案類型(&T)：
+;Files of &type:
+Filmic=電影感
+;Filmic
+FilmicToneMappingBrightLightRolls=電影感色調映射：強光柔和過渡，而不是變成一片純白
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
+FilterNewPicturesAutomatically=自動濾波新圖片
+;Filter new pictures automatically
+FilterNow=立即濾波
+;Filter now
+FindsTheSurfaceWithFewerDistance=以更少的距離估計找到表面。快百分之幾；細節可能略有移動。
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
+Fine=微調
+;fine
+FineTuneThePositionsWithThe=用方向按鈕微調位置
+;fine tune the positions with the arrow buttons
+FinishThePicture=圖片修飾
+;Finish the picture
+FinishedRenderingSlices=切片渲染完成。
+;Finished rendering slices.
+FinishedTracingObject=物件追蹤完成。
+;Finished tracing object.
+Finishing=修飾
+;Finishing
+First4RaysNoisy=前 4 條光線（有雜訊）
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=首次計算此公式組合：正在編譯顯示卡的著色器（10-30 秒，僅需一次，驅動程式會保留）。期間由 CPU 計算，著色器就緒後顯示卡便會加入。
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=隨機第一步：
+;First step random:
+FirstStepRandomColon=第一步隨機：
+;First Step Random:
+FirstStepRandomToAvoidSpotty=第一步隨機：\n避免 DE 不佳的公式出現斑點狀瑕疵。\n若要降低雜訊，請搭配影像縮小和／或較高的光線數使用。\n也可與抖動（dithering）一起使用。
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+Fisheye=魚眼
+;Fisheye
+FisheyeNotInMB3DTheField=魚眼（MB3D 中沒有）：視野最大 360 度，涵蓋圖片的高度；正方形圖片顯示圓形視圖
+;Fisheye (not in MB3D): the field of view, up to 360 degrees, spans the picture's height; a square picture shows a round view
+FitLeftRightBorders=銜接左右邊緣
+;Fit left+right borders
+FixedZoomAndSteps=固定縮放與步長
+;Fixed zoom and steps
+FlatSolid=平面實體
+;Flat Solid
+FlatSolidWithEdges=平面實體含邊線
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor：<= X 的最大整數，  |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fo.{}
+;Fo.{}
+FogOffset=霧偏移
+;Fog offset
+Folder=資料夾
+;Folder
+FolderOfTheLanguageFiles=語言檔案的資料夾：
+;Folder of the language files:
+FollowTheNewest=跟隨最新
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\s若指數為分數，或 |指數| > MaxInt，底數必須 > 0。 }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=球面使用時，以縮小的背景影像取代環境色彩
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=公式
+;Formula
+Formula1=公式1 •
+;Formula1 •
+Formula12=公式1
+;Formula1
+FormulaCombinationsInThisBatchThat=此批次中對顯示卡而言新的公式組合（先編譯其著色器，每個 10 到 30 秒；期間由 CPU 計算，記憶體不足時編譯會等待）：
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
+FormulaEditor=公式編輯器
+;Formula editor
+FormulaLower=公式
+;formula
+FormulaM3f=公式 (*.m3f)
+;Formula (*.m3f)
+FormulaName=公式名稱：
+;Formula name:
+FormulaNotFound=找不到公式「{}」。
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=混合第 2 部分開始的公式編號
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=公式值：
+;Formula values:
+Formulas=公式
+;Formulas
+FormulasColon=公式:
+;Formulas:
+Forward=順向
+;Forward
+FoundOnThisComputerNotConnected=已在這台電腦上找到，尚未連線。
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=已在這台電腦上找到。請在終端機中執行一次此指令，然後開始新的 Claude Code 工作階段：
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=參數名稱：
+;fp name:
+Fpow=Fpow：
+;Fpow:
+Frame=影格：
+;Frame:
+FrameNumberToUseForAnimated=主編輯器中動畫貼圖所使用的影格編號
+;Frame number to use for animated maps in the main editor
+Frames=影格
+;frames
+FramesPerSecond=每秒影格數：
+;Frames per second:
+FramesSec=影格/秒：
+;Frames/sec:
+Fresnel=菲涅耳：
+;Fresnel:
+Fresnel0To1MoreReflection=菲涅耳（0 到 1）：表面越偏離視線，反射越多，如玻璃、水和漆面（與反射一起時最明顯）
+;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromClipboard=從剪貼簿
+;From Clipboard
+FromTheCameraAllAroundA=從相機向四周（從內部看的場景）
+;From the camera, all around (a scene seen from inside)
+FullM3IImageFiles=完整 M3I 影像檔：
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=函數：
+;Functions:
+FunctionsFromSystem={ ----------------------- 來自 System 的函式  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- 來自 System.Math 的函式  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=Gamma：  0.5
+;Gamma:  0.5
+Gauss=高斯
+;Gauss
+GaussianSplats=高斯潑濺
+;Gaussian splats
+GaussianSplats2=高斯潑濺...
+;Gaussian splats...
+GaussianSplatsPLY=高斯潑濺 (PLY)
+;Gaussian splats (PLY)
+GenerateAnAnimationKeyframeFromThe=從目前視角產生一個動畫關鍵影格
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=以分塊方式產生大型影像
+;Generate big images by tiling
+GenerateMesh=產生網格
+;Generate mesh
+GenerateMesh2=產生網格
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=產生物體的 PNG 影像 2D 切片。
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=產生隨機漫射顏色
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=依據漫射顏色產生隨機鏡面反射顏色
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=產生的網格
+;Generated Mesh
+GenerationOf=第 {} 代，共 {} 代
+;Generation {} of {}
+Generations=世代
+;Generations
+GetASmoothImageWraparoundFor=讓影像在球面使用時平滑環繞銜接
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=取得中點
+;get midpoint
+GetMinDistFromImage=從影像取得最小距離
+;Get min.dist. from image
+GetValuesFromImage=從影像取得值
+;Get values from image
+GetZ1=取得 Z1
+;Get Z1
+GetZ2=取得 Z2
+;Get Z2
+GlobalLight=全域燈光
+;Global light
+Glow=發光：
+;Glow:
+Glow0AndUpTheSurface=發光（0 及以上）：表面不靠光照，以自身顏色發光
+;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=光暈
+;Glow
+GlowAroundBrightLightStrengthReach=強光周圍的光暈：強度、範圍（圖片對角線的比例），以及從多亮開始發光（白色的 0 到 1）
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
+GlueSliders=黏合滑桿
+;Glue sliders
+GoToNext=前往下一個
+;Go to next
+GoneLastSeenSAgo=已離開（最後出現於 {} 秒前）
+;gone (last seen {} s ago)
+Grain=顆粒
+;Grain
+GraphicsCard=顯示卡
+;Graphics card
+GroundPlane=地平面
+;Ground plane
+GroundPosition=地面位置
+;Ground position
+GroupByDay=依日期分組
+;Group by day
+GuessParams=推測參數
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=HS 計算時間：
+;HS calc time:
+HardShadowCalculation=硬陰影計算
+;hard shadow calculation
+HardShadowRadius=硬陰影半徑：
+;Hard shadow radius:
+HardShadows=\s硬陰影
+;\sHard Shadows
+HardShadowsLower=硬陰影
+;hard shadows
+Height=高度：
+;Height:
+HeightMapGenerator=高度圖產生器
+;HeightMap Generator
+HeightMapGeneratorPreview=高度圖產生器預覽
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=例如想重做一次不滿意的繪製時很有用。
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=高品質
+;HiQual
+HiQual1=HiQual 1
+;HiQual 1
+HiQual2=HiQual {}
+;HiQual {}
+Hidden=隱藏
+;hidden
+HideThisFormula=隱藏此公式
+;Hide this formula
+High=高
+;high
+HighlightsMoveAsInThePictures=高光會像圖片中一樣移動。每個潑濺點在 2 時約佔 160 位元組，關閉時 68 位元組。
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
+History=歷程記錄
+;History
+HistoryThePicturesCalculatedTheFiles=歷程記錄：已計算的圖片、開啟及儲存的檔案（按一下即可瀏覽）
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=（按住 Shift 鍵可做更細的步進）
+;(Hold Shift key for finer steps)
+Hotkeys=快速鍵
+;Hotkeys
+HowMuchThePlaneReflects0=平面的反射程度（0 到 1）：它的高光，以及計算反射時的鏡面（後製處理）
+;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=表面顏色隨起伏變化的程度：0 不變，1 強烈
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowStrongTheNoiseIsThat=要移除的雜訊強度（1 到 30，同 GIMP 的「Denoise DCT」）。\n越高移除的雜訊越多，但也會移除更多細節。
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThickTheCloudsAre1=雲的濃度（1：整層約透過 2% 的光）以及覆蓋天空的比例（0 到 1）
+;How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
+HowThisComputerIsListedIn=這台電腦在 swarm 中顯示的名稱
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ 雙曲函式及其反函式 }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ 輸入：|X| <= 1  輸出：[0..PI] 弧度 }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ 輸入：|X| <= 1  輸出：[-PI/2..PI/2] 弧度 }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\s輸入：|Y| < 2^64, |X| < 2^64, X <> 0   輸出：[-PI..PI] 弧度 }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=閒置
+;Idle
+IfEnabledTheAmbientShadowsWill=若啟用，環境陰影會在主要算圖完成後\n自動計算。\n請先選好選項。
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=若啟用，所選的硬陰影會在主要算圖完成後\n自動計算。\n請先選好選項。
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=若啟用，景深效果會在先前的計算完成後\n自動計算。\n請先選好選項。
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=若啟用，影像會覆蓋整個球面。\n在動畫中很有用。
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=若啟用，影像在「深度」值很高時不會消失。
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=若啟用，載入預設組或光照參數時不會更改燈光。\n例如當您不想重新計算硬陰影時會很有用。
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=若啟用，反射會在先前的計算完成後\n自動計算。\n請注意，之後變更光照會重設此計算！
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=若啟用，鏡面反射量會分為進入內部的光線與反射兩部分。
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=黏合後，滑桿的行為就像用橡皮筋綁在一起。
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=選取時，按「1」可將此滑桿設為預設位置。
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=若選取，M3I 檔案會儲存在預設的 M3I 資料夾，\n  即「INI DIRS」選項所指定的資料夾。\n若未選取，則儲存在與 M3P 檔案相同的資料夾。
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=若設為大於 0 的值，表面法線將以分布點的平均值計算，\n並同時計算粗糙度因子，從而降低鋸齒。\n設為 8 會對整個體積取平均，速度非常慢，但可用於非常\n關鍵的情況。您也可以在後製處理中使用 Normals on ZBuf。
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=若選擇體積光：  在「動態霧」按鈕上按右鍵以插入體積光色彩。
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=若要從某個位置繼續先前已開始的算圖，\n請在此輸入下一張要算出影像的起始索引。\n「檔案索引」的值請保持不變。
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=忽略
+;Ignore
+Image=影像
+;Image
+ImageDownscalingForViewingPurposeAnd=用於檢視以及儲存為 jpeg、png 或 bmp 的影像縮小比例。\n只有在 1:2 與 1:3 比例下，儲存時才會執行反鋸齒濾鏡。\n點擊以開啟選擇選單。
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=影像已存在
+;Image exists
+ImageLower=影像
+;image
+ImageParameters=影像 + 參數
+;image + parameters
+ImageRotation=影像旋轉：
+;Image rotation:
+ImageSize=-> 影像尺寸：
+;-> Image size:
+ImageWidth=影像寬度：
+;Image width:
+Images=影像
+;Images
+ImagesForMaps=貼圖用影像：
+;Images for maps:
+Img=影像
+;Img
+ImportActualParas=匯入目前參數
+;Import actual paras
+ImportParameter=匯入參數
+;Import parameter
+ImportParameterFromMain=從主視窗匯入參數：
+;Import parameter from main:
+ImportParameterFromMain2=從主視窗匯入參數
+;Import parameter from main
+ImportParametersFromAFileTo=從檔案匯入參數，以製作大型渲染
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=從主程式匯入目前的參數
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=匯入主程式的參數以進行 MC 渲染
+;Import the main programs parameter for mc rendering
+ImportedFromMain=從主程式匯入
+;Imported from Main
+InAndOutside=內外皆渲染
+;In and outside
+InOut=內+外
+;In+Out
+InOutOption=內／外選項：
+;In/out option:
+InTheSwarm=Swarm 中：
+;In the swarm:
+InThisModeRightAndLeft=此模式下，每個子影格都會算出右眼與左眼影像。
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· 共 {}
+;\s· {} in total
+InTotal2=共 {}
+;{} in total
+InclInMain=含於主程式
+;incl. in main
+IncludingDFogOnItsOrVol=包含動態霧依迭代或體積光選項
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=增加/減少影格編號
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=提高／降低品質等級（光線步長乘數）
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=放大比例
+;Increase scale
+IncreaseTheSizeOfTheNavigator=放大導覽器視窗
+;Increase the size of the Navigator window
+Increment=增量：
+;Increment:
+Increment2=增量
+;Increment
+IncrementIfTheSequenceIncreaseThe=序列的增量，提高此值可跳過影像
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=索引前補 0
+;Index with leading 0
+InfinityValuesHaveAFractionField=// 無限大值的小數部分欄位為 0。無限大值可為正
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=資訊
+;info
+Infos=資訊
+;Infos
+IniDirs=Ini 目錄
+;Ini Dirs
+Input=輸入
+;Input
+InputTheHeightDivisor=輸入高度除數：
+;Input the height divisor:
+InputTheOriginalValueFromThe=從主程式參數載入原始數值。
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=從主程式參數載入原始數值。
+;Input the original values from the main program parameters.
+InputTheWidthFactor=輸入寬度係數：
+;Input the width factor:
+Inputs=輸入：
+;Inputs:
+Insert=插入
+;insert
+InsertActualParameterInThisKeyframe=將目前參數插入此關鍵影格
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=從主程式插入完整參數
+;Insert complete parameter from main program
+InsertMidValues=插入中點值
+;Insert mid values
+InsertVolumetricLightColor=插入體積光色彩
+;Insert volumetric light color
+Inserting=插入：
+;Inserting:
+InsertsTheCurrentMidPosition=插入目前的中點位置。
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=將目前位置插入為 Julia 值。\n若在 4D 模式下，向量會依 4D 旋轉值旋轉。
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=內部
+;Inside
+InsideColor=內部顏色
+;Inside color
+InsideRender=內部渲染
+;Inside render
+Int=強度：
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower：將底數提升至整數次方。速度快。 }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=強度：
+;Intensity:
+IntensityOfImage=影像強度
+;Intensity of image
+InterfaceLanguage=介面語言
+;Interface language
+InterfaceLanguageClickToChange=介面語言：{}（按一下可變更）
+;Interface language: {} (click to change)
+InterfaceLanguageColon=介面語言：
+;Interface language:
+InterfaceSize=介面大小：
+;Interface size:
+Internal=內部
+;Internal
+Interpolate=插值
+;Interpolate
+InterpolateANewKeyframeInBetween=在中間插補一個新的關鍵影格。
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=反轉 Z-buffer
+;Invert ZBuffer
+Iridescence=虹彩：
+;Iridescence:
+Iridescence0To1TheColours=虹彩（0 到 1）：隨視角變化的薄膜顏色，以及它的偏移（0 到 1）
+;Iridescence (0 to 1): the colours of a thin film, changing with the angle of view, and their shift (0 to 1)
+IsNotAValidFloatingPoint=「{}」不是有效的浮點數值
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue=「{}」不是有效的整數值
+;'{}' is not a valid integer value
+Iteration=迭代
+;Iteration
+IterationCount=迭代次數
+;Iteration Count
+Iterationcount=迭代次數
+;Iterationcount
+Iterations=迭代次數：
+;Iterations:
+ItsForFree=免費的！
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=JIT 編譯公式
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=JPEG 品質或大小
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=JPG 使用程式主視窗上方\n目前顯示的品質設定。
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=工作
+;Job
+Jobs=工作：
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=JPEG 品質：
+;Jpeg quality:
+JpgQ=jpg 品質：
+;jpg q.:
+JuliaMode=Julia 模式
+;Julia mode
+JuliaMode2=Julia 模式
+;Julia Mode
+JuliaOff=Julia 關
+;Julia Off
+JuliaOn=Julia 開
+;Julia On
+JuliaValuesXYZ=Julia 值 (x,y,z)：
+;Julia values (x,y,z):
+KeepAspect=保持長寬比
+;keep aspect
+KeepLights=保留燈光
+;Keep lights
+KeepOnlyNearerParts=只保留較近的部分：
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=手動更改寬度或高度時保持長寬比。\n按下長寬比按鈕時不需取消勾選。
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=有新的行出現時，讓最新的一行保持在畫面中
+;Keep the newest line in sight as new ones come
+KeepThisPriority=保持此優先權
+;Keep this priority
+KeepsTheChosenLanguageForThe=保留所選語言，供下次啟動時使用
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=保留快速鍵供下次啟動使用
+;Keeps the hotkeys for the next start
+Keyframe=關鍵影格：
+;keyframe:
+Keyframe2=關鍵影格 {}
+;Keyframe {}
+KeyframeListM3k=關鍵影格清單 (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\s關鍵影格\n起始：    結束：
+;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=從主視窗的視角出發，繞畫面中心轉一整圈的關鍵影格：平滑循環中的 8 個關鍵影格（Catmull-Rom）
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeysThatBringAWindowTo=從任何視窗將某個視窗帶到前面的按鍵
+;Keys that bring a window to the front from any window
+Kind=種類
+;Kind
+LGamma05=L-Gamma：  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=光線筆觸
+;LIGHT STROKES
+LMBMoveRMBRotate=左鍵：移動           右鍵：旋轉
+;LMB: move           RMB: rotate
+LastLengthIncrease=最後長度增量
+;Last length increase
+LastPass=\s· 最後一輪 {}
+;\s· last pass {}
+Layer=層：
+;Layer:
+LeftclickGoIntoMouseModeView=左鍵點擊：進入滑鼠模式…以滑鼠觀看，+右鍵…滾轉\n（再次左鍵點擊或按 ESC 離開滑鼠模式）
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=左鍵：   以 Ymid+Zmid 為中心，繞觀察者的 X 軸旋轉物件\n右鍵：以 0 為中心，繞物件自身的 X 軸旋轉
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=左鍵：   以 Xmid+Zmid 為中心，繞觀察者的 Y 軸旋轉物件\n右鍵：以 0 為中心，繞物件自身的 Y 軸旋轉
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=左鍵：   以 Xmid+Ymid 為中心，繞觀察者的 Z 軸旋轉物件\n右鍵：以 0 為中心，繞物件自身的 Z 軸旋轉
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=左鍵：   復原 -> 將光照參數設回上次繪製前的狀態\n右鍵：重做
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=左鍵：   復原 -> 將參數設回上次計算前的狀態\n右鍵：重做
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=讓臨界值將環境陰影一路衰減至 0。\n遠處的結構較不受近處結構影響。
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=等級
+;Level
+Light=光照
+;Light
+Light1=光源 1
+;Light 1
+Light12=光源1
+;Light1
+Light2=光源 2
+;Light 2
+Light22=光源2
+;Light2
+Light3=光源 3
+;Light 3
+Light32=光源3
+;Light3
+Light4=光源 4
+;Light 4
+Light42=光源4
+;Light4
+Light5=光源 5
+;Light 5
+Light52=光源5
+;Light5
+Light6=光源 6
+;Light 6
+Light62=光源6
+;Light6
+LightAmplitudeUseExponentStyleLike=燈光振幅，可使用指數格式，例如：\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=燈光色彩，按下以選擇新色彩。
+;Light color, press to select a new one.
+LightScattering=光線散射：
+;Light scattering:
+LightScatteringInsideTheMaterial=材質內部的光線散射
+;Light scattering inside the material
+LightXangle=燈光 X 角
+;Light Xangle
+LightYangle=燈光 Y 角
+;Light Yangle
+Lighting=光照
+;Lighting
+LightingColon=光照：
+;Lighting:
+Lightmap=光照貼圖
+;Lightmap
+Lightness=亮度
+;Lightness
+LikeANaNAnInfinityDouble=// 與 NaN 一樣，無限大的 double 值其指數為 7FF，但
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// 與無限大一樣，NaN 的 double 值其指數為 7FF，但 NaN
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=線性
+;Linear
+LinearAttenuation=線性衰減
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=在中間線性插補一個關鍵影格
+;Linear interpolate a keyframe inbetween
+LinearStraightFromKeyframeToKeyframe=線性：從關鍵影格到關鍵影格走直線。二次貝茲 (MB3D)：平滑，從關鍵影格旁邊經過。Catmull-Rom (MB3D 中沒有)：平滑並經過每個關鍵影格。曲線按鈕可顯示差別
+;Linear: straight from keyframe to keyframe. Quadratic Bezier (MB3D): smooth, passing beside the keyframes. Catmull-Rom (not in MB3D): smooth and through every keyframe. The Curves button shows the difference
+Lines={} 行
+;{} lines
+List=清單
+;List
+LliMultiplier=Lli 倍率：
+;Lli multiplier:
+Load=載入
+;Load
+LoadANewFormulaFile=載入新的公式檔案
+;Load a new formula file
+LoadBtrace2=載入 btrace2...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=從另一個公式載入程式碼，例如無法編譯的公式
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=載入 m3p...
+;Load m3p...
+LoadMesh=載入網格
+;Load mesh
+LoadParameters=載入參數
+;Load parameters
+LoadSettingsFromBtrace2File=從 *.btrace2 檔案載入設定
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=將參數載入主視窗，或開啟檔案
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=載入所選渲染的參數並繼續其計算
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=僅載入所選渲染的參數
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=載入與儲存的初始目錄
+;Loading and saving initial directories
+Log=記錄
+;Log
+LogEverythingTheProgramDidIts=記錄：程式所做的一切，以及其警告與錯誤（按一下即可查看）
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ 對數函式 }
+;{ Logarithmic functions }
+LongerMarchSteps1Off1=更長的步進步長：1 = 關閉，1.2 到 1.5。1.3 時快 5% 到 10%；薄殼可能出現破洞。
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=場景既沒有動態霧也沒有體積光時，在空曠空間中以更長的步長前進（不與「停用解析 DE」同時使用）。
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
+LongerThanUsualStillWorking=比平常久，仍在進行中
+;longer than usual, still working
+LookIn=查看位置(&I)：
+;Look &in:
+Looking=環視
+;Looking
+LookingRollingAngle=環視+滾轉角度：
+;Looking+Rolling angle:
+Loop=循環
+;Loop
+LoopAnimation=循環動畫
+;Loop animation
+Lower=較低
+;Lower
+Lowest=最低
+;Lowest
+M3AAnimationFiles=M3A 動畫檔：
+;M3A animation files:
+M3CPathtracerFiles=M3C 路徑追蹤檔：
+;M3C pathtracer files:
+M3DAnimationM3a=M3D 動畫 (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=M3D 大型渲染專案 (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=M3D 公式 (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=M3D 影像 + 參數 (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=M3D 光照參數 (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=M3D 蒙地卡羅檔案 (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=M3D 參數 (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=M3D 體素專案 (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=M3F 公式檔載入：
+;M3F formula files load:
+M3IDone=M3I 完成
+;M3I done
+M3ILightParameter=M3I 光照參數：
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=要算成 M3I 的 M3P 檔案
+;M3P files that should be rendered to M3I
+M3PParameterFiles=M3P 參數檔：
+;M3P parameter files:
+M3VPNGVoxelSlices=M3V、PNG 體素切片：
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=MB3D 影像 (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=M.C. 批次渲染
+;M.C. batch render
+MMBWheelZoom=中鍵／滾輪：縮放
+;MMB/Wheel: zoom
+MRelObj=貼圖相對物件
+;M.rel.obj.
+MainCalcTime=主計算時間：
+;Main calc time:
+MainParas=主參數
+;main paras
+MainRendering=主渲染
+;main rendering
+MainRenderingOfTheImage=影像的主要渲染
+;Main rendering of the image
+MainWindow=主視窗:
+;Main window:
+MakeAnImageSelectionWithThe=先用滑鼠在影像中選取範圍，再以目前的參數\n重新計算此選取範圍。\n若已選取硬陰影與 DEAO，也會一併計算，但\n其他環境陰影必須對整張影像重新計算。\n若先前已計算過「Z-buffer 法線」，也必須重新計算。
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=確保在非混合模式下不會減去任何光線
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=若希望納入硬陰影與環境陰影，請確認已設定\n其「自動計算」選項。
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=把那張圖片的光線調暖一些，然後重新渲染。
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=使環境與背景色彩的上下漸層\n相對於物件的座標系。\n在動畫中使用，將燈光固定於場景。
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=製作三個變化版本，並告訴我你最喜歡哪一個。
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=使反射略帶漫射，數值範圍 0 到 2.5
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=正在製作影片...
+;Making the video...
+MapNotFound=找不到\n貼圖
+;Map not\nfound
+MapNumber=貼圖編號
+;Map number
+MapNumber2=貼圖編號：
+;Map Number:
+MapNumberColon=貼圖編號：
+;Map number:
+MapOnOutputVector=貼圖於輸出向量
+;Map on output vector
+MapSequences=貼圖序列
+;Map Sequences
+MapType=貼圖類型：
+;Map Type:
+Material=材質
+;Material
+Max=Max
+;Max
+MaxIterat=最大迭代：
+;Max. Iterat.:
+MaxIterations=最大迭代次數：
+;Max. iterations:
+MaxIterationsColon=最大迭代次數：
+;Max iterations:
+MaxIts=最大迭代：
+;Max its.:
+MaxL=MaxL：
+;MaxL:
+MaxLengthCalc=最大計算長度：
+;Max. length calc.:
+MaxNoise=最大雜訊：
+;Max noise:
+MaxRayCount=最大光線數：
+;Max ray count:
+MaxRaycount=最大光線數：
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue：傳回資料陣列中最大的帶符號值 (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=最大頂點數：
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=混合第二部分的最大迭代次數，從此視窗上方指定的公式編號開始。
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=最大迭代次數
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=預覽中顯示的最大頂點數
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=混合第 1 部分最大迭代：
+;Maxits hybrid part1:
+MaxitsHybridPart2=混合第 2 部分最大迭代：
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=物體表面銳利／平滑程度的量度。請嘗試 0.15 .. 1.5 範圍內的值；少數情況下，像 -0.1 這樣的小負數也會產生有趣的結果
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=所需記憶體：
+;Mem needed:
+Memory=記憶體
+;Memory
+Mesh=網格
+;mesh
+MeshObj=網格 (*.obj)
+;Mesh (*.obj)
+MeshPly=網格 (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=網格預覽
+;MeshPreviewFrm
+MeshProperties=網格屬性
+;Mesh properties
+MeshSavedVerticesFaces=網格已儲存：{}（{} 個頂點，{} 個面）
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=含 uv 座標的網格 (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=含頂點顏色的網格 (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=網格：
+;Meshes:
+Meshes2=網格
+;Meshes
+Messages=訊息
+;Messages
+Mid=中
+;mid
+Min=Min
+;Min
+MinDE=MinDE：
+;MinDE:
+MinDistance=最小距離：
+;Min distance:
+MinIterat=最小迭代：
+;Min. Iterat.:
+MinIterations=最小迭代次數：
+;Min. iterations:
+MinIts=最小迭代：
+;Min its.:
+MinLeft=剩 {} 分
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=極小
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft=剩 {} 分 {} 秒
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue：傳回資料陣列中最小的帶符號值 (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=最小距離：
+;Minimal distance:
+Misc=其他：
+;Misc:
+MiscellaneousRoutines={ 其他函式 }
+;{ Miscellaneous Routines }
+Missing=遺失
+;missing
+MissingBTR123Header=缺少 <BTR1/2/3> 標頭
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=修改：
+;Mod:
+Mode=模式：
+;Mode:
+Mode2=模式 2
+;Mode 2
+ModeFor2ColorChoice=第 2 色彩選擇模式：
+;Mode for 2. color choice:
+MonteCarlo=蒙地卡羅:
+;Monte Carlo:
+MonteCarlo2=蒙地卡羅
+;Monte Carlo
+MonteCarlo3=蒙地卡羅：{}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=蒙地卡羅計算於：{}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=蒙地卡羅渲染
+;Monte Carlo rendering
+MonteCarloRendering2=蒙地卡羅渲染\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=更多選項：將參數傳送至主視窗，調整後再匯入。
+;More options: send paras to main, adjust and import.
+MotionBlur=動態模糊：
+;Motion blur:
+MotionBlurThePicturesAveragedFor=動態模糊：每個影格平均的圖片數，讓移動的物體產生拖影（1 = 關）；渲染時間相應成倍增加
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
+Mousewheel=滑鼠滾輪
+;Mousewheel
+Move=移動
+;Move
+MoveBackwards=向後移動
+;Move backwards
+MoveDown=向下移動
+;Move down
+MoveForward=向前移動
+;Move forward
+MoveLeft=向左移動
+;Move left
+MoveRight=向右移動
+;Move right
+MoveUp=向上移動
+;Move up
+MultiplierForTheLastLengthIncrease=「最後長度增量」選項的倍率。\n高次冪時請降低此值，低縮放比例的公式則提高。
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=將第一步的步寬乘上一個隨機數，\n讓過步的瑕疵呈現為雜訊感。  \n也能減少動態霧的色帶。\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen：{}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [雙擊影像或按「突變！」按鈕進行突變，按右鍵開啟選單]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=突變
+;Mutate
+MutateExclamation=突變！
+;Mutate!
+Mutation=突變 {}
+;Mutation {}
+MutationType=突變類型
+;Mutation type
+N0No255FullTransparency=0：不透明，255：完全透明
+;0: no, 255: Full transparency
+N0To1DarkerCorners=0 到 1：角落變暗
+;0 to 1: darker corners
+N0To1RedAndBlue=0 到 1：像鏡頭那樣朝角落出現紅藍色邊
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
+N1100JPEGQuality100Maximal=1..100：JPEG 品質\n> 100：最大檔案大小（KB）
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=16 位元 PGM
+;16 Bit PGM
+N16BitZBufferGenerator=16 位元 Z-buffer 產生器
+;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 較冷（偏藍）到 1 較暖（偏橘）
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 較平淡到 1 對比較強
+;-1 flatter to 1 stronger contrast
+N1FullSizeNoAntiAliasing=1:  原尺寸，無反鋸齒\n2:  2x2 反鋸齒\n3:  3x3 反鋸齒
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  無\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=第 2 選擇
+;2. choice
+N2Or3PassesGivesA=2 或 3 次可在焦點前方產生更好的強烈模糊。\n1 次會產生圓盤狀散景，次數越多則越接近高斯散景。
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=第 2 次反射
+;2nd reflection
+N360Panorama=360 全景
+;360 Panorama
+N3DAnalyticFormula=3D 解析公式
+;3D analytic formula
+N3DFormula=3D 公式
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=4D 解析公式
+;4D analytic formula
+N4DFormula=4D 公式
+;4D formula
+N4DRotationOfTheWholeBulb=整個物件的 4D 旋轉：
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=4D 旋轉 (xw,yw,zw)：\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=8 位元 PNG
+;8 Bit PNG
+Name=名稱：
+;Name:
+Name2=名稱
+;Name
+NamedParams=具名參數：
+;Named Params:
+NaviExpBright=真實亮度
+;True brightness
+NaviExpBrightHint=依計算結果顯示圖像：不套用亮度滑桿。
+;Shows the picture as calculated: the brightness slider is not applied.
+NaviExpDetail=主視窗的細節
+;Main window's detail
+NaviExpDetailHint=使用主視窗的光線步長、DE 停止值與二分搜尋步數計算，而非導覽器較快的設定。\n較慢，但表面細節與主圖像一致。
+;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
+NaviExpLight=主視窗的光照
+;Main window's lighting
+NaviExpLightHint=使用主視窗的光照，並跟隨光照視窗中的變更。\n在此選擇光照預設或動態霧會將其關閉。
+;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExperimental=實驗性：與主視窗一致
+;Experimental: match the main window
+Navigator=導航器
+;Navigator
+Navigator2=導航器：{}
+;Navigator: {}
+NavigatorColon=導航器:
+;Navigator:
+NavigatorSize=導覽器大小
+;Navigator Size
+NavigatorViewSentToTheMain=導航器視角已送至主視窗，請按「計算 3D」。
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=神經網路雜訊濾波：{}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=神經網路雜訊濾波：完成
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=對顯示的圖片使用神經網路雜訊濾波 (Intel Open Image Denoise)。\n算圖本身不會改變；下次更新時會再次顯示未濾波的圖片。
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=新
+;new
+NewJITCompiledFormula=新建 JIT 編譯的公式
+;New JIT-compiled Formula
+NewSequence=新序列
+;New Sequence
+NewValue=新值：
+;New value:
+NewZoom=新縮放：
+;New zoom:
+No=否
+;no
+No2=否
+;No
+NoDoFOnTiles=圖塊不支援景深。
+;No DoF on tiles.
+NoFacesInTheFile=檔案中沒有面
+;no faces in the file
+NoFileAdded=未加入任何檔案
+;No file added
+NoFramesToRenderInThis=此範圍內沒有要渲染的影格。
+;No frames to render in this range.
+NoImageCalculatedYet=尚未計算任何影像。
+;No image calculated yet.
+NoIpol=不插值
+;No ipol
+NoLightParameters={}：沒有光照參數
+;{}: no light parameters
+NoObjectAtThisPoint=此處沒有物件。
+;No object at this point.
+NoParameters=沒有參數
+;no parameters
+NoParamsToSendToMain=沒有可送至主編輯器的參數
+;No params to send to main editor
+NoPreview=無預覽：{}
+;No preview: {}
+NoPreviewForThisFile=此檔案沒有預覽。
+;No preview for this file.
+NoSOURCESectionThisIsNot={}：沒有 [SOURCE] 區段，這不是 JIT 公式
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=未選擇共用資料夾
+;no shared folder chosen
+NoStepLimitWithoutDynamicFog=無動態霧時不限步數
+;No step limit without dynamic fog
+NoTextParametersFoundInThe=剪貼簿中找不到文字參數。
+;No text parameters found in the clipboard.
+NoTilesToRender=沒有要渲染的圖塊。
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\s找不到有效的文字，請在下方輸入：
+;\sNo valid text found, please enter the text below:
+Noise=-雜訊
+;-noise
+NoiseAI=-雜訊AI
+;-noise AI
+NoiseFilter=\s雜訊濾波
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=對顯示的圖片套用雜訊濾鏡（DCT 去雜訊，如同 GIMP 的「Denoise DCT」），\n強度依光線數估計。渲染本身不會改變；\n下次更新時會再次顯示未濾波的影像。
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=雜訊濾波：強度 {}
+;Noise filter: strength {}
+None=無
+;none
+Normal=一般
+;Normal
+NormalStatusForThisFormula=將此公式設為一般狀態
+;Normal status for this formula
+NormalsOnDE=以 DE 計算法向量：
+;Normals on DE:
+NormalsOnZBuf=Z-buffer 法線
+;Normals on ZBuf
+NormalsOnZBuffer=\sZ-buffer 法線
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=Z-buffer 法線：
+;Normals on ZBuffer:
+Norms=norms
+;norms
+NotABigRenderProject=不是大型渲染專案
+;not a big render project
+NotAvailableForLinuxUseClaude=不適用於 Linux：請使用下方的 Claude Code。
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=找不到。若您有使用，請在終端機中執行一次此指令：
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=未安裝。請從 claude.ai/download 取得，啟動一次後再回到這裡。
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=未選取
+;Not selected
+NotSharingTickShareThisComputer=未共享：勾選「共享這台電腦」即可與其他電腦一起渲染
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=未共享：勾選「共享這台電腦」即可與 {} 一起渲染
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=注意：若要預覽頂點顏色，請在預覽視窗中選擇點模式
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}：尚未渲染任何內容
+;{}: nothing rendered yet
+NothingToSave=沒有可儲存的內容
+;nothing to save
+NumberOfFramesToNextKeyframe=到下一個關鍵影格的影格數
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=要計算的光線數量。\n越多越好，當然也越慢。
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=確定
+;OK
+Object=物件
+;Object
+ObjectColors=物件顏色
+;Object colors
+ObjectDetermination=物體判定：
+;Object determination:
+Of={} / {}
+;{} of {}
+OfEntries={} / {} 筆項目
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=檔案相同的項目（相同參數再次計算、同一張圖片儲存兩次）只顯示最新的一筆
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=的參數
+;of Formulas
+OfLines={} / {} 行
+;{} of {} lines
+OfUnitsDone=已完成 {} / {} 個單位
+;{} of {} units done
+Off=關
+;Off
+OffLeftImageIsOnThe=關：左影像在左側，供平行觀看。開：右影像在左側，供交叉眼觀看。
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=關閉（檔案最小）
+;Off (smallest file)
+OffsetAndScale=偏移與縮放
+;Offset and scale
+OffsetX=偏移 X：
+;Offset X:
+OffsetY=偏移 Y：
+;Offset Y:
+OjectColorsOnCutsAnd2d=切面與 2D 內部的物件色彩，點擊以更改。
+;Oject colors on cuts and 2d inside, click to change them.
+On=開
+;On
+OnInsertingANewKeyframe=插入新關鍵影格時：
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=只有 1 個焦點，取 Zsharp1+2 的平均值！
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=只有圖片會保留為影像（蒙地卡羅渲染、體素或網格匯出則不會）。
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=僅加入光線
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=圖塊模式下只能使用 DEAO 環境陰影。\n現已選取並設為 33 條光線，請依需求自行調整。
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=僅 dIFS
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=（僅在已計算硬陰影時）
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=只顯示一種事件
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=只顯示名稱、資料夾或種類包含此文字的項目
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=只顯示包含這些字詞的行
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=只套用到目前的關鍵影格
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=僅在計算時「平滑法向量」設為大於零才有效。
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=開啟
+;Open
+Open2=開啟(&O)
+;&Open
+OpenAM3cFile=開啟 m3c 檔案
+;Open a m3c file
+OpenAVoxelProject=開啟體素專案
+;Open a voxel project
+OpenAnAnimationParameterFile=開啟動畫參數檔
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=開啟／關閉調整面板
+;open/close adjustment panel
+OpenCloseBatchPanel=開啟／關閉批次面板
+;open/close batch panel
+OpenCloseParameterPanel=開啟／關閉參數面板
+;open/close parameter panel
+OpenExplorer=開啟檔案總管
+;Open explorer
+OpenFiles=開啟檔案
+;Open files
+OpenFolder=開啟資料夾
+;Open folder
+OpenFullLightAndColorParameter=開啟完整的光照與色彩參數
+;Open full light and color parameter
+OpenFullM3I=開啟完整的 M3I
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=最終網格的 OpenGL 預覽
+;OpenGL preview of final mesh
+OpenLogFolder=開啟記錄資料夾
+;Open log folder
+OpenM3i=開啟 m3i
+;Open m3i
+OpenM3p=開啟 m3p
+;Open m3p
+OpenM3pSequence=開啟 *.m3p 序列
+;Open *.m3p-sequence
+OpenParameter=開啟參數
+;Open parameter
+OpenParameterFromClipboardTextSelect=從剪貼簿文字開啟參數：\n選取包含「Mandel...{..}」的參數文字，\n按 Ctrl+C，然後按此開啟文字按鈕。
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=開啟專案
+;Open project
+OpenTextParameters=開啟文字參數
+;Open text parameters
+OpenTheAnimationMaker=開啟動畫製作器
+;Open the animation maker
+OpenTheFolderOfTheFile=開啟檔案所在的資料夾
+;Open the folder of the file
+OpenTheFolderOfTheLog=開啟記錄檔所在的資料夾（每天一個，保留 30 天）
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=開啟 MutaGen
+;Open the MutaGen
+OpenTheNavigator=開啟導航器
+;Open the Navigator
+Opened=已開啟
+;opened
+OpensTheFolderOfTheLanguage=開啟語言檔案所在的資料夾
+;Opens the folder of the language files
+OperationCancelled=操作已取消
+;Operation cancelled
+Option=選項
+;Option
+OptionToCalculateOnlyAPart=只計算影像的一部分以加快預覽的選項。\n計算前請先用滑鼠在影像中選取範圍。
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=針對 1:2 或 1:3 的影像縮放，對光線角度進行抖動的選項。\n這可提高精確度並減少斑點狀瑕疵。\n注意：只能用於相同的影像縮放比例，否則會出現抖動瑕疵。
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=選項
+;Options
+OptionsColon=選項：
+;Options:
+OrMousewheel=（或滑鼠滾輪）
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// 或負，由最高位的符號位元決定。
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=軌道陷阱（到 0 的最小距離）
+;Orbit trap (mindist. to 0)
+Orig=原作：
+;Orig:
+OriginalParameterSizeWidthHeight=原始參數尺寸（寬、高）：
+;Original parameter size (width, height):
+OtherFiles=其他檔案
+;Other files
+OutputFile=輸出檔案：
+;Output file:
+OutputFolder=輸出資料夾：
+;Output folder:
+OutputFolder2=輸出資料夾
+;Output folder
+OutputFormat=輸出格式：
+;Output format:
+OutputImageType=輸出影像類型：
+;Output image type:
+Outside=外部
+;Outside
+OutsideRender=外部渲染
+;Outside render
+OutsideRenderDefaultModeInsideRender=外部渲染：  預設模式\n內部渲染：    在內部以最大迭代次數進行緩慢的光線步進\n內外皆渲染：   渲染兩側
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=整體縮放：
+;Overall scale:
+OverwriteExistingImages=覆寫既有影像
+;Overwrite existing images
+OverwriteExistingM3IFiles=覆寫既有的 M3I 檔案
+;Overwrite existing M3I files
+PGM16BitPgm=PGM 16 位元 (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG 16 位元色彩 (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG 16 位元 (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=具透明背景的 PNG 影格。
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG 透明背景 (*.png)
+;PNG transparent background (*.png)
+PaintClouds=繪製雲
+;Paint clouds
+PaintNow=立即繪製
+;Paint now
+PaintOnImage=在影像上繪製
+;Paint on image
+PaintingAPreview=正在繪製預覽
+;painting a preview
+PaintsThePictureAgainWithThe=依這裡的設定重新繪製帶雲的圖片
+;Paints the picture again with the clouds as set here
+Pano=全景
+;pano.
+PanoramaModeTheFOVIsChoosen=全景模式：\n- FOV 會自動選擇\n- 請使用 24bit SSAO 或 DEAO 作為環境陰影\n- 建議使用 2:1 的長寬比，但非必要。
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=參數
+;Param
+ParamNameMustNotBeEmpty=參數名稱不可為空
+;Param name must not be empty
+Parameter=參數
+;Parameter
+Parameters=參數
+;Parameters
+ParametersCopiedToTheClipboard=參數已複製到剪貼簿。
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=參數已載入，請按「計算 3D」開始渲染。
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=參數已載入：此渲染會在原本建立的地方繼續（命令列或其視窗）。
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=參數
+;parameters
+ParametersMandId=參數：MandId {}
+;Parameters: MandId {}
+Part2At=第 2 部分位於：
+;Part 2 at:
+Pass=第 {} 輪
+;pass {}
+Passes=次數
+;Passes
+PauseRendering=暫停渲染
+;Pause rendering
+PausedPressToContinue=已暫停，按下以繼續
+;Paused, press to continue
+PercentOfLocalDE=局部 DE 的百分比
+;Percent of local DE
+Picture=張圖片
+;picture
+Pictures=張圖片
+;pictures
+PicturesAndFilesTheAssistantMakes=助理產生的圖片與檔案會存到 {}；不會刪除任何內容。大於 4K 的圖片只有在您同意後才會產生，計算會在 10 分鐘後停止。助理所做的一切都會寫入記錄。
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=像素；越大保留的細節越多，檔案也越大
+;pixels; larger keeps more detail and makes a larger file
+PleaseChooseAnOutputFile=請選擇輸出檔案。
+;Please choose an output file.
+PleaseMakeASelectionInThe=請先在影像中選取範圍。
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=請先儲存專案。
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=請先選取燈光。  光照貼圖不支援 HS。
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=png 參數：
+;png par:
+Points=點
+;Points
+PointsColor=點顏色
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=位置
+;Position
+PositionX=位置 X
+;Position X
+PositionY=位置 Y
+;Position Y
+PositionZ=位置 Z
+;Position Z
+PositionalLight=位置光源
+;Positional light
+PostCalculations=後續計算
+;post calculations
+PostProcessing=後製處理
+;Post processing
+PostProcessingColon=後製處理:
+;Post processing:
+PostProcessingLower=後製處理
+;post processing
+Postprocess=後製處理
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power：將底數提升至任意次方。
+;{ Power: Raise base to any power.
+Prefs=偏好設定
+;Prefs
+PreprocessedCode=預處理後的程式碼
+;Preprocessed code
+PresetFlower=預設組 <花>
+;preset <flower>
+PresetMetallic=預設組 <金屬>
+;preset <metallic>
+PresetNeutral=預設組 <中性>
+;preset <neutral>
+PresetSand=預設組 <沙>
+;preset <sand>
+PresetSlime=預設組 <黏液>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=按下按鈕後，再點擊影像中\n應保持清晰的物件部位。
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=按「計算 3D」開始渲染
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=按「開始渲染」以計算影像
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=按下此按鈕再按預設 1 到 3，可儲存目前的導覽器光照。\n點擊兩次可取消儲存。
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=按下以開啟公式視窗\n右鍵可設定釘住選項。
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=按下以開啟光照與色彩調整視窗。\n右鍵可設定釘住選項。
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=按下以開啟後製處理視窗。\n右鍵可設定釘住選項。
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=按下以在「依迭代的動態霧」與「指定燈光編號的體積光」之間切換
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=按下以將目前距離作為行走時與物件的最小距離。
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar=按「0」（零）可將滑桿設回零點。
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=透過不時稍微移動滑鼠游標，\n防止電腦關機。
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=預覽
+;preview
+Preview2=預覽
+;Preview
+PreviewMaxSize=預覽最大尺寸：
+;Preview max size:
+PreviewSize=預覽大小：
+;Preview size:
+Probability=機率
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=處理
+;Processings
+Processor=處理器
+;processor
+Program=程式
+;Program
+ProgramOutput=程式輸出
+;Program output
+Progress=進度
+;Progress
+Project=專案：  {}
+;Project:  {}
+Project2=專案：{}
+;Project: {}
+ProjectNew=專案：  (新)
+;Project:  (new)
+PushDownTo2DZoomIn=按下後，在影像上以左鍵（右鍵）點擊進行 2D 放大（縮小），\n或框選一個放大區域。
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=按下後，可用滑鼠在 Z 方向移動物件。
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=按下後，可用滑鼠在 X、Y 方向平移物件。
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=按下按鈕，計算所選光源的硬陰影。\n計算完成後，除非光源的角度或位置有所變更，\n否則不必再重新計算硬陰影。
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=按下以將 3D 向量長度正規化為 1。\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=將調整後的 Julia 值放入主程式參數。
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=將調整後的數值放入主程式參數。
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=將數值套用到所有關鍵影格
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=將此調整後的數值放入主程式參數。
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=二次衰減
+;Quadratic Attenuation
+QuadraticBezier=二次貝茲
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=快速載入儲存於指定 ini 目錄中的\n光照參數檔案。
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=快速品質設定
+;Quick quality settings
+RBailout=R 逃逸值：
+;R bailout:
+Radius=半徑：
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG 產生以平均值為中心、呈高斯分布的隨機數。
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=隨機
+;Random
+RandomMultiplier=隨機乘數
+;Random multiplier
+Range=範圍
+;Range
+RawValuesMappedValuesClampedValues=原始值：\n  {}..\n  {}\n對應值：\n  {}..\n  {}\n限制值：\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=光線數：
+;Rays:
+RaystepDivisor=光線步長除數：
+;Raystep divisor:
+RaystepMultiplier=光線步進倍率：
+;Raystep multiplier:
+RaystepSubDEstop=步進減去 DEstop：
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=正在讀取歷程記錄... {} 筆項目
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=在您編輯過某個語言檔案後，重新讀取語言檔案
+;Reads the language files again, after you edited one
+Rec=錄
+;Rec
+RecalculateASelection=\s重新計算選取範圍
+;\sRecalculate a Selection
+RecalculatingTheSelection=正在重新計算選取範圍
+;recalculating the selection
+RecordedSKeyframesOfTheFlight=已記錄飛行的 {} 個關鍵影格
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=錄製飛行：按鈕按下期間，導航器的每個新視角（每秒最多兩次）都會成為動畫的下一個關鍵影格
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
+Rect=矩形
+;Rect
+RectLower=直線
+;rect.
+Rectilinear=直線投影
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=減少方塊狀瑕疵，由於已有樣條插值，現在已不那麼重要。
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=降低光線步長乘數以避免過步。\n會使算圖變慢。
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=漫射顏色的參考
+;Reference for diffuse colors
+ReferenceForSpecularColors=鏡面反射顏色的參考
+;Reference for specular colors
+ReflectionDiffusity=反射漫射度：
+;Reflection diffusity:
+ReflectionRaysDepth=反射光線深度：
+;Reflection rays depth:
+Reflections=反射
+;Reflections
+ReflectionsLower=反射
+;reflections
+ReflectionsMustBeCalculatedTooElse=必須同時計算反射，否則此選項無效
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=選取範圍的反射
+;reflections of the selection
+ReflectionsTransparency=\s反射 + 透明
+;\sReflections + Transparency
+ReflectionsTransparency2=反射 + 透明
+;Reflections + Transparency
+ReflectsTime=反射時間：
+;Reflects time:
+RefractiveIndex=折射率：
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=材質的折射率，空氣~1 水~1.33 玻璃~1.5 鑽石~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=重新整理
+;Refresh
+RelToObject=相對於物件：
+;Rel. to object:
+RelativeToObject=相對於物件
+;Relative to object
+Relief=起伏
+;Relief
+Reload=重新載入
+;Reload
+RemainingFaces10NoReduction=保留的面數（1.0 = 不縮減，0.0 = 最大縮減 = 不保留任何面）
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=移除
+;Remove
+RemoveThisFormulaFromTheLocal=從本機 appdata 資料夾移除此公式
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=渲染這些列中的所有圖塊：
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=渲染雙眼影像並顯示並排的立體預覽，不儲存。
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=每隔\n   n 個影格算一張：
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=以 4K 渲染我上一張圖片，並告訴我花了多久時間。
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=渲染下一個圖塊
+;Render next tile
+RenderOnlyTheLeftEyeImages=只算出「左眼」影像。\n可用來將先前算出的動畫擴充為立體。
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=只算到此檔案索引為止。
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=只算出「最左眼」影像
+;Render only 'very left-eye' images
+RenderPreview=算出預覽
+;Render preview
+RenderSMB={} 個渲染，{} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=渲染並儲存立體影像對
+;Render && save stereo pair
+RenderStereoAnimation=算出立體動畫
+;Render stereo animation
+RenderStereoPair=渲染立體影像對
+;Render stereo pair
+RenderTheJobsOtherComputersPut=渲染其他電腦放入資料夾的工作，並在有其他電腦加入 swarm 時，把這台電腦的渲染（計算 3D、大型渲染、蒙地卡羅、動畫）交給 swarm
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=渲染此圖塊
+;Render this tile
+RenderThisTileAgain=重新渲染此圖塊
+;Render this tile again
+RenderingNow=正在渲染
+;rendering now
+RenderingSliceOf=正在渲染切片：{} / {}
+;Rendering slice: {} of {}
+RepeatFromHere=從此處重複
+;Repeat from here
+RerenderAllKeyframePreviewImages=重新算出所有關鍵影格預覽圖
+;Rerender all keyframe preview images
+Reset=重設
+;reset
+Reset0=重設為 0
+;Reset 0
+Reset2=重設
+;Reset
+ResetNow=立即重設
+;Reset now
+ResetOffsetScale=重設偏移+縮放
+;Reset offset+scale
+ResetOffsetScaleRotation=重設偏移+縮放+旋轉
+;Reset offset+scale+rotation
+ResetPosition=重設位置
+;Reset position
+ResetThePositionAndTheRotation=將位置與旋轉重設為初始值。\n對 box 類公式會自動拉遠更多。
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=重設數值
+;Reset value
+ResetValues=重設數值
+;Reset values
+ResetView=重設視角
+;Reset view
+ResetsAPreviousCalculationOfThis=重設此光源先前計算的硬陰影。
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=重設景深效果與反射。
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=將公式重設為預設的 P8 bulb。
+;Resets the formulas to the default P8 bulb.
+Resume=繼續
+;Resume
+Retry=重試
+;Retry
+ReverseTheOrderOfAllKeyframes=反轉所有關鍵影格的順序
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=在圖塊上按右鍵可開啟選項
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=（在滑桿上按右鍵可變更顏色。游標位於滑桿上時可用鍵盤：(c) 複製顏色，(v) 貼上顏色，(b) 貼上 1 個顏色）
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=滾轉
+;Rolling
+Root=根
+;Root
+Rotate=旋轉
+;Rotate
+Rotation=旋轉
+;Rotation
+RotationAngleAroundXAxisIn=繞 x 軸的旋轉角度（度）
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=繞 y 軸的旋轉角度（度）
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=繞 z 軸的旋轉角度（度）
+;Rotation angle around z-axis in degrees
+RotationColon=旋轉：
+;Rotation:
+RotationX=旋轉 X：
+;Rotation X:
+RotationY=旋轉 Y：
+;Rotation Y:
+RotationZ=旋轉 Z：
+;Rotation Z:
+Rough=粗糙
+;Rough
+RoughImage=粗略影像
+;rough image
+Roughness=粗糙度
+;Roughness
+RoutAngleOfXY=X, Y 的 Rout 角
+;Rout angle of X, Y
+RoutAngleOfXZ=X, Z 的 Rout 角
+;Rout angle of X, Z
+RoutAngleOfYZ=Y, Z 的 Rout 角
+;Rout angle of Y, Z
+Rows=列
+;Rows
+RowsOfTiles=圖塊的列數
+;Rows of tiles
+SLeft=剩 {} 秒
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15：    以 Z-buffer 為基礎的環境陰影。\nSSAO24：    使用 Z-buffer 的 24 位元。\nSSAO24r：   使用隨機分佈以減少瑕疵。\nDEAO：        以距離估算為基礎的環境陰影\n（在動畫中較有優勢）
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=開始影像的主渲染。
+;Sart the main rendering of the image.
+Saturation=飽和度
+;Saturation
+Saturation0=飽和度：   0\s\s
+;Saturation:   0\s\s
+Save=儲存
+;Save
+Save2=儲存(&S)
+;&Save
+SaveAM3cFile=儲存 m3c 檔案
+;Save a m3c file
+SaveAZBufferImageAs=將 Z-buffer 影像儲存為 BMP 或 PNG 檔案，依目前檢視比例縮放。
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=將目前的所有設定儲存為 *.btrace2 檔案
+;Save all current settings as *.btrace2-file
+SaveAs=另存新檔
+;Save As
+SaveAsHeightMap=另存為高度圖
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=儲存為高度圖，存放於 MB3D 的 maps 資料夾中
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=另存為影像
+;Save As Image
+SaveAsImageAtTheLocation=儲存為影像，存放於您指定的位置
+;Save as image at the location you specify
+SaveBtrace2=儲存 btrace2...
+;Save btrace2...
+SaveCompleteM3I=儲存完整的 M3I
+;Save complete M3I
+SaveExit=儲存並離開
+;Save + exit
+SaveFullLightAndColorParameter=儲存完整的光照與色彩參數
+;Save full light and color parameter
+SaveImageParameters=儲存影像 + 參數
+;Save image + parameters
+SaveM3i=儲存 m3i
+;Save m3i
+SaveM3iFiles=儲存 m3i 檔案
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=儲存 m3i 檔案時包含內部影像緩衝區，可保存反射等資料。
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=僅儲存參數
+;Save parameters only
+SaveParametersToClipboardAsText=將參數以文字形式儲存到剪貼簿，\n之後可按 Ctrl+V 將文字貼到其他地方。
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=儲存圖片
+;Save pic
+SaveProject=儲存專案
+;Save project
+SaveTextParametersInThePNG=若選取，則將文字參數儲存在 PNG 檔案中。\n例如在 GIMP 的「影像屬性」->「註解」\n中可以看到。
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=儲存動畫參數
+;Save the animation parameters
+SaveTheCodeF5=儲存程式碼 <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=將影像儲存為 BMP 或 PNG 檔案，依目前檢視比例縮放。
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=將影像儲存為 BMP 或 PNG 檔案。若啟用「含 Z-buffer」選項，Z-buffer 也會一併儲存。
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=將影像儲存為 JPEG 檔案，依目前檢視比例縮放。
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=每次更新且已經過 5 分鐘時儲存 M3C 檔案
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=儲存此體素專案
+;Save this voxel project
+SaveType=儲存類型：
+;Save type:
+SaveZBufferPng=儲存 Z-buffer (png)
+;Save Z buffer (png)
+SaveZBufferToo=同時儲存 Z-buffer
+;Save Z buffer too
+Saved=已儲存
+;Saved
+Saved16BitColour=已儲存 {}（16 位元色彩）
+;Saved {} (16 bit colour)
+Saved2=已儲存 {}
+;Saved {}
+SavedLower=已儲存
+;saved
+SavedOpenEXRFloatingPointColoursAnd=已儲存 {}（OpenEXR，浮點色彩與圖層）
+;Saved {} (OpenEXR, floating point colours and layers)
+SavedTransparentBackground=已儲存 {}（透明背景）
+;Saved {} (transparent background)
+Saving=儲存：
+;Saving:
+SavingSucceeded=儲存成功
+;Saving succeeded
+Scale=縮放：
+;Scale:
+ScaleClipRadiusDoFAndTheDE=同時縮放 ClipRadius（景深）與 DE stop 值，\n以保持細節層次與色彩。
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=縮放 DEstop 以維持顏色 && 細節層級
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=將列縮放為地理投影
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=將影像尺寸放大或縮小 2 倍。
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=依所選百分比縮放數值。
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=起始公式的縮放值，影響 DE 精確度
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=縮放要計算的環境光線最大長度。\n使用大於 1 的值可讓陰影更有深度，\n小於 1 的值則產生較局部的陰影。
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=掃描預覽
+;Scan Preview
+ScreenDistance=螢幕距離：
+;Screen distance:
+ScriptEditor=指令碼編輯器
+;Script Editor
+ScrollBy1=捲動 1 格
+;Scroll by 1
+Search=搜尋
+;Search
+SecantSearchForTheSurface=以正割法搜尋表面
+;Secant search for the surface
+SecantSearchmode=正割搜尋模式：
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=第二個焦點，若與第一個不同，\n會得到一條焦線而非單一焦點。\n（物理上不太真實，但很實用）\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=另請參閱主視窗「著色」分頁中的貼圖著色選項。
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=選取(&S)
+;&Select
+SelectThisIfYouWantTo=若要以相同名稱覆寫既有的 M3I 檔案，請選取此項。\n若未選取，檔名會加以修改，以免覆寫任何檔案。
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=已選取
+;Selected
+SelectionRecalculation=選取範圍重新計算
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=將所有調整後的公式值送至主程式參數。
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=送出所有公式值
+;Send all formula values
+SendOnlyThisViewToThe=只將此視角送至主程式
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=將原始參數傳送至主視窗
+;Send original parameter to main window
+SendParameterToMain=傳送參數至主視窗
+;Send parameter to main
+SendParameterToProgramsMainRender=將參數傳送到程式的主渲染視窗
+;send parameter to programs main render window
+SendThisParameterToTheMain=將此參數送至主程式
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=將此專案的原始參數傳送至主程式。\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=將此視角連同所有 Julia 與公式修改送至主程式。
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=傳送至主編輯器
+;Send to Main Editor
+SendValue=送出數值
+;Send value
+SendValues=送出數值
+;Send values
+SendingOut=送出：
+;Sending out:
+SessionsAndCrashes=工作階段與當機
+;Sessions and crashes
+Set=設定
+;Set
+SetLightfuncToCosine=將光照函數設為 cosine
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=將貼圖方向設為相對於物件。\n在動畫中使用，將燈光固定於場景。
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=設定應用程式的視覺主題
+;Set the visual theme of the application
+SetTo0=設為 0
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=計算陰影時，自動將對應的光照函數\n設為 cosine。\ncosine 與 quadratic cosine 函數與陰影搭配的效果良好。
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=設定視覺主題
+;Setting the Visual Theme
+ShadersCompiling=正在編譯著色器
+;shaders compiling
+ShadowsAndAO=陰影與 AO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=透過共用資料夾在您的多台電腦之間分攤渲染工作
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=共享這台電腦：渲染資料夾中的工作，並把我的工作交給 swarm
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=共享資料夾：
+;Shared folder:
+SharingButNoOtherComputerIs=已共享，但 swarm 中尚無其他電腦：渲染只在這台電腦上執行
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=已停止共享：{}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween=與 {} 共享：渲染工作分攤給這 {} 台電腦
+;Sharing with {}: renders are split between the {} computers
+Sharp=銳利：
+;sharp:
+SharpenFactorOfTheSavedOutput=儲存輸出影像的銳化係數，\n僅在 1:2 與 1:3 縮小時有效！\n0：不銳化 ... 3：最大銳化
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=將公式 {} 至 5 向右移一個位置
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=將公式 {} 至 6 向左移一個位置
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=向左移動
+;Shift to the left
+ShiftToTheRight=向右移動
+;Shift to the right
+Shininess=光澤度
+;Shininess
+ShortdistanceCheckDE=短距離 DE 檢查：
+;Shortdistance check DE:
+ShouldIStopCalculations=要停止計算嗎？
+;Should i stop calculations?
+Show=顯示
+;Show
+ShowCoords=顯示座標
+;Show coords
+ShowFrameNr=顯示影格編號
+;Show frame nr
+ShowGuides=顯示輔助線
+;Show guides
+ShowInFolder=在資料夾中顯示
+;Show in folder
+ShowMeAPreviewOfThe=讓我看看我在 mb3d 中最後渲染的那張圖片的預覽。
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=不顯示重複
+;Show unique
+ShowsHiddenFormulasRightclickOnA=顯示已隱藏的公式。\n在公式上按右鍵可更改其狀態。
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=顯示訊息
+;Shows messages
+ShrinkThePanel=縮小面板
+;Shrink the panel
+Shutter=快門：
+;Shutter:
+SinCosIs2xFasterThanCalling={ 對同一角度而言，SinCos 比分別呼叫 Sin 與 Cos 快 2 倍 }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=單擊以切換導覽模式
+;Single click to change the navi mode
+SingleFilenumbering=單一檔案編號
+;Single filenumbering
+Size=尺寸
+;Size
+Size2=大小：
+;Size:
+SizeFactor=尺寸倍數：
+;Size factor:
+SizeOfEachView=每個視圖的大小：
+;Size of each view:
+Sliding=平移
+;Sliding
+SlidingWalkingStep=平移+行走步長：
+;Sliding+Walking step:
+SmoothDEcomb=平滑 DEcomb：
+;Smooth DEcomb:
+SmoothImageOnLoad=載入時平滑影像
+;Smooth image on load
+SmoothNormals=平滑法向量：
+;Smooth  normals:
+SmoothNormalsColon=平滑法線：
+;Smooth Normals:
+SmoothSolid=平滑實體
+;Smooth Solid
+SmoothSolidWithEdges=平滑實體含邊線
+;Smooth Solid with Edges
+SoftClipping=柔性裁切：
+;Soft clipping:
+SoftensTheHardShadowsTheValue=柔化硬陰影。此值相對於光源大小，值越大陰影越柔和。
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=較柔和的硬陰影
+;Softer H.S.
+Sorted=排序
+;Sorted
+SortedCalculationGivesBetterResultsForward=排序計算的結果較好。\n若排序因記憶體問題等而失敗，可改用順向。
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=高光：
+;Spec:
+Spec2=高光
+;Spec
+SpecifiesTheEndOfRaymarchingAs=以局部 DE 的倍數指定光線行進的終點。\n值越大 = 可見的物件越遠。\n\n快捷鍵：  F1：縮小遠平面，  F2：放大遠平面
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=鏡面反射
+;Specular
+SpecularObjectColorsClickToChange=物件高光色彩，點擊以更改。
+;Specular object colors, click to change them.
+SpecularPowerFunction=高光次方函數
+;Specular power function
+SphericalCoords=球座標
+;Spherical coords
+SplatsInWrittenTo={} 個潑濺點，耗時 {}，已儲存到 {}
+;{} splats in {}, written to {}
+Stan=標準
+;stan.
+StandardRectilinearPanorama=標準  直線  全景
+;standard  rectilinear  panorama
+Start=起始：
+;Start:
+StartBatchRendering=開始批次渲染
+;Start batch rendering
+StartIndex=起始索引：
+;Start index:
+StartRendering=開始渲染
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=開始渲染，並在完成後自動儲存 M3I 檔案！
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=開始算出動畫
+;Start rendering animation
+StartRenderingAnimationImages=開始渲染動畫影像
+;Start rendering animation images
+StartRenderingSlices=開始渲染切片
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=開始算出所有選取的 M3P 檔案
+;Starts rendering all selected M3P files
+Statistics=統計
+;Statistics
+Status=狀態
+;Status
+StepRelax=步長放寬：
+;Step relax:
+StepcountForBinarySearch=二分搜尋\n步數：
+;Stepcount for \nbinary search:
+StepwidthLimiter=步寬限制器：
+;Stepwidth limiter:
+Stereo=立體
+;Stereo
+StereoComposingPreview=立體：正在合成預覽
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=立體影像對無法以圖塊渲染。請先關閉圖塊模式。
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=立體：正在渲染左眼
+;stereo: rendering left eye
+StereoRenderingRightEye=立體：正在渲染右眼
+;stereo: rendering right eye
+StickThisWindowToTheLeft=將此視窗釘在左側
+;Stick this window to the left side
+StickThisWindowToTheRight=將此視窗釘在右側
+;Stick this window to the right side
+Stone=石頭
+;Stone
+Stop=停止
+;Stop
+StopBatchRendering=停止批次渲染
+;Stop batch rendering
+StopRendering=停止渲染
+;Stop rendering
+StopRenderingTheAnimation=停止渲染動畫。
+;Stop rendering the animation.
+StopTheCurrentCalculation=停止目前的計算。
+;Stop the current calculation.
+Stopping=正在停止...
+;Stopping...
+StoppingThisComputerFinishesThePart=正在停止：這台電腦會完成正在渲染的部分
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=在與物件相距此距離時停止行走。\n設為 0 可停用。
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=另外儲存一個對應的 *.PNG 檔，方便預覽影像
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=將 M3I 檔案存至預設資料夾
+;Store M3I file in default folder
+StorePNGPreview=儲存 PNG 預覽
+;Store PNG-preview
+Strength=強度：
+;Strength:
+Strength2=強度
+;Strength
+StrengthOfDynamicFog=動態霧的強度。
+;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=起伏的強度、大小（碎形單位）和精細度（0.2 平滑到 0.8 粗糙）
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
+StretchesUpperAndLowerPartsMaybe=拉伸上下部分，對在完整球面選項中使用一般影像可能有用。
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=子影格數\n乘數：
+;Subframe count\nmultiplicator:
+SubframeInterpolation=子影格插補：
+;Subframe interpolation:
+SubframesToRender=要算出的子影格數
+;Subframes to render
+SubframesToRenderBetween=之間要算出的  \n子影格數：
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=從下一步光線步進中減去一部分 DEstop，建議在 DEstop 值較高時使用。
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=支援網路渲染
+;Support network rendering
+SupportedMathematicalFunctions=支援的數學函式
+;Supported mathematical functions
+SurfaceColor=表面顏色
+;Surface color
+SurfaceDetail=表面細節：
+;Surface detail:
+SurfaceMaterial=表面材質
+;Surface material
+Swarm=群集
+;Swarm
+SwarmABlockOnEveryComputer=swarm：每台電腦各一個區塊，直到停止
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=swarm：{} 個區塊，每塊 {} 光線/像素
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=swarm：{} 台電腦
+;swarm: {} computer
+SwarmComputers=swarm：{} 台電腦
+;swarm: {} computers
+SwarmCreatingTheJob=swarm：正在建立工作
+;swarm: creating the job
+SwarmJob=swarm 工作
+;swarm job
+SwarmLower=swarm：{}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=Swarm：在您的多台電腦之間分擔渲染
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=切換回預設主題
+;Switch back to the default theme
+TakeTheEntryOutOfThe=從歷程記錄中移除此項目（已計算圖片的參數與縮圖會被刪除；其他檔案則留在原處）
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=目標貼圖插槽
+;Target Map Slot
+TargetMapSlotUseThisNumber=目標貼圖插槽。在碎形中以此編號作為貼圖使用（例如作為高度圖），即可得到動態貼圖
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=漫射與高光顏色相加的總量大於 1，\n要將其縮小以獲得更真實的著色嗎？
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=動畫至少需要兩個關鍵影格。
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=位於 Zsharp 點的光圈，並非相機的光圈！\n將此值乘以（自由選定的）Zsharp 點到相機的距離，\n再除以相機鏡頭的焦距，即可得到\n相機的光圈。\n因此若不希望相機尺寸那麼大，請縮小此值。\n值越大越模糊。
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheAxisTheCloudLayerLies=雲層所垂直的軸，以及它在該軸上的兩個高度
+;The axis the cloud layer lies across, and its two heights on it
+TheAxisThePlaneLiesAcross=平面所垂直的軸，以及它在該軸上的位置（與切割平面相同；遠離相機的一側是實心的一側）
+;The axis the plane lies across, and its position on that axis (as for the cutting planes; its solid side is the one away from the camera)
+TheBTracer2CacheFormatIsNot=本程式不支援 BTracer2 快取格式。\n請選擇網格格式（*.ply 或 *.obj）。
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=不支援 BTracer2 快取格式，網格未儲存。
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=無法載入背景影像。
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=逃逸時間公式的逃逸值。\n若 3D 值在迭代過程中超過此值，\n則目前的點不屬於物件。
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=模糊半徑會被限制在此值。\n當某些影像區域的半徑變得非常大時，可加快算圖。
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=計算失敗：{}
+;The calculation failed: {}
+TheCalculationFailedLower=計算失敗
+;the calculation failed
+TheCalculationWillBeExtendedTowards=計算會向影像外側延伸，以納入被反射的物件。\n這可減少動畫中的瑕疵，靜態圖也能受益。\n值應在 0 到 0.5 之間（最大 0.9），即相對於影像寬高\n在外側最多計算的尺寸。
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheChosenValueOverAllFrames=所選數值在動畫所有影格上的變化：上下拖曳關鍵影格的方塊，或點擊它並輸入數值
+;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheCommandLineProgramMb3dWas=在本程式所在位置找不到命令列程式 mb3d：請重新安裝本程式。
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=預設編號包含 2 個數字，分別代表 X 與 Y。\n若選擇此選項，則只用一個數字編號，\n在每一欄中遞增，並接續到下一列。
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=預設輸出為物體白色、外部區域黑色。\n選擇此選項可反轉顏色。
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=距離估算值會乘上此係數縮小，以避免過步。\n若出現過步（黑色像素、影像有雜訊），請降低此值。\n值太低會使渲染變慢。
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=距離估算會依此係數縮小以避免過步。\n若發生過步（黑色像素、影像有雜訊），請降低此值。\n值太低會使算圖變慢。
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=光線步進停止時與物件表面的距離，會隨著與觀察者的距離而增大。\n這讓物件外觀均勻一致，因此通常會選用。
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=效果會累積，新的計算請先重設。
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=項目依日期分組；開啟某一天（按一下）時才會顯示該天的項目與圖片
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=無法移除此項目。
+;The entry could not be removed.
+TheFileIsNotThereAny=檔案已不在原處。
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=檔案 <{}.m3f> 已存在。要覆寫嗎？
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=檔案（可從這裡選取並複製）
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=（第一個）焦點。\n此值相對於視角的 Zstart 值，\n並以影像寬度正規化。
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=資料夾不存在（或無法存取）
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=公式名稱應以「JIT」開頭，以便與 ASM 公式區分
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=碎形不在任何一個視圖中。
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=把主視窗的碎形匯出為高斯潑濺，以便在 Blender（5.3 及以上）和其他潑濺檢視器中從各個方向觀看。它從多個方向計算，每個像素都成為一個帶有自身顏色的潑濺點。
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
+TheFractalSSurfaceMaterialOn=疊加在調色盤上的碎形表面材質（MB3D 中沒有：儲存在參數的 MB3D 部分之後）
+;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFramesPerSecondMustBe=每秒影格數必須是大於 0 的數字（例如 25）。
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=影像緩衝區大小錯誤
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=影像大小已變更：請重新計算影像
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=its.trap 模式取決於「著色」分頁中所計算的選項。
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionCrashed=上一個工作階段當機了：{}。更多資訊見「記錄」視窗（標題列中的圖示）。
+;The last session crashed: {}. More in the Log window (the icon in the title bar).
+TheLastSessionDidNotEnd=上一個工作階段未正常結束（凍結、被終止或當機）：{}。它最後做了什麼記載於記錄中（「記錄」視窗，標題列中的圖示）。
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=主編輯器仍在渲染。請先停止，或等待完成。
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=貼圖選項會從特定向量計算球面貼圖的 x,y 座標，\n這也會改變通常以平滑迭代為基礎的\n第一色彩選擇。\n您必須重新計算影像才能看到\n這些選項更改的結果。
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=蒙地卡羅視窗正在渲染：請先停止。
+;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=動態模糊的快門時間：到下一影格時間的比例（0 到 1）
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
+TheNameOfTheNewLanguage=新語言的名稱，以該語言本身書寫（Deutsch、Polski、...）
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=目前最新的工作：已渲染的部分、進行中的部分（含進度）、缺少的部分
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=參數已與未完成的計算不符：請按「計算 3D」重新計算。
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=圖片與其計算不符：請重新計算。
+;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=在所有其他處理之後對圖片的修飾：曝光、強光周圍的光暈、電影感色調映射、調色、暗角和色邊
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
+ThePlaneSColourClickTo=平面的顏色（點擊變更）
+;The plane's colour (click to change)
+TheRotationIsPerformedAroundThe=旋轉以中點 (Xmid, Ymid, Zmid) 為中心進行
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=旋轉依序進行，先 XW 平面，最後 ZW 平面。
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSecondPartAsAnObject=把第二部分作為獨立物體（MB3D 中沒有：儲存在參數的 MB3D 部分之後）：它的中心 (x, y, z)、繞 x, y, z 軸的旋轉（度）以及大小（1 = 依計算）
+;The second part as an object of its own (not in MB3D: kept after MB3D's part of the parameters): its middle (x, y, z), its rotation about x, y, z in degrees and its size (1 = as calculated)
+TheSelectionMustBeBiggerThan=選取範圍的寬度與高度必須大於 2 像素。
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=選取範圍的寬度與高度必須大於 2 像素
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=swarm 的共用資料夾
+;The shared folder of the swarm
+TheSizeOfTheCloudsFeatures=雲形狀的大小（碎形單位）及其顏色（點擊）
+;The size of the clouds' features in fractal units, and their colour (click)
+TheSizeOfTheTiles=圖塊的大小
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=立體雙眼影像的大小不同。
+;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=剪貼簿中的文字參數已損壞：複製時部分行被截斷。請從原處重新複製。
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
+TheTileHasNoImageBuffer=此圖塊沒有影像緩衝區
+;the tile has no image buffer
+TheValueOfTheChosenKeyframe=所選關鍵影格的數值
+;The value of the chosen keyframe
+Themes=主題
+;Themes
+ThereIsAFileAlready=檔案 {} 已存在。
+;There is a file {} already.
+ThingsToAskTheAssistant=可以詢問助理的事
+;Things to ask the assistant
+ThisComputer=這台電腦：
+;This computer:
+ThisEffectIsAccumulatedOnEach=每次按下按鈕都會累積此效果，可按「重設」按鈕\n重設——但反射也會一併被復原！
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=此檔案已存在。確定要覆寫嗎？
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=這是旋轉後的 bulb 在 x 方向的絕對偏移。
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=此渲染正在執行中。
+;This render is running right now.
+ThisRenderKeepsNoImage=此渲染不保留影像。
+;This render keeps no image.
+ThisRenderKeptNoParameters=此渲染未保留參數。
+;This render kept no parameters.
+ThisSessionLive=此工作階段（即時）
+;This session (live)
+ThreadPriority=執行緒\n優先權
+;Thread\nPriority
+ThreadcountInCalculations=計算使用的  \n執行緒數
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=工作使用的執行緒數（0 = 全部核心）：
+;Threads for jobs (0 = all cores):
+ThresholdTo0=臨界值降至 0：
+;Threshold to 0:
+TilNextUpdate=..距下次更新
+;..til next update
+TileCountHorizontal=圖塊數，水平：
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=圖塊縮小、反鋸齒：
+;Tile downscale, anti aliasing:
+TileSaved=已儲存 {} 個圖塊；{}
+;{} tile saved; {}
+TileXY=圖塊：X= Y=
+;Tile: X= Y=
+TileXY2=圖塊：X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  圖塊 X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=圖塊 X={} Y={}
+;tile X={} Y={}
+TileXYSaved=圖塊 X={} Y={} 已儲存。
+;Tile X={} Y={} saved.
+Tiles=個圖塊
+;tiles
+Tiles2=圖塊
+;Tiles
+TilesSaved=已儲存 {} 個圖塊；{}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  與 swarm 一起渲染 {} 個圖塊
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=圖塊尺寸（含 AA）：
+;Tilesize (including aa):
+Tiling=分塊：
+;Tiling:
+TimeNeeded=所需時間：
+;Time needed:
+ToCalculateABetterHardShadow=計算品質更好的硬陰影，僅在只選取 1 個硬陰影時有效！
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=到剪貼簿
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=讓環境光遮蔽也減弱直接光
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=至公式編號：
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=為減少距離估算不佳的混合公式物件周圍的雜訊，\n請使用略低於影像平均迭代次數的迭代數。
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=用以減少過步（overstepping）
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=套用到此關鍵影格及之前的
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=套用到此關鍵影格及之後的
+;To this keyframe and the following
+Togo=剩餘：...
+;togo: ...
+Tools=工具
+;Tools
+TotalAmountOfReflectivityTransparencyIt=反射率 + 透明的總量，會與局部物件的鏡面反射顏色 + 透明量相乘。
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=總計算時間：
+;Total calculation time:
+TotalFramesUpToHereNote=到此為止的總影格數。\n請注意，只有在循環模式下才會算出\n最後一個關鍵影格之後的子影格。
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=追蹤範圍 X：
+;Trace range X:
+TraceRangeY=追蹤範圍 Y：
+;Trace range Y:
+TraceRangeZ=追蹤範圍 Z：
+;Trace range Z:
+TracingObject=正在追蹤物件...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=透過檔案系統追蹤渲染狀態，讓多個執行個體能渲染同一序列的檔案，而不會覆寫其他節點的成果
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=透明
+;Transparency
+TransparencyIntensity=透明強度
+;Transparency intensity
+TransparencySpecular=透明 + 高光
+;Transparency + Specular
+TransparentBackground=透明背景
+;Transparent background
+TrigonometricFunctions={ 三角函式 }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=以 20% 為單位調整體積貼圖的大小
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=開啟／關閉 Julia 模式
+;Turn on/off the julia mode
+Turned=旋轉：
+;Turned:
+Turntable=轉盤
+;Turntable
+Type=類型：
+;Type:
+Type2=類型
+;Type
+TypeInTheQuality0100=輸入品質（0..100）或輸出檔案大小上限，單位 KB（>100）：
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=類型不可為空
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\s混合類型：\n交替：  公式 1 到 6 交替進行。\n插值：  每次迭代時公式 1 與公式 2 插值。\nDE combinate：  公式 1 與公式 2 到 6 的交替混合進行 DE 組合。
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=物體判定的類型，降低最大迭代或提高 DE\n（視所選選項而定）會使物體變厚。\n注意：  DEcombinate 公式與內+外渲染\n           僅在距離估計模式下有效！
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\s物件判定方式；降低 Max its 或提高 DE\n（取決於所選的選項）會使物件變厚。\n注意：DEcombinate 公式僅在距離估算模式下有效！
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=請先輸入新語言的名稱；它也是其檔案的名稱。
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=若影像看起來平坦且有雜訊，請取消勾選。
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=取消勾選則不覆寫已計算完成的影像。\n檔名必須相同（相同的輸出格式、索引，以及立體模式下的\n「left」或「right」後綴）。
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=, {} 進行中
+;, {} under way
+UnfinishedCalculation=未完成的計算
+;Unfinished calculation
+UnfinishedRender=未完成的渲染
+;Unfinished render
+UnfinishedRenders=未完成的渲染
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=未完成的渲染：繼續或刪除
+;Unfinished renders: continue or delete them
+Untitled=未命名
+;untitled
+UpOneLevel=上一層
+;Up one level
+UpTo=至：
+;up to:
+UpdateImage=更新影像
+;Update Image
+UseAMapForTheDiffuse=使用貼圖作為漫射色彩
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=使用縮小影像作為環境色彩
+;Use a small image as ambient color
+UseAlsoNavi=（也可使用導航器）
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=使用原始 M3I 檔案的環境陰影
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=使用預設方向
+;Use default orientation
+UseItInAnimationsToFix=在動畫中使用，將燈光固定於場景。
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=只在法線（用於光照的表面方向）看起來很糟時，才作為第二選擇使用。
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=使用 OpenGL >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=使用不含主題的預設視覺設定
+;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=使用實驗性加速
+;Use the experimental speed-ups
+UseTheMapIntensitiesAndDiffuse=使用貼圖強度與漫射色彩。
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=使用小於 1 的值以減少過步。
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\s適用於模擬含取樣誤差的資料。 }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=適用於陡峭的高度圖
+;Useful for steep heightmaps
+User=自訂
+;user
+UserDefinedApectRatioRightclickTo=使用者定義的長寬比。\n右鍵可定義比例。
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=自訂長寬比
+;User defined aspect ratio
+Value=值：
+;Value:
+ValueNotGuilty=數值無效
+;Value not guilty
+ValuesHaveAFractionFieldThat=// 值的小數部分欄位不為 0。
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=DEstop 隨 FOV 變化：
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=依所選的選項，確認漫射色與高光色的總和不超過 1
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=計算時檢查高光+漫射量是否超過 1。使用漫射貼圖時很有用。
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=版本
+;Version
+Version2=, 版本 {}
+;, version {}
+Vertical=垂直：
+;vertical:
+VerticalFieldOfViewInDegrees=垂直視野角度（度）
+;Vertical field of view in degrees
+VerticesFaces={} [{} 個頂點，{} 個面]
+;{} [{} Vertices, {} Faces]
+Video=視訊
+;video
+VideoLower=影片：{}
+;video: {}
+View=檢視
+;View
+ViewToMain=視角送至主程式
+;View to main
+Viewing=檢視
+;Viewing
+Vignette=暗角
+;Vignette
+Visible=可見：
+;Visible:
+VolumeLightNr=體積光編號：
+;Volume light nr:
+VolumetricResolution=體積解析度：
+;Volumetric resolution:
+VoteFormula=+ 評分此公式
+;+ vote formula
+VoteFormula2=- 評分此公式
+;- vote formula
+VoxelExport=體素匯出
+;Voxel export
+Voxelstack=體素堆疊
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=請等待目前的計算完成，或先停止它。
+;Wait for the running calculation, or stop it first.
+Walking=行走
+;Walking
+Warmth=色溫
+;Warmth
+Warning=警告
+;Warning
+WarningLower=警告
+;warning
+WarningMustRecalculateTheWholeImage=警告：若要復原，必須重新計算整張影像！
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=警告與錯誤
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Waves=波浪：
+;Waves:
+WavesOnThePlaneTheirHeight=平面上的波浪：以碎形單位表示的高度和長度（高度 0：平坦的平面）
+;Waves on the plane: their height and their length in fractal units (height 0: a flat plane)
+Weight=權重
+;Weight
+WeightColon=權重：
+;Weight:
+WhatDidIDoInMb3d=我今天在 mb3d 中做了什麼？有沒有發生任何錯誤？
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=發生的事
+;What happened
+WhatYouDid=您做的事
+;What you did
+When=時間
+;When
+WhenAngleNotBetween180And={ 當角度不在 -180 到 180 之間時，去除超出的部分 }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=時間 (UTC)
+;When (UTC)
+WhenUsingAMapForThe=使用貼圖作為漫射顏色時，\n必須勾選「自動裁切高光+漫射」\n才能自動裁切顏色。
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=白色
+;white
+WhiteOutside=外部為白色
+;White outside
+Width=寬度：
+;Width:
+Windows=視窗
+;Windows
+Wireframe=線框
+;Wireframe
+WireframeColor=線框顏色
+;Wireframe color
+WithHS=含 HS
+;with HS
+WithThe360PanoramaCameraA=使用 360 全景相機時：用於 VR 的立體全景，兩隻眼睛上下排列 (左眼在上)，各個方向的深度都正確
+;With the 360 Panorama camera: a stereo panorama for VR, both eyes one above the other (left on top), the depth right in every direction
+WithZBuffer=含 Z-buffer
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=以此名稱將英文文字寫成新的語言檔案；請用文字編輯器翻譯，然後按「重新載入」
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=將圖片依目前狀態寫入 .m3i 檔案（尚未完成的列以背景填入）
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=已寫入：{}\n請用文字編輯器翻譯「=」右側的文字，然後按「重新載入」。
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=X 角度：
+;X angle:
+XMid=X 中點：
+;X mid:
+XOffset=X 偏移：
+;X offset:
+XScale=X 縮放：
+;X scale:
+XW=XW：
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=X 位置
+;Xpos
+Xrot=X 旋轉
+;Xrot
+YAngle=Y 角度：
+;Y angle:
+YMid=Y 中點：
+;Y mid:
+YOffset=Y 偏移：
+;Y offset:
+YScale=Y 縮放：
+;Y scale:
+YW=YW：
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=是
+;Yes
+YouCanAlsoClickOnA=也可點擊數值直接變更
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=您也可以直接輸入公式
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=您隨時可以開始／繼續或停止計算
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=大多數滑桿在選取時，可用左右方向鍵\n進行更精細的調整。\n按「0」（零）可將滑桿設回零點。
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=您也可以為每個圖塊儲存 m3i 檔案，但請注意磁碟要有足夠的\n空間，而且反射不會儲存在 m3i 檔案中。\n\n請注意，1.7.9 之前的程式版本無法開啟這些 m3i 圖塊！
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=您必須先渲染原始參數並儲存為 M3I 檔案。\n該渲染不要太小。
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=您的作者名稱（儲存在參數中）：
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=您自己的語言（其名稱）：
+;Your own language (its name):
+Ypos=Y 位置
+;Ypos
+Yrot=Y 旋轉
+;Yrot
+Z1Sharp=Z1 清晰：
+;Z1 sharp:
+Z2Sharp=Z2 清晰：
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=Z-buffer：{}
+;Z-buffer: {}
+ZEnd=Z 終點
+;Z end
+ZMid=Z 中點
+;Z mid
+ZOffset=Z 偏移：
+;Z offset:
+ZRThreshold=Z/R 臨界值：
+;Z/R Threshold:
+ZScale=Z 縮放：
+;Z scale:
+ZSlices=Z 切片：
+;Z slices:
+ZStart=Z 起點
+;Z start
+ZW=ZW：
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=縮放：
+;Zoom:
+Zoom2=縮放
+;Zoom
+Zpos=Z 位置
+;Zpos
+Zrot=Z 旋轉
+;Zrot
+
+[AniProcessForm]
+Label13.Caption = 二分搜尋 \n步數：
+Label22.Caption = 光線步長乘數：
+CheckBox17.Caption = 第一步隨機：
+
+[BRInfoForm]
+Caption = 大圖算圖
+
+[BatchForm1]
+Button1.Caption = 開始批次算圖
+
+[BulbTracer2Frm]
+XOffsetEdit.Hint = 這是旋轉後物體在 x 方向上的絕對偏移量。
+YOffsetEdit.Hint = 這是旋轉後物體在 x 方向上的絕對偏移量。
+ZOffsetEdit.Hint = 這是旋轉後物體在 x 方向上的絕對偏移量。
+
+[ColorForm]
+Label2.Caption = 漫射
+
+[FNavigator]
+Caption = 導覽器
+RadioGroup1.Items.2 = 精細
+Label48.Caption = R bailout：
+
+[FVoxelExport]
+Button3.Hint = 按一下以選擇輸出資料夾
+
+[HotkeysFrm]
+Label5.Caption = 光照:
+
+[IniDirForm]
+Button1.Caption = 儲存 + 離開
+
+[JITFormulaEditorForm]
+CancelAndExitBtn.Caption = 取消並離開
+
+[LightAdjustForm]
+ButtonGetPos.Caption = 中點
+TabSheet4.Caption = 環境
+
+[MCForm]
+TrackBar1.Hint = 選取後，按「1」可將此滑桿設回預設位置。
+
+[Mand3DForm]
+PositionBtn.Hint = 點擊以隱藏/顯示
+RotationBtn.Hint = 點擊以隱藏/顯示
+Label12.Caption = 比例：
+
+[MapSequencesFrm]
+SaveAndExitBtn.Caption = 儲存 + 離開
+
+[MeshPreviewFrm]
+LightSheet.Caption = 光源
+
+[PostProForm]
+RadioGroup2.Caption = 計算方式

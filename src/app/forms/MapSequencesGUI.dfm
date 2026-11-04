@@ -2,7 +2,7 @@ object MapSequencesFrm: TMapSequencesFrm
   Left = 148
   Top = 170
   BorderStyle = bsToolWindow
-  Caption = 'Edit Map Sequences'
+  Caption = '@MB:EditMapSequences'
   ClientHeight = 312
   ClientWidth = 743
   Color = clBtnFace
@@ -52,14 +52,14 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 50
       Width = 42
       Height = 13
-      Caption = 'Filename'
+      Caption = '@MB:Filename'
     end
     object SpeedButton11: TSpeedButton
       Left = 93
       Top = 382
       Width = 27
       Height = 25
-      Hint = 'Open an animation parameter file'
+      Hint = '@MB:OpenAnAnimationParameterFile'
       Glyph.Data = {
         E6000000424DE6000000000000007600000028000000100000000E0000000100
         04000000000070000000C30E0000C30E00001000000010000000000000008484
@@ -77,7 +77,7 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 382
       Width = 50
       Height = 25
-      Hint = 'Save the animation parameters'
+      Hint = '@MB:SaveTheAnimationParameters'
       Caption = 'm3a'
       Glyph.Data = {
         F6000000424DF600000000000000760000002800000010000000100000000100
@@ -102,30 +102,28 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 77
       Width = 32
       Height = 13
-      Caption = 'Range'
+      Caption = '@MB:Range'
     end
     object Label3: TLabel
       Left = 6
       Top = 181
       Width = 76
       Height = 13
-      Caption = 'Target Map Slot'
+      Caption = '@MB:TargetMapSlot'
     end
     object Label4: TLabel
       Left = 6
       Top = 105
       Width = 47
       Height = 13
-      Caption = 'Increment'
+      Caption = '@MB:Increment2'
     end
     object DestChannelEdit: TEdit
       Left = 88
       Top = 178
       Width = 60
       Height = 21
-      Hint = 
-        'Target Map Slot. Use this number as map in your fractal, e. g. a' +
-        's heightmap, in order to have an animated map'
+      Hint = '@MB:TargetMapSlotUseThisNumber'
       MaxLength = 5
       NumbersOnly = True
       ParentShowHint = False
@@ -171,9 +169,9 @@ object MapSequencesFrm: TMapSequencesFrm
         Top = 0
         Width = 120
         Height = 31
-        Hint = 'Add new image sequence'
+        Hint = '@MB:AddNewImageSequence'
         Align = alLeft
-        Caption = 'New Sequence'
+        Caption = '@MB:NewSequence'
         Glyph.Data = {
           F6000000424DF600000000000000760000002800000010000000100000000100
           04000000000080000000C30E0000C30E0000100000001000000000000000C6C6
@@ -192,9 +190,9 @@ object MapSequencesFrm: TMapSequencesFrm
         Top = 0
         Width = 120
         Height = 31
-        Hint = 'Delete this keyframe'
+        Hint = '@MB:DeleteThisKeyframe'
         Align = alLeft
-        Caption = 'Delete Sequence'
+        Caption = '@MB:DeleteSequence'
         Glyph.Data = {
           DE000000424DDE0000000000000076000000280000000F0000000D0000000100
           04000000000068000000120B0000120B00001000000010000000000000000000
@@ -236,7 +234,7 @@ object MapSequencesFrm: TMapSequencesFrm
         Width = 195
         Height = 25
         Align = alLeft
-        Caption = 'Cancel + exit'
+        Caption = '@MB:CancelExit'
         TabOrder = 0
         OnClick = CancelAndExitBtnClick
       end
@@ -246,7 +244,7 @@ object MapSequencesFrm: TMapSequencesFrm
         Width = 195
         Height = 25
         Align = alRight
-        Caption = 'Save + exit'
+        Caption = '@MB:SaveExit'
         TabOrder = 1
         OnClick = SaveAndExitBtnClick
       end
@@ -273,7 +271,7 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 75
       Width = 60
       Height = 21
-      Hint = 'Map number'
+      Hint = '@MB:MapNumber'
       MaxLength = 5
       NumbersOnly = True
       ParentShowHint = False
@@ -286,7 +284,7 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 75
       Width = 60
       Height = 21
-      Hint = 'Map number'
+      Hint = '@MB:MapNumber'
       MaxLength = 5
       NumbersOnly = True
       ParentShowHint = False
@@ -299,7 +297,7 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 129
       Width = 82
       Height = 15
-      Caption = 'Loop'
+      Caption = '@MB:Loop'
       Checked = True
       ParentShowHint = False
       ShowHint = False
@@ -312,7 +310,7 @@ object MapSequencesFrm: TMapSequencesFrm
       Top = 102
       Width = 60
       Height = 21
-      Hint = 'Increment if the sequence, increase the value to skip images'
+      Hint = '@MB:IncrementIfTheSequenceIncreaseThe'
       MaxLength = 5
       NumbersOnly = True
       ParentShowHint = False

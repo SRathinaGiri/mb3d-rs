@@ -2,7 +2,7 @@ object VisualThemesFrm: TVisualThemesFrm
   Left = 148
   Top = 170
   BorderStyle = bsToolWindow
-  Caption = 'Setting the Visual Theme'
+  Caption = '@MB:SettingTheVisualTheme'
   ClientHeight = 150
   ClientWidth = 390
   Color = clBtnFace
@@ -23,14 +23,14 @@ object VisualThemesFrm: TVisualThemesFrm
     Width = 73
     Height = 13
     AutoSize = False
-    Caption = 'Chose Theme:'
+    Caption = '@MB:ChoseTheme'
   end
   object SaveAndExitBtn: TButton
     Left = 151
     Top = 84
     Width = 231
     Height = 25
-    Caption = 'Save + exit'
+    Caption = '@MB:SaveExit'
     TabOrder = 0
     OnClick = SaveAndExitBtnClick
   end
@@ -50,14 +50,14 @@ object VisualThemesFrm: TVisualThemesFrm
     Width = 73
     Height = 13
     Alignment = taRightJustify
-    Caption = 'Interface size:'
+    Caption = '@MB:InterfaceSize'
   end
   object UIScaleCmb: TComboBox
     Left = 151
     Top = 118
     Width = 231
     Height = 21
-    Hint = 'Bigger or smaller windows and text (the layout stays the same)'
+    Hint = '@MB:BiggerOrSmallerWindowsAndText'
     Style = csDropDownList
     DropDownCount = 8
     ParentShowHint = False
@@ -70,8 +70,8 @@ object VisualThemesFrm: TVisualThemesFrm
     Top = 84
     Width = 137
     Height = 25
-    Hint = 'Switch back to the default theme'
-    Caption = 'Default Theme'
+    Hint = '@MB:SwitchBackToTheDefaultTheme'
+    Caption = '@MB:DefaultTheme'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
@@ -82,8 +82,8 @@ object VisualThemesFrm: TVisualThemesFrm
     Top = 53
     Width = 137
     Height = 25
-    Hint = 'Use the default visual settings without a theme'
-    Caption = 'Disable Themes'
+    Hint = '@MB:UseTheDefaultVisualSettingsWithout'
+    Caption = '@MB:DisableThemes'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 3

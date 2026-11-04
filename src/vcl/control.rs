@@ -245,6 +245,8 @@ pub struct Control {
 
     // ---- lists
     pub items: Vec<String>,
+    /// a small picture before each item (a list box; empty: none)
+    pub item_images: Vec<bitmap::Bitmap>,
     pub item_index: i32,
     pub item_height: i32,
     pub top_index: i32,
@@ -310,6 +312,11 @@ pub struct Control {
     // ---- grids, list views
     pub cols: Vec<Column>,
     pub cells: Vec<Vec<String>>,
+    /// a list view whose owner fills `cells` with a window of its rows
+    /// only (a list of a million rows): the rows in all (0: `cells` are
+    /// all the rows) and the row `cells[0]` is
+    pub virtual_rows: usize,
+    pub cells_from: usize,
     /// list view with check boxes: the check state per item
     pub checkboxes: bool,
     pub checks: Vec<bool>,
@@ -426,6 +433,7 @@ impl Control {
             cancel: false,
             modal_result: 0,
             items: Vec::new(),
+            item_images: Vec::new(),
             item_index: -1,
             item_height: 13,
             top_index: 0,
@@ -484,6 +492,8 @@ impl Control {
             collapsed: false,
             cols: Vec::new(),
             cells: Vec::new(),
+            virtual_rows: 0,
+            cells_from: 0,
             checkboxes: false,
             checks: Vec::new(),
             fixed_rows: 1,
@@ -954,4 +964,24 @@ pub fn from_obj(o: &Obj, theme: &Theme, parent_font: Option<&Font>) -> Control {
     c.selected = vec![false; c.items.len()];
     c.design = c.rect();
     c
+}
+
+impl Control {
+    /// A list view's rows (see `virtual_rows`).
+    pub fn row_count(&self) -> usize {
+        if self.virtual_rows > 0 {
+            self.virtual_rows
+        } else {
+            self.cells.len()
+        }
+    }
+
+    /// The cells of row `ri`, when its owner filled them.
+    pub fn cell_row(&self, ri: usize) -> Option<&Vec<String>> {
+        if self.virtual_rows > 0 {
+            ri.checked_sub(self.cells_from).and_then(|i| self.cells.get(i))
+        } else {
+            self.cells.get(ri)
+        }
+    }
 }

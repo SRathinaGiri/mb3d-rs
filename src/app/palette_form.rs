@@ -5,6 +5,7 @@
 use super::util::{argb, rgb_of};
 use super::Mb3d;
 use crate::vcl::bitmap::Bitmap;
+use crate::vcl::lang::tr;
 use crate::vcl::{DialogResult, Ev, Event, MouseButton, Ui};
 
 const F: &str = "ColorForm";
@@ -120,7 +121,7 @@ fn radio_group1(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_visible(F, c, out);
     }
     ui.set_visible(F, "Label4", !out);
-    ui.set_caption(F, "Label5", if out { "Transparency" } else { "Transparency + Specular" });
+    ui.set_caption(F, "Label5", &if out { tr("@MB:Transparency") } else { tr("@MB:TransparencySpecular") });
     for i in (5..=20).chain(25..=30) {
         ui.set_visible(F, &format!("Shape{i}"), out);
     }
@@ -180,7 +181,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             } else {
                 let i = (t - 21) as usize;
                 let a = if out { alpha(&app.scene.lighting, i) } else { app.scene.lighting.interior_spec[i] };
-                ui.input_query(&format!("palette:alpha:{t}"), "Transparency intensity", "0: no, 255: Full transparency", &a.to_string());
+                ui.input_query(&format!("palette:alpha:{t}"), &tr("@MB:TransparencyIntensity"), &tr("@MB:N0No255FullTransparency"), &a.to_string());
             }
         }
         "Shape1MouseMove" => {
@@ -402,6 +403,9 @@ fn move_slider(app: &mut Mb3d, ui: &mut Ui) {
             if t > 1 && xp < posof(l, t - 1) {
                 if out {
                     l.palette.swap(t - 1, t);
+                    if let Some(a) = l.palette_alpha.as_mut() {
+                        a.swap(t - 1, t);
+                    }
                 } else {
                     l.interior.swap(t - 1, t);
                     l.interior_spec.swap(t - 1, t);
@@ -410,6 +414,9 @@ fn move_slider(app: &mut Mb3d, ui: &mut Ui) {
             } else if t < n - 1 && xp > posof(l, t + 1) {
                 if out {
                     l.palette.swap(t + 1, t);
+                    if let Some(a) = l.palette_alpha.as_mut() {
+                        a.swap(t + 1, t);
+                    }
                 } else {
                     l.interior.swap(t + 1, t);
                     l.interior_spec.swap(t + 1, t);

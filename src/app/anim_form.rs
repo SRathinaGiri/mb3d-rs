@@ -4,7 +4,9 @@
 //! number of subframes to the next one; the frames are interpolated with
 //! MB3D's functions ([`crate::anim`]) and written into the output folder.
 
-use super::util::{fts_single, parse_float, pti, ptf};
+use crate::vcl::lang::{tr, trf};
+use super::eta::{ItemsLeft, Pace};
+use super::util::{fts_single, left_str, parse_float, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::anim::{Animation, Interpolation, Keyframe, OutputFormat};
 use crate::frames::{FrameResult, FrameRun};
@@ -44,16 +46,16 @@ fn save_output_settings(app: &mut Mb3d, ui: &Ui) {
 
 /// The frames per second of the video and the ffmpeg command.
 fn video_fps(ui: &Ui) -> Result<f64, String> {
-    ui.text(F, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or_else(|| "The frames per second must be a number above 0 (e.g. 25).".to_string())
+    ui.text(F, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).ok_or_else(|| tr("@MB:TheFramesPerSecondMustBe"))
 }
 
 /// A video needs images, one per frame.
 fn video_check(a: &Animation) -> Result<(), String> {
     if a.format == OutputFormat::M3p {
-        return Err("A video needs images: choose BMP, PNG or JPG as the output format.".into());
+        return Err(tr("@MB:AVideoNeedsImagesChooseBMP"));
     }
     if a.stereo_eyes().len() != 1 {
-        return Err("A video of a stereo animation is not made: switch off 'Render stereo animation'.".into());
+        return Err(tr("@MB:AVideoOfAStereoAnimation"));
     }
     Ok(())
 }
@@ -75,7 +77,7 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     read_settings(app, ui);
     let mut a = app.anim.anim.clone();
     if a.keyframes.len() < 2 {
-        return Err("The animation needs at least two keyframes.".into());
+        return Err(tr("@MB:TheAnimationNeedsAtLeastTwo"));
     }
     if a.output_folder.trim().is_empty() {
         a.output_folder = app.ini.dir(super::ini::DIR_ANIOUT).display().to_string();
@@ -86,7 +88,7 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     let run = FrameRun { from_index: from, to_index: to, resume: crate::checkpoint::Policy::Continue, ..Default::default() };
     let frames = run.frames(&a);
     if frames.is_empty() {
-        return Err("No frames to render in this range.".into());
+        return Err(tr("@MB:NoFramesToRenderInThis"));
     }
     Ok((a, run, frames))
 }
@@ -110,7 +112,7 @@ fn ffmpeg_command(app: &mut Mb3d, ui: &mut Ui) {
     let step = if frames.len() > 1 { a.file_index(frames[1]) - a.file_index(frames[0]) } else { 1 };
     let cmd = crate::video::ffmpeg_command(std::path::Path::new(&a.output_folder), &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent);
     crate::vcl::clipboard::set(&cmd);
-    app.message(ui, "Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):");
+    app.message(ui, &tr("@MB:AnimationTheFfmpegCommandIsOn"));
     app.message(ui, &cmd);
 }
 
@@ -126,6 +128,14 @@ pub struct State {
     pub pause: Arc<AtomicBool>,
     pub progress: Arc<AtomicU32>,
     pub started: Instant,
+    /// the time left: the frames' times (the clock's between the frames
+    /// finished, the swarm's come several at once), the running frame's
+    /// pace and when it began, and the time left as shown
+    pub items: ItemsLeft,
+    pub pace: Pace,
+    pub frame_start: Instant,
+    pub last_done: usize,
+    pub left_shown: Option<Shown>,
     pub first_show: bool,
     pub drag: Option<(i32, i32)>,
     pub preview_step: usize,
@@ -147,6 +157,11 @@ impl Default for State {
             pause: Arc::new(AtomicBool::new(false)),
             progress: Arc::new(AtomicU32::new(0)),
             started: Instant::now(),
+            items: ItemsLeft::default(),
+            pace: Pace::default(),
+            frame_start: Instant::now(),
+            last_done: 0,
+            left_shown: None,
             first_show: true,
             drag: None,
             preview_step: 1,
@@ -167,7 +182,11 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     a.width = pti(&ui.text(F, "Edit6")).max(8);
     a.height = pti(&ui.text(F, "Edit7")).max(8);
     a.scale = ui.position(F, "UpDown3").clamp(1, 3) as u32;
-    a.interpolation = if ui.item_index(F, "RadioGroup2") == 0 { Interpolation::Linear } else { Interpolation::Bezier };
+    a.interpolation = match ui.item_index(F, "RadioGroup2") {
+        0 => Interpolation::Linear,
+        2 => Interpolation::CatmullRom,
+        _ => Interpolation::Bezier,
+    };
     a.looped = ui.checked(F, "CheckBox2");
     a.format = match ui.item_index(F, "RadioGroup3") {
         0 => OutputFormat::Bmp,
@@ -181,7 +200,10 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     a.overwrite = ui.checked(F, "CheckBox6");
     a.save_depth = ui.checked(F, "CheckBox7");
     a.transparent = ui.checked(F, "TransparentCheck") && a.format == OutputFormat::Png;
-    a.stereo_bits = if ui.checked(F, "CheckBox4") { 1 | if ui.checked(F, "CheckBox5") { 2 } else { 0 } } else { 0 };
+    a.stereo_bits = if ui.checked(F, "CheckBox4") { 0x40 | if ui.checked(F, "CheckBox5") { 0x80 } else { 0 } } else { 0 };
+    let blur = pti(&ui.text(F, "BlurEdit")).clamp(1, 31) as u32;
+    a.motion_blur = if blur > 1 { blur } else { 0 };
+    a.shutter = (super::util::ptf(&ui.text(F, "ShutterEdit")) as f32).clamp(0.0, 1.0);
 }
 
 fn write_settings(app: &Mb3d, ui: &mut Ui) {
@@ -190,7 +212,7 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_text(F, "Edit7", &a.height.to_string());
     ui.set_position(F, "UpDown3", a.scale as i64);
     ui.set_text(F, "Edit21", &a.scale.to_string());
-    ui.set_item_index(F, "RadioGroup2", if a.interpolation == Interpolation::Linear { 0 } else { 1 });
+    ui.set_item_index(F, "RadioGroup2", a.interpolation as i32);
     ui.set_checked(F, "CheckBox2", a.looped);
     ui.set_item_index(F, "RadioGroup3", a.format as i32);
     ui.set_text(F, "Edit2", &a.output_folder);
@@ -198,17 +220,29 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_text(F, "Edit4", &a.index_step.to_string());
     ui.set_checked(F, "CheckBox6", a.overwrite);
     ui.set_checked(F, "CheckBox7", a.save_depth);
-    ui.set_checked(F, "CheckBox4", a.stereo_bits & 1 != 0);
-    ui.set_checked(F, "CheckBox5", a.stereo_bits & 2 != 0);
-    ui.set_enabled(F, "CheckBox5", a.stereo_bits & 1 != 0);
+    ui.set_text(F, "BlurEdit", &a.motion_blur.max(1).to_string());
+    ui.set_text(F, "ShutterEdit", &super::util::fts_single(a.shutter as f64));
+    ui.set_checked(F, "CheckBox4", a.stereo_bits & 0x40 != 0);
+    ui.set_checked(F, "CheckBox5", a.stereo_bits & 0x80 != 0);
+    ui.set_enabled(F, "CheckBox5", a.stereo_bits & 0x40 != 0);
 }
 
 fn show_project_name(app: &Mb3d, ui: &mut Ui) {
     let n = app.anim.anim.name.clone();
-    ui.fm(F).set_caption(&format!("Animation maker   ({n})"));
+    ui.fm(F).set_caption(&trf("@MB:AnimationMakerParen", &[&n]));
 }
 
 /// Renders the small keyframe image in the background (`RenderPrevBMP`).
+/// Keyframe `k` changed elsewhere (the Curves window): its picture and the
+/// times anew.
+pub fn keyframe_changed(app: &mut Mb3d, ui: &mut Ui, k: usize) {
+    if k < app.anim.anim.keyframes.len() {
+        render_thumb(app, ui, k);
+    }
+    paint_box(app, ui);
+    calc_time(app, ui);
+}
+
 fn render_thumb(app: &mut Mb3d, ui: &Ui, i: usize) {
     read_settings(app, ui);
     let a = app.anim.anim.clone();
@@ -312,7 +346,7 @@ fn calc_time(app: &Mb3d, ui: &mut Ui) {
     let n = count(app);
     if n == 0 {
         ui.set_caption(F, "Label14", "0:00");
-        ui.set_caption(F, "Label25", "  MB");
+        ui.set_caption(F, "Label25", &tr("@MB:MB3"));
         return;
     }
     let every = ui.position(F, "UpDown1").max(1) as f64;
@@ -373,7 +407,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         (j.making_video, v)
     };
     if let Some(v) = video {
-        app.message(ui, &format!("Animation: video written: {}", v.display()));
+        app.message(ui, &trf("@MB:AnimationVideoWritten", &[&v.display()]));
     }
     let (changed, thumbs, running, done, total, err, last, frames_len) = {
         let mut j = app.anim.job.lock().unwrap();
@@ -413,15 +447,39 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     let el = app.anim.started.elapsed().as_secs();
     if making_video {
-        ui.set_caption(F, "Label19", "Making the video...");
+        ui.set_caption(F, "Label19", &tr("@MB:MakingTheVideo"));
     } else if running || done > 0 {
-        ui.set_caption(F, "Label19", &format!("Done: {done} of {total}"));
+        let now = Instant::now();
+        let a = &mut app.anim;
+        if done > a.last_done {
+            let n = done - a.last_done;
+            let each = now.saturating_duration_since(a.frame_start).as_secs_f64() / n as f64;
+            for _ in 0..n {
+                a.items.done(each);
+            }
+            a.last_done = done;
+            a.frame_start = now;
+            a.pace = Pace::default();
+            a.progress.store(0, Ordering::Relaxed);
+        }
+        let mut left = String::new();
+        if running && done < total {
+            let f = a.progress.load(Ordering::Relaxed) as f64 / 1000.0;
+            let secs = now.saturating_duration_since(a.frame_start).as_secs_f64();
+            a.pace.at(f, secs);
+            let l = a.pace.left(&a.items, f, secs, total - done - 1);
+            a.left_shown = l.map(|l| smooth_shown(a.left_shown, l, now)).or(a.left_shown);
+            if let Some((l, _)) = a.left_shown {
+                left = format!(" · {}", left_str(l));
+            }
+        }
+        ui.set_caption(F, "Label19", &trf("@MB:DoneOf", &[&done, &total, &left]));
         ui.set_caption(F, "Label22", &format!("{}:{:02}:{:02}", el / 3600, el / 60 % 60, el % 60));
     }
     if !running {
         end_rendering(app, ui);
         if !err.is_empty() {
-            app.message(ui, &format!("Animation: {err}"));
+            app.message(ui, &trf("@MB:Animation2", &[&err]));
         }
         if ui.showing(PV) {
             ui.set_visible(PV, "ProgressBar1", false);
@@ -433,7 +491,10 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 }
 
 fn end_rendering(app: &mut Mb3d, ui: &mut Ui) {
-    ui.set_caption(F, "Button2", "Start rendering animation images");
+    ui.set_caption(F, "Button2", &tr("@MB:StartRenderingAnimationImages"));
+    if !app.main.calculating && ui.caption(MAIN, "Button2") == tr("@MB:Stop") {
+        super::main_form::enable_buttons(app, ui);
+    }
     ui.set_enabled(F, "Button2", count(app) > 1);
     for b in ["SpeedButton1", "SpeedButton9", "SpeedButton10", "SpeedButton11", "Edit1", "Button3"] {
         ui.set_enabled(F, b, true);
@@ -453,14 +514,18 @@ fn parse_waiting(st: &str) -> Option<(usize, usize)> {
 
 fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let cap = ui.caption(F, "Button2");
-    if cap == "Pause rendering" {
+    if cap == tr("@MB:PauseRendering") {
         app.anim.pause.store(true, Ordering::SeqCst);
-        ui.set_caption(F, "Button2", "Paused, press to continue");
+        ui.set_caption(F, "Button2", &tr("@MB:PausedPressToContinue"));
         return;
     }
-    if cap == "Paused, press to continue" {
+    if cap == tr("@MB:PausedPressToContinue") {
         app.anim.pause.store(false, Ordering::SeqCst);
-        ui.set_caption(F, "Button2", "Pause rendering");
+        ui.set_caption(F, "Button2", &tr("@MB:PauseRendering"));
+        return;
+    }
+    // (a preview still runs)
+    if app.anim.job.lock().unwrap().running {
         return;
     }
     let (a, run, frames) = match output_plan(app, ui) {
@@ -471,7 +536,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     };
     let _ = std::fs::create_dir_all(&a.output_folder);
     if ui.checked(F, "TransparentCheck") && a.format != OutputFormat::Png {
-        return ui.show_message("A transparent background needs PNG frames: choose PNG as the output format.");
+        return ui.show_message(&tr("@MB:ATransparentBackgroundNeedsPNGFrames"));
     }
     let video = match video_settings(ui, &a) {
         Ok(v) => v,
@@ -481,10 +546,19 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     for b in ["SpeedButton1", "SpeedButton2", "SpeedButton3", "SpeedButton4", "SpeedButton5", "SpeedButton8", "SpeedButton9", "SpeedButton10", "SpeedButton11", "SpeedButton12", "SpeedButton14", "Edit1", "Button3", "Button4"] {
         ui.set_enabled(F, b, false);
     }
-    ui.set_caption(F, "Button2", "Pause rendering");
+    ui.set_caption(F, "Button2", &tr("@MB:PauseRendering"));
+    // as in MB3D, the main window's Calculate button stops the animation
+    ui.set_caption(MAIN, "Button2", &tr("@MB:Stop"));
+    ui.cm(MAIN, "Button2").hint = tr("@MB:StopRenderingTheAnimation");
     app.anim.started = Instant::now();
     app.anim.stop.store(false, Ordering::SeqCst);
     app.anim.pause.store(false, Ordering::SeqCst);
+    app.anim.progress.store(0, Ordering::Relaxed);
+    app.anim.items = ItemsLeft::default();
+    app.anim.pace = Pace::default();
+    app.anim.frame_start = app.anim.started;
+    app.anim.last_done = 0;
+    app.anim.left_shown = None;
     {
         let mut j = app.anim.job.lock().unwrap();
         *j = Job { running: true, total: frames.len(), changed: true, ..Default::default() };
@@ -540,17 +614,17 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
                 w.wake();
             }
         } else {
-        for &f in &frames {
+        // (several frames at once on a computer with several graphics
+        // cards: see `frames::render_frames`)
+        let before = || {
             while pause.load(Ordering::SeqCst) && !cancel() {
                 std::thread::sleep(std::time::Duration::from_millis(200));
             }
-            if cancel() {
-                break;
-            }
-            let progress = |d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
-            let r = crate::frames::render_frame_to_file(&a, f, &run, &progress, &cancel);
+        };
+        let progress = |_f: usize, d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+        crate::frames::render_frames(&a, &frames, &run, &before, &progress, &cancel, &mut |_f, r| {
             let mut j = job.lock().unwrap();
-            match r {
+            let go = match r {
                 Ok(FrameResult::Written { path, .. }) => {
                     j.done += 1;
                     if let Ok(img) = crate::image::load(&path) {
@@ -560,22 +634,26 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
                         }).collect();
                         j.last = Some((rgb, img.width, img.height));
                     }
+                    true
                 }
-                Ok(FrameResult::Skipped { .. }) => j.done += 1,
+                Ok(FrameResult::Skipped { .. }) => {
+                    j.done += 1;
+                    true
+                }
                 Err(e) => {
                     if e != "cancelled" {
                         j.error = e;
                     }
-                    j.changed = true;
-                    break;
+                    false
                 }
-            }
+            };
             j.changed = true;
             drop(j);
             if let Some(w) = &waker {
                 w.wake();
             }
-        }
+            go
+        });
         }
         // the video of the frames, when all of them are there
         if let Some((path, fps)) = video.filter(|_| !cancel() && job.lock().unwrap().error.is_empty()) {
@@ -595,7 +673,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             match r {
                 Ok(_) => j.video = Some(path),
                 Err(e) if e == "cancelled" => {}
-                Err(e) => j.error = format!("video: {e}"),
+                Err(e) => j.error = trf("@MB:VideoLower", &[&e]),
             }
         }
         let mut j = job.lock().unwrap();
@@ -612,7 +690,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
 fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     read_settings(app, ui);
     let a = app.anim.anim.clone();
-    if a.keyframes.len() < 2 {
+    if a.keyframes.len() < 2 || app.anim.job.lock().unwrap().running {
         return;
     }
     let every = ui.position(F, "UpDown1").max(1) as usize;
@@ -632,6 +710,9 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
         let mut j = app.anim.job.lock().unwrap();
         *j = Job { running: true, total: frames.len(), frames: vec![None; frames.len()], changed: true, ..Default::default() };
     }
+    // no new job while this one runs (end_rendering enables them again)
+    ui.set_enabled(F, "Button2", false);
+    ui.set_enabled(F, "Button4", false);
     // the preview window: an image of the frame size
     let (w, h) = ((a.width as f64 / down).round() as i32, (a.height as f64 / down).round() as i32);
     setup_preview_window(ui, w, h, frames.len());
@@ -664,7 +745,9 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
             let mut j = job.lock().unwrap();
             match r {
                 Ok(img) => {
-                    j.frames[k] = Some(Bitmap::from_rgb(img.width, img.height, &img.rgb));
+                    if let Some(s) = j.frames.get_mut(k) {
+                        *s = Some(Bitmap::from_rgb(img.width, img.height, &img.rgb));
+                    }
                     j.done = k + 1;
                     j.last = None;
                 }
@@ -743,7 +826,7 @@ fn save_ani_gif(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
     let fps = pti(&ui.text(PV, "Edit1")).clamp(1, 60) as f64;
     let gif = crate::gif::encode_animation(&frames, (100.0 / fps).round() as u16);
     if let Err(e) = std::fs::write(p, gif) {
-        ui.show_message(&format!("Could not write {}: {e}", p.display()));
+        ui.show_message(&trf("@MB:CouldNotWrite", &[&p.display(), &e]));
     }
 }
 
@@ -794,11 +877,14 @@ pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormHide" => {
             app.anim.stop.store(true, Ordering::SeqCst);
             app.anim.playing = false;
-            ui.set_enabled(F, "Button4", count(app) > 1);
+            // (while the preview thread still runs, end_rendering does this)
+            if !app.anim.job.lock().unwrap().running {
+                ui.set_enabled(F, "Button4", count(app) > 1);
+            }
         }
         "SpeedButton1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Animated Gif|*.gif".into(),
+                filter: format!("{}|*.gif", tr("@MB:AnimatedGif")),
                 default_ext: "gif".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 file_name: app.anim.anim.name.clone(),
@@ -930,14 +1016,43 @@ pub fn process_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
 }
 
 pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
+    event_inner(app, ui, e);
+    // the curves follow the keyframes (added, removed, moved, their frames)
+    let h = e.handler.as_str();
+    if h.ends_with("Click") || h.ends_with("Change") || h.ends_with("MouseUp") {
+        super::curves_form::update(app, ui);
+    }
+}
+
+fn event_inner(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     let n = count(app);
     match h {
+        "CurvesBtnClick" => super::curves_form::open(app, ui),
+        "OrbitBtnClick" => {
+            // a turntable of the main window's view after the keyframes
+            // (a new animation: a smooth loop)
+            let empty = count(app) == 0;
+            let sc = main_scene(app, ui);
+            let frames = pti(&ui.text(F, "Edit5")).max(1) as u32;
+            if empty {
+                ui.set_item_index(F, "RadioGroup2", 2);
+                ui.set_checked(F, "CheckBox2", true);
+            }
+            for k in crate::anim::orbit_keyframes(&sc, 8, frames) {
+                app.anim.current = count(app) + 1;
+                insert_keyframe(app, ui, k.scene);
+            }
+            read_settings(app, ui);
+            app.anim.current = count(app);
+            paint_box(app, ui);
+            calc_time(app, ui);
+        }
         "FormShow" => {
             if app.anim.first_show {
                 app.anim.first_show = false;
-                ui.cm(F, "Edit21").hint = "1:  none\n2:  2x2\n3:  3x3".into();
-                ui.set_item_index(F, "RadioGroup2", app.ini.get("AniSmoothPar").parse::<i32>().unwrap_or(1).clamp(0, 1));
+                ui.cm(F, "Edit21").hint = tr("@MB:N1None22x233x3");
+                ui.set_item_index(F, "RadioGroup2", app.ini.get("AniSmoothPar").parse::<i32>().unwrap_or(1).clamp(0, 2));
                 let out = app.ini.dir(super::ini::DIR_ANIOUT).display().to_string();
                 ui.set_text(F, "Edit2", &out);
                 app.anim.anim.output_folder = out;
@@ -966,9 +1081,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             insert_keyframe(app, ui, s);
         }
         "SpeedButton4Click" => {
-            // a keyframe between this and the next
-            let s = main_scene(app, ui);
+            // a keyframe between this and the next (as the button's state:
+            // it is not refreshed while a preview runs)
             let cur = app.anim.current;
+            if cur >= n {
+                return;
+            }
+            let s = main_scene(app, ui);
             let frames = pti(&ui.text(F, "Edit5")).max(0) as u32;
             app.anim.anim.keyframes.insert(cur, Keyframe::new(s, frames));
             app.anim.thumbs.insert(cur, None);
@@ -1080,12 +1199,12 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let cur = app.anim.current;
             if cur >= 1 && cur < n {
                 let c = app.anim.anim.keyframes[cur - 1].frames;
-                ui.input_query("anim:between", "Linear interpolate a keyframe inbetween", "At which subframe:", &((c + 1) / 2).to_string());
+                ui.input_query("anim:between", &tr("@MB:LinearInterpolateAKeyframeInbetween"), &tr("@MB:AtWhichSubframe"), &((c + 1) / 2).to_string());
             }
         }
         "SpeedButton13Click" => {
             if n > 0 {
-                ui.confirm("anim:clear", "Do you really want to delete everything?");
+                ui.confirm("anim:clear", &tr("@MB:DoYouReallyWantToDelete"));
             }
         }
         "Edit1Change" => {
@@ -1106,7 +1225,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Edit2Change" => app.anim.anim.output_folder = ui.text(F, "Edit2"),
         "Button3Click" => {
             let d = std::path::PathBuf::from(ui.text(F, "Edit2"));
-            ui.folder_dialog("anim:outdir", "Output folder", Some(d));
+            ui.folder_dialog("anim:outdir", &tr("@MB:OutputFolder2"), Some(d));
         }
         "Edit3Change" => {
             let t = ui.text(F, "Edit3");
@@ -1131,7 +1250,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton10Click" => ui.show(PR),
         "SpeedButton9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Animation (*.m3a)|*.m3a".into(),
+                filter: format!("{}|*.m3a", tr("@MB:M3DAnimationM3a")),
                 default_ext: "m3a".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3A)),
                 file_name: app.anim.anim.name.clone(),
@@ -1141,7 +1260,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Animation (*.m3a)|*.m3a|Keyframe list (*.m3k)|*.m3k".into(),
+                filter: format!("{}|*.m3a|{}|*.m3k", tr("@MB:M3DAnimationM3a"), tr("@MB:KeyframeListM3k")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3A)),
                 ..Default::default()
             };
@@ -1241,11 +1360,12 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 return;
             }
             let total = app.anim.anim.keyframes[cur - 1].frames;
-            let sf = sf.saturating_sub(1);
-            if sf >= total {
-                ui.show_message("Value not guilty");
+            // (subframes count from 1: 0 is no subframe)
+            if sf < 1 || sf - 1 >= total {
+                ui.show_message(&tr("@MB:ValueNotGuilty"));
                 return;
             }
+            let sf = sf - 1;
             // linear interpolation between this and the next keyframe
             let w2 = sf as f64 / total.max(1) as f64;
             let s1 = app.anim.anim.keyframes[cur - 1].scene.clone();

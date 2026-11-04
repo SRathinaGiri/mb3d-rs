@@ -132,6 +132,20 @@ pub fn build_view_vector_dfov(xa: f64, ya: f64) -> Vec3 {
     scale(v, n)
 }
 
+/// The equidistant fisheye camera (not in MB3D): the view vector at the
+/// angle `sqrt(xa^2 + ya^2)` from the view axis (at most 180 degrees, the
+/// direction straight back), the angles as for [`build_view_vector_dfov`].
+#[inline]
+pub fn build_view_vector_fisheye(xa: f64, ya: f64) -> Vec3 {
+    let t = (xa * xa + ya * ya).sqrt();
+    if t < 1e-12 {
+        return [0.0, 0.0, 1.0];
+    }
+    let tc = t.min(std::f64::consts::PI);
+    let s = tc.sin() / t;
+    [-ya * s, xa * s, tc.cos()]
+}
+
 /// `BuildViewVectorDSphereFOV(xa, ya, v)`: panorama camera.
 #[inline]
 pub fn build_view_vector_dsphere_fov(xa: f64, ya: f64) -> Vec3 {

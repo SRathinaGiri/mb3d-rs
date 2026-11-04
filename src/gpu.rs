@@ -15,22 +15,96 @@ use crate::formulas::Formula;
 use crate::gbuffer::SiLight;
 use crate::iteration::HybridMode;
 use crate::scene::CameraOptic;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static LAST: Mutex<String> = Mutex::new(String::new());
-/// The last error wgpu reported outside an error scope.
-static ERROR: Mutex<Option<String>> = Mutex::new(None);
+/// The last error wgpu reported outside an error scope, per card.
+static ERROR: Mutex<Vec<(usize, String)>> = Mutex::new(Vec::new());
 
-fn set_error(e: String) {
+fn set_error(card: usize, e: String) {
     if let Ok(mut l) = ERROR.lock() {
-        l.get_or_insert(e);
+        if !l.iter().any(|(c, _)| *c == card) {
+            l.push((card, e));
+        }
     }
 }
 
+/// The error of this thread's card (see [`on_card`]).
 fn take_error() -> Option<String> {
-    ERROR.lock().ok().and_then(|mut l| l.take())
+    let card = CARD.with(|c| c.get());
+    let mut l = ERROR.lock().ok()?;
+    let i = l.iter().position(|(c, _)| *c == card)?;
+    Some(l.remove(i).1)
+}
+
+thread_local! {
+    /// The card of [`cards`] this thread calculates on (see [`on_card`]).
+    static CARD: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// This thread's calculations stay on its card alone, the further
+    /// cards being busy with other pictures (see [`solo_card`]).
+    static SOLO: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// The number of graphics cards found (0 without one).
+pub fn card_count() -> usize {
+    cards().map(|c| c.len()).unwrap_or(0)
+}
+
+/// Runs `f` on card `i` of [`cards`] alone: the pictures it calculates do
+/// not share their work with the other cards (animations: a frame per
+/// card).
+pub fn solo_card<R>(i: usize, f: impl FnOnce() -> R) -> R {
+    struct Back(bool);
+    impl Drop for Back {
+        fn drop(&mut self) {
+            SOLO.with(|c| c.set(self.0));
+        }
+    }
+    let _back = Back(SOLO.with(|c| c.replace(true)));
+    on_card(i, f)
+}
+
+/// This thread's card and whether it is alone on it, for a thread that
+/// calculates on its behalf (see [`as_card`]).
+pub fn card_here() -> (usize, bool) {
+    (CARD.with(|c| c.get()), SOLO.with(|c| c.get()))
+}
+
+/// Runs `f` on the card of [`card_here`].
+pub fn as_card<R>(c: (usize, bool), f: impl FnOnce() -> R) -> R {
+    if c.1 {
+        solo_card(c.0, f)
+    } else {
+        on_card(c.0, f)
+    }
+}
+
+/// The cards besides the first that failed: left out until the program
+/// ends (the first failing switches the card off altogether, see `LOST`).
+static FAILED: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Runs `f` with this thread's calculations on card `i` of [`cards`].
+pub fn on_card<R>(i: usize, f: impl FnOnce() -> R) -> R {
+    struct Back(usize);
+    impl Drop for Back {
+        fn drop(&mut self) {
+            CARD.with(|c| c.set(self.0));
+        }
+    }
+    let _back = Back(CARD.with(|c| c.replace(i)));
+    f()
+}
+
+/// The cards besides the first that can take part in the calculation of
+/// `p` (not failed, and with doubles when it needs them).
+pub fn extra_cards(p: &CalcParams) -> Vec<usize> {
+    if SOLO.with(|c| c.get()) {
+        return Vec::new();
+    }
+    let n = cards().map(|c| c.len()).unwrap_or(0);
+    (1..n.min(64)).filter(|&i| FAILED.load(Ordering::SeqCst) & (1 << i) == 0 && on_card(i, || unsupported(p).is_none())).collect()
 }
 
 /// The tasks per dispatch row of the reflection pass (`R_W` in the shader).
@@ -70,7 +144,7 @@ struct Resumer {
 
 /// The [`Resumer`] of the reflection batches with the hash of their shader
 /// (another scene starts with a new one: its turns may take much longer).
-static REFLECT_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+static REFLECT_RESUMER: std::sync::Mutex<Vec<(usize, u64, Resumer)>> = std::sync::Mutex::new(Vec::new());
 
 /// Slots at most (about 1.3 KB of state each).
 const RESUME_SLOTS: usize = 1 << 15;
@@ -176,7 +250,7 @@ impl Resumer {
             started = next;
             let dt = t.elapsed().as_secs_f64();
             if self.timing {
-                eprintln!("  submission (budget {}): {:.1} ms, {next} of {lim} started, {left} suspended", self.budget, dt * 1000.0);
+                crate::elog!("  submission (budget {}): {:.1} ms, {next} of {lim} started, {left} suspended", self.budget, dt * 1000.0);
             }
             // the first suspended item or the next to start: all before it
             // are finished
@@ -215,9 +289,20 @@ pub fn set_enabled(on: bool) {
     ENABLED.store(on, Ordering::Relaxed);
 }
 
-/// The graphics card's name (None without a usable card).
+/// The graphics card's name (None without a usable card); with several,
+/// those still working: identical ones counted (`RTX 2060 (Vulkan) ×2`),
+/// different ones joined by " + ".
 pub fn name() -> Option<String> {
-    gpu().ok().map(|g| g.name.clone())
+    let c = cards().ok()?;
+    let failed = FAILED.load(Ordering::SeqCst);
+    let mut groups: Vec<(&str, usize)> = Vec::new();
+    for (_, g) in c.iter().enumerate().filter(|(i, _)| *i == 0 || *i >= 64 || failed & (1 << i) == 0) {
+        match groups.iter_mut().find(|(n, _)| *n == g.name) {
+            Some(e) => e.1 += 1,
+            None => groups.push((&g.name, 1)),
+        }
+    }
+    Some(groups.iter().map(|(n, k)| if *k > 1 { format!("{n} ×{k}") } else { n.to_string() }).collect::<Vec<_>>().join(" + "))
 }
 
 pub fn enabled() -> bool {
@@ -240,9 +325,16 @@ fn guard<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     if ABORT.load(Ordering::SeqCst) {
         return Err("the program ends".into());
     }
-    let lost = |e: &str| {
-        LOST.store(true, Ordering::SeqCst);
-        set_status(format!("CPU: the graphics card failed ({e}); calculating on the CPU until the program is restarted"));
+    let lost = |e: &str| match CARD.with(|c| c.get()) {
+        0 => {
+            LOST.store(true, Ordering::SeqCst);
+            set_status(format!("CPU: the graphics card failed ({e}); calculating on the CPU until the program is restarted"));
+        }
+        // another card: only that one is left out
+        i => {
+            FAILED.fetch_or(1 << i.min(63), Ordering::SeqCst);
+            crate::elog!("graphics card {} failed ({e}): left out until the program is restarted", i + 1);
+        }
     };
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)) {
         Ok(Err(e)) if e.to_ascii_lowercase().contains("lost") => {
@@ -299,9 +391,25 @@ impl Drop for Flight {
     }
 }
 
+/// Counts card work outside `guard` (the compiles started in the
+/// background, which may open the device first), None once the program
+/// ends: a process that exits while the driver opens the device or
+/// compiles crashes in the driver.
+fn flight() -> Option<Flight> {
+    IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
+    let f = Flight;
+    (!ABORT.load(Ordering::SeqCst)).then_some(f)
+}
+
 /// Stops all GPU work for good (the program ends).
 pub fn abort_all() {
     ABORT.store(true, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// True once [`abort_all`] was called: card work that failed then was
+/// stopped, it did not fail.
+pub fn aborted() -> bool {
+    ABORT.load(std::sync::atomic::Ordering::SeqCst)
 }
 
 /// Waits (at most `max`) until no calculation is on the card any more and
@@ -310,7 +418,7 @@ pub fn abort_all() {
 /// running when the window was closed did).
 pub fn wait_idle(max: std::time::Duration) {
     let t = std::time::Instant::now();
-    while (IN_FLIGHT.load(Ordering::SeqCst) > 0 || compiling()) && t.elapsed() < max {
+    while (IN_FLIGHT.load(Ordering::SeqCst) > 0 || compiling_any()) && t.elapsed() < max {
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
 }
@@ -855,11 +963,17 @@ const MIN_STEP_PRECISION: f64 = 64.0;
 struct Gpu {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    /// compiled scene shaders by a hash of their code
-    pipelines: Mutex<std::collections::HashMap<u64, std::sync::Arc<wgpu::ComputePipeline>>>,
+    /// compiled scene shaders by a hash of their code, with the tick of
+    /// their last use (at most [`PIPELINES_KEPT`]: see [`keep_pipeline`])
+    pipelines: Mutex<std::collections::HashMap<u64, (std::sync::Arc<wgpu::ComputePipeline>, u64)>>,
     name: String,
     /// the shaders can calculate in doubles (SHADER_F64, SHADER_INT64)
     f64: bool,
+    /// its place in [`cards`]
+    index: usize,
+    /// the card and its driver (a driver update empties the driver's
+    /// shader cache: see [`seen`])
+    driver: String,
 }
 
 /// The pipeline of the shader `code` (compiled once, then cached).
@@ -873,10 +987,13 @@ fn pipeline(g: &Gpu, code: &str, constants: &[(&str, f64)]) -> Result<std::sync:
 fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
     let key = pipeline_key(code, entry, constants);
     // compiled in the background (see [`prepare`]): wait for it
-    let pending = PREPARING.lock().unwrap().iter().find(|(k, _)| *k == key).map(|(_, f)| f.clone());
+    let pending = PREPARING.lock().unwrap().iter().find(|(c, k, _)| (*c, *k) == (g.index, key)).map(|(.., f)| f.clone());
     if let Some(f) = pending {
         while !f.load(Ordering::SeqCst) {
             std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        if LOST.load(Ordering::SeqCst) && g.index == 0 || g.index > 0 && FAILED.load(Ordering::SeqCst) & (1 << g.index.min(63)) != 0 {
+            return Err("the graphics card was lost".into());
         }
     }
     compile_entry(g, code, entry, layout, constants, key)
@@ -884,13 +1001,15 @@ fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipeli
 
 /// [`pipeline_entry`] without the wait (the background compile itself).
 fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)], key: u64) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
-    if let Some(pl) = g.pipelines.lock().map_err(|e| e.to_string())?.get(&key) {
+    if let Some((pl, used)) = g.pipelines.lock().map_err(|e| e.to_string())?.get_mut(&key) {
+        *used = PIPELINE_TICK.fetch_add(1, Ordering::Relaxed);
         return Ok(pl.clone());
     }
     let scope = g.device.push_error_scope(wgpu::ErrorFilter::Validation);
     // MB3D_GPU_NOCACHE: a different shader text every time (the driver's
     // cache misses: the compile time of a new scene), MB3D_GPU_TIMING: print it
     let t = std::time::Instant::now();
+    let job = start_job(t, code, constants.len());
     let salted;
     let code = if std::env::var_os("MB3D_GPU_NOCACHE").is_some() {
         // a different constant inside the entry point every time
@@ -911,15 +1030,99 @@ fn compile_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::Pipelin
         compilation_options: wgpu::PipelineCompilationOptions { constants, ..Default::default() },
         cache: None,
     });
-    if let Some(e) = pollster::block_on(scope.pop()) {
+    let error = pollster::block_on(scope.pop());
+    end_job(job, t.elapsed().as_secs_f64());
+    if let Some(e) = error {
         return Err(format!("the shader does not compile: {e}"));
     }
     if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-        eprintln!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
+        crate::elog!("  shader {entry} {constants:?}: {} lines, compiled in {:.2} s (module {module_s:.2} s, pipeline {:.2} s)", code.lines().count(), t.elapsed().as_secs_f64(), t.elapsed().as_secs_f64() - module_s);
+    }
+    COMPILE_MS.fetch_add((t.elapsed().as_secs_f64() * 1000.0) as u64, Ordering::Relaxed);
+    // MB3D_COMPILE_LOG=FILE: a line per compile (the window's estimate of
+    // the compile time is fitted on them)
+    if let Some(path) = std::env::var_os("MB3D_COMPILE_LOG") {
+        use std::io::Write;
+        let line = format!(
+            "{{\"entry\":{entry:?},\"key\":\"{key:016x}\",\"lines\":{},\"bytes\":{},\"double\":{},\"constants\":{},\"secs\":{:.3},\"module\":{module_s:.3}}}\n",
+            code.lines().count(),
+            code.len(),
+            code.contains("f64"),
+            constants.len(),
+            t.elapsed().as_secs_f64()
+        );
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+            let _ = f.write_all(line.as_bytes());
+        }
+    }
+    if std::env::var_os("MB3D_GPU_NOCACHE").is_none() {
+        seen::note(&g.driver, key);
     }
     let pl = std::sync::Arc::new(pl);
-    g.pipelines.lock().map_err(|e| e.to_string())?.insert(key, pl.clone());
+    keep_pipeline(&mut *g.pipelines.lock().map_err(|e| e.to_string())?, key, pl.clone());
     Ok(pl)
+}
+
+/// How many compiled pipelines a card keeps.  Every formula combination
+/// brings its own (the march, shadows, occlusion, Monte Carlo, the cone
+/// passes); a batch or a long session never needs most of them again, and
+/// each holds the driver's compiled code: kept for ever, a batch of 30
+/// example files grew by 13 MB a file.  A pipeline dropped from here and
+/// needed again is compiled again, out of the driver's own cache (fast).
+const PIPELINES_KEPT: usize = 24;
+
+static PIPELINE_TICK: AtomicU64 = AtomicU64::new(0);
+
+/// Puts `pl` into `map`, dropping the least recently used pipelines over
+/// [`PIPELINES_KEPT`] (a calculation still running with one holds its own
+/// reference).
+fn keep_pipeline<T>(map: &mut std::collections::HashMap<u64, (T, u64)>, key: u64, pl: T) {
+    map.insert(key, (pl, PIPELINE_TICK.fetch_add(1, Ordering::Relaxed)));
+    while map.len() > PIPELINES_KEPT {
+        let Some(oldest) = map.iter().min_by_key(|(_, (_, used))| *used).map(|(k, _)| *k) else { break };
+        map.remove(&oldest);
+    }
+}
+
+/// The time spent compiling shaders so far, in milliseconds.
+static COMPILE_MS: AtomicU64 = AtomicU64::new(0);
+
+/// [`COMPILE_MS`] (of compiles that run side by side: more than the time
+/// they took; the window sees from it that shaders compiled meanwhile).
+pub fn compile_ms() -> u64 {
+    COMPILE_MS.load(Ordering::Relaxed)
+}
+
+/// A shader compile: when it began, its time (None while it runs) and its
+/// shader's size, for the window's estimate of the time left.
+#[derive(Clone, Debug)]
+pub struct CompileJob {
+    pub start: std::time::Instant,
+    pub secs: Option<f64>,
+    pub bytes: usize,
+    pub lines: usize,
+    pub double: bool,
+    pub constants: usize,
+}
+
+/// The compiles of this run, in the order they began (a few hundred at most).
+static JOBS: Mutex<Vec<CompileJob>> = Mutex::new(Vec::new());
+
+fn start_job(start: std::time::Instant, code: &str, constants: usize) -> usize {
+    let mut j = JOBS.lock().unwrap();
+    j.push(CompileJob { start, secs: None, bytes: code.len(), lines: code.lines().count(), double: code.contains("f64"), constants });
+    j.len() - 1
+}
+
+fn end_job(i: usize, secs: f64) {
+    if let Some(j) = JOBS.lock().unwrap().get_mut(i) {
+        j.secs = Some(secs);
+    }
+}
+
+/// The compiles that ran at some time after `since` (or still run).
+pub fn compile_jobs(since: std::time::Instant) -> Vec<CompileJob> {
+    JOBS.lock().unwrap().iter().filter(|j| j.secs.is_none_or(|s| j.start + std::time::Duration::from_secs_f64(s) > since)).cloned().collect()
 }
 
 fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {
@@ -932,15 +1135,23 @@ fn pipeline_key(code: &str, entry: &str, constants: &[(&str, f64)]) -> u64 {
     h.finish()
 }
 
-/// The pipelines being compiled in the background, with their flags.
-static PREPARING: Mutex<Vec<(u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
+/// The pipelines being compiled in the background (card, key), with their
+/// flags.
+static PREPARING: Mutex<Vec<(usize, u64, std::sync::Arc<AtomicBool>)>> = Mutex::new(Vec::new());
 
-/// Whether a shader is being compiled in the background right now.  Work
+/// Whether this thread's card compiles a shader in the background now.  Work
 /// sent to the card meanwhile waits behind the driver's compile (the
 /// screen space occlusion of a picture the CPU finished alone waited 13 s
 /// for a double precision shader it never used), so short passes run on
 /// the CPU then.
 pub fn compiling() -> bool {
+    let card = CARD.with(|c| c.get());
+    PREPARING.lock().map(|l| l.iter().any(|(c, ..)| *c == card)).unwrap_or(false)
+}
+
+/// Whether any card compiles a shader in the background (the program's end
+/// waits for those).
+fn compiling_any() -> bool {
     PREPARING.lock().map(|l| !l.is_empty()).unwrap_or(false)
 }
 
@@ -951,13 +1162,148 @@ pub fn compiling() -> bool {
 pub fn wait_compiles(max: std::time::Duration) {
     let t = std::time::Instant::now();
     let mut said = false;
-    while compiling() && t.elapsed() < max {
+    while compiling_any() && t.elapsed() < max {
         if !said {
-            eprintln!("  (waiting for the graphics card's shader compile, kept for the next time)");
+            crate::elog!("  (waiting for the graphics card's shader compile, kept for the next time)");
             said = true;
         }
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
+}
+
+/// The memory a compile may take in the driver: up to 1.9 GB measured for
+/// the example scenes' shaders (about 5700 lines; 0.6 GB for small ones).
+const COMPILE_MEMORY: u64 = 2 << 30;
+
+/// The background compiles running.
+static COMPILES_RUNNING: (Mutex<usize>, std::sync::Condvar) = (Mutex::new(0), std::sync::Condvar::new());
+
+/// The background compiles waiting for memory (see [`CompileRoom`]).
+static COMPILES_WAITING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// A batch is rendering (the command line's `mb3d batch`, the program's
+/// batch window): see [`compiles_waiting`].
+static BATCH: AtomicBool = AtomicBool::new(false);
+
+pub fn set_batch(on: bool) {
+    BATCH.store(on, Ordering::SeqCst);
+}
+
+/// A batch renders and compiles are waiting for memory: a pass whose
+/// shaders are not compiled yet goes to the CPU instead of waiting for
+/// them (they may come late).  Only in a batch: its pictures are many and
+/// mostly small, and the next file's compiles queue behind; a single big
+/// picture (when memory runs short the most) is far quicker on the card
+/// after the wait.
+pub fn compiles_waiting() -> bool {
+    BATCH.load(Ordering::SeqCst) && COMPILES_WAITING.load(Ordering::SeqCst) > 0
+}
+
+/// A background compile's turn: it starts when the free memory has room
+/// for it besides those running (counted at half, as they may have taken
+/// part of theirs already), the first one always.  A batch renders a file
+/// on the CPU while its shaders compile and goes on to the next, whose
+/// compiles came on top: 30 example files new to the driver took 11 GB,
+/// more than many computers have.  Where memory is plentiful nothing
+/// waits; where it is short, a compile waits for one to end instead of
+/// pushing the computer into swapping.
+struct CompileRoom;
+
+impl CompileRoom {
+    fn take() -> CompileRoom {
+        let (m, cv) = &COMPILES_RUNNING;
+        let mut n = m.lock().unwrap_or_else(|e| e.into_inner());
+        let mut waiting = false;
+        loop {
+            if compile_room(*n, crate::render::memory_available()) {
+                break;
+            }
+            if !waiting {
+                waiting = true;
+                COMPILES_WAITING.fetch_add(1, Ordering::SeqCst);
+            }
+            // a compile ending frees its memory; other programs may too
+            n = cv.wait_timeout(n, std::time::Duration::from_millis(500)).unwrap_or_else(|e| e.into_inner()).0;
+        }
+        if waiting {
+            COMPILES_WAITING.fetch_sub(1, Ordering::SeqCst);
+        }
+        *n += 1;
+        CompileRoom
+    }
+}
+
+/// A compile may start beside `running` others with `free` bytes of memory
+/// free (None: cannot be told).
+fn compile_room(running: usize, free: Option<u64>) -> bool {
+    running == 0 || free.is_none_or(|free| free >= COMPILE_MEMORY + running as u64 * COMPILE_MEMORY / 2)
+}
+
+impl Drop for CompileRoom {
+    fn drop(&mut self) {
+        let (m, cv) = &COMPILES_RUNNING;
+        *m.lock().unwrap_or_else(|e| e.into_inner()) -= 1;
+        cv.notify_all();
+    }
+}
+
+/// The shaders this computer's cards compiled before (their driver keeps
+/// them): `compiled_shaders.txt` in the data folder, a line per pipeline
+/// with the card and driver it was compiled for.  A batch tells from it
+/// how many of its files bring formula combinations new to the card.
+mod seen {
+    use std::collections::HashSet;
+    use std::sync::Mutex;
+
+    static SEEN: Mutex<Option<HashSet<(String, u64)>>> = Mutex::new(None);
+
+    fn path() -> std::path::PathBuf {
+        crate::appdirs::data_folder().join("compiled_shaders.txt")
+    }
+
+    fn with<R>(f: impl FnOnce(&mut HashSet<(String, u64)>) -> R) -> R {
+        let mut g = SEEN.lock().unwrap_or_else(|e| e.into_inner());
+        let set = g.get_or_insert_with(|| {
+            std::fs::read_to_string(path())
+                .unwrap_or_default()
+                .lines()
+                .filter_map(|l| {
+                    let (d, k) = l.rsplit_once(' ')?;
+                    Some((d.to_string(), u64::from_str_radix(k, 16).ok()?))
+                })
+                .collect()
+        });
+        f(set)
+    }
+
+    pub(super) fn note(driver: &str, key: u64) {
+        let new = with(|s| s.insert((driver.to_string(), key)));
+        if new {
+            use std::io::Write;
+            let p = path();
+            let _ = p.parent().map(std::fs::create_dir_all);
+            if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(p) {
+                let _ = writeln!(f, "{driver} {key:016x}");
+            }
+        }
+    }
+
+    pub(super) fn contains(driver: &str, key: u64) -> bool {
+        with(|s| s.contains(&(driver.to_string(), key)))
+    }
+}
+
+/// The key of the march of `p` when it brings shaders the card has not
+/// compiled before (the first calculation of its formula combination on
+/// this card and driver); None when they are known or it calculates on
+/// the CPU anyway.
+pub fn new_to_card(p: &CalcParams) -> Option<u64> {
+    if !enabled() || unsupported(p).is_some() {
+        return None;
+    }
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return None };
+    let key = pipeline_key(&sh.code, "main", &march_constants(p, 0));
+    (!g.pipelines.lock().is_ok_and(|m| m.contains_key(&key)) && !seen::contains(&g.driver, key)).then_some(key)
 }
 
 /// A flag that turns true once the pipeline of `code` is compiled (at once
@@ -969,16 +1315,28 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
         return std::sync::Arc::new(AtomicBool::new(true));
     }
     let mut list = PREPARING.lock().unwrap();
-    if let Some((_, f)) = list.iter().find(|(k, _)| *k == key) {
+    if let Some((.., f)) = list.iter().find(|(c, k, _)| (*c, *k) == (g.index, key)) {
         return f.clone();
     }
     let flag = std::sync::Arc::new(AtomicBool::new(false));
-    list.push((key, flag.clone()));
+    list.push((g.index, key, flag.clone()));
     let f = flag.clone();
     std::thread::spawn(move || {
-        let _ = compile_entry(g, &code, entry, None, &constants, key);
+        let _room = CompileRoom::take();
+        // a panic (the device lost) switches the card off, as in `guard`
+        // (a further card: only that one), so that the waiters find it off
+        // instead of waiting forever
+        if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| compile_entry(g, &code, entry, None, &constants, key))).is_err() {
+            if g.index == 0 {
+                LOST.store(true, Ordering::SeqCst);
+                set_status("CPU: the graphics card failed (compiling a shader); calculating on the CPU until the program is restarted".into());
+            } else {
+                FAILED.fetch_or(1 << g.index.min(63), Ordering::SeqCst);
+                crate::elog!("graphics card {} failed (compiling a shader): left out until the program is restarted", g.index + 1);
+            }
+        }
         f.store(true, Ordering::SeqCst);
-        PREPARING.lock().unwrap().retain(|(k, _)| *k != key);
+        PREPARING.lock().unwrap().retain(|(c, k, _)| (*c, *k) != (g.index, key));
     });
     flag
 }
@@ -986,7 +1344,7 @@ fn prepare(g: &'static Gpu, code: String, entry: &'static str, constants: Vec<(&
 /// The constants of the Monte Carlo pipeline.
 fn mc_constants(p: &CalcParams) -> Vec<(&'static str, f64)> {
     let difs = p.difs || p.decomb.as_ref().is_some_and(|d| d.part2.difs);
-    vec![("MODE_KIND", 4.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)]
+    vec![("MODE_KIND", 4.0), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64), ("HAS_GROUND", p.ground.is_some() as u8 as f64)]
 }
 
 /// Monte Carlo on the card: a flag that turns true once its shader is
@@ -995,6 +1353,7 @@ pub fn mc_prepare(p: &CalcParams) -> Result<std::sync::Arc<AtomicBool>, String> 
     if let Some(r) = unsupported(p) {
         return Err(r);
     }
+    let Some(_flight) = flight() else { return Err("the program ends".into()) };
     let g = gpu()?;
     let sh = scene_shader(p)?;
     Ok(prepare(g, sh.code, "main", mc_constants(p)))
@@ -1009,7 +1368,7 @@ fn march_constants(p: &CalcParams, mode: u32) -> Vec<(&'static str, f64)> {
         2 => 2.0,
         _ => 0.0,
     };
-    vec![("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64)]
+    vec![("MODE_KIND", kind), ("HAS_DIFS", difs as u8 as f64), ("HAS_DECOMB", p.decomb.is_some() as u8 as f64), ("HAS_4D", four_d(p) as u8 as f64), ("HAS_IPOL", has_ipol(p) as u8 as f64), ("HAS_GROUND", p.ground.is_some() as u8 as f64)]
 }
 
 /// The single precision march of the scene is compiled already (no
@@ -1038,6 +1397,7 @@ pub fn march_prepare(p: &CalcParams, post: &PostJob) -> Result<Vec<std::sync::Ar
     if let Some(r) = unsupported(p) {
         return Err(r);
     }
+    let Some(_flight) = flight() else { return Err("the program ends".into()) };
     let g = gpu()?;
     let sh = scene_shader(p)?;
     Ok(modes(post).into_iter().map(|m| prepare(g, sh.code.clone(), "main", march_constants(p, m))).collect())
@@ -1053,6 +1413,7 @@ fn reflect_constants(p: &CalcParams, march: bool, hs: bool, ao: bool) -> Vec<(&'
         ("HAS_DECOMB", p.decomb.is_some() as u8 as f64),
         ("HAS_4D", four_d(p) as u8 as f64),
         ("HAS_IPOL", has_ipol(p) as u8 as f64),
+        ("HAS_GROUND", p.ground.is_some() as u8 as f64),
         ("R_HS", hs as u8 as f64),
         ("R_AO", ao as u8 as f64),
         ("R_MARCH", march as u8 as f64),
@@ -1065,6 +1426,7 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
     if unsupported(p).is_some() {
         return;
     }
+    let Some(_flight) = flight() else { return };
     let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return };
     let split = (hs || ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
     if split {
@@ -1081,6 +1443,7 @@ pub fn reflect_prepare(p: &CalcParams, hs: bool, ao: bool) {
 /// after rows went to `sink` (single precision overflows) means they are
 /// not usable.
 pub fn march_bands(p: &CalcParams, post: &PostJob, bands: &dyn Fn(usize) -> Option<(usize, usize)>, cancel: &(dyn Fn() -> bool + Sync), sink: &mut dyn FnMut(usize, &[SiLight])) -> Result<(), String> {
+    ROWS_BAD.with(|c| c.set(false));
     guard(|| march_bands_card(p, post, bands, cancel, sink))
 }
 
@@ -1093,9 +1456,13 @@ fn march_bands_card(p: &CalcParams, post: &PostJob, bands: &dyn Fn(usize) -> Opt
     for m in modes(post) {
         prepare(g, sh.code.clone(), "main", march_constants(p, m));
     }
-    let (_, len) = run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), None, false)?;
+    let r = run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), None, false);
     // pixels whose DE overflowed single precision (see [`march`]): the
-    // card's rows are not usable then
+    // card's rows are not usable then (also those of a stopped run)
+    if overflowed(p) {
+        ROWS_BAD.with(|c| c.set(true));
+    }
+    let (_, len) = r?;
     let n = OVERFLOW.with(|c| c.get());
     if n * 500 > len && !needs_double(p) {
         return Err(format!("single precision overflows in {} ({n} of {len} pixels)", p.slots.iter().filter(|s| s.iterations != 0).map(|s| s.formula.name()).collect::<Vec<_>>().join(" + ")));
@@ -1237,12 +1604,44 @@ pub fn use_own_driver_cache() {
     set("MESA_SHADER_CACHE_MAX_SIZE", "4G".as_ref());
 }
 
+/// The graphics card this thread calculates on: the first of [`cards`]
+/// unless [`on_card`] chose another.
 fn gpu() -> Result<&'static Gpu, String> {
-    static G: OnceLock<Result<Gpu, String>> = OnceLock::new();
-    G.get_or_init(|| pollster::block_on(init())).as_ref().map_err(|e| e.clone())
+    let i = CARD.with(|c| c.get());
+    cards().and_then(|c| c.get(i).ok_or_else(|| format!("no graphics card {}", i + 1)))
 }
 
-async fn init() -> Result<Gpu, String> {
+/// All the graphics cards of the computer, found and opened when a card
+/// is first needed (no choice to make): the one the system offers for high
+/// performance first, then the others of the same interface (Vulkan,
+/// Metal, DirectX 12), one entry per physical card, without software
+/// renderers.
+fn cards() -> Result<&'static [Gpu], String> {
+    static G: OnceLock<Result<Vec<Gpu>, String>> = OnceLock::new();
+    // (opening the devices is counted too: see `flight`)
+    G.get_or_init(|| {
+        IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
+        let _flight = Flight;
+        pollster::block_on(init())
+    })
+    .as_ref()
+    .map(|v| v.as_slice())
+    .map_err(|e| e.clone())
+}
+
+/// The names of the cards found (see [`cards`]; empty without one).
+pub fn card_names() -> Vec<String> {
+    cards().map(|c| c.iter().map(|g| g.name.clone()).collect()).unwrap_or_default()
+}
+
+/// Software renderers (llvmpipe, lavapipe, WARP) are slower than the CPU
+/// renderer; MB3D_GPU_ALLOW_SOFTWARE lets them in, for tests (e.g. Mesa's
+/// lavapipe as a second card).
+fn software_allowed() -> bool {
+    std::env::var_os("MB3D_GPU_ALLOW_SOFTWARE").is_some()
+}
+
+async fn init() -> Result<Vec<Gpu>, String> {
     // Vulkan, Metal, DirectX 12 (OpenGL lost the device on the ray marcher;
     // WGPU_BACKEND still chooses any)
     let mut desc = wgpu::InstanceDescriptor::new_without_display_handle();
@@ -1256,12 +1655,71 @@ async fn init() -> Result<Gpu, String> {
         .await
         .map_err(|e| format!("no graphics card found: {e}"))?;
     let info = adapter.get_info();
-    // (MB3D_GPU_ALLOW_SOFTWARE: tests on a software renderer, e.g. Mesa's
-    // lavapipe for a driver other than the card's)
-    if info.device_type == wgpu::DeviceType::Cpu && std::env::var_os("MB3D_GPU_ALLOW_SOFTWARE").is_none() {
-        // llvmpipe, WARP: slower than the CPU renderer
+    if info.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
         return Err(format!("only a software renderer ({})", info.name));
     }
+    // the other cards: the same interface as the first (a card can show up
+    // under Vulkan and DirectX 12 both), each physical card once: a card
+    // listed again with the first card's PCI bus id is the first card (a
+    // Flatpak's Vulkan loader finds the NVIDIA driver's manifest through two
+    // paths and lists the card twice); without bus ids two identical cards
+    // cannot be told apart, so only the first match is the first card
+    let bus_ids = |a: &wgpu::AdapterInfo| !a.device_pci_bus_id.is_empty() && !info.device_pci_bus_id.is_empty();
+    let same = |a: &wgpu::AdapterInfo| {
+        if bus_ids(a) {
+            a.device_pci_bus_id == info.device_pci_bus_id
+        } else {
+            (a.vendor, a.device, &a.name) == (info.vendor, info.device, &info.name)
+        }
+    };
+    let mut found = vec![adapter.clone()];
+    let mut first_skipped = false;
+    for a in instance.enumerate_adapters(wgpu::Backends::all()).await {
+        let i = a.get_info();
+        if i.backend != info.backend || i.device_type == wgpu::DeviceType::Cpu && !software_allowed() {
+            continue;
+        }
+        if same(&i) && (bus_ids(&i) || !first_skipped) {
+            first_skipped = true;
+            continue;
+        }
+        found.push(a);
+    }
+    let kinds: Vec<wgpu::DeviceType> = found.iter().map(|a| a.get_info().device_type).collect();
+    let mut list = Vec::new();
+    for a in card_order(&kinds).into_iter().map(|i| &found[i]) {
+        match open(a, list.len()).await {
+            Ok(g) => list.push(g),
+            // (the first card must open: the others may fail)
+            Err(e) if list.is_empty() => return Err(e),
+            Err(e) => crate::elog!("graphics card {} not used: {e}", a.get_info().name),
+        }
+    }
+    // MB3D_GPU_TWICE (tests): the first card opened a second time, as a
+    // device of its own, standing in for a second card
+    if std::env::var_os("MB3D_GPU_TWICE").is_some() {
+        list.push(open(&adapter, list.len()).await?);
+    }
+    Ok(list)
+}
+
+/// The order of the cards, by their kinds (the system's first): all of
+/// them (a slower one, integrated graphics, does what it can: its rows are
+/// taken over at the end of a picture, see `render::Board`), a dedicated
+/// card first (the first card shares the ray batches with the CPU and
+/// takes over the others' work).
+fn card_order(kinds: &[wgpu::DeviceType]) -> Vec<usize> {
+    let mut v: Vec<usize> = (0..kinds.len()).collect();
+    if let Some(p) = v.iter().position(|&i| kinds[i] == wgpu::DeviceType::DiscreteGpu) {
+        let d = v.remove(p);
+        v.insert(0, d);
+    }
+    v
+}
+
+/// Opens a card as a device of its own.
+async fn open(adapter: &wgpu::Adapter, index: usize) -> Result<Gpu, String> {
+    let info = adapter.get_info();
     // doubles in shaders (Vulkan, DirectX 12; not Metal): the deep zooms
     let dbl = wgpu::Features::SHADER_F64 | wgpu::Features::SHADER_INT64;
     let f64 = adapter.features().contains(dbl);
@@ -1277,8 +1735,9 @@ async fn init() -> Result<Gpu, String> {
         .map_err(|e| format!("{}: {e}", info.name))?;
     // errors (a shader the driver cannot compile, a lost device) must not
     // end the program: they are kept and the calculation goes to the CPU
-    device.on_uncaptured_error(std::sync::Arc::new(|e: wgpu::Error| set_error(e.to_string())));
-    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64 })
+    device.on_uncaptured_error(std::sync::Arc::new(move |e: wgpu::Error| set_error(index, e.to_string())));
+    let driver = format!("{} {:?} {} {}", info.name, info.backend, info.driver, info.driver_info).split_whitespace().collect::<Vec<_>>().join("_");
+    Ok(Gpu { device, queue, pipelines: Mutex::new(Default::default()), name: format!("{} ({:?})", info.name, info.backend), f64, index, driver })
 }
 
 /// The parameters in the order of the indices in `gpu_march.wgsl`.
@@ -1296,6 +1755,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
         CameraOptic::Common => 0,
         CameraOptic::Planar => 1,
         CameraOptic::Panorama => 2,
+        CameraOptic::Fisheye => 3,
     };
     let mut v: Vec<u32> = Vec::with_capacity(64);
     let i = |v: &mut Vec<u32>, x: i32| v.push(x as u32);
@@ -1561,6 +2021,31 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     while v.len() < PARAM_WORDS {
         v.push(0);
     }
+    // experimental (RELAX, EXP_FLAGS)
+    v[432] = p.relax.to_bits();
+    v[433] = p.secant as u32 | (p.ao_half as u32) << 1;
+    // the ground plane (GROUND_OPT ..)
+    if let Some(g) = &p.ground {
+        let slope = std::f64::consts::TAU * 1.59 * g.wave_height / g.wave_len.max(1e-30);
+        v[411] = 1 | ((g.axis as u32 % 3) << 1) | (g.above as u32) << 3;
+        v[412] = (g.pos as f32).to_bits();
+        v[413] = (g.wave_height as f32).to_bits();
+        v[414] = (g.wave_len as f32).to_bits();
+        v[415] = ((1.0 / (1.0 + slope * slope).sqrt()) as f32).to_bits();
+    }
+    // a stereo panorama's eye (ODS_SHIFT)
+    v[416] = (p.ods as f32).to_bits();
+    // the second part's place (P2_PLACE ..)
+    if let Some(pl) = p.decomb.as_ref().and_then(|d| d.place.as_ref()) {
+        v[417] = 1;
+        for k in 0..3 {
+            v[418 + k] = (pl.offset[k] as f32).to_bits();
+            for j in 0..3 {
+                v[421 + k * 3 + j] = (pl.m[k][j] as f32).to_bits();
+            }
+        }
+        v[430] = (pl.scale as f32).to_bits();
+    }
     v
 }
 
@@ -1601,7 +2086,7 @@ fn has_ipol(p: &CalcParams) -> bool {
 }
 
 /// The size of the parameter buffer.
-const PARAM_WORDS: usize = 416;
+const PARAM_WORDS: usize = 452;
 
 /// The parameter word of the coordinates as doubles (`DP` in the shader).
 const DOUBLE_WORD: usize = 296;
@@ -1613,6 +2098,25 @@ thread_local! {
     static SAMPLE: std::cell::Cell<(usize, usize)> = const { std::cell::Cell::new((0, 0)) };
     /// the pixels of the last [`run`] whose DE overflowed single precision
     static OVERFLOW: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// the pixels the last [`run`] delivered so far (also when it stopped)
+    static SUNK: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+    /// the rows of the last [`march`] / [`march_bands`] are not usable
+    /// (see [`rows_overflowed`])
+    static ROWS_BAD: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Too many of the pixels the last [`run`] delivered (all, or those before
+/// it stopped) overflowed single precision: its rows are not usable.
+fn overflowed(p: &CalcParams) -> bool {
+    OVERFLOW.with(|c| c.get()) * 500 > SUNK.with(|c| c.get()) && !needs_double(p)
+}
+
+/// The rows the last [`march`] or [`march_bands`] of this thread sent to
+/// its sink are not usable (single precision overflowed in too many of
+/// them), also when it was stopped before its verdict: a checkpoint must
+/// not keep them.
+pub fn rows_overflowed() -> bool {
+    ROWS_BAD.with(|c| c.get())
 }
 
 fn bytes(v: &[u32]) -> Vec<u8> {
@@ -1630,6 +2134,7 @@ pub fn march(
     cancel: &(dyn Fn() -> bool + Sync),
     sink: impl FnMut(usize, &[SiLight]),
 ) -> Option<Vec<SiLight>> {
+    ROWS_BAD.with(|c| c.set(false));
     guard(|| Ok(march_card(p, post, progress, cancel, sink))).ok().flatten()
 }
 
@@ -1654,7 +2159,7 @@ fn march_card(
         }
     };
     if timing {
-        eprintln!("  GPU device: {:.2} s", t.elapsed().as_secs_f64());
+        crate::elog!("  GPU device: {:.2} s", t.elapsed().as_secs_f64());
     }
     RETRY_DOUBLE.with(|c| c.set(false));
     let mut r: Result<Vec<SiLight>, String> = Err(String::new());
@@ -1668,7 +2173,7 @@ fn march_card(
             }
         };
         if timing {
-            eprintln!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
+            crate::elog!("  scene shader: {:.2} s", t.elapsed().as_secs_f64());
         }
         // the passes' pipelines compile in parallel
         for m in modes(post) {
@@ -1677,7 +2182,11 @@ fn march_card(
         let t = std::time::Instant::now();
         r = run(g, p, &sh, post, None, progress, cancel, &mut sink, None, None, true).map(|(v, _)| v);
         if timing {
-            eprintln!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
+            crate::elog!("  GPU run: {:.2} s", t.elapsed().as_secs_f64());
+        }
+        // (its rows went to `sink`: stopped or not, they are not usable)
+        if overflowed(p) {
+            ROWS_BAD.with(|c| c.set(true));
         }
         // pixels whose DE overflowed single precision: a formula not made
         // for f32 (folds of huge values); a few are harmless, many are not.
@@ -1687,7 +2196,7 @@ fn march_card(
             Ok(v) => {
                 let n = OVERFLOW.with(|c| c.get());
                 if timing {
-                    eprintln!("  DE overflow in {n} of {} pixels", v.len());
+                    crate::elog!("  DE overflow in {n} of {} pixels", v.len());
                 }
                 n * 500 > v.len() && !needs_double(p)
             }
@@ -1817,18 +2326,49 @@ pub struct RaySharing {
     pub cap: usize,
 }
 
+/// The reflection pass's first pipeline (the surfaces) is compiled; when
+/// not, its compile is started in the background.
+pub fn reflect_compiled(p: &CalcParams) -> bool {
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return false };
+    prepare(g, sh.code, "main", reflect_constants(p, true, false, false)).load(Ordering::SeqCst)
+}
+
+/// Whether this thread's card has the pipelines of a reflection batch with
+/// `o` compiled (else their compile starts in the background).
+fn reflect_ready(p: &CalcParams, o: &ReflectOpts) -> bool {
+    let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return false };
+    let r_hs = !o.lights.is_empty() || o.soft_radius > 0.0;
+    let r_ao = o.ao.is_some();
+    let split = (r_hs || r_ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
+    let kinds: Vec<(bool, bool, bool)> = if split { vec![(true, false, false), (false, r_hs, r_ao)] } else { vec![(true, r_hs, r_ao)] };
+    kinds.into_iter().map(|(m, hs, ao)| prepare(g, sh.code.clone(), "main", reflect_constants(p, m, hs, ao))).collect::<Vec<_>>().iter().all(|f| f.load(Ordering::SeqCst))
+}
+
 /// Runs the tasks of the reflection pass on the graphics card (the march
 /// of every bounce with the normals, colour, shadows and ambient occlusion
 /// of its hit, as `reflect.rs` does on the CPU).
-pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
-    guard(|| reflect_batch_card(p, tasks, o, share))
+pub fn reflect_batch(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+    guard(|| {
+        on_cards(p, tasks.len(), share, 1, &|| reflect_ready(p, o), &|at, len, sh, offset, stop| {
+            reflect_batch_card(p, &tasks[at..at + len], offset, o, sh, &|| cancel() || stop())
+        })
+    })
 }
 
-fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, share: Option<&RaySharing>) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
-    if tasks.is_empty() {
-        if let Some(sh) = share {
-            sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
+/// `tasks` (the batch from `offset` on) on this thread's card.
+fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &ReflectOpts, share: Option<&RaySharing>, cancel: &dyn Fn() -> bool) -> Result<(Vec<ReflectHit>, usize, Vec<usize>), String> {
+    // every way out (an error, a panic of the card) ends the card's part:
+    // the CPU's workers wait for `done`
+    struct Done<'a>(Option<&'a RaySharing>);
+    impl Drop for Done<'_> {
+        fn drop(&mut self) {
+            if let Some(sh) = self.0 {
+                sh.done.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
         }
+    }
+    let _done = Done(share);
+    if tasks.is_empty() {
         return Ok((Vec::new(), 0, Vec::new()));
     }
     if let Some(r) = unsupported(p) {
@@ -1879,6 +2419,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
     let maps = make("maps", &vol_maps(p, &sh));
+    let cone = make("cone", &[0, 0]);
     // the tasks in rows of R_W, resumable (a bounce marches a ray and
     // casts the shadow and occlusion rays of its hit)
     // the pacing from the last batch (its buffers and turn budget): the
@@ -1890,10 +2431,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         sh.code.hash(&mut h);
         h.finish()
     };
-    let mut res = match REFLECT_RESUMER.lock().unwrap().take() {
-        Some((k, r)) if k == key => r,
-        _ => Resumer::new(g, &sh),
-    };
+    let mut res = cached_resumer(&REFLECT_RESUMER, key, g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut base = params(p, 0, n.div_ceil(R_W), &sh, 4, &PostJob::default(), Some((o, n)));
     base[SLOTS_WORD] = split as u32;
@@ -1914,12 +2452,15 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
                 wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+                wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
             ],
         });
         // the march shares the tasks with the CPU (`RaySharing`), the
         // shadows and occlusion follow for the card's part
         let lim = |started: usize, free: usize| -> usize {
             let Some(sh) = share.filter(|_| pi == 0) else { return n_card.get() };
+            // (the sharing counts in the whole batch: `offset` on)
+            let started = offset + started;
             let mut want = started + free;
             // the CPU's share: the card does not go beyond it (its rays
             // still need the shadow and occlusion pass after the march,
@@ -1927,7 +2468,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
             want = want.min(sh.cap.max(started));
             let mut st = sh.state.lock().unwrap();
             st.0 = st.0.max(want.min(st.1));
-            st.0
+            st.0.saturating_sub(offset)
         };
         // the last few rays of the march: the CPU, when it has nothing else
         // to do, is faster for single long rays
@@ -1944,7 +2485,9 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
             n,
             &lim,
             &give_up,
-            &|| false,
+            // ("Stop" ends the batch at its next submission, not after
+            // the whole band's rays: a band can take half a minute)
+            &|| cancel(),
             |enc, groups| {
                 let mut pass = enc.begin_compute_pass(&Default::default());
                 pass.set_pipeline(pl);
@@ -1963,10 +2506,10 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
         }
         if timing {
             let what = if pls.len() == 1 { "march, shadows, occlusion" } else if pi == 0 { "march" } else { "shadows, occlusion" };
-            eprintln!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
+            crate::elog!("    reflection pipeline ({what}; lights {}, soft {}, AO {:?}): {:.2} s", o.lights.len(), o.soft_radius, o.ao, t_pl.elapsed().as_secs_f64());
         }
     }
-    *REFLECT_RESUMER.lock().unwrap() = Some((key, res));
+    keep_resumer(&REFLECT_RESUMER, key, res);
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
@@ -2018,7 +2561,193 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], o: &ReflectOpts, sh
 }
 
 /// The [`Resumer`] of the Monte Carlo batches with the hash of their shader.
-static MC_RESUMER: std::sync::Mutex<Option<(u64, Resumer)>> = std::sync::Mutex::new(None);
+static MC_RESUMER: std::sync::Mutex<Vec<(usize, u64, Resumer)>> = std::sync::Mutex::new(Vec::new());
+
+/// The resumer of `key` on this thread's card kept from the last batch, or
+/// a new one (one is kept per card: see [`keep_resumer`]).
+fn cached_resumer(cache: &Mutex<Vec<(usize, u64, Resumer)>>, key: u64, g: &Gpu, sh: &SceneShader) -> Resumer {
+    let card = CARD.with(|c| c.get());
+    let mut c = cache.lock().unwrap();
+    match c.iter().position(|(k, h, _)| *k == card && *h == key) {
+        Some(i) => c.swap_remove(i).2,
+        None => Resumer::new(g, sh),
+    }
+}
+
+fn keep_resumer(cache: &Mutex<Vec<(usize, u64, Resumer)>>, key: u64, r: Resumer) {
+    let card = CARD.with(|c| c.get());
+    let mut c = cache.lock().unwrap();
+    c.retain(|(k, ..)| *k != card);
+    c.push((card, key, r));
+}
+
+/// Rays per second of each card, by kind of batch (0 Monte Carlo, 1
+/// reflections): the further cards' slices of a batch (see [`on_cards`]).
+static RAY_RATES: Mutex<[[f64; 64]; 2]> = Mutex::new([[0.0; 64]; 2]);
+
+/// The results of a batch of rays: per ray, how many from the start are
+/// done, the indices left to the CPU.
+type Batch<T> = Result<(Vec<T>, usize, Vec<usize>), String>;
+
+/// A batch of `n` rays on all the cards: each further card marches a slice
+/// at the front, sized by its speed, the first card the rest, shared with
+/// the CPU as with one card (`run` with the slice's start and length, the
+/// sharing and the offset of its counts, and a stop).  A further card joins
+/// once its pipelines are compiled (`ready`, on that card).  When the first
+/// card is done, it takes over what a further card has not started yet, and
+/// does what it started as well (the first result counts, the other is
+/// stopped): a slow card does not hold up the batch.  The results as one
+/// card's; what nobody finished goes to the CPU.
+fn on_cards<T: Clone + Default + Send>(
+    p: &CalcParams,
+    n: usize,
+    share: Option<&RaySharing>,
+    kind: usize,
+    ready: &(dyn Fn() -> bool + Sync),
+    run: &(dyn Fn(usize, usize, Option<&RaySharing>, usize, &(dyn Fn() -> bool + Sync)) -> Batch<T> + Sync),
+) -> Batch<T> {
+    let extra: Vec<usize> = if n >= 4096 { extra_cards(p).into_iter().filter(|&k| on_card(k, ready)).collect() } else { Vec::new() };
+    if extra.is_empty() {
+        return run(0, n, share, 0, &|| false);
+    }
+    // the cards' part: before the CPU's (with one card its limit)
+    let region = share.map_or(n, |sh| sh.cap.min(n));
+    let rates = RAY_RATES.lock().unwrap()[kind];
+    let rate = |i: usize| if rates[i.min(63)] > 0.0 { rates[i.min(63)] } else { 1.0 };
+    let all: f64 = rate(0) + extra.iter().map(|&k| rate(k)).sum::<f64>();
+    let mut slices = Vec::new();
+    let mut at = 0;
+    for &k in &extra {
+        let len = ((region as f64 * rate(k) / all) as usize).min(region - at);
+        slices.push((k, at, len));
+        at += len;
+    }
+    // (the CPU stays behind them)
+    if let Some(sh) = share {
+        let mut st = sh.state.lock().unwrap();
+        st.0 = st.0.max(at.min(st.1));
+    }
+    // each slice's counts: the rays its card started (`.0`), the end it may
+    // go to (`.1`); whether its card is done, and told to stop
+    let counts: Vec<RaySharing> = slices
+        .iter()
+        .map(|&(_, _, len)| RaySharing { state: Mutex::new((0, len)), done: std::sync::Arc::new(AtomicBool::new(false)), tail: 0, cap: usize::MAX })
+        .collect();
+    let finished: Vec<AtomicBool> = slices.iter().map(|_| AtomicBool::new(false)).collect();
+    let stops: Vec<AtomicBool> = slices.iter().map(|_| AtomicBool::new(false)).collect();
+    let set_rate = |k: usize, rays: usize, secs: f64| {
+        if rays > 0 && secs > 0.0 {
+            let r = &mut RAY_RATES.lock().unwrap()[kind][k.min(63)];
+            let now = rays as f64 / secs;
+            *r = if *r > 0.0 { 0.7 * *r + 0.3 * now } else { now };
+        }
+    };
+    let debug = std::env::var_os("MB3D_CARDS_DEBUG").is_some();
+    let mut first = None;
+    // per slice: the rays its card had started when the first card came,
+    // the first card's result for the rest and for those
+    let mut taken: Vec<(usize, Option<Batch<T>>, Option<Batch<T>>)> = slices.iter().map(|s| (s.2, None, None)).collect();
+    let mut theirs = Vec::new();
+    std::thread::scope(|s| {
+        let others: Vec<_> = slices
+            .iter()
+            .enumerate()
+            .map(|(i, &(k, a, len))| {
+                let (counts, finished, stops) = (&counts, &finished, &stops);
+                s.spawn(move || {
+                    let t = std::time::Instant::now();
+                    let r = on_card(k, || guard(|| run(a, len, Some(&counts[i]), 0, &|| stops[i].load(Ordering::SeqCst))));
+                    finished[i].store(true, Ordering::SeqCst);
+                    (r, t.elapsed().as_secs_f64())
+                })
+            })
+            .collect();
+        let t = std::time::Instant::now();
+        let r0 = run(at, n - at, share, at, &|| false);
+        if let Ok((_, took, _)) = &r0 {
+            set_rate(0, *took, t.elapsed().as_secs_f64());
+        }
+        if r0.is_ok() {
+            for (i, &(k, a, len)) in slices.iter().enumerate() {
+                if finished[i].load(Ordering::SeqCst) {
+                    continue;
+                }
+                // what it has not started: no more for it, the first card's
+                let s0 = {
+                    let mut st = counts[i].state.lock().unwrap();
+                    st.1 = st.0;
+                    st.0
+                };
+                taken[i].0 = s0;
+                if s0 < len {
+                    taken[i].1 = Some(run(a + s0, len - s0, None, 0, &|| false));
+                }
+                // what it started: here too, the first one done counts
+                if s0 > 0 && !finished[i].load(Ordering::SeqCst) {
+                    let r = run(a, s0, None, 0, &|| finished[i].load(Ordering::SeqCst));
+                    if r.is_ok() {
+                        stops[i].store(true, Ordering::SeqCst);
+                        taken[i].2 = Some(r);
+                    }
+                }
+                if debug {
+                    crate::elog!("card {}: slow, the first card took {} of its {len} rays (and did its {s0} started ones too: {})", k + 1, len - s0, taken[i].2.is_some());
+                }
+            }
+        }
+        first = Some(r0);
+        theirs = others.into_iter().map(|h| h.join().unwrap_or_else(|_| (Err("a panic".into()), 0.0))).collect();
+    });
+    let (v, took, gave_up) = first.unwrap()?;
+    let mut out: Vec<T> = vec![T::default(); n];
+    let mut left = Vec::new();
+    // a result for rays `from..from + len` of the batch (done ones in place,
+    // the others to the CPU)
+    let place = |from: usize, len: usize, r: Batch<T>, out: &mut Vec<T>, left: &mut Vec<usize>| match r {
+        Ok((v, took, gave_up)) => {
+            for (i, x) in v.into_iter().take(took.min(len)).enumerate() {
+                out[from + i] = x;
+            }
+            left.extend((from + took.min(len))..(from + len));
+            left.extend(gave_up.into_iter().filter(|&i| i < took.min(len)).map(|i| from + i));
+        }
+        Err(_) => left.extend(from..from + len),
+    };
+    for (i, (&(k, a, len), (r, secs))) in slices.iter().zip(theirs).enumerate() {
+        let (s0, rest, again) = std::mem::replace(&mut taken[i], (0, None, None));
+        let s0 = if rest.is_some() || again.is_some() { s0 } else { len };
+        if debug {
+            crate::elog!("card {}: {len} of {n} rays in {:.0} ms ({})", k + 1, secs * 1000.0, if r.is_ok() { "ok" } else { "stopped or failed" });
+        }
+        match again {
+            Some(again) => place(a, s0, again, &mut out, &mut left),
+            None => {
+                if let Ok((_, t, _)) = &r {
+                    set_rate(k, *t, secs);
+                }
+                if let Err(e) = &r {
+                    if e != "cancelled" {
+                        crate::elog!("graphics card {}: a batch of rays failed, done on the CPU: {e}", k + 1);
+                    }
+                }
+                place(a, s0, r, &mut out, &mut left);
+            }
+        }
+        if let Some(rest) = rest {
+            place(a + s0, len - s0, rest, &mut out, &mut left);
+        }
+    }
+    // (as long as the first card's: Monte Carlo its done rays, reflections all)
+    let len = at + v.len();
+    for (i, x) in v.into_iter().enumerate() {
+        if at + i < n {
+            out[at + i] = x;
+        }
+    }
+    left.extend(gave_up.into_iter().map(|i| at + i));
+    out.truncate(len.min(n));
+    Ok((out, at + took, left))
+}
 
 /// The shader's M_VLMAP: the volumetric light's map.
 const M_VLMAP: u32 = 6;
@@ -2030,6 +2759,7 @@ pub fn vol_map_prepare(p: &CalcParams) -> Option<std::sync::Arc<AtomicBool>> {
     if !enabled() || unsupported(p).is_some() || LOST.load(Ordering::SeqCst) {
         return None;
     }
+    let _flight = flight()?;
     let (Ok(g), Ok(sh)) = (gpu(), scene_shader(p)) else { return None };
     Some(prepare(g, sh.code.clone(), "main", march_constants(p, 1)))
 }
@@ -2062,6 +2792,7 @@ fn vol_map_card(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f6
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
     let maps = make("maps", &sh.maps);
+    let cone = make("cone", &[0, 0]);
     let mut res = Resumer::new(g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     // the map's values (without its sides) as the march's volumetric light
@@ -2081,6 +2812,7 @@ fn vol_map_card(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f6
             wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
         ],
     });
     res.run(
@@ -2126,10 +2858,15 @@ const MC_WORDS: usize = 23;
 /// returns the results (those the card did not take are default), the
 /// number it took and those of them it did not finish.
 pub fn mc_batch(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
-    guard(|| mc_batch_card(p, tasks, secant, share))
+    guard(|| {
+        on_cards(p, tasks.len(), share, 0, &|| mc_prepare(p).is_ok_and(|f| f.load(Ordering::SeqCst)), &|at, len, sh, offset, stop| {
+            mc_batch_card(p, &tasks[at..at + len], offset, secant, sh, stop)
+        })
+    })
 }
 
-fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share: Option<&RaySharing>) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
+/// `tasks` (the batch from `offset` on) on this thread's card.
+fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, secant: bool, share: Option<&RaySharing>, stop: &(dyn Fn() -> bool + Sync)) -> Result<(Vec<crate::mc::McRes>, usize, Vec<usize>), String> {
     use crate::mc::McRes;
     if tasks.is_empty() {
         if let Some(sh) = share {
@@ -2181,16 +2918,14 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
     let cst = make("constants", &sh.cst);
     let rtpl = make("record", &sh.rtpl);
     let maps = make("maps", &vol_maps(p, &sh));
+    let cone = make("cone", &[0, 0]);
     let key = {
         use std::hash::{Hash, Hasher};
         let mut h = std::collections::hash_map::DefaultHasher::new();
         sh.code.hash(&mut h);
         h.finish()
     };
-    let mut res = match MC_RESUMER.lock().unwrap().take() {
-        Some((k, r)) if k == key => r,
-        _ => Resumer::new(g, &sh),
-    };
+    let mut res = cached_resumer(&MC_RESUMER, key, g, &sh);
     let par = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some("params"), size: (PARAM_WORDS * 4) as u64, usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
     let mut base = params(p, 0, n.div_ceil(R_W), &sh, 5, &PostJob::default(), None);
     base[171] = secant as u32;
@@ -2205,14 +2940,17 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
             wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
         ],
     });
     use std::sync::atomic::Ordering;
     // (the first call has all slots free)
     let slots = std::cell::Cell::new(0usize);
+    // (the sharing counts in the whole batch: `offset` on)
     let lim = |started: usize, free: usize| -> usize {
         let Some(sh) = share else { return n };
         slots.set(slots.get().max(free));
+        let started = offset + started;
         let mut want = started + free;
         // the CPU's share: the card goes beyond it only once it has
         // started all of its own and runs low on rays
@@ -2221,7 +2959,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         }
         let mut st = sh.state.lock().unwrap();
         st.0 = st.0.max(want.min(st.1));
-        st.0
+        st.0.saturating_sub(offset)
     };
     let give_up = |left: usize| -> bool {
         share.is_some_and(|sh| {
@@ -2236,7 +2974,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         n,
         &lim,
         &give_up,
-        &|| false,
+        &|| stop(),
         |enc, groups| {
             let mut pass = enc.begin_compute_pass(&Default::default());
             pass.set_pipeline(&pl);
@@ -2249,7 +2987,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], secant: bool, share
         sh.done.store(true, Ordering::SeqCst);
     }
     let (n_card, unfinished) = r?;
-    *MC_RESUMER.lock().unwrap() = Some((key, res));
+    keep_resumer(&MC_RESUMER, key, res);
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&buf, 0, &read, 0, size);
     g.queue.submit([enc.finish()]);
@@ -2407,6 +3145,47 @@ fn run(
     let cst = words("constants", &sh.cst);
     let rtpl = words("record", &sh.rtpl);
     let maps = words("maps", &vol_maps(p, sh));
+    // the cone march (experimental): the blocks' depths of a band, a
+    // level's entries after the coarser level's
+    let sampling = SAMPLE.with(|c| c.get()) != (0, 0);
+    let cone_on = p.cone.is_some() && upload.is_none() && !sampling && modes.contains(&0);
+    let cone_entries = |b: usize, row0: usize, rows: usize| -> (usize, usize, usize, usize) {
+        let (x0, y0) = (p.rect[0].max(0) as usize, p.rect[1].max(0) as usize);
+        let (bx0, by0) = (x0 / b, (y0 + row0) / b);
+        ((x0 + w).div_ceil(b) - bx0, (y0 + row0 + rows).div_ceil(b) - by0, bx0, by0)
+    };
+    let cone_max16 = cone_entries(16, 0, band).0 * (band.div_ceil(16) + 1);
+    let cone_max4 = cone_entries(4, 0, band).0 * (band.div_ceil(4) + 1);
+    let cone = words("cone", &vec![0u32; if cone_on { 2 * (cone_max16 + cone_max4) } else { 2 }]);
+    let cone_pars: Vec<wgpu::Buffer> = (0..2)
+        .map(|_| {
+            g.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("cone params"),
+                size: (PARAM_WORDS * 4) as u64,
+                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            })
+        })
+        .collect();
+    let cone_binds: Vec<wgpu::BindGroup> = cone_pars
+        .iter()
+        .map(|par| {
+            g.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: &pls[0].get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 1, resource: out.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 2, resource: cst.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 3, resource: rtpl.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
+                ],
+            })
+        })
+        .collect();
     let binds: Vec<wgpu::BindGroup> = pars
         .iter()
         .zip(&pls)
@@ -2422,6 +3201,7 @@ fn run(
                     wgpu::BindGroupEntry { binding: 4, resource: res.state.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 5, resource: res.queue.as_entire_binding() },
                     wgpu::BindGroupEntry { binding: 6, resource: maps.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 7, resource: cone.as_entire_binding() },
                 ],
             })
         })
@@ -2430,6 +3210,8 @@ fn run(
     let mut gbuf = Vec::with_capacity(if keep { w * h } else { w });
     let mut delivered = 0usize;
     let mut overflow = 0usize;
+    OVERFLOW.with(|c| c.set(0));
+    SUNK.with(|c| c.set(0));
     let mut next = 0;
     // the next band: in order, or from the allocator (the rows from the
     // top that the CPU has not taken)
@@ -2461,15 +3243,51 @@ fn run(
                 .collect();
             g.queue.write_buffer(&out, 0, &bytes(&words));
         }
+        // the cone march: the band's blocks of 16, then of 4 pixels (the
+        // words CONE_B .. CONE_P_OFF of the shader; the march reads the
+        // blocks of 4)
+        let mut cone_words = [0u32; 11];
+        if cone_on {
+            let (cols16, rows16, bx16, by16) = cone_entries(16, row0, rows);
+            let (cols4, rows4, bx4, by4) = cone_entries(4, row0, rows);
+            let levels = [(16, cols16, rows16, bx16, by16, 0usize, 0, 0, 0, 0, 0), (4, cols4, rows4, bx4, by4, cone_max16, 16, cols16, bx16, by16, 0)];
+            for (l, &(b, cols, brows, bx0, by0, off, pb, pcols, pbx0, pby0, poff)) in levels.iter().enumerate() {
+                let mut v = params(p, row0, rows, sh, 0, post, None);
+                v[112] = 7; // M_CONE
+                v[441..452].copy_from_slice(&[0, b, cols as u32, bx0 as u32, by0 as u32, off as u32, pb, pcols as u32, pbx0 as u32, pby0 as u32, poff as u32]);
+                let blocks = cols * brows;
+                res.run(
+                    g,
+                    &cone_pars[l],
+                    v,
+                    blocks,
+                    &|_, _| blocks,
+                    &|_| false,
+                    cancel,
+                    |enc, groups| {
+                        let mut pass = enc.begin_compute_pass(&Default::default());
+                        pass.set_pipeline(&pls[0]);
+                        pass.set_bind_group(0, &cone_binds[l], &[]);
+                        pass.dispatch_workgroups(groups, 1, 1);
+                    },
+                    |_| Ok(()),
+                )?;
+            }
+            cone_words = [1, 0, 0, 0, 0, 0, 4, cols4 as u32, bx4 as u32, by4 as u32, cone_max16 as u32];
+        }
         // each pass on the band until its pixels are done; the rows the
         // last one has finished go to the sink as they come
         let mut sunk = 0;
         for (k, &mode) in modes.iter().enumerate() {
             let last = k + 1 == modes.len();
+            let mut v = params(p, row0, rows, sh, mode, post, None);
+            if mode == 0 {
+                v[441..452].copy_from_slice(&cone_words);
+            }
             res.run(
                 g,
                 &pars[k],
-                params(p, row0, rows, sh, mode, post, None),
+                v,
                 w * rows,
                 &|_, _| w * rows,
                 &|_| false,
@@ -2507,6 +3325,9 @@ fn run(
                         }
                         sink(row0 + sunk + r, &gbuf[start..]);
                     }
+                    // (so far: for the verdict on a stopped run)
+                    OVERFLOW.with(|c| c.set(overflow));
+                    SUNK.with(|c| c.set(delivered));
                     sunk = ready;
                     if bands.is_none() {
                         progress(row0 + sunk, h);
@@ -2562,7 +3383,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         .map(|b| wgpu::BindGroupLayoutEntry {
             binding: b,
             visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: b < 2 }, has_dynamic_offset: false, min_binding_size: None },
+            ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Storage { read_only: b < 2 }, has_dynamic_offset: b == 0, min_binding_size: None },
             count: None,
         })
         .collect();
@@ -2581,6 +3402,13 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     let hlo = (h as f32 * p.border_mirror).round_ties_even() as i32;
     let hhi = h as i32 - 1 - hlo;
     let passes = if p.random > 0 { p.random as usize } else { 1 };
+    let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
+    let mem = |what: &str| {
+        if timing {
+            crate::elog!("    ssao24 card: {what}, rss {} MB", crate::reflect::rss_mb());
+        }
+    };
+    mem("start");
     let first: Vec<u32> = gbuf.iter().map(|s| if s.zpos() < 32768 { (s.zpos_fine & 0xFFFF_FF00) >> 1 } else { 0 }).collect();
     let z0: Vec<u32> = gbuf.iter().zip(&first).map(|(s, z)| z | (s.zpos() < 32768) as u32).collect();
     // the angles of a block of rows: 64 bytes per pixel, at most 64 MB
@@ -2591,20 +3419,116 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     let make = |label: &'static str, size: usize, usage: wgpu::BufferUsages| {
         g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (size.max(1) * 4) as u64, usage, mapped_at_creation: false })
     };
-    let par = make("ssao params", 32, storage);
+    // the blocks of rows (y0, y1)
+    let block_list: Vec<(usize, usize)> = (0..blocks).map(|b| (b * rows, ((b + 1) * rows).min(h))).filter(|(a, b)| a < b).collect();
+    // the parameters of every (pass, block, level), two sets each (the
+    // sampling, and the blur that makes the next level), in one buffer
+    // bound with a dynamic offset: one upload for the whole stage (an
+    // upload and two submissions per level, 4500 of them for a 12000 x
+    // 6000 picture, left the driver holding 7 GB; 2026-10-28)
+    let align = (g.device.limits().min_storage_buffer_offset_alignment as usize).max(128);
+    let stride = align / 4;
+    let params_of = |pass: usize, y0: usize, y1: usize, level: usize| -> Vec<u32> {
+        // the constants of the level (ssao::ssao24)
+        let mut sit = (z_scale / 22000.0 * 4096.0) as f32;
+        let mut szrt = thr * if p.t0 { 1.0 } else { 0.7 } * 4096.0 / sit * ((levels as f32 / level as f32).sqrt().sqrt());
+        if p.t0 {
+            szrt *= szrt;
+        }
+        let rnd = p.random > 0;
+        let at = if rnd {
+            (thr * if p.t0 { 0.64 } else { 0.65 } * (levels as f32).sqrt().sqrt()).atan()
+        } else {
+            (thr * 0.6 * (levels as f32).sqrt().sqrt()).atan()
+        };
+        let smul = 1.5 * 32767.0 / (std::f32::consts::PI * 32.0 * if p.t0 { at } else { at.powf(0.9) }) / passes as f32;
+        let imin = 16383 / passes as i32;
+        let iand = (1i64 << (level - 1)) - 1;
+        let ssub = iand as f32 * 0.5;
+        let istep = 1i64 << (level - 1);
+        let smin_rad = if istep < 2 { 1.0f32 } else { 3.25 * istep as f32 };
+        let step_count = if istep < 2 { 5 } else { 3 };
+        sit *= szrt;
+        let mut v: Vec<u32> = Vec::with_capacity(32);
+        let i = |v: &mut Vec<u32>, x: i32| v.push(x as u32);
+        let f = |v: &mut Vec<u32>, x: f32| v.push(x.to_bits());
+        i(&mut v, w as i32);
+        i(&mut v, h as i32);
+        i(&mut v, y0 as i32);
+        i(&mut v, (y1 - y0) as i32);
+        i(&mut v, (level == levels) as i32);
+        f(&mut v, sit);
+        f(&mut v, szrt);
+        f(&mut v, smul);
+        i(&mut v, imin);
+        i(&mut v, iand as i32);
+        f(&mut v, ssub);
+        i(&mut v, istep as i32);
+        f(&mut v, smin_rad);
+        i(&mut v, step_count);
+        for k in 0..5 {
+            f(&mut v, 1.0 / (smin_rad + (k as i64 * istep) as f32 + 0.1));
+        }
+        i(&mut v, rnd as i32);
+        i(&mut v, p.t0 as i32);
+        i(&mut v, wlo);
+        i(&mut v, whi);
+        i(&mut v, hlo);
+        i(&mut v, hhi);
+        i(&mut v, 2 * (w as i32 - 1));
+        i(&mut v, 2 * (h as i32 - 1));
+        i(&mut v, pass as i32);
+        // the blur that made this level (0: the first level) and the one
+        // that makes the next
+        i(&mut v, if level == 1 { 0 } else { 1 << (level - 1) });
+        i(&mut v, p.wrap_x as i32);
+        v.resize(32, 0);
+        v
+    };
+    let mut all: Vec<u32> = Vec::with_capacity(passes * block_list.len() * levels * 2 * stride);
+    for pass in 0..passes {
+        for &(y0, y1) in &block_list {
+            for level in 1..=levels {
+                let v = params_of(pass, y0, y1, level);
+                // NextATlevelHiQ(..., 1 shl level): the step is in the
+                // parameters of the next level
+                let mut v2 = v.clone();
+                v2[28] = 1 << level;
+                for set in [v, v2] {
+                    let start = all.len();
+                    all.extend_from_slice(&set);
+                    all.resize(start + stride, 0);
+                }
+            }
+        }
+    }
+    let par = make("ssao params", all.len(), storage);
+    g.queue.write_buffer(&par, 0, &bytes(&all));
+    drop(all);
     let bz0 = make("ssao z0", w * h, storage);
+    // the first level, uploaded once: every block of rows starts its
+    // pyramid from a copy on the card (an upload per block queued 60 GB
+    // of staging copies for a 12000 x 6000 picture, issue of 2026-10-28)
+    let bfirst = make("ssao level 0", w * h, storage | wgpu::BufferUsages::COPY_SRC);
     let pa = make("ssao level a", w * h, storage);
     let pb = make("ssao level b", w * h, storage);
     let ang = make("ssao angles", w * rows * 16, storage);
     let acc = make("ssao sum", w * h, storage | wgpu::BufferUsages::COPY_SRC);
     let read = make("ssao read", w * h, wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST);
     g.queue.write_buffer(&bz0, 0, &bytes(&z0));
-    g.queue.write_buffer(&acc, 0, &vec![0u8; w * h * 4]);
+    g.queue.write_buffer(&bfirst, 0, &bytes(&first));
+    drop((first, z0));
+    {
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        enc.clear_buffer(&acc, 0, None);
+        g.queue.submit([enc.finish()]);
+    }
+    mem("buffers made and written");
     let bind = g.device.create_bind_group(&wgpu::BindGroupDescriptor {
         label: None,
         layout: &bgl,
         entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: par.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding { buffer: &par, offset: 0, size: std::num::NonZeroU64::new(128) }) },
             wgpu::BindGroupEntry { binding: 1, resource: bz0.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 2, resource: pa.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 3, resource: pb.as_entire_binding() },
@@ -2613,93 +3537,38 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         ],
     });
     let (gx, gy) = (w.div_ceil(8) as u32, h.div_ceil(8) as u32);
+    // a block of rows: its levels in one submission (the passes of an
+    // encoder run in order)
+    let mut set = 0u32;
     for pass in 0..passes {
-        let mut y0 = 0;
-        while y0 < h {
-            let y1 = (y0 + rows).min(h);
-            g.queue.write_buffer(&pa, 0, &bytes(&first));
+        // (a pass in one submission: every submission costs memory the
+        // driver keeps)
+        let mut enc = g.device.create_command_encoder(&Default::default());
+        for &(y0, y1) in &block_list {
+            enc.copy_buffer_to_buffer(&bfirst, 0, &pa, 0, (w * h * 4) as u64);
             for level in 1..=levels {
-                // the constants of the level (ssao::ssao24)
-                let mut sit = (z_scale / 22000.0 * 4096.0) as f32;
-                let mut szrt = thr * if p.t0 { 1.0 } else { 0.7 } * 4096.0 / sit * ((levels as f32 / level as f32).sqrt().sqrt());
-                if p.t0 {
-                    szrt *= szrt;
-                }
-                let rnd = p.random > 0;
-                let at = if rnd {
-                    (thr * if p.t0 { 0.64 } else { 0.65 } * (levels as f32).sqrt().sqrt()).atan()
-                } else {
-                    (thr * 0.6 * (levels as f32).sqrt().sqrt()).atan()
-                };
-                let smul = 1.5 * 32767.0 / (std::f32::consts::PI * 32.0 * if p.t0 { at } else { at.powf(0.9) }) / passes as f32;
-                let imin = 16383 / passes as i32;
-                let iand = (1i64 << (level - 1)) - 1;
-                let ssub = iand as f32 * 0.5;
-                let istep = 1i64 << (level - 1);
-                let smin_rad = if istep < 2 { 1.0f32 } else { 3.25 * istep as f32 };
-                let step_count = if istep < 2 { 5 } else { 3 };
-                sit *= szrt;
-                let mut v: Vec<u32> = Vec::with_capacity(32);
-                let i = |v: &mut Vec<u32>, x: i32| v.push(x as u32);
-                let f = |v: &mut Vec<u32>, x: f32| v.push(x.to_bits());
-                i(&mut v, w as i32);
-                i(&mut v, h as i32);
-                i(&mut v, y0 as i32);
-                i(&mut v, (y1 - y0) as i32);
-                i(&mut v, (level == levels) as i32);
-                f(&mut v, sit);
-                f(&mut v, szrt);
-                f(&mut v, smul);
-                i(&mut v, imin);
-                i(&mut v, iand as i32);
-                f(&mut v, ssub);
-                i(&mut v, istep as i32);
-                f(&mut v, smin_rad);
-                i(&mut v, step_count);
-                for k in 0..5 {
-                    f(&mut v, 1.0 / (smin_rad + (k as i64 * istep) as f32 + 0.1));
-                }
-                i(&mut v, rnd as i32);
-                i(&mut v, p.t0 as i32);
-                i(&mut v, wlo);
-                i(&mut v, whi);
-                i(&mut v, hlo);
-                i(&mut v, hhi);
-                i(&mut v, 2 * (w as i32 - 1));
-                i(&mut v, 2 * (h as i32 - 1));
-                i(&mut v, pass as i32);
-                // the blur that made this level (0: the first level) and
-                // the one that makes the next
-                i(&mut v, if level == 1 { 0 } else { 1 << (level - 1) });
-                i(&mut v, p.wrap_x as i32);
-                v.resize(32, 0);
-                g.queue.write_buffer(&par, 0, &bytes(&v));
-                let mut enc = g.device.create_command_encoder(&Default::default());
+                let off = |k: u32| (set + k) * align as u32;
                 {
                     let mut ps = enc.begin_compute_pass(&Default::default());
                     ps.set_pipeline(&pl_s);
-                    ps.set_bind_group(0, &bind, &[]);
+                    ps.set_bind_group(0, &bind, &[off(0)]);
                     ps.dispatch_workgroups(gx, (y1 - y0).div_ceil(8) as u32, 1);
                 }
                 if level < levels {
-                    // NextATlevelHiQ(..., 1 shl level): the step is in the
-                    // parameters of the next level, so it is sent now
-                    let mut v2 = v.clone();
-                    v2[28] = 1 << level;
-                    g.queue.submit([enc.finish()]);
-                    g.queue.write_buffer(&par, 0, &bytes(&v2));
-                    enc = g.device.create_command_encoder(&Default::default());
                     for pl in [&pl_h, &pl_v] {
                         let mut ps = enc.begin_compute_pass(&Default::default());
                         ps.set_pipeline(pl);
-                        ps.set_bind_group(0, &bind, &[]);
+                        ps.set_bind_group(0, &bind, &[off(1)]);
                         ps.dispatch_workgroups(gx, gy, 1);
                     }
                 }
-                g.queue.submit([enc.finish()]);
+                set += 2;
             }
-            y0 = y1;
         }
+        g.queue.submit([enc.finish()]);
+        // (the finished submissions' memory is given back)
+        let _ = g.device.poll(wgpu::PollType::Poll);
+        mem(&format!("pass {} done", pass + 1));
     }
     let mut enc = g.device.create_command_encoder(&Default::default());
     enc.copy_buffer_to_buffer(&acc, 0, &read, 0, (w * h * 4) as u64);
@@ -2714,6 +3583,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         return Err(e);
     }
     rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    mem("waited for the card");
     {
         let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
         for (s, c) in gbuf.iter_mut().zip(data.chunks_exact(4)) {
@@ -2723,6 +3593,7 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         }
     }
     read.unmap();
+    mem("read back");
     Ok(())
 }
 
@@ -2927,6 +3798,18 @@ pub fn run_compute(wgsl: &str, inputs: &[&[u32]], out_len: usize, groups: u32) -
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_dedicated_card_first() {
+        use wgpu::DeviceType::{Cpu, DiscreteGpu as D, IntegratedGpu as I};
+        assert_eq!(super::card_order(&[D, I]), vec![0, 1]);
+        // the system offered the integrated one first
+        assert_eq!(super::card_order(&[I, D]), vec![1, 0]);
+        assert_eq!(super::card_order(&[I, D, I, D]), vec![1, 0, 2, 3]);
+        assert_eq!(super::card_order(&[I]), vec![0]);
+        assert_eq!(super::card_order(&[D, D]), vec![0, 1]);
+        assert_eq!(super::card_order(&[D, Cpu]), vec![0, 1]);
+    }
+
     use super::*;
     use crate::calc::Marcher;
 
@@ -2937,8 +3820,10 @@ mod tests {
     #[test]
     fn state_lists_complete() {
         let code = include_str!("gpu_march.wgsl");
-        // set before every pixel or submission, or the debug outputs
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf"];
+        // set before every pixel or submission, or the debug outputs; the
+        // cone march's block values are computed from the block at every
+        // entry (also when resuming)
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf", "cone_a", "cone_slope", "cone_t0", "cone_c0", "cone_i"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();
@@ -2992,7 +3877,7 @@ mod tests {
         let p = CalcParams::new(&sc).unwrap();
         assert_eq!(unsupported(&p), None);
         if let Err(e) = gpu() {
-            eprintln!("no GPU, test skipped: {e}");
+            crate::elog!("no GPU, test skipped: {e}");
             return;
         }
         let t = std::time::Instant::now();
@@ -3038,7 +3923,7 @@ mod tests {
         let zd = zdiff / both.max(1) as f64;
         let nd = ndot / both.max(1) as f64;
         let bad = bad_n as f64 / both.max(1) as f64;
-        eprintln!(
+        crate::elog!(
             "{}: GPU {gpu_s:.3}s (one thread on the CPU {cpu_s:.3}s); same background/object {:.2}%, \
              mean |zpos difference| {zd:.1} of 32768, mean normal cosine {nd:.4}, normals off by more than 25 degrees {:.2}%",
             last_status(),
@@ -3047,10 +3932,40 @@ mod tests {
         );
         let col = col_off as f64 / both.max(1) as f64;
         let flag = flag_off as f64 / both.max(1) as f64;
-        eprintln!("  colour values off {:.2}%, flags differ {:.2}%, outside-flagged {flagged}", col * 100.0, flag * 100.0);
+        crate::elog!("  colour values off {:.2}%, flags differ {:.2}%, outside-flagged {flagged}", col * 100.0, flag * 100.0);
         assert!(same > 0.99, "background/object differ in {:.2}% of the pixels", (1.0 - same) * 100.0);
         assert!(col < 0.03 && flag < 0.01, "colour values differ in {:.2}%, flags in {:.2}% of the pixels", col * 100.0, flag * 100.0);
         assert!(zd < 20.0, "depth differs by {zd:.1} on average");
         assert!(nd > 0.97 && bad < 0.03, "normals differ: mean cosine {nd:.4}, {:.2}% off", bad * 100.0);
+    }
+
+    /// The pipeline cache keeps the most recently used ones: a batch of
+    /// ever new scenes no longer grows without end, and a pipeline used
+    /// again stays.
+    #[test]
+    fn the_pipeline_cache_drops_the_least_recently_used() {
+        let mut m = std::collections::HashMap::new();
+        for k in 0..PIPELINES_KEPT as u64 {
+            keep_pipeline(&mut m, k, k);
+        }
+        // key 0 used again: the oldest is now 1
+        m.get_mut(&0).unwrap().1 = PIPELINE_TICK.fetch_add(1, Ordering::Relaxed);
+        for k in 100..110 {
+            keep_pipeline(&mut m, k, k);
+        }
+        assert_eq!(m.len(), PIPELINES_KEPT);
+        assert!(m.contains_key(&0) && m.contains_key(&109));
+        assert!((1..=10).all(|k| !m.contains_key(&k)) && m.contains_key(&11));
+    }
+
+    /// A compile waits while memory is short, never the first one.
+    #[test]
+    fn a_compile_waits_while_memory_is_short() {
+        let gb = 1u64 << 30;
+        assert!(compile_room(0, Some(0)));
+        assert!(compile_room(3, None));
+        assert!(compile_room(1, Some(3 * gb)) && !compile_room(1, Some(3 * gb - 1)));
+        assert!(!compile_room(4, Some(5 * gb)) && compile_room(4, Some(6 * gb)));
+        assert!(compile_room(20, Some(100 * gb)));
     }
 }

@@ -1,6 +1,8 @@
 //! The voxel export window (VoxelExport.pas): PNG slices of the object.
 
-use super::util::{fts, fts_single, parse_float, pti};
+use crate::vcl::lang::{tr, trf};
+use super::eta::ItemsLeft;
+use super::util::{fts, fts_single, left_str, parse_float, pti, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::scene::{InsideMode, Scene};
 use crate::vcl::bitmap::Bitmap;
@@ -9,14 +11,15 @@ use crate::voxel::{ObjectTest, VoxelParams};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 const F: &str = "FVoxelExport";
 const PV_BG: u32 = 0xFF40_3020;
 
 #[derive(Default)]
 struct Shared {
-    /// the last finished slice (number, pixels) of the export
-    slice: Option<(u32, Vec<bool>)>,
+    /// the last finished slice (number, of how many, pixels) of the export
+    slice: Option<(u32, u32, Vec<bool>)>,
     /// the preview picture and whether it changed
     preview: Option<Bitmap>,
     preview_changed: bool,
@@ -38,6 +41,12 @@ pub struct State {
     /// the preview should be calculated again when the current one is stopped
     restart_preview: bool,
     slice_size: (usize, usize),
+    /// the time left: the slices' times, when the last one finished, which
+    /// one it was (number, of how many), and the time left as shown
+    items: ItemsLeft,
+    slice_at: Instant,
+    slice_nr: Option<(u32, u32)>,
+    left_shown: Option<Shown>,
 }
 
 impl Default for State {
@@ -53,6 +62,10 @@ impl Default for State {
             running: 0,
             restart_preview: false,
             slice_size: (0, 0),
+            items: ItemsLeft::default(),
+            slice_at: Instant::now(),
+            slice_nr: None,
+            left_shown: None,
         }
     }
 }
@@ -121,7 +134,9 @@ fn show_size(app: &Mb3d, ui: &mut Ui) {
 
 fn set_project_name(app: &mut Mb3d, ui: &mut Ui, name: &str) {
     app.voxel.project = name.to_string();
-    ui.set_caption(F, "Label7", &format!("Project: {name}"));
+    // ("new": no project file yet, the word shown in the language)
+    let shown = if name == "new" { tr("@MB:New") } else { name.to_string() };
+    ui.set_caption(F, "Label7", &trf("@MB:Project2", &[&shown]));
 }
 
 fn enable(ui: &mut Ui) {
@@ -186,12 +201,13 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let (full_w, _) = vp.size();
     s.de_stop = vp.de * pw as f64 / full_w.max(1) as f64;
     v.de = s.de_stop;
+    // fresh ones for each run: a stopped run still finishing must not report into this one
+    app.voxel.shared = Arc::new(Mutex::new(Shared::default()));
+    app.voxel.stop = Arc::new(AtomicBool::new(false));
     let shared = app.voxel.shared.clone();
     let stop = app.voxel.stop.clone();
-    stop.store(false, Ordering::SeqCst);
-    *shared.lock().unwrap() = Shared::default();
     app.voxel.running = 2;
-    ui.set_caption(F, "Button5", "Stop");
+    ui.set_caption(F, "Button5", &tr("@MB:Stop"));
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
     let waker = ui.waker();
     std::thread::spawn(move || {
@@ -291,21 +307,26 @@ fn start_slices(app: &mut Mb3d, ui: &mut Ui) {
     let vp = app.voxel.vp.clone();
     let dir = PathBuf::from(&vp.output_folder);
     let name = app.voxel.project.clone();
+    // fresh ones for each run: a stopped run still finishing must not report into this one
+    app.voxel.shared = Arc::new(Mutex::new(Shared::default()));
+    app.voxel.stop = Arc::new(AtomicBool::new(false));
     let shared = app.voxel.shared.clone();
     let stop = app.voxel.stop.clone();
-    stop.store(false, Ordering::SeqCst);
-    *shared.lock().unwrap() = Shared::default();
     app.voxel.running = 1;
     app.voxel.slice_size = vp.size();
+    app.voxel.items = ItemsLeft::default();
+    app.voxel.slice_at = Instant::now();
+    app.voxel.slice_nr = None;
+    app.voxel.left_shown = None;
     super::main_form::disable_buttons(app, ui);
     let waker = ui.waker();
     std::thread::spawn(move || {
         let r = (|| -> Result<(), String> {
             let threads = crate::render::thread_count(&sc);
             // (a stopped export continues with the slices it has not written)
-            let slice = |nr: u32, _n: u32, on: Option<&[bool]>| {
+            let slice = |nr: u32, n: u32, on: Option<&[bool]>| {
                 if let Some(on) = on {
-                    shared.lock().unwrap().slice = Some((nr, on.to_vec()));
+                    shared.lock().unwrap().slice = Some((nr, n, on.to_vec()));
                     if let Some(w) = &waker {
                         w.wake();
                     }
@@ -346,12 +367,22 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(b) = preview {
         ui.set_picture(F, "Image1", Some(b));
     }
-    if let Some((nr, on)) = slice {
+    if let Some((nr, n, on)) = slice {
         let (w, h) = app.voxel.slice_size;
         // the slice in the main window (white = object)
         let rgb: Vec<u8> = on.iter().flat_map(|&b| if b { [255u8; 3] } else { [0u8; 3] }).collect();
         super::main_form::show_external(app, ui, Arc::new(rgb), w, h);
-        ui.set_caption(F, "Label13", &format!("Rendering slice: {}", nr + 1));
+        app.voxel.items.done(app.voxel.slice_at.elapsed().as_secs_f64());
+        app.voxel.slice_at = Instant::now();
+        app.voxel.slice_nr = Some((nr, n));
+    }
+    // the slice under way and the time left (the slices' times so far)
+    if let (1, Some((nr, n))) = (app.voxel.running, app.voxel.slice_nr) {
+        let now = Instant::now();
+        let v = &mut app.voxel;
+        let left = (nr + 1 < n).then(|| v.items.left(0.0, now.saturating_duration_since(v.slice_at).as_secs_f64(), None, (n - nr - 2) as usize)).flatten();
+        v.left_shown = left.map(|l| smooth_shown(v.left_shown, l, now)).or(v.left_shown);
+        ui.set_caption(F, "Label13", &slice_caption(nr, n, v.left_shown.map(|s| s.0)));
     }
     if !err.is_empty() {
         app.message(ui, &err);
@@ -363,16 +394,26 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             super::main_form::enable_buttons(app, ui);
             ui.set_caption(F, "Label13", "");
             if err.is_empty() && !app.voxel.stop.load(Ordering::SeqCst) {
-                app.message(ui, "Finished rendering slices.");
+                app.message(ui, &tr("@MB:FinishedRenderingSlices"));
             }
         } else {
-            ui.set_caption(F, "Button5", "Calculate preview");
+            ui.set_caption(F, "Button5", &tr("@MB:CalculatePreview"));
             if app.voxel.restart_preview {
                 app.voxel.restart_preview = false;
                 start_preview(app, ui);
             }
         }
     }
+}
+
+/// "Rendering slice: 4 of 120 · about 7 min left": the slice under way
+/// after `nr` (0-based) finished, of `n`, and the time left.
+fn slice_caption(nr: u32, n: u32, left: Option<f64>) -> String {
+    let mut t = trf("@MB:RenderingSliceOf", &[&(nr + 2).min(n), &n]);
+    if let Some(l) = left.filter(|_| nr + 1 < n) {
+        t += &format!(" · {}", left_str(l));
+    }
+    t
 }
 
 /// Stops the slice export (the main window's Stop button).
@@ -410,7 +451,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.voxel.user_change = true;
             if app.voxel.first_show {
                 app.voxel.first_show = false;
-                ui.cm(F, "RadioGroup1").hint = " Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!".into();
+                ui.cm(F, "RadioGroup1").hint = tr("@MB:TypeOfObjectDeterminationLoweringMaxExclamation");
                 let d = app.ini.dir(super::ini::DIR_VOXEL);
                 let mut s = d.display().to_string();
                 if !s.ends_with(std::path::MAIN_SEPARATOR) {
@@ -424,7 +465,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button1Click" => ui.hide(F),
         "Button3Click" => {
             let start = ui.text(F, "Edit2");
-            ui.folder_dialog("voxel:folder", "Output folder", Some(PathBuf::from(start)));
+            ui.folder_dialog("voxel:folder", &tr("@MB:OutputFolder2"), Some(PathBuf::from(start)));
         }
         "Button4Click" => {
             // import the parameters of the main window
@@ -445,7 +486,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D voxel project (*.m3v)|*.m3v".into(),
+                filter: format!("{}|*.m3v", tr("@MB:M3DVoxelProjectM3v")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_VOXEL)),
                 ..Default::default()
             };
@@ -454,7 +495,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton9Click" => {
             make_m3v(app, ui);
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D voxel project (*.m3v)|*.m3v".into(),
+                filter: format!("{}|*.m3v", tr("@MB:M3DVoxelProjectM3v")),
                 default_ext: "m3v".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_VOXEL)),
                 file_name: if app.voxel.project == "new" { String::new() } else { app.voxel.project.clone() },
@@ -478,6 +519,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button2Click" => {
             if app.voxel.running == 2 {
                 app.voxel.stop.store(true, Ordering::SeqCst);
+                app.voxel.restart_preview = false;
+                ui.set_caption(F, "Button5", &tr("@MB:CalculatePreview"));
             }
             if app.voxel.running != 1 {
                 start_slices(app, ui);
@@ -640,4 +683,17 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         _ => {}
     }
     let _ = MAIN;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn slice_captions() {
+        assert_eq!(slice_caption(0, 120, None), "Rendering slice: 2 of 120");
+        assert_eq!(slice_caption(2, 120, Some(449.0)), "Rendering slice: 4 of 120 · about 7 min left");
+        // the last slice finished: nothing left to say
+        assert_eq!(slice_caption(119, 120, Some(3.0)), "Rendering slice: 120 of 120");
+    }
 }

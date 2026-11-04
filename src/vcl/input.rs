@@ -45,6 +45,20 @@ fn raw(id: Id, name: &'static str, ev: Ev) -> Raw {
     Raw { id, name, ev }
 }
 
+/// Adds a wheel event's `delta` to what was left over and returns the
+/// whole notches (120 each, at most 10) in it, the sign of the turn kept;
+/// the rest waits for the next event (touchpads, hi-res wheels).
+pub fn wheel_steps(rest: &mut i32, delta: i32) -> i32 {
+    if delta.signum() != rest.signum() {
+        *rest = 0;
+    }
+    *rest += delta;
+    let n = (rest.abs() / 120).min(10);
+    let steps = n * rest.signum();
+    *rest = if n == 10 { 0 } else { *rest - steps * 120 };
+    steps
+}
+
 const REPEAT_FIRST: Duration = Duration::from_millis(400);
 const REPEAT_NEXT: Duration = Duration::from_millis(60);
 
@@ -107,7 +121,7 @@ impl Form {
             Kind::ListView => {
                 let (hh, _, vis, max, top) = self.listview_rows(id);
                 let inner = r.inset(2);
-                if c.cells.len() as i32 > vis && x >= inner.right() - SB && y >= inner.y + hh {
+                if c.row_count() as i32 > vis && x >= inner.right() - SB && y >= inner.y + hh {
                     let sr = Rect::new(inner.right() - SB, inner.y + hh, SB, inner.h - hh);
                     return sb_part(sr, true, 0, max as i64, vis as i64, top as i64, x, y);
                 }
@@ -245,8 +259,16 @@ impl Form {
             self.set_focus(Some(id), &mut out);
         }
         let (lx, ly) = self.local(id, x, y);
-        out.push(raw(id, "OnMouseDown", Ev::MouseDown { x: lx, y: ly, button, shift }));
-        if dbl {
+        // A ListBox scrollbar is part of the control, but it is not an item.
+        // Do not forward its press to application-level list handlers: those
+        // commonly select (or drag) the current row on OnMouseDown.
+        if kind != Kind::ListBox || self.cap_part == PART_NONE {
+            out.push(raw(id, "OnMouseDown", Ev::MouseDown { x: lx, y: ly, button, shift }));
+        }
+        // a double click on a list view's column headers is two column
+        // clicks, not a double click on its selected row
+        let on_header = kind == Kind::ListView && ly <= self.listview_rows(id).0 + 2;
+        if dbl && !on_header {
             out.push(raw(id, "OnDblClick", Ev::DblClick));
         }
         if button != MouseButton::Left {
@@ -389,16 +411,51 @@ impl Form {
             Kind::ListView => {
                 let (hh, rh, _, _, top) = self.listview_rows(id);
                 let (lx, ly) = self.local(id, x, y);
-                let c = &mut self.ctl[id];
-                if ly > hh + 2 {
-                    let i = (ly - hh - 2) / rh + top;
-                    if (i as usize) < c.cells.len() && c.item_index != i {
-                        c.item_index = i;
-                        out.push(raw(id, "OnSelectItem", Ev::Select));
-                        out.push(raw(id, "OnChange", Ev::Change));
+                if ly <= hh + 2 {
+                    // A report-style ListView uses its column headers as
+                    // ordinary clickable controls.  The chosen column is
+                    // exposed through `col` for the OnColumnClick handler.
+                    let r = self.abs_rect(id);
+                    let c = &self.ctl[id];
+                    let widths = c.column_widths(r.w - 4);
+                    let mut x = 0;
+                    let col = widths.iter().position(|w| {
+                        let hit = lx >= x && lx < x + *w;
+                        x += *w;
+                        hit
+                    });
+                    if let Some(col) = col {
+                        self.ctl[id].col = col as i32;
+                        out.push(raw(id, "OnColumnClick", Ev::Click));
                     }
-                    if c.checkboxes && lx < 22 && (i as usize) < c.cells.len() {
-                        let n = c.cells.len();
+                } else {
+                    let i = (ly - hh - 2) / rh + top;
+                    let c = &mut self.ctl[id];
+                    if (i as usize) < c.row_count() {
+                        if c.multi_select {
+                            let n = c.row_count();
+                            c.selected.resize(n, false);
+                            if shift & SS_CTRL != 0 {
+                                c.selected[i as usize] ^= true;
+                            } else if shift & SS_SHIFT != 0 && c.item_index >= 0 {
+                                let (a, b) = (c.item_index.min(i), c.item_index.max(i));
+                                c.selected.fill(false);
+                                for selected in &mut c.selected[a as usize..=b as usize] {
+                                    *selected = true;
+                                }
+                            } else {
+                                c.selected.fill(false);
+                                c.selected[i as usize] = true;
+                            }
+                        }
+                        if c.item_index != i {
+                            c.item_index = i;
+                            out.push(raw(id, "OnSelectItem", Ev::Select));
+                            out.push(raw(id, "OnChange", Ev::Change));
+                        }
+                    }
+                    if c.checkboxes && lx < 22 && (i as usize) < c.row_count() {
+                        let n = c.row_count();
                         c.checks.resize(n, false);
                         c.checks[i as usize] ^= true;
                         out.push(raw(id, "OnChange", Ev::Change));
@@ -598,7 +655,8 @@ impl Form {
                 if !lv.rect.contains(x, y) {
                     continue;
                 }
-                if let Some((k, _)) = menu_item_rects(self, lv).into_iter().nth(lv.hot.max(0) as usize) {
+                // hot -1: the border or padding, no item
+                if let Some((k, _)) = usize::try_from(lv.hot).ok().and_then(|h| menu_item_rects(self, lv).into_iter().nth(h)) {
                     let c = &self.ctl[k];
                     if c.enabled && c.caption != "-" && menu_items(self, k).is_empty() {
                         self.popup = None;
@@ -690,7 +748,14 @@ impl Form {
         out
     }
 
+    /// A wheel event of whole notches.
     pub fn wheel(&mut self, delta: i32, x: i32, y: i32, shift: u8) -> Vec<Raw> {
+        self.wheel_by(delta, wheel_steps(&mut 0, delta), x, y, shift)
+    }
+
+    /// `steps`: the whole notches of `delta` (see `wheel_steps`), the
+    /// controls scroll by them; `OnMouseWheel` gets `delta` itself.
+    pub fn wheel_by(&mut self, delta: i32, steps: i32, x: i32, y: i32, shift: u8) -> Vec<Raw> {
         let mut out = Vec::new();
         self.layout();
         self.hint = None;
@@ -699,13 +764,28 @@ impl Form {
             let lr = combo_list_rect(self, id);
             let ih = line_height(&self.font(id)) + 2;
             let vis = (lr.h - 2) / ih;
-            let t = (top - delta.signum() * 3).clamp(0, (n - vis).max(0));
+            let t = (top - steps * 3).clamp(0, (n - vis).max(0));
             self.popup = Some(Popup::Combo { id, hot, top: t });
             self.dirty = true;
             return out;
         }
         if self.popup.is_some() {
             return out;
+        }
+        // the wheel over a closed drop-down list that has the focus selects
+        // the item before or after (as on Windows, where the wheel goes to
+        // the focused control); over any other control the form's own
+        // wheel handler keeps it (the Navigator's zoom, the main window's)
+        if let Some(id) = self.hit(x, y) {
+            if self.focus == Some(id) && self.enabled(id) && self.ctl[id].kind == Kind::ComboBox && !self.ctl[id].items.is_empty() {
+                let n = self.ctl[id].items.len() as i32;
+                let i = (self.ctl[id].item_index - steps).clamp(0, n - 1);
+                if i != self.ctl[id].item_index {
+                    self.combo_select(id, i, &mut out);
+                    self.dirty = true;
+                }
+                return out;
+            }
         }
         out.push(raw(0, "OnMouseWheel", Ev::Wheel { delta, x, y, shift }));
         out.push(raw(0, if delta > 0 { "OnMouseWheelUp" } else { "OnMouseWheelDown" }, Ev::Wheel { delta, x, y, shift }));
@@ -721,7 +801,6 @@ impl Form {
                 k = self.ctl[id].parent;
                 continue;
             }
-            let steps = (delta / 120).max(1).min(10) * delta.signum();
             let kind = self.ctl[id].kind;
             let done = match kind {
                 Kind::ListBox => {
@@ -1493,8 +1572,10 @@ impl Form {
             Kind::Edit | Kind::Memo | Kind::ComboBox if self.editable(id) || kind != Kind::ComboBox => {
                 if kind == Kind::ComboBox && (key == vk::UP || key == vk::DOWN) {
                     let c = &self.ctl[id];
-                    let i = (c.item_index + if key == vk::UP { -1 } else { 1 }).clamp(0, c.items.len() as i32 - 1);
-                    self.combo_select(id, i, &mut out);
+                    if !c.items.is_empty() {
+                        let i = (c.item_index + if key == vk::UP { -1 } else { 1 }).clamp(0, c.items.len() as i32 - 1);
+                        self.combo_select(id, i, &mut out);
+                    }
                     return out;
                 }
                 if kind == Kind::ComboBox && (key == vk::F4 || (key == vk::DOWN && shift & SS_ALT != 0)) {
@@ -1507,6 +1588,9 @@ impl Form {
                 vk::UP | vk::DOWN | vk::HOME | vk::END | vk::PRIOR | vk::NEXT if shift & SS_ALT == 0 => {
                     let c = &self.ctl[id];
                     let n = c.items.len() as i32;
+                    if n == 0 {
+                        return out;
+                    }
                     let i = match key {
                         vk::UP => c.item_index - 1,
                         vk::DOWN => c.item_index + 1,
@@ -1589,8 +1673,8 @@ impl Form {
             Kind::RadioGroup if matches!(key, vk::UP | vk::DOWN | vk::LEFT | vk::RIGHT) => {
                 let c = &mut self.ctl[id];
                 let n = c.items.len() as i32;
-                let i = (c.item_index + if key == vk::UP || key == vk::LEFT { -1 } else { 1 }).clamp(0, n - 1);
-                if i != c.item_index {
+                let i = (c.item_index + if key == vk::UP || key == vk::LEFT { -1 } else { 1 }).clamp(0, (n - 1).max(0));
+                if n > 0 && i != c.item_index {
                     c.item_index = i;
                     out.push(raw(id, "OnClick", Ev::Click));
                 }
@@ -1600,8 +1684,8 @@ impl Form {
                 let c = &mut self.ctl[id];
                 let d = if key == vk::UP { -1 } else { 1 };
                 if kind == Kind::ListView {
-                    let i = (c.item_index + d).clamp(0, c.cells.len() as i32 - 1);
-                    if i != c.item_index {
+                    let i = (c.item_index + d).clamp(0, (c.row_count() as i32 - 1).max(0));
+                    if c.row_count() > 0 && i != c.item_index {
                         c.item_index = i;
                         out.push(raw(id, "OnChange", Ev::Change));
                     }
@@ -1609,7 +1693,7 @@ impl Form {
                     let (_, _, vis, max, top) = self.listview_rows(id);
                     let c = &mut self.ctl[id];
                     c.scroll_y = top.clamp(c.item_index - vis + 1, c.item_index.max(0)).clamp(0, max);
-                } else {
+                } else if (c.cells.len() as i32) > c.fixed_rows {
                     c.row = (c.row + d).clamp(c.fixed_rows, c.cells.len() as i32 - 1);
                     out.push(raw(id, "OnSelectCell", Ev::Select));
                 }
@@ -1858,5 +1942,34 @@ fn thousands(v: i64) -> String {
         format!("-{o}")
     } else {
         o
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wheel_steps;
+
+    #[test]
+    fn wheel_notches_both_ways() {
+        let mut r = 0;
+        assert_eq!(wheel_steps(&mut r, 240), 2);
+        assert_eq!(wheel_steps(&mut r, -240), -2);
+        assert_eq!(wheel_steps(&mut r, -120), -1);
+        assert_eq!(wheel_steps(&mut r, 120 * 30), 10);
+        assert_eq!(wheel_steps(&mut r, -120 * 30), -10);
+        assert_eq!(r, 0);
+    }
+
+    #[test]
+    fn wheel_partial_deltas_add_up() {
+        let mut r = 0;
+        assert_eq!(wheel_steps(&mut r, 40), 0);
+        assert_eq!(wheel_steps(&mut r, 40), 0);
+        assert_eq!(wheel_steps(&mut r, 60), 1);
+        assert_eq!(r, 20);
+        // turning back drops the rest
+        assert_eq!(wheel_steps(&mut r, -100), 0);
+        assert_eq!(wheel_steps(&mut r, -30), -1);
+        assert_eq!(r, -10);
     }
 }

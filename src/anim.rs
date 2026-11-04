@@ -36,6 +36,8 @@ use std::sync::Arc;
 pub enum Interpolation {
     Linear = 0,
     Bezier = 1,
+    /// a Catmull-Rom spline (not in MB3D): smooth, through every keyframe
+    CatmullRom = 2,
 }
 
 /// Output of the frames (`RadioGroup3`).
@@ -121,6 +123,12 @@ pub struct Animation {
     /// Stereo options of `.m3a` files: 0x40 stereo animation (a right and
     /// a left eye image per frame), 0x80 only the "very left" image
     pub stereo_bits: u32,
+    /// motion blur (not in MB3D): each frame the average of this many
+    /// pictures within the shutter time (0 or 1: none)
+    pub motion_blur: u32,
+    /// the shutter time of the motion blur, a part of the time to the next
+    /// frame (0..1)
+    pub shutter: f32,
 }
 
 impl Default for Animation {
@@ -141,6 +149,8 @@ impl Default for Animation {
             save_depth: false,
             transparent: false,
             stereo_bits: 0,
+            motion_blur: 0,
+            shutter: 0.5,
         }
     }
 }
@@ -274,12 +284,39 @@ impl Animation {
         Ok(self.scene_at(pos))
     }
 
+    /// The parameters of a frame `offset` frames later (0..1: between it
+    /// and the next frame; the motion blur's samples), at the animation's
+    /// size as [`Animation::frame_scene`].
+    pub fn frame_scene_at(&self, frame: usize, offset: f64) -> Result<Scene, String> {
+        let pos = self.frame_pos(frame).ok_or_else(|| format!("frame {} is not part of the animation", frame + 1))?;
+        let n = self.keyframes.len();
+        let mut key = pos.key;
+        let mut sub = pos.sub as f64 + offset.clamp(0.0, 1.0);
+        let count = self.keyframes[key].frames.max(1) as f64;
+        if sub >= count {
+            // into the next keyframe's part (the last one of an animation
+            // that does not loop stays)
+            if key + 1 < n || self.looped {
+                key = (key + 1) % n;
+                sub -= count;
+            } else {
+                sub = pos.sub as f64;
+            }
+        }
+        Ok(self.scene_at_sub(key, sub))
+    }
+
     /// The parameters at keyframe `pos.key`, sub-frame `pos.sub`.
     pub fn scene_at(&self, pos: FramePos) -> Scene {
-        let [i0, i1, i2, i3] = self.neighbours(pos.key);
+        self.scene_at_sub(pos.key, pos.sub as f64)
+    }
+
+    /// [`Animation::scene_at`] at a sub-frame between whole ones.
+    pub fn scene_at_sub(&self, key: usize, sub: f64) -> Scene {
+        let [i0, i1, i2, i3] = self.neighbours(key);
         let k = &self.keyframes;
         let count = |i: usize| k[i].frames.max(1) as f64;
-        let t = pos.sub as f64 / count(i1);
+        let t = sub / count(i1);
         let mut s = match self.interpolation {
             Interpolation::Linear => {
                 if i1 != i2 {
@@ -292,6 +329,7 @@ impl Animation {
                 let scenes = [&k[i0].scene, &k[i1].scene, &k[i2].scene, &k[i3].scene];
                 interpolate_bezier(scenes, [count(i0), count(i1), count(i2), count(i3)], t)
             }
+            Interpolation::CatmullRom => interpolate_catmull_rom([&k[i0].scene, &k[i1].scene, &k[i2].scene, &k[i3].scene], t),
         };
         s.width = self.width.max(1);
         s.height = self.height.max(1);
@@ -308,6 +346,32 @@ impl Animation {
         self.width = s.width.max(1);
         self.height = s.height.max(1);
     }
+}
+
+/// A turntable (not in MB3D): `steps` keyframes of `sc` with the camera
+/// turned around the middle of the view in equal steps, a whole turn
+/// around the view's vertical axis, `frames` frames from each to the next
+/// (as a loop the last leads back to the first).
+pub fn orbit_keyframes(sc: &Scene, steps: usize, frames: u32) -> Vec<Keyframe> {
+    let steps = steps.max(3);
+    let up = sc.vgrads[1];
+    let l = (up[0] * up[0] + up[1] * up[1] + up[2] * up[2]).sqrt().max(1e-300);
+    let u = up.map(|v| v / l);
+    (0..steps)
+        .map(|i| {
+            let a = 2.0 * PI * i as f64 / steps as f64;
+            let (s, c) = a.sin_cos();
+            // Rodrigues: each row of the view turned around `u`
+            let turn = |v: [f64; 3]| {
+                let d = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+                let x = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+                [0, 1, 2].map(|k| v[k] * c + x[k] * s + u[k] * d * (1.0 - c))
+            };
+            let mut k = sc.clone();
+            k.vgrads = [turn(sc.vgrads[0]), turn(sc.vgrads[1]), turn(sc.vgrads[2])];
+            Keyframe::new(k, frames)
+        })
+        .collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -351,6 +415,50 @@ fn interpolate_header(base: &Scene, h: &[&Scene], w: &[f64], rot: Quat, bezier: 
     s.fov_y = lin(&|x| x.fov_y);
     for i in 0..4 {
         s.julia_c[i] = lin(&|x| x.julia_c[i]);
+    }
+    // the surface material (mb3d-rs): blended, a keyframe without one as 0
+    if h.iter().any(|x| x.material.is_some()) {
+        let m = |x: &Scene| x.material.unwrap_or_default();
+        s.material = Some(crate::scene::Material {
+            fresnel: lin(&|x| m(x).fresnel as f64) as f32,
+            iridescence: lin(&|x| m(x).iridescence as f64) as f32,
+            irid_shift: lin(&|x| m(x).irid_shift as f64) as f32,
+            glow: lin(&|x| m(x).glow as f64) as f32,
+        });
+    }
+    // the clouds (mb3d-rs): blended when every keyframe has them across
+    // the same axis (an offset moving between keyframes: drifting clouds)
+    if let Some(c0) = base.clouds {
+        if h.iter().all(|x| x.clouds.is_some_and(|c| c.axis == c0.axis)) {
+            let c = |x: &Scene| x.clouds.unwrap();
+            let mut nc = c0;
+            nc.from = lin(&|x| c(x).from);
+            nc.to = lin(&|x| c(x).to);
+            nc.density = lin(&|x| c(x).density as f64).max(0.0) as f32;
+            nc.coverage = lin(&|x| c(x).coverage as f64).clamp(0.0, 1.0) as f32;
+            nc.size = lin(&|x| c(x).size).max(1e-9);
+            for k in 0..3 {
+                nc.offset[k] = lin(&|x| c(x).offset[k]);
+                nc.color[k] = lin(&|x| c(x).color[k] as f64).round().clamp(0.0, 255.0) as u8;
+            }
+            s.clouds = Some(nc);
+        }
+    }
+    // the ground plane (mb3d-rs): blended when every keyframe has one
+    // across the same axis, else the base keyframe's
+    if let Some(g0) = base.ground {
+        if h.iter().all(|x| x.ground.is_some_and(|g| g.axis == g0.axis)) {
+            let g = |x: &Scene| x.ground.unwrap();
+            let mut ng = g0;
+            ng.pos = lin(&|x| g(x).pos);
+            ng.reflect = lin(&|x| g(x).reflect as f64).clamp(0.0, 1.0) as f32;
+            ng.wave_height = lin(&|x| g(x).wave_height).max(0.0);
+            ng.wave_len = lin(&|x| g(x).wave_len).max(1e-9);
+            for k in 0..3 {
+                ng.color[k] = lin(&|x| g(x).color[k] as f64).round().clamp(0.0, 255.0) as u8;
+            }
+            s.ground = Some(ng);
+        }
     }
 
     // singles
@@ -559,6 +667,48 @@ pub fn interpolate_bezier(h: [&Scene; 4], counts: [f64; 4], t: f64) -> Scene {
     s
 }
 
+/// The Catmull-Rom weights of keyframes 0..3 at `t` (0..1) between
+/// keyframes 1 and 2: 1 at a keyframe, the curve's slope there that of its
+/// neighbours (the ends repeat their keyframe: no overshoot past them).
+pub fn catmull_rom_weights(t: f64) -> [f64; 4] {
+    let (t2, t3) = (t * t, t * t * t);
+    [
+        0.5 * (-t3 + 2.0 * t2 - t),
+        0.5 * (3.0 * t3 - 5.0 * t2 + 2.0),
+        0.5 * (-3.0 * t3 + 4.0 * t2 + t),
+        0.5 * (t3 - t2),
+    ]
+}
+
+/// Catmull-Rom (not in MB3D): sub-frame `t` between keyframes `h[1]` and
+/// `h[2]`, with their neighbours `h[0]` and `h[3]`, the curve through every
+/// keyframe; the rotation as the weighted quaternions (made the same sign
+/// as `h[1]`'s) normalised; everything not interpolated from `h[1]`.
+pub fn interpolate_catmull_rom(h: [&Scene; 4], t: f64) -> Scene {
+    let w = catmull_rom_weights(t);
+    let q: Vec<Quat> = h.iter().map(|x| matrix_to_quat(&x.vgrads)).collect();
+    let mut r = [0.0; 4];
+    for (qi, wi) in q.iter().zip(w) {
+        let sign = if qi.iter().zip(&q[1]).map(|(a, b)| a * b).sum::<f64>() < 0.0 { -1.0 } else { 1.0 };
+        for k in 0..4 {
+            r[k] += qi[k] * sign * wi;
+        }
+    }
+    let n = r.iter().map(|v| v * v).sum::<f64>().sqrt().max(1e-300);
+    let rot = r.map(|v| v / n);
+    // (the angles wrap around keyframe 1, as Bezier's around its middle one)
+    let order = [h[1], h[0], h[2], h[3]];
+    let wo = [w[1], w[0], w[2], w[3]];
+    let mut s = interpolate_header(h[1], &order, &wo, rot, false);
+    s.light_blend = Some(Arc::new(LightBlend {
+        keys: h.iter().map(|x| strip(x)).collect(),
+        weights: w.to_vec(),
+        t,
+        bezier: false,
+    }));
+    s
+}
+
 /// Writes the light blend of a frame into its light settings, so the frame
 /// can be saved as a parameter file: the light sliders, colours, palette and
 /// light angles/positions of the keyframes are interpolated with the frame's
@@ -652,6 +802,36 @@ pub fn unit_vgrads(s: &Scene) -> Mat3 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_turntable_goes_once_around_the_middle() {
+        let sc = Scene::preset("Integer Power").unwrap();
+        let ks = orbit_keyframes(&sc, 8, 10);
+        assert_eq!(ks.len(), 8);
+        assert_eq!(ks[0].scene.vgrads, sc.vgrads);
+        let d = |a: [f64; 3], b: [f64; 3]| (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]) / ((a[0] * a[0] + a[1] * a[1] + a[2] * a[2]).sqrt() * (b[0] * b[0] + b[1] * b[1] + b[2] * b[2]).sqrt());
+        for (i, k) in ks.iter().enumerate() {
+            // the vertical axis stays, the view turns by 45 degrees a step
+            assert!((d(k.scene.vgrads[1], sc.vgrads[1]) - 1.0).abs() < 1e-9);
+            let want = (std::f64::consts::PI / 4.0 * i as f64).cos();
+            assert!((d(k.scene.vgrads[2], sc.vgrads[2]) - want).abs() < 1e-9, "{i}");
+            assert_eq!(k.scene.mid, sc.mid);
+        }
+        let a = Animation { keyframes: ks, looped: true, interpolation: Interpolation::CatmullRom, ..Default::default() };
+        assert_eq!(a.frame_count(), 80);
+        // between two frames: between their views
+        let (s0, s1) = (a.frame_scene(3).unwrap(), a.frame_scene(4).unwrap());
+        let h = a.frame_scene_at(3, 0.5).unwrap();
+        let c0 = d(h.vgrads[2], s0.vgrads[2]);
+        let c1 = d(h.vgrads[2], s1.vgrads[2]);
+        assert!(c0 < 1.0 - 1e-6 && c1 < 1.0 - 1e-6 && (c0 - c1).abs() < 1e-3, "{c0} {c1}");
+        // across a keyframe: the next keyframe's part (and the last frame of
+        // the loop into the first)
+        let e = a.frame_scene_at(9, 1.0).unwrap();
+        assert!((d(e.vgrads[2], a.frame_scene(10).unwrap().vgrads[2]) - 1.0).abs() < 1e-9);
+        let w = a.frame_scene_at(79, 1.0).unwrap();
+        assert!((d(w.vgrads[2], a.frame_scene(0).unwrap().vgrads[2]) - 1.0).abs() < 1e-9);
+    }
     use crate::math::vgrads_from_angles;
 
     fn key(zoom: f64, x: f64, rot: f64, frames: u32) -> Keyframe {
@@ -669,6 +849,48 @@ mod tests {
         a.width = 64;
         a.height = 48;
         a
+    }
+
+    #[test]
+    fn catmull_rom_goes_through_the_keyframes() {
+        for t in [0.0, 0.25, 0.5, 0.9] {
+            let w = catmull_rom_weights(t);
+            assert!((w.iter().sum::<f64>() - 1.0).abs() < 1e-12);
+        }
+        assert_eq!(catmull_rom_weights(0.0), [0.0, 1.0, 0.0, 0.0]);
+        let keys = vec![key(1.0, 0.0, 0.0, 4), key(3.0, 2.0, 30.0, 4), key(1.5, -1.0, 10.0, 4), key(2.0, 0.5, 0.0, 4)];
+        let a = anim(keys.clone(), Interpolation::CatmullRom, false);
+        // every keyframe's frame is that keyframe's scene
+        for (i, k) in keys.iter().enumerate() {
+            let s = a.frame_scene(i * 4).unwrap();
+            assert!((s.zoom - k.scene.zoom).abs() < 1e-9, "keyframe {i}: zoom {}", s.zoom);
+            assert!((s.mid[0] - k.scene.mid[0]).abs() < 1e-9);
+            for r in 0..3 {
+                for c in 0..3 {
+                    assert!((s.vgrads[r][c] - k.scene.vgrads[r][c]).abs() < 1e-9);
+                }
+            }
+        }
+        // Bezier passes beside them
+        let b = anim(keys.clone(), Interpolation::Bezier, false);
+        assert!((b.frame_scene(4).unwrap().zoom - 3.0).abs() > 0.05);
+    }
+
+    #[test]
+    fn ground_plane_is_blended() {
+        let mut a = key(1.0, 0.0, 0.0, 10).scene;
+        let mut b = a.clone();
+        let g = crate::scene::Ground { axis: 1, pos: 1.0, color: [0, 100, 200], wave_height: 0.0, ..Default::default() };
+        a.ground = Some(g);
+        b.ground = Some(crate::scene::Ground { pos: 2.0, color: [200, 100, 0], wave_height: 0.04, ..g });
+        let m = interpolate_linear(&a, &b, 0.5).ground.unwrap();
+        assert!((m.pos - 1.5).abs() < 1e-9 && (m.wave_height - 0.02).abs() < 1e-9);
+        assert_eq!(m.color, [100, 100, 100]);
+        // another axis or no ground in a keyframe: the first keyframe's
+        b.ground.as_mut().unwrap().axis = 2;
+        assert_eq!(interpolate_linear(&a, &b, 0.5).ground, a.ground);
+        b.ground = None;
+        assert_eq!(interpolate_linear(&a, &b, 0.5).ground, a.ground);
     }
 
     #[test]

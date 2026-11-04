@@ -1,0 +1,84 @@
+[OPTIONS]
+.DEScale = 1
+.SIPow = 2
+.Version = 9
+.Double fo = 0.2
+.Double g = 0.48
+.Double wa = 0
+[SOURCE]
+procedure MyFormula(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+var
+  cx, cy, cz: Double;
+  temp_x,temp_y,temp_z : Double;
+  p_x, p_y, p_z: Double;
+  vx, vy: Double;
+  v: Double;
+  v1: Double;
+  k: Double;
+  temp_abs: Double;
+begin
+
+  temp_x:= x;
+  temp_y:= y;
+  temp_z:= z;
+  If temp_z > temp_y then
+   begin
+     k := temp_y;
+     temp_y := temp_z;
+     temp_z := k;
+   end;
+  vx := temp_x - 2.0 * fo;
+  vy := temp_y - 4.0 * fo;
+  v := max(abs(vx + fo) - fo, vy);
+  v1 := max(vx - g, temp_y - wa);
+  v := min(v, v1);
+  v1 := max(v1, -abs(temp_x));
+
+  p_x :=  min(v, temp_x);
+
+  temp_x:= y;
+  temp_y:= z;
+  temp_z:= x;
+  If temp_z > temp_y then
+   begin
+     k := temp_y;
+     temp_y := temp_z;
+     temp_z := k;
+   end;
+  vx := temp_x - 2.0 * fo;
+  vy := temp_y - 4.0 * fo;
+  v := max(abs(vx + fo) - fo, vy);
+  v1 := max(vx - g, temp_y - wa);
+  v := min(v, v1);
+  temp_abs := max(temp_x,-temp_x);
+  v1 := max(v1, -temp_abs);
+  
+  p_y :=  min(v, temp_x);
+	
+  temp_x:= z;
+  temp_y:= x;
+  temp_z:= y;
+  If temp_z > temp_y then
+   begin
+     k := temp_y;
+     temp_y := temp_z;
+     temp_z := k;
+   end;
+  vx := temp_x - 2.0 * fo;
+  vy := temp_y - 4.0 * fo;
+  v := max(abs(vx + fo) - fo, vy);
+  v1 := max(vx - g, temp_y - wa);
+  v := min(v, v1);
+  v1 := max(v1, -abs(temp_x));
+  
+  p_z :=  min(v, temp_x);
+
+
+
+  x := p_x ;
+  y := p_y ;
+  z := p_z ;
+
+end;
+[END]
+

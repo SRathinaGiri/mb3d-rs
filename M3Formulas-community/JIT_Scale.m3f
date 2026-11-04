@@ -1,0 +1,53 @@
+[OPTIONS]
+.DEoption = -1
+.DEScale = 1
+.SIPow = 2
+.Version = 9
+.Double Scale = 1
+[SOURCE]
+procedure MyFormula(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+var
+  sq_r: Double;
+  x_rec, y_rec, z_rec: Double;
+  x_tmp, y_tmp, z_tmp: Double;
+  cx, cy, cz: Double;
+
+begin
+  cx:= PIteration3D^.J1;
+  cy:= PIteration3D^.J2;
+  cz:= PIteration3D^.J3;
+
+  x := Scale*x ;
+  y := Scale*y ;
+  z := Scale*z ;
+
+end;
+
+[END]
+SUMMARY:
+  Simple variant a sum of a triplex, and its reciprocal (and c):
+  
+    t(n+1) = Factor_Linear * t(n) + Factor_Reciprocal / t(n) + c
+
+  Each summand has its real factor. 
+
+  Used a cartesian version of triplex 1/z, where
+    1/t "=" (x, -y, -z) / R^2
+  where
+    R = x*x + y*y +z*z + Offset
+  For details see http://www.fractalforums.com/theory/re-triplex-1z/
+
+  May be weird as an independent fractal, 
+  but as kind of tranform it is ok, and quite fast,
+  specifically if compared with MobiusTpx, and TalisTpx
+  (and with an Offset>0 it has no discontinuities)
+  Can build nice rings from subsequent formulas; 
+  and even with discontinuities it's worth to check 
+
+CHANGES:
+_JIT_gnj_AddRecip_01.m3f
+  - Moved to Adds section because of the formula's weird DE, 
+    and because it's more useful to use it as transformation
+  - Renamed to match some naming rules. Old formula name:   JIT_gnj_zduz
+ 
+

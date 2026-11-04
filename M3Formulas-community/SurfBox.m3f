@@ -1,0 +1,43 @@
+[OPTIONS]
+.Version = 2
+.DEscale = 0.2
+.DEoption = 2
+.RStop = 1024
+.SIpower = 2
+.Double Scale = 2
+.Boxscale Min R = 0.5
+.Double Fold = 1
+.Double FoldModX = 2
+.Double FoldModY = 2
+.Double FoldModZ = 2
+.3SingleAngles Rotate = 0
+[CODE]
+8B4C24048B5130DD41E0D9E49BDFE09E720A7704D9EEEB08D9E8EB04D9E8D9E0
+DDD9D9C0DC49E0DC62D8D9C0D9E1DEC1DD42D0DBE9DBD1DDD9DEC9DC69E0DD51
+E0DD41E8D9E49BDFE09E720A7704D9EEEB08D9E8EB04D9E8D9E0DDD9D9C0DC49
+E8DC62D8D9C0D9E1DEC1DD42C8DBE9DBD1DDD9DEC9DC69E8DD51E8DD41F0D9E4
+9BDFE09E720A7704D9EEEB08D9E8EB04D9E8D9E0DDD9D9C0DC49F0DC62D8D9C0
+D9E1DEC1DD42C0DBE9DBD1DDD9DEC9DC69F0DD51F0D9C2D8CBD9C2D8CBDEC1D9
+C1D8CADEC1DD42E0DFE97607DDD8DD42E8EB10D9E8DFE97605DC7AF0EB05DDD8
+DD42F0D9C3D84AB0D9C3D84AACDEC1D9C2D84AA8DEC1D9C4D84AA4D9C4D84AA0
+DEC1D9C3D84A9CDEC1D9CDD84ABCD9CCD84AB8DEC4D9CAD84AB4DEC3DCCAD9CA
+DC4118DD59E0D8C9DC4120DD59E8DCC9D9C9DC4128DD59F0DC49F8DD59F8C208
+00
+[END]
+
+Description:
+
+Amazing Box, but has a modified customizable folding style.
+If foldMod = 0, you disable the fold of the corresponding axis. Nice to create curly surfaces (aka amazing surfaces).
+Conversely if foldMod tends to infinity, you get Tglad's fold. I found that 2000 can be enough.
+If foldMod = 2*fold, you get the perfect Mixed Folding, simulating abs() and fold at the same time.
+If foldMod = 4*fold, you get a double folding just like doing fold twice.
+
+        // Mixed fold by Luca 2016. http://www.fractalforums.com/index.php?topic=25307
+        // do this for all 3d axis, or 4d axis if you have a 4d abox
+        // Tglad normal fold is cfg->x = fabs(cfg->x + fold) - fabs(cfg->x - fold) - cfg->x;
+	sg = sign(cfg->x);
+	folder = sg * cfg->x- fold; // fold is Tglad's
+	folder += fabs(folder);
+	folder = min(folder, foldModX); // and Y,Z,W
+	cfg->x -= sg*folder;

@@ -2,7 +2,7 @@ object LightAdjustForm: TLightAdjustForm
   Left = 844
   Top = 100
   BorderStyle = bsDialog
-  Caption = 'Lighting'
+  Caption = '@MB:Lighting'
   ClientHeight = 625
   ClientWidth = 233
   Color = clBtnFace
@@ -34,7 +34,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 69
       Width = 28
       Height = 30
-      Hint = 'Open full light and color parameter'
+      Hint = '@MB:OpenFullLightAndColorParameter'
       Glyph.Data = {
         76050000424D7605000000000000360400002800000012000000100000000100
         0800000000004001000000000000000000000001000000010000000000000000
@@ -89,7 +89,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 69
       Width = 28
       Height = 30
-      Hint = 'Save full light and color parameter'
+      Hint = '@MB:SaveFullLightAndColorParameter'
       Glyph.Data = {
         76050000424D7605000000000000360400002800000012000000100000000100
         0800000000004001000000000000000000000001000000010000000000000000
@@ -145,7 +145,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 25
       Height = 21
-      Hint = 'preset <sand>'
+      Hint = '@MB:PresetSand'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -159,7 +159,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 25
       Height = 21
-      Hint = 'preset <slime>'
+      Hint = '@MB:PresetSlime'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -173,7 +173,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 25
       Height = 21
-      Hint = 'preset <metallic>'
+      Hint = '@MB:PresetMetallic'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -187,7 +187,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 25
       Height = 21
-      Hint = 'preset <flower>'
+      Hint = '@MB:PresetFlower'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -201,7 +201,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 23
       Width = 25
       Height = 21
-      Hint = 'custom preset 4'
+      Hint = '@MB:CustomPreset4'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -215,7 +215,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 23
       Width = 25
       Height = 21
-      Hint = 'custom preset 1'
+      Hint = '@MB:CustomPreset1'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -229,7 +229,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 23
       Width = 25
       Height = 21
-      Hint = 'custom preset 2'
+      Hint = '@MB:CustomPreset2'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -243,7 +243,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 23
       Width = 25
       Height = 21
-      Hint = 'custom preset 3'
+      Hint = '@MB:CustomPreset3'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -256,9 +256,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 27
       Height = 21
-      Hint = 
-        'Click to save the current light and most color settings'#13#10'on a cu' +
-        'stom preset button.'#13#10'Click this button again to cancel saving.'
+      Hint = '@MB:ClickToSaveTheCurrentLight'
       AllowAllUp = True
       GroupIndex = 6
       Caption = 'M'
@@ -275,7 +273,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 25
       Height = 21
-      Hint = 'preset <neutral>'
+      Hint = '@MB:PresetNeutral'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -289,7 +287,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 23
       Width = 25
       Height = 21
-      Hint = 'custom preset 5'
+      Hint = '@MB:CustomPreset5'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -303,7 +301,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 44
       Width = 25
       Height = 21
-      Hint = 'custom preset 6'
+      Hint = '@MB:CustomPreset6'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -317,7 +315,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 44
       Width = 25
       Height = 21
-      Hint = 'custom preset 7'
+      Hint = '@MB:CustomPreset7'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -331,7 +329,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 44
       Width = 25
       Height = 21
-      Hint = 'custom preset 8'
+      Hint = '@MB:CustomPreset8'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -345,7 +343,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 44
       Width = 25
       Height = 21
-      Hint = 'custom preset 9'
+      Hint = '@MB:CustomPreset9'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -359,7 +357,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 44
       Width = 25
       Height = 21
-      Hint = 'custom preset 10'
+      Hint = '@MB:CustomPreset10'
       Flat = True
       ParentShowHint = False
       ShowHint = True
@@ -372,9 +370,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 2
       Width = 27
       Height = 21
-      Hint = 
-        'Leftclick:   Undo -> Sets the light parameter to the state befor' +
-        'e the last painting'#13#10'Rightclick: Redo'
+      Hint = '@MB:LeftclickUndoSetsTheLightParameter'
       Enabled = False
       Flat = True
       Glyph.Data = {
@@ -395,7 +391,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 1
       Width = 16
       Height = 22
-      Hint = 'Shrink the panel'
+      Hint = '@MB:ShrinkThePanel'
       Glyph.Data = {
         C2010000424DC20100000000000036000000280000000C0000000B0000000100
         1800000000008C010000110B0000110B0000000000000000000084C4C384C4C3
@@ -421,7 +417,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 1
       Width = 18
       Height = 22
-      Hint = 'Expand the panel'
+      Hint = '@MB:ExpandThePanel'
       Glyph.Data = {
         C2010000424DC20100000000000036000000280000000C0000000B0000000100
         1800000000008C010000110B0000110B0000000000000000000084C4C384C4C3
@@ -448,9 +444,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 73
       Width = 137
       Height = 21
-      Hint = 
-        'Quick load of light parameter files that are'#13#10'stored in the spec' +
-        'ific ini directory.'
+      Hint = '@MB:QuickLoadOfLightParameterFiles'
       Style = csDropDownList
       DropDownCount = 40
       Font.Charset = DEFAULT_CHARSET
@@ -470,11 +464,8 @@ object LightAdjustForm: TLightAdjustForm
       Top = 28
       Width = 72
       Height = 17
-      Hint = 
-        'If enabled, the lights are not changed when presets or light par' +
-        'ameters are loaded.'#13#10'Can be useful if you don'#39't want to recalcul' +
-        'ate the hard shadows, for example.'
-      Caption = 'Keep lights'
+      Hint = '@MB:IfEnabledTheLightsAreNot'
+      Caption = '@MB:KeepLights'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -510,7 +501,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 30
       Width = 19
       Height = 13
-      Caption = 'Diff:'
+      Caption = '@MB:Diff'
     end
     object Label9: TLabel
       Left = 127
@@ -518,14 +509,14 @@ object LightAdjustForm: TLightAdjustForm
       Width = 28
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Spec:'
+      Caption = '@MB:Spec'
     end
     object Label26: TLabel
       Left = 76
       Top = 33
       Width = 42
       Height = 13
-      Caption = 'Intensity:'
+      Caption = '@MB:Intensity'
     end
     object SpeedButton12: TSpeedButton
       Tag = 12
@@ -533,7 +524,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 25
       Width = 29
       Height = 21
-      Hint = 'Light color, press to select a new one.'
+      Hint = '@MB:LightColorPressToSelectA'
       Flat = True
       Glyph.Data = {
         A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -569,9 +560,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 27
       Width = 68
       Height = 20
-      Hint = 
-        'Diffuse function, choose Cos or Cos^2 if you use a hard shadow o' +
-        'n this light.'
+      Hint = '@MB:DiffuseFunctionChooseCosOrCos'
       Style = csDropDownList
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -584,17 +573,17 @@ object LightAdjustForm: TLightAdjustForm
       TabOrder = 0
       OnChange = ComboBox1Change
       Items.Strings = (
-        'Cos'
-        'Cos^2'
-        'Cos/2+ '
-        '(Cos/2+)'#178)
+        '@MB:Cos'
+        '@MB:Cos2'
+        '@MB:Cos22'
+        '@MB:Cos23')
     end
     object ComboBox2: TComboBox
       Left = 161
       Top = 51
       Width = 58
       Height = 20
-      Hint = 'Specular power function'
+      Hint = '@MB:SpecularPowerFunction'
       Style = csDropDownList
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -624,7 +613,7 @@ object LightAdjustForm: TLightAdjustForm
       Width = 33
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'On'
+      Caption = '@MB:On'
       TabOrder = 2
       OnClick = CheckBox4Click
     end
@@ -638,27 +627,27 @@ object LightAdjustForm: TLightAdjustForm
       OnChange = PageControl1Change
       OnChanging = PageControl1Changing
       object TabSheet1: TTabSheet
-        Caption = 'Global light'
+        Caption = '@MB:GlobalLight'
         object Label2: TLabel
           Left = 5
           Top = 30
           Width = 59
           Height = 13
-          Caption = 'Light Yangle'
+          Caption = '@MB:LightYangle'
         end
         object Label3: TLabel
           Left = 5
           Top = 56
           Width = 59
           Height = 13
-          Caption = 'Light Xangle'
+          Caption = '@MB:LightXangle'
         end
         object Label25: TLabel
           Left = 6
           Top = 6
           Width = 33
           Height = 13
-          Caption = 'Visible:'
+          Caption = '@MB:Visible'
         end
         object TrackBar1: TTrackBar
           Left = 69
@@ -695,9 +684,9 @@ object LightAdjustForm: TLightAdjustForm
           Top = 4
           Width = 83
           Height = 17
-          Hint = 'Use it in animations to fix the lights to the scenery.'
+          Hint = '@MB:UseItInAnimationsToFix'
           Alignment = taLeftJustify
-          Caption = 'Rel. to object:'
+          Caption = '@MB:RelToObject'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 2
@@ -708,7 +697,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 3
           Width = 38
           Height = 20
-          Hint = 'Determines whether the light should be visible and its shape.'
+          Hint = '@MB:DeterminesWhetherTheLightShouldBe'
           Style = csDropDownList
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -731,35 +720,35 @@ object LightAdjustForm: TLightAdjustForm
         end
       end
       object TabSheet2: TTabSheet
-        Caption = 'Positional light'
+        Caption = '@MB:PositionalLight'
         ImageIndex = 1
         object Label13: TLabel
           Left = 47
           Top = 5
           Width = 24
           Height = 13
-          Caption = 'Xpos'
+          Caption = '@MB:Xpos'
         end
         object Label14: TLabel
           Left = 47
           Top = 31
           Width = 24
           Height = 13
-          Caption = 'Ypos'
+          Caption = '@MB:Ypos'
         end
         object Label15: TLabel
           Left = 47
           Top = 57
           Width = 24
           Height = 13
-          Caption = 'Zpos'
+          Caption = '@MB:Zpos'
         end
         object Label32: TLabel
           Left = 1
           Top = 6
           Width = 33
           Height = 13
-          Caption = 'Visible:'
+          Caption = '@MB:Visible'
         end
         object TrackBar15: TTrackBarEx
           Tag = 1
@@ -767,10 +756,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 27
           Width = 112
           Height = 25
-          Hint = 
-            'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-            'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-            's the trackbar to its zero position.'
+          Hint = '@MB:YouCanDoAFinerAdjust'
           Max = 180
           Min = -180
           ParentShowHint = False
@@ -789,10 +775,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 1
           Width = 112
           Height = 25
-          Hint = 
-            'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-            'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-            's the trackbar to its zero position.'
+          Hint = '@MB:YouCanDoAFinerAdjust'
           Max = 180
           Min = -180
           ParentShowHint = False
@@ -812,10 +795,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 53
           Width = 112
           Height = 25
-          Hint = 
-            'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-            'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-            's the trackbar to its zero position.'
+          Hint = '@MB:YouCanDoAFinerAdjust'
           Max = 180
           Min = -180
           ParentShowHint = False
@@ -834,7 +814,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 2
           Width = 25
           Height = 19
-          Hint = 'fine tune the positions with the arrow buttons'
+          Hint = '@MB:FineTuneThePositionsWithThe'
           Min = -32768
           Max = 32767
           Orientation = udHorizontal
@@ -849,7 +829,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 28
           Width = 25
           Height = 19
-          Hint = 'fine tune the positions with the arrow buttons'
+          Hint = '@MB:FineTuneThePositionsWithThe'
           Min = -32768
           Max = 32767
           Orientation = udHorizontal
@@ -864,7 +844,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 54
           Width = 25
           Height = 19
-          Hint = 'fine tune the positions with the arrow buttons'
+          Hint = '@MB:FineTuneThePositionsWithThe'
           Min = -32768
           Max = 32767
           Orientation = udHorizontal
@@ -878,10 +858,8 @@ object LightAdjustForm: TLightAdjustForm
           Top = 53
           Width = 39
           Height = 21
-          Hint = 
-            'Click on button and afterwards on the object in image'#13#10'to set th' +
-            'e midpoint for the light.'
-          Caption = 'mid'
+          Hint = '@MB:ClickOnButtonAndAfterwardsOn'
+          Caption = '@MB:Mid'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 6
@@ -892,7 +870,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 24
           Width = 38
           Height = 20
-          Hint = 'Determines whether the light should be visible and its shape.'
+          Hint = '@MB:DeterminesWhetherTheLightShouldBe'
           Style = csDropDownList
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -915,7 +893,7 @@ object LightAdjustForm: TLightAdjustForm
         end
       end
       object TabSheet6: TTabSheet
-        Caption = 'Lightmap'
+        Caption = '@MB:Lightmap'
         ImageIndex = 2
         object Label39: TLabel
           Left = 158
@@ -923,28 +901,28 @@ object LightAdjustForm: TLightAdjustForm
           Width = 39
           Height = 26
           Alignment = taCenter
-          Caption = 'Map not'#13#10'found'
+          Caption = '@MB:MapNotFound'
         end
         object Label29: TLabel
           Left = 3
           Top = 5
           Width = 19
           Height = 13
-          Caption = 'Xrot'
+          Caption = '@MB:Xrot'
         end
         object Label30: TLabel
           Left = 3
           Top = 31
           Width = 19
           Height = 13
-          Caption = 'Yrot'
+          Caption = '@MB:Yrot'
         end
         object Label31: TLabel
           Left = 3
           Top = 57
           Width = 19
           Height = 13
-          Caption = 'Zrot'
+          Caption = '@MB:Zrot'
         end
         object Image3: TImage
           Left = 145
@@ -958,7 +936,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 27
           Width = 112
           Height = 25
-          Hint = 'Pressing "0" (zero) sets the trackbar to its zero position.'
+          Hint = '@MB:Pressing0ZeroSetsTheTrackbar'
           Max = 255
           ParentShowHint = False
           PageSize = 1
@@ -977,7 +955,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 1
           Width = 112
           Height = 25
-          Hint = 'Pressing "0" (zero) sets the trackbar to its zero position.'
+          Hint = '@MB:Pressing0ZeroSetsTheTrackbar'
           Max = 255
           ParentShowHint = False
           PageSize = 1
@@ -997,7 +975,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 53
           Width = 112
           Height = 25
-          Hint = 'Pressing "0" (zero) sets the trackbar to its zero position.'
+          Hint = '@MB:Pressing0ZeroSetsTheTrackbar'
           Max = 255
           ParentShowHint = False
           PageSize = 1
@@ -1016,11 +994,9 @@ object LightAdjustForm: TLightAdjustForm
           Top = 63
           Width = 60
           Height = 17
-          Hint = 
-            'Set the maps orientation relative to the object.'#13#10'Use it in anim' +
-            'ations to fix the lights to the scenery.'
+          Hint = '@MB:SetTheMapsOrientationRelativeTo'
           Alignment = taLeftJustify
-          Caption = 'M.rel.obj.'
+          Caption = '@MB:MRelObj'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
@@ -1031,7 +1007,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 5
           Width = 37
           Height = 21
-          Hint = 'Map number'
+          Hint = '@MB:MapNumber'
           MaxLength = 5
           NumbersOnly = True
           ParentShowHint = False
@@ -1060,11 +1036,9 @@ object LightAdjustForm: TLightAdjustForm
       Top = 52
       Width = 33
       Height = 17
-      Hint = 
-        'Enables the hard shadow, if calculated.'#13#10'If the HS wasnt calcula' +
-        'ted, the ambshadow decreases the light if enabled.'
+      Hint = '@MB:EnablesTheHardShadowIfCalculated'
       Alignment = taLeftJustify
-      Caption = 'HS'
+      Caption = '@MB:HS'
       Checked = True
       ParentShowHint = False
       ShowHint = True
@@ -1077,9 +1051,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 50
       Width = 42
       Height = 20
-      Hint = 
-        'Light amplitude, use exponent style like:'#13#10'1.4e-2   ( = 0.014   ' +
-        ')'#13#10'3e-4      ( = 0.0003 )'
+      Hint = '@MB:LightAmplitudeUseExponentStyleLike'
       AutoSize = False
       ParentShowHint = False
       ShowHint = True
@@ -1110,7 +1082,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 12
       Width = 60
       Height = 13
-      Caption = 'Gamma:  0.5'
+      Caption = '@MB:Gamma05'
     end
     object Label17: TLabel
       Left = 168
@@ -1124,9 +1096,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 8
       Width = 93
       Height = 25
-      Hint = 
-        'If selected, press '#39'1'#39' to set this slider to the default positio' +
-        'n.'
+      Hint = '@MB:IfSelectedPress1ToSet'
       Max = 63
       ParentShowHint = False
       Frequency = 32
@@ -1144,9 +1114,7 @@ object LightAdjustForm: TLightAdjustForm
       Top = 11
       Width = 33
       Height = 17
-      Hint = 
-        'Enable internal gamma of 2 for light calculations.'#13#10'This is inde' +
-        'pendent from the Gamma slider.'
+      Hint = '@MB:EnableInternalGammaOf2For'
       Caption = 'I2'
       ParentShowHint = False
       ShowHint = True
@@ -1163,13 +1131,13 @@ object LightAdjustForm: TLightAdjustForm
     Align = alTop
     TabOrder = 3
     object TabSheet3: TTabSheet
-      Caption = 'Object'
+      Caption = '@MB:Object'
       object Label37: TLabel
         Left = 31
         Top = 38
         Width = 36
         Height = 13
-        Caption = 'Diffuse:'
+        Caption = '@MB:Diffuse'
       end
       object SpeedButton1: TSpeedButton
         Tag = 1
@@ -1177,8 +1145,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 34
         Width = 81
         Height = 23
-        Hint = 'Diffuse object colors, click to change them.'
-        Caption = 'Diff'
+        Hint = '@MB:DiffuseObjectColorsClickToChange'
+        Caption = '@MB:Diff2'
         Flat = True
         Glyph.Data = {
           1A060000424D1A060000000000003600000028000000260000000D0000000100
@@ -1244,8 +1212,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 6
         Width = 81
         Height = 23
-        Hint = 'Specular object colors, click to change them.'
-        Caption = 'Spec'
+        Hint = '@MB:SpecularObjectColorsClickToChange'
+        Caption = '@MB:Spec2'
         Flat = True
         Glyph.Data = {
           1A060000424D1A060000000000003600000028000000260000000D0000000100
@@ -1319,14 +1287,14 @@ object LightAdjustForm: TLightAdjustForm
           Width = 39
           Height = 26
           Alignment = taCenter
-          Caption = 'Map not'#13#10'found'
+          Caption = '@MB:MapNotFound'
         end
         object Label34: TLabel
           Left = 8
           Top = 7
           Width = 62
           Height = 13
-          Caption = 'Map number:'
+          Caption = '@MB:MapNumberColon'
         end
         object Label35: TLabel
           Left = 29
@@ -1334,7 +1302,7 @@ object LightAdjustForm: TLightAdjustForm
           Width = 41
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Offset X:'
+          Caption = '@MB:OffsetX'
         end
         object Label36: TLabel
           Left = 29
@@ -1342,7 +1310,7 @@ object LightAdjustForm: TLightAdjustForm
           Width = 41
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Offset Y:'
+          Caption = '@MB:OffsetY'
         end
         object Image4: TImage
           Left = 142
@@ -1356,7 +1324,7 @@ object LightAdjustForm: TLightAdjustForm
           Width = 43
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Rotation:'
+          Caption = '@MB:RotationColon'
         end
         object Label38: TLabel
           Left = 40
@@ -1364,7 +1332,7 @@ object LightAdjustForm: TLightAdjustForm
           Width = 30
           Height = 13
           Alignment = taRightJustify
-          Caption = 'Scale:'
+          Caption = '@MB:Scale'
         end
         object TrackBar28: TTrackBar
           Left = 73
@@ -1416,8 +1384,8 @@ object LightAdjustForm: TLightAdjustForm
           Top = 170
           Width = 182
           Height = 17
-          Hint = 'Use the map intensities and diffuse colors.'
-          Caption = 'Combine map Y with diffuse colors'
+          Hint = '@MB:UseTheMapIntensitiesAndDiffuse'
+          Caption = '@MB:CombineMapYWithDiffuseColors'
           ParentShowHint = False
           ShowHint = True
           TabOrder = 3
@@ -1428,17 +1396,15 @@ object LightAdjustForm: TLightAdjustForm
           Top = 136
           Width = 215
           Height = 31
-          Hint = 
-            'The its.trap mode depends on the calculated option in the "Color' +
-            'ing" tab.'
-          Caption = 'Mode:'
+          Hint = '@MB:TheItsTrapModeDependsOn'
+          Caption = '@MB:Mode'
           Columns = 4
           ItemIndex = 0
           Items.Strings = (
-            'its.trap'
-            'norms'
-            'wrap1'
-            'wrap2')
+            '@MB:ItsTrap'
+            '@MB:Norms'
+            '@MB:Wrap1'
+            '@MB:Wrap2')
           ParentShowHint = False
           ShowHint = True
           TabOrder = 4
@@ -1498,24 +1464,24 @@ object LightAdjustForm: TLightAdjustForm
           Top = 31
           Width = 47
           Height = 13
-          Caption = 'Color start'
+          Caption = '@MB:ColorStart'
         end
         object Label7: TLabel
           Left = 33
           Top = 69
           Width = 45
           Height = 13
-          Caption = 'Color end'
+          Caption = '@MB:ColorEnd'
         end
         object SBFineAdj: TSpeedButton
           Left = 16
           Top = 45
           Width = 29
           Height = 23
-          Hint = 'Adjust roughly then click for fine adjustment.'
+          Hint = '@MB:AdjustRoughlyThenClickForFine'
           AllowAllUp = True
           GroupIndex = 7
-          Caption = 'fine'
+          Caption = '@MB:Fine'
           ParentShowHint = False
           ShowHint = True
           OnClick = SBFineAdjClick
@@ -1525,14 +1491,14 @@ object LightAdjustForm: TLightAdjustForm
           Top = 99
           Width = 47
           Height = 13
-          Caption = 'Color start'
+          Caption = '@MB:ColorStart'
         end
         object Label11: TLabel
           Left = 33
           Top = 137
           Width = 45
           Height = 13
-          Caption = 'Color end'
+          Caption = '@MB:ColorEnd'
         end
         object Image1: TImage
           Left = 95
@@ -1551,7 +1517,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 172
           Width = 64
           Height = 13
-          Caption = 'Col. var. on Z'
+          Caption = '@MB:ColVarOnZ'
         end
         object Label27: TLabel
           Left = 120
@@ -1572,8 +1538,8 @@ object LightAdjustForm: TLightAdjustForm
           Top = 113
           Width = 81
           Height = 23
-          Hint = 'Oject colors on cuts and 2d inside, click to change them.'
-          Caption = 'Cuts'
+          Hint = '@MB:OjectColorsOnCutsAnd2d'
+          Caption = '@MB:Cuts'
           Flat = True
           Glyph.Data = {
             1A060000424D1A060000000000003600000028000000260000000D0000000100
@@ -1638,7 +1604,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 45
           Width = 29
           Height = 23
-          Hint = 'Adjust sliders to fit the histograms endpoints'
+          Hint = '@MB:AdjustSlidersToFitTheHistograms'
           Caption = '>||<'
           ParentShowHint = False
           ShowHint = True
@@ -1700,7 +1666,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 7
           Width = 75
           Height = 17
-          Caption = 'Col cycling'
+          Caption = '@MB:ColCycling'
           Checked = True
           ParentShowHint = False
           ShowHint = False
@@ -1713,7 +1679,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 7
           Width = 69
           Height = 17
-          Caption = '2. choice'
+          Caption = '@MB:N2Choice'
           ParentShowHint = False
           ShowHint = False
           TabOrder = 5
@@ -1724,10 +1690,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 168
           Width = 129
           Height = 25
-          Hint = 
-            'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-            'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-            's the trackbar to its zero position.'
+          Hint = '@MB:YouCanDoAFinerAdjust'
           Max = 360
           Min = -120
           ParentShowHint = False
@@ -1744,7 +1707,7 @@ object LightAdjustForm: TLightAdjustForm
           Top = 7
           Width = 52
           Height = 17
-          Caption = 'No ipol'
+          Caption = '@MB:NoIpol'
           ParentShowHint = False
           ShowHint = False
           TabOrder = 7
@@ -1756,9 +1719,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 34
         Width = 129
         Height = 25
-        Hint = 
-          'If selected, press '#39'1'#39' to set this slider to the default positio' +
-          'n.'
+        Hint = '@MB:IfSelectedPress1ToSet'
         Max = 250
         ParentShowHint = False
         Frequency = 50
@@ -1776,9 +1737,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 6
         Width = 129
         Height = 25
-        Hint = 
-          'If selected, press '#39'1'#39' to set this slider to the default positio' +
-          'n.'
+        Hint = '@MB:IfSelectedPress1ToSet'
         Max = 350
         ParentShowHint = False
         Frequency = 50
@@ -1796,10 +1755,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 64
         Width = 169
         Height = 17
-        Hint = 
-          'See also the map coloring options in the main windows '#39'Coloring'#39 +
-          ' tab.'
-        Caption = 'Use a map for the diffuse color'
+        Hint = '@MB:SeeAlsoTheMapColoringOptions'
+        Caption = '@MB:UseAMapForTheDiffuse'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 4
@@ -1807,14 +1764,14 @@ object LightAdjustForm: TLightAdjustForm
       end
     end
     object TabSheet4: TTabSheet
-      Caption = 'Ambient'
+      Caption = '@MB:Ambient'
       ImageIndex = 1
       object Label4: TLabel
         Left = 2
         Top = 169
         Width = 78
         Height = 13
-        Caption = 'Ambient shadow'
+        Caption = '@MB:AmbientShadow'
       end
       object SpeedButton3: TSpeedButton
         Tag = 3
@@ -1822,10 +1779,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 6
         Width = 60
         Height = 23
-        Hint = 
-          'Ambient top color, leftclick to change color,'#13#10'rightclick to ins' +
-          'ert the depth colors.'
-        Caption = 'Amb'
+        Hint = '@MB:AmbientTopColorLeftclickToChange'
+        Caption = '@MB:Amb'
         Flat = True
         Glyph.Data = {
           A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -1864,7 +1819,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 6
         Width = 21
         Height = 23
-        Hint = 'Ambient bottom color, click to change.'
+        Hint = '@MB:AmbientBottomColorClickToChange'
         Flat = True
         Glyph.Data = {
           A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -1901,10 +1856,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 34
         Width = 60
         Height = 23
-        Hint = 
-          'Background top color, leftclick to change, rightclick for popupm' +
-          'enu.'
-        Caption = 'Depth'
+        Hint = '@MB:BackgroundTopColorLeftclickToChange'
+        Caption = '@MB:Depth'
         Flat = True
         Glyph.Data = {
           A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -1943,7 +1896,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 34
         Width = 21
         Height = 23
-        Hint = 'Background bottom color, click to change.'
+        Hint = '@MB:BackgroundBottomColorClickToChange'
         Flat = True
         Glyph.Data = {
           A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -2005,7 +1958,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 205
         Width = 64
         Height = 13
-        Caption = '2nd reflection'
+        Caption = '@MB:N2ndReflection'
       end
       object SpeedButton5: TSpeedButton
         Tag = 1
@@ -2013,7 +1966,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 66
         Width = 25
         Height = 23
-        Hint = 'Depth gradient function, works only if not '#39'Relative to object'#39'.'
+        Hint = '@MB:DepthGradientFunctionWorksOnlyIf'
         GroupIndex = 12
         Flat = True
         Glyph.Data = {
@@ -2070,7 +2023,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 66
         Width = 25
         Height = 23
-        Hint = 'Depth gradient function, works only if not '#39'Relative to object'#39'.'
+        Hint = '@MB:DepthGradientFunctionWorksOnlyIf'
         GroupIndex = 12
         Down = True
         Flat = True
@@ -2128,7 +2081,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 66
         Width = 25
         Height = 23
-        Hint = 'Depth gradient function, works only if not '#39'Relative to object'#39'.'
+        Hint = '@MB:DepthGradientFunctionWorksOnlyIf'
         GroupIndex = 12
         Flat = True
         Glyph.Data = {
@@ -2184,30 +2137,28 @@ object LightAdjustForm: TLightAdjustForm
         Top = 253
         Width = 54
         Height = 13
-        Caption = 'Roughness'
+        Caption = '@MB:Roughness'
       end
       object Label42: TLabel
         Left = 5
         Top = 119
         Width = 73
         Height = 13
-        Caption = 'Diffuse shadow'
+        Caption = '@MB:DiffuseShadow'
       end
       object Label43: TLabel
         Left = 21
         Top = 140
         Width = 180
         Height = 13
-        Caption = '(only if hard shadows were calculated)'
+        Caption = '@MB:OnlyIfHardShadowsWereCalculated'
       end
       object TrackBar11: TTrackBar
         Left = 84
         Top = 165
         Width = 129
         Height = 25
-        Hint = 
-          'If selected, press '#39'1'#39' to set this slider to the default positio' +
-          'n.'
+        Hint = '@MB:IfSelectedPress1ToSet'
         Max = 106
         ParentShowHint = False
         Frequency = 53
@@ -2253,8 +2204,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 65
         Width = 86
         Height = 17
-        Hint = 'Decreases the fog in near parts'
-        Caption = 'Far depth fog'
+        Hint = '@MB:DecreasesTheFogInNearParts'
+        Caption = '@MB:FarDepthFog'
         Checked = True
         ParentShowHint = False
         ShowHint = True
@@ -2267,11 +2218,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 86
         Width = 104
         Height = 17
-        Hint = 
-          'Make the top-bottom gradient of the ambient and background color' +
-          's'#13#10'relative to the objects coordinate system.'#13#10'Use it in animati' +
-          'ons to fix the lights to the scenery.'
-        Caption = 'Relative to object'
+        Hint = '@MB:MakeTheTopBottomGradientOf'
+        Caption = '@MB:RelativeToObject'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 4
@@ -2282,9 +2230,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 201
         Width = 129
         Height = 25
-        Hint = 
-          'If selected, press '#39'1'#39' to set this slider to the default positio' +
-          'n.'
+        Hint = '@MB:IfSelectedPress1ToSet'
         Max = 106
         ParentShowHint = False
         Frequency = 53
@@ -2302,9 +2248,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 249
         Width = 129
         Height = 25
-        Hint = 
-          'Only working if '#39'Smooth normals'#39' was set bigger than zero on cal' +
-          'culation.'
+        Hint = '@MB:OnlyWorkingIfSmoothNormalsWas'
         Max = 255
         ParentShowHint = False
         Frequency = 255
@@ -2322,7 +2266,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 115
         Width = 129
         Height = 25
-        Hint = 'To decrease also direct light by ambient occlusion'
+        Hint = '@MB:ToDecreaseAlsoDirectLightBy'
         Max = 255
         ParentShowHint = False
         Frequency = 53
@@ -2339,8 +2283,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 227
         Width = 63
         Height = 17
-        Hint = 'Different calculation of light combining'
-        Caption = 'Mode 2'
+        Hint = '@MB:DifferentCalculationOfLightCombining'
+        Caption = '@MB:Mode2'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 8
@@ -2348,23 +2292,23 @@ object LightAdjustForm: TLightAdjustForm
       end
     end
     object Fog: TTabSheet
-      Caption = 'd.Fog'
+      Caption = '@MB:DFog'
       ImageIndex = 3
       object Label1: TLabel
         Left = 33
         Top = 79
         Width = 47
         Height = 13
-        Caption = 'Fog offset'
+        Caption = '@MB:FogOffset'
       end
       object FogResetButton: TSpeedButton
         Left = 0
         Top = 83
         Width = 35
         Height = 31
-        Hint = 'Click to set all dynamic fog sliders to zero.'
+        Hint = '@MB:ClickToSetAllDynamicFog'
         BiDiMode = bdLeftToRight
-        Caption = 'set to 0'
+        Caption = '@MB:SetTo0'
         Flat = True
         ParentShowHint = False
         ParentBiDiMode = False
@@ -2376,7 +2320,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 110
         Width = 44
         Height = 13
-        Caption = 'Far offset'
+        Caption = '@MB:FarOffset'
       end
       object SpeedButton4: TSpeedButton
         Tag = 4
@@ -2384,10 +2328,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 42
         Width = 60
         Height = 23
-        Hint = 
-          'Dynamic fog, click to change the color.  Rightclick to insert vo' +
-          'lumetric light color.'
-        Caption = 'Dyn.fog'
+        Hint = '@MB:DynamicFogClickToChangeThe'
+        Caption = '@MB:DynFog'
         Flat = True
         Glyph.Data = {
           A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -2426,7 +2368,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 42
         Width = 21
         Height = 23
-        Hint = 'Dynamic fog intense color, click to change.'
+        Hint = '@MB:DynamicFogIntenseColorClickTo'
         Flat = True
         Glyph.Data = {
           A6020000424DA60200000000000036000000280000000F0000000D0000000100
@@ -2463,9 +2405,7 @@ object LightAdjustForm: TLightAdjustForm
         Width = 184
         Height = 26
         Alignment = taCenter
-        Caption = 
-          'Dynamic fog or volumetric light params. See '#39'Coloring'#39' tab for o' +
-          'ptions!'
+        Caption = '@MB:DynamicFogOrVolumetricLightParams'
         WordWrap = True
       end
       object Label47: TLabel
@@ -2474,9 +2414,7 @@ object LightAdjustForm: TLightAdjustForm
         Width = 197
         Height = 39
         Alignment = taCenter
-        Caption = 
-          'If volumetric light choosen:  Rightclick on '#39'Dyn.fog'#39' button to ' +
-          'insert the volumetric light color.'
+        Caption = '@MB:IfVolumetricLightChoosenRightclickOn'
         WordWrap = True
       end
       object TrackBar3: TTrackBar
@@ -2516,10 +2454,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 106
         Width = 129
         Height = 25
-        Hint = 
-          'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-          'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-          's the trackbar to its zero position.'
+        Hint = '@MB:YouCanDoAFinerAdjust'
         Max = 256
         ParentShowHint = False
         Frequency = 128
@@ -2537,10 +2472,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 139
         Width = 76
         Height = 17
-        Hint = 
-          'Blend the dynamic fog  instead of adding the light,'#13#10'makes the b' +
-          'ackground vanishing.'
-        Caption = 'Blend dFog'
+        Hint = '@MB:BlendTheDynamicFogInsteadOf'
+        Caption = '@MB:BlendDFog'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 3
@@ -2551,8 +2484,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 161
         Width = 86
         Height = 17
-        Hint = 'Make sure that no light will be subtracted in non-blend mode'
-        Caption = 'Only add light'
+        Hint = '@MB:MakeSureThatNoLightWill'
+        Caption = '@MB:OnlyAddLight'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 4
@@ -2560,7 +2493,7 @@ object LightAdjustForm: TLightAdjustForm
       end
     end
     object TabSheet5: TTabSheet
-      Caption = 'Back pic'
+      Caption = '@MB:BackPic'
       ImageIndex = 2
       object Label6: TLabel
         Left = 49
@@ -2568,7 +2501,7 @@ object LightAdjustForm: TLightAdjustForm
         Width = 29
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Axis X'
+        Caption = '@MB:AxisX'
       end
       object Label19: TLabel
         Left = 49
@@ -2576,7 +2509,7 @@ object LightAdjustForm: TLightAdjustForm
         Width = 29
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Axis Y'
+        Caption = '@MB:AxisY'
       end
       object Label20: TLabel
         Left = 49
@@ -2584,14 +2517,14 @@ object LightAdjustForm: TLightAdjustForm
         Width = 29
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Axis Z'
+        Caption = '@MB:AxisZ'
       end
       object Label24: TLabel
         Left = 1
         Top = 123
         Width = 38
         Height = 26
-        Caption = 'Image rotation:'
+        Caption = '@MB:ImageRotation'
         WordWrap = True
       end
       object Image5: TImage
@@ -2606,7 +2539,7 @@ object LightAdjustForm: TLightAdjustForm
         Width = 21
         Height = 13
         AutoSize = False
-        Caption = 'Int.:'
+        Caption = '@MB:Int'
       end
       object Label45: TLabel
         Left = 23
@@ -2622,7 +2555,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 154
         Width = 23
         Height = 39
-        Caption = '(use also navi)'
+        Caption = '@MB:UseAlsoNavi'
         WordWrap = True
       end
       object CheckBox8: TCheckBox
@@ -2630,8 +2563,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 8
         Width = 120
         Height = 17
-        Hint = 'Click to load a background picture.'
-        Caption = 'Background image:'
+        Hint = '@MB:ClickToLoadABackgroundPicture'
+        Caption = '@MB:BackgroundImage'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
@@ -2642,10 +2575,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 173
         Width = 133
         Height = 25
-        Hint = 
-          'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-          'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-          's the trackbar to its zero position.'
+        Hint = '@MB:YouCanDoAFinerAdjust'
         Max = 255
         ParentShowHint = False
         Frequency = 128
@@ -2663,10 +2593,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 146
         Width = 133
         Height = 25
-        Hint = 
-          'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-          'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-          's the trackbar to its zero position.'
+        Hint = '@MB:YouCanDoAFinerAdjust'
         Max = 255
         ParentShowHint = False
         Frequency = 128
@@ -2684,10 +2611,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 119
         Width = 133
         Height = 25
-        Hint = 
-          'You can do a finer adjust with the left or right arrow keys'#13#10'on ' +
-          'most trackbars, when they are selected.'#13#10'Pressing "0" (zero) set' +
-          's the trackbar to its zero position.'
+        Hint = '@MB:YouCanDoAFinerAdjust'
         Max = 255
         ParentShowHint = False
         Frequency = 128
@@ -2705,10 +2629,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 95
         Width = 147
         Height = 17
-        Hint = 
-          'If enabled, the image covers the whole sphere.'#13#10'Useful in animat' +
-          'ions.'
-        Caption = 'As full background sphere:'
+        Hint = '@MB:IfEnabledTheImageCoversThe'
+        Caption = '@MB:AsFullBackgroundSphere'
         Checked = True
         ParentShowHint = False
         ShowHint = True
@@ -2721,10 +2643,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 50
         Width = 128
         Height = 17
-        Hint = 
-          'Reduces blocky artifacts, no more that important due to spline i' +
-          'nterpolation.'
-        Caption = 'Smooth image on load'
+        Hint = '@MB:ReducesBlockyArtifactsNoMoreThat'
+        Caption = '@MB:SmoothImageOnLoad'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 5
@@ -2734,10 +2654,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 70
         Width = 189
         Height = 17
-        Hint = 
-          'Stretches upper and lower parts, maybe useful for a common image' +
-          ' in full sphere option.'
-        Caption = 'Scale rows to geographic projection'
+        Hint = '@MB:StretchesUpperAndLowerPartsMaybe'
+        Caption = '@MB:ScaleRowsToGeographicProjection'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 6
@@ -2747,8 +2665,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 232
         Width = 200
         Height = 17
-        Hint = 'If enabled, the image does not vanish on a high '#39'Depth'#39' value.'
-        Caption = 'Add to background depth (not blend)'
+        Hint = '@MB:IfEnabledTheImageDoesNot'
+        Caption = '@MB:AddToBackgroundDepthNotBlend'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 7
@@ -2759,8 +2677,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 30
         Width = 115
         Height = 17
-        Hint = 'Get a smooth image wraparound for spherical usage'
-        Caption = 'Fit left+right borders'
+        Hint = '@MB:GetASmoothImageWraparoundFor'
+        Caption = '@MB:FitLeftRightBorders'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 8
@@ -2770,10 +2688,8 @@ object LightAdjustForm: TLightAdjustForm
         Top = 254
         Width = 200
         Height = 17
-        Hint = 
-          'For spherical usage, replaces the ambient colors with the downsc' +
-          'aled background image'
-        Caption = 'Use a small image as ambient color'
+        Hint = '@MB:ForSphericalUsageReplacesTheAmbient'
+        Caption = '@MB:UseASmallImageAsAmbient'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 9
@@ -2784,7 +2700,7 @@ object LightAdjustForm: TLightAdjustForm
         Top = 201
         Width = 133
         Height = 25
-        Hint = 'Intensity of image'
+        Hint = '@MB:IntensityOfImage'
         Max = 255
         ParentShowHint = False
         Frequency = 128
@@ -2820,32 +2736,32 @@ object LightAdjustForm: TLightAdjustForm
     Left = 152
     Top = 65528
     object CopythislighttoLight11: TMenuItem
-      Caption = 'Copy this light to Light1'
+      Caption = '@MB:CopyThisLightToLight1'
       OnClick = CopythislighttoLight11Click
     end
     object CopythislighttoLight21: TMenuItem
       Tag = 1
-      Caption = 'Copy this light to Light2'
+      Caption = '@MB:CopyThisLightToLight2'
       OnClick = CopythislighttoLight11Click
     end
     object CopythislighttoLight31: TMenuItem
       Tag = 2
-      Caption = 'Copy this light to Light3'
+      Caption = '@MB:CopyThisLightToLight3'
       OnClick = CopythislighttoLight11Click
     end
     object CopythislighttoLight41: TMenuItem
       Tag = 3
-      Caption = 'Copy this light to Light4'
+      Caption = '@MB:CopyThisLightToLight4'
       OnClick = CopythislighttoLight11Click
     end
     object CopythislighttoLight51: TMenuItem
       Tag = 4
-      Caption = 'Copy this light to Light5'
+      Caption = '@MB:CopyThisLightToLight5'
       OnClick = CopythislighttoLight11Click
     end
     object CopythislighttoLight61: TMenuItem
       Tag = 5
-      Caption = 'Copy this light to Light6'
+      Caption = '@MB:CopyThisLightToLight6'
       OnClick = CopythislighttoLight11Click
     end
   end
@@ -2878,7 +2794,7 @@ object LightAdjustForm: TLightAdjustForm
     Left = 168
     Top = 336
     object Insertvolumetriclightcolor1: TMenuItem
-      Caption = 'Insert volumetric light color'
+      Caption = '@MB:InsertVolumetricLightColor'
       OnClick = Insertvolumetriclightcolor1Click
     end
   end

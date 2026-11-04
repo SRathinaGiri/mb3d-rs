@@ -140,6 +140,24 @@ fn main() {
         }
         ui.save_form_png("MutaGenFrm", &out.join("MutaGenFrm.png"), 1.0).unwrap();
     }
+    // the experimental speed-ups window, all of them on; the main window
+    // on its Internal tab (the Experimental... button)
+    if want("experimental") {
+        ui.set_active_page("Mand3DForm", "PageControl1", "TabSheet4");
+        app.process(&mut ui);
+        ui.save_form_png("Mand3DForm", &out.join("Mand3DForm_internal.png"), 1.0).unwrap();
+        ui.show("ExperimentalFrm");
+        app.process(&mut ui);
+        for b in ["OnBox", "SecantBox", "FreeBox", "HalfBox", "ConeBox"] {
+            if !ui.checked("ExperimentalFrm", b) {
+                ui.click("ExperimentalFrm", b);
+                app.process(&mut ui);
+            }
+        }
+        ui.set_text("ExperimentalFrm", "RelaxEdit", "1.3");
+        app.process(&mut ui);
+        ui.save_form_png("ExperimentalFrm", &out.join("ExperimentalFrm.png"), 1.0).unwrap();
+    }
     // Voxel export: import and preview
     if want("voxel") {
     ui.show("FVoxelExport");

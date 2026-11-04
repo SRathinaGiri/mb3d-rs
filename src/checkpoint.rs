@@ -8,6 +8,9 @@
 //!
 //! * `data.bin`: the records of every pixel (`rec` bytes each, row major),
 //!   written at their place as soon as a unit (a row, a tile) is finished;
+//!   for a picture the file is `image.m3i` instead, a valid MB3D image
+//!   file at every moment ([`Image`]: its header before the records, the
+//!   rest of the parameters after them, the rows not done as background);
 //! * `marks.bin`: one mark per unit, written after its data: a magic word,
 //!   a hash of the unit's data, a generation (a Monte Carlo pass) and the
 //!   rectangle it covers.  A unit whose data does not match its hash (the
@@ -171,6 +174,24 @@ pub struct Spec {
     pub height: usize,
     pub rec: usize,
     pub units: usize,
+    /// the data file as an image file (see [`Image`]), else `data.bin`
+    pub image: Option<Image>,
+}
+
+/// What makes the data file of a checkpoint a `.m3i` image file: `head`
+/// goes before the records, `tail` after them, and `fill` is the record
+/// of a pixel not calculated yet (the background), so that the file can
+/// be copied out and opened as a picture at any time.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Image {
+    pub head: Vec<u8>,
+    pub tail: Vec<u8>,
+    pub fill: Vec<u8>,
+}
+
+/// The data file of `spec` in its folder.
+fn data_name(spec: &Spec) -> &'static str {
+    if spec.image.is_some() { "image.m3i" } else { "data.bin" }
 }
 
 /// A unit that was done: its generation and rectangle `[x, y, w, h]`.
@@ -185,6 +206,8 @@ pub struct Store {
     dir: PathBuf,
     spec: Spec,
     data: File,
+    /// where the records start in `data` (after an image's header)
+    data_off: u64,
     marks: File,
     _lock: File,
     done: Mutex<Vec<Option<Done>>>,
@@ -224,7 +247,8 @@ impl Store {
         let fits = |k: &str, v: usize| old.get(k).and_then(|s| s.parse::<usize>().ok()) == Some(v);
         let same = fits("width", spec.width) && fits("height", spec.height) && fits("rec", spec.rec) && fits("units", spec.units) && old.get("version").map(|v| v.as_str()) == Some(env!("CARGO_PKG_VERSION"));
         let keep = policy == Policy::Continue && same;
-        let size = (spec.width * spec.height * spec.rec) as u64;
+        let records = (spec.width * spec.height * spec.rec) as u64;
+        let (head, tail) = spec.image.as_ref().map_or((0, 0), |i| (i.head.len() as u64, i.tail.len() as u64));
         let open = |name: &str, len: u64| -> Option<File> {
             let f = OpenOptions::new().read(true).write(true).create(true).truncate(!keep).open(dir.join(name)).ok()?;
             if f.metadata().ok()?.len() != len {
@@ -232,11 +256,26 @@ impl Store {
             }
             Some(f)
         };
-        let data = open("data.bin", size)?;
+        // (the data file of the other name: from another version)
+        let _ = std::fs::remove_file(dir.join(if spec.image.is_some() { "data.bin" } else { "image.m3i" }));
+        let data = open(data_name(&spec), head + records + tail)?;
         let marks = open("marks.bin", (spec.units * MARK) as u64)?;
+        if let Some(im) = &spec.image {
+            // the image's header and the rest of its parameters as they
+            // are now (a continued render may have changed the lighting,
+            // which the key leaves out); the rows not done as background
+            write_at(&data, &im.head, 0).ok()?;
+            write_at(&data, &im.tail, head + records).ok()?;
+            if !keep && im.fill.iter().any(|&b| b != 0) && records <= 1 << 30 {
+                let row: Vec<u8> = im.fill.iter().cycle().take(spec.width * spec.rec).copied().collect();
+                for y in 0..spec.height {
+                    write_at(&data, &row, head + (y * spec.width * spec.rec) as u64).ok()?;
+                }
+            }
+        }
         let mut done = vec![None; spec.units];
         if keep {
-            read_marks(&data, &marks, &spec, &mut done);
+            read_marks(&data, head, &marks, &spec, &mut done);
         } else {
             for f in std::fs::read_dir(&dir).into_iter().flatten().flatten() {
                 let n = f.file_name();
@@ -255,11 +294,13 @@ impl Store {
         info.insert("height".into(), spec.height.to_string());
         info.insert("rec".into(), spec.rec.to_string());
         info.insert("units".into(), spec.units.to_string());
+        info.insert("data".into(), data_name(&spec).into());
         info.entry("created".into()).or_insert_with(|| now_secs().to_string());
         let s = Store {
             dir,
             spec,
             data,
+            data_off: head,
             marks,
             _lock: lock,
             n_done: AtomicUsize::new(resumed),
@@ -335,7 +376,7 @@ impl Store {
         debug_assert_eq!(recs.len(), w * h * r);
         let ok = (|| {
             for k in 0..h {
-                let off = (((y + k) * self.spec.width + x) * r) as u64;
+                let off = self.data_off + (((y + k) * self.spec.width + x) * r) as u64;
                 write_at(&self.data, &recs[k * w * r..(k + 1) * w * r], off)?;
             }
             write_at(&self.marks, &mark(fnv32(recs), gen, rect), (unit * MARK) as u64)
@@ -343,7 +384,7 @@ impl Store {
         if let Err(e) = ok {
             // (a full disk: the render goes on without its checkpoint)
             if !self.failed.swap(true, Ordering::Relaxed) {
-                eprintln!("  checkpoint not written any more: {e}");
+                crate::elog!("  checkpoint not written any more: {e}");
             }
             return;
         }
@@ -362,7 +403,7 @@ impl Store {
         let r = self.spec.rec;
         let mut out = vec![0u8; w * h * r];
         for k in 0..h {
-            let off = (((y + k) * self.spec.width + x) * r) as u64;
+            let off = self.data_off + (((y + k) * self.spec.width + x) * r) as u64;
             let _ = read_at(&self.data, &mut out[k * w * r..(k + 1) * w * r], off);
         }
         out
@@ -372,7 +413,7 @@ impl Store {
     /// so that it is never seen half written.
     pub fn put_extra(&self, name: &str, data: &[u8]) {
         if write_atomic(&self.dir.join(format!("extra-{name}")), data).is_err() && !self.failed.swap(true, Ordering::Relaxed) {
-            eprintln!("  checkpoint not written any more");
+            crate::elog!("  checkpoint not written any more");
         }
         self.autosave();
     }
@@ -474,7 +515,7 @@ fn mark(hash: u32, gen: u32, rect: [usize; 4]) -> [u8; MARK] {
 }
 
 /// The units whose mark is written and whose data matches it.
-fn read_marks(data: &File, marks: &File, spec: &Spec, done: &mut [Option<Done>]) {
+fn read_marks(data: &File, data_off: u64, marks: &File, spec: &Spec, done: &mut [Option<Done>]) {
     let mut all = vec![0u8; spec.units * MARK];
     if read_at(marks, &mut all, 0).is_err() {
         return;
@@ -492,7 +533,7 @@ fn read_marks(data: &File, marks: &File, spec: &Spec, done: &mut [Option<Done>])
             continue;
         }
         buf.resize(w * h * r, 0);
-        let ok = (0..h).all(|k| read_at(data, &mut buf[k * w * r..(k + 1) * w * r], (((y + k) * spec.width + x) * r) as u64).is_ok());
+        let ok = (0..h).all(|k| read_at(data, &mut buf[k * w * r..(k + 1) * w * r], data_off + (((y + k) * spec.width + x) * r) as u64).is_ok());
         if ok && fnv32(&buf) == v(1) {
             done[u] = Some(Done { gen: v(2), rect });
         }
@@ -510,6 +551,14 @@ pub struct Entry {
 }
 
 impl Entry {
+    /// The image file of a picture's checkpoint (`image.m3i`, a `.m3i`
+    /// at any time, its rows not done as background); None for the other
+    /// kinds.
+    pub fn image_file(&self) -> Option<PathBuf> {
+        let p = self.dir.join("image.m3i");
+        (self.info.get("data").map(|d| d == "image.m3i").unwrap_or(false) && p.is_file()).then_some(p)
+    }
+
     pub fn key(&self) -> String {
         self.dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
     }
@@ -598,6 +647,58 @@ pub fn remove(e: &Entry) -> bool {
     !e.busy && std::fs::remove_dir_all(&e.dir).is_ok()
 }
 
+/// Writes the picture of a checkpoint (`calc` or `tiles`, of this or an
+/// earlier version: `data.bin` as well as `image.m3i`) as a `.m3i` file
+/// to `out`: the rows done as they are, the others as background.
+pub fn export_m3i(e: &Entry, out: &Path) -> Result<(), String> {
+    use std::io::Write;
+    let kind = e.info.get("kind").map(String::as_str).unwrap_or("");
+    if kind != "calc" && kind != "tiles" {
+        return Err("only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export)".into());
+    }
+    let n = |k: &str| e.info.get(k).and_then(|v| v.parse::<usize>().ok()).ok_or_else(|| format!("{k} missing in info.txt"));
+    let (width, height, rec, units) = (n("width")?, n("height")?, n("rec")?, n("units")?);
+    let text = e.scene_text().ok_or("this render kept no parameters")?;
+    let sc = crate::scene::Scene::parse(&text)?;
+    let (head, tail) = crate::m3p::m3i_parts(&sc);
+    let fill = crate::gbuffer::pack(&[crate::gbuffer::SiLight::default()]);
+    if rec != fill.len() || width != sc.width.max(0) as usize || height != sc.height.max(0) as usize {
+        return Err("the checkpoint does not match its parameters".into());
+    }
+    let (name, data_off) = if e.dir.join("image.m3i").is_file() { ("image.m3i", head.len() as u64) } else { ("data.bin", 0) };
+    let data = File::open(e.dir.join(name)).map_err(|er| format!("{name}: {er}"))?;
+    let marks = File::open(e.dir.join("marks.bin")).map_err(|er| format!("marks.bin: {er}"))?;
+    let spec = Spec { kind: kind.into(), key: e.key(), name: String::new(), width, height, rec, units, image: None };
+    let mut done = vec![None; units];
+    read_marks(&data, data_off, &marks, &spec, &mut done);
+    // which rows are there (a tile covers several rows in part: its
+    // pixels are read, the rest of the row is background)
+    let mut have = vec![false; width * height];
+    for d in done.iter().flatten() {
+        let [x, y, w, h] = d.rect;
+        for yy in y..(y + h).min(height) {
+            for xx in x..(x + w).min(width) {
+                have[yy * width + xx] = true;
+            }
+        }
+    }
+    let mut f = std::io::BufWriter::new(File::create(out).map_err(|er| format!("{}: {er}", out.display()))?);
+    let w = |f: &mut std::io::BufWriter<File>, b: &[u8]| f.write_all(b).map_err(|er| format!("{}: {er}", out.display()));
+    w(&mut f, &head)?;
+    let mut row = vec![0u8; width * rec];
+    for y in 0..height {
+        let _ = read_at(&data, &mut row, data_off + (y * width * rec) as u64);
+        for x in 0..width {
+            if !have[y * width + x] {
+                row[x * rec..(x + 1) * rec].copy_from_slice(&fill);
+            }
+        }
+        w(&mut f, &row)?;
+    }
+    w(&mut f, &tail)?;
+    f.flush().map_err(|er| format!("{}: {er}", out.display()))
+}
+
 /// Deletes the old checkpoints, then the oldest ones over [`max_bytes`]
 /// (not `keep`, not those a render holds).
 fn prune(root: &Path, keep: Option<&str>) {
@@ -619,12 +720,42 @@ fn prune(root: &Path, keep: Option<&str>) {
 mod tests {
     use super::*;
 
+    // (the tests set MB3D_RESUME_DIR, which is process wide: one at a time)
+    static ONE: Mutex<()> = Mutex::new(());
+
     fn spec(key: &str) -> Spec {
-        Spec { kind: "test".into(), key: key.into(), name: "t".into(), width: 4, height: 3, rec: 2, units: 3 }
+        Spec { kind: "test".into(), key: key.into(), name: "t".into(), width: 4, height: 3, rec: 2, units: 3, image: None }
+    }
+
+    #[test]
+    fn an_image_checkpoint_is_an_image_file() {
+        let _one = ONE.lock().unwrap_or_else(|e| e.into_inner());
+        let d = std::env::temp_dir().join(format!("mb3d-ck-img-{}", std::process::id()));
+        std::env::set_var("MB3D_RESUME_DIR", &d);
+        let key = "test-0002";
+        let image = || Some(Image { head: b"HEAD".to_vec(), tail: b"tail!".to_vec(), fill: vec![7, 8] });
+        let sp = || Spec { image: image(), ..spec(key) };
+        let s = Store::open(sp(), Policy::Fresh).unwrap();
+        s.put(1, 0, [0, 1, 4, 1], &[1, 2, 1, 2, 1, 2, 1, 2]);
+        s.keep();
+        let f = std::fs::read(d.join(key).join("image.m3i")).unwrap();
+        assert_eq!(f.len(), 4 + 24 + 5);
+        assert_eq!(&f[..4], b"HEAD");
+        assert_eq!(&f[4..12], &[7, 8, 7, 8, 7, 8, 7, 8], "a row not done: the fill");
+        assert_eq!(&f[12..20], &[1, 2, 1, 2, 1, 2, 1, 2]);
+        assert_eq!(&f[28..], b"tail!");
+        assert!(entry(&d.join(key)).unwrap().image_file().is_some());
+        // continued: the row is still there, the header written again
+        let s = Store::open(sp(), Policy::Continue).unwrap();
+        assert_eq!(s.resumed(), 1);
+        assert_eq!(s.read([0, 1, 4, 1]), vec![1, 2, 1, 2, 1, 2, 1, 2]);
+        s.finish();
+        let _ = std::fs::remove_dir_all(&d);
     }
 
     #[test]
     fn units_survive_and_bad_ones_are_dropped() {
+        let _one = ONE.lock().unwrap_or_else(|e| e.into_inner());
         let d = std::env::temp_dir().join(format!("mb3d-ck-{}", std::process::id()));
         std::env::set_var("MB3D_RESUME_DIR", &d);
         let key = "test-0001";

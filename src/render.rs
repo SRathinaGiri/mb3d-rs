@@ -31,6 +31,165 @@ impl RenderResult {
     }
 }
 
+/// The rows of the running march the card calculated (for the window's
+/// time estimate: how much the card adds to the CPU threads).
+pub static CARD_ROWS: AtomicUsize = AtomicUsize::new(0);
+
+/// The cost of each row of a calculation, for `progress` to count the work
+/// done rather than the rows: a row of sky takes milliseconds, a row of
+/// the object seconds, and the rows are handed out in order (the CPU from
+/// one end, the card from the other), so a time estimate from the rows
+/// done is off by the cost ratio of the rows to come and the rows done.
+/// `progress(done, total)` gets the weights of the rows done and of all
+/// rows; the weights are integers, each at least 1.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RowWeights {
+    /// `cum[y]`: the weights of the rows before `y` (`cum[h]`: of all)
+    cum: Vec<usize>,
+}
+
+impl RowWeights {
+    /// Every row the same (what the progress counted before: rows).
+    pub fn equal(h: usize) -> Self {
+        Self::new(vec![1; h])
+    }
+
+    /// The rows' weights (0 counts as 1).
+    pub fn new(w: Vec<usize>) -> Self {
+        let mut cum = Vec::with_capacity(w.len() + 1);
+        cum.push(0);
+        for v in w {
+            cum.push(cum.last().unwrap() + v.max(1));
+        }
+        RowWeights { cum }
+    }
+
+    /// The costs of the rows of a picture of `h` rows from the G-buffer
+    /// of a probe of `pw` x `ph` (the same view marched smaller): a
+    /// pixel's cost is its DE steps plus a few for the ray itself (a
+    /// background pixel costs something too), a row's the sum over its
+    /// probe row.  The weights are scaled to a mean of about 100.
+    pub fn from_probe(g: &[SiLight], pw: usize, ph: usize, h: usize) -> Self {
+        if pw == 0 || ph == 0 || g.len() < pw * ph || h == 0 {
+            return Self::equal(h);
+        }
+        let cost: Vec<f64> = (0..ph).map(|r| g[r * pw..(r + 1) * pw].iter().map(|s| (s.shadow & 0x3FF) as f64 + PIXEL_BASE_COST).sum()).collect();
+        let rows: Vec<f64> = (0..h).map(|y| cost[(y * ph / h).min(ph - 1)]).collect();
+        let mean = rows.iter().sum::<f64>() / h as f64;
+        let k = if mean > 0.0 { 100.0 / mean } else { 1.0 };
+        Self::new(rows.iter().map(|c| (c * k).round() as usize).collect())
+    }
+
+    /// The surface pixels of each row of `g` (`w` x `h`) plus one: what
+    /// the passes after the march (shadows, occlusion, reflections) work
+    /// on; a row of sky is done at once.
+    pub fn surface(g: &[SiLight], w: usize, h: usize) -> Self {
+        let w = w.max(1);
+        Self::new((0..h).map(|y| g.get(y * w..(y + 1) * w).map_or(0, |r| r.iter().filter(|s| !s.is_background()).count()) + 1).collect())
+    }
+
+    pub fn rows(&self) -> usize {
+        self.cum.len() - 1
+    }
+
+    pub fn weight(&self, y: usize) -> usize {
+        self.cum.get(y + 1).map_or(0, |c| c - self.cum[y])
+    }
+
+    pub fn total(&self) -> usize {
+        *self.cum.last().unwrap()
+    }
+
+    /// The weights of the first `n` rows (rows done in order).
+    pub fn before(&self, n: usize) -> usize {
+        self.cum[n.min(self.rows())]
+    }
+
+    /// The weights of the rows `ck` has.
+    fn done_in(&self, ck: Option<&Store>) -> usize {
+        match ck.filter(|s| s.done_count() > 0) {
+            Some(s) => (0..self.rows()).filter(|&y| s.is_done(y)).map(|y| self.weight(y)).sum(),
+            None => 0,
+        }
+    }
+}
+
+/// What a pixel costs besides its DE steps (the ray's setup, a background
+/// pixel's march to the far plane), in steps.
+const PIXEL_BASE_COST: f64 = 4.0;
+
+/// The least pixels a picture has for its rows to be weighed by a probe
+/// (`row_weights`): smaller ones are quick anyway.
+const WORKMAP_MIN_PIXELS: usize = 100_000;
+
+/// What the probe of the main calculation found ([`row_weights`]), for the
+/// window's time estimate: the share of the pixels on the object, the
+/// mean DE steps of a pixel, and the probe's own time.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct WorkProbe {
+    pub surface: f64,
+    pub mean_steps: f64,
+    pub seconds: f64,
+    /// the pixels it marched (its pace: `pixels / seconds`)
+    pub pixels: usize,
+}
+
+static WORK_PROBE: std::sync::Mutex<Option<WorkProbe>> = std::sync::Mutex::new(None);
+
+/// The probe of the main calculation under way (None before it ran, or
+/// when it was skipped).
+pub fn work_probe() -> Option<WorkProbe> {
+    *WORK_PROBE.lock().unwrap()
+}
+
+/// The weights of the rows of the calculation of `sc` (`p` its
+/// parameters): a probe marches the view at 1/8 of its size (1.6 % of the
+/// pixels) through the same path the calculation takes, raw, and its DE
+/// steps weigh the rows ([`RowWeights::from_probe`]).  Equal weights for
+/// small pictures, 2D slices, when the probe fails, and with
+/// MB3D_NO_WORKMAP set.
+fn row_weights(sc: &Scene, p: &CalcParams, cancel: &(dyn Fn() -> bool + Sync)) -> RowWeights {
+    let (w, h) = (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize);
+    *WORK_PROBE.lock().unwrap() = None;
+    if w * h < WORKMAP_MIN_PIXELS || p.slice_2d != 0 || std::env::var_os("MB3D_NO_WORKMAP").is_some() {
+        return RowWeights::equal(h);
+    }
+    // the march alone (as in `march_sig`), and no volumetric light map
+    let mut s = sc.clone();
+    s.ao = None;
+    s.shadows = None;
+    s.deao = None;
+    s.normals_on_zbuf = false;
+    s.dof = None;
+    s.mc = Default::default();
+    s.vol_light = None;
+    s.scale_image(1.0 / 8.0);
+    let f = s.width as f64 / sc.width.max(1) as f64;
+    if let Some(r) = s.calc_rect {
+        let at = |v: i32| (v as f64 * f).round() as i32;
+        let size = |v: i32, max: i32| ((v as f64 * f).round() as i32).clamp(1, max.max(1));
+        let (x, y) = (at(r[0]).clamp(0, s.width - 1), at(r[1]).clamp(0, s.height - 1));
+        s.calc_rect = Some([x, y, size(r[2], s.width - x), size(r[3], s.height - y)]);
+    }
+    let t = Instant::now();
+    let Ok((q, g)) = calculate_rows(&s, &|_, _| {}, &no_stage, cancel, 0, None, None, None) else {
+        return RowWeights::equal(h);
+    };
+    let (pw, ph) = (q.rect[2].max(0) as usize, q.rect[3].max(0) as usize);
+    let n = g.len().max(1) as f64;
+    let probe = WorkProbe {
+        surface: g.iter().filter(|s| !s.is_background()).count() as f64 / n,
+        mean_steps: g.iter().map(|s| (s.shadow & 0x3FF) as f64).sum::<f64>() / n,
+        seconds: t.elapsed().as_secs_f64(),
+        pixels: g.len(),
+    };
+    if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+        crate::elog!("  work probe: {pw}x{ph} in {:.0} ms, {:.0} % surface, {:.0} DE steps per pixel", probe.seconds * 1000.0, probe.surface * 100.0, probe.mean_steps);
+    }
+    *WORK_PROBE.lock().unwrap() = Some(probe);
+    RowWeights::from_probe(&g, pw, ph, h)
+}
+
 pub(crate) fn thread_count(sc: &Scene) -> usize {
     if sc.threads > 0 {
         sc.threads
@@ -39,8 +198,9 @@ pub(crate) fn thread_count(sc: &Scene) -> usize {
     }
 }
 
-/// Calculates the G-buffer.  `progress` is called from the worker threads with
-/// the number of finished rows.
+/// Calculates the G-buffer.  `progress` is called from the worker threads
+/// with the work done and the work of the whole (the rows done, weighed by
+/// what they cost: [`RowWeights`]).
 pub fn calculate(
     sc: &Scene,
     progress: &(dyn Fn(usize, usize) + Sync),
@@ -86,16 +246,10 @@ pub fn calculate_raw_rows(
     calculate_inner(sc, progress, &no_stage, cancel, 0, Some(rows), None)
 }
 
-/// The text that decides a calculation's G-buffer, for its checkpoint key:
-/// the scene (without what only chooses how it is calculated) and where it
-/// is calculated (the card's rows differ a little from the CPU's).
-pub(crate) fn checkpoint_text(sc: &Scene) -> String {
-    // (the scene text: what the swarm hands on to calculate the same
-    // picture, and the same again when it is loaded)
-    let mut s = sc.clone();
-    s.threads = 0;
+/// Where a calculation runs (the card's rows differ a little from the CPU's).
+fn gpu_mode() -> &'static str {
     #[cfg(feature = "gpu")]
-    let gpu = if !crate::gpu::enabled() {
+    return if !crate::gpu::enabled() {
         "cpu"
     } else if crate::gpu::auto() {
         "auto"
@@ -103,14 +257,56 @@ pub(crate) fn checkpoint_text(sc: &Scene) -> String {
         "card"
     };
     #[cfg(not(feature = "gpu"))]
-    let gpu = "cpu";
-    format!("{}\ngpu = {gpu}", s.to_text())
+    "cpu"
+}
+
+/// The text that decides a whole result (Monte Carlo, tiles, voxels), for
+/// its checkpoint key: the scene without what only chooses how it is
+/// calculated, and where it is calculated.
+pub(crate) fn checkpoint_text(sc: &Scene) -> String {
+    // (the scene text: what the swarm hands on to calculate the same
+    // picture, and the same again when it is loaded)
+    let mut s = sc.clone();
+    s.threads = 0;
+    format!("{}\ngpu = {}", s.to_text(), gpu_mode())
+}
+
+/// Everything the ray marching (the raw G-buffer) depends on: the scene
+/// without the lighting (unless the volumetric light needs it) and without
+/// the passes after the march.
+pub fn march_sig(sc: &Scene) -> String {
+    let mut s = sc.clone();
+    if s.vol_light.is_none() {
+        s.lighting = Default::default();
+    }
+    s.ao = None;
+    s.shadows = None;
+    s.deao = None;
+    s.normals_on_zbuf = false;
+    s.dof = None;
+    s.mc = Default::default();
+    s.threads = 0;
+    s.to_text()
 }
 
 /// The checkpoint key of a calculation of `sc` (Calculate 3D: the same for
-/// the program and the command line).
+/// the program and the command line).  Its rows are the raw G-buffer, so
+/// the key leaves out the lighting and the passes after the march: a
+/// stopped render changed only in those still continues (rows the card
+/// shadowed during the march carry their shadows' settings, checked when
+/// continuing).
 pub fn checkpoint_key(sc: &Scene) -> String {
-    crate::checkpoint::key("calc", &checkpoint_text(sc))
+    // (the part of the picture calculated: the scene text leaves it out,
+    // and the tiles of a tiled render differ only in it)
+    let rect = sc.calc_rect.map(|r| format!("\ncalc_rect = {} {} {} {}", r[0], r[1], r[2], r[3])).unwrap_or_default();
+    crate::checkpoint::key("calc", &format!("{}\ngpu = {}{rect}", march_sig(sc), gpu_mode()))
+}
+
+/// What makes the checkpoint's data file a `.m3i` of `sc` (see
+/// [`crate::checkpoint::Image`]).
+fn image_of(sc: &Scene) -> crate::checkpoint::Image {
+    let (head, tail) = crate::m3p::m3i_parts(sc);
+    crate::checkpoint::Image { head, tail, fill: crate::gbuffer::pack(&[SiLight::default()]) }
 }
 
 /// The checkpoint of a calculation of `sc` (its G-buffer, row by row; see
@@ -122,7 +318,9 @@ pub fn open_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<Store> 
     if w == 0 || h == 0 {
         return None;
     }
-    let spec = crate::checkpoint::Spec { kind: "calc".into(), key: checkpoint_key(sc), name: name.into(), width: w, height: h, rec: crate::gbuffer::REC_BYTES, units: h };
+    // (the whole picture: its file is a .m3i; a selection's rows are not)
+    let image = (sc.calc_rect.is_none() && w == sc.width.max(0) as usize && h == sc.height.max(0) as usize).then(|| image_of(sc));
+    let spec = crate::checkpoint::Spec { kind: "calc".into(), key: checkpoint_key(sc), name: name.into(), width: w, height: h, rec: crate::gbuffer::REC_BYTES, units: h, image };
     let s = Store::open(spec, policy)?;
     s.put_extra("scene.m3s", sc.to_text().as_bytes());
     Some(s)
@@ -136,7 +334,7 @@ pub fn open_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<Store> 
 ///
 /// `stage` is told the name of each stage after the march as it starts
 /// ("hard shadows (graphics card)", ...): from then on `progress` counts
-/// that stage's rows, from zero again.
+/// that stage's rows, from zero again (weighed by their surface pixels).
 pub fn calculate_with(
     sc: &Scene,
     progress: &(dyn Fn(usize, usize) + Sync),
@@ -150,7 +348,67 @@ pub fn calculate_with(
 }
 
 /// A stage callback that ignores the stages.
-pub fn no_stage(_: &str) {}
+pub fn no_stage(name: &str) {
+    stage_mark(name);
+}
+
+/// `MB3D_STAGE_TIMES=1`: the time of every stage of a render is measured
+/// (the stage names that the calculation reports, [`no_stage`]) and
+/// printed when it ends ([`stage_times_print`]); for finding where a
+/// scene's time goes. Off: nothing is measured.
+fn stage_times_on() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("MB3D_STAGE_TIMES").is_some_and(|v| v != "0"))
+}
+
+type StageLog = (Instant, String, Vec<(String, f64)>);
+static STAGE_LOG: std::sync::Mutex<Option<StageLog>> = std::sync::Mutex::new(None);
+
+/// A stage begins (the one before ends): see [`stage_times_on`].
+pub fn stage_mark(name: &str) {
+    if !stage_times_on() {
+        return;
+    }
+    let mut g = STAGE_LOG.lock().unwrap();
+    let now = Instant::now();
+    match g.as_mut() {
+        Some((t, n, v)) => {
+            if n != name {
+                crate::elog!("  stage {name:?} begins at {:.1} s, rss {} MB", now.duration_since(*t).as_secs_f64(), crate::reflect::rss_mb());
+                v.push((std::mem::take(n), now.duration_since(*t).as_secs_f64()));
+                *t = now;
+                *n = name.to_string();
+            }
+        }
+        None => *g = Some((now, name.to_string(), Vec::new())),
+    }
+}
+
+/// Ends the measured render and prints its stages on stderr, one line:
+/// `stage times: march 1.23 | hard shadows (graphics card) 4.56 | ...`
+/// (seconds; a stage reported twice is summed).
+pub fn stage_times_print() {
+    if std::env::var_os("MB3D_STAGE_TIMES").is_some() {
+        let (n, b) = crate::cone::counts();
+        if n > 0 {
+            crate::elog!("  cone march: {n} pixels on the CPU, {b} of them from the start (the estimate was no bound there)");
+        }
+    }
+    if !stage_times_on() {
+        return;
+    }
+    stage_mark("");
+    let Some((_, _, v)) = STAGE_LOG.lock().unwrap().take() else { return };
+    let mut sums: Vec<(String, f64)> = Vec::new();
+    for (n, t) in v {
+        match sums.iter_mut().find(|(m, _)| *m == n) {
+            Some(e) => e.1 += t,
+            None => sums.push((n, t)),
+        }
+    }
+    let parts: Vec<String> = sums.iter().filter(|(n, _)| !n.is_empty()).map(|(n, t)| format!("{n} {t:.3}")).collect();
+    crate::elog!("stage times: {}", parts.join(" | "));
+}
 
 /// The name of the post passes `shadows` / `occlusion`, run `where_`
 /// ("" for the CPU).
@@ -218,7 +476,35 @@ fn calculate_inner(
     sink: Option<RowSink>,
     ck: Option<&Store>,
 ) -> Result<(CalcParams, Vec<SiLight>), String> {
+    // the rows weighed first (the probe is part of the main calculation:
+    // no stage of its own, the progress stays at zero meanwhile)
+    let p = CalcParams::new(sc)?;
+    let wm = row_weights(sc, &p, cancel);
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    calculate_rows(sc, progress, stage, cancel, post, sink, ck, Some(&wm))
+}
+
+/// The calculation itself; `weights` the rows' weights for `progress`
+/// (None: this is the probe of [`row_weights`]: equal weights, and the
+/// card's precision is not probed either).
+#[allow(clippy::too_many_arguments)]
+fn calculate_rows(
+    sc: &Scene,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+    post: u8,
+    sink: Option<RowSink>,
+    ck: Option<&Store>,
+    weights: Option<&RowWeights>,
+) -> Result<(CalcParams, Vec<SiLight>), String> {
     let mut p = CalcParams::new(sc)?;
+    #[cfg(feature = "gpu")]
+    let is_probe = weights.is_none();
+    let equal = RowWeights::equal(p.rect[3].max(0) as usize);
+    let wm = weights.unwrap_or(&equal);
     let ck = ck.filter(|s| (s.spec().width, s.spec().height) == (p.rect[2].max(0) as usize, p.rect[3].max(0) as usize));
     let threads = thread_count(sc).min(p.rect[3] as usize).max(1);
     let two_d = p.slice_2d != 0;
@@ -230,7 +516,7 @@ fn calculate_inner(
             let t = Instant::now();
             let map = crate::vollight::build(&p, sc.stereo_mid(), ln, positional, l.lights[vp.light].amplitude, vp, hs_len, threads);
             if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-                eprintln!("  volumetric light map: {} side(s) of {}x{} in {:.2} s", map.sides.len(), map.cube_size, map.cube_size, t.elapsed().as_secs_f64());
+                crate::elog!("  volumetric light map: {} side(s) of {}x{} in {:.2} s", map.sides.len(), map.cube_size, map.cube_size, t.elapsed().as_secs_f64());
             }
             p.vol = Some(std::sync::Arc::new(map));
         }
@@ -252,7 +538,10 @@ fn calculate_inner(
         // single precision too coarse for this scene (a probe on the CPU
         // and the card disagrees): double precision (the probe waits for
         // its shader only when the calculation waits for the card anyway)
-        p.gpu_double = double_probe(sc, &p, threads, !crate::gpu::auto());
+        // (not for the work probe: its rows only weigh the calculation's)
+        if !is_probe {
+            p.gpu_double = double_probe(sc, &p, threads, !crate::gpu::auto());
+        }
         // such a scene: the card marches in single precision all the same
         // and the CPU finishes its pixels in double (the surface, normal,
         // roughness and colour: what single precision gets wrong; its march
@@ -284,7 +573,7 @@ fn calculate_inner(
                 // 6.8 -> 5.4 s); a slow card just takes fewer rows
                 // (AboxShapes-Misty: 11 %, as fast as the CPU alone).
                 let probe = || {
-                    if p.gpu_double || finish.load(Ordering::SeqCst) || !double_probe(sc, &p, threads, false) {
+                    if is_probe || p.gpu_double || finish.load(Ordering::SeqCst) || !double_probe(sc, &p, threads, false) {
                         return None;
                     }
                     if mixed_for(sc, &p) {
@@ -297,7 +586,12 @@ fn calculate_inner(
                 };
                 let t_march = Instant::now();
                 ck_tag(ck, "raw");
-                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &probe, ck, true, &finish)?;
+                // (a continued calculation with every row in its checkpoint
+                // marches nothing: the card's pace against the threads' is
+                // not measured, the post passes go to the card as they
+                // mostly do when it joins)
+                let unmeasured = ck.is_some_and(|s| s.done_count() >= h);
+                let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, wm, cancel, sink, &flags[0], &probe, ck, true, &finish)?;
                 let march_secs = t_march.elapsed().as_secs_f64();
                 let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
                 let rate = |n: usize, t: f64| n as f64 / t.max(1e-6);
@@ -310,9 +604,11 @@ fn calculate_inner(
                 // (not after a march in double precision: the card is slow
                 // in it, and the reflections stay in single precision, as
                 // they were before the card joined in double)
-                let card_posts = n_card > 0 && switched.is_none() && !finish.load(Ordering::SeqCst) && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs);
+                let card_posts = switched.is_none()
+                    && !finish.load(Ordering::SeqCst)
+                    && (n_card > 0 && rate(n_card, card_secs) >= POST_ON_CARD_RATIO * rate(h - n_card, march_secs) || unmeasured && n_card == 0);
                 if timing {
-                    eprintln!(
+                    crate::elog!(
                         "  march (card and CPU): {march_secs:.2} s, {n_card} of {h} rows on the card in {card_secs:.2} s; rows/s card {:.1}, CPU {:.1}",
                         rate(n_card, card_secs),
                         rate(h - n_card, march_secs)
@@ -326,9 +622,10 @@ fn calculate_inner(
                     let mut s = crate::gpu::last_status();
                     stage(&post_stage_name(job.shadows.is_some(), job.deao.is_some(), "graphics card"));
                     let t_post = Instant::now();
-                    let r = crate::gpu::post_on_card(&p, &mut gbuf, &job, progress, cancel);
+                    let sp = surface_progress(&gbuf, w, h, progress);
+                    let r = crate::gpu::post_on_card(&p, &mut gbuf, &job, &sp, cancel);
                     if timing {
-                        eprintln!("  shadows and DE occlusion on the card: {:.2} s", t_post.elapsed().as_secs_f64());
+                        crate::elog!("  shadows and DE occlusion on the card: {:.2} s", t_post.elapsed().as_secs_f64());
                     }
                     match r {
                         Ok(()) => {
@@ -364,7 +661,7 @@ fn calculate_inner(
                     let t_post = Instant::now();
                     let card_rows = post_shared(sc, &p, &mut gbuf, &job, threads, progress, cancel)?;
                     if timing {
-                        eprintln!("  shadows and DE occlusion shared: {:.2} s, {card_rows} of {h} rows on the card", t_post.elapsed().as_secs_f64());
+                        crate::elog!("  shadows and DE occlusion shared: {:.2} s, {card_rows} of {h} rows on the card", t_post.elapsed().as_secs_f64());
                     }
                     if card_rows > 0 {
                         let what = match (job.shadows.is_some(), job.deao.is_some()) {
@@ -387,7 +684,7 @@ fn calculate_inner(
             // post passes run on the CPU, as after a march in double)
             if let Ok(flags) = crate::gpu::march_prepare(&p, &PostJob::default()) {
                 ck_tag(ck, "mixed");
-                let (gbuf, n_card, ..) = march_mixed(&p, threads, progress, cancel, sink, &flags[0], &|| None, ck, false, &finish)?;
+                let (gbuf, n_card, ..) = march_mixed(&p, threads, progress, wm, cancel, sink, &flags[0], &|| None, ck, false, &finish)?;
                 if n_card > 0 || ck.is_some_and(|s| s.done_count() == h) {
                     p.gpu_double |= double_after;
                     return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
@@ -402,14 +699,15 @@ fn calculate_inner(
             // they run on the whole picture)
             let with_post = s.value("rows").as_deref() == Some(card_tag.as_str());
             let none = PostJob::default();
-            if let Some(gbuf) = march_card_rest(&p, if with_post { &job } else { &none }, h, progress, cancel, sink, s)? {
+            if let Some(gbuf) = march_card_rest(&p, if with_post { &job } else { &none }, h, progress, wm, cancel, sink, Some(s), true)? {
                 let mut gbuf = gbuf;
                 if with_post {
                     p.gpu_post = Some(job);
                 } else if job.shadows.is_some() || job.deao.is_some() {
                     stage(&post_stage_name(job.shadows.is_some(), job.deao.is_some(), "graphics card"));
                     let t_post = Instant::now();
-                    if crate::gpu::post_on_card(&p, &mut gbuf, &job, progress, cancel).is_ok() {
+                    let sp = surface_progress(&gbuf, w, h, progress);
+                    if crate::gpu::post_on_card(&p, &mut gbuf, &job, &sp, cancel).is_ok() {
                         p.gpu_post = Some(job);
                         p.gpu_post_secs = Some(t_post.elapsed().as_secs_f64());
                     }
@@ -423,23 +721,37 @@ fn calculate_inner(
             s.reset();
         } else {
             ck_tag(ck, &card_tag);
-            let gpu = crate::gpu::march(&p, &job, progress, cancel, |y, row| {
-                if let Some(f) = sink {
-                    f(y, row);
-                }
-                ck_put(ck, y, row);
-            });
+            let gpu = if crate::gpu::extra_cards(&p).is_empty() {
+                // (the card's rows come in order from the top)
+                crate::gpu::march(&p, &job, &|d, _| progress(wm.before(d), wm.total()), cancel, |y, row| {
+                    if let Some(f) = sink {
+                        f(y, row);
+                    }
+                    ck_put(ck, y, row);
+                })
+            } else {
+                // all the cards of the computer, taking bands of the rows
+                march_card_rest(&p, &job, h, progress, wm, cancel, sink, ck, false)?
+            };
             if let Some(gbuf) = gpu {
                 p.gpu_post = Some(job);
                 return finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel);
+            }
+            // (stopped, not failed: the card's rows stay in the checkpoint,
+            // unless too many of their pixels overflowed single precision)
+            if cancel() || crate::gpu::aborted() {
+                if crate::gpu::rows_overflowed() {
+                    ck_tag(ck, "raw");
+                }
+                return Err("cancelled".into());
             }
         }
     }
     let p = p;
     ck_tag(ck, "raw");
     // the rows go straight into the G-buffer (no copy of it: big pictures)
-    let (mut gbuf, had) = ck_rows(ck, w, h, sink);
-    let done = AtomicUsize::new(had);
+    let (mut gbuf, _) = ck_rows(ck, w, h, sink);
+    let done = AtomicUsize::new(wm.done_in(ck));
     std::thread::scope(|s| {
         // thread t takes the rows t, t + threads, ...
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
@@ -473,8 +785,8 @@ fn calculate_inner(
                         f(y, row);
                     }
                     ck_put(ck, y, row);
-                    let d = done.fetch_add(1, Ordering::Relaxed) + 1;
-                    progress(d, h);
+                    let d = done.fetch_add(wm.weight(y), Ordering::Relaxed) + wm.weight(y);
+                    progress(d, wm.total());
                 }
             });
         }
@@ -483,6 +795,15 @@ fn calculate_inner(
         return Err("cancelled".into());
     }
     finish_calculation(sc, p, gbuf, post, threads, progress, stage, cancel)
+}
+
+/// `progress` for a pass over the G-buffer `g` (`w` x `h`) whose rows
+/// come in order from the top and that counts them: weighed by their
+/// surface pixels ([`RowWeights::surface`]).
+#[cfg(feature = "gpu")]
+fn surface_progress<'a>(g: &[SiLight], w: usize, h: usize, progress: &'a (dyn Fn(usize, usize) + Sync)) -> impl Fn(usize, usize) + Sync + 'a {
+    let sw = RowWeights::surface(g, w, h);
+    move |d, _| progress(sw.before(d), sw.total())
 }
 
 /// "Calc-" (MB3D's `CalcMandBlocky`): a rough image of the whole view, one
@@ -568,6 +889,7 @@ fn finish_row(p: &CalcParams, y: usize, card: &[SiLight]) -> Vec<SiLight> {
 }
 
 /// One row of the main calculation on the CPU (MB3D's per-row seed).
+#[cfg(feature = "gpu")]
 fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
     let [x0, y0, w, _] = p.rect;
     let yy = y + y0 as usize;
@@ -620,9 +942,11 @@ fn post_shared(
 ) -> Result<usize, String> {
     use std::sync::Mutex;
     let (w, h) = (p.rect[2].max(1) as usize, p.rect[3].max(0) as usize);
-    // rows finished by either side, for `progress`
+    // rows finished by either side, for `progress` (weighed by their
+    // surface pixels: the passes work on those)
+    let sw = RowWeights::surface(gbuf, w, h);
     let finished = AtomicUsize::new(0);
-    let tick = || progress(finished.fetch_add(1, Ordering::Relaxed) + 1, h);
+    let tick = |y: usize| progress(finished.fetch_add(sw.weight(y), Ordering::Relaxed) + sw.weight(y), sw.total());
     let shadows = job.shadows.as_ref().and_then(|_| ShadowRows::new(sc, p));
     let deao = match (&job.deao, &sc.deao) {
         (Some(_), Some(d)) if sc.ao.is_some() => Some(crate::deao::DeaoRows::new(p, d)),
@@ -641,8 +965,47 @@ fn post_shared(
     // the rows still free: [top, bottom)
     let free = Mutex::new((0usize, h));
     let claimed = Mutex::new(Vec::new());
-    let delivered: Vec<std::sync::atomic::AtomicBool> = (0..h).map(|_| std::sync::atomic::AtomicBool::new(false)).collect();
+    // which rows are where (see `Board`), and how many the cards did
+    let board = Board::new(h);
+    let card_rows = AtomicUsize::new(0);
     let mut card_err = None;
+    let left = || {
+        let f = free.lock().unwrap();
+        f.0 < f.1
+    };
+    // a band of rows for card `k` (smaller as the rows run out, so that
+    // all end together; then rows another card took and has not
+    // delivered), the G-buffer rows it needs, a row it finished (the
+    // first result of the row)
+    let band = |k: usize, band: usize| {
+        let mut f = free.lock().unwrap();
+        let r = if f.0 < f.1 {
+            let r = (f.0, band.min(((f.1 - f.0) / 4).max(16)).min(f.1 - f.0));
+            f.0 += r.1;
+            board.took(k, r);
+            Some(r)
+        } else {
+            drop(f);
+            board.steal(Some(k), band)
+        };
+        if let Some(r) = r {
+            claimed.lock().unwrap().push(r);
+        }
+        r
+    };
+    let upload = |row0: usize, n: usize| (row0..(row0 + n).min(h)).flat_map(|y| rows[y].lock().unwrap().to_vec()).collect();
+    let done_row = |y: usize, row: &[SiLight]| {
+        if y < h && board.deliver(y) {
+            let mut dst = rows[y].lock().unwrap();
+            let n = row.len().min(dst.len());
+            dst[..n].copy_from_slice(&row[..n]);
+            drop(dst);
+            card_rows.fetch_add(1, Ordering::Relaxed);
+            tick(y);
+        }
+    };
+    // card `k` stops once the free rows are gone and all of its rows came
+    let stop = |k: usize| cancel() || !left() && board.done_for(k);
     std::thread::scope(|s| {
         for _ in 0..threads.max(1) {
             s.spawn(|| loop {
@@ -651,42 +1014,49 @@ fn post_shared(
                 }
                 let y = {
                     let mut f = free.lock().unwrap();
-                    if f.1 <= f.0 {
-                        break;
-                    }
-                    f.1 -= 1;
-                    f.1
+                    (f.1 > f.0).then(|| {
+                        f.1 -= 1;
+                        f.1
+                    })
                 };
-                cpu(y, &mut rows[y].lock().unwrap());
-                tick();
+                match y {
+                    Some(y) => {
+                        board.set_delivered(y);
+                        cpu(y, &mut rows[y].lock().unwrap());
+                        tick(y);
+                    }
+                    // a row a card took and has not delivered: on a copy,
+                    // kept when it comes first
+                    None => match board.steal(None, 1) {
+                        Some((y, _)) => {
+                            let mut row = rows[y].lock().unwrap().to_vec();
+                            cpu(y, &mut row);
+                            if board.deliver(y) {
+                                rows[y].lock().unwrap().copy_from_slice(&row);
+                                tick(y);
+                            }
+                        }
+                        None => break,
+                    },
+                }
             });
         }
-        let r = crate::gpu::post_bands(
-            p,
-            job,
-            &|band| {
-                let mut f = free.lock().unwrap();
-                // (smaller as the rows run out, so that both end together)
-                (f.0 < f.1).then(|| {
-                    let r = (f.0, band.min(((f.1 - f.0) / 4).max(16)).min(f.1 - f.0));
-                    f.0 += r.1;
-                    claimed.lock().unwrap().push(r);
-                    r
+        // the other cards of the computer too, once their pipelines are
+        // compiled (what one of them took and did not deliver is done
+        // below, as the first card's)
+        for k in crate::gpu::extra_cards(p) {
+            let (band, upload, done_row, stop, left, board) = (&band, &upload, &done_row, &stop, &left, &board);
+            s.spawn(move || {
+                crate::gpu::on_card(k, || {
+                    let Ok(flags) = crate::gpu::march_prepare(p, job) else { return };
+                    if compiled_in_time(&flags, left, cancel) {
+                        let _ = board.keep_going(cancel, || crate::gpu::post_bands(p, job, &|n| band(k, n), upload, &|| stop(k), &mut |y, row| done_row(y, row)));
+                    }
                 })
-            },
-            &|row0, n| (row0..(row0 + n).min(h)).flat_map(|y| rows[y].lock().unwrap().to_vec()).collect(),
-            cancel,
-            &mut |y, row| {
-                if y < h {
-                    let mut dst = rows[y].lock().unwrap();
-                    let n = row.len().min(dst.len());
-                    dst[..n].copy_from_slice(&row[..n]);
-                    delivered[y].store(true, Ordering::Relaxed);
-                    tick();
-                }
-            },
-        );
-        if let Err(e) = r {
+            });
+        }
+        let r = board.keep_going(cancel, || crate::gpu::post_bands(p, job, &|n| band(0, n), &upload, &|| stop(0), &mut |y, row| done_row(y, row)));
+        if let Err(e) = r.or_else(|e| if e == "cancelled" && !cancel() { Ok(()) } else { Err(e) }) {
             card_err = Some(e);
         }
     });
@@ -695,9 +1065,9 @@ fn post_shared(
     }
     // the rows the card took and did not deliver (it failed): here
     if let Some(e) = &card_err {
-        eprintln!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
+        crate::elog!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
     }
-    let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !delivered[y].load(Ordering::Relaxed)).collect();
+    let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !board.delivered[y].load(Ordering::Relaxed)).collect();
     if !redo.is_empty() {
         let next = AtomicUsize::new(0);
         std::thread::scope(|s| {
@@ -715,7 +1085,7 @@ fn post_shared(
             return Err("cancelled".into());
         }
     }
-    Ok(delivered.iter().filter(|d| d.load(Ordering::Relaxed)).count())
+    Ok(card_rows.into_inner())
 }
 
 /// The probe's limit: the mean difference of the colours (a share of full
@@ -762,7 +1132,8 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
                 while !flags[0].load(Ordering::SeqCst) {
                     std::thread::sleep(std::time::Duration::from_millis(5));
                 }
-                true
+                // (the card failed in the compile: no probe)
+                crate::gpu::enabled()
             }
             Err(_) => false,
         }
@@ -780,7 +1151,7 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
     let mixed = d && f.is_some_and(|f| f.mixed <= limit);
     if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
         match f {
-            Some(f) => eprintln!(
+            Some(f) => crate::elog!(
                 "  probe: {} pixels, colours differ by {:.2} % in single precision, {:.2} % finished in double ({:.0} ms): {}",
                 f.pixels,
                 f.single * 100.0,
@@ -788,7 +1159,7 @@ pub fn double_probe(sc: &Scene, p: &CalcParams, threads: usize, compile: bool) -
                 t.elapsed().as_secs_f64() * 1000.0,
                 if mixed { "single, finished in double" } else if d { "double" } else { "single" }
             ),
-            None => eprintln!("  probe: no result ({:.0} ms)", t.elapsed().as_secs_f64() * 1000.0),
+            None => crate::elog!("  probe: no result ({:.0} ms)", t.elapsed().as_secs_f64() * 1000.0),
         }
     }
     let mut list = PROBED.lock().unwrap();
@@ -851,6 +1222,10 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe>
     let (nx, ny) = (w / sxy, h / sxy);
     let samples: Vec<(usize, usize)> = (0..ny).flat_map(|r| (0..nx).map(move |c| (r * sxy + sxy / 2, c * sxy + (r * 5) % sxy))).collect();
     let ns = samples.len();
+    // (the card's sample marches without the cone march, so the CPU's
+    // pixels do too: the probe compares the precisions, not the jumps)
+    let no_cone = p.cone.as_ref().map(|_| CalcParams { cone: None, ..p.clone() });
+    let p_cpu = no_cone.as_ref().unwrap_or(p);
     if ns == 0 {
         return None;
     }
@@ -877,7 +1252,7 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe>
                     let yy = y + y0;
                     // the card's seed: the row's, advanced by the column
                     let seed = crate::calc::pixel_seed(yy as i64, (x + x0) as i64);
-                    let _ = cpu[j].set(Marcher::new(p, seed).march_pixel((x + x0) as i32, yy as i32));
+                    let _ = cpu[j].set(Marcher::new(p_cpu, seed).march_pixel((x + x0) as i32, yy as i32));
                 }
             });
         }
@@ -922,7 +1297,7 @@ pub fn probe_single(sc: &Scene, p: &CalcParams, threads: usize) -> Option<Probe>
     }
     if std::env::var_os("MB3D_PROBE_DEBUG").is_some() {
         let pc = |k: usize| n[k] as f64 * 100.0 / total.max(1) as f64;
-        eprintln!("  probe: any {:.2} %, object {:.2} %, depth {:.2} %, normal {:.2} %, gradient {:.2} %, roughness {:.2} %", pc(0), pc(1), pc(2), pc(3), pc(4), pc(5));
+        crate::elog!("  probe: any {:.2} %, object {:.2} %, depth {:.2} %, normal {:.2} %, gradient {:.2} %, roughness {:.2} %", pc(0), pc(1), pc(2), pc(3), pc(4), pc(5));
     }
     if total < 100 {
         return None;
@@ -979,6 +1354,125 @@ pub struct Probe {
 #[cfg(feature = "gpu")]
 const POST_ON_CARD_RATIO: f64 = 1.5;
 
+/// The rows of a picture shared out to the cards (and the CPU's threads):
+/// the bands each card took, which rows are delivered (the first result of
+/// a row counts, a later one is dropped) and which have a second worker on
+/// them.  Once the free rows are gone, a worker without work takes rows a
+/// card took and has not delivered yet, so that a slow card no longer
+/// holds up the picture; a card whose rows all came from others stops.
+#[cfg(feature = "gpu")]
+struct Board {
+    delivered: Vec<std::sync::atomic::AtomicBool>,
+    backup: Vec<std::sync::atomic::AtomicBool>,
+    /// (card, first row, rows)
+    bands: std::sync::Mutex<Vec<(usize, usize, usize)>>,
+}
+
+#[cfg(feature = "gpu")]
+impl Board {
+    fn new(h: usize) -> Self {
+        let flags = || (0..h).map(|_| std::sync::atomic::AtomicBool::new(false)).collect();
+        Board { delivered: flags(), backup: flags(), bands: Default::default() }
+    }
+
+    /// `card` took the band `r` (first row, rows).
+    fn took(&self, card: usize, r: (usize, usize)) {
+        self.bands.lock().unwrap().push((card, r.0, r.1));
+    }
+
+    /// Row `y` arrived: true for its first result (that one counts).
+    fn deliver(&self, y: usize) -> bool {
+        !self.delivered[y].swap(true, Ordering::SeqCst)
+    }
+
+    /// Row `y` is delivered (also a result that replaces the first).
+    fn set_delivered(&self, y: usize) {
+        self.delivered[y].store(true, Ordering::SeqCst);
+    }
+
+    /// Up to `max` rows in a row that another card took and has not
+    /// delivered, nobody else backing them up: now also `card`'s (noted as
+    /// its band; `card` None: a CPU thread, one row).
+    fn steal(&self, card: Option<usize>, max: usize) -> Option<(usize, usize)> {
+        let bands = self.bands.lock().unwrap().clone();
+        let open = |y: usize| !self.delivered[y].load(Ordering::SeqCst) && !self.backup[y].load(Ordering::SeqCst);
+        for (k, r0, n) in bands {
+            if Some(k) == card {
+                continue;
+            }
+            let Some(y) = (r0..r0 + n).find(|&y| open(y)) else { continue };
+            let mut m = 0;
+            while y + m < r0 + n && m < max.max(1) && open(y + m) && !self.backup[y + m].swap(true, Ordering::SeqCst) {
+                m += 1;
+            }
+            if m > 0 {
+                if let Some(c) = card {
+                    self.took(c, (y, m));
+                }
+                return Some((y, m));
+            }
+        }
+        None
+    }
+
+    /// Some row is neither delivered nor backed up (work for a card).
+    fn has_open(&self) -> bool {
+        (0..self.delivered.len()).any(|y| !self.delivered[y].load(Ordering::SeqCst) && !self.backup[y].load(Ordering::SeqCst))
+    }
+
+    /// A card's part of a pass (`go`: its march over bands): when it was
+    /// stopped (its rows all came from others) while rows are still open,
+    /// it goes on with those instead of waiting idle for the pass's end.
+    fn keep_going(&self, cancel: &(dyn Fn() -> bool + Sync), mut go: impl FnMut() -> Result<(), String>) -> Result<(), String> {
+        loop {
+            let r = go();
+            if r.as_ref().is_err_and(|e| e == "cancelled") && !cancel() && self.has_open() {
+                continue;
+            }
+            return r;
+        }
+    }
+
+    /// All the rows `card` took are delivered (by it or by others).
+    fn done_for(&self, card: usize) -> bool {
+        self.bands.lock().unwrap().iter().filter(|b| b.0 == card).all(|&(_, r0, n)| (r0..r0 + n).all(|y| self.delivered[y].load(Ordering::SeqCst)))
+    }
+}
+
+/// Whether the pipelines of `flags` (compiling in the background on a
+/// further card) are ready before the rows run out (`left`): the card
+/// joins then; else it stays out of this picture and its compile goes on
+/// for the next (a picture does not wait for a slow compile).
+#[cfg(feature = "gpu")]
+fn compiled_in_time(flags: &[std::sync::Arc<std::sync::atomic::AtomicBool>], left: &dyn Fn() -> bool, cancel: &(dyn Fn() -> bool + Sync)) -> bool {
+    loop {
+        if flags.iter().all(|f| f.load(Ordering::SeqCst)) {
+            return true;
+        }
+        if !left() || cancel() {
+            return false;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+}
+
+/// A card's march that ended because others delivered its rows ("cancelled"
+/// without a Stop) as an ended one; its rows are unusable all the same when
+/// they overflowed single precision.
+#[cfg(feature = "gpu")]
+fn stopped_as_done(r: Result<(), String>, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    match r {
+        Err(e) if e == "cancelled" && !cancel() => {
+            if crate::gpu::rows_overflowed() {
+                Err("single precision overflows".into())
+            } else {
+                Ok(())
+            }
+        }
+        r => r,
+    }
+}
+
 /// The march with the CPU threads taking rows from the bottom at once and
 /// the card from the top once `ready` (its shader compiled) - until they
 /// meet.  Returns the G-buffer and the number of rows the card marched
@@ -988,6 +1482,7 @@ fn march_mixed(
     p: &CalcParams,
     threads: usize,
     progress: &(dyn Fn(usize, usize) + Sync),
+    wm: &RowWeights,
     cancel: &(dyn Fn() -> bool + Sync),
     sink: Option<RowSink>,
     ready: &std::sync::atomic::AtomicBool,
@@ -1013,21 +1508,78 @@ fn march_mixed(
     // (the rows of a checkpoint are there: the free rows skip them)
     let (mut gbuf, had) = ck_rows(ck, w, h, sink);
     let rows: Vec<Mutex<&mut [SiLight]>> = gbuf.chunks_mut(w).map(Mutex::new).collect();
-    let done = AtomicUsize::new(had);
+    let done = AtomicUsize::new(wm.done_in(ck));
     let on_card = AtomicUsize::new(0);
-    let put = |y: usize, row: &[SiLight]| {
+    CARD_ROWS.store(0, Ordering::Relaxed);
+    // the card's rows go to the checkpoint after its verdict on them (see
+    // `gpu::rows_overflowed`): they wait here
+    let pending = Mutex::new(Vec::new());
+    // which rows are where (see `Board`)
+    let board = Board::new(h);
+    // (the callers decide whether the row counts: `Board::deliver`)
+    let put = |y: usize, row: &[SiLight], card: bool| {
         if let Some(f) = sink {
             f(y, row);
         }
-        ck_put(ck, y, row);
+        if card {
+            pending.lock().unwrap().push(y);
+        } else {
+            ck_put(ck, y, row);
+        }
         let mut dst = rows[y].lock().unwrap();
         let n = row.len().min(dst.len());
         dst[..n].copy_from_slice(&row[..n]);
         drop(dst);
-        progress((done.fetch_add(1, Ordering::Relaxed) + 1).min(h), h);
+        let d = done.fetch_add(wm.weight(y), Ordering::Relaxed) + wm.weight(y);
+        progress(d.min(wm.total()), wm.total());
     };
     let mut card_err = None;
     let mut switched = None;
+    let mut card_ok = false;
+    // the first card's choice of precision, for the others (see below)
+    let decided: Mutex<Option<Option<CalcParams>>> = Mutex::new(None);
+    let left = || {
+        let f = free.lock().unwrap();
+        f.0 < f.1
+    };
+    // a band of free rows for card `k` (up to the next row of the
+    // checkpoint), noted in `claimed`; once they are gone, rows another
+    // card took and has not delivered
+    let claim = |k: usize, band: usize, claimed: &Mutex<Vec<(usize, usize)>>| {
+        let mut f = free.lock().unwrap();
+        while f.0 < f.1 && ck_done(ck, f.0) {
+            f.0 += 1;
+        }
+        let r = if f.0 < f.1 {
+            let n = (f.0..f.1).take(band).take_while(|&y| !ck_done(ck, y)).count();
+            let r = (f.0, n);
+            f.0 += r.1;
+            board.took(k, r);
+            Some(r)
+        } else {
+            drop(f);
+            board.steal(Some(k), band)
+        };
+        if let Some(r) = r {
+            claimed.lock().unwrap().push(r);
+        }
+        r
+    };
+    // card `k` stops once the free rows are gone and all of its rows came
+    let stop = |k: usize| cancel() || !left() && board.done_for(k);
+    // a row a card marched (the first result of the row)
+    let card_row = |y: usize, row: &[SiLight]| {
+        if !board.deliver(y) {
+            return;
+        }
+        on_card.fetch_add(1, Ordering::Relaxed);
+        CARD_ROWS.fetch_add(1, Ordering::Relaxed);
+        if finish.load(Ordering::SeqCst) {
+            queue.lock().unwrap().push_back((y, row.to_vec()));
+        } else {
+            put(y, row, true);
+        }
+    };
     let name = crate::gpu::name().unwrap_or_default();
     crate::gpu::set_status(if ready.load(Ordering::SeqCst) {
         format!("GPU {name}: the march shared with the CPU")
@@ -1043,9 +1595,11 @@ fn march_mixed(
                 }
                 let card_row = queue.lock().unwrap().pop_front();
                 if let Some((y, row)) = card_row {
-                    put(y, &finish_row(p, y, &row));
+                    put(y, &finish_row(p, y, &row), true);
                     continue;
                 }
+                // (rows a card took and has not delivered: see `Board`)
+                let stolen = || if cpu_rows && !left() { board.steal(None, 1).map(|r| r.0) } else { None };
                 let y = if cpu_rows {
                     let mut f = free.lock().unwrap();
                     while f.1 > f.0 && ck_done(ck, f.1 - 1) {
@@ -1059,11 +1613,76 @@ fn march_mixed(
                     None
                 };
                 match y {
-                    Some(y) => put(y, &cpu_row(p, y)),
-                    // (rows of the card still to come)
-                    None if finish.load(Ordering::SeqCst) && !card_done.load(Ordering::SeqCst) => std::thread::sleep(std::time::Duration::from_micros(500)),
-                    None => break,
+                    Some(y) => {
+                        board.set_delivered(y);
+                        put(y, &cpu_row(p, y), false)
+                    }
+                    None => match stolen() {
+                        Some(y) => {
+                            let row = cpu_row(p, y);
+                            if board.deliver(y) {
+                                put(y, &row, false);
+                            }
+                        }
+                        // (rows of the card still to come)
+                        None if finish.load(Ordering::SeqCst) && !card_done.load(Ordering::SeqCst) => std::thread::sleep(std::time::Duration::from_micros(500)),
+                        None => break,
+                    },
                 }
+            });
+        }
+        // the other cards of the computer take bands from the same rows,
+        // once the first card has chosen the precision (the parameters in
+        // double precision, or None: as they are)
+        for k in crate::gpu::extra_cards(p) {
+            let (decided, claim, card_row, free, stop, board, left) = (&decided, &claim, &card_row, &free, &stop, &board, &left);
+            s.spawn(move || {
+                crate::gpu::on_card(k, || {
+                    let cp = loop {
+                        let left = {
+                            let f = free.lock().unwrap();
+                            f.0 < f.1
+                        };
+                        if !left || cancel() {
+                            return;
+                        }
+                        if let Some(d) = decided.lock().unwrap().clone() {
+                            break d;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                    };
+                    let cp = cp.as_ref().unwrap_or(p);
+                    let Ok(flags) = crate::gpu::march_prepare(cp, &PostJob::default()) else { return };
+                    if !compiled_in_time(&flags, &left, cancel) {
+                        return;
+                    }
+                    let claimed = Mutex::new(Vec::new());
+                    let mine = AtomicUsize::new(0);
+                    let r = board.keep_going(cancel, || {
+                        crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(k, band, &claimed), &|| stop(k), &mut |y, row| {
+                            mine.fetch_add(1, Ordering::Relaxed);
+                            card_row(y, row)
+                        })
+                    });
+                    let r = stopped_as_done(r, cancel);
+                    // (MB3D_CARDS_DEBUG: what each of the other cards did)
+                    if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
+                        crate::elog!("card {}: {} rows marched ({r:?})", k + 1, mine.load(Ordering::Relaxed));
+                    }
+                    // failed (or its rows overflowed single precision):
+                    // what it took, on the CPU here
+                    if r.as_ref().is_err_and(|e| e != "cancelled") || crate::gpu::rows_overflowed() {
+                        for (r0, n) in claimed.into_inner().unwrap() {
+                            for y in r0..r0 + n {
+                                if cancel() {
+                                    return;
+                                }
+                                board.set_delivered(y);
+                                put(y, &cpu_row(p, y), false);
+                            }
+                        }
+                    }
+                });
             });
         }
         // the card, once its shader is ready
@@ -1093,36 +1712,15 @@ fn march_mixed(
             }
         }
         let cp = switched.as_ref().map_or(p, |(pd, _)| pd);
+        *decided.lock().unwrap() = Some(switched.as_ref().map(|(pd, _)| pd.clone()));
         let claimed = Mutex::new(Vec::new());
         let t_card = Instant::now();
-        let r = crate::gpu::march_bands(
-            cp,
-            &PostJob::default(),
-            &|band| {
-                let mut f = free.lock().unwrap();
-                while f.0 < f.1 && ck_done(ck, f.0) {
-                    f.0 += 1;
-                }
-                (f.0 < f.1).then(|| {
-                    // (up to the next row of the checkpoint)
-                    let n = (f.0..f.1).take(band).take_while(|&y| !ck_done(ck, y)).count();
-                    let r = (f.0, n);
-                    f.0 += r.1;
-                    claimed.lock().unwrap().push(r);
-                    r
-                })
-            },
-            cancel,
-            &mut |y, row| {
-                on_card.fetch_add(1, Ordering::Relaxed);
-                if finish.load(Ordering::SeqCst) {
-                    queue.lock().unwrap().push_back((y, row.to_vec()));
-                } else {
-                    put(y, row);
-                }
-            },
-        );
+        let r = board.keep_going(cancel, || crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(0, band, &claimed), &|| stop(0), &mut |y, row| card_row(y, row)));
+        let r = stopped_as_done(r, cancel);
         *card_secs.lock().unwrap() = t_card.elapsed().as_secs_f64();
+        // (stopped: its rows are kept when the card's verdict on them so
+        // far is good)
+        card_ok = r.is_ok() || (r.as_ref().is_err_and(|e| e == "cancelled") && !crate::gpu::rows_overflowed());
         if let Err(e) = r {
             if e != "cancelled" {
                 // the card's rows (also those it delivered: overflows) on
@@ -1137,11 +1735,12 @@ fn march_mixed(
                             if i >= redo.len() || cancel() {
                                 break;
                             }
-                            put(redo[i], &cpu_row(p, redo[i]));
+                            put(redo[i], &cpu_row(p, redo[i]), false);
                         });
                     }
                 });
                 on_card.store(0, Ordering::Relaxed);
+                CARD_ROWS.store(0, Ordering::Relaxed);
             }
             card_err = Some(e);
         }
@@ -1160,10 +1759,15 @@ fn march_mixed(
                     if i >= left.len() || cancel() {
                         break;
                     }
-                    put(left[i].0, &finish_row(p, left[i].0, &left[i].1));
+                    put(left[i].0, &finish_row(p, left[i].0, &left[i].1), true);
                 });
             }
         });
+    }
+    if card_ok {
+        for y in pending.into_inner().unwrap() {
+            ck_put(ck, y, &rows[y].lock().unwrap());
+        }
     }
     if cancel() {
         return Err("cancelled".into());
@@ -1185,49 +1789,152 @@ fn march_mixed(
     Ok((gbuf, n_card, switched, card_secs.into_inner().unwrap()))
 }
 
-/// The rows that `ck` lacks marched on the card (with the post passes of
-/// `post`), into a G-buffer with the rows of `ck`.  None when the card
-/// cannot march them.
+/// The rows that `ck` lacks (all without one) marched on the cards (with
+/// the post passes of `post`), into a G-buffer with the rows of `ck`: all
+/// cards of the computer take bands of the rows, what a further card took
+/// and could not do goes to the first.  None when the first card cannot
+/// march them.
 #[cfg(feature = "gpu")]
-fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(usize, usize) + Sync), cancel: &(dyn Fn() -> bool + Sync), sink: Option<RowSink>, ck: &Store) -> Result<Option<Vec<SiLight>>, String> {
+#[allow(clippy::too_many_arguments)]
+fn march_card_rest(p: &CalcParams, post: &PostJob, h: usize, progress: &(dyn Fn(usize, usize) + Sync), wm: &RowWeights, cancel: &(dyn Fn() -> bool + Sync), sink: Option<RowSink>, ck: Option<&Store>, continued: bool) -> Result<Option<Vec<SiLight>>, String> {
     use std::sync::Mutex;
     let w = p.rect[2].max(1) as usize;
-    let (mut gbuf, had) = ck_rows(Some(ck), w, h, sink);
+    let (mut gbuf, _) = ck_rows(ck, w, h, sink);
+    let rows: Vec<Mutex<&mut [SiLight]>> = gbuf.chunks_mut(w).map(Mutex::new).collect();
     let next = Mutex::new(0usize);
-    let mut done = had;
-    progress(done, h);
-    let r = crate::gpu::march_bands(
-        p,
-        post,
-        &|band| {
-            let mut y = next.lock().unwrap();
-            while *y < h && ck.is_done(*y) {
-                *y += 1;
-            }
-            (*y < h).then(|| {
-                let n = (*y..h).take(band).take_while(|&r| !ck.is_done(r)).count();
-                let r = (*y, n);
-                *y += n;
-                r
-            })
-        },
-        cancel,
-        &mut |y, row| {
-            if let Some(f) = sink {
-                f(y, row);
-            }
-            ck_put(Some(ck), y, row);
-            gbuf[y * w..(y + 1) * w].copy_from_slice(&row[..w]);
-            done += 1;
-            progress(done.min(h), h);
-        },
-    );
+    let done = AtomicUsize::new(wm.done_in(ck));
+    progress(done.load(Ordering::Relaxed), wm.total());
+    // which rows are where (see `Board`)
+    let board = Board::new(h);
+    let left = || {
+        let mut y = next.lock().unwrap();
+        while *y < h && ck_done(ck, *y) {
+            *y += 1;
+        }
+        *y < h
+    };
+    // a band for card `k`: free rows, then rows another card took and has
+    // not delivered
+    let band = |k: usize, band: usize| {
+        let mut y = next.lock().unwrap();
+        while *y < h && ck_done(ck, *y) {
+            *y += 1;
+        }
+        if *y < h {
+            let n = (*y..h).take(band).take_while(|&r| !ck_done(ck, r)).count();
+            let r = (*y, n);
+            *y += n;
+            board.took(k, r);
+            Some(r)
+        } else {
+            drop(y);
+            board.steal(Some(k), band)
+        }
+    };
+    // card `k` stops once the free rows are gone and all of its rows came
+    let stop = |k: usize| cancel() || !left() && board.done_for(k);
+    // a row: its first result counts (`force`: it replaces that one)
+    let row_in = |y: usize, row: &[SiLight], force: bool| {
+        if force {
+            board.set_delivered(y);
+        } else if !board.deliver(y) {
+            return;
+        }
+        if let Some(f) = sink {
+            f(y, row);
+        }
+        ck_put(ck, y, row);
+        rows[y].lock().unwrap()[..w].copy_from_slice(&row[..w]);
+        let d = done.fetch_add(wm.weight(y), Ordering::Relaxed) + wm.weight(y);
+        progress(d.min(wm.total()), wm.total());
+    };
+    // the bands of the further cards that failed
+    let failed = Mutex::new(Vec::new());
+    let mut r = Ok(());
+    std::thread::scope(|s| {
+        for k in crate::gpu::extra_cards(p) {
+            let (band, row_in, failed, stop, left, board) = (&band, &row_in, &failed, &stop, &left, &board);
+            s.spawn(move || {
+                crate::gpu::on_card(k, || {
+                    // (once its pipelines are compiled)
+                    let Ok(flags) = crate::gpu::march_prepare(p, post) else { return };
+                    if !compiled_in_time(&flags, left, cancel) {
+                        return;
+                    }
+                    let claimed = Mutex::new(Vec::new());
+                    let mine = AtomicUsize::new(0);
+                    let rk = board.keep_going(cancel, || {
+                        crate::gpu::march_bands(
+                            p,
+                            post,
+                            &|n| {
+                                let b = band(k, n);
+                                if let Some(b) = b {
+                                    claimed.lock().unwrap().push(b);
+                                }
+                                b
+                            },
+                            &|| stop(k),
+                            &mut |y, row| {
+                                mine.fetch_add(1, Ordering::Relaxed);
+                                row_in(y, row, false)
+                            },
+                        )
+                    });
+                    let rk = stopped_as_done(rk, cancel);
+                    if std::env::var_os("MB3D_CARDS_DEBUG").is_some() {
+                        crate::elog!("card {}: {} rows marched ({rk:?})", k + 1, mine.load(Ordering::Relaxed));
+                    }
+                    if rk.as_ref().is_err_and(|e| e != "cancelled") || crate::gpu::rows_overflowed() {
+                        failed.lock().unwrap().extend(claimed.into_inner().unwrap());
+                    }
+                });
+            });
+        }
+        r = stopped_as_done(board.keep_going(cancel, || crate::gpu::march_bands(p, post, &|n| band(0, n), &|| stop(0), &mut |y, row| row_in(y, row, false))), cancel);
+    });
+    // (on the first card again)
+    let redo = failed.into_inner().unwrap();
+    if r.is_ok() && !redo.is_empty() && !cancel() {
+        let i = Mutex::new(0usize);
+        r = crate::gpu::march_bands(
+            p,
+            post,
+            &|_| {
+                let mut i = i.lock().unwrap();
+                *i += 1;
+                redo.get(*i - 1).copied()
+            },
+            cancel,
+            &mut |y, row| row_in(y, row, true),
+        );
+    }
+    drop(rows);
     match r {
         Ok(()) => {
-            crate::gpu::set_status(format!("GPU {} (continued)", crate::gpu::name().unwrap_or_default()));
+            let mut s = format!("GPU {}", crate::gpu::name().unwrap_or_default());
+            if continued {
+                s.push_str(" (continued)");
+            }
+            if post.shadows.is_some() {
+                s.push_str(" +shadows");
+            }
+            if post.deao.is_some() {
+                s.push_str(" +AO");
+            }
+            crate::gpu::set_status(s);
             Ok(Some(gbuf))
         }
-        Err(_) if cancel() => Err("cancelled".into()),
+        Err(_) if cancel() || crate::gpu::aborted() => {
+            // (the rows of a march that overflowed are not usable: all on
+            // the CPU next time, as when it fails)
+            if crate::gpu::rows_overflowed() {
+                if let Some(ck) = ck {
+                    ck.reset();
+                }
+            }
+            Err("cancelled".into())
+        }
         Err(e) => {
             crate::gpu::set_status(format!("CPU: GPU error: {e}"));
             Ok(None)
@@ -1253,7 +1960,14 @@ fn finish_calculation(
     } else if post == 2 {
         post_process_reporting(sc, &p, &mut gbuf, threads, progress, stage, cancel)?;
     } else if sc.shadows.is_some() || sc.deao.is_some() {
+        // (a tile: the normals on the Z-buffer need the neighbour tiles,
+        // they run on the whole picture, and the shadows after them there,
+        // as they use the normals: finish_tiles)
         let mut s2 = sc.clone();
+        s2.normals_on_zbuf = false;
+        if sc.normals_on_zbuf {
+            s2.shadows = None;
+        }
         if s2.deao.is_none() {
             s2.ao = None;
         }
@@ -1355,7 +2069,8 @@ pub fn post_process_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]
 }
 
 /// [`post_process_cancellable`] that names each pass to `stage` as it
-/// starts and counts its rows in `progress`.
+/// starts and counts its rows in `progress` (weighed by their surface
+/// pixels).
 pub fn post_process_reporting(
     sc: &Scene,
     p: &CalcParams,
@@ -1386,13 +2101,47 @@ pub fn post_process_reporting(
             }
         }
     }
+    // the passes still to run on the card and the CPU together, as after
+    // the main calculation (a repaint after a calculation on the card: its
+    // pipelines are compiled; a light switched on took 33 s on the CPU at
+    // 4000 x 2000, with the card idle); not after a march in double
+    // precision, nor while the card compiles (the pass would wait behind
+    // it): then the CPU alone, as below, and the compile started here
+    // serves the next repaint
+    #[cfg(feature = "gpu")]
+    {
+        let pending = PostJob { shadows: job.shadows.clone().filter(|_| sc.shadows.is_some() && !shadows_done), deao: job.deao.filter(|_| !deao_done) };
+        if !pending.is_empty() && p.slice_2d == 0 && !p.gpu_double && crate::gpu::enabled() && !crate::gpu::compiling() {
+            if let Ok(flags) = crate::gpu::march_prepare(p, &pending) {
+                if flags.iter().all(|f| f.load(Ordering::SeqCst)) {
+                    let (hs, ao) = (pending.shadows.is_some(), pending.deao.is_some());
+                    stage(&post_stage_name(hs, ao, "graphics card and CPU"));
+                    let t = Instant::now();
+                    let card_rows = post_shared(sc, p, gbuf, &pending, threads, progress, cancel)?;
+                    let secs = t.elapsed().as_secs_f64();
+                    if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+                        crate::elog!("  shadows and DE occlusion shared: {secs:.2} s, {card_rows} of {} rows on the card", p.rect[3]);
+                    }
+                    if hs {
+                        times.shadows = Some(Some(secs));
+                        shadows_done = true;
+                    }
+                    if ao {
+                        times.ao_with_shadows = hs;
+                        times.ao = Some(if hs { None } else { Some(secs) });
+                        deao_done = true;
+                    }
+                }
+            }
+        }
+    }
     if sc.shadows.is_some() && !shadows_done {
         stage(&post_stage_name(true, false, ""));
         let t = Instant::now();
         hard_shadows_reporting(sc, p, gbuf, threads, progress, cancel);
         stopped()?;
         if std::env::var_os("MB3D_GPU_TIMING").is_some() {
-            eprintln!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
+            crate::elog!("  hard shadows (CPU): {:.2} s", t.elapsed().as_secs_f64());
         }
         times.shadows = Some(Some(t.elapsed().as_secs_f64()));
         // (the card's occlusion keeps the time of its pass, which it no
@@ -1411,12 +2160,13 @@ pub fn post_process_reporting(
                 times.ao = Some(Some(t.elapsed().as_secs_f64()));
                 times.ao_with_shadows = false;
             }
+            if p.ao_half {
+                // (the card's pixels, or the card's and the CPU's)
+                crate::deao::fill_half(gbuf, p.rect[2] as usize, p.rect[3] as usize, p.rect[0], p.rect[1]);
+            }
         } else {
-            // (no rows to count: one step)
             stage(&post_stage_name(false, true, ""));
-            progress(0, 1);
-            ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads);
-            progress(1, 1);
+            ssao(gbuf, p.rect[2] as usize, p.rect[3] as usize, p, ao, threads, progress);
             times.ao = Some(Some(t.elapsed().as_secs_f64()));
             times.ao_with_shadows = false;
         }
@@ -1425,30 +2175,37 @@ pub fn post_process_reporting(
     Ok(times)
 }
 
-fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize) {
+/// `progress`: the 15 bit kind counts its rows; the others are one step.
+fn ssao(gbuf: &mut [SiLight], w: usize, h: usize, p: &CalcParams, ao: &crate::ssao::SsaoParams, threads: usize, progress: &(dyn Fn(usize, usize) + Sync)) {
     // a panorama wraps around: its left and right edges are neighbours
     let ao = &crate::ssao::SsaoParams { wrap_x: p.optic == CameraOptic::Panorama, ..*ao };
+    progress(0, 1);
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && !crate::gpu::compiling() {
         // only the depth buffer is needed: also after a CPU calculation
         // (but not while the card compiles a shader: the pass would wait
         // behind the compile)
         let r = if ao.bits15 { crate::gpu::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao) } else { crate::gpu::ssao24(gbuf, w, h, p.zc_mul, p.zcorr, ao) };
+        if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+            crate::elog!("    ssao on the card returned, rss {} MB", crate::reflect::rss_mb());
+        }
         match r {
             Ok(()) => {
                 let s = crate::gpu::last_status();
                 if s.starts_with("GPU") && !s.contains("+SSAO") {
                     crate::gpu::set_status(format!("{s} +SSAO"));
                 }
+                progress(1, 1);
                 return;
             }
-            Err(e) => eprintln!("SSAO on the GPU failed, calculated on the CPU: {e}"),
+            Err(e) => crate::elog!("SSAO on the GPU failed, calculated on the CPU: {e}"),
         }
     }
     if ao.bits15 {
-        crate::ssao15::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao, threads);
+        crate::ssao15::ssao15(gbuf, w, h, p.zc_mul, p.zcorr, ao, threads, progress);
     } else {
         crate::ssao::ssao24(gbuf, w, h, p.zc_mul, p.zcorr, ao, threads);
+        progress(1, 1);
     }
 }
 
@@ -1494,6 +2251,9 @@ pub(crate) fn light_vals(sc: &Scene, l: &crate::lighting::Lighting, cam: &PaintC
     lv.rotate_object_lights(l, &normalise_matrix_to(1.0, &sc.vgrads));
     let vz = normalise_matrix_to(1.0, &sc.vgrads)[2];
     lv.place_lights(l, sc.stereo_mid(), cam, z_range, vz);
+    lv.set_ground(sc.ground.as_ref().filter(|_| sc.inside == crate::scene::InsideMode::Outside));
+    lv.material = sc.material.filter(|m| *m != crate::scene::Material::default());
+    lv.detail = sc.detail.filter(|d| d.strength > 0.0 || d.color > 0.0);
     lv
 }
 
@@ -1604,7 +2364,8 @@ pub fn hard_shadows_cancellable(sc: &Scene, p: &CalcParams, gbuf: &mut [SiLight]
     hard_shadows_reporting(sc, p, gbuf, threads, &|_, _| {}, cancel)
 }
 
-/// [`hard_shadows_cancellable`] that counts the rows done in `progress`.
+/// [`hard_shadows_cancellable`] that counts the rows done in `progress`,
+/// weighed by their surface pixels.
 pub fn hard_shadows_reporting(
     sc: &Scene,
     p: &CalcParams,
@@ -1618,6 +2379,8 @@ pub fn hard_shadows_reporting(
     let h = p.rect[3] as usize;
     let threads = threads.min(h).max(1);
     let pass = &pass;
+    // (the rows weighed by their surface pixels: the pass works on those)
+    let sw = &RowWeights::surface(gbuf, w, h);
     let finished = AtomicUsize::new(0);
     let finished = &finished;
     std::thread::scope(|s| {
@@ -1633,7 +2396,7 @@ pub fn hard_shadows_reporting(
                         break;
                     }
                     pass.row(y, row);
-                    progress(finished.fetch_add(1, Ordering::Relaxed) + 1, h);
+                    progress(finished.fetch_add(sw.weight(y), Ordering::Relaxed) + sw.weight(y), sw.total());
                 }
             });
         }
@@ -1687,6 +2450,12 @@ pub fn paint_cancellable(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], cancel: &
 /// before MB3D's rounding to 8 bit): `mb3d --bits 16`, "PNG 16 bit colour".
 pub fn paint16(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<u16> {
     paint_with::<u16>(sc, p, gbuf, true, &|_, _| {}, &no_stage, &|| false).0
+}
+
+/// [`paint`] in floating point (1 = white), not clipped above white: the
+/// colours of the OpenEXR pictures, as shown (with the picture's gamma).
+pub fn paint_f32(sc: &Scene, p: &CalcParams, gbuf: &[SiLight]) -> Vec<f32> {
+    paint_with::<f32>(sc, p, gbuf, true, &|_, _| {}, &no_stage, &|| false).0
 }
 
 /// [`paint`], and the time of the reflections (None without them).
@@ -1785,6 +2554,31 @@ fn paint_with<S: crate::lighting::Sample>(
     stage: &(dyn Fn(&str) + Sync),
     cancel: &(dyn Fn() -> bool + Sync),
 ) -> (Vec<S>, Option<f64>) {
+    let Some(f) = sc.finish_for_camera().filter(|f| !f.is_neutral() && p.slice_2d == 0) else {
+        return paint_core::<S>(sc, p, gbuf, full, progress, stage, cancel);
+    };
+    // the finishing: painted in floating point (the light above white
+    // kept for the tone mapping), then on the whole picture
+    let (mut v, refl_s) = paint_core::<f32>(sc, p, gbuf, full, progress, stage, cancel);
+    if !cancel() {
+        stage("finishing");
+        let [x0, y0, w, h] = p.rect;
+        let cam = paint_camera(sc, p);
+        let threads = thread_count(sc).min(h.max(1) as usize).max(1);
+        crate::finish::apply(&mut v, w as usize, h as usize, [x0, y0], [cam.width as usize, cam.height as usize], &f, threads);
+    }
+    (v.into_iter().map(|x| S::from_dof(x * 255.0)).collect(), refl_s)
+}
+
+fn paint_core<S: crate::lighting::Sample>(
+    sc: &Scene,
+    p: &CalcParams,
+    gbuf: &[SiLight],
+    full: bool,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    stage: &(dyn Fn(&str) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> (Vec<S>, Option<f64>) {
     let [x0, ry0, w, h] = p.rect;
     let l = effective_lighting(sc);
     let cam = paint_camera(sc, p);
@@ -1818,12 +2612,13 @@ fn paint_with<S: crate::lighting::Sample>(
         crate::reflect::reflections(sc, p, gbuf, &mut rgb, &cam, &lv, threads, progress, cancel);
         refl_s = Some(t.elapsed().as_secs_f64());
     }
+    if let Some(c) = sc.clouds.as_ref().filter(|_| p.slice_2d == 0 && !cancel()) {
+        stage("clouds");
+        crate::clouds::apply(c, &l, &lv, &cam, sc.stereo_mid(), gbuf, &mut rgb, w as usize, [x0, ry0], threads, cancel);
+    }
     if let Some(d) = sc.dof.as_ref().filter(|_| p.slice_2d == 0 && !cancel()) {
-        // (no rows to count: one step)
         stage("depth of field");
-        progress(0, 1);
-        crate::dof::apply(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d, cancel);
-        progress(1, 1);
+        crate::dof::apply_reporting(&mut rgb, gbuf, w as usize, h as usize, p.zc_mul, p.zcorr, sc.fov_y, d, progress, cancel);
     }
     (rgb, refl_s)
 }
@@ -1834,7 +2629,7 @@ fn paint_with<S: crate::lighting::Sample>(
 pub fn auto_color_range(sc: &mut Scene, gbuf: &[SiLight]) {
     let mut v: Vec<f64> = gbuf
         .iter()
-        .filter(|s| !s.is_background() && s.si_gradient < 32768)
+        .filter(|s| !s.is_background() && s.si_gradient < 32768 && !s.is_ground())
         .map(|s| s.si_gradient as f64)
         .collect();
     if v.len() < 16 {
@@ -1849,27 +2644,105 @@ pub fn auto_color_range(sc: &mut Scene, gbuf: &[SiLight]) {
     sc.lighting.color_end = tb(hi) as f32;
 }
 
-/// The memory a whole picture of `w` x `h` takes while it is calculated
-/// (measured: the buffers, the card's copies, the picture; on the safe side).
-pub fn memory_needed(w: usize, h: usize) -> u64 {
-    (w as u64).saturating_mul(h as u64).saturating_mul(80).saturating_add(300 << 20)
+/// What a calculation holds, for [`memory_needed`].
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct MemoryUse {
+    pub w: usize,
+    pub h: usize,
+    /// the reflections (`mc.reflections`): one band of the pass
+    pub reflections: bool,
+    /// the depth of field: its copies of the picture
+    pub dof: bool,
+    /// the main calculation with the shadows and the occlusion runs here
+    /// (false for the owner of a swarm's tiles: the tiles' computers do
+    /// it, each with its tile's memory): the card's occlusion buffers
+    pub march: bool,
+    /// the main window keeps the picture: its copies of the painting
+    pub window: bool,
 }
 
-/// The memory the system can give without swapping (`MemAvailable`); None
-/// where it cannot be told (other systems than Linux).
+impl MemoryUse {
+    /// The calculation of `sc` as `mb3d` renders it (no window).
+    pub fn of(sc: &Scene) -> Self {
+        MemoryUse { w: sc.width.max(0) as usize, h: sc.height.max(0) as usize, reflections: sc.mc.reflections, dof: sc.dof.is_some(), march: true, window: false }
+    }
+
+    /// A picture of `w` x `h` with everything on: the most it can take.
+    pub fn most(w: usize, h: usize) -> Self {
+        MemoryUse { w, h, reflections: true, dof: true, march: true, window: true }
+    }
+}
+
+/// The memory a calculation takes in this program, roughly, with `free`
+/// bytes there (the reflections' band follows it): the G-buffer (20 bytes
+/// per pixel) all along, the program with its shaders (0.6 GB), the
+/// window's copies of the painted picture (10 per pixel); then the larger
+/// of the two stages: the main calculation with the shadows and the
+/// ambient occlusion (the card's buffers, 16 per pixel, and 1.2 GB the
+/// driver holds), or the paint (the picture, 3 per pixel; one band of the
+/// reflection pass, `reflect::band_bytes`, 3.5 GB at most; the depth of
+/// field's copies, 20 per pixel).  From the 12000 x 6000 test picture of
+/// 2026-10-28 (`MB3D_STAGE_TIMES=1` and `MB3D_GPU_TIMING=1` print the
+/// process memory): 6.0 GB measured, 5.8 estimated; since that day no
+/// stage grows with the picture beyond these bytes per pixel.
+pub fn memory_needed(u: MemoryUse, free: Option<u64>) -> u64 {
+    let px = (u.w as u64).saturating_mul(u.h as u64);
+    let per = |bytes: u64| px.saturating_mul(bytes);
+    let base = per(20).saturating_add(if u.window { per(10) } else { 0 }).saturating_add(600 << 20);
+    let march = if u.march { per(16).saturating_add(1200 << 20) } else { 0 };
+    let band = if u.reflections && cfg!(feature = "gpu") { crate::reflect::band_bytes(free) } else { 0 };
+    let paint = per(3).saturating_add(band).saturating_add(if u.dof { per(20) } else { 0 });
+    base.saturating_add(march.max(paint))
+}
+
+/// The memory the system can give without swapping: Linux `MemAvailable`,
+/// Windows and macOS through sysinfo; None where it cannot be told.
+/// MB3D_FREE_MEMORY_MB pretends a size (to try what the program does on a
+/// computer with less memory: the big pictures' checks, the compiles'
+/// turns in a batch).
 pub fn memory_available() -> Option<u64> {
+    if let Some(mb) = std::env::var("MB3D_FREE_MEMORY_MB").ok().and_then(|v| v.trim().parse::<u64>().ok()) {
+        return Some(mb << 20);
+    }
+    os_memory_available()
+}
+
+#[cfg(target_os = "linux")]
+fn os_memory_available() -> Option<u64> {
     let text = std::fs::read_to_string("/proc/meminfo").ok()?;
     let kb: u64 = text.lines().find_map(|l| l.strip_prefix("MemAvailable:"))?.trim().trim_end_matches("kB").trim().parse().ok()?;
     Some(kb * 1024)
 }
 
-/// Err when a picture of `w` x `h` does not fit into the free memory: the
-/// calculation would only swap until the system stops it.
-pub fn check_memory(w: usize, h: usize) -> Result<(), String> {
-    let need = memory_needed(w, h);
-    match memory_available() {
-        Some(free) if need > free => Err(format!("a {w} x {h} picture needs about {} of memory, this computer has {} free", gigabytes(need), gigabytes(free))),
-        _ => Ok(()),
+/// Windows (`GlobalMemoryStatusEx`) and macOS (the free, inactive and
+/// speculative pages) through the sysinfo crate.
+#[cfg(any(windows, target_os = "macos"))]
+fn os_memory_available() -> Option<u64> {
+    let mut s = sysinfo::System::new();
+    s.refresh_memory();
+    Some(s.available_memory()).filter(|&b| b > 0)
+}
+
+#[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
+fn os_memory_available() -> Option<u64> {
+    None
+}
+
+/// The memory the calculation `u` needs and the free memory, when the
+/// first is more than the second (the calculation would swap); None when
+/// it fits or the free memory cannot be told.
+pub fn memory_shortfall(u: MemoryUse) -> Option<(u64, u64)> {
+    let free = memory_available()?;
+    let need = memory_needed(u, Some(free));
+    (need > free).then_some((need, free))
+}
+
+/// Err when the calculation `u` does not fit into the free memory: it
+/// would only swap until the system stops it.
+pub fn check_memory(u: MemoryUse) -> Result<(), String> {
+    match memory_shortfall(u) {
+        Some((need, free)) => Err(format!("a {} x {} picture needs about {} of memory, this computer has {} free", u.w, u.h, gigabytes(need), gigabytes(free))),
+        None => Ok(()),
     }
 }
 
@@ -2007,6 +2880,7 @@ pub fn open_tiles_checkpoint(sc: &Scene, name: &str, policy: Policy) -> Option<S
         height: h,
         rec: crate::gbuffer::REC_BYTES,
         units: (tl.cols * tl.rows) as usize,
+        image: Some(image_of(sc)),
     };
     let s = Store::open(spec, policy)?;
     s.put_extra("scene.m3s", sc.to_text().as_bytes());
@@ -2089,6 +2963,11 @@ pub fn render_tiled_with(
             }
             let mut ts = sc.clone();
             ts.calc_rect = Some(t);
+            // (the DE occlusion uses the normals: after them, on the
+            // whole picture)
+            if sc.normals_on_zbuf {
+                ts.deao = None;
+            }
             let tck = ck.and_then(|s| open_checkpoint(&ts, &s.spec().name, policy));
             let (_, gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, 1, None, tck.as_ref())?;
             put(&mut full, &gbuf);
@@ -2104,9 +2983,7 @@ pub fn render_tiled_with(
     let mut fs = sc.clone();
     fs.calc_rect = None;
     let p = CalcParams::new(&fs)?;
-    if let (Some(ao), None) = (&sc.ao, &sc.deao) {
-        ssao(&mut full, wu, hu, &p, ao, thread_count(sc));
-    }
+    finish_tiles(&fs, &p, &mut full, wu, hu, progress, cancel)?;
     let t1 = Instant::now();
     let rgb = paint(&fs, &p, &full);
     Ok(TiledResult {
@@ -2118,6 +2995,47 @@ pub fn render_tiled_with(
         paint_seconds: t1.elapsed().as_secs_f64(),
         params: Some(p),
     })
+}
+
+/// The post calculations of tiles calculated in the tile mode (`post` 1 of
+/// [`calculate_inner`]: their shadows and DE occlusion done) that need the
+/// whole picture, on the assembled G-buffer `full` (`w` x `h`) with the
+/// whole picture's parameters `p`: the normals on the Z-buffer (and the DE
+/// occlusion after them), the screen space occlusion.  Local tiled renders
+/// and the swarm's assembled tiles: the same picture as a render in one
+/// piece.
+pub fn finish_tiles(
+    fs: &Scene,
+    p: &CalcParams,
+    full: &mut [SiLight],
+    w: usize,
+    h: usize,
+    progress: &(dyn Fn(usize, usize) + Sync),
+    cancel: &(dyn Fn() -> bool + Sync),
+) -> Result<(), String> {
+    // (in the order of post_process: the normals, the shadows (per tile),
+    // the occlusion)
+    if fs.normals_on_zbuf && p.slice_2d == 0 {
+        crate::reflect::normals_on_zbuf(fs, p, full);
+        // the hard shadows with these normals (the tiles left them out)
+        if fs.shadows.is_some() {
+            let mut s3 = fs.clone();
+            s3.normals_on_zbuf = false;
+            s3.ao = None;
+            s3.deao = None;
+            post_process_cancellable(&s3, p, full, thread_count(fs), cancel)?;
+        }
+        if let (Some(_), Some(d)) = (&fs.ao, &fs.deao) {
+            crate::deao::deao(p, full, w, h, d, thread_count(fs), progress, cancel);
+            if cancel() {
+                return Err("cancelled".into());
+            }
+        }
+    }
+    if let (Some(ao), None) = (&fs.ao, &fs.deao) {
+        ssao(full, w, h, p, ao, thread_count(fs), &|_, _| {});
+    }
+    Ok(())
 }
 
 /// One tile of `sc.tiling` (its `pos` set) as [`render_tiled`] calculates
@@ -2151,8 +3069,15 @@ pub fn render_tile_staged(
     let mut ts = sc.clone();
     ts.calc_rect = Some([x0, y0, x1 - x0, y1 - y0]);
     let t0 = Instant::now();
-    let (p, mut gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, 0, None, ck)?;
-    if post_pending(&ts, &p) {
+    // a tile of a picture the owner assembles and paints (not `full`):
+    // calculated as the tiles of a local tiled render, the passes over the
+    // whole picture follow there (finish_tiles), so the assembled picture
+    // is the same as one calculated in one piece
+    if !full && sc.normals_on_zbuf {
+        ts.deao = None;
+    }
+    let (p, mut gbuf) = calculate_inner(&ts, progress, &no_stage, cancel, if full { 0 } else { 1 }, None, ck)?;
+    if full && post_pending(&ts, &p) {
         stage(match (ts.shadows.is_some(), ts.ao.is_some()) {
             (true, true) => "hard shadows and ambient occlusion",
             (true, false) => "hard shadows",
@@ -2201,6 +3126,9 @@ pub enum StereoLayout {
     Cross,
     /// red-cyan anaglyph (half colour: red from the left eye's luminance)
     Anaglyph,
+    /// left image above the right one (360 degree stereo panoramas for VR
+    /// headsets and players)
+    TopBottom,
 }
 
 impl StereoLayout {
@@ -2209,7 +3137,8 @@ impl StereoLayout {
             "parallel" | "side-by-side" | "sbs" => Ok(StereoLayout::Parallel),
             "cross" | "cross-eyed" | "crosseyed" => Ok(StereoLayout::Cross),
             "anaglyph" | "red-cyan" => Ok(StereoLayout::Anaglyph),
-            _ => Err(format!("bad stereo layout '{s}' (parallel, cross, anaglyph)")),
+            "top-bottom" | "tb" | "over-under" => Ok(StereoLayout::TopBottom),
+            _ => Err(format!("bad stereo layout '{s}' (parallel, cross, anaglyph, top-bottom)")),
         }
     }
 }
@@ -2225,6 +3154,7 @@ pub fn compose_stereo(left: &[u8], right: &[u8], w: usize, h: usize, layout: Ste
             }
             (out, w, h)
         }
+        StereoLayout::TopBottom => ([left, right].concat(), w, h * 2),
         _ => {
             let (a, b) = if layout == StereoLayout::Parallel { (left, right) } else { (right, left) };
             let mut out = vec![0u8; w * 2 * h * 3];
@@ -2234,5 +3164,131 @@ pub fn compose_stereo(left: &[u8], right: &[u8], w: usize, h: usize, layout: Ste
             }
             (out, w * 2, h)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn memory_model() {
+        use super::*;
+        let g = |b: u64| b as f64 / (1u64 << 30) as f64;
+        // the 12000 x 6000 test picture with reflections, as mb3d renders
+        // it: 6.0 GB measured
+        let u = MemoryUse { w: 12000, h: 6000, reflections: true, dof: false, march: true, window: false };
+        let need = g(memory_needed(u, None));
+        assert!((5.0..7.0).contains(&need), "{need}");
+        // the owner of a swarm's tiles: no main calculation here
+        let owner = MemoryUse { march: false, window: true, ..u };
+        assert!(memory_needed(owner, None) <= memory_needed(MemoryUse { window: true, ..u }, None));
+        // short memory: the reflections' band shrinks
+        assert!(memory_needed(u, Some(4 << 30)) < memory_needed(u, None));
+        // more pixels, more memory
+        assert!(memory_needed(MemoryUse::most(1000, 1000), None) < memory_needed(MemoryUse::most(2000, 2000), None));
+        assert!(g(memory_needed(MemoryUse::most(100_000, 100_000), None)) > 400.0);
+    }
+
+    use super::*;
+
+    /// A probe G-buffer of `pw` x `ph`: the top `sky` rows background, the
+    /// rows below on the object with `steps` DE steps per pixel.
+    fn probe_gbuf(pw: usize, ph: usize, sky: usize, steps: u16) -> Vec<SiLight> {
+        let mut g = vec![SiLight::default(); pw * ph];
+        for (y, row) in g.chunks_mut(pw).enumerate() {
+            if y >= sky {
+                for s in row {
+                    s.zpos_fine = 1000 << 16;
+                    s.shadow = steps;
+                }
+            }
+        }
+        g
+    }
+
+    /// The progress a render of `h` rows done in order reports (per
+    /// mille, as the window stores it) after each row.
+    fn per_mille(wm: &RowWeights, h: usize) -> Vec<usize> {
+        let done = AtomicUsize::new(0);
+        (0..h).map(|y| (done.fetch_add(wm.weight(y), Ordering::Relaxed) + wm.weight(y)) * 1000 / wm.total()).collect()
+    }
+
+    #[test]
+    fn probe_weights_follow_the_de_steps() {
+        // the probe at 1/4: 2 rows of sky, 2 of object; 16 rows in all
+        let g = probe_gbuf(8, 4, 2, 200);
+        let wm = RowWeights::from_probe(&g, 8, 4, 16);
+        assert_eq!(wm.rows(), 16);
+        // the full rows of a probe row weigh the same
+        assert_eq!(wm.weight(0), wm.weight(7));
+        assert_eq!(wm.weight(8), wm.weight(15));
+        // an object row costs (200 + 4) / 4 times a sky row (rounded)
+        let ratio = wm.weight(8) as f64 / wm.weight(0) as f64;
+        assert!((ratio - 51.0).abs() < 4.0, "{ratio}");
+        // the mean about 100
+        assert!((wm.total() as i64 - 1600).abs() <= 16, "{}", wm.total());
+        assert_eq!(wm.before(8), 8 * wm.weight(0));
+        assert_eq!(wm.before(16), wm.total());
+        // equal weights without a probe
+        assert_eq!(RowWeights::from_probe(&[], 0, 0, 5), RowWeights::equal(5));
+        assert_eq!(RowWeights::equal(5).total(), 5);
+    }
+
+    #[test]
+    fn progress_is_monotonic_and_reaches_1000() {
+        let g = probe_gbuf(8, 4, 1, 300);
+        for wm in [RowWeights::from_probe(&g, 8, 4, 37), RowWeights::equal(37), RowWeights::surface(&g, 8, 4)] {
+            let p = per_mille(&wm, wm.rows());
+            assert!(p.windows(2).all(|w| w[0] <= w[1]), "{p:?}");
+            assert_eq!(*p.last().unwrap(), 1000);
+        }
+    }
+
+    #[test]
+    fn half_sky_is_far_below_half_the_work() {
+        let g = probe_gbuf(8, 4, 2, 200);
+        let wm = RowWeights::from_probe(&g, 8, 4, 16);
+        let p = per_mille(&wm, 16);
+        // the sky rows done: a few per cent, not 50 (4 / (4 + 204))
+        assert!(p[7] < 50, "{}", p[7]);
+        assert!(p[7] >= 10, "{}", p[7]);
+        assert_eq!(p[15], 1000);
+    }
+
+    #[test]
+    fn surface_weights_count_the_object_pixels() {
+        let g = probe_gbuf(8, 4, 1, 10);
+        let sw = RowWeights::surface(&g, 8, 4);
+        assert_eq!((0..4).map(|y| sw.weight(y)).collect::<Vec<_>>(), vec![1, 9, 9, 9]);
+        assert_eq!(sw.total(), 28);
+        assert_eq!(sw.before(2), 10);
+    }
+
+    #[test]
+    fn checkpoint_key_differs_per_tile() {
+        let mut sc = Scene { width: 64, height: 64, ..Default::default() };
+        let tl = crate::scene::Tiling { cols: 2, rows: 2, pos: None, downscale: 1 };
+        let whole = checkpoint_key(&sc);
+        let mut keys = Vec::new();
+        for (c, r) in [(0, 0), (1, 0), (0, 1), (1, 1)] {
+            sc.calc_rect = Some(tl.tile_rect(64, 64, c, r));
+            keys.push(checkpoint_key(&sc));
+        }
+        keys.push(whole);
+        let n = keys.len();
+        keys.sort();
+        keys.dedup();
+        assert_eq!(keys.len(), n);
+    }
+
+    #[test]
+    fn tiles_with_normals_on_zbuf_match_the_whole_picture() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        (sc.width, sc.height, sc.threads) = (64, 48, 2);
+        sc.normals_on_zbuf = true;
+        let whole = crate::render(&sc, &|_, _| {}).unwrap();
+        sc.tiling = Some(crate::scene::Tiling { cols: 2, rows: 2, pos: None, downscale: 1 });
+        let t = render_tiled(&sc, true, &|_, _| {}, &|_, _, _| {}).unwrap();
+        assert!(t.gbuffer.unwrap() == whole.gbuffer);
+        assert_eq!(t.rgb, whole.rgb);
     }
 }

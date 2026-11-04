@@ -1,0 +1,145 @@
+[OPTIONS]
+.DEScale = 0.0105
+.RStop = 6
+.SIPow = 2
+.Version = 9
+.Double AddValue = 0.1
+.Double Lenght = 2.5
+.Double Scale = 2
+.Double v_Lp_space = 2
+[SOURCE]
+procedure BaguaboxP(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+var
+
+temp, modulus, negativeLenght, invPower : double;
+intPow : integer;
+
+begin
+
+
+//===modulus==in==Lp========()==================================
+/// calculate radius in Lp space where circle is circle (2), square (1) or smartphone shape (4)
+// Using just int values - faster.
+
+intPow:=round(v_Lp_space);
+
+	if intPow = 1 then  
+	// choice 1. If curvatures is 1 then use fastest formula
+	begin
+	modulus  := abs(x) + abs(y) + abs(z);
+	end
+		
+  		else if intPow = 2 then  
+		// choice2. If curvatures is 2 then use standart formula
+	  	begin
+		modulus  := sqrt( x*x + y*y + z*z);
+		end
+		
+		else  
+		//choice 3. else use heavy formulas
+	begin
+	invPower:= 1/ intPow; 
+	temp:= intPower(abs(x),intPow) + intPower(abs(y),intPow) + intPower(abs(z),intPow);
+	modulus  := power( temp ,invPower);
+		end;
+
+
+
+//====baguafold=======(^^)==========================
+//baguafold, positive version
+// In transformation  unit vector is involved.
+
+// Zvector = Baguafold(Zvector)
+
+
+//optimisation for speed
+negativeLenght:= -Lenght;
+
+
+ // to awoyd division / 0; Not necessary in M3D but still benefitial
+ if modulus = 0 then
+    begin
+      modulus := 1e-15;
+   end;
+
+
+
+
+///=========x=====================(^_^)===== 
+	 if x > Lenght then
+	    begin
+		x := x/modulus + AddValue;
+	    end
+	  else if x < negativeLenght then
+	    begin
+		x := x/modulus - AddValue;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+///=========y==========================
+	 if y > Lenght then
+	    begin
+		y := y/modulus + AddValue;
+	    end
+	  else if y < negativeLenght then
+	    begin
+		y := y/modulus - AddValue;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+///=========z==========================
+	 if x > Lenght then
+	    begin
+		z := z/modulus + AddValue;
+	    end
+	  else if z < negativeLenght then
+	    begin
+		z := z/modulus - AddValue;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+
+
+
+
+
+//=====scale==+C==========================================
+//scaling and +C
+// Zvector = Scale*Zvector + C
+  x := x*scale + PIteration3D^.J1;
+  y := y*scale + PIteration3D^.J2;
+  z := z*scale + PIteration3D^.J3;
+
+
+
+
+
+end;
+[END]
+Formula version 1.4
+
+Positive fold baguabox.
+
+Very different ...box like formula.
+
+On hybridisation watch to the bailout value. Stature depends on bailout, by default here "R bailout" = 6. Value 16 can turn fractal into just single inside.
+
+Formula variables:
+Lenght - like Fold, AddValue - adds inside a fold. Scale 
+
+
+In Lp space circle (if p=2) is circle, (if p=1) diamond or (if p=4) a smartphone shape
+sophistication 1<2<4  but speed 1>>2>>4
+
+
+ * * *
+By Edgar Malinovsky

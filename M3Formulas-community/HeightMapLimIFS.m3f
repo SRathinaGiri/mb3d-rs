@@ -1,0 +1,42 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.Integer Map nr = 10
+.Single X size = 0.5
+.Single Y size = 0.5
+.Single Thickness = -.5
+.Single X scale = 1
+.Single Y scale = 1
+.Single H scale = -0.1
+.3SingleAngles Rotation = 0
+.Integer Map channel (0..2) = 0
+.Integer OTrap channel (0..2) = 1
+.Single OTrap offset = 0
+.Single OTrap multiplier = 1
+[CONSTANTS]
+Double = 0.5
+[CODE]
+5183C4CEDD4698DD4690DD4688D9C0D84FC0D9C2D84FBCDEC1D9C3D84FB8DEC1
+D9C1D84FD8D9C3D84FD4DEC1D9C4D84FD0DEC1D9CAD84FCCD9CBD84FC8DEC3D9
+CBD84FC4DEC2DD542420D84FE4DD1C24DD542428D84FE0DD5C2408D9E1DD5C24
+18DD442420D9E1D867F0DD442428D9E1D867ECD8D19BDFE0D0EC7304DDD8EB02
+DDD9DD542420DC67F8D9EEDED99BDFE0D0EC7302EB23DD442418D847E8D947DC
+DC4FF8DEE9D947DCD9E1DC8678FFFFFFDED99BDFE0D0EC732CDD442420DD4424
+18D8D19BDFE0D0EC7304DDD8EB02DDD9D9E0DD47F8D84FDCD867E8DEE1DD5EE0
+83C43259C3DD0424DC27DD442408DC27DD5C2408DD1C2489E08B57F489E1FF96
+0C0100008B4FB483E103DD04CCD84FDCD867E8DC6C2418DD442420D8D19BDFE0
+D0EC7304DDD8EB02DDD9DD5EE08B4FB083E103DD04CCD847ACD84FA8DD9E8000
+000083C43259C3
+[END]
+
+Note: Hijacked (by popular demand) march 3 2017 by Luca;
+This version shows a cubey shape with straight edges instead of
+an infinite plane (hence the name Lim = limited in size), kept
+Jesse's optimizations and adapted a bit.
+
+Use a map to generate a terrain out of the amplitude from the map color,
+use 'Map channel' to choose from r,g,b represented by the values 0,1 and 2.
+
+Use the orbit trap coloring mode to colorize the surface. 
+
+Remember that a value of 1 for "Max. iterations" is enough to generate one dIFS object.

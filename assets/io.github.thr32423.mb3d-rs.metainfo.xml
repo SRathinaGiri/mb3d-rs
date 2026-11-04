@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The application's description for software centres and Flathub
+     (AppStream MetaInfo).  Check it with: appstreamcli validate assets/io.github.thr32423.mb3d-rs.metainfo.xml -->
+<component type="desktop-application">
+  <id>io.github.thr32423.mb3d-rs</id>
+  <name>mb3d-rs</name>
+  <summary>Mandelbulb3D on the graphics card</summary>
+  <developer id="io.github.thr32423">
+    <name>thr32423</name>
+  </developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LGPL-2.1-only</project_license>
+
+  <description>
+    <p>
+      mb3d-rs is Mandelbulb3D (MB3D), the 3D fractal program, rewritten so
+      that it runs on today's computers: on Linux, Windows and macOS, and
+      with the picture calculated on the graphics card where MB3D could
+      only use the processor. It opens MB3D's parameter files (.m3p, .m3i,
+      text parameters from forums), uses MB3D's formulas and maps, and
+      makes the same pictures.
+    </p>
+    <p>
+      The windows are MB3D's own: the main window, Formulas, Lighting,
+      Post processing, Navigator, Animation, Batch, Big renders, Monte
+      Carlo, Voxel export, Bulb Tracer 2, MutaGen and the rest. If you
+      know MB3D, you know this program, and MB3D's tutorials apply.
+    </p>
+    <ul>
+      <li>Ray marching, shadows, ambient occlusion and reflections on the graphics card (Vulkan), with the processor's cores sharing the work</li>
+      <li>MB3D's formulas, including the hundreds written in machine code, run on the card and on the processor</li>
+      <li>Monte Carlo path tracing with a neural noise filter (Intel Open Image Denoise, on the processor in this package)</li>
+      <li>Animations, big tiled renders, voxel and mesh export, a swarm of computers sharing one picture</li>
+      <li>Interfaces in several languages, themes, and the mb3d command line renderer for scripts (flatpak run --command=mb3d io.github.thr32423.mb3d-rs)</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.thr32423.mb3d-rs.desktop</launchable>
+  <provides>
+    <binary>Mandelbulb3D</binary>
+    <binary>mb3d</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/thr32423/mb3d-rs</url>
+  <url type="bugtracker">https://github.com/thr32423/mb3d-rs/issues</url>
+  <url type="help">https://github.com/thr32423/mb3d-rs/blob/master/GETTING_STARTED.md</url>
+  <url type="vcs-browser">https://github.com/thr32423/mb3d-rs</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>The main window with a picture calculated on the graphics card</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/main_window.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Lighting window: a light moved, the picture repainted as you drag</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/lighting_live.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Navigator window</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/navigator_values.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A swarm of computers sharing one picture</caption>
+      <image>https://raw.githubusercontent.com/thr32423/mb3d-rs/master/docs/img/swarm_window.png</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>Graphics</category>
+    <category>3DGraphics</category>
+  </categories>
+  <keywords>
+    <keyword>fractal</keyword>
+    <keyword>Mandelbulb</keyword>
+    <keyword>Mandelbulb3D</keyword>
+    <keyword>MB3D</keyword>
+    <keyword>ray marching</keyword>
+    <keyword>3D</keyword>
+  </keywords>
+
+  <content_rating type="oars-1.1"/>
+
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <display_length compare="ge">1024</display_length>
+    <internet>offline-only</internet>
+  </recommends>
+
+  <releases>
+    <release version="0.2.95" date="2026-11-03">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.95</url>
+      <description>
+        <p>Batches no longer use more and more memory with every file, and when the graphics card meets many new formula combinations at once, its shader compiles wait while memory is short instead of filling it; a batch says first how many combinations are new. Parameters pasted with lines cut off in copying are refused with a message instead of calculating the wrong scene. 360 degree panoramas leave out the vignette and the colour fringes, which darkened the view behind the viewer. The experimental speed-ups' combined gains were measured again. The release no longer carries the examples folder.</p>
+      </description>
+    </release>
+    <release version="0.2.94" date="2026-11-03">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.94</url>
+      <description>
+        <p>Clouds in the program are no longer painted black: every calculation set their colour back to black, which made them dark and a dense cloud layer turned the sky black. The cloud density and coverage boxes show their values plainly (0.7, not 0.69999). A new page shows clouds, water and reflections in three pictures with their parameters to paste in.</p>
+      </description>
+    </release>
+    <release version="0.2.93" date="2026-11-03">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.93</url>
+      <description>
+        <p>The cone march no longer loses thin parts of formulas whose distance estimate is far too large, and it is faster: the march about a fifth shorter on the processor and a tenth on the graphics card, also in scenes with dynamic fog. The Navigator keeps the main window's view when it opens, its axes stay sharp, and on Windows the main window can now cover it.</p>
+      </description>
+    </release>
+    <release version="0.2.92" date="2026-11-02">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.92</url>
+      <description>
+        <p>Cone march, a new experimental speed-up: a coarse ray per block of pixels starts every pixel's march, which makes the march up to 60 % faster in open scenes, on the processor and the graphics card. Internal tab, Experimental..., or cone_march = on.</p>
+      </description>
+    </release>
+    <release version="0.2.91" date="2026-11-01">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91</url>
+      <description>
+        <p>Gaussian splats: the fractal exported as a splat file, to look at from every side in Blender 5.3 and other splat viewers. The Bulb Tracer window has a Gaussian splats button, and the command line has mb3d splat.</p>
+        <p>The experimental speed-ups are kept from one start of the program to the next.</p>
+      </description>
+    </release>
+    <release version="0.2.90" date="2026-11-01">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.90</url>
+      <description>
+        <p>Experimental speed-ups that can be switched on one by one: longer march steps, a secant search for the surface, no step limit without dynamic fog, and DE ambient occlusion at half resolution. They change the picture a little and are off by default.</p>
+        <p>Scenes that need double precision are calculated on the graphics card again, and long texts in Japanese and Chinese wrap properly.</p>
+      </description>
+    </release>
+    <release version="0.2.89" date="2026-11-01">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.89</url>
+      <description>
+        <p>Finishing for every picture: exposure, glow around bright light, filmic tone mapping, contrast, saturation, warmth, a vignette and colour fringes.</p>
+        <p>A fine surface relief (rough, stone or grain) with colour variation, fixed to the fractal. A turntable animation in one click, recording a flight in the Navigator, and motion blur for animations.</p>
+      </description>
+    </release>
+    <release version="0.2.88" date="2026-10-31">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.88</url>
+      <description>
+        <p>Ideas from Mandelbulber: a ground plane or water under the fractal, volumetric clouds that cast shadows and show in reflections, surface materials (Fresnel, iridescence, glow), two fractals in one scene, a fisheye camera and 360 degree stereo panoramas for VR, OpenEXR pictures and HDR backgrounds that light Monte Carlo renders, animation curves to see and drag keyframes, and Catmull-Rom interpolation through every keyframe.</p>
+        <p>A swarm now calculates exactly the same picture as one computer. A crash is reported at the next start, and the Navigator can match the main window's lighting.</p>
+      </description>
+    </release>
+    <release version="0.2.87" date="2026-10-30">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.87</url>
+      <description>
+        <p>Five new interface languages: Spanish, Portuguese, Indonesian, Arabic and Urdu, seventeen in all. Arabic and Urdu are written right to left, with their letters joined and Latin words and numbers in the right order. The README and the wiki are translated into the new languages too.</p>
+      </description>
+    </release>
+    <release version="0.2.86" date="2026-10-30">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.86</url>
+      <description>
+        <p>AI assistants can use the program: connect Claude's desktop app or Claude Code with the new AI button on the Prefs tab, then ask in plain words, or by voice through the assistant, to describe, change and render your pictures, make variations, preview a folder or render what you worked on last; the assistant sees the pictures and can adjust them. The program stays offline, writes only into its AI folder, never deletes anything and asks before pictures larger than 4K.</p>
+      </description>
+    </release>
+    <release version="0.2.85" date="2026-10-30">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.85</url>
+      <description>
+        <p>A log of everything the program does, with a Log window behind the title bar's page icon: every click and setting, calculations with their stages and times, files, messages, warnings and errors, and a session that froze or was killed reported at the next start; while the graphics card's shaders compile, the status line shows a ticking clock and gently pulses; the History window handles histories of any size and groups them by day; the README and the wiki in all twelve languages of the program; smoother Navigator and drop-down lists.</p>
+      </description>
+    </release>
+    <release version="0.2.84" date="2026-10-29">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.84</url>
+      <description>
+        <p>The History window behind the title bar's clock icon: every picture calculated with its thumbnail and every file opened or saved, as a list, rows or tiles; a lighting change only repaints, as in Mandelbulb3D; a formula that never returns no longer slows a render to a crawl.</p>
+      </description>
+    </release>
+    <release version="0.2.83" date="2026-10-29">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.83</url>
+      <description>
+        <p>Safe Rust throughout except the C library and the JIT, a card listed twice in a Flatpak sandbox counted once, the files of the Flatpak.</p>
+      </description>
+    </release>
+    <release version="0.2.82" date="2026-10-29">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.82</url>
+    </release>
+  </releases>
+</component>

@@ -3,6 +3,7 @@
 //! text parameters (TextBox.pas) and the 16 bit z-buffer generator
 //! (ZBuf16BitGenUI.pas).
 
+use crate::vcl::lang::{tr, trf};
 use super::util::{fts, parse_float, pti, ptf};
 use super::Mb3d;
 use crate::vcl::bitmap::Bitmap;
@@ -196,7 +197,7 @@ pub fn mapseq_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "MapSequencesListClick" => ms_detail(app, ui),
         "NewBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "Images|*.png;*.jpg;*.jpeg;*.bmp|All files (*.*)|*.*".into(),
+                filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 ..Default::default()
             };
@@ -276,7 +277,7 @@ pub fn textbox_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                         app.eng.clear();
                         app.scene_to_forms(ui);
                         super::main_form::set_caption(app, ui);
-                        app.message(ui, "Parameters loaded, press \"Calculate 3D\" to render.");
+                        app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
                         super::main_form::show_image(app, ui);
                         ui.hide(TB);
                     }
@@ -330,7 +331,7 @@ fn zb_values(ui: &Ui) -> (f64, f64, bool) {
 fn zb_refresh(app: &mut Mb3d, ui: &mut Ui) {
     let (o, s, inv) = zb_values(ui);
     let Some((w, h, z, info)) = zbuf16(app, o, s, inv) else {
-        ui.set_text(ZB, "InfoMemo", "Calculate the image first.");
+        ui.set_text(ZB, "InfoMemo", &tr("@MB:CalculateTheImageFirst"));
         return;
     };
     let mut b = Bitmap::new(w, h, 0);
@@ -345,14 +346,9 @@ fn zb_refresh(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_text(
         ZB,
         "InfoMemo",
-        &format!(
-            "Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n",
-            fts(info[0]),
-            fts(info[1]),
-            info[2] as i64,
-            info[3] as i64,
-            info[4] as i64,
-            info[5] as i64
+        &trf(
+            "@MB:RawValuesMappedValuesClampedValues",
+            &[&fts(info[0]), &fts(info[1]), &(info[2] as i64), &(info[3] as i64), &(info[4] as i64), &(info[5] as i64)],
         ),
     );
 }
@@ -384,7 +380,7 @@ pub fn zbuf_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SaveImgBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "PNG 16 bit (*.png)|*.png|PGM 16 bit (*.pgm)|*.pgm".into(),
+                filter: format!("{}|*.png|{}|*.pgm", tr("@MB:PNG16BitPng"), tr("@MB:PGM16BitPgm")),
                 default_ext: "png".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
                 ..Default::default()
@@ -409,7 +405,7 @@ pub fn zbuf_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             crate::png::write_gray16(&p.to_string_lossy(), w, h, &z).map_err(|e| e.to_string())
         };
         match res {
-            Ok(()) => app.message(ui, &format!("Saved {}", p.display())),
+            Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&p.display()])),
             Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
         }
     }

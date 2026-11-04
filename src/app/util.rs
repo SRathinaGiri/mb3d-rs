@@ -1,6 +1,8 @@
 //! Number conversions as MB3D does them (DivUtils.pas), so the edits show
 //! the same texts as in the original.
 
+use crate::vcl::lang::{tr, trf};
+
 /// Delphi `FloatToStrF(v, ffGeneral, precision, 0)`: the shortest form with
 /// up to `precision` significant digits; scientific notation ("1E-5",
 /// "1.5E20") for very small or large values.
@@ -89,10 +91,10 @@ pub fn ptf(s: &str) -> f64 {
     parse_float(s).unwrap_or(0.0)
 }
 
-/// `StrToIntTrim`.
+/// `StrToIntTrim`: 0 when the text is no whole number (MB3D's StrToInt
+/// rejects "2.5" too).
 pub fn pti(s: &str) -> i32 {
-    let t: String = s.trim().chars().filter(|c| *c != ',' && *c != '.').collect();
-    t.parse::<i64>().map(|v| v.clamp(i32::MIN as i64, i32::MAX as i64) as i32).unwrap_or(0)
+    s.trim().parse::<i64>().map(|v| v.clamp(i32::MIN as i64, i32::MAX as i64) as i32).unwrap_or(0)
 }
 
 /// `IntToTimeStr` (tenths of seconds).
@@ -105,6 +107,61 @@ pub fn time_str(tenths: i64) -> String {
         format!("{}:{:02}.{}", s / 60, s % 60, tenths % 10)
     } else {
         "-".into()
+    }
+}
+
+/// A time left as the window shows it, and when.
+pub type Shown = (f64, std::time::Instant);
+
+/// A time left as shown, following the estimates the way a download's
+/// does (Firefox's `getTimeLeft`): `prev` the last one shown and when,
+/// `est` the new estimate (see [`shown_step`]).
+pub fn smooth_shown(prev: Option<Shown>, est: f64, now: std::time::Instant) -> Shown {
+    let v = match prev {
+        Some((s, t)) => shown_step(s, est, now.saturating_duration_since(t).as_secs_f64()),
+        None => est,
+    };
+    (v, now)
+}
+
+/// The time left shown `dt` seconds after `shown` was, with the new
+/// estimate `est`: a drop to half or less is taken at once; a change under
+/// 5 seconds and 5 % is not, it counts down with the clock instead (holds,
+/// when the estimate is the larger: it must not fall behind); else it
+/// moves part of the way (30 % per second downward, 10 % upward: a long
+/// render is more often slower than predicted than faster; the estimate
+/// itself counts down, so the shown value follows it without adding the
+/// clock, which would outrun a rising estimate).
+pub fn shown_step(shown: f64, est: f64, dt: f64) -> f64 {
+    let d = est - shown;
+    if est <= shown / 2.0 {
+        est
+    } else if d.abs() < 5.0 || d.abs() < 0.05 * shown {
+        if d > 0.0 { shown } else { (shown - dt.max(0.0)).max(0.0) }
+    } else if d < 0.0 {
+        shown + d * (1.0 - 0.7f64.powf(dt))
+    } else {
+        shown + d * (1.0 - 0.9f64.powf(dt))
+    }
+}
+
+/// A time left in words: "a few seconds left", "12 s left", "2 min 30 s
+/// left", "about 7 min left" (from 4 minutes), "about 1 h 20 min left".
+pub fn left_str(secs: f64) -> String {
+    let s = secs.round().max(0.0) as i64;
+    match s {
+        ..=3 => tr("@MB:AFewSecondsLeft"),
+        4..=59 => trf("@MB:SLeft", &[&s]),
+        60..=239 if s % 60 == 0 => trf("@MB:MinLeft", &[&(s / 60)]),
+        60..=239 => trf("@MB:MinSLeft", &[&(s / 60), &(s % 60)]),
+        240..=3599 => trf("@MB:AboutMinLeft", &[&((s + 30) / 60)]),
+        _ => {
+            let m = (s + 30) / 60;
+            match m % 60 {
+                0 => trf("@MB:AboutHLeft", &[&(m / 60)]),
+                r => trf("@MB:AboutHMinLeft", &[&(m / 60), &r]),
+            }
+        }
     }
 }
 
@@ -147,5 +204,58 @@ mod tests {
         assert_eq!(parse_float("x"), None);
         assert_eq!(time_str(125), "0:12.5");
         assert_eq!(d2byte_str(5), "0.05");
+        assert_eq!(pti(" 640 "), 640);
+        assert_eq!(pti("-3"), -3);
+        assert_eq!(pti("2.5"), 0);
+        assert_eq!(pti("640,5"), 0);
+    }
+
+    #[test]
+    fn shown_time_left_follows_a_download_display() {
+        // a drop to half or less: at once
+        assert_eq!(shown_step(100.0, 50.0, 0.0), 50.0);
+        assert_eq!(shown_step(100.0, 20.0, 1.0), 20.0);
+        // an increase: damped, a tenth of the way per second
+        assert!((shown_step(100.0, 200.0, 1.0) - 110.0).abs() < 1e-9);
+        assert!(shown_step(100.0, 200.0, 3.0) < shown_step(100.0, 200.0, 5.0));
+        // a decrease short of half: faster, 30 % per second
+        assert!((shown_step(100.0, 60.0, 1.0) - 88.0).abs() < 1e-9);
+        // a small change (under 5 s or 5 %): only counting down, or holding
+        assert_eq!(shown_step(100.0, 103.0, 1.0), 100.0);
+        assert_eq!(shown_step(100.0, 96.0, 1.0), 99.0);
+        assert_eq!(shown_step(1000.0, 1040.0, 2.0), 1000.0);
+        assert_eq!(shown_step(1000.0, 960.0, 2.0), 998.0);
+        // never up by less than 5 %
+        for est in [101.0, 103.0, 104.0] {
+            assert!(shown_step(100.0, est, 0.5) <= 100.0, "{est}");
+        }
+        // an estimate that stays above what is shown is reached in time
+        let mut s = 0.0;
+        for _ in 0..40 {
+            s = shown_step(s, 10.0, 0.5);
+        }
+        assert!(s > 5.0, "{s}");
+        // and never below zero
+        assert_eq!(shown_step(1.0, 0.0, 5.0), 0.0);
+        assert_eq!(shown_step(1.0, 2.0, 5.0), 1.0);
+        let now = std::time::Instant::now();
+        assert_eq!(smooth_shown(None, 42.0, now), (42.0, now));
+    }
+
+    #[test]
+    fn time_left_words() {
+        assert_eq!(left_str(0.0), "a few seconds left");
+        assert_eq!(left_str(3.4), "a few seconds left");
+        assert_eq!(left_str(3.6), "4 s left");
+        assert_eq!(left_str(59.0), "59 s left");
+        assert_eq!(left_str(60.0), "1 min left");
+        assert_eq!(left_str(150.0), "2 min 30 s left");
+        assert_eq!(left_str(239.0), "3 min 59 s left");
+        assert_eq!(left_str(240.0), "about 4 min left");
+        assert_eq!(left_str(449.0), "about 7 min left");
+        assert_eq!(left_str(3599.0), "about 60 min left");
+        assert_eq!(left_str(3600.0), "about 1 h left");
+        assert_eq!(left_str(4800.0), "about 1 h 20 min left");
+        assert_eq!(left_str(7199.0), "about 2 h left");
     }
 }

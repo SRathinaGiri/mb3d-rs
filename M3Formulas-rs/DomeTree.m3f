@@ -1,0 +1,30 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 20
+.Integer Levels = 16
+.Integer Children = 8
+.Double Bend angle = 1
+.Double Colour scale = 3
+.Integer Start curved = 1
+[CODE]
+C746E000000000C746E4FFFFEF7FB86D623364B82D727320B8446F6D65B85472
+6565C3
+[END]
+
+Dome tree by TGlad (Tom Lowe): a dome that sprouts a ring of smaller
+domes, each of which sprouts its own ring, and so on, built from circle
+inversions (DomeTree.frag in github.com/TGlad/FragmentariumExamples).
+
+Calculated by mb3d-rs itself (the code above is only a placeholder; the
+original Mandelbulb3D shows nothing with this formula).
+
+Levels: how deep the tree goes (up to 100).
+Children: the domes in each ring (4 .. 10).
+Bend angle: in radians, how far the domes bulge (low: flat discs, high:
+round domes); 0.3 .. 1.3 work best, above that the surface turns grainy.
+Colour scale: each branch gets its own colour value (0..2, the orbit
+trap: "2nd choice" in the Lighting); this scales it.
+Start curved: 1 starts with the first dome bent into a ball, 0 starts
+with a flat floor that grows the first ring.
+
+Use a small Raystep (0.2; 0.05 with 9 or 10 children) and 1 iteration.

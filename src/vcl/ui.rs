@@ -19,6 +19,11 @@ pub trait App {
     /// Called when a background thread woke the loop (see [`Ui::waker`])
     /// and regularly while windows are open.
     fn idle(&mut self, _ui: &mut Ui) {}
+    /// A key pressed in form `form`, before the form gets it: true when the
+    /// program used it up (a hotkey of its own).
+    fn hotkey(&mut self, _ui: &mut Ui, _form: usize, _key: u16, _shift: u8) -> bool {
+        false
+    }
 }
 
 /// Wakes the event loop from other threads.
@@ -49,6 +54,10 @@ pub struct Ui {
     pub forms: Vec<Form>,
     by_name: HashMap<String, usize>,
     pub(crate) events: VecDeque<Event>,
+    /// the clicks, changes and selections of controls whose window has no
+    /// handler for them (a check box read only when calculating): no
+    /// program event, but the log is to see them ([`Ui::take_unhandled`])
+    unhandled: VecDeque<Event>,
     timers: HashMap<(usize, Id), Instant>,
     pub(crate) quit: bool,
     pub(crate) requests: Vec<Request>,
@@ -63,14 +72,26 @@ pub struct Ui {
     /// the file type chosen in the last file dialog (1 = the first of its
     /// filter, as TOpenDialog.FilterIndex after Execute)
     pub filter_index: usize,
+    /// The sort choice used by the built-in file dialogs.  Keeping it here
+    /// makes a choice such as "Date modified (newest)" carry over to the
+    /// next Open or Save dialog during this session.
+    pub(crate) file_sort: usize,
+    /// Whether the remembered file-dialog ordering is descending.
+    pub(crate) file_sort_desc: bool,
     /// the file clicked in a file dialog with a preview column (taken by
     /// the application, which shows its preview there)
     pub file_preview: Option<std::path::PathBuf>,
+    /// whether the file dialog that gave the last `DialogResult::File` was a save dialog
+    pub file_dialog_save: bool,
     pub busy: bool,
     /// The user's interface scale (1 = the size of the .dfm files), on top
     /// of the screen's scale factor: windows, controls and text all grow
     /// with it, the layouts stay as they are.
     pub ui_scale: f64,
+    /// The monitor's size in .dfm units (its logical size divided by
+    /// `ui_scale`), once a window was opened: windows that grow with their
+    /// content (the Navigator) keep within it.
+    pub screen: Option<(i32, i32)>,
 }
 
 impl Default for Ui {
@@ -86,6 +107,7 @@ impl Ui {
             forms: Vec::new(),
             by_name: HashMap::new(),
             events: VecDeque::new(),
+            unhandled: VecDeque::new(),
             timers: HashMap::new(),
             quit: false,
             requests: Vec::new(),
@@ -95,9 +117,13 @@ impl Ui {
             close_pending: Vec::new(),
             dialogs: HashMap::new(),
             filter_index: 1,
+            file_sort: 0,
+            file_sort_desc: false,
             file_preview: None,
+            file_dialog_save: false,
             busy: false,
             ui_scale: 1.0,
+            screen: None,
         }
     }
 
@@ -110,9 +136,10 @@ impl Ui {
         }
     }
 
-    /// Adds a form from its form file text; OnCreate is queued.
+    /// Adds a form from its form file text, its texts in the interface
+    /// language; OnCreate is queued.
     pub fn add_form(&mut self, dfm: &str) -> Result<usize, String> {
-        let f = Form::from_dfm(dfm, &self.theme)?;
+        let f = Form::from_dfm_translated(dfm, &self.theme)?;
         Ok(self.add_built(f))
     }
 
@@ -132,6 +159,33 @@ impl Ui {
         self.theme = Theme::new(style);
         for f in &mut self.forms {
             f.dirty = true;
+        }
+    }
+
+    /// Changes the interface language: the texts of all forms follow (those
+    /// the program changed meanwhile stay); false if there is no such
+    /// language.
+    pub fn set_language(&mut self, name: &str) -> bool {
+        let old = super::lang::current();
+        if !super::lang::select(name) {
+            return false;
+        }
+        self.language_changed(&old);
+        true
+    }
+
+    /// Reads the language files again and applies the current one (after
+    /// the user edited it).
+    pub fn reload_languages(&mut self) {
+        let old = super::lang::current();
+        super::lang::reload();
+        self.language_changed(&old);
+    }
+
+    fn language_changed(&mut self, old: &super::lang::Language) {
+        let new = super::lang::current();
+        for f in &mut self.forms {
+            f.retranslate(old, &new);
         }
     }
 
@@ -193,7 +247,7 @@ impl Ui {
     pub fn set_checked(&mut self, form: &str, ctl: &str, v: bool) {
         let f = self.fm(form);
         let Some(id) = f.id(ctl) else {
-            eprintln!("{form}: no control '{ctl}'");
+            crate::elog!("{form}: no control '{ctl}'");
             return;
         };
         match f.ctl[id].kind {
@@ -219,6 +273,26 @@ impl Ui {
     }
     pub fn item_index(&self, form: &str, ctl: &str) -> i32 {
         self.c(form, ctl).item_index
+    }
+    /// A list view's rows in sight: the first and how many.
+    pub fn listview_window(&self, form: &str, ctl: &str) -> (usize, usize) {
+        let f = self.f(form);
+        match f.id(ctl) {
+            Some(id) => {
+                let (_, _, vis, _, top) = f.listview_rows(id);
+                (top as usize, vis as usize)
+            }
+            None => (0, 0),
+        }
+    }
+    /// Scrolls a list view so that its selected row is in sight.
+    pub fn listview_show_selection(&mut self, form: &str, ctl: &str) {
+        let (top, vis) = self.listview_window(form, ctl);
+        let c = self.cm(form, ctl);
+        let i = c.item_index;
+        if i >= 0 && ((i as usize) < top || i as usize >= top + vis) {
+            c.scroll_y = (i - vis as i32 / 2).max(0);
+        }
     }
     pub fn set_item_index(&mut self, form: &str, ctl: &str, i: i32) {
         self.cm(form, ctl).set_item_index(i);
@@ -252,6 +326,11 @@ impl Ui {
             c.item_index = -1;
         }
         c.top_index = c.top_index.min((c.items.len() as i32 - 1).max(0));
+    }
+    /// The pictures before a list box's items (one per item, an empty
+    /// bitmap for none).
+    pub fn set_item_images(&mut self, form: &str, ctl: &str, imgs: Vec<Bitmap>) {
+        self.cm(form, ctl).item_images = imgs;
     }
     pub fn set_picture(&mut self, form: &str, ctl: &str, b: Option<Bitmap>) {
         self.cm(form, ctl).picture = b;
@@ -338,6 +417,7 @@ impl Ui {
         f.visible = true;
         f.dirty = true;
         f.minimized = false;
+        crate::log::info("window", &format!("opened {} [{}]", crate::vcl::canvas::strip_amp(f.caption()), f.name));
         if let Some(h) = f.ctl[0].events.get("OnShow").cloned() {
             self.events.push_back(Event { form: f.name.clone(), sender: f.name.clone(), handler: h, ev: Ev::Show });
         }
@@ -363,6 +443,7 @@ impl Ui {
         if !f.visible {
             return;
         }
+        crate::log::info("window", &format!("closed {} [{}]", crate::vcl::canvas::strip_amp(f.caption()), f.name));
         f.visible = false;
         f.modal = false;
         f.popup = None;
@@ -490,8 +571,16 @@ impl Ui {
             let handler = c.events.get(r.name).cloned();
             if let Some(h) = handler {
                 self.events.push_back(Event { form: f.name.clone(), sender: c.name.clone(), handler: h, ev: r.ev });
+            } else if matches!(r.name, "OnClick" | "OnChange" | "OnSelect") && self.unhandled.len() < 1000 {
+                self.unhandled.push_back(Event { form: f.name.clone(), sender: c.name.clone(), handler: String::new(), ev: r.ev });
             }
         }
+    }
+
+    /// The clicks, changes and selections no handler took since the last
+    /// call (for the log).
+    pub fn take_unhandled(&mut self) -> Vec<Event> {
+        self.unhandled.drain(..).collect()
     }
 
     /// Delivers dialog results for internal tags (colour buttons).

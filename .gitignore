@@ -6,3 +6,6 @@ scenes/
 !docs/img/themes/*.png
 !tools/mb3d-wine/btn_ready.png
 !assets/*.png
+!Languages/*.png
+/build/
+__pycache__/

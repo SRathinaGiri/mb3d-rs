@@ -711,7 +711,8 @@ fn decode_fpu(d: &mut Dec, op: u8, addr: u32) -> R<Ins> {
         _ => match m {
             // DF
             0xE0 => Ins::FnstswAx,
-            0xC0..=0xC7 => Ins::FFree(i), // ffreep
+            // ffreep: no tag word is kept, so freeing st(i) and popping is fstp st(0)
+            0xC0..=0xC7 => Ins::FStSt(0, true),
             0xE8..=0xF7 => Ins::FComi { i, pop: true },
             _ => return Err(unsup(addr, format!("DF {m:02X}"))),
         },
@@ -798,7 +799,9 @@ fn decode_0f(d: &mut Dec, addr: u32, p66: bool, rep: Option<u8>, osz: u8) -> R<I
                 _ => return Err(unsup(addr, "movmskpd mem".into())),
             }
         }
+        0x51 if !f2 && !f3 && !p66 => return Err(unsup(addr, "sqrtps".into())),
         0x51 => xop(d, if f2 { SseOp::SqrtSd } else if f3 { SseOp::SqrtSs } else { SseOp::SqrtPd })?,
+        0x5D | 0x5F if !f2 && !f3 && !p66 => return Err(unsup(addr, "minps/maxps".into())),
         0x54 => xop(d, SseOp::And)?,
         0x55 => xop(d, SseOp::AndN)?,
         0x56 => xop(d, SseOp::Or)?,
@@ -819,7 +822,8 @@ fn decode_0f(d: &mut Dec, addr: u32, p66: bool, rep: Option<u8>, osz: u8) -> R<I
             } else if f3 {
                 [SseOp::AddSs, SseOp::MulSs, SseOp::SubSs, SseOp::MinSs, SseOp::DivSs, SseOp::MaxSs]
             } else {
-                [SseOp::AddPs, SseOp::MulPs, SseOp::SubPs, SseOp::MinSs, SseOp::DivPs, SseOp::MaxSs]
+                // minps/maxps (indices 3, 5) are rejected above
+                [SseOp::AddPs, SseOp::MulPs, SseOp::SubPs, SseOp::AddPs, SseOp::DivPs, SseOp::AddPs]
             };
             xop(d, ops[idx])?
         }
@@ -1133,6 +1137,16 @@ pub struct Machine {
     progs: Option<std::sync::Arc<Vec<(u32, Prog)>>>,
     pub host: Vec<(u32, HostFn)>,
     pub steps: u64,
+    /// the instruction cap of a formula call ([`crate::custom::MAX_STEPS`];
+    /// [`crate::custom::STEPS_AFTER_LOOP`] once a call exceeded it)
+    pub step_cap: u64,
+    /// the alternating hybrid of the scene compiled at run time (set on the
+    /// prototype machine of a scene, see `clif_jit::compile_hybrid`)
+    #[cfg(jit)]
+    pub jit: Option<std::sync::Arc<clif_jit::HybridJit>>,
+    /// the dIFS hybrid of the scene compiled at run time
+    #[cfg(jit)]
+    pub difs_jit: Option<std::sync::Arc<clif_jit::DifsJit>>,
 }
 
 const TRIG_SLOTS: usize = 256;
@@ -1183,6 +1197,15 @@ const ESI: usize = 6;
 const EDI: usize = 7;
 
 impl Machine {
+    /// A formula call exceeded the cap: its loop never ends with these
+    /// options, and the later calls on this machine fail at once.
+    pub fn formula_looped(&mut self) {
+        if self.step_cap != crate::custom::STEPS_AFTER_LOOP {
+            self.step_cap = crate::custom::STEPS_AFTER_LOOP;
+            crate::iteration::CUSTOM_LOOPS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
     pub fn new() -> Machine {
         Machine {
             mem: vec![0u8; MEM_ALLOC].into_boxed_slice().try_into().expect("memory size"),
@@ -1198,6 +1221,11 @@ impl Machine {
             progs: Some(std::sync::Arc::new(Vec::new())),
             host: Vec::new(),
             steps: 0,
+            step_cap: crate::custom::MAX_STEPS,
+            #[cfg(jit)]
+            jit: None,
+            #[cfg(jit)]
+            difs_jit: None,
         }
     }
 
@@ -1275,7 +1303,7 @@ impl Machine {
                     Ok(p) => progs.push((e, p)),
                     Err(r) => {
                         if std::env::var_os("MB3D_DEBUG_COMPILE").is_some() {
-                            eprintln!("not compiled ({e:#x}): {r}");
+                            crate::elog!("not compiled ({e:#x}): {r}");
                         }
                     }
                 }
@@ -1316,6 +1344,17 @@ impl Machine {
         let i = self.progs().iter().position(|(e, _)| *e == entry)?;
         let f = self.progs()[i].1.direct?;
         Some(self.with_prog(i, |m, p| f(m, p, it, pvar, max_steps)))
+    }
+
+    /// The number of the compiled program at `entry` if it has a direct
+    /// version ([`Progs::direct_fn`] calls it); None as for
+    /// [`Machine::call_direct`].
+    pub fn direct_index(&self, entry: u32) -> Option<usize> {
+        if !NATIVE_ENABLED.load(std::sync::atomic::Ordering::Relaxed) {
+            return None;
+        }
+        let i = self.progs().iter().position(|(e, _)| *e == entry)?;
+        self.progs()[i].1.direct.map(|_| i)
     }
 
     /// The compiled programs, taken out of the machine (so that a loop can
@@ -1881,8 +1920,15 @@ impl Machine {
                     let n = self.regs[EAX] & 0xFFFF;
                     let (q, r) = if signed {
                         let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32);
-                        ((n / d) as u32, (n % d) as u32)
+                        let q = n / d;
+                        if q != q as i8 as i32 {
+                            return Err(EmuError::Halt(at));
+                        }
+                        (q as u32, (n % d) as u32)
                     } else {
+                        if n / b > 0xFF {
+                            return Err(EmuError::Halt(at));
+                        }
                         (n / b, n % b)
                     };
                     self.set_reg(0, 1, q);
@@ -1890,9 +1936,17 @@ impl Machine {
                 } else {
                     let n = (self.regs[EDX] & 0xFFFF) << 16 | (self.regs[EAX] & 0xFFFF);
                     let (q, r) = if signed {
+                        // i32::MIN / -1 overflows; like a quotient out of
+                        // range it is a divide error on the CPU
                         let (n, d) = (n as i32, b as u16 as i16 as i32);
-                        ((n / d) as u32, (n % d) as u32)
+                        match n.checked_div(d) {
+                            Some(q) if q == q as i16 as i32 => (q as u32, (n % d) as u32),
+                            _ => return Err(EmuError::Halt(at)),
+                        }
                     } else {
+                        if n / b > 0xFFFF {
+                            return Err(EmuError::Halt(at));
+                        }
                         (n / b, n % b)
                     };
                     self.set_reg(0, 2, q);
@@ -1916,10 +1970,9 @@ impl Machine {
                 } else {
                     let n = n as i64;
                     let b = b as i32 as i64;
-                    let q = n / b;
-                    if q > i32::MAX as i64 || q < i32::MIN as i64 {
+                    let Some(q) = n.checked_div(b).filter(|q| *q == *q as i32 as i64) else {
                         return Err(EmuError::Halt(at));
-                    }
+                    };
                     self.regs[EAX] = q as u32;
                     self.regs[EDX] = (n % b) as u32;
                 }
@@ -2727,7 +2780,18 @@ fn f80_to_f64(mant: u64, se: u16) -> f64 {
     if exp == 0x7FFF {
         return if mant << 1 == 0 { sign * f64::INFINITY } else { f64::NAN };
     }
-    sign * (mant as f64) * 2f64.powi(exp - 16383 - 63)
+    // scale in steps: 2^(e-63) alone can be out of the f64 range (1e-300 is about 2^-997)
+    let mut x = (mant as f64) * 2f64.powi(-63);
+    let mut e = exp - 16383;
+    while e > 1023 {
+        x *= 2f64.powi(1023);
+        e -= 1023;
+    }
+    while e < -1022 {
+        x *= 2f64.powi(-1022);
+        e += 1022;
+    }
+    sign * x * 2f64.powi(e)
 }
 
 fn f64_to_f80(v: f64) -> (u64, u16) {
@@ -2747,7 +2811,7 @@ fn f64_to_f80(v: f64) -> (u64, u16) {
     let (mant, exp) = if e == 0 {
         // subnormal
         let lz = f.leading_zeros() as i32 - 11;
-        (f << (11 + lz + 1), -1022 - lz - 1)
+        (f << (11 + lz), -1022 - lz)
     } else {
         ((f << 11) | (1u64 << 63), e - 1023)
     };
@@ -2794,7 +2858,7 @@ mod tests {
 
     #[test]
     fn f80_round_trip() {
-        for v in [1.0, -2.5, 1e-300, 3.14159e200, 0.1] {
+        for v in [1.0, -2.5, 1e-300, 3.14159e200, 0.1, f64::MIN_POSITIVE, 1e-310, f64::from_bits(1), f64::MAX] {
             let (m, e) = f64_to_f80(v);
             assert_eq!(f80_to_f64(m, e), v);
         }
@@ -2827,6 +2891,96 @@ mod tests {
         let nz = m.rdf64(it - 16).unwrap();
         assert!(nx.is_finite() && ny.is_finite() && nz.is_finite());
         assert!(nx != x || ny != y || nz != z);
+    }
+
+    fn run_code(code: &[u8]) -> R<()> {
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, code).unwrap();
+        m.predecode(&[CODE_START]);
+        m.regs[ESP] = BASE + 0x7F00;
+        m.push(RETURN_SENTINEL).unwrap();
+        m.run(CODE_START, 1000)
+    }
+
+    #[test]
+    fn idiv_overflow_halts() {
+        // mov edx, 0x8000; xor eax, eax; mov cx, -1; idiv cx; ret
+        let r = run_code(&[0xBA, 0, 0x80, 0, 0, 0x31, 0xC0, 0x66, 0xB9, 0xFF, 0xFF, 0x66, 0xF7, 0xF9, 0xC3]);
+        assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 11), "{r:?}");
+        // mov edx, 0x80000000; xor eax, eax; mov ecx, -1; idiv ecx; ret
+        let r = run_code(&[0xBA, 0, 0, 0, 0x80, 0x31, 0xC0, 0xB9, 0xFF, 0xFF, 0xFF, 0xFF, 0xF7, 0xF9, 0xC3]);
+        assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 12), "{r:?}");
+        // mov ax, 0x8000; mov cl, -1; idiv cl; ret (quotient out of range)
+        let r = run_code(&[0x66, 0xB8, 0, 0x80, 0xB1, 0xFF, 0xF6, 0xF9, 0xC3]);
+        assert!(matches!(r, Err(EmuError::Halt(a)) if a == CODE_START + 6), "{r:?}");
+        // mov edx, -1; mov eax, -7; mov ecx, 2; idiv ecx; ret
+        assert!(run_code(&[0xBA, 0xFF, 0xFF, 0xFF, 0xFF, 0xB8, 0xF9, 0xFF, 0xFF, 0xFF, 0xB9, 2, 0, 0, 0, 0xF7, 0xF9, 0xC3]).is_ok());
+    }
+
+    /// Runs `code` (ending in a ret) interpreted and compiled; returns the
+    /// f64 at `BASE + 0x2000` of both runs.
+    fn run_both(code: &[u8]) -> (f64, f64) {
+        let mut out = [0.0; 2];
+        for (k, o) in out.iter_mut().enumerate() {
+            let mut m = Machine::new();
+            m.write_bytes(CODE_START, code).unwrap();
+            m.predecode(&[CODE_START]);
+            m.regs[ESP] = BASE + 0x7F00;
+            m.push(RETURN_SENTINEL).unwrap();
+            if k == 0 {
+                m.run(CODE_START, 1000).unwrap();
+            } else {
+                let p = m.compile(CODE_START).expect("compiles");
+                m.run_prog(&p, 1000).unwrap();
+            }
+            *o = m.rdf64(BASE + 0x2000).unwrap();
+        }
+        (out[0], out[1])
+    }
+
+    #[test]
+    fn ffreep_pops() {
+        // fld1; fldz; ffreep st(1); fstp qword [BASE+0x2000]; ret
+        let mut code = vec![0xD9, 0xE8, 0xD9, 0xEE, 0xDF, 0xC1, 0xDD, 0x1D];
+        code.extend_from_slice(&(BASE + 0x2000).to_le_bytes());
+        code.push(0xC3);
+        assert_eq!(run_both(&code), (1.0, 1.0));
+    }
+
+    #[test]
+    fn compiled_call_return_into_forced_join_rotates() {
+        // xor eax, eax; jz L; fld1; fld1; jmp J; L: fldpi; call S;
+        // J: fstp qword [BASE+0x2000]; ret; S: ret
+        // (J is forced to depth 2, the return from S arrives with depth 1)
+        let mut code = vec![0x31, 0xC0, 0x74, 0x06, 0xD9, 0xE8, 0xD9, 0xE8, 0xEB, 0x07, 0xD9, 0xEB, 0xE8, 7, 0, 0, 0, 0xDD, 0x1D];
+        code.extend_from_slice(&(BASE + 0x2000).to_le_bytes());
+        code.extend_from_slice(&[0xC3, 0xC3]);
+        let pi = std::f64::consts::PI;
+        assert_eq!(run_both(&code), (pi, pi));
+    }
+
+    #[test]
+    fn packed_single_sqrt_min_max_unsupported() {
+        for op in [0x51, 0x5D, 0x5F] {
+            assert!(decode(&[0x0F, op, 0xC1], CODE_START).is_err(), "0F {op:02X}");
+            assert!(decode(&[0x66, 0x0F, op, 0xC1], CODE_START).is_ok(), "66 0F {op:02X}");
+            assert!(decode(&[0xF3, 0x0F, op, 0xC1], CODE_START).is_ok(), "F3 0F {op:02X}");
+        }
+    }
+
+    #[test]
+    fn compiled_ret_loop_hits_step_limit() {
+        // L: push L; ret
+        let mut code = vec![0x68];
+        code.extend_from_slice(&CODE_START.to_le_bytes());
+        code.push(0xC3);
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, &code).unwrap();
+        m.predecode(&[CODE_START]);
+        let p = m.compile(CODE_START).expect("compiles");
+        m.regs[ESP] = BASE + 0x7F00;
+        m.push(RETURN_SENTINEL).unwrap();
+        assert!(matches!(m.run_prog(&p, 1000), Err(EmuError::StepLimit)));
     }
 }
 
@@ -2941,6 +3095,20 @@ fn direct_regs(m: &mut Machine) -> [u32; 8] {
     m.wr32u(STACK_TOP - 4, x + 24);
     m.wr32u(STACK_TOP - 8, IT_C1);
     m.wr32u(STACK_TOP - 12, RETURN_SENTINEL);
+    rg
+}
+
+/// The registers of [`direct_regs`] without the call's stack in the
+/// machine (for formulas that keep their stack in locals).
+#[inline(always)]
+fn direct_regs_local() -> [u32; 8] {
+    use crate::custom::{IT_C1, STACK_TOP};
+    let x = IT_C1 - 32;
+    let mut rg = [0u32; 8];
+    rg[EAX] = x;
+    rg[EDX] = x + 8;
+    rg[ECX] = x + 16;
+    rg[ESP] = STACK_TOP - 12;
     rg
 }
 
@@ -3082,6 +3250,17 @@ pub mod lift;
 mod lift_emit;
 
 pub mod lift_wgsl;
+// the formulas compiled at run time: calling the code Cranelift made is
+// unsafe by Rust's definition (a function pointer from a byte pointer)
+#[cfg(jit)]
+#[allow(unsafe_code)]
+mod lift_clif;
+#[cfg(jit)]
+#[allow(unsafe_code)]
+pub mod clif_jit;
+#[cfg(jit)]
+#[allow(unsafe_code)]
+pub mod clif_builtin;
 
 /// The compiled programs of a machine while they are out of it (see
 /// [`Machine::take_progs`]).
@@ -3097,6 +3276,18 @@ impl Progs {
         }
         let (_, p) = self.0.as_ref()?.iter().find(|(e, _)| *e == entry)?;
         Some((p.difs?, p))
+    }
+
+    /// The direct version of program number `i` (from
+    /// [`Machine::direct_index`]) and the program, if that program is the
+    /// one at `entry`.
+    #[inline]
+    pub fn direct_fn(&self, i: usize, entry: u32) -> Option<(DirectFn, &Prog)> {
+        let (e, p) = self.0.as_ref()?.get(i)?;
+        if *e != entry {
+            return None;
+        }
+        Some((p.direct?, p))
     }
 }
 
@@ -3367,14 +3558,23 @@ impl Machine {
                 Ins::Lea { reg, mem } => Op::Lea { r: *reg, mem: *mem },
                 other => Op::Gen(Box::new(other.clone()), next, a),
             };
-            if let (Op::Call { target, .. }, Some(&rot)) = (&op, call_rot.get(&a)) {
+            if let Op::Call { target, .. } = &op {
                 // the subroutine was compiled for another x87 depth: rotate the
-                // register file around the call; it returns to a landing op
-                let fake = 0xFFFE_0000 | ops.len() as u32;
-                ops.push(Op::CallRot { target: *target, ret: fake, rot: rot.rem_euclid(8) as u8 });
-                index.insert(fake, ops.len());
-                ops.push(Op::JmpRot { target: next, rot: (-rot).rem_euclid(8) as u8 });
-                continue;
+                // register file around the call; it returns to a landing op,
+                // which also rotates into a join point forced to another depth
+                let rot = call_rot.get(&a).copied().unwrap_or(0);
+                let back = bad.get(&(a, next)).copied().unwrap_or(0) - rot;
+                if rot != 0 || back != 0 {
+                    let fake = 0xFFFE_0000 | ops.len() as u32;
+                    ops.push(if rot != 0 {
+                        Op::CallRot { target: *target, ret: fake, rot: rot.rem_euclid(8) as u8 }
+                    } else {
+                        Op::Call { target: *target, ret: fake }
+                    });
+                    index.insert(fake, ops.len());
+                    ops.push(Op::JmpRot { target: next, rot: back.rem_euclid(8) as u8 });
+                    continue;
+                }
             }
             ops.push(op);
             if falls {
@@ -3486,12 +3686,20 @@ impl Machine {
                     continue;
                 }
                 Op::Call { target, ret } => {
+                    self.steps += 1;
+                    if self.steps > limit {
+                        return Err(EmuError::StepLimit);
+                    }
                     self.push(*ret)?;
                     pc = *target as usize;
                     continue;
                 }
                 Op::CallRot { target, ret, rot } => {
                     f.rotate_right(*rot as usize);
+                    self.steps += 1;
+                    if self.steps > limit {
+                        return Err(EmuError::StepLimit);
+                    }
                     self.push(*ret)?;
                     pc = *target as usize;
                     continue;
@@ -3500,6 +3708,11 @@ impl Machine {
                     let r = self.pop()?;
                     self.regs[ESP] = self.regs[ESP].wrapping_add(*k as u32);
                     if r != RETURN_SENTINEL {
+                        // a loop through ret (push L; ret) must run out of steps too
+                        self.steps += 1;
+                        if self.steps > limit {
+                            return Err(EmuError::StepLimit);
+                        }
                         match p.index.get(&r) {
                             Some(&i) => {
                                 pc = i;

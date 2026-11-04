@@ -193,6 +193,64 @@ fn randomize_value(old: f64, integer: bool, strength: f64, rng: &mut Rng) -> f64
     }
 }
 
+/// The range an integer option's name states, as formula authors write
+/// it: `Mode (0..2)`, `0...3`, `0 to 3`, `0-1`, `(0,1)`, `(1 or 2)`,
+/// `max 1000`, `<32`, `Integer 2+`; `None` for a name without one
+/// (`Rotation 1 power`, `Index1`, `DoorPeriod (0 OFF)`).
+fn name_range(name: &str) -> Option<(Option<f64>, Option<f64>)> {
+    let c: Vec<char> = name.chars().collect();
+    let word = |i: usize| c.get(i).is_some_and(|ch| ch.is_alphanumeric() || *ch == '_');
+    // the whole numbers of the name (not part of a word as in Rot2, 1st, 3D)
+    let mut nums: Vec<(usize, usize, f64)> = Vec::new();
+    let mut i = 0;
+    while i < c.len() {
+        if c[i].is_ascii_digit() && (i == 0 || !word(i - 1)) {
+            let mut j = i;
+            while j < c.len() && c[j].is_ascii_digit() {
+                j += 1;
+            }
+            if !word(j) {
+                // a minus sign, unless it joins two numbers (0-1)
+                let neg = i > 0 && c[i - 1] == '-' && (i < 2 || !c[i - 2].is_ascii_digit() && !c[i - 2].is_whitespace());
+                let start = if neg { i - 1 } else { i };
+                let v: f64 = c[i..j].iter().collect::<String>().parse().unwrap_or(0.0);
+                nums.push((start, j, if neg { -v } else { v }));
+            }
+            i = j;
+        } else {
+            i += 1;
+        }
+    }
+    let text = |a: usize, b: usize| c[a..b].iter().collect::<String>().trim().to_lowercase();
+    for w in nums.windows(2) {
+        let ((_, e, a), (s, _, b)) = (w[0], w[1]);
+        if matches!(text(e, s).as_str(), ".." | "..." | "to" | "-" | "–" | "," | "or") {
+            return Some((Some(a.min(b)), Some(a.max(b))));
+        }
+    }
+    for &(s, e, v) in &nums {
+        let before = text(0, s);
+        if before.ends_with("max") {
+            return Some((None, Some(v)));
+        }
+        if before.ends_with('<') {
+            return Some((None, Some(v - 1.0)));
+        }
+        if c.get(e) == Some(&'+') {
+            return Some((Some(v), None));
+        }
+    }
+    None
+}
+
+/// A changed integer kept within the range its option's name states, when
+/// the old value was within it (a value set outside on purpose stays free).
+fn keep_in_name_range(name: &str, old: f64, v: f64) -> f64 {
+    let Some((lo, hi)) = name_range(name) else { return v };
+    let (lo, hi) = (lo.unwrap_or(f64::NEG_INFINITY), hi.unwrap_or(f64::INFINITY));
+    if (lo..=hi).contains(&old) { v.clamp(lo, hi) } else { v }
+}
+
 /// `TModifySingleParamMutation`
 fn modify_params(s: &mut Scene, strength: f64, rng: &mut Rng) {
     let with_params: Vec<usize> = non_empty(s).into_iter().filter(|&i| !s.formulas[i].formula.options().is_empty()).collect();
@@ -213,7 +271,13 @@ fn modify_params(s: &mut Scene, strength: f64, rng: &mut Rng) {
     for _ in 0..changes {
         let p = rng.int(n);
         let opts = f.options();
-        let v = randomize_value(opts[p].1, types.get(p).is_some_and(|&t| is_int_type(t)), strength, rng);
+        let integer = types.get(p).is_some_and(|&t| is_int_type(t));
+        let mut v = randomize_value(opts[p].1, integer, strength, rng);
+        // MB3D left an integer anywhere (a mode of 0..3 at 7, a power of
+        // 2+ at 0): the formulas' own ranges, from their names
+        if integer {
+            v = keep_in_name_range(&opts[p].0, opts[p].1, v);
+        }
         set_option_at(f, p, v);
     }
 }
@@ -427,9 +491,9 @@ pub fn preview(s: &Scene, w: usize, h: usize, blank: bool, threads: usize) -> Re
 }
 
 /// `CalcFilteredCoverage`: share of pixels with a strong horizontal edge
-/// (Sobel filter, luminance > 20).
+/// (Sobel filter, luminance > 20); 0 without an image (a failed preview).
 pub fn filtered_coverage(rgb: &[u8], w: usize, h: usize) -> f64 {
-    if w < 3 || h < 3 {
+    if w < 3 || h < 3 || rgb.len() < w * h * 3 {
         return 0.0;
     }
     let px = |x: usize, y: usize, c: usize| rgb[(y * w + x) * 3 + c] as f64;
@@ -636,6 +700,52 @@ pub fn caption(s: &Scene) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn integer_ranges_from_the_option_names() {
+        let both = |a: f64, b: f64| Some((Some(a), Some(b)));
+        // the forms of the shipped formulas' integer options
+        for (name, want) in [
+            ("Modes (0 to 3)", both(0.0, 3.0)),
+            ("Map channel (0..2)", both(0.0, 2.0)),
+            ("AbsX/Do1stSwap 0...3", both(0.0, 3.0)),
+            ("Mode 0-1", both(0.0, 1.0)),
+            ("Rot2 style (0 - 7)", both(0.0, 7.0)),
+            ("Th(args 0-23)", both(0.0, 23.0)),
+            ("Flip XZ (0,1)", both(0.0, 1.0)),
+            ("FoldMode (1 or 2)", both(1.0, 2.0)),
+            ("Integer power 2..9", both(2.0, 9.0)),
+            ("Offset (-2..2)", both(-2.0, 2.0)),
+            ("#Iterations (max 1000)", Some((None, Some(1000.0)))),
+            ("MaxIter (<32)", Some((None, Some(31.0)))),
+            ("Sharpness (Integer 2+)", Some((Some(2.0), None))),
+            ("Sh. of BallFold (Int 3+)", Some((Some(3.0), None))),
+            ("Rotation 1 power", None),
+            ("Enable rotation 2", None),
+            ("Index1", None),
+            ("C-Fold 1st half", None),
+            ("DoorPeriod (0 OFF)", None),
+            ("Exp3D %", None),
+            ("T1_Count", None),
+        ] {
+            assert_eq!(name_range(name), want, "{name}");
+        }
+        assert_eq!(keep_in_name_range("Modes (0 to 3)", 3.0, 5.0), 3.0);
+        assert_eq!(keep_in_name_range("Sharpness (Integer 2+)", 2.0, -1.0), 2.0);
+        // set outside on purpose: left free
+        assert_eq!(keep_in_name_range("Modes (0 to 3)", 7.0, 9.0), 9.0);
+        assert_eq!(keep_in_name_range("Rotation 1 power", 2.0, -40.0), -40.0);
+    }
+
+    #[test]
+    fn coverage_of_a_failed_preview() {
+        assert_eq!(filtered_coverage(&[], 40, 32), 0.0);
+        // a scene the renderer refuses still gives a root member
+        let mut s = Scene::preset("Amazing Box").unwrap();
+        s.formulas.clear();
+        let cfg = MutationConfig { probe_width: 16, probe_height: 12, ..Default::default() };
+        assert_eq!(root(&cfg, &s, 1).coverage, 0.0);
+    }
 
     #[test]
     fn rng_range() {

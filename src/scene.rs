@@ -35,6 +35,146 @@ pub enum CameraOptic {
     Planar = 1,
     /// 2: spherical panorama
     Panorama = 2,
+    /// 3: equidistant fisheye (not in MB3D: kept in the mb3d-rs block of
+    /// the parameters), the field of view up to 360 degrees across the
+    /// picture's height
+    Fisheye = 3,
+}
+
+/// Where the second hybrid part of a DE combination stands (Mandelbulber's
+/// separate objects, not in MB3D): moved, turned and scaled, the two parts
+/// are two objects, combined as the combination says (union, intersection,
+/// cut, smooth union).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Placement {
+    /// its middle (fractal units)
+    pub offset: [f64; 3],
+    /// its rotation about x, y, z (degrees)
+    pub rotation: [f64; 3],
+    /// its size (1 = as calculated)
+    pub scale: f64,
+}
+
+impl Default for Placement {
+    fn default() -> Self {
+        Placement { offset: [0.0; 3], rotation: [0.0; 3], scale: 1.0 }
+    }
+}
+
+/// The fractal's surface material (ideas from Mandelbulber, not in MB3D),
+/// on top of the palette's colours: all 0 is MB3D's look.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Material {
+    /// Fresnel (0..1): the specular colour, and with it the reflections,
+    /// towards white where the surface turns away from the view
+    pub fresnel: f32,
+    /// iridescence (0..1): the specular colour as the colours of a thin
+    /// film, changing with the angle of view
+    pub iridescence: f32,
+    /// the thin film's colours shifted (0..1, a whole turn)
+    pub irid_shift: f32,
+    /// glow (0..): the surface shines in its own (diffuse) colour
+    pub glow: f32,
+}
+
+impl Material {
+    /// The diffuse colour `dif` with the thin film's sheen (half the
+    /// iridescence) where the view meets the surface at `cos`.
+    pub fn diffuse(&self, dif: [f32; 3], cos: f32) -> [f32; 3] {
+        if self.iridescence <= 0.0 {
+            return dif;
+        }
+        let rb = self.film(cos);
+        let l = 0.299 * dif[0] + 0.587 * dif[1] + 0.114 * dif[2];
+        let k = 0.5 * self.iridescence.min(1.0);
+        [0, 1, 2].map(|c| dif[c] + (rb[c] * l * 1.6 - dif[c]) * k)
+    }
+
+    /// The thin film's colour (0..1) at `cos`.
+    fn film(&self, cos: f32) -> [f32; 3] {
+        let t = self.irid_shift + 2.5 * (1.0 - cos.clamp(0.0, 1.0));
+        let tau = std::f32::consts::TAU;
+        [0.0, 1.0 / 3.0, 2.0 / 3.0].map(|o| 0.5 + 0.5 * (tau * (t + o)).cos())
+    }
+
+    /// The specular colour `spe` (0..1) where the view meets the surface
+    /// at `cos` (1 facing it, 0 grazing).
+    pub fn specular(&self, spe: [f32; 3], cos: f32) -> [f32; 3] {
+        let mut s = spe;
+        if self.fresnel > 0.0 {
+            // Schlick's term, with a third instead of a fifth power: visible
+            // from about 60 degrees on, not only at the very edge
+            let f = self.fresnel.min(1.0) * (1.0 - cos.clamp(0.0, 1.0)).powi(3);
+            s = s.map(|v| v + (1.0 - v) * f);
+        }
+        if self.iridescence > 0.0 {
+            let rb = self.film(cos);
+            let l = (0.299 * s[0] + 0.587 * s[1] + 0.114 * s[2]).max(0.5);
+            let k = self.iridescence.min(1.0);
+            s = [0, 1, 2].map(|c| s[c] + (rb[c] * l - s[c]) * k);
+        }
+        s
+    }
+}
+
+/// A ground plane or water surface (Mandelbulber's idea, not in MB3D):
+/// a plane across one of the fractal's axes that is calculated together
+/// with the fractal (shadows, occlusion, reflections, Monte Carlo), in its
+/// own colour, flat or with waves.  Saved in mb3d-rs's block after MB3D's
+/// parameters (see `m3p::extra`), which MB3D does not read.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Ground {
+    /// the axis it lies across: 0 = x, 1 = y, 2 = z
+    pub axis: u8,
+    /// its position on that axis
+    pub pos: f64,
+    /// the solid side: false = the smaller values, true = the larger ones;
+    /// set by the calculation to the side away from the camera
+    pub above: bool,
+    pub color: [u8; 3],
+    /// how much it reflects (0..1): its specular colour and, with the
+    /// reflections on, its mirror
+    pub reflect: f32,
+    /// the height of the waves (fractal units, 0 = flat)
+    pub wave_height: f64,
+    /// the length of the waves (fractal units)
+    pub wave_len: f64,
+}
+
+impl Default for Ground {
+    fn default() -> Self {
+        Ground { axis: 1, pos: 0.0, above: false, color: [128, 128, 128], reflect: 0.0, wave_height: 0.0, wave_len: 1.0 }
+    }
+}
+
+impl Ground {
+    /// The height of the waves at (u, v) on the plane, -1..1 times
+    /// `wave_height`: three crossing sine waves.
+    #[inline]
+    pub fn wave(&self, u: f64, v: f64) -> f64 {
+        use std::f64::consts::TAU;
+        let (x, y) = (u / self.wave_len, v / self.wave_len);
+        self.wave_height
+            * (0.5 * (TAU * (0.8 * x + 0.6 * y)).sin()
+                + 0.3 * (TAU * 1.7 * (-0.45 * x + 0.9 * y) + 1.3).sin()
+                + 0.2 * (TAU * 2.9 * (0.2 * x - 0.98 * y) + 2.1).sin())
+    }
+
+    /// The distance from `c` to the surface (fractal units; negative in
+    /// the solid side); with waves a lower bound (divided by the waves'
+    /// steepest slope).
+    #[inline]
+    pub fn distance(&self, c: &[f64; 3]) -> f64 {
+        let k = self.axis as usize % 3;
+        let s = if self.above { self.pos - c[k] } else { c[k] - self.pos };
+        if self.wave_height == 0.0 {
+            return s;
+        }
+        let (u, v) = (c[(k + 1) % 3], c[(k + 2) % 3]);
+        // the steepest slope: 2 pi height / length (0.5 + 0.3 * 1.7 + 0.2 * 2.9)
+        let g = std::f64::consts::TAU * 1.59 * self.wave_height / self.wave_len.max(1e-30);
+        (s - self.wave(u, v)) / (1.0 + g * g).sqrt()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -119,6 +259,22 @@ pub struct Scene {
     pub cut_options: u8,
     /// Positions of the cutting planes (`dCutX`, `dCutY`, `dCutZ`)
     pub cut_pos: [f64; 3],
+    /// A ground plane or water surface (not in MB3D): None = none
+    pub ground: Option<Ground>,
+    /// A layer of volumetric clouds (not in MB3D): None = none
+    pub clouds: Option<crate::clouds::Clouds>,
+    /// the finishing of the picture: exposure, glow, tone mapping, colour
+    /// grading, vignette, colour fringes (not in MB3D)
+    pub finish: Option<crate::finish::Finish>,
+    /// a fine relief and colour variation on the surface (not in MB3D)
+    pub detail: Option<crate::detail::Detail>,
+    /// experimental speed-ups that change the picture a little (not in
+    /// MB3D), see `crate::experimental`
+    pub experimental: crate::experimental::Experimental,
+    /// The surface material (not in MB3D): None = MB3D's
+    pub material: Option<Material>,
+    /// The place of the DE combination's second part (not in MB3D)
+    pub part2_place: Option<Placement>,
     /// DE ambient occlusion instead of SSAO (used when `ao` is on)
     pub deao: Option<crate::deao::DeaoParams>,
     /// Inside rendering (`bOptions2` bits 1..2)
@@ -297,6 +453,13 @@ impl Default for Scene {
             inside: InsideMode::Outside,
             cut_options: 0,
             cut_pos: [0.0; 3],
+            ground: None,
+            clouds: None,
+            finish: None,
+            detail: None,
+            experimental: Default::default(),
+            material: None,
+            part2_place: None,
             deao: None,
             threads: 0,
             tiling: None,
@@ -332,24 +495,63 @@ impl Scene {
     /// `StereoChange`: the middle moved sideways for the eye of
     /// `stereo_mode` (used for the calculation and the lights).
     pub fn stereo_mid(&self) -> [f64; 3] {
-        let [sw, sd, md] = self.stereo_screen.map(|v| v as f64);
-        let eyedist = 0.065 * self.width as f64 * sd / f64::max(1e-100, md * sw);
-        let k = (sd - md) / sd;
-        let xadd = match self.stereo_mode {
-            1 => -eyedist * k,
-            3 => 0.5 * eyedist * k,
-            4 => -0.5 * eyedist * k,
-            _ => return self.mid,
-        };
+        // (a panorama's eyes are placed per ray: stereo_eye_shift)
+        let xadd = self.stereo_eye_shift();
+        if xadd == 0.0 || self.optic == CameraOptic::Panorama {
+            return self.mid;
+        }
         let r = self.vgrads[0];
         let l = (r[0] * r[0] + r[1] * r[1] + r[2] * r[2]).sqrt().max(1e-300);
         let s = self.step_width() / l * xadd;
         [self.mid[0] + r[0] * s, self.mid[1] + r[1] * s, self.mid[2] + r[2] * s]
     }
 
+    /// The finishing as the camera takes it: a 360 degree panorama has no
+    /// lens and no corners, its picture's edges meet behind the viewer, so
+    /// the vignette (a dark band behind the viewer and dark poles) and the
+    /// colour fringes (a seam where the edges meet) are left out.
+    pub fn finish_for_camera(&self) -> Option<crate::finish::Finish> {
+        let mut f = self.finish?;
+        if self.optic == CameraOptic::Panorama {
+            f.vignette = 0.0;
+            f.chromatic = 0.0;
+        }
+        Some(f)
+    }
+
+    /// The eye's shift from the middle to the right in steps (0 without
+    /// stereo); a panorama's eyes turn with each ray around the middle
+    /// (omni-directional stereo, the 360 degree pictures of VR headsets).
+    pub fn stereo_eye_shift(&self) -> f64 {
+        let [sw, sd, md] = self.stereo_screen.map(|v| v as f64);
+        if self.optic == CameraOptic::Panorama {
+            // the eyes 6.5 cm apart, the middle at the viewing distance (a
+            // panorama's width spans 360 degrees: no screen to scale to)
+            let half = 0.0325 * (self.mid[2] - self.z_start).abs() / self.step_width() / sd.max(1e-6);
+            return match self.stereo_mode {
+                1 => -2.0 * half,
+                3 => half,
+                4 => -half,
+                _ => 0.0,
+            };
+        }
+        let eyedist = 0.065 * self.width as f64 * sd / f64::max(1e-100, md * sw);
+        let k = (sd - md) / sd;
+        match self.stereo_mode {
+            1 => -eyedist * k,
+            3 => 0.5 * eyedist * k,
+            4 => -0.5 * eyedist * k,
+            _ => 0.0,
+        }
+    }
+
     /// `CalcXoff`: horizontal position of the view centre (0.5 = middle),
-    /// the off-axis projection of the stereo images.
+    /// the off-axis projection of the stereo images (none for a panorama:
+    /// its eyes turn with the rays).
     pub fn stereo_xoff(&self) -> f32 {
+        if self.optic == CameraOptic::Panorama {
+            return 0.5;
+        }
         let xoff = -0.065 / f64::max(1e-100, self.stereo_screen[0] as f64);
         let r = match self.stereo_mode {
             1 => 0.5 + xoff,
@@ -517,6 +719,7 @@ impl Scene {
                 let _ = writeln!(t, "{n} = {}", self.cut_pos[k]);
             }
         }
+        t.push_str(&self.ground_text());
         if let Some(d) = &self.deao {
             let _ = writeln!(
                 t,
@@ -698,6 +901,60 @@ impl Scene {
         t
     }
 
+    /// The settings MB3D's parameters have no place for (the ground plane)
+    /// as scene text lines, "" without any: mb3d-rs keeps them in a block
+    /// after MB3D's parameters (`m3p::write`).
+    pub fn extra_text(&self) -> String {
+        let mut t = self.ground_text();
+        // MB3D's parameters know three optics
+        if self.optic == CameraOptic::Fisheye {
+            t.push_str("optic = 3\n");
+        }
+        // MB3D keeps 23 characters of the background picture's name
+        if self.lighting.bg_image.len() > 23 {
+            t.push_str(&format!("background_image = {}\n", self.lighting.bg_image));
+        }
+        t
+    }
+
+    /// The ground plane's and the clouds' scene text lines ("" without).
+    fn ground_text(&self) -> String {
+        use std::fmt::Write;
+        let mut t = String::new();
+        if let Some(p) = self.part2_place.filter(|p| *p != Placement::default()) {
+            let (o, r) = (p.offset, p.rotation);
+            let _ = writeln!(t, "part2_position = {}, {}, {}\npart2_rotation = {}, {}, {}\npart2_scale = {}", o[0], o[1], o[2], r[0], r[1], r[2], p.scale);
+        }
+        if let Some(m) = &self.material {
+            let _ = writeln!(t, "material_fresnel = {}\nmaterial_iridescence = {}, {}\nmaterial_glow = {}", m.fresnel, m.iridescence, m.irid_shift, m.glow);
+        }
+        if let Some(c) = &self.clouds {
+            let k = c.color;
+            let _ = writeln!(t, "clouds = {}, {}, {}", ["x", "y", "z"][c.axis as usize % 3], c.from, c.to);
+            let _ = writeln!(t, "cloud_density = {}\ncloud_coverage = {}\ncloud_size = {}", c.density, c.coverage, c.size);
+            let _ = writeln!(t, "cloud_color = #{:02X}{:02X}{:02X}", k[0], k[1], k[2]);
+            if c.offset != [0.0; 3] {
+                let _ = writeln!(t, "cloud_offset = {}, {}, {}", c.offset[0], c.offset[1], c.offset[2]);
+            }
+        }
+        if let Some(f) = self.finish.filter(|f| !f.is_neutral()) {
+            t.push_str(&f.to_text());
+        }
+        if let Some(d) = &self.detail {
+            t.push_str(&d.to_text());
+        }
+        t.push_str(&self.experimental.to_text());
+        if let Some(g) = &self.ground {
+            let c = g.color;
+            let _ = writeln!(t, "ground = {}, {}", ["x", "y", "z"][g.axis as usize % 3], g.pos);
+            let _ = writeln!(t, "ground_color = #{:02X}{:02X}{:02X}\nground_reflect = {}", c[0], c[1], c[2], g.reflect);
+            if g.wave_height != 0.0 {
+                let _ = writeln!(t, "ground_waves = {}, {}", g.wave_height, g.wave_len);
+            }
+        }
+        t
+    }
+
     /// Parse the INI-like scene description.
     pub fn parse(text: &str) -> Result<Scene, String> {
         Self::parse_onto(Scene::default(), text, true)
@@ -853,7 +1110,9 @@ impl Scene {
                                 return Err(err("tile counts must be 1..127".into()));
                             }
                             let old = s.tiling.unwrap_or(Tiling { cols: 1, rows: 1, pos: None, downscale: 1 });
-                            s.tiling = Some(Tiling { cols: a, rows: b, ..old });
+                            // a single tile outside of the new grid is dropped
+                            let pos = old.pos.filter(|&(c, r)| c < a && r < b);
+                            s.tiling = Some(Tiling { cols: a, rows: b, pos, ..old });
                         }
                     }
                     "tile" => {
@@ -973,10 +1232,12 @@ impl Scene {
                     }
                     "fov" | "fov_y" => s.fov_y = num()?,
                     "optic" => {
-                        s.optic = match int()? {
-                            1 => CameraOptic::Planar,
-                            2 => CameraOptic::Panorama,
-                            _ => CameraOptic::Common,
+                        s.optic = match val.to_ascii_lowercase().as_str() {
+                            "1" | "planar" => CameraOptic::Planar,
+                            "2" | "panorama" => CameraOptic::Panorama,
+                            "3" | "fisheye" => CameraOptic::Fisheye,
+                            "0" | "common" => CameraOptic::Common,
+                            _ => return Err(err(format!("bad optic '{val}' (0 common, 1 planar, 2 panorama, 3 fisheye)"))),
                         }
                     }
                     "de_stop" | "destop" => s.de_stop = num()?,
@@ -1069,6 +1330,153 @@ impl Scene {
                                 })
                             }
                         }
+                    }
+                    "ground" => {
+                        if matches!(val.to_ascii_lowercase().as_str(), "off" | "none" | "no") {
+                            s.ground = None;
+                        } else {
+                            let (a, pos) = val.split_once(',').ok_or_else(|| err(format!("bad ground '{val}' (axis, position: y, -1.5)")))?;
+                            let axis = match a.trim().to_ascii_lowercase().as_str() {
+                                "x" => 0,
+                                "y" => 1,
+                                "z" => 2,
+                                _ => return Err(err(format!("bad ground axis '{a}' (x, y or z)"))),
+                            };
+                            let pos = pos.trim().parse::<f64>().map_err(|_| err(format!("bad ground position '{pos}'")))?;
+                            let g = s.ground.get_or_insert_with(Ground::default);
+                            g.axis = axis;
+                            g.pos = pos;
+                        }
+                    }
+                    "clouds" => {
+                        if matches!(val.to_ascii_lowercase().as_str(), "off" | "none" | "no") {
+                            s.clouds = None;
+                        } else {
+                            let p: Vec<&str> = val.split(',').map(str::trim).collect();
+                            let [a, from, to] = p[..] else {
+                                return Err(err(format!("bad clouds '{val}' (axis, from, to: y, -1, -1.5)")));
+                            };
+                            let axis = match a.to_ascii_lowercase().as_str() {
+                                "x" => 0,
+                                "y" => 1,
+                                "z" => 2,
+                                _ => return Err(err(format!("bad clouds axis '{a}' (x, y or z)"))),
+                            };
+                            let n = |v: &str| v.parse::<f64>().map_err(|_| err(format!("bad clouds height '{v}'")));
+                            let c = s.clouds.get_or_insert_with(Default::default);
+                            c.axis = axis;
+                            c.from = n(from)?;
+                            c.to = n(to)?;
+                        }
+                    }
+                    "part2_position" | "part2_rotation" => {
+                        let v = vec_n(3)?;
+                        let pl = s.part2_place.get_or_insert_with(Default::default);
+                        let t = [v[0], v[1], v[2]];
+                        if key == "part2_position" {
+                            pl.offset = t;
+                        } else {
+                            pl.rotation = t;
+                        }
+                    }
+                    "part2_scale" => {
+                        let v = num()?;
+                        if v <= 0.0 {
+                            return Err(err(format!("bad part2_scale '{val}' (above 0)")));
+                        }
+                        s.part2_place.get_or_insert_with(Default::default).scale = v;
+                    }
+                    "material_fresnel" => s.material.get_or_insert_with(Default::default).fresnel = num()?.clamp(0.0, 1.0) as f32,
+                    "material_iridescence" => {
+                        let p: Vec<f64> = val.split(',').map(|v| v.trim().parse::<f64>()).collect::<Result<_, _>>().map_err(|_| err(format!("bad material_iridescence '{val}' (amount[, shift])")))?;
+                        let m = s.material.get_or_insert_with(Default::default);
+                        m.iridescence = p.first().copied().unwrap_or(0.0).clamp(0.0, 1.0) as f32;
+                        m.irid_shift = p.get(1).copied().unwrap_or(0.0) as f32;
+                    }
+                    "material_glow" => s.material.get_or_insert_with(Default::default).glow = num()?.max(0.0) as f32,
+                    "material" if matches!(val.to_ascii_lowercase().as_str(), "off" | "none" | "no") => s.material = None,
+                    "cloud_density" => s.clouds.get_or_insert_with(Default::default).density = num()?.max(0.0) as f32,
+                    "cloud_coverage" => s.clouds.get_or_insert_with(Default::default).coverage = num()?.clamp(0.0, 1.0) as f32,
+                    "cloud_size" => s.clouds.get_or_insert_with(Default::default).size = num()?.max(1e-9),
+                    "cloud_color" => {
+                        let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
+                        s.clouds.get_or_insert_with(Default::default).color = c;
+                    }
+                    "detail" => {
+                        let v = val.trim().to_ascii_lowercase();
+                        if matches!(v.as_str(), "off" | "none" | "no") {
+                            s.detail = None;
+                        } else {
+                            let bad = || err(format!("bad detail '{val}' (kind, strength, size, roughness: stone, 0.5, 0.02, 0.5; kinds {})", crate::detail::KINDS.join(", ")));
+                            let p: Vec<&str> = v.split(',').map(str::trim).collect();
+                            let kind = crate::detail::KINDS.iter().position(|k| *k == p[0]).ok_or_else(bad)?;
+                            let f = |i: usize| p.get(i).map(|x| x.parse::<f64>().map_err(|_| bad())).transpose();
+                            let d = s.detail.get_or_insert_with(Default::default);
+                            d.kind = kind as u8;
+                            if let Some(x) = f(1)? {
+                                d.strength = (x as f32).clamp(0.0, 4.0);
+                            }
+                            if let Some(x) = f(2)? {
+                                d.size = x.max(1e-30);
+                            }
+                            if let Some(x) = f(3)? {
+                                d.roughness = (x as f32).clamp(0.05, 0.95);
+                            }
+                        }
+                    }
+                    "experimental" => s.experimental.on = boolean()?,
+                    "step_relax" | "relax" => s.experimental.step_relax = num()?.clamp(1.0, 2.0),
+                    "secant_search" => s.experimental.secant = boolean()?,
+                    "free_steps" => s.experimental.free_steps = boolean()?,
+                    "occlusion_half" => s.experimental.ao_half = boolean()?,
+                    "cone_march" => s.experimental.cone = boolean()?,
+                    "detail_color" => s.detail.get_or_insert_with(Default::default).color = (num()? as f32).clamp(0.0, 1.0),
+                    "finish" if matches!(val.trim().to_ascii_lowercase().as_str(), "off" | "none" | "no") => s.finish = None,
+                    "finish_exposure" | "finish_tonemap" | "glow" | "finish_contrast" | "finish_saturation" | "finish_warmth" | "vignette" | "chromatic" => {
+                        let f = s.finish.get_or_insert_with(Default::default);
+                        match key.as_str() {
+                            "finish_exposure" => f.exposure = (num()? as f32).clamp(-10.0, 10.0),
+                            "finish_tonemap" => {
+                                f.tonemap = match val.trim().to_ascii_lowercase().as_str() {
+                                    "filmic" | "on" | "true" | "yes" | "1" => true,
+                                    "off" | "none" | "false" | "no" | "0" => false,
+                                    _ => return Err(err(format!("bad finish_tonemap '{val}' (filmic or off)"))),
+                                }
+                            }
+                            "glow" => {
+                                let p: Vec<f64> = val.split(',').map(|v| v.trim().parse::<f64>()).collect::<Result<_, _>>().map_err(|_| err(format!("bad glow '{val}' (strength, radius, threshold: 0.5, 0.02, 0.8)")))?;
+                                if p.is_empty() || p.len() > 3 {
+                                    return Err(err(format!("bad glow '{val}' (strength, radius, threshold: 0.5, 0.02, 0.8)")));
+                                }
+                                f.glow = (p[0] as f32).max(0.0);
+                                if let Some(r) = p.get(1) {
+                                    f.glow_radius = (*r as f32).clamp(0.001, 0.5);
+                                }
+                                if let Some(t) = p.get(2) {
+                                    f.glow_threshold = (*t as f32).max(0.0);
+                                }
+                            }
+                            "finish_contrast" => f.contrast = (num()? as f32).clamp(-1.0, 1.0),
+                            "finish_saturation" => f.saturation = (num()? as f32).clamp(0.0, 3.0),
+                            "finish_warmth" => f.warmth = (num()? as f32).clamp(-1.0, 1.0),
+                            "vignette" => f.vignette = (num()? as f32).clamp(0.0, 1.0),
+                            _ => f.chromatic = (num()? as f32).clamp(0.0, 1.0),
+                        }
+                    }
+                    "cloud_offset" => {
+                        let p = vec_n(3)?;
+                        s.clouds.get_or_insert_with(Default::default).offset = [p[0], p[1], p[2]];
+                    }
+                    "ground_color" => {
+                        let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
+                        s.ground.get_or_insert_with(Ground::default).color = c;
+                    }
+                    "ground_reflect" => s.ground.get_or_insert_with(Ground::default).reflect = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_waves" => {
+                        let p = vec_n(2)?;
+                        let g = s.ground.get_or_insert_with(Ground::default);
+                        g.wave_height = p[0].max(0.0);
+                        g.wave_len = if p[1] > 0.0 { p[1] } else { 1.0 };
                     }
                     "cut_x" | "cut_y" | "cut_z" => {
                         let k = (key.as_bytes()[4] - b'x') as usize;
@@ -1342,6 +1750,21 @@ pub fn parse_color(s: &str) -> Option<[u8; 3]> {
 mod tests {
     use super::*;
 
+    /// A 360 degree panorama leaves out the lens effects (the vignette
+    /// darkened the view behind the viewer), keeps the rest; the scene
+    /// itself keeps them for other cameras.
+    #[test]
+    fn a_panorama_has_no_vignette_or_fringes() {
+        let mut s = Scene::parse("vignette = 0.5\nchromatic = 0.3\nfinish_contrast = 0.25\n").unwrap();
+        assert_eq!(s.finish_for_camera().unwrap().vignette, 0.5);
+        s.optic = CameraOptic::Panorama;
+        let f = s.finish_for_camera().unwrap();
+        assert_eq!((f.vignette, f.chromatic, f.contrast), (0.0, 0.0, 0.25));
+        assert_eq!(s.finish.unwrap().vignette, 0.5);
+        s.optic = CameraOptic::Fisheye;
+        assert_eq!(s.finish_for_camera().unwrap().vignette, 0.5);
+    }
+
     #[test]
     fn parse_basic_scene() {
         let s = Scene::parse(
@@ -1354,6 +1777,18 @@ mod tests {
         assert!(matches!(s.formulas[0].formula, Formula::AmazingBox { scale, .. } if scale == -1.5));
         assert_eq!(s.lighting.lights[0].color, [255, 128, 0]);
         assert!(!s.lighting.lights[1].on);
+    }
+
+    #[test]
+    fn fewer_tiles_drop_an_outside_tile() {
+        let s = Scene::parse("tiles = 4x4
+tile = 4, 2
+").unwrap();
+        assert_eq!(s.tiling.unwrap().pos, Some((3, 1)));
+        assert_eq!(s.clone().apply("tiles = 2x2
+").unwrap().tiling.unwrap().pos, None);
+        assert_eq!(s.apply("tiles = 4x2
+").unwrap().tiling.unwrap().pos, Some((3, 1)));
     }
 
     #[test]

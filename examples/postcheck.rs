@@ -43,7 +43,7 @@ fn main() {
             let t = Instant::now();
             let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
             if ao.bits15 {
-                mb3d::ssao15::ssao15(&mut a, w, h, pc.zc_mul, pc.zcorr, &ao, threads);
+                mb3d::ssao15::ssao15(&mut a, w, h, pc.zc_mul, pc.zcorr, &ao, threads, &|_, _| {});
             } else {
                 mb3d::ssao::ssao24(&mut a, w, h, pc.zc_mul, pc.zcorr, &ao, threads);
             }

@@ -18,6 +18,14 @@ pub struct SiLight {
     pub otrap: u16,
 }
 
+/// `otrap` of a pixel of the ground plane (lit in its own colour, not the
+/// palette's): the orbit trap value has 15 bits, its 16th only marks the
+/// inside of inside-and-outside rendering, where there is no ground.  (Its
+/// `si_gradient` is 0, an outside surface, so the shadows, the occlusion
+/// and the reflections treat it as one; 32768 where the start plane is in
+/// the ground, a cut surface as at MB3D's cutting planes.)
+pub const GROUND: u16 = 0xFFFF;
+
 impl Default for SiLight {
     fn default() -> Self {
         SiLight {
@@ -36,6 +44,12 @@ impl SiLight {
     #[inline]
     pub fn zpos(&self) -> u32 {
         self.zpos_fine >> 16
+    }
+
+    /// a pixel of the ground plane ([`GROUND`])
+    #[inline]
+    pub fn is_ground(&self) -> bool {
+        self.otrap == GROUND
     }
 
     #[inline]

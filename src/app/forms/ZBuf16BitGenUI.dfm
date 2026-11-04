@@ -2,7 +2,7 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
   Left = 0
   Top = 0
   BorderStyle = bsSizeToolWin
-  Caption = '16Bit ZBuffer Generator'
+  Caption = '@MB:N16BitZBufferGenerator'
   ClientHeight = 445
   ClientWidth = 670
   Color = clBtnFace
@@ -29,7 +29,7 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
       Width = 42
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z offset:'
+      Caption = '@MB:ZOffset'
     end
     object Label3: TLabel
       Left = 13
@@ -37,14 +37,14 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
       Width = 37
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z scale:'
+      Caption = '@MB:ZScale'
     end
     object RefreshPreviewBtn: TButton
       Left = 6
       Top = 10
       Width = 156
       Height = 47
-      Caption = 'Refresh'
+      Caption = '@MB:Refresh'
       TabOrder = 0
       OnClick = RefreshPreviewBtnClick
     end
@@ -53,7 +53,7 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
       Top = 210
       Width = 156
       Height = 25
-      Caption = 'Save As Image'
+      Caption = '@MB:SaveAsImage'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -118,7 +118,7 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
       Top = 241
       Width = 165
       Height = 203
-      Hint = 'Shows messages'
+      Hint = '@MB:ShowsMessages'
       Align = alBottom
       BorderStyle = bsNone
       Color = clSilver
@@ -140,7 +140,7 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
       Top = 185
       Width = 105
       Height = 19
-      Caption = 'Invert ZBuffer'
+      Caption = '@MB:InvertZBuffer'
       Checked = True
       State = cbChecked
       TabOrder = 7
@@ -152,7 +152,7 @@ object ZBuf16BitGenFrm: TZBuf16BitGenFrm
       Top = 133
       Width = 107
       Height = 27
-      Caption = 'Guess params'
+      Caption = '@MB:GuessParams'
       TabOrder = 8
       OnClick = GuessBtnClick
     end

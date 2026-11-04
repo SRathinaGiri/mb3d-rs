@@ -100,6 +100,43 @@ pub fn strip_amp(s: &str) -> String {
 }
 
 /// Logical line height of a font (VCL `TextHeight`).
+/// How far a caption may stand over its control before it is made to fit
+/// (see [`Canvas::fit`]).
+pub const SLACK: i32 = 2;
+
+/// Whether `c` is written without spaces between words (Chinese and
+/// Japanese characters, their punctuation and full-width forms): a line
+/// may break next to it.
+fn is_cjk(c: char) -> bool {
+    matches!(c as u32, 0x3000..=0x30FF | 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
+}
+
+/// The pieces of a paragraph a line may break between, and whether a space
+/// stands before each: the words between spaces, and inside them each
+/// Chinese or Japanese character on its own (not before closing marks and
+/// small kana, not after opening brackets: the usual kinsoku rules).
+fn break_units(para: &str) -> Vec<(String, bool)> {
+    const NO_START: &str = "〜～、。，．・：；？！）」』】〉》〕］｝ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ々…‥%％)]}.,:;!?";
+    const NO_END: &str = "（「『【〈《〔［｛([{";
+    let mut out: Vec<(String, bool)> = Vec::new();
+    for (wi, word) in para.split(' ').enumerate() {
+        let mut first = true;
+        let mut cur = String::new();
+        let mut prev: Option<char> = None;
+        for c in word.chars() {
+            let can_break = prev.is_some_and(|p| (is_cjk(p) || is_cjk(c)) && !NO_START.contains(c) && !NO_END.contains(p));
+            if can_break && !cur.is_empty() {
+                out.push((std::mem::take(&mut cur), first && wi > 0));
+                first = false;
+            }
+            cur.push(c);
+            prev = Some(c);
+        }
+        out.push((cur, first && wi > 0));
+    }
+    out
+}
+
 pub fn line_height(f: &Font) -> i32 {
     f.line_height()
 }
@@ -454,10 +491,11 @@ impl<'a> Canvas<'a> {
         let mut pen = self.dx(x) as f32;
         let x_start = pen;
         let italic = f.italic;
-        for ch in s.chars() {
-            let g = font::glyph(face, px, ch);
-            let gx = pen.round() as i32 + g.ox;
-            let gy = base + g.oy;
+        let (glyphs, end) = font::layout(face, px, s, pen);
+        for p in &glyphs {
+            let g = &p.g;
+            let gx = (p.x + p.dx).round() as i32 + g.ox;
+            let gy = base + g.oy - p.dy.round() as i32;
             if gx > self.clip[2] {
                 break;
             }
@@ -483,8 +521,8 @@ impl<'a> Canvas<'a> {
                     }
                 }
             }
-            pen += g.advance;
         }
+        pen = end;
         if f.underline {
             let t = self.px1();
             self.fill_dev(x_start as i32, base + t, pen.round() as i32, base + 2 * t, color);
@@ -501,8 +539,14 @@ impl<'a> Canvas<'a> {
                 continue;
             }
             let mut line = String::new();
-            for word in para.split(' ') {
-                let cand = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
+            for (word, spaced) in break_units(para) {
+                let cand = if line.is_empty() {
+                    word.to_string()
+                } else if spaced {
+                    format!("{line} {word}")
+                } else {
+                    format!("{line}{word}")
+                };
                 if self.text_width(f, &cand) <= width || line.is_empty() {
                     line = cand;
                 } else {
@@ -526,6 +570,9 @@ impl<'a> Canvas<'a> {
             VAlign::Center => r.y + (r.h - total) / 2,
             VAlign::Bottom => r.bottom() - total,
         };
+        // (a paragraph of several lines written right to left starts at the
+        // right edge: its lines are right-aligned)
+        let ha = if ha == HAlign::Left && lines.len() > 1 && font::has_rtl(s) { HAlign::Right } else { ha };
         for l in &lines {
             let w = self.text_width(f, l);
             let x = match ha {
@@ -535,6 +582,69 @@ impl<'a> Canvas<'a> {
             };
             self.text(x, y, l, f, color);
             y += lh;
+        }
+    }
+
+    /// The least change that fits a caption into `r`: a text too wide for it
+    /// is drawn in a smaller font (down to 8 pixels), and what still does
+    /// not fit ends in "..." (one-line texts; wrapped text is left to the
+    /// caller's clipping).  Translated captions are often longer than the
+    /// English the windows were laid out for.
+    pub fn fit(&self, r: Rect, s: &str, f: &Font, wrap: bool) -> (Font, String) {
+        if self.fits(r, s, f, wrap) {
+            return (f.clone(), s.to_string());
+        }
+        let mut font = f.clone();
+        let mut h = f.em().round() as i32 - 1;
+        while h >= 8 {
+            font.height = -h;
+            if self.fits(r, s, &font, wrap) {
+                return (font, s.to_string());
+            }
+            h -= 1;
+        }
+        if wrap || s.contains('\n') {
+            return (font, s.to_string());
+        }
+        let short = self.elide(s, &font, r.w);
+        (font, short)
+    }
+
+    /// Whether `s` (wrapped to `r.w` when `wrap`) fits into `r`; a line may
+    /// stand over by [`SLACK`] pixels, as the English captions of the form
+    /// files do here and there.
+    fn fits(&self, r: Rect, s: &str, f: &Font, wrap: bool) -> bool {
+        let lines = self.layout_lines(s, f, r.w, wrap);
+        lines.iter().all(|l| self.text_width(f, l) <= r.w + SLACK) && (!wrap || lines.len() as i32 * line_height(f) <= r.h)
+    }
+
+    /// One line shortened with "..." to `w` pixels.
+    fn elide(&self, s: &str, f: &Font, w: i32) -> String {
+        let mut t: Vec<char> = s.chars().collect();
+        while !t.is_empty() {
+            t.pop();
+            let cand = format!("{}...", t.iter().collect::<String>().trim_end());
+            if self.text_width(f, &cand) <= w {
+                return cand;
+            }
+        }
+        String::new()
+    }
+
+    /// [`text_in`](Canvas::text_in) with the text made to fit (see [`fit`](Canvas::fit)).
+    #[allow(clippy::too_many_arguments)]
+    pub fn text_fit(&mut self, r: Rect, s: &str, f: &Font, color: u32, ha: HAlign, va: VAlign, wrap: bool) {
+        let (font, text) = self.fit(r, s, f, wrap);
+        if wrap && !self.fits(r, &text, &font, true) {
+            // the smallest font still has a word too long for the width, or
+            // too many lines: what does not fit goes, line by line
+            let max_lines = (r.h / line_height(&font)).max(1) as usize;
+            let mut lines = self.layout_lines(&text, &font, r.w, true);
+            lines.truncate(max_lines);
+            let lines: Vec<String> = lines.iter().map(|l| if self.text_width(&font, l) > r.w { self.elide(l, &font, r.w) } else { l.clone() }).collect();
+            self.text_in(r, &lines.join("\n"), &font, color, ha, va, false);
+        } else {
+            self.text_in(r, &text, &font, color, ha, va, wrap);
         }
     }
 
@@ -601,5 +711,24 @@ impl<'a> Canvas<'a> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::break_units;
+
+    #[test]
+    fn lines_break_at_spaces_and_between_chinese_and_japanese_characters() {
+        let join = |u: &[(String, bool)]| u.iter().map(|(w, s)| if *s { format!(" {w}") } else { w.clone() }).collect::<String>();
+        // words between spaces as before (also empty ones)
+        let u = break_units("a bc  d");
+        assert_eq!(u.iter().map(|x| x.0.as_str()).collect::<Vec<_>>(), ["a", "bc", "", "d"]);
+        assert_eq!(join(&u), "a bc  d");
+        // each character, not before 。 and small kana, not after 「
+        let u = break_units("表面を「探索」します。DE 4 倍");
+        let w: Vec<&str> = u.iter().map(|x| x.0.as_str()).collect();
+        assert_eq!(w, ["表", "面", "を", "「探", "索」", "し", "ま", "す。", "DE", "4", "倍"]);
+        assert_eq!(join(&u), "表面を「探索」します。DE 4 倍");
     }
 }

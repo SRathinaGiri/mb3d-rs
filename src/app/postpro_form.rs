@@ -4,6 +4,7 @@
 //! "Calculate now" applies a processing to the kept image; the
 //! "automatically" boxes put it into the parameters of the next calculation.
 
+use crate::vcl::lang::{tr, trf};
 use super::util::{d2byte, d2byte_str, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
 use crate::dof::DofParams;
@@ -24,10 +25,61 @@ pub struct State {
     pub refl_now: bool,
     /// the processing running from this window (its name for the status
     /// line) and its start
-    pub running: Option<(&'static str, std::time::Instant)>,
+    pub running: Option<(String, std::time::Instant)>,
+    /// its running stage's pace, for the time left
+    pub pace: Pace,
+    /// the clouds' colour (Clouds section)
+    pub cloud_color: [u8; 3],
 }
 
-const PANELS: [(&str, &str, &str); 7] = [
+impl State {
+    /// A new calculation, or "Reset now": the processings applied by hand
+    /// are dropped; the settings kept here (the clouds' colour) stay. (The
+    /// whole state was reset, and every calculation painted the clouds
+    /// black: dark clouds, a black sky with dense ones.)
+    pub fn new_calc(&mut self) {
+        *self = State { cloud_color: self.cloud_color, ..State::default() };
+    }
+}
+
+/// The pace of a post processing's running stage (the engine names it
+/// and counts its rows from zero): its time left from the progress made
+/// since the stage began, smoothed as the main rendering's is.
+#[derive(Default)]
+pub struct Pace {
+    stage: String,
+    start: Option<std::time::Instant>,
+    last: (f64, f64),
+    rate: super::eta::RateEma,
+    shown: Option<super::util::Shown>,
+}
+
+impl Pace {
+    /// The time left in `stage` at progress `f`: its pace (once a couple
+    /// of seconds and percent into it) blended with `prior`, what the
+    /// stage took in the last calculation (the card's reflections count
+    /// their rows only at the end of a band). None without either.
+    pub fn left(&mut self, stage: &str, f: f64, prior: Option<f64>, now: std::time::Instant) -> Option<f64> {
+        if self.stage != stage || self.start.is_none() {
+            *self = Pace { stage: stage.to_string(), start: Some(now), ..Default::default() };
+        }
+        let secs = self.start.map_or(0.0, |t| now.saturating_duration_since(t).as_secs_f64());
+        // a sample at most every quarter second
+        let (f0, t0) = self.last;
+        if f > f0 && secs - t0 >= 0.25 {
+            self.rate.add(f - f0, secs - t0);
+            self.last = (f, secs);
+        }
+        let measured = self.rate.rate().filter(|_| secs >= 2.0 && f >= 0.02 && f < 1.0).map(|r| secs + (1.0 - f) / r);
+        // (a stage that runs past its prior without progress: nothing to say)
+        let whole = super::eta::blend(measured, prior, f).filter(|t| measured.is_some() || *t > secs + 1.0);
+        let est = whole.map(|t| (t - secs).max(0.0));
+        self.shown = est.map(|l| super::util::smooth_shown(self.shown, l, now)).or(self.shown);
+        self.shown.map(|s| s.0)
+    }
+}
+
+const PANELS: [(&str, &str, &str); 10] = [
     ("RecalcSectionBtn", "RecalcSectionPnl", "CheckBox21"),
     ("NormalsOnZBufferBtn", "NormalsOnZBufferPnl", "CheckBox23"),
     ("HardShadowsBtn", "HardShadowsPnl", "CheckBox9"),
@@ -35,6 +87,9 @@ const PANELS: [(&str, &str, &str); 7] = [
     ("ReflTransparencyBtn", "ReflTransparencyPnl", "CheckBox24"),
     ("DepthOfFieldBtn", "DepthOfFieldPnl", "CheckBox1"),
     ("NoiseFilterBtn", "NoiseFilterPnl", "NoiseAutoCbx"),
+    ("CloudsBtn", "CloudsPnl", "CloudsCbx"),
+    ("MaterialBtn", "MaterialPnl", "MaterialCbx"),
+    ("FinishBtn", "FinishPnl", "FinishCbx"),
 ];
 
 /// The strength of the noise filter (Noise Filter section), 0 when off.
@@ -79,6 +134,45 @@ fn dof_params(ui: &Ui) -> DofParams {
 pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     let st = &app.post;
     let sc = &mut app.scene;
+    let num = |e: &str| super::util::ptf(&ui.text(F, e));
+    // (the noise's offset is kept: it only comes from scene files and animations)
+    let offset = sc.clouds.map_or([0.0; 3], |c| c.offset);
+    sc.clouds = ui.checked(F, "CloudsCbx").then(|| crate::clouds::Clouds {
+        axis: ui.item_index(F, "CloudAxisCB").clamp(0, 2) as u8,
+        from: num("CloudFromEdit"),
+        to: num("CloudToEdit"),
+        density: (num("CloudDensityEdit") as f32).max(0.0),
+        coverage: (num("CloudCoverEdit") as f32).clamp(0.0, 1.0),
+        size: num("CloudSizeEdit").max(1e-9),
+        color: st.cloud_color,
+        offset,
+    });
+    sc.material = ui.checked(F, "MaterialCbx").then(|| crate::scene::Material {
+        fresnel: (num("FresnelEdit") as f32).clamp(0.0, 1.0),
+        iridescence: (num("IridEdit") as f32).clamp(0.0, 1.0),
+        irid_shift: num("IridShiftEdit") as f32,
+        glow: (num("GlowEdit") as f32).max(0.0),
+    });
+    sc.finish = ui.checked(F, "FinishCbx").then(|| crate::finish::Finish {
+        exposure: (num("FinExpEdit") as f32).clamp(-10.0, 10.0),
+        tonemap: ui.checked(F, "FinFilmicCbx"),
+        glow: (num("FinGlowEdit") as f32).max(0.0),
+        glow_radius: (num("FinGlowRadEdit") as f32).clamp(0.001, 0.5),
+        glow_threshold: (num("FinGlowThrEdit") as f32).max(0.0),
+        contrast: (num("FinContrastEdit") as f32).clamp(-1.0, 1.0),
+        saturation: (num("FinSatEdit") as f32).clamp(0.0, 3.0),
+        warmth: (num("FinWarmEdit") as f32).clamp(-1.0, 1.0),
+        vignette: (num("FinVigEdit") as f32).clamp(0.0, 1.0),
+        chromatic: (num("FinChromEdit") as f32).clamp(0.0, 1.0),
+    });
+    let kind = ui.item_index(F, "DetailKindCB");
+    sc.detail = (1..=3).contains(&kind).then(|| crate::detail::Detail {
+        kind: (kind - 1) as u8,
+        strength: (num("DetailStrEdit") as f32).clamp(0.0, 4.0),
+        size: Some(num("DetailSizeEdit")).filter(|v| *v > 0.0).unwrap_or(0.02),
+        roughness: (num("DetailRoughEdit") as f32).clamp(0.05, 0.95),
+        color: (num("DetailColEdit") as f32).clamp(0.0, 1.0),
+    });
     sc.shadows = (ui.checked(F, "CheckBox9") || st.hs_now).then(|| shadow_params(ui));
     let tab = ui.c(F, "TabControl1").tab_index;
     let ao_on = ui.checked(F, "CheckBox11") || st.ao_now;
@@ -114,6 +208,53 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
 pub fn set_from_header(app: &mut Mb3d, ui: &mut Ui) {
     app.post = State::default();
     let sc = app.scene.clone();
+    let c = sc.clouds.unwrap_or_default();
+    ui.set_checked(F, "CloudsCbx", sc.clouds.is_some());
+    ui.set_item_index(F, "CloudAxisCB", c.axis as i32);
+    for (e, v) in [("CloudFromEdit", c.from), ("CloudToEdit", c.to), ("CloudSizeEdit", c.size)] {
+        ui.set_text(F, e, &super::util::fts(v));
+    }
+    // (single precision: 0.7, not 0.699999988079071)
+    for (e, v) in [("CloudDensityEdit", c.density), ("CloudCoverEdit", c.coverage)] {
+        ui.set_text(F, e, &super::util::fts_single(v as f64));
+    }
+    app.post.cloud_color = c.color;
+    cloud_swatch(app, ui);
+    let m = sc.material.unwrap_or_default();
+    ui.set_checked(F, "MaterialCbx", sc.material.is_some());
+    for (e, v) in [("FresnelEdit", m.fresnel), ("IridEdit", m.iridescence), ("IridShiftEdit", m.irid_shift), ("GlowEdit", m.glow)] {
+        ui.set_text(F, e, &super::util::fts_single(v as f64));
+    }
+    // the relief: without one a size that suits the view (a small part of
+    // what the zoom shows)
+    let suggest = {
+        let v = 0.1 / sc.zoom.max(1e-30);
+        // (two significant digits)
+        let p = 10f64.powf(v.log10().floor() - 1.0);
+        (v / p).round() * p
+    };
+    let det = sc.detail.unwrap_or(crate::detail::Detail { size: suggest, ..Default::default() });
+    ui.set_item_index(F, "DetailKindCB", sc.detail.map_or(0, |d| d.kind as i32 + 1));
+    ui.set_text(F, "DetailStrEdit", &fts_single(det.strength as f64));
+    ui.set_text(F, "DetailSizeEdit", &super::util::fts(det.size));
+    ui.set_text(F, "DetailRoughEdit", &fts_single(det.roughness as f64));
+    ui.set_text(F, "DetailColEdit", &fts_single(det.color as f64));
+    let fin = sc.finish.unwrap_or_default();
+    ui.set_checked(F, "FinishCbx", sc.finish.is_some());
+    ui.set_checked(F, "FinFilmicCbx", fin.tonemap);
+    for (e, v) in [
+        ("FinExpEdit", fin.exposure),
+        ("FinGlowEdit", fin.glow),
+        ("FinGlowRadEdit", fin.glow_radius),
+        ("FinGlowThrEdit", fin.glow_threshold),
+        ("FinContrastEdit", fin.contrast),
+        ("FinSatEdit", fin.saturation),
+        ("FinWarmEdit", fin.warmth),
+        ("FinVigEdit", fin.vignette),
+        ("FinChromEdit", fin.chromatic),
+    ] {
+        ui.set_text(F, e, &fts_single(v as f64));
+    }
     ui.set_checked(F, "CheckBox1", sc.dof.is_some());
     let d = sc.dof.unwrap_or_default();
     ui.set_item_index(F, "RadioGroup2", d.forward as i32);
@@ -233,15 +374,30 @@ fn toggle(ui: &mut Ui, btn: &str, pnl: &str) {
     update_captions(ui);
 }
 
+/// The clouds' colour on their button.
+fn cloud_swatch(app: &Mb3d, ui: &mut Ui) {
+    let b = ui.cm(F, "CloudColBtn");
+    b.glyph = Some(super::light_form::swatch(app.post.cloud_color));
+    b.num_glyphs = 1;
+}
+
+/// The colour dialog of the Clouds section.
+pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &crate::vcl::DialogResult) {
+    if let ("cloudcolor", crate::vcl::DialogResult::Color(Some(c))) = (what, r) {
+        app.post.cloud_color = super::util::rgb_of(*c);
+        cloud_swatch(app, ui);
+    }
+}
+
 /// The image is repainted with the post processing of the parameters;
 /// `stage` is shown in the main window while it runs.
-pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
+pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
     if app.main.calculating {
-        app.message(ui, "Wait for the running calculation, or stop it first.");
+        app.message(ui, &tr("@MB:WaitForTheRunningCalculationOr"));
         return;
     }
     if app.eng.base().is_none() {
-        app.message(ui, "Calculate the image first.");
+        app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     }
     app.make_scene(ui);
@@ -253,7 +409,7 @@ pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
 /// in pixels of the image; None (and the message) without one.
 fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
     if !ui.visible(MAIN, "Shape1") {
-        ui.show_message("Please make a selection in the image first.");
+        ui.show_message(&tr("@MB:PleaseMakeASelectionInThe"));
         return None;
     }
     let sh = ui.c(MAIN, "Shape1").rect();
@@ -261,7 +417,7 @@ fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
     let s = app.main.image_scale;
     let rect = [(sh.x - img.x) * s, (sh.y - img.y) * s, sh.w * s, sh.h * s];
     if rect[2] <= 2 || rect[3] <= 2 {
-        ui.show_message("The selection must be bigger than 2 pixels in width and height.");
+        ui.show_message(&tr("@MB:TheSelectionMustBeBiggerThan"));
         return None;
     }
     Some(rect)
@@ -270,22 +426,25 @@ fn selection_rect(app: &Mb3d, ui: &mut Ui) -> Option<[i32; 4]> {
 /// A processing of this window starts (MB3D's `DisableButtons` and
 /// `Label6`): "Calculate 3D" turns into "Stop", the LED blinks and the stage
 /// is shown until it is done.
-fn started(app: &mut Mb3d, ui: &mut Ui, stage: &'static str) {
+pub fn started(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
     super::main_form::disable_buttons(app, ui);
     app.main.calc3d = false;
     app.main.led_running = true;
     super::main_form::show_led(ui, app.main.led, true);
     ui.set_caption(MAIN, "Label6", stage);
-    app.post.running = Some((stage, std::time::Instant::now()));
+    // the bar: the running stage's progress (issue #2)
+    ui.set_visible(MAIN, "ProgressBar1", true);
+    app.post.running = Some((stage.to_string(), std::time::Instant::now()));
+    app.post.pace = Pace::default();
 }
 
 /// The processing finished (not stopped): a line in the status.
 pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
     if let Some((stage, t)) = app.post.running.take() {
         let tenths = (t.elapsed().as_secs_f64() * 10.0).round().max(1.0) as i64;
-        let mut s = stage.to_string();
-        s[..1].make_ascii_uppercase();
-        app.message(ui, &format!("{s} done ({}).", super::util::time_str(tenths)));
+        let mut c = stage.chars();
+        let s: String = c.next().map(|f| f.to_uppercase().chain(c).collect()).unwrap_or_default();
+        app.message(ui, &trf("@MB:Done2", &[&s, &super::util::time_str(tenths)]));
     }
 }
 
@@ -299,11 +458,24 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     }
     match h {
         "NoiseFilterNowBtnClick" => super::main_form::denoise_picture(app, ui, noise_sigma(ui)),
-        "NoiseAutoCbxClick" => update_captions(ui),
+        "NoiseAutoCbxClick" | "CloudsCbxClick" | "MaterialCbxClick" | "FinishCbxClick" => update_captions(ui),
+        "FinishNowBtnClick" => {
+            app.make_scene(ui);
+            repaint(app, ui, "finishing");
+        }
+        "MaterialNowBtnClick" => {
+            app.make_scene(ui);
+            repaint(app, ui, "material");
+        }
+        "CloudColBtnClick" => ui.pick_color("post:cloudcolor", super::util::argb(app.post.cloud_color)),
+        "CloudsNowBtnClick" => {
+            app.make_scene(ui);
+            repaint(app, ui, "clouds");
+        }
         "FormShow" => {
             super::main_form::place_sticky(app, ui, Some(F), true);
-            ui.cm(F, "Edit11").hint = "Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.".into();
-            ui.cm(F, "Edit12").hint = "Divides the actual \"Raystep multiplier\" by this value,\nincrease the value to reduce overstepping.".into();
+            ui.cm(F, "Edit11").hint = tr("@MB:DepthOfReflections1ToSee");
+            ui.cm(F, "Edit12").hint = tr("@MB:DividesTheActualRaystepMultiplierBy");
             align_panels(ui);
             update_captions(ui);
         }
@@ -318,15 +490,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "UpDown1ChangingEx" => radio_group3_click(ui),
         "Button14Click" => {
             app.post.normals_now = true;
-            repaint(app, ui, "Normals on ZBuf");
+            repaint(app, ui, &tr("@MB:NormalsOnZBuf"));
         }
         "Button3Click" => {
             if shadow_params(ui).lights == 0 {
-                ui.show_message("Please select the lights first.  No HS for lightmaps.");
+                ui.show_message(&tr("@MB:PleaseSelectTheLightsFirstNo"));
                 return;
             }
             app.post.hs_now = true;
-            repaint(app, ui, "hard shadow calculation");
+            repaint(app, ui, &tr("@MB:HardShadowCalculation"));
         }
         "Button4Click" => {
             // reset the hard shadow of a light
@@ -335,50 +507,50 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if shadow_params(ui).lights == 0 {
                 app.post.hs_now = false;
             }
-            repaint(app, ui, "hard shadow calculation");
+            repaint(app, ui, &tr("@MB:HardShadowCalculation"));
         }
         "Button10Click" => {
             app.post.ao_now = true;
-            repaint(app, ui, "ambient shadow calculation");
+            repaint(app, ui, &tr("@MB:AmbientShadowCalculation"));
         }
         "Button11Click" => {
             if ui.checked(F, "CheckBox25") {
                 // "Calculate only a selection in the image": the reflections
                 // of the selection only (MB3D's CalcSRT with the selection)
                 if app.main.calculating {
-                    app.message(ui, "Wait for the running calculation, or stop it first.");
+                    app.message(ui, &tr("@MB:WaitForTheRunningCalculationOr"));
                     return;
                 }
                 if app.eng.base().is_none() {
-                    app.message(ui, "Calculate the image first.");
+                    app.message(ui, &tr("@MB:CalculateTheImageFirst"));
                     return;
                 }
                 let Some(rect) = selection_rect(app, ui) else { return };
                 app.make_scene(ui);
-                started(app, ui, "reflections of the selection");
+                started(app, ui, &tr("@MB:ReflectionsOfTheSelection"));
                 app.eng.start(super::engine::Job::ReflectSel { scene: app.scene.clone(), rect });
                 return;
             }
             app.post.refl_now = true;
-            repaint(app, ui, "Reflections");
+            repaint(app, ui, &tr("@MB:Reflections"));
         }
         "Button1Click" => {
             if app.scene.tiling.is_some() {
-                ui.show_message("No DoF on tiles.");
+                ui.show_message(&tr("@MB:NoDoFOnTiles"));
                 return;
             }
             app.post.dof_now = true;
-            repaint(app, ui, "DoF calculation");
+            repaint(app, ui, &tr("@MB:DoFCalculation"));
         }
         "Button2Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
-            if ui.caption(F, &e.sender) == "Click on image" {
-                ui.set_caption(F, &e.sender, if tg == 1 { "Get Z1" } else { "Get Z2" });
+            if ui.caption(F, &e.sender) == tr("@MB:ClickOnImage") {
+                ui.set_caption(F, &e.sender, &if tg == 1 { tr("@MB:GetZ1") } else { tr("@MB:GetZ2") });
                 app.main.get_pos = 0;
                 ui.cm(MAIN, "Image1").cursor = "crDefault".into();
             } else {
                 app.main.get_pos = tg;
-                ui.set_caption(F, &e.sender, "Click on image");
+                ui.set_caption(F, &e.sender, &tr("@MB:ClickOnImage"));
                 ui.cm(MAIN, "Image1").cursor = "crCross".into();
             }
         }
@@ -388,8 +560,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button16Click" => {
             // "Reset now": the processings applied by hand are dropped
-            app.post = State::default();
-            repaint(app, ui, "post processing");
+            app.post.new_calc();
+            repaint(app, ui, &tr("@MB:PostProcessingLower"));
         }
         "CheckBox21Click" | "CheckBox25Click" => {
             update_captions(ui);
@@ -415,8 +587,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let hs = ui.checked(F, "CheckBox9");
             let deao = ui.checked(F, "CheckBox11") && ui.c(F, "TabControl1").tab_index == 3;
             let keep_as = ui.checked(F, "CheckBox30");
-            started(app, ui, "selection recalculation");
-            ui.set_visible(MAIN, "ProgressBar1", true);
+            started(app, ui, &tr("@MB:SelectionRecalculation"));
             app.eng.start(super::engine::Job::Recalc { scene: app.scene.clone(), rect, div, nearer, hs, deao, keep_as });
         }
         "Button12Click" => {
@@ -424,7 +595,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if app.main.calculating {
                 return;
             }
-            let Some(b) = app.eng.base() else { return ui.show_message("No image calculated yet.") };
+            let Some(b) = app.eng.base() else { return ui.show_message(&tr("@MB:NoImageCalculatedYet")) };
             let g = crate::gbuffer::double_size(&b.post, b.w, b.h);
             let mut sc = b.scene.clone();
             sc.width *= 2;
@@ -452,5 +623,46 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FormMouseWheel" => {}
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Pace;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn pace_time_left() {
+        let t0 = Instant::now();
+        let at = |s: f64| t0 + Duration::from_secs_f64(s);
+        let mut p = Pace::default();
+        // 5 % a second: nothing in the first seconds, then the rest at that pace
+        assert_eq!(p.left("hard shadows", 0.0, None, at(0.0)), None);
+        assert_eq!(p.left("hard shadows", 0.05, None, at(1.0)), None);
+        let l = p.left("hard shadows", 0.10, None, at(2.0)).unwrap();
+        assert!((l - 18.0).abs() < 0.5, "{l}");
+        // a new stage starts over
+        assert_eq!(p.left("reflections", 0.0, None, at(3.0)), None);
+    }
+
+    #[test]
+    fn pace_prior_without_progress() {
+        let t0 = Instant::now();
+        let at = |s: f64| t0 + Duration::from_secs_f64(s);
+        let mut p = Pace::default();
+        // the card's reflections: no rows counted, the last time 10 s
+        assert_eq!(p.left("reflections", 0.0, Some(10.0), at(0.0)), Some(10.0));
+        let l = p.left("reflections", 0.0, Some(10.0), at(4.0)).unwrap();
+        assert!((l - 6.0).abs() < 0.5, "{l}");
+        // past it: the last shown stays (counting down to zero)
+        assert!(p.left("reflections", 0.0, Some(10.0), at(12.0)).is_some());
+    }
+
+    #[test]
+    fn a_new_calculation_keeps_the_cloud_colour() {
+        let mut st = super::State { refl_now: true, hs_now: true, cloud_color: [255, 230, 204], ..Default::default() };
+        st.new_calc();
+        assert_eq!(st.cloud_color, [255, 230, 204]);
+        assert!(!st.refl_now && !st.hs_now);
     }
 }

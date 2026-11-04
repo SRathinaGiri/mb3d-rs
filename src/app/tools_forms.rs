@@ -1,6 +1,8 @@
 //! Batch processing (BatchForm.pas) and big renders in tiles (Tiling.pas).
 
-use super::util::{fts, pti, ptf};
+use crate::vcl::lang::{tr, trf};
+use super::eta::ItemsLeft;
+use super::util::{fts, left_str, pti, ptf, smooth_shown, Shown};
 use super::{Mb3d, MAIN};
 use crate::scene::Scene;
 use crate::vcl::bitmap::Bitmap;
@@ -8,6 +10,7 @@ use crate::vcl::{DialogResult, Ev, Event, MouseButton, Ui};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 // ---------------------------------------------------------------------------
 // BatchForm1
@@ -20,6 +23,9 @@ pub struct BatchState {
     /// status > 0: rendering, < 0: stopping
     pub status: i32,
     pub index: usize,
+    /// the picture under way (1-based) and how many the run has
+    pub nr: usize,
+    pub total: usize,
 }
 
 fn batch_rows(ui: &Ui) -> Vec<Vec<String>> {
@@ -47,7 +53,7 @@ fn batch_add(ui: &mut Ui, p: &Path) {
     if crate::m3p::load(p).is_err() {
         return;
     }
-    rows.push(vec![s, "Selected".into()]);
+    rows.push(vec![s, tr("@MB:Selected")]);
     batch_set_rows(ui, rows);
 }
 
@@ -69,7 +75,7 @@ pub fn batch_next(app: &mut Mb3d, ui: &mut Ui) {
     }
     if i < rows.len() {
         checks[i] = false;
-        rows[i][1] = "M3I done".into();
+        rows[i][1] = tr("@MB:M3IDone");
     }
     loop {
         i = if i == usize::MAX { 0 } else { i + 1 };
@@ -87,12 +93,30 @@ pub fn batch_next(app: &mut Mb3d, ui: &mut Ui) {
     batch_set_rows(ui, rows.clone());
     ui.cm(BF, "ListView1").checks = checks;
     if i < rows.len() {
+        app.batch.nr += 1;
         super::main_form::calc_mand(app, ui, true);
     } else {
         app.batch.status = 0;
         app.batch.index = usize::MAX;
+        #[cfg(feature = "gpu")]
+        crate::gpu::set_batch(false);
         ui.set_enabled(BF, "Button1", true);
-        ui.set_caption(BF, "Button1", "Start batch rendering");
+        ui.set_caption(BF, "Button1", &tr("@MB:StartBatchRendering"));
+        ui.fm(BF).set_caption(&tr("@MB:BatchProcessing"));
+    }
+}
+
+/// The window's title while the batch renders: "Batch processing: picture
+/// 3 of 8 · about 7 min left", the picture's time left as the main window
+/// shows it (the pictures differ too much for a total).
+pub fn batch_idle(app: &mut Mb3d, ui: &mut Ui) {
+    if app.batch.status <= 0 {
+        return;
+    }
+    let left = app.main.left_shown.filter(|_| app.main.calculating).map(|l| format!(" · {}", super::util::left_str(l))).unwrap_or_default();
+    let text = trf("@MB:BatchProcessingPictureOf", &[&app.batch.nr, &app.batch.total]) + &left;
+    if ui.fm(BF).caption() != text {
+        ui.fm(BF).set_caption(&text);
     }
 }
 
@@ -128,7 +152,7 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button2Click" => ui.hide(BF),
         "Button3Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                filter: format!("{}|*.m3p", tr("@MB:M3DParameterM3p")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 multi: true,
                 ..Default::default()
@@ -140,16 +164,35 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             open_folder(&d);
         }
         "Button1Click" => {
-            if ui.caption(BF, "Button1") == "Stop batch rendering" {
+            if app.batch.status != 0 {
                 app.batch.status = 0;
                 app.batch.index = usize::MAX;
+                #[cfg(feature = "gpu")]
+                crate::gpu::set_batch(false);
                 app.eng.stop();
                 super::main_form::enable_buttons(app, ui);
-                ui.set_caption(BF, "Button1", "Start batch rendering");
+                ui.set_caption(BF, "Button1", &tr("@MB:StartBatchRendering"));
+                ui.fm(BF).set_caption(&tr("@MB:BatchProcessing"));
             } else {
-                ui.set_caption(BF, "Button1", "Stop batch rendering");
+                ui.set_caption(BF, "Button1", &tr("@MB:StopBatchRendering"));
                 app.batch.status = 1;
                 app.batch.index = usize::MAX;
+                app.batch.nr = 0;
+                app.batch.total = ui.c(BF, "ListView1").checks.iter().filter(|c| **c).count();
+                // the formula combinations whose shaders the card compiles first
+                let checks = ui.c(BF, "ListView1").checks.clone();
+                let items: Vec<crate::batch::BatchItem> = batch_rows(ui)
+                    .iter()
+                    .zip(checks.iter().chain(std::iter::repeat(&false)))
+                    .filter(|(_, c)| **c)
+                    .map(|(r, _)| crate::batch::BatchItem { input: r[0].clone().into(), overrides: Vec::new() })
+                    .collect();
+                #[cfg(feature = "gpu")]
+                crate::gpu::set_batch(true);
+                let new = crate::batch::new_to_card(&items, &Default::default());
+                if new > 0 {
+                    app.message(ui, &format!("{} {new}", tr("@MB:FormulaCombinationsInThisBatchThat")));
+                }
                 batch_next(app, ui);
             }
         }
@@ -167,7 +210,7 @@ pub fn batch_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     if c.cells[i].len() < 2 {
                         c.cells[i].resize(2, String::new());
                     }
-                    c.cells[i][1] = if c.checks[i] { "Selected" } else { "Not selected" }.into();
+                    c.cells[i][1] = if c.checks[i] { tr("@MB:Selected") } else { tr("@MB:NotSelected") };
                 }
             }
         }
@@ -189,6 +232,10 @@ fn delete_selected(app: &Mb3d, ui: &mut Ui) {
     let mut rows = batch_rows(ui);
     if i >= 0 && (i as usize) < rows.len() {
         rows.remove(i as usize);
+        let checks = &mut ui.cm(BF, "ListView1").checks;
+        if (i as usize) < checks.len() {
+            checks.remove(i as usize);
+        }
         batch_set_rows(ui, rows);
     }
 }
@@ -287,7 +334,7 @@ impl BigData {
             return None;
         }
         let i = |o: usize| i32::from_le_bytes(d[o..o + 4].try_into().unwrap());
-        let version = i(64);
+        let version = i(68);
         Some(BigData {
             scale: f64::from_le_bytes(d[0..8].try_into().unwrap()),
             width: i(8),
@@ -303,10 +350,10 @@ impl BigData {
             save_m3i: i(48) != 0,
             jpeg_q: i(56),
             sharp: i(60),
-            rows_from: if version < 2 { 1 } else { i(68) },
-            rows_to: if version < 2 { 999 } else { i(72) },
-            render_rows: version >= 2 && i(76) != 0,
-            single_number: version >= 3 && i(80) != 0,
+            rows_from: if version < 2 { 1 } else { i(72) },
+            rows_to: if version < 2 { 999 } else { i(76) },
+            render_rows: version >= 2 && i(80) != 0,
+            single_number: version >= 3 && i(84) != 0,
         })
     }
 }
@@ -329,6 +376,11 @@ pub struct TilingState {
     pub status: Arc<Mutex<String>>,
     pub saved: Arc<AtomicUsize>,
     pub shown_saved: usize,
+    /// the time left: when the running tile began, the tiles' times, and
+    /// the time left as shown
+    pub tile_start: Instant,
+    pub items: ItemsLeft,
+    pub left_shown: Option<Shown>,
 }
 
 impl Default for TilingState {
@@ -349,6 +401,9 @@ impl Default for TilingState {
             status: Arc::new(Mutex::new(String::new())),
             saved: Arc::new(AtomicUsize::new(0)),
             shown_saved: 0,
+            tile_start: Instant::now(),
+            items: ItemsLeft::default(),
+            left_shown: None,
         }
     }
 }
@@ -380,7 +435,7 @@ fn set_names(app: &mut Mb3d, ui: &mut Ui, file: &Path) {
     let st = &mut app.tiling;
     st.project = file.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "(new)".into());
     st.dir = file.parent().map(Path::to_path_buf).unwrap_or_default().join(&st.project);
-    ui.set_caption(TF, "Label13", &format!("Project:  {}", st.project));
+    ui.set_caption(TF, "Label13", &trf("@MB:Project", &[&st.project]));
     scan_project(app, ui);
 }
 
@@ -540,11 +595,11 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
     if o.ao.is_some() && o.deao.is_none() {
         // only DEAO works on tiles
         o.deao = Some(crate::deao::DeaoParams { quality: 3, dither: 0, max_len: 1.0, first_step_random: false });
-        notes.push("Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.");
+        notes.push(tr("@MB:OnlyDEAOAmbientShadowsAvailableIn"));
     }
     if o.dof.is_some() {
         o.dof = None;
-        notes.push("DoF calculation turned off, not possible in tiling mode.");
+        notes.push(tr("@MB:DoFCalculationTurnedOffNotPossible"));
     }
     make_data(app, ui);
     set_sizes(app, ui);
@@ -552,14 +607,14 @@ fn import(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_enabled(TF, c, true);
     }
     for n in notes {
-        ui.show_message(n);
+        ui.show_message(&n);
     }
 }
 
 fn next_tile(st: &TilingState, ui: &Ui, from: (i32, i32)) -> (i32, i32) {
     let d = &st.data;
     let (ya, ye) = if ui.checked(TF, "CheckBox6") {
-        (from.1.max(pti(&ui.text(TF, "Edit2"))), d.rows.min(pti(&ui.text(TF, "Edit3"))))
+        (from.1.max(pti(&ui.text(TF, "Edit2"))).max(1), d.rows.min(pti(&ui.text(TF, "Edit3"))))
     } else {
         (from.1.max(1), d.rows)
     };
@@ -575,8 +630,42 @@ fn next_tile(st: &TilingState, ui: &Ui, from: (i32, i32)) -> (i32, i32) {
     (0, 0)
 }
 
+/// The tiles still to do after the running one (none when only it is).
+fn tiles_after(st: &TilingState, ui: &Ui) -> usize {
+    if st.only_this || !(ui.checked(TF, "CheckBox4") || ui.checked(TF, "CheckBox6")) {
+        return 0;
+    }
+    let d = &st.data;
+    let (ya, ye) = if ui.checked(TF, "CheckBox6") { (pti(&ui.text(TF, "Edit2")).max(1), d.rows.min(pti(&ui.text(TF, "Edit3")))) } else { (1, d.rows) };
+    let (ax, ay) = st.act;
+    (ya..=ye)
+        .flat_map(|y| (1..=d.cols).map(move |x| (x, y)))
+        .filter(|&(x, y)| (y, x) > (ay, ax))
+        .filter(|&(x, y)| !st.done.get(y as usize - 1).and_then(|r| r.get(x as usize - 1)).copied().unwrap_or(false))
+        .count()
+}
+
+/// "tile X=1 Y=2 · about 25 min left in total" (tiles follow), "tile X=2
+/// Y=2 · 2 min left" (the last one): the main window's stage line of a big
+/// render (the first tile has no time left: the tile's progress restarts
+/// with each of its stages, nothing to measure a whole tile by).
+fn tile_caption(x: i32, y: i32, left: Option<f64>, more: bool) -> String {
+    let name = trf("@MB:TileXYLower", &[&x, &y]);
+    match left {
+        Some(l) if more => format!("{name} · {}", trf("@MB:InTotal2", &[&left_str(l)])),
+        Some(l) => format!("{name} · {}", left_str(l)),
+        None => name,
+    }
+}
+
+/// A run of tiles begins: the tiles' times start afresh.
+fn begin_tiles(app: &mut Mb3d) {
+    app.tiling.items = ItemsLeft::default();
+    app.tiling.left_shown = None;
+}
+
 fn save_project(app: &Mb3d, p: &Path) -> Result<(), String> {
-    let Some(o) = &app.tiling.orig else { return Err("no parameters".into()) };
+    let Some(o) = &app.tiling.orig else { return Err(tr("@MB:NoParameters")) };
     let mut d = app.tiling.data.to_bytes();
     d.extend_from_slice(&crate::m3p::write(o));
     std::fs::write(p.with_extension("big"), d).map_err(|e| format!("{}: {e}", p.display()))
@@ -585,7 +674,7 @@ fn save_project(app: &Mb3d, p: &Path) -> Result<(), String> {
 /// `LoadBig`.
 pub fn load_big(app: &mut Mb3d, ui: &mut Ui, p: &Path) {
     let res = std::fs::read(p).map_err(|e| e.to_string()).and_then(|d| {
-        let bd = BigData::from_bytes(&d).ok_or("not a big render project")?;
+        let bd = BigData::from_bytes(&d).ok_or_else(|| tr("@MB:NotABigRenderProject"))?;
         let m = crate::m3p::parse(&d[256..])?;
         Ok((bd, m.scene))
     });
@@ -609,11 +698,11 @@ pub fn load_big(app: &mut Mb3d, ui: &mut Ui, p: &Path) {
 fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     let (x, y) = app.tiling.act;
     if x == 0 {
-        ui.show_message("No tiles to render.");
+        ui.show_message(&tr("@MB:NoTilesToRender"));
         return;
     }
     if app.tiling.project == "(new)" {
-        ui.show_message("Please save the project first.");
+        ui.show_message(&tr("@MB:PleaseSaveTheProjectFirst"));
         return;
     }
     let Some(o) = app.tiling.orig.clone() else { return };
@@ -658,11 +747,12 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
     app.tiling.saved.store(0, Ordering::SeqCst);
     app.tiling.shown_saved = 0;
     *app.tiling.status.lock().unwrap() = String::new();
+    app.tiling.tile_start = Instant::now();
     let cancel = app.tiling.cancel.clone();
     super::main_form::disable_buttons(app, ui);
     let title = match &swarm {
-        Some((_, list, ..)) => format!("{}  {} tiles with the swarm", app.tiling.project, list.len()),
-        None => format!("{}  Tile X={x} Y={y}", app.tiling.project),
+        Some((_, list, ..)) => trf("@MB:TilesWithTheSwarm", &[&app.tiling.project, &list.len()]),
+        None => trf("@MB:TileXY3", &[&app.tiling.project, &x, &y]),
     };
     ui.fm(MAIN).set_caption(&title);
     for c in ["Button2", "SpeedButton1", "SpeedButton2", "SpeedButton11", "SpeedButton9"] {
@@ -696,7 +786,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                     write_tile(&p, &data)?;
                     if d.save_zbuf || d.save_m3i {
                         let data = std::fs::read(m3i).map_err(|e| format!("{}: {e}", m3i.display()))?;
-                        let (zw, zh, g) = crate::m3p::gbuffer_from_m3i(&data).ok_or("the tile has no image buffer")?;
+                        let (zw, zh, g) = crate::m3p::gbuffer_from_m3i(&data).ok_or_else(|| tr("@MB:TheTileHasNoImageBuffer"))?;
                         if d.save_zbuf {
                             let z: Vec<u16> = g.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
                             let _ = std::fs::write(zbase.with_extension("png"), crate::png::encode_gray16(zw, zh, &z));
@@ -706,7 +796,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                             ts.width = zw as i32;
                             ts.height = zh as i32;
                             ts.tiling = None;
-                            let _ = std::fs::write(base.with_extension("m3i"), crate::m3p::write_m3i(&ts, &g));
+                            let _ = crate::m3p::write_m3i_to(&base.with_extension("m3i"), &ts, &g);
                         }
                     }
                     saved.fetch_add(1, Ordering::SeqCst);
@@ -755,7 +845,7 @@ fn render_tile(app: &mut Mb3d, ui: &mut Ui) {
                     ts.width = res.width as i32;
                     ts.height = res.height as i32;
                     ts.tiling = None;
-                    let _ = std::fs::write(base.with_extension("m3i"), crate::m3p::write_m3i(&ts, g));
+                    let _ = crate::m3p::write_m3i_to(&base.with_extension("m3i"), &ts, g);
                 }
             }
             Ok((x, y))
@@ -775,6 +865,8 @@ pub fn stop_tiling(app: &mut Mb3d) {
 }
 
 pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
+    // (the Batch window's title too: the same idle call)
+    batch_idle(app, ui);
     if !app.tiling.running {
         return;
     }
@@ -786,20 +878,35 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     let st = app.tiling.status.lock().unwrap().clone();
     if !st.is_empty() && !app.tiling.cancel.load(Ordering::SeqCst) {
-        let text = format!("{saved} {} saved; {st}", if saved == 1 { "tile" } else { "tiles" });
+        let text = if saved == 1 { trf("@MB:TileSaved", &[&saved, &st]) } else { trf("@MB:TilesSaved", &[&saved, &st]) };
+        if ui.caption(MAIN, "Label6") != text {
+            ui.set_caption(MAIN, "Label6", &text);
+        }
+    }
+    // a render here: the tile under way and the tiles to come at the
+    // finished ones' time (shown smoothed, like a calculation's)
+    if st.is_empty() && !app.tiling.cancel.load(Ordering::SeqCst) {
+        let after = tiles_after(&app.tiling, ui);
+        let now = Instant::now();
+        let t = &mut app.tiling;
+        let secs = now.saturating_duration_since(t.tile_start).as_secs_f64();
+        let left = t.items.left(0.0, secs, None, after);
+        t.left_shown = left.map(|l| smooth_shown(t.left_shown, l, now)).or(t.left_shown);
+        let text = tile_caption(t.act.0, t.act.1, t.left_shown.map(|s| s.0), after > 0);
         if ui.caption(MAIN, "Label6") != text {
             ui.set_caption(MAIN, "Label6", &text);
         }
     }
     let Some(r) = app.tiling.job.lock().unwrap().take() else { return };
     app.tiling.running = false;
+    app.tiling.items.done(app.tiling.tile_start.elapsed().as_secs_f64());
     super::main_form::enable_buttons(app, ui);
     for c in ["Button2", "SpeedButton1", "SpeedButton2", "SpeedButton11", "SpeedButton9"] {
         ui.set_enabled(TF, c, true);
     }
     match r {
         Ok((x, y)) => {
-            app.message(ui, &format!("Tile X={x} Y={y} saved."));
+            app.message(ui, &trf("@MB:TileXYSaved", &[&x, &y]));
             scan_project(app, ui);
             ui.fm(MAIN).set_caption(&app.title.clone());
             let auto = ui.checked(TF, "CheckBox4") || ui.checked(TF, "CheckBox6");
@@ -814,17 +921,17 @@ pub fn tiling_idle(app: &mut Mb3d, ui: &mut Ui) {
         Err(_) if app.tiling.cancel.load(Ordering::SeqCst) => {
             scan_project(app, ui);
             ui.fm(MAIN).set_caption(&app.title.clone());
-            app.message(ui, "Big render stopped.");
+            app.message(ui, &tr("@MB:BigRenderStopped"));
         }
-        Err(e) => app.message(ui, &format!("Big render: {e}")),
+        Err(e) => app.message(ui, &trf("@MB:BigRender2", &[&e])),
     }
 }
 
 pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "FormShow" => {
-            ui.cm(TF, "Edit5").hint = "1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing".into();
-            ui.cm(TF, "Edit4").hint = "Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening".into();
+            ui.cm(TF, "Edit5").hint = tr("@MB:N1FullSizeNoAntiAliasing");
+            ui.cm(TF, "Edit4").hint = tr("@MB:SharpenFactorOfTheSavedOutput");
         }
         "Button1Click" => ui.hide(TF),
         "SpeedButton2Click" => {
@@ -839,7 +946,7 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                filter: format!("{}|*.m3p", tr("@MB:M3DParameterM3p")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 ..Default::default()
             };
@@ -847,7 +954,7 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton11Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Big render project (*.big)|*.big".into(),
+                filter: format!("{}|*.big", tr("@MB:M3DBigRenderProjectBig")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_BIG)),
                 ..Default::default()
             };
@@ -855,7 +962,7 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Big render project (*.big)|*.big".into(),
+                filter: format!("{}|*.big", tr("@MB:M3DBigRenderProjectBig")),
                 default_ext: "big".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_BIG)),
                 file_name: if app.tiling.project == "(new)" { String::new() } else { app.tiling.project.clone() },
@@ -892,6 +999,7 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             scan_project(app, ui);
             app.tiling.act = next_tile(&app.tiling, ui, (0, 0));
             app.tiling.only_this = false;
+            begin_tiles(app);
             render_tile(app, ui);
         }
         "Image1MouseDown" => {
@@ -900,14 +1008,15 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 let d = &app.tiling.data;
                 let t = ((x * d.cols) / r.w.max(1) + 1, (y * d.rows) / r.h.max(1) + 1);
                 app.tiling.selected = t;
-                ui.set_caption(TF, "ileXY1", &format!("Tile: X={} Y={}", t.0, t.1));
+                ui.set_caption(TF, "ileXY1", &trf("@MB:TileXY2", &[&t.0, &t.1]));
                 let done = app.tiling.done.get(t.1 as usize - 1).and_then(|row| row.get(t.0 as usize - 1)).copied().unwrap_or(false);
-                ui.set_caption(TF, "Renderthistile1", if done { "Render this tile again" } else { "Render this tile" });
+                ui.set_caption(TF, "Renderthistile1", &if done { tr("@MB:RenderThisTileAgain") } else { tr("@MB:RenderThisTile") });
                 ui.set_enabled(TF, "Deletethistilesfiles1", done);
                 ui.popup_menu(TF, "PopupMenu1", "Image1", x, y);
             }
         }
         "Renderthistile1Click" => {
+            begin_tiles(app);
             app.tiling.act = app.tiling.selected;
             app.tiling.only_this = !ui.checked(TF, "CheckBox4");
             render_tile(app, ui);
@@ -960,5 +1069,25 @@ pub fn tiling_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) 
             }
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn big_data_round_trip() {
+        let d = BigData { rows_from: 3, rows_to: 7, render_rows: true, single_number: true, sharp: 2, ..BigData::default() };
+        let b = BigData::from_bytes(&d.to_bytes()).unwrap();
+        assert_eq!((b.rows_from, b.rows_to, b.render_rows, b.single_number), (3, 7, true, true));
+        assert_eq!((b.jpeg_q, b.sharp, b.cols, b.rows), (95, 2, 4, 4));
+    }
+
+    #[test]
+    fn time_left_captions() {
+        assert_eq!(tile_caption(1, 2, None, true), "tile X=1 Y=2");
+        assert_eq!(tile_caption(1, 2, Some(1500.0), true), "tile X=1 Y=2 · about 25 min left in total");
+        assert_eq!(tile_caption(3, 3, Some(120.0), false), "tile X=3 Y=3 · 2 min left");
     }
 }

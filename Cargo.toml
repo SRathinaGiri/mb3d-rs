@@ -8,20 +8,43 @@ license = "LGPL-2.1-only"
 [features]
 # the desktop application (Mandelbulb3D window and forms); without it only
 # the command line renderer is built, which has no dependencies
-default = ["gui", "gpu"]
-gui = ["dep:winit", "dep:softbuffer", "dep:fontdue", "dep:arboard", "dep:open"]
+default = ["gui", "gpu", "jit", "oidn"]
+gui = ["dep:winit", "dep:softbuffer", "dep:fontdue", "dep:rustybuzz", "dep:unicode-bidi", "dep:arboard", "dep:open"]
 # ray marching on the graphics card (wgpu: Vulkan, Metal, DirectX 12),
 # see src/gpu.rs
 gpu = ["dep:wgpu", "dep:pollster"]
+# the formulas of a hybrid compiled together at run time (Cranelift), see
+# src/x86/lift_clif.rs; MB3D_NO_JIT=1 switches it off at run time (on macOS
+# being tested: tools/jit_check.sh)
+jit = ["dep:cranelift-codegen", "dep:cranelift-frontend", "dep:cranelift-jit", "dep:cranelift-module", "dep:cranelift-native"]
+# the Monte Carlo renders' neural noise filter: Intel Open Image Denoise,
+# loaded at run time when it is there (src/oidn.rs)
+oidn = ["dep:libloading"]
 
 [dependencies]
 winit = { version = "0.30", optional = true }
 softbuffer = { version = "0.4", optional = true }
 fontdue = { version = "0.9", optional = true }
+rustybuzz = { version = "0.20", optional = true }
+unicode-bidi = { version = "0.3", optional = true }
 arboard = { version = "3", optional = true, default-features = false, features = ["wayland-data-control"] }
 wgpu = { version = "30.0.1", optional = true }
 pollster = { version = "1.0.1", optional = true }
 open = { version = "5", optional = true }
+libloading = { version = "0.8", optional = true }
+
+cranelift-codegen = { version = "0.130", optional = true }
+cranelift-frontend = { version = "0.130", optional = true }
+cranelift-jit = { version = "0.130", optional = true }
+cranelift-module = { version = "0.130", optional = true }
+cranelift-native = { version = "0.130", optional = true }
+
+# the free memory of Windows and macOS (render::memory_available; Linux reads /proc/meminfo)
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+sysinfo = { version = "0.38", default-features = false, features = ["system"] }
+
+[build-dependencies]
+winres = "0.1"
 
 # Windows: Microsoft's current shader compiler (DXC) built in; the old FXC
 # that wgpu falls back to without it cannot compile the ray marcher
@@ -36,6 +59,7 @@ required-features = ["gui"]
 [[example]]
 name = "wintest"
 required-features = ["gui"]
+
 
 [profile.release]
 opt-level = 3

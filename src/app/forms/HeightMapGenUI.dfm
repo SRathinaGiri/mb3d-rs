@@ -2,7 +2,7 @@ object HeightMapGenFrm: THeightMapGenFrm
   Left = 0
   Top = 0
   BorderStyle = bsSizeToolWin
-  Caption = 'HeightMap Generator'
+  Caption = '@MB:HeightMapGenerator'
   ClientHeight = 570
   ClientWidth = 794
   Color = clBtnFace
@@ -38,7 +38,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Width = 156
       Height = 13
       Align = alBottom
-      Caption = 'LMB: move           RMB: rotate'
+      Caption = '@MB:LMBMoveRMBRotate'
       ExplicitWidth = 143
     end
     object Label16: TLabel
@@ -47,7 +47,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Width = 156
       Height = 13
       Align = alBottom
-      Caption = 'DblClick: hide right panel'
+      Caption = '@MB:DblClickHideRightPanel'
       ExplicitWidth = 117
     end
     object Label19: TLabel
@@ -56,7 +56,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Width = 60
       Height = 13
       AutoSize = False
-      Caption = 'Map Type:'
+      Caption = '@MB:MapType'
     end
     object Label1: TLabel
       Left = 11
@@ -64,7 +64,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Width = 60
       Height = 13
       AutoSize = False
-      Caption = 'Map Number:'
+      Caption = '@MB:MapNumber2'
     end
     object Label2: TLabel
       Left = 1
@@ -72,7 +72,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Width = 156
       Height = 13
       Align = alBottom
-      Caption = 'MMB/Wheel: zoom'
+      Caption = '@MB:MMBWheelZoom'
       ExplicitWidth = 88
     end
     object LoadMeshBtn: TButton
@@ -80,7 +80,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Top = 13
       Width = 134
       Height = 25
-      Caption = 'Load mesh'
+      Caption = '@MB:LoadMesh'
       TabOrder = 0
       OnClick = LoadMeshBtnClick
     end
@@ -89,8 +89,8 @@ object HeightMapGenFrm: THeightMapGenFrm
       Top = 261
       Width = 134
       Height = 25
-      Hint = 'Save as heightmap inside the MB3D-maps-folder'
-      Caption = 'Save As HeightMap'
+      Hint = '@MB:SaveAsHeightmapInsideTheMB3D'
+      Caption = '@MB:SaveAsHeightMap'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -113,7 +113,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Top = 234
       Width = 37
       Height = 21
-      Hint = 'Map number'
+      Hint = '@MB:MapNumber'
       MaxLength = 5
       NumbersOnly = True
       ParentShowHint = False
@@ -130,16 +130,16 @@ object HeightMapGenFrm: THeightMapGenFrm
       DropDownCount = 32
       TabOrder = 4
       Items.Strings = (
-        'Cancel and show result'
-        'Cancel immediately')
+        '@MB:CancelAndShowResult'
+        '@MB:CancelImmediately')
     end
     object SaveImgBtn: TButton
       Left = 11
       Top = 341
       Width = 134
       Height = 25
-      Hint = 'Save as image at the location you specify'
-      Caption = 'Save As Image'
+      Hint = '@MB:SaveAsImageAtTheLocation'
+      Caption = '@MB:SaveAsImage'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 5
@@ -150,7 +150,7 @@ object HeightMapGenFrm: THeightMapGenFrm
       Top = 477
       Width = 134
       Height = 25
-      Caption = 'Reset position'
+      Caption = '@MB:ResetPosition'
       TabOrder = 6
       OnClick = ResetBtnClick
     end

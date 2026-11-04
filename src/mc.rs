@@ -415,6 +415,8 @@ struct McCtx<'a> {
     p: &'a CalcParams,
     lv: &'a LightVals,
     cam: &'a PaintCamera,
+    /// the clouds and their light (seen along the view rays)
+    clouds: Option<(crate::clouds::Clouds, crate::clouds::CloudLight)>,
     mid: Vec3,
     /// `HSvecs`: direction towards global lights (-StepWidth * light) or the
     /// absolute position of positional lights, per entry of `lv.lights`
@@ -570,7 +572,8 @@ impl<'a, 'c> McMarch<'a, 'c> {
     /// the smoothed iteration count and the normal
     fn normals(&mut self, raydir: &Vec3, seed: &mut i32) -> (f32, Vec3) {
         let p = self.c.p;
-        let on_de = p.normals_on_de;
+        // (the ground's normal always from its distance)
+        let on_de = p.normals_on_de || self.m.on_ground;
         let m = &mut self.m;
         let mut sca: f32 = if *seed & 128 == 0 { 0.15 } else { -0.15 };
         m.it.calc_sit = true;
@@ -711,6 +714,19 @@ impl<'a, 'c> McMarch<'a, 'c> {
         let zzplus = r.zzplus;
         self.update_de_stop(zz);
         let mut dtmp = self.m.calc_de();
+        if r.probe && self.m.on_ground && dtmp < self.m.ms_de_stop as f64 {
+            // the start plane in the ground: its surface there, cut (as in
+            // Marcher::march_pixel), with the ground's normal
+            self.m.mzz = zz;
+            let (_, normals) = self.normals(&dir, &mut seed);
+            o.kind = 2;
+            o.pos = self.m.it.c;
+            o.si_grad = 32768;
+            o.otrap = crate::gbuffer::GROUND;
+            o.normals = normals;
+            o.seed = seed;
+            return o;
+        }
         if r.probe && (self.m.it.it_result >= self.m.max_its_result || dtmp < self.m.ms_de_stop as f64) {
             // the start is inside the set (cutting plane or start plane)
             if p.in_and_outside {
@@ -875,9 +891,10 @@ impl<'a, 'c> McMarch<'a, 'c> {
             zz += (ds - zz) * zzplus;
         }
         self.m.mzz = zz.abs();
+        let ground = self.m.on_ground;
         let (nn, normals) = self.normals(&dir, &mut seed);
         o.pos = self.m.it.c;
-        (o.si_grad, o.otrap) = self.surface_colour(nn, de_limited);
+        (o.si_grad, o.otrap) = if ground { (0, crate::gbuffer::GROUND) } else { self.surface_colour(nn, de_limited) };
         o.kind = 1;
         o.zz = zz;
         o.de_limited = de_limited;
@@ -963,11 +980,12 @@ impl<'a, 'c> McMarch<'a, 'c> {
             zz2 += (d - zz2) * zz2mul;
         }
         self.m.mzz = zz2.abs();
+        let ground = self.m.on_ground;
         let (nn, normals) = self.normals(&v, &mut seed);
         o.pos = self.m.it.c;
         // the iteration count after the normals, as in MB3D's CalcHSMC
         let de_limited = self.m.it.it_result < self.m.max_its_result;
-        (o.si_grad, o.otrap) = self.surface_colour(nn, de_limited);
+        (o.si_grad, o.otrap) = if ground { (0, crate::gbuffer::GROUND) } else { self.surface_colour(nn, de_limited) };
         o.kind = 1;
         o.zz2 = zz2;
         o.normals = normals;
@@ -1086,6 +1104,10 @@ struct Tracer<'a, 'c> {
     act_ray_nr: usize,
     normals: Vec3,
     hs6: Vec<S4>,
+    /// the horizontal angle of the ray (the eye of a stereo panorama)
+    ods_angle: f64,
+    /// the view ray's start and direction (the clouds along it)
+    ray0: (Vec3, Vec3),
     hs_vecs: Vec<Vec3>,
     /// `tmpObjCol`: [specular (+ alpha), diffuse] of the last surface
     tmp_obj_col: [S4; 2],
@@ -1152,6 +1174,8 @@ impl<'a, 'c> Tracer<'a, 'c> {
             act_ray_nr: 0,
             normals: [0.0, 0.0, -1.0],
             hs6: vec![[0.0; 4]; n],
+            ods_angle: 0.0,
+            ray0: ([0.0; 3], [0.0; 3]),
             hs_vecs: c.hs_vecs.clone(),
             tmp_obj_col: [[0.0; 4]; 2],
             total_light: [0.0; 3],
@@ -1245,12 +1269,15 @@ impl<'a, 'c> Tracer<'a, 'c> {
     fn calc_color(&self, si: &SiLight, z_pos: f32) -> [S4; 2] {
         let lv = self.c.lv;
         let idif0 = lv.s_col_zmul * z_pos;
-        let (mut dif, spe, a) = if si.si_gradient > 32767 {
+        let (mut dif, spe, a) = if si.si_gradient > 32767 && !si.is_ground() {
             let (d, s) = lv.calc_colors_inside(si, idif0);
             (d, s, s[0])
         } else {
             lv.calc_colors_alpha(si, idif0)
         };
+        if let Some(d) = lv.detail.as_ref().filter(|_| !si.is_ground()) {
+            dif = sc3(dif, d.tint(self.pos));
+        }
         if let Some(d) = &lv.diff_map {
             let st = dif;
             let lns = self.c.cam.to_view(s3(&self.normals));
@@ -1418,6 +1445,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
                             y = arcsin_safe(t[1]) * fovy1d + 0.5;
                             x = t[0].atan2(t[2]) * (0.5 / PI) + 0.5;
                         }
+                        CameraOptic::Fisheye => {
+                            // the angle from the axis along the direction on the screen
+                            let sn = (t[0] * t[0] + t[1] * t[1]).sqrt().max(1e-30);
+                            let a = t[2].clamp(-1.0, 1.0).acos() / sn;
+                            y = t[1] * a * fovy1d + 0.5;
+                            x = t[0] * a * dtmp2 + 0.5;
+                        }
                         CameraOptic::Common => {
                             let d = (0.5 + (0.25 + (t[0] * t[1]).powi(2)).sqrt()).sqrt();
                             y = arcsin_safe(t[1] * d) * fovy1d + 0.5;
@@ -1457,6 +1491,8 @@ impl<'a, 'c> Tracer<'a, 'c> {
             let mut t = *vec;
             if !lv.amb_rel_obj {
                 t = rotate_vector(&t, &p.vgrads);
+            } else {
+                t = lv.amb_abs64(t);
             }
             let t = normalize(t);
             if use_amb {
@@ -1644,10 +1680,15 @@ impl<'a, 'c> Tracer<'a, 'c> {
             }
         }
         self.calc_hs_mc().await;
+        // the clouds' shadow on the sun's light
+        let cloud = self.c.clouds.as_ref().and_then(|(cl, light)| light.sun_index.map(|si| (si, cl.sunlight(self.pos, light))));
         for (i, l) in lv.lights.iter().enumerate() {
             let hs = self.hs6[i];
             if hs[0] != 0.0 || hs[1] != 0.0 || hs[2] != 0.0 {
                 let mut l0 = l.col;
+                if let Some((_, t)) = cloud.filter(|c| c.0 == i) {
+                    l0 = sc3(l0, t);
+                }
                 let t = if l.positional {
                     let t = sub(self.pos, saved[i]);
                     l0 = sc3(l0, (1.0 / (sqr_len(&t) + 1e-26)) as f32);
@@ -1783,6 +1824,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let start = self.start_override.unwrap_or(self.pos);
         let vpos = s3(&sub(start, c.mid));
         let zzplus = dot(&dir, &self.vfov) / (sw * sw);
+        let seg_start = self.pos;
         let h = self.march(McReq { kind: 0, pos: self.pos, dir, zz, zz2, zzplus, len: max_l, seed: self.seed, inside: self.inside, probe, ..Default::default() }).await;
         self.seed = h.seed;
         self.inside = h.inside;
@@ -1800,6 +1842,11 @@ impl<'a, 'c> Tracer<'a, 'c> {
             h.start_difs
         };
         let mut calc_t = self.calc_trans_r;
+        if !rit1 {
+            // a reflected, refracted or diffusely bounced ray through the
+            // clouds: their light joins, and what lies behind them gets dimmer
+            t_absorb = self.cloud_segment(seg_start, dir, h.kind == 0, t_absorb);
+        }
         zz = h.zz;
         zz2 = h.zz2;
         self.dyn_fog = h.dyn_fog;
@@ -1811,6 +1858,13 @@ impl<'a, 'c> Tracer<'a, 'c> {
             self.hit = true;
             self.mzz = zz.abs();
             self.normals = h.normals;
+            if let Some(d) = lv.detail.as_ref().filter(|_| h.otrap != crate::gbuffer::GROUND) {
+                // the surface detail's relief (as the painting's)
+                let l = len(&self.normals);
+                if l > 1e-30 {
+                    self.normals = scale(d.bump(scale(self.normals, 1.0 / l), self.pos), l);
+                }
+            }
             cr.si_gradient = h.si_grad;
             cr.otrap = h.otrap;
             cc = self.pos;
@@ -1818,7 +1872,19 @@ impl<'a, 'c> Tracer<'a, 'c> {
             if rit1 {
                 self.main_si = cr;
             }
-            obj = self.calc_color(&cr, (self.mzz * sw + p.zz_stmit_dif) as f32);
+            let mut o = self.calc_color(&cr, (self.mzz * sw + p.zz_stmit_dif) as f32);
+            if let Some(m) = lv.material.filter(|_| !cr.is_ground()) {
+                // the surface material (LightVals::shade's): by the angle of view
+                let cosv = (-dot(&self.normals, &normalize(dir))).clamp(0.0, 1.0) as f32;
+                let (sp, df) = (m.specular(first3(o[0]), cosv), m.diffuse(first3(o[1]), cosv));
+                o[0] = [sp[0], sp[1], sp[2], o[0][3]];
+                o[1] = [df[0], df[1], df[2], o[1][3]];
+                if m.glow > 0.0 {
+                    // the surface's own light
+                    self.total_light = add3(self.total_light, mul3(sc3(df, m.glow), t_absorb));
+                }
+            }
+            obj = o;
             self.zpos_dyn_fog = (zz2 * sw + p.zz_stmit_dif) as f32;
             let sv = self.calc_vis_lights(vpos, &dir, &cr, &mut bg_dec, &mut d1);
             self.total_light = add3(self.total_light, mul3(sv, t_absorb));
@@ -2012,6 +2078,51 @@ impl<'a, 'c> Tracer<'a, 'c> {
         None
     }
 
+    /// A reflected, refracted or bounced ray from `o` along `dir` up to `self.pos`
+    /// (its hit), or into the distance when it hit nothing (`open_air`),
+    /// through the clouds: adds their light seen along it (weighted by
+    /// `t_absorb`) to the total and returns `t_absorb` dimmed by them.
+    fn cloud_segment(&mut self, o: Vec3, dir: Vec3, open_air: bool, t_absorb: S3) -> S3 {
+        let Some((cl, light)) = &self.c.clouds else { return t_absorb };
+        let n = len(&dir);
+        if n < 1e-300 {
+            return t_absorb;
+        }
+        let d = scale(dir, 1.0 / n);
+        let tmax = if open_air { cl.far() } else { len(&sub(self.pos, o)) };
+        let j = self.rand();
+        match cl.ray(o, d, tmax, light, j) {
+            Some((tr, acc)) => {
+                self.total_light = add3(self.total_light, mul3(acc, t_absorb));
+                sc3(t_absorb, tr)
+            }
+            None => t_absorb,
+        }
+    }
+
+    /// The light `l` of a view ray seen through the clouds in front of its
+    /// first surface (`clouds::apply` of the painting, here per ray and in
+    /// linear light; the reflected, refracted and bounced rays see them
+    /// through `cloud_segment`).
+    fn with_clouds(&mut self, l: S3) -> S3 {
+        let Some((cl, light)) = &self.c.clouds else { return l };
+        let p = self.c.p;
+        let (o, v) = self.ray0;
+        let n = sqr_len(&v).sqrt().max(1e-300);
+        let d = scale(v, 1.0 / n);
+        let si = self.main_si;
+        let tmax = if si.is_background() {
+            cl.far()
+        } else {
+            (((8388352 - (si.zpos_fine >> 8) as i64) as f64 / p.zc_mul + 1.0).powi(2) - 1.0) * p.step_width / p.zcorr
+        };
+        let j = self.rand();
+        match cl.ray(o, d, tmax, light, j) {
+            Some((tr, acc)) => [l[0] * tr + acc[0], l[1] * tr + acc[1], l[2] * tr + acc[2]],
+            None => l,
+        }
+    }
+
     /// `GetSubPixelShift`: -0.5..0.5 (box) or gaussian
     fn sub_pixel_shift(&mut self) -> (f32, f32) {
         if !self.c.gauss_aa {
@@ -2043,8 +2154,10 @@ impl<'a, 'c> Tracer<'a, 'c> {
             CameraOptic::Planar => normalize([-cafx, cafy, p.pl_optic_z as f64]),
             CameraOptic::Panorama => build_view_vector_dsphere_fov(cafy, cafx),
             CameraOptic::Common => build_view_vector_dfov(cafy, cafx),
+            CameraOptic::Fisheye => build_view_vector_fisheye(cafy, cafx),
         };
         self.vfov = rotate_vector_reverse(&v, &p.vgrads);
+        self.ods_angle = cafx;
     }
 
     /// `DoDOF`: start the ray on the lens disc, aimed at the focus point
@@ -2087,9 +2200,18 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let p = c.p;
         let sw = p.step_width;
         self.guard = 0;
+        let salt = self.c.seed_salt;
         self.act_ray_nr = (rec_rays as usize + itcount as usize).min(65535);
-        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32) ^ self.c.seed_salt;
-        let (sx, sy) = halton_2d_shifts(x1, y);
+        self.seed = seed_of(x1, y, rec_rays as u32 + itcount as u32) ^ salt;
+        let (mut sx, mut sy) = halton_2d_shifts(x1, y);
+        if salt != 0 {
+            // a salted image (a swarm block) takes its own part of the
+            // sequence and its own shifts, so its rays are not the others'
+            self.act_ray_nr = (self.act_ray_nr + (salt as u32 & 0xFFFF) as usize) & 0xFFFF;
+            let (tx, ty) = halton_2d_shifts(salt, salt.rotate_left(16));
+            sx = frac_s(sx + tx);
+            sy = frac_s(sy + ty);
+        }
         self.shift_x = sx;
         self.shift_y = sy;
         let h = halton_seq()[self.act_ray_nr];
@@ -2099,7 +2221,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         set_zpos_word(&mut self.main_si, 32768);
         self.main_si.shadow = 0;
         self.main_si.si_gradient = 0;
-        let (xx, yy) = if rec_rays == 0 {
+        let (xx, yy) = if rec_rays == 0 && salt == 0 {
             (x1 as f32 - (itcount & 1) as f32 * 0.5 - 0.75, y as f32 + (itcount & 2) as f32 * 0.25 - 0.25)
         } else {
             let (gx, gy) = self.sub_pixel_shift();
@@ -2108,6 +2230,12 @@ impl<'a, 'c> Tracer<'a, 'c> {
         self.calc_vgrads_fov(xx, yy);
         if p.optic == CameraOptic::Panorama {
             self.pos = p.ystart;
+            if p.ods != 0.0 {
+                // the eye to the right of the ray (Marcher::calc_start_pos)
+                let a = self.ods_angle;
+                let e = rotate_vector_reverse(&[a.cos(), 0.0, a.sin()], &p.vgrads);
+                add_weight(&mut self.pos, &e, p.ods);
+            }
         } else {
             for k in 0..3 {
                 self.pos[k] = p.ystart[k] + p.vgrads[1][k] * yy as f64 + p.vgrads[0][k] * xx as f64;
@@ -2119,6 +2247,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
             self.disc_x = frac_s(h.hdx as f32 * D1D65535 + sx);
             self.disc_y = frac_s(h.hdy as f32 * D1D65535 + sy);
         }
+        self.ray0 = (self.pos, self.vfov);
         self.total_light = [0.0; 3];
         self.calc_amb_shadow = false;
         self.rit1 = true;
@@ -2153,7 +2282,11 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let mut si = self.main_si;
         si.si_gradient = h.si_grad;
         si.otrap = h.otrap;
-        self.normals_on_cut(cut_plane);
+        if si.is_ground() {
+            self.normals = h.normals;
+        } else {
+            self.normals_on_cut(cut_plane);
+        }
         self.mzz = zz;
         let lsd = self.calc_color(&si, zz as f32);
         si.zpos_fine = zpos_of(p, zz);
@@ -2348,7 +2481,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
                     let mut t = self.fork();
                     Some(Box::pin(async move {
                         let l = t.ray(x1, y, rc, i).await;
-                        (l, t.hit)
+                        (t.with_clouds(l), t.hit)
                     }) as Pin<Box<dyn Future<Output = (S3, bool)> + 'c>>)
                 })
                 .collect::<Vec<_>>();
@@ -2412,7 +2545,8 @@ fn mc_scene(sc: &Scene) -> Scene {
 /// One pass of the Monte Carlo calculation over the whole image
 /// (`TMCForm.StartCalc` + `CalcMCT`).  The first pass shoots 4 rays per
 /// pixel, the following ones add rays where the noise is high.
-/// `progress(done_rows, rows)`; `cancel` is checked per row.
+/// `progress(done, total)` counts the rows done, weighed by their pixels on
+/// the object (equal in the first pass); `cancel` is checked per row.
 pub fn pass(
     sc: &Scene,
     img: &mut McImage,
@@ -2480,12 +2614,18 @@ impl McCheckpoint {
         if w == 0 || h == 0 {
             return None;
         }
-        let spec = crate::checkpoint::Spec { kind: "mc".into(), key: Self::key_of(sc, salt, start), name: name.into(), width: w, height: 2 * h, rec: MC_REC_BYTES, units: 2 * h };
+        let spec = crate::checkpoint::Spec { kind: "mc".into(), key: Self::key_of(sc, salt, start), name: name.into(), width: w, height: 2 * h, rec: MC_REC_BYTES, units: 2 * h, image: None };
         let store = crate::checkpoint::Store::open(spec, policy)?;
         store.put_extra("scene.m3s", sc.to_text().as_bytes());
         store.set_value("seed_salt", &salt.to_string());
         store.set_value("size", &format!("{w} x {h}"));
         Some(McCheckpoint { store, width: w, height: h, partial: std::sync::Mutex::new(None) })
+    }
+
+    /// The `start` of [`McCheckpoint::open`] of a render that continues
+    /// the .m3c file `data`.
+    pub fn m3c_start(data: &[u8]) -> String {
+        format!("m3c {:016x}", crate::checkpoint::fnv64(data))
     }
 
     /// The key of the checkpoint of [`McCheckpoint::open`].
@@ -2683,7 +2823,7 @@ fn pass_inner(
     let threads = if threads == 0 { crate::render::thread_count(&sc) } else { threads }.min(sc.height as usize).max(1);
     let l = sc.lighting.clone();
     let cam = crate::render::paint_camera(&sc, &p);
-    let lv = crate::render::light_vals(&sc, &l, &cam);
+    let mut lv = crate::render::light_vals(&sc, &l, &cam);
     if let Some(vp) = sc.vol_light.as_ref() {
         if let Some((ln, positional)) = lv.light_ln(vp.light) {
             // the map of the last pass while the scene is the same
@@ -2716,6 +2856,7 @@ fn pass_inner(
     let mid = sc.stereo_mid();
     // CalcHSVecsFromLights
     let m1 = normalise_matrix_to(1.0, &p.vgrads);
+    hdr_sun(&mut lv, &m1, sc.mc.soft_shadow_radius as f64);
     let hs_vecs: Vec<Vec3> = lv
         .lights
         .iter()
@@ -2742,6 +2883,7 @@ fn pass_inner(
         p: &p,
         lv: &lv,
         cam: &cam,
+        clouds: sc.clouds.filter(|_| p.slice_2d == 0).map(|c| (c, c.light(&l, &lv, &cam))),
         mid,
         hs_vecs,
         max_amb_depth: mc.depth as i32,
@@ -2794,13 +2936,16 @@ fn pass_inner(
     let h = img.height;
     let pass_nr = img.passes;
     let skipped = |y: usize| skip.is_some_and(|s| s.get(y).copied().unwrap_or(false));
-    let done = std::sync::atomic::AtomicUsize::new((0..h).filter(|&y| skipped(y)).count());
+    // the rows weighed for `progress` by the pixels on the object (a row
+    // of sky is done at once); the first pass does not know them yet
+    let wt = &pass_weights(snap, w, h, fresh);
+    let done = std::sync::atomic::AtomicUsize::new((0..h).filter(|&y| skipped(y)).map(|y| wt.weight(y)).sum());
     let ctx = &ctx;
     let done = &done;
     #[cfg(feature = "gpu")]
     if crate::gpu::enabled() && crate::gpu::unsupported(&p).is_none() {
         let pa = PassArgs { snap, skip_nonzero, avrg_vari, avrg_rcount, max_new, pass_nr: pass_nr as u32 };
-        match pass_gpu(ctx, img, threads, &pa, progress, cancel, rows, &skipped, done.load(std::sync::atomic::Ordering::Relaxed)) {
+        match pass_gpu(ctx, img, threads, &pa, progress, wt, cancel, rows, &skipped, done.load(std::sync::atomic::Ordering::Relaxed)) {
             Ok(status) => {
                 *MC_STATUS.lock().unwrap() = status;
                 img.seconds += t0.elapsed().as_secs_f64();
@@ -2812,7 +2957,7 @@ fn pass_inner(
             }
             Err(e) if e == "cancelled" => return Err(e),
             // nothing of the pass is kept: it runs on the CPU again
-            Err(e) => eprintln!("Monte Carlo on the GPU failed, calculated on the CPU: {e}"),
+            Err(e) => crate::elog!("Monte Carlo on the GPU failed, calculated on the CPU: {e}"),
         }
     }
     *MC_STATUS.lock().unwrap() = "CPU".into();
@@ -2838,8 +2983,8 @@ fn pass_inner(
                     if let Some(f) = rows {
                         f(y, row);
                     }
-                    let d = done.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
-                    progress(d, h);
+                    let d = done.fetch_add(wt.weight(y), std::sync::atomic::Ordering::Relaxed) + wt.weight(y);
+                    progress(d, wt.total());
                 }
             });
         }
@@ -2850,6 +2995,17 @@ fn pass_inner(
     }
     img.passes += 1;
     Ok(())
+}
+
+/// The weights of the rows of a pass for its `progress`: the pixels of
+/// `recs` (`w` x `h`) that hit the object plus one.  Equal in the first
+/// pass (`fresh`: no ray has told yet).
+fn pass_weights(recs: &[McRecord], w: usize, h: usize, fresh: bool) -> crate::render::RowWeights {
+    if fresh {
+        return crate::render::RowWeights::equal(h);
+    }
+    let w = w.max(1);
+    crate::render::RowWeights::new((0..h).map(|y| recs.get(y * w..(y + 1) * w).map_or(0, |r| r.iter().filter(|r| r.hit).count()) + 1).collect())
 }
 
 /// Where the last pass was calculated ("CPU" or the GPU's status).
@@ -2950,12 +3106,18 @@ struct ToMain {
 enum MainEv {
     Round(ToMain),
     Card(Result<(Vec<McRes>, usize, Vec<usize>), String>, f64),
+    /// a thread panicked: the pass ends (the panic comes back at the
+    /// threads' join)
+    Died,
 }
 
 /// The answer to a group's round: the results, or "march them yourself";
 /// or a batch to help with when idle.
 #[cfg(feature = "gpu")]
 enum ToWorker {
+    /// the pass was cancelled: the thread ends (it does not look at
+    /// `cancel` while it waits for an answer)
+    Quit,
     Results(usize, Vec<McRes>),
     Cpu(usize),
     Help(std::sync::Arc<SharedRound>),
@@ -2974,6 +3136,7 @@ fn pass_gpu(
     threads: usize,
     pa: &PassArgs,
     progress: &(dyn Fn(usize, usize) + Sync),
+    wt: &crate::render::RowWeights,
     cancel: &(dyn Fn() -> bool + Sync),
     rows: Option<&(dyn Fn(usize, &[McRecord]) + Sync)>,
     skipped: &(dyn Fn(usize) -> bool + Sync),
@@ -2982,7 +3145,6 @@ fn pass_gpu(
     use std::sync::atomic::Ordering;
     use std::sync::mpsc;
     let w = img.width;
-    let h = img.height;
     let p = ctx.p;
     let done_rows = std::sync::atomic::AtomicUsize::new(done_before);
     let (to_main, from_workers) = mpsc::channel::<MainEv>();
@@ -2996,6 +3158,18 @@ fn pass_gpu(
     let failed: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
     let mut status = String::new();
     let share_cpu = std::env::var("MB3D_MC_CPU_SHARE").map_or(true, |v| v != "0");
+    // a thread that panics tells the pass, which would otherwise wait for
+    // its rounds and pieces forever
+    let died = std::sync::atomic::AtomicBool::new(false);
+    struct Dying<'a>(&'a std::sync::atomic::AtomicBool, mpsc::Sender<MainEv>);
+    impl Drop for Dying<'_> {
+        fn drop(&mut self) {
+            if std::thread::panicking() {
+                self.0.store(true, Ordering::SeqCst);
+                let _ = self.1.send(MainEv::Died);
+            }
+        }
+    }
     std::thread::scope(|s| {
         let mut per: Vec<Vec<(usize, &mut [McRecord])>> = (0..threads).map(|_| Vec::new()).collect();
         for (y, row) in img.recs.chunks_mut(w).enumerate().filter(|(y, _)| !skipped(*y)) {
@@ -3004,7 +3178,9 @@ fn pass_gpu(
         for ((wi, list), inbox) in per.into_iter().enumerate().zip(inboxes) {
             let to_main = to_main.clone();
             let done_rows = &done_rows;
+            let dying = Dying(&died, to_main.clone());
             s.spawn(move || {
+                let _dying = dying;
                 let march = RefCell::new(McMarch::new(ctx));
                 let active_max = (MC_ACTIVE / threads / 2).max(64);
                 // the pixels in row order, every other one for each group:
@@ -3062,14 +3238,29 @@ fn pass_gpu(
                                             continue;
                                         }
                                         drop(m);
-                                        match inbox.recv() {
+                                        match inbox.recv_timeout(std::time::Duration::from_secs(5)) {
                                             Ok(m) => m,
+                                            Err(mpsc::RecvTimeoutError::Timeout) => {
+                                                if std::env::var_os("MB3D_MC_DEBUG").is_some() {
+                                                    crate::elog!(
+                                                        "  worker {wi} waits for group {g}: done {:?}, waiting {:?}, active {:?}, next {:?} of {total}, stash {}, cancel {}",
+                                                        [groups[0].done, groups[1].done],
+                                                        [groups[0].waiting.is_some(), groups[1].waiting.is_some()],
+                                                        [groups[0].active.len(), groups[1].active.len()],
+                                                        next,
+                                                        stash.iter().map(|m| match m { ToWorker::Results(k, r) => format!("results {k} ({})", r.len()), ToWorker::Cpu(k) => format!("cpu {k}"), ToWorker::Help(_) => "help".into(), ToWorker::Quit => "quit".into() }).collect::<Vec<_>>().join(", "),
+                                                        cancel()
+                                                    );
+                                                }
+                                                continue;
+                                            }
                                             Err(_) => return,
                                         }
                                     }
                                 }
                             };
                             match m {
+                                ToWorker::Quit => return,
                                 ToWorker::Help(round) => helping.push(round),
                                 ToWorker::Results(k, res) if k == g => break res,
                                 ToWorker::Cpu(k) if k == g => {
@@ -3084,45 +3275,59 @@ fn pass_gpu(
                         }
                     }
                     let gr = &mut groups[g];
-                    while gr.active.len() < active_max && next[g] < total {
-                        let (y, x) = (ys[next[g] / w], next[g] % w);
-                        next[g] += 2;
-                        let rec = row_of.entry(y).or_insert_with(|| (slices[&y].to_vec(), w)).0[x];
-                        let outbox = gr.outbox.clone();
-                        let fut = Box::pin(async move {
-                            let mut t = Tracer::new(ctx, 0);
-                            t.link = Some((Rc::new(Link::default()), &*outbox));
-                            t.row_y = y as i32;
-                            t.pass_nr = pa.pass_nr;
-                            let mut r = rec;
-                            t.pixel(x as i32 + 1, y as i32, &mut r, pa.snap, pa.skip_nonzero, pa.avrg_vari, pa.avrg_rcount, pa.max_new).await;
-                            r
-                        }) as Px;
-                        gr.active.push((y, x, fut));
-                    }
-                    // the futures run until they wait for a march
-                    let mut k = 0;
-                    while k < gr.active.len() {
-                        if let Poll::Ready(r) = gr.active[k].2.as_mut().poll(&mut cx) {
-                            let (y, x, _) = gr.active.swap_remove(k);
-                            let e = row_of.get_mut(&y).unwrap();
-                            e.0[x] = r;
-                            e.1 -= 1;
-                            if e.1 == 0 {
-                                let (recs, _) = row_of.remove(&y).unwrap();
-                                let row = slices.remove(&y).unwrap();
-                                row.copy_from_slice(&recs);
-                                if let Some(f) = rows {
-                                    f(y, row);
-                                }
-                                let d = done_rows.fetch_add(1, Ordering::Relaxed) + 1;
-                                progress(d, h);
-                            }
-                        } else {
-                            k += 1;
+                    // Every turn of a group that is not done sends a round:
+                    // the pass waits for one from every thread, and a thread
+                    // whose turn had nothing to march (its pixels all
+                    // finished, e.g. sky) and that then waited for its other
+                    // group deadlocked with a thread in the same state the
+                    // other way round.  So new pixels start in the same turn
+                    // when the running ones finished without a march.
+                    let links = loop {
+                        while gr.active.len() < active_max && next[g] < total {
+                            let (y, x) = (ys[next[g] / w], next[g] % w);
+                            next[g] += 2;
+                            let rec = row_of.entry(y).or_insert_with(|| (slices[&y].to_vec(), w)).0[x];
+                            let outbox = gr.outbox.clone();
+                            let fut = Box::pin(async move {
+                                let mut t = Tracer::new(ctx, 0);
+                                t.link = Some((Rc::new(Link::default()), &*outbox));
+                                t.row_y = y as i32;
+                                t.pass_nr = pa.pass_nr;
+                                let mut r = rec;
+                                t.pixel(x as i32 + 1, y as i32, &mut r, pa.snap, pa.skip_nonzero, pa.avrg_vari, pa.avrg_rcount, pa.max_new).await;
+                                r
+                            }) as Px;
+                            gr.active.push((y, x, fut));
                         }
-                    }
-                    let links: Vec<Rc<Link>> = std::mem::take(&mut *gr.outbox.borrow_mut());
+                        // the futures run until they wait for a march
+                        let mut k = 0;
+                        while k < gr.active.len() {
+                            if let Poll::Ready(r) = gr.active[k].2.as_mut().poll(&mut cx) {
+                                let (y, x, _) = gr.active.swap_remove(k);
+                                let e = row_of.get_mut(&y).unwrap();
+                                e.0[x] = r;
+                                e.1 -= 1;
+                                if e.1 == 0 {
+                                    let (recs, _) = row_of.remove(&y).unwrap();
+                                    let row = slices.remove(&y).unwrap();
+                                    row.copy_from_slice(&recs);
+                                    if let Some(f) = rows {
+                                        f(y, row);
+                                    }
+                                    let d = done_rows.fetch_add(wt.weight(y), Ordering::Relaxed) + wt.weight(y);
+                                    progress(d, wt.total());
+                                }
+                            } else {
+                                k += 1;
+                            }
+                        }
+                        let links: Vec<Rc<Link>> = std::mem::take(&mut *gr.outbox.borrow_mut());
+                        // (a pending future waits for a march, so no links
+                        // means no active futures)
+                        if !links.is_empty() || !gr.active.is_empty() || next[g] >= total {
+                            break links;
+                        }
+                    };
                     if links.is_empty() {
                         if gr.active.is_empty() && next[g] >= total {
                             gr.done = true;
@@ -3130,7 +3335,6 @@ fn pass_gpu(
                                 return;
                             }
                         }
-                        // (only new pixels: they start in the next turn)
                     } else {
                         let reqs: Vec<McReq> = links.iter().map(|l| l.req.take().unwrap()).collect();
                         if to_main.send(MainEv::Round(ToMain { worker: wi, group: g, reqs: Some(reqs.clone()) })).is_err() {
@@ -3148,10 +3352,12 @@ fn pass_gpu(
         let (to_card, card_in) = mpsc::channel::<std::sync::Arc<SharedRound>>();
         {
             let to_main = to_main.clone();
+            // (the card of this thread's picture)
+            let card = crate::gpu::card_here();
             s.spawn(move || {
                 while let Ok(sr) = card_in.recv() {
                     let t = std::time::Instant::now();
-                    let r = crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share));
+                    let r = crate::gpu::as_card(card, || crate::gpu::mc_batch(p, &sr.reqs, ctx.secant_search, Some(&sr.share)));
                     if to_main.send(MainEv::Card(r, t.elapsed().as_secs_f64())).is_err() {
                         return;
                     }
@@ -3191,10 +3397,12 @@ fn pass_gpu(
         let mut batches = 0usize;
         let (mut n_card, mut n_cpu) = (0usize, 0usize);
         let timing = std::env::var_os("MB3D_MC_TIMING").is_some();
+        // MB3D_MC_DEBUG: the state of the pass when it waits
+        let debug = std::env::var_os("MB3D_MC_DEBUG").is_some();
         let (mut t_card, mut t_wait) = (0f64, 0f64);
         // the CPU's part of a batch, from the rates of the last one
         let mut cpu_part = 0.3f64;
-        loop {
+        'pass: loop {
             // complete rounds become batches (or CPU rounds)
             for g in 0..2 {
                 if live[g] == 0 || pending[g].len() < live[g] || batches_q.iter().any(|b| b.group == g) {
@@ -3239,6 +3447,7 @@ fn pass_gpu(
             }
             // the next event; meanwhile this thread helps too
             let tw = std::time::Instant::now();
+            let mut stalled = false;
             let ev = loop {
                 match from_workers.try_recv() {
                     Ok(e) => break Some(e),
@@ -3247,13 +3456,45 @@ fn pass_gpu(
                         if share_cpu && batches_q.iter().any(|b| b.sr.help_piece(&mut main_march)) {
                             continue;
                         }
-                        break from_workers.recv().ok();
+                        match from_workers.recv_timeout(std::time::Duration::from_millis(200)) {
+                            Ok(e) => break Some(e),
+                            Err(mpsc::RecvTimeoutError::Timeout) => {
+                                // Stop while nothing happens: the threads
+                                // waiting for an answer are told to end
+                                // (issue: a pass that waited for a round
+                                // that never came hung for good, Stop or not)
+                                if cancel() {
+                                    for r in &replies {
+                                        let _ = r.send(ToWorker::Quit);
+                                    }
+                                    *failed.lock().unwrap() = Some("cancelled".into());
+                                    break 'pass;
+                                }
+                                if debug && tw.elapsed().as_secs() >= 5 && !stalled {
+                                    stalled = true;
+                                    let ids = |g: usize| {
+                                        let mut v: Vec<(usize, usize)> = pending[g].iter().map(|r| (r.0, r.1.len())).collect();
+                                        v.sort_unstable();
+                                        v
+                                    };
+                                    crate::elog!(
+                                        "  pass waits: live {live:?}, pending {:?} / {:?}, batches {:?}, on_card {on_card}, ready {}",
+                                        ids(0),
+                                        ids(1),
+                                        batches_q.iter().map(|b| (b.group, b.round.len())).collect::<Vec<_>>(),
+                                        card_ready()
+                                    );
+                                }
+                                continue;
+                            }
+                            Err(_) => break None,
+                        }
                     }
                 }
             };
             t_wait += tw.elapsed().as_secs_f64();
             let (r, card_s) = match ev {
-                None => break,
+                None | Some(MainEv::Died) => break,
                 Some(MainEv::Round(ToMain { worker, group, reqs: Some(r) })) => {
                     pending[group].push((worker, r));
                     continue;
@@ -3280,7 +3521,7 @@ fn pass_gpu(
                     if e == "cancelled" {
                         *failed.lock().unwrap() = Some(e);
                     } else {
-                        eprintln!("Monte Carlo on the GPU failed, calculated on the CPU: {e}");
+                        crate::elog!("Monte Carlo on the GPU failed, calculated on the CPU: {e}");
                     }
                     on_card = false;
                     (Vec::new(), 0, Vec::new())
@@ -3303,6 +3544,9 @@ fn pass_gpu(
             // the pieces the threads took
             for i in mine.into_iter().chain(meet..total) {
                 while sr.cpu_res[i].get().is_none() {
+                    if died.load(Ordering::SeqCst) {
+                        break 'pass;
+                    }
                     std::thread::yield_now();
                 }
             }
@@ -3319,7 +3563,7 @@ fn pass_gpu(
                 }
             }
             if timing {
-                eprintln!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all, CPU's part now {:.0} %", card_s * 1000.0, b.t0.elapsed().as_secs_f64() * 1000.0, cpu_part * 100.0);
+                crate::elog!("  batch of {total}: {:.1} ms on the card ({took} taken, {n_cpu_b} on the CPU), {:.1} ms in all, CPU's part now {:.0} %", card_s * 1000.0, b.t0.elapsed().as_secs_f64() * 1000.0, cpu_part * 100.0);
             }
             batches += 1;
             n_cpu += n_cpu_b;
@@ -3331,7 +3575,7 @@ fn pass_gpu(
         }
         drop(to_card);
         if timing {
-            eprintln!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
+            crate::elog!("  pass: {t_card:.2} s on the card, {t_wait:.2} s waiting for the threads");
         }
         let pc = (n_card * 100 + (n_card + n_cpu) / 2) / (n_card + n_cpu).max(1);
         status = if n_card == 0 {
@@ -3389,6 +3633,14 @@ fn lab_to_rgb(v: S3) -> S3 {
 /// Pixels without rays are black.
 pub fn paint(img: &McImage, mc: &McSettings, gamma: f32) -> Vec<u8> {
     paint_recs(&img.recs, mc, gamma)
+}
+
+/// [`paint`] with the scene's finishing (`Scene::finish`) of the whole
+/// picture.
+pub fn paint_finished(img: &McImage, sc: &Scene) -> Vec<u8> {
+    let mut rgb = paint(img, &sc.mc, sc.lighting.gamma);
+    crate::finish::apply_rgb8(&mut rgb, img.width, img.height, sc.finish_for_camera().as_ref());
+    rgb
 }
 
 /// [`paint`] of some of the records (e.g. a row), RGB for each.
@@ -3488,12 +3740,15 @@ pub fn read_m3c(data: &[u8]) -> Result<(crate::m3p::M3pFile, McImage), String> {
         return Err("not a Monte Carlo file (.m3c): too short".into());
     }
     let f = crate::m3p::parse(&data[..hl])?;
+    if f.scene.width < 1 || f.scene.height < 1 {
+        return Err("the .m3c file has no image size".into());
+    }
     let (w, h) = (f.scene.width as usize, f.scene.height as usize);
     if data[124] & 128 != 0 {
         return Err("this .m3c file uses the experimental record format of a MB3D development version".into());
     }
     let recs = &data[hl..];
-    if recs.len() < w * h * REC_SIZE {
+    if w.checked_mul(h).and_then(|n| n.checked_mul(REC_SIZE)).is_none_or(|n| recs.len() < n) {
         return Err(format!("the .m3c file is incomplete ({} of {} pixels)", recs.len() / REC_SIZE, w * h));
     }
     let mut img = McImage::new(w, h);
@@ -3510,9 +3765,84 @@ pub fn read_m3c(data: &[u8]) -> Result<(crate::m3p::M3pFile, McImage), String> {
     Ok((f, img))
 }
 
+/// An HDR background picture's sun as a light: taken out of the picture
+/// ([`crate::maps::LightMap::split_sun`]) and added to the lights as a
+/// global light in a free light slot, with soft shadows of the sun's size
+/// (when the soft shadow radius is not 0).  The light gives about the
+/// light that the rays leaving the surface in all directions found in the
+/// sun before (MB3D's diffuse light, with its cos² instead of cos).
+fn hdr_sun(lv: &mut LightVals, m1: &Mat3, soft_radius: f64) {
+    type Split = (usize, Option<(std::sync::Arc<crate::maps::LightMap>, crate::maps::Sun)>);
+    static LAST: std::sync::Mutex<Option<Split>> = std::sync::Mutex::new(None);
+    if lv.bg_direct || lv.s_diff <= 0.0 {
+        return;
+    }
+    let Some(bg) = lv.bg.as_mut() else { return };
+    let Some(idx) = (0..6).find(|i| !lv.lights.iter().any(|l| l.idx == *i)) else {
+        crate::elog!("  note: the HDR background's sun is not a light: all six lights are in use");
+        return;
+    };
+    let key = std::sync::Arc::as_ptr(&bg.map) as usize;
+    let split = {
+        let mut last = LAST.lock().unwrap();
+        match last.as_ref().filter(|(k, _)| *k == key) {
+            Some((_, s)) => s.clone(),
+            None => {
+                let s = bg.map.split_sun().map(|(m, sun)| (std::sync::Arc::new(m), sun));
+                *last = Some((key, s.clone()));
+                s
+            }
+        }
+    };
+    let Some((map, sun)) = split else { return };
+    // the direction in the picture's sphere -> the march's directions
+    // (`sphere_pixel_t` turns a direction v into v * rot)
+    let r = &bg.rot;
+    let d: Vec3 = std::array::from_fn(|i| (0..3).map(|j| r[i][j] as f64 * sun.dir[j] as f64).sum::<f64>());
+    let ln = rotate_vector(&normalize(d), m1);
+    let k = std::f32::consts::PI * lv.s_diff;
+    let col = sun.power.map(|v| v * bg.intensity / k);
+    // the soft shadow's spread is sqrt(lmax_l) * 2.5e-5 * radius (radians)
+    let lmax_l = if soft_radius > 0.0 { (sun.radius.tan() as f64 / (2.5e-5 * soft_radius)).powi(2) as f32 } else { 1.0 };
+    bg.map = map;
+    lv.lights.push(crate::lighting::LightVal {
+        idx,
+        on: true,
+        sub_amb_sh: false,
+        hs_calced: false,
+        hs_mask: 0x400 << idx,
+        ln: ln.map(|v| v as f32),
+        col,
+        pow_func: 2 << 5,
+        diff_func: 0,
+        positional: false,
+        visible: 0,
+        lmax_l,
+        pos_z: 0.0,
+        pos_lp: 0.0,
+    });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pass_weights_count_the_hits() {
+        let mut recs = vec![McRecord::default(); 4 * 3];
+        for r in &mut recs[4..] {
+            r.hit = true;
+        }
+        recs[8].hit = false;
+        // the first pass: nothing known, equal
+        let w = pass_weights(&recs, 4, 3, true);
+        assert_eq!((w.weight(0), w.weight(1), w.total()), (1, 1, 3));
+        // then the hits plus one
+        let w = pass_weights(&recs, 4, 3, false);
+        assert_eq!((w.weight(0), w.weight(1), w.weight(2), w.total()), (1, 5, 4, 10));
+        // the sky row done: a tenth, not a third
+        assert_eq!(w.weight(0) * 1000 / w.total(), 100);
+    }
 
     #[test]
     fn halton_values() {

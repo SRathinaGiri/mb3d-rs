@@ -1,0 +1,50 @@
+[OPTIONS]
+.Version = 5
+.DEscale = 1
+.SIpower = 2
+[CODE]
+5589E58B450883E838DD4018DD4020D9C1D9C1D9C9D8CBD9C9D8CAD9CBDECAD9
+C0DD4028D9CBD8C0D9C9D8C4D9CADEE4D9C2D9CAD9FAD9CAD8CBD9CAD9E8DEF1
+DCC9D9C1D9CDDEC9D9C2D9CDD8CAD9CCD8CAD9CADD5820D9CCD8C3D9C9D8C0D9
+CBDEE2D9FAD9C3DD5018D9C9D9E8DEF1DCCBD9C3D9CBDEC9D9CCD8C9D9CAD8CB
+D9CBDD5028DEC9D9C2D9C9D8C0D9CCDD5020D9C9D8C2D9CADEE3D9C0D9CAD9FA
+D9CAD8C9D9CAD9E8DEF1DCCBDECCD9C2D8CBDEC2D9C3D8CCDEC2D9C9D9FADCCA
+DCC9DECBD9C9DC4050D9C9DC4058D9CADC4060D9C9DD5818D9C9DD5820DD5828
+5DC20800
+[END]
+
+Description:
+
+Formula described by Buddhi at the Forums;
+
+http://www.fractalforums.com/the-3d-mandelbulb/new-mandelbulb-like-formulas/
+
+Use this code, for a triple rotation mandelbrot;
+
+// Optimized by Luca GN, 25/11/2016; removed many unnecessary multiplications
+double tempR = 0.; double temp = 0.;
+
+//rotation around Z axis
+tempR = 1.0 /sqrt(z.x * z.x + z.y * z.y);
+temp = z.x * z.x - z.y * z.y;
+z.y = 2.0 * z.x * z.y;
+z.x = temp;
+z.xy *= tempR; // only x and y must be changed
+// and we don't do a double multip (unnecessary)
+
+//rotation around X axis
+tempR = 1.0 / sqrt(z.y * z.y + z.z * z.z);
+temp = z.y * z.y - z.z * z.z;
+z.z = 2.0 * z.y * z.z;
+z.y = temp;
+z.zy *= tempR;
+
+//rotation around Y axis
+tempR = 1.0 / sqrt(z.x * z.x + z.z * z.z);
+temp = z.x * z.x - z.z * z.z;
+z.z = 2.0 * z.x * z.z;
+z.x = temp;
+z.xz *= tempR;
+
+z = z * length(z);
+z += C; // the C constant vector, or the J-Seed.

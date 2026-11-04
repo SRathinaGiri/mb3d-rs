@@ -28,6 +28,14 @@ pub struct Preview {
 }
 
 /// Size of a keyframe preview (`RenderPrevBMP`): 100 pixels wide or 80 high.
+/// The bit of the binary animation's options that marks mb3d-rs's
+/// Catmull-Rom interpolation (MB3D does not use it and reads Bezier).
+const CATMULL_ROM_BIT: i32 = 1 << 20;
+/// mb3d-rs's motion blur in the options word (MB3D ignores these bits):
+/// the samples in bits 21-25, the shutter in 16ths in bits 26-29
+const BLUR_SHIFT: i32 = 21;
+const SHUTTER_SHIFT: i32 = 26;
+
 pub fn preview_size(width: i32, height: i32) -> (usize, usize) {
     let (w, h) = (width.max(1) as f64, height.max(1) as f64);
     let d = if w >= h * 1.25 { 100.0 / w } else { 80.0 / h };
@@ -135,6 +143,10 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
     if version == 5 {
         let opt = r.i32()?;
         ipol = opt & 3;
+        // mb3d-rs's Catmull-Rom: Bezier for MB3D, this flag for mb3d-rs
+        if opt & CATMULL_ROM_BIT != 0 {
+            ipol = 2;
+        }
         a.looped = opt & 4 != 0;
         a.format = match (opt >> 3) & 7 {
             0 => OutputFormat::Bmp,
@@ -145,6 +157,10 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
         a.stereo_bits = (opt as u32) & 0xC0;
         a.overwrite = opt & 256 == 0;
         a.save_depth = opt & 512 != 0;
+        a.motion_blur = ((opt >> BLUR_SHIFT) & 31) as u32;
+        if a.motion_blur > 1 {
+            a.shutter = ((opt >> SHUTTER_SHIFT) & 15) as f32 / 15.0;
+        }
     } else {
         // older files: no loop, BMP images, no stereo, overwrite, no z-buffer
         if version > 1 {
@@ -157,7 +173,11 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
         a.overwrite = true;
         a.save_depth = false;
     }
-    a.interpolation = if ipol == 0 { Interpolation::Linear } else { Interpolation::Bezier };
+    a.interpolation = match ipol {
+        0 => Interpolation::Linear,
+        2 => Interpolation::CatmullRom,
+        _ => Interpolation::Bezier,
+    };
     let hc = r.i32()?;
     if !(1..=4095).contains(&hc) {
         return Err(format!("animation file: bad keyframe count {hc}"));
@@ -235,12 +255,18 @@ pub fn write_m3a(a: &Animation, previews: &[Option<Preview>]) -> Vec<u8> {
     s[0] = folder.len() as u8;
     s[1..1 + folder.len()].copy_from_slice(&folder);
     d.extend_from_slice(&s);
-    let opt = (a.interpolation as i32)
-        | (a.looped as i32) << 2
+    // (MB3D knows linear and Bezier: Catmull-Rom is Bezier there, with a
+    // flag of its own for mb3d-rs)
+    let opt = match a.interpolation {
+        Interpolation::CatmullRom => 1 | CATMULL_ROM_BIT,
+        i => i as i32,
+    } | (a.looped as i32) << 2
         | (a.format as i32) << 3
         | (a.stereo_bits & 0xC0) as i32
         | (!a.overwrite as i32) << 8
-        | (a.save_depth as i32) << 9;
+        | (a.save_depth as i32) << 9
+        | (a.motion_blur.min(31) as i32) << BLUR_SHIFT
+        | ((a.shutter.clamp(0.0, 1.0) * 15.0).round() as i32) << SHUTTER_SHIFT;
     i32w(&mut d, opt);
     i32w(&mut d, a.keyframes.len() as i32);
     for k in &a.keyframes {
@@ -297,6 +323,8 @@ pub fn write_m3a(a: &Animation, previews: &[Option<Preview>]) -> Vec<u8> {
 /// index_step = 1
 /// overwrite = true
 /// save_depth = false
+/// transparent = false    # PNG frames with a transparent background
+/// stereo = off           # pair (<name>Right/<name>Left images), very_left
 ///
 /// [keyframe]
 /// frames = 50            # sub-frames to the next keyframe
@@ -369,7 +397,8 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                         warnings.push(format!("{f}: {w}"));
                     }
                     kf.scene = Some(s);
-                    kf.source = Some(f);
+                    // as found from here (write_m3k makes it relative again)
+                    kf.source = Some(p.to_string_lossy().into_owned());
                 }
                 "params" => {
                     let mut t = v.to_string();
@@ -378,12 +407,15 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                         t.push('\n');
                         t.push_str(l.trim());
                     }
-                    // an optional {Titel: ...} line belongs to the parameters
-                    if let Some((_, l)) = lines.peek() {
-                        if l.trim_start().starts_with("{Titel") {
-                            t.push('\n');
-                            t.push_str(lines.next().unwrap().1.trim());
+                    // the optional {Titel: ...} and {mb3d-rs: ...} lines belong to
+                    // the parameters
+                    while let Some((_, l)) = lines.peek() {
+                        let l = l.trim_start();
+                        if !(l.starts_with("{Titel") || l.starts_with("{mb3d-rs:")) {
+                            break;
                         }
+                        t.push('\n');
+                        t.push_str(lines.next().unwrap().1.trim());
                     }
                     let (raw, _) = crate::m3p::raw_from_text(&t).map_err(|e| err(e))?;
                     let m = crate::m3p::parse(&raw).map_err(|e| err(e))?;
@@ -410,10 +442,13 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                 a.interpolation = match plain(v).to_ascii_lowercase().as_str() {
                     "linear" => Interpolation::Linear,
                     "bezier" | "quadratic bezier" | "spline" => Interpolation::Bezier,
-                    o => return Err(err(format!("interpolation: '{o}' (linear or bezier)"))),
+                    "catmull-rom" | "catmull rom" | "catmullrom" => Interpolation::CatmullRom,
+                    o => return Err(err(format!("interpolation: '{o}' (linear, bezier or catmull-rom)"))),
                 }
             }
             "loop" => a.looped = boolean(v)?,
+            "motion_blur" => a.motion_blur = num(v)?.clamp(0, 31) as u32,
+            "shutter" => a.shutter = plain(v).parse::<f32>().map_err(|_| err(format!("shutter: '{v}' (0 to 1)")))?.clamp(0.0, 1.0),
             "output" | "output_folder" => {
                 let o = plain(v);
                 a.output_folder = if o.is_empty() || Path::new(&o).is_absolute() {
@@ -428,6 +463,15 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
             "index_step" => a.index_step = num(v)?.max(1),
             "overwrite" => a.overwrite = boolean(v)?,
             "save_depth" => a.save_depth = boolean(v)?,
+            "transparent" => a.transparent = boolean(v)?,
+            "stereo" => {
+                a.stereo_bits = match plain(v).to_ascii_lowercase().as_str() {
+                    "pair" | "on" | "yes" => 0x40,
+                    "very_left" | "very-left" => 0xC0,
+                    "off" | "no" => 0,
+                    o => return Err(err(format!("stereo: '{o}' (pair, very_left, off)"))),
+                }
+            }
             _ => return Err(err(format!("unknown animation key '{k}'"))),
         }
     }
@@ -472,7 +516,11 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
     let _ = writeln!(
         t,
         "interpolation = {}\nloop = {}",
-        if a.interpolation == Interpolation::Linear { "linear" } else { "bezier" },
+        match a.interpolation {
+            Interpolation::Linear => "linear",
+            Interpolation::Bezier => "bezier",
+            Interpolation::CatmullRom => "catmull-rom",
+        },
         a.looped
     );
     if !a.output_folder.is_empty() {
@@ -481,13 +529,24 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
     let _ = writeln!(t, "name = {}\nformat = {}", a.name, a.format.extension());
     let _ = writeln!(t, "start_index = {}\nindex_step = {}", a.start_index, a.index_step);
     let _ = writeln!(t, "overwrite = {}\nsave_depth = {}", a.overwrite, a.save_depth);
+    let stereo = if a.stereo_bits & 0x40 == 0 {
+        "off"
+    } else if a.stereo_bits & 0x80 != 0 {
+        "very_left"
+    } else {
+        "pair"
+    };
+    let _ = writeln!(t, "transparent = {}\nstereo = {stereo}", a.transparent);
+    if a.motion_blur > 1 {
+        let _ = writeln!(t, "motion_blur = {}\nshutter = {}", a.motion_blur, a.shutter);
+    }
     for (i, k) in a.keyframes.iter().enumerate() {
         let _ = writeln!(t, "\n[keyframe]  # {}", i + 1);
         let _ = writeln!(t, "frames = {}", k.frames);
         match &k.source {
             Some(src) => {
                 let mut parts = src.split('\u{0}');
-                let _ = writeln!(t, "file = {}", parts.next().unwrap_or(""));
+                let _ = writeln!(t, "file = {}", rel(parts.next().unwrap_or("")));
                 for s in parts {
                     let _ = writeln!(t, "set = {s}");
                 }
@@ -581,6 +640,41 @@ mod tests {
     }
 
     #[test]
+    fn catmull_rom_in_both_formats() {
+        let mut a = sample();
+        a.interpolation = Interpolation::CatmullRom;
+        let data = write_m3a(&a, &[None, None]);
+        // MB3D reads Bezier (bits 0-1 = 1), mb3d-rs its flag
+        let f = read_m3a(&data, "t").unwrap();
+        assert_eq!(f.anim.interpolation, Interpolation::CatmullRom);
+        let text = write_m3k(&a, None);
+        assert!(text.contains("interpolation = catmull-rom"));
+        assert_eq!(parse_m3k(&text, Path::new("."), "x").unwrap().anim.interpolation, Interpolation::CatmullRom);
+        // Bezier stays plain Bezier
+        a.interpolation = Interpolation::Bezier;
+        assert_eq!(read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap().anim.interpolation, Interpolation::Bezier);
+    }
+
+    #[test]
+    fn motion_blur_in_both_formats() {
+        let mut a = sample();
+        a.motion_blur = 8;
+        a.shutter = 0.6;
+        let f = read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap();
+        // the shutter in 15ths
+        assert_eq!(f.anim.motion_blur, 8);
+        assert!((f.anim.shutter - 0.6).abs() < 1.0 / 30.0);
+        let text = write_m3k(&a, None);
+        assert!(text.contains("motion_blur = 8"));
+        let b = parse_m3k(&text, Path::new("."), "x").unwrap().anim;
+        assert_eq!((b.motion_blur, b.shutter), (8, 0.6));
+        // none: nothing written, MB3D's options as before
+        a.motion_blur = 0;
+        assert!(!write_m3k(&a, None).contains("motion_blur"));
+        assert_eq!(read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap().anim.motion_blur, 0);
+    }
+
+    #[test]
     fn m3k_roundtrip_inline() {
         let a = sample();
         let text = write_m3k(&a, None);
@@ -605,6 +699,25 @@ mod tests {
     }
 
     #[test]
+    fn m3k_stereo_and_transparent() {
+        let mut a = sample();
+        for (bits, transparent) in [(0x40, true), (0xC0, false), (0, true)] {
+            a.stereo_bits = bits;
+            a.transparent = transparent;
+            let b = parse_m3k(&write_m3k(&a, None), Path::new("."), "x").unwrap().anim;
+            assert_eq!((b.stereo_bits, b.transparent), (bits, transparent));
+        }
+        // older files without the keys: no stereo, opaque
+        let text: String = write_m3k(&a, None)
+            .lines()
+            .filter(|l| !l.starts_with("stereo") && !l.starts_with("transparent"))
+            .map(|l| format!("{l}\n"))
+            .collect();
+        let b = parse_m3k(&text, Path::new("."), "x").unwrap().anim;
+        assert_eq!((b.stereo_bits, b.transparent), (0, false));
+    }
+
+    #[test]
     fn m3k_file_references_and_sets() {
         let dir = std::env::temp_dir().join(format!("mb3d_m3k_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
@@ -614,6 +727,7 @@ mod tests {
         assert_eq!(f.anim.keyframes[0].scene.iterations, 33);
         assert_eq!(f.anim.keyframes[0].frames, 7);
         assert_eq!(f.anim.keyframes[1].frames, 50);
+        assert_eq!(f.anim.keyframes[1].source.as_deref(), Some(dir.join("k1.m3s").to_str().unwrap()));
         let out = write_m3k(&f.anim, Some(&dir));
         assert!(out.contains("file = k1.m3s\nset = iterations = 33\n"), "{out}");
         let g = parse_m3k(&out, &dir, "x").unwrap();

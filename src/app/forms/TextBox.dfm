@@ -1,7 +1,7 @@
 object FTextBox: TFTextBox
   Left = 193
   Top = 152
-  Caption = 'Open text parameters'
+  Caption = '@MB:OpenTextParameters'
   ClientHeight = 439
   ClientWidth = 461
   Color = clBtnFace
@@ -21,14 +21,14 @@ object FTextBox: TFTextBox
     Height = 33
     Align = alTop
     Alignment = taLeftJustify
-    Caption = ' No valid text found, please enter the text below:'
+    Caption = '@MB:NoValidTextFoundPleaseEnter'
     TabOrder = 0
     object Button1: TButton
       Left = 320
       Top = 4
       Width = 71
       Height = 25
-      Caption = 'Cancel'
+      Caption = '@MB:Cancel'
       TabOrder = 0
       OnClick = Button1Click
     end

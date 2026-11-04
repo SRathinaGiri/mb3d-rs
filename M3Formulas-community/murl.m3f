@@ -1,0 +1,54 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 21
+.DReci2 Order = 5.
+.Double PreScale = 1.
+.Double PostScale = 1.
+.Double Dx = 0.
+.Double Dy = 0.
+.Double Da = 0.
+.Double Db = 0.
+[CONSTANTS]
+Double = 0.5
+Double = 2.0
+[CODE]
+575683EC74DD4688DD5C2408DD4690DD5C2410DD4698DD5C2418DD47D0DD47C8
+DD47E0D9CADC6C2408DECAD9C1DD47E0D9CADC6C2410DECADD47E8DC4C2418DD
+5C2420DD47F0DD07D9C4D8CDD9C4D8CDDEC1D9EDD9C9D9F1D9CADEC9DEC9D9EA
+DEC9D9E8D9C1D9F8D9F0DEC1D9FDD9C9DDD8D9CADD1424D9C9D9CBD9F3DD47F0
+DEC9DD5C2430DD442430D9FBDD5C2460DD5C2468D9C0DC4C2468D9C9DC4C2460
+D9E8DEC1DD47E8DD07D9C2D8CBD9C4D8CDDEC1D9EDD9C9D9F1D9C9DECADEC9D9
+EADEC9D9E8D9C1D9F8D9F0DEC1D9FDD9C9DDD8D9CAD9C9D9F3DD47E8DEC9DD5C
+2438DD442438D9FBDD5C2460DD5C2468D9C0DC4C2468D9C9DC4C2460D9E8DEC1
+D9C0DD4708D9CAD8C8D9C3D8CCDEC1DEFADD47C0DD5C2428DD47B8DD47D8D9C5
+D8CBDD0424D8CEDEC1D8CCDC642428DEC9DD47D8D9CBDC0C24D9CDDECED9CCDE
+E5D9CCDECAD9CBDEE9DECADD47E0DD442420DEC9DD442408D9C0DEC9DD442410
+D9C0DEC9DEC1DD442418D9C0DEC9DEC1D9C2D8CBD9C4D8CDDEC1D9C2D8CBDEC1
+DEF9D9FAD9CADD5C2440D9CADD442440DD5E88DD5C2448D9C9DD442448DD5E90
+DD5C2450DD442450DD5E98DD5C2458DD442458DC4E70DD5E7083C4745E5FC3
+[END]
+
+Description:
+
+This is an attempt to replicate Zueuk's awesome "murl" Apophyisis plugin.
+The result is not continuous, if the fractal is not symmetrical!
+I do not know if it is really so useful, by the way it gives interesting effects
+in my tests.
+Use as a pretransform on symmetrical fractals. ONLY as pretransform, do not iterate it.
+Be warned, murl projects the unit circle into the whole plane.
+And it is slightly slow because the calculations work for any symmetry order.
+So use it properly!
+
+Zueuk said to me that the formula for second order murl is:
+
+Tanh(Asinh(a+ib)/2.)
+
+That can be simplified, giving us;
+
+murl2(a+ib) = (a+ib)/(1.+(1.+(a+ib)^2)^(1/2))
+
+So to get generalized murl I used the formula;
+
+murl(a+ib,N) = (a+ib)/(1.+(1.+(a+ib)^N)^(1/N))
+
+where a and b are the cartesian coords of x,y. It is not the "correct" one but it gives cool effects.

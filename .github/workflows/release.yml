@@ -81,6 +81,8 @@ jobs:
           echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
       - name: Build
         shell: bash
+        # (the macOS package has clifcheck and jit_check.sh to test the
+        # formulas compiled at run time there)
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             cargo zigbuild --release --no-default-features --features gpu --bin mb3d --target ${{ matrix.target }}.2.28
@@ -92,7 +94,30 @@ jobs:
             done
           else
             cargo build --release --features gpu --target ${{ matrix.target }}
+            if [ "${{ runner.os }}" = "macOS" ]; then
+              cargo build --release --features gpu --target ${{ matrix.target }} --example clifcheck
+            fi
+            # the C runtime is linked in (.cargo/config.toml, issue #18): the
+            # program must not need the Visual C++ redistributable DLLs
+            for exe in Mandelbulb3D mb3d; do
+              if grep -a -i -q -E "MSVCP140\.dll|VCRUNTIME140\.dll" "target/${{ matrix.target }}/release/$exe.exe"; then
+                echo "::error::$exe imports the Visual C++ runtime DLLs"; exit 1
+              fi
+            done
           fi
+      # Intel's package as it is (the libraries, their licences and
+      # documentation), checked against the SHA-256 above
+      - name: Intel Open Image Denoise
+        shell: bash
+        run: |
+          f=${{ matrix.oidn }}
+          curl -sSfL -o "$f" "https://github.com/RenderKit/oidn/releases/download/v2.5.1/$f"
+          if command -v sha256sum > /dev/null; then sum="sha256sum"; else sum="shasum -a 256"; fi
+          echo "${{ matrix.oidn_sha }}  $f" | $sum -c -
+          mkdir oidn-pkg
+          case "$f" in *.zip) 7z x -ooidn-pkg "$f" > /dev/null ;; *) tar xzf "$f" -C oidn-pkg ;; esac
+          mv oidn-pkg/oidn-* oidn
+          ls oidn
       - name: Package
         shell: bash
         run: |
@@ -112,6 +137,12 @@ jobs:
           mv "$name/MB3D-sources/README.md" "$name/README-MB3D.md"
           # formulas new in mb3d-rs (calculated by the program itself)
           cp M3Formulas-rs/*.m3f "$name/M3Formulas/"
+          # formulas and maps of the MB3D community that the original
+          # repository lacks (their authors in the CREDITS files)
+          cp M3Formulas-community/*.m3f "$name/M3Formulas/"
+          cp M3Formulas-community/CREDITS.md "$name/M3Formulas/CREDITS-community.md"
+          cp M3Maps-community/*.jpg "$name/M3Maps/"
+          cp M3Maps-community/CREDITS.md "$name/M3Maps/CREDITS-community.md"
           for d in History Meshes BigRenders; do mkdir -p "$name/$d"; done
           echo "Parameters of every image calculated with \"Calculate 3D\" (one folder per day), as in MB3D." > "$name/History/README.txt"
           echo "Meshes exported with BTracer2 are saved here, as in MB3D." > "$name/Meshes/README.txt"
@@ -175,6 +206,9 @@ jobs:
           test -f /usr/share/man/man1/mb3d.1.gz
           mb3d -W 64 -H 48 --cpu -q -o /tmp/t.png "/usr/share/mb3d-rs/M3Parameter/$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i 'apollo.*\.m3p$')"
           test -s /tmp/t.png
+          # the neural noise filter from /usr/lib/mb3d-rs/oidn
+          MB3D_GPU=0 mb3d montecarlo "/usr/share/mb3d-rs/M3Parameter/$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i 'apollo.*\.m3p$')" --scale 0.1 --rays 4 --denoise-ai --no-resume -q -o /tmp/ai.png
+          test -s /tmp/ai.png
           # the user's files are not written next to the programs
           test ! -e /usr/bin/ShaderCache
       # the .rpm installed on the oldest system the programs are made for
@@ -189,6 +223,8 @@ jobs:
             f=$(ls /usr/share/mb3d-rs/M3Parameter | grep -m1 -i "apollo.*\.m3p$")
             mb3d -W 64 -H 48 --cpu -q -o /tmp/t.png "/usr/share/mb3d-rs/M3Parameter/$f"
             test -s /tmp/t.png
+            MB3D_GPU=0 mb3d montecarlo "/usr/share/mb3d-rs/M3Parameter/$f" --scale 0.1 --rays 4 --denoise-ai --no-resume -q -o /tmp/ai.png
+            test -s /tmp/ai.png
             dnf remove -y -q mb3d-rs
             test ! -e /usr/bin/mb3d'
       # one file per artifact (archive: false uploads a single file)

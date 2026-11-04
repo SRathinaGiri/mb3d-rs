@@ -3,367 +3,6 @@
 
 use super::*;
 
-// IdesFormula
-pub(super) fn f_ef51c569bcc8d778(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
-    let _ = p;
-    let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
-    let mut fl = Flags::default();
-    let mut fsw = 0u16;
-    let vb = pvar.wrapping_sub(256);
-    let vm = m.bytes_at::<40>(vb.wrapping_add(208))?;
-    let mut r3: u64 = rec_get(m, it, pvar, 3);
-    let mut r4: u64 = rec_get(m, it, pvar, 4);
-    let mut r5: u64 = rec_get(m, it, pvar, 5);
-    let mut r10: u64 = rec_get(m, it, pvar, 10);
-    let mut r11: u64 = rec_get(m, it, pvar, 11);
-    let mut r12: u64 = rec_get(m, it, pvar, 12);
-    let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
-    let mut v26: u64 = cell(vm, 0);
-    let mut v27: u64 = cell(vm, 8);
-    let mut v28: u64 = cell(vm, 16);
-    let mut v29: u64 = cell(vm, 24);
-    let mut v30: u64 = cell(vm, 32);
-    'body: {
-        // block 0
-        { rg[ESP] = rg[ESP].wrapping_sub(4); s2014 = (s2014 & !(0xffffffffu64 << 0)) | (((rg[5] as u64) & 0xffffffffu64) << 0); }
-        rg[5] = rg[4];
-        { rg[ESP] = rg[ESP].wrapping_sub(4); s2013 = (s2013 & !(0xffffffffu64 << 32)) | (((rg[6] as u64) & 0xffffffffu64) << 32); }
-        { rg[ESP] = rg[ESP].wrapping_sub(4); s2013 = (s2013 & !(0xffffffffu64 << 0)) | (((rg[7] as u64) & 0xffffffffu64) << 0); }
-        rg[7] = ((s2015 >> 0) & 0xffffffffu64) as u32;
-        rg[6] = ((r13 >> 0) & 0xffffffffu64) as u32;
-        f[0] = f64::from_bits(r5);
-        f[1] = f64::from_bits(r4);
-        f[2] = f64::from_bits(r3);
-        f[3] = f[2];
-        f[3] = f[3] * f[1];
-        f[3] = f[3] * f[0];
-        { let v = f64::from_bits(v29); f[3] = f[3] * v; }
-        { let v = f64::from_bits(r11); f[3] = f[3] + v; }
-        r4 = f[3].to_bits();
-        f[2] = f[2] * f[2];
-        f.swap(2, 1);
-        f[2] = f[2] * f[2];
-        f.swap(2, 0);
-        f[2] = f[2] * f[2];
-        f[3] = f[2];
-        f[3] = f[3] + f[0];
-        { let v = f64::from_bits(v27); f[3] = f[3] * v; }
-        f[4] = f[1];
-        { let v = f64::from_bits(v30); f[4] = f[4] * v; }
-        f[3] = f[4] - f[3];
-        { let v = f64::from_bits(r10); f[3] = f[3] + v; }
-        r3 = f[3].to_bits();
-        { let v = f64::from_bits(v28); f[2] = f[2] * v; }
-        f.swap(2, 0);
-        f[1] = f[1] + f[2];
-        { let v = f64::from_bits(v26); f[1] = f[1] * v; }
-        f[0] = f[0] - f[1];
-        { let v = f64::from_bits(r12); f[0] = f[0] + v; }
-        r5 = f[0].to_bits();
-        { rg[7] = ((s2013 >> 0) & 0xffffffffu64) as u32; rg[ESP] = rg[ESP].wrapping_add(4); }
-        { rg[6] = ((s2013 >> 32) & 0xffffffffu64) as u32; rg[ESP] = rg[ESP].wrapping_add(4); }
-        { rg[5] = ((s2014 >> 0) & 0xffffffffu64) as u32; rg[ESP] = rg[ESP].wrapping_add(4); }
-        rg[ESP] = rg[ESP].wrapping_add(12); break 'body;
-    }
-    rec_set(m, it, 3, r3);
-    rec_set(m, it, 4, r4);
-    rec_set(m, it, 5, r5);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
-    Ok(())
-}
-
-// ABoxPlatinumB
-pub(super) fn f_f00735d0df8b58ff(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
-    let _ = p;
-    let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
-    let mut fl = Flags::default();
-    let mut fsw = 0u16;
-    let vb = pvar.wrapping_sub(256);
-    let vm = m.bytes_at::<168>(vb.wrapping_add(80))?;
-    let mut r3: u64 = rec_get(m, it, pvar, 3);
-    let mut r4: u64 = rec_get(m, it, pvar, 4);
-    let mut r5: u64 = rec_get(m, it, pvar, 5);
-    let mut r6: u64 = rec_get(m, it, pvar, 6);
-    let mut r10: u64 = rec_get(m, it, pvar, 10);
-    let mut r11: u64 = rec_get(m, it, pvar, 11);
-    let mut r12: u64 = rec_get(m, it, pvar, 12);
-    let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2007: u64 = m.rd64u(0x10007eb8u32);
-    let mut s2008: u64 = m.rd64u(0x10007ec0u32);
-    let mut s2009: u64 = m.rd64u(0x10007ec8u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
-    let mut v10: u64 = cell(vm, 0);
-    let mut v11: u64 = cell(vm, 8);
-    let mut v12: u64 = cell(vm, 16);
-    let mut v13: u64 = cell(vm, 24);
-    let mut v14: u64 = cell(vm, 32);
-    let mut v15: u64 = cell(vm, 40);
-    let mut v16: u64 = cell(vm, 48);
-    let mut v17: u64 = cell(vm, 56);
-    let mut v18: u64 = cell(vm, 64);
-    let mut v19: u64 = cell(vm, 72);
-    let mut v20: u64 = cell(vm, 80);
-    let mut v21: u64 = cell(vm, 88);
-    let mut v22: u64 = cell(vm, 96);
-    let mut v23: u64 = cell(vm, 104);
-    let mut v24: u64 = cell(vm, 112);
-    let mut v25: u64 = cell(vm, 120);
-    let mut v26: u64 = cell(vm, 128);
-    let mut v27: u64 = cell(vm, 136);
-    let mut v28: u64 = cell(vm, 144);
-    let mut v29: u64 = cell(vm, 152);
-    let mut v30: u64 = cell(vm, 160);
-    'body: {
-        'b11: {
-        'b10: {
-        'b8: {
-        'b6: {
-        'b4: {
-        'b2: {
-        // block 0
-        { rg[ESP] = rg[ESP].wrapping_sub(4); s2014 = (s2014 & !(0xffffffffu64 << 0)) | (((rg[5] as u64) & 0xffffffffu64) << 0); }
-        rg[5] = rg[4];
-        { rg[ESP] = rg[ESP].wrapping_sub(4); s2013 = (s2013 & !(0xffffffffu64 << 32)) | (((rg[6] as u64) & 0xffffffffu64) << 32); }
-        { rg[ESP] = rg[ESP].wrapping_sub(4); s2013 = (s2013 & !(0xffffffffu64 << 0)) | (((rg[3] as u64) & 0xffffffffu64) << 0); }
-        rg[6] = ((s2015 >> 0) & 0xffffffffu64) as u32;
-        rg[3] = rg[0];
-        rg[6] = ((r13 >> 0) & 0xffffffffu64) as u32;
-        { let bv = 0xffffffd0u32; let av = rg[4]; let r = fl.alu(Alu::Add, av, bv, 4); rg[4] = r; }
-        f[0] = f64::from_bits(v27);
-        f[1] = f64::from_bits(r3);
-        { let v = f64::from_bits((((v14 >> 32) | (v15 << 32)) & u64::MAX)); f[1] = f[1] * v; }
-        f[2] = f64::from_bits(r5);
-        { let v = f64::from_bits((((v15 >> 32) | (v16 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[1] = f[1] - f[2];
-        s2007 = f[1].to_bits();
-        f[1] = f64::from_bits(r3);
-        { let v = f64::from_bits((((v15 >> 32) | (v16 << 32)) & u64::MAX)); f[1] = f[1] * v; }
-        f[2] = f64::from_bits(r5);
-        { let v = f64::from_bits((((v14 >> 32) | (v15 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[1] = f[1] + f[2];
-        s2008 = f[1].to_bits();
-        f[1] = f64::from_bits(s2007);
-        { let v = f64::from_bits((((v16 >> 32) | (v17 << 32)) & u64::MAX)); f[1] = f[1] * v; }
-        f[2] = f64::from_bits(r4);
-        { let v = f64::from_bits((((v17 >> 32) | (v18 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[1] = f[1] - f[2];
-        f[2] = f64::from_bits(s2007);
-        { let v = f64::from_bits((((v17 >> 32) | (v18 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[3] = f64::from_bits(r4);
-        { let v = f64::from_bits((((v16 >> 32) | (v17 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[2] = f[2] + f[3];
-        s2009 = f[2].to_bits();
-        f[2] = f[1];
-        f[2] = f[2] - f[0];
-        f[2] = f[2].abs();
-        f[2] = f[2] + f[1];
-        f.swap(2, 1);
-        f[2] = f[2] + f[0];
-        f[2] = f[2].abs();
-        f[1] = f[2] - f[1];
-        { let v = f64::from_bits((((v16 >> 32) | (v17 << 32)) & u64::MAX)); f[1] = f[1] * v; }
-        f[2] = f64::from_bits(s2009);
-        { let v = f64::from_bits((((v17 >> 32) | (v18 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[1] = f[1] - f[2];
-        { let v = f64::from_bits((((v14 >> 32) | (v15 << 32)) & u64::MAX)); f[1] = f[1] * v; }
-        f[2] = f64::from_bits(s2008);
-        { let v = f64::from_bits((((v15 >> 32) | (v16 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[1] = f[1] - f[2];
-        f[2] = f64::from_bits(r4);
-        { let v = f64::from_bits((((v10 >> 32) | (v11 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[3] = f64::from_bits(r5);
-        { let v = f64::from_bits((((v11 >> 32) | (v12 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[2] = f[2] - f[3];
-        s2007 = f[2].to_bits();
-        f[2] = f64::from_bits(r4);
-        { let v = f64::from_bits((((v11 >> 32) | (v12 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[3] = f64::from_bits(r5);
-        { let v = f64::from_bits((((v10 >> 32) | (v11 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[2] = f[2] + f[3];
-        s2008 = f[2].to_bits();
-        f[2] = f64::from_bits(s2007);
-        { let v = f64::from_bits((((v12 >> 32) | (v13 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[3] = f64::from_bits(r3);
-        { let v = f64::from_bits((((v13 >> 32) | (v14 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[2] = f[2] - f[3];
-        f[3] = f64::from_bits(s2007);
-        { let v = f64::from_bits((((v13 >> 32) | (v14 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[4] = f64::from_bits(r3);
-        { let v = f64::from_bits((((v12 >> 32) | (v13 << 32)) & u64::MAX)); f[4] = f[4] * v; }
-        f[3] = f[3] + f[4];
-        s2009 = f[3].to_bits();
-        f[3] = f[2];
-        f[3] = f[3] - f[0];
-        f[3] = f[3].abs();
-        f[3] = f[3] + f[2];
-        f.swap(3, 2);
-        f[3] = f[3] + f[0];
-        f[3] = f[3].abs();
-        f[2] = f[3] - f[2];
-        { let v = f64::from_bits((((v12 >> 32) | (v13 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[3] = f64::from_bits(s2009);
-        { let v = f64::from_bits((((v13 >> 32) | (v14 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[2] = f[2] - f[3];
-        { let v = f64::from_bits((((v10 >> 32) | (v11 << 32)) & u64::MAX)); f[2] = f[2] * v; }
-        f[3] = f64::from_bits(s2008);
-        { let v = f64::from_bits((((v11 >> 32) | (v12 << 32)) & u64::MAX)); f[3] = f[3] * v; }
-        f[2] = f[2] - f[3];
-        f[3] = f64::from_bits(r5);
-        f[4] = f[3];
-        f[4] = f[4] - f[0];
-        f[4] = f[4].abs();
-        f[4] = f[4] + f[3];
-        f.swap(4, 3);
-        f[4] = f[4] + f[0];
-        f[4] = f[4].abs();
-        f[3] = f[4] - f[3];
-        rg[0] = ((v10 >> 0) & 0xffffffffu64) as u32;
-        { let bv = 0x4u32; let av = rg[0]; let r = fl.alu(Alu::And, av, bv, 4); rg[0] = r; }
-        if fl.cond(4) { break 'b2; }
-        // block 1
-        f[3] = f[3].abs();
-        } // 'b2
-        // block 2
-        rg[0] = ((v10 >> 0) & 0xffffffffu64) as u32;
-        { let bv = 0x2u32; let av = rg[0]; let r = fl.alu(Alu::And, av, bv, 4); rg[0] = r; }
-        if fl.cond(4) { break 'b4; }
-        // block 3
-        f.swap(3, 2);
-        f[3] = f[3].abs();
-        f.swap(3, 2);
-        } // 'b4
-        // block 4
-        rg[0] = ((v10 >> 0) & 0xffffffffu64) as u32;
-        { let bv = 0x1u32; let av = rg[0]; let r = fl.alu(Alu::And, av, bv, 4); rg[0] = r; }
-        if fl.cond(4) { break 'b6; }
-        // block 5
-        f.swap(3, 1);
-        f[3] = f[3].abs();
-        f.swap(3, 1);
-        } // 'b6
-        // block 6
-        f[4] = f64::from_bits((((v19 >> 32) | (v20 << 32)) & u64::MAX));
-        f[3] = f[3] + f[4];
-        f[4] = f[4];
-        f[4] = f64::from_bits((((v20 >> 32) | (v21 << 32)) & u64::MAX));
-        f[2] = f[2] + f[4];
-        f[4] = f[4];
-        f[4] = f64::from_bits((((v21 >> 32) | (v22 << 32)) & u64::MAX));
-        f[1] = f[1] + f[4];
-        f[4] = f[4];
-        f[4] = f[3];
-        f[4] = f[4] * f[4];
-        f[5] = f[2];
-        f[5] = f[5] * f[5];
-        f[4] = f[4] + f[5];
-        f[5] = f[1];
-        f[5] = f[5] * f[5];
-        f[4] = f[4] + f[5];
-        { let v = f64::from_bits((((v18 >> 32) | (v19 << 32)) & u64::MAX)); f[4] = f[4] * v; }
-        fsw = fcompare_cc(f[4], f64::from_bits(v28));
-        rg[EAX] = (rg[EAX] & 0xFFFF_0000) | (fsw | 0x1800) as u32;
-        shift_reg_l(&mut rg, &mut fl, Shift::Shr, 4, 1, 1);
-        if fl.cond(3) { break 'b8; }
-        // block 7
-        f[4] = f[4];
-        f[4] = f64::from_bits(v29);
-        break 'b11;
-        } // 'b8
-        // block 8
-        f[5] = f64::from_bits(0x3ff0000000000000);
-        fsw = fcompare_cc(f[5], f[4]);
-        rg[EAX] = (rg[EAX] & 0xFFFF_0000) | (fsw | 0x1000) as u32;
-        shift_reg_l(&mut rg, &mut fl, Shift::Shr, 4, 1, 1);
-        if fl.cond(2) { break 'b10; }
-        // block 9
-        f[5] = f[5];
-        { let v = f64::from_bits(v30); f[4] = v / f[4]; }
-        break 'b11;
-        } // 'b10
-        // block 10
-        fsw = fcompare_cc(f[5], f[4]);
-        f[4] = f64::from_bits(v30);
-        } // 'b11
-        // block 11
-        f[5] = f64::from_bits(r6);
-        f[5] = f[5] * f[4];
-        r6 = f[5].to_bits();
-        f[1] = f[1] * f[4];
-        f[2] = f[2] * f[4];
-        f[3] = f[3] * f[4];
-        f[4] = f64::from_bits((((v19 >> 32) | (v20 << 32)) & u64::MAX));
-        { let v = f64::from_bits(v30); f[4] = f[4] * v; }
-        f[3] = f[3] - f[4];
-        f[4] = f[4];
-        f[4] = f64::from_bits((((v20 >> 32) | (v21 << 32)) & u64::MAX));
-        { let v = f64::from_bits(v30); f[4] = f[4] * v; }
-        f[2] = f[2] - f[4];
-        f[4] = f[4];
-        f[4] = f64::from_bits((((v21 >> 32) | (v22 << 32)) & u64::MAX));
-        { let v = f64::from_bits(v30); f[4] = f[4] * v; }
-        f[1] = f[1] - f[4];
-        f[4] = f[4];
-        f.swap(3, 1);
-        f[4] = f[3];
-        { let v = (f32::from_bits(((v23 >> 32) & 0xffffffffu64) as u32) as f64); f[4] = f[4] * v; }
-        f[5] = f[2];
-        { let v = (f32::from_bits(((v23 >> 0) & 0xffffffffu64) as u32) as f64); f[5] = f[5] * v; }
-        f[4] = f[4] + f[5];
-        f[5] = f[1];
-        { let v = (f32::from_bits(((v22 >> 32) & 0xffffffffu64) as u32) as f64); f[5] = f[5] * v; }
-        f[4] = f[4] + f[5];
-        f[5] = f[3];
-        { let v = (f32::from_bits(((v26 >> 32) & 0xffffffffu64) as u32) as f64); f[5] = f[5] * v; }
-        f[6] = f[2];
-        { let v = (f32::from_bits(((v26 >> 0) & 0xffffffffu64) as u32) as f64); f[6] = f[6] * v; }
-        f[5] = f[5] + f[6];
-        f[6] = f[1];
-        { let v = (f32::from_bits(((v25 >> 32) & 0xffffffffu64) as u32) as f64); f[6] = f[6] * v; }
-        f[5] = f[5] + f[6];
-        f.swap(5, 3);
-        { let v = (f32::from_bits(((v25 >> 0) & 0xffffffffu64) as u32) as f64); f[5] = f[5] * v; }
-        f.swap(5, 2);
-        { let v = (f32::from_bits(((v24 >> 32) & 0xffffffffu64) as u32) as f64); f[5] = f[5] * v; }
-        f[2] = f[2] + f[5];
-        f.swap(4, 1);
-        { let v = (f32::from_bits(((v24 >> 0) & 0xffffffffu64) as u32) as f64); f[4] = f[4] * v; }
-        f[2] = f[2] + f[4];
-        f.swap(3, 1);
-        rg[6] = ((s2015 >> 0) & 0xffffffffu64) as u32;
-        { let v = f64::from_bits(r12); f[3] = f[3] + v; }
-        r5 = f[3].to_bits();
-        { let v = f64::from_bits(r11); f[2] = f[2] + v; }
-        r4 = f[2].to_bits();
-        { let v = f64::from_bits(r10); f[1] = f[1] + v; }
-        r3 = f[1].to_bits();
-        f[0] = f[0];
-        { let bv = 0x30u32; let av = rg[4]; let r = fl.alu(Alu::Add, av, bv, 4); rg[4] = r; }
-        rg[0] = rg[3];
-        { rg[3] = ((s2013 >> 0) & 0xffffffffu64) as u32; rg[ESP] = rg[ESP].wrapping_add(4); }
-        { rg[6] = ((s2013 >> 32) & 0xffffffffu64) as u32; rg[ESP] = rg[ESP].wrapping_add(4); }
-        { rg[5] = ((s2014 >> 0) & 0xffffffffu64) as u32; rg[ESP] = rg[ESP].wrapping_add(4); }
-        rg[ESP] = rg[ESP].wrapping_add(12); break 'body;
-    }
-    rec_set(m, it, 3, r3);
-    rec_set(m, it, 4, r4);
-    rec_set(m, it, 5, r5);
-    rec_set(m, it, 6, r6);
-    m.wr64u(0x10007eb8u32, s2007);
-    m.wr64u(0x10007ec0u32, s2008);
-    m.wr64u(0x10007ec8u32, s2009);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
-    Ok(())
-}
-
 // sliceExIFS
 pub(super) fn f_f0b104a05b743bd3(m: &mut Machine, p: &Prog, regs: &mut [u32; 8], max_steps: u64) -> R<()> {
     let _ = p;
@@ -380,12 +19,12 @@ pub(super) fn f_f0b104a05b743bd3(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
     let mut r14: u64 = m.rd64u(0x10001070u32);
     let mut r32: u64 = m.rd64u(0x10001100u32);
     let mut r33: u64 = m.rd64u(0x10001108u32);
-    let mut s2009: u64 = m.rd64u(0x10007ec8u32);
-    let mut s2010: u64 = m.rd64u(0x10007ed0u32);
-    let mut s2011: u64 = m.rd64u(0x10007ed8u32);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
+    let mut s2009: u64 = 0x0u64;
+    let mut s2010: u64 = 0x0u64;
+    let mut s2011: u64 = 0x0u64;
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0x0u64;
     let mut v17: u64 = cell(vm, 0);
     let mut v18: u64 = cell(vm, 8);
     let mut v19: u64 = cell(vm, 16);
@@ -568,12 +207,6 @@ pub(super) fn f_f0b104a05b743bd3(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
     m.wr64u(0x10001028u32, r5);
     m.wr64u(0x10001070u32, r14);
     m.wr64u(0x10001100u32, r32);
-    m.wr64u(0x10007ec8u32, s2009);
-    m.wr64u(0x10007ed0u32, s2010);
-    m.wr64u(0x10007ed8u32, s2011);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     *regs = rg;
     Ok(())
 }
@@ -703,7 +336,7 @@ pub(super) fn f_f11bef59dface564(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
 pub(super) fn f_f15e7033ae08e677(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -713,14 +346,14 @@ pub(super) fn f_f15e7033ae08e677(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r5: u64 = rec_get(m, it, pvar, 5);
     let mut r6: u64 = rec_get(m, it, pvar, 6);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2008: u64 = m.rd64u(0x10007ec0u32);
-    let mut s2009: u64 = m.rd64u(0x10007ec8u32);
-    let mut s2010: u64 = m.rd64u(0x10007ed0u32);
-    let mut s2011: u64 = m.rd64u(0x10007ed8u32);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2008: u64 = 0x0u64;
+    let mut s2009: u64 = 0x0u64;
+    let mut s2010: u64 = 0x0u64;
+    let mut s2011: u64 = 0x0u64;
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v20: u64 = cell(vm, 0);
     let mut v21: u64 = cell(vm, 8);
     let mut v22: u64 = cell(vm, 16);
@@ -915,13 +548,6 @@ pub(super) fn f_f15e7033ae08e677(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
     rec_set(m, it, 6, r6);
-    m.wr64u(0x10007ec0u32, s2008);
-    m.wr64u(0x10007ec8u32, s2009);
-    m.wr64u(0x10007ed0u32, s2010);
-    m.wr64u(0x10007ed8u32, s2011);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -929,7 +555,7 @@ pub(super) fn f_f15e7033ae08e677(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f19722dc8c8c12d9(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -939,9 +565,9 @@ pub(super) fn f_f19722dc8c8c12d9(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r5: u64 = rec_get(m, it, pvar, 5);
     let mut r6: u64 = rec_get(m, it, pvar, 6);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v16: u64 = cell(vm, 0);
     let mut v17: u64 = cell(vm, 8);
     let mut v18: u64 = cell(vm, 16);
@@ -1123,8 +749,6 @@ pub(super) fn f_f19722dc8c8c12d9(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
     rec_set(m, it, 6, r6);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -1132,7 +756,7 @@ pub(super) fn f_f19722dc8c8c12d9(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f1ba1b4b15115e83(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -1146,9 +770,9 @@ pub(super) fn f_f1ba1b4b15115e83(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r11: u64 = rec_get(m, it, pvar, 11);
     let mut r12: u64 = rec_get(m, it, pvar, 12);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v25: u64 = cell(vm, 0);
     let mut v26: u64 = cell(vm, 8);
     let mut v27: u64 = cell(vm, 16);
@@ -1214,8 +838,6 @@ pub(super) fn f_f1ba1b4b15115e83(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
     rec_set(m, it, 6, r6);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -1223,7 +845,7 @@ pub(super) fn f_f1ba1b4b15115e83(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f1d590365a4793b6(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -1232,9 +854,9 @@ pub(super) fn f_f1d590365a4793b6(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r4: u64 = rec_get(m, it, pvar, 4);
     let mut r5: u64 = rec_get(m, it, pvar, 5);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v25: u64 = cell(vm, 0);
     let mut v26: u64 = cell(vm, 8);
     let mut v27: u64 = cell(vm, 16);
@@ -1295,8 +917,6 @@ pub(super) fn f_f1d590365a4793b6(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 3, r3);
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -1304,16 +924,16 @@ pub(super) fn f_f1d590365a4793b6(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f37a6105e1854b32(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
     let vm = m.bytes_at::<32>(vb.wrapping_add(216))?;
     let mut r5: u64 = rec_get(m, it, pvar, 5);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v27: u64 = cell(vm, 0);
     let mut v28: u64 = cell(vm, 8);
     let mut v29: u64 = cell(vm, 16);
@@ -1347,8 +967,6 @@ pub(super) fn f_f37a6105e1854b32(m: &mut Machine, p: &Prog, it: &mut Iteration, 
         rg[ESP] = rg[ESP].wrapping_add(12); break 'body;
     }
     rec_set(m, it, 5, r5);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -1356,7 +974,7 @@ pub(super) fn f_f37a6105e1854b32(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f6c64401ae59f789(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -1368,10 +986,10 @@ pub(super) fn f_f6c64401ae59f789(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r11: u64 = rec_get(m, it, pvar, 11);
     let mut r12: u64 = rec_get(m, it, pvar, 12);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v27: u64 = cell(vm, 0);
     let mut v28: u64 = cell(vm, 8);
     let mut v29: u64 = cell(vm, 16);
@@ -1459,9 +1077,6 @@ pub(super) fn f_f6c64401ae59f789(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 10, r10);
     rec_set(m, it, 11, r11);
     rec_set(m, it, 12, r12);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -1469,7 +1084,7 @@ pub(super) fn f_f6c64401ae59f789(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f7d7af6ba66543c7(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let mut steps = 0u64;
@@ -1484,14 +1099,14 @@ pub(super) fn f_f7d7af6ba66543c7(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r12: u64 = rec_get(m, it, pvar, 12);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
     let mut r15: u64 = rec_get(m, it, pvar, 15);
-    let mut s2006: u64 = m.rd64u(0x10007eb0u32);
-    let mut s2007: u64 = m.rd64u(0x10007eb8u32);
-    let mut s2010: u64 = m.rd64u(0x10007ed0u32);
-    let mut s2011: u64 = m.rd64u(0x10007ed8u32);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2006: u64 = 0x0u64;
+    let mut s2007: u64 = 0x0u64;
+    let mut s2010: u64 = 0x0u64;
+    let mut s2011: u64 = 0x0u64;
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v21: u64 = cell(vm, 0);
     let mut v22: u64 = cell(vm, 8);
     let mut v23: u64 = cell(vm, 16);
@@ -1708,13 +1323,6 @@ pub(super) fn f_f7d7af6ba66543c7(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 3, r3);
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
-    m.wr64u(0x10007eb0u32, s2006);
-    m.wr64u(0x10007eb8u32, s2007);
-    m.wr64u(0x10007ed0u32, s2010);
-    m.wr64u(0x10007ed8u32, s2011);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -1722,7 +1330,7 @@ pub(super) fn f_f7d7af6ba66543c7(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f7f9bff8d369f709(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -1737,15 +1345,15 @@ pub(super) fn f_f7f9bff8d369f709(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r13: u64 = rec_get(m, it, pvar, 13);
     let mut r32: u64 = rec_get(m, it, pvar, 32);
     let mut r33: u64 = rec_get(m, it, pvar, 33);
-    let mut s2004: u64 = m.rd64u(0x10007ea0u32);
-    let mut s2005: u64 = m.rd64u(0x10007ea8u32);
-    let mut s2006: u64 = m.rd64u(0x10007eb0u32);
-    let mut s2007: u64 = m.rd64u(0x10007eb8u32);
-    let mut s2008: u64 = m.rd64u(0x10007ec0u32);
-    let mut s2009: u64 = m.rd64u(0x10007ec8u32);
-    let mut s2010: u64 = m.rd64u(0x10007ed0u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2004: u64 = 0x0u64;
+    let mut s2005: u64 = 0x0u64;
+    let mut s2006: u64 = 0x0u64;
+    let mut s2007: u64 = 0x0u64;
+    let mut s2008: u64 = 0x0u64;
+    let mut s2009: u64 = 0x0u64;
+    let mut s2010: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v20: u64 = cell(vm, 0);
     let mut v21: u64 = cell(vm, 8);
     let mut v22: u64 = cell(vm, 16);
@@ -3105,14 +2713,6 @@ pub(super) fn f_f7f9bff8d369f709(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 6, r6);
     rec_set(m, it, 32, r32);
     rec_set(m, it, 33, r33);
-    m.wr64u(0x10007ea0u32, s2004);
-    m.wr64u(0x10007ea8u32, s2005);
-    m.wr64u(0x10007eb0u32, s2006);
-    m.wr64u(0x10007eb8u32, s2007);
-    m.wr64u(0x10007ec0u32, s2008);
-    m.wr64u(0x10007ec8u32, s2009);
-    m.wr64u(0x10007ed0u32, s2010);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -3120,7 +2720,7 @@ pub(super) fn f_f7f9bff8d369f709(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_f8a79f471f2fd4a3(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -3135,9 +2735,9 @@ pub(super) fn f_f8a79f471f2fd4a3(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r11: u64 = rec_get(m, it, pvar, 11);
     let mut r12: u64 = rec_get(m, it, pvar, 12);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v29: u64 = cell(vm, 0);
     let mut v30: u64 = cell(vm, 8);
     'body: {
@@ -3189,8 +2789,6 @@ pub(super) fn f_f8a79f471f2fd4a3(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 10, r10);
     rec_set(m, it, 11, r11);
     rec_set(m, it, 12, r12);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -3198,7 +2796,7 @@ pub(super) fn f_f8a79f471f2fd4a3(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_fb5ac68d1c9c59f0(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -3208,11 +2806,11 @@ pub(super) fn f_fb5ac68d1c9c59f0(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r5: u64 = rec_get(m, it, pvar, 5);
     let mut r6: u64 = rec_get(m, it, pvar, 6);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2008: u64 = m.rd64u(0x10007ec0u32);
-    let mut s2009: u64 = m.rd64u(0x10007ec8u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2008: u64 = 0x0u64;
+    let mut s2009: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v16: u64 = cell(vm, 0);
     let mut v17: u64 = cell(vm, 8);
     let mut v18: u64 = cell(vm, 16);
@@ -3409,10 +3007,6 @@ pub(super) fn f_fb5ac68d1c9c59f0(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
     rec_set(m, it, 6, r6);
-    m.wr64u(0x10007ec0u32, s2008);
-    m.wr64u(0x10007ec8u32, s2009);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -3420,7 +3014,7 @@ pub(super) fn f_fb5ac68d1c9c59f0(m: &mut Machine, p: &Prog, it: &mut Iteration, 
 pub(super) fn f_fceaa568004c7d1c(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let mut r3: u64 = rec_get(m, it, pvar, 3);
@@ -3430,10 +3024,10 @@ pub(super) fn f_fceaa568004c7d1c(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r11: u64 = rec_get(m, it, pvar, 11);
     let mut r12: u64 = rec_get(m, it, pvar, 12);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     'body: {
         // block 0
         { rg[ESP] = rg[ESP].wrapping_sub(4); s2014 = (s2014 & !(0xffffffffu64 << 0)) | (((rg[5] as u64) & 0xffffffffu64) << 0); }
@@ -3477,9 +3071,6 @@ pub(super) fn f_fceaa568004c7d1c(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 3, r3);
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -3499,12 +3090,12 @@ pub(super) fn f_fd36b304692cf4cb(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
     let mut r14: u64 = m.rd64u(0x10001070u32);
     let mut r32: u64 = m.rd64u(0x10001100u32);
     let mut r33: u64 = m.rd64u(0x10001108u32);
-    let mut s2010: u64 = m.rd64u(0x10007ed0u32);
-    let mut s2011: u64 = m.rd64u(0x10007ed8u32);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2010: u64 = 0x0u64;
+    let mut s2011: u64 = 0x0u64;
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0x0u64;
+    let mut s2015: u64 = 0xfffffff000000000u64;
     let mut v17: u64 = cell(vm, 0);
     let mut v18: u64 = cell(vm, 8);
     let mut v19: u64 = cell(vm, 16);
@@ -3686,12 +3277,6 @@ pub(super) fn f_fd36b304692cf4cb(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
     m.wr64u(0x10001028u32, r5);
     m.wr64u(0x10001070u32, r14);
     m.wr64u(0x10001100u32, r32);
-    m.wr64u(0x10007ed0u32, s2010);
-    m.wr64u(0x10007ed8u32, s2011);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
-    m.wr64u(0x10007ef8u32, s2015);
     *regs = rg;
     Ok(())
 }
@@ -3700,7 +3285,7 @@ pub(super) fn f_fd36b304692cf4cb(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
 pub(super) fn f_ff7b36c315e2d39e(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let mut r0: u64 = rec_get(m, it, pvar, 0);
@@ -3711,9 +3296,9 @@ pub(super) fn f_ff7b36c315e2d39e(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r10: u64 = rec_get(m, it, pvar, 10);
     let mut r11: u64 = rec_get(m, it, pvar, 11);
     let mut r12: u64 = rec_get(m, it, pvar, 12);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     'body: {
         // block 0
         { rg[ESP] = rg[ESP].wrapping_sub(4); s2014 = (s2014 & !(0xffffffffu64 << 0)) | (((rg[5] as u64) & 0xffffffffu64) << 0); }
@@ -3782,8 +3367,6 @@ pub(super) fn f_ff7b36c315e2d39e(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 10, r10);
     rec_set(m, it, 11, r11);
     rec_set(m, it, 12, r12);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 
@@ -3805,11 +3388,11 @@ pub(super) fn f_ff7c406ca39237b1(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
     let mut r14: u64 = m.rd64u(0x10001070u32);
     let mut r32: u64 = m.rd64u(0x10001100u32);
     let mut r33: u64 = m.rd64u(0x10001108u32);
-    let mut s2009: u64 = m.rd64u(0x10007ec8u32);
-    let mut s2010: u64 = m.rd64u(0x10007ed0u32);
-    let mut s2011: u64 = m.rd64u(0x10007ed8u32);
-    let mut s2012: u64 = m.rd64u(0x10007ee0u32);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
+    let mut s2009: u64 = 0x0u64;
+    let mut s2010: u64 = 0x0u64;
+    let mut s2011: u64 = 0x0u64;
+    let mut s2012: u64 = 0x0u64;
+    let mut s2013: u64 = 0x0u64;
     let mut v19: u64 = cell(vm, 0);
     let mut v20: u64 = cell(vm, 8);
     let mut v21: u64 = cell(vm, 16);
@@ -3921,11 +3504,6 @@ pub(super) fn f_ff7c406ca39237b1(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
     m.wr64u(0x10001028u32, r5);
     m.wr64u(0x10001070u32, r14);
     m.wr64u(0x10001100u32, r32);
-    m.wr64u(0x10007ec8u32, s2009);
-    m.wr64u(0x10007ed0u32, s2010);
-    m.wr64u(0x10007ed8u32, s2011);
-    m.wr64u(0x10007ee0u32, s2012);
-    m.wr64u(0x10007ee8u32, s2013);
     *regs = rg;
     Ok(())
 }
@@ -3934,7 +3512,7 @@ pub(super) fn f_ff7c406ca39237b1(m: &mut Machine, p: &Prog, regs: &mut [u32; 8],
 pub(super) fn f_ff9c8cad98242cf2(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {
     let _ = p;
     let mut f = [0f64; 8];
-    let mut rg = direct_regs(m);
+    let mut rg = direct_regs_local();
     let mut fl = Flags::default();
     let mut fsw = 0u16;
     let vb = pvar.wrapping_sub(256);
@@ -3943,9 +3521,9 @@ pub(super) fn f_ff9c8cad98242cf2(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     let mut r4: u64 = rec_get(m, it, pvar, 4);
     let mut r5: u64 = rec_get(m, it, pvar, 5);
     let mut r13: u64 = rec_get(m, it, pvar, 13);
-    let mut s2013: u64 = m.rd64u(0x10007ee8u32);
-    let mut s2014: u64 = m.rd64u(0x10007ef0u32);
-    let mut s2015: u64 = m.rd64u(0x10007ef8u32);
+    let mut s2013: u64 = 0x0u64;
+    let mut s2014: u64 = 0xfffffff000000000u64;
+    let mut s2015: u64 = 0x1000103010001038u64;
     let mut v30: u64 = cell(vm, 0);
     'body: {
         // block 0
@@ -3993,8 +3571,6 @@ pub(super) fn f_ff9c8cad98242cf2(m: &mut Machine, p: &Prog, it: &mut Iteration, 
     rec_set(m, it, 3, r3);
     rec_set(m, it, 4, r4);
     rec_set(m, it, 5, r5);
-    m.wr64u(0x10007ee8u32, s2013);
-    m.wr64u(0x10007ef0u32, s2014);
     Ok(())
 }
 

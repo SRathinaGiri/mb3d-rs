@@ -165,6 +165,11 @@ pub fn cache_folder(name: &str) -> PathBuf {
 /// UTC date and time as (`yyyy-mm-dd`, `hhhmmmsss`), MB3D's history names.
 pub fn history_stamp() -> (String, String) {
     let secs = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0) as i64;
+    stamp_of(secs)
+}
+
+/// [`history_stamp`] of a time in seconds since 1970.
+pub fn stamp_of(secs: i64) -> (String, String) {
     let (days, rem) = (secs.div_euclid(86400), secs.rem_euclid(86400));
     // civil date from days since 1970-01-01 (H. Hinnant)
     let z = days + 719468;

@@ -18,8 +18,14 @@ fn with<R>(f: impl FnOnce(&mut arboard::Clipboard) -> Option<R>) -> Option<R> {
     })
 }
 
+/// The text on the clipboard; None when it holds none (an image, files,
+/// nothing): the process-local text only without a system clipboard, not
+/// the last text copied here after another program copied something else.
 pub fn get() -> Option<String> {
-    with(|c| c.get_text().ok()).or_else(|| LOCAL.with(|l| Some(l.borrow().clone())).filter(|s| !s.is_empty()))
+    match with(|c| Some(c.get_text().ok())) {
+        Some(t) => t,
+        None => LOCAL.with(|l| Some(l.borrow().clone())).filter(|s| !s.is_empty()),
+    }
 }
 
 pub fn set(s: &str) {

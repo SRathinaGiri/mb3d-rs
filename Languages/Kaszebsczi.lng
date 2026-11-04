@@ -1,0 +1,3925 @@
+# Mandelbulb3D interface language (UTF-8)
+#
+# The texts are labels, as in Microsoft Dynamics 365: in [Labels], each line
+# is "Id=text". The windows and the program refer to a label by its Id
+# (@MB:Id), so one label gives every place that shows that text. Translate
+# the text right of the "="; a label left out shows the English text. The
+# line under a label starting with ";" is its English text (in English.lng:
+# where it is used); it is only a note.
+#
+# A window section ([FormName], "Control.Property = text") may follow: a
+# text there is used for that one control instead of its label, where one
+# place needs other words than the others.
+#
+# "\n" is a line break, "\\" a backslash, "\s" a space at the start or end
+# of a text. "&" before a letter underlines it (the Alt key shortcut); {} and
+# {0}, {1} ... are values the program fills in (a translation may change
+# their order).
+#
+# Your own language: click the language badge in the title bar of the main
+# window, type the language's name and press "Create language file";
+# translate the new file with a text editor and press "Reload". The file's
+# name is the language's; "code" is shown on the badge. A picture
+# <name>.png next to the file is the language's flag (18 x 12).
+# "font = file.ttf" names a font next to the file for characters the
+# program's fonts lack (Japanese, Chinese, Korean ...).
+
+language = Kaszëbsczi
+code = CSB
+
+[Labels]
+ACalculationIsRunningStopIt=Jidze rechòwanié: nôprzód je zatrzëmôj.
+;A calculation is running: stop it first.
+ACoarseRayPerBlockOf=Jeden grëbi parmiéń na blok 16, pòtemù 4 piksli maszerëje z rozrzutã blokù òdjãtim òd szacënkù òdległoscë, a marsz kòżdégò piksla zaczinô sã na jegò głãbòkòscë. Do 60 % chùtszi przez òtemkłą przestrzéń; cenczé dzéle mògą sã zgùbic tam, gdze szacënk je dalek òd prôwdë.
+;A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
+AFasterMethodThanBinsearchBut=Chùtszô metoda jak binarné szëkanié, le mòże prowadzëc do felów, czej DE są lëché
+;A faster method than binsearch, but can lead to failures if DE's are bad
+AFewSecondsLeft=òstało pôrã sekùnd
+;a few seconds left
+AFineReliefOnTheSurface=Drobnô rzezba na pòwiérzchni, przëczepionô do fraktala: szorstkô, kamiń (grzbietë ë pãkniãca) abò zôrno
+;A fine relief on the surface, fixed to the fractal: rough, stone (ridges and cracks) or grain
+AFolderEveryComputerOfThe=Katalog, chtëren widzy kòżdi kòmpùtr roju: ùdzél NAS, ùdzél Windows abò Samba, synchronizowóny katalog
+;A folder every computer of the swarm can see: a NAS share, a Windows or Samba share, a sync folder
+AGroundOrWaterSurfaceAcross=Pòwierzchniô zemi abò wòdë na sztót òsë X, Y abò Z fraktala, rechòwónô razã z fraktalã: ji cenie, òklùzjô, òdbicé ë swiatło Monte Carlo (nie je w MB3D: zapisóné za dzélã parametrów MB3D, chtërnégò MB3D nie czëtô)
+;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
+AHigherValueMeansABetter=Wikszô wôrtnota òznôczô lepszą jakòsc, nawetka 100% je stratné.
+;A higher value means a better quality, even 100% is lossy.
+AI=AI
+;AI
+ALanguageFileHasOneLabel=Lopk jãzëka mô jedną etiketã w régù: lewò òd "=" ji ID, prawò twój tekst. Dzél òkna za etiketama dôwô jednémù elementowi swój włôsny tekst.
+;A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
+AMultiplierThatDefinesTheMiximal=Mnożnik, chtëren òkresliwô maksymalną długòsc rechòwaniô cwiardégò cénia,\nwzglãdno niechtërnëch parametrów wiôlgòscë òbrôzka (domëslno = 1).\nZwikszë wôrtnosc, jeżlë felëją cénie daleczich òbiektów.
+;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
+AOCalcTime=Czas rechòwaniô AO:
+;AO calc time:
+AStoppedOrInterruptedRenderKeeps=Zatrzëmóny abò przerwóny render trzimô to, co wërechòwôł; Rechùj 3D z tima samima parametrama gò kòntinuëje.
+;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
+ATransparentBackgroundNeedsPNGFrames=Przezérné tło pòtrzebùje klatków PNG: wëbierzë PNG jakno fòrmat wińdzeniô.
+;A transparent background needs PNG frames: choose PNG as the output format.
+AVideoNeedsImagesChooseBMP=Wideò pòtrzebùje òbrôzków: wëbierzë BMP, PNG abò JPG jakno fòrmat wińdzeniô.
+;A video needs images: choose BMP, PNG or JPG as the output format.
+AVideoOfAStereoAnimation=Wideò ze stereo animacji nie je robioné: wëłączë 'Renderuj stereo animacjã'.
+;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AXPictureNeedsAboutOf=Òbrôzk {} x {} brëkùje kòl {} pamiãcë, nen kòmpùter mô {} wòlny: rechòwanié bë szło do pliku wëmianë, a programa bë mògła minutama nie òdpòwiadac.\n\nRechòwac mimò tegò?\n\nWiôldżi render (karta Nôrzãdła) rechùje to w kachlach zapisywónëch jeden pò drëdżim, bez trzëmaniô całégò òbrôzka; rój (òkno Rój) dzeli kachle z jinszima kòmpùtrama.
+;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
+AZBufferPngImageWill=Òbrôzk PNG z Z-bufferã téż bãdze zapisóny.
+;A z-buffer png image will be saved too.
+AZERTYKeyboard=Klawiatura AZERTY
+;AZERTY keyboard
+Abort=Przerwi
+;Abort
+AboutHLeft=òstało kòl {} h
+;about {} h left
+AboutHMinLeft=òstało kòl {} h {} min
+;about {} h {} min left
+AboutMinLeft=òstało kòl {} min
+;about {} min left
+AbsoluteAbsorptionAmountInsideTheMaterial=Absolutnô wielosc absorpcji bënë materiału (wiôldżé zbliżenia brëkùją wiôldżich wôrtnosców). Difuzyjnô farwa òbiektu je téż dlô bëna.
+;Absolute absorption amount inside the material (high zooms need big values). The diffuse object color is also for inside.
+AbsoluteDistanceOfTheSmoothCombine=Absolutnô òdległosc głôdczich fùnkcjów kòmbinowaniô,\ndlô môłëch wôrtnotów mòże brëkòwac nôùkòwi zôpis, np. 3e-5.\nSpróbùj 1/zoom, żebë dostac przëbliżoną dzejającą wôrtnotã.
+;Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
+Absorption=Absorpcja:
+;Absorption:
+Action=Dzejanié
+;Action
+ActualAmbientShadowPar=Akt. par. cenia òtoczeniô
+;Actual ambient shadow par.
+ActualCameraSettings=Aktualné nastawë kamerë
+;Actual camera settings
+ActualColoringTabOptions=Aktualné òpcje kartë 'Farwienié'
+;Actual 'Coloring' tab  options
+ActualDOFParameters=Aktualné parametrë DOF
+;Actual DOF parameters
+ActualHardShadowSetting=Aktualné nastawë cwiardégò cenia
+;Actual hard shadow setting
+ActualReflectionsSettings=Aktualné nastawë òdbiców
+;Actual reflections settings
+ActualStereoParameters=Aktualné parametrë stereo
+;Actual stereo parameters
+Add=Dodôj
+;Add
+AddANewKeyframeInBetween=Dodôj nową kluczową klatkã westrzódkù
+;Add a new keyframe in between
+AddNamedConstantValue=Dodôj nazwóną wôrtnotã kònstantë
+;Add named constant value
+AddNamedParam=Dodôj nazwóny parameter
+;Add named param
+AddNewConstantValue=Dodôwô nową stałą wôrtnotã
+;Add new constant value
+AddNewImageSequence=Dodôj nową sekwencjã òbrôzków
+;Add new image sequence
+AddNewNamedParameter=Dodôwô nowi mionowóny paraméter
+;Add new named parameter
+AddNewOption=Dodôwô nową òpcjã
+;Add new option
+AddOptionValue=Dodôj wôrtnotã òpcji
+;Add option value
+AddToBackgroundDepthNotBlend=Dodôj do głãbi spòdla (nie mieszôj)
+;Add to background depth (not blend)
+AddonFormula=Dodatkòwô fòrmùła
+;Addon formula
+AdjustRoughlyThenClickForFine=Nastôw z grëbsza, pòtemù klikni dlô dokładnégò nastawieniô.
+;Adjust roughly then click for fine adjustment.
+AdjustSlidersToFitTheHistograms=Dopasuj suwôczi do kùńców histogramu
+;Adjust sliders to fit the histograms endpoints
+Adjustments=Dopasowanié:
+;Adjustments:
+AdjustsTheDEForRenderPreview=Dopasowiwô DE do pòdzérkù renderowaniô
+;Adjusts the DE for render preview
+Ads=Ads
+;Ads
+AdvancedZBufferGenerator=Rozszérzony generatór Z-bufora
+;Advanced ZBuffer generator
+AfterCalculationAllUserLightChanges=Pò rechòwanim wszëtczé zmianë widu brëkòwnika są copniãté przez jiné nórtë widu.\nRechòwanié w normalnym tribie włączi je znowa.
+;After calculation all user light changes are cancelled because of different lightangles.\nCalculating in normal mode will enable it again.
+AfterRenderingJoinTheFramesInto=Pò renderowanim łączi klatczi w wideò w katalogù docelowim\n(<miono projektu>.avi, Motion JPEG: grô w VLC i mpv, òtmikô sã w editorach wideò).\nKlatczi òstôwają.
+;After rendering, join the frames into a video in the output folder\n(<project name>.avi, Motion JPEG: plays in VLC and mpv, opens in video editors).\nThe frames are kept.
+AllColorsAreOk=Wszëtczé farwë są dobré.
+;All colors are ok.
+AllFiles=Wszëtczé lopczi
+;All files
+AllFilesParen=Wszëtczé lopczi (*.*)
+;All files (*.*)
+AllKinds=Wszëtczé ôrtë
+;All kinds
+AllRealworldUnitsInMeter=Wszëtczé realné jednostczi w métrach.
+;All realworld units in meter.
+AllTheLightColorSettings=Wszëtczé nastawë swiatła + farwów
+;All the light + color settings
+AlreadyExists={} <{}> ju je
+;{} <{}> already exists
+AlsoMakeAVideoAVI=Zrobi téż wideò (AVI)
+;Also make a video (AVI)
+Alternate=Na przemión
+;Alternate
+Amb=Òkòl.
+;Amb
+Ambient=Òkòlny
+;Ambient
+AmbientBottomColorClickToChange=Dólnô farwa òkòlégò widu, klikni, żebë zmienic.
+;Ambient bottom color, click to change.
+AmbientLight=Òkòlny wid
+;Ambient light
+AmbientLower=òkòlé
+;ambient
+AmbientOcclusion=ambient occlusion
+;ambient occlusion
+AmbientRaysDepth=Głãbiô parmieni òtoczeniô:
+;Ambient rays depth:
+AmbientShadow=Òkòlny céń
+;Ambient shadow
+AmbientShadowCalculation=rechòwanié òkòlnëch céniów
+;ambient shadow calculation
+AmbientShadows=\sÒkòlné cénie
+;\sAmbient Shadows
+AmbientTopColorLeftclickToChange=Górnô farwa òkòlégò widu, lewé kliknienié zmieniwô farwã,\nprawé kliknienié wstôwiô farwë głãbi.
+;Ambient top color, leftclick to change color,\nrightclick to insert the depth colors.
+Amount=Wielosc:
+;Amount:
+AnAIAssistantOnThisComputer=Asystent AI na tim kòmpùtrze mòże brëkòwac Mandelbulb 3D: pòprosë gò prostima słowama abò głosã, żebë òpisôł, zmienił i wërenderowôł twòje òbrôzczi, zrobił warianté abò wërenderowôł to, nad czim të òstatno robił. Mandelbulb 3D òstôwô offline: aplikacjô asystenta zrëszô gò na tim kòmpùtrze.
+;An AI assistant on this computer can use Mandelbulb 3D: ask it in plain words, or by voice, to describe, change and render your pictures, to make variations or to render what you worked on last. Mandelbulb 3D stays offline: the assistant's app starts it on this computer.
+AnUnfinishedCalculationOfThisPicture=Nieskùńczoné rechòwanié tegò òbrôzka òstało zachòwóné ({}).\n\nCzë jic z nim dali?  "Nié" rechùje gò znowa òd zôczątkù.
+;An unfinished calculation of this picture was kept ({}).\n\nContinue it?  "No" calculates it again from the start.
+AnUnfinishedMonteCarloRenderOf=Nieskùńczony render Monte Carlo z tëch parametrów òstôł zachòwóny ({}).\n\nCzë jic z nim dali?  "Nié" renderëje gò znowa òd zôczątkù.
+;An unfinished Monte Carlo render of these parameters was kept ({}).\n\nContinue it?  "No" renders it again from the start.
+And={} ë {}
+;{} and {}
+AndRemove=ë rëmôj
+;and remove
+AngleUnitConversionRoutines={ Procedurë kònwersji jednostków nórta }
+;{ Angle unit conversion routines }
+AniGif=AniGif
+;AniGif
+AniKeyfrF=Klucz. klatka (f)
+;Ani keyfr. (f)
+AniKeyframe=Kluczowô klatka ani
+;Ani keyframe
+AnimatedGif=Animòwóny Gif
+;Animated Gif
+Animation=Animacje:
+;Animation:
+Animation2=Animacjô: {}
+;Animation: {}
+AnimationCurves=Krzëwé animacji
+;Animation curves
+AnimationLower=animacjô
+;animation
+AnimationMaker=Twòrzenié animacje
+;Animation maker
+AnimationMakerParen=Twòrzenié animacje   ({})
+;Animation maker   ({})
+AnimationPicsOutput=Òbrôzczi animacje:
+;Animation pics output:
+AnimationPreview=Pòdzérk animacje
+;Animation preview
+AnimationProcessing=Przerôbianié animacje
+;Animation processing
+AnimationRenderingStopped=Renderowanié animacje zatrzëmóné.
+;Animation rendering stopped.
+AnimationSize=Wiôlgòsc animacje:
+;Animation size:
+AnimationTheFfmpegCommandIsOn=Animacjô: pòlét ffmpeg je w schówkù (zrëszë gò w terminalu, czej klatczi bãdą gòtowé):
+;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
+AnimationVideoWritten=Animacjô: wideò zapisóné: {}
+;Animation: video written: {}
+Animations=Animacje
+;Animations
+AntiAliasing=Antialiasing:
+;Anti aliasing:
+Antialiasing=Antialiasing:
+;Antialiasing:
+Aperture=Apertura:
+;Aperture:
+Appearance=Wëzdrzatk
+;Appearance
+ApplyToImage=Zastosuj do òbrôzka
+;Apply to image
+ApplyYourChangedValuesBecauseEdits=Zastosuj zmienioné wôrtnotë, bò pòla są blós wińdzenim
+;Apply your changed values, because edits are only output
+ApproximateVertexColorsTheColorInformation=Przëbliżoné farwë wiérzków. Infòrmacjô ò farwie bãdze zapisónô jakno kòòrdinatë uv w sécë i zwikszi ji wiôlgòsc
+;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
+ArcTan2CalculatesArcTanYXAnd={ ArcTan2 rechùje ArcTan(Y/X) i zwrôcô nórt w pasownym kwadrance.
+;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+AroundTheMiddleAnObject=Wkół westrzódka (òbiekt)
+;Around the middle (an object)
+AsFullBackgroundSphere=Jakno fùl kùla spòdla:
+;As full background sphere:
+Aspect=Propòrcje:
+;Aspect:
+AssignActualFormulaSettings=Przëjimô aktualné nastawë fòrmùłë
+;Assign actual formula settings
+AssignTheActualLightSettingsOf=Przëjimô aktualné nastawë swiatła z przédnégò programù.\nSwiatła i farwë różnią sã òd przédnégò renderowaniô,\nbò nawi ùżiwô prostszich fùnkcjów.
+;Assign the actual light settings of the main program.\nThe lights and colors differs from main rendering\nbecause of simpler functions in the navi.
+AtWhichSubframe=Na chtërny pòdklatce:
+;At which subframe:
+Author=Aùtor:
+;Author:
+Author2=Ùsôdzca
+;Author
+Auto=Aùto
+;Auto
+AutoRenderAllFollowingTiles=Aùtomaticzno renderëj wszëtczé pòsobné kachle
+;Auto render all following tiles
+AutoSavingTheM3cFile=Aùtomaticzné zapisywanié lopka m3c:
+;Auto-saving the m3c file:
+AutoTheCPUAndTheGraphics=Aùto: CPU i graficznô karta dzelą sã òbrôzkã (CPU\nzaczinô zarô, karta dołącziwô, czej ji shader je\nskòmpilowóny), pòtemù karta rechùje céni i ambient\nocclusion.\nCPU: nigdë graficznô karta.\nGraficznô karta: żdac na shader, jak przódë.
+;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoUpdateImage=Aùtomatné òdnôwianié òbrôzka
+;Auto update image
+AutoUpdatePreview=Aùtomaticzno òdswiéżôj pòdzérk
+;Auto update preview
+AutoclipSpecDiff=Aùtomaticzné òbcynanié òdbł.+rozpr.:
+;Autoclip spec+diff :
+AutodetectOnStart=Aùtomatné rozpòznanié na zôczątkù
+;Autodetect on start
+AverageNoise=Strzédny szëm:
+;Average noise:
+AverageRaycount=Strzédnô lëczba parmieni:
+;Average raycount:
+AvgIterations=Strzéd. iteracjów:
+;Avg. iterations:
+AvgRaysteps=Strzéd. kroków parminia:
+;Avg. raysteps:
+AxisX=Òs X
+;Axis X
+AxisY=Òs Y
+;Axis Y
+AxisZ=Òs Z
+;Axis Z
+BMP=BMP
+;BMP
+BMPJPGPNGSaving=Zapisëwanié BMP,JPG,PNG:
+;BMP,JPG,PNG saving:
+BTracer2=BTracer2
+;BTracer2
+BTracer2CacheBtr2cache=Pamiãc pòdrãcznô BTracer2 (*.btr2cache)
+;BTracer2 cache (*.btr2cache)
+BackPic=Òbrôzk spòdla
+;Back pic
+BackToTheViewTakenFrom=Nazôd do pòzdrzatkù wzãtégò z przédnégò òkna.
+;Back to the view taken from the main window.
+BackgroundBottomColorClickToChange=Dólnô farwa spòdla, klikni, żebë zmienic.
+;Background bottom color, click to change.
+BackgroundImage=Òbrôzk spòdla:
+;Background image:
+BackgroundImage2=Òbrôzk spòdla
+;Background image
+BackgroundPictures=Òbrôzczi tła:
+;Background pictures:
+BackgroundTopColorLeftclickToChange=Górnô farwa spòdla, lewé kliknienié zmieniwô, prawé òtmikô menu.
+;Background top color, leftclick to change, rightclick for popupmenu.
+BasicColors=&Spòdlowé farwë:
+;&Basic colors:
+BatchProcessing=Serijné przerôbianié
+;Batch processing
+BatchProcessingPictureOf=Serijné przerôbianié: òbrôzk {} z {}
+;Batch processing: picture {} of {}
+Between=midzë:
+;between:
+Big=wiôldżé
+;big
+BigRender=Wiôldżi render
+;Big render
+BigRender2=Wiôldżi render: {}
+;Big render: {}
+BigRenderProjects=Projektë wiôldżégò renderu:
+;Big render projects:
+BigRenderStopped=Wiôldżi render zatrzëmóny.
+;Big render stopped.
+BigRenders=Wiôldżé renderë
+;Big renders
+BigSizeIncludingAntiAliasing=Wiôlgô wiôlgòsc (z antialiasingã):
+;Big size (including anti aliasing):
+BiggerOrSmallerWindowsAndText=Wikszé abò mniészé òkna ë tekst (ùkłôd òstôwô ten sóm)
+;Bigger or smaller windows and text (the layout stays the same)
+BiggerRadiusMeansSofterShadows=Wikszi radius dôwô miãkszé cénie
+;Bigger radius means softer shadows
+BiggerValuesThanExistingHorizontalLines=Wôrtnotë wikszé jak lëczba jistniejącëch (pòzémnëch) régów mdą òbcãté do slédny rédżi.\nTo nie je niżóden problem.
+;Bigger values than existing (horizontal) lines will be cropped to the last line.\nNo problem with that.
+BitmapBmp=Bitmapa (*.bmp)
+;Bitmap (*.bmp)
+BlendDFog=Mieszôj dMgłã
+;Blend dFog
+BlendTheDynamicFogInsteadOf=Mieszô dinamiczną mgłã w môl dodôwaniô widu,\nspòdlé przez to znikô.
+;Blend the dynamic fog  instead of adding the light,\nmakes the background vanishing.
+Blocks=blokòw
+;blocks
+Bmp=Bmp
+;Bmp
+Bokeh=Bokeh:
+;Bokeh:
+BorderSize=Wiôlgòsc krézu:
+;Border size:
+Box=Box
+;Box
+BoxSharpGoodAAGaussBit=Box: òstri, dobri AA\nGauss: përznã rozmazóny, baro dobri AA
+;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringsTheWindowToTheFront=Wëcygô òkno na wiéch z kòżdégò òkna abò zamikô biéżné. Klëkni pòle ë naceskni klawisze; Backspace rëmô skrót.
+;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
+Browse=Przezdrzë...
+;Browse...
+BuiltIn=wbùdowóné
+;built in
+BuiltWithoutIntelOpenImageDenoise=zbùdowóné bez Intel Open Image Denoise
+;built without Intel Open Image Denoise
+BulbTracer2=Bulb Tracer2
+;Bulb Tracer2
+BulbTracer22=Bulb Tracer 2 [ {} ]
+;Bulb Tracer 2 [ {} ]
+BulbTracer2SettingsBtrace2=Nastawë BulbTracer2 (*.btrace2)
+;BulbTracer2 settings (*.btrace2)
+By=Òd
+;By
+ByOfDone={} ({}, òd {}): {} z {} {} gòtowé
+;{} ({}, by {}): {} of {} {} done
+CPU=CPU
+;CPU
+Calc=Rechùj-
+;Calc-
+CalcColon=Òbl.:
+;Calc:
+CalcRAutomatic=Rech. R. aùtomatno
+;Calc. R. automatic.
+Calculate=Wërechùj
+;Calculate
+Calculate3D=Rechùj 3D
+;Calculate 3D
+Calculate3DAndTheBatchWindow=Rechùj 3D ë òkno rzeszowégò renderowaniô z rojã, w
+;Calculate 3D and the Batch window with the swarm, in
+CalculateAFast8x8BlockyImage=Rechùje chùtczi klockòwi òbrôzk 8x8 bez pòrządnégò òswieceniô
+;Calculate a fast 8x8 blocky image without proper lighting
+CalculateASAutomatically=Rechùj A.S. aùtomatno
+;Calculate A.S. automatically
+CalculateColors=Rechùj farwë
+;Calculate Colors
+CalculateDoF=Rechùj DoF:
+;Calculate DoF:
+CalculateDoFAutomatically=Rechùj DoF aùtomatno
+;Calculate DoF automatically
+CalculateFrom=Rechùjë z:
+;Calculate from:
+CalculateHSAutomatically=Rechùj H.S. aùtomatno
+;Calculate H.S. automatically
+CalculateJulia=Rechùj Julia
+;Calculate Julia
+CalculateLeftEyeImage=Rechùj òbrôzk lewégò òka
+;Calculate left eye image
+CalculateNTimesToReduceNoise=Rechùj n razy, żebë zmniészëc szëm przez ùstrzédnienié
+;Calculate n times to reduce noise by averaging
+CalculateNow=Wërechùj terô
+;Calculate now
+CalculateOn=Rechùj na
+;Calculate on
+CalculateOnlyASelectionInThe=Rechùj leno wëbróné òbrëmié òbrôzka
+;Calculate only a selection in the image
+CalculatePreview=Wërechùj pòdzérk
+;Calculate preview
+CalculateRTAutomatically=Rechùj R. (+ T.) aùtomatno
+;Calculate R. (+ T.) automatically
+CalculateRandomLightStrokesAutomatically=Rechùj przëtrôfkòwé smùdżi widu aùtomatno
+;Calculate random light strokes automatically
+CalculateReflections=Rechùj òdbicô:
+;Calculate reflections:
+CalculateRightEyeImage=Rechùj òbrôzk prawégò òka
+;Calculate right eye image
+CalculateTheImageFirst=Nôprzód wërechùj òbrôzk.
+;Calculate the image first.
+CalculateTheImageFirstCalculate3D=nôprzód wërechùj òbrôzk (Rechùj 3D)
+;calculate the image first (Calculate 3D)
+CalculateTransparency=Rechùj przezérnosc:
+;Calculate transparency:
+CalculateTransparencyOnlyOnDIFSFormulas=Rechùj przezérnosc leno na fòrmùłach dIFS (dlô kòmbinacjów DE z escapetime)
+;Calculate transparency only on dIFS formulas (for DE combinations with escapetimes)
+Calculated=wërechòwóné
+;calculated
+CalculatedOn=Wërechòwóné na: {}
+;Calculated on: {}
+CalculatedOnTheCPU=Wërechòwóné na CPU
+;Calculated on the CPU
+CalculatedPictures=Wërechòwóné òbrôzczi
+;Calculated pictures
+CalculatesTheDEAmbientOcclusionOn=Rechùje DE ambient occlusion na jedny czwiôrti piksli i dopełniô jinszé. Do 4 razy chùtszé na tim etapie; miãkszé w drobnëch detalach.
+;Calculates the DE ambient occlusion on a quarter of the pixels and fills in the others. Up to 4 times faster on that stage; softer in fine detail.
+CalculatingThePreview=Rechòwanié pòdzérkù...
+;Calculating the preview...
+CalculatingVolumetricLightMap=Rechòwanié wòlumetriczny mapë widu
+;Calculating volumetric light map
+Calculation=Rechòwanié
+;Calculation
+CalculationCount=Lëczba rechòwaniów:
+;Calculation count:
+CalculationOptions=Òptacje rechòwaniô
+;Calculation options
+CalculationStopped=Rechòwanié zatrzëmóné.
+;Calculation stopped.
+Calculations=Rechòwania
+;Calculations
+Camera=Kamera
+;Camera
+CameraColon=Kamera:
+;Camera:
+CameraLense=Òbiektiw kamerë:
+;Camera lense:
+Cancel=Òprzestóń
+;Cancel
+CancelAndShowResult=Òprzestóń i pòkażë rezultat
+;Cancel and show result
+CancelExit=Òprzestóń + wińdzë
+;Cancel + exit
+CancelImmediately=Òprzestóń zarô
+;Cancel immediately
+CancelType=Ôrt òprzestaniô:
+;Cancel type:
+CannotRead={}: nie dô sã przeczëtac
+;{}: cannot read
+CannotTakePartAnotherVersionOf=; {} nie mòże bëc ùczãstnikã (jinô wersjô programù)
+;; {} cannot take part (another version of the program)
+CannotWrite=Nie dô sã zapisac {}: {}
+;Cannot write {}: {}
+CaseYAngleIsAt90=Czej nórt Y je 90 abò -90 stãpni, nórtów Eulera nie jidze wërechòwac!
+;Case Y angle is at 90 or -90 degrees, euler angles can't be calculated!
+CatmullRom=Catmull-Rom
+;Catmull-Rom
+CautionTheProcessingsBelowMustBe=Bôczënk:  Niżi pòdóné òbrôbiania mùszą bëc rechòwóné\nòd górë do dołu, a zmianë widu wëzerëją\nte rechòwania!
+;Caution:  The processings below must be calculated\nfrom top to bottom and light changes will reset\nthese calculations!
+CeilSmallestIntegerXXMaxInt={ Ceil: Nômniészô całownô lëczba >= X, |X| < MaxInt }
+;{ Ceil: Smallest integer >= X, |X| < MaxInt }
+Change=Zmieni
+;Change
+ChangeParams=Zmieni parametrë
+;Change Params
+ChangeTheJuliaValuesWithRadius=Zmieniwô wôrtnotë Julia bez promiéń, dłëgòsc i szerokòsc geògraficzną
+;Change the julia values with radius, longitude and latitude
+CheckColors=Sprawdzë farwë
+;Check colors
+CheckThisIfYouWantTo=Zaznaczë, żelë chcesz zrobic animacjã w pãtlë.\nInterpòlacjô zachòwùje sã tak, jakbë za slédną kluczową klatką\nznowa szła pierszô i òdwrotno.
+;Check this if you want to make a loop animation.\nThe interpolation behaves like behind the last keyframe\ncomes the first keyframe again and vice versa.
+CheckThisOptionToGetLess=Zaznaczenié ti òptacji dôwô mni zmianów farwów na òbrôzkù.\nŻebë miec wicy detalów nawetka przë zaznaczenim, farwòwanié je nót zrobic na òriginalnëch\nparametrach ze zmniészoną wôrtnotą DEstop, pòdzeloną przez 'Faktor wiôlgòscë'.
+;Check this option to get less color changes in the image.\nTo get more details even when checked, do the coloring on the original\nparameters with a lowered DEstop value, divided by the 'Size factor'.
+CheckThisToStopSettingThe=Zaznaczë to, żebë nôpòmalszi wątk nie dostôwôł wëższégò priorytetu.
+;Check this to stop setting the slowest thread to a higher priority.
+CheckToChangeTheValueX=Zaznaczë, żebë zmienic wôrtnotã [x]
+;Check to change the value [x]
+ChooseAFilenameThenRenderBoth=Wëbierzë miono lopka, pòtemù renderuje òbrôzczi òbù òczów i aùtomatno zapisywô gòtową stereo pôrã.
+;Choose a filename, then render both eye images and save the completed stereo pair automatically.
+ChooseAMap=Wëbierzë mapã
+;Choose a map
+ChooseASharedFolderFirstOne=nôprzód wëbierzë dzelony katalog (taczi, jaczi widzy kòżdi kòmpùtr roju)
+;choose a shared folder first (one every computer of the swarm can see)
+ChooseOption=Wëbierzë òpcjã:
+;Choose Option:
+ChoseTheme=Wëbierzë témã:
+;Chose Theme:
+ClaudeCodeInATerminal=Claude Code (w terminalu)
+;Claude Code (in a terminal)
+ClaudeDesktopApp=Claude (aplikacjô na kòmpùtr)
+;Claude (desktop app)
+Clear=Wëczëszczë
+;Clear
+ClearAllGenerationsBeforeTheSelected=Rëmô wszëtczé generacje przed wëbróną
+;Clear all generations before the selected one
+ClearAllPrevious=Wëczëszczë wszëtczé wczasniészé
+;Clear all previous
+ClearTheWholeList=Wëczëszczë całą lëstã
+;Clear the whole list
+ClickAButtonToChangeA=(Klikni knąp, żebë zmienic katalog)
+;(Click a button to change a directory)
+ClickAColumnHeaderToSort=Klikni nagłówk kòlumnë, żebë sortowac.
+;Click a column header to sort.
+ClickALanguageToSwitchThe=Klikni jãzëk, bë przełączëc na niegò òkna
+;Click a language to switch the windows to it
+ClickAParameterFileForIts=Klikni lopk parametrów, bë òbaczëc jegò pòdzérk.
+;Click a parameter file for its preview.
+ClickAndPressTheKeysOf=Klëkni ë naceskni klawisze skrótu
+;Click and press the keys of the hotkey
+ClickImage=klikni òbrôzk
+;click image
+ClickOnButtonAndAfterwardsOn=Klikni knąpã, a pòtemù òbiekt na òbrôzkù,\nżebë nastawic strzódkòwi pùnkt widu.
+;Click on button and afterwards on the object in image\nto set the midpoint for the light.
+ClickOnImage=Klikni na òbrôzk
+;Click on image
+ClickOnMToSaveThese=Klikni na "M", żebë zapisac te nastawë razã z szérzą i skalą òbrôzka\njakò preset. Pòtemù klikni na "pòdzérk",  "strzédny" abò "wësoczi"\nabò znowa na "M", żebë òprzestac.
+;Click on "M" to save these settings plus image width and scale\nas a preset. Click afterwards on "preview",  "mid" or "high"\nor again on "M" to cancel.
+ClickOnTheButtonAndAfterwards=Klikni na knąpã, a pòtemù na òbiekt w òbrôzkù, żebë stądka\npòbrac wôrtnotë.
+;Click on the button and afterwards on the object in the image to get\nthe values from there.
+ClickOnTheButtonAndAfterwards2=Klikni na knąpã, a pòtemù na òbiekt w òbrôzkù, żebë stądka\npòbrac wôrtnotë Julia.\nW tribie 4d wektor je òbrôcony wedle wôrtnotów òbrôcaniô 4d.\n\nRada: Pòbierzë wôrtnotë z òbiektu rechòwónégò bez Julia, jinaczi wënik\nni mô prôwdzëwi relacji do tegò pùnktu.
+;Click on the button and afterwards on the object in the image to get\nthe julia values from there.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.\n\nHint: Get the values from the non julia calculated object, else the result\nhas no real relation to that point.
+ClickOnTheButtonAndAfterwards3=Klikni na knąpã, a pòtemù na òbiekt w òbrôzkù, żebë pòbrac\nnieprzesëniãtą òdległosc òbiektu.\nNen dzél òbiektu pòjawi sã w realny òdległoscë ekranu.
+;Click on the button and afterwards on the object in the image to get\nthe non shifted object distance.\nThe object part would appear in the real distance of the screen.
+ClickOnTheObjectInThe=Klikni na òbiekt w òbrôzkù, jaczi mô bëc wëstrzódkòwóny.\nCzerënk kamerë sã nie zmieni, brëkùj òpcjów òbrôcaniô,\nżebë òbracac wkół strzódka.
+;Click on the object in the image to be centered.\nThe camera direction will not be changed, use the rotation\noptions to rotate around the midpoint.
+ClickToChangeBetweenDynfogOn=Klikni, żebë przełączëc midzë dinamiczną dôką na it. i farwą na it.
+;Click to change between Dynfog on its and Color on its
+ClickToChooseTheOutputFile=Klikni, bë wëbrac lopk wińdzeniô
+;Click to choose the output file
+ClickToChooseTheOutputFolder=Klikni, żebë wëbrac katalog docelowi
+;Click to choose the output folder
+ClickToChooseYourNameFor=Klikni, żebë wëbrac swòje miono do aùtomatnégò zapisywaniô w parametrach
+;Click to choose your name for automatic saving in parameters
+ClickToHideShow=Klikni, żebë schòwac/pòkazac
+;Click to hide/show
+ClickToInsertYourNameBelow=Klikni, żebë wstawic swòje miono niżi
+;Click to insert your name below
+ClickToLoadABackgroundPicture=Klikni, żebë wczëtac òbrôzk spòdla.
+;Click to load a background picture.
+ClickToOpenTheExplorerAnd=Klikni, żebë òtemknąc eksplorator i przecygnąc (drag&&drop) lopczi M3P na lëstã.
+;Click to open the explorer and drag&&drop M3P files on the list.
+ClickToRenderThe2dPlane=Klikni, żebë wërenderowac płaszczëznã 2d w strzódkù.
+;Click to render the 2d plane at the midpoint.
+ClickToRenderThe2dStartplane=Klikni, żebë wërenderowac zôczątkòwą płaszczëznã 2d.
+;Click to render the 2d startplane.
+ClickToRenderTheZEndplane=Klikni, żebë wërenderowac kùńcową płaszczëznã Z.
+;Click to render the Z endplane.
+ClickToSaveTheCurrentLight=Klikni, żebë zapisac terôczasny wid ë wikszosc nastawów farwów\nna knąpie włôsnégò presetu.\nKlikni tã knąpã jesz rôz, żebë òprzestac zapisywanié.
+;Click to save the current light and most color settings\non a custom preset button.\nClick this button again to cancel saving.
+ClickToSelectOneAndMore=Klikni, żebë wëbrac jeden abò wicy lopków M3P do lëstë.
+;Click to select one and more M3P files to put into the list.
+ClickToSetAllDynamicFog=Klikni, żebë wszëtczé suwôczi dinamiczny mgłë nastawic na zero.
+;Click to set all dynamic fog sliders to zero.
+ClickToSetTheImageHeight=Klikni, żebë nastawic wiżã òbrôzka do tëch propòrcjów.
+;Click to set the image height to fit this aspect ratio.
+ClickToSetTheNaviLight=Klikni, żebë nastawic swiatło nawi na jeden z tëch szablonów.
+;Click to set the navi light to one of these presets.
+ClickToTypeTheZoomIt=Klikni, żebë wpisac zoom (òstôwô: stałi zoom).
+;Click to type the zoom (it stays: fixed zoom).
+ClippingR=ClippingR:
+;ClippingR:
+Close=Zamkni
+;Close
+CloseMesh=Zamkni séc
+;Close Mesh
+CloseTheCurrentWindow=Zamkni biéżné òkno:
+;Close the current window:
+CloseTheMeshAtTheBorders=Zamikô séc na grańcach
+;Close the mesh at the borders
+CloseWindow=Zamkni òkno
+;Close window
+CloudDriftX=Dryft chmùrów X
+;Cloud drift X
+CloudDriftY=Dryft chmùrów Y
+;Cloud drift Y
+CloudDriftZ=Dryft chmùrów Z
+;Cloud drift Z
+Clouds=Chmùrë
+;Clouds
+CloudsOverThePictureALayer=Chmùrë na òbrazu: warstwa midzë dwòma wiżawama wzdłuż òsë X, Y abò Z fraktala, òswiecónô pierszim swiatłã, przed fraktalã ë za nim (nie je w MB3D: zapisóné za dzélã parametrów MB3D; w Monte Carlo wzdłuż promieni widzeniô; nie w òdbiciach)
+;Clouds over the picture: a layer between two heights along the fractal's X, Y or Z axis, lit by the first light, in front of and behind the fractal (not in MB3D: kept after MB3D's part of the parameters; in Monte Carlo along the view rays; not in reflections)
+Co=Co:
+;Co:
+Code=Kòd
+;Code
+CodeFile=Kòd: {}\nLopk: {}
+;Code: {}\nFile: {}
+ColCycling=Cykl farwów
+;Col cycling
+ColVarOnZ=War. farwë na Z
+;Col. var. on Z
+Color=Farwa
+;Color
+ColorAdjustment=Dopasowanié farwów
+;Color adjustment
+ColorEnd=Kùńc farwë
+;Color end
+ColorOnIterat=Farwa na iterac.:
+;Color on Iterat.:
+ColorOnIts=Farwa na it.:
+;Color on its:
+ColorOption0AverageOfBoth=Òpcjô farwë:\n0:  Strzédnô òbù fòrmùłów.\n1:  Farwa pierszi fòrmùłë.\n2:  Farwa drëdżi fòrmùłë.
+;Color Option:\n0:  Average of both formulas.\n1:  Color of first formula.\n2:  Color of second formula.
+ColorScalingOptions=Òpcje skalowaniô farwów
+;Color scaling options
+ColorStart=Zôczątk farwë
+;Color start
+Coloring=Farwienié
+;Coloring
+Colour0Grey1AsIt=Farwa: 0 szarô, 1 tak jak je, 2 dwa razë barżi farwny
+;Colour: 0 grey, 1 as it is, 2 twice as colourful
+ColourFringes=Farwné òbrąbczi
+;Colour fringes
+ColourVariation=Zmiana farwë
+;Colour variation
+ColoursByDirection=Farwë wedle kerënkù:
+;Colours by direction:
+ColumnsOfTiles=Kòlumnë kachlów
+;Columns of tiles
+CombinationMethodsMinBothFractalsAre=Metodë łączeniô:\nMin: Òba fraktale są widzałé, minimalné łączenié DE\nMax: Le nakłôdającé sã dzéle, maksymalné łączenié DE\nInv max: Òdwrôcô DE drëdżégò hibridu i łączi 'Max'\nMin lin: Minimalné łączenié z liniową fùnkcją nakłôdaniô\nMin nlin: Jak S1, nieliniowô fùnkcjô, gładszé nakłôdanié\nMix: Nôprzód F1..FendHybrid1, tej FstartHybrid2..F6 (dIFS) ze zmienionym wektorã.
+;Combination Methods:\nMin: Both fractals are visible, minimum combine the DE's\nMax: Only overlapping parts, maximum combine the DE's\nInv max: Invert DE of second Hybrid and combine 'Max'\nMin lin: Minimum combine with a linear overlap function\nMin nlin: Like S1, nonlinear function, more smooth overlap\nMix: First F1..FendHybrid1 then use FstartHybrid2..F6 (dIFS) with modified vector.
+CombineMapYWithDiffuseColors=Łączë Y mapë z difuzyjnyma farwama
+;Combine map Y with diffuse colors
+Common=Zwëczajny
+;Common
+ComparingFiles=pòrównywanié lopków
+;comparing files
+Compile=Kòmpilëj
+;Compile
+CompileTheCodeF9=Kòmpiluje kòd <F9>
+;Compile the code <F9>
+CompilingSucceeded=Kòmpilacjô ùdała sã
+;Compiling succeeded
+Computer=Kòmpùtr
+;Computer
+ConeMarchThePixelsOfA=Stożkòwi marsz: piksle blokù zaczinają tam, gdze sã zatrzimôł jegò grëbi parmiéń
+;Cone march: the pixels of a block start where its coarse ray stopped
+Confirm=Pòcwierdzë
+;Confirm
+Connect=Pòłączë
+;Connect
+ConnectToAnAIAssistant=Pòłączë z asystentã AI
+;Connect to an AI assistant
+ConnectToAnAIAssistantLet=Pòłączë z asystentã AI: niech òpisywô, zmieniwô i renderëje twòje òbrôzczi
+;Connect to an AI assistant: let it describe, change and render your pictures
+ConnectedAskItInANew=Pòłączoné. Spëtôj gò w nowi rozmòwie; zrëszë aplikacjã znowa, jeżlë mb3d nie je widzec midzë jegò nôrzãdłama.
+;Connected. Ask it in a new conversation; restart the app if mb3d does not show among its tools.
+ConnectedStartANewClaudeCode=Pòłączoné. Zrëszë nową sesjã Claude Code, żebë gò brëkòwac. Żebë gò zôs rëmnąc, zrëszë kòmandã niżi.
+;Connected. Start a new Claude Code session to use it. To take it out again, run the command below.
+ConstAttenuation=Stałé tłëmienié
+;Const Attenuation
+Constant=Kònstanta
+;Constant
+Constants=Stałé:
+;Constants:
+Continue=Kòntinuëj
+;Continue
+Contrast=Kòntrast
+;Contrast
+ConvertManyM3PFilesToM3I=Kònwertuje wiele lopków M3P na M3I
+;Convert many M3P files to M3I
+CopiedToTheClipboard=Skòpérowóné do schówkù.
+;Copied to the clipboard.
+CopiesAnFfmpegCommandForA=Kòpiuje do schòwka kòmandã ffmpeg dlô môłégò wideò MP4 z klatków.\nZrëszë jã sóm w terminalu (ten programa nie zrëszô jinëch programów).
+;Copies an ffmpeg command for a small MP4 video of the frames to the clipboard.\nRun it yourself in a terminal (this program starts no other programs).
+Copy=Kòpérëj
+;Copy
+CopyCommand=Kòpérëj kòmandã
+;Copy command
+CopyParamsToClipboard=Kòpérëj parametrë do schówkù
+;Copy Params to Clipboard
+CopyTheCommandToPasteIt=Kòpérëj kòmandã, żebë jã wkleic w terminalu
+;Copy the command, to paste it into a terminal
+CopyTheSelectedLineOrAll=Kòpérëj zaznaczoną régã abò wszëtczé pòkazóné régi, czej niżódnô nie je zaznaczonô
+;Copy the selected line, or all the lines shown when none is selected
+CopyTheValues=Kòpérëj wôrtnotë
+;Copy the values
+CopyTheValuesTo=Skòpiuj wôrtnotë do..
+;Copy the values to..
+CopyThisFormulaToFormula1=Skòpiuj tã fòrmùłã do fòrmùłë 1
+;Copy this formula to formula 1
+CopyThisFormulaToFormula2=Skòpiuj tã fòrmùłã do fòrmùłë 2
+;Copy this formula to formula 2
+CopyThisFormulaToFormula3=Skòpiuj tã fòrmùłã do fòrmùłë 3
+;Copy this formula to formula 3
+CopyThisFormulaToFormula4=Skòpiuj tã fòrmùłã do fòrmùłë 4
+;Copy this formula to formula 4
+CopyThisFormulaToFormula5=Skòpiuj tã fòrmùłã do fòrmùłë 5
+;Copy this formula to formula 5
+CopyThisFormulaToFormula6=Skòpiuj tã fòrmùłã do fòrmùłë 6
+;Copy this formula to formula 6
+CopyThisLightToLight1=Skòpiérëj ten wid do Wid1
+;Copy this light to Light1
+CopyThisLightToLight2=Skòpiérëj ten wid do Wid2
+;Copy this light to Light2
+CopyThisLightToLight3=Skòpiérëj ten wid do Wid3
+;Copy this light to Light3
+CopyThisLightToLight4=Skòpiérëj ten wid do Wid4
+;Copy this light to Light4
+CopyThisLightToLight5=Skòpiérëj ten wid do Wid5
+;Copy this light to Light5
+CopyThisLightToLight6=Skòpiérëj ten wid do Wid6
+;Copy this light to Light6
+CopyZ1ToZ2ToGet=Skòpiérëj Z1 do Z2, żebë dostac pùnkt òstroscë
+;Copy Z1 to Z2 to get a focus point
+Cores=Jądra
+;Cores
+Cos=Cos
+;Cos
+Cos2=Cos^2
+;Cos^2
+Cos22=Cos/2+\s
+;Cos/2+\s
+Cos23=(Cos/2+)²
+;(Cos/2+)²
+CouldNotLoadFormula=Nie dało sã wczëtac fòrmùłë <{}>: {}
+;Could not load formula <{}>: {}
+CouldNotWrite=Nie dało sã zapisac {}: {}
+;Could not write {}: {}
+CountOfImagesObjectSlicesThat=Lëczba òbrôzków (skrôwków òbiektu), jaczé mdą wërechòwóné.
+;Count of images (object slices) that will be calculated.
+Cover=Pòkrëcé:
+;Cover:
+CreateEditAJITCompiledFormula=Ùsôdzë/editëj fòrmùłã kòmpilowóną JIT
+;Create/edit a JIT-compiled formula
+CreateLanguageFile=Ùsôdzë lopk jãzëka
+;Create language file
+CreateMeshes=Twòrzenié sécë (mesh)
+;Create Meshes
+CrossEyedPreview=Pòdzérk na krziż
+;Cross-eyed preview
+Ctrl1ToCtrl7In=Ctrl+1 do Ctrl+7 w pòrządkù lëstë, Ctrl+W zamikô
+;Ctrl+1 to Ctrl+7 in the order of the list, Ctrl+W to close
+Curves=Krzëwé
+;Curves
+CustomPreset1=włôsny preset 1
+;custom preset 1
+CustomPreset10=włôsny preset 10
+;custom preset 10
+CustomPreset2=włôsny preset 2
+;custom preset 2
+CustomPreset3=włôsny preset 3
+;custom preset 3
+CustomPreset4=włôsny preset 4
+;custom preset 4
+CustomPreset5=włôsny preset 5
+;custom preset 5
+CustomPreset6=włôsny preset 6
+;custom preset 6
+CustomPreset7=włôsny preset 7
+;custom preset 7
+CustomPreset8=włôsny preset 8
+;custom preset 8
+CustomPreset9=włôsny preset 9
+;custom preset 9
+Cuts=Cãca
+;Cuts
+Cutting=Òbcynanié
+;Cutting
+Cutting2=Òbcynanié*
+;Cutting*
+Cw=Cw
+;Cw
+Cx=Cx
+;Cx
+Cy=Cy
+;Cy
+Cz=Cz
+;Cz
+DCTDenoisingGIMP=Òdszëmianié DCT (GIMP)
+;DCT denoising (GIMP)
+DE=DE:
+;DE:
+DEAO=DEAO
+;DEAO
+DEComb=DE comb.:
+;DE comb.:
+DEOcclusionAtHalfResolution=DE occlusion przë pòłowie rozdzélnoscë
+;DE occlusion at half resolution
+DEStop=DE stop:
+;DE stop:
+DEcombinate=DEcombinate
+;DEcombinate
+DEstop=DEstop:
+;DEstop:
+DEstopC=DEstop+C
+;DEstop+C
+DFog=d.Mgła
+;d.Fog
+DIFS=dIFS
+;dIFS
+DIFSShapes=sztôłtë dIFS
+;dIFS shapes
+DIFSTransformations=transfòrmacje dIFS
+;dIFS transformations
+DOUBLEIMAGESIZE=PÒDWÒJENIÉ WIÔLGÒSCË ÒBRÔZKA
+;DOUBLE IMAGESIZE
+DateModified=Datum zmianë
+;Date modified
+Day=Dzéń
+;Day
+DblClickHideRightPanel=Dwaklik: schòwôj prawi panel
+;DblClick: hide right panel
+Debug=debug
+;debug
+DecreaseScale=Zmniészë skalã
+;Decrease scale
+DecreaseTheSizeOfTheNavigator=Zmniészô òkno Nawigatora
+;Decrease the size of the Navigator window
+DecreasesTheFogInNearParts=Zmniésziwô mgłã w blësczich partiach
+;Decreases the fog in near parts
+DefaultTheme=Domëslnô téma
+;Default Theme
+Defaults=Domëslné
+;Defaults
+DefineDefaultDirectoriesForLoadingSaving=Òznôczë domëslné katalodżi do wczëtiwaniô+zapisywaniô
+;Define default directories for loading+saving
+DefineImageSequencesToAnimateHeight=Òznôczë sekwencje òbrôzków do animòwaniô mapów wiżë i farwów
+;Define image sequences to animate height- and color maps
+DefinesHowAccurateThePositionWith=Òkresliwô, jak dokładno bãdze rechòwóné pòłożenié z pòdóną òdległoscą òd pòwiérzchni.\nWëższé wôrtnotë dôwają wikszą dokładnosc, co dôwô téż lepszé rechòwanié nòrmalnëch.\nWiele wicy jak 12 je rzôdkò nót.
+;Defines how accurate the position with the defined distance to the surface will be calculated.\nHigher values leads to more accuracy what leads also to a better normals calculation.\nMuch more than 12 are rarely needed.
+DefinesHowNearInMetersThe=Òznôczô, jak krótkò (w métrach) płaszczëzna Zstart leżi przed tobą.\nTo je téż minimalnô òdległosc, w jaczi mòże sã pòjawic (wirtualny) òbiekt.
+;Defines how near (in meters) the Zstart plane lies in front of you.\nIt is also the minimum distance that a (virtual) object can appear.
+DefinesTheDistanceToTheObjects=Òznôczô òdległosc òd pòwiérzchni òbiektu, dze raymarching sã kùńczi.\nNiższé wôrtnotë dôwają wiãcy detalów òbiektu, ale mògą téż prowadzëc do niedopróbkòwaniô.\nWôrtnota je zanôléżnô òd szérzë piksla.
+;Defines the distance to the objects surface where raymarching stops.\nLower values gives more object details, but can also lead to undersampling.\nThe value is related to the width of a pixel.
+DefinesTheRealworldDistanceToThe=Òznôczô realną òdległosc do ekranu w métrach.
+;Defines the realworld distance to the viewing screen in meters.
+DefinesTheRealworldImageWidthOn=Òznôczô realną szérzã òbrôzka na ekranie w métrach.
+;Defines the realworld image width on the screen in meters.
+DefinesTheSizeOfTheZstart=Òznôczô wiôlgòsc płaszczëznë widzeniô Zstart.\nJe nastawiónô aùtomatno przë brëkòwanim nawigatora,\nzmieni blós tedë, czej òbiektë są òbcãté na rańtach\nòbrôzka.
+;Defines the size of the Zstart viewplane.\nIt is set automatically when using the navigator,\nchange only if objects are cutted at the image\nborders.
+DefinesUpToWhichAngleThe=Òkresliwô, do jaczégò nórta bãdze rechòwóné cenienié.\nNiższé wôrtnoscë: daleczé strukturë są mni pòd cëskã blësczich strukturów,\nto je lepszé, czej strukturë mają wiele dzurów.
+;Defines up to which angle the shadowing will be calculated.\nLower values: Far structures are less affected by near structures,\nthis is advanced when the structures got lots of holes.
+DefinesWhereTheIterationStartsAgain=Òznôczô, dze iteracjô zaczinô sã znowa,\nczej òstatnô fòrmùła je zrobionô a do tegò czasu\nnie béł spełniony niżóden warënk stopù.
+;Defines where the iteration starts again,\nwhen the last formula was done and no\nstop condition occured by then.
+DegreeOfRotation=Nórt òbrôcaniô w stãpniach
+;Degree of rotation
+Degrees=Stopnie
+;Degrees
+Del=Rëmôj
+;Del
+DelEntry=Rëmôj wpisënk
+;Del Entry
+Delete=Rëmôj
+;Delete
+DeleteAll=Rëmôj wszëtkò
+;Delete all
+DeleteAllKeyframesToBeginA=Rëmnij wszëtczé kluczowé klatczi, żebë zacząc nowi projekt.
+;Delete all keyframes to begin a new project.
+DeleteHighlightedFilesFromTheList=Rëmnij zaznaczoné lopczi z lëstë
+;Delete highlighted files from the list
+DeleteSelectedConstantValue=Rëmô wëbróną stałą wôrtnotã
+;Delete selected constant value
+DeleteSelectedNamedParameter=Rëmô wëbróny mionowóny paraméter
+;Delete selected named parameter
+DeleteSelectedOption=Rëmô wëbróną òpcjã
+;Delete selected option
+DeleteSequence=Rëmnij sekwencjã
+;Delete Sequence
+DeleteTheParametersAndTheThumbnail=Rëmnąc parametrë i miniaturã "{}" z historii?
+;Delete the parameters and the thumbnail of "{}" from the history?
+DeleteThisKeyframe=Rëmnij tã kluczową klatkã
+;Delete this keyframe
+DeleteThisTilesFiles=Rëmôj lopczi tegò kachla
+;Delete this tiles files
+DeleteWhatAllUnfinishedRendersKept=Rëmô to, co wszëtczé nieskùńczoné renderë trzimałë
+;Delete what all unfinished renders kept
+DeleteWhatAllUnfinishedRendersKeptQuestion=Rëmnąc to, co zachòwałë wszëtczé nieskùńczoné renderë?
+;Delete what all unfinished renders kept?
+DeleteWhatTheSelectedRenderKept=Rëmô to, co wëbróny render trzimôł
+;Delete what the selected render kept
+Density=Gãstosc:
+;Density:
+Depth=Głãbia
+;Depth
+DepthColon=Głãbia:
+;Depth:
+DepthGradientFunctionWorksOnlyIf=Fùnkcja gradientu głãbi, dzejô leno, czej nie je 'Wzglãdno òbiektu'.
+;Depth gradient function, works only if not 'Relative to object'.
+DepthOfField=\sGłãbia òstroscë
+;\sDepth of Field
+DepthOfField2=Głãbiô òstrotë
+;Depth of Field
+DepthOfFieldLower=głãbiô òstroscë
+;depth of field
+DepthOfReflections1ToSee=Głãbòkòsc òdbiców: 1, bë widzec le jedno òdbicé,\nprzë 2 mòże widzec òdbicô w òdbitim òbiekce, ... i tak dali.
+;Depth of reflections: 1 to see only one reflection,\nwith 2 you could see reflections in the reflected object, ... and so on.
+Deriv=Deriv
+;Deriv
+DerivDeriv2=Deriv'  =  Deriv * 2
+;Deriv'  =  Deriv * 2
+Description=Òpisënk
+;Description
+DetectsTheAmountOfProcessorCores=Rozpòznôwô lëczbã jąder procesora przë zrëszanim.\nMòże samemù wëbrac lëczbã i wëłączëc tã òpcjã,\nżebë zaczinac z jinyma nastawama.
+;Detects the amount of processor cores on startup.\nYou can choose the amount yourself and disable\nthis option to start with different settings.
+DeterminesHowManyFollowingObjectsDiffuse=òkresliwô, jak wiele pòsobnëch rozpròszonëch òdbiców òbiektów mdze rechòwónëch
+;determines how many following objects diffuse reflections will be calculated
+DeterminesHowManyFollowingStraightReflections=òkresliwô, jak wiele pòsobnëch prostëch òdbiców mdze rechòwónëch
+;determines how many following straight reflections will be calculated
+DeterminesWhenToStopRenderingIn=Òkresliwô, czedë zatrzëmac renderowanié w rzeszowim tribie
+;Determines when to stop rendering in batch-mode
+DeterminesWhetherTheLightShouldBe=Òkresliwô, czë wid mô bëc widzawny, ë jegò sztôłt.
+;Determines whether the light should be visible and its shape.
+Diff=Dif:
+;Diff:
+Diff2=Dif
+;Diff
+DifferentCalculationOfLightCombining=Jinszé rechòwanié łączeniô widu
+;Different calculation of light combining
+Diffuse=Difuzyjné:
+;Diffuse:
+Diffuse2=Rozproszony
+;Diffuse
+DiffuseFunctionChooseCosOrCos=Fùnkcja difuzji, wëbierzë Cos abò Cos^2, jeżlë dlô tegò widu brëkùjesz cwiardi céń.
+;Diffuse function, choose Cos or Cos^2 if you use a hard shadow on this light.
+DiffuseObjectColorsClickToChange=Difuzyjné farwë òbiektu, klikni, żebë je zmienic.
+;Diffuse object colors, click to change them.
+DiffuseShadow=Difuzyjny céń
+;Diffuse shadow
+DirectionOf=Kerënk {} z {}
+;Direction {} of {}
+DirectionTowardsZero000=Czerënk do zera (0,0,0)
+;Direction towards zero (0,0,0)
+Directions=Kerënczi:
+;Directions:
+DisableAll=Wëłączë wszëtkò
+;Disable all
+DisableAnalyticalDE=Wëłączë analiticzné DE
+;Disable analytical DE
+DisableTheAutomaticZoomAdjustWhen=Wëłączô aùtomatné dopasowanié zoomù przë rëchù.\nTo prowadzy téż do przechòdzeniô bez òbiekt.
+;Disable the automatic zoom adjust when moving.\nThis leads also to stepping through the object.
+DisableTheFKeyForAni=Wëłączë klawisz (f) dlô animacje
+;Disable the (f) key for ani
+DisableThemes=Wëłączë témë
+;Disable Themes
+DisableThisIfYouDoNot=Wëłączë to, czej w indeksach lopków nie mają bëc zéra na przódkù.\nNa przikłôd:  name000010.png  mdze  name10.png
+;Disable this if you do not want leading zeros in the file indizes.\nFor example:  name000010.png  will become  name10.png
+DisableThreadboost=Wëłączë threadboost
+;Disable threadboost
+Disc=Krąg
+;Disc
+Disconnect=Rozłączë
+;Disconnect
+DisplayStyle=Sztél wëskrzëniwaniô
+;Display Style
+DisplaysSomeFormulaDescriptionsIfAvailable=Pòkazywô òpisë fòrmùłów, jeżlë są przistãpné.
+;Displays some formula descriptions, if available.
+DistanceEstimation=Òszacowanié òdległoscë
+;Distance estimation
+DitheringForScale=Dithering dlô skalë:
+;Dithering for scale:
+DividesTheActualRaystepMultiplierBy=Dzelë aktualny "Raystep multiplier" przez tã wôrtnotã,\nzwikszë wôrtnotã, bë zmniészëc przestãpiwanié.
+;Divides the actual "Raystep multiplier" by this value,\nincrease the value to reduce overstepping.
+DoFCalculation=Rechòwanié DoF
+;DoF calculation
+DoFCalculationTurnedOffNotPossible=Rechòwanié DoF wëłączoné, nie je mòżlëwé w tribie kachlów.
+;DoF calculation turned off, not possible in tiling mode.
+DoNotMakeThisWindowSticky=Nie lepi tegò òkna
+;Do not make this window sticky
+DoThisFunctionAutomatically=Wëkònuj tã fùnkcjã aùtomatno
+;Do this function automatically
+DoYouReallyWantToClear=Czë gwësno chcesz wëczëszczëc wszëtczé wczasniészé pòkòlenia?
+;Do you really want to clear all previous generations?
+DoYouReallyWantToClearQuestion=Czë gwësno chcesz wëczëszczëc serijną lëstã?
+;Do you really want to clear the batch list?
+DoYouReallyWantToDelete=Czë gwësno chcesz rëmnąc wszëtkò?
+;Do you really want to delete everything?
+DoYouReallyWantToStop=Czë gwësno chcesz zatrzëmac rechòwania?
+;Do you really want to stop the calculations?
+DoesTheColoringAfterThisNumber=Farwi pò ti lëczbie iteracjów, a nié òd bailoutu (-1,  wëłączoné)
+;Does the coloring after this number of iterations and not from bailout (-1,  disabled)
+Doing=Robi
+;Doing
+DonTChangeAmbShDFog=Nie zmieniwôj òkòl. céni+dMgłë:
+;Don't change AmbSh+dFog:
+DonTSaveOnlyPreview=Nie zapisëj, le pòdzérk
+;Don't save, only preview
+Done=Zrobioné
+;Done
+Done2={} gòtowé ({}).
+;{} done ({}).
+DoneOf=Gòtowé: {} z {}{}
+;Done: {} of {}{}
+Double=Double
+;Double
+DoubleClickToChangeTheNavi=Dwójné kliknienié zmieniwô trib nawi
+;Double click to change the navi mode
+DoubleTheImagesizeAutomatically=Pòdwòjôj wiôlgòsc òbrôzka aùtomatno
+;Double the imagesize automatically
+DownScaling=Pòmniész-\nenié:
+;Down-\nscaling:
+DownscaleBoth=Zmniészë òbie
+;Downscale both
+DownscaleDiffuseKeepReflections=Zmniészë rozproszoné, òstawi òdbicô
+;Downscale diffuse, keep reflections
+DownscaleSpecular=Zmniészë òdbłësk
+;Downscale specular
+Ds=Ds:
+;Ds:
+DunnoDoNothing=Nie wiém, nick nie rób
+;Dunno, do nothing
+DynFog=Din.mgła
+;Dyn.fog
+DynFogOnIt=Din. dôka na it.:
+;Dyn. fog on It.:
+DynFogOnIts=Dyn. dôka na it.:
+;Dyn Fog on its:
+DynamicFogClickToChangeThe=Dinamicznô mgła, klikni, żebë zmienic farwã.  Prawé kliknienié wstôwiô farwã wòlumetricznégò widu.
+;Dynamic fog, click to change the color.  Rightclick to insert volumetric light color.
+DynamicFogIntenseColorClickTo=Intensywnô farwa dinamiczny mgłë, klikni, żebë zmienic.
+;Dynamic fog intense color, click to change.
+DynamicFogOrVolumetricLightParams=Parametrë dinamiczny mgłë abò wòlumetricznégò widu. Òptacje są w karce 'Farwienié'!
+;Dynamic fog or volumetric light params. See 'Coloring' tab for options!
+DynamicFogTheLowerTheNumber=Dinamicznô dôka:\nCzim niższô lëczba, tim dali òd òbiektu pòkazywô sã dôka.\nPrzë dIFS dôka je wkół dzéla òbiektu rechòwónégò w ti iteracji.\nZero wëłącziwô tã fùnkcjã i dinamicznô dôka dzejô jak zwëczajno na lëczbie krokòw parmienia.\nRada: Zaznaczë òpcjã 'First step random', bë zabezpiec przed stãpniama.\nWòlumetriczny wid:\nWëbierzë nr widu, dlô jaczégò bãdze rechòwóné rozpraszanié widu.
+;Dynamic fog:\nThe lower the number the farer away from the object the fog shows up.\nWith dIFS, the fog is around the object part calculated at this iteration.\nZero to disable this feature and do the dynamic fog on raystep count as usual.\nHint: Check the 'First step random' option to prevent steps.\nVolumetric light:\nChoose the light nr from which lightscattering will be calculated.
+EdgesColor=Farwa kańtów
+;Edges color
+Edit=Edytuj
+;Edit
+EditJITCompiledFormula=Editëj fòrmùłã kòmpilowóną JIT
+;Edit JIT-compiled Formula
+EditMapSequences=Editowanié sekwencjów mapów
+;Edit Map Sequences
+EditMode=Trib edicji:
+;Edit mode:
+EditNamedConstantValue=Editëjë nazwóną wôrtnotã kònstantë
+;Edit named constant value
+EditNamedParam=Editëjë nazwóny parameter
+;Edit named param
+EditOptionValue=Editëjë wôrtnotã òpcji
+;Edit option value
+EditSelectedConstantValue=Edytuje wëbróną stałą wôrtnotã
+;Edit selected constant value
+EditSelectedNamedParameter=Edytuje wëbróny mionowóny paraméter
+;Edit selected named parameter
+EditSelectedOption=Edytuje wëbróną òpcjã
+;Edit selected option
+Elapsed=Minãło
+;Elapsed
+ElapsedTimeS=Minãłi czas: {} s
+;Elapsed time: {} s
+Enable=Włączë
+;Enable
+EnableGeneratingZBufferThisMode=Włączô generowanié Z-bufora. Nen trib wëmôgô dodôwnëch pòdôwków, co gò robi niezgódnym z wczasniészima wersjama, tej lopczi MC z tim nastawã nie mògą bëc zapisóné/wczëtóné. Żebë zapisac Z-bufor, sygnie zapisac zwëczajny òbrôzk, Z-bufor je tej zapisywóny aùtomaticzno.
+;Enable generating z-buffer. This mode requires additional data which makes it incompatible with previous versions, so MC-files with this setting can not be saved/restored. To save the z-buffer just save the normal image, the z-buffer is then automatically saved as well.
+EnableInternalGammaOf2For=Włączë bënową gammã 2 dlô rechòwaniô widu.\nTo je niezanôleżné òd suwôka Gamma.
+;Enable internal gamma of 2 for light calculations.\nThis is independent from the Gamma slider.
+EnableLighting=Włączë òswiecenié
+;Enable Lighting
+Enabled=Włączoné
+;Enabled
+EnablesTheHardShadowIfCalculated=Włącziwô cwiardi céń, jeżlë òn je wërechòwóny.\nJeżlë HS nie béł wërechòwóny, włączony òkòlny céń zmniésziwô wid.
+;Enables the hard shadow, if calculated.\nIf the HS wasnt calculated, the ambshadow decreases the light if enabled.
+End=Kùńc:
+;End:
+EnterNamedParameter=Wpiszë nazwóny parameter
+;Enter named parameter
+Entries={} wpisów
+;{} entries
+Error=fela
+;error
+ErrorAt=, fela przë {}: {}
+;, error at {}: {}
+Errors=Felë
+;Errors
+Escapetime3DFormulas=fòrmùłë 3D escapetime
+;escapetime 3D formulas
+Escapetime3DFormulasWithAnalyticFaster=fòrmùłë 3D escapetime z analiticznym (chùtszim) rechòwanim DE
+;escapetime 3D formulas with analytic (faster) DE calculation
+Escapetime4DFormulas=fòrmùłë 4D escapetime
+;escapetime 4D formulas
+Escapetime4DFormulasWithAnalyticFaster=fòrmùłë 4D escapetime z analiticznym (chùtszim) rechòwanim DE
+;escapetime 4D formulas with analytic (faster) DE calculation
+EscapetimeTransformationsOnlyUseInCombination=blós transfòrmacje escapetime,\nbrëkùj razã z fòrmùłama escapetime
+;escapetime transformations only,\nuse in combination with escapetime formulas
+EulerAngles=Nórtë Eulera:
+;Euler angles:
+EveryNewPictureOfTheMain=Kòżdi nowi òbrôzk głównégò òkna je filtrowóny (zapisóny téż).
+;Every new picture of the main window is filtered (the saved one too).
+Everything=Wszëtkò
+;Everything
+ExchangeAdd=Wëmieni, dodôj
+;Exchange, add
+ExchangeThisFormulaWithTheNext=Zamieni tã fòrmùłã z nastãpną
+;Exchange this formula with the next one
+ExchangeThisFormulaWithThePrevious=Zamieni tã fòrmùłã z pòprzédną
+;Exchange this formula with the previous one
+ExchangeThisFrameWithTheNext=Zamieni tã klatkã z nastãpną
+;Exchange this frame with the next one
+ExchangeThisFrameWithThePrevious=Zamieni tã klatkã z pòprzédną
+;Exchange this frame with the previous one
+Exit=Wińdzë
+;Exit
+ExpandThePanel=Rozszérzë panel
+;Expand the panel
+Experimental=Eksperimentalno...
+;Experimental...
+ExperimentalSpeedUps=Eksperimentalné przëspieszenia
+;Experimental speed-ups
+ExponentialFunctions={ Ekspònencjalné fùnkcje }
+;{ Exponential functions }
+ExportACubeAsAStack=Ekspòrtuje kòstkã jakò stos lopków PNG
+;Export a cube as a stack of PNG files
+ExportTheFractalAsGaussianSplats=Eksportëje fraktal jakno gaussowsczé splatë, żebë òbzerac gò ze wszëtczich stronów w Blenderze ë jinëch przezérnikach splatów
+;Export the fractal as Gaussian splats, to look at from every side in Blender and other splat viewers
+Exposure=Ekspozycjô
+;Exposure
+Exposure025=Ekspòzycjô:  0.25
+;Exposure:  0.25
+ExposureInStops1TwiceAs=Ekspozycjô w stopniach: +1 dwa razë jasniészi, -1 pòł tak jasny
+;Exposure in stops: +1 twice as bright, -1 half as bright
+ExtractingAmbientInformationFromTheOriginal=Wëdobiwanié wëdowiédzë ò òtoczenim z òriginalnégò lopka M3I, proszã żdac:
+;Extracting ambient information from the original M3I file, please wait:
+ExtremeTesting={ Testowanié ekstremalnëch wôrtnotów }
+;{ Extreme testing }
+FFmpegCommand=Kòmanda FFmpeg
+;FFmpeg command
+FNr=Nr f.:
+;F.nr:
+FOVy=FOVy:
+;FOVy:
+FailedToImportFractalParametersAll=Nie ùdało sã impòrtowac parametrów fraktala. Wszëtczé jiné nastawë òstałë impòrtowóné.
+;Failed to import fractal parameters. All other settings where imported?
+FarDepthFog=Dalekô mgła głãbi
+;Far depth fog
+FarOffset=Daleczé przesënienié
+;Far offset
+FarPlane=Dalekô płaszczëzna:
+;Far plane:
+FastInaccurate=Chùtkò+niedokładno
+;Fast+inaccurate
+FasterWaysOfCalculatingThatChange=Chùtszé spòsobë rechòwaniô, chtërne trochã zmieniają òbrôzk. Są zapisywóné ze sceną i brëkòwóné leno wtenczas, czej pierszé pòle je zaznaczoné. Nim zaczniesz na nich pòlegac, pòrównôj z renderowanim bez nich.
+;Faster ways of calculating that change the picture a little. They are saved with the scene and used only while the first box is ticked. Compare with a render without them before relying on them.
+FasterWaysOfCalculatingThatChange2=Chùtszé spòsobë rechòwaniô, chtërne trochã zmieniają òbrôzk
+;Faster ways of calculating that change the picture a little
+File=Lopk
+;File
+FileIndex=Indeks lopka:
+;File index:
+FileLower=lopk
+;file
+FileName=&Miono lopka:
+;File &name:
+FileTooShort=lopk je za krótczi
+;file too short
+Filename=Miono lopka
+;Filename
+Files=Lopczi
+;Files
+FilesOfType=Lopczi ôr&tu:
+;Files of &type:
+Filmic=Filmòwé
+;Filmic
+FilmicToneMappingBrightLightRolls=Filmòwé mapòwanié tónów: jasné swiatło miãkkò gasnie, a nie stôwô sã płaską bielą
+;Filmic tone mapping: bright light rolls off softly instead of turning flat white
+FilterNewPicturesAutomatically=Filtrëj nowé òbrôzczi aùtomatno
+;Filter new pictures automatically
+FilterNow=Filtrëj terô
+;Filter now
+FindsTheSurfaceWithFewerDistance=Nalazywô pòwierzchniã z mni szacënkama òdległoscë. Pôrã procent chùtszé; drobné detale mògą sã lekkò przesënąc.
+;Finds the surface with fewer distance estimates. A few per cent faster; fine detail can move slightly.
+Fine=dokł.
+;fine
+FineTuneThePositionsWithThe=dokładno nastôw pòzycje knąpama ze strzélkama
+;fine tune the positions with the arrow buttons
+FinishThePicture=Wëkùńczë òbrôzk
+;Finish the picture
+FinishedRenderingSlices=Renderowanié skrôwków skùńczoné.
+;Finished rendering slices.
+FinishedTracingObject=Sledzenié òbiektu skùńczoné.
+;Finished tracing object.
+Finishing=Wëkùńczenié
+;Finishing
+First4RaysNoisy=pierszé 4 parmienie (z szumã)
+;first 4 rays (noisy)
+FirstCalculationOfThisFormulaCombination=Pierszé rechòwanié ti kòmbinacji fòrmùłów: shadere graficzny kôrtë są kòmpilowóné (10-30 s, leno rôz - drajwer je trzëmô). Westrzód tegò rechùje CPU, kôrta dołącziwô, czej òne bãdą gòtowé.
+;First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
+FirstStepRandom=Pierszi krok przëtrôfkòwi:
+;First step random:
+FirstStepRandomColon=Przëtrôfkòwi pierszi krok:
+;First Step Random:
+FirstStepRandomToAvoidSpotty=Przëtrôfkòwi pierszi krok:\nŻebë ùniknąc plamiastëch artefaktów na fòrmùłach z lëchim DE.\nDlô mniészégò szëmù brëkùj tegò razã ze zmniészanim òbrôzka ë/abò wikszą lëczbą parmieniów.\nMòże bëc brëkòwóné téż razã z ditheringã.
+;First step random:\nTo avoid spotty artifacts on fomulas with bad DE's.\nFor lower noise, use it with image downscaling and/or higher raycounts.\nCan be used also together with dithering.
+Fisheye=Rëbié òkò
+;Fisheye
+FisheyeNotInMB3DTheField=Rëbié òkò (nie je w MB3D): pòle widzeniô, do 360 gradów, òbjimô wiżawã òbrazu; kwadratowi òbrôz pòkazywô òkrągłi widok
+;Fisheye (not in MB3D): the field of view, up to 360 degrees, spans the picture's height; a square picture shows a round view
+FitLeftRightBorders=Dopasuj lewi+prawi kréz
+;Fit left+right borders
+FixedZoomAndSteps=Stałi zoom i kroczi
+;Fixed zoom and steps
+FlatSolid=Płaskô brëła
+;Flat Solid
+FlatSolidWithEdges=Płaskô brëła z kańtama
+;Flat Solid with Edges
+FloorLargestIntegerXXMaxInt={ Floor: Nôwikszô całownô lëczba <= X,  |X| < MaxInt }
+;{ Floor: Largest integer <= X,  |X| < MaxInt }
+Fo=Fò.{}
+;Fo.{}
+FogOffset=Przesënienié mgłë
+;Fog offset
+Folder=Katalog
+;Folder
+FolderOfTheLanguageFiles=Katalog lopków jãzëka:
+;Folder of the language files:
+FollowTheNewest=Sledzë nônowszé
+;Follow the newest
+ForFractionalExponentsOrExponentsMaxInt=\s\sDlô ùłómkòwëch wëkładników abò |wëkładnik| > MaxInt spòdlé mùszi bëc > 0. }
+;\s\sFor fractional exponents, or |exponents| > MaxInt, base must be > 0. }
+ForSphericalUsageReplacesTheAmbient=Dlô kùlowégò brëkòwaniô, zastãpiwô farwë òkòlégò widu zmniészonym òbrôzkã spòdla
+;For spherical usage, replaces the ambient colors with the downscaled background image
+Formula=Fòrmùła
+;Formula
+Formula1=Fòrmùła1 •
+;Formula1 •
+Formula12=Fòrmùła1
+;Formula1
+FormulaCombinationsInThisBatchThat=Kòmbinacje fòrmùłów w ti partii nowé dlô grawicznégò kartë (jich shaderë są nôprzód kòmpilowóné, pò 10 do 30 s; w tim czasu rechùje procesor, a kòmpilacjô żdaje, czej felëje pamiãcë):
+;Formula combinations in this batch that are new to the graphics card (their shaders compile first, 10 to 30 s each; the CPU calculates meanwhile, and a compile waits while memory is short):
+FormulaEditor=Editora fòrmùłów
+;Formula editor
+FormulaLower=fòrmùła
+;formula
+FormulaM3f=Fòrmùła (*.m3f)
+;Formula (*.m3f)
+FormulaName=Miono fòrmùłë:
+;Formula name:
+FormulaNotFound=Nie nalazłé fòrmùłë '{}'.
+;Formula '{}' not found.
+FormulaNrWhereThe2ndPart=Numer fòrmùłë, òd jaczi zaczinô sã 2. dzél hibridë
+;Formula nr where the 2nd part of the hybrid starts
+FormulaValues=Wôrtnotë fòrmùłë:
+;Formula values:
+Formulas=Fòrmùłë
+;Formulas
+FormulasColon=Fòrmùłë:
+;Formulas:
+Forward=W przódk
+;Forward
+FoundOnThisComputerNotConnected=Nalazłé na tim kòmpùtrze, jesz nie pòłączoné.
+;Found on this computer, not connected yet.
+FoundOnThisComputerRunThis=Nalazłé na tim kòmpùtrze. Zrëszë rôz tã kòmandã w terminalu, a pòtemù zrëszë nową sesjã Claude Code:
+;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FpName=miono fp:
+;fp name:
+Fpow=Fpow:
+;Fpow:
+Frame=Klatka:
+;Frame:
+FrameNumberToUseForAnimated=Numer klatczi dlô animòwónëch mapów w głównym editorze
+;Frame number to use for animated maps in the main editor
+Frames=klatków
+;frames
+FramesPerSecond=Klatków na sekùndã:
+;Frames per second:
+FramesSec=Klatków/s:
+;Frames/sec:
+Fresnel=Fresnel:
+;Fresnel:
+Fresnel0To1MoreReflection=Fresnel (òd 0 do 1): wicy òdbicô tam, dze pòwierzchniô òdwrôcô sã òd wzéraniô, jak szkło, wòda ë lakier (nôlepi widzec z òdbiciama)
+;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromClipboard=Ze schówkù
+;From Clipboard
+FromTheCameraAllAroundA=Z kamerë, dokòła (scena widzónô òd westrzódka)
+;From the camera, all around (a scene seen from inside)
+FullM3IImageFiles=Fùl lopczi òbrôzków M3I:
+;Full M3I image files:
+FunctionArcCosConstXDoubleDouble=function ArcCos(const X : Double) : Double;
+;function ArcCos(const X : Double) : Double;
+FunctionArcCoshConstXDoubleDouble=function ArcCosh(const X: Double): Double;
+;function ArcCosh(const X: Double): Double;
+FunctionArcCotConstXDoubleDouble=function ArcCot(const X: Double): Double;
+;function ArcCot(const X: Double): Double;
+FunctionArcCotHConstXDoubleDouble=function ArcCotH(const X: Double): Double;
+;function ArcCotH(const X: Double): Double;
+FunctionArcCscConstXDoubleDouble=function ArcCsc(const X: Double): Double;
+;function ArcCsc(const X: Double): Double;
+FunctionArcCscHConstXDoubleDouble=function ArcCscH(const X: Double): Double;
+;function ArcCscH(const X: Double): Double;
+FunctionArcSecConstXDoubleDouble=function ArcSec(const X: Double): Double;
+;function ArcSec(const X: Double): Double;
+FunctionArcSecHConstXDoubleDouble=function ArcSecH(const X: Double): Double;
+;function ArcSecH(const X: Double): Double;
+FunctionArcSinConstXDoubleDouble=function ArcSin(const X : Double) : Double;
+;function ArcSin(const X : Double) : Double;
+FunctionArcSinhConstXDoubleDouble=function ArcSinh(const X: Double): Double;
+;function ArcSinh(const X: Double): Double;
+FunctionArcTan2ConstYXDouble=function ArcTan2(const Y, X: Double): Double;
+;function ArcTan2(const Y, X: Double): Double;
+FunctionArcTanConstXDoubleDouble=function ArcTan(const X: Double): Double;
+;function ArcTan(const X: Double): Double;
+FunctionArcTanhConstXDoubleDouble=function ArcTanh(const X: Double): Double;
+;function ArcTanh(const X: Double): Double;
+FunctionCeilConstXDoubleInteger=function Ceil(const X: Double): Integer;
+;function Ceil(const X: Double): Integer;
+FunctionCosConstXDoubleDouble=function Cos(const X: Double): Double;
+;function Cos(const X: Double): Double;
+FunctionCosecantConstXDoubleDouble=function Cosecant(const X: Double): Double;
+;function Cosecant(const X: Double): Double;
+FunctionCoshConstXDoubleDouble=function Cosh(const X: Double): Double;
+;function Cosh(const X: Double): Double;
+FunctionCotConstXDoubleDouble=function Cot(const X: Double): Double;
+;function Cot(const X: Double): Double;
+FunctionCotHConstXDoubleDouble=function CotH(const X: Double): Double;
+;function CotH(const X: Double): Double;
+FunctionCotanConstXDoubleDouble=function Cotan(const X: Double): Double;
+;function Cotan(const X: Double): Double;
+FunctionCscConstXDoubleDouble=function Csc(const X: Double): Double;
+;function Csc(const X: Double): Double;
+FunctionCscHConstXDoubleDouble=function CscH(const X: Double): Double;
+;function CscH(const X: Double): Double;
+FunctionDegNormalizeConstDegreesDoubleDouble=function DegNormalize(const Degrees: Double): Double;
+;function DegNormalize(const Degrees: Double): Double;
+FunctionDegToRadConstDegreesDoubleDouble=function DegToRad(const Degrees: Double): Double;
+;function DegToRad(const Degrees: Double): Double;
+FunctionExpConstXDoubleDouble=function Exp(const X: Double): Double;
+;function Exp(const X: Double): Double;
+FunctionFloorConstXDoubleInteger=function Floor(const X: Double): Integer;
+;function Floor(const X: Double): Integer;
+FunctionFracConstXDoubleDouble=function Frac(const X: Double): Double;
+;function Frac(const X: Double): Double;
+FunctionHypotConstXYDouble=function Hypot(const X, Y: Double): Double;
+;function Hypot(const X, Y: Double): Double;
+FunctionIntConstXDoubleDouble=function Int(const X: Double): Double;
+;function Int(const X: Double): Double;
+FunctionIntPowerConstBaseDoubleConst=function IntPower(const Base: Double; const Exponent: Integer): Double;
+;function IntPower(const Base: Double; const Exponent: Integer): Double;
+FunctionIsInfiniteConstAValueDoubleBoolean=function IsInfinite(const AValue: Double): Boolean;
+;function IsInfinite(const AValue: Double): Boolean;
+FunctionIsNanConstAValueDoubleBoolean=function IsNan(const AValue: Double): Boolean;
+;function IsNan(const AValue: Double): Boolean;
+FunctionLnConstXDoubleDouble=function Ln(const X: Double): Double;
+;function Ln(const X: Double): Double;
+FunctionLnXP1ConstXDoubleDouble=function LnXP1(const X: Double): Double;
+;function LnXP1(const X: Double): Double;
+FunctionLog10ConstXDoubleDouble=function Log10(const X: Double): Double;
+;function Log10(const X: Double): Double;
+FunctionLog2ConstXDoubleDouble=function Log2(const X: Double): Double;
+;function Log2(const X: Double): Double;
+FunctionLogNConstBaseXDouble=function LogN(const Base, X: Double): Double;
+;function LogN(const Base, X: Double): Double;
+FunctionMaxConstABDouble=function Max(const A, B: Double): Double;
+;function Max(const A, B: Double): Double;
+FunctionMinConstABDouble=function Min(const A, B: Double): Double;
+;function Min(const A, B: Double): Double;
+FunctionPowerConstBaseExponentDouble=function Power(const Base, Exponent: Double): Double;
+;function Power(const Base, Exponent: Double): Double;
+FunctionRadToDegConstRadiansDoubleDouble=function RadToDeg(const Radians: Double): Double;
+;function RadToDeg(const Radians: Double): Double;
+FunctionRandGMeanStdDevDoubleDouble=function RandG(Mean, StdDev: Double): Double;
+;function RandG(Mean, StdDev: Double): Double;
+FunctionSecConstXDoubleDouble=function Sec(const X: Double): Double;
+;function Sec(const X: Double): Double;
+FunctionSecHConstXDoubleDouble=function SecH(const X: Double): Double;
+;function SecH(const X: Double): Double;
+FunctionSecantConstXDoubleDouble=function Secant(const X: Double): Double;
+;function Secant(const X: Double): Double;
+FunctionSinConstXDoubleDouble=function Sin(const X: Double): Double;
+;function Sin(const X: Double): Double;
+FunctionSinhConstXDoubleDouble=function Sinh(const X: Double): Double;
+;function Sinh(const X: Double): Double;
+FunctionSqrtConstXDoubleDouble=function Sqrt(const X: Double): Double;
+;function Sqrt(const X: Double): Double;
+FunctionTanConstXDoubleDouble=function Tan(const X: Double): Double;
+;function Tan(const X: Double): Double;
+FunctionTanhConstXDoubleDouble=function Tanh(const X: Double): Double;
+;function Tanh(const X: Double): Double;
+Functions=Fùnkcje:
+;Functions:
+FunctionsFromSystem={ ----------------------- Fùnkcje z System  ----------------------------- }
+;{ ----------------------- Functions from System  ----------------------------- }
+FunctionsFromSystemMath={ --------------------- Fùnkcje z System.Math  -------------------------- }
+;{ --------------------- Functions from System.Math  -------------------------- }
+Gamma05=Gamma:  0.5
+;Gamma:  0.5
+Gauss=Gauss
+;Gauss
+GaussianSplats=Gaussowsczé splatë
+;Gaussian splats
+GaussianSplats2=Gaussowsczé splatë...
+;Gaussian splats...
+GaussianSplatsPLY=Gaussowsczé splatë (PLY)
+;Gaussian splats (PLY)
+GenerateAnAnimationKeyframeFromThe=Twòrzi kluczową klatkã animacje z aktualnégò pòzdrzatkù
+;Generate an animation keyframe from the actual view
+GenerateBigImagesByTiling=Generëje wiôldżé òbrôzczi przez kafelkòwanié
+;Generate big images by tiling
+GenerateMesh=Generuj séc
+;Generate mesh
+GenerateMesh2=Generuj séc
+;Generate Mesh
+GeneratePNGImage2dSlicesOf=Generëje 2D skrôwczi òbiektu jakno òbrôzczi PNG.
+;Generate PNG-image 2d slices of the object.
+GenerateRandomDiffuseColors=twòrzi losowé rozproszoné farwë
+;generate random diffuse colors
+GenerateRandomSpecularColorsAccordingTo=twòrzi losowé farwë òdbłëskù wedle rozproszonëch farwów
+;generate random specular colors according to the diffuse colors
+GeneratedMesh=Wëgenerowónô séc
+;Generated Mesh
+GenerationOf=Pòkòlenié {} z {}
+;Generation {} of {}
+Generations=Generacje
+;Generations
+GetASmoothImageWraparoundFor=Dôwô gładczé òwinienié òbrôzka dlô kùlowégò brëkòwaniô
+;Get a smooth image wraparound for spherical usage
+GetMidpoint=pòbierzë strzódk
+;get midpoint
+GetMinDistFromImage=Pòbierzë min. òdl. z òbrôzka
+;Get min.dist. from image
+GetValuesFromImage=Pòbierzë wôrtnotë z òbrôzka
+;Get values from image
+GetZ1=Wez Z1
+;Get Z1
+GetZ2=Wez Z2
+;Get Z2
+GlobalLight=Globalny wid
+;Global light
+Glow=Pòswiata:
+;Glow:
+Glow0AndUpTheSurface=Pòswiata (0 ë wicy): pòwierzchniô swiecy swòją farwą, bez swiatła
+;Glow (0 and up): the surface shines in its own colour, without light
+Glow2=Pòswiata
+;Glow
+GlowAroundBrightLightStrengthReach=Pòswiata wkół jasnégò swiatła: mòc, zasãg (dzél przekątny òbrôzka) ë òd chtërny jasnotë swiécy (0 do 1 bieli)
+;Glow around bright light: strength, reach (a part of the picture's diagonal), and from which brightness it glows (0 to 1 of white)
+GlueSliders=Sklej suwaczi
+;Glue sliders
+GoToNext=Biéj do nastãpny
+;Go to next
+GoneLastSeenSAgo=felëje (slédno widzóny {} s temù)
+;gone (last seen {} s ago)
+Grain=Zôrno
+;Grain
+GraphicsCard=Graficznô karta
+;Graphics card
+GroundPlane=Zemia
+;Ground plane
+GroundPosition=Pòłożenié zemi
+;Ground position
+GroupByDay=Grëpùjë pò dniach
+;Group by day
+GuessParams=Zgadnij parametrë
+;Guess params
+HMapGen=HMapGen
+;HMapGen
+HS=HS
+;HS
+HSCalcTime=Czas rechòwaniô HS:
+;HS calc time:
+HardShadowCalculation=rechòwanié cwiardëch céniów
+;hard shadow calculation
+HardShadowRadius=Promiéń cwiardégò céniô:
+;Hard shadow radius:
+HardShadows=\sCwiardé cénie
+;\sHard Shadows
+HardShadowsLower=cwiardé cénie
+;hard shadows
+Height=Wiżô:
+;Height:
+HeightMapGenerator=Generator map wësokòscë
+;HeightMap Generator
+HeightMapGeneratorPreview=Pòdzérk generatora mapë wësokòscë
+;HeightMap Generator Preview
+HelpfulIfYouWantToRedo=Pòmòcné, jeżlë np. chcesz pòprawic niechcóné malowanié.
+;Helpful if you want to redo an unwanted drawing for example.
+HiQual=Wës. jakòsc
+;HiQual
+HiQual1=HiQual 1
+;HiQual 1
+HiQual2=HiQual {}
+;HiQual {}
+Hidden=zataconé
+;hidden
+HideThisFormula=Zatacë tã fòrmùłã
+;Hide this formula
+High=wësoczi
+;high
+HighlightsMoveAsInThePictures=Blëszczi sã przesuwają jak na òbrôzkach. Splat bierze kòl 160 bajtów przë 2, 68 pò wëłączeniu.
+;Highlights move as in the pictures. A splat takes about 160 bytes at 2, 68 when off.
+History=Historiô
+;History
+HistoryThePicturesCalculatedTheFiles=Historiô: wërechòwóné òbrôzczi, òtemkłé i zapisóné lopczi (klikni, żebë przezérac)
+;History: the pictures calculated, the files opened and saved (click to browse)
+HoldShiftKeyForFinerSteps=(Trzëmôj Shift dlô drobniészich kroków)
+;(Hold Shift key for finer steps)
+Hotkeys=Skrótë
+;Hotkeys
+HowMuchThePlaneReflects0=Jak mòckò płaszczëzna òdbijô (òd 0 do 1): ji pòłësczi ë zdrzadło, czej są rechòwóné òdbicé (Kùńcowô òbróbka)
+;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
+HowMuchTheSurfaceSColour=Jak wiele farwa pòwiérzchni zmieniô sã z rzezbą: 0 wcale, 1 mòcno
+;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowStrongTheNoiseIsThat=Jak mòcny je szëm, chtëren je ùsëwóny (1 do 30, jak "Denoise DCT" w GIMP).\nWëższé ùsëwô wicy szëmù, a téż wicy drobnëch detalów.
+;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
+HowThickTheCloudsAre1=Jak gãsté są chmùrë (1: pełnô warstwa przepùszczô kòl 2 % swiatła) ë jak wiele nieba pòkriwają (òd 0 do 1)
+;How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
+HowThisComputerIsListedIn=Jak nen kòmpùtr je wëpisóny w roju
+;How this computer is listed in the swarm
+HyperbolicFunctionsAndInverses={ Hiperbòliczné fùnkcje i jich òdwrotnoscë }
+;{ Hyperbolic functions and inverses }
+INX1OUT0PI={ IN: |X| <= 1  OUT: [0..PI] radianów }
+;{ IN: |X| <= 1  OUT: [0..PI] radians }
+INX1OUTPI2={ IN: |X| <= 1  OUT: [-PI/2..PI/2] radianów }
+;{ IN: |X| <= 1  OUT: [-PI/2..PI/2] radians }
+INY264X2=\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radianów }
+;\s\sIN: |Y| < 2^64, |X| < 2^64, X <> 0   OUT: [-PI..PI] radians }
+Idle=Nieczinny
+;Idle
+IfEnabledTheAmbientShadowsWill=Jeżlë włączoné, òkòlné cénie bãdą rechòwóné\naùtomatno pò głównym renderowanim.\nÒptacje wëbierzë wczas.
+;If enabled, the ambient shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheChoosenHardShadows=Jeżlë włączoné, wëbróné cwiardé cénie bãdą rechòwóné\naùtomatno pò głównym renderowanim.\nÒptacje wëbierzë wczas.
+;If enabled, the choosen hard shadows will be calculated\nautomatically after the main rendering.\nChoose the options before.
+IfEnabledTheDoFEffectWill=Jeżlë włączoné, efekt DoF bãdze rechòwóny\naùtomatno pò wczasniészich rechòwaniach.\nÒptacje wëbierzë wczas.
+;If enabled, the DoF effect will be calculated\nautomatically after the previous calculations.\nChoose the options before.
+IfEnabledTheImageCoversThe=Jeżlë włączoné, òbrôzk zakrëwô całą kùlã.\nPrzëdatné w animacjach.
+;If enabled, the image covers the whole sphere.\nUseful in animations.
+IfEnabledTheImageDoesNot=Jeżlë włączoné, òbrôzk nie znikô przë wësoczi wôrtnoscë 'Głãbia'.
+;If enabled, the image does not vanish on a high 'Depth' value.
+IfEnabledTheLightsAreNot=Jeżlë włączoné, widë nie są zmieniwóné, czej wczëtiwóné są presetë abò parametrë widu.\nMòże bëc przëdatné np. czej nie chcesz na nowò rechòwac cwiardëch céniów.
+;If enabled, the lights are not changed when presets or light parameters are loaded.\nCan be useful if you don't want to recalculate the hard shadows, for example.
+IfEnabledTheReflectionsWillBe=Jeżlë włączoné, òdbicô bãdą rechòwóné aùtomatno pò\nwczasniészich rechòwaniach.\nPamiãtôj, że pózniészé zmianë widu wëzerëją to rechòwanié!
+;If enabled, the reflections will be calculated automatically after the\nprevious calculations.\nKeep in mind that light changings afterwards will reset this calculation!
+IfEnabledTheSpecularAmountIs=Jeżlë włączoné, spekùlarnô wielosc je dzelonô na parmiéń jidący bënë ë òdbicé.
+;If enabled the specular amount is split into inside going ray and reflection.
+IfGluedTheSlidersBehavesLike=Czej sklejoné, suwaczi zachòwùją sã, jakbë bëłë złączoné gùmką.
+;If glued, the sliders behaves like sticked together with a rubber band.
+IfSelectedPress1ToSet=Czej wëbróny, nacësni '1', żebë nastawic ten suwôk na domëslną pòzycjã.
+;If selected, press '1' to set this slider to the default position.
+IfSelectedTheM3IFilesWill=Żelë zaznaczoné, lopczi M3I bãdą zapisóné w domëslnym katalogù M3I,\n  chtëren je òkreslony w òpcji 'INI DIRS'.\nŻelë nie, bãdą zapisóné w tim samim katalogù co lopczi M3P.
+;If selected, the M3I files will be stored in the default M3I folder,\n  that is specified by the 'INI DIRS' option.\nIf not selected, they are stored in the same folder as the M3P files.
+IfSetToAHigherValue=Przë wôrtnoscë wëższi jak 0 nòrmalné pòwiérzchni bãdą rechòwóné jakno strzédnô\nz rozłożonëch pùnktów, a téż rechòwóny je wskôzownik chropòwatoscë, co dôwô mniészi aliasing.\nWôrtnota 8 ùstrzédniwô pò wòlumenie, co je baro pòmału, ale mòże bëc brëkòwóné w baro\nkriticznëch sytuacjach.  Mòże téż brëkòwac Normals on ZBuf w pòstprocesowaniu.
+;If set to a higher value than 0, the surface normals will be calculated with an average\nof distributed points and a roughness factor is calculated too, resulting in lower aliasing.\nA value of 8 will average over a volume, what is very slow but can be used in very\ncritical situations.  You could also use the Normals on ZBuf in postprocessings.
+IfVolumetricLightChoosenRightclickOn=Jeżlë wëbróny wòlumetriczny wid:  klikni prawim na knąpã 'Din.mgła', żebë wstawic farwã wòlumetricznégò widu.
+;If volumetric light choosen:  Rightclick on 'Dyn.fog' button to insert the volumetric light color.
+IfYouWantToContinueAn=Żelë chcesz kòntinuòwac ju zaczãté renderowanié òd gwësnégò\nplacu, wpiszë tuwò pòczątkòwi indeks òbrôzka, chtëren mô bëc renderowóny nastãpny.\nWôrtnotë "Indeks lopka" òstawi bez zmianë.
+;If you want to continue an already started rendering at acertain\nposition, insert here the startindex of the image to be rendered next.\nLet the "File index" values unchanged.
+Ignore=Ignorëj
+;Ignore
+Image=Òbrôzk
+;Image
+ImageDownscalingForViewingPurposeAnd=Zmniészanié òbrôzka do òbzéraniô i do zapisywaniô jakò jpeg, png abò bmp.\nBlós przë skalach 1:2 i 1:3 przë zapisywanim je brëkòwóny filter anti-aliasingù.\nKlikni, żebë dostac menu wëbiéru.
+;Image downscaling for viewing purpose and for saving as jpeg, png or bmp.\nOnly at scales 1:2 and 1:3 an anti aliasing filter is performed on saving.\nClick for a selection menu.
+ImageExists=Òbrôzk ju je
+;Image exists
+ImageLower=òbrôzk
+;image
+ImageParameters=òbrôzk + parametrë
+;image + parameters
+ImageRotation=Òbrót òbrôzka:
+;Image rotation:
+ImageSize=-> Wiôlgòsc òbrôzka:
+;-> Image size:
+ImageWidth=Szérzô òbrôzka:
+;Image width:
+Images=Òbrôzczi
+;Images
+ImagesForMaps=Òbrôzczi dlô mapów:
+;Images for maps:
+Img=Òbr.
+;Img
+ImportActualParas=Impòrtëj biéżné parametrë
+;Import actual paras
+ImportParameter=Impòrtëj parametrë
+;Import parameter
+ImportParameterFromMain=Impòrtëj parametrë z głównégò òkna:
+;Import parameter from main:
+ImportParameterFromMain2=Impòrtuj parametrë z przédnégò òkna
+;Import parameter from main
+ImportParametersFromAFileTo=Impòrtëje parametrë z lopka, żebë zrobic z nich wiôldżi render
+;Import parameters from a file to make a big render out of them
+ImportTheCurrentParametersFromMain=Impòrtëje biéżné parametrë z głównégò programù
+;Import the current parameters from main program
+ImportTheMainProgramsParameterFor=Impòrtëje parametrë z głównégò programù do renderowaniô MC
+;Import the main programs parameter for mc rendering
+ImportedFromMain=Impòrtowóné z przédnégò òkna
+;Imported from Main
+InAndOutside=Bënë ë z bùtna
+;In and outside
+InOut=Bënë+bùten
+;In+Out
+InOutOption=Òptacjô bënë/bùten:
+;In/out option:
+InTheSwarm=W roju:
+;In the swarm:
+InThisModeRightAndLeft=W tim tribie dlô kòżdi pòdklatczi renderowóné są òbrôzczi dlô prawégò i lewégò òka.
+;In this mode right and left-eye images are rendered for each subframe.
+InTotal=\s· {} wszëtczégò
+;\s· {} in total
+InTotal2={} wszëtczégò
+;{} in total
+InclInMain=wraz z przédnym
+;incl. in main
+IncludingDFogOnItsOrVol=w tim òpcje dFog na it. abò wòl. swiatła
+;including dFog on its or Vol.light options
+IncreaseDecreaseFrameNumber=Zwikszë/zmniészë numer klatczi
+;Increase/decrease frame number
+IncreaseDecreaseQualityLevelRaystepMultiplier=Zwiększô/zmniészô pòzióm jakòscë (mnożnik krokù parmienia)
+;Increase/Decrease quality level (Raystep multiplier)
+IncreaseScale=Zwikszë skalã
+;Increase scale
+IncreaseTheSizeOfTheNavigator=Zwiększô òkno Nawigatora
+;Increase the size of the Navigator window
+Increment=Przërost:
+;Increment:
+Increment2=Przërost
+;Increment
+IncrementIfTheSequenceIncreaseThe=Przërost sekwencje, zwiększë wôrtnotã, żebë przeskakiwac òbrôzczi
+;Increment if the sequence, increase the value to skip images
+IndexWithLeading0=Indeks z zérama na przódkù
+;Index with leading 0
+InfinityValuesHaveAFractionField=// wôrtnotë nieskùńczonoscë mają pòle ùłómka równé 0. Nieskùńczonosc mòże bëc dodatnô
+;// infinity values have a fraction field of 0. Infinity values can be positive
+Info=infò
+;info
+Infos=Infòrmacje
+;Infos
+IniDirs=Katalodżi
+;Ini Dirs
+Input=Wpisënk
+;Input
+InputTheHeightDivisor=Wpiszë dzelnik wësokòscë:
+;Input the height divisor:
+InputTheOriginalValueFromThe=Wczëtiwô pierszą wôrtnotã z parametrów przédnégò programù.
+;Input the original value from the main program parameters.
+InputTheOriginalValuesFromThe=Wczëtiwô pierszé wôrtnotë z parametrów przédnégò programù.
+;Input the original values from the main program parameters.
+InputTheWidthFactor=Wpiszë wskôzownik szérzi:
+;Input the width factor:
+Inputs=Wéńdzenia:
+;Inputs:
+Insert=wstawi
+;insert
+InsertActualParameterInThisKeyframe=Wstôw aktualny parametr do ti kluczowi klatczi
+;Insert actual parameter in this keyframe
+InsertCompleteParameterFromMainProgram=Wstôwiô całi parametr z przédnégò programù
+;Insert complete parameter from main program
+InsertMidValues=Wstawi wôrtnotë strzódka
+;Insert mid values
+InsertVolumetricLightColor=Wstôw farwã wòlumetricznégò widu
+;Insert volumetric light color
+Inserting=Wstôwianié:
+;Inserting:
+InsertsTheCurrentMidPosition=Wstôwiô bieżną pòzycjã strzódka.
+;Inserts the current mid position.
+InsertsTheCurrentPositionAsJulia=Wstôwiô bieżną pòzycjã jakò wôrtnotë Julia.\nW tribie 4d wektor je òbrôcony wedle wôrtnotów òbrôcaniô 4d.
+;Inserts the current position as julia values.\nIf in 4d mode, the vector is rotated according to the 4d rotation values.
+Inside=Bënë
+;Inside
+InsideColor=Farwa bënë
+;Inside color
+InsideRender=Renderowanié òd bënë
+;Inside render
+Int=Int.:
+;Int.:
+Int64=Int64
+;Int64
+IntPowerRaiseBaseToAnIntegral={ IntPower: Pòdnôszô spòdlé do całowny pòtãdżi.  Chùtkô. }
+;{ IntPower: Raise base to an integral power.  Fast. }
+Integer=Integer
+;Integer
+Intensity=Intensywnosc:
+;Intensity:
+IntensityOfImage=Intensywnosc òbrôzka
+;Intensity of image
+InterfaceLanguage=Jãzëk interfejsu
+;Interface language
+InterfaceLanguageClickToChange=Jãzëk interfejsu: {} (klikni, bë zmienic)
+;Interface language: {} (click to change)
+InterfaceLanguageColon=Jãzëk interfejsu:
+;Interface language:
+InterfaceSize=Wiôlgòsc interfejsu:
+;Interface size:
+Internal=Bënowé
+;Internal
+Interpolate=Interpòlacjô
+;Interpolate
+InterpolateANewKeyframeInBetween=Interpòlëje nową kluczową klatkã westrzódkù.
+;Interpolate a new keyframe in between.
+InvMax=Inv max
+;Inv max
+InvertZBuffer=Òdwrócë Z-bufor
+;Invert ZBuffer
+Iridescence=Òpalizacjô:
+;Iridescence:
+Iridescence0To1TheColours=Òpalizacjô (òd 0 do 1): farwë cenczi warstwë, chtërné zmieniwają sã z kątã zdrzeniô, ë jich przesënienié (òd 0 do 1)
+;Iridescence (0 to 1): the colours of a thin film, changing with the angle of view, and their shift (0 to 1)
+IsNotAValidFloatingPoint='{}' nie je bezzmiłkòwą wôrtnotą zmiennoprzecynkòwą
+;'{}' is not a valid floating point value
+IsNotAValidIntegerValue='{}' nie je bezzmiłkòwą wôrtnotą całkòwitą
+;'{}' is not a valid integer value
+Iteration=Iteracjô
+;Iteration
+IterationCount=lëczbã iteracjów
+;Iteration Count
+Iterationcount=Lëczba iteracjów
+;Iterationcount
+Iterations=Iteracje:
+;Iterations:
+ItsForFree=to je darmôk!
+;its for free!
+ItsTrap=its.trap
+;its.trap
+JIT=JIT
+;JIT
+JITCompiledFormula=Fòrmùła kòmpilowónô JIT
+;JIT-compiled formula
+JPEG=JPEG
+;JPEG
+JPEGJpg=JPEG (*.jpg)
+;JPEG (*.jpg)
+JPEGP=JPEG+P
+;JPEG+P
+JPEGQualityOrSize=Jakòsc abò wiôlgòsc JPEG
+;JPEG quality or size
+JPG=JPG
+;JPG
+JPGUsesTheActualQualtitySettings=JPG ùżiwô aktualnëch nastawów jakòscë pòkôzónëch\nw górny czãscë przédnégò òkna programù.
+;JPG uses the actual qualtity settings displayed in the\nupper part of the programs main window.
+Job=Robòta
+;Job
+Jobs=Robòtë:
+;Jobs:
+Jpeg=Jpeg
+;Jpeg
+JpegQuality=Jakòsc JPEG:
+;Jpeg quality:
+JpgQ=jakòsc jpg:
+;jpg q.:
+JuliaMode=Trib Julia
+;Julia mode
+JuliaMode2=trib Julia
+;Julia Mode
+JuliaOff=Julia wëł.
+;Julia Off
+JuliaOn=Julia wł.
+;Julia On
+JuliaValuesXYZ=Wôrtnotë Julia (x,y,z):
+;Julia values (x,y,z):
+KeepAspect=trzëmôj propòrcje
+;keep aspect
+KeepLights=Zachòwôj widë
+;Keep lights
+KeepOnlyNearerParts=Zachòwôj leno blëższé partie:
+;Keep only nearer parts:
+KeepTheAspectRatioWhenManually=Trzimie propòrcje przë rãcznym zmienianim szérzë abò wiżë.\nNie nót òdznaczac przë wcyskanim knąpë propòrcjów.
+;Keep the aspect ratio when manually changing the width or height.\nNo need to uncheck if pressing an aspect button.
+KeepTheNewestLineInSight=Trzëmôj nônowszą régã na widokù, czej przëchòdzą nowé
+;Keep the newest line in sight as new ones come
+KeepThisPriority=Trzëmôj nen priorytet
+;Keep this priority
+KeepsTheChosenLanguageForThe=Zachòwiwô wëbróny jãzëk na nôslédny sztart
+;Keeps the chosen language for the next start
+KeepsTheHotkeysForTheNext=Trzimô skrótë na nôslédny start
+;Keeps the hotkeys for the next start
+Keyframe=kluczowô klatka:
+;keyframe:
+Keyframe2=Kluczné ùjęcé {}
+;Keyframe {}
+KeyframeListM3k=Lësta kluczowëch klatków (*.m3k)
+;Keyframe list (*.m3k)
+KeyframeStartStop=\s\sKluczowô klatka\npòczątk:  kùńc:
+;\s\sKeyframe\nstart:    stop:
+KeyframesForOneWholeTurnAround=Kluczowé klatczi dlô całégò òbrotu wkół westrzódka pòzdrzatkù, òd pòzdrzatkù głównégò òkna: 8 kluczowëch klatków w gładczi pãtlë (Catmull-Rom)
+;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeysThatBringAWindowTo=Klawisze, co wëcygają òkno na wiéch z kòżdégò òkna
+;Keys that bring a window to the front from any window
+Kind=Ôrt
+;Kind
+LGamma05=L-Gamma:  0.5
+;L-Gamma:  0.5
+LIGHTSTROKES=SMÙDŻI WIDU
+;LIGHT STROKES
+LMBMoveRMBRotate=LMB: przesuwanié           RMB: òbrôcanié
+;LMB: move           RMB: rotate
+LastLengthIncrease=Òstatny przërost dłëgòscë
+;Last length increase
+LastPass=\s· slédny przeńdzënk {}
+;\s· last pass {}
+Layer=Warstwa:
+;Layer:
+LeftclickGoIntoMouseModeView=Lewé kliknienié:  wéńdzenié w trib mëszë.. zdrzenié mëszą, +prawi knąp mëszë.. òbrôcanié\n(Klikni znowa lewim abò ESC, żebë wińc z tribù mëszë)
+;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
+LeftclickRotateTheBulbAroundThe=Lewé klikniãcé:   Òbrôcô bulb wkół òsë X òbzérôcza @ wôrtnotë Ymid+Zmid\nPrawé klikniãcé: Òbrôcô bulb wkół òsë X òbiektu @ 0
+;Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
+LeftclickRotateTheBulbAroundThe2=Lewé klikniãcé:   Òbrôcô bulb wkół òsë Y òbzérôcza @ wôrtnotë Xmid+Zmid\nPrawé klikniãcé: Òbrôcô bulb wkół òsë Y òbiektu @ 0
+;Leftclick:   Rotate the bulb around the viewers Y axis @ Xmid+Zmid values\nRightclick: Rotate the bulb around the objects Y axis @ 0
+LeftclickRotateTheBulbAroundThe3=Lewé klikniãcé:   Òbrôcô bulb wkół òsë Z òbzérôcza @ wôrtnotë Xmid+Ymid\nPrawé klikniãcé: Òbrôcô bulb wkół òsë Z òbiektu @ 0
+;Leftclick:   Rotate the bulb around the viewers Z axis @ Xmid+Ymid values\nRightclick: Rotate the bulb around the objects Z axis @ 0
+LeftclickUndoSetsTheLightParameter=Lewé kliknienié:   Copnij -> Nastôwiô parametrë widu na stón sprzed slédnégò malowaniô\nPrawé kliknienié: Pòwtórzë
+;Leftclick:   Undo -> Sets the light parameter to the state before the last painting\nRightclick: Redo
+LeftclickUndoSetsTheParameterTo=Lewé klikniãcé:   Copni -> Nastôwiô parametrë na stón przed òstatnym rechòwanim\nPrawé klikniãcé: Znowa
+;Leftclick:   Undo -> Sets the parameter to the state before the last calculation\nRightclick: Redo
+LetTheThresholdDecreaseTheAmbient=Pòzwôlô progòwi zmniészëc òkòlny céń do 0.\nDaleczé strukturë są mni pòd cëskã blëższich strukturów.
+;Let the threshold decrease the ambient shadow down to 0.\nFar structures are less affected by nearer structures.
+Level=Równiô
+;Level
+Light=Swiatło
+;Light
+Light1=Wid 1
+;Light 1
+Light12=Wid1
+;Light1
+Light2=Wid 2
+;Light 2
+Light22=Wid2
+;Light2
+Light3=Wid 3
+;Light 3
+Light32=Wid3
+;Light3
+Light4=Wid 4
+;Light 4
+Light42=Wid4
+;Light4
+Light5=Wid 5
+;Light 5
+Light52=Wid5
+;Light5
+Light6=Wid 6
+;Light 6
+Light62=Wid6
+;Light6
+LightAmplitudeUseExponentStyleLike=Amplituda widu, brëkùj zôpisu z ekspònentã, np.:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+;Light amplitude, use exponent style like:\n1.4e-2   ( = 0.014   )\n3e-4      ( = 0.0003 )
+LightColorPressToSelectA=Farwa widu, nacësni, żebë wëbrac nową.
+;Light color, press to select a new one.
+LightScattering=Rozpraszanié widu:
+;Light scattering:
+LightScatteringInsideTheMaterial=Rozpraszanié widu bënë materiału
+;Light scattering inside the material
+LightXangle=Nórt X widu
+;Light Xangle
+LightYangle=Nórt Y widu
+;Light Yangle
+Lighting=Òswiecenié
+;Lighting
+LightingColon=Òswiecenié:
+;Lighting:
+Lightmap=Mapa widu
+;Lightmap
+Lightness=Jasnosc
+;Lightness
+LikeANaNAnInfinityDouble=// Jak NaN, wôrtnota nieskùńczonoscë tipù double mô wëkładnik 7FF, ale
+;// Like a NaN, an infinity double value has an exponent of 7FF, but the
+LikeAnInfinityANaNDouble=// Jak nieskùńczonosc, wôrtnota NaN tipù double mô wëkładnik 7FF, ale wôrtnotë NaN
+;// Like an infinity, a NaN double value has an exponent of 7FF, but the NaN
+Linear=Liniowô
+;Linear
+LinearAttenuation=Liniowé tłëmienié
+;Linear Attenuation
+LinearInterpolateAKeyframeInbetween=Liniowò interpòlëjë kluczową klatkã westrzód
+;Linear interpolate a keyframe inbetween
+LinearStraightFromKeyframeToKeyframe=Lëniowô: prosto òd klucznégò ùjęcô do klucznégò ùjęcô. Kwadratowô Béziera (MB3D): gładkô, mijô kluczné ùjęca. Catmull-Rom (nie je w MB3D): gładkô ë przez kòżdé kluczné ùjęcé. Knąpa Krzëwé pòkazywô różnicã
+;Linear: straight from keyframe to keyframe. Quadratic Bezier (MB3D): smooth, passing beside the keyframes. Catmull-Rom (not in MB3D): smooth and through every keyframe. The Curves button shows the difference
+Lines={} régów
+;{} lines
+List=Lësta
+;List
+LliMultiplier=Mnożnik Lli:
+;Lli multiplier:
+Load=Wczëtôj
+;Load
+LoadANewFormulaFile=Wczëtôj nowi lopk fòrmùłë
+;Load a new formula file
+LoadBtrace2=Wczëtôj btrace2...
+;Load btrace2...
+LoadCodeFromAnotherFormulaFor=Wczëtiwô kòd z jiny fòrmùłë, na przëmiôr fòrmùłë, jaczi nie dało sã skòmpilowac
+;Load code from another formula, for example a formula which could not be compiled
+LoadM3p=Wczëtôj m3p...
+;Load m3p...
+LoadMesh=Wczëtôj séc
+;Load mesh
+LoadParameters=Wczëtôj parametrë
+;Load parameters
+LoadSettingsFromBtrace2File=Wczëtiwô nastawë z lopka *.btrace2
+;Load settings from *.btrace2-file
+LoadTheParametersIntoTheMain=Wczëtôj parametrë do przédnégò òkna abò òtemkni lopk
+;Load the parameters into the main window, or open the file
+LoadTheParametersOfTheSelected=Wczëtiwô parametrë wëbrónégò rendera ë kòntinuëje jegò rechòwanié
+;Load the parameters of the selected render and continue its calculation
+LoadTheParametersOfTheSelected2=Wczëtiwô le parametrë wëbrónégò rendera
+;Load the parameters of the selected render only
+LoadingAndSavingInitialDirectories=Wczëtiwanié i zapisëwanié pòczątkòwëch katalogów
+;Loading and saving initial directories
+Log=Dzénnik
+;Log
+LogEverythingTheProgramDidIts=Dzénnik: wszëtkò, co programa zrobiła, ji bôczënczi i felë (klikni, żebë òbaczëc)
+;Log: everything the program did, its warnings and errors (click to see)
+LogarithmicFunctions={ Logaritmiczné fùnkcje }
+;{ Logarithmic functions }
+LongerMarchSteps1Off1=Dłëgszé kroczi parmienia: 1 = wëłączoné, òd 1,2 do 1,5. Przë 1,3 chùtszé ò 5 do 10 %; w cenczich skòrëpach mògą sã pòkazac dzurë.
+;Longer march steps: 1 = off, 1.2 to 1.5. 5 to 10 % faster at 1.3; thin shells can show holes.
+LongerStepsThroughOpenSpaceWhen=Dłëgszé kroczi przez pùsti rum, czej scena ni mô dinamiczny mgłë ani wòlumetricznégò widu (nie z 'Wëłączë analiticzné DE').
+;Longer steps through open space when the scene has no dynamic fog and no volumetric light (not with Disable analytic DE).
+LongerThanUsualStillWorking=dłëżi jak zwëczajno, jesz robi
+;longer than usual, still working
+LookIn=Szëkôj &w:
+;Look &in:
+Looking=Zdrzenié
+;Looking
+LookingRollingAngle=Nórt zdrzeniô+òbrôcaniô:
+;Looking+Rolling angle:
+Loop=Pãtla
+;Loop
+LoopAnimation=Animacjô w pãtlë
+;Loop animation
+Lower=Niższi
+;Lower
+Lowest=Nôniższi
+;Lowest
+M3AAnimationFiles=Lopczi animacje M3A:
+;M3A animation files:
+M3CPathtracerFiles=Lopczi pathtracera M3C:
+;M3C pathtracer files:
+M3DAnimationM3a=Animacjô M3D (*.m3a)
+;M3D Animation (*.m3a)
+M3DBigRenderProjectBig=Projekt wiôldżégò renderu M3D (*.big)
+;M3D Big render project (*.big)
+M3DFormulaM3f=Fòrmùła M3D (*.m3f)
+;M3D formula (*.m3f)
+M3DImageParameterM3i=Òbrôzk + parametrë M3D (*.m3i)
+;M3D Image + Parameter (*.m3i)
+M3DLightParameterM3l=Parametrë widu M3D (*.m3l)
+;M3D Light parameter (*.m3l)
+M3DMonteCarloFileM3c=Lopk Monte Carlo M3D (*.m3c)
+;M3D monte carlo file (*.m3c)
+M3DParameterM3p=Parametrë M3D (*.m3p)
+;M3D Parameter (*.m3p)
+M3DVoxelProjectM3v=Projekt wòkselów M3D (*.m3v)
+;M3D voxel project (*.m3v)
+M3FFormulaFilesLoad=Wczëtiwanié lopków fòrmùłów M3F:
+;M3F formula files load:
+M3IDone=M3I gòtowé
+;M3I done
+M3ILightParameter=Parametrë swiatła M3I:
+;M3I light parameter:
+M3PFilesThatShouldBeRendered=Lopczi M3P do renderowaniô na M3I
+;M3P files that should be rendered to M3I
+M3PParameterFiles=Lopczi parametrów M3P:
+;M3P parameter files:
+M3VPNGVoxelSlices=Wòkselowé plastrë M3V, PNG:
+;M3V, PNG Voxel slices:
+MB=\s\s\sMB
+;\s\s\sMB
+MB2=MB
+;MB
+MB3=\s\sMB
+;\s\sMB
+MB3DImageM3iM3i=Òbrôzk MB3D (*.m3i)|*.m3i
+;MB3D image (*.m3i)|*.m3i
+MCBatchRender=Rzeszowé renderowanié M.C.
+;M.C. batch render
+MMBWheelZoom=MMB/Kółkò: zblëżenié
+;MMB/Wheel: zoom
+MRelObj=M.wzgl.òb.
+;M.rel.obj.
+MainCalcTime=Czas główn. rechòwaniô:
+;Main calc time:
+MainParas=przédné param.
+;main paras
+MainRendering=przédné renderowanié
+;main rendering
+MainRenderingOfTheImage=Główné renderowanié òbrôzka
+;Main rendering of the image
+MainWindow=Przédné òkno:
+;Main window:
+MakeAnImageSelectionWithThe=Zaznaczë mëszą òbrëmié òbrôzka, pòtemù wërechùj ten wëbiér na nowò\nz terôczasnyma parametrama.\nCwiardé cénie ë DEAO bãdą téż wërechòwóné, jeżlë wëbróné, ale\njinszé òkòlné cénie mùszą bëc wërechòwóné na nowò dlô całégò òbrôzka.\nTéż "normalné na Zbuffer" mùszą bëc wërechòwóné na nowò, jeżlë bëłë rëchli rechòwóné.
+;Make an image selection with the mouse then recalculate this selection\nwith the current parameters.\nThe hardshadows and the DEAO will also be calculated if selected, but\nother ambient shadows must be recalculated again for the whole image.\nAlso "normals on Zbuffer" has to be recalculated, if calculated before.
+MakeSureThatNoLightWill=Zagwësniwô, że w tribie bez mieszaniô żóden wid nie bãdze òdjimóny
+;Make sure that no light will be subtracted in non-blend mode
+MakeSureThatTheCalcAutomatic=Zagwësni sã, że òptacje 'Rechùj... aùtomatno' dlô cwiardëch\në òkòlnëch céniów są nastawioné, jeżlë chcesz je ùwzglãdnic.
+;Make sure that the 'Calc... automatic.' options for the hard\nand ambient shadows are set, if you wish to consider them.
+MakeTheLightOfThatPicture=Zrobi wid tegò òbrôzka cepłészim i wërenderëj gò znowa.
+;Make the light of that picture warmer and render it again.
+MakeTheTopBottomGradientOf=Robi gradient góra-dół farwów òkòlégò widu ë spòdla\nwzglãdnym do ùkładu kòòrdinatów òbiektu.\nBrëkùj tegò w animacjach, żebë przëwiązac widë do scenerii.
+;Make the top-bottom gradient of the ambient and background colors\nrelative to the objects coordinate system.\nUse it in animations to fix the lights to the scenery.
+MakeThreeVariationsOfItAnd=Zrobi z niegò trzë warianté i pòwiédz mie, chtëren ce sã nôbarżi widzy.
+;Make three variations of it and tell me which one you like best.
+MakesReflectionsALittleDiffuseValue=Robi òdbicô përznã rozpròszoné, wôrtnotë òd 0 do 2.5
+;Makes reflections a little diffuse, value range from 0 to 2.5
+MakingTheVideo=Ùsôdzanié wideò...
+;Making the video...
+MapNotFound=Mapa nie\nnalazłô
+;Map not\nfound
+MapNumber=Numer mapë
+;Map number
+MapNumber2=Numer mapë:
+;Map Number:
+MapNumberColon=Numer mapë:
+;Map number:
+MapOnOutputVector=Mapa na wińdzeniowim wektorze
+;Map on output vector
+MapSequences=Sekwencje mapów
+;Map Sequences
+MapType=Ôrt mapë:
+;Map Type:
+Material=Materiał
+;Material
+Max=Max
+;Max
+MaxIterat=Maks. iterac.:
+;Max. Iterat.:
+MaxIterations=Maks. iteracje:
+;Max. iterations:
+MaxIterationsColon=Maks. iteracjów:
+;Max iterations:
+MaxIts=Maks. iter.:
+;Max its.:
+MaxL=MaxL:
+;MaxL:
+MaxLengthCalc=Maks. dług. rech.:
+;Max. length calc.:
+MaxNoise=Maks. szëm:
+;Max noise:
+MaxRayCount=Maks. lëczba parmieni:
+;Max ray count:
+MaxRaycount=Maks. lëczba parmieni:
+;Max raycount:
+MaxValueReturnsTheLargestSignedValue={ MaxValue: Zwrôcô nôwikszą wôrtnotã ze znakã w tôflë pòdôwków (MAX) }
+;{ MaxValue: Returns the largest signed value in the data array (MAX) }
+MaxVertices=Maks. wiérzków:
+;Max Vertices:
+MaximalIterationsForTheSecondHybrid=Maksymalné iteracje dlô drëdżégò dzélu hibridë, zaczinającë òd numra fòrmùłë pòdónégò na górze tegò òkna.
+;Maximal iterations for the second hybrid part, beginning with formula nr specified on top of this window.
+MaximumIterationCount=Maksymalnô lëczba iteracjów
+;Maximum iteration count
+MaximumNumberOfVerticesWhichIs=Nôwikszô lëczba wiérzków pòkazëwónëch w pòdzérkù
+;Maximum number of vertices which is shown in the preview
+MaxitsHybridPart1=Maks. it. hibrid dzél1:
+;Maxits hybrid part1:
+MaxitsHybridPart2=Maks. it. 2. dzélu hibridë:
+;Maxits hybrid part2:
+MeasureOfTheSharpnessSmoothnessOf=Miara òstroscë/gładkòscë pòwiérzchni òbiektu. Spróbùj wôrtnotów z zasygù 0.15 .. 1.5, w rzôdczich przëpôdkach môłé ùjemné lëczbë jak -0.1 téż dôwają czekawé rezultatë
+;Measure of the sharpness/smoothness of the object's surface. Try values  in the range of 0.15 .. 1.5, in rare cases small negative numbers like -0.1 also produce interesting results
+MemNeeded=Pòtrzébnô pamiãc:
+;Mem needed:
+Memory=Pamiãc
+;Memory
+Mesh=séc
+;mesh
+MeshObj=Séc (*.obj)
+;Mesh (*.obj)
+MeshPly=Séc (*.ply)
+;Mesh (*.ply)
+MeshPreviewFrm=Pòdzérk sécë
+;MeshPreviewFrm
+MeshProperties=Włôscëwòscë sécë
+;Mesh properties
+MeshSavedVerticesFaces=Séc zapisónô: {} ({} wierzchòłków, {} scónów)
+;Mesh saved: {} ({} vertices, {} faces)
+MeshWithUvCoordinatesObj=Séc z kòòrdinatama uv (*.obj)
+;Mesh with uv-coordinates (*.obj)
+MeshWithVertexColorsPly=Séc z farwama wiérzków (*.ply)
+;Mesh with vertex colors (*.ply)
+Meshes=Sécë:
+;Meshes:
+Meshes2=Sécë
+;Meshes
+Messages=Kòmùnikatë
+;Messages
+Mid=strzódk
+;mid
+Min=Min
+;Min
+MinDE=MinDE:
+;MinDE:
+MinDistance=Min. òddalenié:
+;Min distance:
+MinIterat=Min. iterac.:
+;Min. Iterat.:
+MinIterations=Min. iteracje:
+;Min. iterations:
+MinIts=Min. iter.:
+;Min its.:
+MinLeft=òstało {} min
+;{} min left
+MinLin=Min lin
+;Min lin
+MinLower=min
+;min
+MinNlin=Min nlin
+;Min nlin
+MinSLeft=òstało {} min {} s
+;{} min {} s left
+MinValueReturnsTheSmallestSignedValue={ MinValue: Zwrôcô nômniészą wôrtnotã ze znakã w tôflë pòdôwków (MIN) }
+;{ MinValue: Returns the smallest signed value in the data array (MIN) }
+MinimalDistance=Minimalnô òdległosc:
+;Minimal distance:
+Misc=Jiné:
+;Misc:
+MiscellaneousRoutines={ Rozmajité procedurë }
+;{ Miscellaneous Routines }
+Missing=felëje
+;missing
+MissingBTR123Header=Felëje nagłówk <BTR1/2/3>
+;Missing <BTR1/2/3>-header
+Mix=Mix
+;Mix
+Mod=Mòd:
+;Mod:
+Mode=Trib:
+;Mode:
+Mode2=Trib 2
+;Mode 2
+ModeFor2ColorChoice=Trib dlô 2. wëbiéru farwë:
+;Mode for 2. color choice:
+MonteCarlo=Monte Carlo:
+;Monte Carlo:
+MonteCarlo2=Monte Carlo
+;Monte Carlo
+MonteCarlo3=Monte Carlo: {}
+;Monte Carlo: {}
+MonteCarloCalculatedOn=Monte Carlo wërechòwóné na: {}
+;Monte Carlo calculated on: {}
+MonteCarloRendering=Renderowanié Monte Carlo
+;Monte Carlo rendering
+MonteCarloRendering2=Renderowanié Monte Carlo\s
+;Monte carlo rendering\s
+MoreOptionsSendParasToMain=Wicy òptacjów: sélôj parametrë do głównégò òkna, nastawi ë impòrtëj.
+;More options: send paras to main, adjust and import.
+MotionBlur=Rozmëcé rëchù:
+;Motion blur:
+MotionBlurThePicturesAveragedFor=Rozmëcé rëchù: wielëna òbrôzków ùsrzédnionëch na klatkã, żebë to, co sã rëszô, sã rozmazywało (1 = wëł.); renderowanié trwô tëli razë dłëżi
+;Motion blur: the pictures averaged for each frame, so that what moves smears (1 = off); rendering takes that many times as long
+Mousewheel=Kółkò mëszë
+;Mousewheel
+Move=Przesuwanié
+;Move
+MoveBackwards=Przesuni nazôd
+;Move backwards
+MoveDown=Przesuni w dół
+;Move down
+MoveForward=Przesuni do przódkù
+;Move forward
+MoveLeft=Przesuni w lewò
+;Move left
+MoveRight=Przesuni w prawò
+;Move right
+MoveUp=Przesuni w górã
+;Move up
+MultiplierForTheLastLengthIncrease=Mnożnik dlô òpcji 'Òstatny przërost dłëgòscë'.\nZmniészë wôrtnotã przë wësoczich pòtãgach, zwikszë przë fòrmùłach z môłima skalama.
+;Multiplier for the 'Last length increase' option.\nDecrease the value on high powers, increase on formulas with low scales.
+MultipliesTheFirstStepwidthWithA=Mnożi szérzã pierszégò krokù przez przëtrôfkòwą lëczbã,\nżebë artefaktë przekroczeniô wëzdrzałë jak szëm.  \nZmniésziwô téż pasowanié w dinamiczny dôce.\s
+;Multiplies the first stepwidth with a random number\nto give overstepping artifacts a noisy look.  \nAlso reduces banding in the dynamic fog.\s
+MutaGen=MutaGen
+;MutaGen
+MutaGen2=MutaGen: {}
+;MutaGen: {}
+MutaGenDblClickOnImageOrClick=MutaGen [dwa razë klikni na òbrôzk abò klikni knąpã "Mùtëj!" żebë mùtowac, prawi klik dlô menu]
+;MutaGen [DblClick on Image or Click on "Mutate!"-button to Mutate, RightClick for Menu]
+Mutate=Mùtëj
+;Mutate
+MutateExclamation=Mùtëj!
+;Mutate!
+Mutation=Mùtacjô {}
+;Mutation {}
+MutationType=Ôrt mùtacji
+;Mutation type
+N0No255FullTransparency=0: bez, 255: Całô przezérnosc
+;0: no, 255: Full transparency
+N0To1DarkerCorners=0 do 1: cemniészé nórtë
+;0 to 1: darker corners
+N0To1RedAndBlue=0 do 1: czerwòné ë mòdré òbrąbczi kù nórtóm, jak je pòkazywô òbiektiw
+;0 to 1: red and blue fringes towards the corners, as a lens shows them
+N1100JPEGQuality100Maximal=1..100: jakòsc JPEG\n> 100: maksymalnô wiôlgòsc lopka w kilobajtach
+;1..100: JPEG quality\n> 100: maximal filesize in kilobytes
+N12Aa=1:2  aa
+;1:2  aa
+N13Aa=1:3  aa
+;1:3  aa
+N16BitPGM=16 Bit PGM
+;16 Bit PGM
+N16BitZBufferGenerator=Generator 16-bitowégò Z-bufora
+;16Bit ZBuffer Generator
+N1CoolerBluerTo1Warmer=-1 chłodniészé (barżi mòdré) do 1 cepłészé (barżi òranżowé)
+;-1 cooler (bluer) to 1 warmer (more orange)
+N1FlatterTo1StrongerContrast=-1 płaszczészé do 1 mòcniészi kòntrast
+;-1 flatter to 1 stronger contrast
+N1FullSizeNoAntiAliasing=1:  Całô wiôlgòsc, bez anti-aliasingù\n2:  anti-aliasing 2x2\n3:  anti-aliasing 3x3
+;1:  Full size, no anti aliasing\n2:  2x2 anti aliasing\n3:  3x3 anti aliasing
+N1None22x233x3=1:  nick\n2:  2x2\n3:  3x3
+;1:  none\n2:  2x2\n3:  3x3
+N2Choice=2. wëbiér
+;2. choice
+N2Or3PassesGivesA=2 abò 3 przebiedżi dôwają lepszé mòcné rozmazanié przed pùnktã òstroscë.\n1 przebiég dôwô talarkòwé bokeh, wicy przebiegów dôwô bokeh pòdobné do gaussowégò.
+;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
+N2ndReflection=2. òdbicé
+;2nd reflection
+N360Panorama=Panorama 360
+;360 Panorama
+N3DAnalyticFormula=Analiticznô fòrmùła 3D
+;3D analytic formula
+N3DFormula=Fòrmùła 3D
+;3D formula
+N3Da=3Da
+;3Da
+N4DAnalyticFormula=Analiticznô fòrmùła 4D
+;4D analytic formula
+N4DFormula=Fòrmùła 4D
+;4D formula
+N4DRotationOfTheWholeBulb=Òbrôcanié 4D całégò bulba:
+;4D rotation of the whole bulb:
+N4Da=4Da
+;4Da
+N4dRotationXwYwZw=Òbrót 4d (xw,yw,zw):\s
+;4d rotation (xw,yw,zw):\s
+N8BitPNG=8 Bit PNG
+;8 Bit PNG
+Name=Miono:
+;Name:
+Name2=Miono
+;Name
+NamedParams=Mionowóné parametrë:
+;Named Params:
+NaviExpBright=Prôwdzëwô jasnosc
+;True brightness
+NaviExpBrightHint=Pòkazywô òbrôzk tak, jak béł wërechòwóny: sówk jasnoscë nie je brëkòwóny.
+;Shows the picture as calculated: the brightness slider is not applied.
+NaviExpDetail=Detale przédnégò òkna
+;Main window's detail
+NaviExpDetailHint=Rechùje z krokã proménia, zatrzimanim DE ë krokama binarnégò szëkaniô przédnégò òkna, nié z chùtczéjszima nastôwama nawigatora.\nWòlni, ale detale wiérzchù wëzdrzą jak na przédnym òbrôzkù.
+;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
+NaviExpLight=Swiatło przédnégò òkna
+;Main window's lighting
+NaviExpLightHint=Brëkùje swiatła przédnégò òkna ë jidze za jegò zmianama w òknie Swiatło.\nWëbranié tu nastôwù swiatła abò dinamicznégò dôżdżu wëłączô to.
+;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExperimental=Eksperimentalno: jak w przédnym òknie
+;Experimental: match the main window
+Navigator=Nawigatór
+;Navigator
+Navigator2=Nawigatór: {}
+;Navigator: {}
+NavigatorColon=Nawigatór:
+;Navigator:
+NavigatorSize=Wiôlgòsc Nawigatora
+;Navigator Size
+NavigatorViewSentToTheMain=Wëzdrzatk Nawigatora pòsłóny do przédnégò òkna, wcësni "Rechùj 3D".
+;Navigator view sent to the main window, press "Calculate 3D".
+NeuralNoiseFilter=Neuronowi filter szëmù: {}
+;Neural noise filter: {}
+NeuralNoiseFilterDone=Neuronowi filter szëmù: gòtowé
+;Neural noise filter: done
+NeuralNoiseFilterOnTheShown=Neuronowi filter szëmù na wëskrzënionym òbrazu (Intel Open Image Denoise).\nSamò renderowanié sã nie zmieniô; nôblëższô aktualizacëjô pòkôże je znowu bez filtra.
+;Neural noise filter on the shown picture (Intel Open Image Denoise).\nThe rendering itself is not changed; the next update shows it unfiltered again.
+New=nowi
+;new
+NewJITCompiledFormula=Nowô fòrmùła kòmpilowónô JIT
+;New JIT-compiled Formula
+NewSequence=Nowô sekwencjô
+;New Sequence
+NewValue=Nowô wôrtnota:
+;New value:
+NewZoom=Nowi zoom:
+;New zoom:
+No=nié
+;no
+No2=Nié
+;No
+NoDoFOnTiles=Bez DoF na kachlach.
+;No DoF on tiles.
+NoFacesInTheFile=w lopkù nie ma scónów
+;no faces in the file
+NoFileAdded=Nie dodóny niżóden lopk
+;No file added
+NoFramesToRenderInThis=W tim zakresu nie ma klatków do renderowaniô.
+;No frames to render in this range.
+NoImageCalculatedYet=Jesz nie je wërechòwóny niżóden òbrôzk.
+;No image calculated yet.
+NoIpol=Bez ipol.
+;No ipol
+NoLightParameters={}: bez parametrów widu
+;{}: no light parameters
+NoObjectAtThisPoint=W tim pùnkce nie ma òbiektu.
+;No object at this point.
+NoParameters=bez parametrów
+;no parameters
+NoParamsToSendToMain=Nie ma parametrów do pòsłaniô do przédnégò editora
+;No params to send to main editor
+NoPreview=Bez pòdzérkù: {}
+;No preview: {}
+NoPreviewForThisFile=Nie ma pòdzérkù dlô tegò lopka.
+;No preview for this file.
+NoSOURCESectionThisIsNot={}: felëje sekcjô [SOURCE], to nie je fòrmùła JIT
+;{}: no [SOURCE] section, this is not a JIT formula
+NoSharedFolderChosen=nie wëbróny dzelony katalog
+;no shared folder chosen
+NoStepLimitWithoutDynamicFog=Bez lëmitu krokòw bez dinamiczny mgłë
+;No step limit without dynamic fog
+NoTextParametersFoundInThe=W schówkù nie nalazłé tekstowëch parametrów.
+;No text parameters found in the clipboard.
+NoTilesToRender=Nie ma kachlów do renderowaniô.
+;No tiles to render.
+NoValidTextFoundPleaseEnter=\sNie nalazło sã wôżnégò tekstu, proszã wpisac tekst niżi:
+;\sNo valid text found, please enter the text below:
+Noise=-szëm
+;-noise
+NoiseAI=-szëm AI
+;-noise AI
+NoiseFilter=\sFilter szëmù
+;\sNoise Filter
+NoiseFilterOnTheShownPicture=Filter szëmù na pòkazywónym òbrôzkù (òdszëmianié DCT jak "Denoise DCT" w GIMP-ie),\njegò mòc je òszacowónô z parmieni. Samò renderowanié sã nie zmieniwô;\npòsobné òdswiéżenié pòkazywô je znowa bez filtra.
+;Noise filter on the shown picture (DCT denoising as GIMP's "Denoise DCT"),\nits strength estimated from the rays. The rendering itself is not changed;\nthe next update shows it unfiltered again.
+NoiseFilterStrength=Filter szumù: mòc {}
+;Noise filter: strength {}
+None=felëje
+;none
+Normal=Normalny
+;Normal
+NormalStatusForThisFormula=Normalny sztatus ti fòrmùłë
+;Normal status for this formula
+NormalsOnDE=Nòrmale na DE:
+;Normals on DE:
+NormalsOnZBuf=Normals on ZBuf
+;Normals on ZBuf
+NormalsOnZBuffer=\sNormalné na Z-buffer
+;\sNormals on Z-buffer
+NormalsOnZBufferColon=Nòrmalné na ZBuffer:
+;Normals on ZBuffer:
+Norms=norms
+;norms
+NotABigRenderProject=to nie je projekt wiôldżégò renderu
+;not a big render project
+NotAvailableForLinuxUseClaude=Nie je przistãpné dlô Linuksa: brëkùjë Claude Code niżi.
+;Not available for Linux: use Claude Code below.
+NotFoundIfYouUseIt=Nie nalazłé. Jeżlë gò brëkùjesz, zrëszë rôz tã kòmandã w terminalu:
+;Not found. If you use it, run this command once in a terminal:
+NotInstalledGetItFromClaude=Nie je zainstalowóné. Scygni gò z claude.ai/download, zrëszë gò rôz, a pòtemù wrócë tuwò.
+;Not installed. Get it from claude.ai/download, start it once, then come back here.
+NotSelected=Nie wëbróné
+;Not selected
+NotSharingTickShareThisComputer=Bez dzeleniô: zaznaczë "Dzelë nen kòmpùtr", bë renderowac wespół z jinyma kòmpùtrama
+;Not sharing: tick "Share this computer" to render together with other computers
+NotSharingTickShareThisComputer2=Bez dzeleniô: zaznaczë "Dzelë nen kòmpùtr", bë renderowac wespół z {}
+;Not sharing: tick "Share this computer" to render together with {}
+NoteToPreviewVertexColorsChoose=Bôczënk: bë òbaczëc farwë wiérzków, wëbierzë trib pùnktów w òknie pòdzérkù
+;Note: to preview vertex colors, choose point-mode in the preview-window
+NothingRenderedYet={}: jesz nick nie wërenderowóné
+;{}: nothing rendered yet
+NothingToSave=nie ma czegò zapisac
+;nothing to save
+NumberOfFramesToNextKeyframe=Lëczba klatków do nastãpny kluczowi klatczi
+;Number of frames to next keyframe
+NumberOfRaysThatWillBe=Lëczba parmieniów, jaczé bãdą rechòwóné.\nWicy je lepi, ale wiedzec pòmalni.
+;Number of rays that will be calculated.\nThe more the better but slower, of course.
+OK=OK
+;OK
+Object=Òbiekt
+;Object
+ObjectColors=Farwë òbiektu
+;Object colors
+ObjectDetermination=Òkreslenié òbiektu:
+;Object determination:
+Of={} z {}
+;{} of {}
+OfEntries={} z {} wpisów
+;{} of {} entries
+OfEntriesWhoseFilesAreThe=Z wpisów z tima samima lopkama (te same parametrë wërechòwóné znowa, òbrôzk zapisóny dwa razë) leno nônowszi
+;Of entries whose files are the same (the same parameters calculated again, a picture saved twice) only the newest
+OfFormulas=fòrmùłów
+;of Formulas
+OfLines={} z {} régów
+;{} of {} lines
+OfUnitsDone={} z {} jednostków gòtowé
+;{} of {} units done
+Off=Wëł.
+;Off
+OffLeftImageIsOnThe=Wëł.: lewi òbrôzk je z lewi starnë dlô równoległégò zdrzeniô. Wł.: prawi òbrôzk je z lewi starnë dlô zdrzeniô na krziż.
+;Off: left image is on the left for parallel viewing. On: right image is on the left for cross-eyed viewing.
+OffSmallestFile=Wëłączoné (nômniészi lopk)
+;Off (smallest file)
+OffsetAndScale=Przesëniãcé i skala
+;Offset and scale
+OffsetX=Przesënienié X:
+;Offset X:
+OffsetY=Przesënienié Y:
+;Offset Y:
+OjectColorsOnCutsAnd2d=Farwë òbiektu na cãcach ë bënë 2d, klikni, żebë je zmienic.
+;Oject colors on cuts and 2d inside, click to change them.
+On=Wł.
+;On
+OnInsertingANewKeyframe=Przë wstôwianim nowi kluczowi klatczi:
+;On inserting a new keyframe:
+Only1FocuspointMadeFromAverage=Le 1 pónkt òstrotë, zrobiony ze strzédny Zsharp1+2!
+;Only 1 focuspoint, made from average of Zsharp1+2!
+OnlyAPictureIsKeptAs=Leno òbrôzk je zachòwiwóny jakno lopk òbrôzka (nie render Monte Carlo ani ekspòrt wòkselów abò sécë).
+;Only a picture is kept as an image (not a Monte Carlo render, a voxel or mesh export).
+OnlyAddLight=Leno dodôwôj wid
+;Only add light
+OnlyDEAOAmbientShadowsAvailableIn=W tribie kachlów są przëstãpné le òkòlné cénie DEAO.\nSą terô wëbróné ë nastawioné na 33 parmienie, zmieni to wedle swòjich pòtrzebów.
+;Only DEAO ambient shadows available in tiling mode.\nIs now selected and set to 33 rays, please change it for your own needs.
+OnlyDIFS=Leno dIFS
+;Only dIFS
+OnlyIfHardShadowsWereCalculated=(leno jeżlë cwiardé cénie bëłë wërechòwóné)
+;(only if hard shadows were calculated)
+OnlyOneKindOfEvent=Leno jeden ôrt zdarzeniô
+;Only one kind of event
+OnlyTheEntriesWhoseNameFolder=Leno wpisë, chtërnëch miono, katalog abò ôrt zawiérô nen tekst
+;Only the entries whose name, folder or kind contain this text
+OnlyTheLinesThatContainThese=Leno régi, chtërne zawiérają te słowa
+;Only the lines that contain these words
+OnlyToTheActualKeyframe=Le do aktualny kluczowi klatczi
+;Only to the actual keyframe
+OnlyWorkingIfSmoothNormalsWas=Dzejô leno, jeżlë 'Gładczé normalné' bëło przë rechòwanim nastawioné wikszé òd zera.
+;Only working if 'Smooth normals' was set bigger than zero on calculation.
+Open=Òtemkni
+;Open
+Open2=&Òtemkni
+;&Open
+OpenAM3cFile=Òtemkni lopk m3c
+;Open a m3c file
+OpenAVoxelProject=Òtemkni projekt wòkselów
+;Open a voxel project
+OpenAnAnimationParameterFile=Òtemkni lopk parametrów animacje
+;Open an animation parameter file
+OpenCloseAdjustmentPanel=òtemkni/zamkni panel dopasowaniô
+;open/close adjustment panel
+OpenCloseBatchPanel=òtemkni/zamkni panel rzeszowégò renderowaniô
+;open/close batch panel
+OpenCloseParameterPanel=òtemkni/zamkni panel parametrów
+;open/close parameter panel
+OpenExplorer=Òtemkni eksplorator
+;Open explorer
+OpenFiles=Òtemkni lopczi
+;Open files
+OpenFolder=Òtemkni katalog
+;Open folder
+OpenFullLightAndColorParameter=Òtemkni fùl parametrë widu ë farwów
+;Open full light and color parameter
+OpenFullM3I=Òtemkni fùl M3I
+;Open full M3I
+OpenGL=OpenGL >>
+;OpenGL >>
+OpenGLPreviewOfFinalMesh=Pòdzérk OpenGL kùńcowi sécë
+;OpenGL preview of final mesh
+OpenLogFolder=Òtemkni katalog dzénnika
+;Open log folder
+OpenM3i=Òtemkni m3i
+;Open m3i
+OpenM3p=Òtemkni m3p
+;Open m3p
+OpenM3pSequence=Òtemkni sekwencjã *.m3p
+;Open *.m3p-sequence
+OpenParameter=Òtemkni parametrë
+;Open parameter
+OpenParameterFromClipboardTextSelect=Òtemkni parametrë z tekstu w schówkù:\nZaznaczë tekst parametrów razã z 'Mandel...{..}',\nwcësni ctrl+c, a pòtemù knąpã open-txt.
+;Open parameter from Clipboard text:\nSelect parameter text including 'Mandel...{..}',\npress ctrl+c and afterwards the open-txt button.
+OpenProject=Òtemkni projekt
+;Open project
+OpenTextParameters=Òtemkni parametrë jakno tekst
+;Open text parameters
+OpenTheAnimationMaker=Òtemkni twòrzëdło animacjów
+;Open the animation maker
+OpenTheFolderOfTheFile=Òtemkni katalog lopka
+;Open the folder of the file
+OpenTheFolderOfTheLog=Òtemkni katalog lopków dzénnika (jeden na dzéń, trzëmóné 30 dni)
+;Open the folder of the log files (one a day, kept 30 days)
+OpenTheMutaGen=Òtemkni MutaGen
+;Open the MutaGen
+OpenTheNavigator=Òtemkni Nawigatór
+;Open the Navigator
+Opened=òtemkłé
+;opened
+OpensTheFolderOfTheLanguage=Òtmikô katalog lopków jãzëka
+;Opens the folder of the language files
+OperationCancelled=Òperacjô òprzestónô
+;Operation cancelled
+Option=Òpcjô
+;Option
+OptionToCalculateOnlyAPart=Òptacja rechòwaniô leno dzélu òbrôzka dlô chùtszégò pòdzérkù.\nPrzed rechòwanim zaznaczë mëszą òbrëmié na òbrôzkù.
+;Option to calculate only a part of the image for a faster preview.\nMake a selection in the image with the mouse before calculating.
+OptionToDitherTheAngleOf=Òptacja ditheringù nórta parmieniów dlô skalowaniô òbrôzka 1:2 abò 1:3.\nTo dôwô wikszą precyzjã ë mni plamiastëch artefaktów.\nBôczënk: brëkùj leno przë tim samim skalowanim òbrôzka, jinaczi dostóniesz artefaktë ditheringù.
+;Option to dither the angle of rays for an image scaling of 1:2 or 1:3.\nThis leads to more precision and less spotty artifacts.\nCaution: use only on the same image scaling, else you get dither artifacts.
+Options=Òptacje
+;Options
+OptionsColon=Òpcje:
+;Options:
+OrMousewheel=(abò kółkò mëszë)
+;(or mousewheel)
+OrNegativeWhichIsSpecifiedIn=// abò ùjemnô, co òznôczô nôwëższi bit, bit znakù.
+;// or negative, which is specified in the high-order, sign bit.
+OrbitTrapMindistTo0=Orbit trap (min. òdl. do 0)
+;Orbit trap (mindist. to 0)
+Orig=Òrig:
+;Orig:
+OriginalParameterSizeWidthHeight=Òriginalnô wiôlgòsc parametrów (szérzawa, wësokòsc):
+;Original parameter size (width, height):
+OtherFiles=Jiné lopczi
+;Other files
+OutputFile=Lopk wińdzeniô:
+;Output file:
+OutputFolder=Katalog docelowi:
+;Output folder:
+OutputFolder2=Katalog wińdzeniô
+;Output folder
+OutputFormat=Fòrmat lopków:
+;Output format:
+OutputImageType=Ôrt wińdzeniowégò òbrôzka:
+;Output image type:
+Outside=Bùten
+;Outside
+OutsideRender=Renderowanié z bùtna
+;Outside render
+OutsideRenderDefaultModeInsideRender=Renderowanié z bùtna:  domëslny trib\nRenderowanié òd bënë:    pòmałé raymarching bënë z maks. it.\nBënë ë z bùtna:   renderowanié òbù starnów
+;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverallScale=Całownô skala:
+;Overall scale:
+OverwriteExistingImages=Nadpiszë jistniejącé òbrôzczi
+;Overwrite existing images
+OverwriteExistingM3IFiles=Nadpiszë jistniejącé lopczi M3I
+;Overwrite existing M3I files
+PGM16BitPgm=PGM 16 bit (*.pgm)
+;PGM 16 bit (*.pgm)
+PNG=PNG
+;PNG
+PNG16BitColourPng=PNG 16 bit farwa (*.png)
+;PNG 16 bit colour (*.png)
+PNG16BitPng=PNG 16 bit (*.png)
+;PNG 16 bit (*.png)
+PNGFramesWithATransparentBackground=Klatczi PNG z przezérnym tłã.
+;PNG frames with a transparent background.
+PNGPng=PNG (*.png)
+;PNG (*.png)
+PNGTransparentBackgroundPng=PNG z przezérnym tłã (*.png)
+;PNG transparent background (*.png)
+PaintClouds=Malëjë chmùrë
+;Paint clouds
+PaintNow=Malëjë terô
+;Paint now
+PaintOnImage=Maluj na òbrôzkù
+;Paint on image
+PaintingAPreview=malowanié pòdzérkù
+;painting a preview
+PaintsThePictureAgainWithThe=Malëje òbrôz jesz rôz z chmùrama ùstawionyma tuwò
+;Paints the picture again with the clouds as set here
+Pano=pano.
+;pano.
+PanoramaModeTheFOVIsChoosen=Trib panoramë:\n- FOV je wëbiéróny aùtomatno\n- Brëkùj 24bit SSAO abò DEAO do céniów òkòlô\n- Zalécóny je stosënk bòków 2:1, ale nie je nót.
+;Panorama mode:\n- The FOV is choosen automatically\n- Use the 24bit SSAO or DEAO for ambient shadows\n- A 2:1 aspect ratio is recommended, but not necessary.
+Param=Parametr
+;Param
+ParamNameMustNotBeEmpty=Miono parametra nie mòże bëc pùsté
+;Param name must not be empty
+Parameter=Parametr
+;Parameter
+Parameters=Parametrë
+;Parameters
+ParametersCopiedToTheClipboard=Parametrë skòpérowóné do schówkù.
+;Parameters copied to the clipboard.
+ParametersLoadedPressCalculate3DTo=Parametrë wczëtóné, wcësni "Rechùj 3D", bë renderowac.
+;Parameters loaded, press "Calculate 3D" to render.
+ParametersLoadedThisRenderContinuesWhere=Parametrë wczëtóné: nen render jidze dali tam, dze béł zrobiony (pòlétowô régã abò jegò òkno).
+;Parameters loaded: this render continues where it was made (the command line or its window).
+ParametersLower=parametrë
+;parameters
+ParametersMandId=Parametrë: MandId {}
+;Parameters: MandId {}
+Part2At=Dzél 2 w:
+;Part 2 at:
+Pass=przeńdzënk {}
+;pass {}
+Passes=Przebiedżi
+;Passes
+PauseRendering=Wstrzëmôj renderowanié
+;Pause rendering
+PausedPressToContinue=Wstrzëmóné, wcësni, bë jic dali
+;Paused, press to continue
+PercentOfLocalDE=Procent lokalnégò DE
+;Percent of local DE
+Picture=òbrôzk
+;picture
+Pictures=òbrôzków
+;pictures
+PicturesAndFilesTheAssistantMakes=Òbrôzczi ë lopczi, jaczé robi asystent, trôfiają do {}; nic nie je rëmóné. Òbrôzczi wikszé jak 4K są robioné le pò Twòjim przëzwòlenim, a rechòwanié sã zatrzimùje pò 10 minutach. Wszëtkò, co òn robi, je w dzénnikù.
+;Pictures and files the assistant makes go into {}; nothing is deleted. Pictures larger than 4K are made only after you agreed, and a calculation stops after 10 minutes. Everything it does is in the log.
+PixelsLargerKeepsMoreDetailAnd=pikselów; wikszi trzimô wicy detalów ë dôwô wikszi lopk
+;pixels; larger keeps more detail and makes a larger file
+PleaseChooseAnOutputFile=Wëbierzë lopk wińdzeniô.
+;Please choose an output file.
+PleaseMakeASelectionInThe=Nôprzód zaznaczë wëbiérk na òbrôzkù.
+;Please make a selection in the image first.
+PleaseSaveTheProjectFirst=Nôprzód zapiszë projekt.
+;Please save the project first.
+PleaseSelectTheLightsFirstNo=Nôprzód wëbierzë widë.  Bez HS dlô mapów widu.
+;Please select the lights first.  No HS for lightmaps.
+Png=Png
+;Png
+PngPar=par. png:
+;png par:
+Points=Pùnktë
+;Points
+PointsColor=Farwa pùnktów
+;Points color
+PortableGrayMap=Portable Gray Map
+;Portable Gray Map
+PortableNetworkGraphic=Portable Network Graphic
+;Portable Network Graphic
+Position=Pòzycjô
+;Position
+PositionX=Pòłożenié X
+;Position X
+PositionY=Pòłożenié Y
+;Position Y
+PositionZ=Pòłożenié Z
+;Position Z
+PositionalLight=Pòzycyjny wid
+;Positional light
+PostCalculations=pòstrechòwania
+;post calculations
+PostProcessing=Pòstprodukcja
+;Post processing
+PostProcessingColon=Òbróbka:
+;Post processing:
+PostProcessingLower=pòstprodukcja
+;post processing
+Postprocess=Òbróbka
+;Postprocess
+PowerRaiseBaseToAnyPower={ Power: Pòdnôszô spòdlé do równo jaczi pòtãdżi.
+;{ Power: Raise base to any power.
+Prefs=Nastawë
+;Prefs
+PreprocessedCode=Preprocesowóny kòd
+;Preprocessed code
+PresetFlower=preset <kwiat>
+;preset <flower>
+PresetMetallic=preset <metalowi>
+;preset <metallic>
+PresetNeutral=preset <neutralny>
+;preset <neutral>
+PresetSand=preset <piôsk>
+;preset <sand>
+PresetSlime=preset <szlam>
+;preset <slime>
+PressButtonAndAfterwardsTheObject=Nacësni knąpã, a pòtemù dzél òbiektu\nna òbrôzkù, chtëren mô bëc òstri.
+;Press button and afterwards the object part\nin the image, that should be sharp.
+PressCalculate3DToRender=Wcësni 'Rechùj 3D', bë renderowac
+;Press 'Calculate 3D' to render
+PressStartRenderingToCalculateThe=Wcësni 'Zacznij renderowanié', bë wërechòwac òbrôzk
+;Press 'Start rendering' to calculate the image
+PressThisButtonAndAPreset=Wcësni ten knąp i szablón 1 do 3, żebë zapisac aktualné swiatło nawi.\nKlikni dwa razë, żebë copnąc zapisanié.
+;Press this button and a preset 1 to 3 to store the actual navi light.\nClick twice to undo storing.
+PressToBringUpTheFormula=Wcësni, żebë òtemknąc òkno fòrmùłów\nPrawé klikniãcé dlô òpcjów przëlepieniô.
+;Press to bring up the formula window\nRightclick for sticky options.
+PressToBringUpTheLight=Wcësni, żebë òtemknąc òkno nastôwianiô widu+farwów.\nPrawé klikniãcé dlô òpcjów przëlepieniô.
+;Press to bring up the light+color adjust window.\nRightclick for sticky options.
+PressToBringUpThePostprocessing=Wcësni, żebë òtemknąc òkno òbróbczi pò renderowanim.\nPrawé klikniãcé dlô òpcjów przëlepieniô.
+;Press to bring up the postprocessing window.\nRightclick for sticky options.
+PressToSwitchBetweenDynamicFog=Wcësni, żebë przełączëc midzë dinamiczną dôką na iteracjach a wòlumetricznym widã na widze nr
+;Press to switch between dynamic fog on iterations and volumetric light on light nr
+PressToTakeTheActualDistance=Wcësni, żebë wzyc aktualné òddalenié jakno minimalné òddalenié òd òbiektu przë chòdzenim.
+;Press to take the actual distance as minimum distance to object for walking.
+Pressing0ZeroSetsTheTrackbar=Nacësniãcé "0" (zero) nastôwiô suwôk na jegò zerową pòzycjã.
+;Pressing "0" (zero) sets the trackbar to its zero position.
+PreventTheComputerFromShutdownBy=Nie dôwô kòmpùtrowi sã wëłączëc, rëszającë\nòd czasu do czasu kąsk kùrsorã mëszë.
+;Prevent the computer from shutdown by moving\nthe mouse cursor from time to time a bit.
+Preview=pòdzérk
+;preview
+Preview2=Pòdzérk
+;Preview
+PreviewMaxSize=Maks. wiôlgòsc pòdzérkù:
+;Preview max size:
+PreviewSize=Wiôlgòsc pòdzérkù:
+;Preview size:
+Probability=Prôwdopòdobnosc
+;Probability
+ProcedureSinCosConstThetaDoubleVar=procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+;procedure SinCos(const Theta: Double; var Sin, Cos: Double);
+Processings=Przerôbianié
+;Processings
+Processor=procesor
+;processor
+Program=Programa
+;Program
+ProgramOutput=Wińdzenié programë
+;Program output
+Progress=Pòstãp
+;Progress
+Project=Projekt:  {}
+;Project:  {}
+Project2=Projekt: {}
+;Project: {}
+ProjectNew=Projekt:  (nowi)
+;Project:  (new)
+PushDownTo2DZoomIn=Wcësni, żebë zblëżac (òddalac) 2D lewim (prawim) klikniãcym na òbrôzk,\nabò zaznaczającë òbéńdã do zblëżeniô.
+;Push down to 2D zoom in (out) with left (right) click on the image,\nor by marking a zoom-in area.
+PushDownToMoveTheObject=Wcësni, żebë rëszac òbiekt w czerënkù Z mëszą.
+;Push down to move the object in the Z direction with the mouse.
+PushDownToShiftTheObject=Wcësni, żebë przesëwac òbiekt w czerënkù X,Y mëszą.
+;Push down to shift the object in X,Y direction with the mouse.
+PushTheButtonToCalculateThe=Nacësni knąpã, żebë wërechòwac cwiardé cénie z wëbrónëch widów.\nRôz wërechòwóny cwiardi céń nie mùszi bëc rechòwóny jesz rôz,\nchiba że nórt abò pòzycja widu bëła zmienionô.
+;Push the button to calculate the hardshadows from the selected lights.\nOnce calculated, the hardshadow must not be calculated again,\nunless the angle or the position of the light was changed.
+PushToNormaliseThe3dVector=Wcësni, żebë znormalizowac dłëgòsc wektora 3d do 1.\s
+;Push to normalise the 3d vector length to 1.\s
+PutTheAdjustedJuliaValuesInto=Wstôwiô dopasowóné wôrtnotë Julia do parametrów przédnégò programù.
+;Put the adjusted julia values into the main program parameters.
+PutTheAdjustedValuesIntoThe=Wstôwiô dopasowóné wôrtnotë do parametrów przédnégò programù.
+;Put the adjusted values into the main program parameters.
+PutTheValuesToAllKeyframes=Wstôw wôrtnotë do wszëtczich kluczowëch klatków
+;Put the values to all keyframes
+PutThisAdjustedValueIntoThe=Wstôwiô tã dopasowóną wôrtnotã do parametru przédnégò programù.
+;Put this adjusted value into the main program parameter.
+QuadraticAttenuation=Kwadratowé tłëmienié
+;Quadratic Attenuation
+QuadraticBezier=Kwadratowô Béziera
+;Quadratic bezier
+QuickLoadOfLightParameterFiles=Chùtczé wczëtanié lopków z parametrama widu,\njaczé są zapisóné w gwësnym katalogù ini.
+;Quick load of light parameter files that are\nstored in the specific ini directory.
+QuickQualitySettings=Chùtczé nastawë jakòscë
+;Quick quality settings
+RBailout=R bailout:
+;R bailout:
+Radius=Radius:
+;Radius:
+RandGProducesRandomNumbersWithGaussian={ RandG dôwô przëtrôfkòwé lëczbë z rozkładã Gaussa wkół strzédny.
+;{ RandG produces random numbers with Gaussian distribution about the mean.
+Random=Losowé
+;Random
+RandomMultiplier=Mnożnik losowòscë
+;Random multiplier
+Range=Zasyg
+;Range
+RawValuesMappedValuesClampedValues=Surowé wôrtnotë:\n  {}..\n  {}\nPrzeniosłé wôrtnotë:\n  {}..\n  {}\nÒbgrańczoné wôrtnotë:\n  {}..\n  {}\n
+;Raw Values:\n  {}..\n  {}\nMapped Values:\n  {}..\n  {}\nClamped Values:\n  {}..\n  {}\n
+Rays=Parmienie:
+;Rays:
+RaystepDivisor=Dzelnik krokù parmienia:
+;Raystep divisor:
+RaystepMultiplier=Mnożnik krokù parminia:
+;Raystep multiplier:
+RaystepSubDEstop=Krok parminia minus DEstop:
+;Raystep sub DEstop:
+ReadingTheHistoryEntries=Czëtanié historii... {} wpisów
+;Reading the history... {} entries
+ReadsTheLanguageFilesAgainAfter=Czëtô lopczi jãzëka znowa, pò zmianie jednégò z nich
+;Reads the language files again, after you edited one
+Rec=Nagr
+;Rec
+RecalculateASelection=\sWërechùj wëbiér na nowò
+;\sRecalculate a Selection
+RecalculatingTheSelection=pònowné rechòwanié wëbiérkù
+;recalculating the selection
+RecordedSKeyframesOfTheFlight=Nagróné {} kluczowëch klatków lotu
+;Recorded {} keyframes of the flight
+RecordsAFlightWhileTheButton=Nagrôwô lot: pòczi knąpa je wcësniãtô, kòżdi nowi pòzdrzatk Nawigatora (nôwiãcy dwa na sekùndã) stôwô sã nastãpną kluczową klatką animacje
+;Records a flight: while the button is down, every new view of the navigator (at most two a second) becomes the next keyframe of the animation
+Rect=Prostokąt
+;Rect
+RectLower=rekt.
+;rect.
+Rectilinear=Prostolinijny
+;Rectilinear
+ReducesBlockyArtifactsNoMoreThat=Zmniésziwô klockòwaté artefaktë, przez interpòlacjã spline ju nie tak wôżné.
+;Reduces blocky artifacts, no more that important due to spline interpolation.
+ReducesTheRaystepMultiplierToAvoid=Zmniészô mnożnik krokù parmienia, żebë ùniknąc przekroczeniô.\nRenderowanié je wòlniészé.
+;Reduces the raystep multiplier to avoid overstepping.\nMakes the rendering slower.
+ReferenceForDiffuseColors=Òdniesenié dlô rozproszonëch farwów
+;Reference for diffuse colors
+ReferenceForSpecularColors=Òdniesenié dlô farwów òdbłëskù
+;Reference for specular colors
+ReflectionDiffusity=Rozpròszenié òdbicô:
+;Reflection diffusity:
+ReflectionRaysDepth=Głãbiô parmieni òdbicô:
+;Reflection rays depth:
+Reflections=Òdbicô
+;Reflections
+ReflectionsLower=òdbicô
+;reflections
+ReflectionsMustBeCalculatedTooElse=Òdbicô mùszą bëc téż rechòwóné, jinaczi to nie mô skùtkù
+;Reflections must be calculated too, else this has no effect
+ReflectionsOfTheSelection=òdbicô wëbiérkù
+;reflections of the selection
+ReflectionsTransparency=\sÒdbicô + przezérnosc
+;\sReflections + Transparency
+ReflectionsTransparency2=Òdbicô + przezérnosc
+;Reflections + Transparency
+ReflectsTime=Czas òdbiców:
+;Reflects time:
+RefractiveIndex=Wskôznik załómaniô:
+;Refractive index:
+RefractiveIndexOfTheMaterialAir=Wskôznik załómaniô materiału, lëft~1 wòda~1.33 szkło~1.5 diament~2.4
+;Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
+Refresh=Òdswiéżë
+;Refresh
+RelToObject=Wzgl. òbiektu:
+;Rel. to object:
+RelativeToObject=Wzglãdno òbiektu
+;Relative to object
+Relief=Rzezba
+;Relief
+Reload=Wczëtôj znowa
+;Reload
+RemainingFaces10NoReduction=Òstałé scanë (1.0 = bez redukcji, 0.0 = maks. redukcjô = bez òstałëch scanów )
+;Remaining faces (1.0 = no reduction, 0.0 = max reduction = no remainig faces )
+Remove=Rëmôj
+;Remove
+RemoveThisFormulaFromTheLocal=Rëmôj tã fòrmùłã z lokalnégò katalogù appdata
+;Remove this formula from the local appdata folder
+RenderAllTilesIncludedInThe=Renderëj wszëtczé kachle w régach:
+;Render all tiles included in the lines:
+RenderBothEyeImagesAndShow=Renderuje òbrôzczi òbù òczów i pòkazywô pòdzérk stereo wedle se bez zapisywaniô.
+;Render both eye images and show a side-by-side stereo preview without saving it.
+RenderEveryNThFrame=Renderuj kòżdą\n   n-tą klatkã:
+;Render every\n   n'th frame:
+RenderMyLastPictureAt4K=Wërenderëj mój òstatny òbrôzk w 4K i pòwiédz mie, jak dłëgò to trwało.
+;Render my last picture at 4K and tell me how long it took.
+RenderNextTile=Renderëj pòsobny kachel
+;Render next tile
+RenderOnlyTheLeftEyeImages=Renderuje le òbrôzczi 'lewégò òka'.\nMòże to ùżëc, żebë rozszerzëc rëchli renderowóną animacjã do stereo.
+;Render only the 'left-eye' images.\nCan be used to extend a previous rendered animation to stereo.
+RenderOnlyUpToThisFile=Renderuj le do tegò indeksu lopka.
+;Render only up to this file index.
+RenderOnlyVeryLeftEyeImages=Renderuj le òbrôzczi 'lewégò òka'
+;Render only 'very left-eye' images
+RenderPreview=Renderuj pòdzérk
+;Render preview
+RenderSMB={} render(ë), {} MB
+;{} render(s), {} MB
+RenderSaveStereoPair=Renderuj && zapiszë stereo pôrã
+;Render && save stereo pair
+RenderStereoAnimation=Renderuj stereo animacjã
+;Render stereo animation
+RenderStereoPair=Renderuj stereo pôrã
+;Render stereo pair
+RenderTheJobsOtherComputersPut=Renderëje robòtë, jaczé jiné kòmpùtrë wkłôdają do katalogù, ë dôwô renderë tegò kòmpùtra (Rechùj 3D, wiôldżé renderë, Monte Carlo, animacje) rojowi, czej je w nim jiny kòmpùtr
+;Render the jobs other computers put into the folder, and give this computer's renders (Calculate 3D, Big renders, Monte Carlo, animations) to the swarm when another computer is in it
+RenderThisTile=Renderëj nen kachel
+;Render this tile
+RenderThisTileAgain=Renderëj nen kachel znowa
+;Render this tile again
+RenderingNow=terô renderowanié
+;rendering now
+RenderingSliceOf=Renderowanié skrôwka: {} z {}
+;Rendering slice: {} of {}
+RepeatFromHere=Pòwtórz òd tuwò
+;Repeat from here
+RerenderAllKeyframePreviewImages=Renderuj znowa wszëtczé pòdzérczi kluczowëch klatków
+;Rerender all keyframe preview images
+Reset=wëzerëj
+;reset
+Reset0=Resetuj 0
+;Reset 0
+Reset2=Resetuj
+;Reset
+ResetNow=Wëzerëj terô
+;Reset now
+ResetOffsetScale=Resetuj przesëniãcé+skalã
+;Reset offset+scale
+ResetOffsetScaleRotation=Resetuj przesëniãcé+skalã+òbrót
+;Reset offset+scale+rotation
+ResetPosition=Resetuj pòłożenié
+;Reset position
+ResetThePositionAndTheRotation=Przëwrôcô pòzycjã i òbrôcanié do zôczątkòwëch wôrtnotów.\nPrzë fòrmùłach typù box aùtomatno òddali barżi.
+;Reset the position and the rotation to the start values.\nOn box formulas it will be automatically zoomed out more.
+ResetValue=Przëwrócë wôrtnotã
+;Reset value
+ResetValues=Przëwrócë wôrtnotë
+;Reset values
+ResetView=Przëwrócë pòzdrzatk
+;Reset view
+ResetsAPreviousCalculationOfThis=Zerëje wczasniészé rechòwanié cwiardégò cénia tegò widu.
+;Resets a previous calculation of this lights hard shadow.
+ResetsTheDoFEffectAndThe=Zerëje efekt DoF ë òdbicô.
+;Resets the DoF effect and the reflections.
+ResetsTheFormulasToTheDefault=Przëwrôcô fòrmùłë do domëslnégò bulba P8.
+;Resets the formulas to the default P8 bulb.
+Resume=Kòntinuùj
+;Resume
+Retry=Spróbùj znowa
+;Retry
+ReverseTheOrderOfAllKeyframes=Òdwrócë pòrządk wszëtczich kluczowëch klatków
+;Reverse the order of all keyframes
+RightclickOnATileForOptions=Prawi klik na kachlu dôwô òptacje
+;Rightclick on a tile for options
+RightclickOnSlidersToChangeThe=(Prawé kliknienié na suwakach zmieniwô farwë. Klawiatura, czej kùrsor je nad suwakã: (c) kòpiuj farwë, (v) wklej farwë, (b) wklej 1 farwã)
+;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+Rolling=Òbrôcanié
+;Rolling
+Root=Kòrzeń
+;Root
+Rotate=Òbrôcanié
+;Rotate
+Rotation=Òbrôcanié
+;Rotation
+RotationAngleAroundXAxisIn=Nórt òbrotu wkół òsë x w stãpniach
+;Rotation angle around x-axis in degrees
+RotationAngleAroundYAxisIn=Nórt òbrotu wkół òsë y w stãpniach
+;Rotation angle around y-axis in degrees
+RotationAngleAroundZAxisIn=Nórt òbrotu wkół òsë z w stãpniach
+;Rotation angle around z-axis in degrees
+RotationColon=Òbrót:
+;Rotation:
+RotationX=Òbrót X:
+;Rotation X:
+RotationY=Òbrót Y:
+;Rotation Y:
+RotationZ=Òbrót Z:
+;Rotation Z:
+Rough=Szorstkô
+;Rough
+RoughImage=zgrëbny òbrôzk
+;rough image
+Roughness=Chropòwatosc
+;Roughness
+RoutAngleOfXY=Nórt Rout X, Y
+;Rout angle of X, Y
+RoutAngleOfXZ=Nórt Rout X, Z
+;Rout angle of X, Z
+RoutAngleOfYZ=Nórt Rout Y, Z
+;Rout angle of Y, Z
+Rows=Rédżi
+;Rows
+RowsOfTiles=Rédżi kachlów
+;Rows of tiles
+SLeft=òstało {} s
+;{} s left
+SSAO15=SSAO15
+;SSAO15
+SSAO15AmbientShadowBasedOnThe=SSAO15:    Òkòlny céń òpiarti na ZBuffer.\nSSAO24:    Brëkùje 24 bitów ZBuffera.\nSSAO24r:   Brëkùje przëtrôfkòwëch rozkładów dlô mni artefaktów.\nDEAO:        Òkòlny céń òpiarti na szacënkach òdległoscë\n(lepszi w animacjach)
+;SSAO15:    Ambient shadow based on the ZBuffer.\nSSAO24:    Uses 24 bits of the ZBuffer.\nSSAO24r:   Uses random distributions for less artifacts.\nDEAO:        Ambient shadow based on distance estimates\n(advanced in animations)
+SSAO24=SSAO24
+;SSAO24
+SSAO24r=SSAO24r
+;SSAO24r
+SartTheMainRenderingOfThe=Zacznij przédné renderowanié òbrôzka.
+;Sart the main rendering of the image.
+Saturation=Nasëcenié
+;Saturation
+Saturation0=Nasëcenié:   0\s\s
+;Saturation:   0\s\s
+Save=Zapiszë
+;Save
+Save2=&Zapiszë
+;&Save
+SaveAM3cFile=Zapiszë lopk m3c
+;Save a m3c file
+SaveAZBufferImageAs=Zapisywô òbrôzk Z-bufora jakò lopk BMP abò PNG, skalowóny jak bieżny wëzdrzatk.
+;Save a Z buffer image as BMP or PNG file, scaled like the current view.
+SaveAllCurrentSettingsAsBtrace2=Zapisywô wszëtczé biéżné nastawë jakno lopk *.btrace2
+;Save all current settings as *.btrace2-file
+SaveAs=Zapiszë jakno
+;Save As
+SaveAsHeightMap=Zapiszë jakno mapã wësokòscë
+;Save As HeightMap
+SaveAsHeightmapInsideTheMB3D=Zapisywô jakno mapã wësokòscë w katalogù map MB3D
+;Save as heightmap inside the MB3D-maps-folder
+SaveAsImage=Zapiszë jakno òbrôzk
+;Save As Image
+SaveAsImageAtTheLocation=Zapisywô jakno òbrôzk w pòdónym placu
+;Save as image at the location you specify
+SaveBtrace2=Zapiszë btrace2...
+;Save btrace2...
+SaveCompleteM3I=Zapiszë fùl M3I
+;Save complete M3I
+SaveExit=Zapiszë + wińdzë
+;Save + exit
+SaveFullLightAndColorParameter=Zapiszë fùl parametrë widu ë farwów
+;Save full light and color parameter
+SaveImageParameters=Zapiszë òbrôzk + parametrë
+;Save image + parameters
+SaveM3i=Zapiszë m3i
+;Save m3i
+SaveM3iFiles=Zapiszë lopczi m3i
+;Save m3i files
+SaveM3iFilesIncludingTheInternal=Zapisywô lopczi m3i razã z bënowim bùforã òbrôzka, co zachòwùje òdbicô itd.
+;Save m3i files including the internal image buffer, saving reflections etc.
+SaveParametersOnly=Zapiszë blós parametrë
+;Save parameters only
+SaveParametersToClipboardAsText=Zapisywô parametrë do schówkù jakò tekst,\npòtemù mòże wcësnąc ctrl+v, żebë wstawic tekst dze jindze.
+;Save parameters to Clipboard as text,\nafterwards you can press ctrl+v to insert the text somewhere else.
+SavePic=Zapiszë òbr.
+;Save pic
+SaveProject=Zapiszë projekt
+;Save project
+SaveTextParametersInThePNG=Zapisywô tekstowé parametrë w lopkù PNG, jeżlë zaznaczoné.\nMòże je òbaczëc np. w gimpie pòd\n'Image Properties' -> Comment.
+;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
+SaveTheAnimationParameters=Zapiszë parametrë animacje
+;Save the animation parameters
+SaveTheCodeF5=Zapisywô kòd <F5>
+;Save the code <F5>
+SaveTheImageAsBMPOr=Zapisywô òbrôzk jakò lopk BMP abò PNG, skalowóny jak bieżny wëzdrzatk.
+;Save the image as BMP or PNG file, scaled like the current view.
+SaveTheImageAsBMPOr2=Zapisywô òbrôzk jakno lopk BMP abò PNG. Czej òptacjô 'Z Z-buforã' je włączonô, zapisywóny je téż Z-bufor.
+;Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.
+SaveTheImageAsJPEGFile=Zapisywô òbrôzk jakò lopk JPEG, skalowóny jak bieżny wëzdrzatk.
+;Save the image as JPEG file, scaled like the current view.
+SaveTheM3CFileEveryUpdate=Zapisywô lopk M3C przë kòżdim òdswiéżenim, czej minãło 5 minut
+;Save the M3C file every update and 5 minutes passed
+SaveThisVoxelProject=Zapiszë nen projekt wòkselów
+;Save this voxel project
+SaveType=Ôrt zapisu:
+;Save type:
+SaveZBufferPng=Zapiszë Z-bufor (png)
+;Save Z buffer (png)
+SaveZBufferToo=Zapiszë téż Z-buffer
+;Save Z buffer too
+Saved=Zapisóné
+;Saved
+Saved16BitColour=Zapisóné {} (16 bit farwa)
+;Saved {} (16 bit colour)
+Saved2=Zapisóné {}
+;Saved {}
+SavedLower=zapisóné
+;saved
+SavedOpenEXRFloatingPointColoursAnd=Zapisóné {} (OpenEXR, farwë zmiennoprzecynkowé ë warstwë)
+;Saved {} (OpenEXR, floating point colours and layers)
+SavedTransparentBackground=Zapisóné {} (przezérné tło)
+;Saved {} (transparent background)
+Saving=Zapisywanié:
+;Saving:
+SavingSucceeded=Zapisanié ùdało sã
+;Saving succeeded
+Scale=Skala:
+;Scale:
+ScaleClipRadiusDoFAndTheDE=Skalëje ClipRadius (DoF) i wôrtnotã DE stop,\nżebë ùtrzëmac stãpiéń detalów i farwë.
+;Scale ClipRadius (DoF) and the DE stop value\nto keep the detail level and colors.
+ScaleDEstopToKeepColorDetail=Skalëj DEstop, żebë ùtrzëmac farwã && pòzóm detalów
+;Scale DEstop to keep color && detail level
+ScaleRowsToGeographicProjection=Skalëj rédżi do geògraficzny projekcji
+;Scale rows to geographic projection
+ScaleTheImageSizeBy2=Skalëje wiôlgòsc òbrôzka razë 2, w górã abò w dół.
+;Scale the image size by 2, up or down.
+ScaleTheValuesByTheSelected=Skalëje wôrtnotë ò wëbróny procent.
+;Scale the values by the selected percentage.
+ScaleValueOfTheBeginningFormula=Wôrtnota skalë zôczątkòwi fòrmùłë, mô cësk na dokładnosc DE
+;Scale value of the beginning formula, affects the DE accuracy
+ScalesTheMaximumLengthOfThe=Skalëje maksymalną długòsc rechòwónëch òkòlnëch parmieniów.\nBrëkùj wôrtnoscë wikszi òd 1, żebë dac céniom wicy głãbi,\nwôrtnoscë niżi 1 dôwają barżi môlowé cénie.
+;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
+ScanPreview=Pòdzérk skanowaniô
+;Scan Preview
+ScreenDistance=Òdległosc ekranu:
+;Screen distance:
+ScriptEditor=Editora skriptów
+;Script Editor
+ScrollBy1=Przewiń ò 1
+;Scroll by 1
+Search=Szëkôj
+;Search
+SecantSearchForTheSurface=Szukanié pòwierzchni metodą secznëch
+;Secant search for the surface
+SecantSearchmode=Trib szëkaniô secznym:
+;Secant searchmode:
+SecondFocusPointIfDifferentFrom=Drëdżi pùnkt òstroscë, jeżlë jinszi òd pierszégò,\ndostóniesz linią òstroscë w môl pùnktu òstroscë.\n(fizyczno nie baro realistyczné, ale przëdatné)\s
+;Second focus point, if different from the first one\nyou get a focus line instead of a focus point.\n(physically not very realistic, but good to have)\s
+SeeAlsoTheMapColoringOptions=Òbaczë téż òptacje farwieniô mapą w karce 'Farwienié' głównégò òkna.
+;See also the map coloring options in the main windows 'Coloring' tab.
+Select=&Wëbierzë
+;&Select
+SelectThisIfYouWantTo=Zaznaczë, żelë chcesz nadpisac jistniejącé lopczi M3I ò tim samim mionie.\nŻelë nie, miono bãdze zmienioné tak, że niżóden lopk nie òstónie nadpisóny.
+;Select this if you want to overwrite existing M3I files with the same name.\nIf not selected, the name will be modified so that no files will be overwritten.
+Selected=Wëbróné
+;Selected
+SelectionRecalculation=pònowné rechòwanié wëbiérkù
+;selection recalculation
+SendAllAdjustedFormulaValuesTo=Wësélô wszëtczé dopasowóné wôrtnotë fòrmùłë do parametrów przédnégò programù.
+;Send all adjusted formula values to the main program parameters.
+SendAllFormulaValues=Wëslij wszëtczé wôrtnotë fòrmùłë
+;Send all formula values
+SendOnlyThisViewToThe=Wëslij le ten pòzdrzatk do przédnégò programù
+;Send only this view to the main program
+SendOriginalParameterToMainWindow=Sélôj òriginalné parametrë do głównégò òkna
+;Send original parameter to main window
+SendParameterToMain=Sélôj parametrë do głównégò òkna
+;Send parameter to main
+SendParameterToProgramsMainRender=sélô parametrë do głównégò òkna renderowaniô programù
+;send parameter to programs main render window
+SendThisParameterToTheMain=Wëslij ten parametr do przédnégò programù
+;Send this parameter to the main program
+SendThisProjectsOriginalParameterTo=Sélô òriginalné parametrë tegò projektu do głównégò programù.\s
+;Send this projects original parameter to the main program.\s
+SendThisViewWithAllJulia=Wësélô ten pòzdrzatk ze wszëtczima zmianama Julia i fòrmùłë do przédnégò programù.
+;Send this view with all julia and formula modifications to the main program.
+SendToMainEditor=Sélôj do głównégò editora
+;Send to Main Editor
+SendValue=Wëslij wôrtnotã
+;Send value
+SendValues=Wëslij wôrtnotë
+;Send values
+SendingOut=Wësélanié:
+;Sending out:
+SessionsAndCrashes=Sesje i awarie
+;Sessions and crashes
+Set=Ùstawi
+;Set
+SetLightfuncToCosine=Nastôw fùnkcjã widu na kòsinus
+;Set lightfunc to cosine
+SetTheMapsOrientationRelativeTo=Nastôw òrientacjã mapë wzglãdno òbiektu.\nBrëkùj tegò w animacjach, żebë przëwiązac widë do scenerii.
+;Set the maps orientation relative to the object.\nUse it in animations to fix the lights to the scenery.
+SetTheVisualThemeOfThe=Nastawi wizualną témã aplikacji
+;Set the visual theme of the application
+SetTo0=nastôw 0
+;set to 0
+SetsAutomaticallyTheCorrespondendingLightFunctio=Aùtomatno nastôwiô òdpòwiedną fùnkcjã widu na kòsinus,\nczej céń je rechòwóny.\nFùnkcja kòsinusa ë kwadratowégò kòsinusa dobrze dzejają z céniã.
+;Sets automatically the correspondending light function to cosine,\nwhen the shadow is calculated.\nThe cosine and the quadratic cosine function works well with the shadow.
+SettingTheVisualTheme=Nastôw wëzdrzatkù
+;Setting the Visual Theme
+ShadersCompiling=kòmpilacjô shaderów
+;shaders compiling
+ShadowsAndAO=cénie ë AO
+;shadows and AO
+ShareRenderingBetweenYourComputersThrough=Rozdzelë renderowanié midzë swòje kòmpùtrë przez wespólny katalog
+;Share rendering between your computers through a shared folder
+ShareThisComputerRenderTheJobs=Dzelë nen kòmpùtr: renderëj robòtë z katalogù ë dôj mòje rojowi
+;Share this computer: render the jobs of the folder, and give mine to the swarm
+SharedFolder=Dzelony katalog:
+;Shared folder:
+SharingButNoOtherComputerIs=Dzelenié, ale w roju nie ma jesz jinégò kòmpùtra: renderë jidą le na tim kòmpùtrze
+;Sharing, but no other computer is in the swarm yet: renders run on this computer alone
+SharingStopped=dzelenié zatrzëmóné: {}
+;sharing stopped: {}
+SharingWithRendersAreSplitBetween=Dzelenié z {}: renderë są dzeloné midzë {} kòmpùtrë
+;Sharing with {}: renders are split between the {} computers
+Sharp=òstrosc:
+;sharp:
+SharpenFactorOfTheSavedOutput=Wskôzownik òstrzeniô zapisónégò òbrôzka wińdzeniô,\ndzejô le przë zmniészeniu 1:2 i 1:3 !\n0: bez òstrzeniô ... 3: maksymalné òstrzenié
+;Sharpen factor of the saved output image,\nworks only with downscales of 1:2 and 1:3 !\n0: no sharpening ... 3: maximum sharpening
+ShiftFormulasTo5APosition=Przesënie fòrmùłë {} do 5 ò jedno môl w prawò
+;Shift formulas {} to 5 a position to the right
+ShiftFormulasTo6APosition=Przesënie fòrmùłë {} do 6 ò jedno môl w lewò
+;Shift formulas {} to 6 a position to the left
+ShiftToTheLeft=Przesënie w lewò
+;Shift to the left
+ShiftToTheRight=Przesënie w prawò
+;Shift to the right
+Shininess=Błisk
+;Shininess
+ShortdistanceCheckDE=Sprôwdzanié krótczi òdległoscë DE:
+;Shortdistance check DE:
+ShouldIStopCalculations=Czë zatrzëmac rechòwania?
+;Should i stop calculations?
+Show=Pòkażë
+;Show
+ShowCoords=Pòkażë kòòrd.
+;Show coords
+ShowFrameNr=Pòkażë nr klatczi
+;Show frame nr
+ShowGuides=Pòkażë prowadnice
+;Show guides
+ShowInFolder=Pòkażë w katalogù
+;Show in folder
+ShowMeAPreviewOfThe=Pòkażë mie pòdzérk òstatnégò òbrôzka, jaczi jem wërenderowôł w mb3d.
+;Show me a preview of the last picture I rendered in mb3d.
+ShowUnique=Pòkażë bez pòwtórków
+;Show unique
+ShowsHiddenFormulasRightclickOnA=Pòkazywô zataconé fòrmùłë.\nKlikni prawim knąpã na fòrmùłã, żebë zmienic ji sztatus.
+;Shows hidden formulas.\nRightclick on a formula to change its status.
+ShowsMessages=Pòkazywô wiadła
+;Shows messages
+ShrinkThePanel=Zmniészë panel
+;Shrink the panel
+Shutter=Migawka:
+;Shutter:
+SinCosIs2xFasterThanCalling={ SinCos je 2x chùtszi jak òsóbné wòłanié Sin i Cos dlô tegò samégò nórta }
+;{ SinCos is 2x faster than calling Sin and Cos separately for the same angle }
+Single=Single
+;Single
+SingleClickToChangeTheNavi=Pòjedinczé kliknienié zmieniwô trib nawi
+;Single click to change the navi mode
+SingleFilenumbering=Pòjedinczé numrowanié lopków
+;Single filenumbering
+Size=Wiôlgòsc
+;Size
+Size2=Wiôlgòsc:
+;Size:
+SizeFactor=Faktor wiôlgòscë:
+;Size factor:
+SizeOfEachView=Wiôlgòsc kòżdégò widoku:
+;Size of each view:
+Sliding=Przesëwanié
+;Sliding
+SlidingWalkingStep=Krok przesëwaniô+chòdzeniô:
+;Sliding+Walking step:
+SmoothDEcomb=Głôdczi DEcomb:
+;Smooth DEcomb:
+SmoothImageOnLoad=Wëgładzë òbrôzk przë wczëtanim
+;Smooth image on load
+SmoothNormals=Głôdczé  nòrmale:
+;Smooth  normals:
+SmoothNormalsColon=Głôdczé nòrmalné:
+;Smooth Normals:
+SmoothSolid=Gładkô brëła
+;Smooth Solid
+SmoothSolidWithEdges=Gładkô brëła z kańtama
+;Smooth Solid with Edges
+SoftClipping=Miãtczé òbcynanié:
+;Soft clipping:
+SoftensTheHardShadowsTheValue=Miãtczi cwiardé cénie. Wôrtnota je wzglãdnô do wiôlgòscë zdrzódła widu, wikszô wôrtnota dôwô miãtszi céń.
+;Softens the hard shadows. The value is relative to the size of the lightsource, a bigger value leads to a softer shadow.
+SofterHS=Miãkszi H.S.
+;Softer H.S.
+Sorted=Sortowóné
+;Sorted
+SortedCalculationGivesBetterResultsForward=Sortowóné rechòwanié dôwô lepszé wëniczi.\nW przódk mòże bëc òptacją, czej Sortowóné nie dzejô np. przez problemë z pamiãcą.
+;Sorted calculation gives better results.\nForward may be an option if Sorted is failing because of memory problems or so.
+Spec=Spek:
+;Spec:
+Spec2=Spek
+;Spec
+SpecifiesTheEndOfRaymarchingAs=Òkresliwô kùńc raymarchingù jakno mnożnik lokalnégò DE.\nWiãkszé wôrtnotë = widzec dalszé òbiektë.\n\nKlawisze:  F1: zmniészë daleką płaszczëznã,  F2: zwiększë daleką płaszczëznã
+;Specifies the end of raymarching as a factor of the local DE.\nBigger values = more distant objects visible.\n\nKey shortcuts:  F1: decrease far-plane,  F2: increase far-plane
+Specular=Òdbłësk
+;Specular
+SpecularObjectColorsClickToChange=Spekùlarné farwë òbiektu, klikni, żebë je zmienic.
+;Specular object colors, click to change them.
+SpecularPowerFunction=Fùnkcja spekùlarny mòcë
+;Specular power function
+SphericalCoords=Kùlowé kòòrdinatë
+;Spherical coords
+SplatsInWrittenTo={} splatów w {}, zapisóné w {}
+;{} splats in {}, written to {}
+Stan=stan.
+;stan.
+StandardRectilinearPanorama=standardowô  rektilinearnô  panorama
+;standard  rectilinear  panorama
+Start=Pòczątk:
+;Start:
+StartBatchRendering=Zacznij serijné renderowanié
+;Start batch rendering
+StartIndex=Pòczątkòwi indeks:
+;Start index:
+StartRendering=Zacznij renderowanié
+;Start rendering
+StartRenderingAndSaveAfterwardsThe=Zacznij renderowanié, a pòtemù aùtomatno zapiszë lopk M3I!
+;Start rendering and save afterwards the M3I file automatically!
+StartRenderingAnimation=Zacznij renderowac animacjã
+;Start rendering animation
+StartRenderingAnimationImages=Zacznij renderowanié òbrôzków animacji
+;Start rendering animation images
+StartRenderingSlices=Zacznij renderowanié skrôwków
+;Start rendering slices
+StartsRenderingAllSelectedM3PFiles=Zaczinô renderowanié wszëtczich wëbrónëch lopków M3P
+;Starts rendering all selected M3P files
+Statistics=Statistika
+;Statistics
+Status=Sztatus
+;Status
+StepRelax=Wëdłużenié krokù:
+;Step relax:
+StepcountForBinarySearch=Lëczba kroków dlô \nbinarnégò szukaniô:
+;Stepcount for \nbinary search:
+StepwidthLimiter=Ògrańczenié szérzë krokù:
+;Stepwidth limiter:
+Stereo=Stereo
+;Stereo
+StereoComposingPreview=stereo: składanié pòdzérkù
+;stereo: composing preview
+StereoPairsCannotBeRenderedWith=Stereo pôrë nie dadzą sã renderowac w kachlach. Nôprzód wëłączë kachle.
+;Stereo pairs cannot be rendered with tiles. Turn tiling off first.
+StereoRenderingLeftEye=stereo: renderowanié lewégò òka
+;stereo: rendering left eye
+StereoRenderingRightEye=stereo: renderowanié prawégò òka
+;stereo: rendering right eye
+StickThisWindowToTheLeft=Przëlepi to òkno do lewi starnë
+;Stick this window to the left side
+StickThisWindowToTheRight=Przëlepi to òkno do prawi starnë
+;Stick this window to the right side
+Stone=Kamiń
+;Stone
+Stop=Stop
+;Stop
+StopBatchRendering=Zatrzëmôj serijné renderowanié
+;Stop batch rendering
+StopRendering=Zatrzëmôj renderowanié
+;Stop rendering
+StopRenderingTheAnimation=Zatrzëmôj renderowanié animacji.
+;Stop rendering the animation.
+StopTheCurrentCalculation=Zatrzëmôj biéżné rechòwanié.
+;Stop the current calculation.
+Stopping=Zatrzëmiwanié...
+;Stopping...
+StoppingThisComputerFinishesThePart=Zatrzëmiwanié: nen kòmpùtr kùńczi dzél, chtëren renderëje
+;Stopping: this computer finishes the part it is rendering
+StopsWalkingAtThisDistanceTo=Zatrzimùje chòdzenié w tim òddaleniu òd òbiektu.\nNastôw 0, żebë wëłączëc.
+;Stops walking at this distance to the object.\nSet to 0 to disable.
+StoreAnAdditionalCorrespondingPNGFile=Zapisëje dodatkòwi òdpòwiedny lopk *.PNG dlô prostszégò pòdzérkù òbrôzka
+;Store an additional corresponding *.PNG-file for simpler preview of the image
+StoreM3IFileInDefaultFolder=Zapiszë lopk M3I w domëslnym katalogù
+;Store M3I file in default folder
+StorePNGPreview=Zapiszë pòdzérk PNG
+;Store PNG-preview
+Strength=Mòc:
+;Strength:
+Strength2=Mòc
+;Strength
+StrengthOfDynamicFog=Mòc dinamiczny dôczi.
+;Strength of dynamic fog.
+StrengthSizeFractalUnitsAndFineness=Mòc, wiôlgòsc (jednotczi fraktala) ë drobnosc (0.2 gładkò do 0.8 zôrnisto) rzezbë
+;Strength, size (fractal units) and fineness (0.2 smooth to 0.8 grainy) of the relief
+StretchesUpperAndLowerPartsMaybe=Rozcygô górné ë dólné partie, mòże przëdatné dlô zwëczajnégò òbrôzka w òptacji fùl kùlë.
+;Stretches upper and lower parts, maybe useful for a common image in full sphere option.
+SubframeCountMultiplicator=Mnożnik lëczbë\npòdklatków:
+;Subframe count\nmultiplicator:
+SubframeInterpolation=Interpòlacjô pòdklatków:
+;Subframe interpolation:
+SubframesToRender=Pòdklatczi do renderowaniô
+;Subframes to render
+SubframesToRenderBetween=Pòdklatczi do  \nrenderowaniô midzë:
+;Subframes to  \nrender between:
+SubtractAnAmountOfDEstopFrom=Òdjimô dzél DEstop òd nastãpnégò krokù parminia, zalécóné przë wësoczich wôrtnotach DEstop.
+;Subtract an amount of DEstop from next raystep, recommended on high DEstop values.
+SupportNetworkRendering=Wspiarcé renderowaniô w sécë
+;Support network rendering
+SupportedMathematicalFunctions=Wspieróné matematiczné fùnkcje
+;Supported mathematical functions
+SurfaceColor=Farwa pòwiérzchni
+;Surface color
+SurfaceDetail=Detale pòwiérzchni:
+;Surface detail:
+SurfaceMaterial=Materiał pòwierzchni
+;Surface material
+Swarm=Rój
+;Swarm
+SwarmABlockOnEveryComputer=rój: blok na kòżdim kòmpùtrze, jaż do Stop
+;swarm: a block on every computer, until Stop
+SwarmBlocksOfRaysPixel=rój: {} blokòw pò {} parmieni/piksel
+;swarm: {} blocks of {} rays/pixel
+SwarmComputer=rój: {} kòmpùtr
+;swarm: {} computer
+SwarmComputers=rój: {} kòmpùtrów
+;swarm: {} computers
+SwarmCreatingTheJob=rój: twòrzenié robòtë
+;swarm: creating the job
+SwarmJob=robòta roju
+;swarm job
+SwarmLower=rój: {}
+;swarm: {}
+SwarmRenderingSharedBetweenYourComputers=Rój: renderowanié dzeloné midzë Waszima kòmpùtrama
+;Swarm: rendering shared between your computers
+SwitchBackToTheDefaultTheme=Wrôcô nazôd do domëslny témë
+;Switch back to the default theme
+TakeTheEntryOutOfThe=Rëmôj wpis z historii (parametrë i miniatura wërechòwónégò òbrôzka są rëmniãté; jiné lopczi òstôwają tam, dze są)
+;Take the entry out of the history (a calculated picture's parameters and thumbnail are deleted; other files stay where they are)
+TargetMapSlot=Docelowi slot mapë
+;Target Map Slot
+TargetMapSlotUseThisNumber=Docelowi slot mapë. Ùżij ti lëczbë jakno mapë w swòjim fraktalu, np. jakno mapë wësokòscë, żebë miec animòwóną mapã
+;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+TheAmountOfAddedDiffuseAnd=Wielosc dodónëch rozproszonëch ë spekùlarnëch farwów je wikszô jak 1,\nczë je zmniészëc dlô realisticzniészégò farwieniô?
+;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
+TheAnimationNeedsAtLeastTwo=Animacjô pòtrzebùje nômni dwùch kluczowëch klatków.
+;The animation needs at least two keyframes.
+TheApertureOnTheZsharpPoint=Apertura w pùnkce Zsharp, to nie je apertura kamerë!\nPòmnożë tã wôrtnosc przez (swòbódno wëbróną) òdległosc òd pùnktu Zsharp\ndo kamerë ë pòdzelë przez ògniskòwą dłużawã òbiektiwu kamerë, żebë dostac\naperturã kamerë.\nTej zmniészë tã wôrtnosc, jeżlë nie żdajesz tak wiôldżi kamerë.\nWikszé wôrtnoscë dôwają wicy rozmazaniô.
+;The aperture on the Zsharp point, it is not the aperture from the camera!\nMultply this value with the (free choosen) distance from the Zsharp point\nto the camera and divide it by the focal length of the cameras lense to get\nthe cameras aperture.\nSo downscale this value if you don't expect the cameras size that big.\nLarger values means more blur.
+TheAxisTheCloudLayerLies=Òsa, na sztót chtërny leżi warstwa chmùrów, ë ji dwie wiżawë
+;The axis the cloud layer lies across, and its two heights on it
+TheAxisThePlaneLiesAcross=Òsa, na sztót chtërny leżi płaszczëzna, ë ji pòłożenié na ti òsë (jak przë płaszczëznach cãcô; ji pełnô strona je ta dali òd kamerë)
+;The axis the plane lies across, and its position on that axis (as for the cutting planes; its solid side is the one away from the camera)
+TheBTracer2CacheFormatIsNot=Fòrmat cache BTracer2 nie je wspieróny przez nen program.\nWëbierzë fòrmat sécë (*.ply abò *.obj).
+;The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).
+TheBTracer2CacheFormatIsNot2=Fòrmat cache BTracer2 nie je wspieróny, séc nie òsta zapisónô.
+;The BTracer2 cache format is not supported, the mesh was not saved.
+TheBackgroundImageCouldNotBe=Nie dało sã wczëtac òbrôzka spòdla.
+;The background image could not be loaded.
+TheBailoutValueForEscapetimeFormulas=Wôrtnota bailout dlô fòrmùłów escapetime.\nJeżlë wôrtnota 3d przekroczi tã wôrtnotã òb czas iterowaniô,\nbieżny pùnkt nie nôleżi do òbiektu.
+;The bailout value for escapetime formulas.\nIf the 3d value exceeds this value while iterating,\nthe current point does not belong to the object.
+TheBlurRadiusWillBeLimited=Radius rozmazaniô bãdze ògrańczony do ti wôrtnoscë.\nMòże przërëchlëc renderowanié, czej radius w niechtërnëch dzélach òbrôzka robi sã baro wiôldżi.
+;The blur radius will be limited at this value.\nCan speedup rendering when the radius becomes very huge in some image parts.
+TheCalculationFailed=Rechòwanié sã nie ùdało: {}
+;The calculation failed: {}
+TheCalculationFailedLower=rechòwanié sã nie ùdało
+;the calculation failed
+TheCalculationWillBeExtendedTowards=Rechòwanié bãdze rozszérzoné bùten òbrôzka ò òdbité òbiektë.\nTo mòże dac mni artefaktów w animacjach, ale téż stojącé òbrôzczi mògą na tim zwëskac.\nWôrtnosc mô bëc w òbrëmienim òd 0 do 0.5 (maks 0.9), to je wiôlgòsc wzglãdno szérzë\në wësokòscë òbrôzka, jakô je maksymalno rechòwónô bùten.
+;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheChosenValueOverAllFrames=Wëbróné wôrtnota we wszëtczich klatkach animacji: przecygni kwadrat klucznégò ùjęcô w górã abò w dół, abò klëknij gò ë wpiszë wôrtnotã
+;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheCommandLineProgramMb3dWas=Programa réżczi pòleceniów mb3d nie je kòle ti programë: zainstalëjë programã znowa.
+;The command line program mb3d was not found next to this program: install the program again.
+TheDefaultNumberingIncludes2Numbers=Domëslné numrowanié mô 2 lëczbë, òddzelno dlô X ë Y.\nCzej wëbierze sã tã òptacjã, numrowanié mô le jedną lëczbã,\nrosnącą w kòżdi kòlumnie ë jidącą dali w pòsobny rédze.
+;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
+TheDefaultOutputIsWhiteFor=Domëslno òbiekt je biôłi, a òbéńda bùten czôrnô.\nTa òptacjô òdwrôcô farwë.
+;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDistanceEstimatesAreDownscaledBy=Szacënczi òdległoscë są skalowóné w dół tim faktorã, żebë ùniknąc przekroczeniô.\nZmniészë wôrtnotã, jeżlë pòjawiô sã przekroczenié (czôrné piksle, zaszëmiony òbrôzk).\nZa niższé wôrtnotë spòmalają renderowanié.
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
+TheDistanceEstimatesAreDownscaledBy2=Szacënczi òddaleniô są zmniészóné ò ten mnożnik, żebë ùniknąc przekroczeniô.\nZmniészë wôrtnotã, żelë wëstãpùje przekroczenié (czôrné piksle, szum na òbrôzkù).\nZa môłé wôrtnotë spòwòlniwają renderowanié.
+;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
+TheDistanceToTheObjectsSurface=Òdległosc òd pòwiérzchni òbiektu, przë jaczi raymarching sã kùńczi, bãdze wikszô z òdległoscą òd òbzérôcza.\nTo dôwô jednorodny wëzdrzatk òbiektu, tej je zwëczajno wëbiéróné.
+;The distance to the objects surface, the raymarching stops, will get bigger with the distance to the viewer.\nThis leads to a homogen object appearence, so it is normally choosen.
+TheEffectAccumulatesResetForA=Efekt sã zbiérô, wëzerëj dlô nowégò rechòwaniô.
+;The effect accumulates, reset for a new calculation.
+TheEntriesUnderTheirDaysA=Wpisë pòd swòjima dniama; wpisë i òbrôzczi dnia pòkazywają sã, czej òn je òtemkłi (klikniãcém na niegò)
+;The entries under their days; a day's entries and pictures show when it is opened (a click on it)
+TheEntryCouldNotBeRemoved=Nie dało sã rëmnąc wpisu.
+;The entry could not be removed.
+TheFileIsNotThereAny=Lopka ju tam ni ma.
+;The file is not there any more.
+TheFileM3fAlreadyExistsDo=Lopk <{}.m3f> ju je. Czë chcesz gò nadpisac?
+;The file <{}.m3f> already exists. Do you want to overwrite it?
+TheFileSelectAndCopyIt=Lopk (zaznaczë gò i skòpérëj stąd)
+;The file (select and copy it from here)
+TheFirstFocusPointTheValue=(Pierszi) pùnkt òstroscë.\nWôrtnosc je wzglãdno wôrtnoscë Zstart òbzérôcza,\nznormalizowónô do szérzë òbrôzka.
+;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFolderDoesNotExistOr=katalog nie je (abò nie je przëstãpny)
+;the folder does not exist (or is not reachable)
+TheFormulaNameShouldStartWith=Miono fòrmùłë pòwinno sã zaczënac òd "JIT", bë òdrozniwac te fòrmùłë òd fòrmùłów na spòdlim ASM
+;The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
+TheFractalIsInNoneOf=Fraktala nie je w żódnym z widoków.
+;The fractal is in none of the views.
+TheFractalOfTheMainWindow=Fraktal z przédnégò òkna jakno gaussowsczé splatë, żebë òbzerac gò ze wszëtczich stronów w Blenderze (òd 5.3) ë jinëch przezérnikach splatów. Je rechòwóny z wielu kerënków, a kòżdi piksel stôwô sã splatã w swòji farwie.
+;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
+TheFractalSSurfaceMaterialOn=Materiał pòwierzchni fraktala na paletce (nie je w MB3D: zapisóny za dzélã parametrów MB3D)
+;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFramesPerSecondMustBe=Klatczi na sekùndã mùszą bëc lëczbą wikszą jak 0 (np. 25).
+;The frames per second must be a number above 0 (e.g. 25).
+TheImageBufferHasTheWrong=bùfer òbrôzka mô lëchą wiôlgòsc
+;the image buffer has the wrong size
+TheImageSizeChangedCalculateThe=wiôlgòsc òbrôzka sã zmieniła: wërechùj òbrôzk znowa
+;the image size changed: calculate the image again
+TheItsTrapModeDependsOn=Trib its.trap zanôlégô òd wërechòwóny òptacji w karce "Farwienié".
+;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastSessionCrashed=Òstatnô sesjô miała awariã: {}. Wiãcy w òknie Dzénnik (ikòna na pasku titla).
+;The last session crashed: {}. More in the Log window (the icon in the title bar).
+TheLastSessionDidNotEnd=Òstatnô sesjô nie skùńczëła sã pòprawno (zamarzła, òsta zabitô abò miała awariã): {}. Co òna robiła na òstatkù, je w dzénniku (òkno Dzénnik, ikòna na pasku titla).
+;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
+TheMainEditorIsStillRendering=Przédny editor wcyg renderëje. Nôprzód gò zatrzëmôj abò żdżë, jaż skùńczi.
+;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMapOptionsCalculatesXY=Òpcje mapë rechùją kòòrdinatë x,y z òsoblëwégò\nwektora dlô sfericznëch mapów, to zmieniwô téż pierszi wëbiér farwë,\njaczi zwëczajno òpiérô sã na głôdczich iteracjach.\nŻebë widzec wënik zmianów tëch òpcjów,\nnót je òbrôzk wërechòwac znowa.
+;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMonteCarloWindowIsRendering=Òkno Monte Carlo renderëje: nôprzód je zatrzëmôj.
+;The Monte Carlo window is rendering: stop it first.
+TheMotionBlurSShutterTime=Czas migawczi rozmëcô rëchù: dzél czasu do nastãpny klatczi (0 do 1)
+;The motion blur's shutter time: a part of the time to the next frame (0 to 1)
+TheNameOfTheNewLanguage=Miono nowégò jãzëka, w tim jãzëkù (Deutsch, Polski, ...)
+;The name of the new language, in that language (Deutsch, Polski, ...)
+TheNewestJobSoFarRendered=Nônowszô robòta donëchczôs: wërenderowóné dzélë, dzélë w robòce (z jich pòstãpã), felëjącé dzélë
+;The newest job so far: rendered parts, parts under way (with their progress), missing parts
+TheParametersDoNotMatchThe=Parametrë ju nie pasëją do nieskùńczonégò rechòwaniô: wcësni "Rechùj 3D", bë je wërechòwac.
+;The parameters do not match the unfinished calculation any more: press "Calculate 3D" to calculate them.
+ThePictureDoesNotMatchIts=Òbrôzk nie pasëje do swòjégò rechòwaniô: wërechùj gò znowa.
+;The picture does not match its calculation: calculate it again.
+ThePictureSFinishingAfterAll=Wëkùńczenié òbrôzka pò wszëtczich jinszich przebiegach: ekspozycjô, pòswiata wkół jasnégò swiatła, filmòwé mapòwanié tónów, kòrekcjô farwów, winieta ë farwné òbrąbczi
+;The picture's finishing after all other passes: exposure, glow around bright light, filmic tone mapping, colour grading, a vignette and colour fringes
+ThePlaneSColourClickTo=Farwa płaszczëznë (klëknij, żebë zmienic)
+;The plane's colour (click to change)
+TheRotationIsPerformedAroundThe=Òbrôcanié je wëkònywóné wkół strzódka (Xmid, Ymid, Zmid)
+;The rotation is performed around the Midpoint (Xmid, Ymid, Zmid)
+TheRotationsArePerformedInA=Òbrotë są wëkònywóné pò se, nôprzód w płaszczëznie XW, na kùńcu ZW.
+;The rotations are performed in a row, first the XW, last the ZW-plane.
+TheSecondPartAsAnObject=Drëdżi dzél jakno òsóbny òbiekt (nie je w MB3D: zapisóny za dzélã parametrów MB3D): jegò westrzódk (x, y, z), òbrócenié wkół x, y, z w gradach ë wiôlgòsc (1 = jak rechòwóny)
+;The second part as an object of its own (not in MB3D: kept after MB3D's part of the parameters): its middle (x, y, z), its rotation about x, y, z in degrees and its size (1 = as calculated)
+TheSelectionMustBeBiggerThan=Wëbiérk mùszi bëc wikszi jak 2 piksle w szérzi ë wësokòscë.
+;The selection must be bigger than 2 pixels in width and height.
+TheSelectionMustBeBiggerThanLower=wëbiérk mùszi bëc wikszi jak 2 piksle w szérzi ë wësokòscë
+;the selection must be bigger than 2 pixels in width and height
+TheSharedFolderOfTheSwarm=Dzelony katalog roju
+;The shared folder of the swarm
+TheSizeOfTheCloudsFeatures=Wiôlgòsc ksztôłtów chmùrów w jednotkach fraktala ë jich farwa (klëknij)
+;The size of the clouds' features in fractal units, and their colour (click)
+TheSizeOfTheTiles=Wiôlgòsc kachlów
+;The size of the tiles
+TheStereoEyeImagesHaveDifferent=Òbrôzczi òczów stereo mają różné wiôlgòscë.
+;The stereo eye images have different sizes.
+TheTextParametersOnTheClipboard=Tekstowé parametrë w schòwkù są zniszczoné: dzél régów òstôł ùcãti przë kòpirowanim. Skòpiérujta je jesz rôz z môla, skądka są.
+;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
+TheTileHasNoImageBuffer=kachel ni mô bùfra òbrôzka
+;the tile has no image buffer
+TheValueOfTheChosenKeyframe=Wôrtnota wëbrónégò klucznégò ùjęcô
+;The value of the chosen keyframe
+Themes=Témë
+;Themes
+ThereIsAFileAlready=Lopk {} ju je.
+;There is a file {} already.
+ThingsToAskTheAssistant=Ò co mòżesz pòprosëc asystenta
+;Things to ask the assistant
+ThisComputer=Nen kòmpùtr:
+;This computer:
+ThisEffectIsAccumulatedOnEach=Ten efekt zbiérô sã z kòżdim nacësniãcym knąpë, mòżesz gò wëzerowac knąpą\n'Wëzerëj' - ale òdbicô bãdą téż copniãté!
+;This effect is accumulated on each button press, you can reset by pressing\nthe 'Reset' button - but reflections would also be undone!
+ThisFileAlreadyExistsDoYou=Nen lopk ju je. Czë gwësno chcesz gò nadpisac?
+;This file already exists. Do you really want to overwrite it?
+ThisIsAAbsoluteOffsetIn=To je absolutné przesëniãcé w czerënkù x òbróconégò bulba.
+;This is a absolute offset in x direction of the rotated bulb.
+ThisRenderIsRunningRightNow=Nen render jidze prawie terô.
+;This render is running right now.
+ThisRenderKeepsNoImage=Nen render nie zachòwiwô òbrôzka.
+;This render keeps no image.
+ThisRenderKeptNoParameters=Nen render nie zachòwôł parametrów.
+;This render kept no parameters.
+ThisSessionLive=Na sesjô (na żëwò)
+;This session (live)
+ThreadPriority=Priorytet\nwątkù
+;Thread\nPriority
+ThreadcountInCalculations=Lëczba wątków  \nw rechòwaniach
+;Threadcount  \nin Calculations
+ThreadsForJobs0AllCores=Wątczi dlô robòtów (0 = wszëtczé jądra):
+;Threads for jobs (0 = all cores):
+ThresholdTo0=Próg do 0:
+;Threshold to 0:
+TilNextUpdate=..do pòsobnégò òdswiéżeniô
+;..til next update
+TileCountHorizontal=Lëczba kachlów,  pòzémno:
+;Tile count,  horizontal:
+TileDownscaleAntiAliasing=Zmniészenié kachla, antialiasing:
+;Tile downscale, anti aliasing:
+TileSaved={} kachel zapisóny; {}
+;{} tile saved; {}
+TileXY=Kachel: X= Y=
+;Tile: X= Y=
+TileXY2=Kachel: X={} Y={}
+;Tile: X={} Y={}
+TileXY3={}  Kachel X={} Y={}
+;{}  Tile X={} Y={}
+TileXYLower=kachel X={} Y={}
+;tile X={} Y={}
+TileXYSaved=Kachel X={} Y={} zapisóny.
+;Tile X={} Y={} saved.
+Tiles=kachlach
+;tiles
+Tiles2=Kachle
+;Tiles
+TilesSaved={} kachlów zapisónëch; {}
+;{} tiles saved; {}
+TilesWithTheSwarm={}  {} kachlów z rojã
+;{}  {} tiles with the swarm
+TilesizeIncludingAa=Wiôlgòsc kachla (z aa):
+;Tilesize (including aa):
+Tiling=Kachle:
+;Tiling:
+TimeNeeded=Pòtrzébny czas:
+;Time needed:
+ToCalculateABetterHardShadow=Żebë wërechòwac lepszi cwiardi céń, leno czej wëbróny 1 HS!
+;To calculate a better hard shadow, only if 1 HS selected!
+ToClipboard=Do schówkù
+;To Clipboard
+ToDecreaseAlsoDirectLightBy=Żebë òkòlnym zacemnienim zmniészëc téż bezpòstrzédny wid
+;To decrease also direct light by ambient occlusion
+ToFormulaNr=do fòrmùłë nr:
+;to formula nr:
+ToReduceNoiseAroundObjectsIn=Żebë zmniészëc szëm wkół òbiektów w hibridach ze złim szacowanim òdległoscë,\nbrëkùj czile iteracjów niżi strzédny lëczbë iteracjów w òbrôzkù.
+;To reduce noise around objects in hybrids with bad distance estimates,\nuse some iterations below the average iteration count in the image.
+ToReduceOverstepping=Żebë zmniészëc przekrôczanié krokù
+;To reduce overstepping
+ToThisKeyframeAndAllBefore=Do ti kluczowi klatczi i wszëtczich przed nią
+;To this keyframe and all before
+ToThisKeyframeAndTheFollowing=Do ti kluczowi klatczi i nastãpnëch
+;To this keyframe and the following
+Togo=òstało: ...
+;togo: ...
+Tools=Nôrzãdła
+;Tools
+TotalAmountOfReflectivityTransparencyIt=Całownô wielosc òdbijalnoscë + przezérnoscë, bãdze mnożonô przez môlową spekùlarną farwã òbiektu + wielosc przezérnoscë.
+;Total amount of reflectivity + transparency, it will be multiplied with the local object specular color + transparency amount.
+TotalCalculationTime=Całowny czas rechòwaniô:
+;Total calculation time:
+TotalFramesUpToHereNote=Wszëtczé klatczi do tegò placu.\nBôczë, że le w tribie pãtlë pòdklatczi\nòd slédny kluczowi klatczi bãdą renderowóné.
+;Total frames up to here.\nNote that only in loop mode the subframes\nfrom the last keyframes will be rendered.
+TraceRangeX=Zasyg sledzeniô X:
+;Trace range X:
+TraceRangeY=Zasyg sledzeniô Y:
+;Trace range Y:
+TraceRangeZ=Zasyg sledzeniô Z:
+;Trace range Z:
+TracingObject=Sledzenié òbiektu...
+;Tracing object...
+TrackRenderingStatusAcrossTheFile=Szlachùje za stanã renderowaniô w systemie lopków, żebë wiele instancjów mògło renderowac tã samą sekwencjã lopków bez nadpisywaniô robòtë jinëch wãzłów
+;Track rendering status across the file system so that multiple instances can render the same sequence of files without overwriting the work of the other nodes
+Transparency=Przezérnosc
+;Transparency
+TransparencyIntensity=Mòc przezérnoscë
+;Transparency intensity
+TransparencySpecular=Przezérnosc + spekùlarnô
+;Transparency + Specular
+TransparentBackground=Przezérné tło
+;Transparent background
+TrigonometricFunctions={ Trigònometriczné fùnkcje }
+;{ Trigonometric functions }
+TuneTheSizeOfTheVolumetric=Nastawi wiôlgòsc wòlumetriczny mapë w krokach pò 20%
+;Tune the size of the volumetric map in 20% steps
+TurnOnOffTheJuliaMode=Włączô/wëłączô trib Julia
+;Turn on/off the julia mode
+Turned=Òbrócony:
+;Turned:
+Turntable=Òbrotnica
+;Turntable
+Type=Ôrt:
+;Type:
+Type2=Ôrt
+;Type
+TypeInTheQuality0100=Wpiszë jakòsc (0..100) abò maksymalną wiôlgòsc lopka wińdzeniô w KB (>100):
+;Type in the quality (0..100) or the maximal output filesize in KB (>100):
+TypeMustNotBeEmpty=Ôrt nie mòże bëc pùsti
+;Type must not be empty
+TypeOfHybridAlternateFormulas1=\sTip hibridë:\nNa przemión:  fòrmùłë 1 do 6 na przemión.\nInterpòlacjô:  fòrmùła 1 interpòlowónô w kòżdi iteracji z fòrmùłą 2.\nDE combinate:  fòrmùła 1 je DE-kòmbinowónô z przemiennym hibridã fòrmùłów 2 do 6.
+;\sType of hybrid:\nAlternate:  formulas 1 to 6 alternated.\nInterpolate:  formula 1 interpolated in each iteration with formula 2.\nDE combinate:  formula 1 is DE combinated with alternated hybrid of formulas 2 to 6.
+TypeOfObjectDeterminationLoweringMax=Ôrt òkresleniô òbiektu; zmniészenié maks. iteracjów abò zwikszenié DE\n(w zależnoscë òd wëbróny òptacji) robi òbiekt grëbszim.\nBôczënk:  fòrmùłë DEcombinate ë renderowanié bënë+bùten\n           robią le w tribie òszacowaniô òdległoscë!
+;Type of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas and In+Outside rendering\n           works only in the Distance estimation mode!
+TypeOfObjectDeterminationLoweringMaxExclamation=\sÔrt òkresliwaniô òbiektu; zmniészenié Max its abò zwikszenié DE\n(w zależnoscë òd wëbróny òpcji) zrobi òbiekt grëbszim.\nBôczënk:  Fòrmùłë DEcombinate dzejają le w tribie szacowaniô òdległoscë (DE)!
+;\sType of object determination, lowering Max its or increasing DE\n(dependend on the choosen option), will make the object thicker.\nNote:  DEcombinate formulas work only in the Distance estimation mode!
+TypeTheNameOfTheNew=Nôprzód wpiszë miono nowégò jãzëka; to je miono jegò lopka.
+;Type the name of the new language first; it is the name of its file.
+UncheckThisIfTheImageLooks=Òdznaczë to, jeżlë òbrôzk wëzdrzi płaskò i zaszëmiono.
+;Uncheck this, if the image looks flat and noisy.
+UncheckToNotOverwriteImagesThat=Òdznaczë, żebë nie nadpisëwac ju òbliczonëch òbrôzków.\nMiono lopka mùszi bëc taczé samò (ten sóm fòrmat, indeks i sufiks 'left' abò 'right'\nw tribie stereo).
+;Uncheck to not overwrite images that has already been calculated.\nThe filename must be equal (same output format, index and 'left' or 'right'\nsuffix in stereo mode).
+UnderWay=, {} w robòce
+;, {} under way
+UnfinishedCalculation=Nieskùńczoné rechòwanié
+;Unfinished calculation
+UnfinishedRender=Nieskùńczony render
+;Unfinished render
+UnfinishedRenders=Nieskùńczoné renderë
+;Unfinished renders
+UnfinishedRendersContinueOrDeleteThem=Nieskùńczoné renderingë: kòntinuùj abò rëmôj je
+;Unfinished renders: continue or delete them
+Untitled=bez titla
+;untitled
+UpOneLevel=Katalog wëżi
+;Up one level
+UpTo=do:
+;up to:
+UpdateImage=Òdnowi òbrôzk
+;Update Image
+UseAMapForTheDiffuse=Brëkùj mapë dlô difuzyjny farwë
+;Use a map for the diffuse color
+UseASmallImageAsAmbient=Brëkùj môłégò òbrôzka jakno òkòlny farwë
+;Use a small image as ambient color
+UseAlsoNavi=(brëkùj téż navi)
+;(use also navi)
+UseAmbientShadowsFromOriginalM3I=Brëkùj cénie òtoczeniô z òriginalnégò lopka M3I
+;Use ambient shadows from original M3I file
+UseDefaultOrientation=Brëkùj domëslną òrientacjã
+;Use default orientation
+UseItInAnimationsToFix=Brëkùj tegò w animacjach, żebë przëwiązac widë do scenerii.
+;Use it in animations to fix the lights to the scenery.
+UseOnlyAsSecondOptionIf=Brëkùj leno jakno drëdżi òptacji, jeżlë normalné (czerënk pòwiérzchni dlô òswieceniô) wëzdrzą lëchò.
+;Use only as second option if the normals (the surface direction for lighting) seems to be crappy.
+UseOpenGL=Brëkùj OpenGL >>
+;Use OpenGL >>
+UseTheDefaultVisualSettingsWithout=Brëkùje domëslné wizualné nastawë bez témë
+;Use the default visual settings without a theme
+UseTheExperimentalSpeedUps=Brëkùj eksperimentalnëch przëspieszeniów
+;Use the experimental speed-ups
+UseTheMapIntensitiesAndDiffuse=Brëkùj intensywnoscë mapë ë difuzyjnëch farwów.
+;Use the map intensities and diffuse colors.
+UseValuesLowerThan1To=Brëkùj wôrtnotów niższich jak 1, żebë zmniészëc przekroczenié.
+;Use values lower than 1 to reduce overstepping.
+UsefulForSimulatingDataWithSampling=\s\sPrzëdatné do symùlowaniô pòdôwków z błãdama próbkòwaniô. }
+;\s\sUseful for simulating data with sampling errors. }
+UsefulForSteepHeightmaps=Pòżëteczné dlô strómëch mapów wiżë
+;Useful for steep heightmaps
+User=brëk.
+;user
+UserDefinedApectRatioRightclickTo=Propòrcje òpisóné przez brëkòwnika.\nPrawé klikniãcé, żebë òpisac propòrcje.
+;User defined apect ratio.\nRightclick to define the ratio.
+UserDefinedAspectRatio=Stosënk bòków brëkòwnika
+;User defined aspect ratio
+Value=Wôrtnota:
+;Value:
+ValueNotGuilty=Lëchô wôrtnota
+;Value not guilty
+ValuesHaveAFractionFieldThat=// mają pòle ùłómka, jaczé nie je 0.
+;// values have a fraction field that is not 0.
+VaryDEstopOnFOV=Zmieniwôj DEstop wedle FOV:
+;Vary DEstop on FOV:
+VerifyThatSumOfDiffuseAnd=Sprôwdzô, czë sëma rozpròszonëch ë òdbłëskòwëch farwów nie przechôdô 1, w zależnoscë òd wëbrónëch òptacjów
+;Verify that sum of diffuse and specular colors dont exceed 1, depending on the choosen options
+VerifyWhileCalculatingIfSpecularDiffuse=Sprôwdzô òb czas rechòwaniô, czë sëma òdbłëskù ë rozpròszeniô przechôdô 1.  Przëdatné przë brëkòwanim mapów rozpròszeniô.
+;Verify while calculating if specular+diffuse amount exceeds 1.  Useful when using diffmaps.
+Version=Wersjô
+;Version
+Version2=, wersjô {}
+;, version {}
+Vertical=pionowò:
+;vertical:
+VerticalFieldOfViewInDegrees=Pionowé pòle widzeniô w stãpniach
+;Vertical field of view in degrees
+VerticesFaces={} [{} wierzchòłków, {} scónów]
+;{} [{} Vertices, {} Faces]
+Video=wideò
+;video
+VideoLower=wideò: {}
+;video: {}
+View=Wëzdrzatk
+;View
+ViewToMain=Pòzdrzatk do przédnégò
+;View to main
+Viewing=Òbzéranié
+;Viewing
+Vignette=Winieta
+;Vignette
+Visible=Widzawny:
+;Visible:
+VolumeLightNr=Nr wòlumetricznégò widu:
+;Volume light nr:
+VolumetricResolution=Wòlumetricznô rozdzélnosc:
+;Volumetric resolution:
+VoteFormula=+ głos na fòrmùłã
+;+ vote formula
+VoteFormula2=- głos na fòrmùłã
+;- vote formula
+VoxelExport=Ekspòrt wòkselów
+;Voxel export
+Voxelstack=Stos wokselów
+;Voxelstack
+WWCw=W'  =  W + Cw
+;W'  =  W + Cw
+WaitForTheRunningCalculationOr=Żdżë na biéżné rechòwanié abò je nôprzód zatrzëmôj.
+;Wait for the running calculation, or stop it first.
+Walking=Chòdzenié
+;Walking
+Warmth=Cepło
+;Warmth
+Warning=Bôczënk
+;Warning
+WarningLower=bôczënk
+;warning
+WarningMustRecalculateTheWholeImage=Bôczënk: Żebë to copnąc, trzeba wërechòwac na nowò całi òbrôzk!
+;Warning: Must recalculate the whole image to undo it!
+WarningsAndErrors=Bôczënczi i felë
+;Warnings and errors
+WavefrontOBJObj=Wavefront OBJ (*.obj)
+;Wavefront OBJ (*.obj)
+Waves=Fale:
+;Waves:
+WavesOnThePlaneTheirHeight=Fale na płaszczëznie: jich wiżawa ë długòsc w jednotkach fraktala (wiżawa 0: płaskô płaszczëzna)
+;Waves on the plane: their height and their length in fractal units (height 0: a flat plane)
+Weight=Wôga
+;Weight
+WeightColon=Wôga:
+;Weight:
+WhatDidIDoInMb3d=Co jem dzysô robił w mb3d? Bëłë jaczés felë?
+;What did I do in mb3d today? Were there any errors?
+WhatHappened=Co sã stało
+;What happened
+WhatYouDid=Co të zrobił
+;What you did
+When=Czedë
+;When
+WhenAngleNotBetween180And={ Czej nórt nie je midzë -180 a 180, sprowôdzô gò do tegò zasygù }
+;{ When angle not between -180 and 180 remove left }
+WhenUTC=Czedë (UTC)
+;When (UTC)
+WhenUsingAMapForThe=Czej brëkùjesz mapë dlô rozproszony farwë,\nmùszisz zaznaczëc 'Aùtomaticzné òbcynanié òdbł.+rozpr.'\ndlô aùtomaticznégò òbcynaniô farwów.
+;When using a map for the diffuse color,\nyou have to check 'Autoclip Spec+Diff'\nfor an automatic clipping of colors.
+White=biôłé
+;white
+WhiteOutside=Biôłé bùten
+;White outside
+Width=Szérzô:
+;Width:
+Windows=Òkna
+;Windows
+Wireframe=Drótowô séc
+;Wireframe
+WireframeColor=Farwa drótowi sécë
+;Wireframe color
+WithHS=z HS
+;with HS
+WithThe360PanoramaCameraA=Z kamerą Panorama 360: panorama stereo dlô VR, òbadwa òczë jedno nad drëdżim (lewé na górze), głãbizna pòprawnô w kòżdim kierënkù
+;With the 360 Panorama camera: a stereo panorama for VR, both eyes one above the other (left on top), the depth right in every direction
+WithZBuffer=Z Z-buforã
+;With ZBuffer
+Wrap1=wrap1
+;wrap1
+Wrap2=wrap2
+;wrap2
+WritesTheEnglishTextsAsA=Zapisywô anielsczé tekstë jakno nowi lopk jãzëka ò tim mionie; przełożë je edytorã tekstu, a tej wcësni Wczëtôj znowa
+;Writes the English texts as a new language file of this name; translate them with a text editor, then press Reload
+WritesThePictureAsItIs=Zapisywô òbrôzk taczi, jaczi je terô (nieskùńczoné rédżi jakno tło), jakno lopk .m3i
+;Writes the picture as it is now (the rows not done as background) as a .m3i file
+WrittenTranslateTheTextsRightOf=Zapisóné: {}\nPrzełożë tekstë z prawa òd "=" edytorã tekstu, a tej wcësni Wczëtôj znowa.
+;Written: {}\nTranslate the texts right of the "=" with a text editor, then press Reload.
+XAngle=Nórt X:
+;X angle:
+XMid=X strzódk:
+;X mid:
+XOffset=Przesëniãcé X:
+;X offset:
+XScale=Skala X:
+;X scale:
+XW=XW:
+;XW:
+XXCx=X'  =  X + Cx
+;X'  =  X + Cx
+Xpos=Pòz. X
+;Xpos
+Xrot=Òbr. X
+;Xrot
+YAngle=Nórt Y:
+;Y angle:
+YMid=Y strzódk:
+;Y mid:
+YOffset=Przesëniãcé Y:
+;Y offset:
+YScale=Skala Y:
+;Y scale:
+YW=YW:
+;YW:
+YYCy=Y'  =  Y + Cy
+;Y'  =  Y + Cy
+Yes=Jo
+;Yes
+YouCanAlsoClickOnA=Mòże téż kliknąc na wôrtnotã, żebë jã zmienic
+;You can also click on a value to change it
+YouCanAlsoTypeInThe=Fòrmùłã mòże téż wpisac bezpòstrzédno
+;You can also type in the formula directly
+YouCanAlwaysStartContinueOr=Rechòwanié mòże wiedno zacząc/kòntinuowac abò zatrzëmac
+;You can always start/continue or stop the calculation
+YouCanDoAFinerAdjust=Dokładniészé nastawienié je mòżlëwé klawiszama strzélków w lewò ë w prawò\nna wikszoscë suwôków, czej są wëbróné.\nNacësniãcé "0" (zero) nastôwiô suwôk na jegò zerową pòzycjã.
+;You can do a finer adjust with the left or right arrow keys\non most trackbars, when they are selected.\nPressing "0" (zero) sets the trackbar to its zero position.
+YouCanSaveAlsoM3iFiles=Dlô kòżdégò kachla mòże téż zapisac lopczi m3i; je nót pamiãtac, żebë bëło dosc\nmòl na diskù ë że òdbicô nie są trzëmóné w lopkù m3i.\n\nBôczënk: tëch kachlów m3i nie dô sã òtemknąc w wersjach programù starszich jak 1.7.9!
+;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
+YouHaveToRenderTheOriginal=Nôprzód je nót wërenderowac òriginalné parametrë ë zapisac je jakno lopk M3I.\nNen render nie mòże bëc za môłi.
+;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YourAuthorNameStoredInThe=Twòje miono ùsôdzcë (trzëmóné w parametrach):
+;Your author name (stored in the parameters):
+YourOwnLanguageItsName=Twój gwôsny jãzëk (jegò miono):
+;Your own language (its name):
+Ypos=Pòz. Y
+;Ypos
+Yrot=Òbr. Y
+;Yrot
+Z1Sharp=Z1 òstré:
+;Z1 sharp:
+Z2Sharp=Z2 òstré:
+;Z2 sharp:
+ZBUF=ZBUF
+;ZBUF
+ZBuf16Bit=ZBuf16Bit
+;ZBuf16Bit
+ZBuffer=Z-buffer: {}
+;Z-buffer: {}
+ZEnd=Z kùńc
+;Z end
+ZMid=Z strzódk
+;Z mid
+ZOffset=Przesëniãcé Z:
+;Z offset:
+ZRThreshold=Próg Z/R:
+;Z/R Threshold:
+ZScale=Skala Z:
+;Z scale:
+ZSlices=Skrôwczi Z:
+;Z slices:
+ZStart=Z zôczątk
+;Z start
+ZW=ZW:
+;ZW:
+ZZCz=Z'  =  Z + Cz
+;Z'  =  Z + Cz
+Zoom=Zblëżenié:
+;Zoom:
+Zoom2=Zoom
+;Zoom
+Zpos=Pòz. Z
+;Zpos
+Zrot=Òbr. Z
+;Zrot
+
+[AniProcessForm]
+Label13.Caption = Lëczba kroków \nbinarnégò szukaniô:
+Label22.Caption = Mnożnik krokù parmienia:
+CheckBox17.Caption = Pierszi krok losowi:
+
+[AnimationForm]
+Label17.Caption = Szérz:
+
+[BulbTracer2Frm]
+XOffsetEdit.Hint = To je absolutné przesëniãcé òbróconégò bulba w czerënkù x.
+YOffsetEdit.Hint = To je absolutné przesëniãcé òbróconégò bulba w czerënkù x.
+ZOffsetEdit.Hint = To je absolutné przesëniãcé òbróconégò bulba w czerënkù x.
+AutoCalcPreviewCbx.Caption = Aùtomatno aktualizëj pòdzérk
+
+[ColorForm]
+Label2.Caption = Rozproszoné
+
+[FNavigator]
+RadioGroup1.Items.2 = drobné
+RadioGroup1.Items.3 = strzédné
+Label23.Caption = Zoom:
+
+[FVoxelExport]
+Button3.Caption = Wińdzeniowi katalog:
+Button3.Hint = Klikni, żebë wëbrac wińdzeniowi katalog
+Button5.Caption = Rechùj pòdzérk
+
+[HotkeysFrm]
+Caption = Skrótë klawiszowé
+
+[LightAdjustForm]
+TabSheet4.Caption = Òkòlé
+
+[MCForm]
+TrackBar1.Hint = Czej je wëbróny, wcësnienié '1' nastawiô nen sëwôk na domëslną pòzycjã.
+BatchRenderBtn.Caption = Zacznij rzeszowé renderowanié
+
+[Mand3DForm]
+PositionBtn.Hint = Klikni, żebë zatacëc/pòkazac
+RotationBtn.Hint = Klikni, żebë zatacëc/pòkazac
+SpeedButton31.Caption = resetuj
+Label34.Caption = Maks. iteracjów:
+SpeedButton5.Caption = strzédny
+
+[MeshPreviewFrm]
+Label6.Caption = Zdrzadłowi
+LightSheet.Caption = Wid
+
+[MutaGenFrm]
+Label4.Caption = fòrmùłë
+
+[SwarmFrm]
+ListView1.Columns.4 = Grafikòwô kôrta
+
+[TilingForm]
+Label24.Caption = òstri:

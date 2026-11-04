@@ -1,7 +1,7 @@
 object BatchForm1: TBatchForm1
   Left = 197
   Top = 91
-  Caption = 'Batch processing'
+  Caption = '@MB:BatchProcessing'
   ClientHeight = 539
   ClientWidth = 565
   Color = clBtnFace
@@ -26,10 +26,10 @@ object BatchForm1: TBatchForm1
     Columns = <
       item
         AutoSize = True
-        Caption = 'M3P files that should be rendered to M3I'
+        Caption = '@MB:M3PFilesThatShouldBeRendered'
       end
       item
-        Caption = 'Status'
+        Caption = '@MB:Status'
         Width = 100
       end>
     ColumnClick = False
@@ -62,8 +62,8 @@ object BatchForm1: TBatchForm1
       Top = 43
       Width = 126
       Height = 25
-      Hint = 'Starts rendering all selected M3P files'
-      Caption = 'Start batch rendering'
+      Hint = '@MB:StartsRenderingAllSelectedM3PFiles'
+      Caption = '@MB:StartBatchRendering'
       ParentShowHint = False
       ShowHint = False
       TabOrder = 0
@@ -74,11 +74,8 @@ object BatchForm1: TBatchForm1
       Top = 7
       Width = 153
       Height = 17
-      Hint = 
-        'Select this if you want to overwrite existing M3I files with the' +
-        ' same name.'#13#10'If not selected, the name will be modified so that ' +
-        'no files will be overwritten.'
-      Caption = 'Overwrite existing M3I files'
+      Hint = '@MB:SelectThisIfYouWantTo'
+      Caption = '@MB:OverwriteExistingM3IFiles'
       Checked = True
       Enabled = False
       State = cbChecked
@@ -89,7 +86,7 @@ object BatchForm1: TBatchForm1
       Top = 47
       Width = 81
       Height = 25
-      Caption = 'Close window'
+      Caption = '@MB:CloseWindow'
       ParentShowHint = False
       ShowHint = False
       TabOrder = 2
@@ -100,8 +97,8 @@ object BatchForm1: TBatchForm1
       Top = 6
       Width = 126
       Height = 25
-      Hint = 'Click to select one and more M3P files to put into the list.'
-      Caption = 'Open files'
+      Hint = '@MB:ClickToSelectOneAndMore'
+      Caption = '@MB:OpenFiles'
       TabOrder = 3
       OnClick = Button3Click
     end
@@ -110,11 +107,8 @@ object BatchForm1: TBatchForm1
       Top = 29
       Width = 161
       Height = 17
-      Hint = 
-        'If selected, the M3I files will be stored in the default M3I fol' +
-        'der,'#13#10'  that is specified by the '#39'INI DIRS'#39' option.'#13#10'If not sele' +
-        'cted, they are stored in the same folder as the M3P files.'
-      Caption = 'Store M3I file in default folder'
+      Hint = '@MB:IfSelectedTheM3IFilesWill'
+      Caption = '@MB:StoreM3IFileInDefaultFolder'
       TabOrder = 4
     end
     object Button4: TButton
@@ -122,8 +116,8 @@ object BatchForm1: TBatchForm1
       Top = 6
       Width = 126
       Height = 25
-      Hint = 'Click to open the explorer and drag&&drop M3P files on the list.'
-      Caption = 'Open explorer'
+      Hint = '@MB:ClickToOpenTheExplorerAnd'
+      Caption = '@MB:OpenExplorer'
       TabOrder = 5
       OnClick = Button4Click
     end
@@ -132,10 +126,8 @@ object BatchForm1: TBatchForm1
       Top = 51
       Width = 161
       Height = 17
-      Hint = 
-        'Store an additional corresponding *.PNG-file for simpler preview' +
-        ' of the image'
-      Caption = 'Store PNG-preview'
+      Hint = '@MB:StoreAnAdditionalCorrespondingPNGFile'
+      Caption = '@MB:StorePNGPreview'
       Checked = True
       State = cbChecked
       TabOrder = 6
@@ -145,11 +137,11 @@ object BatchForm1: TBatchForm1
     Left = 88
     Top = 48
     object Deleteselectedfilesfromlist1: TMenuItem
-      Caption = 'Delete highlighted files from the list'
+      Caption = '@MB:DeleteHighlightedFilesFromTheList'
       OnClick = Deleteselectedfilesfromlist1Click
     end
     object Clearthewholelist1: TMenuItem
-      Caption = 'Clear the whole list'
+      Caption = '@MB:ClearTheWholeList'
       OnClick = Clearthewholelist1Click
     end
   end

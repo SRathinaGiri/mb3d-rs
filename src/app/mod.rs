@@ -5,26 +5,37 @@
 //! module has the equivalents of MB3D's `SetEditsFromHeader` (scene ->
 //! controls) and `MakeHeader` (controls -> scene).
 
+pub mod ai_form;
 pub mod anim_form;
 pub mod bulbtracer_form;
+pub mod curves_form;
 pub mod engine;
+pub mod experimental_form;
+pub mod event_log;
+pub mod eta;
+mod eta_model;
 pub mod file_preview;
 pub mod forms;
 pub mod formula_form;
+pub mod hotkeys;
 pub mod ini;
 pub mod jit_form;
+pub mod lang_form;
 pub mod light_form;
 pub mod main_form;
 pub mod mc_form;
 pub mod meshview;
 pub mod mutagen_form;
 pub mod navi_form;
+pub mod splat_form;
 pub mod palette_form;
 pub mod postpro_form;
 pub mod small_forms;
 pub mod swarm_form;
 pub mod tools_forms;
 pub mod unfinished_form;
+pub mod history_form;
+pub mod log_form;
 pub mod util;
 pub mod voxel_form;
 
@@ -36,8 +47,8 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "uMapCalcWindow", "VisualThemesGUI",
-    "VoxelExport", "ZBuf16BitGenUI", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "Splat", "uMapCalcWindow", "VisualThemesGUI",
+    "VoxelExport", "ZBuf16BitGenUI", "Curves", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
 pub const MAIN: &str = "Mand3DForm";
@@ -62,8 +73,12 @@ pub struct Mb3d {
     pub mc: mc_form::State,
     pub swarm: swarm_form::State,
     pub unfinished: unfinished_form::State,
+    pub history: history_form::State,
+    pub curves: curves_form::State,
+    pub logview: log_form::State,
     pub voxel: voxel_form::State,
     pub btracer: bulbtracer_form::State,
+    pub splat: splat_form::State,
     pub mutagen: mutagen_form::State,
     pub meshview: meshview::State,
     pub jit: jit_form::State,
@@ -77,6 +92,9 @@ pub struct Mb3d {
 impl Mb3d {
     /// MB3D's `OutMessage`: a line in the message memo of the main window.
     pub fn message(&self, ui: &mut Ui, s: &str) {
+        if !s.trim().is_empty() {
+            crate::log::info("message", s);
+        }
         let c = ui.cm(MAIN, "Memo1");
         let old = c.text.clone();
         let mut lines: Vec<&str> = if old.is_empty() { Vec::new() } else { old.split('\n').collect() };
@@ -168,20 +186,33 @@ impl App for Mb3d {
         if let Ev::Move = e.ev {
             return;
         }
+        // the log: what the user did (first what no handler took before
+        // this event, so the lines keep the order things happened in)
+        for u in ui.take_unhandled() {
+            event_log::event(ui, &u);
+        }
+        event_log::event(ui, e);
         match e.form.as_str() {
             MAIN => main_form::event(self, ui, e),
             "FormulaGUIForm" => formula_form::event(self, ui, e),
             "LightAdjustForm" => light_form::event(self, ui, e),
             "PostProForm" => postpro_form::event(self, ui, e),
             "VisualThemesFrm" => small_forms::themes_event(self, ui, e),
+            "LanguageFrm" => lang_form::event(self, ui, e),
+            "HotkeysFrm" => hotkeys::event(self, ui, e),
             "SwarmFrm" => swarm_form::event(self, ui, e),
             "UnfinishedFrm" => unfinished_form::event(self, ui, e),
+            "HistoryFrm" => history_form::event(self, ui, e),
+            "LogFrm" => log_form::event(self, ui, e),
+            "AiConnectFrm" => ai_form::event(self, ui, e),
+            "ExperimentalFrm" => experimental_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
             "MapSequencesFrm" => small_forms::mapseq_event(self, ui, e),
             "FTextBox" => small_forms::textbox_event(self, ui, e),
             "ZBuf16BitGenFrm" => small_forms::zbuf_event(self, ui, e),
             "FNavigator" => navi_form::event(self, ui, e),
             "AnimationForm" => anim_form::event(self, ui, e),
+            "CurvesFrm" => curves_form::event(self, ui, e),
             "ColorForm" => palette_form::event(self, ui, e),
             "AniPreviewForm" => anim_form::preview_event(self, ui, e),
             "AniProcessForm" => anim_form::process_event(self, ui, e),
@@ -190,6 +221,7 @@ impl App for Mb3d {
             "MCForm" => mc_form::event(self, ui, e),
             "FVoxelExport" => voxel_form::event(self, ui, e),
             "BulbTracer2Frm" => bulbtracer_form::event(self, ui, e),
+            "SplatFrm" => splat_form::event(self, ui, e),
             "MutaGenFrm" => mutagen_form::event(self, ui, e),
             "MeshPreviewFrm" => meshview::preview_event(self, ui, e),
             "HeightMapGenFrm" => meshview::heightmap_event(self, ui, e),
@@ -200,7 +232,20 @@ impl App for Mb3d {
         }
     }
 
+    fn hotkey(&mut self, ui: &mut Ui, form: usize, key: u16, shift: u8) -> bool {
+        let done = hotkeys::hotkey(self, ui, form, key, shift);
+        if done {
+            event_log::hotkey(ui, form, key, shift);
+        }
+        done
+    }
+
     fn idle(&mut self, ui: &mut Ui) {
+        // the controls the windows have no handler for: the log sees them too
+        for e in ui.take_unhandled() {
+            event_log::event(ui, &e);
+        }
+        event_log::idle();
         main_form::idle(self, ui);
         if ui.showing("FNavigator") {
             navi_form::idle(self, ui);
@@ -210,14 +255,25 @@ impl App for Mb3d {
         mc_form::idle(self, ui);
         voxel_form::idle(self, ui);
         bulbtracer_form::idle(self, ui);
+        splat_form::idle(self, ui);
         mutagen_form::idle(self, ui);
         meshview::idle(self, ui);
         file_preview::idle(self, ui);
+        history_form::idle(self, ui);
+        log_form::idle(self, ui);
     }
 }
 
 impl Mb3d {
     fn dialog_result(&mut self, ui: &mut Ui, tag: &str, r: &DialogResult) {
+        // the history: every file opened or saved through a file dialog
+        // (or dropped on the window); a chosen folder is none
+        if let DialogResult::File(Some(p)) = r {
+            if !p.is_dir() {
+                let save = tag != "@drop" && ui.file_dialog_save;
+                crate::history::log(if save { crate::history::Action::Save } else { crate::history::Action::Open }, p);
+            }
+        }
         if tag == "@drop" {
             return main_form::dialog(self, ui, "open", r);
         }
@@ -231,17 +287,20 @@ impl Mb3d {
             "zbuf" => small_forms::zbuf_dialog(self, ui, what, r),
             "anim" => anim_form::dialog(self, ui, what, r),
             "palette" => palette_form::dialog(self, ui, what, r),
+            "post" => postpro_form::dialog(self, ui, what, r),
             "batch" => tools_forms::batch_dialog(self, ui, what, r),
             "tiling" => tools_forms::tiling_dialog(self, ui, what, r),
             "mc" => mc_form::dialog(self, ui, what, r),
             "navi" => navi_form::dialog(self, ui, what, r),
             "voxel" => voxel_form::dialog(self, ui, what, r),
             "btracer" => bulbtracer_form::dialog(self, ui, what, r),
+            "splat" => splat_form::dialog(self, ui, what, r),
             "mutagen" => mutagen_form::dialog(self, ui, what, r),
             "heightmap" => meshview::heightmap_dialog(self, ui, what, r),
             "jit" => jit_form::dialog(self, ui, what, r),
             "swarm" => swarm_form::dialog(self, ui, what, r),
             "unfinished" => unfinished_form::dialog(self, ui, what, r),
+            "history" => history_form::dialog(self, ui, what, r),
             _ => {}
         }
     }
@@ -281,11 +340,17 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
     // the themes of the `Themes` folder next to the program
     crate::vcl::theme::check()?;
     let style = Style::from_name(ini.get("VisualTheme")).unwrap_or_default();
+    // the interface language (`Language` in the ini): the forms are built in it
+    if let Some(l) = ini.get_extra("Language") {
+        if !crate::vcl::lang::select(l) {
+            crate::elog!("no language file for '{l}': English");
+        }
+    }
     let mut ui = Ui::new(style);
     ui.set_ui_scale(scale_pct.clamp(50, 400) as f64 / 100.0);
     for f in FORMS {
         if let Err(e) = ui.add_form(forms::get(f)) {
-            eprintln!("{f}: {e}");
+            crate::elog!("{f}: {e}");
         }
     }
     ui.main_form = ui.form_index(MAIN).ok_or("no main form")?;
@@ -308,8 +373,12 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         mc: mc_form::State::default(),
         swarm,
         unfinished: Default::default(),
+        history: Default::default(),
+        curves: Default::default(),
+        logview: Default::default(),
         voxel: voxel_form::State::default(),
         btracer: bulbtracer_form::State::default(),
+        splat: splat_form::State::default(),
         mutagen: mutagen_form::State::default(),
         meshview: meshview::State::default(),
         jit: jit_form::State::default(),
@@ -343,6 +412,9 @@ struct Starter(Mb3d);
 impl App for Starter {
     fn event(&mut self, ui: &mut Ui, e: &Event) {
         self.0.event(ui, e)
+    }
+    fn hotkey(&mut self, ui: &mut Ui, form: usize, key: u16, shift: u8) -> bool {
+        self.0.hotkey(ui, form, key, shift)
     }
     fn idle(&mut self, ui: &mut Ui) {
         if ui.waker().is_some() && !self.0.main.waker_set {

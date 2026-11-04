@@ -6,7 +6,11 @@
 //! 24..32, `v..` the variable buffer, `s..` the stack).  They are read from
 //! the machine at the start and the written ones go back at the end, so the
 //! machine ends in the same state as with the interpreter (checked by
-//! `m3fcheck --translated`).  Accesses to parts of a cell are bit
+//! `m3fcheck --translated`).  The direct and dIFS versions keep the stack
+//! in locals only, as the GPU code does: it starts with what the call
+//! pushes and 0 below, and is dead after the return (`m3fcheck` puts
+//! garbage there, so a formula reading stack it did not write would show).
+//! Accesses to parts of a cell are bit
 //! operations on the local.  Local subroutines are generated once per call
 //! site (the analysis follows call strings), so every return has a fixed
 //! target.  The operations are those of `emit_rust`; formulas whose code
@@ -28,7 +32,7 @@ const STACK_LOW: u32 = BASE + 0x4000;
 
 /// A region and byte offset in it: 'r' record (from IT_BASE), 'v' variable
 /// buffer (from its start), 's' stack (from STACK_LOW).
-fn region(loc: Loc) -> Option<(char, u32)> {
+pub(super) fn region(loc: Loc) -> Option<(char, u32)> {
     match loc {
         Loc::Field(o) => Some(('r', o)),
         Loc::Var(o) => Some(('v', (o + crate::m3f::CONST_OFFSET as i32) as u32)),
@@ -212,13 +216,18 @@ pub(super) fn dispatch_wgsl(blocks: &[Block]) -> String {
     body
 }
 
+/// The unset value of the `brk` and `cont` flags of [`structure_wgsl`].
+pub(super) const NO_FLAG: &str = "0xffffffffu";
+
 /// [`structure`] in WGSL (the same layout; kept apart so that the Rust
 /// code stays as it is).  WGSL has no labels: a label scope is a one-pass
 /// `loop { ... break; }`, a jump out of a scope that is not the innermost
 /// one sets `brk` (the target scope) or `cont` (the target loop) and
 /// breaks; every scope and loop end checks the flags and breaks on until
-/// the target is reached.  Loops are guarded by `guard` like the
-/// dispatcher.  None when the flow does not nest (the dispatcher then).
+/// the target is reached.  The flags hold block ids, `NO_FLAG` when unset
+/// (the entry block 0 can be a loop header).  Loops are guarded by `guard`
+/// like the dispatcher.  None when the flow does not nest (the dispatcher
+/// then).
 pub(super) fn structure_wgsl(blocks: &[Block], entry: usize) -> Option<String> {
     let nb = blocks.len();
     let mut order = Vec::with_capacity(nb);
@@ -294,14 +303,15 @@ pub(super) fn structure_wgsl(blocks: &[Block], entry: usize) -> Option<String> {
     let check = |open: &[Open], arrive: Option<usize>| -> String {
         let mut c = String::new();
         if let Some(q) = arrive {
-            let _ = write!(c, "if (brk == {q}u) {{ brk = 0u; }} else ");
+            let _ = write!(c, "if (brk == {q}u) {{ brk = {NO_FLAG}; }} else ");
         }
         match open.last() {
             Some(Open::Loop(h)) => {
-                let _ = write!(c, "if (cont == {h}u) {{ cont = 0u; {step} continue; }} else if (brk != 0u || cont != 0u) {{ break; }}");
+                let h = order[*h];
+                let _ = write!(c, "if (cont == {h}u) {{ cont = {NO_FLAG}; {step} continue; }} else if (brk != {NO_FLAG} || cont != {NO_FLAG}) {{ break; }}");
             }
             Some(Open::Scope(_)) => {
-                let _ = write!(c, "if (brk != 0u || cont != 0u) {{ break; }}");
+                let _ = write!(c, "if (brk != {NO_FLAG} || cont != {NO_FLAG}) {{ break; }}");
             }
             None => {
                 let _ = write!(c, "{{}}");
@@ -560,6 +570,10 @@ fn structure(blocks: &[Block], entry: usize) -> Option<Structured> {
     Some(Structured { code, loops: !loops.is_empty() })
 }
 
+/// Machine accesses of generated code at computed addresses (see
+/// `local_stack` in `emit_lifted_mode`).
+const DYNAMIC_ACCESS: [&str; 9] = ["m.rd32(", "m.wr32(", "m.rd32u(", "m.wr32u(", "m.rdf64(", "m.rdf64u(", "m.wrf64u(", "m.floadu(", "m.exec_op("];
+
 /// The cells and the code that uses them.
 #[derive(Default)]
 pub(super) struct Cells {
@@ -580,6 +594,12 @@ impl Cells {
     /// The cells the formula writes.
     pub(super) fn written_cells(&self) -> impl Iterator<Item = (char, u32)> + '_ {
         self.written.iter().copied()
+    }
+
+    /// The cells the formula reads or writes.
+    #[cfg(jit)]
+    pub(super) fn used_cells(&self) -> impl Iterator<Item = (char, u32)> + '_ {
+        self.used.iter().copied()
     }
 
     /// Expression (u64) of `n` bytes at `off` in region `p`.
@@ -659,7 +679,7 @@ fn fload_expr(c: &mut Cells, r: (char, u32), kind: FKind) -> Option<String> {
 /// `LIFT_DEBUG`: says why a formula is not lifted.
 pub(super) fn lift_debug(why: &str) {
     if std::env::var_os("LIFT_DEBUG").is_some() {
-        eprintln!("    not lifted: {why}");
+        crate::elog!("    not lifted: {why}");
     }
 }
 
@@ -1038,13 +1058,35 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 _ => format!("m.rd64u({})", addr(p, c)),
             }
         };
+        // the stack of a direct or dIFS formula in locals only (as on the
+        // GPU): the cells start with what the call pushes, the others with
+        // 0, and nothing goes back to the machine (callers read nothing
+        // below the stack pointer).  Not when the code addresses memory
+        // through registers (the stack could be among it).
+        let local_stack = conv != Conv::Machine && !DYNAMIC_ACCESS.iter().any(|f| body.contains(f));
+        let stack_init = |c: u32| -> String {
+            let call_cells: Vec<(u32, u32)> = if difs {
+                vec![(STACK_TOP - 4, RETURN_SENTINEL)]
+            } else {
+                let x = crate::custom::IT_C1 - 32;
+                vec![(STACK_TOP - 12, RETURN_SENTINEL), (STACK_TOP - 8, crate::custom::IT_C1), (STACK_TOP - 4, x + 24)]
+            };
+            let half = |a: u32| call_cells.iter().find(|(ca, _)| *ca == a).map_or(0, |(_, v)| *v) as u64;
+            let a = STACK_LOW + 8 * c;
+            format!("{:#x}u64", half(a) | half(a + 4) << 32)
+        };
+        let load = |p: char, c: u32| -> String { if p == 's' && local_stack { stack_init(c) } else { load(p, c) } };
         let mut o = String::new();
         if direct {
             // the state `Machine::call_compiled` sets up, without the machine
             let _ = writeln!(o, "pub(super) fn {name}(m: &mut Machine, p: &Prog, it: &mut Iteration, pvar: u32, max_steps: u64) -> R<()> {{");
             let _ = writeln!(o, "    let _ = p;");
             let _ = writeln!(o, "    let mut f = [0f64; 8];");
-            let _ = writeln!(o, "    let mut rg = direct_regs(m);");
+            if local_stack {
+                let _ = writeln!(o, "    let mut rg = direct_regs_local();");
+            } else {
+                let _ = writeln!(o, "    let mut rg = direct_regs(m);");
+            }
             let _ = writeln!(o, "    let mut fl = Flags::default();");
             let _ = writeln!(o, "    let mut fsw = 0u16;");
             if steps {
@@ -1111,6 +1153,9 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
         // after an error)
         let write_back = |o: &mut String, ind: &str| {
             for (p, c) in &cells.written {
+                if *p == 's' && local_stack {
+                    continue;
+                }
                 if direct && *p == 'r' {
                     let _ = writeln!(o, "{ind}rec_set(m, it, {c}, r{c});");
                 } else {
@@ -1176,7 +1221,7 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 if std::env::var_os("GPU_REPORT_OPS").is_some() {
                     for (i, e) in cells.log.iter().enumerate() {
                         if e.0 == cell && !(e.3 == 'd' && e.1 == 0 && e.2 == 8) {
-                            eprintln!("    {}{}: op {} {:?}", cell.0, cell.1, cells.log_ops[i], self.ops[cells.log_ops[i]]);
+                            crate::elog!("    {}{}: op {} {:?}", cell.0, cell.1, cells.log_ops[i], self.ops[cells.log_ops[i]]);
                         }
                     }
                 }
@@ -1250,10 +1295,16 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
             Op::MovMR { mem, r } => c.wr(loc(mem)?, 4, &format!("rg[{r}] as u64")),
             Op::MovRR { d, s } => format!("rg[{d}] = rg[{s}];"),
             Op::Lea { r, mem } => format!("rg[{r}] = {};", ea_expr(mem).replace("m.regs[", "rg[")),
+            // push esp stores the old value, pop esp sets the popped one
+            Op::PushR(r) if *r as usize == ESP => {
+                let w = c.wr(region(an.stack_loc(k, cs, true))?, 4, "v as u64");
+                format!("{{ let v = rg[ESP]; rg[ESP] = rg[ESP].wrapping_sub(4); {w} }}")
+            }
             Op::PushR(r) => {
                 let w = c.wr(region(an.stack_loc(k, cs, true))?, 4, &format!("rg[{r}] as u64"));
                 format!("{{ rg[ESP] = rg[ESP].wrapping_sub(4); {w} }}")
             }
+            Op::PopR(r) if *r as usize == ESP => format!("rg[ESP] = {} as u32;", c.rd(region(an.stack_loc(k, cs, false))?, 4)),
             Op::PopR(r) => {
                 let v = c.rd(region(an.stack_loc(k, cs, false))?, 4);
                 format!("{{ rg[{r}] = {v} as u32; rg[ESP] = rg[ESP].wrapping_add(4); }}")
@@ -1413,7 +1464,8 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 let m = super::mask(u32::MAX, *size);
                 format!("{{ let v = {v}; let r = fl.alu(Alu::Sub, 0, v, {size}); fl.cf = v & {m:#x} != 0; {} }}", wr(c, rm, *size, "r")?)
             }
-            // one-operand mul / imul / div / idiv (Machine::exec)
+            // one-operand mul / imul / div / idiv (Machine::exec; a quotient
+            // out of range halts)
             Ins::Mul(rm, size) | Ins::IMul1(rm, size) => {
                 let sg = matches!(ins, Ins::IMul1(..));
                 let b = rd(c, rm, *size)?;
@@ -1427,9 +1479,9 @@ fn quantized(op: &Op, q: &mut [bool; 8]) {
                 let sg = matches!(ins, Ins::IDiv(..));
                 let b = rd(c, rm, *size)?;
                 match size {
-                    1 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = rg[EAX] & 0xFFFF; let (q, r) = if {sg} {{ let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32); ((n / d) as u32, (n % d) as u32) }} else {{ (n / b, n % b) }}; reg_set(&mut rg, 0, 1, q); reg_set(&mut rg, 4, 1, r); }}"),
-                    2 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] & 0xFFFF) << 16 | (rg[EAX] & 0xFFFF); let (q, r) = if {sg} {{ let (n, d) = (n as i32, b as u16 as i16 as i32); ((n / d) as u32, (n % d) as u32) }} else {{ (n / b, n % b) }}; reg_set(&mut rg, 0, 2, q); reg_set(&mut rg, 2, 2, r); }}"),
-                    _ => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if {sg} {{ let (n, d) = (n as i64, b as i32 as i64); ((n / d) as u32, (n % d) as u32) }} else {{ ((n / b as u64) as u32, (n % b as u64) as u32) }}; rg[EAX] = q; rg[EDX] = r; }}"),
+                    1 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = rg[EAX] & 0xFFFF; let (q, r) = if {sg} {{ let (n, d) = (n as u16 as i16 as i32, b as u8 as i8 as i32); let q = n / d; if q != q as i8 as i32 {{ return Err(EmuError::Halt(0)); }} (q as u32, (n % d) as u32) }} else {{ if n / b > 0xFF {{ return Err(EmuError::Halt(0)); }} (n / b, n % b) }}; reg_set(&mut rg, 0, 1, q); reg_set(&mut rg, 4, 1, r); }}"),
+                    2 => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] & 0xFFFF) << 16 | (rg[EAX] & 0xFFFF); let (q, r) = if {sg} {{ let (n, d) = (n as i32, b as u16 as i16 as i32); match n.checked_div(d) {{ Some(q) if q == q as i16 as i32 => (q as u32, (n % d) as u32), _ => return Err(EmuError::Halt(0)) }} }} else {{ if n / b > 0xFFFF {{ return Err(EmuError::Halt(0)); }} (n / b, n % b) }}; reg_set(&mut rg, 0, 2, q); reg_set(&mut rg, 2, 2, r); }}"),
+                    _ => format!("{{ let b = {b}; if b == 0 {{ return Err(EmuError::Halt(0)); }} let n = (rg[EDX] as u64) << 32 | rg[EAX] as u64; let (q, r) = if {sg} {{ let (n, d) = (n as i64, b as i32 as i64); match n.checked_div(d) {{ Some(q) if q == q as i32 as i64 => (q as u32, (n % d) as u32), _ => return Err(EmuError::Halt(0)) }} }} else {{ if n / b as u64 > u32::MAX as u64 {{ return Err(EmuError::Halt(0)); }} ((n / b as u64) as u32, (n % b as u64) as u32) }}; rg[EAX] = q; rg[EDX] = r; }}"),
                 }
             }
             Ins::Inc(rm, size) | Ins::Dec(rm, size) => {
@@ -1502,5 +1554,54 @@ mod tests {
         assert!(s.code.contains("'l1: loop {"), "{}", s.code);
         assert!(s.code.contains("continue 'l1;"), "{}", s.code);
         assert!(s.code.contains("break 'b2;"), "{}", s.code);
+    }
+
+    #[test]
+    fn structure_wgsl_loop_flags() {
+        let cond = |t| format!("if (cond(4u)) {{ {} }}", Jump::mark(t, true));
+        // 0: if c goto 2, else 1; 1: if c goto 0, else 2; 2: if c goto 0,
+        // else 3; 3: return.  The jump of 1 back to the entry block (the
+        // loop header) leaves the scope 'b2 through `cont`
+        let blocks = vec![block(&[cond(2)], Some(1)), block(&[cond(0)], Some(2)), block(&[cond(0)], Some(3)), block(&[Jump::RETURN.to_string()], None)];
+        let w = structure_wgsl(&blocks, 0).expect("structured");
+        assert!(w.contains("if (cond(4u)) { cont = 0u; break; }"), "{w}");
+        assert!(w.contains("else if (cont == 0u) { cont = 0xffffffffu;"), "{w}");
+        assert!(w.contains("else if (brk != 0xffffffffu || cont != 0xffffffffu) { break; }"), "{w}");
+        // 0 -> 3; 3: if c goto 1, else 2; 1: if c goto 2, else 3; 2: return.
+        // The loop header is block 3 at position 1: the flag check tests
+        // the block id
+        let blocks = vec![block(&[], Some(3)), block(&[cond(2)], Some(3)), block(&[Jump::RETURN.to_string()], None), block(&[cond(1)], Some(2))];
+        let w = structure_wgsl(&blocks, 0).expect("structured");
+        assert!(w.contains("else if (cont == 3u) {"), "{w}");
+    }
+
+    fn prog_of(code: &[u8]) -> Prog {
+        let mut m = Machine::new();
+        m.write_bytes(CODE_START, code).unwrap();
+        m.predecode(&[CODE_START]);
+        m.compile(CODE_START).expect("compiles")
+    }
+
+    #[test]
+    fn push_pop_esp() {
+        // push esp; pop eax; push eax; pop esp; ret
+        let p = prog_of(&[0x54, 0x58, 0x50, 0x5C, 0xC3]);
+        let r = p.emit_lifted("f", false).expect("lifts");
+        assert!(r.contains("{ let v = rg[ESP]; rg[ESP] = rg[ESP].wrapping_sub(4); s2014 = (s2014 & !(0xffffffffu64 << 0)) | (((v as u64)"), "{r}");
+        assert!(r.contains("\n        rg[ESP] = ((s2014 >> 0) & 0xffffffffu64) as u32;\n"), "{r}");
+        let w = p.emit_wgsl("f", false).expect("lifts").code;
+        assert!(w.contains("{ let v = rg[4]; rg[4] = rg[4] - 4u; s2014l = (v); }"), "{w}");
+        assert!(w.contains("\n    rg[4] = s2014l;\n"), "{w}");
+    }
+
+    #[test]
+    fn div_quotient_out_of_range_halts() {
+        // div ecx; idiv ecx; div cx; idiv cl; ret
+        let p = prog_of(&[0xF7, 0xF1, 0xF7, 0xF9, 0x66, 0xF7, 0xF1, 0xF6, 0xF9, 0xC3]);
+        let r = p.emit_lifted("f", false).expect("lifts");
+        assert!(r.contains("if n / b as u64 > u32::MAX as u64 { return Err(EmuError::Halt(0)); }"), "{r}");
+        assert!(r.contains("Some(q) if q == q as i32 as i64 =>"), "{r}");
+        assert!(r.contains("if n / b > 0xFFFF { return Err(EmuError::Halt(0)); }"), "{r}");
+        assert!(r.contains("if q != q as i8 as i32 { return Err(EmuError::Halt(0)); }"), "{r}");
     }
 }

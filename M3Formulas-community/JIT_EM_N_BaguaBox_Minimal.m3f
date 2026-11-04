@@ -1,0 +1,120 @@
+[OPTIONS]
+.DEScale = 0.0105
+.RStop = 4
+.SIPow = 2
+.Version = 9
+.Double AddValue = 0.1
+.Double Lenght = 2
+.Double Scale = 1.5
+[SOURCE]
+procedure BaguaboxM(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+var
+
+temp, modulus, negativeX, negativeY, negativeZ : double;
+
+begin
+
+
+
+modulus  := sqrt( x*x + y*y + z*z);
+
+
+//====baguafold=======(^^)==========================
+//baguafold
+// In transformation unit vector is involved.
+
+// Zvector = Baguafold(Zvector)
+
+
+//optimisation for speed
+
+negativeX := -x; 
+negativeY := -y;
+negativeZ := -z;
+
+
+
+
+ // to awoyd division / 0; Not necessary in M3D but still benefitial
+ if modulus = 0 then
+    begin
+      modulus := 1e-15;
+   end;
+
+
+
+
+///=========x=====================(^_^)===== 
+	 if x > Lenght then
+	    begin
+		x := negativeX/modulus - AddValue;
+	    end
+	  else if negativeX > Lenght then
+	    begin
+		x := negativeX/modulus + AddValue;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+///=========y==========================
+	 if y > Lenght then
+	    begin
+		y := negativeY/modulus - AddValue;
+	    end
+	  else if negativeY > Lenght then
+	    begin
+		y := negativeY/modulus + AddValue;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+///=========z==========================
+	 if z > Lenght then
+	    begin
+		z := negativeZ/modulus - AddValue;
+	    end
+	  else if negativeZ > Lenght then
+	    begin
+		z := negativeZ/modulus + AddValue;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+
+
+
+
+
+//=====scale==+C==========================================
+//scaling and +C
+// Zvector = Scale*Zvector + C
+  x := x*scale + PIteration3D^.J1;
+  y := y*scale + PIteration3D^.J2;
+  z := z*scale + PIteration3D^.J3;
+
+
+
+
+
+end;
+[END]
+Formula version 1.4
+
+Minimal version with just baguafold and scale.
+
+Very different ...box like formula.
+
+On hybridisation watch to the bailout value. Stature depends on bailout, by default here "R bailout" = 4. Value 16 can turn fractal into just single inside.
+
+Formula variables:
+AddValue, Lenght - bagua Fold. Scale 
+
+
+ * * *
+By Edgar Malinovsky

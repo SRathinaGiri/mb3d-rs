@@ -2,7 +2,7 @@ object ColorForm: TColorForm
   Left = 191
   Top = 214
   BorderStyle = bsDialog
-  Caption = 'Color adjustment'
+  Caption = '@MB:ColorAdjustment'
   ClientHeight = 262
   ClientWidth = 936
   Color = clBtnFace
@@ -302,7 +302,7 @@ object ColorForm: TColorForm
     Top = 32
     Width = 42
     Height = 13
-    Caption = 'Specular'
+    Caption = '@MB:Specular'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -315,24 +315,21 @@ object ColorForm: TColorForm
     Top = 56
     Width = 33
     Height = 13
-    Caption = 'Diffuse'
+    Caption = '@MB:Diffuse2'
   end
   object Label3: TLabel
     Left = 8
     Top = 209
     Width = 662
     Height = 13
-    Caption = 
-      '(Rightclick on sliders to change the colors. Usage of keyboard w' +
-      'hen cursor is over a slider: (c) copy colors, (v) paste colors, ' +
-      '(b) paste 1 color)'
+    Caption = '@MB:RightclickOnSlidersToChangeThe'
   end
   object Label4: TLabel
     Left = 808
     Top = 32
     Width = 54
     Height = 13
-    Caption = 'Inside color'
+    Caption = '@MB:InsideColor'
     Visible = False
   end
   object SpeedButton1: TSpeedButton
@@ -340,7 +337,7 @@ object ColorForm: TColorForm
     Top = 179
     Width = 22
     Height = 22
-    Hint = 'Reference for diffuse colors'
+    Hint = '@MB:ReferenceForDiffuseColors'
     Glyph.Data = {
       D6020000424DD6020000000000003600000028000000100000000E0000000100
       180000000000A0020000120B0000120B0000000000000000000043FD35000000
@@ -376,7 +373,7 @@ object ColorForm: TColorForm
     Top = 154
     Width = 22
     Height = 22
-    Hint = 'Reference for specular colors'
+    Hint = '@MB:ReferenceForSpecularColors'
     Glyph.Data = {
       D6020000424DD6020000000000003600000028000000100000000E0000000100
       180000000000A0020000120B0000120B0000000000000000000043FD35000000
@@ -411,7 +408,7 @@ object ColorForm: TColorForm
     Top = 8
     Width = 65
     Height = 13
-    Caption = 'Transparency'
+    Caption = '@MB:Transparency'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -431,10 +428,8 @@ object ColorForm: TColorForm
     Top = 214
     Width = 81
     Height = 17
-    Hint = 
-      'If glued, the sliders behaves like sticked together with a rubbe' +
-      'r band.'
-    Caption = 'Glue sliders'
+    Hint = '@MB:IfGluedTheSlidersBehavesLike'
+    Caption = '@MB:GlueSliders'
     Checked = True
     ParentShowHint = False
     ShowHint = True
@@ -446,8 +441,8 @@ object ColorForm: TColorForm
     Top = 179
     Width = 51
     Height = 22
-    Hint = 'generate random diffuse colors'
-    Caption = 'Random'
+    Hint = '@MB:GenerateRandomDiffuseColors'
+    Caption = '@MB:Random'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 1
@@ -458,8 +453,8 @@ object ColorForm: TColorForm
     Top = 154
     Width = 51
     Height = 22
-    Hint = 'generate random specular colors according to the diffuse colors'
-    Caption = 'Random'
+    Hint = '@MB:GenerateRandomSpecularColorsAccordingTo'
+    Caption = '@MB:Random'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 2
@@ -470,7 +465,7 @@ object ColorForm: TColorForm
     Top = 232
     Width = 87
     Height = 25
-    Caption = 'Update Image'
+    Caption = '@MB:UpdateImage'
     TabOrder = 3
     OnClick = Button3Click
   end
@@ -479,11 +474,11 @@ object ColorForm: TColorForm
     Top = 72
     Width = 81
     Height = 57
-    Caption = 'Object colors'
+    Caption = '@MB:ObjectColors'
     ItemIndex = 0
     Items.Strings = (
-      'Outside'
-      'Inside')
+      '@MB:Outside'
+      '@MB:Inside')
     TabOrder = 4
     OnClick = RadioGroup1Click
   end
@@ -492,7 +487,7 @@ object ColorForm: TColorForm
     Top = 238
     Width = 113
     Height = 17
-    Caption = 'Auto update image'
+    Caption = '@MB:AutoUpdateImage'
     Checked = True
     State = cbChecked
     TabOrder = 5
@@ -502,7 +497,7 @@ object ColorForm: TColorForm
     Top = 180
     Width = 29
     Height = 21
-    Hint = 'Random multiplier'
+    Hint = '@MB:RandomMultiplier'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 6
@@ -513,7 +508,7 @@ object ColorForm: TColorForm
     Top = 155
     Width = 29
     Height = 21
-    Hint = 'Random multiplier'
+    Hint = '@MB:RandomMultiplier'
     ParentShowHint = False
     ShowHint = True
     TabOrder = 7
@@ -541,7 +536,7 @@ object ColorForm: TColorForm
     Width = 89
     Height = 17
     Alignment = taLeftJustify
-    Caption = 'Paint on image'
+    Caption = '@MB:PaintOnImage'
     TabOrder = 9
     OnClick = CheckBox3Click
   end

@@ -2,7 +2,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
   Left = 0
   Top = 0
   BorderStyle = bsSizeToolWin
-  Caption = 'MeshPreviewFrm'
+  Caption = '@MB:MeshPreviewFrm'
   ClientHeight = 618
   ClientWidth = 824
   Color = clBtnFace
@@ -39,7 +39,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
       Top = 425
       Width = 143
       Height = 13
-      Caption = 'LMB: move           RMB: rotate'
+      Caption = '@MB:LMBMoveRMBRotate'
       OnDblClick = NaviPanelDblClick
     end
     object Label16: TLabel
@@ -47,7 +47,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
       Top = 441
       Width = 88
       Height = 13
-      Caption = 'MMB/Wheel: zoom'
+      Caption = '@MB:MMBWheelZoom'
       OnDblClick = NaviPanelDblClick
     end
     object Label18: TLabel
@@ -55,7 +55,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
       Top = 455
       Width = 117
       Height = 13
-      Caption = 'DblClick: hide right panel'
+      Caption = '@MB:DblClickHideRightPanel'
       OnClick = NaviPanelDblClick
     end
     object DisplayStyleGrp: TRadioGroup
@@ -64,15 +64,15 @@ object MeshPreviewFrm: TMeshPreviewFrm
       Width = 156
       Height = 137
       Align = alTop
-      Caption = 'Display Style'
+      Caption = '@MB:DisplayStyle'
       ItemIndex = 4
       Items.Strings = (
-        'Points'
-        'Wireframe'
-        'Flat Solid'
-        'Flat Solid with Edges'
-        'Smooth Solid'
-        'Smooth Solid with Edges')
+        '@MB:Points'
+        '@MB:Wireframe'
+        '@MB:FlatSolid'
+        '@MB:FlatSolidWithEdges'
+        '@MB:SmoothSolid'
+        '@MB:SmoothSolidWithEdges')
       TabOrder = 0
       OnClick = DisplayStyleGrpClick
     end
@@ -82,7 +82,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
       Width = 156
       Height = 281
       Align = alTop
-      Caption = 'Appearance'
+      Caption = '@MB:Appearance'
       TabOrder = 1
       OnDblClick = NaviPanelDblClick
       object AppearancePageCtrl: TPageControl
@@ -94,7 +94,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
         Align = alClient
         TabOrder = 0
         object MaterialSheet: TTabSheet
-          Caption = 'Material'
+          Caption = '@MB:Material'
           ExplicitLeft = 0
           ExplicitTop = 0
           ExplicitWidth = 0
@@ -105,56 +105,56 @@ object MeshPreviewFrm: TMeshPreviewFrm
             Width = 63
             Height = 13
             Alignment = taCenter
-            Caption = 'Surface color'
+            Caption = '@MB:SurfaceColor'
           end
           object Label1: TLabel
             Left = 4
             Top = 32
             Width = 55
             Height = 13
-            Caption = 'Edges color'
+            Caption = '@MB:EdgesColor'
           end
           object Label2: TLabel
             Left = 4
             Top = 60
             Width = 76
             Height = 13
-            Caption = 'Wireframe color'
+            Caption = '@MB:WireframeColor'
           end
           object Label3: TLabel
             Left = 4
             Top = 80
             Width = 55
             Height = 13
-            Caption = 'Points color'
+            Caption = '@MB:PointsColor'
           end
           object Label4: TLabel
             Left = 4
             Top = 136
             Width = 39
             Height = 13
-            Caption = 'Ambient'
+            Caption = '@MB:Ambient'
           end
           object MatDiffuseColorLbl: TLabel
             Left = 4
             Top = 160
             Width = 34
             Height = 13
-            Caption = 'Diffuse'
+            Caption = '@MB:Diffuse2'
           end
           object Label6: TLabel
             Left = 4
             Top = 184
             Width = 41
             Height = 13
-            Caption = 'Specular'
+            Caption = '@MB:Specular'
           end
           object Label7: TLabel
             Left = 4
             Top = 211
             Width = 44
             Height = 13
-            Caption = 'Shininess'
+            Caption = '@MB:Shininess'
           end
           object SurfaceColorBtn: TJvOfficeColorButton
             Left = 88
@@ -447,7 +447,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
             Width = 101
             Height = 17
             Alignment = taLeftJustify
-            Caption = 'Enable Lighting'
+            Caption = '@MB:EnableLighting'
             Checked = True
             State = cbChecked
             TabOrder = 9
@@ -455,7 +455,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
           end
         end
         object LightSheet: TTabSheet
-          Caption = 'Light'
+          Caption = '@MB:Light'
           ImageIndex = 1
           ExplicitLeft = 0
           ExplicitTop = 0
@@ -466,42 +466,42 @@ object MeshPreviewFrm: TMeshPreviewFrm
             Top = 8
             Width = 39
             Height = 13
-            Caption = 'Ambient'
+            Caption = '@MB:Ambient'
           end
           object Label9: TLabel
             Left = 3
             Top = 32
             Width = 34
             Height = 13
-            Caption = 'Diffuse'
+            Caption = '@MB:Diffuse2'
           end
           object Label5: TLabel
             Left = 4
             Top = 76
             Width = 46
             Height = 13
-            Caption = 'Position X'
+            Caption = '@MB:PositionX'
           end
           object Label10: TLabel
             Left = 4
             Top = 99
             Width = 46
             Height = 13
-            Caption = 'Position Y'
+            Caption = '@MB:PositionY'
           end
           object Label11: TLabel
             Left = 4
             Top = 122
             Width = 46
             Height = 13
-            Caption = 'Position Z'
+            Caption = '@MB:PositionZ'
           end
           object Label12: TLabel
             Left = 4
             Top = 208
             Width = 57
             Height = 26
-            Caption = 'Quadratic Attenuation'
+            Caption = '@MB:QuadraticAttenuation'
             WordWrap = True
           end
           object Label13: TLabel
@@ -509,7 +509,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
             Top = 185
             Width = 57
             Height = 26
-            Caption = 'Linear Attenuation'
+            Caption = '@MB:LinearAttenuation'
             WordWrap = True
           end
           object Label14: TLabel
@@ -517,7 +517,7 @@ object MeshPreviewFrm: TMeshPreviewFrm
             Top = 162
             Width = 57
             Height = 26
-            Caption = 'Const Attenuation'
+            Caption = '@MB:ConstAttenuation'
             WordWrap = True
           end
           object LightAmbientBtn: TJvOfficeColorButton

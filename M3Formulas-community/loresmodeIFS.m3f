@@ -1,0 +1,17 @@
+[OPTIONS]
+.Version = 6
+.DEoption = 21
+.DReci2 Resolution = 25
+[CONSTANTS]
+Double = 16
+[CODE]
+83C4E0DD4698DC4FF0DB1424DA2424D9C0D8C8D8C8DEC9DC0FDA0424DC4FE8DD
+5E98DD4690DC4FF0DB1424DA2424D9C0D8C8D8C8DEC9DC0FDA0424DC4FE8DD5E
+90DD4688DC4FF0DB1424DA2424D9C0D8C8D8C8DEC9DC0FDA0424DC4FE8DD5E88
+83C420C3
+[END]
+A cool 3D transform suggested by Aexion, to give an illusion of
+a pixelated mode, use as pretransform to see strange effects on
+DIFS shapes. Be careful; it will disturb DE at times.
+
+LucaGN & Aexion 2016

@@ -1,0 +1,40 @@
+[OPTIONS]
+.Version = 5
+.DEscale = .1
+.SIpower = 2
+.RStop = 100
+.Integer Option1 = 0
+.Integer Option2 = 0
+.Integer Option3 = 0
+.Double Scale = 1.
+.Double Shape = 0.
+[CODE]
+5589E583EC088B550883EA388B4268DD4218DD4220DD40E4D9C2DD4228D9CADD
+5DF8D9C2D9C9D8CCD9C9D8CB8D48F4DD40DCD9CADEC1D9C28B40F4D8CB85C0DE
+C1D9FA0F84B5000000D9E8D9C0D8F2DCCEDECDD9C08B41FCD8F285C0DECCD9CB
+D8C27408D8C8D9CAD8C8D9CA8B41F8D9C085C07508DDD8D9E8DEF1EB02DDD9DC
+CDDECCD9C4D9C4D8CDD9C9D8CED9CDDECEDEECD9CCD8C0D9C1D9C1D9C5D9CADE
+CCD8CAD9C9D8CDD9CBD8C4D9CBDEC1D9CADC4DF8D9C2D8E4D9CBDEC4D9CBD9E8
+DEF1DCCBDECAD9C4D9C9D8CBD9C9DECDD9CADECBD9CAD8CBD9C9D8CBD9CADECB
+DC4250D9C9DC4258D9CADC4260D9C9DD5A18D9C9DD5A20DD5A28C9C20800D9E8
+E94EFFFFFF
+[END]
+
+Description:
+
+Formula described by pupukuusikko at the Forums;
+
+http://www.fractalforums.com/the-3d-mandelbulb/a-new-3d-mandelbrot-variant-mandelcup/
+
+This version derives from the JIT version by the way.
+
+Original description;
+
+An uninformed attempt at 3d Mandelbrot, 
+Thanks to Tglad, Knighty, DarkBeam and others at Fractalforums.com
+Intricate, clean julias around (x=0.1, y=0, z>1), scale>5
+3d versions of mandelbrot julias in the inside, shape -1 or 1, Scale > 1
+Suggested options;
+opts=1,1,0, scale=10, shape=3 (Notre Dame)
+opts=1,0,0 scale=1, shape=-1 (2d-mandelbrot)
+opts=1,0,1, scale=3, shape=-1 (bottle-liike)

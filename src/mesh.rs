@@ -88,6 +88,8 @@ impl Sampler {
     pub fn new(sc: &Scene, mp: &MeshParams) -> Result<Sampler, String> {
         // VHeader: CalcImageSize makes it ZSlices x ZSlices pixels
         let mut s = sc.clone();
+        // (the fractal alone, without the ground plane)
+        s.ground = None;
         s.width = GRID as i32;
         s.height = GRID as i32;
         s.tiling = None;
@@ -422,7 +424,7 @@ impl MeshCheckpoint {
         let mut m = mp.clone();
         m.smooth = 0;
         let key = crate::checkpoint::key("mesh", &format!("{}\n{m:?}", s.to_text()));
-        let spec = crate::checkpoint::Spec { kind: "mesh".into(), key, name: name.into(), width: n, height: 1, rec: 1, units: n };
+        let spec = crate::checkpoint::Spec { kind: "mesh".into(), key, name: name.into(), width: n, height: 1, rec: 1, units: n, image: None };
         let store = crate::checkpoint::Store::open(spec, policy)?;
         store.put_extra("scene.m3s", sc.to_text().as_bytes());
         store.set_value("size", &format!("{n}^3"));

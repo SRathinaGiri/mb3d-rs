@@ -396,7 +396,7 @@ mod tests {
             let run = |shift: usize| {
                 let mut g = scene(shift);
                 if bits15 {
-                    crate::ssao15::ssao15(&mut g, w, h, 300.0, 0.001, &p, 2);
+                    crate::ssao15::ssao15(&mut g, w, h, 300.0, 0.001, &p, 2, &|_, _| {});
                 } else {
                     ssao24(&mut g, w, h, 300.0, 0.001, &p, 2);
                 }

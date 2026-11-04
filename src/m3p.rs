@@ -103,9 +103,13 @@ pub fn raw_from_bytes(data: Vec<u8>, is_m3i: bool) -> Result<(Vec<u8>, Option<St
     } else if data.len() >= 4 && i32::from_le_bytes(data[0..4].try_into().unwrap()) < 20 {
         Ok((crate::m3p_old::raw_from_old_file(&data)?, None))
     } else {
+        let extra = extra_at(&data, HEADER_SIZE + ADDON_SIZE);
         let mut raw = data;
         raw.resize(raw.len().max(HEADER_SIZE + ADDON_SIZE), 0);
         raw.truncate(HEADER_SIZE + ADDON_SIZE);
+        if let Some(t) = extra {
+            raw.extend(extra_block(&t));
+        }
         Ok((raw, None))
     }
 }
@@ -152,6 +156,33 @@ fn four_chars_to_3_bytes(s: &[u8]) -> Option<[u8; 3]> {
     Some([i as u8, (i >> 8) as u8, (i >> 16) as u8])
 }
 
+/// The start of [`raw_from_text`]'s error for a block whose lines were cut.
+pub const TEXT_DAMAGED: &str = "text parameters damaged";
+
+/// MB3D writes its text parameters in lines of one width (80 characters),
+/// the last one shorter. A line shorter than the first, before the last,
+/// was cut off when the text was copied (a narrow window, a chat that wraps
+/// lines): the characters after it would be read in the wrong places, a
+/// scene with the default formula and nonsense values.
+fn check_line_widths(inner: &str) -> Result<(), String> {
+    let lines: Vec<usize> = inner
+        .lines()
+        .map(|l| l.bytes().filter(|&c| c > 32 && c != 0x85).count())
+        .filter(|&n| n > 0)
+        .collect();
+    let Some((&width, rest)) = lines.split_first() else { return Ok(()) };
+    let last = rest.len();
+    for (i, &n) in rest.iter().enumerate() {
+        if n > width || (n < width && i + 1 < last) {
+            return Err(format!(
+                "{TEXT_DAMAGED}: line {} has {n} characters, the first {width}; part of it was lost in copying, copy the parameters again",
+                i + 2
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// `GetHeaderFromText`: decodes `Mandelbulb3Dv18{...}{Titel: ...}` text
 /// parameters (versions before 16 hold a `TMandHeader8`, see
 /// [`crate::m3p_old::raw_from_old_text`]).
@@ -170,8 +201,9 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
     let ver: f32 = if num.is_empty() { 14.0 } else { num.parse().unwrap_or(13.0) };
     let close = t[open..].find('}').ok_or("text parameters: missing '}'")? + open;
     // the "..." character (cp1252 133) stands for three dots
-    let body: Vec<u8> = t[open + 1..close]
-        .replace('\u{2026}', "...")
+    let inner = t[open + 1..close].replace('\u{2026}', "...");
+    check_line_widths(&inner)?;
+    let body: Vec<u8> = inner
         .bytes()
         .filter(|&c| c > 32 && c != 0x85)
         .collect();
@@ -204,11 +236,19 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
             r[..r.find(['}', '\n', '\r']).unwrap_or(r.len())].chars().take(48).collect::<String>()
         })
         .unwrap_or_else(|| "Mandelbulb3D".to_string());
+    if let Some(i) = rest.find("{mb3d-rs:") {
+        let r = &rest[i + 9..];
+        let t = r[..r.find('}').unwrap_or(r.len())].split(';').map(str::trim).filter(|l| !l.is_empty()).collect::<Vec<_>>().join("\n");
+        raw.extend(extra_block(&t));
+    }
     Ok((raw, title))
 }
 
 /// `MakeTextparas`: the parameters as MB3D text (`Mandelbulb3Dv18{...}`).
+/// Formulas with negative iterations count as used (MB3D looks for > 0
+/// here only, dropping a last one that its own files and renders keep).
 pub fn raw_to_text(raw: &[u8], title: &str) -> String {
+    let extra = extra_at(raw, HEADER_SIZE + ADDON_SIZE);
     let mut raw = raw.to_vec();
     raw.resize(HEADER_SIZE + ADDON_SIZE, 0);
     let a = HEADER_SIZE;
@@ -216,7 +256,7 @@ pub fn raw_to_text(raw: &[u8], title: &str) -> String {
     let n = if raw[a + 1] & 3 == 1 {
         1
     } else {
-        (0..6).rev().find(|&i| i32::from_le_bytes(raw[a + 8 + i * 188..a + 12 + i * 188].try_into().unwrap()) > 0).map(|i| i as i32).unwrap_or(-1)
+        (0..6).rev().find(|&i| i32::from_le_bytes(raw[a + 8 + i * 188..a + 12 + i * 188].try_into().unwrap()) != 0).map(|i| i as i32).unwrap_or(-1)
     };
     raw[a + 4] = (n + 1) as u8;
     let mut out = String::from("Mandelbulb3Dv18{\r\n");
@@ -241,7 +281,37 @@ pub fn raw_to_text(raw: &[u8], title: &str) -> String {
         push(&g, &mut out, &mut k);
     }
     out.push_str(&format!("}}\r\n{{Titel: {title}}}\r\n"));
+    if let Some(t) = extra {
+        // (MB3D reads only up to the title)
+        out.push_str(&format!("{{mb3d-rs: {}}}\r\n", t.lines().map(str::trim).filter(|l| !l.is_empty()).collect::<Vec<_>>().join("; ")));
+    }
     out
+}
+
+/// The start of mb3d-rs's block after MB3D's parameters (in a `.m3p`
+/// after the formulas, in a `.m3i` after the formulas at its end): the
+/// settings MB3D has no place for ([`Scene::extra_text`]), as scene text.
+/// MB3D reads its parameters at their fixed size and leaves the block
+/// alone.  Followed by the length of the text (u32) and the text (UTF-8).
+const EXTRA_MAGIC: &[u8; 8] = b"MB3D-RS\0";
+
+/// The block of the scene text `t`.
+fn extra_block(t: &str) -> Vec<u8> {
+    let mut b = EXTRA_MAGIC.to_vec();
+    b.extend((t.len() as u32).to_le_bytes());
+    b.extend(t.as_bytes());
+    b
+}
+
+/// The text of the block at `at` in `data`, if there is one.
+fn extra_at(data: &[u8], at: usize) -> Option<String> {
+    let d = data.get(at..)?;
+    if !d.starts_with(EXTRA_MAGIC) || d.len() < 12 {
+        return None;
+    }
+    let n = u32::from_le_bytes(d[8..12].try_into().unwrap()) as usize;
+    let t = d.get(12..12 + n)?;
+    String::from_utf8(t.to_vec()).ok()
 }
 
 /// `.m3i` image files: header, G-buffer (`TsiLight5`, 18 bytes per pixel of
@@ -271,6 +341,9 @@ pub fn raw_from_m3i(data: &[u8]) -> Result<Vec<u8>, String> {
         raw.extend_from_slice(&data[off..data.len().min(off + ADDON_SIZE)]);
     }
     raw.resize(HEADER_SIZE + ADDON_SIZE, 0);
+    if let Some(t) = extra_at(data, off + ADDON_SIZE) {
+        raw.extend(extra_block(&t));
+    }
     Ok(raw)
 }
 
@@ -289,8 +362,8 @@ pub fn gbuffer_from_m3i(data: &[u8]) -> Option<(usize, usize, Vec<crate::gbuffer
         return None;
     }
     let (w, h) = (w as usize, h as usize);
-    let end = HEADER_SIZE + w * h * 18;
-    if data.len() < end {
+    let end = w.checked_mul(h).and_then(|n| n.checked_mul(18)).and_then(|n| n.checked_add(HEADER_SIZE));
+    if end.is_none_or(|end| data.len() < end) {
         return None;
     }
     let g = (0..w * h)
@@ -402,6 +475,12 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     s.mid = [r.f64(36), r.f64(44), r.f64(52)];
     s.rot_4d = [r.f64(60), r.f64(68), r.f64(76)];
     s.zoom = r.f64(84);
+    if !(1..32768).contains(&s.width) || !(1..32768).contains(&s.height) {
+        return Err(format!("invalid image size {}x{}", s.width, s.height));
+    }
+    if !(s.zoom.is_finite() && s.zoom > 0.0) {
+        return Err(format!("invalid zoom {}", s.zoom));
+    }
     s.rstop = Some(r.f64(92));
     s.fov_y = r.f64(108);
     s.normals_on_de = r.u8(132) != 0;
@@ -742,6 +821,20 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
         }
         s.step_sub_de_stop = false;
     }
+    // mb3d-rs's own settings
+    if let Some(t) = extra_at(data, HEADER_SIZE + ADDON_SIZE) {
+        match s.clone().apply(&t) {
+            Ok(sc) => s = sc,
+            Err(e) => w.push(format!("mb3d-rs settings: {e}")),
+        }
+        // the full name of a background picture MB3D's 23 characters cut
+        if t.lines().any(|l| l.trim_start().starts_with("background_image")) {
+            w.retain(|x| !x.starts_with("background picture '"));
+            if crate::maps::by_name(&s.lighting.bg_image).is_none() {
+                w.push(format!("background picture '{}' not found (put it into M3Maps or use --maps DIR)", s.lighting.bg_image));
+            }
+        }
+    }
     Ok(M3pFile { scene: s, warnings: w, mand_id })
 }
 
@@ -1037,6 +1130,8 @@ pub fn write(sc: &Scene) -> Vec<u8> {
         CameraOptic::Common => 0,
         CameraOptic::Planar => 1,
         CameraOptic::Panorama => 2,
+        // (the mb3d-rs block keeps it: Scene::extra_text)
+        CameraOptic::Fisheye => 0,
     };
     if let Some(a) = &sc.ao {
         let kind: u8 = if sc.deao.is_some() {
@@ -1289,12 +1384,121 @@ pub fn write(sc: &Scene) -> Vec<u8> {
             pf64(&mut d, o + 60 + 8 * k, *v);
         }
     }
+    let t = sc.extra_text();
+    if !t.is_empty() {
+        d.extend(extra_block(&t));
+    }
     d
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn finishing_in_the_mb3d_rs_block() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.finish = Some(crate::finish::Finish { exposure: 0.5, tonemap: true, glow: 0.75, glow_radius: 0.03, glow_threshold: 0.6, contrast: 0.25, saturation: 1.25, warmth: -0.5, vignette: 0.375, chromatic: 0.125 });
+        let raw = write(&sc);
+        assert_eq!(parse(&raw).unwrap().scene.finish, sc.finish);
+        let text = raw_to_text(&raw, "t");
+        assert!(text.contains("finish_tonemap = filmic"), "{text}");
+        assert_eq!(parse(&raw_from_text(&text).unwrap().0).unwrap().scene.finish, sc.finish);
+        // the surface detail
+        sc.detail = Some(crate::detail::Detail { kind: 1, strength: 1.5, size: 0.125, roughness: 0.625, color: 0.25 });
+        let raw = write(&sc);
+        assert_eq!(parse(&raw).unwrap().scene.detail, sc.detail);
+        assert_eq!(parse(&raw_from_text(&raw_to_text(&raw, "t")).unwrap().0).unwrap().scene.detail, sc.detail);
+        sc.detail = None;
+        assert!(Scene::preset("Integer Power").unwrap().apply("detail = marble, 1").is_err());
+        // neutral settings write nothing
+        sc.finish = Some(Default::default());
+        assert!(!raw_to_text(&write(&sc), "t").contains("mb3d-rs"));
+        assert!(Scene::preset("Integer Power").unwrap().apply("finish_tonemap = maybe").is_err());
+    }
+
+    #[test]
+    fn experimental_settings_in_the_mb3d_rs_block() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.experimental = crate::experimental::Experimental { on: true, step_relax: 1.25, secant: true, free_steps: false, ao_half: true, cone: true };
+        let raw = write(&sc);
+        assert_eq!(parse(&raw).unwrap().scene.experimental, sc.experimental);
+        assert_eq!(parse(&raw_from_text(&raw_to_text(&raw, "t")).unwrap().0).unwrap().scene.experimental, sc.experimental);
+        // switched off, the settings are kept
+        sc.experimental.on = false;
+        assert_eq!(parse(&write(&sc)).unwrap().scene.experimental, sc.experimental);
+        // the keys of the scene text
+        let t = Scene::preset("Integer Power").unwrap().apply("experimental = on\nstep_relax = 3\nocclusion_half = on\ncone_march = on").unwrap();
+        assert!(t.experimental.on && t.experimental.ao_half && t.experimental.cone && !t.experimental.secant);
+        assert_eq!(t.experimental.step_relax, 2.0);
+        // the defaults write nothing
+        assert!(!raw_to_text(&write(&Scene::preset("Integer Power").unwrap()), "t").contains("mb3d-rs"));
+    }
+
+    #[test]
+    fn ground_plane_in_the_mb3d_rs_block() {
+        let plain = Scene::preset("Integer Power").unwrap();
+        // without a ground the parameters are MB3D's alone
+        assert_eq!(write(&plain).len(), HEADER_SIZE + ADDON_SIZE);
+        assert!(!raw_to_text(&write(&plain), "t").contains("mb3d-rs"));
+        let mut sc = plain.clone();
+        sc.ground = Some(crate::scene::Ground {
+            axis: 2,
+            pos: -1.25,
+            above: false,
+            color: [10, 200, 30],
+            reflect: 0.75,
+            wave_height: 0.02,
+            wave_len: 0.5,
+        });
+        let raw = write(&sc);
+        // MB3D's part is the same as without
+        assert_eq!(&raw[..HEADER_SIZE + ADDON_SIZE], &write(&plain)[..]);
+        let check = |s: &Scene| assert_eq!(s.ground, sc.ground);
+        check(&parse(&raw).unwrap().scene);
+        let (r, _) = raw_from_bytes(raw.clone(), false).unwrap();
+        check(&parse(&r).unwrap().scene);
+        // text parameters
+        let text = raw_to_text(&raw, "title");
+        assert!(text.contains("{mb3d-rs: ground = z, -1.25; "), "{text}");
+        let (r, title) = raw_from_text(&text).unwrap();
+        assert_eq!(title, "title");
+        check(&parse(&r).unwrap().scene);
+        // .m3i: after the formulas at the end
+        let gbuf = vec![crate::gbuffer::SiLight::default(); (sc.width * sc.height) as usize];
+        let m = write_m3i(&sc, &gbuf);
+        check(&parse(&raw_from_m3i(&m).unwrap()).unwrap().scene);
+        assert!(parse(&raw_from_m3i(&write_m3i(&plain, &gbuf)).unwrap()).unwrap().scene.ground.is_none());
+        // a background picture's name longer than MB3D's 23 characters
+        let mut long = plain.clone();
+        long.lighting.bg_image = "a_long_environment_name_4k.hdr".into();
+        let raw = write(&long);
+        assert_eq!(&raw[HEADER_SIZE + ADDON_SIZE..HEADER_SIZE + ADDON_SIZE + 7], b"MB3D-RS");
+        assert_eq!(parse(&raw).unwrap().scene.lighting.bg_image, long.lighting.bg_image);
+        let short = { let mut s = plain.clone(); s.lighting.bg_image = "sky.hdr".into(); s };
+        assert_eq!(write(&short).len(), HEADER_SIZE + ADDON_SIZE);
+        // the fisheye: common for MB3D, fisheye from the block
+        let mut fish = plain.clone();
+        fish.optic = crate::scene::CameraOptic::Fisheye;
+        let raw = write(&fish);
+        assert_eq!(&raw[..HEADER_SIZE + ADDON_SIZE], &write(&plain)[..]);
+        assert_eq!(parse(&raw).unwrap().scene.optic, crate::scene::CameraOptic::Fisheye);
+        assert_eq!(parse(&raw_from_text(&raw_to_text(&raw, "t")).unwrap().0).unwrap().scene.optic, crate::scene::CameraOptic::Fisheye);
+        // the clouds
+        let mut cl = plain.clone();
+        cl.clouds = Some(crate::clouds::Clouds { axis: 0, from: 1.5, to: -0.25, density: 2.0, coverage: 0.4, size: 0.3, color: [250, 240, 230], offset: [0.5, 0.0, -1.0] });
+        let raw = write(&cl);
+        assert_eq!(parse(&raw).unwrap().scene.clouds, cl.clouds);
+        assert_eq!(parse(&raw_from_text(&raw_to_text(&raw, "t")).unwrap().0).unwrap().scene.clouds, cl.clouds);
+        // the surface material
+        let mut m = plain.clone();
+        m.material = Some(crate::scene::Material { fresnel: 0.5, iridescence: 0.75, irid_shift: 0.25, glow: 1.5 });
+        assert_eq!(parse(&write(&m)).unwrap().scene.material, m.material);
+        // the second part's place
+        let mut q = plain.clone();
+        q.part2_place = Some(crate::scene::Placement { offset: [2.5, -1.0, 0.25], rotation: [10.0, 20.0, 30.0], scale: 0.4 });
+        assert_eq!(parse(&write(&q)).unwrap().scene.part2_place, q.part2_place);
+    }
 
     #[test]
     fn m3i_round_trip() {
@@ -1311,6 +1515,12 @@ mod tests {
         let back = parse(&raw).unwrap().scene;
         assert_eq!((back.width, back.height), (24, 16));
         assert_eq!(back.formulas[0].formula.name(), "Integer Power");
+        assert_eq!(gbuffer_from_m3i(&d).unwrap().2[5].si_gradient, 1234);
+        // a huge image size in the header is no image, not an overflow
+        let mut big = d.clone();
+        big[4..8].copy_from_slice(&i32::MAX.to_le_bytes());
+        big[8..12].copy_from_slice(&i32::MAX.to_le_bytes());
+        assert!(gbuffer_from_m3i(&big).is_none());
     }
 
     #[test]
@@ -1335,6 +1545,40 @@ mod tests {
         // the used formula slots survive, iFCount is set
         assert_eq!(back[a + 4], 3);
         assert_eq!(back[a + 8..a + 8 + 3 * 188], raw[a + 8..a + 8 + 3 * 188]);
+        // a last formula with negative (uncounted) iterations is used too
+        raw[a + 8 + 3 * 188..a + 12 + 3 * 188].copy_from_slice(&(-3i32).to_le_bytes());
+        let (back, _) = raw_from_text(&raw_to_text(&raw, "Test scene")).unwrap();
+        assert_eq!(back[a + 4], 4);
+        assert_eq!(back[a + 8..a + 8 + 4 * 188], raw[a + 8..a + 8 + 4 * 188]);
+    }
+
+    /// Text whose lines were cut in copying (here 12 characters off every
+    /// other line, as a pasted Storm scene came) is refused, not read as
+    /// the default formula with nonsense values; whole text, also on one
+    /// line or with the first line after the brace, still loads.
+    #[test]
+    fn text_parameters_with_cut_lines_are_refused() {
+        let mut raw = vec![0u8; HEADER_SIZE + ADDON_SIZE];
+        for (i, b) in raw.iter_mut().enumerate() {
+            *b = (i * 5 + 1) as u8;
+        }
+        raw[4..8].copy_from_slice(&640i32.to_le_bytes());
+        raw[8..12].copy_from_slice(&480i32.to_le_bytes());
+        raw[HEADER_SIZE + 8..HEADER_SIZE + 12].copy_from_slice(&1i32.to_le_bytes());
+        let text = raw_to_text(&raw, "t");
+        assert!(raw_from_text(&text).is_ok());
+        assert!(raw_from_text(&text.replace("\r\n", "")).is_ok());
+        assert!(raw_from_text(&text.replacen("{\r\n", "{", 1)).is_ok());
+        let cut: Vec<String> = text.lines().enumerate().map(|(i, l)| if i % 2 == 0 && l.len() == 80 { l[..68].to_string() } else { l.to_string() }).collect();
+        let e = raw_from_text(&cut.join("\n")).unwrap_err();
+        assert!(e.starts_with(TEXT_DAMAGED), "{e}");
+        // a single cut line, and a longer one, too
+        let mut one: Vec<String> = text.lines().map(str::to_string).collect();
+        one[5].truncate(76);
+        assert!(raw_from_text(&one.join("\n")).unwrap_err().starts_with(TEXT_DAMAGED));
+        let mut long: Vec<String> = text.lines().map(str::to_string).collect();
+        long[5].push_str("....");
+        assert!(raw_from_text(&long.join("\n")).unwrap_err().starts_with(TEXT_DAMAGED));
     }
 
     #[test]
@@ -1377,6 +1621,17 @@ mod tests {
         assert_eq!(s.formulas[0].iterations, 3);
         assert_eq!(s.formulas[0].formula, Formula::AmazingBox { scale: -1.5, min_r: 0.5, fold: 1.0 });
         assert!(m.warnings.is_empty(), "{:?}", m.warnings);
+        // a bad image size or zoom is an error
+        for (o, v) in [(4, -1i32), (8, 0), (4, 40000)] {
+            let mut b = d.clone();
+            put_i32(&mut b, o, v);
+            assert!(parse(&b).is_err());
+        }
+        for z in [0.0, f64::NAN, -1.0] {
+            let mut b = d.clone();
+            put_f64(&mut b, 84, z);
+            assert!(parse(&b).is_err());
+        }
     }
 }
 
@@ -1384,10 +1639,33 @@ mod tests {
 /// G-buffer (`TsiLight5`, 18 bytes per pixel), which MB3D opens without
 /// recalculating ("Save m3i" without the "Img" option).
 pub fn write_m3i(sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> Vec<u8> {
-    let p = write(sc);
-    let mut d = Vec::with_capacity(p.len() + gbuf.len() * 18);
-    d.extend_from_slice(&p[..HEADER_SIZE]);
+    let (head, tail) = m3i_parts(sc);
+    let mut d = Vec::with_capacity(head.len() + gbuf.len() * 18 + tail.len());
+    d.extend_from_slice(&head);
     d.extend_from_slice(&crate::gbuffer::pack(gbuf));
-    d.extend_from_slice(&p[HEADER_SIZE..]);
+    d.extend_from_slice(&tail);
     d
+}
+
+/// Writes the `.m3i` of `sc` with the pixels `gbuf` to `path` row block by
+/// row block (`write_m3i` builds the whole file in memory first: 1.3 GB for
+/// a 12000 x 6000 picture, as much again as the picture itself).
+pub fn write_m3i_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> std::io::Result<()> {
+    use std::io::Write;
+    let (head, tail) = m3i_parts(sc);
+    let mut f = std::io::BufWriter::with_capacity(1 << 20, std::fs::File::create(path)?);
+    f.write_all(&head)?;
+    for part in gbuf.chunks(1 << 16) {
+        f.write_all(&crate::gbuffer::pack(part))?;
+    }
+    f.write_all(&tail)?;
+    f.flush()
+}
+
+/// The parts of a `.m3i` around its pixels: the header before them and
+/// the rest of the parameters after them (a checkpoint keeps its rows
+/// between the two, see `checkpoint::Image`).
+pub fn m3i_parts(sc: &Scene) -> (Vec<u8>, Vec<u8>) {
+    let p = write(sc);
+    (p[..HEADER_SIZE].to_vec(), p[HEADER_SIZE..].to_vec())
 }

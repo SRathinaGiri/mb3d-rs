@@ -65,6 +65,41 @@ fn now_secs() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
 
+/// When the file `p` in the swarm folder was last written, in seconds
+/// since the epoch of this computer's clock: the file's time (set by the
+/// clock of the folder's computer, the file server) less how far that
+/// clock is off from this one. Heartbeats, claims and jobs are aged by it,
+/// not by the times their writers' clocks put in them, so a computer whose
+/// clock is wrong does not make the others look gone. Opened first, so a
+/// network share gives its current time, not one it cached.
+fn written_at(swarm: &Path, p: &Path) -> Option<u64> {
+    let t = std::fs::File::open(p).and_then(|f| f.metadata()).or_else(|_| std::fs::metadata(p)).ok()?.modified().ok()?;
+    let t = t.duration_since(UNIX_EPOCH).ok()?.as_secs() as i64;
+    Some((t - share_offset(swarm)).max(0) as u64)
+}
+
+/// How far the swarm folder's clock is ahead of this computer's, in
+/// seconds: measured with a file written there, once a minute.
+fn share_offset(swarm: &Path) -> i64 {
+    static OFFSETS: Mutex<Vec<(PathBuf, i64, Instant)>> = Mutex::new(Vec::new());
+    let dir = swarm.join("peers");
+    let mut all = OFFSETS.lock().unwrap_or_else(|e| e.into_inner());
+    all.retain(|(_, _, at)| at.elapsed().as_secs() < 60);
+    match all.iter().find(|(d, _, _)| *d == dir) {
+        Some(&(_, off, _)) => off,
+        None => {
+            let probe = dir.join(format!(".clock-{}", random_suffix()));
+            let before = now_secs() as i64;
+            let at = std::fs::create_dir_all(&dir).and_then(|_| std::fs::write(&probe, b"")).and_then(|_| std::fs::File::open(&probe)?.metadata()?.modified());
+            let _ = std::fs::remove_file(&probe);
+            let at = at.ok().and_then(|t| t.duration_since(UNIX_EPOCH).ok());
+            let off = at.map_or(0, |t| t.as_secs() as i64 - (before + now_secs() as i64) / 2);
+            all.push((dir, off, Instant::now()));
+            off
+        }
+    }
+}
+
 fn io(path: &Path, e: std::io::Error) -> String {
     format!("{}: {e}", path.display())
 }
@@ -158,7 +193,8 @@ pub struct Peer {
     pub card: String,
     /// what it is doing ("idle", "rendering ...")
     pub state: String,
-    /// seconds since the epoch of the last heartbeat
+    /// seconds since the epoch of the last heartbeat (by this computer's
+    /// clock, from the time of its file)
     pub time: u64,
 }
 
@@ -186,6 +222,35 @@ struct Presence {
 fn folder_key(swarm: &Path) -> PathBuf {
     let _ = std::fs::create_dir_all(swarm);
     swarm.canonicalize().unwrap_or_else(|_| swarm.to_path_buf())
+}
+
+/// A computer's cards in a column of `w` characters: the interface in
+/// brackets goes first, then the names are cut, the count of identical
+/// cards (`×2`) kept.
+fn card_column(card: &str, w: usize) -> String {
+    if card.chars().count() <= w {
+        return card.to_string();
+    }
+    let mut t = String::new();
+    let mut depth = 0;
+    for c in card.chars() {
+        match c {
+            '(' => depth += 1,
+            ')' => depth -= 1,
+            _ if depth == 0 => t.push(c),
+            _ => {}
+        }
+    }
+    let t = t.split_whitespace().collect::<Vec<_>>().join(" ");
+    if t.chars().count() <= w {
+        return t;
+    }
+    let (body, count) = match t.rfind(" ×") {
+        Some(i) if t[i + 3..].chars().all(|c| c.is_ascii_digit()) => (&t[..i], &t[i..]),
+        _ => (t.as_str(), ""),
+    };
+    let keep = w.saturating_sub(count.chars().count() + 1);
+    format!("{}…{count}", body.chars().take(keep).collect::<String>().trim_end())
 }
 
 /// The presences of this program, by swarm folder and name.
@@ -372,6 +437,7 @@ pub fn peers(swarm: &Path) -> Vec<Peer> {
         .filter_map(|e| {
             let text = std::fs::read_to_string(e.path()).ok()?;
             let m = parse_kv(&text);
+            let time = written_at(swarm, &e.path()).or_else(|| m.get("time").and_then(|t| t.parse().ok())).unwrap_or(0);
             Some(Peer {
                 id: e.path().file_stem()?.to_string_lossy().into_owned(),
                 name: m.get("name").cloned().unwrap_or_default(),
@@ -379,7 +445,7 @@ pub fn peers(swarm: &Path) -> Vec<Peer> {
                 cores: m.get("cores").and_then(|c| c.parse().ok()).unwrap_or(0),
                 card: m.get("card").cloned().unwrap_or_default(),
                 state: m.get("state").cloned().unwrap_or_default(),
-                time: m.get("time").and_then(|t| t.parse().ok()).unwrap_or(0),
+                time,
             })
         })
         .collect();
@@ -399,7 +465,7 @@ fn sweep_peers(swarm: &Path) {
     // removed): a job folder without its job.txt for a while
     for e in std::fs::read_dir(swarm.join("jobs")).into_iter().flatten().flatten() {
         let d = e.path();
-        let old = e.metadata().ok().and_then(|m| m.modified().ok()).and_then(|t| t.elapsed().ok()).is_some_and(|a| a.as_secs() > 4 * STALE_SECS);
+        let old = written_at(swarm, &e.path()).is_some_and(|t| now.saturating_sub(t) > 4 * STALE_SECS);
         if old && d.is_dir() && !d.join("job.txt").exists() {
             let _ = std::fs::remove_dir_all(&d);
         }
@@ -503,11 +569,16 @@ impl Job {
     /// The owner has sent no heartbeat for [`ORPHAN_SECS`] (and the job
     /// is at least that old): nobody will collect it.
     pub fn orphaned(&self, swarm: &Path, now: u64) -> bool {
-        if now.saturating_sub(self.created) < ORPHAN_SECS {
+        let created = written_at(swarm, &self.dir.join("job.txt")).unwrap_or(now);
+        if now.saturating_sub(created) < ORPHAN_SECS {
             return false;
         }
         let owner = peers(swarm).into_iter().find(|p| p.id == self.owner_id);
         owner.is_none_or(|p| now.saturating_sub(p.time) > ORPHAN_SECS)
+    }
+    /// The owner's heartbeat is stale or missing.
+    fn owner_gone(&self, swarm: &Path) -> bool {
+        peers(swarm).iter().find(|p| p.id == self.owner_id).is_none_or(|p| p.stale(now_secs()))
     }
     /// The errors workers met in this job: (peer name, message).
     pub fn errors(&self) -> Vec<(String, String)> {
@@ -713,21 +784,25 @@ fn marker_stale(swarm: &Path, marker: &Path) -> bool {
     let id = id.trim();
     let now = now_secs();
     if id.is_empty() {
-        let age = std::fs::metadata(marker).and_then(|m| m.modified()).ok().and_then(|t| t.elapsed().ok()).map_or(0, |d| d.as_secs());
-        return age > STALE_SECS;
+        return written_at(swarm, marker).is_some_and(|t| now.saturating_sub(t) > STALE_SECS);
     }
     peers(swarm).iter().find(|p| p.id == id).is_none_or(|p| p.stale(now))
 }
 
 /// A unit claimed by this computer: its marker, removed when the claim is
-/// dropped (after the result is in place, or when the unit is given up).
+/// dropped (after the result is in place, or when the unit is given up)
+/// while it is still this computer's (one taken over meanwhile by another
+/// computer, as this one was thought gone, stays).
 struct UnitClaim {
     marker: PathBuf,
+    id: String,
 }
 
 impl Drop for UnitClaim {
     fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.marker);
+        if std::fs::read_to_string(&self.marker).is_ok_and(|id| id.trim() == self.id) {
+            let _ = std::fs::remove_file(&self.marker);
+        }
     }
 }
 
@@ -752,8 +827,11 @@ fn claim_unit(job: &Job, heart: &Heart, out: &Path) -> Result<Option<UnitClaim>,
         match std::fs::OpenOptions::new().write(true).create_new(true).open(&marker) {
             Ok(mut f) => {
                 use std::io::Write;
-                let claim = UnitClaim { marker: marker.clone() };
-                f.write_all(heart.id().as_bytes()).map_err(|e| io(&marker, e))?;
+                if let Err(e) = f.write_all(heart.id().as_bytes()) {
+                    let _ = std::fs::remove_file(&marker);
+                    return Err(io(&marker, e));
+                }
+                let claim = UnitClaim { marker: marker.clone(), id: heart.id().to_string() };
                 // finished by another computer just before (its marker
                 // was removed after its result was in place)
                 if std::fs::metadata(out).map(|m| m.len() > 1).unwrap_or(false) {
@@ -773,7 +851,9 @@ fn claim_unit(job: &Job, heart: &Heart, out: &Path) -> Result<Option<UnitClaim>,
                     // another computer took it over first
                     return Ok(None);
                 }
-                if std::fs::read_to_string(&private).unwrap_or_default() != stale_id {
+                // (an empty one just made reads as the stale empty one: its
+                // age tells them apart, a rename keeps it)
+                if std::fs::read_to_string(&private).unwrap_or_default() != stale_id || !marker_stale(swarm, &private) {
                     // the marker renamed was a new one of another computer
                     let _ = std::fs::rename(&private, &marker);
                     return Ok(None);
@@ -851,7 +931,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     FrameResult::Written { seconds, .. } => {
                         n += 1;
                         if !quiet {
-                            eprintln!("  {} done ({seconds:.1} s)", label(&unit));
+                            crate::elog!("  {} done ({seconds:.1} s)", label(&unit));
                         }
                     }
                     FrameResult::Skipped { .. } => {}
@@ -894,7 +974,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                     ItemResult::Done { seconds, .. } => {
                         n += 1;
                         if !quiet {
-                            eprintln!("  {} done ({seconds:.1} s)", label(&unit));
+                            crate::elog!("  {} done ({seconds:.1} s)", label(&unit));
                         }
                     }
                     ItemResult::Skipped { .. } => {}
@@ -1007,7 +1087,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 let _ = std::fs::remove_file(out.with_extension("snap"));
                 n += 1;
                 if !quiet {
-                    eprintln!("  {} done ({} passes, {:.1} s)", label(&unit), done_passes, t0.elapsed().as_secs_f64());
+                    crate::elog!("  {} done ({} passes, {:.1} s)", label(&unit), done_passes, t0.elapsed().as_secs_f64());
                 }
             }
         }
@@ -1042,7 +1122,8 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 // left to the others (the owner notes it and waits for them)
                 let t = crate::scene::Tiling { cols, rows, pos: None, downscale }.tile_rect(scene.width, scene.height, k as u32 % cols, k as u32 / cols);
                 let b = 2 * crate::render::TILE_BORDER;
-                if let Err(e) = crate::render::check_memory((t[2] + b).max(0) as usize, (t[3] + b).max(0) as usize) {
+                let use_ = crate::render::MemoryUse { w: (t[2] + b).max(0) as usize, h: (t[3] + b).max(0) as usize, reflections: full_paint && scene.mc.reflections, dof: full_paint && scene.dof.is_some(), march: true, window: false };
+                if let Err(e) = crate::render::check_memory(use_) {
                     let msg = format!("tile {} left to the others: {e}", k + 1);
                     if job.owner_id != heart.id() {
                         return Err(msg);
@@ -1089,7 +1170,7 @@ pub fn work_on(job: &Job, heart: &Heart, threads: usize, quiet: bool, seen: &mut
                 }
                 n += 1;
                 if !quiet {
-                    eprintln!("  {} done ({:.1} s)", label(&unit), t0.elapsed().as_secs_f64());
+                    crate::elog!("  {} done ({:.1} s)", label(&unit), t0.elapsed().as_secs_f64());
                 }
             }
         }
@@ -1269,6 +1350,8 @@ struct Kept {
     store: Store,
     /// the units' file names
     names: Vec<String>,
+    /// the units' depth images (none: no depth output)
+    depth: Vec<String>,
 }
 
 impl Kept {
@@ -1279,7 +1362,7 @@ impl Kept {
             return None;
         }
         let key = crate::checkpoint::key(&format!("swarm-{}", kind.as_str()), &format!("{text}\nunits = {}", names.join(" ")));
-        let spec = crate::checkpoint::Spec { kind: "swarm".into(), key, name: name.into(), width: names.len(), height: 1, rec: 1, units: names.len() };
+        let spec = crate::checkpoint::Spec { kind: "swarm".into(), key, name: name.into(), width: names.len(), height: 1, rec: 1, units: names.len(), image: None };
         let store = Store::open(spec, opts.resume)?;
         let what = match kind {
             JobKind::Animation => "frames",
@@ -1288,7 +1371,7 @@ impl Kept {
             JobKind::Tiles => "tiles",
         };
         store.set_value("size", &format!("{} {what}", names.len()));
-        let k = Kept { store, names };
+        let k = Kept { store, names, depth: Vec::new() };
         k.note();
         Some(k)
     }
@@ -1304,6 +1387,13 @@ impl Kept {
     }
     fn other(&self, k: usize, ext: &str) -> PathBuf {
         self.store.extra_path(&Path::new(&self.names[k]).with_extension(ext).to_string_lossy())
+    }
+
+    /// The kept depth image of unit `k` (None: not kept, or the unit has
+    /// none, as a parameter file).
+    fn depth_file(&self, k: usize) -> Option<PathBuf> {
+        let kept = self.store.extra_path(self.depth.get(k)?);
+        (self.has(k) && kept.is_file()).then_some(kept)
     }
 
     fn count(&self) -> usize {
@@ -1325,6 +1415,13 @@ impl Kept {
                     self.store.put_extra_file(&Path::new(name).with_extension(e).to_string_lossy(), &o);
                 }
             }
+            // (its depth image is written before it)
+            if let Some(dn) = self.depth.get(k) {
+                let o = out.join(dn);
+                if o.is_file() {
+                    self.store.put_extra_file(dn, &o);
+                }
+            }
             if self.store.put_extra_file(name, &f) {
                 self.store.put(k, 0, [k, 0, 1, 1], &[1]);
                 new = true;
@@ -1339,11 +1436,13 @@ impl Kept {
     /// still in the swarm folder (their owner was killed, or went away:
     /// this one holds the checkpoint, so nobody else is collecting them)
     /// and removes those jobs; their units under way are continued by the
-    /// computers that had them when they get them again.
-    fn adopt(&self, swarm: &Path, ext: Option<&str>) {
+    /// computers that had them when they get them again. Only jobs whose
+    /// owner is gone (or is `own`, this program): the checkpoint is held on
+    /// this computer only, another one may be running the same render.
+    fn adopt(&self, swarm: &Path, own: &str, ext: Option<&str>) {
         let key = &self.store.spec().key;
         for j in jobs(swarm) {
-            if !j.done() && j.settings.get("resume_key") == Some(key) {
+            if !j.done() && j.settings.get("resume_key") == Some(key) && (j.owner_id == own || j.owner_gone(swarm)) {
                 self.take(&j.out_dir(), ext);
                 finish(&j, false);
             }
@@ -1412,9 +1511,19 @@ pub fn run_animation(swarm: &Path, anim: &Animation, frames: Option<&[usize]>, o
         .flat_map(|&f| a.stereo_eyes().into_iter().map(move |(_, eye)| (f, eye)))
         .map(|(f, eye)| a.frame_file_eye(f, eye).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
         .collect();
-    let kept = Kept::open(JobKind::Animation, &format!("{text}\nframes = {frames:?}"), &anim.name, names.clone(), opts);
+    // the depth images, as the frames' files
+    let depth: Vec<String> = if a.save_depth {
+        frames
+            .iter()
+            .flat_map(|&f| a.stereo_eyes().into_iter().map(move |(_, eye)| (f, eye)))
+            .map(|(f, eye)| a.depth_file_eye(f, eye).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
+            .collect()
+    } else {
+        Vec::new()
+    };
+    let kept = Kept::open(JobKind::Animation, &format!("{text}\nframes = {frames:?}"), &anim.name, names.clone(), opts).map(|c| Kept { depth: depth.clone(), ..c });
     if let Some(c) = &kept {
-        c.adopt(swarm, None);
+        c.adopt(swarm, heart.id(), None);
         c.mark(&mut settings);
     }
     let has = |k: usize| kept.as_ref().is_some_and(|c| c.has(k));
@@ -1466,6 +1575,12 @@ pub fn run_animation(swarm: &Path, anim: &Animation, frames: Option<&[usize]>, o
             let dst = target.join(name);
             std::fs::copy(&src, &dst).map_err(|e| io(&src, e))?;
             files.push(dst);
+            if let Some(dn) = depth.get(k) {
+                let out = job.as_ref().map(|j| j.out_dir().join(dn)).filter(|f| f.is_file());
+                if let Some(z) = kept.as_ref().and_then(|c| c.depth_file(k)).or(out) {
+                    std::fs::copy(&z, target.join(dn)).map_err(|e| io(&z, e))?;
+                }
+            }
         }
         Ok(files)
     })();
@@ -1513,9 +1628,12 @@ pub fn run_batch(swarm: &Path, items: &[BatchItem], outputs: &[PathBuf], bopts: 
         text.push_str(&kept_text(&scene));
         text.push_str(&format!("{:?}\n", bopts.overrides.iter().chain(&it.overrides).collect::<Vec<_>>()));
     }
-    let kept = Kept::open(JobKind::Batch, &text, &name, names.clone(), opts);
+    // the depth images, as the batch writes them: `<stem>_depth.png`
+    let depth_of = |p: &Path| p.with_file_name(format!("{}_depth.png", p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()));
+    let depth: Vec<String> = if bopts.depth { names.iter().map(|n| depth_of(Path::new(n)).to_string_lossy().into_owned()).collect() } else { Vec::new() };
+    let kept = Kept::open(JobKind::Batch, &text, &name, names.clone(), opts).map(|c| Kept { depth: depth.clone(), ..c });
     if let Some(c) = &kept {
-        c.adopt(swarm, None);
+        c.adopt(swarm, heart.id(), None);
         c.mark(&mut settings);
     }
     let todo: Vec<usize> = (0..items.len()).filter(|&k| !kept.as_ref().is_some_and(|c| c.has(k))).collect();
@@ -1569,6 +1687,12 @@ pub fn run_batch(swarm: &Path, items: &[BatchItem], outputs: &[PathBuf], bopts: 
                 std::fs::create_dir_all(d).map_err(|e| io(d, e))?;
             }
             std::fs::copy(&src, dst).map_err(|e| io(&src, e))?;
+            if let Some(dn) = depth.get(k) {
+                let out = job.as_ref().map(|j| j.out_dir().join(dn)).filter(|f| f.is_file());
+                if let Some(z) = kept.as_ref().and_then(|c| c.depth_file(k)).or(out) {
+                    std::fs::copy(&z, depth_of(dst)).map_err(|e| io(&z, e))?;
+                }
+            }
         }
         Ok(())
     })();
@@ -1611,7 +1735,7 @@ pub fn run_montecarlo_live(swarm: &Path, scene: &Scene, units: usize, rays: f64,
     let kept = Kept::open(JobKind::MonteCarlo, &format!("{}\n{settings:?}", kept_text(scene)), "monte carlo", names, opts);
     if let Some(c) = &kept {
         c.store.put_extra("scene.m3s", scene.to_text().as_bytes());
-        c.adopt(swarm, None);
+        c.adopt(swarm, heart.id(), None);
         c.mark(&mut settings);
     }
     let todo: Vec<usize> = (0..units).filter(|&k| !kept.as_ref().is_some_and(|c| c.has(k))).collect();
@@ -1756,9 +1880,16 @@ pub fn run_tiles(swarm: &Path, scene: &Scene, cols: u32, rows: u32, opts: &RunOp
         Ok(())
     };
     run_tiles_job(swarm, scene, cols, rows, None, false, opts, report, preview, &collect)?;
-    // (each tile's buffer has its shadows and ambient occlusion already,
-    // calculated with the tile's border as MB3D's big-render tiles are)
-    Ok(full.into_inner().unwrap_or_else(|e| e.into_inner()))
+    // (the tiles come with their shadows and DE occlusion; the passes over
+    // the whole picture as after a local tiled render)
+    let mut full = full.into_inner().unwrap_or_else(|e| e.into_inner());
+    let mut fs = scene.clone();
+    fs.tiling = None;
+    fs.calc_rect = None;
+    let p = crate::calc::CalcParams::new(&fs)?;
+    let cancel = || opts.cancel.as_ref().is_some_and(|c| c());
+    crate::render::finish_tiles(&fs, &p, &mut full, w, h, &|_, _| {}, &cancel)?;
+    Ok(full)
 }
 
 /// The tiles job behind [`run_tiles`]: `subset`, if given, is the tiles
@@ -1832,7 +1963,7 @@ fn run_tiles_job(
     let kept = Kept::open(JobKind::Tiles, &format!("{}\n{settings:?}", kept_text(&scene)), "picture", names, opts);
     if let Some(c) = &kept {
         c.store.put_extra("scene.m3s", scene.to_text().as_bytes());
-        c.adopt(swarm, Some("png"));
+        c.adopt(swarm, heart.id(), Some("png"));
         c.mark(&mut settings);
     }
     let todo: Vec<usize> = (0..tiles.len()).filter(|&i| !kept.as_ref().is_some_and(|c| c.has(i))).collect();
@@ -1995,7 +2126,7 @@ impl BlockMerge {
     /// The merged image painted (the job's own Monte Carlo settings).
     pub fn painted(&self) -> Option<(Vec<u8>, usize, usize)> {
         let (m, sc) = (self.all.as_ref()?, self.scene.as_ref()?);
-        Some((crate::mc::paint(m, &sc.mc, sc.lighting.gamma), m.width, m.height))
+        Some((crate::mc::paint_finished(m, sc), m.width, m.height))
     }
     /// Changes whenever [`BlockMerge::update`] read something new.
     pub fn version(&self) -> u64 {
@@ -2109,7 +2240,7 @@ pub fn job_preview_merged(job: &Job, max_w: usize, merge: Option<&mut BlockMerge
                     let newest = files.iter().filter(|f| is_done_file(f)).max_by_key(|f| std::fs::metadata(f).and_then(|m| m.modified()).ok())?;
                     let data = std::fs::read(newest).ok()?;
                     let (f, img) = crate::mc::read_m3c(&data).ok()?;
-                    (crate::mc::paint(&img, &f.scene.mc, f.scene.lighting.gamma), img.width, img.height)
+                    (crate::mc::paint_finished(&img, &f.scene), img.width, img.height)
                 }
             };
             let (rgb, w, h) = fit_rgb(&rgb, w, h, max_w);
@@ -2218,7 +2349,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
     let heart = Heart::new(swarm, name);
     heart.beat_now("idle")?;
     if !quiet {
-        eprintln!("swarm worker {} in {}: {} cores{}", heart.name(), swarm.display(), std::thread::available_parallelism().map_or(1, |n| n.get()), if heart.presence.peer.card.is_empty() { String::new() } else { format!(", {}", heart.presence.peer.card) });
+        crate::elog!("swarm worker {} in {}: {} cores{}", heart.name(), swarm.display(), std::thread::available_parallelism().map_or(1, |n| n.get()), if heart.presence.peer.card.is_empty() { String::new() } else { format!(", {}", heart.presence.peer.card) });
     }
     let mut seen = HashSet::new();
     let mut sweep = Instant::now();
@@ -2238,7 +2369,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
                 let _ = std::fs::remove_dir_all(&job.dir);
                 let msg = format!("removed the abandoned job {} of {} (no sign of its owner for {} minutes)", job.name, job.owner, ORPHAN_SECS / 60);
                 if !quiet {
-                    eprintln!("  {msg}");
+                    crate::elog!("  {msg}");
                 }
                 control.set_note(msg);
                 continue;
@@ -2247,7 +2378,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
                 if noted.insert(job.id.clone()) {
                     let msg = format!("job {} of {} needs version {} (this is {})", job.name, job.owner, job.version, env!("CARGO_PKG_VERSION"));
                     if !quiet {
-                        eprintln!("  {msg}");
+                        crate::elog!("  {msg}");
                     }
                     control.set_note(msg);
                 }
@@ -2260,7 +2391,7 @@ pub fn worker_controlled(swarm: &Path, name: &str, threads: usize, once: bool, q
                 Err(e) => {
                     let msg = format!("job {} of {}: {e}", job.name, job.owner);
                     if !quiet {
-                        eprintln!("  {msg}");
+                        crate::elog!("  {msg}");
                     }
                     job.note_error(&heart, &e);
                     control.set_note(msg);
@@ -2304,7 +2435,7 @@ pub fn status_text(swarm: &Path) -> String {
             p.name,
             p.version,
             p.cores,
-            if p.card.is_empty() { "processor".to_string() } else { p.card.chars().take(28).collect() },
+            if p.card.is_empty() { "processor".to_string() } else { card_column(&p.card, 28) },
             p.state,
             if p.stale(now) { format!("  (gone, last seen {age} s ago)") } else { String::new() }
         ));
@@ -2330,6 +2461,15 @@ pub fn status_text(swarm: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn card_columns() {
+        assert_eq!(super::card_column("NVIDIA GeForce RTX 2060 (Vulkan)", 28), "NVIDIA GeForce RTX 2060");
+        assert_eq!(super::card_column("NVIDIA GeForce RTX 2060 (Vulkan) ×2", 28), "NVIDIA GeForce RTX 2060 ×2");
+        assert!(super::card_column("AMD Radeon RX 7900 XTX (Vulkan) + NVIDIA GeForce RTX 4090 (Vulkan)", 28).chars().count() <= 28);
+        assert_eq!(super::card_column("NVIDIA GeForce RTX 4090 Laptop GPU (Vulkan) ×2", 28), "NVIDIA GeForce RTX 4090… ×2");
+        assert_eq!(super::card_column("Apple M2 (Metal)", 28), "Apple M2 (Metal)");
+    }
+
     use super::*;
 
     fn temp(name: &str) -> PathBuf {
@@ -2359,6 +2499,14 @@ mod tests {
         assert!(ps[0].stale(now_secs() + STALE_SECS + 1));
         h.leave();
         assert!(peers(&d).is_empty());
+        // aged by the file's time, not the writer's clock: a heartbeat
+        // from a clock an hour ahead is fresh, an old file is stale
+        let f = d.join("peers").join("ahead-1.txt");
+        std::fs::write(&f, format!("name = ahead\ntime = {}\n", now_secs() + 3600)).unwrap();
+        assert!(!peers(&d)[0].stale(now_secs()));
+        let old = SystemTime::now() - Duration::from_secs(STALE_SECS + 10);
+        std::fs::File::options().write(true).open(&f).unwrap().set_modified(old).unwrap();
+        assert!(peers(&d)[0].stale(now_secs()));
         let _ = std::fs::remove_dir_all(&d);
     }
 
@@ -2402,8 +2550,8 @@ mod tests {
         if crate::render::memory_available().is_none() {
             return;
         }
-        assert!(crate::render::check_memory(1000, 1000).is_ok());
-        assert!(crate::render::check_memory(10_000_000, 10_000_000).unwrap_err().contains("needs about"));
+        assert!(crate::render::check_memory(crate::render::MemoryUse::most(1000, 1000)).is_ok());
+        assert!(crate::render::check_memory(crate::render::MemoryUse::most(10_000_000, 10_000_000)).unwrap_err().contains("needs about"));
         let d = temp("toobig");
         let swarm = d.join("swarm");
         let owner = Heart::new(&swarm, "owner");
@@ -2568,6 +2716,19 @@ mod tests {
         assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), a.id());
         assert!(claim_unit(&job, &b, &out).unwrap().is_none());
         drop(ca);
+        // a claimer taken over meanwhile leaves the new claimer's marker
+        let cb = claim_unit(&job, &b, &out).unwrap().expect("b claims");
+        std::fs::write(marker_of(&out), a.id()).unwrap();
+        drop(cb);
+        assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), a.id());
+        // an empty marker: kept while it is new, taken over when old
+        std::fs::write(marker_of(&out), "").unwrap();
+        assert!(claim_unit(&job, &b, &out).unwrap().is_none());
+        let old = std::time::SystemTime::now() - Duration::from_secs(STALE_SECS + 10);
+        std::fs::File::options().write(true).open(marker_of(&out)).unwrap().set_modified(old).unwrap();
+        let cb = claim_unit(&job, &b, &out).unwrap().expect("b takes it over");
+        assert_eq!(std::fs::read_to_string(marker_of(&out)).unwrap(), b.id());
+        drop(cb);
         let _ = std::fs::remove_dir_all(&d);
     }
 
@@ -2578,11 +2739,13 @@ mod tests {
         std::fs::write(d.join("a.m3s"), s.to_text()).unwrap();
         std::fs::write(d.join("b.m3s"), s.to_text()).unwrap();
         let items = vec![BatchItem { input: d.join("a.m3s"), overrides: vec![] }, BatchItem { input: d.join("b.m3s"), overrides: vec!["width = 16".into()] }];
-        let bopts = BatchOptions { output_dir: Some(d.join("pics")), ..Default::default() };
+        let bopts = BatchOptions { output_dir: Some(d.join("pics")), depth: true, ..Default::default() };
         let outs = crate::batch::output_paths(&items, &bopts);
         let swarm = d.join("swarm");
         run_batch(&swarm, &items, &outs, &bopts, &RunOptions { name: "owner".into(), quiet: true, ..Default::default() }, &|_| {}).unwrap();
         assert!(outs.iter().all(|o| o.exists()), "{outs:?}");
+        // the depth images come back with the pictures
+        assert!(d.join("pics/a_depth.png").is_file() && d.join("pics/b_depth.png").is_file());
         assert!(jobs(&swarm).is_empty(), "the job folder is removed");
         let _ = std::fs::remove_dir_all(&d);
     }
@@ -2628,9 +2791,11 @@ mod tests {
         a.keyframes.push(crate::anim::Keyframe::new(s2, 1));
         a.set_size_from(&s);
         a.output_folder = d.join("frames").to_string_lossy().into_owned();
+        a.save_depth = true;
         let files = run_animation(&d.join("swarm"), &a, None, &RunOptions { name: "owner".into(), quiet: true, ..Default::default() }, &|_| {}).unwrap();
         assert_eq!(files.len(), a.frame_count());
         assert!(files.iter().all(|f| is_done_file(f)), "{files:?}");
+        assert!((0..a.frame_count()).all(|f| a.depth_file(f).is_file()));
         let _ = std::fs::remove_dir_all(&d);
     }
 
@@ -2819,14 +2984,27 @@ mod tests {
         foreign.version = "0.0.1".into();
         write_job(&foreign).unwrap();
         // a job whose owner was never heard of, old enough: removed
-        let mut old = new_job(&d, JobKind::MonteCarlo, "old", &h, settings).unwrap();
+        let old = new_job(&d, JobKind::MonteCarlo, "old", &h, settings).unwrap();
         std::fs::write(old.in_dir().join("scene.m3s"), s.to_text()).unwrap();
-        old.created = now_secs() - ORPHAN_SECS - 1;
         write_job(&old).unwrap();
+        let t = SystemTime::now() - Duration::from_secs(ORPHAN_SECS + 1);
+        std::fs::File::options().write(true).open(old.dir.join("job.txt")).unwrap().set_modified(t).unwrap();
         worker(&d, "w1", 0, true, true).unwrap();
         let left: Vec<String> = jobs(&d).into_iter().map(|j| j.name).collect();
         assert_eq!(left, vec!["foreign"]);
         assert_eq!(jobs(&d)[0].progress(), (0, 1), "the foreign job was not rendered");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn a_job_is_adopted_only_when_its_owner_is_gone() {
+        let d = temp("adopt");
+        let other = Heart::new(&d, "other");
+        other.beat_now("rendering").unwrap();
+        let job = new_job(&d, JobKind::Batch, "live", &other, BTreeMap::new()).unwrap();
+        assert!(!job.owner_gone(&d));
+        other.leave();
+        assert!(job.owner_gone(&d));
         let _ = std::fs::remove_dir_all(&d);
     }
 

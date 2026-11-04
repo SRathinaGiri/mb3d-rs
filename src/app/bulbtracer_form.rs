@@ -1,5 +1,6 @@
 //! The mesh export window (bulbtracer2/BulbTracer2UI.pas).
 
+use crate::vcl::lang::{tr, trf};
 use super::util::{fts, fts_single, parse_float, pti};
 use super::Mb3d;
 use crate::mesh::{Mesh, MeshParams};
@@ -86,13 +87,13 @@ fn write_btrace2(h: &Header) -> Vec<u8> {
 /// `LoadBTracer2Header`
 fn read_btrace2(d: &[u8]) -> Result<Header, String> {
     let mut o = 4usize;
-    let id = d.get(0..4).ok_or("file too short")?;
+    let id = d.get(0..4).ok_or_else(|| tr("@MB:FileTooShort"))?;
     if id != b"BTR1" && id != b"BTR2" && id != b"BTR3" {
-        return Err("Missing <BTR1/2/3>-header".into());
+        return Err(tr("@MB:MissingBTR123Header"));
     }
     let ver = id[3] - b'0';
     let mut f = || -> Result<f64, String> {
-        let v = d.get(o..o + 8).ok_or("file too short")?;
+        let v = d.get(o..o + 8).ok_or_else(|| tr("@MB:FileTooShort"))?;
         o += 8;
         Ok(f64::from_le_bytes(v.try_into().unwrap()))
     };
@@ -103,12 +104,12 @@ fn read_btrace2(d: &[u8]) -> Result<Header, String> {
     }
     let mut o = 4 + 64;
     let i = |o: &mut usize| -> Result<i32, String> {
-        let v = d.get(*o..*o + 4).ok_or("file too short")?;
+        let v = d.get(*o..*o + 4).ok_or_else(|| tr("@MB:FileTooShort"))?;
         *o += 4;
         Ok(i32::from_le_bytes(v.try_into().unwrap()))
     };
     let fd = |o: &mut usize| -> Result<f64, String> {
-        let v = d.get(*o..*o + 8).ok_or("file too short")?;
+        let v = d.get(*o..*o + 8).ok_or_else(|| tr("@MB:FileTooShort"))?;
         *o += 8;
         Ok(f64::from_le_bytes(v.try_into().unwrap()))
     };
@@ -121,14 +122,14 @@ fn read_btrace2(d: &[u8]) -> Result<Header, String> {
     h.save_type = i(&mut o)?;
     h.max_preview_vertices = i(&mut o)?;
     let l = i(&mut o)?.max(0) as usize;
-    h.params_text = String::from_utf8_lossy(d.get(o..o + l).ok_or("file too short")?).into_owned();
+    h.params_text = String::from_utf8_lossy(d.get(o..o + l).ok_or_else(|| tr("@MB:FileTooShort"))?).into_owned();
     o += l;
     h.with_gl_preview = i(&mut o)? != 0;
     h.preview_de_stop = fd(&mut o)?;
     h.preview_size_idx = i(&mut o)?;
     h.auto_preview = i(&mut o)? != 0;
     let l = i(&mut o)?.max(0) as usize;
-    let u: Vec<u16> = d.get(o..o + l * 2).ok_or("file too short")?.chunks(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+    let u: Vec<u16> = d.get(o..o + l * 2).ok_or_else(|| tr("@MB:FileTooShort"))?.chunks(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
     h.output = String::from_utf16_lossy(&u);
     o += l * 2;
     for k in 0..3 {
@@ -314,7 +315,7 @@ fn enable_controls(app: &Mb3d, ui: &mut Ui, en: bool) {
     ui.set_enabled(F, "OpenGLPreviewCheckbox", false);
     ui.set_enabled(F, "RefreshPreviewBtn", en && app.btracer.enabled);
     if en {
-        ui.set_caption(F, "RefreshPreviewBtn", "Calculate preview");
+        ui.set_caption(F, "RefreshPreviewBtn", &tr("@MB:CalculatePreview"));
     }
     ui.set_enabled(F, "CancelBtn", app.btracer.calculating);
     ui.set_enabled(F, "CalculateBtn", app.btracer.enabled && !app.btracer.calculating);
@@ -327,7 +328,7 @@ fn import(app: &mut Mb3d, ui: &mut Ui, title: &str) {
     s.tiling = None;
     app.btracer.h.params_text = crate::m3p::raw_to_text(&crate::m3p::write(&s), &app.title);
     app.btracer.scene = Some(s);
-    ui.fm(F).set_caption(&format!("Bulb Tracer 2 [ {title} ]"));
+    ui.fm(F).set_caption(&trf("@MB:BulbTracer22", &[&title]));
     ui_from_header(app, ui);
     app.btracer.enabled = true;
     enable_controls(app, ui, true);
@@ -363,16 +364,14 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let h = app.btracer.h.clone();
     let size = 16usize << ui.item_index(F, "VoxelPreviewSizeGrp").clamp(0, 4);
     app.btracer.pv_dep = size;
+    // fresh ones for each preview: a stopped one still finishing must not report into this one
+    app.btracer.preview_stop = Arc::new(AtomicBool::new(false));
+    app.btracer.shared = Arc::new(Mutex::new(Shared::default()));
+    app.btracer.progress = Arc::new(AtomicUsize::new(0));
     let stop = app.btracer.preview_stop.clone();
-    stop.store(false, Ordering::SeqCst);
     let shared = app.btracer.shared.clone();
-    {
-        let mut sh = shared.lock().unwrap();
-        sh.preview_done = false;
-        sh.preview_changed = false;
-    }
     app.btracer.previewing = true;
-    ui.set_caption(F, "RefreshPreviewBtn", "Stop");
+    ui.set_caption(F, "RefreshPreviewBtn", &tr("@MB:Stop"));
     ui.set_picture(F, "Image1", Some(Bitmap::new(322, 322, PV_BG)));
     {
         let c = ui.cm(F, "PreviewProgressBar");
@@ -380,7 +379,6 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
         c.position = 0;
     }
     let progress = app.btracer.progress.clone();
-    progress.store(0, Ordering::SeqCst);
     let waker = ui.waker();
     std::thread::spawn(move || {
         let r = (|| -> Result<(), String> {
@@ -542,7 +540,7 @@ fn start_calc(app: &mut Mb3d, ui: &mut Ui) {
         c.position = 0;
     }
     super::main_form::disable_buttons(app, ui);
-    ui.set_caption(F, "Label13", "Tracing object...");
+    ui.set_caption(F, "Label13", &tr("@MB:TracingObject"));
     let name = format!("mesh {}", app.title);
     let waker = ui.waker();
     std::thread::spawn(move || {
@@ -583,7 +581,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         ui.cm(F, "PreviewProgressBar").position = p;
         if pv_done {
             app.btracer.previewing = false;
-            ui.set_caption(F, "RefreshPreviewBtn", "Calculate preview");
+            ui.set_caption(F, "RefreshPreviewBtn", &tr("@MB:CalculatePreview"));
             if let Some(Err(e)) = &mesh {
                 app.message(ui, e);
             }
@@ -610,24 +608,24 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
             if !cancelled && (0..=1).contains(&st) {
                 let out = PathBuf::from(&app.btracer.h.output);
                 match m.save(&out) {
-                    Ok(()) => app.message(ui, &format!("Mesh saved: {} ({} vertices, {} faces)", out.display(), m.vertices.len(), m.faces.len())),
+                    Ok(()) => app.message(ui, &trf("@MB:MeshSavedVerticesFaces", &[&out.display(), &m.vertices.len(), &m.faces.len()])),
                     Err(e) => ui.show_message(&e),
                 }
             } else if st == 2 {
-                app.message(ui, "The BTracer2 cache format is not supported, the mesh was not saved.");
+                app.message(ui, &tr("@MB:TheBTracer2CacheFormatIsNot2"));
             }
-            ui.set_caption(F, "Label13", &if cancelled { "Operation cancelled".to_string() } else { format!("Elapsed time: {secs} s") });
+            ui.set_caption(F, "Label13", &if cancelled { tr("@MB:OperationCancelled") } else { trf("@MB:ElapsedTimeS", &[&secs]) });
             if ui.checked(F, "OpenGLPreviewCBx") && (!cancelled || app.btracer.cancel_type == 0) {
                 let max = pti(&ui.text(F, "MaxVerticeCountEdit"));
                 if max <= 0 || m.vertices.len() <= max as usize {
-                    super::meshview::show_mesh(app, ui, &m, "Generated Mesh");
+                    super::meshview::show_mesh(app, ui, &m, &tr("@MB:GeneratedMesh"));
                 }
             }
             ui.cm(F, "ProgressBar").position = 1000;
-            app.message(ui, "Finished tracing object.");
+            app.message(ui, &tr("@MB:FinishedTracingObject"));
         }
         Err(e) => {
-            ui.set_caption(F, "Label13", if cancelled { "Operation cancelled" } else { "" });
+            ui.set_caption(F, "Label13", &if cancelled { tr("@MB:OperationCancelled") } else { String::new() });
             if !cancelled {
                 ui.show_message(&e);
             }
@@ -682,10 +680,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             enable_controls(app, ui, !app.btracer.calculating);
         }
         "CloseButtonClick" => ui.hide(F),
-        "ImportParamsFromMainBtnClick" => import(app, ui, "Imported from Main"),
+        "SplatBtnClick" => super::splat_form::open(app, ui),
+        "ImportParamsFromMainBtnClick" => import(app, ui, &tr("@MB:ImportedFromMain")),
         "Button2Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Parameter (*.m3p)|*.m3p".into(),
+                filter: format!("{}|*.m3p", tr("@MB:M3DParameterM3p")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
                 ..Default::default()
             };
@@ -693,11 +692,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SelectOutputFilenameBtnClick" => {
             let st = ui.item_index(F, "SaveTypeCmb").clamp(0, 3) as usize;
-            let filter = ["Mesh (*.ply)|*.ply", "Mesh (*.obj)|*.obj", "BTracer2 cache (*.btr2cache)|*.btr2cache", "All files|*.*"][st];
+            let filter = match st {
+                0 => format!("{}|*.ply", tr("@MB:MeshPly")),
+                1 => format!("{}|*.obj", tr("@MB:MeshObj")),
+                2 => format!("{}|*.btr2cache", tr("@MB:BTracer2CacheBtr2cache")),
+                _ => format!("{}|*.*", tr("@MB:AllFiles")),
+            };
             let t = ui.text(F, "FilenameREd");
             let p = Path::new(&t);
             let o = crate::vcl::dialogs::FileOptions {
-                filter: filter.into(),
+                filter,
                 default_ext: SAVE_EXT[st].into(),
                 initial_dir: p.parent().map(Path::to_path_buf),
                 file_name: p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default(),
@@ -806,11 +810,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "CalculateBtnClick" => {
             let st = ui.item_index(F, "SaveTypeCmb");
             if st == 2 {
-                ui.show_message("The BTracer2 cache format is not supported by this program.\nPlease choose a mesh format (*.ply or *.obj).");
+                ui.show_message(&tr("@MB:TheBTracer2CacheFormatIsNot"));
                 return;
             }
             if st < 2 && ui.text(F, "FilenameREd").trim().is_empty() {
-                ui.show_message("Please choose an output file.");
+                ui.show_message(&tr("@MB:PleaseChooseAnOutputFile"));
                 return;
             }
             cancel_preview(app);
@@ -829,7 +833,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "CancelTypeCmbChange" => app.btracer.cancel_type = ui.item_index(F, "CancelTypeCmb"),
         "SaveBTracer2FileBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "BulbTracer2 settings (*.btrace2)|*.btrace2".into(),
+                filter: format!("{}|*.btrace2", tr("@MB:BulbTracer2SettingsBtrace2")),
                 default_ext: "btrace2".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_MESHES)),
                 ..Default::default()
@@ -838,7 +842,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "LoadBTracer2FileBtnClick" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "BulbTracer2 settings (*.btrace2)|*.btrace2".into(),
+                filter: format!("{}|*.btrace2", tr("@MB:BulbTracer2SettingsBtrace2")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_MESHES)),
                 ..Default::default()
             };
@@ -885,7 +889,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                                 app.scene_to_forms(ui);
                                 app.btracer.h = h.clone();
                                 ui_from_header(app, ui);
-                                import(app, ui, "Imported from Main");
+                                import(app, ui, &tr("@MB:ImportedFromMain"));
                             }
                             Err(_) => err = true,
                         }
@@ -893,7 +897,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                     app.btracer.h = h;
                     ui_from_header(app, ui);
                     if err {
-                        ui.show_message("Failed to import fractal parameters. All other settings where imported?");
+                        ui.show_message(&tr("@MB:FailedToImportFractalParametersAll"));
                     }
                 }
                 Err(e) => ui.show_message(&format!("{}: {e}", p.display())),

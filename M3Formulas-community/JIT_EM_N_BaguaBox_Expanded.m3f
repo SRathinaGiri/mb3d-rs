@@ -1,0 +1,235 @@
+[OPTIONS]
+.DEScale = 0.0105
+.RStop = 4
+.SIPow = 2
+.Version = 9
+.Double AddValueX = 0.1
+.Double AddValueY = 0.1
+.Double AddValueZ = 0.1
+.Double LenghtX = 2
+.Double LenghtY = 2
+.Double LenghtZ = 2
+.Double Scale = 1.5
+.Double v_Lp_space = 2
+.Double v_UnitVector_Add = 0
+[SOURCE]
+procedure BaguaboxE(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+var
+
+temp, modulus, negativeX, negativeY, negativeZ, invPower : double;
+intPow : integer;
+
+begin
+
+
+//===modulus==in==Lp========()==================================
+/// calculate radius in Lp space where circle is circle (2), square (1) or smartphone shape (4)
+// Using just int values - faster.
+
+intPow:=round(v_Lp_space);
+
+	if intPow = 1 then  
+	// choice 1. If curvatures is 1 then use fastest formula
+	begin
+	modulus  := abs(x) + abs(y) + abs(z);
+	end
+		
+  		else if intPow = 2 then  
+		// choice2. If curvatures is 2 then use standart formula
+	  	begin
+		modulus  := sqrt( x*x + y*y + z*z);
+		end
+		
+		else  
+		//choice 3. else use heavy formulas
+	begin
+	invPower:= 1/ intPow; 
+	temp:= intPower(abs(x),intPow) + intPower(abs(y),intPow) + intPower(abs(z),intPow);
+	modulus  := power( temp ,invPower);
+		end;
+
+
+
+//====baguafold=======(^^)==========================
+//baguafold
+// In transfortion unit vector is involved.
+
+// Zvector = Baguafold(Zvector)
+
+
+//optimisation for speed
+
+negativeX := -x; 
+negativeY := -y;
+negativeZ := -z;
+
+
+
+
+ // to awoyd division / 0; Not necessary in M3D but still benefitial
+ if modulus = 0 then
+    begin
+      modulus := 1e-15;
+   end;
+
+
+
+
+///=========x=====================(^_^)===== 
+	 if x > LenghtX then
+	    begin
+		x := negativeX/modulus - AddValueX;
+	    end
+	  else if negativeX > LenghtX then
+	    begin
+		x := negativeX/modulus + AddValueX;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+///=========y==========================
+	 if y > LenghtY then
+	    begin
+		y := negativeY/modulus - AddValueY;
+	    end
+	  else if negativeY > LenghtY then
+	    begin
+		y := negativeY/modulus + AddValueY;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+///=========z==========================
+	 if z > LenghtZ then
+	    begin
+		z := negativeZ/modulus - AddValueZ;
+	    end
+	  else if negativeZ > LenghtZ then
+	    begin
+		z := negativeZ/modulus + AddValueZ;
+	   end
+	  else
+	    begin
+	//walk along
+	    end;
+
+
+
+
+
+
+//=====scale============================================
+//scaling
+// Zvector = Scale*Zvector
+  x := x*scale ;
+  y := y*scale ;
+  z := z*scale ;
+
+
+
+
+
+
+
+///=====unit vextor addition=+C=============================
+///Unit vector addition  Zvector = Zvector + amount * Zvector/|Zvector|
+/// The same as _Asdam_transf
+
+//==================================================================
+// conditionals are to speed up calculation 
+	if v_UnitVector_Add = 0 then
+	begin
+	 		
+// there is nothing to calculate, just do +C
+//  Zvector = Zvector + C
+
+  x := x + PIteration3D^.J1;
+  y := y + PIteration3D^.J2;
+  z := z + PIteration3D^.J3;
+
+
+	end
+  	else
+	begin
+
+// else calculate transformation 
+
+
+
+
+
+
+
+//===modulus==in==Lp==========================================
+/// calculate radius in Lp space where circle is circle (2), square (1) or smartphone shape (4)
+// Using just int values - faster.
+
+intPow:=round(v_Lp_space);
+
+	if intPow = 1 then  
+	// choice 1. If curvatures is 1 then use fastest formula
+	begin
+	modulus  := abs(x) + abs(y) + abs(z);
+	end
+		
+  		else if intPow = 2 then  
+		// choice2. If curvatures is 2 then use standart formula
+	  	begin
+		modulus  := sqrt( x*x + y*y + z*z);
+		end
+		
+		else  
+		//choice 3. else use heavy formulas
+	begin
+	invPower:= 1/ intPow; 
+	temp:= intPower(abs(x),intPow) + intPower(abs(y),intPow) + intPower(abs(z),intPow);
+	modulus  := power( temp ,invPower);
+		end;
+
+
+
+
+
+
+///adding this transformation 
+x:= x + v_UnitVector_Add*x / modulus;
+y:= y + v_UnitVector_Add*y / modulus;
+z:= z + v_UnitVector_Add*z / modulus;
+
+// do +C
+//  Zvector = Zvector + C
+
+  x := x + PIteration3D^.J1;
+  y := y + PIteration3D^.J2;
+  z := z + PIteration3D^.J3;
+
+	end;
+
+
+end;
+[END]
+Formula version 1.4
+ 
+Expanded version of formula.
+
+Very different ...box like formula.
+
+On hybridisation watch to the bailout value. Stature depends on bailout, by default here "R bailout" = 4. Value 16 can turn fractal into just single inside.
+
+Formula variables:
+AddValue, Lenght - bagua Fold. Scale 
+
+
+In Lp space circle (if p=2) is circle, (if p=1) rombic square or (if p=4) a smartphone shape
+sophistication 1<2<4  but speed 1>>2>>4
+
+Unit vector Addition is _Asdamtransf.m3f 
+If v_UnitVector_Add = 0 it awoyds this transformation. Shrinks or fills with air
+
+
+ * * *
+By Edgar Malinovsky

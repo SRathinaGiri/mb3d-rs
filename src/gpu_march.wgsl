@@ -31,6 +31,11 @@
 // height, index of its pixels), the pixels as f32 RGB 0..255 in rows of
 // width + 1 (LightMap's layout)
 @group(0) @binding(6) var<storage, read> MAPS: array<u32>;
+// the cone march (experimental, crate::cone): the depth and the dynamic
+// fog's step count of every block of a level (f32 bits each), the level's
+// entries from CONE_OFF (written in M_CONE, read by the next level and the
+// march, see CONE_P_*)
+@group(0) @binding(7) var<storage, read_write> CONE: array<u32>;
 
 // parameter indices (gpu.rs writes them in this order)
 const RECT_X0: u32 = 0u;
@@ -119,7 +124,7 @@ const SAMPLE_Y: u32 = 221u;      // SAMPLE_X-th column of every SAMPLE_Y-th row 
 const TURN_BUDGET: u32 = 272u;    // the turns of a pixel in a submission
 // the words of the marcher's state in a slot (after the suspended flag);
 // the record cells follow (gpu.rs reads this number)
-const STATE_FIXED: u32 = 591u;
+const STATE_FIXED: u32 = 596u;
 const HYB_KIND: u32 = 273u;       // the hybrid: 0 alternating 3D, 1 alternating 4D (doHybrid4DPas),
                                   // 2 interpolation 3D, 3 interpolation 4D (doInterpolHybridPas[4D])
 const P2_HYB_KIND: u32 = 274u;    // the second part's
@@ -139,7 +144,8 @@ const M_DEAO: u32 = 2u;
 const M_PROBE: u32 = 3u;         // the DE at the ray start (a check against the CPU)
 const M_REFLECT: u32 = 4u;       // the reflection pass: a bounce (or the surface) of every task
 const M_MC: u32 = 5u;
-const M_VLMAP: u32 = 6u;         // the volumetric light's map: one task per texel of its sides (in the shadow pipeline)            // the Monte Carlo renderer: the march of every task (mc.rs McReq)
+const M_VLMAP: u32 = 6u;
+const M_CONE: u32 = 7u;          // the cone march's coarse rays: a task per block (in the march pipeline)         // the volumetric light's map: one task per texel of its sides (in the shadow pipeline)            // the Monte Carlo renderer: the march of every task (mc.rs McReq)
 const MC_SECANT: u32 = 171u;     // M_MC: the secant search refines the surface (MCoptions bit 1)
 const MC_WORDS: u32 = 23u;       // a task: 0-2 position, 3-5 direction, 6 zz, 7 zz2, 8 zzplus, 9 len,
                                  // 20-22 the sample's view vector (the volumetric light),
@@ -186,6 +192,51 @@ const HS_POS: u32 = 391u;
 // M_VLMAP: the light map's march (vollight.rs build / vl_trace)
 const VOL_MIN_DIST: u32 = 409u;
 const VOL_MAX_DIST: u32 = 410u;   // in steps
+// the ground plane (scene::Ground): bit 0 on, bits 1-2 the axis, bit 3 the
+// solid side is the larger values; its position, the waves' height and
+// length, 1 / sqrt(1 + their steepest slope ^ 2)
+const GROUND_OPT: u32 = 411u;
+const GROUND_POS: u32 = 412u;
+const GROUND_WAVE: u32 = 413u;
+const GROUND_WLEN: u32 = 414u;
+const GROUND_LIP: u32 = 415u;
+// a stereo panorama's eye: its shift to the right in steps, turned with the
+// ray (CalcParams::ods)
+const ODS_SHIFT: u32 = 416u;
+// the DE combination's second part in a place of its own (calc::Place): on,
+// its middle (3), the rows of its rotation divided by its size (9), its size
+const P2_PLACE: u32 = 417u;
+const P2_OFFSET: u32 = 418u;
+const P2_M: u32 = 421u;
+const P2_SCALE: u32 = 430u;
+// experimental (calc.rs CalcParams relax, secant, ao_half): the march
+// steps enlarged by RELAX (1: not); EXP_FLAGS bit 0 the secant search,
+// bit 1 the DE occlusion on every second pixel of every second row
+const RELAX: u32 = 432u;
+const EXP_FLAGS: u32 = 433u;
+// the cone march (experimental): CONE_ON the march's pixels jump to their
+// block's depth; a cone pass (M_CONE) marches blocks of CONE_B pixels,
+// CONE_COLS per row from block (CONE_BX0, CONE_BY0), writing from entry
+// CONE_OFF; the level it starts from (and the march reads): CONE_P_B (0:
+// none), CONE_P_COLS, CONE_P_BX0, CONE_P_BY0, CONE_P_OFF
+const CONE_ON: u32 = 441u;
+const CONE_B: u32 = 442u;
+const CONE_COLS: u32 = 443u;
+const CONE_BX0: u32 = 444u;
+const CONE_BY0: u32 = 445u;
+const CONE_OFF: u32 = 446u;
+const CONE_P_B: u32 = 447u;
+const CONE_P_COLS: u32 = 448u;
+const CONE_P_BX0: u32 = 449u;
+const CONE_P_BY0: u32 = 450u;
+const CONE_P_OFF: u32 = 451u;
+// the cone march takes the estimate for up to this many times (over the
+// step factor) a bound (calc::CONE_MARGIN); it ends when its step falls
+// under this share of the DE stop (calc::CONE_MIN_STEP) or of the march's
+// own step there (calc::CONE_MIN_SHARE)
+const CONE_MARGIN: R = 1.5;
+const CONE_MIN_STEP: R = 0.05;
+const CONE_MIN_SHARE: R = 0.1;
 
 const PI: R = 3.14159265358979;
 
@@ -198,6 +249,8 @@ override HAS_DIFS: bool = false;
 override HAS_DECOMB: bool = false;
 override HAS_4D: bool = false;
 override HAS_IPOL: bool = false;
+// the ground plane (scene::Ground; its values from GROUND_OPT)
+override HAS_GROUND: bool = false;
 // the reflection pass (MODE_KIND 3): the shadow rays / the ambient
 // occlusion at the hits; without them their states compile away
 override R_HS: bool = true;
@@ -1047,6 +1100,8 @@ fn evaluate(on_de: bool) -> R {
     var buf_otrap = R(0.0);
     var buf_sit1 = R(0.0);
     var buf_mir = 0;
+    // the point before the second part's place (P2_PLACE)
+    var c_orig = c;
     for (var guard = 0u; guard < P[EVAL_TURNS]; guard++) {
         if (part_begin) {
             part_begin = false;
@@ -1054,6 +1109,11 @@ fn evaluate(on_de: bool) -> R {
             // max_it + 1, as the CPU, which switches only for part 2)
             if (part == 2u) {
                 set_part(2u);
+                if (P[P2_PLACE] != 0u) {
+                    c_orig = c;
+                    let d = c - pv(P2_OFFSET);
+                    c = vec3<R>(dot(pv(P2_M), d), dot(pv(P2_M + 3u), d), dot(pv(P2_M + 6u), d));
+                }
             }
             if (part == 2u) {
                 difs = pi(P2_DIFS) != 0;
@@ -1190,7 +1250,11 @@ fn evaluate(on_de: bool) -> R {
             continue;
         }
         // CalcDEfull with FormulaType > 0: the second part combined
-        let rst = result;
+        var rst = result;
+        if (P[P2_PLACE] != 0u) {
+            rst *= pf(P2_SCALE);
+            c = c_orig;
+        }
         dbg_rst = rst;
         dbg_it2 = it_result;
         result = r1;
@@ -1476,6 +1540,21 @@ fn r_max_len() -> R {
     return len;
 }
 
+// a reflection pass shadow ray (from `c` along -v): its length `len`
+// up to the nearest cutting plane ahead
+fn hs_cut_len(v: vec3<R>, len: R) -> R {
+    var l = len;
+    for (var k = 0u; k < 3u; k++) {
+        if (((P[CUT_OPT] >> k) & 1u) != 0u && abs(v[k]) > 1e-20) {
+            let t = (c[k] - pf(CUT_POS + k)) / v[k];
+            if (t > 0.0 && t < l) {
+                l = t;
+            }
+        }
+    }
+    return l;
+}
+
 // AtCutPlane2: closer than `plus_d` to a cutting plane
 fn at_cut_plane(plus_d: R) -> bool {
     for (var k = 0u; k < 3u; k++) {
@@ -1504,8 +1583,60 @@ fn calc_nangles_for_cut(plane: u32) {
     }
 }
 
+fn ground_on() -> bool {
+    return HAS_GROUND && (P[GROUND_OPT] & 1u) != 0u;
+}
+
+// Ground::distance, in steps
+fn ground_steps(q: vec3<R>) -> R {
+    let opt = P[GROUND_OPT];
+    let k = (opt >> 1u) & 3u;
+    var s = q[k] - pf(GROUND_POS);
+    if ((opt & 8u) != 0u) {
+        s = -s;
+    }
+    let h = pf(GROUND_WAVE);
+    if (h != 0.0) {
+        let a = q[(k + 1u) % 3u] / pf(GROUND_WLEN);
+        let b = q[(k + 2u) % 3u] / pf(GROUND_WLEN);
+        let t = R(6.283185307179586);
+        let wave = h * (0.5 * r_sin(t * (0.8 * a + 0.6 * b))
+            + 0.3 * r_sin(t * 1.7 * (-0.45 * a + 0.9 * b) + 1.3)
+            + 0.2 * r_sin(t * 2.9 * (0.2 * a - 0.98 * b) + 2.1));
+        s = (s - wave) * pf(GROUND_LIP);
+    }
+    return s / pf(STEP_WIDTH);
+}
+
+// a surface at q is the ground's (the CPU knows it from its DE: Marcher::on_ground)
+fn ground_at(q: vec3<R>) -> bool {
+    return ground_on() && ground_steps(q) < ms_de_stop * 2.0;
+}
+
+// the ground's normal at q along the axes a (the view gradients for the
+// G-buffer, the world axes for the Monte Carlo marches)
+fn ground_normal(q: vec3<R>, world: bool) -> vec3<R> {
+    var n: vec3<R>;
+    for (var k = 0u; k < 3u; k++) {
+        var e = vec3<R>(0.0);
+        if (world) {
+            e[k] = pf(STEP_WIDTH) * 0.5;
+        } else {
+            e = vg(k) * 0.5;
+        }
+        n[k] = ground_steps(q + e) - ground_steps(q - e);
+    }
+    return n;
+}
+
 // RMdoColor
 fn do_color() {
+    if (ground_at(c)) {
+        // the ground plane: its own colour (gbuffer::GROUND)
+        si_grad = 0u;
+        si_otrap = 0xFFFFu;
+        return;
+    }
     let x = v.x;
     let y = v.y;
     let z = v.z;
@@ -1637,6 +1768,8 @@ const P_R_AFTER_HS: u32 = 44u; // then the ambient occlusion
 const P_DONE: u32 = 45u;
 const P_R_END: u32 = 46u;    // the outputs of the task
 const P_CUT: u32 = 47u;      // the march: to the cutting planes, then the DE at the start
+const P_JUMPED: u32 = 90u;   // result: the DE where the cone march's block depth put the pixel
+const P_CONE: u32 = 91u;     // the cone march: result: the DE at the coarse ray's point
 const P_IN_COL: u32 = 48u;   // the pixel starts inside the set: its colour
 const P_IN_SIT: u32 = 49u;   // result: the smoothed iteration count (inside rendering)
 const P_COI: u32 = 50u;      // doColorOnIt, then after_coi
@@ -1676,29 +1809,100 @@ const P_MC_OPEN: u32 = 79u;   // the ray ends in open air   // the second reflec
 // The march of a pixel (M_MARCH), or a post calculation on the G-buffer
 // pixel in si_* (M_SHADOW: the shadow bits, M_DEAO: si_amb); the DE is
 // evaluated at the single site of `evaluate`.
-fn pixel(x: i32, y: i32, mode: u32) {
-    set_part(1u);
-    rstop = pf(D_RSTOP);
-    max_its_result = max_it;
+struct Ray {
+    start: vec3<R>,
+    dir: vec3<R>,
+}
 
+// The ray of the picture's point (fx, fy) (pixel units, fractions
+// allowed): its start and its direction per step (the direction one pixel
+// on, as MB3D; Marcher::ray)
+fn ray_of(fx: R, fy: R) -> Ray {
     // RMCalculateVgradsFOV
-    let cafy = (R(y) / R(pi(HEIGHT)) - 0.5) * pf(FOV_Y);
-    let cafx = (pf(FOVX_OFF) - R(x + 1)) * pf(FOVX_MUL);
+    let cafy = (fy / R(pi(HEIGHT)) - 0.5) * pf(FOV_Y);
+    let cafx = (pf(FOVX_OFF) - (fx + 1.0)) * pf(FOVX_MUL);
     var dv: vec3<R>;
     let optic = pi(OPTIC);
     if (optic == 1) {
         dv = normalize(vec3<R>(-cafx, cafy, pf(PL_OPTIC_Z)));
     } else if (optic == 2) {
         dv = vec3<R>(-r_sin(cafx) * r_cos(cafy), r_sin(cafy), r_cos(cafy) * r_cos(cafx));
+    } else if (optic == 3) {
+        // the equidistant fisheye (math::build_view_vector_fisheye)
+        let t = sqrt(cafx * cafx + cafy * cafy);
+        if (t < 1e-12) {
+            dv = vec3<R>(0.0, 0.0, 1.0);
+        } else {
+            let tc = min(t, PI);
+            let sn = r_sin(tc) / t;
+            dv = vec3<R>(-cafx * sn, cafy * sn, r_cos(tc));
+        }
     } else {
         dv = normalize(vec3<R>(-r_sin(cafx), r_sin(cafy), r_cos(cafy) * r_cos(cafx)));
     }
-    vfov = rot_rev(dv);
+    var r: Ray;
+    r.dir = rot_rev(dv);
     // RMCalculateStartPos
     if (optic == 2) {
-        base = p_ystart();
+        r.start = p_ystart();
+        if (pf(ODS_SHIFT) != 0.0) {
+            // the eye to the right of the ray (Marcher::calc_start_pos)
+            r.start += rot_rev(vec3<R>(r_cos(cafx), 0.0, r_sin(cafx))) * pf(ODS_SHIFT);
+        }
     } else {
-        base = p_ystart() + vg(0u) * R(x) + vg(1u) * R(y);
+        r.start = p_ystart() + vg(0u) * fx + vg(1u) * fy;
+    }
+    return r;
+}
+
+// The entry of the cone march's level the pass reads (CONE_P_*) for the
+// pixel (x, y): the depth up to which its ray is free (+inf: background)
+// and the dynamic fog's step count up to there
+fn cone_parent(x: i32, y: i32) -> vec2<R> {
+    let b = pi(CONE_P_B);
+    let i = (P[CONE_P_OFF] + u32(y / b - pi(CONE_P_BY0)) * P[CONE_P_COLS] + u32(x / b - pi(CONE_P_BX0))) * 2u;
+    return vec2<R>(R(bitcast<f32>(CONE[i])), R(bitcast<f32>(CONE[i + 1u])));
+}
+
+fn pixel(x: i32, y: i32, mode: u32) {
+    set_part(1u);
+    rstop = pf(D_RSTOP);
+    max_its_result = max_it;
+
+    // the cone march (M_CONE): x, y is the block; its coarse ray from its
+    // middle, and the block's spread from it: at the start and per step
+    // width of depth (step widths) (also on resuming: not in the state)
+    var cone_a = R(0.0);
+    var cone_slope = R(0.0);
+    var cone_t0 = R(0.0);
+    var cone_c0 = R(0.0);
+    var cone_i = 0u;
+    if (mode == M_CONE) {
+        let b = pi(CONE_B);
+        let x0 = R(x * b);
+        let y0 = R(y * b);
+        let mid = ray_of(x0 + R(b - 1) * 0.5, y0 + R(b - 1) * 0.5);
+        for (var j = 0; j < b; j++) {
+            for (var i = 0; i < b; i++) {
+                let q = ray_of(x0 + R(i), y0 + R(j));
+                cone_a = max(cone_a, length(q.start - mid.start));
+                cone_slope = max(cone_slope, length(q.dir - mid.dir));
+            }
+        }
+        cone_a /= pf(STEP_WIDTH);
+        cone_slope /= pf(STEP_WIDTH);
+        vfov = mid.dir;
+        base = mid.start;
+        cone_i = (P[CONE_OFF] + u32(y - pi(CONE_BY0)) * P[CONE_COLS] + u32(x - pi(CONE_BX0))) * 2u;
+        if (pi(CONE_P_B) != 0) {
+            let pr = cone_parent(x * b, y * b);
+            cone_t0 = pr.x;
+            cone_c0 = pr.y;
+        }
+    } else {
+        let r = ray_of(R(x), R(y));
+        vfov = r.dir;
+        base = r.start;
     }
     calc_sit = false;
     var step_count = R(0.0);
@@ -1729,6 +1933,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var cut_plane = 0u;
     var after_coi = P_DONE;
     var coi_max = 0;
+    // the cone march's pixel whose jump landed in the surface: marched
+    // from the start as without it
+    var no_cone = false;
     if (mode == M_MARCH) {
         pc = P_CUT;
         need = false;
@@ -1758,6 +1965,13 @@ fn pixel(x: i32, y: i32, mode: u32) {
     var after_bs = P_N_INIT;
     var bs_thr = R(0.001);
     var bs_it_check = mode != M_DEAO;
+    // the secant search (EXP_FLAGS bit 0) in this binary search, the last
+    // probe's DE minus the DE stop and whether it is of use
+    var bs_sec = false;
+    var bs_pok = false;
+    var bs_fprev = R(0.0);
+    // a relaxed step (RELAX) is under way: its DE must overlap the last
+    var relaxed = false;
     var zf = R(0.0);
     // shadows
     let soft = pf(HS_SOFT_RADIUS) > 0.0;
@@ -1846,6 +2060,21 @@ fn pixel(x: i32, y: i32, mode: u32) {
     let so = state_slot;
     let ns = P[N_SLOTS];
     var guard = 0;
+    if (mode == M_CONE) {
+        if (cone_t0 > pf(ZEND)) {
+            // the coarser block's ray passed the end: so does this one
+            CONE[cone_i] = bitcast<u32>(f32(cone_t0));
+            CONE[cone_i + 1u] = bitcast<u32>(f32(cone_c0));
+            return;
+        }
+        mzz = cone_t0;
+        step_count = cone_c0;
+        setc();
+        update_de_stop();
+        dtmp = R(1e30);
+        last_step = 0.0;
+        pc = P_CONE;
+    }
     if (resuming) {
         c.x = rget(so + 1u * ns, ns);
         c.y = rget(so + 3u * ns, ns);
@@ -2038,6 +2267,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
         mc_sec_main = (STATE[so + 586u * ns] != 0u);
         mc_guard = bitcast<i32>(STATE[so + 587u * ns]);
         guard = bitcast<i32>(STATE[so + 588u * ns]);
+        relaxed = (STATE[so + 591u * ns] != 0u);
+        bs_sec = (STATE[so + 592u * ns] & 1u) != 0u;
+        bs_pok = (STATE[so + 592u * ns] & 2u) != 0u;
+        bs_fprev = rget(so + 593u * ns, ns);
+        no_cone = STATE[so + 595u * ns] != 0u;
         load_record(so + (1u + STATE_FIXED) * ns, ns);
     }
     for (var turns = 0u; guard < 2000000; guard++) {
@@ -2233,6 +2467,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
             STATE[so + 586u * ns] = select(0u, 1u, mc_sec_main);
             STATE[so + 587u * ns] = bitcast<u32>(mc_guard);
             STATE[so + 588u * ns] = bitcast<u32>(guard);
+            STATE[so + 591u * ns] = select(0u, 1u, relaxed);
+            STATE[so + 592u * ns] = select(0u, 1u, bs_sec) | select(0u, 2u, bs_pok);
+            rput(so + 593u * ns, ns, bs_fprev);
+            STATE[so + 595u * ns] = select(0u, 1u, no_cone);
             save_record(so + (1u + STATE_FIXED) * ns, ns);
             STATE[so] = cur_item + 1u;
             atomicAdd(&QUEUE[0], 1u);
@@ -2245,6 +2483,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
         if (need) {
             r = evaluate(want_de);
             need = false;
+            if (want_de && ground_on()) {
+                // Marcher::calc_de: the smaller of the fractal's and the ground's
+                let g = ground_steps(c);
+                if (g < r) {
+                    r = g;
+                    it_result = max(it_result, pi(MIN_IT));
+                }
+            }
         }
         switch (pc) {
             case P_START: {
@@ -2277,10 +2523,99 @@ fn pixel(x: i32, y: i32, mode: u32) {
                         // inside the set at the start plane (or the cutting plane)
                         after_coi = P_IN_COL;
                         pc = select(P_IN_COL, P_COI, P[COLOR_ON_IT] != 0u);
+                    } else if (P[CONE_ON] != 0u && !no_cone && cone_parent(x, y).x > mzz) {
+                        // the cone march: nothing up to the block's depth,
+                        // the march starts there (past the end: background,
+                        // with the dynamic fog's count of the whole way)
+                        let pr = cone_parent(x, y);
+                        if (pr.x > pf(ZEND)) {
+                            step_count = pr.y;
+                            done = true;
+                        } else {
+                            mzz = pr.x;
+                            step_count = pr.y;
+                            setc();
+                            update_de_stop();
+                            need = true;
+                            want_de = true;
+                            pc = P_JUMPED;
+                        }
                     } else {
                         rsf_mul = 1.0;
                         last_step = dtmp * pf(Z_STEP_DIV);
                         pc = P_LOOP;
+                    }
+                }
+            }
+            case P_JUMPED: {
+                if (MODE_KIND == 0u) {
+                    dtmp = r;
+                    if (it_result >= max_its_result || dtmp < ms_de_stop) {
+                        // in the surface: the estimate was no bound here;
+                        // from the start as without the cone march
+                        no_cone = true;
+                        mzz = 0.0;
+                        setc();
+                        ms_de_stop = pf(DE_STOP);
+                        step_count = 0.0;
+                        need = false;
+                        pc = P_CUT;
+                    } else {
+                        rsf_mul = 1.0;
+                        last_step = dtmp * pf(Z_STEP_DIV);
+                        pc = P_LOOP;
+                    }
+                }
+            }
+            case P_CONE: {
+                if (MODE_KIND == 0u) {
+                    // the cone march (Marcher::cone_march): dtmp the DE
+                    // before, last_step the step taken
+                    var de = r;
+                    var t = mzz;
+                    var ended = it_result >= max_its_result;
+                    if (!ended) {
+                        if (de > dtmp + last_step) {
+                            de = dtmp + last_step;
+                        }
+                        var rsf = R(1.0);
+                        if (last_step > 0.0 && dtmp > de + 1e-30) {
+                            rsf = clamp(last_step / (dtmp - de), 0.5, 1.0);
+                        }
+                        let zsd = pf(Z_STEP_DIV);
+                        let lip = CONE_MARGIN / clamp(zsd, 0.05, 1.0);
+                        let stop = ms_de_stop;
+                        let reach = (cone_a + cone_slope * mzz) * lip + stop;
+                        let div = 1.0 + cone_slope * lip + pf(DE_STOP) * pf(DE_STOP_FACTOR);
+                        // (within the march's step limit)
+                        let st = min((de - reach - pf(MS_DE_SUB) * stop) * zsd * rsf / div, max(stop, 0.4) * pf(MH04ZSD));
+                        // (the march's own step here: the coarse ray ends
+                        // where its steps fall far behind it)
+                        let d = max(0.11, (de - pf(MS_DE_SUB) * stop) * zsd * rsf);
+                        if (st < CONE_MIN_STEP * stop || st < CONE_MIN_SHARE * min(d, max(stop, 0.4) * pf(MH04ZSD))) {
+                            ended = true;
+                        } else {
+                            if (dfog_on_it == 0 || it_result == dfog_on_it) {
+                                step_count += min(st, pf(ZEND) - mzz) / d;
+                            }
+                            if (mzz + st > pf(ZEND)) {
+                                t = R(1e30);
+                                ended = true;
+                            } else {
+                                mzz += st;
+                                setc();
+                                update_de_stop();
+                                dtmp = de;
+                                last_step = st;
+                                need = true;
+                                want_de = true;
+                            }
+                        }
+                    }
+                    if (ended) {
+                        CONE[cone_i] = bitcast<u32>(f32(t));
+                        CONE[cone_i + 1u] = bitcast<u32>(f32(step_count));
+                        return;
                     }
                 }
             }
@@ -2306,6 +2641,12 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 if (MODE_KIND == 0u) {
                     calc_nangles_for_cut(cut_plane);
                     do_color();
+                    if (si_otrap == 0xFFFFu) {
+                        // the start plane in the ground: a cut surface with the ground's normal
+                        store_normal(ground_normal(c, false));
+                        si_grad = 32768u;
+                        return;
+                    }
                     if (pi(COLOR_OPTION) > 4) {
                         si_grad |= 32768u;
                         return;
@@ -2411,7 +2752,26 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             seed = seed * 214013 + 2531011;
                             d *= R(u32(seed) & 0x7FFFFFFFu) * (1.0 / 2147483647.0);
                         }
+                        // experimental: the step relaxed (its DE must still
+                        // overlap the last one, see P_STEP); the dynamic fog
+                        // counts it as the safe steps
+                        let relax = pf(RELAX);
+                        relaxed = false;
+                        if (relax > 1.0 && rsf_mul >= 1.0 && d < st1) {
+                            d *= relax;
+                            relaxed = true;
+                            if (count && pi(VOL_ON) == 0) {
+                                step_count += relax - 1.0;
+                            }
+                        }
                         mzz += d;
+                        if (relaxed && mzz > pf(ZEND)) {
+                            // (the background only at the safe step)
+                            mzz -= d;
+                            d /= relax;
+                            mzz += d;
+                            relaxed = false;
+                        }
                         if (mzz > pf(ZEND)) {
                             // background (`break` here would only leave the switch)
                             if (pi(VOL_ON) != 0) {
@@ -2435,6 +2795,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             itmp = pi(DE_ADD_STEPS);
                             if (de_limited) {
                                 dt1 = last_step * -0.5;
+                                bs_sec = (P[EXP_FLAGS] & 1u) != 0u;
+                                bs_fprev = dtmp - ms_de_stop;
+                                bs_pok = it_result < max_its_result;
                                 pc = P_BS;
                             } else {
                                 yp = R(max_it) - 0.99;
@@ -2457,6 +2820,21 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_STEP: {
                 if (MODE_KIND == 0u) {
                     dtmp = r;
+                    if (relaxed && (dtmp < 0.0 || dtmp + last_de < last_step) && it_result < max_its_result) {
+                        // the relaxed step overshot (the DE spheres do not
+                        // overlap): back to the safe step, its DE next
+                        relaxed = false;
+                        let back = last_step - last_de;
+                        mzz -= back;
+                        setc();
+                        update_de_stop();
+                        last_step = last_de;
+                        need = true;
+                        want_de = true;
+                        pc = P_STEP;
+                        break;
+                    }
+                    relaxed = false;
                     if (dtmp > last_de + last_step) {
                         dtmp = last_de + last_step;
                     }
@@ -2492,10 +2870,20 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 dtmp = r;
                 if (bs_it_check && it_result >= max_its_result) {
                     dt1 = -abs(dt1);
-                } else if (dtmp < ms_de_stop) {
-                    dt1 = abs(dt1) * -0.55;
+                    bs_pok = false;
                 } else {
-                    dt1 = abs(dt1) * 0.55;
+                    // (experimental: the secant between probes on both
+                    // sides of the surface, calc.rs bin_search)
+                    let f = dtmp - ms_de_stop;
+                    if (bs_sec && bs_pok && (f < 0.0) != (bs_fprev < 0.0)) {
+                        dt1 = -dt1 * clamp(f / (f - bs_fprev), 0.05, 0.95);
+                    } else if (dtmp < ms_de_stop) {
+                        dt1 = abs(dt1) * -0.55;
+                    } else {
+                        dt1 = abs(dt1) * 0.55;
+                    }
+                    bs_fprev = f;
+                    bs_pok = true;
                 }
                 pc = P_BS;
             }
@@ -2572,7 +2960,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     noffset = min(pf(DE_STOP), 1.0) * (1.0 + mzz * pf(DE_STOP_FACTOR)) * 0.15;
                     calc_sit = true;
                     ct1 = c;
-                    need = true;
+                                need = true;
                     want_de = on_de;
                     pc = P_N_0;
                 }
@@ -2764,6 +3152,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     c = ct1;
                     // (the normals on the smoothed iteration count point
                     // out of the set: inverted inside, the DE ones are not)
+                    if (HAS_GROUND && !on_de && ground_at(ct1)) {
+                        // the ground's normal from its distance (as on the CPU)
+                        n = ground_normal(ct1, false);
+                    }
                     store_normal(select(n, -n, inside && !on_de));
                     var g: R;
                     if (de_limited) {
@@ -2778,6 +3170,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 } else if (MODE_KIND == 3u && R_MARCH) {
                     // the hit of a reflected ray (calc_ray)
                     c = ct1;
+                    if (HAS_GROUND && !on_de && ground_at(ct1)) {
+                        // the ground's normal from its distance (as on the CPU)
+                        n = ground_normal(ct1, false);
+                    }
                     store_normal(select(n, -n, inside && !on_de));
                     var g: R;
                     if (de_limited) {
@@ -2831,6 +3227,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             dt1 = q;
                             bs_thr = 0.004;
                         }
+                        bs_sec = (P[EXP_FLAGS] & 1u) != 0u && mode == M_SHADOW;
+                        bs_fprev = dtmp - ms_de_stop;
+                        bs_pok = it_result < max_its_result;
                         pc = P_BS;
                     } else {
                         yp = R(max_it) - 0.99;
@@ -2978,6 +3377,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                                 }
                             }
                         }
+                        if (reflect && P[CUT_OPT] != 0u) {
+                            dt1 = hs_cut_len(lvec, dt1);
+                        }
                         dmax_l = dt1;
                         zz2mul = -dot(lvec, vfov_px) / max(sqrt(dot(lvec, lvec) * dot(vfov_px, vfov_px)), 1e-30);
                         if (too_far) {
@@ -3100,6 +3502,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     update_de_stop();
                     let msl = min(ms_de_stop, 1e6);
                     ic = c;
+                    if (MODE_KIND == 2u) {
+                        // the first step random: up to 33 draws per pixel, so
+                        // a disjoint run of the row's generator for each
+                        seed = pixel_seed(y, x * 33);
+                    }
                     step_ao = msl / pf(DE_STOP);
                     let s_max_d = pf(AO_MAX_LEN) * 0.5 * sqrt(R(pi(HEIGHT)) * R(pi(HEIGHT)) + R(pi(WIDTH)) * R(pi(WIDTH)));
                     max_dist = s_max_d * sqrt(step_ao);
@@ -3321,7 +3728,20 @@ fn pixel(x: i32, y: i32, mode: u32) {
                 if (MODE_KIND == 4u) {
                     si_grad = 0u;
                     do_color();
-                    if (pi(COLOR_OPTION) > 4) {
+                    if (si_otrap == 0xFFFFu) {
+                        // the start plane in the ground (McMarch::ray)
+                        // (as McMarch::normals: a normal away from the ray is
+                        // replaced by the one towards the camera)
+                        let gn = ground_normal(c, true);
+                        let l = dot(gn, gn);
+                        if (l > 0.0 && dot(gn, vfov) < 0.0) {
+                            mc_n = gn / sqrt(l);
+                        } else {
+                            mc_n = -vfov / sqrt(dot(vfov, vfov));
+                        }
+                        si_grad = 32768u;
+                        pc = P_DONE;
+                    } else if (pi(COLOR_OPTION) > 4) {
                         si_grad |= 32768u;
                         pc = P_DONE;
                     } else if (inside) {
@@ -3457,6 +3877,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             itmp = 10;
                             dt1 = rlast_sw * -0.5;
                             bs_it_check = false;
+                            bs_sec = false;
                             pc = P_BS;
                         }
                     } else {
@@ -3526,7 +3947,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     mc_sca = select(R(-0.15), R(0.15), (seed & 128) == 0);
                     calc_sit = true;
                     ct1 = c;
-                    need = true;
+                                need = true;
                     want_de = on_de;
                     pc = P_MC_N0;
                 }
@@ -3576,6 +3997,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     if (kk < 3) {
                         pc = P_MC_NK;
                     } else {
+                        if (HAS_GROUND && !on_de && ground_at(ct1)) {
+                            n = ground_normal(ct1, true);
+                        }
                         let l = dot(n, n);
                         if (l > 0.0 && dot(n, vfov) < 0.0) {
                             mc_n = n / sqrt(l);
@@ -3767,6 +4191,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             let a1 = (8388351.5 - (zf - 1.0)) / pf(ZC_MUL);
                             dt1 = (mzz - a1 * (a1 + 2.0) / pf(ZCORR)) * -0.5;
                             bs_thr = 0.001;
+                            bs_sec = (P[EXP_FLAGS] & 1u) != 0u;
+                            bs_fprev = dtmp - ms_de_stop;
+                            bs_pok = it_result < max_its_result;
                             pc = P_BS;
                         } else {
                             yp = R(max_it) - 0.99;
@@ -3882,6 +4309,7 @@ fn pixel(x: i32, y: i32, mode: u32) {
                             dt1 = rlast_sw * -0.5;
                             bs_thr = 0.001;
                             bs_it_check = false;
+                            bs_sec = false;
                             pc = P_BS;
                         } else {
                             yp = R(max_it) - 0.99;
@@ -4154,6 +4582,21 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         cx = cx * sx + (ry * 5) % sx;
         y = pi(RECT_Y0) + ry * sy + sy / 2;
     }
+    // experimental, the occlusion at half resolution: in a row of the
+    // calculated pixels (an even row of the picture) these come first, the
+    // others after them, so that the card's groups of pixels run together
+    // (the rows stay whole: a row of items is the row of pixels)
+    var o = cur_item * 5u;
+    if (P[MODE] == M_DEAO && (P[EXP_FLAGS] & 2u) != 0u && pi(SAMPLE_X) == 0 && (y & 1) == 0) {
+        let cx0 = pi(RECT_X0) & 1;
+        let m = (w - cx0 + 1) / 2;
+        if (cx < m) {
+            cx = cx0 + 2 * cx;
+        } else {
+            cx = (1 - cx0) + 2 * (cx - m);
+        }
+        o = (u32(ly) * u32(w) + u32(cx)) * 5u;
+    }
     let x = pi(RECT_X0) + cx;
     // MB3D seeds per row and draws once per pixel along it: the row's seed
     // advanced by the column in the whole picture (calc::pixel_seed; the
@@ -4192,7 +4635,14 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         }
         return;
     }
-    let o = cur_item * 5u;
+    if (mode == M_CONE) {
+        // a task per block: the block's column and row in the picture
+        pixel(pi(CONE_BX0) + i32(cur_item % P[CONE_COLS]), pi(CONE_BY0) + i32(cur_item / P[CONE_COLS]), M_CONE);
+        if (!suspended) {
+            STATE[so] = 0u;
+        }
+        return;
+    }
     // one call of pixel() only: the driver inlines it at every call site
     var run = true;
     de_overflow = false;
@@ -4225,6 +4675,12 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
             si_amb = 0u;
         }
         run = (si_zpos >> 16u) < 32768u && si_grad < 32768u;
+        if (run && mode == M_DEAO && (P[EXP_FLAGS] & 2u) != 0u && ((x | y) & 1) != 0) {
+            // experimental: the occlusion on every second pixel of every
+            // second row, the others marked to be filled (deao::fill_half)
+            si_amb = 0xFFFFu;
+            run = false;
+        }
     }
     if (run) {
         pixel(x, y, mode);

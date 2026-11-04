@@ -2,7 +2,7 @@ object PostProForm: TPostProForm
   Left = 844
   Top = 100
   BorderStyle = bsDialog
-  Caption = 'Post processing'
+  Caption = '@MB:PostProcessing'
   ClientHeight = 1352
   ClientWidth = 255
   Color = clBtnFace
@@ -24,11 +24,11 @@ object PostProForm: TPostProForm
     Top = 122
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 2
-    Caption = ' Normals on Z-buffer'
+    Caption = '@MB:NormalsOnZBuffer'
     ParentShowHint = False
     ShowHint = True
     OnClick = NormalsOnZBufferBtnClick
@@ -39,11 +39,11 @@ object PostProForm: TPostProForm
     Top = 208
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 3
-    Caption = ' Hard Shadows'
+    Caption = '@MB:HardShadows'
     ParentShowHint = False
     ShowHint = True
     OnClick = HardShadowsBtnClick
@@ -54,11 +54,11 @@ object PostProForm: TPostProForm
     Top = 422
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 4
-    Caption = ' Ambient Shadows'
+    Caption = '@MB:AmbientShadows'
     ParentShowHint = False
     ShowHint = True
     OnClick = AmbientShadowsBtnClick
@@ -70,11 +70,11 @@ object PostProForm: TPostProForm
     Top = 658
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 5
-    Caption = ' Reflections + Transparency'
+    Caption = '@MB:ReflectionsTransparency'
     ParentShowHint = False
     ShowHint = True
     OnClick = ReflTransparencyBtnClick
@@ -86,11 +86,11 @@ object PostProForm: TPostProForm
     Top = 891
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 6
-    Caption = ' Depth of Field'
+    Caption = '@MB:DepthOfField'
     ParentShowHint = False
     ShowHint = True
     OnClick = DepthOfFieldBtnClick
@@ -102,11 +102,11 @@ object PostProForm: TPostProForm
     Top = 0
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 1
-    Caption = ' Recalculate a Selection'
+    Caption = '@MB:RecalculateASelection'
     ParentShowHint = False
     ShowHint = True
     OnClick = RecalcSectionBtnClick
@@ -131,17 +131,15 @@ object PostProForm: TPostProForm
       Margins.Right = 0
       Margins.Bottom = 0
       Align = alClient
-      Caption = 
-        'Caution:  The processings below must be calculated'#13#10'from top to ' +
-        'bottom and light changes will reset'#13#10'these calculations!'
+      Caption = '@MB:CautionTheProcessingsBelowMustBe'
     end
     object Button16: TButton
       Left = 180
       Top = 27
       Width = 67
       Height = 17
-      Hint = 'Resets the DoF effect and the reflections.'
-      Caption = 'Reset now'
+      Hint = '@MB:ResetsTheDoFEffectAndThe'
+      Caption = '@MB:ResetNow'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -163,20 +161,15 @@ object PostProForm: TPostProForm
       Width = 75
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Raystep divisor:'
+      Caption = '@MB:RaystepDivisor'
     end
     object Button13: TButton
       Left = 83
       Top = 76
       Width = 67
       Height = 21
-      Hint = 
-        'Make an image selection with the mouse then recalculate this sel' +
-        'ection'#13#10'with the current parameters.'#13#10'The hardshadows and the DE' +
-        'AO will also be calculated if selected, but'#13#10'other ambient shado' +
-        'ws must be recalculated again for the whole image.'#13#10'Also "normal' +
-        's on Zbuffer" has to be recalculated, if calculated before.'
-      Caption = 'Calculate'
+      Hint = '@MB:MakeAnImageSelectionWithThe'
+      Caption = '@MB:Calculate'
       Enabled = False
       ParentShowHint = False
       ShowHint = True
@@ -188,9 +181,9 @@ object PostProForm: TPostProForm
       Top = 7
       Width = 131
       Height = 17
-      Hint = 'To reduce overstepping'
+      Hint = '@MB:ToReduceOverstepping'
       Alignment = taLeftJustify
-      Caption = 'Keep only nearer parts:'
+      Caption = '@MB:KeepOnlyNearerParts'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -210,7 +203,7 @@ object PostProForm: TPostProForm
       Width = 58
       Height = 17
       Alignment = taLeftJustify
-      Caption = 'Enable'
+      Caption = '@MB:Enable'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -229,9 +222,9 @@ object PostProForm: TPostProForm
       Top = 26
       Width = 156
       Height = 17
-      Hint = 'Helpful if you want to redo an unwanted drawing for example.'
+      Hint = '@MB:HelpfulIfYouWantToRedo'
       Alignment = taLeftJustify
-      Caption = 'Don'#39't change AmbSh+dFog:'
+      Caption = '@MB:DonTChangeAmbShDFog'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -274,7 +267,7 @@ object PostProForm: TPostProForm
       Width = 133
       Height = 26
       AutoSize = False
-      Caption = 'Warning: Must recalculate the whole image to undo it!'
+      Caption = '@MB:WarningMustRecalculateTheWholeImage'
       WordWrap = True
     end
     object Button14: TButton
@@ -282,10 +275,8 @@ object PostProForm: TPostProForm
       Top = 37
       Width = 83
       Height = 21
-      Hint = 
-        'Use only as second option if the normals (the surface direction ' +
-        'for lighting) seems to be crappy.'
-      Caption = 'Calculate now'
+      Hint = '@MB:UseOnlyAsSecondOptionIf'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -297,7 +288,7 @@ object PostProForm: TPostProForm
       Top = 9
       Width = 191
       Height = 17
-      Caption = 'Do this function automatically'
+      Caption = '@MB:DoThisFunctionAutomatically'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -326,26 +317,22 @@ object PostProForm: TPostProForm
       Top = 117
       Width = 36
       Height = 13
-      Caption = 'Radius:'
+      Caption = '@MB:Radius'
     end
     object Label8: TLabel
       Left = 11
       Top = 37
       Width = 84
       Height = 13
-      Caption = 'Max. length calc.:'
+      Caption = '@MB:MaxLengthCalc'
     end
     object Button3: TButton
       Left = 12
       Top = 170
       Width = 83
       Height = 21
-      Hint = 
-        'Push the button to calculate the hardshadows from the selected l' +
-        'ights.'#13#10'Once calculated, the hardshadow must not be calculated a' +
-        'gain,'#13#10'unless the angle or the position of the light was changed' +
-        '.'
-      Caption = 'Calculate now'
+      Hint = '@MB:PushTheButtonToCalculateThe'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -357,8 +344,8 @@ object PostProForm: TPostProForm
       Top = 34
       Width = 41
       Height = 16
-      Hint = 'Resets a previous calculation of this lights hard shadow.'
-      Caption = 'reset'
+      Hint = '@MB:ResetsAPreviousCalculationOfThis'
+      Caption = '@MB:Reset'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -370,8 +357,8 @@ object PostProForm: TPostProForm
       Top = 57
       Width = 41
       Height = 17
-      Hint = 'Resets a previous calculation of this lights hard shadow.'
-      Caption = 'reset'
+      Hint = '@MB:ResetsAPreviousCalculationOfThis'
+      Caption = '@MB:Reset'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -383,8 +370,8 @@ object PostProForm: TPostProForm
       Top = 80
       Width = 41
       Height = 17
-      Hint = 'Resets a previous calculation of this lights hard shadow.'
-      Caption = 'reset'
+      Hint = '@MB:ResetsAPreviousCalculationOfThis'
+      Caption = '@MB:Reset'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -396,8 +383,8 @@ object PostProForm: TPostProForm
       Top = 103
       Width = 41
       Height = 17
-      Hint = 'Resets a previous calculation of this lights hard shadow.'
-      Caption = 'reset'
+      Hint = '@MB:ResetsAPreviousCalculationOfThis'
+      Caption = '@MB:Reset'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 4
@@ -409,8 +396,8 @@ object PostProForm: TPostProForm
       Top = 126
       Width = 41
       Height = 17
-      Hint = 'Resets a previous calculation of this lights hard shadow.'
-      Caption = 'reset'
+      Hint = '@MB:ResetsAPreviousCalculationOfThis'
+      Caption = '@MB:Reset'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 5
@@ -422,8 +409,8 @@ object PostProForm: TPostProForm
       Top = 149
       Width = 41
       Height = 17
-      Hint = 'Resets a previous calculation of this lights hard shadow.'
-      Caption = 'reset'
+      Hint = '@MB:ResetsAPreviousCalculationOfThis'
+      Caption = '@MB:Reset'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
@@ -434,11 +421,8 @@ object PostProForm: TPostProForm
       Top = 174
       Width = 122
       Height = 17
-      Hint = 
-        'Sets automatically the correspondending light function to cosine' +
-        ','#13#10'when the shadow is calculated.'#13#10'The cosine and the quadratic ' +
-        'cosine function works well with the shadow.'
-      Caption = 'Set lightfunc to cosine'
+      Hint = '@MB:SetsAutomaticallyTheCorrespondendingLightFunctio'
+      Caption = '@MB:SetLightfuncToCosine'
       Checked = True
       ParentShowHint = False
       ShowHint = True
@@ -450,7 +434,7 @@ object PostProForm: TPostProForm
       Top = 34
       Width = 54
       Height = 17
-      Caption = 'Light 1'
+      Caption = '@MB:Light1'
       Checked = True
       State = cbChecked
       TabOrder = 8
@@ -461,8 +445,8 @@ object PostProForm: TPostProForm
       Top = 94
       Width = 72
       Height = 17
-      Hint = 'To calculate a better hard shadow, only if 1 HS selected!'
-      Caption = 'Softer H.S.'
+      Hint = '@MB:ToCalculateABetterHardShadow'
+      Caption = '@MB:SofterHS'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 9
@@ -472,7 +456,7 @@ object PostProForm: TPostProForm
       Top = 57
       Width = 54
       Height = 17
-      Caption = 'Light 2'
+      Caption = '@MB:Light2'
       TabOrder = 10
       OnClick = CheckBox2Click
     end
@@ -481,7 +465,7 @@ object PostProForm: TPostProForm
       Top = 80
       Width = 54
       Height = 17
-      Caption = 'Light 3'
+      Caption = '@MB:Light3'
       TabOrder = 11
       OnClick = CheckBox2Click
     end
@@ -490,7 +474,7 @@ object PostProForm: TPostProForm
       Top = 103
       Width = 54
       Height = 17
-      Caption = 'Light 4'
+      Caption = '@MB:Light4'
       TabOrder = 12
       OnClick = CheckBox2Click
     end
@@ -499,7 +483,7 @@ object PostProForm: TPostProForm
       Top = 126
       Width = 54
       Height = 17
-      Caption = 'Light 5'
+      Caption = '@MB:Light5'
       TabOrder = 13
       OnClick = CheckBox2Click
     end
@@ -508,7 +492,7 @@ object PostProForm: TPostProForm
       Top = 149
       Width = 54
       Height = 17
-      Caption = 'Light 6'
+      Caption = '@MB:Light6'
       TabOrder = 14
       OnClick = CheckBox2Click
     end
@@ -518,10 +502,8 @@ object PostProForm: TPostProForm
       Top = 6
       Width = 182
       Height = 17
-      Hint = 
-        'If enabled, the choosen hard shadows will be calculated'#13#10'automat' +
-        'ically after the main rendering.'#13#10'Choose the options before.'
-      Caption = 'Calculate H.S. automatically'
+      Hint = '@MB:IfEnabledTheChoosenHardShadows'
+      Caption = '@MB:CalculateHSAutomatically'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -540,10 +522,7 @@ object PostProForm: TPostProForm
       Top = 56
       Width = 31
       Height = 21
-      Hint = 
-        'A multiplier that defines the miximal length of the hard shadow ' +
-        'calculation,'#13#10'relative to some image size parameters (default = ' +
-        '1).'#13#10'Increase the value if shadows of far objects are missing.'
+      Hint = '@MB:AMultiplierThatDefinesTheMiximal'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 16
@@ -554,7 +533,7 @@ object PostProForm: TPostProForm
       Top = 133
       Width = 31
       Height = 21
-      Hint = 'Bigger radius means softer shadows'
+      Hint = '@MB:BiggerRadiusMeansSofterShadows'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 17
@@ -575,11 +554,7 @@ object PostProForm: TPostProForm
       Top = 15
       Width = 20
       Height = 20
-      Hint = 
-        'SSAO15:    Ambient shadow based on the ZBuffer.'#13#10'SSAO24:    Uses' +
-        ' 24 bits of the ZBuffer.'#13#10'SSAO24r:   Uses random distributions f' +
-        'or less artifacts.'#13#10'DEAO:        Ambient shadow based on distanc' +
-        'e estimates'#13#10'(advanced in animations)'
+      Hint = '@MB:SSAO15AmbientShadowBasedOnThe'
       Alignment = taCenter
       AutoSize = False
       Caption = '?'
@@ -597,7 +572,7 @@ object PostProForm: TPostProForm
       Top = 142
       Width = 83
       Height = 21
-      Caption = 'Calculate now'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = False
       TabOrder = 0
@@ -609,10 +584,8 @@ object PostProForm: TPostProForm
       Top = 9
       Width = 182
       Height = 17
-      Hint = 
-        'If enabled, the ambient shadows will be calculated'#13#10'automaticall' +
-        'y after the main rendering.'#13#10'Choose the options before.'
-      Caption = 'Calculate A.S. automatically'
+      Hint = '@MB:IfEnabledTheAmbientShadowsWill'
+      Caption = '@MB:CalculateASAutomatically'
       Checked = True
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
@@ -637,10 +610,10 @@ object PostProForm: TPostProForm
       ShowHint = True
       TabOrder = 2
       Tabs.Strings = (
-        'SSAO15'
-        'SSAO24'
-        'SSAO24r'
-        'DEAO')
+        '@MB:SSAO15'
+        '@MB:SSAO24'
+        '@MB:SSAO24r'
+        '@MB:DEAO')
       TabIndex = 1
       OnChange = RadioGroup3Click
       object Label14: TLabel
@@ -649,7 +622,7 @@ object PostProForm: TPostProForm
         Width = 85
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Calculation count:'
+        Caption = '@MB:CalculationCount'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -663,7 +636,7 @@ object PostProForm: TPostProForm
         Top = 74
         Width = 29
         Height = 13
-        Caption = 'MaxL:'
+        Caption = '@MB:MaxL'
         Visible = False
       end
       object Label16: TLabel
@@ -671,7 +644,7 @@ object PostProForm: TPostProForm
         Top = 71
         Width = 27
         Height = 13
-        Caption = 'Rays:'
+        Caption = '@MB:Rays'
         Visible = False
       end
       object Label17: TLabel
@@ -689,7 +662,7 @@ object PostProForm: TPostProForm
         Width = 55
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Border size:'
+        Caption = '@MB:BorderSize'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -703,7 +676,7 @@ object PostProForm: TPostProForm
         Width = 73
         Height = 13
         Alignment = taRightJustify
-        Caption = 'Z/R Threshold:'
+        Caption = '@MB:ZRThreshold'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clWindowText
         Font.Height = -12
@@ -716,11 +689,9 @@ object PostProForm: TPostProForm
         Top = 51
         Width = 90
         Height = 17
-        Hint = 
-          'Let the threshold decrease the ambient shadow down to 0.'#13#10'Far st' +
-          'ructures are less affected by nearer structures.'
+        Hint = '@MB:LetTheThresholdDecreaseTheAmbient'
         Alignment = taLeftJustify
-        Caption = 'Threshold to 0:'
+        Caption = '@MB:ThresholdTo0'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 1
@@ -730,12 +701,9 @@ object PostProForm: TPostProForm
         Top = 30
         Width = 68
         Height = 33
-        Hint = 
-          'First step random:'#13#10'To avoid spotty artifacts on fomulas with ba' +
-          'd DE'#39's.'#13#10'For lower noise, use it with image downscaling and/or h' +
-          'igher raycounts.'#13#10'Can be used also together with dithering.'
+        Hint = '@MB:FirstStepRandomToAvoidSpotty'
         Alignment = taLeftJustify
-        Caption = 'First Step Random:'
+        Caption = '@MB:FirstStepRandomColon'
         Color = clBtnFace
         ParentColor = False
         ParentShowHint = False
@@ -761,10 +729,7 @@ object PostProForm: TPostProForm
         Top = 50
         Width = 36
         Height = 21
-        Hint = 
-          'Defines up to which angle the shadowing will be calculated.'#13#10'Low' +
-          'er values: Far structures are less affected by near structures,'#13 +
-          #10'this is advanced when the structures got lots of holes.'
+        Hint = '@MB:DefinesUpToWhichAngleThe'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 3
@@ -775,10 +740,7 @@ object PostProForm: TPostProForm
         Top = 67
         Width = 29
         Height = 21
-        Hint = 
-          'Scales the maximum length of the ambient rays to be calculated.'#13 +
-          #10'Use a value bigger than 1 to give more depth to the shadows,'#13#10'v' +
-          'alues below 1 gives more local shadows.'
+        Hint = '@MB:ScalesTheMaximumLengthOfThe'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 4
@@ -790,13 +752,7 @@ object PostProForm: TPostProForm
         Top = 28
         Width = 36
         Height = 21
-        Hint = 
-          'The calculation will be extended towards the outside the image w' +
-          'ith reflected objects.'#13#10'This might lead to less artifacts in ani' +
-          'mations, but stills can profit from it too.'#13#10'Value should be in ' +
-          'the range of 0 to 0.5 (max 0.9), it is the size relative to the ' +
-          'image'#13#10'width and height that is maximal calculated on the outsid' +
-          'e.'
+        Hint = '@MB:TheCalculationWillBeExtendedTowards'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 5
@@ -807,17 +763,13 @@ object PostProForm: TPostProForm
         Top = 27
         Width = 127
         Height = 33
-        Hint = 
-          'Option to dither the angle of rays for an image scaling of 1:2 o' +
-          'r 1:3.'#13#10'This leads to more precision and less spotty artifacts.'#13 +
-          #10'Caution: use only on the same image scaling, else you get dithe' +
-          'r artifacts.'
-        Caption = 'Dithering for scale:'
+        Hint = '@MB:OptionToDitherTheAngleOf'
+        Caption = '@MB:DitheringForScale'
         Color = clBtnFace
         Columns = 3
         ItemIndex = 0
         Items.Strings = (
-          'no'
+          '@MB:No'
           '1:2'
           '1:3')
         ParentBackground = False
@@ -832,9 +784,7 @@ object PostProForm: TPostProForm
         Top = 66
         Width = 18
         Height = 24
-        Hint = 
-          'Number of rays that will be calculated.'#13#10'The more the better but' +
-          ' slower, of course.'
+        Hint = '@MB:NumberOfRaysThatWillBe'
         Max = 3
         ParentShowHint = False
         Position = 1
@@ -848,7 +798,7 @@ object PostProForm: TPostProForm
         Top = 73
         Width = 16
         Height = 21
-        Hint = 'Calculate n times to reduce noise by averaging'
+        Hint = '@MB:CalculateNTimesToReduceNoise'
         Associate = Edit21
         Min = 1
         Max = 9
@@ -875,7 +825,7 @@ object PostProForm: TPostProForm
       Width = 32
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Depth:'
+      Caption = '@MB:DepthColon'
     end
     object Label12: TLabel
       Left = 29
@@ -883,7 +833,7 @@ object PostProForm: TPostProForm
       Width = 39
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Amount:'
+      Caption = '@MB:Amount'
     end
     object Label21: TLabel
       Left = 113
@@ -891,7 +841,7 @@ object PostProForm: TPostProForm
       Width = 53
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Absorption:'
+      Caption = '@MB:Absorption'
     end
     object Label22: TLabel
       Left = 86
@@ -899,7 +849,7 @@ object PostProForm: TPostProForm
       Width = 80
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Refractive index:'
+      Caption = '@MB:RefractiveIndex'
     end
     object Label23: TLabel
       Left = 91
@@ -907,7 +857,7 @@ object PostProForm: TPostProForm
       Width = 75
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Light scattering:'
+      Caption = '@MB:LightScattering'
     end
     object Button15: TButton
       Tag = 1
@@ -915,10 +865,8 @@ object PostProForm: TPostProForm
       Top = 182
       Width = 83
       Height = 21
-      Hint = 
-        'Make sure that the '#39'Calc... automatic.'#39' options for the hard'#13#10'an' +
-        'd ambient shadows are set, if you wish to consider them.'
-      Caption = 'Calculate now'
+      Hint = '@MB:MakeSureThatTheCalcAutomatic'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -930,11 +878,8 @@ object PostProForm: TPostProForm
       Top = 9
       Width = 204
       Height = 17
-      Hint = 
-        'If enabled, the reflections will be calculated automatically aft' +
-        'er the'#13#10'previous calculations.'#13#10'Keep in mind that light changing' +
-        's afterwards will reset this calculation!'
-      Caption = 'Calculate R. (+ T.) automatically'
+      Hint = '@MB:IfEnabledTheReflectionsWillBe'
+      Caption = '@MB:CalculateRTAutomatically'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -951,11 +896,8 @@ object PostProForm: TPostProForm
       Top = 162
       Width = 207
       Height = 17
-      Hint = 
-        'Option to calculate only a part of the image for a faster previe' +
-        'w.'#13#10'Make a selection in the image with the mouse before calculat' +
-        'ing.'
-      Caption = 'Calculate only a selection in the image'
+      Hint = '@MB:OptionToCalculateOnlyAPart'
+      Caption = '@MB:CalculateOnlyASelectionInThe'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 2
@@ -966,10 +908,8 @@ object PostProForm: TPostProForm
       Top = 66
       Width = 135
       Height = 17
-      Hint = 
-        'If enabled the specular amount is split into inside going ray an' +
-        'd reflection.'
-      Caption = 'Calculate transparency:'
+      Hint = '@MB:IfEnabledTheSpecularAmountIs'
+      Caption = '@MB:CalculateTransparency'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -979,10 +919,8 @@ object PostProForm: TPostProForm
       Top = 89
       Width = 66
       Height = 17
-      Hint = 
-        'Calculate transparency only on dIFS formulas (for DE combination' +
-        's with escapetimes)'
-      Caption = 'Only dIFS'
+      Hint = '@MB:CalculateTransparencyOnlyOnDIFSFormulas'
+      Caption = '@MB:OnlyDIFS'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 4
@@ -1003,9 +941,7 @@ object PostProForm: TPostProForm
       Top = 88
       Width = 52
       Height = 21
-      Hint = 
-        'Absolute absorption amount inside the material (high zooms need ' +
-        'big values). The diffuse object color is also for inside.'
+      Hint = '@MB:AbsoluteAbsorptionAmountInsideTheMaterial'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
@@ -1016,9 +952,7 @@ object PostProForm: TPostProForm
       Top = 112
       Width = 52
       Height = 21
-      Hint = 
-        'Refractive index of the material, air~1 water~1.33 glass~1.5 dia' +
-        'mond~2.4'
+      Hint = '@MB:RefractiveIndexOfTheMaterialAir'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 7
@@ -1029,7 +963,7 @@ object PostProForm: TPostProForm
       Top = 136
       Width = 52
       Height = 21
-      Hint = 'Light scattering inside the material'
+      Hint = '@MB:LightScatteringInsideTheMaterial'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 8
@@ -1040,9 +974,7 @@ object PostProForm: TPostProForm
       Top = 36
       Width = 37
       Height = 21
-      Hint = 
-        'Total amount of reflectivity + transparency, it will be multipli' +
-        'ed with the local object specular color + transparency amount.'
+      Hint = '@MB:TotalAmountOfReflectivityTransparencyIt'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 9
@@ -1065,14 +997,56 @@ object PostProForm: TPostProForm
     Top = 1115
     Width = 255
     Height = 21
-    Hint = 'Click to hide/show'
+    Hint = '@MB:ClickToHideShow'
     Align = alTop
     AllowAllUp = True
     GroupIndex = 7
-    Caption = ' Noise Filter'
+    Caption = '@MB:NoiseFilter'
     ParentShowHint = False
     ShowHint = True
     OnClick = NoiseFilterBtnClick
+  end
+  object CloudsBtn: TSpeedButton
+    Left = 0
+    Top = 1220
+    Width = 255
+    Height = 21
+    Hint = '@MB:ClickToHideShow'
+    Align = alTop
+    AllowAllUp = True
+    GroupIndex = 8
+    Caption = '@MB:Clouds'
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = CloudsBtnClick
+  end
+  object MaterialBtn: TSpeedButton
+    Left = 0
+    Top = 1353
+    Width = 255
+    Height = 21
+    Hint = '@MB:ClickToHideShow'
+    Align = alTop
+    AllowAllUp = True
+    GroupIndex = 9
+    Caption = '@MB:Material'
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = MaterialBtnClick
+  end
+  object FinishBtn: TSpeedButton
+    Left = 0
+    Top = 1487
+    Width = 255
+    Height = 21
+    Hint = '@MB:ClickToHideShow'
+    Align = alTop
+    AllowAllUp = True
+    GroupIndex = 10
+    Caption = '@MB:Finishing'
+    ParentShowHint = False
+    ShowHint = True
+    OnClick = FinishBtnClick
   end
   object DepthOfFieldPnl: TPanel
     Left = 0
@@ -1089,14 +1063,14 @@ object PostProForm: TPostProForm
       Width = 45
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z1 sharp:'
+      Caption = '@MB:Z1Sharp'
     end
     object Label18: TLabel
       Left = 106
       Top = 157
       Width = 115
       Height = 39
-      Caption = 'The effect accumulates, reset for a new calculation.'
+      Caption = '@MB:TheEffectAccumulatesResetForA'
       WordWrap = True
     end
     object Label19: TLabel
@@ -1105,7 +1079,7 @@ object PostProForm: TPostProForm
       Width = 45
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Z2 sharp:'
+      Caption = '@MB:Z2Sharp'
     end
     object Label2: TLabel
       Left = 138
@@ -1113,7 +1087,7 @@ object PostProForm: TPostProForm
       Width = 48
       Height = 13
       Alignment = taRightJustify
-      Caption = 'ClippingR:'
+      Caption = '@MB:ClippingR'
     end
     object Label5: TLabel
       Left = 33
@@ -1121,18 +1095,15 @@ object PostProForm: TPostProForm
       Width = 43
       Height = 13
       Alignment = taRightJustify
-      Caption = 'Aperture:'
+      Caption = '@MB:Aperture'
     end
     object Button1: TButton
       Left = 11
       Top = 160
       Width = 83
       Height = 21
-      Hint = 
-        'This effect is accumulated on each button press, you can reset b' +
-        'y pressing'#13#10'the '#39'Reset'#39' button - but reflections would also be u' +
-        'ndone!'
-      Caption = 'Calculate now'
+      Hint = '@MB:ThisEffectIsAccumulatedOnEach'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -1144,10 +1115,8 @@ object PostProForm: TPostProForm
       Top = 59
       Width = 85
       Height = 21
-      Hint = 
-        'Press button and afterwards the object part'#13#10'in the image, that ' +
-        'should be sharp.'
-      Caption = 'Get Z2'
+      Hint = '@MB:PressButtonAndAfterwardsTheObject'
+      Caption = '@MB:GetZ2'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -1158,7 +1127,7 @@ object PostProForm: TPostProForm
       Top = 60
       Width = 18
       Height = 17
-      Hint = 'Copy Z1 to Z2 to get a focus point'
+      Hint = '@MB:CopyZ1ToZ2ToGet'
       Caption = '->'
       ParentShowHint = False
       ShowHint = True
@@ -1171,10 +1140,8 @@ object PostProForm: TPostProForm
       Top = 34
       Width = 85
       Height = 21
-      Hint = 
-        'Press button and afterwards the object part'#13#10'in the image, that ' +
-        'should be sharp.'
-      Caption = 'Get Z1'
+      Hint = '@MB:PressButtonAndAfterwardsTheObject'
+      Caption = '@MB:GetZ1'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
@@ -1186,10 +1153,8 @@ object PostProForm: TPostProForm
       Top = 9
       Width = 182
       Height = 17
-      Hint = 
-        'If enabled, the DoF effect will be calculated'#13#10'automatically aft' +
-        'er the previous calculations.'#13#10'Choose the options before.'
-      Caption = 'Calculate DoF automatically'
+      Hint = '@MB:IfEnabledTheDoFEffectWill'
+      Caption = '@MB:CalculateDoFAutomatically'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1208,9 +1173,7 @@ object PostProForm: TPostProForm
       Top = 34
       Width = 62
       Height = 21
-      Hint = 
-        'The (first) focus point.'#13#10'The value is relative to the viewers Z' +
-        'start value,'#13#10'normalized to the imagewidth.'
+      Hint = '@MB:TheFirstFocusPointTheValue'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -1227,10 +1190,7 @@ object PostProForm: TPostProForm
       Top = 59
       Width = 62
       Height = 21
-      Hint = 
-        'Second focus point, if different from the first one'#13#10'you get a f' +
-        'ocus line instead of a focus point.'#13#10'(physically not very realis' +
-        'tic, but good to have) '
+      Hint = '@MB:SecondFocusPointIfDifferentFrom'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -1247,9 +1207,7 @@ object PostProForm: TPostProForm
       Top = 88
       Width = 49
       Height = 21
-      Hint = 
-        'The blur radius will be limited at this value.'#13#10'Can speedup rend' +
-        'ering when the radius becomes very huge in some image parts.'
+      Hint = '@MB:TheBlurRadiusWillBeLimited'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -1266,13 +1224,7 @@ object PostProForm: TPostProForm
       Top = 88
       Width = 50
       Height = 21
-      Hint = 
-        'The aperture on the Zsharp point, it is not the aperture from th' +
-        'e camera!'#13#10'Multply this value with the (free choosen) distance f' +
-        'rom the Zsharp point'#13#10'to the camera and divide it by the focal l' +
-        'ength of the cameras lense to get'#13#10'the cameras aperture.'#13#10'So dow' +
-        'nscale this value if you don'#39't expect the cameras size that big.' +
-        #13#10'Larger values means more blur.'
+      Hint = '@MB:TheApertureOnTheZsharpPoint'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -1289,11 +1241,8 @@ object PostProForm: TPostProForm
       Top = 114
       Width = 101
       Height = 37
-      Hint = 
-        '2 or 3 passes gives a better strong bluring in front of the focu' +
-        's point.'#13#10'1 pass leads to a disc bokey, more passes yields to a ' +
-        'gaussian like bokey.'
-      Caption = 'Passes'
+      Hint = '@MB:N2Or3PassesGivesA'
+      Caption = '@MB:Passes'
       Columns = 3
       ItemIndex = 0
       Items.Strings = (
@@ -1309,15 +1258,13 @@ object PostProForm: TPostProForm
       Top = 114
       Width = 129
       Height = 37
-      Hint = 
-        'Sorted calculation gives better results.'#13#10'Forward may be an opti' +
-        'on if Sorted is failing because of memory problems or so.'
-      Caption = 'Calculation'
+      Hint = '@MB:SortedCalculationGivesBetterResultsForward'
+      Caption = '@MB:Calculation'
       Columns = 2
       ItemIndex = 0
       Items.Strings = (
-        'Sorted'
-        'Forward')
+        '@MB:Sorted'
+        '@MB:Forward')
       ParentShowHint = False
       ShowHint = True
       TabOrder = 10
@@ -1337,17 +1284,15 @@ object PostProForm: TPostProForm
       Top = 37
       Width = 46
       Height = 13
-      Caption = 'Strength:'
+      Caption = '@MB:Strength'
     end
     object NoiseAutoCbx: TCheckBox
       Left = 27
       Top = 9
       Width = 212
       Height = 17
-      Hint = 
-        'Every new picture of the main window is filtered (the saved one ' +
-        'too).'
-      Caption = 'Filter new pictures automatically'
+      Hint = '@MB:EveryNewPictureOfTheMain'
+      Caption = '@MB:FilterNewPicturesAutomatically'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 0
@@ -1358,9 +1303,7 @@ object PostProForm: TPostProForm
       Top = 34
       Width = 40
       Height = 21
-      Hint = 
-        'How strong the noise is that is removed (1 to 30, as GIMP'#39's "Den' +
-        'oise DCT").'#13#10'Higher removes more noise, and more fine detail.'
+      Hint = '@MB:HowStrongTheNoiseIsThat'
       ParentShowHint = False
       ShowHint = True
       TabOrder = 1
@@ -1371,7 +1314,7 @@ object PostProForm: TPostProForm
       Top = 59
       Width = 83
       Height = 21
-      Caption = 'Filter now'
+      Caption = '@MB:FilterNow'
       TabOrder = 2
       OnClick = NoiseFilterNowBtnClick
     end
@@ -1380,7 +1323,7 @@ object PostProForm: TPostProForm
       Top = 37
       Width = 115
       Height = 13
-      Caption = 'DCT denoising (GIMP)'
+      Caption = '@MB:DCTDenoisingGIMP'
     end
   end
   object GroupBox4: TGroupBox
@@ -1388,7 +1331,7 @@ object PostProForm: TPostProForm
     Top = 1139
     Width = 449
     Height = 65
-    Caption = 'LIGHT STROKES'
+    Caption = '@MB:LIGHTSTROKES'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -12
@@ -1402,7 +1345,7 @@ object PostProForm: TPostProForm
       Top = 39
       Width = 49
       Height = 17
-      Caption = 'Light1'
+      Caption = '@MB:Light12'
       Checked = True
       State = cbChecked
       TabOrder = 0
@@ -1412,7 +1355,7 @@ object PostProForm: TPostProForm
       Top = 39
       Width = 49
       Height = 17
-      Caption = 'Light2'
+      Caption = '@MB:Light22'
       TabOrder = 1
     end
     object CheckBox15: TCheckBox
@@ -1420,7 +1363,7 @@ object PostProForm: TPostProForm
       Top = 39
       Width = 49
       Height = 17
-      Caption = 'Light3'
+      Caption = '@MB:Light32'
       TabOrder = 2
     end
     object CheckBox16: TCheckBox
@@ -1428,7 +1371,7 @@ object PostProForm: TPostProForm
       Top = 39
       Width = 49
       Height = 17
-      Caption = 'Light4'
+      Caption = '@MB:Light42'
       TabOrder = 3
     end
     object CheckBox17: TCheckBox
@@ -1436,7 +1379,7 @@ object PostProForm: TPostProForm
       Top = 39
       Width = 49
       Height = 17
-      Caption = 'Light5'
+      Caption = '@MB:Light52'
       TabOrder = 4
     end
     object CheckBox18: TCheckBox
@@ -1444,7 +1387,7 @@ object PostProForm: TPostProForm
       Top = 39
       Width = 49
       Height = 17
-      Caption = 'Light6'
+      Caption = '@MB:Light62'
       TabOrder = 5
     end
     object Button17: TButton
@@ -1452,7 +1395,7 @@ object PostProForm: TPostProForm
       Top = 16
       Width = 83
       Height = 21
-      Caption = 'Calculate now'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = False
       TabOrder = 6
@@ -1463,7 +1406,7 @@ object PostProForm: TPostProForm
       Top = 11
       Width = 272
       Height = 17
-      Caption = 'Calculate random light strokes automatically'
+      Caption = '@MB:CalculateRandomLightStrokesAutomatically'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1491,7 +1434,7 @@ object PostProForm: TPostProForm
     Top = 1150
     Width = 449
     Height = 42
-    Caption = 'Ambient light'
+    Caption = '@MB:AmbientLight'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -12
@@ -1515,7 +1458,7 @@ object PostProForm: TPostProForm
       Top = 16
       Width = 83
       Height = 21
-      Caption = 'Calculate now'
+      Caption = '@MB:CalculateNow'
       TabOrder = 0
       OnClick = Button20Click
     end
@@ -1525,11 +1468,8 @@ object PostProForm: TPostProForm
       Top = 11
       Width = 131
       Height = 17
-      Hint = 
-        'If enabled, the reflections will be calculated automatically aft' +
-        'er the'#13#10'previous calculations.'#13#10'Keep in mind that light changing' +
-        's afterwards will reset this calculation!'
-      Caption = 'Calc. R. automatic.'
+      Hint = '@MB:IfEnabledTheReflectionsWillBe'
+      Caption = '@MB:CalcRAutomatic'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -12
@@ -1547,7 +1487,7 @@ object PostProForm: TPostProForm
     Top = 1150
     Width = 351
     Height = 42
-    Caption = 'DOUBLE IMAGESIZE'
+    Caption = '@MB:DOUBLEIMAGESIZE'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -12
@@ -1561,7 +1501,7 @@ object PostProForm: TPostProForm
       Top = 16
       Width = 83
       Height = 21
-      Caption = 'Calculate now'
+      Caption = '@MB:CalculateNow'
       ParentShowHint = False
       ShowHint = False
       TabOrder = 0
@@ -1572,7 +1512,7 @@ object PostProForm: TPostProForm
       Top = 15
       Width = 222
       Height = 17
-      Caption = 'Double the imagesize automatically'
+      Caption = '@MB:DoubleTheImagesizeAutomatically'
       Color = clBtnFace
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -1730,5 +1670,517 @@ object PostProForm: TPostProForm
       FF1F000000000000FF8F000000000000FFC7000000000000FFE3000000000000
       FFF8000000000000FFFF00000000000000000000000000000000000000000000
       000000000000}
+  end
+  object CloudsPnl: TPanel
+    Left = 0
+    Top = 1241
+    Width = 255
+    Height = 112
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 11
+    Visible = False
+    object CloudsCbx: TCheckBox
+      Left = 27
+      Top = 9
+      Width = 212
+      Height = 17
+      Hint = '@MB:CloudsOverThePictureALayer'
+      Caption = '@MB:PaintClouds'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      OnClick = CloudsCbxClick
+    end
+    object CloudLayerLbl: TLabel
+      Left = 11
+      Top = 37
+      Width = 40
+      Height = 13
+      Caption = '@MB:Layer'
+    end
+    object CloudAxisCB: TComboBox
+      Left = 60
+      Top = 34
+      Width = 40
+      Height = 21
+      Hint = '@MB:TheAxisTheCloudLayerLies'
+      Style = csDropDownList
+      ItemIndex = 1
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      Text = 'Y'
+      Items.Strings = (
+        'X'
+        'Y'
+        'Z')
+    end
+    object CloudFromEdit: TEdit
+      Left = 103
+      Top = 34
+      Width = 66
+      Height = 21
+      Hint = '@MB:TheAxisTheCloudLayerLies'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+      Text = '-1'
+    end
+    object CloudToEdit: TEdit
+      Left = 172
+      Top = 34
+      Width = 66
+      Height = 21
+      Hint = '@MB:TheAxisTheCloudLayerLies'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      Text = '-1.5'
+    end
+    object CloudDensityLbl: TLabel
+      Left = 11
+      Top = 63
+      Width = 40
+      Height = 13
+      Caption = '@MB:Density'
+    end
+    object CloudDensityEdit: TEdit
+      Left = 60
+      Top = 60
+      Width = 40
+      Height = 21
+      Hint = '@MB:HowThickTheCloudsAre1'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 4
+      Text = '1'
+    end
+    object CloudCoverLbl: TLabel
+      Left = 108
+      Top = 63
+      Width = 40
+      Height = 13
+      Caption = '@MB:Cover'
+    end
+    object CloudCoverEdit: TEdit
+      Left = 172
+      Top = 60
+      Width = 40
+      Height = 21
+      Hint = '@MB:HowThickTheCloudsAre1'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 5
+      Text = '0.5'
+    end
+    object CloudSizeLbl: TLabel
+      Left = 11
+      Top = 89
+      Width = 40
+      Height = 13
+      Caption = '@MB:Size2'
+    end
+    object CloudSizeEdit: TEdit
+      Left = 60
+      Top = 86
+      Width = 40
+      Height = 21
+      Hint = '@MB:TheSizeOfTheCloudsFeatures'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 6
+      Text = '0.5'
+    end
+    object CloudColBtn: TSpeedButton
+      Left = 106
+      Top = 85
+      Width = 23
+      Height = 23
+      Hint = '@MB:TheSizeOfTheCloudsFeatures'
+      Flat = True
+      ParentShowHint = False
+      ShowHint = True
+      OnClick = CloudColBtnClick
+    end
+    object CloudsNowBtn: TButton
+      Left = 140
+      Top = 86
+      Width = 98
+      Height = 21
+      Hint = '@MB:PaintsThePictureAgainWithThe'
+      Caption = '@MB:PaintNow'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 7
+      OnClick = CloudsNowBtnClick
+    end
+  end
+  object MaterialPnl: TPanel
+    Left = 0
+    Top = 1374
+    Width = 255
+    Height = 192
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 12
+    Visible = False
+    object MaterialCbx: TCheckBox
+      Left = 27
+      Top = 9
+      Width = 212
+      Height = 17
+      Hint = '@MB:TheFractalSSurfaceMaterialOn'
+      Caption = '@MB:SurfaceMaterial'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      OnClick = MaterialCbxClick
+    end
+    object FresnelLbl: TLabel
+      Left = 11
+      Top = 37
+      Width = 50
+      Height = 13
+      Caption = '@MB:Fresnel'
+    end
+    object FresnelEdit: TEdit
+      Left = 90
+      Top = 34
+      Width = 44
+      Height = 21
+      Hint = '@MB:Fresnel0To1MoreReflection'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      Text = '0'
+    end
+    object IridLbl: TLabel
+      Left = 11
+      Top = 63
+      Width = 50
+      Height = 13
+      Caption = '@MB:Iridescence'
+    end
+    object IridEdit: TEdit
+      Left = 90
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:Iridescence0To1TheColours'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+      Text = '0'
+    end
+    object IridShiftEdit: TEdit
+      Left = 140
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:Iridescence0To1TheColours'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      Text = '0'
+    end
+    object GlowLbl: TLabel
+      Left = 11
+      Top = 89
+      Width = 50
+      Height = 13
+      Caption = '@MB:Glow'
+    end
+    object GlowEdit: TEdit
+      Left = 90
+      Top = 86
+      Width = 44
+      Height = 21
+      Hint = '@MB:Glow0AndUpTheSurface'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 4
+      Text = '0'
+    end
+    object MaterialNowBtn: TButton
+      Left = 140
+      Top = 86
+      Width = 98
+      Height = 21
+      Hint = '@MB:PaintsThePictureAgainWithThe'
+      Caption = '@MB:PaintNow'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 5
+      OnClick = MaterialNowBtnClick
+    end
+    object ReliefLbl: TLabel
+      Left = 11
+      Top = 115
+      Width = 75
+      Height = 13
+      Caption = '@MB:Relief'
+    end
+    object DetailKindCB: TComboBox
+      Left = 90
+      Top = 112
+      Width = 94
+      Height = 21
+      Hint = '@MB:AFineReliefOnTheSurface'
+      Style = csDropDownList
+      ItemIndex = 0
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 6
+      Items.Strings = (
+        '@MB:Off'
+        '@MB:Rough'
+        '@MB:Stone'
+        '@MB:Grain')
+    end
+    object DetailStrEdit: TEdit
+      Left = 90
+      Top = 138
+      Width = 44
+      Height = 21
+      Hint = '@MB:StrengthSizeFractalUnitsAndFineness'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 7
+      Text = '0.8'
+    end
+    object DetailSizeEdit: TEdit
+      Left = 140
+      Top = 138
+      Width = 44
+      Height = 21
+      Hint = '@MB:StrengthSizeFractalUnitsAndFineness'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 8
+      Text = '0.02'
+    end
+    object DetailRoughEdit: TEdit
+      Left = 190
+      Top = 138
+      Width = 44
+      Height = 21
+      Hint = '@MB:StrengthSizeFractalUnitsAndFineness'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 9
+      Text = '0.5'
+    end
+    object DetailColLbl: TLabel
+      Left = 11
+      Top = 167
+      Width = 75
+      Height = 13
+      Caption = '@MB:ColourVariation'
+    end
+    object DetailColEdit: TEdit
+      Left = 90
+      Top = 164
+      Width = 44
+      Height = 21
+      Hint = '@MB:HowMuchTheSurfaceSColour'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 10
+      Text = '0'
+    end
+  end
+  object FinishPnl: TPanel
+    Left = 0
+    Top = 1508
+    Width = 255
+    Height = 218
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 13
+    Visible = False
+    object FinishCbx: TCheckBox
+      Left = 27
+      Top = 9
+      Width = 212
+      Height = 17
+      Hint = '@MB:ThePictureSFinishingAfterAll'
+      Caption = '@MB:FinishThePicture'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 0
+      OnClick = FinishCbxClick
+    end
+    object FinExpLbl: TLabel
+      Left = 11
+      Top = 37
+      Width = 75
+      Height = 13
+      Caption = '@MB:Exposure'
+    end
+    object FinExpEdit: TEdit
+      Left = 90
+      Top = 34
+      Width = 44
+      Height = 21
+      Hint = '@MB:ExposureInStops1TwiceAs'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 1
+      Text = '0'
+    end
+    object FinFilmicCbx: TCheckBox
+      Left = 142
+      Top = 36
+      Width = 100
+      Height = 17
+      Hint = '@MB:FilmicToneMappingBrightLightRolls'
+      Caption = '@MB:Filmic'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
+    end
+    object FinGlowLbl: TLabel
+      Left = 11
+      Top = 63
+      Width = 75
+      Height = 13
+      Caption = '@MB:Glow2'
+    end
+    object FinGlowEdit: TEdit
+      Left = 90
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:GlowAroundBrightLightStrengthReach'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 3
+      Text = '0'
+    end
+    object FinGlowRadEdit: TEdit
+      Left = 140
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:GlowAroundBrightLightStrengthReach'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 4
+      Text = '0.02'
+    end
+    object FinGlowThrEdit: TEdit
+      Left = 190
+      Top = 60
+      Width = 44
+      Height = 21
+      Hint = '@MB:GlowAroundBrightLightStrengthReach'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 5
+      Text = '0.8'
+    end
+    object FinContrastLbl: TLabel
+      Left = 11
+      Top = 89
+      Width = 75
+      Height = 13
+      Caption = '@MB:Contrast'
+    end
+    object FinContrastEdit: TEdit
+      Left = 90
+      Top = 86
+      Width = 44
+      Height = 21
+      Hint = '@MB:N1FlatterTo1StrongerContrast'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 6
+      Text = '0'
+    end
+    object FinSatLbl: TLabel
+      Left = 11
+      Top = 115
+      Width = 75
+      Height = 13
+      Caption = '@MB:Saturation'
+    end
+    object FinSatEdit: TEdit
+      Left = 90
+      Top = 112
+      Width = 44
+      Height = 21
+      Hint = '@MB:Colour0Grey1AsIt'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 7
+      Text = '1'
+    end
+    object FinWarmLbl: TLabel
+      Left = 11
+      Top = 141
+      Width = 75
+      Height = 13
+      Caption = '@MB:Warmth'
+    end
+    object FinWarmEdit: TEdit
+      Left = 90
+      Top = 138
+      Width = 44
+      Height = 21
+      Hint = '@MB:N1CoolerBluerTo1Warmer'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 8
+      Text = '0'
+    end
+    object FinVigLbl: TLabel
+      Left = 11
+      Top = 167
+      Width = 75
+      Height = 13
+      Caption = '@MB:Vignette'
+    end
+    object FinVigEdit: TEdit
+      Left = 90
+      Top = 164
+      Width = 44
+      Height = 21
+      Hint = '@MB:N0To1DarkerCorners'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 9
+      Text = '0'
+    end
+    object FinChromLbl: TLabel
+      Left = 11
+      Top = 193
+      Width = 75
+      Height = 13
+      Caption = '@MB:ColourFringes'
+    end
+    object FinChromEdit: TEdit
+      Left = 90
+      Top = 190
+      Width = 44
+      Height = 21
+      Hint = '@MB:N0To1RedAndBlue'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 10
+      Text = '0'
+    end
+    object FinishNowBtn: TButton
+      Left = 140
+      Top = 190
+      Width = 98
+      Height = 21
+      Hint = '@MB:PaintsThePictureAgainWithThe'
+      Caption = '@MB:PaintNow'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 11
+      OnClick = FinishNowBtnClick
+    end
   end
 end

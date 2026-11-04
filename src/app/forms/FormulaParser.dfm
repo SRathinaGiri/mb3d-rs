@@ -1,7 +1,7 @@
 object FormulaEditor: TFormulaEditor
   Left = 192
   Top = 127
-  Caption = 'Formula editor'
+  Caption = '@MB:FormulaEditor'
   ClientHeight = 643
   ClientWidth = 764
   Color = clBtnFace
@@ -28,18 +28,18 @@ object FormulaEditor: TFormulaEditor
       Style = tsButtons
       TabOrder = 0
       Tabs.Strings = (
-        '3D formula'
-        '3D analytic formula'
-        '4D formula'
-        '4D analytic formula'
-        'Addon formula')
+        '@MB:N3DFormula'
+        '@MB:N3DAnalyticFormula'
+        '@MB:N4DFormula'
+        '@MB:N4DAnalyticFormula'
+        '@MB:AddonFormula')
       TabIndex = 0
       object Label1: TLabel
         Left = 8
         Top = 32
         Width = 32
         Height = 13
-        Caption = 'Inputs:'
+        Caption = '@MB:Inputs'
       end
       object StaticText1: TStaticText
         Left = 56
@@ -98,7 +98,7 @@ object FormulaEditor: TFormulaEditor
         AutoSize = False
         BevelKind = bkFlat
         BevelOuter = bvRaised
-        Caption = 'Deriv'
+        Caption = '@MB:Deriv'
         TabOrder = 4
       end
       object StaticText10: TStaticText
@@ -110,7 +110,7 @@ object FormulaEditor: TFormulaEditor
         AutoSize = False
         BevelKind = bkFlat
         BevelOuter = bvRaised
-        Caption = 'Cx'
+        Caption = '@MB:Cx'
         TabOrder = 5
       end
       object StaticText11: TStaticText
@@ -122,7 +122,7 @@ object FormulaEditor: TFormulaEditor
         AutoSize = False
         BevelKind = bkFlat
         BevelOuter = bvRaised
-        Caption = 'Cy'
+        Caption = '@MB:Cy'
         TabOrder = 6
       end
       object StaticText12: TStaticText
@@ -134,7 +134,7 @@ object FormulaEditor: TFormulaEditor
         AutoSize = False
         BevelKind = bkFlat
         BevelOuter = bvRaised
-        Caption = 'Cz'
+        Caption = '@MB:Cz'
         TabOrder = 7
       end
       object StaticText13: TStaticText
@@ -146,7 +146,7 @@ object FormulaEditor: TFormulaEditor
         AutoSize = False
         BevelKind = bkFlat
         BevelOuter = bvRaised
-        Caption = 'Cw'
+        Caption = '@MB:Cw'
         TabOrder = 8
       end
       object StaticText14: TStaticText
@@ -158,7 +158,7 @@ object FormulaEditor: TFormulaEditor
         AutoSize = False
         BevelKind = bkFlat
         BevelOuter = bvRaised
-        Caption = 'Iteration'
+        Caption = '@MB:Iteration'
         TabOrder = 9
       end
     end
@@ -175,7 +175,7 @@ object FormulaEditor: TFormulaEditor
       Top = 16
       Width = 49
       Height = 13
-      Caption = 'Functions:'
+      Caption = '@MB:Functions'
     end
     object StaticText6: TStaticText
       Left = 72
@@ -274,11 +274,11 @@ object FormulaEditor: TFormulaEditor
       ''
       ''
       ''
-      'X'#39'  =  X + Cx'
-      'Y'#39'  =  Y + Cy'
-      'Z'#39'  =  Z + Cz'
-      'W'#39'  =  W + Cw'
-      'Deriv'#39'  =  Deriv * 2')
+      '@MB:XXCx'
+      '@MB:YYCy'
+      '@MB:ZZCz'
+      '@MB:WWCw'
+      '@MB:DerivDeriv2')
     ParentFont = False
     ScrollBars = ssBoth
     TabOrder = 3

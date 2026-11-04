@@ -291,7 +291,9 @@ fn rings(lv: &Levels, w: usize, szrt: f32) -> Vec<Ring> {
 }
 
 /// Calculates `amb_shadow` for all object pixels.
-pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &SsaoParams, threads: usize) {
+/// `progress`: the rows done, weighed by their surface pixels.
+#[allow(clippy::too_many_arguments)]
+pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64, p: &SsaoParams, threads: usize, progress: &(dyn Fn(usize, usize) + Sync)) {
     if w < 4 || h < 4 {
         return;
     }
@@ -302,6 +304,8 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
     let (lv, rings) = (&lv, &rings);
     let zps: Vec<i32> = gbuf.iter().map(|s| lv.zp_of(s)).collect();
     let zps = &zps;
+    let sw = &crate::render::RowWeights::surface(gbuf, w, h);
+    let finished = &std::sync::atomic::AtomicUsize::new(0);
     std::thread::scope(|sc| {
         let mut per: Vec<Vec<(usize, &mut [SiLight])>> = (0..threads).map(|_| Vec::new()).collect();
         for (i, r) in gbuf.chunks_mut(w).enumerate() {
@@ -387,6 +391,8 @@ pub fn ssao15(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64,
                         let s: f32 = ang[..32].iter().filter(|&&a| a > -1e9).map(|&a| (a * st2).atan()).sum();
                         si.amb_shadow = (s * smul).round_ties_even().clamp(0.0, 16383.0) as u16;
                     }
+                    let d = finished.fetch_add(sw.weight(y), std::sync::atomic::Ordering::Relaxed) + sw.weight(y);
+                    progress(d, sw.total());
                 }
             });
         }
@@ -432,7 +438,7 @@ mod tests {
                 g[y * w + x].zpos_fine = ((4_000_000.0 - pit) as u32) << 8;
             }
         }
-        ssao15(&mut g, w, h, 300.0, 0.001, &SsaoParams { bits15: true, ..Default::default() }, 2);
+        ssao15(&mut g, w, h, 300.0, 0.001, &SsaoParams { bits15: true, ..Default::default() }, 2, &|_, _| {});
         let center = g[32 * w + 32].amb_shadow;
         let far = g[5 * w + 5].amb_shadow;
         assert!(center > far, "center {center} far {far}");

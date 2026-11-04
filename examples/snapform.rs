@@ -6,6 +6,8 @@
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
 //! `file:TAG:PATH` (a file dialog answered with that file, e.g. `file:tiling:import:x.m3p`),
+//! `answer:TAG:BUTTON` (a message box answered, e.g. `answer:main:resume:6`),
+//! `watch:FORM:CONTROL:SECONDS` (its caption with the time, until it is empty),
 //! `key:FORM:CONTROL:HANDLER:KEYCODE` (a key down event), `hit:FORM:X:Y` (the control there),
 //! `mouse:FORM:X:Y[:right]` (a click at client coordinates, as from the mouse),
 //! `drag:FORM:X1:Y1:X2:Y2:STEPS` (a left drag), `wheel:FORM:X:Y:DELTA`,
@@ -13,8 +15,9 @@
 //! a running calculation; `lagwait:SECONDS` also prints the longest
 //! blocking of the window), `print:FORM:CONTROL` (its caption),
 //! `printtext:FORM:CONTROL` (its text), `rect:FORM:CONTROL` (where it is),
-//! `formpos:FORM` (the window's position and size) and `led`
-//! (the title bar LED of the main window).
+//! `formpos:FORM` (the window's position and size), `led`
+//! (the title bar LED of the main window) and `panic` (a crash, as the
+//! program's: crash.rs writes it down, the next start tells it).
 use mb3d::vcl::canvas::Canvas;
 use mb3d::vcl::App;
 
@@ -22,11 +25,16 @@ fn main() {
     let all: Vec<String> = std::env::args().skip(1).collect();
     let split = all.iter().position(|a| a == "--").unwrap_or(all.len());
     let (app_args, steps) = (&all[..split], all.get(split + 1..).unwrap_or(&[]));
+    // a crash and the log as the desktop program keeps them (the Log window shows it)
+    mb3d::crash::install("snapform");
+    mb3d::log::init("gui", true);
+    mb3d::log::session_start("snapform");
     let (mut ui, mut app) = mb3d::app::build(app_args).unwrap().unwrap();
     for s in steps {
         let p: Vec<&str> = s.split(':').collect();
         match p[0] {
             "show" => ui.show(p[1]),
+            "panic" => panic!("snapform: the panic step"),
             "page" => ui.set_active_page(p[1], p[2], p[3]),
             "click" => ui.click(p[1], p[2]),
             "text" => ui.set_text(p[1], p[2], &p[3..].join(":")),
@@ -36,6 +44,8 @@ fn main() {
             "post" => ui.post(p[1], p[2], p[3], mb3d::vcl::Ev::Click),
             // a file dialog's answer: `file:TAG:PATH` (the tag as the program opened it, e.g. tiling:import)
             "file" => ui.post("", &p[1..3].join(":"), "", mb3d::vcl::Ev::DialogResult(mb3d::vcl::DialogResult::File(Some(std::path::PathBuf::from(p[3..].join(":")))))),
+            // a message box's answer: `answer:TAG:BUTTON` (e.g. `answer:main:resume:6`, 6 Yes, 7 No)
+            "answer" => ui.post("", &p[1..p.len() - 1].join(":"), "", mb3d::vcl::Ev::DialogResult(mb3d::vcl::DialogResult::Button(p[p.len() - 1].parse().unwrap()))),
             "hit" => {
                 let fi = ui.form_index(p[1]).unwrap();
                 let f = &ui.forms[fi];
@@ -92,6 +102,35 @@ fn main() {
                     app.idle(&mut ui);
                     app.process(&mut ui);
                     std::thread::sleep(std::time::Duration::from_millis(50));
+                }
+            }
+            // `watch:FORM:CONTROL:SECONDS`: its caption every half second
+            // with the time, until it is empty (a calculation's stage line
+            // when it is done) or the seconds are over; with `:BAR`, also
+            // that progress bar's position in %
+            "watch" => {
+                let t = std::time::Instant::now();
+                let mut next = 0.0;
+                let mut seen = false;
+                while t.elapsed().as_secs_f64() < p[3].parse().unwrap() {
+                    app.idle(&mut ui);
+                    app.process(&mut ui);
+                    let c = ui.c(p[1], p[2]).caption.clone();
+                    let el = t.elapsed().as_secs_f64();
+                    if c.is_empty() && seen {
+                        println!("watch {el:.1} done");
+                        break;
+                    }
+                    seen |= !c.is_empty();
+                    if el >= next {
+                        let bar = p.get(4).map_or(String::new(), |b| {
+                            let max = ui.c(p[1], b).max.max(1) as f64;
+                            format!(" | bar {:.0} %", ui.position(p[1], b) as f64 * 100.0 / max)
+                        });
+                        println!("watch {el:.1} {c}{bar}");
+                        next += 0.5;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(20));
                 }
             }
             // `memreset`: the peak memory starts again from now (Linux)

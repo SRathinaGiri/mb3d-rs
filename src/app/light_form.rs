@@ -3,12 +3,12 @@
 //! ambient / fog / background pages.  Changes repaint the kept image
 //! without a new calculation, as in MB3D.
 
+use crate::vcl::lang::{tr, trf};
 use super::util::{argb, fts_single, parse_float, pti, rgb_of};
 use super::Mb3d;
 use crate::lighting::{Light, Lighting, PaletteColor};
 use crate::vcl::bitmap::Bitmap;
 use crate::vcl::{DialogResult, Ev, Event, MouseButton, Ui};
-use std::time::Instant;
 
 const F: &str = "LightAdjustForm";
 const PID180: f64 = std::f64::consts::PI / 180.0;
@@ -22,10 +22,10 @@ pub struct State {
     pub old_tb: [i64; 3],
     pub custom: Vec<Option<Lighting>>,
     pub custom_tb: Vec<[i64; 3]>,
-    pub repaint_pending: bool,
-    pub last_change: Instant,
     pub undo: Vec<Lighting>,
     pub undo_pos: usize,
+    /// the running relight shows an undo/redo step: it stores no undo entry
+    pub undo_relight: bool,
     pub hist: Vec<u32>,
     pub hist_ot: Vec<u32>,
     pub hist_int: Vec<u32>,
@@ -41,10 +41,9 @@ impl Default for State {
             old_tb: [0; 3],
             custom: vec![None; 10],
             custom_tb: vec![[50, 50, 90]; 10],
-            repaint_pending: false,
-            last_change: Instant::now(),
             undo: Vec::new(),
             undo_pos: 0,
+            undo_relight: false,
             hist: Vec::new(),
             hist_ot: Vec::new(),
             hist_int: Vec::new(),
@@ -474,7 +473,7 @@ fn set_preset(app: &mut Mb3d, ui: &mut Ui, nr: usize, keep_lights: bool) {
 // header <-> controls
 // ---------------------------------------------------------------------------
 
-fn swatch(c: [u8; 3]) -> Bitmap {
+pub(crate) fn swatch(c: [u8; 3]) -> Bitmap {
     let (w, h) = (15, 13);
     let mut b = Bitmap::new(w, h, 0xFFFF_00FF);
     for y in 0..13 {
@@ -696,21 +695,32 @@ pub fn put_light_in_header(app: &mut Mb3d, ui: &mut Ui) {
     l.gamma = pos(ui, "TrackBar18") as f32;
 }
 
-/// `TriggerRepaint`: repaints the kept image with the new lighting.
+/// `TriggerRepaint`: repaints the kept image with the new lighting at once,
+/// as MB3D does: the hard shadows as they were calculated, without
+/// reflections and depth of field.  As in MB3D, the post processing
+/// window's buttons calculate the shadows of a moved light, the
+/// reflections and the depth of field again (nothing follows by itself:
+/// on a big picture those passes take as long as the calculation).
 pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
     if app.main.calculating {
         return;
     }
+    app.light.undo_relight = false;
     app.make_scene(ui);
     if app.eng.base().is_some() {
-        app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
+        app.eng.start(super::engine::Job::Relight { scene: app.scene.clone() });
     }
+    super::navi_form::main_lighting_changed(app, ui);
     ui.cm(F, "ComboBox3").font = Some(crate::vcl::font::Font { color: ui.theme.text_disabled(), custom_color: true, ..Default::default() });
 }
 
 fn store_undo_light(app: &mut Mb3d) {
     let l = app.scene.lighting.clone();
     let st = &mut app.light;
+    // (as CompareMem in MB3D: an unchanged lighting is no new step)
+    if st.undo_pos > 0 && st.undo.get(st.undo_pos - 1).is_some_and(|u| format!("{u:?}") == format!("{l:?}")) {
+        return;
+    }
     st.undo.truncate(st.undo_pos);
     st.undo.push(l);
     if st.undo.len() > 40 {
@@ -743,7 +753,9 @@ pub fn calc_finished(app: &mut Mb3d, ui: &mut Ui) {
         app.light.hist_int = hi;
         repaint_col_histo(app, ui);
     }
-    store_undo_light(app);
+    if !std::mem::take(&mut app.light.undo_relight) {
+        store_undo_light(app);
+    }
     let n = app.light.undo.len();
     ui.set_enabled(F, "SpeedButton9", n > 1);
 }
@@ -837,6 +849,55 @@ fn light_page(l: &Light) -> usize {
 fn update_tab_header(app: &Mb3d, ui: &mut Ui) {
     let tabs: Vec<String> = (0..6).map(|i| if app.scene.lighting.lights[i].on { format!("Li.{} \u{00BB}", i + 1) } else { format!("Li.{}", i + 1) }).collect();
     ui.cm(F, "TabControl1").tabs = tabs;
+}
+
+/// `FindVecAngles`: the light angles (-LX, LY) whose light vector (rotated
+/// back with `m` when `abs`, i.e. relative to the object) is `sv`; None when
+/// the search ends farther than 1e-3 off.
+fn find_vec_angles(sv: &crate::math::Vec3, m: &crate::math::Mat3, abs: bool) -> Option<(f64, f64)> {
+    use std::f64::consts::PI;
+    let vec = |d1: f64, d2: f64| {
+        let v = crate::math::scale(crate::math::build_view_vector_dfov(d2, d1), -1.0);
+        crate::math::normalize(if abs { crate::math::rotate_vector_reverse(&v, m) } else { v })
+    };
+    let err = |v: crate::math::Vec3| (sv[0] - v[0]).abs() + (sv[1] - v[1]).abs() + (sv[2] - v[2]).abs();
+    let (mut dmin, mut b1, mut b2) = (1000.0, 0.0, 0.0);
+    for y in -5..=5 {
+        for x in -5..=5 {
+            let (d1, d2) = (x as f64 * PI * 0.2, y as f64 * PI * 0.2);
+            let dt = err(vec(d1, d2));
+            if dt < dmin {
+                (dmin, b1, b2) = (dt, d1, d2);
+            }
+        }
+    }
+    let mut i = 4000;
+    while i >= 0 && dmin >= 1e-7 {
+        // (a probe step gives the gradient, then the step from it)
+        let (mut d1, mut d2) = (b1, b2);
+        if i & 1 == 1 { d1 = b1 + dmin * 0.001 } else { d2 = b2 + dmin * 0.001 }
+        let dt = err(vec(d1, d2));
+        // (NonZero)
+        let q = dmin - dt;
+        let q = if q.abs() < 1e-40 { 1e-3 } else if q.abs() < 1e-3 { q.signum() * 1e-3 } else { q };
+        let dt = dmin * dmin * 0.001 / q;
+        if i & 1 == 1 { d1 = b1 + dt } else { d2 = b2 + dt }
+        let dt = err(vec(d1, d2));
+        if dt < dmin {
+            (dmin, b1, b2) = (dt, d1, d2);
+        }
+        i -= 1;
+    }
+    let wrap = |mut d: f64| {
+        while d < -PI {
+            d += PI * 2.0;
+        }
+        while d > PI {
+            d -= PI * 2.0;
+        }
+        d
+    };
+    (dmin < 1e-3).then(|| (wrap(b1), wrap(b2)))
 }
 
 /// `TabControl1Change`: shows light `TabIndex`.
@@ -993,7 +1054,7 @@ fn move_pos_light(app: &mut Mb3d, ui: &mut Ui) {
 /// Light position from a point picked in the main image (`iGetPosFromImage = 2`).
 pub fn set_pos_light_from_image(app: &mut Mb3d, ui: &mut Ui, p: [f64; 3]) {
     let i = tab(ui);
-    ui.set_caption(F, "ButtonGetPos", "mid");
+    ui.set_caption(F, "ButtonGetPos", &tr("@MB:Mid"));
     app.scene.lighting.lights[i].position = p;
     trigger_repaint(app, ui);
 }
@@ -1195,11 +1256,20 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 if e.sender == "CheckBox6" && !l.positional {
                     // keep the light direction when switching between
                     // viewer and object relative angles
-                    let v = crate::math::build_view_vector_dfov(l.y_angle, -l.x_angle);
-                    let m = app.scene.vgrads;
-                    let mm = crate::math::normalise_matrix_to(1.0, &m);
-                    let target = if on { crate::math::rotate_vector_reverse(&v, &mm) } else { crate::math::rotate_vector(&v, &mm) };
-                    let _ = target;
+                    let mm = crate::math::normalise_matrix_to(1.0, &app.scene.vgrads);
+                    let mut v = crate::math::scale(crate::math::build_view_vector_dfov(l.y_angle, -l.x_angle), -1.0);
+                    if !on {
+                        v = crate::math::normalize(crate::math::rotate_vector_reverse(&v, &mm));
+                    }
+                    if let Some((d1, d2)) = find_vec_angles(&v, &mm, on) {
+                        l.x_angle = -d1;
+                        l.y_angle = d2;
+                        let b = app.light.user_change;
+                        app.light.user_change = false;
+                        setp(ui, "TrackBar1", (d1 / PID180).round() as i64);
+                        setp(ui, "TrackBar2", (d2 / PID180).round() as i64);
+                        app.light.user_change = b;
+                    }
                 }
                 l.relative_to_object = on;
                 trigger_repaint(app, ui);
@@ -1289,8 +1359,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Edit2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, .. } = e.ev {
                 let o = crate::vcl::dialogs::FileOptions {
-                    title: "Choose a map".into(),
-                    filter: "Images|*.png;*.jpg;*.jpeg;*.bmp|All files (*.*)|*.*".into(),
+                    title: tr("@MB:ChooseAMap"),
+                    filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
                     initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
                     ..Default::default()
                 };
@@ -1298,12 +1368,12 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "ButtonGetPosClick" => {
-            if ui.caption(F, "ButtonGetPos") == "image" {
-                ui.set_caption(F, "ButtonGetPos", "mid");
+            if ui.caption(F, "ButtonGetPos") == tr("@MB:ImageLower") {
+                ui.set_caption(F, "ButtonGetPos", &tr("@MB:Mid"));
                 app.main.get_pos = 0;
                 ui.cm(super::MAIN, "Image1").cursor = "crDefault".into();
             } else {
-                ui.set_caption(F, "ButtonGetPos", "image");
+                ui.set_caption(F, "ButtonGetPos", &tr("@MB:ImageLower"));
                 app.main.get_pos = 2;
                 ui.cm(super::MAIN, "Image1").cursor = "crCross".into();
             }
@@ -1478,13 +1548,13 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "CheckBox16Click" => {
             let m = ui.item_index(F, "RadioGroup1");
             let (a, b, c) = match m {
-                1 => ("Rotation X:", "Rotation Y:", "Rotation Z:"),
-                0 => ("Offset X:", "Offset Y:", "Rotation:"),
-                _ => ("Offset X:", "Offset Y:", ""),
+                1 => (tr("@MB:RotationX"), tr("@MB:RotationY"), tr("@MB:RotationZ")),
+                0 => (tr("@MB:OffsetX"), tr("@MB:OffsetY"), tr("@MB:RotationColon")),
+                _ => (tr("@MB:OffsetX"), tr("@MB:OffsetY"), String::new()),
             };
-            ui.set_caption(F, "Label35", a);
-            ui.set_caption(F, "Label36", b);
-            ui.set_caption(F, "Label41", c);
+            ui.set_caption(F, "Label35", &a);
+            ui.set_caption(F, "Label36", &b);
+            ui.set_caption(F, "Label41", &c);
             ui.set_visible(F, "TrackBar30", m < 2);
             ui.set_visible(F, "Label38", m != 1);
             ui.set_visible(F, "TrackBar31", m != 1);
@@ -1496,8 +1566,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if uc {
                 if ui.checked(F, "CheckBox8") {
                     let o = crate::vcl::dialogs::FileOptions {
-                        title: "Background image".into(),
-                        filter: "Images|*.png;*.jpg;*.jpeg;*.bmp|All files (*.*)|*.*".into(),
+                        title: tr("@MB:BackgroundImage2"),
+                        filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
                         initial_dir: Some(app.ini.dir(super::ini::DIR_BGPIC)),
                         ..Default::default()
                     };
@@ -1529,6 +1599,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     set_from_header(app, ui);
                     ui.set_item_index(F, "ComboBox3", -1);
                     trigger_repaint(app, ui);
+                    app.light.undo_relight = app.eng.running();
                 }
             }
         }
@@ -1542,7 +1613,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Light parameter (*.m3l)|*.m3l".into(),
+                filter: format!("{}|*.m3l", tr("@MB:M3DLightParameterM3l")),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_LIGHTS)),
                 ..Default::default()
             };
@@ -1550,7 +1621,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Button2Click" => {
             let o = crate::vcl::dialogs::FileOptions {
-                filter: "M3D Light parameter (*.m3l)|*.m3l".into(),
+                filter: format!("{}|*.m3l", tr("@MB:M3DLightParameterM3l")),
                 default_ext: "m3l".into(),
                 initial_dir: Some(app.ini.dir(super::ini::DIR_LIGHTS)),
                 ..Default::default()
@@ -1657,7 +1728,7 @@ fn make_depth_col_list(ui: &mut Ui) {
 /// `GetLightParaFile`: a .m3l file (TLightingParas9).
 fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
     let Ok(d) = std::fs::read(p) else {
-        app.message(ui, &format!("{}: cannot read", p.display()));
+        app.message(ui, &trf("@MB:CannotRead", &[&p.display()]));
         return;
     };
     match crate::m3p::light_from_record(&d) {
@@ -1670,7 +1741,7 @@ fn load_light_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
             trigger_repaint(app, ui);
             ui.cm(F, "ComboBox3").font = None;
         }
-        None => app.message(ui, &format!("{}: no light parameters", p.display())),
+        None => app.message(ui, &trf("@MB:NoLightParameters", &[&p.display()])),
     }
 }
 
@@ -1707,7 +1778,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             let rec = crate::m3p::write(&app.scene);
             let p = p.with_extension("m3l");
             match std::fs::write(&p, &rec[432..840]) {
-                Ok(()) => app.message(ui, &format!("Saved {}", p.display())),
+                Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&p.display()])),
                 Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
             }
             update_quick_load(app, ui);
@@ -1721,7 +1792,7 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                     }
                     app.scene.lighting.bg_image = p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
                     if crate::maps::by_name(&app.scene.lighting.bg_image).is_none() {
-                        app.message(ui, "The background image could not be loaded.");
+                        app.message(ui, &tr("@MB:TheBackgroundImageCouldNotBe"));
                         app.scene.lighting.bg_image.clear();
                         app.light.user_change = false;
                         ui.set_checked(F, "CheckBox8", false);
@@ -1751,5 +1822,21 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn find_vec_angles_keeps_the_light_vector() {
+        // a rotated view; light at -LX = 0.7, LY = -0.4, viewer relative
+        let m = crate::math::normalise_matrix_to(1.0, &[[0.8, 0.0, -0.6], [0.0, 1.0, 0.0], [0.6, 0.0, 0.8]]);
+        let v = crate::math::scale(crate::math::build_view_vector_dfov(-0.4, 0.7), -1.0);
+        let (d1, d2) = find_vec_angles(&v, &m, true).unwrap();
+        let w = crate::math::scale(crate::math::build_view_vector_dfov(d2, d1), -1.0);
+        let w = crate::math::normalize(crate::math::rotate_vector_reverse(&w, &m));
+        assert!((0..3).all(|k| (v[k] - w[k]).abs() < 1e-3), "{v:?} {w:?}");
     }
 }

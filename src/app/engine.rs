@@ -6,6 +6,7 @@
 use crate::calc::CalcParams;
 use crate::gbuffer::SiLight;
 use crate::scene::Scene;
+use crate::vcl::lang::{tr, trf};
 use crate::vcl::ui::Waker;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
@@ -26,6 +27,10 @@ pub enum Job {
     Stereo { scene: Scene, layout: crate::render::StereoLayout },
     /// lighting / post processing changed: repaint the kept G-buffer
     Repaint { scene: Scene },
+    /// the lighting changed (the Lighting window): repaint at once with the
+    /// kept shadows, without reflections and depth of field (MB3D's
+    /// repaint); a `Repaint` adds them afterwards
+    Relight { scene: Scene },
     /// "Recalculate a selection" (MB3D's `CalcPartT`): rectangle (left,
     /// top, width, height) of the image with the raystep divided,
     /// optionally only nearer parts, its hard shadows (`hs`) and DEAO
@@ -114,11 +119,19 @@ pub struct Output {
     pub ver: u64,
     pub running: bool,
     pub stage: String,
+    /// the part of the stage done before it began (rows of a continued
+    /// calculation), not counted in its rate
+    pub stage_base: f32,
+    /// the time the rows of a continued calculation took (its checkpoint
+    /// keeps it, through earlier runs); 0 when none or unknown
+    pub kept_secs: f32,
     pub error: String,
     pub stats: Stats,
     /// the last job finished (for "Calculate 3D" -> enable buttons)
     pub finished: u64,
     pub was_calc3d: bool,
+    /// the last job was cancelled (by Stop or new parameters)
+    pub cancelled: bool,
 }
 
 /// The calculation under way, for its live picture: the rows marched
@@ -141,6 +154,12 @@ pub struct Inner {
     cv: Condvar,
     gen: AtomicU64,
     pub progress: AtomicU32,
+    /// of the rows calculated so far: their pixels, those on a surface and
+    /// their DE steps (the window's time estimate)
+    pub rows_px: AtomicU64,
+    pub rows_hits: AtomicU64,
+    pub rows_steps: AtomicU64,
+    pub rows: AtomicU64,
     pub out: Mutex<Output>,
     pub base: Mutex<Option<Arc<Base>>>,
     partial: Mutex<Option<Partial>>,
@@ -176,13 +195,24 @@ impl Drop for Engine {
     }
 }
 
-/// Everything the post calculations depend on.
+/// Everything the post calculations depend on: with hard shadows, of the
+/// lights only what casts them (on, shadowing, direction or position, a
+/// positional light's reach), not their colours or shading, so that those
+/// repaint at once without calculating the shadows again.
 pub fn post_sig(sc: &Scene) -> String {
     let mut s = sc.clone();
     let lights = s.lighting.lights.clone();
     s.lighting = Default::default();
     if s.shadows.is_some() {
-        s.lighting.lights = lights;
+        s.lighting.lights = lights.map(|l| crate::lighting::Light {
+            color: [0; 3],
+            spec_func: 0,
+            diff_func: 0,
+            map_rot: [0; 3],
+            // (the reach of a positional light's shadow grows with it)
+            amplitude: if l.positional { l.amplitude } else { 0.0 },
+            ..l
+        });
     }
     s.dof = None;
     s.mc = Default::default();
@@ -192,18 +222,7 @@ pub fn post_sig(sc: &Scene) -> String {
 
 /// Everything the ray marching depends on.
 pub fn calc_sig(sc: &Scene) -> String {
-    let mut s = sc.clone();
-    if s.vol_light.is_none() {
-        s.lighting = Default::default();
-    }
-    s.ao = None;
-    s.shadows = None;
-    s.deao = None;
-    s.normals_on_zbuf = false;
-    s.dof = None;
-    s.mc = Default::default();
-    s.threads = 0;
-    s.to_text()
+    crate::render::march_sig(sc)
 }
 
 fn needs_post(sc: &Scene, p: &CalcParams) -> bool {
@@ -225,6 +244,10 @@ impl Engine {
             cv: Condvar::new(),
             gen: AtomicU64::new(0),
             progress: AtomicU32::new(0),
+            rows_px: AtomicU64::new(0),
+            rows_hits: AtomicU64::new(0),
+            rows_steps: AtomicU64::new(0),
+            rows: AtomicU64::new(0),
             out: Mutex::new(Output::default()),
             base: Mutex::new(None),
             partial: Mutex::new(None),
@@ -248,14 +271,22 @@ impl Engine {
     /// Starts a job; a running one is cancelled.
     pub fn start(&self, job: Job) {
         let gen = self.0.gen.fetch_add(1, Ordering::SeqCst) + 1;
+        // (under the job's lock: the worker ending the last job does not
+        // see it running without the new one, see `worker`)
+        let mut j = self.0.job.lock().unwrap();
         {
             let mut o = self.0.out.lock().unwrap();
             o.running = true;
             o.error.clear();
+            // (the last job's stage is not this one's)
+            o.stage.clear();
+            o.stage_base = 0.0;
+            o.kept_secs = 0.0;
             o.was_calc3d = matches!(job, Job::Calc { slice: 0, .. } | Job::Swarm { .. } | Job::Stereo { .. });
         }
         self.0.progress.store(0, Ordering::Relaxed);
-        *self.0.job.lock().unwrap() = Some((gen, job));
+        *j = Some((gen, job));
+        drop(j);
         self.0.cv.notify_all();
     }
 
@@ -369,12 +400,18 @@ impl Engine {
         true
     }
 
-    /// Drops the kept image (a new parameter set was loaded).
+    /// Drops the kept image (a new parameter set was loaded); a calculation
+    /// under way stops (its picture is of the old parameters).
     pub fn clear(&self) {
+        self.stop();
+        *self.0.partial.lock().unwrap() = None;
+        *self.0.preview.lock().unwrap() = None;
         *self.0.base.lock().unwrap() = None;
         let mut o = self.0.out.lock().unwrap();
         o.rgb = None;
         o.ver += 1;
+        // a job that finished but was not taken yet is of the old parameters too
+        o.cancelled = true;
     }
 
     /// Sets the kept G-buffer from an .m3i file and paints it.
@@ -382,7 +419,7 @@ impl Engine {
         let p = CalcParams::new(sc)?;
         let (w, h) = (sc.width as usize, sc.height as usize);
         if gbuf.len() != w * h {
-            return Err("the image buffer has the wrong size".into());
+            return Err(tr("@MB:TheImageBufferHasTheWrong"));
         }
         let raw = Arc::new(gbuf);
         let rgb = crate::render::paint(sc, &p, &raw);
@@ -420,6 +457,7 @@ impl Inner {
             let mut o = self.out.lock().unwrap();
             o.running = false;
             o.finished += 1;
+            o.cancelled = err.as_deref() == Some("cancelled");
             if let Some(e) = err {
                 if e != "cancelled" {
                     o.error = e;
@@ -435,12 +473,21 @@ impl Inner {
     fn begin_partial(&self, params: CalcParams, scene: &Scene, w: usize, h: usize) {
         let step = self.preview_step.load(Ordering::Relaxed).max(1);
         let id = self.partial_id.fetch_add(1, Ordering::SeqCst) + 1;
+        for a in [&self.rows_px, &self.rows_hits, &self.rows_steps, &self.rows] {
+            a.store(0, Ordering::Relaxed);
+        }
         *self.partial.lock().unwrap() = Some(Partial { params, scene: scene.clone(), w, h, step, id, pending: Vec::new() });
     }
 
     /// A row `y` of the calculation, kept for its live picture as the
     /// window shows it.
     fn partial_row(&self, y: usize, row: &[SiLight]) {
+        let hits = row.iter().filter(|s| !s.is_background()).count() as u64;
+        let steps: u64 = row.iter().map(|s| (s.shadow & 0x3FF) as u64).sum();
+        self.rows_px.fetch_add(row.len() as u64, Ordering::Relaxed);
+        self.rows_hits.fetch_add(hits, Ordering::Relaxed);
+        self.rows_steps.fetch_add(steps, Ordering::Relaxed);
+        self.rows.fetch_add(1, Ordering::Relaxed);
         if let Some(p) = self.partial.lock().unwrap().as_mut() {
             let s = p.step;
             if y % s == 0 && y / s < p.h / s {
@@ -482,20 +529,22 @@ fn worker(e: Arc<Inner>) {
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match job {
             Job::Calc { scene, slice, resume, name } => calc(&e, &scene, slice, resume, &name, &cancel),
             Job::Repaint { scene } => repaint(&e, &scene, &cancel),
+            Job::Relight { scene } => relight(&e, &scene),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Stereo { scene, layout } => stereo(&e, &scene, layout, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
             Job::Recalc { scene, rect, div, nearer, hs, deao, keep_as } => recalc(&e, &scene, rect, div, nearer, (hs, deao, keep_as), &cancel),
             Job::ReflectSel { scene, rect } => reflect_sel(&e, &scene, rect, &cancel),
-            Job::Swarm { scene, dir, cols, rows, name } => swarm_tiles(&e, &scene, &dir, cols, rows, name, &cancel),
+            Job::Swarm { scene, dir, cols, rows, name } => swarm_tiles(&e, &scene, &dir, cols, rows, name, gen, &cancel),
         }))
         .unwrap_or_else(|p| {
             let m = p.downcast_ref::<String>().cloned().or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
-            Err(format!("The calculation failed: {}", m.lines().last().unwrap_or("").trim()))
+            Err(trf("@MB:TheCalculationFailed", &[&m.lines().last().unwrap_or("").trim()]))
         });
         e.busy.store(false, Ordering::SeqCst);
         // a newer job may already wait: only report when this one is the last
-        if e.job.lock().unwrap().is_none() {
+        let j = e.job.lock().unwrap();
+        if j.is_none() {
             e.finish(res.err());
         }
     }
@@ -506,7 +555,7 @@ fn worker(e: Arc<Inner>) {
 /// sequence avoids doubling the already substantial G-buffer memory use.
 fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     if sc.tiling.is_some() {
-        return Err("Stereo pairs cannot be rendered with tiles. Turn tiling off first.".into());
+        return Err(tr("@MB:StereoPairsCannotBeRenderedWith"));
     }
     let eye = |mode: u8, name: &str, offset: usize| -> Result<(Vec<u8>, usize, usize, f64, f64), String> {
         let mut s = sc.clone();
@@ -533,7 +582,7 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
     }
     let (right, rw, rh, right_calc, right_paint) = eye(3, "right", 500)?;
     if (w, h) != (rw, rh) {
-        return Err("The stereo eye images have different sizes.".into());
+        return Err(tr("@MB:TheStereoEyeImagesHaveDifferent"));
     }
     if cancel() {
         return Err("cancelled".into());
@@ -552,12 +601,13 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
 /// Calculate 3D with the swarm (`Job::Swarm`): the tiles come from the
 /// swarm folder, the picture so far is shown while they do, the finished
 /// buffer is kept as a calculated one.
-fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, rows: u32, name: String, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+#[allow(clippy::too_many_arguments)]
+fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, rows: u32, name: String, gen: u64, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     let mut sc = sc.clone();
     sc.slice_2d = 0;
     sc.calc_rect = None;
     e.out.lock().unwrap().stage = "swarm: creating the job".into();
-    let gen = e.gen.load(Ordering::SeqCst);
+    // (the job's own generation: one started since cancels it)
     let e2 = e.clone();
     let cancel_fn: Arc<dyn Fn() -> bool + Send + Sync> = Arc::new(move || e2.gen.load(Ordering::SeqCst) != gen);
     let opts = crate::swarm::RunOptions { name, threads: 0, quiet: true, keep: false, cancel: Some(cancel_fn), resume: crate::checkpoint::Policy::Continue };
@@ -578,16 +628,23 @@ fn swarm_tiles(e: &Arc<Inner>, sc: &Scene, dir: &std::path::Path, cols: u32, row
     let p = CalcParams::new(&sc)?;
     let (w, h) = (sc.width as usize, sc.height as usize);
     let raw = Arc::new(full);
-    // (the reflections and the depth of field of the whole picture: they
-    // can take as long as a tile)
-    report(match (sc.mc.reflections, sc.dof.is_some()) {
-        (true, true) => "all tiles done, painting the picture: reflections and depth of field",
-        (true, false) => "all tiles done, painting the picture: reflections",
-        (false, true) => "all tiles done, painting the picture: depth of field",
-        (false, false) => "all tiles done, painting the picture",
-    });
-    let rgb = crate::render::paint(&sc, &p, &raw);
-    let stats = stats_of(&raw, &p, t0.elapsed().as_secs_f64(), 0.0);
+    // the reflections and the depth of field of the whole picture (they
+    // can take as long as a tile): their stages with their progress and
+    // the Stop button, as the calculation here has them
+    report("all tiles done, painting the picture");
+    let stage = |name: &str| {
+        let mut o = e.out.lock().unwrap();
+        o.stage = name.to_string();
+        o.stage_base = 0.0;
+        e.progress.store(0, Ordering::Relaxed);
+    };
+    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    let (rgb, refl_s) = crate::render::paint_reporting(&sc, &p, &raw, &progress, &stage, cancel);
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let mut stats = stats_of(&raw, &p, t0.elapsed().as_secs_f64(), 0.0);
+    stats.stages.reflections = refl_s;
     *e.base.lock().unwrap() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw: raw.clone(), post: raw, post_sig: post_sig(&sc), w, h }));
     e.publish(rgb, w, h, "done (swarm)", Some(stats));
     Ok(())
@@ -617,22 +674,51 @@ fn calc(e: &Inner, sc: &Scene, slice: u8, resume: crate::checkpoint::Policy, nam
     e.begin_partial(params, &sc, w, h);
     // (a 2D slice is quick: no checkpoint)
     let ck = if slice == 0 { crate::render::open_checkpoint(&sc, name, resume) } else { None };
+    // the time the main rendering took so far, kept with its rows (the
+    // window's time left and progress go on from it)
+    let kept_secs: f64 = ck.as_ref().filter(|s| s.resumed() > 0).and_then(|s| s.value("secs")).and_then(|v| v.parse().ok()).unwrap_or(0.0);
+    let main_done = AtomicBool::new(false);
+    let note_secs = |done: bool| {
+        if let Some(s) = ck.as_ref() {
+            if !main_done.swap(done, Ordering::Relaxed) {
+                s.set_value("secs", &format!("{:.1}", kept_secs + t0.elapsed().as_secs_f64()));
+            }
+        }
+    };
     {
         let mut o = e.out.lock().unwrap();
+        o.stage_base = ck.as_ref().map_or(0.0, |s| s.resumed() as f32 / h.max(1) as f32);
+        o.kept_secs = kept_secs as f32;
         o.stage = match (slice, ck.as_ref().is_some_and(|s| s.resumed() > 0)) {
             (0, false) => "main rendering".into(),
             (0, true) => "main rendering (continued)".into(),
             _ => "2D calculation".into(),
         };
     }
-    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    // (a continued calculation: the rows kept count as work done in the
+    // first report, which weighs the rows; the base in rows until then)
+    let base_pending = AtomicBool::new(ck.as_ref().is_some_and(|s| s.resumed() > 0));
+    let progress = |d: usize, t: usize| {
+        e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+        if d > 0 && base_pending.swap(false, Ordering::Relaxed) {
+            e.out.lock().unwrap().stage_base = d as f32 / t.max(1) as f32;
+        }
+    };
     // each stage after the march: its name for the window, the bar from zero
     let stage = |name: &str| {
-        e.out.lock().unwrap().stage = name.to_string();
+        base_pending.store(false, Ordering::Relaxed);
+        note_secs(true);
+        let mut o = e.out.lock().unwrap();
+        o.stage = name.to_string();
+        o.stage_base = 0.0;
         e.progress.store(0, Ordering::Relaxed);
     };
     let sink = |y: usize, row: &[SiLight]| e.partial_row(y, row);
-    let (p, raw) = crate::render::calculate_with(&sc, &progress, &stage, cancel, 0, Some(&sink), ck.as_ref())?;
+    let r = crate::render::calculate_with(&sc, &progress, &stage, cancel, 0, Some(&sink), ck.as_ref());
+    // (stopped during the main rendering, or over without a later stage
+    // of its own: its time so far)
+    note_secs(true);
+    let (p, raw) = r?;
     *e.partial.lock().unwrap() = None;
     let t1 = Instant::now();
     let raw = Arc::new(raw);
@@ -721,6 +807,21 @@ fn preview(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     Ok(())
 }
 
+/// A post processing job's progress: the rows of its running stage done,
+/// for the main window's bar (see [`stage_namer`]).
+fn stage_progress(e: &Inner) -> impl Fn(usize, usize) + Sync + '_ {
+    move |d, t| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed)
+}
+
+/// A post processing job's stage begins: its name for the main window,
+/// the bar from zero.
+fn stage_namer(e: &Inner) -> impl Fn(&str) + Sync + '_ {
+    move |name| {
+        e.out.lock().unwrap().stage = name.to_string();
+        e.progress.store(0, Ordering::Relaxed);
+    }
+}
+
 fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
     let mut target = sc.clone();
@@ -730,13 +831,14 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     target.calc_rect = None;
     let psig = post_sig(&target);
     let reuse = psig == b.post_sig || b.params.slice_2d != 0;
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
     let post = if reuse {
         b.post.clone()
     } else {
-        e.out.lock().unwrap().stage = "post processing".into();
+        stage("post processing");
         let mut g = (*b.raw).clone();
         if needs_post(&target, &b.params) {
-            crate::render::post_process_cancellable(&target, &b.params, &mut g, crate::render::thread_count(&target), cancel)?;
+            crate::render::post_process_reporting(&target, &b.params, &mut g, crate::render::thread_count(&target), &progress, &stage, cancel)?;
         }
         Arc::new(g)
     };
@@ -744,7 +846,10 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
         return Err("cancelled".into());
     }
     // (stopped during the reflections or the DoF: the image stays as it was)
-    let rgb = crate::render::paint_cancellable(&target, &b.params, &post, cancel)?;
+    let rgb = crate::render::paint_reporting(&target, &b.params, &post, &progress, &stage, cancel).0;
+    if cancel() {
+        return Err("cancelled".into());
+    }
     e.publish(rgb, b.w, b.h, "", None);
     let mut g = e.base.lock().unwrap();
     // (the buffers painted on meanwhile ("Paint on image") are kept: their
@@ -757,6 +862,30 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     Ok(())
 }
 
+/// The kept G-buffer painted with the new lighting at once: its hard
+/// shadows as they were calculated (stale when a shadowing light moved,
+/// as in MB3D), no reflections or depth of field (both take about as long
+/// as the calculation). The kept buffers and their signature stay, so a
+/// following `Repaint` knows what to calculate again.
+fn relight(e: &Inner, sc: &Scene) -> Result<(), String> {
+    let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
+    let mut target = sc.clone();
+    target.width = b.scene.width;
+    target.height = b.scene.height;
+    target.slice_2d = b.scene.slice_2d;
+    target.calc_rect = None;
+    let rgb = crate::render::paint_preview(&target, &b.params, &b.post);
+    e.publish(rgb, b.w, b.h, "", None);
+    let mut g = e.base.lock().unwrap();
+    let (raw, post, post_sig) = match g.as_ref() {
+        Some(cur) => (cur.raw.clone(), cur.post.clone(), cur.post_sig.clone()),
+        None => (b.raw.clone(), b.post.clone(), b.post_sig.clone()),
+    };
+    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig, w: b.w, h: b.h }));
+    Ok(())
+}
+
+
 /// MB3D's `CalcPartT`: the selection is marched again (the raystep
 /// divided by `div`; with `nearer` only nearer surfaces replace the old
 /// ones), its hard shadows and DEAO are calculated again there only
@@ -765,18 +894,18 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
 /// (`PaintRows`); the rest of the image stays as it is.
 fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (bool, bool, bool), cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     let (hs, deao, keep_as) = opts;
-    let b = e.base.lock().unwrap().clone().ok_or("calculate the image first (Calculate 3D)")?;
+    let b = e.base.lock().unwrap().clone().ok_or_else(|| tr("@MB:CalculateTheImageFirstCalculate3D"))?;
     if sc.width != b.scene.width || sc.height != b.scene.height {
-        return Err("the image size changed: calculate the image again".into());
+        return Err(tr("@MB:TheImageSizeChangedCalculateThe"));
     }
     let (w, h) = (b.w, b.h);
-    let r = clip_rect(rect, w, h).ok_or("the selection must be bigger than 2 pixels in width and height")?;
+    let r = clip_rect(rect, w, h).ok_or_else(|| tr("@MB:TheSelectionMustBeBiggerThanLower"))?;
     let [x0, y0, rw, rh] = r;
-    e.out.lock().unwrap().stage = "recalculating the selection".into();
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
+    stage("recalculating the selection");
     let mut rs = sc.clone();
     rs.calc_rect = Some([x0 as i32, y0 as i32, rw as i32, rh as i32]);
     rs.z_step_div = (rs.z_step_div / div.max(1.0)).max(1e-4);
-    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
     let (_, g) = crate::render::calculate_raw_cancellable(&rs, &progress, cancel)?;
     let mut target = sc.clone();
     target.calc_rect = None;
@@ -804,12 +933,12 @@ fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (
     }
     let q = rect_params(&p, r);
     if hs && target.shadows.is_some() {
-        e.out.lock().unwrap().stage = "hard shadows".into();
-        crate::render::hard_shadows_cancellable(&target, &q, &mut part, threads, cancel);
+        stage("hard shadows");
+        crate::render::hard_shadows_reporting(&target, &q, &mut part, threads, &progress, cancel);
     }
     if let (true, false, Some(d), Some(_)) = (deao, keep_as, &target.deao, &target.ao) {
-        e.out.lock().unwrap().stage = "ambient".into();
-        crate::deao::deao(&q, &mut part, rw, rh, d, threads, &|_, _| {}, cancel);
+        stage("ambient");
+        crate::deao::deao(&q, &mut part, rw, rh, d, threads, &progress, cancel);
     }
     if cancel() {
         return Err("cancelled".into());
@@ -836,10 +965,11 @@ fn recalc(e: &Inner, sc: &Scene, rect: [i32; 4], div: f64, nearer: bool, opts: (
 /// image stays as it is (the depth of field needs the whole image: not
 /// here).
 fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
-    let b = e.base.lock().unwrap().clone().ok_or("calculate the image first (Calculate 3D)")?;
+    let b = e.base.lock().unwrap().clone().ok_or_else(|| tr("@MB:CalculateTheImageFirstCalculate3D"))?;
     let (w, h) = (b.w, b.h);
-    let r = clip_rect(rect, w, h).ok_or("the selection must be bigger than 2 pixels in width and height")?;
-    e.out.lock().unwrap().stage = "reflections of the selection".into();
+    let r = clip_rect(rect, w, h).ok_or_else(|| tr("@MB:TheSelectionMustBeBiggerThanLower"))?;
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
+    stage("reflections of the selection");
     let mut target = sc.clone();
     target.width = b.scene.width;
     target.height = b.scene.height;
@@ -849,7 +979,11 @@ fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool
     target.dof = None;
     let q = rect_params(&b.params, r);
     let part = take_rect(&b.post, w, r, 1);
-    let painted = crate::render::paint_cancellable(&target, &q, &part, cancel)?;
+    // (the reflections keep the selection's name: it is one stage)
+    let painted = crate::render::paint_reporting(&target, &q, &part, &progress, &|_| {}, cancel).0;
+    if cancel() {
+        return Err("cancelled".into());
+    }
     let cur = e.out.lock().unwrap().rgb.clone().filter(|c| c.len() == w * h * 3);
     let mut rgb = match cur {
         Some(c) => (*c).clone(),

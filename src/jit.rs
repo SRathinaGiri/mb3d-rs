@@ -412,6 +412,8 @@ struct Compiler {
     loc_ty: Vec<Ty>,
     ptr_name: String,
     loop_depth: usize,
+    /// parsing a constant expression: variables are not allowed
+    in_const: bool,
 }
 
 fn err<T>(line: usize, m: impl fmt::Display) -> Result<T, String> {
@@ -623,7 +625,10 @@ impl Compiler {
     /// A constant expression (evaluated at compile time).
     fn const_expr(&mut self) -> Result<(f64, Ty), String> {
         let line = self.line();
-        let (e, ty) = self.expr()?;
+        self.in_const = true;
+        let r = self.expr();
+        self.in_const = false;
+        let (e, ty) = r?;
         // constant expressions only use literals and constants: evaluate on a dummy state
         let mut it = Iteration::default();
         let mut l = [0.0f64; 0];
@@ -1041,6 +1046,9 @@ impl Compiler {
                 Ok((Box::new(|_| std::f64::consts::PI), Ty::Real))
             }
             Tok::Id(n) => {
+                if self.in_const && (n == self.ptr_name || self.vars.contains_key(&n)) {
+                    return err(line, "constant expression expected");
+                }
                 if n == self.ptr_name {
                     let (f, t) = self.field()?;
                     return Ok((Box::new(move |e| get_field(e.it, f)), t));
@@ -1514,6 +1522,7 @@ impl Program {
             loc_ty: Vec::new(),
             ptr_name: String::new(),
             loop_depth: 0,
+            in_const: false,
         };
         let name = c.header()?;
         let mut needs_buffer = false;
@@ -1640,6 +1649,25 @@ mod tests {
         assert!(power(-2.0, 2.5).is_nan());
         assert_eq!(power(0.0, 2.5), 0.0);
         assert_eq!(2.5f64.round_ties_even(), 2.0);
+    }
+
+    #[test]
+    fn const_expr_rejects_variables() {
+        for (opts, decl) in [
+            ("", "var a: Double = 1;\nconst k = a * 2;"),
+            ("", "const k = x + 1;"),
+            ("", "const k = PIteration3D^.J1;"),
+            (".Double b = 2", "const k = b;"),
+        ] {
+            let src = format!("procedure F(var x, y, z, w: Double; PIteration3D: TPIteration3D);\n{decl}\nbegin\n x := k;\nend;");
+            let text = format!("[OPTIONS]\n.Version = 9\n{opts}\n[SOURCE]\n{src}\n[END]\n");
+            let e = M3f::parse("t", &text).err().expect(decl);
+            assert!(e.contains("constant expression expected"), "{decl}: {e}");
+        }
+        // a case label using an option
+        let src = "procedure F(var x, y, z, w: Double; PIteration3D: TPIteration3D);\nvar i: integer;\nbegin\n i := 1;\n case i of b: x := 1; end;\nend;";
+        let text = format!("[OPTIONS]\n.Version = 9\n.Integer b = 1\n[SOURCE]\n{src}\n[END]\n");
+        assert!(M3f::parse("t", &text).is_err());
     }
 
     #[test]

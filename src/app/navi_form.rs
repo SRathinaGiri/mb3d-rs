@@ -4,6 +4,7 @@
 //! camera, the mouse look mode, the adjustment panel (julia, formula, 4D
 //! rotation and other values) and sending the view back to the main window.
 
+use crate::vcl::lang::{tr, trf};
 use super::engine::{Engine, Job};
 use super::util::{fts, fts_single, parse_float, pti, ptf};
 use super::{Mb3d, MAIN};
@@ -38,12 +39,18 @@ pub struct State {
     pub presets: [Option<Lighting>; 3],
     pub storing: bool,
     pub dynfog_changed: bool,
+    /// the navigator's own lighting while the experimental "main window's
+    /// lighting" draws with the main one (back when the option goes off)
+    pub own_light: Option<Lighting>,
     pub destop_changed: bool,
     pub adjust_first: bool,
     pub waker_set: bool,
     /// the view taken from the main window and "Fixed zoom" then ("Reset view")
     pub start: Option<Scene>,
     pub start_fixed: bool,
+    /// a flight being recorded ("Rec"): when the last keyframe was made,
+    /// its view (middle, rotation, zoom) and how many
+    pub rec: Option<(std::time::Instant, ([f64; 3], [[f64; 3]; 3], f64), usize)>,
 }
 
 impl Default for State {
@@ -70,13 +77,41 @@ impl Default for State {
             presets: [None, None, None],
             storing: false,
             dynfog_changed: false,
+            own_light: None,
             destop_changed: false,
             adjust_first: true,
             waker_set: false,
             start: None,
             start_fixed: false,
+            rec: None,
         }
     }
+}
+
+/// The navigator's view as the main window's keyframe would be.
+fn keyframe_scene(app: &Mb3d) -> Scene {
+    let mut s = app.navi.scene.clone();
+    mod_rot_point(&mut s);
+    s.width = app.scene.width;
+    s.height = app.scene.height;
+    s
+}
+
+/// A recorded flight: the navigator's view as the next keyframe when it
+/// changed and half a second has passed (`force`: now).
+fn record_view(app: &mut Mb3d, ui: &mut Ui, force: bool) {
+    let Some((last, cam, n)) = app.navi.rec else { return };
+    let s = &app.navi.scene;
+    let now = (s.mid, s.vgrads, s.zoom);
+    if !force && (now == cam || last.elapsed().as_secs_f64() < 0.5) {
+        return;
+    }
+    let k = keyframe_scene(app);
+    app.anim.current = app.anim.anim.keyframes.len() + 1;
+    super::anim_form::insert_keyframe(app, ui, k);
+    app.navi.rec = Some((std::time::Instant::now(), now, n + 1));
+    // (the navigator stays in front)
+    ui.show(F);
 }
 
 fn is_int_type(t: i32) -> bool {
@@ -155,7 +190,14 @@ fn navi_scale(ui: &Ui) -> f64 {
 fn set_header_size(app: &mut Mb3d, ui: &Ui) {
     let st = &mut app.navi;
     let p2h = if ui.visible(F, "Panel2") { ui.c(F, "Panel2").height } else { 0 };
-    let hmax = (760 - ui.c(F, "Panel1").height - p2h).max(200);
+    let mut hmax = 760 - ui.c(F, "Panel1").height - p2h - ui.c(F, "Panel8").height;
+    // the whole window within the screen: the preview at its size (the
+    // size combo) plus the panels, the title bar and a taskbar's room
+    if let Some((_, sh)) = ui.screen {
+        let room = sh - ui.c(F, "Panel1").height - p2h - ui.c(F, "Panel8").height - 110;
+        hmax = hmax.min((room as f64 / navi_scale(ui)) as i32);
+    }
+    let hmax = hmax.max(200);
     let (ow, oh) = (st.orig.0.max(1), st.orig.1.max(1));
     let (mut w, mut h);
     if oh * 640 / ow > hmax {
@@ -181,7 +223,8 @@ fn transform_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.bin_search_steps = sc.bin_search_steps.min(7);
     sc.de_stop = sc.de_stop.max(0.01);
     ui.set_text(F, "Edit3", &fts(sc.fov_y));
-    ui.set_item_index(F, "RadioGroup2", sc.optic as i32);
+    // (a fisheye shows as standard: the closest of the navigator's three)
+    ui.set_item_index(F, "RadioGroup2", if sc.optic == crate::scene::CameraOptic::Fisheye { 0 } else { sc.optic as i32 });
     let vz = normalize(sc.vgrads[2]);
     let d = sc.z_start - sc.mid[2];
     for k in 0..3 {
@@ -225,37 +268,79 @@ fn set_window_size(app: &mut Mb3d, ui: &mut Ui, panel2: bool) {
     let (w, h) = (app.navi.scene.width, app.navi.scene.height);
     let p2h = if panel2 { ui.c(F, "Panel2").height } else { 0 };
     let p1h = ui.c(F, "Panel1").height;
+    // the experimental options' strip, always at the bottom
+    let p8h = ui.c(F, "Panel8").height;
     // MB3D: Max(580, height + Panel1 + Panel2): below 580 the bottom panel
     // pushed the bar with its open/close arrows up, away from under the
     // mouse (they looked gone); the window grows by the panel instead, so
     // the bar stays where it is
-    let ch = (h + p1h).max(580) + p2h;
+    let ch = (h + p1h).max(580) + p2h + p8h;
     // MB3D: Max(646 (+ Panel3), width + Panel5.Width) kept room for the
     // adjustment panel also while it is hidden, which left a gap between
     // the image and the panel; the panel is added only when it is shown
     let pw = if ui.visible(F, "Panel3") { ui.c(F, "Panel3").width } else { 0 };
     let cw = 646.max(w) + pw;
     ui.set_client_size(F, cw, ch);
-    let p1top = ch - p2h - p1h;
+    let p1top = ch - p8h - p2h - p1h;
     ui.cm(F, "Panel1").top = p1top;
-    ui.cm(F, "Panel2").top = ch - p2h;
+    ui.cm(F, "Panel2").top = ch - p8h - p2h;
+    ui.cm(F, "Panel8").top = ch - p8h;
     let (x, y) = if w > 640 { (0, 0) } else { ((640 - w) / 2, (p1top - h) / 2) };
     let c = ui.cm(F, "Image1");
     c.set_bounds(x, y, w, h);
     c.stretch = true;
     c.anchored = false;
+    // PaintCoord in the original Navigator is a 120 x 120 transparent
+    // image over the preview, rather than part of the rendered bitmap.  It
+    // therefore keeps one screen size while the preview arrives in coarse
+    // and full-resolution passes.
+    ui.cm(F, "Image6").set_bounds(x + w / 2 - 60, y + h / 2 - 60, 120, 120);
 }
 
 fn new_calc(app: &mut Mb3d, ui: &mut Ui) {
+    // experimental: the main window's lighting (taken from the Lighting
+    // window each time, so the navigator follows its changes)
+    if ui.checked(F, "ExpLightCBx") {
+        if app.navi.own_light.is_none() {
+            app.navi.own_light = Some(app.navi.scene.lighting.clone());
+        }
+        super::light_form::put_light_in_header(app, ui);
+        app.navi.scene.lighting = app.scene.lighting.clone();
+        app.navi.dynfog_changed = false;
+    } else if let Some(l) = app.navi.own_light.take() {
+        app.navi.scene.lighting = l;
+        let df = app.navi.scene.lighting.dyn_fog as i64;
+        ui.set_position(F, "UpDown1", df);
+        ui.set_caption(F, "Label38", &(df - 53).to_string());
+        let df = app.navi.scene.lighting.dyn_fog as i64;
+        ui.set_position(F, "UpDown1", df);
+        ui.set_caption(F, "Label38", &(df - 53).to_string());
+    }
+    let main_detail = ui.checked(F, "ExpDetailCBx");
+    let m = &app.scene;
+    let (m_step, m_limiter, m_bin, m_destop) = (m.z_step_div, m.raystep_limiter, m.bin_search_steps, m.de_stop);
     let st = &mut app.navi;
     let mut sc = st.scene.clone();
-    let hiq = ui.checked(F, "CheckBox4");
-    sc.z_step_div = 0.7 - if hiq { (st.quality + 6) as f64 * 0.05 } else { 0.0 };
-    sc.raystep_limiter = sc.raystep_limiter.max(sc.z_step_div * 0.5);
+    if main_detail {
+        // experimental: the main window's raystep and detail instead of
+        // the navigator's faster ones (a DE stop changed here is kept)
+        sc.z_step_div = m_step;
+        sc.raystep_limiter = m_limiter;
+        sc.bin_search_steps = m_bin;
+        if !st.destop_changed {
+            sc.de_stop = m_destop;
+        }
+    } else {
+        let hiq = ui.checked(F, "CheckBox4");
+        sc.z_step_div = 0.7 - if hiq { (st.quality + 6) as f64 * 0.05 } else { 0.0 };
+        sc.raystep_limiter = sc.raystep_limiter.max(sc.z_step_div * 0.5);
+    }
     sc.fov_y = ptf(&ui.text(F, "Edit3"));
     sc.optic = match ui.item_index(F, "RadioGroup2") {
         1 => crate::scene::CameraOptic::Planar,
         2 => crate::scene::CameraOptic::Panorama,
+        // a fisheye stays one until another optic is chosen here
+        _ if st.scene.optic == crate::scene::CameraOptic::Fisheye => crate::scene::CameraOptic::Fisheye,
         _ => crate::scene::CameraOptic::Common,
     };
     st.scene.fov_y = sc.fov_y;
@@ -294,42 +379,48 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     }
     app.navi.ver = ver;
     if !err.is_empty() {
-        app.message(ui, &format!("Navigator: {err}"));
+        app.message(ui, &trf("@MB:Navigator2", &[&err]));
     }
     let Some(rgb) = rgb else { return };
-    let l = app.navi.lightness;
+    record_view(app, ui, false);
+    // experimental "true brightness": the picture as calculated
+    let l = if ui.checked(F, "ExpBrightCBx") { 1.0 } else { app.navi.lightness };
     let px: Vec<u8> = if (l - 1.0).abs() > 1e-3 { rgb.iter().map(|&v| (v as f64 * l).min(255.0) as u8).collect() } else { (*rgb).clone() };
     let mut b = Bitmap::from_rgb(w, h, &px);
-    paint_coords(ui, &app.navi.scene, &mut b);
     paint_guides(ui, &mut b);
     ui.set_picture(F, "Image1", Some(b));
+    paint_coords(ui, &app.navi.scene);
 }
 
 /// `PaintCoord`: the original Navigator's coloured world-axis triad.  It is
-/// drawn into the preview here rather than in a separate transparent image,
-/// so it remains centred when the navigator size changes.
-fn paint_coords(ui: &Ui, sc: &Scene, b: &mut Bitmap) {
-    if !ui.checked(F, "ShowCoordsCBx") || b.is_empty() {
+/// a separate transparent image over the preview, so progressive preview
+/// resolutions cannot scale it.
+fn paint_coords(ui: &mut Ui, sc: &Scene) {
+    if !ui.checked(F, "ShowCoordsCBx") {
+        ui.set_visible(F, "Image6", false);
         return;
     }
+    let mut b = Bitmap::new(120, 120, 0);
     let m = normalise_matrix_to(1.0, &sc.vgrads);
     let mut axes = [0usize, 1, 2];
     // Draw the far axes first, preserving the helpful depth cue from MB3D.
     axes.sort_by(|&a, &z| m[2][z].partial_cmp(&m[2][a]).unwrap_or(std::cmp::Ordering::Equal));
     let colors = [0xFFFF_5000, 0xFF30_F040, 0xFF00_B0FF];
-    let (cx, cy) = (b.w as f64 * 0.5, b.h as f64 * 0.5);
+    let (cx, cy) = (60.0, 60.0);
     for axis in axes {
         let (x, y, z) = (m[0][axis], m[1][axis], m[2][axis]);
         let (ex, ey) = (cx + x * 38.0, cy + y * 38.0);
         let tip = (2.0 - z) * 2.0 / (x.hypot(y)).max(0.1);
         let c = colors[axis];
-        line(b, cx, cy, ex, ey, c, 2);
-        line(b, ex, ey, ex - x * 8.0 - y * tip, ey - y * 8.0 + x * tip, c, 2);
-        line(b, ex, ey, ex - x * 8.0 + y * tip, ey - y * 8.0 - x * tip, c, 2);
+        line(&mut b, cx, cy, ex, ey, c, 2);
+        line(&mut b, ex, ey, ex - x * 8.0 - y * tip, ey - y * 8.0 + x * tip, c, 2);
+        line(&mut b, ex, ey, ex - x * 8.0 + y * tip, ey - y * 8.0 - x * tip, c, 2);
         let text_size = (3.0 - z) * 4.0;
         let (tx, ty) = (ex + x * text_size * 0.8, ey + y * text_size * 0.8);
-        axis_letter(b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c);
+        axis_letter(&mut b, tx - text_size * 0.35, ty - text_size * 0.7, axis, c);
     }
+    ui.set_picture(F, "Image6", Some(b));
+    ui.set_visible(F, "Image6", true);
 }
 
 /// A clipped, two-pixel-wide line on a preview bitmap.
@@ -425,6 +516,7 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
     app.navi.eng.stop();
     app.make_scene(ui);
     app.navi.scene = app.scene.clone();
+    app.navi.own_light = None;
     transform_header(app, ui);
     app.navi.start = Some(app.navi.scene.clone());
     app.navi.start_fixed = ui.checked(F, "CheckBox1");
@@ -436,9 +528,13 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
     let df = app.navi.scene.lighting.dyn_fog as i64;
     ui.set_position(F, "UpDown1", df);
     ui.set_caption(F, "Label38", &(df - 53).to_string());
-    let cap = if app.title.is_empty() { "main paras".to_string() } else { app.title.clone() };
+    let cap = if app.title.is_empty() { tr("@MB:MainParas") } else { app.title.clone() };
     ui.fm(F).set_caption(&cap);
-    set_zoom(app, ui);
+    // Keep the imported camera zoom exactly as it was in the main window.
+    // The original Navigator intentionally does not call SetZoom here:
+    // recomputing it for the Navigator preview's different width changes
+    // the view before the user has navigated, and View to main would then
+    // overwrite the original camera position.
     set_window_size(app, ui, ui.visible(F, "Panel2"));
     new_calc(app, ui);
 }
@@ -497,9 +593,9 @@ fn view_to_main(app: &mut Mb3d, ui: &mut Ui) {
     *m = mm;
     app.scene_to_forms(ui);
     let t = ui.f(F).caption().to_string();
-    app.title = if t.is_empty() || t == "main paras" { app.title.clone() } else if t.ends_with('~') { t } else { format!("{t}~") };
+    app.title = if t.is_empty() || t == tr("@MB:MainParas") { app.title.clone() } else if t.ends_with('~') { t } else { format!("{t}~") };
     super::main_form::set_caption(app, ui);
-    app.message(ui, "Navigator view sent to the main window, press \"Calculate 3D\".");
+    app.message(ui, &tr("@MB:NavigatorViewSentToTheMain"));
 }
 
 fn round_fvals(f: &[crate::scene::FormulaEntry]) -> Vec<crate::scene::FormulaEntry> {
@@ -681,6 +777,12 @@ fn option_count(app: &Mb3d, f: usize) -> usize {
     app.navi.scene.formulas.get(f).map(|e| e.formula.options().len()).unwrap_or(0)
 }
 
+/// SpeedButton33 shows "Dyn Fog on its:" (its form text, in any language)
+/// until the program sets it to "Color on its:".
+fn dyn_fog_shown(ui: &Ui) -> bool {
+    ui.caption(F, "SpeedButton33") != tr("@MB:ColorOnIts")
+}
+
 /// `UpdateFormulaLabels`.
 fn update_formula_labels(app: &Mb3d, ui: &mut Ui) {
     let f = formula_nr(ui);
@@ -705,7 +807,7 @@ fn update_formula_labels(app: &Mb3d, ui: &mut Ui) {
 
 fn update_divers_labels(app: &Mb3d, ui: &mut Ui) {
     let sc = &app.navi.scene;
-    let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+    let fog = dyn_fog_shown(ui);
     ui.set_caption(F, "LabelV3", &if fog { sc.dfog_on_it.to_string() } else { (sc.color_on_it as i32 - 1).to_string() });
     ui.set_caption(F, "LabelV4", &fts_single(sc.effective_rstop()));
     ui.set_caption(F, "LabelV5", &fts_single(sc.decomb.map(|d| d.smooth as f64).unwrap_or(0.5)));
@@ -737,12 +839,12 @@ fn update_adjust(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
     match app.navi.scene.interpolation {
         Some(w) => {
             ui.set_caption(F, "Label47", &fts_single(w.get(fi.0).copied().unwrap_or(0.0) as f64));
-            ui.set_caption(F, "Label42", "Weight:");
+            ui.set_caption(F, "Label42", &tr("@MB:WeightColon"));
         }
         None => {
             let its = app.navi.scene.formulas.get(fi.0).map(|e| e.iterations).unwrap_or(0);
             ui.set_caption(F, "Label47", &its.to_string());
-            ui.set_caption(F, "Label42", "Iterations:");
+            ui.set_caption(F, "Label42", &tr("@MB:Iterations"));
         }
     }
     for i in 3..6 {
@@ -754,7 +856,7 @@ fn update_adjust(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
     }
     update_formula_labels(app, ui);
     let sc = &app.navi.scene;
-    let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+    let fog = dyn_fog_shown(ui);
     let p = [
         if fog { sc.dfog_on_it as f64 } else { sc.color_on_it as f64 - 1.0 },
         sc.effective_rstop(),
@@ -863,7 +965,7 @@ fn apply_value(app: &mut Mb3d, ui: &mut Ui, t: usize, formula_shown: bool) {
         st.focused = t - 6;
         let lv = format!("LabelV{}", t - 6);
         let old = ui.caption(F, &lv);
-        let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+        let fog = dyn_fog_shown(ui);
         let sc = &mut st.scene;
         let cap = match t {
             9 => {
@@ -935,7 +1037,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let q = app.ini.get("NaviSize").to_string();
             let i = ui.c(F, "NaviSizeCmb").items.iter().position(|s| *s == q).map(|i| i as i32).unwrap_or(6);
             ui.set_item_index(F, "NaviSizeCmb", i);
-            ui.set_caption(F, "CheckBox4", "HiQual 1");
+            ui.set_caption(F, "CheckBox4", &tr("@MB:HiQual1"));
         }
         "FormShow" => {
             if app.navi.first {
@@ -944,6 +1046,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.set_text(F, "Edit2", &app.ini.get("NavLookAngle").to_string());
                 ui.set_text(F, "Edit3", &app.ini.get("NavFOVy").to_string());
                 ui.set_checked(F, "CheckBox2", app.ini.get("NaviAZERTY") == "1");
+                ui.set_checked(F, "ExpDetailCBx", app.ini.get("NavExpDetail") == "Yes");
+                ui.set_checked(F, "ExpBrightCBx", app.ini.get("NavExpBright") == "Yes");
+                ui.set_checked(F, "ExpLightCBx", app.ini.get("NavExpLight") == "Yes");
+                enable_experimental(ui);
                 ui.set_checked(F, "CheckBox5", app.ini.get("NavFkey") == "0");
                 ui.set_checked(F, "CheckBox4", app.ini.get("NavHiQ") != "No");
                 app.navi.double_click = app.ini.get("NavDoubleClickMode") != "No";
@@ -967,6 +1073,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.ini.set("NaviAZERTY", if ui.checked(F, "CheckBox2") { "1" } else { "0" });
             app.ini.set("NavFkey", if ui.checked(F, "CheckBox5") { "0" } else { "1" });
             app.ini.set("NavHiQ", if ui.checked(F, "CheckBox4") { "Yes" } else { "No" });
+            save_experimental(app, ui);
             if app.navi.look {
                 set_look(app, ui, false);
             }
@@ -980,11 +1087,25 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             navigate(app, ui, t, false);
         }
         "SpeedButton11Click" => insert_main(app, ui),
+        "ExpDetailCBxClick" | "ExpLightCBxClick" => {
+            enable_experimental(ui);
+            save_experimental(app, ui);
+            new_calc(app, ui);
+        }
+        "ExpBrightCBxClick" => {
+            enable_experimental(ui);
+            save_experimental(app, ui);
+            app.navi.ver = 0;
+            idle(app, ui);
+        }
         "SpeedButton14Click" => view_to_main(app, ui),
         "SpeedButton15Click" => {
             // the lighting of the main window
             super::light_form::put_light_in_header(app, ui);
             app.navi.scene.lighting = app.scene.lighting.clone();
+            if app.navi.own_light.is_some() {
+                app.navi.own_light = Some(app.navi.scene.lighting.clone());
+            }
             let df = app.navi.scene.lighting.dyn_fog as i64;
             ui.set_position(F, "UpDown1", df);
             ui.set_caption(F, "Label38", &(df - 53).to_string());
@@ -1019,11 +1140,18 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton18Click" => {
             // a keyframe for the animation
-            let mut s = app.navi.scene.clone();
-            mod_rot_point(&mut s);
-            s.width = app.scene.width;
-            s.height = app.scene.height;
+            let s = keyframe_scene(app);
             super::anim_form::insert_keyframe(app, ui, s);
+        }
+        "RecordBtnClick" => {
+            if ui.c(F, "RecordBtn").down {
+                // the flight starts with the view as it is
+                let s = &app.navi.scene;
+                app.navi.rec = Some((std::time::Instant::now(), (s.mid, s.vgrads, s.zoom), 0));
+                record_view(app, ui, true);
+            } else if let Some((_, _, n)) = app.navi.rec.take() {
+                app.message(ui, &trf("@MB:RecordedSKeyframesOfTheFlight", &[&n.to_string()]));
+            }
         }
         "SpeedButton23Click" => toggle_adjust_panel(app, ui),
         "FormKeyDown" => {
@@ -1072,7 +1200,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     let dc = app.navi.double_click;
                     ui.set_checked(F, "Singleclicktochangethenavimode1", !dc);
                     ui.set_checked(F, "Doubleclicktochangethenavimode1", dc);
-                    ui.popup_menu(F, "PopupMenu1", "Image1", x, y);
+                    // at the control clicked: the preview or the axes'
+                    // overlay over its middle (Image6, which passes its
+                    // mouse to Image1's handlers with its own coordinates)
+                    let at = if e.sender == "Image6" { "Image6" } else { "Image1" };
+                    ui.popup_menu(F, "PopupMenu1", at, x, y);
                 }
             }
         }
@@ -1120,15 +1252,20 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_caption(F, "Label12", if az { "(z)" } else { "(w)" });
         }
         "CheckBox5Click" => {
-            let c = if ui.checked(F, "CheckBox5") { "Ani keyframe" } else { "Ani keyfr. (f)" };
-            ui.set_caption(F, "SpeedButton18", c);
+            let c = if ui.checked(F, "CheckBox5") { tr("@MB:AniKeyframe") } else { tr("@MB:AniKeyfrF") };
+            ui.set_caption(F, "SpeedButton18", &c);
         }
         "CheckBox1Click" => {
             let v = ui.checked(F, "CheckBox1");
             ui.set_visible(F, "UpDown3", v);
         }
         "CheckBox3Click" | "RadioGroup2Click" => new_calc(app, ui),
-        "ShowCoordsCBxClick" | "ShowGuidesCBxClick" => {
+        "ShowCoordsCBxClick" => {
+            paint_coords(ui, &app.navi.scene);
+            app.navi.ver = 0;
+            idle(app, ui);
+        }
+        "ShowGuidesCBxClick" => {
             app.navi.ver = 0;
             idle(app, ui);
         }
@@ -1166,6 +1303,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     ui.set_enabled(F, &b, en);
                 }
             } else if let Some(l) = app.navi.presets[t].clone() {
+                leave_main_lighting(app, ui);
                 app.navi.scene.lighting = l;
                 let df = app.navi.scene.lighting.dyn_fog as i64;
                 ui.set_position(F, "UpDown1", df);
@@ -1185,13 +1323,14 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 let q = (app.navi.quality + if up { 1 } else { -1 }).clamp(1, 7);
                 if q != app.navi.quality {
                     app.navi.quality = q;
-                    ui.set_caption(F, "CheckBox4", &format!("HiQual {q}"));
+                    ui.set_caption(F, "CheckBox4", &trf("@MB:HiQual2", &[&q]));
                     new_calc(app, ui);
                 }
             }
         }
         "UpDown1Click" => {
             if let Ev::UpDown { up } = e.ev {
+                leave_main_lighting(app, ui);
                 let l = &mut app.navi.scene.lighting;
                 l.dyn_fog = if up { (l.dyn_fog + 1.0).min(153.0) } else { (l.dyn_fog - 1.0).max(0.0) };
                 let df = l.dyn_fog as i64;
@@ -1268,8 +1407,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpeedButton26Click" => update_adjust(app, ui, "SpeedButton26"),
         "SpeedButton27Click" => {
-            let fi = app.navi.findex;
-            let v = app.navi.vals[3 + app.navi.focused.min(2)];
+            // (FormulaIndex(FocusedSlider): the focus moves without update_adjust)
+            let foc = app.navi.focused.min(2);
+            let fi = formula_index(app, ui, foc);
+            let v = app.navi.vals[3 + foc];
             if let Some(slot) = app.formula.slots.get_mut(fi.0).and_then(|s| s.as_mut()) {
                 super::formula_form::set_option_index(slot, fi.1, v);
             }
@@ -1353,7 +1494,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.make_scene(ui);
             let m = app.scene.clone();
             let foc = app.navi.focused;
-            let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+            let fog = dyn_fog_shown(ui);
             let n = &mut app.navi.scene;
             match foc {
                 3 => {
@@ -1364,10 +1505,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     }
                 }
                 4 => n.rstop = m.rstop,
-                5 | 6 => {
+                5 => {
                     if let (Some(a), Some(b)) = (n.decomb.as_mut(), m.decomb) {
                         a.smooth = b.smooth;
                     }
+                }
+                // (MB3D copies the DE combine smooth value here too)
+                6 => {
+                    n.de_stop = m.de_stop;
+                    app.navi.destop_changed = false;
                 }
                 7 => n.iterations = m.iterations,
                 _ => return,
@@ -1378,7 +1524,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "SpeedButton32Click" => {
             let foc = app.navi.focused;
             let n = app.navi.scene.clone();
-            let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
+            let fog = dyn_fog_shown(ui);
             match foc {
                 3 => {
                     if fog {
@@ -1395,8 +1541,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "SpeedButton33Click" => {
-            let fog = ui.caption(F, "SpeedButton33") == "Dyn Fog on its:";
-            ui.set_caption(F, "SpeedButton33", if fog { "Color on its:" } else { "Dyn Fog on its:" });
+            let fog = dyn_fog_shown(ui);
+            ui.set_caption(F, "SpeedButton33", &if fog { tr("@MB:ColorOnIts") } else { tr("@MB:DynFogOnIts") });
             ui.set_visible(F, "Label38", !fog);
             ui.set_visible(F, "UpDown1", !fog);
             let sc = &app.navi.scene;
@@ -1407,7 +1553,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Label24Click" => {
             let z = crate::app::util::float_general(app.navi.scene.zoom, 6);
-            ui.input_query("navi:zoom", "Zoom", "New zoom:", &z);
+            ui.input_query("navi:zoom", &tr("@MB:Zoom2"), &tr("@MB:NewZoom"), &z);
         }
         "ResetViewBtnClick" => reset_view(app, ui),
         "Label39MouseDown" => {
@@ -1417,7 +1563,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if t < 14 {
                 let v = app.navi.vals[t];
                 let s = if (6..9).contains(&t) { fts_single(v.to_degrees()) } else if is_int_type(app.navi.vtype[t]) { (v.round() as i64).to_string() } else { fts_single(v) };
-                ui.input_query(&format!("navi:val{t}"), "Input", "New value:", &s);
+                ui.input_query(&format!("navi:val{t}"), &tr("@MB:Input"), &tr("@MB:NewValue"), &s);
             }
             if (3..=5).contains(&t) {
                 app.navi.focused = t - 3;
@@ -1436,6 +1582,40 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
 
 /// "Reset view": the position, direction and zoom taken from the main
 /// window (the adjusted values stay).
+/// The experimental options grey out what they replace: the navigator's
+/// quality (raystep) and its brightness slider.
+fn enable_experimental(ui: &mut Ui) {
+    let detail = ui.checked(F, "ExpDetailCBx");
+    ui.set_enabled(F, "CheckBox4", !detail);
+    ui.set_enabled(F, "UpDown4", !detail);
+    ui.set_enabled(F, "TrackBar1", !ui.checked(F, "ExpBrightCBx"));
+}
+
+fn save_experimental(app: &mut Mb3d, ui: &Ui) {
+    let yn = |b: bool| if b { "Yes" } else { "No" };
+    app.ini.set("NavExpDetail", yn(ui.checked(F, "ExpDetailCBx")));
+    app.ini.set("NavExpBright", yn(ui.checked(F, "ExpBrightCBx")));
+    app.ini.set("NavExpLight", yn(ui.checked(F, "ExpLightCBx")));
+}
+
+/// A light preset or dynamic fog chosen in the navigator ends "the main
+/// window's lighting" (the user's own choice wins).
+fn leave_main_lighting(app: &mut Mb3d, ui: &mut Ui) {
+    app.navi.own_light = None;
+    if ui.checked(F, "ExpLightCBx") {
+        ui.set_checked(F, "ExpLightCBx", false);
+        save_experimental(app, ui);
+    }
+}
+
+/// The Lighting window changed the main lighting: with the experimental
+/// "main window's lighting" on, the open navigator draws again with it.
+pub fn main_lighting_changed(app: &mut Mb3d, ui: &mut Ui) {
+    if ui.showing(F) && ui.checked(F, "ExpLightCBx") {
+        new_calc(app, ui);
+    }
+}
+
 fn reset_view(app: &mut Mb3d, ui: &mut Ui) {
     let Some(s0) = app.navi.start.clone() else { return };
     let sc = &mut app.navi.scene;
@@ -1444,10 +1624,10 @@ fn reset_view(app: &mut Mb3d, ui: &mut Ui) {
     sc.z_start = s0.z_start;
     sc.z_end = s0.z_end;
     sc.zoom = s0.zoom;
-    // the zoom as when the view was taken: fixed, or from the distance
+    // the zoom mode as when the view was taken; the zoom and far plane as
+    // taken, not recomputed (as insert_main leaves them)
     ui.set_checked(F, "CheckBox1", app.navi.start_fixed);
     app.navi.de_mul = 1.0;
-    set_zoom(app, ui);
     new_calc(app, ui);
 }
 

@@ -5,6 +5,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 ## Contents
 
 - [Graphics card](#graphics-card)
+- [Several graphics cards](#several-graphics-cards)
 - [What is ported](#what-is-ported)
 - [Custom formulas (.m3f)](#custom-formulas-m3f)
 - [Scene files (.m3s)](#scene-files-m3s)
@@ -15,6 +16,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Videos](#videos)
+- [Time left and the progress bar](#time-left-and-the-progress-bar)
 - [Unfinished renders (`checkpoint.rs`)](#unfinished-renders-checkpointrs)
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
 - [Linux packaging and the command line](#linux-packaging-and-the-command-line)
@@ -101,7 +103,10 @@ inverted maximum, the two smooth minima and the dIFS mix), also with
 cutting planes, inside or inside-and-outside rendering and colour on
 iteration; formulas that read maps through MB3D's map functions get the
 maps uploaded to the card. Everything else is calculated on the CPU as
-before: the formulas the lifter cannot resolve and volumetric light. Views zoomed so far that single precision would show
+before: the formulas the lifter cannot resolve. Volumetric light runs on the
+card too: its map is marched there as shadow rays shared with the CPU
+threads (the CPU only takes it when the map is too big for one buffer).
+Views zoomed so far that single precision would show
 as noise are calculated in double precision on cards with doubles in
 shaders (Vulkan and DirectX 12 on NVIDIA, AMD and Intel; not Metal): the
 shader's real type becomes f64, with sine, cosine, logarithm and
@@ -123,6 +128,33 @@ size and lighting), so calculating it again does not probe again. The
 probe needs the card's single precision shader: with *Auto* it runs once
 that is compiled (from the next calculation of the scene on), with
 *Graphics card* the calculation waits for it.
+
+Memory: the stages after the main calculation never grow with the
+picture beyond the G-buffer. The reflections take bands of rows of at most
+2M pixels (`reflect::band_pixels`), fewer when the free memory is short:
+the band is sized to half of the memory free when the pass starts, at
+`REFLECT_BAND_BYTES` (1792) per pixel, its peak during a round of rays
+(the per pixel record with its stack of bounces, the round's requests,
+tasks, hits and results, the card's buffers; 0.8 to 1 KB per pixel between
+rounds), so a 2M band peaks at 3.5 GB and a PC with 4 GB left gets bands of
+1.2M pixels (1M bands take 9 % longer than one band at 4.5M pixels); the
+lists are dropped as soon as they are used; until 2026-10-28 a picture of
+up to 8M pixels was one band of up to 4.5 GB. `render::memory_needed`
+models it all (`MemoryUse`: the G-buffer, 20 bytes per pixel; the window's
+copies, 10; the main calculation's stage, 16 per pixel and 1.2 GB; the
+paint, 3 per pixel, the reflections' band, the depth of field's 20) for
+the question before Calculate 3D, the command line's note and the swarm's
+check of a tile; the owner of a swarm's tiles has no main calculation
+stage, its tiles' computers do. The ambient occlusion on the card uploads
+its depth buffer and the parameters of all its levels once and copies them
+on the card for every block of rows, in one submission per pass: an upload and two submissions per level
+and block queued 60 GB of staging copies for a 12000 x 6000 picture and
+left the driver holding 7 GB afterwards (the "freeze" of big pictures on
+Windows). `MB3D_STAGE_TIMES=1` prints the process memory at every stage,
+`MB3D_GPU_TIMING=1` at the steps of the reflections and the occlusion.
+Before Calculate 3D the window compares the estimate of
+`render::memory_needed` with the free memory (`render::memory_available`:
+`MemAvailable`, `GlobalMemoryStatusEx`, `host_statistics64`) and asks.
 
 In such scenes single precision mostly finds the same surfaces; what it
 gets wrong are the values measured at them. So the card marches them in
@@ -322,6 +354,28 @@ the final images to the CPU's.
 
 </details>
 
+## Several graphics cards
+
+`gpu::cards` finds and opens every card (the system's high performance
+card first, one entry per physical card, no software renderers unless
+`MB3D_GPU_ALLOW_SOFTWARE=1`; a dedicated card before integrated
+graphics). A thread calculates on the card `gpu::on_card` gives it
+(thread local; `solo_card` keeps a frame on one card), with pipelines,
+errors and background compiles per card; a further card that fails is
+left out alone (`FAILED`). In Auto and "Graphics card" mode each further
+card is a worker of its own taking bands from the shared rows
+(`render::Board`: which rows are delivered, which have a second worker;
+once the free rows are gone, an idle card or CPU thread takes the rows a
+card took and has not delivered, the first result counts, and a card whose
+rows all came from others stops, or goes on with rows still open). Ray
+batches (`gpu::on_cards`) give each further card a slice sized by its
+measured rays per second; the first card takes back a slow card's
+unstarted rays and races its started ones. Animations render a frame per
+card (`frames::render_frames`), the last frames raced on an idle card.
+`MB3D_GPU_TWICE=1` opens the first card twice for tests,
+`MB3D_CARDS_DEBUG=1` prints what the further cards did. See
+`docs/MULTI_GPU_PLAN.md` for the measurements.
+
 ## What is ported
 
 Each Delphi routine was ported from its assembler or Pascal source. Where only
@@ -365,6 +419,7 @@ and kept in the original evaluation order.
 | `batch.rs` | BatchForm.pas | batch lists |
 | `voxel.rs` | VoxelExport.pas | voxel slice stacks (`TVoxelExportCalcThread`, object test, in-and-outside limits), `.m3v` projects incl. older versions, stack preview |
 | `mesh.rs`, `mclut.rs` | BulbTracer2.pas, ObjectScanner2.pas, VertexList.pas, MeshWriter.pas | the DE grid (`TObjectScanner2`), marching cubes with BulbTracer2's tables, vertex merging, centring, OBJ and PLY writers; STL and Taubin smoothing (new) |
+| `splat.rs` | (new) | Gaussian splat export: views around the middle or the camera, a splat per object pixel, the merge by patches, spherical harmonics by a ridge fit, the 3DGS PLY writer |
 | `formulas.rs` (Aexion C) | formulas.pas | the internal formula Aexion C (`HybridAexionC`, translated from x87 assembler) with all its modes |
 | `mutagen.rs` | mutagen/MutaGen.pas, MutaGenGUI.pas, PreviewRenderer.pas, FormulaNames.pas | mutation operators, probing (Sobel and difference coverage), the 15-member tree and its layout, formula categories |
 | `jit.rs` | paxCompiler (JIT formulas), formulas/JIT*.m3f | a compiler for the Delphi subset of `[SOURCE]` formulas: preprocessor (options and constants), Delphi typing, `Math`/`System` functions, compiled to closures over the iteration state |
@@ -403,10 +458,18 @@ code. This port runs that code in three tiers:
 3. **Interpreter** (`x86.rs`): an IA-32 emulator (integer, x87, SSE/SSE2
    subset) for code that does not fit the static model (a handful of formula files).
 
+Formulas and maps of the MB3D community that the original repository
+lacks (`M3Formulas-community/`, 129 formulas, and `M3Maps-community/`, 154
+maps, from the Mandelbulb3D 1.99.37 package that Machina Infinitum offers
+as a free download) are copied into `M3Formulas` and `M3Maps` by the release
+workflow too, with their `CREDITS.md` as `CREDITS-community.md`; they run as
+any `.m3f` does. `tests/jit.rs` checks that every one loads and every JIT one
+compiles.
+
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
-**UlamSpiral**, Ulam's prime spiral in 3D, and **PseudoKleinian**,
-knighty's pseudo Kleinian) are
+**UlamSpiral**, Ulam's prime spiral in 3D, **PseudoKleinian**,
+knighty's pseudo Kleinian, and **DomeTree**, TGlad's dome tree) are
 written in Rust and WGSL (`src/x86/handwritten.rs`). Their `.m3f` file has
 the options and a placeholder `[CODE]` that only stores a huge `Rout` (the
 original MB3D loads the formula and shows nothing) and carries the
@@ -444,6 +507,21 @@ laid out with the two integers first (pConst−12, −16) so that every
 double sits on an 8-byte cell, which the GPU constants need (cells 29
 down to 17). The colour value is the smallest |p|² over the levels, as a
 radius.
+
+DomeTree reads Levels (pConst−12), Children (−16), Bend angle (−24),
+Colour scale (−32) and Start curved (−36). Per level the point is turned
+into the first of n sectors, inverted out of the sector's circle, and
+either scaled up by 1/minr when it is inside the child dome on the axis
+(the next level starts by bending its floor into a dome) or inverted in
+the circle of radius L4; the distance is the height over the scale, as
+in TGlad's `DomeTree.frag`. The GPU's double precision shader has no
+trigonometry, so the WGSL takes the constants per child count (r, l, L4
+and the sector's cosine and sine) from a table written by
+`dome_tree_table`, the bend's in single precision, and turns the point
+into its sector by k multiplications (the sector k from a single
+precision `atan2`). The JIT leaves the formulas of this file alone: their
+code is only the placeholder (`clif_jit::compile_difs` checks
+`handwritten::lookup_difs`).
 
 
 All tiers emulate the flat 32-bit address space with the `TIteration3Dext`
@@ -669,6 +747,30 @@ itself per light.
 | `vol_light` | `off` or light number 1-6 | volumetric light of that light (shown with the dynamic fog colours, `dyn_fog` sets the amount) |
 | `vol_light_map_size` | -7..7 | size of the light's shadow map in 20 % steps |
 | `cut_x`, `cut_y`, `cut_z` | position or `off` | cutting planes; the side away from the camera is kept |
+| `ground` | axis, position (`y, 1.2`) or `off` | ground plane or water (not in MB3D): calculated with the fractal, the side away from the camera solid |
+| `ground_color` | `#RRGGBB` | its colour |
+| `ground_reflect` | 0..1 | its highlights, and its mirror with `mc_reflections` |
+| `ground_waves` | height, length | waves in fractal units (height 0 = flat) |
+| `clouds` | axis, from, to (`y, -1.2, -2.2`) or `off` | a layer of volumetric clouds (not in MB3D), painted after the lighting and reflections, before the depth of field, and in the reflections (each reflected or refracted ray through the layer up to its hit, the hit in the clouds' shadow); they shade the surfaces under them (the sunlight through them from each surface point; in the painting the ambient third of the light stays, in Monte Carlo the sun's direct light is dimmed at every hit); Monte Carlo composites them along each view ray and each reflected, refracted and diffusely bounced ray in linear light (so they also tint the ambient light) (`src/clouds.rs`: each pixel's ray through the layer up to its surface, 3D value noise, the first global light through the cloud) |
+| `cloud_density`, `cloud_coverage`, `cloud_size` | number, 0..1, fractal units | how thick, how much sky, how big |
+| `cloud_color`, `cloud_offset` | `#RRGGBB`, x, y, z | colour; the noise's shift (keyframes animate it) |
+| `material_fresnel` | 0..1 | the fractal's specular colour (and its reflections) towards white where the surface turns from the view (Schlick's term with a third power) |
+| `material_iridescence` | amount, shift | a thin film's colours on the specular colour (and half on the diffuse one), changing with the angle of view |
+| `material_glow` | 0.. | the surface's own light in its diffuse colour (in Monte Carlo emitted at the hits) |
+| `finish_exposure` | stops | finishing (not in MB3D, `src/finish.rs`): the last pass after the depth of field, on the whole picture in linear light (the painting runs in floating point while finishing is on); +1 twice as bright |
+| `finish_tonemap` | `filmic` / `off` | filmic tone mapping (an approximation of the ACES film curve): highlights roll off towards white instead of clipping |
+| `glow` | strength, radius, threshold | light brighter than the threshold (0..1 of white) blurred on a copy reduced to about six pixels per radius (a wide and a near Gaussian), added; the radius is a part of the picture's diagonal |
+| `finish_contrast`, `finish_saturation`, `finish_warmth` | -1..1, 0..3, -1..1 | an S curve, the colours away from their luminance, red up and blue down (or the reverse) |
+| `vignette`, `chromatic` | 0..1 | darker corners, red and blue sampled a little outwards and inwards from the middle; both by the whole picture's middle (a tile gets its part); Monte Carlo pictures are finished after the noise filter |
+| `detail` | kind, strength, size, roughness (`stone, 1.5, 0.12, 0.5`) or `off` | surface detail (not in MB3D, `src/detail.rs`): 3D gradient noise in the fractal's coordinates (rough: sum of octaves; stone: folded `1 - 2|n|`; grain: three fine octaves); its gradient tilts the normal where the light is calculated (painting, the reflections' mirror and Monte Carlo), not the distance estimate; not on the ground plane |
+| `detail_color` | 0..1 | the diffuse colour times `1 + 0.6 * amount * noise` (patches three times the relief's size) |
+| `experimental` | `on` / `off` | the switch of the experimental speed-ups (not in MB3D, `src/experimental.rs`, see "Experimental speed-ups"): while off, the four keys below are kept but not used |
+| `step_relax` | 1..2 (1 = off) | the march's steps enlarged by this (over-relaxation); a step whose DE no longer overlaps the last one is taken again at the safe length; the dynamic fog counts a relaxed step as the safe steps it stands for |
+| `secant_search` | `on` / `off` | the binary search after the march (and at the shadows' and reflections' starts): a probe on the other side of the surface than the one before goes to where the line through both meets the DE stop (kept within 5..95 % of the step), else 0.55 of the step as before |
+| `free_steps` | `on` / `off` | without dynamic fog (53) and volumetric light, and not with `disable_analytic_de`: no step limit (`mh04zsd`), which only serves the fog's step count |
+| `cone_march` | `on` / `off` | a coarse ray per block of 16, then 4 pixels, marched with the block's spread taken off the distance estimate; every pixel's march starts where it stopped (see "Cone march") |
+| `occlusion_half` | `on` / `off` | the DE occlusion on the pixels with even x and y of the whole picture, the others filled from the four around them (bilinear, weighed by depth and normal) |
+| `part2_position`, `part2_rotation`, `part2_scale` | x, y, z; degrees; size | with a DE combination (not the mix): the second hybrid part as an object of its own, its point `m (p - position)` (the rotation divided by the size), its distance times the size |
 | `dof` | `off`, `sorted`, `forward` | depth of field |
 | `dof_focus`, `dof_focus2` | distance as fraction of the image width | sharp range (`--stats` prints the value for the image centre) |
 | `dof_aperture` | 0.0001..2 | aperture |
@@ -678,10 +780,28 @@ itself per light.
 ```sh
 ./mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
 ./mb3d examples/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
+./mb3d examples/mandelbulb.m3s -s "ground=y, 1.15" -s ground_color=#203848 -s ground_reflect=0.8 -s "ground_waves=0.03, 0.4" -s mc_reflections=1 -o water.png
 ```
 
 The volumetric light map is calculated before the image, with a ray march
 per map pixel, so it adds noticeable time.
+
+**Changing the lighting after a calculation** (the Lighting window,
+`light_form.rs`: `trigger_repaint`; `engine.rs`: `Job::Relight`)
+repaints at once from the kept G-buffer, as MB3D does: the hard shadows as
+they were calculated, without reflections and depth of field. Nothing
+follows by itself, as in MB3D: the post processing window's buttons
+calculate the shadows of a moved light, the reflections and the depth of
+field again (until v0.2.83 a full repaint did that 1.5 s after the last
+change; on a big picture those passes take as long as the calculation,
+so it was taken out). A repaint of the post processing window runs as a
+processing: "Calculate 3D" turns into "Stop", the LED blinks, the line
+and the bar show the stage and its time left, and the message list gets
+its time when it is done. Its hard shadows and DE ambient occlusion share
+the card and the CPU as after the main calculation
+(`post_process_reporting` → `post_shared`) when the card's pipelines are
+compiled, which they are after a calculation on the card; after a march
+in double precision, or while the card compiles, the CPU runs them alone.
 
 ## Reflections and transparency, normals on the z-buffer
 
@@ -716,7 +836,7 @@ specular colours of the palette say how much light a surface reflects.
 | `decomb_end1`, `decomb_start2`, `decomb_end2`, `decomb_repeat2` | formula slots 1..6 | the two parts |
 | `decomb_iterations2`, `decomb_smooth`, `decomb_mix_pow`, `decomb_mix_color` | | part 2 iterations, smoothing, mix options |
 | `inside` | `outside`, `inside`, `both` | inside rendering, in-and-outside |
-| `background_image` | file name | background picture (sphere or `background_direct = true` image coordinates) |
+| `background_image` | file name | background picture (sphere or `background_direct = true` image coordinates); a Radiance `.hdr` keeps its light above white and lights Monte Carlo renders, its sun as a light with soft shadows |
 | `background_rotation`, `background_brightness`, `background_add_light`, `background_ambient` | | picture rotation (bytes, 128 = half turn), brightness 1.04^(v-40), add instead of fog, small blurred copy as ambient light |
 | `map`, `map_rotation` (in `[light]`) | map number, 3 bytes | light map: an image lighting from all directions |
 | `diffuse_map` | map number | diffuse colour map |
@@ -771,6 +891,16 @@ fog over the background) are dropped with the background. `mb3d
 `yuva420p` with alpha, MP4 has none), Save pic > PNG transparent
 background, the Animation maker's Transparent background (`AniTransparent`
 in the ini).
+
+OpenEXR pictures (`src/exr.rs`, written without a library): one part, scan
+lines, ZIP compression (the PNG writer's zlib), the colours as half floats,
+linear (the inverse sRGB curve of the shown picture, continued above white:
+the painting's `f32` sample type keeps the light above white), with the
+layers `A` (opacity as for transparent PNGs), `Z` (32 bit float: the depth
+from the camera's start plane in fractal units, 1e10 on the background) and
+`N.X`, `N.Y`, `N.Z` (the normals in camera space). `mb3d -o name.exr` (single
+pictures; `--aa` averages the colours, takes the nearest depth and the mean
+normal), Save pic > OpenEXR.
 
 The noise filter (`src/denoise.rs`) is the DCT image denoising of
 G. Yu and G. Sapiro (IPOL 2011, doi:10.5201/ipol.2011.ys-dct), the
@@ -889,6 +1019,237 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
 
+## Gaussian splat export
+
+`src/splat.rs`, `mb3d splat`; the window `SplatFrm` (`app/splat_form.rs`,
+`Splat.dfm`), opened by the Bulb Tracer window's *Gaussian splats...*,
+exports the main window's scene in a thread (Stop ends it between views,
+nothing is written). Checked with `examples/splatcheck.rs`, which
+exports a scene, renders the program's picture from a direction that is not
+one of the views and prints that camera in the file's frame, for a splat
+renderer (Blender 5.3 headless) to render the file from the same place.
+
+* **The scene for the views** (`prepare`): square, the field of view the
+  scene's widest, no depth of field, clouds, ground plane, glow, vignette
+  or colour fringes. Lights given relative to the viewer become relative to
+  the object with the direction they have in the scene's view
+  (`fix_lights`: the angles of the object light whose vector, turned back
+  by the view, is the viewer light's). The ambient light's top and bottom
+  and the depth colours (`amb_rel_obj`) get the scene's view as their frame
+  (`Lighting::amb_frame`, not saved; the depth colours spread over the
+  scene's field of view, as across its picture), so all views paint a
+  surface alike. Without the frame nothing changes.
+* **The views** (`view_dirs`): a Fibonacci lattice on the sphere turned so
+  that the first point is the scene's view direction. Around the middle,
+  the camera turns about the scene middle as the turntable does. Around the
+  camera (`Around::Camera`; `auto` when the first picture is more than
+  97 % object), MB3D's camera is a pinhole at an eye behind the start
+  plane, whose rays start on that plane: the views are 110 degrees wide
+  (16 directions are all within 46 degrees of one), the zoom is changed so
+  that the start plane keeps its distance from the eye, and each view's
+  middle is moved so that its eye is the scene's. The start plane lies at
+  `z_start - mid z`, so `z_start` and `z_end` move with the middle.
+* **A splat per object pixel** (`splats_of_view`): the position from the
+  depth (`PaintCamera::object_pos`), the normal turned to face the camera,
+  the footprint `step_width + z * fov / height` (checked against the
+  distance of neighbouring splats: 1.0), standard deviations 0.5 footprint
+  across, 0.5 / cos (at most 4 times) along the slope, 0.05 along the
+  normal; opacity 0.99. Pixels that meet the object at the start of their
+  ray are cuts by that view's start plane: only the scene's own view keeps
+  them, and around the middle everything in front of the scene's start
+  plane is dropped (its picture cuts that away too).
+* **The merge** (`merge`): cells of twice the median splat width; patches
+  of 6 x 6 x 6 cells. In a patch the view with the largest sum of facing
+  (cos) keeps its splats; another view's splat stays only where that view
+  has none in the 27 cells around it. Per cell instead of per patch, the
+  views' slightly different pictures (highlights on normals estimated along
+  each camera's axes) mix into speckles.
+* **Colours by direction** (`fit_view_colours`): per cell of 3 merge cells,
+  each view's mean colour and mean direction; a ridge fit of the constant
+  and the spherical harmonics up to `--sh` (penalty 0.05 l (l + 1)); each
+  splat keeps the harmonics and its own colour in its own view's direction.
+* **The file**: binary little-endian PLY, `x y z nx ny nz f_dc_0..2
+  f_rest_* opacity scale_0..2 rot_0..3` (the INRIA layout; `f_rest` by
+  channel, 3, 8 or 15 per channel), in the scene's view frame (x right,
+  y into the picture, z up), the origin at the middle or the eye, scaled so
+  that 99.9 % of the splats are within 1. Blender 5.3 reads all degrees
+  (`radiance:sh_*`).
+
+Measured against the program's pictures from a direction between the views
+(Aexion 10bulbs, 512 x 512): at a view's own direction a single view's
+splats differ by 18 of 255 on average (1-pixel crust cannot be matched by
+Gaussians), 16 views by 24 to 27; between the views about 32.
+
+## Experimental speed-ups
+
+`src/experimental.rs`; the window `ExperimentalFrm` (Internal tab,
+"Experimental..."); the scene keys `experimental`, `step_relax`,
+`secant_search`, `free_steps`, `occlusion_half`, `cone_march`, also in the
+MB3D-RS block of `.m3p`/`.m3i` files. The window keeps the user's choice in
+Mandelbulb3D.ini (`Experimental  1 1.3 0 1 1 0`: the switch, step relax,
+secant, free steps, half occlusion, cone march; `Experimental::to_ini`; the
+five values of v0.2.91 are read too), and every scene the window takes
+(at the start, an opened file) gets it. Each is on the processor and the card alike (with each
+of them the card's and the processor's pictures differ in 0.005 % of the
+pixels by more than 8 of 255, as without them). Measured 2026-11-01 on the
+80 example files in Auto mode at about 0.4 megapixels, the faster of two
+runs (run to run the pictures differ in a median 0.001 % of the pixels):
+
+| | whole render | changed pixels (> 8 of 255) |
+|---|---|---|
+| `step_relax = 1.3` | total −5.1 %, median −5.0 %, best −20 % (Chrystal), worst +8 %; 62 faster, 2 slower | median 2.6 %, more than 5 % in 26 files; holes in thin shells (BatJorge – Pong 703 – Swirls 58 %), speckle in noisy scenes (spineJulia 48 %, the MutaGen canary 41 %) |
+| `secant_search` | total −1.5 %, median −2.3 %, best −18 % | median 0.7 %, more than 5 % in 12 files (spineJulia 15 %) |
+| `free_steps` | total −1.7 %, median −0.6 %, best −30 % (LightBulbMoon – No, Never) | median 0.03 %, more than 5 % in 5 files |
+| `cone_march` (2026-11-02, the march stage on the processor, 0.2 megapixels; v0.2.93: the coarse rays within the step limit, margin 1.5, ending at a tenth of the march's step) | total −19.5 %, median −22.5 %, best −66 % (Dainbramage – Nothing left but bones), worst +1 %; 68 of 69 faster; on the card (1 megapixel) total −10.0 %, median −3.1 %, best −47 % (off in 9: inside and outside, disable analytic DE, volumetric light) | median 1.0 %: in every file, pictures and holes, as much as the random first step changes (the base against itself with the random first step toggled both ways); v0.2.92 lost 1.8 % of LightBulbMoon – No, Never |
+
+### Cone march
+
+`src/cone.rs`, `Marcher::cone_march` and the jump in `Marcher::march_pixel`
+(`calc.rs`); on the card the mode `M_CONE` of the march shader and the
+`CONE` buffer (binding 7), `gpu::run` runs the cone passes of a band before
+its march. A coarse ray per block of 16 by 16 pixels, then of 4 by 4 (the
+finer block's ray starts where the coarser block's stopped), from the
+block's middle: at depth `t` every pixel's ray of the block lies within
+`a + slope * t` of it (`a` the widest gap of the pixels' starts, `slope` of
+their directions, in step widths; computed from every pixel of the block,
+`Marcher::ray`). The march takes the distance estimate for a bound within
+its step factor, and some formulas' estimates are far off between rays, so
+the coarse ray keeps `CONE_MARGIN` (1.5) times that spread over the step
+factor and the DE stop at its depth in reach: it steps by `(de - reach -
+ms_de_sub * stop) * z_step_div * rsf / (1 + slope * lip + de_stop *
+de_stop_factor)` (the divisor: the reach grows over the step) with the
+march's Lipschitz clamp and its slowing down (`rsf`), never longer than the
+march's step limit (`max(stop, 0.4) * mh04zsd`, MB3D's raystep limiter:
+where an estimate is far too large, as Amazing Surf's in LightBulbMoon – No,
+Never, only that limit finds the thin parts), and ends when the step
+falls under `CONE_MIN_STEP` (0.05) of the DE stop, or past the end of the
+view (+inf: the block is background). Up to that depth every pixel's ray
+has an estimate above the DE stop (within the assumption), so the pixel's
+march goes there in one step; a pixel whose jump lands in the surface all
+the same is marched from the start (counted in the stage times). The
+dynamic fog's step count: the coarse ray sums the march's steps per length
+along its way (`min(s, zend - t) / d` with `d` the march's step there), the
+pixel starts with that. The blocks are calculated when a pixel of them is
+first marched, by that thread (`cone::Grid`, an atomic per block: EMPTY,
+BUSY, or the depth's bits; another thread wanting the block waits), per
+level for the calculation's rectangle; on the card per band, blocks on a
+band's edge in both bands. Not with the volumetric light (it integrates
+along every ray), "disable analytic DE", inside and outside together (the
+start decides the side per pixel), 2D slices, and not in the sample
+marches (the row weights, the precision probe: its CPU pixels march without
+the cone too). The margin, measured on the 80 example files (2 November
+2026, the march on the processor, 0.2 megapixels; a hole is a pixel on the
+surface in the plain render and background with the cone march, compared
+with the plain render against itself with the random first step toggled
+both ways): v0.2.92 had no step limit in the coarse ray and a margin of 3,
+and LightBulbMoon – No, Never lost 1.8 % of its pixels (4.7 % at 1, still
+0.4 % at 6: no margin makes up for the missing limit). With the limit, 1.5
+is at the noise level in every file, pictures and holes, and gains a third
+more than 3 (march −17.8 % against −11.9 %); at 1 the fog of KentPress and
+the sphere of "cutted sphere over carpet" changed. The card at 1 megapixel:
+every file at its noise level, LightBulbMoon's holes 0.1 % (v0.2.92: 2.3 %).
+A coarse ray also ends where its step falls under a tenth of the march's
+own step there (`CONE_MIN_SHARE`; at most the step limit): far off, its
+reach grows with the depth and can leave it crawling along a surface at a
+small fraction of the pixels' steps. On the card the cone passes of a band
+are few rays, and a handful of such crawling rays held up the band: 6 AM –
+Torii temple marched 70 % longer with the cone march, now 10 %. Measured
+(0.1 against none, 0.25 and 0.5; the march, warm shader caches): on the
+processor total −19.5 % against −16.7 % without it, pictures as close to
+the plain render or closer; on the card −10.0 % against −6.6 % (0.25 the
+same on the card, a little further from the plain render on the
+processor; 0.5 slower).
+| `occlusion_half` | the 10 files with DE occlusion: total −17.6 % (DEcomb1 −24 %); the stage 3.8 times faster on the processor, 2–3 times in Auto mode | 0.01–27 % (JuliaSetSample), softer occlusion in fine detail |
+
+Earlier, on the processor alone at 400 px, `step_relax = 1.3` gave −11.6 %
+over the 80 files; in Auto mode the card does most of the march, so less
+of the time is in it.
+
+On the card the half-resolution occlusion orders the items of an even row
+of the picture with its calculated pixels first (`main` in
+`gpu_march.wgsl`): the card runs 32 pixels in step, and with every second
+pixel skipped in place its groups took as long as before (1.7 times faster
+instead of 4). The rows stay whole, so the card's rows are handed over as
+before. The skipped pixels are marked (`amb_shadow = 0xFFFF`) and filled by
+`deao::fill_half` after the pass, on the processor, for the card's and the
+processor's rows alike.
+
+### Measuring a speed-up
+
+`tools/bench.py run SWEEP.json OUT_DIR` times and compares variants of
+the example scenes, and `tools/bench.py report OUT_DIR` sums them up (the
+settings are described at the top of the script). Sweeps run by hand were
+skewed again and again, so the driver rules the known causes out:
+
+- a frozen copy of the program (its checksum and commit in the sweep's
+  header), and a quiet machine: before every run it waits while a build
+  runs or the processor is busy;
+- every scene and variant twice, the second round in reverse order; the
+  smaller time counts, a pair more than 15 % apart is run a third time.
+  The first render of a new shader on the card includes its compile
+  (~30 s for a large scene; a small warm-up render does not help, small
+  pictures are calculated on the processor), and while it compiles the
+  processor fills in part of the picture: the pictures are round 2's;
+- the variants as argument lists, never through a shell, checked before
+  anything runs (unknown keys, two variants alike, a variant that is the
+  plain render, arguments the driver sets itself such as `--card`);
+- every run checked: the device it was calculated on (`MB3D_GPU=0` does
+  not stop `--card`), the strings a variant expects (`cone march: on`; a
+  scene where it is off counts as not in use), a variant marked `same`
+  against the plain render (byte for byte on the processor, within the
+  card's own run-to-run variation, about 0.001 % of the pixels, on the card);
+- the noise: the plain render with the scene's random first step flipped.
+  A variant changes a scene where its pixels (more than 8 of 255 apart) or
+  holes (surface in the plain render, background in the variant: the depth
+  picture's background is 0) exceed 1.5 times that noise.
+
+## Time left and the progress bar
+
+The main window's bar shows the whole 3D calculation, and the line beside
+it the stage and the time left in total (`main_form.rs`: `time_left`,
+`stage_caption`).
+
+- **The main rendering's time left** comes from its own progress: the
+  rate of the last third of its time (at least 5 s), or, for a picture
+  calculated again, the progress curve of the last time at the pace of
+  this one.
+- **The later stages** (hard shadows and ambient occlusion together,
+  reflections, depth of field) are expected at a ratio to the whole main
+  rendering's time. The ratios come from a model (`src/app/eta.rs`,
+  weights in `eta_model.rs`): 25 features of the scene and the computer
+  (picture size, threads, graphics card, the shadow, occlusion, reflection
+  and DOF settings, from the rows marched so far the part on a surface,
+  the DE steps per pixel and the pixels per second, and whether the CPU
+  did the main rendering alone while the card's shaders compiled) into
+  five small networks (25 → 16 tanh → 3 log ratios), averaged. It was
+  fitted on 1418 renders of 366 scenes, 270 of them compiling shaders; on
+  scenes it had not seen, the later stages' time at the end of the main
+  rendering was off by a median 0.7 % of the whole render (90 %: 8 %),
+  against 20 % (29 %) for the fixed ratios before and 1.1 % (12 %) for a
+  linear fit. A picture calculated again expects its stages' times of the
+  last time instead.
+- **The bar** is the time done over the time done plus the time left
+  (smoothed over a few seconds as the caption); before the time left is
+  known, the main rendering's part by the expected ratios. It never goes
+  back.
+- **Shader compiles**: while the graphics card's shaders compile, the CPU
+  marches alone. The time left then comes from the CPU threads' pace,
+  unless the shaders are predicted done clearly earlier (by half again):
+  then the card joins and the rest runs about 3 times faster
+  (`compiling_estimate`). A shader job's compile time is predicted from
+  its size, precision, constants and how many compile at once
+  (`eta::compile_left`; median error 28 % for jobs over a second). On the
+  compiling renders of the data the total time left was off by a median
+  1–4 % of the render's time; when the card joins part-way, the estimate
+  is too high until the shaders are done (median 45 %). After them the
+  main rendering's time is taken at the pace since; a main rendering the
+  CPU finished alone gives the later stages the model's CPU-alone ratios.
+  A stage that ran while shaders compiled is not kept as the time of the
+  next render.
+- `MB3D_ETA_LOG=FILE` appends a line per finished calculation (features,
+  stage times, whether shaders compiled), `MB3D_COMPILE_LOG=FILE` a line
+  per shader compile: the data the model is fitted on.
+
 ## Unfinished renders (`checkpoint.rs`)
 
 A render keeps what it calculated in a checkpoint, a folder
@@ -896,15 +1257,21 @@ A render keeps what it calculated in a checkpoint, a folder
 another), never in a swarm folder. The name is the key: an FNV-1a hash of
 the kind, the program version and the scene text (`Scene::to_text`, the
 text the swarm hands on, with `threads` cleared) plus where it is
-calculated (`cpu`, `auto`, `card`). Running the same render again finds
-it; the Unfinished renders window loads the scene text it kept
+calculated (`cpu`, `auto`, `card`). For a calculation (`calc`) only what
+its rows depend on counts (`render::march_sig`: not the lighting unless
+the volumetric light uses it, not the shadows, occlusion, reflections or
+DoF), so a stopped render changed only in those still continues; rows the
+card shadowed during the march carry their shadows' settings, checked when
+continuing. Monte Carlo, tiles and voxels keep the whole scene. Running the
+same render again finds it; the Unfinished renders window loads the scene text it kept
 (`extra-scene.m3s`) and gets the same key back.
 
 | file | content |
 |---|---|
-| `data.bin` | the records of all pixels, row major (a G-buffer: the 18 bytes of a `.m3i` pixel) |
+| `data.bin` | the records of all pixels, row major (Monte Carlo, voxels, the swarm) |
+| `image.m3i` | the same for a picture or a big render, as a `.m3i` image file: the file's header before the records, the rest of the parameters after them, the rows not done as background (`checkpoint::Image`). A valid image at every moment: copy it out, open it in this program or in MB3D. `checkpoint::export_m3i` ("Save m3i" in the Unfinished renders window, `mb3d resume --m3i`) writes either file as a `.m3i` with the rows not done as background, also an earlier version's `data.bin` |
 | `marks.bin` | 28 bytes per unit (a row, a tile): magic, FNV hash of the unit's data, generation, rectangle |
-| `info.txt` | kind, name, size, version, the units done, times; `rows = raw` or `card PostJob {...}` (what the stored rows hold) |
+| `info.txt` | kind, name, size, version, the units done, times; `rows = raw` or `card PostJob {...}` (what the stored rows hold); `secs`, the time the main rendering of a picture took so far (the window's progress and time left go on from it) |
 | `extra-*` | further state, written atomically (`scene.m3s`) |
 | `lock` | held (`try_lock`) by the render that uses it: a second process of the same render runs without a checkpoint |
 
@@ -1091,6 +1458,175 @@ update `info.txt`); `--clear [KEY]` deletes them.
 
 `MB3D_PORTABLE=1` or `0` chooses a way regardless of the folder.
 
+**History** (`src/history.rs`, the window `src/app/history_form.rs`, the
+clock icon left of the version in the title bar). `History/<date>/<time> <title>.m3p`
+is the parameter file of every Calculate 3D, as MB3D keeps it
+(`appdirs::store_history`); since v0.2.84 a thumbnail of the finished
+picture is written beside it as `.png` (240 x 180 at most, scaled down
+on a thread of its own when the calculation ends), and
+`History/<date>/log.txt` records the files opened and saved through the
+file dialogs or dropped on the window, a line
+`<seconds since 1970>\t<open|save>\t<path>` each (a chosen folder is
+not logged). The window lists all of it newest first, as a list, as rows
+with their pictures or as tiles whose size a slider sets, grouped by
+day ("Group by day", on by default: a day's entries and pictures show
+when it is opened with a click, the newest day open at the start) or
+in one run; a column header sorts (within a day when grouped), the
+search box filters by name, folder, kind and action (a day without a
+hit is hidden), the kind box by file type, "Show unique" keeps one of
+several entries whose files have the same bytes (the closed days'
+counts tell what opening them would list)
+(`history::content_key`: the whole file up to 256 kB, else its size
+with its first and last 64 kB). The pictures of entries without a
+thumbnail come from `file_preview.rs` (parameters rendered small on the
+CPU, an image file read and scaled down), queued and calculated one at
+a time, the most wanted first; the last 400 pictures are kept.
+"Remove" deletes a calculation's parameter file and thumbnail (the
+history's own) and takes a logged file's line out without touching the
+file. Load opens parameters or an .m3i in the main window, any other
+file with the system's program for it.
+
+The window is made for a history of any size (thousands of days of
+thousands of entries): the day folders are listed at once and read one
+by one on a thread (`history::Scan`), the newest first, the list
+filling as they come, and a closed window stops the reading; the list
+view holds a window of its rows only (`Control::virtual_rows`,
+`cells_from`: the rows in sight and 200 beyond, filled again as it
+scrolls); the sort keys are made once per entry
+(`sort_by_cached_key`) and the search text of an entry once when it is
+read; the files are compared for "Show unique" on a thread
+(`history::hash_keys`, 2000 at a time, only the files that are listed),
+and their keys are kept between sessions in the cache folder
+(`History/keys.txt`, `history::Keys`: a key is used again while the
+file's size and time are the same). A removed entry leaves the list
+without a reading again. A synthetic history of 200 days with 200,000
+entries lists within a second of opening, and no step of the window
+blocks it longer than 60 ms.
+
+**Interface languages: labels** (`src/vcl/lang.rs`, `Languages/*.lng`,
+`tools/labels.py`), in the way of Microsoft Dynamics 365's label files.
+Every text of the program is a label with an ID: the form files carry
+`Caption = '@MB:CalculateNow'`, the code `tr("@MB:CalculationStopped")`
+(`trf` with `{}` values the same way), and each language file's
+`[Labels]` section gives the texts, `Id=text`, with a note under each
+(`;` and the English text; in English.lng where the label is used). One
+label serves every place that shows its text, so a text is translated
+once (until v0.2.86 every control had its own line: 2,042 lines for 1,793
+texts, 7 to 25 of them translated differently per language, and a new
+window got no translation even of "Close"). A label a language lacks
+shows the English text, which is built into the program
+(`include_str!` of English.lng), so a window never shows an ID; a form
+section (`[Form]`, `Control.Property = text`) gives one control a text of
+its own where it needs other words (the conversion kept the 7 to 29
+translations per language that differed from their label's most common
+one there). Old language files keep working: their form lines are such
+control texts, their `[Strings]` translate a label's English text. An
+English text the code passes around (a stage name) finds its label by
+its text. Changing the language while the program runs finds the texts
+the program set by their labels again. `tools/labels.py find TEXT` lists
+labels to reuse, `add "Text"` makes a new one (an ID from its first six
+words), `check` tells missing references and the labels each language
+has not translated yet, `sync` puts the files in order (labels by ID, the
+notes, the untranslated labels listed at the end of each file as notes);
+the tests check that every reference of the forms and the code has an
+English text and every language's labels and control texts exist.
+The fonts of Japanese, Korean, Chinese and Hindi (`Languages/*.ttf`, named
+by `font =`) are subsets of the Noto fonts with the characters their
+language file uses (one glyph per character, no layout tables, for CJK;
+Devanagari keeps its shaping rules): `python3 tools/font_subsets.py` (needs
+fontTools) adds what a file gained and never drops a character.
+
+**Translations of the README and the wiki.** One per language of the
+program (`Languages/*.lng`): `docs/i18n/README.<code>.md` (de, fr, it, nl,
+pl, csb, hi, ja, ko, zh-CN, zh-TW) and the wiki's `<Page>-<code>.md`. They
+translate the whole README except the release list (a pointer to
+`docs/UPDATES.md`) and the credits (a pointer to the English README); the
+interface labels in them are the language's own from its `.lng`. Every
+`##` and `###` section carries the English README's anchor as an `<a id>`
+line, so `#download` and the like work in every language and a section
+added in English shows up as missing. `python3 tools/i18n_docs.py --wiki
+../mb3d-rs.wiki` writes the language bars (README.md and each
+translation, between `<!-- languages:start -->` and `<!-- languages:end
+-->`) and the wiki sidebar's language list, and exits with 1 when a
+translation lacks a section of the English README or a wiki page lacks a
+translation. The English texts are the reference; each translation says so
+under its title, with the version it was made from (0.2.84).
+
+**The log** (`src/log.rs`, the window `src/app/log_form.rs`, the page
+icon left of the History clock in the title bar). Both programs write
+every event of a session to `logs/mb3d-<date>.log` in the data folder (a
+file a day, UTC, kept 30 days), one line each:
+`<date> <time>\t<level>\t<gui|cli>\t<kind>\t<text>`. The kinds:
+`session` (start with version, system, memory, threads and data folder;
+end; a session that never ended), `ui` (every event a window handles,
+`app/event_log.rs`: the window, the control's caption or hint and its
+name, the new value; the many events of one typing, dragging or wheel
+turning make one line, written when another control is used or a second
+later; mouse moves and timers are left out), `window` (opened, closed),
+`calc` (a calculation's start with size, formulas and later stages, each
+stage's time, the finish with time, where it ran and its statistics, a
+stop, an error), `message` (every line of the main window's message
+list), `file` (opened, saved), `console` (every line the programs print,
+`elog!`, its level guessed from its words), `crash` (a panic). Lines are
+written at once under a lock (nothing per pixel or row), so a line logged
+is on disk if the process dies the moment after. The desktop program holds
+`logs/session-<pid>.lock` locked while it runs and deletes it at the end;
+a lock file a later start can lock belongs to a session that froze, was
+killed, crashed or lost its power, and that start says so in the message
+list and the log. A crash note in `mb3d_crash.txt` gets the log's last 50
+lines. The Log window lists the running session live (the newest 20,000
+lines, the newest followed) or an earlier day's file, filtered by level,
+kind and words, the selected line in full below; "Copy" copies the
+selected line or all listed ones.
+
+**AI assistants** (`src/mcp.rs`, `mb3d mcp`; JSON in `src/json.rs`, our
+own, as the command line program has no dependencies). The Model Context
+Protocol over the standard input and output (JSON-RPC 2.0, a message a
+line; versions 2025-06-18, 2025-03-26, 2024-11-05): an assistant's app on
+this computer starts `mb3d mcp`; nothing listens on the network. Tools:
+`describe_scene` (a parameter file as `key = value` lines, `Scene::to_text`,
+with the view as the angles of the `rotation` key when they rebuild the same
+view, the inverse of `math::vgrads_from_angles`), `change_scene`
+(`Scene::apply` of global `key = value` lines, or `Scene::parse` of the whole
+edited scene text: in `apply` a `[light]` section switches off the lights it
+does not list and a `[formula]` section adds a formula; saved as a new .m3p),
+`scene_guide` (which keys do what, from wishes like warmer light, fog,
+detail or turning the view to settings), `formula_help` (the formula names, or
+one formula's values and defaults), `preview_folder` (up to 24 parameter
+files of a folder, newest first, on one numbered sheet),
+`render` (the full calculation with its post passes, `render::calculate_with`
++ `paint`, saved as PNG, returned as an image of at most 512 pixels;
+`preview` renders 640 wide), `variations` (a MutaGen generation, 15
+members saved as .m3p, their contact sheet returned), `recent_pictures`
+(the History, newest first) and `recent_log` (the log's newest lines,
+optionally of one kind). Files are written only into the output folder
+(`AI` in the data folder, `--output`), nothing is deleted; a picture above
+`--max-pixels` (3840 x 2160) needs `confirm_large: true`, which the
+instructions tell the assistant to ask the user for; a calculation stops
+after `--max-minutes` (10). Every call is logged (kind `mcp`). `mb3d mcp
+--setup` adds mb3d to Claude's desktop app's `claude_desktop_config.json`
+(merged, the old file kept as `.json.before-mb3d`) and prints the command
+for Claude Code (`claude mcp add mb3d --scope user -- <mb3d> mcp`): the
+program starts no other programs; `--remove` undoes both. The desktop
+program's "Connect to an AI assistant" window (the Prefs tab's AI button,
+`src/app/ai_form.rs`) does the same: it tells whether each app is installed
+and connected (`claude_desktop_status`, `claude_code_status`: the settings
+folder and file, `claude` on the PATH, `mcpServers.mb3d` in
+`~/.claude.json`), connects or disconnects the desktop app with a click and
+shows Claude Code's command to copy, with things to ask, the output folder
+and the limits; it connects the `mb3d` next to the desktop program
+(`mcp::cli_program`).
+
+**Crashes.** A panic of either program (any thread), or the error the
+desktop program ends with, is appended to `mb3d_crash.txt` with the
+program, version, time, system and backtrace (`src/crash.rs`): next to
+the program in the one-folder way, else in the data folder above
+(`~/.local/share/mb3d-rs` on Linux and macOS, `%APPDATA%\mb3d-rs` on
+Windows), on every system since v0.2.80
+(before only on Windows). A crash of the graphics driver or a kill by the
+system (out of memory) is no panic and leaves no note; the unfinished
+render's checkpoint is what remains then.
+
 The shipped folders are found next to the program, in the user's data
 folder and in `$XDG_DATA_DIRS/mb3d-rs` (`/usr/local/share/mb3d-rs`,
 `/usr/share/mb3d-rs`). Formulas are searched in this order:
@@ -1199,9 +1735,18 @@ gh attestation verify mb3d-rs-linux-x64.tar.gz --repo thr32423/mb3d-rs
 
 This section is for developers; the release downloads above need none of
 it. The renderer has **no external dependencies** (std only, including its
-own PNG and JPEG encoders); the windows use four crates (winit, softbuffer,
-fontdue, arboard) and the graphics card two (wgpu, pollster). Everything
-builds with any recent stable Rust:
+own PNG and JPEG encoders); the windows use five crates (winit, softbuffer,
+fontdue, rustybuzz for scripts with joined letters, arboard) and the graphics card two (wgpu, pollster). Everything
+builds with any recent stable Rust. **Safe Rust:** the crate is
+`#![deny(unsafe_code)]`; `unsafe` is allowed only where Rust has no safe
+way, each place marked `#[allow(unsafe_code)]` with its reason: `oidn.rs`
+(calls into Intel's C library) and the formulas compiled at run time
+(`x86/clif_jit.rs`, `lift_clif.rs`, `clif_builtin.rs` and the two functions
+of `iteration.rs` that call the compiled loops). Anything else is safe
+Rust, even for speed: the hybrid loop's four separate loads of the iterated
+vector go through `std::hint::black_box` (the same speed as volatile loads,
+measured over the 80 example parameter files with `examples/formbench`),
+and the free memory of Windows and macOS comes from the sysinfo crate.
 
 ```sh
 git clone https://github.com/thr32423/mb3d-rs
