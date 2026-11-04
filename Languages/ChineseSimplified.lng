@@ -1527,6 +1527,8 @@ HowMuchThePlaneReflects0=平面的反射程度（0 到 1）：它的高光，以
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=表面颜色随起伏变化的程度：0 不变，1 强烈
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=水散射光的强度（0 到 1，0：不散射）：水朝灯光方向发光，浪尖透光，光束射入水中，水下物体泛出水的颜色（开启反射或在蒙特卡洛中）
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=水的浑浊程度：每个分形单位内光线减弱的速度（0：完全清澈；1：约可看到一个单位深；3：浑浊）。在蓝绿色的水中，红色最先消失。
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=要去除的噪点强度（1 到 30，同 GIMP 的“Denoise DCT”）。\n值越高去除的噪点越多，细节也损失越多。
@@ -3075,6 +3077,8 @@ ScalesTheMaximumLengthOfThe=缩放要计算的环境光线的最大长度。\n�
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=扫描预览
 ;Scan Preview
+Scattering=散射：
+;Scattering:
 ScreenDistance=屏幕距离：
 ;Screen distance:
 ScriptEditor=脚本编辑器
@@ -3419,6 +3423,8 @@ TheDefaultNumberingIncludes2Numbers=默认编号包含 2 个数字，分为 X �
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=默认输出中物体为白色，外部区域为黑色。\n选择此项可反转颜色。
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=散射的方向（0 到 0.95）：水主要向前散射（0.8），所以朝着光看时最亮
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=距离估计值按此系数缩小，以避免过步。\n如果出现过步（黑色像素、图像有噪点），请减小该值。\n值太小会降低渲染速度。
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=距离估计按此系数缩小以避免过步。\n若出现过步（黑色像素、噪点图像），请减小该值。\n值过低会使渲染变慢。

@@ -1527,6 +1527,8 @@ HowMuchThePlaneReflects0=평면의 반사 정도 (0에서 1): 하이라이트, �
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=기복에 따라 표면 색이 변하는 정도: 0 없음, 1 강하게
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=물이 빛을 산란시키는 정도 (0에서 1, 0: 없음): 조명 쪽으로 빛나고, 물마루가 비쳐 보이며, 빛줄기가 물속으로 들어가고 물속의 것이 물의 색으로 빛납니다 (반사 또는 몬테카를로)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=물이 얼마나 탁한지: 프랙털 단위당 빛이 줄어드는 속도 (0: 완전히 맑음, 1: 약 한 단위 깊이까지 보임, 3: 탁함). 청록색 물에서는 빨강이 먼저 사라집니다.
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=제거할 노이즈의 강도입니다(1~30, GIMP의 "Denoise DCT"와 동일).\n높을수록 노이즈를 더 많이 제거하지만 미세한 디테일도 더 사라집니다.
@@ -3075,6 +3077,8 @@ ScalesTheMaximumLengthOfThe=계산할 앰비언트 광선의 최대 길이를 �
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=스캔 미리보기
 ;Scan Preview
+Scattering=산란:
+;Scattering:
 ScreenDistance=화면 거리:
 ;Screen distance:
 ScriptEditor=스크립트 편집기
@@ -3419,6 +3423,8 @@ TheDefaultNumberingIncludes2Numbers=기본 번호 매기기는 X와 Y로 나뉜 
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=기본 출력은 물체가 흰색, 바깥 영역이 검은색입니다.\n색을 반전하려면 이 옵션을 선택하십시오.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=산란의 방향 (0에서 0.95): 물은 주로 앞쪽으로 산란하므로 (0.8) 빛 쪽을 볼 때 가장 밝게 빛납니다
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=오버스테핑을 피하기 위해 거리 추정값을 이 배율로 줄입니다.\n오버스테핑(검은 픽셀, 노이즈 이미지)이 생기면 값을 줄이십시오.\n값이 너무 낮으면 렌더링이 느려집니다.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=오버스테핑을 피하기 위해 거리 추정값을 이 배율로 줄입니다.\n오버스테핑(검은 픽셀, 노이즈 많은 이미지)이 생기면 값을 줄이십시오.\n값이 너무 낮으면 렌더링이 느려집니다.

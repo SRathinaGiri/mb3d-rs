@@ -1527,6 +1527,8 @@ HowMuchThePlaneReflects0=مقدار انعكاس المستوى (من 0 إلى 1
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=مقدار تغيّر لون السطح مع النتوء: 0 لا يتغير، 1 بقوة
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=مقدار تشتيت الماء للضوء (من 0 إلى 1، 0: لا تشتيت): يتوهج نحو الأضواء، وتشف قمم أمواجه، وتسقط فيه حزم الضوء، ويتوهج ما تحته بلونه (مع الانعكاسات أو في مونت كارلو)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=مدى عكارة الماء: سرعة خفوت الضوء فيه لكل وحدة من الكسيري (0: صافٍ تمامًا؛ 1: يُرى إلى عمق وحدة تقريبًا؛ 3: عكر). في الماء الأزرق المخضر يخفت الأحمر أولًا.
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=مدى قوة التشويش الذي يُزال (من 1 إلى 30، كما في "Denoise DCT" في GIMP).\nالأعلى يزيل تشويشًا أكثر، وتفاصيل دقيقة أكثر.
@@ -3075,6 +3077,8 @@ ScalesTheMaximumLengthOfThe=يحجّم الطول الأقصى للأشعة ال
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=معاينة المسح
 ;Scan Preview
+Scattering=التشتت:
+;Scattering:
 ScreenDistance=مسافة الشاشة:
 ;Screen distance:
 ScriptEditor=محرر السكربت
@@ -3419,6 +3423,8 @@ TheDefaultNumberingIncludes2Numbers=الترقيم الافتراضي يتضمن
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=الإخراج الافتراضي أبيض للجسم وأسود للمنطقة الخارجية.\nاختر هذا الخيار لعكس الألوان.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=اتجاه التشتت (من 0 إلى 0.95): يشتت الماء الضوء غالبًا إلى الأمام (0.8)، لذا يتوهج أكثر عند النظر نحو الضوء
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=تُصغَّر تقديرات المسافة بهذا المعامل لتجنب تجاوز الخطوات.\nأنقص القيمة إن حدث تجاوز للخطوات (بكسلات سوداء، صورة مشوشة).\nالقيم المنخفضة جدًّا تبطئ التصيير.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=تُصغَّر تقديرات المسافة بهذا المعامل لتجنب تجاوز الخطوات.\nأنقص القيمة إن حدث تجاوز للخطوات (بكسلات سوداء، صورة مشوشة).\nالقيم المنخفضة جدًّا تبطئ التصيير .

@@ -1526,6 +1526,8 @@ HowMuchThePlaneReflects0=Jak mòckò płaszczëzna òdbijô (òd 0 do 1): ji pò
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Jak wiele farwa pòwiérzchni zmieniô sã z rzezbą: 0 wcale, 1 mòcno
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=Jak mòckò wòda rozpraszô swiatło (òd 0 do 1, 0: wcale nie): swiécy w stronã swiatłów, wiérzchë fal przeswiécają, wpôdają w nią smùdżi swiatła, a to, co pòd nią, swiécy ji farwą (z òdbicama abò w Monte Carlo)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=Jak mãtnô je wòda: jak chùtkò gasnie w ni swiatło, na jednostkã fraktala (0: całô przezérnô; 1: widzec na kòl jedny jednostczi w głãb; 3: mãtnô). W modrozelony wòdze nôprzód zanikô czerwień.
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Jak mòcny je szëm, chtëren je ùsëwóny (1 do 30, jak "Denoise DCT" w GIMP).\nWëższé ùsëwô wicy szëmù, a téż wicy drobnëch detalów.
@@ -3074,6 +3076,8 @@ ScalesTheMaximumLengthOfThe=Skalëje maksymalną długòsc rechòwónëch òkòl
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=Pòdzérk skanowaniô
 ;Scan Preview
+Scattering=Rozpraszanié:
+;Scattering:
 ScreenDistance=Òdległosc ekranu:
 ;Screen distance:
 ScriptEditor=Editora skriptów
@@ -3418,6 +3422,8 @@ TheDefaultNumberingIncludes2Numbers=Domëslné numrowanié mô 2 lëczbë, òddz
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=Domëslno òbiekt je biôłi, a òbéńda bùten czôrnô.\nTa òptacjô òdwrôcô farwë.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=Czerënk rozpraszaniô (òd 0 do 0,95): wòda rozpraszô przédno do przódkù (0,8), tej swiécy nômòcni, czej sã zdrzi w stronã swiatła
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=Szacënczi òdległoscë są skalowóné w dół tim faktorã, żebë ùniknąc przekroczeniô.\nZmniészë wôrtnotã, jeżlë pòjawiô sã przekroczenié (czôrné piksle, zaszëmiony òbrôzk).\nZa niższé wôrtnotë spòmalają renderowanié.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=Szacënczi òddaleniô są zmniészóné ò ten mnożnik, żebë ùniknąc przekroczeniô.\nZmniészë wôrtnotã, żelë wëstãpùje przekroczenié (czôrné piksle, szum na òbrôzkù).\nZa môłé wôrtnotë spòwòlniwają renderowanié.

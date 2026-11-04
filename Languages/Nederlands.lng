@@ -1526,6 +1526,8 @@ HowMuchThePlaneReflects0=Hoeveel het vlak reflecteert (0 tot 1): de glanzen, en 
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Hoeveel de kleur van het oppervlak met het reliëf varieert: 0 niet, 1 sterk
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=Hoeveel het water licht verstrooit (0 tot 1, 0: niet): het gloeit naar de lampen toe, de golftoppen schijnen door, lichtstralen vallen erin en wat eronder ligt gloeit in zijn kleur (met de reflecties of in Monte Carlo)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=Hoe troebel het water is: hoe snel het licht erin dooft, per fractaleenheid (0: volkomen helder; 1: je ziet ongeveer één eenheid diep; 3: troebel). In blauwgroen water verdwijnt rood het eerst.
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Hoe sterk de ruis is die wordt verwijderd (1 tot 30, zoals "Denoise DCT" van GIMP).\nHoger verwijdert meer ruis, en meer fijne details.
@@ -3074,6 +3076,8 @@ ScalesTheMaximumLengthOfThe=Schaalt de maximale lengte van de te berekenen omgev
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=Scanvoorbeeld
 ;Scan Preview
+Scattering=Verstrooiing:
+;Scattering:
 ScreenDistance=Schermafstand:
 ;Screen distance:
 ScriptEditor=Scripteditor
@@ -3418,6 +3422,8 @@ TheDefaultNumberingIncludes2Numbers=De standaardnummering bestaat uit 2 getallen
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=Standaard is de uitvoer wit voor het object en zwart voor het gebied erbuiten.\nKies deze optie om de kleuren om te keren.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=De richting van de verstrooiing (0 tot 0,95): water verstrooit vooral naar voren (0,8), dus het gloeit het meest als je naar het licht kijkt
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=De afstandsschattingen worden met deze factor verkleind om overstepping te voorkomen.\nVerlaag de waarde als overstepping optreedt (zwarte pixels, ruisige afbeelding).\nTe lage waarden vertragen het renderen.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=De afstandsschattingen worden met deze factor verkleind om overstepping te voorkomen.\nVerlaag de waarde als overstepping optreedt (zwarte pixels, ruis in de afbeelding).\nTe lage waarden vertragen het renderen.

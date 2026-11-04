@@ -1527,6 +1527,8 @@ HowMuchThePlaneReflects0=तल कितना परावर्तित क�
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=उभार के साथ सतह का रंग कितना बदलता है: 0 बिल्कुल नहीं, 1 बहुत
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=पानी प्रकाश को कितना बिखेरता है (0 से 1, 0: बिल्कुल नहीं): वह रोशनियों की ओर चमकता है, लहरों के शिखर पारभासी होते हैं, प्रकाश की किरणें उसमें उतरती हैं और नीचे की चीज़ें उसके रंग में चमकती हैं (परावर्तन या मोंटे कार्लो में)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=पानी कितना धुंधला है: उसमें प्रकाश कितनी जल्दी घटता है, प्रति फ़्रैक्टल इकाई (0: पूरी तरह साफ़; 1: लगभग एक इकाई गहराई तक दिखता है; 3: धुंधला)। नीले-हरे पानी में लाल सबसे पहले मिटता है।
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=हटाया जाने वाला शोर कितना प्रबल है (1 से 30, जैसे GIMP का "Denoise DCT")।\nअधिक मान अधिक शोर हटाता है, और अधिक बारीक विवरण भी।
@@ -3075,6 +3077,8 @@ ScalesTheMaximumLengthOfThe=गणना की जाने वाली पर
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=स्कैन पूर्वावलोकन
 ;Scan Preview
+Scattering=प्रकीर्णन:
+;Scattering:
 ScreenDistance=स्क्रीन दूरी:
 ;Screen distance:
 ScriptEditor=स्क्रिप्ट एडिटर
@@ -3419,6 +3423,8 @@ TheDefaultNumberingIncludes2Numbers=डिफ़ॉल्ट क्रमां�
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=डिफ़ॉल्ट आउटपुट में वस्तु सफ़ेद और बाहरी क्षेत्र काला होता है।\nरंग उलटने के लिए यह विकल्प चुनें।
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=प्रकीर्णन की दिशा (0 से 0.95): पानी मुख्यतः आगे की ओर बिखेरता है (0.8), इसलिए प्रकाश की ओर देखने पर सबसे अधिक चमकता है
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=ओवरस्टेपिंग से बचने के लिए दूरी अनुमानों को इस गुणक से घटाया जाता है।\nओवरस्टेपिंग होने पर (काले पिक्सेल, शोरयुक्त छवि) मान कम करें।\nबहुत कम मान रेंडरिंग को धीमा कर देते हैं।
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=ओवरस्टेपिंग से बचने के लिए दूरी अनुमानों को इस गुणक से घटाया जाता है।\nयदि ओवरस्टेपिंग हो (काले पिक्सेल, शोरयुक्त छवि) तो मान घटाएँ।\nबहुत कम मान रेंडरिंग को धीमा कर देते हैं।

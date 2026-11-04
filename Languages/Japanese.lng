@@ -1527,6 +1527,8 @@ HowMuchThePlaneReflects0=平面の反射の強さ (0 から 1): ハイライト�
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=起伏による表面の色の変化の度合い: 0 なし、1 強い
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=水が光を散乱する強さ (0 から 1、0: 散乱しない): ライトの方向に輝き、波頭が透け、光の筋が差し込み、水中のものが水の色で輝きます (反射またはモンテカルロ)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=水の濁り具合：フラクタル単位あたりで光が弱まる速さ（0：完全に透明、1：約1単位の深さまで見える、3：濁っている）。青緑の水では赤が最初に消えます。
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=除去するノイズの強さです (1 ~ 30、GIMP の「Denoise DCT」と同じ)。\n高いほど多くのノイズを除去しますが、細部も失われます。
@@ -3075,6 +3077,8 @@ ScalesTheMaximumLengthOfThe=計算するアンビエントレイの最大長を�
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=スキャンプレビュー
 ;Scan Preview
+Scattering=散乱:
+;Scattering:
 ScreenDistance=画面までの距離:
 ;Screen distance:
 ScriptEditor=スクリプトエディター
@@ -3419,6 +3423,8 @@ TheDefaultNumberingIncludes2Numbers=既定の番号付けはXとYに分かれた
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=既定の出力はオブジェクトが白、外側の領域が黒です。\n色を反転するにはこのオプションを選んでください。
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=散乱の向き (0 から 0.95): 水はおもに前方へ散乱する (0.8) ので、光の方を見ると最も明るく輝きます
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=距離推定値にこの係数を掛けて縮小し、オーバーステップを防ぎます。\nオーバーステップ (黒いピクセル、ノイズの多い画像) が発生する場合は値を下げてください。\n値が小さすぎるとレンダリングが遅くなります。
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=オーバーステップを避けるため、距離推定値をこの倍率で縮小します。\nオーバーステップ (黒い画素、ノイズの多い画像) が出る場合は値を下げてください。\n値が小さすぎるとレンダリングが遅くなります。

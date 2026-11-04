@@ -1526,6 +1526,8 @@ HowMuchThePlaneReflects0=Seberapa kuat bidang memantul (0 sampai 1): kilaunya, d
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Seberapa besar warna permukaan berubah mengikuti relief: 0 tidak, 1 kuat
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=Seberapa kuat air menghamburkan cahaya (0 sampai 1, 0: tidak sama sekali): air bercahaya ke arah lampu, puncak ombaknya tembus cahaya, berkas cahaya jatuh ke dalamnya dan yang ada di bawahnya bercahaya dengan warnanya (dengan pantulan atau di Monte Carlo)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=Seberapa keruh air: seberapa cepat cahaya meredup di dalamnya, per satuan fraktal (0: jernih sempurna; 1: terlihat sekitar satu satuan ke dalam; 3: keruh). Di air biru-hijau, merah memudar lebih dulu.
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Seberapa kuat derau yang dihapus (1 sampai 30, seperti "Denoise DCT" GIMP).\nNilai lebih tinggi menghapus lebih banyak derau, dan lebih banyak detail halus.
@@ -3074,6 +3076,8 @@ ScalesTheMaximumLengthOfThe=Menskalakan panjang maksimum sinar ambien yang dihit
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=Pratinjau Pindai
 ;Scan Preview
+Scattering=Hamburan:
+;Scattering:
 ScreenDistance=Jarak layar:
 ;Screen distance:
 ScriptEditor=Editor Skrip
@@ -3418,6 +3422,8 @@ TheDefaultNumberingIncludes2Numbers=Penomoran bawaan terdiri dari 2 angka, terpi
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=Keluaran bawaan putih untuk objek dan hitam untuk area luar.\nPilih opsi ini untuk membalik warna.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=Arah hamburan (0 sampai 0,95): air menghambur terutama ke depan (0,8), jadi paling bercahaya bila memandang ke arah cahaya
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=Estimasi jarak diperkecil dengan faktor ini untuk menghindari overstepping.\nKurangi nilainya jika terjadi overstepping (piksel hitam, gambar berderau).\nNilai yang terlalu rendah memperlambat render.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=Estimasi jarak diperkecil dengan faktor ini untuk menghindari overstepping.\nKurangi nilainya jika terjadi overstepping (piksel hitam, gambar berderau).\nNilai yang terlalu rendah memperlambat render .

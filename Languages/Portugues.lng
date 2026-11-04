@@ -1526,6 +1526,8 @@ HowMuchThePlaneReflects0=Quanto o plano reflete (0 a 1): seus brilhos, e seu esp
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Quanto a cor da superfície varia com o relevo: 0 nada, 1 fortemente
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=Quanto a água dispersa a luz (0 a 1, 0: nada): ela brilha em direção às luzes, as cristas das ondas ficam translúcidas, raios de luz caem nela e o que está embaixo brilha na sua cor (com os reflexos ou no Monte Carlo)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
 HowMurkyTheWaterIsHow=Quão turva é a água: a rapidez com que a luz se apaga nela, por unidade do fractal (0: perfeitamente límpida; 1: vê-se cerca de uma unidade de profundidade; 3: turva). Em água verde-azulada o vermelho desaparece primeiro.
 ;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Intensidade do ruído removido (1 a 30, como o "Denoise DCT" do GIMP).\nValores maiores removem mais ruído, e mais detalhes finos.
@@ -3074,6 +3076,8 @@ ScalesTheMaximumLengthOfThe=Escala o comprimento máximo dos raios ambiente a ca
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=Prévia da varredura
 ;Scan Preview
+Scattering=Dispersão:
+;Scattering:
 ScreenDistance=Distância da tela:
 ;Screen distance:
 ScriptEditor=Editor de scripts
@@ -3418,6 +3422,8 @@ TheDefaultNumberingIncludes2Numbers=A numeração padrão inclui 2 números, sep
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=A saída padrão é branca para o objeto e preta para a área externa.\nEscolha esta opção para inverter as cores.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=A direção da dispersão (0 a 0,95): a água dispersa sobretudo para a frente (0,8), então brilha mais olhando em direção à luz
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=As estimativas de distância são reduzidas por este fator para evitar passos excessivos.\nReduza o valor se houver passos excessivos (pixels pretos, imagem com ruído).\nValores baixos demais deixam o render mais lento.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=As estimativas de distância são reduzidas por este fator para evitar passos excessivos.\nReduza o valor se houver passos excessivos (pixels pretos, imagem com ruído).\nValores baixos demais deixam o render mais lento .
