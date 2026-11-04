@@ -1236,17 +1236,29 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                 }
             }
             self.m.mzz = zz.abs();
-            let nn = if p.normals_on_de { self.m.calculate_normals(&mut si) } else { self.m.calculate_normals_on_smooth_it(&mut si) };
-            let v = if de_limited {
-                32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
+            // a hit of the ground plane: its normal from its distance, its
+            // own colour (as the card's reflections: ground_at in
+            // gpu_march.wgsl; before 2026-11-04 the CPU's took the fractal's
+            // colouring there, seen where a wave's reflection meets the
+            // water again)
+            let ground = p.ground.as_ref().is_some_and(|g| g.distance(&self.m.it.c) / sw < self.m.ms_de_stop as f64 * 2.0);
+            if ground {
+                self.m.calculate_normals(&mut si);
+                si.si_gradient = 0;
+                si.otrap = crate::gbuffer::GROUND;
             } else {
-                32767.0 - nn * p.mcts_m
-            };
-            si.si_gradient = min_max_clip_15bit(v);
-            if p.color_on_it != 0 {
-                self.m.do_color_on_it();
+                let nn = if p.normals_on_de { self.m.calculate_normals(&mut si) } else { self.m.calculate_normals_on_smooth_it(&mut si) };
+                let v = if de_limited {
+                    32767.0 - (nn + p.d_col_plus + p.col_var_de_stop_mul * ((self.m.ms_de_stop as f64 * sw).ln() as f32)) * p.mcts_m
+                } else {
+                    32767.0 - nn * p.mcts_m
+                };
+                si.si_gradient = min_max_clip_15bit(v);
+                if p.color_on_it != 0 {
+                    self.m.do_color_on_it();
+                }
+                self.m.do_color(&mut si);
             }
-            self.m.do_color(&mut si);
             let ds = if lv.far_fog || lv.sqr {
                 (((zz2 + last_zz as f64).powi(2) - last_zz as f64 + 1e-30).max(0.0)).sqrt()
             } else {
