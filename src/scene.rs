@@ -182,17 +182,70 @@ impl Default for Ground {
     }
 }
 
+/// The waves of the ground plane: 16 sine waves, each (direction x, y
+/// on the plane, frequency per wave length, amplitude, phase), around a
+/// main wind direction with a spread (wider for the short waves), wave
+/// lengths from 2 to 0.3 times `wave_len` (more short ones, none in a
+/// simple ratio to another, so no grid or tiling shows), amplitudes
+/// growing with the wave length (an ocean spectrum's falloff,
+/// length^1.25) and random phases; scaled to the mean height of the three
+/// regular waves before 2026-11-04.  The card's shader gets the same table
+/// (`gpu::wave_code`).
+pub const WAVES: [[f64; 5]; 16] = [
+    [0.997866, -0.065290, 0.914345, 0.277821, 2.925766],
+    [0.948197, 0.317683, 1.055979, 0.240558, 3.690648],
+    [0.997975, 0.063609, 1.159089, 0.219158, 4.982421],
+    [0.827013, 0.562183, 1.286918, 0.197389, 1.906326],
+    [0.616711, 0.787190, 1.429186, 0.177740, 0.263142],
+    [0.997262, -0.073947, 1.678415, 0.151348, 6.061752],
+    [0.913951, 0.405823, 1.805482, 0.140696, 0.094252],
+    [0.905870, 0.423556, 1.964208, 0.129326, 0.374171],
+    [0.795917, 0.605405, 2.104404, 0.120711, 2.914986],
+    [0.710178, 0.704022, 2.334424, 0.108817, 5.293126],
+    [0.976530, 0.215381, 2.556661, 0.099358, 4.162293],
+    [0.993173, 0.116653, 2.772080, 0.091637, 1.747749],
+    [-0.205983, 0.978556, 3.107468, 0.081746, 4.447299],
+    [0.818188, 0.574950, 3.242815, 0.078334, 1.443033],
+    [-0.005548, 0.999985, 3.510215, 0.072367, 2.515786],
+    [0.461339, 0.887224, 3.919932, 0.064803, 2.428536],
+];
+
+/// The highest the waves get (the sum of the amplitudes, times
+/// `wave_height`).
+pub const WAVE_MAX: f64 = {
+    let mut s = 0.0;
+    let mut i = 0;
+    while i < WAVES.len() {
+        s += WAVES[i][3];
+        i += 1;
+    }
+    s
+};
+
+/// The steepest the waves get (the sum of amplitude times frequency,
+/// times 2 pi `wave_height` / `wave_len`).
+pub const WAVE_SLOPE: f64 = {
+    let mut s = 0.0;
+    let mut i = 0;
+    while i < WAVES.len() {
+        s += WAVES[i][3] * WAVES[i][2];
+        i += 1;
+    }
+    s
+};
+
 impl Ground {
-    /// The height of the waves at (u, v) on the plane, -1..1 times
-    /// `wave_height`: three crossing sine waves.
+    /// The height of the waves at (u, v) on the plane, times
+    /// `wave_height` ([`WAVES`]: irregular, mostly within -1..1).
     #[inline]
     pub fn wave(&self, u: f64, v: f64) -> f64 {
         use std::f64::consts::TAU;
         let (x, y) = (u / self.wave_len, v / self.wave_len);
-        self.wave_height
-            * (0.5 * (TAU * (0.8 * x + 0.6 * y)).sin()
-                + 0.3 * (TAU * 1.7 * (-0.45 * x + 0.9 * y) + 1.3).sin()
-                + 0.2 * (TAU * 2.9 * (0.2 * x - 0.98 * y) + 2.1).sin())
+        let mut w = 0.0;
+        for c in &WAVES {
+            w += c[3] * (TAU * c[2] * (c[0] * x + c[1] * y) + c[4]).sin();
+        }
+        self.wave_height * w
     }
 
     /// The distance from `c` to the surface (fractal units; negative in
@@ -205,10 +258,24 @@ impl Ground {
         if self.wave_height == 0.0 {
             return s;
         }
+        // the steepest slope
+        let g = std::f64::consts::TAU * WAVE_SLOPE * self.wave_height / self.wave_len.max(1e-30);
+        // high above the crests the waves need not be summed: from 3 to 6
+        // times their highest the distance blends into the one to the
+        // crests' height (both lower bounds; blended, not switched, or rays
+        // whose DE stop has grown far away would stop on the jump)
+        let top = self.wave_height * WAVE_MAX;
+        let c0 = (1.0 + g * g).sqrt();
+        if s >= 6.0 * top {
+            return (s - top) / c0;
+        }
         let (u, v) = (c[(k + 1) % 3], c[(k + 2) % 3]);
-        // the steepest slope: 2 pi height / length (0.5 + 0.3 * 1.7 + 0.2 * 2.9)
-        let g = std::f64::consts::TAU * 1.59 * self.wave_height / self.wave_len.max(1e-30);
-        (s - self.wave(u, v)) / (1.0 + g * g).sqrt()
+        let d = s - self.wave(u, v);
+        if s > 3.0 * top {
+            let t = (s - 3.0 * top) / (3.0 * top);
+            return (d + (s - top - d) * t) / c0;
+        }
+        d / c0
     }
 
     /// The depth of `c` under the surface with its waves (fractal units

@@ -1593,6 +1593,17 @@ fn ground_on() -> bool {
     return HAS_GROUND && (P[GROUND_OPT] & 1u) != 0u;
 }
 
+// Ground::wave without the height (scene::WAVES; the code between the
+// marks is made by gpu::wave_code from the same table)
+//@WAVES@
+fn ground_wave(a: R, b: R) -> R {
+    return R(0.0);
+}
+fn ground_wave_max() -> R {
+    return R(0.0);
+}
+//@WAVES_END@
+
 // Ground::distance, in steps
 fn ground_steps(q: vec3<R>) -> R {
     let opt = P[GROUND_OPT];
@@ -1603,13 +1614,22 @@ fn ground_steps(q: vec3<R>) -> R {
     }
     let h = pf(GROUND_WAVE);
     if (h != 0.0) {
-        let a = q[(k + 1u) % 3u] / pf(GROUND_WLEN);
-        let b = q[(k + 2u) % 3u] / pf(GROUND_WLEN);
-        let t = R(6.283185307179586);
-        let wave = h * (0.5 * r_sin(t * (0.8 * a + 0.6 * b))
-            + 0.3 * r_sin(t * 1.7 * (-0.45 * a + 0.9 * b) + 1.3)
-            + 0.2 * r_sin(t * 2.9 * (0.2 * a - 0.98 * b) + 2.1));
-        s = (s - wave) * pf(GROUND_LIP);
+        // (Ground::distance: blended into the distance to the crests' height
+        // from 3 to 6 times their highest)
+        let top = h * ground_wave_max();
+        if (s >= 6.0 * top) {
+            s = (s - top) * pf(GROUND_LIP);
+        } else {
+            let a = q[(k + 1u) % 3u] / pf(GROUND_WLEN);
+            let b = q[(k + 2u) % 3u] / pf(GROUND_WLEN);
+            let d = s - h * ground_wave(a, b);
+            if (s > 3.0 * top) {
+                let t = (s - 3.0 * top) / (3.0 * top);
+                s = (d + (s - top - d) * t) * pf(GROUND_LIP);
+            } else {
+                s = d * pf(GROUND_LIP);
+            }
+        }
     }
     return s / pf(STEP_WIDTH);
 }

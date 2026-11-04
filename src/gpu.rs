@@ -461,6 +461,27 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     scene_shader(p).err()
 }
 
+/// The shader's `ground_wave` and `ground_wave_max` from the CPU's table
+/// of the waves (`scene::WAVES`, `Ground::wave`): the same sum in the same
+/// order.
+fn wave_code() -> String {
+    use std::fmt::Write;
+    let mut s = String::from("fn ground_wave(a: R, b: R) -> R {\n    let t = R(6.283185307179586);\n    var w = R(0.0);\n");
+    for c in &crate::scene::WAVES {
+        let _ = writeln!(s, "    w += R({:?}) * r_sin(t * R({:?}) * (R({:?}) * a + R({:?}) * b) + R({:?}));", c[3], c[2], c[0], c[1], c[4]);
+    }
+    let _ = write!(s, "    return w;\n}}\nfn ground_wave_max() -> R {{\n    return R({:?});\n}}\n", crate::scene::WAVE_MAX);
+    s
+}
+
+/// The shader's code with the waves' table put in (between `//@WAVES@` and
+/// `//@WAVES_END@`).
+fn with_waves(code: &str) -> String {
+    let a = code.find("//@WAVES@").expect("waves mark");
+    let b = code.find("//@WAVES_END@").expect("waves end mark");
+    format!("{}{}{}", &code[..a], wave_code(), &code[b + "//@WAVES_END@".len()..])
+}
+
 /// The parts of the shader and its buffers for one scene.
 struct SceneShader {
     /// the complete WGSL
@@ -900,7 +921,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "        default: {{ rg[1] = cnt; rg[3] = n; }}");
     let _ = writeln!(g, "    }}");
     let _ = writeln!(g, "}}");
-    let code = format!("{}{}", real_block(dbl), include_str!("gpu_march.wgsl").replace("//@FORMULAS@", &g));
+    let code = format!("{}{}", real_block(dbl), with_waves(include_str!("gpu_march.wgsl")).replace("//@FORMULAS@", &g));
     // MB3D_GPU_DUMP=file: write the scene shader (for debugging)
     if let Some(f) = std::env::var_os("MB3D_GPU_DUMP") {
         let _ = std::fs::write(f, &code);
@@ -2026,7 +2047,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     v[433] = p.secant as u32 | (p.ao_half as u32) << 1;
     // the ground plane (GROUND_OPT ..)
     if let Some(g) = &p.ground {
-        let slope = std::f64::consts::TAU * 1.59 * g.wave_height / g.wave_len.max(1e-30);
+        let slope = std::f64::consts::TAU * crate::scene::WAVE_SLOPE * g.wave_height / g.wave_len.max(1e-30);
         v[411] = 1 | ((g.axis as u32 % 3) << 1) | (g.above as u32) << 3;
         v[412] = (g.pos as f32).to_bits();
         v[413] = (g.wave_height as f32).to_bits();
@@ -3869,6 +3890,22 @@ mod tests {
         gbuffer_matches_cpu(&format!("cut_y = -0.3\ncolor_on_iteration = 2\n{bulb}"), 0.5);
         gbuffer_matches_cpu(&format!("cut_z = 0.1\ninside = both\n{bulb}"), 0.5);
         gbuffer_matches_cpu(&format!("cut_x = 0.2\ninside = inside\n{bulb}"), 0.5);
+    }
+
+    /// The ground plane with its irregular waves (scene::WAVES, made into
+    /// the shader by wave_code): the card's surface as the CPU's.
+    #[test]
+    fn waves_match_cpu() {
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
+        gbuffer_matches_cpu(&format!("ground = y, 0.2\nground_waves = 0.02, 0.3\n{bulb}"), 0.5);
+        gbuffer_matches_cpu(&format!("ground = y, -0.1\nground_waves = 0.006, 0.8\n{bulb}"), 0.5);
+        // the shader's table is the CPU's, in the same order
+        let code = wave_code();
+        assert_eq!(code.matches("r_sin(").count(), crate::scene::WAVES.len());
+        assert!(code.contains(&format!("return R({:?});", crate::scene::WAVE_MAX)));
+        for c in &crate::scene::WAVES {
+            assert!(code.contains(&format!("w += R({:?}) * r_sin(t * R({:?}) * (R({:?}) * a + R({:?}) * b) + R({:?}));", c[3], c[2], c[0], c[1], c[4])));
+        }
     }
 
     fn validate_wgsl(what: &str, code: &str) {
