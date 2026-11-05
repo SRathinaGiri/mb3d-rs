@@ -34,6 +34,7 @@
 #![deny(unsafe_code)]
 
 pub mod anim;
+pub mod autopilot;
 #[cfg(feature = "gui")]
 pub mod app;
 pub mod appdirs;
@@ -97,6 +98,7 @@ pub mod ssao;
 pub mod ssao15;
 pub mod swarm;
 pub mod video;
+pub mod vr;
 pub mod vollight;
 pub mod voxel;
 pub mod water;

@@ -894,6 +894,22 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   berikutnya), sehingga yang bergerak menjadi kabur; waktunya pun sekian kali
   lebih lama (`mb3d animate --motion-blur 8,0.5`).
 
+  *Pembuat animasi* > *Templat animasi...* membuat keyframe dari tampilan
+  jendela utama untuk durasi dalam detik (pada frame per detik jendela itu):
+  *Orbit 360°* mengelilingi sumbu pilihan Anda (kiri ke kanan, lewat atas,
+  roll, ketiganya sekaligus, atau sumbu X, Y, atau Z fraktal; `--orbit 8
+  --duration 10 --orbit-axis pitch`) atau *Terbang menembus*, ketika kamera
+  terus terbang masuk ke fraktal, zoom mengikuti jaraknya, menjaga arahnya
+  dan hanya berbelok untuk menghindari yang akan ditabraknya (`--fly
+  --duration 20`; `--duration 0`: sampai tampilan hanya menunjukkan langit
+  atau hanya fraktal). *VR 360°* di Pembuat animasi (`--vr`) menjadikan
+  setiap frame panorama bola (2:1); dengan *Render animasi stereo* video
+  berisi kedua mata atas-bawah (kiri di atas), dan perintah ffmpeg diakhiri
+  `mb3d vr360 video.mp4 --stereo tb`, yang menandai MP4 sebagai video 360
+  untuk YouTube, Meta Quest, dan VLC. Panorama bola yang disimpan sebagai
+  JPEG membawa XMP Photo Sphere, sehingga Facebook menampilkannya sebagai
+  foto 360.
+
   </details>
 * **Splat Gaussian** dari fraktal, untuk dilihat dari segala sisi di
   Blender (5.3 dan yang lebih baru), SuperSplat, dan penampil splat lain: *Bulb

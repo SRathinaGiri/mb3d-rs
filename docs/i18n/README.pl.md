@@ -860,6 +860,21 @@ możesz sprawdzić sam:
   następnej klatki), więc to, co się rusza, rozmazuje się; trwa to tyle razy
   dłużej (`mb3d animate --motion-blur 8,0.5`).
 
+  *Kreator animacji* > *Szablony animacji...* tworzy klatki kluczowe z
+  widoku okna głównego na zadany czas w sekundach (przy liczbie klatek na
+  sekundę okna): *Orbita 360°* wokół wybranej osi (od lewej do prawej, górą,
+  przechylenie, wszystkie trzy naraz albo oś X, Y lub Z fraktala; `--orbit 8
+  --duration 10 --orbit-axis pitch`) albo *Przelot*, w którym kamera leci
+  dalej w głąb fraktala, zoom podąża za odległością od niego, a ona trzyma
+  kurs i skręca tylko, by ominąć to, w co by uderzyła (`--fly --duration
+  20`; `--duration 0`: aż widok pokaże tylko niebo albo tylko fraktal). *VR
+  360°* w oknie Kreator animacji (`--vr`) robi z każdej klatki panoramę
+  sferyczną (2:1); z *Renderuj animację stereo* wideo ma oczy jedno nad
+  drugim (lewe u góry), a polecenie ffmpeg kończy się na `mb3d vr360
+  video.mp4 --stereo tb`, które oznacza plik MP4 jako wideo 360 dla YouTube,
+  Meta Quest i VLC. Panorama sferyczna zapisana jako JPEG ma XMP Photo
+  Sphere, więc Facebook pokazuje ją jako zdjęcie 360.
+
   </details>
 * **Splaty gaussowskie** fraktala, do oglądania ze wszystkich stron w
   Blenderze (5.3 i nowszym), SuperSplat i innych przeglądarkach splatów: *Bulb

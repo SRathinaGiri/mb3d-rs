@@ -28,6 +28,8 @@ language = Kaszëbsczi
 code = CSB
 
 [Labels]
+A360DegreeAnimationForVR=Animacjô 360 grôdów dlô òkùlarów VR: kòżdô klatka to sferiwô panorama, dwa razë szersza jak wësokô; z 'Renderuj stereo animacjã' wideo mô òczë jedno nad drëdżim, a pòlecenié ffmpeg znaczi MP4 dlô òdgrëwników VR
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
 A4dQuaternionFormulaOneIteration=Cztërowymiarowô kwaternionowô fòrmùła, jedna iteracëjô:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ABulbFormulaAsSuggestedBy=Fòrmùła bulba zaproponowónô przez Aexiona:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nDodóné dwie òpcëje òbracaniô stałi pòtãżno ò òdlegòscë midzë terôźnyma wektorama Z ë C (Cond Phi=1)\në nôslédné òpcëje Mode:\n(Bitë wôrtnotë Mode)\nBit1: òdwrócë skłôdniczi atan theta\nBit2: òdwrócë skłôdniczi atan phi\nBit3: òdwrócë theta ë phi\nBit4: òdwrócë CyCz przë rechòwanim kąta\nBit5: pòmnóż powerC przez òdlegòscã midzë wektorama Z ë C
@@ -68,6 +70,8 @@ AVideoNeedsImagesChooseBMP=Wideò pòtrzebùje òbrôzków: wëbierzë BMP, PNG 
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=Wideò ze stereo animacji nie je robioné: wëłączë 'Renderuj stereo animacjã'.
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=Całi òbrót kamerë wkół òbiektu w 8 abò wicy kluczowëch klatkach, gładkô pãtla (Catmull-Rom); klatczi skłôdają sã na czas przë klatkach na sekùndã z òkna animacje
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf=Òbrôzk {} x {} brëkùje kòl {} pamiãcë, nen kòmpùter mô {} wòlny: rechòwanié bë szło do pliku wëmianë, a programa bë mògła minutama nie òdpòwiadac.\n\nRechòwac mimò tegò?\n\nWiôldżi render (karta Nôrzãdła) rechùje to w kachlach zapisywónëch jeden pò drëdżim, bez trzëmaniô całégò òbrôzka; rój (òkno Rój) dzeli kachle z jinszima kòmpùtrama.
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=Òbrôzk PNG z Z-bufferã téż bãdze zapisóny.
@@ -122,6 +126,8 @@ AddNewOption=Dodôwô nową òpcjã
 ;Add new option
 AddOptionValue=Dodôj wôrtnotã òpcji
 ;Add option value
+AddTheKeyframes=Dodôj kluczowé klatczi
+;Add the keyframes
 AddToBackgroundDepthNotBlend=Dodôj do głãbi spòdla (nie mieszôj)
 ;Add to background depth (not blend)
 AddonFormula=Dodatkòwô fòrmùła
@@ -154,6 +160,8 @@ AllRealworldUnitsInMeter=Wszëtczé realné jednostczi w métrach.
 ;All realworld units in meter.
 AllTheLightColorSettings=Wszëtczé nastawë swiatła + farwów
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=Wszëtkò razã: òdchilenié, pòchilenié i przechilenié (kòzłowanié)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> ju je
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=Zrobi téż wideò (AVI)
@@ -226,6 +234,10 @@ AnimationRenderingStopped=Renderowanié animacje zatrzëmóné.
 ;Animation rendering stopped.
 AnimationSize=Wiôlgòsc animacje:
 ;Animation size:
+AnimationTemplates=Szablonë animacje...
+;Animation templates...
+AnimationTemplates2=Szablonë animacje
+;Animation templates
 AnimationTheFfmpegCommandIsOn=Animacjô: pòlét ffmpeg je w schówkù (zrëszë gò w terminalu, czej klatczi bãdą gòtowé):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=Animacjô: wideò zapisóné: {}
@@ -248,6 +260,8 @@ ApproximateVertexColorsTheColorInformation=Przëbliżoné farwë wiérzków. Inf
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 rechùje ArcTan(Y/X) i zwrôcô nórt w pasownym kwadrance.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=Wkół:
+;Around:
 AroundTheMiddleAnObject=Wkół westrzódka (òbiekt)
 ;Around the middle (an object)
 AsFullBackgroundSphere=Jakno fùl kùla spòdla:
@@ -272,6 +286,8 @@ AutoSavingTheM3cFile=Aùtomaticzné zapisywanié lopka m3c:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=Aùto: CPU i graficznô karta dzelą sã òbrôzkã (CPU\nzaczinô zarô, karta dołącziwô, czej ji shader je\nskòmpilowóny), pòtemù karta rechùje céni i ambient\nocclusion.\nCPU: nigdë graficznô karta.\nGraficznô karta: żdac na shader, jak przódë.
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=Auto: westrzódk abò widzałô pòwierzchniô
+;Auto: the middle, or the surface in view
 AutoUpdateImage=Aùtomatné òdnôwianié òbrôzka
 ;Auto update image
 AutoUpdatePreview=Aùtomaticzno òdswiéżôj pòdzérk
@@ -288,6 +304,8 @@ AvgIterations=Strzéd. iteracjów:
 ;Avg. iterations:
 AvgRaysteps=Strzéd. kroków parminia:
 ;Avg. raysteps:
+Axis=Òs:
+;Axis:
 AxisX=Òs X
 ;Axis X
 AxisY=Òs Y
@@ -1034,6 +1052,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=Nie wiém, nick nie rób
 ;Dunno, do nothing
+DurationSeconds=Czas (sekùndë):
+;Duration (seconds):
 DynFog=Din.mgła
 ;Dyn.fog
 DynFogOnIt=Din. dôka na it.:
@@ -1230,6 +1250,10 @@ FlatSolidWithEdges=Płaskô brëła z kańtama
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: Nôwikszô całownô lëczba <= X,  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=Przelot
+;Fly-through
+FlyThroughTheFlightEndedAfter=Przelot: lot sã skùńcził pò {} z {} klatków, {}
+;Fly-through: the flight ended after {} of {} frames, {}
 Fo=Fò.{}
 ;Fo.{}
 FogOffset=Przesënienié mgłë
@@ -1286,6 +1310,8 @@ FrameNumberToUseForAnimated=Numer klatczi dlô animòwónëch mapów w głównym
 ;Frame number to use for animated maps in the main editor
 Frames=klatków
 ;frames
+FramesAtFramesASecond={} klatków przë {} klatkach na sekùndã
+;{} frames at {} frames a second
 FramesPerSecond=Klatków na sekùndã:
 ;Frames per second:
 FramesSec=Klatków/s:
@@ -1800,8 +1826,12 @@ KeyframeListM3k=Lësta kluczowëch klatków (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKluczowô klatka\npòczątk:  kùńc:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=Kluczowé klatczi:
+;Keyframes:
 KeyframesForOneWholeTurnAround=Kluczowé klatczi dlô całégò òbrotu wkół westrzódka pòzdrzatkù, òd pòzdrzatkù głównégò òkna: 8 kluczowëch klatków w gładczi pãtlë (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=Kluczowé klatczi zrobioné z pòzdrzatkù głównégò òkna: òrbita 360° abò przelot, tak dłudżi, jak pòdôsz
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=Klawisze, co wëcygają òkno na wiéch z kòżdégò òkna
 ;Keys that bring a window to the front from any window
 Kind=Ôrt
@@ -1812,12 +1842,16 @@ LIGHTSTROKES=SMÙDŻI WIDU
 ;LIGHT STROKES
 LMBMoveRMBRotate=LMB: przesuwanié           RMB: òbrôcanié
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=Nôwikszi skrãt (grôdë na klatkã):
+;Largest turn (degrees a frame):
 LastLengthIncrease=Òstatny przërost dłëgòscë
 ;Last length increase
 LastPass=\s· slédny przeńdzënk {}
 ;\s· last pass {}
 Layer=Warstwa:
 ;Layer:
+LeftToRightAroundItYaw=Òd lewi do prawi wkół (òdchilenié)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=Lewé kliknienié:  wéńdzenié w trib mëszë.. zdrzenié mëszą, +prawi knąp mëszë.. òbrôcanié\n(Klikni znowa lewim abò ESC, żebë wińc z tribù mëszë)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=Lewé klikniãcé:   Òbrôcô bulb wkół òsë X òbzérôcza @ wôrtnotë Ymid+Zmid\nPrawé klikniãcé: Òbrôcô bulb wkół òsë X òbiektu @ 0
@@ -2226,8 +2260,12 @@ N2Or3PassesGivesA=2 abò 3 przebiedżi dôwają lepszé mòcné rozmazanié prze
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=2. òdbicé
 ;2nd reflection
+N360Orbit=Òrbita 360°
+;360° orbit
 N360Panorama=Panorama 360
 ;360 Panorama
+N360VR=VR 360°
+;360° VR
 N3DAnalyticFormula=Analiticznô fòrmùła 3D
 ;3D analytic formula
 N3DFormula=Fòrmùła 3D
@@ -2332,6 +2370,8 @@ NoTilesToRender=Nie ma kachlów do renderowaniô.
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\sNie nalazło sã wôżnégò tekstu, proszã wpisac tekst niżi:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=nie òstała żódnô droga naprzódk
+;no way ahead was left
 Noise=-szëm
 ;-noise
 NoiseAI=-szëm AI
@@ -2544,6 +2584,8 @@ OutsideRender=Renderowanié z bùtna
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Renderowanié z bùtna:  domëslny trib\nRenderowanié òd bënë:    pòmałé raymarching bënë z maks. it.\nBënë ë z bùtna:   renderowanié òbù starnów
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=Górą i dołã (pòchilenié)
+;Over the top and under (pitch)
 OverallScale=Całownô skala:
 ;Overall scale:
 OverwriteExistingImages=Nadpiszë jistniejącé òbrôzczi
@@ -3254,8 +3296,12 @@ SpecularObjectColorsClickToChange=Spekùlarné farwë òbiektu, klikni, żebë j
 ;Specular object colors, click to change them.
 SpecularPowerFunction=Fùnkcja spekùlarny mòcë
 ;Specular power function
+SpeedOfTheDistanceAFrame=Chùtkòsc (% òdległoscë na klatkã):
+;Speed (% of the distance a frame):
 SphericalCoords=Kùlowé kòòrdinatë
 ;Spherical coords
+SpinningAroundTheLineOfSight=Òbrót wkół òsë widzeniô (przechilenié)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} splatów w {}, zapisóné w {}
 ;{} splats in {}, written to {}
 Stan=stan.
@@ -3384,6 +3430,8 @@ TargetMapSlot=Docelowi slot mapë
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Docelowi slot mapë. Ùżij ti lëczbë jakno mapë w swòjim fraktalu, np. jakno mapë wësokòscë, żebë miec animòwóną mapã
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=Szablon:
+;Template:
 TheAmazingBoxAkaMandboxFormula=Fòrmùła 'Amazing Box', téż zwónô Mandbox, wëmëslonô przez TGlada na fractalforums.com.\n\nFòrmùła jednégò iteracëji wëzdrzy tak:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=Wielosc dodónëch rozproszonëch ë spekùlarnëch farwów je wikszô jak 1,\nczë je zmniészëc dlô realisticzniészégò farwieniô?
@@ -3412,6 +3460,10 @@ TheCalculationFailedLower=rechòwanié sã nie ùdało
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Rechòwanié bãdze rozszérzoné bùten òbrôzka ò òdbité òbiektë.\nTo mòże dac mni artefaktów w animacjach, ale téż stojącé òbrôzczi mògą na tim zwëskac.\nWôrtnosc mô bëc w òbrëmienim òd 0 do 0.5 (maks 0.9), to je wiôlgòsc wzglãdno szérzë\në wësokòscë òbrôzka, jakô je maksymalno rechòwónô bùten.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=Kamera leci dali w głãbiã fraktala, zoom jidze za òdległoscą òd niegò, a òna sã kerëje przez jegò szczelënë; kluczowô klatka co pół sekùndë (Catmull-Rom). Lot sã kùńczi wczasni w slepim zaùlkù, na grańcë dwójny precyzje abò czej òpùszczô fraktal
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=kamera òpùscëła fraktal
+;the camera left the fractal
 TheChosenValueOverAllFrames=Wëbróné wôrtnota we wszëtczich klatkach animacji: przecygni kwadrat klucznégò ùjęcô w górã abò w dół, abò klëknij gò ë wpiszë wôrtnotã
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 TheColourOfDeepWaterThe=Farwa głãbòczi wòdë: swòje swiatło wòdë ë farwa, jaką z głãbòkòscą bierze to, co je pòd nią (klëkni, żebë zmienic)
@@ -3444,6 +3496,8 @@ TheFileSelectAndCopyIt=Lopk (zaznaczë gò i skòpérëj stąd)
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(Pierszi) pùnkt òstroscë.\nWôrtnosc je wzglãdno wôrtnoscë Zstart òbzérôcza,\nznormalizowónô do szérzë òbrôzka.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=Przelot nie mòże sã tu zacząc: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=katalog nie je (abò nie je przëstãpny)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Miono fòrmùłë pòwinno sã zaczënac òd "JIT", bë òdrozniwac te fòrmùłë òd fòrmùłów na spòdlim ASM
@@ -3454,6 +3508,12 @@ TheFractalOfTheMainWindow=Fraktal z przédnégò òkna jakno gaussowsczé splat�
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Materiał pòwierzchni fraktala na paletce (nie je w MB3D: zapisóny za dzélã parametrów MB3D)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=Òs X fraktala
+;The fractal's X axis
+TheFractalSYAxis=Òs Y fraktala
+;The fractal's Y axis
+TheFractalSZAxis=Òs Z fraktala
+;The fractal's Z axis
 TheFramesPerSecondMustBe=Klatczi na sekùndã mùszą bëc lëczbą wikszą jak 0 (np. 25).
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=bùfer òbrôzka mô lëchą wiôlgòsc
@@ -3470,6 +3530,8 @@ TheMainEditorIsStillRendering=Przédny editor wcyg renderëje. Nôprzód gò zat
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=Òpcje mapë rechùją kòòrdinatë x,y z òsoblëwégò\nwektora dlô sfericznëch mapów, to zmieniwô téż pierszi wëbiér farwë,\njaczi zwëczajno òpiérô sã na głôdczich iteracjach.\nŻebë widzec wënik zmianów tëch òpcjów,\nnót je òbrôzk wërechòwac znowa.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=Westrzódk pòzdrzatkù
+;The middle of the view
 TheMonteCarloWindowIsRendering=Òkno Monte Carlo renderëje: nôprzód je zatrzëmôj.
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=Czas migawczi rozmëcô rëchù: dzél czasu do nastãpny klatczi (0 do 1)
@@ -3504,6 +3566,8 @@ TheSizeOfTheCloudsFeatures=Wiôlgòsc ksztôłtów chmùrów w jednotkach frakta
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=Wiôlgòsc kachlów
 ;The size of the tiles
+TheStepsCameToTheLimit=krokòwie doszlë do grańcë dwójny precyzje
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=Òbrôzczi òczów stereo mają różné wiôlgòscë.
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=Tekstowé parametrë w schòwkù są zniszczoné: dzél régów òstôł ùcãti przë kòpirowanim. Skòpiérujta je jesz rôz z môla, skądka są.
@@ -3514,6 +3578,10 @@ TheTriplexMathSineBulbAs=Sinusowi bulb w triplex-matematice, zaproponowóny prze
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Wôrtnota wëbrónégò klucznégò ùjęcô
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=pòzdrzatk je fùl fraktala
+;the view is filled with the fractal
+TheViewShowsOnlySky=pòzdrzatk wëkazëje le niebò
+;the view shows only sky
 Themes=Témë
 ;Themes
 ThereIsAFileAlready=Lopk {} ju je.
@@ -3660,6 +3728,8 @@ UnfinishedRenders=Nieskùńczoné renderë
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=Nieskùńczoné renderingë: kòntinuùj abò rëmôj je
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=Jaż pòzdrzatk wëkôże le niebò abò le fraktal (nôwicy 2 minutë)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=bez titla
 ;untitled
 UpOneLevel=Katalog wëżi

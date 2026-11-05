@@ -28,6 +28,8 @@ language = Italiano
 code = IT
 
 [Labels]
+A360DegreeAnimationForVR=Un'animazione a 360 gradi per visori VR: ogni fotogramma un panorama sferico, largo il doppio dell'altezza; con 'Renderizza animazione stereo' il video ha gli occhi uno sopra l'altro, e il comando ffmpeg contrassegna l'MP4 per i lettori VR
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
 A4dQuaternionFormulaOneIteration=Una formula quaternionica 4D, un'iterazione:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ABulbFormulaAsSuggestedBy=Una formula bulb suggerita da Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAggiunte due opzioni per ruotare la costante per potenza in base alla distanza tra i vettori attuali di Z e C (Cond Phi=1),\ne le seguenti opzioni Mode:\n(Bit del valore Mode)\nBit1: inverti le componenti atan di theta\nBit2: inverti le componenti atan di phi\nBit3: inverti theta e phi\nBit4: inverti CyCz per il calcolo dell'angolo\nBit5: moltiplica powerC per la distanza tra i vettori Z e C
@@ -68,6 +70,8 @@ AVideoNeedsImagesChooseBMP=Un video richiede immagini: scegliere BMP, PNG o JPG 
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=Non si crea un video di un'animazione stereo: disattivare 'Render stereo animation'.
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=Un giro completo della fotocamera attorno all'oggetto in 8 o più fotogrammi chiave, un ciclo morbido (Catmull-Rom); i fotogrammi danno insieme la durata ai fotogrammi al secondo della finestra Animazione
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf=Un'immagine di {} x {} ha bisogno di circa {} di memoria, questo computer ne ha {} liberi: il calcolo userebbe lo swap e il programma potrebbe non rispondere per minuti.\n\nCalcolare comunque?\n\nIl render grande (scheda Strumenti) la calcola a riquadri salvati uno per uno, senza tenere in memoria l'intera immagine; uno sciame (finestra Sciame) condivide i riquadri con altri computer.
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=Viene salvata anche un'immagine PNG dello Z-buffer.
@@ -122,6 +126,8 @@ AddNewOption=Aggiunge una nuova opzione
 ;Add new option
 AddOptionValue=Aggiungi valore opzione
 ;Add option value
+AddTheKeyframes=Aggiungi i fotogrammi chiave
+;Add the keyframes
 AddToBackgroundDepthNotBlend=Aggiungi alla profondità dello sfondo (non fondere)
 ;Add to background depth (not blend)
 AddonFormula=Formula addon
@@ -154,6 +160,8 @@ AllRealworldUnitsInMeter=Tutte le unità reali in metri.
 ;All realworld units in meter.
 AllTheLightColorSettings=Tutte le impostazioni di luce + colore
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=Tutti insieme: imbardata, beccheggio e rollio (capriola)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> esiste già
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=Crea anche un video (AVI)
@@ -226,6 +234,10 @@ AnimationRenderingStopped=Rendering dell'animazione fermato.
 ;Animation rendering stopped.
 AnimationSize=Dimensione animazione:
 ;Animation size:
+AnimationTemplates=Modelli di animazione...
+;Animation templates...
+AnimationTemplates2=Modelli di animazione
+;Animation templates
 AnimationTheFfmpegCommandIsOn=Animazione: il comando ffmpeg è negli appunti (eseguirlo in un terminale quando i fotogrammi sono pronti):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=Animazione: video scritto: {}
@@ -248,6 +260,8 @@ ApproximateVertexColorsTheColorInformation=Approssima i colori dei vertici. Le i
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calcola ArcTan(Y/X) e restituisce un angolo nel quadrante corretto.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=Attorno a:
+;Around:
 AroundTheMiddleAnObject=Attorno al centro (un oggetto)
 ;Around the middle (an object)
 AsFullBackgroundSphere=Come sfera di sfondo completa:
@@ -272,6 +286,8 @@ AutoSavingTheM3cFile=Salvataggio automatico del file m3c:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=Auto: la CPU e la scheda grafica si dividono l'immagine (la CPU\nparte subito, la scheda si aggiunge appena il suo shader è\ncompilato), poi la scheda esegue le ombre e l'occlusione\nambientale.\nCPU: mai la scheda grafica.\nScheda grafica: attende lo shader, come prima.
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=Auto: il centro, o la superficie in vista
+;Auto: the middle, or the surface in view
 AutoUpdateImage=Aggiorna immagine autom.
 ;Auto update image
 AutoUpdatePreview=Aggiorna anteprima automaticamente
@@ -288,6 +304,8 @@ AvgIterations=Iterazioni medie:
 ;Avg. iterations:
 AvgRaysteps=Passi raggio medi:
 ;Avg. raysteps:
+Axis=Asse:
+;Axis:
 AxisX=Asse X
 ;Axis X
 AxisY=Asse Y
@@ -1034,6 +1052,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=Non so, non fare nulla
 ;Dunno, do nothing
+DurationSeconds=Durata (secondi):
+;Duration (seconds):
 DynFog=Nebbia din.
 ;Dyn.fog
 DynFogOnIt=Nebbia din. su it.:
@@ -1230,6 +1250,10 @@ FlatSolidWithEdges=Solido piatto con bordi
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: il più grande intero <= X,  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=Volo attraverso
+;Fly-through
+FlyThroughTheFlightEndedAfter=Volo attraverso: il volo è terminato dopo {} di {} fotogrammi, {}
+;Fly-through: the flight ended after {} of {} frames, {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Offset nebbia
@@ -1286,6 +1310,8 @@ FrameNumberToUseForAnimated=Numero del fotogramma da usare per le mappe animate 
 ;Frame number to use for animated maps in the main editor
 Frames=fotogrammi
 ;frames
+FramesAtFramesASecond={} fotogrammi a {} fotogrammi al secondo
+;{} frames at {} frames a second
 FramesPerSecond=Fotogrammi al secondo:
 ;Frames per second:
 FramesSec=Fotogr./sec:
@@ -1800,8 +1826,12 @@ KeyframeListM3k=Elenco keyframe (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\ninizio:   fine:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=Fotogrammi chiave:
+;Keyframes:
 KeyframesForOneWholeTurnAround=Fotogrammi chiave per un giro completo attorno al centro della vista, partendo dalla vista della finestra principale: 8 fotogrammi chiave in un ciclo morbido (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=Fotogrammi chiave creati per te dalla vista della finestra principale: un'orbita a 360° o un volo attraverso, lungo quanto vuoi
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=Tasti che portano una finestra in primo piano da qualsiasi finestra
 ;Keys that bring a window to the front from any window
 Kind=Tipo
@@ -1812,12 +1842,16 @@ LIGHTSTROKES=TRATTI DI LUCE
 ;LIGHT STROKES
 LMBMoveRMBRotate=LMB: sposta           RMB: ruota
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=Virata massima (gradi per fotogramma):
+;Largest turn (degrees a frame):
 LastLengthIncrease=Ultimo aumento di lunghezza
 ;Last length increase
 LastPass=\s· ultimo passaggio {}
 ;\s· last pass {}
 Layer=Strato:
 ;Layer:
+LeftToRightAroundItYaw=Da sinistra a destra attorno (imbardata)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=Clic sinistro: entra in modalità mouse.. vista con il mouse, +tasto destro.. rollio\n(di nuovo clic sinistro o ESC per uscire dalla modalità mouse)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=Clic sinistro:   Ruota il bulbo attorno all'asse X dell'osservatore ai valori Ymid+Zmid\nClic destro: Ruota il bulbo attorno all'asse X dell'oggetto a 0
@@ -2226,8 +2260,12 @@ N2Or3PassesGivesA=2 o 3 passaggi danno una sfocatura forte migliore davanti al p
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=2ª riflessione
 ;2nd reflection
+N360Orbit=Orbita a 360°
+;360° orbit
 N360Panorama=Panorama 360
 ;360 Panorama
+N360VR=VR 360°
+;360° VR
 N3DAnalyticFormula=Formula 3D analitica
 ;3D analytic formula
 N3DFormula=Formula 3D
@@ -2332,6 +2370,8 @@ NoTilesToRender=Nessun riquadro da renderizzare.
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\sNessun testo valido trovato, inserire il testo qui sotto:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=non restava più strada davanti
+;no way ahead was left
 Noise=-rumore
 ;-noise
 NoiseAI=-rumore IA
@@ -2544,6 +2584,8 @@ OutsideRender=Render esterno
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Render esterno:  modo predefinito\nRender interno:    raymarching lento all'interno con it. max.\nInterno ed esterno:   rende entrambi i lati
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=Sopra e sotto (beccheggio)
+;Over the top and under (pitch)
 OverallScale=Scala globale:
 ;Overall scale:
 OverwriteExistingImages=Sovrascrivi immagini esistenti
@@ -3254,8 +3296,12 @@ SpecularObjectColorsClickToChange=Colori speculari dell'oggetto, clicca per camb
 ;Specular object colors, click to change them.
 SpecularPowerFunction=Funzione di potenza speculare
 ;Specular power function
+SpeedOfTheDistanceAFrame=Velocità (% della distanza per fotogramma):
+;Speed (% of the distance a frame):
 SphericalCoords=Coord. sferiche
 ;Spherical coords
+SpinningAroundTheLineOfSight=Rotazione attorno alla linea di vista (rollio)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} splat in {}, salvati in {}
 ;{} splats in {}, written to {}
 Stan=stan.
@@ -3384,6 +3430,8 @@ TargetMapSlot=Slot mappa di destinazione
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Slot mappa di destinazione. Usare questo numero come mappa nel frattale, ad es. come heightmap, per avere una mappa animata
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=Modello:
+;Template:
 TheAmazingBoxAkaMandboxFormula=La formula 'Amazing Box' alias Mandbox, inventata da TGlad su fractalforums.com.\n\nLa formula per un'iterazione si presenta così:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=La somma dei colori diffuso e speculare aggiunti è maggiore di 1,\nridurli per una colorazione più realistica?
@@ -3412,6 +3460,10 @@ TheCalculationFailedLower=il calcolo non è riuscito
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Il calcolo viene esteso oltre il bordo dell'immagine con gli oggetti riflessi.\nQuesto può ridurre gli artefatti nelle animazioni, ma anche le immagini fisse ne traggono vantaggio.\nIl valore dovrebbe stare tra 0 e 0.5 (max 0.9); è la dimensione, relativa a larghezza\ne altezza dell'immagine, calcolata al massimo all'esterno.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=La fotocamera continua a volare dentro il frattale, lo zoom segue la distanza da esso, e si dirige attraverso i suoi varchi; un fotogramma chiave ogni mezzo secondo (Catmull-Rom). Termina prima in un vicolo cieco, al limite della doppia precisione o quando esce dal frattale
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=la fotocamera è uscita dal frattale
+;the camera left the fractal
 TheChosenValueOverAllFrames=Il valore scelto su tutti i fotogrammi dell'animazione: trascinate il quadrato di un fotogramma chiave in su o in giù, oppure cliccatelo e scrivetene il valore
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 TheColourOfDeepWaterThe=Il colore dell'acqua profonda: la luce propria dell'acqua e il colore che prende ciò che sta sotto con la profondità (clic per cambiare)
@@ -3444,6 +3496,8 @@ TheFileSelectAndCopyIt=Il file (selezionarlo e copiarlo da qui)
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=Il (primo) punto di fuoco.\nIl valore è relativo allo Zstart dell'osservatore,\nnormalizzato alla larghezza dell'immagine.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=Il volo attraverso non può iniziare qui: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=la cartella non esiste (o non è raggiungibile)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Il nome della formula dovrebbe iniziare con "JIT" per distinguere queste formule da quelle basate su ASM
@@ -3454,6 +3508,12 @@ TheFractalOfTheMainWindow=Il frattale della finestra principale come splat gauss
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Il materiale della superficie del frattale sopra la tavolozza (non in MB3D: salvato dopo la parte MB3D dei parametri)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=L'asse X del frattale
+;The fractal's X axis
+TheFractalSYAxis=L'asse Y del frattale
+;The fractal's Y axis
+TheFractalSZAxis=L'asse Z del frattale
+;The fractal's Z axis
 TheFramesPerSecondMustBe=I fotogrammi al secondo devono essere un numero maggiore di 0 (ad es. 25).
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=il buffer immagine ha la dimensione sbagliata
@@ -3470,6 +3530,8 @@ TheMainEditorIsStillRendering=L'editor principale sta ancora renderizzando. Ferm
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=Le opzioni mappa calcolano le coordinate x,y dal vettore\nspecifico per le mappe sferiche; questo cambia anche la prima scelta colore\nche di solito si basa sulle iterazioni lisce.\nDevi ricalcolare l'immagine per vedere il risultato delle\nmodifiche a queste opzioni.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=Il centro della vista
+;The middle of the view
 TheMonteCarloWindowIsRendering=La finestra Monte Carlo sta renderizzando: fermarla prima.
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=Il tempo di otturazione dell'effetto mosso: una parte del tempo fino al fotogramma successivo (da 0 a 1)
@@ -3504,6 +3566,8 @@ TheSizeOfTheCloudsFeatures=La grandezza delle forme delle nuvole in unità del f
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=La dimensione dei riquadri
 ;The size of the tiles
+TheStepsCameToTheLimit=i passi hanno raggiunto il limite della doppia precisione
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=Le immagini stereo dei due occhi hanno dimensioni diverse.
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=I parametri di testo negli appunti sono danneggiati: alcune righe sono state tagliate durante la copia. Copiali di nuovo dalla loro origine.
@@ -3514,6 +3578,10 @@ TheTriplexMathSineBulbAs=Il bulb seno in matematica triplex, suggerito da Daniel
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Il valore del fotogramma chiave scelto
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=la vista è riempita dal frattale
+;the view is filled with the fractal
+TheViewShowsOnlySky=la vista mostra solo cielo
+;the view shows only sky
 Themes=Temi
 ;Themes
 ThereIsAFileAlready=Esiste già un file {}.
@@ -3660,6 +3728,8 @@ UnfinishedRenders=Render non terminati
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=Render non finiti: continuali o eliminali
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=Finché la vista mostra solo cielo o solo frattale (al massimo 2 minuti)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=senza titolo
 ;untitled
 UpOneLevel=Livello superiore

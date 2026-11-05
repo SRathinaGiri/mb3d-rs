@@ -889,6 +889,21 @@ you check further on your own:
   frame), so what moves smears; it takes that many times as long
   (`mb3d animate --motion-blur 8,0.5`).
 
+  *Animation maker* > *Animation templates...* makes keyframes from the main
+  window's view for a duration in seconds (at the window's frames per
+  second): a *360° orbit* around an axis of your choice (left to right, over
+  the top, a roll, all three at once, or the fractal's X, Y or Z axis;
+  `--orbit 8 --duration 10 --orbit-axis pitch`) or a *Fly-through*, in which
+  the camera flies on into the fractal, the zoom following the distance to
+  it, keeping its course and turning only to get round what it would hit
+  (`--fly --duration 20`; `--duration 0`: until the view shows only sky or
+  only fractal). *360° VR* in the Animation maker (`--vr`) makes every frame
+  a spherical panorama (2:1); with *Render stereo animation* the video has
+  the eyes one above the other (left on top), and the ffmpeg command ends
+  with `mb3d vr360 video.mp4 --stereo tb`, which marks the MP4 as a 360
+  video for YouTube, the Meta Quest and VLC. A spherical panorama saved as
+  JPEG carries the Photo Sphere XMP, so Facebook shows it as a 360 photo.
+
   </details>
 * **Gaussian splats** of the fractal, to look at from every side in
   Blender (5.3 and later), SuperSplat and other splat viewers: *Bulb

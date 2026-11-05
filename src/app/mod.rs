@@ -7,6 +7,7 @@
 
 pub mod ai_form;
 pub mod anim_form;
+pub mod anim_templates_form;
 pub mod bulbtracer_form;
 pub mod curves_form;
 pub mod engine;
@@ -47,7 +48,7 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "Splat", "uMapCalcWindow", "VisualThemesGUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "AnimTemplates", "Splat", "uMapCalcWindow", "VisualThemesGUI",
     "VoxelExport", "ZBuf16BitGenUI", "Curves", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
@@ -232,6 +233,7 @@ impl App for Mb3d {
             "LogFrm" => log_form::event(self, ui, e),
             "AiConnectFrm" => ai_form::event(self, ui, e),
             "ExperimentalFrm" => experimental_form::event(self, ui, e),
+            "AnimTemplatesFrm" => anim_templates_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
             "MapSequencesFrm" => small_forms::mapseq_event(self, ui, e),
             "FTextBox" => small_forms::textbox_event(self, ui, e),

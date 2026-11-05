@@ -29,6 +29,8 @@ code = JA
 font = Japanese.ttf
 
 [Labels]
+A360DegreeAnimationForVR=VR ヘッドセット用の 360 度アニメーション: 各フレームは幅が高さの 2 倍の全天球パノラマ。「ステレオアニメーションをレンダリング」と組み合わせると、動画は両目を上下に並べ、ffmpeg コマンドが MP4 を VR プレーヤー用にマークします
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
 A4dQuaternionFormulaOneIteration=4次元クォータニオン数式、1回の反復:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ABulbFormulaAsSuggestedBy=Aexion が提案したバルブ数式:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nZ と C の現在のベクトル間の距離で定数をべき乗回転させる2つのオプション (Cond Phi=1) と、\n次のモードオプションを追加しました:\n(モード値のビット)\nBit1: atan theta 成分を反転\nBit2: atan phi 成分を反転\nBit3: theta と phi を反転\nBit4: 角度計算で CyCz を反転\nBit5: powerC にベクトル Z と C の距離を掛ける
@@ -69,6 +71,8 @@ AVideoNeedsImagesChooseBMP=動画には画像が必要です。出力形式に B
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=ステレオアニメーションの動画は作成されません。「ステレオアニメーションをレンダリング」をオフにしてください。
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=8 個以上のキーフレームでカメラが物体の周りを一周する滑らかなループ (Catmull-Rom)。フレーム数の合計は、アニメーションウィンドウのフレーム/秒での長さになります
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf={} x {} の画像にはおよそ {} のメモリが必要ですが、このコンピュータの空きは {} です: 計算はスワップを起こし、プログラムが数分間応答しなくなることがあります。\n\nそれでも計算しますか?\n\n大判レンダリング (ツールタブ) なら、画像全体を保持せずにタイルごとに計算して保存します。スウォーム (スウォームウィンドウ) はタイルを他のコンピュータと分担します。
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=Zバッファの PNG 画像も保存します。
@@ -123,6 +127,8 @@ AddNewOption=新しいオプションを追加します。
 ;Add new option
 AddOptionValue=オプション値を追加
 ;Add option value
+AddTheKeyframes=キーフレームを追加
+;Add the keyframes
 AddToBackgroundDepthNotBlend=背景の深度に加算 (ブレンドしない)
 ;Add to background depth (not blend)
 AddonFormula=アドオン数式
@@ -155,6 +161,8 @@ AllRealworldUnitsInMeter=実世界の単位はすべてメートルです。
 ;All realworld units in meter.
 AllTheLightColorSettings=ライト+色の設定すべて
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=すべて同時: ヨー、ピッチ、ロール (宙返り)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> は既に存在します
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=動画 (AVI) も作成
@@ -227,6 +235,10 @@ AnimationRenderingStopped=アニメーションのレンダリングを停止し
 ;Animation rendering stopped.
 AnimationSize=アニメーションサイズ:
 ;Animation size:
+AnimationTemplates=アニメーションテンプレート...
+;Animation templates...
+AnimationTemplates2=アニメーションテンプレート
+;Animation templates
 AnimationTheFfmpegCommandIsOn=アニメーション: ffmpeg コマンドをクリップボードにコピーしました (フレームが完成したら端末で実行してください):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=アニメーション: 動画を書き出しました: {}
@@ -249,6 +261,8 @@ ApproximateVertexColorsTheColorInformation=頂点カラーを近似計算しま�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 は ArcTan(Y/X) を計算し、正しい象限の角度を返します。
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=中心:
+;Around:
 AroundTheMiddleAnObject=中心の周り（物体）
 ;Around the middle (an object)
 AsFullBackgroundSphere=全天球の背景として:
@@ -273,6 +287,8 @@ AutoSavingTheM3cFile=m3cファイルを自動保存:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=自動: CPU とグラフィックカードで画像を分担します (CPU は\nすぐに開始し、シェーダーのコンパイルが終わるとカードが参加)。\nその後、影とアンビエントオクルージョンはカードが\n実行します。\nCPU: グラフィックカードは使用しません。\nグラフィックカード: 従来どおりシェーダーを待ちます。
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=自動: 中央、または見えている表面
+;Auto: the middle, or the surface in view
 AutoUpdateImage=画像を自動更新
 ;Auto update image
 AutoUpdatePreview=プレビューを自動更新
@@ -289,6 +305,8 @@ AvgIterations=平均反復回数:
 ;Avg. iterations:
 AvgRaysteps=平均レイステップ:
 ;Avg. raysteps:
+Axis=軸:
+;Axis:
 AxisX=X軸
 ;Axis X
 AxisY=Y軸
@@ -1035,6 +1053,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=わからない、何もしない
 ;Dunno, do nothing
+DurationSeconds=長さ (秒):
+;Duration (seconds):
 DynFog=動的フォグ
 ;Dyn.fog
 DynFogOnIt=反復回数でダイナミックフォグ:
@@ -1231,6 +1251,10 @@ FlatSolidWithEdges=フラットソリッド+エッジ
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: X 以下の最大の整数、 |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=フライスルー
+;Fly-through
+FlyThroughTheFlightEndedAfter=フライスルー: {} / {} フレームで飛行が終わりました。{}
+;Fly-through: the flight ended after {} of {} frames, {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=フォグオフセット
@@ -1287,6 +1311,8 @@ FrameNumberToUseForAnimated=メインエディターでアニメーションマ�
 ;Frame number to use for animated maps in the main editor
 Frames=フレーム
 ;frames
+FramesAtFramesASecond={} フレーム ({} フレーム/秒)
+;{} frames at {} frames a second
 FramesPerSecond=フレーム/秒:
 ;Frames per second:
 FramesSec=フレーム/秒:
@@ -1801,8 +1827,12 @@ KeyframeListM3k=キーフレームリスト (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sキーフレーム\n開始:    終了:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=キーフレーム:
+;Keyframes:
 KeyframesForOneWholeTurnAround=メインウィンドウの視点から、画面中央の周りを一周するキーフレーム: 滑らかなループの 8 キーフレーム (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=メインウィンドウの視点から作るキーフレーム: 360° 周回またはフライスルーを、指定した長さで
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=どのウィンドウからでもウィンドウを前面に出すキー
 ;Keys that bring a window to the front from any window
 Kind=種類
@@ -1813,12 +1843,16 @@ LIGHTSTROKES=ライトストローク
 ;LIGHT STROKES
 LMBMoveRMBRotate=左ボタン: 移動           右ボタン: 回転
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=最大の旋回 (度/フレーム):
+;Largest turn (degrees a frame):
 LastLengthIncrease=最後の長さの増加
 ;Last length increase
 LastPass=\s· 前回のパス {}
 ;\s· last pass {}
 Layer=層:
 ;Layer:
+LeftToRightAroundItYaw=左から右へ周りを回る (ヨー)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=左クリック: マウスモードに入ります。マウスで視点を動かし、右ボタンも押すとロールします。\n(もう一度左クリックするか ESC でマウスモードを終了します)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=左クリック:   視点の X 軸を中心に Y 中心+Z 中心の値でバルブを回転\n右クリック: オブジェクトの X 軸を中心に 0 で回転
@@ -2227,8 +2261,12 @@ N2Or3PassesGivesA=2 または 3 パスにすると、焦点の手前の強いぼ
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=第2反射
 ;2nd reflection
+N360Orbit=360° 周回
+;360° orbit
 N360Panorama=360 パノラマ
 ;360 Panorama
+N360VR=360° VR
+;360° VR
 N3DAnalyticFormula=3D解析的数式
 ;3D analytic formula
 N3DFormula=3D数式
@@ -2333,6 +2371,8 @@ NoTilesToRender=レンダリングするタイルがありません。
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\s有効なテキストが見つかりません。下にテキストを入力してください:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=前方に進める道がなくなりました
+;no way ahead was left
 Noise=-ノイズ
 ;-noise
 NoiseAI=-ノイズAI
@@ -2545,6 +2585,8 @@ OutsideRender=外側レンダー
 ;Outside render
 OutsideRenderDefaultModeInsideRender=外側レンダー:  既定モード\n内側レンダー:    最大反復回数で内側を低速にレイマーチング\n内側と外側:   両側をレンダー
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=上を越えて下をくぐる (ピッチ)
+;Over the top and under (pitch)
 OverallScale=全体スケール:
 ;Overall scale:
 OverwriteExistingImages=既存の画像を上書き
@@ -3255,8 +3297,12 @@ SpecularObjectColorsClickToChange=オブジェクトの鏡面色です。クリ�
 ;Specular object colors, click to change them.
 SpecularPowerFunction=鏡面反射の指数関数です。
 ;Specular power function
+SpeedOfTheDistanceAFrame=速度 (距離の % / フレーム):
+;Speed (% of the distance a frame):
 SphericalCoords=球面座標
 ;Spherical coords
+SpinningAroundTheLineOfSight=視線の周りに回転 (ロール)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} 個のスプラット（{}）を {} に保存しました
 ;{} splats in {}, written to {}
 Stan=標準
@@ -3385,6 +3431,8 @@ TargetMapSlot=対象マップスロット
 ;Target Map Slot
 TargetMapSlotUseThisNumber=対象のマップスロットです。マップをアニメーションさせるには、この番号をフラクタル内でマップとして (例: ハイトマップとして) 使います。
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=テンプレート:
+;Template:
 TheAmazingBoxAkaMandboxFormula='Amazing Box'、別名 Mandbox 数式。fractalforums.com の TGlad が考案しました。\n\n1回の反復の数式は次のとおりです:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=加算した拡散色と鏡面色の合計が 1 を超えています。\nよりリアルな色にするために縮小しますか?
@@ -3413,6 +3461,10 @@ TheCalculationFailedLower=計算に失敗しました
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=計算を画像の外側まで拡張し、そこにあるオブジェクトの反射も含めます。\nアニメーションでアーティファクトが減りますが、静止画にも有効です。\n値は 0 から 0.5 の範囲 (最大 0.9) にしてください。これは外側で最大限に計算される\n画像の幅と高さに対する相対サイズです。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=カメラはフラクタルの奥へ飛び続け、ズームはそこまでの距離に追従し、すき間を抜けて進みます。キーフレームは 0.5 秒ごと (Catmull-Rom)。行き止まり、倍精度の限界、またはフラクタルを離れたときに早めに終わります
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=カメラがフラクタルを離れました
+;the camera left the fractal
 TheChosenValueOverAllFrames=アニメーション全フレームでの選んだ値: キーフレームの四角を上下にドラッグするか、クリックして値を入力します
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 TheColourOfDeepWaterThe=深い水の色: 水自身の光であり、水中のものが深さとともに近づく色 (クリックで変更)
@@ -3445,6 +3497,8 @@ TheFileSelectAndCopyIt=ファイル (ここから選択してコピーできま�
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(第1の) 焦点です。\n値はビューアの Zstart 値に対する相対値で、\n画像の幅で正規化されています。
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=ここではフライスルーを開始できません: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=フォルダが存在しません (またはアクセスできません)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=ASM ベースの数式と区別するため、数式名は「JIT」で始めてください
@@ -3455,6 +3509,12 @@ TheFractalOfTheMainWindow=メインウィンドウのフラクタルをガウシ
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=パレットに重ねるフラクタル表面の素材 (MB3D にはありません: パラメーターの MB3D の部分の後に保存)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=フラクタルの X 軸
+;The fractal's X axis
+TheFractalSYAxis=フラクタルの Y 軸
+;The fractal's Y axis
+TheFractalSZAxis=フラクタルの Z 軸
+;The fractal's Z axis
 TheFramesPerSecondMustBe=1 秒あたりのフレーム数は 0 より大きい数にしてください (例: 25)。
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=画像バッファのサイズが正しくありません
@@ -3471,6 +3531,8 @@ TheMainEditorIsStillRendering=メインエディターはまだレンダリン�
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=マップオプションは球面マップ用に特定のベクトルから\nx,y 座標を計算します。これにより、通常はスムーズ反復回数に\n基づく 1 番目の色選択も変わります。\nこのオプションの変更結果を確認するには、画像を\n再計算する必要があります。
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=画面の中央
+;The middle of the view
 TheMonteCarloWindowIsRendering=モンテカルロウィンドウがレンダリング中です。先に停止してください。
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=モーションブラーのシャッター時間: 次のフレームまでの時間に対する割合 (0 から 1)
@@ -3505,6 +3567,8 @@ TheSizeOfTheCloudsFeatures=雲の形の大きさ (フラクタル単位) と色 
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=タイルのサイズ
 ;The size of the tiles
+TheStepsCameToTheLimit=歩幅が倍精度の限界に達しました
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=ステレオの左右の画像のサイズが異なります。
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=クリップボードのテキストパラメータが壊れています。コピーの際に一部の行が切れました。元の場所からもう一度コピーしてください。
@@ -3515,6 +3579,10 @@ TheTriplexMathSineBulbAs=トリプレックス数学のサインバルブ。Dani
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=選んだキーフレームの値
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=画面がフラクタルで埋まりました
+;the view is filled with the fractal
+TheViewShowsOnlySky=画面には空しかありません
+;the view shows only sky
 Themes=テーマ
 ;Themes
 ThereIsAFileAlready=ファイル {} は既に存在します。
@@ -3661,6 +3729,8 @@ UnfinishedRenders=未完了のレンダリング
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=未完了のレンダリング: 続行または削除します
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=画面が空だけ、またはフラクタルだけになるまで (最長 2 分)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=無題
 ;untitled
 UpOneLevel=1つ上へ
