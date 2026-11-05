@@ -288,6 +288,29 @@ impl Ground {
         w - s
     }
 
+    /// How much the distance to the waves can be smaller than the height
+    /// over them (1 / the factor of `distance` under the crests: the
+    /// steepest slope's sqrt(1 + g^2); 1 without waves).
+    pub fn slope_bound(&self) -> f64 {
+        if self.wave_height == 0.0 {
+            return 1.0;
+        }
+        let g = std::f64::consts::TAU * WAVE_SLOPE * self.wave_height / self.wave_len.max(1e-30);
+        (1.0 + g * g).sqrt()
+    }
+
+    /// The height of `c` over the plane without its waves (fractal units,
+    /// negative in the solid side).
+    #[inline]
+    pub fn height(&self, c: &[f64; 3]) -> f64 {
+        let k = self.axis as usize % 3;
+        if self.above {
+            self.pos - c[k]
+        } else {
+            c[k] - self.pos
+        }
+    }
+
     /// The plane's normal without the waves, out of the solid side (towards
     /// the camera's side).
     #[inline]

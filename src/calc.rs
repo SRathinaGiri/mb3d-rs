@@ -1445,6 +1445,159 @@ impl<'a> Marcher<'a> {
         self.vfov = rotate_vector_reverse(&v, &p.vgrads);
     }
 
+    /// The ray of pixel x, y: its start on the start plane and its
+    /// direction (one step of the march; `it.c` is left at the start).
+    pub(crate) fn pixel_ray(&mut self, x: i32, y: i32) -> (Vec3, Vec3) {
+        let p = self.p;
+        self.cafy = (y as f64 / p.height as f64 - 0.5) * p.fov_y;
+        self.calc_vgrads_fov(x + 1);
+        self.calc_start_pos(x, y);
+        (self.it.c, self.vfov)
+    }
+
+    /// Where the ray (`s` + t `v`) of a pixel comes from: its closest
+    /// approach to the ray of the picture's centre `centre`, as a multiple
+    /// of `v` (<= 0: MB3D's rays start on the start plane, in front of the
+    /// eye their directions spread from; with the panorama they start at
+    /// the eye, 0).
+    pub(crate) fn eye_t(s: &Vec3, v: &Vec3, centre: &(Vec3, Vec3)) -> f64 {
+        let (c0, a) = centre;
+        let w0 = sub(*s, *c0);
+        let (aa, b, c, d, e) = (dot(v, v), dot(v, a), dot(a, a), dot(v, &w0), dot(a, &w0));
+        let den = aa * c - b * b;
+        if den.abs() < 1e-18 * aa * c {
+            return f64::NAN;
+        }
+        ((b * e - c * d) / den).min(0.0)
+    }
+
+    /// The water's surface as a ray tracer meets it (`water_layer`): the
+    /// ray of pixel x, y followed from the eye (`t0`, a multiple of the
+    /// direction before the start plane) to its first point under the
+    /// surface, by sphere tracing on `Ground::distance` (steps of at least
+    /// a pixel's width there, so that it reaches the horizon) and bisection,
+    /// up to `t_limit` (what lies in front of the water); t of the surface along the
+    /// ray (negative in front of the start plane), `it.c` there; None when
+    /// the ray does not meet the water (the sky) or the eye is under it.
+    pub(crate) fn water_hit(&mut self, x: i32, y: i32, g: &crate::scene::Ground, t0: f64, t_limit: f64) -> Option<f64> {
+        let p = self.p;
+        let (s, v) = self.pixel_ray(x, y);
+        let vl = len(&v).max(1e-300);
+        let at = |t: f64| add(s, scale(v, t));
+        if g.depth(&at(t0)) >= 0.0 {
+            return None;
+        }
+        // a ray that rises never comes back to the water once it is above
+        // the highest crests
+        let rise = dot(&v, &g.up());
+        let rising = rise >= 0.0;
+        let crests = g.wave_height * crate::scene::WAVE_MAX;
+        let c0 = g.slope_bound();
+        // the width of a pixel per unit of distance
+        let px = (p.fov_y.abs() / p.height.max(1) as f64).max(1e-9);
+        let t_max = (p.zend * 64.0 + 1e6).min(t_limit);
+        let (mut prev, mut t) = (t0, t0);
+        for _ in 0..10_000 {
+            let q = at(t);
+            let above = g.height(&q) - crests;
+            // (a jump lands a little under the crests' height, not on it:
+            // rounding would leave it above, jumping by nothing)
+            let eps = 1e-3 * crests.max(1e-9);
+            let dep = if above > eps { -above } else { g.depth(&q) };
+            if above > eps {
+                if rising {
+                    return None;
+                }
+                // nothing above the crests: straight down to their height
+                prev = t;
+                t += (above + eps) / -rise;
+                if t > t_max {
+                    break;
+                }
+                continue;
+            }
+            if dep >= 0.0 {
+                // between prev (above) and t (under)
+                let (mut lo, mut hi) = (prev, t);
+                for _ in 0..60 {
+                    let m = 0.5 * (lo + hi);
+                    if g.depth(&at(m)) >= 0.0 {
+                        hi = m;
+                    } else {
+                        lo = m;
+                    }
+                }
+                self.it.c = at(lo);
+                return Some(lo);
+            }
+            // (under the crests the distance to the waves is the depth over
+            // the steepest slope: Ground::distance without a second sum)
+            let d = (-dep / c0).max(0.0);
+            let foot = (t - t0) * vl * px * 3.0;
+            prev = t;
+            t += d.max(foot).max(1e-12 * (1.0 + t.abs() * vl)) / vl;
+            if t > t_max {
+                break;
+            }
+        }
+        None
+    }
+
+    /// The G-buffer entry of a water pixel at t along its ray (`it.c` on
+    /// the surface, from [`Marcher::water_hit`]): the ground's normal as the
+    /// march makes it, its depth (the start plane for t < 0: a cut surface
+    /// there, as MB3D's cutting planes, without shadows or occlusion).
+    pub(crate) fn water_si(&mut self, t: f64) -> SiLight {
+        let mut si = SiLight { amb_shadow: 5000, ..SiLight::default() };
+        // where the march would have stopped: a little before the surface,
+        // its distance estimate below the stop distance (the passes after
+        // it find their point from the depth and check the distance there,
+        // and the normal is the march's): back along the ray until the
+        // estimate is 3/4 of the stop distance (the water's own estimate:
+        // its waves only, without the fractal's iterations)
+        let (s0, v) = (sub(self.it.c, scale(self.vfov, t)), self.vfov);
+        let at = |t: f64| add(s0, scale(v, t));
+        let g = self.p.ground.expect("water");
+        let sw = self.p.step_width;
+        let de_at = |m: &mut Self, t: f64| {
+            m.it.c = at(t);
+            m.mzz = t.max(0.0);
+            m.update_de_stop();
+            (g.distance(&m.it.c) / sw, m.ms_de_stop as f64)
+        };
+        let (d, stop) = de_at(self, t);
+        let mut tb = t;
+        if d < 0.75 * stop {
+            let mut k = stop.max(1e-9);
+            let mut far = t - k;
+            for _ in 0..40 {
+                let (d, stop) = de_at(self, far);
+                if d >= 0.75 * stop {
+                    break;
+                }
+                k *= 2.0;
+                far = t - k;
+            }
+            let (mut lo, mut hi) = (far, t);
+            for _ in 0..30 {
+                let mid = 0.5 * (lo + hi);
+                let (d, stop) = de_at(self, mid);
+                if d >= 0.75 * stop {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            tb = lo;
+        }
+        let _ = de_at(self, tb);
+        self.calculate_normals(&mut si);
+        si.otrap = crate::gbuffer::GROUND;
+        si.si_gradient = if tb >= 0.0 { 0 } else { 32768 };
+        self.calc_zpos_and_rough(&mut si);
+        si
+    }
+
     /// `RMCalculateStartPos`
     #[inline]
     pub(crate) fn calc_start_pos(&mut self, ix: i32, iy: i32) {

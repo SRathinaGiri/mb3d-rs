@@ -281,6 +281,9 @@ struct SrTracer<'a, 'c> {
     dbg: bool,
     /// set: give up the ray being marched (`march_until`)
     stop: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    /// the pixel is water from the eye (water_layer): its first reflected
+    /// ray, when it rises, does not stop on the water again
+    water_ray: bool,
 }
 
 /// (specular colour, alpha, diffuse colour) of a surface for the next ray
@@ -1389,6 +1392,21 @@ impl<'a, 'c> SrTracer<'a, 'c> {
     /// [`SrTracer::march`] that gives up (None) when the tracer's `stop`
     /// flag is set (checked every 64 steps of the ray and of its shadow ray).
     fn march_until(&mut self, r: &RayReq) -> Option<RayHit> {
+        // a ray rising from the water (a mirror ray, of any bounce): not
+        // stopped by the water it leaves, as a ray tracer's (water_layer;
+        // it still meets the fractal); one falling meets the next wave
+        let skip = crate::water_layer::wanted(self.c.p) && self.c.p.ground.as_ref().is_some_and(|g| dot(&r.dir, &g.up()) > 0.0 && g.height(&r.origin) < 4.0 * g.wave_height * crate::scene::WAVE_MAX + 1e-9);
+        let nog = self.m.no_ground;
+        if skip {
+            self.m.no_ground = true;
+        }
+        let h = self.march_ray(r);
+        self.m.no_ground = nog;
+        h
+    }
+
+    /// [`SrTracer::march_until`] itself.
+    fn march_ray(&mut self, r: &RayReq) -> Option<RayHit> {
         let c = self.c;
         let p = c.p;
         let sw = p.step_width;
@@ -1623,6 +1641,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         }
         self.sr_si = *si;
         self.guard = 0;
+        self.water_ray = false;
         let inside = if p.in_and_outside && si.otrap & 0x8000 != 0 { false } else { p.inside_rendering };
         self.m.inside = inside;
         self.m.calc_inside = inside;
@@ -1646,14 +1665,70 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         self.m.it.calc_sit = false;
         let zf = (si.zpos_fine >> 8) as f64;
         let zpos_of = |iz: f64| (((8388351.5 - iz) / p.zc_mul + 1.0).powi(2) - 1.0) / p.zcorr;
-        self.m.mzz = zpos_of(zf);
         let vf = self.m.vfov;
-        add_weight(&mut self.m.it.c, &vf, self.m.mzz);
-        self.update_de_stop(self.m.mzz);
-        if si.si_gradient < 32768 {
+        // a water pixel: the surface where the ray from the eye meets it
+        // (water_layer; also in front of the start plane, t < 0)
+        // (the water behind the start plane has its point in the G-buffer
+        // from water_layer::apply: the march's where it lies on the surface,
+        // else the exact one; in front of it, cut, the point from the eye)
+        let layer = si.is_ground() && crate::water_layer::wanted(p);
+        let exact = if layer && si.si_gradient >= 32768 {
+            let centre = crate::water_layer::centre_ray(&mut self.m);
+            let h = crate::water_layer::hit(&mut self.m, x, y, &centre);
+            if h.is_none() {
+                self.pixel_marcher(x, y);
+            }
+            h
+        } else {
+            None
+        };
+        let mut si_w = *si;
+        if let Some((t, pos)) = exact {
+            self.m.it.c = pos;
+            self.m.mzz = t;
+            self.update_de_stop(t.max(0.0));
+            // off the surface along its normal, twice the distance the march
+            // stops at (its rays must not stop on the water at once; along
+            // the view a grazing ray would hardly rise)
+            // (a little: its first reflected ray, when it rises, is marched
+            // without the water, as a ray tracer's mirror ray leaves the
+            // surface; far away the march's stop distance is larger than the
+            // waves, it would stop on them at once)
+            if let Some(g) = p.ground.as_ref() {
+                let off = (2.0 * self.m.ms_de_stop as f64 * sw).min(2.0 * g.wave_height.max(1e-9));
+                self.m.it.c = add(pos, scale(g.normal(&pos), off));
+            }
+            if si.si_gradient >= 32768 && self.c.hs.is_some() {
+                // in front of the start plane the shadow pass left it out:
+                // the fractal's shadows on it here
+                let (nog, mzz) = (self.m.no_ground, self.m.mzz);
+                self.m.no_ground = true;
+                self.m.mzz = mzz.abs();
+                si_w.shadow &= 0x3FF;
+                self.calc_hs(&mut si_w);
+                (self.m.no_ground, self.m.mzz) = (nog, mzz);
+            }
+            // (a surface, not a cut: its rays see the fractal, not only the
+            // open air)
+            si_w.si_gradient = 0;
+            self.sr_si = si_w;
+        } else {
+            self.m.mzz = zpos_of(zf);
+            add_weight(&mut self.m.it.c, &vf, self.m.mzz);
+            self.update_de_stop(self.m.mzz);
+        }
+        self.water_ray = layer;
+        let si = &si_w;
+        if exact.is_some() {
+            // (its point is set)
+        } else if si.si_gradient < 32768 {
             let mut d = self.m.calc_de();
             if d < self.m.ms_de_stop as f64 * 0.5 {
-                return None;
+                // (water from water_layer: on the surface already)
+                if !layer {
+                    return None;
+                }
+                d = self.m.ms_de_stop as f64 * 0.5;
             }
             let de_limited = self.m.it.it_result < self.m.max_its_result || d <= self.m.ms_de_stop as f64;
             if de_limited {
@@ -1974,6 +2049,7 @@ fn reflections_cpu<S: Sample>(
                         guard: 0,
                         dbg: false,
                         stop: None,
+                        water_ray: false,
                     };
                     let dp = debug_pixel();
                     for x in 0..wu {
@@ -2017,6 +2093,9 @@ struct RPix {
     stack: Vec<Frame>,
     /// the march of the ray the last step asked for
     hit: Option<RayHit>,
+    /// water from the eye (water_layer): its rays are marched on the CPU
+    /// (`SrTracer::water_ray`)
+    water: bool,
 }
 
 /// `reflections` with the rays on the graphics card: every bounce of all
@@ -2105,6 +2184,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         guard: 0,
         dbg: false,
         stop: None,
+        water_ray: false,
     };
     let dbg_i = debug_pixel().map(|(x, y)| ((y - y0) * w + (x - x0)) as usize);
     // the surfaces of the object pixels
@@ -2113,8 +2193,10 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     // inside rendering: the rays of a pixel run inside the set (in and
     // outside: unless the pixel was found from outside, as `pixel` does)
     let inside_of = |si: &SiLight| if p.in_and_outside && si.otrap & 0x8000 != 0 { false } else { p.inside_rendering };
+    // (the water from the eye, water_layer: on the CPU, set up below)
+    let layer = crate::water_layer::wanted(p);
     for (i, si) in gbuf.iter().enumerate() {
-        if si.zpos() < 32768 && si.si_gradient < 32768 {
+        if si.zpos() < 32768 && si.si_gradient < 32768 && !(layer && si.is_ground()) {
             tasks.push(ReflectTask { zz: (si.zpos_fine >> 8) as f32, pixel: i as u32, inside: inside_of(si), ..Default::default() });
         }
     }
@@ -2190,21 +2272,25 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                         guard: 0,
                         stack: vec![Frame::new(zz, vfov, sc3(sh.result, ctx.sr_light_amount), sd, 1)],
                         hit: None,
+                        water: false,
                     });
                 }
                 // pixels on a cutting plane: no surface to refine, set up here
-                // (their rays only see the open air)
-                if p.cut_options != 0 {
+                // (their rays only see the open air); and the water from the
+                // eye (water_layer)
+                if p.cut_options != 0 || layer {
                     for i in lo..hi {
                         let si = gbuf[i];
-                        if si.zpos() >= 32768 || si.si_gradient < 32768 {
+                        if si.zpos() >= 32768 || (si.si_gradient < 32768 && !(layer && si.is_ground())) {
                             continue;
                         }
                         let (x, y) = (x0 + (i % wu) as i32, y0 + (i / wu) as i32);
                         t.dbg = dbg_i == Some(i);
                         let Some((mzz, vf, sv, sd)) = t.start_pixel(x, y, &si) else { continue };
                         part[i - lo] = Some(RPix {
-                            si0: si,
+                            // (water from the eye: its entry as start_pixel made it)
+                            si0: t.sr_si,
+                            water: t.water_ray,
                             t_amb: t.t_amb,
                             pos: t.m.it.c,
                             normal: t.normal,
@@ -2371,11 +2457,19 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                         t.scale_amb_diff_down = q.scale_amb_diff_down;
                         t.guard = q.guard;
                         t.dbg = dbg_i == Some(i);
+                        t.water_ray = q.water;
                         // the rays of a pixel on a cutting plane end in the open
-                        // air (`march` does not step): no need for the card
-                        let on_cut = q.si0.si_gradient > 32767;
+                        // air (`march` does not step): no need for the card; the
+                        // water's are marched here too (the card does not leave
+                        // out the water for a mirror ray, `march_until`)
+                        let on_cut = q.si0.si_gradient > 32767 || q.water;
                         if on_cut {
+                            let pos = t.m.it.c;
                             t.pixel_marcher(x0 + (i % wu) as i32, y0 + (i / wu) as i32);
+                            if q.water {
+                                // (its view vector, not its start)
+                                t.m.it.c = pos;
+                            }
                         }
                         let mut hit = q.hit.take();
                         while let Some(r) = t.step(&mut q.stack, hit) {

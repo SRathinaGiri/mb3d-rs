@@ -2082,14 +2082,17 @@ pub fn post_process_reporting(
 ) -> Result<StageTimes, String> {
     let stopped = || if cancel() { Err("cancelled".to_string()) } else { Ok(()) };
     let mut times = card_post_times(sc, p);
+    // the water where a ray from the eye meets it (water_layer)
+    let new_water = crate::water_layer::apply(p, gbuf, threads);
     if sc.normals_on_zbuf {
         crate::reflect::normals_on_zbuf(sc, p, gbuf);
     }
     let job = post_job(sc, p);
     let (mut shadows_done, mut deao_done) = (false, false);
     if let Some(d) = &p.gpu_post {
-        shadows_done = job.shadows.is_some() && d.shadows == job.shadows;
-        deao_done = job.deao.is_some() && d.deao == job.deao;
+        // (pixels that became water have no shadows or occlusion of the card's)
+        shadows_done = job.shadows.is_some() && d.shadows == job.shadows && new_water == 0;
+        deao_done = job.deao.is_some() && d.deao == job.deao && new_water == 0;
         if d.shadows.is_some() && !shadows_done {
             for s in gbuf.iter_mut() {
                 s.shadow &= 0x3FF;
