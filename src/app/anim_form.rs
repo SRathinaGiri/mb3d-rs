@@ -509,7 +509,8 @@ pub fn insert_keyframe(app: &mut Mb3d, ui: &mut Ui, sc: Scene) {
 /// leads back to the animation's first keyframe, not the orbit's).
 /// `from_last`: the template starts at the last keyframe there is (its
 /// first keyframe is that one): the last keyframe takes the template's
-/// first frames instead of a copy of it being added.
+/// first keyframe (the same camera, the middle an orbit's pivot) and its
+/// frames instead of a copy of it being added.
 pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, closed: bool, from_last: bool) {
     let empty = count(app) == 0;
     if empty {
@@ -520,6 +521,9 @@ pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, closed: bo
     let mut keys = keys.into_iter();
     if from_last && !empty {
         if let (Some(first), Some(last)) = (keys.next(), app.anim.anim.keyframes.last_mut()) {
+            // (the same camera and picture; an orbit's middle on its pivot,
+            // which its keyframes share)
+            last.scene = first.scene;
             last.frames = first.frames;
         }
     }
