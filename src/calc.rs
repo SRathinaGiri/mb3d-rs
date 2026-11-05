@@ -1126,6 +1126,72 @@ impl Drop for Marcher<'_> {
     }
 }
 
+/// [`Marcher::water_hit`] for the ray `s` + t `v` (any ray of the camera,
+/// also the Monte Carlo renderer's jittered ones).
+pub(crate) fn water_hit_ray(p: &CalcParams, s: &Vec3, v: &Vec3, g: &crate::scene::Ground, t0: f64, t_limit: f64) -> Option<f64> {
+    let (s, v) = (*s, *v);
+    let vl = len(&v).max(1e-300);
+    let at = |t: f64| add(s, scale(v, t));
+    if g.depth(&at(t0)) >= 0.0 {
+        return None;
+    }
+    // a ray that rises never comes back to the water once it is above
+    // the highest crests
+    let rise = dot(&v, &g.up());
+    let rising = rise >= 0.0;
+    let crests = g.wave_height * crate::scene::WAVE_MAX;
+    let c0 = g.slope_bound();
+    // the width of a pixel per unit of distance
+    let px = (p.fov_y.abs() / p.height.max(1) as f64).max(1e-9);
+    let t_max = (p.zend * 64.0 + 1e6).min(t_limit);
+    let (mut prev, mut t) = (t0, t0);
+    for _ in 0..10_000 {
+        let q = at(t);
+        let above = g.height(&q) - crests;
+        // (a jump lands a little under the crests' height, not on it:
+        // rounding would leave it above, jumping by nothing)
+        let eps = 1e-3 * crests.max(1e-9);
+        let dep = if above > eps { -above } else { g.depth(&q) };
+        if above > eps {
+            if rising {
+                return None;
+            }
+            // nothing above the crests: straight down to their height
+            if t >= t_max {
+                break;
+            }
+            prev = t;
+            t = (t + (above + eps) / -rise).min(t_max);
+            continue;
+        }
+        if dep >= 0.0 {
+            // between prev (above) and t (under)
+            let (mut lo, mut hi) = (prev, t);
+            for _ in 0..60 {
+                let m = 0.5 * (lo + hi);
+                if g.depth(&at(m)) >= 0.0 {
+                    hi = m;
+                } else {
+                    lo = m;
+                }
+            }
+            return Some(lo);
+        }
+        // (under the crests the distance to the waves is the depth over
+        // the steepest slope: Ground::distance without a second sum)
+        let d = (-dep / c0).max(0.0);
+        let foot = (t - t0) * vl * px * 3.0;
+        if t >= t_max {
+            break;
+        }
+        prev = t;
+        // (the limit itself is the last point tried: a step past it would
+        // leave the water just before it unseen)
+        t = (t + d.max(foot).max(1e-12 * (1.0 + t.abs() * vl)) / vl).min(t_max);
+    }
+    None
+}
+
 impl<'a> Marcher<'a> {
     pub fn new(p: &'a CalcParams, seed: i32) -> Self {
         Marcher {
@@ -1480,67 +1546,10 @@ impl<'a> Marcher<'a> {
     /// ray (negative in front of the start plane), `it.c` there; None when
     /// the ray does not meet the water (the sky) or the eye is under it.
     pub(crate) fn water_hit(&mut self, x: i32, y: i32, g: &crate::scene::Ground, t0: f64, t_limit: f64) -> Option<f64> {
-        let p = self.p;
         let (s, v) = self.pixel_ray(x, y);
-        let vl = len(&v).max(1e-300);
-        let at = |t: f64| add(s, scale(v, t));
-        if g.depth(&at(t0)) >= 0.0 {
-            return None;
-        }
-        // a ray that rises never comes back to the water once it is above
-        // the highest crests
-        let rise = dot(&v, &g.up());
-        let rising = rise >= 0.0;
-        let crests = g.wave_height * crate::scene::WAVE_MAX;
-        let c0 = g.slope_bound();
-        // the width of a pixel per unit of distance
-        let px = (p.fov_y.abs() / p.height.max(1) as f64).max(1e-9);
-        let t_max = (p.zend * 64.0 + 1e6).min(t_limit);
-        let (mut prev, mut t) = (t0, t0);
-        for _ in 0..10_000 {
-            let q = at(t);
-            let above = g.height(&q) - crests;
-            // (a jump lands a little under the crests' height, not on it:
-            // rounding would leave it above, jumping by nothing)
-            let eps = 1e-3 * crests.max(1e-9);
-            let dep = if above > eps { -above } else { g.depth(&q) };
-            if above > eps {
-                if rising {
-                    return None;
-                }
-                // nothing above the crests: straight down to their height
-                prev = t;
-                t += (above + eps) / -rise;
-                if t > t_max {
-                    break;
-                }
-                continue;
-            }
-            if dep >= 0.0 {
-                // between prev (above) and t (under)
-                let (mut lo, mut hi) = (prev, t);
-                for _ in 0..60 {
-                    let m = 0.5 * (lo + hi);
-                    if g.depth(&at(m)) >= 0.0 {
-                        hi = m;
-                    } else {
-                        lo = m;
-                    }
-                }
-                self.it.c = at(lo);
-                return Some(lo);
-            }
-            // (under the crests the distance to the waves is the depth over
-            // the steepest slope: Ground::distance without a second sum)
-            let d = (-dep / c0).max(0.0);
-            let foot = (t - t0) * vl * px * 3.0;
-            prev = t;
-            t += d.max(foot).max(1e-12 * (1.0 + t.abs() * vl)) / vl;
-            if t > t_max {
-                break;
-            }
-        }
-        None
+        let t = water_hit_ray(self.p, &s, &v, g, t0, t_limit)?;
+        self.it.c = add(s, scale(v, t));
+        Some(t)
     }
 
     /// The G-buffer entry of a water pixel at t along its ray (`it.c` on

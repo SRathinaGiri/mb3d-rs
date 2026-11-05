@@ -412,6 +412,9 @@ impl McImage {
 struct McCtx<'a> {
     /// see `McImage::seed_salt`
     seed_salt: i32,
+    /// the picture's centre ray, for the eye of the water traced from it
+    /// (water_layer; None without water)
+    water_centre: Option<(Vec3, Vec3)>,
     p: &'a CalcParams,
     lv: &'a LightVals,
     cam: &'a PaintCamera,
@@ -1133,6 +1136,10 @@ struct Tracer<'a, 'c> {
     /// their marches, their light fades on its way through the water and
     /// `water_light` fills what fades (`crate::water`)
     under_water: bool,
+    /// the primary ray meets no water, traced from the eye (water_layer):
+    /// a water hit of its march (far away, where the march's stop distance
+    /// is larger than the waves) is the open air
+    sky_ray: bool,
     /// the water's own light where the refracted ray left the surface
     water_light: S3,
 }
@@ -1202,6 +1209,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
             guard: 0,
             pass_nr: 0,
             under_water: false,
+            sky_ray: false,
             water_light: [0.0; 3],
         }
     }
@@ -1895,7 +1903,11 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let vpos = s3(&sub(start, c.mid));
         let zzplus = dot(&dir, &self.vfov) / (sw * sw);
         let seg_start = self.pos;
-        let h = self.march(McReq { kind: 0, pos: self.pos, dir, zz, zz2, zzplus, len: max_l, seed: self.seed, inside: self.inside, probe, ..Default::default() }).await;
+        let mut h = self.march(McReq { kind: 0, pos: self.pos, dir, zz, zz2, zzplus, len: max_l, seed: self.seed, inside: self.inside, probe, ..Default::default() }).await;
+        if rit1 && self.sky_ray && h.kind == 1 && h.otrap == crate::gbuffer::GROUND {
+            // (the march stopped above far waves the ray does not meet)
+            h.kind = 0;
+        }
         self.seed = h.seed;
         self.inside = h.inside;
         self.pos = h.pos;
@@ -2436,6 +2448,41 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let mut cut_plane = 0usize;
         self.start_override = None;
         let vf = self.vfov;
+        // the water between the eye and the start plane (water_layer): the
+        // ray starts a little above it, where the march then meets it; also
+        // when the water lies just behind the start plane, closer to it than
+        // the march's stop distance (its start check would take the start
+        // for one in the water, a cut surface)
+        self.sky_ray = false;
+        if let (Some(centre), Some(g), 0) = (self.c.water_centre.as_ref(), p.ground.as_ref(), p.cut_options) {
+            let t0 = crate::calc::Marcher::eye_t(&self.pos, &vf, centre);
+            let margin = 4.0 * p.de_stop as f64 * sw;
+            if t0.is_finite() && t0 <= 0.0 && g.depth(&add(self.pos, scale(vf, t0))) < 0.0 {
+                self.sky_ray = crate::calc::water_hit_ray(p, &self.pos, &vf, g, t0, f64::INFINITY).is_none();
+            }
+            if t0.is_finite() && t0 < 0.0 {
+                let base = match crate::calc::water_hit_ray(p, &self.pos, &vf, g, t0, 0.0) {
+                    Some(t) => Some(t),
+                    None if g.distance(&self.pos) < margin => Some(0.0),
+                    None => None,
+                };
+                if let Some(t) = base {
+                    // back to a few stop distances above the waves there,
+                    // clear by the march's own estimate (a lower bound on
+                    // steep waves; a crest nearby may be higher)
+                    let rise = -dot(&vf, &g.up());
+                    let mut k = if rise > 1e-12 { margin / rise } else { 0.0 };
+                    let at = |t: f64| add(self.pos, scale(vf, t));
+                    for _ in 0..40 {
+                        if t - k <= t0 || g.distance(&at(t - k)) > margin {
+                            break;
+                        }
+                        k *= 1.5;
+                    }
+                    add_weight(&mut self.pos, &vf, (t - k).max(t0));
+                }
+            }
+        }
         if p.cut_options != 0 {
             let (len, plane) = self.max_length_to_cut_plane();
             zz = len;
@@ -3058,8 +3105,10 @@ fn pass_inner(
         Some(d) => (true, (d.aperture * 0.5).max(1e-7), (((d.z_sharp + d.z_sharp2) * 0.5) * sc.width as f32).max(0.01)),
         None => (false, 1e-7, 0.01),
     };
+    let water_centre = crate::water_layer::wanted(&p).then(|| crate::water_layer::centre_ray(&mut crate::calc::Marcher::new(&p, 0)));
     let ctx = McCtx {
         seed_salt: img.seed_salt as i32,
+        water_centre,
         p: &p,
         lv: &lv,
         cam: &cam,
