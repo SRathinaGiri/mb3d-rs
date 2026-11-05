@@ -907,7 +907,7 @@ fn cpu_row(p: &CalcParams, y: usize) -> Vec<SiLight> {
 /// scale) above which a scene runs in double precision on the card (see
 /// [`double_probe`]).
 #[cfg(feature = "gpu")]
-const PROBE_LIMIT: f64 = 0.013;
+const PROBE_LIMIT: f64 = 0.015;
 
 /// The probe's pixels (about; the CPU marches fewer when they take longer
 /// than [`PROBE_MS`]).
