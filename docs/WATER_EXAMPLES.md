@@ -149,3 +149,46 @@ E....2..F3E..........6....EGiFLNbJaQU.pPrJaQ.........................6..........
 {Titel: golden}
 {mb3d-rs: material_fresnel = 0; material_iridescence = 0, 0; material_glow = 0.25; clouds = y, -1.4, -3.4; cloud_density = 1; cloud_coverage = 0.64; cloud_size = 1; cloud_color = #A0ACBA; finish_exposure = 0; finish_tonemap = filmic; glow = 0.5, 0.03, 0.85; finish_contrast = 0.25; finish_saturation = 0.85; finish_warmth = 0; vignette = 0.5; chromatic = 0; ground = y, 0.15; ground_color = #2A3846; ground_reflect = 0.5; ground_waves = 0.01, 0.5; ground_transparency = 1; ground_absorption = 1; ground_water_color = #0A3C46; ground_ior = 1.33; ground_scattering = 0.5}
 ```
+
+## Sunset at sea
+
+Not transparent water this time: a calm sea as a mirror under the evening sun, the clouds reaching the horizon, the sun's path of light on the waves, and a Mandelbulb standing in the water. A second, soft light from behind the camera and above lights its front. The waves run along the wind, and the sea meets the sky at the horizon without a line (the water is traced from the eye up to the horizon since 0.2.100).
+
+<a href="img/water_sunset.jpg"><img src="img/water_sunset.jpg" width="760" alt="Sunset at sea"></a>
+
+| Setting | Value |
+|---|---|
+| Water | mirror (transparency 0), reflection 0.92 |
+| Waves | height 0.006, length 0.5 |
+| Plane | Y at 0.35 |
+| Clouds | Y from −6 to −9, density 0.5, coverage 0.42, size 5, #B88070 |
+| Camera | rotation 2, 0, 0; field of view 40 |
+| Bloom (glow) | 1.2, 0.04, 0.7 |
+| Light 1 (sun, visible) | #FFB868, 18° / 175°, 1.6 |
+| Light 2 (front) | #FFE2C4, −35° / 0°, 0.6 |
+
+Parameters for *From Clipboard*:
+
+```text
+Mandelbulb3Dv18{
+g.....E/...o0...A....2.............2.1......kR8E..........kAnAnAnAnkz0..........
+........................................cz1........A./.........E........2/2...wD
+...Uz6........../I.0/.................E/................/......................U
+z.....kD1.....UaNaNaNaNmzCnAnAnAnAyDOaNaNaNa7z1...........U0.....y1...sD...../..
+.w1...sDhA25f9iBWx1................................31/xj9EXMzQHuLcvPLFlj........
+..kBdTVijR33zElEEzv0o6qDU.....2...........UNaNqD/A....sD..G.0...................
+.............oAnAt1.........z................................................k..
+.....0...............wzzz1.U..6......61...EB....m....A0..UE6....c....I1....DS.52
+.....c3Jcxj8UEmz8F3QzHDiA0.05./.zX9O...wQOr9PExD66DvF8oP6.2............/wwzzWHA.
+.gZW/J1XXz9...................../EU0.wzzz1...........s/...................E.2c..
+zzzz.................................2./8.kzzzD............8....................
+/EU0.wzzz1...................................2CcN/UvNPcveeWCNq0.yRiibHJJUk1f..XR
+SvBmx3CcN/UvNPcvQsLsUa3.ibhVi1bTV1OK.sSq4uCly3CcN/UvNPcvMwLsUa3.ibhVinqTV1OK.sSq
+4uCkz3CcN/UvNPcv..EsUa3ceeWCNq0cIJ36wk8cwyLsUa3c................................
+E....2..F3E..........6....EGiFLNbJaQU.pPrJaQ.........................6..........
+...................6./........zj................................................
+................................................................................
+........................}
+{Titel: sunset at sea}
+{mb3d-rs: material_fresnel = 0; material_iridescence = 0, 0; material_glow = 0; clouds = y, -6, -9; cloud_density = 0.5; cloud_coverage = 0.42; cloud_size = 5; cloud_color = #B88070; finish_exposure = 0; finish_tonemap = filmic; glow = 1.2, 0.04, 0.7; finish_contrast = 0.3; finish_saturation = 1; finish_warmth = 0.3; vignette = 0.35; chromatic = 0; ground = y, 0.35; ground_color = #0A0E12; ground_reflect = 0.92; ground_waves = 0.006, 0.5; ground_transparency = 0; ground_absorption = 0.5; ground_water_color = #0A5A50; ground_ior = 1.33}
+```
