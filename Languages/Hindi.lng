@@ -1255,6 +1255,8 @@ FlyThrough=भीतर उड़ान
 ;Fly-through
 FlyThroughTheFlightEndedAfter=भीतर उड़ान: उड़ान {} में से {} फ़्रेम के बाद रुक गई, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=उड़ान: फ़्रेम {} / {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=कोहरा ऑफ़सेट
@@ -3313,6 +3315,8 @@ Start=आरंभ:
 ;Start:
 StartBatchRendering=बैच रेंडरिंग शुरू करें
 ;Start batch rendering
+StartFrom=यहाँ से शुरू करें
+;Start from
 StartIndex=आरंभ सूचकांक:
 ;Start index:
 StartRendering=रेंडरिंग शुरू करें
@@ -3523,12 +3527,16 @@ TheImageSizeChangedCalculateThe=छवि का आकार बदल गय�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap मोड "रंगाई" टैब में गणना किए गए विकल्प पर निर्भर करता है।
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=आख़िरी की-फ़्रेम
+;The last keyframe
 TheLastSessionCrashed=पिछला सत्र क्रैश हो गया: {}। अधिक जानकारी लॉग विंडो में (शीर्षक पट्टी में आइकन)।
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=पिछला सत्र ठीक से समाप्त नहीं हुआ (वह अटक गया, बंद कर दिया गया या क्रैश हो गया): {}। उसने अंत में क्या किया, यह लॉग में है (लॉग विंडो, शीर्षक पट्टी में आइकन)।
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=मुख्य संपादक अभी भी रेंडर कर रहा है। कृपया पहले उसे रोकें या उसके पूरा होने तक प्रतीक्षा करें।
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=मुख्य विंडो का दृश्य
+;The main window's view
 TheMapOptionsCalculatesXY=मैप विकल्प गोलाकार मैप के लिए विशिष्ट वेक्टर से x,y निर्देशांक\nगणना करते हैं, इससे पहला रंग चयन भी बदलता है\nजो सामान्यतः स्मूद पुनरावृत्तियों पर आधारित होता है।\nइन विकल्पों के बदलाव का परिणाम देखने के लिए\nछवि की फिर से गणना करनी होगी।
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=दृश्य का मध्य

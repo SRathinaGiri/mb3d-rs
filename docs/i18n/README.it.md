@@ -912,6 +912,32 @@ permettono di verificare ulteriormente da solo:
   per YouTube, Meta Quest e VLC. Un panorama sferico salvato come JPEG porta
   l'XMP Photo Sphere, così Facebook lo mostra come foto 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Cinque fotogrammi di un'orbita a 360° attorno a un punto della superficie di un Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Un volo attraverso, un fotogramma al secondo"></a>
+
+  I modelli di animazione, le foto a 360° e i video VR 360° sono un
+  contributo di Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). L'orbita tiene la
+  telecamera alla stessa distanza dal suo perno in ogni fotogramma, anche
+  tra i fotogrammi chiave: prima il centro della vista viene posto sul
+  perno, così i fotogrammi chiave differiscono solo per la rotazione.
+  Aggiunta dopo altri fotogrammi chiave, termina di nuovo con il suo primo
+  fotogramma chiave, così il giro è completo; *Inizia da* prende la vista
+  della finestra principale o l'ultimo fotogramma chiave. Il volo attraverso
+  viene calcolato in background con una barra di avanzamento, e *Ferma*
+  tiene ciò che è stato percorso. Video (allegati alla versione v0.2.100,
+  renderizzati con la versione successiva): [un'orbita con 4 fotogrammi
+  chiave, la prima versione e quella esatta
+  affiancate](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [una
+  capriola](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [un volo
+  attraverso](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [un'orbita VR
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Splat gaussiani** del frattale, da guardare da ogni lato in Blender (5.3
   e successivi), SuperSplat e altri visualizzatori di splat: *Bulb

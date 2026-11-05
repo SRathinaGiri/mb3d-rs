@@ -1254,6 +1254,8 @@ FlyThrough=Voo através
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Voo através: o voo terminou após {} de {} quadros, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Voando: quadro {} de {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Desloc. da neblina
@@ -3312,6 +3314,8 @@ Start=Início:
 ;Start:
 StartBatchRendering=Iniciar render em lote
 ;Start batch rendering
+StartFrom=Começar de
+;Start from
 StartIndex=Índice inicial:
 ;Start index:
 StartRendering=Iniciar render
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=o tamanho da imagem mudou: calcule a imagem de n
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=O modo its.trap depende da opção calculada na aba "Coloração".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=O último quadro-chave
+;The last keyframe
 TheLastSessionCrashed=A última sessão falhou: {}. Mais na janela Log (o ícone na barra de título).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=A última sessão não terminou corretamente (travou, foi encerrada ou falhou): {}. O que ela fez por último está no log (a janela Log, o ícone na barra de título).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=O editor principal ainda está renderizando. Pare-o primeiro ou espere até terminar.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=A vista da janela principal
+;The main window's view
 TheMapOptionsCalculatesXY=As opções de mapa calculam coordenadas x,y a partir do vetor\nespecífico para mapas esféricos; isso altera também a primeira escolha de cor,\nque normalmente se baseia em iterações suaves.\nÉ preciso recalcular a imagem para ver o resultado das\nalterações destas opções.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=O centro da vista

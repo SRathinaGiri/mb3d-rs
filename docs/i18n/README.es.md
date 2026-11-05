@@ -933,6 +933,32 @@ esto puede comprobar más por su cuenta:
   Quest y VLC. Un panorama esférico guardado como JPEG lleva el XMP de Photo
   Sphere, así que Facebook lo muestra como foto 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Cinco fotogramas de una órbita de 360° alrededor de un punto de la superficie de un Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Un vuelo a través, un fotograma por segundo"></a>
+
+  Las plantillas de animación, las fotos de 360° y los vídeos de RV 360° son
+  una contribución de Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). La órbita mantiene la
+  cámara a la misma distancia de su pivote en cada fotograma, también entre
+  los fotogramas clave: primero el centro de la vista se coloca en el
+  pivote, de modo que los fotogramas clave solo se diferencian en su
+  rotación. Añadida después de otros fotogramas clave, termina de nuevo con
+  su primer fotograma clave, para que la vuelta sea completa; *Empezar
+  desde* toma la vista de la ventana principal o el último fotograma clave.
+  El vuelo a través se calcula en segundo plano con una barra de progreso, y
+  *Detener* conserva lo volado hasta entonces. Vídeos (adjuntos a la versión
+  v0.2.100, renderizados con la versión siguiente): [una órbita con 4
+  fotogramas clave, la primera versión y la exacta lado a
+  lado](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [un
+  volteo](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [un vuelo a
+  través](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [una órbita de RV
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Splats gaussianos** del fractal, para verlo por todos los lados en
   Blender (5.3 y posteriores), SuperSplat y otros visores de splats: *Bulb

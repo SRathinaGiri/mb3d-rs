@@ -1254,6 +1254,8 @@ FlyThrough=Survol
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Survol : le vol s'est arrêté après {} images sur {}, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Survol : image {} sur {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Décalage brouillard
@@ -3312,6 +3314,8 @@ Start=Début :
 ;Start:
 StartBatchRendering=Démarrer le rendu par lot
 ;Start batch rendering
+StartFrom=Commencer à
+;Start from
 StartIndex=Index de début :
 ;Start index:
 StartRendering=Démarrer le rendu
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=la taille de l'image a changé : recalculez l'im
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=Le mode its.trap dépend de l'option calculée dans l'onglet « Coloration ».
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=La dernière image-clé
+;The last keyframe
 TheLastSessionCrashed=La dernière session a planté : {}. Plus de détails dans la fenêtre Journal (l'icône dans la barre de titre).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=La dernière session ne s'est pas terminée correctement (elle s'est figée, a été tuée ou a planté) : {}. Ce qu'elle a fait en dernier se trouve dans le journal (la fenêtre Journal, l'icône dans la barre de titre).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=L'éditeur principal est encore en train de rendre. Arrêtez-le d'abord ou attendez qu'il ait terminé.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=La vue de la fenêtre principale
+;The main window's view
 TheMapOptionsCalculatesXY=Les options de carte calculent les coordonnées x,y à partir du vecteur\ndonné pour les cartes sphériques ; cela change aussi le premier choix de couleur,\nhabituellement basé sur les itérations lissées.\nVous devez recalculer l'image pour voir l'effet d'un changement\nde ces options.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=Le centre de la vue

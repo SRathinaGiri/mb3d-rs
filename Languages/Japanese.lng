@@ -1255,6 +1255,8 @@ FlyThrough=フライスルー
 ;Fly-through
 FlyThroughTheFlightEndedAfter=フライスルー: {} / {} フレームで飛行が終わりました。{}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=飛行中: フレーム {} / {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=フォグオフセット
@@ -3313,6 +3315,8 @@ Start=開始:
 ;Start:
 StartBatchRendering=バッチレンダリング開始
 ;Start batch rendering
+StartFrom=開始位置
+;Start from
 StartIndex=開始インデックス:
 ;Start index:
 StartRendering=レンダリング開始
@@ -3523,12 +3527,16 @@ TheImageSizeChangedCalculateThe=画像サイズが変わりました: 画像を�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap モードは「カラーリング」タブで計算に選んだオプションに依存します。
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=最後のキーフレーム
+;The last keyframe
 TheLastSessionCrashed=前回のセッションはクラッシュしました: {}。詳細はログウィンドウ (タイトルバーのアイコン) にあります。
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=前回のセッションは正常に終了しませんでした (フリーズ、強制終了、またはクラッシュ): {}。最後に行ったことはログ (ログウィンドウ、タイトルバーのアイコン) にあります。
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=メインエディターはまだレンダリング中です。先に停止するか、完了するまでお待ちください。
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=メインウィンドウの視点
+;The main window's view
 TheMapOptionsCalculatesXY=マップオプションは球面マップ用に特定のベクトルから\nx,y 座標を計算します。これにより、通常はスムーズ反復回数に\n基づく 1 番目の色選択も変わります。\nこのオプションの変更結果を確認するには、画像を\n再計算する必要があります。
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=画面の中央

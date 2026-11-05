@@ -127,7 +127,7 @@ AddNewOption=Add new option
 AddOptionValue=Add option value
 ;the program
 AddTheKeyframes=Add the keyframes
-;AnimTemplatesFrm.AddBtn.Caption
+;AnimTemplatesFrm.AddBtn.Caption; the program
 AddToBackgroundDepthNotBlend=Add to background depth (not blend)
 ;LightAdjustForm.CheckBox17.Caption
 AddonFormula=Addon formula
@@ -1255,7 +1255,7 @@ FlyThrough=Fly-through
 FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
 ;the program
 FlyingFrameOf=Flying: frame {} of {}
-;not used
+;the program
 Fo=Fo.{}
 ;the program
 FogOffset=Fog offset
@@ -3315,7 +3315,7 @@ Start=Start:
 StartBatchRendering=Start batch rendering
 ;BatchForm1.Button1.Caption, MCForm.BatchRenderBtn.Caption; the program
 StartFrom=Start from
-;not used
+;AnimTemplatesFrm.StartLabel.Caption
 StartIndex=Start index:
 ;AnimationForm.Label6.Caption
 StartRendering=Start rendering
@@ -3527,7 +3527,7 @@ TheImageSizeChangedCalculateThe=the image size changed: calculate the image agai
 TheItsTrapModeDependsOn=The its.trap mode depends on the calculated option in the "Coloring" tab.
 ;LightAdjustForm.RadioGroup1.Hint
 TheLastKeyframe=The last keyframe
-;not used
+;AnimTemplatesFrm.StartCmb.Items
 TheLastSessionCrashed=The last session crashed: {}. More in the Log window (the icon in the title bar).
 ;the program
 TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
@@ -3535,7 +3535,7 @@ TheLastSessionDidNotEnd=The last session did not end properly (it froze, was kil
 TheMainEditorIsStillRendering=The main editor is still rendering. Please stop it first or wait until it is done.
 ;the program
 TheMainWindowSView=The main window's view
-;not used
+;AnimTemplatesFrm.StartCmb.Items
 TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 ;Mand3DForm.RadioGroup1.Hint
 TheMiddleOfTheView=The middle of the view

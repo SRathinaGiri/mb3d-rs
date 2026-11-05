@@ -1255,6 +1255,8 @@ FlyThrough=طيران عبر
 ;Fly-through
 FlyThroughTheFlightEndedAfter=طيران عبر: انتهى الطيران بعد {} من {} إطار، {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=الطيران: الإطار {} من {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=إزاحة الضباب
@@ -3313,6 +3315,8 @@ Start=البداية:
 ;Start:
 StartBatchRendering=بدء التصيير الدفعي
 ;Start batch rendering
+StartFrom=البدء من
+;Start from
 StartIndex=رقم البداية:
 ;Start index:
 StartRendering=بدء التصيير
@@ -3523,12 +3527,16 @@ TheImageSizeChangedCalculateThe=تغير حجم الصورة: احسب الصو�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=يعتمد وضع its.trap على الخيار المحسوب في تبويب «التلوين».
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=آخر إطار مفتاحي
+;The last keyframe
 TheLastSessionCrashed=تعطلت الجلسة الأخيرة: {}. المزيد في نافذة سجل الأحداث (الأيقونة في شريط العنوان).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=لم تنتهِ الجلسة الأخيرة كما يجب (تجمدت أو أُنهيت قسرًا أو تعطلت): {}. آخر ما فعلته مدوّن في سجل الأحداث (نافذة سجل الأحداث، الأيقونة في شريط العنوان).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=لا يزال المحرر الرئيسي يصيّر. يرجى إيقافه أولًا أو الانتظار حتى ينتهي.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=عرض النافذة الرئيسية
+;The main window's view
 TheMapOptionsCalculatesXY=خيارات الخريطة تحسب إحداثيات x,y من المتجه\nالمحدد للخرائط الكروية، وهذا يغير أيضًا الاختيار الأول للون\nالذي يعتمد عادةً على التكرارات الناعمة.\nعليك إعادة حساب الصورة لترى نتيجة تغيير\nهذه الخيارات.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=منتصف المنظر

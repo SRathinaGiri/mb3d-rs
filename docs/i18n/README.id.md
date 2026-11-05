@@ -910,6 +910,30 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   JPEG membawa XMP Photo Sphere, sehingga Facebook menampilkannya sebagai
   foto 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Lima frame orbit 360° mengelilingi satu titik di permukaan Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Terbang menembus, satu frame per detik"></a>
+
+  Templat animasi, foto 360° dan video VR 360° dikontribusikan oleh
+  Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). Orbit menjaga kamera
+  pada jarak yang sama dari titik porosnya di setiap frame, juga di antara
+  keyframe: titik tengah tampilan diletakkan dulu di titik poros, sehingga
+  keyframe hanya berbeda dalam rotasinya. Jika ditambahkan setelah keyframe
+  lain, orbit berakhir lagi dengan keyframe pertamanya, sehingga putarannya
+  utuh; *Mulai dari* memakai tampilan jendela utama atau keyframe terakhir.
+  Terbang menembus dihitung di latar belakang dengan bilah kemajuan, dan
+  *Hentikan* menyimpan apa yang sudah diterbangkan. Video (dilampirkan pada
+  rilis v0.2.100, dirender dengan versi sesudahnya): [orbit dengan 4
+  keyframe, versi pertama dan versi yang tepat
+  berdampingan](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [jungkir
+  balik](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [terbang
+  menembus](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [orbit VR
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Splat Gaussian** dari fraktal, untuk dilihat dari segala sisi di
   Blender (5.3 dan yang lebih baru), SuperSplat, dan penampil splat lain: *Bulb

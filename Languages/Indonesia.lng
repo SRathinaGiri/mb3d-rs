@@ -1254,6 +1254,8 @@ FlyThrough=Terbang menembus
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Terbang menembus: penerbangan berhenti setelah {} dari {} frame, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Terbang: frame {} dari {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Offset kabut
@@ -3312,6 +3314,8 @@ Start=Mulai:
 ;Start:
 StartBatchRendering=Mulai render batch
 ;Start batch rendering
+StartFrom=Mulai dari
+;Start from
 StartIndex=Indeks awal:
 ;Start index:
 StartRendering=Mulai render
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=ukuran gambar berubah: hitung gambar lagi
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=Mode its.trap bergantung pada opsi yang dihitung di tab "Pewarnaan".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=Keyframe terakhir
+;The last keyframe
 TheLastSessionCrashed=Sesi terakhir crash: {}. Selengkapnya di jendela Log (ikon di bilah judul).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=Sesi terakhir tidak berakhir dengan benar (macet, dimatikan, atau crash): {}. Apa yang terakhir dilakukannya ada di log (jendela Log, ikon di bilah judul).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=Editor utama masih merender. Hentikan dulu atau tunggu hingga selesai.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=Tampilan jendela utama
+;The main window's view
 TheMapOptionsCalculatesXY=Opsi peta menghitung koordinat x,y dari vektor\ntertentu untuk peta sferis, ini juga mengubah pilihan warna pertama\nyang biasanya berdasarkan iterasi halus.\nAnda harus menghitung ulang gambar untuk melihat hasil perubahan\nopsi ini.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=Tengah tampilan

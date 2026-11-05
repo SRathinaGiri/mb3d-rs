@@ -914,6 +914,31 @@ pontos permitem que você confira mais por conta própria:
   YouTube, o Meta Quest e o VLC. Um panorama esférico salvo como JPEG leva o
   XMP Photo Sphere, então o Facebook o mostra como foto 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Cinco quadros de uma órbita de 360° em torno de um ponto da superfície de um Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Um voo através, um quadro por segundo"></a>
+
+  Os modelos de animação, as fotos 360° e os vídeos de RV 360° foram
+  contribuídos por Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). A órbita mantém a
+  câmera à mesma distância do seu pivô em cada quadro, também entre os
+  quadros-chave: primeiro o centro da vista é posto no pivô, de modo que os
+  quadros-chave diferem apenas na rotação. Adicionada depois de outros
+  quadros-chave, ela termina de novo com o seu primeiro quadro-chave, para
+  que a volta seja completa; *Começar de* usa a vista da janela principal ou
+  o último quadro-chave. O voo através é calculado em segundo plano com uma
+  barra de progresso, e *Parar* mantém o que já foi voado. Vídeos (anexados
+  à versão v0.2.100, renderizados com a versão seguinte): [uma órbita com 4
+  quadros-chave, a primeira versão e a exata lado a
+  lado](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [uma
+  cambalhota](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [um voo
+  através](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [uma órbita de RV
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Splats gaussianos** do fractal, para ver de todos os lados no
   Blender (5.3 ou mais novo), no SuperSplat e em outros visualizadores de splats: *Bulb

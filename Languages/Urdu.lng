@@ -1255,6 +1255,8 @@ FlyThrough=اندر سے پرواز
 ;Fly-through
 FlyThroughTheFlightEndedAfter=اندر سے پرواز: پرواز {} میں سے {} فریمز کے بعد ختم ہوئی، {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=پرواز: فریم {} از {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=دھند آفسیٹ
@@ -3313,6 +3315,8 @@ Start=آغاز:
 ;Start:
 StartBatchRendering=بیچ رینڈرنگ شروع کریں
 ;Start batch rendering
+StartFrom=یہاں سے شروع کریں
+;Start from
 StartIndex=ابتدائی نمبر:
 ;Start index:
 StartRendering=رینڈرنگ شروع کریں
@@ -3523,12 +3527,16 @@ TheImageSizeChangedCalculateThe=تصویر کا سائز بدل گیا: تصوی
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap موڈ "رنگ کاری" ٹیب میں حساب شدہ اختیار پر منحصر ہے۔
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=آخری کی فریم
+;The last keyframe
 TheLastSessionCrashed=پچھلا سیشن کریش ہو گیا: {}۔ مزید لاگ ونڈو میں (ٹائٹل بار میں آئیکن)۔
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=پچھلا سیشن درست طریقے سے ختم نہیں ہوا (رک گیا، بند کیا گیا یا کریش ہوا): {}۔ اس نے آخری بار کیا کیا، یہ لاگ میں ہے (لاگ ونڈو، ٹائٹل بار میں آئیکن)۔
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=مرکزی ایڈیٹر ابھی رینڈر کر رہا ہے۔ براہ کرم پہلے اسے روکیں یا مکمل ہونے تک انتظار کریں۔
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=مرکزی ونڈو کا منظر
+;The main window's view
 TheMapOptionsCalculatesXY=نقشہ اختیارات کروی نقشوں کے لیے مخصوص ویکٹر سے x,y کوآرڈینیٹس\nحساب کرتے ہیں، اس سے پہلا رنگ انتخاب بھی بدلتا ہے\nجو عموماً ہموار تکرار پر مبنی ہوتا ہے۔\nان اختیارات کی تبدیلی کا نتیجہ دیکھنے کے لیے تصویر کا\nدوبارہ حساب کرنا ہو گا۔
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=منظر کا وسط

@@ -1254,6 +1254,8 @@ FlyThrough=Przelot
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Przelot: lot sã skùńcził pò {} z {} klatków, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Przelot: klatka {} z {}
+;Flying: frame {} of {}
 Fo=Fò.{}
 ;Fo.{}
 FogOffset=Przesënienié mgłë
@@ -3312,6 +3314,8 @@ Start=Pòczątk:
 ;Start:
 StartBatchRendering=Zacznij serijné renderowanié
 ;Start batch rendering
+StartFrom=Zaczni òd
+;Start from
 StartIndex=Pòczątkòwi indeks:
 ;Start index:
 StartRendering=Zacznij renderowanié
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=wiôlgòsc òbrôzka sã zmieniła: wërechùj �
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=Trib its.trap zanôlégô òd wërechòwóny òptacji w karce "Farwienié".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=Slédnô kluczowô klatka
+;The last keyframe
 TheLastSessionCrashed=Òstatnô sesjô miała awariã: {}. Wiãcy w òknie Dzénnik (ikòna na pasku titla).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=Òstatnô sesjô nie skùńczëła sã pòprawno (zamarzła, òsta zabitô abò miała awariã): {}. Co òna robiła na òstatkù, je w dzénniku (òkno Dzénnik, ikòna na pasku titla).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=Przédny editor wcyg renderëje. Nôprzód gò zatrzëmôj abò żdżë, jaż skùńczi.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=Wëzdrzatk przédnégò òkna
+;The main window's view
 TheMapOptionsCalculatesXY=Òpcje mapë rechùją kòòrdinatë x,y z òsoblëwégò\nwektora dlô sfericznëch mapów, to zmieniwô téż pierszi wëbiér farwë,\njaczi zwëczajno òpiérô sã na głôdczich iteracjach.\nŻebë widzec wënik zmianów tëch òpcjów,\nnót je òbrôzk wërechòwac znowa.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=Westrzódk pòzdrzatkù

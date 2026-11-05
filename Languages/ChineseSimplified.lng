@@ -1255,6 +1255,8 @@ FlyThrough=穿越飞行
 ;Fly-through
 FlyThroughTheFlightEndedAfter=穿越飞行：飞行在第 {} / {} 帧后结束，{}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=飞行中：第 {} / {} 帧
+;Flying: frame {} of {}
 Fo=公式{}
 ;Fo.{}
 FogOffset=雾偏移
@@ -3313,6 +3315,8 @@ Start=起始：
 ;Start:
 StartBatchRendering=开始批量渲染
 ;Start batch rendering
+StartFrom=起点
+;Start from
 StartIndex=起始索引：
 ;Start index:
 StartRendering=开始渲染
@@ -3523,12 +3527,16 @@ TheImageSizeChangedCalculateThe=图像尺寸已更改：请重新计算图像
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap 模式取决于"着色"选项卡中计算时所用的选项。
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=最后一个关键帧
+;The last keyframe
 TheLastSessionCrashed=上次会话崩溃了：{}。更多信息见“日志”窗口（标题栏中的图标）。
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=上次会话未正常结束（卡死、被终止或崩溃）：{}。它最后所做的操作记录在日志中（“日志”窗口，标题栏中的图标）。
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=主编辑器仍在渲染。请先停止它或等待其完成。
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=主窗口的视图
+;The main window's view
 TheMapOptionsCalculatesXY=映射选项根据特定向量计算球面映射的 x,y 坐标，\n这也会改变通常基于平滑迭代的\n第一颜色选择。\n您必须重新计算图像才能看到\n这些选项更改的结果。
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=画面中心

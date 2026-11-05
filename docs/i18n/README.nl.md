@@ -871,6 +871,30 @@ kunt u zelf verder controleren:
   Een als JPEG opgeslagen bolvormig panorama krijgt de Photo Sphere-XMP,
   zodat Facebook het als 360-foto toont.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Vijf beelden van een 360°-omloop rond een punt op het oppervlak van een Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Een doorvlucht, één beeld per seconde"></a>
+
+  De animatiesjablonen, 360°-foto's en 360° VR-video's zijn bijgedragen door
+  Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). De omloop houdt de
+  camera in elk beeld op dezelfde afstand van zijn draaipunt, ook tussen de
+  keyframes: het midden van de weergave wordt eerst op het draaipunt gelegd,
+  zodat de keyframes alleen in hun draaiing verschillen. Toegevoegd na
+  andere keyframes eindigt hij weer met zijn eerste keyframe, zodat de draai
+  heel is; *Beginnen bij* neemt de weergave van het hoofdvenster of de
+  laatste keyframe. Een doorvlucht wordt op de achtergrond gevlogen met een
+  voortgangsbalk, en *Stop* houdt wat er gevlogen is. Video's (bij de
+  release v0.2.100 gevoegd, gerenderd met de versie daarna): [een omloop met
+  4 keyframes, de eerste versie en de exacte naast
+  elkaar](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [een
+  tuimeling](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [een
+  doorvlucht](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [een 360°
+  VR-omloop](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Gaussische splats** van de fractal, om van alle kanten te bekijken in
   Blender (5.3 en later), SuperSplat en andere splatviewers: *Bulb

@@ -1255,6 +1255,8 @@ FlyThrough=플라이스루
 ;Fly-through
 FlyThroughTheFlightEndedAfter=플라이스루: {}/{} 프레임 후 비행이 끝났습니다. {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=비행 중: 프레임 {} / {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=안개 오프셋
@@ -3313,6 +3315,8 @@ Start=시작:
 ;Start:
 StartBatchRendering=일괄 렌더링 시작
 ;Start batch rendering
+StartFrom=시작 위치
+;Start from
 StartIndex=시작 인덱스:
 ;Start index:
 StartRendering=렌더링 시작
@@ -3523,12 +3527,16 @@ TheImageSizeChangedCalculateThe=이미지 크기가 바뀌었습니다. 이미�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap 모드는 "색상" 탭에서 계산된 옵션에 따라 달라집니다.
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=마지막 키프레임
+;The last keyframe
 TheLastSessionCrashed=지난 세션이 비정상 종료되었습니다: {}. 자세한 내용은 로그 창(제목 표시줄의 아이콘)에 있습니다.
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=지난 세션이 제대로 끝나지 않았습니다(멈췄거나, 강제 종료되었거나, 비정상 종료됨): {}. 마지막으로 한 일은 로그(로그 창, 제목 표시줄의 아이콘)에 있습니다.
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=메인 편집기가 아직 렌더링 중입니다. 먼저 중지하거나 끝날 때까지 기다리십시오.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=메인 창의 시점
+;The main window's view
 TheMapOptionsCalculatesXY=맵 옵션은 구면 맵을 위해 지정 벡터에서 x, y 좌표를\n계산하며, 보통 부드러운 반복 횟수에 기반하는 첫 번째 색상 선택도\n바꿉니다.\n이 옵션을 변경한 결과를 보려면 이미지를\n다시 계산해야 합니다.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=화면 가운데

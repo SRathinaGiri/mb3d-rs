@@ -934,6 +934,32 @@ Voici de quoi vérifier plus loin par vous-même :
   Meta Quest et VLC. Un panorama sphérique enregistré en JPEG porte le XMP
   Photo Sphere, si bien que Facebook l'affiche comme photo 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Cinq images d'une orbite à 360° autour d'un point de la surface d'un Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Un survol, une image par seconde"></a>
+
+  Les modèles d'animation, les photos à 360° et les vidéos RV 360° ont été
+  apportés par Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). L'orbite garde la
+  caméra à la même distance de son pivot à chaque image, aussi entre les
+  images-clés : le centre de la vue est d'abord placé sur le pivot, si bien
+  que les images-clés ne diffèrent que par leur rotation. Ajoutée après
+  d'autres images-clés, elle se termine de nouveau par sa première
+  image-clé, pour que le tour soit complet ; *Commencer à* prend la vue de
+  la fenêtre principale ou la dernière image-clé. Le survol est calculé en
+  arrière-plan avec une barre de progression, et *Arrêter* garde ce qui a
+  déjà été parcouru. Vidéos (jointes à la version v0.2.100, rendues avec la
+  version suivante) : [une orbite à 4 images-clés, la première version et
+  l'exacte côte à
+  côte](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [une
+  culbute](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [un
+  survol](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [une orbite RV
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Splats gaussiens** de la fractale, à regarder de tous les côtés dans
   Blender (5.3 et suivants), SuperSplat et d'autres visionneuses de splats :

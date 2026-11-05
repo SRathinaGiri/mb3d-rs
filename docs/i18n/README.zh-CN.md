@@ -557,6 +557,12 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
 
   *动画制作器* > *动画模板...* 从主窗口的视角为以秒计的时长（按窗口的每秒帧数）生成关键帧：绕你选择的轴（从左到右、从上方越过、滚转、三者同时，或分形的 X、Y、Z 轴）的 *360° 环绕*（`--orbit 8 --duration 10 --orbit-axis pitch`），或 *穿越飞行*：相机持续飞入分形，缩放随距离变化，保持航向，只在要避开会撞上的东西时才转向（`--fly --duration 20`；`--duration 0`：直到画面中只有天空或只有分形）。动画制作器中的 *360° VR*（`--vr`）把每一帧做成球面全景（2:1）；配合 *渲染立体动画*，视频中两只眼睛上下排列（左眼在上），ffmpeg 命令以 `mb3d vr360 video.mp4 --stereo tb` 结尾，把 MP4 标记为 YouTube、Meta Quest 和 VLC 的 360 视频。保存为 JPEG 的球面全景带有 Photo Sphere XMP，因此 Facebook 会把它显示为 360 照片。
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="围绕 Mandelbulb 表面一点的 360° 环绕的 5 帧"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="穿越飞行，每秒一帧"></a>
+
+  动画模板、360° 照片和 360° VR 视频由 Rathinagiri S（[SRathinaGiri](https://github.com/SRathinaGiri)，[#30](https://github.com/thr32423/mb3d-rs/pull/30)）贡献。环绕在每一帧中（关键帧之间也一样）都让相机与旋转中心保持相同距离：先把视图中心放到旋转中心上，因此关键帧之间只有旋转不同。添加在其他关键帧之后时，它会再以自己的第一个关键帧结束，使一圈完整；*起点* 可选主窗口的视图或最后一个关键帧。穿越飞行在后台计算并显示进度条，*停止* 会保留已经飞过的部分。视频（附在 v0.2.100 版本中，用其后的版本渲染）：[4 个关键帧的环绕，最初版本与精确版本并排](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4)、[翻滚](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4)、[穿越飞行](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4)、[360° VR 环绕](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4)。
+
   </details>
 * 分形的 **高斯泼溅**，可在 Blender (5.3 及以上)、SuperSplat 和其他泼溅查看器中
   从各个方向观看：*Bulb Tracer2* > *高斯泼溅...*，或

@@ -558,6 +558,12 @@ MB3D 當年只能使用處理器。它能開啟 MB3D 的參數檔（`.m3p`、`.m
 
   *動畫製作器* > *動畫範本...* 從主視窗的視角為以秒計的長度（依視窗的每秒影格數）產生關鍵影格：繞你選擇的軸（由左到右、從上方越過、翻滾、三者同時，或碎形的 X、Y、Z 軸）的 *360° 環繞*（`--orbit 8 --duration 10 --orbit-axis pitch`），或 *穿越飛行*：相機持續飛入碎形，縮放隨距離變化，保持航向，只在要避開會撞上的東西時才轉向（`--fly --duration 20`；`--duration 0`：直到畫面中只有天空或只有碎形）。動畫製作器中的 *360° VR*（`--vr`）把每個影格做成球面全景（2:1）；搭配 *算出立體動畫*，影片中兩眼上下排列（左眼在上），ffmpeg 指令以 `mb3d vr360 video.mp4 --stereo tb` 結尾，把 MP4 標記為 YouTube、Meta Quest 和 VLC 的 360 影片。儲存為 JPEG 的球面全景帶有 Photo Sphere XMP，因此 Facebook 會把它顯示為 360 照片。
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="環繞 Mandelbulb 表面一點的 360° 環繞的 5 格"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="穿越飛行，每秒一格"></a>
+
+  動畫範本、360° 照片與 360° VR 影片由 Rathinagiri S（[SRathinaGiri](https://github.com/SRathinaGiri)，[#30](https://github.com/thr32423/mb3d-rs/pull/30)）貢獻。環繞在每一格中（關鍵影格之間也是）都讓攝影機與旋轉中心保持相同距離：先把視角中心放到旋轉中心上，因此關鍵影格之間只有旋轉不同。加在其他關鍵影格之後時，它會再以自己的第一個關鍵影格結束，使一圈完整；*起點* 可選主視窗的視角或最後一個關鍵影格。穿越飛行在背景計算並顯示進度列，*停止* 會保留已經飛過的部分。影片（附在 v0.2.100 版本中，以其後的版本算圖）：[4 個關鍵影格的環繞，最初版本與精確版本並排](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4)、[翻滾](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4)、[穿越飛行](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4)、[360° VR 環繞](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4)。
+
   </details>
 * 碎形的 **高斯潑濺**，可在 Blender (5.3 及以上)、SuperSplat 和其他潑濺檢視器中
   從各個方向觀看：*Bulb Tracer2* > *高斯潑濺...*，或

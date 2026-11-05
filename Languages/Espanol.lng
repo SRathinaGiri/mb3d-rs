@@ -1254,6 +1254,8 @@ FlyThrough=Vuelo a través
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Vuelo a través: el vuelo terminó tras {} de {} fotogramas, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Volando: fotograma {} de {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Desplaz. niebla
@@ -3312,6 +3314,8 @@ Start=Inicio:
 ;Start:
 StartBatchRendering=Iniciar render por lotes
 ;Start batch rendering
+StartFrom=Empezar desde
+;Start from
 StartIndex=Índice inicial:
 ;Start index:
 StartRendering=Iniciar render
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=el tamaño de imagen cambió: calcule la imagen 
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=El modo its.trap depende de la opción calculada en la pestaña "Coloreado".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=El último fotograma clave
+;The last keyframe
 TheLastSessionCrashed=La última sesión se cerró de forma inesperada: {}. Más en la ventana Registro (el icono de la barra de título).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=La última sesión no terminó correctamente (se bloqueó, se terminó o se cerró de forma inesperada): {}. Lo último que hizo está en el registro (la ventana Registro, el icono de la barra de título).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=El editor principal sigue renderizando. Deténgalo primero o espere a que termine.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=La vista de la ventana principal
+;The main window's view
 TheMapOptionsCalculatesXY=Las opciones de mapa calculan coordenadas x,y a partir del vector\nespecífico para mapas esféricos; esto cambia también la primera elección\nde color, que suele basarse en iteraciones suaves.\nTiene que recalcular la imagen para ver el resultado de los\ncambios de estas opciones.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=El centro de la vista

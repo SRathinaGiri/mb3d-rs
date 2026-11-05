@@ -1254,6 +1254,8 @@ FlyThrough=Durchflug
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Durchflug: der Flug endete nach {} von {} Bildern, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Flug: Bild {} von {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Nebelversatz
@@ -3312,6 +3314,8 @@ Start=Start:
 ;Start:
 StartBatchRendering=Stapelrendern starten
 ;Start batch rendering
+StartFrom=Beginnen bei
+;Start from
 StartIndex=Startindex:
 ;Start index:
 StartRendering=Rendern starten
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=die Bildgröße hat sich geändert: Berechnen Si
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=Der Modus „its.trap“ hängt von der berechneten Option im Tab „Färbung“ ab.
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=Der letzte Keyframe
+;The last keyframe
 TheLastSessionCrashed=Die letzte Sitzung ist abgestürzt: {}. Mehr im Fenster Protokoll (das Symbol in der Titelleiste).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=Die letzte Sitzung wurde nicht ordnungsgemäß beendet (sie ist eingefroren, wurde beendet oder ist abgestürzt): {}. Was sie zuletzt getan hat, steht im Protokoll (das Fenster Protokoll, das Symbol in der Titelleiste).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=Der Haupteditor rendert noch. Bitte stoppen Sie ihn zuerst oder warten Sie, bis er fertig ist.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=Die Ansicht des Hauptfensters
+;The main window's view
 TheMapOptionsCalculatesXY=Die Map-Optionen berechnen x,y-Koordinaten aus dem jeweiligen\nVektor für sphärische Maps; das ändert auch die erste Farbwahl,\ndie normalerweise auf glatten Iterationen basiert.\nSie müssen das Bild neu berechnen, um das Ergebnis dieser\nOptionsänderungen zu sehen.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=Die Mitte der Ansicht

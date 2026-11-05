@@ -904,6 +904,30 @@ you check further on your own:
   video for YouTube, the Meta Quest and VLC. A spherical panorama saved as
   JPEG carries the Photo Sphere XMP, so Facebook shows it as a 360 photo.
 
+  <a href="docs/img/orbit_template.jpg"><img src="docs/img/orbit_template.jpg" width="640" alt="Five frames of a 360° orbit around a point on a Mandelbulb's surface"></a>
+
+  <a href="docs/img/fly_through.jpg"><img src="docs/img/fly_through.jpg" width="640" alt="A fly-through, one frame a second"></a>
+
+  The animation templates, 360° photos and 360° VR videos were contributed
+  by Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). The orbit keeps the
+  camera at the same distance from its pivot in every frame, also between
+  the keyframes: the middle of the view is put on the pivot first, so the
+  keyframes differ only in their rotation. Added after other keyframes, it
+  ends with its first keyframe again, so the turn is whole; *Start from*
+  takes the main window's view or the last keyframe. A fly-through is flown
+  in the background with a progress bar, and *Stop* keeps what was flown.
+  Videos (attached to the v0.2.100 release, rendered with the version after
+  it): [an orbit with 4 keyframes, the first version and the exact one side
+  by
+  side](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [a
+  tumble](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [a
+  fly-through](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [a 360° VR
+  orbit](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Gaussian splats** of the fractal, to look at from every side in
   Blender (5.3 and later), SuperSplat and other splat viewers: *Bulb
@@ -1533,8 +1557,9 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   ([#13](https://github.com/thr32423/mb3d-rs/pull/13)), the stereo controls
   ([#14](https://github.com/thr32423/mb3d-rs/pull/14)), sorting in the file dialogs
   ([#17](https://github.com/thr32423/mb3d-rs/pull/17)) and their sortable columns
-  ([#19](https://github.com/thr32423/mb3d-rs/pull/19)), and the program icon in the Windows
-  executable.
+  ([#19](https://github.com/thr32423/mb3d-rs/pull/19)), the program icon in the Windows
+  executable, and the animation templates, 360° photos and 360° VR videos
+  ([#30](https://github.com/thr32423/mb3d-rs/pull/30)).
 * **Bug reports and suggestions**:
   [kronpano](https://github.com/kronpano)
   ([#1](https://github.com/thr32423/mb3d-rs/issues/1),

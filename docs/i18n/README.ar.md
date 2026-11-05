@@ -843,6 +843,12 @@ MB3D وخرائطه، ويصنع الصور نفسها.
   وVLC. والبانوراما الكروية المحفوظة بصيغة JPEG تحمل بيانات Photo Sphere
   XMP، فيعرضها Facebook صورةً بزاوية 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="خمسة إطارات من مدار 360° حول نقطة على سطح Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="طيران عبر الفراكتال، إطار كل ثانية"></a>
+
+  ساهم Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri)، [#30](https://github.com/thr32423/mb3d-rs/pull/30)) بقوالب التحريك وصور 360° وفيديوهات الواقع الافتراضي 360°. يحافظ المدار على بُعد الكاميرا نفسه عن نقطة الارتكاز في كل إطار، وكذلك بين الإطارات المفتاحية: يوضع منتصف العرض أولًا على نقطة الارتكاز، فلا تختلف الإطارات المفتاحية إلا في دورانها. وإذا أُضيف بعد إطارات مفتاحية أخرى ينتهي بإطاره المفتاحي الأول مرة أخرى فتكتمل الدورة؛ ويأخذ *البدء من* عرض النافذة الرئيسية أو آخر إطار مفتاحي. يُحسب الطيران عبر الفراكتال في الخلفية مع شريط تقدم، ويحتفظ *إيقاف* بما قُطع من الطيران حتى ذلك الحين. الفيديوهات (مرفقة بالإصدار v0.2.100، ومُصيَّرة بالإصدار الذي يليه): [مدار بأربعة إطارات مفتاحية، النسخة الأولى والنسخة الدقيقة جنبًا إلى جنب](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4)، [تقلّب](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4)، [طيران عبر](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4)، [مدار واقع افتراضي 360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **بقع غاوسية** للفركتل، للنظر إليه من كل جانب في
   Blender (5.3 وما بعده) وSuperSplat وعارضات البقع الأخرى: *Bulb

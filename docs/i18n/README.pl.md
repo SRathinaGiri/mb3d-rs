@@ -875,6 +875,28 @@ możesz sprawdzić sam:
   Meta Quest i VLC. Panorama sferyczna zapisana jako JPEG ma XMP Photo
   Sphere, więc Facebook pokazuje ją jako zdjęcie 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Pięć klatek orbity 360° wokół punktu na powierzchni Mandelbulba"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Przelot, jedna klatka na sekundę"></a>
+
+  Szablony animacji, zdjęcia 360° i filmy VR 360° wniósł Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). Orbita utrzymuje
+  kamerę w tej samej odległości od punktu obrotu w każdej klatce, także
+  między klatkami kluczowymi: środek widoku jest najpierw ustawiany w
+  punkcie obrotu, więc klatki kluczowe różnią się tylko obrotem. Dodana po
+  innych klatkach kluczowych kończy się znowu swoją pierwszą klatką
+  kluczową, więc obrót jest pełny; *Zacznij od* bierze widok okna głównego
+  albo ostatnią klatkę kluczową. Przelot jest liczony w tle z paskiem
+  postępu, a *Stop* zachowuje to, co już przeleciano. Filmy (dołączone do
+  wydania v0.2.100, wyrenderowane wersją po nim): [orbita z 4 klatkami
+  kluczowymi, pierwsza wersja i dokładna obok
+  siebie](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [koziołkowanie](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [przelot](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [orbita VR
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Splaty gaussowskie** fraktala, do oglądania ze wszystkich stron w
   Blenderze (5.3 i nowszym), SuperSplat i innych przeglądarkach splatów: *Bulb

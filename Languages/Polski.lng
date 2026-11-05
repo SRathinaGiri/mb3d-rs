@@ -1254,6 +1254,8 @@ FlyThrough=Przelot
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Przelot: lot zakończył się po {} z {} klatek, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Przelot: klatka {} z {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Przesunięcie mgły
@@ -3312,6 +3314,8 @@ Start=Start:
 ;Start:
 StartBatchRendering=Rozpocznij renderowanie wsadowe
 ;Start batch rendering
+StartFrom=Zacznij od
+;Start from
 StartIndex=Indeks pocz.:
 ;Start index:
 StartRendering=Rozpocznij renderowanie
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=rozmiar obrazu się zmienił: oblicz obraz ponow
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=Tryb its.trap zależy od opcji obliczonej na karcie „Kolorowanie”.
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=Ostatnia klatka kluczowa
+;The last keyframe
 TheLastSessionCrashed=Ostatnia sesja uległa awarii: {}. Więcej w oknie Dziennik (ikona na pasku tytułu).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=Ostatnia sesja nie zakończyła się prawidłowo (zawiesiła się, została zabita lub uległa awarii): {}. To, co robiła na końcu, jest w dzienniku (okno Dziennik, ikona na pasku tytułu).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=Główny edytor wciąż renderuje. Najpierw go zatrzymaj lub poczekaj, aż skończy.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=Widok okna głównego
+;The main window's view
 TheMapOptionsCalculatesXY=Opcje map obliczają współrzędne x,y z określonego\nwektora dla map sferycznych; zmienia to także pierwszy wybór koloru,\nktóry zwykle opiera się na gładkich iteracjach.\nAby zobaczyć efekt zmian tych opcji,\ntrzeba ponownie obliczyć obraz.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=Środek widoku

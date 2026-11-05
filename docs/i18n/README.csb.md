@@ -872,6 +872,27 @@ sprawdzëc sóm:
   zapisónô jakno JPEG mô XMP Photo Sphere, tak że Facebook wëkazëje jã jakno
   òdjimk 360.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Piãc klatków òrbitë 360° wkół pùnktu na wiéchrzëznie Mandelbulba"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Przelot, jedna klatka na sekùndã"></a>
+
+  Szablonë animacje, fòtografie 360° ë filmë VR 360° dołożił Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). Òrbita trzimô kamerã
+  w ti sami òdległoscë òd pùnktu òbrótu w kòżdi klatce, téż midzë kluczowima
+  klatkama: pòstrzódk wëzdrzatkù je nôprzód stôwiony w pùnkce òbrótu, tak że
+  kluczowé klatczi rozrézniają sã leno òbrótã. Dodónô pò jinszich kluczowich
+  klatkach, kùńczi sã znowa swòją pierszą kluczową klatką, tak że òbrót je
+  całi; *Zaczni òd* bierze wëzdrzatk przédnégò òkna abò slédną kluczową
+  klatkã. Przelot je rëchòwóny w tle z paskã pòstãpù, a *Stop* trzimô to, co
+  ju przeleconé. Filmë (dodóné do wëdaniô v0.2.100, zrobioné wersją pò nim):
+  [òrbita z 4 kluczowima klatkama, pierszô wersjô ë dokładnô kòl
+  se](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [kòzłowanié](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [przelot](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [òrbita VR
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * **Gaussowsczé splatë** fraktala, do òbzéraniô z kòżdi stronë w
   Blenderze (5.3 ë nowszim), SuperSplat ë jinszich programach do splatów: *Bulb

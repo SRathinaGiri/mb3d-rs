@@ -594,6 +594,12 @@ MB3D の数式とマップを使い、同じ画像を作ります。
 
   *アニメーションメーカー* > *アニメーションテンプレート...* は、メインウィンドウの視点から、秒で指定した長さ (ウィンドウのフレーム/秒で) のキーフレームを作ります: 選んだ軸 (左から右、上を越えて、ロール、3 つ同時、またはフラクタルの X、Y、Z 軸) の周りの *360° 周回* (`--orbit 8 --duration 10 --orbit-axis pitch`)、またはカメラがフラクタルの奥へ飛び続け、ズームが距離に追従し、進路を保ってぶつかりそうなものを避けるときだけ曲がる *フライスルー* (`--fly --duration 20`、`--duration 0`: 画面が空だけ、またはフラクタルだけになるまで)。アニメーションメーカー の *360° VR* (`--vr`) は各フレームを全天球パノラマ (2:1) にします。*ステレオアニメーションをレンダリング* と組み合わせると動画は両目を上下に並べ (左目が上)、ffmpeg コマンドは `mb3d vr360 video.mp4 --stereo tb` で終わり、MP4 を YouTube、Meta Quest、VLC 用の 360 動画としてマークします。JPEG で保存した全天球パノラマには Photo Sphere XMP が付くので、Facebook は 360 写真として表示します。
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Mandelbulb の表面の一点を回る 360° 周回の 5 フレーム"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="フライスルー、1 秒ごとに 1 フレーム"></a>
+
+  アニメーションテンプレート、360° 写真、360° VR 動画は Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri)、[#30](https://github.com/thr32423/mb3d-rs/pull/30)) による貢献です。周回はすべてのフレームで、キーフレームの間でも、カメラを回転の中心から同じ距離に保ちます: まずビューの中心を回転の中心に置くので、キーフレームの違いは回転だけになります。ほかのキーフレームの後に追加すると最初のキーフレームでもう一度終わるので、一周が欠けません。*開始位置* でメインウィンドウの視点か最後のキーフレームを選べます。フライスルーは進行バーを表示しながらバックグラウンドで計算され、*停止* でそこまでの飛行を残します。動画 (v0.2.100 のリリースに添付、その次のバージョンでレンダリング): [キーフレーム 4 つの周回、最初の版と正確な版を並べて](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4)、[タンブル](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4)、[フライスルー](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4)、[360° VR 周回](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4)。
+
   </details>
 * **ガウシアンスプラット** でフラクタルを書き出し、Blender (5.3 以降)、SuperSplat
   などのスプラットビューアーであらゆる方向から見られます: *Bulb Tracer2* >

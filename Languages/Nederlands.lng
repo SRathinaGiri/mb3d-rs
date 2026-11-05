@@ -1254,6 +1254,8 @@ FlyThrough=Doorvlucht
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Doorvlucht: de vlucht stopte na {} van {} frames, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Vliegen: beeld {} van {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Mist-offset
@@ -3312,6 +3314,8 @@ Start=Start:
 ;Start:
 StartBatchRendering=Batchrendering starten
 ;Start batch rendering
+StartFrom=Beginnen bij
+;Start from
 StartIndex=Startindex:
 ;Start index:
 StartRendering=Rendering starten
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=de afbeeldingsgrootte is gewijzigd: bereken de a
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=De its.trap-modus hangt af van de berekende optie op het tabblad "Kleuring".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=De laatste keyframe
+;The last keyframe
 TheLastSessionCrashed=De vorige sessie is gecrasht: {}. Meer in het venster Logboek (het pictogram in de titelbalk).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=De vorige sessie is niet goed afgesloten (ze liep vast, werd beëindigd of crashte): {}. Wat ze het laatst deed, staat in het logboek (het venster Logboek, het pictogram in de titelbalk).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=De hoofdeditor is nog aan het renderen. Stop die eerst of wacht tot hij klaar is.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=De weergave van het hoofdvenster
+;The main window's view
 TheMapOptionsCalculatesXY=De map-opties berekenen x,y-coördinaten uit de betreffende\nvector voor sferische maps; dit verandert ook de eerste kleurkeuze,\ndie normaal op gladde iteraties is gebaseerd.\nU moet de afbeelding opnieuw berekenen om het resultaat van\ndeze wijzigingen te zien.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 TheMiddleOfTheView=Het midden van het beeld

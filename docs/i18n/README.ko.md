@@ -771,6 +771,12 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   MP4를 YouTube, Meta Quest, VLC용 360 동영상으로 표시합니다. JPEG로 저장한 구형 파노라마에는 Photo
   Sphere XMP가 들어가므로 Facebook이 360 사진으로 보여 줍니다.
 
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Mandelbulb 표면의 한 점을 도는 360° 궤도의 5개 프레임"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="플라이스루, 1초마다 1프레임"></a>
+
+  애니메이션 템플릿, 360° 사진, 360° VR 동영상은 Rathinagiri S([SRathinaGiri](https://github.com/SRathinaGiri), [#30](https://github.com/thr32423/mb3d-rs/pull/30))가 기여했습니다. 궤도는 모든 프레임에서, 키프레임 사이에서도 카메라를 회전 중심에서 같은 거리에 둡니다: 먼저 시점의 중심을 회전 중심에 놓으므로 키프레임은 회전만 다릅니다. 다른 키프레임 뒤에 추가하면 첫 키프레임으로 다시 끝나 한 바퀴가 온전합니다. *시작 위치*에서 메인 창의 시점이나 마지막 키프레임을 고릅니다. 플라이스루는 진행 막대와 함께 백그라운드에서 계산되며, *중지*하면 그때까지 비행한 부분을 남깁니다. 동영상(v0.2.100 릴리스에 첨부, 그다음 버전으로 렌더링): [키프레임 4개 궤도, 첫 버전과 정확한 버전 나란히](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4), [텀블](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4), [플라이스루](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4), [360° VR 궤도](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+
   </details>
 * 프랙탈의 **가우시안 스플랫** 으로, Blender (5.3 이상), SuperSplat 및 다른 스플랫
   뷰어에서 모든 방향으로 볼 수 있습니다: *Bulb Tracer2* > *가우시안 스플랫...*,
