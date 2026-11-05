@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.98](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.98)** (4 Nov 2026, 16:52 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.2.99](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.99)** (5 Nov 2026, 06:11 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1406,6 +1406,27 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### Not released yet
+
+| Commit | What it does |
+|---|---|
+| [`61ad74f`](https://github.com/thr32423/mb3d-rs/commit/61ad74f6bd0562b3ef0047092d4838831dd6e3c4) | The shader checks of the tests do not ask the card about doubles at all: the macOS runner has a card (Metal) without doubles, so the double precision shaders of shaders_validate_without_a_card were refused there; scene_shader keeps the check (make_scene_shader builds the shader, the test calls it) |
+
+### [v0.2.99](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.99) · 5 Nov 2026, 06:11 UTC
+
+| Commit | What it does |
+|---|---|
+| [`6cf16cf`](https://github.com/thr32423/mb3d-rs/commit/6cf16cfeeb8ce15a84d2d68d448ad42e919f6928) | Version number and release notes of this release |
+| [`4b743bb`](https://github.com/thr32423/mb3d-rs/commit/4b743bbb31aaa50c542540e7ad9286dc8108b1c0) | The probe keeps a scene in single precision on the card up to 1.5 % mean colour difference (was 1.3 %): formulas just above the old limit (the Pascal JIT_RealPower at 1.48 %) ran in double precision, 3 times slower (2560x1920 on an RTX 2060: 5.2 s -> 1.6 s, the CPU alone 8.0 s) |
+| [`a9c697c`](https://github.com/thr32423/mb3d-rs/commit/a9c697ccd51f9bc5c99fcf048448bd29dfee6cd9) | The shader checks without a graphics card pass again: scene_shader asked the card whether it calculates in doubles before making a scene's double precision shader, so on the CI runners (no card) shaders_validate_without_a_card failed since 0.2.97 (42a4125 added the double shaders to it); without any card the shader is made, a card without doubles still refuses it |
+| [`a088fe4`](https://github.com/thr32423/mb3d-rs/commit/a088fe457ef9f313b4aa7d13d8b8da100a343a5b) | The Pascal formulas on the graphics card and in the compiled hybrid loop: jit_wgsl translates a formula's tree to a shader function with the interface of the lifted machine-code formulas (record cells, option values in the constants buffer, file constants and untouched locals folded in), single or double precision; gpu.rs builds Pascal slots with it (also mixed with other formulas, cell types unified). examples/pascalgpu: all 72 Pascal formulas agree with the closures on the card in both precisions. clif_jit::compile_hybrid puts Pascal formulas inline (their double fields as the loop's cells, the iteration count and first-iteration flag its variables), alone or mixed with machine-code and built-in formulas; results identical to the formulas called one by one (examples/pascalfused, test). Survey of the 72 alone at 1280x960: 40 on the card (35 single, 5 single finished in double), 13 in double precision (the probe), 3 fall back on single precision overflows, 12 are transforms (rendered in hybrids); e.g. JIT_EM_N_BoxBulb 14.3 s CPU -> 2.1 s card at 2560x1920. The folding moved from jit_pascal to jit.rs (shared) |
+| [`3e107e7`](https://github.com/thr32423/mb3d-rs/commit/3e107e74696005b58ad5549c4464ca0aec696f6b) | The Pascal formulas compiled with Cranelift: jit.rs parses a formula into a typed tree (the closures are made from it, results unchanged for all 72 Pascal formulas), jit_pascal compiles the tree for a scene's option values (the options and constants become constants and what depends only on them is computed at compile time, so a branch on an option disappears; integer powers with a known exponent, square roots, rounding, Min/Max inline; the closures' f64 representation kept, so the results are the closures' bit for bit apart from NaN payloads). CalcParams compiles the Pascal slots (cached by formula and values), the iteration calls the compiled function; MB3D_NO_JIT=1 keeps the closures. CPU renders 2560x1920: JIT_RealPower 25.4 s -> 8.0 s (as fast as the built-in Real Power), JIT_EM_Fld_StandartBulb 89.5 s -> 20.4 s. examples/pascalcheck compares the compiled code with the closures (and a saved checksum file); test with the community formulas and a formula using every kind of statement |
+| [`c30be88`](https://github.com/thr32423/mb3d-rs/commit/c30be88e084e7294b4f74a1f55826fd20debdb2c) | The community formulas run as compiled code: the 58 machine-code formulas of M3Formulas-community had no translation in src/x86/native and ran in the x86 interpreter, which also kept them out of the Cranelift loop; regenerated with m3f2rs over MB3D's M3Formulas plus the community folder (without M3Formulas-rs, as before). The 450 earlier functions are unchanged byte for byte; m3fcheck --translated: all 60 community machine-code formulas agree with the interpreter bit for bit; clifcheck (CANON_NAN): 50 compiled and identical. CPU renders 480x360 with the same pictures: MandelCup 17.1 s -> 1.6 s, SurfBox 2.0 s -> 0.4 s, CosinePow7 1.65 s -> 0.09 s |
+| [`35fdc08`](https://github.com/thr32423/mb3d-rs/commit/35fdc081bb194e9430e973c539178f7f5e5fa44e) | A window pulled very small no longer crashes the program: a rounded rectangle (a button, the file list's scroll bar thumb) squeezed below twice its corner radius made f32::clamp panic with min > max (the Save As dialog with its bottom edge dragged up to the top); the radius is now cut to half the smaller side and an empty rectangle covers nothing; test paints the save dialog with a full file list at every small height and width |
+| [`38372c4`](https://github.com/thr32423/mb3d-rs/commit/38372c4e2fe5a42542df261a7a08529f15015044) | Parameters of a newer version keep what this one can read: a line of the mb3d-rs settings block that cannot be read (a newer key, a bad value) is left out with a warning instead of dropping the whole block (pasting 0.2.98's water scenes into 0.2.97 lost the clouds and the ground plane for one unknown key); test |
+| [`883e2bd`](https://github.com/thr32423/mb3d-rs/commit/883e2bd373bb45ce7db42dd03e101214ec1ff28f) | docs/WATER_EXAMPLES.md: three scenes with transparent water (turquoise lagoon, deep-water shaft, golden hour) using the irregular waves, transparency, absorption, refraction, scattering and a glow on the fractal, each with its picture, settings and the parameters for From Clipboard; linked from the README and its 16 translations and from CLOUDS_WATER.md |
+| [`587d560`](https://github.com/thr32423/mb3d-rs/commit/587d560acc248ff0dd7c90f778e684e26c9f09f6) | README: Updates for v0.2.98 |
+
 ### [v0.2.98](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.98) · 4 Nov 2026, 16:52 UTC
 
 | Commit | What it does |
@@ -1453,17 +1474,7 @@ of a release are on its page. Times are in UTC.
 | [`42a4125`](https://github.com/thr32423/mb3d-rs/commit/42a41255f9790d0a500f93bb532644c79af8c5ec) | MB3D's rules in five places, ported from MB3D's source; shader checks without a graphics card; Stop ends painting at once |
 | [`29e63e2`](https://github.com/thr32423/mb3d-rs/commit/29e63e21651f11123635a251132125b7bcf4641a) | tools/fork_watch.py: watches the projects built on mb3d-rs (Mandelbulb3D SE with our engine in vendor/mb3d-rs, and the GitHub forks): which commit of ours a copy was taken from, its kept, changed and new files, the functions of ours its app calls, a fork's own commits; compares with the last run, writes ~/.local/share/mb3d-fork-watch/latest.md, notifies when something is new; --install adds a daily systemd user timer. Fetches and reads only, never builds or runs their code |
 
-### [v0.2.96](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.96) · 4 Nov 2026, 04:25 UTC
-
-| Commit | What it does |
-|---|---|
-| [`5d22064`](https://github.com/thr32423/mb3d-rs/commit/5d22064678f95c1eea85389c605a0d5767fea52b) | Community light presets: the 608 .m3l of the Mandelbulb3D 1.99.37 package Machina Infinitum offers as a free download (M3Lights-community, copied into M3Lights by the release workflow and the deb/rpm scripts, with CREDITS.md as CREDITS-community.md: no maker or terms named in the files, credit to the community and Machina Infinitum, makers can ask to be named or removed). M3Lights is the default lights folder (Lighting window's quick load list and Open), also for an ini that kept the old default, the program folder, unless presets were saved there; installed, the shipped folder. Tests: every preset is a light record; the old lights folder moves to M3Lights. README and its 16 translations, TECHNICAL.md, the 0.2.96 release notes |
-| [`619189d`](https://github.com/thr32423/mb3d-rs/commit/619189de39d5b7ddc65f4c22de4d0a65deb8cfb4) | Version number and release notes of this release |
-| [`d707630`](https://github.com/thr32423/mb3d-rs/commit/d707630e465ef212af87560448419ebfd5aa06c5) | The example scenes gone: hybrid_box_bulb.m3s (unused) deleted, mandelbulb, quaternion_julia and interpolation_boxes moved to tests/data (the card tests compare their pictures with the CPU's); TECHNICAL.md's commands use tests/data/mandelbulb.m3s, its scene file paragraph points to mb3d --save-scene, the packages' folder list without examples |
-| [`7151462`](https://github.com/thr32423/mb3d-rs/commit/7151462cc66eb447fd31647f64c9dc49722f8e66) | build_deb.sh, build_rpm.sh: no examples folder to copy (releases no longer carry it) |
-| [`4177c15`](https://github.com/thr32423/mb3d-rs/commit/4177c15f8b592506e01e7779c6049ec49f241663) | Community formulas and maps: 129 formulas and 154 maps that the original MB3D repository lacks, from the Mandelbulb3D 1.99.37 package Machina Infinitum offers as a free download (M3Formulas-community, M3Maps-community, copied into M3Formulas and M3Maps by the release workflow). Each formula's author as its file names them in M3Formulas-community/CREDITS.md (Edgar Malinovsky 40, gnj 18, DarkBeam/Luca GN, bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, Nrx, Eiffie, Quasihedron and others; teapot.m3f CC BY-SA 3.0); the maps under DarkBeam's terms of use (free use, not sold unchanged), Kronpano's 3046-3048 credited. Left out: three JIT files cut off in the package (end written en), JITtest, the package's older copies of six formulas (ours are the repository's newer ones) and its 608 light presets (no author or terms). Every formula checked: 125 calculate alone or with the Mandelbulb, the dIFS transforms with a dIFS shape; test: all load, the JIT ones compile. Credits in the README and its 16 translations, TECHNICAL.md |
-
-All 109 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 110 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
