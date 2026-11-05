@@ -268,6 +268,9 @@ struct SrTracer<'a, 'c> {
     m: Marcher<'a>,
     /// the G-buffer value of the pixel (`srPsiLight`)
     sr_si: SiLight,
+    /// The distance of the pixel's surface from the camera (the clouds a
+    /// reflected ray sees reach as far beyond it as the camera's view).
+    eye_dist: f64,
     normal: Vec3,
     t_amb: S3,
     plv: Plv,
@@ -1055,7 +1058,11 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             return t_absorb;
         }
         let d = scale(dir, 1.0 / n);
-        let tmax = hit.map_or(cl.far(), |h| len(&sub(h, o)));
+        // (into the distance: as far as the camera's view reaches, from
+        // the camera; far away a mirror ray off the water that rises at a
+        // grazing angle meets the clouds' layer far beyond its point: the
+        // sky above the horizon, not the background under them)
+        let tmax = hit.map_or(cl.far() + self.eye_dist, |h| len(&sub(h, o)));
         // the steps' shift from the start (no random number: the card's
         // and the processor's marches draw them differently)
         let q = o.map(|v| (v * 65536.0) as i64);
@@ -1264,7 +1271,23 @@ impl<'a, 'c> SrTracer<'a, 'c> {
                             new_vec = nv;
                         } else {
                             let n = self.normal;
-                            new_vec = sub(sr_vec, scale(n, 2.0 * dot(&n, &sr_vec) / sqr_len(&n)));
+                            let mut v = sub(sr_vec, scale(n, 2.0 * dot(&n, &sr_vec) / sqr_len(&n)));
+                            // a grazing mirror ray off the water that a wave
+                            // tilts downwards meets the next wave and goes up
+                            // from there (the many bounces of a ray tracer in
+                            // one; it would find the sky under the horizon,
+                            // a dark line where the sea meets the sky)
+                            if let Some(g) = p.ground.as_ref().filter(|_| crate::water_layer::wanted(p)) {
+                                let up = g.up();
+                                let k = dot(&v, &up);
+                                if k < 0.0 {
+                                    let w = sub(v, scale(up, 2.0 * k));
+                                    if crate::water_layer::leaves_water(p, &self.m.it.c, &w, f.zz) {
+                                        v = w;
+                                    }
+                                }
+                            }
+                            new_vec = v;
                         }
                         break;
                     }
@@ -1665,7 +1688,11 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         // from water_layer::apply: the march's where it lies on the surface,
         // else the exact one; in front of it, cut, the point from the eye)
         let layer = si.is_ground() && crate::water_layer::wanted(p);
-        let exact = if layer && si.si_gradient >= 32768 {
+        // (and the water beyond the end of the march, out to the horizon:
+        // its depth does not fit in the G-buffer, which keeps the march's
+        // end, in the air above it)
+        let beyond = zf == 0.0;
+        let exact = if layer && (si.si_gradient >= 32768 || beyond) {
             let centre = crate::water_layer::centre_ray(&mut self.m);
             let h = crate::water_layer::hit(&mut self.m, x, y, &centre);
             if h.is_none() {
@@ -1710,6 +1737,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             add_weight(&mut self.m.it.c, &vf, self.m.mzz);
             self.update_de_stop(self.m.mzz);
         }
+        self.eye_dist = self.m.mzz.max(0.0) * sw;
         let si = &si_w;
         if exact.is_some() {
             // (its point is set)
@@ -2020,6 +2048,7 @@ fn reflections_cpu<S: Sample>(
                         c: ctx,
                         m: Marcher::new(p, seed),
                         sr_si: SiLight::default(),
+                        eye_dist: 0.0,
                         normal: [0.0; 3],
                         t_amb: [0.0; 3],
                         plv: Plv {
@@ -2161,6 +2190,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         c: &ctx,
         m: Marcher::new(p, seed),
         sr_si: SiLight::default(),
+                        eye_dist: 0.0,
         normal: [0.0; 3],
         t_amb: [0.0; 3],
         plv: Plv { view: [0.0, 0.0, 1.0], abs_view: [0.0, 0.0, 1.0], cam_pos: [0.0; 3], obj_pos: [0.0; 3], z_pos: 0.0, zpos_dyn_fog: 0.0, x_pos: 0.0, y_pos: 0.0, dep_c: [0.0; 3] },
