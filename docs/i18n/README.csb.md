@@ -72,12 +72,16 @@ programòwaniô. Kòżdi mòże ją w kòżdi chwili pùscëc na tim repòzytori
 **[▶ Przeskanuj mb3d-rs na scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klikni *Rescan*, żebë dostac swiéżi rezultat dlô terôczasnégò kòdu)
 
-Wersjô 0.2.85 dostała òcenã **bezpieczné: 5 z 100** (skanowanié 30 rujana
-2026, prawidła mòtora 10 skanera). Jedurné warnowanié tikô sã réżczi, jakô
-zrëszô fòrmùłë, jaczé program kòmpilëje przë robòce dlô chùtkòscë: zrëszaniô
+Wersjô 0.3.1 dostała òcenã **bezpieczné: 8 z 100** (skanowanié 5 lëstopadnika
+2026, prawidła mòtora 10 skanera). Ji warnowania tikają sã réżków, jaczé
+zrëszają fòrmùłë, jaczé program kòmpilëje przë robòce dlô chùtkòscë: zrëszaniô
 swiéżo zrobionégò kòdu maszinowégò nie dô sã napisac w sprawdzoni fòrmie Rusta,
-a ta réżka ë mòst do filtra szëmù firmë Intel to są jedurné place, dze program
-na to pòzwôlô; reszta to je informacjowô ùwôga. (Rëchli: 0.2.66 dostała
+a te réżczi ë mòst do filtra szëmù firmë Intel to są jedurné place, dze program
+na to pòzwôlô; reszta to je informacjowô ùwôga. (Rëchli: 0.2.85 dostała 5 z 100;
+0.2.100 bëła przez czile gòdzin ùwôżónô za niebezpieczną, bò dwie matematiczné
+fùnkcje kòmpilatora fòrmùłów mia mióno, jaczé skaner bierze za zrëszanié skrëtégò
+kòdu; jesz tegò samégò dnia jima zmieniono miona, a test pilnuje terô, żebë taczé
+miona nie wrócëłë; 0.2.66 dostała
 0 z 100 òd starszégò mòtora, òbôczë téż
 [rezultat 0.2.44](../img/scan_0.2.44.png).) Jedna rëchlészô
 wersjô bëła òznaczonô, a më zmienilë kòd w òdpòwiedzë

@@ -74,13 +74,16 @@ qualquer momento:
 **[▶ Analisar o mb3d-rs no scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (clique em *Rescan* para um resultado novo do código atual)
 
-A versão 0.2.85 foi classificada como **segura: 5 de 100** (analisada em 30
-de outubro de 2026, regras do mecanismo 10 do analisador). Seu único aviso é
-a linha que inicia as fórmulas que o programa compila em tempo de execução
+A versão 0.3.1 foi classificada como **segura: 8 de 100** (analisada em 5
+de novembro de 2026, regras do mecanismo 10 do analisador). Seus avisos dizem
+respeito às linhas que iniciam as fórmulas que o programa compila em tempo de execução
 para ganhar velocidade: executar código de máquina recém-gerado não pode ser
-escrito na forma verificada do Rust, e essa linha e a ponte para o filtro de
+escrito na forma verificada do Rust, e essas linhas e a ponte para o filtro de
 ruído da Intel são os únicos lugares onde o programa permite isso; o resto é
-uma nota informativa. (Antes: a 0.2.66 foi classificada com 0 de 100 por um
+uma nota informativa. (Antes: a 0.2.85 obteve 5 de 100; a 0.2.100 foi
+classificada como perigosa por algumas horas, porque duas funções matemáticas do
+compilador de fórmulas tinham um nome que o analisador toma por execução de código
+oculto; foram renomeadas no mesmo dia, e agora um teste mantém esses nomes de fora; a 0.2.66 foi classificada com 0 de 100 por um
 mecanismo mais antigo, veja também [o resultado da 0.2.44](../img/scan_0.2.44.png).)
 Uma versão anterior foi sinalizada, e mudamos o código em resposta
 ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4)); agora ele é

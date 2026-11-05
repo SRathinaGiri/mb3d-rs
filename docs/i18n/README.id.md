@@ -73,13 +73,17 @@ pada repositori ini kapan saja:
 **[▶ Pindai mb3d-rs di scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klik *Rescan* untuk hasil baru dari kode saat ini)
 
-Versi 0.2.85 dinilai **aman: 5 dari 100** (dipindai 30 Oktober 2026,
-aturan mesin pemindai versi 10). Satu-satunya peringatannya adalah baris
+Versi 0.3.1 dinilai **aman: 8 dari 100** (dipindai 5 November 2026,
+aturan mesin pemindai versi 10). Peringatannya menyangkut baris-baris
 yang menjalankan formula yang dikompilasi program saat berjalan demi
 kecepatan: menjalankan kode mesin yang baru dibuat tidak bisa ditulis dalam
-bentuk Rust yang diperiksa, dan baris itu serta jembatan ke filter derau
+bentuk Rust yang diperiksa, dan baris-baris itu serta jembatan ke filter derau
 Intel adalah satu-satunya tempat program mengizinkannya; sisanya adalah
-catatan informasi. (Sebelumnya: 0.2.66 dinilai 0 dari 100 oleh mesin yang
+catatan informasi. (Sebelumnya: 0.2.85 dinilai 5 dari 100; 0.2.100 sempat
+dinilai berbahaya selama beberapa jam, karena dua fungsi matematika pada
+kompilator formula memakai nama yang dianggap pemindai sebagai menjalankan kode
+tersembunyi; namanya diganti pada hari yang sama, dan kini sebuah tes menjaga agar
+nama seperti itu tidak muncul lagi; 0.2.66 dinilai 0 dari 100 oleh mesin yang
 lebih lama, lihat juga [hasil 0.2.44](../img/scan_0.2.44.png).) Versi
 yang lebih awal pernah ditandai, dan kami mengubah kodenya sebagai
 tanggapan ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));

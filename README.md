@@ -70,12 +70,16 @@ programming language. Anyone can run it on this repository at any time:
 **[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (click *Rescan* for a fresh result of the current code)
 
-Version 0.2.85 was rated **safe: 5 out of 100** (scanned 30 October 2026,
-rules of the scanner's engine 10). Its one warning is the line that starts
+Version 0.3.1 was rated **safe: 8 out of 100** (scanned 5 November 2026,
+rules of the scanner's engine 10). Its warnings are about the lines that start
 the formulas the program compiles at run time for speed: running freshly
-made machine code cannot be written in Rust's checked form, and that line
+made machine code cannot be written in Rust's checked form, and those lines
 and the bridge to Intel's noise filter are the only places the program
-allows it; the rest is an informational note. (Earlier: 0.2.66 was rated
+allows it; the rest is an informational note. (Earlier: 0.2.85 was rated
+5 out of 100; 0.2.100 was rated dangerous for a few hours, because two math
+functions of the formula compiler had a name the scanner takes for running
+hidden code; they were renamed the same day, and a test now keeps such names
+out; 0.2.66 was rated
 0 out of 100 by an older engine, see also
 [the 0.2.44 result](docs/img/scan_0.2.44.png).) An earlier version was flagged,
 and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
