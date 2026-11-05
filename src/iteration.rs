@@ -298,7 +298,13 @@ impl Iteration {
         let slot = &slots[n];
         if let Formula::Custom(c) = &slot.formula {
             match &c.def.jit {
-                Some(p) => p.run(self, &c.def, &c.values),
+                Some(p) => {
+                    #[cfg(jit)]
+                    if let Some(f) = &c.compiled {
+                        return f.run(self);
+                    }
+                    p.run(self, &c.def, &c.values)
+                }
                 None => self.run_custom(n),
             }
         } else {

@@ -396,6 +396,13 @@ impl CalcParams {
                 ade: false,
             })
             .collect();
+        // the Pascal formulas compiled for their option values
+        #[cfg(jit)]
+        for s in slots.iter_mut() {
+            if let crate::formulas::Formula::Custom(c) = &mut s.formula {
+                c.compile_pascal();
+            }
+        }
         let dc_scene = if ipol.is_some() { None } else { sc.decomb };
         // CheckHybridOptions: end = last slot with iterations
         let mut last = slots.len() - 1;

@@ -143,3 +143,101 @@ fn the_community_light_presets_load() {
     }
     assert_eq!(n, 608);
 }
+
+/// The Pascal formulas compiled with Cranelift (`jit_pascal`) give the
+/// closures' results bit for bit (NaN payloads aside) from random states,
+/// with the default option values and changed ones; and the statements of
+/// every kind (loops with break / continue / exit, case, integer and
+/// Boolean operations) in a test formula.
+#[cfg(jit)]
+#[test]
+fn the_compiled_pascal_formulas_give_the_closures_results() {
+    let mut defs: Vec<M3f> = Vec::new();
+    for dir in ["/M3Formulas-community", "/tests/formulas"] {
+        let dir = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR")).to_string() + dir);
+        for e in std::fs::read_dir(&dir).unwrap().flatten() {
+            if e.path().extension().is_some_and(|x| x == "m3f") {
+                if let Ok(f) = M3f::load(&e.path()) {
+                    if f.jit.is_some() {
+                        defs.push(f);
+                    }
+                }
+            }
+        }
+    }
+    defs.push(M3f::parse("statements", STATEMENTS).unwrap());
+    let mut seed = 0x1234_5678_9abc_def0u64;
+    let mut rnd = move || {
+        seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        (seed >> 11) as f64 / (1u64 << 53) as f64
+    };
+    let same = |a: f64, b: f64| a.to_bits() == b.to_bits() || (a.is_nan() && b.is_nan());
+    for def in &defs {
+        let prog = def.jit.as_ref().unwrap();
+        for k in 0..3 {
+            let values: Vec<f64> = def.defaults().iter().map(|d| if k == 0 { *d } else if d.fract() == 0.0 { d + k as f64 } else { d * (0.7 + 0.3 * k as f64) }).collect();
+            let c = mb3d::jit_pascal::compile(prog, def, &values).unwrap_or_else(|| panic!("{}: not compiled", def.name));
+            for _ in 0..200 {
+                let mut it = Iteration::default();
+                for (v, j) in it.v.iter_mut().zip(it.j.iter_mut()) {
+                    *v = rnd() * 3.0 - 1.5;
+                    *j = rnd() * 2.4 - 1.2;
+                }
+                it.c = [rnd() - 0.5, rnd() - 0.5, rnd() - 0.5];
+                it.rout = rnd() * 4.0;
+                it.deriv1 = 1.0 + rnd();
+                it.max_it = 60;
+                it.it_result = (rnd() * 60.0) as i32;
+                let mut a = it.clone();
+                let mut b = it.clone();
+                prog.run(&mut a, def, &values);
+                c.run(&mut b);
+                let fa = [a.v[0], a.v[1], a.v[2], a.v[3], a.j[0], a.j[1], a.j[2], a.rout, a.deriv1, a.otrap];
+                let fb = [b.v[0], b.v[1], b.v[2], b.v[3], b.j[0], b.j[1], b.j[2], b.rout, b.deriv1, b.otrap];
+                assert!(fa.iter().zip(&fb).all(|(x, y)| same(*x, *y)) && a.it_result == b.it_result, "{} {values:?}: closures {fa:?}, compiled {fb:?}", def.name);
+            }
+        }
+    }
+}
+
+#[cfg(jit)]
+const STATEMENTS: &str = r#"[OPTIONS]
+.Version = 9
+.Double Mode = 2
+.Double Count = 4
+[SOURCE]
+procedure T(var x, y, z, w: Double; PIteration3D: TPIteration3D);
+const two = 2;
+var i, n, m: integer; k: int64; s, c: double; b: boolean;
+begin
+  n := 0;
+  for i := 1 to round(Count) * 3 do begin
+    if odd(i) then continue;
+    n := n + i;
+    if n > 20 then break;
+  end;
+  m := 7;
+  for i := 10 downto 1 do Dec(m, i mod 3);
+  x := x + n div 4 + n mod 4 + (m shl 2) + (m shr 1) - (not m) + (m xor 5) + (m and 6) + (m or 1);
+  k := trunc(x * 1000000);
+  y := y + 7 / two + k mod 1000 + Abs(-m) + Sqr(m) + Sign(z) + IntPower(1.1, m) + Power(Abs(y) + 0.5, 3) + Power(2, z);
+  SinCos(x, s, c);
+  z := z + s*s + c*c + Max(x, y) - Min(m, n) + Frac(y) + Int(z) + Hypot(x, y) + ArcTan2(y, x);
+  b := (x > 0.5) and not (y < 0) or (z = 1) xor (Mode >= 2);
+  if b then w := round(z) + Ceil(x) + Floor(y) else w := -1;
+  i := 0;
+  while true do begin Inc(i, 3); if i > 10 then break; end;
+  repeat Dec(i) until i < 5;
+  case trunc(Mode + w) mod 5 of
+    0..1: x := x * 0.5;
+    2, 3: y := y * 0.5;
+  else z := -z;
+  end;
+  if IsNan(x) or IsInfinite(y) then x := 0;
+  PIteration3D^.J1 := PIteration3D^.J2 * 2 + PIteration3D^.Rout;
+  PIteration3D^.Deriv1 := PIteration3D^.Deriv1 * 2;
+  if PIteration3D^.ItResultI > 30 then exit;
+  w := w + 99;
+end;
+[END]
+"#;

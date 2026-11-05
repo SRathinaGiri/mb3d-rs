@@ -69,6 +69,11 @@ pub mod gpu;
 pub mod image;
 pub mod iteration;
 pub mod jit;
+/// The Pascal formulas compiled with Cranelift (calls of the compiled code
+/// are unsafe by Rust's definition, as in `x86::clif_jit`)
+#[cfg(jit)]
+#[allow(unsafe_code)]
+pub mod jit_pascal;
 pub mod jpeg;
 pub mod lighting;
 pub mod m3f;
