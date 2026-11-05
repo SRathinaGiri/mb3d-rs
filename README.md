@@ -881,28 +881,28 @@ you check further on your own:
 
   *Animation maker* > *Turntable*: eight keyframes of one whole turn around
   the middle of the main window's view, a smooth loop (`mb3d animate
-  scene.m3p --orbit 8 --frames 25`). *Animation maker* > *Animation
-  templates...* makes keyframes from the main window's view for a duration
-  in seconds (at the window's frames per second): a *360° orbit* (keyframes
-  and the point to turn around: the middle, or the surface the view shows
-  when the middle lies in empty space before it; `--orbit 8 --duration 10`)
-  or a *Fly-through*, where the camera flies on into the fractal, the zoom
-  following the distance to it, steering through its gaps (speed and
-  largest turn to set; `--fly --duration 20`), or until the view shows only
-  sky or only fractal (`--duration 0`). *360° VR* in the Animation maker
-  (`--vr`) renders every frame as a spherical panorama (2:1); with *Render
-  stereo animation* the video has the eyes one above the other (left on
-  top), named `_360_TB` for VR players, and the ffmpeg command ends with
-  `mb3d vr360 video.mp4 --stereo tb`, which writes the Spherical Video V2
-  metadata that YouTube and the Meta Quest read. A spherical panorama saved
-  as JPEG (main window) carries the Photo Sphere XMP, so Facebook shows it
-  as a 360 photo; `mb3d vr360 photo.jpg` marks any other. *Navigator* > *Rec*: while the button is
+  scene.m3p --orbit 8 --frames 25`). *Navigator* > *Rec*: while the button is
   down, every new view of the flight (at most two a second) becomes the next
   keyframe; with Catmull-Rom the animation passes through all of them.
   *Motion blur* in the Animation maker: each frame is the average of that
   many pictures within the *Shutter* time (a part of the time to the next
   frame), so what moves smears; it takes that many times as long
   (`mb3d animate --motion-blur 8,0.5`).
+
+  *Animation maker* > *Animation templates...* makes keyframes from the main
+  window's view for a duration in seconds (at the window's frames per
+  second): a *360° orbit* around an axis of your choice (left to right, over
+  the top, a roll, all three at once, or the fractal's X, Y or Z axis;
+  `--orbit 8 --duration 10 --orbit-axis pitch`) or a *Fly-through*, in which
+  the camera flies on into the fractal, the zoom following the distance to
+  it, keeping its course and turning only to get round what it would hit
+  (`--fly --duration 20`; `--duration 0`: until the view shows only sky or
+  only fractal). *360° VR* in the Animation maker (`--vr`) makes every frame
+  a spherical panorama (2:1); with *Render stereo animation* the video has
+  the eyes one above the other (left on top), and the ffmpeg command ends
+  with `mb3d vr360 video.mp4 --stereo tb`, which marks the MP4 as a 360
+  video for YouTube, the Meta Quest and VLC. A spherical panorama saved as
+  JPEG carries the Photo Sphere XMP, so Facebook shows it as a 360 photo.
 
   </details>
 * **Gaussian splats** of the fractal, to look at from every side in

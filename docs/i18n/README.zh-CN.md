@@ -555,6 +555,8 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
   (到下一帧的时间的一部分) 内这么多张图片的平均值，所以移动的东西会被拖影；
   耗时也是这么多倍 (`mb3d animate --motion-blur 8,0.5`)。
 
+  *动画制作器* > *动画模板...* 从主窗口的视角为以秒计的时长（按窗口的每秒帧数）生成关键帧：绕你选择的轴（从左到右、从上方越过、滚转、三者同时，或分形的 X、Y、Z 轴）的 *360° 环绕*（`--orbit 8 --duration 10 --orbit-axis pitch`），或 *穿越飞行*：相机持续飞入分形，缩放随距离变化，保持航向，只在要避开会撞上的东西时才转向（`--fly --duration 20`；`--duration 0`：直到画面中只有天空或只有分形）。动画制作器中的 *360° VR*（`--vr`）把每一帧做成球面全景（2:1）；配合 *渲染立体动画*，视频中两只眼睛上下排列（左眼在上），ffmpeg 命令以 `mb3d vr360 video.mp4 --stereo tb` 结尾，把 MP4 标记为 YouTube、Meta Quest 和 VLC 的 360 视频。保存为 JPEG 的球面全景带有 Photo Sphere XMP，因此 Facebook 会把它显示为 360 照片。
+
   </details>
 * 分形的 **高斯泼溅**，可在 Blender (5.3 及以上)、SuperSplat 和其他泼溅查看器中
   从各个方向观看：*Bulb Tracer2* > *高斯泼溅...*，或

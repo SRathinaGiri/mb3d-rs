@@ -29,6 +29,8 @@ code = CN
 font = ChineseSimplified.ttf
 
 [Labels]
+A360DegreeAnimationForVR=用于 VR 头显的 360 度动画：每一帧都是宽为高两倍的球面全景；配合“渲染立体动画”，视频中两只眼睛上下排列，ffmpeg 命令会将 MP4 标记给 VR 播放器
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
 A4dQuaternionFormulaOneIteration=四维四元数公式，一次迭代：\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ABulbFormulaAsSuggestedBy=Aexion 建议的球茎（bulb）公式：\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\n新增两个选项，按 Z 与 C 当前向量之间的距离对常量做幂旋转 (Cond Phi=1)，\n以及以下模式选项：\n（模式值的各位）\nBit1：翻转 atan theta 分量\nBit2：翻转 atan phi 分量\nBit3：翻转 theta 和 phi\nBit4：计算角度时翻转 CyCz\nBit5：将 powerC 乘以向量 Z 与 C 的距离
@@ -69,6 +71,8 @@ AVideoNeedsImagesChooseBMP=视频需要图像：请选择 BMP、PNG 或 JPG 作�
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=立体动画不会生成视频：请关闭“渲染立体动画”。
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=相机用 8 个或更多关键帧绕物体转一整圈，平滑循环（Catmull-Rom）；按动画窗口的每秒帧数，各帧合计为所设时长
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf={} x {} 的图像大约需要 {} 内存，而这台电脑只有 {} 可用：计算会用到交换空间，程序可能一次数分钟没有响应。\n\n仍要计算吗？\n\n大图渲染（“工具”选项卡）会分图块逐个计算并保存，无需容纳整幅图像；集群（“集群”窗口）会把图块分给其他电脑。
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=同时保存一幅 Z-buffer PNG 图像。
@@ -123,6 +127,8 @@ AddNewOption=添加新选项
 ;Add new option
 AddOptionValue=添加选项值
 ;Add option value
+AddTheKeyframes=添加关键帧
+;Add the keyframes
 AddToBackgroundDepthNotBlend=叠加到背景深度（非混合）
 ;Add to background depth (not blend)
 AddonFormula=附加公式
@@ -155,6 +161,8 @@ AllRealworldUnitsInMeter=所有真实世界单位均为米。
 ;All realworld units in meter.
 AllTheLightColorSettings=所有光照 + 颜色设置
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=全部同时：偏航、俯仰和滚转（翻滚）
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> 已存在
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=同时生成视频 (AVI)
@@ -227,6 +235,10 @@ AnimationRenderingStopped=动画渲染已停止。
 ;Animation rendering stopped.
 AnimationSize=动画尺寸：
 ;Animation size:
+AnimationTemplates=动画模板...
+;Animation templates...
+AnimationTemplates2=动画模板
+;Animation templates
 AnimationTheFfmpegCommandIsOn=动画：ffmpeg 命令已复制到剪贴板（帧渲染完成后在终端中运行）：
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=动画：视频已写入：{}
@@ -249,6 +261,8 @@ ApproximateVertexColorsTheColorInformation=近似计算顶点颜色。颜色信�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 计算 ArcTan(Y/X)，并返回位于正确象限的角度。
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=绕：
+;Around:
 AroundTheMiddleAnObject=围绕中心（物体）
 ;Around the middle (an object)
 AsFullBackgroundSphere=作为完整背景球：
@@ -273,6 +287,8 @@ AutoSavingTheM3cFile=自动保存 m3c 文件：
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=自动：CPU 和显卡共同渲染图像（CPU\n立即开始，显卡在其着色器编译完成后\n加入），之后由显卡运行阴影和环境光\n遮蔽。\nCPU：从不使用显卡。\n显卡：等待着色器，与以前一样。
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=自动：中心，或可见的表面
+;Auto: the middle, or the surface in view
 AutoUpdateImage=自动更新图像
 ;Auto update image
 AutoUpdatePreview=自动更新预览
@@ -289,6 +305,8 @@ AvgIterations=平均迭代次数：
 ;Avg. iterations:
 AvgRaysteps=平均光线步数：
 ;Avg. raysteps:
+Axis=轴：
+;Axis:
 AxisX=X 轴
 ;Axis X
 AxisY=Y 轴
@@ -1035,6 +1053,8 @@ Ds=Ds：
 ;Ds:
 DunnoDoNothing=不确定，什么都不做
 ;Dunno, do nothing
+DurationSeconds=时长（秒）：
+;Duration (seconds):
 DynFog=动态雾
 ;Dyn.fog
 DynFogOnIt=按迭代动态雾：
@@ -1231,6 +1251,10 @@ FlatSolidWithEdges=带边线的平面实体
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor：<= X 的最大整数，  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=穿越飞行
+;Fly-through
+FlyThroughTheFlightEndedAfter=穿越飞行：飞行在第 {} / {} 帧后结束，{}
+;Fly-through: the flight ended after {} of {} frames, {}
 Fo=公式{}
 ;Fo.{}
 FogOffset=雾偏移
@@ -1287,6 +1311,8 @@ FrameNumberToUseForAnimated=主编辑器中动画贴图所用的帧号
 ;Frame number to use for animated maps in the main editor
 Frames=帧
 ;frames
+FramesAtFramesASecond={} 帧，每秒 {} 帧
+;{} frames at {} frames a second
 FramesPerSecond=每秒帧数：
 ;Frames per second:
 FramesSec=帧/秒：
@@ -1801,8 +1827,12 @@ KeyframeListM3k=关键帧列表 (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\s关键帧\n起始：    结束：
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=关键帧：
+;Keyframes:
 KeyframesForOneWholeTurnAround=从主窗口的视角出发，围绕画面中心转一整圈的关键帧：平滑循环中的 8 个关键帧（Catmull-Rom）
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=从主窗口视角为你生成关键帧：360° 环绕或穿越飞行，时长由你决定
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=从任意窗口将某个窗口调到前面的按键
 ;Keys that bring a window to the front from any window
 Kind=类型
@@ -1813,12 +1843,16 @@ LIGHTSTROKES=光线笔触
 ;LIGHT STROKES
 LMBMoveRMBRotate=左键：移动           右键：旋转
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=最大转向（每帧度数）：
+;Largest turn (degrees a frame):
 LastLengthIncrease=最后长度增量
 ;Last length increase
 LastPass=\s· 上一遍 {}
 ;\s· last pass {}
 Layer=层：
 ;Layer:
+LeftToRightAroundItYaw=从左到右绕它转（偏航）
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=左键点击：进入鼠标模式……用鼠标观察，+右键……滚转\n（再次左键点击或按 ESC 退出鼠标模式）
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=左键：   围绕观察者的 X 轴（位于 Ymid+Zmid）旋转分形\n右键：围绕物体的 X 轴（位于 0）旋转分形
@@ -2227,8 +2261,12 @@ N2Or3PassesGivesA=2 或 3 遍能在焦点前方得到更好的强模糊。\n1 �
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=二次反射
 ;2nd reflection
+N360Orbit=360° 环绕
+;360° orbit
 N360Panorama=360 全景
 ;360 Panorama
+N360VR=360° VR
+;360° VR
 N3DAnalyticFormula=3D 解析公式
 ;3D analytic formula
 N3DFormula=3D 公式
@@ -2333,6 +2371,8 @@ NoTilesToRender=没有要渲染的图块。
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\s未找到有效文本，请在下方输入文本：
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=前方已无路可走
+;no way ahead was left
 Noise=-噪点
 ;-noise
 NoiseAI=-噪点AI
@@ -2545,6 +2585,8 @@ OutsideRender=外部渲染
 ;Outside render
 OutsideRenderDefaultModeInsideRender=外部渲染：  默认模式\n内部渲染：    以最大迭代次数在内部进行缓慢的光线步进\n内外渲染：   渲染两侧
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=从上方越过再从下方穿过（俯仰）
+;Over the top and under (pitch)
 OverallScale=整体缩放：
 ;Overall scale:
 OverwriteExistingImages=覆盖已有图像
@@ -3255,8 +3297,12 @@ SpecularObjectColorsClickToChange=物体高光颜色，点击更改。
 ;Specular object colors, click to change them.
 SpecularPowerFunction=高光幂函数
 ;Specular power function
+SpeedOfTheDistanceAFrame=速度（每帧距离的 %）：
+;Speed (% of the distance a frame):
 SphericalCoords=球坐标
 ;Spherical coords
+SpinningAroundTheLineOfSight=绕视线旋转（滚转）
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} 个泼溅点，用时 {}，已保存到 {}
 ;{} splats in {}, written to {}
 Stan=标准
@@ -3385,6 +3431,8 @@ TargetMapSlot=目标贴图槽
 ;Target Map Slot
 TargetMapSlotUseThisNumber=目标贴图槽。在分形中使用此编号作为贴图（例如作为高度图），即可得到动画贴图
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=模板：
+;Template:
 TheAmazingBoxAkaMandboxFormula='Amazing Box'，又名 Mandbox 公式，由 TGlad 在 fractalforums.com 发明。\n\n一次迭代的公式如下：\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=漫反射与高光颜色之和大于 1，\n是否将其缩小以获得更真实的着色？
@@ -3413,6 +3461,10 @@ TheCalculationFailedLower=计算失败
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=计算范围将向图像外侧扩展，以包含被反射的物体。\n这能减少动画中的瑕疵，静态图像也能从中受益。\n取值应在 0 到 0.5 之间（最大 0.9），即图像外侧最大计算范围\n相对于图像宽高的比例。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=相机持续飞入分形内部，缩放随与它的距离变化，并穿过其空隙转向；每半秒一个关键帧（Catmull-Rom）。遇到死路、达到双精度极限或离开分形时会提前结束
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=相机离开了分形
+;the camera left the fractal
 TheChosenValueOverAllFrames=所选数值在动画所有帧上的变化：上下拖动关键帧的方块，或点击它并输入数值
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 TheColourOfDeepWaterThe=深水的颜色：水自身的光，也是水下物体随深度变成的颜色（点击更改）
@@ -3445,6 +3497,8 @@ TheFileSelectAndCopyIt=文件（可在此处选择并复制）
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=（第一个）焦点。\n该值相对于观察者的 Zstart 值，\n并按图像宽度归一化。
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=无法在此开始穿越飞行：{}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=文件夹不存在（或无法访问）
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=公式名称应以“JIT”开头，以便与基于 ASM 的公式区分
@@ -3455,6 +3509,12 @@ TheFractalOfTheMainWindow=把主窗口的分形导出为高斯泼溅，以便在
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=叠加在调色板上的分形表面材质（MB3D 中没有：保存在参数的 MB3D 部分之后）
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=分形的 X 轴
+;The fractal's X axis
+TheFractalSYAxis=分形的 Y 轴
+;The fractal's Y axis
+TheFractalSZAxis=分形的 Z 轴
+;The fractal's Z axis
 TheFramesPerSecondMustBe=每秒帧数必须是大于 0 的数字（例如 25）。
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=图像缓冲区尺寸错误
@@ -3471,6 +3531,8 @@ TheMainEditorIsStillRendering=主编辑器仍在渲染。请先停止它或等�
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=映射选项根据特定向量计算球面映射的 x,y 坐标，\n这也会改变通常基于平滑迭代的\n第一颜色选择。\n您必须重新计算图像才能看到\n这些选项更改的结果。
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=画面中心
+;The middle of the view
 TheMonteCarloWindowIsRendering=蒙特卡洛窗口正在渲染：请先停止它。
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=运动模糊的快门时间：到下一帧时间的比例（0 到 1）
@@ -3505,6 +3567,8 @@ TheSizeOfTheCloudsFeatures=云形状的大小（分形单位）及其颜色（�
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=图块的大小
 ;The size of the tiles
+TheStepsCameToTheLimit=步长已达到双精度极限
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=立体左右眼图像的尺寸不同。
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=剪贴板中的文本参数已损坏：复制时部分行被截断。请从原处重新复制。
@@ -3515,6 +3579,10 @@ TheTriplexMathSineBulbAs=三元数（triplex）数学正弦球茎，由 Daniel W
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=所选关键帧的数值
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=画面已被分形填满
+;the view is filled with the fractal
+TheViewShowsOnlySky=画面中只有天空
+;the view shows only sky
 Themes=主题
 ;Themes
 ThereIsAFileAlready=文件 {} 已存在。
@@ -3661,6 +3729,8 @@ UnfinishedRenders=未完成的渲染
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=未完成的渲染：继续或删除它们
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=直到画面中只有天空或只有分形（最多 2 分钟）
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=未命名
 ;untitled
 UpOneLevel=向上一级
@@ -3946,41 +4016,3 @@ LightSheet.Caption = 光源
 
 [PostProForm]
 RadioGroup2.Caption = 计算方式
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-;A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
-;AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
-;AddTheKeyframes=Add the keyframes
-;AllTogetherYawPitchAndRoll=All together: yaw, pitch and roll (tumble)
-;AnimationTemplates=Animation templates...
-;AnimationTemplates2=Animation templates
-;Around=Around:
-;AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
-;Axis=Axis:
-;DurationSeconds=Duration (seconds):
-;FlyThrough=Fly-through
-;FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
-;FramesAtFramesASecond={} frames at {} frames a second
-;Keyframes=Keyframes:
-;KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
-;LargestTurnDegreesAFrame=Largest turn (degrees a frame):
-;LeftToRightAroundItYaw=Left to right around it (yaw)
-;N360Orbit=360° orbit
-;N360VR=360° VR
-;NoWayAheadWasLeft=no way ahead was left
-;OverTheTopAndUnderPitch=Over the top and under (pitch)
-;SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
-;SpinningAroundTheLineOfSight=Spinning around the line of sight (roll)
-;Template=Template:
-;TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
-;TheCameraLeftTheFractal=the camera left the fractal
-;TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
-;TheFractalSXAxis=The fractal's X axis
-;TheFractalSYAxis=The fractal's Y axis
-;TheFractalSZAxis=The fractal's Z axis
-;TheMiddleOfTheView=The middle of the view
-;TheStepsCameToTheLimit=the steps came to the limit of double precision
-;TheViewIsFilledWithThe=the view is filled with the fractal
-;TheViewShowsOnlySky=the view shows only sky
-;UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)

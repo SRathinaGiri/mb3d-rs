@@ -29,6 +29,8 @@ code = KO
 font = Korean.ttf
 
 [Labels]
+A360DegreeAnimationForVR=VR 헤드셋용 360도 애니메이션: 모든 프레임이 가로가 세로의 두 배인 구형 파노라마입니다. '스테레오 애니메이션 렌더링'과 함께 쓰면 동영상에 두 눈이 위아래로 담기고, ffmpeg 명령이 MP4를 VR 플레이어용으로 표시합니다
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
 A4dQuaternionFormulaOneIteration=4차원 쿼터니언 포뮬러, 1회 반복:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ABulbFormulaAsSuggestedBy=Aexion이 제안한 벌브 포뮬러:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nZ와 C의 현재 벡터 사이의 거리에 따라 상수를 거듭제곱 회전시키는 옵션 두 가지 (Cond Phi=1)와\n다음 모드 옵션을 추가했습니다:\n(모드 값의 비트)\nBit1: atan theta 성분 뒤집기\nBit2: atan phi 성분 뒤집기\nBit3: theta와 phi 뒤집기\nBit4: 각도 계산에서 CyCz 뒤집기\nBit5: powerC에 벡터 Z와 C 사이의 거리를 곱하기
@@ -69,6 +71,8 @@ AVideoNeedsImagesChooseBMP=동영상에는 이미지가 필요합니다. 출력 
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=스테레오 애니메이션의 동영상은 만들지 않습니다. '스테레오 애니메이션 렌더링'을 끄십시오.
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=8개 이상의 키프레임으로 카메라가 물체 주위를 한 바퀴 도는 부드러운 루프 (Catmull-Rom). 프레임 수의 합은 애니메이션 창의 초당 프레임 수로 계산한 길이입니다
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf={} x {} 이미지는 약 {}의 메모리가 필요하지만 이 컴퓨터의 여유 메모리는 {}입니다: 계산이 스왑을 사용하게 되어 프로그램이 몇 분씩 응답하지 않을 수 있습니다.\n\n그래도 계산할까요?\n\n대형 렌더링(도구 탭)은 전체 이미지를 메모리에 두지 않고 타일을 하나씩 저장하며 계산합니다. 스웜(스웜 창)은 타일을 다른 컴퓨터와 나눕니다.
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=Z-buffer PNG 이미지도 함께 저장됩니다.
@@ -123,6 +127,8 @@ AddNewOption=새 옵션을 추가합니다.
 ;Add new option
 AddOptionValue=옵션 값 추가
 ;Add option value
+AddTheKeyframes=키프레임 추가
+;Add the keyframes
 AddToBackgroundDepthNotBlend=배경 깊이에 더하기 (혼합 아님)
 ;Add to background depth (not blend)
 AddonFormula=애드온 포뮬러
@@ -155,6 +161,8 @@ AllRealworldUnitsInMeter=실제 단위는 모두 미터입니다.
 ;All realworld units in meter.
 AllTheLightColorSettings=모든 조명 + 색상 설정
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=모두 함께: 요, 피치, 롤 (공중제비)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}>이(가) 이미 있습니다
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=비디오(AVI)도 만들기
@@ -227,6 +235,10 @@ AnimationRenderingStopped=애니메이션 렌더링을 중지했습니다.
 ;Animation rendering stopped.
 AnimationSize=애니메이션 크기:
 ;Animation size:
+AnimationTemplates=애니메이션 템플릿...
+;Animation templates...
+AnimationTemplates2=애니메이션 템플릿
+;Animation templates
 AnimationTheFfmpegCommandIsOn=애니메이션: ffmpeg 명령을 클립보드에 복사했습니다(프레임이 완성되면 터미널에서 실행하십시오):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=애니메이션: 동영상 저장됨: {}
@@ -249,6 +261,8 @@ ApproximateVertexColorsTheColorInformation=정점 색상을 근사 계산합니�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2는 ArcTan(Y/X)를 계산하여 올바른 사분면의 각도를 반환합니다.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=중심:
+;Around:
 AroundTheMiddleAnObject=중심 주위(물체)
 ;Around the middle (an object)
 AsFullBackgroundSphere=전체 배경 구로:
@@ -273,6 +287,8 @@ AutoSavingTheM3cFile=m3c 파일 자동 저장:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=자동: CPU와 그래픽 카드가 이미지를 분담합니다(CPU가\n즉시 시작하고 그래픽 카드는 셰이더 컴파일이 끝나면\n합류합니다). 그다음 그래픽 카드가 그림자와 앰비언트\n오클루전을 처리합니다.\nCPU: 그래픽 카드를 쓰지 않습니다.\n그래픽 카드: 이전처럼 셰이더를 기다립니다.
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=자동: 가운데 또는 보이는 표면
+;Auto: the middle, or the surface in view
 AutoUpdateImage=이미지 자동 업데이트
 ;Auto update image
 AutoUpdatePreview=미리보기 자동 업데이트
@@ -289,6 +305,8 @@ AvgIterations=평균 반복 횟수:
 ;Avg. iterations:
 AvgRaysteps=평균 레이 스텝:
 ;Avg. raysteps:
+Axis=축:
+;Axis:
 AxisX=X축
 ;Axis X
 AxisY=Y축
@@ -1035,6 +1053,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=모르겠음, 그대로 두기
 ;Dunno, do nothing
+DurationSeconds=길이 (초):
+;Duration (seconds):
 DynFog=동적 안개
 ;Dyn.fog
 DynFogOnIt=반복 기준 동적 안개:
@@ -1231,6 +1251,10 @@ FlatSolidWithEdges=플랫 솔리드 + 모서리
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: X 이하의 가장 큰 정수,  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=플라이스루
+;Fly-through
+FlyThroughTheFlightEndedAfter=플라이스루: {}/{} 프레임 후 비행이 끝났습니다. {}
+;Fly-through: the flight ended after {} of {} frames, {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=안개 오프셋
@@ -1287,6 +1311,8 @@ FrameNumberToUseForAnimated=메인 편집기에서 애니메이션 맵에 사용
 ;Frame number to use for animated maps in the main editor
 Frames=프레임
 ;frames
+FramesAtFramesASecond={} 프레임 (초당 {} 프레임)
+;{} frames at {} frames a second
 FramesPerSecond=초당 프레임 수:
 ;Frames per second:
 FramesSec=프레임/초:
@@ -1801,8 +1827,12 @@ KeyframeListM3k=키프레임 목록 (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\s키프레임\n시작:    끝:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=키프레임:
+;Keyframes:
 KeyframesForOneWholeTurnAround=메인 창의 시점에서 시작해 화면 중앙을 한 바퀴 도는 키프레임: 부드러운 루프의 8 키프레임 (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=메인 창의 시점으로 만드는 키프레임: 360° 궤도 또는 플라이스루를 원하는 길이만큼
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=어느 창에서나 창을 앞으로 가져오는 키
 ;Keys that bring a window to the front from any window
 Kind=종류
@@ -1813,12 +1843,16 @@ LIGHTSTROKES=라이트 스트로크
 ;LIGHT STROKES
 LMBMoveRMBRotate=LMB: 이동           RMB: 회전
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=최대 회전 (프레임당 도):
+;Largest turn (degrees a frame):
 LastLengthIncrease=마지막 길이 증가
 ;Last length increase
 LastPass=\s· 마지막 패스 {}
 ;\s· last pass {}
 Layer=층:
 ;Layer:
+LeftToRightAroundItYaw=주위를 왼쪽에서 오른쪽으로 (요)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=왼쪽 클릭:  마우스 모드로 진입.. 마우스로 시점 이동, +오른쪽 버튼.. 롤링\n(마우스 모드를 종료하려면 다시 왼쪽 클릭 또는 ESC)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=왼쪽 클릭:   Ymid+Zmid 값에서 시점의 X축을 중심으로 벌브를 회전합니다\n오른쪽 클릭: 0에서 물체의 X축을 중심으로 벌브를 회전합니다
@@ -2227,8 +2261,12 @@ N2Or3PassesGivesA=2~3패스는 초점 지점 앞쪽의 강한 블러를 더 잘 
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=2차 반사
 ;2nd reflection
+N360Orbit=360° 궤도
+;360° orbit
 N360Panorama=360 파노라마
 ;360 Panorama
+N360VR=360° VR
+;360° VR
 N3DAnalyticFormula=3D 해석적 포뮬러
 ;3D analytic formula
 N3DFormula=3D 포뮬러
@@ -2333,6 +2371,8 @@ NoTilesToRender=렌더링할 타일이 없습니다.
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\s유효한 텍스트가 없습니다. 아래에 텍스트를 입력하십시오:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=앞으로 갈 길이 남지 않았습니다
+;no way ahead was left
 Noise=-노이즈
 ;-noise
 NoiseAI=-노이즈 AI
@@ -2545,6 +2585,8 @@ OutsideRender=외부 렌더링
 ;Outside render
 OutsideRenderDefaultModeInsideRender=외부 렌더링:  기본 모드\n내부 렌더링:    최대 반복 횟수로 내부를 느리게 레이마칭합니다\n내부와 외부:   양쪽 모두 렌더링합니다
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=위로 넘어 아래로 (피치)
+;Over the top and under (pitch)
 OverallScale=전체 배율:
 ;Overall scale:
 OverwriteExistingImages=기존 이미지 덮어쓰기
@@ -3255,8 +3297,12 @@ SpecularObjectColorsClickToChange=물체의 반사 광택 색상입니다. 클�
 ;Specular object colors, click to change them.
 SpecularPowerFunction=반사 광택(specular) 지수 함수
 ;Specular power function
+SpeedOfTheDistanceAFrame=속도 (프레임당 거리의 %):
+;Speed (% of the distance a frame):
 SphericalCoords=구면 좌표
 ;Spherical coords
+SpinningAroundTheLineOfSight=시선 축 주위로 회전 (롤)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo=스플랫 {}개, {} 걸림, {}에 저장했습니다
 ;{} splats in {}, written to {}
 Stan=표준
@@ -3385,6 +3431,8 @@ TargetMapSlot=대상 맵 슬롯
 ;Target Map Slot
 TargetMapSlotUseThisNumber=대상 맵 슬롯입니다. 애니메이션 맵을 만들려면 프랙탈에서 이 번호를 맵(예: 하이트맵)으로 사용하십시오
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=템플릿:
+;Template:
 TheAmazingBoxAkaMandboxFormula='Amazing Box', 일명 Mandbox 포뮬러. fractalforums.com의 TGlad가 만들었습니다.\n\n한 번 반복하는 포뮬러는 다음과 같습니다:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=더해진 확산 및 스페큘러 색상의 합이 1보다 큽니다.\n더 사실적인 색상을 위해 축소할까요?
@@ -3413,6 +3461,10 @@ TheCalculationFailedLower=계산에 실패했습니다
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=반사된 물체가 있는 이미지 바깥쪽으로 계산을 확장합니다.\n애니메이션에서 아티팩트가 줄어들 수 있으며 정지 이미지에도 도움이 됩니다.\n값은 0에서 0.5 사이(최대 0.9)여야 하며, 바깥쪽으로 최대 계산되는\n범위를 이미지 너비와 높이에 대한 상대 크기로 나타냅니다.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=카메라는 프랙탈 안으로 계속 날아가고, 줌은 거리에 따라 바뀌며, 틈새를 따라 방향을 잡습니다. 0.5초마다 키프레임 (Catmull-Rom). 막다른 곳, 배정밀도의 한계, 또는 프랙탈을 벗어나면 일찍 끝납니다
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=카메라가 프랙탈을 벗어났습니다
+;the camera left the fractal
 TheChosenValueOverAllFrames=애니메이션 모든 프레임에서 고른 값: 키프레임의 사각형을 위아래로 끌거나, 클릭해서 값을 입력합니다
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 TheColourOfDeepWaterThe=깊은 물의 색: 물 자체의 빛이자 물속의 것이 깊이에 따라 띠는 색 (클릭하여 변경)
@@ -3445,6 +3497,8 @@ TheFileSelectAndCopyIt=파일 (여기서 선택하여 복사하십시오)
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(첫 번째) 초점 지점입니다.\n값은 뷰어의 Zstart 값에 상대적이며,\n이미지 너비로 정규화됩니다.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=여기서는 플라이스루를 시작할 수 없습니다: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=폴더가 없거나 접근할 수 없습니다
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=JIT 공식을 ASM 기반 공식과 구별하기 위해 공식 이름은 "JIT"로 시작해야 합니다
@@ -3455,6 +3509,12 @@ TheFractalOfTheMainWindow=메인 창의 프랙탈을 가우시안 스플랫으�
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=팔레트 위에 더하는 프랙탈 표면의 재질 (MB3D에는 없음: 매개변수의 MB3D 부분 뒤에 저장)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=프랙탈의 X축
+;The fractal's X axis
+TheFractalSYAxis=프랙탈의 Y축
+;The fractal's Y axis
+TheFractalSZAxis=프랙탈의 Z축
+;The fractal's Z axis
 TheFramesPerSecondMustBe=초당 프레임 수는 0보다 큰 숫자여야 합니다(예: 25).
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=이미지 버퍼 크기가 잘못되었습니다
@@ -3471,6 +3531,8 @@ TheMainEditorIsStillRendering=메인 편집기가 아직 렌더링 중입니다.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=맵 옵션은 구면 맵을 위해 지정 벡터에서 x, y 좌표를\n계산하며, 보통 부드러운 반복 횟수에 기반하는 첫 번째 색상 선택도\n바꿉니다.\n이 옵션을 변경한 결과를 보려면 이미지를\n다시 계산해야 합니다.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=화면 가운데
+;The middle of the view
 TheMonteCarloWindowIsRendering=몬테카를로 창이 렌더링 중입니다. 먼저 중지하십시오.
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=모션 블러의 셔터 시간: 다음 프레임까지 시간의 비율 (0 ~ 1)
@@ -3505,6 +3567,8 @@ TheSizeOfTheCloudsFeatures=구름 모양의 크기 (프랙탈 단위) 와 색 (�
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=타일 크기
 ;The size of the tiles
+TheStepsCameToTheLimit=걸음이 배정밀도의 한계에 이르렀습니다
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=스테레오 양쪽 눈 이미지의 크기가 다릅니다.
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=클립보드의 텍스트 매개변수가 손상되었습니다. 복사할 때 일부 줄이 잘렸습니다. 원래 위치에서 다시 복사하세요.
@@ -3515,6 +3579,10 @@ TheTriplexMathSineBulbAs=트리플렉스 수학 사인 벌브. Daniel White와 P
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=고른 키프레임의 값
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=화면이 프랙탈로 가득 찼습니다
+;the view is filled with the fractal
+TheViewShowsOnlySky=화면에 하늘만 보입니다
+;the view shows only sky
 Themes=테마
 ;Themes
 ThereIsAFileAlready=파일 {}이(가) 이미 있습니다.
@@ -3661,6 +3729,8 @@ UnfinishedRenders=미완성 렌더링
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=완료되지 않은 렌더링을 계속하거나 삭제합니다
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=화면에 하늘만 또는 프랙탈만 보일 때까지 (최대 2분)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=제목 없음
 ;untitled
 UpOneLevel=상위 폴더로
@@ -3957,41 +4027,3 @@ Label6.Caption = 반사광
 [MutaGenFrm]
 Label4.Caption = 교환, 추가
 Label11.Caption = 반복 횟수
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-;A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
-;AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
-;AddTheKeyframes=Add the keyframes
-;AllTogetherYawPitchAndRoll=All together: yaw, pitch and roll (tumble)
-;AnimationTemplates=Animation templates...
-;AnimationTemplates2=Animation templates
-;Around=Around:
-;AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
-;Axis=Axis:
-;DurationSeconds=Duration (seconds):
-;FlyThrough=Fly-through
-;FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
-;FramesAtFramesASecond={} frames at {} frames a second
-;Keyframes=Keyframes:
-;KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
-;LargestTurnDegreesAFrame=Largest turn (degrees a frame):
-;LeftToRightAroundItYaw=Left to right around it (yaw)
-;N360Orbit=360° orbit
-;N360VR=360° VR
-;NoWayAheadWasLeft=no way ahead was left
-;OverTheTopAndUnderPitch=Over the top and under (pitch)
-;SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
-;SpinningAroundTheLineOfSight=Spinning around the line of sight (roll)
-;Template=Template:
-;TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
-;TheCameraLeftTheFractal=the camera left the fractal
-;TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
-;TheFractalSXAxis=The fractal's X axis
-;TheFractalSYAxis=The fractal's Y axis
-;TheFractalSZAxis=The fractal's Z axis
-;TheMiddleOfTheView=The middle of the view
-;TheStepsCameToTheLimit=the steps came to the limit of double precision
-;TheViewIsFilledWithThe=the view is filled with the fractal
-;TheViewShowsOnlySky=the view shows only sky
-;UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)

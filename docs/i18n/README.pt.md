@@ -898,6 +898,22 @@ pontos permitem que você confira mais por conta própria:
   próximo quadro), de modo que o que se move fica borrado; leva tantas vezes
   mais tempo (`mb3d animate --motion-blur 8,0.5`).
 
+  *Criador de animações* > *Modelos de animação...* cria quadros-chave a
+  partir da vista da janela principal para uma duração em segundos (nos
+  quadros por segundo da janela): uma *Órbita de 360°* em torno do eixo que
+  você escolher (da esquerda para a direita, por cima, uma rolagem, os três
+  de uma vez ou o eixo X, Y ou Z do fractal; `--orbit 8 --duration 10
+  --orbit-axis pitch`) ou um *Voo através*, em que a câmera continua voando
+  para dentro do fractal, o zoom acompanhando a distância até ele, mantendo
+  o rumo e virando só para contornar aquilo em que bateria (`--fly
+  --duration 20`; `--duration 0`: até a vista mostrar só céu ou só fractal).
+  *RV 360°* no Criador de animações (`--vr`) faz de cada quadro um panorama
+  esférico (2:1); com *Renderizar animação estéreo* o vídeo tem os olhos um
+  acima do outro (o esquerdo em cima), e o comando do ffmpeg termina com
+  `mb3d vr360 video.mp4 --stereo tb`, que marca o MP4 como vídeo 360 para o
+  YouTube, o Meta Quest e o VLC. Um panorama esférico salvo como JPEG leva o
+  XMP Photo Sphere, então o Facebook o mostra como foto 360.
+
   </details>
 * **Splats gaussianos** do fractal, para ver de todos os lados no
   Blender (5.3 ou mais novo), no SuperSplat e em outros visualizadores de splats: *Bulb

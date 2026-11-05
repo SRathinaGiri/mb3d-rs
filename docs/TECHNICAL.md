@@ -16,6 +16,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Videos](#videos)
+- [Animation templates and 360° output](#animation-templates-and-360-output)
 - [Time left and the progress bar](#time-left-and-the-progress-bar)
 - [Unfinished renders (`checkpoint.rs`)](#unfinished-renders-checkpointrs)
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
@@ -1027,6 +1028,71 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 `mb3d animate` prints it at the end; the Animation maker's *FFmpeg
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
+
+## Animation templates and 360° output
+
+**Animation templates** (`src/autopilot.rs`, `src/app/anim_templates_form.rs`;
+the Animation maker's *Animation templates...*) make keyframes from the
+main window's view, added after the keyframes there are. The camera is the
+Navigator's (`TransformNHeader`: the start plane's middle); keyframes are
+given back with the middle in front of it again (`ModRotPoint`). The
+module has its own copies of these helpers, so `navi_form.rs` is as it was.
+
+* *360° orbit* (`orbit_keyframes_axis`): the view and the middle turned
+  together around a pivot, so the camera keeps its distance and its look at
+  it; axis yaw (the view's up, the Turntable's), pitch (its right), roll
+  (its forward), all (roll, pitch and yaw at once about the start view's
+  axes: back where it began after the whole turn) or the fractal's X, Y,
+  Z. The pivot (`turntable_pivot`) is the middle, or where the middle lies
+  in the empty space before the surface the picture's middle shows, that
+  surface point (sphere tracing along the middle ray). The frames of the
+  duration are spread over the keyframes (`spread_frames`), a Catmull-Rom
+  loop. `--orbit N --duration S [--orbit-axis AXIS]`; without `--duration`
+  and `--orbit-axis`, `--orbit` is `anim::orbit_keyframes` as before.
+* *Fly-through* (`fly_through`): each frame a step of `speed` (0.04) of the
+  local DE (`GetLocalAbsoluteDE`), the zoom from it as `SetZoom`, the far
+  plane as many DEs away as at the start. Ahead the free distance along 33
+  directions (the course, four rings of 8 at 12, 25, 45 and 70°) is
+  traced to 8 DE. It flies straight on while nothing is in the way within
+  50 frames of flight (`REACT_FRAMES`); then it takes one way (scored by
+  how far it is free, not ending at a wall, not leading out into the empty
+  space, near the heading) and keeps it until the heading is on it and the
+  way ahead is free (looked at again every 6 frames; a way that closes is
+  replaced by the free one nearest to it); for 75 frames after a turn one
+  to the other side is far less wanted (`HOLD_FRAMES`). The turn's rate is
+  eased in and out (full rate, `max_turn`, after 12 frames). From a view of
+  the object from outside it first flies straight in, until the DE is 0.3
+  of the start's. Heading out into empty space with no free way back it
+  glides back toward the surface (against the DE's gradient, at a slant,
+  keeping its heading); it has left the fractal after 90 such frames. It
+  also ends at a dead end (no way free beyond 1.5 DE three frames running)
+  or when the step falls under double precision at the camera; with
+  `until_view` when of 24 by 16 rays of a keyframe's view at most one hits, or at most one misses
+  (`view_coverage`). Keyframes every half second, Catmull-Rom, not looped.
+  `--fly --duration S` (`0`: until the view is pure, at most 2 minutes).
+  Test: on Integer Power and Amazing Box at most 2 reversals of the turn in
+  30 s (before the steering: 5 to 18).
+
+**360° photos and videos** (`src/vr.rs`). A JPEG of a spherical panorama
+(`CameraOptic::Panorama`, 2:1) gets the Photo Sphere XMP (`GPano`,
+equirectangular, the whole panorama) in an APP1 segment after the JFIF one,
+which Facebook and Google Photos read (`encode_jpeg_for`, the main window's
+*Save image* as JPEG). An MP4 gets both Spherical Video metadata versions in
+every video track (`inject_spherical_mp4`): V2, `st3d` (mono, top-bottom,
+left-right) and `sv3d` with an equirectangular `proj` in the sample entry
+(YouTube, Meta Quest, VLC), and V1, the XML in a `uuid` box
+(ffcc8263-f855-4a93-8814-587a02521fdd) in the track, as Google's Spatial
+Media Metadata Injector writes it; old boxes are replaced, the chunk
+offsets moved when `moov` comes before `mdat`. `mb3d vr360 FILE [-o OUT]
+[--stereo mono|tb|lr]` marks a JPEG or an MP4. A *360° VR* animation
+(`Animation::vr360`, `--vr`, `vr360` in `.m3k`) has every frame a
+spherical panorama; with stereo its video is made of the eyes top-bottom,
+left on top (`video_frames`: `<name>VR<index>` pictures, made again when an
+eye is newer), the AVI named `_360`/`_360_TB`, and
+`video::ffmpeg_command_vr` ends with `mb3d vr360 ... --stereo tb`. Checked:
+YouTube plays both as 360 and the stereo one in two eyes (Cardboard), VLC as
+360; Facebook took the photo as 360 but played the videos flat, a file
+injected with Google's tool too.
 
 ## Gaussian splat export
 

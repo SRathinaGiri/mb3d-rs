@@ -855,6 +855,22 @@ kunt u zelf verder controleren:
   het volgende frame), zodat wat beweegt uitsmeert; het duurt zoveel keer zo
   lang (`mb3d animate --motion-blur 8,0.5`).
 
+  *Animatiemaker* > *Animatiesjablonen...* maakt keyframes vanuit het beeld
+  van het hoofdvenster voor een duur in seconden (bij de frames per seconde
+  van het venster): een *360°-omloop* rond een as naar keuze (van links naar
+  rechts, over de bovenkant, een rol, alle drie tegelijk of de X-, Y- of
+  Z-as van het fractal; `--orbit 8 --duration 10 --orbit-axis pitch`) of een
+  *Doorvlucht*, waarbij de camera verder het fractal in vliegt, de zoom de
+  afstand volgt, de koers houdt en alleen afbuigt om te ontwijken waar hij
+  tegenaan zou komen (`--fly --duration 20`; `--duration 0`: tot het beeld
+  alleen lucht of alleen fractal toont). *360° VR* in de Animatiemaker
+  (`--vr`) maakt van elk beeld een bolvormig panorama (2:1); met
+  *Stereo-animatie renderen* heeft de video de ogen boven elkaar (links
+  boven), en het ffmpeg-commando eindigt met `mb3d vr360 video.mp4 --stereo
+  tb`, dat de MP4 als 360-video markeert voor YouTube, de Meta Quest en VLC.
+  Een als JPEG opgeslagen bolvormig panorama krijgt de Photo Sphere-XMP,
+  zodat Facebook het als 360-foto toont.
+
   </details>
 * **Gaussische splats** van de fractal, om van alle kanten te bekijken in
   Blender (5.3 en later), SuperSplat en andere splatviewers: *Bulb

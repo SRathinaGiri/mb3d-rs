@@ -887,6 +887,23 @@ können Sie selbst weiter prüfen:
   Zeit bis zum nächsten Bild), was sich bewegt, verwischt also; es dauert
   entsprechend so viel länger (`mb3d animate --motion-blur 8,0.5`).
 
+  *Animationseditor* > *Animationsvorlagen...* erstellt Keyframes aus der
+  Ansicht des Hauptfensters für eine Dauer in Sekunden (bei den Bildern pro
+  Sekunde des Fensters): eine *360°-Umkreisung* um eine Achse Ihrer Wahl
+  (von links nach rechts, oben drüber, ein Rollen, alle drei zugleich oder
+  die X-, Y- oder Z-Achse des Fraktals; `--orbit 8 --duration 10
+  --orbit-axis pitch`) oder einen *Durchflug*, bei dem die Kamera weiter in
+  das Fraktal hineinfliegt, der Zoom der Entfernung folgt, sie ihren Kurs
+  hält und nur abbiegt, um dem auszuweichen, worauf sie treffen würde
+  (`--fly --duration 20`; `--duration 0`: bis die Ansicht nur Himmel oder
+  nur Fraktal zeigt). *360° VR* im Animationseditor (`--vr`) macht jedes
+  Bild zu einem sphärischen Panorama (2:1); mit *Stereo-Animation rendern*
+  zeigt das Video die Augen übereinander (links oben), und der ffmpeg-Befehl
+  endet mit `mb3d vr360 video.mp4 --stereo tb`, das die MP4 für YouTube, die
+  Meta Quest und VLC als 360-Video kennzeichnet. Ein als JPEG gespeichertes
+  sphärisches Panorama trägt das Photo-Sphere-XMP, sodass Facebook es als
+  360-Foto zeigt.
+
   </details>
 * **Gauß-Splats** des Fraktals, von allen Seiten anzusehen in Blender (ab
   5.3), SuperSplat und anderen Splat-Betrachtern: *Bulb

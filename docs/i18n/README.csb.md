@@ -857,6 +857,21 @@ sprawdzëc sóm:
   że to, co sã rësza, sã rozmazywô; trwô to tëli razy dłëżi
   (`mb3d animate --motion-blur 8,0.5`).
 
+  *Twòrzenié animacje* > *Szablonë animacje...* robi kluczowé klatczi z
+  pòzdrzatkù głównégò òkna na czas w sekùndach (przë klatkach na sekùndã
+  òkna): *Òrbita 360°* wkół wëbrany òsë (òd lewi do prawi, górą,
+  przechilenié, wszëtczé trzë razã abò òs X, Y abò Z fraktala; `--orbit 8
+  --duration 10 --orbit-axis pitch`) abò *Przelot*, w jaczim kamera leci
+  dali w głãbiã fraktala, zoom jidze za òdległoscą, trzimô kùrs i skrãcô le,
+  cobë òbińc to, w co bë ùderzëła (`--fly --duration 20`; `--duration 0`:
+  jaż pòzdrzatk wëkôże le niebò abò le fraktal). *VR 360°* w Twòrzenié
+  animacje (`--vr`) robi z kòżdi klatczi sferiwą panoramã (2:1); z *Renderuj
+  stereo animacjã* wideo mô òczë jedno nad drëdżim (lewé na górze), a
+  pòlecenié ffmpeg kùńczi sã na `mb3d vr360 video.mp4 --stereo tb`, jaczé
+  znaczi MP4 jakno wideo 360 dlô YouTube, Meta Quest i VLC. Sferiwô panorama
+  zapisónô jakno JPEG mô XMP Photo Sphere, tak że Facebook wëkazëje jã jakno
+  òdjimk 360.
+
   </details>
 * **Gaussowsczé splatë** fraktala, do òbzéraniô z kòżdi stronë w
   Blenderze (5.3 ë nowszim), SuperSplat ë jinszich programach do splatów: *Bulb

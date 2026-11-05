@@ -917,6 +917,23 @@ Voici de quoi vérifier plus loin par vous-même :
   est donc étalé ; cela prend autant de fois plus de temps
   (`mb3d animate --motion-blur 8,0.5`).
 
+  *Créateur d'animation* > *Modèles d'animation...* crée des images-clés à
+  partir de la vue de la fenêtre principale pour une durée en secondes (aux
+  images par seconde de la fenêtre) : une *Orbite à 360°* autour de l'axe de
+  votre choix (de gauche à droite, par-dessus, un roulis, les trois à la
+  fois, ou l'axe X, Y ou Z de la fractale ; `--orbit 8 --duration 10
+  --orbit-axis pitch`) ou un *Survol*, où la caméra continue de voler dans
+  la fractale, le zoom suivant la distance à celle-ci, en gardant son cap et
+  en ne tournant que pour contourner ce qu'elle heurterait (`--fly
+  --duration 20` ; `--duration 0` : jusqu'à ce que la vue ne montre que le
+  ciel ou que la fractale). *RV 360°* dans le Créateur d'animation (`--vr`)
+  fait de chaque image un panorama sphérique (2:1) ; avec *Rendre une
+  animation stéréo*, la vidéo a les yeux l'un au-dessus de l'autre (le
+  gauche en haut), et la commande ffmpeg se termine par `mb3d vr360
+  video.mp4 --stereo tb`, qui marque le MP4 comme vidéo 360 pour YouTube, le
+  Meta Quest et VLC. Un panorama sphérique enregistré en JPEG porte le XMP
+  Photo Sphere, si bien que Facebook l'affiche comme photo 360.
+
   </details>
 * **Splats gaussiens** de la fractale, à regarder de tous les côtés dans
   Blender (5.3 et suivants), SuperSplat et d'autres visionneuses de splats :

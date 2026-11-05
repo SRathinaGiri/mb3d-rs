@@ -28,6 +28,8 @@ language = Bahasa Indonesia
 code = ID
 
 [Labels]
+A360DegreeAnimationForVR=Animasi 360 derajat untuk headset VR: setiap frame sebuah panorama bola, dua kali lebih lebar daripada tingginya; dengan 'Render animasi stereo' video berisi kedua mata atas-bawah, dan perintah ffmpeg menandai MP4 untuk pemutar VR
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
 A4dQuaternionFormulaOneIteration=Formula quaternion 4d, satu iterasi:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
 ABulbFormulaAsSuggestedBy=Formula bulb seperti yang disarankan oleh Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nDitambahkan dua opsi untuk memutar konstanta dengan pangkat menurut jarak vektor Z dan C saat ini (Cond Phi=1),\ndan opsi Mode berikut:\n(Bit dari nilai Mode)\nBit1: Balik komponen atan theta\nBit2: Balik komponen atan phi\nBit3: Balik theta dan phi\nBit4: Balik CyCz untuk perhitungan sudut\nBit5: Kalikan powerC dengan jarak vektor Z dan C
@@ -68,6 +70,8 @@ AVideoNeedsImagesChooseBMP=Video memerlukan gambar: pilih BMP, PNG, atau JPG seb
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=Video animasi stereo tidak dibuat: matikan 'Render animasi stereo'.
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=Satu putaran penuh kamera mengelilingi objek dalam 8 keyframe atau lebih, putaran mulus (Catmull-Rom); jumlah frame sama dengan durasinya pada frame per detik jendela Animasi
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf=Gambar {} x {} memerlukan sekitar {} memori, komputer ini memiliki {} yang kosong: perhitungan akan menggunakan swap, dan program bisa tidak merespons selama beberapa menit.\n\nTetap hitung?\n\nRender besar (tab Alat) menghitungnya dalam tile yang disimpan satu per satu, tanpa menyimpan seluruh gambar; swarm (jendela Swarm) membagi tile dengan komputer lain.
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=Gambar png z-buffer juga akan disimpan.
@@ -122,6 +126,8 @@ AddNewOption=Tambah opsi baru
 ;Add new option
 AddOptionValue=Tambah nilai opsi
 ;Add option value
+AddTheKeyframes=Tambahkan keyframe
+;Add the keyframes
 AddToBackgroundDepthNotBlend=Tambah ke kedalaman latar (bukan campur)
 ;Add to background depth (not blend)
 AddonFormula=Formula tambahan
@@ -154,6 +160,8 @@ AllRealworldUnitsInMeter=Semua satuan dunia nyata dalam meter.
 ;All realworld units in meter.
 AllTheLightColorSettings=Semua pengaturan cahaya + warna
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=Semuanya: yaw, pitch, dan roll (berjungkir)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> sudah ada
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=Buat juga video (AVI)
@@ -226,6 +234,10 @@ AnimationRenderingStopped=Render animasi dihentikan.
 ;Animation rendering stopped.
 AnimationSize=Ukuran animasi:
 ;Animation size:
+AnimationTemplates=Templat animasi...
+;Animation templates...
+AnimationTemplates2=Templat animasi
+;Animation templates
 AnimationTheFfmpegCommandIsOn=Animasi: perintah ffmpeg ada di clipboard (jalankan di terminal setelah frame selesai):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=Animasi: video ditulis: {}
@@ -248,6 +260,8 @@ ApproximateVertexColorsTheColorInformation=Perkiraan warna vertex. Informasi war
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 menghitung ArcTan(Y/X), dan mengembalikan sudut di kuadran yang benar.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=Mengelilingi:
+;Around:
 AroundTheMiddleAnObject=Mengelilingi titik tengah (sebuah objek)
 ;Around the middle (an object)
 AsFullBackgroundSphere=Sebagai bola latar penuh:
@@ -272,6 +286,8 @@ AutoSavingTheM3cFile=Simpan otomatis file m3c:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=Otomatis: CPU dan kartu grafis berbagi gambar (CPU\nlangsung mulai, kartu bergabung segera setelah shader-nya\ndikompilasi), lalu kartu menjalankan bayangan dan ambient\nocclusion.\nCPU: tidak pernah memakai kartu grafis.\nKartu grafis: menunggu shader, seperti sebelumnya.
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=Otomatis: tengah, atau permukaan yang terlihat
+;Auto: the middle, or the surface in view
 AutoUpdateImage=Perbarui gambar otomatis
 ;Auto update image
 AutoUpdatePreview=Perbarui pratinjau otomatis
@@ -288,6 +304,8 @@ AvgIterations=Rata-rata iterasi:
 ;Avg. iterations:
 AvgRaysteps=Rata-rata langkah sinar:
 ;Avg. raysteps:
+Axis=Sumbu:
+;Axis:
 AxisX=Sumbu X
 ;Axis X
 AxisY=Sumbu Y
@@ -1034,6 +1052,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=Entahlah, jangan lakukan apa-apa
 ;Dunno, do nothing
+DurationSeconds=Durasi (detik):
+;Duration (seconds):
 DynFog=Kabut din.
 ;Dyn.fog
 DynFogOnIt=Kabut din. pd It.:
@@ -1230,6 +1250,10 @@ FlatSolidWithEdges=Padat Datar dengan Tepi
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: Bilangan bulat terbesar <= X,  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=Terbang menembus
+;Fly-through
+FlyThroughTheFlightEndedAfter=Terbang menembus: penerbangan berhenti setelah {} dari {} frame, {}
+;Fly-through: the flight ended after {} of {} frames, {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Offset kabut
@@ -1286,6 +1310,8 @@ FrameNumberToUseForAnimated=Nomor frame yang digunakan untuk peta animasi di edi
 ;Frame number to use for animated maps in the main editor
 Frames=frame
 ;frames
+FramesAtFramesASecond={} frame pada {} frame per detik
+;{} frames at {} frames a second
 FramesPerSecond=Frame per detik:
 ;Frames per second:
 FramesSec=Frame/dtk:
@@ -1800,8 +1826,12 @@ KeyframeListM3k=Daftar keyframe (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nmulai:    henti:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=Keyframe:
+;Keyframes:
 KeyframesForOneWholeTurnAround=Keyframe untuk satu putaran penuh mengelilingi tengah tampilan, dari tampilan jendela utama: 8 keyframe dalam putaran mulus (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=Keyframe dibuatkan dari tampilan jendela utama: orbit 360° atau terbang menembus, selama yang Anda tentukan
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=Tombol yang membawa jendela ke depan dari jendela mana pun
 ;Keys that bring a window to the front from any window
 Kind=Jenis
@@ -1812,12 +1842,16 @@ LIGHTSTROKES=GORESAN CAHAYA
 ;LIGHT STROKES
 LMBMoveRMBRotate=TMK: geser           TMKa: putar
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=Belokan terbesar (derajat per frame):
+;Largest turn (degrees a frame):
 LastLengthIncrease=Kenaikan panjang terakhir
 ;Last length increase
 LastPass=\s· lintasan terakhir {}
 ;\s· last pass {}
 Layer=Lapisan:
 ;Layer:
+LeftToRightAroundItYaw=Dari kiri ke kanan mengelilinginya (yaw)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=Klik kiri:  masuk ke mode mouse.. lihat dengan mouse, +tombol kanan mouse.. berguling\n(Klik kiri lagi atau ESC untuk keluar dari mode mouse)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=Klik kiri:   Putar bulb di sekitar sumbu X pengamat @ nilai Ymid+Zmid\nKlik kanan: Putar bulb di sekitar sumbu X objek @ 0
@@ -2226,8 +2260,12 @@ N2Or3PassesGivesA=2 atau 3 lintasan memberi blur kuat yang lebih baik di depan t
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=Refleksi ke-2
 ;2nd reflection
+N360Orbit=Orbit 360°
+;360° orbit
 N360Panorama=Panorama 360
 ;360 Panorama
+N360VR=VR 360°
+;360° VR
 N3DAnalyticFormula=Formula 3D analitis
 ;3D analytic formula
 N3DFormula=Formula 3D
@@ -2332,6 +2370,8 @@ NoTilesToRender=Tidak ada tile untuk dirender.
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\sTidak ditemukan teks yang valid, masukkan teks di bawah:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=tidak ada jalan di depan lagi
+;no way ahead was left
 Noise=-derau
 ;-noise
 NoiseAI=-derau AI
@@ -2544,6 +2584,8 @@ OutsideRender=Render luar
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Render luar:  mode bawaan\nRender dalam:    raymarching lambat di bagian dalam dengan its maks.\nDi dalam dan luar:   render kedua sisi
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=Lewat atas dan bawah (pitch)
+;Over the top and under (pitch)
 OverallScale=Skala keseluruhan:
 ;Overall scale:
 OverwriteExistingImages=Timpa gambar yang ada
@@ -3254,8 +3296,12 @@ SpecularObjectColorsClickToChange=Warna spekular objek, klik untuk mengubahnya.
 ;Specular object colors, click to change them.
 SpecularPowerFunction=Fungsi pangkat spekular
 ;Specular power function
+SpeedOfTheDistanceAFrame=Kecepatan (% jarak per frame):
+;Speed (% of the distance a frame):
 SphericalCoords=Koord. sferis
 ;Spherical coords
+SpinningAroundTheLineOfSight=Berputar pada garis pandang (roll)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} splat dalam {}, disimpan ke {}
 ;{} splats in {}, written to {}
 Stan=stan.
@@ -3384,6 +3430,8 @@ TargetMapSlot=Slot Peta Tujuan
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Slot Peta Tujuan. Gunakan nomor ini sebagai peta di fraktal Anda, mis. sebagai heightmap, agar petanya beranimasi
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=Templat:
+;Template:
 TheAmazingBoxAkaMandboxFormula=Formula 'Amazing Box' alias Mandbox, ditemukan oleh TGlad di fractalforums.com.\n\nFormula untuk satu iterasi terlihat seperti ini:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=Jumlah warna difus dan spekular yang dijumlahkan lebih dari 1,\nperlukah saya mengecilkannya agar pewarnaan lebih realistis?
@@ -3412,6 +3460,10 @@ TheCalculationFailedLower=perhitungan gagal
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Perhitungan akan diperluas ke luar gambar dengan objek yang dipantulkan.\nIni dapat mengurangi artefak dalam animasi, tetapi gambar diam juga bisa mendapat manfaat.\nNilainya sebaiknya dalam rentang 0 sampai 0.5 (maks 0.9), yaitu ukuran relatif terhadap lebar\ndan tinggi gambar yang dihitung maksimal di luar gambar.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=Kamera terus terbang masuk ke fraktal, zoom mengikuti jaraknya, dan berbelok melalui celah-celahnya; satu keyframe setiap setengah detik (Catmull-Rom). Berhenti lebih awal di jalan buntu, di batas presisi ganda, atau saat keluar dari fraktal
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=kamera keluar dari fraktal
+;the camera left the fractal
 TheChosenValueOverAllFrames=Nilai yang dipilih di semua frame animasi: seret kotak keyframe ke atas atau ke bawah, atau klik lalu ketik nilainya
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 TheColourOfDeepWaterThe=Warna air dalam: cahaya air itu sendiri, dan warna yang diambil benda di bawahnya seiring kedalaman (klik untuk mengubah)
@@ -3444,6 +3496,8 @@ TheFileSelectAndCopyIt=File (pilih dan salin dari sini)
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=Titik fokus (pertama).\nNilainya relatif terhadap nilai Zstart pengamat,\ndinormalkan terhadap lebar gambar.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=Terbang menembus tidak dapat dimulai di sini: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=folder tidak ada (atau tidak dapat dijangkau)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=Nama formula sebaiknya diawali "JIT" untuk membedakan formula tersebut dari formula berbasis ASM
@@ -3454,6 +3508,12 @@ TheFractalOfTheMainWindow=Fraktal jendela utama sebagai splat Gaussian, untuk di
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Material permukaan fraktal di atas palet (tidak ada di MB3D: disimpan setelah bagian parameter MB3D)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=Sumbu X fraktal
+;The fractal's X axis
+TheFractalSYAxis=Sumbu Y fraktal
+;The fractal's Y axis
+TheFractalSZAxis=Sumbu Z fraktal
+;The fractal's Z axis
 TheFramesPerSecondMustBe=Frame per detik harus berupa angka di atas 0 (mis. 25).
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=buffer gambar memiliki ukuran yang salah
@@ -3470,6 +3530,8 @@ TheMainEditorIsStillRendering=Editor utama masih merender. Hentikan dulu atau tu
 ;The main editor is still rendering. Please stop it first or wait until it is done.
 TheMapOptionsCalculatesXY=Opsi peta menghitung koordinat x,y dari vektor\ntertentu untuk peta sferis, ini juga mengubah pilihan warna pertama\nyang biasanya berdasarkan iterasi halus.\nAnda harus menghitung ulang gambar untuk melihat hasil perubahan\nopsi ini.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=Tengah tampilan
+;The middle of the view
 TheMonteCarloWindowIsRendering=Jendela Monte Carlo sedang merender: hentikan terlebih dahulu.
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=Waktu rana motion blur: bagian dari waktu sampai frame berikutnya (0 sampai 1)
@@ -3504,6 +3566,8 @@ TheSizeOfTheCloudsFeatures=Ukuran bentuk awan dalam satuan fraktal, dan warnanya
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=Ukuran tile
 ;The size of the tiles
+TheStepsCameToTheLimit=langkahnya mencapai batas presisi ganda
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=Gambar mata stereo memiliki ukuran berbeda.
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=Parameter teks di papan klip rusak: beberapa barisnya terpotong saat disalin. Salin lagi dari sumbernya.
@@ -3514,6 +3578,10 @@ TheTriplexMathSineBulbAs=Bulb sinus matematika triplex, seperti yang disarankan 
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Nilai keyframe yang dipilih
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=tampilan dipenuhi fraktal
+;the view is filled with the fractal
+TheViewShowsOnlySky=tampilan hanya menunjukkan langit
+;the view shows only sky
 Themes=Tema
 ;Themes
 ThereIsAFileAlready=Sudah ada file {}.
@@ -3660,6 +3728,8 @@ UnfinishedRenders=Render belum selesai
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=Render belum selesai: lanjutkan atau hapus
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=Sampai tampilan hanya menunjukkan langit atau hanya fraktal (paling lama 2 menit)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=tanpa judul
 ;untitled
 UpOneLevel=Naik satu tingkat
@@ -3910,41 +3980,3 @@ Zpos=Zpos
 ;Zpos
 Zrot=Zrot
 ;Zrot
-
-[Labels]
-; Not translated yet (shown in English): remove the ";" and translate
-;A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
-;AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
-;AddTheKeyframes=Add the keyframes
-;AllTogetherYawPitchAndRoll=All together: yaw, pitch and roll (tumble)
-;AnimationTemplates=Animation templates...
-;AnimationTemplates2=Animation templates
-;Around=Around:
-;AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
-;Axis=Axis:
-;DurationSeconds=Duration (seconds):
-;FlyThrough=Fly-through
-;FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
-;FramesAtFramesASecond={} frames at {} frames a second
-;Keyframes=Keyframes:
-;KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
-;LargestTurnDegreesAFrame=Largest turn (degrees a frame):
-;LeftToRightAroundItYaw=Left to right around it (yaw)
-;N360Orbit=360° orbit
-;N360VR=360° VR
-;NoWayAheadWasLeft=no way ahead was left
-;OverTheTopAndUnderPitch=Over the top and under (pitch)
-;SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
-;SpinningAroundTheLineOfSight=Spinning around the line of sight (roll)
-;Template=Template:
-;TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
-;TheCameraLeftTheFractal=the camera left the fractal
-;TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
-;TheFractalSXAxis=The fractal's X axis
-;TheFractalSYAxis=The fractal's Y axis
-;TheFractalSZAxis=The fractal's Z axis
-;TheMiddleOfTheView=The middle of the view
-;TheStepsCameToTheLimit=the steps came to the limit of double precision
-;TheViewIsFilledWithThe=the view is filled with the fractal
-;TheViewShowsOnlySky=the view shows only sky
-;UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)

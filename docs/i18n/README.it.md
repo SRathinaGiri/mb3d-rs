@@ -896,6 +896,22 @@ permettono di verificare ulteriormente da solo:
   così ciò che si muove si sfuma; richiede altrettante volte più tempo
   (`mb3d animate --motion-blur 8,0.5`).
 
+  *Creazione animazioni* > *Modelli di animazione...* crea fotogrammi chiave
+  dalla vista della finestra principale per una durata in secondi (ai
+  fotogrammi al secondo della finestra): un'*Orbita a 360°* attorno all'asse
+  che scegli (da sinistra a destra, sopra, un rollio, tutti e tre insieme o
+  l'asse X, Y o Z del frattale; `--orbit 8 --duration 10 --orbit-axis
+  pitch`) o un *Volo attraverso*, in cui la fotocamera continua a volare
+  dentro il frattale, lo zoom segue la distanza da esso, mantiene la rotta e
+  vira solo per aggirare ciò che urterebbe (`--fly --duration 20`;
+  `--duration 0`: finché la vista mostra solo cielo o solo frattale). *VR
+  360°* in Creazione animazioni (`--vr`) fa di ogni fotogramma un panorama
+  sferico (2:1); con *Renderizza animazione stereo* il video ha gli occhi
+  uno sopra l'altro (il sinistro in alto), e il comando ffmpeg termina con
+  `mb3d vr360 video.mp4 --stereo tb`, che contrassegna l'MP4 come video 360
+  per YouTube, Meta Quest e VLC. Un panorama sferico salvato come JPEG porta
+  l'XMP Photo Sphere, così Facebook lo mostra come foto 360.
+
   </details>
 * **Splat gaussiani** del frattale, da guardare da ogni lato in Blender (5.3
   e successivi), SuperSplat e altri visualizzatori di splat: *Bulb
