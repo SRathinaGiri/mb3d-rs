@@ -78,7 +78,7 @@ macro_rules! f1_table {
     ($($k:literal)*) => {
         [$({
             extern "C" fn f(x: f64) -> f64 {
-                F1_ALL[$k].eval(x)
+                F1_ALL[$k].apply(x)
             }
             f as *const u8
         }),*]
@@ -93,16 +93,16 @@ fn f1_addr(f: F1) -> *const u8 {
 
 fn f2_addr(f: F2) -> *const u8 {
     extern "C" fn atan2(a: f64, b: f64) -> f64 {
-        F2_ALL[0].eval(a, b)
+        F2_ALL[0].apply(a, b)
     }
     extern "C" fn hypot(a: f64, b: f64) -> f64 {
-        F2_ALL[1].eval(a, b)
+        F2_ALL[1].apply(a, b)
     }
     extern "C" fn logn(a: f64, b: f64) -> f64 {
-        F2_ALL[2].eval(a, b)
+        F2_ALL[2].apply(a, b)
     }
     extern "C" fn power(a: f64, b: f64) -> f64 {
-        F2_ALL[3].eval(a, b)
+        F2_ALL[3].apply(a, b)
     }
     match f {
         F2::ArcTan2 => atan2 as *const u8,

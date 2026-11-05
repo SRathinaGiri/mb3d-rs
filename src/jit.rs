@@ -502,7 +502,7 @@ impl F1 {
     }
 
     #[inline]
-    pub(crate) fn eval(self, x: f64) -> f64 {
+    pub(crate) fn apply(self, x: f64) -> f64 {
         use F1::*;
         match self {
             Sin => x.sin(),
@@ -562,7 +562,7 @@ pub(crate) const F2_ALL: [F2; 6] = [F2::ArcTan2, F2::Hypot, F2::LogN, F2::Power,
 
 impl F2 {
     #[inline]
-    pub(crate) fn eval(self, a: f64, b: f64) -> f64 {
+    pub(crate) fn apply(self, a: f64, b: f64) -> f64 {
         match self {
             F2::ArcTan2 => a.atan2(b),
             F2::Hypot => a.hypot(b),
@@ -1737,13 +1737,13 @@ fn lower_e(e: &E) -> Ex {
         }
         E::F1(f, a) => {
             let (a, f) = (b(a), *f);
-            Box::new(move |e| f.eval(a(e)))
+            Box::new(move |e| f.apply(a(e)))
         }
         E::F2(f, x, y) => {
             let (x, y, f) = (b(x), b(y), *f);
             Box::new(move |e| {
                 let a = x(e);
-                f.eval(a, y(e))
+                f.apply(a, y(e))
             })
         }
         E::OMinMax(mx, x, y) => {
