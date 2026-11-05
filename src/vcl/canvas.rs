@@ -339,7 +339,14 @@ impl<'a> Canvas<'a> {
     }
 
     /// Coverage of a rounded rectangle at device pixel centre (for AA).
+    /// A rectangle squeezed below twice the radius (a button in a window
+    /// pulled very small) has the radius cut to half its smaller side, and
+    /// an empty one covers nothing (`clamp` would panic on min > max).
     fn rr_cov(px: f32, py: f32, x0: f32, y0: f32, x1: f32, y1: f32, rad: f32) -> f32 {
+        if !(x1 > x0 && y1 > y0) {
+            return 0.0;
+        }
+        let rad = rad.min((x1 - x0) / 2.0).min((y1 - y0) / 2.0).max(0.0);
         let cx = px.clamp(x0 + rad, x1 - rad);
         let cy = py.clamp(y0 + rad, y1 - rad);
         let (dx, dy) = (px - cx, py - cy);

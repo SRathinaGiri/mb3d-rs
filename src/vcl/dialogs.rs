@@ -878,6 +878,29 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// A save dialog pulled down to almost no height (or width) paints
+    /// without a panic: its buttons, squeezed below their corner radius,
+    /// crashed the program (f32::clamp with min > max).
+    #[test]
+    fn file_dialog_paints_when_squeezed() {
+        let mut ui = Ui::default();
+        // enough files for the list's scroll bar
+        let dir = std::env::temp_dir().join(format!("mb3d-squeeze-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for k in 0..60 {
+            std::fs::write(dir.join(format!("f{k}.png")), b"").unwrap();
+        }
+        let o = FileOptions { filter: "PNG (*.png)|*.png".into(), initial_dir: Some(dir.clone()), ..Default::default() };
+        ui.save_dialog("t", &o);
+        for (w, h) in (0..200).map(|h| (560, h)).chain((0..300).step_by(3).map(|w| (w, 390))).chain([(0, 0), (1, 1), (3, 3)]) {
+            for scale in [1.0, 1.25] {
+                ui.set_client_size("FileDlg", w, h);
+                let _ = ui.render_form("FileDlg", scale);
+            }
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// A message while a confirm is open opens over it; the confirm still
     /// gets its answer.
     #[test]
