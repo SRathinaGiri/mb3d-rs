@@ -142,7 +142,17 @@ fn turn(v: Vec3, u: Vec3, angle: f64) -> Vec3 {
 /// Sphere tracing from `from` along the unit `dir`: the free distance up to
 /// `reach` (`reach` when nothing is in the way), with the distance
 /// estimate taken at a safe part (`step` of it) and a surface at `stop`.
+///
+/// The distance estimate is not a bound: MB3D marches with the scene's ray
+/// step (`z_step_div`, 0.5 by default) times it, and a whole one can jump
+/// over a surface (from 5 units away the Integer Power bulb's estimate is
+/// 8: the trace passed through it, found nothing ahead, and the orbit's
+/// automatic pivot fell back to an empty middle). So the steps are taken
+/// at `step` times the scene's ray step, and as many more of them allowed.
 fn free_distance(p: &CalcParams, from: Vec3, dir: Vec3, reach: f64, stop: f64, step: f64, max_steps: usize) -> f64 {
+    let ray = (p.z_step_div as f64).clamp(0.05, 1.0);
+    let step = step * ray;
+    let max_steps = (max_steps as f64 / ray).ceil() as usize;
     let mut t = 0.0;
     for _ in 0..max_steps {
         let (d, _) = de_at(p, add(from, scale(dir, t)));
@@ -244,20 +254,51 @@ pub fn orbit_keyframes_around(sc: &Scene, steps: usize, frames: u32, pivot: Vec3
     orbit_keyframes_axis(sc, steps, frames, pivot, OrbitAxis::Yaw)
 }
 
+/// The middle moved `s` along the line of sight with the camera where it
+/// is (the start and end planes keep their distance from the camera): a
+/// pivot on the middle ray becomes the middle.
+fn centre_on_sight(sc: &mut Scene, s: f64) {
+    let f = unit_rows(sc)[2];
+    sc.mid = add(sc.mid, scale(f, s));
+    sc.z_start += f[2] * s - s;
+    sc.z_end += f[2] * s - s;
+}
+
 /// [`orbit_keyframes_around`] around `axis`: the view and the camera
 /// turned together around the pivot, so the camera keeps its distance and
 /// its look at the pivot.
+///
+/// A pivot on the middle ray (as [`turntable_pivot`] gives) first becomes
+/// the middle, the camera staying where it is; then the keyframes differ
+/// in their rotation alone, as the Turntable's, and every interpolation
+/// keeps the camera at the same distance from the pivot (the rotation is
+/// interpolated on the unit sphere). Moving the middle around the pivot
+/// in each keyframe left the camera's position to the interpolation of
+/// the middles, which cuts the circle short between the keyframes (Catmull-
+/// Rom: 0.85 % of its radius with 8 keyframes, 12 % with 4, 31 % with 3;
+/// Linear: a polygon). A pivot off that ray is still turned that way.
 pub fn orbit_keyframes_axis(sc: &Scene, steps: usize, frames: u32, pivot: Vec3, axis: OrbitAxis) -> Vec<Keyframe> {
     let steps = steps.max(3);
-    let centre = add(sc.mid, pivot);
+    let f = unit_rows(sc)[2];
+    let along = dot(&pivot, &f);
+    let mut base = sc.clone();
+    let pivot = if len(&sub(pivot, scale(f, along))) <= 1e-9 * len(&pivot).max(sc.step_width()) {
+        centre_on_sight(&mut base, along);
+        [0.0; 3]
+    } else {
+        pivot
+    };
+    let centre = add(base.mid, pivot);
     (0..steps)
         .map(|i| {
             let a = 2.0 * PI * i as f64 / steps as f64;
-            let mut k = sc.clone();
-            k.vgrads = sc.vgrads.map(|r| axis.turn(sc, r, a));
-            // the middle turned around the pivot as the view
-            let m = add(centre, axis.turn(sc, sub(sc.mid, centre), a));
-            move_middle(&mut k, sub(m, sc.mid));
+            let mut k = base.clone();
+            k.vgrads = base.vgrads.map(|r| axis.turn(&base, r, a));
+            if pivot != [0.0; 3] {
+                // the middle turned around the pivot as the view
+                let m = add(centre, axis.turn(&base, sub(base.mid, centre), a));
+                move_middle(&mut k, sub(m, base.mid));
+            }
             Keyframe::new(k, frames)
         })
         .collect()
@@ -731,6 +772,55 @@ mod tests {
             }
             assert_eq!(x.scene.mid, y.scene.mid);
             assert_eq!(x.scene.z_start, y.scene.z_start);
+        }
+    }
+
+    #[test]
+    fn the_pivot_is_found_from_far_away() {
+        // the camera 5 units from the bulb's centre (its distance estimate
+        // there is 8, past the bulb), the middle 1 unit before the camera
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.z_start = sc.mid[2] - 5.0;
+        let f = unit_rows(&sc)[2];
+        let c = cam_pos(&sc);
+        let a = -4.0;
+        let (ds, de) = (sc.z_start - sc.mid[2], sc.z_end - sc.mid[2]);
+        sc.mid = add(sc.mid, scale(f, a));
+        sc.z_start = sc.mid[2] + ds - a;
+        sc.z_end = sc.mid[2] + de - a;
+        assert!(len(&sub(cam_pos(&sc), c)) < 1e-12);
+        let at = add(sc.mid, turntable_pivot(&sc));
+        let p = CalcParams::new(&sc).unwrap();
+        assert!(de_at(&p, at).0 < 0.05, "the pivot on the surface");
+        let d = len(&sub(at, c));
+        assert!(d > 3.0 && d < 4.5, "the bulb's near side: {d}");
+    }
+
+    #[test]
+    fn the_orbit_keeps_its_radius_between_keyframes() {
+        use crate::anim::{Animation, Interpolation};
+        let sc = Scene::preset("Integer Power").unwrap();
+        let f = unit_rows(&sc)[2];
+        let cam0 = cam_pos(&sc);
+        for along in [-0.7, 0.4] {
+            let pivot = add(sc.mid, scale(f, along));
+            let r0 = len(&sub(cam0, pivot));
+            for axis in OrbitAxis::ALL {
+                for steps in [3, 4, 8] {
+                    let ks = orbit_keyframes_axis(&sc, steps, 10, scale(f, along), axis);
+                    // the first keyframe is the view as it was
+                    assert!(len(&sub(cam_pos(&ks[0].scene), cam0)) < 1e-12 * r0.max(1.0));
+                    for ipol in [Interpolation::Linear, Interpolation::Bezier, Interpolation::CatmullRom] {
+                        let a = Animation { keyframes: ks.clone(), looped: true, interpolation: ipol, ..Default::default() };
+                        for fr in 0..a.frame_count() {
+                            let s = a.frame_scene(fr).unwrap();
+                            let r = len(&sub(cam_pos(&s), pivot));
+                            assert!((r - r0).abs() < 1e-9 * r0, "{axis:?} {steps} {ipol:?} frame {fr}: {r} vs {r0}");
+                            assert!(len(&sub(s.mid, pivot)) < 1e-12 * r0.max(1.0));
+                        }
+                    }
+                }
+            }
         }
     }
 

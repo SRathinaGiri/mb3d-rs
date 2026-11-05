@@ -170,6 +170,38 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     TabOrder = 6
     Text = '2'
   end
+  object StartLabel: TLabel
+    Left = 12
+    Top = 259
+    Width = 150
+    Height = 13
+    Caption = '@MB:StartFrom'
+  end
+  object StartCmb: TComboBox
+    Left = 170
+    Top = 256
+    Width = 288
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 10
+    Items.Strings = (
+      '@MB:TheMainWindowSView'
+      '@MB:TheLastKeyframe')
+  end
+  object FlightBar: TProgressBar
+    Left = 12
+    Top = 284
+    Width = 446
+    Height = 10
+    Visible = False
+  end
+  object FlightLabel: TLabel
+    Left = 12
+    Top = 306
+    Width = 176
+    Height = 13
+    AutoSize = False
+  end
   object AddBtn: TButton
     Left = 196
     Top = 300

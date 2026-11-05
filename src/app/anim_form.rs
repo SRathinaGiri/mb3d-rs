@@ -503,10 +503,25 @@ pub fn insert_keyframe(app: &mut Mb3d, ui: &mut Ui, sc: Scene) {
 /// The keyframes of an animation template after the keyframes there are,
 /// each with its own frames; an animation that was empty gets the
 /// template's kind: Catmull-Rom, a loop for a turntable, else not.
-pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, looped: bool) {
-    if count(app) == 0 {
+///
+/// A `closed` template (an orbit) added after other keyframes ends with
+/// its first keyframe again, so the turn is whole without the loop (which
+/// leads back to the animation's first keyframe, not the orbit's).
+/// `from_last`: the template starts at the last keyframe there is (its
+/// first keyframe is that one): the last keyframe takes the template's
+/// first frames instead of a copy of it being added.
+pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, closed: bool, from_last: bool) {
+    let empty = count(app) == 0;
+    if empty {
         ui.set_item_index(F, "RadioGroup2", 2);
-        ui.set_checked(F, "CheckBox2", looped);
+        ui.set_checked(F, "CheckBox2", closed);
+    }
+    let closing = (closed && !empty).then(|| keys.first().map(|k| k.scene.clone())).flatten();
+    let mut keys = keys.into_iter();
+    if from_last && !empty {
+        if let (Some(first), Some(last)) = (keys.next(), app.anim.anim.keyframes.last_mut()) {
+            last.frames = first.frames;
+        }
     }
     for k in keys {
         app.anim.current = count(app) + 1;
@@ -517,6 +532,15 @@ pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, looped: bo
             last.frames = frames;
         }
     }
+    if let Some(sc) = closing {
+        // (its frames, to what comes after it: as the orbit's own)
+        app.anim.current = count(app) + 1;
+        let frames = app.anim.anim.keyframes.last().map(|k| k.frames);
+        insert_keyframe(app, ui, sc);
+        if let (Some(f), Some(last)) = (frames, app.anim.anim.keyframes.last_mut()) {
+            last.frames = f;
+        }
+    }
     if let Some(k) = app.anim.anim.keyframes.last() {
         ui.set_text(F, "Edit1", &k.frames.to_string());
     }
@@ -524,6 +548,11 @@ pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, looped: bo
     app.anim.current = count(app);
     paint_box(app, ui);
     calc_time(app, ui);
+}
+
+/// The last keyframe's parameters (for a template that starts there).
+pub fn last_keyframe_scene(app: &Mb3d) -> Option<Scene> {
+    app.anim.anim.keyframes.last().map(|k| k.scene.clone())
 }
 
 /// The main window's parameters as a keyframe.

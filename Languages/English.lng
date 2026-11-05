@@ -1254,6 +1254,8 @@ FlyThrough=Fly-through
 ;AnimTemplatesFrm.TemplateCmb.Items
 FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
 ;the program
+FlyingFrameOf=Flying: frame {} of {}
+;not used
 Fo=Fo.{}
 ;the program
 FogOffset=Fog offset
@@ -3312,6 +3314,8 @@ Start=Start:
 ;AnimationForm.Label7.Caption
 StartBatchRendering=Start batch rendering
 ;BatchForm1.Button1.Caption, MCForm.BatchRenderBtn.Caption; the program
+StartFrom=Start from
+;not used
 StartIndex=Start index:
 ;AnimationForm.Label6.Caption
 StartRendering=Start rendering
@@ -3522,12 +3526,16 @@ TheImageSizeChangedCalculateThe=the image size changed: calculate the image agai
 ;the program
 TheItsTrapModeDependsOn=The its.trap mode depends on the calculated option in the "Coloring" tab.
 ;LightAdjustForm.RadioGroup1.Hint
+TheLastKeyframe=The last keyframe
+;not used
 TheLastSessionCrashed=The last session crashed: {}. More in the Log window (the icon in the title bar).
 ;the program
 TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 ;the program
 TheMainEditorIsStillRendering=The main editor is still rendering. Please stop it first or wait until it is done.
 ;the program
+TheMainWindowSView=The main window's view
+;not used
 TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 ;Mand3DForm.RadioGroup1.Hint
 TheMiddleOfTheView=The middle of the view

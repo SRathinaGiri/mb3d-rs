@@ -361,25 +361,9 @@ impl Animation {
 /// around the view's vertical axis, `frames` frames from each to the next
 /// (as a loop the last leads back to the first).
 pub fn orbit_keyframes(sc: &Scene, steps: usize, frames: u32) -> Vec<Keyframe> {
-    let steps = steps.max(3);
-    let up = sc.vgrads[1];
-    let l = (up[0] * up[0] + up[1] * up[1] + up[2] * up[2]).sqrt().max(1e-300);
-    let u = up.map(|v| v / l);
-    (0..steps)
-        .map(|i| {
-            let a = 2.0 * PI * i as f64 / steps as f64;
-            let (s, c) = a.sin_cos();
-            // Rodrigues: each row of the view turned around `u`
-            let turn = |v: [f64; 3]| {
-                let d = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
-                let x = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-                [0, 1, 2].map(|k| v[k] * c + x[k] * s + u[k] * d * (1.0 - c))
-            };
-            let mut k = sc.clone();
-            k.vgrads = [turn(sc.vgrads[0]), turn(sc.vgrads[1]), turn(sc.vgrads[2])];
-            Keyframe::new(k, frames)
-        })
-        .collect()
+    // (one orbit for the Turntable button, the command line and the
+    // Animation templates)
+    crate::autopilot::orbit_keyframes_around(sc, steps, frames, [0.0; 3])
 }
 
 // ---------------------------------------------------------------------------

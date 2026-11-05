@@ -11,11 +11,33 @@
 //!   the view shows only sky or only fractal.
 //!
 //! The frames per second are the Animation window's (its video's).
+//!
+//! A template starts from the main window's view or from the animation's
+//! last keyframe. The fly-through is flown on a thread of its own (a long
+//! one took the window with it): a bar shows the frames flown, Stop ends
+//! the flight there and adds what was flown.
 
 use super::util::{pti, ptf};
 use super::{Mb3d, Ui};
 use crate::vcl::lang::{tr, trf};
 use crate::vcl::Event;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
+
+/// A fly-through being flown.
+#[derive(Default)]
+pub struct State {
+    flying: Option<Flying>,
+}
+
+struct Flying {
+    done: Arc<AtomicUsize>,
+    total: usize,
+    cancel: Arc<AtomicBool>,
+    result: Arc<Mutex<Option<Result<crate::autopilot::Flight, String>>>>,
+    from_last: bool,
+    asked: usize,
+}
 
 const F: &str = "AnimTemplatesFrm";
 const ANIM: &str = "AnimationForm";
@@ -31,6 +53,7 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "UntilCheck", get("AniTplUntil", "0") == "1");
     ui.set_text(F, "SpeedEdit", &get("AniTplSpeed", "4"));
     ui.set_text(F, "TurnEdit", &get("AniTplTurn", "2"));
+    ui.set_item_index(F, "StartCmb", get("AniTplStart", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     show_kind(ui);
     ui.show(F);
 }
@@ -40,6 +63,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
     let pivot = ui.item_index(F, "PivotCmb").to_string();
     let axis = ui.item_index(F, "AxisCmb").to_string();
     let until = if ui.checked(F, "UntilCheck") { "1" } else { "0" };
+    let start = ui.item_index(F, "StartCmb").to_string();
     for (k, v) in [
         ("AniTplKind", kind.as_str()),
         ("AniTplSecs", ui.text(F, "DurationEdit").trim()),
@@ -49,6 +73,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
         ("AniTplUntil", until),
         ("AniTplSpeed", ui.text(F, "SpeedEdit").trim()),
         ("AniTplTurn", ui.text(F, "TurnEdit").trim()),
+        ("AniTplStart", start.as_str()),
     ] {
         app.ini.set_extra(k, v);
     }
@@ -95,8 +120,23 @@ fn show_frames(ui: &mut Ui) {
     ui.set_caption(F, "FramesLabel", &text);
 }
 
+/// The view a template starts from: the last keyframe's (when chosen and
+/// there is one; true) or the main window's.
+fn start_scene(app: &mut Mb3d, ui: &mut Ui) -> (crate::scene::Scene, bool) {
+    if ui.item_index(F, "StartCmb") == 1 {
+        if let Some(sc) = super::anim_form::last_keyframe_scene(app) {
+            return (sc, true);
+        }
+    }
+    app.make_scene(ui);
+    (app.scene.clone(), false)
+}
+
 /// Makes the template's keyframes and adds them to the Animation window.
 fn add(app: &mut Mb3d, ui: &mut Ui) {
+    if app.anim_tpl.flying.is_some() {
+        return;
+    }
     let fps = fps(ui);
     let until = !is_orbit(ui) && ui.checked(F, "UntilCheck");
     let secs = if until { Some(120.0) } else { seconds(ui) };
@@ -105,8 +145,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
         return;
     };
     save(app, ui);
-    app.make_scene(ui);
-    let sc = app.scene.clone();
+    let (sc, from_last) = start_scene(app, ui);
     if is_orbit(ui) {
         let steps = pti(&ui.text(F, "StepsEdit")).clamp(3, 360) as usize;
         let pivot = if ui.item_index(F, "PivotCmb") == 1 { [0.0; 3] } else { crate::autopilot::turntable_pivot(&sc) };
@@ -116,7 +155,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
         for (k, f) in keys.iter_mut().zip(crate::autopilot::spread_frames(total, steps)) {
             k.frames = f;
         }
-        super::anim_form::add_template(app, ui, keys, true);
+        super::anim_form::add_template(app, ui, keys, true, from_last);
     } else {
         let speed = ptf(&ui.text(F, "SpeedEdit"));
         let turn = ptf(&ui.text(F, "TurnEdit"));
@@ -128,24 +167,90 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             until_view: until,
             ..Default::default()
         };
-        match crate::autopilot::fly_through(&sc, &fp, &|_, _| {}, &|| false) {
-            Ok(fl) => {
-                use crate::autopilot::FlightEnd;
-                let why = match fl.end {
-                    FlightEnd::Done => None,
-                    FlightEnd::DeadEnd => Some(tr("@MB:NoWayAheadWasLeft")),
-                    FlightEnd::Precision => Some(tr("@MB:TheStepsCameToTheLimit")),
-                    FlightEnd::LeftFractal => Some(tr("@MB:TheCameraLeftTheFractal")),
-                    FlightEnd::OnlySky => Some(tr("@MB:TheViewShowsOnlySky")),
-                    FlightEnd::OnlyFractal => Some(tr("@MB:TheViewIsFilledWithThe")),
-                };
-                super::anim_form::add_template(app, ui, fl.keyframes, false);
-                if let Some(w) = why {
-                    app.message(ui, &trf("@MB:FlyThroughTheFlightEndedAfter", &[&fl.frames, &fp.frames, &w]));
+        let fl = Flying {
+            done: Arc::new(AtomicUsize::new(0)),
+            total: fp.frames,
+            cancel: Arc::new(AtomicBool::new(false)),
+            result: Arc::new(Mutex::new(None)),
+            from_last,
+            asked: fp.frames,
+        };
+        let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
+        std::thread::spawn(move || {
+            let w = waker.clone();
+            let progress = move |d: usize, _: usize| {
+                // (the window shown anew some 25 times a flight)
+                let old = done.swap(d, Ordering::Relaxed);
+                if let Some(w) = &w {
+                    if d * 25 / fp.frames.max(1) != old * 25 / fp.frames.max(1) {
+                        w.wake();
+                    }
                 }
+            };
+            let r = crate::autopilot::fly_through(&sc, &fp, &progress, &|| cancel.load(Ordering::Relaxed));
+            *result.lock().unwrap() = Some(r);
+            if let Some(w) = waker {
+                w.wake();
             }
-            Err(e) => ui.show_message(&trf("@MB:TheFlyThroughCannotStartHere", &[&e])),
+        });
+        app.anim_tpl.flying = Some(fl);
+        show_flying(app, ui);
+    }
+}
+
+/// The controls while a flight is flown (Add becomes Stop).
+fn show_flying(app: &Mb3d, ui: &mut Ui) {
+    let fl = app.anim_tpl.flying.as_ref();
+    ui.set_visible(F, "FlightBar", fl.is_some());
+    ui.set_caption(F, "AddBtn", &tr(if fl.is_some() { "@MB:Stop" } else { "@MB:AddTheKeyframes" }));
+    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb"] {
+        ui.set_enabled(F, c, fl.is_none());
+    }
+    match fl {
+        Some(fl) => {
+            let d = fl.done.load(Ordering::Relaxed);
+            let c = ui.cm(F, "FlightBar");
+            c.max = fl.total.max(1) as i64;
+            c.position = d.min(fl.total) as i64;
+            ui.set_caption(F, "FlightLabel", &trf("@MB:FlyingFrameOf", &[&d, &fl.total]));
         }
+        None => {
+            ui.set_caption(F, "FlightLabel", "");
+            let until = !is_orbit(ui) && ui.checked(F, "UntilCheck");
+            ui.set_enabled(F, "DurationEdit", !until);
+        }
+    }
+}
+
+/// The flight's progress, and its keyframes added when it has ended.
+pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
+    let Some(fl) = &app.anim_tpl.flying else { return };
+    let r = fl.result.lock().unwrap().take();
+    let Some(r) = r else {
+        show_flying(app, ui);
+        return;
+    };
+    let (from_last, asked) = (fl.from_last, fl.asked);
+    app.anim_tpl.flying = None;
+    show_flying(app, ui);
+    match r {
+        Ok(fl) => {
+            use crate::autopilot::FlightEnd;
+            let why = match fl.end {
+                FlightEnd::Done => None,
+                FlightEnd::DeadEnd => Some(tr("@MB:NoWayAheadWasLeft")),
+                FlightEnd::Precision => Some(tr("@MB:TheStepsCameToTheLimit")),
+                FlightEnd::LeftFractal => Some(tr("@MB:TheCameraLeftTheFractal")),
+                FlightEnd::OnlySky => Some(tr("@MB:TheViewShowsOnlySky")),
+                FlightEnd::OnlyFractal => Some(tr("@MB:TheViewIsFilledWithThe")),
+            };
+            let flown = fl.frames;
+            super::anim_form::add_template(app, ui, fl.keyframes, false, from_last);
+            if let Some(w) = why {
+                app.message(ui, &trf("@MB:FlyThroughTheFlightEndedAfter", &[&flown, &asked, &w]));
+            }
+        }
+        Err(e) => ui.show_message(&trf("@MB:TheFlyThroughCannotStartHere", &[&e])),
     }
 }
 
@@ -154,8 +259,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "FormShow" => show_kind(ui),
         "TemplateCmbChange" | "UntilCheckClick" => show_kind(ui),
         "DurationEditChange" => show_frames(ui),
-        "AddBtnClick" => add(app, ui),
+        "AddBtnClick" => match &app.anim_tpl.flying {
+            // Stop: the flight ends at its next frame, what was flown is added
+            Some(fl) => fl.cancel.store(true, Ordering::Relaxed),
+            None => add(app, ui),
+        },
         "CloseBtnClick" => {
+            if let Some(fl) = &app.anim_tpl.flying {
+                fl.cancel.store(true, Ordering::Relaxed);
+            }
             save(app, ui);
             ui.hide(F);
         }

@@ -68,6 +68,7 @@ pub struct Mb3d {
     pub mapseq: small_forms::MapSeqState,
     pub navi: navi_form::State,
     pub anim: anim_form::State,
+    pub anim_tpl: anim_templates_form::State,
     pub palette: palette_form::State,
     pub batch: tools_forms::BatchState,
     pub tiling: tools_forms::TilingState,
@@ -279,6 +280,7 @@ impl App for Mb3d {
             navi_form::idle(self, ui);
         }
         anim_form::idle(self, ui);
+        anim_templates_form::idle(self, ui);
         tools_forms::tiling_idle(self, ui);
         mc_form::idle(self, ui);
         voxel_form::idle(self, ui);
@@ -398,6 +400,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         mapseq: small_forms::MapSeqState::default(),
         navi: navi_form::State::default(),
         anim: anim_form::State::default(),
+        anim_tpl: anim_templates_form::State::default(),
         palette: palette_form::State::default(),
         batch: tools_forms::BatchState::default(),
         tiling: tools_forms::TilingState::default(),
