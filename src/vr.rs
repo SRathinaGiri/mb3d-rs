@@ -263,6 +263,29 @@ fn spherical_boxes(st: Stereo) -> Vec<u8> {
     v
 }
 
+/// The uuid of the Spherical Video V1 metadata box.
+const SPHERICAL_V1_UUID: [u8; 16] = [0xff, 0xcc, 0x82, 0x63, 0xf8, 0x55, 0x4a, 0x93, 0x88, 0x14, 0x58, 0x7a, 0x02, 0x52, 0x1f, 0xdd];
+
+/// The Spherical Video V1 box of an equirectangular video in the layout
+/// `st` (Google's spherical video RFC, the XML of its injector).
+fn spherical_v1_box(st: Stereo) -> Vec<u8> {
+    let stereo = match st {
+        Stereo::Mono => String::new(),
+        Stereo::TopBottom => "<GSpherical:StereoMode>top-bottom</GSpherical:StereoMode>".to_string(),
+        Stereo::LeftRight => "<GSpherical:StereoMode>left-right</GSpherical:StereoMode>".to_string(),
+    };
+    let xml = format!(
+        "<?xml version=\"1.0\"?><rdf:SphericalVideo\nxmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\nxmlns:GSpherical=\"http://ns.google.com/videos/1.0/spherical/\">\
+<GSpherical:Spherical>true</GSpherical:Spherical>\
+<GSpherical:Stitched>true</GSpherical:Stitched>\
+<GSpherical:StitchingSoftware>Spherical Metadata Tool</GSpherical:StitchingSoftware>\
+<GSpherical:ProjectionType>equirectangular</GSpherical:ProjectionType>{stereo}</rdf:SphericalVideo>"
+    );
+    let mut body = SPHERICAL_V1_UUID.to_vec();
+    body.extend_from_slice(xml.as_bytes());
+    make_box(b"uuid", &body)
+}
+
 const VIDEO_ENTRIES: [&[u8; 4]; 7] = [b"avc1", b"avc3", b"hvc1", b"hev1", b"mp4v", b"vp09", b"av01"];
 /// The sample entry's fields before its boxes (VisualSampleEntry).
 const VISUAL_ENTRY_FIELDS: usize = 78;
@@ -276,7 +299,28 @@ fn rewrite(b: &[u8], st: Stereo, delta: i64, found: &mut usize) -> Result<Vec<u8
     for (ty, s, hl, e) in boxes(b)? {
         let body = &b[s + hl..e];
         match &ty {
-            b"moov" | b"trak" | b"mdia" | b"minf" | b"stbl" => {
+            b"trak" => {
+                // a video track also gets the Spherical Video V1 metadata
+                // (an XML uuid box in the track: what Google's Spatial Media
+                // Metadata Injector writes; players such as Facebook's may only look
+                // for this one)
+                let before = *found;
+                let inner = rewrite(body, st, delta, found)?;
+                if *found > before {
+                    let mut t = Vec::with_capacity(inner.len() + 600);
+                    for (cty, cs, chl, ce) in boxes(&inner)? {
+                        let v1 = &cty == b"uuid" && inner.get(cs + chl..cs + chl + 16) == Some(&SPHERICAL_V1_UUID[..]);
+                        if !v1 {
+                            t.extend_from_slice(&inner[cs..ce]);
+                        }
+                    }
+                    t.extend(spherical_v1_box(st));
+                    out.extend(make_box(&ty, &t));
+                } else {
+                    out.extend(make_box(&ty, &inner));
+                }
+            }
+            b"moov" | b"mdia" | b"minf" | b"stbl" => {
                 out.extend(make_box(&ty, &rewrite(body, st, delta, found)?));
             }
             b"stsd" => {
@@ -373,7 +417,7 @@ pub fn mark_file(path: &Path, out: &Path, st: Stereo) -> Result<String, String> 
         }
         (jpeg_with_pano(&data, im.width, im.height)?, "360 photo (Photo Sphere XMP)".to_string())
     } else {
-        (inject_spherical_mp4(&data, st)?, format!("360 video, {} (Spherical Video V2)", match st {
+        (inject_spherical_mp4(&data, st)?, format!("360 video, {} (Spherical Video V1 and V2)", match st {
             Stereo::Mono => "mono",
             Stereo::TopBottom => "stereo top-bottom",
             Stereo::LeftRight => "stereo left-right",
@@ -427,6 +471,9 @@ mod tests {
             assert_eq!(first_chunk(&f).1, 7);
             let g = inject_spherical_mp4(&f, Stereo::TopBottom).unwrap();
             assert!(g.windows(4).any(|w| w == b"sv3d") && g.windows(4).any(|w| w == b"equi"));
+            // and the V1 XML in the track, once
+            assert_eq!(g.windows(16).filter(|w| *w == SPHERICAL_V1_UUID).count(), 1);
+            assert!(String::from_utf8_lossy(&g).contains("<GSpherical:StereoMode>top-bottom</GSpherical:StereoMode>"));
             let i = g.windows(4).position(|w| w == b"st3d").unwrap();
             assert_eq!(g[i + 8], 1, "top-bottom");
             // every size still adds up, and the chunk still finds its data
@@ -435,9 +482,10 @@ mod tests {
             assert_eq!(found, 1);
             assert_eq!(first_chunk(&g).1, 7, "moov first: {moov_first}");
             // a second time replaces, does not add
-            let h = inject_spherical_mp4(&g, Stereo::Mono).unwrap();
+            let h = inject_spherical_mp4(&g, Stereo::TopBottom).unwrap();
             assert_eq!(h.len(), g.len());
             assert_eq!(h.windows(4).filter(|w| w == b"sv3d").count(), 1);
+            assert_eq!(h.windows(16).filter(|w| *w == SPHERICAL_V1_UUID).count(), 1);
             assert_eq!(first_chunk(&h).1, 7);
         }
     }
