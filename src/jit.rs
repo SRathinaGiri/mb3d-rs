@@ -1519,6 +1519,15 @@ fn binary(op: &str, a: E, ta: Ty, b: E, tb: Ty, line: usize) -> Result<(E, Ty), 
     }
 }
 
+/// `SinCos`: `f64::sin_cos` in one function the closures and the compiled
+/// formulas (`jit_pascal`) both call, so that they get the same bits (LLVM
+/// may turn it into one call computing both, as on macOS, whose results
+/// can differ from `sin` and `cos` alone in the last bit).
+#[inline(never)]
+pub(crate) fn sin_cos(x: f64) -> (f64, f64) {
+    x.sin_cos()
+}
+
 /// Math.IntPower (repeated squaring; negative exponents give the reciprocal).
 pub fn int_power(base: f64, exponent: i32) -> f64 {
     let mut y = exponent.unsigned_abs();
@@ -1936,7 +1945,7 @@ fn lower_s(s: &S) -> St {
             let a = lower_e(a);
             let (ss, sc) = (setter(*ps, *ts), setter(*pc, *tc));
             Box::new(move |e| {
-                let (s, c) = a(e).sin_cos();
+                let (s, c) = sin_cos(a(e));
                 ss(e, s);
                 sc(e, c);
                 NORMAL

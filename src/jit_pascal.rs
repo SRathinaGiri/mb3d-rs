@@ -113,6 +113,17 @@ fn f2_addr(f: F2) -> *const u8 {
     }
 }
 
+/// SinCos as the closures run it (`jit::sin_cos`: on macOS one
+/// `__sincos_stret`, which can differ from `sin` alone in the last bit),
+/// one half each
+extern "C" fn sincos_sin(x: f64) -> f64 {
+    crate::jit::sin_cos(x).0
+}
+
+extern "C" fn sincos_cos(x: f64) -> f64 {
+    crate::jit::sin_cos(x).1
+}
+
 extern "C" fn int_power_fn(a: f64, n: i32) -> f64 {
     crate::jit::int_power(a, n)
 }
@@ -706,11 +717,10 @@ impl<F: Fields> Gen<'_, '_, F> {
                 self.store(*p, *ty, x);
             }
             S::SinCos(a, (ps, ts), (pc, tc)) => {
-                // f64::sin_cos is (sin, cos)
                 let x = self.e(a);
                 let s1 = self.sig1;
-                let sn = self.call1(f1_addr(F1::Sin), s1, &[x]);
-                let cs = self.call1(f1_addr(F1::Cos), s1, &[x]);
+                let sn = self.call1(sincos_sin as *const u8, s1, &[x]);
+                let cs = self.call1(sincos_cos as *const u8, s1, &[x]);
                 self.store(*ps, *ts, sn);
                 self.store(*pc, *tc, cs);
             }
