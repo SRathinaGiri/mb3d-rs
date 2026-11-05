@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.2.99" date="2026-11-05">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.99</url>
+      <description>
+        <p>Faster formulas. The formulas written in Pascal (MB3D's JIT formulas, 72 of them among MB3D's and the community's) are now compiled to machine code: three to four times faster on the processor, with the same results, and most of them now also run on the graphics card. The community's formulas in machine code run as compiled code too instead of being interpreted (up to 18 times faster). Scenes slightly above the single precision limit stay on the graphics card's faster calculation. A fix: the program crashed when the Save window was pulled to a very small size.</p>
+      </description>
+    </release>
     <release version="0.2.98" date="2026-11-04">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.98</url>
       <description>
