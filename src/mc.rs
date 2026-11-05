@@ -482,8 +482,9 @@ pub struct McReq {
     /// the view vector of the sample (the volumetric light is collected
     /// along it, as `DoDynFog` does)
     pub vfov: Vec3,
-    /// the ground plane is left out (rays under transparent water; on the
-    /// CPU only, `reflect::water_on_cpu`)
+    /// the ground plane is left out (rays under transparent water, on the
+    /// CPU only, `reflect::water_on_cpu`; mirror rays rising from the
+    /// water, `water_layer::leaves_water`)
     pub no_ground: bool,
 }
 
@@ -1140,6 +1141,10 @@ struct Tracer<'a, 'c> {
     /// a water hit of its march (far away, where the march's stop distance
     /// is larger than the waves) is the open air
     sky_ray: bool,
+    /// where the primary ray meets the water, traced from the eye: its
+    /// march's water hit is put there (far away the march stops above the
+    /// waves, and its mirror ray would end on them)
+    water_pt: Option<Vec3>,
     /// the water's own light where the refracted ray left the surface
     water_light: S3,
 }
@@ -1210,6 +1215,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
             pass_nr: 0,
             under_water: false,
             sky_ray: false,
+            water_pt: None,
             water_light: [0.0; 3],
         }
     }
@@ -1245,7 +1251,9 @@ impl<'a, 'c> Tracer<'a, 'c> {
     /// A march by the CPU's marcher, or by the card (waits for the batch)
     async fn march(&mut self, mut r: McReq) -> McRes {
         r.vfov = self.vfov;
-        r.no_ground = self.under_water;
+        // (under transparent water; or a mirror ray rising from the water,
+        // water_layer)
+        r.no_ground = self.under_water || crate::water_layer::leaves_water(self.c.p, &r.pos, &r.dir);
         if let Some(m) = self.cpu {
             return m.borrow_mut().run(&r);
         }
@@ -1904,9 +1912,21 @@ impl<'a, 'c> Tracer<'a, 'c> {
         let zzplus = dot(&dir, &self.vfov) / (sw * sw);
         let seg_start = self.pos;
         let mut h = self.march(McReq { kind: 0, pos: self.pos, dir, zz, zz2, zzplus, len: max_l, seed: self.seed, inside: self.inside, probe, ..Default::default() }).await;
-        if rit1 && self.sky_ray && h.kind == 1 && h.otrap == crate::gbuffer::GROUND {
-            // (the march stopped above far waves the ray does not meet)
-            h.kind = 0;
+        if rit1 && h.kind == 1 && h.otrap == crate::gbuffer::GROUND {
+            if self.sky_ray {
+                // (the march stopped above far waves the ray does not meet)
+                h.kind = 0;
+            } else if let (Some(pt), Some(g)) = (self.water_pt, p.ground.as_ref()) {
+                // the water where the ray meets it, its normal there (a
+                // little above it, as the normal render's water_layer)
+                let mut n = g.normal(&pt);
+                if dot(&n, &dir) > 0.0 {
+                    n = scale(n, -1.0);
+                }
+                let off = (2.0 * p.de_stop as f64 * sw).min(2.0 * g.wave_height.max(1e-9));
+                h.pos = add(pt, scale(g.normal(&pt), off));
+                h.normals = n;
+            }
         }
         self.seed = h.seed;
         self.inside = h.inside;
@@ -2453,12 +2473,15 @@ impl<'a, 'c> Tracer<'a, 'c> {
         // when the water lies just behind the start plane, closer to it than
         // the march's stop distance (its start check would take the start
         // for one in the water, a cut surface)
-        self.sky_ray = false;
+        (self.sky_ray, self.water_pt) = (false, None);
         if let (Some(centre), Some(g), 0) = (self.c.water_centre.as_ref(), p.ground.as_ref(), p.cut_options) {
             let t0 = crate::calc::Marcher::eye_t(&self.pos, &vf, centre);
             let margin = 4.0 * p.de_stop as f64 * sw;
             if t0.is_finite() && t0 <= 0.0 && g.depth(&add(self.pos, scale(vf, t0))) < 0.0 {
-                self.sky_ray = crate::calc::water_hit_ray(p, &self.pos, &vf, g, t0, f64::INFINITY).is_none();
+                match crate::calc::water_hit_ray(p, &self.pos, &vf, g, t0, f64::INFINITY) {
+                    Some(t) => self.water_pt = Some(add(self.pos, scale(vf, t))),
+                    None => self.sky_ray = true,
+                }
             }
             if t0.is_finite() && t0 < 0.0 {
                 let base = match crate::calc::water_hit_ray(p, &self.pos, &vf, g, t0, 0.0) {

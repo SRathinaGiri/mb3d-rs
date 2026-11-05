@@ -2313,6 +2313,9 @@ pub struct ReflectTask {
     /// the quality of the ambient occlusion at the hit (0..3, `deao_1pos`;
     /// the bounces use lower ones)
     pub ao_q: u8,
+    /// the ground plane is left out (a mirror ray rising from the water,
+    /// water_layer)
+    pub no_ground: bool,
 }
 
 /// The result of a task: the G-buffer value of the hit (normal, depth,
@@ -2448,7 +2451,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
             }
             w[6] = t.zz.to_bits();
             w[7] = t.pixel;
-            w[23] = t.inside as u32 | (t.ao_q as u32) << 8;
+            w[23] = t.inside as u32 | (t.ao_q as u32) << 8 | (t.no_ground as u32) << 16;
             w
         })
         .collect();
@@ -2943,7 +2946,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, seca
             w[8] = (t.zzplus as f32).to_bits();
             w[9] = (t.len as f32).to_bits();
             w[10] = t.seed as u32;
-            w[11] = t.kind as u32 | (t.inside as u32) << 2 | (t.probe as u32) << 3 | (t.trans as u32) << 4;
+            w[11] = t.kind as u32 | (t.inside as u32) << 2 | (t.probe as u32) << 3 | (t.trans as u32) << 4 | (t.no_ground as u32) << 5;
             w[12] = t.ms_de_stop.to_bits();
             for k in 0..3 {
                 w[20 + k] = (t.vfov[k] as f32).to_bits();
@@ -3869,7 +3872,7 @@ mod tests {
         // set before every pixel or submission, or the debug outputs; the
         // cone march's block values are computed from the block at every
         // entry (also when resuming)
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf", "cone_a", "cone_slope", "cone_t0", "cone_c0", "cone_i"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "ray_no_ground", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf", "cone_a", "cone_slope", "cone_t0", "cone_c0", "cone_i"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();

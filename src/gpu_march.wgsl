@@ -1589,8 +1589,12 @@ fn calc_nangles_for_cut(plane: u32) {
     }
 }
 
+// the ray of the task leaves out the ground plane (a mirror ray rising from
+// the water: water_layer)
+var<private> ray_no_ground: bool;
+
 fn ground_on() -> bool {
-    return HAS_GROUND && (P[GROUND_OPT] & 1u) != 0u;
+    return HAS_GROUND && (P[GROUND_OPT] & 1u) != 0u && !ray_no_ground;
 }
 
 // Ground::wave without the height (scene::WAVES; the code between the
@@ -4514,6 +4518,7 @@ fn reflect_task(idx: u32) {
     r_rec = o;
     r_task_inside = (OUT[o + 23u] & 1u) != 0u;
     r_task_q = (OUT[o + 23u] >> 8u) & 0xFFu;
+    ray_no_ground = (OUT[o + 23u] & 0x10000u) != 0u;
     r_keep = false;
     r_task_origin = task_origin(o);
     r_task_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
@@ -4567,6 +4572,7 @@ fn mc_task(idx: u32) {
     mc_t_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
     mc_t = vec4<R>(R(bitcast<f32>(OUT[o + 6u])), R(bitcast<f32>(OUT[o + 7u])), R(bitcast<f32>(OUT[o + 8u])), R(bitcast<f32>(OUT[o + 9u])));
     mc_t_flags = OUT[o + 11u];
+    ray_no_ground = (mc_t_flags & 32u) != 0u;
     mc_t_stop = R(bitcast<f32>(OUT[o + 12u]));
     mc_t_vf = vec3<R>(R(bitcast<f32>(OUT[o + 20u])), R(bitcast<f32>(OUT[o + 21u])), R(bitcast<f32>(OUT[o + 22u])));
     seed = bitcast<i32>(OUT[o + 10u]);

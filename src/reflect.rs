@@ -281,9 +281,6 @@ struct SrTracer<'a, 'c> {
     dbg: bool,
     /// set: give up the ray being marched (`march_until`)
     stop: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
-    /// the pixel is water from the eye (water_layer): its first reflected
-    /// ray, when it rises, does not stop on the water again
-    water_ray: bool,
 }
 
 /// (specular colour, alpha, diffuse colour) of a surface for the next ray
@@ -1392,10 +1389,7 @@ impl<'a, 'c> SrTracer<'a, 'c> {
     /// [`SrTracer::march`] that gives up (None) when the tracer's `stop`
     /// flag is set (checked every 64 steps of the ray and of its shadow ray).
     fn march_until(&mut self, r: &RayReq) -> Option<RayHit> {
-        // a ray rising from the water (a mirror ray, of any bounce): not
-        // stopped by the water it leaves, as a ray tracer's (water_layer;
-        // it still meets the fractal); one falling meets the next wave
-        let skip = crate::water_layer::wanted(self.c.p) && self.c.p.ground.as_ref().is_some_and(|g| dot(&r.dir, &g.up()) > 0.0 && g.height(&r.origin) < 4.0 * g.wave_height * crate::scene::WAVE_MAX + 1e-9);
+        let skip = crate::water_layer::leaves_water(self.c.p, &r.origin, &r.dir);
         let nog = self.m.no_ground;
         if skip {
             self.m.no_ground = true;
@@ -1641,7 +1635,6 @@ impl<'a, 'c> SrTracer<'a, 'c> {
         }
         self.sr_si = *si;
         self.guard = 0;
-        self.water_ray = false;
         let inside = if p.in_and_outside && si.otrap & 0x8000 != 0 { false } else { p.inside_rendering };
         self.m.inside = inside;
         self.m.calc_inside = inside;
@@ -1717,7 +1710,6 @@ impl<'a, 'c> SrTracer<'a, 'c> {
             add_weight(&mut self.m.it.c, &vf, self.m.mzz);
             self.update_de_stop(self.m.mzz);
         }
-        self.water_ray = layer;
         let si = &si_w;
         if exact.is_some() {
             // (its point is set)
@@ -2049,7 +2041,6 @@ fn reflections_cpu<S: Sample>(
                         guard: 0,
                         dbg: false,
                         stop: None,
-                        water_ray: false,
                     };
                     let dp = debug_pixel();
                     for x in 0..wu {
@@ -2093,9 +2084,6 @@ struct RPix {
     stack: Vec<Frame>,
     /// the march of the ray the last step asked for
     hit: Option<RayHit>,
-    /// water from the eye (water_layer): its rays are marched on the CPU
-    /// (`SrTracer::water_ray`)
-    water: bool,
 }
 
 /// `reflections` with the rays on the graphics card: every bounce of all
@@ -2184,7 +2172,6 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
         guard: 0,
         dbg: false,
         stop: None,
-        water_ray: false,
     };
     let dbg_i = debug_pixel().map(|(x, y)| ((y - y0) * w + (x - x0)) as usize);
     // the surfaces of the object pixels
@@ -2272,7 +2259,6 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                         guard: 0,
                         stack: vec![Frame::new(zz, vfov, sc3(sh.result, ctx.sr_light_amount), sd, 1)],
                         hit: None,
-                        water: false,
                     });
                 }
                 // pixels on a cutting plane: no surface to refine, set up here
@@ -2290,7 +2276,6 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                         part[i - lo] = Some(RPix {
                             // (water from the eye: its entry as start_pixel made it)
                             si0: t.sr_si,
-                            water: t.water_ray,
                             t_amb: t.t_amb,
                             pos: t.m.it.c,
                             normal: t.normal,
@@ -2323,7 +2308,7 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
     let march_gpu = |list: &[&(usize, RayReq)], share: Option<&crate::gpu::RaySharing>| -> Result<(Vec<RayHit>, usize, Vec<usize>), String> {
         let tasks: Vec<ReflectTask> = list
             .iter()
-            .map(|(i, r)| ReflectTask { origin: r.origin, dir: s3(&r.dir), zz: r.zz as f32, pixel: *i as u32, inside: r.inside, ao_q: rit_q(r.rit) })
+            .map(|(i, r)| ReflectTask { origin: r.origin, dir: s3(&r.dir), zz: r.zz as f32, pixel: *i as u32, inside: r.inside, ao_q: rit_q(r.rit), no_ground: crate::water_layer::leaves_water(p, &r.origin, &r.dir) })
             .collect();
         let opts = ReflectOpts { surface: false, lights: lights.clone(), soft_radius, hs_mul, ao: ao.map(|(m, f)| (0, m, f)), far_fog };
         let (hits, n_card, unfinished) = crate::gpu::reflect_batch(p, &tasks, &opts, share, cancel)?;
@@ -2457,19 +2442,11 @@ fn reflections_gpu<S: Sample>(sc: &Scene, p: &CalcParams, gbuf: &[SiLight], rgb:
                         t.scale_amb_diff_down = q.scale_amb_diff_down;
                         t.guard = q.guard;
                         t.dbg = dbg_i == Some(i);
-                        t.water_ray = q.water;
                         // the rays of a pixel on a cutting plane end in the open
-                        // air (`march` does not step): no need for the card; the
-                        // water's are marched here too (the card does not leave
-                        // out the water for a mirror ray, `march_until`)
-                        let on_cut = q.si0.si_gradient > 32767 || q.water;
+                        // air (`march` does not step): no need for the card
+                        let on_cut = q.si0.si_gradient > 32767;
                         if on_cut {
-                            let pos = t.m.it.c;
                             t.pixel_marcher(x0 + (i % wu) as i32, y0 + (i / wu) as i32);
-                            if q.water {
-                                // (its view vector, not its start)
-                                t.m.it.c = pos;
-                            }
                         }
                         let mut hit = q.hit.take();
                         while let Some(r) = t.step(&mut q.stack, hit) {
