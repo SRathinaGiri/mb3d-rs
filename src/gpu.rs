@@ -654,6 +654,15 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 row[6] = 9;
                 slotx[n] = [*power as u32, (*z_mul as f32).to_bits(), (*fold as f32).to_bits(), 0, 0, 0, 0, 0];
             }
+            Formula::Custom(c) if c.def.jit.is_some() => {
+                // a Pascal formula (jit_wgsl): its option values in the constants
+                let prog = c.def.jit.as_ref().expect("checked");
+                let (wf, words) = crate::jit_wgsl::emit(prog, &c.def, &c.values, &format!("fm{n}"), dbl, &Default::default()).map_err(|e| format!("{}: {e}", c.name()))?;
+                row[2] = cst.len() as u32;
+                cst.extend(words);
+                row[6] |= 2;
+                wfs.push((n, wf));
+            }
             Formula::Custom(c) if c.def.jit.is_none() => {
                 let m = p.machine.as_ref().ok_or("no formula machine")?;
                 let prog = m.prog(crate::custom::code_addr(n)).ok_or_else(|| format!("{}: not compiled", c.name()))?;
@@ -689,6 +698,12 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     }
     for (n, w) in wfs.iter_mut() {
         if w.record.iter().any(|(c, t)| unified[c] != *t) {
+            if let Formula::Custom(c) = &p.slots[*n].formula {
+                if let Some(prog) = &c.def.jit {
+                    *w = crate::jit_wgsl::emit(prog, &c.def, &c.values, &format!("fm{n}"), dbl, &unified).map_err(|e| format!("{}: {e}", c.name()))?.0;
+                    continue;
+                }
+            }
             let prog = p.machine.as_ref().and_then(|m| m.prog(crate::custom::code_addr(*n))).ok_or("not compiled")?;
             let difs = w.code.contains(&format!("fn fd{n}("));
             let name = if difs { format!("fd{n}") } else { format!("fm{n}") };
@@ -729,6 +744,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     }
     let mut g = String::new();
     g.push_str(&prelude(dbl));
+    if p.slots.iter().any(|s| matches!(&s.formula, Formula::Custom(c) if c.def.jit.is_some())) {
+        g.push_str(&crate::jit_wgsl::prelude(dbl));
+    }
     g.push_str(&globals);
     // init_record, marshal_in, marshal_out
     let has = |c: u32| ty.contains_key(&c);

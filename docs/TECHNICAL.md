@@ -422,7 +422,7 @@ and kept in the original evaluation order.
 | `splat.rs` | (new) | Gaussian splat export: views around the middle or the camera, a splat per object pixel, the merge by patches, spherical harmonics by a ridge fit, the 3DGS PLY writer |
 | `formulas.rs` (Aexion C) | formulas.pas | the internal formula Aexion C (`HybridAexionC`, translated from x87 assembler) with all its modes |
 | `mutagen.rs` | mutagen/MutaGen.pas, MutaGenGUI.pas, PreviewRenderer.pas, FormulaNames.pas | mutation operators, probing (Sobel and difference coverage), the 15-member tree and its layout, formula categories |
-| `jit.rs` | paxCompiler (JIT formulas), formulas/JIT*.m3f | a compiler for the Delphi subset of `[SOURCE]` formulas: preprocessor (options and constants), Delphi typing, `Math`/`System` functions, compiled to closures over the iteration state |
+| `jit.rs` | paxCompiler (JIT formulas), formulas/JIT*.m3f | a compiler for the Delphi subset of `[SOURCE]` formulas: preprocessor (options and constants), Delphi typing, `Math`/`System` functions, parsed into a typed tree, run as closures over the iteration state; `jit_pascal.rs` compiles the tree with Cranelift, `jit_wgsl.rs` translates it for the graphics card |
 | `iteration.rs` (interpolation) | formulas.pas | `doInterpolHybridPas`, `doInterpolHybridPasDE` and the 4D variants; `doHybrid4DDEPas` |
 | `calc.rs` (2D, colour on iteration) | CalcThread2D.pas, Calc.pas | `T2DcalcThread` (plane at Z start, middle or end), `doColorOnIt` |
 | `scene.rs`, `render.rs` (stereo) | HeaderTrafos.pas (`StereoChange`, `CalcXoff`) | the stereo eyes: shifted middle and off-axis view centre; left and right eye images combined (an addition) |
@@ -587,7 +587,28 @@ maps through `PMapFunc` (the oracle has no maps; they work in the renderer).
 Formulas written in Pascal (`[SOURCE]`, compiled by paxCompiler in MB3D) are
 compiled by `jit.rs` from the Delphi subset they use; all 40 of the MB3D
 repository compile, and the tests compare two of them with equivalent
-formulas.
+formulas. The compiler parses a formula into a typed tree, and three code
+generators work from it:
+
+* the closures (`jit.rs`): the reference, used without the JIT;
+* Cranelift (`jit_pascal.rs`): machine code for a scene's option values.
+  The options, the `[CONSTANTS]` and the locals a formula never assigns
+  become constants, and what depends only on them is computed at compile
+  time with the closures themselves, so a branch on an option disappears.
+  The code keeps the closures' representation (every value an f64,
+  ordinals converted to i64 for their operations, saturating and wrapping
+  as the closures do), so its results are the closures' bit for bit apart
+  from NaN payloads (`examples/pascalcheck.rs --jit` for all 72 Pascal
+  formulas of MB3D's and the community's folders; a test does the same).
+  A formula runs as a function of its own, or inline in the compiled
+  hybrid loop (`clif_jit::compile_hybrid`), also mixed with machine-code
+  formulas. CPU renders: JIT_RealPower 3.2 times, JIT_EM_Fld_StandartBulb
+  4.4 times faster than the closures, as fast as the built-in Real Power;
+* WGSL (`jit_wgsl.rs`): a shader function with the interface of the lifted
+  machine-code formulas (the record cells, the option values in the
+  constants buffer so the shader text does not change with them), in single
+  or double precision. `examples/pascalgpu.rs [--dbl]` runs every formula
+  on the card against the closures: all 72 agree in both precisions.
 
 Formulas are looked up in `M3Formulas` next to the program, and also in
 `--formulas DIR`, `$MB3D_FORMULAS` and `M3Formulas` in the current folder.

@@ -241,3 +241,43 @@ begin
 end;
 [END]
 "#;
+
+/// The compiled hybrid loop (`clif_jit::compile_hybrid`) with Pascal
+/// formulas inline, alone and between built-in ones, gives the results of
+/// the formulas called one by one (NaN payloads aside).
+#[cfg(jit)]
+#[test]
+fn the_compiled_hybrid_loop_with_pascal_formulas_gives_the_formulas_results() {
+    mb3d::formulas::add_formula_dir(PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/formulas")));
+    let base = Scene::preset("Integer Power").unwrap().to_text();
+    let head: String = base.split("\n[formula]").next().unwrap().to_string();
+    for (k, hybrid) in [vec![("JIT_IQ_Bulb", 1)], vec![("JIT_IQ_Bulb", 2), ("Integer Power", 1), ("JITBenesiPineTree", 1)]].into_iter().enumerate() {
+        let mut text = head.clone();
+        for (name, its) in &hybrid {
+            text.push_str(&format!("\n[formula]\nname = {name}\niterations = {its}\n"));
+        }
+        let path = std::env::temp_dir().join(format!("mb3d-pascal-hybrid-{}-{k}.m3s", std::process::id()));
+        std::fs::write(&path, &text).unwrap();
+        let (mut sc, _) = mb3d::animfile::load_scene(&path).unwrap();
+        let _ = std::fs::remove_file(&path);
+        sc.width = 64;
+        sc.height = 48;
+        let plain = mb3d::calc::CalcParams::new(&sc).unwrap();
+        let mut fused = plain.clone();
+        let mut m = plain.machine.clone().unwrap_or_else(|| mb3d::custom::build_machine(&[]));
+        let h = mb3d::x86::clif_jit::compile_hybrid(&m, &fused.slots, 0, fused.end_to, fused.repeat_from, false).unwrap_or_else(|| panic!("{hybrid:?}: not compiled"));
+        m.jit = Some(std::sync::Arc::new(h));
+        fused.machine = Some(m);
+        let mut plain = plain;
+        if let Some(mm) = plain.machine.as_mut() {
+            mm.jit = None;
+        }
+        let (mut a, mut b) = (mb3d::calc::Marcher::new(&fused, 1), mb3d::calc::Marcher::new(&plain, 1));
+        let same = |x: f64, y: f64| x.to_bits() == y.to_bits() || (x.is_nan() && y.is_nan());
+        for i in 0..4000u64 {
+            let c = [(i % 20) as f64 * 0.12 - 1.2, ((i / 20) % 20) as f64 * 0.12 - 1.2, (i / 400) as f64 * 0.25 - 1.2];
+            let (na, nb) = (a.iterations_at(c), b.iterations_at(c));
+            assert!(na == nb && same(a.it.rout, b.it.rout) && a.it.v.iter().zip(&b.it.v).all(|(x, y)| same(*x, *y)), "{hybrid:?} at {c:?}: {na} {nb}, {:?} {:?}", a.it.v, b.it.v);
+        }
+    }
+}

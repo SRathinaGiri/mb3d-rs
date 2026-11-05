@@ -74,6 +74,9 @@ pub mod jit;
 #[cfg(jit)]
 #[allow(unsafe_code)]
 pub mod jit_pascal;
+/// The Pascal formulas translated to WGSL for the graphics card
+#[cfg_attr(not(feature = "gpu"), allow(dead_code))]
+pub mod jit_wgsl;
 pub mod jpeg;
 pub mod lighting;
 pub mod m3f;

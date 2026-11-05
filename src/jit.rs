@@ -1946,6 +1946,205 @@ fn lower_s(s: &S) -> St {
 }
 
 // ---------------------------------------------------------------------------
+// specialising a tree: the locals with known values as constants
+
+/// The locals `s` assigns.
+fn assigned(s: &S, out: &mut Vec<bool>) {
+    let mut set = |p: &Place| {
+        if let Place::Local(i) = p {
+            out[*i] = true;
+        }
+    };
+    match s {
+        S::Seq(l) => l.iter().for_each(|s| assigned(s, out)),
+        S::If(_, a, b) => {
+            assigned(a, out);
+            assigned(b, out);
+        }
+        S::While(_, b) | S::Repeat(b, _) => assigned(b, out),
+        S::For { slot, body, .. } => {
+            out[*slot] = true;
+            assigned(body, out);
+        }
+        S::Case(_, arms, other) => {
+            arms.iter().for_each(|(_, s)| assigned(s, out));
+            if let Some(o) = other {
+                assigned(o, out);
+            }
+        }
+        S::Store(p, _, _) => set(p),
+        S::SinCos(_, (a, _), (b, _)) => {
+            set(a);
+            set(b);
+        }
+        S::Nop | S::Exit | S::Break | S::Continue => {}
+    }
+}
+
+struct Folder {
+    /// the value of each local that is never assigned
+    known: Vec<Option<f64>>,
+}
+
+pub(crate) fn lit(e: &E) -> Option<f64> {
+    match e {
+        E::Lit(v) => Some(*v),
+        _ => None,
+    }
+}
+
+impl Folder {
+    fn e(&self, e: &E) -> E {
+        let f = |x: &E| Box::new(self.e(x));
+        let out = match e {
+            E::Lit(v) => return E::Lit(*v),
+            E::Load(Place::Local(i)) => {
+                return match self.known[*i] {
+                    Some(v) => E::Lit(v),
+                    None => e.clone(),
+                }
+            }
+            E::Load(_) => return e.clone(),
+            E::Neg(a, w) => E::Neg(f(a), *w),
+            E::NotB(a) => E::NotB(f(a)),
+            E::NotI(a, w) => E::NotI(f(a), *w),
+            E::Cmp(c, a, b) => E::Cmp(*c, f(a), f(b)),
+            E::R(o, a, b) => E::R(*o, f(a), f(b)),
+            E::I(o, w, a, b) => E::I(*o, *w, f(a), f(b)),
+            E::And(a, b) | E::Or(a, b) => {
+                let (a, b) = (f(a), f(b));
+                let and = matches!(e, E::And(..));
+                // a known first operand decides or leaves the second
+                if let Some(x) = lit(&a) {
+                    return match (and, x != 0.0) {
+                        (true, false) => E::Lit(0.0),
+                        (false, true) => E::Lit(1.0),
+                        _ => self.e(&E::Cmp(Cmp::Ne, b, Box::new(E::Lit(0.0)))),
+                    };
+                }
+                if and {
+                    E::And(a, b)
+                } else {
+                    E::Or(a, b)
+                }
+            }
+            E::Xor(a, b) => E::Xor(f(a), f(b)),
+            E::F1(k, a) => E::F1(*k, f(a)),
+            E::F2(k, a, b) => E::F2(*k, f(a), f(b)),
+            E::OMinMax(m, a, b) => E::OMinMax(*m, f(a), f(b)),
+            E::IntPower(a, b) => E::IntPower(f(a), f(b)),
+            E::IAbs(a) => E::IAbs(f(a)),
+            E::ISqr(a) => E::ISqr(f(a)),
+            E::RAbs(a) => E::RAbs(f(a)),
+            E::RSqr(a) => E::RSqr(f(a)),
+            E::Rnd(k, w, a) => E::Rnd(*k, *w, f(a)),
+            E::Odd(a) => E::Odd(f(a)),
+            E::IsNan(a) => E::IsNan(f(a)),
+            E::IsInf(a) => E::IsInf(f(a)),
+            E::Sign(a) => E::Sign(f(a)),
+        };
+        // every operand known: the closures' value
+        if children(&out).iter().all(|c| lit(c).is_some()) {
+            E::Lit(eval_const(&out))
+        } else {
+            out
+        }
+    }
+
+    fn s(&self, s: &S) -> S {
+        match s {
+            S::Seq(l) => {
+                let mut v = Vec::new();
+                for s in l {
+                    match self.s(s) {
+                        S::Nop => {}
+                        S::Seq(inner) => v.extend(inner),
+                        x => {
+                            let ends = matches!(x, S::Exit | S::Break | S::Continue);
+                            v.push(x);
+                            // the rest of the list never runs
+                            if ends {
+                                break;
+                            }
+                        }
+                    }
+                }
+                S::Seq(v)
+            }
+            S::If(c, a, b) => {
+                let c = self.e(c);
+                match lit(&c) {
+                    Some(x) if x != 0.0 => self.s(a),
+                    Some(_) => self.s(b),
+                    None => S::If(c, Box::new(self.s(a)), Box::new(self.s(b))),
+                }
+            }
+            S::While(c, b) => {
+                let c = self.e(c);
+                if lit(&c) == Some(0.0) {
+                    return S::Nop;
+                }
+                S::While(c, Box::new(self.s(b)))
+            }
+            S::Repeat(b, c) => S::Repeat(Box::new(self.s(b)), self.e(c)),
+            S::For { slot, from, to, down, body } => S::For { slot: *slot, from: self.e(from), to: self.e(to), down: *down, body: Box::new(self.s(body)) },
+            S::Case(sel, arms, other) => {
+                let sel = self.e(sel);
+                if let Some(v) = lit(&sel) {
+                    let v = v as i64;
+                    for (labels, st) in arms {
+                        if labels.iter().any(|&(lo, hi)| v >= lo && v <= hi) {
+                            return self.s(st);
+                        }
+                    }
+                    return other.as_ref().map_or(S::Nop, |o| self.s(o));
+                }
+                S::Case(sel, arms.iter().map(|(l, s)| (l.clone(), self.s(s))).collect(), other.as_ref().map(|o| Box::new(self.s(o))))
+            }
+            S::Store(p, t, v) => S::Store(*p, *t, self.e(v)),
+            S::SinCos(a, x, y) => S::SinCos(self.e(a), *x, *y),
+            S::Nop | S::Exit | S::Break | S::Continue => s.clone(),
+        }
+    }
+}
+
+fn children(e: &E) -> Vec<&E> {
+    match e {
+        E::Lit(_) | E::Load(_) => vec![],
+        E::Neg(a, _)
+        | E::NotB(a)
+        | E::NotI(a, _)
+        | E::F1(_, a)
+        | E::IAbs(a)
+        | E::ISqr(a)
+        | E::RAbs(a)
+        | E::RSqr(a)
+        | E::Rnd(_, _, a)
+        | E::Odd(a)
+        | E::IsNan(a)
+        | E::IsInf(a)
+        | E::Sign(a) => vec![a],
+        E::Cmp(_, a, b) | E::R(_, a, b) | E::I(_, _, a, b) | E::And(a, b) | E::Or(a, b) | E::Xor(a, b) | E::F2(_, a, b) | E::OMinMax(_, a, b) | E::IntPower(a, b) => {
+            vec![a, b]
+        }
+    }
+}
+
+/// The locals (of `n`) the tree assigns.
+pub(crate) fn assigned_locals(tree: &S, n: usize) -> Vec<bool> {
+    let mut v = vec![false; n];
+    assigned(tree, &mut v);
+    v
+}
+
+/// `tree` with the locals of known value (`known[i]`) as constants and
+/// what depends only on constants computed (with the closures, so exactly),
+/// the branches decided by them taken.
+pub(crate) fn fold(tree: &S, known: Vec<Option<f64>>) -> S {
+    Folder { known }.s(tree)
+}
+
+// ---------------------------------------------------------------------------
 // the compiled formula
 
 /// A compiled `[SOURCE]` formula.

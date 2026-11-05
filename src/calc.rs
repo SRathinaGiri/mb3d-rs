@@ -917,7 +917,8 @@ impl CalcParams {
         // carries the compiled loop (kept only when it is used)
         let builtin_only = self.machine.is_none();
         if builtin_only {
-            if self.slots.iter().any(|s| matches!(s.formula, crate::formulas::Formula::Custom(_))) {
+            // (Pascal formulas have no machine code: their hybrid goes the same way)
+            if self.slots.iter().any(|s| matches!(&s.formula, crate::formulas::Formula::Custom(c) if c.def.jit.is_none())) {
                 return;
             }
             self.machine = Some(crate::custom::build_machine(&[]));
