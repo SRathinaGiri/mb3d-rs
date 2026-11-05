@@ -563,14 +563,19 @@ fn needs_double(p: &CalcParams) -> bool {
 }
 
 fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
+    if needs_double(p) && !gpu()?.f64 {
+        return Err("the zoom needs double precision (the graphics card has no doubles)".into());
+    }
+    make_scene_shader(p)
+}
+
+/// [`scene_shader`] without asking the card whether it can calculate in
+/// doubles (the shader checks of the tests, also on machines without a
+/// card or without doubles).
+fn make_scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     use crate::x86::lift_wgsl::{prelude, record_globals, CellTy, WgslFormula};
     use std::fmt::Write;
     let dbl = needs_double(p);
-    // (without any card the shader is still made: the shader checks of the
-    // tests run without one; a calculation needs the card before it)
-    if dbl && gpu().is_ok_and(|g| !g.f64) {
-        return Err("the zoom needs double precision (the graphics card has no doubles)".into());
-    }
     let mut slots = [[0u32; 8]; 6];
     let mut slotx = [[0u32; 8]; 6];
     let mut wfs: Vec<(usize, WgslFormula)> = Vec::new();
@@ -3994,7 +3999,7 @@ mod tests {
                     continue;
                 }
             };
-            let sh = match scene_shader(&p) {
+            let sh = match make_scene_shader(&p) {
                 Ok(sh) => sh,
                 Err(e) => {
                     // (calculated on the CPU)
@@ -4006,7 +4011,7 @@ mod tests {
             if !needs_double(&p) {
                 let mut p2 = p.clone();
                 p2.gpu_double = true;
-                validate_wgsl(&format!("{what} (double precision)"), &scene_shader(&p2).unwrap().code);
+                validate_wgsl(&format!("{what} (double precision)"), &make_scene_shader(&p2).unwrap().code);
             }
             checked += 1;
         }
