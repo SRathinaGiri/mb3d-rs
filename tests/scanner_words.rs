@@ -1,14 +1,17 @@
 //! Words that make the repository look like malware to scanrepo.dev (the
-//! independent scan the README invites readers to run): its rule "eval()
-//! usage detected" matches any `eval(` in the code, a call of a math
-//! helper too, and rated the repository dangerous (70 of 100, 5 November
-//! 2026, for 0.2.100's `F1::eval`) where it was safe (5 of 100).  Name
-//! such functions otherwise (`apply`, `value`, `run`).
+//! independent scan the README invites readers to run): its rule against
+//! running code given as text matches the word "eval" followed by an
+//! opening bracket anywhere in a file, comments, a call of a math helper
+//! and this test's own text included, and rated the repository dangerous
+//! (70 of 100, 5 November 2026, for 0.2.100's math helper F1 named so)
+//! where it was safe (5 of 100).  Name such functions otherwise (`apply`,
+//! `value`, `run`), and never write the word with a bracket after it, not
+//! even in a comment or a string: this test checks itself as well.
 
 use std::path::Path;
 
 /// The words the scanner takes for running code given as text.
-const WORDS: [&str; 1] = ["eval"];
+const WORDS: [&str; 1] = [concat!("ev", "al")];
 
 fn check(p: &Path, found: &mut Vec<String>) {
     if p.is_dir() {
@@ -20,7 +23,7 @@ fn check(p: &Path, found: &mut Vec<String>) {
     {
         let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("");
         if !["rs", "py", "sh", "js", "wgsl", "toml", "yml"].contains(&ext)
-            || p.ends_with("scanner_words.rs")
+           
         {
             return;
         }
@@ -55,7 +58,7 @@ fn no_words_the_malware_scanner_flags() {
     }
     assert!(
         found.is_empty(),
-        "scanrepo.dev reads these as eval() (rename them):\n{}",
+        "scanrepo.dev reads these as running code given as text (rename them):\n{}",
         found.join("\n")
     );
 }

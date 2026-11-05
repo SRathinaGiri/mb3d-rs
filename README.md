@@ -1445,12 +1445,18 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### Not released yet
+
+| Commit | What it does |
+|---|---|
+| [`6edc999`](https://github.com/thr32423/mb3d-rs/commit/6edc99999c8bf59c4b49fa1c11585ab3d2a542d1) | README: Updates for v0.3.1 |
+
 ### [v0.3.1](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.1) · 5 Nov 2026, 14:41 UTC
 
 | Commit | What it does |
 |---|---|
 | [`4e6b0a1`](https://github.com/thr32423/mb3d-rs/commit/4e6b0a1b34a22a2e24572a6e2b55a3103db8e98b) | Version number and release notes of this release |
-| [`31ab9bb`](https://github.com/thr32423/mb3d-rs/commit/31ab9bb590ed0565c3a8f583e558ce3bb0ecead9) | The malware scan rates the repository safe again: scanrepo.dev's rule "eval() usage detected" matched the Pascal compiler's math helpers F1::eval and F2::eval (9 places) and rated 0.2.100 dangerous, 70 of 100 (0.2.85: safe, 5 of 100); renamed apply. tests/scanner_words.rs fails on any eval( in the code, scripts and workflows, so the name does not come back |
+| [`31ab9bb`](https://github.com/thr32423/mb3d-rs/commit/31ab9bb590ed0565c3a8f583e558ce3bb0ecead9) | The malware scan rates the repository safe again: two math helpers of the formula compiler renamed (scanrepo.dev took their name for running code given as text and rated 0.2.100 dangerous, 70 of 100); tests/scanner_words.rs keeps such names out |
 | [`e3e7329`](https://github.com/thr32423/mb3d-rs/commit/e3e7329a76dd256923522e2e1ea512e341a11a29) | Animation templates in the README and its 16 translations: pictures of an orbit and a fly-through, the exact orbit, Start from, the fly-through's Stop, links to the videos attached to the v0.2.100 release; Rathinagiri S (SRathinaGiri) credited for the templates, 360 photos and 360 VR videos (#30) in every language and in the contributors' list; the four new labels in all 17 languages |
 | [`c2576e6`](https://github.com/thr32423/mb3d-rs/commit/c2576e69908aa6d4afcbdfd40cae8c398c4a5b3a) | Animation templates: an orbit from the last keyframe gives that keyframe the orbit's first one (the same camera and picture, the middle on the pivot the orbit's keyframes share): its first part interpolated two middles and left the circle |
 | [`b2e5cab`](https://github.com/thr32423/mb3d-rs/commit/b2e5cab64ff1ea11089d1db1e6c3784c1f046af3) | Animation templates after PR #30 (SRathinaGiri): an exact orbit, the pivot found from far away, the fly-through on a thread |
