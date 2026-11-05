@@ -931,6 +931,8 @@ you check further on your own:
   fly-through](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [a 360° VR
   orbit](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  All four with pictures and notes:
+  [docs/ANIMATION_TEMPLATES.md](docs/ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gaussian splats** of the fractal, to look at from every side in
