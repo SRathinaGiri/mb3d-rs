@@ -145,7 +145,7 @@ impl Clouds {
     /// clouds (1 without a sun or clouds in its way).
     pub(crate) fn sunlight(&self, p: [f64; 3], cl: &CloudLight) -> f32 {
         let Some((sd, _)) = &cl.sun else { return 1.0 };
-        let Some((t0, t1)) = self.span(p, *sd, self.far()) else { return 1.0 };
+        let Some((t0, t1)) = self.span(p, *sd, self.haze()) else { return 1.0 };
         let n = ((t1 - t0) / (self.size * 0.5)).clamp(6.0, 32.0) as usize;
         let dt = (t1 - t0) / n as f64;
         let mut od = 0f32;
@@ -159,9 +159,19 @@ impl Clouds {
         (-od).exp()
     }
 
-    /// How far a ray that hits nothing looks into the layer: through it at
-    /// a slant.
+    /// How far a ray that hits nothing looks into the layer: towards the
+    /// horizon, where the clouds have faded into the haze (`haze`); a layer
+    /// of clouds reaches the horizon (before 2026-11-05 it ended at the
+    /// haze distance: a hard edge a little above the horizon, a clear strip
+    /// under it).
     pub(crate) fn far(&self) -> f64 {
+        self.haze() * 20.0
+    }
+
+    /// The distance at which the clouds are half faded into the haze of the
+    /// air (aerial perspective), and up to which the sunlight is followed
+    /// through them for the clouds' shadows on surfaces (`sunlight`).
+    pub(crate) fn haze(&self) -> f64 {
         let (lo, hi) = self.bounds();
         (hi - lo).max(1e-30) * 20.0 + self.size * 40.0
     }
@@ -179,10 +189,13 @@ impl Clouds {
         let n = ((t1 - t0) / (self.size * 0.3)).clamp(8.0, 96.0) as usize;
         let dt = (t1 - t0) / n as f64;
         let (mut tr, mut acc) = (1f32, [0f32; 3]);
+        let haze = self.haze();
         for i in 0..n {
             let t = t0 + (i as f64 + jitter) * dt;
             let p = [0, 1, 2].map(|k| o[k] + d[k] * t);
-            let sigma = self.density_at(p);
+            // far away the clouds fade into the haze (what lies behind, the
+            // sky's horizon, shows through more and more)
+            let sigma = self.density_at(p) / (1.0 + (t / haze).powi(2)) as f32;
             if sigma <= 0.0 {
                 continue;
             }

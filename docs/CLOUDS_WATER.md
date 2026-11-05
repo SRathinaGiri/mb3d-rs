@@ -289,7 +289,11 @@ gives still water. The waves are an irregular sea: sixteen waves of
 lengths from 1.2 to 0.25 times the given length, mostly along one wind
 direction, the long ones higher, so no grid or repeating pattern shows
 (before November 2026 three regular waves made a checkerboard of blobs;
-scenes with waves look different since). Below, the old waves (left of
+scenes with waves look different since). Since 5 November 2026 their
+directions keep within a narrow spread around the wind, from 8 degrees
+for the longest waves to 30 for the shortest, so the crests run as long
+lines across the wind; before, some crossed it at up to 90 degrees and
+made a pattern of diamonds. Below, the old waves (left of
 each pair) and the new ones: small waves 0.004, 0.6 on top, large waves
 0.03, 0.4 below, the sun in front and behind.
 
@@ -311,7 +315,10 @@ Transparency*: tick *Calculate R. (+ T.) automatically* and set the *Amount*
 *Layer* (an axis and two heights, here Y from -2.4 to -4.2), the *Density*,
 how much of the sky they *Cover*, their *Size* and their colour (the small
 square). *Paint now* repaints them in a fraction of a second, so you can try
-settings quickly.
+settings quickly. The layer reaches the horizon: far away the clouds grow
+smaller and fade into the haze of the air, so the sky's horizon colour
+shows through them more and more (before 5 November 2026 the layer ended a
+little above the horizon, with a hard edge and a clear strip under it).
 
 <img src="img/clouds_ui_clouds.png" width="400" alt="The Clouds section of the Post processing window">
 

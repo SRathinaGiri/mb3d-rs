@@ -39,16 +39,19 @@ pub fn wanted(p: &CalcParams) -> bool {
     p.ground.is_some() && p.slice_2d == 0 && p.optic != CameraOptic::Panorama && std::env::var_os("MB3D_NO_WATER_LAYER").is_none()
 }
 
-/// A ray (from `origin` along `dir`) rising from the water: a mirror ray
-/// of a ray tracer, which the water it leaves does not stop again (it
-/// still meets the fractal); far away the march's stop distance grows
-/// larger than the waves and would end it on them at once.  One falling
-/// meets the next wave.
-pub fn leaves_water(p: &CalcParams, origin: &[f64; 3], dir: &[f64; 3]) -> bool {
+/// A ray (from `origin` along `dir`, at the depth `zz` of the march, in
+/// steps) rising from the water: a mirror ray of a ray tracer, which the
+/// water it leaves does not stop again (it still meets the fractal); far
+/// away the march's stop distance grows larger than the waves and would end
+/// it on them at once.  From the water: within a few crest heights, or
+/// within twice the march's stop distance there (far away the march stops
+/// that high above the waves).  One falling meets the next wave.
+pub fn leaves_water(p: &CalcParams, origin: &[f64; 3], dir: &[f64; 3], zz: f64) -> bool {
     wanted(p)
         && p.ground.as_ref().is_some_and(|g| {
             let up = g.up();
-            dir[0] * up[0] + dir[1] * up[1] + dir[2] * up[2] > 0.0 && g.height(origin) < 4.0 * g.wave_height * crate::scene::WAVE_MAX + 1e-9
+            let stop = p.de_stop as f64 * (1.0 + zz.abs() * p.de_stop_factor as f64) * p.step_width;
+            dir[0] * up[0] + dir[1] * up[1] + dir[2] * up[2] > 0.0 && g.height(origin) < 4.0 * g.wave_height * crate::scene::WAVE_MAX + 2.0 * stop + 1e-9
         })
 }
 

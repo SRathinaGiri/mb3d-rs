@@ -1253,7 +1253,7 @@ impl<'a, 'c> Tracer<'a, 'c> {
         r.vfov = self.vfov;
         // (under transparent water; or a mirror ray rising from the water,
         // water_layer)
-        r.no_ground = self.under_water || crate::water_layer::leaves_water(self.c.p, &r.pos, &r.dir);
+        r.no_ground = self.under_water || crate::water_layer::leaves_water(self.c.p, &r.pos, &r.dir, r.zz);
         if let Some(m) = self.cpu {
             return m.borrow_mut().run(&r);
         }
