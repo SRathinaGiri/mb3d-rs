@@ -897,6 +897,7 @@ kunt u zelf verder controleren:
   doorvlucht](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [een 360°
   VR-omloop](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Alle vier met bewegende beelden en toelichting: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gaussische splats** van de fractal, om van alle kanten te bekijken in

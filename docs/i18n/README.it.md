@@ -941,6 +941,7 @@ permettono di verificare ulteriormente da solo:
   attraverso](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [un'orbita VR
   360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Tutti e quattro con immagini in movimento e note: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Splat gaussiani** del frattale, da guardare da ogni lato in Blender (5.3

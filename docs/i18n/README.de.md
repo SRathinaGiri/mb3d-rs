@@ -931,6 +931,7 @@ können Sie selbst weiter prüfen:
   Durchflug](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [eine
   360°-VR-Umkreisung](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Alle vier mit bewegten Bildern und Erläuterungen: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gauß-Splats** des Fraktals, von allen Seiten anzusehen in Blender (ab

@@ -962,6 +962,7 @@ esto puede comprobar más por su cuenta:
   través](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [una órbita de RV
   360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Los cuatro con imágenes en movimiento y notas: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Splats gaussianos** del fractal, para verlo por todos los lados en

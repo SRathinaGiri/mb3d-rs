@@ -896,6 +896,7 @@ sprawdzëc sóm:
   [przelot](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [òrbita VR
   360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Wszëtczé sztërë z rëszającymi sã òbrôzkama ë ùwôgama: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gaussowsczé splatë** fraktala, do òbzéraniô z kòżdi stronë w

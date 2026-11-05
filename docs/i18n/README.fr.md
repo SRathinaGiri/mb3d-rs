@@ -963,6 +963,7 @@ Voici de quoi vérifier plus loin par vous-même :
   survol](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
   [une orbite RV
   360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Les quatre avec des images animées et des notes : [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Splats gaussiens** de la fractale, à regarder de tous les côtés dans
