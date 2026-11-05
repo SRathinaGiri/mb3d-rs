@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.3.1" date="2026-11-05">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.1</url>
+      <description>
+        <p>Animation templates: a 360 degree orbit around the fractal on any axis and a fly-through, made from the current view in one step; 360 degree photos and 360 degree VR animations, mono and stereo, for VR headsets and 360 video players (by Rathinagiri S, SRathinaGiri). The malware scan the README points to (scanrepo.dev) reads the repository as safe again: two math functions of the formula compiler were named eval, a word the scanner takes for running hidden code; they are renamed, and a test keeps the name from coming back.</p>
+      </description>
+    </release>
     <release version="0.2.100" date="2026-11-05">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.100</url>
       <description>
