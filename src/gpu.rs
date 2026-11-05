@@ -566,7 +566,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     use crate::x86::lift_wgsl::{prelude, record_globals, CellTy, WgslFormula};
     use std::fmt::Write;
     let dbl = needs_double(p);
-    if dbl && !gpu()?.f64 {
+    // (without any card the shader is still made: the shader checks of the
+    // tests run without one; a calculation needs the card before it)
+    if dbl && gpu().is_ok_and(|g| !g.f64) {
         return Err("the zoom needs double precision (the graphics card has no doubles)".into());
     }
     let mut slots = [[0u32; 8]; 6];
