@@ -182,8 +182,6 @@ jobs:
           fi
           # the themes are read by the Windows desktop application.
           if [ "${{ runner.os }}" = "Windows" ]; then cp -r Themes "$name"/; fi
-          mkdir -p "$name/examples"
-          cp examples/*.m3s "$name/examples"/
           # the archive name has no version, so that the README can link to
           # releases/latest/download/<archive>
           if [ "${{ runner.os }}" = "Windows" ]; then archive=mb3d-rs-${{ matrix.asset }}.zip; 7z a "$archive" "$name" > /dev/null
