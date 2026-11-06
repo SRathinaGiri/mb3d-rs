@@ -3,7 +3,7 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   Top = 200
   BorderStyle = bsDialog
   Caption = '@MB:AnimationTemplates2'
-  ClientHeight = 340
+  ClientHeight = 372
   ClientWidth = 470
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -201,23 +201,46 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
       '@MB:OutsideTheFractal'
       '@MB:TheLastKeyframe')
   end
+  object RollLabel: TLabel
+    Left = 12
+    Top = 291
+    Width = 200
+    Height = 13
+    Caption = '@MB:RollDegreesASecond'
+  end
+  object RollEdit: TEdit
+    Left = 220
+    Top = 288
+    Width = 60
+    Height = 21
+    TabOrder = 12
+    Text = '0'
+  end
+  object RollNoteLabel: TLabel
+    Left = 290
+    Top = 291
+    Width = 168
+    Height = 13
+    AutoSize = False
+    Caption = '@MB:N0NoneNegativeAnticlockwise'
+  end
   object FlightBar: TProgressBar
     Left = 12
-    Top = 284
+    Top = 316
     Width = 446
     Height = 10
     Visible = False
   end
   object FlightLabel: TLabel
     Left = 12
-    Top = 306
+    Top = 338
     Width = 176
     Height = 13
     AutoSize = False
   end
   object AddBtn: TButton
     Left = 196
-    Top = 300
+    Top = 332
     Width = 160
     Height = 25
     Caption = '@MB:AddTheKeyframes'
@@ -227,7 +250,7 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   end
   object CloseBtn: TButton
     Left = 364
-    Top = 300
+    Top = 332
     Width = 94
     Height = 25
     Cancel = True

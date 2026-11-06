@@ -2237,6 +2237,8 @@ MutationType=نوع الطفرة
 ;Mutation type
 N0No255FullTransparency=0: لا، 255: شفافية كاملة
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: لا شيء؛ سالب: عكس عقارب الساعة
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 إلى 1: زوايا أغمق
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 إلى 1: حواف حمراء وزرقاء نحو الزوايا، كما تظهرها العدسة
@@ -2971,6 +2973,8 @@ RightclickOnATileForOptions=انقر بالزر الأيمن على بلاطة �
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(انقر بالزر الأيمن على المنزلقات لتغيير الألوان. استخدام لوحة المفاتيح والمؤشر فوق منزلق: (c) نسخ الألوان، (v) لصق الألوان، (b) لصق لون واحد)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=الدوران (درجة في الثانية):
+;Roll (degrees a second):
 Rolling=اللف
 ;Rolling
 Root=الجذر

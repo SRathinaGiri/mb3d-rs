@@ -2237,6 +2237,8 @@ MutationType=تبدیلی کی قسم
 ;Mutation type
 N0No255FullTransparency=0: نہیں، 255: مکمل شفافیت
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: کوئی نہیں؛ منفی: گھڑی کی مخالف سمت
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 سے 1: گہرے کونے
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 سے 1: کونوں کی طرف سرخ اور نیلے کنارے، جیسے لینس دکھاتا ہے
@@ -2971,6 +2973,8 @@ RightclickOnATileForOptions=اختیارات کے لیے ٹائل پر دائی�
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(رنگ بدلنے کے لیے سلائیڈرز پر دائیں کلک کریں۔ جب کرسر سلائیڈر پر ہو تو کی بورڈ: (c) رنگ کاپی، (v) رنگ پیسٹ، (b) 1 رنگ پیسٹ)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=گردش (ڈگری فی سیکنڈ):
+;Roll (degrees a second):
 Rolling=لڑھکنا
 ;Rolling
 Root=جڑ

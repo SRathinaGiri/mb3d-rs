@@ -908,7 +908,10 @@ you check further on your own:
   on the straightest free way, round what is in the way and back onto the
   course, the zoom following the distance, arriving exactly at the view
   (`mb3d animate view.m3p --approach --duration 10`; with two files from the
-  first view to the second). *360° VR* in the Animation maker (`--vr`) makes every frame
+  first view to the second). Both flights can *roll*: the picture turns
+  around the line of sight at the degrees a second given, eased in and out
+  (`--roll 45`; negative: anticlockwise; flying to a view, whole turns, so
+  that it still arrives exactly). *360° VR* in the Animation maker (`--vr`) makes every frame
   a spherical panorama (2:1); with *Render stereo animation* the video has
   the eyes one above the other (left on top), and the ffmpeg command ends
   with `mb3d vr360 video.mp4 --stereo tb`, which marks the MP4 as a 360

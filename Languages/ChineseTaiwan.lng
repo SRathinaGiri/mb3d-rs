@@ -2237,6 +2237,8 @@ MutationType=突變類型
 ;Mutation type
 N0No255FullTransparency=0：不透明，255：完全透明
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0：無；負數：逆時針
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 到 1：角落變暗
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 到 1：像鏡頭那樣朝角落出現紅藍色邊
@@ -2971,6 +2973,8 @@ RightclickOnATileForOptions=在圖塊上按右鍵可開啟選項
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=（在滑桿上按右鍵可變更顏色。游標位於滑桿上時可用鍵盤：(c) 複製顏色，(v) 貼上顏色，(b) 貼上 1 個顏色）
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=滾轉（每秒度數）：
+;Roll (degrees a second):
 Rolling=滾轉
 ;Rolling
 Root=根

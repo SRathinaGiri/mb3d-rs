@@ -1079,6 +1079,10 @@ OPTIONS:
                              way and back onto the course, and arrives exactly at
                              that view (place, direction, zoom); --duration long
                              (default 10 s), keyframes every half second
+        --roll <DEG>         With --fly or --approach: the picture turns around the line
+                             of sight, DEG degrees a second (negative: anticlockwise),
+                             eased in and out; with --approach whole turns, so that
+                             it still arrives exactly at the view
         --duration <SECONDS> The length of --orbit (one whole turn) or --fly at --fps
                              frames a second (default 25), instead of --frames; for
                              --fly 0 flies until the view shows only sky or only
@@ -1151,6 +1155,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
     let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
     let mut approach = false;
+    let mut roll: Option<f64> = None;
     let mut vr = false;
     let mut orbit_axis: Option<mb3d::autopilot::OrbitAxis> = None;
     let mut args = argv.iter();
@@ -1187,6 +1192,18 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--approach" | "--fly-to" => approach = true,
             "--vr" | "--vr360" => vr = true,
             "--orbit-axis" => orbit_axis = Some(mb3d::autopilot::OrbitAxis::parse(args.next().ok_or("--orbit-axis needs a value")?)?),
+            "--roll" => {
+                roll = Some(
+                    args.next()
+                        .ok_or("--roll needs a value")?
+                        .trim()
+                        .replace(',', ".")
+                        .parse::<f64>()
+                        .ok()
+                        .filter(|d| d.is_finite() && d.abs() <= 720.0)
+                        .ok_or("--roll needs degrees a second, -720 to 720 (e.g. 30; negative: anticlockwise)")?,
+                )
+            }
             "--duration" => {
                 duration = Some(
                     args.next()
@@ -1340,7 +1357,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
                 Some(_) => (120.0 * fps).round() as usize,
                 None => frames.map_or(250, |f| f.max(2) as usize),
             },
-            keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+            keyframe_every: mb3d::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll.unwrap_or(0.0), fps),
             until_view: duration == Some(0.0),
             ..Default::default()
         };
@@ -1349,6 +1366,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             note(&format!("the flight ended after {} of {} frames: {}", fl.frames, fp.frames, mb3d::autopilot::flight_end_text(fl.end)));
         }
         anim.keyframes = fl.keyframes;
+        mb3d::autopilot::roll_keyframes(&mut anim.keyframes, roll.unwrap_or(0.0), fps, false);
         previews = vec![None; anim.keyframes.len()];
         looped = Some(false);
         ipol = ipol.or(Some(Interpolation::CatmullRom));
@@ -1364,7 +1382,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
                 Some(_) => return Err(usage_err("--approach needs a --duration above 0")),
                 None => frames.map_or((10.0 * fps).round() as usize, |f| f.max(2) as usize),
             },
-            keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+            keyframe_every: mb3d::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll.unwrap_or(0.0), fps),
             ..Default::default()
         };
         let a = mb3d::approach::fly_to(&target.scene, start.as_ref().map(|k| &k.scene), &ap, &|_, _| {}, &|| false).map_err(input_err)?;
@@ -1375,11 +1393,14 @@ fn animate(argv: &[String]) -> Result<(), String> {
             });
         }
         anim.keyframes = a.flight.keyframes;
+        mb3d::autopilot::roll_keyframes(&mut anim.keyframes, roll.unwrap_or(0.0), fps, true);
         previews = vec![None; anim.keyframes.len()];
         looped = Some(false);
         ipol = ipol.or(Some(Interpolation::CatmullRom));
     } else if orbit_axis.is_some() {
         return Err(usage_err("--orbit-axis goes with --orbit"));
+    } else if roll.is_some() {
+        return Err(usage_err("--roll goes with --fly or --approach"));
     } else if duration.is_some() {
         return Err("--duration goes with --orbit, --fly or --approach".into());
     }

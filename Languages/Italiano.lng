@@ -2236,6 +2236,8 @@ MutationType=Tipo di mutazione
 ;Mutation type
 N0No255FullTransparency=0: no, 255: trasparenza totale
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: nessuno; negativo: antiorario
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=Da 0 a 1: angoli più scuri
 ;0 to 1: darker corners
 N0To1RedAndBlue=Da 0 a 1: frange rosse e blu verso gli angoli, come le mostra un obiettivo
@@ -2970,6 +2972,8 @@ RightclickOnATileForOptions=Clic destro su un riquadro per le opzioni
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(Clic destro sui cursori per cambiare i colori. Tastiera con il puntatore su un cursore: (c) copia colori, (v) incolla colori, (b) incolla 1 colore)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=Rollio (gradi al secondo):
+;Roll (degrees a second):
 Rolling=Rollio
 ;Rolling
 Root=Radice

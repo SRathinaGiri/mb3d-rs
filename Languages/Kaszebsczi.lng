@@ -2236,6 +2236,8 @@ MutationType=Ôrt mùtacji
 ;Mutation type
 N0No255FullTransparency=0: bez, 255: Całô przezérnosc
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: felëje; ùjemny: procëm zégarowi
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 do 1: cemniészé nórtë
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 do 1: czerwòné ë mòdré òbrąbczi kù nórtóm, jak je pòkazywô òbiektiw
@@ -2970,6 +2972,8 @@ RightclickOnATileForOptions=Prawi klik na kachlu dôwô òptacje
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(Prawé kliknienié na suwakach zmieniwô farwë. Klawiatura, czej kùrsor je nad suwakã: (c) kòpiuj farwë, (v) wklej farwë, (b) wklej 1 farwã)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=Òbrót (gradë na sekùndã):
+;Roll (degrees a second):
 Rolling=Òbrôcanié
 ;Rolling
 Root=Kòrzeń

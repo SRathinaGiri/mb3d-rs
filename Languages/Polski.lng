@@ -2236,6 +2236,8 @@ MutationType=Typ mutacji
 ;Mutation type
 N0No255FullTransparency=0: brak, 255: pełna przezroczystość
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: brak; ujemny: przeciwnie do zegara
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 do 1: ciemniejsze narożniki
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 do 1: czerwone i niebieskie obwódki ku narożnikom, jak pokazuje je obiektyw
@@ -2970,6 +2972,8 @@ RightclickOnATileForOptions=Kliknij prawym przyciskiem na kafelku, aby zobaczyć
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(Prawy klik na suwakach zmienia kolory. Klawisze, gdy kursor jest nad suwakiem: (c) kopiuj kolory, (v) wklej kolory, (b) wklej 1 kolor)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=Obrót (stopnie na sekundę):
+;Roll (degrees a second):
 Rolling=Przechylanie
 ;Rolling
 Root=Korzeń

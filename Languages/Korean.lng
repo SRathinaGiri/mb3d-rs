@@ -2237,6 +2237,8 @@ MutationType=변이 유형
 ;Mutation type
 N0No255FullTransparency=0: 없음, 255: 완전 투명
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: 없음, 음수: 반시계 방향
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 ~ 1: 모서리를 어둡게
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 ~ 1: 렌즈처럼 모서리 쪽으로 빨강과 파랑 색 번짐
@@ -2971,6 +2973,8 @@ RightclickOnATileForOptions=타일을 오른쪽 클릭하면 옵션이 표시됩
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(슬라이더를 오른쪽 클릭하여 색상을 변경합니다. 커서가 슬라이더 위에 있을 때 키보드 사용: (c) 색상 복사, (v) 색상 붙여넣기, (b) 색상 1개 붙여넣기)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=롤 (초당 도):
+;Roll (degrees a second):
 Rolling=롤링
 ;Rolling
 Root=루트

@@ -2236,6 +2236,8 @@ MutationType=Mutation type
 ;MutaGenFrm.MinIterLabel.Caption
 N0No255FullTransparency=0: no, 255: Full transparency
 ;the program
+N0NoneNegativeAnticlockwise=0: none; negative: anticlockwise
+;AnimTemplatesFrm.RollNoteLabel.Caption
 N0To1DarkerCorners=0 to 1: darker corners
 ;PostProForm.FinVigEdit.Hint
 N0To1RedAndBlue=0 to 1: red and blue fringes towards the corners, as a lens shows them
@@ -2970,6 +2972,8 @@ RightclickOnATileForOptions=Rightclick on a tile for options
 ;TilingForm.Image1.Hint
 RightclickOnSlidersToChangeThe=(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
 ;ColorForm.Label3.Caption
+RollDegreesASecond=Roll (degrees a second):
+;AnimTemplatesFrm.RollLabel.Caption
 Rolling=Rolling
 ;FNavigator.Label15.Caption
 Root=Root

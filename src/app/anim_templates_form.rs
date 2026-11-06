@@ -14,6 +14,10 @@
 //!   straightest free way, round what is in the way and back onto the
 //!   course, arriving exactly at the view ([`crate::approach`]).
 //!
+//! Both flights can roll: the picture turns around the line of sight at
+//! the degrees a second given (Fly to the view: whole turns, so that it
+//! still arrives exactly at the view).
+//!
 //! The frames per second are the Animation window's (its video's).
 //!
 //! A template starts from the main window's view or from the animation's
@@ -61,6 +65,7 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_text(F, "SpeedEdit", &get("AniTplSpeed", "4"));
     ui.set_text(F, "TurnEdit", &get("AniTplTurn", "2"));
     ui.set_item_index(F, "StartCmb", get("AniTplStart", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
+    ui.set_text(F, "RollEdit", &get("AniTplRoll", "0"));
     ui.set_item_index(F, "FromCmb", get("AniTplFrom", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     show_kind(ui);
     ui.show(F);
@@ -84,6 +89,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
         ("AniTplTurn", ui.text(F, "TurnEdit").trim()),
         ("AniTplStart", start.as_str()),
         ("AniTplFrom", from.as_str()),
+        ("AniTplRoll", ui.text(F, "RollEdit").trim()),
     ] {
         app.ini.set_extra(k, v);
     }
@@ -123,6 +129,9 @@ fn show_kind(ui: &mut Ui) {
     for c in ["UntilCheck", "SpeedLabel", "SpeedEdit", "TurnLabel", "TurnEdit"] {
         ui.set_visible(F, c, fly);
     }
+    for c in ["RollLabel", "RollEdit", "RollNoteLabel"] {
+        ui.set_visible(F, c, !orbit);
+    }
     ui.set_visible(F, "StartCmb", !to_view);
     ui.set_visible(F, "FromCmb", to_view);
     let until = until(ui);
@@ -134,6 +143,12 @@ fn show_kind(ui: &mut Ui) {
 /// The Animation window's frames per second (25 when it has none).
 fn fps(ui: &Ui) -> f64 {
     ui.text(ANIM, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).unwrap_or(25.0)
+}
+
+/// The roll typed in, degrees a second (0 when none or not a number).
+fn roll(ui: &Ui) -> f64 {
+    let r = ptf(&ui.text(F, "RollEdit"));
+    if r.is_finite() { r.clamp(-720.0, 720.0) } else { 0.0 }
 }
 
 /// The duration typed in, above 0.
@@ -196,7 +211,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
         let turn = ptf(&ui.text(F, "TurnEdit"));
         let fp = crate::autopilot::FlightParams {
             frames: (secs * fps).round().max(2.0) as usize,
-            keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+            keyframe_every: crate::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll(ui), fps),
             speed: if speed.is_finite() { (speed / 100.0).clamp(0.002, 0.5) } else { 0.04 },
             max_turn_deg: if turn.is_finite() { turn.clamp(0.1, 30.0) } else { 2.0 },
             until_view: until,
@@ -212,6 +227,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             to_view: false,
         };
         let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
+        let roll = roll(ui);
         std::thread::spawn(move || {
             let w = waker.clone();
             let progress = move |d: usize, _: usize| {
@@ -223,7 +239,10 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
                     }
                 }
             };
-            let r = crate::autopilot::fly_through(&sc, &fp, &progress, &|| cancel.load(Ordering::Relaxed));
+            let r = crate::autopilot::fly_through(&sc, &fp, &progress, &|| cancel.load(Ordering::Relaxed)).map(|mut f| {
+                crate::autopilot::roll_keyframes(&mut f.keyframes, roll, fps, false);
+                f
+            });
             *result.lock().unwrap() = Some(r);
             if let Some(w) = waker {
                 w.wake();
@@ -241,9 +260,10 @@ fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
     let target = app.scene.clone();
     let start = if ui.item_index(F, "FromCmb") == 1 { super::anim_form::last_keyframe_scene(app) } else { None };
     let from_last = start.is_some();
+    let roll = roll(ui);
     let ap = crate::approach::ApproachParams {
         frames: (secs * fps).round().max(2.0) as usize,
-        keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+        keyframe_every: crate::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll, fps),
         ..Default::default()
     };
     let fl = Flying {
@@ -267,7 +287,11 @@ fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
                 }
             }
         };
-        let r = crate::approach::fly_to(&target, start.as_ref(), &ap, &progress, &|| cancel.load(Ordering::Relaxed)).map(|a| a.flight);
+        let r = crate::approach::fly_to(&target, start.as_ref(), &ap, &progress, &|| cancel.load(Ordering::Relaxed)).map(|a| {
+            let mut f = a.flight;
+            crate::autopilot::roll_keyframes(&mut f.keyframes, roll, fps, true);
+            f
+        });
         *result.lock().unwrap() = Some(r);
         if let Some(w) = waker {
             w.wake();
@@ -282,7 +306,7 @@ fn show_flying(app: &Mb3d, ui: &mut Ui) {
     let fl = app.anim_tpl.flying.as_ref();
     ui.set_visible(F, "FlightBar", fl.is_some());
     ui.set_caption(F, "AddBtn", &tr(if fl.is_some() { "@MB:Stop" } else { "@MB:AddTheKeyframes" }));
-    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb"] {
+    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb", "RollEdit"] {
         ui.set_enabled(F, c, fl.is_none());
     }
     match fl {

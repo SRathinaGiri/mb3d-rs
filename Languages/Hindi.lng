@@ -2237,6 +2237,8 @@ MutationType=म्यूटेशन प्रकार
 ;Mutation type
 N0No255FullTransparency=0: नहीं, 255: पूर्ण पारदर्शिता
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: कोई नहीं; ऋणात्मक: वामावर्त
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 से 1: गहरे कोने
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 से 1: कोनों की ओर लाल और नीले किनारे, जैसे लेंस दिखाता है
@@ -2971,6 +2973,8 @@ RightclickOnATileForOptions=विकल्पों के लिए किस�
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(रंग बदलने के लिए स्लाइडर पर दायाँ क्लिक करें। कर्सर स्लाइडर पर हो तब कीबोर्ड का उपयोग: (c) रंग कॉपी करें, (v) रंग पेस्ट करें, (b) 1 रंग पेस्ट करें)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=घुमाव (डिग्री प्रति सेकंड):
+;Roll (degrees a second):
 Rolling=रोलिंग
 ;Rolling
 Root=रूट

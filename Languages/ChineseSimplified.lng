@@ -2237,6 +2237,8 @@ MutationType=变异类型
 ;Mutation type
 N0No255FullTransparency=0：不透明，255：完全透明
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0：无；负数：逆时针
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 到 1：角落变暗
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 到 1：像镜头那样朝角落出现红蓝色边
@@ -2971,6 +2973,8 @@ RightclickOnATileForOptions=右键点击图块查看选项
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=（右键点击滑块可更改颜色。光标位于滑块上时可用键盘：(c) 复制颜色，(v) 粘贴颜色，(b) 粘贴 1 个颜色）
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=滚转（每秒度数）：
+;Roll (degrees a second):
 Rolling=滚转
 ;Rolling
 Root=根

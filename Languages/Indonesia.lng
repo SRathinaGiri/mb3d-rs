@@ -2236,6 +2236,8 @@ MutationType=Jenis mutasi
 ;Mutation type
 N0No255FullTransparency=0: tidak, 255: Transparansi penuh
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: tidak ada; negatif: berlawanan jarum jam
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 sampai 1: sudut lebih gelap
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 sampai 1: pinggiran merah dan biru ke arah sudut, seperti yang ditunjukkan lensa
@@ -2970,6 +2972,8 @@ RightclickOnATileForOptions=Klik kanan pada tile untuk opsi
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(Klik kanan pada slider untuk mengubah warna. Penggunaan keyboard saat kursor di atas slider: (c) salin warna, (v) tempel warna, (b) tempel 1 warna)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=Putaran (derajat per detik):
+;Roll (degrees a second):
 Rolling=Berguling
 ;Rolling
 Root=Root

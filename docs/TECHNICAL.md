@@ -1123,6 +1123,18 @@ module has its own copies of these helpers, so `navi_form.rs` is as it was.
   reached on one straight line, the distance to it falling; a view behind
   the bulb on a way round it; a view 1e-4 from the surface with the zoom
   rising over 5 e-folds, without dips.
+* *Roll* (`roll_keyframes`, both flights): after the flight each
+  keyframe's right and down rows are turned around its forward row by the
+  angle reached at its time (the camera's place and direction unchanged).
+  The speed is `deg_per_sec`, eased in over the first second and out over
+  the last (a quarter of the flight when shorter); the angle is its
+  integral (Simpson). For Fly to the view it is scaled to a whole number of
+  turns (at least one) and the last keyframe left as the view. The
+  rotations are interpolated as quaternions, which take the short way, so
+  the keyframes come closer when the roll is fast: at most 40° apart
+  (`roll_keyframe_every`). `--roll DEG` with `--fly` or `--approach`.
+  Test: 90°/s for 10 s, 2 to 2.8 turns, the cameras unchanged, whole turns
+  ending on the view.
 
 **360° photos and videos** (`src/vr.rs`). A JPEG of a spherical panorama
 (`CameraOptic::Panorama`, 2:1) gets the Photo Sphere XMP (`GPano`,

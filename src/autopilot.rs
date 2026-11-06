@@ -306,6 +306,80 @@ pub fn orbit_keyframes_axis(sc: &Scene, steps: usize, frames: u32, pivot: Vec3, 
 
 /// `total` frames spread over `parts` keyframe gaps as evenly as whole
 /// frames allow (their sum is `total`).
+/// The largest roll between two keyframes (the rotations are interpolated
+/// as quaternions, which take the short way: well under a half turn).
+pub const ROLL_MAX_KEY_DEG: f64 = 40.0;
+
+/// The keyframe spacing of a flight with a roll of `deg_per_sec`: `base`
+/// frames, or fewer, so that the roll between keyframes stays under
+/// [`ROLL_MAX_KEY_DEG`].
+pub fn roll_keyframe_every(base: usize, deg_per_sec: f64, fps: f64) -> usize {
+    if !deg_per_sec.is_finite() || deg_per_sec == 0.0 {
+        return base.max(1);
+    }
+    let most = (ROLL_MAX_KEY_DEG * fps / deg_per_sec.abs()).floor() as usize;
+    base.min(most).max(1)
+}
+
+/// A roll added to a flight's keyframes: the picture turns around the line
+/// of sight at `deg_per_sec` (positive: clockwise on the screen), eased in
+/// over the first second and out over the last (a quarter of the flight
+/// when it is shorter). The camera's place and direction stay the flight's.
+/// With `whole_turns` the roll is made a whole number of turns (at least
+/// one), so that the last keyframe is exactly its view (Fly to the view).
+pub fn roll_keyframes(keys: &mut [Keyframe], deg_per_sec: f64, fps: f64, whole_turns: bool) {
+    if keys.len() < 2 || !deg_per_sec.is_finite() || deg_per_sec == 0.0 || fps <= 0.0 {
+        return;
+    }
+    let mut at = Vec::with_capacity(keys.len());
+    let mut f = 0u64;
+    for k in keys.iter() {
+        at.push(f as f64 / fps);
+        f += k.frames as u64;
+    }
+    let total = *at.last().unwrap();
+    if total <= 0.0 {
+        return;
+    }
+    let ramp = (total / 4.0).min(1.0);
+    let ease = |x: f64| {
+        let x = x.clamp(0.0, 1.0);
+        x * x * (3.0 - 2.0 * x)
+    };
+    let speed = |t: f64| ease(t / ramp) * ease((total - t) / ramp);
+    // the angle at time t: the speed's integral (Simpson, fine steps)
+    let angle = |t: f64| {
+        let n = ((t / total) * 2000.0).ceil().max(2.0) as usize * 2;
+        let h = t / n as f64;
+        let mut a = speed(0.0) + speed(t);
+        for i in 1..n {
+            a += speed(i as f64 * h) * if i % 2 == 1 { 4.0 } else { 2.0 };
+        }
+        a * h / 3.0
+    };
+    let mut rate = deg_per_sec.to_radians();
+    let end = angle(total) * rate;
+    if whole_turns {
+        let mut n = (end / (2.0 * PI)).round();
+        if n == 0.0 {
+            n = deg_per_sec.signum();
+        }
+        rate *= n * 2.0 * PI / end;
+    }
+    let last = keys.len() - 1;
+    for (k, key) in keys.iter_mut().enumerate() {
+        if k == 0 || (whole_turns && k == last) {
+            continue;
+        }
+        // (right turned toward down is the camera turning clockwise, the
+        // picture anticlockwise)
+        let a = -rate * angle(at[k]);
+        let fz = normalize(key.scene.vgrads[2]);
+        key.scene.vgrads[0] = turn(key.scene.vgrads[0], fz, a);
+        key.scene.vgrads[1] = turn(key.scene.vgrads[1], fz, a);
+    }
+}
+
 pub fn spread_frames(total: u32, parts: usize) -> Vec<u32> {
     let parts = parts.max(1) as u64;
     (0..parts).map(|i| (((i + 1) * total as u64) / parts - (i * total as u64) / parts) as u32).collect()
@@ -757,6 +831,44 @@ mod tests {
         let v = spread_frames(250, 8);
         assert!(v.iter().all(|&f| f == 31 || f == 32), "{v:?}");
         assert_eq!(spread_frames(7, 7), vec![1; 7]);
+    }
+
+    #[test]
+    fn a_roll_turns_only_round_the_line_of_sight() {
+        let sc = Scene::preset("Integer Power").unwrap();
+        // 10 s at 25 frames a second, 90 degrees a second
+        let every = roll_keyframe_every(12, 90.0, 25.0);
+        assert_eq!(every, 11);
+        let n = 250 / every + 1;
+        let base: Vec<Keyframe> = (0..n).map(|_| Keyframe::new(sc.clone(), every as u32)).collect();
+        for whole in [false, true] {
+            let mut keys = base.clone();
+            roll_keyframes(&mut keys, 90.0, 25.0, whole);
+            let ang = |k: &Keyframe| {
+                let r = unit_rows(&k.scene);
+                let r0 = unit_rows(&sc);
+                dot(&r[1], &r0[0]).atan2(dot(&r[0], &r0[0]))
+            };
+            let mut total = 0.0;
+            for w in keys.windows(2) {
+                let mut d = ang(&w[1]) - ang(&w[0]);
+                d = (d + PI).rem_euclid(2.0 * PI) - PI;
+                assert!(d.to_degrees().abs() <= ROLL_MAX_KEY_DEG + 1.0, "{}", d.to_degrees());
+                total += d;
+            }
+            for k in &keys {
+                // the camera and its direction are the flight's
+                assert!(len(&sub(cam_pos(&k.scene), cam_pos(&sc))) < 1e-9);
+                assert!(len(&sub(unit_rows(&k.scene)[2], unit_rows(&sc)[2])) < 1e-12);
+            }
+            let turns = total.to_degrees() / 360.0;
+            if whole {
+                assert_eq!(keys.last().unwrap().scene.vgrads, sc.vgrads);
+                assert!((turns.abs() - turns.abs().round()).abs() < 1e-6, "{turns}");
+            }
+            // about 90 degrees a second less the easing (1 s in, 1 s out)
+            assert!((2.0..2.8).contains(&turns.abs()), "{turns}");
+        }
     }
 
     #[test]

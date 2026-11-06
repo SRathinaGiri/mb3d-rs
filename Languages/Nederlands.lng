@@ -2236,6 +2236,8 @@ MutationType=Mutatietype
 ;Mutation type
 N0No255FullTransparency=0: geen, 255: volledige transparantie
 ;0: no, 255: Full transparency
+N0NoneNegativeAnticlockwise=0: geen; negatief: tegen de klok in
+;0: none; negative: anticlockwise
 N0To1DarkerCorners=0 tot 1: donkerdere hoeken
 ;0 to 1: darker corners
 N0To1RedAndBlue=0 tot 1: rode en blauwe randen naar de hoeken toe, zoals een lens ze toont
@@ -2970,6 +2972,8 @@ RightclickOnATileForOptions=Rechtsklik op een tegel voor opties
 ;Rightclick on a tile for options
 RightclickOnSlidersToChangeThe=(Rechtsklik op de schuifregelaars om de kleuren te wijzigen. Toetsenbord als de cursor boven een schuifregelaar staat: (c) kleuren kopiëren, (v) kleuren plakken, (b) 1 kleur plakken)
 ;(Rightclick on sliders to change the colors. Usage of keyboard when cursor is over a slider: (c) copy colors, (v) paste colors, (b) paste 1 color)
+RollDegreesASecond=Rollen (graden per seconde):
+;Roll (degrees a second):
 Rolling=Rollen
 ;Rolling
 Root=Wortel
