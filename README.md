@@ -903,7 +903,12 @@ you check further on your own:
   the camera flies on into the fractal, the zoom following the distance to
   it, keeping its course and turning only to get round what it would hit
   (`--fly --duration 20`; `--duration 0`: until the view shows only sky or
-  only fractal). *360° VR* in the Animation maker (`--vr`) makes every frame
+  only fractal), or *Fly to the view*: from outside the fractal, where all
+  of it is in view (or from the last keyframe), to the main window's view,
+  on the straightest free way, round what is in the way and back onto the
+  course, the zoom following the distance, arriving exactly at the view
+  (`mb3d animate view.m3p --approach --duration 10`; with two files from the
+  first view to the second). *360° VR* in the Animation maker (`--vr`) makes every frame
   a spherical panorama (2:1); with *Render stereo animation* the video has
   the eyes one above the other (left on top), and the ffmpeg command ends
   with `mb3d vr360 video.mp4 --stereo tb`, which marks the MP4 as a 360

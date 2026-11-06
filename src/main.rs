@@ -1072,6 +1072,13 @@ OPTIONS:
                              following the distance to it, until --duration is flown
                              or no way ahead is left (keyframes every half second, a
                              Catmull-Rom animation)
+        --approach           Fly to a view: with one keyframe file the camera starts
+                             outside the fractal, where all of it is in view, with two
+                             at the first file's view; it flies to the (last) file's
+                             view on the straightest free way, round what is in the
+                             way and back onto the course, and arrives exactly at
+                             that view (place, direction, zoom); --duration long
+                             (default 10 s), keyframes every half second
         --duration <SECONDS> The length of --orbit (one whole turn) or --fly at --fps
                              frames a second (default 25), instead of --frames; for
                              --fly 0 flies until the view shows only sky or only
@@ -1143,6 +1150,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut video, mut fps): (Option<std::path::PathBuf>, f64) = (None, 25.0);
     let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
     let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
+    let mut approach = false;
     let mut vr = false;
     let mut orbit_axis: Option<mb3d::autopilot::OrbitAxis> = None;
     let mut args = argv.iter();
@@ -1176,6 +1184,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--loop" => looped = Some(true),
             "--orbit" => orbit = Some(num(a, args.next())?.clamp(3, 360) as usize),
             "--fly" => fly = true,
+            "--approach" | "--fly-to" => approach = true,
             "--vr" | "--vr360" => vr = true,
             "--orbit-axis" => orbit_axis = Some(mb3d::autopilot::OrbitAxis::parse(args.next().ok_or("--orbit-axis needs a value")?)?),
             "--duration" => {
@@ -1343,10 +1352,36 @@ fn animate(argv: &[String]) -> Result<(), String> {
         previews = vec![None; anim.keyframes.len()];
         looped = Some(false);
         ipol = ipol.or(Some(Interpolation::CatmullRom));
+    } else if approach {
+        if from_file || !(1..=2).contains(&anim.keyframes.len()) {
+            return Err("--approach flies to the view of one keyframe file (from outside) or from the first of two to the second".into());
+        }
+        let target = anim.keyframes.pop().unwrap();
+        let start = anim.keyframes.pop();
+        let ap = mb3d::approach::ApproachParams {
+            frames: match duration {
+                Some(d) if d > 0.0 => (d * fps).round().max(2.0) as usize,
+                Some(_) => return Err(usage_err("--approach needs a --duration above 0")),
+                None => frames.map_or((10.0 * fps).round() as usize, |f| f.max(2) as usize),
+            },
+            keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+            ..Default::default()
+        };
+        let a = mb3d::approach::fly_to(&target.scene, start.as_ref().map(|k| &k.scene), &ap, &|_, _| {}, &|| false).map_err(input_err)?;
+        if !quiet {
+            note(&match a.route {
+                mb3d::approach::Route::Straight => "the way to the view: one straight line".to_string(),
+                mb3d::approach::Route::Round(n) => format!("the way to the view: round what is in between, in {n} legs"),
+            });
+        }
+        anim.keyframes = a.flight.keyframes;
+        previews = vec![None; anim.keyframes.len()];
+        looped = Some(false);
+        ipol = ipol.or(Some(Interpolation::CatmullRom));
     } else if orbit_axis.is_some() {
         return Err(usage_err("--orbit-axis goes with --orbit"));
     } else if duration.is_some() {
-        return Err("--duration goes with --orbit or --fly".into());
+        return Err("--duration goes with --orbit, --fly or --approach".into());
     }
     if let Some((n, sh)) = blur {
         anim.motion_blur = n;

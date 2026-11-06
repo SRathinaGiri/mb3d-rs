@@ -1255,6 +1255,8 @@ FlyThrough=اندر سے پرواز
 ;Fly-through
 FlyThroughTheFlightEndedAfter=اندر سے پرواز: پرواز {} میں سے {} فریمز کے بعد ختم ہوئی، {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyToTheView=منظر تک پرواز
+;Fly to the view
 FlyingFrameOf=پرواز: فریم {} از {}
 ;Flying: frame {} of {}
 Fo=Fo.{}
@@ -2587,6 +2589,8 @@ OutsideRender=بیرونی رینڈر
 ;Outside render
 OutsideRenderDefaultModeInsideRender=بیرونی رینڈر:  طے شدہ موڈ\nاندرونی رینڈر:    زیادہ سے زیادہ its کے ساتھ اندر سست رے مارچنگ\nاندر اور باہر:   دونوں اطراف رینڈر کریں
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OutsideTheFractal=فریکٹل کے باہر
+;Outside the fractal
 OverTheTopAndUnderPitch=اوپر سے اور نیچے سے (پچ)
 ;Over the top and under (pitch)
 OverallScale=مجموعی پیمانہ:
@@ -3465,6 +3469,8 @@ TheCalculationFailedLower=حساب ناکام ہو گیا
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=حساب منعکس اشیاء کے ساتھ تصویر سے باہر کی طرف بڑھایا جائے گا۔\nاس سے اینیمیشنز میں کم نقائص ہو سکتے ہیں، لیکن ساکن تصاویر کو بھی فائدہ ہو سکتا ہے۔\nقدر 0 سے 0.5 (زیادہ سے زیادہ 0.9) کی حد میں ہونی چاہیے، یہ تصویر کی چوڑائی\nاور اونچائی کے لحاظ سے وہ سائز ہے جو باہر زیادہ سے زیادہ حساب ہوتا ہے۔
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesFromOutsideThe=کیمرا فریکٹل کے باہر سے، جہاں وہ پورا نظر آتا ہے، یا اینیمیشن کے آخری کی فریم سے مرکزی ونڈو کے منظر تک اڑتا ہے: سب سے سیدھے کھلے راستے پر، راستے میں آنے والی چیز کے گرد گھوم کر پھر راستے پر واپس، زوم فاصلے کے ساتھ بدلتا ہے؛ یہ بالکل اسی منظر پر پہنچتا ہے۔ ہر آدھے سیکنڈ پر ایک کی فریم (Catmull-Rom)
+;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=کیمرہ فریکٹل کے اندر اڑتا رہتا ہے، زوم اس تک کے فاصلے کے ساتھ چلتا ہے، اور یہ اس کے خلاؤں سے راستہ بناتا ہے؛ ہر آدھے سیکنڈ میں ایک کی فریم (Catmull-Rom)۔ پرواز بند گلی میں، دوہری درستی کی حد پر یا فریکٹل سے نکلنے پر پہلے ختم ہو جاتی ہے
 ;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 TheCameraLeftTheFractal=کیمرہ فریکٹل سے باہر نکل گیا
@@ -3587,6 +3593,8 @@ TheTriplexMathSineBulbAs=ٹرپلیکس میتھ سائن بلب، جیسا Dani
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=چنے گئے کی فریم کی قدر
 ;The value of the chosen keyframe
+TheViewCannotBeReached=منظر تک نہیں پہنچا جا سکتا: {}
+;The view cannot be reached: {}
 TheViewIsFilledWithThe=منظر فریکٹل سے بھرا ہوا ہے
 ;the view is filled with the fractal
 TheViewShowsOnlySky=منظر میں صرف آسمان ہے

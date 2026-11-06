@@ -42,7 +42,8 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     OnChange = TemplateCmbChange
     Items.Strings = (
       '@MB:N360Orbit'
-      '@MB:FlyThrough')
+      '@MB:FlyThrough'
+      '@MB:FlyToTheView')
   end
   object NoteLabel: TLabel
     Left = 12
@@ -186,6 +187,18 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     TabOrder = 10
     Items.Strings = (
       '@MB:TheMainWindowSView'
+      '@MB:TheLastKeyframe')
+  end
+  object FromCmb: TComboBox
+    Left = 170
+    Top = 256
+    Width = 288
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 11
+    Visible = False
+    Items.Strings = (
+      '@MB:OutsideTheFractal'
       '@MB:TheLastKeyframe')
   end
   object FlightBar: TProgressBar

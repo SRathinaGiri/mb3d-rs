@@ -1255,6 +1255,8 @@ FlyThrough=フライスルー
 ;Fly-through
 FlyThroughTheFlightEndedAfter=フライスルー: {} / {} フレームで飛行が終わりました。{}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyToTheView=ビューへ飛ぶ
+;Fly to the view
 FlyingFrameOf=飛行中: フレーム {} / {}
 ;Flying: frame {} of {}
 Fo=Fo.{}
@@ -2587,6 +2589,8 @@ OutsideRender=外側レンダー
 ;Outside render
 OutsideRenderDefaultModeInsideRender=外側レンダー:  既定モード\n内側レンダー:    最大反復回数で内側を低速にレイマーチング\n内側と外側:   両側をレンダー
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OutsideTheFractal=フラクタルの外側
+;Outside the fractal
 OverTheTopAndUnderPitch=上を越えて下をくぐる (ピッチ)
 ;Over the top and under (pitch)
 OverallScale=全体スケール:
@@ -3465,6 +3469,8 @@ TheCalculationFailedLower=計算に失敗しました
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=計算を画像の外側まで拡張し、そこにあるオブジェクトの反射も含めます。\nアニメーションでアーティファクトが減りますが、静止画にも有効です。\n値は 0 から 0.5 の範囲 (最大 0.9) にしてください。これは外側で最大限に計算される\n画像の幅と高さに対する相対サイズです。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesFromOutsideThe=カメラはフラクタル全体が見える外側から、またはアニメーションの最後のキーフレームから、メインウィンドウのビューへ飛びます。最もまっすぐな空いた道を通り、障害物があれば回り込んでからコースに戻り、ズームは距離に従います。ビューにぴったり到着します。0.5 秒ごとにキーフレーム（Catmull-Rom）
+;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=カメラはフラクタルの奥へ飛び続け、ズームはそこまでの距離に追従し、すき間を抜けて進みます。キーフレームは 0.5 秒ごと (Catmull-Rom)。行き止まり、倍精度の限界、またはフラクタルを離れたときに早めに終わります
 ;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 TheCameraLeftTheFractal=カメラがフラクタルを離れました
@@ -3587,6 +3593,8 @@ TheTriplexMathSineBulbAs=トリプレックス数学のサインバルブ。Dani
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=選んだキーフレームの値
 ;The value of the chosen keyframe
+TheViewCannotBeReached=ビューに到達できません: {}
+;The view cannot be reached: {}
 TheViewIsFilledWithThe=画面がフラクタルで埋まりました
 ;the view is filled with the fractal
 TheViewShowsOnlySky=画面には空しかありません

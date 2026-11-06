@@ -1255,6 +1255,8 @@ FlyThrough=穿越飞行
 ;Fly-through
 FlyThroughTheFlightEndedAfter=穿越飞行：飞行在第 {} / {} 帧后结束，{}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyToTheView=飞到视图
+;Fly to the view
 FlyingFrameOf=飞行中：第 {} / {} 帧
 ;Flying: frame {} of {}
 Fo=公式{}
@@ -2587,6 +2589,8 @@ OutsideRender=外部渲染
 ;Outside render
 OutsideRenderDefaultModeInsideRender=外部渲染：  默认模式\n内部渲染：    以最大迭代次数在内部进行缓慢的光线步进\n内外渲染：   渲染两侧
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OutsideTheFractal=分形外部
+;Outside the fractal
 OverTheTopAndUnderPitch=从上方越过再从下方穿过（俯仰）
 ;Over the top and under (pitch)
 OverallScale=整体缩放：
@@ -3465,6 +3469,8 @@ TheCalculationFailedLower=计算失败
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=计算范围将向图像外侧扩展，以包含被反射的物体。\n这能减少动画中的瑕疵，静态图像也能从中受益。\n取值应在 0 到 0.5 之间（最大 0.9），即图像外侧最大计算范围\n相对于图像宽高的比例。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesFromOutsideThe=相机从能看到整个分形的外部，或从动画的最后一个关键帧，飞到主窗口的视图：走最直的空闲路线，遇到阻挡就绕过去再回到航线上，缩放随距离变化；最终准确到达该视图。每半秒一个关键帧（Catmull-Rom）
+;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=相机持续飞入分形内部，缩放随与它的距离变化，并穿过其空隙转向；每半秒一个关键帧（Catmull-Rom）。遇到死路、达到双精度极限或离开分形时会提前结束
 ;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 TheCameraLeftTheFractal=相机离开了分形
@@ -3587,6 +3593,8 @@ TheTriplexMathSineBulbAs=三元数（triplex）数学正弦球茎，由 Daniel W
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=所选关键帧的数值
 ;The value of the chosen keyframe
+TheViewCannotBeReached=无法到达该视图：{}
+;The view cannot be reached: {}
 TheViewIsFilledWithThe=画面已被分形填满
 ;the view is filled with the fractal
 TheViewShowsOnlySky=画面中只有天空

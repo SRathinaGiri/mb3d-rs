@@ -127,12 +127,12 @@ fn move_middle(sc: &mut Scene, t: Vec3) {
     sc.z_end += t[2];
 }
 
-fn cross(a: Vec3, b: Vec3) -> Vec3 {
+pub(crate) fn cross(a: Vec3, b: Vec3) -> Vec3 {
     [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
 }
 
 /// Rodrigues: `v` turned by `angle` around the unit axis `u`.
-fn turn(v: Vec3, u: Vec3, angle: f64) -> Vec3 {
+pub(crate) fn turn(v: Vec3, u: Vec3, angle: f64) -> Vec3 {
     let (s, c) = angle.sin_cos();
     let d = dot(&u, &v);
     let x = cross(u, v);
@@ -149,7 +149,7 @@ fn turn(v: Vec3, u: Vec3, angle: f64) -> Vec3 {
 /// 8: the trace passed through it, found nothing ahead, and the orbit's
 /// automatic pivot fell back to an empty middle). So the steps are taken
 /// at `step` times the scene's ray step, and as many more of them allowed.
-fn free_distance(p: &CalcParams, from: Vec3, dir: Vec3, reach: f64, stop: f64, step: f64, max_steps: usize) -> f64 {
+pub(crate) fn free_distance(p: &CalcParams, from: Vec3, dir: Vec3, reach: f64, stop: f64, step: f64, max_steps: usize) -> f64 {
     let ray = (p.z_step_div as f64).clamp(0.05, 1.0);
     let step = step * ray;
     let max_steps = (max_steps as f64 / ray).ceil() as usize;

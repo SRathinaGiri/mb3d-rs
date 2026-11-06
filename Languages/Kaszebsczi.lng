@@ -1254,6 +1254,8 @@ FlyThrough=Przelot
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Przelot: lot sã skùńcził pò {} z {} klatków, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyToTheView=Lot do wëzdrzatku
+;Fly to the view
 FlyingFrameOf=Przelot: klatka {} z {}
 ;Flying: frame {} of {}
 Fo=Fò.{}
@@ -2586,6 +2588,8 @@ OutsideRender=Renderowanié z bùtna
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Renderowanié z bùtna:  domëslny trib\nRenderowanié òd bënë:    pòmałé raymarching bënë z maks. it.\nBënë ë z bùtna:   renderowanié òbù starnów
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OutsideTheFractal=Spòza fraktala
+;Outside the fractal
 OverTheTopAndUnderPitch=Górą i dołã (pòchilenié)
 ;Over the top and under (pitch)
 OverallScale=Całownô skala:
@@ -3464,6 +3468,8 @@ TheCalculationFailedLower=rechòwanié sã nie ùdało
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Rechòwanié bãdze rozszérzoné bùten òbrôzka ò òdbité òbiektë.\nTo mòże dac mni artefaktów w animacjach, ale téż stojącé òbrôzczi mògą na tim zwëskac.\nWôrtnosc mô bëc w òbrëmienim òd 0 do 0.5 (maks 0.9), to je wiôlgòsc wzglãdno szérzë\në wësokòscë òbrôzka, jakô je maksymalno rechòwónô bùten.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesFromOutsideThe=Kamera lecy spòza fraktala, skądka je ôn widzec w całoscë, abò z òstatnégò klucowégò kadru animacëji do wëzdrzatku przédnégò òkna: nôprostszą wòlną drogą, òbchôdając to, co zawôdzô, i wracając na kùrs, a zoom jidze za òdległoscą; doléjcô akùrôtno do wëzdrzatku. Klucowi kader co pół sekùndë (Catmull-Rom)
+;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=Kamera leci dali w głãbiã fraktala, zoom jidze za òdległoscą òd niegò, a òna sã kerëje przez jegò szczelënë; kluczowô klatka co pół sekùndë (Catmull-Rom). Lot sã kùńczi wczasni w slepim zaùlkù, na grańcë dwójny precyzje abò czej òpùszczô fraktal
 ;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 TheCameraLeftTheFractal=kamera òpùscëła fraktal
@@ -3586,6 +3592,8 @@ TheTriplexMathSineBulbAs=Sinusowi bulb w triplex-matematice, zaproponowóny prze
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Wôrtnota wëbrónégò klucznégò ùjęcô
 ;The value of the chosen keyframe
+TheViewCannotBeReached=Nie je mòżno doleccec do wëzdrzatku: {}
+;The view cannot be reached: {}
 TheViewIsFilledWithThe=pòzdrzatk je fùl fraktala
 ;the view is filled with the fractal
 TheViewShowsOnlySky=pòzdrzatk wëkazëje le niebò

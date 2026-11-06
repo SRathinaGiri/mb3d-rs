@@ -1254,6 +1254,8 @@ FlyThrough=Terbang menembus
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Terbang menembus: penerbangan berhenti setelah {} dari {} frame, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyToTheView=Terbang ke tampilan
+;Fly to the view
 FlyingFrameOf=Terbang: frame {} dari {}
 ;Flying: frame {} of {}
 Fo=Fo.{}
@@ -2586,6 +2588,8 @@ OutsideRender=Render luar
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Render luar:  mode bawaan\nRender dalam:    raymarching lambat di bagian dalam dengan its maks.\nDi dalam dan luar:   render kedua sisi
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OutsideTheFractal=Di luar fraktal
+;Outside the fractal
 OverTheTopAndUnderPitch=Lewat atas dan bawah (pitch)
 ;Over the top and under (pitch)
 OverallScale=Skala keseluruhan:
@@ -3464,6 +3468,8 @@ TheCalculationFailedLower=perhitungan gagal
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Perhitungan akan diperluas ke luar gambar dengan objek yang dipantulkan.\nIni dapat mengurangi artefak dalam animasi, tetapi gambar diam juga bisa mendapat manfaat.\nNilainya sebaiknya dalam rentang 0 sampai 0.5 (maks 0.9), yaitu ukuran relatif terhadap lebar\ndan tinggi gambar yang dihitung maksimal di luar gambar.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesFromOutsideThe=Kamera terbang dari luar fraktal, tempat seluruhnya terlihat, atau dari keyframe terakhir animasi ke tampilan jendela utama: lewat jalan bebas yang paling lurus, memutari apa yang menghalangi lalu kembali ke jalurnya, zoom mengikuti jarak; kamera tiba tepat di tampilan itu. Satu keyframe setiap setengah detik (Catmull-Rom)
+;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=Kamera terus terbang masuk ke fraktal, zoom mengikuti jaraknya, dan berbelok melalui celah-celahnya; satu keyframe setiap setengah detik (Catmull-Rom). Berhenti lebih awal di jalan buntu, di batas presisi ganda, atau saat keluar dari fraktal
 ;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 TheCameraLeftTheFractal=kamera keluar dari fraktal
@@ -3586,6 +3592,8 @@ TheTriplexMathSineBulbAs=Bulb sinus matematika triplex, seperti yang disarankan 
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=Nilai keyframe yang dipilih
 ;The value of the chosen keyframe
+TheViewCannotBeReached=Tampilan tidak dapat dicapai: {}
+;The view cannot be reached: {}
 TheViewIsFilledWithThe=tampilan dipenuhi fraktal
 ;the view is filled with the fractal
 TheViewShowsOnlySky=tampilan hanya menunjukkan langit

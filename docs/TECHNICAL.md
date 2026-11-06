@@ -1093,6 +1093,36 @@ module has its own copies of these helpers, so `navi_form.rs` is as it was.
   `--fly --duration S` (`0`: until the view is pure, at most 2 minutes).
   Test: on Integer Power and Amazing Box at most 2 reversals of the turn in
   30 s (before the steering: 5 to 18).
+* *Fly to the view* (`src/approach.rs`, `approach::fly_to`): to a target
+  view from a start view or from outside. The fractal's bounding radius R
+  is marched in from far away along 26 directions (×1.1). Outside means
+  on a sphere at the distance where the sphere of R fills the field of view
+  (×1.15), at least 1.5 R and 1.2 times the camera's distance from the
+  origin. The DE is clamped to the sphere (`Space::de`: at most r + R,
+  at least r − R outside it), since far out it is no bound. A segment is
+  free when sphere tracing along it keeps a clearance of max(0.5 DE at the
+  target, 0.05 × the distance to the target), so near the target it may
+  come as close as the view itself. From outside, straight lines from the
+  target are tried first (`line_dirs`): straight back behind its camera,
+  then rings round that at 8 to 70°, then the rest of the sphere, nearest
+  first; the start is where the first free one leaves the outside sphere.
+  From a start view the straight line is tried. When none is free:
+  RRT-connect (6000 iterations, samples at several
+  scales round both ends), shortened (`shortcut`) and its corners rounded
+  (Chaikin, 3 times, each kept only when free). The path is timed by
+  u = ∫ ds / DE (equal steps in u are equal steps on the picture), the
+  keyframes at equal steps of u (uneven steps made Catmull-Rom swing
+  back), the time eased (8 % in, 15 % out). The zoom follows the DE as
+  `SetZoom` (a running minimum, not under the target's DE, so it does not
+  breathe); the heading looks 2 u ahead and over the last part (from
+  80 % of u or 6 u before the end, whichever is later) turns into the target's rotation,
+  the middle of the view moving to the target's. The first keyframe is the
+  start view exactly, the last the target scene unchanged.
+  `mb3d animate view.m3p --approach [--duration S]` (from outside) or
+  `a.m3p b.m3p --approach` (from a to b). Tests: a view in the open is
+  reached on one straight line, the distance to it falling; a view behind
+  the bulb on a way round it; a view 1e-4 from the surface with the zoom
+  rising over 5 e-folds, without dips.
 
 **360° photos and videos** (`src/vr.rs`). A JPEG of a spherical panorama
 (`CameraOptic::Panorama`, 2:1) gets the Photo Sphere XMP (`GPano`,

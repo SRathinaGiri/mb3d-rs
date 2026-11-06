@@ -1254,6 +1254,8 @@ FlyThrough=Doorvlucht
 ;Fly-through
 FlyThroughTheFlightEndedAfter=Doorvlucht: de vlucht stopte na {} van {} frames, {}
 ;Fly-through: the flight ended after {} of {} frames, {}
+FlyToTheView=Vlieg naar het beeld
+;Fly to the view
 FlyingFrameOf=Vliegen: beeld {} van {}
 ;Flying: frame {} of {}
 Fo=Fo.{}
@@ -2586,6 +2588,8 @@ OutsideRender=Buitenkant renderen
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Buitenkant renderen:  standaardmodus\nBinnenkant renderen:    trage raymarching aan de binnenkant met max. its.\nBinnen en buiten:   beide kanten renderen
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OutsideTheFractal=Buiten de fractal
+;Outside the fractal
 OverTheTopAndUnderPitch=Over de bovenkant en eronderdoor (stampen)
 ;Over the top and under (pitch)
 OverallScale=Totale schaal:
@@ -3464,6 +3468,8 @@ TheCalculationFailedLower=de berekening is mislukt
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=De berekening wordt uitgebreid tot buiten de afbeelding met gespiegelde objecten.\nDit kan tot minder artefacten in animaties leiden, maar ook stilstaande beelden profiteren ervan.\nDe waarde moet tussen 0 en 0,5 liggen (max. 0,9); het is de grootte ten opzichte van de breedte\nen hoogte van de afbeelding die maximaal buiten de afbeelding wordt berekend.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesFromOutsideThe=De camera vliegt van buiten de fractal, waar die helemaal in beeld is, of van het laatste sleutelbeeld van de animatie naar het beeld van het hoofdvenster: langs de rechtste vrije weg, om wat in de weg zit heen en terug op koers, de zoom volgt de afstand; hij komt precies bij het beeld aan. Elke halve seconde een sleutelbeeld (Catmull-Rom)
+;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=De camera vliegt verder het fractal in, de zoom volgt de afstand ertoe, en stuurt door de openingen; elke halve seconde een keyframe (Catmull-Rom). De vlucht stopt eerder bij een doodlopend punt, bij de grens van dubbele precisie of als hij het fractal verlaat
 ;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 TheCameraLeftTheFractal=de camera heeft het fractal verlaten
@@ -3586,6 +3592,8 @@ TheTriplexMathSineBulbAs=De triplex-wiskunde-sinusbulb, voorgesteld door Daniel 
 ;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=De waarde van het gekozen keyframe
 ;The value of the chosen keyframe
+TheViewCannotBeReached=Het beeld is niet te bereiken: {}
+;The view cannot be reached: {}
 TheViewIsFilledWithThe=het beeld is gevuld met het fractal
 ;the view is filled with the fractal
 TheViewShowsOnlySky=het beeld toont alleen lucht

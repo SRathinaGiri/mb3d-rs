@@ -8,12 +8,17 @@
 //!   axis), the frames adding up to the duration (the Animation window's own Turntable button stays as it
 //!   was);
 //! * Fly-through: a flight on into the fractal for the duration, or until
-//!   the view shows only sky or only fractal.
+//!   the view shows only sky or only fractal;
+//! * Fly to the view: from outside the fractal (all of it in view) or from
+//!   the animation's last keyframe to the main window's view, on the
+//!   straightest free way, round what is in the way and back onto the
+//!   course, arriving exactly at the view ([`crate::approach`]).
 //!
 //! The frames per second are the Animation window's (its video's).
 //!
 //! A template starts from the main window's view or from the animation's
-//! last keyframe. The fly-through is flown on a thread of its own (a long
+//! last keyframe (Fly to the view: from outside the fractal or from the
+//! last keyframe, to the main window's view). The flights are flown on a thread of its own (a long
 //! one took the window with it): a bar shows the frames flown, Stop ends
 //! the flight there and adds what was flown.
 
@@ -37,6 +42,8 @@ struct Flying {
     result: Arc<Mutex<Option<Result<crate::autopilot::Flight, String>>>>,
     from_last: bool,
     asked: usize,
+    /// Fly to the view (else the fly-through)
+    to_view: bool,
 }
 
 const F: &str = "AnimTemplatesFrm";
@@ -45,7 +52,7 @@ const ANIM: &str = "AnimationForm";
 /// Opens the window with the settings of last time.
 pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     let get = |k: &str, d: &str| app.ini.get_extra(k).filter(|v| !v.is_empty()).unwrap_or(d).to_string();
-    ui.set_item_index(F, "TemplateCmb", get("AniTplKind", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
+    ui.set_item_index(F, "TemplateCmb", get("AniTplKind", "0").parse::<i32>().unwrap_or(0).clamp(0, 2));
     ui.set_text(F, "DurationEdit", &get("AniTplSecs", "10"));
     ui.set_item_index(F, "AxisCmb", get("AniTplAxis", "0").parse::<i32>().unwrap_or(0).clamp(0, 6));
     ui.set_text(F, "StepsEdit", &get("AniTplSteps", "8"));
@@ -54,6 +61,7 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_text(F, "SpeedEdit", &get("AniTplSpeed", "4"));
     ui.set_text(F, "TurnEdit", &get("AniTplTurn", "2"));
     ui.set_item_index(F, "StartCmb", get("AniTplStart", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
+    ui.set_item_index(F, "FromCmb", get("AniTplFrom", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     show_kind(ui);
     ui.show(F);
 }
@@ -64,6 +72,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
     let axis = ui.item_index(F, "AxisCmb").to_string();
     let until = if ui.checked(F, "UntilCheck") { "1" } else { "0" };
     let start = ui.item_index(F, "StartCmb").to_string();
+    let from = ui.item_index(F, "FromCmb").to_string();
     for (k, v) in [
         ("AniTplKind", kind.as_str()),
         ("AniTplSecs", ui.text(F, "DurationEdit").trim()),
@@ -74,26 +83,49 @@ fn save(app: &mut Mb3d, ui: &Ui) {
         ("AniTplSpeed", ui.text(F, "SpeedEdit").trim()),
         ("AniTplTurn", ui.text(F, "TurnEdit").trim()),
         ("AniTplStart", start.as_str()),
+        ("AniTplFrom", from.as_str()),
     ] {
         app.ini.set_extra(k, v);
     }
 }
 
 fn is_orbit(ui: &Ui) -> bool {
-    ui.item_index(F, "TemplateCmb") != 1
+    !matches!(ui.item_index(F, "TemplateCmb"), 1 | 2)
+}
+
+fn is_fly(ui: &Ui) -> bool {
+    ui.item_index(F, "TemplateCmb") == 1
+}
+
+fn is_to_view(ui: &Ui) -> bool {
+    ui.item_index(F, "TemplateCmb") == 2
+}
+
+/// "Until the view shows only sky ..." (the fly-through's).
+fn until(ui: &Ui) -> bool {
+    is_fly(ui) && ui.checked(F, "UntilCheck")
 }
 
 /// The controls of the chosen template.
 fn show_kind(ui: &mut Ui) {
-    let orbit = is_orbit(ui);
-    ui.set_caption(F, "NoteLabel", &tr(if orbit { "@MB:AWholeTurnOfTheCamera" } else { "@MB:TheCameraFliesOnIntoThe" }));
+    let (orbit, fly, to_view) = (is_orbit(ui), is_fly(ui), is_to_view(ui));
+    let note = if orbit {
+        "@MB:AWholeTurnOfTheCamera"
+    } else if fly {
+        "@MB:TheCameraFliesOnIntoThe"
+    } else {
+        "@MB:TheCameraFliesFromOutsideThe"
+    };
+    ui.set_caption(F, "NoteLabel", &tr(note));
     for c in ["AxisLabel", "AxisCmb", "StepsLabel", "StepsEdit", "PivotLabel", "PivotCmb"] {
         ui.set_visible(F, c, orbit);
     }
     for c in ["UntilCheck", "SpeedLabel", "SpeedEdit", "TurnLabel", "TurnEdit"] {
-        ui.set_visible(F, c, !orbit);
+        ui.set_visible(F, c, fly);
     }
-    let until = !orbit && ui.checked(F, "UntilCheck");
+    ui.set_visible(F, "StartCmb", !to_view);
+    ui.set_visible(F, "FromCmb", to_view);
+    let until = until(ui);
     ui.set_enabled(F, "DurationEdit", !until);
     ui.set_enabled(F, "DurationLabel", !until);
     show_frames(ui);
@@ -110,7 +142,7 @@ fn seconds(ui: &Ui) -> Option<f64> {
 }
 
 fn show_frames(ui: &mut Ui) {
-    let until = !is_orbit(ui) && ui.checked(F, "UntilCheck");
+    let until = until(ui);
     let f = fps(ui);
     let text = match (until, seconds(ui)) {
         (true, _) => String::new(),
@@ -138,13 +170,16 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
         return;
     }
     let fps = fps(ui);
-    let until = !is_orbit(ui) && ui.checked(F, "UntilCheck");
+    let until = until(ui);
     let secs = if until { Some(120.0) } else { seconds(ui) };
     let Some(secs) = secs else {
         ui.show_message(&tr("@MB:ValueNotGuilty"));
         return;
     };
     save(app, ui);
+    if is_to_view(ui) {
+        return add_to_view(app, ui, secs, fps);
+    }
     let (sc, from_last) = start_scene(app, ui);
     if is_orbit(ui) {
         let steps = pti(&ui.text(F, "StepsEdit")).clamp(3, 360) as usize;
@@ -174,6 +209,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             result: Arc::new(Mutex::new(None)),
             from_last,
             asked: fp.frames,
+            to_view: false,
         };
         let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
         std::thread::spawn(move || {
@@ -198,12 +234,55 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
     }
 }
 
+/// Fly to the view: from outside the fractal or the last keyframe to the
+/// main window's view, on a thread like the fly-through.
+fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
+    app.make_scene(ui);
+    let target = app.scene.clone();
+    let start = if ui.item_index(F, "FromCmb") == 1 { super::anim_form::last_keyframe_scene(app) } else { None };
+    let from_last = start.is_some();
+    let ap = crate::approach::ApproachParams {
+        frames: (secs * fps).round().max(2.0) as usize,
+        keyframe_every: (fps * 0.5).round().max(1.0) as usize,
+        ..Default::default()
+    };
+    let fl = Flying {
+        done: Arc::new(AtomicUsize::new(0)),
+        total: ap.frames,
+        cancel: Arc::new(AtomicBool::new(false)),
+        result: Arc::new(Mutex::new(None)),
+        from_last,
+        asked: ap.frames,
+        to_view: true,
+    };
+    let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
+    std::thread::spawn(move || {
+        let w = waker.clone();
+        let total = ap.frames.max(1);
+        let progress = move |d: usize, _: usize| {
+            let old = done.swap(d, Ordering::Relaxed);
+            if let Some(w) = &w {
+                if d * 25 / total != old * 25 / total {
+                    w.wake();
+                }
+            }
+        };
+        let r = crate::approach::fly_to(&target, start.as_ref(), &ap, &progress, &|| cancel.load(Ordering::Relaxed)).map(|a| a.flight);
+        *result.lock().unwrap() = Some(r);
+        if let Some(w) = waker {
+            w.wake();
+        }
+    });
+    app.anim_tpl.flying = Some(fl);
+    show_flying(app, ui);
+}
+
 /// The controls while a flight is flown (Add becomes Stop).
 fn show_flying(app: &Mb3d, ui: &mut Ui) {
     let fl = app.anim_tpl.flying.as_ref();
     ui.set_visible(F, "FlightBar", fl.is_some());
     ui.set_caption(F, "AddBtn", &tr(if fl.is_some() { "@MB:Stop" } else { "@MB:AddTheKeyframes" }));
-    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb"] {
+    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb"] {
         ui.set_enabled(F, c, fl.is_none());
     }
     match fl {
@@ -216,7 +295,7 @@ fn show_flying(app: &Mb3d, ui: &mut Ui) {
         }
         None => {
             ui.set_caption(F, "FlightLabel", "");
-            let until = !is_orbit(ui) && ui.checked(F, "UntilCheck");
+            let until = until(ui);
             ui.set_enabled(F, "DurationEdit", !until);
         }
     }
@@ -230,7 +309,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         show_flying(app, ui);
         return;
     };
-    let (from_last, asked) = (fl.from_last, fl.asked);
+    let (from_last, asked, to_view) = (fl.from_last, fl.asked, fl.to_view);
     app.anim_tpl.flying = None;
     show_flying(app, ui);
     match r {
@@ -250,6 +329,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 app.message(ui, &trf("@MB:FlyThroughTheFlightEndedAfter", &[&flown, &asked, &w]));
             }
         }
+        // (a stopped flight to the view adds nothing: it would not arrive)
+        Err(e) if to_view && e == "cancelled" => {}
+        Err(e) if to_view => ui.show_message(&trf("@MB:TheViewCannotBeReached", &[&e])),
         Err(e) => ui.show_message(&trf("@MB:TheFlyThroughCannotStartHere", &[&e])),
     }
 }

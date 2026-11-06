@@ -1254,6 +1254,8 @@ FlyThrough=Fly-through
 ;AnimTemplatesFrm.TemplateCmb.Items
 FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
 ;the program
+FlyToTheView=Fly to the view
+;AnimTemplatesFrm.TemplateCmb.Items
 FlyingFrameOf=Flying: frame {} of {}
 ;the program
 Fo=Fo.{}
@@ -2586,6 +2588,8 @@ OutsideRender=Outside render
 ;FormulaGUIForm.ComboBox1.Items
 OutsideRenderDefaultModeInsideRender=Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
 ;FormulaGUIForm.ComboBox1.Hint
+OutsideTheFractal=Outside the fractal
+;AnimTemplatesFrm.FromCmb.Items
 OverTheTopAndUnderPitch=Over the top and under (pitch)
 ;AnimTemplatesFrm.AxisCmb.Items
 OverallScale=Overall scale:
@@ -3464,6 +3468,8 @@ TheCalculationFailedLower=the calculation failed
 ;the program
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
+TheCameraFliesFromOutsideThe=The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
+;the program
 TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
 ;the program
 TheCameraLeftTheFractal=the camera left the fractal
@@ -3527,7 +3533,7 @@ TheImageSizeChangedCalculateThe=the image size changed: calculate the image agai
 TheItsTrapModeDependsOn=The its.trap mode depends on the calculated option in the "Coloring" tab.
 ;LightAdjustForm.RadioGroup1.Hint
 TheLastKeyframe=The last keyframe
-;AnimTemplatesFrm.StartCmb.Items
+;AnimTemplatesFrm.StartCmb.Items, AnimTemplatesFrm.FromCmb.Items
 TheLastSessionCrashed=The last session crashed: {}. More in the Log window (the icon in the title bar).
 ;the program
 TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
@@ -3586,6 +3592,8 @@ TheTriplexMathSineBulbAs=The triplex math sine bulb, as suggested by Daniel Whit
 ;the program
 TheValueOfTheChosenKeyframe=The value of the chosen keyframe
 ;CurvesFrm.KeyValEdit.Hint
+TheViewCannotBeReached=The view cannot be reached: {}
+;the program
 TheViewIsFilledWithThe=the view is filled with the fractal
 ;the program
 TheViewShowsOnlySky=the view shows only sky
