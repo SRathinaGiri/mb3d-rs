@@ -34,7 +34,13 @@ share="$root/usr/share"
 
 install -Dm755 "$src/mb3d" "$root/usr/bin/mb3d"
 mkdir -p "$share/mb3d-rs"
-for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas examples; do
+# Intel Open Image Denoise as shipped (the programs look in
+# /usr/lib/mb3d-rs/oidn/lib, src/oidn.rs)
+if [ -d "$src/oidn" ]; then
+  mkdir -p "$root/usr/lib/mb3d-rs"
+  cp -a "$src/oidn" "$root/usr/lib/mb3d-rs/"
+fi
+for d in M3Formulas M3Maps M3Lights M3Parameter EM_JIT_M3Formulas Themes Languages; do
   [ -d "$src/$d" ] && cp -r "$src/$d" "$share/mb3d-rs/"
 done
 install -d "$share/man/man1"

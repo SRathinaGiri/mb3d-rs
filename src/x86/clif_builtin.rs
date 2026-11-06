@@ -306,7 +306,9 @@ fn amazing_box(scale: f64, min_r: f64, fold: f64, v: &mut [X; 4], j: &[X; 4], ad
     let y = box_fold(v[1], fold);
     let z = box_fold(v[2], fold);
     let r = z * z + y * y + x * x;
-    let sqr_min_r = min_r * min_r;
+    // Sqr(Max(1e-40, MinR)) as MB3D (formulas::amazing_box)
+    let m = min_r.max(1e-40);
+    let sqr_min_r = m * m;
     // if r < sqr_min_r { scale / sqr_min_r } else if 1.0 < r { scale } else { scale / r }
     let mul = r.lt_select(k(sqr_min_r), k(scale / sqr_min_r), k(1.0).lt_select(r, k(scale), scale / r));
     if ade {

@@ -355,7 +355,7 @@ impl<A: App> Runner<A> {
         }
         for r in std::mem::take(&mut self.ui.requests) {
             let fi = match r {
-                Request::Raise(i) | Request::Minimize(i) | Request::Maximize(i, _) | Request::Move(i, ..) | Request::Cursor(i, _) | Request::MouseLook(i, _) => i,
+                Request::Raise(i) | Request::Minimize(i) | Request::Maximize(i, _) | Request::Move(i, ..) | Request::Cursor(i, _) | Request::MouseLook(i, _) | Request::DragResize(i) => i,
             };
             let Some(w) = self.by_form.get(&fi).and_then(|id| self.wins.get(id)) else { continue };
             match r {
@@ -367,6 +367,12 @@ impl<A: App> Runner<A> {
                 Request::Maximize(_, m) => w.window.set_maximized(m),
                 Request::Move(_, x, y) => w.window.set_outer_position(LogicalPosition::new(x, y)),
                 Request::Cursor(_, c) => w.window.set_cursor(cursor_for(c)),
+                Request::DragResize(_) => {
+                    // the window manager takes the press and often its release too
+                    self.buttons &= !SS_LEFT;
+                    self.ui.forms[fi].capture = None;
+                    let _ = w.window.drag_resize_window(ResizeDirection::SouthEast);
+                }
                 Request::MouseLook(_, on) => {
                     use winit::window::CursorGrabMode;
                     if on {

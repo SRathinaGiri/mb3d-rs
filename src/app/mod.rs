@@ -7,6 +7,7 @@
 
 pub mod ai_form;
 pub mod anim_form;
+pub mod anim_templates_form;
 pub mod bulbtracer_form;
 pub mod curves_form;
 pub mod engine;
@@ -47,7 +48,7 @@ use std::path::PathBuf;
 pub const FORMS: &[&str] = &[
     "Mand", "FormulaGUI", "LightAdjust", "PostProcessForm", "Navigator", "Animation", "AniPreviewWindow", "AniProcess",
     "BatchForm", "BRInfoWindow", "ColorOptionForm", "ColorPick", "FormulaParser", "IniDirsForm", "MapSequencesGUI",
-    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "Splat", "uMapCalcWindow", "VisualThemesGUI",
+    "MonteCarloForm", "MutaGenGUI", "ParamValueEditGUI", "Swarm", "TextBox", "Tiling", "Unfinished", "History", "Log", "AiConnect", "Experimental", "AnimTemplates", "Splat", "uMapCalcWindow", "VisualThemesGUI",
     "VoxelExport", "ZBuf16BitGenUI", "Curves", "BulbTracer2UI", "HeightMapGenUI", "JITFormulaEditGUI", "MeshPreviewUI", "LanguageGUI", "HotkeysGUI",
 ];
 
@@ -67,6 +68,7 @@ pub struct Mb3d {
     pub mapseq: small_forms::MapSeqState,
     pub navi: navi_form::State,
     pub anim: anim_form::State,
+    pub anim_tpl: anim_templates_form::State,
     pub palette: palette_form::State,
     pub batch: tools_forms::BatchState,
     pub tiling: tools_forms::TilingState,
@@ -152,8 +154,11 @@ impl Mb3d {
         };
         self.scene = sc;
         self.notes = notes;
-        self.title = name;
+        // the file's name without its extension (SetSaveDialogNames,
+        // FileHandling.pas:2084)
+        self.title = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or(name);
         self.eng.clear();
+        main_form::history_kept(self);
         self.scene_to_forms(ui);
         main_form::set_caption(self, ui);
         for n in self.notes.clone() {
@@ -163,6 +168,16 @@ impl Mb3d {
             if let Some((w, h, g)) = crate::m3p::gbuffer_from_m3i(&data) {
                 if w == self.scene.width as usize && h == self.scene.height as usize {
                     self.eng.set_gbuffer(&self.scene, g)?;
+                    // the finished picture kept with it ("Save image in
+                    // m3i") is shown as it was, not painted again
+                    // (FileHandling.pas:2309); a lighting change repaints
+                    if let Some((iw, ih, rgb)) = crate::m3p::image_from_m3i(&data) {
+                        if (iw, ih) == (w, h) {
+                            let mut o = self.eng.0.out.lock().unwrap();
+                            o.rgb = Some(std::sync::Arc::new(rgb));
+                            o.ver += 1;
+                        }
+                    }
                 }
             }
         }
@@ -178,12 +193,25 @@ pub fn forms_jit_open(app: &mut Mb3d, ui: &mut Ui, name: Option<String>) {
 impl App for Mb3d {
     fn event(&mut self, ui: &mut Ui, e: &Event) {
         if let Ev::DialogResult(r) = &e.ev {
+            // files dropped on the batch window go into its list
+            // (BatchForm.pas WMDROPFILES), also while it calculates
+            if e.sender == "@drop" && e.form == "BatchForm1" {
+                tools_forms::batch_dialog(self, ui, "open", r);
+                return;
+            }
             if e.form.is_empty() || e.sender == "@drop" {
                 self.dialog_result(ui, &e.sender, r);
                 return;
             }
         }
         if let Ev::Move = e.ev {
+            // (the windows sticking to the main window follow it; the
+            // Animation window sticks when moved under it)
+            match e.form.as_str() {
+                MAIN => main_form::event(self, ui, e),
+                "AnimationForm" => main_form::ani_form_moved(self, ui),
+                _ => {}
+            }
             return;
         }
         // the log: what the user did (first what no handler took before
@@ -206,6 +234,7 @@ impl App for Mb3d {
             "LogFrm" => log_form::event(self, ui, e),
             "AiConnectFrm" => ai_form::event(self, ui, e),
             "ExperimentalFrm" => experimental_form::event(self, ui, e),
+            "AnimTemplatesFrm" => anim_templates_form::event(self, ui, e),
             "IniDirForm" => small_forms::inidirs_event(self, ui, e),
             "MapSequencesFrm" => small_forms::mapseq_event(self, ui, e),
             "FTextBox" => small_forms::textbox_event(self, ui, e),
@@ -251,6 +280,7 @@ impl App for Mb3d {
             navi_form::idle(self, ui);
         }
         anim_form::idle(self, ui);
+        anim_templates_form::idle(self, ui);
         tools_forms::tiling_idle(self, ui);
         mc_form::idle(self, ui);
         voxel_form::idle(self, ui);
@@ -269,7 +299,10 @@ impl Mb3d {
         // the history: every file opened or saved through a file dialog
         // (or dropped on the window); a chosen folder is none
         if let DialogResult::File(Some(p)) = r {
-            if !p.is_dir() {
+            // (not a drop or an Open of the main window refused while a
+            // calculation runs: main_form::open_file)
+            let refused = self.main.calculating && (tag == "@drop" || tag.starts_with("main:open"));
+            if !p.is_dir() && !refused {
                 let save = tag != "@drop" && ui.file_dialog_save;
                 crate::history::log(if save { crate::history::Action::Save } else { crate::history::Action::Open }, p);
             }
@@ -367,6 +400,7 @@ pub fn build(args: &[String]) -> Result<Option<(Ui, Mb3d)>, String> {
         mapseq: small_forms::MapSeqState::default(),
         navi: navi_form::State::default(),
         anim: anim_form::State::default(),
+        anim_tpl: anim_templates_form::State::default(),
         palette: palette_form::State::default(),
         batch: tools_forms::BatchState::default(),
         tiling: tools_forms::TilingState::default(),

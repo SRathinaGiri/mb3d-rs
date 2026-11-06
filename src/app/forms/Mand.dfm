@@ -425,7 +425,7 @@ object Mand3DForm: TMand3DForm
       Left = 1
       Top = 446
       Width = 151
-      Height = 292
+      Height = 388
       ActivePage = TabSheet5
       Align = alTop
       BiDiMode = bdLeftToRight
@@ -1269,6 +1269,130 @@ object Mand3DForm: TMand3DForm
           ShowHint = True
           TabOrder = 13
           Text = '1'
+        end
+        object Label92: TLabel
+          Left = 9
+          Top = 224
+          Width = 30
+          Height = 13
+          Caption = '@MB:Water'
+        end
+        object GroundTranspEdit: TEdit
+          Left = 50
+          Top = 221
+          Width = 42
+          Height = 21
+          Hint = '@MB:HowMuchLightTheWaterLets'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 14
+          Text = '0'
+        end
+        object Label94: TLabel
+          Left = 9
+          Top = 248
+          Width = 80
+          Height = 13
+          Caption = '@MB:Absorption'
+        end
+        object GroundVisEdit: TEdit
+          Left = 95
+          Top = 245
+          Width = 42
+          Height = 21
+          Hint = '@MB:HowMurkyTheWaterIsHow'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 15
+          Text = '1'
+        end
+        object GroundWaterColBtn: TSpeedButton
+          Left = 9
+          Top = 268
+          Width = 23
+          Height = 23
+          Hint = '@MB:TheColourOfDeepWaterThe'
+          Flat = True
+          ParentShowHint = False
+          ShowHint = True
+          OnClick = GroundWaterColBtnClick
+        end
+        object Label93: TLabel
+          Left = 36
+          Top = 272
+          Width = 56
+          Height = 13
+          Caption = '@MB:Refraction'
+        end
+        object GroundIorEdit: TEdit
+          Left = 95
+          Top = 269
+          Width = 42
+          Height = 21
+          Hint = '@MB:RefractionIndexOfTheWaterWater'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 16
+          Text = '1.33'
+        end
+        object Label95: TLabel
+          Left = 9
+          Top = 296
+          Width = 56
+          Height = 13
+          Caption = '@MB:Scattering'
+        end
+        object GroundScatEdit: TEdit
+          Left = 66
+          Top = 293
+          Width = 34
+          Height = 21
+          Hint = '@MB:HowMuchTheWaterScattersLight'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 17
+          Text = '0'
+        end
+        object GroundScatDirEdit: TEdit
+          Left = 103
+          Top = 293
+          Width = 34
+          Height = 21
+          Hint = '@MB:TheDirectionOfTheScattering0'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'MS Serif'
+          Font.Style = []
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 18
+          Text = '0.8'
         end
       end
       object TabSheet9: TTabSheet

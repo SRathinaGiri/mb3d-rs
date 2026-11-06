@@ -182,6 +182,9 @@ enum Kind {
 pub struct State {
     f: JitFormula,
     edit_name: Option<String>,
+    /// opened to edit a formula of the list (MB3D's EditJITFormulaItmClick,
+    /// which selects it again after Save and exit; a new one only reloads)
+    editing: bool,
     /// the value dialog is open for: kind, index (None = add)
     pending: Option<(Kind, Option<usize>)>,
     saving_and_exit: bool,
@@ -189,7 +192,7 @@ pub struct State {
 
 impl Default for State {
     fn default() -> Self {
-        State { f: JitFormula::new_formula(), edit_name: None, pending: None, saving_and_exit: false }
+        State { f: JitFormula::new_formula(), edit_name: None, editing: false, pending: None, saving_and_exit: false }
     }
 }
 
@@ -260,6 +263,7 @@ fn formula_dir(app: &Mb3d) -> PathBuf {
 
 /// Opens the editor for a new formula or the formula `name` (`forms_jit_open`).
 pub fn open(app: &mut Mb3d, ui: &mut Ui, name: Option<String>) {
+    app.jit.editing = name.is_some();
     app.jit.edit_name = name;
     ui.show_modal(F);
 }
@@ -338,6 +342,12 @@ fn write_formula(app: &mut Mb3d, ui: &mut Ui) {
             if std::mem::take(&mut app.jit.saving_and_exit) {
                 ui.hide(F);
                 super::formula_form::load_formula_names(app, ui);
+                // an edited formula is selected again, so that the slot
+                // takes the saved code (FormulaGUI.pas EditJITFormulaItmClick:
+                // LoadFormulaNames; SelectFormula(Formulaname))
+                if let Some(n) = app.jit.edit_name.clone().filter(|_| app.jit.editing) {
+                    super::formula_form::select_formula(app, ui, &n);
+                }
             }
         }
         Err(e) => {

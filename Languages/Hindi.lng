@@ -29,6 +29,12 @@ code = HI
 font = Hindi.ttf
 
 [Labels]
+A360DegreeAnimationForVR=वीआर हेडसेट के लिए 360 डिग्री एनिमेशन: हर फ़्रेम एक गोलाकार पैनोरमा, ऊँचाई से दोगुना चौड़ा; 'स्टीरियो एनिमेशन रेंडर करें' के साथ वीडियो में दोनों आँखें ऊपर-नीचे होती हैं, और ffmpeg कमांड MP4 को वीआर प्लेयर के लिए चिह्नित करती है
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
+A4dQuaternionFormulaOneIteration=4d क्वाटर्नियन फ़ॉर्मूला, एक पुनरावृत्ति:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Aexion द्वारा सुझाया गया बल्ब (bulb) फ़ॉर्मूला:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nZ और C के वर्तमान सदिशों की दूरी के अनुसार स्थिरांक को घात से घुमाने के दो विकल्प जोड़े गए हैं (Cond Phi=1),\nऔर ये मोड विकल्प:\n(मोड मान के बिट)\nBit1: atan theta घटकों को पलटें\nBit2: atan phi घटकों को पलटें\nBit3: theta और phi को पलटें\nBit4: कोण गणना के लिए CyCz पलटें\nBit5: powerC को सदिश Z और C की दूरी से गुणा करें
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=एक गणना चल रही है: पहले उसे रोकें।
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=16, फिर 4 पिक्सेल के हर ब्लॉक के लिए एक मोटी किरण मार्च करती है, जिसमें ब्लॉक का फैलाव दूरी अनुमान से घटा दिया जाता है, और हर पिक्सेल का मार्च उसकी गहराई से शुरू होता है। खुली जगह में 60 % तक तेज़; जहाँ अनुमान बहुत गलत हो वहाँ पतले हिस्से खो सकते हैं।
@@ -45,6 +51,8 @@ AGroundOrWaterSurfaceAcross=फ़्रैक्टल के X, Y या Z अ
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=अधिक मान का अर्थ है बेहतर गुणवत्ता, 100% भी हानिपूर्ण है।
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=घात 2 वाले साइन बल्ब और अमेज़िंग बॉक्स का हाइब्रिड; 3d सदिश की लंबाई तय करती है कि कौन-सा फ़ॉर्मूला उपयोग होगा:\nयदि वह 'Box/Bulb R threshold' से बड़ी है तो अमेज़िंग बॉक्स उपयोग होता है, यदि '..threshold 2' से छोटी है तो साइन बल्ब,\nदोनों के बीच दोनों फ़ॉर्मूलों का इंटरपोलेशन होता है। अधिक सहजता के लिए दूसरी थ्रेशोल्ड को पहली से थोड़ा छोटा रखें।
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=भाषा फ़ाइल में हर पंक्ति में एक लेबल होता है: "=" के बाईं ओर उसकी ID, दाईं ओर आपका टेक्स्ट। लेबलों के बाद आने वाला विंडो खंड किसी एक कंट्रोल को उसका अपना टेक्स्ट देता है।
@@ -53,6 +61,8 @@ AMultiplierThatDefinesTheMiximal=एक गुणक जो कठोर छा�
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO गणना समय:
 ;AO calc time:
+ASineIntegerPowerBulbWith=पहले फ़ोल्डिंग वाला साइन पूर्णांक घात बल्ब, जैसा अमेज़िंग बॉक्स में होता है।
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=रोका गया या बाधित रेंडर अपनी गणना रखता है; उन्हीं पैरामीटर की 3D गणना उसे जारी रखती है।
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=पारदर्शी पृष्ठभूमि के लिए PNG फ़्रेम चाहिए: आउटपुट फ़ॉर्मैट के रूप में PNG चुनें।
@@ -61,6 +71,8 @@ AVideoNeedsImagesChooseBMP=वीडियो के लिए छविया�
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=स्टीरियो एनिमेशन का वीडियो नहीं बनता: 'Render stereo animation' बंद करें।
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=वस्तु के चारों ओर कैमरे का एक पूरा चक्कर 8 या अधिक की-फ़्रेम में, एक सहज लूप (Catmull-Rom); एनिमेशन विंडो के फ़्रेम प्रति सेकंड पर फ़्रेम मिलकर अवधि के बराबर होते हैं
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf={} x {} के चित्र को लगभग {} मेमोरी चाहिए, इस कंप्यूटर में {} खाली है: गणना स्वैप करेगी और प्रोग्राम कई मिनट तक जवाब देना बंद कर सकता है।\n\nफिर भी गणना करें?\n\nबड़ा रेंडर (Tools टैब) इसे टाइलों में गणना करता है जो एक-एक कर सहेजी जाती हैं, पूरा चित्र मेमोरी में रखे बिना; स्वॉर्म (Swarm विंडो) टाइलें दूसरे कंप्यूटरों में बाँटता है।
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=एक Z-बफ़र PNG छवि भी सहेजी जाएगी।
@@ -115,6 +127,8 @@ AddNewOption=नया विकल्प जोड़ें
 ;Add new option
 AddOptionValue=विकल्प मान जोड़ें
 ;Add option value
+AddTheKeyframes=की-फ़्रेम जोड़ें
+;Add the keyframes
 AddToBackgroundDepthNotBlend=पृष्ठभूमि गहराई में जोड़ें (मिलाएँ नहीं)
 ;Add to background depth (not blend)
 AddonFormula=ऐड-ऑन फ़ॉर्मूला
@@ -147,6 +161,8 @@ AllRealworldUnitsInMeter=सभी वास्तविक इकाइया�
 ;All realworld units in meter.
 AllTheLightColorSettings=सभी प्रकाश + रंग सेटिंग्स
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=सब एक साथ: यॉ, पिच और रोल (कलाबाज़ी)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> पहले से मौजूद है
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=वीडियो भी बनाएँ (AVI)
@@ -219,6 +235,10 @@ AnimationRenderingStopped=एनिमेशन रेंडरिंग रो�
 ;Animation rendering stopped.
 AnimationSize=एनिमेशन आकार:
 ;Animation size:
+AnimationTemplates=एनिमेशन टेम्पलेट...
+;Animation templates...
+AnimationTemplates2=एनिमेशन टेम्पलेट
+;Animation templates
 AnimationTheFfmpegCommandIsOn=एनिमेशन: ffmpeg कमांड क्लिपबोर्ड पर है (फ़्रेम पूरे होने पर इसे टर्मिनल में चलाएँ):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=एनिमेशन: वीडियो लिखा गया: {}
@@ -241,6 +261,8 @@ ApproximateVertexColorsTheColorInformation=वर्टेक्स रंगो
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2, ArcTan(Y/X) की गणना करता है और सही चतुर्थांश में कोण लौटाता है।
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=किसके चारों ओर:
+;Around:
 AroundTheMiddleAnObject=केंद्र के चारों ओर (एक वस्तु)
 ;Around the middle (an object)
 AsFullBackgroundSphere=पूर्ण पृष्ठभूमि गोले के रूप में:
@@ -265,6 +287,8 @@ AutoSavingTheM3cFile=m3c फ़ाइल स्वतः सहेजना:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=ऑटो: CPU और ग्राफ़िक्स कार्ड छवि को बाँटते हैं (CPU\nतुरंत शुरू करता है, कार्ड अपना शेडर कंपाइल होते ही\nजुड़ जाता है), फिर कार्ड छाया और एम्बिएंट\nऑक्लूज़न चलाता है।\nCPU: कभी ग्राफ़िक्स कार्ड नहीं।\nग्राफ़िक्स कार्ड: पहले की तरह शेडर की प्रतीक्षा करें।
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=स्वचालित: मध्य, या दिखाई देने वाली सतह
+;Auto: the middle, or the surface in view
 AutoUpdateImage=छवि स्वतः अपडेट करें
 ;Auto update image
 AutoUpdatePreview=पूर्वावलोकन स्वतः अपडेट करें
@@ -281,6 +305,8 @@ AvgIterations=औसत पुनरावृत्तियाँ:
 ;Avg. iterations:
 AvgRaysteps=औसत रे-स्टेप:
 ;Avg. raysteps:
+Axis=अक्ष:
+;Axis:
 AxisX=अक्ष X
 ;Axis X
 AxisY=अक्ष Y
@@ -739,6 +765,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete={} हटाया नहीं जा सका
+;Could not delete {}
 CouldNotLoadFormula=फ़ॉर्मूला <{}> लोड नहीं हो सका: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite={} नहीं लिख सके: {}
@@ -1025,6 +1053,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=पता नहीं, कुछ न करें
 ;Dunno, do nothing
+DurationSeconds=अवधि (सेकंड):
+;Duration (seconds):
 DynFog=डायन.कोहरा
 ;Dyn.fog
 DynFogOnIt=पुनरा. पर डायन. कोहरा:
@@ -1221,6 +1251,12 @@ FlatSolidWithEdges=किनारों सहित सपाट ठोस
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: सबसे बड़ा पूर्णांक <= X,  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=भीतर उड़ान
+;Fly-through
+FlyThroughTheFlightEndedAfter=भीतर उड़ान: उड़ान {} में से {} फ़्रेम के बाद रुक गई, {}
+;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=उड़ान: फ़्रेम {} / {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=कोहरा ऑफ़सेट
@@ -1277,6 +1313,8 @@ FrameNumberToUseForAnimated=मुख्य एडिटर में एनि�
 ;Frame number to use for animated maps in the main editor
 Frames=फ़्रेम
 ;frames
+FramesAtFramesASecond={} फ़्रेम, {} फ़्रेम प्रति सेकंड पर
+;{} frames at {} frames a second
 FramesPerSecond=फ़्रेम प्रति सेकंड:
 ;Frames per second:
 FramesSec=फ़्रेम/सेकंड:
@@ -1511,10 +1549,16 @@ HoldShiftKeyForFinerSteps=(बारीक कदमों के लिए Shif
 ;(Hold Shift key for finer steps)
 Hotkeys=हॉटकी
 ;Hotkeys
+HowMuchLightTheWaterLets=पानी कितना प्रकाश आर-पार जाने देता है (0 से 1, 0: अपारदर्शी): परावर्तन (पोस्ट प्रोसेसिंग) या मोंटे कार्लो में सतह के नीचे का फ्रैक्टल दिखता है, अपवर्तन से मुड़ा हुआ और गहराई के साथ धुंधला होता
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=तल कितना परावर्तित करता है (0 से 1): इसकी चमक, और परावर्तन गणना होने पर इसका दर्पण (पोस्ट प्रोसेसिंग)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=उभार के साथ सतह का रंग कितना बदलता है: 0 बिल्कुल नहीं, 1 बहुत
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=पानी प्रकाश को कितना बिखेरता है (0 से 1, 0: बिल्कुल नहीं): वह रोशनियों की ओर चमकता है, लहरों के शिखर पारभासी होते हैं, प्रकाश की किरणें उसमें उतरती हैं और नीचे की चीज़ें उसके रंग में चमकती हैं (परावर्तन या मोंटे कार्लो में)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
+HowMurkyTheWaterIsHow=पानी कितना धुंधला है: उसमें प्रकाश कितनी जल्दी घटता है, प्रति फ़्रैक्टल इकाई (0: पूरी तरह साफ़; 1: लगभग एक इकाई गहराई तक दिखता है; 3: धुंधला)। नीले-हरे पानी में लाल सबसे पहले मिटता है।
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=हटाया जाने वाला शोर कितना प्रबल है (1 से 30, जैसे GIMP का "Denoise DCT")।\nअधिक मान अधिक शोर हटाता है, और अधिक बारीक विवरण भी।
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=बादल कितने घने हैं (1: पूरी परत लगभग 2 % प्रकाश जाने देती है) और आकाश का कितना भाग ढकते हैं (0 से 1)
@@ -1785,8 +1829,12 @@ KeyframeListM3k=कीफ़्रेम सूची (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sकीफ़्रेम\nशुरू:    अंत:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=की-फ़्रेम:
+;Keyframes:
 KeyframesForOneWholeTurnAround=दृश्य के मध्य के चारों ओर एक पूरे चक्कर के कीफ़्रेम, मुख्य विंडो के दृश्य से: एक सहज लूप में 8 कीफ़्रेम (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=मुख्य विंडो के दृश्य से आपके लिए बने की-फ़्रेम: 360° परिक्रमा या भीतर उड़ान, जितनी देर आप कहें
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=वे कुंजियाँ जो किसी भी विंडो से एक विंडो को सामने लाती हैं
 ;Keys that bring a window to the front from any window
 Kind=प्रकार
@@ -1797,12 +1845,16 @@ LIGHTSTROKES=प्रकाश धारियाँ
 ;LIGHT STROKES
 LMBMoveRMBRotate=LMB: खिसकाएँ           RMB: घुमाएँ
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=सबसे बड़ा मोड़ (डिग्री प्रति फ़्रेम):
+;Largest turn (degrees a frame):
 LastLengthIncrease=अंतिम लंबाई वृद्धि
 ;Last length increase
 LastPass=\s· पिछला पास {}
 ;\s· last pass {}
 Layer=परत:
 ;Layer:
+LeftToRightAroundItYaw=उसके चारों ओर बाएँ से दाएँ (यॉ)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=बायाँ क्लिक: माउस मोड में जाएँ.. माउस से देखें, +दायाँ माउस बटन.. रोलिंग\n(माउस मोड से बाहर निकलने के लिए फिर से बायाँ क्लिक करें या ESC दबाएँ)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=बायाँ क्लिक:   बल्ब को दर्शक के X अक्ष के चारों ओर Ymid+Zmid मानों पर घुमाएँ\nदायाँ क्लिक: बल्ब को वस्तु के X अक्ष के चारों ओर 0 पर घुमाएँ
@@ -2211,8 +2263,12 @@ N2Or3PassesGivesA=2 या 3 पास फ़ोकस बिंदु के �
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=दूसरा परावर्तन
 ;2nd reflection
+N360Orbit=360° परिक्रमा
+;360° orbit
 N360Panorama=360 पैनोरमा
 ;360 Panorama
+N360VR=360° वीआर
+;360° VR
 N3DAnalyticFormula=3D विश्लेषणात्मक फ़ॉर्मूला
 ;3D analytic formula
 N3DFormula=3D फ़ॉर्मूला
@@ -2317,6 +2373,8 @@ NoTilesToRender=रेंडर करने के लिए कोई टा�
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\sकोई मान्य टेक्स्ट नहीं मिला, कृपया नीचे टेक्स्ट दर्ज करें:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=आगे कोई रास्ता नहीं बचा
+;no way ahead was left
 Noise=-शोर
 ;-noise
 NoiseAI=-शोर AI
@@ -2347,6 +2405,8 @@ NotABigRenderProject=बड़ा रेंडर प्रोजेक्ट �
 ;not a big render project
 NotAvailableForLinuxUseClaude=Linux के लिए उपलब्ध नहीं: नीचे Claude Code का उपयोग करें।
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=पर्याप्त मेमोरी उपलब्ध नहीं है
+;Not enough memory available
 NotFoundIfYouUseIt=नहीं मिला। यदि आप इसका उपयोग करते हैं, तो यह कमांड टर्मिनल में एक बार चलाएँ:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=इंस्टॉल नहीं है। इसे claude.ai/download से लें, एक बार शुरू करें, फिर यहाँ वापस आएँ।
@@ -2527,6 +2587,8 @@ OutsideRender=बाहर रेंडर
 ;Outside render
 OutsideRenderDefaultModeInsideRender=बाहर रेंडर:  डिफ़ॉल्ट मोड\nअंदर रेंडर:    अधि. पुनरा. के साथ अंदर धीमी रेमार्चिंग\nअंदर और बाहर:   दोनों ओर रेंडर करें
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=ऊपर से और नीचे से (पिच)
+;Over the top and under (pitch)
 OverallScale=कुल स्केल:
 ;Overall scale:
 OverwriteExistingImages=मौजूदा छवियाँ ओवरराइट करें
@@ -2541,6 +2603,8 @@ PNG16BitColourPng=PNG 16 bit रंग (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16 bit (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8 bit (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=पारदर्शी पृष्ठभूमि वाले PNG फ़्रेम।
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2589,6 +2653,8 @@ PauseRendering=रेंडर रोकें
 ;Pause rendering
 PausedPressToContinue=रुका हुआ, जारी रखने के लिए दबाएँ
 ;Paused, press to continue
+PausingOnNextFrame=अगले फ़्रेम पर रुकेगा...
+;Pausing on next frame...
 PercentOfLocalDE=स्थानीय DE का प्रतिशत
 ;Percent of local DE
 Picture=चित्र
@@ -2799,6 +2865,10 @@ ReflectionsTransparency2=परावर्तन + पारदर्शित�
 ;Reflections + Transparency
 ReflectsTime=परावर्तन समय:
 ;Reflects time:
+Refraction=अपवर्तन:
+;Refraction:
+RefractionIndexOfTheWaterWater=पानी का अपवर्तनांक (पानी 1.33; 1: कोई मोड़ नहीं)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=अपवर्तनांक:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=सामग्री का अपवर्तनांक, हवा~1 पानी~1.33 कांच~1.5 हीरा~2.4
@@ -3051,6 +3121,8 @@ ScalesTheMaximumLengthOfThe=गणना की जाने वाली पर
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=स्कैन पूर्वावलोकन
 ;Scan Preview
+Scattering=प्रकीर्णन:
+;Scattering:
 ScreenDistance=स्क्रीन दूरी:
 ;Screen distance:
 ScriptEditor=स्क्रिप्ट एडिटर
@@ -3227,8 +3299,12 @@ SpecularObjectColorsClickToChange=वस्तु के स्पेक्य�
 ;Specular object colors, click to change them.
 SpecularPowerFunction=स्पेक्युलर पावर फ़ंक्शन
 ;Specular power function
+SpeedOfTheDistanceAFrame=गति (दूरी का % प्रति फ़्रेम):
+;Speed (% of the distance a frame):
 SphericalCoords=गोलीय निर्देशांक
 ;Spherical coords
+SpinningAroundTheLineOfSight=दृष्टि-रेखा के चारों ओर घूमना (रोल)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} स्प्लैट, {} में, {} में सहेजे गए
 ;{} splats in {}, written to {}
 Stan=मानक
@@ -3239,6 +3315,8 @@ Start=आरंभ:
 ;Start:
 StartBatchRendering=बैच रेंडरिंग शुरू करें
 ;Start batch rendering
+StartFrom=यहाँ से शुरू करें
+;Start from
 StartIndex=आरंभ सूचकांक:
 ;Start index:
 StartRendering=रेंडरिंग शुरू करें
@@ -3357,6 +3435,10 @@ TargetMapSlot=लक्ष्य मैप स्लॉट
 ;Target Map Slot
 TargetMapSlotUseThisNumber=लक्ष्य मैप स्लॉट। एनिमेटेड मैप पाने के लिए इस संख्या को अपने फ़्रैक्टल में मैप के रूप में उपयोग करें, जैसे हाइटमैप के रूप में।
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=टेम्पलेट:
+;Template:
+TheAmazingBoxAkaMandboxFormula='Amazing Box' उर्फ़ Mandbox फ़ॉर्मूला, जिसका आविष्कार fractalforums.com पर TGlad ने किया।\n\nएक पुनरावृत्ति का फ़ॉर्मूला इस प्रकार दिखता है:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=जोड़े गए डिफ़्यूज़ और स्पेक्युलर रंगों का योग 1 से अधिक है,\nक्या अधिक यथार्थवादी रंगों के लिए उन्हें कम कर दूँ?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=एनिमेशन के लिए कम से कम दो कीफ़्रेम चाहिए।
@@ -3383,14 +3465,22 @@ TheCalculationFailedLower=गणना विफल रही
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=गणना को परावर्तित वस्तुओं के साथ छवि के बाहर तक बढ़ाया जाएगा।\nइससे एनिमेशन में कम विकृतियाँ हो सकती हैं, पर स्थिर चित्रों को भी लाभ मिल सकता है।\nमान 0 से 0.5 (अधिकतम 0.9) के बीच होना चाहिए, यह छवि की चौड़ाई और ऊँचाई के\nसापेक्ष वह आकार है जिसकी बाहर अधिकतम गणना होती है।
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=कैमरा फ़्रैक्टल के भीतर उड़ता रहता है, ज़ूम उससे दूरी के साथ चलता है, और वह उसके खाली स्थानों से रास्ता बनाता है; हर आधे सेकंड में एक की-फ़्रेम (Catmull-Rom)। उड़ान बंद रास्ते पर, डबल प्रिसिज़न की सीमा पर या फ़्रैक्टल से बाहर निकलने पर पहले रुक जाती है
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=कैमरा फ़्रैक्टल से बाहर निकल गया
+;the camera left the fractal
 TheChosenValueOverAllFrames=एनिमेशन के सभी फ़्रेमों पर चुना गया मान: किसी की-फ़्रेम का वर्ग ऊपर या नीचे खींचें, या उस पर क्लिक करके मान लिखें
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourOfDeepWaterThe=गहरे पानी का रंग: पानी का अपना प्रकाश, और वह रंग जो नीचे की चीज़ें गहराई के साथ लेती हैं (बदलने के लिए क्लिक करें)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=कमांड लाइन प्रोग्राम mb3d इस प्रोग्राम के पास नहीं मिला: प्रोग्राम को फिर से इंस्टॉल करें।
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=डिफ़ॉल्ट क्रमांकन में 2 संख्याएँ होती हैं, X और Y के लिए अलग।\nयह विकल्प चुनने पर क्रमांकन केवल एक संख्या होगी,\nजो हर कॉलम में बढ़ती है और अगली पंक्ति में जारी रहती है।
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=डिफ़ॉल्ट आउटपुट में वस्तु सफ़ेद और बाहरी क्षेत्र काला होता है।\nरंग उलटने के लिए यह विकल्प चुनें।
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=प्रकीर्णन की दिशा (0 से 0.95): पानी मुख्यतः आगे की ओर बिखेरता है (0.8), इसलिए प्रकाश की ओर देखने पर सबसे अधिक चमकता है
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=ओवरस्टेपिंग से बचने के लिए दूरी अनुमानों को इस गुणक से घटाया जाता है।\nओवरस्टेपिंग होने पर (काले पिक्सेल, शोरयुक्त छवि) मान कम करें।\nबहुत कम मान रेंडरिंग को धीमा कर देते हैं।
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=ओवरस्टेपिंग से बचने के लिए दूरी अनुमानों को इस गुणक से घटाया जाता है।\nयदि ओवरस्टेपिंग हो (काले पिक्सेल, शोरयुक्त छवि) तो मान घटाएँ।\nबहुत कम मान रेंडरिंग को धीमा कर देते हैं।
@@ -3411,6 +3501,8 @@ TheFileSelectAndCopyIt=फ़ाइल (इसे यहाँ से चुन�
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=(पहला) फ़ोकस बिंदु।\nमान दर्शक के Zstart मान के सापेक्ष है,\nछवि की चौड़ाई पर सामान्यीकृत।
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=भीतर उड़ान यहाँ शुरू नहीं हो सकती: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=फ़ोल्डर मौजूद नहीं है (या पहुँच योग्य नहीं है)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=फ़ॉर्मूले का नाम "JIT" से शुरू होना चाहिए, ताकि इन फ़ॉर्मूलों को ASM-आधारित फ़ॉर्मूलों से अलग पहचाना जा सके
@@ -3421,6 +3513,12 @@ TheFractalOfTheMainWindow=मुख्य विंडो का फ्रैक
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=पैलेट के ऊपर फ़्रैक्टल की सतह सामग्री (MB3D में नहीं: पैरामीटरों में MB3D के भाग के बाद सहेजी जाती है)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=फ़्रैक्टल का X अक्ष
+;The fractal's X axis
+TheFractalSYAxis=फ़्रैक्टल का Y अक्ष
+;The fractal's Y axis
+TheFractalSZAxis=फ़्रैक्टल का Z अक्ष
+;The fractal's Z axis
 TheFramesPerSecondMustBe=फ़्रेम प्रति सेकंड 0 से बड़ी संख्या होनी चाहिए (जैसे 25)।
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=छवि बफ़र का आकार गलत है
@@ -3429,14 +3527,20 @@ TheImageSizeChangedCalculateThe=छवि का आकार बदल गय�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=its.trap मोड "रंगाई" टैब में गणना किए गए विकल्प पर निर्भर करता है।
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=आख़िरी की-फ़्रेम
+;The last keyframe
 TheLastSessionCrashed=पिछला सत्र क्रैश हो गया: {}। अधिक जानकारी लॉग विंडो में (शीर्षक पट्टी में आइकन)।
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=पिछला सत्र ठीक से समाप्त नहीं हुआ (वह अटक गया, बंद कर दिया गया या क्रैश हो गया): {}। उसने अंत में क्या किया, यह लॉग में है (लॉग विंडो, शीर्षक पट्टी में आइकन)।
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=मुख्य संपादक अभी भी रेंडर कर रहा है। कृपया पहले उसे रोकें या उसके पूरा होने तक प्रतीक्षा करें।
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=मुख्य विंडो का दृश्य
+;The main window's view
 TheMapOptionsCalculatesXY=मैप विकल्प गोलाकार मैप के लिए विशिष्ट वेक्टर से x,y निर्देशांक\nगणना करते हैं, इससे पहला रंग चयन भी बदलता है\nजो सामान्यतः स्मूद पुनरावृत्तियों पर आधारित होता है।\nइन विकल्पों के बदलाव का परिणाम देखने के लिए\nछवि की फिर से गणना करनी होगी।
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=दृश्य का मध्य
+;The middle of the view
 TheMonteCarloWindowIsRendering=Monte Carlo विंडो रेंडर कर रही है: पहले उसे रोकें।
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=मोशन ब्लर का शटर समय: अगले फ़्रेम तक के समय का भाग (0 से 1)
@@ -3465,18 +3569,28 @@ TheSelectionMustBeBiggerThanLower=चयन की चौड़ाई और ऊ
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=स्वार्म का साझा फ़ोल्डर
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=साइन बल्ब, जिसमें कोई भी घात मान उपयोग किया जा सकता है; गणना पूर्णांक घातों से धीमी है।\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=बादलों की आकृतियों का आकार फ़्रैक्टल इकाइयों में, और उनका रंग (क्लिक करें)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=टाइलों का आकार
 ;The size of the tiles
+TheStepsCameToTheLimit=कदम डबल प्रिसिज़न की सीमा तक पहुँच गए
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=स्टीरियो आँख छवियों के आकार अलग-अलग हैं।
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=क्लिपबोर्ड के टेक्स्ट पैरामीटर खराब हैं: कॉपी करते समय उनकी कुछ पंक्तियाँ कट गईं। उन्हें उनके मूल स्थान से फिर से कॉपी करें।
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=टाइल में कोई छवि बफ़र नहीं है
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=ट्रिप्लेक्स गणित का साइन बल्ब, जैसा Daniel White और Paul Nylander ने सुझाया। ये घात 2,3,4,5,6,7 और 8 के तेज़ कार्यान्वयन हैं।\n\nयदि आप घात में सहज बदलाव वाला एनिमेशन बनाना चाहते हैं, तो कृपया 'Real Power' फ़ॉर्मूला उपयोग करें।
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=चुने गए की-फ़्रेम का मान
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=दृश्य फ़्रैक्टल से भरा है
+;the view is filled with the fractal
+TheViewShowsOnlySky=दृश्य में केवल आकाश है
+;the view shows only sky
 Themes=थीम
 ;Themes
 ThereIsAFileAlready=फ़ाइल {} पहले से मौजूद है।
@@ -3623,6 +3737,8 @@ UnfinishedRenders=अधूरे रेंडर
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=अधूरे रेंडर: उन्हें जारी रखें या हटाएँ
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=जब तक दृश्य में केवल आकाश या केवल फ़्रैक्टल न हो (अधिकतम 2 मिनट)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=शीर्षकहीन
 ;untitled
 UpOneLevel=एक स्तर ऊपर
@@ -3729,6 +3845,8 @@ WarningMustRecalculateTheWholeImage=चेतावनी: इसे पूर�
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=चेतावनियाँ और त्रुटियाँ
 ;Warnings and errors
+Water=पानी:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=लहरें:
@@ -3739,6 +3857,8 @@ Weight=भार
 ;Weight
 WeightColon=भार:
 ;Weight:
+WelcomeTo={} में आपका स्वागत है!
+;Welcome to {}!
 WhatDidIDoInMb3d=आज मैंने mb3d में क्या किया? क्या कोई त्रुटियाँ थीं?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=क्या हुआ
@@ -3823,6 +3943,8 @@ YouCanSaveAlsoM3iFiles=आप हर टाइल के लिए m3i फ़ा
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=पहले आपको मूल पैरामीटर रेंडर करके M3I फ़ाइल के रूप में सहेजने होंगे।\nवह रेंडर बहुत छोटा न रखें।
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=आप हटाना चाहते हैं:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=आपका लेखक नाम (पैरामीटर में संग्रहीत):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=आपकी अपनी भाषा (उसका नाम):

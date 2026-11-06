@@ -228,16 +228,24 @@ fn delete_selected(app: &Mb3d, ui: &mut Ui) {
     if app.batch.status != 0 {
         return;
     }
-    let i = ui.c(BF, "ListView1").item_index;
-    let mut rows = batch_rows(ui);
-    if i >= 0 && (i as usize) < rows.len() {
-        rows.remove(i as usize);
-        let checks = &mut ui.cm(BF, "ListView1").checks;
-        if (i as usize) < checks.len() {
-            checks.remove(i as usize);
+    // all highlighted rows (BatchForm.pas ListView1KeyDown,
+    // Deleteselectedfilesfromlist1Click: the Selected items); the current
+    // row when none is highlighted
+    let rows = batch_rows(ui);
+    let c = ui.c(BF, "ListView1");
+    let mut del: Vec<bool> = (0..rows.len()).map(|k| c.selected.get(k).copied().unwrap_or(false)).collect();
+    if !del.contains(&true) {
+        match usize::try_from(c.item_index) {
+            Ok(i) if i < del.len() => del[i] = true,
+            _ => return,
         }
-        batch_set_rows(ui, rows);
     }
+    let keep = |k: usize| !del.get(k).copied().unwrap_or(false);
+    let rows: Vec<Vec<String>> = rows.into_iter().enumerate().filter(|(k, _)| keep(*k)).map(|(_, r)| r).collect();
+    let c = ui.cm(BF, "ListView1");
+    c.checks = std::mem::take(&mut c.checks).into_iter().enumerate().filter(|(k, _)| keep(*k)).map(|(_, b)| b).collect();
+    c.selected = vec![false; rows.len()];
+    batch_set_rows(ui, rows);
 }
 
 pub fn batch_dialog(_app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
@@ -381,6 +389,8 @@ pub struct TilingState {
     pub tile_start: Instant,
     pub items: ItemsLeft,
     pub left_shown: Option<Shown>,
+    /// "Delete this tile's files": the files still to ask for
+    pub delete_queue: Vec<PathBuf>,
 }
 
 impl Default for TilingState {
@@ -404,7 +414,20 @@ impl Default for TilingState {
             tile_start: Instant::now(),
             items: ItemsLeft::default(),
             left_shown: None,
+            delete_queue: Vec::new(),
         }
+    }
+}
+
+/// Asks for the next file of "Delete this tile's files" ("You want to
+/// delete: ..."); with none left, the project folder anew.
+fn ask_delete_tile_file(app: &mut Mb3d, ui: &mut Ui) {
+    match app.tiling.delete_queue.first() {
+        Some(p) => {
+            let t = trf("@MB:YouWantToDelete", &[&p.display()]);
+            ui.message_box("tiling:deletefile", &tr("@MB:Warning"), &t, &[crate::vcl::form::MR_YES, crate::vcl::form::MR_NO]);
+        }
+        None => scan_project(app, ui),
     }
 }
 
@@ -686,7 +709,7 @@ pub fn load_big(app: &mut Mb3d, ui: &mut Ui, p: &Path) {
             set_data(app, ui);
             set_sizes(app, ui);
             for c in ["Panel2", "Button2", "Button3", "SpeedButton9"] {
-                ui.set_enabled(TF, c, true);
+                super::main_form::enable_after_calc(app, ui, TF, c);
             }
             ui.show(TF);
         }
@@ -982,6 +1005,9 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "SpinEdit2Change" | "SpinEdit1Change" => {
             if app.tiling.user_change && app.tiling.orig.is_some() {
+                // other tiles: another project, saved before it renders
+                // (Tiling.pas SpinEdit1Change, SpinEdit2Change: NewProject)
+                new_project(app, ui);
                 if e.handler == "SpinEdit2Change" {
                     make_data(app, ui);
                     set_sizes(app, ui);
@@ -1022,19 +1048,20 @@ pub fn tiling_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             render_tile(app, ui);
         }
         "Deletethistilesfiles1Click" => {
+            // each file asked for (Tiling.pas Deletethistilesfiles1Click)
             let (x, y) = app.tiling.selected;
             let idx = tile_index(&app.tiling.data, x, y);
+            let mut files = Vec::new();
             for pre in ["", "ZBuf "] {
                 let stem = format!("{pre}{}{idx}", app.tiling.project);
                 if let Ok(rd) = std::fs::read_dir(&app.tiling.dir) {
-                    for e in rd.flatten() {
-                        if e.path().file_stem().map(|s| s.to_string_lossy() == stem) == Some(true) {
-                            let _ = std::fs::remove_file(e.path());
-                        }
-                    }
+                    let mut v: Vec<std::path::PathBuf> = rd.flatten().map(|e| e.path()).filter(|p| p.file_stem().map(|s| s.to_string_lossy() == stem) == Some(true)).collect();
+                    v.sort();
+                    files.extend(v);
                 }
             }
-            scan_project(app, ui);
+            app.tiling.delete_queue = files;
+            ask_delete_tile_file(app, ui);
         }
         "CheckBox6Click" => {
             if ui.checked(TF, "CheckBox6") {
@@ -1067,6 +1094,20 @@ pub fn tiling_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) 
             if let Err(e) = save_project(app, &p.with_extension("big")) {
                 ui.show_message(&e);
             }
+        }
+        ("deletefile", DialogResult::Button(b)) => {
+            if app.tiling.delete_queue.is_empty() {
+                return;
+            }
+            let p = app.tiling.delete_queue.remove(0);
+            if *b == crate::vcl::form::MR_YES && std::fs::remove_file(&p).is_err() {
+                // (a failed delete ends the questions: one message box
+                // at a time)
+                app.tiling.delete_queue.clear();
+                scan_project(app, ui);
+                return ui.show_message(&trf("@MB:CouldNotDelete", &[&p.display()]));
+            }
+            ask_delete_tile_file(app, ui);
         }
         _ => {}
     }

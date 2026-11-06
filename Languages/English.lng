@@ -28,6 +28,12 @@ language = English
 code = EN
 
 [Labels]
+A360DegreeAnimationForVR=A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
+;AnimationForm.Vr360Check.Hint
+A4dQuaternionFormulaOneIteration=A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;the program
+ABulbFormulaAsSuggestedBy=A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
+;the program
 ACalculationIsRunningStopIt=A calculation is running: stop it first.
 ;the program
 ACoarseRayPerBlockOf=A coarse ray per block of 16, then of 4 pixels marches with the block's spread taken off the distance estimate, and every pixel's march starts at its depth. Up to 60 % faster through open space; thin parts can be lost where the estimate is far off.
@@ -44,6 +50,8 @@ AGroundOrWaterSurfaceAcross=A ground or water surface across the fractal's X, Y 
 ;Mand3DForm.GroundCBx.Hint
 AHigherValueMeansABetter=A higher value means a better quality, even 100% is lossy.
 ;TilingForm.Edit7.Hint
+AHybridOfASinePower=A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
+;the program
 AI=AI
 ;Mand3DForm.AiBtn.Caption
 ALanguageFileHasOneLabel=A language file has one label per line: left of the "=" its ID, right of it your text. A window section after the labels gives one control a text of its own.
@@ -52,6 +60,8 @@ AMultiplierThatDefinesTheMiximal=A multiplier that defines the miximal length of
 ;PostProForm.Edit5.Hint
 AOCalcTime=AO calc time:
 ;Mand3DForm.Label47.Caption
+ASineIntegerPowerBulbWith=A sine integer power bulb with foldings before, like in the amazing box.
+;the program
 AStoppedOrInterruptedRenderKeeps=A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ;UnfinishedFrm.Label1.Caption
 ATransparentBackgroundNeedsPNGFrames=A transparent background needs PNG frames: choose PNG as the output format.
@@ -59,6 +69,8 @@ ATransparentBackgroundNeedsPNGFrames=A transparent background needs PNG frames: 
 AVideoNeedsImagesChooseBMP=A video needs images: choose BMP, PNG or JPG as the output format.
 ;the program
 AVideoOfAStereoAnimation=A video of a stereo animation is not made: switch off 'Render stereo animation'.
+;the program
+AWholeTurnOfTheCamera=A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 ;the program
 AXPictureNeedsAboutOf=A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 ;the program
@@ -79,7 +91,7 @@ AbsoluteAbsorptionAmountInsideTheMaterial=Absolute absorption amount inside the 
 AbsoluteDistanceOfTheSmoothCombine=Absolute distance of the smooth combine functions,\nyou can use scientific notation like 3e-5 for small values.\nTry 1/zoom to get close to a working value.
 ;FormulaGUIForm.Edit23.Hint; the program
 Absorption=Absorption:
-;PostProForm.Label21.Caption
+;Mand3DForm.Label94.Caption, PostProForm.Label21.Caption
 Action=Action
 ;HistoryFrm.Caption
 ActualAmbientShadowPar=Actual ambient shadow par.
@@ -114,6 +126,8 @@ AddNewOption=Add new option
 ;JITFormulaEditorForm.OptionAddBtn.Hint
 AddOptionValue=Add option value
 ;the program
+AddTheKeyframes=Add the keyframes
+;AnimTemplatesFrm.AddBtn.Caption; the program
 AddToBackgroundDepthNotBlend=Add to background depth (not blend)
 ;LightAdjustForm.CheckBox17.Caption
 AddonFormula=Addon formula
@@ -146,6 +160,8 @@ AllRealworldUnitsInMeter=All realworld units in meter.
 ;Mand3DForm.Label36.Caption
 AllTheLightColorSettings=All the light + color settings
 ;AniProcessForm.CheckBox8.Caption
+AllTogetherYawPitchAndRoll=All together: yaw, pitch and roll (tumble)
+;AnimTemplatesFrm.AxisCmb.Items
 AlreadyExists={} <{}> already exists
 ;the program
 AlsoMakeAVideoAVI=Also make a video (AVI)
@@ -218,6 +234,10 @@ AnimationRenderingStopped=Animation rendering stopped.
 ;the program
 AnimationSize=Animation size:
 ;AnimationForm.GroupBox3.Caption
+AnimationTemplates=Animation templates...
+;AnimationForm.TemplatesBtn.Caption
+AnimationTemplates2=Animation templates
+;AnimTemplatesFrm.Caption
 AnimationTheFfmpegCommandIsOn=Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 ;the program
 AnimationVideoWritten=Animation: video written: {}
@@ -240,6 +260,8 @@ ApproximateVertexColorsTheColorInformation=Approximate vertex colors. The color-
 ;BulbTracer2Frm.CalculateColorsCBx.Hint
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
+Around=Around:
+;AnimTemplatesFrm.PivotLabel.Caption
 AroundTheMiddleAnObject=Around the middle (an object)
 ;SplatFrm.AroundCmb.Items
 AsFullBackgroundSphere=As full background sphere:
@@ -264,6 +286,8 @@ AutoSavingTheM3cFile=Auto-saving the m3c file:
 ;MCForm.CheckBox5.Caption
 AutoTheCPUAndTheGraphics=Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
 ;Mand3DForm.CalcOnCombo.Hint
+AutoTheMiddleOrTheSurface=Auto: the middle, or the surface in view
+;AnimTemplatesFrm.PivotCmb.Items
 AutoUpdateImage=Auto update image
 ;ColorForm.CheckBox2.Caption
 AutoUpdatePreview=Auto update preview
@@ -280,6 +304,8 @@ AvgIterations=Avg. iterations:
 ;Mand3DForm.Label30.Caption
 AvgRaysteps=Avg. raysteps:
 ;Mand3DForm.Label29.Caption
+Axis=Axis:
+;AnimTemplatesFrm.AxisLabel.Caption
 AxisX=Axis X
 ;LightAdjustForm.Label6.Caption
 AxisY=Axis Y
@@ -585,7 +611,7 @@ ClickToTypeTheZoomIt=Click to type the zoom (it stays: fixed zoom).
 ClippingR=ClippingR:
 ;PostProForm.Label2.Caption
 Close=Close
-;AiConnectFrm.Button3.Caption, BulbTracer2Frm.CloseButton.Caption, ExperimentalFrm.CloseBtn.Caption and 6 more
+;AiConnectFrm.Button3.Caption, AnimTemplatesFrm.CloseBtn.Caption, BulbTracer2Frm.CloseButton.Caption and 7 more
 CloseMesh=Close Mesh
 ;BulbTracer2Frm.CloseMeshCheckbox.Caption
 CloseTheCurrentWindow=Close the current window:
@@ -601,7 +627,7 @@ CloudDriftY=Cloud drift Y
 CloudDriftZ=Cloud drift Z
 ;the program
 Clouds=Clouds
-;PostProForm.CloudsBtn.Caption
+;PostProForm.CloudsBtn.Caption; the program
 CloudsOverThePictureALayer=Clouds over the picture: a layer between two heights along the fractal's X, Y or Z axis, lit by the first light, in front of and behind the fractal (not in MB3D: kept after MB3D's part of the parameters; in Monte Carlo along the view rays; not in reflections)
 ;PostProForm.CloudsCbx.Hint
 Co=Co:
@@ -738,6 +764,8 @@ Cos22=Cos/2+\s
 ;LightAdjustForm.ComboBox1.Items
 Cos23=(Cos/2+)²
 ;LightAdjustForm.ComboBox1.Items
+CouldNotDelete=Could not delete {}
+;the program
 CouldNotLoadFormula=Could not load formula <{}>: {}
 ;the program
 CouldNotWrite=Could not write {}: {}
@@ -1024,6 +1052,8 @@ Ds=Ds:
 ;FormulaGUIForm.Label18.Caption; the program
 DunnoDoNothing=Dunno, do nothing
 ;FColorOptions.Button4.Caption
+DurationSeconds=Duration (seconds):
+;AnimTemplatesFrm.DurationLabel.Caption
 DynFog=Dyn.fog
 ;LightAdjustForm.SpeedButton4.Caption
 DynFogOnIt=Dyn. fog on It.:
@@ -1195,7 +1225,7 @@ FinishedRenderingSlices=Finished rendering slices.
 FinishedTracingObject=Finished tracing object.
 ;the program
 Finishing=Finishing
-;PostProForm.FinishBtn.Caption
+;PostProForm.FinishBtn.Caption; the program
 First4RaysNoisy=first 4 rays (noisy)
 ;the program
 FirstCalculationOfThisFormulaCombination=First calculation of this formula combination: the graphics card's shaders are being compiled (10-30 s, only once - the driver keeps them). The CPU calculates meanwhile, the card joins when they are ready.
@@ -1220,6 +1250,12 @@ FlatSolidWithEdges=Flat Solid with Edges
 ;MeshPreviewFrm.DisplayStyleGrp.Items
 FloorLargestIntegerXXMaxInt={ Floor: Largest integer <= X,  |X| < MaxInt }
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
+FlyThrough=Fly-through
+;AnimTemplatesFrm.TemplateCmb.Items
+FlyThroughTheFlightEndedAfter=Fly-through: the flight ended after {} of {} frames, {}
+;the program
+FlyingFrameOf=Flying: frame {} of {}
+;the program
 Fo=Fo.{}
 ;the program
 FogOffset=Fog offset
@@ -1275,6 +1311,8 @@ Frame=Frame:
 FrameNumberToUseForAnimated=Frame number to use for animated maps in the main editor
 ;Mand3DForm.FrameEdit.Hint
 Frames=frames
+;the program
+FramesAtFramesASecond={} frames at {} frames a second
 ;the program
 FramesPerSecond=Frames per second:
 ;AnimationForm.VideoFpsLbl.Caption
@@ -1510,10 +1548,16 @@ HoldShiftKeyForFinerSteps=(Hold Shift key for finer steps)
 ;FNavigator.Label14.Caption
 Hotkeys=Hotkeys
 ;HotkeysFrm.Caption, Mand3DForm.HotkeysBtn.Caption
+HowMuchLightTheWaterLets=How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
+;Mand3DForm.GroundTranspEdit.Hint
 HowMuchThePlaneReflects0=How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 ;Mand3DForm.GroundReflEdit.Hint
 HowMuchTheSurfaceSColour=How much the surface's colour varies with the relief: 0 not, 1 strongly
 ;PostProForm.DetailColEdit.Hint
+HowMuchTheWaterScattersLight=How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
+;Mand3DForm.GroundScatEdit.Hint
+HowMurkyTheWaterIsHow=How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
+;Mand3DForm.GroundVisEdit.Hint
 HowStrongTheNoiseIsThat=How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 ;PostProForm.NoiseSigmaEdit.Hint
 HowThickTheCloudsAre1=How thick the clouds are (1: a full layer lets about 2 % of the light through) and how much of the sky they cover (0 to 1)
@@ -1784,8 +1828,12 @@ KeyframeListM3k=Keyframe list (*.m3k)
 ;the program
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;AnimationForm.Label10.Caption
+Keyframes=Keyframes:
+;AnimTemplatesFrm.StepsLabel.Caption
 KeyframesForOneWholeTurnAround=Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
 ;AnimationForm.OrbitBtn.Hint
+KeyframesMadeForYouFromThe=Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
+;AnimTemplatesFrm.IntroLabel.Caption, AnimationForm.TemplatesBtn.Hint
 KeysThatBringAWindowTo=Keys that bring a window to the front from any window
 ;Mand3DForm.HotkeysBtn.Hint
 Kind=Kind
@@ -1796,12 +1844,16 @@ LIGHTSTROKES=LIGHT STROKES
 ;PostProForm.GroupBox4.Caption
 LMBMoveRMBRotate=LMB: move           RMB: rotate
 ;HeightMapGenFrm.Label15.Caption, MeshPreviewFrm.Label15.Caption
+LargestTurnDegreesAFrame=Largest turn (degrees a frame):
+;AnimTemplatesFrm.TurnLabel.Caption
 LastLengthIncrease=Last length increase
 ;Mand3DForm.RadioGroup1.Items
 LastPass=\s· last pass {}
 ;the program
 Layer=Layer:
 ;PostProForm.CloudLayerLbl.Caption
+LeftToRightAroundItYaw=Left to right around it (yaw)
+;AnimTemplatesFrm.AxisCmb.Items
 LeftclickGoIntoMouseModeView=Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 ;FNavigator.Image1.Hint
 LeftclickRotateTheBulbAroundThe=Leftclick:   Rotate the bulb around the viewers X axis @ Ymid+Zmid values\nRightclick: Rotate the bulb around the objects X axis @ 0
@@ -2019,7 +2071,7 @@ MapSequences=Map Sequences
 MapType=Map Type:
 ;HeightMapGenFrm.Label19.Caption
 Material=Material
-;MeshPreviewFrm.MaterialSheet.Caption, PostProForm.MaterialBtn.Caption
+;MeshPreviewFrm.MaterialSheet.Caption, PostProForm.MaterialBtn.Caption; the program
 Max=Max
 ;FormulaGUIForm.DECombineCmb.Items
 MaxIterat=Max. Iterat.:
@@ -2210,8 +2262,12 @@ N2Or3PassesGivesA=2 or 3 passes gives a better strong bluring in front of the fo
 ;PostProForm.RadioGroup1.Hint
 N2ndReflection=2nd reflection
 ;LightAdjustForm.Label23.Caption
+N360Orbit=360° orbit
+;AnimTemplatesFrm.TemplateCmb.Items
 N360Panorama=360 Panorama
 ;Mand3DForm.RadioGroup2.Items
+N360VR=360° VR
+;AnimationForm.Vr360Check.Caption
 N3DAnalyticFormula=3D analytic formula
 ;FormulaEditor.TabControl1.Tabs
 N3DFormula=3D formula
@@ -2316,6 +2372,8 @@ NoTilesToRender=No tiles to render.
 ;the program
 NoValidTextFoundPleaseEnter=\sNo valid text found, please enter the text below:
 ;FTextBox.Panel1.Caption
+NoWayAheadWasLeft=no way ahead was left
+;the program
 Noise=-noise
 ;MCForm.Button6.Caption
 NoiseAI=-noise AI
@@ -2345,6 +2403,8 @@ Norms=norms
 NotABigRenderProject=not a big render project
 ;the program
 NotAvailableForLinuxUseClaude=Not available for Linux: use Claude Code below.
+;the program
+NotEnoughMemoryAvailable=Not enough memory available
 ;the program
 NotFoundIfYouUseIt=Not found. If you use it, run this command once in a terminal:
 ;the program
@@ -2526,6 +2586,8 @@ OutsideRender=Outside render
 ;FormulaGUIForm.ComboBox1.Items
 OutsideRenderDefaultModeInsideRender=Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
 ;FormulaGUIForm.ComboBox1.Hint
+OverTheTopAndUnderPitch=Over the top and under (pitch)
+;AnimTemplatesFrm.AxisCmb.Items
 OverallScale=Overall scale:
 ;FVoxelExport.Label14.Caption
 OverwriteExistingImages=Overwrite existing images
@@ -2539,6 +2601,8 @@ PNG=PNG
 PNG16BitColourPng=PNG 16 bit colour (*.png)
 ;the program
 PNG16BitPng=PNG 16 bit (*.png)
+;the program
+PNG8BitPng=PNG 8 bit (*.png)
 ;the program
 PNGFramesWithATransparentBackground=PNG frames with a transparent background.
 ;AnimationForm.TransparentCheck.Hint
@@ -2587,6 +2651,8 @@ Passes=Passes
 PauseRendering=Pause rendering
 ;the program
 PausedPressToContinue=Paused, press to continue
+;the program
+PausingOnNextFrame=Pausing on next frame...
 ;the program
 PercentOfLocalDE=Percent of local DE
 ;FNavigator.Edit1.Hint
@@ -2798,6 +2864,10 @@ ReflectionsTransparency2=Reflections + Transparency
 ;MCForm.CategoryPanel5.Caption
 ReflectsTime=Reflects time:
 ;Mand3DForm.Label49.Caption
+Refraction=Refraction:
+;Mand3DForm.Label93.Caption
+RefractionIndexOfTheWaterWater=Refraction index of the water (water 1.33; 1: no bending)
+;Mand3DForm.GroundIorEdit.Hint
 RefractiveIndex=Refractive index:
 ;PostProForm.Label22.Caption
 RefractiveIndexOfTheMaterialAir=Refractive index of the material, air~1 water~1.33 glass~1.5 diamond~2.4
@@ -3050,6 +3120,8 @@ ScalesTheMaximumLengthOfThe=Scales the maximum length of the ambient rays to be 
 ;PostProForm.Edit8.Hint
 ScanPreview=Scan Preview
 ;BulbTracer2Frm.GroupBox4.Caption
+Scattering=Scattering:
+;Mand3DForm.Label95.Caption
 ScreenDistance=Screen distance:
 ;Mand3DForm.Label35.Caption
 ScriptEditor=Script Editor
@@ -3226,8 +3298,12 @@ SpecularObjectColorsClickToChange=Specular object colors, click to change them.
 ;LightAdjustForm.SpeedButton2.Hint
 SpecularPowerFunction=Specular power function
 ;LightAdjustForm.ComboBox2.Hint
+SpeedOfTheDistanceAFrame=Speed (% of the distance a frame):
+;AnimTemplatesFrm.SpeedLabel.Caption
 SphericalCoords=Spherical coords
 ;FNavigator.CheckBox8.Caption
+SpinningAroundTheLineOfSight=Spinning around the line of sight (roll)
+;AnimTemplatesFrm.AxisCmb.Items
 SplatsInWrittenTo={} splats in {}, written to {}
 ;the program
 Stan=stan.
@@ -3238,6 +3314,8 @@ Start=Start:
 ;AnimationForm.Label7.Caption
 StartBatchRendering=Start batch rendering
 ;BatchForm1.Button1.Caption, MCForm.BatchRenderBtn.Caption; the program
+StartFrom=Start from
+;AnimTemplatesFrm.StartLabel.Caption
 StartIndex=Start index:
 ;AnimationForm.Label6.Caption
 StartRendering=Start rendering
@@ -3356,6 +3434,10 @@ TargetMapSlot=Target Map Slot
 ;MapSequencesFrm.Label3.Caption
 TargetMapSlotUseThisNumber=Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
 ;MapSequencesFrm.DestChannelEdit.Hint
+Template=Template:
+;AnimTemplatesFrm.TemplateLabel.Caption
+TheAmazingBoxAkaMandboxFormula=The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;the program
 TheAmountOfAddedDiffuseAnd=The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 ;the program
 TheAnimationNeedsAtLeastTwo=The animation needs at least two keyframes.
@@ -3382,14 +3464,22 @@ TheCalculationFailedLower=the calculation failed
 ;the program
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
+TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+;the program
+TheCameraLeftTheFractal=the camera left the fractal
+;the program
 TheChosenValueOverAllFrames=The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
 ;AnimationForm.CurvesBtn.Hint, CurvesFrm.Image1.Hint
+TheColourOfDeepWaterThe=The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
+;Mand3DForm.GroundWaterColBtn.Hint
 TheCommandLineProgramMb3dWas=The command line program mb3d was not found next to this program: install the program again.
 ;the program
 TheDefaultNumberingIncludes2Numbers=The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 ;TilingForm.CheckBox7.Hint
 TheDefaultOutputIsWhiteFor=The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
 ;FVoxelExport.CheckBox1.Hint
+TheDirectionOfTheScattering0=The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
+;Mand3DForm.GroundScatDirEdit.Hint
 TheDistanceEstimatesAreDownscaledBy=The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 ;Mand3DForm.Edit6.Hint
 TheDistanceEstimatesAreDownscaledBy2=The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down .
@@ -3410,6 +3500,8 @@ TheFileSelectAndCopyIt=The file (select and copy it from here)
 ;HistoryFrm.Edit2.Hint
 TheFirstFocusPointTheValue=The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
 ;PostProForm.Edit1.Hint
+TheFlyThroughCannotStartHere=The fly-through cannot start here: {}
+;the program
 TheFolderDoesNotExistOr=the folder does not exist (or is not reachable)
 ;the program
 TheFormulaNameShouldStartWith=The formula name should start with "JIT" in order to distinguish those formulas from the ASM-based formulas
@@ -3420,6 +3512,12 @@ TheFractalOfTheMainWindow=The fractal of the main window as Gaussian splats, to 
 ;SplatFrm.IntroLabel.Caption
 TheFractalSSurfaceMaterialOn=The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
 ;PostProForm.MaterialCbx.Hint
+TheFractalSXAxis=The fractal's X axis
+;AnimTemplatesFrm.AxisCmb.Items
+TheFractalSYAxis=The fractal's Y axis
+;AnimTemplatesFrm.AxisCmb.Items
+TheFractalSZAxis=The fractal's Z axis
+;AnimTemplatesFrm.AxisCmb.Items
 TheFramesPerSecondMustBe=The frames per second must be a number above 0 (e.g. 25).
 ;the program
 TheImageBufferHasTheWrong=the image buffer has the wrong size
@@ -3428,14 +3526,20 @@ TheImageSizeChangedCalculateThe=the image size changed: calculate the image agai
 ;the program
 TheItsTrapModeDependsOn=The its.trap mode depends on the calculated option in the "Coloring" tab.
 ;LightAdjustForm.RadioGroup1.Hint
+TheLastKeyframe=The last keyframe
+;AnimTemplatesFrm.StartCmb.Items
 TheLastSessionCrashed=The last session crashed: {}. More in the Log window (the icon in the title bar).
 ;the program
 TheLastSessionDidNotEnd=The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 ;the program
 TheMainEditorIsStillRendering=The main editor is still rendering. Please stop it first or wait until it is done.
 ;the program
+TheMainWindowSView=The main window's view
+;AnimTemplatesFrm.StartCmb.Items
 TheMapOptionsCalculatesXY=The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
 ;Mand3DForm.RadioGroup1.Hint
+TheMiddleOfTheView=The middle of the view
+;AnimTemplatesFrm.PivotCmb.Items
 TheMonteCarloWindowIsRendering=The Monte Carlo window is rendering: stop it first.
 ;the program
 TheMotionBlurSShutterTime=The motion blur's shutter time: a part of the time to the next frame (0 to 1)
@@ -3464,18 +3568,28 @@ TheSelectionMustBeBiggerThanLower=the selection must be bigger than 2 pixels in 
 ;the program
 TheSharedFolderOfTheSwarm=The shared folder of the swarm
 ;the program
+TheSineBulbWhereArbitraryPower=The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;the program
 TheSizeOfTheCloudsFeatures=The size of the clouds' features in fractal units, and their colour (click)
 ;PostProForm.CloudSizeEdit.Hint, PostProForm.CloudColBtn.Hint
 TheSizeOfTheTiles=The size of the tiles
 ;HistoryFrm.TrackBar1.Hint
+TheStepsCameToTheLimit=the steps came to the limit of double precision
+;the program
 TheStereoEyeImagesHaveDifferent=The stereo eye images have different sizes.
 ;the program
 TheTextParametersOnTheClipboard=The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 ;the program
 TheTileHasNoImageBuffer=the tile has no image buffer
 ;the program
+TheTriplexMathSineBulbAs=The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
+;the program
 TheValueOfTheChosenKeyframe=The value of the chosen keyframe
 ;CurvesFrm.KeyValEdit.Hint
+TheViewIsFilledWithThe=the view is filled with the fractal
+;the program
+TheViewShowsOnlySky=the view shows only sky
+;the program
 Themes=Themes
 ;Mand3DForm.VisualThemesBtn.Caption
 ThereIsAFileAlready=There is a file {} already.
@@ -3622,6 +3736,8 @@ UnfinishedRenders=Unfinished renders
 ;UnfinishedFrm.Caption
 UnfinishedRendersContinueOrDeleteThem=Unfinished renders: continue or delete them
 ;Mand3DForm.ResumeBtn.Hint
+UntilTheViewShowsOnlySky=Until the view shows only sky or only fractal (at most 2 minutes)
+;AnimTemplatesFrm.UntilCheck.Caption
 Untitled=untitled
 ;the program
 UpOneLevel=Up one level
@@ -3728,6 +3844,8 @@ WarningMustRecalculateTheWholeImage=Warning: Must recalculate the whole image to
 ;PostProForm.Label7.Caption
 WarningsAndErrors=Warnings and errors
 ;LogFrm.ComboBox1.Items
+Water=Water:
+;Mand3DForm.Label92.Caption
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;the program
 Waves=Waves:
@@ -3737,6 +3855,8 @@ WavesOnThePlaneTheirHeight=Waves on the plane: their height and their length in 
 Weight=Weight
 ;the program
 WeightColon=Weight:
+;the program
+WelcomeTo=Welcome to {}!
 ;the program
 WhatDidIDoInMb3d=What did I do in mb3d today? Were there any errors?
 ;the program
@@ -3822,6 +3942,8 @@ YouCanSaveAlsoM3iFiles=You can save also m3i files for each tile, keep in mind t
 ;TilingForm.CheckBox3.Hint
 YouHaveToRenderTheOriginal=You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
 ;TilingForm.CheckBox5.Hint
+YouWantToDelete=You want to delete:\n{}
+;the program
 YourAuthorNameStoredInThe=Your author name (stored in the parameters):
 ;the program
 YourOwnLanguageItsName=Your own language (its name):

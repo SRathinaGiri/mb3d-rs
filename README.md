@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.2.93](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.93)** (3 Nov 2026, 07:25 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.3.1](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.1)** (5 Nov 2026, 14:41 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -71,12 +71,16 @@ programming language. Anyone can run it on this repository at any time:
 **[▶ Scan mb3d-rs on scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (click *Rescan* for a fresh result of the current code)
 
-Version 0.2.85 was rated **safe: 5 out of 100** (scanned 30 October 2026,
-rules of the scanner's engine 10). Its one warning is the line that starts
+Version 0.3.1 was rated **safe: 8 out of 100** (scanned 5 November 2026,
+rules of the scanner's engine 10). Its warnings are about the lines that start
 the formulas the program compiles at run time for speed: running freshly
-made machine code cannot be written in Rust's checked form, and that line
+made machine code cannot be written in Rust's checked form, and those lines
 and the bridge to Intel's noise filter are the only places the program
-allows it; the rest is an informational note. (Earlier: 0.2.66 was rated
+allows it; the rest is an informational note. (Earlier: 0.2.85 was rated
+5 out of 100; 0.2.100 was rated dangerous for a few hours, because two math
+functions of the formula compiler had a name the scanner takes for running
+hidden code; they were renamed the same day, and a test now keeps such names
+out; 0.2.66 was rated
 0 out of 100 by an older engine, see also
 [the 0.2.44 result](docs/img/scan_0.2.44.png).) An earlier version was flagged,
 and we changed the code in response ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
@@ -509,7 +513,12 @@ you check further on your own:
   collection, under his terms (free to use, not to be sold unchanged), with
   pictures shared on DeviantArt by CmdrChaos, Fractales75, Nic022 and
   UndeadAcademy; maps 3046–3048 are by Kronpano
-  (`M3Maps/CREDITS-community.md`).
+  (`M3Maps/CREDITS-community.md`). The 608 light presets in `M3Lights` come from the same package; their
+  files name no maker (`M3Lights/CREDITS-community.md`).
+* **Ideas from Mandelbulb3D SE**: Glenn Olander's Mandelbulb3D SE, a macOS
+  app built on mb3d-rs, gave two ideas: checking every graphics card shader
+  in the tests without a graphics card, and Stop ending the painting of a
+  picture at once.
 * **A new formula, PseudoKleinian:** the "Kleinian architecture" of
   halls, arches and spheres as one formula with its own exact distance.
 
@@ -655,6 +664,58 @@ you check further on your own:
   Mandelbulb3D does not read. Scene keys `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; details in
   [TECHNICAL.md](docs/TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+
+  **Transparent water**: with *Water* above 0 (how much light it lets
+  through) a fractal half under water shows beneath the surface, bent by
+  the refraction (*Refraction*: 1.33 for water) and turning into the
+  colour of deep water (the colour button) with depth: the *Absorption*
+  says how murky it is (0 clear, 3 murky), and in a
+  blue-green water red fades first, so what lies under it turns
+  turquoise. The lights' glints on the waves stay on the surface. The
+  normal render shows it with the reflections on (Post processing),
+  Monte Carlo always; without the reflections the water stays opaque.
+  Scene keys `ground_transparency`, `ground_absorption`,
+  `ground_water_color`, `ground_ior`; an example in
+  [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
+
+  **Scattering** (the row below *Refraction*): the water scatters light
+  as real water does. It glows turquoise looking towards the sun, the
+  wave crests shine through, the sun's light falls into it as shafts cut
+  by the fractal's shadows, and what lies under the water glows softly
+  in its colour; Monte Carlo traces the light through the water as it
+  scatters. The second field is its direction (0.8: mostly forward). 0
+  is the look without it. Scene keys `ground_scattering`,
+  `ground_scatter_dir`; see
+  [CLOUDS_WATER.md](docs/CLOUDS_WATER.md#transparent-water).
+
+  **Try it**: on the *Cutting* page tick *Ground plane* and put its height
+  through the fractal, set *Water* to 1, *Absorption* to 1 and
+  *Scattering* to 0.5, and switch the reflections on (*Postprocess*,
+  *Reflections + Transparency*, *Calculate R. (+ T.) automatically*),
+  then *Calculate 3D*. Three finished scenes to paste, with their settings:
+  [WATER_EXAMPLES.md](docs/WATER_EXAMPLES.md).
+
+  *Water* (transparency) 0, 0.5 and 1:
+
+  <a href="docs/img/water_transparency.jpg"><img src="docs/img/water_transparency.jpg" width="760" alt="Transparency 0, 0.5 and 1: grey opaque water, then the submerged half of the bulb showing through in turquoise"></a>
+
+  *Absorption* 0.3, 1 and 3, from clear to murky:
+
+  <a href="docs/img/water_absorption.jpg"><img src="docs/img/water_absorption.jpg" width="760" alt="Absorption 0.3, 1 and 3: the submerged half clearly green, fading, then hidden"></a>
+
+  *Scattering* 0, 0.5 and 1 looking towards the sun, and the light shafts
+  with a low sun in front:
+
+  <a href="docs/img/water_scattering.jpg"><img src="docs/img/water_scattering.jpg" width="760" alt="Scattering 0, 0.5 and 1 looking towards the sun: dark water, then glowing turquoise water"></a>
+
+  <a href="docs/img/water_shafts.jpg"><img src="docs/img/water_shafts.jpg" width="760" alt="A low sun in front: the fractal's shadow volume stretching through the water as a blue shaft"></a>
+
+  **The waves** are an irregular sea of sixteen waves along one wind
+  direction (before 0.2.98 three regular waves made a checkerboard;
+  scenes with waves look different since). Old (left of each pair) and
+  new, small and large waves, the sun in front and behind:
+
+  <a href="docs/img/water_waves.jpg"><img src="docs/img/water_waves.jpg" width="760" alt="Old and new waves side by side: the old regular grid of bright diamonds, the new irregular sea"></a>
 
   </details>
 * **Light from an HDR picture**: a 360° Radiance `.hdr` picture as the
@@ -833,6 +894,47 @@ you check further on your own:
   many pictures within the *Shutter* time (a part of the time to the next
   frame), so what moves smears; it takes that many times as long
   (`mb3d animate --motion-blur 8,0.5`).
+
+  *Animation maker* > *Animation templates...* makes keyframes from the main
+  window's view for a duration in seconds (at the window's frames per
+  second): a *360° orbit* around an axis of your choice (left to right, over
+  the top, a roll, all three at once, or the fractal's X, Y or Z axis;
+  `--orbit 8 --duration 10 --orbit-axis pitch`) or a *Fly-through*, in which
+  the camera flies on into the fractal, the zoom following the distance to
+  it, keeping its course and turning only to get round what it would hit
+  (`--fly --duration 20`; `--duration 0`: until the view shows only sky or
+  only fractal). *360° VR* in the Animation maker (`--vr`) makes every frame
+  a spherical panorama (2:1); with *Render stereo animation* the video has
+  the eyes one above the other (left on top), and the ffmpeg command ends
+  with `mb3d vr360 video.mp4 --stereo tb`, which marks the MP4 as a 360
+  video for YouTube, the Meta Quest and VLC. A spherical panorama saved as
+  JPEG carries the Photo Sphere XMP, so Facebook shows it as a 360 photo.
+
+  <a href="docs/img/orbit_template.jpg"><img src="docs/img/orbit_template.jpg" width="640" alt="Five frames of a 360° orbit around a point on a Mandelbulb's surface"></a>
+
+  <a href="docs/img/fly_through.jpg"><img src="docs/img/fly_through.jpg" width="640" alt="A fly-through, one frame a second"></a>
+
+  The animation templates, 360° photos and 360° VR videos were contributed
+  by Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). The orbit keeps the
+  camera at the same distance from its pivot in every frame, also between
+  the keyframes: the middle of the view is put on the pivot first, so the
+  keyframes differ only in their rotation. Added after other keyframes, it
+  ends with its first keyframe again, so the turn is whole; *Start from*
+  takes the main window's view or the last keyframe. A fly-through is flown
+  in the background with a progress bar, and *Stop* keeps what was flown.
+  Videos (attached to the v0.2.100 release, rendered with the version after
+  it): [an orbit with 4 keyframes, the first version and the exact one side
+  by
+  side](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [a
+  tumble](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [a
+  fly-through](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [a 360° VR
+  orbit](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  All four with pictures and notes:
+  [docs/ANIMATION_TEMPLATES.md](docs/ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gaussian splats** of the fractal, to look at from every side in
@@ -1346,39 +1448,58 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
-### [v0.2.93](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.93) · 3 Nov 2026, 07:25 UTC
+### Not released yet
 
 | Commit | What it does |
 |---|---|
-| [`24aa951`](https://github.com/thr32423/mb3d-rs/commit/24aa951e194632de1f266f1910cd4af1419cfbe0) | Version number and release notes of this release |
-| [`ab95ca7`](https://github.com/thr32423/mb3d-rs/commit/ab95ca76ccf71a8e990dc6907cd56d90d3c54678) | Cone march: a coarse ray also ends where its step falls under a tenth of the step the march would take there (CONE_MIN_SHARE, the march's step at most its step limit; Marcher::cone_march and the card's cone pass): far off, its reach grows with the depth and left it crawling along a surface at a small fraction of the pixels' steps, and on the card a handful of such rays held up their band (6 AM - Torii temple, dynamic fog: one band's cone passes 1.5 s, the march 70 % longer than without the cone march, now 10 %). Measured on the 80 example files against none, 0.25 and 0.5 (pictures and holes against the plain render with the random first step toggled, the card's times again with warm shader caches): on the processor (0.2 megapixels, 69 files) the march total -19.5 %, median -22.5 %, best -66 %, worst +1 %, 68 faster (without it in the same sweep -16.7 %), pictures as close to the plain render as without it or closer (cutted sphere over carpet 0.40 % of the pixels instead of 0.59 %); on the card (1 megapixel) total -10.0 %, median -3.1 %, 52 of 69 faster (without it -6.6 %, 40); 0.25 the same on the card, a little further from the plain render on the processor (Abominog-Ua, LightBulbMoon), 0.5 slower. EXPERIMENTAL.md (the figures, the warning about fog on the card gone, the section on 0.2.92), TECHNICAL.md, the README row in all seventeen languages. |
-| [`ab375cb`](https://github.com/thr32423/mb3d-rs/commit/ab375cb1e8603156c96c015745f69d2ae210c72c) | Cone march: the coarse rays within the march's step limit, margin 1.5: the coarse ray of a block (Marcher::cone_march, the card's cone pass) stepped by the distance estimate alone, without the step limit every pixel's march keeps (max(DE stop, 0.4) * mh04zsd, MB3D's raystep limiter), so where the estimate is far too large it passed thin parts the pixels would have found: in LightBulbMoon - No, Never (Amazing Surf, 1000 iterations) 1.8 % of the pixels became background at the released margin 3 (4.7 % at 1, still 0.4 % at 6, no margin made up for it); the release's hole check had taken the depth map's largest value for the background (it is 0) and missed them. With the limit a margin of 1.5 is at the noise level in all 70 files the cone march works in (pictures and holes against the plain render with the random first step toggled both ways; at 1 the fog of KentPress and the sphere of cutted sphere over carpet changed), and faster: the march on the processor (0.2 megapixels) total -17.9 %, median -21.1 %, best -66 % (Nothing left but bones), worst +1 %, 68 of 70 faster (v0.2.92 in the same sweep: -11.5 %); on the card (1 megapixel) every file at its noise level, LightBulbMoon's holes 0.1 % (v0.2.92 2.3 %), the march -5.4 % (v0.2.92 -3.8 %); 6 AM - Torii temple (dynamic fog) marches slower on the card with the cone march (+73 %, v0.2.92 +44 %); all five experimental speed-ups in Auto mode (78 files): -11.0 %, median -8.4 % (v0.2.92 -10.2 %, -7.1 %). Test: LightBulbMoon at 192 by 192, at most 1 % of the surface background with the cone march (v0.2.92: 225 of 12317). EXPERIMENTAL.md (the figures, the chart, a section on the cone march in 0.2.92), TECHNICAL.md, the README row in all seventeen languages, the AI guide. |
-| [`4a79447`](https://github.com/thr32423/mb3d-rs/commit/4a79447913966110cfa253e523ee40b984c08765) | Windows: the auxiliary windows follow the main window's minimizing again (since pull request 29 they are no longer owned by it, so that it can cover them): hidden when it is minimized, by its own title bar button, the taskbar or Win+D alike (seen in its resize events), and shown again when it comes back, in the order they were activated, the window active before getting the focus back (for a second also from a shown window that takes it, as Wine shows them after the focus was given); a window minimized on its own stays minimized; hidden, not minimized, since a minimized window without a taskbar entry becomes a small title bar at the bottom of the screen; as Delphi's Application.Minimize and Restore did in MB3D. Tested on a Windows build (x86_64-pc-windows-gnullvm, llvm-mingw) under Wine 11.20 in a nested KWin session: the main window covers the Navigator when clicked, minimizing by the window manager and by the title bar button hides Formulas, Lighting and the Navigator, restoring shows them with the main window active, a minimized Lighting window stays minimized |
-| [`5b6cd2e`](https://github.com/thr32423/mb3d-rs/commit/5b6cd2e6cf703bbff61554636ed97beb08766ea7) | Navigator, on pull request 29: Reset view takes back the zoom and far plane of the view as they were taken, no longer recomputed for the preview (as the inserted main parameters now keep them, so Reset view gives the opened view again); a right click on the axes' overlay (Image6, over the middle of the preview, which passes its mouse to Image1's handlers with its own coordinates) opens the menu where it was clicked, not 60 pixels up and to the left of it |
-| [`4af64fa`](https://github.com/thr32423/mb3d-rs/commit/4af64fa18d0682229df48c1644129ecc95516c97) | docs/EXPERIMENTAL.md: the experimental speed-ups on one page: where they are (the Internal tab's Experimental... button, the window with all five on), each one's gain and picture change, all five together (a tenth off a whole render, a third in open scenes, more than the single gains add up to), how they affect each other (cone march and step relax help each other, cone march and no step limit overlap, the rest independent) and what to switch on; measured 2026-11-02 on the 80 example files; linked from the README; apptest renders the Internal tab and the window with all five on |
-| [`f0d28ce`](https://github.com/thr32423/mb3d-rs/commit/f0d28ce9a2ad3eb7e49bc56cdb0bb25bdfd72ba0) | README: Updates for v0.2.92 |
-| [`40772ec`](https://github.com/thr32423/mb3d-rs/commit/40772ecb06b1933b7815fe6931c49490489c3b19) | Allow main window to cover auxiliary forms |
-| [`f021642`](https://github.com/thr32423/mb3d-rs/commit/f0216423c629baad7ab56e3b41a57bae608a2806) | Keep navigator view unchanged on import |
+| [`6edc999`](https://github.com/thr32423/mb3d-rs/commit/6edc99999c8bf59c4b49fa1c11585ab3d2a542d1) | README: Updates for v0.3.1 |
 
-### [v0.2.92](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.92) · 2 Nov 2026, 07:27 UTC
+### [v0.3.1](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.1) · 5 Nov 2026, 14:41 UTC
 
 | Commit | What it does |
 |---|---|
-| [`9235f9b`](https://github.com/thr32423/mb3d-rs/commit/9235f9b872de2b4057a2432a7f98df977fe04e66) | Version number and release notes of this release |
-| [`0830c84`](https://github.com/thr32423/mb3d-rs/commit/0830c8424db50aacaad9b4f80dfba0a87c612d5b) | Cone march (experimental speed-up, not in MB3D): a coarse ray per block of 16 by 16, then 4 by 4 pixels marches from the block's middle with the block's spread (the pixels' starts and directions, computed from every pixel of the block) and the DE stop taken off the distance estimate, three times over the step factor because the estimate is no true bound between rays (at a margin of 1 the thin fins of Abominog-Ua were lost, at 2 still in small pictures), and every pixel's march starts where the coarse ray stopped, in one step; a pixel whose jump lands in the surface all the same is marched from the start; a block whose ray passes the end of the view is background; the dynamic fog's step count estimated along the coarse ray (the march's steps per length); not with the volumetric light, disable analytic DE, inside and outside, 2D slices, nor in the sample marches (the precision probe's CPU pixels without it too); the blocks calculated when a pixel of them is first marched (an atomic per block, another thread waits) per calculation rectangle; on the card the mode M_CONE of the march shader (states P_JUMPED, P_CONE, the CONE buffer at binding 7, the words CONE_ON .. CONE_P_OFF, the state word no_cone), two cone passes per band before its march; scene key cone_march, the window's Cone march box (Mandelbulb3D.ini Experimental with six values, five read as before), labels in all seventeen languages and the CJK font subsets, README (all seventeen languages), TECHNICAL.md, the AI guide; apptest renders the Experimental window; measured on the 80 example files (the march on the processor, 0.2 megapixels, 70 usable): total -18 %, median -18 %, best -64 % (Dainbramage - Nothing left but bones), worst +2 %, no holes, every picture within the march's own noise (the base against itself with the random first step toggled); on the card whole renders of open scenes up to -63 %; tests: the ray of a pixel, the blocks' depths before the surfaces and background blocks, the fog's count, when it is not used, the ini values |
-| [`e4cab8e`](https://github.com/thr32423/mb3d-rs/commit/e4cab8e5012dd2e0cadbece012f3e333a6ed776d) | README: Updates for v0.2.91 |
+| [`4e6b0a1`](https://github.com/thr32423/mb3d-rs/commit/4e6b0a1b34a22a2e24572a6e2b55a3103db8e98b) | Version number and release notes of this release |
+| [`31ab9bb`](https://github.com/thr32423/mb3d-rs/commit/31ab9bb590ed0565c3a8f583e558ce3bb0ecead9) | The malware scan rates the repository safe again: two math helpers of the formula compiler renamed (scanrepo.dev took their name for running code given as text and rated 0.2.100 dangerous, 70 of 100); tests/scanner_words.rs keeps such names out |
+| [`e3e7329`](https://github.com/thr32423/mb3d-rs/commit/e3e7329a76dd256923522e2e1ea512e341a11a29) | Animation templates in the README and its 16 translations: pictures of an orbit and a fly-through, the exact orbit, Start from, the fly-through's Stop, links to the videos attached to the v0.2.100 release; Rathinagiri S (SRathinaGiri) credited for the templates, 360 photos and 360 VR videos (#30) in every language and in the contributors' list; the four new labels in all 17 languages |
+| [`c2576e6`](https://github.com/thr32423/mb3d-rs/commit/c2576e69908aa6d4afcbdfd40cae8c398c4a5b3a) | Animation templates: an orbit from the last keyframe gives that keyframe the orbit's first one (the same camera and picture, the middle on the pivot the orbit's keyframes share): its first part interpolated two middles and left the circle |
+| [`b2e5cab`](https://github.com/thr32423/mb3d-rs/commit/b2e5cab64ff1ea11089d1db1e6c3784c1f046af3) | Animation templates after PR #30 (SRathinaGiri): an exact orbit, the pivot found from far away, the fly-through on a thread |
+| [`db62c70`](https://github.com/thr32423/mb3d-rs/commit/db62c70abea3d792448336810bbc5eef666430b7) | README: Updates for v0.2.100 |
+| [`06c37c0`](https://github.com/thr32423/mb3d-rs/commit/06c37c0c23b7fa3653422c143adcc73f056916f8) | Animation templates and 360 output: the 35 labels in all 17 languages, the CJK font subsets, the README and its 16 translations, TECHNICAL.md |
+| [`ad677c9`](https://github.com/thr32423/mb3d-rs/commit/ad677c96780ed3f723288f9697d693341b5bb58b) | 360 videos: Spherical Video V1 metadata as well as V2 |
+| [`0f15c52`](https://github.com/thr32423/mb3d-rs/commit/0f15c52339e20c0c945bbe39164ebc16a2fc874d) | Animation templates (360 degree orbit around any axis, fly-through), 360 degree photos, 360 degree VR animations mono and stereo |
 
-### [v0.2.91](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.91) · 1 Nov 2026, 20:07 UTC
+### [v0.2.100](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.100) · 5 Nov 2026, 13:32 UTC
 
 | Commit | What it does |
 |---|---|
-| [`f6d9b09`](https://github.com/thr32423/mb3d-rs/commit/f6d9b0904ea4e4e3e0bc4a410a31a0725d5911b5) | Version number and release notes of this release |
-| [`b5cfa13`](https://github.com/thr32423/mb3d-rs/commit/b5cfa13aebc463ba1a3689177ef964efd5ef96f7) | The experimental speed-ups kept from one start to the next: the window's choice is saved in Mandelbulb3D.ini (Experimental, e.g. 1 1.3 0 1 1: the switch, step relax, secant, free steps, half occlusion) when it changes, and every scene the main window takes gets it, at the start and when a file is opened (MB3D's files have none, so an opened file switched them off); README (all seventeen languages), TECHNICAL.md; test: the ini value read back |
-| [`f86042b`](https://github.com/thr32423/mb3d-rs/commit/f86042b93ef6ee706cd0004dde250267b548eb5a) | Gaussian splats window: the Bulb Tracer window's Gaussian splats... button opens it; it exports the main window's scene (Calculate from Auto, around the middle or from the camera; directions; size of each view; colours by direction off, 1, 2, 3; output file) in a thread, with a progress bar per direction, Stop (nothing written) and the result in the window and the messages; the settings and defaults those of mb3d splat; labels in all seventeen languages, the CJK font subsets; README (all seventeen languages) and TECHNICAL.md; the missing experimental speed-ups anchor in eight translations |
-| [`a77088c`](https://github.com/thr32423/mb3d-rs/commit/a77088c411c8272914426b818bc969bf0fcd0381) | Gaussian splat export (not in MB3D): mb3d splat FILE -o OUTPUT.ply calculates the scene from 16 directions (--views) of 640 x 640 pixels (--size) and makes every object pixel a flat Gaussian on the surface with its colour in the picture (lights, shadows, occlusion, reflections), written as the PLY of 3D Gaussian splatting (INRIA layout) that Blender 5.3, SuperSplat and other splat viewers open; objects seen from outside around the scene middle, scenes seen from inside from the camera in every direction (--around middle\|camera\|auto: auto when the first picture is all object; 110 degree views with the eye and the start plane's distance of the scene); the lights relative to the viewer and the ambient light's top and bottom fixed to the object as in the scene's view (Lighting::amb_frame, not saved; pictures without it byte-identical); each patch of the surface from the view that saw it most squarely, colours that change with the direction by spherical harmonics fitted to the views (--sh 0..3, default 2), the start plane's cut kept only from the scene's view; in the scene's frame (x right, y into the picture, z up), scaled to radius 1; examples/splatcheck.rs compares a file rendered in a splat viewer with the program's picture from a direction between the views; README, TECHNICAL.md; tests: the views, the scene's own view, the fixed lights, the camera's eye kept, the quaternion, the PLY layout, the merge, the harmonics |
-| [`47d1a5a`](https://github.com/thr32423/mb3d-rs/commit/47d1a5a3aeeece41770541112688beec77fafb78) | README: Updates for v0.2.90 |
+| [`3be6271`](https://github.com/thr32423/mb3d-rs/commit/3be62714775187a31307c4822472d7d48e3aaeeb) | Version number and release notes of this release |
+| [`f92c32e`](https://github.com/thr32423/mb3d-rs/commit/f92c32e21fa7acb7ba91f9ca855aa29a1d277634) | docs/WATER_EXAMPLES.md: a fourth scene, sunset at sea: a calm mirror sea under the evening sun with clouds to the horizon, the sun's path of light on the waves and a Mandelbulb in the water lit softly from the front; picture, settings and the parameters for From Clipboard |
+| [`f208049`](https://github.com/thr32423/mb3d-rs/commit/f208049507d4f1e6a6f960cfb22ed93cd93b110d) | Doc pictures: the cloud and water scenes rendered again (water layer, waves along the wind, clouds to the horizon) |
+| [`20a540a`](https://github.com/thr32423/mb3d-rs/commit/20a540a42ea53f68daa2046ec18ece21a6ea098f) | The sea meets the sky at the horizon: water beyond the end of the march (traced to the horizon, its depth past what the G-buffer holds) has the clouds in front of it as far as the open air's (above the clouds the sea showed through them in a blue band) and its mirror rays start at the exact point (blocks); the clouds far away fade into the sky's colour evenly (a cloud far away hides as much, its light is the sky's) where they thinned out within one row of pixels over the horizon and left a dark line of the background; a reflected ray into the open air sees clouds as far beyond its point as the camera's view; a grazing mirror ray off the water that a wave tilts downwards goes up off the next wave |
+| [`abc86b7`](https://github.com/thr32423/mb3d-rs/commit/abc86b7df8e26e019597628cc275430c5c9a7ac0) | Waves along the wind, clouds to the horizon, no line at the horizon of a camera over open water: the 16 waves' directions keep within a narrow spread to both sides of the wind (8 degrees for the longest to 30 for the shortest; some crossed it at up to 90 degrees to one side and made a pattern of diamonds, waves coming from left and right), lengths, heights and phases as before; the cloud layer reaches the horizon (a view ray that hits nothing looks 20 times the old distance into it) and fades into the haze with the distance (its density over 1 + (t / the old distance)^2), where it ended a little above the horizon with a hard edge and a clear strip under it (the clouds' shadows on surfaces keep the old reach); a ray rising from the water counts as leaving it within twice the march's stop distance there too (far away the march stops that high above the waves: a black line at the horizon). CLOUDS_WATER.md |
+| [`44bb585`](https://github.com/thr32423/mb3d-rs/commit/44bb585bc4f567390b170f6de83ac23c7222022b) | The water's mirror rays on the card too, and the Monte Carlo horizon: a ray rising from the water (water_layer::leaves_water) leaves the ground plane out on the CPU and on the card (a flag per task: the reflection tasks' word 23 bit 16, the Monte Carlo tasks' flags bit 5; ground_on() is off for it), so the water pixels' reflections go to the card again; Monte Carlo puts a primary ray's water hit where the trace from the eye meets the water, with its normal there (far away its march stopped above the waves and its mirror ray ended on them: a dark line at the horizon) |
+| [`a313d5d`](https://github.com/thr32423/mb3d-rs/commit/a313d5df16bd33dac543af4ce60ba83fb7a1b4f2) | Monte Carlo: the water between the eye and the start plane: a primary ray that meets the water in front of the start plane, or starts closer to it than the march's stop distance, starts a little above it (clear by the waves' distance estimate), where its march meets it, instead of a flat cut surface (a bright band across the bottom with a camera low over the water, and a line at its edge); a primary ray that the trace from the eye finds meeting no water takes a water hit of its march (far away, above the waves) for the open air. The trace of the water for any ray of the camera is calc::water_hit_ray; it tries its limit as its last point (a step past it left the water just before it unseen) |
+| [`1015838`](https://github.com/thr32423/mb3d-rs/commit/1015838a2d233dc39f84bdab0e00fa4bea84db2c) | The water as a ray tracer sees it (water_layer): the fractal is marched as in MB3D, the water of the ground plane is traced from the eye. MB3D's rays start on the start plane, in front of the eye: with the camera low over the water, the water between the eye and that plane was a cut surface without reflections (a dark band across the bottom), the march stopped above the waves far away (its stop distance grows) and left a dark line between the water and the sky, and a seam between the two. After the march (CPU or card) each pixel's ray is followed from the eye to the analytic surface of the waves (sphere tracing, a jump to the crests' height, bisection); where that lies in front of what the march found the pixel is water (its normal and depth where the march would have stopped), where the march found water the ray does not meet it is sky. The reflection pass starts the water in front of the start plane at the exact point (with the fractal's shadows there), and a ray rising from the water is not stopped by it again (it still meets the fractal), as a ray tracer's mirror ray; the water's rays are marched on the CPU. Transparent water, absorption, scattering, light shafts, the fractal's shadows and its mirror image work as before (tests/water.rs); scenes without water are unchanged; the lagoon and golden-hour examples differ by under 1 %, the lagoon 5 % slower. MB3D_NO_WATER_LAYER=1 switches it off; test |
+| [`b0d3330`](https://github.com/thr32423/mb3d-rs/commit/b0d33305b7d8c348f4f198ef0985836532889167) | Pascal formulas: SinCos gives the same bits compiled and in the closures on macOS too: the closures called f64::sin_cos, which LLVM turns into one __sincos_stret call on macOS whose sine can differ from sin alone in the last bit, while the compiled code called sin and cos; both now call one shared function jit::sin_cos (not inlined), the compiled code through two helpers (the CI test on the Apple Silicon runner failed on JITRealPowermy's z by one bit) |
+| [`b235df5`](https://github.com/thr32423/mb3d-rs/commit/b235df5703556a615db2b089b0cd45e9f45da397) | README: Updates for v0.2.99 |
+| [`61ad74f`](https://github.com/thr32423/mb3d-rs/commit/61ad74f6bd0562b3ef0047092d4838831dd6e3c4) | The shader checks of the tests do not ask the card about doubles at all: the macOS runner has a card (Metal) without doubles, so the double precision shaders of shaders_validate_without_a_card were refused there; scene_shader keeps the check (make_scene_shader builds the shader, the test calls it) |
 
-All 104 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+### [v0.2.99](https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.99) · 5 Nov 2026, 06:11 UTC
+
+| Commit | What it does |
+|---|---|
+| [`6cf16cf`](https://github.com/thr32423/mb3d-rs/commit/6cf16cfeeb8ce15a84d2d68d448ad42e919f6928) | Version number and release notes of this release |
+| [`4b743bb`](https://github.com/thr32423/mb3d-rs/commit/4b743bbb31aaa50c542540e7ad9286dc8108b1c0) | The probe keeps a scene in single precision on the card up to 1.5 % mean colour difference (was 1.3 %): formulas just above the old limit (the Pascal JIT_RealPower at 1.48 %) ran in double precision, 3 times slower (2560x1920 on an RTX 2060: 5.2 s -> 1.6 s, the CPU alone 8.0 s) |
+| [`a9c697c`](https://github.com/thr32423/mb3d-rs/commit/a9c697ccd51f9bc5c99fcf048448bd29dfee6cd9) | The shader checks without a graphics card pass again: scene_shader asked the card whether it calculates in doubles before making a scene's double precision shader, so on the CI runners (no card) shaders_validate_without_a_card failed since 0.2.97 (42a4125 added the double shaders to it); without any card the shader is made, a card without doubles still refuses it |
+| [`a088fe4`](https://github.com/thr32423/mb3d-rs/commit/a088fe457ef9f313b4aa7d13d8b8da100a343a5b) | The Pascal formulas on the graphics card and in the compiled hybrid loop: jit_wgsl translates a formula's tree to a shader function with the interface of the lifted machine-code formulas (record cells, option values in the constants buffer, file constants and untouched locals folded in), single or double precision; gpu.rs builds Pascal slots with it (also mixed with other formulas, cell types unified). examples/pascalgpu: all 72 Pascal formulas agree with the closures on the card in both precisions. clif_jit::compile_hybrid puts Pascal formulas inline (their double fields as the loop's cells, the iteration count and first-iteration flag its variables), alone or mixed with machine-code and built-in formulas; results identical to the formulas called one by one (examples/pascalfused, test). Survey of the 72 alone at 1280x960: 40 on the card (35 single, 5 single finished in double), 13 in double precision (the probe), 3 fall back on single precision overflows, 12 are transforms (rendered in hybrids); e.g. JIT_EM_N_BoxBulb 14.3 s CPU -> 2.1 s card at 2560x1920. The folding moved from jit_pascal to jit.rs (shared) |
+| [`3e107e7`](https://github.com/thr32423/mb3d-rs/commit/3e107e74696005b58ad5549c4464ca0aec696f6b) | The Pascal formulas compiled with Cranelift: jit.rs parses a formula into a typed tree (the closures are made from it, results unchanged for all 72 Pascal formulas), jit_pascal compiles the tree for a scene's option values (the options and constants become constants and what depends only on them is computed at compile time, so a branch on an option disappears; integer powers with a known exponent, square roots, rounding, Min/Max inline; the closures' f64 representation kept, so the results are the closures' bit for bit apart from NaN payloads). CalcParams compiles the Pascal slots (cached by formula and values), the iteration calls the compiled function; MB3D_NO_JIT=1 keeps the closures. CPU renders 2560x1920: JIT_RealPower 25.4 s -> 8.0 s (as fast as the built-in Real Power), JIT_EM_Fld_StandartBulb 89.5 s -> 20.4 s. examples/pascalcheck compares the compiled code with the closures (and a saved checksum file); test with the community formulas and a formula using every kind of statement |
+| [`c30be88`](https://github.com/thr32423/mb3d-rs/commit/c30be88e084e7294b4f74a1f55826fd20debdb2c) | The community formulas run as compiled code: the 58 machine-code formulas of M3Formulas-community had no translation in src/x86/native and ran in the x86 interpreter, which also kept them out of the Cranelift loop; regenerated with m3f2rs over MB3D's M3Formulas plus the community folder (without M3Formulas-rs, as before). The 450 earlier functions are unchanged byte for byte; m3fcheck --translated: all 60 community machine-code formulas agree with the interpreter bit for bit; clifcheck (CANON_NAN): 50 compiled and identical. CPU renders 480x360 with the same pictures: MandelCup 17.1 s -> 1.6 s, SurfBox 2.0 s -> 0.4 s, CosinePow7 1.65 s -> 0.09 s |
+| [`35fdc08`](https://github.com/thr32423/mb3d-rs/commit/35fdc081bb194e9430e973c539178f7f5e5fa44e) | A window pulled very small no longer crashes the program: a rounded rectangle (a button, the file list's scroll bar thumb) squeezed below twice its corner radius made f32::clamp panic with min > max (the Save As dialog with its bottom edge dragged up to the top); the radius is now cut to half the smaller side and an empty rectangle covers nothing; test paints the save dialog with a full file list at every small height and width |
+| [`38372c4`](https://github.com/thr32423/mb3d-rs/commit/38372c4e2fe5a42542df261a7a08529f15015044) | Parameters of a newer version keep what this one can read: a line of the mb3d-rs settings block that cannot be read (a newer key, a bad value) is left out with a warning instead of dropping the whole block (pasting 0.2.98's water scenes into 0.2.97 lost the clouds and the ground plane for one unknown key); test |
+| [`883e2bd`](https://github.com/thr32423/mb3d-rs/commit/883e2bd373bb45ce7db42dd03e101214ec1ff28f) | docs/WATER_EXAMPLES.md: three scenes with transparent water (turquoise lagoon, deep-water shaft, golden hour) using the irregular waves, transparency, absorption, refraction, scattering and a glow on the fractal, each with its picture, settings and the parameters for From Clipboard; linked from the README and its 16 translations and from CLOUDS_WATER.md |
+| [`587d560`](https://github.com/thr32423/mb3d-rs/commit/587d560acc248ff0dd7c90f778e684e26c9f09f6) | README: Updates for v0.2.98 |
+
+All 112 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
@@ -1437,8 +1558,9 @@ Mandelbulb3D, which this program is a port of, was made by these people:
   ([#13](https://github.com/thr32423/mb3d-rs/pull/13)), the stereo controls
   ([#14](https://github.com/thr32423/mb3d-rs/pull/14)), sorting in the file dialogs
   ([#17](https://github.com/thr32423/mb3d-rs/pull/17)) and their sortable columns
-  ([#19](https://github.com/thr32423/mb3d-rs/pull/19)), and the program icon in the Windows
-  executable.
+  ([#19](https://github.com/thr32423/mb3d-rs/pull/19)), the program icon in the Windows
+  executable, and the animation templates, 360° photos and 360° VR videos
+  ([#30](https://github.com/thr32423/mb3d-rs/pull/30)).
 * **Bug reports and suggestions**:
   [kronpano](https://github.com/kronpano)
   ([#1](https://github.com/thr32423/mb3d-rs/issues/1),

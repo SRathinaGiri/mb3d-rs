@@ -291,7 +291,16 @@ fn deao_row(m: &mut Marcher, y: i32, row: &mut [SiLight], dp: &DeaoParams, base:
         let step_ao = ms_de_stop / de_stop;
         let max_dist = s_max_d * step_ao.sqrt();
         let d_step_mul = base.d_step_mul as f64;
-        let ms_de_stop = if p.de_stop_factor != 0.0 { ms_de_stop / (d_step_mul * d_step_mul) } else { de_stop / (d_step_mul * d_step_mul) };
+        // seen from inside (MB3D's bIsIFS is always false here, so dIFS too):
+        // a ray counts until it meets the surface, without the correction
+        let inside = m.inside;
+        let ms_de_stop = if p.de_stop_factor == 0.0 {
+            de_stop / (d_step_mul * d_step_mul)
+        } else if inside {
+            ms_de_stop
+        } else {
+            ms_de_stop / (d_step_mul * d_step_mul)
+        };
 
         // ray directions (dithered per pixel)
         let mut dirs: Vec<SVec>;
@@ -325,6 +334,7 @@ fn deao_row(m: &mut Marcher, y: i32, row: &mut [SiLight], dp: &DeaoParams, base:
         let de_mul = (ray_count as f64 * 0.5).sqrt();
         let abr = 1.2 / (1.0 / de_mul).clamp(-1.0, 1.0).asin();
         let md_d10 = 0.1 / (max_dist * de_mul);
+        let de_mul = if inside { 1.0 } else { de_mul };
 
         let n = {
             let v = [si.normal[0] as f32, si.normal[1] as f32, si.normal[2] as f32];
@@ -355,11 +365,19 @@ fn deao_row(m: &mut Marcher, y: i32, row: &mut [SiLight], dp: &DeaoParams, base:
                     break;
                 }
                 let dt2 = m.calc_de();
-                s_tmp = s_tmp.min((dt2 - ms_de_stop + dt1 * md_d10) / dt1);
-                if s_tmp < 0.02 {
-                    break;
+                if inside {
+                    if dt2 < ms_de_stop {
+                        s_tmp = (dt1 / max_dist).powi(2).powi(2);
+                        break;
+                    }
+                    dt1 += dt1 * d_step_mul * 0.1 + ms_de_stop;
+                } else {
+                    s_tmp = s_tmp.min((dt2 - ms_de_stop + dt1 * md_d10) / dt1);
+                    if s_tmp < 0.02 {
+                        break;
+                    }
+                    dt1 += dt2.max(dt1 * d_step_mul);
                 }
-                dt1 += dt2.max(dt1 * d_step_mul);
                 if b_end {
                     break;
                 }
@@ -369,6 +387,10 @@ fn deao_row(m: &mut Marcher, y: i32, row: &mut [SiLight], dp: &DeaoParams, base:
         // correction: open neighbour rays lighten a closed one
         let mut amount = 0f64;
         for k in 0..ray_count {
+            if inside {
+                amount += min_ra[k] as f64;
+                continue;
+            }
             let mut s_add = 0f32;
             if min_ra[k] < 1.0 {
                 let max_add = 1.0 - min_ra[k];

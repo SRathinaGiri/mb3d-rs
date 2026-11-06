@@ -83,12 +83,37 @@ pub mod off {
 pub struct CustomFormula {
     pub def: Arc<M3f>,
     pub values: Vec<f64>,
+    /// a Pascal formula compiled for `values` (set on the slots of a
+    /// calculation, `CalcParams::new`; `jit_pascal`)
+    #[cfg(jit)]
+    pub compiled: Option<Arc<crate::jit_pascal::Compiled>>,
 }
 
 impl CustomFormula {
     pub fn new(def: Arc<M3f>) -> Self {
         let values = def.defaults();
-        CustomFormula { def, values }
+        CustomFormula {
+            def,
+            values,
+            #[cfg(jit)]
+            compiled: None,
+        }
+    }
+
+    /// Compiles a Pascal formula for its option values (kept when they
+    /// are the ones it was compiled for), unless the JIT is off.
+    #[cfg(jit)]
+    pub fn compile_pascal(&mut self) {
+        if self.compiled.as_ref().is_some_and(|c| c.values == self.values) {
+            return;
+        }
+        self.compiled = None;
+        if !crate::x86::clif_jit::enabled() {
+            return;
+        }
+        if let Some(p) = &self.def.jit {
+            self.compiled = crate::jit_pascal::cached(p, &self.def, &self.values);
+        }
     }
     pub fn name(&self) -> &str {
         &self.def.name

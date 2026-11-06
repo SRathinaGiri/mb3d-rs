@@ -76,13 +76,17 @@ este repositorio en cualquier momento:
 **[▶ Analizar mb3d-rs en scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (pulse *Rescan* para obtener un resultado nuevo del código actual)
 
-La versión 0.2.85 obtuvo la calificación **segura: 5 de 100** (analizada
-el 30 de octubre de 2026, reglas del motor 10 del analizador). Su único aviso
-es la línea que pone en marcha las fórmulas que el programa compila en
+La versión 0.3.1 obtuvo la calificación **segura: 8 de 100** (analizada
+el 5 de noviembre de 2026, reglas del motor 10 del analizador). Sus avisos
+se refieren a las líneas que ponen en marcha las fórmulas que el programa compila en
 tiempo de ejecución para ganar velocidad: ejecutar código máquina recién
-generado no se puede escribir en la forma comprobada de Rust, y esa línea y
+generado no se puede escribir en la forma comprobada de Rust, y esas líneas y
 el puente al filtro de ruido de Intel son los únicos lugares donde el
-programa lo permite; lo demás es una nota informativa. (Antes: la 0.2.66
+programa lo permite; lo demás es una nota informativa. (Antes: la 0.2.85
+obtuvo 5 de 100; la 0.2.100 se calificó de peligrosa durante unas horas, porque
+dos funciones matemáticas del compilador de fórmulas tenían un nombre que el
+analizador toma por ejecución de código oculto; se renombraron el mismo día, y
+ahora una prueba mantiene fuera esos nombres; la 0.2.66
 obtuvo 0 de 100 con un motor más antiguo; véase también
 [el resultado de la 0.2.44](../img/scan_0.2.44.png).) Una versión anterior
 fue señalada y cambiamos el código en respuesta
@@ -530,7 +534,8 @@ esto puede comprobar más por su cuenta:
   que ven una misma carpeta compartida renderizan juntos una imagen, un
   Render grande, una imagen Monte Carlo o una animación. Véase
   [Renderizar en varios equipos](#rendering-on-several-computers-the-swarm).
-* **Fórmulas y mapas de la comunidad**: 129 fórmulas y 154 mapas que faltan en el repositorio oficial, del paquete Mandelbulb3D 1.99.37 que Machina Infinitum ofrece como descarga gratuita. Las fórmulas son de Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero y otros cuyos archivos no nombran autor; `M3Formulas/CREDITS-community.md` nombra al autor de cada una (`teapot.m3f` de DarkBeam está bajo CC BY-SA 3.0). Los mapas son de la colección de DarkBeam, bajo sus condiciones (uso libre, no se venden sin cambios), con imágenes compartidas en DeviantArt por CmdrChaos, Fractales75, Nic022 y UndeadAcademy; los mapas 3046–3048 son de Kronpano (`M3Maps/CREDITS-community.md`).
+* **Fórmulas y mapas de la comunidad**: 129 fórmulas y 154 mapas que faltan en el repositorio oficial, del paquete Mandelbulb3D 1.99.37 que Machina Infinitum ofrece como descarga gratuita. Las fórmulas son de Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero y otros cuyos archivos no nombran autor; `M3Formulas/CREDITS-community.md` nombra al autor de cada una (`teapot.m3f` de DarkBeam está bajo CC BY-SA 3.0). Los mapas son de la colección de DarkBeam, bajo sus condiciones (uso libre, no se venden sin cambios), con imágenes compartidas en DeviantArt por CmdrChaos, Fractales75, Nic022 y UndeadAcademy; los mapas 3046–3048 son de Kronpano (`M3Maps/CREDITS-community.md`). Los 608 ajustes de luz de `M3Lights` vienen del mismo paquete; sus archivos no nombran autor (`M3Lights/CREDITS-community.md`).
+* **Ideas de Mandelbulb3D SE**: Mandelbulb3D SE de Glenn Olander, una app de macOS basada en mb3d-rs, aportó dos ideas: comprobar en las pruebas cada shader de la tarjeta gráfica sin tarjeta gráfica, y que Detener termine al instante el pintado de una imagen.
 * **Una fórmula nueva, PseudoKleinian:** la "arquitectura kleiniana" de
   salas, arcos y esferas como una sola fórmula con su propia distancia
   exacta.
@@ -683,6 +688,59 @@ esto puede comprobar más por su cuenta:
   `{mb3d-rs: ...}` tras el título de los parámetros de texto), que
   Mandelbulb3D no lee. Claves de escena `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; detalles en [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+
+  **Agua transparente**: con *Agua* por encima de 0 (cuánta luz deja
+  pasar) un fractal medio sumergido se ve bajo la superficie, desviado
+  por la refracción (*Refracción*: 1,33 para el agua) y tomando con la
+  profundidad el color del agua profunda (el botón de color): la *Absorción* dice qué tan turbia es (0 clara, 3 turbia), y en
+  agua verdeazulada el rojo se apaga primero, así que lo sumergido se
+  vuelve turquesa. Los brillos de las luces sobre las olas siguen en la
+  superficie. El render normal lo muestra con los reflejos activados
+  (Postprocesado), Monte Carlo siempre; sin reflejos el agua sigue
+  opaca. Claves de escena `ground_transparency`, `ground_absorption`,
+  `ground_water_color`, `ground_ior`; un ejemplo en
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Dispersión** (la fila bajo *Refracción*): el agua dispersa la luz
+  como el agua real. Brilla turquesa mirando hacia el sol, las crestas
+  de las olas se transparentan, la luz del sol cae en ella en rayos
+  cortados por las sombras del fractal y lo que está bajo el agua brilla
+  suavemente en su color; Monte Carlo sigue la luz mientras se dispersa
+  en el agua. El segundo campo es su dirección (0,8: sobre todo hacia
+  delante). 0 es el aspecto sin ella. Claves de escena
+  `ground_scattering`, `ground_scatter_dir`; véase
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Pruébalo**: en la página *Corte* marca *Plano de suelo* y haz que su
+  altura atraviese el fractal, pon *Agua* en 1, *Absorción* en 1 y
+  *Dispersión* en 0,5, y activa los reflejos (*Posprocesar*, *Reflejos +
+  transparencia*, *Calcular R. (+ T.) automáticamente*); después *Calcular
+  3D*.
+
+  Tres escenas listas para pegar, con sus ajustes: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *Agua* (transparencia) 0, 0,5 y 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparencia 0, 0,5 y 1: agua gris opaca, luego la mitad sumergida del fractal se ve a través en turquesa"></a>
+
+  *Absorción* 0,3, 1 y 3, de clara a turbia:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorción 0,3, 1 y 3: la mitad sumergida claramente verde, desvaneciéndose, luego oculta"></a>
+
+  *Dispersión* 0, 0,5 y 1 mirando hacia el sol, y los rayos de luz con un
+  sol bajo delante:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Dispersión 0, 0,5 y 1 mirando hacia el sol: agua oscura, luego agua turquesa brillante"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Un sol bajo delante: el volumen de sombra del fractal se extiende por el agua como un rayo azul"></a>
+
+  **Las olas** son un mar irregular de dieciséis olas a lo largo de una
+  dirección del viento (antes de 0.2.98 tres olas regulares formaban un
+  tablero de ajedrez; las escenas con olas se ven distintas desde
+  entonces). Antiguas (a la izquierda de cada par) y nuevas, olas pequeñas
+  y grandes, con el sol delante y detrás:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Olas antiguas y nuevas lado a lado: la antigua cuadrícula regular de rombos brillantes, el nuevo mar irregular"></a>
 
   </details>
 * **Luz de una imagen HDR**: una imagen Radiance de 360° (`.hdr`) como fondo
@@ -861,6 +919,50 @@ esto puede comprobar más por su cuenta:
   imágenes dentro del tiempo de *Obturador* (una parte del tiempo hasta el
   siguiente fotograma), así que lo que se mueve se difumina; tarda esa
   cantidad de veces más (`mb3d animate --motion-blur 8,0.5`).
+
+  *Creador de animaciones* > *Plantillas de animación...* crea fotogramas
+  clave desde la vista de la ventana principal para una duración en segundos
+  (a los fotogramas por segundo de la ventana): una *Órbita de 360°*
+  alrededor del eje que elija (de izquierda a derecha, por encima, un
+  alabeo, los tres a la vez o el eje X, Y o Z del fractal; `--orbit 8
+  --duration 10 --orbit-axis pitch`) o un *Vuelo a través*, en el que la
+  cámara sigue volando hacia el fractal, el zoom sigue la distancia a él,
+  mantiene su rumbo y solo gira para esquivar aquello con lo que chocaría
+  (`--fly --duration 20`; `--duration 0`: hasta que la vista muestre solo
+  cielo o solo fractal). *RV 360°* en el Creador de animaciones (`--vr`)
+  hace de cada fotograma un panorama esférico (2:1); con *Renderizar
+  animación estéreo* el vídeo tiene los ojos uno encima del otro (el
+  izquierdo arriba), y el comando de ffmpeg termina con `mb3d vr360
+  video.mp4 --stereo tb`, que marca el MP4 como vídeo 360 para YouTube, Meta
+  Quest y VLC. Un panorama esférico guardado como JPEG lleva el XMP de Photo
+  Sphere, así que Facebook lo muestra como foto 360.
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Cinco fotogramas de una órbita de 360° alrededor de un punto de la superficie de un Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Un vuelo a través, un fotograma por segundo"></a>
+
+  Las plantillas de animación, las fotos de 360° y los vídeos de RV 360° son
+  una contribución de Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). La órbita mantiene la
+  cámara a la misma distancia de su pivote en cada fotograma, también entre
+  los fotogramas clave: primero el centro de la vista se coloca en el
+  pivote, de modo que los fotogramas clave solo se diferencian en su
+  rotación. Añadida después de otros fotogramas clave, termina de nuevo con
+  su primer fotograma clave, para que la vuelta sea completa; *Empezar
+  desde* toma la vista de la ventana principal o el último fotograma clave.
+  El vuelo a través se calcula en segundo plano con una barra de progreso, y
+  *Detener* conserva lo volado hasta entonces. Vídeos (adjuntos a la versión
+  v0.2.100, renderizados con la versión siguiente): [una órbita con 4
+  fotogramas clave, la primera versión y la exacta lado a
+  lado](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [un
+  volteo](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [un vuelo a
+  través](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [una órbita de RV
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Los cuatro con imágenes en movimiento y notas: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Splats gaussianos** del fractal, para verlo por todos los lados en

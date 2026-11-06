@@ -1687,6 +1687,14 @@ impl Form {
                     let i = (c.item_index + d).clamp(0, (c.row_count() as i32 - 1).max(0));
                     if c.row_count() > 0 && i != c.item_index {
                         c.item_index = i;
+                        // (a plain arrow key selects only the new row, as a
+                        // click does: the highlight is what Del removes)
+                        if !c.selected.is_empty() {
+                            c.selected.fill(false);
+                            if let Some(s) = c.selected.get_mut(i as usize) {
+                                *s = true;
+                            }
+                        }
                         out.push(raw(id, "OnChange", Ev::Change));
                     }
                     // the selected row stays in view

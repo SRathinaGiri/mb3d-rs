@@ -1300,6 +1300,30 @@ object AnimationForm: TAnimationForm
       TabOrder = 23
       OnClick = OrbitBtnClick
     end
+    object TemplatesBtn: TButton
+      Left = 456
+      Top = 262
+      Width = 118
+      Height = 25
+      Hint = '@MB:KeyframesMadeForYouFromThe'
+      Caption = '@MB:AnimationTemplates'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 24
+      OnClick = TemplatesBtnClick
+    end
+    object Vr360Check: TCheckBox
+      Left = 586
+      Top = 266
+      Width = 170
+      Height = 17
+      Hint = '@MB:A360DegreeAnimationForVR'
+      Caption = '@MB:N360VR'
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 25
+      OnClick = Vr360CheckClick
+    end
   end
   object Panel3: TPanel
     Left = 0

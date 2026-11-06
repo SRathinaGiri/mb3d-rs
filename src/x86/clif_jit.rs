@@ -79,6 +79,11 @@ pub fn hybrid_key(m: &Machine, slots: &[HybridSlot], start: usize, end: usize, r
     for (n, s) in slots.iter().enumerate() {
         (s.iterations, s.uncounted, s.ade).hash(&mut h);
         match &s.formula {
+            Formula::Custom(c) if c.def.jit.is_some() => {
+                // a Pascal formula: its source and option values
+                (c.def.name.as_str(), c.def.source.as_str()).hash(&mut h);
+                c.values.iter().map(|v| v.to_bits()).collect::<Vec<u64>>().hash(&mut h);
+            }
             Formula::Custom(_) => {
                 m.prog(crate::custom::code_addr(n)).map(|p| p.hash).hash(&mut h);
                 let a = mem_off(crate::custom::var_buf_addr(n)) as usize;
@@ -448,22 +453,87 @@ impl Record for Fused {
     }
 }
 
+/// The record cell of a double field of a Pascal formula (see `it_double`).
+fn pascal_cell(f: crate::jit::Field) -> Option<u32> {
+    use crate::jit::Field::*;
+    Some(match f {
+        V(k) => 3 + k as u32,
+        C(k) => 7 + k as u32,
+        J(3) => 0,
+        J(k) => 10 + k as u32,
+        Rout => 14,
+        Rold => 1,
+        OTrap => 31,
+        VaryScale => 32,
+        Dfree(k) => 34 + k as u32,
+        Deriv(k) => 36 + k as u32,
+        _ => return None,
+    })
+}
+
+/// The fields of a Pascal formula inline in the compiled loop: the double
+/// fields are the loop's cells, the iteration count and first-iteration
+/// flag its variables, the others in the iteration.
+struct FusedFields<'a> {
+    st: &'a mut Fused,
+}
+
+impl crate::jit_pascal::Fields for FusedFields<'_> {
+    fn get(&mut self, b: &mut FunctionBuilder, f: crate::jit::Field) -> Value {
+        use crate::jit::Field;
+        match f {
+            Field::ItResult | Field::FirstIt => {
+                let v = b.use_var(if f == Field::ItResult { self.st.it_result } else { self.st.first_it });
+                b.ins().fcvt_from_sint(F64, v)
+            }
+            _ => match pascal_cell(f) {
+                Some(c) => self.st.read(b, c),
+                None => crate::jit_pascal::load_field(b, self.st.it, f),
+            },
+        }
+    }
+
+    fn set(&mut self, b: &mut FunctionBuilder, f: crate::jit::Field, v: Value) {
+        use crate::jit::Field;
+        match f {
+            Field::ItResult | Field::FirstIt => {
+                let x = b.ins().fcvt_to_sint_sat(I32, v);
+                b.def_var(if f == Field::ItResult { self.st.it_result } else { self.st.first_it }, x);
+            }
+            _ => match pascal_cell(f) {
+                // (every double field it writes is a variable of the loop)
+                Some(c) => self.st.write(b, c, v),
+                None => crate::jit_pascal::store_field(b, self.st.it, f, v),
+            },
+        }
+    }
+}
+
 /// The alternating hybrid loop (`Iteration::run_with`) of `slots` from
 /// `start` (end `end`, repeat from `repeat`) compiled with the formulas of
 /// machine `m` (the prototype of the scene) inlined; None if a formula
 /// cannot be compiled (or the loop is one of the rare kinds left to the
-/// interpreter: no counted formula, MB3D's JIT formulas).
+/// interpreter: no counted formula; a Pascal formula the JIT did not
+/// compile on its own).
 pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usize, repeat: usize, four_d: bool) -> Option<HybridJit> {
     if slots.is_empty() || end >= slots.len() || repeat > end || start > end {
         return None;
     }
-    // every slot of the cycle must be compilable; the cycle must count
+    // every slot of the cycle must be compilable; the cycle must count.
+    // A Pascal formula goes in as its tree for the slot's option values
+    // (when the JIT compiled it for them: `CustomFormula::compiled`)
+    let mut pascal: Vec<Option<(crate::jit::S, Vec<f64>)>> = Vec::new();
     for s in slots {
+        let mut t = None;
         if let Formula::Custom(c) = &s.formula {
-            if c.def.jit.is_some() {
-                return None;
+            if let Some(prog) = &c.def.jit {
+                if c.compiled.as_ref().is_none_or(|x| x.values != c.values) {
+                    return None;
+                }
+                t = Some(crate::jit_pascal::specialise(prog, &c.def, &c.values));
             }
         }
+        pascal.push(t);
     }
     // the double fields written in the loop: v, rout, rold, otrap, those
     // the formulas write, j when a built-in formula runs through the helper
@@ -473,6 +543,13 @@ pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usiz
             continue;
         }
         match &s.formula {
+            Formula::Custom(_) if pascal[n].is_some() => {
+                // the double fields it writes (the integer ones are the
+                // loop's variables or go to the iteration)
+                let mut fs = Vec::new();
+                crate::jit_pascal::written_fields(&pascal[n].as_ref().expect("checked").0, &mut fs);
+                written.extend(fs.into_iter().filter_map(pascal_cell));
+            }
             Formula::Custom(_) => {
                 let prog = m.prog(crate::custom::code_addr(n))?;
                 if prog.clif_unsupported().is_some() {
@@ -570,6 +647,13 @@ pub fn compile_hybrid(m: &Machine, slots: &[HybridSlot], start: usize, end: usiz
             // the formula
             let after = b.create_block();
             match &s.formula {
+                Formula::Custom(_) if pascal[n].is_some() => {
+                    let (tree, start) = pascal[n].as_ref().expect("checked");
+                    let call_conv = jit.module.target_config().default_call_conv;
+                    let mut fields = FusedFields { st: &mut st };
+                    crate::jit_pascal::emit(&mut b, &mut fields, tree, start, ptr, call_conv);
+                    b.ins().jump(after, &[]);
+                }
                 Formula::Custom(_) => {
                     let prog = m.prog(crate::custom::code_addr(n))?;
                     let err = b.create_block();

@@ -25,12 +25,25 @@ pub enum Job {
     /// Both stereo eyes, combined for viewing.  This deliberately keeps no
     /// G-buffer: a side-by-side picture cannot be repainted as one camera.
     Stereo { scene: Scene, layout: crate::render::StereoLayout },
-    /// lighting / post processing changed: repaint the kept G-buffer
-    Repaint { scene: Scene },
+    /// The post processing window: the kept G-buffer repainted (MB3D's
+    /// `TriggerRepaint`), the post steps whose settings changed run on the
+    /// kept result (only those, as MB3D's buttons run one step on
+    /// siLight5) and `step` in any case ("Calculate now"); painted without
+    /// the depth of field, and with the reflections only when `reflections`
+    /// ("Calculate now" of the reflections, MB3D's `CalcSRT`): a repaint
+    /// drops both, as in MB3D.  `scene` stays the kept image's parameters;
+    /// the lights in `hs_off` are painted as without calculated shadows
+    /// (their shadows reset in the G-buffer, MB3D's bHScalculated).
+    Repaint { scene: Scene, reflections: bool, step: Option<PostStep>, hs_off: u8 },
+    /// The depth of field's "Calculate now" (MB3D's `doDOF` on
+    /// fullSizeImage): once more on the picture shown, so that it
+    /// accumulates with each press until the next repaint
+    Dof { dof: crate::dof::DofParams },
     /// the lighting changed (the Lighting window): repaint at once with the
     /// kept shadows, without reflections and depth of field (MB3D's
-    /// repaint); a `Repaint` adds them afterwards
-    Relight { scene: Scene },
+    /// repaint)
+    /// `hs_off`: the lights whose shadows were reset (painted without them)
+    Relight { scene: Scene, hs_off: u8 },
     /// "Recalculate a selection" (MB3D's `CalcPartT`): rectangle (left,
     /// top, width, height) of the image with the raystep divided,
     /// optionally only nearer parts, its hard shadows (`hs`) and DEAO
@@ -43,6 +56,15 @@ pub enum Job {
     /// Calculate 3D with the swarm: the picture in tiles rendered by the
     /// computers that watch the shared folder `dir`, put together here
     Swarm { scene: Scene, dir: std::path::PathBuf, cols: u32, rows: u32, name: String },
+}
+
+/// A step of the post calculations on the G-buffer that "Calculate now"
+/// runs (also when its settings did not change).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PostStep {
+    Normals,
+    Shadows,
+    Ao,
 }
 
 /// `rect` clipped to the image (MB3D's `ClipIRect`); None when less than
@@ -104,7 +126,7 @@ pub struct Base {
     pub raw: Arc<Vec<SiLight>>,
     /// after hard shadows / ambient occlusion
     pub post: Arc<Vec<SiLight>>,
-    pub post_sig: String,
+    pub post_sig: PostSig,
     pub w: usize,
     pub h: usize,
 }
@@ -199,7 +221,34 @@ impl Drop for Engine {
 /// lights only what casts them (on, shadowing, direction or position, a
 /// positional light's reach), not their colours or shading, so that those
 /// repaint at once without calculating the shadows again.
-pub fn post_sig(sc: &Scene) -> String {
+pub fn post_sig(sc: &Scene) -> PostSig {
+    let s = post_sig_scene(sc);
+    let mut rest = s.clone();
+    rest.shadows = None;
+    rest.ao = None;
+    rest.deao = None;
+    rest.normals_on_zbuf = false;
+    rest.lighting = Default::default();
+    PostSig {
+        rest: rest.to_text(),
+        normals: s.normals_on_zbuf,
+        shadows: s.shadows.map_or(String::new(), |h| format!("{h:?} {:?}", s.lighting.lights)),
+        ao: s.ao.map_or(String::new(), |a| format!("{a:?} {:?}", s.deao)),
+    }
+}
+
+/// [`post_sig`] in its parts: what all post steps depend on, and each
+/// step's own settings (a step that changed alone runs alone on the kept
+/// result).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct PostSig {
+    rest: String,
+    normals: bool,
+    shadows: String,
+    ao: String,
+}
+
+fn post_sig_scene(sc: &Scene) -> Scene {
     let mut s = sc.clone();
     let lights = s.lighting.lights.clone();
     s.lighting = Default::default();
@@ -217,7 +266,7 @@ pub fn post_sig(sc: &Scene) -> String {
     s.dof = None;
     s.mc = Default::default();
     s.threads = 0;
-    s.to_text()
+    s
 }
 
 /// Everything the ray marching depends on.
@@ -528,8 +577,9 @@ fn worker(e: Arc<Inner>) {
         // the window waiting for it
         let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| match job {
             Job::Calc { scene, slice, resume, name } => calc(&e, &scene, slice, resume, &name, &cancel),
-            Job::Repaint { scene } => repaint(&e, &scene, &cancel),
-            Job::Relight { scene } => relight(&e, &scene),
+            Job::Repaint { scene, reflections, step, hs_off } => repaint(&e, &scene, (reflections, step, hs_off), &cancel),
+            Job::Dof { dof } => depth_of_field(&e, &dof, &cancel),
+            Job::Relight { scene, hs_off } => relight(&e, &scene, hs_off),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Stereo { scene, layout } => stereo(&e, &scene, layout, &cancel),
             Job::Preview { scene } => preview(&e, &scene, &cancel),
@@ -822,7 +872,8 @@ fn stage_namer(e: &Inner) -> impl Fn(&str) + Sync + '_ {
     }
 }
 
-fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+fn repaint(e: &Inner, sc: &Scene, opts: (bool, Option<PostStep>, u8), cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let (reflections, step, hs_off) = opts;
     let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
     let mut target = sc.clone();
     target.width = b.scene.width;
@@ -830,10 +881,41 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     target.slice_2d = b.scene.slice_2d;
     target.calc_rect = None;
     let psig = post_sig(&target);
-    let reuse = psig == b.post_sig || b.params.slice_2d != 0;
+    // without a "Calculate now" a repaint only paints what was calculated
+    // (MB3D's TriggerRepaint: "Reset now", the lighting, a light moved: the
+    // shadows stay as they were until they are calculated again)
+    let reuse = b.params.slice_2d != 0 || step.is_none();
     let (progress, stage) = (stage_progress(e), stage_namer(e));
     let post = if reuse {
         b.post.clone()
+    } else if let Some((steps, clear_hs)) = steps_on_kept(&b.post_sig, &psig, step) {
+        // only the steps that changed (or "Calculate now"), on the kept result
+        let mut g = (*b.post).clone();
+        if clear_hs {
+            for s in g.iter_mut() {
+                s.shadow &= 0x3FF;
+            }
+        }
+        let mut only = target.clone();
+        if !steps.contains(&PostStep::Normals) {
+            only.normals_on_zbuf = false;
+        }
+        if !steps.contains(&PostStep::Shadows) {
+            only.shadows = None;
+        }
+        if !steps.contains(&PostStep::Ao) {
+            only.ao = None;
+            only.deao = None;
+        }
+        // (what the card ran with the calculation is in the kept result:
+        // nothing of it to keep or to undo)
+        let mut q = b.params.clone();
+        q.gpu_post = None;
+        if !steps.is_empty() {
+            stage("post processing");
+            crate::render::post_process_reporting(&only, &q, &mut g, crate::render::thread_count(&target), &progress, &stage, cancel)?;
+        }
+        Arc::new(g)
     } else {
         stage("post processing");
         let mut g = (*b.raw).clone();
@@ -845,8 +927,15 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
     if cancel() {
         return Err("cancelled".into());
     }
-    // (stopped during the reflections or the DoF: the image stays as it was)
-    let rgb = crate::render::paint_reporting(&target, &b.params, &post, &progress, &stage, cancel).0;
+    // MB3D's repaint: no depth of field, the reflections only when asked
+    // for (stopped during them: the image stays as it was)
+    let mut paint = target.clone();
+    paint.mc.reflections = reflections;
+    paint.dof = None;
+    if let Some(h) = &mut paint.shadows {
+        h.lights &= !hs_off;
+    }
+    let rgb = crate::render::paint_reporting(&paint, &b.params, &post, &progress, &stage, cancel).0;
     if cancel() {
         return Err("cancelled".into());
     }
@@ -858,7 +947,56 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
         Some(cur) if reuse => (cur.raw.clone(), cur.post.clone()),
         _ => (b.raw.clone(), post),
     };
-    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig: psig, w: b.w, h: b.h }));
+    // (painted only: the kept result is still the one of its old settings)
+    let post_sig = if reuse { g.as_ref().map(|cur| cur.post_sig.clone()).unwrap_or(psig) } else { psig };
+    *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig, w: b.w, h: b.h }));
+    Ok(())
+}
+
+/// The post steps to run on the kept result (`old` its signature) for
+/// `new`'s, and whether its hard shadows are cleared first (switched
+/// off); None when all must run again on the raw G-buffer (what they all
+/// depend on changed, or a step was switched off that cannot be undone on
+/// the result).  `forced`: "Calculate now" of a step.
+fn steps_on_kept(old: &PostSig, new: &PostSig, forced: Option<PostStep>) -> Option<(Vec<PostStep>, bool)> {
+    if old.rest != new.rest || (old.normals && !new.normals) || (!old.ao.is_empty() && new.ao.is_empty()) {
+        return None;
+    }
+    let mut steps = Vec::new();
+    if new.normals && (!old.normals || forced == Some(PostStep::Normals)) {
+        steps.push(PostStep::Normals);
+    }
+    let clear_hs = !old.shadows.is_empty() && new.shadows.is_empty();
+    if !new.shadows.is_empty() && (old.shadows != new.shadows || forced == Some(PostStep::Shadows)) {
+        steps.push(PostStep::Shadows);
+    }
+    if !new.ao.is_empty() && (old.ao != new.ao || forced == Some(PostStep::Ao)) {
+        steps.push(PostStep::Ao);
+    }
+    Some((steps, clear_hs))
+}
+
+/// MB3D's `doDOF` / `doDOFsort` of "Calculate now": the depth of field
+/// (all its passes) once more on the picture shown, with the depths of
+/// the kept G-buffer, so that it accumulates with each press.
+fn depth_of_field(e: &Inner, d: &crate::dof::DofParams, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
+    if b.params.slice_2d != 0 {
+        return Ok(());
+    }
+    let (w, h) = (b.w, b.h);
+    let cur = e.out.lock().unwrap().rgb.clone().filter(|c| c.len() == w * h * 3);
+    let mut rgb = match cur {
+        Some(c) => (*c).clone(),
+        None => crate::render::paint_preview(&b.scene, &b.params, &b.post),
+    };
+    let (progress, stage) = (stage_progress(e), stage_namer(e));
+    stage("depth of field");
+    crate::dof::apply_reporting(&mut rgb, &b.post, w, h, b.params.zc_mul, b.params.zcorr, b.scene.fov_y, d, &progress, cancel);
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    e.publish(rgb, w, h, "", None);
     Ok(())
 }
 
@@ -867,14 +1005,20 @@ fn repaint(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
 /// as in MB3D), no reflections or depth of field (both take about as long
 /// as the calculation). The kept buffers and their signature stay, so a
 /// following `Repaint` knows what to calculate again.
-fn relight(e: &Inner, sc: &Scene) -> Result<(), String> {
+fn relight(e: &Inner, sc: &Scene, hs_off: u8) -> Result<(), String> {
     let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
     let mut target = sc.clone();
     target.width = b.scene.width;
     target.height = b.scene.height;
     target.slice_2d = b.scene.slice_2d;
     target.calc_rect = None;
-    let rgb = crate::render::paint_preview(&target, &b.params, &b.post);
+    // (the kept scene keeps its shadow ticks, as MB3D's bCalculateHardShadow;
+    // only the picture is painted without the reset lights' shadows)
+    let mut paint = target.clone();
+    if let Some(h) = &mut paint.shadows {
+        h.lights &= !hs_off;
+    }
+    let rgb = crate::render::paint_preview(&paint, &b.params, &b.post);
     e.publish(rgb, b.w, b.h, "", None);
     let mut g = e.base.lock().unwrap();
     let (raw, post, post_sig) = match g.as_ref() {
@@ -992,4 +1136,44 @@ fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool
     put_rect(&mut rgb, w, r, 3, &painted);
     e.publish(rgb, w, h, "", None);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{post_sig, steps_on_kept, PostStep};
+    use crate::scene::{Scene, ShadowParams};
+
+    #[test]
+    fn a_post_step_runs_alone_on_the_kept_result() {
+        let mut a = Scene::preset("Integer Power").unwrap();
+        a.ao = Some(Default::default());
+        let old = post_sig(&a);
+        // the hard shadows switched on: only they run, the ambient
+        // shadows stay as calculated
+        let mut b = a.clone();
+        b.shadows = Some(ShadowParams::default());
+        assert_eq!(steps_on_kept(&old, &post_sig(&b), None), Some((vec![PostStep::Shadows], false)));
+        // "Calculate now" of the ambient shadows with nothing changed
+        assert_eq!(steps_on_kept(&old, &old, Some(PostStep::Ao)), Some((vec![PostStep::Ao], false)));
+        // nothing changed, nothing forced: nothing to run
+        assert_eq!(steps_on_kept(&old, &old, None), Some((vec![], false)));
+        // a shadow light moved: its shadows again
+        let hs = post_sig(&b);
+        let mut c = b.clone();
+        c.lighting.lights[0].y_angle += 0.5;
+        assert_eq!(steps_on_kept(&hs, &post_sig(&c), None), Some((vec![PostStep::Shadows], false)));
+        // a light's colour is no shadow setting
+        let mut c = b.clone();
+        c.lighting.lights[0].color = [1, 2, 3];
+        assert_eq!(post_sig(&c), hs);
+        // the shadows switched off: cleared, nothing runs
+        assert_eq!(steps_on_kept(&hs, &old, None), Some((vec![], true)));
+        // the ambient shadows switched off, or the view changed: all again
+        let mut d = a.clone();
+        d.ao = None;
+        assert_eq!(steps_on_kept(&old, &post_sig(&d), None), None);
+        let mut d = a.clone();
+        d.zoom *= 2.0;
+        assert_eq!(steps_on_kept(&old, &post_sig(&d), None), None);
+    }
 }

@@ -28,6 +28,12 @@ language = Nederlands
 code = NL
 
 [Labels]
+A360DegreeAnimationForVR=Een 360-gradenanimatie voor VR-brillen: elk beeld een bolvormig panorama, twee keer zo breed als hoog; met 'Stereo-animatie renderen' heeft de video de ogen boven elkaar, en het ffmpeg-commando markeert de MP4 voor VR-spelers
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
+A4dQuaternionFormulaOneIteration=Een 4D-quaternionformule, één iteratie:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=Een bulbformule, voorgesteld door Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nTwee opties toegevoegd om de constante machtsgewijs te roteren met de afstand tussen de huidige vectoren van Z en C (Cond Phi=1),\nen de volgende Mode-opties:\n(Bits van de Mode-waarde)\nBit1: atan-theta-componenten omkeren\nBit2: atan-phi-componenten omkeren\nBit3: theta en phi omkeren\nBit4: CyCz omkeren voor de hoekberekening\nBit5: powerC vermenigvuldigen met de afstand tussen de vectoren Z en C
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=Er loopt een berekening: stop die eerst.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=Een grove straal per blok van 16, dan van 4 pixels marcheert met de spreiding van het blok van de afstandsschatting afgetrokken, en de mars van elke pixel begint op zijn diepte. Tot 60 % sneller door open ruimte; dunne delen kunnen verloren gaan waar de schatting er ver naast zit.
@@ -44,6 +50,8 @@ AGroundOrWaterSurfaceAcross=Een grond- of wateroppervlak dwars op de X-, Y- of Z
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=Een hogere waarde betekent een betere kwaliteit; zelfs 100% is niet verliesvrij.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=Een hybride van een sinusbulb met macht 2 en de Amazing Box; de lengte van de 3D-vector bepaalt welke formule wordt gebruikt:\nIs die groter dan 'Box/Bulb R threshold', dan wordt de Amazing Box gebruikt, is die kleiner dan '..threshold 2', dan de sinusbulb,\ntussen beide in wordt geïnterpoleerd.  Kies de tweede drempel iets kleiner dan de eerste voor een vloeiender resultaat.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=AI
 ;AI
 ALanguageFileHasOneLabel=Een taalbestand heeft één label per regel: links van de "=" de ID, rechts ervan uw tekst. Een venstersectie na de labels geeft één element een eigen tekst.
@@ -52,6 +60,8 @@ AMultiplierThatDefinesTheMiximal=Een vermenigvuldiger die de maximale lengte van
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=AO-rekentijd:
 ;AO calc time:
+ASineIntegerPowerBulbWith=Een sinusbulb met gehele macht en voorafgaande vouwingen, zoals in de Amazing Box.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=Een gestopte of onderbroken render bewaart wat hij heeft berekend; 3D berekenen met dezelfde parameters zet hem voort.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=Een transparante achtergrond vereist PNG-frames: kies PNG als uitvoerformaat.
@@ -60,6 +70,8 @@ AVideoNeedsImagesChooseBMP=Een video vereist afbeeldingen: kies BMP, PNG of JPG 
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=Van een stereo-animatie wordt geen video gemaakt: schakel 'Stereo-animatie renderen' uit.
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=Een hele draai van de camera rond het object in 8 of meer keyframes, een vloeiende lus (Catmull-Rom); de frames tellen op tot de duur bij de frames per seconde van het animatievenster
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf=Een afbeelding van {} x {} heeft ongeveer {} geheugen nodig, deze computer heeft {} vrij: de berekening zou gaan swappen en het programma kan minutenlang niet reageren.\n\nToch berekenen?\n\nGrote render (tabblad Extra) berekent het in tegels die één voor één worden opgeslagen, zonder de hele afbeelding in het geheugen te houden; een zwerm (venster Zwerm) verdeelt de tegels over andere computers.
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=Er wordt ook een Z-buffer-PNG-afbeelding opgeslagen.
@@ -114,6 +126,8 @@ AddNewOption=Nieuwe optie toevoegen
 ;Add new option
 AddOptionValue=Optiewaarde toevoegen
 ;Add option value
+AddTheKeyframes=Keyframes toevoegen
+;Add the keyframes
 AddToBackgroundDepthNotBlend=Bij achtergronddiepte optellen (niet mengen)
 ;Add to background depth (not blend)
 AddonFormula=Addon-formule
@@ -146,6 +160,8 @@ AllRealworldUnitsInMeter=Alle werkelijke eenheden in meter.
 ;All realworld units in meter.
 AllTheLightColorSettings=Alle licht- + kleurinstellingen
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=Alles samen: gieren, stampen en rollen (tuimelen)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> bestaat al
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=Ook een video maken (AVI)
@@ -218,6 +234,10 @@ AnimationRenderingStopped=Renderen van de animatie gestopt.
 ;Animation rendering stopped.
 AnimationSize=Animatiegrootte:
 ;Animation size:
+AnimationTemplates=Animatiesjablonen...
+;Animation templates...
+AnimationTemplates2=Animatiesjablonen
+;Animation templates
 AnimationTheFfmpegCommandIsOn=Animatie: de ffmpeg-opdracht staat op het klembord (voer die in een terminal uit als de frames klaar zijn):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=Animatie: video geschreven: {}
@@ -240,6 +260,8 @@ ApproximateVertexColorsTheColorInformation=Benadert de vertexkleuren. De kleurin
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 berekent ArcTan(Y/X) en geeft een hoek in het juiste kwadrant terug.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=Rond:
+;Around:
 AroundTheMiddleAnObject=Rond het midden (een object)
 ;Around the middle (an object)
 AsFullBackgroundSphere=Als volledige achtergrondbol:
@@ -264,6 +286,8 @@ AutoSavingTheM3cFile=Het m3c-bestand automatisch opslaan:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=Auto: de CPU en de grafische kaart delen de afbeelding (de CPU\nbegint direct, de kaart doet mee zodra haar shader is\ngecompileerd), daarna doet de kaart de schaduwen en de ambient\nocclusion.\nCPU: nooit de grafische kaart.\nGrafische kaart: wacht op de shader, zoals voorheen.
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=Auto: het midden, of het zichtbare oppervlak
+;Auto: the middle, or the surface in view
 AutoUpdateImage=Afbeelding automatisch bijwerken
 ;Auto update image
 AutoUpdatePreview=Voorbeeld automatisch bijwerken
@@ -280,6 +304,8 @@ AvgIterations=Gem. iteraties:
 ;Avg. iterations:
 AvgRaysteps=Gem. raystappen:
 ;Avg. raysteps:
+Axis=As:
+;Axis:
 AxisX=As X
 ;Axis X
 AxisY=As Y
@@ -738,6 +764,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete={} kon niet worden verwijderd
+;Could not delete {}
 CouldNotLoadFormula=Kan formule <{}> niet laden: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=Kan {} niet schrijven: {}
@@ -1024,6 +1052,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=Weet niet, niets doen
 ;Dunno, do nothing
+DurationSeconds=Duur (seconden):
+;Duration (seconds):
 DynFog=Dyn.mist
 ;Dyn.fog
 DynFogOnIt=Dyn. mist op it.:
@@ -1220,6 +1250,12 @@ FlatSolidWithEdges=Vlak gevuld met randen
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: grootste geheel getal <= X,  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=Doorvlucht
+;Fly-through
+FlyThroughTheFlightEndedAfter=Doorvlucht: de vlucht stopte na {} van {} frames, {}
+;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=Vliegen: beeld {} van {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=Mist-offset
@@ -1276,6 +1312,8 @@ FrameNumberToUseForAnimated=Framenummer voor geanimeerde maps in de hoofdeditor
 ;Frame number to use for animated maps in the main editor
 Frames=frames
 ;frames
+FramesAtFramesASecond={} frames bij {} frames per seconde
+;{} frames at {} frames a second
 FramesPerSecond=Frames per seconde:
 ;Frames per second:
 FramesSec=Frames/sec:
@@ -1510,10 +1548,16 @@ HoldShiftKeyForFinerSteps=(Houd Shift ingedrukt voor fijnere stappen)
 ;(Hold Shift key for finer steps)
 Hotkeys=Sneltoetsen
 ;Hotkeys
+HowMuchLightTheWaterLets=Hoeveel licht het water doorlaat (0 tot 1, 0: ondoorzichtig): met de reflecties (Nabewerking) of in Monte Carlo is de fractal onder het oppervlak te zien, verschoven door de breking en vervagend met de diepte
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=Hoeveel het vlak reflecteert (0 tot 1): de glanzen, en de spiegeling als de reflecties berekend worden (Nabewerking)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=Hoeveel de kleur van het oppervlak met het reliëf varieert: 0 niet, 1 sterk
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=Hoeveel het water licht verstrooit (0 tot 1, 0: niet): het gloeit naar de lampen toe, de golftoppen schijnen door, lichtstralen vallen erin en wat eronder ligt gloeit in zijn kleur (met de reflecties of in Monte Carlo)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
+HowMurkyTheWaterIsHow=Hoe troebel het water is: hoe snel het licht erin dooft, per fractaleenheid (0: volkomen helder; 1: je ziet ongeveer één eenheid diep; 3: troebel). In blauwgroen water verdwijnt rood het eerst.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=Hoe sterk de ruis is die wordt verwijderd (1 tot 30, zoals "Denoise DCT" van GIMP).\nHoger verwijdert meer ruis, en meer fijne details.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=Hoe dicht de wolken zijn (1: een volle laag laat ongeveer 2 % van het licht door) en hoeveel van de lucht ze bedekken (0 tot 1)
@@ -1784,8 +1828,12 @@ KeyframeListM3k=Keyframelijst (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sKeyframe\nstart:    stop:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=Keyframes:
+;Keyframes:
 KeyframesForOneWholeTurnAround=Keyframes voor een hele draai rond het midden van het beeld, vanuit het beeld van het hoofdvenster: 8 keyframes in een vloeiende lus (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=Keyframes voor u gemaakt vanuit het beeld van het hoofdvenster: een 360°-omloop of een doorvlucht, zo lang als u wilt
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=Toetsen die een venster vanuit elk venster naar voren halen
 ;Keys that bring a window to the front from any window
 Kind=Soort
@@ -1796,12 +1844,16 @@ LIGHTSTROKES=LICHTSTREKEN
 ;LIGHT STROKES
 LMBMoveRMBRotate=LMK: verplaatsen           RMK: draaien
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=Grootste draai (graden per frame):
+;Largest turn (degrees a frame):
 LastLengthIncrease=Laatste lengtetoename
 ;Last length increase
 LastPass=\s· laatste ronde {}
 ;\s· last pass {}
 Layer=Laag:
 ;Layer:
+LeftToRightAroundItYaw=Van links naar rechts eromheen (gieren)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=Linksklikken:  muismodus in.. kijken met de muis, +rechter muisknop.. rollen\n(Nogmaals linksklikken of ESC om de muismodus te verlaten)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=Linksklik:   Draai de bulb rond de X-as van de kijker bij de Ymid+Zmid-waarden\nRechtsklik: Draai de bulb rond de X-as van het object bij 0
@@ -2210,8 +2262,12 @@ N2Or3PassesGivesA=2 of 3 passen geven een betere sterke vervaging vóór het foc
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=2e reflectie
 ;2nd reflection
+N360Orbit=360°-omloop
+;360° orbit
 N360Panorama=360 Panorama
 ;360 Panorama
+N360VR=360° VR
+;360° VR
 N3DAnalyticFormula=3D analytische formule
 ;3D analytic formula
 N3DFormula=3D-formule
@@ -2316,6 +2372,8 @@ NoTilesToRender=Geen tegels om te renderen.
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\sGeen geldige tekst gevonden, voer de tekst hieronder in:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=er was geen weg vooruit meer
+;no way ahead was left
 Noise=-ruis
 ;-noise
 NoiseAI=-ruis AI
@@ -2346,6 +2404,8 @@ NotABigRenderProject=geen project voor grote render
 ;not a big render project
 NotAvailableForLinuxUseClaude=Niet beschikbaar voor Linux: gebruik Claude Code hieronder.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=Onvoldoende geheugen beschikbaar
+;Not enough memory available
 NotFoundIfYouUseIt=Niet gevonden. Als u het gebruikt, voer deze opdracht dan één keer uit in een terminal:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=Niet geïnstalleerd. Haal het op via claude.ai/download, start het één keer en kom dan hier terug.
@@ -2526,6 +2586,8 @@ OutsideRender=Buitenkant renderen
 ;Outside render
 OutsideRenderDefaultModeInsideRender=Buitenkant renderen:  standaardmodus\nBinnenkant renderen:    trage raymarching aan de binnenkant met max. its.\nBinnen en buiten:   beide kanten renderen
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=Over de bovenkant en eronderdoor (stampen)
+;Over the top and under (pitch)
 OverallScale=Totale schaal:
 ;Overall scale:
 OverwriteExistingImages=Bestaande afbeeldingen overschrijven
@@ -2540,6 +2602,8 @@ PNG16BitColourPng=PNG 16-bits kleur (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG 16-bits (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG 8-bits (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=PNG-frames met een transparante achtergrond.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2588,6 +2652,8 @@ PauseRendering=Renderen pauzeren
 ;Pause rendering
 PausedPressToContinue=Gepauzeerd, druk om verder te gaan
 ;Paused, press to continue
+PausingOnNextFrame=Pauzeren bij het volgende beeld...
+;Pausing on next frame...
 PercentOfLocalDE=Procent van de lokale DE
 ;Percent of local DE
 Picture=afbeelding
@@ -2798,6 +2864,10 @@ ReflectionsTransparency2=Reflecties + transparantie
 ;Reflections + Transparency
 ReflectsTime=Reflectietijd:
 ;Reflects time:
+Refraction=Breking:
+;Refraction:
+RefractionIndexOfTheWaterWater=Brekingsindex van het water (water 1,33; 1: geen breking)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=Brekingsindex:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=Brekingsindex van het materiaal, lucht~1 water~1,33 glas~1,5 diamant~2,4
@@ -3050,6 +3120,8 @@ ScalesTheMaximumLengthOfThe=Schaalt de maximale lengte van de te berekenen omgev
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=Scanvoorbeeld
 ;Scan Preview
+Scattering=Verstrooiing:
+;Scattering:
 ScreenDistance=Schermafstand:
 ;Screen distance:
 ScriptEditor=Scripteditor
@@ -3226,8 +3298,12 @@ SpecularObjectColorsClickToChange=Speculaire objectkleuren, klik om ze te wijzig
 ;Specular object colors, click to change them.
 SpecularPowerFunction=Speculaire machtsfunctie
 ;Specular power function
+SpeedOfTheDistanceAFrame=Snelheid (% van de afstand per frame):
+;Speed (% of the distance a frame):
 SphericalCoords=Sferische coörd.
 ;Spherical coords
+SpinningAroundTheLineOfSight=Draaien rond de kijkrichting (rollen)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} splats in {}, opgeslagen in {}
 ;{} splats in {}, written to {}
 Stan=stan.
@@ -3238,6 +3314,8 @@ Start=Start:
 ;Start:
 StartBatchRendering=Batchrendering starten
 ;Start batch rendering
+StartFrom=Beginnen bij
+;Start from
 StartIndex=Startindex:
 ;Start index:
 StartRendering=Rendering starten
@@ -3356,6 +3434,10 @@ TargetMapSlot=Doel-mapslot
 ;Target Map Slot
 TargetMapSlotUseThisNumber=Doel-mapslot. Gebruik dit nummer als map in uw fractal, bijv. als hoogtemap, om een geanimeerde map te krijgen
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=Sjabloon:
+;Template:
+TheAmazingBoxAkaMandboxFormula=De formule 'Amazing Box', ook wel Mandbox, bedacht door TGlad op fractalforums.com.\n\nDe formule voor één iteratie ziet er zo uit:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=De som van de diffuse en speculaire kleuren is groter dan 1,\nzal ik ze verkleinen voor een realistischere kleuring?
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=De animatie heeft minstens twee keyframes nodig.
@@ -3382,14 +3464,22 @@ TheCalculationFailedLower=de berekening is mislukt
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=De berekening wordt uitgebreid tot buiten de afbeelding met gespiegelde objecten.\nDit kan tot minder artefacten in animaties leiden, maar ook stilstaande beelden profiteren ervan.\nDe waarde moet tussen 0 en 0,5 liggen (max. 0,9); het is de grootte ten opzichte van de breedte\nen hoogte van de afbeelding die maximaal buiten de afbeelding wordt berekend.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=De camera vliegt verder het fractal in, de zoom volgt de afstand ertoe, en stuurt door de openingen; elke halve seconde een keyframe (Catmull-Rom). De vlucht stopt eerder bij een doodlopend punt, bij de grens van dubbele precisie of als hij het fractal verlaat
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=de camera heeft het fractal verlaten
+;the camera left the fractal
 TheChosenValueOverAllFrames=De gekozen waarde over alle frames van de animatie: sleep het vierkantje van een keyframe omhoog of omlaag, of klik erop en typ de waarde
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourOfDeepWaterThe=De kleur van diep water: het eigen licht van het water en de kleur die wat eronder ligt met de diepte krijgt (klik om te wijzigen)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=Het opdrachtregelprogramma mb3d staat niet naast dit programma: installeer het programma opnieuw.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=De standaardnummering bestaat uit 2 getallen, gescheiden in X en Y.\nMet deze optie bestaat de nummering uit één getal,\ndat in elke kolom oploopt en op de volgende rij doorgaat.
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=Standaard is de uitvoer wit voor het object en zwart voor het gebied erbuiten.\nKies deze optie om de kleuren om te keren.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=De richting van de verstrooiing (0 tot 0,95): water verstrooit vooral naar voren (0,8), dus het gloeit het meest als je naar het licht kijkt
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=De afstandsschattingen worden met deze factor verkleind om overstepping te voorkomen.\nVerlaag de waarde als overstepping optreedt (zwarte pixels, ruisige afbeelding).\nTe lage waarden vertragen het renderen.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=De afstandsschattingen worden met deze factor verkleind om overstepping te voorkomen.\nVerlaag de waarde als overstepping optreedt (zwarte pixels, ruis in de afbeelding).\nTe lage waarden vertragen het renderen.
@@ -3410,6 +3500,8 @@ TheFileSelectAndCopyIt=Het bestand (selecteer en kopieer het hier)
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=Het (eerste) focuspunt.\nDe waarde is relatief ten opzichte van de Zstart-waarde van de kijker,\ngenormaliseerd op de afbeeldingsbreedte.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=De doorvlucht kan hier niet beginnen: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=de map bestaat niet (of is niet bereikbaar)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=De formulenaam moet met "JIT" beginnen om deze formules te onderscheiden van de op ASM gebaseerde formules
@@ -3420,6 +3512,12 @@ TheFractalOfTheMainWindow=De fractal van het hoofdvenster als Gaussische splats,
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=Het oppervlaktemateriaal van de fractal bovenop het palet (niet in MB3D: bewaard na het MB3D-deel van de parameters)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=De X-as van het fractal
+;The fractal's X axis
+TheFractalSYAxis=De Y-as van het fractal
+;The fractal's Y axis
+TheFractalSZAxis=De Z-as van het fractal
+;The fractal's Z axis
 TheFramesPerSecondMustBe=Het aantal frames per seconde moet een getal boven 0 zijn (bijv. 25).
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=de beeldbuffer heeft de verkeerde grootte
@@ -3428,14 +3526,20 @@ TheImageSizeChangedCalculateThe=de afbeeldingsgrootte is gewijzigd: bereken de a
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=De its.trap-modus hangt af van de berekende optie op het tabblad "Kleuring".
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=De laatste keyframe
+;The last keyframe
 TheLastSessionCrashed=De vorige sessie is gecrasht: {}. Meer in het venster Logboek (het pictogram in de titelbalk).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=De vorige sessie is niet goed afgesloten (ze liep vast, werd beëindigd of crashte): {}. Wat ze het laatst deed, staat in het logboek (het venster Logboek, het pictogram in de titelbalk).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=De hoofdeditor is nog aan het renderen. Stop die eerst of wacht tot hij klaar is.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=De weergave van het hoofdvenster
+;The main window's view
 TheMapOptionsCalculatesXY=De map-opties berekenen x,y-coördinaten uit de betreffende\nvector voor sferische maps; dit verandert ook de eerste kleurkeuze,\ndie normaal op gladde iteraties is gebaseerd.\nU moet de afbeelding opnieuw berekenen om het resultaat van\ndeze wijzigingen te zien.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=Het midden van het beeld
+;The middle of the view
 TheMonteCarloWindowIsRendering=Het Monte Carlo-venster is aan het renderen: stop het eerst.
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=De sluitertijd van de motion blur: een deel van de tijd tot het volgende frame (0 tot 1)
@@ -3464,18 +3568,28 @@ TheSelectionMustBeBiggerThanLower=de selectie moet in breedte en hoogte groter z
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=De gedeelde map van de zwerm
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=De sinusbulb waarbij willekeurige machtswaarden kunnen worden gebruikt; de berekening is langzamer dan bij gehele machten.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=De grootte van de vormen van de wolken in fractaleenheden, en hun kleur (klikken)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=De grootte van de tegels
 ;The size of the tiles
+TheStepsCameToTheLimit=de stappen bereikten de grens van dubbele precisie
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=De stereo-oogafbeeldingen hebben verschillende afmetingen.
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=De tekstparameters op het klembord zijn beschadigd: sommige regels zijn bij het kopiëren afgekapt. Kopieer ze opnieuw van de bron.
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=de tegel heeft geen beeldbuffer
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=De triplex-wiskunde-sinusbulb, voorgesteld door Daniel White en Paul Nylander.  Dit zijn snelle implementaties van de machten 2, 3, 4, 5, 6, 7 en 8.\n\nWil je een animatie met vloeiende machtsveranderingen maken, gebruik dan de formule 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=De waarde van het gekozen keyframe
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=het beeld is gevuld met het fractal
+;the view is filled with the fractal
+TheViewShowsOnlySky=het beeld toont alleen lucht
+;the view shows only sky
 Themes=Thema's
 ;Themes
 ThereIsAFileAlready=Er bestaat al een bestand {}.
@@ -3622,6 +3736,8 @@ UnfinishedRenders=Onvoltooide renders
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=Onvoltooide renders: hervatten of verwijderen
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=Tot het beeld alleen lucht of alleen fractal toont (hoogstens 2 minuten)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=naamloos
 ;untitled
 UpOneLevel=Eén niveau omhoog
@@ -3728,6 +3844,8 @@ WarningMustRecalculateTheWholeImage=Waarschuwing: om dit ongedaan te maken moet 
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=Waarschuwingen en fouten
 ;Warnings and errors
+Water=Water:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=Golven:
@@ -3738,6 +3856,8 @@ Weight=Gewicht
 ;Weight
 WeightColon=Gewicht:
 ;Weight:
+WelcomeTo=Welkom bij {}!
+;Welcome to {}!
 WhatDidIDoInMb3d=Wat heb ik vandaag in mb3d gedaan? Waren er fouten?
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=Wat er gebeurde
@@ -3822,6 +3942,8 @@ YouCanSaveAlsoM3iFiles=U kunt ook voor elke tegel m3i-bestanden opslaan; houd er
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=U moet eerst de originele parameters renderen en als M3I-bestand opslaan.\nMaak die render niet te klein.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=Je wilt verwijderen:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=Uw auteursnaam (opgeslagen in de parameters):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=Uw eigen taal (de naam ervan):

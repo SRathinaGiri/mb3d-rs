@@ -48,7 +48,7 @@ impl Ini {
         let data = crate::appdirs::data_folder();
         let mut ini = Ini::load_from(&crate::appdirs::config_folder().join("Mandelbulb3D.ini"), &data);
         // the shipped folders where they are (installed: not in the data folder)
-        for (d, name) in [(DIR_M3P, "M3Parameter"), (DIR_FORMULAS, "M3Formulas"), (DIR_MAPS, "M3Maps")] {
+        for (d, name) in [(DIR_M3P, "M3Parameter"), (DIR_FORMULAS, "M3Formulas"), (DIR_MAPS, "M3Maps"), (DIR_LIGHTS, "M3Lights")] {
             if ini.dirs[d] == data.join(name) && !ini.dirs[d].is_dir() {
                 if let Some(r) = crate::appdirs::resource(name) {
                     ini.dirs[d] = r;
@@ -64,6 +64,7 @@ impl Ini {
         dirs[DIR_FORMULAS] = app.join("M3Formulas");
         dirs[DIR_BIG] = app.join("BigRenders");
         dirs[DIR_MAPS] = app.join("M3Maps");
+        dirs[DIR_LIGHTS] = app.join("M3Lights");
         dirs[DIR_MESHES] = app.join("Meshes");
         let mut ini = Ini { val: DEFAULTS.iter().map(|s| s.to_string()).collect(), dirs, extra: Vec::new(), path: path.to_path_buf() };
         if let Ok(t) = std::fs::read_to_string(path) {
@@ -86,6 +87,14 @@ impl Ini {
                     ini.dirs[d] = PathBuf::from(&ini.val[v]);
                 }
             }
+        }
+        // the lights folder was the program's folder before the presets
+        // came in M3Lights: kept only if presets were saved there
+        let has_m3l = |d: &Path| {
+            std::fs::read_dir(d).is_ok_and(|rd| rd.flatten().any(|e| e.path().extension().is_some_and(|x| x.eq_ignore_ascii_case("m3l"))))
+        };
+        if ini.dirs[DIR_LIGHTS] == app && !has_m3l(app) {
+            ini.dirs[DIR_LIGHTS] = app.join("M3Lights");
         }
         ini
     }
@@ -160,6 +169,22 @@ mod tests {
         let b = super::Ini::load_from(&p, &dir);
         assert_eq!(b.get("Author"), "someone");
         assert_eq!(b.dirs[1], dir.join("M3Parameter"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// An ini saved with the program's folder as the lights folder (the
+    /// old default) now opens M3Lights, unless presets were saved there.
+    #[test]
+    fn the_old_lights_folder_moves_to_m3lights() {
+        let dir = std::env::temp_dir().join(format!("mb3d-ini-lights-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let p = dir.join("Mandelbulb3D.ini");
+        let mut a = super::Ini::load_from(&p, &dir);
+        a.dirs[super::DIR_LIGHTS] = dir.clone();
+        a.save().unwrap();
+        assert_eq!(super::Ini::load_from(&p, &dir).dir(super::DIR_LIGHTS), dir.join("M3Lights"));
+        std::fs::write(dir.join("mine.m3l"), [0u8; 4]).unwrap();
+        assert_eq!(super::Ini::load_from(&p, &dir).dir(super::DIR_LIGHTS), dir);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

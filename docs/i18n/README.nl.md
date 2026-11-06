@@ -71,12 +71,15 @@ programmeertaal omzeilt. Iedereen kan de scan op elk moment op deze repository u
 **[▶ mb3d-rs scannen op scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klik op *Rescan* voor een nieuw resultaat van de huidige code)
 
-Versie 0.2.85 kreeg de beoordeling **veilig: 5 van 100** (gescand op 30 oktober 2026,
-regels van engine 10 van de scanner). De enige waarschuwing betreft de regel die de
-formules start die het programma tijdens het draaien compileert voor snelheid: vers
+Versie 0.3.1 kreeg de beoordeling **veilig: 8 van 100** (gescand op 5 november 2026,
+regels van engine 10 van de scanner). De waarschuwingen betreffen de regels die de
+formules starten die het programma tijdens het draaien compileert voor snelheid: vers
 gemaakte machinecode uitvoeren kan niet in de gecontroleerde vorm van Rust worden
-geschreven, en die regel en de brug naar het ruisfilter van Intel zijn de enige plekken
-waar het programma dat toestaat; de rest is een informatieve opmerking. (Eerder: 0.2.66
+geschreven, en die regels en de brug naar het ruisfilter van Intel zijn de enige plekken
+waar het programma dat toestaat; de rest is een informatieve opmerking. (Eerder: 0.2.85
+kreeg 5 van 100; 0.2.100 gold een paar uur als gevaarlijk, omdat twee rekenfuncties van
+de formulecompiler een naam hadden die de scanner aanziet voor het uitvoeren van
+verborgen code; ze zijn dezelfde dag hernoemd, en een test houdt zulke namen nu buiten; 0.2.66
 kreeg 0 van 100 van een oudere engine, zie ook
 [het resultaat van 0.2.44](../img/scan_0.2.44.png).) Een eerdere versie werd gemarkeerd,
 en daarop hebben we de code aangepast ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
@@ -499,7 +502,8 @@ kunt u zelf verder controleren:
   één gedeelde map zien, renderen samen een afbeelding, een Grote render, een Monte Carlo-afbeelding
   of een animatie. Zie
   [Renderen op meerdere computers](#rendering-on-several-computers-the-swarm).
-* **Formules en maps van de community**: 129 formules en 154 maps die de officiële repository niet heeft, uit het Mandelbulb3D 1.99.37-pakket dat Machina Infinitum gratis aanbiedt om te downloaden. De formules zijn van Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero en anderen wier bestanden geen auteur noemen; `M3Formulas/CREDITS-community.md` noemt de auteur van elke formule (`teapot.m3f` van DarkBeam valt onder CC BY-SA 3.0). De maps komen uit de verzameling van DarkBeam, onder zijn voorwaarden (vrij te gebruiken, niet ongewijzigd te verkopen), met afbeeldingen die CmdrChaos, Fractales75, Nic022 en UndeadAcademy op DeviantArt deelden; de maps 3046–3048 zijn van Kronpano (`M3Maps/CREDITS-community.md`).
+* **Formules en maps van de community**: 129 formules en 154 maps die de officiële repository niet heeft, uit het Mandelbulb3D 1.99.37-pakket dat Machina Infinitum gratis aanbiedt om te downloaden. De formules zijn van Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero en anderen wier bestanden geen auteur noemen; `M3Formulas/CREDITS-community.md` noemt de auteur van elke formule (`teapot.m3f` van DarkBeam valt onder CC BY-SA 3.0). De maps komen uit de verzameling van DarkBeam, onder zijn voorwaarden (vrij te gebruiken, niet ongewijzigd te verkopen), met afbeeldingen die CmdrChaos, Fractales75, Nic022 en UndeadAcademy op DeviantArt deelden; de maps 3046–3048 zijn van Kronpano (`M3Maps/CREDITS-community.md`). De 608 lichtinstellingen in `M3Lights` komen uit hetzelfde pakket; hun bestanden noemen geen maker (`M3Lights/CREDITS-community.md`).
+* **Ideeën uit Mandelbulb3D SE**: Glenn Olanders Mandelbulb3D SE, een macOS-app gebouwd op mb3d-rs, gaf twee ideeën: elke shader van de grafische kaart in de tests controleren zonder grafische kaart, en Stop die het schilderen van een afbeelding meteen beëindigt.
 * **Een nieuwe formule, PseudoKleinian:** de "Kleiniaanse architectuur" van
   zalen, bogen en bollen als één formule met een eigen exacte afstand.
 
@@ -629,6 +633,58 @@ kunt u zelf verder controleren:
   klein blok erachter (in .m3p- en .m3i-bestanden, en als `{mb3d-rs: ...}` na
   de titel van tekstparameters), dat Mandelbulb3D niet leest. Scènesleutels
   `ground`, `ground_color`, `ground_reflect`, `ground_waves`; details in [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+
+  **Doorzichtig water**: met *Water* boven 0 (hoeveel licht het
+  doorlaat) is een half ondergedompelde fractal onder het oppervlak te
+  zien, verschoven door de breking (*Breking*: 1,33 voor water) en met
+  de diepte overgaand in de kleur van diep water (de kleurknop): de *Absorptie* zegt hoe troebel het is (0 helder, 3 troebel), en in
+  blauwgroen water verdwijnt rood eerst, zodat wat eronder ligt turkoois
+  wordt. De glanzen van de lampen op de golven blijven op het oppervlak.
+  De gewone render toont het met de reflecties aan (Nabewerking), Monte
+  Carlo altijd; zonder reflecties blijft het water ondoorzichtig.
+  Scènesleutels `ground_transparency`, `ground_absorption`,
+  `ground_water_color`, `ground_ior`; een voorbeeld in
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Verstrooiing** (de rij onder *Breking*): het water verstrooit licht
+  zoals echt water. Naar de zon toe gloeit het turkoois, de golftoppen
+  schijnen door, het zonlicht valt erin als stralen die door de
+  schaduwen van de fractal worden onderbroken, en wat onder water ligt
+  gloeit zacht in zijn kleur; Monte Carlo volgt het licht terwijl het in
+  het water verstrooid wordt. Het tweede veld is de richting (0,8:
+  vooral naar voren). 0 is het beeld zonder. Scènesleutels
+  `ground_scattering`, `ground_scatter_dir`; zie
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Probeer het**: vink op de pagina *Snijden* *Grondvlak* aan en laat de
+  hoogte ervan door de fractal gaan, zet *Water* op 1, *Absorptie* op 1 en
+  *Verstrooiing* op 0,5, en zet de reflecties aan (*Nabewerking*,
+  *Reflecties + transparantie*, *R. (+ T.) automatisch berekenen*); daarna
+  *3D berekenen*.
+
+  Drie kant-en-klare scènes om te plakken, met hun instellingen: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *Water* (transparantie) 0, 0,5 en 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparantie 0, 0,5 en 1: grijs ondoorzichtig water, dan schijnt de ondergedompelde helft van de fractal turkoois door"></a>
+
+  *Absorptie* 0,3, 1 en 3, van helder tot troebel:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorptie 0,3, 1 en 3: de ondergedompelde helft duidelijk groen, vervagend, dan verborgen"></a>
+
+  *Verstrooiing* 0, 0,5 en 1 met de blik naar de zon, en de lichtstralen
+  met een lage zon voor:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Verstrooiing 0, 0,5 en 1 met de blik naar de zon: donker water, dan gloeiend turkoois water"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Een lage zon voor: het schaduwvolume van de fractal strekt zich als een blauwe straal door het water uit"></a>
+
+  **De golven** zijn een onregelmatige zee van zestien golven langs één
+  windrichting (vóór 0.2.98 maakten drie regelmatige golven een dambord;
+  scènes met golven zien er sindsdien anders uit). Oud (links in elk paar)
+  en nieuw, kleine en grote golven, de zon voor en achter:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Oude en nieuwe golven naast elkaar: het oude regelmatige raster van heldere ruiten, de nieuwe onregelmatige zee"></a>
 
   </details>
 * **Licht uit een HDR-afbeelding**: een 360°-Radiance-afbeelding (`.hdr`) als
@@ -801,6 +857,47 @@ kunt u zelf verder controleren:
   van zoveel afbeeldingen binnen de *Sluiter*-tijd (een deel van de tijd tot
   het volgende frame), zodat wat beweegt uitsmeert; het duurt zoveel keer zo
   lang (`mb3d animate --motion-blur 8,0.5`).
+
+  *Animatiemaker* > *Animatiesjablonen...* maakt keyframes vanuit het beeld
+  van het hoofdvenster voor een duur in seconden (bij de frames per seconde
+  van het venster): een *360°-omloop* rond een as naar keuze (van links naar
+  rechts, over de bovenkant, een rol, alle drie tegelijk of de X-, Y- of
+  Z-as van het fractal; `--orbit 8 --duration 10 --orbit-axis pitch`) of een
+  *Doorvlucht*, waarbij de camera verder het fractal in vliegt, de zoom de
+  afstand volgt, de koers houdt en alleen afbuigt om te ontwijken waar hij
+  tegenaan zou komen (`--fly --duration 20`; `--duration 0`: tot het beeld
+  alleen lucht of alleen fractal toont). *360° VR* in de Animatiemaker
+  (`--vr`) maakt van elk beeld een bolvormig panorama (2:1); met
+  *Stereo-animatie renderen* heeft de video de ogen boven elkaar (links
+  boven), en het ffmpeg-commando eindigt met `mb3d vr360 video.mp4 --stereo
+  tb`, dat de MP4 als 360-video markeert voor YouTube, de Meta Quest en VLC.
+  Een als JPEG opgeslagen bolvormig panorama krijgt de Photo Sphere-XMP,
+  zodat Facebook het als 360-foto toont.
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Vijf beelden van een 360°-omloop rond een punt op het oppervlak van een Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Een doorvlucht, één beeld per seconde"></a>
+
+  De animatiesjablonen, 360°-foto's en 360° VR-video's zijn bijgedragen door
+  Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). De omloop houdt de
+  camera in elk beeld op dezelfde afstand van zijn draaipunt, ook tussen de
+  keyframes: het midden van de weergave wordt eerst op het draaipunt gelegd,
+  zodat de keyframes alleen in hun draaiing verschillen. Toegevoegd na
+  andere keyframes eindigt hij weer met zijn eerste keyframe, zodat de draai
+  heel is; *Beginnen bij* neemt de weergave van het hoofdvenster of de
+  laatste keyframe. Een doorvlucht wordt op de achtergrond gevlogen met een
+  voortgangsbalk, en *Stop* houdt wat er gevlogen is. Video's (bij de
+  release v0.2.100 gevoegd, gerenderd met de versie daarna): [een omloop met
+  4 keyframes, de eerste versie en de exacte naast
+  elkaar](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [een
+  tuimeling](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [een
+  doorvlucht](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [een 360°
+  VR-omloop](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Alle vier met bewegende beelden en toelichting: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gaussische splats** van de fractal, om van alle kanten te bekijken in

@@ -29,6 +29,9 @@ LATEST_START, LATEST_END = "<!-- latest:start -->", "<!-- latest:end -->"
 # the fix of issue 7 is not named as such in the README)
 WORDING = {
     "a97340e": "Big pictures: far less memory (a 15360x15360 picture fits in 32 GB)",
+    # (the scanner's word with its bracket, quoted in the subject, would be
+    # read as running code given as text; tests/scanner_words.rs)
+    "31ab9bb": "The malware scan rates the repository safe again: two math helpers of the formula compiler renamed (scanrepo.dev took their name for running code given as text and rated 0.2.100 dangerous, 70 of 100); tests/scanner_words.rs keeps such names out",
 }
 
 def git(*args):

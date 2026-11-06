@@ -72,12 +72,16 @@ programòwaniô. Kòżdi mòże ją w kòżdi chwili pùscëc na tim repòzytori
 **[▶ Przeskanuj mb3d-rs na scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klikni *Rescan*, żebë dostac swiéżi rezultat dlô terôczasnégò kòdu)
 
-Wersjô 0.2.85 dostała òcenã **bezpieczné: 5 z 100** (skanowanié 30 rujana
-2026, prawidła mòtora 10 skanera). Jedurné warnowanié tikô sã réżczi, jakô
-zrëszô fòrmùłë, jaczé program kòmpilëje przë robòce dlô chùtkòscë: zrëszaniô
+Wersjô 0.3.1 dostała òcenã **bezpieczné: 8 z 100** (skanowanié 5 lëstopadnika
+2026, prawidła mòtora 10 skanera). Ji warnowania tikają sã réżków, jaczé
+zrëszają fòrmùłë, jaczé program kòmpilëje przë robòce dlô chùtkòscë: zrëszaniô
 swiéżo zrobionégò kòdu maszinowégò nie dô sã napisac w sprawdzoni fòrmie Rusta,
-a ta réżka ë mòst do filtra szëmù firmë Intel to są jedurné place, dze program
-na to pòzwôlô; reszta to je informacjowô ùwôga. (Rëchli: 0.2.66 dostała
+a te réżczi ë mòst do filtra szëmù firmë Intel to są jedurné place, dze program
+na to pòzwôlô; reszta to je informacjowô ùwôga. (Rëchli: 0.2.85 dostała 5 z 100;
+0.2.100 bëła przez czile gòdzin ùwôżónô za niebezpieczną, bò dwie matematiczné
+fùnkcje kòmpilatora fòrmùłów mia mióno, jaczé skaner bierze za zrëszanié skrëtégò
+kòdu; jesz tegò samégò dnia jima zmieniono miona, a test pilnuje terô, żebë taczé
+miona nie wrócëłë; 0.2.66 dostała
 0 z 100 òd starszégò mòtora, òbôczë téż
 [rezultat 0.2.44](../img/scan_0.2.44.png).) Jedna rëchlészô
 wersjô bëła òznaczonô, a më zmienilë kòd w òdpòwiedzë
@@ -507,7 +511,8 @@ sprawdzëc sóm:
   jaczé widzą jeden dzelony katalog, renderëją wespół òbrôzk, Wiôldżi
   render, òbrôzk Monte Carlo abò animacjã. Òbaczë
   [Renderowanié na wielu kòmpùtrach](#rendering-on-several-computers-the-swarm).
-* **Fòrmùłë ë mapë spòlëznë**: 129 fòrmùłów ë 154 map, chtërnëch felëje w òficjalnym repòzytorium, z paczétu Mandelbulb3D 1.99.37, jaczi Machina Infinitum dôwô do darmòwégò sćągniãcô. Fòrmùłë ùsôdzëlë Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero ë jinszi, chtërnëch lopczi nie mienią ùsôdzcë; `M3Formulas/CREDITS-community.md` mieni ùsôdzcã kòżdi fòrmùłë (`teapot.m3f` òd DarkBeama je pòd licencją CC BY-SA 3.0). Mapë są z kòlekcji DarkBeama, na jegò warënkach (wòlné ùżëcé, bez przedôwaniô bez zmianë), z òbrazama, jaczé na DeviantArt ùdostãpnilë CmdrChaos, Fractales75, Nic022 ë UndeadAcademy; mapë 3046–3048 są òd Kronpano (`M3Maps/CREDITS-community.md`).
+* **Fòrmùłë ë mapë spòlëznë**: 129 fòrmùłów ë 154 map, chtërnëch felëje w òficjalnym repòzytorium, z paczétu Mandelbulb3D 1.99.37, jaczi Machina Infinitum dôwô do darmòwégò sćągniãcô. Fòrmùłë ùsôdzëlë Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero ë jinszi, chtërnëch lopczi nie mienią ùsôdzcë; `M3Formulas/CREDITS-community.md` mieni ùsôdzcã kòżdi fòrmùłë (`teapot.m3f` òd DarkBeama je pòd licencją CC BY-SA 3.0). Mapë są z kòlekcji DarkBeama, na jegò warënkach (wòlné ùżëcé, bez przedôwaniô bez zmianë), z òbrazama, jaczé na DeviantArt ùdostãpnilë CmdrChaos, Fractales75, Nic022 ë UndeadAcademy; mapë 3046–3048 są òd Kronpano (`M3Maps/CREDITS-community.md`). 608 nastôwów swiatła w `M3Lights` je z tegò samégò paketu; jich lopczi nie miono ùtwórcë (`M3Lights/CREDITS-community.md`).
+* **Ùdbë z Mandelbulb3D SE**: Mandelbulb3D SE (ùtwórca: Glenn Olander), aplikacjô dlô macOS zbùdowónô na mb3d-rs, dało dwie ùdbë: sprôwdzanié w testach kòżdégò shadera grafikòwi kartë bez grafikòwi kartë ë stop, chtëren zarô kùńczi malowanié òbrôzka.
 * **Nowô fòrmùła, PseudoKleinian:** „kleinowskô architektura” halów,
   łãków ë kùl jakno jedna fòrmùła z gwôsną dokładną òdległoscą.
 
@@ -639,6 +644,56 @@ sprawdzëc sóm:
   `{mb3d-rs: ...}` za titlã tekstowëch parametrów), chtërnégò Mandelbulb3D nie
   czëtô. Klucze sceny `ground`, `ground_color`, `ground_reflect`,
   `ground_waves`; drobnotë w [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+
+  **Przezérnô wòda**: z *Wòda* wëżi 0 (wiele swiatła przepùszczô)
+  fraktal zanurzony do pòłowë je widzec pòd wiéchrzëzną, przesëniãti
+  przez załómanié (*Załómanié*: 1,33 dlô wòdë) ë z głãbòkòscą
+  przechòdzący w farwã głãbòczi wòdë (knąpa farwë): *Absorpcja* gôdô, jak mùtny je (0 czësti, 3 mùtny), a w mòdrozelony wòdze
+  czerwienô zanikô pierszô, tak że to, co zanurzoné, robi sã turkùsowé.
+  Pòłësczi swiatłów na falach òstôwają na wiéchrzëznie. Zwëczajny render
+  pòkazëje to z włączonyma òdbicama (Kùńcowô òbróbka), Monte Carlo
+  wiedno; bez òdbiców wòda òstôwô nieprzezérnô. Klucze scenë
+  `ground_transparency`, `ground_absorption`, `ground_water_color`,
+  `ground_ior`; przikłôd w
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Rozpraszanié** (rząd pòd *Załómanié*): wòda rozpraszô swiatło jak
+  prôwdzëwô wòda. W stronã słuńca swiécy turkùsowò, wiérzchë fal
+  przeswiécają, swiatło słuńca wpôdô w nią smùgama przecãtima cénią
+  fraktala, a to, co pòd wòdą, swiécy łagòdno ji farwą; Monte Carlo
+  sledzy swiatło rozpraszóné w wòdze. Drëdżé pòle to jegò czerënk (0,8:
+  przédno do przódkù). 0 to wëzdrzatk bez niegò. Klucze scenë
+  `ground_scattering`, `ground_scatter_dir`; zdrzë
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Wëpróbùj**: na starnie *Òbcynanié* zaznaczë *Zemia* ë przepòwadzë ji
+  wëższëzna przez fraktal, nastawi *Wòda* na 1, *Absorpcja* na 1 ë
+  *Rozpraszanié* na 0,5, ë włączë òdbicô (*Òbróbka*, *Òdbicô +
+  przezérnosc*, *Rechùj R. (+ T.) aùtomatno*); pózdze *Rechùj 3D*.
+
+  Trzë gòtowé scenë do wlepienia, z jich nastôwama: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *Wòda* (przezérnosc) 0, 0,5 ë 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Przezérnosc 0, 0,5 ë 1: szôrô nieprzezérnô wòda, pózdze zanùrzonô półkô fraktala przeswiéca turkùsowò"></a>
+
+  *Absorpcja* 0,3, 1 ë 3, òd czësti do mãtny:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorpcja 0,3, 1 ë 3: zanùrzonô półkô wëraznò zelonô, blëdnącô, pózdze skrëtô"></a>
+
+  *Rozpraszanié* 0, 0,5 ë 1 przë patrzenim w stronã słuńca, ë smùgë
+  swiatła przë niskim słuńcu z przódkù:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Rozpraszanié 0, 0,5 ë 1 przë patrzenim w stronã słuńca: ciemnô wòda, pózdze swiécącô turkùsowô wòda"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Niskò słuńce z przódkù: òbjimk cénia fraktala cygnie sã przez wòdã jakno niebieskô smùga"></a>
+
+  **Fale** to nieregùlarné mòrze szesnôstu falów wzdłëż jednégò kierënkù
+  wiatru (przed 0.2.98 trzë regùlarné fale robiłë szachòwnicã; scenë z
+  falama wëzdrzą òd tegò czasu jinaczi). Stôré (z lewi stronë kòżdi parë)
+  ë nowé, môłé ë wiôldżé fale, słuńce z przódkù ë z tëłu:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Stôré ë nowé fale jedne kòl drëgich: stôrô regùlarnô sztélëna jasnëch rómbów, nowé nieregùlarné mòrze"></a>
 
   </details>
 * **Swiatło z òbrazu HDR**: òbrôz Radiance 360° (`.hdr`) jakno spódk òswiecywô
@@ -805,6 +860,43 @@ sprawdzëc sóm:
   z tëli òbrôzków w czasu *Migawczi* (dzélu czasu do nôslédny klatczi), tak
   że to, co sã rësza, sã rozmazywô; trwô to tëli razy dłëżi
   (`mb3d animate --motion-blur 8,0.5`).
+
+  *Twòrzenié animacje* > *Szablonë animacje...* robi kluczowé klatczi z
+  pòzdrzatkù głównégò òkna na czas w sekùndach (przë klatkach na sekùndã
+  òkna): *Òrbita 360°* wkół wëbrany òsë (òd lewi do prawi, górą,
+  przechilenié, wszëtczé trzë razã abò òs X, Y abò Z fraktala; `--orbit 8
+  --duration 10 --orbit-axis pitch`) abò *Przelot*, w jaczim kamera leci
+  dali w głãbiã fraktala, zoom jidze za òdległoscą, trzimô kùrs i skrãcô le,
+  cobë òbińc to, w co bë ùderzëła (`--fly --duration 20`; `--duration 0`:
+  jaż pòzdrzatk wëkôże le niebò abò le fraktal). *VR 360°* w Twòrzenié
+  animacje (`--vr`) robi z kòżdi klatczi sferiwą panoramã (2:1); z *Renderuj
+  stereo animacjã* wideo mô òczë jedno nad drëdżim (lewé na górze), a
+  pòlecenié ffmpeg kùńczi sã na `mb3d vr360 video.mp4 --stereo tb`, jaczé
+  znaczi MP4 jakno wideo 360 dlô YouTube, Meta Quest i VLC. Sferiwô panorama
+  zapisónô jakno JPEG mô XMP Photo Sphere, tak że Facebook wëkazëje jã jakno
+  òdjimk 360.
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Piãc klatków òrbitë 360° wkół pùnktu na wiéchrzëznie Mandelbulba"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Przelot, jedna klatka na sekùndã"></a>
+
+  Szablonë animacje, fòtografie 360° ë filmë VR 360° dołożił Rathinagiri S
+  ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). Òrbita trzimô kamerã
+  w ti sami òdległoscë òd pùnktu òbrótu w kòżdi klatce, téż midzë kluczowima
+  klatkama: pòstrzódk wëzdrzatkù je nôprzód stôwiony w pùnkce òbrótu, tak że
+  kluczowé klatczi rozrézniają sã leno òbrótã. Dodónô pò jinszich kluczowich
+  klatkach, kùńczi sã znowa swòją pierszą kluczową klatką, tak że òbrót je
+  całi; *Zaczni òd* bierze wëzdrzatk przédnégò òkna abò slédną kluczową
+  klatkã. Przelot je rëchòwóny w tle z paskã pòstãpù, a *Stop* trzimô to, co
+  ju przeleconé. Filmë (dodóné do wëdaniô v0.2.100, zrobioné wersją pò nim):
+  [òrbita z 4 kluczowima klatkama, pierszô wersjô ë dokładnô kòl
+  se](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [kòzłowanié](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [przelot](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [òrbita VR
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Wszëtczé sztërë z rëszającymi sã òbrôzkama ë ùwôgama: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Gaussowsczé splatë** fraktala, do òbzéraniô z kòżdi stronë w

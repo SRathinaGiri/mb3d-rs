@@ -88,6 +88,42 @@
   </recommends>
 
   <releases>
+    <release version="0.3.1" date="2026-11-05">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.1</url>
+      <description>
+        <p>Animation templates: a 360 degree orbit around the fractal on any axis and a fly-through, made from the current view in one step; 360 degree photos and 360 degree VR animations, mono and stereo, for VR headsets and 360 video players (by Rathinagiri S, SRathinaGiri). The malware scan the README points to (scanrepo.dev) reads the repository as safe again: two math functions of the formula compiler were named eval, a word the scanner takes for running hidden code; they are renamed, and a test keeps the name from coming back.</p>
+      </description>
+    </release>
+    <release version="0.2.100" date="2026-11-05">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.100</url>
+      <description>
+        <p>Water as a ray tracer sees it. The sea of the ground plane is now traced from the eye to the exact surface of its waves: the water reaches the bottom edge of the picture with a camera low over it (no more dark band), and it meets the sky at the horizon without a line, also in Monte Carlo renders and on the graphics card. Its mirror rays leave the water like a ray tracer's. The waves run along the wind instead of crossing it from both sides, and the clouds reach the horizon, fading evenly into the sky. The Pascal formulas give the same results on macOS as elsewhere. A new example scene: sunset at sea.</p>
+      </description>
+    </release>
+    <release version="0.2.99" date="2026-11-05">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.99</url>
+      <description>
+        <p>Faster formulas. The formulas written in Pascal (MB3D's JIT formulas, 72 of them among MB3D's and the community's) are now compiled to machine code: three to four times faster on the processor, with the same results, and most of them now also run on the graphics card. The community's formulas in machine code run as compiled code too instead of being interpreted (up to 18 times faster). Scenes slightly above the single precision limit stay on the graphics card's faster calculation. A fix: the program crashed when the Save window was pulled to a very small size.</p>
+      </description>
+    </release>
+    <release version="0.2.98" date="2026-11-04">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.98</url>
+      <description>
+        <p>Transparent water: the ground plane's water can be see-through, so a fractal standing half in it shows beneath the surface, bent by the refraction and turning turquoise and then into the water's colour with depth. New settings on the Cutting page: Water (transparency), Absorption (how murky), the deep water colour, Refraction and Scattering, which makes the water glow towards the sun, lets wave crests shine through, casts light shafts cut by the fractal's shadows and gives submerged parts a soft glow; Monte Carlo traces the light through the water. It shows in the normal render with the reflections on, and in Monte Carlo. The waves are now an irregular sea instead of three regular waves, so scenes with waves look different. A fix: reflections on the processor that met the water were coloured like the fractal.</p>
+      </description>
+    </release>
+    <release version="0.2.97" date="2026-11-04">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.97</url>
+      <description>
+        <p>The program behaves more like the original Mandelbulb3D. Saving over an existing file asks first; a file dropped during a render no longer stops it; Stop asks after 15 minutes of rendering; "Save image in m3i" stores the finished picture. Post processing: "Reset now" keeps hand-calculated shadows, depth of field strengthens with each press, each "Calculate now" runs only its own step. Formula lists are sorted by vote and open when the mouse rests on a button; built-in formulas have descriptions; the animation preview shows frames as they render. Dialogs no longer change the folders of the settings. Five places now follow MB3D's rules: a negative Min R in Amazing Box and Bulbox, the dynamic fog's far offset, ambient shadows seen from inside, inside and outside scenes, and formula combinations. Every graphics card shader is checked in the tests without a card.</p>
+      </description>
+    </release>
+    <release version="0.2.96" date="2026-11-04">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.96</url>
+      <description>
+        <p>129 more formulas, 154 more maps and 608 light presets from the Mandelbulb3D community, taken from the free Mandelbulb3D 1.99.37 package by Machina Infinitum, each formula credited to its author (CREDITS-community.md in the formula, map and light folders); the Lighting window's quick load list opens the new M3Lights folder. The example scenes are gone; mb3d --save-scene writes a scene file from any parameters.</p>
+      </description>
+    </release>
     <release version="0.2.95" date="2026-11-03">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.2.95</url>
       <description>

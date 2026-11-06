@@ -29,6 +29,12 @@ code = AR
 font = Arabic.ttf
 
 [Labels]
+A360DegreeAnimationForVR=تحريك بزاوية 360 درجة لنظارات الواقع الافتراضي: كل إطار بانوراما كروية عرضها ضعف ارتفاعها؛ مع 'تصيير تحريك مجسم' يضع الفيديو العينين إحداهما فوق الأخرى، ويعلّم أمر ffmpeg ملف MP4 لمشغلات الواقع الافتراضي
+;A 360 degree animation for VR headsets: every frame a spherical panorama, twice as wide as high; with 'Render stereo animation' the video has the eyes one above the other, and the ffmpeg command marks the MP4 for VR players
+A4dQuaternionFormulaOneIteration=صيغة كواترنيون رباعية الأبعاد (4d)، تكرار واحد:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+;A 4d quaternion formula, one iteration:\n\nx' = x*x - y*y - z*z - w*w + Cx\ny' = 2*(y*x + z*w) + Cy\nz' = 2*(z*x + YW_multiplier*y*w) + Cz\nw' = 2*(w*x + y*z) + W_add + Cw
+ABulbFormulaAsSuggestedBy=صيغة بصلة (bulb) اقترحها Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nتمت إضافة خيارين لتدوير الثابت بالقوة حسب المسافة بين المتجهين الحاليين Z وC (Cond Phi=1)،\nوخيارات الوضع (Mode) التالية:\n(بتات قيمة الوضع)\nBit1: عكس مركّبات atan لـ theta\nBit2: عكس مركّبات atan لـ phi\nBit3: عكس theta وphi\nBit4: عكس CyCz عند حساب الزاوية\nBit5: ضرب powerC في المسافة بين المتجهين Z وC
+;A bulb formula as suggested by Aexion:\nhttp://www.fractalforums.com/the-3d-mandelbulb/iterating-c/\n\nAdded two options to power-rotate the Constant by the distance of the current vectors of Z and C (Cond Phi=1),\nand the following Mode options:\n(Bits of Mode value)\nBit1: Flip atan theta components\nBit2: Flip atan phi components\nBit3: Flip theta and phi\nBit4: Flip CyCz for angle calc\nBit5: Multiply powerC by the distance of vector Z and C
 ACalculationIsRunningStopIt=يجري حساب الآن: أوقفه أولًا.
 ;A calculation is running: stop it first.
 ACoarseRayPerBlockOf=شعاع خشن لكل كتلة من 16 بكسلًا ثم من 4 يتقدّم مع طرح اتساع الكتلة من تقدير المسافة، ويبدأ تقدّم كل بكسل من عمقه. أسرع حتى 60 % عبر الفضاء المفتوح؛ قد تُفقد الأجزاء الرقيقة حيث يكون التقدير بعيدًا عن الصواب.
@@ -45,6 +51,8 @@ AGroundOrWaterSurfaceAcross=سطح أرض أو ماء عمودي على المح
 ;A ground or water surface across the fractal's X, Y or Z axis, calculated with the fractal: its shadows, occlusion, reflections and Monte Carlo light (not in MB3D: kept after MB3D's part of the parameters, which MB3D ignores)
 AHigherValueMeansABetter=القيمة الأعلى تعني جودة أفضل، وحتى 100% تفقد شيئًا من الجودة.
 ;A higher value means a better quality, even 100% is lossy.
+AHybridOfASinePower=صيغة هجينة من بصلة جيبية من القوة 2 والصندوق المذهل (amazing box)، ويحدد طول المتجه ثلاثي الأبعاد الصيغة المستخدمة:\nإذا كان أكبر من 'Box/Bulb R threshold' يُستخدم الصندوق المذهل، وإذا كان أصغر من '..threshold 2' تُستخدم البصلة الجيبية،\nوبينهما يتم الاستيفاء بين الصيغتين. اجعل العتبة الثانية أصغر قليلًا من الأولى لمزيد من النعومة.
+;A hybrid of a sine power 2 bulb and the amazing box, the 3d vector length decides which formula is used:\nIf it is bigger than 'Box/Bulb R threshold' the amazing box is used, else if smaller than '..threshold 2' the sine bulb,\ninbetween both formulas will be interpolated.  Make the second threshold a little smaller than the first for more smoothness.
 AI=الذكاء الاصطناعي
 ;AI
 ALanguageFileHasOneLabel=في ملف اللغة تسمية واحدة في كل سطر: يسار "=" معرّفها، ويمينها نصك. وقسم النافذة بعد التسميات يعطي عنصر تحكم واحدًا نصًّا خاصًّا به.
@@ -53,6 +61,8 @@ AMultiplierThatDefinesTheMiximal=مُعامل ضرب يحدد الطول الأ�
 ;A multiplier that defines the miximal length of the hard shadow calculation,\nrelative to some image size parameters (default = 1).\nIncrease the value if shadows of far objects are missing.
 AOCalcTime=زمن حساب AO:
 ;AO calc time:
+ASineIntegerPowerBulbWith=بصلة جيبية بقوة صحيحة مع طيّات قبلها، كما في الصندوق المذهل.
+;A sine integer power bulb with foldings before, like in the amazing box.
 AStoppedOrInterruptedRenderKeeps=التصيير الموقوف أو المنقطع يحتفظ بما حسبه؛ و«احسب ثلاثي الأبعاد» للمعاملات نفسها يتابعه.
 ;A stopped or interrupted render keeps what it calculated; Calculate 3D of the same parameters continues it.
 ATransparentBackgroundNeedsPNGFrames=الخلفية الشفافة تحتاج إلى إطارات PNG: اختر PNG صيغةً للإخراج.
@@ -61,6 +71,8 @@ AVideoNeedsImagesChooseBMP=الفيديو يحتاج إلى صور: اختر BMP
 ;A video needs images: choose BMP, PNG or JPG as the output format.
 AVideoOfAStereoAnimation=لا يُصنع فيديو لتحريك مجسم: أطفئ «تصيير تحريك مجسم».
 ;A video of a stereo animation is not made: switch off 'Render stereo animation'.
+AWholeTurnOfTheCamera=دورة كاملة للكاميرا حول الجسم في 8 إطارات مفتاحية أو أكثر، حلقة ناعمة (Catmull-Rom)؛ مجموع الإطارات يساوي المدة بعدد الإطارات في الثانية في نافذة التحريك
+;A whole turn of the camera around the object in 8 or more keyframes, a smooth loop (Catmull-Rom); the frames add up to the duration at the frames per second of the Animation window
 AXPictureNeedsAboutOf=صورة بحجم {} x {} تحتاج إلى نحو {} من الذاكرة، وفي هذا الحاسوب {} متاحة: سيلجأ الحساب إلى ملف التبديل، وقد يتوقف البرنامج عن الاستجابة دقائق متتالية.\n\nأتريد الحساب على أي حال؟\n\nالتصيير الكبير (تبويب الأدوات) يحسبها في بلاطات تُحفظ واحدةً تلو الأخرى، دون الاحتفاظ بالصورة كلها؛ والسرب (نافذة السرب) يوزع البلاطات على حواسيب أخرى.
 ;A {} x {} picture needs about {} of memory, this computer has {} free: the calculation would swap, and the program could stop responding for minutes at a time.\n\nCalculate anyway?\n\nBig render (Tools tab) calculates it in tiles saved one by one, without holding the whole picture; a swarm (Swarm window) shares the tiles with other computers.
 AZBufferPngImageWill=ستُحفظ أيضًا صورة png لمخزن Z.
@@ -115,6 +127,8 @@ AddNewOption=إضافة خيار جديد
 ;Add new option
 AddOptionValue=إضافة قيمة خيار
 ;Add option value
+AddTheKeyframes=إضافة الإطارات المفتاحية
+;Add the keyframes
 AddToBackgroundDepthNotBlend=إضافة إلى عمق الخلفية (لا مزج)
 ;Add to background depth (not blend)
 AddonFormula=صيغة إضافية
@@ -147,6 +161,8 @@ AllRealworldUnitsInMeter=كل وحدات العالم الحقيقي بالمت�
 ;All realworld units in meter.
 AllTheLightColorSettings=كل إعدادات الإضاءة والألوان
 ;All the light + color settings
+AllTogetherYawPitchAndRoll=الكل معًا: انعراج وانحدار ودوران (تشقلب)
+;All together: yaw, pitch and roll (tumble)
 AlreadyExists={} <{}> موجود مسبقًا
 ;{} <{}> already exists
 AlsoMakeAVideoAVI=صنع فيديو أيضًا (AVI)
@@ -219,6 +235,10 @@ AnimationRenderingStopped=توقف تصيير التحريك.
 ;Animation rendering stopped.
 AnimationSize=حجم التحريك:
 ;Animation size:
+AnimationTemplates=قوالب التحريك...
+;Animation templates...
+AnimationTemplates2=قوالب التحريك
+;Animation templates
 AnimationTheFfmpegCommandIsOn=التحريك: أمر ffmpeg في الحافظة (شغّله في الطرفية عند اكتمال الإطارات):
 ;Animation: the ffmpeg command is on the clipboard (run it in a terminal when the frames are done):
 AnimationVideoWritten=التحريك: كُتب الفيديو: {}
@@ -241,6 +261,8 @@ ApproximateVertexColorsTheColorInformation=ألوان الرؤوس التقري�
 ;Approximate vertex colors. The color-information will be saved as uv-coordinates in  the mesh and will increase mesh-size
 ArcTan2CalculatesArcTanYXAnd={ ArcTan2 تحسب ArcTan(Y/X) وتعيد زاوية في الربع الصحيح.
 ;{ ArcTan2 calculates ArcTan(Y/X), and returns an angle in the correct quadrant.
+Around=حول:
+;Around:
 AroundTheMiddleAnObject=حول المركز (جسم)
 ;Around the middle (an object)
 AsFullBackgroundSphere=كرةً خلفية كاملة:
@@ -265,6 +287,8 @@ AutoSavingTheM3cFile=حفظ ملف m3c تلقائيًا:
 ;Auto-saving the m3c file:
 AutoTheCPUAndTheGraphics=تلقائي: يتقاسم CPU وبطاقة الرسوميات الصورة (يبدأ CPU\nفورًا، وتنضم البطاقة حالما يُترجَم\nمظلّلها)، ثم تحسب البطاقة الظلال والانسداد\nالمحيطي.\nCPU: لا بطاقة رسوميات أبدًا.\nبطاقة الرسوميات: انتظار المظلّل، كما في السابق.
 ;Auto: the CPU and the graphics card share the image (the CPU\nstarts at once, the card joins as soon as its shader is\ncompiled), the card then runs the shadows and the ambient\nocclusion.\nCPU: never the graphics card.\nGraphics card: wait for the shader, as before.
+AutoTheMiddleOrTheSurface=تلقائي: المنتصف، أو السطح الظاهر
+;Auto: the middle, or the surface in view
 AutoUpdateImage=تحديث الصورة تلقائيًا
 ;Auto update image
 AutoUpdatePreview=تحديث المعاينة تلقائيًا
@@ -281,6 +305,8 @@ AvgIterations=متوسط التكرارات:
 ;Avg. iterations:
 AvgRaysteps=متوسط خطوات الشعاع:
 ;Avg. raysteps:
+Axis=المحور:
+;Axis:
 AxisX=المحور X
 ;Axis X
 AxisY=المحور Y
@@ -739,6 +765,8 @@ Cos22=Cos/2+\s
 ;Cos/2+\s
 Cos23=(Cos/2+)²
 ;(Cos/2+)²
+CouldNotDelete=تعذّر حذف {}
+;Could not delete {}
 CouldNotLoadFormula=تعذر تحميل الصيغة <{}>: {}
 ;Could not load formula <{}>: {}
 CouldNotWrite=تعذرت كتابة {}: {}
@@ -1025,6 +1053,8 @@ Ds=Ds:
 ;Ds:
 DunnoDoNothing=لا أدري، لا تفعل شيئًا
 ;Dunno, do nothing
+DurationSeconds=المدة (ثوانٍ):
+;Duration (seconds):
 DynFog=ضباب ديناميكي
 ;Dyn.fog
 DynFogOnIt=ضباب ديناميكي حسب التكرار:
@@ -1221,6 +1251,12 @@ FlatSolidWithEdges=مصمت مسطح مع الحواف
 ;Flat Solid with Edges
 FloorLargestIntegerXXMaxInt={ Floor: أكبر عدد صحيح <= X،  |X| < MaxInt }
 ;{ Floor: Largest integer <= X,  |X| < MaxInt }
+FlyThrough=طيران عبر
+;Fly-through
+FlyThroughTheFlightEndedAfter=طيران عبر: انتهى الطيران بعد {} من {} إطار، {}
+;Fly-through: the flight ended after {} of {} frames, {}
+FlyingFrameOf=الطيران: الإطار {} من {}
+;Flying: frame {} of {}
 Fo=Fo.{}
 ;Fo.{}
 FogOffset=إزاحة الضباب
@@ -1277,6 +1313,8 @@ FrameNumberToUseForAnimated=رقم الإطار المستخدم للخرائط 
 ;Frame number to use for animated maps in the main editor
 Frames=إطارات
 ;frames
+FramesAtFramesASecond={} إطار بمعدل {} إطار في الثانية
+;{} frames at {} frames a second
 FramesPerSecond=الإطارات في الثانية:
 ;Frames per second:
 FramesSec=إطار/ث:
@@ -1511,10 +1549,16 @@ HoldShiftKeyForFinerSteps=(اضغط مفتاح Shift لخطوات أدق)
 ;(Hold Shift key for finer steps)
 Hotkeys=مفاتيح الاختصار
 ;Hotkeys
+HowMuchLightTheWaterLets=مقدار الضوء الذي يمرره الماء (من 0 إلى 1، 0: معتم): مع الانعكاسات (المعالجة اللاحقة) أو في مونت كارلو يظهر الكسيري تحت السطح، منحرفًا بالانكسار ويتلاشى مع العمق
+;How much light the water lets through (0 to 1, 0: opaque): with the reflections (Post processing) or in Monte Carlo the fractal shows under the surface, bent by the refraction and fading with depth
 HowMuchThePlaneReflects0=مقدار انعكاس المستوى (من 0 إلى 1): لمعانه، ومرآته عند حساب الانعكاسات (المعالجة اللاحقة)
 ;How much the plane reflects (0 to 1): its highlights, and its mirror when the reflections are calculated (Post processing)
 HowMuchTheSurfaceSColour=مقدار تغيّر لون السطح مع النتوء: 0 لا يتغير، 1 بقوة
 ;How much the surface's colour varies with the relief: 0 not, 1 strongly
+HowMuchTheWaterScattersLight=مقدار تشتيت الماء للضوء (من 0 إلى 1، 0: لا تشتيت): يتوهج نحو الأضواء، وتشف قمم أمواجه، وتسقط فيه حزم الضوء، ويتوهج ما تحته بلونه (مع الانعكاسات أو في مونت كارلو)
+;How much the water scatters light (0 to 1, 0: none): it glows towards the lights, its wave crests shine through, light shafts fall into it and what lies under it glows in its colour (with the reflections or in Monte Carlo)
+HowMurkyTheWaterIsHow=مدى عكارة الماء: سرعة خفوت الضوء فيه لكل وحدة من الكسيري (0: صافٍ تمامًا؛ 1: يُرى إلى عمق وحدة تقريبًا؛ 3: عكر). في الماء الأزرق المخضر يخفت الأحمر أولًا.
+;How murky the water is: how fast light fades in it, per fractal unit (0: perfectly clear; 1: you see about one fractal unit deep; 3: murky). In blue-green water red fades first.
 HowStrongTheNoiseIsThat=مدى قوة التشويش الذي يُزال (من 1 إلى 30، كما في "Denoise DCT" في GIMP).\nالأعلى يزيل تشويشًا أكثر، وتفاصيل دقيقة أكثر.
 ;How strong the noise is that is removed (1 to 30, as GIMP's "Denoise DCT").\nHigher removes more noise, and more fine detail.
 HowThickTheCloudsAre1=مدى كثافة السحب (1: الطبقة الكاملة تمرر نحو 2 % من الضوء) وكم تغطي من السماء (من 0 إلى 1)
@@ -1785,8 +1829,12 @@ KeyframeListM3k=قائمة الإطارات المفتاحية (*.m3k)
 ;Keyframe list (*.m3k)
 KeyframeStartStop=\s\sالإطار المفتاحي\nالبداية:    النهاية:
 ;\s\sKeyframe\nstart:    stop:
+Keyframes=الإطارات المفتاحية:
+;Keyframes:
 KeyframesForOneWholeTurnAround=إطارات مفتاحية لدورة كاملة حول منتصف المنظر، من منظر النافذة الرئيسية: 8 إطارات مفتاحية في حلقة ناعمة (Catmull-Rom)
 ;Keyframes for one whole turn around the middle of the view, from the main window's view: 8 keyframes in a smooth loop (Catmull-Rom)
+KeyframesMadeForYouFromThe=إطارات مفتاحية تُصنع لك من منظر النافذة الرئيسية: مدار 360° أو طيران عبر، بالمدة التي تحددها
+;Keyframes made for you from the main window's view: a 360° orbit or a fly-through, as long as you say
 KeysThatBringAWindowTo=مفاتيح تُحضر نافذة إلى الأمام من أي نافذة
 ;Keys that bring a window to the front from any window
 Kind=النوع
@@ -1797,12 +1845,16 @@ LIGHTSTROKES=ضربات الضوء
 ;LIGHT STROKES
 LMBMoveRMBRotate=الزر الأيسر: تحريك           الزر الأيمن: تدوير
 ;LMB: move           RMB: rotate
+LargestTurnDegreesAFrame=أكبر انعطاف (درجات لكل إطار):
+;Largest turn (degrees a frame):
 LastLengthIncrease=آخر زيادة في الطول
 ;Last length increase
 LastPass=\s· آخر تمريرة {}
 ;\s· last pass {}
 Layer=الطبقة:
 ;Layer:
+LeftToRightAroundItYaw=من اليسار إلى اليمين حوله (انعراج)
+;Left to right around it (yaw)
 LeftclickGoIntoMouseModeView=النقر الأيسر:  الدخول في وضع الفأرة.. النظر بالفأرة، + الزر الأيمن.. اللف\n(انقر بالأيسر مرة أخرى أو ESC للخروج من وضع الفأرة)
 ;Leftclick:  go into mouse-mode.. view by mouse, +right mousebutton.. rolling\n(Leftclick again or ESC to exit the mouse-mode)
 LeftclickRotateTheBulbAroundThe=النقر الأيسر:   تدوير الجسم حول محور X للمشاهد @ قيم Ymid+Zmid\nالنقر الأيمن: تدوير الجسم حول محور X للجسم @ 0
@@ -2211,8 +2263,12 @@ N2Or3PassesGivesA=تمريرتان أو 3 تعطي تمويهًا قويًا أ�
 ;2 or 3 passes gives a better strong bluring in front of the focus point.\n1 pass leads to a disc bokey, more passes yields to a gaussian like bokey.
 N2ndReflection=الانعكاس الثاني
 ;2nd reflection
+N360Orbit=مدار 360°
+;360° orbit
 N360Panorama=بانوراما 360
 ;360 Panorama
+N360VR=واقع افتراضي 360°
+;360° VR
 N3DAnalyticFormula=صيغة تحليلية ثلاثية الأبعاد
 ;3D analytic formula
 N3DFormula=صيغة ثلاثية الأبعاد
@@ -2317,6 +2373,8 @@ NoTilesToRender=لا بلاطات للتصيير.
 ;No tiles to render.
 NoValidTextFoundPleaseEnter=\sلم يُعثر على نص صالح، يرجى إدخال النص أدناه:
 ;\sNo valid text found, please enter the text below:
+NoWayAheadWasLeft=لم يبق طريق إلى الأمام
+;no way ahead was left
 Noise=-تشويش
 ;-noise
 NoiseAI=-تشويش AI
@@ -2347,6 +2405,8 @@ NotABigRenderProject=ليس مشروع تصيير كبير
 ;not a big render project
 NotAvailableForLinuxUseClaude=غير متوفر لـ Linux: استخدم Claude Code أدناه.
 ;Not available for Linux: use Claude Code below.
+NotEnoughMemoryAvailable=لا توجد ذاكرة كافية
+;Not enough memory available
 NotFoundIfYouUseIt=غير موجود. إن كنت تستخدمه، شغّل هذا الأمر مرة واحدة في الطرفية:
 ;Not found. If you use it, run this command once in a terminal:
 NotInstalledGetItFromClaude=غير مثبت. احصل عليه من claude.ai/download، وشغّله مرة واحدة، ثم عد إلى هنا.
@@ -2527,6 +2587,8 @@ OutsideRender=تصيير الخارج
 ;Outside render
 OutsideRenderDefaultModeInsideRender=تصيير الخارج:  الوضع الافتراضي\nتصيير الداخل:    تقدم بطيء للشعاع في الداخل بأقصى تكرارات.\nداخل وخارج:   تصيير الجانبين
 ;Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
+OverTheTopAndUnderPitch=من فوقه ومن تحته (انحدار)
+;Over the top and under (pitch)
 OverallScale=المقياس الكلي:
 ;Overall scale:
 OverwriteExistingImages=الكتابة فوق الصور الموجودة
@@ -2541,6 +2603,8 @@ PNG16BitColourPng=PNG ملون بـ 16 بت (*.png)
 ;PNG 16 bit colour (*.png)
 PNG16BitPng=PNG بـ 16 بت (*.png)
 ;PNG 16 bit (*.png)
+PNG8BitPng=PNG بـ 8 بت (*.png)
+;PNG 8 bit (*.png)
 PNGFramesWithATransparentBackground=إطارات PNG بخلفية شفافة.
 ;PNG frames with a transparent background.
 PNGPng=PNG (*.png)
@@ -2589,6 +2653,8 @@ PauseRendering=إيقاف التصيير مؤقتًا
 ;Pause rendering
 PausedPressToContinue=متوقف مؤقتًا، اضغط للمتابعة
 ;Paused, press to continue
+PausingOnNextFrame=سيتوقف مؤقتًا عند الإطار التالي...
+;Pausing on next frame...
 PercentOfLocalDE=نسبة مئوية من DE المحلي
 ;Percent of local DE
 Picture=صورة
@@ -2799,6 +2865,10 @@ ReflectionsTransparency2=الانعكاسات + الشفافية
 ;Reflections + Transparency
 ReflectsTime=زمن الانعكاسات:
 ;Reflects time:
+Refraction=الانكسار:
+;Refraction:
+RefractionIndexOfTheWaterWater=معامل انكسار الماء (الماء 1.33؛ 1: بلا انحراف)
+;Refraction index of the water (water 1.33; 1: no bending)
 RefractiveIndex=معامل الانكسار:
 ;Refractive index:
 RefractiveIndexOfTheMaterialAir=معامل انكسار المادة، الهواء~1 الماء~1.33 الزجاج~1.5 الماس~2.4
@@ -3051,6 +3121,8 @@ ScalesTheMaximumLengthOfThe=يحجّم الطول الأقصى للأشعة ال
 ;Scales the maximum length of the ambient rays to be calculated.\nUse a value bigger than 1 to give more depth to the shadows,\nvalues below 1 gives more local shadows.
 ScanPreview=معاينة المسح
 ;Scan Preview
+Scattering=التشتت:
+;Scattering:
 ScreenDistance=مسافة الشاشة:
 ;Screen distance:
 ScriptEditor=محرر السكربت
@@ -3227,8 +3299,12 @@ SpecularObjectColorsClickToChange=ألوان لمعان الجسم، انقر ل
 ;Specular object colors, click to change them.
 SpecularPowerFunction=دالة قوة اللمعان
 ;Specular power function
+SpeedOfTheDistanceAFrame=السرعة (% من المسافة لكل إطار):
+;Speed (% of the distance a frame):
 SphericalCoords=إحداثيات كروية
 ;Spherical coords
+SpinningAroundTheLineOfSight=الدوران حول خط النظر (دوران)
+;Spinning around the line of sight (roll)
 SplatsInWrittenTo={} بقعة في {}، حُفظت في {}
 ;{} splats in {}, written to {}
 Stan=قياسي
@@ -3239,6 +3315,8 @@ Start=البداية:
 ;Start:
 StartBatchRendering=بدء التصيير الدفعي
 ;Start batch rendering
+StartFrom=البدء من
+;Start from
 StartIndex=رقم البداية:
 ;Start index:
 StartRendering=بدء التصيير
@@ -3357,6 +3435,10 @@ TargetMapSlot=خانة الخريطة الهدف
 ;Target Map Slot
 TargetMapSlotUseThisNumber=خانة الخريطة الهدف. استخدم هذا الرقم خريطةً في كسوريّك، مثلًا خريطة ارتفاع، لتحصل على خريطة متحركة
 ;Target Map Slot. Use this number as map in your fractal, e. g. as heightmap, in order to have an animated map
+Template=القالب:
+;Template:
+TheAmazingBoxAkaMandboxFormula=صيغة 'Amazing Box' المعروفة أيضًا بصيغة Mandbox، ابتكرها TGlad في fractalforums.com.\n\nتبدو صيغة التكرار الواحد هكذا:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
+;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=مجموع الألوان الانتشارية وألوان اللمعان المضافة أكبر من 1،\nهل أصغّرها لتلوين أكثر واقعية؟
 ;The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
 TheAnimationNeedsAtLeastTwo=يحتاج التحريك إلى إطارين مفتاحيين على الأقل.
@@ -3383,14 +3465,22 @@ TheCalculationFailedLower=أخفق الحساب
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=يمتد الحساب إلى خارج الصورة مع الأجسام المنعكسة.\nقد يقلل هذا العيوب في التحريكات، لكن الصور الثابتة قد تستفيد منه أيضًا.\nيجب أن تكون القيمة بين 0 و0.5 (بحد أقصى 0.9)، وهي الحجم نسبةً إلى عرض الصورة\nوارتفاعها الذي يُحسب كحد أقصى خارجها.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesOnIntoThe=تواصل الكاميرا الطيران داخل الكسورية، ويتبع التكبير المسافة إليها، وتوجّه نفسها عبر فجواتها؛ إطار مفتاحي كل نصف ثانية (Catmull-Rom). ينتهي الطيران مبكرًا عند طريق مسدود، أو عند حد الدقة المضاعفة، أو عندما يغادر الكسورية
+;The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
+TheCameraLeftTheFractal=غادرت الكاميرا الكسورية
+;the camera left the fractal
 TheChosenValueOverAllFrames=القيمة المختارة عبر كل إطارات الحركة: اسحب مربع إطار مفتاحي لأعلى أو لأسفل، أو انقره واكتب قيمته
 ;The chosen value over all frames of the animation: drag a keyframe's square up or down, or click it and type its value
+TheColourOfDeepWaterThe=لون الماء العميق: ضوء الماء نفسه، واللون الذي يكتسبه ما تحته مع العمق (انقر للتغيير)
+;The colour of deep water: the water's own light, and the colour what lies under it turns to with depth (click to change)
 TheCommandLineProgramMb3dWas=لم يُعثر على برنامج سطر الأوامر mb3d بجوار هذا البرنامج: ثبّت البرنامج من جديد.
 ;The command line program mb3d was not found next to this program: install the program again.
 TheDefaultNumberingIncludes2Numbers=الترقيم الافتراضي يتضمن رقمين، منفصلين في X وY.\nإن اخترت هذا الخيار، يصبح الترقيم رقمًا واحدًا\nيزداد في كل عمود ويستمر في الصف التالي.
 ;The default numbering includes 2 numbers, seperated in X and Y.\nIf you choose this option, the numbering is only one number,\nincreasing in each column and follows on the next row.
 TheDefaultOutputIsWhiteFor=الإخراج الافتراضي أبيض للجسم وأسود للمنطقة الخارجية.\nاختر هذا الخيار لعكس الألوان.
 ;The default output is white for the object and black for the outside area.\nChoose this option to invert the colors.
+TheDirectionOfTheScattering0=اتجاه التشتت (من 0 إلى 0.95): يشتت الماء الضوء غالبًا إلى الأمام (0.8)، لذا يتوهج أكثر عند النظر نحو الضوء
+;The direction of the scattering (0 to 0.95): water scatters mostly forward (0.8), so it glows most looking towards the light
 TheDistanceEstimatesAreDownscaledBy=تُصغَّر تقديرات المسافة بهذا المعامل لتجنب تجاوز الخطوات.\nأنقص القيمة إن حدث تجاوز للخطوات (بكسلات سوداء، صورة مشوشة).\nالقيم المنخفضة جدًّا تبطئ التصيير.
 ;The distance estimates are downscaled by this factor to avoid overstepping.\nReduce the value if overstepping occurs (black pixels, noisy image).\nToo low values slows the rendering down.
 TheDistanceEstimatesAreDownscaledBy2=تُصغَّر تقديرات المسافة بهذا المعامل لتجنب تجاوز الخطوات.\nأنقص القيمة إن حدث تجاوز للخطوات (بكسلات سوداء، صورة مشوشة).\nالقيم المنخفضة جدًّا تبطئ التصيير .
@@ -3411,6 +3501,8 @@ TheFileSelectAndCopyIt=الملف (حدّده وانسخه من هنا)
 ;The file (select and copy it from here)
 TheFirstFocusPointTheValue=نقطة التركيز (الأولى).\nالقيمة نسبية إلى قيمة Zstart للمشاهد،\nمسوّاة على عرض الصورة.
 ;The (first) focus point.\nThe value is relative to the viewers Zstart value,\nnormalized to the imagewidth.
+TheFlyThroughCannotStartHere=لا يمكن أن يبدأ الطيران عبر هنا: {}
+;The fly-through cannot start here: {}
 TheFolderDoesNotExistOr=المجلد غير موجود (أو يتعذر الوصول إليه)
 ;the folder does not exist (or is not reachable)
 TheFormulaNameShouldStartWith=يجب أن يبدأ اسم الصيغة بـ "JIT" لتمييز هذه الصيغ من الصيغ المبنية على ASM
@@ -3421,6 +3513,12 @@ TheFractalOfTheMainWindow=كسيريّة النافذة الرئيسية بقع�
 ;The fractal of the main window as Gaussian splats, to look at from every side in Blender (5.3 and later) and other splat viewers. It is calculated from several directions, and every pixel becomes a splat with its colour.
 TheFractalSSurfaceMaterialOn=مادة سطح الكسورية فوق لوحة الألوان (ليست في MB3D: تُحفظ بعد جزء MB3D من المعاملات)
 ;The fractal's surface material on top of the palette (not in MB3D: kept after MB3D's part of the parameters)
+TheFractalSXAxis=محور X للكسورية
+;The fractal's X axis
+TheFractalSYAxis=محور Y للكسورية
+;The fractal's Y axis
+TheFractalSZAxis=محور Z للكسورية
+;The fractal's Z axis
 TheFramesPerSecondMustBe=يجب أن يكون عدد الإطارات في الثانية عددًا أكبر من 0 (مثلًا 25).
 ;The frames per second must be a number above 0 (e.g. 25).
 TheImageBufferHasTheWrong=مخزن الصورة بحجم خاطئ
@@ -3429,14 +3527,20 @@ TheImageSizeChangedCalculateThe=تغير حجم الصورة: احسب الصو�
 ;the image size changed: calculate the image again
 TheItsTrapModeDependsOn=يعتمد وضع its.trap على الخيار المحسوب في تبويب «التلوين».
 ;The its.trap mode depends on the calculated option in the "Coloring" tab.
+TheLastKeyframe=آخر إطار مفتاحي
+;The last keyframe
 TheLastSessionCrashed=تعطلت الجلسة الأخيرة: {}. المزيد في نافذة سجل الأحداث (الأيقونة في شريط العنوان).
 ;The last session crashed: {}. More in the Log window (the icon in the title bar).
 TheLastSessionDidNotEnd=لم تنتهِ الجلسة الأخيرة كما يجب (تجمدت أو أُنهيت قسرًا أو تعطلت): {}. آخر ما فعلته مدوّن في سجل الأحداث (نافذة سجل الأحداث، الأيقونة في شريط العنوان).
 ;The last session did not end properly (it froze, was killed or crashed): {}. What it did last is in the log (the Log window, the icon in the title bar).
 TheMainEditorIsStillRendering=لا يزال المحرر الرئيسي يصيّر. يرجى إيقافه أولًا أو الانتظار حتى ينتهي.
 ;The main editor is still rendering. Please stop it first or wait until it is done.
+TheMainWindowSView=عرض النافذة الرئيسية
+;The main window's view
 TheMapOptionsCalculatesXY=خيارات الخريطة تحسب إحداثيات x,y من المتجه\nالمحدد للخرائط الكروية، وهذا يغير أيضًا الاختيار الأول للون\nالذي يعتمد عادةً على التكرارات الناعمة.\nعليك إعادة حساب الصورة لترى نتيجة تغيير\nهذه الخيارات.
 ;The map options calculates x,y coordinates from the specific\nvector for spherical maps, this changes also the first color choice\nthat is usually based on smooth iterations.\nYou have to recalculate the image to see the result of this\noptions changes.
+TheMiddleOfTheView=منتصف المنظر
+;The middle of the view
 TheMonteCarloWindowIsRendering=نافذة Monte Carlo تصيّر: أوقفها أولًا.
 ;The Monte Carlo window is rendering: stop it first.
 TheMotionBlurSShutterTime=زمن غالق ضبابية الحركة: جزء من الزمن حتى الإطار التالي (0 إلى 1)
@@ -3465,18 +3569,28 @@ TheSelectionMustBeBiggerThanLower=يجب أن يكون الجزء المحدد �
 ;the selection must be bigger than 2 pixels in width and height
 TheSharedFolderOfTheSwarm=المجلد المشترك للسرب
 ;The shared folder of the swarm
+TheSineBulbWhereArbitraryPower=البصلة الجيبية التي يمكن فيها استخدام قيم قوة اعتباطية، والحساب فيها أبطأ منه مع القوى الصحيحة.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
+;The sine bulb where arbitrary power values can be used, the calculation is slower than of integer powers.\n\nr  = sqrt(x*x + y*y + z*z)\nth = ArcTan2(y, x) * Float_power\nph = ArcSin(z/r) * Float_power\nr  = Power(r, Float_power)\nx  = r * cos(ph) * cos(th) + Cx\ny  = r * cos(ph) * sin(th) + Cy\nz  = Z_multiplier * r * sin(ph) + Cz
 TheSizeOfTheCloudsFeatures=حجم أشكال السحب بوحدات الكسورية، ولونها (انقر)
 ;The size of the clouds' features in fractal units, and their colour (click)
 TheSizeOfTheTiles=حجم المربعات
 ;The size of the tiles
+TheStepsCameToTheLimit=بلغت الخطوات حد الدقة المضاعفة
+;the steps came to the limit of double precision
 TheStereoEyeImagesHaveDifferent=صورتا العينين المجسمتان بحجمين مختلفين.
 ;The stereo eye images have different sizes.
 TheTextParametersOnTheClipboard=معاملات النص في الحافظة تالفة: قُطعت بعض أسطرها عند النسخ. انسخها مرة أخرى من مصدرها.
 ;The text parameters on the clipboard are damaged: some of their lines were cut off when they were copied. Copy them again from where they came from.
 TheTileHasNoImageBuffer=البلاطة بلا مخزن صورة
 ;the tile has no image buffer
+TheTriplexMathSineBulbAs=البصلة الجيبية بالرياضيات الثلاثية (triplex)، كما اقترحها Daniel White وPaul Nylander. هذه تطبيقات سريعة للقوى 2 و3 و4 و5 و6 و7 و8.\n\nإذا أردت إنشاء رسم متحرك بتغيّر سلس في القوة، فاستخدم صيغة 'Real Power'.
+;The triplex math sine bulb, as suggested by Daniel White and Paul Nylander.  These are fast implementions of powers of 2,3,4,5,6,7 and 8.\n\nIf you want to make an animation with smooth power changings, please use the 'Real Power' formula.
 TheValueOfTheChosenKeyframe=قيمة الإطار المفتاحي المختار
 ;The value of the chosen keyframe
+TheViewIsFilledWithThe=المنظر ممتلئ بالكسورية
+;the view is filled with the fractal
+TheViewShowsOnlySky=المنظر لا يُظهر إلا السماء
+;the view shows only sky
 Themes=السمات
 ;Themes
 ThereIsAFileAlready=يوجد ملف {} مسبقًا.
@@ -3623,6 +3737,8 @@ UnfinishedRenders=التصييرات غير المكتملة
 ;Unfinished renders
 UnfinishedRendersContinueOrDeleteThem=التصييرات غير المكتملة: تابعها أو احذفها
 ;Unfinished renders: continue or delete them
+UntilTheViewShowsOnlySky=حتى لا يُظهر المنظر إلا السماء أو إلا الكسورية (دقيقتان على الأكثر)
+;Until the view shows only sky or only fractal (at most 2 minutes)
 Untitled=بلا عنوان
 ;untitled
 UpOneLevel=مستوى واحد لأعلى
@@ -3729,6 +3845,8 @@ WarningMustRecalculateTheWholeImage=تحذير: يجب إعادة حساب ال�
 ;Warning: Must recalculate the whole image to undo it!
 WarningsAndErrors=التحذيرات والأخطاء
 ;Warnings and errors
+Water=الماء:
+;Water:
 WavefrontOBJObj=Wavefront OBJ (*.obj)
 ;Wavefront OBJ (*.obj)
 Waves=الأمواج:
@@ -3739,6 +3857,8 @@ Weight=الوزن
 ;Weight
 WeightColon=الوزن:
 ;Weight:
+WelcomeTo=مرحبًا بك في {}!
+;Welcome to {}!
 WhatDidIDoInMb3d=ماذا فعلت في mb3d اليوم؟ هل كانت هناك أخطاء؟
 ;What did I do in mb3d today? Were there any errors?
 WhatHappened=ما حدث
@@ -3823,6 +3943,8 @@ YouCanSaveAlsoM3iFiles=يمكنك أيضًا حفظ ملفات m3i لكل بلا
 ;You can save also m3i files for each tile, keep in mind that you got enough\nmemory on the disc and that reflections are not stored in the m3i file.\n\nNote that you cannot open these m3i tiles in earlier program versions than 1.7.9!
 YouHaveToRenderTheOriginal=عليك أولًا تصيير المعاملات الأصلية وتخزينها في ملف M3I.\nولا تجعل ذلك التصيير صغيرًا جدًّا.
 ;You have to render the original parameters first and store them as M3I file.\nMake that render not to small.
+YouWantToDelete=تريد حذف:\n{}
+;You want to delete:\n{}
 YourAuthorNameStoredInThe=اسمك مؤلفًا (يُخزن في المعاملات):
 ;Your author name (stored in the parameters):
 YourOwnLanguageItsName=لغتك الخاصة (اسمها):

@@ -52,7 +52,11 @@ s="$src"
 r=%{buildroot}
 install -Dm755 "\$s/mb3d" "\$r/usr/bin/mb3d"
 mkdir -p "\$r/usr/share/mb3d-rs"
-for d in M3Formulas M3Maps M3Parameter EM_JIT_M3Formulas examples; do
+if [ -d "\$s/oidn" ]; then
+  mkdir -p "\$r/usr/lib/mb3d-rs"
+  cp -a "\$s/oidn" "\$r/usr/lib/mb3d-rs/"
+fi
+for d in M3Formulas M3Maps M3Lights M3Parameter EM_JIT_M3Formulas Themes Languages; do
   [ -d "\$s/\$d" ] && cp -r "\$s/\$d" "\$r/usr/share/mb3d-rs/"
 done
 install -d "\$r/usr/share/man/man1"

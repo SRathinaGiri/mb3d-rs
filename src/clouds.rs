@@ -145,7 +145,7 @@ impl Clouds {
     /// clouds (1 without a sun or clouds in its way).
     pub(crate) fn sunlight(&self, p: [f64; 3], cl: &CloudLight) -> f32 {
         let Some((sd, _)) = &cl.sun else { return 1.0 };
-        let Some((t0, t1)) = self.span(p, *sd, self.far()) else { return 1.0 };
+        let Some((t0, t1)) = self.span(p, *sd, self.haze()) else { return 1.0 };
         let n = ((t1 - t0) / (self.size * 0.5)).clamp(6.0, 32.0) as usize;
         let dt = (t1 - t0) / n as f64;
         let mut od = 0f32;
@@ -159,9 +159,19 @@ impl Clouds {
         (-od).exp()
     }
 
-    /// How far a ray that hits nothing looks into the layer: through it at
-    /// a slant.
+    /// How far a ray that hits nothing looks into the layer: towards the
+    /// horizon, where the clouds have faded into the haze (`haze`); a layer
+    /// of clouds reaches the horizon (before 2026-11-05 it ended at the
+    /// haze distance: a hard edge a little above the horizon, a clear strip
+    /// under it).
     pub(crate) fn far(&self) -> f64 {
+        self.haze() * 20.0
+    }
+
+    /// The distance at which the clouds are half faded into the haze of the
+    /// air (aerial perspective), and up to which the sunlight is followed
+    /// through them for the clouds' shadows on surfaces (`sunlight`).
+    pub(crate) fn haze(&self) -> f64 {
         let (lo, hi) = self.bounds();
         (hi - lo).max(1e-30) * 20.0 + self.size * 40.0
     }
@@ -178,11 +188,24 @@ impl Clouds {
         // steps of about a third of the features' size, 8 to 96
         let n = ((t1 - t0) / (self.size * 0.3)).clamp(8.0, 96.0) as usize;
         let dt = (t1 - t0) / n as f64;
-        let (mut tr, mut acc) = (1f32, [0f32; 3]);
+        let (mut tr, mut acc, mut hazed) = (1f32, [0f32; 3], 0f32);
+        // far away the clouds fade into the haze where the sky lies behind
+        // them: a ray into the open air (`tmax` = `far`) going up through
+        // them (towards the axis' smaller values, up in the usual views, as
+        // the scene guide has it) sees the sky's horizon in their place more
+        // and more (the part of their light a cloud far away hides is the
+        // sky's: they stay as dense, so their colour goes over into the
+        // sky's evenly down to the horizon, where they thinned out within a
+        // row of pixels and left a line of the sky's colour under them);
+        // with a surface behind them, or looking down onto them (a sea of
+        // clouds seen from above), they stay as they are
+        let k = self.axis as usize % 3;
+        let haze = if tmax >= self.far() && d[k] < 0.0 { self.haze() } else { f64::INFINITY };
         for i in 0..n {
             let t = t0 + (i as f64 + jitter) * dt;
             let p = [0, 1, 2].map(|k| o[k] + d[k] * t);
             let sigma = self.density_at(p);
+            let fade = (1.0 / (1.0 + (t / haze).powi(2))) as f32;
             if sigma <= 0.0 {
                 continue;
             }
@@ -204,19 +227,19 @@ impl Clouds {
                 }
             }
             // ambient: the top colour from above, the bottom one from below
-            let k = self.axis as usize % 3;
             let up = ((p[k] - lo) / thick).clamp(0.0, 1.0) as f32;
             let a = (1.0 - (-sigma * dt as f32).exp()) * tr;
             for c in 0..3 {
                 let amb = cl.amb_bottom[c] + (cl.amb_top[c] - cl.amb_bottom[c]) * up;
-                acc[c] += a * col[c] * (light[c] + 0.35 * amb);
+                acc[c] += a * fade * col[c] * (light[c] + 0.35 * amb);
             }
+            hazed += a * (1.0 - fade);
             tr *= (-sigma * dt as f32).exp();
             if tr < 0.01 {
                 break;
             }
         }
-        Some((tr, acc))
+        Some((tr + hazed, acc))
     }
 }
 
@@ -268,7 +291,11 @@ pub fn apply<S: Sample>(
                         let cp = cam.cam_pos(x as f32, y as f32);
                         let o = [0, 1, 2].map(|k| mid[k] + cp[k] as f64);
                         let d = view.map(|v| v as f64);
-                        let tmax = if si.is_background() {
+                        // (water beyond the end of the march, out to the
+                        // horizon: its depth has no place in the G-buffer,
+                        // which keeps the march's end; the clouds in front
+                        // of it as far as the open air's)
+                        let tmax = if si.is_background() || (si.is_ground() && si.zpos_fine >> 8 == 0) {
                             far
                         } else {
                             (((8388352 - (si.zpos_fine >> 8) as i64) as f64 / cam.zc_mul + 1.0).powi(2) - 1.0) * cam.step_width / cam.zcorr

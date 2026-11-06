@@ -64,11 +64,14 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
 **[▶ scanrepo.dev에서 mb3d-rs 검사하기](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (현재 코드에 대한 새 결과를 보려면 *Rescan*을 클릭하십시오)
 
-버전 0.2.85는 **안전: 100점 중 5점** 판정을 받았습니다(2026년 10월 30일 검사, 검사기
-엔진 10의 규칙). 유일한 경고는 프로그램이 속도를 위해 실행 중에 컴파일하는 수식을
-시작하는 줄에 대한 것입니다. 새로 만든 기계어 코드를 실행하는 일은 Rust의 검사된
-형태로는 작성할 수 없으며, 프로그램이 이를 허용하는 곳은 이 줄과 Intel 노이즈 제거
-필터로 이어지는 연결 부분뿐입니다. 나머지는 참고용 안내입니다. (이전: 0.2.66은 예전
+버전 0.3.1은 **안전: 100점 중 8점** 판정을 받았습니다(2026년 11월 5일 검사, 검사기
+엔진 10의 규칙). 경고는 프로그램이 속도를 위해 실행 중에 컴파일하는 수식을
+시작하는 줄들에 대한 것입니다. 새로 만든 기계어 코드를 실행하는 일은 Rust의 검사된
+형태로는 작성할 수 없으며, 프로그램이 이를 허용하는 곳은 이 줄들과 Intel 노이즈 제거
+필터로 이어지는 연결 부분뿐입니다. 나머지는 참고용 안내입니다. (이전: 0.2.85는 100점 중
+5점을 받았습니다. 0.2.100은 몇 시간 동안 위험으로 판정되었는데, 수식 컴파일러의 수학 함수
+두 개가 검사기가 숨겨진 코드 실행으로 여기는 이름을 쓰고 있었기 때문입니다. 같은 날 이름을
+바꾸었고, 이제 테스트가 그런 이름이 들어오지 않게 막습니다. 0.2.66은 예전
 엔진에서 100점 중 0점을 받았습니다. [0.2.44 결과](../img/scan_0.2.44.png)도
 참고하십시오.) 이전의 한 버전이 경고를 받았고, 이에 대응해
 코드를 변경했습니다([issue #4](https://github.com/thr32423/mb3d-rs/issues/4)).
@@ -463,7 +466,8 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   컴퓨터들이 그림, 큰 렌더링, 몬테카를로 그림, 애니메이션을 함께 렌더링합니다.
   [여러 컴퓨터에서 렌더링하기](#rendering-on-several-computers-the-swarm)를
   참고하십시오.
-* **커뮤니티 수식과 맵**: 공식 저장소에 없는 수식 129개와 맵 154개로, Machina Infinitum가 무료로 배포하는 Mandelbulb3D 1.99.37 패키지에서 가져왔습니다. 수식의 작성자는 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero 및 파일에 작성자 이름이 없는 다른 사람들입니다. 각 수식의 작성자는 `M3Formulas/CREDITS-community.md`에 있습니다(DarkBeam의 `teapot.m3f`는 CC BY-SA 3.0). 맵은 DarkBeam의 모음으로, 그의 조건(자유롭게 사용 가능, 변경 없이 판매 불가)을 따르며 CmdrChaos, Fractales75, Nic022, UndeadAcademy가 DeviantArt에 공유한 그림을 포함합니다. 맵 3046–3048은 Kronpano의 작품입니다(`M3Maps/CREDITS-community.md`).
+* **커뮤니티 수식과 맵**: 공식 저장소에 없는 수식 129개와 맵 154개로, Machina Infinitum가 무료로 배포하는 Mandelbulb3D 1.99.37 패키지에서 가져왔습니다. 수식의 작성자는 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero 및 파일에 작성자 이름이 없는 다른 사람들입니다. 각 수식의 작성자는 `M3Formulas/CREDITS-community.md`에 있습니다(DarkBeam의 `teapot.m3f`는 CC BY-SA 3.0). 맵은 DarkBeam의 모음으로, 그의 조건(자유롭게 사용 가능, 변경 없이 판매 불가)을 따르며 CmdrChaos, Fractales75, Nic022, UndeadAcademy가 DeviantArt에 공유한 그림을 포함합니다. 맵 3046–3048은 Kronpano의 작품입니다(`M3Maps/CREDITS-community.md`). `M3Lights`의 조명 프리셋 608개도 같은 패키지에서 왔으며, 파일에 만든 사람이 적혀 있지 않습니다(`M3Lights/CREDITS-community.md`).
+* **Mandelbulb3D SE에서 얻은 아이디어**: mb3d-rs를 바탕으로 만든 macOS 앱인 Glenn Olander의 Mandelbulb3D SE에서 두 가지 아이디어를 얻었습니다. 그래픽 카드 없이 테스트에서 모든 그래픽 카드 셰이더를 검사하는 것, 그리고 정지가 그림 칠하기를 즉시 끝내는 것입니다.
 * **새 공식 PseudoKleinian:** 홀, 아치, 구로 이루어진 "Kleinian architecture"를
   고유의 정확한 거리를 가진 하나의 공식으로 만든 것입니다.
 
@@ -579,6 +583,32 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   와 .m3i 파일, 그리고 텍스트 매개변수의 제목 뒤 `{mb3d-rs: ...}`).
   Mandelbulb3D 는 이를 읽지 않습니다. 장면 키 `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; 자세한 내용은 [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+
+  **투명한 물**: *물* 을 0보다 크게 하면 (물이 통과시키는 빛의 양) 반쯤 잠긴 프랙탈이 수면 아래에 보이며, 굴절로 휘어지고 (*굴절*: 물은 1.33) 깊이에 따라 깊은 물의 색 (색 버튼) 으로 변합니다. *흡수* 는 얼마나 탁한지 (0 맑음, 3 탁함) 정하며, 청록색 물에서는 빨강이 먼저 사라져 잠긴 부분이 청록빛이 됩니다. 물결 위 조명의 반짝임은 수면에 남습니다. 일반 렌더는 반사를 켰을 때 (후처리), 몬테카를로는 항상 보여 줍니다. 반사가 없으면 물은 불투명하게 남습니다. 장면 키 `ground_transparency`, `ground_absorption`, `ground_water_color`, `ground_ior`; 예시는 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **산란** (*굴절* 아래 줄): 물이 실제 물처럼 빛을 산란시킵니다. 태양 쪽을 보면 청록색으로 빛나고, 물마루가 비쳐 보이며, 햇빛이 프랙탈의 그림자에 잘린 빛줄기로 들어가고, 물속의 것이 물의 색으로 은은하게 빛납니다. 몬테카를로는 물속에서 산란하는 빛을 추적합니다. 두 번째 칸은 산란의 방향입니다 (0.8: 주로 앞쪽). 0은 산란 없는 모습입니다. 장면 키 `ground_scattering`, `ground_scatter_dir`; [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water) 참고.
+
+  **해 보기**: *절단* 페이지에서 *지면* 을 선택하고 그 높이를 프랙탈 사이로 지나게 한 뒤, *물* 을 1, *흡수* 를 1, *산란* 을 0.5로 놓고, 반사를 켭니다 (*후처리*, *반사 + 투명도*, *R. (+ T.) 자동 계산*). 그런 다음 *3D 계산* 을 누릅니다.
+
+  설정과 함께 붙여 넣기만 하면 되는 완성 장면 3개: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *물* (투명도) 0, 0.5, 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="투명도 0, 0.5, 1: 회색의 불투명한 물, 그다음 잠긴 절반의 프랙탈이 청록색으로 비쳐 보임"></a>
+
+  *흡수* 0.3, 1, 3, 맑은 물에서 탁한 물까지:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="흡수 0.3, 1, 3: 잠긴 절반이 뚜렷한 녹색, 흐려지다가 사라짐"></a>
+
+  *산란* 0, 0.5, 1 을 태양 쪽을 보며, 그리고 낮은 태양이 앞에 있을 때의 빛줄기:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="산란 0, 0.5, 1 을 태양 쪽을 보며: 어두운 물, 그다음 빛나는 청록색 물"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="낮은 태양이 앞에: 프랙탈의 그림자 부피가 파란 빛줄기로 물속으로 뻗음"></a>
+
+  **물결** 은 하나의 바람 방향을 따르는 열여섯 개의 파도로 이루어진 불규칙한 바다입니다 (0.2.98 이전에는 규칙적인 파도 세 개가 체크무늬를 만들었습니다. 물결이 있는 장면은 그 이후 다르게 보입니다). 이전 것 (각 쌍의 왼쪽) 과 새것, 작은 파도와 큰 파도, 태양이 앞과 뒤에 있을 때:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="이전 물결과 새 물결의 비교: 밝은 마름모의 이전 규칙적인 격자와 새로운 불규칙한 바다"></a>
 
   </details>
 * **HDR 그림의 빛**: 360° Radiance 그림 (`.hdr`) 을 배경으로 쓰면 그 밝기
@@ -733,6 +763,22 @@ GitHub 저장소에서 유해한 소프트웨어의 징후를 검사하는 독�
   지나갑니다. 애니메이션 메이커의 *모션 블러*: 각 프레임은 *셔터* 시간 (다음
   프레임까지의 시간에 대한 비율) 안의 그 수만큼의 그림의 평균이므로 움직이는 것이
   번집니다. 시간도 그 수의 배만큼 걸립니다 (`mb3d animate --motion-blur 8,0.5`).
+
+  *애니메이션 메이커* > *애니메이션 템플릿...*은 메인 창의 시점에서 초 단위로 지정한 길이 (창의 초당 프레임 수 기준)의
+  키프레임을 만듭니다: 고른 축 (왼쪽에서 오른쪽, 위로 넘어, 롤, 셋을 동시에, 또는 프랙탈의 X, Y, Z 축) 주위의 *360°
+  궤도* (`--orbit 8 --duration 10 --orbit-axis pitch`), 또는 카메라가 프랙탈 안으로 계속
+  날아가고 줌이 거리를 따라가며, 진로를 유지하다가 부딪힐 것을 피할 때만 방향을 바꾸는 *플라이스루* (`--fly
+  --duration 20`; `--duration 0`: 화면에 하늘만 또는 프랙탈만 보일 때까지). 애니메이션 메이커의 *360°
+  VR* (`--vr`)은 모든 프레임을 구형 파노라마 (2:1)로 만듭니다. *스테레오 애니메이션 렌더링*와 함께 쓰면 동영상에 두
+  눈이 위아래로 담기고 (왼쪽이 위), ffmpeg 명령은 `mb3d vr360 video.mp4 --stereo tb`로 끝나
+  MP4를 YouTube, Meta Quest, VLC용 360 동영상으로 표시합니다. JPEG로 저장한 구형 파노라마에는 Photo
+  Sphere XMP가 들어가므로 Facebook이 360 사진으로 보여 줍니다.
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Mandelbulb 표면의 한 점을 도는 360° 궤도의 5개 프레임"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="플라이스루, 1초마다 1프레임"></a>
+
+  애니메이션 템플릿, 360° 사진, 360° VR 동영상은 Rathinagiri S([SRathinaGiri](https://github.com/SRathinaGiri), [#30](https://github.com/thr32423/mb3d-rs/pull/30))가 기여했습니다. 궤도는 모든 프레임에서, 키프레임 사이에서도 카메라를 회전 중심에서 같은 거리에 둡니다: 먼저 시점의 중심을 회전 중심에 놓으므로 키프레임은 회전만 다릅니다. 다른 키프레임 뒤에 추가하면 첫 키프레임으로 다시 끝나 한 바퀴가 온전합니다. *시작 위치*에서 메인 창의 시점이나 마지막 키프레임을 고릅니다. 플라이스루는 진행 막대와 함께 백그라운드에서 계산되며, *중지*하면 그때까지 비행한 부분을 남깁니다. 동영상(v0.2.100 릴리스에 첨부, 그다음 버전으로 렌더링): [키프레임 4개 궤도, 첫 버전과 정확한 버전 나란히](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4), [텀블](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4), [플라이스루](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4), [360° VR 궤도](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4). 네 가지 모두 움직이는 그림과 설명과 함께: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * 프랙탈의 **가우시안 스플랫** 으로, Blender (5.3 이상), SuperSplat 및 다른 스플랫

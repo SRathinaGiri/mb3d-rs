@@ -7,11 +7,20 @@ use super::*;
 pub(super) fn lookup(hash: u64, ops: usize) -> Option<NativeFn> {
     let (n, f): (usize, NativeFn) = match hash {
         0x2029faef222702b4 => (47, f_2029faef222702b4), // _CondItcountR
+        0x29261967e8153d83 => (520, f_29261967e8153d83), // _Simplex3DShift
         0x2ae643c3730b173d => (97, f_2ae643c3730b173d), // _CondItcountSwX2
+        0x313a7f9d837c7ef5 => (496, f_313a7f9d837c7ef5), // JosKn-KleinIFS
+        0x4ce27eb7beb48ce8 => (135, f_4ce27eb7beb48ce8), // YPicartP8
         0x51c21cc6af31bb68 => (88, f_51c21cc6af31bb68), // _CondLyapunov
+        0x54afdd6e51191c1b => (262, f_54afdd6e51191c1b), // diamondIFS
+        0x7cb57ad8445651d3 => (142, f_7cb57ad8445651d3), // SurfBox
         0x7dd7527284569513 => (55, f_7dd7527284569513), // _CondItcountSwitch
+        0x89f03bb8be527f08 => (117, f_89f03bb8be527f08), // MandelCup
+        0xbbefa3d716fd8355 => (568, f_bbefa3d716fd8355), // JosKn-ModIFS
         0xc18a0ced851f0bba => (105, f_c18a0ced851f0bba), // HeightMap2IFS
         0xc692939cbb1d0771 => (117, f_c692939cbb1d0771), // _CondLyapunovEx
+        0xe37b852748043cdc => (284, f_e37b852748043cdc), // eiffieCarIFS
+        0xedaa1ee61c342440 => (284, f_edaa1ee61c342440), // SinePowSum
         _ => return None,
     };
     (n == ops).then_some(f)
@@ -19,6 +28,7 @@ pub(super) fn lookup(hash: u64, ops: usize) -> Option<NativeFn> {
 
 pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
     let (n, f): (usize, DirectFn) = match hash {
+        0x002ef22266bd5deb => (112, f_002ef22266bd5deb), // SinAziTwoStageInv
         0x0202689ab0f2cd69 => (137, f_0202689ab0f2cd69), // _Sin4Dplus
         0x028e1e6782dccfd3 => (90, f_028e1e6782dccfd3), // KaliLinCombSSE2sm
         0x02cc7c3b23f0ba95 => (51, f_02cc7c3b23f0ba95), // Faehrten
@@ -28,7 +38,9 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x04128463c4b21a4d => (63, f_04128463c4b21a4d), // BPine_only
         0x04c5648d94adc5e4 => (51, f_04c5648d94adc5e4), // _poincare
         0x0500d3104ee8edd4 => (37, f_0500d3104ee8edd4), // _SphereFolding1
+        0x054dcaead4b49388 => (110, f_054dcaead4b49388), // _BT4_Transform4V2
         0x0592e58aa5f82c72 => (43, f_0592e58aa5f82c72), // _QuadrayTransform
+        0x062d720b655de93b => (113, f_062d720b655de93b), // _BT2_Transform2V2
         0x069ac184d3b6d59b => (22, f_069ac184d3b6d59b), // _invtorical
         0x06b6f1ba8ace3036 => (13, f_06b6f1ba8ace3036), // _conj4D
         0x070a62f7d5d36334 => (32, f_070a62f7d5d36334), // _planeFold
@@ -55,10 +67,13 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x13798995920dbc66 => (28, f_13798995920dbc66), // _HopSqrtX
         0x14487fecacf35018 => (23, f_14487fecacf35018), // _flipC-xyz
         0x14ea390f09101007 => (45, f_14ea390f09101007), // _BRotateToMag
+        0x15cddef128dc668b => (112, f_15cddef128dc668b), // CosAziTwoStageInv
+        0x168e4781961dfec9 => (96, f_168e4781961dfec9), // RevCosTwoStageInv
         0x170d88a7063dc19f => (56, f_170d88a7063dc19f), // _dynamic
         0x179460da9f3c72b4 => (20, f_179460da9f3c72b4), // _FlipYZc
         0x17ea5a086699b098 => (102, f_17ea5a086699b098), // Aexion1
         0x1843a4e57d14edaa => (97, f_1843a4e57d14edaa), // _BT2_Transform2, _BenesiT2
+        0x1855fc7ca58da301 => (371, f_1855fc7ca58da301), // _BTwistBraid_V4v0alpha
         0x19167e07a00f877b => (35, f_19167e07a00f877b), // _NeoSqrY
         0x19a98948a101c630 => (132, f_19a98948a101c630), // Beth651
         0x1adb0954ce48afa5 => (309, f_1adb0954ce48afa5), // Beth1661dual
@@ -82,8 +97,10 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x2a3ad3459047dc56 => (92, f_2a3ad3459047dc56), // Makin4D p2b
         0x2aa886369f57321b => (38, f_2aa886369f57321b), // _Rotate
         0x2d0eb4e6f078b385 => (39, f_2d0eb4e6f078b385), // Aex-Octo
+        0x2e05808b8122f1c4 => (71, f_2e05808b8122f1c4), // yes-Box-two-3finS
         0x2e69ea4edc1c5736 => (32, f_2e69ea4edc1c5736), // _sqr_4D
         0x2e7bab9b5e660afa => (424, f_2e7bab9b5e660afa), // TetraFolding Pow2
+        0x2ed8f8f4861ecb29 => (91, f_2ed8f8f4861ecb29), // SinCosTwoStageInv
         0x2ff39075db065d85 => (158, f_2ff39075db065d85), // Menger4
         0x3026de1ec4eb0e62 => (56, f_3026de1ec4eb0e62), // MandyCousin3
         0x319b6afb1ce0cefe => (136, f_319b6afb1ce0cefe), // ABoxSmoothFold
@@ -91,6 +108,8 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x324ecf945352b2bd => (163, f_324ecf945352b2bd), // Barnsley2_4Dnc
         0x333566b600828b95 => (35, f_333566b600828b95), // _NeoSqrX
         0x334f193283f9597c => (102, f_334f193283f9597c), // HalfOctIFS
+        0x33f85ce639630e31 => (68, f_33f85ce639630e31), // EiffieQ
+        0x341cdd3c9a694310 => (366, f_341cdd3c9a694310), // _BTwistBraid_V3v2after
         0x354e2b1115793e88 => (35, f_354e2b1115793e88), // _MapTranslate
         0x354eaa270ceeee89 => (43, f_354eaa270ceeee89), // BristorBrot
         0x359551ba93faa981 => (32, f_359551ba93faa981), // _reciprocalX3b
@@ -103,8 +122,10 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x3b497cfee4d7d687 => (97, f_3b497cfee4d7d687), // Makin-NSR-tri
         0x3b7744c8ba03a427 => (38, f_3b7744c8ba03a427), // CosinePow2
         0x3ba307e95caa64f9 => (318, f_3ba307e95caa64f9), // _e_3Dtess
+        0x3dbb1ce9bec93b11 => (59, f_3dbb1ce9bec93b11), // _BPolygonToCircleV2
         0x3dd3d14c111a4f2c => (214, f_3dd3d14c111a4f2c), // Barnsley4Dnc
         0x3dde1df1a9f1ef97 => (78, f_3dde1df1a9f1ef97), // _gnarl2Dfast
+        0x3f3c312349d7b282 => (108, f_3f3c312349d7b282), // CosAziTwoStage
         0x3f765c463884471f => (19, f_3f765c463884471f), // _reciprocalX2
         0x3f9b8ef7ed2e83ae => (106, f_3f9b8ef7ed2e83ae), // ABoxMod1
         0x40561823f83f886e => (74, f_40561823f83f886e), // _quadist
@@ -126,8 +147,10 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x51047c2cab88bd4e => (215, f_51047c2cab88bd4e), // Makin4D p8a
         0x52acd88c7bcf018e => (161, f_52acd88c7bcf018e), // MagVsXYZabs
         0x54069ee3b39d99e6 => (82, f_54069ee3b39d99e6), // Quadrat3D
+        0x54792b847d6342d4 => (422, f_54792b847d6342d4), // _BTwistBraid_V3v3
         0x558b81855fc0a4dd => (44, f_558b81855fc0a4dd), // _sphereZinv
         0x55a54e66dcd2d72f => (167, f_55a54e66dcd2d72f), // Lambda4Dnc
+        0x5892014270c1364a => (101, f_5892014270c1364a), // _Bmod_FernTransform
         0x58fc3b5da2368ee2 => (38, f_58fc3b5da2368ee2), // _totorical2
         0x590eb8dce25dd57b => (76, f_590eb8dce25dd57b), // IQ_PineTree_NoYZ
         0x59d6a2c368055035 => (94, f_59d6a2c368055035), // _BT4_Transform4
@@ -139,6 +162,9 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x5ed55c7747d8abf4 => (47, f_5ed55c7747d8abf4), // _PartlyJulia
         0x60ab5319ed4fba0b => (81, f_60ab5319ed4fba0b), // Hopf4D
         0x61aeefdbaa5e5b10 => (20, f_61aeefdbaa5e5b10), // _FlipXYc
+        0x621449000c668362 => (97, f_621449000c668362), // CrossMenger
+        0x62c00571d2e5f3a1 => (225, f_62c00571d2e5f3a1), // BuddhiRotX3b
+        0x6385a0cbc7455f73 => (84, f_6385a0cbc7455f73), // CosSinTwoStage
         0x63dbe858f3b68b24 => (163, f_63dbe858f3b68b24), // Barnsley2_4Dc
         0x6405c0b3abe12770 => (43, f_6405c0b3abe12770), // _gnarl2D_2
         0x64152fb1c5237b37 => (120, f_64152fb1c5237b37), // ASurfMod1
@@ -170,16 +196,20 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0x76665bf51ca8f80e => (117, f_76665bf51ca8f80e), // _RotateXYonItsP
         0x76b09de54fd4686e => (26, f_76b09de54fd4686e), // _julibrot
         0x778f7dea5adf2d48 => (218, f_778f7dea5adf2d48), // Amazing Surf 2
+        0x779c675e419a2202 => (110, f_779c675e419a2202), // _BT3_Transform3V2
         0x7802538289b5cfe3 => (78, f_7802538289b5cfe3), // IQ_PineTree
         0x7820bdda2a825c7e => (71, f_7820bdda2a825c7e), // _RotatedAbs
         0x789b0e6fa175e144 => (32, f_789b0e6fa175e144), // _reciprocalY3b
         0x7a40fec6e4674f50 => (203, f_7a40fec6e4674f50), // _IntPowRotateC
         0x7a6c90aeb7f60905 => (34, f_7a6c90aeb7f60905), // _LogZ
+        0x7bcc206a1b7043dd => (93, f_7bcc206a1b7043dd), // RevSinTwoStage
         0x7db073976a2f1e2e => (68, f_7db073976a2f1e2e), // _gnarl3D
         0x7efcd46b624cb1bb => (94, f_7efcd46b624cb1bb), // _BT3_Transform3, _BenesiT3
         0x7f9fef6fa0413ff0 => (51, f_7f9fef6fa0413ff0), // _toruspinv1
         0x7fb5cdafeec5dbf0 => (11, f_7fb5cdafeec5dbf0), // _invcylindrical
         0x81f3c3c0ee0b399e => (47, f_81f3c3c0ee0b399e), // Mandel4DBiC
+        0x8210aadcf78103bb => (45, f_8210aadcf78103bb), // _BPolygonFromCircleV2
+        0x82cd1c634d5278cf => (109, f_82cd1c634d5278cf), // SinAziTwoStage
         0x82fc9de97ad99e88 => (155, f_82fc9de97ad99e88), // MixPinski4
         0x838ae2b97d9fa9b7 => (34, f_838ae2b97d9fa9b7), // _TranslateC4d
         0x83c81cbbb8888f0b => (246, f_83c81cbbb8888f0b), // BulboxP-2
@@ -241,6 +271,8 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xa4bf55564b130369 => (197, f_a4bf55564b130369), // Barnsley4Dc2
         0xa54e8329bc37d850 => (38, f_a54e8329bc37d850), // _rossler
         0xa6dbf2766292a63e => (23, f_a6dbf2766292a63e), // _tospherical
+        0xa739e60cb34c60ef => (90, f_a739e60cb34c60ef), // CosSinTwoStageInv
+        0xa774b10b3f158cbb => (54, f_a774b10b3f158cbb), // _loresmode
         0xa7936171b561b3d0 => (83, f_a7936171b561b3d0), // MengerIFS
         0xa85da18b6fe095bc => (21, f_a85da18b6fe095bc), // _totorical
         0xa9861b5923bb62f5 => (103, f_a9861b5923bb62f5), // Sierpinski3alt
@@ -251,18 +283,22 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xac3ff5358b339fc8 => (36, f_ac3ff5358b339fc8), // _FoldingOct
         0xad57da69411cd8be => (8, f_ad57da69411cd8be), // _FlipXZ
         0xad64becab40dc2e6 => (71, f_ad64becab40dc2e6), // _BPolyhedronToSphere
+        0xadd36b29fc56ff98 => (104, f_add36b29fc56ff98), // CosinePow7
         0xae55f8c704ff1068 => (221, f_ae55f8c704ff1068), // TgladTetra2
+        0xb1dfc28374bc8a25 => (89, f_b1dfc28374bc8a25), // RevCosTwoStage
         0xb20564341de25a3f => (215, f_b20564341de25a3f), // TalisTpx
         0xb2453fefc3b1431c => (21, f_b2453fefc3b1431c), // _reciprocalZ3
         0xb2ce2c7485c0a0d0 => (36, f_b2ce2c7485c0a0d0), // _juliax2
         0xb2d7cef7f6817ce1 => (204, f_b2d7cef7f6817ce1), // ATetraVS2
         0xb31dd057e6ca45d3 => (82, f_b31dd057e6ca45d3), // _Log4D
+        0xb340e4f0944588f0 => (57, f_b340e4f0944588f0), // qh_cubicbulb
         0xb4ad016c670aa902 => (66, f_b4ad016c670aa902), // _HexaTransform
         0xb4c29c913bad48b4 => (50, f_b4c29c913bad48b4), // _CelticMode
         0xb4cf373b9466e13e => (24, f_b4cf373b9466e13e), // _Scalingplus
         0xb5d34f8186a0b281 => (68, f_b5d34f8186a0b281), // _FoldingVar
         0xb61d72457c8e4a80 => (220, f_b61d72457c8e4a80), // ABoxPlatinum
         0xb79b4e171c1ff1e4 => (37, f_b79b4e171c1ff1e4), // _SinePow2
+        0xb7efecf1a7127151 => (109, f_b7efecf1a7127151), // _BPolyCircleTransformV2
         0xb8c0565aa1a8fd35 => (74, f_b8c0565aa1a8fd35), // _BenesiUnSpheric
         0xb90d8f4fad9c4895 => (192, f_b90d8f4fad9c4895), // Beth1032
         0xba4de75c7ecca449 => (155, f_ba4de75c7ecca449), // Makin4D p4b
@@ -293,11 +329,13 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xcc9e197248dd9869 => (20, f_cc9e197248dd9869), // _Rpow3_4d
         0xccc969eed4f1b60e => (66, f_ccc969eed4f1b60e), // _sphereinv
         0xcd09cc47b9ba875d => (16, f_cd09cc47b9ba875d), // _AbsX
+        0xce65419049e105ee => (468, f_ce65419049e105ee), // MengerIFS_B_2v0
         0xd015ffb71f7f9999 => (21, f_d015ffb71f7f9999), // _reciprocalY3
         0xd02a4629db0ffb5f => (147, f_d02a4629db0ffb5f), // _FoldingTetraKaleid
         0xd0bca413e7f68945 => (132, f_d0bca413e7f68945), // ABoxVaryScale4d
         0xd1e51e777240591a => (21, f_d1e51e777240591a), // _reciprocalX3
         0xd33f7aba0cdb3883 => (20, f_d33f7aba0cdb3883), // _SquareR
+        0xd397340e746073be => (282, f_d397340e746073be), // _BSpinBobber_333
         0xd39a6b99dad09571 => (165, f_d39a6b99dad09571), // HalfOct4a
         0xd3df2096124fd53c => (104, f_d3df2096124fd53c), // MengerIFSplus
         0xd4ac4a8e5a1330a8 => (164, f_d4ac4a8e5a1330a8), // MagVsXYZ
@@ -311,7 +349,7 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xdaa911bbd21a5ba2 => (8, f_daa911bbd21a5ba2), // _FlipXY
         0xdb586ffc50e7c8e7 => (166, f_db586ffc50e7c8e7), // _kamtor
         0xdcaf5f10d7642fa5 => (182, f_dcaf5f10d7642fa5), // Lambda4Dc
-        0xdd0e13f47b61ba55 => (78, f_dd0e13f47b61ba55), // IQ-bulb
+        0xdd0e13f47b61ba55 => (78, f_dd0e13f47b61ba55), // IQ-bulb, Scap
         0xdd6d270d41ac382c => (98, f_dd6d270d41ac382c), // CosinePow8
         0xddde751ec8e90b97 => (34, f_ddde751ec8e90b97), // _LogX
         0xde241dcc0eea52d3 => (58, f_de241dcc0eea52d3), // MsltoeSym3
@@ -330,7 +368,7 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xe414957dff3bdb3b => (177, f_e414957dff3bdb3b), // DodecahedronIFS, IcosahedronIFS
         0xe481d9d21cb9b5a3 => (95, f_e481d9d21cb9b5a3), // Aex-TorusPow
         0xe537e77efcce6421 => (43, f_e537e77efcce6421), // ABoxModKali
-        0xe589ab23df662be4 => (75, f_e589ab23df662be4), // _AmazingBox
+        0xe589ab23df662be4 => (75, f_e589ab23df662be4), // _AmazingBox, _AmazingRandom
         0xe5b10d9b6546bbe5 => (19, f_e5b10d9b6546bbe5), // _SinY
         0xe5db1997040c3e06 => (161, f_e5db1997040c3e06), // ASurfSmoothFold
         0xe60fa9d255bb9543 => (64, f_e60fa9d255bb9543), // _hopalm1
@@ -342,8 +380,10 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xeba3ca997c3e90a6 => (88, f_eba3ca997c3e90a6), // _BT1_Transform1, _BenesiT1
         0xed20a957557e16ba => (179, f_ed20a957557e16ba), // Quintic
         0xed8c0bada1a48f34 => (55, f_ed8c0bada1a48f34), // CommQuat
+        0xee80f00219797b4b => (281, f_ee80f00219797b4b), // _BSpinBobber_333spintop
         0xef51c569bcc8d778 => (39, f_ef51c569bcc8d778), // IdesFormula
         0xf00735d0df8b58ff => (225, f_f00735d0df8b58ff), // ABoxPlatinumB
+        0xf0514f31d08bb851 => (121, f_f0514f31d08bb851), // _BPolyCircleTransformV2_W
         0xf15e7033ae08e677 => (164, f_f15e7033ae08e677), // koch_cube
         0xf19722dc8c8c12d9 => (139, f_f19722dc8c8c12d9), // MengerKochV2
         0xf1ba1b4b15115e83 => (58, f_f1ba1b4b15115e83), // MandyCousin
@@ -352,7 +392,10 @@ pub(super) fn lookup_direct(hash: u64, ops: usize) -> Option<DirectFn> {
         0xf6c64401ae59f789 => (61, f_f6c64401ae59f789), // _PartlyJuliaRoff
         0xf7d7af6ba66543c7 => (192, f_f7d7af6ba66543c7), // BT1Pinegon
         0xf7f9bff8d369f709 => (341, f_f7f9bff8d369f709), // ATetraVS
+        0xf8730ef7d41a27db => (98, f_f8730ef7d41a27db), // RevSinTwoStageInv
         0xf8a79f471f2fd4a3 => (40, f_f8a79f471f2fd4a3), // _JuliaSets
+        0xf8c91aac84be22b0 => (80, f_f8c91aac84be22b0), // SinCosTwoStage
+        0xfb2f524a42903f19 => (107, f_fb2f524a42903f19), // BuddhiRotX3
         0xfb5ac68d1c9c59f0 => (156, f_fb5ac68d1c9c59f0), // koch_surf
         0xfceaa568004c7d1c => (41, f_fceaa568004c7d1c), // Makin3D-1
         0xff7b36c315e2d39e => (57, f_ff7b36c315e2d39e), // _SphereInvC4d
@@ -370,18 +413,24 @@ pub(super) fn lookup_difs(hash: u64, ops: usize) -> Option<DifsFn> {
         0x0c5b508a8961b04d => (62, f_0c5b508a8961b04d), // PolyFoldIFS
         0x0d2d38758758b123 => (83, f_0d2d38758758b123), // KnotsIFS
         0x1241d2b84fae112c => (126, f_1241d2b84fae112c), // trifoliumIFS
+        0x147b986ebf3538f6 => (254, f_147b986ebf3538f6), // teapot
         0x15ceb8dc7a068aa6 => (121, f_15ceb8dc7a068aa6), // CitrusIFS
         0x170526ee426bbc9d => (75, f_170526ee426bbc9d), // foldingoctIFS
         0x1941b230051d078c => (86, f_1941b230051d078c), // SphereHeightMap
         0x19adbddced1d7f99 => (132, f_19adbddced1d7f99), // SphereHMVoid
         0x1c26f158990d75db => (148, f_1c26f158990d75db), // hextgrid3IFS
         0x1d53e7c915b02656 => (47, f_1d53e7c915b02656), // QCylIFS
+        0x1e0f9a93662cc139 => (194, f_1e0f9a93662cc139), // LoResTIFS
         0x1fc56909b67e214a => (199, f_1fc56909b67e214a), // NewFoldCutIFS
+        0x2056c4daad446e9e => (137, f_2056c4daad446e9e), // murl2_fast
         0x221797652ab837b5 => (98, f_221797652ab837b5), // Apollo2D-IFS
         0x22e2557ab471f64e => (223, f_22e2557ab471f64e), // NewMenger2IFS
+        0x23cd7b4f83b9f0ef => (157, f_23cd7b4f83b9f0ef), // ScherkIFS
         0x2447beab2b1a0d2d => (73, f_2447beab2b1a0d2d), // roomclrIFS
+        0x24c113e431dbc7b7 => (150, f_24c113e431dbc7b7), // ApolloTetraIFS
         0x25b0e599b5e18c3f => (111, f_25b0e599b5e18c3f), // MitreIFS
         0x268ab00071700e27 => (133, f_268ab00071700e27), // foldcut12-IFS
+        0x271e754564d800c8 => (137, f_271e754564d800c8), // K-TowerIFS
         0x2afaa6e446c39604 => (138, f_2afaa6e446c39604), // Seashell
         0x2ce52f975c89786f => (211, f_2ce52f975c89786f), // cayleySurfIFS
         0x31d3d4fa897a6b4a => (139, f_31d3d4fa897a6b4a), // diniIFS
@@ -392,10 +441,12 @@ pub(super) fn lookup_difs(hash: u64, ops: usize) -> Option<DifsFn> {
         0x38cbe2a25848f82c => (176, f_38cbe2a25848f82c), // boardIFS
         0x3d11b504b653453e => (73, f_3d11b504b653453e), // TorusIFS
         0x3e3f70ef8a7a49e9 => (19, f_3e3f70ef8a7a49e9), // TilingIFS
+        0x418c00f4c8bd6d96 => (8, f_418c00f4c8bd6d96), // invcylIFS
         0x41988a06b6cbcd15 => (89, f_41988a06b6cbcd15), // pyramIFS
         0x45ed33e74dab57e4 => (79, f_45ed33e74dab57e4), // RiemSqrtIFS
         0x496394d990bca45e => (131, f_496394d990bca45e), // schwartzIFS
         0x4d358183a0a8f2e7 => (235, f_4d358183a0a8f2e7), // WeirdCubeIFS
+        0x4e2c2e531ba0933f => (183, f_4e2c2e531ba0933f), // LoResCIFS
         0x4f619e28b1880b12 => (123, f_4f619e28b1880b12), // Apollo3D-IFS
         0x4fc28fd4347db636 => (81, f_4fc28fd4347db636), // gearIFS
         0x5146a19bd6cd198b => (129, f_5146a19bd6cd198b), // YinYangIFS
@@ -425,15 +476,20 @@ pub(super) fn lookup_difs(hash: u64, ops: usize) -> Option<DifsFn> {
         0x857d56de27b2f9d7 => (102, f_857d56de27b2f9d7), // ScherkFS
         0x85d0642781938c8d => (92, f_85d0642781938c8d), // PSphereIFS
         0x8713cb10fb46f160 => (72, f_8713cb10fb46f160), // PenN-gonIFS
+        0x8727bafba736d17a => (137, f_8727bafba736d17a), // LoHexIFS
         0x8cca213c07130873 => (110, f_8cca213c07130873), // PolyFoldEx-symIFS
         0x8e1d3abf1bb89335 => (70, f_8e1d3abf1bb89335), // PolyFold-symIFS
         0x8e4e8be2b0066d00 => (100, f_8e4e8be2b0066d00), // greekIFS
+        0x8fc38030eb046ba1 => (196, f_8fc38030eb046ba1), // LoHexCIFS
+        0x9097eae42ce14448 => (124, f_9097eae42ce14448), // LoResIFS
         0x98525f800bf1d30d => (78, f_98525f800bf1d30d), // HeightMapIFS
+        0x985c559cc794c19b => (127, f_985c559cc794c19b), // HeightMapLimIFS
         0x9f3abcd9e3fc675a => (44, f_9f3abcd9e3fc675a), // SphereIFS
         0x9fbb38a21e3674ad => (113, f_9fbb38a21e3674ad), // DevilIFS
         0xa17f8ba9b9d3f95f => (104, f_a17f8ba9b9d3f95f), // loxodromeIFS
         0xaa054baa11be9c8e => (95, f_aa054baa11be9c8e), // transLogSpIFS
         0xaba24ce0b8f5885d => (105, f_aba24ce0b8f5885d), // gnarlyIFS
+        0xadd1e1a9add7e00d => (205, f_add1e1a9add7e00d), // LoHexTIFS
         0xafc7526b3b5df48b => (89, f_afc7526b3b5df48b), // gear2IFS
         0xb465984b31c92b84 => (40, f_b465984b31c92b84), // RoundedBox
         0xb7d4c8cbb7787dd9 => (61, f_b7d4c8cbb7787dd9), // tilingbrick2IFS
@@ -443,6 +499,7 @@ pub(super) fn lookup_difs(hash: u64, ops: usize) -> Option<DifsFn> {
         0xc3fa8539ce08ddd1 => (84, f_c3fa8539ce08ddd1), // trans-qIFS
         0xca35300610e09d04 => (45, f_ca35300610e09d04), // cylinderIFS
         0xcb020d7c1a106e2b => (150, f_cb020d7c1a106e2b), // logspIFS
+        0xcc0171a0c630040b => (179, f_cc0171a0c630040b), // murl
         0xcc0b522db10a8ce6 => (93, f_cc0b522db10a8ce6), // CylinderHeightMap
         0xcf16d7a4f261c2fa => (103, f_cf16d7a4f261c2fa), // amazingIFS
         0xd004a1690fd068a2 => (60, f_d004a1690fd068a2), // ScarabIFS
@@ -455,6 +512,7 @@ pub(super) fn lookup_difs(hash: u64, ops: usize) -> Option<DifsFn> {
         0xd8b70249414a637a => (136, f_d8b70249414a637a), // lidinoidIFS
         0xd9606d2eae063b67 => (77, f_d9606d2eae063b67), // cayley2IFS
         0xda4d7ed6aa1a21a0 => (67, f_da4d7ed6aa1a21a0), // TorusEllipIFS
+        0xdb5a99b4889edb6e => (39, f_db5a99b4889edb6e), // loresmodeIFS
         0xdbf3f2529d716fba => (87, f_dbf3f2529d716fba), // PiriformIFS
         0xde14c307bf8b1b6d => (73, f_de14c307bf8b1b6d), // DecoCubeIFS
         0xdefe577413c81dd1 => (98, f_defe577413c81dd1), // CylinderHMVoid
@@ -509,3 +567,9 @@ mod part15;
 use part15::*;
 mod part16;
 use part16::*;
+mod part17;
+use part17::*;
+mod part18;
+use part18::*;
+mod part19;
+use part19::*;

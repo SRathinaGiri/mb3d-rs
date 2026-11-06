@@ -714,7 +714,10 @@ fn amazing_box(scale: f64, min_r: f64, fold: f64, v: &mut [f64; 4], j: &[f64; 4]
     let y = box_fold(v[1], fold);
     let z = box_fold(v[2], fold);
     let r = z * z + y * y + x * x;
-    let sqr_min_r = min_r * min_r;
+    // MB3D's option type 7 (Amazing Box, Bulbox): Sqr(Max(1e-40, MinR)), so
+    // a negative Min R acts as 0, not as its size
+    let m = min_r.max(1e-40);
+    let sqr_min_r = m * m;
     let mul = if r < sqr_min_r {
         scale / sqr_min_r
     } else if 1.0 < r {
@@ -854,6 +857,22 @@ fn int_pow(power: i32, zmul: f64, v: &mut [f64; 4], j: &[f64; 4]) {
 
 #[cfg(test)]
 mod tests {
+    /// A negative Min R acts as 0 (MB3D's Sqr(Max(1e-40, MinR))), not as
+    /// its size.
+    #[test]
+    fn a_negative_min_r_acts_as_zero() {
+        for ade in [false, true] {
+            for p in [[0.1, 0.1, 0.1, 1.0], [0.8, -0.3, 0.2, 1.0], [0.01, 0.02, -0.01, 1.0]] {
+                let (mut neg, mut zero, mut pos) = (p, p, p);
+                super::amazing_box(1.7, -0.6, 0.3, &mut neg, &[0.0; 4], ade);
+                super::amazing_box(1.7, 0.0, 0.3, &mut zero, &[0.0; 4], ade);
+                super::amazing_box(1.7, 0.6, 0.3, &mut pos, &[0.0; 4], ade);
+                assert_eq!(neg, zero);
+                assert_ne!(neg, pos);
+            }
+        }
+    }
+
 
     /// `AexionC` against the Pascal reference kept in formulas.pas (mode 0,
     /// which the x87 code extends with the mode bits).

@@ -47,7 +47,7 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
 **[▶ 在 scanrepo.dev 上扫描 mb3d-rs](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 （点击 *Rescan* 可获得当前代码的最新结果）
 
-版本 0.2.85 的评级为**安全：100 分中 5 分**（扫描于 2026 年 10 月 30 日，扫描器引擎第 10 版的规则）。它唯一的警告针对的是启动程序在运行时为提速而编译的公式的那一行：运行新生成的机器码无法用 Rust 的受检形式编写，而程序只在这一行和通往 Intel 降噪滤镜的桥接代码中允许这样做；其余是一条提示性说明。（更早的：0.2.66 在旧版引擎下的评级为 100 分中 0 分，另请参阅：
+版本 0.3.1 的评级为**安全：100 分中 8 分**（扫描于 2026 年 11 月 5 日，扫描器引擎第 10 版的规则）。它的警告针对的是启动程序在运行时为提速而编译的公式的那几行：运行新生成的机器码无法用 Rust 的受检形式编写，而程序只在这几行和通往 Intel 降噪滤镜的桥接代码中允许这样做；其余是一条提示性说明。（更早的：0.2.85 得到 100 分中 5 分；0.2.100 曾在几个小时内被评为危险，因为公式编译器的两个数学函数用了一个扫描器视为运行隐藏代码的名字；当天就改了名，现在有一项测试防止这类名字再出现；0.2.66 在旧版引擎下的评级为 100 分中 0 分，另请参阅：
 [0.2.44 的结果](../img/scan_0.2.44.png)。）曾有一个较早的版本被标记，我们随即修改了代码（[issue #4](https://github.com/thr32423/mb3d-rs/issues/4)）；现在的代码就是按保持这一结果的要求编写的。程序中没有任何连接互联网的代码；它们唯一请求系统打开的其他程序是您的文件管理器，即在您点击按钮打开某个文件夹时。
 
 扫描只查找已知的警示迹象，并不是保证。下面这些可以让您自己进一步核实：
@@ -312,7 +312,8 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
   计算出的完全相同。
 * **在您的多台计算机之间共享渲染**，即"集群"：能访问同一共享文件夹的计算机一起渲染一张图片、一次大图渲染、一张蒙特卡洛图片或一段动画。参见
   [在多台计算机上渲染](#rendering-on-several-computers-the-swarm)。
-* **社区公式与贴图**：官方仓库中没有的 129 个公式和 154 张贴图，来自 Machina Infinitum 免费提供下载的 Mandelbulb3D 1.99.37 软件包。公式作者为 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero，以及文件中未署名的其他作者；每个公式的作者见 `M3Formulas/CREDITS-community.md`（DarkBeam 的 `teapot.m3f` 采用 CC BY-SA 3.0 许可）。贴图来自 DarkBeam 的收藏，遵循其条款（可自由使用，不得原样出售），其中包含 CmdrChaos、Fractales75、Nic022 和 UndeadAcademy 在 DeviantArt 上分享的图片；贴图 3046–3048 为 Kronpano 所作（`M3Maps/CREDITS-community.md`）。
+* **社区公式与贴图**：官方仓库中没有的 129 个公式和 154 张贴图，来自 Machina Infinitum 免费提供下载的 Mandelbulb3D 1.99.37 软件包。公式作者为 Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero，以及文件中未署名的其他作者；每个公式的作者见 `M3Formulas/CREDITS-community.md`（DarkBeam 的 `teapot.m3f` 采用 CC BY-SA 3.0 许可）。贴图来自 DarkBeam 的收藏，遵循其条款（可自由使用，不得原样出售），其中包含 CmdrChaos、Fractales75、Nic022 和 UndeadAcademy 在 DeviantArt 上分享的图片；贴图 3046–3048 为 Kronpano 所作（`M3Maps/CREDITS-community.md`）。`M3Lights` 中的 608 个灯光预设也来自同一软件包，文件中未注明作者（`M3Lights/CREDITS-community.md`）。
+* **来自 Mandelbulb3D SE 的想法**：Glenn Olander 的 Mandelbulb3D SE 是一个基于 mb3d-rs 的 macOS 应用，它提供了两个想法：在测试中无需显卡即可检查每个显卡着色器，以及按下停止时立即结束图片的绘制。
 * **新公式 PseudoKleinian：** 由大厅、拱门和球体构成的"克莱因建筑"，作为一个带有精确距离的独立公式。
 
   <a href="../img/kleinian_hall.jpg"><img src="../img/kleinian_hall.jpg" width="300" alt="新公式：PseudoKleinian"></a>
@@ -386,6 +387,32 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
   中 (在 .m3p 和 .m3i 文件中，以及文本参数标题之后的 `{mb3d-rs: ...}`)，
   Mandelbulb3D 不会读取。场景键 `ground`、`ground_color`、`ground_reflect`、
   `ground_waves`；详见 [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field)。
+
+  **透明的水**：*水* 大于 0（水透过多少光）时，半浸在水中的分形在水面下可见，被折射弯曲（*折射*：水为 1.33），并随深度变成深水的颜色（颜色按钮）：*吸收* 决定水有多浑浊（0 清澈，3 浑浊），在蓝绿色的水中红色先消失，所以水下部分变成青绿色。灯光在波浪上的闪光留在水面上。普通渲染在开启反射（后期处理）时显示，蒙特卡洛始终显示；不开反射时水保持不透明。场景键 `ground_transparency`, `ground_absorption`, `ground_water_color`, `ground_ior`；示例见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+
+  **散射**（*折射* 下面一行）：水像真实的水一样散射光。朝太阳看时水发出青绿色的光，浪尖透光，阳光以被分形阴影切开的光束射入水中，水下物体柔和地泛出水的颜色；蒙特卡洛追踪光在水中的散射。第二个字段是散射方向（0.8：主要向前）。0 为不散射的样子。场景键 `ground_scattering`, `ground_scatter_dir`；见 [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+
+  **试一试**：在 *切割* 页勾选 *地平面*，让它的高度穿过分形，把 *水* 设为 1，*吸收* 设为 1，*散射* 设为 0.5，并打开反射（*后期处理*、*反射 + 透明*、*自动计算反射（+ 透明）*），然后点 *计算 3D*。
+
+  三个可直接粘贴的成品场景及其设置： [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *水*（透明度）0、0.5 和 1：
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="透明度 0、0.5 和 1：灰色不透明的水，然后水下的半个分形透出青绿色"></a>
+
+  *吸收* 0.3、1 和 3，从清澈到浑浊：
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="吸收 0.3、1 和 3：水下的一半清晰地呈绿色，逐渐变淡，然后隐没"></a>
+
+  *散射* 0、0.5 和 1，朝太阳看，以及低太阳在前方时的光束：
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="散射 0、0.5 和 1，朝太阳看：暗的水，然后发光的青绿色水"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="低太阳在前方：分形的阴影体积像蓝色光束一样穿过水"></a>
+
+  **波浪** 是沿同一风向的十六个波组成的不规则海面（0.2.98 之前三个规则的波形成棋盘格；有波浪的场景此后外观不同）。旧的（每对的左侧）和新的，小浪和大浪，太阳在前方和后方：
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="新旧波浪并排：旧的由明亮菱形组成的规则网格，新的不规则海面"></a>
 
   </details>
 * **来自 HDR 图片的光照**：以 360° Radiance 图片 (`.hdr`) 作为背景，以其
@@ -527,6 +554,14 @@ mb3d-rs 就是 [Mandelbulb3D](https://github.com/thargor6/mb3d)（MB3D）这款
   时动画会经过所有这些关键帧。动画制作器中的 *运动模糊*：每一帧是 *快门* 时间
   (到下一帧的时间的一部分) 内这么多张图片的平均值，所以移动的东西会被拖影；
   耗时也是这么多倍 (`mb3d animate --motion-blur 8,0.5`)。
+
+  *动画制作器* > *动画模板...* 从主窗口的视角为以秒计的时长（按窗口的每秒帧数）生成关键帧：绕你选择的轴（从左到右、从上方越过、滚转、三者同时，或分形的 X、Y、Z 轴）的 *360° 环绕*（`--orbit 8 --duration 10 --orbit-axis pitch`），或 *穿越飞行*：相机持续飞入分形，缩放随距离变化，保持航向，只在要避开会撞上的东西时才转向（`--fly --duration 20`；`--duration 0`：直到画面中只有天空或只有分形）。动画制作器中的 *360° VR*（`--vr`）把每一帧做成球面全景（2:1）；配合 *渲染立体动画*，视频中两只眼睛上下排列（左眼在上），ffmpeg 命令以 `mb3d vr360 video.mp4 --stereo tb` 结尾，把 MP4 标记为 YouTube、Meta Quest 和 VLC 的 360 视频。保存为 JPEG 的球面全景带有 Photo Sphere XMP，因此 Facebook 会把它显示为 360 照片。
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="围绕 Mandelbulb 表面一点的 360° 环绕的 5 帧"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="穿越飞行，每秒一帧"></a>
+
+  动画模板、360° 照片和 360° VR 视频由 Rathinagiri S（[SRathinaGiri](https://github.com/SRathinaGiri)，[#30](https://github.com/thr32423/mb3d-rs/pull/30)）贡献。环绕在每一帧中（关键帧之间也一样）都让相机与旋转中心保持相同距离：先把视图中心放到旋转中心上，因此关键帧之间只有旋转不同。添加在其他关键帧之后时，它会再以自己的第一个关键帧结束，使一圈完整；*起点* 可选主窗口的视图或最后一个关键帧。穿越飞行在后台计算并显示进度条，*停止* 会保留已经飞过的部分。视频（附在 v0.2.100 版本中，用其后的版本渲染）：[4 个关键帧的环绕，最初版本与精确版本并排](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4)、[翻滚](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4)、[穿越飞行](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4)、[360° VR 环绕](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4)。四段全部配有动图和说明：[docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md)。
 
   </details>
 * 分形的 **高斯泼溅**，可在 Blender (5.3 及以上)、SuperSplat 和其他泼溅查看器中

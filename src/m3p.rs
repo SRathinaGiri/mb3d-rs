@@ -244,6 +244,35 @@ pub fn raw_from_text(text: &str) -> Result<(Vec<u8>, String), String> {
     Ok((raw, title))
 }
 
+/// mb3d-rs's own settings applied to `s`: a line this version cannot read
+/// (a key of a newer version, a bad value) is left out with a warning and
+/// the others still apply, so newer parameters keep their clouds, ground
+/// and the rest in an older program (a single unknown key dropped them all).
+fn apply_extras(s: Scene, text: &str) -> (Scene, Vec<String>) {
+    let mut lines: Vec<&str> = text.lines().collect();
+    let mut warnings = Vec::new();
+    for _ in 0..=lines.len() {
+        match s.clone().apply(&lines.join("\n")) {
+            Ok(sc) => return (sc, warnings),
+            Err(e) => {
+                // "line N: ..." names the line to leave out
+                let n = e.strip_prefix("line ").and_then(|r| r.split(':').next()).and_then(|n| n.trim().parse::<usize>().ok());
+                match n.filter(|n| (1..=lines.len()).contains(n)) {
+                    Some(n) => {
+                        warnings.push(format!("mb3d-rs settings: left out {} ({e})", lines[n - 1].trim()));
+                        lines.remove(n - 1);
+                    }
+                    None => {
+                        warnings.push(format!("mb3d-rs settings: {e}"));
+                        return (s, warnings);
+                    }
+                }
+            }
+        }
+    }
+    (s, warnings)
+}
+
 /// `MakeTextparas`: the parameters as MB3D text (`Mandelbulb3Dv18{...}`).
 /// Formulas with negative iterations count as used (MB3D looks for > 0
 /// here only, dropping a last one that its own files and renders keep).
@@ -341,10 +370,39 @@ pub fn raw_from_m3i(data: &[u8]) -> Result<Vec<u8>, String> {
         raw.extend_from_slice(&data[off..data.len().min(off + ADDON_SIZE)]);
     }
     raw.resize(HEADER_SIZE + ADDON_SIZE, 0);
-    if let Some(t) = extra_at(data, off + ADDON_SIZE) {
+    // (behind the picture of "Save image in m3i" when the file has one)
+    if let Some(t) = extra_at(data, off + ADDON_SIZE).or_else(|| extra_at(data, off + ADDON_SIZE + px * 4)) {
         raw.extend(extra_block(&t));
     }
     Ok(raw)
+}
+
+/// The finished picture an `.m3i` keeps after its parameters ("Save image
+/// in m3i", MB3D's `SaveM3I` with `bSaveImgBuf`: `fullSizeImage`, 4 bytes a
+/// pixel, blue, green, red and 0, the rows from the top), as RGB; None
+/// when the file has none (or a tiled one).  MB3D shows it instead of
+/// painting the picture again (`LoadFullM3I`, FileHandling.pas:2309).
+pub fn image_from_m3i(data: &[u8]) -> Option<(usize, usize, Vec<u8>)> {
+    if data.len() < HEADER_SIZE {
+        return None;
+    }
+    let r = Rd(data);
+    let (w, h) = (r.i32(4), r.i32(8));
+    if r.i32(0) < 20 || w < 1 || h < 1 || (r.i32(0) >= 35 && r.i32(428) != 0) {
+        return None;
+    }
+    let (w, h) = (w as usize, h as usize);
+    let n = w.checked_mul(h)?;
+    let at = n.checked_mul(18)?.checked_add(HEADER_SIZE + ADDON_SIZE)?;
+    let px = data.get(at..at.checked_add(n.checked_mul(4)?)?)?;
+    if px.starts_with(EXTRA_MAGIC) {
+        return None;
+    }
+    let mut rgb = Vec::with_capacity(n * 3);
+    for p in px.chunks_exact(4) {
+        rgb.extend_from_slice(&[p[2], p[1], p[0]]);
+    }
+    Some((w, h, rgb))
 }
 
 /// The G-buffer of an `.m3i` file (for images without tiling); None when
@@ -823,10 +881,9 @@ pub fn parse(data: &[u8]) -> Result<M3pFile, String> {
     }
     // mb3d-rs's own settings
     if let Some(t) = extra_at(data, HEADER_SIZE + ADDON_SIZE) {
-        match s.clone().apply(&t) {
-            Ok(sc) => s = sc,
-            Err(e) => w.push(format!("mb3d-rs settings: {e}")),
-        }
+        let (sc, skipped) = apply_extras(s.clone(), &t);
+        s = sc;
+        w.extend(skipped);
         // the full name of a background picture MB3D's 23 characters cut
         if t.lines().any(|l| l.trim_start().starts_with("background_image")) {
             w.retain(|x| !x.starts_with("background picture '"));
@@ -957,6 +1014,7 @@ fn parse_light(r: &Rd, w: &mut Vec<String>) -> Lighting {
         w.push(format!("diffuse colour map {} not found (use --maps DIR)", l.diff_map));
     }
     l.fog_offset = (tb(3) & 0xFFFF) as f32;
+    l.fog_far_offset = ((tb(3) as u32) >> 16) as f32;
     l.depth_fog = tb(4) as f32;
     l.diffuse = tb(5) as f32;
     l.dyn_fog = tb(6) as f32;
@@ -1046,13 +1104,19 @@ fn parse_light(r: &Rd, w: &mut Vec<String>) -> Lighting {
 }
 
 /// The lighting of a light record (`TLightingParas9`, .m3l files and the
-/// header from byte 432).
+/// header from byte 432).  A shorter record is an older one
+/// (`TLightingParas8` or before), converted as MB3D's `GetLightParaFile`
+/// does; an empty one is none.
 pub fn light_from_record(rec: &[u8]) -> Option<Lighting> {
-    if rec.len() < 408 {
+    if rec.is_empty() {
         return None;
     }
     let mut h = vec![0u8; HEADER_SIZE];
-    h[432..840].copy_from_slice(&rec[..408]);
+    if rec.len() < 408 {
+        h[432..840].copy_from_slice(&crate::m3p_old::light9_from_old_record(rec));
+    } else {
+        h[432..840].copy_from_slice(&rec[..408]);
+    }
     let mut w = Vec::new();
     Some(parse_light(&Rd(&h), &mut w))
 }
@@ -1235,7 +1299,7 @@ pub fn write(sc: &Scene) -> Vec<u8> {
     d[b + 7] = (l.bg_add_light as u8) << 3 | l.internal_gamma2 as u8 | (l.yc_comb as u8) << 2 | (l.bg_ambient as u8) << 5;
     d[b + 3] = l.diff_map as u8;
     let tbv = [
-        (l.fog_offset.round() as i32 & 0xFFFF) | (128 << 16),
+        (l.fog_offset.round() as i32 & 0xFFFF) | ((l.fog_far_offset.round() as i32 & 0xFFFF) << 16),
         l.depth_fog.round() as i32,
         l.diffuse.round() as i32,
         l.dyn_fog.round() as i32,
@@ -1396,6 +1460,42 @@ mod tests {
     use super::*;
 
     #[test]
+    fn old_light_record_is_converted() {
+        // a TLightingParas record (92 bytes, before the lights were
+        // stored): ConvertFromOldLightParas makes light 1 of TBpos[1..2]
+        // and the light function of TBoptions, lights 2..4 off
+        let mut rec = vec![0u8; 92];
+        rec[0..4].copy_from_slice(&90i32.to_le_bytes()); // TBpos[1]
+        rec[4..8].copy_from_slice(&45i32.to_le_bytes()); // TBpos[2]
+        rec[44] = 3; // TBoptions: LFunction 3
+        for k in [3usize, 6, 9] {
+            // the ambient colours Cols[3, 6, 9]: AmbCol
+            rec[56 + (k - 1) * 4..60 + (k - 1) * 4].copy_from_slice(&0x0010_2030u32.to_le_bytes());
+        }
+        let l = light_from_record(&rec).expect("an old record converts");
+        assert!(l.lights[0].on && l.lights[1..].iter().all(|x| !x.on));
+        assert_eq!(l.lights[0].spec_func, 3);
+        // LXangle = Round(90 * -32768 / 360), LYangle = Round(45 * 32768 / 360), in radians
+        assert!((l.lights[0].x_angle.abs() - std::f64::consts::FRAC_PI_2).abs() < 1e-6, "{}", l.lights[0].x_angle);
+        assert!((l.lights[0].y_angle.abs() - std::f64::consts::FRAC_PI_4).abs() < 1e-6, "{}", l.lights[0].y_angle);
+        // the same lighting as the converted TLightingParas9 written out
+        let mut h = vec![0u8; HEADER_SIZE];
+        h[432..840].copy_from_slice(&crate::m3p_old::light9_from_old_record(&rec));
+        // (InterpolateColorB weighs by 0.33333: 0x10 of the third byte becomes 0x0F)
+        assert_eq!(&h[432 + 52..432 + 55], &[0x30, 0x20, 0x0F]);
+        assert_eq!(l.amb_top, parse_light(&Rd(&h), &mut Vec::new()).amb_top);
+        // a TLightingParas8 (272 bytes) keeps its lights
+        let mut r8 = vec![0u8; 272];
+        r8[92] = 0; // Lights[0].Loption: on
+        r8[93] = 2;
+        r8[106] = 1; // Lights[1].Loption: off
+        let l8 = light_from_record(&r8).unwrap();
+        assert!(l8.lights[0].on && !l8.lights[1].on);
+        assert_eq!(l8.lights[0].spec_func, 2);
+        assert!(light_from_record(&[]).is_none());
+    }
+
+    #[test]
     fn finishing_in_the_mb3d_rs_block() {
         let mut sc = Scene::preset("Integer Power").unwrap();
         sc.finish = Some(crate::finish::Finish { exposure: 0.5, tonemap: true, glow: 0.75, glow_radius: 0.03, glow_threshold: 0.6, contrast: 0.25, saturation: 1.25, warmth: -0.5, vignette: 0.375, chromatic: 0.125 });
@@ -1450,6 +1550,12 @@ mod tests {
             reflect: 0.75,
             wave_height: 0.02,
             wave_len: 0.5,
+            transparency: 0.8,
+            visibility: 0.4,
+            water_color: [10, 60, 70],
+            ior: 1.4,
+            scattering: 0.6,
+            scatter_dir: 0.7,
         });
         let raw = write(&sc);
         // MB3D's part is the same as without
@@ -1500,6 +1606,30 @@ mod tests {
         assert_eq!(parse(&write(&q)).unwrap().scene.part2_place, q.part2_place);
     }
 
+    /// The dynamic fog's far offset (TBpos[3] high word, slider 19) is
+    /// kept through the header, the scene text and back.
+    #[test]
+    fn the_far_fog_offset_is_kept() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        assert_eq!(sc.lighting.fog_far_offset, 128.0);
+        assert!(!sc.to_text().contains("fog_far_offset"));
+        sc.lighting.fog_far_offset = 201.0;
+        assert_eq!(parse(&write(&sc)).unwrap().scene.lighting.fog_far_offset, 201.0);
+        assert_eq!(Scene::parse(&sc.to_text()).unwrap().lighting.fog_far_offset, 201.0);
+    }
+
+    /// Parameters of a newer version: its unknown key is left out, the
+    /// clouds and the ground before and after it still apply.
+    #[test]
+    fn an_unknown_mb3d_rs_key_leaves_the_others() {
+        let s = Scene::preset("Integer Power").unwrap();
+        let (sc, w) = super::apply_extras(s, "clouds = y, -1.4, -3.4\nground_from_the_future = 7\nground = y, -0.45\ncloud_density = 0.5");
+        assert!(sc.clouds.is_some());
+        assert_eq!(sc.ground.as_ref().map(|g| g.pos), Some(-0.45));
+        assert_eq!(w.len(), 1, "{w:?}");
+        assert!(w[0].contains("ground_from_the_future"), "{w:?}");
+    }
+
     #[test]
     fn m3i_round_trip() {
         let mut sc = Scene::preset("Integer Power").unwrap();
@@ -1521,6 +1651,44 @@ mod tests {
         big[4..8].copy_from_slice(&i32::MAX.to_le_bytes());
         big[8..12].copy_from_slice(&i32::MAX.to_le_bytes());
         assert!(gbuffer_from_m3i(&big).is_none());
+        assert!(image_from_m3i(&d).is_none());
+    }
+
+    /// "Save image in m3i": the picture after the addon in MB3D's layout
+    /// (blue, green, red, 0), read back; the parameters and this program's
+    /// settings block behind it are still found.
+    #[test]
+    fn m3i_image_round_trip() {
+        let mut sc = Scene::preset("Integer Power").unwrap();
+        sc.width = 6;
+        sc.height = 4;
+        sc.material = Some(crate::scene::Material { fresnel: 0.5, iridescence: 0.75, irid_shift: 0.25, glow: 1.5 });
+        let g = vec![crate::gbuffer::SiLight::default(); 24];
+        let rgb: Vec<u8> = (0..24 * 3).map(|i| (i * 5) as u8).collect();
+        let p = std::env::temp_dir().join(format!("mb3d-m3i-img-{}.m3i", std::process::id()));
+        write_m3i_image_to(&p, &sc, &g, Some(&rgb)).unwrap();
+        let d = std::fs::read(&p).unwrap();
+        let _ = std::fs::remove_file(&p);
+        let at = HEADER_SIZE + 24 * 18 + ADDON_SIZE;
+        assert_eq!(&d[at..at + 8], &[10, 5, 0, 0, 25, 20, 15, 0]);
+        let (w, h, back) = image_from_m3i(&d).unwrap();
+        assert_eq!((w, h), (6, 4));
+        assert_eq!(back, rgb);
+        let m = parse(&raw_from_m3i(&d).unwrap()).unwrap().scene;
+        assert_eq!(m.material, sc.material);
+        assert_eq!(gbuffer_from_m3i(&d).unwrap().2.len(), 24);
+        // without the picture: none read, the settings still there
+        write_m3i_to(&p, &sc, &g).unwrap();
+        let d = std::fs::read(&p).unwrap();
+        let _ = std::fs::remove_file(&p);
+        assert!(image_from_m3i(&d).is_none());
+        assert_eq!(parse(&raw_from_m3i(&d).unwrap()).unwrap().scene.material, sc.material);
+        // an MB3D file: the picture at the end, no settings block
+        let mut plain = sc.clone();
+        plain.material = None;
+        let mut mb = write_m3i(&plain, &g);
+        mb.extend(rgb.chunks(3).flat_map(|p| [p[2], p[1], p[0], 0]));
+        assert_eq!(image_from_m3i(&mb).unwrap().2, rgb);
     }
 
     #[test]
@@ -1651,6 +1819,14 @@ pub fn write_m3i(sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> Vec<u8> {
 /// row block (`write_m3i` builds the whole file in memory first: 1.3 GB for
 /// a 12000 x 6000 picture, as much again as the picture itself).
 pub fn write_m3i_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::SiLight]) -> std::io::Result<()> {
+    write_m3i_image_to(path, sc, gbuf, None)
+}
+
+/// [`write_m3i_to`], with the finished picture `rgb` (RGB, the size of the
+/// G-buffer) after the formula addon as MB3D writes it with "Save image in
+/// m3i" (Mand.pas:2866 `SaveM3I`, see [`image_from_m3i`]); this program's
+/// block of further settings follows the picture.
+pub fn write_m3i_image_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::SiLight], rgb: Option<&[u8]>) -> std::io::Result<()> {
     use std::io::Write;
     let (head, tail) = m3i_parts(sc);
     let mut f = std::io::BufWriter::with_capacity(1 << 20, std::fs::File::create(path)?);
@@ -1658,7 +1834,18 @@ pub fn write_m3i_to(path: &std::path::Path, sc: &Scene, gbuf: &[crate::gbuffer::
     for part in gbuf.chunks(1 << 16) {
         f.write_all(&crate::gbuffer::pack(part))?;
     }
-    f.write_all(&tail)?;
+    match rgb.filter(|rgb| rgb.len() == gbuf.len() * 3) {
+        Some(rgb) => {
+            let a = ADDON_SIZE.min(tail.len());
+            f.write_all(&tail[..a])?;
+            for part in rgb.chunks(3 << 16) {
+                let bgr0: Vec<u8> = part.chunks_exact(3).flat_map(|p| [p[2], p[1], p[0], 0]).collect();
+                f.write_all(&bgr0)?;
+            }
+            f.write_all(&tail[a..])?;
+        }
+        None => f.write_all(&tail)?,
+    }
     f.flush()
 }
 

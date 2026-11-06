@@ -16,6 +16,7 @@ The technical side of [mb3d-rs](../README.md): how the graphics card is used, wh
 - [Output: 16 bit pictures, noise filter](#output-16-bit-pictures-noise-filter)
 - [Known differences and gaps](#known-differences-and-gaps)
 - [Videos](#videos)
+- [Animation templates and 360° output](#animation-templates-and-360-output)
 - [Time left and the progress bar](#time-left-and-the-progress-bar)
 - [Unfinished renders (`checkpoint.rs`)](#unfinished-renders-checkpointrs)
 - [Where the program keeps its files](#where-the-program-keeps-its-files)
@@ -422,7 +423,7 @@ and kept in the original evaluation order.
 | `splat.rs` | (new) | Gaussian splat export: views around the middle or the camera, a splat per object pixel, the merge by patches, spherical harmonics by a ridge fit, the 3DGS PLY writer |
 | `formulas.rs` (Aexion C) | formulas.pas | the internal formula Aexion C (`HybridAexionC`, translated from x87 assembler) with all its modes |
 | `mutagen.rs` | mutagen/MutaGen.pas, MutaGenGUI.pas, PreviewRenderer.pas, FormulaNames.pas | mutation operators, probing (Sobel and difference coverage), the 15-member tree and its layout, formula categories |
-| `jit.rs` | paxCompiler (JIT formulas), formulas/JIT*.m3f | a compiler for the Delphi subset of `[SOURCE]` formulas: preprocessor (options and constants), Delphi typing, `Math`/`System` functions, compiled to closures over the iteration state |
+| `jit.rs` | paxCompiler (JIT formulas), formulas/JIT*.m3f | a compiler for the Delphi subset of `[SOURCE]` formulas: preprocessor (options and constants), Delphi typing, `Math`/`System` functions, parsed into a typed tree, run as closures over the iteration state; `jit_pascal.rs` compiles the tree with Cranelift, `jit_wgsl.rs` translates it for the graphics card |
 | `iteration.rs` (interpolation) | formulas.pas | `doInterpolHybridPas`, `doInterpolHybridPasDE` and the 4D variants; `doHybrid4DDEPas` |
 | `calc.rs` (2D, colour on iteration) | CalcThread2D.pas, Calc.pas | `T2DcalcThread` (plane at Z start, middle or end), `doColorOnIt` |
 | `scene.rs`, `render.rs` (stereo) | HeaderTrafos.pas (`StereoChange`, `CalcXoff`) | the stereo eyes: shifted middle and off-axis view centre; left and right eye images combined (an addition) |
@@ -463,8 +464,10 @@ lacks (`M3Formulas-community/`, 129 formulas, and `M3Maps-community/`, 154
 maps, from the Mandelbulb3D 1.99.37 package that Machina Infinitum offers
 as a free download) are copied into `M3Formulas` and `M3Maps` by the release
 workflow too, with their `CREDITS.md` as `CREDITS-community.md`; they run as
-any `.m3f` does. `tests/jit.rs` checks that every one loads and every JIT one
-compiles.
+any `.m3f` does. The package's 608 light presets (`M3Lights-community/`) go
+into `M3Lights`, the default folder of the Lighting window's quick load list.
+`tests/jit.rs` checks that every formula loads, every JIT one compiles and
+every preset is a light record.
 
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
@@ -585,7 +588,28 @@ maps through `PMapFunc` (the oracle has no maps; they work in the renderer).
 Formulas written in Pascal (`[SOURCE]`, compiled by paxCompiler in MB3D) are
 compiled by `jit.rs` from the Delphi subset they use; all 40 of the MB3D
 repository compile, and the tests compare two of them with equivalent
-formulas.
+formulas. The compiler parses a formula into a typed tree, and three code
+generators work from it:
+
+* the closures (`jit.rs`): the reference, used without the JIT;
+* Cranelift (`jit_pascal.rs`): machine code for a scene's option values.
+  The options, the `[CONSTANTS]` and the locals a formula never assigns
+  become constants, and what depends only on them is computed at compile
+  time with the closures themselves, so a branch on an option disappears.
+  The code keeps the closures' representation (every value an f64,
+  ordinals converted to i64 for their operations, saturating and wrapping
+  as the closures do), so its results are the closures' bit for bit apart
+  from NaN payloads (`examples/pascalcheck.rs --jit` for all 72 Pascal
+  formulas of MB3D's and the community's folders; a test does the same).
+  A formula runs as a function of its own, or inline in the compiled
+  hybrid loop (`clif_jit::compile_hybrid`), also mixed with machine-code
+  formulas. CPU renders: JIT_RealPower 3.2 times, JIT_EM_Fld_StandartBulb
+  4.4 times faster than the closures, as fast as the built-in Real Power;
+* WGSL (`jit_wgsl.rs`): a shader function with the interface of the lifted
+  machine-code formulas (the record cells, the option values in the
+  constants buffer so the shader text does not change with them), in single
+  or double precision. `examples/pascalgpu.rs [--dbl]` runs every formula
+  on the card against the closures: all 72 agree in both precisions.
 
 Formulas are looked up in `M3Formulas` next to the program, and also in
 `--formulas DIR`, `$MB3D_FORMULAS` and `M3Formulas` in the current folder.
@@ -694,8 +718,9 @@ up): the window's switch uses `stop`, closing the program `abort`.
 ## Scene files (`.m3s`)
 
 The INI-style format holds global keys, then optional `[formula]` sections (up
-to 6, forming an alternating hybrid) and `[light]` sections (up to 6). See
-`examples/`. Any key can be overridden on the command line with
+to 6, forming an alternating hybrid) and `[light]` sections (up to 6);
+`mb3d --save-scene` writes one from any parameter file, and
+`tests/data/*.m3s` are short ones (the tests' scenes). Any key can be overridden on the command line with
 `-s key=value`. `Scene::to_text()` writes the format, and `.m3p` → `.m3s` →
 `.m3p` keeps every setting the port uses (checked over the parameter
 collection). In `[light]` sections, `slot = N` keeps MB3D's light numbering,
@@ -729,7 +754,7 @@ Like MB3D, both run on the G-buffer after the main calculation (as with the
 | `shadow_set_cos` | `true`/`false` | set the diffuse function of shadowed lights to cos |
 
 ```sh
-./mb3d examples/mandelbulb.m3s -s shadows=1 -s shadow_soft=true -o soft.png
+./mb3d tests/data/mandelbulb.m3s -s shadows=1 -s shadow_soft=true -o soft.png
 ```
 
 `.m3p` files bring their own settings. Shadows are only calculated when the
@@ -750,7 +775,13 @@ itself per light.
 | `ground` | axis, position (`y, 1.2`) or `off` | ground plane or water (not in MB3D): calculated with the fractal, the side away from the camera solid |
 | `ground_color` | `#RRGGBB` | its colour |
 | `ground_reflect` | 0..1 | its highlights, and its mirror with `mc_reflections` |
-| `ground_waves` | height, length | waves in fractal units (height 0 = flat) |
+| `ground_waves` | height, length | waves in fractal units (height 0 = flat): an irregular sea, `scene::WAVES` (16 sines around a wind direction, lengths 1.2 to 0.25 times the length, amplitude ~ length; the card's shader gets the same table, `gpu::wave_code`); the distance is divided by the steepest possible slope, and from 3 to 6 times the highest crest it blends into the distance to the crests' height |
+| `ground_transparency` | 0..1 | transparent water (`src/water.rs`; 0 = opaque): with `mc_reflections` and in Monte Carlo the refracted ray goes on under the surface through the fractal alone; Fresnel's share reflects; the reflection pass and Monte Carlo then run on the CPU |
+| `ground_absorption` | per fractal unit | Beer-Lambert: a channel keeps exp(-distance · e · absorption), e = 1 + 5 ln(clearest channel / channel) of the water colour (#0A3C46: about 10 : 2 : 1); the water's own light fills the rest; the light down to a surface under water is dimmed the same way (depth / cosine of its refracted angle). `ground_visibility` (test builds) is read as 1 / absorption |
+| `ground_water_color` | `#RRGGBB` | the colour of deep water: its own light (lit from above, without the waves) and the colour the light under water turns to; `ground_absorb_color` is read too |
+| `ground_ior` | 1..3 | refraction index (1.33) |
+| `ground_scattering` | 0..1 | scattering in the water (`water.rs`; 0 = none, the default when the key is absent): scattering coefficient = amount / visibility, grey. Reflection pass: single scattering along the refracted ray (8 steps placed by the clearest channel's fading, each lit through the water above it, `calc_hs` shadows of the shadowed lamps, the waves' focus, Henyey-Greenstein blurred by multiple scattering, gain `water::SHAFTS`), the water's own light scaled by the angle to the lamps (`glow_mod`), translucent crests (`crest`), the water's light on submerged surfaces times their occlusion. Monte Carlo: free-flight sampling of the scattering, next-event estimation of the lamps, Henyey-Greenstein directions, Russian roulette |
+| `ground_scatter_dir` | 0..0.95 | Henyey-Greenstein's g (0.8, forward) |
 | `clouds` | axis, from, to (`y, -1.2, -2.2`) or `off` | a layer of volumetric clouds (not in MB3D), painted after the lighting and reflections, before the depth of field, and in the reflections (each reflected or refracted ray through the layer up to its hit, the hit in the clouds' shadow); they shade the surfaces under them (the sunlight through them from each surface point; in the painting the ambient third of the light stays, in Monte Carlo the sun's direct light is dimmed at every hit); Monte Carlo composites them along each view ray and each reflected, refracted and diffusely bounced ray in linear light (so they also tint the ambient light) (`src/clouds.rs`: each pixel's ray through the layer up to its surface, 3D value noise, the first global light through the cloud) |
 | `cloud_density`, `cloud_coverage`, `cloud_size` | number, 0..1, fractal units | how thick, how much sky, how big |
 | `cloud_color`, `cloud_offset` | `#RRGGBB`, x, y, z | colour; the noise's shift (keyframes animate it) |
@@ -778,9 +809,9 @@ itself per light.
 | `dof_passes` | 1..4 | passes |
 
 ```sh
-./mb3d examples/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
-./mb3d examples/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
-./mb3d examples/mandelbulb.m3s -s "ground=y, 1.15" -s ground_color=#203848 -s ground_reflect=0.8 -s "ground_waves=0.03, 0.4" -s mc_reflections=1 -o water.png
+./mb3d tests/data/mandelbulb.m3s -s dof=sorted -s dof_focus=0.61 -s dof_aperture=0.3 -o dof.png
+./mb3d tests/data/mandelbulb.m3s -s cut_y=-0.2 -o cut.png
+./mb3d tests/data/mandelbulb.m3s -s "ground=y, 1.15" -s ground_color=#203848 -s ground_reflect=0.8 -s "ground_waves=0.03, 0.4" -s mc_reflections=1 -o water.png
 ```
 
 The volumetric light map is calculated before the image, with a ray march
@@ -817,7 +848,7 @@ in double precision, or while the card compiles, the CPU runs them alone.
 
 ```sh
 ./mb3d "material colors.m3p" -o glass.png
-./mb3d examples/mandelbulb.m3s -s cut_y=-0.6 -s mc_reflections=true -s mc_reflection_amount=0.8 -o mirror.png
+./mb3d tests/data/mandelbulb.m3s -s cut_y=-0.6 -s mc_reflections=true -s mc_reflection_amount=0.8 -o mirror.png
 ```
 
 Like in MB3D these run after the calculation: the normals on the z-buffer
@@ -1018,6 +1049,71 @@ a `-pattern_type glob` input when the file index steps by more than 1.
 `mb3d animate` prints it at the end; the Animation maker's *FFmpeg
 command* copies it to the clipboard. The program itself starts no other
 programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
+
+## Animation templates and 360° output
+
+**Animation templates** (`src/autopilot.rs`, `src/app/anim_templates_form.rs`;
+the Animation maker's *Animation templates...*) make keyframes from the
+main window's view, added after the keyframes there are. The camera is the
+Navigator's (`TransformNHeader`: the start plane's middle); keyframes are
+given back with the middle in front of it again (`ModRotPoint`). The
+module has its own copies of these helpers, so `navi_form.rs` is as it was.
+
+* *360° orbit* (`orbit_keyframes_axis`): the view and the middle turned
+  together around a pivot, so the camera keeps its distance and its look at
+  it; axis yaw (the view's up, the Turntable's), pitch (its right), roll
+  (its forward), all (roll, pitch and yaw at once about the start view's
+  axes: back where it began after the whole turn) or the fractal's X, Y,
+  Z. The pivot (`turntable_pivot`) is the middle, or where the middle lies
+  in the empty space before the surface the picture's middle shows, that
+  surface point (sphere tracing along the middle ray). The frames of the
+  duration are spread over the keyframes (`spread_frames`), a Catmull-Rom
+  loop. `--orbit N --duration S [--orbit-axis AXIS]`; without `--duration`
+  and `--orbit-axis`, `--orbit` is `anim::orbit_keyframes` as before.
+* *Fly-through* (`fly_through`): each frame a step of `speed` (0.04) of the
+  local DE (`GetLocalAbsoluteDE`), the zoom from it as `SetZoom`, the far
+  plane as many DEs away as at the start. Ahead the free distance along 33
+  directions (the course, four rings of 8 at 12, 25, 45 and 70°) is
+  traced to 8 DE. It flies straight on while nothing is in the way within
+  50 frames of flight (`REACT_FRAMES`); then it takes one way (scored by
+  how far it is free, not ending at a wall, not leading out into the empty
+  space, near the heading) and keeps it until the heading is on it and the
+  way ahead is free (looked at again every 6 frames; a way that closes is
+  replaced by the free one nearest to it); for 75 frames after a turn one
+  to the other side is far less wanted (`HOLD_FRAMES`). The turn's rate is
+  eased in and out (full rate, `max_turn`, after 12 frames). From a view of
+  the object from outside it first flies straight in, until the DE is 0.3
+  of the start's. Heading out into empty space with no free way back it
+  glides back toward the surface (against the DE's gradient, at a slant,
+  keeping its heading); it has left the fractal after 90 such frames. It
+  also ends at a dead end (no way free beyond 1.5 DE three frames running)
+  or when the step falls under double precision at the camera; with
+  `until_view` when of 24 by 16 rays of a keyframe's view at most one hits, or at most one misses
+  (`view_coverage`). Keyframes every half second, Catmull-Rom, not looped.
+  `--fly --duration S` (`0`: until the view is pure, at most 2 minutes).
+  Test: on Integer Power and Amazing Box at most 2 reversals of the turn in
+  30 s (before the steering: 5 to 18).
+
+**360° photos and videos** (`src/vr.rs`). A JPEG of a spherical panorama
+(`CameraOptic::Panorama`, 2:1) gets the Photo Sphere XMP (`GPano`,
+equirectangular, the whole panorama) in an APP1 segment after the JFIF one,
+which Facebook and Google Photos read (`encode_jpeg_for`, the main window's
+*Save image* as JPEG). An MP4 gets both Spherical Video metadata versions in
+every video track (`inject_spherical_mp4`): V2, `st3d` (mono, top-bottom,
+left-right) and `sv3d` with an equirectangular `proj` in the sample entry
+(YouTube, Meta Quest, VLC), and V1, the XML in a `uuid` box
+(ffcc8263-f855-4a93-8814-587a02521fdd) in the track, as Google's Spatial
+Media Metadata Injector writes it; old boxes are replaced, the chunk
+offsets moved when `moov` comes before `mdat`. `mb3d vr360 FILE [-o OUT]
+[--stereo mono|tb|lr]` marks a JPEG or an MP4. A *360° VR* animation
+(`Animation::vr360`, `--vr`, `vr360` in `.m3k`) has every frame a
+spherical panorama; with stereo its video is made of the eyes top-bottom,
+left on top (`video_frames`: `<name>VR<index>` pictures, made again when an
+eye is newer), the AVI named `_360`/`_360_TB`, and
+`video::ffmpeg_command_vr` ends with `mb3d vr360 ... --stereo tb`. Checked:
+YouTube plays both as 360 and the stereo one in two eyes (Cardboard), VLC as
+360; Facebook took the photo as 360 but played the videos flat, a file
+injected with Google's tool too.
 
 ## Gaussian splat export
 
@@ -1678,7 +1774,7 @@ another release folder (`file://` works, for tests).
 and `tar` where it is missing) and installs it on the runner as a test.
 It lays the files out as a system program: `/usr/bin/mb3d`,
 `/usr/bin/Mandelbulb3D`, MB3D's folders (`M3Formulas`, `M3Maps`,
-`M3Parameter`, `EM_JIT_M3Formulas`, `Themes`, `examples`) in
+`M3Parameter`, `EM_JIT_M3Formulas`, `Themes`, `Languages`) in
 `/usr/share/mb3d-rs`, the menu entry `mb3d-rs.desktop` and its icon, the
 man page and the completions in Debian's folders (zsh:
 `vendor-completions`). `mb3d-rs-linux-x64.rpm` (`tools/build_rpm.sh`,

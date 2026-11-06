@@ -14,15 +14,21 @@ use crate::vcl::{Event, Ui};
 
 const F: &str = "PostProForm";
 
-/// Processings applied with "Calculate now" to the image on screen (kept
-/// until the next calculation, like MB3D's bits in the G-buffer).
+/// Processings applied with "Calculate now" to the image on screen: the
+/// G-buffer's (hard and ambient shadows, normals) kept until the next
+/// calculation, like MB3D's bits in siLight5; the depth of field on the
+/// picture until the next repaint (the reflections too: they are painted).
 #[derive(Default)]
 pub struct State {
     pub hs_now: bool,
     pub ao_now: bool,
     pub normals_now: bool,
-    pub dof_now: bool,
-    pub refl_now: bool,
+    /// how often the depth of field was applied to the picture shown
+    /// ("Calculate now" accumulates, MB3D's doDOF on fullSizeImage)
+    pub dof_count: u32,
+    /// the lights whose hard shadows were reset (Button4..9) since they
+    /// were calculated: painted as without (MB3D's bHScalculated bits)
+    pub hs_reset: u8,
     /// the processing running from this window (its name for the status
     /// line) and its start
     pub running: Option<(String, std::time::Instant)>,
@@ -33,12 +39,20 @@ pub struct State {
 }
 
 impl State {
-    /// A new calculation, or "Reset now": the processings applied by hand
-    /// are dropped; the settings kept here (the clouds' colour) stay. (The
-    /// whole state was reset, and every calculation painted the clouds
-    /// black: dark clouds, a black sky with dense ones.)
+    /// A new calculation: the processings applied by hand are dropped; the
+    /// settings kept here (the clouds' colour) stay. (The whole state was
+    /// reset, and every calculation painted the clouds black: dark clouds,
+    /// a black sky with dense ones.)
     pub fn new_calc(&mut self) {
         *self = State { cloud_color: self.cloud_color, ..State::default() };
+    }
+
+    /// The picture was painted again from the G-buffer ("Reset now", a
+    /// step's "Calculate now", the lighting): the depth of field applied
+    /// to it is gone; the shadows and normals in the G-buffer stay
+    /// (MB3D's `TriggerRepaint`).
+    pub fn repainted(&mut self) {
+        self.dof_count = 0;
     }
 }
 
@@ -191,9 +205,9 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         first_step_random: ui.checked(F, "CheckBox22"),
     });
     sc.normals_on_zbuf = ui.checked(F, "CheckBox23") || st.normals_now;
-    sc.dof = (ui.checked(F, "CheckBox1") || st.dof_now).then(|| dof_params(ui));
+    sc.dof = ui.checked(F, "CheckBox1").then(|| dof_params(ui));
     let m = &mut sc.mc;
-    m.reflections = ui.checked(F, "CheckBox24") || st.refl_now;
+    m.reflections = ui.checked(F, "CheckBox24");
     m.transparency = ui.checked(F, "CheckBox27");
     m.only_difs = ui.checked(F, "CheckBox28");
     m.reflection_amount = ptf(&ui.text(F, "Edit6")).clamp(0.0, 100.0) as f32;
@@ -389,20 +403,83 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &crate::vcl::DialogRes
     }
 }
 
-/// The image is repainted with the post processing of the parameters;
-/// `stage` is shown in the main window while it runs.
-pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
+/// Whether a processing can start on the kept image (else the message).
+fn can_start(app: &mut Mb3d, ui: &mut Ui) -> bool {
     if app.main.calculating {
         app.message(ui, &tr("@MB:WaitForTheRunningCalculationOr"));
-        return;
+        return false;
     }
     if app.eng.base().is_none() {
         app.message(ui, &tr("@MB:CalculateTheImageFirst"));
+        return false;
+    }
+    true
+}
+
+/// The image is repainted with the post processing of the parameters
+/// (MB3D's `TriggerRepaint`: without the depth of field and the
+/// reflections), `step` calculated on the G-buffer first; `stage` is shown
+/// in the main window while it runs.
+pub fn repaint(app: &mut Mb3d, ui: &mut Ui, stage: &str) {
+    repaint_with(app, ui, stage, false, None);
+}
+
+fn repaint_with(app: &mut Mb3d, ui: &mut Ui, stage: &str, reflections: bool, step: Option<super::engine::PostStep>) {
+    if !can_start(app, ui) {
         return;
     }
     app.make_scene(ui);
+    app.post.repainted();
     started(app, ui, stage);
-    app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone() });
+    app.eng.start(super::engine::Job::Repaint { scene: app.scene.clone(), reflections, step, hs_off: app.post.hs_reset });
+}
+
+/// A wheel event of the window `form` given to the main window's
+/// (`Mand3DForm.FormMouseWheel` with the screen position): the paint
+/// brush's size, or the zoom when the pointer is over the image.
+pub fn forward_wheel(app: &mut Mb3d, ui: &mut Ui, form: &str, e: &Event) {
+    let crate::vcl::Ev::Wheel { delta, x, y, shift } = e.ev else { return };
+    if !ui.has_form(MAIN) {
+        return;
+    }
+    let (f, m) = (ui.f(form), ui.f(MAIN));
+    let (x, y) = (x + f.left - m.left, y + f.top - m.top);
+    let ev = Event { form: MAIN.into(), sender: String::new(), handler: "FormMouseWheel".into(), ev: crate::vcl::Ev::Wheel { delta, x, y, shift } };
+    super::main_form::event(app, ui, &ev);
+}
+
+/// The bits in the G-buffer that a light's hard shadow reset leaves
+/// (Button4Click): `t` the button's tag 1..6 (light `t - 1`); with the
+/// soft shadow of one light (`soft_light` the light it was calculated
+/// for) every pixel lit again, else that light's bit cleared.  None: the
+/// soft shadow is another light's, nothing to reset.
+fn reset_shadow_bits(shadow: u16, t: u32, soft_light: Option<Option<u32>>) -> Option<u16> {
+    match soft_light {
+        Some(l) if l != Some(t - 1) => None,
+        Some(_) => Some(shadow & 0x3FF | 0xFC00),
+        None => Some(shadow & !(0x200u16 << t)),
+    }
+}
+
+/// Button4..9: the hard shadow of one light is taken out of the G-buffer
+/// and the picture repainted; the light's box stays ticked (MB3D).
+fn reset_light_shadow(app: &mut Mb3d, ui: &mut Ui, t: u32) {
+    if !(1..=6).contains(&t) || !can_start(app, ui) {
+        return;
+    }
+    let Some(b) = app.eng.base() else { return };
+    // the soft shadow is of the last selected light (calcHSsoft)
+    let soft_light = b.scene.shadows.filter(|h| h.soft).map(|h| (0..6u32).rev().find(|i| h.lights >> i & 1 != 0));
+    if reset_shadow_bits(0, t, soft_light).is_none() {
+        return;
+    }
+    app.eng.edit_gbuffer(|_, _, g| {
+        for s in g.iter_mut() {
+            s.shadow = reset_shadow_bits(s.shadow, t, soft_light).unwrap_or(s.shadow);
+        }
+    });
+    app.post.hs_reset |= 1 << (t - 1);
+    repaint(app, ui, &tr("@MB:PostProcessingLower"));
 }
 
 /// The selection in the image (MB3D's `iRect` with `ClipIRect`'s checks),
@@ -461,16 +538,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "NoiseAutoCbxClick" | "CloudsCbxClick" | "MaterialCbxClick" | "FinishCbxClick" => update_captions(ui),
         "FinishNowBtnClick" => {
             app.make_scene(ui);
-            repaint(app, ui, "finishing");
+            repaint(app, ui, &tr("@MB:Finishing"));
         }
         "MaterialNowBtnClick" => {
             app.make_scene(ui);
-            repaint(app, ui, "material");
+            repaint(app, ui, &tr("@MB:Material"));
         }
         "CloudColBtnClick" => ui.pick_color("post:cloudcolor", super::util::argb(app.post.cloud_color)),
         "CloudsNowBtnClick" => {
             app.make_scene(ui);
-            repaint(app, ui, "clouds");
+            repaint(app, ui, &tr("@MB:Clouds"));
         }
         "FormShow" => {
             super::main_form::place_sticky(app, ui, Some(F), true);
@@ -490,28 +567,28 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "UpDown1ChangingEx" => radio_group3_click(ui),
         "Button14Click" => {
             app.post.normals_now = true;
-            repaint(app, ui, &tr("@MB:NormalsOnZBuf"));
+            repaint_with(app, ui, &tr("@MB:NormalsOnZBuf"), false, Some(super::engine::PostStep::Normals));
         }
         "Button3Click" => {
-            if shadow_params(ui).lights == 0 {
+            // the ticked lights that are no light maps (Button3Click)
+            app.make_scene(ui);
+            let lights = &app.scene.lighting.lights;
+            let any = (0..6).any(|i| {
+                let cb = format!("CheckBox{}", i + 2);
+                ui.enabled(F, &cb) && ui.checked(F, &cb) && lights.get(i).is_some_and(|l| l.map == 0)
+            });
+            if !any {
                 ui.show_message(&tr("@MB:PleaseSelectTheLightsFirstNo"));
                 return;
             }
             app.post.hs_now = true;
-            repaint(app, ui, &tr("@MB:HardShadowCalculation"));
+            app.post.hs_reset = 0;
+            repaint_with(app, ui, &tr("@MB:HardShadowCalculation"), false, Some(super::engine::PostStep::Shadows));
         }
-        "Button4Click" => {
-            // reset the hard shadow of a light
-            let t = ui.tag(F, &e.sender) as usize;
-            ui.set_checked(F, &format!("CheckBox{}", t + 1), false);
-            if shadow_params(ui).lights == 0 {
-                app.post.hs_now = false;
-            }
-            repaint(app, ui, &tr("@MB:HardShadowCalculation"));
-        }
+        "Button4Click" => reset_light_shadow(app, ui, ui.tag(F, &e.sender) as u32),
         "Button10Click" => {
             app.post.ao_now = true;
-            repaint(app, ui, &tr("@MB:AmbientShadowCalculation"));
+            repaint_with(app, ui, &tr("@MB:AmbientShadowCalculation"), false, Some(super::engine::PostStep::Ao));
         }
         "Button11Click" => {
             if ui.checked(F, "CheckBox25") {
@@ -531,16 +608,21 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 app.eng.start(super::engine::Job::ReflectSel { scene: app.scene.clone(), rect });
                 return;
             }
-            app.post.refl_now = true;
-            repaint(app, ui, &tr("@MB:Reflections"));
+            repaint_with(app, ui, &tr("@MB:Reflections"), true, None);
         }
         "Button1Click" => {
+            app.make_scene(ui);
             if app.scene.tiling.is_some() {
                 ui.show_message(&tr("@MB:NoDoFOnTiles"));
                 return;
             }
-            app.post.dof_now = true;
-            repaint(app, ui, &tr("@MB:DoFCalculation"));
+            // doDOF on the picture shown: the effect accumulates
+            if !can_start(app, ui) {
+                return;
+            }
+            app.post.dof_count += 1;
+            started(app, ui, &tr("@MB:DoFCalculation"));
+            app.eng.start(super::engine::Job::Dof { dof: dof_params(ui) });
         }
         "Button2Click" => {
             let tg = ui.tag(F, &e.sender) as i32;
@@ -559,8 +641,9 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.set_text(F, "Edit10", &t);
         }
         "Button16Click" => {
-            // "Reset now": the processings applied by hand are dropped
-            app.post.new_calc();
+            // "Reset now" (TriggerRepaint): the depth of field and the
+            // reflections are undone; the shadows and normals calculated by
+            // hand stay in the G-buffer
             repaint(app, ui, &tr("@MB:PostProcessingLower"));
         }
         "CheckBox21Click" | "CheckBox25Click" => {
@@ -621,7 +704,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 Err(e) => ui.show_message(&e),
             }
         }
-        "FormMouseWheel" => {}
+        // FormMouseWheel: to the main window (the brush size, the zoom)
+        "FormMouseWheel" => forward_wheel(app, ui, F, e),
         _ => {}
     }
 }
@@ -660,9 +744,29 @@ mod tests {
 
     #[test]
     fn a_new_calculation_keeps_the_cloud_colour() {
-        let mut st = super::State { refl_now: true, hs_now: true, cloud_color: [255, 230, 204], ..Default::default() };
+        let mut st = super::State { dof_count: 2, hs_now: true, cloud_color: [255, 230, 204], ..Default::default() };
         st.new_calc();
         assert_eq!(st.cloud_color, [255, 230, 204]);
-        assert!(!st.refl_now && !st.hs_now);
+        assert!(st.dof_count == 0 && !st.hs_now);
+    }
+
+    #[test]
+    fn a_light_shadow_reset() {
+        use super::reset_shadow_bits;
+        // hard shadows: only light 2's bit ($200 shl 2) goes, the DE count stays
+        assert_eq!(reset_shadow_bits(0x0C00 | 0x123, 2, None), Some(0x0400 | 0x123));
+        // the soft shadow of light 3: every pixel lit; another light's reset: nothing
+        assert_eq!(reset_shadow_bits(0x1400 | 0x45, 3, Some(Some(2))), Some(0xFC00 | 0x45));
+        assert_eq!(reset_shadow_bits(0x1400, 1, Some(Some(2))), None);
+    }
+
+    #[test]
+    fn a_repaint_drops_the_depth_of_field_only() {
+        // "Reset now", a step's "Calculate now": the DoF presses are
+        // undone, the shadows calculated by hand stay (in the G-buffer)
+        let mut st = super::State { dof_count: 3, hs_now: true, ao_now: true, normals_now: true, ..Default::default() };
+        st.repainted();
+        assert_eq!(st.dof_count, 0);
+        assert!(st.hs_now && st.ao_now && st.normals_now);
     }
 }

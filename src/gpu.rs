@@ -461,6 +461,27 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     scene_shader(p).err()
 }
 
+/// The shader's `ground_wave` and `ground_wave_max` from the CPU's table
+/// of the waves (`scene::WAVES`, `Ground::wave`): the same sum in the same
+/// order.
+fn wave_code() -> String {
+    use std::fmt::Write;
+    let mut s = String::from("fn ground_wave(a: R, b: R) -> R {\n    let t = R(6.283185307179586);\n    var w = R(0.0);\n");
+    for c in &crate::scene::WAVES {
+        let _ = writeln!(s, "    w += R({:?}) * r_sin(t * R({:?}) * (R({:?}) * a + R({:?}) * b) + R({:?}));", c[3], c[2], c[0], c[1], c[4]);
+    }
+    let _ = write!(s, "    return w;\n}}\nfn ground_wave_max() -> R {{\n    return R({:?});\n}}\n", crate::scene::WAVE_MAX);
+    s
+}
+
+/// The shader's code with the waves' table put in (between `//@WAVES@` and
+/// `//@WAVES_END@`).
+fn with_waves(code: &str) -> String {
+    let a = code.find("//@WAVES@").expect("waves mark");
+    let b = code.find("//@WAVES_END@").expect("waves end mark");
+    format!("{}{}{}", &code[..a], wave_code(), &code[b + "//@WAVES_END@".len()..])
+}
+
 /// The parts of the shader and its buffers for one scene.
 struct SceneShader {
     /// the complete WGSL
@@ -542,12 +563,19 @@ fn needs_double(p: &CalcParams) -> bool {
 }
 
 fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
+    if needs_double(p) && !gpu()?.f64 {
+        return Err("the zoom needs double precision (the graphics card has no doubles)".into());
+    }
+    make_scene_shader(p)
+}
+
+/// [`scene_shader`] without asking the card whether it can calculate in
+/// doubles (the shader checks of the tests, also on machines without a
+/// card or without doubles).
+fn make_scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     use crate::x86::lift_wgsl::{prelude, record_globals, CellTy, WgslFormula};
     use std::fmt::Write;
     let dbl = needs_double(p);
-    if dbl && !gpu()?.f64 {
-        return Err("the zoom needs double precision (the graphics card has no doubles)".into());
-    }
     let mut slots = [[0u32; 8]; 6];
     let mut slotx = [[0u32; 8]; 6];
     let mut wfs: Vec<(usize, WgslFormula)> = Vec::new();
@@ -633,6 +661,15 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
                 row[6] = 9;
                 slotx[n] = [*power as u32, (*z_mul as f32).to_bits(), (*fold as f32).to_bits(), 0, 0, 0, 0, 0];
             }
+            Formula::Custom(c) if c.def.jit.is_some() => {
+                // a Pascal formula (jit_wgsl): its option values in the constants
+                let prog = c.def.jit.as_ref().expect("checked");
+                let (wf, words) = crate::jit_wgsl::emit(prog, &c.def, &c.values, &format!("fm{n}"), dbl, &Default::default()).map_err(|e| format!("{}: {e}", c.name()))?;
+                row[2] = cst.len() as u32;
+                cst.extend(words);
+                row[6] |= 2;
+                wfs.push((n, wf));
+            }
             Formula::Custom(c) if c.def.jit.is_none() => {
                 let m = p.machine.as_ref().ok_or("no formula machine")?;
                 let prog = m.prog(crate::custom::code_addr(n)).ok_or_else(|| format!("{}: not compiled", c.name()))?;
@@ -668,6 +705,12 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     }
     for (n, w) in wfs.iter_mut() {
         if w.record.iter().any(|(c, t)| unified[c] != *t) {
+            if let Formula::Custom(c) = &p.slots[*n].formula {
+                if let Some(prog) = &c.def.jit {
+                    *w = crate::jit_wgsl::emit(prog, &c.def, &c.values, &format!("fm{n}"), dbl, &unified).map_err(|e| format!("{}: {e}", c.name()))?.0;
+                    continue;
+                }
+            }
             let prog = p.machine.as_ref().and_then(|m| m.prog(crate::custom::code_addr(*n))).ok_or("not compiled")?;
             let difs = w.code.contains(&format!("fn fd{n}("));
             let name = if difs { format!("fd{n}") } else { format!("fm{n}") };
@@ -708,6 +751,9 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     }
     let mut g = String::new();
     g.push_str(&prelude(dbl));
+    if p.slots.iter().any(|s| matches!(&s.formula, Formula::Custom(c) if c.def.jit.is_some())) {
+        g.push_str(&crate::jit_wgsl::prelude(dbl));
+    }
     g.push_str(&globals);
     // init_record, marshal_in, marshal_out
     let has = |c: u32| ty.contains_key(&c);
@@ -900,7 +946,7 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let _ = writeln!(g, "        default: {{ rg[1] = cnt; rg[3] = n; }}");
     let _ = writeln!(g, "    }}");
     let _ = writeln!(g, "}}");
-    let code = format!("{}{}", real_block(dbl), include_str!("gpu_march.wgsl").replace("//@FORMULAS@", &g));
+    let code = format!("{}{}", real_block(dbl), with_waves(include_str!("gpu_march.wgsl")).replace("//@FORMULAS@", &g));
     // MB3D_GPU_DUMP=file: write the scene shader (for debugging)
     if let Some(f) = std::env::var_os("MB3D_GPU_DUMP") {
         let _ = std::fs::write(f, &code);
@@ -2026,7 +2072,7 @@ fn params(p: &CalcParams, row0: usize, rows: usize, scene: &SceneShader, mode: u
     v[433] = p.secant as u32 | (p.ao_half as u32) << 1;
     // the ground plane (GROUND_OPT ..)
     if let Some(g) = &p.ground {
-        let slope = std::f64::consts::TAU * 1.59 * g.wave_height / g.wave_len.max(1e-30);
+        let slope = std::f64::consts::TAU * crate::scene::WAVE_SLOPE * g.wave_height / g.wave_len.max(1e-30);
         v[411] = 1 | ((g.axis as u32 % 3) << 1) | (g.above as u32) << 3;
         v[412] = (g.pos as f32).to_bits();
         v[413] = (g.wave_height as f32).to_bits();
@@ -2267,6 +2313,9 @@ pub struct ReflectTask {
     /// the quality of the ambient occlusion at the hit (0..3, `deao_1pos`;
     /// the bounces use lower ones)
     pub ao_q: u8,
+    /// the ground plane is left out (a mirror ray rising from the water,
+    /// water_layer)
+    pub no_ground: bool,
 }
 
 /// The result of a task: the G-buffer value of the hit (normal, depth,
@@ -2402,7 +2451,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
             }
             w[6] = t.zz.to_bits();
             w[7] = t.pixel;
-            w[23] = t.inside as u32 | (t.ao_q as u32) << 8;
+            w[23] = t.inside as u32 | (t.ao_q as u32) << 8 | (t.no_ground as u32) << 16;
             w
         })
         .collect();
@@ -2897,7 +2946,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, seca
             w[8] = (t.zzplus as f32).to_bits();
             w[9] = (t.len as f32).to_bits();
             w[10] = t.seed as u32;
-            w[11] = t.kind as u32 | (t.inside as u32) << 2 | (t.probe as u32) << 3 | (t.trans as u32) << 4;
+            w[11] = t.kind as u32 | (t.inside as u32) << 2 | (t.probe as u32) << 3 | (t.trans as u32) << 4 | (t.no_ground as u32) << 5;
             w[12] = t.ms_de_stop.to_bits();
             for k in 0..3 {
                 w[20 + k] = (t.vfov[k] as f32).to_bits();
@@ -3823,7 +3872,7 @@ mod tests {
         // set before every pixel or submission, or the debug outputs; the
         // cone march's block values are computed from the block at every
         // entry (also when resuming)
-        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf", "cone_a", "cone_slope", "cone_t0", "cone_c0", "cone_i"];
+        let transient = ["state_slot", "cur_item", "resuming", "suspended", "r_task_origin", "r_task_dir", "r_task", "r_rec", "r_keep", "r_task_inside", "r_task_q", "ray_no_ground", "dv", "mc_t_pos", "mc_t_dir", "mc_t", "mc_t_flags", "mc_t_stop", "mc_t_vf", "cone_a", "cone_slope", "cone_t0", "cone_c0", "cone_i"];
         let mut names: Vec<&str> = code.lines().filter_map(|l| l.strip_prefix("var<private> ")).map(|l| l.split(':').next().unwrap()).collect();
         let body = &code[code.find("fn pixel(").unwrap()..];
         let lp = body.find("    for (var turns").unwrap();
@@ -3842,21 +3891,21 @@ mod tests {
     /// when the computer has no usable graphics card).
     #[test]
     fn mandelbulb_matches_cpu() {
-        gbuffer_matches_cpu(include_str!("../examples/mandelbulb.m3s"), 0.5);
+        gbuffer_matches_cpu(include_str!("../tests/data/mandelbulb.m3s"), 0.5);
     }
 
     /// The 4D hybrid loop (doHybrid4DPas) with the 4D rotation.
     #[test]
     fn quaternion_julia_matches_cpu() {
-        gbuffer_matches_cpu(include_str!("../examples/quaternion_julia.m3s"), 0.5);
+        gbuffer_matches_cpu(include_str!("../tests/data/quaternion_julia.m3s"), 0.5);
     }
 
     /// The interpolation hybrid (doInterpolHybridPasDE), 3D and, with two
     /// quaternions, 4D (doInterpolHybridPas4D).
     #[test]
     fn interpolation_matches_cpu() {
-        gbuffer_matches_cpu(include_str!("../examples/interpolation_boxes.m3s"), 0.5);
-        let quat = format!("{}\n[formula]\nname = Quaternion\nyw_multiplier = -1\nw_add = 0.3\n", include_str!("../examples/quaternion_julia.m3s").replace("iterations = 12\n", "iterations = 12\ninterpolation = 0.5, 0.5\n"));
+        gbuffer_matches_cpu(include_str!("../tests/data/interpolation_boxes.m3s"), 0.5);
+        let quat = format!("{}\n[formula]\nname = Quaternion\nyw_multiplier = -1\nw_add = 0.3\n", include_str!("../tests/data/quaternion_julia.m3s").replace("iterations = 12\n", "iterations = 12\ninterpolation = 0.5, 0.5\n"));
         gbuffer_matches_cpu(&quat, 0.5);
     }
 
@@ -3865,10 +3914,150 @@ mod tests {
     /// set where it is cut).
     #[test]
     fn cut_inside_matches_cpu() {
-        let bulb = include_str!("../examples/mandelbulb.m3s");
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
         gbuffer_matches_cpu(&format!("cut_y = -0.3\ncolor_on_iteration = 2\n{bulb}"), 0.5);
         gbuffer_matches_cpu(&format!("cut_z = 0.1\ninside = both\n{bulb}"), 0.5);
         gbuffer_matches_cpu(&format!("cut_x = 0.2\ninside = inside\n{bulb}"), 0.5);
+    }
+
+    /// The ground plane with its irregular waves (scene::WAVES, made into
+    /// the shader by wave_code): the card's surface as the CPU's.
+    #[test]
+    fn waves_match_cpu() {
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
+        gbuffer_matches_cpu(&format!("ground = y, 0.2\nground_waves = 0.02, 0.3\n{bulb}"), 0.5);
+        gbuffer_matches_cpu(&format!("ground = y, -0.1\nground_waves = 0.006, 0.8\n{bulb}"), 0.5);
+        // the shader's table is the CPU's, in the same order
+        let code = wave_code();
+        assert_eq!(code.matches("r_sin(").count(), crate::scene::WAVES.len());
+        assert!(code.contains(&format!("return R({:?});", crate::scene::WAVE_MAX)));
+        for c in &crate::scene::WAVES {
+            assert!(code.contains(&format!("w += R({:?}) * r_sin(t * R({:?}) * (R({:?}) * a + R({:?}) * b) + R({:?}));", c[3], c[2], c[0], c[1], c[4])));
+        }
+    }
+
+    fn validate_wgsl(what: &str, code: &str) {
+        let module = wgpu::naga::front::wgsl::parse_str(code).unwrap_or_else(|e| panic!("{what}: {}", e.emit_to_string(code)));
+        wgpu::naga::valid::Validator::new(wgpu::naga::valid::ValidationFlags::all(), wgpu::naga::valid::Capabilities::all())
+            .validate(&module)
+            .unwrap_or_else(|e| panic!("{what}: {}", e.emit_to_string(code)));
+    }
+
+    /// Every shader is valid WGSL, checked without a graphics card (so CI
+    /// catches a broken shader): the post shaders and the scene shader of
+    /// each built-in formula, the test scenes, the formulas of this program
+    /// and the community's, in single and double precision. (The idea from
+    /// Mandelbulb3D SE by Glenn Olander.)
+    #[test]
+    fn shaders_validate_without_a_card() {
+        for (name, code) in [("gpu_ssao.wgsl", include_str!("gpu_ssao.wgsl")), ("gpu_ssao15.wgsl", include_str!("gpu_ssao15.wgsl")), ("gpu_dof.wgsl", include_str!("gpu_dof.wgsl"))] {
+            validate_wgsl(name, code);
+        }
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        // MB3D's own formulas too where its repository is (MB3D_REPO, as in CI)
+        let mut dirs = vec![root.join("M3Formulas-rs"), root.join("M3Formulas-community")];
+        if let Ok(repo) = std::env::var("MB3D_REPO") {
+            dirs.push(std::path::PathBuf::from(repo).join("M3Formulas"));
+        }
+        for d in &dirs {
+            crate::formulas::add_formula_dir(d.clone());
+        }
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
+        let scenes: Vec<(String, String)> = vec![
+            ("mandelbulb.m3s".into(), bulb.into()),
+            ("quaternion_julia.m3s".into(), include_str!("../tests/data/quaternion_julia.m3s").into()),
+            ("interpolation_boxes.m3s".into(), include_str!("../tests/data/interpolation_boxes.m3s").into()),
+            ("inside and outside".into(), format!("cut_z = 0.1\ninside = both\nao = deao\n{bulb}")),
+        ];
+        let builtin = ["Integer Power", "Real Power", "Quaternion", "Tricorn", "Amazing Box", "Bulbox", "Folding Int Pow", "Aexion C"];
+        let mut files: Vec<String> = Vec::new();
+        for d in &dirs {
+            let Ok(rd) = std::fs::read_dir(d) else { continue };
+            for e in rd.flatten() {
+                let p = e.path();
+                if p.extension().is_some_and(|x| x == "m3f") {
+                    files.push(p.file_stem().unwrap().to_string_lossy().into_owned());
+                }
+            }
+        }
+        files.sort();
+        files.dedup();
+        let mut built: Vec<(String, crate::scene::Scene)> = Vec::new();
+        for (what, text) in &scenes {
+            built.push((what.clone(), crate::scene::Scene::parse(text).unwrap_or_else(|e| panic!("{what}: {e}"))));
+        }
+        for f in builtin.iter().map(|s| s.to_string()).chain(files) {
+            let mut sc = crate::scene::Scene::preset("Integer Power").unwrap();
+            sc.formulas[0].formula = crate::formulas::lookup(&f).unwrap_or_else(|e| panic!("{f}: {e}"));
+            built.push((f, sc));
+        }
+        let (mut checked, mut cpu_only) = (0, Vec::new());
+        for (what, mut sc) in built {
+            let what = &what;
+            sc.scale_image(0.1);
+            let p = match CalcParams::new(&sc) {
+                Ok(p) => p,
+                Err(e) => {
+                    cpu_only.push(format!("{what} (params: {e})"));
+                    continue;
+                }
+            };
+            let sh = match make_scene_shader(&p) {
+                Ok(sh) => sh,
+                Err(e) => {
+                    // (calculated on the CPU)
+                    cpu_only.push(format!("{what} ({})", e.chars().take(60).collect::<String>()));
+                    continue;
+                }
+            };
+            validate_wgsl(what, &sh.code);
+            if !needs_double(&p) {
+                let mut p2 = p.clone();
+                p2.gpu_double = true;
+                validate_wgsl(&format!("{what} (double precision)"), &make_scene_shader(&p2).unwrap().code);
+            }
+            checked += 1;
+        }
+        crate::elog!("{checked} scene shaders valid; on the CPU only: {}", cpu_only.join(", "));
+        assert!(checked >= 40, "{checked}");
+    }
+
+    /// The card's ambient shadows (DEAO) match the CPU's on the same
+    /// surfaces, also seen from inside and in inside and outside scenes
+    /// (MB3D's own rules there).
+    #[test]
+    fn deao_inside_matches_cpu() {
+        let bulb = include_str!("../tests/data/mandelbulb.m3s");
+        for extra in ["", "cut_x = 0.2\ninside = inside\n", "cut_z = 0.1\ninside = both\n"] {
+            let mut sc = crate::scene::Scene::parse(&format!("{extra}ao = deao\n{bulb}")).unwrap();
+            sc.scale_image(0.4);
+            let p = CalcParams::new(&sc).unwrap();
+            if let Err(e) = gpu() {
+                crate::elog!("no GPU, test skipped: {e}");
+                return;
+            }
+            let dp = crate::deao::DeaoParams::default();
+            let job = PostJob { shadows: None, deao: Some(dp) };
+            let g = march(&p, &job, &|_, _| {}, &|| false, |_, _| {}).expect(&last_status());
+            let mut cpu = g.clone();
+            let [_, _, w, h] = p.rect;
+            crate::deao::deao(&p, &mut cpu, w as usize, h as usize, &dp, 8, &|_, _| {}, &|| false);
+            let (mut n, mut sum, mut far) = (0usize, 0f64, 0usize);
+            for (a, b) in g.iter().zip(&cpu) {
+                if a.is_background() {
+                    continue;
+                }
+                n += 1;
+                let d = (a.amb_shadow as f64 - b.amb_shadow as f64).abs() / 16383.0;
+                sum += d;
+                far += (d > 0.1) as usize;
+            }
+            let mean = sum / n.max(1) as f64;
+            let farf = far as f64 / n.max(1) as f64;
+            crate::elog!("DEAO {extra:?}: {n} pixels, mean difference {:.4}, off by more than 10 % {:.2}%", mean, farf * 100.0);
+            assert!(n > 100);
+            assert!(mean < 0.01 && farf < 0.01, "{extra:?}: mean {mean}, far {farf}");
+        }
     }
 
     fn gbuffer_matches_cpu(scene: &str, scale: f64) {

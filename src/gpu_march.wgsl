@@ -476,7 +476,8 @@ fn abox(scale: R, min_r: R, fold: R, ade: bool) {
     let y = box_fold(v.y, fold);
     let z = box_fold(v.z, fold);
     let r = z * z + y * y + x * x;
-    let sqr_min_r = min_r * min_r;
+    // Sqr(Max(1e-40, MinR)) as MB3D (a negative Min R acts as 0)
+    let sqr_min_r = max(min_r, R(1e-40)) * max(min_r, R(1e-40));
     var mul: R;
     if (r < sqr_min_r) {
         mul = scale / sqr_min_r;
@@ -1094,6 +1095,7 @@ fn evaluate(on_de: bool) -> R {
     var g = R(0.0);
     // the first part's values for the combination
     var r1 = R(0.0);
+    var difs1 = false;
     var wt = R(0.0);
     var dt = R(0.0);
     var buf_it = 0;
@@ -1237,6 +1239,7 @@ fn evaluate(on_de: bool) -> R {
             }
             // PrepareF1DEcomb
             r1 = result;
+            difs1 = difs;
             dbg_r1 = result;
             dbg_it1 = it_result;
             wt = abs(w);
@@ -1279,6 +1282,7 @@ fn evaluate(on_de: bool) -> R {
                 if (!(rst < result)) {
                     it_result = buf_it;
                     max_its_result = buf_mir;
+                    last_difs = difs1;
                 }
                 let sm = pf(DC_SMOOTH);
                 if (kind == 4u) {
@@ -1319,9 +1323,11 @@ fn evaluate(on_de: bool) -> R {
             smooth_it = buf_sit1;
             otrap = buf_otrap;
             max_its_result = buf_mir;
+            last_difs = difs1;
         }
         set_part(1u);
-        return invert_inside(result, difs);
+        // the ruling part's dIFS flag (Marcher::calc_de, MB3D's DEoptionResult)
+        return invert_inside(result, last_difs);
     }
     return ms_de_stop * 0.25;
 }
@@ -1583,9 +1589,24 @@ fn calc_nangles_for_cut(plane: u32) {
     }
 }
 
+// the ray of the task leaves out the ground plane (a mirror ray rising from
+// the water: water_layer)
+var<private> ray_no_ground: bool;
+
 fn ground_on() -> bool {
-    return HAS_GROUND && (P[GROUND_OPT] & 1u) != 0u;
+    return HAS_GROUND && (P[GROUND_OPT] & 1u) != 0u && !ray_no_ground;
 }
+
+// Ground::wave without the height (scene::WAVES; the code between the
+// marks is made by gpu::wave_code from the same table)
+//@WAVES@
+fn ground_wave(a: R, b: R) -> R {
+    return R(0.0);
+}
+fn ground_wave_max() -> R {
+    return R(0.0);
+}
+//@WAVES_END@
 
 // Ground::distance, in steps
 fn ground_steps(q: vec3<R>) -> R {
@@ -1597,13 +1618,22 @@ fn ground_steps(q: vec3<R>) -> R {
     }
     let h = pf(GROUND_WAVE);
     if (h != 0.0) {
-        let a = q[(k + 1u) % 3u] / pf(GROUND_WLEN);
-        let b = q[(k + 2u) % 3u] / pf(GROUND_WLEN);
-        let t = R(6.283185307179586);
-        let wave = h * (0.5 * r_sin(t * (0.8 * a + 0.6 * b))
-            + 0.3 * r_sin(t * 1.7 * (-0.45 * a + 0.9 * b) + 1.3)
-            + 0.2 * r_sin(t * 2.9 * (0.2 * a - 0.98 * b) + 2.1));
-        s = (s - wave) * pf(GROUND_LIP);
+        // (Ground::distance: blended into the distance to the crests' height
+        // from 3 to 6 times their highest)
+        let top = h * ground_wave_max();
+        if (s >= 6.0 * top) {
+            s = (s - top) * pf(GROUND_LIP);
+        } else {
+            let a = q[(k + 1u) % 3u] / pf(GROUND_WLEN);
+            let b = q[(k + 2u) % 3u] / pf(GROUND_WLEN);
+            let d = s - h * ground_wave(a, b);
+            if (s > 3.0 * top) {
+                let t = (s - 3.0 * top) / (3.0 * top);
+                s = (d + (s - top - d) * t) * pf(GROUND_LIP);
+            } else {
+                s = d * pf(GROUND_LIP);
+            }
+        }
     }
     return s / pf(STEP_WIDTH);
 }
@@ -3203,6 +3233,14 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     mzz = a * (a + 2.0) / pf(ZCORR);
                     setc();
                     update_de_stop();
+                    // the side the pixel was hit from in an inside and
+                    // outside scene (otrap bit 0x8000: outside), as MB3D's
+                    // DEAO and hard shadows (Marcher::set_pixel_side)
+                    if ((P[INSIDE_FLAGS] & 2u) != 0u) {
+                        inside = (si_otrap & 0x8000u) == 0u;
+                    } else {
+                        inside = (P[INSIDE_FLAGS] & 1u) != 0u;
+                    }
                     need = true;
                     want_de = true;
                     pc = P_PS_R;
@@ -3528,8 +3566,11 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     if (ao_in) {
                         d_step_mul *= 0.5;
                     }
+                    // seen from inside (the picture's DEAO, dIFS too as in
+                    // MB3D): rays count until they meet the surface
+                    let ao_in_main = !reflect && inside;
                     if (pf(DE_STOP_FACTOR) != 0.0) {
-                        ms2 = select(msl / (d_step_mul * d_step_mul), msl, ao_in);
+                        ms2 = select(msl / (d_step_mul * d_step_mul), msl, ao_in || ao_in_main);
                     } else {
                         ms2 = pf(DE_STOP) / (d_step_mul * d_step_mul);
                     }
@@ -3570,6 +3611,9 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     de_mul = sqrt(R(ray_count) * 0.5);
                     abr_c = 1.2 / r_asin(clamp(1.0 / de_mul, -1.0, 1.0));
                     md_d10 = 0.1 / (max_dist * de_mul);
+                    if (ao_in_main) {
+                        de_mul = 1.0;
+                    }
                     rot_w = normal_matrix(normalize(vec3<R>(si_normal)));
                     // normalise_matrix_to(step_width, vgrads)
                     rv0 = vg(0u) * (pf(STEP_WIDTH) / length(vg(0u)));
@@ -3619,11 +3663,23 @@ fn pixel(x: i32, y: i32, mode: u32) {
             case P_AO_R: {
                 if (MODE_KIND == 2u || (MODE_KIND == 3u && R_AO)) {
                     let dt2 = r;
-                    s_tmp = min(s_tmp, (dt2 - ms2 + dt1 * md_d10) / dt1);
-                    var fin = s_tmp < 0.02;
-                    if (!fin) {
-                        dt1 += max(dt2, dt1 * d_step_mul);
-                        fin = b_end;
+                    var fin = false;
+                    if (!reflect && inside) {
+                        if (dt2 < ms2) {
+                            let o4 = dt1 / max_dist;
+                            s_tmp = (o4 * o4) * (o4 * o4);
+                            fin = true;
+                        } else {
+                            dt1 += dt1 * d_step_mul * 0.1 + ms2;
+                            fin = b_end;
+                        }
+                    } else {
+                        s_tmp = min(s_tmp, (dt2 - ms2 + dt1 * md_d10) / dt1);
+                        fin = s_tmp < 0.02;
+                        if (!fin) {
+                            dt1 += max(dt2, dt1 * d_step_mul);
+                            fin = b_end;
+                        }
                     }
                     if (fin) {
                         ao_min[k] = max(s_tmp, 0.0) * de_mul;
@@ -3639,6 +3695,10 @@ fn pixel(x: i32, y: i32, mode: u32) {
                     // open neighbour rays lighten a closed one
                     var amount = R(0.0);
                     for (var i = 0u; i < ray_count; i++) {
+                        if (!reflect && inside) {
+                            amount += ao_min[i];
+                            continue;
+                        }
                         var s_add = R(0.0);
                         if (ao_min[i] < 1.0) {
                             let max_add = 1.0 - ao_min[i];
@@ -4458,6 +4518,7 @@ fn reflect_task(idx: u32) {
     r_rec = o;
     r_task_inside = (OUT[o + 23u] & 1u) != 0u;
     r_task_q = (OUT[o + 23u] >> 8u) & 0xFFu;
+    ray_no_ground = (OUT[o + 23u] & 0x10000u) != 0u;
     r_keep = false;
     r_task_origin = task_origin(o);
     r_task_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
@@ -4511,6 +4572,7 @@ fn mc_task(idx: u32) {
     mc_t_dir = vec3<R>(R(bitcast<f32>(OUT[o + 3u])), R(bitcast<f32>(OUT[o + 4u])), R(bitcast<f32>(OUT[o + 5u])));
     mc_t = vec4<R>(R(bitcast<f32>(OUT[o + 6u])), R(bitcast<f32>(OUT[o + 7u])), R(bitcast<f32>(OUT[o + 8u])), R(bitcast<f32>(OUT[o + 9u])));
     mc_t_flags = OUT[o + 11u];
+    ray_no_ground = (mc_t_flags & 32u) != 0u;
     mc_t_stop = R(bitcast<f32>(OUT[o + 12u]));
     mc_t_vf = vec3<R>(R(bitcast<f32>(OUT[o + 20u])), R(bitcast<f32>(OUT[o + 21u])), R(bitcast<f32>(OUT[o + 22u])));
     seed = bitcast<i32>(OUT[o + 10u]);
@@ -4662,6 +4724,7 @@ fn main(@builtin(workgroup_id) wid: vec3<u32>, @builtin(local_invocation_index) 
         si_shadow = b >> 16u;
         si_zpos = OUT[o + 2u];
         si_grad = OUT[o + 3u] & 0xFFFFu;
+        si_otrap = OUT[o + 3u] >> 16u;
         si_amb = OUT[o + 4u];
         if (mode == M_SHADOW) {
             if (pf(HS_SOFT_RADIUS) > 0.0) {

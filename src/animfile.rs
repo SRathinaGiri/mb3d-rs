@@ -35,6 +35,9 @@ const CATMULL_ROM_BIT: i32 = 1 << 20;
 /// the samples in bits 21-25, the shutter in 16ths in bits 26-29
 const BLUR_SHIFT: i32 = 21;
 const SHUTTER_SHIFT: i32 = 26;
+/// mb3d-rs's 360 degree VR animation (MB3D reads bits 0-9 only,
+/// Animation.pas SpeedButton11Click)
+const VR360_BIT: i32 = 1 << 30;
 
 pub fn preview_size(width: i32, height: i32) -> (usize, usize) {
     let (w, h) = (width.max(1) as f64, height.max(1) as f64);
@@ -158,6 +161,7 @@ pub fn read_m3a(data: &[u8], name: &str) -> Result<AnimFile, String> {
         a.overwrite = opt & 256 == 0;
         a.save_depth = opt & 512 != 0;
         a.motion_blur = ((opt >> BLUR_SHIFT) & 31) as u32;
+        a.vr360 = opt & VR360_BIT != 0;
         if a.motion_blur > 1 {
             a.shutter = ((opt >> SHUTTER_SHIFT) & 15) as f32 / 15.0;
         }
@@ -266,7 +270,8 @@ pub fn write_m3a(a: &Animation, previews: &[Option<Preview>]) -> Vec<u8> {
         | (!a.overwrite as i32) << 8
         | (a.save_depth as i32) << 9
         | (a.motion_blur.min(31) as i32) << BLUR_SHIFT
-        | ((a.shutter.clamp(0.0, 1.0) * 15.0).round() as i32) << SHUTTER_SHIFT;
+        | ((a.shutter.clamp(0.0, 1.0) * 15.0).round() as i32) << SHUTTER_SHIFT
+        | if a.vr360 { VR360_BIT } else { 0 };
     i32w(&mut d, opt);
     i32w(&mut d, a.keyframes.len() as i32);
     for k in &a.keyframes {
@@ -447,6 +452,7 @@ pub fn parse_m3k(text: &str, base_dir: &Path, name: &str) -> Result<AnimFile, St
                 }
             }
             "loop" => a.looped = boolean(v)?,
+            "vr360" => a.vr360 = boolean(v)?,
             "motion_blur" => a.motion_blur = num(v)?.clamp(0, 31) as u32,
             "shutter" => a.shutter = plain(v).parse::<f32>().map_err(|_| err(format!("shutter: '{v}' (0 to 1)")))?.clamp(0.0, 1.0),
             "output" | "output_folder" => {
@@ -537,6 +543,9 @@ pub fn write_m3k(a: &Animation, dir: Option<&Path>) -> String {
         "pair"
     };
     let _ = writeln!(t, "transparent = {}\nstereo = {stereo}", a.transparent);
+    if a.vr360 {
+        let _ = writeln!(t, "vr360 = true");
+    }
     if a.motion_blur > 1 {
         let _ = writeln!(t, "motion_blur = {}\nshutter = {}", a.motion_blur, a.shutter);
     }
@@ -653,6 +662,20 @@ mod tests {
         // Bezier stays plain Bezier
         a.interpolation = Interpolation::Bezier;
         assert_eq!(read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap().anim.interpolation, Interpolation::Bezier);
+    }
+
+    #[test]
+    fn vr360_in_both_formats() {
+        let mut a = sample();
+        assert!(!read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap().anim.vr360);
+        a.vr360 = true;
+        let f = read_m3a(&write_m3a(&a, &[None, None]), "t").unwrap();
+        assert!(f.anim.vr360);
+        // MB3D's own bits as without it
+        assert_eq!(f.anim.interpolation, a.interpolation);
+        assert_eq!(f.anim.looped, a.looped);
+        let text = write_m3k(&a, None);
+        assert!(parse_m3k(&text, Path::new("."), "x").unwrap().anim.vr360);
     }
 
     #[test]

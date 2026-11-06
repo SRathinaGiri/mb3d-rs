@@ -148,6 +148,130 @@ by 2048). The field of view sets itself: 360° across, 180° up and down.
   panorama it blurs the sky and the water all round.
 - Keep the camera level, or the horizon bends into a wave.
 
+## Transparent water
+
+The water can also be see-through: a fractal that stands half in it shows
+beneath the surface, bent by the refraction and turning into the colour of
+deep water the deeper it goes: first turquoise, as red light fades long
+before green and blue, then the water's own colour. Four settings make it,
+next to the waves on the *Cutting* page:
+
+- **Water** (`ground_transparency`, 0 to 1): how much light the water lets
+  through. 0 is the opaque ground of before; 1 is clear water, whose mirror
+  is then as strong as Fresnel's equations make it: faint where you look
+  down into the water, strong at grazing angles towards the horizon. In
+  between, the ground's own colour and its *reflect* value blend in.
+- **Absorption** (`ground_absorption`, its own row below *Water*): how
+  murky the water is, how fast the light fades in it per fractal unit.
+  0 is perfectly clear water; at 1 the water colour's clearest channel
+  keeps a third of its light (1/e) after one fractal unit, the others
+  less, about the size of a fractal: parts just under the surface stay
+  clear, the bottom half of a bulb turns turquoise and fades. 3 is murky,
+  0.3 clear as a mountain lake. The light that reaches a part
+  under water has crossed the water above it too, so deep parts also get
+  darker, not only distant ones.
+- **Water colour** (`ground_water_color`, the colour button below
+  *Water*): the colour of deep water. What the water absorbs is replaced
+  by its own scattered light in this colour (lit by the lights from above
+  and the sky, without the waves' shading), so deep water turns into it,
+  not into black. The colour also decides how fast each colour of the
+  light fades: with the default blue-green #0A3C46, red fades about ten
+  times and green twice as fast as blue (as in pure water, which absorbs
+  0.45, 0.06 and 0.02 of the light per metre); a grey water dims all
+  alike. A greener #0A5A50 makes a shallow sea, a deep blue #08204A an
+  ocean.
+- The lights' glints on the waves stay on the surface however clear the
+  water is, so the waterline and the waves show where the sun is in front
+  of you.
+- **Refraction** (`ground_ior`): the refraction index, 1.33 for water; 1
+  does not bend the light.
+- **Scattering** (`ground_scattering`, 0 to 1, the row below
+  *Refraction*): how much the water scatters light, as real water does
+  with its particles. 0 is the look without scattering (and what scenes
+  saved before have); a water switched on in the program starts at 0.5.
+  The water then glows turquoise when you look towards the sun and is
+  darker looking away; the wave crests between you and a low sun shine
+  through; the sun's light falls into the water as shafts, broken into
+  bands by the waves and cut by the fractal's shadows (the lights with
+  hard or soft shadows on cast them); and what lies under the water glows
+  softly in its colour, less in its hollows. Clearer water (a lower
+  absorption, e.g. 0.3) shows the shafts deeper. The second field
+  (`ground_scatter_dir`, 0 to 0.95, 0.8) is the direction: water scatters
+  mostly forward, towards where the light goes; 0 scatters alike in every
+  direction.
+
+  The normal render follows the light once along each ray under the water
+  (eight steps, each with a shadow ray towards the lamps) and adds the
+  light scattered many times as a glow of the water colour that depends
+  on the angle to the lamps; Monte Carlo traces the light through the
+  water as it is (it scatters, is absorbed and scatters again). A
+  scattering water takes the normal render's reflection pass about a
+  fifth to a half longer.
+
+Three finished scenes with all of it, ready to paste: [WATER_EXAMPLES.md](WATER_EXAMPLES.md).
+
+What each setting does, on a Mandelbulb standing half in the water
+(`ground = y, -0.45`, reflections on):
+
+**Water (transparency)** 0, 0.5 and 1: the opaque ground of before, then
+the part under the water showing through more and more.
+
+<a href="img/water_transparency.jpg"><img src="img/water_transparency.jpg" width="760" alt="Transparency 0, 0.5 and 1: grey opaque water, then the submerged half of the bulb showing through in turquoise"></a>
+
+**Absorption** 0.3, 1 and 3: clear water shows the whole submerged half,
+turned green; at 1 it fades with depth; murky water hides all but what is
+just below the surface.
+
+<a href="img/water_absorption.jpg"><img src="img/water_absorption.jpg" width="760" alt="Absorption 0.3, 1 and 3: the submerged half clearly green, fading, then hidden"></a>
+
+**Scattering** 0, 0.5 and 1, looking towards the sun: without it the
+water is dark; with it the water glows turquoise and the wave crests
+shine through.
+
+<a href="img/water_scattering.jpg"><img src="img/water_scattering.jpg" width="760" alt="Scattering 0, 0.5 and 1 looking towards the sun: dark water, then glowing turquoise water"></a>
+
+**Light shafts**, scattering 0, 0.5 and 1 with a low sun in front and
+clear water (absorption 0.3): the fractal's shadow reaches through the
+water towards the camera, beside the sunlit bands.
+
+<a href="img/water_shafts.jpg"><img src="img/water_shafts.jpg" width="760" alt="A low sun in front: the fractal's shadow volume stretching through the water as a blue shaft"></a>
+
+The normal render shows the transparency with the reflections on
+(*Postprocess*, *Reflections + Transparency*, *Calculate R. (+ T.)
+automatically*); without them the water stays opaque, as the picture
+painted before the reflections are calculated. Monte Carlo always shows it.
+With transparent water the reflections and Monte Carlo are calculated on
+the processor (the graphics card's part of them does not know the rays
+under the water yet), which makes them slower.
+
+Example: a Mandelbulb half under clear water, seen from above at a slant.
+Copy all of the text below, press *From Clipboard* in the main window, then
+*Calculate 3D*:
+
+```text
+Mandelbulb3Dv18{
+g.....m....K0...A....2.............2.1.......E3E................................
+........................................kz1........A./.........E........2/2...wD
+...Uz6........../I.0/.................E/................/......................U
+z.....kD1.....UaNaNaNaNmzCnAnAnAnAyDOaNaNaNa7z1...........U0.....y1...sD...../..
+.w1...sDcO2VlTjtYx1..........IvqGtWoDaojlNoFMO2.sw96fqQH.moMzox6zwIEUCpjLyWEQbRY
+4xXffnBSGL6Jz2e/t4zbo7qDU.....2...............kD/2....sD..G.0...................
+.............oAnAt1.........z................................................k..
+.....0...............wzzz1.U..6......c3...EB....4/...Q1..UE6....c....I1....DS.52
+.....kXFKxjKcVrzSI0Azv4TA0..po..z1Cg...Fbf24LNxj6Eot8VlJaz1...........U.mwDEE/5.
+.AL9s6Jkkz9.2RiGMQZtz0........../EU0.wzzz1...........s/...................E.2c..
+zzzz.................................2./8.kzzzD............8....................
+/EU0.wzzz1...................................2CcN/UvNPcveeWCNq0.yRiibHJJUk1f..XR
+SvBmx3CcN/UvNPcvQsLsUa3.ibhVi1bTV1OK.sSq4uCly3CcN/UvNPcvMwLsUa3.ibhVinqTV1OK.sSq
+4uCkz3CcN/UvNPcv..EsUa3ceeWCNq0cIJ36wk8cwyLsUa3c................................
+E....2..F3E..........6....EGiFLNbJaQU.pPrJaQ.........................6..........
+...................6./........zj................................................
+................................................................................
+........................}
+{Titel: Half under water}
+{mb3d-rs: clouds = y, -1.4, -3.4; cloud_density = 1; cloud_coverage = 0.64; cloud_size = 1; cloud_color = #A0ACBA; finish_exposure = 0; finish_tonemap = filmic; glow = 0.3, 0.03, 0.85; finish_contrast = 0.25; finish_saturation = 0.85; finish_warmth = 0; vignette = 0.5; chromatic = 0; ground = y, -0.45; ground_color = #2A3846; ground_reflect = 0.5; ground_waves = 0.004, 0.6; ground_transparency = 1; ground_visibility = 1; ground_water_color = #0A3C46; ground_ior = 1.33}
+```
+
 ## Where the settings are
 
 The screens show the settings of picture 1, Golden hour, as they look after
@@ -161,9 +285,25 @@ parameters you copied.
 **Water.** Main window, page *Cutting*: tick *Ground plane* and choose the
 axis (Y). Below it: the height of the plane (1.15), its colour, and how much
 it reflects (0.9). *Waves* takes their height and length; a height of 0
-gives still water.
+gives still water. The waves are an irregular sea: sixteen waves of
+lengths from 1.2 to 0.25 times the given length, mostly along one wind
+direction, the long ones higher, so no grid or repeating pattern shows
+(before November 2026 three regular waves made a checkerboard of blobs;
+scenes with waves look different since). Since 5 November 2026 their
+directions keep within a narrow spread around the wind, from 8 degrees
+for the longest waves to 30 for the shortest, so the crests run as long
+lines across the wind; before, some crossed it at up to 90 degrees and
+made a pattern of diamonds. Below, the old waves (left of
+each pair) and the new ones: small waves 0.004, 0.6 on top, large waves
+0.03, 0.4 below, the sun in front and behind.
 
-<img src="img/clouds_ui_cutting.png" width="312" alt="The Cutting page with the Ground plane settings">
+<a href="img/water_waves.jpg"><img src="img/water_waves.jpg" width="760" alt="Old and new waves side by side: the old regular grid of bright diamonds, the new irregular sea"></a>
+ The two rows below them make the water transparent
+(see [Transparent water](#transparent-water)): *Water* takes its
+transparency, *Absorption* how murky it is, the colour button its deep
+colour, and *Refraction* its refraction index.
+
+<img src="img/clouds_ui_cutting.png" width="310" alt="The Cutting page with the Ground plane settings">
 
 **Reflections.** Main window, *Postprocess*, section *Reflections +
 Transparency*: tick *Calculate R. (+ T.) automatically* and set the *Amount*
@@ -175,7 +315,10 @@ Transparency*: tick *Calculate R. (+ T.) automatically* and set the *Amount*
 *Layer* (an axis and two heights, here Y from -2.4 to -4.2), the *Density*,
 how much of the sky they *Cover*, their *Size* and their colour (the small
 square). *Paint now* repaints them in a fraction of a second, so you can try
-settings quickly.
+settings quickly. The layer reaches the horizon: far away the clouds grow
+smaller and fade into the haze of the air, so the sky's horizon colour
+shows through them more and more (before 5 November 2026 the layer ended a
+little above the horizon, with a hard edge and a clear strip under it).
 
 <img src="img/clouds_ui_clouds.png" width="400" alt="The Clouds section of the Post processing window">
 

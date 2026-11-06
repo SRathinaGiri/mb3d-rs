@@ -150,7 +150,9 @@ pub struct State {
     pub mouse_start: (i32, i32),
     pub max_shape_w: i32,
     pub z_translate: i32,
-    pub undo: Vec<Scene>,
+    /// the parameters of the undo steps with the window title they had
+    /// (`UndoTitels`, Undo.pas)
+    pub undo: Vec<(Scene, String)>,
     pub undo_pos: usize,
     pub authors: [String; 2],
     pub auto_m3i: Option<PathBuf>,
@@ -182,6 +184,24 @@ pub struct State {
     /// the ground plane's colour on the Cutting page (kept while the plane
     /// is off)
     pub ground_color: [u8; 3],
+    /// the colour transparent water fades to (Cutting page)
+    pub ground_water_color: [u8; 3],
+    /// the folder each file dialog of this window showed last, for this
+    /// session (MB3D's dialogs keep their own `InitialDir`, `ChangeFName`;
+    /// the folders of the Ini-dirs window stay as they are)
+    pub last_dirs: std::collections::HashMap<String, PathBuf>,
+    /// the lighting History kept last (`LHPSLight`) and when Timer2 looked
+    /// (every minute)
+    pub history_light: String,
+    pub history_tick: Instant,
+    /// the controls of other windows greyed while a calculation runs, with
+    /// whether they were enabled before (`DisableButtons`)
+    greyed: Vec<(&'static str, &'static str, bool)>,
+    /// the Animation window sticks below this one (`bAniFormStick`,
+    /// StickOption bit 2)
+    pub ani_stick: bool,
+    /// the question whether to stop a long calculation is open
+    stop_ask: bool,
 }
 
 impl Default for State {
@@ -264,6 +284,13 @@ impl Default for State {
             memory_ask: false,
             resume_key: None,
             ground_color: crate::scene::Ground::default().color,
+            ground_water_color: crate::scene::Ground::default().water_color,
+            last_dirs: Default::default(),
+            history_light: String::new(),
+            history_tick: Instant::now(),
+            greyed: Vec::new(),
+            ani_stick: false,
+            stop_ask: false,
         }
     }
 }
@@ -297,6 +324,9 @@ pub fn set_caption(app: &Mb3d, ui: &mut Ui) {
 
 /// FormCreate, SetM3Dini, FirstShowUpdate and LoadStartupParas.
 pub fn start(app: &mut Mb3d, ui: &mut Ui) {
+    // the welcome lines (FormCreate, Mand.pas:1705)
+    app.message(ui, &trf("@MB:WelcomeTo", &[&version_str()]));
+    app.message(ui, "");
     set_language_badge(ui);
     ui.fm(F).history_hint = tr("@MB:HistoryThePicturesCalculatedTheFiles");
     ui.fm(F).log_hint = tr("@MB:LogEverythingTheProgramDidIts");
@@ -357,6 +387,7 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     // StickOption: Lighting bits 0-1, Formulas 4-5, Post processing 6-7
     let j = app.ini.get("StickOption").trim().parse::<u32>().unwrap_or(81);
     app.main.sticky = [((j >> 4) & 3) as u8, (j & 3) as u8, ((j >> 6) & 3) as u8];
+    app.main.ani_stick = (j >> 2) & 3 == 1;
     // window position and size of the last session
     let (l, tp) = super::ini::two_ints(app.ini.get("m3dPos"), (65, 100));
     let (w, h) = super::ini::two_ints(app.ini.get("m3dSize"), (779, 671));
@@ -382,7 +413,15 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
     }
     // the start parameters: a file of the command line or Default.m3p
     let mut start_timer = true;
-    let file = app.startup_file.clone().or_else(|| {
+    // an animation or a big render project of the command line opens its
+    // window (LoadStartupParas, Mand.pas:3146-3152); then no parameters
+    let ext = app.startup_file.as_ref().and_then(|p| p.extension()).map(|e| e.to_string_lossy().to_ascii_lowercase());
+    let window_file = app.startup_file.clone().filter(|_| matches!(ext.as_deref(), Some("m3a" | "big")));
+    let file = if window_file.is_some() { None } else { app.startup_file.clone() };
+    let file = file.or_else(|| {
+        if window_file.is_some() {
+            return None;
+        }
         let a = crate::appdirs::config_file("Default.m3p");
         let b = app.ini.dir(super::ini::DIR_M3P).join("Default.m3p");
         [a, b].into_iter().find(|p| p.is_file())
@@ -410,11 +449,20 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         }
     }
     app.main.intern_aspect = app.scene.width.max(1) as f64 / app.scene.height.max(1) as f64;
+    // (Mand.pas:3126: LastHisParSaveTime, LHPSLight)
+    history_kept(app);
     set_caption(app, ui);
     page_control1_change(app, ui);
     ui.show(F);
     ui.show("LightAdjustForm");
     ui.show("FormulaGUIForm");
+    if let Some(p) = window_file {
+        if ext.as_deref() == Some("m3a") {
+            super::anim_form::load_animation(app, ui, &p);
+        } else {
+            super::tools_forms::load_big(app, ui, &p);
+        }
+    }
     if start_timer && app.eng.base().is_none() {
         // Timer1: a first 2D calculation of the start parameters
         app.main.slice_calc = 2;
@@ -675,7 +723,16 @@ pub fn set_edits_from_header(app: &mut Mb3d, ui: &mut Ui) {
     set(ui, "GroundReflEdit", &fts_single(g.reflect as f64));
     set(ui, "GroundWaveEdit", &fts(g.wave_height));
     set(ui, "GroundWaveLenEdit", &fts(g.wave_len));
+    set(ui, "GroundTranspEdit", &fts_single(g.transparency as f64));
+    // (shown as the absorption, 1 / the visibility)
+    set(ui, "GroundVisEdit", &fts_single(1.0 / g.visibility.max(1e-6) as f64));
+    set(ui, "GroundIorEdit", &fts_single(g.ior as f64));
+    // (a fresh water scatters: the scenes without the key do not)
+    let scat = if sc.ground.is_some() { g.scattering } else { FRESH_SCATTERING };
+    set(ui, "GroundScatEdit", &fts_single(scat as f64));
+    set(ui, "GroundScatDirEdit", &fts_single(g.scatter_dir as f64));
     app.main.ground_color = g.color;
+    app.main.ground_water_color = g.water_color;
     ground_swatch(app, ui);
     ui.set_checked(F, "CheckBox9", sc.vary_de_stop_on_fov);
     ui.set_checked(F, "CheckBox7", sc.julia);
@@ -729,6 +786,13 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
         reflect: (ptf(&t(ui, "GroundReflEdit")) as f32).clamp(0.0, 1.0),
         wave_height: ptf(&t(ui, "GroundWaveEdit")).max(0.0),
         wave_len: Some(ptf(&t(ui, "GroundWaveLenEdit"))).filter(|v| *v > 0.0).unwrap_or(1.0),
+        transparency: (ptf(&t(ui, "GroundTranspEdit")) as f32).clamp(0.0, 1.0),
+        // the absorption: 0 is perfectly clear water
+        visibility: (1.0 / ptf(&t(ui, "GroundVisEdit")).max(1e-6)) as f32,
+        water_color: app.main.ground_water_color,
+        ior: Some(ptf(&t(ui, "GroundIorEdit")) as f32).filter(|v| *v >= 1.0).unwrap_or(1.33).min(3.0),
+        scattering: (ptf(&t(ui, "GroundScatEdit")) as f32).clamp(0.0, 1.0),
+        scatter_dir: (ptf(&t(ui, "GroundScatDirEdit")) as f32).clamp(0.0, 0.95),
     });
     sc.de_stop = ptf(&t(ui, "Edit25")).max(0.001);
     sc.julia = ui.checked(F, "CheckBox7");
@@ -752,10 +816,17 @@ pub fn make_header(app: &mut Mb3d, ui: &mut Ui) {
     sc.threads = if n == std::thread::available_parallelism().map(|n| n.get()).unwrap_or(0) { 0 } else { n };
 }
 
+/// The scattering a ground plane gets when it is switched on in a scene
+/// without one (scenes saved without the key keep 0).
+const FRESH_SCATTERING: f32 = 0.5;
+
 /// The ground plane's colour on its button.
 fn ground_swatch(app: &Mb3d, ui: &mut Ui) {
     let b = ui.cm(F, "GroundColBtn");
     b.glyph = Some(super::light_form::swatch(app.main.ground_color));
+    b.num_glyphs = 1;
+    let b = ui.cm(F, "GroundWaterColBtn");
+    b.glyph = Some(super::light_form::swatch(app.main.ground_water_color));
     b.num_glyphs = 1;
 }
 
@@ -805,10 +876,102 @@ const CALC_BUTTONS: [&str; 23] = [
     "SpeedButton4", "IniDirsBtn", "MapSequencesBtn", "VisualThemesBtn",
 ];
 
+/// The calculating controls of the other windows MB3D's `DisableButtons`
+/// greys (Mand.pas:1182-1240): Post processing's calculations, Monte
+/// Carlo's start, the Navigator's "view to main"; the batch's start and
+/// the big render's buttons unless they run the calculation themselves.
+const OTHER_CALC: [(&str, &str); 18] = [
+    ("PostProForm", "Button1"),
+    ("PostProForm", "Button2"),
+    ("PostProForm", "Button3"),
+    ("PostProForm", "Button4"),
+    ("PostProForm", "Button5"),
+    ("PostProForm", "Button6"),
+    ("PostProForm", "Button7"),
+    ("PostProForm", "Button8"),
+    ("PostProForm", "Button9"),
+    ("PostProForm", "Button10"),
+    ("PostProForm", "Button12"),
+    ("PostProForm", "Button14"),
+    ("PostProForm", "Button15"),
+    ("PostProForm", "Button16"),
+    ("PostProForm", "Button18"),
+    ("MCForm", "Button4"),
+    ("FNavigator", "SpeedButton14"),
+    ("ColorForm", "CheckBox3"),
+];
+const TILING_CALC: [&str; 7] = ["Button2", "Button3", "SpeedButton1", "SpeedButton2", "SpeedButton9", "SpeedButton11", "Panel2"];
+
+fn grey_other_windows(app: &mut Mb3d, ui: &mut Ui) {
+    let mut list: Vec<(&'static str, &'static str)> = OTHER_CALC.to_vec();
+    if app.batch.status == 0 {
+        list.push(("BatchForm1", "Button1"));
+    }
+    if !app.tiling.running {
+        list.extend(TILING_CALC.iter().map(|c| ("TilingForm", *c)));
+    }
+    // (a second call while it runs: the states before the first are kept)
+    let record = app.main.greyed.is_empty();
+    for (form, ctl) in list {
+        if !ui.has_form(form) || ui.f(form).id(ctl).is_none() {
+            continue;
+        }
+        if record {
+            app.main.greyed.push((form, ctl, ui.enabled(form, ctl)));
+        }
+        ui.set_enabled(form, ctl, false);
+    }
+    // "Recalculate a selection": only to switch it off
+    for c in ["CheckBox21", "CheckBox25"] {
+        if ui.has_form("PostProForm") {
+            let on = ui.checked("PostProForm", c);
+            ui.set_enabled("PostProForm", c, on);
+        }
+    }
+    // the colour window's "Paint on image" goes off (Mand.pas:1238, 1802)
+    if ui.has_form("ColorForm") && ui.checked("ColorForm", "CheckBox3") {
+        ui.set_checked("ColorForm", "CheckBox3", false);
+        ui.cm("ColorForm", "Image1").cursor = "crDefault".into();
+        show_paint_brush(app, ui, false);
+    }
+}
+
+/// Enables a control of another window, or, while a calculation runs,
+/// lets it come back enabled when the calculation ends (MB3D's
+/// DisableButtons keeps them greyed until then).
+pub fn enable_after_calc(app: &mut Mb3d, ui: &mut Ui, form: &'static str, ctl: &'static str) {
+    if !app.main.calculating {
+        ui.set_enabled(form, ctl, true);
+        return;
+    }
+    match app.main.greyed.iter_mut().find(|(f, c, _)| *f == form && *c == ctl) {
+        Some(g) => g.2 = true,
+        None => {
+            app.main.greyed.push((form, ctl, true));
+            ui.set_enabled(form, ctl, false);
+        }
+    }
+}
+
+fn ungrey_other_windows(app: &mut Mb3d, ui: &mut Ui) {
+    // (a control that its window enabled meanwhile, e.g. Big renders
+    // opening a project during the calculation, stays enabled)
+    for (form, ctl, was) in std::mem::take(&mut app.main.greyed) {
+        let now = ui.enabled(form, ctl);
+        ui.set_enabled(form, ctl, was || now);
+    }
+    if ui.has_form("PostProForm") {
+        for c in ["CheckBox21", "CheckBox25"] {
+            ui.set_enabled("PostProForm", c, true);
+        }
+    }
+}
+
 pub fn disable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     for b in CALC_BUTTONS {
         ui.set_enabled(F, b, false);
     }
+    grey_other_windows(app, ui);
     ui.set_enabled(F, "SpeedButton9", false);
     ui.set_caption(F, "Button2", &tr("@MB:Stop"));
     ui.cm(F, "Button2").hint = tr("@MB:StopTheCurrentCalculation");
@@ -828,6 +991,7 @@ pub fn enable_buttons(app: &mut Mb3d, ui: &mut Ui) {
     for b in CALC_BUTTONS {
         ui.set_enabled(F, b, true);
     }
+    ungrey_other_windows(app, ui);
     let undo_ok = app.main.undo.len() > 1;
     ui.set_enabled(F, "SpeedButton9", undo_ok);
     ui.set_visible(F, "ProgressBar1", false);
@@ -913,12 +1077,51 @@ pub fn place_sticky(app: &Mb3d, ui: &mut Ui, only: Option<&str>, free: bool) {
     }
 }
 
-/// `StickOption` of the ini (keeps the Animation window's bits).
+/// `StickOption` of the ini: Lighting bits 0-1, the Animation window
+/// bit 2 (FileHandling.pas:664), Formulas 4-5, Post processing 6-7.
 fn store_sticky(app: &mut Mb3d) {
-    let j = app.ini.get("StickOption").trim().parse::<u32>().unwrap_or(81);
     let s = app.main.sticky.map(|v| v as u32 & 3);
-    let j = (j & 0b1100) | s[1] | (s[0] << 4) | (s[2] << 6);
+    let j = s[1] | (app.main.ani_stick as u32) << 2 | (s[0] << 4) | (s[2] << 6);
     app.ini.set("StickOption", &j.to_string());
+}
+
+/// The main window moved or changed its size: the Animation window
+/// sticking below it follows; one shown less than 17 pixels from there
+/// sticks from now on (`WndProc` WM_Move, `FormResize`, Mand.pas:933-947,
+/// 3234).
+fn place_ani(app: &mut Mb3d, ui: &mut Ui) {
+    const A: &str = "AnimationForm";
+    if !ui.has_form(A) {
+        return;
+    }
+    let m = ui.f(F);
+    let (ml, mt) = (m.left, m.top);
+    let (_, mh) = m.outer_size(&ui.theme);
+    if app.main.ani_stick {
+        ui.move_form(A, ml, mt + mh);
+    } else if ui.showing(A) {
+        let a = ui.f(A);
+        if (a.top - mt - mh).abs() < 17 && (a.left - ml).abs() < 17 {
+            app.main.ani_stick = true;
+        }
+    }
+}
+
+/// The Animation window moved: it sticks below the main window when it
+/// is less than 17 pixels from there, else not (Animation.pas `WndProc`).
+pub fn ani_form_moved(app: &mut Mb3d, ui: &mut Ui) {
+    const A: &str = "AnimationForm";
+    let m = ui.f(F);
+    let (ml, mt) = (m.left, m.top);
+    let (_, mh) = m.outer_size(&ui.theme);
+    let a = ui.f(A);
+    if (a.top - mt - mh).abs() < 17 {
+        if (a.left - ml).abs() < 17 {
+            app.main.ani_stick = true;
+        }
+    } else {
+        app.main.ani_stick = false;
+    }
 }
 
 /// Post processing > "Recalculate a selection" is enabled: the mouse marks
@@ -934,8 +1137,8 @@ fn not_all_buttons_up(ui: &Ui) -> bool {
 fn store_undo(app: &mut Mb3d) {
     let s = app.scene.clone();
     app.main.undo.truncate(app.main.undo_pos);
-    if app.main.undo.last().map(|l| l.to_text()) != Some(s.to_text()) {
-        app.main.undo.push(s);
+    if app.main.undo.last().map(|l| l.0.to_text()) != Some(s.to_text()) {
+        app.main.undo.push((s, app.title.clone()));
         if app.main.undo.len() > 60 {
             app.main.undo.remove(0);
         }
@@ -1935,6 +2138,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 ui.set_caption(F, "Label48", &ao);
                 ui.set_caption(F, "Label50", &stage(stats.stages.reflections.map(Some)));
                 let _ = secs;
+                // (always with the picture, Mand.pas:2321)
                 if let Some(p) = auto_m3i {
                     save_m3i(app, ui, &p);
                 }
@@ -1950,9 +2154,47 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
         super::light_form::calc_finished(app, ui);
     }
-    // the history keeps the parameters after lighting changes (Timer2)
-    if !app.main.calculating && app.main.last_history.elapsed().as_secs() >= 300 {
-        app.main.last_history = Instant::now();
+    // a calculation of more than 100 s releases the zoom, move and Z
+    // buttons (MButtonsUp, Mand.pas:2177)
+    if app.main.calculating && app.main.calc3d && app.main.calc_start.elapsed().as_secs() > 100 && not_all_buttons_up(ui) {
+        m_buttons_up(ui);
+    }
+    // Timer2 (every minute, Mand.pas:4122): the history keeps the
+    // parameters after the lighting changed, at most every 5 minutes, not
+    // while animating or batch rendering
+    if app.main.history_tick.elapsed().as_secs() >= 60 {
+        app.main.history_tick = Instant::now();
+        history_timer(app);
+    }
+}
+
+/// `Timer2Timer`: the parameters into History when the lighting changed
+/// since History kept it last.
+fn history_timer(app: &mut Mb3d) {
+    let animating = app.anim.job.lock().unwrap().running;
+    if app.main.calculating || animating || app.batch.status != 0 || app.main.last_history.elapsed().as_secs() <= 300 {
+        return;
+    }
+    let light = format!("{:?}", app.scene.lighting);
+    if light == app.main.history_light {
+        return;
+    }
+    crate::appdirs::store_history(&app.scene, &stem(&app.title));
+    app.main.last_history = Instant::now();
+    app.main.history_light = light;
+}
+
+/// History kept the parameters now (`StoreHistoryPars`, a file loaded:
+/// `LastHisParSaveTime`, `LHPSLight`).
+pub fn history_kept(app: &mut Mb3d) {
+    app.main.last_history = Instant::now();
+    app.main.history_light = format!("{:?}", app.scene.lighting);
+}
+
+/// `MButtonsUp`: zoom, move and Z of the image released.
+fn m_buttons_up(ui: &mut Ui) {
+    for b in ["SpeedButton1", "SpeedButton2", "SpeedButton4"] {
+        ui.set_checked(F, b, false);
     }
 }
 
@@ -2109,7 +2351,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("PNG (*.png)|*.png|JPEG (*.jpg)|*.jpg|{}|*.bmp", tr("@MB:BitmapBmp")),
                 default_ext: "png".into(),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
+                initial_dir: Some(dlg_dir(app, "autostereo", super::ini::DIR_IMG)),
                 file_name: format!("{}-stereo", stem(&app.title)),
                 ..Default::default()
             };
@@ -2126,7 +2368,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("{}|*.m3i", tr("@MB:M3DImageParameterM3i")),
                 default_ext: "m3i".into(),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
+                initial_dir: Some(dlg_dir(app, "autom3i", super::ini::DIR_M3I)),
+                file_name: stem(&app.title),
                 ..Default::default()
             };
             ui.save_dialog("main:autom3i", &o);
@@ -2344,6 +2587,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "CheckBox7Click" | "PageControl1Change" | "GroundChange" => page_control1_change(app, ui),
         "GroundColBtnClick" => ui.pick_color("main:groundcolor", super::util::argb(app.main.ground_color)),
+        "GroundWaterColBtnClick" => ui.pick_color("main:groundwatercolor", super::util::argb(app.main.ground_water_color)),
         "ButtonVolLightClick" => {
             if ui.caption(F, "ButtonVolLight") != tr("@MB:VolumeLightNr") {
                 app.scene.vol_light = Some(crate::vollight::VolLightParams { light: 0, map_size: 0 });
@@ -2378,8 +2622,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                     MouseButton::Right if app.main.undo_pos < n => app.main.undo_pos += 1,
                     _ => return,
                 }
-                if let Some(s) = app.main.undo.get(app.main.undo_pos.saturating_sub(1)).cloned() {
+                if let Some((s, title)) = app.main.undo.get(app.main.undo_pos.saturating_sub(1)).cloned() {
                     app.scene = s;
+                    // the window title of the step too (SetM3DUndo, Undo.pas:50)
+                    app.title = title;
+                    set_caption(app, ui);
                     app.scene_to_forms(ui);
                     paras_changed(app, ui);
                     all_presets_up(ui);
@@ -2418,7 +2665,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button5Click" => {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("{}|*.m3p|{}|*.*", tr("@MB:M3DParameterM3p"), tr("@MB:AllFilesParen")),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
+                initial_dir: Some(dlg_dir(app, "openm3p", super::ini::DIR_M3P)),
                 preview: true,
                 ..Default::default()
             };
@@ -2427,7 +2674,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "Button9Click" => {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("{}|*.m3i", tr("@MB:M3DImageParameterM3i")),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
+                initial_dir: Some(dlg_dir(app, "openm3i", super::ini::DIR_M3I)),
                 preview: true,
                 ..Default::default()
             };
@@ -2437,7 +2684,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("{}|*.m3p", tr("@MB:M3DParameterM3p")),
                 default_ext: "m3p".into(),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_M3P)),
+                initial_dir: Some(dlg_dir(app, "savem3p", super::ini::DIR_M3P)),
                 file_name: stem(&app.title),
                 ..Default::default()
             };
@@ -2451,7 +2698,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let o = crate::vcl::dialogs::FileOptions {
                 filter: format!("{}|*.m3i", tr("@MB:M3DImageParameterM3i")),
                 default_ext: "m3i".into(),
-                initial_dir: Some(app.ini.dir(super::ini::DIR_M3I)),
+                initial_dir: Some(dlg_dir(app, "savem3i", super::ini::DIR_M3I)),
                 file_name: stem(&app.title),
                 ..Default::default()
             };
@@ -2501,8 +2748,22 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             }
         }
         "FrameEditExit" => crate::maps::set_current_frame(pti(&t(ui, "FrameEdit")).max(1)),
-        "FormKeyPress" => {}
-        "WMMove" => place_sticky(app, ui, None, false),
+        // Esc leaves the Navigator's mouse look (Mand.pas:3511 FormKeyPress)
+        "FormKeyPress" => {
+            if e.ev == Ev::KeyPress('\u{1b}') && app.navi.look {
+                super::navi_form::set_look(app, ui, false);
+            }
+        }
+        // the size grip in the bottom right corner (Mand.pas:3003-3032)
+        "Image2MouseDown" => {
+            if let Ev::MouseDown { button: MouseButton::Left, .. } = e.ev {
+                ui.drag_resize(F);
+            }
+        }
+        "WMMove" => {
+            place_sticky(app, ui, None, false);
+            place_ani(app, ui);
+        }
         // a right click on Formulas, Lighting, Postprocess: stick its window
         // to the right or left side of this one, or not
         "Button10MouseDown" => {
@@ -2524,13 +2785,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "FormResize" => {
             place_sticky(app, ui, None, false);
+            place_ani(app, ui);
             let ph = ui.c(F, "Panel1").height;
             let mt = ui.c(F, "Memo1").top;
             let p4 = ui.c(F, "Panel4").height;
             ui.cm(F, "Memo1").height = (ph - mt - p4 - 1).clamp(80, 240);
         }
         "FormCloseQuery" => {
-            if app.eng.running() && app.main.calc_start.elapsed().as_secs() > 900 {
+            // (also while the Monte Carlo window renders, Mand.pas:2979)
+            let mc = ui.has_form("MCForm") && ui.caption("MCForm", "Button2") == tr("@MB:StopRendering");
+            if long_calculation(app) || mc {
                 ui.message_box("main:closequery", &tr("@MB:Warning"), &tr("@MB:DoYouReallyWantToStop"), &[MR_YES, crate::vcl::form::MR_NO]);
             } else {
                 app.eng.stop();
@@ -2542,8 +2806,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     }
 }
 
+/// The parameter name of a title: without the extension of a file type
+/// the program reads or writes (the title is a file's name without one,
+/// as MB3D shows it, which may itself contain a dot).
 pub(crate) fn stem(title: &str) -> String {
-    std::path::Path::new(title).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
+    const TYPES: [&str; 11] = ["m3p", "m3i", "m3a", "big", "txt", "png", "jpg", "jpeg", "bmp", "exr", "m3c"];
+    let p = std::path::Path::new(title);
+    let known = p.extension().is_some_and(|e| TYPES.iter().any(|t| e.eq_ignore_ascii_case(t)));
+    let name = if known { p.file_stem() } else { p.file_name() };
+    name.map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
 }
 
 fn form_close(app: &mut Mb3d, ui: &mut Ui) {
@@ -2567,38 +2838,28 @@ fn form_close(app: &mut Mb3d, ui: &mut Ui) {
     app.ini.set("SavePNGtextPars", if ui.checked(F, "CheckBox13") { "Yes" } else { "No" });
     app.ini.set("DisableTBoost", if ui.checked(F, "CheckBox14") { "Yes" } else { "No" });
     app.ini.set("SaveImgInM3I", if ui.checked(F, "CheckBox16") { "Yes" } else { "No" });
+    store_sticky(app);
     app.ini.set("VisualTheme", ui.theme.style.name());
     let _ = app.ini.save();
+}
+
+/// A calculation of the main window has run for more than 15 minutes:
+/// stopping it (or closing the program) asks first (Mand.pas:1767, 2979).
+fn long_calculation(app: &Mb3d) -> bool {
+    app.eng.running() && app.main.calc_start.elapsed().as_secs() > 900
 }
 
 fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     crate::maps::set_current_frame(pti(&t(ui, "FrameEdit")).max(1));
     if ui.caption(F, "Button2") == tr("@MB:Stop") {
-        let anim = app.anim.job.lock().unwrap().running;
-        app.anim.stop.store(true, std::sync::atomic::Ordering::SeqCst);
-        app.eng.stop();
-        super::voxel_form::stop(app);
-        super::tools_forms::stop_tiling(app);
-        let status = ui.caption(F, "Label6");
-        let bar_shown = app.main.calc3d && ui.visible(F, "ProgressBar1") && !status.is_empty();
-        enable_buttons(app, ui);
-        // the stopped calculation's stage, progress and time left stay (the
-        // frame number keeps making room) until they are replaced or a
-        // calculation starts
-        if bar_shown {
-            ui.set_caption(F, "Label6", &status);
-            ui.set_visible(F, "ProgressBar1", true);
-            ui.set_visible(F, "Panel7", false);
-            app.main.stopped_status = Some(status);
+        if long_calculation(app) {
+            if !app.main.stop_ask {
+                app.main.stop_ask = true;
+                ui.message_box("main:stopquery", &tr("@MB:Warning"), &tr("@MB:DoYouReallyWantToStop"), &[MR_YES, MR_NO]);
+            }
+            return;
         }
-        if app.main.led_running {
-            app.main.led_running = false;
-            show_led(ui, app.main.led, false);
-        }
-        if anim {
-            ui.set_caption("AnimationForm", "Button2", &tr("@MB:StartRenderingAnimationImages"));
-        }
-        app.message(ui, &if anim { tr("@MB:AnimationRenderingStopped") } else { tr("@MB:CalculationStopped") });
+        stop_calc(app, ui);
         return;
     }
     app.main.image_text = false;
@@ -2606,7 +2867,37 @@ fn button2_click(app: &mut Mb3d, ui: &mut Ui) {
     app.make_scene(ui);
     let title = stem(&app.title);
     app.main.history_file = crate::appdirs::store_history(&app.scene, &title);
+    history_kept(app);
     calc_mand(app, ui, true);
+}
+
+/// The Stop button: the running calculation ends.
+fn stop_calc(app: &mut Mb3d, ui: &mut Ui) {
+    let anim = app.anim.job.lock().unwrap().running;
+    app.anim.stop.store(true, std::sync::atomic::Ordering::SeqCst);
+    app.eng.stop();
+    super::voxel_form::stop(app);
+    super::tools_forms::stop_tiling(app);
+    let status = ui.caption(F, "Label6");
+    let bar_shown = app.main.calc3d && ui.visible(F, "ProgressBar1") && !status.is_empty();
+    enable_buttons(app, ui);
+    // the stopped calculation's stage, progress and time left stay (the
+    // frame number keeps making room) until they are replaced or a
+    // calculation starts
+    if bar_shown {
+        ui.set_caption(F, "Label6", &status);
+        ui.set_visible(F, "ProgressBar1", true);
+        ui.set_visible(F, "Panel7", false);
+        app.main.stopped_status = Some(status);
+    }
+    if app.main.led_running {
+        app.main.led_running = false;
+        show_led(ui, app.main.led, false);
+    }
+    if anim {
+        ui.set_caption("AnimationForm", "Button2", &tr("@MB:StartRenderingAnimationImages"));
+    }
+    app.message(ui, &if anim { tr("@MB:AnimationRenderingStopped") } else { tr("@MB:CalculationStopped") });
 }
 
 fn speed_button3_click(app: &mut Mb3d, ui: &mut Ui, sender: &str) {
@@ -2965,12 +3256,22 @@ fn save_pic_dialog(app: &mut Mb3d, ui: &mut Ui, what: &str) {
         "png" => (format!("PNG (*.png)|*.png|{}|*.png|{}|*.png|{}|*.bmp|OpenEXR (*.exr)|*.exr", tr("@MB:PNG16BitColourPng"), tr("@MB:PNGTransparentBackgroundPng"), tr("@MB:BitmapBmp")), "png"),
         "jpg" => ("JPEG (*.jpg)|*.jpg".to_string(), "jpg"),
         "jpgp" => ("JPEG + M3P (*.jpg)|*.jpg|PNG + M3P (*.png)|*.png".to_string(), "jpg"),
-        _ => (format!("{}|*.png", tr("@MB:PNG16BitPng")), "png"),
+        // SaveDialog5: Windows bitmap, PNG 8 bit, PNG 16 bit (Mand.dfm)
+        _ => (format!("{}|*.bmp|{}|*.png|{}|*.png", tr("@MB:BitmapBmp"), tr("@MB:PNG8BitPng"), tr("@MB:PNG16BitPng")), "png"),
     };
+    // the picture's file type chosen last (`SaveImagePNG`, Mand.pas:3781),
+    // the z-buffer's PNG 16 bit
+    let filter_index = match what {
+        "png" => saved_png_type(app),
+        "zbuf" => 3,
+        _ => 1,
+    };
+    let key = format!("save{what}");
     let o = crate::vcl::dialogs::FileOptions {
         filter,
+        filter_index,
         default_ext: ext.into(),
-        initial_dir: Some(app.ini.dir(super::ini::DIR_IMG)),
+        initial_dir: Some(dlg_dir(app, &key, super::ini::DIR_IMG)),
         file_name: stem(&app.title),
         ..Default::default()
     };
@@ -2984,13 +3285,15 @@ fn saved_image(app: &Mb3d) -> Option<(Vec<u8>, usize, usize)> {
     Some(if s > 1 { crate::render::downsample(&rgb, w, h, s) } else { ((*rgb).clone(), w, h) })
 }
 
-fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
-    let Some((rgb, w, h)) = saved_image(app) else { return };
+fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) -> bool {
+    let Some((rgb, w, h)) = saved_image(app) else { return false };
     let ext = path.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
     let res: Result<(), String> = match ext.as_str() {
         "jpg" | "jpeg" => {
             let q = pti(&t(ui, "Edit26")).clamp(1, 100) as u8;
-            std::fs::write(path, crate::jpeg::encode(w, h, &rgb, q)).map_err(|e| e.to_string())
+            // a spherical panorama: a 360 photo (Photo Sphere XMP)
+            let sc = app.eng.base().map(|b| b.scene.clone()).unwrap_or_else(|| app.scene.clone());
+            std::fs::write(path, crate::vr::encode_jpeg_for(&sc, w, h, &rgb, q)).map_err(|e| e.to_string())
         }
         "bmp" => std::fs::write(path, crate::frames::encode_bmp(w, h, &rgb)).map_err(|e| e.to_string()),
         _ => {
@@ -3004,19 +3307,30 @@ fn save_image(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
             std::fs::write(path, data).map_err(|e| e.to_string())
         }
     };
+    saved(app, ui, res.map(|()| trf("@MB:Saved2", &[&path.display()])), path)
+}
+
+/// The message of a file saved (true) or not.
+fn saved(app: &Mb3d, ui: &mut Ui, res: Result<String, String>, path: &std::path::Path) -> bool {
     match res {
-        Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&path.display()])),
-        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
+        Ok(m) => {
+            app.message(ui, &m);
+            true
+        }
+        Err(e) => {
+            app.message(ui, &format!("{}: {e}", path.display()));
+            false
+        }
     }
 }
 
 /// "PNG 16 bit colour": the picture painted again from the kept G-buffer
 /// with the colours as calculated (before the rounding to 8 bit), reduced
 /// by the viewing scale as the 8 bit picture.
-fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) -> bool {
     let Some(b) = app.eng.base() else {
         app.message(ui, &tr("@MB:CalculateTheImageFirst"));
-        return;
+        return false;
     };
     let rgb = crate::render::paint16(&b.scene, &b.params, &b.post);
     let s = app.main.image_scale.max(1) as usize;
@@ -3026,37 +3340,34 @@ fn save_image16(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         let text = crate::m3p::raw_to_text(&crate::m3p::write(&b.scene), ui.f(F).caption());
         data = crate::png::with_text(data, "Comment", &text);
     }
-    match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &trf("@MB:Saved16BitColour", &[&path.display()])),
-        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
-    }
+    let res = std::fs::write(path, data).map(|()| trf("@MB:Saved16BitColour", &[&path.display()])).map_err(|e| e.to_string());
+    saved(app, ui, res, path)
 }
 
 /// "OpenEXR": the colours in floating point (not clipped above white) with
 /// the opacity, depth and normal layers ([`crate::exr`]), reduced by the
 /// viewing scale.
-fn save_exr(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+fn save_exr(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) -> bool {
     let Some(b) = app.eng.base() else {
         app.message(ui, &tr("@MB:CalculateTheImageFirst"));
-        return;
+        return false;
     };
     let s = app.main.image_scale.max(1) as usize;
     let l = crate::exr::layers(&b.scene, &b.params, &b.post, b.w, b.h, s);
-    match std::fs::write(path, crate::exr::encode(&l)) {
-        Ok(()) => app.message(ui, &trf("@MB:SavedOpenEXRFloatingPointColoursAnd", &[&path.display()])),
-        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
-    }
+    let res = std::fs::write(path, crate::exr::encode(&l)).map(|()| trf("@MB:SavedOpenEXRFloatingPointColoursAnd", &[&path.display()])).map_err(|e| e.to_string());
+    saved(app, ui, res, path)
 }
 
 /// "PNG transparent background": the shown picture as RGBA, the background
 /// transparent ([`crate::frames::rgba_of`]), reduced by the viewing scale.
-fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) -> bool {
     let (Some((rgb, w, h)), Some(b)) = (app.main.rgb.clone(), app.eng.base()) else {
         app.message(ui, &tr("@MB:CalculateTheImageFirst"));
-        return;
+        return false;
     };
     if b.post.len() != w * h {
-        return app.message(ui, &tr("@MB:ThePictureDoesNotMatchIts"));
+        app.message(ui, &tr("@MB:ThePictureDoesNotMatchIts"));
+        return false;
     }
     let s = app.main.image_scale.max(1) as usize;
     let (rgba, ow, oh) = crate::frames::rgba_of(&rgb, &b.post, w, h, s);
@@ -3065,43 +3376,157 @@ fn save_transparent(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
         let text = crate::m3p::raw_to_text(&crate::m3p::write(&b.scene), ui.f(F).caption());
         data = crate::png::with_text(data, "Comment", &text);
     }
-    match std::fs::write(path, data) {
-        Ok(()) => app.message(ui, &trf("@MB:SavedTransparentBackground", &[&path.display()])),
-        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
-    }
+    let res = std::fs::write(path, data).map(|()| trf("@MB:SavedTransparentBackground", &[&path.display()])).map_err(|e| e.to_string());
+    saved(app, ui, res, path)
 }
 
-fn save_zbuf(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
+/// "Save Z-buffer" (`SaveZBuf`, FileHandling.pas:1331): `kind` 1 a Windows
+/// bitmap or 2 a PNG of 8 bit (`MakeZbufBMP`: the depth / 137 + 16, the
+/// background black, at the size shown), 3 a PNG of 16 bit with the
+/// offset, scale and inversion of the Z-buffer 16 bit window (`MakeZbufPGM`).
+fn save_zbuf(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path, kind: usize) {
     let Some(b) = app.eng.base() else {
         app.message(ui, &tr("@MB:CalculateTheImageFirst"));
         return;
     };
-    let z: Vec<u16> = b.post.iter().map(|s| if s.is_background() { 0 } else { (65535 - (s.zpos() * 2).min(65535)) as u16 }).collect();
-    match crate::png::write_gray16(&path.to_string_lossy(), b.w, b.h, &z) {
-        Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&path.display()])),
+    let res = if kind == 3 {
+        let path = path.with_extension("png");
+        let (o, sc, inv) = super::small_forms::zb_values(ui);
+        match super::small_forms::zbuf16(app, o, sc, inv) {
+            Some((w, h, z, _)) => crate::png::write_gray16(&path.to_string_lossy(), w, h, &z).map(|()| path).map_err(|e| e.to_string()),
+            None => return,
+        }
+    } else {
+        let s = app.main.image_scale.max(1) as usize;
+        let (w, h, g) = zbuf8(&b.post, b.w, b.h, s);
+        let path = path.with_extension(if kind == 1 { "bmp" } else { "png" });
+        let data = if kind == 1 {
+            let rgb: Vec<u8> = g.iter().flat_map(|&v| [v, v, v]).collect();
+            crate::frames::encode_bmp(w, h, &rgb)
+        } else {
+            crate::png::encode_gray8(w, h, &g)
+        };
+        std::fs::write(&path, data).map(|()| path).map_err(|e| e.to_string())
+    };
+    match res {
+        Ok(p) => app.message(ui, &trf("@MB:Saved2", &[&p.display()])),
         Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
     }
 }
 
+/// `MakeZbufBMP` (ImageProcess.pas:820): the 8 bit depth picture at the
+/// viewing scale `s`: a pixel is its depth word / 137 + 16, the background
+/// 0; reduced, the mean of the s x s pixels (the background counted as 0,
+/// and MB3D's offset of 16 x s² / (s² x 137), which rounds to nothing).
+fn zbuf8(g: &[crate::gbuffer::SiLight], w: usize, h: usize, s: usize) -> (usize, usize, Vec<u8>) {
+    if s <= 1 {
+        let px = g.iter().map(|p| if p.is_background() { 0 } else { (p.zpos() / 137 + 16).min(255) as u8 }).collect();
+        return (w, h, px);
+    }
+    let scale = s.clamp(2, 10);
+    let (dw, dh) = (w / s, h / s);
+    let add = 16 * (scale * scale) as u32;
+    let mut out = Vec::with_capacity(dw * dh);
+    for y in 0..dh {
+        for x in 0..dw {
+            let mut sum = 0u32;
+            for yy in 0..scale {
+                for xx in 0..scale {
+                    let (px, py) = (x * s + xx, y * s + yy);
+                    if px < w && py < h && !g[py * w + px].is_background() {
+                        sum += g[py * w + px].zpos() + add;
+                    }
+                }
+            }
+            out.push((sum / ((scale * scale) as u32 * 137)).min(255) as u8);
+        }
+    }
+    (dw, dh, out)
+}
+
+/// Saves the calculated picture's parameters with its G-buffer and the
+/// finished picture as an .m3i, as MB3D does after a batch calculation
+/// and "Start rendering and save the M3I" (`SaveM3I(.., True)`,
+/// Mand.pas:2321, 2330).
 pub fn save_m3i(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path) {
-    let Some(b) = app.eng.base() else { return };
-    match crate::m3p::write_m3i_to(path, &b.scene, &b.post) {
-        Ok(()) => app.message(ui, &trf("@MB:Saved2", &[&path.display()])),
-        Err(e) => app.message(ui, &format!("{}: {e}", path.display())),
+    save_m3i_with(app, ui, path, true);
+}
+
+/// Saves the calculated picture's parameters with its G-buffer as an
+/// .m3i (`SaveM3I`, Mand.pas:2866); `with_image` also the finished
+/// picture after them ("Save image in m3i"), which MB3D and this program
+/// show when opening it instead of painting it again.
+pub fn save_m3i_with(app: &mut Mb3d, ui: &mut Ui, path: &std::path::Path, with_image: bool) -> bool {
+    let Some(b) = app.eng.base() else { return false };
+    let rgb = app.main.rgb.clone().filter(|(_, w, h)| with_image && (*w, *h) == (b.w, b.h)).map(|(rgb, ..)| rgb);
+    let res = crate::m3p::write_m3i_image_to(path, &b.scene, &b.post, rgb.as_deref().map(|v| v.as_slice())).map(|()| trf("@MB:Saved2", &[&path.display()])).map_err(|e| e.to_string());
+    saved(app, ui, res, path)
+}
+
+/// The folder the file dialog `key` of this window opens in: where it was
+/// last in this session, else the folder of the Ini-dirs window.
+fn dlg_dir(app: &Mb3d, key: &str, ini_dir: usize) -> PathBuf {
+    app.main.last_dirs.get(key).cloned().filter(|d| d.is_dir()).unwrap_or_else(|| app.ini.dir(ini_dir))
+}
+
+/// The file dialog `key` chose `p`: its folder next time in this session.
+fn dlg_used(app: &mut Mb3d, key: &str, p: &std::path::Path) {
+    if let Some(d) = p.parent().filter(|d| !d.as_os_str().is_empty()) {
+        app.main.last_dirs.insert(key.to_string(), d.to_path_buf());
+    }
+}
+
+/// `SetSaveDialogNames` (FileHandling.pas:457): the window's title, and
+/// the name the save dialogs offer, is the file's name without extension.
+pub fn set_save_names(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
+    app.title = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    set_caption(app, ui);
+}
+
+/// The picture dialog's file type chosen last: this program's own line
+/// `SaveImageType` (its order of types), else MB3D's `SaveImagePNG` (0 a
+/// bitmap, 1 a PNG).
+fn saved_png_type(app: &Mb3d) -> usize {
+    match app.ini.get_extra("SaveImageType").and_then(|v| v.parse::<usize>().ok()) {
+        Some(k @ 1..=5) => k,
+        // (an ini of MB3D: its SaveImagePNG, 0 for a bitmap)
+        _ if app.ini.get("SaveImagePNG") == "0" && app.ini.get_extra("SaveImageType").is_none() => 4,
+        _ => 1,
+    }
+}
+
+/// Keeps the picture dialog's file type `k` (1 PNG, 2 PNG 16 bit, 3 PNG
+/// transparent, 4 bitmap, 5 OpenEXR); MB3D's item as far as it has it.
+fn store_png_type(app: &mut Mb3d, k: usize) {
+    app.ini.set_extra("SaveImageType", &k.to_string());
+    match k {
+        1 => app.ini.set("SaveImagePNG", "1"),
+        4 => app.ini.set("SaveImagePNG", "0"),
+        _ => {}
     }
 }
 
 /// Opens a parameter file, an .m3i or text parameters (the Open dialogs,
 /// a dropped file, the History window).
 pub fn open_file(app: &mut Mb3d, ui: &mut Ui, p: &std::path::Path) {
-    let ext = p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).unwrap_or_default();
-    if let Some(d) = p.parent() {
-        let k = if ext == "m3i" { super::ini::DIR_M3I } else { super::ini::DIR_M3P };
-        app.ini.dirs[k] = d.to_path_buf();
+    // no files while a calculation runs: MB3D takes no dropped files then
+    // (DragAcceptFiles(False) in DisableButtons, Mand.pas:1236), loading
+    // would end the calculation
+    if app.main.calculating {
+        ui.show_message(&tr("@MB:ACalculationIsRunningStopIt"));
+        return;
+    }
+    // an animation opens the Animation window, a big render project the
+    // Big renders window (Mand.pas:845-855)
+    match p.extension().map(|e| e.to_string_lossy().to_ascii_lowercase()).as_deref() {
+        Some("m3a") => return super::anim_form::load_animation(app, ui, p),
+        Some("big") => return super::tools_forms::load_big(app, ui, p),
+        _ => {}
     }
     match app.load_params(ui, p) {
         Ok(()) => {
             all_presets_up(ui);
+            m_buttons_up(ui);
             if app.eng.base().is_none() {
                 app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
             }
@@ -3134,41 +3559,59 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 _ => not_started(app, ui),
             }
         }
-        (_, DialogResult::File(Some(p))) if what.starts_with("open") || what == "" => open_file(app, ui, p),
+        // a file dialog of this window: it opens in this folder next time
+        (_, DialogResult::File(Some(p))) if what.starts_with("open") || what.is_empty() => {
+            if what.starts_with("open") {
+                dlg_used(app, what, p);
+            }
+            open_file(app, ui, p)
+        }
         ("groundcolor", DialogResult::Color(Some(c))) => {
             app.main.ground_color = super::util::rgb_of(*c);
             ground_swatch(app, ui);
         }
+        ("groundwatercolor", DialogResult::Color(Some(c))) => {
+            app.main.ground_water_color = super::util::rgb_of(*c);
+            ground_swatch(app, ui);
+        }
         ("savem3p", DialogResult::File(Some(p))) => {
+            dlg_used(app, what, p);
             app.make_scene(ui);
             let p = p.with_extension("m3p");
             match std::fs::write(&p, crate::m3p::write(&app.scene)) {
                 Ok(()) => {
-                    app.title = p.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-                    set_caption(app, ui);
+                    set_save_names(app, ui, &p);
                     app.message(ui, &trf("@MB:Saved2", &[&p.display()]));
                 }
                 Err(e) => app.message(ui, &format!("{}: {e}", p.display())),
             }
         }
-        ("savem3i", DialogResult::File(Some(p))) => save_m3i(app, ui, &p.with_extension("m3i")),
+        ("savem3i", DialogResult::File(Some(p))) => {
+            dlg_used(app, what, p);
+            let p = p.with_extension("m3i");
+            // "Save image in m3i" (CheckBox16, Mand.pas:2902)
+            let img = ui.checked(F, "CheckBox16");
+            if save_m3i_with(app, ui, &p, img) {
+                set_save_names(app, ui, &p);
+            }
+        }
         ("autom3i", DialogResult::File(Some(p))) => {
+            dlg_used(app, what, p);
             app.main.auto_m3i = Some(p.with_extension("m3i"));
             button2_click(app, ui);
         }
         ("autostereo", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
-            }
+            dlg_used(app, what, p);
             app.main.auto_stereo = Some(if p.extension().is_some() { p.to_path_buf() } else { p.with_extension("png") });
             start_stereo_pair(app, ui);
         }
         ("savepng" | "savejpg", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
+            dlg_used(app, what, p);
+            if what == "savepng" {
+                store_png_type(app, ui.filter_index);
             }
             let png = p.extension().is_some_and(|e| e.eq_ignore_ascii_case("png"));
-            if p.extension().is_some_and(|e| e.eq_ignore_ascii_case("exr")) {
+            let ok = if p.extension().is_some_and(|e| e.eq_ignore_ascii_case("exr")) {
                 save_exr(app, ui, p)
             } else if what == "savepng" && ui.filter_index == 2 && png {
                 save_image16(app, ui, p)
@@ -3176,14 +3619,25 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
                 save_transparent(app, ui, p)
             } else {
                 save_image(app, ui, p)
+            };
+            // the window takes the picture's name (SetSaveDialogNames, Mand.pas:3787)
+            if ok {
+                set_save_names(app, ui, p);
             }
         }
         ("savejpgp", DialogResult::File(Some(p))) => {
+            dlg_used(app, what, p);
             app.make_scene(ui);
             let _ = std::fs::write(p.with_extension("m3p"), crate::m3p::write(&app.scene));
-            save_image(app, ui, p);
+            if save_image(app, ui, p) {
+                set_save_names(app, ui, p);
+            }
         }
-        ("savezbuf", DialogResult::File(Some(p))) => save_zbuf(app, ui, p),
+        ("savezbuf", DialogResult::File(Some(p))) => {
+            dlg_used(app, what, p);
+            let k = ui.filter_index;
+            save_zbuf(app, ui, p, k)
+        }
         ("aspectx", DialogResult::Text(Some(s))) => {
             let i = pti(s);
             if i >= 1 {
@@ -3206,6 +3660,12 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         ("author", DialogResult::Text(Some(s))) => {
             app.ini.set("Author", s.trim());
         }
+        ("stopquery", DialogResult::Button(b)) => {
+            app.main.stop_ask = false;
+            if *b == MR_YES && ui.caption(F, "Button2") == tr("@MB:Stop") {
+                stop_calc(app, ui);
+            }
+        }
         ("closequery", DialogResult::Button(b)) => {
             if *b == MR_YES {
                 app.eng.stop();
@@ -3215,5 +3675,18 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stem_keeps_dots_of_the_name() {
+        assert_eq!(stem("my.scene"), "my.scene");
+        assert_eq!(stem("my.scene.m3p"), "my.scene");
+        assert_eq!(stem("pic.PNG"), "pic");
+        assert_eq!(stem("Keyframe #3"), "Keyframe #3");
     }
 }

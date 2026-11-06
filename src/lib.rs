@@ -34,6 +34,7 @@
 #![deny(unsafe_code)]
 
 pub mod anim;
+pub mod autopilot;
 #[cfg(feature = "gui")]
 pub mod app;
 pub mod appdirs;
@@ -69,6 +70,14 @@ pub mod gpu;
 pub mod image;
 pub mod iteration;
 pub mod jit;
+/// The Pascal formulas compiled with Cranelift (calls of the compiled code
+/// are unsafe by Rust's definition, as in `x86::clif_jit`)
+#[cfg(jit)]
+#[allow(unsafe_code)]
+pub mod jit_pascal;
+/// The Pascal formulas translated to WGSL for the graphics card
+#[cfg_attr(not(feature = "gpu"), allow(dead_code))]
+pub mod jit_wgsl;
 pub mod jpeg;
 pub mod lighting;
 pub mod m3f;
@@ -89,8 +98,11 @@ pub mod ssao;
 pub mod ssao15;
 pub mod swarm;
 pub mod video;
+pub mod vr;
 pub mod vollight;
 pub mod voxel;
+pub mod water;
+pub mod water_layer;
 pub mod x86;
 #[cfg(feature = "gui")]
 pub mod vcl;

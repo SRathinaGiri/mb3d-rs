@@ -30,12 +30,15 @@ pub struct Job {
     pub error: String,
     pub last: Option<(Vec<u8>, usize, usize)>,
     pub frames: Vec<Option<Bitmap>>,
-    pub thumbs: Vec<(usize, u64, Bitmap)>,
+    /// keyframe pictures done: index, keyframe id, picture, its time in ms
+    pub thumbs: Vec<(usize, u64, Bitmap, i32)>,
     pub changed: bool,
     /// the frames are done, the video is being made
     pub making_video: bool,
     /// the video written ("Also make a video")
     pub video: Option<std::path::PathBuf>,
+    /// the rendering waits for "Paused, press to continue"
+    pub paused: bool,
 }
 
 fn save_output_settings(app: &mut Mb3d, ui: &Ui) {
@@ -54,7 +57,7 @@ fn video_check(a: &Animation) -> Result<(), String> {
     if a.format == OutputFormat::M3p {
         return Err(tr("@MB:AVideoNeedsImagesChooseBMP"));
     }
-    if a.stereo_eyes().len() != 1 {
+    if a.stereo_eyes().len() != 1 && !a.vr360 {
         return Err(tr("@MB:AVideoOfAStereoAnimation"));
     }
     Ok(())
@@ -68,7 +71,10 @@ fn video_settings(ui: &Ui, a: &Animation) -> Result<Option<(std::path::PathBuf, 
     }
     video_check(a)?;
     let fps = video_fps(ui)?;
-    Ok(Some((std::path::Path::new(&a.output_folder).join(format!("{}.avi", a.name)), fps)))
+    // (a 360 video: named so that VR players know it, an AVI has no place
+    // for the metadata)
+    let name = if a.vr360 { crate::vr::vr_name(&a.name, crate::vr::anim_stereo(a)) } else { a.name.clone() };
+    Ok(Some((std::path::Path::new(&a.output_folder).join(format!("{name}.avi")), fps)))
 }
 
 /// The animation to render with this window's settings, its range and
@@ -93,6 +99,17 @@ fn output_plan(app: &mut Mb3d, ui: &Ui) -> Result<(Animation, FrameRun, Vec<usiz
     Ok((a, run, frames))
 }
 
+/// The command line program beside this one (it marks MP4s as 360 ones),
+/// else its name.
+fn mb3d_program() -> String {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.join(format!("mb3d{}", std::env::consts::EXE_SUFFIX))))
+        .filter(|p| p.is_file())
+        .map(|p| p.display().to_string())
+        .unwrap_or_else(|| "mb3d".into())
+}
+
 /// `FfmpegBtnClick`: the ffmpeg command for a small video of the frames,
 /// to the clipboard and the messages (run by the user: this program
 /// starts no other programs).
@@ -110,7 +127,18 @@ fn ffmpeg_command(app: &mut Mb3d, ui: &mut Ui) {
         Err(e) => return ui.show_message(&e),
     };
     let step = if frames.len() > 1 { a.file_index(frames[1]) - a.file_index(frames[0]) } else { 1 };
-    let cmd = crate::video::ffmpeg_command(std::path::Path::new(&a.output_folder), &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent);
+    let folder = std::path::Path::new(&a.output_folder);
+    let cmd = if a.vr360 {
+        // the eyes of a stereo one put together top-bottom first
+        if let Err(e) = crate::vr::video_frames(&a, &frames) {
+            return ui.show_message(&e);
+        }
+        let st = crate::vr::anim_stereo(&a);
+        let frames_name = if st == crate::vr::Stereo::Mono { a.name.clone() } else { format!("{}VR", a.name) };
+        crate::video::ffmpeg_command_vr(folder, &frames_name, &crate::vr::vr_name(&a.name, st), a.format.extension(), a.file_index(frames[0]), step, fps, st, &mb3d_program())
+    } else {
+        crate::video::ffmpeg_command(folder, &a.name, a.format.extension(), a.file_index(frames[0]), step, fps, a.transparent)
+    };
     crate::vcl::clipboard::set(&cmd);
     app.message(ui, &tr("@MB:AnimationTheFfmpegCommandIsOn"));
     app.message(ui, &cmd);
@@ -142,6 +170,12 @@ pub struct State {
     pub preview_start: usize,
     pub play_frame: usize,
     pub playing: bool,
+    /// the preview window's speed was read from the ini (`FirstShow`)
+    pub preview_fps_read: bool,
+    /// the frames are rendered with the swarm (it cannot pause)
+    pub swarm_run: bool,
+    /// Label25's font from the form (the memory figure's normal colour)
+    pub mem_font: Option<Option<crate::vcl::font::Font>>,
 }
 
 impl Default for State {
@@ -168,6 +202,9 @@ impl Default for State {
             preview_start: 1,
             play_frame: 0,
             playing: false,
+            preview_fps_read: false,
+            swarm_run: false,
+            mem_font: None,
         }
     }
 }
@@ -204,6 +241,7 @@ fn read_settings(app: &mut Mb3d, ui: &Ui) {
     let blur = pti(&ui.text(F, "BlurEdit")).clamp(1, 31) as u32;
     a.motion_blur = if blur > 1 { blur } else { 0 };
     a.shutter = (super::util::ptf(&ui.text(F, "ShutterEdit")) as f32).clamp(0.0, 1.0);
+    a.vr360 = ui.checked(F, "Vr360Check");
 }
 
 fn write_settings(app: &Mb3d, ui: &mut Ui) {
@@ -225,6 +263,7 @@ fn write_settings(app: &Mb3d, ui: &mut Ui) {
     ui.set_checked(F, "CheckBox4", a.stereo_bits & 0x40 != 0);
     ui.set_checked(F, "CheckBox5", a.stereo_bits & 0x80 != 0);
     ui.set_enabled(F, "CheckBox5", a.stereo_bits & 0x40 != 0);
+    ui.set_checked(F, "Vr360Check", a.vr360);
 }
 
 fn show_project_name(app: &Mb3d, ui: &mut Ui) {
@@ -256,10 +295,13 @@ fn render_thumb(app: &mut Mb3d, ui: &Ui, i: usize) {
             a.keyframes[i].scene.slice_2d = 2;
         }
         crate::maps::set_current_frame(a.first_frame_of(i) as i32 + 1);
+        // (its time is the keyframe's KFtime, for the preview's estimate)
+        let t0 = Instant::now();
         if let Ok(p) = crate::frames::keyframe_preview(&a, i) {
+            let ms = t0.elapsed().as_millis().min(i32::MAX as u128) as i32;
             let b = Bitmap::from_rgb(p.width, p.height, &p.rgb);
             let mut j = job.lock().unwrap();
-            j.thumbs.push((i, id, b));
+            j.thumbs.push((i, id, b, ms));
             j.changed = true;
         }
         if let Some(w) = waker {
@@ -342,18 +384,82 @@ fn set_scroll_button(app: &Mb3d, ui: &mut Ui) {
 }
 
 /// `calcTimeForPreviewRender`: frames and memory of the preview.
-fn calc_time(app: &Mb3d, ui: &mut Ui) {
+fn calc_time(app: &mut Mb3d, ui: &mut Ui) {
     let n = count(app);
     if n == 0 {
         ui.set_caption(F, "Label14", "0:00");
         ui.set_caption(F, "Label25", &tr("@MB:MB3"));
         return;
     }
-    let every = ui.position(F, "UpDown1").max(1) as f64;
-    let down = ui.position(F, "UpDown2").max(1) as f64;
-    let frames: u32 = app.anim.anim.keyframes.iter().map(|k| k.frames).sum();
-    let mem = frames as f64 * 4.0 * app.anim.anim.width as f64 * app.anim.anim.height as f64 / (every * down * down);
+    // Edit9..Edit10: the keyframes of the preview
+    let start = match ui.text(F, "Edit9").trim().parse::<i64>() {
+        Ok(v) => {
+            ui.cm(F, "Edit9").font = None;
+            v
+        }
+        Err(_) => {
+            ui.cm(F, "Edit9").font = Some(crate::vcl::font::Font { color: 0xFF80_0000, custom_color: true, ..Default::default() });
+            0
+        }
+    };
+    let stop = ui.text(F, "Edit10").trim().parse::<i64>().ok().filter(|v| (1..=n as i64).contains(v)).unwrap_or(n as i64);
+    let a = &app.anim.anim;
+    let times: Vec<(u32, f64)> = a.keyframes.iter().map(|k| (k.frames, k.time_ms.max(0) as f64)).collect();
+    let thumb_w = app.anim.thumbs.first().and_then(|t| t.as_ref()).map(|t| t.w).unwrap_or(0);
+    let every = ui.position(F, "UpDown1").max(1);
+    let down = ui.position(F, "UpDown2").max(1);
+    let (ms, frames) = preview_estimate(&times, start, stop, a.looped, every, down, a.width, thumb_w);
+    ui.set_caption(F, "Label14", &day_time(ms));
+    let mem = (frames as f64 * 4.0 * a.width as f64 * a.height as f64 / (every as f64 * (down * down) as f64)).round();
+    // red when short of memory, orange when tight
+    let col = match crate::render::memory_available() {
+        Some(m) if mem * 1.2 > m as f64 => Some(0xFFFF_0000u32),
+        Some(m) if mem * 1.5 > m as f64 => Some(0xFFC0_6000u32),
+        _ => None,
+    };
+    let base = app.anim.mem_font.get_or_insert_with(|| ui.c(F, "Label25").font.clone()).clone();
+    ui.cm(F, "Label25").font = match col {
+        Some(c) => Some(crate::vcl::font::Font { color: c, custom_color: true, ..base.unwrap_or_default() }),
+        None => base,
+    };
     ui.set_caption(F, "Label25", &format!("{} MB", (mem * 0.954e-6).round() as i64));
+}
+
+/// `calcTimeForPreviewRender` (Animation.pas): the preview's time in ms
+/// from the keyframe pictures' times, and its number of frames before
+/// "every Nth" (the keyframes `start..=stop`, 1-based; to the first again
+/// in a loop). `thumb_w` is the keyframe picture's width.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn preview_estimate(kf: &[(u32, f64)], start: i64, stop: i64, looped: bool, every: i64, down: i64, width: i32, thumb_w: usize) -> (f64, u64) {
+    let n = kf.len() as i64;
+    if n == 0 {
+        return (0.0, 0);
+    }
+    let start = start.max(1);
+    let (every, down) = (every.max(1) as f64, down.max(1) as f64);
+    let ds = (width as f64 / (thumb_w as f64 * down).max(1.0)).powi(2) / (every * (1.2 - (down - 3.0).powi(2) * 0.012));
+    let ie = if looped { stop - 1 } else { stop - 2 };
+    let (mut d, mut t) = (0.0, 0u64);
+    let mut i = start - 1;
+    while i <= ie && i < n {
+        let (c, t0) = kf[i as usize];
+        let t1 = kf[((i + 1) % n) as usize].1;
+        d += c as f64 * ((t0 + t1) * ds * 0.5 + 0.08 / every);
+        t += c as u64;
+        i += 1;
+    }
+    (d, t)
+}
+
+/// `FormatDateTime('h:nn:ss')` of a time in ms, "+d " from a day on.
+fn day_time(ms: f64) -> String {
+    let s = (ms / 1000.0).max(0.0) as u64;
+    let hms = format!("{}:{:02}:{:02}", s / 3600 % 24, s / 60 % 60, s % 60);
+    if ms >= 86_400_000.0 {
+        format!("+d {hms}")
+    } else {
+        hms
+    }
 }
 
 /// Inserts a keyframe at the current position (`InsertFromHeader`).
@@ -394,6 +500,65 @@ pub fn insert_keyframe(app: &mut Mb3d, ui: &mut Ui, sc: Scene) {
     calc_time(app, ui);
 }
 
+/// The keyframes of an animation template after the keyframes there are,
+/// each with its own frames; an animation that was empty gets the
+/// template's kind: Catmull-Rom, a loop for a turntable, else not.
+///
+/// A `closed` template (an orbit) added after other keyframes ends with
+/// its first keyframe again, so the turn is whole without the loop (which
+/// leads back to the animation's first keyframe, not the orbit's).
+/// `from_last`: the template starts at the last keyframe there is (its
+/// first keyframe is that one): the last keyframe takes the template's
+/// first keyframe (the same camera, the middle an orbit's pivot) and its
+/// frames instead of a copy of it being added.
+pub fn add_template(app: &mut Mb3d, ui: &mut Ui, keys: Vec<Keyframe>, closed: bool, from_last: bool) {
+    let empty = count(app) == 0;
+    if empty {
+        ui.set_item_index(F, "RadioGroup2", 2);
+        ui.set_checked(F, "CheckBox2", closed);
+    }
+    let closing = (closed && !empty).then(|| keys.first().map(|k| k.scene.clone())).flatten();
+    let mut keys = keys.into_iter();
+    if from_last && !empty {
+        if let (Some(first), Some(last)) = (keys.next(), app.anim.anim.keyframes.last_mut()) {
+            // (the same camera and picture; an orbit's middle on its pivot,
+            // which its keyframes share)
+            last.scene = first.scene;
+            last.frames = first.frames;
+        }
+    }
+    for k in keys {
+        app.anim.current = count(app) + 1;
+        let frames = k.frames;
+        insert_keyframe(app, ui, k.scene);
+        // (insert_keyframe gives it the frames of the window's box)
+        if let Some(last) = app.anim.anim.keyframes.last_mut() {
+            last.frames = frames;
+        }
+    }
+    if let Some(sc) = closing {
+        // (its frames, to what comes after it: as the orbit's own)
+        app.anim.current = count(app) + 1;
+        let frames = app.anim.anim.keyframes.last().map(|k| k.frames);
+        insert_keyframe(app, ui, sc);
+        if let (Some(f), Some(last)) = (frames, app.anim.anim.keyframes.last_mut()) {
+            last.frames = f;
+        }
+    }
+    if let Some(k) = app.anim.anim.keyframes.last() {
+        ui.set_text(F, "Edit1", &k.frames.to_string());
+    }
+    read_settings(app, ui);
+    app.anim.current = count(app);
+    paint_box(app, ui);
+    calc_time(app, ui);
+}
+
+/// The last keyframe's parameters (for a template that starts there).
+pub fn last_keyframe_scene(app: &Mb3d) -> Option<Scene> {
+    app.anim.anim.keyframes.last().map(|k| k.scene.clone())
+}
+
 /// The main window's parameters as a keyframe.
 fn main_scene(app: &mut Mb3d, ui: &mut Ui) -> Scene {
     app.make_scene(ui);
@@ -409,20 +574,30 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(v) = video {
         app.message(ui, &trf("@MB:AnimationVideoWritten", &[&v.display()]));
     }
-    let (changed, thumbs, running, done, total, err, last, frames_len) = {
+    let (changed, thumbs, running, done, total, err, last, frames_len, paused) = {
         let mut j = app.anim.job.lock().unwrap();
         let c = j.changed;
         j.changed = false;
-        (c, std::mem::take(&mut j.thumbs), j.running, j.done, j.total, j.error.clone(), j.last.take(), j.frames.len())
+        (c, std::mem::take(&mut j.thumbs), j.running, j.done, j.total, j.error.clone(), j.last.take(), j.frames.len(), j.paused)
     };
-    for (i, id, b) in thumbs {
+    let new_thumbs = !thumbs.is_empty();
+    for (i, id, b, ms) in thumbs {
         if let Some(k) = app.anim.ids.iter().position(|&x| x == id) {
             let _ = i;
             app.anim.thumbs[k] = Some(b);
+            app.anim.anim.keyframes[k].time_ms = ms.max(1);
         }
     }
     if changed {
         paint_box(app, ui);
+    }
+    if new_thumbs {
+        calc_time(app, ui);
+    }
+    // "Pausing on next frame..." until the rendering waits
+    if paused && ui.caption(F, "Button2") == tr("@MB:PausingOnNextFrame") {
+        ui.set_caption(F, "Button2", &tr("@MB:PausedPressToContinue"));
+        ui.set_enabled(F, "Button2", true);
     }
     if !changed && !running {
         // the flip book of the preview
@@ -444,6 +619,13 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         ui.set_position(PV, "ProgressBar1", done as i64);
         let c = ui.cm(PV, "ScrollBar1");
         c.max = (frames_len as i64 - 1).max(0);
+        // each frame shows when it is done, while "Frames/sec" is on
+        // (AniPreviewWindow.pas IncSubFrame)
+        if running && done > 0 && ui.checked(PV, "CheckBox3") {
+            let k = (done - 1).min(frames_len - 1);
+            ui.set_position(PV, "ScrollBar1", k as i64);
+            show_frame(app, ui, k);
+        }
     }
     let el = app.anim.started.elapsed().as_secs();
     if making_video {
@@ -515,8 +697,15 @@ fn parse_waiting(st: &str) -> Option<(usize, usize)> {
 fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let cap = ui.caption(F, "Button2");
     if cap == tr("@MB:PauseRendering") {
+        // the frame being rendered is finished first (Animation.pas
+        // Button2Click, Timer2Timer); idle tells when the rendering waits
         app.anim.pause.store(true, Ordering::SeqCst);
-        ui.set_caption(F, "Button2", &tr("@MB:PausedPressToContinue"));
+        if app.anim.swarm_run {
+            ui.set_caption(F, "Button2", &tr("@MB:PausedPressToContinue"));
+        } else {
+            ui.set_caption(F, "Button2", &tr("@MB:PausingOnNextFrame"));
+            ui.set_enabled(F, "Button2", false);
+        }
         return;
     }
     if cap == tr("@MB:PausedPressToContinue") {
@@ -569,6 +758,7 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
     let prog = app.anim.progress.clone();
     let waker = ui.waker();
     let swarm_dir = super::swarm_form::anim_folder(app);
+    app.anim.swarm_run = swarm_dir.is_some();
     let swarm_name = app.swarm.name.clone();
     std::thread::spawn(move || {
         let cancel = || stop.load(Ordering::SeqCst);
@@ -617,8 +807,21 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
         // (several frames at once on a computer with several graphics
         // cards: see `frames::render_frames`)
         let before = || {
-            while pause.load(Ordering::SeqCst) && !cancel() {
-                std::thread::sleep(std::time::Duration::from_millis(200));
+            let tell = |p: bool| {
+                let mut j = job.lock().unwrap();
+                j.paused = p;
+                j.changed = true;
+                drop(j);
+                if let Some(w) = &waker {
+                    w.wake();
+                }
+            };
+            if pause.load(Ordering::SeqCst) && !cancel() {
+                tell(true);
+                while pause.load(Ordering::SeqCst) && !cancel() {
+                    std::thread::sleep(std::time::Duration::from_millis(200));
+                }
+                tell(false);
             }
         };
         let progress = |_f: usize, d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
@@ -665,9 +868,8 @@ fn start_rendering(app: &mut Mb3d, ui: &mut Ui) {
             if let Some(w) = &waker {
                 w.wake();
             }
-            let files: Vec<std::path::PathBuf> = frames.iter().map(|&f| a.frame_file(f)).filter(|p| p.is_file()).collect();
             let progress = |d: usize, t: usize| prog.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
-            let r = crate::video::frames_to_avi(&files, fps, &path, &progress, &cancel);
+            let r = crate::vr::video_frames(&a, &frames).and_then(|files| crate::video::frames_to_avi(&files, fps, &path, &progress, &cancel));
             let mut j = job.lock().unwrap();
             j.making_video = false;
             match r {
@@ -701,6 +903,11 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     let (f0, f1) = (a.first_frame_of(k0), if k1 + 1 >= n { a.frame_count() } else { a.first_frame_of(k1) + 1 });
     let fast = ui.checked(F, "CheckBox3");
     let frames: Vec<usize> = (f0..f1.min(a.frame_count())).step_by(every).collect();
+    // the frames are kept in memory (Button4Click)
+    let need = frames.len() as f64 * 4.0 * a.width as f64 * a.height as f64 / (down * down);
+    if crate::render::memory_available().is_some_and(|m| need * 1.2 > m as f64) {
+        return ui.show_message(&tr("@MB:NotEnoughMemoryAvailable"));
+    }
     let run = FrameRun { every: 1, preview: 1.0 / down, ..Default::default() };
     app.anim.preview_step = every;
     app.anim.preview_start = f0 + 1;
@@ -718,6 +925,8 @@ fn start_preview(app: &mut Mb3d, ui: &mut Ui) {
     setup_preview_window(ui, w, h, frames.len());
     // (the AniGif button shows when the frames are done)
     ui.set_visible(PV, "SpeedButton1", false);
+    ui.set_checked(PV, "CheckBox3", true);
+    ui.set_picture(PV, "FrameImage", None);
     ui.show(PV);
     ui.set_visible(PV, "ProgressBar1", true);
     ui.cm(PV, "ProgressBar1").max = frames.len() as i64;
@@ -857,7 +1066,8 @@ fn play_tick(app: &mut Mb3d, ui: &mut Ui) {
         return;
     }
     app.anim.started = Instant::now();
-    let n = app.anim.job.lock().unwrap().frames.len();
+    // (the frames rendered: a cancelled preview plays those)
+    let n = app.anim.job.lock().unwrap().frames.iter().take_while(|f| f.is_some()).count();
     if n == 0 {
         return;
     }
@@ -870,9 +1080,20 @@ fn play_tick(app: &mut Mb3d, ui: &mut Ui) {
 pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "Button1Click" => {
+            // a running preview is only cancelled (the frames done play
+            // then), a finished one closes (AniPreviewWindow.pas Button1Click)
             app.anim.stop.store(true, Ordering::SeqCst);
-            app.anim.playing = false;
-            ui.hide(PV);
+            if !app.anim.job.lock().unwrap().running {
+                app.anim.playing = false;
+                ui.hide(PV);
+            }
+        }
+        "FormShow" => {
+            if !std::mem::replace(&mut app.anim.preview_fps_read, true) {
+                let fps = app.ini.get("AniPrevFPS").trim().parse::<i64>().unwrap_or(15).clamp(1, 30);
+                ui.set_position(PV, "UpDown1", fps);
+                ui.set_text(PV, "Edit1", &fps.to_string());
+            }
         }
         "FormHide" => {
             app.anim.stop.store(true, Ordering::SeqCst);
@@ -881,6 +1102,9 @@ pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             if !app.anim.job.lock().unwrap().running {
                 ui.set_enabled(F, "Button4", count(app) > 1);
             }
+            // the speed for the next start (IniVal[8], AniPrevFPS)
+            let fps = pti(&ui.text(PV, "Edit1")).clamp(1, 30);
+            app.ini.set("AniPrevFPS", &fps.to_string());
         }
         "SpeedButton1Click" => {
             let o = crate::vcl::dialogs::FileOptions {
@@ -893,6 +1117,8 @@ pub fn preview_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             ui.save_dialog("anim:gif", &o);
         }
         "ScrollBar1Scroll" => {
+            // scrubbing stops the playing (CheckBox3 off, ScrollBar1Scroll)
+            ui.set_checked(PV, "CheckBox3", false);
             let k = ui.position(PV, "ScrollBar1").max(0) as usize;
             app.anim.play_frame = k;
             show_frame(app, ui, k);
@@ -1046,6 +1272,16 @@ fn event_inner(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             read_settings(app, ui);
             app.anim.current = count(app);
             paint_box(app, ui);
+            calc_time(app, ui);
+        }
+        "TemplatesBtnClick" => super::anim_templates_form::open(app, ui),
+        "Vr360CheckClick" => {
+            // an equirectangular picture is twice as wide as high
+            if ui.checked(F, "Vr360Check") {
+                let w = pti(&ui.text(F, "Edit6")).max(16);
+                ui.set_text(F, "Edit7", &(w / 2).to_string());
+            }
+            read_settings(app, ui);
             calc_time(app, ui);
         }
         "FormShow" => {
@@ -1304,19 +1540,13 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     match (what, r) {
         ("outdir", DialogResult::File(Some(p))) => {
             ui.set_text(F, "Edit2", &p.display().to_string());
+            // (the folders of the settings change only in their window, as MB3D)
             app.anim.anim.output_folder = p.display().to_string();
-            app.ini.dirs[super::ini::DIR_ANIOUT] = p.clone();
         }
         ("gif", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_IMG] = d.to_path_buf();
-            }
             save_ani_gif(app, ui, &p.with_extension("gif"));
         }
         ("open", DialogResult::File(Some(p))) => {
-            if let Some(d) = p.parent() {
-                app.ini.dirs[super::ini::DIR_M3A] = d.to_path_buf();
-            }
             load_animation(app, ui, p);
         }
         ("save", DialogResult::File(Some(p))) => {
@@ -1385,4 +1615,27 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
     }
     let _ = fts_single;
     let _ = parse_float;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preview_estimate_counts_the_range() {
+        // three keyframes of 10 frames, pictures of 100 ms, 1/1 the
+        // picture's width: ds = 1 / (1 * (1.2 - 4 * 0.012))
+        let kf = [(10, 100.0), (10, 100.0), (10, 100.0)];
+        let ds = 1.0 / (1.2 - 4.0 * 0.012);
+        let (ms, t) = preview_estimate(&kf, 1, 3, false, 1, 1, 160, 160);
+        assert_eq!(t, 20);
+        assert!((ms - 20.0 * (100.0 * ds + 0.08)).abs() < 1e-9);
+        // a loop goes back to the first keyframe
+        assert_eq!(preview_estimate(&kf, 1, 3, true, 1, 1, 160, 160).1, 30);
+        // only keyframes 2..3
+        assert_eq!(preview_estimate(&kf, 2, 3, false, 1, 1, 160, 160).1, 10);
+        assert_eq!(preview_estimate(&kf, 3, 3, false, 1, 1, 160, 160), (0.0, 0));
+        assert_eq!(day_time(3_723_000.0), "1:02:03");
+        assert_eq!(day_time(90_000_000.0), "+d 1:00:00");
+    }
 }

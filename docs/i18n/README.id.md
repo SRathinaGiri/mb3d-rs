@@ -73,13 +73,17 @@ pada repositori ini kapan saja:
 **[▶ Pindai mb3d-rs di scanrepo.dev](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 (klik *Rescan* untuk hasil baru dari kode saat ini)
 
-Versi 0.2.85 dinilai **aman: 5 dari 100** (dipindai 30 Oktober 2026,
-aturan mesin pemindai versi 10). Satu-satunya peringatannya adalah baris
+Versi 0.3.1 dinilai **aman: 8 dari 100** (dipindai 5 November 2026,
+aturan mesin pemindai versi 10). Peringatannya menyangkut baris-baris
 yang menjalankan formula yang dikompilasi program saat berjalan demi
 kecepatan: menjalankan kode mesin yang baru dibuat tidak bisa ditulis dalam
-bentuk Rust yang diperiksa, dan baris itu serta jembatan ke filter derau
+bentuk Rust yang diperiksa, dan baris-baris itu serta jembatan ke filter derau
 Intel adalah satu-satunya tempat program mengizinkannya; sisanya adalah
-catatan informasi. (Sebelumnya: 0.2.66 dinilai 0 dari 100 oleh mesin yang
+catatan informasi. (Sebelumnya: 0.2.85 dinilai 5 dari 100; 0.2.100 sempat
+dinilai berbahaya selama beberapa jam, karena dua fungsi matematika pada
+kompilator formula memakai nama yang dianggap pemindai sebagai menjalankan kode
+tersembunyi; namanya diganti pada hari yang sama, dan kini sebuah tes menjaga agar
+nama seperti itu tidak muncul lagi; 0.2.66 dinilai 0 dari 100 oleh mesin yang
 lebih lama, lihat juga [hasil 0.2.44](../img/scan_0.2.44.png).) Versi
 yang lebih awal pernah ditandai, dan kami mengubah kodenya sebagai
 tanggapan ([issue #4](https://github.com/thr32423/mb3d-rs/issues/4));
@@ -519,7 +523,8 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   komputer-komputer yang melihat satu folder bersama merender gambar, Render
   besar, gambar Monte Carlo, atau animasi bersama-sama. Lihat
   [Merender di beberapa komputer](#rendering-on-several-computers-the-swarm).
-* **Rumus dan peta komunitas**: 129 rumus dan 154 peta yang tidak ada di repositori resmi, dari paket Mandelbulb3D 1.99.37 yang ditawarkan Machina Infinitum sebagai unduhan gratis. Rumusnya dibuat oleh Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero dan lainnya yang berkasnya tidak menyebut pembuat; `M3Formulas/CREDITS-community.md` menyebut pembuat setiap rumus (`teapot.m3f` karya DarkBeam berlisensi CC BY-SA 3.0). Petanya dari koleksi DarkBeam, dengan ketentuannya (bebas dipakai, tidak boleh dijual tanpa diubah), dengan gambar yang dibagikan di DeviantArt oleh CmdrChaos, Fractales75, Nic022, dan UndeadAcademy; peta 3046–3048 karya Kronpano (`M3Maps/CREDITS-community.md`).
+* **Rumus dan peta komunitas**: 129 rumus dan 154 peta yang tidak ada di repositori resmi, dari paket Mandelbulb3D 1.99.37 yang ditawarkan Machina Infinitum sebagai unduhan gratis. Rumusnya dibuat oleh Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero dan lainnya yang berkasnya tidak menyebut pembuat; `M3Formulas/CREDITS-community.md` menyebut pembuat setiap rumus (`teapot.m3f` karya DarkBeam berlisensi CC BY-SA 3.0). Petanya dari koleksi DarkBeam, dengan ketentuannya (bebas dipakai, tidak boleh dijual tanpa diubah), dengan gambar yang dibagikan di DeviantArt oleh CmdrChaos, Fractales75, Nic022, dan UndeadAcademy; peta 3046–3048 karya Kronpano (`M3Maps/CREDITS-community.md`). 608 preset cahaya di `M3Lights` berasal dari paket yang sama; berkasnya tidak menyebut pembuat (`M3Lights/CREDITS-community.md`).
+* **Ide dari Mandelbulb3D SE**: Mandelbulb3D SE karya Glenn Olander, aplikasi macOS yang dibangun di atas mb3d-rs, memberi dua ide: memeriksa setiap shader kartu grafis dalam pengujian tanpa kartu grafis, dan tombol Berhenti yang langsung menghentikan pewarnaan gambar.
 * **Formula baru, PseudoKleinian:** "arsitektur Kleinian" berupa aula,
   lengkungan, dan bola sebagai satu formula dengan jarak tepatnya sendiri.
 
@@ -670,6 +675,57 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   .m3p dan .m3i, dan sebagai `{mb3d-rs: ...}` setelah judul parameter teks),
   yang tidak dibaca Mandelbulb3D. Kunci adegan `ground`, `ground_color`,
   `ground_reflect`, `ground_waves`; detail di [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field).
+
+  **Air bening**: dengan *Air* di atas 0 (seberapa banyak cahaya yang
+  diloloskan) fraktal yang setengah terendam terlihat di bawah
+  permukaan, dibelokkan oleh pembiasan (*Pembiasan*: 1,33 untuk air) dan
+  seiring kedalaman berubah ke warna air dalam (tombol warna): *Absorpsi* menentukan seberapa keruh ia (0 jernih, 3 keruh), dan di air biru-hijau merah memudar lebih dulu, sehingga
+  yang terendam menjadi pirus. Kilau lampu di atas ombak tetap di
+  permukaan. Render biasa menampilkannya bila pantulan aktif
+  (Pasca-proses), Monte Carlo selalu; tanpa pantulan air tetap buram.
+  Kunci adegan `ground_transparency`, `ground_absorption`,
+  `ground_water_color`, `ground_ior`; contoh di
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Hamburan** (baris di bawah *Pembiasan*): air menghamburkan cahaya
+  seperti air sungguhan. Air bercahaya pirus saat memandang ke arah
+  matahari, puncak ombak tembus cahaya, cahaya matahari jatuh ke
+  dalamnya sebagai berkas yang dipotong bayangan fraktal, dan yang ada
+  di bawah air bercahaya lembut dengan warnanya; Monte Carlo menelusuri
+  cahaya saat terhambur di air. Kolom kedua adalah arahnya (0,8:
+  terutama ke depan). 0 adalah tampilan tanpanya. Kunci adegan
+  `ground_scattering`, `ground_scatter_dir`; lihat
+  [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water).
+
+  **Cobalah**: di halaman *Pemotongan* centang *Bidang tanah* dan letakkan
+  tingginya menembus fraktal, atur *Air* ke 1, *Absorpsi* ke 1 dan
+  *Hamburan* ke 0,5, lalu nyalakan refleksi (*Pascaproses*, *Refleksi +
+  Transparansi*, *Hitung R. (+ T.) otomatis*); kemudian *Hitung 3D*.
+
+  Tiga adegan siap tempel, beserta pengaturannya: [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *Air* (transparansi) 0, 0,5 dan 1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="Transparansi 0, 0,5 dan 1: air abu-abu buram, lalu separuh fraktal yang terendam tembus pandang berwarna pirus"></a>
+
+  *Absorpsi* 0,3, 1 dan 3, dari jernih hingga keruh:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="Absorpsi 0,3, 1 dan 3: separuh yang terendam jelas hijau, memudar, lalu tersembunyi"></a>
+
+  *Hamburan* 0, 0,5 dan 1 memandang ke arah matahari, dan berkas cahaya
+  dengan matahari rendah di depan:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="Hamburan 0, 0,5 dan 1 memandang ke arah matahari: air gelap, lalu air pirus bercahaya"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="Matahari rendah di depan: volume bayangan fraktal membentang melalui air sebagai berkas biru"></a>
+
+  **Ombak** adalah laut tak beraturan dari enam belas gelombang searah
+  satu arah angin (sebelum 0.2.98 tiga gelombang teratur membentuk papan
+  catur; adegan dengan ombak tampak berbeda sejak itu). Lama (di kiri tiap
+  pasangan) dan baru, ombak kecil dan besar, matahari di depan dan di
+  belakang:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="Ombak lama dan baru berdampingan: kisi teratur lama berupa belah ketupat terang, laut baru yang tak beraturan"></a>
 
   </details>
 * **Cahaya dari gambar HDR**: gambar Radiance 360° (`.hdr`) sebagai latar
@@ -841,6 +897,47 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   sejumlah itu gambar dalam waktu *Rana* (bagian dari waktu sampai frame
   berikutnya), sehingga yang bergerak menjadi kabur; waktunya pun sekian kali
   lebih lama (`mb3d animate --motion-blur 8,0.5`).
+
+  *Pembuat animasi* > *Templat animasi...* membuat keyframe dari tampilan
+  jendela utama untuk durasi dalam detik (pada frame per detik jendela itu):
+  *Orbit 360°* mengelilingi sumbu pilihan Anda (kiri ke kanan, lewat atas,
+  roll, ketiganya sekaligus, atau sumbu X, Y, atau Z fraktal; `--orbit 8
+  --duration 10 --orbit-axis pitch`) atau *Terbang menembus*, ketika kamera
+  terus terbang masuk ke fraktal, zoom mengikuti jaraknya, menjaga arahnya
+  dan hanya berbelok untuk menghindari yang akan ditabraknya (`--fly
+  --duration 20`; `--duration 0`: sampai tampilan hanya menunjukkan langit
+  atau hanya fraktal). *VR 360°* di Pembuat animasi (`--vr`) menjadikan
+  setiap frame panorama bola (2:1); dengan *Render animasi stereo* video
+  berisi kedua mata atas-bawah (kiri di atas), dan perintah ffmpeg diakhiri
+  `mb3d vr360 video.mp4 --stereo tb`, yang menandai MP4 sebagai video 360
+  untuk YouTube, Meta Quest, dan VLC. Panorama bola yang disimpan sebagai
+  JPEG membawa XMP Photo Sphere, sehingga Facebook menampilkannya sebagai
+  foto 360.
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Lima frame orbit 360° mengelilingi satu titik di permukaan Mandelbulb"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="Terbang menembus, satu frame per detik"></a>
+
+  Templat animasi, foto 360° dan video VR 360° dikontribusikan oleh
+  Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri),
+  [#30](https://github.com/thr32423/mb3d-rs/pull/30)). Orbit menjaga kamera
+  pada jarak yang sama dari titik porosnya di setiap frame, juga di antara
+  keyframe: titik tengah tampilan diletakkan dulu di titik poros, sehingga
+  keyframe hanya berbeda dalam rotasinya. Jika ditambahkan setelah keyframe
+  lain, orbit berakhir lagi dengan keyframe pertamanya, sehingga putarannya
+  utuh; *Mulai dari* memakai tampilan jendela utama atau keyframe terakhir.
+  Terbang menembus dihitung di latar belakang dengan bilah kemajuan, dan
+  *Hentikan* menyimpan apa yang sudah diterbangkan. Video (dilampirkan pada
+  rilis v0.2.100, dirender dengan versi sesudahnya): [orbit dengan 4
+  keyframe, versi pertama dan versi yang tepat
+  berdampingan](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4),
+  [jungkir
+  balik](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4),
+  [terbang
+  menembus](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4),
+  [orbit VR
+  360°](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4).
+  Keempatnya dengan gambar bergerak dan catatan: [docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md).
 
   </details>
 * **Splat Gaussian** dari fraktal, untuk dilihat dari segala sisi di

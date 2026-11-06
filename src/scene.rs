@@ -139,25 +139,115 @@ pub struct Ground {
     pub wave_height: f64,
     /// the length of the waves (fractal units)
     pub wave_len: f64,
+    /// how much of the light the water lets through (0..1; 0 = opaque,
+    /// as before): the reflection pass and Monte Carlo see the fractal
+    /// under the surface, refracted and fading with depth (`water`)
+    pub transparency: f32,
+    /// how far one sees into the water (fractal units): the channel of
+    /// `water_color` that passes best keeps 1/e of its light after this
+    /// distance, the others less (`water::extinction`)
+    pub visibility: f32,
+    /// the colour of deep water: its own, scattered light, and the
+    /// colour the light under water turns to (red goes first in a
+    /// blue-green water)
+    pub water_color: [u8; 3],
+    /// the refraction index of the water (1.33)
+    pub ior: f32,
+    /// how much the water scatters light (0 = none, as before; 0..1):
+    /// its glow towards the lights, translucent wave crests, light shafts
+    /// under the surface, the glow on what lies under it (`water`)
+    pub scattering: f32,
+    /// the direction of the scattering (Henyey-Greenstein's g, 0..0.95;
+    /// water scatters mostly forward: 0.8)
+    pub scatter_dir: f32,
 }
 
 impl Default for Ground {
     fn default() -> Self {
-        Ground { axis: 1, pos: 0.0, above: false, color: [128, 128, 128], reflect: 0.0, wave_height: 0.0, wave_len: 1.0 }
+        Ground {
+            axis: 1,
+            pos: 0.0,
+            above: false,
+            color: [128, 128, 128],
+            reflect: 0.0,
+            wave_height: 0.0,
+            wave_len: 1.0,
+            transparency: 0.0,
+            visibility: 1.0,
+            water_color: [10, 60, 70],
+            ior: 1.33,
+            scattering: 0.0,
+            scatter_dir: 0.8,
+        }
     }
 }
 
+/// The waves of the ground plane: 16 sine waves, each (direction x, y
+/// on the plane, frequency per wave length, amplitude, phase), around a
+/// main wind direction with a narrow spread to both sides (from 8 degrees
+/// for the longest to 30 for the shortest; before 2026-11-05 up to 90 to
+/// one side, whose crossing waves made a pattern of diamonds), wave
+/// lengths from 2 to 0.3 times `wave_len` (more short ones, none in a
+/// simple ratio to another, so no grid or tiling shows), amplitudes
+/// growing with the wave length (an ocean spectrum's falloff,
+/// length^1.25) and random phases; scaled to the mean height of the three
+/// regular waves before 2026-11-04.  The card's shader gets the same table
+/// (`gpu::wave_code`).
+pub const WAVES: [[f64; 5]; 16] = [
+    [0.998806, 0.048850, 0.914345, 0.277821, 2.925766],
+    [0.992050, -0.125842, 1.055979, 0.240558, 3.690648],
+    [0.999671, 0.025631, 1.159089, 0.219158, 4.982421],
+    [0.993697, -0.112098, 1.286918, 0.197389, 1.906326],
+    [0.981023, 0.193893, 1.429186, 0.177740, 0.263142],
+    [0.994307, -0.106555, 1.678415, 0.151348, 6.061752],
+    [0.984301, 0.176501, 1.805482, 0.140696, 0.094252],
+    [0.997659, -0.068384, 1.964208, 0.129326, 0.374171],
+    [0.965746, 0.259490, 2.104404, 0.120711, 2.914986],
+    [0.987144, -0.159834, 2.334424, 0.108817, 5.293126],
+    [0.994510, 0.104639, 2.556661, 0.099358, 4.162293],
+    [0.949105, -0.314959, 2.772080, 0.091637, 1.747749],
+    [0.963001, 0.269499, 3.107468, 0.081746, 4.447299],
+    [0.984755, -0.173949, 3.242815, 0.078334, 1.443033],
+    [0.890999, 0.454006, 3.510215, 0.072367, 2.515786],
+    [0.958820, -0.284015, 3.919932, 0.064803, 2.428536],
+];
+
+/// The highest the waves get (the sum of the amplitudes, times
+/// `wave_height`).
+pub const WAVE_MAX: f64 = {
+    let mut s = 0.0;
+    let mut i = 0;
+    while i < WAVES.len() {
+        s += WAVES[i][3];
+        i += 1;
+    }
+    s
+};
+
+/// The steepest the waves get (the sum of amplitude times frequency,
+/// times 2 pi `wave_height` / `wave_len`).
+pub const WAVE_SLOPE: f64 = {
+    let mut s = 0.0;
+    let mut i = 0;
+    while i < WAVES.len() {
+        s += WAVES[i][3] * WAVES[i][2];
+        i += 1;
+    }
+    s
+};
+
 impl Ground {
-    /// The height of the waves at (u, v) on the plane, -1..1 times
-    /// `wave_height`: three crossing sine waves.
+    /// The height of the waves at (u, v) on the plane, times
+    /// `wave_height` ([`WAVES`]: irregular, mostly within -1..1).
     #[inline]
     pub fn wave(&self, u: f64, v: f64) -> f64 {
         use std::f64::consts::TAU;
         let (x, y) = (u / self.wave_len, v / self.wave_len);
-        self.wave_height
-            * (0.5 * (TAU * (0.8 * x + 0.6 * y)).sin()
-                + 0.3 * (TAU * 1.7 * (-0.45 * x + 0.9 * y) + 1.3).sin()
-                + 0.2 * (TAU * 2.9 * (0.2 * x - 0.98 * y) + 2.1).sin())
+        let mut w = 0.0;
+        for c in &WAVES {
+            w += c[3] * (TAU * c[2] * (c[0] * x + c[1] * y) + c[4]).sin();
+        }
+        self.wave_height * w
     }
 
     /// The distance from `c` to the surface (fractal units; negative in
@@ -170,10 +260,91 @@ impl Ground {
         if self.wave_height == 0.0 {
             return s;
         }
+        // the steepest slope
+        let g = std::f64::consts::TAU * WAVE_SLOPE * self.wave_height / self.wave_len.max(1e-30);
+        // high above the crests the waves need not be summed: from 3 to 6
+        // times their highest the distance blends into the one to the
+        // crests' height (both lower bounds; blended, not switched, or rays
+        // whose DE stop has grown far away would stop on the jump)
+        let top = self.wave_height * WAVE_MAX;
+        let c0 = (1.0 + g * g).sqrt();
+        if s >= 6.0 * top {
+            return (s - top) / c0;
+        }
         let (u, v) = (c[(k + 1) % 3], c[(k + 2) % 3]);
-        // the steepest slope: 2 pi height / length (0.5 + 0.3 * 1.7 + 0.2 * 2.9)
-        let g = std::f64::consts::TAU * 1.59 * self.wave_height / self.wave_len.max(1e-30);
-        (s - self.wave(u, v)) / (1.0 + g * g).sqrt()
+        let d = s - self.wave(u, v);
+        if s > 3.0 * top {
+            let t = (s - 3.0 * top) / (3.0 * top);
+            return (d + (s - top - d) * t) / c0;
+        }
+        d / c0
+    }
+
+    /// The depth of `c` under the surface with its waves (fractal units
+    /// along the axis; negative above it).
+    #[inline]
+    pub fn depth(&self, c: &[f64; 3]) -> f64 {
+        let k = self.axis as usize % 3;
+        let s = if self.above { self.pos - c[k] } else { c[k] - self.pos };
+        let w = if self.wave_height == 0.0 { 0.0 } else { self.wave(c[(k + 1) % 3], c[(k + 2) % 3]) };
+        w - s
+    }
+
+    /// How much the distance to the waves can be smaller than the height
+    /// over them (1 / the factor of `distance` under the crests: the
+    /// steepest slope's sqrt(1 + g^2); 1 without waves).
+    pub fn slope_bound(&self) -> f64 {
+        if self.wave_height == 0.0 {
+            return 1.0;
+        }
+        let g = std::f64::consts::TAU * WAVE_SLOPE * self.wave_height / self.wave_len.max(1e-30);
+        (1.0 + g * g).sqrt()
+    }
+
+    /// The height of `c` over the plane without its waves (fractal units,
+    /// negative in the solid side).
+    #[inline]
+    pub fn height(&self, c: &[f64; 3]) -> f64 {
+        let k = self.axis as usize % 3;
+        if self.above {
+            self.pos - c[k]
+        } else {
+            c[k] - self.pos
+        }
+    }
+
+    /// The plane's normal without the waves, out of the solid side (towards
+    /// the camera's side).
+    #[inline]
+    pub fn up(&self) -> [f64; 3] {
+        let mut n = [0.0; 3];
+        n[self.axis as usize % 3] = if self.above { -1.0 } else { 1.0 };
+        n
+    }
+
+    /// The surface's normal at `c` with the waves (unit length, out of
+    /// the solid side).
+    pub fn normal(&self, c: &[f64; 3]) -> [f64; 3] {
+        let k = self.axis as usize % 3;
+        let mut n = self.up();
+        if self.wave_height != 0.0 {
+            let (u, v) = (c[(k + 1) % 3], c[(k + 2) % 3]);
+            let e = self.wave_len.max(1e-30) * 1e-4;
+            // the surface s = wave(u, v): its gradient tilts the normal
+            let du = (self.wave(u + e, v) - self.wave(u - e, v)) / (2.0 * e);
+            let dv = (self.wave(u, v + e) - self.wave(u, v - e)) / (2.0 * e);
+            n[(k + 1) % 3] = -du;
+            n[(k + 2) % 3] = -dv;
+            let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt();
+            n = n.map(|x| x / l);
+        }
+        n
+    }
+
+    /// The water is see-through (transparency above 0).
+    #[inline]
+    pub fn transparent(&self) -> bool {
+        self.transparency > 0.0
     }
 }
 
@@ -795,6 +966,9 @@ impl Scene {
         let _ = writeln!(t, "depth_color = {}\ndepth_color2 = {}", hex(l.depth_col), hex(l.depth_col2));
         let _ = writeln!(t, "dynfog_color = {}\ndynfog_color2 = {}", hex(l.dyn_fog_col), hex(l.dyn_fog_col2));
         let _ = writeln!(t, "fog_offset = {}\ndepth_fog = {}\ndyn_fog = {}", l.fog_offset, l.depth_fog, l.dyn_fog);
+        if l.fog_far_offset != 128.0 {
+            let _ = writeln!(t, "fog_far_offset = {}", l.fog_far_offset);
+        }
         let _ = writeln!(t, "diffuse = {}\nspecular = {}\nambient = {}", l.diffuse, l.specular, l.ambient);
         let _ = writeln!(t, "ambient_shadow = {}\nindirect_light = {}", l.amb_shadow, l.ind_light);
         let _ = writeln!(t, "gamma = {}\nroughness = {}", l.gamma, l.roughness);
@@ -950,6 +1124,18 @@ impl Scene {
             let _ = writeln!(t, "ground_color = #{:02X}{:02X}{:02X}\nground_reflect = {}", c[0], c[1], c[2], g.reflect);
             if g.wave_height != 0.0 {
                 let _ = writeln!(t, "ground_waves = {}, {}", g.wave_height, g.wave_len);
+            }
+            let d = Ground::default();
+            if (g.transparency, g.visibility, g.water_color, g.ior) != (d.transparency, d.visibility, d.water_color, d.ior) {
+                let a = g.water_color;
+                let _ = writeln!(t, "ground_transparency = {}\nground_absorption = {}", g.transparency, ((1.0 / g.visibility.max(1e-6) as f64) * 1e6).round() / 1e6);
+                let _ = writeln!(t, "ground_water_color = #{:02X}{:02X}{:02X}\nground_ior = {}", a[0], a[1], a[2], g.ior);
+            }
+            if g.scattering != d.scattering {
+                let _ = writeln!(t, "ground_scattering = {}", g.scattering);
+            }
+            if g.scatter_dir != d.scatter_dir {
+                let _ = writeln!(t, "ground_scatter_dir = {}", g.scatter_dir);
             }
         }
         t
@@ -1472,6 +1658,17 @@ impl Scene {
                         s.ground.get_or_insert_with(Ground::default).color = c;
                     }
                     "ground_reflect" => s.ground.get_or_insert_with(Ground::default).reflect = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_transparency" => s.ground.get_or_insert_with(Ground::default).transparency = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_visibility" => s.ground.get_or_insert_with(Ground::default).visibility = num()?.max(1e-6) as f32,
+                    // (the first test builds' keys: an absorption per unit)
+                    "ground_absorption" => s.ground.get_or_insert_with(Ground::default).visibility = (1.0 / num()?.max(1e-6)) as f32,
+                    "ground_water_color" | "ground_absorb_color" => {
+                        let c = parse_color(val).ok_or_else(|| err(format!("bad colour '{val}' (#RRGGBB)")))?;
+                        s.ground.get_or_insert_with(Ground::default).water_color = c;
+                    }
+                    "ground_ior" => s.ground.get_or_insert_with(Ground::default).ior = num()?.clamp(1.0, 3.0) as f32,
+                    "ground_scattering" => s.ground.get_or_insert_with(Ground::default).scattering = num()?.clamp(0.0, 1.0) as f32,
+                    "ground_scatter_dir" => s.ground.get_or_insert_with(Ground::default).scatter_dir = num()?.clamp(0.0, 0.95) as f32,
                     "ground_waves" => {
                         let p = vec_n(2)?;
                         let g = s.ground.get_or_insert_with(Ground::default);
@@ -1635,6 +1832,7 @@ impl Scene {
                     "ambient_shadow" => s.lighting.amb_shadow = num()? as f32,
                     "indirect_light" => s.lighting.ind_light = num()? as f32,
                     "fog_offset" => s.lighting.fog_offset = num()? as f32,
+                    "fog_far_offset" => s.lighting.fog_far_offset = num()? as f32,
                     "gamma" => s.lighting.gamma = num()? as f32,
                     "color_start" => s.lighting.color_start = num()? as f32,
                     "color_end" => s.lighting.color_end = num()? as f32,

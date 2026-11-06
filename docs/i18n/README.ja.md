@@ -50,7 +50,7 @@ MB3D の数式とマップを使い、同じ画像を作ります。
 **[▶ scanrepo.dev で mb3d-rs をスキャン](https://www.scanrepo.dev/scan/github/thr32423/mb3d-rs)**
 （現在のコードの最新の結果を見るには *Rescan* をクリックします）
 
-バージョン 0.2.85 の評価は **安全：100 点中 5 点** でした（2026 年 10 月 30 日スキャン、スキャナーのエンジン 10 のルール）。唯一の警告は、プログラムが高速化のために実行時にコンパイルする数式を起動する行に対するものです。新しく生成した機械語を実行する処理は Rust の検査付きの形では書けず、プログラムがそれを許しているのはこの行と Intel のノイズ除去フィルターへの橋渡し部分だけです。残りは情報としての注記です。（以前の結果：0.2.66 は旧エンジンで 100 点中 0 点と評価されました。参考：
+バージョン 0.3.1 の評価は **安全：100 点中 8 点** でした（2026 年 11 月 5 日スキャン、スキャナーのエンジン 10 のルール）。警告は、プログラムが高速化のために実行時にコンパイルする数式を起動する行に対するものです。新しく生成した機械語を実行する処理は Rust の検査付きの形では書けず、プログラムがそれを許しているのはこれらの行と Intel のノイズ除去フィルターへの橋渡し部分だけです。残りは情報としての注記です。（以前の結果：0.2.85 は 100 点中 5 点でした。0.2.100 は数時間のあいだ危険と評価されました。数式コンパイラーの二つの数学関数に、スキャナーが隠れたコードの実行とみなす名前が付いていたためです。同じ日に名前を変え、今ではテストがそうした名前を締め出しています。0.2.66 は旧エンジンで 100 点中 0 点と評価されました。参考：
 [0.2.44 の結果](../img/scan_0.2.44.png)。）以前のバージョンが警告を受けたことがあり、それを受けてコードを変更しました（[issue #4](https://github.com/thr32423/mb3d-rs/issues/4)）。現在はこの状態が保たれるように書かれています。プログラムにはインターネットに接続するコードは含まれていません。プログラムがシステムに開くよう求める他のプログラムは、フォルダを開くボタンをクリックしたときのファイルマネージャーだけです。
 
 スキャンは既知の警告サインを探すものであり、保証ではありません。次の方法で、ご自身でさらに確認できます。
@@ -324,7 +324,8 @@ MB3D の数式とマップを使い、同じ画像を作ります。
   resume` で一覧を表示します。続きから再開したレンダリングは、一度に計算したものと同じ結果になります。
 * **複数のコンピュータでレンダリングを分担**する「スウォーム」：1 つの共有フォルダが見えるコンピュータどうしで、画像、大判レンダリング、モンテカルロ画像、アニメーションを一緒にレンダリングします。
   [複数のコンピュータでのレンダリング](#rendering-on-several-computers-the-swarm)を参照してください。
-* **コミュニティのフォーミュラとマップ**：公式リポジトリにない 129 個のフォーミュラと 154 枚のマップ。Machina Infinitum が無料で配布している Mandelbulb3D 1.99.37 パッケージから収録しました。フォーミュラの作者は Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero、およびファイルに作者名のないものです。各フォーミュラの作者は `M3Formulas/CREDITS-community.md` にあります（DarkBeam の `teapot.m3f` は CC BY-SA 3.0）。マップは DarkBeam のコレクションで、その条件（自由に使用可、無加工での販売は不可）に従い、CmdrChaos、Fractales75、Nic022、UndeadAcademy が DeviantArt で共有した画像を含みます。マップ 3046–3048 は Kronpano の作品です（`M3Maps/CREDITS-community.md`）。
+* **コミュニティのフォーミュラとマップ**：公式リポジトリにない 129 個のフォーミュラと 154 枚のマップ。Machina Infinitum が無料で配布している Mandelbulb3D 1.99.37 パッケージから収録しました。フォーミュラの作者は Edgar Malinovsky, gnj, DarkBeam (Luca GN), bugman, Aexion, Buddhi, pupukuusikko, Jos Leys, Knighty, trafassel, Nrx, Eiffie, Quasihedron, Inigo Quilez, Yannis Picart, Jotero、およびファイルに作者名のないものです。各フォーミュラの作者は `M3Formulas/CREDITS-community.md` にあります（DarkBeam の `teapot.m3f` は CC BY-SA 3.0）。マップは DarkBeam のコレクションで、その条件（自由に使用可、無加工での販売は不可）に従い、CmdrChaos、Fractales75、Nic022、UndeadAcademy が DeviantArt で共有した画像を含みます。マップ 3046–3048 は Kronpano の作品です（`M3Maps/CREDITS-community.md`）。`M3Lights` の 608 個のライトプリセットも同じパッケージのもので、ファイルに作者名はありません（`M3Lights/CREDITS-community.md`）。
+* **Mandelbulb3D SE からのアイデア**：mb3d-rs を基にした macOS アプリ、Glenn Olander の Mandelbulb3D SE から二つのアイデアを得ました。グラフィックカードなしでテスト中にすべてのグラフィックカード用シェーダーを検査すること、そして停止で画像の描画をすぐに終えることです。
 * **新しい数式 PseudoKleinian：** ホール、アーチ、球でできた「クライン建築」を、独自の正確な距離を持つ 1 つの数式にしたもの。
 
   <a href="../img/kleinian_hall.jpg"><img src="../img/kleinian_hall.jpg" width="300" alt="新しい数式：PseudoKleinian"></a>
@@ -404,6 +405,32 @@ MB3D の数式とマップを使い、同じ画像を作ります。
   パラメーターではタイトルの後の `{mb3d-rs: ...}`)。Mandelbulb3D はこれを
   読みません。シーンのキーは `ground`、`ground_color`、`ground_reflect`、
   `ground_waves`。詳しくは [TECHNICAL.md](../TECHNICAL.md#lights-volumetric-light-cutting-planes-depth-of-field)。
+
+  **透明な水**: *水* を 0 より大きくすると (水が通す光の量)、半分水に沈んだフラクタルが水面下に見え、屈折で曲がり (*屈折*: 水は 1.33)、深さとともに深い水の色 (色ボタン) へ変わっていきます。*吸収* は水がどれだけ濁っているか (0 澄む、3 濁る) を決め、青緑の水では赤が先に消えるので、水中の部分はターコイズになります。波の上のライトのきらめきは水面に残ります。通常のレンダーは反射をオンにしたとき (ポストプロセス)、モンテカルロは常に表示します。反射なしでは水は不透明のままです。シーンキー `ground_transparency`, `ground_absorption`, `ground_water_color`, `ground_ior`。例は [CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water)。
+
+  **散乱** (*屈折* の下の行): 水が本物の水のように光を散乱します。太陽の方を見るとターコイズに輝き、波頭が透け、太陽の光がフラクタルの影に切られた光の筋となって差し込み、水中のものが水の色でやわらかく輝きます。モンテカルロは水中で散乱する光を追跡します。2 番目の欄は散乱の向きです (0.8: おもに前方)。0 は散乱なしの見た目です。シーンキー `ground_scattering`, `ground_scatter_dir`。[CLOUDS_WATER.md](../CLOUDS_WATER.md#transparent-water) を参照。
+
+  **試してみる**: *カット* ページで *地面* にチェックを入れ、その高さをフラクタルの中に通し、*水* を 1、*吸収* を 1、*散乱* を 0.5 にして、反射をオンにし (*ポストプロセス*、*反射 + 透明*、*R. (+ T.) を自動的に計算*)、*3D計算* を押します。
+
+  設定付きの、貼り付けるだけの完成シーン3つ： [WATER_EXAMPLES.md](../WATER_EXAMPLES.md)
+
+  *水* (透明度) 0、0.5、1:
+
+  <a href="../img/water_transparency.jpg"><img src="../img/water_transparency.jpg" width="760" alt="透明度 0、0.5、1: 灰色の不透明な水、次に水没した半分のフラクタルがターコイズで透けて見える"></a>
+
+  *吸収* 0.3、1、3、澄んだ水から濁った水へ:
+
+  <a href="../img/water_absorption.jpg"><img src="../img/water_absorption.jpg" width="760" alt="吸収 0.3、1、3: 水没した半分がはっきり緑、薄れ、そして見えなくなる"></a>
+
+  *散乱* 0、0.5、1 を太陽の方を向いて見たところ、そして低い太陽が正面にあるときの光の筋:
+
+  <a href="../img/water_scattering.jpg"><img src="../img/water_scattering.jpg" width="760" alt="散乱 0、0.5、1 を太陽の方を向いて見たところ: 暗い水、次に輝くターコイズの水"></a>
+
+  <a href="../img/water_shafts.jpg"><img src="../img/water_shafts.jpg" width="760" alt="低い太陽が正面: フラクタルの影の体積が青い光の筋として水中に伸びる"></a>
+
+  **波** は 1 つの風向きに沿った 16 個の波からなる不規則な海です (0.2.98 より前は 3 つの規則的な波が市松模様を作っていました。波のあるシーンはそれ以来見た目が変わっています)。古いもの (各組の左) と新しいもの、小さい波と大きい波、太陽が正面と背後にある場合:
+
+  <a href="../img/water_waves.jpg"><img src="../img/water_waves.jpg" width="760" alt="古い波と新しい波の並置: 古い明るい菱形の規則的な格子と、新しい不規則な海"></a>
 
   </details>
 * **HDR 画像からの光**: 360° の Radiance 画像 (`.hdr`) を背景にすると、
@@ -564,6 +591,14 @@ MB3D の数式とマップを使い、同じ画像を作ります。
   フレームまでの時間に対する割合) の中で撮ったその枚数の画像の平均なので、
   動くものはにじみます。時間はその枚数倍かかります
   (`mb3d animate --motion-blur 8,0.5`)。
+
+  *アニメーションメーカー* > *アニメーションテンプレート...* は、メインウィンドウの視点から、秒で指定した長さ (ウィンドウのフレーム/秒で) のキーフレームを作ります: 選んだ軸 (左から右、上を越えて、ロール、3 つ同時、またはフラクタルの X、Y、Z 軸) の周りの *360° 周回* (`--orbit 8 --duration 10 --orbit-axis pitch`)、またはカメラがフラクタルの奥へ飛び続け、ズームが距離に追従し、進路を保ってぶつかりそうなものを避けるときだけ曲がる *フライスルー* (`--fly --duration 20`、`--duration 0`: 画面が空だけ、またはフラクタルだけになるまで)。アニメーションメーカー の *360° VR* (`--vr`) は各フレームを全天球パノラマ (2:1) にします。*ステレオアニメーションをレンダリング* と組み合わせると動画は両目を上下に並べ (左目が上)、ffmpeg コマンドは `mb3d vr360 video.mp4 --stereo tb` で終わり、MP4 を YouTube、Meta Quest、VLC 用の 360 動画としてマークします。JPEG で保存した全天球パノラマには Photo Sphere XMP が付くので、Facebook は 360 写真として表示します。
+
+  <a href="../img/orbit_template.jpg"><img src="../img/orbit_template.jpg" width="640" alt="Mandelbulb の表面の一点を回る 360° 周回の 5 フレーム"></a>
+
+  <a href="../img/fly_through.jpg"><img src="../img/fly_through.jpg" width="640" alt="フライスルー、1 秒ごとに 1 フレーム"></a>
+
+  アニメーションテンプレート、360° 写真、360° VR 動画は Rathinagiri S ([SRathinaGiri](https://github.com/SRathinaGiri)、[#30](https://github.com/thr32423/mb3d-rs/pull/30)) による貢献です。周回はすべてのフレームで、キーフレームの間でも、カメラを回転の中心から同じ距離に保ちます: まずビューの中心を回転の中心に置くので、キーフレームの違いは回転だけになります。ほかのキーフレームの後に追加すると最初のキーフレームでもう一度終わるので、一周が欠けません。*開始位置* でメインウィンドウの視点か最後のキーフレームを選べます。フライスルーは進行バーを表示しながらバックグラウンドで計算され、*停止* でそこまでの飛行を残します。動画 (v0.2.100 のリリースに添付、その次のバージョンでレンダリング): [キーフレーム 4 つの周回、最初の版と正確な版を並べて](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-orbit-compare.mp4)、[タンブル](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-tumble.mp4)、[フライスルー](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-fly-through.mp4)、[360° VR 周回](https://github.com/thr32423/mb3d-rs/releases/download/v0.2.100/anim-templates-vr360-orbit.mp4)。4 本すべてを動く画像と解説付きで：[docs/ANIMATION_TEMPLATES.md](../ANIMATION_TEMPLATES.md)。
 
   </details>
 * **ガウシアンスプラット** でフラクタルを書き出し、Blender (5.3 以降)、SuperSplat

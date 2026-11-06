@@ -129,6 +129,10 @@ pub struct Animation {
     /// the shutter time of the motion blur, a part of the time to the next
     /// frame (0..1)
     pub shutter: f32,
+    /// a 360 degree VR animation (not in MB3D): every frame with the camera
+    /// optic spherical panorama (the frames 2:1; stereo eyes one above the
+    /// other in the video), see [`crate::vr`]
+    pub vr360: bool,
 }
 
 impl Default for Animation {
@@ -151,6 +155,7 @@ impl Default for Animation {
             stereo_bits: 0,
             motion_blur: 0,
             shutter: 0.5,
+            vr360: false,
         }
     }
 }
@@ -335,6 +340,9 @@ impl Animation {
         s.height = self.height.max(1);
         s.tiling = None;
         s.calc_rect = None;
+        if self.vr360 {
+            s.optic = crate::scene::CameraOptic::Panorama;
+        }
         if self.scale > 1 {
             s.scale_image(self.scale as f64);
         }
@@ -353,25 +361,9 @@ impl Animation {
 /// around the view's vertical axis, `frames` frames from each to the next
 /// (as a loop the last leads back to the first).
 pub fn orbit_keyframes(sc: &Scene, steps: usize, frames: u32) -> Vec<Keyframe> {
-    let steps = steps.max(3);
-    let up = sc.vgrads[1];
-    let l = (up[0] * up[0] + up[1] * up[1] + up[2] * up[2]).sqrt().max(1e-300);
-    let u = up.map(|v| v / l);
-    (0..steps)
-        .map(|i| {
-            let a = 2.0 * PI * i as f64 / steps as f64;
-            let (s, c) = a.sin_cos();
-            // Rodrigues: each row of the view turned around `u`
-            let turn = |v: [f64; 3]| {
-                let d = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
-                let x = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-                [0, 1, 2].map(|k| v[k] * c + x[k] * s + u[k] * d * (1.0 - c))
-            };
-            let mut k = sc.clone();
-            k.vgrads = [turn(sc.vgrads[0]), turn(sc.vgrads[1]), turn(sc.vgrads[2])];
-            Keyframe::new(k, frames)
-        })
-        .collect()
+    // (one orbit for the Turntable button, the command line and the
+    // Animation templates)
+    crate::autopilot::orbit_keyframes_around(sc, steps, frames, [0.0; 3])
 }
 
 // ---------------------------------------------------------------------------
@@ -454,8 +446,14 @@ fn interpolate_header(base: &Scene, h: &[&Scene], w: &[f64], rot: Quat, bezier: 
             ng.reflect = lin(&|x| g(x).reflect as f64).clamp(0.0, 1.0) as f32;
             ng.wave_height = lin(&|x| g(x).wave_height).max(0.0);
             ng.wave_len = lin(&|x| g(x).wave_len).max(1e-9);
+            ng.transparency = lin(&|x| g(x).transparency as f64).clamp(0.0, 1.0) as f32;
+            ng.visibility = lin(&|x| g(x).visibility as f64).max(1e-6) as f32;
+            ng.ior = lin(&|x| g(x).ior as f64).clamp(1.0, 3.0) as f32;
+            ng.scattering = lin(&|x| g(x).scattering as f64).clamp(0.0, 1.0) as f32;
+            ng.scatter_dir = lin(&|x| g(x).scatter_dir as f64).clamp(0.0, 0.95) as f32;
             for k in 0..3 {
                 ng.color[k] = lin(&|x| g(x).color[k] as f64).round().clamp(0.0, 255.0) as u8;
+                ng.water_color[k] = lin(&|x| g(x).water_color[k] as f64).round().clamp(0.0, 255.0) as u8;
             }
             s.ground = Some(ng);
         }
@@ -736,6 +734,7 @@ pub fn bake_light_blend(s: &mut Scene) {
     l.dyn_fog_col = c(&|x| x.dyn_fog_col);
     l.dyn_fog_col2 = c(&|x| x.dyn_fog_col2);
     l.fog_offset = f(&|x| x.fog_offset);
+    l.fog_far_offset = f(&|x| x.fog_far_offset);
     l.depth_fog = f(&|x| x.depth_fog);
     l.diffuse = f(&|x| x.diffuse);
     l.dyn_fog = f(&|x| x.dyn_fog);

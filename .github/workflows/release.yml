@@ -31,8 +31,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, ext: "", asset: linux-x64 }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc, ext: ".exe", asset: windows-x64 }
+          # oidn: Intel Open Image Denoise's release package for the system
+          # (the Monte Carlo renders' neural filter, shipped in oidn/)
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, ext: "", asset: linux-x64,
+              oidn: oidn-2.5.1.x86_64.linux.tar.gz, oidn_sha: 743c3e2aff8c220d5d70fe6cb970fb3d36f2702d2693c61d1d148e404cf37cd6 }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, ext: ".exe", asset: windows-x64,
+              oidn: oidn-2.5.1.x64.windows.zip, oidn_sha: f11f91bc072a5e3a564515724cb72ab8fcfbc445c84a84c197ff9b16cc01396f }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -143,6 +147,9 @@ jobs:
           cp M3Formulas-community/CREDITS.md "$name/M3Formulas/CREDITS-community.md"
           cp M3Maps-community/*.jpg "$name/M3Maps/"
           cp M3Maps-community/CREDITS.md "$name/M3Maps/CREDITS-community.md"
+          mkdir -p "$name/M3Lights"
+          cp M3Lights-community/*.m3l "$name/M3Lights/"
+          cp M3Lights-community/CREDITS.md "$name/M3Lights/CREDITS-community.md"
           for d in History Meshes BigRenders; do mkdir -p "$name/$d"; done
           echo "Parameters of every image calculated with \"Calculate 3D\" (one folder per day), as in MB3D." > "$name/History/README.txt"
           echo "Meshes exported with BTracer2 are saved here, as in MB3D." > "$name/Meshes/README.txt"
@@ -154,6 +161,8 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then
             cp "target/${{ matrix.target }}/release/Mandelbulb3D${{ matrix.ext }}" "$name"/
           fi
+          # Intel Open Image Denoise (Apache 2.0, its licences in oidn/doc)
+          mv oidn "$name/oidn"
           cp README.md GETTING_STARTED.md LICENSE download.sh "$name"/
           # the application menu entry and icons are only for the Windows
           # desktop package; Linux is command-line only.

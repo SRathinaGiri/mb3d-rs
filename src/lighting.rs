@@ -168,6 +168,9 @@ pub struct Lighting {
     pub dyn_fog_col2: [u8; 3],
     /// TBpos[3]: fog offset (128 = 0)
     pub fog_offset: f32,
+    /// TBpos[3] high word: the dynamic fog's far offset, its change with
+    /// depth (`sShadZmul`, Lighting window slider 19; 128 = neutral)
+    pub fog_far_offset: f32,
     /// TBpos[4]: depth fog amount
     pub depth_fog: f32,
     /// TBpos[5]: diffuse colour multiplier (50 = 1.0)
@@ -326,6 +329,7 @@ impl Default for Lighting {
             dyn_fog_col: [255, 255, 255],
             dyn_fog_col2: [255, 255, 255],
             fog_offset: 128.0,
+            fog_far_offset: 128.0,
             depth_fog: 27.0,
             diffuse: 120.0,
             dyn_fog: 53.0,
@@ -1030,7 +1034,7 @@ impl LightVals {
             (gr, dtmp, mul, stmp)
         };
         let s_shad = (stmp - l.fog_offset.max(0.0).sqrt() * 11.313708) * dtmp * 0.28;
-        let s_shad_zmul = dtmp * 0.7 / z_range as f32 * (128.0 - 128f32.sqrt() * 11.313708);
+        let s_shad_zmul = dtmp * 0.7 / z_range as f32 * (128.0 - l.fog_far_offset.max(0.0).sqrt() * 11.313708);
         let s_amb_shad = l.amb_shadow / 53.0;
         // CalcSCstartAndSCmul
         let s_c_start = ((l.color_start + 30.0) / 90.0).powi(2) * 32767.0 - 10900.0;
@@ -1228,17 +1232,20 @@ impl LightVals {
     /// The ground plane's colours: its colour as diffuse, its reflection
     /// amount as a grey specular colour (the reflections' mirror).
     pub fn set_ground(&mut self, g: Option<&crate::scene::Ground>) {
-        let col = |c: [u8; 3]| -> SVec {
-            if self.sqr {
-                c.map(|v| v as f32 * v as f32 * 0.0000153787)
-            } else {
-                c.map(|v| v as f32 / 255.0)
-            }
-        };
         self.ground = g.map(|g| {
             let r = (g.reflect.clamp(0.0, 1.0) * 255.0).round() as u8;
-            (col(g.color), col([r; 3]))
+            (self.surface_colour(g.color), self.surface_colour([r; 3]))
         });
+    }
+
+    /// A colour of a surface (the ground's) as the shading takes it: 0..1,
+    /// squared with the internal gamma 2.
+    pub(crate) fn surface_colour(&self, c: [u8; 3]) -> SVec {
+        if self.sqr {
+            c.map(|v| v as f32 * v as f32 * 0.0000153787)
+        } else {
+            c.map(|v| v as f32 / 255.0)
+        }
     }
 
     /// Volumetric light: the shadow word holds the light amount
@@ -1249,7 +1256,7 @@ impl LightVals {
         let dtmp = 50.0f32;
         self.s_shad_gr = (l.dyn_fog - 53.0) * 0.00002;
         self.s_shad = (128.0 - l.fog_offset.max(0.0).sqrt() * 11.313708) * dtmp * 0.28;
-        self.s_shad_zmul = dtmp * 0.7 / z_range as f32 * (128.0 - 128f32.sqrt() * 11.313708);
+        self.s_shad_zmul = dtmp * 0.7 / z_range as f32 * (128.0 - l.fog_far_offset.max(0.0).sqrt() * 11.313708);
     }
 
     /// Positions of positional lights relative to the scene middle, depth
@@ -1831,7 +1838,9 @@ impl LightVals {
                 sv_add_w(&mut li_dif, c, d_amb_sh);
             }
             let idif0 = self.s_col_zmul * plv_zpos;
-            let (mut idif, ispe, ia) = if si.si_gradient > 32767 && !si.is_ground() {
+            let (mut idif, ispe, ia) = if let Some((d, s)) = o.ground.filter(|_| si.is_ground()) {
+                (d, s, 0.0)
+            } else if si.si_gradient > 32767 && !si.is_ground() {
                 let (d, s) = self.calc_colors_inside(si, idif0);
                 (d, s, s[0])
             } else {
@@ -2083,6 +2092,9 @@ pub(crate) struct ShadeOpts<'a> {
     /// `CalcPixelColor2` / `CalcPixelColorSqr`: with internal gamma 2 the
     /// ambient shadow is squared (not the mean of it and its square)
     pub(crate) svec: bool,
+    /// the ground plane's diffuse and specular colours in place of
+    /// [`LightVals::ground`]'s (transparent water, `reflect`)
+    pub(crate) ground: Option<(SVec, SVec)>,
 }
 
 /// Result of [`LightVals::shade`].
@@ -2100,6 +2112,19 @@ pub(crate) struct Shaded {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The far offset sets how the dynamic fog changes with depth, as
+    /// MB3D's sShadZmul (128 neutral as before).
+    #[test]
+    fn the_far_fog_offset_sets_the_depth_change() {
+        let mut l = Lighting::default();
+        let neutral = LightVals::new(&l, 0.1, 0, 4.0, 0.01, 96, 1.0).s_shad_zmul;
+        l.fog_far_offset = 255.0;
+        let v = LightVals::new(&l, 0.1, 0, 4.0, 0.01, 96, 1.0).s_shad_zmul;
+        let k = (128.0 - 255f32.sqrt() * 11.313708) / (128.0 - 128f32.sqrt() * 11.313708);
+        assert!((v - neutral * k).abs() <= 1e-4 * neutral.abs().max(1.0), "{v} {neutral}");
+    }
+
 
     #[test]
     fn cos_tab_monotonic() {

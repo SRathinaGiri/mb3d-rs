@@ -1,8 +1,10 @@
 //! Formulas written in Pascal (`[SOURCE]` sections of `.m3f` files).
 //!
 //! MB3D compiles them at load time with paxCompiler (`formula/FormulaCompiler.pas`,
-//! `script/CompilerUtil.pas`).  This module compiles the same Delphi subset
-//! into a tree of closures that work directly on the iteration state:
+//! `script/CompilerUtil.pas`).  This module parses the same Delphi subset
+//! into a typed tree and makes closures of it that work directly on the
+//! iteration state (with the JIT, `jit_pascal` compiles the tree to machine
+//! code for each scene's option values):
 //!
 //! * one `procedure Name(var x, y, z, w: Double; PIteration3D: TPIteration3D);`
 //!   with `var` and `const` sections, locals of the ordinal and real types;
@@ -205,10 +207,17 @@ fn tokenize(src: &str) -> Result<Vec<(Tok, usize)>, String> {
 }
 
 // ---------------------------------------------------------------------------
-// types and run time
+// types and the tree of a formula
+//
+// The parser builds a typed tree (`E`, `S`); the closures run it (`lower_e`,
+// `lower_s`), `jit_pascal` compiles it with Cranelift and `jit_wgsl`
+// translates it for the graphics card.  Every value is an f64 as in the
+// closures: ordinals are whole numbers (Integer results wrapped to 32 bits),
+// booleans 0 or 1; the operations say exactly how they treat them, so that
+// the code generators give the closures' results bit for bit.
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Ty {
+pub(crate) enum Ty {
     Int,   // 32 bit (Integer, Cardinal, Word, Byte, ...)
     Int64, // Int64 (results of Round and Trunc)
     Real,
@@ -252,13 +261,13 @@ type Ex = Box<dyn Fn(&mut Env) -> f64 + Send + Sync>;
 type St = Box<dyn Fn(&mut Env) -> u8 + Send + Sync>;
 
 #[inline]
-fn wrap32(v: i64) -> f64 {
+pub(crate) fn wrap32(v: i64) -> f64 {
     v as i32 as f64
 }
 
 /// Fields of `TIteration3D` / `TIteration3Dext` the formulas can use.
-#[derive(Clone, Copy, Debug)]
-enum Field {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Field {
     C(usize),
     J(usize),
     Ju(usize),
@@ -319,7 +328,7 @@ fn field_by_name(n: &str) -> Option<(Field, Ty)> {
 }
 
 #[inline]
-fn get_field(it: &Iteration, f: Field) -> f64 {
+pub(crate) fn get_field(it: &Iteration, f: Field) -> f64 {
     use Field::*;
     match f {
         C(k) => it.c[k],
@@ -346,7 +355,7 @@ fn get_field(it: &Iteration, f: Field) -> f64 {
 }
 
 #[inline]
-fn set_field(it: &mut Iteration, f: Field, v: f64) {
+pub(crate) fn set_field(it: &mut Iteration, f: Field, v: f64) {
     use Field::*;
     match f {
         C(k) => it.c[k] = v,
@@ -373,8 +382,8 @@ fn set_field(it: &mut Iteration, f: Field, v: f64) {
 }
 
 /// Storage place of a variable.
-#[derive(Clone, Copy, Debug)]
-enum Place {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Place {
     Local(usize),
     /// one of the `var x, y, z, w` parameters
     V(usize),
@@ -390,13 +399,302 @@ struct Var {
 
 /// Where the initial value of a local comes from.
 #[derive(Clone, Debug)]
-enum Init {
+pub(crate) enum Init {
     /// option value number n (a Double option at the preprocessor's offset)
     Value(usize),
     /// 8 bytes of the variable buffer below `PVar` (offset in bytes)
     Below(usize),
-    /// a value from the `[CONSTANTS]` section
+    /// a value from the `[CONSTANTS]` section or a `var` initializer
     Const(f64),
+}
+
+/// The math functions of one real argument.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum F1 {
+    Sin,
+    Cos,
+    Tan,
+    Cot,
+    Sec,
+    Csc,
+    ArcTan,
+    ArcSin,
+    ArcCos,
+    ArcCot,
+    ArcSec,
+    ArcCsc,
+    Sinh,
+    Cosh,
+    Tanh,
+    Coth,
+    Sech,
+    Csch,
+    ArcSinh,
+    ArcCosh,
+    ArcTanh,
+    ArcCoth,
+    ArcSech,
+    ArcCsch,
+    Sqrt,
+    Exp,
+    Ln,
+    LnXp1,
+    Log10,
+    Log2,
+    Int,
+    Frac,
+    RadToDeg,
+    DegToRad,
+    DegNormalize,
+}
+
+/// Every [`F1`], in the order of its number (`F1::ALL[f as usize] == f`).
+#[cfg_attr(not(jit), allow(dead_code))]
+pub(crate) const F1_ALL: [F1; 35] = {
+    use F1::*;
+    [
+        Sin, Cos, Tan, Cot, Sec, Csc, ArcTan, ArcSin, ArcCos, ArcCot, ArcSec, ArcCsc, Sinh, Cosh, Tanh, Coth, Sech, Csch, ArcSinh, ArcCosh, ArcTanh,
+        ArcCoth, ArcSech, ArcCsch, Sqrt, Exp, Ln, LnXp1, Log10, Log2, Int, Frac, RadToDeg, DegToRad, DegNormalize,
+    ]
+};
+
+impl F1 {
+    fn by_name(n: &str) -> Option<F1> {
+        use F1::*;
+        Some(match n {
+            "sin" => Sin,
+            "cos" => Cos,
+            "tan" => Tan,
+            "cotan" | "cot" => Cot,
+            "secant" | "sec" => Sec,
+            "cosecant" | "csc" => Csc,
+            "arctan" => ArcTan,
+            "arcsin" => ArcSin,
+            "arccos" => ArcCos,
+            "arccot" => ArcCot,
+            "arcsec" => ArcSec,
+            "arccsc" => ArcCsc,
+            "sinh" => Sinh,
+            "cosh" => Cosh,
+            "tanh" => Tanh,
+            "coth" => Coth,
+            "sech" => Sech,
+            "csch" => Csch,
+            "arcsinh" => ArcSinh,
+            "arccosh" => ArcCosh,
+            "arctanh" => ArcTanh,
+            "arccoth" => ArcCoth,
+            "arcsech" => ArcSech,
+            "arccsch" => ArcCsch,
+            "sqrt" => Sqrt,
+            "exp" => Exp,
+            "ln" => Ln,
+            "lnxp1" => LnXp1,
+            "log10" => Log10,
+            "log2" => Log2,
+            "int" => Int,
+            "frac" => Frac,
+            "radtodeg" => RadToDeg,
+            "degtorad" => DegToRad,
+            "degnormalize" => DegNormalize,
+            _ => return None,
+        })
+    }
+
+    #[inline]
+    pub(crate) fn apply(self, x: f64) -> f64 {
+        use F1::*;
+        match self {
+            Sin => x.sin(),
+            Cos => x.cos(),
+            Tan => x.tan(),
+            Cot => 1.0 / x.tan(),
+            Sec => 1.0 / x.cos(),
+            Csc => 1.0 / x.sin(),
+            ArcTan => x.atan(),
+            ArcSin => x.asin(),
+            ArcCos => x.acos(),
+            ArcCot => (1.0 / x).atan(),
+            ArcSec => (1.0 / x).acos(),
+            ArcCsc => (1.0 / x).asin(),
+            Sinh => x.sinh(),
+            Cosh => x.cosh(),
+            Tanh => x.tanh(),
+            Coth => 1.0 / x.tanh(),
+            Sech => 1.0 / x.cosh(),
+            Csch => 1.0 / x.sinh(),
+            ArcSinh => x.asinh(),
+            ArcCosh => x.acosh(),
+            ArcTanh => x.atanh(),
+            ArcCoth => (1.0 / x).atanh(),
+            ArcSech => (1.0 / x).acosh(),
+            ArcCsch => (1.0 / x).asinh(),
+            Sqrt => x.sqrt(),
+            Exp => x.exp(),
+            Ln => x.ln(),
+            LnXp1 => x.ln_1p(),
+            Log10 => x.log10(),
+            Log2 => x.log2(),
+            Int => x.trunc(),
+            Frac => x.fract(),
+            RadToDeg => x.to_degrees(),
+            DegToRad => x.to_radians(),
+            DegNormalize => x - (x / 360.0).floor() * 360.0,
+        }
+    }
+}
+
+/// The math functions of two real arguments.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum F2 {
+    ArcTan2,
+    Hypot,
+    LogN,
+    Power,
+    /// Math.Min: "if A < B then Result := A else Result := B"
+    Min,
+    /// Math.Max: "if A > B then Result := A else Result := B"
+    Max,
+}
+
+#[cfg_attr(not(jit), allow(dead_code))]
+pub(crate) const F2_ALL: [F2; 6] = [F2::ArcTan2, F2::Hypot, F2::LogN, F2::Power, F2::Min, F2::Max];
+
+impl F2 {
+    #[inline]
+    pub(crate) fn apply(self, a: f64, b: f64) -> f64 {
+        match self {
+            F2::ArcTan2 => a.atan2(b),
+            F2::Hypot => a.hypot(b),
+            F2::LogN => b.ln() / a.ln(),
+            F2::Power => power(a, b),
+            F2::Min => {
+                if a < b {
+                    a
+                } else {
+                    b
+                }
+            }
+            F2::Max => {
+                if a > b {
+                    a
+                } else {
+                    b
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Cmp {
+    Eq,
+    Ne,
+    Lt,
+    Gt,
+    Le,
+    Ge,
+}
+
+/// Real arithmetic.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ROp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+/// Ordinal arithmetic on `x as i64`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum IOp {
+    Add,
+    Sub,
+    Mul,
+    /// `div` (0 for a zero divisor)
+    Div,
+    /// `mod` (0 for a zero divisor)
+    Mod,
+    And,
+    Or,
+    Xor,
+    Shl,
+    Shr,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Rnd {
+    /// to nearest, ties to even (x87 FISTP)
+    Round,
+    Trunc,
+    Ceil,
+    Floor,
+}
+
+/// An expression.
+#[derive(Clone, Debug)]
+pub(crate) enum E {
+    Lit(f64),
+    Load(Place),
+    /// `-a`; `wrap`: an Integer (`wrap32(-(a as i64))`)
+    Neg(Box<E>, bool),
+    /// `not` of a Boolean
+    NotB(Box<E>),
+    /// `not` of an Integer (`!(a as i64 as i32)`) or, `wide`, an Int64
+    NotI(Box<E>, bool),
+    /// a comparison of the two f64 values (0 or 1)
+    Cmp(Cmp, Box<E>, Box<E>),
+    R(ROp, Box<E>, Box<E>),
+    /// ordinal operation; `wrap`: the result is an Integer (wrap32)
+    I(IOp, bool, Box<E>, Box<E>),
+    /// Boolean and / or (short-circuit), xor
+    And(Box<E>, Box<E>),
+    Or(Box<E>, Box<E>),
+    Xor(Box<E>, Box<E>),
+    F1(F1, Box<E>),
+    F2(F2, Box<E>, Box<E>),
+    /// Min / Max of ordinals (`f64::min` / `f64::max`)
+    OMinMax(bool, Box<E>, Box<E>),
+    /// IntPower(a, b as i32)
+    IntPower(Box<E>, Box<E>),
+    /// Abs / Sqr of an Integer (wrapped)
+    IAbs(Box<E>),
+    ISqr(Box<E>),
+    /// Abs / Sqr of a real or an Int64
+    RAbs(Box<E>),
+    RSqr(Box<E>),
+    /// Round, Trunc, Ceil, Floor of a real; `wrap`: an Integer (Ceil, Floor)
+    Rnd(Rnd, bool, Box<E>),
+    Odd(Box<E>),
+    IsNan(Box<E>),
+    IsInf(Box<E>),
+    Sign(Box<E>),
+}
+
+/// A statement.
+#[derive(Clone, Debug)]
+pub(crate) enum S {
+    Nop,
+    Seq(Vec<S>),
+    If(E, Box<S>, Box<S>),
+    While(E, Box<S>),
+    Repeat(Box<S>, E),
+    /// `for` over `from as i64 ..= to as i64` (the counter stored as is)
+    For { slot: usize, from: E, to: E, down: bool, body: Box<S> },
+    /// the selector as i64 against the label ranges
+    Case(E, Vec<(Vec<(i64, i64)>, S)>, Option<Box<S>>),
+    Exit,
+    Break,
+    Continue,
+    /// the value stored as the type of the place (`store_value`), into
+    /// x, y, z, w as it is
+    Store(Place, Ty, E),
+    /// SinCos(a, s, c)
+    SinCos(E, (Place, Ty), (Place, Ty)),
+}
+
+fn bx(e: E) -> Box<E> {
+    Box::new(e)
 }
 
 // ---------------------------------------------------------------------------
@@ -630,10 +928,7 @@ impl Compiler {
         self.in_const = false;
         let (e, ty) = r?;
         // constant expressions only use literals and constants: evaluate on a dummy state
-        let mut it = Iteration::default();
-        let mut l = [0.0f64; 0];
-        let mut env = Env { l: &mut l, it: &mut it };
-        let v = e(&mut env);
+        let v = eval_const(&e);
         if !v.is_finite() && !ty.real() {
             return err(line, "constant expression expected");
         }
@@ -642,9 +937,9 @@ impl Compiler {
 
     // ---- statements
 
-    fn block(&mut self) -> Result<St, String> {
+    fn block(&mut self) -> Result<S, String> {
         self.expect_kw("begin")?;
-        let mut list: Vec<St> = Vec::new();
+        let mut list: Vec<S> = Vec::new();
         loop {
             if self.eat_kw("end") {
                 break;
@@ -660,10 +955,10 @@ impl Compiler {
                 return err(self.line(), format!("';' expected but {} found", self.desc()));
             }
         }
-        Ok(seq(list))
+        Ok(S::Seq(list))
     }
 
-    fn statement(&mut self) -> Result<St, String> {
+    fn statement(&mut self) -> Result<S, String> {
         let line = self.line();
         match self.peek().clone() {
             Tok::Id(k) => match k.as_str() {
@@ -672,13 +967,9 @@ impl Compiler {
                     self.bump();
                     let c = self.condition()?;
                     self.expect_kw("then")?;
-                    let a = if self.is_kw("else") || self.is_sym(";") { nop() } else { self.statement()? };
-                    if self.eat_kw("else") {
-                        let b = if self.is_kw("end") || self.is_sym(";") { nop() } else { self.statement()? };
-                        Ok(Box::new(move |e| if c(e) != 0.0 { a(e) } else { b(e) }))
-                    } else {
-                        Ok(Box::new(move |e| if c(e) != 0.0 { a(e) } else { NORMAL }))
-                    }
+                    let a = if self.is_kw("else") || self.is_sym(";") { S::Nop } else { self.statement()? };
+                    let b = if self.eat_kw("else") { if self.is_kw("end") || self.is_sym(";") { S::Nop } else { self.statement()? } } else { S::Nop };
+                    Ok(S::If(c, Box::new(a), Box::new(b)))
                 }
                 "while" => {
                     self.bump();
@@ -687,16 +978,7 @@ impl Compiler {
                     self.loop_depth += 1;
                     let body = self.statement()?;
                     self.loop_depth -= 1;
-                    Ok(Box::new(move |e| {
-                        while c(e) != 0.0 {
-                            match body(e) {
-                                BREAK => break,
-                                EXIT => return EXIT,
-                                _ => {}
-                            }
-                        }
-                        NORMAL
-                    }))
+                    Ok(S::While(c, Box::new(body)))
                 }
                 "repeat" => {
                     self.bump();
@@ -714,20 +996,7 @@ impl Compiler {
                     self.loop_depth -= 1;
                     self.expect_kw("until")?;
                     let c = self.condition()?;
-                    let body = seq(list);
-                    Ok(Box::new(move |e| {
-                        loop {
-                            match body(e) {
-                                BREAK => break,
-                                EXIT => return EXIT,
-                                _ => {}
-                            }
-                            if c(e) != 0.0 {
-                                break;
-                            }
-                        }
-                        NORMAL
-                    }))
+                    Ok(S::Repeat(Box::new(S::Seq(list)), c))
                 }
                 "for" => {
                     self.bump();
@@ -758,23 +1027,7 @@ impl Compiler {
                     self.loop_depth += 1;
                     let body = self.statement()?;
                     self.loop_depth -= 1;
-                    Ok(Box::new(move |e| {
-                        let (from, to) = (a(e) as i64, b(e) as i64);
-                        let mut i = from;
-                        loop {
-                            if (!down && i > to) || (down && i < to) {
-                                break;
-                            }
-                            e.l[slot] = i as f64;
-                            match body(e) {
-                                BREAK => break,
-                                EXIT => return EXIT,
-                                _ => {}
-                            }
-                            i = if down { i - 1 } else { i + 1 };
-                        }
-                        NORMAL
-                    }))
+                    Ok(S::For { slot, from: a, to: b, down, body: Box::new(body) })
                 }
                 "case" => {
                     self.bump();
@@ -783,8 +1036,8 @@ impl Compiler {
                         return err(line, "ordinal type required");
                     }
                     self.expect_kw("of")?;
-                    let mut arms: Vec<(Vec<(i64, i64)>, St)> = Vec::new();
-                    let mut other: Option<St> = None;
+                    let mut arms: Vec<(Vec<(i64, i64)>, S)> = Vec::new();
+                    let mut other: Option<Box<S>> = None;
                     loop {
                         if self.eat_kw("end") {
                             break;
@@ -798,7 +1051,7 @@ impl Compiler {
                                 list.push(self.statement()?);
                             }
                             self.expect_kw("end")?;
-                            other = Some(seq(list));
+                            other = Some(Box::new(S::Seq(list)));
                             break;
                         }
                         let mut labels = Vec::new();
@@ -811,39 +1064,27 @@ impl Compiler {
                             }
                         }
                         self.expect_sym(":")?;
-                        let st = if self.is_sym(";") { nop() } else { self.statement()? };
+                        let st = if self.is_sym(";") { S::Nop } else { self.statement()? };
                         arms.push((labels, st));
                         if !self.eat_sym(";") && !self.is_kw("end") && !self.is_kw("else") {
                             return err(self.line(), format!("';' expected but {} found", self.desc()));
                         }
                     }
-                    Ok(Box::new(move |e| {
-                        let v = sel(e) as i64;
-                        for (labels, st) in &arms {
-                            if labels.iter().any(|&(lo, hi)| v >= lo && v <= hi) {
-                                return st(e);
-                            }
-                        }
-                        match &other {
-                            Some(st) => st(e),
-                            None => NORMAL,
-                        }
-                    }))
+                    Ok(S::Case(sel, arms, other))
                 }
                 "exit" => {
                     self.bump();
                     if self.eat_sym("(") {
                         self.expect_sym(")")?;
                     }
-                    Ok(Box::new(|_| EXIT))
+                    Ok(S::Exit)
                 }
                 "break" | "continue" => {
                     self.bump();
                     if self.loop_depth == 0 {
                         return err(line, format!("{k} outside of a loop"));
                     }
-                    let f = if k == "break" { BREAK } else { CONTINUE };
-                    Ok(Box::new(move |_| f))
+                    Ok(if k == "break" { S::Break } else { S::Continue })
                 }
                 "inc" | "dec" => {
                     self.bump();
@@ -859,12 +1100,11 @@ impl Compiler {
                         }
                         d
                     } else {
-                        lit(1.0)
+                        E::Lit(1.0)
                     };
                     self.expect_sym(")")?;
-                    let sign = if k == "inc" { 1i64 } else { -1 };
-                    let get = load(place);
-                    Ok(store(place, ty, Box::new(move |e| (get(e) as i64 + sign * d(e) as i64) as f64)))
+                    let op = if k == "inc" { IOp::Add } else { IOp::Sub };
+                    Ok(S::Store(place, ty, E::I(op, false, bx(E::Load(place)), bx(d))))
                 }
                 "sincos" => {
                     self.bump();
@@ -878,13 +1118,7 @@ impl Compiler {
                     if !ts.real() || !tc.real() {
                         return err(line, "SinCos needs real variables");
                     }
-                    let (ss, sc) = (setter(ps, ts), setter(pc, tc));
-                    Ok(Box::new(move |e| {
-                        let (s, c) = a(e).sin_cos();
-                        ss(e, s);
-                        sc(e, c);
-                        NORMAL
-                    }))
+                    Ok(S::SinCos(a, (ps, ts), (pc, tc)))
                 }
                 _ => {
                     // assignment (or a call of a function whose result is dropped)
@@ -895,20 +1129,20 @@ impl Compiler {
                     }
                     let (v, tv) = self.expr()?;
                     let v = coerce(v, tv, ty, al)?;
-                    Ok(store(place, ty, v))
+                    Ok(S::Store(place, ty, v))
                 }
             },
             _ => err(line, format!("statement expected but {} found", self.desc())),
         }
     }
 
-    fn real_arg(&mut self) -> Result<Ex, String> {
+    fn real_arg(&mut self) -> Result<E, String> {
         let l = self.line();
         let (e, t) = self.expr()?;
         coerce(e, t, Ty::Real, l)
     }
 
-    fn condition(&mut self) -> Result<Ex, String> {
+    fn condition(&mut self) -> Result<E, String> {
         let l = self.line();
         let (c, t) = self.expr()?;
         if t != Ty::Bool {
@@ -947,7 +1181,7 @@ impl Compiler {
 
     // ---- expressions
 
-    fn expr(&mut self) -> Result<(Ex, Ty), String> {
+    fn expr(&mut self) -> Result<(E, Ty), String> {
         let (a, ta) = self.simple()?;
         let op = match self.peek() {
             Tok::Sym(s @ ("=" | "<>" | "<" | ">" | "<=" | ">=")) => *s,
@@ -959,18 +1193,18 @@ impl Compiler {
         if !((ta.numeric() && tb.numeric()) || (ta == Ty::Bool && tb == Ty::Bool)) {
             return err(line, format!("incompatible types: '{}' and '{}'", ta.name(), tb.name()));
         }
-        let f: Ex = match op {
-            "=" => Box::new(move |e| (a(e) == b(e)) as i32 as f64),
-            "<>" => Box::new(move |e| (a(e) != b(e)) as i32 as f64),
-            "<" => Box::new(move |e| (a(e) < b(e)) as i32 as f64),
-            ">" => Box::new(move |e| (a(e) > b(e)) as i32 as f64),
-            "<=" => Box::new(move |e| (a(e) <= b(e)) as i32 as f64),
-            _ => Box::new(move |e| (a(e) >= b(e)) as i32 as f64),
+        let c = match op {
+            "=" => Cmp::Eq,
+            "<>" => Cmp::Ne,
+            "<" => Cmp::Lt,
+            ">" => Cmp::Gt,
+            "<=" => Cmp::Le,
+            _ => Cmp::Ge,
         };
-        Ok((f, Ty::Bool))
+        Ok((E::Cmp(c, bx(a), bx(b)), Ty::Bool))
     }
 
-    fn simple(&mut self) -> Result<(Ex, Ty), String> {
+    fn simple(&mut self) -> Result<(E, Ty), String> {
         let (mut a, mut ta) = self.term()?;
         loop {
             let op = match self.peek() {
@@ -985,7 +1219,7 @@ impl Compiler {
         }
     }
 
-    fn term(&mut self) -> Result<(Ex, Ty), String> {
+    fn term(&mut self) -> Result<(E, Ty), String> {
         let (mut a, mut ta) = self.factor()?;
         loop {
             let op = match self.peek() {
@@ -1000,15 +1234,14 @@ impl Compiler {
         }
     }
 
-    fn factor(&mut self) -> Result<(Ex, Ty), String> {
+    fn factor(&mut self) -> Result<(E, Ty), String> {
         let line = self.line();
         match self.bump() {
             Tok::Int(v) => {
                 let ty = if v > i32::MAX as i64 || v < i32::MIN as i64 { Ty::Int64 } else { Ty::Int };
-                let f = v as f64;
-                Ok((Box::new(move |_| f), ty))
+                Ok((E::Lit(v as f64), ty))
             }
-            Tok::Real(v) => Ok((Box::new(move |_| v), Ty::Real)),
+            Tok::Real(v) => Ok((E::Lit(v), Ty::Real)),
             Tok::Sym("(") => {
                 let r = self.expr()?;
                 self.expect_sym(")")?;
@@ -1019,31 +1252,24 @@ impl Compiler {
                 if !t.numeric() {
                     return err(line, "numeric operand expected");
                 }
-                if t == Ty::Int {
-                    Ok((Box::new(move |e| wrap32(-(a(e) as i64))), t))
-                } else {
-                    Ok((Box::new(move |e| -a(e)), t))
-                }
+                Ok((E::Neg(bx(a), t == Ty::Int), t))
             }
             Tok::Sym("+") => self.factor(),
             Tok::Id(k) if k == "not" => {
                 let (a, t) = self.factor()?;
                 match t {
-                    Ty::Bool => Ok((Box::new(move |e| (a(e) == 0.0) as i32 as f64), t)),
-                    Ty::Int => Ok((Box::new(move |e| !(a(e) as i64 as i32) as f64), t)),
-                    Ty::Int64 => Ok((Box::new(move |e| !(a(e) as i64) as f64), t)),
+                    Ty::Bool => Ok((E::NotB(bx(a)), t)),
+                    Ty::Int => Ok((E::NotI(bx(a), false), t)),
+                    Ty::Int64 => Ok((E::NotI(bx(a), true), t)),
                     _ => err(line, "operator not applicable to this operand type"),
                 }
             }
-            Tok::Id(k) if k == "true" || k == "false" => {
-                let v = (k == "true") as i32 as f64;
-                Ok((Box::new(move |_| v), Ty::Bool))
-            }
+            Tok::Id(k) if k == "true" || k == "false" => Ok((E::Lit((k == "true") as i32 as f64), Ty::Bool)),
             Tok::Id(k) if k == "pi" && !self.vars.contains_key("pi") => {
                 if self.eat_sym("(") {
                     self.expect_sym(")")?;
                 }
-                Ok((Box::new(|_| std::f64::consts::PI), Ty::Real))
+                Ok((E::Lit(std::f64::consts::PI), Ty::Real))
             }
             Tok::Id(n) => {
                 if self.in_const && (n == self.ptr_name || self.vars.contains_key(&n)) {
@@ -1051,13 +1277,13 @@ impl Compiler {
                 }
                 if n == self.ptr_name {
                     let (f, t) = self.field()?;
-                    return Ok((Box::new(move |e| get_field(e.it, f)), t));
+                    return Ok((E::Load(Place::Field(f)), t));
                 }
                 if let Some(v) = self.vars.get(&n).copied() {
-                    return Ok((load(v.place), v.ty));
+                    return Ok((E::Load(v.place), v.ty));
                 }
                 if let Some(&(c, t)) = self.consts.get(&n) {
-                    return Ok((Box::new(move |_| c), t));
+                    return Ok((E::Lit(c), t));
                 }
                 if self.is_sym("(") || is_function(&n) {
                     return self.call(&n, line);
@@ -1071,7 +1297,7 @@ impl Compiler {
         }
     }
 
-    fn args(&mut self) -> Result<Vec<(Ex, Ty, usize)>, String> {
+    fn args(&mut self) -> Result<Vec<(E, Ty, usize)>, String> {
         let mut out = Vec::new();
         if !self.eat_sym("(") {
             return Ok(out);
@@ -1090,8 +1316,8 @@ impl Compiler {
         }
     }
 
-    fn call(&mut self, name: &str, line: usize) -> Result<(Ex, Ty), String> {
-        let mut args = self.args()?;
+    fn call(&mut self, name: &str, line: usize) -> Result<(E, Ty), String> {
+        let args = self.args()?;
         let n = args.len();
         let want = |k: usize| -> Result<(), String> {
             if n == k {
@@ -1100,103 +1326,64 @@ impl Compiler {
                 err(line, format!("{name}: {k} argument(s) expected, {n} given"))
             }
         };
-        let real = |i: usize, args: &mut Vec<(Ex, Ty, usize)>| -> Result<Ex, String> {
-            let (e, t, l) = std::mem::replace(&mut args[i], (Box::new(|_| 0.0), Ty::Real, 0));
+        let mut args = args.into_iter();
+        let real = |args: &mut std::vec::IntoIter<(E, Ty, usize)>| -> Result<E, String> {
+            let (e, t, l) = args.next().expect("counted");
             coerce(e, t, Ty::Real, l)
         };
-        macro_rules! r1 {
-            ($f:expr) => {{
-                want(1)?;
-                let a = real(0, &mut args)?;
-                let f: fn(f64) -> f64 = $f;
-                return Ok((Box::new(move |e| f(a(e))), Ty::Real));
-            }};
+        if let Some(f) = F1::by_name(name) {
+            want(1)?;
+            return Ok((E::F1(f, bx(real(&mut args)?)), Ty::Real));
         }
-        macro_rules! r2 {
-            ($f:expr) => {{
-                want(2)?;
-                let a = real(0, &mut args)?;
-                let b = real(1, &mut args)?;
-                let f: fn(f64, f64) -> f64 = $f;
-                return Ok((Box::new(move |e| f(a(e), b(e))), Ty::Real));
-            }};
+        let f2 = match name {
+            "arctan2" => Some(F2::ArcTan2),
+            "hypot" => Some(F2::Hypot),
+            "logn" => Some(F2::LogN),
+            "power" => Some(F2::Power),
+            _ => None,
+        };
+        if let Some(f) = f2 {
+            want(2)?;
+            let a = real(&mut args)?;
+            let b = real(&mut args)?;
+            return Ok((E::F2(f, bx(a), bx(b)), Ty::Real));
         }
+        let mut args: Vec<(E, Ty, usize)> = args.collect();
         match name {
-            "sin" => r1!(f64::sin),
-            "cos" => r1!(f64::cos),
-            "tan" => r1!(f64::tan),
-            "cotan" | "cot" => r1!(|x| 1.0 / x.tan()),
-            "secant" | "sec" => r1!(|x| 1.0 / x.cos()),
-            "cosecant" | "csc" => r1!(|x| 1.0 / x.sin()),
-            "arctan" => r1!(f64::atan),
-            "arcsin" => r1!(f64::asin),
-            "arccos" => r1!(f64::acos),
-            "arccot" => r1!(|x| (1.0 / x).atan()),
-            "arcsec" => r1!(|x| (1.0 / x).acos()),
-            "arccsc" => r1!(|x| (1.0 / x).asin()),
-            "sinh" => r1!(f64::sinh),
-            "cosh" => r1!(f64::cosh),
-            "tanh" => r1!(f64::tanh),
-            "coth" => r1!(|x| 1.0 / x.tanh()),
-            "sech" => r1!(|x| 1.0 / x.cosh()),
-            "csch" => r1!(|x| 1.0 / x.sinh()),
-            "arcsinh" => r1!(f64::asinh),
-            "arccosh" => r1!(f64::acosh),
-            "arctanh" => r1!(f64::atanh),
-            "arccoth" => r1!(|x| (1.0 / x).atanh()),
-            "arcsech" => r1!(|x| (1.0 / x).acosh()),
-            "arccsch" => r1!(|x| (1.0 / x).asinh()),
-            "sqrt" => r1!(f64::sqrt),
-            "exp" => r1!(f64::exp),
-            "ln" => r1!(f64::ln),
-            "lnxp1" => r1!(f64::ln_1p),
-            "log10" => r1!(f64::log10),
-            "log2" => r1!(f64::log2),
-            "int" => r1!(f64::trunc),
-            "frac" => r1!(f64::fract),
-            "radtodeg" => r1!(f64::to_degrees),
-            "degtorad" => r1!(f64::to_radians),
-            "degnormalize" => r1!(|d| d - (d / 360.0).floor() * 360.0),
-            "arctan2" => r2!(f64::atan2),
-            "hypot" => r2!(f64::hypot),
-            "logn" => r2!(|b, x| x.ln() / b.ln()),
-            "power" => r2!(power),
             "min" | "max" => {
                 want(2)?;
                 let (ta, tb) = (args[0].1, args[1].1);
+                let (b, _, lb) = args.pop().expect("counted");
+                let (a, _, la) = args.pop().expect("counted");
                 if ta.ordinal() && tb.ordinal() {
-                    let (a, _, _) = args.remove(0);
-                    let (b, _, _) = args.remove(0);
                     let ty = if ta == Ty::Int64 || tb == Ty::Int64 { Ty::Int64 } else { Ty::Int };
-                    let mx = name == "max";
-                    return Ok((Box::new(move |e| if mx { a(e).max(b(e)) } else { a(e).min(b(e)) }), ty));
+                    return Ok((E::OMinMax(name == "max", bx(a), bx(b)), ty));
                 }
-                // Math.Min/Max: "if A < B then Result := A else Result := B"
-                if name == "min" {
-                    r2!(|a, b| if a < b { a } else { b })
-                } else {
-                    r2!(|a, b| if a > b { a } else { b })
-                }
+                let a = coerce(a, ta, Ty::Real, la)?;
+                let b = coerce(b, tb, Ty::Real, lb)?;
+                let f = if name == "min" { F2::Min } else { F2::Max };
+                Ok((E::F2(f, bx(a), bx(b)), Ty::Real))
             }
             "intpower" => {
                 want(2)?;
-                let a = real(0, &mut args)?;
-                let (b, tb, l) = args.remove(1);
+                let (b, tb, l) = args.pop().expect("counted");
+                let (a, ta, la) = args.pop().expect("counted");
+                let a = coerce(a, ta, Ty::Real, la)?;
                 if !tb.ordinal() {
                     return err(l, "IntPower: integer exponent expected");
                 }
-                return Ok((Box::new(move |e| int_power(a(e), b(e) as i32)), Ty::Real));
+                Ok((E::IntPower(bx(a), bx(b)), Ty::Real))
             }
             "abs" | "sqr" => {
                 want(1)?;
                 let (a, t, l) = args.remove(0);
                 let sq = name == "sqr";
-                return match t {
-                    Ty::Int => Ok((if sq { Box::new(move |e| wrap32((a(e) as i64).wrapping_mul(a(e) as i64))) } else { Box::new(move |e| wrap32((a(e) as i64).abs())) }, t)),
-                    Ty::Int64 => Ok((if sq { Box::new(move |e| { let v = a(e); v * v }) } else { Box::new(move |e| a(e).abs()) }, t)),
-                    Ty::Real | Ty::Single => Ok((if sq { Box::new(move |e| { let v = a(e); v * v }) } else { Box::new(move |e| a(e).abs()) }, Ty::Real)),
+                match t {
+                    Ty::Int => Ok((if sq { E::ISqr(bx(a)) } else { E::IAbs(bx(a)) }, t)),
+                    Ty::Int64 => Ok((if sq { E::RSqr(bx(a)) } else { E::RAbs(bx(a)) }, t)),
+                    Ty::Real | Ty::Single => Ok((if sq { E::RSqr(bx(a)) } else { E::RAbs(bx(a)) }, Ty::Real)),
                     Ty::Bool => err(l, "numeric argument expected"),
-                };
+                }
             }
             "round" | "trunc" | "ceil" | "floor" => {
                 want(1)?;
@@ -1206,17 +1393,13 @@ impl Compiler {
                 }
                 let a = coerce(a, t, Ty::Real, l)?;
                 let ty = if name == "ceil" || name == "floor" { Ty::Int } else { Ty::Int64 };
-                let f: fn(f64) -> f64 = match name {
-                    // x87 FISTP in the default rounding mode: to nearest, ties to even
-                    "round" => f64::round_ties_even,
-                    "trunc" => f64::trunc,
-                    "ceil" => f64::ceil,
-                    _ => f64::floor,
+                let k = match name {
+                    "round" => Rnd::Round,
+                    "trunc" => Rnd::Trunc,
+                    "ceil" => Rnd::Ceil,
+                    _ => Rnd::Floor,
                 };
-                if ty == Ty::Int {
-                    return Ok((Box::new(move |e| wrap32(f(a(e)) as i64)), ty));
-                }
-                return Ok((Box::new(move |e| f(a(e))), ty));
+                Ok((E::Rnd(k, ty == Ty::Int, bx(a)), ty))
             }
             "odd" => {
                 want(1)?;
@@ -1224,26 +1407,20 @@ impl Compiler {
                 if !t.ordinal() {
                     return err(l, "ordinal argument expected");
                 }
-                return Ok((Box::new(move |e| ((a(e) as i64) & 1) as f64), Ty::Bool));
+                Ok((E::Odd(bx(a)), Ty::Bool))
             }
-            "isnan" => {
+            "isnan" | "isinfinite" | "sign" => {
                 want(1)?;
-                let a = real(0, &mut args)?;
-                return Ok((Box::new(move |e| a(e).is_nan() as i32 as f64), Ty::Bool));
+                let (a, t, l) = args.remove(0);
+                let a = bx(coerce(a, t, Ty::Real, l)?);
+                Ok(match name {
+                    "isnan" => (E::IsNan(a), Ty::Bool),
+                    "isinfinite" => (E::IsInf(a), Ty::Bool),
+                    _ => (E::Sign(a), Ty::Int),
+                })
             }
-            "isinfinite" => {
-                want(1)?;
-                let a = real(0, &mut args)?;
-                return Ok((Box::new(move |e| a(e).is_infinite() as i32 as f64), Ty::Bool));
-            }
-            "sign" => {
-                want(1)?;
-                let a = real(0, &mut args)?;
-                return Ok((Box::new(move |e| { let v = a(e); if v > 0.0 { 1.0 } else if v < 0.0 { -1.0 } else { 0.0 } }), Ty::Int));
-            }
-            _ => {}
+            _ => err(line, format!("undeclared identifier: '{name}'")),
         }
-        err(line, format!("undeclared identifier: '{name}'"))
     }
 }
 
@@ -1259,79 +1436,8 @@ fn is_reserved(s: &str) -> bool {
     )
 }
 
-fn lit(v: f64) -> Ex {
-    Box::new(move |_| v)
-}
-
-fn nop() -> St {
-    Box::new(|_| NORMAL)
-}
-
-fn seq(mut list: Vec<St>) -> St {
-    match list.len() {
-        0 => nop(),
-        1 => list.pop().unwrap(),
-        _ => Box::new(move |e| {
-            for s in &list {
-                let f = s(e);
-                if f != NORMAL {
-                    return f;
-                }
-            }
-            NORMAL
-        }),
-    }
-}
-
-fn load(p: Place) -> Ex {
-    match p {
-        Place::Local(i) => Box::new(move |e| e.l[i]),
-        Place::V(k) => Box::new(move |e| e.it.v[k]),
-        Place::Field(f) => Box::new(move |e| get_field(e.it, f)),
-    }
-}
-
-fn store_value(ty: Ty, v: f64) -> f64 {
-    match ty {
-        Ty::Single => v as f32 as f64,
-        Ty::Int => wrap32(v as i64),
-        Ty::Bool => (v != 0.0) as i32 as f64,
-        _ => v,
-    }
-}
-
-fn setter(p: Place, ty: Ty) -> Box<dyn Fn(&mut Env, f64) + Send + Sync> {
-    match p {
-        Place::Local(i) => Box::new(move |e, v| e.l[i] = store_value(ty, v)),
-        Place::V(k) => Box::new(move |e, v| e.it.v[k] = v),
-        Place::Field(f) => Box::new(move |e, v| set_field(e.it, f, store_value(ty, v))),
-    }
-}
-
-fn store(p: Place, ty: Ty, v: Ex) -> St {
-    match (p, ty) {
-        (Place::Local(i), Ty::Real | Ty::Int64) => Box::new(move |e| {
-            e.l[i] = v(e);
-            NORMAL
-        }),
-        (Place::Local(i), _) => Box::new(move |e| {
-            e.l[i] = store_value(ty, v(e));
-            NORMAL
-        }),
-        (Place::V(k), _) => Box::new(move |e| {
-            e.it.v[k] = v(e);
-            NORMAL
-        }),
-        (Place::Field(f), _) => Box::new(move |e| {
-            let x = store_value(ty, v(e));
-            set_field(e.it, f, x);
-            NORMAL
-        }),
-    }
-}
-
 /// Assignment compatibility (Delphi rules).
-fn coerce(e: Ex, from: Ty, to: Ty, line: usize) -> Result<Ex, String> {
+fn coerce(e: E, from: Ty, to: Ty, line: usize) -> Result<E, String> {
     let ok = match to {
         Ty::Real | Ty::Single => from.numeric(),
         Ty::Int | Ty::Int64 => from.ordinal(),
@@ -1344,81 +1450,82 @@ fn coerce(e: Ex, from: Ty, to: Ty, line: usize) -> Result<Ex, String> {
     }
 }
 
-fn binary(op: &str, a: Ex, ta: Ty, b: Ex, tb: Ty, line: usize) -> Result<(Ex, Ty), String> {
+fn binary(op: &str, a: E, ta: Ty, b: E, tb: Ty, line: usize) -> Result<(E, Ty), String> {
     let both_ord = ta.ordinal() && tb.ordinal();
     let ity = if ta == Ty::Int64 || tb == Ty::Int64 { Ty::Int64 } else { Ty::Int };
     let w = ity == Ty::Int;
-    let fix = move |v: i64| if w { wrap32(v) } else { v as f64 };
+    let (a, b) = (bx(a), bx(b));
     match op {
         "+" | "-" | "*" => {
             if !(ta.numeric() && tb.numeric()) {
                 return err(line, format!("operator not applicable to '{}' and '{}'", ta.name(), tb.name()));
             }
             if both_ord {
-                let f: Ex = match op {
-                    "+" => Box::new(move |e| fix((a(e) as i64).wrapping_add(b(e) as i64))),
-                    "-" => Box::new(move |e| fix((a(e) as i64).wrapping_sub(b(e) as i64))),
-                    _ => Box::new(move |e| fix((a(e) as i64).wrapping_mul(b(e) as i64))),
+                let o = match op {
+                    "+" => IOp::Add,
+                    "-" => IOp::Sub,
+                    _ => IOp::Mul,
                 };
-                return Ok((f, ity));
+                return Ok((E::I(o, w, a, b), ity));
             }
-            let f: Ex = match op {
-                "+" => Box::new(move |e| a(e) + b(e)),
-                "-" => Box::new(move |e| a(e) - b(e)),
-                _ => Box::new(move |e| a(e) * b(e)),
+            let o = match op {
+                "+" => ROp::Add,
+                "-" => ROp::Sub,
+                _ => ROp::Mul,
             };
-            Ok((f, Ty::Real))
+            Ok((E::R(o, a, b), Ty::Real))
         }
         "/" => {
             if !(ta.numeric() && tb.numeric()) {
                 return err(line, format!("operator not applicable to '{}' and '{}'", ta.name(), tb.name()));
             }
-            Ok((Box::new(move |e| a(e) / b(e)), Ty::Real))
+            Ok((E::R(ROp::Div, a, b), Ty::Real))
         }
         "div" | "mod" | "shl" | "shr" => {
             if !both_ord {
                 return err(line, format!("operator '{op}' needs integer operands"));
             }
-            let f: Ex = match op {
-                "div" => Box::new(move |e| {
-                    let d = b(e) as i64;
-                    if d == 0 { 0.0 } else { fix((a(e) as i64).wrapping_div(d)) }
-                }),
-                "mod" => Box::new(move |e| {
-                    let d = b(e) as i64;
-                    if d == 0 { 0.0 } else { fix((a(e) as i64).wrapping_rem(d)) }
-                }),
-                "shl" => Box::new(move |e| {
-                    if w { ((a(e) as i64 as i32).wrapping_shl(b(e) as u32)) as f64 } else { ((a(e) as i64).wrapping_shl(b(e) as u32)) as f64 }
-                }),
-                _ => Box::new(move |e| {
-                    if w { ((a(e) as i64 as u32).wrapping_shr(b(e) as u32)) as i32 as f64 } else { ((a(e) as i64 as u64).wrapping_shr(b(e) as u32)) as i64 as f64 }
-                }),
+            let o = match op {
+                "div" => IOp::Div,
+                "mod" => IOp::Mod,
+                "shl" => IOp::Shl,
+                _ => IOp::Shr,
             };
-            Ok((f, ity))
+            Ok((E::I(o, w, a, b), ity))
         }
         "and" | "or" | "xor" => {
             if ta == Ty::Bool && tb == Ty::Bool {
                 // complete boolean evaluation is off ({$B-}): short-circuit
-                let f: Ex = match op {
-                    "and" => Box::new(move |e| if a(e) != 0.0 { (b(e) != 0.0) as i32 as f64 } else { 0.0 }),
-                    "or" => Box::new(move |e| if a(e) != 0.0 { 1.0 } else { (b(e) != 0.0) as i32 as f64 }),
-                    _ => Box::new(move |e| ((a(e) != 0.0) != (b(e) != 0.0)) as i32 as f64),
-                };
-                return Ok((f, Ty::Bool));
+                return Ok((
+                    match op {
+                        "and" => E::And(a, b),
+                        "or" => E::Or(a, b),
+                        _ => E::Xor(a, b),
+                    },
+                    Ty::Bool,
+                ));
             }
             if !both_ord {
                 return err(line, format!("operator '{op}' not applicable to '{}' and '{}'", ta.name(), tb.name()));
             }
-            let f: Ex = match op {
-                "and" => Box::new(move |e| fix((a(e) as i64) & (b(e) as i64))),
-                "or" => Box::new(move |e| fix((a(e) as i64) | (b(e) as i64))),
-                _ => Box::new(move |e| fix((a(e) as i64) ^ (b(e) as i64))),
+            let o = match op {
+                "and" => IOp::And,
+                "or" => IOp::Or,
+                _ => IOp::Xor,
             };
-            Ok((f, ity))
+            Ok((E::I(o, w, a, b), ity))
         }
         _ => err(line, format!("unknown operator {op}")),
     }
+}
+
+/// `SinCos`: `f64::sin_cos` in one function the closures and the compiled
+/// formulas (`jit_pascal`) both call, so that they get the same bits (LLVM
+/// may turn it into one call computing both, as on macOS, whose results
+/// can differ from `sin` and `cos` alone in the last bit).
+#[inline(never)]
+pub(crate) fn sin_cos(x: f64) -> (f64, f64) {
+    x.sin_cos()
 }
 
 /// Math.IntPower (repeated squaring; negative exponents give the reciprocal).
@@ -1454,6 +1561,598 @@ pub fn power(base: f64, exponent: f64) -> f64 {
     }
 }
 
+/// The value stored into a local or field of type `ty`.
+#[inline]
+pub(crate) fn store_value(ty: Ty, v: f64) -> f64 {
+    match ty {
+        Ty::Single => v as f32 as f64,
+        Ty::Int => wrap32(v as i64),
+        Ty::Bool => (v != 0.0) as i32 as f64,
+        _ => v,
+    }
+}
+
+/// The ordinal operation `op` on the values `a`, `b` (an Integer result
+/// with `w`).
+#[inline]
+pub(crate) fn int_op(op: IOp, w: bool, a: f64, b: f64) -> f64 {
+    let fix = |v: i64| if w { wrap32(v) } else { v as f64 };
+    let (x, y) = (a as i64, b as i64);
+    match op {
+        IOp::Add => fix(x.wrapping_add(y)),
+        IOp::Sub => fix(x.wrapping_sub(y)),
+        IOp::Mul => fix(x.wrapping_mul(y)),
+        IOp::Div => {
+            if y == 0 {
+                0.0
+            } else {
+                fix(x.wrapping_div(y))
+            }
+        }
+        IOp::Mod => {
+            if y == 0 {
+                0.0
+            } else {
+                fix(x.wrapping_rem(y))
+            }
+        }
+        IOp::And => fix(x & y),
+        IOp::Or => fix(x | y),
+        IOp::Xor => fix(x ^ y),
+        IOp::Shl => {
+            if w {
+                ((x as i32).wrapping_shl(b as u32)) as f64
+            } else {
+                (x.wrapping_shl(b as u32)) as f64
+            }
+        }
+        IOp::Shr => {
+            if w {
+                ((x as u32).wrapping_shr(b as u32)) as i32 as f64
+            } else {
+                ((x as u64).wrapping_shr(b as u32)) as i64 as f64
+            }
+        }
+    }
+}
+
+#[inline]
+pub(crate) fn round_value(k: Rnd, w: bool, x: f64) -> f64 {
+    let r = match k {
+        // x87 FISTP in the default rounding mode: to nearest, ties to even
+        Rnd::Round => x.round_ties_even(),
+        Rnd::Trunc => x.trunc(),
+        Rnd::Ceil => x.ceil(),
+        Rnd::Floor => x.floor(),
+    };
+    if w {
+        wrap32(r as i64)
+    } else {
+        r
+    }
+}
+
+#[inline]
+pub(crate) fn sign_value(v: f64) -> f64 {
+    if v > 0.0 {
+        1.0
+    } else if v < 0.0 {
+        -1.0
+    } else {
+        0.0
+    }
+}
+
+// ---------------------------------------------------------------------------
+// the closures
+
+/// The value of a constant expression (literals and constants only).
+pub(crate) fn eval_const(e: &E) -> f64 {
+    let mut it = Iteration::default();
+    let mut l = [0.0f64; 0];
+    let mut env = Env { l: &mut l, it: &mut it };
+    lower_e(e)(&mut env)
+}
+
+fn lower_e(e: &E) -> Ex {
+    let b = |x: &E| lower_e(x);
+    match e {
+        E::Lit(v) => {
+            let v = *v;
+            Box::new(move |_| v)
+        }
+        E::Load(Place::Local(i)) => {
+            let i = *i;
+            Box::new(move |e| e.l[i])
+        }
+        E::Load(Place::V(k)) => {
+            let k = *k;
+            Box::new(move |e| e.it.v[k])
+        }
+        E::Load(Place::Field(f)) => {
+            let f = *f;
+            Box::new(move |e| get_field(e.it, f))
+        }
+        E::Neg(a, wrap) => {
+            let a = b(a);
+            if *wrap {
+                Box::new(move |e| wrap32(-(a(e) as i64)))
+            } else {
+                Box::new(move |e| -a(e))
+            }
+        }
+        E::NotB(a) => {
+            let a = b(a);
+            Box::new(move |e| (a(e) == 0.0) as i32 as f64)
+        }
+        E::NotI(a, wide) => {
+            let a = b(a);
+            if *wide {
+                Box::new(move |e| !(a(e) as i64) as f64)
+            } else {
+                Box::new(move |e| !(a(e) as i64 as i32) as f64)
+            }
+        }
+        E::Cmp(c, x, y) => {
+            let (x, y) = (b(x), b(y));
+            match c {
+                Cmp::Eq => Box::new(move |e| (x(e) == y(e)) as i32 as f64),
+                Cmp::Ne => Box::new(move |e| (x(e) != y(e)) as i32 as f64),
+                Cmp::Lt => Box::new(move |e| (x(e) < y(e)) as i32 as f64),
+                Cmp::Gt => Box::new(move |e| (x(e) > y(e)) as i32 as f64),
+                Cmp::Le => Box::new(move |e| (x(e) <= y(e)) as i32 as f64),
+                Cmp::Ge => Box::new(move |e| (x(e) >= y(e)) as i32 as f64),
+            }
+        }
+        E::R(o, x, y) => {
+            let (x, y) = (b(x), b(y));
+            match o {
+                ROp::Add => Box::new(move |e| x(e) + y(e)),
+                ROp::Sub => Box::new(move |e| x(e) - y(e)),
+                ROp::Mul => Box::new(move |e| x(e) * y(e)),
+                ROp::Div => Box::new(move |e| x(e) / y(e)),
+            }
+        }
+        E::I(o, w, x, y) => {
+            let (x, y, o, w) = (b(x), b(y), *o, *w);
+            Box::new(move |e| {
+                let a = x(e);
+                int_op(o, w, a, y(e))
+            })
+        }
+        E::And(x, y) => {
+            let (x, y) = (b(x), b(y));
+            Box::new(move |e| if x(e) != 0.0 { (y(e) != 0.0) as i32 as f64 } else { 0.0 })
+        }
+        E::Or(x, y) => {
+            let (x, y) = (b(x), b(y));
+            Box::new(move |e| if x(e) != 0.0 { 1.0 } else { (y(e) != 0.0) as i32 as f64 })
+        }
+        E::Xor(x, y) => {
+            let (x, y) = (b(x), b(y));
+            Box::new(move |e| {
+                let a = x(e) != 0.0;
+                (a != (y(e) != 0.0)) as i32 as f64
+            })
+        }
+        E::F1(f, a) => {
+            let (a, f) = (b(a), *f);
+            Box::new(move |e| f.apply(a(e)))
+        }
+        E::F2(f, x, y) => {
+            let (x, y, f) = (b(x), b(y), *f);
+            Box::new(move |e| {
+                let a = x(e);
+                f.apply(a, y(e))
+            })
+        }
+        E::OMinMax(mx, x, y) => {
+            let (x, y) = (b(x), b(y));
+            if *mx {
+                Box::new(move |e| {
+                    let a = x(e);
+                    a.max(y(e))
+                })
+            } else {
+                Box::new(move |e| {
+                    let a = x(e);
+                    a.min(y(e))
+                })
+            }
+        }
+        E::IntPower(x, y) => {
+            let (x, y) = (b(x), b(y));
+            Box::new(move |e| {
+                let a = x(e);
+                int_power(a, y(e) as i32)
+            })
+        }
+        E::IAbs(a) => {
+            let a = b(a);
+            Box::new(move |e| wrap32((a(e) as i64).abs()))
+        }
+        E::ISqr(a) => {
+            let a = b(a);
+            Box::new(move |e| wrap32((a(e) as i64).wrapping_mul(a(e) as i64)))
+        }
+        E::RAbs(a) => {
+            let a = b(a);
+            Box::new(move |e| a(e).abs())
+        }
+        E::RSqr(a) => {
+            let a = b(a);
+            Box::new(move |e| {
+                let v = a(e);
+                v * v
+            })
+        }
+        E::Rnd(k, w, a) => {
+            let (a, k, w) = (b(a), *k, *w);
+            Box::new(move |e| round_value(k, w, a(e)))
+        }
+        E::Odd(a) => {
+            let a = b(a);
+            Box::new(move |e| ((a(e) as i64) & 1) as f64)
+        }
+        E::IsNan(a) => {
+            let a = b(a);
+            Box::new(move |e| a(e).is_nan() as i32 as f64)
+        }
+        E::IsInf(a) => {
+            let a = b(a);
+            Box::new(move |e| a(e).is_infinite() as i32 as f64)
+        }
+        E::Sign(a) => {
+            let a = b(a);
+            Box::new(move |e| sign_value(a(e)))
+        }
+    }
+}
+
+fn nop() -> St {
+    Box::new(|_| NORMAL)
+}
+
+fn setter(p: Place, ty: Ty) -> Box<dyn Fn(&mut Env, f64) + Send + Sync> {
+    match p {
+        Place::Local(i) => Box::new(move |e, v| e.l[i] = store_value(ty, v)),
+        Place::V(k) => Box::new(move |e, v| e.it.v[k] = v),
+        Place::Field(f) => Box::new(move |e, v| set_field(e.it, f, store_value(ty, v))),
+    }
+}
+
+fn lower_s(s: &S) -> St {
+    match s {
+        S::Nop => nop(),
+        S::Seq(list) => {
+            let mut list: Vec<St> = list.iter().map(lower_s).collect();
+            match list.len() {
+                0 => nop(),
+                1 => list.pop().unwrap(),
+                _ => Box::new(move |e| {
+                    for s in &list {
+                        let f = s(e);
+                        if f != NORMAL {
+                            return f;
+                        }
+                    }
+                    NORMAL
+                }),
+            }
+        }
+        S::If(c, a, b) => {
+            let c = lower_e(c);
+            let a = lower_s(a);
+            if matches!(**b, S::Nop) {
+                Box::new(move |e| if c(e) != 0.0 { a(e) } else { NORMAL })
+            } else {
+                let b = lower_s(b);
+                Box::new(move |e| if c(e) != 0.0 { a(e) } else { b(e) })
+            }
+        }
+        S::While(c, body) => {
+            let (c, body) = (lower_e(c), lower_s(body));
+            Box::new(move |e| {
+                while c(e) != 0.0 {
+                    match body(e) {
+                        BREAK => break,
+                        EXIT => return EXIT,
+                        _ => {}
+                    }
+                }
+                NORMAL
+            })
+        }
+        S::Repeat(body, c) => {
+            let (c, body) = (lower_e(c), lower_s(body));
+            Box::new(move |e| {
+                loop {
+                    match body(e) {
+                        BREAK => break,
+                        EXIT => return EXIT,
+                        _ => {}
+                    }
+                    if c(e) != 0.0 {
+                        break;
+                    }
+                }
+                NORMAL
+            })
+        }
+        S::For { slot, from, to, down, body } => {
+            let (a, b, body, slot, down) = (lower_e(from), lower_e(to), lower_s(body), *slot, *down);
+            Box::new(move |e| {
+                let (from, to) = (a(e) as i64, b(e) as i64);
+                let mut i = from;
+                loop {
+                    if (!down && i > to) || (down && i < to) {
+                        break;
+                    }
+                    e.l[slot] = i as f64;
+                    match body(e) {
+                        BREAK => break,
+                        EXIT => return EXIT,
+                        _ => {}
+                    }
+                    i = if down { i - 1 } else { i + 1 };
+                }
+                NORMAL
+            })
+        }
+        S::Case(sel, arms, other) => {
+            let sel = lower_e(sel);
+            let arms: Vec<(Vec<(i64, i64)>, St)> = arms.iter().map(|(l, s)| (l.clone(), lower_s(s))).collect();
+            let other = other.as_ref().map(|s| lower_s(s));
+            Box::new(move |e| {
+                let v = sel(e) as i64;
+                for (labels, st) in &arms {
+                    if labels.iter().any(|&(lo, hi)| v >= lo && v <= hi) {
+                        return st(e);
+                    }
+                }
+                match &other {
+                    Some(st) => st(e),
+                    None => NORMAL,
+                }
+            })
+        }
+        S::Exit => Box::new(|_| EXIT),
+        S::Break => Box::new(|_| BREAK),
+        S::Continue => Box::new(|_| CONTINUE),
+        S::Store(p, ty, v) => {
+            let (v, ty) = (lower_e(v), *ty);
+            match (*p, ty) {
+                (Place::Local(i), Ty::Real | Ty::Int64) => Box::new(move |e| {
+                    e.l[i] = v(e);
+                    NORMAL
+                }),
+                (Place::Local(i), _) => Box::new(move |e| {
+                    e.l[i] = store_value(ty, v(e));
+                    NORMAL
+                }),
+                (Place::V(k), _) => Box::new(move |e| {
+                    e.it.v[k] = v(e);
+                    NORMAL
+                }),
+                (Place::Field(f), _) => Box::new(move |e| {
+                    let x = store_value(ty, v(e));
+                    set_field(e.it, f, x);
+                    NORMAL
+                }),
+            }
+        }
+        S::SinCos(a, (ps, ts), (pc, tc)) => {
+            let a = lower_e(a);
+            let (ss, sc) = (setter(*ps, *ts), setter(*pc, *tc));
+            Box::new(move |e| {
+                let (s, c) = sin_cos(a(e));
+                ss(e, s);
+                sc(e, c);
+                NORMAL
+            })
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// specialising a tree: the locals with known values as constants
+
+/// The locals `s` assigns.
+fn assigned(s: &S, out: &mut Vec<bool>) {
+    let mut set = |p: &Place| {
+        if let Place::Local(i) = p {
+            out[*i] = true;
+        }
+    };
+    match s {
+        S::Seq(l) => l.iter().for_each(|s| assigned(s, out)),
+        S::If(_, a, b) => {
+            assigned(a, out);
+            assigned(b, out);
+        }
+        S::While(_, b) | S::Repeat(b, _) => assigned(b, out),
+        S::For { slot, body, .. } => {
+            out[*slot] = true;
+            assigned(body, out);
+        }
+        S::Case(_, arms, other) => {
+            arms.iter().for_each(|(_, s)| assigned(s, out));
+            if let Some(o) = other {
+                assigned(o, out);
+            }
+        }
+        S::Store(p, _, _) => set(p),
+        S::SinCos(_, (a, _), (b, _)) => {
+            set(a);
+            set(b);
+        }
+        S::Nop | S::Exit | S::Break | S::Continue => {}
+    }
+}
+
+struct Folder {
+    /// the value of each local that is never assigned
+    known: Vec<Option<f64>>,
+}
+
+pub(crate) fn lit(e: &E) -> Option<f64> {
+    match e {
+        E::Lit(v) => Some(*v),
+        _ => None,
+    }
+}
+
+impl Folder {
+    fn e(&self, e: &E) -> E {
+        let f = |x: &E| Box::new(self.e(x));
+        let out = match e {
+            E::Lit(v) => return E::Lit(*v),
+            E::Load(Place::Local(i)) => {
+                return match self.known[*i] {
+                    Some(v) => E::Lit(v),
+                    None => e.clone(),
+                }
+            }
+            E::Load(_) => return e.clone(),
+            E::Neg(a, w) => E::Neg(f(a), *w),
+            E::NotB(a) => E::NotB(f(a)),
+            E::NotI(a, w) => E::NotI(f(a), *w),
+            E::Cmp(c, a, b) => E::Cmp(*c, f(a), f(b)),
+            E::R(o, a, b) => E::R(*o, f(a), f(b)),
+            E::I(o, w, a, b) => E::I(*o, *w, f(a), f(b)),
+            E::And(a, b) | E::Or(a, b) => {
+                let (a, b) = (f(a), f(b));
+                let and = matches!(e, E::And(..));
+                // a known first operand decides or leaves the second
+                if let Some(x) = lit(&a) {
+                    return match (and, x != 0.0) {
+                        (true, false) => E::Lit(0.0),
+                        (false, true) => E::Lit(1.0),
+                        _ => self.e(&E::Cmp(Cmp::Ne, b, Box::new(E::Lit(0.0)))),
+                    };
+                }
+                if and {
+                    E::And(a, b)
+                } else {
+                    E::Or(a, b)
+                }
+            }
+            E::Xor(a, b) => E::Xor(f(a), f(b)),
+            E::F1(k, a) => E::F1(*k, f(a)),
+            E::F2(k, a, b) => E::F2(*k, f(a), f(b)),
+            E::OMinMax(m, a, b) => E::OMinMax(*m, f(a), f(b)),
+            E::IntPower(a, b) => E::IntPower(f(a), f(b)),
+            E::IAbs(a) => E::IAbs(f(a)),
+            E::ISqr(a) => E::ISqr(f(a)),
+            E::RAbs(a) => E::RAbs(f(a)),
+            E::RSqr(a) => E::RSqr(f(a)),
+            E::Rnd(k, w, a) => E::Rnd(*k, *w, f(a)),
+            E::Odd(a) => E::Odd(f(a)),
+            E::IsNan(a) => E::IsNan(f(a)),
+            E::IsInf(a) => E::IsInf(f(a)),
+            E::Sign(a) => E::Sign(f(a)),
+        };
+        // every operand known: the closures' value
+        if children(&out).iter().all(|c| lit(c).is_some()) {
+            E::Lit(eval_const(&out))
+        } else {
+            out
+        }
+    }
+
+    fn s(&self, s: &S) -> S {
+        match s {
+            S::Seq(l) => {
+                let mut v = Vec::new();
+                for s in l {
+                    match self.s(s) {
+                        S::Nop => {}
+                        S::Seq(inner) => v.extend(inner),
+                        x => {
+                            let ends = matches!(x, S::Exit | S::Break | S::Continue);
+                            v.push(x);
+                            // the rest of the list never runs
+                            if ends {
+                                break;
+                            }
+                        }
+                    }
+                }
+                S::Seq(v)
+            }
+            S::If(c, a, b) => {
+                let c = self.e(c);
+                match lit(&c) {
+                    Some(x) if x != 0.0 => self.s(a),
+                    Some(_) => self.s(b),
+                    None => S::If(c, Box::new(self.s(a)), Box::new(self.s(b))),
+                }
+            }
+            S::While(c, b) => {
+                let c = self.e(c);
+                if lit(&c) == Some(0.0) {
+                    return S::Nop;
+                }
+                S::While(c, Box::new(self.s(b)))
+            }
+            S::Repeat(b, c) => S::Repeat(Box::new(self.s(b)), self.e(c)),
+            S::For { slot, from, to, down, body } => S::For { slot: *slot, from: self.e(from), to: self.e(to), down: *down, body: Box::new(self.s(body)) },
+            S::Case(sel, arms, other) => {
+                let sel = self.e(sel);
+                if let Some(v) = lit(&sel) {
+                    let v = v as i64;
+                    for (labels, st) in arms {
+                        if labels.iter().any(|&(lo, hi)| v >= lo && v <= hi) {
+                            return self.s(st);
+                        }
+                    }
+                    return other.as_ref().map_or(S::Nop, |o| self.s(o));
+                }
+                S::Case(sel, arms.iter().map(|(l, s)| (l.clone(), self.s(s))).collect(), other.as_ref().map(|o| Box::new(self.s(o))))
+            }
+            S::Store(p, t, v) => S::Store(*p, *t, self.e(v)),
+            S::SinCos(a, x, y) => S::SinCos(self.e(a), *x, *y),
+            S::Nop | S::Exit | S::Break | S::Continue => s.clone(),
+        }
+    }
+}
+
+fn children(e: &E) -> Vec<&E> {
+    match e {
+        E::Lit(_) | E::Load(_) => vec![],
+        E::Neg(a, _)
+        | E::NotB(a)
+        | E::NotI(a, _)
+        | E::F1(_, a)
+        | E::IAbs(a)
+        | E::ISqr(a)
+        | E::RAbs(a)
+        | E::RSqr(a)
+        | E::Rnd(_, _, a)
+        | E::Odd(a)
+        | E::IsNan(a)
+        | E::IsInf(a)
+        | E::Sign(a) => vec![a],
+        E::Cmp(_, a, b) | E::R(_, a, b) | E::I(_, _, a, b) | E::And(a, b) | E::Or(a, b) | E::Xor(a, b) | E::F2(_, a, b) | E::OMinMax(_, a, b) | E::IntPower(a, b) => {
+            vec![a, b]
+        }
+    }
+}
+
+/// The locals (of `n`) the tree assigns.
+pub(crate) fn assigned_locals(tree: &S, n: usize) -> Vec<bool> {
+    let mut v = vec![false; n];
+    assigned(tree, &mut v);
+    v
+}
+
+/// `tree` with the locals of known value (`known[i]`) as constants and
+/// what depends only on constants computed (with the closures, so exactly),
+/// the branches decided by them taken.
+pub(crate) fn fold(tree: &S, known: Vec<Option<f64>>) -> S {
+    Folder { known }.s(tree)
+}
+
 // ---------------------------------------------------------------------------
 // the compiled formula
 
@@ -1461,8 +2160,14 @@ pub fn power(base: f64, exponent: f64) -> f64 {
 pub struct Program {
     pub name: String,
     body: St,
-    nloc: usize,
-    inits: Vec<(usize, Init)>,
+    /// the tree the closures were made from (for the code generators)
+    #[cfg_attr(not(jit), allow(dead_code))]
+    pub(crate) tree: S,
+    pub(crate) nloc: usize,
+    /// the type of each local (for the GPU translation)
+    #[allow(dead_code)]
+    pub(crate) loc_ty: Vec<Ty>,
+    pub(crate) inits: Vec<(usize, Init)>,
     /// some option is read from a non-Double slot: the variable buffer is needed
     needs_buffer: bool,
 }
@@ -1546,7 +2251,6 @@ impl Program {
         }
         let mut sorted_consts: Vec<&ConstDef> = consts.iter().collect();
         sorted_consts.sort_by(|a, b| ansi_key(&a.name).cmp(&ansi_key(&b.name)));
-        let line = c.line();
         let mut voff = 16usize;
         for (pname, _) in &params {
             let l = c.new_local(Ty::Real);
@@ -1588,10 +2292,9 @@ impl Program {
             }
             coff += size;
         }
-        let _ = line;
 
         c.decls()?;
-        let body = c.block()?;
+        let tree = c.block()?;
         c.eat_sym(";");
         if *c.peek() != Tok::Eof {
             if c.is_kw("procedure") || c.is_kw("function") {
@@ -1599,7 +2302,16 @@ impl Program {
             }
             return err(c.line(), format!("unexpected {} after the end of the procedure", c.desc()));
         }
-        Ok(Program { name, body, nloc: c.nloc, inits: c.inits, needs_buffer })
+        let body = lower_s(&tree);
+        Ok(Program { name, body, tree, nloc: c.nloc, loc_ty: c.loc_ty, inits: c.inits, needs_buffer })
+    }
+
+    /// The start values of the locals that have one (option values,
+    /// constants, initializers), for the option values `values` of `def`.
+    #[cfg_attr(not(jit), allow(dead_code))]
+    pub(crate) fn init_values(&self, def: &M3f, values: &[f64]) -> Vec<(usize, f64)> {
+        let buf = if self.needs_buffer { Some(def.var_buffer(values, &|_| 0)) } else { None };
+        self.inits.iter().map(|(i, init)| (*i, init_value(init, values, buf.as_deref()))).collect()
     }
 
     /// One iteration step on `it`, with the option values `values` of `def`.
@@ -1615,18 +2327,23 @@ impl Program {
         };
         let buf = if self.needs_buffer { Some(def.var_buffer(values, &|_| 0)) } else { None };
         for (i, init) in &self.inits {
-            l[*i] = match init {
-                Init::Value(k) => values.get(*k).copied().unwrap_or(0.0),
-                Init::Const(v) => *v,
-                Init::Below(off) => {
-                    let b = buf.as_ref().unwrap();
-                    let o = crate::m3f::CONST_OFFSET - off;
-                    f64::from_le_bytes(b[o..o + 8].try_into().unwrap())
-                }
-            };
+            l[*i] = init_value(init, values, buf.as_deref());
         }
         let mut env = Env { l, it };
         (self.body)(&mut env);
+    }
+}
+
+#[inline]
+fn init_value(init: &Init, values: &[f64], buf: Option<&[u8]>) -> f64 {
+    match init {
+        Init::Value(k) => values.get(*k).copied().unwrap_or(0.0),
+        Init::Const(v) => *v,
+        Init::Below(off) => {
+            let b = buf.expect("the variable buffer");
+            let o = crate::m3f::CONST_OFFSET - off;
+            f64::from_le_bytes(b[o..o + 8].try_into().unwrap())
+        }
     }
 }
 
