@@ -1129,6 +1129,24 @@ module has its own copies of these helpers, so `navi_form.rs` is as it was.
   pulls back along the same free way. `--zoom-out [--duration S]`. Test:
   from a view 1e-3 from the surface the distance from it rising, the zoom
   falling, every camera outside, the last far out.
+* The middle on the way (`OPEN_AHEAD`): in front of the camera as
+  `ModRotPoint` puts it at the zoom that follows the estimate (1.6 of it),
+  moving to the view's own place over the last part. A 360 stereo
+  panorama's eyes are set apart by the camera's distance to the middle
+  (`stereo_eye_shift`); with the middle on the camera, as before, both
+  eyes were the same picture for the first three quarters of a flight.
+  Test: the middle at least 0.3 estimates in front over the first 80 %.
+* *VR comfort* (`steady_keyframes`, `ApproachParams::steady`,
+  `--vr-comfort`): in a headset a turn of the view the viewer does not make
+  with their head makes them sick. The orbit's keyframes (at least 36,
+  `STEADY_ORBIT_STEPS`) get the first one's rotation, their cameras and the
+  middle's distance kept, so the camera goes round the circle (0.1 % of
+  the radius between keyframes) with one rotation; the fly-through's the
+  same after the flight; Fly to the view and Zoom out keep the view's
+  rotation all the way (from a start view a slerp to the view's over the
+  whole flight, eased). No roll with it. On at first in the templates
+  window when the Animation window's 360° VR is. Tests: a steady orbit and
+  steady flights never turn, cameras unchanged, ends exact.
 * Keyframe gaps (`even_gaps`): where the even steps of the measure give
   neighbouring gaps on the way that differ more than threefold, a keyframe
   is put into the longer one at twice the shorter's length from their

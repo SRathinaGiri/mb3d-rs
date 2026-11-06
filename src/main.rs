@@ -1083,6 +1083,12 @@ OPTIONS:
                              fractal, where all of it is in view (--approach backwards:
                              the same free way, the camera facing the view's place);
                              --duration long (default 10 s)
+        --vr-comfort         For 360 VR: the view never turns by itself (a turn the
+                             viewer does not make makes them sick in a headset): with
+                             --orbit the camera goes round with one rotation (at least
+                             36 keyframes), with --fly, --approach and --zoom-out it
+                             flies the same way without turning (from one view to
+                             another: a slow turn over the whole flight); not with --roll
         --roll <DEG>         With --fly, --approach or --zoom-out: the picture turns
                              around the line of sight, DEG degrees a second (negative:
                              anticlockwise),
@@ -1161,6 +1167,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
     let mut approach = false;
     let mut zoom_out = false;
+    let mut comfort = false;
     let mut roll: Option<f64> = None;
     let mut vr = false;
     let mut orbit_axis: Option<mb3d::autopilot::OrbitAxis> = None;
@@ -1197,6 +1204,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--fly" => fly = true,
             "--approach" | "--fly-to" => approach = true,
             "--zoom-out" => zoom_out = true,
+            "--vr-comfort" => comfort = true,
             "--vr" | "--vr360" => vr = true,
             "--orbit-axis" => orbit_axis = Some(mb3d::autopilot::OrbitAxis::parse(args.next().ok_or("--orbit-axis needs a value")?)?),
             "--roll" => {
@@ -1337,11 +1345,18 @@ fn animate(argv: &[String]) -> Result<(), String> {
         previews = vec![None; a.keyframes.len()];
         a
     };
+    if comfort && roll.is_some_and(|r| r != 0.0) {
+        return Err(usage_err("--roll and --vr-comfort do not go together (in VR the view must not turn by itself)"));
+    }
+    if comfort && orbit.is_none() && !fly && !approach && !zoom_out {
+        return Err(usage_err("--vr-comfort goes with --orbit, --fly, --approach or --zoom-out"));
+    }
     if let Some(steps) = orbit {
         if from_file || anim.keyframes.len() != 1 {
             return Err("--orbit makes a turntable from one keyframe file".into());
         }
         let k = anim.keyframes.remove(0);
+        let steps = if comfort { steps.max(mb3d::autopilot::STEADY_ORBIT_STEPS) } else { steps };
         anim.keyframes = match duration {
             Some(d) if d > 0.0 => mb3d::autopilot::turntable_axis(&k.scene, steps, d, fps, orbit_axis.unwrap_or(mb3d::autopilot::OrbitAxis::Yaw)),
             Some(_) => return Err(usage_err("--duration 0 goes with --fly only")),
@@ -1350,6 +1365,10 @@ fn animate(argv: &[String]) -> Result<(), String> {
                 Some(ax) => mb3d::autopilot::orbit_keyframes_axis(&k.scene, steps, frames.unwrap_or(25), mb3d::autopilot::turntable_pivot(&k.scene), ax),
             },
         };
+        if comfort {
+            let rows = anim.keyframes[0].scene.vgrads;
+            mb3d::autopilot::steady_keyframes(&mut anim.keyframes, rows);
+        }
         previews = vec![None; anim.keyframes.len()];
         looped = looped.or(Some(true));
         ipol = ipol.or(Some(Interpolation::CatmullRom));
@@ -1374,6 +1393,10 @@ fn animate(argv: &[String]) -> Result<(), String> {
         }
         anim.keyframes = fl.keyframes;
         mb3d::autopilot::roll_keyframes(&mut anim.keyframes, roll.unwrap_or(0.0), fps, false);
+        if comfort {
+            let rows = anim.keyframes[0].scene.vgrads;
+            mb3d::autopilot::steady_keyframes(&mut anim.keyframes, rows);
+        }
         previews = vec![None; anim.keyframes.len()];
         looped = Some(false);
         ipol = ipol.or(Some(Interpolation::CatmullRom));
@@ -1389,6 +1412,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
                 None => frames.map_or((10.0 * fps).round() as usize, |f| f.max(2) as usize),
             },
             keyframe_every: mb3d::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll.unwrap_or(0.0), fps),
+            steady: comfort,
             ..Default::default()
         };
         let a = mb3d::approach::fly_out(&view.scene, &ap, &|_, _| {}, &|| false).map_err(input_err)?;
@@ -1416,6 +1440,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
                 None => frames.map_or((10.0 * fps).round() as usize, |f| f.max(2) as usize),
             },
             keyframe_every: mb3d::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll.unwrap_or(0.0), fps),
+            steady: comfort,
             ..Default::default()
         };
         let a = mb3d::approach::fly_to(&target.scene, start.as_ref().map(|k| &k.scene), &ap, &|_, _| {}, &|| false).map_err(input_err)?;

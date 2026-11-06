@@ -3796,6 +3796,8 @@ UserDefinedApectRatioRightclickTo=User defined apect ratio.\nRightclick to defin
 ;Mand3DForm.SpeedButton21.Hint
 UserDefinedAspectRatio=User defined aspect ratio
 ;the program
+VRComfortTheViewNeverTurns=VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
+;AnimTemplatesFrm.ComfortCheck.Caption
 Value=Value:
 ;ParamValueEditFrm.Label27.Caption
 ValueNotGuilty=Value not guilty

@@ -3796,6 +3796,8 @@ UserDefinedApectRatioRightclickTo=Relación de aspecto definida por el usuario.\
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=Relación de aspecto definida por el usuario
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=Comodidad VR: la vista nunca gira sola (para VR 360°: un giro que el espectador no hace con la cabeza le marea)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=Valor:
 ;Value:
 ValueNotGuilty=Valor no válido

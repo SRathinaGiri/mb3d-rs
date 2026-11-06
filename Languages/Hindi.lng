@@ -3797,6 +3797,8 @@ UserDefinedApectRatioRightclickTo=उपयोगकर्ता-परिभा
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=उपयोगकर्ता-परिभाषित पक्षानुपात
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=VR आराम: दृश्य कभी अपने आप नहीं घूमता (360° VR के लिए: ऐसा घुमाव जो दर्शक अपने सिर से न करे, जी मिचलाता है)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=मान:
 ;Value:
 ValueNotGuilty=मान अमान्य

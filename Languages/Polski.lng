@@ -3796,6 +3796,8 @@ UserDefinedApectRatioRightclickTo=Własne proporcje obrazu.\nPrawy klik, aby zde
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=Proporcje użytkownika
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=Komfort VR: widok nigdy nie obraca się sam (w VR 360°: obrót, którego widz nie wykonuje głową, wywołuje mdłości)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=Wartość:
 ;Value:
 ValueNotGuilty=Nieprawidłowa wartość

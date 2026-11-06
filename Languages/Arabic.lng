@@ -3797,6 +3797,8 @@ UserDefinedApectRatioRightclickTo=نسبة أبعاد يحددها المستخ�
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=نسبة أبعاد يحددها المستخدم
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=راحة الواقع الافتراضي: لا يدور المشهد من تلقاء نفسه أبدًا (لـ VR بزاوية 360°: الدوران الذي لا يقوم به المشاهد برأسه يسبب الغثيان)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=القيمة:
 ;Value:
 ValueNotGuilty=القيمة غير صالحة

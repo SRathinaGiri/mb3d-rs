@@ -3796,6 +3796,8 @@ UserDefinedApectRatioRightclickTo=Rasio aspek buatan pengguna.\nKlik kanan untuk
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=Rasio aspek buatan pengguna
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=Kenyamanan VR: tampilan tidak pernah berputar sendiri (untuk VR 360°: putaran yang tidak dibuat penonton dengan kepalanya membuat mual)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=Nilai:
 ;Value:
 ValueNotGuilty=Nilai tidak valid

@@ -3797,6 +3797,8 @@ UserDefinedApectRatioRightclickTo=사용자 정의 가로세로 비율입니다.
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=사용자 정의 가로세로 비율
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=VR 편안함: 뷰가 저절로 돌지 않음 (360° VR용: 보는 사람이 머리로 하지 않는 회전은 멀미를 일으킵니다)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=값:
 ;Value:
 ValueNotGuilty=값이 유효하지 않습니다

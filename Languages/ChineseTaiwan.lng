@@ -3797,6 +3797,8 @@ UserDefinedApectRatioRightclickTo=使用者定義的長寬比。\n右鍵可定�
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=自訂長寬比
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=VR 舒適：視角從不自行轉動（用於 360° VR：觀看者沒有用頭做出的轉動會讓人暈）
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=值：
 ;Value:
 ValueNotGuilty=數值無效

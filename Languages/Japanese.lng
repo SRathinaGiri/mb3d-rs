@@ -3797,6 +3797,8 @@ UserDefinedApectRatioRightclickTo=ユーザー定義の縦横比。\n右クリ�
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=ユーザー定義の縦横比
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=VR 快適モード: ビューが勝手に回転しない（360° VR 用: 見る人が自分の頭で行わない回転は酔いの原因になります）
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=値:
 ;Value:
 ValueNotGuilty=無効な値です

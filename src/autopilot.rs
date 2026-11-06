@@ -306,6 +306,30 @@ pub fn orbit_keyframes_axis(sc: &Scene, steps: usize, frames: u32, pivot: Vec3, 
 
 /// `total` frames spread over `parts` keyframe gaps as evenly as whole
 /// frames allow (their sum is `total`).
+/// VR comfort: every keyframe given the rotation `rows`, its camera and
+/// the middle's distance in front of it kept, so the camera goes the same
+/// way but the view never turns (a 360 panorama turning by itself makes
+/// viewers in a headset sick: the eyes see a turn the inner ear does not
+/// feel; they turn their own head instead).
+pub fn steady_keyframes(keys: &mut [Keyframe], rows: crate::math::Mat3) {
+    let vz = normalize(rows[2]);
+    for k in keys.iter_mut() {
+        let sc = &mut k.scene;
+        let c = cam_pos(sc);
+        let ahead = sc.z_start - sc.mid[2];
+        let depth = sc.z_end - sc.z_start;
+        sc.vgrads = rows;
+        sc.mid = sub(c, scale(vz, ahead));
+        sc.z_start = sc.mid[2] + ahead;
+        sc.z_end = sc.z_start + depth;
+    }
+}
+
+/// The keyframes of an orbit in VR comfort: as many as this at least (the
+/// middles, on a circle, are interpolated as points: 0.85 % of the radius
+/// off it between 8 keyframes, 0.03 % between 36).
+pub const STEADY_ORBIT_STEPS: usize = 36;
+
 /// The largest roll between two keyframes (the rotations are interpolated
 /// as quaternions, which take the short way: well under a half turn).
 pub const ROLL_MAX_KEY_DEG: f64 = 40.0;
@@ -831,6 +855,32 @@ mod tests {
         let v = spread_frames(250, 8);
         assert!(v.iter().all(|&f| f == 31 || f == 32), "{v:?}");
         assert_eq!(spread_frames(7, 7), vec![1; 7]);
+    }
+
+    #[test]
+    fn a_steady_orbit_keeps_its_cameras_and_one_rotation() {
+        let sc = Scene::preset("Integer Power").unwrap();
+        let pivot = turntable_pivot(&sc);
+        let mut keys = orbit_keyframes_axis(&sc, STEADY_ORBIT_STEPS, 4, pivot, OrbitAxis::Yaw);
+        let cams: Vec<Vec3> = keys.iter().map(|k| cam_pos(&k.scene)).collect();
+        let rows = keys[0].scene.vgrads;
+        steady_keyframes(&mut keys, rows);
+        for (k, c) in keys.iter().zip(&cams) {
+            assert!(len(&sub(cam_pos(&k.scene), *c)) < 1e-9);
+            assert_eq!(k.scene.vgrads, rows);
+        }
+        // between the keyframes the camera stays on the circle
+        let mut a = crate::anim::Animation::default();
+        a.keyframes = keys;
+        a.interpolation = crate::anim::Interpolation::CatmullRom;
+        a.looped = true;
+        let r0 = len(&sub(cams[0], pivot));
+        for i in 0..a.frame_count() {
+            let s = a.frame_scene(i).unwrap();
+            let r = len(&sub(cam_pos(&s), pivot));
+            assert!((r / r0 - 1.0).abs() < 1e-3, "frame {i}: {}", r / r0);
+            assert!((dot(&unit_rows(&s)[2], &normalize(rows[2])) - 1.0).abs() < 1e-9);
+        }
     }
 
     #[test]

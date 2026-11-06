@@ -3796,6 +3796,8 @@ UserDefinedApectRatioRightclickTo=Propòrcje òpisóné przez brëkòwnika.\nPra
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=Stosënk bòków brëkòwnika
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=Wigòda VR: wëzdrzatk nigdë sã sóm nie òbrôcô (w VR 360°: òbrót, chtërnégò òbzérający nie robi głową, robi mù niedobrze)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=Wôrtnota:
 ;Value:
 ValueNotGuilty=Lëchô wôrtnota

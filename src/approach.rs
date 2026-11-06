@@ -32,7 +32,7 @@
 use crate::anim::Keyframe;
 use crate::autopilot::{camera_on_middle, cross, length_of_size, local_de_with, turn, unit_rows, Flight, FlightEnd};
 use crate::calc::{de_at, CalcParams};
-use crate::math::{add, dot, len, normalize, scale, sub, Vec3};
+use crate::math::{add, dot, len, matrix_to_quat, normalize, rotation_matrix, scale, slerp_quat, sub, Mat3, Vec3};
 use crate::scene::Scene;
 
 /// Settings of a flight to a view.
@@ -45,13 +45,24 @@ pub struct ApproachParams {
     /// How far outside the start is: the distance at which the whole
     /// fractal fits into the picture, times this.
     pub outside: f64,
+    /// VR comfort: the view does not turn on the way (the target's
+    /// rotation all along; from a start view a slow turn from its rotation
+    /// to the target's over the whole flight).
+    pub steady: bool,
 }
 
 impl Default for ApproachParams {
     fn default() -> Self {
-        ApproachParams { frames: 250, keyframe_every: 12, outside: 1.15 }
+        ApproachParams { frames: 250, keyframe_every: 12, outside: 1.15, steady: false }
     }
 }
+
+/// The middle of the view on the way, in distance estimates in front of the
+/// camera (negative: in front, as `z_start - mid z`): where `ModRotPoint`
+/// puts it at the zoom that follows the estimate (1.5 picture diagonals of
+/// steps). A 360 stereo panorama's eyes are set apart by the camera's
+/// distance to the middle, so a middle on the camera gave no stereo.
+const OPEN_AHEAD: f64 = -1.5 * 2.1345 / 2.0;
 
 /// How a way to the view was found.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -426,6 +437,11 @@ fn even_gaps(pts: &[Vec3], us: &[f64], mut ukeys: Vec<f64>) -> Vec<f64> {
     ukeys
 }
 
+/// The unit rows `m` with the lengths of the rows of `like`.
+fn rows_like(m: Mat3, like: &Mat3) -> Mat3 {
+    [0, 1, 2].map(|r| scale(m[r], len(&like[r])))
+}
+
 /// The point at measure `u` along the way.
 fn at(pts: &[Vec3], us: &[f64], u: f64) -> Vec3 {
     let u = u.clamp(0.0, *us.last().unwrap());
@@ -630,13 +646,20 @@ pub fn fly_to(target: &Scene, from: Option<&Scene>, ap: &ApproachParams, progres
         let d = sp.de(x).min(geo).min(d_prev).max(de_view);
         d_prev = d;
         let mut s = tc.clone();
-        s.vgrads = turned_rows(t.vgrads, ft, f, ut);
+        s.vgrads = match (ap.steady, from) {
+            (false, _) => turned_rows(t.vgrads, ft, f, ut),
+            (true, None) => t.vgrads,
+            // (a slow turn from the start's rotation to the view's)
+            (true, Some(fs)) => {
+                let q = slerp_quat(&matrix_to_quat(&fs.vgrads), &matrix_to_quat(&t.vgrads), smoothstep(u / total.max(1e-12)));
+                rows_like(rotation_matrix(&q), &t.vgrads)
+            }
+        };
         s.zoom = length_of_size(&s) * 2.0 / (d * s.width as f64);
-        // the middle on the camera on the way (the keyframes' cameras then
-        // are what is interpolated), moving to its place in the view at the
-        // end
+        // the middle in front of the camera as ModRotPoint puts it, moving
+        // to its place in the view at the end
         let fz = normalize(s.vgrads[2]);
-        let off = ahead_rel * d * w;
+        let off = d * (OPEN_AHEAD * (1.0 - w) + ahead_rel * w);
         s.mid = sub(x, scale(fz, off));
         s.z_start = s.mid[2] + off;
         // the far plane: on the way to the far side of the fractal, at the
@@ -745,6 +768,41 @@ mod tests {
             let to = len(&sub(c, cam_pos(&target)));
             assert!(to <= prev * 1.0001 + 1e-9, "frame {i}: {to} after {prev}");
             prev = to;
+        }
+    }
+
+    #[test]
+    fn on_the_way_the_middle_is_in_front_for_the_stereo() {
+        // a 360 stereo panorama's eyes are as far apart as the camera is
+        // from the middle: on the camera there was no stereo
+        let view = close_view(1e-3);
+        let ap = ApproachParams { frames: 150, ..Default::default() };
+        let a = fly_to(&view, None, &ap, &|_, _| {}, &|| false).unwrap();
+        let an = anim(&a.flight);
+        let p = CalcParams::new(&view).unwrap();
+        for i in 0..120 {
+            let s = an.frame_scene(i).unwrap();
+            let ahead = (s.z_start - s.mid[2]).abs();
+            let de = de_at(&p, cam_pos(&s)).0;
+            assert!(ahead > 0.3 * de, "frame {i}: middle {ahead}, estimate {de}");
+        }
+    }
+
+    #[test]
+    fn a_steady_flight_never_turns() {
+        let view = close_view(1e-3);
+        let ap = ApproachParams { frames: 120, steady: true, ..Default::default() };
+        for out in [false, true] {
+            let a = if out { fly_out(&view, &ap, &|_, _| {}, &|| false) } else { fly_to(&view, None, &ap, &|_, _| {}, &|| false) }.unwrap();
+            let an = anim(&a.flight);
+            let f = unit_rows(&view)[2];
+            for i in 0..120 {
+                let s = an.frame_scene(i).unwrap();
+                assert!((dot(&unit_rows(&s)[2], &f) - 1.0).abs() < 1e-9, "frame {i} turned");
+            }
+            let end = if out { &a.flight.keyframes[0] } else { a.flight.keyframes.last().unwrap() };
+            assert_eq!(end.scene.vgrads, view.vgrads);
+            assert_eq!(end.scene.mid, view.mid);
         }
     }
 

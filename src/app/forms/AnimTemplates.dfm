@@ -3,7 +3,7 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   Top = 200
   BorderStyle = bsDialog
   Caption = '@MB:AnimationTemplates2'
-  ClientHeight = 372
+  ClientHeight = 400
   ClientWidth = 470
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -225,23 +225,32 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     AutoSize = False
     Caption = '@MB:N0NoneNegativeAnticlockwise'
   end
+  object ComfortCheck: TCheckBox
+    Left = 12
+    Top = 318
+    Width = 446
+    Height = 17
+    Caption = '@MB:VRComfortTheViewNeverTurns'
+    TabOrder = 13
+    OnClick = ComfortCheckClick
+  end
   object FlightBar: TProgressBar
     Left = 12
-    Top = 316
+    Top = 344
     Width = 446
     Height = 10
     Visible = False
   end
   object FlightLabel: TLabel
     Left = 12
-    Top = 338
+    Top = 366
     Width = 176
     Height = 13
     AutoSize = False
   end
   object AddBtn: TButton
     Left = 196
-    Top = 332
+    Top = 360
     Width = 160
     Height = 25
     Caption = '@MB:AddTheKeyframes'
@@ -251,7 +260,7 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   end
   object CloseBtn: TButton
     Left = 364
-    Top = 332
+    Top = 360
     Width = 94
     Height = 25
     Cancel = True

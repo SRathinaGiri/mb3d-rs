@@ -3796,6 +3796,8 @@ UserDefinedApectRatioRightclickTo=Door de gebruiker gedefinieerde beeldverhoudin
 ;User defined apect ratio.\nRightclick to define the ratio.
 UserDefinedAspectRatio=Door gebruiker bepaalde beeldverhouding
 ;User defined aspect ratio
+VRComfortTheViewNeverTurns=VR-comfort: het beeld draait nooit vanzelf (voor 360° VR: een draai die de kijker niet met zijn hoofd maakt, maakt misselijk)
+;VR comfort: the view never turns by itself (for 360° VR: a turn the viewer does not make with their head makes them sick)
 Value=Waarde:
 ;Value:
 ValueNotGuilty=Ongeldige waarde

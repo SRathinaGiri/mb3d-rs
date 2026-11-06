@@ -20,6 +20,10 @@
 //! the degrees a second given (Fly to the view: whole turns, so that it
 //! still arrives exactly at the view).
 //!
+//! VR comfort (on at first when the Animation window's 360° VR is): the
+//! view never turns by itself (the orbit goes round with one rotation, the
+//! flights fly the same way without turning), and no roll.
+//!
 //! The frames per second are the Animation window's (its video's).
 //!
 //! A template starts from the main window's view or from the animation's
@@ -70,6 +74,8 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_text(F, "TurnEdit", &get("AniTplTurn", "2"));
     ui.set_item_index(F, "StartCmb", get("AniTplStart", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     ui.set_text(F, "RollEdit", &get("AniTplRoll", "0"));
+    let vr = if ui.checked(ANIM, "Vr360Check") { "1" } else { "0" };
+    ui.set_checked(F, "ComfortCheck", get("AniTplComfort", vr) == "1");
     ui.set_item_index(F, "FromCmb", get("AniTplFrom", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     show_kind(ui);
     ui.show(F);
@@ -94,6 +100,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
         ("AniTplStart", start.as_str()),
         ("AniTplFrom", from.as_str()),
         ("AniTplRoll", ui.text(F, "RollEdit").trim()),
+        ("AniTplComfort", if ui.checked(F, "ComfortCheck") { "1" } else { "0" }),
     ] {
         app.ini.set_extra(k, v);
     }
@@ -141,6 +148,7 @@ fn show_kind(ui: &mut Ui) {
     }
     for c in ["RollLabel", "RollEdit", "RollNoteLabel"] {
         ui.set_visible(F, c, !orbit);
+        ui.set_enabled(F, c, !comfort(ui));
     }
     ui.set_visible(F, "StartCmb", !to_view);
     ui.set_visible(F, "FromCmb", to_view);
@@ -155,8 +163,17 @@ fn fps(ui: &Ui) -> f64 {
     ui.text(ANIM, "VideoFpsEdit").trim().replace(',', ".").parse::<f64>().ok().filter(|f| *f > 0.0 && *f <= 1000.0).unwrap_or(25.0)
 }
 
-/// The roll typed in, degrees a second (0 when none or not a number).
+/// VR comfort: the view never turns by itself.
+fn comfort(ui: &Ui) -> bool {
+    ui.checked(F, "ComfortCheck")
+}
+
+/// The roll typed in, degrees a second (0 when none or not a number; none
+/// with VR comfort).
 fn roll(ui: &Ui) -> f64 {
+    if comfort(ui) {
+        return 0.0;
+    }
     let r = ptf(&ui.text(F, "RollEdit"));
     if r.is_finite() { r.clamp(-720.0, 720.0) } else { 0.0 }
 }
@@ -208,12 +225,17 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
     let (sc, from_last) = start_scene(app, ui);
     if is_orbit(ui) {
         let steps = pti(&ui.text(F, "StepsEdit")).clamp(3, 360) as usize;
+        let steps = if comfort(ui) { steps.max(crate::autopilot::STEADY_ORBIT_STEPS) } else { steps };
         let pivot = if ui.item_index(F, "PivotCmb") == 1 { [0.0; 3] } else { crate::autopilot::turntable_pivot(&sc) };
         let total = (secs * fps).round().max(steps as f64) as u32;
         let axis = crate::autopilot::OrbitAxis::ALL[ui.item_index(F, "AxisCmb").clamp(0, 6) as usize];
         let mut keys = crate::autopilot::orbit_keyframes_axis(&sc, steps, 1, pivot, axis);
         for (k, f) in keys.iter_mut().zip(crate::autopilot::spread_frames(total, steps)) {
             k.frames = f;
+        }
+        if comfort(ui) {
+            let rows = keys[0].scene.vgrads;
+            crate::autopilot::steady_keyframes(&mut keys, rows);
         }
         super::anim_form::add_template(app, ui, keys, true, from_last);
     } else {
@@ -238,7 +260,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             out: false,
         };
         let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
-        let roll = roll(ui);
+        let (roll, steady) = (roll(ui), comfort(ui));
         std::thread::spawn(move || {
             let w = waker.clone();
             let progress = move |d: usize, _: usize| {
@@ -252,6 +274,10 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             };
             let r = crate::autopilot::fly_through(&sc, &fp, &progress, &|| cancel.load(Ordering::Relaxed)).map(|mut f| {
                 crate::autopilot::roll_keyframes(&mut f.keyframes, roll, fps, false);
+                if steady && !f.keyframes.is_empty() {
+                    let rows = f.keyframes[0].scene.vgrads;
+                    crate::autopilot::steady_keyframes(&mut f.keyframes, rows);
+                }
                 f
             });
             *result.lock().unwrap() = Some(r);
@@ -282,6 +308,7 @@ fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
     let ap = crate::approach::ApproachParams {
         frames: (secs * fps).round().max(2.0) as usize,
         keyframe_every: crate::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll, fps),
+        steady: comfort(ui),
         ..Default::default()
     };
     let fl = Flying {
@@ -328,7 +355,7 @@ fn show_flying(app: &Mb3d, ui: &mut Ui) {
     let fl = app.anim_tpl.flying.as_ref();
     ui.set_visible(F, "FlightBar", fl.is_some());
     ui.set_caption(F, "AddBtn", &tr(if fl.is_some() { "@MB:Stop" } else { "@MB:AddTheKeyframes" }));
-    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb", "RollEdit"] {
+    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb", "RollEdit", "ComfortCheck"] {
         ui.set_enabled(F, c, fl.is_none());
     }
     match fl {
@@ -343,6 +370,7 @@ fn show_flying(app: &Mb3d, ui: &mut Ui) {
             ui.set_caption(F, "FlightLabel", "");
             let until = until(ui);
             ui.set_enabled(F, "DurationEdit", !until);
+            ui.set_enabled(F, "RollEdit", !comfort(ui));
         }
     }
 }
@@ -386,7 +414,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "FormShow" => show_kind(ui),
-        "TemplateCmbChange" | "UntilCheckClick" => show_kind(ui),
+        "TemplateCmbChange" | "UntilCheckClick" | "ComfortCheckClick" => show_kind(ui),
         "DurationEditChange" => show_frames(ui),
         "AddBtnClick" => match &app.anim_tpl.flying {
             // Stop: the flight ends at its next frame, what was flown is added
