@@ -12,7 +12,9 @@
 //! * Fly to the view: from outside the fractal (all of it in view) or from
 //!   the animation's last keyframe to the main window's view, on the
 //!   straightest free way, round what is in the way and back onto the
-//!   course, arriving exactly at the view ([`crate::approach`]).
+//!   course, arriving exactly at the view ([`crate::approach`]);
+//! * Zoom out: Fly to the view backwards, from the main window's view or
+//!   the last keyframe to outside the fractal.
 //!
 //! Both flights can roll: the picture turns around the line of sight at
 //! the degrees a second given (Fly to the view: whole turns, so that it
@@ -46,8 +48,10 @@ struct Flying {
     result: Arc<Mutex<Option<Result<crate::autopilot::Flight, String>>>>,
     from_last: bool,
     asked: usize,
-    /// Fly to the view (else the fly-through)
+    /// Fly to the view or zoom out (else the fly-through)
     to_view: bool,
+    /// Zoom out
+    out: bool,
 }
 
 const F: &str = "AnimTemplatesFrm";
@@ -56,7 +60,7 @@ const ANIM: &str = "AnimationForm";
 /// Opens the window with the settings of last time.
 pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     let get = |k: &str, d: &str| app.ini.get_extra(k).filter(|v| !v.is_empty()).unwrap_or(d).to_string();
-    ui.set_item_index(F, "TemplateCmb", get("AniTplKind", "0").parse::<i32>().unwrap_or(0).clamp(0, 2));
+    ui.set_item_index(F, "TemplateCmb", get("AniTplKind", "0").parse::<i32>().unwrap_or(0).clamp(0, 3));
     ui.set_text(F, "DurationEdit", &get("AniTplSecs", "10"));
     ui.set_item_index(F, "AxisCmb", get("AniTplAxis", "0").parse::<i32>().unwrap_or(0).clamp(0, 6));
     ui.set_text(F, "StepsEdit", &get("AniTplSteps", "8"));
@@ -96,7 +100,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
 }
 
 fn is_orbit(ui: &Ui) -> bool {
-    !matches!(ui.item_index(F, "TemplateCmb"), 1 | 2)
+    !matches!(ui.item_index(F, "TemplateCmb"), 1..=3)
 }
 
 fn is_fly(ui: &Ui) -> bool {
@@ -105,6 +109,10 @@ fn is_fly(ui: &Ui) -> bool {
 
 fn is_to_view(ui: &Ui) -> bool {
     ui.item_index(F, "TemplateCmb") == 2
+}
+
+fn is_out(ui: &Ui) -> bool {
+    ui.item_index(F, "TemplateCmb") == 3
 }
 
 /// "Until the view shows only sky ..." (the fly-through's).
@@ -119,8 +127,10 @@ fn show_kind(ui: &mut Ui) {
         "@MB:AWholeTurnOfTheCamera"
     } else if fly {
         "@MB:TheCameraFliesOnIntoThe"
-    } else {
+    } else if to_view {
         "@MB:TheCameraFliesFromOutsideThe"
+    } else {
+        "@MB:TheCameraFliesBackFromThe"
     };
     ui.set_caption(F, "NoteLabel", &tr(note));
     for c in ["AxisLabel", "AxisCmb", "StepsLabel", "StepsEdit", "PivotLabel", "PivotCmb"] {
@@ -192,7 +202,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
         return;
     };
     save(app, ui);
-    if is_to_view(ui) {
+    if is_to_view(ui) || is_out(ui) {
         return add_to_view(app, ui, secs, fps);
     }
     let (sc, from_last) = start_scene(app, ui);
@@ -225,6 +235,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             from_last,
             asked: fp.frames,
             to_view: false,
+            out: false,
         };
         let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
         let roll = roll(ui);
@@ -253,13 +264,20 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
     }
 }
 
-/// Fly to the view: from outside the fractal or the last keyframe to the
-/// main window's view, on a thread like the fly-through.
+/// Fly to the view (from outside the fractal or the last keyframe to the
+/// main window's view) or zoom out (from the main window's view or the
+/// last keyframe to outside), on a thread like the fly-through.
 fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
-    app.make_scene(ui);
-    let target = app.scene.clone();
-    let start = if ui.item_index(F, "FromCmb") == 1 { super::anim_form::last_keyframe_scene(app) } else { None };
-    let from_last = start.is_some();
+    let out = is_out(ui);
+    let (target, start, from_last) = if out {
+        let (sc, from_last) = start_scene(app, ui);
+        (sc, None, from_last)
+    } else {
+        app.make_scene(ui);
+        let start = if ui.item_index(F, "FromCmb") == 1 { super::anim_form::last_keyframe_scene(app) } else { None };
+        let from_last = start.is_some();
+        (app.scene.clone(), start, from_last)
+    };
     let roll = roll(ui);
     let ap = crate::approach::ApproachParams {
         frames: (secs * fps).round().max(2.0) as usize,
@@ -274,6 +292,7 @@ fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
         from_last,
         asked: ap.frames,
         to_view: true,
+        out,
     };
     let (done, cancel, result, waker) = (fl.done.clone(), fl.cancel.clone(), fl.result.clone(), ui.waker());
     std::thread::spawn(move || {
@@ -287,9 +306,12 @@ fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
                 }
             }
         };
-        let r = crate::approach::fly_to(&target, start.as_ref(), &ap, &progress, &|| cancel.load(Ordering::Relaxed)).map(|a| {
+        let stop = || cancel.load(Ordering::Relaxed);
+        let r = if out { crate::approach::fly_out(&target, &ap, &progress, &stop) } else { crate::approach::fly_to(&target, start.as_ref(), &ap, &progress, &stop) };
+        let r = r.map(|a| {
             let mut f = a.flight;
-            crate::autopilot::roll_keyframes(&mut f.keyframes, roll, fps, true);
+            // (flying to a view whole turns, so that it arrives exactly)
+            crate::autopilot::roll_keyframes(&mut f.keyframes, roll, fps, !out);
             f
         });
         *result.lock().unwrap() = Some(r);
@@ -333,7 +355,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         show_flying(app, ui);
         return;
     };
-    let (from_last, asked, to_view) = (fl.from_last, fl.asked, fl.to_view);
+    let (from_last, asked, to_view, out) = (fl.from_last, fl.asked, fl.to_view, fl.out);
     app.anim_tpl.flying = None;
     show_flying(app, ui);
     match r {
@@ -355,6 +377,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         }
         // (a stopped flight to the view adds nothing: it would not arrive)
         Err(e) if to_view && e == "cancelled" => {}
+        Err(e) if out => ui.show_message(&trf("@MB:NoWayOutOfTheFractal", &[&e])),
         Err(e) if to_view => ui.show_message(&trf("@MB:TheViewCannotBeReached", &[&e])),
         Err(e) => ui.show_message(&trf("@MB:TheFlyThroughCannotStartHere", &[&e])),
     }

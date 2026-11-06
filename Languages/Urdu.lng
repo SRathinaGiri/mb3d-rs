@@ -2379,6 +2379,8 @@ NoValidTextFoundPleaseEnter=\sکوئی درست متن نہیں ملا، برا�
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=آگے کوئی راستہ باقی نہیں رہا
 ;no way ahead was left
+NoWayOutOfTheFractal=فریکٹل سے باہر نکلنے کا راستہ نہیں ملا: {}
+;No way out of the fractal was found: {}
 Noise=-شور
 ;-noise
 NoiseAI=-شور AI
@@ -3473,6 +3475,8 @@ TheCalculationFailedLower=حساب ناکام ہو گیا
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=حساب منعکس اشیاء کے ساتھ تصویر سے باہر کی طرف بڑھایا جائے گا۔\nاس سے اینیمیشنز میں کم نقائص ہو سکتے ہیں، لیکن ساکن تصاویر کو بھی فائدہ ہو سکتا ہے۔\nقدر 0 سے 0.5 (زیادہ سے زیادہ 0.9) کی حد میں ہونی چاہیے، یہ تصویر کی چوڑائی\nاور اونچائی کے لحاظ سے وہ سائز ہے جو باہر زیادہ سے زیادہ حساب ہوتا ہے۔
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=کیمرا مرکزی ونڈو کے منظر یا اینیمیشن کے آخری کی فریم سے واپس فریکٹل کے باہر تک اڑتا ہے، جہاں وہ پورا نظر آتا ہے: منظر تک پرواز الٹی، اسی کھلے راستے پر، منظر کی جگہ کی طرف رخ کیے، زوم فاصلے کے ساتھ بدلتا ہے۔ ہر آدھے سیکنڈ پر ایک کی فریم (Catmull-Rom)
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=کیمرا فریکٹل کے باہر سے، جہاں وہ پورا نظر آتا ہے، یا اینیمیشن کے آخری کی فریم سے مرکزی ونڈو کے منظر تک اڑتا ہے: سب سے سیدھے کھلے راستے پر، راستے میں آنے والی چیز کے گرد گھوم کر پھر راستے پر واپس، زوم فاصلے کے ساتھ بدلتا ہے؛ یہ بالکل اسی منظر پر پہنچتا ہے۔ ہر آدھے سیکنڈ پر ایک کی فریم (Catmull-Rom)
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=کیمرہ فریکٹل کے اندر اڑتا رہتا ہے، زوم اس تک کے فاصلے کے ساتھ چلتا ہے، اور یہ اس کے خلاؤں سے راستہ بناتا ہے؛ ہر آدھے سیکنڈ میں ایک کی فریم (Catmull-Rom)۔ پرواز بند گلی میں، دوہری درستی کی حد پر یا فریکٹل سے نکلنے پر پہلے ختم ہو جاتی ہے
@@ -3997,6 +4001,8 @@ Zoom=زوم:
 ;Zoom:
 Zoom2=زوم
 ;Zoom
+ZoomOut=زوم آؤٹ
+;Zoom out
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

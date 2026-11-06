@@ -2379,6 +2379,8 @@ NoValidTextFoundPleaseEnter=\s有効なテキストが見つかりません。�
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=前方に進める道がなくなりました
 ;no way ahead was left
+NoWayOutOfTheFractal=フラクタルの外へ出る道が見つかりません: {}
+;No way out of the fractal was found: {}
 Noise=-ノイズ
 ;-noise
 NoiseAI=-ノイズAI
@@ -3473,6 +3475,8 @@ TheCalculationFailedLower=計算に失敗しました
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=計算を画像の外側まで拡張し、そこにあるオブジェクトの反射も含めます。\nアニメーションでアーティファクトが減りますが、静止画にも有効です。\n値は 0 から 0.5 の範囲 (最大 0.9) にしてください。これは外側で最大限に計算される\n画像の幅と高さに対する相対サイズです。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=カメラはメインウィンドウのビュー、またはアニメーションの最後のキーフレームから、フラクタル全体が見える外側まで戻ります。「ビューへ飛ぶ」の逆再生で、同じ空いた道を通り、ビューの場所を向いたまま、ズームは距離に従います。0.5 秒ごとにキーフレーム（Catmull-Rom）
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=カメラはフラクタル全体が見える外側から、またはアニメーションの最後のキーフレームから、メインウィンドウのビューへ飛びます。最もまっすぐな空いた道を通り、障害物があれば回り込んでからコースに戻り、ズームは距離に従います。ビューにぴったり到着します。0.5 秒ごとにキーフレーム（Catmull-Rom）
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=カメラはフラクタルの奥へ飛び続け、ズームはそこまでの距離に追従し、すき間を抜けて進みます。キーフレームは 0.5 秒ごと (Catmull-Rom)。行き止まり、倍精度の限界、またはフラクタルを離れたときに早めに終わります
@@ -3997,6 +4001,8 @@ Zoom=ズーム:
 ;Zoom:
 Zoom2=ズーム
 ;Zoom
+ZoomOut=ズームアウト
+;Zoom out
 Zpos=Z位置
 ;Zpos
 Zrot=Z回転

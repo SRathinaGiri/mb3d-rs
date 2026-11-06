@@ -2379,6 +2379,8 @@ NoValidTextFoundPleaseEnter=\sلم يُعثر على نص صالح، يرجى إ
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=لم يبق طريق إلى الأمام
 ;no way ahead was left
+NoWayOutOfTheFractal=لم يُعثر على طريق للخروج من الكسيرية: {}
+;No way out of the fractal was found: {}
 Noise=-تشويش
 ;-noise
 NoiseAI=-تشويش AI
@@ -3473,6 +3475,8 @@ TheCalculationFailedLower=أخفق الحساب
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=يمتد الحساب إلى خارج الصورة مع الأجسام المنعكسة.\nقد يقلل هذا العيوب في التحريكات، لكن الصور الثابتة قد تستفيد منه أيضًا.\nيجب أن تكون القيمة بين 0 و0.5 (بحد أقصى 0.9)، وهي الحجم نسبةً إلى عرض الصورة\nوارتفاعها الذي يُحسب كحد أقصى خارجها.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=تعود الكاميرا من مشهد النافذة الرئيسية أو من آخر إطار مفتاحي في الحركة إلى خارج الكسيرية، حيث تُرى كاملة: الطيران إلى المشهد معكوسًا، على الطريق الحر نفسه، متجهة نحو مكان المشهد، والتكبير يتبع المسافة. إطار مفتاحي كل نصف ثانية (Catmull-Rom)
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=تطير الكاميرا من خارج الكسيرية، حيث تُرى كاملة، أو من آخر إطار مفتاحي في الحركة إلى مشهد النافذة الرئيسية: على أكثر الطرق الحرة استقامة، تلتف حول ما يعترضها ثم تعود إلى مسارها، والتكبير يتبع المسافة؛ وتصل إلى المشهد تمامًا. إطار مفتاحي كل نصف ثانية (Catmull-Rom)
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=تواصل الكاميرا الطيران داخل الكسورية، ويتبع التكبير المسافة إليها، وتوجّه نفسها عبر فجواتها؛ إطار مفتاحي كل نصف ثانية (Catmull-Rom). ينتهي الطيران مبكرًا عند طريق مسدود، أو عند حد الدقة المضاعفة، أو عندما يغادر الكسورية
@@ -3997,6 +4001,8 @@ Zoom=التكبير:
 ;Zoom:
 Zoom2=التكبير
 ;Zoom
+ZoomOut=تصغير
+;Zoom out
 Zpos=موضع Z
 ;Zpos
 Zrot=دوران Z

@@ -2378,6 +2378,8 @@ NoValidTextFoundPleaseEnter=\sNie znaleziono poprawnego tekstu, wprowadź tekst 
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=nie została żadna droga naprzód
 ;no way ahead was left
+NoWayOutOfTheFractal=Nie znaleziono drogi z fraktala: {}
+;No way out of the fractal was found: {}
 Noise=-szum
 ;-noise
 NoiseAI=-szum AI
@@ -3472,6 +3474,8 @@ TheCalculationFailedLower=obliczenie nie powiodło się
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=Obliczenia zostaną rozszerzone poza obraz na odbite obiekty.\nMoże to zmniejszyć artefakty w animacjach, ale skorzystają też obrazy statyczne.\nWartość powinna mieścić się w zakresie 0 do 0.5 (maks. 0.9); to rozmiar względem szerokości\ni wysokości obrazu, maksymalnie obliczany na zewnątrz.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=Kamera wraca z widoku okna głównego albo z ostatniej klatki kluczowej animacji na zewnątrz fraktala, skąd widać go w całości: Lot do widoku wstecz, tą samą wolną drogą, zwrócona ku miejscu widoku, a zoom podąża za odległością. Klatka kluczowa co pół sekundy (Catmull-Rom)
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=Kamera leci spoza fraktala, skąd widać go w całości, albo z ostatniej klatki kluczowej animacji do widoku okna głównego: najprostszą wolną drogą, omijając przeszkody i wracając na kurs, a zoom podąża za odległością; dociera dokładnie do widoku. Klatka kluczowa co pół sekundy (Catmull-Rom)
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=Kamera leci dalej w głąb fraktala, zoom podąża za odległością od niego, i kieruje się przez jego szczeliny; klatka kluczowa co pół sekundy (Catmull-Rom). Lot kończy się wcześniej w ślepym zaułku, na granicy podwójnej precyzji lub gdy opuszcza fraktal
@@ -3996,6 +4000,8 @@ Zoom=Zoom:
 ;Zoom:
 Zoom2=Zoom
 ;Zoom
+ZoomOut=Oddalenie
+;Zoom out
 Zpos=Poz. Z
 ;Zpos
 Zrot=Obr. Z

@@ -2378,6 +2378,8 @@ NoValidTextFoundPleaseEnter=\sNenhum texto válido encontrado, insira o texto ab
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=não restava caminho à frente
 ;no way ahead was left
+NoWayOutOfTheFractal=Não foi encontrada saída do fractal: {}
+;No way out of the fractal was found: {}
 Noise=-ruído
 ;-noise
 NoiseAI=-ruído IA
@@ -3472,6 +3474,8 @@ TheCalculationFailedLower=o cálculo falhou
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=O cálculo será estendido para fora da imagem com objetos refletidos.\nIsso pode reduzir artefatos em animações, mas imagens fixas também podem se beneficiar.\nO valor deve ficar entre 0 e 0.5 (máx. 0.9); é o tamanho, relativo à largura\ne à altura da imagem, calculado no máximo do lado de fora.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=A câmara volta da vista da janela principal ou do último fotograma-chave da animação até fora do fractal, onde ele se vê inteiro: Voar até à vista ao contrário, pelo mesmo caminho livre, virada para o lugar da vista, com o zoom a seguir a distância. Um fotograma-chave a cada meio segundo (Catmull-Rom)
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=A câmara voa de fora do fractal, onde ele se vê inteiro, ou do último fotograma-chave da animação até à vista da janela principal: pelo caminho livre mais direito, contornando o que está no caminho e voltando ao rumo, com o zoom a seguir a distância; chega exatamente à vista. Um fotograma-chave a cada meio segundo (Catmull-Rom)
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=A câmera continua voando para dentro do fractal, o zoom acompanhando a distância até ele, e se guia pelas suas aberturas; um quadro-chave a cada meio segundo (Catmull-Rom). Termina antes num beco sem saída, no limite da precisão dupla ou quando sai do fractal
@@ -3996,6 +4000,8 @@ Zoom=Zoom:
 ;Zoom:
 Zoom2=Zoom
 ;Zoom
+ZoomOut=Afastar
+;Zoom out
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

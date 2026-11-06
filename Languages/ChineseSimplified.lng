@@ -2379,6 +2379,8 @@ NoValidTextFoundPleaseEnter=\s未找到有效文本，请在下方输入文本�
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=前方已无路可走
 ;no way ahead was left
+NoWayOutOfTheFractal=找不到飞出分形的路线：{}
+;No way out of the fractal was found: {}
 Noise=-噪点
 ;-noise
 NoiseAI=-噪点AI
@@ -3473,6 +3475,8 @@ TheCalculationFailedLower=计算失败
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=计算范围将向图像外侧扩展，以包含被反射的物体。\n这能减少动画中的瑕疵，静态图像也能从中受益。\n取值应在 0 到 0.5 之间（最大 0.9），即图像外侧最大计算范围\n相对于图像宽高的比例。
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=相机从主窗口的视图或动画的最后一个关键帧飞回到能看到整个分形的外部：即“飞到视图”的倒放，走同一条空闲路线，始终朝向视图所在处，缩放随距离变化。每半秒一个关键帧（Catmull-Rom）
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=相机从能看到整个分形的外部，或从动画的最后一个关键帧，飞到主窗口的视图：走最直的空闲路线，遇到阻挡就绕过去再回到航线上，缩放随距离变化；最终准确到达该视图。每半秒一个关键帧（Catmull-Rom）
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=相机持续飞入分形内部，缩放随与它的距离变化，并穿过其空隙转向；每半秒一个关键帧（Catmull-Rom）。遇到死路、达到双精度极限或离开分形时会提前结束
@@ -3997,6 +4001,8 @@ Zoom=缩放：
 ;Zoom:
 Zoom2=缩放
 ;Zoom
+ZoomOut=缩小飞出
+;Zoom out
 Zpos=Z 位置
 ;Zpos
 Zrot=Z 旋转

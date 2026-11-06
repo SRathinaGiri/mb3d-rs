@@ -1079,8 +1079,13 @@ OPTIONS:
                              way and back onto the course, and arrives exactly at
                              that view (place, direction, zoom); --duration long
                              (default 10 s), keyframes every half second
-        --roll <DEG>         With --fly or --approach: the picture turns around the line
-                             of sight, DEG degrees a second (negative: anticlockwise),
+        --zoom-out           Zoom out: from the keyframe file's view back to outside the
+                             fractal, where all of it is in view (--approach backwards:
+                             the same free way, the camera facing the view's place);
+                             --duration long (default 10 s)
+        --roll <DEG>         With --fly, --approach or --zoom-out: the picture turns
+                             around the line of sight, DEG degrees a second (negative:
+                             anticlockwise),
                              eased in and out; with --approach whole turns, so that
                              it still arrives exactly at the view
         --duration <SECONDS> The length of --orbit (one whole turn) or --fly at --fps
@@ -1155,6 +1160,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let (mut orbit, mut blur): (Option<usize>, Option<(u32, Option<f32>)>) = (None, None);
     let (mut fly, mut duration): (bool, Option<f64>) = (false, None);
     let mut approach = false;
+    let mut zoom_out = false;
     let mut roll: Option<f64> = None;
     let mut vr = false;
     let mut orbit_axis: Option<mb3d::autopilot::OrbitAxis> = None;
@@ -1190,6 +1196,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--orbit" => orbit = Some(num(a, args.next())?.clamp(3, 360) as usize),
             "--fly" => fly = true,
             "--approach" | "--fly-to" => approach = true,
+            "--zoom-out" => zoom_out = true,
             "--vr" | "--vr360" => vr = true,
             "--orbit-axis" => orbit_axis = Some(mb3d::autopilot::OrbitAxis::parse(args.next().ok_or("--orbit-axis needs a value")?)?),
             "--roll" => {
@@ -1370,6 +1377,32 @@ fn animate(argv: &[String]) -> Result<(), String> {
         previews = vec![None; anim.keyframes.len()];
         looped = Some(false);
         ipol = ipol.or(Some(Interpolation::CatmullRom));
+    } else if zoom_out {
+        if from_file || anim.keyframes.len() != 1 {
+            return Err("--zoom-out flies back from the view of one keyframe file to outside the fractal".into());
+        }
+        let view = anim.keyframes.remove(0);
+        let ap = mb3d::approach::ApproachParams {
+            frames: match duration {
+                Some(d) if d > 0.0 => (d * fps).round().max(2.0) as usize,
+                Some(_) => return Err(usage_err("--zoom-out needs a --duration above 0")),
+                None => frames.map_or((10.0 * fps).round() as usize, |f| f.max(2) as usize),
+            },
+            keyframe_every: mb3d::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll.unwrap_or(0.0), fps),
+            ..Default::default()
+        };
+        let a = mb3d::approach::fly_out(&view.scene, &ap, &|_, _| {}, &|| false).map_err(input_err)?;
+        if !quiet {
+            note(&match a.route {
+                mb3d::approach::Route::Straight => "the way out: one straight line".to_string(),
+                mb3d::approach::Route::Round(n) => format!("the way out: round what is in between, in {n} legs"),
+            });
+        }
+        anim.keyframes = a.flight.keyframes;
+        mb3d::autopilot::roll_keyframes(&mut anim.keyframes, roll.unwrap_or(0.0), fps, false);
+        previews = vec![None; anim.keyframes.len()];
+        looped = Some(false);
+        ipol = ipol.or(Some(Interpolation::CatmullRom));
     } else if approach {
         if from_file || !(1..=2).contains(&anim.keyframes.len()) {
             return Err("--approach flies to the view of one keyframe file (from outside) or from the first of two to the second".into());
@@ -1400,9 +1433,9 @@ fn animate(argv: &[String]) -> Result<(), String> {
     } else if orbit_axis.is_some() {
         return Err(usage_err("--orbit-axis goes with --orbit"));
     } else if roll.is_some() {
-        return Err(usage_err("--roll goes with --fly or --approach"));
+        return Err(usage_err("--roll goes with --fly, --approach or --zoom-out"));
     } else if duration.is_some() {
-        return Err("--duration goes with --orbit, --fly or --approach".into());
+        return Err("--duration goes with --orbit, --fly, --approach or --zoom-out".into());
     }
     if let Some((n, sh)) = blur {
         anim.motion_blur = n;

@@ -2379,6 +2379,8 @@ NoValidTextFoundPleaseEnter=\s유효한 텍스트가 없습니다. 아래에 텍
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=앞으로 갈 길이 남지 않았습니다
 ;no way ahead was left
+NoWayOutOfTheFractal=프랙털 밖으로 나가는 길을 찾지 못했습니다: {}
+;No way out of the fractal was found: {}
 Noise=-노이즈
 ;-noise
 NoiseAI=-노이즈 AI
@@ -3473,6 +3475,8 @@ TheCalculationFailedLower=계산에 실패했습니다
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=반사된 물체가 있는 이미지 바깥쪽으로 계산을 확장합니다.\n애니메이션에서 아티팩트가 줄어들 수 있으며 정지 이미지에도 도움이 됩니다.\n값은 0에서 0.5 사이(최대 0.9)여야 하며, 바깥쪽으로 최대 계산되는\n범위를 이미지 너비와 높이에 대한 상대 크기로 나타냅니다.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=카메라가 메인 창의 뷰 또는 애니메이션의 마지막 키프레임에서 프랙털 전체가 보이는 바깥까지 되돌아갑니다. '뷰로 날아가기'를 거꾸로, 같은 빈 길로, 뷰가 있던 곳을 향한 채, 줌은 거리를 따라갑니다. 0.5초마다 키프레임 하나(Catmull-Rom)
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=카메라가 프랙털 전체가 보이는 바깥에서, 또는 애니메이션의 마지막 키프레임에서 메인 창의 뷰로 날아갑니다. 가장 곧은 빈 길로 가되 가로막는 것은 돌아서 다시 경로로 돌아오며, 줌은 거리를 따라갑니다. 뷰에 정확히 도착합니다. 0.5초마다 키프레임 하나(Catmull-Rom)
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=카메라는 프랙탈 안으로 계속 날아가고, 줌은 거리에 따라 바뀌며, 틈새를 따라 방향을 잡습니다. 0.5초마다 키프레임 (Catmull-Rom). 막다른 곳, 배정밀도의 한계, 또는 프랙탈을 벗어나면 일찍 끝납니다
@@ -3997,6 +4001,8 @@ Zoom=확대/축소:
 ;Zoom:
 Zoom2=줌
 ;Zoom
+ZoomOut=줌 아웃
+;Zoom out
 Zpos=Z위치
 ;Zpos
 Zrot=Z회전

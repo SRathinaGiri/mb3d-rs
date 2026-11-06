@@ -383,6 +383,49 @@ fn measure(sp: &Space, way: &[Vec3]) -> (Vec<Vec3>, Vec<f64>) {
     (pts, us)
 }
 
+/// Keyframes at measures `ukeys` made such that neighbouring gaps on the
+/// way differ at most threefold: where one is longer, a keyframe is put
+/// into it at twice the other's length from their shared keyframe. (A
+/// Catmull-Rom curve swings back where a gap is more than five times its
+/// neighbour: the tangent at the shared keyframe, half the two gaps,
+/// exceeds three times the shorter one. Far out, where the distance
+/// estimate is clamped to the fractal's sphere, even steps of the measure
+/// gave gaps of 3.7 and 0.4: 9 % back.)
+fn even_gaps(pts: &[Vec3], us: &[f64], mut ukeys: Vec<f64>) -> Vec<f64> {
+    // the arc length along the way at each point of the measure
+    let mut ss = vec![0.0];
+    for w in pts.windows(2) {
+        ss.push(ss.last().unwrap() + len(&sub(w[1], w[0])));
+    }
+    let map = |from: &[f64], to: &[f64], x: f64| {
+        let x = x.clamp(0.0, *from.last().unwrap());
+        let i = from.partition_point(|&v| v < x).clamp(1, from.len() - 1);
+        let (a, b) = (from[i - 1], from[i]);
+        let w = if b > a { (x - a) / (b - a) } else { 1.0 };
+        to[i - 1] + (to[i] - to[i - 1]) * w
+    };
+    for _ in 0..500 {
+        let sk: Vec<f64> = ukeys.iter().map(|&u| map(us, &ss, u)).collect();
+        let mut add = None;
+        for i in 1..sk.len().saturating_sub(1) {
+            let (a, b) = (sk[i] - sk[i - 1], sk[i + 1] - sk[i]);
+            if a > 3.0 * b && b > 0.0 {
+                add = Some((i, sk[i] - 2.0 * b));
+                break;
+            }
+            if b > 3.0 * a && a > 0.0 {
+                add = Some((i + 1, sk[i] + 2.0 * a));
+                break;
+            }
+        }
+        match add {
+            Some((at_index, s)) => ukeys.insert(at_index, map(&ss, us, s)),
+            None => break,
+        }
+    }
+    ukeys
+}
+
 /// The point at measure `u` along the way.
 fn at(pts: &[Vec3], us: &[f64], u: f64) -> Vec3 {
     let u = u.clamp(0.0, *us.last().unwrap());
@@ -525,9 +568,11 @@ pub fn fly_to(target: &Scene, from: Option<&Scene>, ap: &ApproachParams, progres
     // the Catmull-Rom curve follows without swinging back), each at the
     // frame the eased timing reaches it
     let n_keys = ((frames - 1) / every).max(1) + 1;
+    let ukeys = even_gaps(&pts, &us, (0..n_keys).map(|j| total * j as f64 / (n_keys - 1) as f64).collect());
     let mut plan: Vec<(f64, usize)> = Vec::new();
-    for j in 0..n_keys {
-        let share = j as f64 / (n_keys - 1) as f64;
+    let last_key = ukeys.len() - 1;
+    for (j, &uk) in ukeys.iter().enumerate() {
+        let share = if total > 0.0 { (uk / total).clamp(0.0, 1.0) } else { j as f64 / last_key.max(1) as f64 };
         // the time at which the eased flight has flown this share
         let (mut lo, mut hi) = (0.0f64, 1.0f64);
         for _ in 0..50 {
@@ -539,11 +584,11 @@ pub fn fly_to(target: &Scene, from: Option<&Scene>, ap: &ApproachParams, progres
             }
         }
         let fr = ((frames - 1) as f64 * hi).round() as usize;
-        let fr = if j + 1 == n_keys { frames - 1 } else { fr.min(frames - 2) };
+        let fr = if j == last_key { frames - 1 } else { fr.min(frames - 2) };
         if plan.last().is_some_and(|&(_, f)| fr <= f) {
             continue;
         }
-        plan.push((total * share, fr));
+        plan.push((uk, fr));
     }
     if plan.last().map(|x| x.1) != Some(frames - 1) {
         plan.pop();
@@ -614,6 +659,24 @@ pub fn fly_to(target: &Scene, from: Option<&Scene>, ap: &ApproachParams, progres
     Ok(Approach { flight: Flight { keyframes, frames, end: FlightEnd::Done }, route })
 }
 
+/// Zoom out: from the view `view` back to outside the fractal, where all of
+/// it is in view. [`fly_to`] from outside played backwards: the same free
+/// way, the camera facing the view's place as it pulls back; the first
+/// keyframe is the view exactly.
+pub fn fly_out(view: &Scene, ap: &ApproachParams, progress: &dyn Fn(usize, usize), cancel: &dyn Fn() -> bool) -> Result<Approach, String> {
+    let a = fly_to(view, None, ap, progress, cancel)?;
+    let mut keys = a.flight.keyframes;
+    let n = keys.len();
+    // the frames to the next keyframe, backwards: keyframe j is the old
+    // n-1-j, the frames after it the old ones before that
+    let gaps: Vec<u32> = keys.iter().take(n.saturating_sub(1)).map(|k| k.frames).collect();
+    keys.reverse();
+    for (j, k) in keys.iter_mut().enumerate() {
+        k.frames = if j + 1 < n { gaps[n - 2 - j] } else { 1 };
+    }
+    Ok(Approach { flight: Flight { keyframes: keys, frames: a.flight.frames, end: FlightEnd::Done }, route: a.route })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -681,6 +744,50 @@ mod tests {
             assert!(d > 0.0, "frame {i} inside");
             let to = len(&sub(c, cam_pos(&target)));
             assert!(to <= prev * 1.0001 + 1e-9, "frame {i}: {to} after {prev}");
+            prev = to;
+        }
+    }
+
+    #[test]
+    fn zooming_out_starts_at_the_view_and_ends_outside() {
+        let view = close_view(1e-3);
+        let ap = ApproachParams { frames: 150, ..Default::default() };
+        let a = fly_out(&view, &ap, &|_, _| {}, &|| false).unwrap();
+        let ks = &a.flight.keyframes;
+        assert_eq!(ks[0].scene.mid, view.mid);
+        assert_eq!(ks[0].scene.vgrads, view.vgrads);
+        assert_eq!(ks[0].scene.zoom, view.zoom);
+        let an = anim(&a.flight);
+        assert_eq!(an.frame_count(), 150);
+        // the distance from the view rising, the zoom falling, every camera
+        // outside the bulb, the last far from it
+        let p = CalcParams::new(&view).unwrap();
+        let (mut prev, mut zoom) = (0.0, f64::MAX);
+        for i in 0..150 {
+            let s = an.frame_scene(i).unwrap();
+            let c = cam_pos(&s);
+            assert!(de_at(&p, c).0 > 0.0, "frame {i} inside");
+            let from = len(&sub(c, cam_pos(&view)));
+            assert!(from >= prev * 0.9999 - 1e-9, "frame {i}: {from} after {prev}");
+            assert!(s.zoom.ln() <= zoom.ln() + 0.05, "frame {i}: zoom rose");
+            prev = from;
+            zoom = zoom.min(s.zoom);
+        }
+        assert!(len(&cam_pos(&an.frame_scene(149).unwrap())) > 3.0);
+    }
+
+    #[test]
+    fn a_deep_view_is_approached_without_a_step_back() {
+        // far out the gaps between keyframes at even measure were 3.7 and
+        // 0.4: the Catmull-Rom curve swung 9 % back
+        let view = close_view(1e-3);
+        let ap = ApproachParams { frames: 150, ..Default::default() };
+        let a = fly_to(&view, None, &ap, &|_, _| {}, &|| false).unwrap();
+        let an = anim(&a.flight);
+        let mut prev = f64::MAX;
+        for i in 0..150 {
+            let to = len(&sub(cam_pos(&an.frame_scene(i).unwrap()), cam_pos(&view)));
+            assert!(to <= prev * 1.0001 + 1e-12, "frame {i}: {to} after {prev}");
             prev = to;
         }
     }

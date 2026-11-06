@@ -2378,6 +2378,8 @@ NoValidTextFoundPleaseEnter=\sGeen geldige tekst gevonden, voer de tekst hierond
 ;\sNo valid text found, please enter the text below:
 NoWayAheadWasLeft=er was geen weg vooruit meer
 ;no way ahead was left
+NoWayOutOfTheFractal=Geen weg uit de fractal gevonden: {}
+;No way out of the fractal was found: {}
 Noise=-ruis
 ;-noise
 NoiseAI=-ruis AI
@@ -3472,6 +3474,8 @@ TheCalculationFailedLower=de berekening is mislukt
 ;the calculation failed
 TheCalculationWillBeExtendedTowards=De berekening wordt uitgebreid tot buiten de afbeelding met gespiegelde objecten.\nDit kan tot minder artefacten in animaties leiden, maar ook stilstaande beelden profiteren ervan.\nDe waarde moet tussen 0 en 0,5 liggen (max. 0,9); het is de grootte ten opzichte van de breedte\nen hoogte van de afbeelding die maximaal buiten de afbeelding wordt berekend.
 ;The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
+TheCameraFliesBackFromThe=De camera vliegt terug van het beeld van het hoofdvenster of het laatste sleutelbeeld van de animatie naar buiten de fractal, waar die helemaal in beeld is: Vlieg naar het beeld achteruit, langs dezelfde vrije weg, naar de plek van het beeld gekeerd, de zoom volgt de afstand. Elke halve seconde een sleutelbeeld (Catmull-Rom)
+;The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
 TheCameraFliesFromOutsideThe=De camera vliegt van buiten de fractal, waar die helemaal in beeld is, of van het laatste sleutelbeeld van de animatie naar het beeld van het hoofdvenster: langs de rechtste vrije weg, om wat in de weg zit heen en terug op koers, de zoom volgt de afstand; hij komt precies bij het beeld aan. Elke halve seconde een sleutelbeeld (Catmull-Rom)
 ;The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 TheCameraFliesOnIntoThe=De camera vliegt verder het fractal in, de zoom volgt de afstand ertoe, en stuurt door de openingen; elke halve seconde een keyframe (Catmull-Rom). De vlucht stopt eerder bij een doodlopend punt, bij de grens van dubbele precisie of als hij het fractal verlaat
@@ -3996,6 +4000,8 @@ Zoom=Zoom:
 ;Zoom:
 Zoom2=Zoom
 ;Zoom
+ZoomOut=Uitzoomen
+;Zoom out
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

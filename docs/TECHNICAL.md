@@ -1123,7 +1123,20 @@ module has its own copies of these helpers, so `navi_form.rs` is as it was.
   reached on one straight line, the distance to it falling; a view behind
   the bulb on a way round it; a view 1e-4 from the surface with the zoom
   rising over 5 e-folds, without dips.
-* *Roll* (`roll_keyframes`, both flights): after the flight each
+* *Zoom out* (`approach::fly_out`): Fly to the view from outside, its
+  keyframes in the opposite order (the frames between them with them), so
+  the first is the view exactly and the camera, facing the view's place,
+  pulls back along the same free way. `--zoom-out [--duration S]`. Test:
+  from a view 1e-3 from the surface the distance from it rising, the zoom
+  falling, every camera outside, the last far out.
+* Keyframe gaps (`even_gaps`): where the even steps of the measure give
+  neighbouring gaps on the way that differ more than threefold, a keyframe
+  is put into the longer one at twice the shorter's length from their
+  shared keyframe (a Catmull-Rom curve swings back where a gap is more
+  than five times its neighbour; far out, where the estimate is clamped
+  to the sphere, gaps of 3.7 and 0.4 had swung 9 % back). Test: a view
+  1e-3 from the surface approached without a step back.
+* *Roll* (`roll_keyframes`, the flights): after the flight each
   keyframe's right and down rows are turned around its forward row by the
   angle reached at its time (the camera's place and direction unchanged).
   The speed is `deg_per_sec`, eased in over the first second and out over

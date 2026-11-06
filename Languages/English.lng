@@ -2378,6 +2378,8 @@ NoValidTextFoundPleaseEnter=\sNo valid text found, please enter the text below:
 ;FTextBox.Panel1.Caption
 NoWayAheadWasLeft=no way ahead was left
 ;the program
+NoWayOutOfTheFractal=No way out of the fractal was found: {}
+;the program
 Noise=-noise
 ;MCForm.Button6.Caption
 NoiseAI=-noise AI
@@ -3472,6 +3474,8 @@ TheCalculationFailedLower=the calculation failed
 ;the program
 TheCalculationWillBeExtendedTowards=The calculation will be extended towards the outside the image with reflected objects.\nThis might lead to less artifacts in animations, but stills can profit from it too.\nValue should be in the range of 0 to 0.5 (max 0.9), it is the size relative to the image\nwidth and height that is maximal calculated on the outside.
 ;PostProForm.Edit9.Hint
+TheCameraFliesBackFromThe=The camera flies back from the main window's view or the animation's last keyframe to outside the fractal, where all of it is in view: Fly to the view backwards, the same free way, the camera facing the view's place, the zoom following the distance. A keyframe every half second (Catmull-Rom)
+;the program
 TheCameraFliesFromOutsideThe=The camera flies from outside the fractal, where all of it is in view, or from the animation's last keyframe to the main window's view: on the straightest free way, round what is in the way and back onto the course, the zoom following the distance; it arrives exactly at the view. A keyframe every half second (Catmull-Rom)
 ;the program
 TheCameraFliesOnIntoThe=The camera flies on into the fractal, the zoom following the distance to it, and steers through its gaps; a keyframe every half second (Catmull-Rom). It ends early at a dead end, at the limit of double precision or when it leaves the fractal
@@ -3996,6 +4000,8 @@ Zoom=Zoom:
 ;Mand3DForm.Label5.Caption, FNavigator.Label23.Caption
 Zoom2=Zoom
 ;the program
+ZoomOut=Zoom out
+;AnimTemplatesFrm.TemplateCmb.Items
 Zpos=Zpos
 ;LightAdjustForm.Label15.Caption
 Zrot=Zrot

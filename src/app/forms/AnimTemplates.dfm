@@ -43,7 +43,8 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     Items.Strings = (
       '@MB:N360Orbit'
       '@MB:FlyThrough'
-      '@MB:FlyToTheView')
+      '@MB:FlyToTheView'
+      '@MB:ZoomOut')
   end
   object NoteLabel: TLabel
     Left = 12
