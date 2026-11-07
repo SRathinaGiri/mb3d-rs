@@ -264,6 +264,8 @@ Around=Rond:
 ;Around:
 AroundTheMiddleAnObject=Rond het midden (een object)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=Zo ver als de snelheid reikt
+;As far as the speed goes
 AsFullBackgroundSphere=Als volledige achtergrondbol:
 ;As full background sphere:
 Aspect=Verhouding:
@@ -2320,6 +2322,8 @@ NavigatorSize=Navigatorgrootte
 ;Navigator Size
 NavigatorViewSentToTheMain=Navigatorbeeld naar het hoofdvenster gestuurd, druk op "3D berekenen".
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=Dicht bij het beeld, zo ver terug als de snelheid reikt
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=Neuraal ruisfilter: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=Neuraal ruisfilter: klaar
@@ -2754,6 +2758,8 @@ Preview=voorbeeld
 ;preview
 Preview2=Voorbeeld
 ;Preview
+Preview50PixelsWideLowestQuality=Voorbeeld (50 pixels breed, laagste kwaliteit)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=Max. voorbeeldgrootte:
 ;Preview max size:
 PreviewSize=Voorbeeldgrootte:
@@ -4004,6 +4010,8 @@ Zoom2=Zoom
 ;Zoom
 ZoomOut=Uitzoomen
 ;Zoom out
+ZoomOutTo=Uitzoomen tot:
+;Zoom out to:
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

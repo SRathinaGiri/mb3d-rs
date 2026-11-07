@@ -31,6 +31,14 @@
 //! last keyframe, to the main window's view). The flights are flown on a thread of its own (a long
 //! one took the window with it): a bar shows the frames flown, Stop ends
 //! the flight there and adds what was flown.
+//!
+//! Fly to the view can start near the view instead of outside: as far back
+//! as the flight goes at the speed in the duration (slow: near, fast: far);
+//! Zoom out likewise ends as far out as the speed goes.
+//!
+//! The keyframes made play as a small preview in the window (50 pixels
+//! wide, without shadows, ambient occlusion, reflections, volume light or
+//! depth of field), rendered on a thread while it plays.
 
 use super::util::{pti, ptf};
 use super::{Mb3d, Ui};
@@ -38,12 +46,29 @@ use crate::vcl::lang::{tr, trf};
 use crate::vcl::Event;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
-/// A fly-through being flown.
+/// A fly-through being flown, and the preview of the keyframes made.
 #[derive(Default)]
 pub struct State {
     flying: Option<Flying>,
+    preview: Option<Preview>,
 }
+
+/// The small preview: its frames as they are rendered, played in real time.
+struct Preview {
+    frames: Arc<Mutex<Vec<Option<crate::vcl::bitmap::Bitmap>>>>,
+    stop: Arc<AtomicBool>,
+    /// the preview's frames a second (the animation's over the frames left out)
+    fps: f64,
+    started: Instant,
+    shown: Option<usize>,
+}
+
+/// The preview's width in pixels (shown twice as large).
+const PREVIEW_W: f64 = 50.0;
+/// At most this many frames are rendered for the preview.
+const PREVIEW_FRAMES: usize = 150;
 
 struct Flying {
     done: Arc<AtomicUsize>,
@@ -76,7 +101,8 @@ pub fn open(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_text(F, "RollEdit", &get("AniTplRoll", "0"));
     let vr = if ui.checked(ANIM, "Vr360Check") { "1" } else { "0" };
     ui.set_checked(F, "ComfortCheck", get("AniTplComfort", vr) == "1");
-    ui.set_item_index(F, "FromCmb", get("AniTplFrom", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
+    ui.set_item_index(F, "FromCmb", get("AniTplFrom", "0").parse::<i32>().unwrap_or(0).clamp(0, 2));
+    ui.set_item_index(F, "ToCmb", get("AniTplTo", "0").parse::<i32>().unwrap_or(0).clamp(0, 1));
     show_kind(ui);
     ui.show(F);
 }
@@ -88,6 +114,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
     let until = if ui.checked(F, "UntilCheck") { "1" } else { "0" };
     let start = ui.item_index(F, "StartCmb").to_string();
     let from = ui.item_index(F, "FromCmb").to_string();
+    let to = ui.item_index(F, "ToCmb").to_string();
     for (k, v) in [
         ("AniTplKind", kind.as_str()),
         ("AniTplSecs", ui.text(F, "DurationEdit").trim()),
@@ -99,6 +126,7 @@ fn save(app: &mut Mb3d, ui: &Ui) {
         ("AniTplTurn", ui.text(F, "TurnEdit").trim()),
         ("AniTplStart", start.as_str()),
         ("AniTplFrom", from.as_str()),
+        ("AniTplTo", to.as_str()),
         ("AniTplRoll", ui.text(F, "RollEdit").trim()),
         ("AniTplComfort", if ui.checked(F, "ComfortCheck") { "1" } else { "0" }),
     ] {
@@ -122,6 +150,18 @@ fn is_out(ui: &Ui) -> bool {
     ui.item_index(F, "TemplateCmb") == 3
 }
 
+/// Fly to the view from near the view, or zoom out as far as the speed
+/// goes: the flight's length from the speed and the duration.
+fn by_speed(ui: &Ui) -> bool {
+    (is_to_view(ui) && ui.item_index(F, "FromCmb") == 2) || (is_out(ui) && ui.item_index(F, "ToCmb") == 1)
+}
+
+/// The speed typed in, % of the distance a frame (4 when not a number).
+fn speed_pct(ui: &Ui) -> f64 {
+    let v = ptf(&ui.text(F, "SpeedEdit"));
+    if v.is_finite() { v.clamp(0.2, 50.0) } else { 4.0 }
+}
+
 /// "Until the view shows only sky ..." (the fly-through's).
 fn until(ui: &Ui) -> bool {
     is_fly(ui) && ui.checked(F, "UntilCheck")
@@ -143,8 +183,15 @@ fn show_kind(ui: &mut Ui) {
     for c in ["AxisLabel", "AxisCmb", "StepsLabel", "StepsEdit", "PivotLabel", "PivotCmb"] {
         ui.set_visible(F, c, orbit);
     }
-    for c in ["UntilCheck", "SpeedLabel", "SpeedEdit", "TurnLabel", "TurnEdit"] {
+    for c in ["UntilCheck", "TurnLabel", "TurnEdit"] {
         ui.set_visible(F, c, fly);
+    }
+    let speed = fly || by_speed(ui);
+    for c in ["SpeedLabel", "SpeedEdit"] {
+        ui.set_visible(F, c, speed);
+    }
+    for c in ["ToLabel", "ToCmb"] {
+        ui.set_visible(F, c, is_out(ui));
     }
     for c in ["RollLabel", "RollEdit", "RollNoteLabel"] {
         ui.set_visible(F, c, !orbit);
@@ -237,6 +284,7 @@ fn add(app: &mut Mb3d, ui: &mut Ui) {
             let rows = keys[0].scene.vgrads;
             crate::autopilot::steady_keyframes(&mut keys, rows);
         }
+        start_preview(app, ui, &keys, true);
         super::anim_form::add_template(app, ui, keys, true, from_last);
     } else {
         let speed = ptf(&ui.text(F, "SpeedEdit"));
@@ -305,10 +353,12 @@ fn add_to_view(app: &mut Mb3d, ui: &mut Ui, secs: f64, fps: f64) {
         (app.scene.clone(), start, from_last)
     };
     let roll = roll(ui);
+    let frames = (secs * fps).round().max(2.0) as usize;
     let ap = crate::approach::ApproachParams {
-        frames: (secs * fps).round().max(2.0) as usize,
+        frames,
         keyframe_every: crate::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll, fps),
         steady: comfort(ui),
+        reach: by_speed(ui).then(|| speed_pct(ui) / 100.0 * frames as f64),
         ..Default::default()
     };
     let fl = Flying {
@@ -355,7 +405,7 @@ fn show_flying(app: &Mb3d, ui: &mut Ui) {
     let fl = app.anim_tpl.flying.as_ref();
     ui.set_visible(F, "FlightBar", fl.is_some());
     ui.set_caption(F, "AddBtn", &tr(if fl.is_some() { "@MB:Stop" } else { "@MB:AddTheKeyframes" }));
-    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb", "RollEdit", "ComfortCheck"] {
+    for c in ["TemplateCmb", "DurationEdit", "UntilCheck", "SpeedEdit", "TurnEdit", "StartCmb", "FromCmb", "ToCmb", "RollEdit", "ComfortCheck"] {
         ui.set_enabled(F, c, fl.is_none());
     }
     match fl {
@@ -373,6 +423,96 @@ fn show_flying(app: &Mb3d, ui: &mut Ui) {
             ui.set_enabled(F, "RollEdit", !comfort(ui));
         }
     }
+}
+
+/// The preview of the template's keyframes: small frames rendered on a
+/// thread (the Animation window's size and 360° VR, one eye), played as
+/// they come.
+fn start_preview(app: &mut Mb3d, ui: &mut Ui, keys: &[crate::anim::Keyframe], looped: bool) {
+    stop_preview(app, ui);
+    if keys.len() < 2 {
+        return;
+    }
+    let mut a = app.anim.anim.clone();
+    a.vr360 = ui.checked(ANIM, "Vr360Check");
+    if a.width < 1 || a.height < 1 {
+        a.set_size_from(&keys[0].scene);
+    }
+    a.keyframes = keys.to_vec();
+    for k in a.keyframes.iter_mut() {
+        k.scene.stereo_mode = 0;
+    }
+    a.looped = looped;
+    a.interpolation = crate::anim::Interpolation::CatmullRom;
+    a.scale = 1;
+    a.motion_blur = 0;
+    let (w, h) = if a.vr360 { (2.0, 1.0) } else { (a.width as f64, a.height as f64) };
+    let total = a.frame_count();
+    if total == 0 {
+        return;
+    }
+    let step = total.div_ceil(PREVIEW_FRAMES).max(1);
+    let list: Vec<usize> = (0..total).step_by(step).collect();
+    // shown twice as large, at most 100 x 100
+    let (bw, bh) = if w >= h { (100, (100.0 * h / w).round().max(1.0) as i32) } else { ((100.0 * w / h).round().max(1.0) as i32, 100) };
+    let c = ui.cm(F, "PreviewImage");
+    c.set_bounds(12, 360, bw, bh);
+    c.stretch = true;
+    ui.set_picture(F, "PreviewImage", None);
+    let frames = Arc::new(Mutex::new(vec![None; list.len()]));
+    let stop = Arc::new(AtomicBool::new(false));
+    let run = crate::frames::FrameRun { preview: PREVIEW_W / a.width.max(1) as f64, ..Default::default() };
+    let (fr, st, waker) = (frames.clone(), stop.clone(), ui.waker());
+    std::thread::spawn(move || {
+        let cancel = || st.load(Ordering::Relaxed);
+        for (k, &f) in list.iter().enumerate() {
+            if cancel() {
+                return;
+            }
+            let r = crate::frames::frame_render_scene(&a, f, &run).and_then(|mut s| {
+                s.stereo_mode = 0;
+                s.shadows = None;
+                s.mc.reflections = false;
+                s.vol_light = None;
+                s.deao = None;
+                s.ao = None;
+                s.dof = None;
+                crate::frames::render_scaled(&s, 1, false, false, &|_, _| {}, &cancel)
+            });
+            let Ok(img) = r else { return };
+            fr.lock().unwrap()[k] = Some(crate::vcl::bitmap::Bitmap::from_rgb(img.width, img.height, &img.rgb));
+            if let Some(w) = &waker {
+                w.wake();
+            }
+        }
+    });
+    app.anim_tpl.preview = Some(Preview { frames, stop, fps: fps(ui) / step as f64, started: Instant::now(), shown: None });
+    ui.set_timer(F, "PreviewTimer", true);
+}
+
+fn stop_preview(app: &mut Mb3d, ui: &mut Ui) {
+    if let Some(p) = app.anim_tpl.preview.take() {
+        p.stop.store(true, Ordering::Relaxed);
+    }
+    ui.set_timer(F, "PreviewTimer", false);
+}
+
+/// The preview's next frame, in real time (looping over the frames there).
+fn preview_tick(app: &mut Mb3d, ui: &mut Ui) {
+    let Some(p) = &mut app.anim_tpl.preview else { return };
+    let fr = p.frames.lock().unwrap();
+    let ready = fr.iter().take_while(|f| f.is_some()).count();
+    if ready == 0 {
+        return;
+    }
+    let k = (p.started.elapsed().as_secs_f64() * p.fps) as usize % ready;
+    if p.shown == Some(k) {
+        return;
+    }
+    let b = fr[k].clone();
+    drop(fr);
+    p.shown = Some(k);
+    ui.set_picture(F, "PreviewImage", b);
 }
 
 /// The flight's progress, and its keyframes added when it has ended.
@@ -398,6 +538,7 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
                 FlightEnd::OnlyFractal => Some(tr("@MB:TheViewIsFilledWithThe")),
             };
             let flown = fl.frames;
+            start_preview(app, ui, &fl.keyframes, false);
             super::anim_form::add_template(app, ui, fl.keyframes, false, from_last);
             if let Some(w) = why {
                 app.message(ui, &trf("@MB:FlyThroughTheFlightEndedAfter", &[&flown, &asked, &w]));
@@ -414,7 +555,8 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
 pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     match e.handler.as_str() {
         "FormShow" => show_kind(ui),
-        "TemplateCmbChange" | "UntilCheckClick" | "ComfortCheckClick" => show_kind(ui),
+        "TemplateCmbChange" | "UntilCheckClick" | "ComfortCheckClick" | "FromCmbChange" | "ToCmbChange" => show_kind(ui),
+        "PreviewTimerTimer" => preview_tick(app, ui),
         "DurationEditChange" => show_frames(ui),
         "AddBtnClick" => match &app.anim_tpl.flying {
             // Stop: the flight ends at its next frame, what was flown is added
@@ -426,6 +568,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 fl.cancel.store(true, Ordering::Relaxed);
             }
             save(app, ui);
+            stop_preview(app, ui);
             ui.hide(F);
         }
         _ => {}

@@ -264,6 +264,8 @@ Around=Alrededor de:
 ;Around:
 AroundTheMiddleAnObject=Alrededor del centro (un objeto)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=Hasta donde llegue la velocidad
+;As far as the speed goes
 AsFullBackgroundSphere=Como esfera de fondo completa:
 ;As full background sphere:
 Aspect=Aspecto:
@@ -2320,6 +2322,8 @@ NavigatorSize=Tamaño del navegador
 ;Navigator Size
 NavigatorViewSentToTheMain=Vista del navegador enviada a la ventana principal; pulse "Calcular 3D".
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=Cerca de la vista, tan atrás como llegue la velocidad
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=Filtro neuronal de ruido: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=Filtro neuronal de ruido: hecho
@@ -2754,6 +2758,8 @@ Preview=previa
 ;preview
 Preview2=Vista previa
 ;Preview
+Preview50PixelsWideLowestQuality=Vista previa (50 píxeles de ancho, calidad mínima)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=Tamaño máx. vista previa:
 ;Preview max size:
 PreviewSize=Tamaño de vista previa:
@@ -4004,6 +4010,8 @@ Zoom2=Zoom
 ;Zoom
 ZoomOut=Alejar
 ;Zoom out
+ZoomOutTo=Alejar hasta:
+;Zoom out to:
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

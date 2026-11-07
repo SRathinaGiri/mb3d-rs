@@ -1089,6 +1089,12 @@ OPTIONS:
                              36 keyframes), with --fly, --approach and --zoom-out it
                              flies the same way without turning (from one view to
                              another: a slow turn over the whole flight); not with --roll
+        --speed <PCT>        The flight's speed, % of the distance to the fractal a frame
+                             (--fly: default 4); with --approach (one file) and
+                             --zoom-out the start (the end) is not outside the fractal
+                             but as far from the view as the flight goes at this speed
+                             in --duration: slow starts near, fast far (nearer where
+                             the way behind the view is not free that far)
         --roll <DEG>         With --fly, --approach or --zoom-out: the picture turns
                              around the line of sight, DEG degrees a second (negative:
                              anticlockwise),
@@ -1168,6 +1174,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
     let mut approach = false;
     let mut zoom_out = false;
     let mut comfort = false;
+    let mut speed: Option<f64> = None;
     let mut roll: Option<f64> = None;
     let mut vr = false;
     let mut orbit_axis: Option<mb3d::autopilot::OrbitAxis> = None;
@@ -1205,6 +1212,18 @@ fn animate(argv: &[String]) -> Result<(), String> {
             "--approach" | "--fly-to" => approach = true,
             "--zoom-out" => zoom_out = true,
             "--vr-comfort" => comfort = true,
+            "--speed" => {
+                speed = Some(
+                    args.next()
+                        .ok_or("--speed needs a value")?
+                        .trim()
+                        .replace(',', ".")
+                        .parse::<f64>()
+                        .ok()
+                        .filter(|v| v.is_finite() && *v > 0.0 && *v <= 50.0)
+                        .ok_or("--speed needs % of the distance a frame, above 0 and at most 50 (e.g. 4)")?,
+                )
+            }
             "--vr" | "--vr360" => vr = true,
             "--orbit-axis" => orbit_axis = Some(mb3d::autopilot::OrbitAxis::parse(args.next().ok_or("--orbit-axis needs a value")?)?),
             "--roll" => {
@@ -1385,6 +1404,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             },
             keyframe_every: mb3d::autopilot::roll_keyframe_every((fps * 0.5).round().max(1.0) as usize, roll.unwrap_or(0.0), fps),
             until_view: duration == Some(0.0),
+            speed: speed.map_or(mb3d::autopilot::FlightParams::default().speed, |v| v / 100.0),
             ..Default::default()
         };
         let fl = mb3d::autopilot::fly_through(&k.scene, &fp, &|_, _| {}, &|| false).map_err(input_err)?;
@@ -1415,6 +1435,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             steady: comfort,
             ..Default::default()
         };
+        let ap = mb3d::approach::ApproachParams { reach: speed.map(|v| v / 100.0 * ap.frames as f64), ..ap };
         let a = mb3d::approach::fly_out(&view.scene, &ap, &|_, _| {}, &|| false).map_err(input_err)?;
         if !quiet {
             note(&match a.route {
@@ -1443,6 +1464,7 @@ fn animate(argv: &[String]) -> Result<(), String> {
             steady: comfort,
             ..Default::default()
         };
+        let ap = mb3d::approach::ApproachParams { reach: speed.map(|v| v / 100.0 * ap.frames as f64), ..ap };
         let a = mb3d::approach::fly_to(&target.scene, start.as_ref().map(|k| &k.scene), &ap, &|_, _| {}, &|| false).map_err(input_err)?;
         if !quiet {
             note(&match a.route {
@@ -1459,6 +1481,8 @@ fn animate(argv: &[String]) -> Result<(), String> {
         return Err(usage_err("--orbit-axis goes with --orbit"));
     } else if roll.is_some() {
         return Err(usage_err("--roll goes with --fly, --approach or --zoom-out"));
+    } else if speed.is_some() {
+        return Err(usage_err("--speed goes with --fly, --approach or --zoom-out"));
     } else if duration.is_some() {
         return Err("--duration goes with --orbit, --fly, --approach or --zoom-out".into());
     }

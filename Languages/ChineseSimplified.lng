@@ -265,6 +265,8 @@ Around=绕：
 ;Around:
 AroundTheMiddleAnObject=围绕中心（物体）
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=按速度能到的距离
+;As far as the speed goes
 AsFullBackgroundSphere=作为完整背景球：
 ;As full background sphere:
 Aspect=宽高比：
@@ -2321,6 +2323,8 @@ NavigatorSize=导航器大小
 ;Navigator Size
 NavigatorViewSentToTheMain=导航器视图已发送到主窗口，请按“计算 3D”。
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=视图附近，按速度能退到的距离
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=神经网络降噪滤镜：{}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=神经网络降噪滤镜：完成
@@ -2755,6 +2759,8 @@ Preview=预览
 ;preview
 Preview2=预览
 ;Preview
+Preview50PixelsWideLowestQuality=预览（宽 50 像素，最低质量）
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=预览最大尺寸：
 ;Preview max size:
 PreviewSize=预览尺寸：
@@ -4005,6 +4011,8 @@ Zoom2=缩放
 ;Zoom
 ZoomOut=缩小飞出
 ;Zoom out
+ZoomOutTo=缩小飞出到：
+;Zoom out to:
 Zpos=Z 位置
 ;Zpos
 Zrot=Z 旋转

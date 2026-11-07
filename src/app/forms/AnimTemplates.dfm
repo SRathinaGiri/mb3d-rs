@@ -3,7 +3,7 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   Top = 200
   BorderStyle = bsDialog
   Caption = '@MB:AnimationTemplates2'
-  ClientHeight = 400
+  ClientHeight = 524
   ClientWidth = 470
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -142,6 +142,27 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     TabOrder = 4
     OnClick = UntilCheckClick
   end
+  object ToLabel: TLabel
+    Left = 12
+    Top = 163
+    Width = 150
+    Height = 13
+    Visible = False
+    Caption = '@MB:ZoomOutTo'
+  end
+  object ToCmb: TComboBox
+    Left = 170
+    Top = 160
+    Width = 288
+    Height = 21
+    Style = csDropDownList
+    TabOrder = 14
+    Visible = False
+    OnChange = ToCmbChange
+    Items.Strings = (
+      '@MB:OutsideTheFractal'
+      '@MB:AsFarAsTheSpeedGoes')
+  end
   object SpeedLabel: TLabel
     Left = 12
     Top = 195
@@ -198,9 +219,11 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     Style = csDropDownList
     TabOrder = 11
     Visible = False
+    OnChange = FromCmbChange
     Items.Strings = (
       '@MB:OutsideTheFractal'
-      '@MB:TheLastKeyframe')
+      '@MB:TheLastKeyframe'
+      '@MB:NearTheViewAsFarBack')
   end
   object RollLabel: TLabel
     Left = 12
@@ -234,23 +257,43 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
     TabOrder = 13
     OnClick = ComfortCheckClick
   end
-  object FlightBar: TProgressBar
+  object PreviewLabel: TLabel
     Left = 12
     Top = 344
+    Width = 446
+    Height = 13
+    Caption = '@MB:Preview50PixelsWideLowestQuality'
+  end
+  object PreviewImage: TImage
+    Left = 12
+    Top = 360
+    Width = 100
+    Height = 100
+  end
+  object PreviewTimer: TTimer
+    Enabled = False
+    Interval = 20
+    OnTimer = PreviewTimerTimer
+    Left = 420
+    Top = 360
+  end
+  object FlightBar: TProgressBar
+    Left = 12
+    Top = 468
     Width = 446
     Height = 10
     Visible = False
   end
   object FlightLabel: TLabel
     Left = 12
-    Top = 366
+    Top = 490
     Width = 176
     Height = 13
     AutoSize = False
   end
   object AddBtn: TButton
     Left = 196
-    Top = 360
+    Top = 484
     Width = 160
     Height = 25
     Caption = '@MB:AddTheKeyframes'
@@ -260,7 +303,7 @@ object AnimTemplatesFrm: TAnimTemplatesFrm
   end
   object CloseBtn: TButton
     Left = 364
-    Top = 360
+    Top = 484
     Width = 94
     Height = 25
     Cancel = True

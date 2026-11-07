@@ -1123,6 +1123,25 @@ module has its own copies of these helpers, so `navi_form.rs` is as it was.
   reached on one straight line, the distance to it falling; a view behind
   the bulb on a way round it; a view 1e-4 from the surface with the zoom
   rising over 5 e-folds, without dips.
+* Near the view (`ApproachParams::reach`, `--speed PCT`): not from
+  outside but from as far back from the view as the measure `reach`
+  (speed in parts of the estimate a frame times frames). Lines back from
+  the view's camera within 35° of straight behind (nearest first; farther
+  round the camera came in from the side, along a fold plane) are walked
+  (`walk_back`, steps of 0.2 estimates) while they keep the clearance; the
+  first that reaches `reach` is taken, else the one free the farthest (the
+  flight is then slower). Some fractals have no free outside: an Amazing
+  Box hybrid's fold planes and fine structure left 0.3 to 5 units of room
+  even 100 units out, and the way from outside crept along a fold plane.
+  Test: a faster flight starts farther, straight, in the cone.
+* Room (`Space::free`, `room`): a point whose iteration does not escape is
+  inside (as the renderer takes it); below the clearance the estimate is
+  checked by rays in 14 directions before the point counts as blocked.
+* Preview (the templates window): the keyframes made rendered at 50
+  pixels wide (`FrameRun::preview`), at most 150 frames (every n-th, played
+  at the frames a second over n), one eye, without shadows, ambient
+  occlusion, reflections, volume light or depth of field, on a thread; a
+  timer shows the frames there in real time.
 * *Zoom out* (`approach::fly_out`): Fly to the view from outside, its
   keyframes in the opposite order (the frames between them with them), so
   the first is the view exactly and the camera, facing the view's place,

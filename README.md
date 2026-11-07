@@ -908,9 +908,13 @@ you check further on your own:
   on the straightest free way, round what is in the way and back onto the
   course, the zoom following the distance, arriving exactly at the view
   (`mb3d animate view.m3p --approach --duration 10`; with two files from the
-  first view to the second), or *Zoom out*, the same backwards: from the
+  first view to the second; or *Near the view*: as far back as the flight
+  goes at the *Speed* in the duration, slow near, fast far, `--speed 6`),
+  or *Zoom out*, the same backwards: from the
   view (or the last keyframe) out to where all of the fractal is in view
-  (`--zoom-out`). *VR comfort* (on at first with *360° VR*;
+  (`--zoom-out`; *as far as the speed goes* with `--speed`). The keyframes
+  made play as a small preview in the window, 50 pixels wide and without
+  shadows or ambient occlusion, while it is rendered. *VR comfort* (on at first with *360° VR*;
   `--vr-comfort`) keeps the view from turning by itself, which makes
   viewers in a headset sick: the orbit goes round with one rotation, the
   flights fly the same way without turning. The flights can *roll*: the picture turns

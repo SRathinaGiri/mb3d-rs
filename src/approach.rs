@@ -49,11 +49,16 @@ pub struct ApproachParams {
     /// rotation all along; from a start view a slow turn from its rotation
     /// to the target's over the whole flight).
     pub steady: bool,
+    /// Not from outside the fractal: from as far back from the view as the
+    /// flight goes at its speed, this many distance estimates (the measure
+    /// of the way: speed in parts of the estimate a frame times frames);
+    /// nearer when the way behind the view is not free that far.
+    pub reach: Option<f64>,
 }
 
 impl Default for ApproachParams {
     fn default() -> Self {
-        ApproachParams { frames: 250, keyframe_every: 12, outside: 1.15, steady: false }
+        ApproachParams { frames: 250, keyframe_every: 12, outside: 1.15, steady: false, reach: None }
     }
 }
 
@@ -483,6 +488,29 @@ fn even_gaps(pts: &[Vec3], us: &[f64], mut ukeys: Vec<f64>) -> Vec<f64> {
     ukeys
 }
 
+/// From the view's camera `pt` back along the unit `d`: how far (in the
+/// measure, distance estimates) the line keeps its clearance, up to
+/// `reach` or out of the sphere `outside`, and the point there.
+fn walk_back(sp: &Space, pt: Vec3, d: Vec3, reach: f64, outside: f64) -> (f64, Vec3) {
+    let (mut u, mut t) = (0.0, 0.0);
+    let mut last = pt;
+    for _ in 0..100_000 {
+        let x = add(pt, scale(d, t));
+        if t > 0.0 && sp.free(x, sp.clearance(x)).is_none() {
+            return (u, last);
+        }
+        last = x;
+        if u >= reach || len(&x) >= outside {
+            return (u, x);
+        }
+        let e = sp.de(x).max(sp.near);
+        let dt = e * 0.2;
+        u += 0.2;
+        t += dt;
+    }
+    (u, last)
+}
+
 /// The unit rows `m` with the lengths of the rows of `like`.
 fn rows_like(m: Mat3, like: &Mat3) -> Mat3 {
     [0, 1, 2].map(|r| scale(m[r], len(&like[r])))
@@ -584,6 +612,33 @@ pub fn fly_to(target: &Scene, from: Option<&Scene>, ap: &ApproachParams, progres
                 let w = round_corners(&sp, shortcut(&sp, &w));
                 let n = w.len() - 1;
                 (w, Route::Round(n))
+            }
+        }
+        None if ap.reach.is_some() => {
+            let reach = ap.reach.unwrap().max(1e-3);
+            let back = scale(ft, -1.0);
+            // the line back from the view that is free for the whole
+            // measure, nearest to straight behind first; else the one
+            // free the farthest
+            let mut best: Option<(f64, Vec3)> = None;
+            // (within 35 degrees of straight behind: farther round the
+            // camera would come in from the side, along what is there)
+            let cone = 35f64.to_radians().cos() - 1e-9;
+            for (k, d) in line_dirs(back).into_iter().filter(|d| dot(d, &back) >= cone).enumerate() {
+                if k % 16 == 0 && cancel() {
+                    return Err("cancelled".into());
+                }
+                let (u, x) = walk_back(&sp, pt, d, reach, outside);
+                if best.is_none_or(|(b, _)| u > b * 1.0001) {
+                    best = Some((u, x));
+                }
+                if u >= reach {
+                    break;
+                }
+            }
+            match best {
+                Some((u, s)) if u > reach.min(1.0) * 0.1 => (vec![s, pt], Route::Straight),
+                _ => return Err("no free room behind the view was found".into()),
             }
         }
         None => {
@@ -850,6 +905,29 @@ mod tests {
             assert_eq!(end.scene.vgrads, view.vgrads);
             assert_eq!(end.scene.mid, view.mid);
         }
+    }
+
+    #[test]
+    fn a_faster_flight_starts_farther_and_straight_behind() {
+        let view = close_view(1e-3);
+        let c = cam_pos(&view);
+        let back = scale(unit_rows(&view)[2], -1.0);
+        let mut prev = 0.0;
+        for reach in [2.0, 5.0, 10.0] {
+            let ap = ApproachParams { frames: 100, reach: Some(reach), ..Default::default() };
+            let a = fly_to(&view, None, &ap, &|_, _| {}, &|| false).unwrap();
+            assert_eq!(a.route, Route::Straight);
+            let s = cam_pos(&a.flight.keyframes[0].scene);
+            let d = len(&sub(s, c));
+            assert!(d > prev, "reach {reach}: {d} after {prev}");
+            // within the cone behind the view
+            assert!(dot(&normalize(sub(s, c)), &back) >= 35f64.to_radians().cos() - 1e-6);
+            // the last keyframe is still the view
+            assert_eq!(a.flight.keyframes.last().unwrap().scene.vgrads, view.vgrads);
+            prev = d;
+        }
+        // (and far less than outside)
+        assert!(prev < 1.0, "{prev}");
     }
 
     #[test]

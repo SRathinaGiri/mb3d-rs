@@ -265,6 +265,8 @@ Around=중심:
 ;Around:
 AroundTheMiddleAnObject=중심 주위(물체)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=속도가 닿는 곳까지
+;As far as the speed goes
 AsFullBackgroundSphere=전체 배경 구로:
 ;As full background sphere:
 Aspect=비율:
@@ -2321,6 +2323,8 @@ NavigatorSize=내비게이터 크기
 ;Navigator Size
 NavigatorViewSentToTheMain=내비게이터 시점을 메인 창으로 보냈습니다. "3D 계산"을 누르십시오.
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=뷰 가까이, 속도가 닿는 만큼 뒤에서
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=신경망 노이즈 필터: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=신경망 노이즈 필터: 완료
@@ -2755,6 +2759,8 @@ Preview=미리보기
 ;preview
 Preview2=미리보기
 ;Preview
+Preview50PixelsWideLowestQuality=미리 보기 (너비 50픽셀, 최저 품질)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=미리보기 최대 크기:
 ;Preview max size:
 PreviewSize=미리보기 크기:
@@ -4005,6 +4011,8 @@ Zoom2=줌
 ;Zoom
 ZoomOut=줌 아웃
 ;Zoom out
+ZoomOutTo=줌 아웃 끝:
+;Zoom out to:
 Zpos=Z위치
 ;Zpos
 Zrot=Z회전

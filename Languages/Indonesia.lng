@@ -264,6 +264,8 @@ Around=Mengelilingi:
 ;Around:
 AroundTheMiddleAnObject=Mengelilingi titik tengah (sebuah objek)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=Sejauh yang dicapai kecepatan
+;As far as the speed goes
 AsFullBackgroundSphere=Sebagai bola latar penuh:
 ;As full background sphere:
 Aspect=Aspek:
@@ -2320,6 +2322,8 @@ NavigatorSize=Ukuran Navigator
 ;Navigator Size
 NavigatorViewSentToTheMain=Tampilan navigator dikirim ke jendela utama, tekan "Hitung 3D".
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=Dekat tampilan, sejauh mundur yang dicapai kecepatan
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=Filter derau neural: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=Filter derau neural: selesai
@@ -2754,6 +2758,8 @@ Preview=pratinjau
 ;preview
 Preview2=Pratinjau
 ;Preview
+Preview50PixelsWideLowestQuality=Pratinjau (lebar 50 piksel, kualitas terendah)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=Ukuran maks pratinjau:
 ;Preview max size:
 PreviewSize=Ukuran pratinjau:
@@ -4004,6 +4010,8 @@ Zoom2=Zoom
 ;Zoom
 ZoomOut=Perkecil
 ;Zoom out
+ZoomOutTo=Perkecil sampai:
+;Zoom out to:
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

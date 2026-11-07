@@ -264,6 +264,8 @@ Around=Wkół:
 ;Around:
 AroundTheMiddleAnObject=Wkół westrzódka (òbiekt)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=Tak daleko, jak sygô chùtkòsc
+;As far as the speed goes
 AsFullBackgroundSphere=Jakno fùl kùla spòdla:
 ;As full background sphere:
 Aspect=Propòrcje:
@@ -2320,6 +2322,8 @@ NavigatorSize=Wiôlgòsc Nawigatora
 ;Navigator Size
 NavigatorViewSentToTheMain=Wëzdrzatk Nawigatora pòsłóny do przédnégò òkna, wcësni "Rechùj 3D".
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=Blëso wëzdrzatkù, tak daleko na spak, jak sygô chùtkòsc
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=Neuronowi filter szëmù: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=Neuronowi filter szëmù: gòtowé
@@ -2754,6 +2758,8 @@ Preview=pòdzérk
 ;preview
 Preview2=Pòdzérk
 ;Preview
+Preview50PixelsWideLowestQuality=Przezérk (50 pikselów szérzi, nôlëchszô jakòsc)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=Maks. wiôlgòsc pòdzérkù:
 ;Preview max size:
 PreviewSize=Wiôlgòsc pòdzérkù:
@@ -4004,6 +4010,8 @@ Zoom2=Zoom
 ;Zoom
 ZoomOut=Òddalenié
 ;Zoom out
+ZoomOutTo=Òddalenié do:
+;Zoom out to:
 Zpos=Pòz. Z
 ;Zpos
 Zrot=Òbr. Z

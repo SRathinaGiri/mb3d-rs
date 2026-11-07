@@ -264,6 +264,8 @@ Around=Around:
 ;AnimTemplatesFrm.PivotLabel.Caption
 AroundTheMiddleAnObject=Around the middle (an object)
 ;SplatFrm.AroundCmb.Items
+AsFarAsTheSpeedGoes=As far as the speed goes
+;AnimTemplatesFrm.ToCmb.Items
 AsFullBackgroundSphere=As full background sphere:
 ;LightAdjustForm.CheckBox12.Caption
 Aspect=Aspect:
@@ -2320,6 +2322,8 @@ NavigatorSize=Navigator Size
 ;FNavigator.SizeGroup.Caption
 NavigatorViewSentToTheMain=Navigator view sent to the main window, press "Calculate 3D".
 ;the program
+NearTheViewAsFarBack=Near the view, as far back as the speed goes
+;AnimTemplatesFrm.FromCmb.Items
 NeuralNoiseFilter=Neural noise filter: {}
 ;the program
 NeuralNoiseFilterDone=Neural noise filter: done
@@ -2593,7 +2597,7 @@ OutsideRender=Outside render
 OutsideRenderDefaultModeInsideRender=Outside render:  default mode\nInside render:    slow raymarching on the inside with max. its.\nIn and outside:   render both sides
 ;FormulaGUIForm.ComboBox1.Hint
 OutsideTheFractal=Outside the fractal
-;AnimTemplatesFrm.FromCmb.Items
+;AnimTemplatesFrm.ToCmb.Items, AnimTemplatesFrm.FromCmb.Items
 OverTheTopAndUnderPitch=Over the top and under (pitch)
 ;AnimTemplatesFrm.AxisCmb.Items
 OverallScale=Overall scale:
@@ -2754,6 +2758,8 @@ Preview=preview
 ;Mand3DForm.SpeedButton3.Caption
 Preview2=Preview
 ;AnimationForm.GroupBox1.Caption
+Preview50PixelsWideLowestQuality=Preview (50 pixels wide, lowest quality)
+;AnimTemplatesFrm.PreviewLabel.Caption
 PreviewMaxSize=Preview max size:
 ;FVoxelExport.RadioGroup2.Caption
 PreviewSize=Preview size:
@@ -4004,6 +4010,8 @@ Zoom2=Zoom
 ;the program
 ZoomOut=Zoom out
 ;AnimTemplatesFrm.TemplateCmb.Items
+ZoomOutTo=Zoom out to:
+;AnimTemplatesFrm.ToLabel.Caption
 Zpos=Zpos
 ;LightAdjustForm.Label15.Caption
 Zrot=Zrot

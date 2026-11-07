@@ -265,6 +265,8 @@ Around=किसके चारों ओर:
 ;Around:
 AroundTheMiddleAnObject=केंद्र के चारों ओर (एक वस्तु)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=जहाँ तक गति ले जाए
+;As far as the speed goes
 AsFullBackgroundSphere=पूर्ण पृष्ठभूमि गोले के रूप में:
 ;As full background sphere:
 Aspect=अनुपात:
@@ -2321,6 +2323,8 @@ NavigatorSize=नेविगेटर आकार
 ;Navigator Size
 NavigatorViewSentToTheMain=नेविगेटर दृश्य मुख्य विंडो को भेजा गया, "3D गणना करें" दबाएँ।
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=दृश्य के पास, गति जितना पीछे ले जाए
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=न्यूरल शोर फ़िल्टर: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=न्यूरल शोर फ़िल्टर: पूर्ण
@@ -2755,6 +2759,8 @@ Preview=पूर्वावलोकन
 ;preview
 Preview2=पूर्वावलोकन
 ;Preview
+Preview50PixelsWideLowestQuality=पूर्वावलोकन (50 पिक्सेल चौड़ा, सबसे कम गुणवत्ता)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=पूर्वावलोकन अधि. आकार:
 ;Preview max size:
 PreviewSize=पूर्वावलोकन आकार:
@@ -4005,6 +4011,8 @@ Zoom2=ज़ूम
 ;Zoom
 ZoomOut=ज़ूम आउट
 ;Zoom out
+ZoomOutTo=ज़ूम आउट तक:
+;Zoom out to:
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot

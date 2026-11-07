@@ -265,6 +265,8 @@ Around=حول:
 ;Around:
 AroundTheMiddleAnObject=حول المركز (جسم)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=إلى حيث تبلغ السرعة
+;As far as the speed goes
 AsFullBackgroundSphere=كرةً خلفية كاملة:
 ;As full background sphere:
 Aspect=نسبة الأبعاد:
@@ -2321,6 +2323,8 @@ NavigatorSize=حجم المستكشف
 ;Navigator Size
 NavigatorViewSentToTheMain=أُرسل منظر المستكشف إلى النافذة الرئيسية، اضغط «احسب ثلاثي الأبعاد».
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=قرب المشهد، إلى الخلف بقدر ما تبلغه السرعة
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=مرشح التشويش العصبي: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=مرشح التشويش العصبي: تم
@@ -2755,6 +2759,8 @@ Preview=معاينة
 ;preview
 Preview2=المعاينة
 ;Preview
+Preview50PixelsWideLowestQuality=معاينة (بعرض 50 بكسل، بأدنى جودة)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=أقصى حجم للمعاينة:
 ;Preview max size:
 PreviewSize=حجم المعاينة:
@@ -4005,6 +4011,8 @@ Zoom2=التكبير
 ;Zoom
 ZoomOut=تصغير
 ;Zoom out
+ZoomOutTo=التصغير حتى:
+;Zoom out to:
 Zpos=موضع Z
 ;Zpos
 Zrot=دوران Z

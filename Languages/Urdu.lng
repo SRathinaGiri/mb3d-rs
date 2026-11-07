@@ -265,6 +265,8 @@ Around=گرد:
 ;Around:
 AroundTheMiddleAnObject=مرکز کے گرد (ایک چیز)
 ;Around the middle (an object)
+AsFarAsTheSpeedGoes=جہاں تک رفتار لے جائے
+;As far as the speed goes
 AsFullBackgroundSphere=مکمل پس منظر کرّے کے طور پر:
 ;As full background sphere:
 Aspect=تناسب:
@@ -2321,6 +2323,8 @@ NavigatorSize=نیویگیٹر سائز
 ;Navigator Size
 NavigatorViewSentToTheMain=نیویگیٹر کا منظر مرکزی ونڈو کو بھیج دیا گیا، "3D حساب کریں" دبائیں۔
 ;Navigator view sent to the main window, press "Calculate 3D".
+NearTheViewAsFarBack=منظر کے قریب، رفتار جتنا پیچھے لے جائے
+;Near the view, as far back as the speed goes
 NeuralNoiseFilter=نیورل شور فلٹر: {}
 ;Neural noise filter: {}
 NeuralNoiseFilterDone=نیورل شور فلٹر: مکمل
@@ -2755,6 +2759,8 @@ Preview=پیش منظر
 ;preview
 Preview2=پیش منظر
 ;Preview
+Preview50PixelsWideLowestQuality=پیش منظر (50 پکسل چوڑا، کم ترین معیار)
+;Preview (50 pixels wide, lowest quality)
 PreviewMaxSize=پیش منظر زیادہ سے زیادہ سائز:
 ;Preview max size:
 PreviewSize=پیش منظر سائز:
@@ -4005,6 +4011,8 @@ Zoom2=زوم
 ;Zoom
 ZoomOut=زوم آؤٹ
 ;Zoom out
+ZoomOutTo=زوم آؤٹ تک:
+;Zoom out to:
 Zpos=Zpos
 ;Zpos
 Zrot=Zrot
