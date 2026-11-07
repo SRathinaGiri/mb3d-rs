@@ -100,7 +100,12 @@ impl Space<'_> {
     /// distance to the sphere, at most to its far side). The estimate alone
     /// is no bound far out: the Integer Power bulb's says 50 at 17 units.
     fn de(&self, x: Vec3) -> f64 {
-        let (d, _) = de_at(self.p, x);
+        let (d, it) = de_at(self.p, x);
+        // (a point that does not escape is inside, as the renderer takes
+        // it, whatever the estimate says)
+        if it >= self.p.max_it {
+            return 0.0;
+        }
         let d = if d.is_finite() { d } else { f64::MAX };
         let r = len(&x);
         let d = d.min(r + self.radius);
@@ -113,6 +118,47 @@ impl Space<'_> {
 
     fn clearance(&self, x: Vec3) -> f64 {
         self.near.max(self.slope * len(&sub(x, self.target)))
+    }
+
+    /// Room of `c` around `x` although the estimate there is less: rays in
+    /// 14 directions traced to `c` meet nothing (a surface: within 2 % of
+    /// `c`). Some estimates are far below the distance: an Amazing Box
+    /// hybrid's is 1 to 2 at 100 units, so every line from outside seemed
+    /// blocked and the way crept in along a fold plane.
+    fn room(&self, x: Vec3, c: f64) -> bool {
+        const K: f64 = 0.577_350_269_189_625_8;
+        const DIRS: [Vec3; 14] = [
+            [1.0, 0.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, -1.0],
+            [K, K, K], [K, K, -K], [K, -K, K], [K, -K, -K], [-K, K, K], [-K, K, -K], [-K, -K, K], [-K, -K, -K],
+        ];
+        let hit = (c * 0.02).max(surface(self.p));
+        let ray = self.ray.max(0.5);
+        DIRS.iter().all(|u| {
+            let mut t = 0.0;
+            for _ in 0..2000 {
+                let d = self.de(add(x, scale(*u, t)));
+                if d <= hit {
+                    return false;
+                }
+                t += (d * ray).max(c * 0.01);
+                if t >= c {
+                    return true;
+                }
+            }
+            false
+        })
+    }
+
+    /// The clearance is kept at `x`: by the estimate, or else by looking.
+    fn free(&self, x: Vec3, c: f64) -> Option<f64> {
+        let d = self.de(x);
+        if d >= c {
+            Some(d)
+        } else if self.room(x, c) {
+            Some(c)
+        } else {
+            None
+        }
     }
 
     /// The line from `a` to `b` keeps the clearance all the way.
@@ -133,17 +179,17 @@ impl Space<'_> {
             let step = if outside > c {
                 outside - c + c * 0.02
             } else {
-                let d = self.de(x);
-                if d < c {
+                let Some(d) = self.free(x, c) else {
                     return false;
-                }
+                };
                 // (the room beyond the clearance, at the ray step, and a
-                // little more so that a line just at the clearance gets on)
-                (d - c) * self.ray + c * 0.02
+                // little more so that a line just at the clearance gets on;
+                // where the room was looked at, half of it)
+                if d > c { (d - c) * self.ray + c * 0.02 } else { c * 0.5 }
             };
             t += step;
             if t >= l {
-                return self.de(b) >= self.clearance(b);
+                return self.free(b, self.clearance(b)).is_some();
             }
         }
         false
