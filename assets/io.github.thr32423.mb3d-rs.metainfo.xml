@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.3.11" date="2026-11-15">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.11</url>
+      <description>
+        <p>The Navigator shows the fog and depth colours as the main window does, and one switch, "Main window's look", gives the main window's lighting and, when the camera rests, its full picture; a drag on the view looks around or slides. A map or a background picture is chosen from a grid of the folder's pictures (a click on its small picture in the Lighting window). MutaGen keeps its generations when it is opened again. A stopped calculation no longer waits for a shader the graphics card still compiles, and a picture whose formula overflows on the card has its shadows and reflections from the processor too.</p>
+      </description>
+    </release>
     <release version="0.3.10" date="2026-11-13">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.10</url>
       <description>
