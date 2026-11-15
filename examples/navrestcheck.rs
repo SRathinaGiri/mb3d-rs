@@ -76,8 +76,11 @@ fn main() {
     );
 
     ui.show(NAV);
+    rest(&mut ui, &mut app);
+    assert!(!ui.checked(NAV, "MainLookCBx"), "the main window's look is off at first");
+    ui.click(NAV, "MainLookCBx");
     let t_rest = rest(&mut ui, &mut app);
-    assert!(ui.checked(NAV, "ExpRestCBx"), "the picture at rest is on at first");
+    assert!(ui.checked(NAV, "MainLookCBx"));
     let (a, w, h) = app.navi.eng.picture().expect("the Navigator's picture");
     // the main window's picture, reduced to the Navigator's size (when the
     // Navigator has the main picture's proportions)
@@ -87,9 +90,9 @@ fn main() {
     let (r, rw, rh) = if near { (resized(&m.rgb, m.width, m.height, w, h), w, h) } else { mb3d::history::downscale(&m.rgb, m.width, m.height, w, h) };
     let same_shape = (rw, rh) == (w, h);
 
-    ui.click(NAV, "ExpRestCBx");
+    ui.click(NAV, "MainLookCBx");
     let t_fast = rest(&mut ui, &mut app);
-    assert!(!ui.checked(NAV, "ExpRestCBx"));
+    assert!(!ui.checked(NAV, "MainLookCBx"));
     let (b, bw, bh) = app.navi.eng.picture().unwrap();
     assert_eq!((bw, bh), (w, h));
     println!("Navigator {w} x {h}: at rest after {t_rest:.1} s, without the option {t_fast:.1} s");
@@ -109,7 +112,7 @@ fn main() {
 
     // a drag with the left button looks, with the right one slides; its
     // end is no click (the mouse look stays off)
-    ui.click(NAV, "ExpRestCBx");
+    ui.click(NAV, "MainLookCBx");
     rest(&mut ui, &mut app);
     let (v0, m0) = (app.navi.scene.vgrads, app.navi.scene.mid);
     let drag = |ui: &mut mb3d::vcl::Ui, app: &mut mb3d::app::Mb3d, button: MouseButton, held: u8| {

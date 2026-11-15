@@ -2476,24 +2476,12 @@ Name2=Nama
 ;Name
 NamedParams=Param Bernama:
 ;Named Params:
-NaviExpBright=Kecerahan sebenarnya
-;True brightness
-NaviExpBrightHint=Menampilkan gambar seperti yang dihitung: penggeser kecerahan tidak diterapkan.
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=Detail jendela utama
-;Main window's detail
-NaviExpDetailHint=Menghitung dengan raystep, DE stop, dan langkah pencarian biner jendela utama, bukan pengaturan navigator yang lebih cepat.\nLebih lambat, tetapi detail permukaan terlihat seperti gambar utama.
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=Pencahayaan jendela utama
-;Main window's lighting
-NaviExpLightHint=Memakai pencahayaan jendela utama dan mengikuti perubahannya di jendela Pencahayaan.\nMemilih preset cahaya atau kabut dinamis di sini mematikannya.
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=Gambar jendela utama saat kamera diam
-;Main window's picture when the camera rests
-NaviExpRestHint=Saat kamera diam, tampilan dihitung seperti yang akan ditunjukkan jendela utama: dengan detail, bayangan, oklusi ambien, pantulan, dan kedalaman ruangnya.\nBergerak lagi langsung menghentikannya.
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Eksperimental: sama dengan jendela utama
 ;Experimental: match the main window
+NaviMainLook=Tampilan jendela utama
+;Main window's look
+NaviMainLookHint=Memakai pencahayaan dan kecerahan jendela utama.\nSaat kamera diam, tampilan dihitung seperti yang akan ditunjukkan jendela utama: dengan detail, bayangan, oklusi ambien, pantulan, dan kedalaman ruangnya.\nBergerak lagi langsung menghentikannya.\nJika dimatikan, gambar digambar lebih cepat, untuk menjelajah.\nMemilih preset cahaya atau kabut dinamis di sini mematikannya.
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=Navigator
 ;Navigator
 Navigator2=Navigator: {}

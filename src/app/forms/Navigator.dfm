@@ -2250,63 +2250,27 @@ object FNavigator: TFNavigator
     Left = 0
     Top = 587
     Width = 640
-    Height = 65
+    Height = 45
     BevelOuter = bvNone
     TabOrder = 2
     object GroupBox1: TGroupBox
       Left = 4
       Top = 0
       Width = 632
-      Height = 63
+      Height = 43
       Caption = '@MB:NaviExperimental'
       TabOrder = 0
-      object ExpDetailCBx: TCheckBox
+      object MainLookCBx: TCheckBox
         Left = 10
         Top = 19
-        Width = 200
+        Width = 400
         Height = 17
-        Hint = '@MB:NaviExpDetailHint'
-        Caption = '@MB:NaviExpDetail'
+        Hint = '@MB:NaviMainLookHint'
+        Caption = '@MB:NaviMainLook'
         ParentShowHint = False
         ShowHint = True
         TabOrder = 0
-        OnClick = ExpDetailCBxClick
-      end
-      object ExpBrightCBx: TCheckBox
-        Left = 220
-        Top = 19
-        Width = 190
-        Height = 17
-        Hint = '@MB:NaviExpBrightHint'
-        Caption = '@MB:NaviExpBright'
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 1
-        OnClick = ExpBrightCBxClick
-      end
-      object ExpLightCBx: TCheckBox
-        Left = 420
-        Top = 19
-        Width = 205
-        Height = 17
-        Hint = '@MB:NaviExpLightHint'
-        Caption = '@MB:NaviExpLight'
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 2
-        OnClick = ExpLightCBxClick
-      end
-      object ExpRestCBx: TCheckBox
-        Left = 10
-        Top = 39
-        Width = 400
-        Height = 17
-        Hint = '@MB:NaviExpRestHint'
-        Caption = '@MB:NaviExpRest'
-        ParentShowHint = False
-        ShowHint = True
-        TabOrder = 3
-        OnClick = ExpRestCBxClick
+        OnClick = MainLookCBxClick
       end
     end
   end

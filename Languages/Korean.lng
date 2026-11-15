@@ -2477,24 +2477,12 @@ Name2=이름
 ;Name
 NamedParams=명명 파라미터:
 ;Named Params:
-NaviExpBright=실제 밝기
-;True brightness
-NaviExpBrightHint=계산된 그대로의 이미지를 보여 줍니다: 밝기 슬라이더가 적용되지 않습니다.
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=메인 창의 디테일
-;Main window's detail
-NaviExpDetailHint=내비게이터의 빠른 설정 대신 메인 창의 레이스텝, DE 정지, 이진 탐색 단계로 계산합니다.\n느리지만 표면 디테일이 메인 이미지와 같게 보입니다.
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=메인 창의 조명
-;Main window's lighting
-NaviExpLightHint=메인 창의 조명을 사용하고 조명 창에서의 변경을 따릅니다.\n여기서 조명 프리셋이나 동적 안개를 선택하면 꺼집니다.
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=카메라가 멈추면 메인 창의 그림
-;Main window's picture when the camera rests
-NaviExpRestHint=카메라가 멈추면 메인 창이 보여 줄 그대로 뷰를 계산합니다: 메인 창의 디테일, 그림자, 앰비언트 오클루전, 반사, 피사계 심도를 사용합니다.\n다시 움직이면 즉시 중단됩니다.
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=실험적: 메인 창과 같게
 ;Experimental: match the main window
+NaviMainLook=메인 창의 모습
+;Main window's look
+NaviMainLookHint=메인 창의 조명과 밝기를 사용합니다.\n카메라가 멈추면 메인 창이 보여 줄 그대로 뷰를 계산합니다: 메인 창의 디테일, 그림자, 앰비언트 오클루전, 반사, 피사계 심도를 사용합니다.\n다시 움직이면 즉시 중단됩니다.\n끄면 탐색용으로 이미지를 더 빠르게 그립니다.\n여기서 조명 프리셋이나 동적 안개를 선택하면 꺼집니다.
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=내비게이터
 ;Navigator
 Navigator2=내비게이터: {}

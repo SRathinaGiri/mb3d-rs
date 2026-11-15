@@ -2476,24 +2476,12 @@ Name2=Naam
 ;Name
 NamedParams=Benoemde params:
 ;Named Params:
-NaviExpBright=Echte helderheid
-;True brightness
-NaviExpBrightHint=Toont de afbeelding zoals berekend: de helderheidsschuif wordt niet toegepast.
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=Detail van het hoofdvenster
-;Main window's detail
-NaviExpDetailHint=Rekent met de raystep, DE-stop en binaire zoekstappen van het hoofdvenster in plaats van de snellere instellingen van de navigator.\nTrager, maar het oppervlaktedetail ziet eruit als in de hoofdafbeelding.
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=Belichting van het hoofdvenster
-;Main window's lighting
-NaviExpLightHint=Gebruikt de belichting van het hoofdvenster en volgt de wijzigingen in het belichtingsvenster.\nHier een lichtvoorinstelling of de dynamische mist kiezen zet het uit.
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=Beeld van het hoofdvenster wanneer de camera rust
-;Main window's picture when the camera rests
-NaviExpRestHint=Wanneer de camera rust, wordt het beeld berekend zoals het hoofdvenster het zou tonen: met zijn detail, schaduwen, omgevingsocclusie, reflecties en scherptediepte.\nVerder bewegen stopt het meteen.
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Experimenteel: zoals het hoofdvenster
 ;Experimental: match the main window
+NaviMainLook=Uiterlijk van het hoofdvenster
+;Main window's look
+NaviMainLookHint=Gebruikt de belichting en helderheid van het hoofdvenster.\nWanneer de camera rust, wordt het beeld berekend zoals het hoofdvenster het zou tonen: met zijn detail, schaduwen, omgevingsocclusie, reflecties en scherptediepte.\nVerder bewegen stopt het meteen.\nUitgeschakeld wordt het beeld sneller getekend, om te verkennen.\nHier een lichtvoorinstelling of de dynamische mist kiezen zet het uit.
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=Navigator
 ;Navigator
 Navigator2=Navigator: {}

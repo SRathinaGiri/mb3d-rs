@@ -2476,24 +2476,12 @@ Name2=Nome
 ;Name
 NamedParams=Parâm. nomeados:
 ;Named Params:
-NaviExpBright=Brilho real
-;True brightness
-NaviExpBrightHint=Mostra a imagem como calculada: o controle de brilho não é aplicado.
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=Detalhe da janela principal
-;Main window's detail
-NaviExpDetailHint=Calcula com o passo de raio, a parada DE e os passos de busca binária da janela principal em vez das configurações mais rápidas do navegador.\nMais lento, mas o detalhe da superfície fica como na imagem principal.
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=Iluminação da janela principal
-;Main window's lighting
-NaviExpLightHint=Usa a iluminação da janela principal e acompanha suas mudanças na janela Iluminação.\nEscolher aqui uma predefinição de luz ou a névoa dinâmica desliga isso.
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=Imagem da janela principal quando a câmera repousa
-;Main window's picture when the camera rests
-NaviExpRestHint=Quando a câmera repousa, a vista é calculada como a janela principal a mostraria: com seu detalhe, sombras, oclusão de ambiente, reflexos e profundidade de campo.\nMover-se a interrompe na hora.
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Experimental: igual à janela principal
 ;Experimental: match the main window
+NaviMainLook=Aparência da janela principal
+;Main window's look
+NaviMainLookHint=Usa a iluminação e o brilho da janela principal.\nQuando a câmera repousa, a vista é calculada como a janela principal a mostraria: com seu detalhe, sombras, oclusão de ambiente, reflexos e profundidade de campo.\nMover-se a interrompe na hora.\nDesligado, a imagem é desenhada mais rápido, para explorar.\nEscolher aqui uma predefinição de luz ou a névoa dinâmica desliga isso.
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=Navegador
 ;Navigator
 Navigator2=Navegador: {}

@@ -2477,24 +2477,12 @@ Name2=名称
 ;Name
 NamedParams=命名参数：
 ;Named Params:
-NaviExpBright=真实亮度
-;True brightness
-NaviExpBrightHint=按计算结果显示图像：不应用亮度滑块。
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=主窗口的细节
-;Main window's detail
-NaviExpDetailHint=使用主窗口的光线步长、DE 停止值和二分搜索步数计算，而不是导航器更快的设置。\n更慢，但表面细节与主图像一致。
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=主窗口的光照
-;Main window's lighting
-NaviExpLightHint=使用主窗口的光照，并跟随光照窗口中的更改。\n在此选择光照预设或动态雾会将其关闭。
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=相机静止时显示主窗口的画面
-;Main window's picture when the camera rests
-NaviExpRestHint=相机静止时，按主窗口将显示的样子计算视图：使用其细节、阴影、环境光遮蔽、反射和景深。\n继续移动会立即停止计算。
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=实验性：与主窗口一致
 ;Experimental: match the main window
+NaviMainLook=主窗口的外观
+;Main window's look
+NaviMainLookHint=使用主窗口的光照和亮度。\n相机静止时，按主窗口将显示的样子计算视图：使用其细节、阴影、环境光遮蔽、反射和景深。\n继续移动会立即停止计算。\n关闭时图像绘制更快，便于探索。\n在此选择光照预设或动态雾会将其关闭。
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=导航器
 ;Navigator
 Navigator2=导航器：{}

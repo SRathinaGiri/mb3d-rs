@@ -2476,24 +2476,12 @@ Name2=Name
 ;Name
 NamedParams=Benannte Parameter:
 ;Named Params:
-NaviExpBright=Echte Helligkeit
-;True brightness
-NaviExpBrightHint=Zeigt das Bild wie berechnet: der Helligkeitsregler wird nicht angewendet.
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=Detail des Hauptfensters
-;Main window's detail
-NaviExpDetailHint=Rechnet mit Raystep, DE-Stopp und Binärsuchschritten des Hauptfensters statt mit den schnelleren Einstellungen des Navigators.\nLangsamer, aber die Oberflächendetails sehen aus wie im Hauptbild.
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=Beleuchtung des Hauptfensters
-;Main window's lighting
-NaviExpLightHint=Verwendet die Beleuchtung des Hauptfensters und folgt ihren Änderungen im Beleuchtungsfenster.\nEine Lichtvorgabe oder der dynamische Nebel hier schaltet es aus.
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=Bild des Hauptfensters, wenn die Kamera ruht
-;Main window's picture when the camera rests
-NaviExpRestHint=Ruht die Kamera, wird die Ansicht so berechnet, wie das Hauptfenster sie zeigen würde: mit dessen Detail, Schatten, Umgebungsverdeckung, Spiegelungen und Schärfentiefe.\nWeiterbewegen bricht es sofort ab.
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Experimentell: wie das Hauptfenster
 ;Experimental: match the main window
+NaviMainLook=Aussehen des Hauptfensters
+;Main window's look
+NaviMainLookHint=Verwendet die Beleuchtung und Helligkeit des Hauptfensters.\nRuht die Kamera, wird die Ansicht so berechnet, wie das Hauptfenster sie zeigen würde: mit dessen Detail, Schatten, Umgebungsverdeckung, Spiegelungen und Schärfentiefe.\nWeiterbewegen bricht es sofort ab.\nAusgeschaltet wird das Bild schneller gezeichnet, zum Erkunden.\nEine Lichtvorgabe oder der dynamische Nebel hier schaltet es aus.
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=Navigator
 ;Navigator
 Navigator2=Navigator: {}

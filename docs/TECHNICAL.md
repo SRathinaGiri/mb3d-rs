@@ -1196,8 +1196,9 @@ programs (until 0.2.42 it ran ffmpeg, which code scanners flag).
 
 The Navigator (`src/app/navi_form.rs`) draws its own copy of the parameters
 at 1/8, 1/4, 1/2 and full size (`Job::Preview`), without shadows, ambient
-occlusion, reflections and depth of field, as MB3D's does. Three things
-bring its picture to the main window's:
+occlusion, reflections and depth of field, as MB3D's does. This is its
+picture for exploring; the middle and one switch bring it to the main
+window's:
 
 * **The middle.** The fog and the depth colours are measured from the
   scene's middle, which the Navigator keeps on the camera
@@ -1205,21 +1206,31 @@ bring its picture to the main window's:
   the main picture wherever they depend on depth. Each drawing is painted
   with the middle in front of the camera, where "View to main" puts it
   (`ModRotPoint`); the camera is the same.
-* **The picture at rest** (*Main window's picture when the camera rests*,
-  on at first, ini `NavExpRest`). After the full size pass the engine
-  calculates `rest_scene`: the main window's parameters with the
-  Navigator's view, formulas and lighting (what "View to main" sends,
+* **Main window's look** (one switch, off at first, ini `NavMainLook`; it
+  replaced the four experimental switches for the main window's detail,
+  lighting, true brightness and the picture at rest, which overlapped).
+  On, every pass is drawn with the main window's lighting (taken from the
+  Lighting window each time) and without the brightness slider; the moving
+  passes keep the Navigator's faster ray steps. After the full size pass
+  the engine calculates `rest_scene`: the main window's parameters with
+  the Navigator's view and formulas (what "View to main" sends,
   `view_into`), at the Navigator's size with the DE stop scaled to it
   (`Scene::scale_image`), through the stages of Calculate 3D (shadows,
   ambient occlusion, reflections, depth of field). Any move starts a new
-  job, which stops it.
+  job, which stops it: the wait for a shader the card still compiles ends
+  with the stop too (`gpu::pipeline`; before, a move waited the 20 s the
+  reflection shader of a new scene took to compile). A light preset or the
+  dynamic fog chosen in the Navigator switches it off.
 * **A drag on the view** looks around (left button) or slides the camera
   (right button, by the distance estimate at the camera); the right
   button's menu opens when it is released without a drag. (From the
   workspace branch, where it was the docked Navigator's only.)
 
 `examples/navrestcheck.rs` compares the Navigator's picture with the main
-picture reduced to its size, with the option and without it.
+picture reduced to its size, with the switch and without it;
+`examples/navlatency.rs` times a move made while the picture at rest is
+calculated (the time to the first new picture; `__GL_SHADER_DISK_CACHE_PATH`
+set to an empty folder makes the card's shaders compile again).
 
 ## Animation templates and 360° output
 

@@ -2476,24 +2476,12 @@ Name2=Nome
 ;Name
 NamedParams=Parametri con nome:
 ;Named Params:
-NaviExpBright=Luminosità reale
-;True brightness
-NaviExpBrightHint=Mostra l'immagine come calcolata: il cursore della luminosità non viene applicato.
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=Dettaglio della finestra principale
-;Main window's detail
-NaviExpDetailHint=Calcola con il passo del raggio, l'arresto DE e i passi di ricerca binaria della finestra principale invece delle impostazioni più veloci del navigatore.\nPiù lento, ma i dettagli della superficie appaiono come nell'immagine principale.
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=Illuminazione della finestra principale
-;Main window's lighting
-NaviExpLightHint=Usa l'illuminazione della finestra principale e ne segue le modifiche nella finestra Illuminazione.\nScegliere qui un preset di luce o la nebbia dinamica la disattiva.
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=Immagine della finestra principale a camera ferma
-;Main window's picture when the camera rests
-NaviExpRestHint=Quando la camera è ferma, la vista viene calcolata come la mostrerebbe la finestra principale: con il suo dettaglio, le ombre, l'occlusione ambientale, i riflessi e la profondità di campo.\nMuoversi la interrompe subito.
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Sperimentale: come la finestra principale
 ;Experimental: match the main window
+NaviMainLook=Aspetto della finestra principale
+;Main window's look
+NaviMainLookHint=Usa l'illuminazione e la luminosità della finestra principale.\nQuando la camera è ferma, la vista viene calcolata come la mostrerebbe la finestra principale: con il suo dettaglio, le ombre, l'occlusione ambientale, i riflessi e la profondità di campo.\nMuoversi la interrompe subito.\nDisattivato, l'immagine viene disegnata più velocemente, per esplorare.\nScegliere qui un preset di luce o la nebbia dinamica la disattiva.
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=Navigatore
 ;Navigator
 Navigator2=Navigatore: {}

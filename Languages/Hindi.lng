@@ -2477,24 +2477,12 @@ Name2=नाम
 ;Name
 NamedParams=नामित पैरामीटर:
 ;Named Params:
-NaviExpBright=वास्तविक चमक
-;True brightness
-NaviExpBrightHint=चित्र को जैसा गणना किया गया वैसा दिखाता है: चमक स्लाइडर लागू नहीं होता।
-;Shows the picture as calculated: the brightness slider is not applied.
-NaviExpDetail=मुख्य विंडो का विवरण
-;Main window's detail
-NaviExpDetailHint=नेविगेटर की तेज़ सेटिंग्स के बजाय मुख्य विंडो के रेस्टेप, DE स्टॉप और बाइनरी खोज चरणों से गणना करता है।\nधीमा, पर सतह का विवरण मुख्य चित्र जैसा दिखता है।
-;Calculates with the main window's raystep, DE stop and binary search steps instead of the navigator's faster settings.\nSlower, but the surface detail looks like the main picture.
-NaviExpLight=मुख्य विंडो की रोशनी
-;Main window's lighting
-NaviExpLightHint=मुख्य विंडो की रोशनी का उपयोग करता है और लाइटिंग विंडो में उसके बदलावों का अनुसरण करता है।\nयहाँ कोई लाइट प्रीसेट या डायनामिक कोहरा चुनने से यह बंद हो जाता है।
-;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
-NaviExpRest=कैमरा रुकने पर मुख्य विंडो का चित्र
-;Main window's picture when the camera rests
-NaviExpRestHint=कैमरा रुकने पर दृश्य वैसा ही गणना किया जाता है जैसा मुख्य विंडो दिखाती: उसके विवरण, छायाओं, एम्बिएंट ऑक्लूज़न, परावर्तनों और डेप्थ ऑफ़ फ़ील्ड के साथ।\nआगे बढ़ते ही यह तुरंत रुक जाता है।
-;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=प्रायोगिक: मुख्य विंडो जैसा
 ;Experimental: match the main window
+NaviMainLook=मुख्य विंडो का रूप
+;Main window's look
+NaviMainLookHint=मुख्य विंडो की रोशनी और चमक का उपयोग करता है।\nकैमरा रुकने पर दृश्य वैसा ही गणना किया जाता है जैसा मुख्य विंडो दिखाती: उसके विवरण, छायाओं, एम्बिएंट ऑक्लूज़न, परावर्तनों और डेप्थ ऑफ़ फ़ील्ड के साथ।\nआगे बढ़ते ही यह तुरंत रुक जाता है।\nबंद होने पर चित्र तेज़ी से बनता है, खोजने के लिए।\nयहाँ कोई लाइट प्रीसेट या डायनामिक कोहरा चुनने से यह बंद हो जाता है।
+;Uses the main window's lighting and brightness.\nWhen the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.\nOff, the picture is drawn faster, for exploring.\nChoosing a light preset or the dynamic fog here turns it off.
 Navigator=नेविगेटर
 ;Navigator
 Navigator2=नेविगेटर: {}
