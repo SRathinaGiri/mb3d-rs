@@ -1024,25 +1024,47 @@ struct Gpu {
     driver: String,
 }
 
-/// The pipeline of the shader `code` (compiled once, then cached).
-fn pipeline(g: &Gpu, code: &str, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
-    pipeline_entry(g, code, "main", None, constants)
+/// The pipeline of the scene shader `code` (compiled once, then cached).
+/// A compile takes seconds to minutes in the driver and cannot be
+/// interrupted, so it always runs on a thread of its own ([`prepare`]) and
+/// this waits for it: `cancel` ends the wait (the error "cancelled"; the
+/// compile goes on and is kept for the next time), so that a stopped
+/// calculation never hangs on a shader (the Navigator's picture at rest
+/// held a move back for the 20 s its reflection shader took to compile).
+fn pipeline(g: &'static Gpu, code: &str, constants: &[(&'static str, f64)], cancel: &dyn Fn() -> bool) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
+    let key = pipeline_key(code, "main", constants);
+    if !g.pipelines.lock().is_ok_and(|m| m.contains_key(&key)) {
+        let f = prepare(g, code.to_string(), "main", constants.to_vec());
+        wait_compiled(g, &f, cancel)?;
+    }
+    compile_entry(g, code, "main", None, constants, key)
+}
+
+/// Waits for the background compile with the flag `f` (see [`prepare`]),
+/// until `cancel`.
+fn wait_compiled(g: &Gpu, f: &AtomicBool, cancel: &dyn Fn() -> bool) -> Result<(), String> {
+    while !f.load(Ordering::SeqCst) {
+        if cancel() || ABORT.load(Ordering::SeqCst) {
+            return Err("cancelled".into());
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    if LOST.load(Ordering::SeqCst) && g.index == 0 || g.index > 0 && FAILED.load(Ordering::SeqCst) & (1 << g.index.min(63)) != 0 {
+        return Err("the graphics card was lost".into());
+    }
+    Ok(())
 }
 
 /// The pipeline of the entry point `entry` of the shader `code`; `layout`
 /// when several pipelines share one bind group (the automatic layout of a
-/// pipeline is exclusive to it).
-fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)]) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
+/// pipeline is exclusive to it).  For the small fixed shaders (ambient
+/// occlusion, depth of field), compiled here; a compile of the same shader
+/// running in the background is waited for, until `cancel`.
+fn pipeline_entry(g: &Gpu, code: &str, entry: &str, layout: Option<&wgpu::PipelineLayout>, constants: &[(&str, f64)], cancel: &dyn Fn() -> bool) -> Result<std::sync::Arc<wgpu::ComputePipeline>, String> {
     let key = pipeline_key(code, entry, constants);
-    // compiled in the background (see [`prepare`]): wait for it
     let pending = PREPARING.locked().iter().find(|(c, k, _)| (*c, *k) == (g.index, key)).map(|(.., f)| f.clone());
     if let Some(f) = pending {
-        while !f.load(Ordering::SeqCst) {
-            std::thread::sleep(std::time::Duration::from_millis(5));
-        }
-        if LOST.load(Ordering::SeqCst) && g.index == 0 || g.index > 0 && FAILED.load(Ordering::SeqCst) & (1 << g.index.min(63)) != 0 {
-            return Err("the graphics card was lost".into());
-        }
+        wait_compiled(g, &f, cancel)?;
     }
     compile_entry(g, code, entry, layout, constants, key)
 }
@@ -2449,7 +2471,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
     let r_hs = !o.lights.is_empty() || o.soft_radius > 0.0;
     let r_ao = o.ao.is_some();
     let split = (r_hs || r_ao) && std::env::var_os("MB3D_GPU_NOSPLIT").is_none();
-    let kind = |march: bool, hs: bool, ao: bool| pipeline(g, &sh.code, &reflect_constants(p, march, hs, ao));
+    let kind = |march: bool, hs: bool, ao: bool| pipeline(g, &sh.code, &reflect_constants(p, march, hs, ao), cancel);
     let mut pls = vec![if split { kind(true, false, false)? } else { kind(true, r_hs, r_ao)? }];
     if split {
         pls.push(kind(false, r_hs, r_ao)?);
@@ -2841,7 +2863,8 @@ pub fn vol_map(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f64
 fn vol_map_card(p: &CalcParams, map: &crate::vollight::VolLightMap, max_dist: f64, claim: &(dyn Fn(usize) -> usize + Sync)) -> Result<Vec<f32>, String> {
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let pl = pipeline(g, &sh.code, &march_constants(p, 1))?;
+    // (no stop reaches the light map's card pass yet)
+    let pl = pipeline(g, &sh.code, &march_constants(p, 1), &|| false)?;
     let cs = map.cube_size as usize;
     let sides = if map.is_pos_light { 6 } else { 1 };
     let n = sides * cs * cs;
@@ -2945,7 +2968,7 @@ fn mc_batch_card(p: &CalcParams, tasks: &[crate::mc::McReq], offset: usize, seca
     let dbl = needs_double(p);
     let g = gpu()?;
     let sh = scene_shader(p)?;
-    let pl = pipeline(g, &sh.code, &mc_constants(p))?;
+    let pl = pipeline(g, &sh.code, &mc_constants(p), stop)?;
     let n = tasks.len();
     let words: Vec<u32> = tasks
         .iter()
@@ -3129,7 +3152,7 @@ fn de_probe_card(p: &CalcParams, mzz: f64) -> Result<Vec<DeProbe>, String> {
 
 #[allow(clippy::too_many_arguments)]
 fn run(
-    g: &Gpu,
+    g: &'static Gpu,
     p: &CalcParams,
     sh: &SceneShader,
     post: &PostJob,
@@ -3183,7 +3206,7 @@ fn run(
     // takes effect before all of its passes), and a pipeline per kind of pass
     let mut pls = Vec::new();
     for &m in &modes {
-        pls.push(pipeline(g, &sh.code, &march_constants(p, m))?);
+        pls.push(pipeline(g, &sh.code, &march_constants(p, m), cancel)?);
     }
     let pars: Vec<wgpu::Buffer> = modes
         .iter()
@@ -3455,9 +3478,9 @@ fn ssao24_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
     let bgl = g.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor { label: Some("ssao"), entries: &entries });
     let layout = g.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("ssao"), bind_group_layouts: &[Some(&bgl)], immediate_size: 0 });
     let (pl_h, pl_v, pl_s) = (
-        pipeline_entry(g, code, "blur_h", Some(&layout), &[])?,
-        pipeline_entry(g, code, "blur_v", Some(&layout), &[])?,
-        pipeline_entry(g, code, "sample", Some(&layout), &[])?,
+        pipeline_entry(g, code, "blur_h", Some(&layout), &[], &|| false)?,
+        pipeline_entry(g, code, "blur_v", Some(&layout), &[], &|| false)?,
+        pipeline_entry(g, code, "sample", Some(&layout), &[], &|| false)?,
     );
     let levels = crate::ssao::level_count(w, h);
     let z_scale = ((256.0 / zc_mul + 1.0).powi(2) - 1.0) / zcorr;
@@ -3674,7 +3697,7 @@ fn ssao15_card(gbuf: &mut [SiLight], w: usize, h: usize, zc_mul: f64, zcorr: f64
         return Ok(());
     }
     let g = gpu()?;
-    let pl = pipeline_entry(g, include_str!("gpu_ssao15.wgsl"), "sample15", None, &[])?;
+    let pl = pipeline_entry(g, include_str!("gpu_ssao15.wgsl"), "sample15", None, &[], &|| false)?;
     let lv = crate::ssao15::build_levels(gbuf, w, h, p.wrap_x);
     let (szrt, smul, st2) = crate::ssao15::sampling_constants(&lv, zc_mul, zcorr, p);
     let levels: Vec<u32> = lv.lev.iter().flat_map(|l| l.iter().map(|&v| v as u32)).collect();
@@ -3720,7 +3743,7 @@ pub fn dof_strip(s: &DofStrip, cancel: &(dyn Fn() -> bool + Sync)) -> Result<Vec
 
 fn dof_strip_card(s: &DofStrip, cancel: &(dyn Fn() -> bool + Sync)) -> Result<Vec<f32>, String> {
     let g = gpu()?;
-    let pl = pipeline_entry(g, include_str!("gpu_dof.wgsl"), "main", None, &[])?;
+    let pl = pipeline_entry(g, include_str!("gpu_dof.wgsl"), "main", None, &[], cancel)?;
     let storage = wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST;
     let upload = |label: &'static str, words: &[u32]| {
         let b = g.device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: (words.len().max(1) * 4) as u64, usage: storage, mapped_at_creation: false });
@@ -3835,7 +3858,7 @@ pub fn compile_time(wgsl: &str, entry: &str) -> Result<f64, String> {
     let g = gpu()?;
     std::env::set_var("MB3D_GPU_NOCACHE", "1");
     let t = std::time::Instant::now();
-    pipeline_entry(g, wgsl, entry, None, &[])?;
+    pipeline_entry(g, wgsl, entry, None, &[], &|| false)?;
     Ok(t.elapsed().as_secs_f64())
 }
 
