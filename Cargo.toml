@@ -60,6 +60,18 @@ required-features = ["gui"]
 # --no-default-features (without these lines `cargo test
 # --no-default-features` stops at them)
 [[example]]
+name = "navlatency"
+required-features = ["gui", "gpu"]
+
+[[example]]
+name = "navrestcheck"
+required-features = ["gui", "gpu"]
+
+[[example]]
+name = "overflowcheck"
+required-features = ["gpu"]
+
+[[example]]
 name = "apptest"
 required-features = ["gui", "gpu"]
 
