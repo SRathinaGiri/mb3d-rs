@@ -443,7 +443,7 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     }
     // (the march of this picture showed it: every later pass would
     // overflow the same way, and has no check of its own)
-    if p.gpu_overflow && !p.gpu_double {
+    if p.gpu_overflow.load(Ordering::Relaxed) && !p.gpu_double {
         return r("single precision overflows in this scene's formulas");
     }
     if p.is_custom_de && !p.difs && ![2, 5, 6, 11].contains(&p.de_option) {
@@ -1630,10 +1630,30 @@ pub fn post_on_card(
             None,
             Some(&band),
             false,
-        )?;
-        Ok(())
+        )
+        .and_then(|(_, len)| post_verdict(p, len))
     })
 }
+
+/// The verdict on a post pass's rows, as the march's on its own: the
+/// shadows and the occlusion march the scene's formulas too, and where
+/// too many of their pixels overflowed single precision the rows are not
+/// usable (the caller calculates them on the CPU) and no later pass of
+/// the picture goes to the card (`CalcParams::gpu_overflow`).
+fn post_verdict(p: &CalcParams, len: usize) -> Result<(), String> {
+    let n = OVERFLOW.with(|c| c.get());
+    if std::env::var_os("MB3D_GPU_TIMING").is_some() {
+        crate::elog!("  DE overflow in {n} of {len} pixels (shadows, occlusion)");
+    }
+    if n * 500 > len && !needs_double(p) {
+        p.gpu_overflow.store(true, Ordering::Relaxed);
+        return Err(format!("{POST_OVERFLOW} ({n} of {len} pixels)"));
+    }
+    Ok(())
+}
+
+/// How the error of a post pass whose rows overflowed begins.
+pub const POST_OVERFLOW: &str = "single precision overflows in the shadows or the occlusion";
 
 /// The post passes of `post` (shadows, DE ambient occlusion) on the card
 /// for the bands of rows that `bands` hands out (None: no more), on the
@@ -1651,8 +1671,7 @@ pub fn post_bands(
     guard(|| {
         let g = gpu()?;
         let sh = scene_shader(p)?;
-        run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), Some(upload), false)?;
-        Ok(())
+        run(g, p, &sh, post, None, &|_, _| {}, cancel, sink, Some(bands), Some(upload), false).and_then(|(_, len)| post_verdict(p, len))
     })
 }
 
@@ -4119,7 +4138,7 @@ mod tests {
         let sc = crate::scene::Scene::parse("width = 64\nheight = 48\n").unwrap();
         let mut p = CalcParams::new(&sc).unwrap();
         assert_eq!(unsupported(&p), None);
-        p.gpu_overflow = true;
+        p.gpu_overflow.store(true, Ordering::Relaxed);
         assert!(unsupported(&p).is_some_and(|r| r.contains("single precision")));
         // (in double precision the card does not overflow)
         p.gpu_double = true;

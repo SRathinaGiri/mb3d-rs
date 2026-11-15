@@ -596,7 +596,9 @@ fn calculate_rows(
                 let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, wm, cancel, sink, &flags[0], &probe, ck, true, &finish)?;
                 // (the card's rows overflowed single precision and the CPU
                 // calculated them: the passes after the march stay off it)
-                p.gpu_overflow = crate::gpu::rows_overflowed();
+                if crate::gpu::rows_overflowed() {
+                    p.gpu_overflow.store(true, Ordering::Relaxed);
+                }
                 let march_secs = t_march.elapsed().as_secs_f64();
                 let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
                 let rate = |n: usize, t: f64| n as f64 / t.max(1e-6);
@@ -756,7 +758,7 @@ fn calculate_rows(
     // this calculation on the CPU stay off the card too)
     #[cfg(feature = "gpu")]
     if !two_d && crate::gpu::enabled() && crate::gpu::rows_overflowed() {
-        p.gpu_overflow = true;
+        p.gpu_overflow.store(true, Ordering::Relaxed);
     }
     let p = p;
     ck_tag(ck, "raw");
@@ -979,6 +981,10 @@ fn post_shared(
     // which rows are where (see `Board`), and how many the cards did
     let board = Board::new(h);
     let card_rows = AtomicUsize::new(0);
+    // (the rows the cards delivered: not usable when their verdict is that
+    // single precision overflowed, see `gpu::post_bands`)
+    let from_card = Mutex::new(Vec::new());
+    let overflowed = std::sync::atomic::AtomicBool::new(false);
     let mut card_err = None;
     let left = || {
         let f = free.locked();
@@ -1011,6 +1017,7 @@ fn post_shared(
             let n = row.len().min(dst.len());
             dst[..n].copy_from_slice(&row[..n]);
             drop(dst);
+            from_card.locked().push(y);
             card_rows.fetch_add(1, Ordering::Relaxed);
             tick(y);
         }
@@ -1056,18 +1063,24 @@ fn post_shared(
         // compiled (what one of them took and did not deliver is done
         // below, as the first card's)
         for k in crate::gpu::extra_cards(p) {
-            let (band, upload, done_row, stop, left, board) = (&band, &upload, &done_row, &stop, &left, &board);
+            let (band, upload, done_row, stop, left, board, overflowed) = (&band, &upload, &done_row, &stop, &left, &board, &overflowed);
             s.spawn(move || {
                 crate::gpu::on_card(k, || {
                     let Ok(flags) = crate::gpu::march_prepare(p, job) else { return };
                     if compiled_in_time(&flags, left, cancel) {
-                        let _ = board.keep_going(cancel, || crate::gpu::post_bands(p, job, &|n| band(k, n), upload, &|| stop(k), &mut |y, row| done_row(y, row)));
+                        let r = board.keep_going(cancel, || crate::gpu::post_bands(p, job, &|n| band(k, n), upload, &|| stop(k), &mut |y, row| done_row(y, row)));
+                        if r.is_err_and(|e| e.starts_with(crate::gpu::POST_OVERFLOW)) {
+                            overflowed.store(true, Ordering::Relaxed);
+                        }
                     }
                 })
             });
         }
         let r = board.keep_going(cancel, || crate::gpu::post_bands(p, job, &|n| band(0, n), &upload, &|| stop(0), &mut |y, row| done_row(y, row)));
         if let Err(e) = r.or_else(|e| if e == "cancelled" && !cancel() { Ok(()) } else { Err(e) }) {
+            if e.starts_with(crate::gpu::POST_OVERFLOW) {
+                overflowed.store(true, Ordering::Relaxed);
+            }
             card_err = Some(e);
         }
     });
@@ -1078,7 +1091,16 @@ fn post_shared(
     if let Some(e) = &card_err {
         crate::elog!("shadows and occlusion on the GPU failed, calculated on the CPU: {e}");
     }
-    let redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !board.delivered[y].load(Ordering::Relaxed)).collect();
+    let mut redo: Vec<usize> = claimed.into_inner().unwrap().into_iter().flat_map(|(r0, n)| r0..r0 + n).filter(|&y| y < h && !board.delivered[y].load(Ordering::Relaxed)).collect();
+    // single precision overflowed in the cards' rows: all they delivered
+    // again here (the CPU's passes write a row's shadows and occlusion
+    // anew, whatever it held)
+    let overflowed = overflowed.into_inner();
+    if overflowed {
+        redo.extend(from_card.into_inner().unwrap());
+        redo.sort_unstable();
+        redo.dedup();
+    }
     if !redo.is_empty() {
         let next = AtomicUsize::new(0);
         std::thread::scope(|s| {
@@ -1096,7 +1118,7 @@ fn post_shared(
             return Err("cancelled".into());
         }
     }
-    Ok(card_rows.into_inner())
+    Ok(if overflowed { 0 } else { card_rows.into_inner() })
 }
 
 /// The probe's limit: the mean difference of the colours (a share of full
@@ -2102,7 +2124,7 @@ pub fn post_process_reporting(
     let post_p = match &post_sc {
         Some(s) => {
             let mut q = CalcParams::new(s)?;
-            q.gpu_overflow = p.gpu_overflow;
+            q.gpu_overflow = p.gpu_overflow.clone();
             Some(q)
         }
         None => None,
