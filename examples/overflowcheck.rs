@@ -52,6 +52,26 @@ fn main() {
     let sh = cpu.iter().zip(&card).filter(|(x, y)| x.shadow != y.shadow).count();
     let big = cpu.iter().zip(&card).filter(|(x, y)| (x.amb_shadow as i32 - y.amb_shadow as i32).abs() > 1).count();
     println!("of those: shadows {sh}, occlusion off by more than 1: {big}");
+    // the reflections: painted on the CPU alone, then with the card on a
+    // picture not marked yet (twice: its pipelines compile at first)
+    let mut bad_refl = false;
+    if sc.mc.reflections {
+        let px = |x: &[u8], y: &[u8]| x.chunks(3).zip(y.chunks(3)).filter(|(a, b)| a != b).count();
+        mb3d::gpu::set_enabled(false);
+        let (want, _) = mb3d::render::paint_plain(&sc, &p, &cpu);
+        mb3d::gpu::set_enabled(true);
+        let p3 = mb3d::calc::CalcParams::new(&sc).unwrap();
+        let _ = mb3d::render::paint_plain(&sc, &p3, &cpu);
+        while mb3d::gpu::compiling() {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        let p4 = mb3d::calc::CalcParams::new(&sc).unwrap();
+        let (got, _) = mb3d::render::paint_plain(&sc, &p4, &cpu);
+        let n = px(&want, &got);
+        let marked4 = p4.gpu_overflow.load(Ordering::Relaxed);
+        println!("reflections: {n} of {} pixels differ from the CPU's; picture marked as overflowing: {marked4}", want.len() / 3);
+        bad_refl = n > 0 || !marked4;
+    }
     // (the screen space occlusion of the card rounds some values by one)
-    std::process::exit((sh + big > 0 || !marked) as i32);
+    std::process::exit((sh + big > 0 || !marked || bad_refl) as i32);
 }

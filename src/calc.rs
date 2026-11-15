@@ -153,6 +153,13 @@ impl ItStats {
         }
     }
 
+    /// The counts of `o` added to these (the card's, once its rows are
+    /// kept).
+    pub fn merge(&self, o: &ItStats) {
+        use std::sync::atomic::Ordering::Relaxed;
+        self.add(o.sum.load(Relaxed), o.count.load(Relaxed), o.max.load(Relaxed));
+    }
+
     pub fn reset(&self) {
         use std::sync::atomic::Ordering::Relaxed;
         self.sum.store(0, Relaxed);

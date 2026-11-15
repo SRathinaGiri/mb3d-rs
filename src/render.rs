@@ -761,6 +761,9 @@ fn calculate_rows(
         p.gpu_overflow.store(true, Ordering::Relaxed);
     }
     let p = p;
+    // (a card that failed counted the iterations of its pixels: the
+    // calculation starts again here)
+    p.its.reset();
     ck_tag(ck, "raw");
     // the rows go straight into the G-buffer (no copy of it: big pictures)
     let (mut gbuf, _) = ck_rows(ck, w, h, sink);
@@ -1746,6 +1749,12 @@ fn march_mixed(
         }
         let cp = switched.as_ref().map_or(p, |(pd, _)| pd);
         *decided.locked() = Some(switched.as_ref().map(|(pd, _)| pd.clone()));
+        // (the card counts the iterations of its pixels apart: they join
+        // the picture's when its rows are kept, not when the CPU
+        // calculates them again)
+        let mut cq = cp.clone();
+        cq.its = Default::default();
+        let cp = &cq;
         let claimed = Mutex::new(Vec::new());
         let t_card = Instant::now();
         let r = board.keep_going(cancel, || crate::gpu::march_bands(cp, &PostJob::default(), &|band| claim(0, band, &claimed), &|| stop(0), &mut |y, row| card_row(y, row)));
@@ -1754,6 +1763,9 @@ fn march_mixed(
         // (stopped: its rows are kept when the card's verdict on them so
         // far is good)
         card_ok = r.is_ok() || (r.as_ref().is_err_and(|e| e == "cancelled") && !crate::gpu::rows_overflowed());
+        if card_ok {
+            p.its.merge(&cq.its);
+        }
         if let Err(e) = r {
             if e != "cancelled" {
                 // the card's rows (also those it delivered: overflows) on

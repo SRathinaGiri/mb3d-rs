@@ -4533,6 +4533,7 @@ fn reflect_task(idx: u32) {
     si_otrap = 0u;
     si_amb = 5000u;
     s_roughness = 0.0;
+    de_overflow = false;
     pixel(x, y, M_REFLECT);
     if (suspended || r_keep) {
         return;
@@ -4548,7 +4549,9 @@ fn reflect_task(idx: u32) {
     put_hit_pos(o, c);
     OUT[o + 16u] = bitcast<u32>(f32(zz_base + mzz * zz_mul));
     OUT[o + 17u] = bitcast<u32>(f32(r_zz2));
-    OUT[o + 18u] = r_flags;
+    // (bit 4: a DE of the ray overflowed single precision, as the march
+    // marks its pixels)
+    OUT[o + 18u] = r_flags | select(0u, 16u, de_overflow);
     OUT[o + 19u] = bitcast<u32>(f32(r_step_count));
 }
 

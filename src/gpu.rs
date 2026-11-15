@@ -2640,6 +2640,8 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
         return Err(e);
     }
     rx.recv().map_err(|e| e.to_string())?.map_err(|e| e.to_string())?;
+    // the rays whose DE overflowed single precision (see `post_verdict`)
+    let overflow = std::cell::Cell::new(0usize);
     let out = {
         let data = slice.get_mapped_range().map_err(|e| e.to_string())?;
         data.chunks_exact(36 * 4)
@@ -2648,6 +2650,7 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
                 let f = |k: usize| f32::from_bits(u(k));
                 let (a, b, z, s, amb) = (u(8), u(9), u(10), u(11), u(12));
                 let flags = u(18);
+                overflow.set(overflow.get() + (flags & 16 != 0) as usize);
                 ReflectHit {
                     si: SiLight {
                         normal: [a as u16 as i16, (a >> 16) as u16 as i16, b as u16 as i16],
@@ -2674,6 +2677,18 @@ fn reflect_batch_card(p: &CalcParams, tasks: &[ReflectTask], offset: usize, o: &
             .collect()
     };
     read.unmap();
+    // The verdict on the batch, as the march's on its rows: the bounces
+    // march the scene's formulas too.  Too many overflowed: the batch is not
+    // usable (the caller calculates the band on the CPU) and no later pass
+    // of the picture goes to the card.
+    let (n, len) = (overflow.get(), n_card.get().saturating_sub(unfinished.len()));
+    if timing {
+        crate::elog!("    DE overflow in {n} of {len} rays (reflections)");
+    }
+    if n * 500 > len.max(1) && !dbl {
+        p.gpu_overflow.store(true, Ordering::Relaxed);
+        return Err(format!("single precision overflows in the reflections ({n} of {len} rays)"));
+    }
     Ok((out, n_card.get(), unfinished))
 }
 
