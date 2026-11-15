@@ -84,6 +84,9 @@ pub struct State {
     cancel: Arc<AtomicBool>,
     layout_size: (i32, i32),
     uuid: u32,
+    /// the main window's parameters (as text) the window last started
+    /// from or sent there: opened again with the same ones, nothing changes
+    main_text: String,
 }
 
 impl Default for State {
@@ -96,6 +99,7 @@ impl Default for State {
             cancel: Arc::new(AtomicBool::new(false)),
             layout_size: (0, 0),
             uuid: 0,
+            main_text: String::new(),
         }
     }
 }
@@ -259,29 +263,41 @@ fn to_bitmap(rgb: &[u8], w: usize, h: usize, bw: usize, bh: usize) -> Bitmap {
     b
 }
 
-/// The window is opened (again): the main window's parameters become the
-/// root of a first generation and its preview is rendered (MB3D's
-/// `RestartFromMain` / `CreateInitialSet`, which it never called: its root
-/// tile stayed black until the first mutation).  When the parameters are
-/// still those the generations started from, nothing changes.
+/// The window is opened (again).  The first time, the main window's
+/// parameters become the root of a first generation and its preview is
+/// rendered (MB3D's `RestartFromMain` / `CreateInitialSet`, which it never
+/// called: its root tile stayed black until the first mutation).  Later,
+/// the generations made so far stay: when the main window's parameters are
+/// those the window knows (the ones it started from, a variation it sent
+/// to the main window, any variation of a generation), nothing changes;
+/// new parameters become the root of a further generation, after the kept
+/// ones.  (Until 0.3.10 other parameters in the main window emptied the
+/// window: a variation sent to the main window and calculated there lost
+/// all generations on the way back.)
 pub fn opening(app: &mut Mb3d, ui: &mut Ui) {
     if app.mutagen.running || ui.showing(F) {
         return;
     }
     app.make_scene(ui);
-    if let Some(root) = app.mutagen.generations.first().and_then(|g| g.first().cloned().flatten()) {
-        if root.member.scene.to_text() == app.scene.to_text() {
-            return;
+    let text = app.scene.to_text();
+    let first = app.mutagen.generations.is_empty();
+    if !first && (text == app.mutagen.main_text || app.mutagen.generations.iter().flatten().flatten().any(|m| m.member.scene.to_text() == text)) {
+        return;
+    }
+    app.mutagen.main_text = text;
+    if first {
+        app.mutagen.current = 0;
+        for i in 0..TREE.len() {
+            let b = blank(ui);
+            ui.set_picture(F, &image_name(i), Some(b));
+            ui.set_caption(F, &panel_name(i), "");
         }
-    }
-    app.mutagen.generations.clear();
-    app.mutagen.current = 0;
-    for i in 0..TREE.len() {
+    } else {
+        // the new root's tile until its preview is there
         let b = blank(ui);
-        ui.set_picture(F, &image_name(i), Some(b));
-        ui.set_caption(F, &panel_name(i), "");
+        ui.set_picture(F, &image_name(0), Some(b));
     }
-    create_mutation(app, ui, 0, true);
+    create_mutation(app, ui, None, true);
 }
 
 /// The parameters of the main window as the root (`CreateInitialSet`).
@@ -291,22 +307,24 @@ fn initial_from_main(app: &mut Mb3d, ui: &mut Ui) -> Option<GenMember> {
     Some(GenMember { member: Member { scene: s, probe: Vec::new(), coverage: 0.0 }, img: blank(ui) })
 }
 
-/// `CreateMutation(Sender)`: a new generation from the member of a panel;
-/// `root_only` renders just the root (`CreateInitialSet`).
-fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: usize, root_only: bool) {
+/// `CreateMutation(Sender)`: a new generation from the member of the panel
+/// `from` (None: from the main window's parameters); `root_only` renders
+/// just the root (`CreateInitialSet`).
+fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: Option<usize>, root_only: bool) {
     if app.mutagen.running {
         app.mutagen.cancel.store(true, Ordering::SeqCst);
         return;
     }
     // the picture size follows the window's layout
     layout(app, ui);
-    let initial = if app.mutagen.generations.is_empty() {
-        initial_from_main(app, ui)
-    } else {
-        app.mutagen.generations.get(app.mutagen.current).and_then(|g| g.get(from).cloned().flatten())
+    let from = from.filter(|_| !app.mutagen.generations.is_empty());
+    let initial = match from {
+        None => initial_from_main(app, ui),
+        Some(from) => app.mutagen.generations.get(app.mutagen.current).and_then(|g| g.get(from).cloned().flatten()),
     };
     let Some(initial) = initial else { return };
-    let has_img = !app.mutagen.generations.is_empty();
+    // (a member of a generation brings its picture, the main window's parameters are rendered)
+    let has_img = from.is_some();
     app.mutagen.running = true;
     enable_controls(app, ui);
     refresh_mutate_caption(app, ui);
@@ -446,11 +464,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.close_cancel(F);
             }
         }
-        "MutateBtnClick" => create_mutation(app, ui, 0, false),
+        "MutateBtnClick" => create_mutation(app, ui, Some(0), false),
         "Panel_1DblClick" => {
             let s = e.sender.as_str();
             if let Some(i) = (0..TREE.len()).find(|&i| s == panel_name(i) || s == image_name(i)) {
-                create_mutation(app, ui, i, false);
+                create_mutation(app, ui, Some(i), false);
             }
         }
         "DisableAllBtnClick" => {
@@ -493,6 +511,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             app.scene_to_forms(ui);
             app.title = caption(i, app.mutagen.current);
             super::main_form::set_caption(app, ui);
+            // (as the main window gives them back: the window opened again
+            // with them keeps its generations as they are)
+            app.make_scene(ui);
+            app.mutagen.main_text = app.scene.to_text();
         }
         _ => {}
     }

@@ -1,7 +1,7 @@
 //! Paints the program's windows off screen into PNG files (for checking
 //! layouts without clicking through the windows).
 //! `cargo run --release --example snapform -- [APP ARGS] -- STEPS...` with
-//! the steps `show:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
+//! the steps `show:FORM`, `close:FORM`, `page:FORM:PAGECONTROL:SHEET`, `click:FORM:CONTROL`,
 //! `text:FORM:CONTROL:TEXT`, `check:FORM:CONTROL:0|1`, `item:FORM:CONTROL:INDEX`, `pos:FORM:UPDOWN:N`,
 //! `items:FORM:CONTROL:A|B|...` (a list's lines), `drop:FORM:COMBOBOX` (its list opened),
 //! `post:FORM:CONTROL:HANDLER` (an event as from the control, e.g. an OnMouseDown),
@@ -34,6 +34,7 @@ fn main() {
         let p: Vec<&str> = s.split(':').collect();
         match p[0] {
             "show" => ui.show(p[1]),
+            "close" => ui.close(p[1]),
             "panic" => panic!("snapform: the panic step"),
             "page" => ui.set_active_page(p[1], p[2], p[3]),
             "click" => ui.click(p[1], p[2]),
