@@ -645,6 +645,8 @@ ClickThenClickAnyPixelIn=انقر، ثم انقر أي بكسل في نوافذ 
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=انقر للتبديل بين Dynfog حسب التكرارات واللون حسب التكرارات
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=انقر لاختيار صورة من مجلد الخرائط.
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=انقر لاختيار ملف الإخراج
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=انقر لاختيار مجلد الإخراج

@@ -644,6 +644,8 @@ ClickThenClickAnyPixelIn=Click, then click any pixel in the program's windows (t
 ;the program
 ClickToChangeBetweenDynfogOn=Click to change between Dynfog on its and Color on its
 ;FNavigator.SpeedButton33.Hint
+ClickToChooseAPicture=Click to choose a picture from the maps folder.
+;LightAdjustForm.Image3.Hint, LightAdjustForm.Image4.Hint, LightAdjustForm.Image5.Hint
 ClickToChooseTheOutputFile=Click to choose the output file
 ;BulbTracer2Frm.SelectOutputFilenameBtn.Hint, SplatFrm.FileBtn.Hint
 ClickToChooseTheOutputFolder=Click to choose the output folder

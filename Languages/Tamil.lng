@@ -645,6 +645,8 @@ ClickThenClickAnyPixelIn=சொடுக்கி, பிறகு நிரல�
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=Dynfog on its மற்றும் Color on its இடையே மாற்றக் கிளிக் செய்யவும்
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=வரைபடக் கோப்புறையிலிருந்து ஒரு படத்தைத் தேர்ந்தெடுக்க சொடுக்கவும்.
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=வெளியீட்டுக் கோப்பைத் தேர்ந்தெடுக்கக் கிளிக் செய்யவும்
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=வெளியீட்டுக் கோப்புறையைத் தேர்ந்தெடுக்கக் கிளிக் செய்யவும்

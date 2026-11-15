@@ -241,7 +241,9 @@ pub fn request(app: &mut Mb3d, ui: &mut Ui, path: PathBuf, form: &str, image: &s
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(p) = ui.file_preview.take() {
         let t = dialog_target();
-        if is_params(&p) {
+        // (parameters, and pictures: the dialogs that choose a map or a
+        // background picture, whose file names are numbers)
+        if possible(&p) {
             request(app, ui, p, &t.0, &t.1, &t.2);
         } else {
             app.preview.shown = None;

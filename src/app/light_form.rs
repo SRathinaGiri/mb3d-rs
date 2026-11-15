@@ -1381,15 +1381,16 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         }
         "Edit2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, .. } = e.ev {
-                let o = crate::vcl::dialogs::FileOptions {
-                    title: tr("@MB:ChooseAMap"),
-                    filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
-                    initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
-                    ..Default::default()
-                };
-                ui.open_dialog(&format!("light:map:{}", e.sender), &o);
+                map_dialog(app, ui, &e.sender);
             }
         }
+        // A click on a map's small picture opens the maps folder to choose
+        // one by its picture (the dialog shows the clicked file), as the
+        // right click on the number does (MB3D's only way; a number alone
+        // says nothing about the picture)
+        "Image3Click" => map_dialog(app, ui, "Edit2"),
+        "Image4Click" => map_dialog(app, ui, "Edit21"),
+        "Image5Click" => bg_dialog(app, ui),
         "ButtonGetPosClick" => {
             if ui.caption(F, "ButtonGetPos") == tr("@MB:ImageLower") {
                 ui.set_caption(F, "ButtonGetPos", &tr("@MB:Mid"));
@@ -1609,13 +1610,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
         "CheckBox8Click" => {
             if uc {
                 if ui.checked(F, "CheckBox8") {
-                    let o = crate::vcl::dialogs::FileOptions {
-                        title: tr("@MB:BackgroundImage2"),
-                        filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
-                        initial_dir: Some(app.ini.dir(super::ini::DIR_BGPIC)),
-                        ..Default::default()
-                    };
-                    ui.open_dialog("light:bgpic", &o);
+                    bg_dialog(app, ui);
                 } else {
                     app.scene.lighting.bg_image.clear();
                     ui.set_checked(F, "CheckBox21", false);
@@ -1773,6 +1768,43 @@ fn make_depth_col_list(ui: &mut Ui) {
         c.events.insert("OnClick".into(), "N01Click".into());
         f.add_control(menu, c);
     }
+}
+
+const PICTURES: [&str; 5] = ["png", "jpg", "jpeg", "bmp", "hdr"];
+
+/// The dialog that chooses a map's picture, in the maps folder; `edit` is
+/// the number field it is for (`Edit2`: a light's map, `Edit21`: the
+/// diffuse colour's).
+fn map_dialog(app: &Mb3d, ui: &mut Ui, edit: &str) {
+    let o = crate::vcl::dialogs::FileOptions {
+        title: tr("@MB:ChooseAMap"),
+        filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
+        initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
+        // (the clicked picture is shown beside the list: the names are numbers)
+        preview: true,
+        ..Default::default()
+    };
+    ui.open_dialog(&format!("light:map:{edit}"), &o);
+}
+
+/// The dialog that chooses the background picture: in the background
+/// pictures' folder, or in the maps folder while that one holds no
+/// picture (it starts as the program's folder; the maps folder has the
+/// pictures the program came with).
+fn bg_dialog(app: &Mb3d, ui: &mut Ui) {
+    let has_pictures = |d: &std::path::Path| {
+        std::fs::read_dir(d).is_ok_and(|rd| rd.flatten().any(|e| e.path().extension().and_then(|x| x.to_str()).is_some_and(|x| PICTURES.contains(&x.to_ascii_lowercase().as_str()))))
+    };
+    let bg = app.ini.dir(super::ini::DIR_BGPIC);
+    let dir = if has_pictures(&bg) { bg } else { app.ini.dir(super::ini::DIR_MAPS) };
+    let o = crate::vcl::dialogs::FileOptions {
+        title: tr("@MB:BackgroundImage2"),
+        filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
+        initial_dir: Some(dir),
+        preview: true,
+        ..Default::default()
+    };
+    ui.open_dialog("light:bgpic", &o);
 }
 
 /// The map number of a picture chosen for a map ([`crate::maps::import_picture`]),

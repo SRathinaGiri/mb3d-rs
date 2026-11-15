@@ -645,6 +645,8 @@ ClickThenClickAnyPixelIn=ここをクリックしてから、プログラムの�
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=クリックで「反復数の動的フォグ」と「反復数の色」を切り替えます。
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=クリックしてマップフォルダーから画像を選びます。
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=クリックして出力ファイルを選択します。
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=クリックして出力フォルダを選択します。

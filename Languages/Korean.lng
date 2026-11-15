@@ -645,6 +645,8 @@ ClickThenClickAnyPixelIn=이 버튼을 클릭한 다음 프로그램 창(이미�
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=클릭하여 반복 기준 Dynfog와 반복 기준 색상 사이를 전환합니다
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=클릭하여 맵 폴더에서 이미지를 선택합니다.
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=클릭하여 출력 파일을 선택하십시오.
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=클릭하여 출력 폴더를 선택합니다

@@ -929,6 +929,10 @@ object LightAdjustForm: TLightAdjustForm
           Top = 30
           Width = 64
           Height = 32
+          Hint = '@MB:ClickToChooseAPicture'
+          ParentShowHint = False
+          ShowHint = True
+          OnClick = Image3Click
         end
         object TrackBar25: TTrackBar
           Tag = 1
@@ -1317,6 +1321,10 @@ object LightAdjustForm: TLightAdjustForm
           Top = 1
           Width = 64
           Height = 32
+          Hint = '@MB:ClickToChooseAPicture'
+          ParentShowHint = False
+          ShowHint = True
+          OnClick = Image4Click
         end
         object Label41: TLabel
           Left = 27
@@ -2533,6 +2541,10 @@ object LightAdjustForm: TLightAdjustForm
         Top = 5
         Width = 64
         Height = 32
+        Hint = '@MB:ClickToChooseAPicture'
+        ParentShowHint = False
+        ShowHint = True
+        OnClick = Image5Click
       end
       object Label33: TLabel
         Left = 3

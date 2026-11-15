@@ -644,6 +644,8 @@ ClickThenClickAnyPixelIn=Klik, lalu klik piksel mana pun di jendela program (gam
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=Klik untuk beralih antara Dynfog pada its dan Warna pada its
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=Klik untuk memilih gambar dari folder peta.
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=Klik untuk memilih file keluaran
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=Klik untuk memilih folder keluaran

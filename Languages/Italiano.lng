@@ -644,6 +644,8 @@ ClickThenClickAnyPixelIn=Clicca qui, poi su un pixel qualsiasi delle finestre de
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=Clic per passare da Nebbia dinamica su iterazioni a Colore su iterazioni
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=Fai clic per scegliere un'immagine dalla cartella delle mappe.
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=Fare clic per scegliere il file di output
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=Clic per scegliere la cartella di output

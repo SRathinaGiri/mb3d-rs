@@ -644,6 +644,8 @@ ClickThenClickAnyPixelIn=Clique aqui e depois em qualquer pixel das janelas do p
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=Clique para alternar entre Dynfog nas its e Cor nas its
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=Clique para escolher uma imagem da pasta de mapas.
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=Clique para escolher o arquivo de saída
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=Clique para escolher a pasta de saída

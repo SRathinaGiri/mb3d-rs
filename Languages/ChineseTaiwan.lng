@@ -645,6 +645,8 @@ ClickThenClickAnyPixelIn=先按一下這裡，再按一下程式視窗中的任�
 ;Click, then click any pixel in the program's windows (the picture, a map, a palette, another window) to take its color. Esc stops.
 ClickToChangeBetweenDynfogOn=點擊以在「動態霧依迭代」與「顏色依迭代」之間切換
 ;Click to change between Dynfog on its and Color on its
+ClickToChooseAPicture=按一下以從貼圖資料夾中選擇圖片。
+;Click to choose a picture from the maps folder.
 ClickToChooseTheOutputFile=按一下以選擇輸出檔案
 ;Click to choose the output file
 ClickToChooseTheOutputFolder=點擊以選擇輸出資料夾
