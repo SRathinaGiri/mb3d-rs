@@ -441,6 +441,11 @@ pub fn unsupported(p: &CalcParams) -> Option<String> {
     if p.slice_2d != 0 {
         return r("2D calculation (not on the GPU yet)");
     }
+    // (the march of this picture showed it: every later pass would
+    // overflow the same way, and has no check of its own)
+    if p.gpu_overflow && !p.gpu_double {
+        return r("single precision overflows in this scene's formulas");
+    }
     if p.is_custom_de && !p.difs && ![2, 5, 6, 11].contains(&p.de_option) {
         return r("this analytic DE option (not on the GPU yet)");
     }
@@ -2201,6 +2206,12 @@ fn overflowed(p: &CalcParams) -> bool {
 /// not keep them.
 pub fn rows_overflowed() -> bool {
     ROWS_BAD.with(|c| c.get())
+}
+
+/// Before a picture's march: the verdict of the march before it on this
+/// thread is not this picture's.
+pub fn clear_rows_overflowed() {
+    ROWS_BAD.with(|c| c.set(false));
 }
 
 fn bytes(v: &[u32]) -> Vec<u8> {
@@ -4097,6 +4108,22 @@ mod tests {
             assert!(n > 100);
             assert!(mean < 0.01 && farf < 0.01, "{extra:?}: mean {mean}, far {farf}");
         }
+    }
+
+    /// A picture whose march overflowed single precision on the card keeps
+    /// its later passes (shadows, occlusion, reflections) off the card:
+    /// they march the same formulas and have no overflow check of their
+    /// own (the shadows came out wrong, unlike a calculation on the CPU).
+    #[test]
+    fn an_overflowed_picture_stays_off_the_card() {
+        let sc = crate::scene::Scene::parse("width = 64\nheight = 48\n").unwrap();
+        let mut p = CalcParams::new(&sc).unwrap();
+        assert_eq!(unsupported(&p), None);
+        p.gpu_overflow = true;
+        assert!(unsupported(&p).is_some_and(|r| r.contains("single precision")));
+        // (in double precision the card does not overflow)
+        p.gpu_double = true;
+        assert_eq!(unsupported(&p), None);
     }
 
     fn gbuffer_matches_cpu(scene: &str, scale: f64) {

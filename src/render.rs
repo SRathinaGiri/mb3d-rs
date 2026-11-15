@@ -532,6 +532,7 @@ fn calculate_rows(
     } else if !crate::gpu::enabled() {
         crate::gpu::set_status("CPU: the GPU is switched off".into());
     } else {
+        crate::gpu::clear_rows_overflowed();
         // the shadows and the DE ambient occlusion run on the card with
         // the main calculation (also for a raw calculation: post_process
         // skips what is done)
@@ -593,6 +594,9 @@ fn calculate_rows(
                 // mostly do when it joins)
                 let unmeasured = ck.is_some_and(|s| s.done_count() >= h);
                 let (mut gbuf, n_card, switched, card_secs) = march_mixed(&p, threads, progress, wm, cancel, sink, &flags[0], &probe, ck, true, &finish)?;
+                // (the card's rows overflowed single precision and the CPU
+                // calculated them: the passes after the march stay off it)
+                p.gpu_overflow = crate::gpu::rows_overflowed();
                 let march_secs = t_march.elapsed().as_secs_f64();
                 let timing = std::env::var_os("MB3D_GPU_TIMING").is_some();
                 let rate = |n: usize, t: f64| n as f64 / t.max(1e-6);
@@ -747,6 +751,12 @@ fn calculate_rows(
                 return Err("cancelled".into());
             }
         }
+    }
+    // (the card's march overflowed single precision: the passes after
+    // this calculation on the CPU stay off the card too)
+    #[cfg(feature = "gpu")]
+    if !two_d && crate::gpu::enabled() && crate::gpu::rows_overflowed() {
+        p.gpu_overflow = true;
     }
     let p = p;
     ck_tag(ck, "raw");
@@ -2090,7 +2100,11 @@ pub fn post_process_reporting(
     // volumetric light below take `pq`
     let post_sc = sc.post_scene();
     let post_p = match &post_sc {
-        Some(s) => Some(CalcParams::new(s)?),
+        Some(s) => {
+            let mut q = CalcParams::new(s)?;
+            q.gpu_overflow = p.gpu_overflow;
+            Some(q)
+        }
         None => None,
     };
     let (sc, p) = (post_sc.as_ref().unwrap_or(sc), post_p.as_ref().unwrap_or(p));

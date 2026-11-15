@@ -121,6 +121,12 @@ pub struct CalcParams {
     /// would allow single: a probe found single precision too coarse for
     /// the scene's fine detail (see `render::double_probe`).
     pub gpu_double: bool,
+    /// The graphics card's march of this picture overflowed single
+    /// precision in too many pixels (`gpu::rows_overflowed`) and the CPU
+    /// calculated it: the passes after it (shadows, ambient occlusion,
+    /// reflections) march the same formulas and stay off the card too
+    /// (`gpu::unsupported`).
+    pub gpu_overflow: bool,
     /// The iteration statistics of the calculation (shared by the clones
     /// of these parameters).
     pub its: std::sync::Arc<ItStats>,
@@ -866,6 +872,7 @@ impl CalcParams {
             gpu_post: None,
             gpu_post_secs: None,
             gpu_double: false,
+            gpu_overflow: false,
             its: Default::default(),
             machine,
         };
