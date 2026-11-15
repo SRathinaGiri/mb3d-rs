@@ -247,8 +247,13 @@ pub struct Control {
 
     // ---- lists
     pub items: Vec<String>,
-    /// a small picture before each item (a list box; empty: none)
+    /// a small picture before each item (a list box; empty: none); a
+    /// list view shown as tiles (`tile`): each tile's picture
     pub item_images: Vec<bitmap::Bitmap>,
+    /// a list view shown as tiles (not in Delphi's forms: the file dialog
+    /// that chooses a picture): the size of a tile's picture box.  The
+    /// rows' first cells are the captions.
+    pub tile: Option<(i32, i32)>,
     pub item_index: i32,
     pub item_height: i32,
     pub top_index: i32,
@@ -437,6 +442,7 @@ impl Control {
             modal_result: 0,
             items: Vec::new(),
             item_images: Vec::new(),
+            tile: None,
             item_index: -1,
             item_height: 13,
             top_index: 0,

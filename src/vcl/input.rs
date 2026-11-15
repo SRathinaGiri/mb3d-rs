@@ -121,7 +121,7 @@ impl Form {
             Kind::ListView => {
                 let (hh, _, vis, max, top) = self.listview_rows(id);
                 let inner = r.inset(2);
-                if c.row_count() as i32 > vis && x >= inner.right() - SB && y >= inner.y + hh {
+                if self.listview_lines(id) > vis && x >= inner.right() - SB && y >= inner.y + hh {
                     let sr = Rect::new(inner.right() - SB, inner.y + hh, SB, inner.h - hh);
                     return sb_part(sr, true, 0, max as i64, vis as i64, top as i64, x, y);
                 }
@@ -411,7 +411,8 @@ impl Form {
             Kind::ListView => {
                 let (hh, rh, _, _, top) = self.listview_rows(id);
                 let (lx, ly) = self.local(id, x, y);
-                if ly <= hh + 2 {
+                let tiles = self.listview_tiles(id);
+                if ly <= hh + 2 && tiles.is_none() {
                     // A report-style ListView uses its column headers as
                     // ordinary clickable controls.  The chosen column is
                     // exposed through `col` for the OnColumnClick handler.
@@ -429,9 +430,14 @@ impl Form {
                         out.push(raw(id, "OnColumnClick", Ev::Click));
                     }
                 } else {
-                    let i = (ly - hh - 2) / rh + top;
+                    let i = match tiles {
+                        // (a click beside the last tile of a line or under the last line: none)
+                        Some((cols, cw, _)) if (lx - 2) / cw >= cols || ly < 2 => i32::MAX,
+                        Some((cols, cw, _)) => ((ly - 2) / rh + top) * cols + (lx - 2) / cw,
+                        None => (ly - hh - 2) / rh + top,
+                    };
                     let c = &mut self.ctl[id];
-                    if (i as usize) < c.row_count() {
+                    if i >= 0 && (i as usize) < c.row_count() {
                         if c.multi_select {
                             let n = c.row_count();
                             c.selected.resize(n, false);
@@ -454,7 +460,7 @@ impl Form {
                             out.push(raw(id, "OnChange", Ev::Change));
                         }
                     }
-                    if c.checkboxes && lx < 22 && (i as usize) < c.row_count() {
+                    if c.checkboxes && lx < 22 && i >= 0 && (i as usize) < c.row_count() {
                         let n = c.row_count();
                         c.checks.resize(n, false);
                         c.checks[i as usize] ^= true;
@@ -818,7 +824,9 @@ impl Form {
                 }
                 Kind::ListView => {
                     let (_, _, _, max, top) = self.listview_rows(id);
-                    self.ctl[id].scroll_y = (top - steps * 3).clamp(0, max);
+                    // (three rows a notch, or one line of tiles)
+                    let k = if self.ctl[id].tile.is_some() { 1 } else { 3 };
+                    self.ctl[id].scroll_y = (top - steps * k).clamp(0, max);
                     true
                 }
                 Kind::TrackBar if self.focus == Some(id) => {
@@ -1680,9 +1688,16 @@ impl Form {
                 }
             }
             Kind::Button if key == vk::RETURN => out.extend(self.click_control(id)),
-            Kind::ListView | Kind::StringGrid if matches!(key, vk::UP | vk::DOWN) => {
+            Kind::ListView | Kind::StringGrid if matches!(key, vk::UP | vk::DOWN) || (kind == Kind::ListView && self.ctl[id].tile.is_some() && matches!(key, vk::LEFT | vk::RIGHT)) => {
+                // (tiles: up and down by a line of them, left and right by one)
+                let cols = self.listview_tiles(id).map_or(1, |t| t.0);
                 let c = &mut self.ctl[id];
-                let d = if key == vk::UP { -1 } else { 1 };
+                let d = match key {
+                    vk::UP => -cols,
+                    vk::DOWN => cols,
+                    vk::LEFT => -1,
+                    _ => 1,
+                };
                 if kind == Kind::ListView {
                     let i = (c.item_index + d).clamp(0, (c.row_count() as i32 - 1).max(0));
                     if c.row_count() > 0 && i != c.item_index {
@@ -1697,10 +1712,11 @@ impl Form {
                         }
                         out.push(raw(id, "OnChange", Ev::Change));
                     }
-                    // the selected row stays in view
+                    // the selected row (or line of tiles) stays in view
                     let (_, _, vis, max, top) = self.listview_rows(id);
                     let c = &mut self.ctl[id];
-                    c.scroll_y = top.clamp(c.item_index - vis + 1, c.item_index.max(0)).clamp(0, max);
+                    let line = c.item_index.max(0) / cols;
+                    c.scroll_y = top.clamp(line - vis + 1, line).clamp(0, max);
                 } else if (c.cells.len() as i32) > c.fixed_rows {
                     c.row = (c.row + d).clamp(c.fixed_rows, c.cells.len() as i32 - 1);
                     out.push(raw(id, "OnSelectCell", Ev::Select));

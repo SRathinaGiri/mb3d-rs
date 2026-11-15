@@ -35,6 +35,8 @@ pub(crate) struct FileDlg {
     entries: Vec<FileEntry>,
     /// a preview column: a clicked file goes to `Ui::file_preview`
     preview: bool,
+    /// the files as tiles with their pictures (`FileOptions::grid`)
+    grid: bool,
     /// Column and direction of the report-style file list.
     sort_column: usize,
     sort_desc: bool,
@@ -54,7 +56,38 @@ struct FileEntry {
 }
 
 fn name_cmp(a: &FileEntry, b: &FileEntry) -> Ordering {
-    a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase())
+    natural_cmp(&a.name, &b.name)
+}
+
+/// Names in the order people read them: without regard to case, and a run
+/// of digits by its value (28.jpg before 100.jpg before 1001.jpg: the maps
+/// are named by number).
+fn natural_cmp(a: &str, b: &str) -> Ordering {
+    let (a, b): (Vec<char>, Vec<char>) = (a.to_lowercase().chars().collect(), b.to_lowercase().chars().collect());
+    let (mut i, mut j) = (0, 0);
+    while i < a.len() && j < b.len() {
+        if a[i].is_ascii_digit() && b[j].is_ascii_digit() {
+            let run = |s: &[char], k: usize| s[k..].iter().take_while(|c| c.is_ascii_digit()).count();
+            let (na, nb) = (run(&a, i), run(&b, j));
+            // (without leading zeros: the longer run is the bigger number)
+            let za = a[i..i + na].iter().take_while(|c| **c == '0').count().min(na - 1);
+            let zb = b[j..j + nb].iter().take_while(|c| **c == '0').count().min(nb - 1);
+            let (da, db) = (&a[i + za..i + na], &b[j + zb..j + nb]);
+            let o = da.len().cmp(&db.len()).then_with(|| da.cmp(db));
+            if o != Ordering::Equal {
+                return o;
+            }
+            i += na;
+            j += nb;
+        } else {
+            if a[i] != b[j] {
+                return a[i].cmp(&b[j]);
+            }
+            i += 1;
+            j += 1;
+        }
+    }
+    (a.len() - i).cmp(&(b.len() - j)).then_with(|| a.cmp(&b))
 }
 
 fn type_cmp(a: &FileEntry, b: &FileEntry) -> Ordering {
@@ -139,7 +172,15 @@ pub struct FileOptions {
     /// a preview column on the right (`PreviewImage`, `PreviewLabel`): a
     /// clicked file is put into `Ui::file_preview` for the application
     pub preview: bool,
+    /// the files as tiles with their pictures instead of the list (the
+    /// dialogs that choose a picture): the application supplies the
+    /// pictures of the tiles in sight (`Ui::file_tiles_wanted`,
+    /// `Ui::set_file_tile`)
+    pub grid: bool,
 }
+
+/// The picture box of a tile of the file dialog's grid.
+const TILE: (i32, i32) = (112, 84);
 
 fn esc(s: &str) -> String {
     let mut o = String::from("'");
@@ -464,8 +505,8 @@ impl Ui {
     fn file_dialog(&mut self, tag: &str, o: &FileOptions, save: bool) {
         let title = if o.title.is_empty() { if save { tr("@MB:SaveAs") } else { tr("@MB:Open") } } else { o.title.clone() };
         let filters = parse_filter(&o.filter);
-        let cw = if o.preview { 812 } else { 560 };
-        let mut d = format!("object FileDlg: TForm\n  Caption = {}\n  ClientWidth = {cw}\n  ClientHeight = 390\n{FORM_HEAD}", esc(&title));
+        let (cw, chh) = if o.preview && !o.grid { (812, 390) } else { (560, 390) };
+        let mut d = format!("object FileDlg: TForm\n  Caption = {}\n  ClientWidth = {cw}\n  ClientHeight = {chh}\n{FORM_HEAD}", esc(&title));
         d = d.replace("bsDialog", "bsSizeable");
         d.push_str(&format!(
             "  object LookLabel: TLabel\n    Left = 8\n    Top = 12\n    Width = 40\n    Height = 13\n    Caption = {}\n  end\n\
@@ -483,7 +524,7 @@ impl Ui {
         ));
         d.push_str(&button("OkBtn", &if o.folder { tr("@MB:Select") } else if save { tr("@MB:Save2") } else { tr("@MB:Open2") }, 477, 314, 75, 0, true, false).replace("TabOrder = 0", "TabOrder = 5\n    Anchors = [akRight, akBottom]"));
         d.push_str(&button("CancelBtn", &tr("@MB:Cancel"), 477, 346, 75, MR_CANCEL, false, true).replace("TabOrder = 0", "TabOrder = 6\n    Anchors = [akRight, akBottom]"));
-        if o.preview {
+        if o.preview && !o.grid {
             d.push_str(&format!(
                 "  object PreviewImage: TImage\n    Left = 564\n    Top = 36\n    Width = 240\n    Height = 180\n    Anchors = [akTop, akRight]\n    Center = True\n  end\n\
                  \x20 object PreviewLabel: TLabel\n    Left = 564\n    Top = 224\n    Width = 240\n    Height = 80\n    Anchors = [akTop, akRight]\n    AutoSize = False\n    WordWrap = True\n    Caption = {}\n  end\n",
@@ -514,6 +555,7 @@ impl Ui {
             folder: o.folder,
             entries: Vec::new(),
             preview: o.preview,
+            grid: o.grid,
             sort_column: self.file_sort,
             sort_desc: self.file_sort_desc,
             eat_ok: false,
@@ -527,8 +569,16 @@ impl Ui {
             c.set_item_index(fi as i32);
             f.c_mut("NameEdit").set_text(&name);
             f.c_mut("FileList").multi_select = o.multi && !save;
+            if o.grid {
+                f.c_mut("FileList").tile = Some(TILE);
+            }
         }
         self.dialogs.insert(i, DialogState::File(dlg));
+        if o.grid {
+            // a grid of pictures: five tiles in a line, four lines (the
+            // controls follow by their anchors)
+            self.set_client_size("FileDlg", 680, 530);
+        }
         self.file_refresh(i);
         self.center_on_main(i);
         let ne = self.forms[i].id("NameEdit");
@@ -575,9 +625,69 @@ impl Ui {
         let l = f.c_mut("FileList");
         file_columns(l, d.sort_column, d.sort_desc);
         l.selected = vec![false; rows.len()];
+        // (the tiles' pictures: none yet)
+        l.item_images = if d.grid { vec![Default::default(); rows.len()] } else { Vec::new() };
         l.cells = rows;
         l.item_index = -1;
         l.top_index = 0;
+        l.scroll_y = 0;
+    }
+
+    /// The files of an open picture grid ([`FileOptions::grid`]) whose
+    /// tiles are in sight and have no picture yet: their place in the list
+    /// and their path.  The application makes the pictures and hands them
+    /// over with [`Ui::set_file_tile`].
+    pub fn file_tiles_wanted(&self) -> Vec<(usize, PathBuf)> {
+        let mut out = Vec::new();
+        for (&i, st) in &self.dialogs {
+            let DialogState::File(d) = st else { continue };
+            if !d.grid {
+                continue;
+            }
+            let f = &self.forms[i];
+            let Some(id) = f.id("FileList") else { continue };
+            let Some((cols, ..)) = f.listview_tiles(id) else { continue };
+            let (_, _, vis, _, top) = f.listview_rows(id);
+            let l = f.c("FileList");
+            let (a, b) = ((top * cols) as usize, ((top + vis + 1) * cols) as usize);
+            for k in a..b.min(d.entries.len()) {
+                if !d.entries[k].is_dir && l.item_images.get(k).is_some_and(|p| p.is_empty()) {
+                    out.push((k, d.dir.join(&d.entries[k].name)));
+                }
+            }
+        }
+        out
+    }
+
+    /// The picture of the tile `k` of the open picture grid, when that
+    /// tile still is the file `path` (the folder may have changed since).
+    /// Kept at most twice the tile's size.
+    pub fn set_file_tile(&mut self, k: usize, path: &Path, b: &super::bitmap::Bitmap) {
+        let found = self.dialogs.iter().find_map(|(&i, st)| match st {
+            DialogState::File(d) if d.grid && d.entries.get(k).is_some_and(|e| d.dir.join(&e.name) == path) => Some(i),
+            _ => None,
+        });
+        let Some(i) = found else { return };
+        if b.is_empty() {
+            return;
+        }
+        let f = (2.0 * TILE.0 as f64 / b.w as f64).min(2.0 * TILE.1 as f64 / b.h as f64).min(1.0);
+        let (w, h) = (((b.w as f64 * f).round() as usize).max(1), ((b.h as f64 * f).round() as usize).max(1));
+        let small = if (w, h) == (b.w, b.h) {
+            b.clone()
+        } else {
+            let mut s = super::bitmap::Bitmap::new(w, h, 0);
+            for y in 0..h {
+                for x in 0..w {
+                    s.px[y * w + x] = b.get((x * b.w / w).min(b.w - 1), (y * b.h / h).min(b.h - 1));
+                }
+            }
+            s
+        };
+        if let Some(slot) = self.forms[i].c_mut("FileList").item_images.get_mut(k) {
+            *slot = small;
+            self.forms[i].dirty = true;
+        }
     }
 
     /// The extension of the chosen file type (its first `*.ext` pattern).
@@ -941,6 +1051,40 @@ const BASIC: [u32; 48] = [
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn file_names_sort_by_the_value_of_their_numbers() {
+        let mut v = vec!["100.jpg", "1001.jpg", "28.jpg", "102.jpg", "Map2.png", "map10.png", "007.png", "7b.png", "abc"];
+        v.sort_by(|a, b| natural_cmp(a, b));
+        assert_eq!(v, ["007.png", "7b.png", "28.jpg", "100.jpg", "102.jpg", "1001.jpg", "abc", "Map2.png", "map10.png"]);
+    }
+
+    /// The picture grid of a file dialog: tiles instead of rows, the
+    /// pictures of the tiles in sight asked for and taken.
+    #[test]
+    fn the_picture_grid_asks_for_the_tiles_in_sight() {
+        let dir = std::env::temp_dir().join(format!("mb3d_grid_test_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        for k in 0..60 {
+            std::fs::write(dir.join(format!("{k}.png")), b"x").unwrap();
+        }
+        let mut ui = Ui::default();
+        ui.open_dialog("t:grid", &FileOptions { filter: "Images|*.png".into(), initial_dir: Some(dir.clone()), grid: true, ..Default::default() });
+        let want = ui.file_tiles_wanted();
+        assert!(!want.is_empty() && want.len() < 60, "only the tiles in sight: {}", want.len());
+        assert_eq!(want[0], (0, dir.join("0.png")));
+        assert_eq!(want[1].1, dir.join("1.png"), "in the order of their numbers");
+        // a picture handed over is not asked for again; one for another file is not taken
+        ui.set_file_tile(0, &dir.join("0.png"), &super::super::bitmap::Bitmap::new(400, 300, 0xFF00_FF00));
+        ui.set_file_tile(1, &dir.join("5.png"), &super::super::bitmap::Bitmap::new(4, 4, 0xFF00_FF00));
+        let want = ui.file_tiles_wanted();
+        assert_eq!(want[0].0, 1);
+        let i = ui.form_index("FileDlg").unwrap();
+        let b = &ui.forms[i].c("FileList").item_images[0];
+        assert!(b.w <= 2 * TILE.0 as usize && b.h <= 2 * TILE.1 as usize && !b.is_empty(), "kept small: {} x {}", b.w, b.h);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn hex_colors_read_and_write() {

@@ -1055,18 +1055,89 @@ impl Form {
     #[allow(clippy::too_many_arguments)]
     /// A list view's rows: (header height, row height, rows shown, the
     /// largest first row, the first row shown).
+    /// A list view shown as tiles (`Control::tile`): the tiles in a line,
+    /// a tile's width and height (the picture box and the caption).
+    pub(crate) fn listview_tiles(&self, id: Id) -> Option<(i32, i32, i32)> {
+        let (tw, th) = self.ctl[id].tile?;
+        let (cw, ch) = (tw + 12, th + line_height(&self.font(id)) + 12);
+        let r = self.abs_rect(id);
+        Some((((r.w - 4 - SB) / cw).max(1), cw, ch))
+    }
+
+    /// The lines a list view scrolls by: its rows, or its lines of tiles.
+    pub(crate) fn listview_lines(&self, id: Id) -> i32 {
+        let n = self.ctl[id].row_count() as i32;
+        match self.listview_tiles(id) {
+            Some((cols, ..)) => (n + cols - 1) / cols,
+            None => n,
+        }
+    }
+
+    /// The header's and a line's height, the lines in sight, the furthest
+    /// scroll position and the current one (tiles: no header, a line of
+    /// tiles).
     pub(crate) fn listview_rows(&self, id: Id) -> (i32, i32, i32, i32, i32) {
+        let r = self.abs_rect(id);
+        let c = &self.ctl[id];
+        if let Some((_, _, ch)) = self.listview_tiles(id) {
+            let vis = ((r.h - 4) / ch).max(1);
+            let max = (self.listview_lines(id) - vis).max(0);
+            return (0, ch, vis, max, c.scroll_y.clamp(0, max));
+        }
         let font = self.font(id);
         let hh = line_height(&font) + 8;
         let rh = line_height(&font) + 6;
-        let r = self.abs_rect(id);
         let vis = ((r.h - 4 - hh) / rh).max(1);
-        let c = &self.ctl[id];
         let max = (c.row_count() as i32 - vis).max(0);
         (hh, rh, vis, max, c.scroll_y.clamp(0, max))
     }
 
+    /// The list view as tiles: each item its picture (fitted into the box,
+    /// a frame while there is none) over its caption.
+    fn paint_listview_tiles(&self, cv: &mut Canvas, th: &Theme, id: Id, r: Rect, en: bool, focused: bool, font: &Font, tc: u32) {
+        let c = &self.ctl[id];
+        let inner = th.edit_frame(cv, r, en, focused, c.color);
+        let Some((cols, cw, ch)) = self.listview_tiles(id) else { return };
+        let (tw, tih) = c.tile.unwrap_or((64, 48));
+        let (_, _, vis, max, top) = self.listview_rows(id);
+        let need_sb = self.listview_lines(id) > vis;
+        let old = cv.clip_to(Rect::new(inner.x, inner.y, inner.w - if need_sb { SB } else { 0 }, inner.h));
+        let lh = line_height(font);
+        for i in (top * cols) as usize..c.row_count() {
+            let (line, col) = (i as i32 / cols - top, i as i32 % cols);
+            let cell = Rect::new(inner.x + col * cw, inner.y + line * ch, cw, ch);
+            if cell.y > inner.bottom() {
+                break;
+            }
+            let sel = c.item_index == i as i32 || (c.multi_select && c.selected.get(i).copied().unwrap_or(false));
+            if sel {
+                th.selection(cv, cell.inset(1), focused);
+            }
+            let bx = Rect::new(cell.x + 6, cell.y + 5, tw, tih);
+            match c.item_images.get(i).filter(|b| !b.is_empty()) {
+                Some(b) => {
+                    // fitted into the box, its proportions kept
+                    let k = (tw as f64 / b.w as f64).min(tih as f64 / b.h as f64);
+                    let (w, h) = (((b.w as f64 * k).round() as i32).max(1), ((b.h as f64 * k).round() as i32).max(1));
+                    cv.image_stretch(Rect::new(bx.x + (tw - w) / 2, bx.y + (tih - h) / 2, w, h), b, true);
+                }
+                None => cv.frame(bx, th.menu_border()),
+            }
+            let txt = c.cell_row(i).and_then(|r| r.first()).map(String::as_str).unwrap_or("");
+            cv.text_in(Rect::new(cell.x + 2, bx.bottom() + 2, cw - 4, lh + 2), txt, font, if sel { th.selection_text(focused) } else { tc }, HAlign::Center, VAlign::Center, false);
+        }
+        cv.set_clip(old);
+        if need_sb {
+            let sr = Rect::new(inner.right() - SB, inner.y, SB, inner.h);
+            let hp = if self.hot == Some(id) { self.hot_part } else { PART_NONE };
+            paint_scrollbar(cv, th, sr, true, 0, max as i64, vis as i64, top as i64, hp, if self.capture == Some(id) { self.cap_part } else { PART_NONE }, en);
+        }
+    }
+
     fn paint_listview(&self, cv: &mut Canvas, th: &Theme, id: Id, r: Rect, en: bool, focused: bool, font: &Font, tc: u32) {
+        if self.ctl[id].tile.is_some() {
+            return self.paint_listview_tiles(cv, th, id, r, en, focused, font, tc);
+        }
         let c = &self.ctl[id];
         let inner = th.edit_frame(cv, r, en, focused, c.color);
         let (hh, rh, vis, max, top) = self.listview_rows(id);

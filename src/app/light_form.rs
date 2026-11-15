@@ -1780,8 +1780,8 @@ fn map_dialog(app: &Mb3d, ui: &mut Ui, edit: &str) {
         title: tr("@MB:ChooseAMap"),
         filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
         initial_dir: Some(app.ini.dir(super::ini::DIR_MAPS)),
-        // (the clicked picture is shown beside the list: the names are numbers)
-        preview: true,
+        // (the pictures as tiles: the names are numbers)
+        grid: true,
         ..Default::default()
     };
     ui.open_dialog(&format!("light:map:{edit}"), &o);
@@ -1801,7 +1801,7 @@ fn bg_dialog(app: &Mb3d, ui: &mut Ui) {
         title: tr("@MB:BackgroundImage2"),
         filter: format!("{}|*.png;*.jpg;*.jpeg;*.bmp;*.hdr|{}|*.*", tr("@MB:Images"), tr("@MB:AllFilesParen")),
         initial_dir: Some(dir),
-        preview: true,
+        grid: true,
         ..Default::default()
     };
     ui.open_dialog("light:bgpic", &o);

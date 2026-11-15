@@ -239,6 +239,18 @@ pub fn request(app: &mut Mb3d, ui: &mut Ui, path: PathBuf, form: &str, image: &s
 /// The idle work: a file clicked in a preview dialog, a finished preview,
 /// the next of the queue.
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
+    idle_work(app, ui);
+    // a dialog that shows pictures as tiles: the ones in sight that are
+    // there by now (the others are queued, and this runs again when one
+    // is finished)
+    for (k, path) in ui.file_tiles_wanted() {
+        if let Some(b) = thumb(app, &path) {
+            ui.set_file_tile(k, &path, &b);
+        }
+    }
+}
+
+fn idle_work(app: &mut Mb3d, ui: &mut Ui) {
     if let Some(p) = ui.file_preview.take() {
         let t = dialog_target();
         // (parameters, and pictures: the dialogs that choose a map or a
