@@ -2489,6 +2489,10 @@ NaviExpLight=メインウィンドウのライティング
 ;Main window's lighting
 NaviExpLightHint=メインウィンドウのライティングを使い、ライティングウィンドウでの変更に追従します。\nここでライトプリセットや動的フォグを選ぶとオフになります。
 ;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExpRest=カメラ静止時にメインウィンドウの画像
+;Main window's picture when the camera rests
+NaviExpRestHint=カメラが静止すると、メインウィンドウが表示するとおりにビューを計算します：その詳細度、影、アンビエントオクルージョン、反射、被写界深度を使います。\n動かすとすぐに中止します。
+;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=実験的：メインウィンドウに合わせる
 ;Experimental: match the main window
 Navigator=ナビゲーター

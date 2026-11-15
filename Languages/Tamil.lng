@@ -2489,6 +2489,10 @@ NaviExpLight=முதன்மைச் சாளரத்தின் ஒள�
 ;Main window's lighting
 NaviExpLightHint=முதன்மைச் சாளரத்தின் ஒளியமைப்பைப் பயன்படுத்தி Lighting சாளரத்தில் அதன் மாற்றங்களைப் பின்பற்றுகிறது.\nஇங்கே ஒளி முன்னமைவு அல்லது இயங்கு மூடுபனியைத் தேர்ந்தெடுத்தால் அணையும்.
 ;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExpRest=கேமரா நிற்கும்போது முதன்மைச் சாளரத்தின் படம்
+;Main window's picture when the camera rests
+NaviExpRestHint=கேமரா நிற்கும்போது, முதன்மைச் சாளரம் காட்டுவது போலவே காட்சி கணக்கிடப்படுகிறது: அதன் நுணுக்கம், நிழல்கள், சூழல் மறைப்பு, பிரதிபலிப்புகள் மற்றும் புல ஆழத்துடன்.\nமீண்டும் நகர்ந்தால் உடனே நிற்கும்.
+;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=சோதனை முயற்சி: முதன்மைச் சாளரத்துடன் பொருத்து
 ;Experimental: match the main window
 Navigator=நேவிகேட்டர்

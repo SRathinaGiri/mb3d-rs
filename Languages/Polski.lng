@@ -2488,6 +2488,10 @@ NaviExpLight=Oświetlenie okna głównego
 ;Main window's lighting
 NaviExpLightHint=Używa oświetlenia okna głównego i podąża za jego zmianami w oknie Oświetlenie.\nWybranie tutaj ustawienia światła lub mgły dynamicznej wyłącza tę opcję.
 ;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExpRest=Obraz okna głównego, gdy kamera spoczywa
+;Main window's picture when the camera rests
+NaviExpRestHint=Gdy kamera spoczywa, widok jest obliczany tak, jak pokazałoby go okno główne: z jego szczegółowością, cieniami, okluzją otoczenia, odbiciami i głębią ostrości.\nDalszy ruch przerywa to od razu.
+;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Eksperymentalne: jak w oknie głównym
 ;Experimental: match the main window
 Navigator=Nawigator

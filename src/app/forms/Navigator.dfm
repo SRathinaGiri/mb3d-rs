@@ -37,6 +37,7 @@ object FNavigator: TFNavigator
     OnDblClick = Image1DblClick
     OnMouseDown = Image1MouseDown
     OnMouseMove = Image1MouseMove
+    OnMouseUp = Image1MouseUp
   end
   object Label27: TLabel
     Left = 8
@@ -77,6 +78,7 @@ object FNavigator: TFNavigator
     OnDblClick = Image1DblClick
     OnMouseDown = Image1MouseDown
     OnMouseMove = Image1MouseMove
+    OnMouseUp = Image1MouseUp
   end
   object Image7: TImage
     Left = 266
@@ -89,6 +91,7 @@ object FNavigator: TFNavigator
     OnDblClick = Image1DblClick
     OnMouseDown = Image1MouseDown
     OnMouseMove = Image1MouseMove
+    OnMouseUp = Image1MouseUp
   end
   object Panel3: TPanel
     Left = 488
@@ -2247,14 +2250,14 @@ object FNavigator: TFNavigator
     Left = 0
     Top = 587
     Width = 640
-    Height = 46
+    Height = 65
     BevelOuter = bvNone
     TabOrder = 2
     object GroupBox1: TGroupBox
       Left = 4
       Top = 0
       Width = 632
-      Height = 44
+      Height = 63
       Caption = '@MB:NaviExperimental'
       TabOrder = 0
       object ExpDetailCBx: TCheckBox
@@ -2292,6 +2295,18 @@ object FNavigator: TFNavigator
         ShowHint = True
         TabOrder = 2
         OnClick = ExpLightCBxClick
+      end
+      object ExpRestCBx: TCheckBox
+        Left = 10
+        Top = 39
+        Width = 400
+        Height = 17
+        Hint = '@MB:NaviExpRestHint'
+        Caption = '@MB:NaviExpRest'
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 3
+        OnClick = ExpRestCBxClick
       end
     end
   end

@@ -52,6 +52,11 @@ pub struct State {
     /// a flight being recorded ("Rec"): when the last keyframe was made,
     /// its view (middle, rotation, zoom) and how many
     pub rec: Option<(std::time::Instant, ([f64; 3], [[f64; 3]; 3], f64), usize)>,
+    /// a mouse button went down on the view, where the mouse was last (a
+    /// drag with the left one looks, with the right one slides), and
+    /// whether it moved since (then it was no click)
+    pub drag: Option<(i32, i32)>,
+    pub dragged: bool,
 }
 
 impl Default for State {
@@ -85,6 +90,8 @@ impl Default for State {
             start: None,
             start_fixed: false,
             rec: None,
+            drag: None,
+            dragged: false,
         }
     }
 }
@@ -288,6 +295,14 @@ fn new_calc(app: &mut Mb3d, ui: &mut Ui) {
     };
     st.scene.fov_y = sc.fov_y;
     st.scene.optic = sc.optic;
+    // when the camera rests: the picture as the main window would show it
+    let rest = ui.checked(F, "ExpRestCBx").then(|| rest_scene(&app.scene, &sc, st.destop_changed));
+    // The fog and the depth colours are measured from the middle, which
+    // the navigator keeps on the camera (MB3D's too, whose colours differ
+    // from the main picture's by that): painted with the middle in front
+    // of the camera, where "View to main" puts it, the colours are those
+    // of the main window.  The camera is the same.
+    mod_rot_point(&mut sc);
     // MB3D's navigator renders with simpler lighting: no shadows, no
     // ambient occlusion, no reflections, no depth of field
     sc.shadows = None;
@@ -302,7 +317,7 @@ fn new_calc(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_caption(F, "Label24", &crate::app::util::float_general(sc.zoom, 4));
     let red = sc.zoom > 1e13;
     ui.cm(F, "Label24").font = red.then(|| crate::vcl::font::Font { color: 0xFFFF_0000, custom_color: true, ..Default::default() });
-    st.eng.start(Job::Preview { scene: sc });
+    st.eng.start(Job::Preview { scene: sc, rest });
 }
 
 /// The navigator's image (polled from the idle loop).
@@ -486,8 +501,22 @@ fn insert_main(app: &mut Mb3d, ui: &mut Ui) {
 fn view_to_main(app: &mut Mb3d, ui: &mut Ui) {
     app.make_scene(ui);
     let n = app.navi.scene.clone();
+    view_into(&mut app.scene, &n, app.navi.destop_changed, app.navi.dynfog_changed);
     let m = &mut app.scene;
-    let (mw, mh) = (m.width, m.height);
+    let mut mm = m.clone();
+    mod_rot_point(&mut mm);
+    *m = mm;
+    app.scene_to_forms(ui);
+    let t = ui.f(F).caption().to_string();
+    app.title = if t.is_empty() || t == tr("@MB:MainParas") { app.title.clone() } else if t.ends_with('~') { t } else { format!("{t}~") };
+    super::main_form::set_caption(app, ui);
+    app.message(ui, &tr("@MB:NavigatorViewSentToTheMain"));
+}
+
+/// What "View to main" sends: the navigator's view `n` with its formulas
+/// and the values changed there into the main window's parameters `m`,
+/// which keep all else (size, detail, shadows, reflections, lighting).
+fn view_into(m: &mut Scene, n: &Scene, destop_changed: bool, dynfog_changed: bool) {
     m.z_start = n.z_start;
     m.z_end = n.z_end;
     m.mid = n.mid;
@@ -506,24 +535,38 @@ fn view_to_main(app: &mut Mb3d, ui: &mut Ui) {
     if let (Some(a), Some(b)) = (m.decomb.as_mut(), n.decomb.as_ref()) {
         a.smooth = b.smooth;
     }
-    if app.navi.destop_changed {
+    if destop_changed {
         m.de_stop = n.de_stop;
     }
     m.color_on_it = n.color_on_it;
-    if app.navi.dynfog_changed {
+    if dynfog_changed {
         m.lighting.dyn_fog = n.lighting.dyn_fog;
     }
     m.formulas = round_fvals(&n.formulas);
     m.rot_4d = n.rot_4d;
-    let _ = (mw, mh);
-    let mut mm = m.clone();
-    mod_rot_point(&mut mm);
-    *m = mm;
-    app.scene_to_forms(ui);
-    let t = ui.f(F).caption().to_string();
-    app.title = if t.is_empty() || t == tr("@MB:MainParas") { app.title.clone() } else if t.ends_with('~') { t } else { format!("{t}~") };
-    super::main_form::set_caption(app, ui);
-    app.message(ui, &tr("@MB:NavigatorViewSentToTheMain"));
+}
+
+/// The picture the main window would calculate of the navigator's view
+/// ("View to main", then Calculate 3D), at the navigator's size: the main
+/// window's parameters with the view of `shown` (the scene the navigator
+/// draws: its optic and its lighting too, so that the picture does not
+/// change its light when the camera rests).  The DE stop is given in
+/// pixels and goes with the size ([`Scene::scale_image`]), so the surface
+/// is the one of the big picture.
+fn rest_scene(main: &Scene, shown: &Scene, destop_changed: bool) -> Scene {
+    let mut r = main.clone();
+    view_into(&mut r, shown, destop_changed, false);
+    // (the middle in front of the camera, as "View to main" leaves it: the
+    // fog and the depth colours are measured from it)
+    mod_rot_point(&mut r);
+    r.lighting = shown.lighting.clone();
+    r.slice_2d = 0;
+    r.calc_rect = None;
+    r.tiling = None;
+    r.scale_image(shown.width as f64 / r.width.max(1) as f64);
+    r.width = shown.width;
+    r.height = shown.height;
+    r
 }
 
 fn round_fvals(f: &[crate::scene::FormulaEntry]) -> Vec<crate::scene::FormulaEntry> {
@@ -628,6 +671,32 @@ fn navigate(app: &mut Mb3d, ui: &mut Ui, t: i64, fine: bool) {
         };
         sc.vgrads = mat_mul(&m, &sc.vgrads);
     }
+    new_calc(app, ui);
+}
+
+/// A drag with the right button: the camera slides so that what is under
+/// the mouse follows it by `(dx, dy)` pixels of the view, taking the
+/// distance estimate at the camera for how far away that is.
+fn slide_by(app: &mut Mb3d, ui: &mut Ui, dx: i32, dy: i32) {
+    let fixed = ui.checked(F, "CheckBox1");
+    let st = &mut app.navi;
+    let sc = &mut st.scene;
+    let de = match local_de(sc).filter(|_| !fixed) {
+        Some(d) => d * st.de_mul,
+        None => length_of_size(sc) * sc.step_width(),
+    };
+    let fov = sc.fov_y.clamp(15.0, 120.0) * PID180;
+    let per_px = de * 2.0 * (fov / 2.0).tan() / sc.height.max(1) as f64;
+    let u = unit_rows(sc);
+    let zm0 = sc.mid[2];
+    for k in 0..3 {
+        sc.mid[k] -= (u[0][k] * dx as f64 + u[1][k] * dy as f64) * per_px;
+    }
+    let dz = sc.mid[2] - zm0;
+    sc.z_start += dz;
+    sc.z_end += dz;
+    st.moving = true;
+    set_zoom(app, ui);
     new_calc(app, ui);
 }
 
@@ -978,6 +1047,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 ui.set_checked(F, "ExpDetailCBx", app.ini.get("NavExpDetail") == "Yes");
                 ui.set_checked(F, "ExpBrightCBx", app.ini.get("NavExpBright") == "Yes");
                 ui.set_checked(F, "ExpLightCBx", app.ini.get("NavExpLight") == "Yes");
+                ui.set_checked(F, "ExpRestCBx", app.ini.get("NavExpRest") != "No");
                 enable_experimental(ui);
                 ui.set_checked(F, "CheckBox5", app.ini.get("NavFkey") == "0");
                 ui.set_checked(F, "CheckBox4", app.ini.get("NavHiQ") != "No");
@@ -1016,7 +1086,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             navigate(app, ui, t, false);
         }
         "SpeedButton11Click" => insert_main(app, ui),
-        "ExpDetailCBxClick" | "ExpLightCBxClick" => {
+        "ExpDetailCBxClick" | "ExpLightCBxClick" | "ExpRestCBxClick" => {
             enable_experimental(ui);
             save_experimental(app, ui);
             new_calc(app, ui);
@@ -1111,6 +1181,8 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 }
             }
         }
+        // (the end of a drag is no click)
+        "Image1Click" | "Image1DblClick" if app.navi.dragged => {}
         "Image1Click" => {
             if !app.navi.double_click {
                 let on = !app.navi.look;
@@ -1123,18 +1195,50 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 set_look(app, ui, on);
             }
         }
+        // A drag on the view moves the camera: with the left button it looks
+        // around, with the right one it slides; what is under the mouse
+        // follows it.  The menu of the right button opens when it is
+        // released without a drag.
         "Image1MouseDown" => {
-            if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
-                if !app.navi.look {
-                    let dc = app.navi.double_click;
-                    ui.set_checked(F, "Singleclicktochangethenavimode1", !dc);
-                    ui.set_checked(F, "Doubleclicktochangethenavimode1", dc);
-                    // at the control clicked: the preview or the axes'
-                    // overlay over its middle (Image6, which passes its
-                    // mouse to Image1's handlers with its own coordinates)
-                    let at = if e.sender == "Image6" { "Image6" } else { "Image1" };
-                    ui.popup_menu(F, "PopupMenu1", at, x, y);
-                }
+            if let Ev::MouseDown { x, y, .. } = e.ev {
+                app.navi.dragged = false;
+                app.navi.drag = (!app.navi.look).then_some((x, y));
+            }
+        }
+        "Image1MouseMove" => {
+            let (Ev::MouseMove { x, y, shift }, Some((x0, y0))) = (e.ev.clone(), app.navi.drag) else { return };
+            let (left, right) = (shift & crate::vcl::form::SS_LEFT != 0, shift & crate::vcl::form::SS_RIGHT != 0);
+            if !(left || right) || app.navi.look {
+                app.navi.drag = None;
+                return;
+            }
+            let (dx, dy) = (x - x0, y - y0);
+            if !app.navi.dragged && dx.abs() + dy.abs() < 4 {
+                return;
+            }
+            app.navi.dragged = true;
+            app.navi.drag = Some((x, y));
+            if left {
+                // an angle per pixel as the view shows it
+                let h = ui.c(F, "Image1").height.max(1) as f64;
+                let k = app.navi.scene.fov_y.clamp(15.0, 180.0) * PID180 / h;
+                rotate_view(app, -k * dy as f64, k * dx as f64, 0.0);
+                new_calc(app, ui);
+            } else {
+                slide_by(app, ui, dx, dy);
+            }
+        }
+        "Image1MouseUp" => {
+            let was = app.navi.drag.take();
+            if let (Ev::MouseUp { button: MouseButton::Right, x, y, .. }, Some(_), false, false) = (e.ev.clone(), was, app.navi.dragged, app.navi.look) {
+                let dc = app.navi.double_click;
+                ui.set_checked(F, "Singleclicktochangethenavimode1", !dc);
+                ui.set_checked(F, "Doubleclicktochangethenavimode1", dc);
+                // at the control clicked: the preview or the axes'
+                // overlay over its middle (Image6, which passes its
+                // mouse to Image1's handlers with its own coordinates)
+                let at = if e.sender == "Image6" { "Image6" } else { "Image1" };
+                ui.popup_menu(F, "PopupMenu1", at, x, y);
             }
         }
         "Doubleclicktochangethenavimode1Click" => {
@@ -1527,6 +1631,7 @@ fn save_experimental(app: &mut Mb3d, ui: &Ui) {
     app.ini.set("NavExpDetail", yn(ui.checked(F, "ExpDetailCBx")));
     app.ini.set("NavExpBright", yn(ui.checked(F, "ExpBrightCBx")));
     app.ini.set("NavExpLight", yn(ui.checked(F, "ExpLightCBx")));
+    app.ini.set("NavExpRest", yn(ui.checked(F, "ExpRestCBx")));
 }
 
 /// A light preset or dynamic fog chosen in the navigator ends "the main

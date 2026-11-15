@@ -2488,6 +2488,10 @@ NaviExpLight=Swiatło przédnégò òkna
 ;Main window's lighting
 NaviExpLightHint=Brëkùje swiatła przédnégò òkna ë jidze za jegò zmianama w òknie Swiatło.\nWëbranié tu nastôwù swiatła abò dinamicznégò dôżdżu wëłączô to.
 ;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExpRest=Òbrôz przédnégò òkna, czej kamera stoji
+;Main window's picture when the camera rests
+NaviExpRestHint=Czej kamera stoji, widok je rechòwóny tak, jak bë gò pòkôzało przédné òkno: z jegò detalama, ceniama, òkluzją òkòlégò, òdbicama ë głãbią òstroscë.\nDalszi rëch przeriwô to òd razu.
+;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=Eksperimentalno: jak w przédnym òknie
 ;Experimental: match the main window
 Navigator=Nawigatór

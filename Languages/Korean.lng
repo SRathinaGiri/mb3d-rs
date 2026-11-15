@@ -2489,6 +2489,10 @@ NaviExpLight=메인 창의 조명
 ;Main window's lighting
 NaviExpLightHint=메인 창의 조명을 사용하고 조명 창에서의 변경을 따릅니다.\n여기서 조명 프리셋이나 동적 안개를 선택하면 꺼집니다.
 ;Uses the main window's lighting and follows its changes in the Lighting window.\nChoosing a light preset or the dynamic fog here turns it off.
+NaviExpRest=카메라가 멈추면 메인 창의 그림
+;Main window's picture when the camera rests
+NaviExpRestHint=카메라가 멈추면 메인 창이 보여 줄 그대로 뷰를 계산합니다: 메인 창의 디테일, 그림자, 앰비언트 오클루전, 반사, 피사계 심도를 사용합니다.\n다시 움직이면 즉시 중단됩니다.
+;When the camera rests, the view is calculated as the main window would show it: with its detail, shadows, ambient occlusion, reflections and depth of field.\nMoving on stops it at once.
 NaviExperimental=실험적: 메인 창과 같게
 ;Experimental: match the main window
 Navigator=내비게이터

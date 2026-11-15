@@ -19,8 +19,11 @@ pub enum Job {
     /// a 3D calculation keeps a checkpoint (`resume`, shown as `name`)
     Calc { scene: Scene, slice: u8, resume: crate::checkpoint::Policy, name: String },
     /// the Navigator's preview: the scene at 1/8, 1/4, 1/2 and full size
-    /// (MB3D's NaviStep 8, 4, 2, 1), each pass shown when done
-    Preview { scene: Scene },
+    /// (MB3D's NaviStep 8, 4, 2, 1), each pass shown when done; then
+    /// `rest`, when given, with everything Calculate 3D does (shadows,
+    /// ambient occlusion, reflections, depth of field): the picture the
+    /// main window would show of this view, once the camera rests
+    Preview { scene: Scene, rest: Option<Scene> },
     /// "Calc-": the rough image of 8x8 blocks (MB3D's `CalcMandBlocky`)
     Blocky { scene: Scene },
     /// Both stereo eyes, combined for viewing.  This deliberately keeps no
@@ -360,6 +363,12 @@ impl Engine {
         self.0.out.locked().running || self.0.busy.load(Ordering::SeqCst)
     }
 
+    /// The picture shown last (RGB, width, height).
+    pub fn picture(&self) -> Option<(Arc<Vec<u8>>, usize, usize)> {
+        let o = self.0.out.locked();
+        o.rgb.clone().map(|rgb| (rgb, o.w, o.h))
+    }
+
     /// Progress of the running job, 0..1.
     pub fn progress(&self) -> f32 {
         self.0.progress.load(Ordering::Relaxed) as f32 / 1000.0
@@ -607,7 +616,7 @@ fn worker(e: Arc<Inner>) {
             Job::Relight { scene, hs_off } => relight(&e, &scene, hs_off),
             Job::Blocky { scene } => blocky(&e, &scene, &cancel),
             Job::Stereo { scene, layout } => stereo(&e, &scene, layout, &cancel),
-            Job::Preview { scene } => preview(&e, &scene, &cancel),
+            Job::Preview { scene, rest } => preview(&e, &scene, &cancel).and_then(|_| rest.map_or(Ok(()), |r| preview_rest(&e, &r, &cancel))),
             Job::Recalc { scene, rect, div, nearer, hs, deao, keep_as } => recalc(&e, &scene, rect, div, nearer, (hs, deao, keep_as), &cancel),
             Job::ReflectSel { scene, rect } => reflect_sel(&e, &scene, rect, &cancel),
             Job::Swarm { scene, dir, cols, rows, name } => swarm_tiles(&e, &scene, &dir, cols, rows, name, gen, &cancel),
@@ -880,6 +889,39 @@ fn preview(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<
             *e.base.locked() = Some(Arc::new(Base { scene: ps.clone(), params: p, raw: g.clone(), post: g, post_sig: post_sig(&ps), w: pw, h: ph }));
         }
     }
+    Ok(())
+}
+
+/// The Navigator's picture at rest: `sc` calculated, post processed and
+/// painted as [`calc`] does (no checkpoint, no rows shown on the way: the
+/// last pass of [`preview`] stays until this one is whole).
+fn preview_rest(e: &Inner, sc: &Scene, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
+    let mut sc = sc.clone();
+    sc.calc_rect = None;
+    sc.tiling = None;
+    sc.slice_2d = 0;
+    let progress = |d: usize, t: usize| e.progress.store((d * 1000 / t.max(1)) as u32, Ordering::Relaxed);
+    let stage = |_: &str| e.progress.store(0, Ordering::Relaxed);
+    let (p, raw) = crate::render::calculate_with(&sc, &progress, &stage, cancel, 0, None, None)?;
+    let raw = Arc::new(raw);
+    let post = if needs_post(&sc, &p) {
+        let mut g = (*raw).clone();
+        crate::render::post_process_reporting(&sc, &p, &mut g, crate::render::thread_count(&sc), &progress, &stage, cancel)?;
+        Arc::new(g)
+    } else {
+        raw.clone()
+    };
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let (rgb, _, plain) = crate::render::paint_reporting_plain(&sc, &p, &post, &progress, &stage, cancel);
+    if cancel() {
+        return Err("cancelled".into());
+    }
+    let [_, _, w, h] = p.rect;
+    let (w, h) = (w as usize, h as usize);
+    e.publish_plain(rgb, plain, w, h, "", None);
+    *e.base.locked() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw, post, post_sig: post_sig(&sc), w, h }));
     Ok(())
 }
 
