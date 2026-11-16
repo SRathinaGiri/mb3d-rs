@@ -422,6 +422,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: nitido, buon AA\nGauss: un po' sfocato, AA molto buono
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=Portali qui
+;Bring them over
 BringsTheWindowToTheFront=Porta la finestra in primo piano da qualsiasi finestra, o chiude quella attuale. Fai clic su un campo e premi i tasti; Backspace rimuove la scorciatoia.
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=Sfoglia...
@@ -1120,6 +1122,8 @@ Done2={} fatto ({}).
 ;{} done ({}).
 DoneOf=Fatto: {} di {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=Fatto: le tue impostazioni e i tuoi file sono ora in questa copia. mb3d-rs si riavvia per usare le tue impostazioni.
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Doppio clic per cambiare la modalità del navigatore
@@ -3602,6 +3606,8 @@ StartRenderingAnimationImages=Avvia il rendering delle immagini dell'animazione
 ;Start rendering animation images
 StartRenderingSlices=Avvia rendering sezioni
 ;Start rendering slices
+StartWithoutThem=Avvia senza
+;Start without them
 StartsRenderingAllSelectedM3PFiles=Avvia il rendering di tutti i file M3P selezionati
 ;Starts rendering all selected M3P files
 Statistics=Statistiche
@@ -3924,6 +3930,8 @@ Themes=Temi
 ;Themes
 ThereIsAFileAlready=Esiste già un file {}.
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=Questi elementi non si sono potuti spostare e sono ancora nella vecchia cartella "{}": {}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=Questi parametri usano la formula "{}", che qui non è installata.\n\nLe formule sono file che finiscono in .m3f. Procurati {}.m3f (spesso è condiviso insieme ai parametri, nei file di un gruppo o in un pacchetto di formule) e mettilo in una delle cartelle delle formule:\n{}\n\nPoi apri o incolla di nuovo i parametri.
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=Cose da chiedere all'assistente
@@ -3936,6 +3944,8 @@ ThisFileAlreadyExistsDoYou=Questo file esiste già. Sovrascriverlo davvero?
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=Offset assoluto in direzione x del bulbo ruotato.
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=Questa è una nuova copia di mb3d-rs. Accanto c'è la copia che usavi prima, nella cartella "{}".\n\nOgni copia di mb3d-rs tiene le tue cose nella propria cartella: le impostazioni, la Cronologia delle tue immagini, i parametri salvati, le mappe aggiunte, i render grandi e le mesh. Per questo qui sembrano mancare.\n\nPortali qui: le impostazioni vengono copiate e tutto ciò che hai creato viene spostato in questa copia. La vecchia copia si avvia ancora, senza i tuoi file; puoi eliminarne la cartella più tardi.\nAvvia senza: questa copia parte senza di loro e non ti verrà più chiesto.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=Questo render è in esecuzione proprio ora.
 ;This render is running right now.
 ThisRenderKeepsNoImage=Questo render non conserva alcuna immagine.
@@ -4312,6 +4322,8 @@ YouWantToDelete=Vuoi eliminare:\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=Il tuo nome autore (memorizzato nei parametri):
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=I tuoi file dalla versione precedente
+;Your files from the earlier version
 YourOwnLanguageItsName=La propria lingua (il suo nome):
 ;Your own language (its name):
 Ypos=Ypos

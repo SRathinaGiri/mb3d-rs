@@ -422,6 +422,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: scharf, gutes AA\nGauss: etwas unscharf, sehr gutes AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=Übernehmen
+;Bring them over
 BringsTheWindowToTheFront=Holt das Fenster aus jedem Fenster nach vorne oder schließt das aktuelle. Feld anklicken und die Tasten drücken; Rücktaste entfernt den Hotkey.
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=Durchsuchen...
@@ -1120,6 +1122,8 @@ Done2={} fertig ({}).
 ;{} done ({}).
 DoneOf=Fertig: {} von {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=Fertig: Ihre Einstellungen und Dateien sind jetzt in dieser Kopie. mb3d-rs startet neu, damit Ihre Einstellungen gelten.
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Doppelklick wechselt den Navigator-Modus
@@ -3602,6 +3606,8 @@ StartRenderingAnimationImages=Rendern der Animationsbilder starten
 ;Start rendering animation images
 StartRenderingSlices=Schichten rendern
 ;Start rendering slices
+StartWithoutThem=Ohne sie starten
+;Start without them
 StartsRenderingAllSelectedM3PFiles=Startet das Rendern aller ausgewählten M3P-Dateien
 ;Starts rendering all selected M3P files
 Statistics=Statistik
@@ -3924,6 +3930,8 @@ Themes=Designs
 ;Themes
 ThereIsAFileAlready=Die Datei {} existiert bereits.
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=Folgendes ließ sich nicht verschieben und liegt noch im alten Ordner „{}“: {}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=Diese Parameter verwenden die Formel "{}", die hier nicht installiert ist.\n\nFormeln sind Dateien mit der Endung .m3f. Besorgen Sie sich {}.m3f (sie wird oft zusammen mit den Parametern geteilt, in den Dateien einer Gruppe oder in einem Formelpaket) und legen Sie sie in einen der Formelordner:\n{}\n\nÖffnen oder fügen Sie die Parameter dann erneut ein.
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=Fragen an den Assistenten
@@ -3936,6 +3944,8 @@ ThisFileAlreadyExistsDoYou=Diese Datei existiert bereits. Möchten Sie sie wirkl
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=Dies ist ein absoluter Versatz in x-Richtung des gedrehten Bulbs.
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=Dies ist eine neue Kopie von mb3d-rs. Daneben liegt die Kopie, die Sie bisher benutzt haben, im Ordner „{}“.\n\nJede Kopie von mb3d-rs bewahrt Ihre Sachen in ihrem eigenen Ordner auf: Ihre Einstellungen, den Verlauf Ihrer Bilder, die gespeicherten Parameter, hinzugefügte Maps, Ihre großen Renderings und Meshes. Deshalb scheinen sie hier zu fehlen.\n\nÜbernehmen: Ihre Einstellungen werden kopiert, und alles, was Sie gemacht haben, wird in diese Kopie verschoben. Die alte Kopie startet weiterhin, nur ohne Ihre Dateien; ihren Ordner können Sie später löschen.\nOhne sie starten: Diese Kopie startet ohne sie, und Sie werden nicht noch einmal gefragt.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=Dieses Rendering läuft gerade.
 ;This render is running right now.
 ThisRenderKeepsNoImage=Dieses Rendering bewahrt kein Bild auf.
@@ -4312,6 +4322,8 @@ YouWantToDelete=Du möchtest löschen:\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=Ihr Autorenname (wird in den Parametern gespeichert):
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=Ihre Dateien aus der früheren Version
+;Your files from the earlier version
 YourOwnLanguageItsName=Ihre eigene Sprache (ihr Name):
 ;Your own language (its name):
 Ypos=Ypos

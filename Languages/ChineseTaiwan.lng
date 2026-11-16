@@ -423,6 +423,8 @@ Box=方框
 ;Box
 BoxSharpGoodAAGaussBit=Box：銳利，AA 良好\nGauss：略為模糊，AA 極佳
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=移轉過來
+;Bring them over
 BringsTheWindowToTheFront=從任何視窗將該視窗帶到前面，或關閉目前視窗。\n按一下欄位並按下按鍵；\nBackspace 會移除快速鍵。
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=瀏覽...
@@ -1121,6 +1123,8 @@ Done2={} 已完成（{}）。
 ;{} done ({}).
 DoneOf=完成：{} / {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=完成：您的設定和檔案現在在這個副本中。mb3d-rs 將重新啟動以使用您的設定。
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=雙擊以切換導覽模式
@@ -3603,6 +3607,8 @@ StartRenderingAnimationImages=開始渲染動畫影像
 ;Start rendering animation images
 StartRenderingSlices=開始渲染切片
 ;Start rendering slices
+StartWithoutThem=不移轉直接開始
+;Start without them
 StartsRenderingAllSelectedM3PFiles=開始算出所有選取的 M3P 檔案
 ;Starts rendering all selected M3P files
 Statistics=統計
@@ -3925,6 +3931,8 @@ Themes=主題
 ;Themes
 ThereIsAFileAlready=檔案 {} 已存在。
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=以下內容無法移動，仍在舊資料夾「{}」中：{}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=這些參數使用了公式「{}」，但這裡沒有安裝。\n\n公式是副檔名為 .m3f 的檔案。取得 {}.m3f（它通常和參數一起分享，在社團的檔案中或公式包裡），並放入其中一個公式資料夾：\n{}\n\n然後重新開啟或貼上參數。
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=可以詢問助理的事
@@ -3937,6 +3945,8 @@ ThisFileAlreadyExistsDoYou=此檔案已存在。確定要覆寫嗎？
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=這是旋轉後的 bulb 在 x 方向的絕對偏移。
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=這是 mb3d-rs 的一個新副本。它旁邊是您以前使用的副本，位於資料夾「{}」中。\n\nmb3d-rs 的每個副本都把您的東西存放在自己的資料夾裡：您的設定、圖片的歷程記錄、儲存的參數、加入的貼圖、大型渲染和網格。所以它們在這裡看起來不見了。\n\n移轉過來：您的設定會被複製，您製作的一切會移到這個副本中。舊副本仍可啟動，只是沒有您的檔案；之後可以刪除它的資料夾。\n不移轉直接開始：這個副本不帶它們開始，之後不會再詢問。
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=此渲染正在執行中。
 ;This render is running right now.
 ThisRenderKeepsNoImage=此渲染不保留影像。
@@ -4313,6 +4323,8 @@ YouWantToDelete=您要刪除：\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=您的作者名稱（儲存在參數中）：
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=您在舊版本中的檔案
+;Your files from the earlier version
 YourOwnLanguageItsName=您自己的語言（其名稱）：
 ;Your own language (its name):
 Ypos=Y 位置

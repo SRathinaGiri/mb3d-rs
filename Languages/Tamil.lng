@@ -423,6 +423,8 @@ Box=பெட்டி
 ;Box
 BoxSharpGoodAAGaussBit=Box: கூர்மை, நல்ல AA\nGauss: சற்று மங்கல், மிக நல்ல AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=இங்கே கொண்டு வா
+;Bring them over
 BringsTheWindowToTheFront=எந்தச் சாளரத்திலிருந்தும் அந்தச் சாளரத்தை முன்னுக்குக் கொண்டு வரும், அல்லது தற்போதையதை மூடும். ஒரு புலத்தைக் கிளிக் செய்து விசைகளை அழுத்துங்கள்; Backspace விரைவு விசையை நீக்கும்.
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=உலாவு...
@@ -1121,6 +1123,8 @@ Done2={} முடிந்தது ({}).
 ;{} done ({}).
 DoneOf=முடிந்தது: {} / {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=முடிந்தது: உங்கள் அமைப்புகளும் கோப்புகளும் இப்போது இந்த நகலில் உள்ளன. உங்கள் அமைப்புகளைப் பயன்படுத்த mb3d-rs மீண்டும் தொடங்குகிறது.
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=இரட்டை
 ;Double
 DoubleClickToChangeTheNavi=நேவி முறையை மாற்ற இரட்டைக் கிளிக் செய்யவும்
@@ -3603,6 +3607,8 @@ StartRenderingAnimationImages=அனிமேஷன் படங்களின�
 ;Start rendering animation images
 StartRenderingSlices=துண்டுகளின் ரெண்டரைத் தொடங்கு
 ;Start rendering slices
+StartWithoutThem=அவை இல்லாமல் தொடங்கு
+;Start without them
 StartsRenderingAllSelectedM3PFiles=தேர்ந்த எல்லா M3P கோப்புகளின் ரெண்டரையும் தொடங்குகிறது
 ;Starts rendering all selected M3P files
 Statistics=புள்ளிவிவரங்கள்
@@ -3925,6 +3931,8 @@ Themes=தீம்கள்
 ;Themes
 ThereIsAFileAlready={} கோப்பு ஏற்கனவே உள்ளது.
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=இவற்றை நகர்த்த முடியவில்லை, இவை இன்னும் பழைய கோப்புறை "{}" இல் உள்ளன: {}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=இந்த அளவுருக்கள் "{}" சூத்திரத்தைப் பயன்படுத்துகின்றன, அது இங்கு நிறுவப்படவில்லை.\n\nசூத்திரங்கள் .m3f இல் முடியும் கோப்புகள். {}.m3f ஐப் பெற்று (பெரும்பாலும் அளவுருக்களுடன், குழுவின் கோப்புகளில் அல்லது சூத்திரத் தொகுப்பில் பகிரப்படும்) சூத்திரக் கோப்புறைகளில் ஒன்றில் வைக்கவும்:\n{}\n\nபிறகு அளவுருக்களை மீண்டும் திறக்கவும் அல்லது ஒட்டவும்.
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=உதவியாளரிடம் கேட்க வேண்டியவை
@@ -3937,6 +3945,8 @@ ThisFileAlreadyExistsDoYou=இந்தக் கோப்பு ஏற்கன
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=இது சுழற்றிய பல்பின் x திசையில் முழுமையான ஆஃப்செட்.
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=இது mb3d-rs இன் புதிய நகல். இதன் அருகில், நீங்கள் முன்பு பயன்படுத்திய நகல் "{}" என்ற கோப்புறையில் உள்ளது.\n\nmb3d-rs இன் ஒவ்வொரு நகலும் உங்கள் பொருட்களை தன் சொந்த கோப்புறையில் வைத்திருக்கிறது: உங்கள் அமைப்புகள், உங்கள் படங்களின் வரலாறு, நீங்கள் சேமித்த அளவுருக்கள், சேர்த்த வரைபடங்கள், உங்கள் பெரிய ரெண்டர்கள் மற்றும் மெஷ்கள். அதனால்தான் அவை இங்கே காணாமல் போனது போலத் தெரிகிறது.\n\nஇங்கே கொண்டு வா: உங்கள் அமைப்புகள் நகலெடுக்கப்படும், நீங்கள் உருவாக்கிய அனைத்தும் இந்த நகலுக்கு நகர்த்தப்படும். பழைய நகல் உங்கள் கோப்புகள் இல்லாமல் தொடர்ந்து இயங்கும்; அதன் கோப்புறையை பின்னர் நீக்கலாம்.\nஅவை இல்லாமல் தொடங்கு: இந்த நகல் அவை இல்லாமல் தொடங்கும், மீண்டும் கேட்கப்படாது.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=இந்த ரெண்டர் இப்போது இயங்குகிறது.
 ;This render is running right now.
 ThisRenderKeepsNoImage=இந்த ரெண்டர் படத்தை வைத்திருக்கவில்லை.
@@ -4313,6 +4323,8 @@ YouWantToDelete=நீக்க விரும்புவது:\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=உங்கள் ஆசிரியர் பெயர் (அளவுருக்களில் சேமிக்கப்படும்):
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=முந்தைய பதிப்பிலிருந்து உங்கள் கோப்புகள்
+;Your files from the earlier version
 YourOwnLanguageItsName=உங்கள் சொந்த மொழி (அதன் பெயர்):
 ;Your own language (its name):
 Ypos=Ypos

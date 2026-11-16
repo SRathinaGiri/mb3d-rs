@@ -423,6 +423,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: تیز، اچھا AA\nGauss: کچھ دھندلا، بہت اچھا AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=یہاں لے آئیں
+;Bring them over
 BringsTheWindowToTheFront=کسی بھی ونڈو سے اس ونڈو کو سامنے لاتا ہے، یا موجودہ ونڈو بند کرتا ہے۔ کسی خانے پر کلک کریں اور کیز دبائیں؛ Backspace ہاٹ کی ہٹا دیتا ہے۔
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=براؤز کریں...
@@ -1121,6 +1123,8 @@ Done2={} مکمل ({})۔
 ;{} done ({}).
 DoneOf=مکمل: {} از {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=ہو گیا: آپ کی ترتیبات اور فائلیں اب اس کاپی میں ہیں۔ mb3d-rs دوبارہ شروع ہو رہا ہے تاکہ آپ کی ترتیبات استعمال ہوں۔
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=نیویگیٹر موڈ بدلنے کے لیے ڈبل کلک کریں
@@ -3603,6 +3607,8 @@ StartRenderingAnimationImages=اینیمیشن تصاویر کی رینڈرنگ 
 ;Start rendering animation images
 StartRenderingSlices=ٹکڑوں کی رینڈرنگ شروع کریں
 ;Start rendering slices
+StartWithoutThem=ان کے بغیر شروع کریں
+;Start without them
 StartsRenderingAllSelectedM3PFiles=تمام منتخب M3P فائلوں کی رینڈرنگ شروع کرتا ہے
 ;Starts rendering all selected M3P files
 Statistics=اعداد و شمار
@@ -3925,6 +3931,8 @@ Themes=تھیمز
 ;Themes
 ThereIsAFileAlready=فائل {} پہلے سے موجود ہے۔
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=یہ منتقل نہیں ہو سکیں اور ابھی تک پرانے فولڈر "{}" میں ہیں: {}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=یہ پیرامیٹرز فارمولا "{}" استعمال کرتے ہیں، جو یہاں انسٹال نہیں ہے۔\n\nفارمولے .m3f پر ختم ہونے والی فائلیں ہیں۔ {}.m3f حاصل کریں (یہ اکثر پیرامیٹرز کے ساتھ، کسی گروپ کی فائلوں میں یا کسی فارمولا پیک میں شیئر ہوتا ہے) اور اسے فارمولا فولڈرز میں سے کسی ایک میں رکھیں:\n{}\n\nپھر پیرامیٹرز دوبارہ کھولیں یا چسپاں کریں۔
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=اسسٹنٹ سے پوچھنے کی باتیں
@@ -3937,6 +3945,8 @@ ThisFileAlreadyExistsDoYou=یہ فائل پہلے سے موجود ہے۔ کیا 
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=یہ گھمائے گئے بلب کا x سمت میں مطلق آفسیٹ ہے۔
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=یہ mb3d-rs کی ایک نئی کاپی ہے۔ اس کے ساتھ وہ کاپی ہے جو آپ پہلے استعمال کرتے تھے، فولڈر "{}" میں۔\n\nmb3d-rs کی ہر کاپی آپ کی چیزیں اپنے ہی فولڈر میں رکھتی ہے: آپ کی ترتیبات، آپ کی تصویروں کی تاریخچہ، محفوظ کیے گئے پیرامیٹر، شامل کیے گئے نقشے، آپ کے بڑے رینڈرز اور میشز۔ اسی لیے یہ یہاں غائب لگتی ہیں۔\n\nیہاں لے آئیں: آپ کی ترتیبات کاپی ہو جاتی ہیں، اور جو کچھ آپ نے بنایا وہ اس کاپی میں منتقل ہو جاتا ہے۔ پرانی کاپی پھر بھی چلتی ہے، آپ کی فائلوں کے بغیر؛ اس کا فولڈر آپ بعد میں حذف کر سکتے ہیں۔\nان کے بغیر شروع کریں: یہ کاپی ان کے بغیر شروع ہوتی ہے، اور آپ سے دوبارہ نہیں پوچھا جائے گا۔
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=یہ رینڈر ابھی چل رہا ہے۔
 ;This render is running right now.
 ThisRenderKeepsNoImage=یہ رینڈر کوئی تصویر نہیں رکھتا۔
@@ -4313,6 +4323,8 @@ YouWantToDelete=آپ حذف کرنا چاہتے ہیں:\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=آپ کا مصنف نام (پیرامیٹرز میں محفوظ):
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=پچھلے ورژن سے آپ کی فائلیں
+;Your files from the earlier version
 YourOwnLanguageItsName=آپ کی اپنی زبان (اس کا نام):
 ;Your own language (its name):
 Ypos=Ypos

@@ -422,6 +422,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: ostry, dobry AA\nGauss: nieco rozmyty, bardzo dobry AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=Przenieś je
+;Bring them over
 BringsTheWindowToTheFront=Przywołuje okno na wierzch z dowolnego okna lub zamyka bieżące. Kliknij pole i naciśnij klawisze; Backspace usuwa skrót.
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=Przeglądaj...
@@ -1120,6 +1122,8 @@ Done2={} gotowe ({}).
 ;{} done ({}).
 DoneOf=Gotowe: {} z {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=Gotowe: Twoje ustawienia i pliki są teraz w tej kopii. mb3d-rs uruchomi się ponownie, aby użyć Twoich ustawień.
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Podwójny klik zmienia tryb nawigatora
@@ -3602,6 +3606,8 @@ StartRenderingAnimationImages=Rozpocznij renderowanie klatek animacji
 ;Start rendering animation images
 StartRenderingSlices=Rozpocznij renderowanie przekrojów
 ;Start rendering slices
+StartWithoutThem=Zacznij bez nich
+;Start without them
 StartsRenderingAllSelectedM3PFiles=Rozpoczyna renderowanie wszystkich wybranych plików M3P
 ;Starts rendering all selected M3P files
 Statistics=Statystyki
@@ -3924,6 +3930,8 @@ Themes=Motywy
 ;Themes
 ThereIsAFileAlready=Plik {} już istnieje.
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=Tego nie udało się przenieść i nadal jest w starym folderze „{}”: {}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=Te parametry używają formuły "{}", która nie jest tu zainstalowana.\n\nFormuły to pliki z rozszerzeniem .m3f. Zdobądź {}.m3f (często jest udostępniany razem z parametrami, w plikach grupy albo w paczce formuł) i umieść go w jednym z folderów formuł:\n{}\n\nNastępnie otwórz lub wklej parametry ponownie.
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=O co zapytać asystenta
@@ -3936,6 +3944,8 @@ ThisFileAlreadyExistsDoYou=Ten plik już istnieje. Czy na pewno go zastąpić?
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=To bezwzględne przesunięcie obróconej bryły w kierunku x.
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=To jest nowa kopia mb3d-rs. Obok znajduje się kopia, której używałeś wcześniej, w folderze „{}”.\n\nKażda kopia mb3d-rs trzyma Twoje rzeczy we własnym folderze: ustawienia, Historię Twoich obrazów, zapisane parametry, dodane mapy, duże rendery i siatki. Dlatego wydaje się, że tutaj ich brakuje.\n\nPrzenieś je: ustawienia zostaną skopiowane, a wszystko, co stworzyłeś, zostanie przeniesione do tej kopii. Stara kopia nadal się uruchamia, tylko bez Twoich plików; jej folder możesz później usunąć.\nZacznij bez nich: ta kopia zacznie bez nich i pytanie się nie powtórzy.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=Ten render właśnie trwa.
 ;This render is running right now.
 ThisRenderKeepsNoImage=Ten render nie zachowuje obrazu.
@@ -4312,6 +4322,8 @@ YouWantToDelete=Chcesz usunąć:\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=Twoje imię autora (zapisywane w parametrach):
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=Twoje pliki z poprzedniej wersji
+;Your files from the earlier version
 YourOwnLanguageItsName=Twój własny język (jego nazwa):
 ;Your own language (its name):
 Ypos=Poz. Y

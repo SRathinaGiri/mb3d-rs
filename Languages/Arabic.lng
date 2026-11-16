@@ -423,6 +423,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: حاد، AA جيد\nGauss: ضبابي قليلًا، AA جيد جدًّا
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringThemOver=انقلها إلى هنا
+;Bring them over
 BringsTheWindowToTheFront=يُحضر النافذة إلى الأمام من أي نافذة، أو يغلق النافذة الحالية. انقر حقلًا واضغط المفاتيح؛ ومفتاح Backspace يزيل مفتاح الاختصار.
 ;Brings the window to the front from any window, or closes the current one. Click a field and press the keys; Backspace takes the hotkey away.
 Browse=استعراض...
@@ -1121,6 +1123,8 @@ Done2=تم {} ({}).
 ;{} done ({}).
 DoneOf=تم: {} من {}{}
 ;Done: {} of {}{}
+DoneYourSettingsAndFilesAre=تم: إعداداتك وملفاتك موجودة الآن في هذه النسخة. سيُعاد تشغيل mb3d-rs لاستخدام إعداداتك.
+;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=نقر مزدوج لتغيير وضع المستكشف
@@ -3603,6 +3607,8 @@ StartRenderingAnimationImages=بدء تصيير صور التحريك
 ;Start rendering animation images
 StartRenderingSlices=بدء تصيير الشرائح
 ;Start rendering slices
+StartWithoutThem=ابدأ من دونها
+;Start without them
 StartsRenderingAllSelectedM3PFiles=يبدأ تصيير كل ملفات M3P المحددة
 ;Starts rendering all selected M3P files
 Statistics=الإحصاءات
@@ -3925,6 +3931,8 @@ Themes=السمات
 ;Themes
 ThereIsAFileAlready=يوجد ملف {} مسبقًا.
 ;There is a file {} already.
+TheseCouldNotBeMovedAnd=تعذّر نقل ما يلي وما زال في المجلد القديم "{}": {}
+;These could not be moved and are still in the old folder "{}": {}
 TheseParametersUseTheFormulaWhich=تستخدم هذه المعاملات الصيغة "{}"، وهي غير مثبتة هنا.\n\nالصيغ ملفات تنتهي بـ .m3f. احصل على {}.m3f (غالبًا تُشارك مع المعاملات، في ملفات مجموعة أو في حزمة صيغ) وضعها في أحد مجلدات الصيغ:\n{}\n\nثم افتح المعاملات أو الصقها مرة أخرى.
 ;These parameters use the formula "{}", which is not installed here.\n\nFormulas are files ending in .m3f. Get {}.m3f (it is often shared together with the parameters, in a group's files or in a formula pack) and put it into one of the formula folders:\n{}\n\nThen open or paste the parameters again.
 ThingsToAskTheAssistant=أشياء تطلبها من المساعد
@@ -3937,6 +3945,8 @@ ThisFileAlreadyExistsDoYou=هذا الملف موجود مسبقًا. أتريد
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=هذه إزاحة مطلقة في اتجاه x للجسم المُدار.
 ;This is a absolute offset in x direction of the rotated bulb.
+ThisIsANewCopyOf=هذه نسخة جديدة من mb3d-rs. وبجانبها النسخة التي كنت تستخدمها من قبل، في المجلد "{}".\n\nكل نسخة من mb3d-rs تحفظ أشياءك في مجلدها الخاص: إعداداتك، وسجل صورك، والمعاملات التي حفظتها، والخرائط التي أضفتها، والتصييرات الكبيرة والشبكات. لهذا تبدو مفقودة هنا.\n\nانقلها إلى هنا: تُنسخ إعداداتك، ويُنقل كل ما صنعته إلى هذه النسخة. تظل النسخة القديمة تعمل، لكن من دون ملفاتك؛ ويمكنك حذف مجلدها لاحقًا.\nابدأ من دونها: تبدأ هذه النسخة من دونها، ولن يُطرح عليك السؤال مرة أخرى.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
 ThisRenderIsRunningRightNow=هذا التصيير يجري الآن.
 ;This render is running right now.
 ThisRenderKeepsNoImage=هذا التصيير لا يحتفظ بصورة.
@@ -4313,6 +4323,8 @@ YouWantToDelete=تريد حذف:\n{}
 ;You want to delete:\n{}
 YourAuthorNameStoredInThe=اسمك مؤلفًا (يُخزن في المعاملات):
 ;Your author name (stored in the parameters):
+YourFilesFromTheEarlierVersion=ملفاتك من الإصدار السابق
+;Your files from the earlier version
 YourOwnLanguageItsName=لغتك الخاصة (اسمها):
 ;Your own language (its name):
 Ypos=موضع Y
