@@ -573,13 +573,15 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     if needs_double(p) && !gpu()?.f64 {
         return Err("the zoom needs double precision (the graphics card has no doubles)".into());
     }
-    make_scene_shader(p)
+    let l = gpu()?.device.limits();
+    make_scene_shader(p, Some((l.max_storage_buffer_binding_size as u64).min(l.max_buffer_size)))
 }
 
 /// [`scene_shader`] without asking the card whether it can calculate in
 /// doubles (the shader checks of the tests, also on machines without a
-/// card or without doubles).
-fn make_scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
+/// card or without doubles). `max_buffer`: the most bytes the card takes
+/// in one buffer, `None` for no check.
+fn make_scene_shader(p: &CalcParams, max_buffer: Option<u64>) -> Result<SceneShader, String> {
     use crate::x86::lift_wgsl::{prelude, record_globals, CellTy, WgslFormula};
     use std::fmt::Write;
     let dbl = needs_double(p);
@@ -978,6 +980,16 @@ fn make_scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     let mut maps = vec![nrs.len() as u32];
     let mut pixels: Vec<u32> = Vec::new();
     let head = 1 + 4 * nrs.len();
+    // the maps and the volumetric light's map (vol_maps) go into one
+    // buffer: larger than the card takes, the CPU calculates the scene
+    // (checked before the copy, which would take as much memory again)
+    if let Some(max) = max_buffer {
+        let vol = p.vol.as_ref().map_or(0, |v| v.sides.iter().map(|s| s.len()).sum::<usize>());
+        let words = head + vol + nrs.iter().map(|nr| 3 * crate::maps::by_number(*nr).unwrap().data().len()).sum::<usize>();
+        if words as u64 * 4 > max {
+            return Err(format!("its maps are too big for the graphics card ({} MB, the card takes {} MB)", (words as u64 * 4) >> 20, max >> 20));
+        }
+    }
     for nr in &nrs {
         let lm = crate::maps::by_number(*nr).unwrap();
         maps.extend_from_slice(&[*nr as u32, lm.width as u32, lm.height as u32, (head + pixels.len()) as u32]);
@@ -4027,6 +4039,28 @@ mod tests {
             .unwrap_or_else(|e| panic!("{what}: {}", e.emit_to_string(code)));
     }
 
+    /// A scene whose maps do not fit into one buffer of the card is left to
+    /// the CPU (with the reason), checked before the maps are copied; at
+    /// the card's limit exactly it still goes to the card.
+    #[test]
+    fn maps_too_big_for_the_card_go_to_the_cpu() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        crate::formulas::add_formula_dir(root.join("M3Formulas-community"));
+        crate::maps::add_map_dir(root.join("M3Maps-community"));
+        let mut sc = crate::scene::Scene::preset("Integer Power").unwrap();
+        let mut f = crate::formulas::lookup("HeightMapLimIFS").unwrap();
+        let Formula::Custom(c) = &mut f else { panic!("HeightMapLimIFS is no .m3f") };
+        c.values[0] = 100.0; // the map number (M3Maps-community/100.jpg)
+        sc.formulas[0].formula = f;
+        let p = CalcParams::new(&sc).unwrap();
+        let sh = make_scene_shader(&p, None).unwrap();
+        let bytes = sh.maps.len() as u64 * 4;
+        assert!(bytes > 100_000, "the map is in the buffer ({bytes} bytes)");
+        assert!(make_scene_shader(&p, Some(bytes)).is_ok());
+        let e = make_scene_shader(&p, Some(bytes - 4)).err().unwrap();
+        assert!(e.contains("its maps are too big for the graphics card"), "{e}");
+    }
+
     /// Every shader is valid WGSL, checked without a graphics card (so CI
     /// catches a broken shader): the post shaders and the scene shader of
     /// each built-in formula, the test scenes, the formulas of this program
@@ -4086,7 +4120,7 @@ mod tests {
                     continue;
                 }
             };
-            let sh = match make_scene_shader(&p) {
+            let sh = match make_scene_shader(&p, None) {
                 Ok(sh) => sh,
                 Err(e) => {
                     // (calculated on the CPU)
@@ -4098,7 +4132,7 @@ mod tests {
             if !needs_double(&p) {
                 let mut p2 = p.clone();
                 p2.gpu_double = true;
-                validate_wgsl(&format!("{what} (double precision)"), &make_scene_shader(&p2).unwrap().code);
+                validate_wgsl(&format!("{what} (double precision)"), &make_scene_shader(&p2, None).unwrap().code);
             }
             checked += 1;
         }

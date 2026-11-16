@@ -490,6 +490,12 @@ into `M3Lights`, the default folder of the Lighting window's quick load list.
 `tests/jit.rs` checks that every formula loads, every JIT one compiles and
 every preset is a light record.
 
+Geoffrey N. Barnes's 61 maps (`M3Maps-barnes/`, numbers 10001 to 13015)
+go into `M3Maps` the same way, with their `CREDITS.md` as
+`CREDITS-barnes.md`. `tests/maps.rs` checks that every map of both folders
+decodes, that its name matches its content (MB3D picks the decoder by the
+name) and that no side is larger than 4096 pixels.
+
 Formulas new in this program (`M3Formulas-rs/`, copied into `M3Formulas`
 by the release workflow; so far **SphereTree**, TGlad's sphere tree, and
 **UlamSpiral**, Ulam's prime spiral in 3D, **PseudoKleinian**,
