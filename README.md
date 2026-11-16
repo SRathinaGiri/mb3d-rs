@@ -7,7 +7,7 @@
 <!-- languages:end -->
 
 <!-- latest:start -->
-**Latest release: [v0.3.11](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.11)** (15 Nov 2026, 19:34 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
+**Latest release: [v0.3.12](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.12)** (16 Nov 2026, 09:01 UTC) · [Download](#download) · [What's new](docs/UPDATES.md)
 <!-- latest:end -->
 
 mb3d-rs is [Mandelbulb3D](https://github.com/thargor6/mb3d) (MB3D), the
@@ -1509,6 +1509,19 @@ Each commit links to its full description and code on GitHub; the downloads
 of a release are on its page. Times are in UTC.
 
 <!-- updates:start -->
+### [v0.3.12](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.12) · 16 Nov 2026, 09:01 UTC
+
+| Commit | What it does |
+|---|---|
+| [`d6ba9ab`](https://github.com/thr32423/mb3d-rs/commit/d6ba9ab466f56b7cb8c55431ad0f4bc2efc1c503) | Maps by Geoffrey N. Barnes: the 17 stored as PNG were left out of fdf544c (.gitignore ignores *.png); the map folders' pictures are no longer ignored. tests/maps.rs found it in a clean checkout |
+| [`7f2a0dc`](https://github.com/thr32423/mb3d-rs/commit/7f2a0dca0a936acabcbbb8e327897447851de385) | Version number and release notes of this release |
+| [`cf17302`](https://github.com/thr32423/mb3d-rs/commit/cf173023d198342c5f34a846d5429f2e20b085bb) | A map number shows its picture's name: a picture of any name chosen as a map is kept as '<number> <its name>' (parameter files refer to maps by number, as MB3D's), so the Lighting window showed only the number (John Paleo). The diffuse colour map shows the picture's own name under the number (the Lighting window one line taller); the light map's and the colour map's numbers and pictures and a height map formula's map number in the Formula window name it in their hints. maps::display_name, with a test |
+| [`daf0b0f`](https://github.com/thr32423/mb3d-rs/commit/daf0b0f841a7e79b4a36f933cbb84248a784e9c8) | MutaGen: Send to Main Editor closes the MutaGen window and brings the main window to the front with "Parameters loaded, press Calculate 3D to render" (John Paleo: as he knows it from 1.99.37); reopened, the window keeps its generations. snapform: a step visible:FORM |
+| [`7a4e681`](https://github.com/thr32423/mb3d-rs/commit/7a4e681076d560e1c1493bb76293defb0f95a0f4) | Your files from the earlier version: a new release unpacked beside the one used before started empty (each copy keeps the settings, the History, the logs, the parameters saved into M3Parameter, the maps added, the Big renders and meshes in its own folder), so the History seemed to have stopped recording (John Paleo, Mandelbulb Maniacs). On its first start a copy that keeps its files in its folder finds the most recently used mb3d-rs folder beside it (one with the mb3d program, so not MB3D 1.99; never a newer version by its name) and asks once, in words for users who are not technical, with the buttons "Bring them over" and "Start without them": the settings are copied (the ini's paths into the old folder point to the new one; the colour, quality and Navigator light presets), what the user made is moved where the new folder has no file of the name (a day of the History or a log both have is joined; a file the new version ships stays its own; locks and caches stay), what cannot be moved is named, and the program starts again with the settings (its exit does not save over them). The answer is kept in earlier-version.txt. Texts in all 18 languages; tests: finding the folder once, the version in a folder's name, the paths moving along, copying and moving |
+| [`8ea8fb5`](https://github.com/thr32423/mb3d-rs/commit/8ea8fb5d19cfe628a7890acc19e00f2cc3f9ef47) | Maps too big for the graphics card: a scene whose maps (with the volumetric light's map, one buffer) are larger than the card takes in one buffer is calculated on the CPU, with the reason "its maps are too big for the graphics card (N MB, the card takes M MB)"; checked in scene_shader, which every card path builds, before the maps are copied (an 8192 x 8192 map is 800 MB, a second copy as much again). Before, only the volumetric light's map was checked and a too large formula map went to the card's error handler. A test builds a map formula's shader at the limit (card) and one word below (CPU), without a card |
+| [`fdf544c`](https://github.com/thr32423/mb3d-rs/commit/fdf544cf8ec81199084eff0b60eea40992384a26) | Maps by Geoffrey N. Barnes: 61 maps (numbers 10001 to 13015, M3Maps-barnes/ with CREDITS.md), copied into M3Maps by the release workflow as the community maps are. Stored as JPEG at quality 95 with full colour detail where lossless PNG is more than a quarter larger (the busy colour textures), else as lossless PNG or the original JPEG: 121.6 MB down to 43.0 MB at full resolution; a 3000x2250 render coloured with 11021 differs from one with the original by 48 dB, no pixel by more than 8 levels. 11028 is 4096 instead of 8192 pixels a side (800 MB as a map, more than many graphics cards take in one buffer); the transparent pictures are laid onto white (13004 and 13007 held their pattern only in the transparency and were black); JPEG and BMP files named .png have the right name; 11026 keeps its 16 bits. tests/maps.rs checks that every map of M3Maps-community and M3Maps-barnes decodes, that its name matches its content and that no side is above 4096. README (17 languages) and TECHNICAL.md |
+| [`1816d87`](https://github.com/thr32423/mb3d-rs/commit/1816d87e9992702549f9d53d2338c941459f9d98) | README: Updates for v0.3.11 |
+
 ### [v0.3.11](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.11) · 15 Nov 2026, 19:34 UTC
 
 | Commit | What it does |
@@ -1539,18 +1552,7 @@ of a release are on its page. Times are in UTC.
 | [`bbf919f`](https://github.com/thr32423/mb3d-rs/commit/bbf919f69b73536d333981007671d65fa4195c32) | The engine for other programs (experimental): mb3d::api, a small surface over the renderer (open, set, resize, render with depth, progress, cancel), and mb3d serve, the same as JSON lines on standard input and output (docs/API.md) |
 | [`adfa327`](https://github.com/thr32423/mb3d-rs/commit/adfa327c31cb48da1830faad495212da56bf3ea6) | README: Updates for v0.3.9 |
 
-### [v0.3.9](https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.9) · 11 Nov 2026, 13:38 UTC
-
-| Commit | What it does |
-|---|---|
-| [`1cbc21c`](https://github.com/thr32423/mb3d-rs/commit/1cbc21c1cd70cc6b58cf771eaac7ba8e2b84052f) | Version number and release notes of this release |
-| [`5f3a829`](https://github.com/thr32423/mb3d-rs/commit/5f3a829c9cdfc40eda909d1267a4e64fe101ff92) | Opening an .m3i no longer freezes the program: the G-buffer is painted at once without the reflections, clouds and depth of field (they took over a minute on the window's thread with a slow formula, issue 32, and an .m3i with its finished picture threw that painting away); without a kept picture they follow as a background job (Job::Finish) with progress and Stop, also after doubling the image size in the post processing window |
-| [`3a786a0`](https://github.com/thr32423/mb3d-rs/commit/3a786a07e879600d30b05636c700dc4cb7d96324) | File previews: a History thumbnail is no longer stopped for a dialog that closed (the stopped dialog preview of the same file made it stop again at every start, its tile stayed empty), and a stopped preview makes the History window ask again for what it shows (found in a review by Claude Fable 5.2) |
-| [`b12057b`](https://github.com/thr32423/mb3d-rs/commit/b12057b24a193c007aa3ba0bc8c5ff710704515d) | JosKn-KleinIFS and JosKn-ModIFS on the graphics card: the translation of a formula's machine code to the card's shader knows movzx / movsx, cmovcc, setcc, fcomi, fcmov and the x87 control word (fnstcw / fldcw, the rounding mode of Delphi's Trunc and Floor, followed only in a formula that loads one, so the other formulas' shaders stay the same to the byte). Six formulas are new on the card (also SinePowSum, SurfBox, diamondIFS, eiffieCarIFS), each the same as the interpreter on 256 random inputs (gpuformulas); the code of the other 513 is unchanged, no example file uses the six. Gestation_02.m3i (issue 32) renders in 24 s instead of 81 s, the shaders cached |
-| [`e508a61`](https://github.com/thr32423/mb3d-rs/commit/e508a61982c78e6cc5461896db23e0a4e73f2fe1) | File previews leave out the reflections and stop when nobody waits for them: the open dialog's preview of an old .m3i with reflections and a slow formula (JosKn-KleinIFS, issue 32) never appeared and took the processor from the program for minutes; it now shows after about 2 s, and a preview stops when its dialog closes or another file is clicked (the History window's queue keeps its pictures); mutagen::preview_cancellable |
-| [`a03f223`](https://github.com/thr32423/mb3d-rs/commit/a03f223493b4a85934e91415a1f4ff84210247c5) | README: Updates for v0.3.8 |
-
-All 122 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
+All 123 releases, back to v0.1.0: [the whole list](docs/UPDATES.md).
 <!-- updates:end -->
 
 ## For developers
