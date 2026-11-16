@@ -515,6 +515,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             // with them keeps its generations as they are)
             app.make_scene(ui);
             app.mutagen.main_text = app.scene.to_text();
+            // the main window in front with the parameters, the MutaGen
+            // window closed (it keeps its generations for the next time)
+            ui.close(F);
+            ui.show(super::MAIN);
+            app.message(ui, &tr("@MB:ParametersLoadedPressCalculate3DTo"));
         }
         _ => {}
     }

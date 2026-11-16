@@ -15,7 +15,7 @@
 //! a running calculation; `lagwait:SECONDS` also prints the longest
 //! blocking of the window), `print:FORM:CONTROL` (its caption),
 //! `printtext:FORM:CONTROL` (its text), `rect:FORM:CONTROL` (where it is),
-//! `formpos:FORM` (the window's position and size), `led`
+//! `formpos:FORM` (the window's position and size), `visible:FORM` (whether it is open), `led`
 //! (the title bar LED of the main window) and `panic` (a crash, as the
 //! program's: crash.rs writes it down, the next start tells it).
 use mb3d::vcl::canvas::Canvas;
@@ -179,6 +179,7 @@ fn main() {
             }
             "print" => println!("{}.{} = {:?}", p[1], p[2], ui.caption(p[1], p[2])),
             "printtext" => println!("{}.{} = {:?}", p[1], p[2], ui.text(p[1], p[2])),
+            "visible" => println!("{} visible: {}", p[1], ui.showing(p[1])),
             "formpos" => {
                 let f = ui.f(p[1]);
                 println!("{} at {}, {} size {:?}", p[1], f.left, f.top, f.outer_size(&ui.theme));
