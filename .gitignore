@@ -7,5 +7,6 @@ scenes/
 !tools/mb3d-wine/btn_ready.png
 !assets/*.png
 !Languages/*.png
+!M3Maps-*/*.png
 /build/
 __pycache__/
