@@ -163,6 +163,9 @@ jobs:
           cp M3Formulas-community/CREDITS.md "$name/M3Formulas/CREDITS-community.md"
           cp M3Maps-community/*.jpg "$name/M3Maps/"
           cp M3Maps-community/CREDITS.md "$name/M3Maps/CREDITS-community.md"
+          # maps by Geoffrey N. Barnes (10001-13015)
+          cp M3Maps-barnes/*.jpg M3Maps-barnes/*.png "$name/M3Maps/"
+          cp M3Maps-barnes/CREDITS.md "$name/M3Maps/CREDITS-barnes.md"
           mkdir -p "$name/M3Lights"
           cp M3Lights-community/*.m3l "$name/M3Lights/"
           cp M3Lights-community/CREDITS.md "$name/M3Lights/CREDITS-community.md"

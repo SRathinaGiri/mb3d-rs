@@ -532,6 +532,9 @@ you check further on your own:
   UndeadAcademy; maps 3046–3048 are by Kronpano
   (`M3Maps/CREDITS-community.md`). The 608 light presets in `M3Lights` come from the same package; their
   files name no maker (`M3Lights/CREDITS-community.md`).
+* **Maps by Geoffrey N. Barnes**: 61 maps (numbers 10001–13015) that he
+  made for mb3d-rs: seamless colour textures, patterns, mazes, rings and
+  circuits (`M3Maps/CREDITS-barnes.md`).
 * **Ideas from Mandelbulb3D SE**: Glenn Olander's Mandelbulb3D SE, a macOS
   app built on mb3d-rs, gave two ideas: checking every graphics card shader
   in the tests without a graphics card, and Stop ending the painting of a
