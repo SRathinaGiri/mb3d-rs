@@ -573,8 +573,13 @@ fn scene_shader(p: &CalcParams) -> Result<SceneShader, String> {
     if needs_double(p) && !gpu()?.f64 {
         return Err("the zoom needs double precision (the graphics card has no doubles)".into());
     }
-    let l = gpu()?.device.limits();
-    make_scene_shader(p, Some((l.max_storage_buffer_binding_size as u64).min(l.max_buffer_size)))
+    // (the maps' size against the card's limit where there is a card;
+    // without one the scene goes to the CPU anyway)
+    let max = gpu().ok().map(|g| {
+        let l = g.device.limits();
+        (l.max_storage_buffer_binding_size as u64).min(l.max_buffer_size)
+    });
+    make_scene_shader(p, max)
 }
 
 /// [`scene_shader`] without asking the card whether it can calculate in
@@ -4186,12 +4191,15 @@ mod tests {
     fn an_overflowed_picture_stays_off_the_card() {
         let sc = crate::scene::Scene::parse("width = 64\nheight = 48\n").unwrap();
         let mut p = CalcParams::new(&sc).unwrap();
-        assert_eq!(unsupported(&p), None);
+        // (the rule only: without a card, or a card without doubles, the
+        // scene stays off it for that reason, as on the CI machines)
+        let overflow = |p: &CalcParams| unsupported(p).is_some_and(|r| r.contains("single precision"));
+        assert!(!overflow(&p));
         p.gpu_overflow.store(true, Ordering::Relaxed);
-        assert!(unsupported(&p).is_some_and(|r| r.contains("single precision")));
+        assert!(overflow(&p));
         // (in double precision the card does not overflow)
         p.gpu_double = true;
-        assert_eq!(unsupported(&p), None);
+        assert!(!overflow(&p));
     }
 
     fn gbuffer_matches_cpu(scene: &str, scale: f64) {
