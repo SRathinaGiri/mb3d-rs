@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.3.13" date="2026-11-16">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.13</url>
+      <description>
+        <p>Your settings and files from an earlier version can be brought over from any folder: from the start-up question, from a question on a new copy's first start, or later from the Folders window (Prefs, Ini Dirs). Afterwards the program asks you to start it again instead of restarting itself.</p>
+      </description>
+    </release>
     <release version="0.3.12" date="2026-11-16">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.12</url>
       <description>
