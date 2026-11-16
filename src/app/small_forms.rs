@@ -75,6 +75,13 @@ pub fn inidirs_event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                 let d = app.ini.dirs[i].display().to_string();
                 ui.set_text(ID, &format!("Edit{}", i + 1), &d);
             }
+            // (a copy that keeps its files in its own folder)
+            ui.set_visible(ID, "Button15", crate::earlier::applies());
+        }
+        // the settings and files of an earlier copy (crate::earlier)
+        "Button15Click" => {
+            ui.hide(ID);
+            super::main_form::choose_earlier(app, ui);
         }
         "Button3Click" => {
             let t = ui.tag(ID, &e.sender).clamp(0, 12) as usize;

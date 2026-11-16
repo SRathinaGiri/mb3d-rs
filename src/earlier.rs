@@ -48,13 +48,65 @@ pub struct Report {
     pub left: Vec<String>,
 }
 
-/// The earlier version to ask about, if this copy keeps its files in its
-/// own folder and was not asked yet.
+/// Whether this copy brings files over at all: it keeps them in its own
+/// folder, a release's (with the mb3d program beside it: not a test tool
+/// in a build folder).
+pub fn applies() -> bool {
+    crate::appdirs::portable() && is_copy(&crate::appdirs::app_folder())
+}
+
+/// A folder of an mb3d-rs copy (its command line program is there; MB3D
+/// 1.99 has none).
+fn is_copy(d: &Path) -> bool {
+    d.join("mb3d").is_file() || d.join("mb3d.exe").is_file()
+}
+
+/// Whether a copy was used (it has settings or a History).
+fn used(d: &Path) -> bool {
+    d.join("Mandelbulb3D.ini").is_file() || d.join("History").is_dir()
+}
+
+/// The earlier version beside this copy to ask about, if it was not asked
+/// yet.
 pub fn find() -> Option<Earlier> {
-    if !crate::appdirs::portable() {
+    if !applies() {
         return None;
     }
     find_beside(&crate::appdirs::app_folder(), env!("CARGO_PKG_VERSION"))
+}
+
+/// This copy's first start (no settings yet, never asked): if no earlier
+/// version is found beside it, it asks whether one was used elsewhere.
+pub fn first_start() -> bool {
+    let app = crate::appdirs::app_folder();
+    applies() && !app.join(MARKER).exists() && !app.join("Mandelbulb3D.ini").exists()
+}
+
+/// Why a folder the user chose is not an earlier copy.
+#[derive(Debug, PartialEq)]
+pub enum NotACopy {
+    /// this copy's own folder
+    Own,
+    /// no used mb3d-rs copy in it or around it
+    Nothing,
+}
+
+/// The earlier copy in a folder the user chose: the folder itself or the
+/// copy it is in (a History folder chosen, say).
+pub fn chosen(app: &Path, dir: &Path) -> Result<Earlier, NotACopy> {
+    let own = std::fs::canonicalize(app).unwrap_or_else(|_| app.to_path_buf());
+    let mut d = Some(std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf()));
+    for _ in 0..3 {
+        let Some(c) = d else { break };
+        if c == own {
+            return Err(NotACopy::Own);
+        }
+        if is_copy(&c) && used(&c) {
+            return Ok(Earlier { dir: c });
+        }
+        d = c.parent().map(Path::to_path_buf);
+    }
+    Err(NotACopy::Nothing)
 }
 
 /// The most recently used mb3d-rs folder beside `app` that holds settings
@@ -74,7 +126,7 @@ pub fn find_beside(app: &Path, version: &str) -> Option<Earlier> {
             continue;
         }
         // mb3d-rs (its command line program), not MB3D 1.99
-        if !(d.join("mb3d").is_file() || d.join("mb3d.exe").is_file()) {
+        if !is_copy(&d) {
             continue;
         }
         let used = [d.join("Mandelbulb3D.ini"), d.join("History")]
@@ -106,6 +158,12 @@ fn version_in_name(name: &str) -> Option<(u32, u32, u32)> {
     let rest = &name[i + 2..];
     let end = rest.find(|c: char| !(c.is_ascii_digit() || c == '.')).unwrap_or(rest.len());
     parse_version(rest[..end].trim_end_matches('.'))
+}
+
+/// Notes in `app` that no earlier copy was used: never asked again.
+pub fn note_first(app: &Path) {
+    let text = "This was the first copy of mb3d-rs (asked once). To bring over the files of an earlier copy later: the Prefs tab, Ini Dirs, \"From an earlier version\".\n";
+    let _ = std::fs::write(app.join(MARKER), text);
 }
 
 /// Notes the answer in `app` ([`MARKER`]): never asked again.
@@ -280,6 +338,28 @@ mod tests {
         assert_eq!(find_beside(&new, "0.3.11"), Some(Earlier { dir: old.clone() }));
         note(&new, &Earlier { dir: old }, false);
         assert_eq!(find_beside(&new, "0.3.11"), None);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_chosen_folder_finds_the_copy_it_is_in() {
+        let root = tmp("chosen");
+        let old = root.join("somewhere/else/my old mb3d");
+        let new = root.join("mb3d-rs-v0.3.13-x");
+        release(&old);
+        release(&new);
+        let other = root.join("photos");
+        std::fs::create_dir_all(&other).unwrap();
+        // a copy never used: nothing to bring
+        assert_eq!(chosen(&new, &old), Err(NotACopy::Nothing));
+        put(&old.join("History/2026-11-10/a.m3p"), "a");
+        let want = Ok(Earlier { dir: std::fs::canonicalize(&old).unwrap() });
+        assert_eq!(chosen(&new, &old), want);
+        // a folder inside the copy: the copy
+        assert_eq!(chosen(&new, &old.join("History/2026-11-10")), want);
+        assert_eq!(chosen(&new, &new), Err(NotACopy::Own));
+        assert_eq!(chosen(&new, &new.join("M3Parameter")), Err(NotACopy::Own));
+        assert_eq!(chosen(&new, &other), Err(NotACopy::Nothing));
         let _ = std::fs::remove_dir_all(&root);
     }
 

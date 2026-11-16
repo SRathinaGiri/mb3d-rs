@@ -278,6 +278,8 @@ AnimationVideoWritten=Animation : vidéo écrite : {}
 ;Animation: video written: {}
 Animations=Animations
 ;Animations
+AnotherFolder=Autre dossier…
+;Another folder…
 AntiAliasing=Anticrénelage :
 ;Anti aliasing:
 Antialiasing=Anticrénelage :
@@ -422,6 +424,8 @@ Box=Boîte
 ;Box
 BoxSharpGoodAAGaussBit=Box : net, bon AA\nGauss : un peu flou, très bon AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringOverFromTheFolder=Récupérer vos réglages et fichiers de la copie dans le dossier « {} » ?\n\nVos réglages sont copiés, et tout ce que vous avez créé est déplacé dans cette copie. L'ancienne copie démarre toujours, sans vos fichiers ; vous pourrez supprimer son dossier plus tard.
+;Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 BringThemOver=Les récupérer
 ;Bring them over
 BringsTheWindowToTheFront=Met la fenêtre au premier plan depuis n'importe quelle fenêtre, ou ferme la fenêtre active. Cliquez sur un champ et appuyez sur les touches ; Retour arrière supprime le raccourci.
@@ -594,8 +598,12 @@ ChooseAMap=Choisir une carte
 ;Choose a map
 ChooseASharedFolderFirstOne=choisissez d'abord un dossier partagé (que chaque ordinateur de l'essaim peut voir)
 ;choose a shared folder first (one every computer of the swarm can see)
+ChooseAnotherFolder=Choisir un autre dossier…
+;Choose another folder…
 ChooseOption=Choisir une option :
 ;Choose Option:
+ChooseTheFolder=Choisir le dossier…
+;Choose the folder…
 ChoosesAVariantOfTheFormula=choisit une variante de la formule ; nombres entiers seulement
 ;chooses a variant of the formula; whole numbers only
 ChoseTheme=Choisir un thème :
@@ -1446,6 +1454,8 @@ Fresnel=Fresnel :
 ;Fresnel:
 Fresnel0To1MoreReflection=Fresnel (0 à 1) : plus de reflet là où la surface se détourne du regard, comme le verre, l'eau et la laque (mieux visible avec les reflets)
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromAnEarlierVersion=D'une version précédente…
+;From an earlier version…
 FromClipboard=Du presse-papiers
 ;From Clipboard
 FromTheCameraAllAroundA=Depuis la caméra, tout autour (une scène vue de l'intérieur)
@@ -1646,6 +1656,8 @@ HardShadows=\sOmbres franches
 ;\sHard Shadows
 HardShadowsLower=ombres franches
 ;hard shadows
+HaveYouUsedMb3dRsBefore=Avez-vous déjà utilisé mb3d-rs ?\n\nChaque copie de mb3d-rs garde vos affaires dans son propre dossier : vos réglages, l'Historique de vos images, les paramètres enregistrés, les maps ajoutées, vos grands rendus et vos maillages. Une nouvelle copie démarre sans eux.\n\nChoisir le dossier… : choisissez le dossier de la copie que vous utilisiez. Vos réglages sont copiés, et tout ce que vous avez créé est déplacé dans cette copie.\nC'est ma première : cette copie démarre à neuf. Vous pourrez récupérer vos fichiers plus tard : onglet {}, {}, « D'une version précédente… ».
+;Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
 Height=Hauteur:
 ;Height:
 Height16BitNearestPointWhite=Hauteur (16 bits, le point le plus proche en blanc)
@@ -2520,6 +2532,8 @@ No2=Non
 ;No
 No360TagsTheCalculatedPicture=Pas de balises 360 : l'image calculée n'est pas un panorama sphérique deux fois plus large que haut ({0} x {1}). Réglez l'optique et la taille, puis recalculez.
 ;No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
+NoCopyOfMb3dRsInTheFolder=Le dossier « {} » ne contient aucune copie de mb3d-rs déjà utilisée.\n\nChoisissez le dossier de la copie que vous utilisiez : celui qui contient le programme Mandelbulb3D.
+;There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
 NoDescriptionFromTheAuthor=Pas de description de l'auteur.
 ;No description from the author.
 NoDoFOnTiles=Pas de profondeur de champ sur les tuiles.
@@ -3730,6 +3744,8 @@ TextureExport=Export de textures...
 ;Texture export...
 TextureExport2=Export de textures
 ;Texture export
+ThatIsThisCopysOwnFolder=C'est le dossier de cette copie. Choisissez le dossier de la copie que vous utilisiez.
+;That is the folder of this copy. Choose the folder of the copy you used before.
 TheAmazingBoxAkaMandboxFormula=La formule 'Amazing Box' alias Mandbox, inventée par TGlad sur fractalforums.com.\n\nLa formule d'une itération se présente ainsi :\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=La somme des couleurs diffuse et spéculaire dépasse 1,\ndois-je les réduire pour une coloration plus réaliste ?
@@ -3812,6 +3828,8 @@ TheFoldSOffsetOnOne=le décalage du pli sur un axe ; 1 est la forme pure, d'autr
 ;the fold's offset on one axis; 1 is the plain shape, other values shift the copies
 TheFolderDoesNotExistOr=le dossier n'existe pas (ou n'est pas accessible)
 ;the folder does not exist (or is not reachable)
+TheFolderOfYourEarlierCopy=Le dossier de votre ancienne copie de mb3d-rs
+;The folder of your earlier copy of mb3d-rs
 TheFormulaAloneAtItsDefault=La formule seule, avec ses valeurs par défaut
 ;The formula alone, at its default values
 TheFormulaBookEveryFormulaIn=Le livre des formules : chaque formule en mots, avec une image, ses valeurs expliquées et des fichiers d'exemple
@@ -3944,8 +3962,10 @@ ThisFileAlreadyExistsDoYou=Ce fichier existe déjà. Voulez-vous vraiment le rem
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=Décalage absolu en direction x du bulbe après rotation.
 ;This is a absolute offset in x direction of the rotated bulb.
-ThisIsANewCopyOf=Ceci est une nouvelle copie de mb3d-rs. À côté se trouve la copie que vous utilisiez, dans le dossier « {} ».\n\nChaque copie de mb3d-rs garde vos affaires dans son propre dossier : vos réglages, l'Historique de vos images, les paramètres enregistrés, les maps ajoutées, vos grands rendus et vos maillages. C'est pourquoi ils semblent manquer ici.\n\nLes récupérer : vos réglages sont copiés, et tout ce que vous avez créé est déplacé dans cette copie. L'ancienne copie démarre toujours, sans vos fichiers ; vous pourrez supprimer son dossier plus tard.\nDémarrer sans eux : cette copie démarre sans eux, et la question ne sera plus posée.
-;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=Ceci est une nouvelle copie de mb3d-rs. À côté se trouve la copie que vous utilisiez, dans le dossier « {} ».\n\nChaque copie de mb3d-rs garde vos affaires dans son propre dossier : vos réglages, l'Historique de vos images, les paramètres enregistrés, les maps ajoutées, vos grands rendus et vos maillages. C'est pourquoi ils semblent manquer ici.\n\nLes récupérer : vos réglages sont copiés, et tout ce que vous avez créé est déplacé dans cette copie. L'ancienne copie démarre toujours, sans vos fichiers ; vous pourrez supprimer son dossier plus tard.\nAutre dossier… : choisissez vous-même le dossier de votre ancienne copie.\nDémarrer sans eux : cette copie démarre sans eux, et la question ne sera plus posée.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsMyFirst=C'est ma première
+;This is my first
 ThisRenderIsRunningRightNow=Ce rendu est en cours d'exécution.
 ;This render is running right now.
 ThisRenderKeepsNoImage=Ce rendu ne conserve aucune image.

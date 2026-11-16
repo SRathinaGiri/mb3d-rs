@@ -9,7 +9,7 @@ use super::{Mb3d, MAIN};
 use crate::math::{build_rot_matrix, mat_mul, matrix_to_angles, normalise_matrix_to, rotate_vector_reverse};
 use crate::scene::{CameraOptic, Scene};
 use crate::vcl::bitmap::Bitmap;
-use crate::vcl::form::{MouseButton, MR_CANCEL, MR_NO, MR_OK, MR_YES, SS_LEFT};
+use crate::vcl::form::{MouseButton, MR_CANCEL, MR_IGNORE, MR_NO, MR_OK, MR_YES, SS_LEFT};
 use crate::vcl::{DialogResult, Ev, Event, Ui};
 use std::path::PathBuf;
 use std::time::Instant;
@@ -495,9 +495,17 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
             "main:earlier",
             &tr("@MB:YourFilesFromTheEarlierVersion"),
             &trf("@MB:ThisIsANewCopyOf", &[&e.name()]),
-            &[(MR_YES, tr("@MB:BringThemOver")), (MR_NO, tr("@MB:StartWithoutThem"))],
+            &[(MR_YES, tr("@MB:BringThemOver")), (MR_IGNORE, tr("@MB:AnotherFolder")), (MR_NO, tr("@MB:StartWithoutThem"))],
         );
         app.main.earlier_ask = Some(e);
+    } else if crate::earlier::first_start() {
+        // none beside it: perhaps one elsewhere (asked once)
+        ui.message_box_with(
+            "main:firststart",
+            &tr("@MB:YourFilesFromTheEarlierVersion"),
+            &trf("@MB:HaveYouUsedMb3dRsBefore", &[&tr("@MB:Prefs"), &tr("@MB:IniDirs")]),
+            &[(MR_YES, tr("@MB:ChooseTheFolder")), (MR_NO, tr("@MB:ThisIsMyFirst"))],
+        );
     }
     if start_timer && app.eng.base().is_none() {
         // Timer1: a first 2D calculation of the start parameters
@@ -2884,6 +2892,32 @@ pub(crate) fn stem(title: &str) -> String {
     name.map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
 }
 
+/// Brings the settings and files of an earlier copy into this one
+/// (crate::earlier) and tells what came; the settings are used from the
+/// next start.
+pub(crate) fn bring_over(app: &mut Mb3d, ui: &mut Ui, e: crate::earlier::Earlier) {
+    let r = crate::earlier::bring_over(&crate::appdirs::app_folder(), &e);
+    crate::log::info("file", &format!("brought over the settings and files of {}: {} moved, {} left", e.dir.display(), r.moved, r.left.len()));
+    // (the settings as they came: a save before the exit keeps them,
+    // the next start uses them; the program is not started again by
+    // itself: no process is launched)
+    app.ini = super::ini::Ini::load();
+    app.main.settings_came = true;
+    let mut text = tr("@MB:DoneYourSettingsAndFilesAre");
+    if !r.left.is_empty() {
+        text.push_str("\n\n");
+        text.push_str(&trf("@MB:TheseCouldNotBeMovedAnd", &[&e.name(), &r.left.join(", ")]));
+    }
+    ui.message_box("", &tr("@MB:YourFilesFromTheEarlierVersion"), &text, &[MR_OK]);
+}
+
+/// Asks for the folder of an earlier copy (the folder this copy is in to
+/// begin with).
+pub(crate) fn choose_earlier(_app: &mut Mb3d, ui: &mut Ui) {
+    let here = crate::appdirs::app_folder();
+    ui.folder_dialog("main:earlierdir", &tr("@MB:TheFolderOfYourEarlierCopy"), here.parent().map(|p| p.to_path_buf()));
+}
+
 fn form_close(app: &mut Mb3d, ui: &mut Ui) {
     app.eng.stop();
     super::tools_forms::stop_tiling(app);
@@ -3872,24 +3906,52 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         }
         ("earlier", DialogResult::Button(b)) => {
             let Some(e) = app.main.earlier_ask.take() else { return };
-            let here = crate::appdirs::app_folder();
-            if *b != MR_YES {
-                crate::earlier::note(&here, &e, false);
-                return;
+            match *b {
+                MR_YES => bring_over(app, ui, e),
+                MR_IGNORE => choose_earlier(app, ui),
+                _ => crate::earlier::note(&crate::appdirs::app_folder(), &e, false),
             }
-            let r = crate::earlier::bring_over(&here, &e);
-            crate::log::info("file", &format!("brought over the settings and files of {}: {} moved, {} left", e.dir.display(), r.moved, r.left.len()));
-            // (the settings as they came: a save before the exit keeps them,
-            // the next start uses them; the program is not started again by
-            // itself: no process is launched)
-            app.ini = super::ini::Ini::load();
-            app.main.settings_came = true;
-            let mut text = tr("@MB:DoneYourSettingsAndFilesAre");
-            if !r.left.is_empty() {
-                text.push_str("\n\n");
-                text.push_str(&trf("@MB:TheseCouldNotBeMovedAnd", &[&e.name(), &r.left.join(", ")]));
+        }
+        ("firststart", DialogResult::Button(b)) => {
+            if *b == MR_YES {
+                choose_earlier(app, ui);
+            } else {
+                crate::earlier::note_first(&crate::appdirs::app_folder());
             }
-            ui.message_box("", &tr("@MB:YourFilesFromTheEarlierVersion"), &text, &[MR_OK]);
+        }
+        // the folder of an earlier copy, chosen by the user
+        ("earlierdir", DialogResult::File(Some(p))) => match crate::earlier::chosen(&crate::appdirs::app_folder(), p) {
+            Ok(e) => {
+                ui.message_box_with(
+                    "main:earlierok",
+                    &tr("@MB:YourFilesFromTheEarlierVersion"),
+                    &trf("@MB:BringOverFromTheFolder", &[&e.dir.display()]),
+                    &[(MR_YES, tr("@MB:BringThemOver")), (MR_CANCEL, tr("@MB:Cancel"))],
+                );
+                app.main.earlier_ask = Some(e);
+            }
+            Err(why) => {
+                let text = match why {
+                    crate::earlier::NotACopy::Own => tr("@MB:ThatIsThisCopysOwnFolder"),
+                    crate::earlier::NotACopy::Nothing => trf("@MB:NoCopyOfMb3dRsInTheFolder", &[&p.display()]),
+                };
+                ui.message_box_with(
+                    "main:earlierretry",
+                    &tr("@MB:YourFilesFromTheEarlierVersion"),
+                    &text,
+                    &[(MR_YES, tr("@MB:ChooseAnotherFolder")), (MR_CANCEL, tr("@MB:Cancel"))],
+                );
+            }
+        },
+        ("earlierretry", DialogResult::Button(b)) => {
+            if *b == MR_YES {
+                choose_earlier(app, ui);
+            }
+        }
+        ("earlierok", DialogResult::Button(b)) => {
+            if let (MR_YES, Some(e)) = (*b, app.main.earlier_ask.take()) {
+                bring_over(app, ui, e);
+            }
         }
         ("resume", DialogResult::Button(b)) => {
             let Some((sc, slice)) = app.main.resume_ask.take() else { return };

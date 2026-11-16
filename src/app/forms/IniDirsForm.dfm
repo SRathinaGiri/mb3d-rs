@@ -31,6 +31,18 @@ object IniDirForm: TIniDirForm
     Height = 21
     TabOrder = 1
   end
+  object Button15: TButton
+    Left = 379
+    Top = 427
+    Width = 181
+    Height = 25
+    Hint = '@MB:TheFolderOfYourEarlierCopy'
+    Caption = '@MB:FromAnEarlierVersion'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 27
+    OnClick = Button15Click
+  end
   object Button1: TButton
     Left = 571
     Top = 427

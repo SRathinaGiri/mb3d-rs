@@ -279,6 +279,8 @@ AnimationVideoWritten=اینیمیشن: ویڈیو لکھی گئی: {}
 ;Animation: video written: {}
 Animations=اینیمیشنز
 ;Animations
+AnotherFolder=کوئی اور فولڈر…
+;Another folder…
 AntiAliasing=اینٹی ایلیاسنگ:
 ;Anti aliasing:
 Antialiasing=اینٹی ایلیاسنگ:
@@ -423,6 +425,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: تیز، اچھا AA\nGauss: کچھ دھندلا، بہت اچھا AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringOverFromTheFolder=فولڈر "{}" والی کاپی سے اپنی ترتیبات اور فائلیں لے آئیں؟\n\nآپ کی ترتیبات کاپی ہو جاتی ہیں، اور جو کچھ آپ نے بنایا وہ اس کاپی میں منتقل ہو جاتا ہے۔ پرانی کاپی پھر بھی چلتی ہے، آپ کی فائلوں کے بغیر؛ اس کا فولڈر آپ بعد میں حذف کر سکتے ہیں۔
+;Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 BringThemOver=یہاں لے آئیں
 ;Bring them over
 BringsTheWindowToTheFront=کسی بھی ونڈو سے اس ونڈو کو سامنے لاتا ہے، یا موجودہ ونڈو بند کرتا ہے۔ کسی خانے پر کلک کریں اور کیز دبائیں؛ Backspace ہاٹ کی ہٹا دیتا ہے۔
@@ -595,8 +599,12 @@ ChooseAMap=ایک نقشہ منتخب کریں
 ;Choose a map
 ChooseASharedFolderFirstOne=پہلے ایک مشترکہ فولڈر منتخب کریں (جسے سوارم کا ہر کمپیوٹر دیکھ سکے)
 ;choose a shared folder first (one every computer of the swarm can see)
+ChooseAnotherFolder=کوئی اور فولڈر منتخب کریں…
+;Choose another folder…
 ChooseOption=اختیار منتخب کریں:
 ;Choose Option:
+ChooseTheFolder=فولڈر منتخب کریں…
+;Choose the folder…
 ChoosesAVariantOfTheFormula=فارمولے کی ایک قسم چنتا ہے؛ صرف مکمل اعداد
 ;chooses a variant of the formula; whole numbers only
 ChoseTheme=تھیم منتخب کریں:
@@ -1447,6 +1455,8 @@ Fresnel=فرینل:
 ;Fresnel:
 Fresnel0To1MoreReflection=فرینل (0 سے 1): جہاں سطح نظر سے مڑتی ہے وہاں زیادہ عکس، جیسے شیشہ، پانی اور لاکھ (عکسوں کے ساتھ بہتر دکھتا ہے)
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromAnEarlierVersion=پچھلے ورژن سے…
+;From an earlier version…
 FromClipboard=کلپ بورڈ سے
 ;From Clipboard
 FromTheCameraAllAroundA=کیمرے سے، ہر سمت میں (اندر سے دیکھا گیا منظر)
@@ -1647,6 +1657,8 @@ HardShadows=\sسخت سائے
 ;\sHard Shadows
 HardShadowsLower=سخت سائے
 ;hard shadows
+HaveYouUsedMb3dRsBefore=کیا آپ نے پہلے mb3d-rs استعمال کیا ہے؟\n\nmb3d-rs کی ہر کاپی آپ کی چیزیں اپنے ہی فولڈر میں رکھتی ہے: آپ کی ترتیبات، آپ کی تصویروں کی تاریخچہ، محفوظ کیے گئے پیرامیٹر، شامل کیے گئے نقشے، آپ کے بڑے رینڈرز اور میشز۔ نئی کاپی ان کے بغیر شروع ہوتی ہے۔\n\nفولڈر منتخب کریں…: اس کاپی کا فولڈر چنیں جو آپ پہلے استعمال کرتے تھے۔ آپ کی ترتیبات کاپی ہو جاتی ہیں، اور جو کچھ آپ نے بنایا وہ اس کاپی میں منتقل ہو جاتا ہے۔\nیہ میری پہلی ہے: یہ کاپی نئے سرے سے شروع ہوتی ہے۔ آپ اپنی فائلیں بعد میں بھی لا سکتے ہیں: ٹیب {}، {}، "پچھلے ورژن سے…"۔
+;Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
 Height=اونچائی:
 ;Height:
 Height16BitNearestPointWhite=اونچائی (16 بٹ، قریب ترین نقطہ سفید)
@@ -2521,6 +2533,8 @@ No2=نہیں
 ;No
 No360TagsTheCalculatedPicture=360 ٹیگ نہیں: حساب شدہ تصویر ایسا کروی پینوراما نہیں جس کی چوڑائی اونچائی سے دگنی ہو ({0} x {1})۔ بصریات اور سائز سیٹ کر کے دوبارہ حساب کریں۔
 ;No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
+NoCopyOfMb3dRsInTheFolder=فولڈر "{}" میں mb3d-rs کی کوئی استعمال شدہ کاپی نہیں ہے۔\n\nاس کاپی کا فولڈر چنیں جو آپ پہلے استعمال کرتے تھے: جس میں پروگرام Mandelbulb3D ہے۔
+;There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
 NoDescriptionFromTheAuthor=مصنف کی طرف سے کوئی تفصیل نہیں۔
 ;No description from the author.
 NoDoFOnTiles=ٹائلز پر DoF نہیں۔
@@ -3731,6 +3745,8 @@ TextureExport=ٹیکسچر برآمد...
 ;Texture export...
 TextureExport2=ٹیکسچر برآمد
 ;Texture export
+ThatIsThisCopysOwnFolder=یہ اسی کاپی کا فولڈر ہے۔ اس کاپی کا فولڈر چنیں جو آپ پہلے استعمال کرتے تھے۔
+;That is the folder of this copy. Choose the folder of the copy you used before.
 TheAmazingBoxAkaMandboxFormula='Amazing Box' فارمولا، جسے Mandbox فارمولا بھی کہتے ہیں، fractalforums.com پر TGlad نے ایجاد کیا۔\n\nایک تکرار کا فارمولا کچھ اس طرح ہے:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=شامل کیے گئے ڈفیوز اور اسپیکولر رنگوں کی مقدار 1 سے زیادہ ہے،\nکیا زیادہ حقیقی رنگ کاری کے لیے انہیں کم کر دوں؟
@@ -3813,6 +3829,8 @@ TheFoldSOffsetOnOne=ایک محور پر تہ کا ہٹاؤ؛ 1 سادہ شکل 
 ;the fold's offset on one axis; 1 is the plain shape, other values shift the copies
 TheFolderDoesNotExistOr=فولڈر موجود نہیں (یا قابل رسائی نہیں)
 ;the folder does not exist (or is not reachable)
+TheFolderOfYourEarlierCopy=mb3d-rs کی آپ کی پچھلی کاپی کا فولڈر
+;The folder of your earlier copy of mb3d-rs
 TheFormulaAloneAtItsDefault=صرف فارمولا، اپنی ڈیفالٹ قدروں پر
 ;The formula alone, at its default values
 TheFormulaBookEveryFormulaIn=فارمولا کتاب: ہر فارمولا لفظوں میں، تصویر، وضاحت شدہ قدروں اور مثال فائلوں کے ساتھ
@@ -3945,8 +3963,10 @@ ThisFileAlreadyExistsDoYou=یہ فائل پہلے سے موجود ہے۔ کیا 
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=یہ گھمائے گئے بلب کا x سمت میں مطلق آفسیٹ ہے۔
 ;This is a absolute offset in x direction of the rotated bulb.
-ThisIsANewCopyOf=یہ mb3d-rs کی ایک نئی کاپی ہے۔ اس کے ساتھ وہ کاپی ہے جو آپ پہلے استعمال کرتے تھے، فولڈر "{}" میں۔\n\nmb3d-rs کی ہر کاپی آپ کی چیزیں اپنے ہی فولڈر میں رکھتی ہے: آپ کی ترتیبات، آپ کی تصویروں کی تاریخچہ، محفوظ کیے گئے پیرامیٹر، شامل کیے گئے نقشے، آپ کے بڑے رینڈرز اور میشز۔ اسی لیے یہ یہاں غائب لگتی ہیں۔\n\nیہاں لے آئیں: آپ کی ترتیبات کاپی ہو جاتی ہیں، اور جو کچھ آپ نے بنایا وہ اس کاپی میں منتقل ہو جاتا ہے۔ پرانی کاپی پھر بھی چلتی ہے، آپ کی فائلوں کے بغیر؛ اس کا فولڈر آپ بعد میں حذف کر سکتے ہیں۔\nان کے بغیر شروع کریں: یہ کاپی ان کے بغیر شروع ہوتی ہے، اور آپ سے دوبارہ نہیں پوچھا جائے گا۔
-;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=یہ mb3d-rs کی ایک نئی کاپی ہے۔ اس کے ساتھ وہ کاپی ہے جو آپ پہلے استعمال کرتے تھے، فولڈر "{}" میں۔\n\nmb3d-rs کی ہر کاپی آپ کی چیزیں اپنے ہی فولڈر میں رکھتی ہے: آپ کی ترتیبات، آپ کی تصویروں کی تاریخچہ، محفوظ کیے گئے پیرامیٹر، شامل کیے گئے نقشے، آپ کے بڑے رینڈرز اور میشز۔ اسی لیے یہ یہاں غائب لگتی ہیں۔\n\nیہاں لے آئیں: آپ کی ترتیبات کاپی ہو جاتی ہیں، اور جو کچھ آپ نے بنایا وہ اس کاپی میں منتقل ہو جاتا ہے۔ پرانی کاپی پھر بھی چلتی ہے، آپ کی فائلوں کے بغیر؛ اس کا فولڈر آپ بعد میں حذف کر سکتے ہیں۔\nکوئی اور فولڈر…: اپنی پچھلی کاپی کا فولڈر خود منتخب کریں۔\nان کے بغیر شروع کریں: یہ کاپی ان کے بغیر شروع ہوتی ہے، اور آپ سے دوبارہ نہیں پوچھا جائے گا۔
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsMyFirst=یہ میری پہلی ہے
+;This is my first
 ThisRenderIsRunningRightNow=یہ رینڈر ابھی چل رہا ہے۔
 ;This render is running right now.
 ThisRenderKeepsNoImage=یہ رینڈر کوئی تصویر نہیں رکھتا۔

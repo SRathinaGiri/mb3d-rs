@@ -279,6 +279,8 @@ AnimationVideoWritten=アニメーション: 動画を書き出しました: {}
 ;Animation: video written: {}
 Animations=アニメーション
 ;Animations
+AnotherFolder=別のフォルダー…
+;Another folder…
 AntiAliasing=アンチエイリアス:
 ;Anti aliasing:
 Antialiasing=アンチエイリアス:
@@ -423,6 +425,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: シャープ、良好なAA\nGauss: 少しぼやけるが、非常に良好なAA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringOverFromTheFolder=フォルダー「{}」のコピーから設定とファイルを引き継ぎますか？\n\n設定はコピーされ、あなたが作ったものはすべてこのコピーに移動します。古いコピーはファイルなしで引き続き起動できます。そのフォルダーは後で削除できます。
+;Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 BringThemOver=引き継ぐ
 ;Bring them over
 BringsTheWindowToTheFront=ウィンドウを前面に出す／閉じるキーです。\n欄をクリックしてキーを押してください。\nBackspace でホットキーを解除します。
@@ -595,8 +599,12 @@ ChooseAMap=マップを選択
 ;Choose a map
 ChooseASharedFolderFirstOne=先に共有フォルダを選んでください (スウォームのすべてのコンピュータから見えるもの)
 ;choose a shared folder first (one every computer of the swarm can see)
+ChooseAnotherFolder=別のフォルダーを選ぶ…
+;Choose another folder…
 ChooseOption=オプションを選択:
 ;Choose Option:
+ChooseTheFolder=フォルダーを選ぶ…
+;Choose the folder…
 ChoosesAVariantOfTheFormula=数式の変種を選びます。整数のみ
 ;chooses a variant of the formula; whole numbers only
 ChoseTheme=テーマを選択:
@@ -1447,6 +1455,8 @@ Fresnel=フレネル:
 ;Fresnel:
 Fresnel0To1MoreReflection=フレネル (0 から 1): 表面が視線からそれる所ほど強く映り込みます。ガラス、水、ラッカーのように (反射と一緒だとよく見えます)
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromAnEarlierVersion=以前のバージョンから…
+;From an earlier version…
 FromClipboard=クリップボードから
 ;From Clipboard
 FromTheCameraAllAroundA=カメラから全方向（内側から見たシーン）
@@ -1647,6 +1657,8 @@ HardShadows=\sハードシャドウ
 ;\sHard Shadows
 HardShadowsLower=ハードシャドウ
 ;hard shadows
+HaveYouUsedMb3dRsBefore=以前に mb3d-rs を使ったことはありますか？\n\nmb3d-rs のコピーはそれぞれ、あなたのものを自分のフォルダーに保存します：設定、画像の履歴、保存したパラメーター、追加したマップ、大判レンダリングやメッシュ。新しいコピーはそれらなしで始まります。\n\nフォルダーを選ぶ…：以前使っていたコピーのフォルダーを選びます。設定はコピーされ、あなたが作ったものはすべてこのコピーに移動します。\n初めて使う：このコピーは新しく始まります。後からでもファイルを引き継げます：{} タブ、{}、「以前のバージョンから…」。
+;Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
 Height=高さ:
 ;Height:
 Height16BitNearestPointWhite=高さ（16 ビット、最も近い点が白）
@@ -2521,6 +2533,8 @@ No2=いいえ
 ;No
 No360TagsTheCalculatedPicture=360 タグなし: 計算した画像は幅が高さの 2 倍の球面パノラマではありません（{0} x {1}）。光学系とサイズを設定して再計算してください。
 ;No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
+NoCopyOfMb3dRsInTheFolder=フォルダー「{}」には、使われた mb3d-rs のコピーがありません。\n\n以前使っていたコピーのフォルダー（Mandelbulb3D プログラムがあるフォルダー）を選んでください。
+;There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
 NoDescriptionFromTheAuthor=作者による説明はありません。
 ;No description from the author.
 NoDoFOnTiles=タイルでは DoF を使用できません。
@@ -3731,6 +3745,8 @@ TextureExport=テクスチャ書き出し...
 ;Texture export...
 TextureExport2=テクスチャ書き出し
 ;Texture export
+ThatIsThisCopysOwnFolder=それはこのコピーのフォルダーです。以前使っていたコピーのフォルダーを選んでください。
+;That is the folder of this copy. Choose the folder of the copy you used before.
 TheAmazingBoxAkaMandboxFormula='Amazing Box'、別名 Mandbox 数式。fractalforums.com の TGlad が考案しました。\n\n1回の反復の数式は次のとおりです:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=加算した拡散色と鏡面色の合計が 1 を超えています。\nよりリアルな色にするために縮小しますか?
@@ -3813,6 +3829,8 @@ TheFoldSOffsetOnOne=一つの軸での折りのずれ。1 が素の形で、他�
 ;the fold's offset on one axis; 1 is the plain shape, other values shift the copies
 TheFolderDoesNotExistOr=フォルダが存在しません (またはアクセスできません)
 ;the folder does not exist (or is not reachable)
+TheFolderOfYourEarlierCopy=以前の mb3d-rs のコピーのフォルダー
+;The folder of your earlier copy of mb3d-rs
 TheFormulaAloneAtItsDefault=数式単体、既定値のまま
 ;The formula alone, at its default values
 TheFormulaBookEveryFormulaIn=数式ブック: すべての数式を言葉で、画像と値の説明とサンプルファイル付きで
@@ -3945,8 +3963,10 @@ ThisFileAlreadyExistsDoYou=このファイルは既に存在します。上書�
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=回転後のバルブのx方向の絶対オフセットです。
 ;This is a absolute offset in x direction of the rotated bulb.
-ThisIsANewCopyOf=これは mb3d-rs の新しいコピーです。その隣に、以前使っていたコピーがフォルダー「{}」にあります。\n\nmb3d-rs のコピーはそれぞれ、あなたのものを自分のフォルダーに保存します：設定、画像の履歴、保存したパラメーター、追加したマップ、大判レンダリングやメッシュ。そのため、ここでは見当たらないように見えます。\n\n引き継ぐ：設定はコピーされ、あなたが作ったものはすべてこのコピーに移動します。古いコピーはファイルなしで引き続き起動できます。そのフォルダーは後で削除できます。\n引き継がずに開始：このコピーはそれらなしで開始し、今後この質問は表示されません。
-;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=これは mb3d-rs の新しいコピーです。その隣に、以前使っていたコピーがフォルダー「{}」にあります。\n\nmb3d-rs のコピーはそれぞれ、あなたのものを自分のフォルダーに保存します：設定、画像の履歴、保存したパラメーター、追加したマップ、大判レンダリングやメッシュ。そのため、ここでは見当たらないように見えます。\n\n引き継ぐ：設定はコピーされ、あなたが作ったものはすべてこのコピーに移動します。古いコピーはファイルなしで引き続き起動できます。そのフォルダーは後で削除できます。\n別のフォルダー…：以前のコピーのフォルダーを自分で選びます。\n引き継がずに開始：このコピーはそれらなしで開始し、今後この質問は表示されません。
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsMyFirst=初めて使う
+;This is my first
 ThisRenderIsRunningRightNow=このレンダリングは現在実行中です。
 ;This render is running right now.
 ThisRenderKeepsNoImage=このレンダリングは画像を保持しません。

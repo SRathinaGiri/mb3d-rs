@@ -279,6 +279,8 @@ AnimationVideoWritten=அனிமேஷன்: வீடியோ எழுத�
 ;Animation: video written: {}
 Animations=அனிமேஷன்கள்
 ;Animations
+AnotherFolder=வேறு கோப்புறை…
+;Another folder…
 AntiAliasing=ஆன்டி ஆலியாசிங்:
 ;Anti aliasing:
 Antialiasing=ஆன்டிஆலியாசிங்:
@@ -423,6 +425,8 @@ Box=பெட்டி
 ;Box
 BoxSharpGoodAAGaussBit=Box: கூர்மை, நல்ல AA\nGauss: சற்று மங்கல், மிக நல்ல AA
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringOverFromTheFolder="{}" கோப்புறையில் உள்ள நகலிலிருந்து உங்கள் அமைப்புகளையும் கோப்புகளையும் கொண்டு வரவா?\n\nஉங்கள் அமைப்புகள் நகலெடுக்கப்படும், நீங்கள் உருவாக்கிய அனைத்தும் இந்த நகலுக்கு நகர்த்தப்படும். பழைய நகல் உங்கள் கோப்புகள் இல்லாமல் தொடர்ந்து இயங்கும்; அதன் கோப்புறையை பின்னர் நீக்கலாம்.
+;Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 BringThemOver=இங்கே கொண்டு வா
 ;Bring them over
 BringsTheWindowToTheFront=எந்தச் சாளரத்திலிருந்தும் அந்தச் சாளரத்தை முன்னுக்குக் கொண்டு வரும், அல்லது தற்போதையதை மூடும். ஒரு புலத்தைக் கிளிக் செய்து விசைகளை அழுத்துங்கள்; Backspace விரைவு விசையை நீக்கும்.
@@ -595,8 +599,12 @@ ChooseAMap=ஒரு வரைபடத்தைத் தேர்ந்தெ�
 ;Choose a map
 ChooseASharedFolderFirstOne=முதலில் ஒரு பகிர்ந்த கோப்புறையைத் தேர்ந்தெடுங்கள் (ஸ்வார்மின் ஒவ்வொரு கணினியும் பார்க்கக்கூடியது)
 ;choose a shared folder first (one every computer of the swarm can see)
+ChooseAnotherFolder=வேறு கோப்புறையைத் தேர்ந்தெடு…
+;Choose another folder…
 ChooseOption=விருப்பத்தைத் தேர்ந்தெடு:
 ;Choose Option:
+ChooseTheFolder=கோப்புறையைத் தேர்ந்தெடு…
+;Choose the folder…
 ChoosesAVariantOfTheFormula=சூத்திரத்தின் ஒரு வகையைத் தேர்ந்தெடுக்கும்; முழு எண்கள் மட்டும்
 ;chooses a variant of the formula; whole numbers only
 ChoseTheme=தீமைத் தேர்ந்தெடு:
@@ -1447,6 +1455,8 @@ Fresnel=Fresnel:
 ;Fresnel:
 Fresnel0To1MoreReflection=Fresnel (0 முதல் 1): கண்ணாடி, நீர், அரக்கு போல மேற்பரப்பு பார்வையிலிருந்து விலகும் இடங்களில் அதிகப் பிரதிபலிப்பு (பிரதிபலிப்புகளுடன் சிறப்பாகத் தெரியும்)
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromAnEarlierVersion=முந்தைய பதிப்பிலிருந்து…
+;From an earlier version…
 FromClipboard=கிளிப்போர்டிலிருந்து
 ;From Clipboard
 FromTheCameraAllAroundA=கேமராவிலிருந்து, சுற்றிலும் (உள்ளிருந்து பார்க்கும் காட்சி)
@@ -1647,6 +1657,8 @@ HardShadows=\sகடின நிழல்கள்
 ;\sHard Shadows
 HardShadowsLower=கடின நிழல்கள்
 ;hard shadows
+HaveYouUsedMb3dRsBefore=நீங்கள் முன்பு mb3d-rs பயன்படுத்தியிருக்கிறீர்களா?\n\nmb3d-rs இன் ஒவ்வொரு நகலும் உங்கள் பொருட்களை தன் சொந்த கோப்புறையில் வைத்திருக்கிறது: உங்கள் அமைப்புகள், உங்கள் படங்களின் வரலாறு, நீங்கள் சேமித்த அளவுருக்கள், சேர்த்த வரைபடங்கள், உங்கள் பெரிய ரெண்டர்கள் மற்றும் மெஷ்கள். புதிய நகல் அவை இல்லாமல் தொடங்கும்.\n\nகோப்புறையைத் தேர்ந்தெடு…: நீங்கள் முன்பு பயன்படுத்திய நகலின் கோப்புறையைத் தேர்ந்தெடுங்கள். உங்கள் அமைப்புகள் நகலெடுக்கப்படும், நீங்கள் உருவாக்கிய அனைத்தும் இந்த நகலுக்கு நகர்த்தப்படும்.\nஇது என் முதல் நகல்: இந்த நகல் புதிதாகத் தொடங்கும். உங்கள் கோப்புகளைப் பின்னரும் கொண்டு வரலாம்: {} தாவல், {}, "முந்தைய பதிப்பிலிருந்து…".
+;Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
 Height=உயரம்:
 ;Height:
 Height16BitNearestPointWhite=உயரம் (16 பிட், அருகிலுள்ள புள்ளி வெள்ளை)
@@ -2521,6 +2533,8 @@ No2=இல்லை
 ;No
 No360TagsTheCalculatedPicture=360 குறிகள் இல்லை: கணக்கிட்ட படம் உயரத்தை விட இரு மடங்கு அகலமான கோளப் பரந்தோற்றம் அல்ல ({0} x {1}). ஒளியியலையும் அளவையும் அமைத்து மீண்டும் கணக்கிடவும்.
 ;No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
+NoCopyOfMb3dRsInTheFolder="{}" கோப்புறையில் பயன்படுத்தப்பட்ட mb3d-rs நகல் எதுவும் இல்லை.\n\nநீங்கள் முன்பு பயன்படுத்திய நகலின் கோப்புறையைத் தேர்ந்தெடுங்கள்: Mandelbulb3D நிரல் உள்ள கோப்புறை.
+;There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
 NoDescriptionFromTheAuthor=ஆசிரியரின் விளக்கம் இல்லை.
 ;No description from the author.
 NoDoFOnTiles=ஓடுகளில் DoF இல்லை.
@@ -3731,6 +3745,8 @@ TextureExport=இழைம ஏற்றுமதி...
 ;Texture export...
 TextureExport2=இழைம ஏற்றுமதி
 ;Texture export
+ThatIsThisCopysOwnFolder=அது இந்த நகலின் கோப்புறை. நீங்கள் முன்பு பயன்படுத்திய நகலின் கோப்புறையைத் தேர்ந்தெடுங்கள்.
+;That is the folder of this copy. Choose the folder of the copy you used before.
 TheAmazingBoxAkaMandboxFormula=fractalforums.com இல் TGlad கண்டுபிடித்த 'Amazing Box' எனும் Mandbox சூத்திரம்.\n\nஒரு தொடர்மடக்கின் சூத்திரம் இப்படி:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=சேர்த்த பரவல் மற்றும் specular நிறங்களின் அளவு 1 ஐ விடப் பெரிது,\nயதார்த்தமான நிறமூட்டலுக்கு அவற்றைக் கீழ்அளவிடவா?
@@ -3813,6 +3829,8 @@ TheFoldSOffsetOnOne=ஒரு அச்சில் மடிப்பின் 
 ;the fold's offset on one axis; 1 is the plain shape, other values shift the copies
 TheFolderDoesNotExistOr=கோப்புறை இல்லை (அல்லது அடைய முடியவில்லை)
 ;the folder does not exist (or is not reachable)
+TheFolderOfYourEarlierCopy=mb3d-rs இன் உங்கள் முந்தைய நகலின் கோப்புறை
+;The folder of your earlier copy of mb3d-rs
 TheFormulaAloneAtItsDefault=சூத்திரம் தனியாக, அதன் இயல்புநிலை மதிப்புகளில்
 ;The formula alone, at its default values
 TheFormulaBookEveryFormulaIn=சூத்திர நூல்: ஒவ்வொரு சூத்திரமும் சொற்களில், படத்துடன், விளக்கப்பட்ட மதிப்புகளுடன், எடுத்துக்காட்டுக் கோப்புகளுடன்
@@ -3945,8 +3963,10 @@ ThisFileAlreadyExistsDoYou=இந்தக் கோப்பு ஏற்கன
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=இது சுழற்றிய பல்பின் x திசையில் முழுமையான ஆஃப்செட்.
 ;This is a absolute offset in x direction of the rotated bulb.
-ThisIsANewCopyOf=இது mb3d-rs இன் புதிய நகல். இதன் அருகில், நீங்கள் முன்பு பயன்படுத்திய நகல் "{}" என்ற கோப்புறையில் உள்ளது.\n\nmb3d-rs இன் ஒவ்வொரு நகலும் உங்கள் பொருட்களை தன் சொந்த கோப்புறையில் வைத்திருக்கிறது: உங்கள் அமைப்புகள், உங்கள் படங்களின் வரலாறு, நீங்கள் சேமித்த அளவுருக்கள், சேர்த்த வரைபடங்கள், உங்கள் பெரிய ரெண்டர்கள் மற்றும் மெஷ்கள். அதனால்தான் அவை இங்கே காணாமல் போனது போலத் தெரிகிறது.\n\nஇங்கே கொண்டு வா: உங்கள் அமைப்புகள் நகலெடுக்கப்படும், நீங்கள் உருவாக்கிய அனைத்தும் இந்த நகலுக்கு நகர்த்தப்படும். பழைய நகல் உங்கள் கோப்புகள் இல்லாமல் தொடர்ந்து இயங்கும்; அதன் கோப்புறையை பின்னர் நீக்கலாம்.\nஅவை இல்லாமல் தொடங்கு: இந்த நகல் அவை இல்லாமல் தொடங்கும், மீண்டும் கேட்கப்படாது.
-;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=இது mb3d-rs இன் புதிய நகல். இதன் அருகில், நீங்கள் முன்பு பயன்படுத்திய நகல் "{}" என்ற கோப்புறையில் உள்ளது.\n\nmb3d-rs இன் ஒவ்வொரு நகலும் உங்கள் பொருட்களை தன் சொந்த கோப்புறையில் வைத்திருக்கிறது: உங்கள் அமைப்புகள், உங்கள் படங்களின் வரலாறு, நீங்கள் சேமித்த அளவுருக்கள், சேர்த்த வரைபடங்கள், உங்கள் பெரிய ரெண்டர்கள் மற்றும் மெஷ்கள். அதனால்தான் அவை இங்கே காணாமல் போனது போலத் தெரிகிறது.\n\nஇங்கே கொண்டு வா: உங்கள் அமைப்புகள் நகலெடுக்கப்படும், நீங்கள் உருவாக்கிய அனைத்தும் இந்த நகலுக்கு நகர்த்தப்படும். பழைய நகல் உங்கள் கோப்புகள் இல்லாமல் தொடர்ந்து இயங்கும்; அதன் கோப்புறையை பின்னர் நீக்கலாம்.\nவேறு கோப்புறை…: உங்கள் முந்தைய நகலின் கோப்புறையை நீங்களே தேர்ந்தெடுங்கள்.\nஅவை இல்லாமல் தொடங்கு: இந்த நகல் அவை இல்லாமல் தொடங்கும், மீண்டும் கேட்கப்படாது.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsMyFirst=இது என் முதல் நகல்
+;This is my first
 ThisRenderIsRunningRightNow=இந்த ரெண்டர் இப்போது இயங்குகிறது.
 ;This render is running right now.
 ThisRenderKeepsNoImage=இந்த ரெண்டர் படத்தை வைத்திருக்கவில்லை.

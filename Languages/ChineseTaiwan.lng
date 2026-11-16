@@ -279,6 +279,8 @@ AnimationVideoWritten=動畫：影片已寫入：{}
 ;Animation: video written: {}
 Animations=動畫
 ;Animations
+AnotherFolder=其他資料夾…
+;Another folder…
 AntiAliasing=反鋸齒：
 ;Anti aliasing:
 Antialiasing=反鋸齒：
@@ -423,6 +425,8 @@ Box=方框
 ;Box
 BoxSharpGoodAAGaussBit=Box：銳利，AA 良好\nGauss：略為模糊，AA 極佳
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringOverFromTheFolder=要從資料夾「{}」中的副本移轉您的設定和檔案嗎？\n\n您的設定會被複製，您製作的一切會移到這個副本中。舊副本仍可啟動，只是沒有您的檔案；之後可以刪除它的資料夾。
+;Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 BringThemOver=移轉過來
 ;Bring them over
 BringsTheWindowToTheFront=從任何視窗將該視窗帶到前面，或關閉目前視窗。\n按一下欄位並按下按鍵；\nBackspace 會移除快速鍵。
@@ -595,8 +599,12 @@ ChooseAMap=選擇貼圖
 ;Choose a map
 ChooseASharedFolderFirstOne=請先選擇共用資料夾（swarm 中每台電腦都能看到的資料夾）
 ;choose a shared folder first (one every computer of the swarm can see)
+ChooseAnotherFolder=選擇其他資料夾…
+;Choose another folder…
 ChooseOption=選擇選項：
 ;Choose Option:
+ChooseTheFolder=選擇資料夾…
+;Choose the folder…
 ChoosesAVariantOfTheFormula=選擇公式的變體；只能是整數
 ;chooses a variant of the formula; whole numbers only
 ChoseTheme=選擇主題：
@@ -1447,6 +1455,8 @@ Fresnel=菲涅耳：
 ;Fresnel:
 Fresnel0To1MoreReflection=菲涅耳（0 到 1）：表面越偏離視線，反射越多，如玻璃、水和漆面（與反射一起時最明顯）
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromAnEarlierVersion=從舊版本移轉…
+;From an earlier version…
 FromClipboard=從剪貼簿
 ;From Clipboard
 FromTheCameraAllAroundA=從相機向四周（從內部看的場景）
@@ -1647,6 +1657,8 @@ HardShadows=\s硬陰影
 ;\sHard Shadows
 HardShadowsLower=硬陰影
 ;hard shadows
+HaveYouUsedMb3dRsBefore=您以前用過 mb3d-rs 嗎？\n\nmb3d-rs 的每個副本都把您的東西存放在自己的資料夾裡：您的設定、圖片的歷程記錄、儲存的參數、加入的貼圖、大型渲染和網格。新副本開始時沒有它們。\n\n選擇資料夾…：選擇您以前使用的副本所在的資料夾。您的設定會被複製，您製作的一切會移到這個副本中。\n這是我的第一份：這個副本從頭開始。之後也可以移轉檔案：{} 分頁，{}，「從舊版本移轉…」。
+;Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
 Height=高度：
 ;Height:
 Height16BitNearestPointWhite=高度（16 位元，最近點為白）
@@ -2521,6 +2533,8 @@ No2=否
 ;No
 No360TagsTheCalculatedPicture=無 360 標籤：計算的畫面不是寬為高兩倍的球面全景（{0} x {1}）。請設定光學和尺寸後重新計算。
 ;No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
+NoCopyOfMb3dRsInTheFolder=資料夾「{}」中沒有用過的 mb3d-rs 副本。\n\n請選擇您以前使用的副本所在的資料夾：其中有 Mandelbulb3D 程式。
+;There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
 NoDescriptionFromTheAuthor=作者沒有留下說明。
 ;No description from the author.
 NoDoFOnTiles=圖塊不支援景深。
@@ -3731,6 +3745,8 @@ TextureExport=紋理匯出...
 ;Texture export...
 TextureExport2=紋理匯出
 ;Texture export
+ThatIsThisCopysOwnFolder=這是本副本自己的資料夾。請選擇您以前使用的副本所在的資料夾。
+;That is the folder of this copy. Choose the folder of the copy you used before.
 TheAmazingBoxAkaMandboxFormula='Amazing Box'，又稱 Mandbox 公式，由 TGlad 在 fractalforums.com 發明。\n\n一次迭代的公式如下：\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=漫射與高光顏色相加的總量大於 1，\n要將其縮小以獲得更真實的著色嗎？
@@ -3813,6 +3829,8 @@ TheFoldSOffsetOnOne=摺疊在某一軸上的偏移；1 是原始形狀，其他�
 ;the fold's offset on one axis; 1 is the plain shape, other values shift the copies
 TheFolderDoesNotExistOr=資料夾不存在（或無法存取）
 ;the folder does not exist (or is not reachable)
+TheFolderOfYourEarlierCopy=您以前的 mb3d-rs 副本所在的資料夾
+;The folder of your earlier copy of mb3d-rs
 TheFormulaAloneAtItsDefault=僅此公式，取預設值
 ;The formula alone, at its default values
 TheFormulaBookEveryFormulaIn=公式手冊：用文字介紹每個公式，附圖片、參數說明和範例檔案
@@ -3945,8 +3963,10 @@ ThisFileAlreadyExistsDoYou=此檔案已存在。確定要覆寫嗎？
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=這是旋轉後的 bulb 在 x 方向的絕對偏移。
 ;This is a absolute offset in x direction of the rotated bulb.
-ThisIsANewCopyOf=這是 mb3d-rs 的一個新副本。它旁邊是您以前使用的副本，位於資料夾「{}」中。\n\nmb3d-rs 的每個副本都把您的東西存放在自己的資料夾裡：您的設定、圖片的歷程記錄、儲存的參數、加入的貼圖、大型渲染和網格。所以它們在這裡看起來不見了。\n\n移轉過來：您的設定會被複製，您製作的一切會移到這個副本中。舊副本仍可啟動，只是沒有您的檔案；之後可以刪除它的資料夾。\n不移轉直接開始：這個副本不帶它們開始，之後不會再詢問。
-;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=這是 mb3d-rs 的一個新副本。它旁邊是您以前使用的副本，位於資料夾「{}」中。\n\nmb3d-rs 的每個副本都把您的東西存放在自己的資料夾裡：您的設定、圖片的歷程記錄、儲存的參數、加入的貼圖、大型渲染和網格。所以它們在這裡看起來不見了。\n\n移轉過來：您的設定會被複製，您製作的一切會移到這個副本中。舊副本仍可啟動，只是沒有您的檔案；之後可以刪除它的資料夾。\n其他資料夾…：自己選擇舊副本所在的資料夾。\n不移轉直接開始：這個副本不帶它們開始，之後不會再詢問。
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsMyFirst=這是我的第一份
+;This is my first
 ThisRenderIsRunningRightNow=此渲染正在執行中。
 ;This render is running right now.
 ThisRenderKeepsNoImage=此渲染不保留影像。

@@ -279,6 +279,8 @@ AnimationVideoWritten=التحريك: كُتب الفيديو: {}
 ;Animation: video written: {}
 Animations=التحريكات
 ;Animations
+AnotherFolder=مجلد آخر…
+;Another folder…
 AntiAliasing=تنعيم الحواف:
 ;Anti aliasing:
 Antialiasing=تنعيم الحواف:
@@ -423,6 +425,8 @@ Box=Box
 ;Box
 BoxSharpGoodAAGaussBit=Box: حاد، AA جيد\nGauss: ضبابي قليلًا، AA جيد جدًّا
 ;Box: sharp, good AA\nGauss: bit blurry, very good AA
+BringOverFromTheFolder=هل تريد نقل إعداداتك وملفاتك من النسخة الموجودة في المجلد "{}"؟\n\nتُنسخ إعداداتك، ويُنقل كل ما صنعته إلى هذه النسخة. تظل النسخة القديمة تعمل، لكن من دون ملفاتك؛ ويمكنك حذف مجلدها لاحقًا.
+;Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 BringThemOver=انقلها إلى هنا
 ;Bring them over
 BringsTheWindowToTheFront=يُحضر النافذة إلى الأمام من أي نافذة، أو يغلق النافذة الحالية. انقر حقلًا واضغط المفاتيح؛ ومفتاح Backspace يزيل مفتاح الاختصار.
@@ -595,8 +599,12 @@ ChooseAMap=اختر خريطة
 ;Choose a map
 ChooseASharedFolderFirstOne=اختر مجلدًا مشتركًا أولًا (يراه كل حاسوب في السرب)
 ;choose a shared folder first (one every computer of the swarm can see)
+ChooseAnotherFolder=اختر مجلدًا آخر…
+;Choose another folder…
 ChooseOption=اختر خيارًا:
 ;Choose Option:
+ChooseTheFolder=اختر المجلد…
+;Choose the folder…
 ChoosesAVariantOfTheFormula=يختار نوعاً من الصيغة؛ أعداد صحيحة فقط
 ;chooses a variant of the formula; whole numbers only
 ChoseTheme=اختر السمة:
@@ -1447,6 +1455,8 @@ Fresnel=فرينل:
 ;Fresnel:
 Fresnel0To1MoreReflection=فرينل (من 0 إلى 1): انعكاس أكثر حيث يميل السطح عن النظر، كما في الزجاج والماء والطلاء اللامع (يظهر أفضل مع الانعكاسات)
 ;Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
+FromAnEarlierVersion=من إصدار سابق…
+;From an earlier version…
 FromClipboard=من الحافظة
 ;From Clipboard
 FromTheCameraAllAroundA=من الكاميرا في كل الاتجاهات (مشهد يُرى من الداخل)
@@ -1647,6 +1657,8 @@ HardShadows=\sالظلال الحادة
 ;\sHard Shadows
 HardShadowsLower=الظلال الحادة
 ;hard shadows
+HaveYouUsedMb3dRsBefore=هل استخدمت mb3d-rs من قبل؟\n\nكل نسخة من mb3d-rs تحفظ أشياءك في مجلدها الخاص: إعداداتك، وسجل صورك، والمعاملات التي حفظتها، والخرائط التي أضفتها، والتصييرات الكبيرة والشبكات. النسخة الجديدة تبدأ من دونها.\n\nاختر المجلد…: اختر مجلد النسخة التي كنت تستخدمها من قبل. تُنسخ إعداداتك، ويُنقل كل ما صنعته إلى هذه النسخة.\nهذه أول نسخة لي: تبدأ هذه النسخة من جديد. يمكنك نقل ملفاتك لاحقًا أيضًا: علامة التبويب {}، {}، "من إصدار سابق…".
+;Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
 Height=الارتفاع:
 ;Height:
 Height16BitNearestPointWhite=الارتفاع (16 بت، أقرب نقطة بيضاء)
@@ -2521,6 +2533,8 @@ No2=لا
 ;No
 No360TagsTheCalculatedPicture=لا وسوم 360: الصورة المحسوبة ليست بانوراما كروية عرضها ضعف ارتفاعها ({0} × {1}). اضبط البصريات والحجم ثم أعد الحساب.
 ;No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
+NoCopyOfMb3dRsInTheFolder=لا توجد في المجلد "{}" نسخة مستخدمة من mb3d-rs.\n\nاختر مجلد النسخة التي كنت تستخدمها من قبل: المجلد الذي فيه برنامج Mandelbulb3D.
+;There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
 NoDescriptionFromTheAuthor=لا وصف من المؤلف.
 ;No description from the author.
 NoDoFOnTiles=لا DoF على البلاطات.
@@ -3731,6 +3745,8 @@ TextureExport=تصدير الخامات...
 ;Texture export...
 TextureExport2=تصدير الخامات
 ;Texture export
+ThatIsThisCopysOwnFolder=هذا مجلد هذه النسخة. اختر مجلد النسخة التي كنت تستخدمها من قبل.
+;That is the folder of this copy. Choose the folder of the copy you used before.
 TheAmazingBoxAkaMandboxFormula=صيغة 'Amazing Box' المعروفة أيضًا بصيغة Mandbox، ابتكرها TGlad في fractalforums.com.\n\nتبدو صيغة التكرار الواحد هكذا:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 TheAmountOfAddedDiffuseAnd=مجموع الألوان الانتشارية وألوان اللمعان المضافة أكبر من 1،\nهل أصغّرها لتلوين أكثر واقعية؟
@@ -3813,6 +3829,8 @@ TheFoldSOffsetOnOne=إزاحة الطيّ على محور واحد؛ 1 هو ال
 ;the fold's offset on one axis; 1 is the plain shape, other values shift the copies
 TheFolderDoesNotExistOr=المجلد غير موجود (أو يتعذر الوصول إليه)
 ;the folder does not exist (or is not reachable)
+TheFolderOfYourEarlierCopy=مجلد نسختك السابقة من mb3d-rs
+;The folder of your earlier copy of mb3d-rs
 TheFormulaAloneAtItsDefault=الصيغة وحدها، بقيمها الافتراضية
 ;The formula alone, at its default values
 TheFormulaBookEveryFormulaIn=كتاب الصيغ: كل صيغة بالكلمات، مع صورة وشرح لقيمها وملفات أمثلة
@@ -3945,8 +3963,10 @@ ThisFileAlreadyExistsDoYou=هذا الملف موجود مسبقًا. أتريد
 ;This file already exists. Do you really want to overwrite it?
 ThisIsAAbsoluteOffsetIn=هذه إزاحة مطلقة في اتجاه x للجسم المُدار.
 ;This is a absolute offset in x direction of the rotated bulb.
-ThisIsANewCopyOf=هذه نسخة جديدة من mb3d-rs. وبجانبها النسخة التي كنت تستخدمها من قبل، في المجلد "{}".\n\nكل نسخة من mb3d-rs تحفظ أشياءك في مجلدها الخاص: إعداداتك، وسجل صورك، والمعاملات التي حفظتها، والخرائط التي أضفتها، والتصييرات الكبيرة والشبكات. لهذا تبدو مفقودة هنا.\n\nانقلها إلى هنا: تُنسخ إعداداتك، ويُنقل كل ما صنعته إلى هذه النسخة. تظل النسخة القديمة تعمل، لكن من دون ملفاتك؛ ويمكنك حذف مجلدها لاحقًا.\nابدأ من دونها: تبدأ هذه النسخة من دونها، ولن يُطرح عليك السؤال مرة أخرى.
-;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=هذه نسخة جديدة من mb3d-rs. وبجانبها النسخة التي كنت تستخدمها من قبل، في المجلد "{}".\n\nكل نسخة من mb3d-rs تحفظ أشياءك في مجلدها الخاص: إعداداتك، وسجل صورك، والمعاملات التي حفظتها، والخرائط التي أضفتها، والتصييرات الكبيرة والشبكات. لهذا تبدو مفقودة هنا.\n\nانقلها إلى هنا: تُنسخ إعداداتك، ويُنقل كل ما صنعته إلى هذه النسخة. تظل النسخة القديمة تعمل، لكن من دون ملفاتك؛ ويمكنك حذف مجلدها لاحقًا.\nمجلد آخر…: اختر بنفسك مجلد نسختك السابقة.\nابدأ من دونها: تبدأ هذه النسخة من دونها، ولن يُطرح عليك السؤال مرة أخرى.
+;This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsMyFirst=هذه أول نسخة لي
+;This is my first
 ThisRenderIsRunningRightNow=هذا التصيير يجري الآن.
 ;This render is running right now.
 ThisRenderKeepsNoImage=هذا التصيير لا يحتفظ بصورة.

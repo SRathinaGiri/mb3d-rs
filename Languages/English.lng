@@ -278,6 +278,8 @@ AnimationVideoWritten=Animation: video written: {}
 ;the program
 Animations=Animations
 ;HistoryFrm.ComboBox1.Items, Mand3DForm.SpeedButton12.Caption
+AnotherFolder=Another folder…
+;the program
 AntiAliasing=Anti aliasing:
 ;MCForm.Label24.Caption
 Antialiasing=Antialiasing:
@@ -421,6 +423,8 @@ BorderSize=Border size:
 Box=Box
 ;MCForm.ComboBox1.Items
 BoxSharpGoodAAGaussBit=Box: sharp, good AA\nGauss: bit blurry, very good AA
+;the program
+BringOverFromTheFolder=Bring over your settings and files from the copy in the folder "{}"?\n\nYour settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.
 ;the program
 BringThemOver=Bring them over
 ;the program
@@ -594,8 +598,12 @@ ChooseAMap=Choose a map
 ;the program
 ChooseASharedFolderFirstOne=choose a shared folder first (one every computer of the swarm can see)
 ;the program
+ChooseAnotherFolder=Choose another folder…
+;the program
 ChooseOption=Choose Option:
 ;FNavigator.ChooseOption1.Caption
+ChooseTheFolder=Choose the folder…
+;the program
 ChoosesAVariantOfTheFormula=chooses a variant of the formula; whole numbers only
 ;the program
 ChoseTheme=Chose Theme:
@@ -1446,6 +1454,8 @@ Fresnel=Fresnel:
 ;PostProForm.FresnelLbl.Caption
 Fresnel0To1MoreReflection=Fresnel (0 to 1): more reflection where the surface turns away from the view, as with glass, water and lacquer (shows best with the reflections)
 ;PostProForm.FresnelEdit.Hint
+FromAnEarlierVersion=From an earlier version…
+;IniDirForm.Button15.Caption
 FromClipboard=From Clipboard
 ;ColorForm.ColorsClipBtn.Caption, Mand3DForm.SpeedButton8.Caption; the program
 FromTheCameraAllAroundA=From the camera, all around (a scene seen from inside)
@@ -1646,6 +1656,8 @@ HardShadows=\sHard Shadows
 ;PostProForm.HardShadowsBtn.Caption
 HardShadowsLower=hard shadows
 ;the program
+HaveYouUsedMb3dRsBefore=Have you used mb3d-rs before?\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. A new copy starts without them.\n\nChoose the folder…: pick the folder of the copy you used before. Your settings are copied, and everything you made moves into this copy.\nThis is my first: this copy starts fresh. You can still bring your files over later: the {} tab, {}, "From an earlier version…".
+;the program
 Height=Height:
 ;AnimationForm.Label18.Caption, Mand3DForm.Label25.Caption
 Height16BitNearestPointWhite=Height (16 bit, nearest point white)
@@ -1825,7 +1837,7 @@ Info=info
 Infos=Infos
 ;Mand3DForm.TabSheet5.Caption
 IniDirs=Ini Dirs
-;Mand3DForm.IniDirsBtn.Caption
+;Mand3DForm.IniDirsBtn.Caption; the program
 InnerRadius=Inner radius:
 ;DrosteFrm.InnerLabel.Caption
 Input=Input
@@ -2520,6 +2532,8 @@ No2=No
 ;the program
 No360TagsTheCalculatedPicture=No 360 tags: the calculated picture is not a spherical panorama twice as wide as high ({0} x {1}). Set the optic, the size and calculate again.
 ;the program
+NoCopyOfMb3dRsInTheFolder=There is no copy of mb3d-rs that was used in the folder "{}".\n\nChoose the folder of the copy you used before: the one with the program Mandelbulb3D in it.
+;the program
 NoDescriptionFromTheAuthor=No description from the author.
 ;the program
 NoDoFOnTiles=No DoF on tiles.
@@ -2927,7 +2941,7 @@ Postprocess=Postprocess
 PowerRaiseBaseToAnyPower={ Power: Raise base to any power.
 ;JITFormulaEditorForm.SupportedFunctionsEdit.Lines
 Prefs=Prefs
-;Mand3DForm.TabSheet13.Caption
+;Mand3DForm.TabSheet13.Caption; the program
 PreprocessedCode=Preprocessed code
 ;JITFormulaEditorForm.PreprocessedCodeSheet.Caption
 PresetFlower=preset <flower>
@@ -3730,6 +3744,8 @@ TextureExport=Texture export...
 ;Mand3DForm.TexBtn.Caption
 TextureExport2=Texture export
 ;TextureFrm.Caption
+ThatIsThisCopysOwnFolder=That is the folder of this copy. Choose the folder of the copy you used before.
+;the program
 TheAmazingBoxAkaMandboxFormula=The 'Amazing Box' aka Mandbox formula, invented by TGlad at fractalforums.com.\n\nThe formula for one iteration looks like this:\n\nx = abs(x+Fold) - abs(x-Fold) - x\ny = abs(y+Fold) - abs(y-Fold) - y\nz = abs(z+Fold) - abs(z-Fold) - z\nrr = x*x + y*y + z*z\nif rr < sqr(Min_R) then m = Scale/sqr(Min_R) else\nif rr < 1 then m = Scale/rr else m = Scale\nx = x * m + Cx\ny = y * m + Cy\nz = z * m + Cz
 ;the program
 TheAmountOfAddedDiffuseAnd=The amount of added diffuse and specular colors are bigger 1,\nshould i downscale them for a more realistic coloring?
@@ -3812,6 +3828,8 @@ TheFoldSOffsetOnOne=the fold's offset on one axis; 1 is the plain shape, other v
 ;the program
 TheFolderDoesNotExistOr=the folder does not exist (or is not reachable)
 ;the program
+TheFolderOfYourEarlierCopy=The folder of your earlier copy of mb3d-rs
+;IniDirForm.Button15.Hint; the program
 TheFormulaAloneAtItsDefault=The formula alone, at its default values
 ;the program
 TheFormulaBookEveryFormulaIn=The formula book: every formula in words, with a picture, its values explained and example files
@@ -3944,7 +3962,9 @@ ThisFileAlreadyExistsDoYou=This file already exists. Do you really want to overw
 ;the program
 ThisIsAAbsoluteOffsetIn=This is a absolute offset in x direction of the rotated bulb.
 ;BulbTracer2Frm.XOffsetEdit.Hint, BulbTracer2Frm.YOffsetEdit.Hint, BulbTracer2Frm.ZOffsetEdit.Hint and 3 more
-ThisIsANewCopyOf=This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nStart without them: this copy starts without them, and you will not be asked again.
+ThisIsANewCopyOf=This is a new copy of mb3d-rs. Next to it is the copy you used before, in the folder "{}".\n\nEvery copy of mb3d-rs keeps your things in its own folder: your settings, the History of your pictures, the parameters you saved, the maps you added, your Big renders and meshes. That is why they seem to be missing here.\n\nBring them over: your settings are copied, and everything you made moves into this copy. The old copy still starts, without your files; you can delete its folder later.\nAnother folder…: choose the folder of your earlier copy yourself.\nStart without them: this copy starts without them, and you will not be asked again.
+;the program
+ThisIsMyFirst=This is my first
 ;the program
 ThisRenderIsRunningRightNow=This render is running right now.
 ;the program
