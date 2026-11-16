@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.3.12" date="2026-11-16">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.12</url>
+      <description>
+        <p>A new version unpacked next to the one used before offers to bring over your settings, History, saved parameters, maps, Big renders and meshes, which each copy keeps in its own folder. MutaGen closes when it sends a picture to the main window. A map chosen by its picture shows the picture's name with its number. 61 new maps by Geoffrey N. Barnes (10001 to 13015). A scene whose maps do not fit the graphics card is calculated on the processor instead.</p>
+      </description>
+    </release>
     <release version="0.3.11" date="2026-11-15">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.11</url>
       <description>
