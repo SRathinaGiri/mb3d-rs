@@ -639,6 +639,15 @@ fn forget(nr: i32) {
     GENERATION.fetch_add(1, std::sync::atomic::Ordering::Release);
 }
 
+/// The name of map `nr`'s file as the user knows it: a picture copied in
+/// as `<number> <its name>` (a map of any name) shows its own name.
+pub fn display_name(nr: i32) -> Option<String> {
+    let p = find_map_file(nr)?;
+    let name = p.file_name()?.to_string_lossy().into_owned();
+    let own = name.strip_prefix(&format!("{nr} ")).filter(|r| !r.is_empty());
+    Some(own.map(str::to_string).unwrap_or(name))
+}
+
 type Cache = Mutex<HashMap<String, Option<Arc<LightMap>>>>;
 
 fn cache() -> &'static Cache {
@@ -880,6 +889,20 @@ mod tests {
 
     fn picture(p: &std::path::Path, shade: u8) {
         std::fs::write(p, crate::png::encode_rgb(4, 4, &[shade; 48])).unwrap();
+    }
+
+    /// The Lighting window and the Formula window show a map number's
+    /// picture by its own name (a map of any name was copied in as
+    /// `<number> <name>`).
+    #[test]
+    fn a_map_number_shows_its_pictures_name() {
+        let d = test_dir("display-names");
+        picture(&d.join("31801 Brick wall.png"), 1);
+        picture(&d.join("31802.png"), 2);
+        add_map_dir(d.clone());
+        assert_eq!(display_name(31801).as_deref(), Some("Brick wall.png"));
+        assert_eq!(display_name(31802).as_deref(), Some("31802.png"));
+        assert_eq!(display_name(31803), None);
     }
 
     #[test]

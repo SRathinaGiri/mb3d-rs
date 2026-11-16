@@ -1000,6 +1000,10 @@ pub fn short_float_str(v: f32) -> String {
 fn light_map_preview(ui: &mut Ui, nr: i32) {
     let map = crate::maps::by_number(nr);
     ui.set_visible(F, "Label39", map.is_none());
+    let name = crate::maps::display_name(nr).unwrap_or_default();
+    for c in ["Edit2", "Image3"] {
+        ui.cm(F, c).hint = name.clone();
+    }
     let img = map.map(|m| map_preview(&m, ui.c(F, "Image3").width.max(8) as usize, ui.c(F, "Image3").height.max(8) as usize));
     ui.set_picture(F, "Image3", img);
 }
@@ -1032,6 +1036,12 @@ fn check_box15(app: &Mb3d, ui: &mut Ui) {
         let nr = ui.position(F, "UpDownDiffMap") as i32;
         let map = crate::maps::by_number(nr);
         ui.set_visible(F, "Label40", map.is_none());
+        // the picture's own name (a map of any name gets a number)
+        let name = crate::maps::display_name(nr).unwrap_or_default();
+        ui.set_caption(F, "DiffMapName", &name);
+        for c in ["DiffMapName", "Edit21", "Image4"] {
+            ui.cm(F, c).hint = name.clone();
+        }
         let p = map.map(|m| map_preview(&m, ui.c(F, "Image4").width.max(8) as usize, ui.c(F, "Image4").height.max(8) as usize));
         ui.set_picture(F, "Image4", p);
     }

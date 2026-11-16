@@ -3,7 +3,7 @@ object LightAdjustForm: TLightAdjustForm
   Top = 100
   BorderStyle = bsDialog
   Caption = '@MB:Lighting'
-  ClientHeight = 625
+  ClientHeight = 639
   ClientWidth = 233
   Color = clBtnFace
   DragMode = dmAutomatic
@@ -23,7 +23,7 @@ object LightAdjustForm: TLightAdjustForm
   TextHeight = 13
   object Panel3: TPanel
     Left = 0
-    Top = 521
+    Top = 535
     Width = 233
     Height = 104
     Align = alBottom
@@ -1076,7 +1076,7 @@ object LightAdjustForm: TLightAdjustForm
   end
   object Panel4: TPanel
     Left = 0
-    Top = 483
+    Top = 497
     Width = 233
     Height = 38
     Align = alClient
@@ -1130,7 +1130,7 @@ object LightAdjustForm: TLightAdjustForm
     Left = 0
     Top = 180
     Width = 233
-    Height = 303
+    Height = 317
     ActivePage = Fog
     Align = alTop
     TabOrder = 3
@@ -1281,7 +1281,7 @@ object LightAdjustForm: TLightAdjustForm
         Left = 0
         Top = 88
         Width = 217
-        Height = 187
+        Height = 201
         BevelOuter = bvNone
         TabOrder = 3
         Visible = False
@@ -1293,6 +1293,14 @@ object LightAdjustForm: TLightAdjustForm
           Alignment = taCenter
           Caption = '@MB:MapNotFound'
         end
+        object DiffMapName: TLabel
+          Left = 8
+          Top = 30
+          Width = 201
+          Height = 13
+          AutoSize = False
+          ShowHint = True
+        end
         object Label34: TLabel
           Left = 8
           Top = 7
@@ -1302,7 +1310,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object Label35: TLabel
           Left = 29
-          Top = 39
+          Top = 53
           Width = 41
           Height = 13
           Alignment = taRightJustify
@@ -1310,7 +1318,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object Label36: TLabel
           Left = 29
-          Top = 65
+          Top = 79
           Width = 41
           Height = 13
           Alignment = taRightJustify
@@ -1328,7 +1336,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object Label41: TLabel
           Left = 27
-          Top = 91
+          Top = 105
           Width = 43
           Height = 13
           Alignment = taRightJustify
@@ -1336,7 +1344,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object Label38: TLabel
           Left = 40
-          Top = 117
+          Top = 131
           Width = 30
           Height = 13
           Alignment = taRightJustify
@@ -1344,7 +1352,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object TrackBar28: TTrackBar
           Left = 73
-          Top = 61
+          Top = 75
           Width = 136
           Height = 25
           Max = 255
@@ -1359,7 +1367,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object TrackBar29: TTrackBar
           Left = 73
-          Top = 35
+          Top = 49
           Width = 136
           Height = 25
           Max = 255
@@ -1374,7 +1382,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object TrackBar30: TTrackBar
           Left = 73
-          Top = 87
+          Top = 101
           Width = 136
           Height = 25
           Max = 255
@@ -1389,7 +1397,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object CheckBox18: TCheckBox
           Left = 12
-          Top = 170
+          Top = 184
           Width = 182
           Height = 17
           Hint = '@MB:UseTheMapIntensitiesAndDiffuse'
@@ -1401,7 +1409,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object RadioGroup1: TRadioGroup
           Left = 0
-          Top = 136
+          Top = 150
           Width = 215
           Height = 31
           Hint = '@MB:TheItsTrapModeDependsOn'
@@ -1420,7 +1428,7 @@ object LightAdjustForm: TLightAdjustForm
         end
         object TrackBar31: TTrackBar
           Left = 73
-          Top = 113
+          Top = 127
           Width = 136
           Height = 25
           Max = 255

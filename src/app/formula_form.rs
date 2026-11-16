@@ -419,7 +419,7 @@ pub fn tab_control1_change(app: &mut Mb3d, ui: &mut Ui) {
             ui.cm(F, &e).font = None;
             ui.set_caption(F, &l, &opts[i].0);
             // a map number: a right click chooses the picture
-            ui.cm(F, &e).hint = if is_map_option(&opts[i].0) { tr("@MB:MapNumberRightClickToChoose") } else { String::new() };
+            ui.cm(F, &e).hint = if is_map_option(&opts[i].0) { map_hint(opts[i].1) } else { String::new() };
         }
     }
     ui.set_visible(F, "Panel3", st.hybrid == 2);
@@ -430,6 +430,16 @@ pub fn tab_control1_change(app: &mut Mb3d, ui: &mut Ui) {
     ui.set_visible(F, "Button3", false);
     radio_group1_click(app, ui);
     app.formula.user_change = true;
+}
+
+/// The hint of a map number: the picture's own name, and how to choose
+/// another.
+fn map_hint(v: f64) -> String {
+    let how = tr("@MB:MapNumberRightClickToChoose");
+    match crate::maps::display_name(v.round() as i32) {
+        Some(n) => format!("{n}\n{how}"),
+        None => how,
+    }
 }
 
 /// Is a formula option the number of a map (`Map nr`, `Map number` of the
@@ -799,6 +809,10 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
                             set_option_index(f, i, v);
                         }
                         ui.cm(F, &e.sender).font = None;
+                        // (a map number's hint names its picture)
+                        if app.formula.slots[t].as_ref().and_then(|f| f.options().get(i).map(|o| o.0.clone())).is_some_and(|n| is_map_option(&n)) {
+                            ui.cm(F, &e.sender).hint = map_hint(v);
+                        }
                     }
                     None => {
                         let f = crate::vcl::font::Font { color: 0xFF80_0000, custom_color: true, ..Default::default() };
