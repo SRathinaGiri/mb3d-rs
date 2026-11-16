@@ -1123,8 +1123,8 @@ Done2={} مکمل ({})۔
 ;{} done ({}).
 DoneOf=مکمل: {} از {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=ہو گیا: آپ کی ترتیبات اور فائلیں اب اس کاپی میں ہیں۔ mb3d-rs دوبارہ شروع ہو رہا ہے تاکہ آپ کی ترتیبات استعمال ہوں۔
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=ہو گیا: آپ کی ترتیبات اور فائلیں اب اس کاپی میں ہیں۔ mb3d-rs بند کریں اور دوبارہ شروع کریں تاکہ آپ کی ترتیبات استعمال ہوں۔
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=نیویگیٹر موڈ بدلنے کے لیے ڈبل کلک کریں

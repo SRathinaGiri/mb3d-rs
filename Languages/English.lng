@@ -1122,7 +1122,7 @@ Done2={} done ({}).
 ;the program
 DoneOf=Done: {} of {}{}
 ;the program
-DoneYourSettingsAndFilesAre=Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 ;the program
 Double=Double
 ;ParamValueEditFrm.TypeCmb.Items

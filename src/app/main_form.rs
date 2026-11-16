@@ -190,9 +190,9 @@ pub struct State {
     /// the earlier version's folder whose files the start-up question is
     /// about (crate::earlier)
     pub earlier_ask: Option<crate::earlier::Earlier>,
-    /// the program starts again (after the earlier version's settings
-    /// came): its exit keeps the settings file as it is
-    pub restarting: bool,
+    /// the earlier version's settings came (crate::earlier): the exit
+    /// keeps the settings file as it is, the next start uses them
+    pub settings_came: bool,
     /// the question whether to calculate a picture that does not fit into
     /// the free memory is open
     pub memory_ask: bool,
@@ -304,7 +304,7 @@ impl Default for State {
             stick_it: 0,
             resume_ask: None,
             earlier_ask: None,
-            restarting: false,
+            settings_came: false,
             memory_ask: false,
             resume_key: None,
             ground_color: crate::scene::Ground::default().color,
@@ -2884,30 +2884,8 @@ pub(crate) fn stem(title: &str) -> String {
     name.map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
 }
 
-/// Starts the program again (with the same command line) and ends this
-/// one without saving its settings over the ones that came.
-fn restart(app: &mut Mb3d, ui: &mut Ui) {
-    let started = std::env::current_exe().and_then(|exe| std::process::Command::new(exe).args(std::env::args_os().skip(1)).spawn());
-    match started {
-        Ok(_) => {
-            app.main.restarting = true;
-            // (no question whether to stop: right after the start)
-            app.eng.stop();
-            ui.close_ok(F);
-        }
-        // (then the settings come at the next start)
-        Err(e) => crate::log::info("file", &format!("could not start again: {e}")),
-    }
-}
-
 fn form_close(app: &mut Mb3d, ui: &mut Ui) {
     app.eng.stop();
-    if app.main.restarting {
-        super::tools_forms::stop_tiling(app);
-        super::mc_form::stop_for_exit(app);
-        super::voxel_form::stop(app);
-        return;
-    }
     super::tools_forms::stop_tiling(app);
     super::mc_form::stop_for_exit(app);
     super::voxel_form::stop(app);
@@ -2915,6 +2893,11 @@ fn form_close(app: &mut Mb3d, ui: &mut Ui) {
     super::swarm_form::stop_worker(app, true);
     app.make_scene(ui);
     crate::appdirs::store_history(&app.scene, &stem(&app.title));
+    // (the settings of the earlier version stay as they came, for the
+    // next start)
+    if app.main.settings_came {
+        return;
+    }
     let f = ui.f(F);
     let (w, h) = f.outer_size(&ui.theme);
     let (l, tp) = (f.left, f.top);
@@ -3896,16 +3879,18 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
             }
             let r = crate::earlier::bring_over(&here, &e);
             crate::log::info("file", &format!("brought over the settings and files of {}: {} moved, {} left", e.dir.display(), r.moved, r.left.len()));
-            // (the settings as they came: a save before the restart keeps them)
+            // (the settings as they came: a save before the exit keeps them,
+            // the next start uses them; the program is not started again by
+            // itself: no process is launched)
             app.ini = super::ini::Ini::load();
+            app.main.settings_came = true;
             let mut text = tr("@MB:DoneYourSettingsAndFilesAre");
             if !r.left.is_empty() {
                 text.push_str("\n\n");
                 text.push_str(&trf("@MB:TheseCouldNotBeMovedAnd", &[&e.name(), &r.left.join(", ")]));
             }
-            ui.message_box("main:earlierdone", &tr("@MB:YourFilesFromTheEarlierVersion"), &text, &[MR_OK]);
+            ui.message_box("", &tr("@MB:YourFilesFromTheEarlierVersion"), &text, &[MR_OK]);
         }
-        ("earlierdone", DialogResult::Button(_)) => restart(app, ui),
         ("resume", DialogResult::Button(b)) => {
             let Some((sc, slice)) = app.main.resume_ask.take() else { return };
             match *b {

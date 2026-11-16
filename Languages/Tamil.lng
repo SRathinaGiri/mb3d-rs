@@ -1123,8 +1123,8 @@ Done2={} முடிந்தது ({}).
 ;{} done ({}).
 DoneOf=முடிந்தது: {} / {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=முடிந்தது: உங்கள் அமைப்புகளும் கோப்புகளும் இப்போது இந்த நகலில் உள்ளன. உங்கள் அமைப்புகளைப் பயன்படுத்த mb3d-rs மீண்டும் தொடங்குகிறது.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=முடிந்தது: உங்கள் அமைப்புகளும் கோப்புகளும் இப்போது இந்த நகலில் உள்ளன. உங்கள் அமைப்புகளைப் பயன்படுத்த mb3d-rs ஐ மூடி மீண்டும் தொடங்குங்கள்.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=இரட்டை
 ;Double
 DoubleClickToChangeTheNavi=நேவி முறையை மாற்ற இரட்டைக் கிளிக் செய்யவும்

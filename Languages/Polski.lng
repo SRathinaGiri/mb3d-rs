@@ -1122,8 +1122,8 @@ Done2={} gotowe ({}).
 ;{} done ({}).
 DoneOf=Gotowe: {} z {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=Gotowe: Twoje ustawienia i pliki są teraz w tej kopii. mb3d-rs uruchomi się ponownie, aby użyć Twoich ustawień.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=Gotowe: Twoje ustawienia i pliki są teraz w tej kopii. Zamknij mb3d-rs i uruchom go ponownie, aby użyć Twoich ustawień.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Podwójny klik zmienia tryb nawigatora

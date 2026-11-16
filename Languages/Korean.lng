@@ -1123,8 +1123,8 @@ Done2={} 완료({}).
 ;{} done ({}).
 DoneOf=완료: {}/{}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=완료: 설정과 파일이 이제 이 사본에 있습니다. 설정을 적용하려고 mb3d-rs를 다시 시작합니다.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=완료: 설정과 파일이 이제 이 사본에 있습니다. 설정을 적용하려면 mb3d-rs를 닫고 다시 시작하세요.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=더블 클릭으로 내비 모드 변경

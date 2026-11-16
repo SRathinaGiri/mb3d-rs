@@ -1122,8 +1122,8 @@ Done2={} hecho ({}).
 ;{} done ({}).
 DoneOf=Hecho: {} de {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=Listo: sus ajustes y archivos están ahora en esta copia. mb3d-rs se reinicia para usar sus ajustes.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=Listo: sus ajustes y archivos están ahora en esta copia. Cierre mb3d-rs y vuelva a abrirlo para que se usen sus ajustes.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Doble clic para cambiar el modo del navegador

@@ -1123,8 +1123,8 @@ Done2=تم {} ({}).
 ;{} done ({}).
 DoneOf=تم: {} من {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=تم: إعداداتك وملفاتك موجودة الآن في هذه النسخة. سيُعاد تشغيل mb3d-rs لاستخدام إعداداتك.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=تم: إعداداتك وملفاتك موجودة الآن في هذه النسخة. أغلق mb3d-rs ثم شغّله من جديد لتُستخدم إعداداتك.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=نقر مزدوج لتغيير وضع المستكشف

@@ -62,3 +62,49 @@ fn no_words_the_malware_scanner_flags() {
         found.join("\n")
     );
 }
+
+/// Starting another process (`std::process::Command`) is what scanrepo.dev
+/// rates as "Code Execution", critical: 0.3.12's main window started
+/// itself again after bringing over an earlier version's settings and the
+/// repository went from safe to dangerous (70 of 100, 16 November 2026).
+/// The program does without: it asks the user to start it again, a tool
+/// that needs another program is an example or a script outside `src`.
+/// Only the files below may start one, each for a reason the scanner has
+/// accepted (0.3.11 was rated safe with them).
+const MAY_START_PROCESSES: [&str; 1] = [
+    // sysctl for the processor's name on macOS (the benchmark's header)
+    "src/bench.rs",
+];
+
+#[test]
+fn no_process_is_started_from_the_program() {
+    fn walk(root: &Path, p: &Path, found: &mut Vec<String>) {
+        if p.is_dir() {
+            for e in std::fs::read_dir(p).into_iter().flatten().flatten() {
+                walk(root, &e.path(), found);
+            }
+            return;
+        }
+        if p.extension().is_none_or(|e| e != "rs") {
+            return;
+        }
+        let rel = p.strip_prefix(root).unwrap().to_string_lossy().replace('\\', "/");
+        if MAY_START_PROCESSES.contains(&rel.as_str()) {
+            return;
+        }
+        let Ok(text) = std::fs::read_to_string(p) else { return };
+        for (n, line) in text.lines().enumerate() {
+            if line.contains(concat!("process", "::", "Command")) || line.contains(concat!("Command", "::", "new")) {
+                found.push(format!("{rel}:{}: {}", n + 1, line.trim()));
+            }
+        }
+    }
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut found = Vec::new();
+    walk(root, &root.join("src"), &mut found);
+    assert!(
+        found.is_empty(),
+        "scanrepo.dev rates starting a process as malware (Code Execution, critical); do without, or discuss it and add the file to MAY_START_PROCESSES:\n{}",
+        found.join("\n")
+    );
+}

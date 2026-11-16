@@ -1122,8 +1122,8 @@ Done2={} klaar ({}).
 ;{} done ({}).
 DoneOf=Klaar: {} van {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=Klaar: uw instellingen en bestanden staan nu in deze kopie. mb3d-rs start opnieuw zodat uw instellingen gebruikt worden.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=Klaar: uw instellingen en bestanden staan nu in deze kopie. Sluit mb3d-rs en start het opnieuw zodat uw instellingen gebruikt worden.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Dubbelklik om de navi-modus te wijzigen

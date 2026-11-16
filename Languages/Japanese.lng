@@ -1123,8 +1123,8 @@ Done2={} 完了 ({})。
 ;{} done ({}).
 DoneOf=完了: {} / {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=完了：設定とファイルがこのコピーに移りました。設定を使うために mb3d-rs を再起動します。
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=完了：設定とファイルがこのコピーに移りました。設定を使うには、mb3d-rs を閉じてもう一度起動してください。
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=ダブルクリックでナビモードを切り替え

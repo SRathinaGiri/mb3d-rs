@@ -1123,8 +1123,8 @@ Done2={} 完成（{}）。
 ;{} done ({}).
 DoneOf=已完成：{}/{}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=完成：您的设置和文件现在在这个副本中。mb3d-rs 将重新启动以使用您的设置。
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=完成：您的设置和文件现在在这个副本中。请关闭 mb3d-rs 并重新启动，以使用您的设置。
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=双击切换导航模式

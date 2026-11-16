@@ -1122,8 +1122,8 @@ Done2={} gòtowé ({}).
 ;{} done ({}).
 DoneOf=Gòtowé: {} z {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=Gòtowé: twòje ùstôwë ë lopczi są terô w ti kòpii. mb3d-rs zrëszô sã znowa, żebë bëłë ùżëté twòje ùstôwë.
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=Gòtowé: twòje ùstôwë ë lopczi są terô w ti kòpii. Zamkni mb3d-rs ë zrëszë gò znowa, żebë bëłë ùżëté twòje ùstôwë.
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=Dwójné kliknienié zmieniwô trib nawi

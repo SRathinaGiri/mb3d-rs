@@ -1123,8 +1123,8 @@ Done2={} पूर्ण ({})।
 ;{} done ({}).
 DoneOf=पूर्ण: {} / {}{}
 ;Done: {} of {}{}
-DoneYourSettingsAndFilesAre=हो गया: आपकी सेटिंग्स और फ़ाइलें अब इस कॉपी में हैं। आपकी सेटिंग्स लागू करने के लिए mb3d-rs फिर से शुरू हो रहा है।
-;Done: your settings and files are in this copy now. mb3d-rs starts again so that your settings are used.
+DoneYourSettingsAndFilesAre=हो गया: आपकी सेटिंग्स और फ़ाइलें अब इस कॉपी में हैं। अपनी सेटिंग्स लागू करने के लिए mb3d-rs बंद करके फिर से शुरू करें।
+;Done: your settings and files are in this copy now. Close mb3d-rs and start it again so that your settings are used.
 Double=Double
 ;Double
 DoubleClickToChangeTheNavi=नेविगेटर मोड बदलने के लिए डबल क्लिक करें
