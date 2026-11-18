@@ -1023,6 +1023,11 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
     let h = e.handler.as_str();
     match h {
         "FormCreate" => {
+            // the move, turn and roll buttons go on while held, as their
+            // keys do (MB3D: one step a click)
+            for n in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13] {
+                ui.set_auto_repeat(F, &format!("SpeedButton{n}"), true);
+            }
             let q = app.ini.get("NaviSize").to_string();
             let i = ui.c(F, "NaviSizeCmb").items.iter().position(|s| *s == q).map(|i| i as i32).unwrap_or(6);
             ui.set_item_index(F, "NaviSizeCmb", i);

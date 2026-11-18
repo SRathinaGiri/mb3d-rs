@@ -399,6 +399,14 @@ impl Ui {
         }
     }
 
+    /// A SpeedButton that clicks again and again while held down.
+    pub fn set_auto_repeat(&mut self, form: &str, ctl: &str, on: bool) {
+        let f = self.fm(form);
+        if let Some(i) = f.id(ctl) {
+            f.ctl[i].auto_repeat = on;
+        }
+    }
+
     /// Calls a control's OnClick handler as if it was clicked (VCL `Click`).
     pub fn click(&mut self, form: &str, ctl: &str) {
         let fi = self.fi(form);

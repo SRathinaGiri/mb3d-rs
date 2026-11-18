@@ -268,6 +268,10 @@ impl Form {
         // a double click on a list view's column headers is two column
         // clicks, not a double click on its selected row
         let on_header = kind == Kind::ListView && ly <= self.listview_rows(id).0 + 2;
+        if kind == Kind::SpeedButton && self.ctl[id].auto_repeat && button == MouseButton::Left && self.enabled(id) {
+            out.push(raw(id, "OnClick", Ev::Click));
+            self.repeat_at = Some(now + REPEAT_FIRST);
+        }
         if dbl && !on_header {
             out.push(raw(id, "OnDblClick", Ev::DblClick));
         }
@@ -698,6 +702,8 @@ impl Form {
                         out.push(raw(id, "@ModalResult", Ev::Click));
                     }
                 }
+                // (one that repeats clicked when pressed)
+                Kind::SpeedButton if self.ctl[id].auto_repeat => {}
                 Kind::SpeedButton => {
                     self.speed_click(id);
                     out.push(raw(id, "OnClick", Ev::Click));
@@ -863,7 +869,8 @@ impl Form {
         out
     }
 
-    /// Auto-repeat of held arrow buttons; returns events when it fired.
+    /// Auto-repeat of held arrow buttons (and repeating SpeedButtons);
+    /// returns events when it fired.
     pub fn tick(&mut self, now: Instant) -> Vec<Raw> {
         let mut out = Vec::new();
         let Some(t) = self.repeat_at else { return out };
@@ -880,6 +887,7 @@ impl Form {
         }
         match self.ctl[id].kind {
             Kind::UpDown => self.updown_step(id, self.cap_part == PART_UP, &mut out),
+            Kind::SpeedButton if self.ctl[id].auto_repeat && self.enabled(id) => out.push(raw(id, "OnClick", Ev::Click)),
             Kind::ScrollBar | Kind::ListBox | Kind::ListView | Kind::Memo => {
                 if self.cap_part != PART_THUMB {
                     self.scroll_part(id, self.cap_part, &mut out)

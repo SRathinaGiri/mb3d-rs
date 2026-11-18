@@ -236,6 +236,9 @@ pub struct Control {
     pub down: bool,
     pub group_index: i32,
     pub allow_all_up: bool,
+    /// a SpeedButton that clicks when pressed and again and again while
+    /// held (as the arrows of an UpDown; not in the VCL)
+    pub auto_repeat: bool,
     pub flat: bool,
     pub glyph: Option<Bitmap>,
     pub num_glyphs: i32,
@@ -432,6 +435,7 @@ impl Control {
             down: false,
             group_index: 0,
             allow_all_up: false,
+            auto_repeat: false,
             flat: false,
             glyph: None,
             num_glyphs: 1,
