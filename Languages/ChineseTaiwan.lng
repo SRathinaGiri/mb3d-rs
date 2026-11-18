@@ -1433,8 +1433,8 @@ Forward=順向
 ;Forward
 FoundOnThisComputerNotConnected=已在這台電腦上找到，尚未連線。
 ;Found on this computer, not connected yet.
-FoundOnThisComputerRunThis=已在這台電腦上找到。請在終端機中執行一次此指令，然後開始新的 Claude Code 工作階段：
-;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FoundOnThisComputerRunThis=已在這台電腦上找到。請在終端機（Windows 上為 PowerShell 或命令提示字元，不是「執行」方塊）中執行一次此指令，然後開始新的 Claude Code 工作階段：
+;Found on this computer. Run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box), then start a new Claude Code session:
 FpName=參數名稱：
 ;fp name:
 Fpow=Fpow：
@@ -2615,8 +2615,8 @@ NotAvailableForLinuxUseClaude=不適用於 Linux：請使用下方的 Claude Cod
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=可用記憶體不足
 ;Not enough memory available
-NotFoundIfYouUseIt=找不到。若您有使用，請在終端機中執行一次此指令：
-;Not found. If you use it, run this command once in a terminal:
+NotFoundIfYouUseIt=找不到。Claude 桌面應用程式只需上方的「連線」按鈕。若您使用 Claude Code，請在終端機（Windows 上為 PowerShell 或命令提示字元，不是「執行」方塊）中執行一次此指令：
+;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
 NotInstalledGetItFromClaude=未安裝。請從 claude.ai/download 取得，啟動一次後再回到這裡。
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=未選取

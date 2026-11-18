@@ -1432,8 +1432,8 @@ Forward=W przódk
 ;Forward
 FoundOnThisComputerNotConnected=Nalazłé na tim kòmpùtrze, jesz nie pòłączoné.
 ;Found on this computer, not connected yet.
-FoundOnThisComputerRunThis=Nalazłé na tim kòmpùtrze. Zrëszë rôz tã kòmandã w terminalu, a pòtemù zrëszë nową sesjã Claude Code:
-;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FoundOnThisComputerRunThis=Nalazłé na tim kòmpùtrze. Zrëszë rôz tã kòmandã w terminalu (w Windows: PowerShell abò Wiérsz pòlecënków, nié òkno Zrëszanié), a pòtemù zrëszë nową sesjã Claude Code:
+;Found on this computer. Run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box), then start a new Claude Code session:
 FpName=miono fp:
 ;fp name:
 Fpow=Fpow:
@@ -2614,8 +2614,8 @@ NotAvailableForLinuxUseClaude=Nie je przistãpné dlô Linuksa: brëkùjë Claud
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=Za mało dostãpny pamiãtë
 ;Not enough memory available
-NotFoundIfYouUseIt=Nie nalazłé. Jeżlë gò brëkùjesz, zrëszë rôz tã kòmandã w terminalu:
-;Not found. If you use it, run this command once in a terminal:
+NotFoundIfYouUseIt=Nie nalazłé. Aplikacjô Claude na kòmpùter nót mô blós knefla „Pòłączë” wëżi. Jeżlë brëkùjesz Claude Code, zrëszë rôz tã kòmandã w terminalu (w Windows: PowerShell abò Wiérsz pòlecënków, nié òkno Zrëszanié):
+;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
 NotInstalledGetItFromClaude=Nie je zainstalowóné. Scygni gò z claude.ai/download, zrëszë gò rôz, a pòtemù wrócë tuwò.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=Nie wëbróné

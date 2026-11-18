@@ -3,7 +3,7 @@ object AiConnectFrm: TAiConnectFrm
   Top = 160
   BorderStyle = bsDialog
   Caption = '@MB:ConnectToAnAIAssistant'
-  ClientHeight = 470
+  ClientHeight = 496
   ClientWidth = 640
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -65,14 +65,14 @@ object AiConnectFrm: TAiConnectFrm
     Left = 12
     Top = 158
     Width = 616
-    Height = 32
+    Height = 58
     AutoSize = False
     Caption = ''
     WordWrap = True
   end
   object Edit1: TEdit
     Left = 12
-    Top = 194
+    Top = 220
     Width = 470
     Height = 21
     ReadOnly = True
@@ -80,7 +80,7 @@ object AiConnectFrm: TAiConnectFrm
   end
   object Button2: TButton
     Left = 488
-    Top = 190
+    Top = 216
     Width = 140
     Height = 28
     Hint = '@MB:CopyTheCommandToPasteIt'
@@ -92,7 +92,7 @@ object AiConnectFrm: TAiConnectFrm
   end
   object Label4: TLabel
     Left = 12
-    Top = 234
+    Top = 260
     Width = 300
     Height = 13
     Caption = '@MB:ThingsToAskTheAssistant'
@@ -101,7 +101,7 @@ object AiConnectFrm: TAiConnectFrm
   end
   object Memo1: TMemo
     Left = 12
-    Top = 252
+    Top = 278
     Width = 616
     Height = 120
     ReadOnly = True
@@ -110,7 +110,7 @@ object AiConnectFrm: TAiConnectFrm
   end
   object Label5: TLabel
     Left = 12
-    Top = 382
+    Top = 408
     Width = 616
     Height = 44
     AutoSize = False
@@ -119,7 +119,7 @@ object AiConnectFrm: TAiConnectFrm
   end
   object Button3: TButton
     Left = 528
-    Top = 432
+    Top = 458
     Width = 100
     Height = 28
     Caption = '@MB:Close'

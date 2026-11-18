@@ -1433,8 +1433,8 @@ Forward=آگے
 ;Forward
 FoundOnThisComputerNotConnected=اس کمپیوٹر پر ملا، ابھی جڑا نہیں۔
 ;Found on this computer, not connected yet.
-FoundOnThisComputerRunThis=اس کمپیوٹر پر ملا۔ یہ کمانڈ ایک بار ٹرمینل میں چلائیں، پھر Claude Code کا نیا سیشن شروع کریں:
-;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FoundOnThisComputerRunThis=اس کمپیوٹر پر ملا۔ یہ کمانڈ ایک بار ٹرمینل میں چلائیں (Windows پر: PowerShell یا Command Prompt، Run باکس نہیں)، پھر Claude Code کا نیا سیشن شروع کریں:
+;Found on this computer. Run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box), then start a new Claude Code session:
 FpName=fp نام:
 ;fp name:
 Fpow=Fpow:
@@ -2615,8 +2615,8 @@ NotAvailableForLinuxUseClaude=Linux کے لیے دستیاب نہیں: نیچے 
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=کافی میموری دستیاب نہیں ہے
 ;Not enough memory available
-NotFoundIfYouUseIt=نہیں ملا۔ اگر آپ اسے استعمال کرتے ہیں تو یہ کمانڈ ایک بار ٹرمینل میں چلائیں:
-;Not found. If you use it, run this command once in a terminal:
+NotFoundIfYouUseIt=نہیں ملا۔ Claude کی ڈیسک ٹاپ ایپ کے لیے اوپر کا «جوڑیں» بٹن ہی کافی ہے۔ اگر آپ Claude Code استعمال کرتے ہیں تو یہ کمانڈ ایک بار ٹرمینل میں چلائیں (Windows پر: PowerShell یا Command Prompt، Run باکس نہیں):
+;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
 NotInstalledGetItFromClaude=انسٹال نہیں۔ اسے claude.ai/download سے حاصل کریں، ایک بار شروع کریں، پھر یہاں واپس آئیں۔
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=منتخب نہیں

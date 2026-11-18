@@ -1432,8 +1432,8 @@ Forward=Vorwärts
 ;Forward
 FoundOnThisComputerNotConnected=Auf diesem Computer gefunden, noch nicht verbunden.
 ;Found on this computer, not connected yet.
-FoundOnThisComputerRunThis=Auf diesem Computer gefunden. Führen Sie diesen Befehl einmal in einem Terminal aus und starten Sie dann eine neue Claude-Code-Sitzung:
-;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FoundOnThisComputerRunThis=Auf diesem Computer gefunden. Führen Sie diesen Befehl einmal in einem Terminal aus (unter Windows: PowerShell oder Eingabeaufforderung, nicht das Fenster „Ausführen“) und starten Sie dann eine neue Claude-Code-Sitzung:
+;Found on this computer. Run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box), then start a new Claude Code session:
 FpName=FP-Name:
 ;fp name:
 Fpow=Fpow:
@@ -2614,8 +2614,8 @@ NotAvailableForLinuxUseClaude=Für Linux nicht verfügbar: Verwenden Sie Claude 
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=Nicht genügend Speicher verfügbar
 ;Not enough memory available
-NotFoundIfYouUseIt=Nicht gefunden. Wenn Sie es verwenden, führen Sie diesen Befehl einmal in einem Terminal aus:
-;Not found. If you use it, run this command once in a terminal:
+NotFoundIfYouUseIt=Nicht gefunden. Claudes Desktop-App braucht nur die Schaltfläche „Verbinden“ oben. Wenn Sie Claude Code verwenden, führen Sie diesen Befehl einmal in einem Terminal aus (unter Windows: PowerShell oder Eingabeaufforderung, nicht das Fenster „Ausführen“):
+;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
 NotInstalledGetItFromClaude=Nicht installiert. Laden Sie es von claude.ai/download, starten Sie es einmal und kommen Sie dann hierher zurück.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=Nicht ausgewählt

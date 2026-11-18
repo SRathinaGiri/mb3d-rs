@@ -1433,8 +1433,8 @@ Forward=순방향
 ;Forward
 FoundOnThisComputerNotConnected=이 컴퓨터에서 찾았지만 아직 연결되지 않았습니다.
 ;Found on this computer, not connected yet.
-FoundOnThisComputerRunThis=이 컴퓨터에서 찾았습니다. 터미널에서 이 명령을 한 번 실행한 다음 새 Claude Code 세션을 시작하십시오:
-;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FoundOnThisComputerRunThis=이 컴퓨터에서 찾았습니다. 터미널(Windows에서는 PowerShell 또는 명령 프롬프트, '실행' 창이 아님)에서 이 명령을 한 번 실행한 다음 새 Claude Code 세션을 시작하십시오:
+;Found on this computer. Run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box), then start a new Claude Code session:
 FpName=fp 이름:
 ;fp name:
 Fpow=Fpow:
@@ -2615,8 +2615,8 @@ NotAvailableForLinuxUseClaude=Linux용은 없습니다: 아래의 Claude Code를
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=사용 가능한 메모리가 부족합니다
 ;Not enough memory available
-NotFoundIfYouUseIt=찾을 수 없습니다. 사용한다면 터미널에서 이 명령을 한 번 실행하십시오:
-;Not found. If you use it, run this command once in a terminal:
+NotFoundIfYouUseIt=찾을 수 없습니다. Claude 데스크톱 앱은 위의 '연결' 단추만 있으면 됩니다. Claude Code를 사용한다면 터미널(Windows에서는 PowerShell 또는 명령 프롬프트, '실행' 창이 아님)에서 이 명령을 한 번 실행하십시오:
+;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
 NotInstalledGetItFromClaude=설치되지 않았습니다. claude.ai/download에서 받아 한 번 실행한 다음 여기로 돌아오십시오.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=선택 안 됨

@@ -1433,8 +1433,8 @@ Forward=முன்னோக்கி
 ;Forward
 FoundOnThisComputerNotConnected=இந்தக் கணினியில் கண்டறியப்பட்டது, இன்னும் இணைக்கப்படவில்லை.
 ;Found on this computer, not connected yet.
-FoundOnThisComputerRunThis=இந்தக் கணினியில் கண்டறியப்பட்டது. இந்தக் கட்டளையை ஒரு முறை டெர்மினலில் இயக்கி, பின் ஒரு புதிய Claude Code அமர்வைத் தொடங்குங்கள்:
-;Found on this computer. Run this command once in a terminal, then start a new Claude Code session:
+FoundOnThisComputerRunThis=இந்தக் கணினியில் கண்டறியப்பட்டது. இந்தக் கட்டளையை ஒரு முறை டெர்மினலில் இயக்கி (Windows-இல்: PowerShell அல்லது Command Prompt, Run பெட்டி அல்ல), பின் ஒரு புதிய Claude Code அமர்வைத் தொடங்குங்கள்:
+;Found on this computer. Run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box), then start a new Claude Code session:
 FpName=fp பெயர்:
 ;fp name:
 Fpow=Fpow:
@@ -2615,8 +2615,8 @@ NotAvailableForLinuxUseClaude=Linux இல் கிடைக்காது: �
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=போதுமான நினைவகம் இல்லை
 ;Not enough memory available
-NotFoundIfYouUseIt=கிடைக்கவில்லை. பயன்படுத்தினால், இந்தக் கட்டளையை ஒரு முறை டெர்மினலில் இயக்குங்கள்:
-;Not found. If you use it, run this command once in a terminal:
+NotFoundIfYouUseIt=கிடைக்கவில்லை. Claude டெஸ்க்டாப் செயலிக்கு மேலே உள்ள "இணை" பொத்தான் மட்டுமே போதும். Claude Code பயன்படுத்தினால், இந்தக் கட்டளையை ஒரு முறை டெர்மினலில் இயக்குங்கள் (Windows-இல்: PowerShell அல்லது Command Prompt, Run பெட்டி அல்ல):
+;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
 NotInstalledGetItFromClaude=நிறுவப்படவில்லை. claude.ai/download இலிருந்து பெற்று, ஒரு முறை தொடங்கி, பின் இங்கே திரும்புங்கள்.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=தேர்ந்தெடுக்கப்படவில்லை
