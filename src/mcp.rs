@@ -683,12 +683,19 @@ pub fn claude_desktop_status() -> (bool, bool) {
 /// Whether Claude Code is installed (`claude` on the PATH, or its folder in
 /// the home folder) and whether mb3d is among its servers for the user.
 pub fn claude_code_status() -> (bool, bool) {
-    let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).map(PathBuf::from);
+    // (Windows: %USERPROFILE%, where Claude Code keeps .claude.json;
+    // HOME is set there only inside Git Bash)
+    let home = if cfg!(windows) { std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")) } else { std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) }.map(PathBuf::from);
     let on_path = std::env::var_os("PATH").is_some_and(|p| {
         std::env::split_paths(&p).any(|d| d.join("claude").is_file() || d.join("claude.exe").is_file() || d.join("claude.cmd").is_file())
     });
-    let installed = on_path || home.as_ref().is_some_and(|h| h.join(".claude").is_dir());
-    let connected = home
+    // the native installer's place (on Windows not always on the PATH,
+    // and not on this program's when it was started before the install)
+    let native = home.as_ref().is_some_and(|h| h.join(".local").join("bin").join(if cfg!(windows) { "claude.exe" } else { "claude" }).is_file());
+    let installed = on_path || native || home.as_ref().is_some_and(|h| h.join(".claude").is_dir());
+    // (CLAUDE_CONFIG_DIR moves .claude.json, as Claude Code reads it)
+    let config_dir = std::env::var_os("CLAUDE_CONFIG_DIR").map(PathBuf::from).or(home);
+    let connected = config_dir
         .and_then(|h| std::fs::read_to_string(h.join(".claude.json")).ok())
         .and_then(|t| json::parse(&t).ok())
         .is_some_and(|v| v.get("mcpServers").and_then(|m| m.get("mb3d")).is_some());
@@ -736,12 +743,26 @@ pub fn claude_desktop(remove: bool, exe: &Path) -> Result<String, String> {
 
 /// The command that adds mb3d to Claude Code (for the user to run: this
 /// program starts no other programs).
+///
+/// One line that runs alike in PowerShell, Command Prompt, Git Bash and
+/// the terminals of Linux and macOS: the options before the name and no
+/// `--` (PowerShell takes `--` as its own end of options when Claude Code
+/// was installed through npm, a PowerShell script, and mb3d's one argument
+/// `mcp` needs none); the program in double quotes on Windows always (its
+/// paths often hold spaces; Command Prompt and PowerShell both take them),
+/// elsewhere when it has a space.
 pub fn claude_code_command(remove: bool, exe: &Path) -> Result<String, String> {
-    let quoted = |p: &Path| {
-        let t = p.to_string_lossy();
-        if t.contains(' ') { format!("\"{t}\"") } else { t.into_owned() }
-    };
-    Ok(if remove { "claude mcp remove mb3d --scope user".to_string() } else { format!("claude mcp add mb3d --scope user -- {} mcp", quoted(exe)) })
+    Ok(if remove { "claude mcp remove --scope user mb3d".to_string() } else { format!("claude mcp add --scope user mb3d {} mcp", quote_program(&exe.to_string_lossy(), cfg!(windows))) })
+}
+
+fn quote_program(t: &str, windows: bool) -> String {
+    if windows || t.contains(' ') { format!("\"{t}\"") } else { t.to_string() }
+}
+
+/// How to install Claude Code (from its documentation): PowerShell's line
+/// on Windows, the shell script elsewhere.
+pub fn claude_code_install() -> &'static str {
+    if cfg!(windows) { "irm https://claude.ai/install.ps1 | iex" } else { "curl -fsSL https://claude.ai/install.sh | bash" }
 }
 
 #[cfg(test)]
@@ -750,6 +771,20 @@ mod tests {
 
     fn ask(opt: &Options, line: &str) -> Value {
         handle(opt, &json::parse(line).unwrap()).unwrap()
+    }
+
+    /// The line runs alike in every shell: no `--`, the program quoted on
+    /// Windows (a user ran 0.3.13's in Windows' Run box; PowerShell may
+    /// take `--` as its own).
+    #[test]
+    fn claude_codes_command_has_no_double_dash_and_quotes_windows_paths() {
+        let c = claude_code_command(false, Path::new("/opt/mb3d/mb3d")).unwrap();
+        assert!(!c.contains(" -- "), "{c}");
+        assert!(c.starts_with("claude mcp add --scope user mb3d ") && c.ends_with(" mcp"), "{c}");
+        assert_eq!(quote_program(r"C:\mb3d\mb3d.exe", true), r#""C:\mb3d\mb3d.exe""#);
+        assert_eq!(quote_program("/home/a b/mb3d", false), "\"/home/a b/mb3d\"");
+        assert_eq!(quote_program("/opt/mb3d", false), "/opt/mb3d");
+        assert_eq!(claude_code_command(true, Path::new("x")).unwrap(), "claude mcp remove --scope user mb3d");
     }
 
     #[test]

@@ -36,7 +36,10 @@ fn refresh(app: &mut Mb3d, ui: &mut Ui) {
     let c_text = match (c_inst, c_conn) {
         (_, true) => tr("@MB:ConnectedStartANewClaudeCode"),
         (true, false) => tr("@MB:FoundOnThisComputerRunThis"),
-        (false, false) => tr("@MB:NotFoundIfYouUseIt"),
+        // (how to install it, then the command: a user ran the command in
+        // Windows' Run box)
+        (false, false) if cfg!(windows) => trf("@MB:NotFoundIfYouUseIt", &[&crate::mcp::claude_code_install()]),
+        (false, false) => trf("@MB:NotFoundToUseClaudeCode", &[&crate::mcp::claude_code_install()]),
     };
     ui.set_caption(F, "Label3", &c_text);
     // (the error of a missing mb3d in the window's language)

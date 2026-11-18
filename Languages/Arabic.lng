@@ -2615,8 +2615,10 @@ NotAvailableForLinuxUseClaude=غير متوفر لـ Linux: استخدم Claude 
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=لا توجد ذاكرة كافية
 ;Not enough memory available
-NotFoundIfYouUseIt=غير موجود. تطبيق Claude لسطح المكتب لا يحتاج إلا إلى زر «اتصال» أعلاه. إن كنت تستخدم Claude Code، شغّل هذا الأمر مرة واحدة في الطرفية (في Windows: PowerShell أو موجه الأوامر، لا مربع التشغيل):
-;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
+NotFoundIfYouUseIt=غير موجود. تطبيق Claude لسطح المكتب لا يحتاج إلا إلى زر «اتصال» أعلاه. لاستخدام Claude Code ثبّته في PowerShell (لا في مربع التشغيل) بالأمر  {}  ثم افتح نافذة PowerShell جديدة وشغّل هذا الأمر مرة واحدة:
+;Not found. Claude's desktop app needs only the Connect button above. To use Claude Code, install it in PowerShell (not the Run box) with  {}  then open a new PowerShell window and run this command once:
+NotFoundToUseClaudeCode=غير موجود. لاستخدام Claude Code ثبّته في الطرفية بالأمر  {}  ثم افتح طرفية جديدة وشغّل هذا الأمر مرة واحدة:
+;Not found. To use Claude Code, install it in a terminal with  {}  then open a new terminal and run this command once:
 NotInstalledGetItFromClaude=غير مثبت. احصل عليه من claude.ai/download، وشغّله مرة واحدة، ثم عد إلى هنا.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=غير محدد

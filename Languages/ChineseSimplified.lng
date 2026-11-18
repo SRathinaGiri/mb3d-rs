@@ -2615,8 +2615,10 @@ NotAvailableForLinuxUseClaude=不支持 Linux：请使用下面的 Claude Code�
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=可用内存不足
 ;Not enough memory available
-NotFoundIfYouUseIt=未找到。Claude 桌面应用只需上方的“连接”按钮。如果你使用 Claude Code，请在终端（Windows 上为 PowerShell 或命令提示符，不是“运行”框）中运行一次此命令：
-;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
+NotFoundIfYouUseIt=未找到。Claude 桌面应用只需上方的“连接”按钮。要使用 Claude Code，请在 PowerShell（不是“运行”框）中用  {}  安装，然后打开一个新的 PowerShell 窗口，运行一次此命令：
+;Not found. Claude's desktop app needs only the Connect button above. To use Claude Code, install it in PowerShell (not the Run box) with  {}  then open a new PowerShell window and run this command once:
+NotFoundToUseClaudeCode=未找到。要使用 Claude Code，请在终端中用  {}  安装，然后打开一个新的终端，运行一次此命令：
+;Not found. To use Claude Code, install it in a terminal with  {}  then open a new terminal and run this command once:
 NotInstalledGetItFromClaude=未安装。请从 claude.ai/download 获取，启动一次，然后回到这里。
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=未选择

@@ -2614,8 +2614,10 @@ NotAvailableForLinuxUseClaude=Nie je przistãpné dlô Linuksa: brëkùjë Claud
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=Za mało dostãpny pamiãtë
 ;Not enough memory available
-NotFoundIfYouUseIt=Nie nalazłé. Aplikacjô Claude na kòmpùter nót mô blós knefla „Pòłączë” wëżi. Jeżlë brëkùjesz Claude Code, zrëszë rôz tã kòmandã w terminalu (w Windows: PowerShell abò Wiérsz pòlecënków, nié òkno Zrëszanié):
-;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
+NotFoundIfYouUseIt=Nie nalazłé. Aplikacjô Claude na kòmpùter nót mô blós knefla „Pòłączë” wëżi. Żebë brëkòwac Claude Code, zainstalëjë gò w PowerShell (nié w òknie Zrëszanié) kòmandą  {}  pòtemù òtemkni nowé òkno PowerShell i zrëszë rôz tã kòmandã:
+;Not found. Claude's desktop app needs only the Connect button above. To use Claude Code, install it in PowerShell (not the Run box) with  {}  then open a new PowerShell window and run this command once:
+NotFoundToUseClaudeCode=Nie nalazłé. Żebë brëkòwac Claude Code, zainstalëjë gò w terminalu kòmandą  {}  pòtemù òtemkni nowi terminal i zrëszë rôz tã kòmandã:
+;Not found. To use Claude Code, install it in a terminal with  {}  then open a new terminal and run this command once:
 NotInstalledGetItFromClaude=Nie je zainstalowóné. Scygni gò z claude.ai/download, zrëszë gò rôz, a pòtemù wrócë tuwò.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=Nie wëbróné

@@ -2615,8 +2615,10 @@ NotAvailableForLinuxUseClaude=Linux용은 없습니다: 아래의 Claude Code를
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=사용 가능한 메모리가 부족합니다
 ;Not enough memory available
-NotFoundIfYouUseIt=찾을 수 없습니다. Claude 데스크톱 앱은 위의 '연결' 단추만 있으면 됩니다. Claude Code를 사용한다면 터미널(Windows에서는 PowerShell 또는 명령 프롬프트, '실행' 창이 아님)에서 이 명령을 한 번 실행하십시오:
-;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
+NotFoundIfYouUseIt=찾을 수 없습니다. Claude 데스크톱 앱은 위의 '연결' 단추만 있으면 됩니다. Claude Code를 사용하려면 PowerShell('실행' 창이 아님)에서  {}  로 설치한 다음 새 PowerShell 창을 열고 이 명령을 한 번 실행하십시오:
+;Not found. Claude's desktop app needs only the Connect button above. To use Claude Code, install it in PowerShell (not the Run box) with  {}  then open a new PowerShell window and run this command once:
+NotFoundToUseClaudeCode=찾을 수 없습니다. Claude Code를 사용하려면 터미널에서  {}  로 설치한 다음 새 터미널을 열고 이 명령을 한 번 실행하십시오:
+;Not found. To use Claude Code, install it in a terminal with  {}  then open a new terminal and run this command once:
 NotInstalledGetItFromClaude=설치되지 않았습니다. claude.ai/download에서 받아 한 번 실행한 다음 여기로 돌아오십시오.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=선택 안 됨

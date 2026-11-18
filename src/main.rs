@@ -962,7 +962,13 @@ fn mcp_cmd(argv: &[String]) -> Result<(), String> {
                     Err(e) => println!("Claude (desktop app): {e}"),
                 }
                 println!();
-                println!("Claude Code: run this command once in a terminal{}:", if remove { " to take mb3d out" } else { "" });
+                let (inst, _) = mb3d::mcp::claude_code_status();
+                if !inst && !remove {
+                    println!("Claude Code is not installed. To use it, install it {} with:", if cfg!(windows) { "in PowerShell" } else { "in a terminal" });
+                    println!("    {}", mb3d::mcp::claude_code_install());
+                    println!("and open a new {} window.", if cfg!(windows) { "PowerShell" } else { "terminal" });
+                }
+                println!("Claude Code: run this command once in {}{}:", if cfg!(windows) { "PowerShell or Command Prompt" } else { "a terminal" }, if remove { " to take mb3d out" } else { "" });
                 println!("    {}", mb3d::mcp::claude_code_command(remove, &exe)?);
                 if !remove {
                     println!("then start a new Claude Code session and ask, for example: \"Show me a preview of the last picture I rendered in mb3d.\"");

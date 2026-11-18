@@ -2615,8 +2615,10 @@ NotAvailableForLinuxUseClaude=Linux இல் கிடைக்காது: �
 ;Not available for Linux: use Claude Code below.
 NotEnoughMemoryAvailable=போதுமான நினைவகம் இல்லை
 ;Not enough memory available
-NotFoundIfYouUseIt=கிடைக்கவில்லை. Claude டெஸ்க்டாப் செயலிக்கு மேலே உள்ள "இணை" பொத்தான் மட்டுமே போதும். Claude Code பயன்படுத்தினால், இந்தக் கட்டளையை ஒரு முறை டெர்மினலில் இயக்குங்கள் (Windows-இல்: PowerShell அல்லது Command Prompt, Run பெட்டி அல்ல):
-;Not found. Claude's desktop app needs only the Connect button above. If you use Claude Code, run this command once in a terminal (on Windows: PowerShell or Command Prompt, not the Run box):
+NotFoundIfYouUseIt=கிடைக்கவில்லை. Claude டெஸ்க்டாப் செயலிக்கு மேலே உள்ள "இணை" பொத்தான் மட்டுமே போதும். Claude Code-க்கு, PowerShell-இல் (Run பெட்டியில் அல்ல)  {}  மூலம் நிறுவி, புதிய PowerShell சாளரத்தைத் திறந்து இந்தக் கட்டளையை ஒரு முறை இயக்குங்கள்:
+;Not found. Claude's desktop app needs only the Connect button above. To use Claude Code, install it in PowerShell (not the Run box) with  {}  then open a new PowerShell window and run this command once:
+NotFoundToUseClaudeCode=கிடைக்கவில்லை. Claude Code-க்கு, டெர்மினலில்  {}  மூலம் நிறுவி, புதிய டெர்மினலைத் திறந்து இந்தக் கட்டளையை ஒரு முறை இயக்குங்கள்:
+;Not found. To use Claude Code, install it in a terminal with  {}  then open a new terminal and run this command once:
 NotInstalledGetItFromClaude=நிறுவப்படவில்லை. claude.ai/download இலிருந்து பெற்று, ஒரு முறை தொடங்கி, பின் இங்கே திரும்புங்கள்.
 ;Not installed. Get it from claude.ai/download, start it once, then come back here.
 NotSelected=தேர்ந்தெடுக்கப்படவில்லை
