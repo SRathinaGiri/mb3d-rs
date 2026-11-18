@@ -87,6 +87,10 @@ pub struct State {
     /// the main window's parameters (as text) the window last started
     /// from or sent there: opened again with the same ones, nothing changes
     main_text: String,
+    /// the main window's parameters wait for the generation being made:
+    /// Some(Some(variation)) after Send to Main, Some(None) after the
+    /// window opened again (see `take_main`)
+    main_waiting: Option<Option<GenMember>>,
 }
 
 impl Default for State {
@@ -100,6 +104,7 @@ impl Default for State {
             layout_size: (0, 0),
             uuid: 0,
             main_text: String::new(),
+            main_waiting: None,
         }
     }
 }
@@ -275,16 +280,49 @@ fn to_bitmap(rgb: &[u8], w: usize, h: usize, bw: usize, bh: usize) -> Bitmap {
 /// window: a variation sent to the main window and calculated there lost
 /// all generations on the way back.)
 pub fn opening(app: &mut Mb3d, ui: &mut Ui) {
-    if app.mutagen.running || ui.showing(F) {
+    if ui.showing(F) {
         return;
     }
+    if app.mutagen.running {
+        // (the generation being made finishes first, see `idle`; until
+        // 0.3.13 the window opened again as it was and stayed so)
+        app.mutagen.main_waiting.get_or_insert(None);
+        return;
+    }
+    take_main(app, ui, None);
+}
+
+/// The main window's parameters as the centre picture: nothing changes when
+/// they are the centre already or the ones the window last started from or
+/// sent there; a variation of a generation becomes the root of a further
+/// generation with its picture, other parameters with a new one (rendered),
+/// after the kept generations.  `sent`: the variation Send to Main gave the
+/// main window, in the centre when the window opens again (until 0.3.13 the
+/// centre kept the generation's root); it is taken as it is, since the
+/// main window gives its parameters back rounded (Julia values to 15
+/// digits), so they need not match it as text.
+fn take_main(app: &mut Mb3d, ui: &mut Ui, sent: Option<GenMember>) {
     app.make_scene(ui);
     let text = app.scene.to_text();
     let first = app.mutagen.generations.is_empty();
-    if !first && (text == app.mutagen.main_text || app.mutagen.generations.iter().flatten().flatten().any(|m| m.member.scene.to_text() == text)) {
-        return;
-    }
-    app.mutagen.main_text = text;
+    let centre = app.mutagen.generations.get(app.mutagen.current).and_then(|g| g.first().cloned().flatten()).map(|c| c.member.scene.to_text());
+    let known = match sent {
+        Some(m) => {
+            app.mutagen.main_text = text;
+            if centre.as_deref() == Some(m.member.scene.to_text().as_str()) {
+                return;
+            }
+            Some(m)
+        }
+        None => {
+            if !first && (centre.as_deref() == Some(text.as_str()) || text == app.mutagen.main_text) {
+                app.mutagen.main_text = text;
+                return;
+            }
+            app.mutagen.main_text = text.clone();
+            app.mutagen.generations.iter().flatten().flatten().find(|m| m.member.scene.to_text() == text).cloned()
+        }
+    };
     if first {
         app.mutagen.current = 0;
         for i in 0..TREE.len() {
@@ -294,10 +332,10 @@ pub fn opening(app: &mut Mb3d, ui: &mut Ui) {
         }
     } else {
         // the new root's tile until its preview is there
-        let b = blank(ui);
+        let b = known.as_ref().map(|m| m.img.clone()).unwrap_or_else(|| blank(ui));
         ui.set_picture(F, &image_name(0), Some(b));
     }
-    create_mutation(app, ui, None, true);
+    create_mutation(app, ui, None, true, known);
 }
 
 /// The parameters of the main window as the root (`CreateInitialSet`).
@@ -310,7 +348,8 @@ fn initial_from_main(app: &mut Mb3d, ui: &mut Ui) -> Option<GenMember> {
 /// `CreateMutation(Sender)`: a new generation from the member of the panel
 /// `from` (None: from the main window's parameters); `root_only` renders
 /// just the root (`CreateInitialSet`).
-fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: Option<usize>, root_only: bool) {
+/// `given`: a member of a generation as the root (instead of `from`).
+fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: Option<usize>, root_only: bool, given: Option<GenMember>) {
     if app.mutagen.running {
         app.mutagen.cancel.store(true, Ordering::SeqCst);
         return;
@@ -318,13 +357,15 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: Option<usize>, root_only: 
     // the picture size follows the window's layout
     layout(app, ui);
     let from = from.filter(|_| !app.mutagen.generations.is_empty());
+    let given_img = from.is_none() && given.is_some();
     let initial = match from {
+        None if given.is_some() => given,
         None => initial_from_main(app, ui),
         Some(from) => app.mutagen.generations.get(app.mutagen.current).and_then(|g| g.get(from).cloned().flatten()),
     };
     let Some(initial) = initial else { return };
     // (a member of a generation brings its picture, the main window's parameters are rendered)
-    let has_img = from.is_some();
+    let has_img = from.is_some() || given_img;
     app.mutagen.running = true;
     enable_controls(app, ui);
     refresh_mutate_caption(app, ui);
@@ -405,10 +446,11 @@ fn create_mutation(app: &mut Mb3d, ui: &mut Ui, from: Option<usize>, root_only: 
 }
 
 pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
-    if !ui.showing(F) {
-        return;
+    // (a generation goes on with the window closed, after Send to Main:
+    // its pictures are taken in here too, or it would never end)
+    if ui.showing(F) {
+        layout(app, ui);
     }
-    layout(app, ui);
     if !app.mutagen.running {
         return;
     }
@@ -435,6 +477,9 @@ pub fn idle(app: &mut Mb3d, ui: &mut Ui) {
         ui.cm(F, "ProgressBar").position = 0;
         refresh_mutate_caption(app, ui);
         enable_controls(app, ui);
+        if let Some(sent) = app.mutagen.main_waiting.take() {
+            take_main(app, ui, sent);
+        }
     }
 }
 
@@ -457,18 +502,15 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             refresh_mutate_caption(app, ui);
             ui.cm(F, "ProgressBar").position = 0;
         }
-        "FormCloseQuery" => {
-            if !app.mutagen.running {
-                ui.close_ok(F);
-            } else {
-                ui.close_cancel(F);
-            }
-        }
-        "MutateBtnClick" => create_mutation(app, ui, Some(0), false),
+        // (a generation being made goes on with the window closed, see
+        // `idle`; until 0.3.13 the window stayed open, so Send to Main
+        // during one left it in front with the old centre picture)
+        "FormCloseQuery" => ui.close_ok(F),
+        "MutateBtnClick" => create_mutation(app, ui, Some(0), false, None),
         "Panel_1DblClick" => {
             let s = e.sender.as_str();
             if let Some(i) = (0..TREE.len()).find(|&i| s == panel_name(i) || s == image_name(i)) {
-                create_mutation(app, ui, Some(i), false);
+                create_mutation(app, ui, Some(i), false, None);
             }
         }
         "DisableAllBtnClick" => {
@@ -506,15 +548,19 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             let Some((i, m)) = popup_member(app, ui) else { return ui.show_message(&tr("@MB:NoParamsToSendToMain")) };
             let t = crate::m3p::raw_to_text(&crate::m3p::write(&m.scene), &caption(i, app.mutagen.current));
             crate::vcl::clipboard::set(&t);
+            let gm = app.mutagen.generations[app.mutagen.current][i].clone();
             app.scene = m.scene;
             app.eng.clear();
             app.scene_to_forms(ui);
             app.title = caption(i, app.mutagen.current);
             super::main_form::set_caption(app, ui);
-            // (as the main window gives them back: the window opened again
-            // with them keeps its generations as they are)
-            app.make_scene(ui);
-            app.mutagen.main_text = app.scene.to_text();
+            // the variation sent in the centre (after the generation being
+            // made, if one is)
+            if app.mutagen.running {
+                app.mutagen.main_waiting = Some(gm);
+            } else {
+                take_main(app, ui, gm);
+            }
             // the main window in front with the parameters, the MutaGen
             // window closed (it keeps its generations for the next time)
             ui.close(F);
@@ -532,4 +578,20 @@ pub fn dialog(app: &mut Mb3d, ui: &mut Ui, what: &str, r: &DialogResult) {
         app.mutagen.current = 0;
         refresh_generation_label(app, ui);
     }
+}
+
+/// For the tests (tests/mutagen_window.rs): whether a generation is being
+/// made or the main window's parameters wait for it, the number of
+/// generations, a member of the current generation (0: the centre) as text.
+#[doc(hidden)]
+pub fn test_state(app: &Mb3d, member: usize) -> (bool, usize, Option<String>) {
+    let m = &app.mutagen;
+    let t = m.generations.get(m.current).and_then(|g| g.get(member)?.as_ref()).map(|x| x.member.scene.to_text());
+    (m.running || m.main_waiting.is_some(), m.generations.len(), t)
+}
+
+/// For the tests: the panel of a member (0: the centre).
+#[doc(hidden)]
+pub fn test_panel(member: usize) -> String {
+    panel_name(member)
 }
