@@ -564,7 +564,8 @@ impl Form {
                     enabled: en,
                     ..Default::default()
                 };
-                let (d1, d2) = if c.vertical { (Dir::Left, Dir::Right) } else { (Dir::Up, Dir::Down) };
+                // (udHorizontal: the right arrow counts up, as in the VCL)
+                let (d1, d2) = if c.vertical { (Dir::Up, Dir::Down) } else { (Dir::Right, Dir::Left) };
                 th.small_button(cv, a, Some(d1), st(PART_UP));
                 th.small_button(cv, b, Some(d2), st(PART_DOWN));
             }
@@ -1283,13 +1284,15 @@ impl Form {
 }
 
 /// The two button rectangles of an up-down (up/left first).
+/// The up and the down button of an UpDown: stacked (up on top) or, for
+/// udHorizontal, side by side (up on the right, as in the VCL).
 pub fn updown_rects(c: &Control, r: Rect) -> (Rect, Rect) {
     if c.vertical {
-        let w = r.w / 2;
-        (Rect::new(r.x, r.y, w, r.h), Rect::new(r.x + w, r.y, r.w - w, r.h))
-    } else {
         let h = r.h / 2;
         (Rect::new(r.x, r.y, r.w, h), Rect::new(r.x, r.y + h, r.w, r.h - h))
+    } else {
+        let w = r.w / 2;
+        (Rect::new(r.x + w, r.y, r.w - w, r.h), Rect::new(r.x, r.y, w, r.h))
     }
 }
 

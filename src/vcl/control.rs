@@ -956,6 +956,12 @@ pub fn from_obj(o: &Obj, theme: &Theme, parent_font: Option<&Font>) -> Control {
     }
     if k == Kind::UpDown {
         c.width = c.width.max(1);
+        // (the VCL's default is udVertical; until 0.3.13 an UpDown without
+        // Orientation was taken as horizontal and drawn the other way
+        // round, so udHorizontal ones showed up/down arrows too)
+        if ident(o, "Orientation").is_none() {
+            c.vertical = true;
+        }
     }
     if k == Kind::StringGrid {
         if c.cols.is_empty() {
