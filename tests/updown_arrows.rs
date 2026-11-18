@@ -1,5 +1,7 @@
 //! The arrows of an UpDown, with the program's windows (own test process).
 
+#![cfg(feature = "gui")]
+
 use mb3d::vcl::{Ev, MouseButton};
 
 /// MutaGen's generation arrows (udHorizontal) side by side, the right one

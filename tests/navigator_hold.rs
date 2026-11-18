@@ -2,6 +2,8 @@
 //! windows on the screen (its own test process: the program's settings
 //! would disturb the library's tests).
 
+#![cfg(feature = "gui")]
+
 use mb3d::vcl::input::Raw;
 use mb3d::vcl::MouseButton;
 use std::time::{Duration, Instant};

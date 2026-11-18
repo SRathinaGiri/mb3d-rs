@@ -2,6 +2,8 @@
 //! screen (its own test process: the program's settings would disturb the
 //! library's tests).
 
+#![cfg(feature = "gui")]
+
 use mb3d::app::mutagen_form::{test_panel, test_state};
 use mb3d::vcl::{App, Ev};
 
