@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.3.14" date="2026-11-18">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.14</url>
+      <description>
+        <p>MutaGen shows the variation you sent to the main window in its centre when you come back, and its generation arrows point left and right. The Navigator's arrow buttons keep moving while held. The AI window explains how to install and connect Claude Code on Windows, with a command that works in PowerShell and Command Prompt.</p>
+      </description>
+    </release>
     <release version="0.3.13" date="2026-11-16">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.13</url>
       <description>
