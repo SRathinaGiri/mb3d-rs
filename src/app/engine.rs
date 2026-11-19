@@ -22,8 +22,8 @@ pub enum Job {
     Preview { scene: Scene },
     /// "Calc-": the rough image of 8x8 blocks (MB3D's `CalcMandBlocky`)
     Blocky { scene: Scene },
-    /// Both stereo eyes, combined for viewing.  This deliberately keeps no
-    /// G-buffer: a side-by-side picture cannot be repainted as one camera.
+    /// Both stereo eyes, combined for viewing.  Its two G-buffers are kept
+    /// so the Lighting window can repaint and recompose both cameras.
     Stereo { scene: Scene, layout: crate::render::StereoLayout },
     /// The post processing window: the kept G-buffer repainted (MB3D's
     /// `TriggerRepaint`), the post steps whose settings changed run on the
@@ -131,6 +131,25 @@ pub struct Base {
     pub h: usize,
 }
 
+/// The two kept eye buffers of a stereo preview. Unlike a normal
+/// [`Base`], these are only used for the Lighting window's immediate
+/// repaint: post-processing actions still require a single-camera image.
+#[derive(Clone)]
+struct StereoBase {
+    scene: Scene,
+    layout: crate::render::StereoLayout,
+    left: StereoEye,
+    right: StereoEye,
+}
+
+#[derive(Clone)]
+struct StereoEye {
+    params: CalcParams,
+    post: Arc<Vec<SiLight>>,
+    w: usize,
+    h: usize,
+}
+
 #[derive(Default)]
 pub struct Output {
     /// the image (full size RGB)
@@ -184,6 +203,7 @@ pub struct Inner {
     pub rows: AtomicU64,
     pub out: Mutex<Output>,
     pub base: Mutex<Option<Arc<Base>>>,
+    stereo_base: Mutex<Option<Arc<StereoBase>>>,
     partial: Mutex<Option<Partial>>,
     /// the painted preview of the rows so far, and whether a painter runs
     preview: Mutex<Option<(Vec<u8>, usize, usize)>>,
@@ -299,6 +319,7 @@ impl Engine {
             rows: AtomicU64::new(0),
             out: Mutex::new(Output::default()),
             base: Mutex::new(None),
+            stereo_base: Mutex::new(None),
             partial: Mutex::new(None),
             preview: Mutex::new(None),
             painting: AtomicBool::new(false),
@@ -320,6 +341,15 @@ impl Engine {
     /// Starts a job; a running one is cancelled.
     pub fn start(&self, job: Job) {
         let gen = self.0.gen.fetch_add(1, Ordering::SeqCst) + 1;
+        // A stereo preview has two full G-buffers. Keep them only while
+        // it is the displayed calculation; a new render releases them.
+        // Relighting is the one job that consumes and updates them.
+        if !matches!(&job, Job::Relight { .. }) {
+            *self.0.stereo_base.lock().unwrap() = None;
+        }
+        if matches!(&job, Job::Stereo { .. }) {
+            *self.0.base.lock().unwrap() = None;
+        }
         // (under the job's lock: the worker ending the last job does not
         // see it running without the new one, see `worker`)
         let mut j = self.0.job.lock().unwrap();
@@ -406,6 +436,13 @@ impl Engine {
         self.0.base.lock().unwrap().clone()
     }
 
+    /// Whether the Lighting window can repaint the displayed calculation.
+    /// A normal calculation has one kept buffer; a stereo preview has one
+    /// for each eye.
+    pub fn can_relight(&self) -> bool {
+        self.0.base.lock().unwrap().is_some() || self.0.stereo_base.lock().unwrap().is_some()
+    }
+
     /// The object position (absolute) under pixel `x`, `y` of the kept
     /// image and its distance from the camera plane as a fraction of the
     /// image width (MB3D's `GetZPos / (dStepWidth * Width)`); None over the
@@ -456,6 +493,7 @@ impl Engine {
         *self.0.partial.lock().unwrap() = None;
         *self.0.preview.lock().unwrap() = None;
         *self.0.base.lock().unwrap() = None;
+        *self.0.stereo_base.lock().unwrap() = None;
         let mut o = self.0.out.lock().unwrap();
         o.rgb = None;
         o.ver += 1;
@@ -601,13 +639,14 @@ fn worker(e: Arc<Inner>) {
 }
 
 /// Renders the two eye cameras one after the other, then places them beside
-/// each other for parallel or cross-eyed viewing.  Rendering the eyes in
-/// sequence avoids doubling the already substantial G-buffer memory use.
+/// each other for parallel or cross-eyed viewing. Both eye G-buffers are
+/// retained so the Lighting window can repaint the stereo preview without
+/// ray marching it again, just as it can after Calculate 3D.
 fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     if sc.tiling.is_some() {
         return Err(tr("@MB:StereoPairsCannotBeRenderedWith"));
     }
-    let eye = |mode: u8, name: &str, offset: usize| -> Result<(Vec<u8>, usize, usize, f64, f64), String> {
+    let eye = |mode: u8, name: &str, offset: usize| -> Result<(Vec<u8>, StereoEye, f64, f64), String> {
         let mut s = sc.clone();
         s.slice_2d = 0;
         s.calc_rect = None;
@@ -624,22 +663,25 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
         }
         let painted_from = Instant::now();
         let rgb = crate::render::paint(&s, &params, &gbuffer);
-        Ok((rgb, params.rect[2] as usize, params.rect[3] as usize, (painted_from - started).as_secs_f64(), painted_from.elapsed().as_secs_f64()))
+        let (w, h) = (params.rect[2] as usize, params.rect[3] as usize);
+        let eye = StereoEye { params, post: Arc::new(gbuffer), w, h };
+        Ok((rgb, eye, (painted_from - started).as_secs_f64(), painted_from.elapsed().as_secs_f64()))
     };
-    let (left, w, h, left_calc, left_paint) = eye(4, "left", 0)?;
+    let (left, left_eye, left_calc, left_paint) = eye(4, "left", 0)?;
     if cancel() {
         return Err("cancelled".into());
     }
-    let (right, rw, rh, right_calc, right_paint) = eye(3, "right", 500)?;
-    if (w, h) != (rw, rh) {
+    let (right, right_eye, right_calc, right_paint) = eye(3, "right", 500)?;
+    if (left_eye.w, left_eye.h) != (right_eye.w, right_eye.h) {
         return Err(tr("@MB:TheStereoEyeImagesHaveDifferent"));
     }
     if cancel() {
         return Err("cancelled".into());
     }
     e.out.lock().unwrap().stage = "stereo: composing preview".into();
-    let (rgb, ow, oh) = crate::render::compose_stereo(&left, &right, w, h, layout);
+    let (rgb, ow, oh) = crate::render::compose_stereo(&left, &right, left_eye.w, left_eye.h, layout);
     *e.base.lock().unwrap() = None;
+    *e.stereo_base.lock().unwrap() = Some(Arc::new(StereoBase { scene: sc.clone(), layout, left: left_eye, right: right_eye }));
     e.publish(rgb, ow, oh, "stereo preview ready", Some(Stats {
         calc_s: left_calc + right_calc,
         post_s: left_paint + right_paint,
@@ -1006,7 +1048,9 @@ fn depth_of_field(e: &Inner, d: &crate::dof::DofParams, cancel: &(dyn Fn() -> bo
 /// as the calculation). The kept buffers and their signature stay, so a
 /// following `Repaint` knows what to calculate again.
 fn relight(e: &Inner, sc: &Scene, hs_off: u8) -> Result<(), String> {
-    let Some(b) = e.base.lock().unwrap().clone() else { return Ok(()) };
+    let Some(b) = e.base.lock().unwrap().clone() else {
+        return relight_stereo(e, sc, hs_off);
+    };
     let mut target = sc.clone();
     target.width = b.scene.width;
     target.height = b.scene.height;
@@ -1026,6 +1070,45 @@ fn relight(e: &Inner, sc: &Scene, hs_off: u8) -> Result<(), String> {
         None => (b.raw.clone(), b.post.clone(), b.post_sig.clone()),
     };
     *g = Some(Arc::new(Base { scene: target, params: b.params.clone(), raw, post, post_sig, w: b.w, h: b.h }));
+    Ok(())
+}
+
+/// Repaints both retained stereo eyes with the current lighting and
+/// composes the preview again. Geometry, depths and calculated shadows
+/// remain those of the stereo render, matching the normal relight path.
+fn relight_stereo(e: &Inner, sc: &Scene, hs_off: u8) -> Result<(), String> {
+    let Some(b) = e.stereo_base.lock().unwrap().clone() else { return Ok(()) };
+    let mut target = sc.clone();
+    target.width = b.scene.width;
+    target.height = b.scene.height;
+    target.slice_2d = 0;
+    target.calc_rect = None;
+    if let Some(h) = &mut target.shadows {
+        h.lights &= !hs_off;
+    }
+    let paint_eye = |eye: &StereoEye, mode| {
+        let mut scene = target.clone();
+        scene.stereo_mode = mode;
+        crate::render::paint_preview(&scene, &eye.params, &eye.post)
+    };
+    let left = paint_eye(&b.left, 4);
+    let right = paint_eye(&b.right, 3);
+    let (rgb, w, h) = crate::render::compose_stereo(&left, &right, b.left.w, b.left.h, b.layout);
+    e.publish(rgb, w, h, "", None);
+
+    // Keep the unmasked scene, as with a normal base: hs_off affects only
+    // this paint and not the parameters of subsequent lighting changes.
+    let mut kept = sc.clone();
+    kept.width = b.scene.width;
+    kept.height = b.scene.height;
+    kept.slice_2d = 0;
+    kept.calc_rect = None;
+    *e.stereo_base.lock().unwrap() = Some(Arc::new(StereoBase {
+        scene: kept,
+        layout: b.layout,
+        left: b.left.clone(),
+        right: b.right.clone(),
+    }));
     Ok(())
 }
 
@@ -1140,7 +1223,7 @@ fn reflect_sel(e: &Inner, sc: &Scene, rect: [i32; 4], cancel: &(dyn Fn() -> bool
 
 #[cfg(test)]
 mod tests {
-    use super::{post_sig, steps_on_kept, PostStep};
+    use super::{post_sig, relight, steps_on_kept, stereo, Engine, PostStep};
     use crate::scene::{Scene, ShadowParams};
 
     #[test]
@@ -1175,5 +1258,27 @@ mod tests {
         let mut d = a.clone();
         d.zoom *= 2.0;
         assert_eq!(steps_on_kept(&old, &post_sig(&d), None), None);
+    }
+
+    #[test]
+    fn a_stereo_preview_can_be_relighted() {
+        let mut scene = Scene::preset("Integer Power").unwrap();
+        scene.width = 32;
+        scene.height = 24;
+        scene.threads = 1;
+        let engine = Engine::new();
+        stereo(&engine.0, &scene, crate::render::StereoLayout::Parallel, &|| false).unwrap();
+        assert!(engine.can_relight());
+        assert!(engine.base().is_none(), "stereo is not a single-camera base");
+        let before = engine.0.out.lock().unwrap().rgb.clone().unwrap();
+
+        let mut changed = scene.clone();
+        changed.lighting.diffuse = 0.0;
+        changed.lighting.ambient = 0.0;
+        changed.lighting.specular = 0.0;
+        relight(&engine.0, &changed, 0).unwrap();
+        let after = engine.0.out.lock().unwrap().rgb.clone().unwrap();
+        assert_eq!(before.len(), after.len());
+        assert_ne!(before, after);
     }
 }
