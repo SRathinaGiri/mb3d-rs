@@ -28,8 +28,33 @@ pub fn app_folder() -> PathBuf {
     std::env::current_exe()
         .ok()
         .and_then(|p| std::fs::canonicalize(p).ok())
+        .map(plain)
         .and_then(|p| p.parent().map(|d| d.to_path_buf()))
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_default())
+}
+
+/// A path as people write it: without the `\\?\` Windows puts in front of
+/// the full form of a path (`std::fs::canonicalize` gives
+/// `\\?\C:\Users\...`; shown in windows, and in the command and the
+/// settings entry that start `mb3d`, it reads as a mistake and not every
+/// program takes it).
+pub fn plain(p: PathBuf) -> PathBuf {
+    match p.to_str() {
+        Some(t) => PathBuf::from(plain_text(t)),
+        None => p,
+    }
+}
+
+fn plain_text(t: &str) -> String {
+    if let Some(rest) = t.strip_prefix(r"\\?\UNC\") {
+        format!(r"\\{rest}")
+    } else if let Some(rest) = t.strip_prefix(r"\\?\") {
+        // (only a drive path: `\\?\Volume{...}` has no shorter form)
+        let b = rest.as_bytes();
+        if b.len() >= 2 && b[0].is_ascii_alphabetic() && b[1] == b':' { rest.to_string() } else { t.to_string() }
+    } else {
+        t.to_string()
+    }
 }
 
 /// The one-folder way (see the module notes): `MB3D_PORTABLE`, else
@@ -199,6 +224,16 @@ pub fn store_history(sc: &crate::scene::Scene, title: &str) -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
+    /// Windows' full paths are shown and handed on without `\\?\`.
+    #[test]
+    fn windows_full_paths_lose_their_prefix() {
+        assert_eq!(super::plain_text(r"\\?\C:\Users\a b\mb3d.exe"), r"C:\Users\a b\mb3d.exe");
+        assert_eq!(super::plain_text(r"\\?\UNC\nas\share\mb3d"), r"\\nas\share\mb3d");
+        assert_eq!(super::plain_text(r"\\?\Volume{1b3c}\mb3d"), r"\\?\Volume{1b3c}\mb3d");
+        assert_eq!(super::plain_text("/opt/mb3d"), "/opt/mb3d");
+        assert_eq!(super::plain_text(r"C:\mb3d"), r"C:\mb3d");
+    }
+
     #[test]
     fn stamp_format() {
         let (d, t) = super::history_stamp();

@@ -643,22 +643,71 @@ fn variations(opt: &Options, a: &Value) -> Result<Vec<Value>, String> {
 /// Where Claude's desktop app keeps its settings, on this system.
 fn claude_desktop_config() -> Option<PathBuf> {
     let home = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).map(PathBuf::from);
-    if cfg!(windows) {
-        std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("Claude").join("claude_desktop_config.json"))
+    let dir = if cfg!(windows) {
+        let local = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+        let roaming = std::env::var_os("APPDATA").map(PathBuf::from);
+        claude_desktop_dir_windows(local.as_deref(), roaming.as_deref())
     } else if cfg!(target_os = "macos") {
-        home.map(|h| h.join("Library/Application Support/Claude/claude_desktop_config.json"))
+        home.map(|h| h.join("Library/Application Support/Claude"))
     } else {
         // (no official Linux app: the builds of others keep it here)
         let base = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from).or_else(|| home.map(|h| h.join(".config")));
-        base.map(|b| b.join("Claude").join("claude_desktop_config.json"))
+        base.map(|b| b.join("Claude"))
+    };
+    dir.map(|d| d.join("claude_desktop_config.json"))
+}
+
+/// The settings folder of Claude's desktop app on Windows, which moved with
+/// its installers (a user's 0.3.14 said "Not installed" beside the
+/// installed app). The newest place that is there wins:
+///
+/// 1. `%LOCALAPPDATA%\Claude-Data\<package>`: the Store-style package
+///    (claude.ai/download since 2026, seen with 5.11492.5:
+///    `Claude-Data\claude_pzs8sxrjxfjjc`);
+/// 2. `%LOCALAPPDATA%\Packages\Claude_*\LocalCache\Roaming\Claude`: where
+///    Windows kept an earlier package's `%APPDATA%\Claude`. A package that
+///    moved on to 1. leaves the folder behind with a `.user-data-left...`
+///    note in it: not that one;
+/// 3. `%APPDATA%\Claude`: the installer before the package.
+///
+/// With none there, 3. is the answer (its name is what the "not installed"
+/// message shows).
+fn claude_desktop_dir_windows(local: Option<&Path>, roaming: Option<&Path>) -> Option<PathBuf> {
+    // (several folders in one place: the one whose settings were written
+    // last, a folder with settings before one without)
+    let newest = |dirs: Vec<PathBuf>| {
+        dirs.into_iter().max_by_key(|d| {
+            let cfg = d.join("claude_desktop_config.json");
+            let m = std::fs::metadata(&cfg).or_else(|_| std::fs::metadata(d)).and_then(|m| m.modified()).ok();
+            (cfg.is_file(), m)
+        })
+    };
+    let subdirs = |d: PathBuf| -> Vec<PathBuf> { std::fs::read_dir(d).map(|r| r.flatten().map(|e| e.path()).filter(|p| p.is_dir()).collect()).unwrap_or_default() };
+    if let Some(local) = local {
+        if let Some(d) = newest(subdirs(local.join("Claude-Data"))) {
+            return Some(d);
+        }
+        let left = |d: &Path| std::fs::read_dir(d).is_ok_and(|r| r.flatten().any(|e| e.file_name().to_string_lossy().starts_with(".user-data-left")));
+        let packages = subdirs(local.join("Packages"))
+            .into_iter()
+            .filter(|p| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with("Claude_")))
+            .map(|p| p.join("LocalCache").join("Roaming").join("Claude"))
+            .filter(|d| d.is_dir() && !left(d))
+            .collect();
+        if let Some(d) = newest(packages) {
+            return Some(d);
+        }
     }
+    roaming.map(|r| r.join("Claude"))
 }
 
 /// The command line program `mb3d` (the one assistants start): this
 /// program, or the `mb3d` next to it (from the desktop program).
 pub fn cli_program() -> Result<PathBuf, String> {
     let p = std::env::current_exe().map_err(|e| format!("cannot tell where this program is: {e}"))?;
-    let p = std::fs::canonicalize(&p).unwrap_or(p);
+    // (without Windows' `\\?\`: the path goes into Claude's settings and
+    // into the command the user runs)
+    let p = crate::appdirs::plain(std::fs::canonicalize(&p).unwrap_or(p));
     let is_cli = p.file_stem().is_some_and(|s| s == "mb3d");
     if is_cli {
         return Ok(p);
@@ -680,8 +729,9 @@ pub fn claude_desktop_status() -> (bool, bool) {
     (installed, connected)
 }
 
-/// Whether Claude Code is installed (`claude` on the PATH, or its folder in
-/// the home folder) and whether mb3d is among its servers for the user.
+/// Whether Claude Code is installed (`claude` on the PATH or in the native
+/// installer's place; on Linux also its folder in the home folder) and
+/// whether mb3d is among its servers for the user.
 pub fn claude_code_status() -> (bool, bool) {
     // (Windows: %USERPROFILE%, where Claude Code keeps .claude.json;
     // HOME is set there only inside Git Bash)
@@ -692,7 +742,10 @@ pub fn claude_code_status() -> (bool, bool) {
     // the native installer's place (on Windows not always on the PATH,
     // and not on this program's when it was started before the install)
     let native = home.as_ref().is_some_and(|h| h.join(".local").join("bin").join(if cfg!(windows) { "claude.exe" } else { "claude" }).is_file());
-    let installed = on_path || native || home.as_ref().is_some_and(|h| h.join(".claude").is_dir());
+    // (the `.claude` folder tells only on Linux: on Windows and macOS
+    // Claude's desktop app makes one too, at sign-in, with no `claude`
+    // command anywhere)
+    let installed = on_path || native || (cfg!(target_os = "linux") && home.as_ref().is_some_and(|h| h.join(".claude").is_dir()));
     // (CLAUDE_CONFIG_DIR moves .claude.json, as Claude Code reads it)
     let config_dir = std::env::var_os("CLAUDE_CONFIG_DIR").map(PathBuf::from).or(home);
     let connected = config_dir
@@ -776,6 +829,42 @@ mod tests {
     /// The line runs alike in every shell: no `--`, the program quoted on
     /// Windows (a user ran 0.3.13's in Windows' Run box; PowerShell may
     /// take `--` as its own).
+    /// Claude's desktop app on Windows: the package's `Claude-Data` folder
+    /// before the folder an earlier package left, before `%APPDATA%`
+    /// (0.3.14 looked only there and said "Not installed").
+    #[test]
+    fn claudes_windows_settings_folder_follows_its_installers() {
+        let root = std::env::temp_dir().join(format!("mb3d-mcp-claude-dirs-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let (local, roaming) = (root.join("Local"), root.join("Roaming"));
+        let find = || claude_desktop_dir_windows(Some(&local), Some(&roaming));
+        // nothing installed: the old place (named in the message)
+        std::fs::create_dir_all(&local).unwrap();
+        assert_eq!(find(), Some(roaming.join("Claude")));
+        // the installer before the package
+        std::fs::create_dir_all(roaming.join("Claude")).unwrap();
+        assert_eq!(find(), Some(roaming.join("Claude")));
+        // an earlier package: Windows' own copy of %APPDATA%\Claude
+        let pkg = local.join("Packages").join("Claude_pzs8sxrjxfjjc").join("LocalCache").join("Roaming").join("Claude");
+        std::fs::create_dir_all(&pkg).unwrap();
+        std::fs::create_dir_all(local.join("Packages").join("Microsoft.Other_8wekyb").join("LocalCache").join("Roaming").join("Claude")).unwrap();
+        assert_eq!(find(), Some(pkg.clone()));
+        // ... which the package of today left behind with a note
+        std::fs::write(pkg.join(".user-data-left.claude_pzs8sxrjxfjjc"), "{}").unwrap();
+        assert_eq!(find(), Some(roaming.join("Claude")));
+        // the package of today (as on a fresh Windows 11 with 5.11492.5)
+        let data = local.join("Claude-Data").join("claude_pzs8sxrjxfjjc");
+        std::fs::create_dir_all(&data).unwrap();
+        std::fs::write(local.join("Claude-Data").join("README.txt"), "").unwrap();
+        assert_eq!(find(), Some(data.clone()));
+        // two packages: the one with settings
+        let other = local.join("Claude-Data").join("claude_other");
+        std::fs::create_dir_all(&other).unwrap();
+        std::fs::write(data.join("claude_desktop_config.json"), "{}").unwrap();
+        assert_eq!(find(), Some(data));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
     #[test]
     fn claude_codes_command_has_no_double_dash_and_quotes_windows_paths() {
         let c = claude_code_command(false, Path::new("/opt/mb3d/mb3d")).unwrap();
