@@ -1,0 +1,44 @@
+name: GUI build
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: gui-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows GUI
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+      - name: GitHub token for curl
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          d="$RUNNER_TEMP/curlhome"
+          mkdir -p "$d"
+          printf 'header = "Authorization: Bearer %s"\n' "$GH_TOKEN" > "$d/.curlrc"
+          cp "$d/.curlrc" "$d/_curlrc"
+          echo "CURL_HOME=$d" >> "$GITHUB_ENV"
+      - name: Test GUI changes
+        run: |
+          cargo test --release --lib app::engine::tests::a_stereo_preview_can_be_relighted
+          cargo test --release --lib app::main_form::tests::saved_stereo_settings_are_strict_and_positive
+          cargo test --release --lib app::lang_form::tests::labels_complete
+      - name: Build Mandelbulb3D GUI
+        run: cargo build --release --bin Mandelbulb3D
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Mandelbulb3D-windows-x64
+          path: target/release/Mandelbulb3D.exe
+          archive: false
+          if-no-files-found: error
