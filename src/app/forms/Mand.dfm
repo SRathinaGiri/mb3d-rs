@@ -1841,6 +1841,18 @@ object Mand3DForm: TMand3DForm
           TabOrder = 7
           OnClick = StereoPairSaveClick
         end
+        object StereoSettingsSaveButton: TButton
+          Left = 8
+          Top = 226
+          Width = 131
+          Height = 22
+          Hint = '@MB:SaveTheCurrentStereoPreviewLayoutAndDistances'
+          Caption = '@MB:SaveStereoSettings'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 8
+          OnClick = StereoSettingsSaveClick
+        end
         object StereoCrossCheck: TCheckBox
           Left = 8
           Top = 8
@@ -1862,7 +1874,7 @@ object Mand3DForm: TMand3DForm
           Caption = '@MB:GetMinDistFromImage'
           ParentShowHint = False
           ShowHint = True
-          TabOrder = 8
+          TabOrder = 9
           Visible = False
           OnClick = Button16Click
         end

@@ -34,8 +34,11 @@ jobs:
           printf 'header = "Authorization: Bearer %s"\n' "$GH_TOKEN" > "$d/.curlrc"
           cp "$d/.curlrc" "$d/_curlrc"
           echo "CURL_HOME=$d" >> "$GITHUB_ENV"
-      - name: Test stereo relighting
-        run: cargo test --release --lib app::engine::tests::a_stereo_preview_can_be_relighted
+      - name: Test GUI changes
+        run: |
+          cargo test --release --lib app::engine::tests::a_stereo_preview_can_be_relighted
+          cargo test --release --lib app::main_form::tests::saved_stereo_settings_are_strict_and_positive
+          cargo test --release --lib app::lang_form::tests::labels_complete
       - name: Build Mandelbulb3D GUI
         run: cargo build --release --bin Mandelbulb3D
       - uses: actions/upload-artifact@v7

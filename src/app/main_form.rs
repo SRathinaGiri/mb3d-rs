@@ -15,6 +15,7 @@ use std::time::Instant;
 
 const F: &str = MAIN;
 const PID180: f64 = std::f64::consts::PI / 180.0;
+const STEREO_SETTINGS: &str = "StereoSettings";
 
 /// `TqualPreset`: the quality presets preview / video / mid / high.
 #[derive(Clone, Copy, Debug)]
@@ -448,6 +449,13 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
             Err(e) => app.message(ui, &e),
         }
     }
+    if let Some((cross, screen)) = app.ini.get_extra(STEREO_SETTINGS).and_then(parse_stereo_settings) {
+        app.scene.stereo_screen = screen;
+        ui.set_checked(F, "StereoCrossCheck", cross);
+        set(ui, "Edit15", &fts_single(screen[0] as f64));
+        set(ui, "Edit18", &fts_single(screen[1] as f64));
+        set(ui, "Edit13", &fts_single(screen[2] as f64));
+    }
     app.main.intern_aspect = app.scene.width.max(1) as f64 / app.scene.height.max(1) as f64;
     // (Mand.pas:3126: LastHisParSaveTime, LHPSLight)
     history_kept(app);
@@ -870,8 +878,8 @@ fn scale_rclip(ui: &mut Ui, s: f64) {
 // calculation
 // ---------------------------------------------------------------------------
 
-const CALC_BUTTONS: [&str; 23] = [
-    "SpeedButton32", "SpeedButton33", "SpeedButton34", "Button1", "Button6", "Button5", "Button9", "Button11", "Button12", "StereoPairSaveButton", "SpeedButton8",
+const CALC_BUTTONS: [&str; 24] = [
+    "SpeedButton32", "SpeedButton33", "SpeedButton34", "Button1", "Button6", "Button5", "Button9", "Button11", "Button12", "StereoPairSaveButton", "StereoSettingsSaveButton", "SpeedButton8",
     "SpeedButton11", "SpeedButton16", "SpeedButton17", "SpeedButton18", "SpeedButton22", "SpeedButton23", "SpeedButton1", "SpeedButton2",
     "SpeedButton4", "IniDirsBtn", "MapSequencesBtn", "VisualThemesBtn",
 ];
@@ -1240,6 +1248,43 @@ fn start_stereo_pair(app: &mut Mb3d, ui: &mut Ui) {
     #[cfg(feature = "gpu")]
     crate::gpu::set_status(String::new());
     app.eng.start(Job::Stereo { scene: app.scene.clone(), layout });
+}
+
+/// A saved stereo-tab profile: cross-eyed layout, image width, screen
+/// distance and minimum distance. Invalid or older values are ignored.
+fn parse_stereo_settings(text: &str) -> Option<(bool, [f32; 3])> {
+    let mut fields = text.split_whitespace();
+    let cross = match fields.next()? {
+        "0" => false,
+        "1" => true,
+        _ => return None,
+    };
+    let mut screen = [0.0f32; 3];
+    for value in &mut screen {
+        *value = fields.next()?.parse().ok()?;
+        if !(*value).is_finite() || *value <= 0.0 {
+            return None;
+        }
+    }
+    fields.next().is_none().then_some((cross, screen))
+}
+
+fn save_stereo_settings(app: &mut Mb3d, ui: &mut Ui) {
+    let parsed = ["Edit15", "Edit18", "Edit13"].map(|edit| parse_float(&t(ui, edit)).map(|v| v as f32));
+    let [Some(width), Some(distance), Some(minimum)] = parsed else {
+        return app.message(ui, &tr("@MB:StereoSettingsMustBePositiveNumbers"));
+    };
+    let screen = [width, distance, minimum];
+    if screen.iter().any(|v| !v.is_finite() || *v <= 0.0) {
+        return app.message(ui, &tr("@MB:StereoSettingsMustBePositiveNumbers"));
+    }
+    app.scene.stereo_screen = screen;
+    let cross = ui.checked(F, "StereoCrossCheck");
+    app.ini.set_extra(STEREO_SETTINGS, &format!("{} {} {} {}", cross as u8, screen[0], screen[1], screen[2]));
+    match app.ini.save() {
+        Ok(()) => app.message(ui, &tr("@MB:SavedStereoSettings")),
+        Err(e) => app.message(ui, &trf("@MB:CouldNotWrite", &[&"Mandelbulb3D.ini", &e])),
+    }
 }
 
 /// Starts the calculation of `sc`; when an unfinished calculation of it
@@ -2357,6 +2402,7 @@ pub fn event(app: &mut Mb3d, ui: &mut Ui, e: &Event) {
             };
             ui.save_dialog("main:autostereo", &o);
         }
+        "StereoSettingsSaveClick" => save_stereo_settings(app, ui),
         "Button2MouseDown" => {
             if let Ev::MouseDown { button: MouseButton::Right, x, y, .. } = e.ev {
                 if ui.caption(F, "Button2") != tr("@MB:Stop") {
@@ -3688,5 +3734,14 @@ mod tests {
         assert_eq!(stem("my.scene.m3p"), "my.scene");
         assert_eq!(stem("pic.PNG"), "pic");
         assert_eq!(stem("Keyframe #3"), "Keyframe #3");
+    }
+
+    #[test]
+    fn saved_stereo_settings_are_strict_and_positive() {
+        assert_eq!(parse_stereo_settings("1 1 2 0.5"), Some((true, [1.0, 2.0, 0.5])));
+        assert_eq!(parse_stereo_settings("0 1.5 3 0.25"), Some((false, [1.5, 3.0, 0.25])));
+        for bad in ["", "2 1 2 0.5", "1 1 2", "1 1 2 0", "1 one 2 0.5", "1 1 2 0.5 extra"] {
+            assert_eq!(parse_stereo_settings(bad), None, "{bad}");
+        }
     }
 }
