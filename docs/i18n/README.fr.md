@@ -609,10 +609,12 @@ Voici de quoi vérifier plus loin par vous-même :
   de l'œil droit avec les réglages stéréo de l'onglet et les affiche côte à
   côte dans la fenêtre principale. Elles sont placées pour la vision
   parallèle (image gauche à gauche) ; **Aperçu en vision croisée** les
-  intervertit pour la vision croisée. C'est un aperçu : l'éclairage et les
-  couleurs
-  ne peuvent pas être modifiés ensuite sans refaire le rendu, et cela ne
-  fonctionne pas avec les tuiles. Les boutons pour les images d'un seul œil
+  intervertit pour la vision croisée. Un changement dans la fenêtre
+  d'éclairage repeint aussitôt les deux yeux, sans refaire le rendu (les
+  reflets et la profondeur de champ demandent un nouveau rendu, une très
+  grande paire aussi) ; cela ne fonctionne pas avec les tuiles.
+  **Enregistrer réglages stéréo** garde Aperçu en vision croisée et les
+  trois distances pour le prochain démarrage du programme. Les boutons pour les images d'un seul œil
   sont toujours là.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Une paire stéréo de Hydra de Dainbramage, côte à côte pour la vision parallèle"></a>

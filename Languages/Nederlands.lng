@@ -3332,12 +3332,16 @@ SavePicture=Afbeelding opslaan:
 ;Save picture:
 SaveProject=Project opslaan
 ;Save project
+SaveStereoSettings=Stereo-instellingen opslaan
+;Save stereo settings
 SaveTextParametersInThePNG=Slaat de tekstparameters op in het PNG-bestand, indien aangevinkt.\nU kunt deze bijvoorbeeld in GIMP bekijken onder\n'Afbeeldingseigenschappen' -> Commentaar.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=Sla de animatieparameters op
 ;Save the animation parameters
 SaveTheCodeF5=De code opslaan <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=Slaat Kruislings voorbeeld, Beeldbreedte, Schermafstand en Minimale afstand op als standaardwaarden voor de volgende programmastart.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=De afbeelding opslaan als BMP- of PNG-bestand, geschaald zoals de huidige weergave.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=De afbeelding opslaan als BMP- of PNG-bestand. Als de optie 'Met Z-buffer' is ingeschakeld, wordt de Z-buffer ook opgeslagen.
@@ -3368,6 +3372,8 @@ SavedLower=opgeslagen
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} opgeslagen (OpenEXR, kleuren in drijvende komma en lagen)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=Stereo-instellingen opgeslagen.
+;Stereo settings saved.
 SavedTransparentBackground={} opgeslagen (transparante achtergrond)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=Slaat de belichting met deze kleuren op als lichtbestand (.m3l, ook voor MB3D); "Kleuren uit bestand" haalt de kleuren er weer uit.
@@ -3650,6 +3656,8 @@ StereoRenderingLeftEye=stereo: linkeroog wordt gerenderd
 ;stereo: rendering left eye
 StereoRenderingRightEye=stereo: rechteroog renderen
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=Beeldbreedte, Schermafstand en Minimale afstand moeten positieve getallen zijn voordat de stereo-instellingen kunnen worden opgeslagen.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=Dit venster links vastzetten
 ;Stick this window to the left side
 StickThisWindowToTheRight=Dit venster rechts vastzetten

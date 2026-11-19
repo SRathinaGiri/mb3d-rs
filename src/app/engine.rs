@@ -355,15 +355,6 @@ impl Engine {
     /// Starts a job; a running one is cancelled.
     pub fn start(&self, job: Job) {
         let gen = self.0.gen.fetch_add(1, Ordering::SeqCst) + 1;
-        // A stereo preview has two full G-buffers. Keep them only while
-        // it is the displayed calculation; a new render releases them.
-        // Relighting is the one job that consumes and updates them.
-        if !matches!(&job, Job::Relight { .. }) {
-            *self.0.stereo_base.locked() = None;
-        }
-        if matches!(&job, Job::Stereo { .. }) {
-            *self.0.base.locked() = None;
-        }
         // (under the job's lock: the worker ending the last job does not
         // see it running without the new one, see `worker`)
         let mut j = self.0.job.locked();
@@ -537,6 +528,7 @@ impl Engine {
         let (rgb, plain) = crate::render::paint_preview_plain(sc, &p, &raw);
         let unfinished = p.slice_2d == 0 && (sc.mc.reflections || sc.clouds.is_some() || sc.dof.is_some());
         *self.0.base.locked() = Some(Arc::new(Base { scene: sc.clone(), params: p, raw: raw.clone(), post: raw, post_sig: post_sig(sc), w, h }));
+        *self.0.stereo_base.locked() = None;
         let mut o = self.0.out.locked();
         o.rgb = Some(Arc::new(rgb));
         o.plain = plain.map(Arc::new);
@@ -618,13 +610,16 @@ impl Inner {
     }
 
     /// Before a big calculation: the last picture's buffers go (the old
-    /// G-buffers and the new one together do not fit, issue #7).  A
-    /// stopped calculation then leaves no picture to repaint.
+    /// G-buffers and the new one together do not fit, issue #7), those of
+    /// a stereo preview's two eyes too.  A stopped calculation then leaves
+    /// no picture to repaint.
     fn free_big_base(&self, w: usize, h: usize) {
         let mut b = self.base.locked();
-        let old = b.as_ref().map_or(0, |b| b.w * b.h);
+        let mut s = self.stereo_base.locked();
+        let old = b.as_ref().map_or(0, |b| b.w * b.h) + s.as_ref().map_or(0, |s| 2 * s.left.w * s.left.h);
         if w * h + old > BIG_PICTURE_PIXELS {
             *b = None;
+            *s = None;
         }
     }
 }
@@ -665,6 +660,12 @@ fn worker(e: Arc<Inner>) {
             Err(trf("@MB:TheCalculationFailed", &[&m.lines().last().unwrap_or("").trim()]))
         });
         e.busy.store(false, Ordering::SeqCst);
+        // (a single-camera picture took the stereo preview's place: its
+        // two eye buffers go.  Until then they stay, as a picture's do, so
+        // that a stopped calculation leaves the preview to repaint)
+        if e.base.locked().is_some() {
+            *e.stereo_base.locked() = None;
+        }
         // a newer job may already wait: only report when this one is the last
         let j = e.job.locked();
         if j.is_none() {
@@ -676,11 +677,19 @@ fn worker(e: Arc<Inner>) {
 /// Renders the two eye cameras one after the other, then places them beside
 /// each other for parallel or cross-eyed viewing. Both eye G-buffers are
 /// retained so the Lighting window can repaint the stereo preview without
-/// ray marching it again, just as it can after Calculate 3D.
+/// ray marching it again, just as it can after Calculate 3D.  Not those of
+/// a big pair (more than [`BIG_PICTURE_PIXELS`] in both eyes): there the
+/// left eye's buffer goes before the right eye is calculated, as two do
+/// not fit (issue #7), and the Lighting window cannot repaint the preview.
 fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cancel: &(dyn Fn() -> bool + Sync)) -> Result<(), String> {
     if sc.tiling.is_some() {
         return Err(tr("@MB:StereoPairsCannotBeRenderedWith"));
     }
+    let pixels = sc.width.max(0) as usize * sc.height.max(0) as usize;
+    let keep = 2 * pixels <= BIG_PICTURE_PIXELS;
+    // (the last picture's buffers stay while the eyes are calculated, so a
+    // stopped pair leaves it to repaint; unless they do not fit)
+    e.free_big_base(2 * pixels, 1);
     let eye = |mode: u8, name: &str, offset: usize| -> Result<(Vec<u8>, StereoEye, f64, f64), String> {
         let mut s = sc.clone();
         s.slice_2d = 0;
@@ -699,7 +708,7 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
         let painted_from = Instant::now();
         let rgb = crate::render::paint(&s, &params, &gbuffer);
         let (w, h) = (params.rect[2] as usize, params.rect[3] as usize);
-        let eye = StereoEye { params, post: Arc::new(gbuffer), w, h };
+        let eye = StereoEye { params, post: Arc::new(if keep { gbuffer } else { Vec::new() }), w, h };
         Ok((rgb, eye, (painted_from - started).as_secs_f64(), painted_from.elapsed().as_secs_f64()))
     };
     let (left, left_eye, left_calc, left_paint) = eye(4, "left", 0)?;
@@ -716,7 +725,7 @@ fn stereo(e: &Arc<Inner>, sc: &Scene, layout: crate::render::StereoLayout, cance
     e.out.locked().stage = "stereo: composing preview".into();
     let (rgb, ow, oh) = crate::render::compose_stereo(&left, &right, left_eye.w, left_eye.h, layout);
     *e.base.locked() = None;
-    *e.stereo_base.locked() = Some(Arc::new(StereoBase { scene: sc.clone(), layout, left: left_eye, right: right_eye }));
+    *e.stereo_base.locked() = keep.then(|| Arc::new(StereoBase { scene: sc.clone(), layout, left: left_eye, right: right_eye }));
     e.publish(rgb, ow, oh, "stereo preview ready", Some(Stats {
         calc_s: left_calc + right_calc,
         post_s: left_paint + right_paint,
@@ -1177,20 +1186,9 @@ fn relight_stereo(e: &Inner, sc: &Scene, hs_off: u8) -> Result<(), String> {
     let right = paint_eye(&b.right, 3);
     let (rgb, w, h) = crate::render::compose_stereo(&left, &right, b.left.w, b.left.h, b.layout);
     e.publish(rgb, w, h, "", None);
-
-    // Keep the unmasked scene, as with a normal base: hs_off affects only
-    // this paint and not the parameters of subsequent lighting changes.
-    let mut kept = sc.clone();
-    kept.width = b.scene.width;
-    kept.height = b.scene.height;
-    kept.slice_2d = 0;
-    kept.calc_rect = None;
-    *e.stereo_base.locked() = Some(Arc::new(StereoBase {
-        scene: kept,
-        layout: b.layout,
-        left: b.left.clone(),
-        right: b.right.clone(),
-    }));
+    // (the kept eyes stay as they are: nothing of them changes with the
+    // lighting, and writing them back could bring back buffers that a
+    // calculation started meanwhile has let go)
     Ok(())
 }
 
@@ -1370,5 +1368,28 @@ mod tests {
         let after = engine.picture().unwrap().0;
         assert_eq!(before.len(), after.len());
         assert_ne!(before, after);
+        // (the eyes stay kept: a second change repaints as well)
+        relight(&engine.0, &scene, 0).unwrap();
+        assert_eq!(engine.picture().unwrap().0, before);
+    }
+
+    /// The buffers go as a picture's do: a stopped stereo pair leaves the
+    /// last picture to repaint, and a single-camera picture that takes the
+    /// preview's place lets the two eye buffers go.
+    #[test]
+    fn stereo_buffers_follow_the_shown_picture() {
+        let mut scene = Scene::preset("Integer Power").unwrap();
+        scene.width = 32;
+        scene.height = 24;
+        scene.threads = 1;
+        let engine = Engine::new();
+        let (_, gbuf) = crate::render::calculate_cancellable(&scene, &|_, _| {}, &|| false).unwrap();
+        engine.set_gbuffer(&scene, gbuf.clone()).unwrap();
+        assert!(stereo(&engine.0, &scene, crate::render::StereoLayout::Parallel, &|| true).is_err());
+        assert!(engine.base().is_some(), "a stopped pair keeps the last picture's buffers");
+        stereo(&engine.0, &scene, crate::render::StereoLayout::Parallel, &|| false).unwrap();
+        assert!(engine.base().is_none() && engine.0.stereo_base.lock().unwrap().is_some());
+        engine.set_gbuffer(&scene, gbuf).unwrap();
+        assert!(engine.0.stereo_base.lock().unwrap().is_none());
     }
 }

@@ -3332,12 +3332,16 @@ SavePicture=Enregistrer l'image :
 ;Save picture:
 SaveProject=Enregistrer le projet
 ;Save project
+SaveStereoSettings=Enregistrer réglages stéréo
+;Save stereo settings
 SaveTextParametersInThePNG=Enregistre les paramètres en texte dans le fichier PNG, si coché.\nVous pouvez les voir par exemple dans GIMP sous\n« Propriétés de l'image » -> Commentaire.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=Enregistrer les paramètres d'animation
 ;Save the animation parameters
 SaveTheCodeF5=Enregistre le code <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=Enregistre Aperçu en vision croisée, Largeur image, Distance écran et Distance minimale comme valeurs par défaut pour le prochain démarrage du programme.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=Enregistre l'image en fichier BMP ou PNG, à l'échelle de la vue actuelle.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=Enregistrer l'image en fichier BMP ou PNG. Si l'option « Avec Z-buffer » est activée, le Z-buffer est enregistré également.
@@ -3368,6 +3372,8 @@ SavedLower=enregistré
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} enregistré (OpenEXR, couleurs en virgule flottante et calques)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=Réglages stéréo enregistrés.
+;Stereo settings saved.
 SavedTransparentBackground={} enregistré (arrière-plan transparent)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=Enregistre l'éclairage avec ces couleurs dans un fichier de lumière (.m3l, aussi pour MB3D) ; « Couleurs d'un fichier » en reprend les couleurs.
@@ -3650,6 +3656,8 @@ StereoRenderingLeftEye=stéréo : rendu de l'œil gauche
 ;stereo: rendering left eye
 StereoRenderingRightEye=stéréo : rendu de l'œil droit
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=Largeur image, Distance écran et Distance minimale doivent être des nombres positifs pour que les réglages stéréo puissent être enregistrés.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=Ancrer cette fenêtre à gauche
 ;Stick this window to the left side
 StickThisWindowToTheRight=Ancrer cette fenêtre à droite

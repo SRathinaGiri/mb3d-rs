@@ -3333,12 +3333,16 @@ SavePicture=画像を保存:
 ;Save picture:
 SaveProject=プロジェクトを保存
 ;Save project
+SaveStereoSettings=ステレオ設定を保存
+;Save stereo settings
 SaveTextParametersInThePNG=選択すると、テキストパラメーターを PNG ファイルに保存します。\n例えば gimp の「画像の情報」-> コメントで\n確認できます。
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=アニメーションパラメータを保存します。
 ;Save the animation parameters
 SaveTheCodeF5=コードを保存します <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=交差法プレビュー、画像の幅、画面までの距離、最小距離を、次回のプログラム起動時の既定値として保存します。
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=現在の表示と同じスケールで、画像を BMP または PNG ファイルとして保存します。
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=画像をBMPまたはPNGファイルとして保存します。「Zバッファ付き」オプションが有効な場合は、Z-bufferも一緒に保存されます。
@@ -3369,6 +3373,8 @@ SavedLower=保存した
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} を保存しました (OpenEXR、浮動小数点カラーとレイヤー)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=ステレオ設定を保存しました。
+;Stereo settings saved.
 SavedTransparentBackground={} を保存しました (透明背景)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=これらの色を含むライティングをライトファイル (.m3l、MB3D でも使用可) として保存します。「ファイルから色」でそこから色を読み戻せます。
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=ステレオ: 左目をレンダリング中
 ;stereo: rendering left eye
 StereoRenderingRightEye=ステレオ: 右目をレンダリング中
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=ステレオ設定を保存するには、画像の幅、画面までの距離、最小距離が正の数でなければなりません。
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=このウィンドウを左側に固定
 ;Stick this window to the left side
 StickThisWindowToTheRight=このウィンドウを右側に固定

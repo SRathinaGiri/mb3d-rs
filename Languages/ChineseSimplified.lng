@@ -3333,12 +3333,16 @@ SavePicture=保存图像:
 ;Save picture:
 SaveProject=保存项目
 ;Save project
+SaveStereoSettings=保存立体设置
+;Save stereo settings
 SaveTextParametersInThePNG=选中时，将文本参数保存到 PNG 文件中。\n例如在 gimp 中可通过\n"图像属性" -> 注释查看。
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=保存动画参数
 ;Save the animation parameters
 SaveTheCodeF5=保存代码 <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=将交叉眼预览、图像宽度、屏幕距离和最小距离保存为下次启动程序时的默认值。
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=将图像保存为 BMP 或 PNG 文件，按当前视图比例缩放。
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=将图像保存为 BMP 或 PNG 文件。启用“带 Z 缓冲”选项时，Z 缓冲也会一同保存。
@@ -3369,6 +3373,8 @@ SavedLower=已保存
 ;saved
 SavedOpenEXRFloatingPointColoursAnd=已保存 {}（OpenEXR，浮点颜色和图层）
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=立体设置已保存。
+;Stereo settings saved.
 SavedTransparentBackground=已保存 {}（透明背景）
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=把带有这些颜色的光照保存为光照文件（.m3l，MB3D 也能用）；“从文件取颜色”可以从中取回这些颜色。
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=立体：正在渲染左眼
 ;stereo: rendering left eye
 StereoRenderingRightEye=立体：正在渲染右眼
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=图像宽度、屏幕距离和最小距离必须为正数，才能保存立体设置。
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=将此窗口吸附到左侧
 ;Stick this window to the left side
 StickThisWindowToTheRight=将此窗口吸附到右侧

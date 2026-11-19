@@ -3333,12 +3333,16 @@ SavePicture=حفظ الصورة:
 ;Save picture:
 SaveProject=حفظ المشروع
 ;Save project
+SaveStereoSettings=حفظ إعدادات المجسم
+;Save stereo settings
 SaveTextParametersInThePNG=حفظ المعاملات النصية في ملف PNG، إن حُدد.\nيمكنك رؤيتها مثلًا في gimp تحت\n'Image Properties' -> Comment.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=حفظ معاملات التحريك
 ;Save the animation parameters
 SaveTheCodeF5=حفظ الشيفرة <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=يحفظ معاينة بالعينين المتقاطعتين وعرض الصورة ومسافة الشاشة وأدنى مسافة كقيم افتراضية لبدء البرنامج في المرة القادمة.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=حفظ الصورة بصيغة BMP أو PNG، بمقياس المنظر الحالي.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=حفظ الصورة بصيغة BMP أو PNG. عند تمكين خيار «مع مخزن Z» يُحفظ مخزن Z أيضًا.
@@ -3369,6 +3373,8 @@ SavedLower=محفوظ
 ;saved
 SavedOpenEXRFloatingPointColoursAnd=حُفظ {} (OpenEXR، ألوان بفاصلة عائمة وطبقات)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=تم حفظ إعدادات المجسم.
+;Stereo settings saved.
 SavedTransparentBackground=حُفظ {} (خلفية شفافة)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=يحفظ الإضاءة بهذه الألوان كملف إضاءة (.m3l، يصلح لـ MB3D أيضًا)؛ "ألوان من ملف" يستعيد الألوان منه.
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=مجسم: جارٍ تصيير العين اليسرى
 ;stereo: rendering left eye
 StereoRenderingRightEye=مجسم: جارٍ تصيير العين اليمنى
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=يجب أن يكون عرض الصورة ومسافة الشاشة وأدنى مسافة أرقامًا موجبة قبل حفظ إعدادات المجسم.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=لصق هذه النافذة بالجانب الأيسر
 ;Stick this window to the left side
 StickThisWindowToTheRight=لصق هذه النافذة بالجانب الأيمن

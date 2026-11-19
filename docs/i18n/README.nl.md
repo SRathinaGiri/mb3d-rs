@@ -560,10 +560,12 @@ kunt u zelf verder controleren:
   **Stereo ▸ Stereopaar renderen** rendert eerst de afbeelding voor het linkeroog en dan die voor het
   rechteroog met de stereo-instellingen van het tabblad, en toont ze naast elkaar in het
   hoofdvenster. Ze staan klaar om parallel te kijken (linkerafbeelding
-  links); **Kruislings voorbeeld** verwisselt ze om scheel te kijken. Het is een
-  voorvertoning: belichting en kleuren
-  kunnen achteraf niet worden veranderd zonder opnieuw te renderen, en het werkt
-  niet met tegels. De knoppen voor de afzonderlijke ooghelften zijn er nog steeds.
+  links); **Kruislings voorbeeld** verwisselt ze om scheel te kijken. Een wijziging in
+  het belichtingsvenster schildert beide ogen meteen opnieuw, zonder opnieuw
+  te renderen (spiegelingen en scherptediepte vragen een nieuwe render, een
+  heel groot paar ook); het werkt niet met tegels. **Stereo-instellingen
+  opslaan** bewaart Kruislings voorbeeld en de drie afstanden voor de
+  volgende programmastart. De knoppen voor de afzonderlijke ooghelften zijn er nog steeds.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Een stereopaar van Hydra van Dainbramage, naast elkaar om parallel te kijken"></a>
 

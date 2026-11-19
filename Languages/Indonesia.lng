@@ -3332,12 +3332,16 @@ SavePicture=Simpan gambar:
 ;Save picture:
 SaveProject=Simpan proyek
 ;Save project
+SaveStereoSettings=Simpan setelan stereo
+;Save stereo settings
 SaveTextParametersInThePNG=Simpan parameter teks dalam file PNG, jika dipilih.\nAnda dapat melihatnya misalnya di gimp pada\n'Image Properties' -> Comment.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=Simpan parameter animasi
 ;Save the animation parameters
 SaveTheCodeF5=Simpan kode <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=Menyimpan Pratinjau cross-eyed, Lebar gambar, Jarak layar, dan Jarak minimal sebagai bawaan untuk awal program berikutnya.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=Simpan gambar sebagai file BMP atau PNG, diskalakan seperti tampilan saat ini.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=Simpan gambar sebagai file BMP atau PNG. Jika opsi 'Dengan ZBuffer' aktif, z-buffer juga disimpan.
@@ -3368,6 +3372,8 @@ SavedLower=disimpan
 ;saved
 SavedOpenEXRFloatingPointColoursAnd=Disimpan {} (OpenEXR, warna floating point dan lapisan)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=Setelan stereo disimpan.
+;Stereo settings saved.
 SavedTransparentBackground=Disimpan {} (latar transparan)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=Menyimpan pencahayaan dengan warna ini sebagai file cahaya (.m3l, juga untuk MB3D); "Warna dari file" mengambil kembali warnanya dari file itu.
@@ -3650,6 +3656,8 @@ StereoRenderingLeftEye=stereo: merender mata kiri
 ;stereo: rendering left eye
 StereoRenderingRightEye=stereo: merender mata kanan
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=Lebar gambar, Jarak layar, dan Jarak minimal harus berupa angka positif sebelum setelan stereo dapat disimpan.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=Tempelkan jendela ini ke sisi kiri
 ;Stick this window to the left side
 StickThisWindowToTheRight=Tempelkan jendela ini ke sisi kanan

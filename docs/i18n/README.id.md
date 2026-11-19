@@ -586,9 +586,11 @@ jaminan. Hal-hal berikut memungkinkan Anda memeriksa lebih jauh sendiri:
   dengan pengaturan stereo di tab itu dan menampilkannya berdampingan di
   jendela utama. Keduanya ditata untuk melihat secara paralel (gambar kiri
   di kiri); **Pratinjau cross-eyed** menukarnya untuk melihat secara
-  bersilang. Ini adalah pratinjau: pencahayaan dan warna
-  tidak bisa diubah setelahnya tanpa merender ulang, dan fitur ini tidak
-  bekerja dengan tile. Tombol untuk gambar satu mata tetap ada.
+  bersilang. Perubahan di jendela pencahayaan langsung
+  mengecat ulang kedua mata, tanpa merender ulang (pantulan dan kedalaman
+  bidang perlu render baru, begitu juga pasangan yang sangat besar); fitur
+  ini tidak bekerja dengan tile. **Simpan setelan stereo** menyimpan
+  Pratinjau cross-eyed dan ketiga jarak untuk awal program berikutnya. Tombol untuk gambar satu mata tetap ada.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Pasangan stereo Hydra karya Dainbramage, berdampingan untuk melihat secara paralel"></a>
 

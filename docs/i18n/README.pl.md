@@ -574,8 +574,11 @@ możesz sprawdzić sam:
   prawego oka z ustawieniami stereo tej zakładki i pokazuje je obok siebie
   w oknie głównym. Są ułożone do oglądania równoległego (lewy obraz po
   lewej); **Podgląd krzyżowy** zamienia je miejscami do oglądania zezem.
-  To podgląd: oświetlenia i kolorów nie można potem zmienić bez ponownego
-  renderowania i nie działa on z kafelkami. Przyciski pojedynczych obrazów
+  Zmiana w oknie oświetlenia od razu maluje oba oczy na nowo, bez ponownego
+  renderowania (odbicia i głębia ostrości wymagają nowego renderowania,
+  bardzo duża para też); nie działa to z kafelkami. **Zapisz ustawienia
+  stereo** zachowuje Podgląd krzyżowy i trzy odległości na następne
+  uruchomienie programu. Przyciski pojedynczych obrazów
   dla każdego oka nadal są dostępne.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Para stereo Hydry Dainbramage'a, obok siebie do oglądania równoległego"></a>

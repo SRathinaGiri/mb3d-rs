@@ -475,11 +475,15 @@ pub fn start(app: &mut Mb3d, ui: &mut Ui) {
         }
     }
     if let Some((cross, screen)) = app.ini.get_extra(STEREO_SETTINGS).and_then(parse_stereo_settings) {
-        app.scene.stereo_screen = screen;
         ui.set_checked(F, "StereoCrossCheck", cross);
-        set(ui, "Edit15", &fts_single(screen[0] as f64));
-        set(ui, "Edit18", &fts_single(screen[1] as f64));
-        set(ui, "Edit13", &fts_single(screen[2] as f64));
+        // (a parameter file of the command line keeps its own distances:
+        // the saved ones are the defaults, as over Default.m3p)
+        if app.startup_file.is_none() {
+            app.scene.stereo_screen = screen;
+            set(ui, "Edit15", &fts_single(screen[0] as f64));
+            set(ui, "Edit18", &fts_single(screen[1] as f64));
+            set(ui, "Edit13", &fts_single(screen[2] as f64));
+        }
     }
     app.main.intern_aspect = app.scene.width.max(1) as f64 / app.scene.height.max(1) as f64;
     // (Mand.pas:3126: LastHisParSaveTime, LHPSLight)

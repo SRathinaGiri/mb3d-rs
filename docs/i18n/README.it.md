@@ -589,10 +589,12 @@ permettono di verificare ulteriormente da solo:
   e poi quella del destro con le impostazioni stereo della scheda e le
   mostra affiancate nella finestra principale. Sono disposte per la visione
   parallela (immagine sinistra a sinistra); **Anteprima a occhi incrociati**
-  le scambia per la visione a occhi incrociati. È un'anteprima:
-  illuminazione e colori
-  non si possono cambiare dopo senza renderizzare di nuovo, e non funziona
-  con i riquadri. I pulsanti per le immagini dei singoli occhi ci sono
+  le scambia per la visione a occhi incrociati. Una modifica nella
+  finestra di illuminazione ridipinge subito entrambi gli occhi, senza
+  renderizzare di nuovo (riflessi e profondità di campo richiedono un nuovo
+  rendering, e così una coppia molto grande); non funziona con i riquadri.
+  **Salva impostazioni stereo** conserva Anteprima a occhi incrociati e le
+  tre distanze per il prossimo avvio del programma. I pulsanti per le immagini dei singoli occhi ci sono
   ancora.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Una coppia stereo di Hydra di Dainbramage, affiancata per la visione parallela"></a>

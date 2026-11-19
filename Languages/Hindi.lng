@@ -3333,12 +3333,16 @@ SavePicture=चित्र सहेजें:
 ;Save picture:
 SaveProject=प्रोजेक्ट सहेजें
 ;Save project
+SaveStereoSettings=स्टीरियो सेटिंग सहेजें
+;Save stereo settings
 SaveTextParametersInThePNG=चयनित होने पर टेक्स्ट पैरामीटर PNG फ़ाइल में सहेजें।\nआप इन्हें उदाहरण के लिए gimp में\n'Image Properties' -> Comment में देख सकते हैं।
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=एनिमेशन पैरामीटर सहेजें
 ;Save the animation parameters
 SaveTheCodeF5=कोड सहेजें <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=क्रॉस-आई पूर्वावलोकन, छवि चौड़ाई, स्क्रीन दूरी और न्यूनतम दूरी को प्रोग्राम के अगले आरंभ के लिए डिफ़ॉल्ट के रूप में सहेजता है।
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=छवि को वर्तमान दृश्य जैसे स्केल में BMP या PNG फ़ाइल के रूप में सहेजें।
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=छवि को BMP या PNG फ़ाइल के रूप में सहेजें। 'ZBuffer के साथ' विकल्प चालू होने पर Z-बफ़र भी सहेजा जाता है।
@@ -3369,6 +3373,8 @@ SavedLower=सहेजी गई
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} सहेजा गया (OpenEXR, फ़्लोटिंग पॉइंट रंग और परतें)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=स्टीरियो सेटिंग सहेजी गईं।
+;Stereo settings saved.
 SavedTransparentBackground={} सहेजा गया (पारदर्शी पृष्ठभूमि)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=इन रंगों के साथ प्रकाश व्यवस्था को लाइट फ़ाइल (.m3l, MB3D के लिए भी) के रूप में सहेजता है; "फ़ाइल से रंग" उससे रंग वापस लेता है।
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=स्टीरियो: बाईं आँख रे�
 ;stereo: rendering left eye
 StereoRenderingRightEye=स्टीरियो: दाईं आँख रेंडर हो रही है
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=स्टीरियो सेटिंग सहेजने से पहले छवि चौड़ाई, स्क्रीन दूरी और न्यूनतम दूरी धनात्मक संख्याएँ होनी चाहिए।
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=इस विंडो को बाईं ओर चिपकाएँ
 ;Stick this window to the left side
 StickThisWindowToTheRight=इस विंडो को दाईं ओर चिपकाएँ

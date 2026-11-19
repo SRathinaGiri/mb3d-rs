@@ -587,9 +587,11 @@ können Sie selbst weiter prüfen:
   das für das rechte Auge mit den Stereo-Einstellungen der Registerkarte und
   zeigt sie nebeneinander im Hauptfenster. Sie sind für den Parallelblick
   angeordnet (linkes Bild links); **Kreuzblick-Vorschau** vertauscht sie für
-  den Kreuzblick. Es ist eine Vorschau: Beleuchtung und Farben
-  lassen sich danach nicht ändern, ohne neu zu rendern, und es funktioniert
-  nicht mit Kacheln. Die Schaltflächen für die einzelnen Augenbilder gibt es
+  den Kreuzblick. Eine Änderung im Beleuchtungsfenster malt beide Augen
+  sofort neu, ohne neu zu rendern (Spiegelungen und Schärfentiefe brauchen
+  ein neues Rendern, ein sehr großes Paar ebenso); es funktioniert nicht mit
+  Kacheln. **Stereo-Einstellungen speichern** behält Kreuzblick-Vorschau und
+  die drei Abstände für den nächsten Programmstart. Die Schaltflächen für die einzelnen Augenbilder gibt es
   weiterhin.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Ein Stereopaar von Dainbramages Hydra, nebeneinander für den Parallelblick"></a>

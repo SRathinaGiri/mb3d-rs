@@ -3333,12 +3333,16 @@ SavePicture=تصویر محفوظ کریں:
 ;Save picture:
 SaveProject=پروجیکٹ محفوظ کریں
 ;Save project
+SaveStereoSettings=اسٹیریو ترتیبات محفوظ کریں
+;Save stereo settings
 SaveTextParametersInThePNG=منتخب ہو تو متنی پیرامیٹرز PNG فائل میں محفوظ کریں۔\nآپ انہیں مثلاً gimp میں\n'Image Properties' -> Comment کے تحت دیکھ سکتے ہیں۔
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=اینیمیشن پیرامیٹرز محفوظ کریں
 ;Save the animation parameters
 SaveTheCodeF5=کوڈ محفوظ کریں <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=کراس آئیڈ پیش منظر، تصویر کی چوڑائی، اسکرین کا فاصلہ اور کم از کم فاصلہ پروگرام کے اگلے آغاز کے لیے طے شدہ قدروں کے طور پر محفوظ کرتا ہے۔
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=تصویر BMP یا PNG فائل کے طور پر محفوظ کریں، موجودہ منظر کے پیمانے پر۔
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=تصویر BMP یا PNG فائل کے طور پر محفوظ کریں۔ 'With ZBuffer' اختیار فعال ہو تو z-buffer بھی محفوظ ہوتا ہے۔
@@ -3369,6 +3373,8 @@ SavedLower=محفوظ ہوا
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} محفوظ ہوا (OpenEXR، فلوٹنگ پوائنٹ رنگ اور پرتیں)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=اسٹیریو ترتیبات محفوظ ہو گئیں۔
+;Stereo settings saved.
 SavedTransparentBackground={} محفوظ ہوا (شفاف پس منظر)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=ان رنگوں کے ساتھ روشنی کاری کو روشنی فائل (.m3l، MB3D کے لیے بھی) کے طور پر محفوظ کرتا ہے؛ "فائل سے رنگ" اس سے رنگ واپس لیتا ہے۔
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=اسٹیریو: بائیں آنکھ رینڈر ہو رہ�
 ;stereo: rendering left eye
 StereoRenderingRightEye=اسٹیریو: دائیں آنکھ رینڈر ہو رہی ہے
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=اسٹیریو ترتیبات محفوظ کرنے سے پہلے تصویر کی چوڑائی، اسکرین کا فاصلہ اور کم از کم فاصلہ مثبت اعداد ہونے چاہییں۔
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=اس ونڈو کو بائیں طرف چپکائیں
 ;Stick this window to the left side
 StickThisWindowToTheRight=اس ونڈو کو دائیں طرف چپکائیں

@@ -596,9 +596,12 @@ esto puede comprobar más por su cuenta:
   luego la del derecho con los ajustes estéreo de la pestaña y las muestra
   una junto a otra en la ventana principal. Se colocan para visión paralela
   (la imagen izquierda a la izquierda); **Vista previa ojos cruzados** las
-  intercambia para visión cruzada. Es una vista previa: la iluminación y los
-  colores no se pueden cambiar después sin volver a renderizar, y no
-  funciona con teselas. Los botones para las imágenes de cada ojo por
+  intercambia para visión cruzada. Un cambio en la ventana de iluminación
+  repinta los dos ojos al momento, sin volver a renderizar (los reflejos y
+  la profundidad de campo necesitan un nuevo render, y también un par muy
+  grande); no funciona con teselas. **Guardar ajustes estéreo** conserva
+  Vista previa ojos cruzados y las tres distancias para el próximo inicio
+  del programa. Los botones para las imágenes de cada ojo por
   separado siguen ahí.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Un par estéreo de Hydra de Dainbramage, una imagen junto a otra para visión paralela"></a>

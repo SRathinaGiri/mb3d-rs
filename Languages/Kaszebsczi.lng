@@ -3332,12 +3332,16 @@ SavePicture=Zapiszë òbrôzk:
 ;Save picture:
 SaveProject=Zapiszë projekt
 ;Save project
+SaveStereoSettings=Zapiszë nastôwë stereo
+;Save stereo settings
 SaveTextParametersInThePNG=Zapisywô tekstowé parametrë w lopkù PNG, jeżlë zaznaczoné.\nMòże je òbaczëc np. w gimpie pòd\n'Image Properties' -> Comment.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=Zapiszë parametrë animacje
 ;Save the animation parameters
 SaveTheCodeF5=Zapisywô kòd <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=Zapisywô Pòdzérk na krziż, Szérzã òbrôzka, Òdległosc ekranu ë Minimalną òdległosc jakno domëslné wôrtnotë na pòstãpny start programë.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=Zapisywô òbrôzk jakò lopk BMP abò PNG, skalowóny jak bieżny wëzdrzatk.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=Zapisywô òbrôzk jakno lopk BMP abò PNG. Czej òptacjô 'Z Z-buforã' je włączonô, zapisywóny je téż Z-bufor.
@@ -3368,6 +3372,8 @@ SavedLower=zapisóné
 ;saved
 SavedOpenEXRFloatingPointColoursAnd=Zapisóné {} (OpenEXR, farwë zmiennoprzecynkowé ë warstwë)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=Nastôwë stereo zapisóné.
+;Stereo settings saved.
 SavedTransparentBackground=Zapisóné {} (przezérné tło)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=Zapisywô òswiecenié z tima farwama jakno plik widu (.m3l, téż dlô MB3D); "Farwë z plikù" bierze z niegò farwë nazôd.
@@ -3650,6 +3656,8 @@ StereoRenderingLeftEye=stereo: renderowanié lewégò òka
 ;stereo: rendering left eye
 StereoRenderingRightEye=stereo: renderowanié prawégò òka
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=Szérzô òbrôzka, Òdległosc ekranu ë Minimalnô òdległosc mùszą bëc dodôtnyma lëczbama, żebë szło zapisac nastôwë stereo.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=Przëlepi to òkno do lewi starnë
 ;Stick this window to the left side
 StickThisWindowToTheRight=Przëlepi to òkno do prawi starnë

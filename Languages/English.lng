@@ -3334,14 +3334,14 @@ SaveProject=Save project
 ;TilingForm.SpeedButton9.Caption
 SaveStereoSettings=Save stereo settings
 ;Mand3DForm.StereoSettingsSaveButton.Caption
-SaveTheCurrentStereoPreviewLayoutAndDistances=Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
-;Mand3DForm.StereoSettingsSaveButton.Hint
 SaveTextParametersInThePNG=Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 ;Mand3DForm.CheckBox13.Hint
 SaveTheAnimationParameters=Save the animation parameters
 ;AnimationForm.SpeedButton9.Hint, MapSequencesFrm.SpeedButton9.Hint
 SaveTheCodeF5=Save the code <F5>
 ;JITFormulaEditorForm.SaveBtn.Hint
+SaveTheCurrentStereoPreviewLayoutAndDistances=Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
+;Mand3DForm.StereoSettingsSaveButton.Hint
 SaveTheImageAsBMPOr=Save the image as BMP or PNG file, scaled like the current view.
 ;Mand3DForm.Button3.Hint
 SaveTheImageAsBMPOr2=Save the image as BMP or PNG file. When the option 'With ZBuffer' is enabled then the z-buffer is saved as well.

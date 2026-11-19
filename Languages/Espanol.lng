@@ -3332,12 +3332,16 @@ SavePicture=Guardar imagen:
 ;Save picture:
 SaveProject=Guardar proyecto
 ;Save project
+SaveStereoSettings=Guardar ajustes estéreo
+;Save stereo settings
 SaveTextParametersInThePNG=Si está marcado, guarda los parámetros de texto en el archivo PNG.\nPuede verlos, por ejemplo, en gimp en\n'Propiedades de la imagen' -> Comentario.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=Guardar los parámetros de animación
 ;Save the animation parameters
 SaveTheCodeF5=Guardar el código <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=Guarda Vista previa ojos cruzados, Ancho de imagen, Distancia a pantalla y Distancia mínima como valores por defecto para el próximo inicio del programa.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=Guardar la imagen como archivo BMP o PNG, escalada como la vista actual.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=Guardar la imagen como archivo BMP o PNG. Si está activada la opción 'Con búfer Z', también se guarda el búfer Z.
@@ -3368,6 +3372,8 @@ SavedLower=guardado
 ;saved
 SavedOpenEXRFloatingPointColoursAnd=Guardado {} (OpenEXR, colores en coma flotante y capas)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=Ajustes estéreo guardados.
+;Stereo settings saved.
 SavedTransparentBackground=Guardado {} (fondo transparente)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=Guarda la iluminación con estos colores como archivo de luz (.m3l, también para MB3D); "Colores de archivo" vuelve a tomar los colores de él.
@@ -3650,6 +3656,8 @@ StereoRenderingLeftEye=estéreo: renderizando ojo izquierdo
 ;stereo: rendering left eye
 StereoRenderingRightEye=estéreo: renderizando ojo derecho
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=Ancho de imagen, Distancia a pantalla y Distancia mínima deben ser números positivos para poder guardar los ajustes estéreo.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=Fijar esta ventana al lado izquierdo
 ;Stick this window to the left side
 StickThisWindowToTheRight=Fijar esta ventana al lado derecho

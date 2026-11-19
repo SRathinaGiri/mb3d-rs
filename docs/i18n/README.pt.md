@@ -585,9 +585,12 @@ pontos permitem que você confira mais por conta própria:
   e depois a do direito com as configurações estéreo da aba e as mostra
   lado a lado na janela principal. Elas são posicionadas para visão
   paralela (imagem esquerda à esquerda); **Prévia de olhos cruzados** as
-  troca para a visão cruzada. É uma prévia: iluminação e cores
-  não podem ser alteradas depois sem renderizar de novo, e não funciona com
-  blocos. Os botões para as imagens de cada olho continuam lá.
+  troca para a visão cruzada. Uma mudança na janela de iluminação
+  repinta os dois olhos na hora, sem renderizar de novo (reflexos e
+  profundidade de campo pedem uma nova renderização, e um par muito grande
+  também); não funciona com blocos. **Salvar ajustes estéreo** guarda
+  Prévia de olhos cruzados e as três distâncias para a próxima
+  inicialização do programa. Os botões para as imagens de cada olho continuam lá.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Um par estéreo de Hydra, de Dainbramage, lado a lado para visão paralela"></a>
 

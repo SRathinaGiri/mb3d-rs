@@ -589,10 +589,12 @@ you check further on your own:
   **Stereo ▸ Render stereo pair** renders the left and then the right eye
   image with the tab's stereo settings and shows them side by side in the
   main window. They are placed for parallel viewing (left image on the
-  left); **Cross-eyed preview** swaps them for cross-eyed viewing. It is a
-  preview: lighting and colours
-  cannot be changed afterwards without rendering again, and it does not
-  work with tiles. The buttons for the single eye images are still there.
+  left); **Cross-eyed preview** swaps them for cross-eyed viewing. A change
+  in the Lighting window repaints both eyes at once, without rendering
+  again (reflections and depth of field need a new render, and so does a
+  very big pair); it does not work with tiles. **Save stereo settings**
+  keeps Cross-eyed preview and the three distances for the next program
+  start. The buttons for the single eye images are still there.
   
   <a href="docs/img/stereo_pair.jpg"><img src="docs/img/stereo_pair.jpg" width="760" alt="A stereo pair of Dainbramage's Hydra, side by side for parallel viewing"></a>
 

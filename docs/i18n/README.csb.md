@@ -570,10 +570,11 @@ sprawdzëc sóm:
   **Stereo ▸ Renderuj stereo pôrã** renderëje nôpierwi lewi, a pòtemù
   prawi òbrôzk òka z nastawama stereo z ti karte ë pòkazëje je kòl se
   w przédnym òknie. Są ùłożoné do równoległégò pòzéraniô (lewi òbrôzk z
-  lewa); **Pòdzérk na krziż** zamieniwô je do pòzéraniô na krziż. To je
-  pòdzérk: òswieceniô ë farwów
-  nie da sã pózni zmienic bez nowégò renderowaniô, ë nie dzejô to z
-  kachlama. Knąpë dlô pòjedinczëch òbrôzków òczów są dali na swòjim
+  lewa); **Pòdzérk na krziż** zamieniwô je do pòzéraniô na krziż. Zmiana w òknie
+  òswieceniô zarô malëje òbëdwa òczë na nowò, bez nowégò renderowaniô
+  (òdbicô ë głãbiô òstroscë brëkùją nowégò renderowaniô, baro wiôlgô pôra
+  téż); nie dzejô to z kachlama. **Zapiszë nastôwë stereo** zachòwiwô
+  Pòdzérk na krziż ë trzë òdległoscë na pòstãpny start programë. Knąpë dlô pòjedinczëch òbrôzków òczów są dali na swòjim
   placu.
   
   <a href="../img/stereo_pair.jpg"><img src="../img/stereo_pair.jpg" width="760" alt="Stereo pôra Hydrë Dainbramage'a, kòl se do równoległégò pòzéraniô"></a>

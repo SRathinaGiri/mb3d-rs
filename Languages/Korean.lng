@@ -3333,12 +3333,16 @@ SavePicture=그림 저장:
 ;Save picture:
 SaveProject=프로젝트 저장
 ;Save project
+SaveStereoSettings=스테레오 설정 저장
+;Save stereo settings
 SaveTextParametersInThePNG=선택하면 텍스트 매개변수를 PNG 파일에 저장합니다.\n예를 들어 GIMP의 '이미지 속성' -> 주석에서\n확인할 수 있습니다.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=애니메이션 매개변수를 저장합니다
 ;Save the animation parameters
 SaveTheCodeF5=코드를 저장합니다 <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=교차시 미리보기, 이미지 너비, 화면 거리, 최소 거리를 다음 프로그램 시작 시의 기본값으로 저장합니다.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=이미지를 현재 보기 배율로 BMP 또는 PNG 파일에 저장합니다.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=이미지를 BMP 또는 PNG 파일로 저장합니다. 'Z 버퍼 포함' 옵션이 켜져 있으면 Z 버퍼도 함께 저장됩니다.
@@ -3369,6 +3373,8 @@ SavedLower=저장됨
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} 저장됨 (OpenEXR, 부동소수점 색상과 레이어)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=스테레오 설정이 저장되었습니다.
+;Stereo settings saved.
 SavedTransparentBackground={} 저장됨 (투명 배경)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=이 색상이 들어간 조명을 조명 파일(.m3l, MB3D에서도 사용 가능)로 저장합니다. "파일에서 색상"으로 다시 색상을 가져올 수 있습니다.
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=스테레오: 왼쪽 눈 렌더링 중
 ;stereo: rendering left eye
 StereoRenderingRightEye=스테레오: 오른쪽 눈 렌더링 중
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=스테레오 설정을 저장하려면 이미지 너비, 화면 거리, 최소 거리가 양수여야 합니다.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=이 창을 왼쪽에 붙이기
 ;Stick this window to the left side
 StickThisWindowToTheRight=이 창을 오른쪽에 붙이기

@@ -3333,12 +3333,16 @@ SavePicture=படத்தைச் சேமி:
 ;Save picture:
 SaveProject=திட்டத்தைச் சேமி
 ;Save project
+SaveStereoSettings=ஸ்டீரியோ அமைப்புகளைச் சேமி
+;Save stereo settings
 SaveTextParametersInThePNG=தேர்ந்தால் PNG கோப்பில் உரை அளவுருக்களைச் சேமி.\nஎடுத்துக்காட்டாக gimp இல்\n'Image Properties' -> Comment இல் இவற்றைப் பார்க்கலாம்.
 ;Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 SaveTheAnimationParameters=அனிமேஷன் அளவுருக்களைச் சேமி
 ;Save the animation parameters
 SaveTheCodeF5=குறியீட்டைச் சேமி <F5>
 ;Save the code <F5>
+SaveTheCurrentStereoPreviewLayoutAndDistances=குறுக்குப் பார்வை முன்னோட்டம், பட அகலம், திரைத் தூரம், குறைந்தபட்சத் தூரம் ஆகியவற்றை நிரலின் அடுத்த தொடக்கத்திற்கான இயல்புநிலைகளாகச் சேமிக்கிறது.
+;Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
 SaveTheImageAsBMPOr=படத்தை BMP அல்லது PNG கோப்பாக, தற்போதைய பார்வை போல அளவிட்டுச் சேமி.
 ;Save the image as BMP or PNG file, scaled like the current view.
 SaveTheImageAsBMPOr2=படத்தை BMP அல்லது PNG கோப்பாகச் சேமி. 'With ZBuffer' விருப்பம் இயக்கப்பட்டிருந்தால் z-buffer உம் சேமிக்கப்படும்.
@@ -3369,6 +3373,8 @@ SavedLower=சேமிக்கப்பட்டது
 ;saved
 SavedOpenEXRFloatingPointColoursAnd={} சேமிக்கப்பட்டது (OpenEXR, மிதவைப் புள்ளி நிறங்களும் அடுக்குகளும்)
 ;Saved {} (OpenEXR, floating point colours and layers)
+SavedStereoSettings=ஸ்டீரியோ அமைப்புகள் சேமிக்கப்பட்டன.
+;Stereo settings saved.
 SavedTransparentBackground={} சேமிக்கப்பட்டது (ஒளிபுகும் பின்னணி)
 ;Saved {} (transparent background)
 SavesTheLightingWithTheseColors=இந்த வண்ணங்களுடன் ஒளியமைப்பை ஒளிக் கோப்பாகச் சேமிக்கும் (.m3l, MB3D க்கும்); "கோப்பிலிருந்து வண்ணங்கள்" அதிலிருந்து வண்ணங்களைத் திரும்ப எடுக்கும்.
@@ -3651,6 +3657,8 @@ StereoRenderingLeftEye=ஸ்டீரியோ: இடது கண் ரெ�
 ;stereo: rendering left eye
 StereoRenderingRightEye=ஸ்டீரியோ: வலது கண் ரெண்டர்
 ;stereo: rendering right eye
+StereoSettingsMustBePositiveNumbers=ஸ்டீரியோ அமைப்புகளைச் சேமிக்க, பட அகலம், திரைத் தூரம், குறைந்தபட்சத் தூரம் ஆகியவை நேர்ம எண்களாக இருக்க வேண்டும்.
+;Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 StickThisWindowToTheLeft=இந்தச் சாளரத்தை இடது பக்கத்தில் ஒட்டு
 ;Stick this window to the left side
 StickThisWindowToTheRight=இந்தச் சாளரத்தை வலது பக்கத்தில் ஒட்டு
