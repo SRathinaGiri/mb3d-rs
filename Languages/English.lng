@@ -3332,6 +3332,10 @@ SavePicture=Save picture:
 ;HotkeysFrm.Label11.Caption
 SaveProject=Save project
 ;TilingForm.SpeedButton9.Caption
+SaveStereoSettings=Save stereo settings
+;Mand3DForm.StereoSettingsSaveButton.Caption
+SaveTheCurrentStereoPreviewLayoutAndDistances=Save Cross-eyed Preview, Image Width, Screen Distance, and Minimal Distance as the defaults for the next program start.
+;Mand3DForm.StereoSettingsSaveButton.Hint
 SaveTextParametersInThePNG=Save text parameters in the PNG file, if selected.\nYou can see these for example in gimp under\n'Image Properties' -> Comment.
 ;Mand3DForm.CheckBox13.Hint
 SaveTheAnimationParameters=Save the animation parameters
@@ -3367,6 +3371,8 @@ Saved2=Saved {}
 SavedLower=saved
 ;the program
 SavedOpenEXRFloatingPointColoursAnd=Saved {} (OpenEXR, floating point colours and layers)
+;the program
+SavedStereoSettings=Stereo settings saved.
 ;the program
 SavedTransparentBackground=Saved {} (transparent background)
 ;the program
@@ -3649,6 +3655,8 @@ StereoPairsCannotBeRenderedWith=Stereo pairs cannot be rendered with tiles. Turn
 StereoRenderingLeftEye=stereo: rendering left eye
 ;the program
 StereoRenderingRightEye=stereo: rendering right eye
+;the program
+StereoSettingsMustBePositiveNumbers=Image Width, Screen Distance, and Minimal Distance must be positive numbers before the stereo settings can be saved.
 ;the program
 StickThisWindowToTheLeft=Stick this window to the left side
 ;Mand3DForm.Stickthiswindowtotheleftside1.Caption

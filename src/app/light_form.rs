@@ -727,7 +727,7 @@ pub fn trigger_repaint(app: &mut Mb3d, ui: &mut Ui) {
     app.make_scene(ui);
     // (a repaint: the depth of field applied by hand is gone)
     app.post.repainted();
-    if app.eng.base().is_some() {
+    if app.eng.can_relight() {
         // (the lights whose shadows were reset in the post processing:
         // painted without, as MB3D's bHScalculated)
         app.eng.start(super::engine::Job::Relight { scene: app.scene.clone(), hs_off: app.post.hs_reset });
