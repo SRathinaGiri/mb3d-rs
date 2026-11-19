@@ -88,6 +88,12 @@
   </recommends>
 
   <releases>
+    <release version="0.3.15" date="2026-11-19">
+      <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.15</url>
+      <description>
+        <p>The AI window finds Claude's desktop app on Windows again: its new installer keeps the settings in another folder, so the window said "Not installed" and Connect stayed grey. Claude Code is no longer shown as found when only the desktop app is installed, and Windows paths are shown without their internal prefix.</p>
+      </description>
+    </release>
     <release version="0.3.14" date="2026-11-18">
       <url>https://github.com/thr32423/mb3d-rs/releases/tag/v0.3.14</url>
       <description>
