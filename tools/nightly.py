@@ -130,6 +130,17 @@ def compare(a, b):
 # ---------------------------------------------------------------------------
 
 
+def machine():
+    """What the night was built and run on: a change of it (a new Ubuntu,
+    a new Rust) can move a few pixels without any change of the code."""
+    m = {"image": os.environ.get("ImageOS", ""), "image_version": os.environ.get("ImageVersion", "")}
+    try:
+        m["rustc"] = subprocess.run(["rustc", "-V"], capture_output=True, text=True, timeout=60).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        m["rustc"] = ""
+    return m
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bin", required=True)
@@ -209,8 +220,16 @@ def main():
         note("kind", name, cmd + ["-q"] + data, run(cmd + ["-q"] + data, KIND_SECS))
 
     # the example pictures against the previous night's
+    # (kept with the pictures, so the next night knows what made them)
+    now = machine()
+    (pics / "machine.json").write_text(json.dumps(now, indent=1))
+    before = None
     changes = []
     if a.ref and Path(a.ref).is_dir():
+        try:
+            before = json.loads((Path(a.ref) / "machine.json").read_text())
+        except (OSError, ValueError):
+            pass
         for p in sorted(pics.glob("*.png")):
             old = Path(a.ref) / p.name
             if old.exists():
@@ -225,6 +244,8 @@ def main():
         "results": results,
         "changes": changes,
         "compared": bool(a.ref and Path(a.ref).is_dir()),
+        "machine": now,
+        "machine_before": before,
     }
     (out / "results.json").write_text(json.dumps(info, indent=1))
     bad = [r for r in results if r["status"] != "ok"]

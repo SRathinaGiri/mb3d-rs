@@ -61,6 +61,18 @@ def read_marker(body, name):
     return m.group(1) if m else None
 
 
+def machine_change(d):
+    """What changed in the machine since the night before ("" if nothing
+    known): the runner's system (ubuntu-latest moving to a new Ubuntu) or
+    Rust.  A new image version of the same system is only mentioned."""
+    now, before = d.get("machine") or {}, d.get("machine_before") or {}
+    if not now or not before:
+        return "", ""
+    big = [f"{k} {before.get(k) or '?'} → {now.get(k) or '?'}" for k in ("image", "rustc") if before.get(k) != now.get(k)]
+    small = "" if before.get("image_version") == now.get("image_version") else f"image version {before.get('image_version') or '?'} → {now.get('image_version') or '?'}"
+    return ", ".join(big), small
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("results")
@@ -141,14 +153,30 @@ def main():
 
     # changed pictures
     rows = []
+    machines = []
     for os_, d in sorted(runs.items()):
-        for c in d.get("changes", []):
+        if not d.get("changes"):
+            continue
+        for c in d["changes"]:
             how = c.get("note") or f"{c['pixels']} of {c['of']} pixels, by up to {c['max']}"
             rows.append(f"| {os_} | {c['item']} | {how} |")
+        big, small = machine_change(d)
+        if big or small:
+            machines.append((os_, big, small))
     if rows:
-        lines = [
-            f"{len(rows)} example picture(s) differ from the night before ({run} of {sha}).",
-            "If the change was meant (a new feature, a fix), close this issue; else it points at a regression.",
+        moved = [f"- **{os_}**: {big}" + (f" ({small})" if small else "") for os_, big, small in machines if big]
+        lines = [f"{len(rows)} example picture(s) differ from the night before ({run} of {sha}).", ""]
+        if moved:
+            lines += [
+                "**The build machine changed** since the night before; small differences on these systems most likely come from it (another system maths library or compiler), not from the code:",
+                *moved,
+                "",
+            ]
+        same = [f"{os_} ({small})" for os_, big, small in machines if not big]
+        if same:
+            lines += [f"A newer image of the same system on {', '.join(same)}.", ""]
+        lines += [
+            "If the change was meant (a new feature, a fix, a new build machine), close this issue; else it points at a regression.",
             "The pictures of both nights are in the runs' artifacts (`pictures-<system>`).",
             "",
             "| system | picture | difference |",
@@ -157,7 +185,8 @@ def main():
             "",
             marker("kind", "pictures"),
         ]
-        gh(["issue", "create", "--title", f"Nightly: {len(rows)} example picture(s) changed ({short})", "--label", f"{LABEL},picture-change", "--body", "\n".join(lines)], dry)
+        title = f"Nightly: {len(rows)} example picture(s) changed ({short})" + (", build machine changed" if moved else "")
+        gh(["issue", "create", "--title", title, "--label", f"{LABEL},picture-change", "--body", "\n".join(lines)], dry)
 
     bad = sum(len(g["systems"]) for g in groups.values())
     print(f"{len(runs)} systems, {bad} failures in {len(groups)} groups, {len(rows)} changed pictures")
