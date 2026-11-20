@@ -325,6 +325,7 @@ fn guard<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     IN_FLIGHT.fetch_add(1, Ordering::SeqCst);
     let _flight = Flight;
     if ABORT.load(Ordering::SeqCst) {
+        set_status("CPU: the program ends".into());
         return Err("the program ends".into());
     }
     let lost = |e: &str| match CARD.with(|c| c.get()) {
@@ -425,7 +426,20 @@ pub fn wait_idle(max: std::time::Duration) {
     }
 }
 
+thread_local! {
+    /// The last status set on this thread: the global one may already be
+    /// another thread's (tests run in parallel, and one that switched the
+    /// card off hid the real reason of another's failure on macOS).
+    static THREAD_LAST: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };
+}
+
+/// [`last_status`] as this thread set it.
+pub fn thread_status() -> String {
+    THREAD_LAST.with(|t| t.borrow().clone())
+}
+
 pub fn set_status(s: String) {
+    THREAD_LAST.with(|t| t.borrow_mut().clone_from(&s));
     // (a thread kept on the CPU does not speak for the main calculation)
     if CPU_HERE.with(|c| c.get()) {
         return;
@@ -4161,7 +4175,7 @@ mod tests {
             }
             let dp = crate::deao::DeaoParams::default();
             let job = PostJob { shadows: None, deao: Some(dp) };
-            let g = march(&p, &job, &|_, _| {}, &|| false, |_, _| {}).expect(&last_status());
+            let g = march(&p, &job, &|_, _| {}, &|| false, |_, _| {}).expect(&thread_status());
             let mut cpu = g.clone();
             let [_, _, w, h] = p.rect;
             crate::deao::deao(&p, &mut cpu, w as usize, h as usize, &dp, 8, &|_, _| {}, &|| false);
@@ -4212,7 +4226,7 @@ mod tests {
             return;
         }
         let t = std::time::Instant::now();
-        let g = march(&p, &PostJob::default(), &|_, _| {}, &|| false, |_, _| {}).expect(&last_status());
+        let g = march(&p, &PostJob::default(), &|_, _| {}, &|| false, |_, _| {}).expect(&thread_status());
         let gpu_s = t.elapsed().as_secs_f64();
         let [x0, y0, w, h] = p.rect;
         let t = std::time::Instant::now();
@@ -4257,7 +4271,7 @@ mod tests {
         crate::elog!(
             "{}: GPU {gpu_s:.3}s (one thread on the CPU {cpu_s:.3}s); same background/object {:.2}%, \
              mean |zpos difference| {zd:.1} of 32768, mean normal cosine {nd:.4}, normals off by more than 25 degrees {:.2}%",
-            last_status(),
+            thread_status(),
             same * 100.0,
             bad * 100.0
         );

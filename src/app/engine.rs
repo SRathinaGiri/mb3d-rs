@@ -238,7 +238,10 @@ pub struct Engine(pub Arc<Inner>);
 /// see bin/Mandelbulb3D.rs.)
 impl Drop for Engine {
     fn drop(&mut self) {
-        #[cfg(feature = "gpu")]
+        // (not in the tests: they share one process, and an engine dropped
+        // in one test stopped the card for all the others, which then
+        // failed on a computer with a card: macOS CI after PR #35)
+        #[cfg(all(feature = "gpu", not(test)))]
         crate::gpu::abort_all();
         self.stop();
         let t = Instant::now();
