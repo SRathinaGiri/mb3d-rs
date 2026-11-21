@@ -1338,4 +1338,41 @@ mod tests {
         assert_eq!(hot, 7);
         assert!(top + rows > 7 && top >= 0, "top {top}, {rows} rows");
     }
+
+    /// A combo popup's drawn scroll bar is a control, not decoration: its
+    /// arrows, track and thumb scroll without choosing an item or closing
+    /// the popup (the Lighting window's long light-file list).
+    #[test]
+    fn combo_popup_scrollbar_works() {
+        let th = Theme::new(super::super::theme::Style::default());
+        let mut f = Form::from_dfm(include_str!("../app/forms/LightAdjust.dfm"), &th).unwrap();
+        let c = f.id("ComboBox3").unwrap();
+        f.ctl[c].items = (0..100).map(|i| format!("Light {i}")).collect();
+        f.ctl[c].set_item_index(0);
+        f.layout();
+        let r = f.abs_rect(c);
+        f.mouse_down(r.right() - 5, r.y + 5, MouseButton::Left, 0);
+        f.mouse_up(r.right() - 5, r.y + 5, MouseButton::Left, 0);
+
+        let lr = super::super::paint::combo_list_rect(&f, c);
+        let rows = super::super::paint::combo_rows(&f, c);
+        let sx = lr.right() - 1 - super::super::paint::SB / 2;
+        // The down arrow advances one row and releasing it leaves the list open.
+        f.mouse_down(sx, lr.bottom() - 3, MouseButton::Left, 0);
+        f.mouse_up(sx, lr.bottom() - 3, MouseButton::Left, 0);
+        let Some(Popup::Combo { top, .. }) = f.popup else { panic!("scrolling closed the list") };
+        assert_eq!(top, 1);
+
+        // Dragging the thumb to the bottom reaches the last page.
+        let sr = Rect::new(lr.right() - 1 - super::super::paint::SB, lr.y + 1, super::super::paint::SB, lr.h - 2);
+        let (_, _, track, thumb) = super::super::paint::sb_geom(sr, true, 0, 100 - rows as i64, rows as i64, top as i64);
+        let sy = thumb.y + thumb.h / 2;
+        let ey = sy + track.h - thumb.h;
+        f.mouse_down(sx, sy, MouseButton::Left, 0);
+        f.mouse_move(sx, ey, 0);
+        f.mouse_up(sx, ey, MouseButton::Left, 0);
+        let Some(Popup::Combo { top, .. }) = f.popup else { panic!("dragging closed the list") };
+        assert_eq!(top, 100 - rows);
+        assert_eq!(f.ctl[c].item_index, 0, "scrolling selected an item");
+    }
 }

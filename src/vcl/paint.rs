@@ -1226,7 +1226,9 @@ impl Form {
         cv.set_clip(old);
         if need_sb {
             let sr = Rect::new(lr.right() - 1 - SB, lr.y + 1, SB, lr.h - 2);
-            paint_scrollbar(cv, th, sr, true, 0, c.items.len() as i64 - vis as i64, vis as i64, top as i64, PART_NONE, PART_NONE, true);
+            let hp = if self.hot == Some(id) { self.hot_part } else { PART_NONE };
+            let pressed = if self.capture == Some(id) { self.cap_part } else { PART_NONE };
+            paint_scrollbar(cv, th, sr, true, 0, c.items.len() as i64 - vis as i64, vis as i64, top as i64, hp, pressed, true);
         }
     }
 
